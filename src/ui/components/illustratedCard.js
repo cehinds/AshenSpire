@@ -1,3 +1,4 @@
+import { cardCutoutUrl } from '../layeredCardArt.js';
 import {cardTagRailHtml} from './cardTagSymbols.js';
 import {CARD_COMPONENTS} from '../../content/cardComponents.generated.js';
 import {assetUrl} from '../assetmap.js';
@@ -63,7 +64,7 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
       if(l.bind==='tags')l={...l,x:doc.width*.1,y:doc.height*.858,w:doc.width*.8,h:doc.height*.116};
     }
     const footer=l.bind==='tags'&&model.sigils;
-    const position=`left:${l.x/doc.width*100}%;top:${l.y/doc.height*100}%;width:${l.w/doc.width*100}%;height:${l.h/doc.height*100}%;opacity:${l.opacity};filter:${footer?'none':`hue-rotate(${Number.isFinite(l.hue)?l.hue:0}deg)`};transform:${footer?'none':`rotate(${l.rotation}deg)`};`;
+    const position=`left:${l.x/doc.width*100}%;top:${l.y/doc.height*100}%;width:${l.w/doc.width*100}%;height:${l.h/doc.height*100}%;opacity:${l.opacity};filter:${footer||!l.hue||!Number.isFinite(l.hue)?'none':`hue-rotate(${l.hue}deg)`};transform:${footer||!l.rotation?'none':`rotate(${l.rotation}deg)`};`;
     let body='';
     if(l.bind==='tags'&&model.sigils){
       body=cardSigilsHtml(model.sigils);
@@ -73,7 +74,7 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
         const [x,y,w,h]=l.trim||[0,0,l.imageWidth||1,l.imageHeight||1];
         const crop=l.trim?`width:${l.imageWidth/w*100}%;height:${l.imageHeight/h*100}%;left:${-x/w*100}%;top:${-y/h*100}%;`:'width:100%;height:100%;left:0;top:0;';
         const composition=l.bind==='artwork'?artworkComposition:null;
-        body=`<span class="ic-image"${composition?.kind==='simple'?' style="position:relative;display:block;width:100%;height:100%;overflow:hidden"':''}><img${l.bind==='artwork'?` class="playing-card-art" data-card-art="${esc(artworkKind)}"`:''} alt="" aria-hidden="true" src="${esc(assetUrl(href))}" style="${crop}${l.bind==='artwork'&&artworkPosition?`object-position:${esc(artworkPosition)};`:''}${composition?.filter?`filter:${esc(composition.filter)};`:''}object-fit:${l.fit==='cover'?'cover':l.fit==='contain'||l.bind==='artwork'?'contain':'fill'}" />${composition?cardArtLayersHtml(composition):''}</span>`;
+        body=`<span class="ic-image"${composition?.kind==='simple'?' style="position:relative;display:block;width:100%;height:100%;overflow:hidden;isolation:isolate"':''}><img${l.bind==='artwork'?` class="playing-card-art" data-card-art="${esc(artworkKind)}"`:''} alt="" aria-hidden="true" src="${esc(composition?.componentArt ? cardCutoutUrl(href) : assetUrl(href))}" style="${crop}${l.bind==='artwork'&&artworkPosition?`object-position:${esc(artworkPosition)};`:''}${composition?.filter?`filter:${esc(composition.filter)};`:''}object-fit:${l.fit==='cover'?'cover':l.fit==='contain'||l.bind==='artwork'?'contain':'fill'}" />${composition?cardArtLayersHtml(composition):''}</span>`;
       }else body=`<span class="ic-glyph">${glyph}</span>`;
     }else{
       const text=l.bind==='rules'?renderedRules:values[l.bind]??esc(l.text||'');

@@ -61,6 +61,12 @@ export function readMissing(root = ROOT, game = GAME) {
   return existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')).missing || {} : {};
 }
 
+/** Semantic UI slot ids (card.frame, icon.attack) -> a catalog id, or null when the slot is a placeholder on purpose. */
+export function readAliases(root = ROOT, game = GAME) {
+  const file = join(root, `games/${game}/assets/aliases.json`);
+  return existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')).aliases || {} : {};
+}
+
 export function buildAssetCatalog({ root = ROOT, game = GAME } = {}) {
   const manifest = JSON.parse(readFileSync(join(root, 'art-manifest.json'), 'utf8'));
   const assets = {};

@@ -1,0 +1,320 @@
+{
+  "format": "ashen.commands@1",
+  "commands": {
+    "app.quit": {
+      "kind": "app",
+      "handler": "src/ui/screens/title.js#mountTitle.onQuit",
+      "description": "Quit the application (title, combat and map pass onQuit)."
+    },
+    "armoury.close": {
+      "kind": "app",
+      "handler": "src/ui/screens/equipment.js#mountEquipment",
+      "description": "Close the armoury."
+    },
+    "armoury.open": {
+      "kind": "app",
+      "handler": "src/ui/screens/map.js#mountMap.onArmoury",
+      "description": "Open the armoury from the HUD (combat and map pass onArmoury)."
+    },
+    "card.select": {
+      "kind": "app",
+      "handler": "src/ui/components/cardSelection.js#lightCard",
+      "description": "Select (light) a card face."
+    },
+    "choice.pick": {
+      "kind": "app",
+      "handler": "src/ui/components/choiceBody.js#mountChoiceBody",
+      "description": "Pick one option of a choice body."
+    },
+    "combat.armCard": {
+      "kind": "app",
+      "handler": "src/ui/components/hand.js#mountHand",
+      "description": "Arm a hand card (tap) so a target can be chosen."
+    },
+    "combat.endTurn": {
+      "kind": "app",
+      "handler": "src/ui/screens/combat.js#mountCombat",
+      "description": "End the player turn and resolve the enemy batch."
+    },
+    "combat.playCard": {
+      "kind": "app",
+      "handler": "src/ui/screens/combat.js#mountCombat",
+      "description": "Play the armed or dragged hand card onto its target."
+    },
+    "combat.selectTarget": {
+      "kind": "app",
+      "handler": "src/ui/screens/combat.js#mountCombat",
+      "description": "Choose the combatant a card or intent applies to."
+    },
+    "deck.cancel": {
+      "kind": "app",
+      "handler": "src/ui/screens/deckEditor.js#mountDeckEditor.onCancel",
+      "description": "Leave deck editing without keeping changes."
+    },
+    "deck.done": {
+      "kind": "app",
+      "handler": "src/ui/screens/deckEditor.js#mountDeckEditor.onDone",
+      "description": "Finish deck editing and keep the changes."
+    },
+    "deck.moveCard": {
+      "kind": "app",
+      "handler": "src/ui/screens/deckEditor.js#mountDeckEditor",
+      "description": "Move a card between the deck and the collection."
+    },
+    "deck.open": {
+      "kind": "app",
+      "handler": "src/ui/screens/rest.js#mountRest.deckEditor",
+      "description": "Open the deck editor from the rest site."
+    },
+    "deck.selectCard": {
+      "kind": "app",
+      "handler": "src/ui/screens/deckEditor.js#mountDeckEditor",
+      "description": "Select a card row in the deck editor."
+    },
+    "dialogue.advance": {
+      "kind": "app",
+      "handler": "src/ui/screens/dialogue.js#mountDialogue",
+      "description": "Advance to the next dialogue line."
+    },
+    "dialogue.leave": {
+      "kind": "app",
+      "handler": "src/ui/screens/dialogue.js#mountDialogue.onDone",
+      "description": "Leave the dialogue."
+    },
+    "dialogue.respond": {
+      "kind": "app",
+      "handler": "src/ui/screens/dialogue.js#mountDialogue",
+      "description": "Choose a dialogue response."
+    },
+    "gear.equip": {
+      "kind": "app",
+      "handler": "src/ui/screens/equipment.js#mountEquipment",
+      "description": "Equip a piece of gear."
+    },
+    "gear.unequip": {
+      "kind": "app",
+      "handler": "src/ui/screens/equipment.js#mountEquipment",
+      "description": "Unequip a piece of gear."
+    },
+    "hand.reorder": {
+      "kind": "app",
+      "handler": "src/ui/components/hand.js#mountHand.reorderAt",
+      "description": "Reorder a hand card by drag."
+    },
+    "history.open": {
+      "kind": "app",
+      "handler": "src/ui/screens/gameover.js#mountGameOver.onHistory",
+      "description": "Open the run history (title, defeat and victory pass onHistory)."
+    },
+    "inspect.close": {
+      "kind": "app",
+      "handler": "src/ui/components/cardInspection.js#openCardInspection",
+      "description": "Close the inspection overlay opened by inspect.open."
+    },
+    "inspect.open": {
+      "kind": "app",
+      "handler": "src/ui/components/cardInspection.js#openCardInspection",
+      "description": "Open the inspection sheet for a card, combatant, intent, status or meter."
+    },
+    "map.pan": {
+      "kind": "app",
+      "handler": "src/ui/components/mapboard.js#mountMapBoard",
+      "description": "Pan the route map camera."
+    },
+    "map.pickNode": {
+      "kind": "app",
+      "handler": "src/ui/screens/map.js#mountMap.onPick",
+      "description": "Confirm travel to the selected map node."
+    },
+    "map.selectNode": {
+      "kind": "app",
+      "handler": "src/ui/components/mapboard.js#mountMapBoard",
+      "description": "Select a node on the route map."
+    },
+    "menu.open": {
+      "kind": "app",
+      "handler": "src/ui/screens/map.js#mountMap.onMenu",
+      "description": "Open the run menu from the HUD (combat and map pass onMenu)."
+    },
+    "nav.back": {
+      "kind": "app",
+      "handler": "src/ui/screens/customize.js#mountCustomize.onBack",
+      "description": "Go back one step from character creation."
+    },
+    "nav.selectCategory": {
+      "kind": "app",
+      "handler": "src/ui/kit/categoryNav.js#categoryNav",
+      "description": "Switch the active category or tab."
+    },
+    "nav.title": {
+      "kind": "app",
+      "handler": "src/ui/screens/gameover.js#mountGameOver.onTitle",
+      "description": "Return to the title screen."
+    },
+    "nav.to": {
+      "kind": "app",
+      "handler": "src/ui/screens/deckEditor.js#mountDeckEditor.onNavigate",
+      "description": "Navigate from the deck editor to another screen."
+    },
+    "offline.open": {
+      "kind": "app",
+      "handler": "src/ui/screens/title.js#mountTitle.onOffline",
+      "description": "Open the offline play options."
+    },
+    "profile.open": {
+      "kind": "app",
+      "handler": "src/ui/screens/title.js#mountTitle.onProfile",
+      "description": "Open the player profile."
+    },
+    "progression.levelUp": {
+      "kind": "app",
+      "handler": "src/ui/screens/rest.js#mountRest.onLevelUp",
+      "description": "Apply a level-up at the rest site."
+    },
+    "progression.reallocate": {
+      "kind": "app",
+      "handler": "src/ui/screens/rest.js#mountRest.onReallocate",
+      "description": "Reallocate stat points at the rest site."
+    },
+    "prologue.advance": {
+      "kind": "app",
+      "handler": "src/ui/screens/prologue.js#mountPrologue",
+      "description": "Advance the prologue to the next scene."
+    },
+    "prologue.finish": {
+      "kind": "app",
+      "handler": "src/ui/screens/prologue.js#mountPrologue",
+      "description": "Finish the prologue."
+    },
+    "rest.done": {
+      "kind": "app",
+      "handler": "src/ui/screens/rest.js#mountRest.onDone",
+      "description": "Leave the rest site."
+    },
+    "rest.heal": {
+      "kind": "app",
+      "handler": "src/ui/screens/rest.js#mountRest",
+      "description": "Rest at a camp to heal."
+    },
+    "rest.inn": {
+      "kind": "app",
+      "handler": "src/ui/screens/shop.js#mountShop.restAtInn",
+      "description": "Buy a rest at the inn from the shop."
+    },
+    "reward.allocateStat": {
+      "kind": "app",
+      "handler": "src/ui/screens/reward.js#mountRewards.onAllocateStat",
+      "description": "Spend a stat point from the reward screen."
+    },
+    "reward.claim": {
+      "kind": "app",
+      "handler": "src/ui/screens/reward.js#mountRewards",
+      "description": "Claim the chosen reward offer."
+    },
+    "reward.claimLevel": {
+      "kind": "app",
+      "handler": "src/ui/screens/reward.js#mountRewards.onClaimLevel",
+      "description": "Claim the level-up reward."
+    },
+    "reward.claimSkill": {
+      "kind": "app",
+      "handler": "src/ui/screens/reward.js#mountRewards.onClaimSkill",
+      "description": "Claim the skill reward."
+    },
+    "reward.done": {
+      "kind": "app",
+      "handler": "src/ui/screens/reward.js#mountRewards.onDone",
+      "description": "Finish the reward screen."
+    },
+    "reward.skip": {
+      "kind": "app",
+      "handler": "src/ui/screens/reward.js#mountRewards",
+      "description": "Skip a reward offer."
+    },
+    "run.continue": {
+      "kind": "app",
+      "handler": "src/ui/screens/title.js#mountTitle.onContinue",
+      "description": "Continue a saved run."
+    },
+    "run.custom": {
+      "kind": "app",
+      "handler": "src/ui/screens/title.js#mountTitle.onCustom",
+      "description": "Begin a run with a custom character."
+    },
+    "run.new": {
+      "kind": "app",
+      "handler": "src/ui/screens/title.js#mountTitle.onNew",
+      "description": "Begin a new run."
+    },
+    "run.quickStart": {
+      "kind": "app",
+      "handler": "src/ui/screens/title.js#mountTitle.onQuickStart",
+      "description": "Begin a run with the default character."
+    },
+    "run.retry": {
+      "kind": "app",
+      "handler": "src/ui/screens/gameover.js#mountGameOver.onRetry",
+      "description": "Retry after defeat."
+    },
+    "run.start": {
+      "kind": "app",
+      "handler": "src/ui/screens/customize.js#mountCustomize.onStart",
+      "description": "Start a run from character creation."
+    },
+    "run.usePotion": {
+      "kind": "app",
+      "handler": "src/ui/components/runPotions.js#openRunPotions.onAction",
+      "description": "Use a potion from the run HUD tray outside combat."
+    },
+    "save.delete": {
+      "kind": "app",
+      "handler": "src/ui/screens/title.js#mountTitle.onDelete",
+      "description": "Delete a save slot."
+    },
+    "save.write": {
+      "kind": "app",
+      "handler": "src/ui/screens/map.js#mountMap.onSave",
+      "description": "Save the run (combat and map pass onSave)."
+    },
+    "settings.open": {
+      "kind": "app",
+      "handler": "src/ui/screens/title.js#mountTitle.onSettings",
+      "description": "Open settings (title, creation and prologue pass onSettings)."
+    },
+    "shop.buy": {
+      "kind": "app",
+      "handler": "src/ui/screens/shop.js#mountShop",
+      "description": "Buy a shop offer."
+    },
+    "shop.leave": {
+      "kind": "app",
+      "handler": "src/ui/screens/shop.js#mountShop.onLeave",
+      "description": "Leave the shop."
+    },
+    "smith.leave": {
+      "kind": "app",
+      "handler": "src/ui/screens/blacksmith.js#mountBlacksmith.onLeave",
+      "description": "Leave the blacksmith."
+    },
+    "smith.upgrade": {
+      "kind": "app",
+      "handler": "src/ui/screens/blacksmith.js#mountBlacksmith",
+      "description": "Upgrade a card at the blacksmith."
+    },
+    "tooltip.hide": {
+      "kind": "app",
+      "handler": "src/ui/components/tooltip.js#hideTooltip",
+      "description": "Dismiss the visible tooltip."
+    },
+    "tray.activate": {
+      "kind": "app",
+      "handler": "src/ui/components/iconTray.js#trayIcon",
+      "description": "Activate an icon in a tray."
+    },
+    "ui.press": {
+      "kind": "app",
+      "handler": "unresolved",
+      "description": "Press of a choice or footer button; ButtonSizeModel only sizes buttons, each screen wires its own press."
+    }
+  }
+}

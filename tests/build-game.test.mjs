@@ -107,6 +107,15 @@ test('report counts match the mechanics index, the ui index and the maps', () =>
   for (const m of idx) assert.equal(artifact.tags[m.tag], m.id, m.tag);
 });
 
+test('the artifact ships the asset aliases so an engine reading only the artifact can resolve a UI slot', () => {
+  const aliases = readJson('games/ashenspire/assets/aliases.json').aliases;
+  assert.deepEqual(artifact.assets.aliases, aliases);
+  const target = aliases['icon.health'];
+  assert.equal(typeof target, 'string');
+  assert.equal(artifact.assets.aliases['icon.health'], target);
+  assert.ok(artifact.assets.catalog.assets[target], `catalog has ${target}`);
+});
+
 test('tags, layout refs and references resolve', () => {
   for (const [tag, slug] of Object.entries(artifact.tags)) assert.equal(artifact.mechanics[slug].manifest.tag, tag);
   for (const c of Object.values(artifact.ui.components)) if (c.layout?.ref) assert.ok(artifact.ui.layout[c.layout.ref], c.layout.ref);

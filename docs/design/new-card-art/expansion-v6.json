@@ -1,0 +1,101 @@
+{
+  "revision": 6,
+  "sourceCommit": "2a8488bf493c5aa07259209f631a02a41b0526d4",
+  "families": [
+    {
+      "letter": "Q",
+      "label": "Broken swords",
+      "baseFamily": "J",
+      "effectFamily": "A",
+      "cardType": "attack"
+    },
+    {
+      "letter": "R",
+      "label": "Broken hammers",
+      "baseFamily": "K",
+      "effectFamily": "D",
+      "cardType": "smash"
+    },
+    {
+      "letter": "S",
+      "label": "Broken shields",
+      "baseFamily": "M",
+      "effectFamily": "E",
+      "cardType": "defend"
+    },
+    {
+      "letter": "T",
+      "label": "Ruined spellbooks",
+      "baseFamily": "I",
+      "effectFamily": "I",
+      "cardType": "spell"
+    },
+    {
+      "letter": "U",
+      "label": "Sweep scythes",
+      "baseFamily": "L",
+      "effectFamily": "C",
+      "cardType": "sweep"
+    },
+    {
+      "letter": "V",
+      "label": "Magic scepters",
+      "baseFamily": null,
+      "effectFamily": "I",
+      "cardType": "spell"
+    },
+    {
+      "letter": "W",
+      "label": "Broken scythes",
+      "baseFamily": "L",
+      "effectFamily": "C",
+      "cardType": "sweep"
+    },
+    {
+      "letter": "X",
+      "label": "Broken scimitars",
+      "baseFamily": "B",
+      "effectFamily": "B",
+      "cardType": "sweep"
+    },
+    {
+      "letter": "Y",
+      "label": "Ethereal melee",
+      "baseFamily": "V",
+      "effectFamily": "Y",
+      "cardType": "spell"
+    },
+    {
+      "letter": "Z",
+      "label": "Ranged projectiles",
+      "baseFamily": "V",
+      "effectFamily": "Z",
+      "cardType": "spell"
+    }
+  ],
+  "preferredArt": {
+    "sweep": "U",
+    "magicBase": "V",
+    "magicMelee": "Y",
+    "magicRanged": "Z"
+  },
+  "brokenMeaning": "Visual condition only. Does not create a broken gameplay status.",
+  "elementNames": [
+    "Divine",
+    "Necrotic",
+    "Force",
+    "Earth",
+    "Frost",
+    "Fire",
+    "Lightning",
+    "Psychic",
+    "Alteration",
+    "Wind"
+  ],
+  "sourcePolicy": "Reuse existing components and repository scepter references; keep original PNGs unchanged. New variants are generated edits.",
+  "counts": {
+    "objects": 80,
+    "effects": 20,
+    "newCompositions": 1000
+  }
+}
