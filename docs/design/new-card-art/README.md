@@ -1,4 +1,50 @@
-## Latest: 70 standalone object cutouts
+## Current revision: accepted pale-mint color pass
+
+Revision 14 replaces the five strong-green source sprites with a pale pearl-white / icy-mint pass at the existing 20% rendered opacity. Shared scepter size, alignment and all layer transforms are preserved. [View the gallery](weapon-scepter-gallery.html), [see the current set](weapons-and-scepters-v14.png), or [download revision 14](card-art-cutouts-v14.zip).
+
+Published as-is at the user's request. The next refinement is a slightly thinner, more transparent outline with a little green restored.
+
+## Revision 13: one small shared scepter, blue and soft green
+
+Revision 13 uses the same amber scepter sprite at 152.95 × 152.95 in every melee composition. Its grip follows each weapon axis while spectral weapon sizes and positions remain unchanged. Green replaces violet, using 20% opacity and softened saturation; blue retains 40% opacity. [View the gallery](weapon-scepter-gallery.html), [see all weapons](weapons-and-scepters-v13.png), or [download revision 13](card-art-cutouts-v13.zip). Scepter and ethereal layers remain separate. Y00–Y09 are the ten canonical choices; older Y codes redirect to the matching effect.
+
+## Revision 12: more transparent ethereal weapons
+
+Revision 12 halves spectral opacity from 80% to 40% across all 100 melee scepter combinations. The approved shapes, sizes and physical scepter placements remain unchanged. [View all five weapons and both scepter colors](weapon-scepter-gallery.html), [open the labelled overview](weapons-and-scepters-v12.png), or [download revision 12](card-art-cutouts-v12.zip). The gallery includes isolated energy-layer previews and direct PNG links.
+
+## Revision 11: half-size scepters aligned with the spectral staff
+
+Revision 11 halves the physical scythe scepters from 305.9 to 152.95 pixels and aligns their grips with the spectral staff. The spectral scythes keep exactly the same size and position. [View the comparison](scythe-scepter-comparison-v11.png), [open the gallery](expansion-v6.html), or [download revision 11](card-art-cutouts-v11.zip). Reset saved scythe compositions to use the new placement.
+
+## Revision 10: smaller physical scepters for scythes
+
+Revision 10 reduces the physical scepters by 30% in both scythe color families. The enlarged spectral scythes retain their position and scale. [View the gallery](expansion-v6.html), [edit the scythe](cutouts.html?category=Y&code=Y22), or [download revision 10](card-art-cutouts-v10.zip). Reset saved scythe compositions to use this placement.
+
+## Revision 9: larger scythe projections
+
+Revision 9 makes both ethereal scythes 35% taller and 20% wider, with the full blade inside the art crop and the spectral shaft extending to the physical pommel. All 362 component PNGs and the approved Y00 sword remain unchanged. [View the gallery](expansion-v6.html), [edit the scythe](cutouts.html?category=Y&code=Y22), or [download revision 9](card-art-cutouts-v9.zip). Reset saved scythe compositions to use the enlarged placement.
+
+## Revision 8: full ethereal weapon silhouettes
+
+Revision 8 follows the supplied sword, hammer, L40 scythe, scimitar and shield models in blue and violet. Luminous outlines retain the full guards, grips and pommels around the physical scepters, with transparent cores and flowing energy. [View labelled references and compositions](expansion-v6.html), [edit layers](cutouts.html?category=Y), or [download revision 8](card-art-cutouts-v8.zip). Ten Y overlays are revised; the other 352 PNGs are unchanged. Reset previously saved compositions to use the new placement.
+
+## Revision 7: broad melee heads and visible item labels
+
+Revision 7 follows the annotated proportions: large ethereal blades/heads wrap around the scepter stone. All components, assembled options and intact references show their code and name. [View the labelled gallery](expansion-v6.html), [edit melee layers](cutouts.html?category=Y), or [download revision 7](card-art-cutouts-v7.zip). Ten Y overlays are revised; the other 352 PNGs are unchanged.
+
+## Previous set: broken objects, Sweep scythes and magic scepters
+
+Revision 6 adds 80 objects and 20 separate magic overlays. [View broken variants and scepter magic](expansion-v6.html), [edit melee layers](cutouts.html?category=Y), [edit projectiles](cutouts.html?category=Z), or [download revision 6](card-art-cutouts-v6.zip). Ethereal weapons attach to the stone; ranged projectiles remain separate PNGs. All A–P IDs are preserved. Total: 362 PNGs and 2,520 compositions.
+
+## Previous set: existing-art components
+
+Revision 5 adds 30 reconstructed components from ten existing card illustrations and two unchanged native inventory PNGs. [Compare sources and layers](source-breakdown.html), [edit compositions](cutouts.html?category=O), or [download revision 5](card-art-cutouts-v5.zip). JSON includes source provenance and CSS transforms. A–N IDs remain unchanged. Total: 262 PNGs, 132 physical objects plus ten cleansing fires, and 1,520 compositions.
+
+## Previous expansion: spellbooks and more weapons
+
+Revision 4 adds 50 transparent objects in I–M and ten editable Counter starting pairs in N. [Open the composer](cutouts.html) or [view the new objects](objects-overview.html?new). [Revision 4 pack](card-art-cutouts-v4.zip). Original A–H IDs are preserved.
+
+## Original set: 70 standalone object cutouts
 
 Open [objects-overview.html](objects-overview.html) for ten variants each of seven core objects, or [cutouts.html](cutouts.html) for separate layers and transform controls. See [CUTOUTS.md](CUTOUTS.md) for codes, alpha exports and JSON. Earlier concept boards below are retained as reference, not the current candidate count.
 

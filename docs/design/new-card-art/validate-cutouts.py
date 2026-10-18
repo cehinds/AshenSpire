@@ -7,9 +7,9 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent
 data = json.loads((ROOT / 'cutout-manifest.json').read_text())
 assets = data['assets']
-assert len(assets) == 170
-assert len(data['categories']) == 8
-assert len(data['compositions']) == 800
+assert len(assets) == (362 if data['revision'] >= 6 else 262 if data['revision'] >= 5 else 230 if data['revision'] >= 4 else 170)
+assert len(data['categories']) == (26 if data['revision'] >= 6 else 16 if data['revision'] >= 5 else 14 if data['revision'] >= 4 else 8)
+assert len(data['compositions']) == (2520 if data['revision'] >= 6 else 1520 if data['revision'] >= 5 else 1400 if data['revision'] >= 4 else 800)
 assert len([a for a in assets.values() if a['kind'] == 'object' and a['category'] in 'ABCDEFG']) == 70
 assert len([a for a in assets.values() if a['kind'] == 'object' and a['category'] == 'H']) == 10
 for asset in assets.values():
@@ -23,18 +23,20 @@ for asset in assets.values():
     if asset['kind'] == 'background':
         assert im.size == (512, 640) and alpha.getextrema() == (255, 255), path
     else:
-        assert im.size == (512, 512) and alpha.getextrema()[0] == 0, path
+        expected = (512,640) if asset['category']=='O' else (256,256) if asset['category']=='P' else (512,512)
+        assert im.size == expected and alpha.getextrema()[0] == 0, path
         assert alpha.getextrema()[1] > 0, path
-        for xy in [(0, 0), (0, 511), (511, 0), (511, 511)]:
+        for xy in [(0, 0), (0, im.height-1), (im.width-1, 0), (im.width-1, im.height-1)]:
             assert alpha.getpixel(xy) == 0, path
     assert asset['references']['sourceSha256']
 for c in data['categories']:
     for kind in ['object', 'effect']:
         ids = c[kind + 'Ids']
-        assert len(ids) == 10
-        assert [assets[id]['digit'] for id in ids] == list(range(10))
-    for i in range(10):
-        for j in range(10):
+        expected_count = 1 if c.get('sharedObjectId') and kind=='object' else 2 if c['letter']=='P' and kind=='object' else 10
+        assert len(ids) == expected_count
+        assert [assets[id]['digit'] for id in ids] == list(range(expected_count))
+    for i in range(len(c['objectIds'])):
+        for j in range(len(c['effectIds'])):
             code = f"{c['letter']}{i}{j}"
             composition = data['compositions'][code]
             layers = {layer['id']: layer for layer in composition['layers']}
@@ -43,7 +45,54 @@ for c in data['categories']:
             assert layers['object']['visible'] and layers['foreground']['visible']
             for layer in layers.values():
                 assert layer['assetId'] in assets
+if data['revision'] >= 4:
+    assert len([a for a in assets.values() if a['kind'] == 'object' and a['category'] in 'IJKLM']) == 50
+    assert 'I' in next(t for t in data['cardTypes'] if t['id'] == 'spell')['objectFamilies']
+    for i in range(10):
+        for j in range(10):
+            comp = data['compositions'][f'N{i}{j}']
+            layers = {l['id']: l for l in comp['layers']}
+            assert layers['object']['assetId'] == f'M.object.{i}'
+            assert layers['secondaryObject']['assetId'] == f'J.object.{i}'
+            assert layers['secondaryObject']['visible']
+            assert layers['secondaryObject']['zIndex'] < layers['object']['zIndex']
 assert len(data['cardTypes']) == 10
 assert data['tagComposition']['maxTags'] == 4
 assert data['runtimeEnabled'] is False
-print('Validated 70 core objects + 10 cleansing fires + 80 effect exports + 10 backgrounds; 800 combinations, real option 0, alpha, hashes and references.')
+print(f"Validated revision {data['revision']}: {len(assets)} PNGs, {len(data['compositions'])} combinations, independent Counter layers, alpha, hashes and references.")
+
+if data['revision'] >= 5:
+    for a in assets.values():
+        if a['category'] not in ['O','P']: continue
+        r=a['references']; source=ROOT/r['sourceReference']
+        assert hashlib.sha256(source.read_bytes()).hexdigest()==r['sourceSha256']
+        if a['category']=='P':
+            original=Image.open(source).convert('RGBA'); png=Image.open(ROOT/a['src']).convert('RGBA')
+            assert original.size==png.size and original.tobytes()==png.tobytes()
+        if a['category']=='O' and a['kind']=='object':
+            x,y,right,bottom=a['alphaBounds']
+            assert x>=14 and y>=14 and right<=498 and bottom<=626
+    for digit,sword in [(4,0),(9,5)]:
+        layers={l['id']:l for l in data['compositions'][f'O{digit}{digit}']['layers']}
+        assert layers['secondaryObject']['assetId']==f'O.object.{sword}'
+        assert layers['secondaryObject']['visible']
+        assert layers['secondaryObject']['zIndex']<layers['object']['zIndex']
+    print('Verified all reused source hashes, exact native decoded pixels, safe object margins and separate Counter swords.')
+
+if data['revision'] >= 6:
+    assert len([a for a in assets.values() if (a['category'] or '') in list('QRSTUVWX')])==80
+    assert len([a for a in assets.values() if (a['category'] or '') in list('YZ')])==20
+    for a in assets.values():
+        if a.get('intactAssetId'):
+            assert assets[a['intactAssetId']]['sha256']==a['references']['baseAssetSha256']
+        if (a['category'] or '') in list('QRSTUVWXYZ'):
+            assert hashlib.sha256((ROOT/a['references']['sourceReference']).read_bytes()).hexdigest()==a['references']['referenceSha256']
+    for letter in 'YZ':
+        for i in range(10):
+            for j in range(10):
+                c=data['compositions'][f'{letter}{i}{j}'];layers={l['id']:l for l in c['layers']}
+                assert layers['object']['assetId']==('V.object.0' if letter=='Y' and data['revision']>=13 else f'V.object.{i}')
+                assert layers['foreground']['assetId']==f'{letter}.effect.{j}'
+                assert layers['foreground']['attachment']['enabled']
+                assert not layers['backEffect']['visible']
+    print('Verified 80 new objects, 20 magic overlays, intact references and 200 linked magic compositions.')

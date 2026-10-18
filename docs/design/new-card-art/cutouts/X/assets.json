@@ -1,0 +1,942 @@
+{
+  "X.object.0": {
+    "id": "X.object.0",
+    "kind": "object",
+    "category": "X",
+    "digit": 0,
+    "name": "Broken scimitars 0",
+    "src": "cutouts/X/objects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      44,
+      480,
+      468
+    ],
+    "sha256": "d70dc895a8550a16154127149a45a528ec9bf8fcd01cbbf4438cc1ff38262100",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/X-reference.png",
+      "referenceSha256": "89acc145599146cca1cfcaf0a0673b5d7158195c65a930799ef2ad17ddfb4c18",
+      "sourceFile": "exec-2cf53b81-148c-435d-9e13-1d4fec42ea13.png",
+      "sourceSha256": "17e172a55e8b5036de66d53f90f968e40208f2b9264b42cf7d0d86aadf06f931",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 41,
+        "y": 49,
+        "width": 318,
+        "height": 301
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "B.object.0",
+      "baseAssetSha256": "e758a1690cf44436dfa75f7110a4427ae970c9a5f5e3d492449b3a6a9b246b1f"
+    },
+    "condition": "broken",
+    "intactAssetId": "B.object.0",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ],
+    "displayCode": "X00",
+    "displayLabel": "X00 \u00b7 Broken scimitars 0 \u00b7 object"
+  },
+  "X.object.1": {
+    "id": "X.object.1",
+    "kind": "object",
+    "category": "X",
+    "digit": 1,
+    "name": "Broken scimitars 1",
+    "src": "cutouts/X/objects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      54,
+      480,
+      457
+    ],
+    "sha256": "ec72af0511bae52c791ed8e0e9b9e2de6da3016aae1130658f8c5370ec4490fc",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/X-reference.png",
+      "referenceSha256": "89acc145599146cca1cfcaf0a0673b5d7158195c65a930799ef2ad17ddfb4c18",
+      "sourceFile": "exec-2cf53b81-148c-435d-9e13-1d4fec42ea13.png",
+      "sourceSha256": "17e172a55e8b5036de66d53f90f968e40208f2b9264b42cf7d0d86aadf06f931",
+      "sourceCell": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 450,
+        "y": 56,
+        "width": 321,
+        "height": 289
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "B.object.1",
+      "baseAssetSha256": "da1a8925014789482bc59d82328a97b52fc33291ad761e553ddf3ea3d3441980"
+    },
+    "condition": "broken",
+    "intactAssetId": "B.object.1",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ],
+    "displayCode": "X10",
+    "displayLabel": "X10 \u00b7 Broken scimitars 1 \u00b7 object"
+  },
+  "X.object.2": {
+    "id": "X.object.2",
+    "kind": "object",
+    "category": "X",
+    "digit": 2,
+    "name": "Broken scimitars 2",
+    "src": "cutouts/X/objects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      113,
+      32,
+      399,
+      480
+    ],
+    "sha256": "0164751bcfb5f1d26531c203a574590043e4895d1c38e3255a0fd3b0d65493f2",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/X-reference.png",
+      "referenceSha256": "89acc145599146cca1cfcaf0a0673b5d7158195c65a930799ef2ad17ddfb4c18",
+      "sourceFile": "exec-2cf53b81-148c-435d-9e13-1d4fec42ea13.png",
+      "sourceSha256": "17e172a55e8b5036de66d53f90f968e40208f2b9264b42cf7d0d86aadf06f931",
+      "sourceCell": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 900,
+        "y": 64,
+        "width": 189,
+        "height": 296
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "B.object.2",
+      "baseAssetSha256": "fd945583e750ff93a7bf7d624b7d36d216bd212911c579b82279c47fc77dcdce"
+    },
+    "condition": "broken",
+    "intactAssetId": "B.object.2",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ],
+    "displayCode": "X20",
+    "displayLabel": "X20 \u00b7 Broken scimitars 2 \u00b7 object"
+  },
+  "X.object.3": {
+    "id": "X.object.3",
+    "kind": "object",
+    "category": "X",
+    "digit": 3,
+    "name": "Broken scimitars 3",
+    "src": "cutouts/X/objects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      114,
+      480,
+      398
+    ],
+    "sha256": "c4bda1205616ea1f0f6e483f5aaf1514da210033c61f608cec7b07ae8a8ea28d",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/X-reference.png",
+      "referenceSha256": "89acc145599146cca1cfcaf0a0673b5d7158195c65a930799ef2ad17ddfb4c18",
+      "sourceFile": "exec-2cf53b81-148c-435d-9e13-1d4fec42ea13.png",
+      "sourceSha256": "17e172a55e8b5036de66d53f90f968e40208f2b9264b42cf7d0d86aadf06f931",
+      "sourceCell": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1228,
+        "y": 103,
+        "width": 328,
+        "height": 208
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "B.object.3",
+      "baseAssetSha256": "3f8b1892f5fd249910e33a4cadbe16f5dc76ae91d18fe52089ff86b15b828b81"
+    },
+    "condition": "broken",
+    "intactAssetId": "B.object.3",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ],
+    "displayCode": "X30",
+    "displayLabel": "X30 \u00b7 Broken scimitars 3 \u00b7 object"
+  },
+  "X.object.4": {
+    "id": "X.object.4",
+    "kind": "object",
+    "category": "X",
+    "digit": 4,
+    "name": "Broken scimitars 4",
+    "src": "cutouts/X/objects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      60,
+      480,
+      451
+    ],
+    "sha256": "cbac1bbffc6c75a61d961e060cf61e2d60c04c56367ad93366de125dc97cb6f1",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/X-reference.png",
+      "referenceSha256": "89acc145599146cca1cfcaf0a0673b5d7158195c65a930799ef2ad17ddfb4c18",
+      "sourceFile": "exec-2cf53b81-148c-435d-9e13-1d4fec42ea13.png",
+      "sourceSha256": "17e172a55e8b5036de66d53f90f968e40208f2b9264b42cf7d0d86aadf06f931",
+      "sourceCell": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1630,
+        "y": 95,
+        "width": 305,
+        "height": 266
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "B.object.4",
+      "baseAssetSha256": "97a96e13440deffbf15ff7e5b70c4a086e9d160122eaa5236eb83e09d6f95c26"
+    },
+    "condition": "broken",
+    "intactAssetId": "B.object.4",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ],
+    "displayCode": "X40",
+    "displayLabel": "X40 \u00b7 Broken scimitars 4 \u00b7 object"
+  },
+  "X.object.5": {
+    "id": "X.object.5",
+    "kind": "object",
+    "category": "X",
+    "digit": 5,
+    "name": "Broken scimitars 5",
+    "src": "cutouts/X/objects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      35,
+      480,
+      476
+    ],
+    "sha256": "f271dc4ce677114a32c3076faa819255aca17c03a6cc913f855e656cb481cdad",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/X-reference.png",
+      "referenceSha256": "89acc145599146cca1cfcaf0a0673b5d7158195c65a930799ef2ad17ddfb4c18",
+      "sourceFile": "exec-2cf53b81-148c-435d-9e13-1d4fec42ea13.png",
+      "sourceSha256": "17e172a55e8b5036de66d53f90f968e40208f2b9264b42cf7d0d86aadf06f931",
+      "sourceCell": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 49,
+        "y": 439,
+        "width": 312,
+        "height": 307
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "B.object.5",
+      "baseAssetSha256": "95d5bb6e6a1d709558bd204ec274a269331acc6eaeea19aa2b77053bb80dbd50"
+    },
+    "condition": "broken",
+    "intactAssetId": "B.object.5",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ],
+    "displayCode": "X50",
+    "displayLabel": "X50 \u00b7 Broken scimitars 5 \u00b7 object"
+  },
+  "X.object.6": {
+    "id": "X.object.6",
+    "kind": "object",
+    "category": "X",
+    "digit": 6,
+    "name": "Broken scimitars 6",
+    "src": "cutouts/X/objects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      71,
+      32,
+      441,
+      480
+    ],
+    "sha256": "b542675175e8eac1cf0edf504c7d468f279bef10260640a76d7304c0e4f63423",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/X-reference.png",
+      "referenceSha256": "89acc145599146cca1cfcaf0a0673b5d7158195c65a930799ef2ad17ddfb4c18",
+      "sourceFile": "exec-2cf53b81-148c-435d-9e13-1d4fec42ea13.png",
+      "sourceSha256": "17e172a55e8b5036de66d53f90f968e40208f2b9264b42cf7d0d86aadf06f931",
+      "sourceCell": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 477,
+        "y": 438,
+        "width": 258,
+        "height": 312
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "B.object.6",
+      "baseAssetSha256": "83c6e0a1f357c452113f26449948399ddbf8c152995ec874e4ddc7cc0079d335"
+    },
+    "condition": "broken",
+    "intactAssetId": "B.object.6",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ],
+    "displayCode": "X60",
+    "displayLabel": "X60 \u00b7 Broken scimitars 6 \u00b7 object"
+  },
+  "X.object.7": {
+    "id": "X.object.7",
+    "kind": "object",
+    "category": "X",
+    "digit": 7,
+    "name": "Broken scimitars 7",
+    "src": "cutouts/X/objects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      50,
+      32,
+      461,
+      480
+    ],
+    "sha256": "531acdcf9e266fc008f6ff4f5c3a3ee330c5a49c87a5ad7af5de2772993f7843",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/X-reference.png",
+      "referenceSha256": "89acc145599146cca1cfcaf0a0673b5d7158195c65a930799ef2ad17ddfb4c18",
+      "sourceFile": "exec-2cf53b81-148c-435d-9e13-1d4fec42ea13.png",
+      "sourceSha256": "17e172a55e8b5036de66d53f90f968e40208f2b9264b42cf7d0d86aadf06f931",
+      "sourceCell": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 859,
+        "y": 436,
+        "width": 288,
+        "height": 314
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "B.object.7",
+      "baseAssetSha256": "a3f12ac647d02c2be098308592a5b729c361162d686c0cf4776c1ad1bd4c21ef"
+    },
+    "condition": "broken",
+    "intactAssetId": "B.object.7",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ],
+    "displayCode": "X70",
+    "displayLabel": "X70 \u00b7 Broken scimitars 7 \u00b7 object"
+  },
+  "X.object.8": {
+    "id": "X.object.8",
+    "kind": "object",
+    "category": "X",
+    "digit": 8,
+    "name": "Broken scimitars 8",
+    "src": "cutouts/X/objects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      42,
+      32,
+      469,
+      480
+    ],
+    "sha256": "c4974b09621ed5f69cd176e8594c93ea661d0e56951c85224b9ce406938bda9c",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/X-reference.png",
+      "referenceSha256": "89acc145599146cca1cfcaf0a0673b5d7158195c65a930799ef2ad17ddfb4c18",
+      "sourceFile": "exec-2cf53b81-148c-435d-9e13-1d4fec42ea13.png",
+      "sourceSha256": "17e172a55e8b5036de66d53f90f968e40208f2b9264b42cf7d0d86aadf06f931",
+      "sourceCell": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1243,
+        "y": 452,
+        "width": 287,
+        "height": 301
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "B.object.8",
+      "baseAssetSha256": "f71bcb94e2e65e37364f5fc780e51b01b0a42a79e1bb48740cbe8ad5df0c101c"
+    },
+    "condition": "broken",
+    "intactAssetId": "B.object.8",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ],
+    "displayCode": "X80",
+    "displayLabel": "X80 \u00b7 Broken scimitars 8 \u00b7 object"
+  },
+  "X.object.9": {
+    "id": "X.object.9",
+    "kind": "object",
+    "category": "X",
+    "digit": 9,
+    "name": "Broken scimitars 9",
+    "src": "cutouts/X/objects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      37,
+      32,
+      475,
+      480
+    ],
+    "sha256": "741d8f698c67182fd29a6cc7ab793fee0a1ce6a7c083d43503913fdb78c48fa1",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:sweep",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/X-reference.png",
+      "referenceSha256": "89acc145599146cca1cfcaf0a0673b5d7158195c65a930799ef2ad17ddfb4c18",
+      "sourceFile": "exec-2cf53b81-148c-435d-9e13-1d4fec42ea13.png",
+      "sourceSha256": "17e172a55e8b5036de66d53f90f968e40208f2b9264b42cf7d0d86aadf06f931",
+      "sourceCell": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1664,
+        "y": 476,
+        "width": 269,
+        "height": 275
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "B.object.9",
+      "baseAssetSha256": "d7757063b087d26927c6292be1b51befd3ede9b0dd27f8f2159e10def0af1dec"
+    },
+    "condition": "broken",
+    "intactAssetId": "B.object.9",
+    "tagReferences": [
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ],
+    "displayCode": "X90",
+    "displayLabel": "X90 \u00b7 Broken scimitars 9 \u00b7 object"
+  }
+}
