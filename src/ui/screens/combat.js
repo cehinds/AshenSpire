@@ -1,3 +1,4 @@
+import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { chooseAutoCombatAction, resolveCombatAutomation, AUTOMATION_DEFAULTS } from '../../model/autoCombatPolicy.js';
@@ -1130,6 +1131,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const eventIndex = combat.eventLog.indexOf(e);
       if (eventIndex >= 0) disp.logLength = Math.max(disp.logLength, eventIndex + 1);
       const t = e.targetId && disp.ents[e.targetId];
+      if (applyCombatDisplayReceipt(disp.ents, e)) continue;
       switch (e.type) {
         case 'combatCounterTriggered': {
           const actor = disp.ents[e.sourceId];
@@ -1273,16 +1275,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'stanceEntered':
           if (disp.ents.player) disp.ents.player.stanceId = e.stance;
           break;
-        // Expanded combat posture advances with its beat, not at playback end.
-        case 'combatStanceChanged': {
-          const actor = disp.ents[e.sourceId];
-          if (actor) {
-            const { maneuver, camp, reach, school, expiresOnOwnerCycle } = e;
-            actor.combatStance = { maneuver, camp, reach, ...(school ? { school } : {}),
-              ...(expiresOnOwnerCycle != null ? { expiresOnOwnerCycle } : {}) };
-          }
-          break;
-        }
         case 'evadeGained': {
           // Only the expansion's prepared Evade; the foundation Evade has its own row.
           if (!e.combatEvade) break;
