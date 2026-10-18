@@ -61,6 +61,9 @@ for (const mode of ['core', 'current']) test(`${mode} actual grouped damage matc
   const enemy = combat.enemies[0];
   enemy.intent = { kind: 'attack', moveId: 'slash', damage: 8, hits: 3, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
   enemy.proposalIntentRevealedUntil = 99;
+  // Isolate the mitigation stage from Core2's now-active equipped enemy AR.
+  enemy.ratings = {...enemy.ratings, ar:0};
+  delete enemy.combatStance;
   combat.player.block = 4; combat.player.gameProfilePoise = 0; combat.player.poise = 0; combat.player.ratings = { ar: 0, dr: 0, poise: 0 };
   delete combat.player.persistentPoise; delete combat.player.persistentWard;
   combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };

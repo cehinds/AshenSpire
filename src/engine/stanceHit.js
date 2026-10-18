@@ -77,7 +77,7 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   }
   const hitChance = 100 * hits / outcomes;
   const evadeActive = evadeAttempted;
-  return { range, requiredRange, inRange, accuracy, evasion, need, stanceFactor, bypass, mode, advantage: mode === 'advantage', disadvantage: mode === 'disadvantage', evadeStacks, evadeActive, evadeAttempted, hitChance, chance: hitChance,
+  return { range, requiredRange, inRange, accuracy, evasion, need, ...(fixCoreEnabled(ctx) ? {stanceFactor} : {}), bypass, mode, advantage: mode === 'advantage', disadvantage: mode === 'disadvantage', evadeStacks, evadeActive, evadeAttempted, hitChance, chance: hitChance,
     ...(!inRange ? { missReason: 'range' } : {}) };
 }
 

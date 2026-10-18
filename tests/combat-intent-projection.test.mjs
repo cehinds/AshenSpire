@@ -11,8 +11,10 @@ import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
 import { executeAction } from '../src/engine/actions.js';
 import { enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 
+// These Core assertions preserve the archived flat-Poise and failed-Evade rules.
+// Modern typed protection is covered by fixcore-live-combat/protection.
 function fixture(core = false) {
-  const profile = core ? resolveGameProfile('core') : null;
+  const profile = core ? resolveGameProfile('ashen.core@1.0.0') : null;
   const registries = profile ? bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile) : createRegistries(contentBundle);
   const combat = createCombat({ registries, rng: createRng(71), gameProfile: profile, combatExpansionVersion: 2,
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', hp: 100, maxHp: 100, maxMana: 5, mana: 5, maxStamina: 5, stamina: 5, energyMax: 5, drawPerTurn: 1, deck: [] } });
