@@ -437,7 +437,11 @@ async function main() {
         return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: c.dataset.cardId };
       })()`);
       if (!pt) return { armed: false, card: null };
-      await clickAt(pt.x, pt.y);
+      // A completed card hold selects without playing, including singleton
+      // targets under the shipped oneTapPlay default (SPEC §7.3).
+      const beforeHold = await gameplayReceipt();
+      await holdAt(pt.x, pt.y);
+      ok(await gameplayReceipt() === beforeHold, 'attack selection hold leaves gameplay unchanged');
       const state = await evalIn(`({
         armed: !!document.querySelector('.hand .card.selected') && !!document.querySelector('.enemy-row .enemy.targetable'),
         card: (document.querySelector('.hand .card.selected') || {}).dataset?.cardId || null,
@@ -467,7 +471,11 @@ async function main() {
         return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
       })()`);
       if (!pt) return { armed: false, card: null };
-      await clickAt(pt.x, pt.y);
+      // A completed card hold selects without playing, including singleton
+      // targets under the shipped oneTapPlay default (SPEC §7.3).
+      const beforeHold = await gameplayReceipt();
+      await holdAt(pt.x, pt.y);
+      ok(await gameplayReceipt() === beforeHold, 'self-Counter selection hold leaves gameplay unchanged');
       const state = await evalIn(`({
         armed: !!document.querySelector('.hand .card.selected') && !!document.querySelector('.combatant.player.armed'),
         enemyTarget: !!document.querySelector('.enemy-row .enemy.targetable'),
