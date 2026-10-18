@@ -197,10 +197,15 @@ function gearWeights(item, settings, pool) {
   if (Object.keys(summed).length) return summed;
   return { ...(settings.weights.kinds[item.kind]?.[pool] || settings.weights.slots[item.slot]?.[pool] || settings.weights.global[pool] || {}) };
 }
+// Armor budget: baseline + optional per-rank growth (absent in Core) + rarity bonus (missing rarity = 0).
+export function armorBudgetFor(item, settings, rank = item.rank ?? 1) {
+  const b = settings.armorBudget;
+  return b.baseline + (rank - 1) * (b.perRank ?? 0) + (b.rarityBonus?.[item.rarity] ?? 0);
+}
 export function resolveGearItem(item, settings, { rank = item.rank ?? 1 } = {}) {
   if (!Number.isSafeInteger(rank) || rank < 1) throw new Error('Gear rank must be a positive integer');
   const armorBudget = item.kind === 'armor' && settings.armorBudget
-    ? settings.armorBudget.baseline + (rank - 1) * settings.armorBudget.perRank : null;
+    ? armorBudgetFor(item, settings, rank) : null;
   const size = pool => settings.poolSizes[pool][item.rarity] || { min: 0, max: 0 };
   const target = pool => settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? size(pool).min : size(pool).max;
   const explicit = Object.fromEntries(GEAR_KEYS.map(k => [k, item.points?.[k] || 0]));
@@ -254,7 +259,7 @@ function verifyGearContent(content, settings) {
     const r = settings.poolSizes.ratings[item.rarity], b = settings.poolSizes.bonus[item.rarity];
     const setR = GEAR_RATINGS.reduce((s, k) => s + (item.points?.[k] || 0), 0), setB = attrs.reduce((s, k) => s + item.points[k], 0);
     const cost = (item.tags || []).reduce((s, t) => s + (settings.tags[t]?.cost || 0), 0);
-    const armorBudget = item.kind === 'armor' && settings.armorBudget ? settings.armorBudget.baseline + ((item.rank ?? 1) - 1) * settings.armorBudget.perRank : null;
+    const armorBudget = item.kind === 'armor' && settings.armorBudget ? armorBudgetFor(item, settings) : null;
     if (item.rank !== undefined && (!Number.isSafeInteger(item.rank) || item.rank < 1)) fail(`${at}/rank`, 'expected positive integer rank');
     const whole = armorBudget ?? settings.poolSizes.merged?.[item.rarity]?.max ?? r.max + b.max;
     if (settings.pools === 'merged' || armorBudget !== null ? setR + setB + cost > whole : setR > r.max || setB + cost > b.max) fail(`${at}/points`, 'set points and tag costs exceed the pool');
