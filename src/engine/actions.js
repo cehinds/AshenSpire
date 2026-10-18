@@ -684,7 +684,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     wardSpent = spend.spent;
     if (spend.breakEvent) breaks.push(['wardBroken', spend.breakEvent]);
   }
-  const plannedReduction = tactical.wardReducedAmounts?.[contactIndex] ?? plannedWard;
+  const plannedReduction = fixCoreEnabled(ctx) ? tactical.wardReducedAmounts?.[contactIndex] ?? plannedWard : plannedWard;
   // Revalidate the current active pool: status riders between contacts can change it.
   const liveWardReduction = fixCoreEnabled(ctx) ? (plannedWard > 0 && wardSpent > 0 ? plannedReduction : 0) : wardSpent;
   amount += (plannedBarrier - barrierSpent) + (plannedReduction - liveWardReduction);
