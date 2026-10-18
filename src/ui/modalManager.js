@@ -141,16 +141,25 @@ function syncPage() {
   // removes its veil, then releases — so the waiters run last).
   const live = stack.filter((entry) => !entry.closing);
   if (root?.dataset) root.dataset.modalDepth = String(live.length);
-  const top = live.length ? live[live.length - 1] : null;
+  // The lock is held by the highest live entry that asked for it. A bespoke
+  // surface opened above it (a confirmation over Settings) keeps that lock in
+  // place — the page beneath must not wake while the lower dialog still stands —
+  // and is itself left live along with everything that holds it. An entry above
+  // the lock with no element cannot be exempted, so the lock lifts, as before.
+  let lockAt = -1;
+  for (let i = live.length - 1; i >= 0; i--) if (live[i].inert === true && live[i].element) { lockAt = i; break; }
+  const above = lockAt >= 0 ? live.slice(lockAt + 1) : [];
   const want = new Set();
-  if (top && top.inert === true && top.element) {
+  if (lockAt >= 0 && above.every((entry) => entry.element)) {
+    const kept = [live[lockAt].element, ...above.map((entry) => entry.element)];
+    const holdsKept = (el) => kept.some((keep) => holds(el, keep));
     const app = typeof document.getElementById === 'function' ? document.getElementById('app') : null;
     for (const child of app?.children ? Array.from(app.children) : []) {
-      if (!holds(child, top.element)) want.add(child);
+      if (!holdsKept(child)) want.add(child);
     }
-    for (let i = 0; i < live.length - 1; i++) {
+    for (let i = 0; i < lockAt; i++) {
       const lower = live[i];
-      if (lower.element && lower.inert === true && !holds(lower.element, top.element)) want.add(lower.element);
+      if (lower.element && lower.inert === true && !holdsKept(lower.element)) want.add(lower.element);
     }
   }
   for (const el of [...inertByUs]) {

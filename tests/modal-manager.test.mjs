@@ -123,6 +123,25 @@ test('inert: false leaves the page behind interactive; depth still counts', () =
   });
 });
 
+test('a bespoke surface above a locking modal keeps the page locked and stays live itself', () => {
+  withPage(({ document, screen, hud }) => {
+    const settings = modalIn(document);
+    const releaseSettings = registerModal('settings', settings, { dismiss() {} });
+    assert.equal(screen.hasAttribute('inert'), true);
+    const confirm = modalIn(document);
+    const releaseConfirm = registerModal('confirmation', confirm); // no dismiss, no inert: a bespoke dialog
+    assert.equal(screen.hasAttribute('inert'), true, 'the page under Settings stays locked');
+    assert.equal(hud.hasAttribute('inert'), true);
+    assert.equal(confirm.hasAttribute('inert'), false, 'the confirmation is live');
+    assert.equal(settings.hasAttribute('inert'), false, 'the confirmation does not hold the lock; Settings is not inert under it');
+    releaseConfirm();
+    assert.equal(screen.hasAttribute('inert'), true);
+    releaseSettings();
+    assert.equal(screen.hasAttribute('inert'), false);
+    assert.equal(hud.hasAttribute('inert'), false);
+  });
+});
+
 test('a pruned (disconnected) entry clears its inert and depth', () => {
   withPage(({ document, screen }) => {
     const panel = modalIn(document);
