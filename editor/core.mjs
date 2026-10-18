@@ -7,7 +7,7 @@ import { createHash, randomUUID } from 'node:crypto';
 
 export const hash = value => createHash('sha256').update(value).digest('hex');
 export const slash = value => value.replaceAll('\\', '/');
-export const editable = name => /^(content\/(source|framework)\/[^/]+\.(csv|json)|src\/(content|engine|model|ui)\/(?!.*\/generated\/)(?!generated\/)[\w./-]+\.js|styles\/[\w./-]+\.css|editor\/workspace\/[\w./-]+\.(json|js|html|css))$/.test(name);
+export const editable = name => /^(content\/(source|framework)\/[^/]+\.(csv|json)|content\/source\/cards\/[^/]+\.json|src\/(content|engine|model|ui)\/(?!.*\/generated\/)(?!generated\/)[\w./-]+\.js|styles\/[\w./-]+\.css|editor\/workspace\/[\w./-]+\.(json|js|html|css))$/.test(name);
 export async function safePath(root, name, create = false) {
   if (typeof name !== 'string' || !name || name.includes('\\') || name.split('/').some(p => !p || p === '.' || p === '..' || p.startsWith('.')) || /[:\x00-\x1f]/.test(name)) throw Error('Invalid workspace path');
   const absolute = path.resolve(root, name);

@@ -1022,21 +1022,33 @@ drift. Before that nothing ran it, and from 2026-09-17 to 2026-10-02 about 230
 sentences landed in code across 24 files without anyone seeing the red. Never
 regenerate the baseline to cover a file that GREW: move the sentence to a row.
 
-## Add a card (one file: `src/content/cards/<class>.js`)
+## Add a card (one file: `content/source/cards/<class>Cards.json`)
 
-```js
+The Herald, Reaver and Starseer pools, the armament cards, the colorless cards and the
+corrupted cards are plain JSON (an array of rows, two-space indent), named for the export
+they compile to: `heraldCards.json`, `reaverCards.json`, `starseerCards.json`,
+`armamentCards.json`, `colorlessCards.json`, `corruptedCards.json`.
+`src/content/cards/<class>.js` is only a shim over the compiled
+`src/content/generated/cards/<name>.js`; do not author there. Add the row, then compile
+(`node tools/launch.mjs` does it for you; by hand: `node tools/content-build.mjs`) and commit
+the regenerated file. Design notes that used to be comments in the JS live in
+`content/source/CONTENT-NOTES.md` under "Cards", keyed by card id. JSON has no comments, no
+shared constants and no functions, so write a repeated value out in full. The two builder
+pools, `rogue.js` and `coop.js`, hold functions and stay JS: author those in the JS file.
+
+```json
 {
-  id: 'moonSlash', name: 'Moon Slash', class: 'reaver', rarity: 'common',
-  cost: 1, type: 'attack', keywords: [], icon: '🌙',
-  effects: [
-    { op: 'damage', target: 'enemy', amount: 6 },
-    { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
+  "id": "moonSlash", "name": "Moon Slash", "class": "reaver", "rarity": "common",
+  "cost": 1, "type": "attack", "keywords": [], "icon": "🌙",
+  "effects": [
+    { "op": "damage", "target": "enemy", "amount": 6 },
+    { "op": "applyStatus", "target": "enemy", "status": "weak", "stacks": 1 }
   ],
-  textTemplate: 'Deal {damage} damage. Apply {weak} Weak.',
-  upgrade: { effects: [
-    { op: 'damage', target: 'enemy', amount: 9 },
-    { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 },
-  ] },
+  "textTemplate": "Deal {damage} damage. Apply {weak} Weak.",
+  "upgrade": { "effects": [
+    { "op": "damage", "target": "enemy", "amount": 9 },
+    { "op": "applyStatus", "target": "enemy", "status": "weak", "stacks": 2 }
+  ] }
 }
 ```
 
@@ -1048,7 +1060,7 @@ should appear in rewards. Notes:
   player-visible op without a token is a validation error.
 - Powers whose stack count is invisible ("gain the power", not "gain N")
   use formula-valued stacks to opt out of the token rule:
-  `stacks: { f: 'add', args: [1] }` — see Rallying Standard.
+  `"stacks": { "f": "add", "args": [1] }` — see Rallying Standard.
 - `upgrade` is a partial override: present fields replace base ones;
   `keywords` replaces the whole list (that's how Kick Off+ drops Exhaust).
 - `onTurnEndInHand` (optional effect list) fires at the player's turn end for
