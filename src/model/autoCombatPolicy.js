@@ -79,23 +79,3 @@ export function recordManualReaction(run, seat, kind) {
 export function manualReactionPicks(run, seat) {
   return { ...(tallies.get(run)?.[seat || 'player'] || {}) };
 }
-
-// Removed in the next commit (D12): whole-turn automation.
-const score = value => Number.isFinite(value) ? Math.max(0, value) : 0;
-export function chooseAutoCombatAction({ settings = {}, phase, result, busy = false, pendingReaction = false,
-  modalOpen = false, targetUnresolved = false, deckEditing = false, queued = false,
-  candidates = [], canEndTurn = true } = {}) {
-  const policy = resolveCombatAutomation(settings);
-  if (!policy.enabled || phase !== 'player' || result || busy || pendingReaction || modalOpen || targetUnresolved || deckEditing || queued) return null;
-  const primary = policy.preference === 'defense' ? 'defense' : 'offense';
-  const secondary = primary === 'defense' ? 'offense' : 'defense';
-  // Stable source order is the tie-break; selecting a card cannot consume RNG.
-  const legal = candidates.filter(candidate => candidate.legal === true && candidate.affordable === true && candidate.cardInstanceId);
-  const ranked = legal.map((candidate, index) => ({ candidate, index,
-    score: score(candidate[primary]) * 4 + score(candidate[secondary]) + score(candidate.stanceAdvantage)
-      + (Number.isFinite(candidate.knownHitChance) ? Math.max(0, Math.min(1, candidate.knownHitChance)) : 0),
-  })).sort((a, b) => b.score - a.score || a.index - b.index);
-  if (!ranked.length) return canEndTurn ? { type: 'endTurn' } : null;
-  const { cardInstanceId, targetId } = ranked[0].candidate;
-  return { type: 'playCard', cardInstanceId, targetId: targetId ?? null };
-}

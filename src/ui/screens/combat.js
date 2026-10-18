@@ -2,7 +2,7 @@ import { fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
-import { chooseAutoCombatAction, resolveCombatAutomation, AUTOMATION_DEFAULTS } from '../../model/autoCombatPolicy.js';
+import { chooseReaction, resolveCombatAutomation, recordManualReaction, manualReactionPicks } from '../../model/autoCombatPolicy.js';
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
 import { projectCombatIntent } from '../models/CombatIntentProjectionModel.js';
@@ -204,8 +204,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let timelinePlayback = null;
   let autoCombatTimer = null;
   let autoCombatPausedUntil = 0;
-  let autoCombatTurn = combat.turn;
-  let autoCombatActions = 0;
   let formationMovement = null;
   const previewParams = new URLSearchParams(window.location.search);
   const previewSceneId = previewParams.get('shot') === 'combat' ? previewParams.get('shotScene') : null;
@@ -1335,42 +1333,27 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     targetHud.update({ combatants, eligibleIds: eligibleIds || (selected || selfArm || selectedFlask != null ? pendingTargetPlan().legalIds : []), focusedId: selectedCombatantId });
   }
 
-  function autoCombatChoice() {
-    const candidates = [];
-    if (autoCombatTurn !== combat.turn) { autoCombatTurn = combat.turn; autoCombatActions = 0; }
-    const capped = autoCombatActions >= (AUTOMATION_DEFAULTS.maxActionsPerTurn ?? 64);
-    const blocked = busy || enemyPlayback || document.hidden || document.visibilityState === 'hidden'
-      || !!hasCardChoice(combat) || performance.now() < autoCombatPausedUntil;
-    if (!blocked && !capped && combat.phase === 'player' && !combat.result && !veilIsOpen() && !selected && !selfArm && selectedFlask == null) {
-      for (const inst of combat.piles.hand) {
-        if (isRoundQueued(inst.instanceId) || unplayableReason(inst)) continue;
-        try {
-          const pv = previewCard(combat, inst.instanceId);
-          const def = pv.resolvedDefinition || resolveCombatCard(combat, inst);
-          // Card-choice and payment prompts remain deliberate user decisions.
-          if (cardChoicePlan(combat, inst.instanceId) || upcastOptions(def).length && readSettings().askToUpcastAfterTarget) continue;
-          const plan = cardTargets(inst.instanceId);
-          const targets = pv.needsTarget ? plan.legalIds : [null];
-          const offense = (def.effects || []).filter(effect => effect.op === 'damage').length + (def.counterPayload?.hp ? 1 : 0);
-          const defense = (def.effects || []).filter(effect => ['block', 'gainPoise', 'gainWard', 'gainBarrier', 'heal', 'dodgeRoll'].includes(effect.op)).length;
-          for (const targetId of targets) {
-            const enemy = combat.enemies.find(row => row.id === targetId);
-            const known = enemy && hitChanceKnown(enemy);
-            const profile = combatProfileFor(def);
-            const matchup = known ? targetHudMatchup(profile, projectCombatIntent(combat, targetId), gameModule(run, 'stances')) : 'neutral';
-            candidates.push({ cardInstanceId: inst.instanceId, targetId, legal: true,
-              affordable: combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0),
-              offense, defense, stanceAdvantage: matchup === 'advantage' ? 1 : 0,
-              ...(known && offense ? { knownHitChance: previewCardHit(combat, inst.instanceId, targetId)?.hitChance / 100 } : {}) });
-          }
-        } catch { /* A refused preview cannot become an automated play. */ }
-      }
-    }
-    return chooseAutoCombatAction({ settings: readSettings(), phase: combat.phase, result: combat.result, busy: blocked,
-      pendingReaction: !!combat.pendingReaction, modalOpen: veilIsOpen(), targetUnresolved: !!(selected || selfArm || selectedFlask != null),
-      // An idle round queue is a plan: skip its cards above, then finish
-      // planning or End Turn. busy/enemyPlayback guard executing queues.
-      queued: false, candidates, canEndTurn: !hasCardChoice(combat) });
+  // Auto-combat (D12) answers this seat's reaction prompts only. It never plays a card or ends
+  // a turn. Every input is what this seat can see: its own intent read, its last stance, and
+  // its own manual picks; another seat's prompt is never answered here.
+  const ownSeat = () => combat.playerKey || 'player';
+  const reactionKind = option => {
+    const inst = findInst(option.play?.cardInstanceId);
+    try { return inst ? kindForCard(resolveCombatCard(combat, inst))?.maneuver ?? null : null; } catch { return null; }
+  };
+  function autoReactionChoice() {
+    const pending = combat.pendingReaction;
+    const policy = resolveCombatAutomation(readSettings());
+    if (!policy.enabled || !pending || pending.ownerId !== ownSeat() || !reactionShell || busy || combat.result || hasCardChoice(combat)
+      || document.hidden || document.visibilityState === 'hidden' || performance.now() < autoCombatPausedUntil) return null;
+    const enemy = combat.enemies.find(row => row.id === pending.sourceId);
+    let intent = null;
+    try { if (enemy?.alive && (combat.combatExpansionVersion !== 2 || hitChanceKnown(enemy))) intent = projectCombatIntent(combat, enemy.id); } catch { intent = null; }
+    const seat = ownSeat();
+    const options = pending.options.map(option => ({ id: option.id, kind: reactionKind(option) }));
+    const picked = chooseReaction({ matchups: gameModule(run, 'stances')?.matchups,
+      seats: { [seat]: { intent, lastStance: heldKinds.get()?.maneuver ?? null, picks: manualReactionPicks(run, seat) } } }, seat, options);
+    return picked ? pending.options.find(option => option.id === picked.id) : null;
   }
   function scheduleAutoCombat() {
     if (autoCombatTimer !== null || !combatEl.isConnected) return;
@@ -1378,9 +1361,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     autoCombatTimer = setTimeout(() => {
       autoCombatTimer = null;
       if (!combatEl.isConnected || combat.result) return;
-      const action = autoCombatChoice();
-      if (action?.type === 'playCard') { autoCombatActions++; playCard(action.cardInstanceId, action.targetId); }
-      else if (action?.type === 'endTurn') commitEndTurn();
+      const pending = combat.pendingReaction;
+      const option = autoReactionChoice();
+      if (option) { reactionShell.dismiss(); answerReaction({ offerId: pending.id, optionId: option.id }, false); }
       scheduleAutoCombat();
     }, policy.enabled ? Math.max(100, policy.delayMs / policy.speed) : 500);
   }
@@ -2853,16 +2836,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       .map(entry => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
     reactionShell = openReactionChoiceModal({ pending, stack,
       onClosed: () => { reactionShell = null; },
-      onAnswer: intent => {
-        if (!combatEl.isConnected || combat.pendingReaction?.id !== intent.offerId) return;
-        disp = takeSnapshot();
-        try {
-          const out = dispatch(combat, { type: 'chooseReaction', ...intent });
-          enemyPlayback = combat.phase === 'enemy' || !!combat.reactionCursor;
-          busy = true; afterDispatch(out.events);
-        } catch (error) { disp = null; console.warn('[combat] reaction refused:', error.message); render(); showPendingReaction(); }
-      },
+      onAnswer: intent => answerReaction(intent, true),
     });
+  }
+  function answerReaction(intent, manual) {
+    if (!combatEl.isConnected || combat.pendingReaction?.id !== intent.offerId) return;
+    // Only a deliberate pick teaches the auto choice; its own picks never feed it.
+    const chosen = manual && intent.optionId ? combat.pendingReaction.options.find(option => option.id === intent.optionId) : null;
+    const kind = chosen ? reactionKind(chosen) : null;
+    const owner = combat.pendingReaction.ownerId;
+    disp = takeSnapshot();
+    try {
+      const out = dispatch(combat, { type: 'chooseReaction', ...intent });
+      if (kind) recordManualReaction(run, owner || ownSeat(), kind);
+      enemyPlayback = combat.phase === 'enemy' || !!combat.reactionCursor;
+      busy = true; afterDispatch(out.events);
+    } catch (error) { disp = null; console.warn('[combat] reaction refused:', error.message); render(); showPendingReaction(); }
   }
   function showPendingDiscard() {
     if (!hasCardChoice(combat)) { showPendingReaction(); return; }
