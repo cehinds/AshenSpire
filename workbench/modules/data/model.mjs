@@ -1,6 +1,6 @@
 // workbench/modules/data/model.mjs — the Data Studio's DOM-free table model.
 //
-// A table is one repo file: content/source/*.csv, content/source/*.json (arrays
+// A table is one repo file: content/source/*.csv, content/source/*.json, content/source/cards/*.json (arrays
 // of objects) or content/framework/*.json (arrays of objects). parseTable turns
 // the text into { columns, rows } for the grid kit; serializeTable turns the
 // grid's { columns, rows } back into text.
@@ -69,6 +69,9 @@ export function listTables(paths = []) {
     if (pk) { out.push({ path, name: pk[1], group: PACKS_GROUP, format: 'json' }); continue; }
     const hud = /^content\/hud-layout\/([\w.-]+)\.json$/.exec(String(path));
     if (hud) { out.push({ path, name: hud[1], group: HUD_GROUP, format: 'json' }); continue; }
+    // The card pools (content/source/cards/<pool>.json): one subdirectory level, JSON arrays like the flat Source tables.
+    const card = /^content\/source\/cards\/([\w.-]+)\.json$/.exec(String(path));
+    if (card) { out.push({ path, name: `cards/${card[1]}`, group: 'Source', format: 'json' }); continue; }
     const m = /^(content\/(source|framework))\/([^/]+)\.(csv|json)$/.exec(String(path));
     if (!m) continue;
     const group = m[2] === 'source' ? 'Source' : 'Framework';

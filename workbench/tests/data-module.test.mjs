@@ -43,6 +43,16 @@ test('listTables groups Source csv and json, Framework json only, and skips othe
   ]);
 });
 
+test('listTables lists the card pools under content/source/cards as Source json, and nothing deeper or generated', () => {
+  const out = D.listTables([
+    'content/source/cards/heraldCards.json',
+    'content/source/cards/sub/deep.json',
+    'content/source/cards/notes.csv',
+    'src/content/generated/cards/heraldCards.js',
+  ]);
+  assert.deepEqual(out.map((t) => [t.group, t.name, t.format, t.path]), [['Source', 'cards/heraldCards', 'json', 'content/source/cards/heraldCards.json']]);
+});
+
 for (const rel of REAL) {
   test(`unchanged ${rel} is written back byte for byte`, () => {
     const text = read(rel);
