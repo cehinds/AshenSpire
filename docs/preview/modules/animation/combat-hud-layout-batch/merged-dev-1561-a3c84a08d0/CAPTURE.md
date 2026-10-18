@@ -1,3 +1,5 @@
+> Historical Dev1561 capture/proof set. Current combined-source captures: [../merged-dev-1563-660a9a7b03/CAPTURE.md](../merged-dev-1563-660a9a7b03/CAPTURE.md).
+
 # Fresh layered-card combat capture
 
 Captured 2026-10-18 from actual source `a3c84a08d0b5833f3793eff06006862ecfcacc3e`, parent canonical build **0.7.1.1562**, digest `737e86b2b2`. These new local `dist/AshenSpire.html?shot=combat` captures include the incoming layered hand artwork. Root inspected all four images: player/enemies and hand art are painted; fonts loaded and zero failed image elements were recorded. No capture-only CSS was applied.

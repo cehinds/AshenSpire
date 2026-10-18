@@ -86,6 +86,36 @@ test('none and unknown future grammar retain original direct rendering; no surfa
   assert.equal(f.surfaces.length, 0); assert.equal(f.reads.length, 0);
 });
 
+test('immutable repeated frames reuse current pixels without allocating another surface or skipping readback', () => {
+  const f = fixture(), image = {}, filter = 'drop-shadow(0 0 7px #aabbcc) brightness(1.2)';
+  const draw = (source = image, text = filter, x = 128, y = 16, width = 512, height = 512) =>
+    f.renderer.draw(f.target, source, text, x, y, width, height, {immutable:true,materialize:true});
+  draw();
+  const first = f.draws.length;
+  draw();
+  assert.equal(f.draws.length, first + 1, 'only composite the existing aura on an unchanged frame');
+  assert.equal(f.clears.length, 1);
+  assert.equal(f.reads.length, 2, 'both first and reused frames materialize when requested');
+  assert.equal(f.draws.at(-1).filter, 'brightness(1.2)');
+  // A direct draw cannot alter the separate work surface.
+  f.renderer.draw(f.target, {}, 'blur(2px)', 0, 0);
+  draw(); assert.equal(f.clears.length, 1);
+  for (const args of [[{},filter], [image,filter,129], [image,filter,129,17],
+    [image,filter,129,17,511], [image,filter,129,17,511,510], [image,'drop-shadow(0 0 8px #aabbcc)']]) {
+    const before = f.clears.length; draw(...args);
+    assert.equal(f.clears.length, before + 1, 'source, filter and every geometry input invalidate current pixels');
+  }
+  draw();
+  assert.equal(f.surfaces.length, 1, 'the cache owns no additional canvas');
+  // A mutable source must render on every call and replace the old work pixels.
+  const mutable = {};
+  f.renderer.draw(f.target, mutable, filter, 128, 16);
+  const before = f.clears.length;
+  f.renderer.draw(f.target, mutable, filter, 128, 16);
+  assert.equal(f.clears.length, before + 1);
+  draw(); assert.equal(f.clears.length, before + 2);
+});
+
 test('surface reuse and disposal prevent retained pixels or late allocation/painting', () => {
   const f = fixture();
   for (let n = 0; n < 25; n++) f.renderer.draw(f.target, {}, `drop-shadow(0 0 ${n}px #aabbcc)`, 128, 16);
@@ -144,7 +174,7 @@ test('opt-in fixed phase reuse preserves pixels, filter and materialization with
 
 test('last-work memo has baseline miss work and no allocations or copies beyond one surface', () => {
   const f = fixture(), image = {}, other = {}, filter = auraFilter('power2', 'idle', ['stamina'], true);
-  const paint = (source = image, text = filter, x = 128, y = 16, width = 512, height = 512, options = { reuseWork: true }) => {
+  const paint = (source = image, text = filter, x = 128, y = 16, width = 512, height = 512, options = { immutable: true }) => {
     const before = { draws: f.draws.length, clears: f.clears.length, reads: f.reads.length };
     f.renderer.draw(f.target, source, text, x, y, width, height, { ...options, materialize: true });
     return { draws: f.draws.length - before.draws, clears: f.clears.length - before.clears, reads: f.reads.length - before.reads };
@@ -171,6 +201,6 @@ test('last-work memo has baseline miss work and no allocations or copies beyond 
   assert.equal(f.surfaces.length, 1);
   f.renderer.dispose();
   assert.equal(f.surfaces[0].width, 0);
-  assert.equal(f.renderer.draw(f.target, image, filter, 128, 16, 512, 512, { reuseWork: true }), false);
+  assert.equal(f.renderer.draw(f.target, image, filter, 128, 16, 512, 512, { immutable: true }), false);
   assert.equal(f.surfaces.length, 1, 'disposed memo cannot allocate');
 });

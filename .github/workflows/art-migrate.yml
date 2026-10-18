@@ -90,7 +90,9 @@ jobs:
   intake:
     if: github.event_name == 'pull_request_target' && github.event.action != 'closed'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # Source libraries can contain hundreds of PNGs. The checkout and raw-blob
+    # transfer need time to finish before the guarded push and PR creation.
+    timeout-minutes: 15
     permissions:
       contents: read
       pull-requests: write

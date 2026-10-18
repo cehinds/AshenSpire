@@ -1,23 +1,14 @@
 {
   "captureDate": "2026-10-18",
-  "sourceCommit": "a3c84a08d0b5833f3793eff06006862ecfcacc3e",
-  "method": "Fresh parent canonical cache build; actual dist/AshenSpire.html?shot=combat; default solo combat fixture",
+  "sourceCommit": "660a9a7b034fa6437263dd889eeeef4cfa3c5cea",
+  "method": "Fresh root canonical build; actual dist/AshenSpire.html?shot=combat default solo fixture",
   "localBuild": {
-    "version": "0.7.1.1562",
-    "digest": "737e86b2b2"
+    "version": "0.7.1.1564",
+    "digest": "f2ae87772e"
   },
-  "artifactIdentity": {
-    "runtimeSourceCommit": "1a880f97d2abe07029401ddbe07393649c73763e",
-    "workflowRunId": 39093524516,
-    "workflowJobId": 117575076426,
-    "artifactId": 12123792282,
-    "version": "0.7.1.1562",
-    "sourceDigest": "737e86b2b2",
-    "artifactArchiveSha256": "e0369d45522075f30f3a7ddf095832b71106ca95c8e650fe6df78a128d33e22f",
-    "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39093524516/artifacts/12123792282",
-    "status": "artifact verified; dated1a public-route identity verified; new Dev integration pending"
-  },
-  "publicRouteVerification": {
+  "artifactIdentity": "pending current combined-source artifact",
+  "publicRouteVerification": "pending current combined-source public proof",
+  "historicalPublicRouteVerification": {
     "status": "verified read-only historical source identity",
     "runtimeSourceCommit": "1a880f97d2abe07029401ddbe07393649c73763e",
     "checkedAt": "2026-10-18T04:05:17.777Z",
@@ -35,7 +26,6 @@
     "earlierAttempt": "Attempt1 saw stale origin; propagation resolved on attempt2.",
     "scope": "Dated1a publication and payload identity only; does not cover newly advanced Dev4a or demonstrate hosted gameplay."
   },
-  "expectedUrl": "https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/",
   "screenshots": [
     {
       "name": "mobile",
@@ -86,42 +76,6 @@
       }
     }
   ],
-  "inspection": "Root visually inspected all four new captures; layered hand artwork, player and enemies painted. Fonts loaded and zero failed image elements in every viewport.",
-  "canonicalValidation": "4/4 passed; pack15,929,510 JavaScript string units /70,490 headroom; version9 and census438/20/46 passed",
-  "limits": "Local posed rendering only; not CI/public screenshots, latency measurements, hosted execution or live co-op. No capture-only CSS. Prior galleries remain historical.",
-  "aboutChangelogValidation": {
-    "status": "PASS",
-    "checksPassed": 985,
-    "checksTotal": 985,
-    "scope": "Source plus selected standalone Settings routes",
-    "log": "/tmp/combat-final-a3c84-parent-changelog.log"
-  },
-  "currentQuickStart": {
-    "status": "success",
-    "workflowRunId": 39093528388,
-    "workflowJobId": 117575453364,
-    "hashChecksPassed": 536,
-    "loadedBodyImage": "256x256",
-    "contactMs": [
-      296,
-      255,
-      387
-    ],
-    "contactMedianMs": 296,
-    "firstNumberMs": [
-      731,
-      614,
-      746
-    ],
-    "firstNumberMedianMs": 731,
-    "inputChecksPassed": 5,
-    "limitsMs": {
-      "contact": 400,
-      "firstNumber": 750
-    },
-    "scope": "Exact current source CI pass, not universal latency; historical local edb397/779 failed separately.",
-    "diagnostics": "not needed; uninstrumented timing authoritative"
-  },
-  "captureRetentionBasis": "Fresh actual a3 capture source/local1562/737e86b2b2; verified CI artifact source compiled values and build digest match. Images remain local, not CI/public screenshots.",
-  "sourceFastCI": "All exact1a fast checks passed; expected conditional stance skip."
+  "inspection": "Root inspected all four fresh PNGs; fonts loaded and zero failed images at all sizes.",
+  "limits": "Fresh local rendering only, not latency, hosted gameplay or CI/public screenshots. Historical1a proof does not cover this combined source. No capture-only CSS."
 }

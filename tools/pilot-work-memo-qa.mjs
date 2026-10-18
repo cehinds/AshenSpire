@@ -53,7 +53,7 @@ try {
       const before = [plain, cached].map(target => ({ ...target.counts }));
       for (const [target, reuse] of [[plain, false], [cached, true]]) {
         target.context.clearRect(0, 0, width, height);
-        target.renderer.draw(target.context, image, filter, x, y, ...size, { reuseWork: reuse, materialize: true });
+        target.renderer.draw(target.context, image, filter, x, y, ...size, { immutable: reuse, materialize: true });
       }
       const bytes = [plain, cached].map(target => target.context.getImageData(0, 0, width, height).data);
       let different = 0;

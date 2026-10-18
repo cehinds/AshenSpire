@@ -38,7 +38,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
     return parsed.get(filter);
   }
   return Object.freeze({
-    draw(context, image, filter, x, y, width = 512, height = 512, { materialize = false, reuse = false, reuseWork = false } = {}) {
+    draw(context, image, filter, x, y, width = 512, height = 512, { materialize = false, reuse = false, immutable = false } = {}) {
       if (disposed || !image) return false;
       const plan = layers(filter);
       context.save();
@@ -52,7 +52,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
             lastWork = null;
             surface.width = canvasWidth; surface.height = canvasHeight;
           }
-          const sameWork = reuseWork && lastWork && lastWork.image === image && lastWork.filter === filter
+          const sameWork = immutable && lastWork && lastWork.image === image && lastWork.filter === filter
             && lastWork.x === x && lastWork.y === y && lastWork.width === width && lastWork.height === height;
           if (sameWork) {
             context.filter = plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`;
@@ -87,7 +87,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
             work.drawImage(image, x + outside, y, width, height); work.restore();
           }
           work.save(); work.filter = 'none'; work.drawImage(image, x, y, width, height); work.restore();
-          if (reuseWork) lastWork = { image, filter, x, y, width, height };
+          if (immutable) lastWork = { image, filter, x, y, width, height };
           if (reuse) {
             const copy = createCanvas(); copy.width = canvasWidth; copy.height = canvasHeight;
             const copyContext = copy.getContext('2d');

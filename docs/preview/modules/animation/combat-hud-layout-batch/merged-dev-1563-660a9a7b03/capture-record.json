@@ -1,0 +1,81 @@
+{
+  "captureDate": "2026-10-18",
+  "sourceCommit": "660a9a7b034fa6437263dd889eeeef4cfa3c5cea",
+  "method": "Fresh root canonical build; actual dist/AshenSpire.html?shot=combat default solo fixture",
+  "localBuild": {
+    "version": "0.7.1.1564",
+    "digest": "f2ae87772e"
+  },
+  "artifactIdentity": "pending current combined-source artifact",
+  "publicRouteVerification": "pending current combined-source public proof",
+  "historicalPublicRouteVerification": {
+    "status": "verified read-only historical source identity",
+    "runtimeSourceCommit": "1a880f97d2abe07029401ddbe07393649c73763e",
+    "checkedAt": "2026-10-18T04:05:17.777Z",
+    "workflowRunId": 39095693860,
+    "attempt": 2,
+    "workflowJobId": 117582049312,
+    "normalAndNonceIndexStatus": 200,
+    "normalAndNonceBuildStatus": 200,
+    "buildContentType": "text/plain",
+    "sourceDigest": "737e86b2b2",
+    "ordinal": 1562,
+    "release": "0.7.1",
+    "payloadCharacters": 93084747,
+    "trustedPin": "passed",
+    "earlierAttempt": "Attempt1 saw stale origin; propagation resolved on attempt2.",
+    "scope": "Dated1a publication and payload identity only; does not cover newly advanced Dev4a or demonstrate hosted gameplay."
+  },
+  "screenshots": [
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      }
+    },
+    {
+      "name": "wide",
+      "width": 1280,
+      "height": 720,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "name": "tablet",
+      "width": 768,
+      "height": 1024,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      }
+    }
+  ],
+  "inspection": "Root inspected all four fresh PNGs; fonts loaded and zero failed images at all sizes.",
+  "limits": "Fresh local rendering only, not latency, hosted gameplay or CI/public screenshots. Historical1a proof does not cover this combined source. No capture-only CSS."
+}
