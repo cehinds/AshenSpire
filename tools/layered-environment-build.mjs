@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
-const artRepo=path.resolve(process.env.ASHENSPIRE_ART_DIR||path.join(root,'../AshenSpire-art'));
+const artRepo=path.resolve(process.env.ASHENSPIRE_ART_DIR||process.env.ASHEN_ART_REPO_DIR||path.join(root,'../AshenSpire-art'));
 const drafts=path.join(artRepo,'art/map-battlefield-drafts'),base=path.join(drafts,'batch-10-location-streets');
 if(!fs.existsSync(path.join(drafts,'catalog.json')))throw Error('Layered source art is missing. Set ASHENSPIRE_ART_DIR to a cehinds/AshenSpire-art checkout (see docs/design/layered-environment-runtime.md).');
 process.env.ASHENSPIRE_DIR=root;

@@ -5,8 +5,9 @@ import path from 'node:path';
 import os from 'node:os';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 
-const exporter=new URL('../tools/layered-environment-build.mjs',import.meta.url);
+const exporter=fileURLToPath(new URL('../tools/layered-environment-build.mjs',import.meta.url));
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 function fixture(t){
  const home=fs.mkdtempSync(path.join(os.tmpdir(),'layered-export-'));

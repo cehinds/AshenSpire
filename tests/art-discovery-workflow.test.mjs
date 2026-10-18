@@ -36,3 +36,12 @@ for (const [workflow, job] of [['tests', 'discovered'], ['ci', 'test-discovered'
     } finally { rmSync(root, {recursive: true, force: true}); }
   });
 }
+
+// The published source PR owns authoring; the game must retain each shipped export.
+test('the authoring sources are not tracked here; the runtime exports are', () => {
+  assert.equal(existsSync(new URL('../art/map-battlefield-drafts', import.meta.url)), false);
+  const manifest = JSON.parse(readFileSync(new URL('../assets-display/layered/manifest.json', import.meta.url), 'utf8'));
+  const ids = Object.keys(manifest.assets);
+  assert.equal(ids.length, 95);
+  for (const id of ids) assert.equal(existsSync(new URL(`../${id}`, import.meta.url)), true, id);
+});
