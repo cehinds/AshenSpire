@@ -1,0 +1,40 @@
+{
+  "id": "defense.poiseProtection",
+  "tag": "defense:poiseProtection",
+  "version": "1.0.0",
+  "family": "defense",
+  "label": "Poise protection",
+  "description": "Percentage reduction while the owner pool is active.",
+  "attaches": [
+    "character",
+    "entity",
+    "gear",
+    "relic",
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "portability": "portable",
+  "authored": true,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "multiplier": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "default": 0.75
+      }
+    },
+    "required": [
+      "multiplier"
+    ],
+    "additionalProperties": false
+  },
+  "stateScope": "instance"
+}
