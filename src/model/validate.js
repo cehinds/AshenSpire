@@ -1,3 +1,4 @@
+import { fixCoreModuleParameters } from './fixCoreMechanics.js';
 import { compileBindings } from './mechanicsKernel.js';
 import { fixCoreProtection } from '../content/generated/fixCoreProtection.js';
 import { validateZoneEffect } from '../engine/cardZones.js';
@@ -1023,8 +1024,8 @@ function collectContentProblems(bundle, errors = []) {
   for (const [table, rows, kind] of mechanicCarriers) for (const row of Array.isArray(rows) ? rows : []) {
     if (!row?.mechanicTags && !row?.mechanicBindings) continue;
     try {
-      compileBindings({mechanics:behaviorMechanics,attachments:[{
-        ownerId:row.id,sourceInstanceId:row.id,kind,mechanicTags:row.mechanicTags || [],mechanicBindings:row.mechanicBindings || [],
+      compileBindings({mechanics:behaviorMechanics,moduleParameters:fixCoreModuleParameters(),attachments:[{
+        ownerId:row.id,sourceInstanceId:row.id,kind,tags:row.mechanicTags || [],mechanicBindings:row.mechanicBindings || [],
       }]});
     } catch(error) { err(`${table}.${row.id}.mechanicBindings`,error.message); }
   }

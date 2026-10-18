@@ -1,6 +1,7 @@
+import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
 import { snapshotEnemyKnowledgeRules } from '../model/enemyKnowledgeRules.js';
 import { decayAtTurnStart } from './statuses.js';
-import { damageReceipt, fixCoreEnabled } from '../model/fixCoreMechanics.js';
+import { damageReceipt, fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
@@ -325,6 +326,7 @@ export function createCombat({
     _idCounter: 0,
     _emitDepth: 0,
   };
+  if (fixCoreEnabled(combat)) combat.fixCoreRules = snapshotFixCoreRules(combat);
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
   combat._emitEvent = emitEvent;
   // The skill tracks listen to the same bus (plan phase 4a); the receipt they
@@ -405,6 +407,7 @@ export function createCombat({
         enemy.basePrecisionBonus = definition.basePrecisionBonus || definition.precisionBonus || 0;
         enemy.ratings ||= { ar: definition.ar || 0, dr: definition.dr || 0, pr: 0,
           ward: definition.ward || definition.poiseMax || 0, poise: definition.poise || definition.poiseMax || 0 };
+        Object.assign(enemy, gameProfileEnemyRatings(combat,enemy) || {});
       }
     }
   }
@@ -723,6 +726,7 @@ function enemyTurnStart(combat) {
 // recovery. Leaves the enemy dead when a tick killed it.
 function enemyOwnerTurnStart(combat, enemy) {
   decayAtTurnStart(combat, enemy);
+  if (fixCoreEnabled(combat)) enemy.fixCoreStaminaRemaining = enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId));
   beginEnemyBurdens(combat,enemy,Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId)));
   Reactions.revealActor(combat, enemy);
   proposalTurn(combat,enemy,'start');
@@ -883,7 +887,14 @@ function startDelayedMove(combat, enemy, move, moveId) {
 // `roundEntry`: the move resolves a Combat Rounds timeline entry, whose reaction point was the round prompt (SPEC
 // §4.11), so its group is marked roundSettled and the live reaction window does not open for it again.
 function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, roundPoiseMultiplier = combat.roundPoiseMultiplier } = {}) {
-  if (!allowBurdenMove(combat,enemy,Rounds.enemyMoveSp(move,{enemy,moveId,combat}),move)) return;
+  const spCost=Rounds.enemyMoveSp(move,{enemy,moveId,combat});
+  if (fixCoreEnabled(combat)) {
+    const available=enemy.fixCoreStaminaRemaining ?? enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId));
+    if(spCost>available) {combat.emit('enemyMoveUnavailable',{sourceId:enemy.id,moveId,required:spCost,available,resource:'sp'});return;}
+    enemy.fixCoreStaminaRemaining=available-spCost;
+    enemy.stamina=enemy.fixCoreStaminaRemaining;
+  }
+  if (!allowBurdenMove(combat,enemy,spCost,move)) return;
   move = expandedEnemyMove(enemy, move, moveId, combat);
   // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
   // cancels never happens. This is what did — the inspector's history.

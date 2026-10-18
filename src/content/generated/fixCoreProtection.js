@@ -68,6 +68,10 @@ export const fixCoreProtection = [
             "stanceMaximum": {
               "type": "number",
               "minimum": 0
+            },
+            "stanceAdvantageBonus": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [

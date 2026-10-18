@@ -23,7 +23,8 @@
               "sweep": 2
             },
             "stanceMinimum": 1,
-            "stanceMaximum": 1.5
+            "stanceMaximum": 1.5,
+            "stanceAdvantageBonus": 0.25
           }
         },
         "query": "parameters"
@@ -39,7 +40,8 @@
           "sweep": 2
         },
         "stanceMinimum": 1,
-        "stanceMaximum": 1.5
+        "stanceMaximum": 1.5,
+        "stanceAdvantageBonus": 0.25
       }
     }
   },
@@ -73,7 +75,8 @@
               "sweep": 2
             },
             "stanceMinimum": 1,
-            "stanceMaximum": 1.5
+            "stanceMaximum": 1.5,
+            "stanceAdvantageBonus": 0.25
           }
         },
         "query": "parameters"
@@ -115,7 +118,8 @@
               "sweep": 2
             },
             "stanceMinimum": 1,
-            "stanceMaximum": 1.5
+            "stanceMaximum": 1.5,
+            "stanceAdvantageBonus": 0.25
           }
         },
         "query": "parameters"

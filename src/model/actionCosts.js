@@ -318,7 +318,7 @@ export const enemySpOf = enemyPoolOf;
 export function enemyMoveSpOf(move, kind, fallback, { entity = null, enemyId, moveId, ctx = null } = {}) {
   const effects = move?.effects || [];
   if (fixCoreEnabled(ctx) && (move?.heal > 0 || effects.some(effect => effect.op === 'heal'))
-    && (move?.block > 0 || effects.some(effect => effect.op === 'block'))) return fixCoreRules(ctx).enemyHealBlockCost;
+    && (move?.block > 0 || effects.some(effect => effect.op === 'block'))) return fixCoreRules(ctx, entity, move).enemyHealBlockCost;
   const own = Number.isFinite(Number(move?.sp)) && move?.sp !== null && move?.sp !== undefined;
   const base = own ? Math.max(0, Number(move.sp)) : stanceCost(actionStance({ kind, tags: move?.tags })) ?? fallback;
   const carrier = { ...move, enemyId, moveId };
