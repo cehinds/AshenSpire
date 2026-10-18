@@ -21,14 +21,14 @@ function fixture() {
   return { run, visit };
 }
 
-test('configured Rest uses exact non-mutating previews and preserves three service identities', () => {
+test('configured Rest uses exact non-mutating previews and preserves the two service identities (D10: Strategize is gone)', () => {
   const { run, visit } = fixture();
   const before = structuredClone(run);
   const model = gameProfileRestModel(registries, run, visit);
-  assert.deepEqual(model.services.map(row => row.id), ['strategize', 'smith', 'levelUp']);
+  assert.deepEqual(model.services.map(row => row.id), ['smith', 'levelUp']);
   assert.equal(model.services.find(row => row.id === 'levelUp').available, false);
   assert.ok(model.services.find(row => row.id === 'levelUp').reason);
-  const preview = model.services.find(row => row.id === 'strategize').preview;
+  const preview = model.services.find(row => row.id === 'smith').preview;
   assert.equal(preview.hp, preview.maxHp);
   assert.equal(preview.flaskCharges.hpCurrent, preview.flaskCharges.hp);
   assert.deepEqual(run, before, 'opening or cancelling a review has no transaction to undo');
@@ -50,8 +50,10 @@ test('a free Smith quote and shared review agree with the configured commit at z
   commitGameProfileRest(registries, run, 'smith', { itemRef: candidate.itemRef });
   assert.deepEqual(run, expected);
   assert.equal(run.smithingStones, 0);
+  // D10: Smith being used leaves Level Up usable in the same visit (not exclusive).
   const spent = gameProfileRestModel(registries, run, run.gameProfileRestVisits[visit.id]);
-  assert.ok(spent.services.every(row => !row.available && row.reason));
+  assert.equal(spent.services.find(row => row.id === 'smith').available, false);
+  assert.ok(spent.services.find(row => row.id === 'smith').reason);
 });
 
 test('earned Constitution selection previews its new maximum and exactly matches confirmation', () => {
@@ -76,7 +78,7 @@ test('normal Smithing quotes keep their authored cost and affordability', () => 
   assert.ok(free.candidates.every(row => row.cost === 0 && row.affordable));
 });
 
-test('Strategize exposes only authored basics and rejects the legacy attack mint before mutation', async () => {
+test('the deck editor exposes only authored basics and rejects the legacy attack mint before mutation', async () => {
   const { deckEditorModel, openDeckEdit, deckVariantKey } = await import('../src/ui/models/DeckEditorModel.js');
   const { createGameProfileRestDraft } = await import('../src/model/gameProfileRest.js');
   const { run } = fixture();
@@ -97,12 +99,7 @@ test('Strategize exposes only authored basics and rejects the legacy attack mint
   assert.equal(session.add(`card:${deckVariantKey(removed)}`).ok, true);
   assert.equal(draft.deck.at(-1).instanceId, removed.instanceId);
   assert.equal(session.confirm().ok, true);
-  commitGameProfileRest(registries, run, 'strategize', { draft });
-  assert.equal(run.deck.length, before.deck.length);
-  assert.equal(run.deck.at(-1).instanceId, removed.instanceId);
-  assert.equal(run.sideboard.some(card => card.instanceId === removed.instanceId), false);
-  assert.equal(run.hp, run.maxHp);
-  assert.equal(run.gameProfileRestVisits[run.gameProfileRestVisitId].service, 'strategize');
+  assert.throws(() => commitGameProfileRest(registries, run, 'strategize', { draft }), /Unknown rest service/, 'D10: deck editing is not a rest service');
 });
 
 test('the editor follows an explicit nonempty configured basic policy without legacy equipment slots', async () => {

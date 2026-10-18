@@ -173,6 +173,7 @@
         "minimumThreatFloor": "minimumThreatFloor",
         "mapMode": "mapMode",
         "firstFloor": "firstFloor",
+        "shopShare": "shopShare",
         "requirePrebossRest": "requirePrebossRest"
       }
     },
@@ -182,7 +183,6 @@
       "settings": {
         "servicesPerVisit": "servicesPerVisit",
         "services": "services",
-        "allowEmptyStrategize": "allowEmptyStrategize",
         "recovery": "recovery",
         "smith": "smith"
       }

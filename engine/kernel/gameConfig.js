@@ -587,7 +587,8 @@ function verifySettings(modules, instances = {}) {
     if (restFloors.length !== restsPerAct || restFloors.some(n=>n>prebossNodes)) fail('$/modules/routes/restFloors', 'must provide one valid preboss position per rest');
     if (modules.routes.requirePrebossRest && !restFloors.includes(prebossNodes)) fail('$/modules/routes/restFloors', 'requirePrebossRest requires the final preboss depth to be a rest');
   }
-  if (modules.rest?.mode === 'configured' && !modules.rest.services.includes('strategize')) fail('$/modules/rest/services', 'Strategize recovery fallback is required by this adapter');
+  // A one-service visit needs a deck-free fallback so a visit can always be spent; "all" visits heal on arrival, so any list will do.
+  if (modules.rest?.mode === 'configured' && modules.rest.servicesPerVisit === 1 && !modules.rest.services.includes('strategize')) fail('$/modules/rest/services', 'Strategize recovery fallback is required by this adapter');
   if (modules.rewards && modules.rewards.takeCount > modules.rewards.offerCount) fail('$/modules/rewards/takeCount', 'cannot exceed offerCount');
   if (modules.stances && modules.stances.minimumHitChance > modules.stances.maximumHitChance) fail('$/modules/stances/minimumHitChance','must not exceed maximumHitChance');
 }
