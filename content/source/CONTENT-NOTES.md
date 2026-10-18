@@ -1,4 +1,4 @@
-# Content authoring notes (relics, stances, flasks, statuses, events, cards)
+# Content authoring notes (relics, stances, flasks, statuses, events, cards, enemies, classes)
 
 The relics are `content/source/relics.json`, compiled to `src/content/generated/relics.js` by
 `tools/content-build.mjs`. These are the design notes that lived as comments in the old
@@ -251,3 +251,71 @@ Starseer 51/120 wins; 47/120 with these five back on 1 Stamina + 1 Mana.
 - **frostNova** — THE CARD NAMED FROST NOVA NOW APPLIES FROST (Rune, 2026-08-08). It applied `weak` + `vulnerable` and nothing in the game applied `frost` at all: a complete threshold-proc row (threshold, burst, Frost-Exposed, a resist row and its own SFX row) that no player could reach. Weak and Vulnerable are what the Frost PROC leaves behind; this is the card that fills the meter, and it is the Starseer's because `frostExposed` raises `starstone`-tagged damage. Numbers PROVISIONAL, like the row's.
 - **attune** — the class ability card (plan phase 5a, proposal §4). Attune: the Starseer's loop is stamina tension around scarce casts; one card that buys the next cast.
 - **cinderSigil**, **ashenMote** — Ash rites (skill-draft depth for the Ash Focus). The Ash Focus is a ritual staff: a levelled one drafts ritual cards, and until these the Starseer's pool held none, so its baseline staff drafted nothing. Starstone combos still apply.
+
+## Enemies (content/source/act1Enemies.json, act2Enemies.json, act3Enemies.json)
+
+Three JSON arrays of 11 enemies each (act 1, 2, 3), compiled by `tools/content-build.mjs` to
+`src/content/generated/act<N>Enemies.js`; `src/content/enemies/act<N>.js` is a shim that re-exports each.
+`tools/enemy-decks-convert.mjs` reads them to write the pack files. These are the comments that lived in the
+old `act<N>.js` files (JSON has no comments); keep a note under its enemy id when you change one.
+
+### File headers
+
+All three: creature tags (beast / humanoid / undead / construct / spirit) are NOT a field on an enemy row. They
+are rows in `content/source/tagging.csv`, family `enemy`, against the one tag registry, and
+`model/registries.js` stamps them onto the def at boot, so `enemy.tags` still reads the same at runtime and the
+proc resistance gate is unchanged. Retagging a creature is a spreadsheet row.
+
+Act 1 (`act1Enemies.json`): the Act 1 roster (SPEC section 5.3, exact numbers).
+
+Act 2 (`act2Enemies.json`), The Stitched Court (GDD section 2): the mid-spire palace, a court that stitched
+itself together to survive. Act II escalates: bigger numbers, self-healing, and the first enemies that turn YOUR
+mechanics against you (Bleed and Blight applied to the player; the status model is entity-agnostic, so
+player-side meters just work).
+
+Act 3 (`act3Enemies.json`), The Ashen Crown (GDD section 2): the burnt canopy. Act III judges: self-reforming
+revenants, heavy hits, and the Blighted Valkyrie, the one enemy in the game that inverts a player mechanic (she
+heals off landing hits on YOU, and her blades Bleed you). Both behaviors are plain data: a persistent
+damageDealt phase trigger and move effects on the entity-agnostic status model (SPEC section 10 seams).
+
+### Every enemy
+
+- **attributes** (every row, all three acts) — "Stats for its SP pool" (SPEC section 4.6a, owner 2026-10-13).
+- **Order in each act** — the regulars, then the elite, then the boss, then the expanded destinations. The elite
+  is wyrmAspirant (act 1), courtDuelist (act 2), wyrmLord (act 3); the boss is fellWarden (SPEC section 5.3, the
+  Fell Warden-inspired), stitchedKing (GDD section 2: phase 2 literally adds limbs), blightedValkyrie (the
+  final boss, GDD section 2, SPEC sections 5.3 and 10). The rows from lanternMoth (act 1), mirrorScribe (act 2)
+  and cinderMantis (act 3) on are the expanded destinations: authored weighted moves use the existing phase and
+  delay engine.
+
+### Act 1
+
+- **wanderingSoldier** — the `arcaneExposure` numbers `threshold`, `buildupMultiplier` and the `onBreak` row are PROVISIONAL.
+- **blightHound** — `artFaces: "left"`. Drawn in profile looking LEFT, which is where an enemy looks: the player's zone is to its left (assets.js SIDE_FACES), so this one is NOT mirrored and ships as painted. Read off the sprite, not assumed.
+- **huskBrute** — the `bellow` move adds `slimed` (grey weald muck, colorless.js); SPEC section 5.2: "enemies and events inject these".
+- **fellWarden** — signature delayed attack: telegraphs 16, holds (gaining 8 Block), lands the following turn regardless of newly rolled intents. Staggering him cancels it (engine-generic delayed-move rule). Phase 2 at 50% HP or below: roar (Frail + Weak on the player, +2 Strength), unlock Twin Daggers. One-way door (phases default to once).
+
+### Act 2
+
+- **gildedKnight** — `gildedGuard` is an enemy reaction (docs/combat-card-traits-contract.md, "Enemy reactions"): never rolled as an intent.
+- **courtSurgeon** — the `scalpel` move adds `wound` (a cut that closes wrong, colorless.js); SPEC section 5.2: "enemies and events inject these".
+- **stitchedHound** — `artFaces: "left"`, same note as blightHound (drawn in profile looking LEFT, so NOT mirrored). The `rend` move is the player's own favorite trick, reflected: Bleed on YOU.
+- **livingArmor** — the `rimeCrush` move is the player-side door into Frost (Rune, 2026-08-08). This act's own header already states the design ("the first enemies that turn YOUR mechanics against you (Bleed and Blight applied to the player)") and Frost was the one build-up with no enemy behind it. Living Armor is already tinted var(--frost) and is `construct`, which is NOT in Frost's resistance tags, so it can seed the meter without shrugging it off itself. Numbers PROVISIONAL, like the row's.
+- **courtDuelist** — `bindingRiposte` is an enemy reaction (see gildedKnight): never rolled as an intent.
+- **stitchedKing** — the 50% HP phase: new limbs are stitched on. The pattern changes; the rules don't.
+
+### Act 3
+
+- **emberStarvedPilgrim** — the `wail` move is the player-side door into Insanity (Rune, 2026-08-08). An ember-starved pilgrim wailing at you is the one move in the tree that was already ABOUT the mind, and Insanity had no applier anywhere. The pilgrim is `humanoid`, which IS in Insanity's resistance tags, so it resists what it inflicts, which is the joke and also the reason this is the right row. Numbers PROVISIONAL, like the row's.
+- **charredColossus** — `damageResistanceBySchool: { magic: 10 }` is a PROVISIONAL raw HP resistance.
+- **blightedValkyrie** — signature inversion (SPEC section 10): she heals 2 whenever SHE lands a hit, a persistent (`once: false`) trigger on her own damageDealt events. The 50% HP phase is the scarlet bloom, a one-way door.
+
+## Classes (content/source/classes.json)
+
+Four class rows (reaver, starseer, rogue, herald), compiled to `src/content/generated/classes.js`; `src/content/classes.js` re-exports `classes` and keeps
+`LOCKED_CLASSES = []` in JS ("All classes are playable as of M3 phase 1; kept for UI compatibility").
+
+File header: class definitions (SPEC section 5.1). Only the Reaver registered in M1 (the schema is strict; locked
+classes are UI display data, exported separately and NOT part of the bundle).
+
+- **cardPool** — each class's list was grouped by rarity with comments. In order: Commons, Uncommons, Rares. Reaver: Commons start at `crimsonCleave`, Uncommons at `stomp`, Rares at `executioner`. Starseer: Commons start at `cometFragment`, Uncommons at `starstoneArc`, Rares at `supernova` (the group runs to `riteOfCinders`, the end of its list). Rogue's list carried no rarity comments. Herald: Commons start at `bloodPact`, Uncommons at `martyrBlood`, Rares at `secondBloom`. A card's rarity is authoritative in its card row (content/source/cards/*.json), not by position in this list.
