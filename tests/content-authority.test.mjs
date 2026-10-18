@@ -1,5 +1,5 @@
 // The content-authority flip (owner, 2026-10-17): relics, stances, flasks and the
-// authored statuses are authored as JSON under content/source;
+// authored statuses, events and the six class/armament card pools are authored as JSON under content/source;
 // src/content/generated/<kind>.js is the compiled mirror; src/content/<kind>.js is
 // a re-export shim for importers.
 import { test } from 'node:test';
@@ -14,6 +14,12 @@ import { flasks } from '../src/content/flasks.js';
 import { statuses } from '../src/content/statuses.js';
 import { expansionStatuses } from '../src/content/combatStatusRules.js';
 import * as eventModule from '../src/content/events.js';
+import { heraldCards } from '../src/content/cards/herald.js';
+import { reaverCards } from '../src/content/cards/reaver.js';
+import { starseerCards } from '../src/content/cards/starseer.js';
+import { armamentCards } from '../src/content/cards/armaments.js';
+import { colorlessCards } from '../src/content/cards/colorless.js';
+import { corruptedCards } from '../src/content/cards/corrupted.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const KINDS = { relics, stances, flasks };
@@ -104,6 +110,49 @@ test('events: src/content/events.js is a shim with no event literal', () => {
   assert.ok(!/^\s*(name|label|resultText)\s*:/m.test(text), 'events.js authors event text — edit content/source/events.json instead');
   for (const name of ['events', ...EVENT_TABLES]) {
     assert.match(text, new RegExp(`from './generated/${name}\\.js'`));
+  }
+});
+
+// Cards: six class/armament pools are JSON under content/source/cards, named for the
+// export they compile to. rogue.js and coop.js hold builder functions and stay JS.
+// None of the old pools was frozen, and none is now.
+const CARD_POOLS = {
+  herald: ['heraldCards', heraldCards],
+  reaver: ['reaverCards', reaverCards],
+  starseer: ['starseerCards', starseerCards],
+  armaments: ['armamentCards', armamentCards],
+  colorless: ['colorlessCards', colorlessCards],
+  corrupted: ['corruptedCards', corruptedCards],
+};
+
+for (const [file, [exportName, exported]] of Object.entries(CARD_POOLS)) {
+  test(`cards: ${exportName} deep-equals content/source/cards/${exportName}.json`, () => {
+    const authored = JSON.parse(readFileSync(resolve(ROOT, `content/source/cards/${exportName}.json`), 'utf8'));
+    assert.ok(Array.isArray(authored) && authored.length > 0, `${exportName}.json is a non-empty array`);
+    assert.deepStrictEqual(exported, authored);
+    assert.equal(new Set(authored.map((card) => card.id)).size, authored.length, `${exportName}: card ids are unique`);
+  });
+
+  test(`cards: src/content/cards/${file}.js is a shim with no card literal`, () => {
+    const text = readFileSync(resolve(ROOT, `src/content/cards/${file}.js`), 'utf8');
+    assert.ok(!/\{\s*id\s*:/.test(text), `${file}.js authors a card (\`{ id:\`) — edit content/source/cards/${exportName}.json instead`);
+    assert.ok(!/^\s*(name|id|flavor|textTemplate)\s*:/m.test(text), `${file}.js authors a card field — edit content/source/cards/${exportName}.json instead`);
+    assert.match(text, new RegExp(`from '\\.\\./generated/cards/${exportName}\\.js'`));
+    assert.ok(text.split('\n').filter((line) => line && !line.startsWith('//')).length <= 4, `${file}.js is more than an import and an export`);
+  });
+}
+
+test('cards: the pools keep the freeze depth they had (unfrozen, top level and rows)', () => {
+  for (const [, [exportName, exported]] of Object.entries(CARD_POOLS)) {
+    assert.equal(Object.isFrozen(exported), false, `${exportName} is not frozen`);
+    assert.equal(Object.isFrozen(exported[0]), false, `${exportName}[0] is not frozen`);
+  }
+});
+
+test('cards: the shim for a builder pool (rogue, coop) still authors its cards in JS', () => {
+  for (const file of ['rogue', 'coop']) {
+    const text = readFileSync(resolve(ROOT, `src/content/cards/${file}.js`), 'utf8');
+    assert.ok(!/generated\/cards\//.test(text), `${file}.js holds builder functions and stays JS`);
   }
 });
 
