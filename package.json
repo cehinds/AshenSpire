@@ -7,7 +7,7 @@
   },
   "scripts": {
     "start": "node tools/launch.mjs",
-    "build": "node tools/launch.mjs --build-only",
+    "build:standalone": "node tools/launch.mjs --build-only",
     "serve": "node tools/serve.mjs --no-open",
     "test": "node tests/run-node.mjs --no-selftests --no-discovered",
     "test:all": "node tests/run-node.mjs",

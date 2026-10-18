@@ -23,8 +23,8 @@ otherwise.
 ## Run & test
 
 `package.json` (no dependencies, no `"type"` field) gives the common commands
-short names: `npm start` (launch), `npm run build` (`launch.mjs --build-only`),
-`npm run serve`, `npm test` (core) and `npm run test:all`, the checks
+short names: `npm start` (launch), `npm run build:standalone` (`launch.mjs --build-only`; not named `build`, so a hosting platform that auto-runs a `build` script does nothing here),
+`npm run serve`, `npm test` (the fast core lane) and `npm run test:all` (the full `tests/run-node.mjs` merge gate), the checks
 `npm run validate:ui|validate:maps|validate:config|build:game|plantsites|receipts`,
 and `npm run art:fetch`. Each is the `node tools/...` command it names. Every
 tool, what it does and who calls it: [tools/README.md](tools/README.md).

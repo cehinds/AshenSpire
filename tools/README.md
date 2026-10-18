@@ -1,13 +1,13 @@
 # tools/
 
-Index of the tools, generated 2026-10-17 from each tool's own header comment and from
+Index of the tools, written 2026-10-17 by hand from each tool's own header comment (no generator yet; update the row when a tool is added) and from
 `git grep -l -F "<name>.mjs" -- ":!tools/<name>.mjs"` over tracked files (substring match, so a short name can
 pick up a longer one). Nothing is deleted or moved. Common ones run as `npm run <script>` (package.json, DEVELOPER.md).
 Callers: `wf` workflow, `tests` file under tests/, `tools` other file under tools/, `docs` markdown, `other` anything else;
 `+N` = more callers than shown. A row with several names groups the tools that have no header comment and share a name
 prefix; its callers are the union.
 
-## Tools something references (323 files, plus the 8 subfolders)
+## Tools something references (325 files, plus the 8 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -59,6 +59,7 @@ prefix; its callers are the union.
 | `buildversion.mjs` | buildversion — DERIVE the build version, and hold the line that | wf ci, dev-preview, pages-builds; tests alternative-branches, build-identity, buildversion-schema-versions; tools about-changelog, ai-disclosure, art-source +20; docs docs/ARCHITECTURE-MAP.md, docs/ART-REPO-PLAN.md, docs/COMBAT-EQUIPMENT-RULES.md +10; other .gitignore, buildordinal.json +8 |
 | `bundle.mjs` | bundle — produce the built game: the pack-shaped HTML at | wf ci, dev-preview; tests alternative-art, build-identity, combat-audit-runtime +8; tools ai-disclosure, art-manifest, art-source +26; docs DEVELOPER.md, SPEC.md, desktop/windows/README.md +8; other buildordinal.json, desktop/windows/build-installer.mjs +20 |
 | `bundle.test.mjs` | bundle.test — the parse gate's own fixtures (#77 property 4). | wf ci, worker-check; tests run-node-lanes, run-node; tools art-source, hud-component-studio/README.md, linkcheck; docs DEVELOPER.md, docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md +2 |
+| `card-cutout-assets.mjs` | Branch-owned PNGs use the same verified common-pack path as alternative art | tests layered-card-art; tools asset-pack, buildversion, bundle; docs docs/card-art-composition.md |
 | `card-components.mjs`, `card-layout-save-qa.mjs`, `card-layout-save.mjs`, `card-master-qa.mjs`, `card-rank-layers-qa.mjs`, `card-sigils-qa.mjs` | (no header comment) | tests card-object-ids; tools buildversion, bundle, card-components.test +5; docs docs/workbench/CONSOLIDATION.md, docs/ai/session-continuations/2026-10-08/card-layers-and-rank.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other src/content/cardComponents.generated.js, workbench/core/files.mjs +4 |
 | `card-drag-targeting.mjs` | card-drag-targeting — browser acceptance for #150 + #198 + #311 | tools hybrid-input-parity, plantsites-baseline.json |
 | `card-effect-art-build.mjs` | Normalize the authored six-frame refresh; preserve one scale and anchor per sheet. | tools combat-effects-ship; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other src/content/combatEffectArt.js |
@@ -123,6 +124,7 @@ prefix; its callers are the union.
 | `equipment-animation-browser.mjs` | (no header comment) | docs docs/EQUIPMENT-ANIMATION-REFERENCES.md |
 | `equipment-surface-receipts.mjs` | Observed-red contract for the one presentation receipt shared by character | tools plantsites-baseline.json, swap-cost-relic-surface; other src/model/equipmentPresentation.js, src/ui/screens/customize.js |
 | `escape-back.mjs` | escape-back — Escape and pad B back out of every screen, measured | tests escape-back; docs DEVELOPER.md, docs/FINISH.md; other src/ui/input.js, src/ui/screens/map.js |
+| `export-layered-card-art.mjs` | Select already-approved cutouts; do not repaint, flatten, or recolor them | docs docs/card-art-composition.md; other src/content/layeredCardArt.generated.js |
 | `export-extended-card-art.mjs` | (no header comment) | tests extended-card-artwork; docs docs/EXTENDED-CARD-ART.md, docs/workbench/CONSOLIDATION.md; other src/ui/extendedCardArtwork.js |
 | `external-play-art-state.mjs` | (no header comment) | tests external-play-network; tools external-play |
 | `external-play.mjs` | external-play — load the DE-INLINED build in a real browser and | wf dev-preview; tests external-play-network; tools verify-external, verify-shipped; docs DEVELOPER.md, dist/README.md, docs/EXTERNAL-ASSETS-PLAN.md |
