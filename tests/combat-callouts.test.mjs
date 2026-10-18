@@ -297,3 +297,11 @@ test('accuracy wording follows stance entry and the first sequential swing', t2 
     assert.equal(trace.filter(e => e.what === 'callout:hit@player').length, 1, 'the accuracy word is shown once');
   });
 });
+
+test('committed damage without accuracy receipts says Hit, while a fully guarded hit says Blocked', t2 => {
+  drive(t2, ({ trace, run, finish }) => {
+    run(playerAttack(hit('player', 'e1'))); finish();
+    assert.equal(timeOf(trace, 'callout:hit@e1'), LEAD + TOTAL + AFTER);
+    assert.equal(timeOf(trace, 'float:-4'), LEAD + TOTAL + AFTER + REACTION);
+  });
+});

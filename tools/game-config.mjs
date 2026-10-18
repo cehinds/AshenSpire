@@ -8,10 +8,44 @@ import { resolveGameAuthor, canonicalGameJSON, gameDigest, dataClone } from '../
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const GENERATED = 'src/content/generated/gameProfiles.js';
 const LOCK = 'games/ashenspire/game.lock.json';
-const inside = path => { const full = realpathSync(resolve(ROOT,path)); if (!full.startsWith(ROOT+sep)) throw new Error(`Source reference escapes repository: ${path}`); return full; };
+const inside = (path,root=ROOT) => { const full = realpathSync(resolve(root,path)); if (!full.startsWith(root+sep)) throw new Error(`Source reference escapes repository: ${path}`); return full; };
 const json = path => { try { return JSON.parse(readFileSync(inside(path),'utf8')); } catch(error) { throw new Error(`${path}: ${error.message}`); } };
-function artifact(path,id,version) { const text=readFileSync(inside(path),'utf8'); return {path,id,version,hash:gameDigest(path.endsWith('.json') ? canonicalGameJSON(JSON.parse(text)) : text)}; }
+function artifact(path,id,version,root=ROOT) { const text=readFileSync(inside(path,root),'utf8'); return {path,id,version,hash:gameDigest(path.endsWith('.json') ? canonicalGameJSON(JSON.parse(text)) : text)}; }
 function referenced(base,path) { if (typeof path !== 'string') throw new Error(`${base}: expected file reference`); return relative(ROOT,resolve(ROOT,dirname(base),path)).split(sep).join('/'); }
+// These source modules execute the authored mechanic definitions in the live
+// browser. The generated data mirrors are derived from the canonical JSON.
+const MECHANIC_RUNTIME_SOURCES = Object.freeze([
+  'content/source/fixCoreMechanics.json',
+  'src/model/mechanicsKernel.js',
+  'src/model/formulas.js',
+  'src/model/fixCoreMechanics.js',
+]);
+export const MECHANIC_RUNTIME_PATH = 'engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + src/model/{mechanicsKernel,formulas,fixCoreMechanics}.js';
+
+// Cases and guides are authoring/test evidence, not executable rules. Hash the
+// registered definitions explicitly so a JSON-only tuning or attachment-policy
+// change cannot reinterpret a saved run under the same compatibility pin.
+export function collectMechanicsRuntimeArtifacts(root = ROOT) {
+  root=realpathSync(resolve(root));
+  const paths=['engine/mechanics/index.json',...MECHANIC_RUNTIME_SOURCES];
+  const index=JSON.parse(readFileSync(inside(paths[0],root),'utf8'));
+  const seen=new Set();
+  for(const entry of [...index.mechanics].sort((a,b)=>a.id < b.id ? -1 : a.id > b.id ? 1 : 0)) {
+    if(seen.has(entry.id))throw new Error(`engine/mechanics/index.json: duplicate mechanic ${entry.id}`);
+    seen.add(entry.id);
+    const manifestPath=`engine/mechanics/${entry.id}/mechanic.json`;
+    const manifest=JSON.parse(readFileSync(inside(manifestPath,root),'utf8'));
+    if(manifest.id!==entry.id)throw new Error(`${manifestPath}: registry identity mismatch`);
+    paths.push(manifestPath);
+    for(const kind of ['model','interface','service']) {
+      const file=manifest.files?.[kind];
+      if(typeof file!=='string'||!file)throw new Error(`${manifestPath}: missing ${kind} reference`);
+      paths.push(relative(root,resolve(root,dirname(manifestPath),file)).split(sep).join('/'));
+    }
+  }
+  return [...new Set(paths)].sort().map(path=>artifact(path,'ashen.mechanics-runtime','1.0.0',root));
+}
+
 export function loadGameProfileCatalog() {
   compileBaseCards(); // validate authored effect/opcode/reference contracts before locking source packs
   const contracts = json('engine/contracts/game-profile.json'), foundation = json('engine/foundation/foundation.json');
@@ -25,7 +59,8 @@ export function loadGameProfileCatalog() {
   }
   // The save-compatibility hash covers what a saved profile is interpreted by: the engine kernel, the
   // runtime ops/formulas/interpreter and the game-profile contract. Docs (*.md), the UI/map/asset/build
-  // contracts and app code under src/ play no part in resuming a save and are not hashed.
+  // contracts and unrelated app/UI code do not interpret saved mechanics and are not hashed.
+  // The shared browser evaluator and canonical mechanics are pinned separately below.
   const kernelRuntime=[];
   const visitRuntime = dir => {
     for (const entry of readdirSync(resolve(ROOT,dir),{withFileTypes:true}).sort((a,b)=>a.name < b.name ? -1 : 1)) {
@@ -37,6 +72,7 @@ export function loadGameProfileCatalog() {
   for(const dir of ['engine/kernel','engine/runtime'])visitRuntime(dir);
   kernelRuntime.push(artifact('engine/contracts/game-profile.json','ashen.kernel-runtime','1.0.0'));
   catalog.runtimeArtifacts.push({id:'ashen.kernel-runtime',version:'1.0.0',path:'engine/{kernel,runtime}/** (no *.md) + engine/contracts/game-profile.json',hash:gameDigest(kernelRuntime)});
+  catalog.runtimeArtifacts.push({id:'ashen.mechanics-runtime',version:'1.0.0',path:MECHANIC_RUNTIME_PATH,hash:gameDigest(collectMechanicsRuntimeArtifacts())});
   catalog.runtimeHash=gameDigest(catalog.runtimeArtifacts);
   for(const name of ['core-v1','core','current']) {
     const path=`games/ashenspire/bundles/${name}/bundle.json`,manifest=json(path);

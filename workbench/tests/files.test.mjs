@@ -40,6 +40,23 @@ async function boot(t, root, { settings } = {}) {
   return { app, call, post, stateDir };
 }
 
+test('allowlist: card pool JSON under content/source/cards is readable and listed; generated card modules stay refused', async (t) => {
+  const root = await project(t);
+  await fs.mkdir(path.join(root, 'content/source/cards'), { recursive: true });
+  await fs.mkdir(path.join(root, 'src/content/generated/cards'), { recursive: true });
+  await fs.writeFile(path.join(root, 'content/source/cards/heraldCards.json'), '[{"id":"strike"}]\n');
+  await fs.writeFile(path.join(root, 'src/content/generated/cards/heraldCards.js'), 'export default [];\n');
+  assert.equal(allowedKind('content/source/cards/heraldCards.json'), 'json');
+  assert.equal(allowedKind('content/source/cards/sub/heraldCards.json'), null);
+  assert.equal(allowedKind('src/content/generated/cards/heraldCards.js'), null);
+  const { call } = await boot(t, root);
+  const read = await call('/api/files/read?path=content/source/cards/heraldCards.json');
+  assert.equal(read.status, 200);
+  const list = await (await call('/api/files/list?dir=content/source&ext=csv,json')).json();
+  assert.ok(list.files.includes('content/source/cards/heraldCards.json'), JSON.stringify(list.files));
+  assert.equal((await call('/api/files/read?path=src/content/generated/cards/heraldCards.js')).ok, false);
+});
+
 test('allowlist: editable sources only; traversal, generated files, .git and other trees refused', async (t) => {
   const root = await project(t);
   const { call } = await boot(t, root);

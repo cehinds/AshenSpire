@@ -31,6 +31,9 @@ export function runActionTimeline(beats, hooks, timing, { setTimer = setTimeout,
         actor = stage('sprite', beat, () => hooks.onSprite?.(beat, timing.spriteSpeed));
         const impact = Math.max(0, Number(actor?.impactMs) || 0);
         const total = Math.max(impact, Number(actor?.totalMs) || 0);
+        // Authored handles are the final timing authority. A longer real clip
+        // must extend the budget even when the caller underestimated its cap.
+        clearTimer(watchdog); watchdog = setTimer(() => finish(true), budget + total);
         schedule(() => {
           const contactHold = stage('contact', beat, () => { actor?.contact?.(); return hooks.onContact?.(beat, actor); });
           // Some sprite services extend their recovery after contact (hit-stop).
@@ -73,5 +76,5 @@ export function runActionTimeline(beats, hooks, timing, { setTimer = setTimeout,
   const budget = 2000 + beats.reduce((budget, beat) => budget + Math.max(perAction + Math.max(0, (safe(() => hooks.reactionGroups?.(beat))?.length || 1) - 1) * (timing.reactionMs + timing.stepMs), timing.bannerMs + timing.stepMs), 0);
   watchdog = setTimer(() => finish(true), budget);
   next();
-  return { pauseForSkip: () => { clearTimer(timer); clearTimer(watchdog); cancelActor(); }, cancel: () => finish(true), skip: () => finish(true), get finished() { return finished; } };
+  return { pauseForSkip: () => { clearTimer(timer); cancelActor(); }, cancel: () => finish(true), skip: () => finish(true), get finished() { return finished; } };
 }

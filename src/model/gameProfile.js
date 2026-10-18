@@ -4,9 +4,11 @@ import { resolveGameAuthor, validateResolvedGameProfile, freezeGameData, dataClo
 export { GameConfigError };
 export function resolveGameProfile(idOrAuthor = 'current') {
   if (typeof idOrAuthor === 'string') {
-    const alias = {'ashen.core@1.0.0':'core','ashen.current@1.0.0':'current'}[idOrAuthor] || idOrAuthor;
-    if (!gameProfileAuthors[alias]) throw new GameConfigError('$/profile','unknown profile ID');
-    return resolveGameAuthor(gameProfileAuthors[alias],gameProfileCatalog);
+    if (Object.hasOwn(gameProfileCatalog.bundles, idOrAuthor)) {
+      return resolveGameAuthor({formatVersion:1,core:idOrAuthor,modules:{}},gameProfileCatalog);
+    }
+    if (!gameProfileAuthors[idOrAuthor]) throw new GameConfigError('$/profile','unknown profile ID');
+    return resolveGameAuthor(gameProfileAuthors[idOrAuthor],gameProfileCatalog);
   }
   if (idOrAuthor?.hash) return validateGameProfileSnapshot(idOrAuthor);
   return resolveGameAuthor(idOrAuthor,gameProfileCatalog);

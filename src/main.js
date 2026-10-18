@@ -2158,12 +2158,15 @@ function showCombatDeckEditor(combat, nodeId, encounterId) {
     registries, run: draft, settings,
     onDone: () => {
       if (run !== owner || combat.result) return;
+      const before = structuredClone(owner);
       try {
         commitDeckEditDraft(registries, owner, draft, settings);
         commitCombatSnapshot({ run: owner, combat, nodeId, encounterId });
         persist();
         showSettingsNotice('Deck saved. Changes apply next encounter; current combat piles stay unchanged.');
       } catch (error) {
+        for (const key of Object.keys(owner)) delete owner[key];
+        Object.assign(owner, before);
         showSettingsNotice(error.message || 'Deck changes could not be saved.');
       }
     },

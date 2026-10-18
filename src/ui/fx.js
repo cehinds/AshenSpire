@@ -951,9 +951,13 @@ export function playTimeline(events, ctx, done) {
     clearHeldFigures(); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
   };
   const release = () => { if (skippedPointer) handle?.skip(); };
+  const blur = () => handle?.skip();
+  const visibility = () => { if (globalThis.document?.hidden || globalThis.document?.visibilityState === 'hidden') handle?.skip(); };
   addEventListener('pointerdown', skip, { capture: true });
   addEventListener('pointerup', release, { capture: true });
   addEventListener('pointercancel', release, { capture: true });
+  addEventListener('blur', blur);
+  globalThis.document?.addEventListener?.('visibilitychange', visibility);
   dbg.open = (dbg.open || 0) + 1;
   handle = runActionTimeline(beats, {
     onStage: (name, beat) => { traceBeat(name, beat.actorId); ctx.onStage?.(name, beat); },
@@ -1005,9 +1009,16 @@ export function playTimeline(events, ctx, done) {
       // Accuracy receipts cannot say Hit before a miss, full Block or break
       // receipt that follows them. More specific outcomes take precedence.
       const outcomeTargets = new Set(beat.events.filter(event => event.type !== 'attackHit' && calloutForEvent(event)).map(event => event.targetId));
+      const saidTargets = new Set(beat.events.filter(event => calloutForEvent(event)).map(event => event.targetId));
       for (const event of beat.events) {
         if (terminal(event) || (event.type === 'attackHit' && outcomeTargets.has(event.targetId))) continue;
         visualSafe(() => parts.get(event)?.callout?.(ctx));
+        // Historical and authored unavoidable hits may carry damage without an
+        // accuracy receipt. The committed HP residual still proves a Hit.
+        if (event.type === 'damageDealt' && guardHitFloatParts(event).residual > 0 && !saidTargets.has(event.targetId)) {
+          visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'hit'));
+          saidTargets.add(event.targetId);
+        }
       }
       return Math.max(0, ...beat.events.map(event => Number(ctx.reactionTimingForReceipt?.(event, timing.spriteSpeed)) || 0));
     },
@@ -1031,6 +1042,8 @@ export function playTimeline(events, ctx, done) {
       removeEventListener('pointerdown', skip, { capture: true });
       removeEventListener('pointerup', release, { capture: true });
       removeEventListener('pointercancel', release, { capture: true });
+      removeEventListener('blur', blur);
+      globalThis.document?.removeEventListener?.('visibilitychange', visibility);
       dbg.finished = (dbg.finished || 0) + 1;
       done?.();
     },
