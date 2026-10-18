@@ -2412,6 +2412,9 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   background: var(--bg-raise); border: 1px solid var(--line-soft); border-radius: var(--r-3);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
 }
+/* Asleep under a door (modalManager page chrome): drop beneath the veil (z 500)
+   instead of floating above a dialog it cannot answer. */
+.as-dock[inert] { z-index: calc(var(--layer-sheet) - 50); } /* under the modal veil (--layer-sheet) */
 .as-dock > .as-tabs { flex: 1 1 auto; min-width: 0; overflow-x: auto; }
 .as-dock .as-tab { display: inline-flex; align-items: center; gap: 0.5rem; }
 

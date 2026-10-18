@@ -15,6 +15,11 @@ const waiters = [];
 // Every element this module has marked `inert`. Only these are ever cleared:
 // an inert some other surface set (deckEditor, gameProfileRest) is not ours.
 const inertByUs = new Set();
+// PAGE CHROME: body-level elements (the co-op seat strip) that are not modals.
+// They never hold the lock, never count in modalOpen() or data-modal-depth, and
+// never stall a whenNoOverlay() redraw; they only go inert under a lock, exactly
+// as an #app child does.
+const chrome = new Set();
 
 // An entry whose element left the page without its close path running (a
 // screen remount wiped the host it was appended to) is not open any more.
@@ -165,6 +170,12 @@ function syncPage() {
       const lower = live[i];
       if (lower.element && !holdsKept(lower.element)) want.add(lower.element);
     }
+    // Page chrome under the lock goes inert too. A strip that left the page
+    // without its release running is dropped (attribute reads only, no layout).
+    for (const el of [...chrome]) {
+      if (el?.isConnected === false) { chrome.delete(el); continue; }
+      if (!holdsKept(el)) want.add(el);
+    }
   }
   for (const el of [...inertByUs]) {
     if (want.has(el)) continue;
@@ -309,9 +320,26 @@ export function onModalsClosed(fn) {
   };
 }
 
+/**
+ * Register body-level page chrome (not a modal) so a lock above it covers it.
+ * Chrome never holds the lock and never counts in modalOpen()/openModals()/
+ * data-modal-depth. Register it once it is IN the page: a disconnected element
+ * is dropped on the next sync. Returns an idempotent release().
+ */
+export function registerPageChrome(element) {
+  if (!element) return () => {};
+  chrome.add(element);
+  syncPage();
+  return function releasePageChrome() {
+    if (!chrome.delete(element)) return;
+    syncPage();
+  };
+}
+
 /** TESTS ONLY. Clears the stack and every pending waiter. */
 export function resetModalState() {
   stack.length = 0;
+  chrome.clear();
   waiters.length = 0;
   sentinelUp = false;
   ignorePops = 0;
