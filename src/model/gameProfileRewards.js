@@ -1,6 +1,7 @@
 // Persisted mixed offers: claiming never edits/equips the active deck.
 import { gameModule, gameContent } from './gameProfile.js';
 import { syncZones } from './state.js';
+import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -54,30 +55,38 @@ function cardRank(card,rules) {
   const rule=rules?.eligibility?.combatCards;
   return Number.isSafeInteger(card.rank) ? card.rank : rule?.rankOfRarity?.[card.rarity] ?? 1;
 }
-function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories}) {
+function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
   if(run.gameProfileRewardOffers?.[offerId])return run.gameProfileRewardOffers[offerId];
   const available=pools(registries,run), options=[];
-  run.gameProfileRewardOffers ||= {};
-  // Pick categories uniformly, then an eligible distinct item within that category.
+  const stream=source==='shop'&&itemsPerCategory!==null?'shop':'cardRewards';
+  if(groups.length) {
+    const problems=rewardGroupProblems(groups,categories);
+    if(problems.length)throw new Error(problems.join('; '));
+  }
+  const shelfCounts=new Map();
+  // Ordinary combat draws weighted groups. Shops independently fill each shelf.
   while(options.length<count) {
-    const kinds=categories.filter(kind=>(available[kind]||[]).length);
+    const kinds=categories.filter(kind=>(available[kind]||[]).length && (itemsPerCategory===null || (shelfCounts.get(kind)||0)<itemsPerCategory));
     if(!kinds.length)break;
-    const kind=rng.pick('cardRewards',kinds);
+    const kind=itemsPerCategory===null?pickRewardCategory(rng,stream,kinds,groups):kinds[0];
+    if(!kind)break;
     let ids=available[kind];
     // Most card rewards are rank 1+; a small authored chance lets a lower-rank card through.
     const rule=gameContent(run,'rewards')?.eligibility?.combatCards;
     if(kind==='combatCards'&&rule){
       const low=new Set(available.combatCardsLow||[]),high=ids.filter(id=>!low.has(id)),lowIds=ids.filter(id=>low.has(id));
       // The chance is honored even when no rank 1+ card is left: a failed (or zero) roll drops the category.
-      const allowLow=lowIds.length>0&&rng.pick('cardRewards',Array.from({length:100},(_,i)=>i))<Math.round((rule.lowerRankChance??0)*100);
+      const allowLow=lowIds.length>0&&rng.pick(stream,Array.from({length:100},(_,i)=>i))<Math.round((rule.lowerRankChance??0)*100);
       if(!allowLow&&!high.length){available[kind]=[];continue;}
       ids=allowLow?lowIds:high;
     }
-    const id=rng.pick('cardRewards',ids);available[kind]=available[kind].filter(value=>value!==id);
+    const id=rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
     options.push({kind,id});
+    shelfCounts.set(kind,(shelfCounts.get(kind)||0)+1);
   }
   const offer={id:offerId,source,options,takeCount,taken:[],claimed:null};
+  run.gameProfileRewardOffers ||= {};
   run.gameProfileRewardOffers[offerId]=offer;
   return offer;
 }
@@ -85,7 +94,8 @@ export function gameProfileRewardOffers(registries, run, rng, { offerId, source 
   const module=gameModule(run,'rewards');
   if(module?.mode!=='configured')throw new Error('Configured rewards unavailable');
   const rules=gameContent(run,'rewards');
-  return makeOffer(registries,run,rng,{offerId,source,count:module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories});
+  return makeOffer(registries,run,rng,{offerId,source,count:module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
+    groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):[]});
 }
 export function claimGameProfileReward(registries,run,offerId,index) {
   const offer=run.gameProfileRewardOffers?.[offerId];
@@ -122,8 +132,11 @@ export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   const module=gameModule(run,'shops');
   if(module?.mode!=='configured')throw new Error('Configured shop unavailable');
   const rules=gameContent(run,'shops');
-  const stock=makeOffer(registries,run,rng,{offerId:`shop:${shopId}`,source:'shop',count:module.options??rules.offerCount,takeCount:module.options??rules.offerCount,categories:gameContent(run,'rewards').categories});
-  if(stock.price===undefined)stock.price=rules.price;
+  const categories=gameContent(run,'rewards').categories;
+  const itemsPerCategory=module.itemsPerCategory??rules.itemsPerCategory??null;
+  const count=itemsPerCategory===null?(module.options??rules.offerCount):itemsPerCategory*categories.length;
+  const stock=makeOffer(registries,run,rng,{offerId:`shop:${shopId}`,source:'shop',count,takeCount:count,categories,itemsPerCategory});
+  if(stock.price===undefined)stock.price=module.price??rules.price;
   return stock;
 }
 export function purchaseGameProfileShopOffer(registries,run,shopId,index) {
