@@ -161,7 +161,8 @@
         "restFloors": "restFloors",
         "branchColumns": "branchColumns",
         "minimumThreatFloor": "minimumThreatFloor",
-        "mapMode": "mapMode"
+        "mapMode": "mapMode",
+        "firstFloor": "firstFloor"
       }
     },
     {

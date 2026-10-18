@@ -15,10 +15,11 @@
     "boss"
   ],
   "restFloors": [
-    1,
+    3,
     6
   ],
   "branchColumns": 3,
   "minimumThreatFloor": 3,
-  "mapMode": "path"
+  "mapMode": "path",
+  "firstFloor": "fight"
 }

@@ -46,12 +46,13 @@ test('every seeded core branch visits eight levels and both rests across all thr
     for (let tier = 1; tier <= 3; tier++) {
       const seat = run.seatOrder[tier - 1];
       const map = buildActMap(reg, createRng(seed), seat, tier);
-      verifyPaths(map, [1, 6]);
+      verifyPaths(map, [3, 6]);
       assert.equal(map.floors, 8);
-      assert.deepEqual(map.startIds, ['n1_0']);
-      assert.equal(map.nodes.n1_0.type, 'shrine');
-      assert.equal(map.nodes.n1_0.next.length, 3);
-      assert.equal(Object.values(map.nodes).filter(node => node.floor === 1).length, 1);
+      // Floor 1 is a fight (routes.firstFloor, owner 2026-10-18): three fight lanes to choose from, drawn as fights.
+      assert.deepEqual(map.startIds, ['n1_0', 'n1_1', 'n1_2']);
+      for (const id of map.startIds) { assert.equal(map.nodes[id].actualType, 'fight'); assert.equal(map.nodes[id].type, 'monster'); assert.ok(map.nodes[id].next.length >= 2); }
+      assert.equal(Object.values(map.nodes).filter(node => node.floor === 1).length, 3);
+      assert.equal(map.shrineId, 'n6_0');
       for (const node of Object.values(map.nodes)) if (['elite', 'boss'].includes(node.actualType)) assert.ok(node.floor >= 3);
       assert.equal(Object.keys(map.nodes).length, 18);
       assert.ok(Object.values(map.nodes).some(node => node.next.length > 1));
@@ -61,7 +62,7 @@ test('every seeded core branch visits eight levels and both rests across all thr
       bosses.add(map.nodes.boss.encounterId);
       assert.deepEqual(map, buildActMap(reg, createRng(seed), seat, tier));
       for (const node of Object.values(map.nodes)) {
-        if (['rest', 'elite', 'boss'].includes(node.actualType)) assert.notEqual(node.type, 'event');
+        if (['rest', 'elite', 'boss'].includes(node.actualType) || node.floor === 1) assert.notEqual(node.type, 'event');
         else { assert.equal(node.type, 'event'); assert.ok(node.resolved); }
       }
     }
@@ -114,8 +115,23 @@ test('Core authors a fully visible map and pins it over a stale viewer fog setti
   assert.equal(knowledge.counts.hidden, 0);
   assert.equal(knowledge.drawn.size, Object.keys(run.mapGraph.nodes).length);
 });
+test('firstFloor forces depth 1 and is refused where it cannot hold (owner, 2026-10-18)', () => {
+  const build = routes => { const { reg, run } = setup(routes); return buildActMap(reg, createRng(5), run.seatOrder[0], 1); };
+  const open = build({});
+  assert.deepEqual(open.startIds, ['n1_0', 'n1_1', 'n1_2']);
+  assert.equal(open.nodes.n3_0.type, 'shrine', 'rests moved to depth 3 so depth 1 can be a fight');
+  const restFirst = build({ firstFloor: null, restFloors: [1, 6] });
+  assert.deepEqual(restFirst.startIds, ['n1_0']);
+  assert.equal(restFirst.nodes.n1_0.type, 'shrine');
+  const shop = build({ firstFloor: 'shop' });
+  for (const id of shop.startIds) assert.equal(shop.nodes[id].actualType, 'shop');
+  assert.throws(() => build({ firstFloor: 'fight', restFloors: [1, 6] }), /firstFloor/, 'depth 1 cannot be both a rest and a fight');
+  assert.throws(() => setup({ firstFloor: 'rest', restFloors: [3, 6] }), /firstFloor/, 'rest is not a forceable lane type');
+  assert.throws(() => setup({ firstFloor: 'boss' }), /firstFloor/);
+  assert.throws(() => build({ firstFloor: 'elite' }), /firstFloor/, 'an elite cannot open before minimumThreatFloor');
+});
 test('a configured fog route reveals only landmarks, then the split and next rest; the trail persists on load', () => {
-  const { reg, run } = setup({ mapMode: 'fog' });
+  const { reg, run } = setup({ mapMode: 'fog', restFloors: [1, 6], firstFloor: null }); // the Rest-first route, authored explicitly
   run.mapGraph = buildActMap(reg, createRng(9), run.seatOrder[0], 1);
   const mode = resolveMapMode({ settings: { mapMode: 'path' } }, run);
   assert.equal(mode, 'fog', 'configured policy must not inherit a stale whole-map viewer setting');
