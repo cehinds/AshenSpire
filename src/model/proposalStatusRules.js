@@ -127,10 +127,13 @@ export function proposalTargetRules({ actor, target, card, rules = {}, capabilit
   return out;
 }
 
-/** Input amount is the connected pre-protection hit; apply this plan exactly once. */
+/** Input amount is the connected pre-protection hit; apply this plan exactly once.
+ * Configured receipts defer primary-damage rounding until all offense modifiers
+ * have run. Independent rider effects keep their integer quantity boundaries. */
 export function proposalHitRules({ actor, target, card, amount, damageType, camp = 'physical', range,
-  direct = true, reactive = false, allies = [], rules = {}, capabilities } = {}) {
-  const original = rounded(amount);
+  direct = true, reactive = false, allies = [], rules = {}, capabilities, roundDamage = true } = {}) {
+  const damageQuantity = roundDamage ? rounded : value => Math.max(0, Number(value) || 0);
+  const original = damageQuantity(amount);
   const out = { amount: original, healing: 0, unavoidable: false, effects: [], statusChanges: [], redirect: null };
   let outgoingMultiplier = 1;
   for (const { behavior: b } of active(actor, rules, capabilities)) {
@@ -138,11 +141,11 @@ export function proposalHitRules({ actor, target, card, amount, damageType, camp
     if (b.kind === 'weaponBonus' && direct && !reactive && hasAnyTag(card, b.requiredTags))
       out.effects.push(effect(actor, target, { op: 'damage', amount: b.amount, damageType: b.damageType, camp: b.camp, proposalReactive: true }));
   }
-  out.amount = rounded(out.amount * outgoingMultiplier);
+  out.amount = damageQuantity(out.amount * outgoingMultiplier);
   let incomingCap = Infinity, healingMultiplier = null;
   for (const { status, stacks, behavior: b } of active(target, rules, capabilities)) {
     if (b.kind === 'greaseFire' && matches(b.damageTypes, damageType)) {
-      out.unavoidable = true; out.amount = rounded(out.amount * b.multiplier);
+      out.unavoidable = true; out.amount = damageQuantity(out.amount * b.multiplier);
       out.effects.push(effect(actor, target, { op: 'applyStatus', status: b.burnStatus, stacks: b.burnStacks }));
       if (!reactive) for (const ally of allies.filter(row => idOf(row) !== idOf(target) && row.hp > 0))
         out.effects.push(effect(actor, ally, { op: 'damage', amount: rounded(original * b.splashMultiplier), damageType, camp, proposalReactive: true }));
