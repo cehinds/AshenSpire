@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **Relics, stances and flasks are plain data files now** ([#2110](https://github.com/cehinds/AshenSpire/pull/2110), `0.7.1.1597`). Nothing changes in play. The 63 relics, the stances and the 7 flasks are authored as JSON in content/source and compiled into the game like the rest of the content tables; the design notes that lived as code comments are kept beside them.
+- **Relics, stances and flasks are plain data files now** ([#2110](https://github.com/cehinds/AshenSpire/pull/2110), `0.7.1.1599`). Nothing changes in play. The 63 relics, the stances and the 7 flasks are authored as JSON in content/source and compiled into the game like the rest of the content tables; the design notes that lived as code comments are kept beside them.
 - **71 unused developer scripts moved into tools/attic** ([#2109](https://github.com/cehinds/AshenSpire/pull/2109), `0.7.1.1597`). No change in play. Seventy-one tools that nothing in the repository runs or names were moved, not deleted, into tools/attic/ (owner ruling 2026-10-17); their imports still resolve and tools/README.md says where they are.
 - **Misspelled targets, statuses and card names are refused at build time** ([#2108](https://github.com/cehinds/AshenSpire/pull/2108), `0.7.1.1595`). A card or enemy move that names an unknown effect target, status or card used to build fine and fail in the middle of a fight; the game build now refuses it with the exact path and the allowed vocabulary.
 
