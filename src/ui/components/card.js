@@ -1,3 +1,4 @@
+import { bindDamageReceipt, cardDamageReceipt, damageReceiptHtml } from './damageReceipt.js';
 import { bindCardComponentFailures } from '../cardArtLayers.js';
 import { baseCardPresentation } from '../../content/generated/baseCards.js';
 import { gameModule } from '../../model/gameProfile.js';
@@ -332,6 +333,7 @@ export function renderCard(registries, ref, opts = {}) {
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
     applyCardAppearance(el.querySelector('.illustrated-card-face'));
+    bindDamageReceipt(el, opts.preview);
     if (def.corrupted) el.insertAdjacentHTML('beforeend', ashenBlightCardLabel(def));
     // The illustrated face owns the rank label and keeps it above its fitted panel.
     if(el.children)for(const node of el.children)if(node.dataset)node.dataset.cardPainted = '1';
@@ -387,6 +389,8 @@ export function renderCard(registries, ref, opts = {}) {
       const details = document.createElement('div');
       const liveCosts = model.hasPreview ? model.costs : null;
       details.innerHTML = opts.tooltipFn ? sigilExplanationHtml(model.sigils) + opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences);
+      const receipt = cardDamageReceipt(opts.preview);
+      if (receipt) details.insertAdjacentHTML('beforeend', damageReceiptHtml(receipt, { targetName: opts.preview.targetName }));
       decorateKeywords(details);
       // AUTHORED FLAVOUR REACHES THE PLAYER, at the level that promises
       // everything. The note above the regions used to say a playing card

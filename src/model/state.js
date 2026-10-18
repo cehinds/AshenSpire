@@ -1,3 +1,4 @@
+import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { validateResolvedGameProfile } from '../../engine/kernel/gameConfig.js';
 import { gameModule, gameContent } from './gameProfile.js';
 import { isConfiguredRun, gameProfileAttributes, gameProfileClassAvailable, gameProfileStatOptions, initializeGameProfileRun } from './gameProfileRun.js';
@@ -415,7 +416,7 @@ export function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const modeProfiles = run.attributeModeSnapshot && run.attributeModeSnapshot.equipmentProfiles;
-  const effectiveAttributes = effectiveAshenBlightAttributes(run);
+  const effectiveAttributes = gameProfileEffectiveAttributes(registries,run,effectiveAshenBlightAttributes(run));
   const blightStaminaPenalty = run.combatExpansionVersion === 2 ? ashenBlightBonuses(run).maxStaminaPenalty : 0;
   // THE CREATION SCALE NO LONGER TOUCHES A DERIVED ROW (owner, 2026-09-21).
   // A smaller starting pool used to multiply every `pointsPerTier` by the
@@ -432,7 +433,7 @@ export function initializeRunDerivedStats(run, registries, {
   const effectiveDerivedStatOptions = { ...derivedStatOptions, modeModifiers };
   const existing = snapshot || run.derivedStatRuleSnapshot;
   const classDef = registries.classes.get(run.class);
-  const liveEquipmentMods = run.loadout ? runMods(registries, run.loadout, run.class) : null;
+  const liveEquipmentMods = run.loadout ? runMods(registries, run.loadout, run.class, run) : null;
   run.equipmentProfileRuleSnapshot = run.equipmentProfileRuleSnapshot
     ? restoreEquipmentProfileRuleSnapshot(run.equipmentProfileRuleSnapshot, registries)
     : createEquipmentProfileRuleSnapshot(registries, effectiveDerivedStatOptions);

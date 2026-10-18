@@ -31,11 +31,8 @@
       "requiresTag": "training.graduate",
       "pools": [],
       "cards": {
-        "rarity": [
-          "starter"
-        ],
         "tagsAll": [
-          "camp:spell"
+          "rank.cantrip"
         ]
       }
     }

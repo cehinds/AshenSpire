@@ -58,7 +58,7 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     markUiComponent(node, UI.blockBadge, badge.kind);
     if (tooltips) {
       node.tabIndex = 0;
-      attachTooltip(node, () => `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : badge.kind === 'evade' ? 'Evasion rating, including active Evade stacks.' : badge.kind === 'poise' ? tFull('combat.protection.poise') : wardHelp)}${badge.barrier > 0 ? `<br>${esc(tFull('combat.protection.barrier'))}` : ''}${badge.wardBlock > 0 ? `<br>${esc(t('combat.protection.wardBlock'))} ${badge.wardBlock}: ${esc(tFull('combat.protection.wardBlock'))}` : ''}`);
+      attachTooltip(node, () => `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : badge.kind === 'evade' ? 'Active Evasion stacks. Each stack contributes to the attack roll defense.' : badge.kind === 'poise' ? tFull('combat.protection.poise') : wardHelp)}${badge.barrier > 0 ? `<br>${esc(tFull('combat.protection.barrier'))}` : ''}${badge.wardBlock > 0 ? `<br>${esc(t('combat.protection.wardBlock'))} ${badge.wardBlock}: ${esc(tFull('combat.protection.wardBlock'))}` : ''}`);
     }
     row.append(node);
   }

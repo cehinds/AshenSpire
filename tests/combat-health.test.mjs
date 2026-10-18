@@ -47,3 +47,17 @@ test('Poise has a numeric badge and retains the HP trim and accessible value', (
   const none = combatHealthRow(meter({ id: 'hp', value: '64/80', cur: 64, max: 80, pct: 80, lengthPct: 72, inset: true }), { poise: 0, poiseMax: 10 }, { tooltips: false });
   assert.equal(none.querySelector('.combat-health-meter').dataset.poised, 'false');
 }));
+
+test('PIP badges preserve actual Evasion stacks independently of other defenses', () => withKitDom(() => {
+  const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }),
+    { evasion: 2, poise: 3, poiseMax: 8, ward: 4, defense: 5 }, { tooltips: false });
+  assert.deepEqual(row.querySelectorAll('.combat-health-badge').map(node =>
+    [node.dataset.defenseKind, node.querySelector('.combat-health-badge-value').textContent]),
+  [['evade', '2'], ['poise', '3'], ['ward', '4'], ['shield', '5']]);
+  assert.equal(row.querySelector('.combat-health-meter .m-value').textContent, '18/20');
+}));
+
+test('spent Evasion stacks disappear from the PIP instead of showing a zero rating', () => {
+  for (const evasion of [0,-2,null,undefined]) assert.ok(!combatHealthModel({evasion}).badges.some(badge=>badge.kind==='evade'));
+  assert.equal(combatHealthModel({evasion:3}).badges.find(badge=>badge.kind==='evade').value,3);
+});

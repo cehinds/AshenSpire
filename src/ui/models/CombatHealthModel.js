@@ -22,7 +22,7 @@ export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, poise = 
     poised: poised > 0,
     poiseLabel: poised > 0 ? t('combat.protection.poiseValue', { value: poised, max: Math.max(poised, count(poiseMax)) }) : null,
     badges: [
-      ...(Number.isFinite(evasion) ? [{ kind: 'evade', label: t('card.tags.evade'), value: count(evasion) }] : []),
+      ...(Number.isFinite(evasion) && count(evasion) > 0 ? [{ kind: 'evade', label: t('card.tags.evade'), value: count(evasion) }] : []),
       ...(poised > 0 ? [{ kind: 'poise', label: t('combat.protection.poise'), value: poised }] : []),
       ...(arcaneWard > 0 ? [{ kind: 'ward', label: t('combat.protection.ward'), value: arcaneWard, barrier: charged, wardBlock: warded }] : []),
       ...(shield > 0 ? [{ kind: 'shield', label: t('combat.protection.block'), value: shield }] : []),

@@ -24,6 +24,12 @@
       "enum": [
         "turnStart"
       ]
+    },
+    "chargeFlaskCapacityPerPickup": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000,
+      "description": "Capacity granted by collecting an HP/MP charge flask. Absent or zero preserves inventory-only acquisition."
     }
   },
   "required": [
