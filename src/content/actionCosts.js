@@ -103,6 +103,7 @@ export const COST_TAGS = Object.freeze({
   oath: { weight: 0, side: 'sp' },
   ash: { weight: 0, side: 'sp' },
   basic: { weight: 0, side: 'sp' },
+  'rank.cantrip': { weight: 0, side: 'sp' }, // training classification; numerical rank owns the cost
   extractable: { weight: 0, side: 'sp' },
   starstone: { weight: 0, side: 'sp' },
   ritual: { weight: 0, side: 'sp' },
