@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "family": "status",
   "label": "Vulnerable",
-  "description": "Takes 50% more attack damage. 1 stack expires each turn.",
+  "description": "Takes 25% more attack damage. 1 stack expires each turn.",
   "attaches": [
     "status"
   ],
