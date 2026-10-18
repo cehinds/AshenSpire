@@ -719,6 +719,8 @@ The original technical illustrations, editable SVG wireframes, and 24 transparen
 
 ### Map and battlefield draft paintings (2026-10-17)
 
+The sources named in this section and the next (`art/map-battlefield-drafts/…`) live in [cehinds/AshenSpire-art](https://github.com/cehinds/AshenSpire-art) (intake PR #26), not in this repository; only the runtime exports under `assets-display/layered/` are kept here.
+
 Eight original OpenAI-generated paintings under user direction are retained on
 `feature/ImproveMapBattleFieldArt` in `art/map-battlefield-drafts/batch-01/`.
 Each source has its exact generation prompt and provenance; the readable manifest
@@ -840,8 +842,8 @@ Eighty-six original OpenAI image_gen paintings in
 backdrops, 19 transparent ground planes and 42 transparent nearby props.
 Exact prompts, original generated output paths, native dimensions and SHA-256
 records accompany unchanged source PNGs. Hash-bound reviews are indexed in
-`style-system/audit-location-streets.json`. The [editable modules](art/map-battlefield-drafts/batch-10-location-streets/modules/index.json)
-define 28 layered scenes and [12 Crownfall intro-map art candidates](art/map-battlefield-drafts/batch-10-location-streets/modules/intro-map.json).
+`style-system/audit-location-streets.json`. The [editable modules](https://github.com/cehinds/AshenSpire-art/blob/main/art/map-battlefield-drafts/batch-10-location-streets/modules/index.json)
+define 28 layered scenes and [12 Crownfall intro-map art candidates](https://github.com/cehinds/AshenSpire-art/blob/main/art/map-battlefield-drafts/batch-10-location-streets/modules/intro-map.json).
 Preview crops and declared viewport-edge prop framing do not alter source files.
 These remain unregistered feature-branch drafts; no third-party artwork or
 license is claimed.
