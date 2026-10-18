@@ -1,3 +1,4 @@
+import { cardCutoutUrl } from './layeredCardArt.js';
 import { CARD_ART_ELEMENTS } from './cardArtComposition.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
@@ -21,8 +22,9 @@ const MOTIFS = Object.freeze({
 });
 
 export function cardArtLayersHtml(composition) {
-  if (composition?.kind !== 'simple' || !Array.isArray(composition.layers) || !composition.layers.length) return '';
-  const layers = composition.layers.slice(0, 4).map((layer, index) => {
+  if (composition?.kind !== 'simple') return '';
+  const components = componentLayersHtml(composition.componentArt);
+  const layers = (composition.layers || []).slice(0, 3).map((layer, index) => {
     const theme = layer.kind === 'element' && Object.hasOwn(CARD_ART_ELEMENTS, layer.id) && CARD_ART_ELEMENTS[layer.id];
     const motif = Object.hasOwn(MOTIFS, layer.motif) && MOTIFS[layer.motif];
     if (!motif) return '';
@@ -30,5 +32,25 @@ export function cardArtLayersHtml(composition) {
     const glow = theme ? `<span style="position:absolute;inset:0;background:radial-gradient(ellipse at 15% 65%,${color(theme.glow)}24,transparent 42%),radial-gradient(ellipse at 85% 30%,${color(theme.glow)}1c,transparent 40%)"></span>` : '';
     return `${glow}<svg data-art-${theme ? 'element' : 'status'}="${esc(layer.id)}" viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:hidden;color:${tint};opacity:${theme ? '.34' : '.42'}" fill="none" stroke="currentColor" stroke-width="${theme ? '.55' : '.8'}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><g${!theme && index > 1 ? ` transform="translate(0 ${index % 2 ? 7 : -7})"` : ''}>${motif}</g></svg>`;
   }).join('');
-  return layers ? `<span data-card-art-layers aria-hidden="true" style="position:absolute;inset:0;display:block;overflow:hidden;pointer-events:none;border-radius:inherit">${layers}</span>` : '';
+  return layers || components ? `<span data-card-art-layers aria-hidden="true" style="position:absolute;inset:0;display:block;overflow:hidden;pointer-events:none;border-radius:inherit">${components}${layers}</span>` : '';
+}
+
+// A uniformly scaled 512×640 stage keeps shaft alignment and PNG aspect ratios
+// identical in square thumbnails, the short hand crop, and full inspection cards.
+function componentLayersHtml(art) {
+  if (!art) return '';
+  const images = art.sprites.filter(layer => layer.id !== 'background').map(layer => {
+    const css = Object.entries(layer.css).map(([key, value]) => `${key.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}:${value}`).join(';');
+    return `<img data-card-art-component="${esc(layer.assetId)}" data-art-layer="${esc(layer.id)}" alt="" aria-hidden="true" draggable="false" src="${esc(cardCutoutUrl(layer.path))}" style="${esc(css)}" />`;
+  }).join('');
+  return `<span data-art-composition="${esc(art.code)}" style="position:absolute;inset:0;container-type:size;pointer-events:none"><span style="position:absolute;left:50%;top:50%;width:min(100cqw,80cqh);height:min(125cqw,100cqh);transform:translate(-50%,-50%)">${images}</span></span>`;
+}
+
+/** A missing cutout must not leave a floating glow or an empty background. */
+export function bindCardComponentFailures(host, baseImage) {
+  for (const image of host.querySelectorAll('[data-card-art-component]')) {
+    image.addEventListener('error', () => {
+      if (host.contains(image)) baseImage.dispatchEvent(new Event('error'));
+    }, {once:true});
+  }
 }

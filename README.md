@@ -1,5 +1,22 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — layered card art
+
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/feature/newCardArt/latest/)
+
+Simple card art uses separate PNG backgrounds, objects and effects, selected
+from combat tags and JSON placement data. Shared small scepters retain the
+approved blue and pale mint ethereal weapon layers.
+[Runtime component preview](docs/preview/layered-card-art/index.html) ·
+[Placement JSON](asset-data/card-art/layered-runtime.json) ·
+[Capture record](docs/preview/features/newCardArt/capture.md).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile layered cards](docs/preview/features/newCardArt/mobile.png) | ![Desktop layered cards](docs/preview/features/newCardArt/desktop.png) | ![Wide layered cards](docs/preview/features/newCardArt/wide.png) | ![Tablet layered cards](docs/preview/features/newCardArt/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 A browser roguelike: build a character, explore a seeded world, and fight with cards.
