@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-18
+
+- **Card layers stop carrying empty filters, and the download folder sheds unused files** ([#2089](https://github.com/cehinds/AshenSpire/pull/2089), `0.7.1.1559`). Development-process change only, nothing in the game changes. Every illustrated card layer no longer carries a do-nothing colour filter, and the per-card layout files the game never loads are no longer copied into the download folder (about 13 MB).
+
 ## 2026-10-17
 
 - **Rules, screens, maps and art are described as JSON that one build compiles for any engine** ([#2072](https://github.com/cehinds/AshenSpire/pull/2072), `0.7.1.1559`). Players and enemies now share one character format, stat formulas, card pool and gear pool, with enemy decks, gear point pools, the Ashen Blight Core relic, deck-training copy limits and mostly rank 1+ card rewards. Each tag has a mechanic folder (model, interface, rules, test cases), UI components and screens carry view models, act maps and the asset catalog are JSON, and `tools/build-game.mjs` writes one hashed artifact with a reference Unity loader. Combat on phones no longer re-measures the HUD every frame, and the player HUD stays on the player's right. The running game still uses its existing code for most rules.
