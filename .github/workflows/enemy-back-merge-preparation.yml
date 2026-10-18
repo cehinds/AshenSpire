@@ -13,6 +13,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          filter: blob:none
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -39,7 +40,8 @@ jobs:
           const stamp=box.release+'.'+box.ordinal;
           const lines=missing.map(n=>{
             const entry=subjects.find(s=>landedPull(s)===n);
-            const subject=n==='2085' ? 'Prepare rear design branch for integration' : entry.subject.replace(/^Merge pull request #\d+ from [^\n]+\n?/,'Worker contribution '+n).replace(/^Merge PR #\d+: /,'');
+            const full=n==='2085' ? '' : execFileSync('git',['log','--all','--merges','--grep','^Merge pull request #'+n+' ','--format=%B','-1'],{encoding:'utf8'}).trim().split('\n').slice(1).join(' ').trim();
+            const subject=n==='2085' ? 'Prepare rear design branch for integration' : full || entry.subject.replace(/^Merge pull request #\d+ from [^\n]+\n?/,'Worker contribution '+n).replace(/^Merge PR #\d+: /,'');
             return '- **Rear-design preparation history: '+subject.replaceAll('*','')+'** ([#'+n+'](https://github.com/cehinds/AshenSpire/pull/'+n+'), `'+stamp+'`). Worker contribution included in this branch; first integration into dev is pending.';
           });
           if(lines.length)text=text.replace(/(## \d{4}-\d{2}-\d{2}\n)/,'$1\n'+lines.join('\n')+'\n');
