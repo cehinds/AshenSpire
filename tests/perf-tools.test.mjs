@@ -7,7 +7,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BUDGET, checkBudget, budgetFailed, budgetValues, parseArgs, sceneUrl, mean, httpProblem, readinessProblem, pageErrorProblem, playSummary, PLAYS_WANTED } from '../tools/measure.mjs';
+import { BUDGET, checkBudget, budgetFailed, budgetValues, parseArgs, sceneUrl, mean, httpProblem, readinessProblem, pageErrorProblem, turnAdvanced, playSummary, PLAYS_WANTED } from '../tools/measure.mjs';
 import * as size from '../tools/size-budget.mjs';
 
 const within = Object.fromEntries(Object.entries(BUDGET));
@@ -74,6 +74,14 @@ test('pageErrorProblem: any uncaught page error voids the attempt and is named',
   assert.equal(pageErrorProblem(undefined), null);
   assert.equal(pageErrorProblem(['TypeError: x is undefined']), 'page error: TypeError: x is undefined');
   assert.equal(pageErrorProblem(['a', 'b']), 'page error (1 of 2): a');
+});
+
+test('turnAdvanced: End Turn worked only on a later player turn or a finished combat', () => {
+  assert.equal(turnAdvanced(2, { phase: 'player', turn: 3 }), true);
+  assert.equal(turnAdvanced(2, { phase: 'enemy', turn: 3 }), false);
+  assert.equal(turnAdvanced(2, { phase: 'player', turn: 2 }), false);
+  assert.equal(turnAdvanced(2, { phase: 'enemy', turn: 2, result: 'win' }), true);
+  assert.equal(turnAdvanced(2, undefined), false);
 });
 
 test('playSummary: three plays are a sample, fewer are partial and never gated', () => {

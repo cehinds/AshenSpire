@@ -164,6 +164,14 @@ export function pageErrorProblem(errors) {
   return `page error${errors.length > 1 ? ` (1 of ${errors.length})` : ''}: ${errors[0]}`;
 }
 
+/**
+ * Whether End Turn did its job: the combat is over, or it is the player's phase
+ * on a later turn than `prev`. `c` is a combat state ({ phase, turn, result }).
+ */
+export function turnAdvanced(prev, c) {
+  return !!(c && (c.result || (c.phase === 'player' && c.turn > prev)));
+}
+
 // Runs in the page.
 function readinessProbe() {
   return { appChildren: document.querySelector('#app')?.children.length ?? 0, banners: document.querySelectorAll('.validation-banner').length };
@@ -332,13 +340,16 @@ async function endTurn(page, cdp, state) {
   const prev = (await state()).turn;
   const touch = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
   await touch('touchStart', b.x, b.y); await sleep(900); await touch('touchEnd');
-  for (let i = 0; i < 120; i++) {
+  let advanced = false;
+  for (let i = 0; i < 120 && !advanced; i++) {
     await sleep(500);
     const back = await page.evaluate(() => { const el = [...document.querySelectorAll('button')].find((x) => /^back$/i.test(x.textContent.trim()) && x.offsetParent && x.closest('[role=dialog],.modal,.reaction')); if (!el) return null; const r = window.__perf.rect(el); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
     if (back) { await page.touchscreen.tap(back.x, back.y); await sleep(300); }
     const c = await state();
-    if (c.result || (c.phase === 'player' && c.turn > prev)) break;
+    advanced = turnAdvanced(prev, c);
   }
+  // 60 s without a new turn is a stuck scene; falling through would let touchPlays retry for up to 30 hands
+  if (!advanced) throw new Error('End Turn never advanced the turn (60 s)');
   await sleep(800);
 }
 
