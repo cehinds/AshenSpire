@@ -158,9 +158,18 @@ test('jobs: only allowlisted ids run, one at a time, and history is kept', async
 
 test('engine export: the real exporter runs as a job, and its manifest and files are served read-only', async (t) => {
   const root = await project(t);
-  // The job runs tools/engine-export.mjs in the project. Plant a shim that runs
-  // the repository's real exporter, narrowed to two tables so it stays fast.
-  const exporter = path.resolve(HERE, '../../tools/engine-export.mjs');
+  // The real exporter derives its compiler/lock root from its script path.
+  // Give this case a private copy: the other export suite may compile the real
+  // checkout concurrently, including in the heavy discovered test shard.
+  const sourceRoot = path.resolve(HERE, '../..');
+  const compilerRoot = path.join(root, 'compiler-fixture');
+  for (const rel of ['tools', 'src', 'engine', 'content', 'games', 'asset-data',
+    'art-manifest.json', 'art-release.json', 'buildordinal.json']) {
+    await fs.cp(path.join(sourceRoot, rel), path.join(compilerRoot, rel), { recursive: true });
+  }
+  const exporter = path.join(compilerRoot, 'tools/engine-export.mjs');
+  assert.notEqual(path.dirname(path.dirname(exporter)), sourceRoot);
+  assert.equal(await fs.readFile(exporter, 'utf8'), await fs.readFile(path.join(sourceRoot, 'tools/engine-export.mjs'), 'utf8'), 'run the real exporter, not a fixture implementation');
   await fs.mkdir(path.join(root, 'tools'), { recursive: true });
   await fs.writeFile(path.join(root, 'tools/engine-export.mjs'), `import { spawnSync } from 'node:child_process';
 const r = spawnSync(process.execPath, [${JSON.stringify(exporter)}, ...process.argv.slice(2), '--only', 'content.cards,content.enemies'], { stdio: 'inherit' });
@@ -169,10 +178,20 @@ process.exit(r.status ?? 1);\n`);
   const { defs } = await (await call('/api/jobs')).json();
   assert.equal(defs.find((d) => d.id === 'engine-export').available, true);
   const started = await (await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'engine-export' }) })).json();
-  for (let i = 0; i < 600 && app.jobs.active.size; i++) await new Promise((r) => setTimeout(r, 50));
+  let compilerLock, projectLock;
+  for (let i = 0; i < 600 && app.jobs.active.size; i++) {
+    compilerLock ||= await fs.readFile(path.join(compilerRoot, '.build-lock'), 'utf8').then(JSON.parse).catch(() => null);
+    projectLock ||= await fs.readFile(path.join(root, '.build-lock'), 'utf8').then(JSON.parse).catch(() => null);
+    await new Promise((r) => setTimeout(r, 50));
+  }
   const run = await (await call(`/api/jobs/runs/${started.runId}`)).json();
   assert.equal(run.status, 'passed', run.log);
   assert.match(run.log, /engine-export: OK — 2 tables/);
+  assert.ok(compilerLock?.token, 'the copied exporter acquires its nested compiler lock');
+  assert.ok(projectLock?.token, 'the Workbench job owns its project lock');
+  assert.notEqual(compilerLock.token, projectLock.token, 'compiler and project locks have independent identities');
+  await assert.rejects(fs.access(path.join(compilerRoot, '.build-lock')), { code: 'ENOENT' }, 'nested exporter releases its own lock');
+  assert.ok((await fs.stat(path.join(compilerRoot, 'src/content/generated/gameProfiles.js'))).isFile(), 'the copied compiler retains the generated profile artifact');
 
   const body = await (await call('/api/export/manifest')).json();
   assert.equal(body.exists, true);
