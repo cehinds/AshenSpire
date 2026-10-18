@@ -12,6 +12,7 @@
     "combatPreference": "offense",
     "speedMinimum": 0.25,
     "speedMaximum": 8,
-    "delayMaximumMs": 5000
+    "delayMaximumMs": 5000,
+    "maxActionsPerTurn": 64
   }
 }
