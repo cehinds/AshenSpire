@@ -38,7 +38,7 @@ Contract: #2127 (merged). Implementation: #2129 `feature/FixCore`. Where a
 
 ## #2129 assumptions that differ from these rulings
 
-- Ward and damage typing (D3: no Ward, no typing).
+- Ward and damage typing (D3: open. Hold Ward changes until the owner rules; do not remove the physical/spell `camp`).
 - Same-stance effectiveness 1.0025 (D5: keep 1.25).
 - Combat deck drafts taking effect next encounter (D15: no editing in combat).
 - 60/10/30 rewards (D9: 60/10/15/15 with shops).
