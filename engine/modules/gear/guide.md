@@ -49,8 +49,14 @@ costs above the pool.
 ## Status
 
 Data, settings, the fill algorithm (`resolveGearItem` in `engine/kernel/gameConfig.js`) and the
-validator. Player equipment at runtime still reads `content/source/weapons.csv` and
-`outfits.csv`; switching the runtime to resolved gear is a follow-up.
+validator. Profiles carrying `armorBudget` aggregate converted equipped values through
+`gameProfileEquipmentReceipt`; matched items replace legacy self-stat modifiers.
+Armor uses baseline 3 points plus 1 per additional rank, independent of rarity.
+One upgrade tier adds one rank. Weapons retain their rarity pools.
+
+Additional point conversions: HP 10, MP 1, SP 1, Ward 3, Evasion 1 and
+Precision 1. Existing AR 1, DR 2, Poise 3 and attribute 1 conversions remain.
+Only resolved values contribute; their point counts are never granted again.
 
 ## Names
 

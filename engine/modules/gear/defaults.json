@@ -83,7 +83,13 @@
     "dexterity": 1,
     "constitution": 1,
     "wisdom": 1,
-    "intelligence": 1
+    "intelligence": 1,
+    "hp": 10,
+    "mp": 1,
+    "sp": 1,
+    "ward": 3,
+    "evasion": 1,
+    "precision": 1
   },
   "tags": {
     "sword": {
@@ -774,5 +780,9 @@
         "constitution": 1
       }
     }
+  },
+  "armorBudget": {
+    "baseline": 3,
+    "perRank": 1
   }
 }
