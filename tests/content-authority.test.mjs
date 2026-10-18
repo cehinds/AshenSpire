@@ -13,6 +13,7 @@ import { stances } from '../src/content/stances.js';
 import { flasks } from '../src/content/flasks.js';
 import { statuses } from '../src/content/statuses.js';
 import { expansionStatuses } from '../src/content/combatStatusRules.js';
+import * as eventModule from '../src/content/events.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const KINDS = { relics, stances, flasks };
@@ -50,6 +51,60 @@ test('statuses: src/content/statuses.js is a shim with no row literal', () => {
   assert.ok(!/^\s*name\s*:/m.test(text), 'statuses.js authors a `name:` line — edit content/source/statuses.json instead');
   assert.match(text, /from '\.\/generated\/statuses\.js'/);
   assert.match(text, /from '\.\/combatStatusRules\.js'/);
+});
+
+// Events: one array and five tables, each its own JSON file. The shim keeps the
+// freeze depths the hand-written module had: `events` unfrozen, the three
+// `event*` tables frozen at the top, `questChains` and `eventSpeakers` deeply.
+const readJson = (name) => JSON.parse(readFileSync(resolve(ROOT, `content/source/${name}.json`), 'utf8'));
+const isDeepFrozen = (value) => !value || typeof value !== 'object'
+  || (Object.isFrozen(value) && Object.values(value).every(isDeepFrozen));
+const EVENT_TABLES = ['eventChoiceIds', 'eventChoiceHistoryRequirements', 'eventHistoryRequirements', 'questChains', 'eventSpeakers'];
+
+test('events: the export deep-equals content/source/events.json', () => {
+  const authored = readJson('events');
+  assert.ok(Array.isArray(authored) && authored.length > 0, 'events.json is a non-empty array');
+  assert.deepStrictEqual(eventModule.events, authored);
+});
+
+for (const table of EVENT_TABLES) {
+  test(`events: ${table} deep-equals content/source/${table}.json`, () => {
+    const authored = readJson(table);
+    assert.ok(authored && typeof authored === 'object' && !Array.isArray(authored), `${table}.json is an object`);
+    if (table === 'eventChoiceHistoryRequirements') {
+      // JSON `null` in a slot means "no requirement"; the export holds `undefined`.
+      for (const slots of Object.values(authored)) {
+        assert.ok(Array.isArray(slots));
+        slots.forEach((slot, i) => { if (slot === null) slots[i] = undefined; });
+      }
+    }
+    assert.deepStrictEqual(eventModule[table], authored);
+  });
+}
+
+test('events: the frozen exports are frozen at the depth they always were', () => {
+  assert.equal(Object.isFrozen(eventModule.events), false);
+  for (const table of ['eventChoiceIds', 'eventChoiceHistoryRequirements', 'eventHistoryRequirements']) {
+    assert.ok(Object.isFrozen(eventModule[table]), `${table} is frozen`);
+  }
+  assert.ok(isDeepFrozen(eventModule.questChains), 'questChains is deeply frozen');
+  assert.ok(isDeepFrozen(eventModule.eventSpeakers), 'eventSpeakers is deeply frozen');
+});
+
+test('events: every event has one history id per choice', () => {
+  for (const event of eventModule.events) {
+    assert.equal(eventModule.eventChoiceIds[event.id]?.length, event.choices.length, `${event.id}: eventChoiceIds length`);
+    assert.equal(eventModule.eventChoicesWithHistory(event).length, event.choices.length, event.id);
+  }
+});
+
+test('events: src/content/events.js is a shim with no event literal', () => {
+  const text = readFileSync(resolve(ROOT, 'src/content/events.js'), 'utf8');
+  assert.ok(!/\{\s*id\s*:/.test(text), 'events.js authors a row (`{ id:`) — edit content/source/events.json instead');
+  assert.ok(!/^\s*(name|label|resultText)\s*:/m.test(text), 'events.js authors event text — edit content/source/events.json instead');
+  for (const name of ['events', ...EVENT_TABLES]) {
+    assert.match(text, new RegExp(`from './generated/${name}\\.js'`));
+  }
 });
 
 test('the generated modules are current (content-build --check exits 0)', () => {
