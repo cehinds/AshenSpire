@@ -195,7 +195,9 @@ if (removed.length) console.log(`launch: removed ${removed.length} stale launche
 const html = resolve(buildDir, 'AshenSpire.html');
 const singleFile = resolve(buildDir, 'download', 'AshenSpire.html');
 mkdirSync(resolve(distDir, 'download'), { recursive: true });
-for (const part of ['packs', 'objects', 'cards']) cpSync(resolve(buildDir, part), resolve(distDir, part), { recursive: true });
+// build/cards/ (per-card layout JSON, ~13 MB) stays a build-tree export for
+// tooling: the game never requests it, so it is not copied into dist/.
+for (const part of ['packs', 'objects']) cpSync(resolve(buildDir, part), resolve(distDir, part), { recursive: true });
 for (const part of ['asset-base.json', '.asset-pack']) copyFileSync(resolve(buildDir, part), resolve(distDir, part));
 const aliases = [
   [html, resolve(distDir, 'AshenSpire.html')],

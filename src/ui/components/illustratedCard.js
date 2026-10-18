@@ -64,7 +64,7 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
       if(l.bind==='tags')l={...l,x:doc.width*.1,y:doc.height*.858,w:doc.width*.8,h:doc.height*.116};
     }
     const footer=l.bind==='tags'&&model.sigils;
-    const position=`left:${l.x/doc.width*100}%;top:${l.y/doc.height*100}%;width:${l.w/doc.width*100}%;height:${l.h/doc.height*100}%;opacity:${l.opacity};filter:${footer?'none':`hue-rotate(${Number.isFinite(l.hue)?l.hue:0}deg)`};transform:${footer?'none':`rotate(${l.rotation}deg)`};`;
+    const position=`left:${l.x/doc.width*100}%;top:${l.y/doc.height*100}%;width:${l.w/doc.width*100}%;height:${l.h/doc.height*100}%;opacity:${l.opacity};filter:${footer||!l.hue||!Number.isFinite(l.hue)?'none':`hue-rotate(${l.hue}deg)`};transform:${footer||!l.rotation?'none':`rotate(${l.rotation}deg)`};`;
     let body='';
     if(l.bind==='tags'&&model.sigils){
       body=cardSigilsHtml(model.sigils);
