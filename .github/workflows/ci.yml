@@ -521,8 +521,10 @@ jobs:
           cat "$RUNNER_TEMP/shard.log"
           # DIAG (throwaway branch): surface the failing tests as annotations, which the REST API can read.
           if [ $code -ne 0 ]; then
-            grep -E "^not ok|^# (pass|fail)|failing tests|EPERM|EBUSY|ENOTEMPTY|ENOENT|Error:" "$RUNNER_TEMP/shard.log" | head -10 | while IFS= read -r line; do echo "::error::${line:0:400}"; done
-            grep -n -A12 "^not ok" "$RUNNER_TEMP/shard.log" | head -80 | while IFS= read -r line; do echo "::warning::${line:0:400}"; done
+            # the spec reporter: "✖ name (ms)" lines, then a "failing tests:" section with the errors
+            { grep -E "✖|EPERM|EBUSY|ENOTEMPTY|ENOENT" "$RUNNER_TEMP/shard.log" | grep -v "failing tests" | head -10; } | while IFS= read -r line; do echo "::error::${line:0:400}"; done
+            grep -A60 "failing tests" "$RUNNER_TEMP/shard.log" | grep -vE "^\s*$|^\s+at " | sed -n 1,10p | while IFS= read -r line; do echo "::warning::${line:0:400}"; done
+            grep -A60 "failing tests" "$RUNNER_TEMP/shard.log" | grep -vE "^\s*$|^\s+at " | sed -n 11,20p | while IFS= read -r line; do echo "::notice::${line:0:400}"; done
           fi
           exit $code
 
