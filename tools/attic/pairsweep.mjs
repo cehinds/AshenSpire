@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/pairsweep.mjs — the settings door, walked: named high-risk pairs of
+// tools/attic/pairsweep.mjs — the settings door, walked: named high-risk pairs of
 // (geometry-moving settings row × core gate), each legal value through the
 // app's OWN resolution, never the tool's copy of it.
 //
@@ -69,10 +69,10 @@
 //                               census gates live in tools/mapfog.mjs.
 //
 // Usage
-//   node tools/pairsweep.mjs                 all three pairs, this tree
-//   node tools/pairsweep.mjs --pair zoom     one pair
-//   node tools/pairsweep.mjs --root DIR      another tree (the known-bad run)
-//   CHROME=/path/to/chrome node tools/pairsweep.mjs
+//   node tools/attic/pairsweep.mjs                 all three pairs, this tree
+//   node tools/attic/pairsweep.mjs --pair zoom     one pair
+//   node tools/attic/pairsweep.mjs --root DIR      another tree (the known-bad run)
+//   CHROME=/path/to/chrome node tools/attic/pairsweep.mjs
 // Exit: 0 all green · 1 a finding · 2 usage / no browser / NOTHING RAN
 //
 // OBSERVED RED (the instrument rule), SAME DOOR AS THE REAL INPUT — the value

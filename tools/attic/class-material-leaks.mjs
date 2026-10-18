@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/class-material-leaks.mjs — catch cross-class material leaks statically.
+// tools/attic/class-material-leaks.mjs — catch cross-class material leaks statically.
 //
 // THE BUG THIS EXISTS FOR, twice now.
 //
@@ -21,7 +21,7 @@
 // Neither is visible to py_compile, to an import, or to any test that does not
 // actually render. It is visible here, in a second, from the source alone.
 //
-// Usage: node tools/class-material-leaks.mjs     (exit 1 on any leak)
+// Usage: node tools/attic/class-material-leaks.mjs     (exit 1 on any leak)
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

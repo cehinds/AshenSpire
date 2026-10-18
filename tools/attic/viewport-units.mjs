@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/viewport-units.mjs — Law 2's detector for viewport-constrained UI CSS.
+// tools/attic/viewport-units.mjs — Law 2's detector for viewport-constrained UI CSS.
 //
 // `body { zoom: var(--ui-zoom) }` creates a second coordinate space. A viewport
 // unit below that zoom can measure the unzoomed viewport while its box is painted

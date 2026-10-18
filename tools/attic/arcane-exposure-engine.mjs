@@ -1,4 +1,4 @@
-// tools/arcane-exposure-engine.mjs — observed-red host engine contract.
+// tools/attic/arcane-exposure-engine.mjs — observed-red host engine contract.
 //
 // No UI claims live here. Mid-combat state is authoritative in the host combat
 // snapshot; disk saves still resume at the established pre-combat boundary.

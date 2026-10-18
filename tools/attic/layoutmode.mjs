@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/layoutmode.mjs — #39's focused browser witness.
+// tools/attic/layoutmode.mjs — #39's focused browser witness.
 //
 // A height-only resize may change the fit zoom, but it must not change the
 // composition mode. This drives the real boot at the same width through a

@@ -1,4 +1,4 @@
-// tools/controlstrip.mjs — DOES THE SCREEN TELL THE TRUTH ABOUT ITS CONTROLS?
+// tools/attic/controlstrip.mjs — DOES THE SCREEN TELL THE TRUTH ABOUT ITS CONTROLS?
 //
 // Constantine, 2026-08-17: *"all the buttons on those tool tips should also work
 // and auto map to the current controls configured and the active device
@@ -34,11 +34,11 @@
 // the one cell that can tell the two apart and it is the reason this file exists.
 //
 // Usage
-//   node tools/controlstrip.mjs                  source tree via tools/serve.mjs
-//   node tools/controlstrip.mjs --dist           dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
-//   node tools/controlstrip.mjs --selftest       three source plants, watched red
-//   node tools/controlstrip.mjs --root DIR       serve a different tree (--selftest's door)
-//   CHROME=/path/to/chrome node tools/controlstrip.mjs
+//   node tools/attic/controlstrip.mjs                  source tree via tools/serve.mjs
+//   node tools/attic/controlstrip.mjs --dist           dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
+//   node tools/attic/controlstrip.mjs --selftest       three source plants, watched red
+//   node tools/attic/controlstrip.mjs --root DIR       serve a different tree (--selftest's door)
+//   CHROME=/path/to/chrome node tools/attic/controlstrip.mjs
 //
 // Exit codes
 //   0  every check held

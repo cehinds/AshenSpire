@@ -1,4 +1,4 @@
-// tools/uprightsetting.mjs — BOTH EDGES OF HIS AMENDMENT TO THE UPRIGHT GATE.
+// tools/attic/uprightsetting.mjs — BOTH EDGES OF HIS AMENDMENT TO THE UPRIGHT GATE.
 //
 // Constantine, 2026-08-17: *"rotating to horizontal should work again. I hate
 // that it tells me to rerotate to verticle. revert that back, or make that a
@@ -42,10 +42,10 @@
 // than argued in a commit message.
 //
 // Usage
-//   node tools/uprightsetting.mjs               source tree via tools/serve.mjs
-//   node tools/uprightsetting.mjs --dist        dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
-//   node tools/uprightsetting.mjs --selftest    two source plants, watched red
-//   node tools/uprightsetting.mjs --root DIR    serve a different tree
+//   node tools/attic/uprightsetting.mjs               source tree via tools/serve.mjs
+//   node tools/attic/uprightsetting.mjs --dist        dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
+//   node tools/attic/uprightsetting.mjs --selftest    two source plants, watched red
+//   node tools/attic/uprightsetting.mjs --root DIR    serve a different tree
 //
 // Exit codes  0 held · 1 a finding · 2 usage / no browser / NOTHING MEASURED
 //

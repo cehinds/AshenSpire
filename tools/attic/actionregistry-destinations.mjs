@@ -10,14 +10,14 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const TOOL_PATH = 'tools/actionregistry-destinations.mjs';
+const TOOL_PATH = 'tools/attic/actionregistry-destinations.mjs';
 const CEILING = [
   'src/main.js',
   'src/ui/input.js',
   'src/ui/screens/combat.js',
   'src/ui/screens/equipment.js',
   'src/ui/screens/map.js',
-  'tools/actionregistry-destinations.mjs',
+  'tools/attic/actionregistry-destinations.mjs',
 ];
 
 const read = (path) => readFileSync(resolve(ROOT, path), 'utf8');
@@ -250,7 +250,7 @@ function contract(s, { paths = changedPaths() } = {}) {
     {
       code: 'PATH-CEILING',
       ok: paths.length > 0 && paths.every((path) => CEILING.includes(path))
-        && paths.includes('tools/actionregistry-destinations.mjs'),
+        && paths.includes('tools/attic/actionregistry-destinations.mjs'),
       detail: `the exact source-only delta stays inside the six-path ceiling (${paths.join(', ')})`,
     },
   ];

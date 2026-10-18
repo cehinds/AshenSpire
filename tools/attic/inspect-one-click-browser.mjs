@@ -3,7 +3,7 @@
 // main@2026-10-03 the enemy "i" needed two presses). Guards the hand card's
 // Inspect control (.hand-info-portal) and the enemy's Inspect control
 // (.combatant-info) on a desktop mouse shape and a phone touch shape.
-// Run: node tools/inspect-one-click-browser.mjs
+// Run: node tools/attic/inspect-one-click-browser.mjs
 // Prints "inspect-one-click: OK n/n checks" and exits 0, or names the failed
 // check and exits 1. Screenshots go to docs/preview/inspect-one-click/.
 import assert from 'node:assert/strict';

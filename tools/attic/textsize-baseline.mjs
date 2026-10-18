@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/textsize-baseline.mjs — #53's browser witness.
+// tools/attic/textsize-baseline.mjs — #53's browser witness.
 //
 // Auto is the stylesheet-owned baseline. M is retained only as a legacy save
 // alias, so both stored values must clear the inline root write; S/L/XL must

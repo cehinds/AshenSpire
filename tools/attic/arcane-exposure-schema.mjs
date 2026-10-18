@@ -1,4 +1,4 @@
-// tools/arcane-exposure-schema.mjs — observed-red schema/carrier contract.
+// tools/attic/arcane-exposure-schema.mjs — observed-red schema/carrier contract.
 //
 // This slice stops before engine resolution. It establishes only truthful,
 // persisted carriers and a strict configured | immune | absent enemy model.

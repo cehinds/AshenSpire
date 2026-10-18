@@ -1,5 +1,5 @@
 // Capture real event, speaker, and combat-card screens after their art loads.
-// Usage: node tools/art-runtime-check.mjs --out D:/repos/.codex/temp/art-runtime
+// Usage: node tools/attic/art-runtime-check.mjs --out D:/repos/.codex/temp/art-runtime
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

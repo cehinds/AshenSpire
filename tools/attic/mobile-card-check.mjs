@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Touch regression checks for selection, confirmation, cancellation and detail text.
-// node tools/mobile-card-check.mjs [--shots absolute-output-directory]
+// node tools/attic/mobile-card-check.mjs [--shots absolute-output-directory]
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';

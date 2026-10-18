@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Rendered regression: a retained defeated frame cannot consume targeting.
-// node tools/defeated-targets.mjs [--shots DIRECTORY]
+// node tools/attic/defeated-targets.mjs [--shots DIRECTORY]
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";

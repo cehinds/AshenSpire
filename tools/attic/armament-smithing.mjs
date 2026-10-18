@@ -3,8 +3,8 @@
 // armament Smithing. This tool exercises the real content/model/save/session
 // modules from the selected tree. It writes only to in-memory save storage.
 //
-//   node tools/armament-smithing.mjs
-//   node tools/armament-smithing.mjs --root <checkout>
+//   node tools/attic/armament-smithing.mjs
+//   node tools/attic/armament-smithing.mjs --root <checkout>
 
 
 import { existsSync } from 'node:fs';

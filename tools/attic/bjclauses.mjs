@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/bjclauses.mjs — re-derive Constantine's eight D17 map clauses against
+// tools/attic/bjclauses.mjs — re-derive Constantine's eight D17 map clauses against
 // this tree. Bjorn, 2026-08-13. Reads the SOURCE TREE served by tools/serve.mjs.
 //
 // REMOVAL CONDITION (SOP 1's corollary): delete this file the day the eight
@@ -33,9 +33,9 @@
 //   computed styles of visited/current/reachable circles.
 // Screenshots go to shots/.
 //
-// Usage: node tools/bjclauses.mjs /path/to/ashenspire [--quick]
-//        node tools/bjclauses.mjs /path/to/tree --seeds BJORN1 --shapes 390x844
-//        node tools/bjclauses.mjs --selftest        the two floors, observed
+// Usage: node tools/attic/bjclauses.mjs /path/to/ashenspire [--quick]
+//        node tools/attic/bjclauses.mjs /path/to/tree --seeds BJORN1 --shapes 390x844
+//        node tools/attic/bjclauses.mjs --selftest        the two floors, observed
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from '../browser.mjs';
@@ -320,7 +320,7 @@ async function selftest() {
 
   let out = ''; let code = 0;
   try {
-    out = execFileSync(process.execPath, [join(tree, 'tools/bjclauses.mjs'), tree, '--quick', '--seeds', 'BJORN1', '--shapes', '390x844'],
+    out = execFileSync(process.execPath, [join(tree, 'tools/attic/bjclauses.mjs'), tree, '--quick', '--seeds', 'BJORN1', '--shapes', '390x844'],
       { cwd: tree, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 300000, env: { ...process.env, BJ_OUT: join(base, 'shots') } });
   } catch (e) { code = e.status ?? -1; out = `${e.stdout || ''}${e.stderr || ''}`; }
   rmSync(base, { recursive: true, force: true });
@@ -332,7 +332,7 @@ async function selftest() {
   if (!ok) console.log(`         tail: ${out.trim().split('\n').slice(-4).join(' | ').slice(0, 300)}`);
   console.log('');
   if (!ok) { console.log('The floor did not fire. This tool may still exit 0 having read nothing.'); return 1; }
-  console.log('DOOR: `node <planted copy>/tools/bjclauses.mjs <copy>` — a whole run, through serve(),');
+  console.log('DOOR: `node <planted copy>/tools/attic/bjclauses.mjs <copy>` — a whole run, through serve(),');
   console.log('  chromium and the real page. The plant is a real edit to a real source file, and the');
   console.log('  probe fails for the reason a genuinely broken map would fail it.');
   console.log('NOT PASSED THROUGH: the build (this tool serves the source tree by design), and the');

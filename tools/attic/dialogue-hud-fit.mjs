@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// tools/dialogue-hud-fit.mjs — THE W4c HUD IS READABLE, ON EVERY SCREEN.
+// tools/attic/dialogue-hud-fit.mjs — THE W4c HUD IS READABLE, ON EVERY SCREEN.
 //
 // THE DEFECT THIS EXISTS FOR, and it shipped: on a 411x783 phone the band's
 // two rows were folded onto one line, so "CLASS Reaver" was drawn on top of
@@ -13,8 +13,8 @@
 // tools/dialogue-context-fit.mjs does, deliberately) cannot see this at all.
 //
 // Usage
-//   node tools/dialogue-hud-fit.mjs           the five hosts
-//   node tools/dialogue-hud-fit.mjs --out DIR also a PNG per host
+//   node tools/attic/dialogue-hud-fit.mjs           the five hosts
+//   node tools/attic/dialogue-hud-fit.mjs --out DIR also a PNG per host
 //
 // Exit 0 green, 1 a finding, 2 the harness could not run.
 import { mkdirSync, writeFileSync } from 'node:fs';

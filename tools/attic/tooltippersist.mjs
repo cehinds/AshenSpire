@@ -1,4 +1,4 @@
-// tools/tooltippersist.mjs — E8: the tooltip stays up until something replaces
+// tools/attic/tooltippersist.mjs — E8: the tooltip stays up until something replaces
 // it, observed on the real combat screen through the finger's own door.
 //
 // HIS SENTENCE, and it is the whole spec (asks-ledger.md E8, his words):
@@ -74,11 +74,11 @@
 // can stick: no other caller asks for it.
 //
 // Usage
-//   node tools/tooltippersist.mjs                source tree via serve.mjs
-//   node tools/tooltippersist.mjs --selftest     the re-runnable known-bad
-//   node tools/tooltippersist.mjs --root DIR     another tree
-//   node tools/tooltippersist.mjs --only 390x844
-//   node tools/tooltippersist.mjs --shots DIR   also write the two frames he
+//   node tools/attic/tooltippersist.mjs                source tree via serve.mjs
+//   node tools/attic/tooltippersist.mjs --selftest     the re-runnable known-bad
+//   node tools/attic/tooltippersist.mjs --root DIR     another tree
+//   node tools/attic/tooltippersist.mjs --only 390x844
+//   node tools/attic/tooltippersist.mjs --shots DIR   also write the two frames he
 //                                               asked to see (held, lifted).
 //                                               Evidence, not a check: the
 //                                               camera asserts nothing.
