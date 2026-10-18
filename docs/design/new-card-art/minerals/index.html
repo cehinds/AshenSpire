@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Minerals · separate object, cracks and glow</title>
+<link rel="stylesheet" href="style.css">
+<header>
+  <p class="eyebrow">ASHENSPIRE / ART COMPONENT PROPOSALS</p>
+  <h1>Shard, pebble, stone, crystal & diamond</h1>
+  <p>Ten objects per family. Every object, crack decal and glow is a separate transparent PNG.</p>
+  <nav><a href="minerals-png-json.zip" download>Download 150 PNGs + JSON + viewer</a><a href="manifest.json">Full JSON</a><a href="../cutouts.html">Weapon components</a></nav>
+  <p class="muted">Minerals has its own A–E codes: letter = family, first digit = object, second digit = effect pair. Zero is a real variant. The separate layer switches hide effects.</p>
+</header>
+<main>
+  <section id="editor" aria-labelledby="editor-title">
+    <h2 id="editor-title">Adjust layers</h2>
+    <div class="selectors">
+      <label>Family <select id="family"></select></label>
+      <label>Object <select id="object"></select></label>
+      <label>Effect pair <select id="effect"></select></label>
+      <button id="reset">Reset placement</button><button id="export">Download placement JSON</button>
+    </div>
+    <p id="selection-label"></p>
+    <div class="workspace"><div><div id="stage" class="stage"></div><p class="muted">Preview background is not part of the PNGs.</p></div><div id="controls"></div></div>
+    <div id="isolated" class="isolated"></div>
+  </section>
+  <section aria-labelledby="collection-title">
+    <div class="collection-heading"><h2 id="collection-title">All 50 options</h2><label>Show <select id="view"><option value="all">Assembled</option><option value="object">Objects only</option><option value="cracks">Cracks only</option><option value="glow">Glow only</option></select></label></div>
+    <p class="muted">Choose any labeled option to edit it. Cracks are unlit fissures; the blue/mint aura lives only in the glow PNG. Mixed effect pairs may need placement adjustments.</p>
+    <div id="gallery"></div>
+  </section>
+</main>
+<script src="data.js"></script><script src="viewer.js"></script>
+</html>

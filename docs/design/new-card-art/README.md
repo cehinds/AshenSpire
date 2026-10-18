@@ -1,3 +1,7 @@
+## Mineral proposals: separate object, crack and glow layers
+
+[Browse 50 mineral options](minerals/index.html): ten shards, pebbles, stones, crystals and diamonds, with 150 transparent PNG components and editable placement JSON. Mineral codes use their own namespace; the accepted weapon revision below is unchanged.
+
 ## Current revision: accepted pale-mint color pass
 
 Revision 14 replaces the five strong-green source sprites with a pale pearl-white / icy-mint pass at the existing 20% rendered opacity. Shared scepter size, alignment and all layer transforms are preserved. [View the gallery](weapon-scepter-gallery.html), [see the current set](weapons-and-scepters-v14.png), or [download revision 14](card-art-cutouts-v14.zip).

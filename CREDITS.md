@@ -1,5 +1,15 @@
 # Credits & Asset Licenses
 
+## Mineral component proposals (2026-10-18)
+
+The [mineral proposal collection](docs/design/new-card-art/minerals/README.md)
+contains 50 objects with separate crack and glow layers (150 transparent PNGs).
+The artwork was generated with OpenAI ImageGen under human direction, referencing
+an earlier generated dark-pebble concept. Original sheets, hashes, effect prompts
+and extraction metadata accompany the collection. ImageMagick performs fixed-grid
+cropping and normalization. These are review assets, not runtime replacements.
+No third-party artwork was downloaded and no third-party licence is claimed.
+
 ## Starter-class Smash paintings (2026-10-14)
 
 The Rogue dagger-and-buckler, Starseer ash-staff and Herald bone-sceptre
