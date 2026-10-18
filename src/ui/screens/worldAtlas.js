@@ -34,6 +34,10 @@ const pct = (n) => `${(n * 100).toFixed(2)}%`;
 const button = (label, attrs = "") =>
   `<button type="button" class="as-btn" ${attrs}>${esc(label)}</button>`;
 
+export function atlasLayeredPreviewHtml(locationName, scene) {
+  return `<div class="atlas-layered-preview" role="img" aria-label="${esc(locationName)} — ${esc(scene.label)}">${layeredEnvironmentHtml(scene)}</div>`;
+}
+
 export function mountWorldAtlas(
   app,
   {
@@ -238,7 +242,7 @@ export function mountWorldAtlas(
     const layeredScene = layeredSceneAt(id);
     const scene = locationScene(id, run);
     const illustration = layeredScene
-      ? `<div class="atlas-layered-preview">${layeredEnvironmentHtml(layeredScene)}</div>`
+      ? atlasLayeredPreviewHtml(n.displayName, layeredScene)
       : scene
       ? `<svg viewBox="${scene.box.join(' ')}" role="img" aria-label="${esc(n.displayName)} — ${esc(scene.name)}" data-location-scene="${esc(scene.id)}"><image href="${esc(assetUrl(scene.atlas))}" width="1536" height="1024"/></svg>`
       : coreArt(id);
@@ -358,7 +362,7 @@ export function mountWorldAtlas(
       const pane = dialog.querySelector(".atlas-location-detail");
       disposePreview();
       const previewScene = layeredSceneAt(pointId);
-      pane.innerHTML = `<div class="atlas-detail-scroll">${previewScene ? `<div class="atlas-layered-preview">${layeredEnvironmentHtml(previewScene)}</div>` : ''}${html}</div>`;
+      pane.innerHTML = `<div class="atlas-detail-scroll">${previewScene ? atlasLayeredPreviewHtml(point.displayName, previewScene) : ''}${html}</div>`;
       mountPreview(pane.querySelector('.atlas-layered-preview'));
       const actions = dialog.querySelector('.atlas-detail-actions');
       actions.replaceChildren();

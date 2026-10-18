@@ -132,3 +132,84 @@ test('dialogue window fitting exposes the shared floor-line receipt', async () =
   assert.equal(receipt.floor.top,380);
   assert.equal(backdrop.dataset.floorTop,'570');
 });
+
+test('both dialogue plates recover art sources and release on stage replacement and disposal', async () => {
+  const {wireDialogueStage}=await import('../src/ui/components/dialogueStage.js');
+  const {setBuiltInSource}=await import('../src/ui/assetmap.js');
+  const {builtInArtArrived,resetHighResArt}=await import('../src/ui/highResArt.js');
+  const keys=['document','window','matchMedia','MutationObserver','ResizeObserver','getComputedStyle'];
+  const old=Object.fromEntries(keys.map(key=>[key,globalThis[key]]));
+  const id='assets-display/layered/rain.webp';
+  const mount=()=>{
+    const nodes=Array.from({length:2},()=>({dataset:{layerAsset:id},style:{}}));
+    const plates=nodes.map(node=>({querySelector:()=>({dataset:{},querySelectorAll:()=>[node]})}));
+    const root={isConnected:true,clientWidth:0,clientHeight:0,getBoundingClientRect:()=>({width:0}),querySelector:()=>null,
+      querySelectorAll:selector=>selector===':scope > .dialogue-plate-layer'?plates:[]};
+    return {root,nodes};
+  };
+  const doc=new EventTarget();doc.body={classList:{contains:()=>false}};doc.documentElement={};doc.querySelectorAll=()=>[];
+  globalThis.document=doc;globalThis.window=new EventTarget();
+  globalThis.matchMedia=()=>({matches:false,addEventListener(){},removeEventListener(){}});
+  globalThis.MutationObserver=class{observe(){}disconnect(){}};
+  delete globalThis.ResizeObserver;
+  globalThis.getComputedStyle=()=>({fontSize:'16px'});
+  const config={layout:{sizing:{floorPercent:60}},parent:{},scene:{}};
+  const recover=url=>{const map=new Map([[id,url]]);setBuiltInSource(map);builtInArtArrived(map);};
+  let first,second;
+  try {
+    setBuiltInSource(null);
+    const a=mount();first=wireDialogueStage(a.root,config);
+    recover('./objects/aa/recovered.webp');
+    assert.ok(a.nodes.every(node=>node.style.backgroundImage==='url("./objects/aa/recovered.webp")'),'both mounted copies recover');
+    const b=mount();second=wireDialogueStage(b.root,config);
+    recover('./objects/bb/replacement.webp');
+    assert.ok(a.nodes.every(node=>node.style.backgroundImage==='url("./objects/aa/recovered.webp")'),'replacement releases old plates');
+    assert.ok(b.nodes.every(node=>node.style.backgroundImage==='url("./objects/bb/replacement.webp")'));
+    second.release();recover('./objects/cc/disposed.webp');
+    assert.ok(b.nodes.every(node=>node.style.backgroundImage==='url("./objects/bb/replacement.webp")'),'disposal releases both plates');
+  } finally {
+    first?.release();second?.release();setBuiltInSource(null);resetHighResArt();
+    for(const [key,value]of Object.entries(old)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}
+  }
+});
+
+test('battlefield replacement and DOM detachment release layered source listeners', async () => {
+  const {wireBattlefieldStage}=await import('../src/ui/components/battlefieldStage.js');
+  const {battlefieldStageModel}=await import('../src/ui/models/BattlefieldStageModel.js');
+  const {setBuiltInSource}=await import('../src/ui/assetmap.js');
+  const {builtInArtArrived,resetHighResArt}=await import('../src/ui/highResArt.js');
+  const keys=['document','window','MutationObserver','ResizeObserver','matchMedia','cancelAnimationFrame'];
+  const old=Object.fromEntries(keys.map(key=>[key,globalThis[key]])),observers=[];
+  const id='assets-display/layered/rain.webp';
+  const doc=new EventTarget();doc.body={classList:{contains:()=>false}};doc.documentElement={dataset:{}};
+  doc.createElement=()=>({getContext:()=>null});doc.querySelectorAll=()=>[];
+  globalThis.document=doc;globalThis.window=new EventTarget();globalThis.cancelAnimationFrame=()=>{};
+  globalThis.matchMedia=()=>({matches:false,addEventListener(){},removeEventListener(){}});
+  globalThis.ResizeObserver=class{observe(){}disconnect(){}};
+  globalThis.MutationObserver=class{constructor(fn){this.fn=fn;observers.push(this);}observe(target,options){this.options=options;}disconnect(){this.closed=true;}};
+  const mount=()=>{
+    const node={dataset:{layerAsset:id},style:{}},effects={dataset:{},querySelectorAll:()=>[node]};
+    const combat=new EventTarget();combat.dataset={};combat.querySelector=()=>effects;combat.querySelectorAll=()=>[];
+    const field={isConnected:true,dataset:{},style:{setProperty(){}},setAttribute(){},closest:()=>combat,querySelectorAll:()=>[]};
+    return {node,field};
+  };
+  const recover=url=>{const map=new Map([[id,url]]);setBuiltInSource(map);builtInArtArrived(map);};
+  let aStage,bStage;
+  try {
+    setBuiltInSource(null);
+    const a=mount();aStage=wireBattlefieldStage(a.field,battlefieldStageModel());
+    recover('./first.webp');assert.equal(a.node.style.backgroundImage,'url("./first.webp")');
+    const b=mount();bStage=wireBattlefieldStage(b.field,battlefieldStageModel());
+    recover('./second.webp');
+    assert.equal(a.node.style.backgroundImage,'url("./first.webp")','replacement already releases the previous stage');
+    assert.equal(b.node.style.backgroundImage,'url("./second.webp")');
+    b.field.isConnected=false;
+    for(const observer of observers.filter(o=>!o.closed&&o.options.childList&&o.options.subtree))observer.fn([]);
+    recover('./detached.webp');
+    assert.equal(b.node.style.backgroundImage,'url("./second.webp")','the detach observer releases art-source wiring');
+    assert.ok(observers.every(o=>o.closed),'all old stage observers disconnect');
+  } finally {
+    aStage?.release();bStage?.release();setBuiltInSource(null);resetHighResArt();
+    for(const [key,value]of Object.entries(old)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}
+  }
+});
