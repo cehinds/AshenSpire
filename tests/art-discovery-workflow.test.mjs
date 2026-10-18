@@ -1,11 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync, existsSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
+import {join} from 'node:path';
 
 // The map and battlefield authoring sources live in cehinds/AshenSpire-art
 // (art/map-battlefield-drafts/, AshenSpire-art PR #26). This repository ships only the
 // native-size runtime exports under assets-display/layered/, so no CI lane may depend on the sources.
-const url = path => new URL(`../${path}`, import.meta.url);
+const root = fileURLToPath(new URL('../', import.meta.url));
+const url = path => join(root, path);
 
 for (const workflow of ['tests', 'ci']) {
   test(`${workflow}.yml does not check out or install anything from the map authoring sources`, () => {
