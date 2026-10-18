@@ -97,14 +97,8 @@ jobs:
         with:
           packs: ${{ env.ART_PACKS }}
 
-      - name: Workbench, editor, UI Studio and build-lock tests
-        run: node --test workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/build-lock.test.mjs tests/build-steps.test.mjs tests/write-atomic.test.mjs tests/shot-match.test.mjs
-
-      # This suite and the Workbench server test both invoke the real exporter
-      # against this checkout's shared build lock; run the suite after the
-      # parallel test-file command has finished.
-      - name: Engine-export tests
-        run: node --test tests/engine-export.test.mjs
+      - name: Workbench, editor, UI Studio, engine-export and build-lock tests
+        run: node --test workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/engine-export.test.mjs tests/build-lock.test.mjs tests/build-steps.test.mjs tests/write-atomic.test.mjs tests/shot-match.test.mjs
 
       - name: Engine export
         run: node tools/engine-export.mjs --out build/engine-export
@@ -164,10 +158,6 @@ jobs:
         with:
           packs: ${{ env.ART_PACKS }}
 
-      - name: Workbench, editor, UI Studio and build-lock tests
+      - name: Workbench, editor, UI Studio, engine-export and build-lock tests
         shell: bash
-        run: node --test --test-timeout=180000 workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/build-lock.test.mjs tests/build-steps.test.mjs tests/write-atomic.test.mjs tests/shot-match.test.mjs
-
-      - name: Engine-export tests
-        shell: bash
-        run: node --test --test-timeout=180000 tests/engine-export.test.mjs
+        run: node --test --test-timeout=180000 workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/engine-export.test.mjs tests/build-lock.test.mjs tests/build-steps.test.mjs tests/write-atomic.test.mjs tests/shot-match.test.mjs
