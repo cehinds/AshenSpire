@@ -2041,8 +2041,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     app.querySelectorAll('[data-cu]').forEach((b) => b.addEventListener('click', () => resolve(b.dataset.cu === 'relic' ? { takeRelic: true } : {})));
   }
+  let victoryCued = false; // the complete scene can render more than once; the buzz is for the moment, not the repaint
   function renderComplete() {
     const win = snap.scene.victory;
+    if (win && !victoryCued) { victoryCued = true; haptic.play('victory'); } // the win's own buzz, as in gameover.js
     const leave = button({ label: 'Return to the fire', weight: 'primary', id: 'coop-leave2' });
     const door = pageDoor({
       eyebrow: 'Forsaken Together', title: win ? 'Victory' : 'Defeat', size: 'md', className: 'coop-door',

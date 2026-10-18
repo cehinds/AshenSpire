@@ -494,4 +494,8 @@ test('victory: the win screen buzzes once; the defeat screen does not', async ()
   const src_ = src('src/ui/screens/gameover.js');
   assert.equal([...src_.matchAll(/haptic\.play\('victory'\)/g)].length, 1, 'one victory haptic site');
   assert.match(src_, /if \(victory\) haptic\.play\('victory'\)/, 'only on a win');
+  // Co-op's complete scene is rendered by coop.js, not mountGameOver: it buzzes once per scene, on a win only.
+  const coop = src('src/ui/screens/coop.js');
+  assert.equal([...coop.matchAll(/haptic\.play\('victory'\)/g)].length, 1, 'one co-op victory haptic site');
+  assert.match(coop, /if \(win && !victoryCued\) \{ victoryCued = true; haptic\.play\('victory'\); \}/, 'once, on a win');
 });

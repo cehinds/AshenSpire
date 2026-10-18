@@ -21,7 +21,8 @@
 //   poiseBreak  — an enemy's Poise breaks and its stagger starts: ui/fx.js
 //                 playBeatHaptics, on the engine's poiseBroken receipt (solo
 //                 only; the receipt names no seat, so co-op leaves it still).
-//   victory     — the run is won: ui/screens/gameover.js mountGameOver.
+//   victory     — the run is won: ui/screens/gameover.js mountGameOver (solo),
+//                 ui/screens/coop.js renderComplete (co-op, once per complete scene).
 //
 // Retuning a buzz, or giving another moment one, is an edit to this table and
 // one call site. The setting that turns all of them off is `haptics` in
