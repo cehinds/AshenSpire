@@ -29,7 +29,7 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
     const width = Math.min(panel.width, area.width), height = Math.min(panel.height, area.height), a = panel.anchor;
     const side = targetHudSide(panel.role, panel.lane, config);
     const point = direction => direction === 'below' ? { left: a.left + (a.width - width) / 2, top: a.top + a.height + gap }
-      : { left: direction === 'left' ? a.left - width - gap : a.left + a.width + gap, top: a.top + Math.max(0, (a.height - height) / 3) };
+      : { left: direction === 'left' ? a.left - width - gap : a.left + a.width + gap, top: a.top - height / 3 };
     const choices = [], seen = new Set();
     function add(left, top, penalty) {
       const rect = { left: clamp(left, area.left, area.left + area.width - width), top: clamp(top, area.top, area.top + area.height - height), width, height };

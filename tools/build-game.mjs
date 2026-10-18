@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { canonicalGameJSON, resolveGameAuthor, validateGameSchema } from '../engine/kernel/gameConfig.js';
 import { loadGameProfileCatalog } from './game-config.mjs';
+import { compileBindings, validateModifiers, validateParameters, validateParameterSchema, parameterDefaults } from '../engine/runtime/bindings.mjs';
 import { loadMechanics, loadOps } from '../engine/runtime/interpreter.mjs';
 import { buildAssetCatalog, readAliases } from './asset-catalog.mjs';
 import { contentBundle } from '../src/content/index.js';
@@ -117,7 +118,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const paramOk = (type, x, { staticContent = false } = {}) => {
     if (isVar(x) && !staticContent) return true;
     switch (type) {
-      case 'value': case 'number': return typeof x === 'number' || isFormula(x);
+      case 'value': case 'number': return Number.isFinite(x) || isFormula(x);
       case 'integer': return Number.isInteger(x) || isFormula(x);
       case 'boolean': return typeof x === 'boolean';
       case 'string': return typeof x === 'string';
@@ -127,6 +128,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
         // an array target is only something the portable mechanic interpreter understands.
         if (staticContent) return typeof x === 'string' && TARGETS.includes(x);
         return typeof x === 'string' || (Array.isArray(x) && x.every(y => typeof y === 'string'));
+      case 'array': return Array.isArray(x);
       case 'object': return x !== null && typeof x === 'object' && !Array.isArray(x);
       default: return true;
     }
@@ -144,7 +146,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const catalogOps = loadOps();
   // Condition shapes (SPEC section 5): both runtimes read operands unconditionally.
   const CMP = ['<', '<=', '==', '!=', '>=', '>'];
-  const isValue = x => typeof x === 'number' || (typeof x === 'string' && x.startsWith('$')) || (x && typeof x === 'object' && !Array.isArray(x) && 'f' in x);
+  const isValue = x => Number.isFinite(x) || (typeof x === 'string' && x.startsWith('$')) || (x && typeof x === 'object' && !Array.isArray(x) && 'f' in x);
   const conditionErrors = (c, where) => {
     if (!c || typeof c !== 'object' || Array.isArray(c)) return [`${where}: condition must be an object`];
     const keys = Object.keys(c);
@@ -165,7 +167,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const operandOk = (desc, x) => /^array of values/.test(desc) ? Array.isArray(x) && x.every(isValue)
     : /^array/.test(desc) ? Array.isArray(x)
     : /^(entity ref|status id|metric name)/.test(desc) ? typeof x === 'string'
-    : /^number/.test(desc) ? (typeof x === 'number' || (typeof x === 'string' && x.startsWith('$')))  // the evaluator reads number fields directly; no nested formulas
+    : /^number/.test(desc) ? (Number.isFinite(x) || (typeof x === 'string' && x.startsWith('$')))  // the evaluator reads number fields directly; no nested formulas
     : true;
   const PORTABLE_FORMULAS = new Set(['add', 'mul', 'percentMaxHp', 'missingHp', 'missingMana', 'blockOf', 'hpOf', 'energySpent', 'cardsPlayedThisTurn', 'stacks']);
   const portableFormulaErrors = (v, where) => {
@@ -180,6 +182,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const formulaRequired = Object.fromEntries(Object.entries(formulaCatalog).map(([op, d]) => [op, Object.entries(d.fields || {}).filter(([, t]) => /\brequired\b/.test(String(t))).map(([k]) => k)]));
   // Every authored { f } formula anywhere in a step or query names a catalog formula (formulas.json).
   const formulaErrors = (v, where) => {
+    if (typeof v === 'number' && !Number.isFinite(v)) return [`${where}: nonfinite number`];
     if (Array.isArray(v)) return v.flatMap(x => formulaErrors(x, where));
     if (!v || typeof v !== 'object') return [];
     const own = !('f' in v) ? [] : !formulaOps.has(v.f) ? [`${where}: unknown formula '${v.f}'`]
@@ -200,9 +203,13 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
       // A declarative amount must name a provider exported by this profile.
       if (v.op === 'heal' && v.rule !== undefined && (v.rule !== 'healRules' || !profile.modules['heal-rules'])) fail(`${where}: unknown or unavailable phase heal rule '${v.rule}'`);
       if ('op' in v && !catalog[v.op]) fail(`${where}: unknown effect op '${v.op}'`);
-      else if ('op' in v) for (const [name, param] of Object.entries(catalog[v.op].params || {})) {
+      else if ('op' in v) {
+        for (const key of Object.keys(v)) if (key !== 'op' && !Object.hasOwn(catalog[v.op].params || {}, key) && !Object.hasOwn(catalogOps.effectEnvelope || {}, key)) fail(`${where}: op ${v.op} unknown parameter '${key}'`);
+        for (const [key, param] of Object.entries(catalogOps.effectEnvelope || {})) if (v[key] !== undefined && !paramOk(param.type,v[key],{staticContent:true})) fail(`${where}: op ${v.op} envelope '${key}' is not a ${param.type}`);
+        for (const [name, param] of Object.entries(catalog[v.op].params || {})) {
         if (param.required && v[name] === undefined && !(param.contentRequiredUnless && v[param.contentRequiredUnless] !== undefined)) fail(`${where}: op ${v.op} needs '${name}'`);
         else if (v[name] !== undefined && !paramOk(param.type, v[name], { staticContent: true })) fail(`${where}: op ${v.op} param '${name}' is not ${param.type === 'entityRef' ? `an effect target (${TARGETS.join(', ')})` : `a ${param.type}`}`);
+        }
       }
       if ((v.op === 'applyStatus' || v.op === 'removeStatus') && typeof v.status === 'string' && !knownStatuses.has(v.status)) fail(`${where}: op ${v.op} names status '${v.status}', which this profile does not export`);
       if (v.op === 'buildup' && typeof v.status === 'string' && !knownBuildups.has(v.status)) fail(`${where}: op buildup names status '${v.status}', which has no status-control row (src/content/combatStatusRules.js)`);
@@ -213,6 +220,17 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     for (const key of ['cards', 'enemyCards', 'resourceVariants', 'effectVariants', 'enemies', 'characters']) if (content[key]) { walk(content[key], `content.${key}`); for (const e of formulaErrors(content[key], `content.${key}`)) fail(e); }
   }
   for (const [slug, m] of Object.entries(mechanics)) {
+    try {
+      if (m.manifest.parameters) validateParameterSchema(m.manifest.parameters, `engine/mechanics/${slug}/mechanic.json.parameters`);
+      if (m.manifest.parameters) validateParameters(m.manifest.parameters, parameterDefaults(m.manifest.parameters), `engine/mechanics/${slug}/mechanic.json.parameters`, true);
+      const typed = (m.service.modifiers || []).filter(row => row.phase !== undefined);
+      if (typed.length) validateModifiers(typed, `engine/mechanics/${slug}/service.json.modifiers`);
+      for (const row of typed) {
+        for (const error of formulaErrors(row.value, `${slug} modifier ${row.id}`)) fail(error);
+        if (row.when) for (const error of conditionErrors(row.when, `${slug} modifier ${row.id}.when`)) fail(error);
+      }
+      if (m.manifest.portability === 'portable' && !(m.service.handlers || []).length && !typed.length && !Object.keys(m.interface.queries || {}).length) fail(`${slug}: required mechanic has no executable behavior`);
+    } catch (error) { fail(error.message); }
     for (const [q, def] of Object.entries(m.interface.queries || {})) for (const e of formulaErrors(def.value, `${slug} query ${q}`)) fail(e);
     // Portable runtimes evaluate only the formulas they carry context for (SPEC section 7); metric and traitBonus
     // read engine-only state (abilityRiders, weapon damage, turn counters) and stay with the legacy engine.
@@ -267,13 +285,36 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
           const entry = catalogOps.ops[step.op];
           if (!entry) fail(`${slug}: op '${step.op}' is not in engine/runtime/ops.json`);
           else if (m.manifest.portability === 'portable' && entry.reference !== 'portable') fail(`${slug}: portable mechanic uses legacy op '${step.op}'`);
-          else for (const [name, param] of Object.entries(entry.params || {})) {
+          else {
+            for (const key of Object.keys(step)) if (key !== 'op' && !Object.hasOwn(entry.params || {}, key)) fail(`${slug}: op ${step.op} unknown parameter '${key}'`);
+            for (const [name, param] of Object.entries(entry.params || {})) {
             if (param.required && step[name] === undefined) fail(`${slug}: op ${step.op} needs '${name}'`);
             else if (step[name] !== undefined && !paramOk(param.type, step[name])) fail(`${slug}: op ${step.op} param '${name}' is not a ${param.type}`);
+            }
           }
         }
       }
     }
+  }
+
+  const visiting = new Set(), visited = new Set();
+  const visit = slug => {
+    if (visiting.has(slug)) { fail(`engine/mechanics/${slug}/interface.json.requires: dependency cycle`); return; }
+    if (visited.has(slug)) return;
+    visiting.add(slug);
+    for (const required of mechanics[slug]?.interface.requires || []) if (mechanics[required]) visit(required);
+    visiting.delete(slug); visited.add(slug);
+  };
+  for (const slug of Object.keys(mechanics)) visit(slug);
+
+  // Explicit authored behavior bindings use the same compiler as live mounts.
+  const attachmentKinds = {cards:'card',enemyCards:'card',characters:'character',gear:'gear',enemies:'entity',enemyRelics:'relic'};
+  for (const [kind, attachmentKind] of Object.entries(attachmentKinds)) for (const [i, item] of (content[kind] || []).entries()) {
+    if (!item.mechanicBindings) continue;
+    try { compileBindings({mechanics: new Map(Object.entries(mechanics)), attachments:[{
+      ownerId:item.id || `${kind}:${i}`,sourceInstanceId:item.id || `${kind}:${i}`,kind:attachmentKind,
+      tags:item.tags || [],mechanicBindings:item.mechanicBindings,
+    }]}); } catch(error) { fail(`content.${kind}[${i}] (${item.id}): ${error.message}`); }
   }
 
   // ----- runtime -----

@@ -64,3 +64,14 @@ for (const capacity of [0, 3, 6, 12, 18]) {
   assert.equal(orb.w, footerLayout.items.find(n => n.asset === 'orb').w * .8);
 }
 console.log('footer-layout: bindings, docking, authored SP art and live mana capacity pass');
+
+// Live ring interpolation must preserve the enlarged authored socket centers.
+for (const capacity of [3, 6, 12, 24, 48]) {
+  const sockets = footerLayout.items.filter(item => item.asset === 'diamond');
+  const gems = footerStaminaLayers(footerLayout, {gems:Array.from({length:capacity},()=>({id:'diamond'}))}).filter(item=>item.asset==='diamond');
+  assert.ok(gems.every(item=>Math.abs(item.w/item.h-sockets[0].w/sockets[0].h)<1e-9));
+  assert.equal(gems[0].x+gems[0].w/2,sockets[0].x+sockets[0].w/2);
+  assert.equal(gems[0].y+gems[0].h/2,sockets[0].y+sockets[0].h/2);
+  const bounds=footerLayoutModel(footerLayout).groups.sp.bounds;
+  assert.ok(gems.every(item=>item.x>=bounds.x && item.y>=bounds.y && item.x+item.w<=bounds.x+bounds.w+1e-9 && item.y+item.h<=bounds.y+bounds.h+1e-9),'live mana artwork stays inside the resource viewBox');
+}

@@ -156,6 +156,9 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   }
   // The damage types the owner added on 2026-10-12: Poison (decision 2), Psychic and Earth (decision 5).
   const ADDED_DAMAGE_TYPES = ['damage:poison', 'damage:psychic', 'damage:earth'];
+  // FixCore's registered identity distinguishes trained basic spells from ordinary spells.
+  const FIXCORE_TAGS = ['rank.cantrip'];
+  assert.deepEqual(tags.get('rank.cantrip'), {id:'rank.cantrip',domain:'card',label:'Cantrip',color:'7FA8C9',glyph:'✦',visibility:'',blurb:'Basic spell eligible for Arcane Graduate deck copies.'});
   // Owner stance continuation: Target is an explicit card identity, distinct from a selector.
   const tacticalIds = [...Object.values(TACTICAL_TAGS).flat(), 'targeting:single', 'targeting:area', 'target', ...ADDED_DAMAGE_TYPES];
   assert.deepEqual(TAGS.filter(t => t.id.startsWith('ability:')).map(t => t.id).sort(), [...ABILITY_TAGS].sort(), 'the fifty approved ability identities are exact');
@@ -164,9 +167,9 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     assert.equal(tag.domain, 'technique');
     assert.ok(tag.label && tag.blurb && tag.glyph && tag.color, `${id} has visible presentation and an authored description`);
   }
-  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (t.id === 'bow' && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id)),
-    'every tag that joined is a framework node, named property, Bow, approved ability or named tactical identity');
-  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', ...ABILITY_TAGS, ...tacticalIds].sort(), 'the visible additions are exactly the named ones');
+  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (t.id === 'bow' && t.domain === 'card') || (ABILITY_TAGS.includes(t.id) && t.domain === 'technique') || tacticalIds.includes(t.id) || FIXCORE_TAGS.includes(t.id)),
+    'every tag that joined is a framework node, named property, Bow, approved ability, named tactical identity or exact FixCore identity');
+  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow', ...ABILITY_TAGS, ...tacticalIds, ...FIXCORE_TAGS].sort(), 'the visible additions are exactly the named ones');
   assert.equal(addedTags.length, TAGS.length - pre.tags.length);
 });
 

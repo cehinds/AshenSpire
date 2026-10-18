@@ -3,7 +3,7 @@ import { staminaOrb } from '../../content/staminaOrb.js';
 
 export const manaRingEnabled = (settings = {}) => settings.manaRing !== false;
 export const combatVitals = (bars, settings) => manaRingEnabled(settings) ? bars.filter(bar => bar.id !== 'mana') : bars;
-export const manaGemSize = ({ gemSize, radius, maxMana }) => Math.min(gemSize * 9, 2 * Math.PI * radius * 9 / Math.max(1, maxMana) / 1.3);
+export const manaGemSize = ({ gemSize, radius, maxMana }) => Math.min(gemSize * 18, 2 * Math.PI * radius * 9 / Math.max(1, maxMana) / 1.3);
 
 export function staminaOrbModel({ stamina = 0, maxStamina = 0, mana = 0, maxMana = 0, settings = {} } = {}) {
   const current = Number.isFinite(stamina) ? Math.max(0, stamina) : 0;

@@ -1,3 +1,6 @@
+import { fixCoreModuleParameters } from './fixCoreMechanics.js';
+import { compileBindings } from './mechanicsKernel.js';
+import { fixCoreProtection } from '../content/generated/fixCoreProtection.js';
 import { validateZoneEffect } from '../engine/cardZones.js';
 import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
 // src/model/validate.js — content validation (SPEC §3.14)
@@ -1008,6 +1011,23 @@ function collectContentProblems(bundle, errors = []) {
       || a.hp + a.mana !== flaskCapacity) {
       err(`classes.${cls && cls.id || '?'}.startingFlaskAllocation`, `must satisfy hp + mana = flaskCapacity ${flaskCapacity}`);
     }
+  }
+
+  // JSON mechanic attachments are validated by the same compiler that live
+  // mounts use. Ordinary normalized classification tags keep their own door.
+  const behaviorMechanics = new Map(fixCoreProtection);
+  const mechanicCarriers = [
+    ['cards', b.cards, 'card'], ['relics', b.relics, 'relic'], ['statuses', b.statuses, 'status'],
+    ['classes', b.classes, 'character'], ['enemies', b.enemies, 'entity'],
+    ['equipment.armaments', b.equipment?.armaments, 'gear'], ['equipment.armour', b.equipment?.armour, 'gear'],
+  ];
+  for (const [table, rows, kind] of mechanicCarriers) for (const row of Array.isArray(rows) ? rows : []) {
+    if (!row?.mechanicTags && !row?.mechanicBindings) continue;
+    try {
+      compileBindings({mechanics:behaviorMechanics,moduleParameters:fixCoreModuleParameters(),attachments:[{
+        ownerId:row.id,sourceInstanceId:row.id,kind,tags:row.mechanicTags || [],mechanicBindings:row.mechanicBindings || [],
+      }]});
+    } catch(error) { err(`${table}.${row.id}.mechanicBindings`,error.message); }
   }
 
   // The whole tag system in one pass: the registry, who may carry which

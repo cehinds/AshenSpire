@@ -79,19 +79,18 @@ test('normal Smithing quotes keep their authored cost and affordability', () => 
 test('Strategize exposes only authored basics and rejects the legacy attack mint before mutation', async () => {
   const { deckEditorModel, openDeckEdit, deckVariantKey } = await import('../src/ui/models/DeckEditorModel.js');
   const { createGameProfileRestDraft } = await import('../src/model/gameProfileRest.js');
-  const { gameContent } = await import('../src/model/gameProfile.js');
   const { run } = fixture();
   const draft = createGameProfileRestDraft(run);
   const session = openDeckEdit(registries, draft);
   const before = structuredClone(draft);
   const editor = deckEditorModel({ registries, run: draft });
-  const allowed = gameContent(run, 'editor')?.unlimitedBasicCards || [];
+  const allowed = ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.evade'];
   const mints = editor.collection.filter(tile => tile.unlimited);
   assert.deepEqual(mints.map(tile => tile.cardId).sort(), [...allowed].sort());
   assert.equal(editor.collection.some(tile => tile.key === 'basic:attack' || tile.key === 'basic:guard'), false);
   assert.throws(() => session.add('basic:attack'), /not an unlimited card id/);
   assert.deepEqual(draft, before, 'the formerly enabled legacy tile cannot alter a configured draft');
-  const removed = draft.deck[0];
+  const removed = draft.deck.find(card => card.cardId === 'base.draw');
   assert.equal(session.remove(removed.instanceId).ok, true);
   assert.equal(draft.deck.length, run.deck.length - 1);
   assert.equal(draft.sideboard.some(card => card.instanceId === removed.instanceId), true);
@@ -109,9 +108,8 @@ test('Strategize exposes only authored basics and rejects the legacy attack mint
 test('the editor follows an explicit nonempty configured basic policy without legacy equipment slots', async () => {
   const { deckEditorModel, openDeckEdit } = await import('../src/ui/models/DeckEditorModel.js');
   const { run } = fixture();
-  // Supply the read-model contract directly: the shipped core deliberately
-  // has no such author row and therefore keeps all starter cards finite.
-  run.gameProfile = { ...run.gameProfile, content: { ...run.gameProfile.content,
+  // With training disabled, the explicit editor policy remains the fallback.
+  run.gameProfile = { ...run.gameProfile, modules: { ...run.gameProfile.modules, 'deck-training': false }, content: { ...run.gameProfile.content,
     editor: { unlimitedBasicCards: ['core.strike'] },
   } };
   const model = deckEditorModel({ registries, run });

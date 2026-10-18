@@ -49,3 +49,23 @@ export function setBeatOrder(v) {
 export function getBeatOrder() {
   return beatOrder;
 }
+
+// One presentation-only multiplier for the entire ordered action. The classic
+// pace remains a compatibility choice, with ×1 preserving its relative scale.
+import { ACTION_PACING, resolveCombatAutomation } from '../model/autoCombatPolicy.js';
+let combatPacing = resolveCombatAutomation();
+export function setCombatPacing(settings = {}) { combatPacing = resolveCombatAutomation(settings); }
+export function actionPacing({ reduced = false } = {}) {
+  const pace = ANIM_SPEEDS[getAnimSpeed()];
+  const scale = !pace || reduced ? 0 : (pace.beatMs / ANIM_SPEEDS.normal.beatMs) / combatPacing.speed;
+  const scaled = value => Math.max(0, Number(value) || 0) * scale;
+  const spriteScale = scale / ACTION_PACING.spritePlaybackRate;
+  return {
+    intentMs: scaled(combatPacing.delayMs), wordMs: scaled(ACTION_PACING.actionWordMs),
+    afterSpriteMs: scaled(ACTION_PACING.afterSpriteMs), reactionMs: scaled(combatPacing.delayMs),
+    stepMs: scaled(pace?.stepMs || 0), bannerMs: scaled(pace ? turnBannerHoldMs(pace) : 0),
+    // Animation services consume the same lunge/cap duration object as before.
+    spriteSpeed: Object.fromEntries(Object.entries(pace || ANIM_SPEEDS.normal).map(([key, value]) => [key, value * spriteScale])),
+    scale,
+  };
+}

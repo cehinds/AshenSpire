@@ -6,6 +6,7 @@ import { playTimeline, setAnimSpeed, setBeatOrder, ANIM_SPEEDS } from '../src/ui
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { createPaintedStage } from '../src/ui/paintedOutfits.js';
+import { actionPacing, getBeatOrder } from '../src/ui/animationPace.js';
 import { figureAnimationsEnabled } from '../src/model/gameAnimationPolicy.js';
 import { reaverAttackTiming } from '../src/ui/reaverAttack.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../src/model/selectedWeaponSequences.js';
@@ -74,7 +75,7 @@ function timeline(t, enabled, { fallback = false, lethal = false, cancel = false
       ...(lethal ? [{ type: 'enemyDied', targetId: 'e1' }] : []),
     ];
     playTimeline(events, ctx, () => at('done'));
-    if (cancel) { win.dispatchEvent({ type: 'pointerdown' }); win.dispatchEvent({ type: 'pointerup' }); }
+    if (cancel) { if (getBeatOrder() === 'sequential') for (let i = 0; i < 1100; i++) t.mock.timers.tick(1); win.dispatchEvent({ type: 'pointerdown' }); win.dispatchEvent({ type: 'pointerup' }); }
     for (let i = 0; i < 4000 && !trace.some(row => row.what === 'done'); i++) t.mock.timers.tick(1);
     assert.equal(trace.filter(row => row.what === 'done').length, 1);
     if (!enabled) assert.equal(anchors.player.classList.contains('act-attack'), false);
@@ -93,7 +94,10 @@ for (const order of ['impact', 'sequential']) test(`on/off keeps contact, number
     assert.ok(on.some(row => row.what === 'target:hit'));
     assert.ok(!off.some(row => /^(actor|target):/.test(row.what)), 'no authored figure clip runs');
     assert.deepEqual(off, on.filter(row => !/^(actor|target):/.test(row.what)));
-    assert.equal(off.find(row => row.what === 'contact').at, selectedWeaponSequenceTiming(selectedWeaponSequence('smash'), ANIM_SPEEDS.normal).impactMs);
+    const pacing = actionPacing();
+    const spriteSpeed = order === 'sequential' ? pacing.spriteSpeed : ANIM_SPEEDS.normal;
+    const lead = order === 'sequential' ? pacing.intentMs + pacing.wordMs : 0;
+    assert.equal(off.find(row => row.what === 'contact').at, lead + selectedWeaponSequenceTiming(selectedWeaponSequence('smash'), spriteSpeed).impactMs);
   } finally { setAnimSpeed('normal'); setBeatOrder('sequential'); }
 });
 

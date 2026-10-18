@@ -1,13 +1,11 @@
-// STANCE FIRST across stage contracts (SPEC §7.4 sequential beat order; Codex
-// review on #1849). An attacker caught out of its stance settles and waits
-// stanceLeadMs before it swings, whichever stage shape draws it: the painted
-// outfit (presentation.pose/rest/transition), the enemy pose stage (pose/rest
-// getters), the alternative card stage (presentation.action), or an expansion
-// stage that only has settle()/play() — which settles but is never waited for.
+// Stance settlement precedes the shared intent and action-word waits. Every
+// actor starts its sprite after those waits; an unknown expansion stage still
+// receives settle(), without inserting a separate stance timer.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { playTimeline, setAnimSpeed, setBeatOrder, ANIM_SPEEDS, stanceState } from '../src/ui/fx.js';
+import { playTimeline, setAnimSpeed, setBeatOrder, stanceState } from '../src/ui/fx.js';
+import { actionPacing, setCombatPacing } from '../src/ui/animationPace.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
@@ -24,12 +22,13 @@ test('stanceState reads each stage contract', () => {
 });
 
 function swingAt(t, stage) {
+  setCombatPacing();
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
-  let swing = null, settled = 0, completed = 0;
+  let swing = null, settled = 0, settledAt = null, completed = 0;
   withKitDom((dom) => {
     const anchor = dom.document.createElement('div');
     const e1 = dom.document.createElement('div');
-    registerStage(anchor, { ...stage, settle: () => { settled++; stage.settle?.(); } , play: () => true, hold() {} });
+    registerStage(anchor, { ...stage, settle: () => { settled++; settledAt = Date.now(); stage.settle?.(); } , play: () => true, hold() {} });
     registerStage(e1, { play: () => true, hold() {}, settle() {} });
     try {
       playTimeline([{ type: 'cardPlayed', cardType: 'attack', cardId: 's', cardInstanceId: 'c', targetId: 'e1' },
@@ -43,23 +42,24 @@ function swingAt(t, stage) {
     } finally { setAnimSpeed('normal'); setBeatOrder('sequential'); }
   });
   assert.equal(completed, 1);
-  return { swing, settled };
+  return { swing, settled, settledAt };
 }
 
-test('a painted outfit caught in a hurt pose settles and waits stanceLeadMs', (t) => {
-  const { swing, settled } = swingAt(t, { get presentation() { return { rest: 'idle', pose: 'hit', transition: null }; } });
+test('a painted outfit caught in a hurt pose settles before the intent and action-word waits', (t) => {
+  const { swing, settled, settledAt } = swingAt(t, { get presentation() { return { rest: 'idle', pose: 'hit', transition: null }; } });
   assert.equal(settled, 1);
-  assert.equal(swing, ANIM_SPEEDS.normal.stanceLeadMs);
+  assert.equal(settledAt, 0, 'the stance is restored before either wait begins');
+  assert.equal(swing, actionPacing().intentMs + actionPacing().wordMs);
 });
 
-test('a painted outfit at rest swings at once', (t) => {
+test('a painted outfit at rest retains the same ordered waits', (t) => {
   const { swing, settled } = swingAt(t, { get presentation() { return { rest: 'idle', pose: 'idle', transition: null }; } });
   assert.equal(settled, 0);
-  assert.equal(swing, 0);
+  assert.equal(swing, actionPacing().intentMs + actionPacing().wordMs);
 });
 
-test('an expansion stage with only settle/play settles, and nothing waits for it', (t) => {
+test('an expansion stage with only settle/play settles before the ordered waits', (t) => {
   const { swing, settled } = swingAt(t, {});
   assert.equal(settled, 1, 'settle() is still called');
-  assert.equal(swing, 0, 'no stance lead for a stage that cannot tell');
+  assert.equal(swing, actionPacing().intentMs + actionPacing().wordMs, 'no additional lead for an unknown stage');
 });

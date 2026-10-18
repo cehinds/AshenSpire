@@ -14,10 +14,15 @@ import { proposalTurn } from '../src/engine/proposalStatusRuntime.js';
 import { beginEnemyBurdens, endEnemyBurdens } from '../src/engine/enemyBurdens.js';
 
 // Exercise the real aggregated catalog and profile adapter, not replacement definitions.
-function fight(profileId = 'current', expanded = false) {
+function fight(profileId = 'current', expanded = false, { intentRoll = null } = {}) {
   const gameProfile = resolveGameProfile(profileId);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, gameProfile)), gameProfile);
-  const combat = createCombat({ registries, rng: createRng(311), gameProfile,
+  const rng = createRng(311), draw = rng.float.bind(rng);
+  if (intentRoll !== null) rng.float = stream => {
+    const value = draw(stream);
+    return stream === 'enemyIntentVisibility' ? intentRoll : value;
+  };
+  const combat = createCombat({ registries, rng, gameProfile,
     ...(profileId === 'current' ? { ruleset: combatRules } : {}), ratingsRules: null,
     ...(expanded ? { combatExpansionVersion: 2, reactionRulesVersion: 1 } : {}),
     enemyIds: ['wanderingSoldier', 'wanderingSoldier'], player: { classId: 'reaver',
@@ -126,7 +131,13 @@ test('explicit Read Intent survives save/load with hand identities and expires w
 });
 
 test('Read Intent status alone does not reveal enemy intents, including to its living owner', () => {
-  const c = fight('core'), target = c.enemies[0];
+  // Core2 uses the authority-owned per-action perception read. Make that
+  // actual check fail; changing legacy intent flags cannot revoke a passed read.
+  const c = fight('core', false, { intentRoll: 0 }), target = c.enemies[0];
+  const read = target.knowledgeAction.reads[c.playerKey || 'player'];
+  assert.equal(read.perception.passed, false);
+  assert.equal(read.visibility, 'unknown');
+  assert.equal(previewIntent(c, target.id).hidden, true, 'the real failed read conceals the move before applying any marker');
   target.intentRevealed = false;
   target.intentReads = { [c.playerKey]: false };
   status(c, c.player, 'base.read-intent');

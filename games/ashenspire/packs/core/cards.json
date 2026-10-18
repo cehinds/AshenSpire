@@ -281,7 +281,14 @@
     "type": "skill",
     "icon": "\u219d",
     "keywords": [],
-    "effects": [],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "evade",
+        "stacks": 1
+      }
+    ],
     "tags": [
       "camp:physical",
       "maneuver:defend",
@@ -290,7 +297,38 @@
     "stanceTrigger": {
       "stance": "evade"
     },
-    "textTemplate": "Evade the next attack; a failed dodge takes double damage.",
+    "textTemplate": "Gain {evade} Evasion.",
     "flavor": "Core adapter fixture. Evade is available in rewards, never starter."
+  },
+  {
+    "id": "core.cantrip",
+    "name": "Arcane Spark",
+    "class": "colorless",
+    "rarity": "starter",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "\u2694",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 6
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
   }
 ]
