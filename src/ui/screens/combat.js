@@ -6,6 +6,7 @@ import { chooseReaction, reactionAnswer, resolveCombatAutomation, recordManualRe
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
 import { projectCombatIntent } from '../models/CombatIntentProjectionModel.js';
+import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
 import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
@@ -1352,8 +1353,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // a hidden intent stays unknown to the chooser.
     // The player sees "unread intent" when this game profile has no intent module: unknown here too.
     const intentShown = !(configuredArt && !gameModule(run, 'intent'));
-    try { if (enemy?.alive && intentShown) intent = projectCombatIntent(combat, enemy.id); } catch { intent = null; }
     const seat = ownSeat();
+    // A prompt answering a stacked enemy reaction move reads that stack entry (public in the modal),
+    // not the enemy's separate normal intent.
+    try {
+      intent = stackedEnemyReactionIntent(combat, pending, seat);
+      if (!intent && enemy?.alive && intentShown) intent = projectCombatIntent(combat, enemy.id);
+    } catch { intent = null; }
     const options = pending.options.map(option => ({ id: option.id, kind: reactionKind(option) }));
     const picked = chooseReaction({ matchups: gameModule(run, 'stances')?.matchups,
       seats: { [seat]: { intent, lastStance: heldKinds.get(seat)?.maneuver ?? null, picks: manualReactionPicks(run, seat) } } }, seat, options);
