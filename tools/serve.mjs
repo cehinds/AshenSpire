@@ -30,7 +30,8 @@
 // `event: reload` (data: the changed path) down GET /__dev/events, an
 // EventSource stream. A change under content/config/ (*.json) first runs
 // `node tools/config-build.mjs`, one under content/hud-layout/ (*.json) runs
-// `node tools/hud-layout-css.mjs`, and one under content/source/ runs
+// `node tools/hud-layout-css.mjs`, one under content/framework/ (*.json) runs
+// `node tools/framework-data-build.mjs`, and one under content/source/ runs
 // `node tools/content-build.mjs`, one build at a time with the newest change
 // winning; a failed build sends `event: error` (data: the last 20 lines of its
 // stderr) and no reload. Files a build writes itself (generated/, *.generated.js,
@@ -97,7 +98,7 @@ const WATCH_DEBOUNCE_MS = 150;
 const WATCH_SKIP = /(^|\/)(\.|node_modules(\/|$))|~$|\.sw[px]$|\.tmp$/;
 
 /** The order builders run in when one batch needs several. */
-const BUILD_ORDER = ['config-build.mjs', 'hud-layout-css.mjs', 'content-build.mjs'];
+const BUILD_ORDER = ['config-build.mjs', 'hud-layout-css.mjs', 'framework-data-build.mjs', 'content-build.mjs'];
 
 /** Which build tool (in tools/) must run before a change under `rel` can be seen. */
 function buildToolFor(rel) {
@@ -105,6 +106,9 @@ function buildToolFor(rel) {
   if (rel.startsWith('content/source/')) return 'content-build.mjs';
   // content/hud-layout/*.json → styles/hud-layout.generated.css (no flag = --write).
   if (rel.startsWith('content/hud-layout/') && rel.endsWith('.json')) return 'hud-layout-css.mjs';
+  // content/framework/*.json → src/framework/data/*.js (no flag = compile + report).
+  // Before content-build, whose stray-source sweep wants each JSON's mirror to exist.
+  if (rel.startsWith('content/framework/') && rel.endsWith('.json')) return 'framework-data-build.mjs';
   return null;
 }
 
@@ -193,6 +197,7 @@ function startWatch(root, emit) {
     // made during a build (or just after it) is never dropped: it joins
     // `pending` and the loop in flush() runs another round for it.
     if (/(^|\/)generated\//.test(rel) || /\.generated\.(js|css)$/.test(rel)) return;
+    if (rel.startsWith('src/framework/data/')) return; // framework-data-build / content-build output
     pending.add(rel);
     clearTimeout(timer);
     timer = setTimeout(flush, WATCH_DEBOUNCE_MS);
