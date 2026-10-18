@@ -55,6 +55,7 @@
 // is VISIBLE on any screen — that is ink, not source, and it is
 // tools/buildstamp-shot.mjs with a browser.
 
+import { decodeCatalogJSONText } from '../src/model/catalogJson.js';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, existsSync, statSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -330,6 +331,42 @@ function isContractColumn(file, key, value) {
  * Never clear a whole generated file: UI/release fields and appended declarations
  * still pass through both second-copy detectors. Invalid JSON fails closed.
  */
+// Materialize only the recognized data call. Never execute generated JavaScript;
+// every surrounding declaration remains in the scan and exact value-span rules.
+export function catalogVersionScanText(file, text) {
+  if (file !== 'src/content/generated/gameProfiles.js') return text;
+  const declaration = /^export const gameProfileCatalog\s*=\s*/m.exec(text);
+  if (!declaration) return text;
+  const start = declaration.index + declaration[0].length;
+  if (!text.slice(start).startsWith('decodeCatalogJSON(')) {
+    if (!text.slice(start).startsWith('{')) throw new Error('Unrecognized game-profile catalog expression');
+    return text;
+  }
+  const body = text.slice(start + 'decodeCatalogJSON('.length);
+  // Payload contains no executable expression: exactly one JSON object followed
+  // by the call/declaration terminators. JSON strings may contain braces/quotes.
+  let depth = 0, quoted = false, escaped = false, end = -1;
+  if (body[0] !== '{') throw new Error('Malformed encoded game-profile catalog');
+  for (let i = 0; i < body.length; i++) {
+    const ch = body[i];
+    if (quoted) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') quoted = false;
+    } else if (ch === '"') quoted = true;
+    else if (ch === '{' || ch === '[') depth++;
+    else if ((ch === '}' || ch === ']') && --depth === 0) { end = i + 1; break; }
+  }
+  if (end < 0 || body.slice(end, end + 2) !== ');') throw new Error('Malformed encoded game-profile catalog');
+  const literal = body.slice(0, end), payload = JSON.parse(literal);
+  // The owned encoded payload is canonical JSON. Refuse duplicate keys or
+  // alternate payload syntax instead of discarding hidden dictionary material.
+  if (JSON.stringify(payload) !== literal) throw new Error('Noncanonical encoded game-profile catalog');
+  const decoded = decodeCatalogJSONText(payload);
+  JSON.parse(decoded);
+  return text.slice(0, start) + decoded + text.slice(start + 'decodeCatalogJSON('.length + end + 1);
+}
+
 export function catalogSchemaVersionSpans(file, text) {
   const spans = [];
   if (file !== 'src/content/generated/gameProfiles.js') return spans;
@@ -951,7 +988,9 @@ export function check(root = REPO_ROOT) {
   for (const f of inputFiles(root)) {
     if (f === RELEASE_HOME) continue;
     if (!/\.(js|css|html|json)$/.test(f)) continue;
-    const text = readFileSync(resolve(root, f), 'utf8');
+    let text = readFileSync(resolve(root, f), 'utf8');
+    try { text = catalogVersionScanText(f, text); }
+    catch (error) { sites.push({ file: f, line: 1, key: 'encoded catalog', value: error.message }); continue; }
     const schemaVersions = catalogSchemaVersionSpans(f, text);
     // Preserve offsets/newlines and inspect everything beside each approved
     // value, including unknown fields on the same compact catalog line.

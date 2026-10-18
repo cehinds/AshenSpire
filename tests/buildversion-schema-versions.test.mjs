@@ -3,14 +3,17 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, cpSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { check, release, REPO_ROOT, BUILD_IDENTITY_FILES, catalogSchemaVersionSpans } from '../tools/buildversion.mjs';
+import { check, release, REPO_ROOT, BUILD_IDENTITY_FILES, catalogSchemaVersionSpans, catalogVersionScanText } from '../tools/buildversion.mjs';
 import { gameProfileCatalog } from '../src/content/generated/gameProfiles.js';
+
+import { catalogJSONExpression } from '../tools/catalog-json.mjs';
 
 const file = 'src/content/generated/gameProfiles.js';
 const original = readFileSync(resolve(REPO_ROOT, file), 'utf8');
 const formats = [
   ['pretty', value => JSON.stringify(value, null, 2)],
   ['compact', value => JSON.stringify(value)],
+  ['dictionary', value => catalogJSONExpression(value).expression],
   ['CRLF', value => JSON.stringify(value, null, 2).replaceAll('\n', '\r\n')],
 ];
 const moduleText = (catalog, format) => 'export const gameProfileCatalog = ' + format(catalog) + ';\n';
@@ -43,6 +46,11 @@ test('catalog protocol versions clear only their schema sites, including when eq
         if (version === rel) assert.match(row().detail, /arm 1/);
       }
     }
+    for (const expression of invalidEncodedExpressions) {
+      writeFileSync(resolve(root, file), 'export const gameProfileCatalog = ' + expression + ';');
+      assert.equal(row().ok, false, 'invalid encoded catalog fails row B closed');
+      assert.match(row().detail, /encoded catalog/);
+    }
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -54,7 +62,7 @@ test('unrecognized generated fields and other files never receive a catalog-wide
     catalog.releaseVersion = 'latest';
     // A quoted brace/semicolon is data, never the end of the JSON export.
     catalog.display = { note: 'escaped quote " and }; and [brackets]', version: 'latest' };
-    const text = moduleText(catalog, format);
+    const text = catalogVersionScanText(file, moduleText(catalog, format));
     const exempt = catalogSchemaVersionSpans(file, text);
     assert.ok(exempt.length > 1000, name);
     for (const span of exempt) assert.equal(JSON.parse(text.slice(span.start, span.end)), '1.0.0');
@@ -65,4 +73,19 @@ test('unrecognized generated fields and other files never receive a catalog-wide
   }
   assert.equal(catalogSchemaVersionSpans(file, 'export const gameProfileCatalog = {"contracts":{"version":"1.0.0","version":"latest"}};').length, 0, 'duplicate keys fail closed');
   assert.equal(catalogSchemaVersionSpans(file, 'export const gameProfileCatalog = {"contracts":{"version":"1.0.0"}} + unsafe;').length, 0, 'expressions receive no exemption');
+});
+
+const invalidEncodedExpressions = [
+  ...[
+    { text: '{}', strings: ['"9.9.z"'] },
+    { text: '~1~', strings: ['"value"'] },
+  ].map(payload => `decodeCatalogJSON(${JSON.stringify(payload)})`),
+  'decodeCatalogJSON({"text":"{}","strings":[]}) + unsafe',
+  'decodeCatalogJSON({"text":"{}","text":"{}","strings":[]})',
+  'anotherDecoder({})',
+];
+test('encoded catalogs reject malformed, unknown, and unused dictionary material', () => {
+  for (const expression of invalidEncodedExpressions) {
+    assert.throws(() => catalogVersionScanText(file, 'export const gameProfileCatalog = ' + expression + ';'));
+  }
 });
