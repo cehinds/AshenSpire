@@ -23,7 +23,7 @@ The object form below changes only one setting; bundle defaults and other module
 
 ```json
 {
-  "modules": { "shops": { "options": 4, "price": 12 } }
+  "modules": { "shops": { "itemsPerCategory": 3, "price": 12 } }
 }
 ```
 
@@ -58,3 +58,12 @@ node tools/game-config.mjs check
 ```
 
 For runtime changes, use the focused tests in `tests/game-profile-run.test.mjs` and the matching module tests. A passing resolver check proves schema/resolution only, not that every host behavior is covered by browser acceptance.
+
+## Per-category shelves
+
+`itemsPerCategory` takes precedence over the older total `options` count. The core
+pack requests three distinct eligible items in each category; a depleted or
+one-item catalog offers only what exists. The stock is saved once per visit and
+uses the `shop` RNG stream, independently of combat reward weights. Purchase
+claims and their cinder debit remain one atomic transaction. Profiles without
+`itemsPerCategory` retain the older total-options policy.

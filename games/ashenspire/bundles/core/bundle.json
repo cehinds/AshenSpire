@@ -162,7 +162,8 @@
         "branchColumns": "branchColumns",
         "minimumThreatFloor": "minimumThreatFloor",
         "mapMode": "mapMode",
-        "firstFloor": "firstFloor"
+        "firstFloor": "firstFloor",
+        "requirePrebossRest": "requirePrebossRest"
       }
     },
     {
@@ -181,7 +182,8 @@
       "module": "rewards",
       "settings": {
         "offerCount": "offerCount",
-        "takeCount": "takeCount"
+        "takeCount": "takeCount",
+        "rewardGroups": "rewardGroups"
       }
     },
     {
@@ -189,7 +191,8 @@
       "module": "shops",
       "settings": {
         "offerCount": "options",
-        "price": "price"
+        "price": "price",
+        "itemsPerCategory": "itemsPerCategory"
       }
     },
     {

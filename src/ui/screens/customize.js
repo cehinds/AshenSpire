@@ -1,3 +1,4 @@
+import { groupCardVariants } from '../../model/cardGroups.js';
 import { uiZoom } from '../fx.js';
 import { masteryClassSummary } from '../components/classMastery.js';
 import { compactEquipmentDetails } from '../components/compactEquipmentDetails.js';
@@ -1544,7 +1545,10 @@ export function mountCustomize(app, {
       reveal: { node: receiptBody },
     }], { structure: 'details' });
     if (fixedCreation) {
-      const deck = el('div', { class: 'card-shelf cc-starter-deck', 'aria-label': t('creation.review.starterDeck') }, run.deck.map(ref => renderCard(registries, ref, { level: 'glance' })));
+      const deck = el('div', { class: 'card-shelf cc-starter-deck', 'aria-label': t('creation.review.starterDeck') }, groupCardVariants(run.deck).map(group => el('div', { class: 'cc-starter-deck-group' }, [
+        renderCard(registries, group.card, { level: 'glance' }),
+        ...(group.count > 1 ? [el('strong', { class: 'cc-starter-deck-count', text: `×${group.count}`, 'aria-label': `${group.count} copies` })] : []),
+      ])));
       host.replaceChildren(cards, deck);
     } else host.replaceChildren(cards, calculations);
   }

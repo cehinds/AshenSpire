@@ -68,3 +68,12 @@ node tools/game-config.mjs check
 ```
 
 For runtime changes, use the focused tests in `tests/game-profile-map.test.mjs`, `tests/game-profile-run.test.mjs` and `node tools/mapfog.mjs --selftest`. A passing resolver check proves schema/resolution only, not that every host behavior is covered by browser acceptance.
+
+## Mandatory preboss rest
+
+`requirePrebossRest: true` requires `restFloors` to include `prebossNodes`.
+The core route keeps the opening fight, a rest at depth 3, and the final rest at
+7 before the boss at 8. Each rest depth merges every lane, so every possible
+boss predecessor is a shrine. The resolver refuses incompatible overrides
+before starting the run; the map generator checks the same invariant.
+Older snapshots without this field keep their authored route policy.

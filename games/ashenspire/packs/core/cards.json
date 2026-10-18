@@ -292,5 +292,36 @@
     },
     "textTemplate": "Evade the next attack; a failed dodge takes double damage.",
     "flavor": "Core adapter fixture. Evade is available in rewards, never starter."
+  },
+  {
+    "id": "core.cantrip",
+    "name": "Arcane Spark",
+    "class": "colorless",
+    "rarity": "starter",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "\u2694",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 6
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
   }
 ]
