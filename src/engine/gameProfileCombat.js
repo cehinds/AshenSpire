@@ -38,7 +38,7 @@ export function setProfileStance(ctx, entity, carrier) {
     ? { maneuver: stance, camp: carrier?.combatProfile?.camp || 'physical', range: carrier?.combatProfile?.range || 'melee' }
     : { maneuver: 'neutral', camp: 'physical', range: 'melee' };
   if (grants?.precision > 0) applyStatus(ctx,entity,'precision',grants.precision,entity);
-  if (grants?.evade > 0) applyStatus(ctx,entity,'evade',grants.evade,entity);
+  if (grants?.evade > 0 && !carrier?.appliedStatuses?.includes('evade')) applyStatus(ctx,entity,'evade',grants.evade,entity);
   rememberCombatStance(ctx,entity,previous);
   ctx.emit?.('combatStanceChanged', { targetId: entity.id, maneuver: entity.combatStance.maneuver });
   return true;

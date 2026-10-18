@@ -94,7 +94,10 @@ test('selected card hit odds match configured stance entry and Evade grants actu
  combat.player.energy=10;combat.player.stamina=10;
  combat.piles.hand.push({cardId:'core.evade',instanceId:'actual-evade',upgraded:false});
  dispatch(combat,{type:'playCard',cardInstanceId:'actual-evade'});
- assert.ok(combat.player.statuses.evade?.stacks>0);
+ assert.equal(combat.player.statuses.evade?.stacks,1);
+ combat.piles.hand.push({cardId:'core.evade',instanceId:'actual-evade-second',upgraded:false});
+ dispatch(combat,{type:'playCard',cardInstanceId:'actual-evade-second'});
+ assert.equal(combat.player.statuses.evade.stacks,2);
 });
 test('registered owner and active card parameters affect live shared math and reject typos',async()=>{
  const {fixCoreRules,validateFixCoreRules}=await import('../src/model/fixCoreMechanics.js');
