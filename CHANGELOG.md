@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **The death screen says what killed you, offers Run again, and fits a phone** ([#2098](https://github.com/cehinds/AshenSpire/pull/2098), `0.7.1.1579`). Defeat now names the blow that ended the climb (who, which move, how much). Run again starts a fresh climb with the same class and choices on a new seed, from defeat or victory. The end-of-run door no longer overflows a 390 px phone; the four stat chips sit two by two.
+- **The death screen says what killed you, offers Run again, and fits a phone** ([#2098](https://github.com/cehinds/AshenSpire/pull/2098), `0.7.1.1581`). Defeat now names the blow that ended the climb (who, which move, how much). Run again starts a fresh climb with the same class and choices on a new seed, from defeat or victory. The end-of-run door no longer overflows a 390 px phone; the four stat chips sit two by two.
 - **Phones shake on hits, big hits pop bigger numbers, three new vibrations** ([#2097](https://github.com/cehinds/AshenSpire/pull/2097), `0.7.1.1579`). Lite rendering (the phone default) no longer drops the screen shake — only the Screen shake setting and Reduced motion do. Damage numbers now size by the share of the target's max HP they took (a fifth or more pops big, a third or more pops huge), with a snappier pop. New vibrations: a big hit on an enemy, an enemy's poise breaking, and victory.
 - **UI command registry moved out of the save-hash scope** ([#2096](https://github.com/cehinds/AshenSpire/pull/2096), `0.7.1.1577`). engine/runtime/commands.json now lives at engine/ui/commands.json, so editing button wiring no longer invalidates in-progress saves; saves made before #2092 resume again.
 
