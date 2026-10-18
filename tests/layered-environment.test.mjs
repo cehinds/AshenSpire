@@ -132,3 +132,43 @@ test('dialogue window fitting exposes the shared floor-line receipt', async () =
   assert.equal(receipt.floor.top,380);
   assert.equal(backdrop.dataset.floorTop,'570');
 });
+
+test('both dialogue plates recover art sources and release on stage replacement and disposal', async () => {
+  const {wireDialogueStage}=await import('../src/ui/components/dialogueStage.js');
+  const {setBuiltInSource}=await import('../src/ui/assetmap.js');
+  const {builtInArtArrived,resetHighResArt}=await import('../src/ui/highResArt.js');
+  const keys=['document','window','matchMedia','MutationObserver','ResizeObserver','getComputedStyle'];
+  const old=Object.fromEntries(keys.map(key=>[key,globalThis[key]]));
+  const id='assets-display/layered/rain.webp';
+  const mount=()=>{
+    const nodes=Array.from({length:2},()=>({dataset:{layerAsset:id},style:{}}));
+    const plates=nodes.map(node=>({querySelector:()=>({dataset:{},querySelectorAll:()=>[node]})}));
+    const root={isConnected:true,clientWidth:0,clientHeight:0,getBoundingClientRect:()=>({width:0}),querySelector:()=>null,
+      querySelectorAll:selector=>selector===':scope > .dialogue-plate-layer'?plates:[]};
+    return {root,nodes};
+  };
+  const doc=new EventTarget();doc.body={classList:{contains:()=>false}};doc.documentElement={};doc.querySelectorAll=()=>[];
+  globalThis.document=doc;globalThis.window=new EventTarget();
+  globalThis.matchMedia=()=>({matches:false,addEventListener(){},removeEventListener(){}});
+  globalThis.MutationObserver=class{observe(){}disconnect(){}};
+  delete globalThis.ResizeObserver;
+  globalThis.getComputedStyle=()=>({fontSize:'16px'});
+  const config={layout:{sizing:{floorPercent:60}},parent:{},scene:{}};
+  const recover=url=>{const map=new Map([[id,url]]);setBuiltInSource(map);builtInArtArrived(map);};
+  let first,second;
+  try {
+    setBuiltInSource(null);
+    const a=mount();first=wireDialogueStage(a.root,config);
+    recover('./objects/aa/recovered.webp');
+    assert.ok(a.nodes.every(node=>node.style.backgroundImage==='url("./objects/aa/recovered.webp")'),'both mounted copies recover');
+    const b=mount();second=wireDialogueStage(b.root,config);
+    recover('./objects/bb/replacement.webp');
+    assert.ok(a.nodes.every(node=>node.style.backgroundImage==='url("./objects/aa/recovered.webp")'),'replacement releases old plates');
+    assert.ok(b.nodes.every(node=>node.style.backgroundImage==='url("./objects/bb/replacement.webp")'));
+    second.release();recover('./objects/cc/disposed.webp');
+    assert.ok(b.nodes.every(node=>node.style.backgroundImage==='url("./objects/bb/replacement.webp")'),'disposal releases both plates');
+  } finally {
+    first?.release();second?.release();setBuiltInSource(null);resetHighResArt();
+    for(const [key,value]of Object.entries(old)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}
+  }
+});
