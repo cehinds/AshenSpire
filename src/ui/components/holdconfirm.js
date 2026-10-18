@@ -217,7 +217,7 @@ export function armHold(btn, {
       const hint = target.querySelector?.('.hold-hint');
       if (hint) {
         hint.textContent = target.dataset.hold === 'holding' ? `${Math.round(p * 100)}%` : 'HOLD';
-        hint.setAttribute('aria-label', target.dataset.hold === 'holding' ? `Hold progress ${Math.round(p * 100)} percent` : 'Hold to confirm');
+        hint.setAttribute('aria-label', target.dataset.hold === 'holding' ? `Hold progress ${Math.round(p * 100)} percent` : t('settings.row.holdConfirm'));
       }
     }
   };
