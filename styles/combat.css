@@ -1991,7 +1991,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
 :root .combat[data-target-hud='true'] .target-hud-statuses.statuses { flex-wrap: wrap; }
 :root .combat[data-target-hud='true'] .target-hud-statuses .status-icon-glyph svg { width: 100%; height: 100%; object-fit: contain; }
 
-:root .combat[data-target-hud='true'] .target-hud-meters .combat-health-meter { flex: 1; --meter-tone: #ad403a; }
+:root .combat[data-target-hud='true'] .target-hud-meters .combat-health-meter { --meter-tone: #ad403a; }
 :root .combat[data-target-hud='true'] .target-hud-meters .m-plate { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; pointer-events: none; }
 :root .combat[data-target-hud='true'] .target-hud-statuses.statuses { justify-content: flex-end !important; }
 :root .combat[data-target-hud='true'] .target-hud-statuses .stk { position: absolute; right: -.12em; bottom: -.12em; top: auto; min-width: 1em; padding: 0 .15em; font-size: .7em; line-height: 1.2; }

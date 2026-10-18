@@ -17,6 +17,7 @@ const SHAPES = Object.freeze({
   earth: '<path d="m8 5 13-2 9 11-3 14-16 3L2 20Zm1 4-4 10 7 8 1-12Zm6 6-1 12 10-2 3-10Zm1-3h9l-6-6-7 2Z"/>',
   fire: '<path d="M18 1c4 9-5 11-1 16 4-2 6-6 6-10 12 14 9 24-7 24C1 31-2 19 9 10c-1 6 1 9 4 9-4-9 3-13 5-18ZM16 21c-7 7-3 9 0 9s8-4 0-9Z"/>',
   ritual: '<path d="M16 2 31 28H1Zm0 7L7 25h18Z"/><circle cx="16" cy="19" r="4"/>',
+  power: '<path d="m16 1 4 9 10 2-7 7 1 11-8-5-8 5 1-11-7-7 10-2Z"/>',
   skill: '<path d="m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z"/>',
   bleed: '<path d="M16 1C13 8 5 15 5 21a11 11 0 0 0 22 0C27 15 19 8 16 1ZM9 21h3c0 4 2 5 5 5v3c-5 0-8-3-8-8Z"/>',
   frost: '<path d="M14 1h4v8l6-5 3 3-8 7 10-1v4l-10 1 8 7-3 3-6-7v10h-4V21l-7 7-3-3 8-7-10-1v-4l10 1-8-7 3-3 7 5Z"/>',
@@ -69,7 +70,10 @@ export function cardSideTags(model, def = {}, registries = null, preview = null)
   const tags = Array.isArray(model?.tags) ? model.tags : [];
   const selected = [];
   const camp = tags.find(tag => ['camp:physical', 'camp:spell'].includes(tag.id));
-  if (camp) selected.push(camp);
+  // Public category is independent of the engine's legacy physical camp.
+  const category = def.type === 'power' ? 'power' : def.type === 'skill' && camp?.id !== 'camp:spell' ? 'skill' : null;
+  if (category) selected.push({ id: `category:${category}`, label: category[0].toUpperCase() + category.slice(1), blurb: category === 'power' ? 'Persistent power effects.' : 'Skill effects.' });
+  else if (camp && (camp.id !== 'camp:physical' || carriesHealthDamage(def) || !def.type)) selected.push(camp);
   const damage = carriesHealthDamage(def) ? tags.filter(tag => tag.id.startsWith('damage:')) : [];
   // One effect identity: an explicit supported element wins over its school,
   // including aliases, before the cap can displace a status icon.

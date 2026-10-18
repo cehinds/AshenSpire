@@ -8,7 +8,6 @@ import { foundationStandin } from '../components/foundationStandin.js';
 import { gameModule } from '../../model/gameProfile.js';
 import { figureAnimationsEnabled } from '../../model/gameAnimationPolicy.js';
 import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js';
-import { attackHitPreview, effectiveEvasion } from '../../engine/stanceHit.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import { enemyMoveCarrier } from '../../engine/combatCardTactics.js';
@@ -643,6 +642,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     return [];
   }
+
+  function previewAimedTarget(event) {
+    if (!selected || busy || enemyPlayback) return;
+    const targetId = event.target.closest?.('.combatant.enemy')?.dataset.eid;
+    if (!targetId || targetId === lastTargetId || !cardTargets(selected).legalIds.includes(targetId)) return;
+    lastTargetId = targetId;
+    renderHand();
+  }
+  combatEl.addEventListener('pointerover', previewAimedTarget);
+  combatEl.addEventListener('focusin', previewAimedTarget);
 
   function refreshAim() {
     if (combatEl.classList.contains('drag-targeting')) return;
@@ -1500,7 +1509,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // M1's "absent at zero", applied to pips too: a spent proc row (💧0
       // after a burst) is an empty frame, not information (Sunna's S-flag).
       if (def.proc && stacks <= 0) continue;
-      const shownValue = stacks;
+      const shownValue = presentation.valueText;
       const statusTip = () => {
         let extra = '';
         if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
@@ -1968,7 +1977,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.
     const stackedIds = stackedCardIds(combat.reactionStack);
     const key = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
-      combat.turn, combat.phase, combat.result, selected, selfArm, [...stackedIds], readSettings()]);
+      combat.turn, combat.phase, combat.result, selected, selfArm, lastTargetId, [...stackedIds], readSettings()]);
     if (handRenderKey === key) { syncHandPager(handList); return; }
     handStrip.render({
       cards: handList.map((inst) => {
@@ -1979,7 +1988,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // wedge the timeline (this froze the game on the killing blow).
         let pv = null;
         try {
-          if (!heldTurnHand) pv = previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId));
+          if (!heldTurnHand) {
+            const targetId = selected === inst.instanceId && lastTargetId && cardTargets(inst.instanceId).legalIds.includes(lastTargetId) ? lastTargetId : undefined;
+            pv = previewCard(combat, inst.instanceId, targetId, upcastRanksByCard.get(inst.instanceId));
+            if (targetId) pv = { ...pv, targetName: registries.enemies.get(getEntity(combat, targetId)?.enemyId)?.name || targetId };
+          }
         } catch (e) {
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
         }
