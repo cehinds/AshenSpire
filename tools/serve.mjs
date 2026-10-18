@@ -174,6 +174,20 @@ function sseMessage(event, text) {
  * own non-recursive watcher, and new directories are picked up as they appear.
  * SERVE_WATCH_NO_RECURSIVE=1 forces that second strategy (the test uses it).
  */
+/**
+ * The path a reload names: the last FILE the batch saw. Windows reports a
+ * directory as changed whenever a file inside it is written (the entry's
+ * mtime moves), so a batch there reads [file, its directory] and the
+ * directory would otherwise be the label; a path that is gone counts as a
+ * file (a delete is an edit). A batch of directories alone keeps its last.
+ */
+export function reloadLabel(root, batch) {
+  for (let i = batch.length - 1; i >= 0; i--) {
+    try { if (!statSync(join(root, batch[i])).isDirectory()) return batch[i]; } catch { return batch[i]; }
+  }
+  return batch[batch.length - 1];
+}
+
 function startWatch(root, emit) {
   const closers = [];
   const dirs = new Map(); // per-directory fallback: absolute dir -> its fs.watch handle
@@ -202,7 +216,7 @@ function startWatch(root, emit) {
           owed.delete(tools[at]);
         }
         if (failure) { for (const tool of tools.slice(at)) owed.add(tool); emit('error', failure); }
-        else emit('reload', batch[batch.length - 1]);
+        else emit('reload', reloadLabel(root, batch));
       }
     } finally { running = false; }
   }
