@@ -1,5 +1,5 @@
 import { combatProfileFor } from '../../model/combatCardProfile.js';
-import { chooseAutoCombatAction, resolveCombatAutomation } from '../../model/autoCombatPolicy.js';
+import { chooseAutoCombatAction, resolveCombatAutomation, AUTOMATION_DEFAULTS } from '../../model/autoCombatPolicy.js';
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
 import { projectCombatIntent } from '../models/CombatIntentProjectionModel.js';
@@ -200,6 +200,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let timelinePlayback = null;
   let autoCombatTimer = null;
   let autoCombatPausedUntil = 0;
+  let autoCombatTurn = combat.turn;
+  let autoCombatActions = 0;
   let formationMovement = null;
   const previewParams = new URLSearchParams(window.location.search);
   const previewSceneId = previewParams.get('shot') === 'combat' ? previewParams.get('shotScene') : null;
@@ -1336,8 +1338,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function autoCombatChoice() {
     const candidates = [];
+    if (autoCombatTurn !== combat.turn) { autoCombatTurn = combat.turn; autoCombatActions = 0; }
+    const capped = autoCombatActions >= (AUTOMATION_DEFAULTS.maxActionsPerTurn ?? 64);
     const blocked = busy || enemyPlayback || !!hasCardChoice(combat) || performance.now() < autoCombatPausedUntil;
-    if (!blocked && combat.phase === 'player' && !combat.result && !veilIsOpen() && !selected && !selfArm && selectedFlask == null) {
+    if (!blocked && !capped && combat.phase === 'player' && !combat.result && !veilIsOpen() && !selected && !selfArm && selectedFlask == null) {
       for (const inst of combat.piles.hand) {
         if (unplayableReason(inst)) continue;
         try {
@@ -1373,7 +1377,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       autoCombatTimer = null;
       if (!combatEl.isConnected || combat.result) return;
       const action = autoCombatChoice();
-      if (action?.type === 'playCard') playCard(action.cardInstanceId, action.targetId);
+      if (action?.type === 'playCard') { autoCombatActions++; playCard(action.cardInstanceId, action.targetId); }
       else if (action?.type === 'endTurn') commitEndTurn();
       scheduleAutoCombat();
     }, policy.enabled ? Math.max(100, policy.delayMs / policy.speed) : 500);

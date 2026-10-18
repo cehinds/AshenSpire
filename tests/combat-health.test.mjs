@@ -56,3 +56,8 @@ test('PIP badges preserve actual Evasion stacks independently of other defenses'
   [['evade', '2'], ['poise', '3'], ['ward', '4'], ['shield', '5']]);
   assert.equal(row.querySelector('.combat-health-meter .m-value').textContent, '18/20');
 }));
+
+test('spent Evasion stacks disappear from the PIP instead of showing a zero rating', () => {
+  for (const evasion of [0,-2,null,undefined]) assert.ok(!combatHealthModel({evasion}).badges.some(badge=>badge.kind==='evade'));
+  assert.equal(combatHealthModel({evasion:3}).badges.find(badge=>badge.kind==='evade').value,3);
+});
