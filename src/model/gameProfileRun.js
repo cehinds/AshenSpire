@@ -129,12 +129,20 @@ export function gameProfileRatingReceipt(registries, run) {
         const piece = registries.equipment.armaments.find(row => row.id === id);
         if (!piece) continue;
         if (piece.kind === 'shield') armorTier = Math.max(armorTier,tier(`armament/${id}`));
-        else weaponTier = Math.max(weaponTier,tier(`armament/${id}`));
+        else {
+          const itemTier = tier(`armament/${id}`);
+          weaponTier = Math.max(weaponTier,itemTier);
+          if (gameModule(run,'gear')?.armorBudget && itemTier) {
+            const ar = itemTier * policy.weaponARPerTier;
+            totals.ar += ar;
+            sources.push({name:piece.name || id,kind:'equipment',sourceId:`armament/${id}`,itemId:id,slot,ar,dr:0,pr:0,ward:0,poise:0,weaponTier:itemTier});
+          }
+        }
       }
     }
-    const ar = weaponTier * policy.weaponARPerTier, dr = gameModule(run,'gear')?.armorBudget ? 0 : armorTier * policy.armorDRPerTier;
+    const ar = gameModule(run,'gear')?.armorBudget ? 0 : weaponTier * policy.weaponARPerTier, dr = gameModule(run,'gear')?.armorBudget ? 0 : armorTier * policy.armorDRPerTier;
     totals.ar += ar; totals.dr += dr;
-    sources.push({name:'Equipped upgrade tiers',kind:'equipment',sourceId:'configured-upgrades',ar,dr,pr:0,ward:0,poise:0,weaponTier,armorTier});
+    if (ar || dr) sources.push({name:'Equipped upgrade tiers',kind:'equipment',sourceId:'configured-upgrades',ar,dr,pr:0,ward:0,poise:0,weaponTier,armorTier});
   }
   return {totals,sources,attributeReceipts,baseEvasionBonus:gear.totals.evasion,basePrecisionBonus:gear.totals.precision};
 }

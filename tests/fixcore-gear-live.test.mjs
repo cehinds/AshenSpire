@@ -101,3 +101,12 @@ test('resolved gear suppresses duplicate legacy pool stats and retains independe
   assert.equal(actual.swapCostDelta,baseline.swapCostDelta+1);
   assert.equal(actual.startStatuses.find(row=>row.status==='regen')?.stacks,(baseline.startStatuses.find(row=>row.status==='regen')?.stacks || 0)+2);
 });
+test('Core 2 weapon upgrades retain each equipped source identity', () => {
+  const run=fresh();run.loadout.sets.leftHand[0]='dagger';
+  const before=gameProfileRatingReceipt(reg,run);
+  run.itemUpgradeLevels={'armament/greatsword':2,'armament/dagger':1};
+  const after=gameProfileRatingReceipt(reg,run);
+  assert.equal(after.totals.ar,before.totals.ar+3);
+  assert.equal(after.sources.find(row=>row.sourceId==='armament/greatsword' && row.weaponTier)?.ar,2);
+  assert.equal(after.sources.find(row=>row.sourceId==='armament/dagger' && row.weaponTier)?.ar,1);
+});
