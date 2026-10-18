@@ -646,7 +646,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function previewAimedTarget(event) {
     if (!selected || busy || enemyPlayback) return;
     const targetId = event.target.closest?.('.combatant.enemy')?.dataset.eid;
-    if (!targetId || targetId === lastTargetId || !cardTargets(selected).legalIds.includes(targetId)) return;
+    if (!targetId || !cardTargets(selected).legalIds.includes(targetId)) return;
+    if (combatEl.classList.contains('drag-targeting')) return;
     lastTargetId = targetId;
     renderHand();
   }
@@ -773,6 +774,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // Selection changes presentation only; every input waits for confirmation.
   function syncCardSelection() {
+    if (!combatEl.classList.contains('drag-targeting') && !combatEl.querySelector('.hand [data-hold="holding"]')) renderHand();
     const active = selected || selfArm;
     if (active) selectCombatant(null);
     if (!active) combatEl.querySelectorAll('.hand .inspection-selected').forEach(card => { card.classList.remove('inspection-selected', 'inspection-info-visible'); card.removeAttribute('aria-current'); });

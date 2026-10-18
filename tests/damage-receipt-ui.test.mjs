@@ -19,3 +19,13 @@ test('missing engine receipts do not invent calculations', () => {
   assert.equal(cardDamageReceipt({values:[{op:'damage',value:20}]}),null);
   assert.equal(damageReceiptHtml(null),'');
 });
+
+test('hand hit lanes route the displayed damage number at pointer/touch coordinates', async () => {
+  const {damageNumberUnderLane} = await import('../src/ui/components/damageReceipt.js');
+  const number = {getBoundingClientRect:()=>({left:10,right:30,top:50,bottom:70})};
+  const lane = {parentElement:{querySelectorAll:()=>[number]}};
+  const target = {closest:selector=>selector==='.hand-hit-lane'?lane:null};
+  assert.equal(damageNumberUnderLane({target,clientX:20,clientY:60,pointerType:'touch'}),number);
+  assert.equal(damageNumberUnderLane({target,clientX:31,clientY:60}),null);
+  assert.equal(damageNumberUnderLane({target:{closest:()=>null},clientX:20,clientY:60}),null);
+});
