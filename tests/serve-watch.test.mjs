@@ -262,6 +262,36 @@ test('--watch: a batch touching config, hud-layout and source runs the builders 
   child.kill();
 });
 
+test('--watch: a builder an earlier failure skipped runs in the next round, and engine/kernel edits rebuild the profiles', async () => {
+  const root = makeTree();
+  mkdirSync(join(root, 'engine', 'kernel'), { recursive: true });
+  const log = join(root, 'order.log');
+  const fake = (tool, body = '') => writeFileSync(join(root, 'tools', `${tool}.mjs`),
+    `import { appendFileSync } from 'node:fs';\nappendFileSync(${JSON.stringify(log)}, ${JSON.stringify(`${tool}\n`)});\n${body}`);
+  fake('config-build', 'console.error("bad config"); process.exit(1);\n');
+  fake('content-build');
+  fake('game-config');
+  const { port, child } = await start(root, ['--watch']);
+  const stream = await events(port);
+  const error = stream.next('error', 3000);
+  writeFileSync(join(root, 'content', 'source', 'cards.json'), '{}\n');
+  writeFileSync(join(root, 'content', 'config', 'a.json'), '{}\n');
+  await error;
+  // config-build failed, so content-build never ran and is owed.
+  assert.deepEqual(readFileSync(log, 'utf8').trim().split('\n'), ['config-build']);
+  fake('config-build'); // the fix
+  const reload = stream.next('reload', 3000);
+  writeFileSync(join(root, 'content', 'config', 'a.json'), '{"fixed":1}\n');
+  await reload;
+  assert.deepEqual(readFileSync(log, 'utf8').trim().split('\n'), ['config-build', 'config-build', 'content-build']);
+  const reload2 = stream.next('reload', 3000);
+  writeFileSync(join(root, 'engine', 'kernel', 'kernel.json'), '{}\n');
+  await reload2;
+  assert.equal(readFileSync(log, 'utf8').trim().split('\n').at(-1), 'game-config');
+  stream.close();
+  child.kill();
+});
+
 test('--watch: index.html replaced by rename (an editor\'s atomic save) reloads every time', async () => {
   const root = makeTree();
   const { port, child } = await start(root, ['--watch']);

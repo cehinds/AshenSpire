@@ -111,9 +111,10 @@ function buildToolFor(rel) {
   // content/framework/*.json → src/framework/data/*.js (no flag = compile + report).
   // Before content-build, whose stray-source sweep wants each JSON's mirror to exist.
   if (rel.startsWith('content/framework/') && rel.endsWith('.json')) return 'framework-data-build.mjs';
-  // games/** and engine/modules/** → src/content/generated/{gameProfiles,baseCards}.js
+  // games/** and every engine tree game-config.mjs reads (modules, foundation, the
+  // game-profile contract, kernel, runtime) → src/content/generated/{gameProfiles,baseCards}.js
   // and games/ashenspire/game.lock.json. Needs the subcommand: bare, it only validates.
-  if (rel.startsWith('games/') || rel.startsWith('engine/modules/')) return 'game-config.mjs build';
+  if (rel.startsWith('games/') || /^engine\/(modules|foundation|contracts|kernel|runtime)\//.test(rel)) return 'game-config.mjs build';
   return null;
 }
 
@@ -178,6 +179,7 @@ function startWatch(root, emit) {
   let running = false;
   const forceDirs = process.env.SERVE_WATCH_NO_RECURSIVE === '1';
 
+  const owed = new Set(); // builders a failed round left unrun; they ride the next round
   async function flush() {
     if (running) return; // the loop below picks the new change up
     running = true;
@@ -186,12 +188,18 @@ function startWatch(root, emit) {
         const batch = [...pending];
         pending.clear();
         // Fixed order, not arrival order: content-build rejects a stale config
-        // module, so config-build must finish first.
-        const wanted = new Set(batch.map(buildToolFor).filter(Boolean));
+        // module, so config-build must finish first. A builder an earlier
+        // failure skipped stays owed until a round runs it.
+        const wanted = new Set([...owed, ...batch.map(buildToolFor).filter(Boolean)]);
         const tools = BUILD_ORDER.filter((tool) => wanted.has(tool));
-        let failure = null;
-        for (const tool of tools) { failure = await runBuild(root, tool); if (failure) break; }
-        if (failure) emit('error', failure); else emit('reload', batch[batch.length - 1]);
+        let failure = null, at = 0;
+        for (; at < tools.length; at++) {
+          failure = await runBuild(root, tools[at]);
+          if (failure) break;
+          owed.delete(tools[at]);
+        }
+        if (failure) { for (const tool of tools.slice(at)) owed.add(tool); emit('error', failure); }
+        else emit('reload', batch[batch.length - 1]);
       }
     } finally { running = false; }
   }
