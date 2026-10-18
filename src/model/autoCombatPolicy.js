@@ -58,7 +58,7 @@ export function chooseReaction(state = {}, seat, options = []) {
     const rank = matchupRank(kind, incoming, state.matchups);
     const stance = !incoming && last && kind === last ? 1 : 0;
     const picks = Math.max(0, Number(own.picks?.[kind]) || 0);
-    const signal = rank === 2 || stance === 1 || picks > 0;
+    const signal = rank > 0 && (rank === 2 || stance === 1 || picks > 0);
     const key = [rank, stance, picks];
     if (!best || beats(key, best.key)) best = { option, key, signal };
   });

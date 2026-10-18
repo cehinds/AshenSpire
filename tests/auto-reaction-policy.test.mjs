@@ -92,3 +92,9 @@ test('an intent the player sees as unread is unknown to auto-combat', () => {
   assert.match(autoSource(), /configuredArt && !gameModule\(run, 'intent'\)/);
   assert.match(autoSource(), /enemy\?\.alive && intentShown/);
 });
+
+test('when every option is countered by the action, decline despite manual picks', () => {
+  const m = { attack: ['defend', 'evade'] };
+  const st = { matchups: m, seats: { player: { intent: read('attack'), lastStance: 'defend', picks: { defend: 5 } } } };
+  assert.equal(chooseReaction(st, 'player', [{ id: 'a', kind: 'defend' }, { id: 'c', kind: 'evade' }]), null);
+});
