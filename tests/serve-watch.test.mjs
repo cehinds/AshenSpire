@@ -11,7 +11,7 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, renameSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request } from 'node:http';
@@ -26,6 +26,7 @@ function makeTree() {
   const root = mkdtempSync(join(tmpdir(), 'serve-watch-'));
   mkdirSync(join(root, 'src', 'deep'), { recursive: true });
   mkdirSync(join(root, 'content', 'source'), { recursive: true });
+  mkdirSync(join(root, 'content', 'config'), { recursive: true });
   mkdirSync(join(root, 'tools'), { recursive: true });
   writeFileSync(join(root, 'index.html'), INDEX);
   writeFileSync(join(root, 'src', 'main.js'), 'export const a = 1;\n');
@@ -140,6 +141,27 @@ test('--watch: a failed build sends the stderr tail as an error event and no rel
   const reload = stream.next('reload', 3000);
   writeFileSync(join(root, 'content', 'source', 'cards.json'), '{"a":1}\n');
   assert.equal(await reload, 'content/source/cards.json');
+  stream.close();
+  child.kill();
+});
+
+test('--watch: an edit saved while a build runs is not dropped (error, then reload)', async () => {
+  const root = makeTree();
+  // Reads its verdict when it starts, then takes 1 s: a slow build.
+  writeFileSync(join(root, 'tools', 'config-build.mjs'),
+    "import { existsSync } from 'node:fs';\nconst bad = existsSync('fail.flag');\n" +
+    "await new Promise((r) => setTimeout(r, 1000));\nif (bad) console.error('config is bad');\nprocess.exit(bad ? 1 : 0);\n");
+  writeFileSync(join(root, 'fail.flag'), '');
+  const { port, child } = await start(root, ['--watch']);
+  const stream = await events(port);
+  const error = stream.next('error', 4000);
+  writeFileSync(join(root, 'content', 'config', 'a.json'), '{"bad":true}\n');
+  await new Promise((r) => setTimeout(r, 600)); // the 1 s build is running now
+  rmSync(join(root, 'fail.flag'));
+  const reload = stream.next('reload', 4000);
+  writeFileSync(join(root, 'content', 'config', 'a.json'), '{"bad":false}\n');
+  assert.equal(await error, 'config is bad');
+  assert.equal(await reload, 'content/config/a.json');
   stream.close();
   child.kill();
 });

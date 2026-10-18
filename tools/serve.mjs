@@ -32,8 +32,9 @@
 // `node tools/config-build.mjs`, and one under content/source/ runs
 // `node tools/content-build.mjs`, one build at a time with the newest change
 // winning; a failed build sends `event: error` (data: the last 20 lines of its
-// stderr) and no reload. Writes the build makes itself, and changes in the 300
-// ms after it, are not edits and are ignored. In watch mode the served
+// stderr) and no reload. Files a build writes itself (generated/, *.generated.js,
+// *.generated.css) are not edits and are ignored by name; an edit made while a
+// build runs is queued and gets its own round. In watch mode the served
 // index.html (that file only) gets a small inline script before </body> that
 // reloads the page on `reload` and shows `error` text in a banner. Without --watch nothing here exists: no
 // endpoint, no watcher, and every response is byte-identical to before.
@@ -92,7 +93,6 @@ export function openBrowser(url) {
 export const DEV_EVENTS_PATH = '/__dev/events';
 const WATCH_TARGETS = ['src', 'styles', 'content', 'games', 'engine', 'index.html'];
 const WATCH_DEBOUNCE_MS = 150;
-const WATCH_QUIET_MS = 300; // a build's own writes land just after it ends
 const WATCH_SKIP = /(^|\/)(\.|node_modules(\/|$))|~$|\.sw[px]$|\.tmp$/;
 
 /** Which build tool (in tools/) must run before a change under `rel` can be seen. */
@@ -160,7 +160,6 @@ function startWatch(root, emit) {
   const pending = new Set();
   let timer = null;
   let running = false;
-  let quietUntil = 0;
   const forceDirs = process.env.SERVE_WATCH_NO_RECURSIVE === '1';
 
   async function flush() {
@@ -173,7 +172,6 @@ function startWatch(root, emit) {
         const tools = new Set(batch.map(buildToolFor).filter(Boolean));
         let failure = null;
         for (const tool of tools) { failure = await runBuild(root, tool); if (failure) break; }
-        quietUntil = Date.now() + WATCH_QUIET_MS;
         if (failure) emit('error', failure); else emit('reload', batch[batch.length - 1]);
       }
     } finally { running = false; }
@@ -182,9 +180,10 @@ function startWatch(root, emit) {
   function changed(rel) {
     rel = rel.split(sep).join('/');
     if (WATCH_SKIP.test(rel)) return;
-    // The generated files and anything else a build writes are its output, not an edit.
-    if (running || Date.now() < quietUntil) return;
-    if (/(^|\/)generated\//.test(rel) || rel.endsWith('.generated.js')) return;
+    // A build's own output is recognised by name, never by timing, so an edit
+    // made during a build (or just after it) is never dropped: it joins
+    // `pending` and the loop in flush() runs another round for it.
+    if (/(^|\/)generated\//.test(rel) || /\.generated\.(js|css)$/.test(rel)) return;
     pending.add(rel);
     clearTimeout(timer);
     timer = setTimeout(flush, WATCH_DEBOUNCE_MS);
