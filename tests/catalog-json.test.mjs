@@ -43,3 +43,20 @@ test('unknown, malformed and unused transport tokens fail closed', () => {
     { text: '{~bad~:1}', strings: [] },
   ]) assert.throws(() => decodeCatalogJSON(data));
 });
+
+
+test('encoded JSON retains own __proto__ keys and independent nested identities', () => {
+  const row = JSON.parse('{"__proto__":{"longRepeatedProperty":"repeated data"},"nested":{"longRepeatedProperty":"repeated data"},"zero":-0}');
+  const value = Array.from({ length: 20 }, () => structuredClone(row));
+  const packed = catalogJSONExpression(value);
+  assert.equal(packed.encoded, true);
+  const text = JSON.stringify(value);
+  assert.equal(decodeCatalogJSONText(payload(packed.expression)), text);
+  const decoded = decodeCatalogJSON(payload(packed.expression));
+  assert.deepEqual(decoded, JSON.parse(text), 'preserves the existing JSON serialization semantics for -0');
+  assert.ok(Object.hasOwn(decoded[0], '__proto__'));
+  assert.equal(Object.getPrototypeOf(decoded[0]), Object.prototype);
+  assert.deepEqual(Object.keys(decoded[0]), Object.keys(row));
+  assert.notEqual(decoded[0].nested, decoded[1].nested);
+  assert.notEqual(decoded[0].__proto__, decoded[1].__proto__);
+});

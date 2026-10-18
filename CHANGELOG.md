@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **Combat input does less repeated work** ([#2080](https://github.com/cehinds/AshenSpire/pull/2080), `0.7.1.1561`). Combat HUDs measure fighters before writing positions and read each displayed body once. Focus restoration checks the remembered control before measuring unrelated controls; previews reuse owned immutable rules, and pilot figures reuse identical aura work. These changes preserve combat outcomes, appearance and authored animation holds. Reduced-motion and touch input leave backdrop movement settled without repeated layout work. Optional Map flask controls are reachable by keyboard and controller. Compact generated profiles preserve decoded values; Workbench saves retain compiler dependencies and its library lists the new card-art viewers. Motion checks use the current legal target HUD.
+- **Combat input does less repeated work** ([#2080](https://github.com/cehinds/AshenSpire/pull/2080), `0.7.1.1561`). Combat HUDs measure fighters before writing positions and read each displayed body once. Focus restoration checks the remembered control before measuring unrelated controls; previews reuse owned immutable rules, and pilot figures reuse identical aura work. These changes preserve combat outcomes, appearance and authored animation holds. Reduced-motion and touch input leave backdrop movement settled without repeated layout work. Optional Map flask controls are reachable by keyboard and controller. Compact generated profiles and tag data preserve decoded values; Workbench saves retain compiler dependencies and its library lists the new card-art viewers. Motion checks use the current legal target HUD.
 
 ## 2026-10-17
 

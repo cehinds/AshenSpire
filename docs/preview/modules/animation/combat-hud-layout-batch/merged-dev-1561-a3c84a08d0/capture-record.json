@@ -1,0 +1,72 @@
+{
+  "captureDate": "2026-10-18",
+  "sourceCommit": "a3c84a08d0b5833f3793eff06006862ecfcacc3e",
+  "method": "Fresh parent canonical cache build; actual dist/AshenSpire.html?shot=combat; default solo combat fixture",
+  "localBuild": {
+    "version": "0.7.1.1562",
+    "digest": "737e86b2b2"
+  },
+  "artifactIdentity": "pending new exact-source CI artifact",
+  "publicRouteVerification": "pending new exact-source public identity proof",
+  "expectedUrl": "https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/",
+  "screenshots": [
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      }
+    },
+    {
+      "name": "wide",
+      "width": 1280,
+      "height": 720,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "name": "tablet",
+      "width": 768,
+      "height": 1024,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      }
+    }
+  ],
+  "inspection": "Root visually inspected all four new captures; layered hand artwork, player and enemies painted. Fonts loaded and zero failed image elements in every viewport.",
+  "canonicalValidation": "4/4 passed; pack15,929,510 JavaScript string units /70,490 headroom; version9 and census438/20/46 passed",
+  "limits": "Local posed rendering only; not CI/public screenshots, latency measurements, hosted execution or live co-op. No capture-only CSS. Prior galleries remain historical.",
+  "aboutChangelogValidation": {
+    "status": "PASS",
+    "checksPassed": 985,
+    "checksTotal": 985,
+    "scope": "Source plus selected standalone Settings routes",
+    "log": "/tmp/combat-final-a3c84-parent-changelog.log"
+  }
+}

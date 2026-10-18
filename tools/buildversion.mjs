@@ -335,12 +335,14 @@ function isContractColumn(file, key, value) {
 // Materialize only the recognized data call. Never execute generated JavaScript;
 // every surrounding declaration remains in the scan and exact value-span rules.
 export function catalogVersionScanText(file, text) {
-  if (file !== 'src/content/generated/gameProfiles.js') return text;
-  const declaration = /^export const gameProfileCatalog\s*=\s*/m.exec(text);
+  const name = file === 'src/content/generated/gameProfiles.js' ? 'gameProfileCatalog'
+    : file === 'src/content/generated/tagging.js' ? 'tagging' : null;
+  if (!name) return text;
+  const declaration = new RegExp('^export const ' + name + '\\s*=\\s*', 'm').exec(text);
   if (!declaration) return text;
   const start = declaration.index + declaration[0].length;
   if (!text.slice(start).startsWith('decodeCatalogJSON(')) {
-    if (!text.slice(start).startsWith('{')) throw new Error('Unrecognized game-profile catalog expression');
+    if (!text.slice(start).startsWith(name === 'tagging' ? '[' : '{')) throw new Error('Unrecognized generated catalog expression');
     return text;
   }
   const body = text.slice(start + 'decodeCatalogJSON('.length);
