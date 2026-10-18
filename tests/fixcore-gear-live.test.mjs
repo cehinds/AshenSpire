@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { readFileSync } from 'node:fs';
 import { loadGameProfileCatalog } from '../tools/game-config.mjs';
-import { resolveGameAuthor, resolveGearItem } from '../engine/kernel/gameConfig.js';
+import { resolveGameAuthor, resolveGearItem, armorBudgetFor } from '../engine/kernel/gameConfig.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
@@ -120,4 +120,11 @@ test('combat refresh derives from allocated attributes without counting gear twi
   const run=fresh(), expected=gameProfileRatingReceipt(reg,run);
   const combat={...run,allocatedAttributes:{...run.attributes},attributes:gameProfileEffectiveAttributes(reg,run)};
   assert.deepEqual(gameProfileRatingReceipt(reg,combat).totals,expected.totals);
+});
+
+test('armor rarity bonus ignores inherited keys such as constructor', () => {
+  const settings = { armorBudget: { baseline: 3, rarityBonus: { epic: 2 } } };
+  assert.equal(armorBudgetFor({ rarity: 'constructor' }, settings, 1), 3);
+  assert.equal(armorBudgetFor({ rarity: 'toString' }, settings, 4), 3);
+  assert.equal(armorBudgetFor({ rarity: 'epic' }, settings, 1), 5);
 });

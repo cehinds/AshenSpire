@@ -200,7 +200,7 @@ function gearWeights(item, settings, pool) {
 // Armor budget: baseline + optional per-rank growth (absent in Core) + rarity bonus (missing rarity = 0).
 export function armorBudgetFor(item, settings, rank = item.rank ?? 1) {
   const b = settings.armorBudget;
-  return b.baseline + (rank - 1) * (b.perRank ?? 0) + (b.rarityBonus?.[item.rarity] ?? 0);
+  return b.baseline + (rank - 1) * (b.perRank ?? 0) + (b.rarityBonus && Object.hasOwn(b.rarityBonus, item.rarity) ? b.rarityBonus[item.rarity] : 0);
 }
 export function resolveGearItem(item, settings, { rank = item.rank ?? 1 } = {}) {
   if (!Number.isSafeInteger(rank) || rank < 1) throw new Error('Gear rank must be a positive integer');
