@@ -3,7 +3,7 @@
 <!-- feature-preview:start -->
 ## Feature preview — Combat HUD Layout Batch
 
-[Feature build — publication pending](https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/) · [Capture details](docs/preview/features/combat-hud-layout-batch/README.md).
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/) · [Capture details](docs/preview/features/combat-hud-layout-batch/README.md).
 
 Combat HUD geometry reads are batched before placement writes. These local posed solo-combat captures document rendering; timing is validated separately by the native quick-start probe.
 
