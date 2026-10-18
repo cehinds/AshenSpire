@@ -67,6 +67,10 @@ export function initAudio(settings = {}) {
     timer: null,
     pulseTimer: null, // rhythmic low-thump layer (battle beds)
     sampleCache: new Map(),
+    // Voice cap + per-id dedupe for SFX. `voices` counts live tone/noise nodes
+    // (up from start, down in onended); `lastAt` is the audio-clock time each
+    // id last played. A cue refused by either is dropped silently.
+    sfxVoices: { voices: 0, max: 8, lastAt: new Map(), dedupeSec: 0.04 },
     folder: '', // external music folder/URL
     tracks: {}, // context → [track urls] from the folder manifest
     mediaEl: null, // currently-playing external <audio>, if any
@@ -156,6 +160,15 @@ export function initAudio(settings = {}) {
     // MUSIC IS DELIBERATELY NOT DROPPED — a bed that starts a beat late is a
     // bed, not a report about an event, and music() keeps its own path.
     if (ctx.state !== 'running') return;
+    // The same id inside 40 ms is one sound (a five-card draw is one draw
+    // cue), and a full house of 8 live voices refuses the cue. Both drop
+    // silently: a late or clipped cue is worse than none, same as above.
+    const gate = state.sfxVoices;
+    const at = now();
+    const prev = gate.lastAt.get(id);
+    if (prev !== undefined && at - prev < gate.dedupeSec) return;
+    if (gate.voices >= gate.max) return;
+    gate.lastAt.set(id, at);
     const sample = assetUrl(own(SFX_MANIFEST, id) || `assets/sfx/${encodeURIComponent(id)}.ogg`);
     if (playCachedSample(sample, sfxBus)) return;
     synthSfx(id);
@@ -176,8 +189,18 @@ export function initAudio(settings = {}) {
     g.gain.exponentialRampToValueAtTime(peak, start + Math.min(0.02, dur * 0.3));
     g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
     o.connect(g).connect(bus);
+    holdVoice(o);
     o.start(start);
     o.stop(start + dur + 0.02);
+  }
+
+  // A voice is live from start until its node reports ended.
+  function holdVoice(node) {
+    state.sfxVoices.voices++;
+    node.onended = () => {
+      node.onended = null;
+      state.sfxVoices.voices = Math.max(0, state.sfxVoices.voices - 1);
+    };
   }
 
   function noise({ dur, peak = 0.5, t0 = 0, hp = 400, lp = 6000, bus = sfxBus }) {
@@ -198,6 +221,7 @@ export function initAudio(settings = {}) {
     g.gain.setValueAtTime(peak, start);
     g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
     src.connect(hpF).connect(lpF).connect(g).connect(bus);
+    holdVoice(src);
     src.start(start);
     src.stop(start + dur + 0.02);
   }
