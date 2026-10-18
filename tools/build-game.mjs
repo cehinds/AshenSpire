@@ -119,7 +119,9 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
       case 'string': return typeof x === 'string';
       case 'cardRef': return typeof x === 'string' && (knownCards === null || knownCards.has(x));
       case 'entityRef':
-        if (staticContent) return (typeof x === 'string' && TARGETS.includes(x)) || (Array.isArray(x) && x.every(y => typeof y === 'string' && TARGETS.includes(y)));
+        // Static content: one scalar member of TARGETS — the legacy runtime's resolveRawTargets switches on a string;
+        // an array target is only something the portable mechanic interpreter understands.
+        if (staticContent) return typeof x === 'string' && TARGETS.includes(x);
         return typeof x === 'string' || (Array.isArray(x) && x.every(y => typeof y === 'string'));
       case 'object': return x !== null && typeof x === 'object' && !Array.isArray(x);
       default: return true;

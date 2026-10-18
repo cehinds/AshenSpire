@@ -169,6 +169,7 @@ test('the build fails on dangling references', () => {
   // Static content is read literally by the engine: effect targets are the closed TARGETS set, status ids are known
   // statuses, and '$name' refs are not resolved, so each fails at build time rather than mid-fight.
   assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op === 'damage')); c.effects.find(e => e.op === 'damage').target = 'definitelyUnknown'; } }), /op damage param 'target' is not an effect target \(self, enemy/);
+  assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op === 'damage')); c.effects.find(e => e.op === 'damage').target = ['self', 'enemy']; } }), /param 'target' is not an effect target/, 'an array target is not a scalar the legacy runtime can resolve');
   assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op)); c.effects = [{ op: 'applyStatus', target: 'self', status: 'definitelyUnknown', stacks: 1 }]; } }), /op applyStatus names status 'definitelyUnknown', which this profile does not export/);
   assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op)); c.effects = [{ op: 'addCard', card: '$bogus' }]; } }), /op addCard param 'card' is not a cardRef/);
   // Mechanic service steps keep '$' refs and arbitrary entity refs.
