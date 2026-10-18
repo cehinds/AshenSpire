@@ -208,7 +208,7 @@
       "properties": {
         "asset": {
           "type": "string",
-          "pattern": "^art/enemy-back-(proposals|motion)/[A-Za-z0-9_./-]+\\.png$"
+          "pattern": "^art/enemy-back-(proposals|motion)/(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9_./-]+\\.png$"
         },
         "sha256": {
           "type": "string",
