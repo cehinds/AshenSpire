@@ -329,13 +329,14 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const maps = { components: mapComponents, maps: mapDocs, atlas: sortKeys(atlas) };
 
   // ----- assets -----
-  const assets = { catalog: buildAssetCatalog({ game }) };
+  const aliases = readAliases(ROOT, game);
+  // aliases ship beside the catalog so an engine that reads only this artifact can resolve a UI slot (slot -> catalog id, or null for a placeholder).
+  const assets = { catalog: buildAssetCatalog({ game }), aliases };
   const known = new Set(Object.keys(assets.catalog.assets));
   const referenced = (where, ids) => { for (const id of ids) if (id && !known.has(id)) fail(`${where}: asset '${id}' is not in the asset catalog or missing.json`); };
   // UI components and screens name logical asset slots (card.frame, scene.rest, icon.gold). A slot resolves through
   // the catalog or games/<game>/assets/aliases.json (a null alias is a placeholder on purpose); any other slot is
   // reported, not failed, until the art is mapped (see report.unresolvedAssets).
-  const aliases = readAliases(ROOT, game);
   const unresolvedAssets = [];
   const slot = (from, ids) => { for (const id of ids) if (id && !known.has(id) && !Object.hasOwn(aliases, id)) unresolvedAssets.push({ from, id }); };
   for (const [id, c] of Object.entries(uiComponents)) slot(`ui.components.${id}`, c.assets || []);
