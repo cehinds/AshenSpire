@@ -424,11 +424,12 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   let opts;
   try { opts = parseArgs(process.argv.slice(2)); } catch (e) { console.error(e.message); process.exit(2); }
   run(opts).then((result) => {
+    // An unmeasurable scene is exit 2 before any budget verdict: infrastructure failure is not performance evidence.
+    if (result.failed.length) { console.error(`measure: scenes that could not be measured: ${result.failed.join(', ')}`); process.exit(2); }
     if (opts.budget && budgetFailed(result.budget)) {
-      console.log('BUDGET FAILED: at least one count is over budget by more than 25% (or was not measured).');
+      console.log('BUDGET FAILED: at least one count is over budget by more than 25%.');
       process.exit(1);
     }
-    if (result.failed.length) { console.error(`measure: scenes that could not be measured: ${result.failed.join(', ')}`); process.exit(2); }
     process.exit(0);
   }).catch((e) => { console.error(e && e.stack || e); process.exit(2); });
 }
