@@ -119,3 +119,34 @@ test('saved combat preserves exact authored parameters and owner clocks without 
  const altered=structuredClone(snapshot);altered.fixCoreRules.perception.baseDC='oops';
  assert.throws(()=>restoreCombatSnapshot({registries:reg,rng:createRng(1),snapshot:altered}),/finite number/);
 });
+test('enemy heal-and-block move spends exactly three SP and cannot cast with two',()=>{
+ for(const pool of [3,2]) {
+  const {combat,target}=live();target.hp=250;target.maxStamina=pool;target.stamina=pool;
+  const move={intent:'block',block:4,sp:1,effects:[{op:'heal',target:'self',amount:4}],tags:['camp:physical','maneuver:defend']};
+  const enemies=reg.enemies;
+  combat.registries={...reg,enemies:{...enemies,get:id=>id===target.enemyId ? {...enemies.get(id),moves:{...enemies.get(id).moves,healguard:move}} : enemies.get(id)}};
+  target.intent={kind:'block',moveId:'healguard'};target.plannedMoves=[];target.planDue=false;
+  dispatch(combat,{type:'endTurn'});
+  const played=combat.eventLog.some(row=>row.type==='enemyMoveStarted' && row.moveId==='healguard');
+  assert.equal(played,pool===3);
+  if(pool===3)assert.equal(combat.enemies[0].fixCoreStaminaRemaining,0);
+  else assert.ok(combat.eventLog.some(row=>row.type==='enemyMoveUnavailable' && row.required===3 && row.available===2));
+ }
+});
+test('canonical equipped gear bindings mount with copy identity and disappear on unequip',async()=>{
+ const {syncLoadoutProperties}=await import('../src/engine/properties.js');
+ const {protectionReceipt}=await import('../src/model/fixCoreMechanics.js');
+ const {combat}=live();const pinned=structuredClone(profile);
+ const gear=pinned.content.gear.find(row=>row.source?.id==='greatsword');assert.ok(gear);
+ gear.mechanicTags=['defense:wardProtection'];gear.mechanicBindings=[{tag:'defense:wardProtection',parameters:{multiplier:.5}}];
+ combat.registries={...reg,gameProfile:pinned};combat.gameProfile=pinned;
+ combat.player.ratings.ward=20;combat.player.persistentWard={value:20,max:20};
+ syncLoadoutProperties(combat);
+ assert.equal(protectionReceipt(combat,combat.player,'magical',20).amount,10);
+ assert.ok(Object.keys(combat.propertyMounts.player).some(id=>id.includes('greatsword@rightHand')));
+ combat.loadout.sets.leftHand[0]='greatsword';syncLoadoutProperties(combat);
+ assert.equal(Object.keys(combat.propertyMounts.player).filter(id=>id.includes('greatsword@')).length,2);
+ assert.equal(protectionReceipt(combat,combat.player,'magical',20).amount,10,'strongest protection group does not multiply identical copies');
+ combat.loadout.sets.leftHand[0]=null;combat.loadout.sets.rightHand[0]=null;syncLoadoutProperties(combat);
+ assert.equal(protectionReceipt(combat,combat.player,'magical',20).amount,15);
+});
