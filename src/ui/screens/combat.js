@@ -356,6 +356,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     },
     combatEl,
     anchorFor: (id) => app.querySelector(`[data-eid="${id}"] .sprite`) || app.querySelector(`[data-eid="${id}"]`),
+    // A damage float sizes by the hit's share of this max HP (ui/fx.js dmgClass).
+    maxHpFor: (id) => (getEntity(combat, id) || {}).maxHp || 0,
     relicAnchor: (relicId) => app.querySelector(`[data-relic-id="${relicId}"]`),
     orb: () => app.querySelector('.energy-orb'),
     // #61: fx beats read a proc row's display data (name/tint/icon) through

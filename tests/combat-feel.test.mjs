@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SHAKE_STEPS, SHAKE_MAX_PX, HIT_STOP, shakePxFor, hitStopMsFor, combatFeelIssues } from '../src/content/combatFeel.js';
-import { ANIM_SPEEDS, playTimeline, setAnimSpeed, setBeatOrder } from '../src/ui/fx.js';
+import { ANIM_SPEEDS, playTimeline, setAnimSpeed, setBeatOrder, dmgClass, guardHitFloatParts } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { playReaverAttack } from '../src/ui/reaverAttack.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -259,4 +259,18 @@ test('a lite (phone) tier does not drop the shake; only the setting does', () =>
   const main = src('src/main.js');
   assert.match(main, /toggle\('no-shake', settings\.screenShake === false\)/);
   assert.doesNotMatch(main, /toggle\('no-shake'[^)]*quality/);
+});
+
+test('a damage float sizes by its share of the target max HP; no max HP keeps the absolute tiers', () => {
+  assert.equal(dmgClass(35, 100), 'dmg pct35');
+  assert.equal(dmgClass(20, 100), 'dmg pct20');
+  assert.equal(dmgClass(19, 100), 'dmg heavy', 'below 20% the absolute tiers apply');
+  assert.equal(dmgClass(5, 100), 'dmg small');
+  assert.equal(dmgClass(4, 10), 'dmg pct35', 'a chip that is 40 percent of a small target is a big hit');
+  assert.equal(dmgClass(10, 0), 'dmg', 'no max HP known: the absolute rule');
+  assert.equal(guardHitFloatParts({ amount: 30, blocked: 0 }, 60).damage.cls, 'dmg pct35');
+  assert.equal(guardHitFloatParts({ amount: 30, blocked: 18 }, 60).damage.cls, 'dmg pct20', 'the share is of the HP residual the number shows');
+  const css = src('styles/combat.css');
+  assert.match(css, /\.float-num\.pct20 \{ --pop: 1\.6; font-size: 3\.6rem; \}/);
+  assert.match(css, /\.float-num\.pct35 \{ --pop: 1\.9; font-size: 4\.6rem; \}/);
 });

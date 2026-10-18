@@ -2274,6 +2274,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       isLocalPlayer: coopLocalSeat(seats),
       get layer() { return app.querySelector('.fx-layer'); },
       get combatEl() { return app.querySelector('.combat'); }, anchorFor,
+      maxHpFor: id => entityFor(id)?.maxHp || 0,
       maxActorAnimationMs(speed) {
         return Math.max(0, ...[...app.querySelectorAll('.sprite')].flatMap(sprite => {
           const stage = stageFor(sprite);

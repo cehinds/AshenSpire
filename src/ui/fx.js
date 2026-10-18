@@ -598,7 +598,7 @@ export function clearCallouts(layer) {
  * `amount` is the authoritative pre-block total; `blocked` is guard consumed.
  * Guard consumption is unsigned. Guard gain remains the separate +N channel.
  */
-export function guardHitFloatParts(event) {
+export function guardHitFloatParts(event, targetMaxHp = 0) {
   const amount = Math.max(0, Number(event && event.amount) || 0);
   const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
   const residual = amount - blocked;
@@ -619,12 +619,18 @@ export function guardHitFloatParts(event) {
     poise: poise > 0 ? { text: String(poise), cls: 'poise small' } : null,
     immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
-    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual) } : null,
+    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual, targetMaxHp) } : null,
   };
 }
 
-// Damage magnitude → size tier: crit (big hits pop hardest), heavy, normal, chip.
-function dmgClass(amount) {
+// Damage size tier. A hit that takes a big share of the target's max HP pops
+// biggest (pct35 at 35% or more, pct20 at 20% or more), whatever its absolute
+// size; with no max HP known, or a smaller share, the absolute tiers apply:
+// crit (big hits pop hardest), heavy, normal, chip.
+export function dmgClass(amount, targetMaxHp = 0) {
+  const pct = targetMaxHp > 0 ? amount / targetMaxHp : 0;
+  if (pct >= 0.35) return 'dmg pct35';
+  if (pct >= 0.20) return 'dmg pct20';
   if (amount >= 25) return 'dmg crit';
   if (amount >= 15) return 'dmg heavy';
   if (amount < 6) return 'dmg small';
@@ -1697,8 +1703,12 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false });
           if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
             { x: paired ? -26 : 0, jitter: false });
-          if (parts.damage) floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
-            { x: paired ? 26 : 0, jitter: !paired });
+          if (parts.damage) {
+            // The tier is the hit's share of the target's max HP when the screen can say it.
+            const maxHp = typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(e.targetId)) || 0 : 0;
+            floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.residual, maxHp), null,
+              { x: paired ? 26 : 0, jitter: !paired });
+          }
         },
       };
     }
