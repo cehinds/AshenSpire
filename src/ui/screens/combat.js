@@ -1,3 +1,4 @@
+import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { chooseAutoCombatAction, resolveCombatAutomation } from '../../model/autoCombatPolicy.js';
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
@@ -1562,19 +1563,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     markUiComponent(row, UI.statusEffectTray, entity.kind);
     const armed = () => !inspection && !!(selected || selectedFlask != null || selfArm);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
-    // Expanded combat: a prepared Evade (Dodge Roll, Quickstep) is a pip with
-    // its charge count, in the card rail's own Evade symbol.
-    const evade = preparedEvadeRow(dv(entity));
-    if (evade) {
-      const evadeTip = () => `<div class="tt-title">${esc(evade.name)}</div>${esc(evade.detail)}`;
-      const el = trayIcon({
-        art: tagSymbolSvg('effect:evade'), count: evade.charges, tone: 'var(--gold)',
-        label: evade.name, attrs: { class: 'status-icon combat-evade-icon' }, tip: evadeTip, yieldTap: armed,
-      });
-      el.setAttribute('data-status-id', 'combat-evade');
-      row.appendChild(el);
-    }
+    // Evasion stacks have one home: the dedicated defense badge. Prepared
+    // reaction charges remain available in the actor's inspection details.
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
+      if (combat.combatExpansionVersion === 2 && sid === 'evade') continue;
       const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
@@ -2497,9 +2489,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // keep:40, not the whole box — a card dragged to the edge of the screen
           // SHOULD hang over it, the way it does in the hand. What must never
           // happen is the ghost leaving entirely, which is what it did at 1.48.
-          const p = clampBox({ left: at.left - gripX, top: at.top - gripY, width: g.width, height: g.height }, view, { keep: 40 });
-          dragGhost.style.left = `${p.left}px`;
-          dragGhost.style.top = `${p.top}px`;
+          const ghostPlacement = clampBox({ left: at.left - gripX, top: at.top - gripY, width: g.width, height: g.height }, view, { keep: 40 });
+          dragGhost.style.left = `${ghostPlacement.left}px`;
+          dragGhost.style.top = `${ghostPlacement.top}px`;
           updateDropTarget(mv);
         }
       };
@@ -3334,7 +3326,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       handRules: combat.handRules || runHandRules(registries, run, readSettings()),
       destination,
       inCombat: true,
-      onEditDeck: onEditDeck ? () => { if (!busy && !enemyPlayback && !combat.pendingReaction && !hasCardChoice(combat) && !combat.combatRounds?.playerQueue?.length) onEditDeck({ inCombat: true, note: 'Changes apply next encounter; current combat piles stay unchanged.' }); } : null,
+      onEditDeck: onEditDeck ? () => { if (!busy && !enemyPlayback && !combat.pendingReaction && !hasCardChoice(combat) && !combat.combatRounds?.playerQueue?.length) onEditDeck({ inCombat: true, note: tFull('combat.deckEdit.deferred') }); } : null,
       onSwap: (slotId, setIndex) => {
         let out;
         try {
@@ -3364,11 +3356,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
   if (onEditDeck) {
     const deck = document.createElement('button'); deck.className = 'subtle combat-deck-edit'; deck.textContent = 'Deck';
-    deck.setAttribute('aria-description', 'Changes apply next encounter; current combat piles stay unchanged.');
+    deck.setAttribute('aria-description', tFull('combat.deckEdit.deferred'));
     deck.addEventListener('click', () => {
       if (busy || enemyPlayback || combat.pendingReaction || hasCardChoice(combat) || combat.combatRounds?.playerQueue?.length) return;
       selected = selfArm = null; selectedFlask = null; clearSelection(); syncCardSelection();
-      onEditDeck({ inCombat: true, note: 'Changes apply next encounter; current combat piles stay unchanged.' });
+      onEditDeck({ inCombat: true, note: tFull('combat.deckEdit.deferred') });
     });
     combatEl.querySelector('.combat-tools')?.append(deck);
   }
