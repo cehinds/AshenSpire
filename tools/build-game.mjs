@@ -18,6 +18,7 @@ import { loadMechanics, loadOps } from '../engine/runtime/interpreter.mjs';
 import { buildAssetCatalog, readAliases } from './asset-catalog.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { TARGETS } from '../src/model/schemas.js';
+import { combatStatusRules } from '../src/content/combatStatusRules.js';
 const engineCards = Array.isArray(contentBundle.cards) ? contentBundle.cards : Object.values(contentBundle.cards || {});
 import { resolveAtlasPath, validateMaps } from './maps-validate.mjs';
 import { visibilityErrors, validateUi } from './ui-validate.mjs';
@@ -104,6 +105,9 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   // Static status literals (applyStatus / removeStatus) name a status the profile exports: the bundle's status registry
   // (the web runtime reads registries.statuses.get(id) and throws on a miss; the portable interpreter would create an inert key).
   const knownStatuses = new Set((contentBundle.statuses || []).map(s => s.id));
+  // `buildup` fills a status meter: its id is a row of the status-control rules (combatStatusControl.applyStatusPressure
+  // throws 'Unknown status buildup' otherwise), a different vocabulary from the status registry.
+  const knownBuildups = new Set(Object.keys(combatStatusRules.statuses || {}));
   // Op parameter literals by catalog type; '$var' strings and { f } formulas are resolved at run time.
   const isVar = x => typeof x === 'string' && x.startsWith('$');
   const isFormula = x => x && typeof x === 'object' && !Array.isArray(x) && 'f' in x;
@@ -201,6 +205,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
         else if (v[name] !== undefined && !paramOk(param.type, v[name], { staticContent: true })) fail(`${where}: op ${v.op} param '${name}' is not ${param.type === 'entityRef' ? `an effect target (${TARGETS.join(', ')})` : `a ${param.type}`}`);
       }
       if ((v.op === 'applyStatus' || v.op === 'removeStatus') && typeof v.status === 'string' && !knownStatuses.has(v.status)) fail(`${where}: op ${v.op} names status '${v.status}', which this profile does not export`);
+      if (v.op === 'buildup' && typeof v.status === 'string' && !knownBuildups.has(v.status)) fail(`${where}: op buildup names status '${v.status}', which has no status-control row (src/content/combatStatusRules.js)`);
       for (const [k, x] of Object.entries(v)) walk(x, `${where}.${k}`);
     };
     for (const key of ['cards', 'enemyCards', 'resourceVariants', 'effectVariants', 'enemies', 'characters']) if (content[key]) { walk(content[key], `content.${key}`); for (const e of formulaErrors(content[key], `content.${key}`)) fail(e); }
