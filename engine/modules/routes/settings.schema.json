@@ -65,6 +65,10 @@
         null
       ],
       "description": "Node type every lane on depth 1 is forced to; null leaves depth 1 to the ordinary draw. It must be one of the route's alternatives, and depth 1 cannot also be a rest depth."
+    },
+    "requirePrebossRest": {
+      "type": "boolean",
+      "description": "Require the last preboss depth to be a mandatory rest on every route."
     }
   },
   "required": [

@@ -162,7 +162,8 @@
         "branchColumns": "branchColumns",
         "minimumThreatFloor": "minimumThreatFloor",
         "mapMode": "mapMode",
-        "firstFloor": "firstFloor"
+        "firstFloor": "firstFloor",
+        "requirePrebossRest": "requirePrebossRest"
       }
     },
     {

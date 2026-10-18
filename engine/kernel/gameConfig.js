@@ -575,6 +575,7 @@ function verifySettings(modules, instances = {}) {
     const {restFloors,restsPerAct,prebossNodes,minimumThreatFloor} = modules.routes;
     if (prebossNodes + 1 < minimumThreatFloor) fail('$/modules/routes/prebossNodes', 'boss depth must reach minimumThreatFloor');
     if (restFloors.length !== restsPerAct || restFloors.some(n=>n>prebossNodes)) fail('$/modules/routes/restFloors', 'must provide one valid preboss position per rest');
+    if (modules.routes.requirePrebossRest && !restFloors.includes(prebossNodes)) fail('$/modules/routes/restFloors', 'requirePrebossRest requires the final preboss depth to be a rest');
   }
   if (modules.rest?.mode === 'configured' && !modules.rest.services.includes('strategize')) fail('$/modules/rest/services', 'Strategize recovery fallback is required by this adapter');
   if (modules.rewards && modules.rewards.takeCount > modules.rewards.offerCount) fail('$/modules/rewards/takeCount', 'cannot exceed offerCount');
