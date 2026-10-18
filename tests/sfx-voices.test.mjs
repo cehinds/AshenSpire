@@ -50,6 +50,41 @@ test('tone pitch is scaled by 1 +/- 4 %', () => {
   assert.ok(Math.abs(heard(0) - recipe.freq * 0.96) < 1e-9, 'bottom of the range is -4 %');
 });
 
+test('one pitch draw per cue: the layers of a multi-tone cue share the factor', () => {
+  const id = Object.keys(SFX_RECIPES).find((k) => SFX_RECIPES[k].filter((l) => l.kind !== 'noise').length >= 2);
+  assert.ok(id, 'a recipe with two or more tone layers exists');
+  const recipe = SFX_RECIPES[id].filter((l) => l.kind !== 'noise');
+  const draws = [1, 0, 1, 0, 1, 0];
+  const old = sfxVariance.rng;
+  sfxVariance.rng = () => draws.shift() ?? 0.5;
+  try {
+    const engine = fresh();
+    ctx.currentTime = 100;
+    engine.sfx(id);
+    const made = oscs();
+    assert.equal(made.length, recipe.length);
+    const factors = made.map((o, i) => o.frequency.value / recipe[i].freq);
+    for (const f of factors) assert.ok(Math.abs(f - factors[0]) < 1e-9, `every layer carries the one draw (${factors.join(', ')})`);
+  } finally { sfxVariance.rng = old; }
+});
+
+test('a cue whose sample is still warming reserves its synth layers, not one voice', () => {
+  const engine = fresh();
+  const id = Object.keys(SFX_RECIPES).find((k) => SFX_RECIPES[k].length >= 3);
+  assert.ok(id, 'a recipe with three or more layers exists');
+  const layers = SFX_RECIPES[id].length;
+  let t = 30;
+  // Fill to 8 - layers + 1 live voices with single-layer cues, then the
+  // multi-layer cue must be refused: its sample is not ready, so it is a synth.
+  const single = Object.keys(SFX_RECIPES).find((k) => SFX_RECIPES[k].length === 1);
+  assert.ok(single, 'a one-layer recipe exists');
+  while (live() < 8 - layers + 1) { t += 0.1; ctx.currentTime = t; engine.sfx(single); }
+  const before = voiceCount();
+  t += 0.1; ctx.currentTime = t; engine.sfx(id);
+  assert.equal(voiceCount(), before, `the ${layers}-layer cue is refused on ${live()} live voices`);
+  endAll();
+});
+
 test('the same id inside 40 ms plays once; a different id in that window still plays', () => {
   const engine = fresh();
   ctx.currentTime = 10;

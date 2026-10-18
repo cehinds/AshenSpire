@@ -20,10 +20,11 @@ import { assetUrl } from './assetmap.js';
 // shared with ui/screens/settings.js.
 export const AUDIO_DEFAULTS = balance.ui.audio;
 
-// Pitch variance for synthesized tones: every tone() is multiplied by
-// 1 + (rng() * 2 * spread - spread), so the same cue never sounds twice
-// the same (+/-4 %). `rng` is a hook so a test can pin the factor; noise
-// bursts are unaffected.
+// Pitch variance for synthesized tones: every cue is multiplied by
+// 1 + (rng() * 2 * spread - spread), drawn once per cue and shared by its
+// tone layers, so the same cue never sounds twice the same (+/-4 %) and its
+// intervals never drift against themselves. `rng` is a hook so a test can pin
+// the factor; noise bursts are unaffected.
 export const sfxVariance = { spread: 0.04, rng: Math.random };
 const pitchFactor = () => 1 + (sfxVariance.rng() * 2 * sfxVariance.spread - sfxVariance.spread);
 
@@ -167,26 +168,30 @@ export function initAudio(settings = {}) {
     const at = now();
     const prev = gate.lastAt.get(id);
     if (prev !== undefined && at - prev < gate.dedupeSec) return;
-    // Reserve the whole cue: a sample is one voice, a synth cue one per layer
-    // of its recipe, so a 4-layer burst on 6 live voices is refused, not
-    // let through to 10.
-    const layers = own(SFX_MANIFEST, id) ? 1 : Math.max(1, resolveRecipe(id).recipe.length);
+    // Reserve the whole cue by what will actually sound: a cached sample is
+    // one voice; anything else (no sample, or one still warming or failed)
+    // falls back to the synth, one voice per recipe layer, so a 4-layer burst
+    // on 6 live voices is refused, not let through to 10.
+    const sample = assetUrl(own(SFX_MANIFEST, id) || `assets/sfx/${encodeURIComponent(id)}.ogg`);
+    const cached = state.sampleCache.get(sample)?.status === 'ready';
+    const layers = cached ? 1 : Math.max(1, resolveRecipe(id).recipe.length);
     if (gate.voices + layers > gate.max) return;
     gate.lastAt.set(id, at);
-    const sample = assetUrl(own(SFX_MANIFEST, id) || `assets/sfx/${encodeURIComponent(id)}.ogg`);
-    if (playCachedSample(sample, sfxBus)) return;
+    if (cached && playCachedSample(sample, sfxBus)) return;
     synthSfx(id);
     warmSample(sample);
   }
 
   const now = () => ctx.currentTime;
 
-  function tone({ type = 'sine', freq, to, t0 = 0, dur, peak = 0.6, bus = sfxBus }) {
+  // `k` is the cue's pitch factor: synthSfx draws it once per cue so the
+  // intervals inside a cue (holdCommit's octave, the victory arpeggio) hold
+  // while the whole cue transposes; a lone tone() draws its own.
+  function tone({ type = 'sine', freq, to, t0 = 0, dur, peak = 0.6, bus = sfxBus, k = pitchFactor() }) {
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     o.type = type;
     const start = now() + t0;
-    const k = pitchFactor();
     o.frequency.setValueAtTime(freq * k, start);
     if (to != null) o.frequency.exponentialRampToValueAtTime(Math.max(1, to * k), start + dur);
     g.gain.setValueAtTime(0.0001, start);
@@ -261,9 +266,10 @@ export function initAudio(settings = {}) {
           `, in src/content/sfx.js.`
       );
     }
+    const k = pitchFactor(); // one draw per cue: layers stay in tune with each other
     for (const { kind, ...params } of recipe) {
       if (kind === 'noise') noise(params);
-      else tone(params);
+      else tone({ ...params, k });
     }
   }
 
