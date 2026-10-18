@@ -1,0 +1,114 @@
+{
+  "schema": 1,
+  "sourceRevision": 14,
+  "sourceManifest": "docs/design/new-card-art/cutout-manifest.json",
+  "coordinateSpace": {
+    "width": 512,
+    "height": 640
+  },
+  "maxVisibleTags": 4,
+  "physical": {
+    "attack": {
+      "code": "O00"
+    },
+    "smash": {
+      "code": "O11"
+    },
+    "sweep": {
+      "code": "L40"
+    },
+    "counter": {
+      "code": "O44"
+    },
+    "defend": {
+      "code": "O44",
+      "hideLayers": [
+        "secondaryObject"
+      ]
+    }
+  },
+  "melee": {
+    "attack": 0,
+    "smash": 1,
+    "sweep": 2,
+    "defend": 4
+  },
+  "meleePalettes": {
+    "blue": 0,
+    "mint": 5
+  },
+  "mintElements": [
+    "earth",
+    "alteration",
+    "necrotic",
+    "wind"
+  ],
+  "projectiles": {
+    "divine": 0,
+    "necrotic": 1,
+    "force": 2,
+    "earth": 3,
+    "frost": 4,
+    "fire": 5,
+    "lightning": 6,
+    "psychic": 7,
+    "alteration": 8,
+    "wind": 9
+  },
+  "projectileTags": [
+    "delivery:projectile",
+    "delivery:ranged",
+    "maneuver:ranged"
+  ],
+  "utility": [
+    {
+      "id": "cleanse",
+      "code": "H00",
+      "operations": [
+        "removeStatus"
+      ],
+      "tags": [
+        "cleansed",
+        "cleanse",
+        "effect:cleanse"
+      ],
+      "target": "self"
+    },
+    {
+      "id": "draw",
+      "code": "F00",
+      "operations": [
+        "draw",
+        "retain",
+        "shuffleDiscardIntoDraw"
+      ],
+      "tags": [
+        "draw",
+        "retain",
+        "reshuffle",
+        "effect:draw"
+      ]
+    },
+    {
+      "id": "heal",
+      "code": "G00",
+      "operations": [
+        "heal"
+      ],
+      "tags": [
+        "heal",
+        "effect:heal"
+      ]
+    }
+  ],
+  "spellUtility": {
+    "code": "I00"
+  },
+  "notes": [
+    "Art only: resolved camp/maneuver/delivery tags choose a composition, never a card name.",
+    "One fixed physical model per family; zero is a real asset choice.",
+    "Y00-Y09 preserve the approved small shared amber scepter, alignment and ethereal opacity.",
+    "Counter uses separate shield and sword PNGs. Magical Counter and Evade retain their existing art until a matching assembly is approved.",
+    "Unsupported objects retain the existing Simple or Legacy fallback. Status cues retain existing perimeter motifs until their PNGs are approved."
+  ]
+}

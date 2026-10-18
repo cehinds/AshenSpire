@@ -1,0 +1,73 @@
+{
+  "revision": 7,
+  "sourceCommit": "b8d337437c0f5b9ae096205b50ea3feaaf9b9b00",
+  "request": "Follow the broad weapon outlines in the annotated screenshot and label every item.",
+  "changedPngs": [
+    "Y.effect.0",
+    "Y.effect.1",
+    "Y.effect.2",
+    "Y.effect.3",
+    "Y.effect.4",
+    "Y.effect.5",
+    "Y.effect.6",
+    "Y.effect.7",
+    "Y.effect.8",
+    "Y.effect.9"
+  ],
+  "unchangedPngCount": 352,
+  "magicPlacement": {
+    "parent": {
+      "x": 135,
+      "y": 465
+    },
+    "perShape": [
+      {
+        "shape": "Sword blade",
+        "size": 480,
+        "rotationDeg": -9,
+        "anchor": [
+          0.23,
+          0.79
+        ]
+      },
+      {
+        "shape": "Hammer head",
+        "size": 470,
+        "rotationDeg": -10,
+        "anchor": [
+          0.3,
+          0.76
+        ]
+      },
+      {
+        "shape": "Scythe blade",
+        "size": 460,
+        "rotationDeg": 0,
+        "anchor": [
+          0.29,
+          0.77
+        ]
+      },
+      {
+        "shape": "Scimitar blade",
+        "size": 470,
+        "rotationDeg": -8,
+        "anchor": [
+          0.23,
+          0.79
+        ]
+      },
+      {
+        "shape": "Shield ward",
+        "size": 440,
+        "rotationDeg": -4,
+        "anchor": [
+          0.23,
+          0.79
+        ]
+      }
+    ]
+  },
+  "labelPolicy": "Labels are in HTML and JSON outside the transparent PNG pixels. Display codes keep the existing category/object/effect scheme; 0 is a real variant.",
+  "generationSource": "/workspace/generated_images/exec-9cd7eea3-4698-4da5-9e72-287753d2f4ec.png"
+}

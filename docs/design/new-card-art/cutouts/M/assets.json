@@ -1,0 +1,862 @@
+{
+  "M.object.0": {
+    "id": "M.object.0",
+    "kind": "object",
+    "category": "M",
+    "digit": 0,
+    "name": "Shield variant 0",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend",
+      "counter"
+    ],
+    "src": "cutouts/M/objects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      106,
+      32,
+      405,
+      480
+    ],
+    "sha256": "6e303f4a4a6dbdc844db30b10e2935cc28e291bcd947c8486def0f5f36bda5a6",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "M-objects",
+      "sourceFile": "exec-361c0cc4-92c7-4ce9-bc81-0a8e5847171a.png",
+      "sourceSha256": "e4aded95f9fcabcbfe12e2e7c1db7cd75d285eb3653b930bd7a19c0541423449",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 86,
+        "y": 7,
+        "width": 254,
+        "height": 380
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Dark steel kite shield, plain bronze boss and broad border, front tilted right",
+    "displayCode": "M00",
+    "displayLabel": "M00 \u00b7 Shield variant 0 \u00b7 object"
+  },
+  "M.object.1": {
+    "id": "M.object.1",
+    "kind": "object",
+    "category": "M",
+    "digit": 1,
+    "name": "Shield variant 1",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend",
+      "counter"
+    ],
+    "src": "cutouts/M/objects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      57,
+      32,
+      454,
+      480
+    ],
+    "sha256": "c9e889433d010d0e46e3d2d66987e6caabc186a758adfd5d8bec86e47a3768bf",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "M-objects",
+      "sourceFile": "exec-361c0cc4-92c7-4ce9-bc81-0a8e5847171a.png",
+      "sourceSha256": "e4aded95f9fcabcbfe12e2e7c1db7cd75d285eb3653b930bd7a19c0541423449",
+      "sourceCell": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 450,
+        "y": 32,
+        "width": 305,
+        "height": 344
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Worn round shield with simple bronze central boss, three-quarter left",
+    "displayCode": "M10",
+    "displayLabel": "M10 \u00b7 Shield variant 1 \u00b7 object"
+  },
+  "M.object.2": {
+    "id": "M.object.2",
+    "kind": "object",
+    "category": "M",
+    "digit": 2,
+    "name": "Shield variant 2",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend",
+      "counter"
+    ],
+    "src": "cutouts/M/objects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      118,
+      32,
+      394,
+      480
+    ],
+    "sha256": "9c413635d0e1a391f0acc71d31a196102a649c3683a9a6c6e50a25f213380347",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "M-objects",
+      "sourceFile": "exec-361c0cc4-92c7-4ce9-bc81-0a8e5847171a.png",
+      "sourceSha256": "e4aded95f9fcabcbfe12e2e7c1db7cd75d285eb3653b930bd7a19c0541423449",
+      "sourceCell": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 887,
+        "y": 7,
+        "width": 234,
+        "height": 380
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Tall narrow heater shield, dark face and bronze cross braces, slight tilt",
+    "displayCode": "M20",
+    "displayLabel": "M20 \u00b7 Shield variant 2 \u00b7 object"
+  },
+  "M.object.3": {
+    "id": "M.object.3",
+    "kind": "object",
+    "category": "M",
+    "digit": 3,
+    "name": "Shield variant 3",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend",
+      "counter"
+    ],
+    "src": "cutouts/M/objects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      96,
+      32,
+      415,
+      480
+    ],
+    "sha256": "01a3dc8fd10ad1f56f3d374c8efaf163c3af8eb094eee7cbcead3aec092405ae",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "M-objects",
+      "sourceFile": "exec-361c0cc4-92c7-4ce9-bc81-0a8e5847171a.png",
+      "sourceSha256": "e4aded95f9fcabcbfe12e2e7c1db7cd75d285eb3653b930bd7a19c0541423449",
+      "sourceCell": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1245,
+        "y": 6,
+        "width": 271,
+        "height": 381
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Heavy broad kite shield with simple central vertical ridge, three-quarter right",
+    "displayCode": "M30",
+    "displayLabel": "M30 \u00b7 Shield variant 3 \u00b7 object"
+  },
+  "M.object.4": {
+    "id": "M.object.4",
+    "kind": "object",
+    "category": "M",
+    "digit": 4,
+    "name": "Shield variant 4",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend",
+      "counter"
+    ],
+    "src": "cutouts/M/objects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      45,
+      32,
+      466,
+      480
+    ],
+    "sha256": "993c295634fcf64e453f72cfa808b026a2d6cfab61899c807b464027608f365f",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "M-objects",
+      "sourceFile": "exec-361c0cc4-92c7-4ce9-bc81-0a8e5847171a.png",
+      "sourceSha256": "e4aded95f9fcabcbfe12e2e7c1db7cd75d285eb3653b930bd7a19c0541423449",
+      "sourceCell": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1666,
+        "y": 57,
+        "width": 262,
+        "height": 279
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Small round buckler, battered dark iron and dull bronze rim, face angled",
+    "displayCode": "M40",
+    "displayLabel": "M40 \u00b7 Shield variant 4 \u00b7 object"
+  },
+  "M.object.5": {
+    "id": "M.object.5",
+    "kind": "object",
+    "category": "M",
+    "digit": 5,
+    "name": "Shield variant 5",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend",
+      "counter"
+    ],
+    "src": "cutouts/M/objects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      92,
+      32,
+      419,
+      480
+    ],
+    "sha256": "e1d6510343ef24989f1e547b1232426c71bb78553e1e2035d3a1adedee52202f",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "M-objects",
+      "sourceFile": "exec-361c0cc4-92c7-4ce9-bc81-0a8e5847171a.png",
+      "sourceSha256": "e4aded95f9fcabcbfe12e2e7c1db7cd75d285eb3653b930bd7a19c0541423449",
+      "sourceCell": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 67,
+        "y": 390,
+        "width": 289,
+        "height": 396
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Rectangular tower shield with clipped corners, plain black iron face, slight diagonal",
+    "displayCode": "M50",
+    "displayLabel": "M50 \u00b7 Shield variant 5 \u00b7 object"
+  },
+  "M.object.6": {
+    "id": "M.object.6",
+    "kind": "object",
+    "category": "M",
+    "digit": 6,
+    "name": "Shield variant 6",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend",
+      "counter"
+    ],
+    "src": "cutouts/M/objects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      92,
+      32,
+      419,
+      480
+    ],
+    "sha256": "c830ad5bad2cd182d181ad1ae8c0aeef3d8e2c5efd29b64ac1e6cf750b7f3407",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "M-objects",
+      "sourceFile": "exec-361c0cc4-92c7-4ce9-bc81-0a8e5847171a.png",
+      "sourceSha256": "e4aded95f9fcabcbfe12e2e7c1db7cd75d285eb3653b930bd7a19c0541423449",
+      "sourceCell": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 483,
+        "y": 401,
+        "width": 268,
+        "height": 367
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Oval dark steel shield with bronze boss, three-quarter right",
+    "displayCode": "M60",
+    "displayLabel": "M60 \u00b7 Shield variant 6 \u00b7 object"
+  },
+  "M.object.7": {
+    "id": "M.object.7",
+    "kind": "object",
+    "category": "M",
+    "digit": 7,
+    "name": "Shield variant 7",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend",
+      "counter"
+    ],
+    "src": "cutouts/M/objects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      65,
+      32,
+      446,
+      480
+    ],
+    "sha256": "74803b133caa3255284c3a78587909d8c516271f2e33b3cd34a46411d5014873",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "M-objects",
+      "sourceFile": "exec-361c0cc4-92c7-4ce9-bc81-0a8e5847171a.png",
+      "sourceSha256": "e4aded95f9fcabcbfe12e2e7c1db7cd75d285eb3653b930bd7a19c0541423449",
+      "sourceCell": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 842,
+        "y": 415,
+        "width": 297,
+        "height": 349
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Short triangular heater shield with thick bronze edges, front tilted",
+    "displayCode": "M70",
+    "displayLabel": "M70 \u00b7 Shield variant 7 \u00b7 object"
+  },
+  "M.object.8": {
+    "id": "M.object.8",
+    "kind": "object",
+    "category": "M",
+    "digit": 8,
+    "name": "Shield variant 8",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend",
+      "counter"
+    ],
+    "src": "cutouts/M/objects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      122,
+      32,
+      389,
+      480
+    ],
+    "sha256": "5fd8d01256ebd859651969250abb858c450b757f92cb2f37c29aca697372bcf8",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "M-objects",
+      "sourceFile": "exec-361c0cc4-92c7-4ce9-bc81-0a8e5847171a.png",
+      "sourceSha256": "e4aded95f9fcabcbfe12e2e7c1db7cd75d285eb3653b930bd7a19c0541423449",
+      "sourceCell": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1267,
+        "y": 393,
+        "width": 227,
+        "height": 381
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Long teardrop shield with central boss and plain metal braces, opposite tilt",
+    "displayCode": "M80",
+    "displayLabel": "M80 \u00b7 Shield variant 8 \u00b7 object"
+  },
+  "M.object.9": {
+    "id": "M.object.9",
+    "kind": "object",
+    "category": "M",
+    "digit": 9,
+    "name": "Shield variant 9",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      },
+      {
+        "kind": "tag",
+        "id": "maneuver:counter",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend",
+      "counter"
+    ],
+    "src": "cutouts/M/objects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      78,
+      32,
+      434,
+      480
+    ],
+    "sha256": "e4fe289d3e37a743f9b70fe6c459918d95e0329b35ec0f77bf3ad5ec7f6e4dac",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "M-objects",
+      "sourceFile": "exec-361c0cc4-92c7-4ce9-bc81-0a8e5847171a.png",
+      "sourceSha256": "e4aded95f9fcabcbfe12e2e7c1db7cd75d285eb3653b930bd7a19c0541423449",
+      "sourceCell": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1631,
+        "y": 400,
+        "width": 296,
+        "height": 373
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Broad round-corner shield, dark iron plate and bronze rivets, three-quarter left",
+    "displayCode": "M90",
+    "displayLabel": "M90 \u00b7 Shield variant 9 \u00b7 object"
+  }
+}

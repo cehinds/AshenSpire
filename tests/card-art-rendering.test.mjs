@@ -39,7 +39,7 @@ test('resolved cards use Simple by default while legacy API and unsupported art 
   applyCardArtStyle({});
   const simple=playingCardArt(ref,{definition,registries});
   assert.equal(simple.kind,'simple');
-  assert.match(simple.path,/assets\/cards\/library\/physical-attack-\d\d-512.webp$/);
+  assert.equal(simple.componentArt.code,'O00');
   assert.equal(playingCardArt(ref,{definition,registries,style:'Legacy'}).path,playingCardArtwork(ref));
   const unsupported={id:'utility',type:'power',cardTags:[]};
   assert.deepEqual(playingCardArt(ref,{definition:unsupported,registries}),playingCardArt(ref,{style:'Legacy'}));
@@ -65,7 +65,7 @@ test('new artwork replaces shipped layout paintings while Legacy keeps its old p
     const cardRef={cardId},def=resolveCard(registries,cardRef);
     const simple=illustratedArtwork(cardRef,cardId,{definition:def,registries,style:'Simple'});
     assert.equal(simple.kind,'simple',cardId);
-    assert.match(simple.path,/assets\/cards\/library\//);
+    assert.match(simple.path,/assets-display\/card-cutouts\//);
     const legacy=illustratedArtwork(cardRef,cardId,{definition:def,registries,style:'Legacy'});
     assert.equal(legacy.path,illustratedArtwork(cardRef,cardId,{style:'Legacy'}).path);
     assert.notEqual(legacy.path,simple.path);

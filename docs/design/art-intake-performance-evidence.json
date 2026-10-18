@@ -1,0 +1,28 @@
+{
+  "base": "27ce8aaee",
+  "browser": "/usr/bin/chromium",
+  "canvasComparison": {
+    "source": "assets-display/alternative/card-reaver-guard-brace.webp",
+    "filter": "auraFilter('power2','idle',['stamina','mana'],true)",
+    "canvasWidth": 768,
+    "canvasHeight": 544,
+    "frames": 12,
+    "materializeEveryFrame": true,
+    "baselineMs": 280.8,
+    "cachedMs": 46.6,
+    "differentRGBAChannels": 0
+  },
+  "clickImpactProbe": {
+    "command": "node tools/click-impact-probe.mjs",
+    "unchangedContactBudgetMs": 400,
+    "unchangedFirstNumberBudgetMs": 750,
+    "baseline": {"contactMs": [281,247,436], "firstNumberMs": [753,629,802], "contactMedianMs": 281, "firstNumberMedianMs": 753},
+    "after1": {"contactMs": [266,303,424], "firstNumberMs": [724,667,795], "contactMedianMs": 303, "firstNumberMedianMs": 724},
+    "after2": {"contactMs": [288,297,370], "firstNumberMs": [740,673,754], "contactMedianMs": 297, "firstNumberMedianMs": 740}
+  },
+  "unitTests": {
+    "files": ["tests/alternative-aura-renderer.test.mjs", "tests/alternative-card-stage.test.mjs", "tests/alternative-card-animation.test.mjs"],
+    "passed": 19,
+    "failed": 0
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "revision": 4,
+  "sourceRevision": 3,
+  "scope": "50 new standalone objects: ten spellbooks, swords, hammers, scythes and shields; ten Counter starting pairs reuse the new sword and shield PNGs.",
+  "families": [
+    {
+      "letter": "I",
+      "id": "spellbooks",
+      "label": "Spellbooks",
+      "parent": "F",
+      "effectFamily": "I",
+      "background": 5,
+      "items": [
+        "Closed charcoal leather grimoire, simple bronze corner caps, diagonal right",
+        "Open thick tome, blank warm ivory pages, three-quarter tilt left",
+        "Closed narrow iron-bound book with plain clasp, upright tilted",
+        "Open low spread spellbook with dark brown cover, shallow diagonal",
+        "Closed square dark green leather book, worn bronze spine, tilted left",
+        "Half-open heavy black grimoire, thick parchment page block, diagonal right",
+        "Closed tall black book with one simple circular bronze medallion, diagonal",
+        "Open battered gray leather tome, blank slightly curled pages, tilted right",
+        "Closed compact black pocket spellbook with plain leather strap, opposite diagonal",
+        "Heavy half-open dark blue tome with brass hinge, strong three-quarter angle"
+      ]
+    },
+    {
+      "letter": "J",
+      "id": "swords-2",
+      "label": "Swords II",
+      "parent": "A",
+      "effectFamily": "A",
+      "background": 0,
+      "items": [
+        "Broad straight iron longsword, simple thick bronze crossguard, tip upper-right",
+        "Short wide straight arming sword, square bronze guard, opposite diagonal",
+        "Long slender straight blade, round iron pommel, steep right diagonal",
+        "Heavy straight two-handed greatsword, blunt square shoulders, lower-left diagonal",
+        "Broad straight fuller blade, black leather grip, near upright",
+        "Straight single-edge backsword, plain knuckle bow, slant right",
+        "Short straight leaf-point sword, worn black bronze hilt, slant left",
+        "Wide straight battle sword, uneven chipped tip edges, low diagonal",
+        "Narrow straight estoc, simple compact guard, steep left diagonal",
+        "Massive straight hand-and-a-half sword, iron pommel and bronze crossguard, strong diagonal"
+      ]
+    },
+    {
+      "letter": "K",
+      "id": "hammers-2",
+      "label": "Hammers II",
+      "parent": "D",
+      "effectFamily": "D",
+      "background": 3,
+      "items": [
+        "Heavy square cuboid iron warhammer, short dark grip, head lower-left",
+        "Long steel block warhammer, bronze collar, head upper-right",
+        "Broad square-headed maul, thick wrapped handle, opposite diagonal",
+        "Compact double-faced square iron hammer, short shaft, shallow angle",
+        "Rectangular dark stone maul in simple iron bands, diagonal",
+        "Battered cuboid steel hammer with plain rectangular strike face, upright tilted",
+        "Short thick black iron sledge, narrow bronze bands, slant left",
+        "Long-handled rectangular iron sledge, deep broad striking head, diagonal",
+        "Squat square steel hammer, scarred plain face, black handle, low diagonal",
+        "Tall rectangular slab-headed warhammer, iron shaft, strong opposite diagonal"
+      ]
+    },
+    {
+      "letter": "L",
+      "id": "scythes-2",
+      "label": "Scythes II",
+      "parent": "C",
+      "effectFamily": "C",
+      "background": 4,
+      "items": [
+        "Long black wooden shaft with inward curved crescent iron scythe blade, diagonal right",
+        "Short battle scythe with broad hooked steel blade, diagonal left",
+        "Long slim shaft and thin hooked crescent blade, nearly upright",
+        "Heavy half-moon scythe blade on black leather-wrapped shaft, diagonal",
+        "Iron-collared wooden scythe, long narrow worn steel blade, tilt right",
+        "Compact hooked scythe, thick straight dark shaft, tilt left",
+        "Broad inward crescent steel scythe, plain brass joint, three-quarter view",
+        "Long agricultural scythe with simple blackened shaft and tapered blade, low diagonal",
+        "Stout battle scythe with inward curved blade and short shaft, steep diagonal",
+        "Large plain crescent scythe on iron shaft, opposite diagonal"
+      ]
+    },
+    {
+      "letter": "M",
+      "id": "shields-2",
+      "label": "Shields II",
+      "parent": "E",
+      "effectFamily": "E",
+      "background": 1,
+      "items": [
+        "Dark steel kite shield, plain bronze boss and broad border, front tilted right",
+        "Worn round shield with simple bronze central boss, three-quarter left",
+        "Tall narrow heater shield, dark face and bronze cross braces, slight tilt",
+        "Heavy broad kite shield with simple central vertical ridge, three-quarter right",
+        "Small round buckler, battered dark iron and dull bronze rim, face angled",
+        "Rectangular tower shield with clipped corners, plain black iron face, slight diagonal",
+        "Oval dark steel shield with bronze boss, three-quarter right",
+        "Short triangular heater shield with thick bronze edges, front tilted",
+        "Long teardrop shield with central boss and plain metal braces, opposite tilt",
+        "Broad round-corner shield, dark iron plate and bronze rivets, three-quarter left"
+      ]
+    }
+  ]
+}
