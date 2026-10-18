@@ -1,6 +1,6 @@
 # Layered environment runtime
 
-Combat and the world atlas location inspector now consume reusable component recipes. Editable authoring JSON remains in `art/map-battlefield-drafts/batch-10-location-streets/modules/`; `tools/layered-environment-build.mjs` publishes a runtime catalog and95 native-size WebP exports from reviewed original PNGs. Source originals stay unchanged. Runtime exports preserve transparency and are separate from the pinned external classic art pack.
+Combat and the world atlas location inspector now consume reusable component recipes. Editable authoring JSON lives in the dedicated [AshenSpire-art repository](https://github.com/cehinds/AshenSpire-art) under `art/map-battlefield-drafts/batch-10-location-streets/modules/`; `tools/layered-environment-build.mjs` publishes a runtime catalog and 95 native-size WebP exports from reviewed original PNGs. Source originals stay unchanged. Runtime exports preserve transparency and are separate from the pinned external classic art pack.
 
 ## Component ownership
 
@@ -33,13 +33,13 @@ Only compatible region/setting mappings select new art. Examples: Ashen Crown ci
 To refresh JSON without re-encoding unchanged art:
 
 ```sh
-node tools/layered-environment-build.mjs --catalog-only
+ASHENSPIRE_ART_DIR=/path/to/AshenSpire-art node tools/layered-environment-build.mjs --catalog-only
 ```
 
-To re-encode reviewed PNGs at native size, omit `--catalog-only`. This authoring command needs the source-art checkout and Sharp. Ordinary game builds use committed exports and require no image tooling.
+To re-encode reviewed PNGs at native size, omit `--catalog-only`. This authoring command needs the source-art checkout and Sharp. A sibling `../AshenSpire-art` checkout is the default. The command supplies this game checkout to the authoring module through `ASHENSPIRE_DIR`, so intro-map bindings are validated against its actual atlas. Manifest source paths are relative to the art repository, independent of checkout names. Ordinary game builds use committed exports and require no image tooling.
 
 ## Evidence and limits
 
-Run `node --test tests/layered-environments.test.mjs tests/layered-environment.test.mjs tests/layered-art-pack.test.mjs` and build through `node tools/launch.mjs --build-only`. The browser suite `tests/layered-environment.browser.mjs` checks four viewport sizes plus Crownfall map inspection without travel. It accepts `LAYERED_GAME_URL` for web or standalone builds.
+Run `node --test tests/layered-environments.test.mjs tests/layered-environment.test.mjs tests/layered-art-pack.test.mjs` and build through `node tools/launch.mjs --build-only`. The browser suite `tests/layered-environment.browser.mjs` checks four viewport sizes plus Crownfall map inspection without travel. It accepts `LAYERED_GAME_URL` for web or standalone builds. [Viewport captures and verification record](layered-environment-evidence/CAPTURE.md) are retained as design evidence.
 
 This integration does not replace the world atlas with the separate procedural hex authoring prototype. Floor/backdrop seams and wider moving-camera overscan still need art polish. Native layer exports add about28.6 MiB to the common art pack; individual source PNGs are not loaded by the game.
