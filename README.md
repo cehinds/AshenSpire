@@ -1,19 +1,5 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — layered map and battlefield art
-
-[Feature build](https://cehinds.github.io/AshenSpire/branches/feature/ImproveMapBattleFieldArt/latest/) — published by branch CI. Local web and standalone builds are verified; hosted verification is pending publication.
-
-Separate back walls/skies, grounds, furniture/rugs, time-of-day tints and weather. Crownfall's location inspector previews the same components used in combat.
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Mobile layered city street](docs/preview/features/improve-map-battlefield-art/mobile.png) | ![Desktop separate throne and rug](docs/preview/features/improve-map-battlefield-art/desktop.png) | ![Wide painted night street](docs/preview/features/improve-map-battlefield-art/wide.png) | ![Tablet forest layers](docs/preview/features/improve-map-battlefield-art/tablet.png) |
-
-[Capture record](docs/preview/features/improve-map-battlefield-art/CAPTURE.md) · [Runtime component guide](docs/design/layered-environment-runtime.md) · [Component catalog](docs/component-catalog.html)
-<!-- feature-preview:end -->
-
 
 
 
@@ -87,7 +73,7 @@ Checked items are implemented; build channels and older saves can differ.
 [Getting started and project links](docs/PROJECT-GUIDE.md) · [Contributing](CONTRIBUTING.md)
 · [Game rules](SPEC.md) · [Development](DEVELOPER.md) · [Credits](CREDITS.md).
 
-Draft environment art: [251 sources across eleven batches](https://github.com/cehinds/AshenSpire-art/blob/main/art/map-battlefield-drafts/README.md), including [28 close-location scenes](https://github.com/cehinds/AshenSpire-art/blob/main/art/map-battlefield-drafts/batch-10-location-streets/modules/index.json) and [12 Crownfall intro-map art candidates](https://github.com/cehinds/AshenSpire-art/blob/main/art/map-battlefield-drafts/batch-10-location-streets/modules/intro-map.json).
+Draft environment art: [251 sources across eleven batches](https://github.com/cehinds/AshenSpire-art/blob/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts/README.md), including [28 close-location scenes](https://github.com/cehinds/AshenSpire-art/blob/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts/batch-10-location-streets/modules/index.json) and [12 Crownfall intro-map art candidates](https://github.com/cehinds/AshenSpire-art/blob/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts/batch-10-location-streets/modules/intro-map.json).
 
 ## Legal and credits
 

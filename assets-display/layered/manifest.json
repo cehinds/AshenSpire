@@ -1,6 +1,7 @@
 {
   "schema": 1,
   "styleFamilyId": "ashen-spire-painted-v1",
+  "sourceRepository": "https://github.com/cehinds/AshenSpire-art",
   "sourceModule": "art/map-battlefield-drafts/batch-10-location-streets/modules/index.json",
   "assets": {
     "assets-display/layered/batch-10-location-streets--city-street--backdrop.webp": {
