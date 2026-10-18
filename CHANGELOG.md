@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **Dialogs lock the page behind them; the back button and Escape close just the top one** ([#2103](https://github.com/cehinds/AshenSpire/pull/2103), `0.7.1.1575`). One modal stack now owns every shared dialog: the page behind an open dialog is inert and does not scroll, the browser or Android back button closes the top dialog, and Escape closes only the top one. Bespoke overlays (menu, armoury, deck desk and the like) keep their own handling for now.
+- **Dialogs lock the page behind them; the back button and Escape close just the top one** ([#2103](https://github.com/cehinds/AshenSpire/pull/2103), `0.7.1.1583`). One modal stack now owns every shared dialog: the page behind an open dialog is inert and does not scroll, the browser or Android back button closes the top dialog, and Escape closes only the top one. Bespoke overlays (menu, armoury, deck desk and the like) keep their own handling for now.
 
 - **Windows test shard green again (serve --watch tests)** ([#2099](https://github.com/cehinds/AshenSpire/pull/2099), `0.7.1.1583`). Two dev-server watch tests that replace a watched directory now run only where that code path exists (POSIX); nothing player-facing.
 - **The death screen says what killed you, offers Run again, and fits a phone** ([#2098](https://github.com/cehinds/AshenSpire/pull/2098), `0.7.1.1581`). Defeat now names the blow that ended the climb (who, which move, how much). Run again starts a fresh climb with the same class and choices on a new seed, from defeat or victory. The end-of-run door no longer overflows a 390 px phone; the four stat chips sit two by two.
