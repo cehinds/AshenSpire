@@ -68,14 +68,34 @@ export function importStudioLayout(file,base=root){
   writeFileSync(resolve(base,'src/content/card-layout.json'),JSON.stringify(next,null,2)+'\n');
 }
 export function cardComponentsModule(data){
-  // Keep the editable master once in the bundle. Each exported card still has
-  // its own resolved object and layers, matching the standalone JSON exports.
-  const cards=Object.fromEntries(Object.entries(data.cards).map(([id,card])=>[id,
-    Object.fromEntries(Object.entries(card).filter(([key,value])=>value!==data.template[key]))]));
+  // Keep the editable master once in the bundle. Each card stores its layers as
+  // diffs against the template layer with the same id; the module resolves them
+  // at load into the same per-card objects and layers as the standalone exports.
+  const byId=Object.fromEntries(data.template.layers.map(l=>[l.id,l]));
+  const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+  const encodeLayer=(layer)=>{
+    const base=byId[layer.id];
+    if(!base||Object.keys(base).some(key=>!(key in layer)))return {...layer,$full:true};
+    if(same(layer,base))return layer.id;
+    const diff={id:layer.id};
+    for(const [key,value] of Object.entries(layer))if(key!=='id'&&!same(value,base[key]))diff[key]=value;
+    return diff;
+  };
+  const cards=Object.fromEntries(Object.entries(data.cards).map(([id,card])=>{
+    const out=Object.fromEntries(Object.entries(card).filter(([key,value])=>key!=='layers'&&value!==data.template[key]));
+    if('layers' in card)out.layers=card.layers.map(encodeLayer);
+    return [id,out];
+  }));
   return '// Generated from src/content/card-layout.json by tools/card-components.mjs.\n'
     +'const template = '+JSON.stringify(data.template)+';\n'
+    +'const byId = Object.fromEntries(template.layers.map((l) => [l.id, l]));\n'
+    +'const clone = (v) => JSON.parse(JSON.stringify(v));\n'
+    +'const layer = (l) => typeof l === \'string\' ? clone(byId[l])\n'
+    +'  : l.$full ? (({ $full, ...rest }) => rest)(l)\n'
+    +'  : { ...clone(byId[l.id]), ...l };\n'
+    +'const resolve = (card) => ({ ...template, ...card, ...(card.layers ? { layers: card.layers.map(layer) } : {}) });\n'
     +'export const CARD_COMPONENTS = {schemaVersion:1,template,cards:Object.fromEntries(Object.entries('
-    +JSON.stringify(cards)+').map(([id,card])=>[id,{...template,...card}]))};\n';
+    +JSON.stringify(cards)+').map(([id,card])=>[id,resolve(card)]))};\n';
 }
 export function generateCardComponents(base=root){
   const template=JSON.parse(readFileSync(resolve(base,'src/content/card-layout.json'),'utf8'));
