@@ -807,6 +807,8 @@ save.status.saved,,Saved.,,
 save.status.failed,,The save did not land: {reason}. Your run is unchanged; try the save again.,,
 save.status.retry,,Retry save,,
 save.status.save,,Save,,
+# The end-of-run door: a fresh climb with the same class and choices (SPEC: a rematch is a new climb).
+gameover.runAgain,,Run again,,
 # W1c: character creation is a W1 workspace — the categories in the rail, one at a time in the pane.
 creation.title,,Create character,,
 creation.primaryAttributes,,Primary Attributes,,
