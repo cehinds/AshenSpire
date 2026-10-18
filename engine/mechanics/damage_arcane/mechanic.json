@@ -1,0 +1,27 @@
+{
+  "id": "damage_arcane",
+  "tag": "damage:arcane",
+  "version": "1.0.0",
+  "family": "damage",
+  "label": "Force",
+  "description": "Strips 2 Ward once per action; bypasses melee Counter.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "damage_arcane",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "prepareExpandedDefense"
+  }
+}

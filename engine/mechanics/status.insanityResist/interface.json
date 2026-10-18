@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.insanityResist",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

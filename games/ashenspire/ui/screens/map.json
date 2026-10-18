@@ -1,0 +1,45 @@
+{
+  "id": "map",
+  "description": "Route map. Mounted by src/ui/screens/map.js (mountMap).",
+  "route": "map",
+  "scene": {
+    "ref": "content/config/ui/scenes/w4b-map.json"
+  },
+  "viewModel": {
+    "props": {
+      "run": "runRef",
+      "selectedId": "string"
+    }
+  },
+  "regions": [
+    {
+      "slot": "header",
+      "component": "hud"
+    },
+    {
+      "slot": "map",
+      "component": "mapView",
+      "props": {
+        "run": "$run"
+      }
+    },
+    {
+      "slot": "tray",
+      "component": "iconTray",
+      "props": {
+        "items": "$run.flasks"
+      }
+    }
+  ],
+  "events": {
+    "pick": "map.pickNode",
+    "select": "map.selectNode",
+    "menu": "menu.open",
+    "armoury": "armoury.open",
+    "save": "save.write",
+    "quit": "app.quit"
+  },
+  "assets": [
+    "map.background"
+  ]
+}

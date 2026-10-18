@@ -1,0 +1,26 @@
+{
+  "id": "damage.physical",
+  "tag": "damage.physical",
+  "version": "1.0.0",
+  "family": "damage",
+  "label": "Physical",
+  "description": "Tag damage.physical in the damage family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "damage.physical"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "ratingBonusPart"
+  }
+}

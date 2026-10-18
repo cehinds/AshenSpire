@@ -1,0 +1,22 @@
+{
+  "id": "region",
+  "kind": "region",
+  "label": "Region",
+  "description": "One of five atlas regions, each with its patrol pool and map art.",
+  "icon": "region-banner",
+  "placement": {
+    "atlas": "content/source/worldAtlas.json",
+    "table": "regions",
+    "source": "content/source/worldAtlas.json (regions)"
+  },
+  "assets": [
+    "environments.ashen-crown-map",
+    "environments.hollow-weald-map",
+    "environments.pale-marches-map",
+    "environments.cinder-reach-map",
+    "environments.drowned-coast-map"
+  ],
+  "tags": [
+    "atlas"
+  ]
+}

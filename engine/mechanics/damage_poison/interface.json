@@ -1,0 +1,8 @@
+{
+  "mechanic": "damage_poison",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

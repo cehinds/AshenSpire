@@ -1,0 +1,26 @@
+{
+  "id": "damage.fire",
+  "tag": "damage.fire",
+  "version": "1.0.0",
+  "family": "damage",
+  "label": "Fire",
+  "description": "Tag damage.fire in the damage family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "damage.fire"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/ashenBlight.js",
+    "symbol": "ashenBlightSpellBuildup"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "fx_ward",
+  "tag": "fx:ward",
+  "version": "1.0.0",
+  "family": "fx",
+  "label": "Ward",
+  "description": "Ward visual identity; no combat modifier.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "fx_ward",
+    "color": "9FC3E8"
+  },
+  "portability": "data"
+}

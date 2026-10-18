@@ -1,0 +1,26 @@
+{
+  "id": "equipment.mainHand",
+  "tag": "equipment.mainHand",
+  "version": "1.0.0",
+  "family": "equipment",
+  "label": "MainHand",
+  "description": "Tag equipment.mainHand in the equipment family.",
+  "attaches": [
+    "gear"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "equipment.mainHand"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatCardTactics.js",
+    "symbol": "wieldedArmament"
+  }
+}

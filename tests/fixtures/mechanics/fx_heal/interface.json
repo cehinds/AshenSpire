@@ -1,0 +1,8 @@
+{
+  "mechanic": "fx_heal",
+  "commands": { "heal": { "params": { "target": "entityRef", "amount": "value" } }, "healPct": { "params": { "target": "entityRef", "pct": "number" } } },
+  "events": { "healed": { "payload": { "target": "entityRef", "amount": "number" } } },
+  "queries": { "healAmount": { "params": { "target": "entityRef", "pct": "number" }, "returns": "number", "value": { "f": "percentMaxHp", "of": "target", "pct": "$pct" } } },
+  "listens": [],
+  "requires": []
+}

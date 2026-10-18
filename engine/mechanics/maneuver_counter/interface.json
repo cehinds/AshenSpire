@@ -1,0 +1,8 @@
+{
+  "mechanic": "maneuver_counter",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

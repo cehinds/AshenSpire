@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "properties": {
+    "amount": {
+      "type": "number",
+      "x-role": "amount",
+      "x-balance": "costs.mana",
+      "default": 1
+    }
+  },
+  "required": [],
+  "additionalProperties": false,
+  "x-attach": "card"
+}

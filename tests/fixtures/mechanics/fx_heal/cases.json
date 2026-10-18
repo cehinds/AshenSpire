@@ -1,0 +1,18 @@
+[
+  { "name": "heals and clamps to max HP",
+    "given": { "entities": { "self": { "hp": 8, "maxHp": 10 } } },
+    "when": { "command": "fx_heal.heal", "with": { "target": "self", "amount": 5 } },
+    "then": { "entities": { "self": { "hp": 10 } }, "events": ["fx_heal.healed"], "mechanics": { "fx_heal": { "healed": 5 } } } },
+  { "name": "heals a percent of max HP",
+    "given": { "entities": { "enemy": { "hp": 1, "maxHp": 50 } } },
+    "when": { "command": "fx_heal.healPct", "with": { "target": "enemy", "pct": 10 } },
+    "then": { "entities": { "enemy": { "hp": 6 } } } },
+  { "name": "query returns the floored percent",
+    "given": { "entities": { "self": { "hp": 1, "maxHp": 45 } } },
+    "when": { "query": "fx_heal.healAmount", "with": { "target": "self", "pct": 10 } },
+    "then": { "value": 4 } },
+  { "name": "unknown command is an error",
+    "given": {},
+    "when": { "command": "fx_heal.nothing" },
+    "then": { "error": "Unknown command" } }
+]

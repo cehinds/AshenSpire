@@ -1,0 +1,23 @@
+{
+  "id": "from_relic",
+  "tag": "from:relic",
+  "version": "1.0.0",
+  "family": "from",
+  "label": "Relic",
+  "description": "Carried in by the starting relic.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "from_relic",
+    "color": "C9A227"
+  },
+  "portability": "data"
+}

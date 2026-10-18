@@ -1,0 +1,8 @@
+{
+  "mechanic": "classification.slot",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

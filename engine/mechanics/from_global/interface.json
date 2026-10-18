@@ -1,0 +1,8 @@
+{
+  "mechanic": "from_global",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

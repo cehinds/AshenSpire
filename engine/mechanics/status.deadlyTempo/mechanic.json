@@ -1,0 +1,25 @@
+{
+  "id": "status.deadlyTempo",
+  "tag": "status.deadlyTempo",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Deadly Tempo",
+  "description": "At turn start, become Prepared and draw 1 card per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.deadlyTempo"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

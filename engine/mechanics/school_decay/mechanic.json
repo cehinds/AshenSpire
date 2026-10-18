@@ -1,0 +1,27 @@
+{
+  "id": "school_decay",
+  "tag": "school:decay",
+  "version": "1.0.0",
+  "family": "school",
+  "label": "Decay",
+  "description": "Attrition and offerings: Crimson Blight, life transfer and pay-health combos.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "school_decay",
+    "color": "A4BD72"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatRounds/resolver.js",
+    "symbol": "resolveRound"
+  }
+}

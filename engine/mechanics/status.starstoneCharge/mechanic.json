@@ -1,0 +1,26 @@
+{
+  "id": "status.starstoneCharge",
+  "tag": "status.starstoneCharge",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Starstone Charge",
+  "description": "A spell was cast this turn: your next Starstone bonus is live. Fades at end of turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.starstoneCharge"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatPose.js",
+    "symbol": "readinessPose"
+  }
+}

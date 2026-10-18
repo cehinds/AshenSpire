@@ -1,0 +1,25 @@
+{
+  "id": "possession",
+  "description": "Card face lines and effects for a possession variant. Reads src/ui/models/PossessionVariantModel.js.",
+  "layout": {
+    "ref": "content/config/ui/components/possession.json"
+  },
+  "viewModel": {
+    "props": {
+      "item": "itemRef"
+    },
+    "bindings": {
+      "lines": "$item.faceLines",
+      "effects": "$item.faceEffects"
+    }
+  },
+  "states": [
+    "idle"
+  ],
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "id": "status.strength",
+  "tag": "status.strength",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Strength",
+  "description": "Attacks deal +1 damage per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.strength"
+  },
+  "portability": "portable",
+  "legacy": {
+    "file": "src/model/ashenBlight.js",
+    "symbol": "ashenBlightBonuses"
+  },
+  "authored": true
+}

@@ -1,0 +1,47 @@
+{
+  "id": "hand",
+  "description": "The hand strip, one renderer for solo and co-op. Reads src/ui/components/hand.js, handDiscard.js, src/ui/models/HandLayout.js and DesktopCombatFooter.js.",
+  "layout": {
+    "ref": "content/config/ui/scenes/w4a-combat.json",
+    "path": "sizing.hand"
+  },
+  "viewModel": {
+    "props": {
+      "cards": "array",
+      "energy": "number",
+      "viewer": "entityRef"
+    },
+    "bindings": {
+      "cards": "$cards",
+      "count": "$cards.length",
+      "energy": "$energy",
+      "layoutMode": "ui.handLayout"
+    }
+  },
+  "states": [
+    "idle",
+    "targeting",
+    "discarding",
+    "disabled"
+  ],
+  "events": {
+    "play": "combat.playCard",
+    "reorder": "hand.reorder",
+    "inspect": "inspect.open"
+  },
+  "children": [
+    {
+      "component": "handCard",
+      "slot": "card",
+      "props": {
+        "card": "$cards[i]"
+      }
+    }
+  ],
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

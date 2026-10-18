@@ -1,0 +1,8 @@
+{
+  "mechanic": "classification.enemy",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

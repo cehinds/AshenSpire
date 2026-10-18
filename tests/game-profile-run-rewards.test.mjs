@@ -32,3 +32,19 @@ test('shop stock persists and failed purchases do not debit or grant',()=>{
  run.cinders=100;purchaseGameProfileShopOffer(reg,run,'act1',0);assert.equal(run.cinders,90);
  assert.throws(()=>purchaseGameProfileShopOffer(reg,run,'act1',0),/claimed/);assert.equal(run.cinders,90);
 });
+
+test('owned basic cards are never offered; most card offers are rank 1+ (owner 2026-10-17)',()=>{
+ const rules=p.content.rewards.eligibility.combatCards;
+ const rankOf=id=>{const card=p.content.cards.find(c=>c.id===id);return Number.isSafeInteger(card.rank)?card.rank:rules.rankOfRarity[card.rarity]??1;};
+ let total=0,low=0;
+ for(let seed=0;seed<120;seed++){
+  const run=fresh(),owned=new Set(run.deck.map(c=>c.cardId));
+  const o=gameProfileRewardOffers(reg,run,createRng(seed),{offerId:`level${seed}`,source:'level'});
+  for(const row of o.options){
+   total++;
+   if(rankOf(row.id)<rules.minRank){low++;assert.ok(!owned.has(row.id),`seed ${seed}: owned basic ${row.id} offered`);}
+  }
+ }
+ assert.ok(total>0);
+ assert.ok(low/total<0.25,`rank-0 share ${low}/${total} should be small`);
+});

@@ -21,7 +21,11 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
   const area = { left: bounds.left + inset, top: bounds.top + inset,
     width: bounds.width - inset * 2, height: bounds.height - inset * 2 };
   const requests = [];
-  for (const panel of [...panels].sort((a, b) => (a.role === 'player') - (b.role === 'player') || a.anchor.top - b.anchor.top || a.anchor.left - b.anchor.left)) {
+  // Owner (2026-10-17): the player's panel is pinned to the player's right. It
+  // is placed first and never falls back to another side or the free-space
+  // lattice, so it cannot drift beside an enemy; enemies route around it.
+  for (const panel of [...panels].sort((a, b) => (b.role === 'player') - (a.role === 'player') || a.anchor.top - b.anchor.top || a.anchor.left - b.anchor.left)) {
+    const pinned = panel.role === 'player';
     const width = Math.min(panel.width, area.width), height = Math.min(panel.height, area.height), a = panel.anchor;
     const side = targetHudSide(panel.role, panel.lane, config);
     const point = direction => direction === 'below' ? { left: a.left + (a.width - width) / 2, top: a.top + a.height + gap }
@@ -32,21 +36,23 @@ export function placeTargetHudPanels({ bounds, panels, obstacles = [], config = 
       const key = `${rect.left}:${rect.top}`;
       if (!seen.has(key)) { seen.add(key); choices.push({ ...rect, penalty }); }
     }
-    for (const [rank, direction] of [side, ...['left', 'below', 'right'].filter(value => value !== side)].entries()) {
+    for (const [rank, direction] of (pinned ? [side] : [side, ...['left', 'below', 'right'].filter(value => value !== side)]).entries()) {
       const p = point(direction);
       for (const offset of [0, -step, step, -height - gap, height + gap, -height * 2 - gap * 2, height * 2 + gap * 2]) add(p.left, p.top + offset, rank * 500 + Math.abs(offset));
     }
-    for (let top = area.top; top <= area.top + area.height - height; top += step)
+    if (!pinned) for (let top = area.top; top <= area.top + area.height - height; top += step)
       for (let left = area.left; left <= area.left + area.width - width; left += width + gap) add(left, top, 1800 + Math.abs(left - a.left) + Math.abs(top - a.top));
     // A narrow free strip can fall between lattice rows. Try measured
     // obstacle edges so an available sprite-safe slot survives quantization.
-    for (const obstacle of obstacles.filter(other => other.width > 0 && other.height > 0))
+    if (!pinned) for (const obstacle of obstacles.filter(other => other.width > 0 && other.height > 0))
       for (const top of [obstacle.top + obstacle.height + gap, obstacle.top - height - gap])
         for (const left of [area.left, area.left + area.width - width])
           add(left, top, 1200 + Math.abs(left - a.left) + Math.abs(top - a.top));
     const obstacleCount = rect => obstacles.filter(other => targetHudOverlaps(rect, other)).length;
     choices.sort((a, b) => obstacleCount(a) - obstacleCount(b) || a.penalty - b.penalty);
-    const clear = choices.filter(choice => obstacleCount(choice) === 0);
+    const free = choices.filter(choice => obstacleCount(choice) === 0);
+    // A pinned panel overlaps a decoration before it leaves the player's side.
+    const clear = pinned && !free.length ? choices.slice(0, 1) : free;
     requests.push({ id: panel.id, side, choices, clear });
   }
   // Backtracking with the most constrained remaining target first avoids an

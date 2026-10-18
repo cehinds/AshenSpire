@@ -1,0 +1,26 @@
+{
+  "id": "status.paralysis",
+  "tag": "status.paralysis",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Paralysis",
+  "description": "Locks ordinary cards, Counter and card Evade. Break Paralysis: 3 SP per stack. Grounding clears its pressure.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.paralysis"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/ashenBlight.js",
+    "symbol": "ashenBlightSpellBuildup"
+  }
+}

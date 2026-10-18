@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.prepared",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

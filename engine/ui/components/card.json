@@ -1,0 +1,53 @@
+{
+  "id": "card",
+  "description": "Card face shared by hand, rewards, deck and inspection. Reads src/ui/components/card.js, cardLayout.js, cardAppearance.js, src/ui/models/CardSizeModel.js and CombatCardView.js.",
+  "layout": {
+    "ref": "content/config/ui/components/card.json"
+  },
+  "viewModel": {
+    "props": {
+      "card": "cardRef",
+      "level": "string",
+      "rules": "object"
+    },
+    "bindings": {
+      "name": "$card.name",
+      "cost": "$card.cost",
+      "type": "$card.type",
+      "text": "$card.text",
+      "art": "$card.art",
+      "rarity": "$card.rarity",
+      "tags": "$card.tags"
+    }
+  },
+  "states": [
+    "idle",
+    "selected",
+    "unaffordable",
+    "disabled",
+    "upgraded"
+  ],
+  "events": {
+    "tap": "card.select",
+    "hold": "inspect.open"
+  },
+  "children": [
+    {
+      "component": "tooltip",
+      "slot": "tag"
+    },
+    {
+      "component": "possession",
+      "slot": "variant"
+    }
+  ],
+  "assets": [
+    "card.frame",
+    "card.art"
+  ],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}
