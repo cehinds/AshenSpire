@@ -809,6 +809,27 @@ test('the status-semantics door forwards shipped state, results and errors', () 
   }
 });
 
+test('the status-semantics door forwards Core 2 owner-start decay and round gates', () => {
+  const exercise = api => {
+    const definition = {id:'buff',stackMode:'add',decay:'perTurnEnd',modifiers:{}};
+    const player = {id:'player',kind:'player',alive:true,statuses:{buff:{stacks:3}}};
+    const events = [];
+    const ctx = {player,enemies:[],turn:11,combatExpansionVersion:2,
+      gameProfile:{modules:{effects:{fixCoreVersion:1}}},
+      registries:{statuses:{get:()=>definition}},emit:(type,payload)=>events.push({type,...payload})};
+    eq(api.statusDefinition(ctx,'buff'),definition,'effective definitions use the implementation');
+    eq(api.decayAtTurnStart(ctx,player),undefined,'owner-start decay forwards its return');
+    eq(player.statuses.buff.stacks,2,'the owner-start clock removes one stack');
+    api.decayAtTurnStart(ctx,player);
+    eq(player.statuses.buff.stacks,2,'a repeated clock in the same round cannot decay twice');
+    ctx.turn=12;
+    api.decayAtTurnStart(ctx,player);
+    eq(player.statuses.buff.stacks,1,'the next round advances decay');
+    return {player,events};
+  };
+  eq(exercise(semanticsDoor),exercise(semanticsHome),'the framework forwards actual Core 2 state and receipts');
+});
+
 test('the router door serves the whole routed-interaction surface, identically', () => {
   eq(routerDoor.armHold === holdconfirmHome.armHold, true, 'armHold: one home');
   eq(routerDoor.armInspect === holdconfirmHome.armInspect, true, 'armInspect: one home');
