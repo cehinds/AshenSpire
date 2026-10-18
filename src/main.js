@@ -913,7 +913,7 @@ function applyDisplaySettings(settings) {
       : (settings.largeText === true ? 'L' : null);
   if (tKey) document.documentElement.style.fontSize = TEXT_SIZES[tKey];
   else document.documentElement.style.removeProperty('font-size');
-  document.body.classList.toggle('no-shake', quality === 'lite' || settings.screenShake === false);
+  document.body.classList.toggle('no-shake', settings.screenShake === false);
   // Card colour motif: mode on the root as a data attr, wash depth as a var, so
   // switching is a re-paint with no re-render. Both defaults live in balance.ui.
   const motif = UI.cardMotifModes.includes(settings.cardMotif) ? settings.cardMotif : UI.cardMotif;
@@ -1271,6 +1271,11 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   });
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
+  // What the player chose to begin this climb, saved with the run so the
+  // game-over screen can offer Run again with the same choices after any
+  // reload. The STARTING attributes, not the levelled ones; the game profile
+  // is already run.gameProfile. A run saved before this field has no Run again.
+  run.beginChoices = structuredClone({ classId, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile });
   if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile, ATLAS, { townsPerActMax: registries.balance.atlas.townsPerActMax });
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
@@ -2362,8 +2367,14 @@ async function showFinishedRun(victory) {
   const result = await finishRun(victory);
   if (run !== finishedRun || activeSlot !== finishedSlot) return result;
   const retry = () => showFinishedRun(victory);
+  // Run again is a NEW climb: same class and choices, a new random seed (a
+  // rematch is not a replay). It waits for the finished run to be saved away.
+  const again = finishedRun.beginChoices ? () => {
+    if (run !== finishedRun || activeSlot !== finishedSlot) return undefined;
+    return startRunInSlot({ ...structuredClone(finishedRun.beginChoices), gameProfile: finishedRun.gameProfile, seedString: randomSeedString() }, finishedSlot);
+  } : null;
   mountGameOver(app, { registries: finishedRegistries, game: finishedRun, victory, earned: result.earned,
-    onTitle: showTitle, onHistory: showHistory, onRetry: result.ok ? null : retry });
+    onTitle: showTitle, onHistory: showHistory, onRetry: result.ok ? null : retry, onRunAgain: result.ok ? again : null });
   if (!result.ok) openSaveStatusReview({
     ...runIdentityParts(), savedAt: run.savedAt ?? null, error: result.error, onRetry: retry,
   });
@@ -4561,8 +4572,9 @@ if (shotState === 'combat-test') {
     run.stats.fightsWon = 3;
     run.stats.damageDealt = 214;
     run.stats.damageTaken = 96;
+    run.stats.lastHit = { sourceId: 'e1', sourceName: 'Ash Warden', move: 'Cleave', amount: 14 };
     run.hp = 0;
-    mountGameOver(app, { registries, game: run, victory: false, earned: [], onTitle: showTitle, onHistory: showHistory });
+    mountGameOver(app, { registries, game: run, victory: false, earned: [], onTitle: showTitle, onHistory: showHistory, onRunAgain: showTitle });
   } else if (shotState === 'victory') {
     // The other end of the same door as ?shot=death: the run won, the stats
     // real, the deck the class's own — so the victory face is photographed
@@ -4571,7 +4583,7 @@ if (shotState === 'combat-test') {
     run.stats.fightsWon = 11;
     run.stats.damageDealt = 640;
     run.stats.damageTaken = 212;
-    mountGameOver(app, { registries, game: run, victory: true, earned: [{ name: 'Twinblade', kind: 'armament' }], onTitle: showTitle, onHistory: showHistory });
+    mountGameOver(app, { registries, game: run, victory: true, earned: [{ name: 'Twinblade', kind: 'armament' }], onTitle: showTitle, onHistory: showHistory, onRunAgain: showTitle });
   } else if (shotState === 'boss') {
     // Straight into the act-1 boss; the intro card is held for the camera.
     enterCombat(run.mapGraph.startIds[0], 'bossOmen');
