@@ -187,6 +187,27 @@ test('--watch: a content/hud-layout change runs hud-layout-css, reloads, and ign
   child.kill();
 });
 
+test('--watch: a batch touching config, hud-layout and source runs the builders in a fixed order', async () => {
+  const root = makeTree();
+  mkdirSync(join(root, 'content', 'hud-layout'), { recursive: true });
+  const log = join(root, 'order.log');
+  for (const tool of ['config-build', 'hud-layout-css', 'content-build']) {
+    writeFileSync(join(root, 'tools', `${tool}.mjs`),
+      `import { appendFileSync } from 'node:fs';\nappendFileSync(${JSON.stringify(log)}, ${JSON.stringify(`${tool}\n`)});\n`);
+  }
+  const { port, child } = await start(root, ['--watch']);
+  const stream = await events(port);
+  const reload = stream.next('reload', 3000);
+  // Source first, so insertion order alone would run content-build first.
+  writeFileSync(join(root, 'content', 'source', 'cards.json'), '{}\n');
+  writeFileSync(join(root, 'content', 'hud-layout', 'mobile.json'), '{}\n');
+  writeFileSync(join(root, 'content', 'config', 'a.json'), '{}\n');
+  await reload;
+  assert.deepEqual(readFileSync(log, 'utf8').trim().split('\n'), ['config-build', 'hud-layout-css', 'content-build']);
+  stream.close();
+  child.kill();
+});
+
 test('--watch: index.html (only) carries the live-reload listener', async () => {
   const root = makeTree();
   const { port, child } = await start(root, ['--watch']);

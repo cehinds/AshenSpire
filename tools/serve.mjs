@@ -96,6 +96,9 @@ const WATCH_TARGETS = ['src', 'styles', 'content', 'games', 'engine', 'index.htm
 const WATCH_DEBOUNCE_MS = 150;
 const WATCH_SKIP = /(^|\/)(\.|node_modules(\/|$))|~$|\.sw[px]$|\.tmp$/;
 
+/** The order builders run in when one batch needs several. */
+const BUILD_ORDER = ['config-build.mjs', 'hud-layout-css.mjs', 'content-build.mjs'];
+
 /** Which build tool (in tools/) must run before a change under `rel` can be seen. */
 function buildToolFor(rel) {
   if (rel.startsWith('content/config/') && rel.endsWith('.json')) return 'config-build.mjs';
@@ -172,7 +175,10 @@ function startWatch(root, emit) {
       while (pending.size) {
         const batch = [...pending];
         pending.clear();
-        const tools = new Set(batch.map(buildToolFor).filter(Boolean));
+        // Fixed order, not arrival order: content-build rejects a stale config
+        // module, so config-build must finish first.
+        const wanted = new Set(batch.map(buildToolFor).filter(Boolean));
+        const tools = BUILD_ORDER.filter((tool) => wanted.has(tool));
         let failure = null;
         for (const tool of tools) { failure = await runBuild(root, tool); if (failure) break; }
         if (failure) emit('error', failure); else emit('reload', batch[batch.length - 1]);
