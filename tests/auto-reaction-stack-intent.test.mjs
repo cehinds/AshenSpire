@@ -55,3 +55,21 @@ test('a stack move that cannot be read is unknown, never guessed', () => {
   const read = stackedEnemyReactionIntent(combat, { groupKey: combat.reactionStack.groupKey, sourceId: knight.id }, 'player');
   assert.equal(perceivedManeuver(read), null);
 });
+
+// A loaded fight's stance ledger is rebuilt from the restored eventLog (the last-stance fallback survives a reload).
+test('a fresh ledger replays a restored eventLog to each seat\'s last confirmed card kind', async () => {
+  const { createStanceLedger, kindForCard } = await import('../src/model/alternativeStance.js');
+  const log = [
+    { type: 'combatStarted' },
+    { type: 'cardPlayed', playerId: 'p1', cardId: 'strike', cardType: 'attack', cardTags: [] },
+    { type: 'damageDealt', sourceId: 'p1' },
+    { type: 'cardPlayed', playerId: 'p2', cardId: 'defend', cardType: 'skill', cardTags: [] },
+  ];
+  const live = createStanceLedger(kindForCard);
+  for (const e of log) live.accept(e);
+  const restored = createStanceLedger(kindForCard);
+  restored.replay(log, () => { throw new Error('resolver failure falls back to the receipt'); });
+  assert.deepEqual(restored.get('p1'), live.get('p1'));
+  assert.deepEqual(restored.get('p2'), live.get('p2'));
+  assert.notEqual(restored.get('p1'), null);
+});

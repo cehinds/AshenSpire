@@ -302,6 +302,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The player's last confirmed card kind: the at-rest intent glyph above the head.
   const heldKinds = createStanceLedger(kindForCard);
   const heldCards = createStanceLedger(card => card);
+  // A loaded fight starts with empty ledgers: rebuild each seat's last stance from the restored cardPlayed receipts.
+  heldKinds.replay(combat.eventLog, receipt => receipt.cardInstance ? resolveCombatCard(combat, receipt.cardInstance) : undefined);
   function smashProfile() {
     return combatWeaponProfilesFor({appearance:displayAppearance(), classId:run.class, armourId:figureSpec(registries,run.loadout,run.class).armourId, grip:gripOf(registries,run.loadout,run.class)}).smashProfile;
   }
