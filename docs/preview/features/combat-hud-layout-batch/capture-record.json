@@ -6,7 +6,17 @@
     "version": "0.7.1.1564",
     "digest": "f2ae87772e"
   },
-  "artifactIdentity": "pending current combined-source artifact",
+  "artifactIdentity": {
+    "runtimeSourceCommit": "c979e9d9c037c685aec3f024aa9975a79775af7b",
+    "workflowRunId": 39096395333,
+    "workflowJobId": 117583642590,
+    "artifactId": 12125171021,
+    "version": "0.7.1.1564",
+    "sourceDigest": "f2ae87772e",
+    "artifactArchiveSha256": "e5d15bc8a7d76a8a8705f23165367eaf3264dd8710b19e89eb015a233bc2614c",
+    "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39096395333/artifacts/12125171021",
+    "status": "verified CI artifact; current public proof pending"
+  },
   "publicRouteVerification": "pending current combined-source public proof",
   "historicalPublicRouteVerification": {
     "status": "verified read-only historical source identity",
@@ -77,5 +87,28 @@
     }
   ],
   "inspection": "Root inspected all four fresh PNGs; fonts loaded and zero failed images at all sizes.",
-  "limits": "Fresh local rendering only, not latency, hosted gameplay or CI/public screenshots. Historical1a proof does not cover this combined source. No capture-only CSS."
+  "limits": "Fresh local rendering only, not latency, hosted gameplay or CI/public screenshots. Historical1a proof does not cover this combined source. No capture-only CSS.",
+  "currentQuickStart": {
+    "workflowRunId": 39096397995,
+    "workflowJobId": 117584033338,
+    "status": "success",
+    "contactMs": [
+      280,
+      272,
+      371
+    ],
+    "contactMedianMs": 280,
+    "firstNumberMs": [
+      739,
+      631,
+      735
+    ],
+    "firstNumberMedianMs": 735,
+    "hashChecksPassed": 536,
+    "loadedBody": "Reaver256x256",
+    "inputChecksPassed": 5,
+    "diagnostics": "not needed; uninstrumented timing authoritative",
+    "scope": "Unchanged budgets; historical local397/779 failure remains separate, no universal latency claim."
+  },
+  "currentSourceCI": "All functional source CI passed, including tests39096398033 core plus four shards; only art39096396447 remains queued, with expected conditional stance skip."
 }
