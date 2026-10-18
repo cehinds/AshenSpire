@@ -2062,6 +2062,11 @@ together.
   focused card, selection glow, revealed information button and legal-target
   highlights. Information opens details without playing. Existing tap, hold,
   keyboard, controller and direct-target drag confirmation remain available.
+  A tap on a playable card plays it when its target is unambiguous (self and
+  all-enemy cards; one living enemy); the hold selects it without playing
+  (inspect, Upcast, target choice) (owner, 2026-10-18).
+- **End Turn.** A single press when no card in hand is playable; otherwise the
+  configured second beat (owner, 2026-10-18).
 - **Card flick to play.** An upward or upward-diagonal primary-pointer flick from a
   playable hand card can play on release without reaching a combatant. A profile
   setting enables it (default on); Card flick distance accepts 32–160 CSS pixels
