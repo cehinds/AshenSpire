@@ -6,6 +6,10 @@ import {compileGameProfiles,loadGameProfileCatalog} from '../tools/game-config.m
 import {resolveGameAuthor} from '../engine/kernel/gameConfig.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const cli=(...args)=>spawnSync(process.execPath,['tools/game-config.mjs',...args],{cwd:root,encoding:'utf8'});
+function selectedCoreContent(catalog, author) {
+ const pack=catalog.bundles[author.core].manifest.packs.find(row=>row.id==='ashen.core-content');
+ return catalog.packs[`${pack.id}@${pack.version}`].content;
+}
 test('generated imports and locks exactly match source compilation',()=>{
  const compiled=compileGameProfiles();for(const[path,value]of Object.entries(compiled.outputs))assert.equal(readFileSync(resolve(root,path),'utf8'),value,path);
  assert.equal(cli('check').status,0);
@@ -31,11 +35,11 @@ test('kernel/runtime edits change the behavior pin; docs, other contracts and un
  probe('src/model/__gameProfileRuntimeProbe.js','export const probe = 1;\n',false);
 });
 test('unresolved pack/class card references fail before a game can start',()=>{
- const {catalog,authors}=compileGameProfiles(),changed=JSON.parse(JSON.stringify(catalog));changed.packs['ashen.core-content@1.0.0'].content.characters.find(c=>c.tags.includes('character.player')).player.specialCardId='missing';
+ const {catalog,authors}=compileGameProfiles(),changed=JSON.parse(JSON.stringify(catalog));selectedCoreContent(changed,authors.core).characters.find(c=>c.tags.includes('character.player')).player.specialCardId='missing';
  assert.throws(()=>resolveGameAuthor(authors.core,changed),/unresolved card reference/);
 });
 
 test('pack policies supply bundle defaults rather than being shadowed by generic defaults',()=>{
- const {catalog,authors}=compileGameProfiles(),changed=JSON.parse(JSON.stringify(catalog));changed.packs['ashen.core-content@1.0.0'].content.routes.acts=2;
+ const {catalog,authors}=compileGameProfiles(),changed=JSON.parse(JSON.stringify(catalog));selectedCoreContent(changed,authors.core).routes.acts=2;
  const profile=resolveGameAuthor(authors.core,changed);assert.equal(profile.modules.routes.acts,2);assert.equal(profile.content.routes.acts,2);
 });
