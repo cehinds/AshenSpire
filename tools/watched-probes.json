@@ -5,10 +5,10 @@
   {
    "id": "P1",
    "by": "Bjorn",
-   "read": "src/ui/screens/combat.js (procbar) · src/content/statuses.js (bleed.proc.threshold = 7)",
+   "read": "src/ui/screens/combat.js (procbar) · content/source/statuses.json (bleed.proc.threshold = 7)",
    "anchors": [
     "bar procbar",
-    "threshold: 7"
+    "\"threshold\": 7"
    ],
    "screen": "combat › the enemy's build-up meter",
    "why-drive": "No ?shot= state poses a status, so the game is PLAYED: the Reaver's own starter card Gorefire Slash applies 3 Bleed. A drive is the only honest way to photograph a mechanic.",
@@ -39,7 +39,7 @@
   {
    "id": "P2",
    "by": "Bjorn",
-   "read": "src/content/statuses.js (bleed proc: threshold 7, burst 15% min 8, applies bleedResist) · (bleedResist 'Clotted', icon 🩹) · src/content/cards/reaver.js (gorefireSlash 1 energy + 1 MANA) · src/content/classes.js (startingFlaskAllocation mana — the third cast's honest source)",
+   "read": "content/source/statuses.json (bleed proc: threshold 7, burst 15% min 8, applies bleedResist) · (bleedResist 'Clotted', icon 🩹) · src/content/cards/reaver.js (gorefireSlash 1 energy + 1 MANA) · src/content/classes.js (startingFlaskAllocation mana — the third cast's honest source)",
    "anchors": [
     "startingFlaskAllocation",
     "gorefireSlash",
@@ -80,7 +80,7 @@
   {
    "id": "P3",
    "by": "Bjorn",
-   "read": "src/content/statuses.js (frost, threshold proc) · appliers now exist: src/content/cards/starseer.js (6x applyStatus status:'frost'), src/content/enemies/act2.js (1x)",
+   "read": "content/source/statuses.json (frost, threshold proc) · appliers now exist: src/content/cards/starseer.js (6x applyStatus status:'frost'), src/content/enemies/act2.js (1x)",
    "anchors": [
     "status: 'frost'"
    ],
@@ -110,7 +110,7 @@
   {
    "id": "P4",
    "by": "Bjorn",
-   "read": "src/ui/screens/combat.js (meterBars → resourceBars surface 'model') · src/ui/components/resbars.js (data-res='poise', data-cur) · src/content/statuses.js (proc.poiseDamage 3) · #165 replaced the old .poisebar — the vessel is the bar now",
+   "read": "src/ui/screens/combat.js (meterBars → resourceBars surface 'model') · src/ui/components/resbars.js (data-res='poise', data-cur) · content/source/statuses.json (proc.poiseDamage 3) · #165 replaced the old .poisebar — the vessel is the bar now",
    "anchors": [
     "resourceBars",
     "poiseDamage"
@@ -149,7 +149,7 @@
   {
    "id": "P5",
    "by": "Bjorn",
-   "read": "src/content/statuses.js (insanity, threshold proc) · appliers now exist: src/content/cards/herald.js (2x), src/content/enemies/act3.js (applyStatus status:'insanity' on player)",
+   "read": "content/source/statuses.json (insanity, threshold proc) · appliers now exist: src/content/cards/herald.js (2x), src/content/enemies/act3.js (applyStatus status:'insanity' on player)",
    "anchors": [
     "status: 'insanity'"
    ],
