@@ -48,3 +48,15 @@ test('JSON tuning reaches live offers; exhausted pools fall back and saved offer
   assert.ok(shop.options.some(row=>row.kind==='weapons'),'combat weights do not restrict shop shelves');
   assert.equal(rng.getCounters().cardRewards,counters.cardRewards,'shop uses its own RNG stream');
 });
+test('older shop snapshots retain their total count and cardRewards stream', () => {
+  const profile=resolveGameProfile('core');
+  const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
+  const run=createRunState({seed:1,classId:'reaver',registries:reg});
+  delete run.gameProfile.modules.shops.itemsPerCategory;
+  delete run.gameProfile.content.shops.itemsPerCategory;
+  const rng=createRng(71), before=rng.getCounters();
+  const stock=gameProfileShopStock(reg,run,rng,{shopId:'legacy-snapshot'});
+  assert.equal(stock.options.length,3);
+  assert.equal(rng.getCounters().shop,before.shop);
+  assert.ok(rng.getCounters().cardRewards>before.cardRewards);
+});

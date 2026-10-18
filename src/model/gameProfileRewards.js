@@ -59,7 +59,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
   if(run.gameProfileRewardOffers?.[offerId])return run.gameProfileRewardOffers[offerId];
   const available=pools(registries,run), options=[];
-  const stream=source==='shop'?'shop':'cardRewards';
+  const stream=source==='shop'&&itemsPerCategory!==null?'shop':'cardRewards';
   if(groups.length) {
     const problems=rewardGroupProblems(groups,categories);
     if(problems.length)throw new Error(problems.join('; '));
@@ -77,7 +77,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
     if(kind==='combatCards'&&rule){
       const low=new Set(available.combatCardsLow||[]),high=ids.filter(id=>!low.has(id)),lowIds=ids.filter(id=>low.has(id));
       // The chance is honored even when no rank 1+ card is left: a failed (or zero) roll drops the category.
-      const allowLow=lowIds.length>0&&rng.float(stream)<(rule.lowerRankChance??0);
+      const allowLow=lowIds.length>0&&rng.pick(stream,Array.from({length:100},(_,i)=>i))<Math.round((rule.lowerRankChance??0)*100);
       if(!allowLow&&!high.length){available[kind]=[];continue;}
       ids=allowLow?lowIds:high;
     }
