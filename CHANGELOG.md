@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
+- **Matching stances hit harder and hit chances show when you pick a card** ([#2143](https://github.com/cehinds/AshenSpire/pull/2143), `0.7.1.1627`). Matching stances now add 25% effectiveness. Enemy intent checks use the target's Intelligence and Wisdom against your Wisdom roll. Hit chances show on every target as soon as you pick a card that can hit it.
+
 - **Matching-stance discounts follow what a card costs** ([#2142](https://github.com/cehinds/AshenSpire/pull/2142), `0.7.1.1627`). Matching-stance cards now get their cost discount on mana if they cost mana, otherwise on stamina.
 
 - **ModalManager: the co-op seat strip goes inert under a door** ([#2132](https://github.com/cehinds/AshenSpire/pull/2132), `0.7.1.1627`). In couch co-op the seat tabs now sleep under an open dialog instead of answering taps through it.
