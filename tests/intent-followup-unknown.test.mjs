@@ -9,7 +9,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch } from '../src/engine/combat.js';
-import { followUpPlan, remainingFollowUps } from '../src/ui/models/IntentFollowUpModel.js';
+import { advanceFollowUps, followUpPlan, remainingFollowUps } from '../src/ui/models/IntentFollowUpModel.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { combatantIntent } from '../src/ui/components/combatantOverhead.js';
 
@@ -39,15 +39,26 @@ test('no SP left (nothing queued): nothing shows, read or no read', () => {
   assert.deepEqual(remainingFollowUps(null, 2), []);
 });
 
-test('enemyMoveStarted carries the count of planned follow-ups left, falling by one per move played', () => {
+test('each action event of the actor consumes one planned move, so the "?" row shrinks as it acts', () => {
+  const failed = followUpPlan({ passed: false, queue: QUEUE, def: DEF });
+  // Head starts (3 left), a follow-up starts (2), one is refused for SP (1), the last starts (0).
+  assert.deepEqual([advanceFollowUps(failed), advanceFollowUps(failed), advanceFollowUps(failed), advanceFollowUps(failed)].map((row) => row.length), [3, 2, 1, 0]);
+  const passed = followUpPlan({ passed: true, queue: QUEUE, def: DEF });
+  assert.deepEqual(advanceFollowUps(passed).map((s) => s.icon), ['attack', 'defend', 'smash']);
+  assert.deepEqual(advanceFollowUps(passed).map((s) => s.icon), ['defend', 'smash']);
+  assert.deepEqual(advanceFollowUps(null), []);
+});
+
+test('the engine event stays count-free: the saved golden event log is unchanged', () => {
   const run = createRunState({ seed: 5, classId: 'reaver', registries, profileMeta: { settings: {} } });
   const c = createRunCombat({ registries, rng: createRng(5), run, enemyIds: ['wanderingSoldier'], settings: {} });
   const planned = c.enemies[0].plannedMoves.length;
   assert.ok(planned >= 1, 'the fixture soldier plans follow-ups');
   dispatch(c, { type: 'endTurn' });
   while (c.pendingReaction) dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: null });
-  const starts = c.eventLog.filter((e) => e.type === 'enemyMoveStarted' && !e.reaction).map((e) => e.queued);
-  assert.deepEqual(starts.slice(0, planned + 1), Array.from({ length: planned + 1 }, (_, i) => planned - i));
+  const acts = c.eventLog.filter((e) => (e.type === 'enemyMoveStarted' && !e.reaction) || e.type === 'enemyMoveUnavailable');
+  assert.equal(acts.length, planned + 1, 'one action event for the head and one per planned move');
+  assert.ok(c.eventLog.filter((e) => e.type === 'enemyMoveStarted').every((e) => !('queued' in e)));
 });
 
 test('the intent renders "?" for a failed read and icons for a passed one, and no move reaches the DOM', () => {

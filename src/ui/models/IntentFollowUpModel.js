@@ -34,3 +34,15 @@ export function remainingFollowUps(plan, queued) {
   if (!plan.passed || !plan.icons) return Array.from({ length: count }, () => ({ kind: 'unknown' }));
   return plan.icons.slice(plan.total - count).map(icon => ({ kind: 'action', icon }));
 }
+
+/**
+ * advanceFollowUps(plan) → the symbols after the next action event of one actor's turn. Call it once per
+ * `enemyMoveStarted` (not a reaction) or `enemyMoveUnavailable` of that actor, in order. The first call is the
+ * actor's head move, which is not in the plan; each later call consumes one planned move, played or refused
+ * for SP. The engine's event stays count-free (its log is a saved golden), so the UI counts.
+ */
+export function advanceFollowUps(plan) {
+  if (!plan) return [];
+  plan.spent = plan.spent == null ? 0 : plan.spent + 1;
+  return remainingFollowUps(plan, plan.total - plan.spent);
+}

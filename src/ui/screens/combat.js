@@ -6,7 +6,7 @@ import { chooseAutoCombatAction, resolveCombatAutomation, AUTOMATION_DEFAULTS } 
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
 import { projectCombatIntent } from '../models/CombatIntentProjectionModel.js';
-import { followUpPlan, remainingFollowUps } from '../models/IntentFollowUpModel.js';
+import { advanceFollowUps, followUpPlan } from '../models/IntentFollowUpModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
 import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
@@ -1158,13 +1158,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           if (e.reaction) break;
           const actor = disp.ents[e.sourceId];
           // The actor has acted and may still have SP: its remaining queue is "?" unless the read passed.
-          if (actor) actor.followUps = remainingFollowUps(disp.followPlans?.[e.sourceId], e.queued);
+          if (actor) actor.followUps = advanceFollowUps(disp.followPlans?.[e.sourceId]);
           const enemy = combat.enemies.find(row => row.id === e.sourceId);
           const move = registries.enemies.get(e.enemyId || enemy?.enemyId)?.moves?.[e.moveId];
           if (actor && enemy && move) actor.presentationStance = enemyStanceCategory({
             kind: e.kind || move.intent,
             combatProfile: enemyMoveCarrier(enemy, move, e.moveId, combat).combatProfile,
           });
+          break;
+        }
+        case 'enemyMoveUnavailable': {
+          const actor = disp.ents[e.sourceId];
+          if (actor) actor.followUps = advanceFollowUps(disp.followPlans?.[e.sourceId]);
           break;
         }
         case 'enemyActorTurnStarted': {
