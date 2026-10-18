@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **FixCore requirements are collected in one implementation contract** ([#2127](https://github.com/cehinds/AshenSpire/pull/2127), `0.7.1.1615`). Records the corrected combat, equipment, deck, rewards and interface requirements, JSON authoring architecture and review criteria. The versioned rules contract preserves existing saves; gameplay implementation remains pending.
-- **One-tap combat: End Turn with nothing playable, and cards with one target** ([#2121](https://github.com/cehinds/AshenSpire/pull/2121), `0.7.1.1615`). End Turn is one tap when you have nothing left to play. Tap a card to play it when there is only one target.
+- **FixCore requirements are collected in one implementation contract** ([#2127](https://github.com/cehinds/AshenSpire/pull/2127), `0.7.1.1617`). Records the corrected combat, equipment, deck, rewards and interface requirements, JSON authoring architecture and review criteria. The versioned rules contract preserves existing saves; gameplay implementation remains pending.
+- **One-tap combat: End Turn with nothing playable, and cards with one target** ([#2121](https://github.com/cehinds/AshenSpire/pull/2121), `0.7.1.1617`). End Turn is one tap when you have nothing left to play. Tap a card to play it when there is only one target.
 - **Content authority: enemies and classes are JSON** ([#2130](https://github.com/cehinds/AshenSpire/pull/2130), `0.7.1.1615`). Enemies and classes are plain data files now; nothing changes in play.
 - **Content authority: class and armament cards are JSON** ([#2125](https://github.com/cehinds/AshenSpire/pull/2125), `0.7.1.1613`). Class and armament cards are plain data files now; nothing changes in play.
 - **Hit feel: shake by share of max HP up to 10 px, 120 ms hit-stop on huge hits** ([#2123](https://github.com/cehinds/AshenSpire/pull/2123), `0.7.1.1611`). Big hits shake harder and hold longer: shake scales with the share of health a hit takes, up to 10 px, and a hit for 35% or more of max health pauses 120 ms at impact.
