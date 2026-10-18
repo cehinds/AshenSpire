@@ -35,7 +35,7 @@
 
 import { carrierRules } from '../model/registries.js';
 import { breakPropertyRule } from '../model/breakMeter.js';
-import { equippedPieces, pieceItemRef } from '../model/loadout.js';
+import { equippedPieces, equippedIn, pieceItemRef } from '../model/loadout.js';
 import * as Triggers from './triggers.js';
 
 // The carrier kinds the loadout owns. syncLoadoutProperties manages these and
@@ -131,13 +131,20 @@ export function propertyMountsOf(ctx, entity) {
  * none given, no sigil mounts.
  */
 export function loadoutCarriers(registries, loadout, classId, ownerKey, itemUpgradeLevels = {}, sigilSlots = null) {
-  const worn = equippedPieces(registries, loadout, classId, { itemUpgradeLevels });
+  const modern = registries.gameProfile?.modules?.effects?.fixCoreVersion === 1;
+  const canonical = modern ? registries.gameProfile?.content?.gear || [] : [];
+  const slots = (registries.equipment?.slots || []).filter(slot => equippedIn(registries,loadout,classId,slot.id));
+  const worn = equippedPieces(registries, loadout, classId, { itemUpgradeLevels }).map((piece,index)=>{
+    const authored=canonical.find(row=>(row.source?.id || row.id)===piece.id && (row.kind==='armor')===(piece.kind==='armor') && (!row.classes || row.classes.includes(classId)));
+    return {...piece,...(authored?.mechanicTags ? {mechanicTags:authored.mechanicTags} : {}),
+      ...(authored?.mechanicBindings ? {mechanicBindings:authored.mechanicBindings} : {}),equippedSlotId:slots[index]?.id};
+  });
   const pieces = worn
     .filter((piece) => (Array.isArray(piece.propertyTags) && piece.propertyTags.length) || hasMechanics(piece))
     .map((piece) => ({
       ...mechanicMetadata(piece), kind: piece.kind === 'armor' ? 'armour' : 'armament',
       id: piece.id,
-      instanceId: pieceItemRef(piece),
+      instanceId: modern && hasMechanics(piece) ? `${pieceItemRef(piece)}@${piece.equippedSlotId}` : pieceItemRef(piece),
       ownerKey,
       tagIds: [...(piece.propertyTags || [])],
     }));
@@ -181,7 +188,9 @@ export function relicCarrier(registries, relicId, ownerKey) {
  * carries no property.
  */
 export function classCarrier(registries, classId, ownerKey, coreTags = []) {
-  const def = registries.classes && registries.classes.get ? registries.classes.get(classId) : null;
+  const base = registries.classes && registries.classes.get ? registries.classes.get(classId) : null;
+  const authored = registries.gameProfile?.modules?.effects?.fixCoreVersion === 1 ? registries.gameProfile.content.characters?.find(row=>row.id===classId) : null;
+  const def = base && {...base,...(authored?.mechanicTags ? {mechanicTags:authored.mechanicTags} : {}),...(authored?.mechanicBindings ? {mechanicBindings:authored.mechanicBindings} : {})};
   const own = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
   // The run's picked tree nodes (plan phase 5b, run.coreTags) are the core
   // card's own tagging rows: they mount beside the class's authored tags.
