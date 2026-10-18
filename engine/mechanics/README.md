@@ -25,7 +25,7 @@ Cases, services and queries all use the state in [SPEC.md section 1](../runtime/
 - `portable`: `service.json` fully describes the behaviour with ops marked `portable` in `engine/runtime/ops.json`.
   Hand-authored (`"authored": true`), at least 3 cases, every case passes through the interpreter
   (`tests/mechanics-runtime.test.mjs`).
-- `legacy`: the behaviour still runs in JavaScript; `legacy.file` and `legacy.symbol` name where.
+- `legacy`: the behaviour still runs in JavaScript; `legacy.file` and `legacy.symbol` name where, and when the definition is data, `legacy.source` names the authored data file that defines it (`content/source/statuses.json` or `src/content/combatStatusRules.js`).
 - `data`: a classification or label with no behaviour of its own; it names no legacy file.
 
 ## Adding a mechanic

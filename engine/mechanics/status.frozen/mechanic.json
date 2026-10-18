@@ -20,6 +20,7 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/content/combatStatusRules.js"
+    "file": "src/content/statuses.js",
+    "source": "src/content/combatStatusRules.js"
   }
 }

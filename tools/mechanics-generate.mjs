@@ -5,7 +5,9 @@
 // (content/source/nodes.csv), the node variables and bindings, and the status
 // definitions (authored rows in content/source/statuses.json, expansion rows derived in
 // src/content/combatStatusRules.js, joined by the src/content/statuses.js shim), and writes
-// engine/mechanics/<slug>/.
+// engine/mechanics/<slug>/. A status's legacy.file is always its JavaScript home (the shim, or
+// the reader that runs it); legacy.source names the authored data file or the derived rules
+// module that defines the row.
 //
 //   node tools/mechanics-generate.mjs          write what is missing or stale
 //   node tools/mechanics-generate.mjs --check  exit 1 if anything would change
@@ -127,7 +129,7 @@ function describe(entry) {
   if (status) {
     portability = 'legacy';
     const reader = findReader([...quotedPatterns(status.id), new RegExp(`\\bstatuses\\??\\.${esc(status.id)}\\b`)]);
-    legacy = reader || { file: authoredStatusIds.has(status.id) ? 'content/source/statuses.json' : 'src/content/combatStatusRules.js' };
+    legacy = reader || { file: 'src/content/statuses.js', source: authoredStatusIds.has(status.id) ? 'content/source/statuses.json' : 'src/content/combatStatusRules.js' };
   } else if (family === 'classification' || family === 'fx' || /visual identity|presentation only/i.test(node.blurb)) {
     portability = 'data';
   } else {
@@ -160,6 +162,7 @@ function describe(entry) {
     description,
     `- Carried by: ${carried}.`,
     `- Lives in: ${where}.`,
+    ...(legacy?.source ? [`- Defined in: \`${legacy.source}\`.`] : []),
     `- Portability: ${portability}${portability === 'legacy' ? ' (service.json is empty until the behaviour moves to catalog ops)' : portability === 'data' ? ' (classification or presentation only)' : ''}.`,
   ].join('\n') + '\n';
   const iface = { mechanic: manifest.id, commands: {}, events: {}, queries: {}, listens: [], requires: [] };
