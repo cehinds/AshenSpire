@@ -487,7 +487,7 @@ test('Reading Desk: search accepts hotkey characters without mutating or closing
   });
 });
 
-test('Reading Desk: inspector uses one native artwork image across card selection', async () => {
+test('Reading Desk: inspector uses one artwork background with independent cutout layers', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   const { illustratedArtwork } = await import('../src/ui/components/illustratedCard.js');
   withDom(() => {
@@ -499,10 +499,18 @@ test('Reading Desk: inspector uses one native artwork image across card selectio
         editor.root.querySelector(`[data-focus-key="tile:${tile.key}"]`).click();
         editor.root.querySelector(`[data-focus-key="inspect:collection:${tile.key}"]`).click();
         const face = editor.root.querySelector('.deck-editor-reading .card');
-        const images = face.querySelectorAll('[data-component="art"] img');
+        const images = face.querySelectorAll('[data-component="art"] .playing-card-art');
         assert.equal(images.length, 1, tile.name);
         assert.ok(images[0].classList.contains('playing-card-art'));
-        assert.equal(images[0].getAttribute('data-card-art'), illustratedArtwork(tile.ref, face.dataset.cardId, { large: true, definition:resolveCard(REG,tile.ref), registries:REG }).kind);
+        const art = illustratedArtwork(tile.ref, face.dataset.cardId, { large: true, definition:resolveCard(REG,tile.ref), registries:REG });
+        assert.equal(images[0].getAttribute('data-card-art'), art.kind);
+        const cutouts = face.querySelectorAll('[data-card-art-component]');
+        assert.equal(cutouts.length, art.componentArt?.sprites.filter(layer => layer.id !== 'background').length || 0);
+        if (cutouts.length) {
+          cutouts[0].dispatchEvent(new Event('error'));
+          assert.notEqual(images[0].getAttribute('data-card-art'), 'simple');
+          assert.equal(face.querySelectorAll('[data-card-art-component]').length, 0);
+        }
         assert.equal(face.querySelector('.deck-editor-art'), null, 'no second Reading Desk artwork overlay');
       }
     } finally { editor.close(); }

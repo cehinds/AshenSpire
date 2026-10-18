@@ -1,0 +1,942 @@
+{
+  "R.object.0": {
+    "id": "R.object.0",
+    "kind": "object",
+    "category": "R",
+    "digit": 0,
+    "name": "Broken hammers 0",
+    "src": "cutouts/R/objects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      35,
+      480,
+      477
+    ],
+    "sha256": "1a2a5381059a0d81093ae0073986d7f89742331fb07ee0ee22aa61a4dbf9a369",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/R-reference.png",
+      "referenceSha256": "450c4f8c6abb4d987f4aa85a8e929acfbf430583ae16483244456262a0fb3f24",
+      "sourceFile": "exec-f7d401e1-5ccb-44a8-8d5f-c25fb80f2f21.png",
+      "sourceSha256": "9987af0c9c64c7509cdc918b6ed90cd49b0ba4544e5e5aee31b908065f1fdf4a",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 56,
+        "y": 40,
+        "width": 320,
+        "height": 316
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "K.object.0",
+      "baseAssetSha256": "12e6a6bc0e0675b6b3edf04c71415233da06b1a8c80cd5df836546d1a39b1327"
+    },
+    "condition": "broken",
+    "intactAssetId": "K.object.0",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ],
+    "displayCode": "R00",
+    "displayLabel": "R00 \u00b7 Broken hammers 0 \u00b7 object"
+  },
+  "R.object.1": {
+    "id": "R.object.1",
+    "kind": "object",
+    "category": "R",
+    "digit": 1,
+    "name": "Broken hammers 1",
+    "src": "cutouts/R/objects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      37,
+      480,
+      475
+    ],
+    "sha256": "94e5ab00f78f76f5ec704651594e769fe57efc53b135720a622813e8ffd94481",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/R-reference.png",
+      "referenceSha256": "450c4f8c6abb4d987f4aa85a8e929acfbf430583ae16483244456262a0fb3f24",
+      "sourceFile": "exec-f7d401e1-5ccb-44a8-8d5f-c25fb80f2f21.png",
+      "sourceSha256": "9987af0c9c64c7509cdc918b6ed90cd49b0ba4544e5e5aee31b908065f1fdf4a",
+      "sourceCell": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 437,
+        "y": 47,
+        "width": 325,
+        "height": 318
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "K.object.1",
+      "baseAssetSha256": "79c5091899673231cf406ee2e732345159c2e21054f0eefede4a4d4d44a73b3d"
+    },
+    "condition": "broken",
+    "intactAssetId": "K.object.1",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ],
+    "displayCode": "R10",
+    "displayLabel": "R10 \u00b7 Broken hammers 1 \u00b7 object"
+  },
+  "R.object.2": {
+    "id": "R.object.2",
+    "kind": "object",
+    "category": "R",
+    "digit": 2,
+    "name": "Broken hammers 2",
+    "src": "cutouts/R/objects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      479,
+      480
+    ],
+    "sha256": "6206eb2fe4349b3841a3f5707e0f700602b12e17e4a7eb03d736df17a9997d58",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/R-reference.png",
+      "referenceSha256": "450c4f8c6abb4d987f4aa85a8e929acfbf430583ae16483244456262a0fb3f24",
+      "sourceFile": "exec-f7d401e1-5ccb-44a8-8d5f-c25fb80f2f21.png",
+      "sourceSha256": "9987af0c9c64c7509cdc918b6ed90cd49b0ba4544e5e5aee31b908065f1fdf4a",
+      "sourceCell": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 838,
+        "y": 45,
+        "width": 308,
+        "height": 309
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "K.object.2",
+      "baseAssetSha256": "1f5e17e6ee92846fb29f48e9e387ae9b7e542b9f6572e2cab4bb13a8c826e8a7"
+    },
+    "condition": "broken",
+    "intactAssetId": "K.object.2",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ],
+    "displayCode": "R20",
+    "displayLabel": "R20 \u00b7 Broken hammers 2 \u00b7 object"
+  },
+  "R.object.3": {
+    "id": "R.object.3",
+    "kind": "object",
+    "category": "R",
+    "digit": 3,
+    "name": "Broken hammers 3",
+    "src": "cutouts/R/objects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      37,
+      480,
+      475
+    ],
+    "sha256": "c24c48fa16d9526d6af43fca906f6145eeb0c871e17dbc43ab037bbf4868a9bb",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/R-reference.png",
+      "referenceSha256": "450c4f8c6abb4d987f4aa85a8e929acfbf430583ae16483244456262a0fb3f24",
+      "sourceFile": "exec-f7d401e1-5ccb-44a8-8d5f-c25fb80f2f21.png",
+      "sourceSha256": "9987af0c9c64c7509cdc918b6ed90cd49b0ba4544e5e5aee31b908065f1fdf4a",
+      "sourceCell": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1230,
+        "y": 37,
+        "width": 330,
+        "height": 323
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "K.object.3",
+      "baseAssetSha256": "fb576526b926e39b58ee363134b9649f971bddc891a73214d186d483b8cffae0"
+    },
+    "condition": "broken",
+    "intactAssetId": "K.object.3",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ],
+    "displayCode": "R30",
+    "displayLabel": "R30 \u00b7 Broken hammers 3 \u00b7 object"
+  },
+  "R.object.4": {
+    "id": "R.object.4",
+    "kind": "object",
+    "category": "R",
+    "digit": 4,
+    "name": "Broken hammers 4",
+    "src": "cutouts/R/objects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      41,
+      32,
+      470,
+      480
+    ],
+    "sha256": "e5199e809178db6276240d7ca6634a3aefd6c54d47af91c0a0f014ca4577f97c",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/R-reference.png",
+      "referenceSha256": "450c4f8c6abb4d987f4aa85a8e929acfbf430583ae16483244456262a0fb3f24",
+      "sourceFile": "exec-f7d401e1-5ccb-44a8-8d5f-c25fb80f2f21.png",
+      "sourceSha256": "9987af0c9c64c7509cdc918b6ed90cd49b0ba4544e5e5aee31b908065f1fdf4a",
+      "sourceCell": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1629,
+        "y": 36,
+        "width": 311,
+        "height": 325
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "K.object.4",
+      "baseAssetSha256": "e5053cbbd7fbe81d6214193bda778829c06aa13e0fe253037aed402753ac32ce"
+    },
+    "condition": "broken",
+    "intactAssetId": "K.object.4",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ],
+    "displayCode": "R40",
+    "displayLabel": "R40 \u00b7 Broken hammers 4 \u00b7 object"
+  },
+  "R.object.5": {
+    "id": "R.object.5",
+    "kind": "object",
+    "category": "R",
+    "digit": 5,
+    "name": "Broken hammers 5",
+    "src": "cutouts/R/objects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      126,
+      32,
+      385,
+      480
+    ],
+    "sha256": "0489d912ad6c87b6e3515aa5a50726a8ca8a4fef2f520367fe4c854cf4c1d71e",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/R-reference.png",
+      "referenceSha256": "450c4f8c6abb4d987f4aa85a8e929acfbf430583ae16483244456262a0fb3f24",
+      "sourceFile": "exec-f7d401e1-5ccb-44a8-8d5f-c25fb80f2f21.png",
+      "sourceSha256": "9987af0c9c64c7509cdc918b6ed90cd49b0ba4544e5e5aee31b908065f1fdf4a",
+      "sourceCell": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 110,
+        "y": 438,
+        "width": 181,
+        "height": 313
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "K.object.5",
+      "baseAssetSha256": "d21d2d4a87c92780a769c33daeb4e4e543aa67937e51c3f1135c5a55765eb7a5"
+    },
+    "condition": "broken",
+    "intactAssetId": "K.object.5",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ],
+    "displayCode": "R50",
+    "displayLabel": "R50 \u00b7 Broken hammers 5 \u00b7 object"
+  },
+  "R.object.6": {
+    "id": "R.object.6",
+    "kind": "object",
+    "category": "R",
+    "digit": 6,
+    "name": "Broken hammers 6",
+    "src": "cutouts/R/objects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      35,
+      480,
+      476
+    ],
+    "sha256": "d1d823ed8519087308fba331b791094f3f5109170f20a254f5c7c0057d1a151b",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/R-reference.png",
+      "referenceSha256": "450c4f8c6abb4d987f4aa85a8e929acfbf430583ae16483244456262a0fb3f24",
+      "sourceFile": "exec-f7d401e1-5ccb-44a8-8d5f-c25fb80f2f21.png",
+      "sourceSha256": "9987af0c9c64c7509cdc918b6ed90cd49b0ba4544e5e5aee31b908065f1fdf4a",
+      "sourceCell": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 447,
+        "y": 441,
+        "width": 314,
+        "height": 309
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "K.object.6",
+      "baseAssetSha256": "7e84b4e93a5e4c2f91c4c719d9ddddd1341848ee2140a1742e10069df8bfe274"
+    },
+    "condition": "broken",
+    "intactAssetId": "K.object.6",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ],
+    "displayCode": "R60",
+    "displayLabel": "R60 \u00b7 Broken hammers 6 \u00b7 object"
+  },
+  "R.object.7": {
+    "id": "R.object.7",
+    "kind": "object",
+    "category": "R",
+    "digit": 7,
+    "name": "Broken hammers 7",
+    "src": "cutouts/R/objects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      46,
+      32,
+      465,
+      480
+    ],
+    "sha256": "5495e2a6d3c39ff3521aab182d131c01473ca44ef3734c2539cfd96427dff655",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/R-reference.png",
+      "referenceSha256": "450c4f8c6abb4d987f4aa85a8e929acfbf430583ae16483244456262a0fb3f24",
+      "sourceFile": "exec-f7d401e1-5ccb-44a8-8d5f-c25fb80f2f21.png",
+      "sourceSha256": "9987af0c9c64c7509cdc918b6ed90cd49b0ba4544e5e5aee31b908065f1fdf4a",
+      "sourceCell": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 833,
+        "y": 431,
+        "width": 301,
+        "height": 322
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "K.object.7",
+      "baseAssetSha256": "11b8cb8e627f1a4af1d9f7d907101f0341e10958b73b1839570c2fbbe86f9ef6"
+    },
+    "condition": "broken",
+    "intactAssetId": "K.object.7",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ],
+    "displayCode": "R70",
+    "displayLabel": "R70 \u00b7 Broken hammers 7 \u00b7 object"
+  },
+  "R.object.8": {
+    "id": "R.object.8",
+    "kind": "object",
+    "category": "R",
+    "digit": 8,
+    "name": "Broken hammers 8",
+    "src": "cutouts/R/objects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      48,
+      480,
+      464
+    ],
+    "sha256": "41c4d72a2ea92649911a3b1a0b7f209e504d5e0634aaf32772bed06280c89a2a",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/R-reference.png",
+      "referenceSha256": "450c4f8c6abb4d987f4aa85a8e929acfbf430583ae16483244456262a0fb3f24",
+      "sourceFile": "exec-f7d401e1-5ccb-44a8-8d5f-c25fb80f2f21.png",
+      "sourceSha256": "9987af0c9c64c7509cdc918b6ed90cd49b0ba4544e5e5aee31b908065f1fdf4a",
+      "sourceCell": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1234,
+        "y": 448,
+        "width": 308,
+        "height": 286
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "K.object.8",
+      "baseAssetSha256": "3eed4249c3ed4f82c9af1eeab185ca8056ed096a7bee6b0bbd6b531acad4957b"
+    },
+    "condition": "broken",
+    "intactAssetId": "K.object.8",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ],
+    "displayCode": "R80",
+    "displayLabel": "R80 \u00b7 Broken hammers 8 \u00b7 object"
+  },
+  "R.object.9": {
+    "id": "R.object.9",
+    "kind": "object",
+    "category": "R",
+    "digit": 9,
+    "name": "Broken hammers 9",
+    "src": "cutouts/R/objects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      33,
+      480,
+      478
+    ],
+    "sha256": "a542f2cedd29621db816b5be7909d42066f23fda4a9e32d273f0afd3d539d13c",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:smash",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/R-reference.png",
+      "referenceSha256": "450c4f8c6abb4d987f4aa85a8e929acfbf430583ae16483244456262a0fb3f24",
+      "sourceFile": "exec-f7d401e1-5ccb-44a8-8d5f-c25fb80f2f21.png",
+      "sourceSha256": "9987af0c9c64c7509cdc918b6ed90cd49b0ba4544e5e5aee31b908065f1fdf4a",
+      "sourceCell": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1624,
+        "y": 438,
+        "width": 317,
+        "height": 315
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "K.object.9",
+      "baseAssetSha256": "93a53a66f743542a37811459b95bcf5e067047b7603fa7ec816abcabab34407b"
+    },
+    "condition": "broken",
+    "intactAssetId": "K.object.9",
+    "tagReferences": [
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ],
+    "displayCode": "R90",
+    "displayLabel": "R90 \u00b7 Broken hammers 9 \u00b7 object"
+  }
+}

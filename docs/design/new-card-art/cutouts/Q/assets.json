@@ -1,0 +1,942 @@
+{
+  "Q.object.0": {
+    "id": "Q.object.0",
+    "kind": "object",
+    "category": "Q",
+    "digit": 0,
+    "name": "Broken swords 0",
+    "src": "cutouts/Q/objects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      46,
+      480,
+      466
+    ],
+    "sha256": "c49631998abc8ea38c20afe01f5e159b21a79ad951ac1091b027866bc406392c",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/Q-reference.png",
+      "referenceSha256": "c3228037817e24a8618aae5faa19b0cafb3dd5350be87437e038be91eafb77bd",
+      "sourceFile": "exec-7c6e9d4b-aa12-4fa6-90e8-48dad4cea667.png",
+      "sourceSha256": "f870bb2d1b965e1df29dbb6a0046162190e6abd4803b0ac824b22e6ca882a39d",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 50,
+        "y": 50,
+        "width": 318,
+        "height": 298
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "J.object.0",
+      "baseAssetSha256": "153f739463bbb22a9178aae66d6d50c9231acb2969d1f4d424d32c554881e147"
+    },
+    "condition": "broken",
+    "intactAssetId": "J.object.0",
+    "tagReferences": [
+      {
+        "id": "maneuver:attack",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "attack"
+        }
+      }
+    ],
+    "displayCode": "Q00",
+    "displayLabel": "Q00 \u00b7 Broken swords 0 \u00b7 object"
+  },
+  "Q.object.1": {
+    "id": "Q.object.1",
+    "kind": "object",
+    "category": "Q",
+    "digit": 1,
+    "name": "Broken swords 1",
+    "src": "cutouts/Q/objects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      41,
+      480,
+      470
+    ],
+    "sha256": "f141aaf664e61c91c5ef0b735561e8d58171fa102324ccf3761eb3389d37dc8b",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/Q-reference.png",
+      "referenceSha256": "c3228037817e24a8618aae5faa19b0cafb3dd5350be87437e038be91eafb77bd",
+      "sourceFile": "exec-7c6e9d4b-aa12-4fa6-90e8-48dad4cea667.png",
+      "sourceSha256": "f870bb2d1b965e1df29dbb6a0046162190e6abd4803b0ac824b22e6ca882a39d",
+      "sourceCell": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 447,
+        "y": 48,
+        "width": 311,
+        "height": 298
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "J.object.1",
+      "baseAssetSha256": "522aa2d2ec112387b87ce17412ddd515102750a6000b6a5f2fd885126df49388"
+    },
+    "condition": "broken",
+    "intactAssetId": "J.object.1",
+    "tagReferences": [
+      {
+        "id": "maneuver:attack",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "attack"
+        }
+      }
+    ],
+    "displayCode": "Q10",
+    "displayLabel": "Q10 \u00b7 Broken swords 1 \u00b7 object"
+  },
+  "Q.object.2": {
+    "id": "Q.object.2",
+    "kind": "object",
+    "category": "Q",
+    "digit": 2,
+    "name": "Broken swords 2",
+    "src": "cutouts/Q/objects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      39,
+      32,
+      473,
+      480
+    ],
+    "sha256": "9030d5b251b76cd8848825e53c9367b6aaa471d4b956bcb213d7513d39040310",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/Q-reference.png",
+      "referenceSha256": "c3228037817e24a8618aae5faa19b0cafb3dd5350be87437e038be91eafb77bd",
+      "sourceFile": "exec-7c6e9d4b-aa12-4fa6-90e8-48dad4cea667.png",
+      "sourceSha256": "f870bb2d1b965e1df29dbb6a0046162190e6abd4803b0ac824b22e6ca882a39d",
+      "sourceCell": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 842,
+        "y": 44,
+        "width": 302,
+        "height": 312
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "J.object.2",
+      "baseAssetSha256": "7b32fd27a71eaff585ca81c745558e31cc5866dca8205df7745b003218c64413"
+    },
+    "condition": "broken",
+    "intactAssetId": "J.object.2",
+    "tagReferences": [
+      {
+        "id": "maneuver:attack",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "attack"
+        }
+      }
+    ],
+    "displayCode": "Q20",
+    "displayLabel": "Q20 \u00b7 Broken swords 2 \u00b7 object"
+  },
+  "Q.object.3": {
+    "id": "Q.object.3",
+    "kind": "object",
+    "category": "Q",
+    "digit": 3,
+    "name": "Broken swords 3",
+    "src": "cutouts/Q/objects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      43,
+      480,
+      469
+    ],
+    "sha256": "d227ac8d7f91c298da0859b604086a0b55941cf81710f4da20ec97db7b24b54c",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/Q-reference.png",
+      "referenceSha256": "c3228037817e24a8618aae5faa19b0cafb3dd5350be87437e038be91eafb77bd",
+      "sourceFile": "exec-7c6e9d4b-aa12-4fa6-90e8-48dad4cea667.png",
+      "sourceSha256": "f870bb2d1b965e1df29dbb6a0046162190e6abd4803b0ac824b22e6ca882a39d",
+      "sourceCell": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1243,
+        "y": 51,
+        "width": 310,
+        "height": 295
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "J.object.3",
+      "baseAssetSha256": "2139cb9203fa1c0eb57bf9a974b5634942a26e469c85cd0776493c2400b47a25"
+    },
+    "condition": "broken",
+    "intactAssetId": "J.object.3",
+    "tagReferences": [
+      {
+        "id": "maneuver:attack",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "attack"
+        }
+      }
+    ],
+    "displayCode": "Q30",
+    "displayLabel": "Q30 \u00b7 Broken swords 3 \u00b7 object"
+  },
+  "Q.object.4": {
+    "id": "Q.object.4",
+    "kind": "object",
+    "category": "Q",
+    "digit": 4,
+    "name": "Broken swords 4",
+    "src": "cutouts/Q/objects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      169,
+      32,
+      343,
+      480
+    ],
+    "sha256": "957904685136793d1f39daabc2d7f8dd0807a86964c7bbbab791e2e42eb63324",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/Q-reference.png",
+      "referenceSha256": "c3228037817e24a8618aae5faa19b0cafb3dd5350be87437e038be91eafb77bd",
+      "sourceFile": "exec-7c6e9d4b-aa12-4fa6-90e8-48dad4cea667.png",
+      "sourceSha256": "f870bb2d1b965e1df29dbb6a0046162190e6abd4803b0ac824b22e6ca882a39d",
+      "sourceCell": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1734,
+        "y": 58,
+        "width": 116,
+        "height": 299
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "J.object.4",
+      "baseAssetSha256": "0debcbca0a5e7d56af71380cc1ae5e31595ebca79340f961d7d0784d31cbb924"
+    },
+    "condition": "broken",
+    "intactAssetId": "J.object.4",
+    "tagReferences": [
+      {
+        "id": "maneuver:attack",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "attack"
+        }
+      }
+    ],
+    "displayCode": "Q40",
+    "displayLabel": "Q40 \u00b7 Broken swords 4 \u00b7 object"
+  },
+  "Q.object.5": {
+    "id": "Q.object.5",
+    "kind": "object",
+    "category": "Q",
+    "digit": 5,
+    "name": "Broken swords 5",
+    "src": "cutouts/Q/objects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      41,
+      32,
+      471,
+      480
+    ],
+    "sha256": "bb2a54ad3054d306f8848ff1848555a281f8483049c6f74183faebb48922b437",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/Q-reference.png",
+      "referenceSha256": "c3228037817e24a8618aae5faa19b0cafb3dd5350be87437e038be91eafb77bd",
+      "sourceFile": "exec-7c6e9d4b-aa12-4fa6-90e8-48dad4cea667.png",
+      "sourceSha256": "f870bb2d1b965e1df29dbb6a0046162190e6abd4803b0ac824b22e6ca882a39d",
+      "sourceCell": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 53,
+        "y": 433,
+        "width": 295,
+        "height": 307
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "J.object.5",
+      "baseAssetSha256": "041a1a133e298732f33505a1ed724872bd3694362c714c42cc130f5df44d1d4f"
+    },
+    "condition": "broken",
+    "intactAssetId": "J.object.5",
+    "tagReferences": [
+      {
+        "id": "maneuver:attack",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "attack"
+        }
+      }
+    ],
+    "displayCode": "Q50",
+    "displayLabel": "Q50 \u00b7 Broken swords 5 \u00b7 object"
+  },
+  "Q.object.6": {
+    "id": "Q.object.6",
+    "kind": "object",
+    "category": "Q",
+    "digit": 6,
+    "name": "Broken swords 6",
+    "src": "cutouts/Q/objects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      55,
+      32,
+      457,
+      480
+    ],
+    "sha256": "4d12381c2d0625023aa75bca73f89a3070fdc5ce0f232a2a9bfa901860bba48b",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/Q-reference.png",
+      "referenceSha256": "c3228037817e24a8618aae5faa19b0cafb3dd5350be87437e038be91eafb77bd",
+      "sourceFile": "exec-7c6e9d4b-aa12-4fa6-90e8-48dad4cea667.png",
+      "sourceSha256": "f870bb2d1b965e1df29dbb6a0046162190e6abd4803b0ac824b22e6ca882a39d",
+      "sourceCell": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 464,
+        "y": 437,
+        "width": 269,
+        "height": 300
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "J.object.6",
+      "baseAssetSha256": "21d5c0869909aed984751111fcde9690d8b944cd5f53746021760d51e4674b83"
+    },
+    "condition": "broken",
+    "intactAssetId": "J.object.6",
+    "tagReferences": [
+      {
+        "id": "maneuver:attack",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "attack"
+        }
+      }
+    ],
+    "displayCode": "Q60",
+    "displayLabel": "Q60 \u00b7 Broken swords 6 \u00b7 object"
+  },
+  "Q.object.7": {
+    "id": "Q.object.7",
+    "kind": "object",
+    "category": "Q",
+    "digit": 7,
+    "name": "Broken swords 7",
+    "src": "cutouts/Q/objects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      55,
+      480,
+      457
+    ],
+    "sha256": "faefd18a25a90a19eebf8250e7426197dd9d4efbc506dfa1fe89a62af8715c04",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/Q-reference.png",
+      "referenceSha256": "c3228037817e24a8618aae5faa19b0cafb3dd5350be87437e038be91eafb77bd",
+      "sourceFile": "exec-7c6e9d4b-aa12-4fa6-90e8-48dad4cea667.png",
+      "sourceSha256": "f870bb2d1b965e1df29dbb6a0046162190e6abd4803b0ac824b22e6ca882a39d",
+      "sourceCell": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 827,
+        "y": 440,
+        "width": 320,
+        "height": 287
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "J.object.7",
+      "baseAssetSha256": "a26647d955728ef5f81c714f266e03a3b5a956b10b6aaa30434ceaad3216c709"
+    },
+    "condition": "broken",
+    "intactAssetId": "J.object.7",
+    "tagReferences": [
+      {
+        "id": "maneuver:attack",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "attack"
+        }
+      }
+    ],
+    "displayCode": "Q70",
+    "displayLabel": "Q70 \u00b7 Broken swords 7 \u00b7 object"
+  },
+  "Q.object.8": {
+    "id": "Q.object.8",
+    "kind": "object",
+    "category": "Q",
+    "digit": 8,
+    "name": "Broken swords 8",
+    "src": "cutouts/Q/objects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      34,
+      32,
+      477,
+      480
+    ],
+    "sha256": "e2936f132b27fcd5087e3b408b9e7699b8e2ac07563dfdf6138239cadeaf7d51",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/Q-reference.png",
+      "referenceSha256": "c3228037817e24a8618aae5faa19b0cafb3dd5350be87437e038be91eafb77bd",
+      "sourceFile": "exec-7c6e9d4b-aa12-4fa6-90e8-48dad4cea667.png",
+      "sourceSha256": "f870bb2d1b965e1df29dbb6a0046162190e6abd4803b0ac824b22e6ca882a39d",
+      "sourceCell": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1243,
+        "y": 453,
+        "width": 282,
+        "height": 285
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "J.object.8",
+      "baseAssetSha256": "9cf75004b5a9642ab23b5e62b43e3442e00c92f3a4dae0b8267a7341558462e0"
+    },
+    "condition": "broken",
+    "intactAssetId": "J.object.8",
+    "tagReferences": [
+      {
+        "id": "maneuver:attack",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "attack"
+        }
+      }
+    ],
+    "displayCode": "Q80",
+    "displayLabel": "Q80 \u00b7 Broken swords 8 \u00b7 object"
+  },
+  "Q.object.9": {
+    "id": "Q.object.9",
+    "kind": "object",
+    "category": "Q",
+    "digit": 9,
+    "name": "Broken swords 9",
+    "src": "cutouts/Q/objects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      41,
+      32,
+      470,
+      480
+    ],
+    "sha256": "24eca59e6fee8c6411f604c811a0d9ec24902139e36a62c50fc4c1af21138704",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/Q-reference.png",
+      "referenceSha256": "c3228037817e24a8618aae5faa19b0cafb3dd5350be87437e038be91eafb77bd",
+      "sourceFile": "exec-7c6e9d4b-aa12-4fa6-90e8-48dad4cea667.png",
+      "sourceSha256": "f870bb2d1b965e1df29dbb6a0046162190e6abd4803b0ac824b22e6ca882a39d",
+      "sourceCell": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1639,
+        "y": 440,
+        "width": 286,
+        "height": 299
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "J.object.9",
+      "baseAssetSha256": "67bbb9979eb43ba82f0b6c27410fa137d4fe6c779044df9505e748799284a5fc"
+    },
+    "condition": "broken",
+    "intactAssetId": "J.object.9",
+    "tagReferences": [
+      {
+        "id": "maneuver:attack",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "attack"
+        }
+      }
+    ],
+    "displayCode": "Q90",
+    "displayLabel": "Q90 \u00b7 Broken swords 9 \u00b7 object"
+  }
+}
