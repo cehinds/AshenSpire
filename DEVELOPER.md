@@ -22,6 +22,13 @@ otherwise.
 
 ## Run & test
 
+`package.json` (no dependencies, no `"type"` field) gives the common commands
+short names: `npm start` (launch), `npm run build` (`launch.mjs --build-only`),
+`npm run serve`, `npm test` (core) and `npm run test:all`, the checks
+`npm run validate:ui|validate:maps|validate:config|build:game|plantsites|receipts`,
+and `npm run art:fetch`. Each is the `node tools/...` command it names. Every
+tool, what it does and who calls it: [tools/README.md](tools/README.md).
+
 **The built standalone HTML is not committed on `dev`** (since 2026-09-26).
 Every rebuild used to upload ~284 MB of new Git LFS objects (the 255 MB full file
 and the 29 MB mobile one) and the repository's LFS budget ran out. Now the root
