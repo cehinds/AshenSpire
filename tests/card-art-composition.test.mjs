@@ -7,24 +7,23 @@ import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 
 const face = (tags, extra = {}) => ({ id: 'custom', cardTags: tags, ...extra });
-test('nine elements across six actions and all five base variants are composable', () => {
+test('ten elements across six actions retain approved components or their supported fallback', () => {
   const fixtures = cardArtPreviewFixtures();
-  assert.equal(fixtures.length, 54);
-  assert.equal(new Set(fixtures.map(row => row.id)).size, 54);
+  assert.equal(fixtures.length, 60);
+  assert.equal(new Set(fixtures.map(row => row.id)).size, 60);
   for (const { composition } of fixtures) {
-    assert.match(composition.path, /^assets\/cards\/library\/magical-(attack|smash|counter|evade|sweep|defend)-0[1-5]-512.webp$/);
+    if (['counter', 'evade'].includes(composition.maneuver)) assert.match(composition.path, /^assets\/cards\/library\/magical-/);
+    else assert.ok(composition.componentArt.sprites.some(layer => layer.assetId === 'V.object.0'));
     assert.match(cardArtLayersHtml(composition), /data-card-art-layers/);
   }
-  const all = cardArtPreviewFixtures({ allVariants: true });
-  assert.equal(all.length, 270);
-  assert.equal(new Set(all.map(row => `${row.composition.path}:${row.composition.element}`)).size, 270);
+  assert.equal(cardArtPreviewFixtures({allVariants:true}).length, 300);
 });
 test('aliases and unrecognized tags cannot invent mechanics or unsafe paths', () => {
   for (const [source, target] of [['alternation', 'alteration'], ['illusion', 'psychic'], ['decay', 'necrotic'], ['holy', 'divine']]) assert.equal(cardArtElement(source), target);
   assert.equal(cardArtElement('__proto__'), null);
   assert.equal(simpleCardArt(face(['camp:spell', 'maneuver:../attack'])), null);
   assert.equal(simpleCardArt(face(['camp:spell', 'maneuver:attack', 'school:unknown'])).element, 'force');
-  assert.equal(simpleCardArt(face(['camp:physical', 'maneuver:smash']), { large: true, variant: 5 }).path, 'assets/cards/library/physical-smash-05-1024.webp');
+  assert.equal(simpleCardArt(face(['camp:physical', 'maneuver:smash']), { large: true, variant: 5 }).componentArt.code, 'O11');
 });
 test('resolved equipment identity and explicit empty tags take precedence', () => {
   const def = face(['camp:spell', 'maneuver:counter', 'school:fire'], { id: 'strike', tags: ['camp:physical', 'maneuver:attack'] });
@@ -79,14 +78,14 @@ test('shipped resolved cards retain their authored family', () => {
   assert.equal(pebble.category, 'magical');
   assert.equal(pebble.maneuver, 'attack');
   assert.equal(pebble.element, 'force');
-  assert.match(pebble.path, /magical-attack-04-512\.webp$/);
+  assert.equal(pebble.componentArt.code, 'Z02');
   assert.equal(simpleCardArt(resolveCard(registries, { cardId: 'evasiveGuard' }), { registries }).maneuver, 'evade');
   assert.equal(simpleCardArt(resolveCard(registries, { cardId: 'defend' }), { registries }).maneuver, 'defend');
 });
 test('legacy attack fallback requires an authored camp and no explicit maneuver', () => {
   assert.equal(simpleCardArt(face(['camp:spell'], { type: 'attack' })).maneuver, 'attack');
   assert.equal(simpleCardArt(face([], { type: 'attack' })), null);
-  assert.equal(simpleCardArt(face(['camp:spell'], { type: 'skill' })), null);
+  assert.equal(simpleCardArt(face(['camp:spell'], { type: 'skill' })).componentArt.code, 'I00');
   assert.equal(simpleCardArt(face(['camp:spell', 'maneuver:unknown'], { type: 'attack' })), null);
   assert.equal(simpleCardArt(face(['camp:spell', 'maneuver:attack', 'maneuver:smash'], { type: 'attack' })), null);
   assert.equal(simpleCardArt(face(['camp:physical'], { type: 'skill', effects: [{ op: 'block' }] })), null);
@@ -138,7 +137,7 @@ test('rebalanced decay spells keep their distinct Blight identities with wisp ar
   const utility = applyCombatExpansionCard(registries.cards.get('blightBloom'));
   const utilityArt = simpleCardArt(utility, { registries });
   assert.equal(utilityArt.category, 'magical');
-  assert.equal(utilityArt.maneuver, 'attack');
+  assert.equal(utilityArt.maneuver, 'skill');
   assert.equal(utilityArt.element, 'necrotic');
   assert.deepEqual(cardArtStatuses(utility, utility.cardTags, registries).map(row => [row.id, row.motif]), [['crimsonBlight', 'wisps'], ['necroticBlight', 'wisps']]);
 });

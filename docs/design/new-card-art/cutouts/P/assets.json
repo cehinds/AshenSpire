@@ -1,0 +1,146 @@
+{
+  "P.object.0": {
+    "id": "P.object.0",
+    "kind": "object",
+    "category": "P",
+    "digit": 0,
+    "name": "Existing inventory sword",
+    "src": "cutouts/P/objects/0.png",
+    "mimeType": "image/png",
+    "width": 256,
+    "height": 256,
+    "hasTransparency": true,
+    "alphaBounds": [
+      31,
+      28,
+      230,
+      228
+    ],
+    "sha256": "4d058d6c10568e895fb2d24570c162372cecf647b40b0c528dcf992483832003",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:attack",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack"
+    ],
+    "references": {
+      "method": "lossless-format-conversion",
+      "originalAssetId": "assets/equipment/icon_straightSwordInventory2026.webp",
+      "repositoryPath": "assets-mobile/equipment/icon_straightSwordInventory2026.webp",
+      "sourceReference": "source-art-v5/icon_straightSwordInventory2026.webp",
+      "sourceSha256": "bd08c827485098f0238121a863dcb03a1caaa831d700a689a91015389b200a8d",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "decodedPixelsPreserved": true,
+      "sourceDecodedRgbaSha256": "477a81f5317534818b041cae6ef34000ae55c560e2cc54d6940516e73b67cb8d"
+    },
+    "displayCode": "P00",
+    "displayLabel": "P00 \u00b7 Existing inventory sword \u00b7 object"
+  },
+  "P.object.1": {
+    "id": "P.object.1",
+    "kind": "object",
+    "category": "P",
+    "digit": 1,
+    "name": "Existing inventory shield",
+    "src": "cutouts/P/objects/1.png",
+    "mimeType": "image/png",
+    "width": 256,
+    "height": 256,
+    "hasTransparency": true,
+    "alphaBounds": [
+      74,
+      21,
+      179,
+      228
+    ],
+    "sha256": "da6713b5873488a75361ec6682ae5f9d469d96739000dc0270687c22f0adfdad",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:defend",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend"
+    ],
+    "references": {
+      "method": "lossless-format-conversion",
+      "originalAssetId": "assets/equipment/icon_kiteShieldInventory2026.webp",
+      "repositoryPath": "assets-mobile/equipment/icon_kiteShieldInventory2026.webp",
+      "sourceReference": "source-art-v5/icon_kiteShieldInventory2026.webp",
+      "sourceSha256": "5ecee420ef668b37b18e9305e386537a374132b2652c053941ac13325ceead23",
+      "sourceTier": "light",
+      "originalArtRelease": "hd-assets-v23",
+      "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074",
+      "decodedPixelsPreserved": true,
+      "sourceDecodedRgbaSha256": "45608cbb2f03ea027ea8906bbf24a81fdbf9964228e5f76d57a2cf18c25a60d5"
+    },
+    "displayCode": "P10",
+    "displayLabel": "P10 \u00b7 Existing inventory shield \u00b7 object"
+  }
+}

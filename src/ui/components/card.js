@@ -1,3 +1,4 @@
+import { bindCardComponentFailures } from '../cardArtLayers.js';
 import { baseCardPresentation } from '../../content/generated/baseCards.js';
 import { gameModule } from '../../model/gameProfile.js';
 import { stanceOf, stanceEntryBonuses, stanceRulesFor, stanceRatingBonus } from '../../model/stanceRules.js';
@@ -356,6 +357,7 @@ export function renderCard(registries, ref, opts = {}) {
           image.src=assetUrl(next.path);
         }
       });
+      bindCardComponentFailures(image.parentNode, image);
     }
 
   };
