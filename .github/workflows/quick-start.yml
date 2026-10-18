@@ -110,4 +110,10 @@ jobs:
       # effects layer's data-contact) and to the first damage or guard number
       # (about a minute).
       - name: Click to contact within 400 ms and first number within 750 ms at Normal pacing
+        id: click_impact
+        run: node tools/verdict.mjs -- node tools/click-impact-probe.mjs
+
+      - name: Diagnose failed click timing without replacing acceptance
+        # Instrumentation is failure evidence, never a replacement acceptance run.
+        if: ${{ failure() && steps.click_impact.outcome == 'failure' }}
         run: node tools/verdict.mjs -- node tools/click-impact-probe.mjs --diagnostics
