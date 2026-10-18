@@ -128,7 +128,7 @@
     "tags": [
       "character.player",
       "class.starseer",
-      "training.basic"
+      "training.graduate"
     ],
     "kind": "player",
     "tier": null,
@@ -377,7 +377,7 @@
     "tags": [
       "character.player",
       "class.herald",
-      "training.basic"
+      "training.graduate"
     ],
     "kind": "player",
     "tier": null,
