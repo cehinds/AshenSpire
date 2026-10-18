@@ -20,6 +20,13 @@ import { assetUrl } from './assetmap.js';
 // shared with ui/screens/settings.js.
 export const AUDIO_DEFAULTS = balance.ui.audio;
 
+// Pitch variance for synthesized tones: every tone() is multiplied by
+// 1 + (rng() * 2 * spread - spread), so the same cue never sounds twice
+// the same (+/-4 %). `rng` is a hook so a test can pin the factor; noise
+// bursts are unaffected.
+export const sfxVariance = { spread: 0.04, rng: Math.random };
+const pitchFactor = () => 1 + (sfxVariance.rng() * 2 * sfxVariance.spread - sfxVariance.spread);
+
 /** Resolve the sparse music-only preference without deriving it from volume. */
 export function resolveMusicEnabled(settings = {}) {
   return typeof settings.musicEnabled === 'boolean'
@@ -162,8 +169,9 @@ export function initAudio(settings = {}) {
     const g = ctx.createGain();
     o.type = type;
     const start = now() + t0;
-    o.frequency.setValueAtTime(freq, start);
-    if (to != null) o.frequency.exponentialRampToValueAtTime(Math.max(1, to), start + dur);
+    const k = pitchFactor();
+    o.frequency.setValueAtTime(freq * k, start);
+    if (to != null) o.frequency.exponentialRampToValueAtTime(Math.max(1, to * k), start + dur);
     g.gain.setValueAtTime(0.0001, start);
     g.gain.exponentialRampToValueAtTime(peak, start + Math.min(0.02, dur * 0.3));
     g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
