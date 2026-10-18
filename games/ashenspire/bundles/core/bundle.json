@@ -76,7 +76,9 @@
     },
     "intent": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "reads": "exact"
+      }
     },
     "reactions": {
       "version": "1.0.0",
@@ -159,7 +161,8 @@
         "restFloors": "restFloors",
         "branchColumns": "branchColumns",
         "minimumThreatFloor": "minimumThreatFloor",
-        "mapMode": "mapMode"
+        "mapMode": "mapMode",
+        "firstFloor": "firstFloor"
       }
     },
     {

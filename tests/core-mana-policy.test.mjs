@@ -28,8 +28,8 @@ function fight(cardId, classId = 'reaver', reg = registries) {
 
 test('core Reaver starts with one MP and an earned WIS point still adds exactly one maximum MP', () => {
   const run = fresh(); assert.equal(run.maxMana, 1); assert.equal(run.mana, 1);
-  run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1); run.mapNodeId = 'n1_0';
-  beginGameProfileRest(run, '1:n1_0'); run.level.unspentPoints = 1;
+  run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1); run.mapNodeId = 'n3_0';
+  beginGameProfileRest(run, '1:n3_0'); run.level.unspentPoints = 1;
   commitGameProfileRest(registries, run, 'levelUp', { attributeId: 'wisdom' });
   assert.equal(run.maxMana, 2); assert.equal(run.mana, 2);
 });
