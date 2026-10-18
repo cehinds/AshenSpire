@@ -27,7 +27,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const lib = readFileSync(join(root, 'tools', 'sprites-blender.py'), 'utf8');
 const eq = readFileSync(join(root, 'tools', 'equipment-blender.py'), 'utf8');
 

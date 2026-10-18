@@ -38,7 +38,7 @@
 //        node tools/bjclauses.mjs --selftest        the two floors, observed
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { launchBrowser } from '../browser.mjs';
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
@@ -50,7 +50,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // `--selftest` was resolved as a directory name and the run died on a path that
 // was never a path. A positional read that cannot tell a flag from a tree is
 // the same shape as a reader that cannot tell empty from missing.
-const REPO = resolve(process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : join(__dirname, '..'));
+const REPO = resolve(process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : join(__dirname, '../..'));
 const QUICK = process.argv.includes('--quick');
 const OUT = process.env.BJ_OUT || join(process.cwd(), 'bj-clauses-shots');
 mkdirSync(OUT, { recursive: true });

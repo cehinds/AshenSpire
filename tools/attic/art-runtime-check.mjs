@@ -3,10 +3,10 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 const outIndex = process.argv.indexOf('--out');
 if (outIndex >= 0 && !process.argv[outIndex + 1]) throw new Error('--out needs a directory');
 const out = resolve(outIndex >= 0 ? process.argv[outIndex + 1] : 'D:/repos/.codex/temp/art-runtime');

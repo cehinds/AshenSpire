@@ -5,18 +5,18 @@
 // position. A bow is a data-authored core-card projection in the combat system
 // that already exists; `ranged` and `precision` are explicit presentation tags.
 
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { createRunState } from '../src/model/state.js';
-import { equipmentKitReceipt, stampDeck, validateEquipment } from '../src/model/loadout.js';
-import { DAMAGE_SCHOOLS, SCHEMAS } from '../src/model/schemas.js';
-import { deriveStat } from '../src/model/derivedStats.js';
-import { createCombat, previewCard, dispatch } from '../src/engine/combat.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
-import { createRng } from '../src/engine/rng.js';
-import { validateContent } from '../src/model/validate.js';
-import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
-import { resolveCombatRatings } from '../src/model/combatRatings.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries, resolveCard } from '../../src/model/registries.js';
+import { createRunState } from '../../src/model/state.js';
+import { equipmentKitReceipt, stampDeck, validateEquipment } from '../../src/model/loadout.js';
+import { DAMAGE_SCHOOLS, SCHEMAS } from '../../src/model/schemas.js';
+import { deriveStat } from '../../src/model/derivedStats.js';
+import { createCombat, previewCard, dispatch } from '../../src/engine/combat.js';
+import { createCoopCombat } from '../../src/engine/coopCombat.js';
+import { createRng } from '../../src/engine/rng.js';
+import { validateContent } from '../../src/model/validate.js';
+import { createMemoryStorage, createSaveManager } from '../../src/engine/save.js';
+import { resolveCombatRatings } from '../../src/model/combatRatings.js';
 
 const R = createRegistries(contentBundle);
 let passed = 0;

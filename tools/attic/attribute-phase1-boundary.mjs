@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 // file on disk and re-runs this whole tool against that copy — the same road,
 // observed red. (Vira's doors audit 2026-08-14 listed this tool NO-KNOWN-BAD.)
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'attribute-phase1-boundary.mjs',
     plants: [
@@ -36,7 +36,7 @@ if (process.argv.includes('--selftest')) {
   }));
 }
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const mechanics = [
   'src/engine/actions.js',
   'src/engine/combat.js',

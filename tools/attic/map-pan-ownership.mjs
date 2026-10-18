@@ -8,11 +8,11 @@ import {
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
 const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)));
-const ROOT = resolve(HERE, '..');
+const ROOT = resolve(HERE, '../..');
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 const valueAfter = (name, fallback = '') => {
   const at = process.argv.indexOf(name);

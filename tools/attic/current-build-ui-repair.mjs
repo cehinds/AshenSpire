@@ -16,10 +16,10 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser, resolveBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser, resolveBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 const STANDALONE = process.argv.includes('--build');
 const OUT = resolve(ROOT, 'outputs', STANDALONE ? 't0-ui-authoritative-build' : 't0-ui-authoritative');
 const BROWSER = resolveBrowser([

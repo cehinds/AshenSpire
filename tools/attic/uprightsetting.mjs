@@ -55,16 +55,16 @@
 // fit, without resurrecting that refusal inside the supported landscape band.
 
 import { spawn } from 'node:child_process';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from '../browser.mjs';
 import { existsSync, mkdtempSync, cpSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { serve } from './serve.mjs';
-import { printArtifactProvenance } from './artifact-provenance.mjs';
-import { copySourceArt } from './art-source.mjs';
+import { serve } from '../serve.mjs';
+import { printArtifactProvenance } from '../artifact-provenance.mjs';
+import { copySourceArt } from '../art-source.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
 const useDist = args.includes('--dist');

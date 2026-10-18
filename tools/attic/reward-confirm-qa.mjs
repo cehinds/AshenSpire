@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { serve } from './serve.mjs';
+import { serve } from '../serve.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const output = resolve(process.env.REWARD_QA_OUT || resolve(process.env.TEMP || '.', 'reward-confirm-qa'));
 mkdirSync(output, { recursive: true });

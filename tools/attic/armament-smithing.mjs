@@ -23,7 +23,7 @@ function valueAfter(flag) {
   return process.argv[index + 1];
 }
 
-const ROOT = resolve(valueAfter('--root') || resolve(HERE, '..'));
+const ROOT = resolve(valueAfter('--root') || resolve(HERE, '../..'));
 const required = [
   'src/content/index.js',
   'src/model/registries.js',

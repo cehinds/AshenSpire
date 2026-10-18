@@ -9,8 +9,8 @@ import { fileURLToPath } from "node:url";
 const { chromium } = await import(
   process.env.PLAYWRIGHT_MODULE || "playwright"
 );
-import { serve } from "./serve.mjs";
-const ROOT = fileURLToPath(new URL("..", import.meta.url));
+import { serve } from "../serve.mjs";
+const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const args = process.argv.slice(2),
   at = args.indexOf("--shots"),
   shots = at < 0 ? null : resolve(args[at + 1]);

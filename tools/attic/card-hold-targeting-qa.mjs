@@ -6,7 +6,7 @@ import { mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
-import { serve } from './serve.mjs';
+import { serve } from '../serve.mjs';
 
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const output = resolve(process.env.CARD_HOLD_OUT || resolve(tmpdir(), 'ashenspire-card-hold-targeting'));

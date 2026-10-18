@@ -10,9 +10,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { launchBrowser, resolveBrowser } from './browser.mjs';
+import { launchBrowser, resolveBrowser } from '../browser.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
+const ROOT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const CSS = resolve(ROOT, 'styles/ui.css');
 const FIXTURE = resolve(ROOT, 'tests/fixtures/viewport-units/zoom-probe.html');
 const allowlisted = [

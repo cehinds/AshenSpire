@@ -88,14 +88,14 @@
 // tooltip stops being one shared element.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { launchBrowser } from '../browser.mjs';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { copySourceArt } from './art-source.mjs';
+import { copySourceArt } from '../art-source.mjs';
 
-const TOOLS = resolve(fileURLToPath(new URL('.', import.meta.url)));
+const TOOLS = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
 const ROOT = resolve(argOf('--root') || resolve(TOOLS, '..'));

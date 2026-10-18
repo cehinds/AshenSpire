@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const TOOL_PATH = 'tools/actionregistry-destinations.mjs';
 const CEILING = [
   'src/main.js',
@@ -30,8 +30,8 @@ const sources = () => ({
   hints: read('src/ui/components/hints.js'),
 });
 
-const inputRuntime = await import('../src/ui/input.js');
-const equipmentRuntime = await import('../src/ui/screens/equipment.js');
+const inputRuntime = await import('../../src/ui/input.js');
+const equipmentRuntime = await import('../../src/ui/screens/equipment.js');
 inputRuntime.setKeyBindings({ deck: 'x', relics: 'y', stats: 'z' });
 const runtimeReceipts = ['deck', 'relics', 'stats'].map((actionId) => ({
   actionId,

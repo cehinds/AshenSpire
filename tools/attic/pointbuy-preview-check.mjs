@@ -1,7 +1,7 @@
 // Run against a rebuilt preview server; Playwright must be available to Node.
 import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
-import { attributeRules } from '../src/content/attributes.js';
+import { attributeRules } from '../../src/content/attributes.js';
 const { chromium } = createRequire(import.meta.url)('playwright');
 const browser = await chromium.launch({ executablePath: process.env.CHROME || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', headless: true });
 const base = process.env.PREVIEW_URL || 'http://127.0.0.1:4277';

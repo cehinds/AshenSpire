@@ -13,12 +13,12 @@
 // and this whole tool re-runs against that copy — the same road, observed red.
 
 import fs from 'node:fs';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
-import * as G from '../src/model/gracerefill.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries } from '../../src/model/registries.js';
+import * as G from '../../src/model/gracerefill.js';
 
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'flask-data-authority.mjs',
     plants: [

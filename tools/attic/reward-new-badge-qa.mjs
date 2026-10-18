@@ -3,8 +3,8 @@
 // the selected Information control sits above NEW without changing card flow.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
 const output = resolve(process.env.REWARD_BADGE_QA_OUT || resolve(process.env.TEMP || '.', 'reward-new-badge-qa'));
 mkdirSync(output, { recursive: true });

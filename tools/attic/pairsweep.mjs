@@ -111,15 +111,15 @@
 // boundary that lives only in a header is a boundary nobody re-reads.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { launchBrowser } from '../browser.mjs';
 import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { serve } from './serve.mjs';
-import { printArtifactProvenance } from './artifact-provenance.mjs';
+import { serve } from '../serve.mjs';
+import { printArtifactProvenance } from '../artifact-provenance.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 const argv = process.argv.slice(2);
 const val = (n, d) => { const i = argv.indexOf(n); return i >= 0 && argv[i + 1] ? argv[i + 1] : d; };
 const TREE = resolve(val('--root', ROOT));

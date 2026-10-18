@@ -6,17 +6,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
-import { contentBundle } from '../src/content/index.js';
-import { createCoopCombat, leaveCombat, playCard } from '../src/engine/coopCombat.js';
-import { createRng } from '../src/engine/rng.js';
-import { createMemoryStorage, createSaveManager, META_KEY } from '../src/engine/save.js';
-import { createRegistries } from '../src/model/registries.js';
-import { friendlyTargetMode, friendlyTargetPlan } from '../src/model/friendlyTargets.js';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
-import { setCombatStartStateForTools } from './session.mjs';
+import { contentBundle } from '../../src/content/index.js';
+import { createCoopCombat, leaveCombat, playCard } from '../../src/engine/coopCombat.js';
+import { createRng } from '../../src/engine/rng.js';
+import { createMemoryStorage, createSaveManager, META_KEY } from '../../src/engine/save.js';
+import { createRegistries } from '../../src/model/registries.js';
+import { friendlyTargetMode, friendlyTargetPlan } from '../../src/model/friendlyTargets.js';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
+import { setCombatStartStateForTools } from '../session.mjs';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
 
 const files = {
@@ -270,7 +270,7 @@ if (process.argv.includes('--selftest-source')) {
 }
 
 if (process.argv.includes('--selftest-artifact')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   const artifactPlants = [
     ['selected artifact generic gold ally', 'AshenSpire.html', "ally: '#49b675'", "ally: '#d5ad57'"],
     ['selected artifact swapped self color', 'AshenSpire.html', "self: '#4d94e0'", "self: '#49b675'"],

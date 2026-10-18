@@ -1,8 +1,8 @@
 // Run against tools/serve.mjs; Playwright must be available to Node.
 import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
-import { ARMAMENTS } from '../src/content/equipment.js';
-import { authoringNeeds } from './art-authoring.mjs';
+import { ARMAMENTS } from '../../src/content/equipment.js';
+import { authoringNeeds } from '../art-authoring.mjs';
 authoringNeeds(import.meta.url, ['art']);
 const { chromium } = createRequire(import.meta.url)('playwright');
 const browser = await chromium.launch({ executablePath: process.env.CHROME || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', headless: true });

@@ -1,4 +1,4 @@
-import { contentBundle } from '../src/content/index.js';
+import { contentBundle } from '../../src/content/index.js';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';

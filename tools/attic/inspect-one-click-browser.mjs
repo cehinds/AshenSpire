@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
-import { serve } from './serve.mjs';
+import { serve } from '../serve.mjs';
 
 const require = createRequire(import.meta.url);
 let playwright;

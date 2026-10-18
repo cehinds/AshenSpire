@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { serve } from './serve.mjs';
+import { serve } from '../serve.mjs';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const local = process.env.SHOT_QA_URL ? null : await serve({ root: path.resolve('.'), port: 0, open: false, quiet: true });
 const base = process.env.SHOT_QA_URL || `http://127.0.0.1:${local.port}/`;

@@ -3,12 +3,12 @@
 // this gate introduces no client meter mutation or damage arithmetic.
 
 import fs from 'node:fs';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
-import { createCombat } from '../src/engine/combat.js';
-import { createRng } from '../src/engine/rng.js';
-import { createRunState } from '../src/model/state.js';
-import * as UiContent from '../src/ui/uiContent.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries } from '../../src/model/registries.js';
+import { createCombat } from '../../src/engine/combat.js';
+import { createRng } from '../../src/engine/rng.js';
+import { createRunState } from '../../src/model/state.js';
+import * as UiContent from '../../src/ui/uiContent.js';
 
 const R = createRegistries(contentBundle);
 let passed = 0;
@@ -20,7 +20,7 @@ function check(ok, label, detail = '') {
 
 let arcaneExposureReceipt = null;
 try {
-  ({ arcaneExposureReceipt } = await import('../src/ui/components/arcaneExposure.js'));
+  ({ arcaneExposureReceipt } = await import('../../src/ui/components/arcaneExposure.js'));
 } catch (error) {
   check(false, 'shared Arcane Exposure UI receipt exists', error.message);
 }
@@ -96,11 +96,11 @@ if (arcaneExposureReceipt) {
     'UI receipt never mutates the host-owned meter');
 }
 
-const component = fs.existsSync(new URL('../src/ui/components/arcaneExposure.js', import.meta.url))
-  ? fs.readFileSync(new URL('../src/ui/components/arcaneExposure.js', import.meta.url), 'utf8') : '';
-const solo = fs.readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-const coop = fs.readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
-const css = fs.readFileSync(new URL('../styles/ui.css', import.meta.url), 'utf8');
+const component = fs.existsSync(new URL('../../src/ui/components/arcaneExposure.js', import.meta.url))
+  ? fs.readFileSync(new URL('../../src/ui/components/arcaneExposure.js', import.meta.url), 'utf8') : '';
+const solo = fs.readFileSync(new URL('../../src/ui/screens/combat.js', import.meta.url), 'utf8');
+const coop = fs.readFileSync(new URL('../../src/ui/screens/coop.js', import.meta.url), 'utf8');
+const css = fs.readFileSync(new URL('../../styles/ui.css', import.meta.url), 'utf8');
 check(/renderArcaneExposure/.test(solo), 'solo combat renders the shared host-state meter');
 check(/renderArcaneExposure/.test(coop), 'co-op combat renders the shared snapshot meter');
 check(/statusInstancePresentation/.test(solo) && /statusInstancePresentation/.test(coop),

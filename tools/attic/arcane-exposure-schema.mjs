@@ -7,18 +7,18 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries, resolveCard } from '../src/model/registries.js';
-import { createRunState } from '../src/model/state.js';
-import { stampDeck } from '../src/model/loadout.js';
-import { createCombat } from '../src/engine/combat.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
-import { createRng } from '../src/engine/rng.js';
-import { createMemoryStorage, createSaveManager, RUN_KEY } from '../src/engine/save.js';
-import { validateContent } from '../src/model/validate.js';
-import * as schemaVocabulary from '../src/model/schemas.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries, resolveCard } from '../../src/model/registries.js';
+import { createRunState } from '../../src/model/state.js';
+import { stampDeck } from '../../src/model/loadout.js';
+import { createCombat } from '../../src/engine/combat.js';
+import { createCoopCombat } from '../../src/engine/coopCombat.js';
+import { createRng } from '../../src/engine/rng.js';
+import { createMemoryStorage, createSaveManager, RUN_KEY } from '../../src/engine/save.js';
+import { validateContent } from '../../src/model/validate.js';
+import * as schemaVocabulary from '../../src/model/schemas.js';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 let checks = 0;
 let failures = 0;
 

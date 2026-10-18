@@ -4,14 +4,14 @@
 // snapshot; disk saves still resume at the established pre-combat boundary.
 
 import { readFileSync } from 'node:fs';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
-import { createRunState } from '../src/model/state.js';
-import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
-import { createCoopCombat, playCard } from '../src/engine/coopCombat.js';
-import { createRng } from '../src/engine/rng.js';
-import { applyAttackDamage, computeAttackDamage } from '../src/engine/actions.js';
-import { EVENTS } from '../src/model/schemas.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries } from '../../src/model/registries.js';
+import { createRunState } from '../../src/model/state.js';
+import { createCombat, dispatch, previewCard } from '../../src/engine/combat.js';
+import { createCoopCombat, playCard } from '../../src/engine/coopCombat.js';
+import { createRng } from '../../src/engine/rng.js';
+import { applyAttackDamage, computeAttackDamage } from '../../src/engine/actions.js';
+import { EVENTS } from '../../src/model/schemas.js';
 
 let checks = 0;
 let failures = 0;
@@ -200,7 +200,7 @@ check('real preview and dispatch agree under resistance, vulnerability, and per-
 check('session projection source preserves refusal attempted amount', () => {
   // Source-level because session combat setup is encounter-seeded; this proves
   // the named host field is not silently dropped at the LAN boundary.
-  const source = readFileSync(new URL('./session.mjs', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../session.mjs', import.meta.url), 'utf8');
   assert(/attempted:\s*e\.attempted/.test(source), 'session projection drops arcaneExposureRefused.attempted');
 });
 

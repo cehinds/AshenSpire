@@ -3,17 +3,17 @@
 // Class-start eligibility remains owned by starting kits; this gate concerns
 // loot already owned by a run and contains no class-id branch in equip logic.
 
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
-import { resolveCard } from '../src/model/registries.js';
-import { createRunState } from '../src/model/state.js';
-import * as Loadout from '../src/model/loadout.js';
-import { resolveStartingKit } from '../src/model/startingKits.js';
-import { classAttributePreset } from '../src/model/attributes.js';
-import { validateContent } from '../src/model/validate.js';
-import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
-import { createRng } from '../src/engine/rng.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries } from '../../src/model/registries.js';
+import { resolveCard } from '../../src/model/registries.js';
+import { createRunState } from '../../src/model/state.js';
+import * as Loadout from '../../src/model/loadout.js';
+import { resolveStartingKit } from '../../src/model/startingKits.js';
+import { classAttributePreset } from '../../src/model/attributes.js';
+import { validateContent } from '../../src/model/validate.js';
+import { createMemoryStorage, createSaveManager } from '../../src/engine/save.js';
+import { createCoopCombat } from '../../src/engine/coopCombat.js';
+import { createRng } from '../../src/engine/rng.js';
 
 const R = createRegistries(contentBundle);
 let passed = 0;

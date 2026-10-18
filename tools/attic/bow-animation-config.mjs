@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const path = resolve(root, 'content/config/ui/presentation/equipmentAnimations.json');
 const source = JSON.parse(readFileSync(path, 'utf8'));
 const data = source.components;

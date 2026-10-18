@@ -2,15 +2,15 @@
 // Observed-red contract: profile-owned starting-kit discovery without spoilers.
 
 import { readFileSync } from 'node:fs';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
-import { createRunState, RUN_SCHEMA_VERSION } from '../src/model/state.js';
-import { createMemoryStorage, createSaveManager, META_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
-import { rollArmamentDrop } from '../src/engine/encounters.js';
-import { createRng } from '../src/engine/rng.js';
-import { createSession, restoreSession } from './session.mjs';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries } from '../../src/model/registries.js';
+import { createRunState, RUN_SCHEMA_VERSION } from '../../src/model/state.js';
+import { createMemoryStorage, createSaveManager, META_KEY, META_SCHEMA_VERSION } from '../../src/engine/save.js';
+import { rollArmamentDrop } from '../../src/engine/encounters.js';
+import { createRng } from '../../src/engine/rng.js';
+import { createSession, restoreSession } from '../session.mjs';
 
-const discovery = await import('../src/model/startingKits.js').catch(() => ({}));
+const discovery = await import('../../src/model/startingKits.js').catch(() => ({}));
 const {
   startingKitProblems,
   startingKitViews,
@@ -256,7 +256,7 @@ const weightedR = createRegistries(weightedBundle);
 const weighted = rollArmamentDrop(weightedR, createRng(9), { source: 'boss', found: [], carried: [] });
 check(weighted === 'greatsword', 'armament roller consumes authored positive dropWeight', String(weighted));
 
-const customize = readFileSync(new URL('../src/ui/screens/customize.js', import.meta.url), 'utf8');
+const customize = readFileSync(new URL('../../src/ui/screens/customize.js', import.meta.url), 'utf8');
 check(/startingKitViews/.test(customize) && /startingKitId/.test(customize),
   'creation consumes the shared kit view and submits kit identity');
 // Every alternate's pieces, read from this tool's table (the Rogue's included).
@@ -265,8 +265,8 @@ const alternateNames = new RegExp(Object.values(alternates).flatMap((row) => [ro
 check(!alternateNames.test(customize),
   'creation contains no hard-coded alternate names or stats');
 
-const lan = readFileSync(new URL('./lan.mjs', import.meta.url), 'utf8');
-const lobby = readFileSync(new URL('../src/ui/screens/lobby.js', import.meta.url), 'utf8');
+const lan = readFileSync(new URL('../lan.mjs', import.meta.url), 'utf8');
+const lobby = readFileSync(new URL('../../src/ui/screens/lobby.js', import.meta.url), 'utf8');
 check(/startingKitId:\s*cl\.startingKitId/.test(lan) && /discoveredArmaments:\s*cl\.discoveredArmaments/.test(lan),
   'production LAN start forwards main-seat kit identity and entitlement to the host session');
 check(/startingKitId:\s*lp\.startingKitId/.test(lan) && /discoveredArmaments:\s*lp\.discoveredArmaments/.test(lan),

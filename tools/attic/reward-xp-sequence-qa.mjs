@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { serve } from './serve.mjs';
+import { serve } from '../serve.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const output = resolve(process.env.REWARD_XP_QA_OUT || process.env.TEMP || '.', 'xp-sequence');
 mkdirSync(output, { recursive: true });

@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { serve } from './serve.mjs';
+import { serve } from '../serve.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const output=resolve(process.env.CARD_USE_OUT || 'docs/preview/card-use'); mkdirSync(output,{recursive:true});
 const server=await serve({root:process.cwd(),port:0,open:false});

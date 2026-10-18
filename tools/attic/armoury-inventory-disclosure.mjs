@@ -5,11 +5,11 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
-import { wireframeUi } from '../src/content/wireframeUi.js';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
+import { wireframeUi } from '../../src/content/wireframeUi.js';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 const TAKE_SHOTS = process.argv.includes('--shots');
 const SHIPPED = process.argv.includes('--shipped');
 const SHOT_DIR = resolve(ROOT, 'scratch', 'pr315-playtest');

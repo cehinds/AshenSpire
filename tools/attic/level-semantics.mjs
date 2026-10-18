@@ -2,15 +2,15 @@
 // Focused pure-model gate for issue #237.
 
 import process from 'node:process';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries } from '../../src/model/registries.js';
 import {
   ENCOUNTER_LEVEL_SEAM,
   levelScalingReceipt,
   playerLevel,
   resolveEnemyLevel,
-} from '../src/model/levels.js';
-import { validateContent } from '../src/model/validate.js';
+} from '../../src/model/levels.js';
+import { validateContent } from '../../src/model/validate.js';
 
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 const throws = (fn, pattern) => {

@@ -4,16 +4,16 @@
 // three surfaces and captures failed cells so older fixture drift stays visible.
 
 import { spawn } from 'node:child_process';
-import { buildPageUrl, launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from '../browser.mjs';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { contentBundle } from '../src/content/index.js';
-import { META_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
-import { serve } from './serve.mjs';
+import { contentBundle } from '../../src/content/index.js';
+import { META_KEY, META_SCHEMA_VERSION } from '../../src/engine/save.js';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 const args = process.argv.slice(2);
 const arg = (name, fallback) => {
   const i = args.indexOf(name);

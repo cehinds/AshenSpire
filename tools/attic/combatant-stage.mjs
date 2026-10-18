@@ -8,10 +8,10 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildPageUrl, launchBrowser, resolveBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
+import { buildPageUrl, launchBrowser, resolveBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
 const args = process.argv.slice(2);
 const valueOf = (flag) => { const at = args.indexOf(flag); return at < 0 ? null : args[at + 1]; };
 const standalone = args.includes('--standalone');

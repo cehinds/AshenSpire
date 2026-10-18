@@ -1,7 +1,7 @@
 import {createRequire} from 'node:module';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import {serve} from './serve.mjs';
+import {serve} from '../serve.mjs';
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const {server,port}=await serve({root:path.resolve('.'),port:0,open:false,quiet:true});
 const browser=await chromium.launch({headless:true,...(process.env.CHROME ? {executablePath:process.env.CHROME} : {}),args:['--no-sandbox']});

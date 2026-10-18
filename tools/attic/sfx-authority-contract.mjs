@@ -8,7 +8,7 @@
 import { spawnSync } from 'node:child_process';
 
 const run = (...args) => spawnSync(process.execPath, ['tools/content-build.mjs', ...args], {
-  cwd: new URL('..', import.meta.url),
+  cwd: new URL('../..', import.meta.url),
   encoding: 'utf8',
 });
 const text = (result) => `${result.stdout || ''}\n${result.stderr || ''}`;

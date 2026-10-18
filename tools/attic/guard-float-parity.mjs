@@ -13,14 +13,14 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launchBrowser } from './browser.mjs';
-import { serve } from './serve.mjs';
-import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
-import { createSession, setCombatStartStateForTools } from './session.mjs';
-import { guardHitFloatParts } from '../src/ui/fx.js';
+import { launchBrowser } from '../browser.mjs';
+import { serve } from '../serve.mjs';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries } from '../../src/model/registries.js';
+import { createSession, setCombatStartStateForTools } from '../session.mjs';
+import { guardHitFloatParts } from '../../src/ui/fx.js';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const args = process.argv.slice(2);
 const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : null; };
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
@@ -73,7 +73,7 @@ if (args.includes('--artifact-check')) {
 }
 
 if (args.includes('--selftest') || args.includes('--selftest-source')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest } = await import('../doorplant.mjs');
   const plants = [
     ['solo-collapses-to-preblock-total', 'src/ui/fx.js', 'const residual = amount - blocked;', 'const residual = amount;'],
     ['absorbed-channel-omitted', 'src/ui/fx.js', "guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null", 'guard: null'],

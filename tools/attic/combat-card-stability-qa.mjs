@@ -1,9 +1,9 @@
 import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
-import { openCombatQa } from './rear-qa-runtime.mjs';
+import { openCombatQa } from '../rear-qa-runtime.mjs';
 const { chromium } = createRequire(import.meta.url)('playwright');
-import { serve } from './serve.mjs';
-import { pointerTargetExpression } from './pointer-target.mjs';
+import { serve } from '../serve.mjs';
+import { pointerTargetExpression } from '../pointer-target.mjs';
 import { mkdirSync, writeFileSync } from 'node:fs';
 const running = process.env.COMBAT_QA_URL ? null : await serve({root:process.cwd(),port:8276,open:false});
 const base = process.env.COMBAT_QA_URL || `http://localhost:${running.port}/`;

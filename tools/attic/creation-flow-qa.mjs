@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {createRequire} from 'node:module';
-import {serve} from './serve.mjs';
+import {serve} from '../serve.mjs';
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
 const out=path.resolve(process.env.CREATION_FLOW_OUT||'scratch/qa/creation-flow');await fs.mkdir(out,{recursive:true});
 const {server,port}=await serve({root:path.resolve('.'),port:0,open:false,quiet:true});
