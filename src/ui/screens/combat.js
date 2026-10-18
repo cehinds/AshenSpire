@@ -3059,7 +3059,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // always takes the configured second beat.
   // Nothing on this line says "hold", and adding a third action to this screen
   // would say even less.
+  // The one thing it does say is the state the row's stakes move with (owner,
+  // 2026-10-18: End Turn is a single tap when no card is playable). `ctx` is a
+  // function, read at the moment of each press, so a hand that is spent
+  // mid-turn takes the tap and a hand that still has a play keeps the beat.
   endTurnBeat = arm($('.end-turn'), 'endTurn', {
+    ctx: () => ({ playable: endTurnHasPlayable() }),
+    tapWhenNone: true,
     question: 'End your turn and let the enemies act?',
     confirmLabel: 'END TURN',
     onConfirm: () => {

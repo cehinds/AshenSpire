@@ -1559,6 +1559,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     et.classList.toggle('pulse', hasPlayable);
     et.dataset.confirmReady = String(canEnd && !hasPlayable);
     endTurnBeat = arm(et, 'endTurn', {
+      // The row's stakes move with whether a card is playable (owner,
+      // 2026-10-18: End Turn is one tap when none is). Co-op keeps its
+      // configured beat on every press until its own ruling: the fact is
+      // declared as `true`, not left out, so the row cannot resolve by default.
+      ctx: { playable: true },
       onConfirm: () => {
         const current = snap && snap.scene && snap.scene.kind === 'combat'
           ? snap.scene.players.find((p) => p.id === me)

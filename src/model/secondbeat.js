@@ -139,9 +139,17 @@ export const ACTIONS = Object.freeze({
     // same configured second beat guards every press. The pulse may still
     // report playable resources; it does not decide whether the safety step
     // exists.
-    stakes: 'turn',
+    // THE EXCEPTION (owner, 2026-10-18): ruled state-independent 2026-08-17;
+    // 2026-10-18 the owner made the spent hand the exception. "End Turn is a
+    // single tap when no card is playable; the hold/confirm stays when a card is
+    // still affordable." `playable` is the same fact the pulse reports (combat.js
+    // endTurnHasPlayable), read at the moment of the press. With a play still in
+    // hand, ending the turn throws it away and the configured beat guards it;
+    // with none, there is nothing to lose and the press is a single tap.
+    stakes: (c) => (c.playable ? 'turn' : 'nothing'),
     undo: 'none',
     hazard: 'pointing',
+    edges: { playable: [true, false] },
     note: 'the button sits at the edge of a hand a thumb is already dragging cards out of',
   },
   useFlask: {
