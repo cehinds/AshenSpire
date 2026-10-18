@@ -179,3 +179,18 @@ test('enemy held gear and relic behavior mounts are owner scoped and leave on un
  definition.defaultGear=[];definition.defaultRelics=[];syncConfiguredEnemyProperties(combat);
  assert.equal(protectionReceipt(combat,target,'magical',20).amount,15);assert.equal(protectionReceipt(combat,target,'physical',20).amount,15);
 });
+
+test('fractional offense reaches final rounding without a fabricated status modifier',()=>{
+ const {combat,target}=live();
+ const card={skipRatingBonus:true,combatProfile:{camp:'physical',maneuver:'attack',range:'melee'}};
+ combat.player.combatStance={...card.combatProfile};delete target.combatStance;
+ target.statuses={};combat.player.statuses={};
+ const receipt=profileDamageReceipt(combat,combat.player,target,13,card);
+ const sources=receipt.damageReceipt.hits[0].sources;
+ assert.ok(sources.some(row=>row.id==='matching-stance' && row.effective>13));
+ assert.equal(sources.some(row=>row.id==='status-rules'),false);
+ assert.ok(sources.some(row=>row.id==='quantity-rounding' && row.amount<0));
+ const before=target.hp;primeAccuracyRolls(combat);
+ applyAttackDamage(combat,combat.player,target,13,[],card);
+ assert.equal(before-target.hp,receipt.hpLoss);
+});
