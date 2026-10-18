@@ -90,6 +90,27 @@ try {
     assert.ok(after.energy < before.energy, 'sweep: and spent its cost');
     await page.close();
   }
+  {
+    // End Turn's beat is CARD-ONLY. In a v2 fight a control-recovery action keeps
+    // the pulse lit, but with no playable card the End Turn press is still one tap.
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto(`${process.env.BASE_URL || server.url}index.html?shot=combat&gameProfile=core&shotSeed=4&shotEnemyCount=1&shotExpansion=sleep`, { waitUntil: 'networkidle' });
+    const before = await page.evaluate(() => {
+      const combat = window.__combat;
+      combat.piles.hand = [];
+      combat.player.energy = Math.max(combat.player.energy, 3);
+      return { turn: combat.turn, phase: combat.phase, version: combat.combatExpansionVersion };
+    });
+    assert.equal(before.version, 2, 'fixture: an expansion v2 fight');
+    const box = await page.locator('.end-turn').boundingBox();
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await page.waitForTimeout(900);
+    assert.equal(await page.locator('.confirmation-modal').count(), 0, 'no review opens');
+    const after = await page.evaluate(() => ({ turn: window.__combat.turn, phase: window.__combat.phase }));
+    assert.ok(after.turn > before.turn || after.phase !== before.phase, 'one tap ended the turn');
+    await page.close();
+  }
   assert.deepEqual(errors, []);
   console.log('PASS combat-one-tap-play');
 } catch (error) {

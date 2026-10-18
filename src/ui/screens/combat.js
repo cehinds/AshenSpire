@@ -2092,9 +2092,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
   function isUnplayable(inst) { return !!unplayableReason(inst); }
 
-  /** The pulse reports that the player still has an affordable play. */
-  function endTurnHasPlayable() {
-    const anyPlayable = combat.piles.hand.some((inst) => {
+  /** A card in hand the player can still afford and play. The End Turn beat reads this and nothing broader: the ruling is "no card in hand is playable" (owner, 2026-10-18). */
+  function endTurnHasPlayableCard() {
+    // No outer Energy gate: a Light dodge costs 0 Actions and 1 Stamina, so a
+    // player at 0 Energy with Stamina left still holds a playable card, and
+    // the per-card check below already prices every pool.
+    return combat.piles.hand.some((inst) => {
       if (isUnplayable(inst)) return false;
       // The live preview — class-priced dodge costs, Power reductions — the
       // same numbers the badge shows and the engine charges, in all three
@@ -2109,10 +2112,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         && combat.player.mana >= pv.manaCost
         && combat.player.stamina >= (pv.staminaCost || 0);
     });
-    // No outer Energy gate: a Light dodge costs 0 Actions and 1 Stamina, so a
-    // player at 0 Energy with Stamina left still holds a playable card, and
-    // the per-card check above already prices every pool.
-    return anyPlayable || combat.combatExpansionVersion === 2 && recoveryControls(combat, combat.player).some(row => !row.disabled && combat.player.energy >= row.costPerStack);
+  }
+
+  /** The pulse reports that the player still has an affordable play: a card, or (expansion v2) a control-recovery action. */
+  function endTurnHasPlayable() {
+    return endTurnHasPlayableCard() || combat.combatExpansionVersion === 2 && recoveryControls(combat, combat.player).some(row => !row.disabled && combat.player.energy >= row.costPerStack);
   }
 
   function renderControls() {
@@ -3090,7 +3094,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // function, read at the moment of each press, so a hand that is spent
   // mid-turn takes the tap and a hand that still has a play keeps the beat.
   endTurnBeat = arm($('.end-turn'), 'endTurn', {
-    ctx: () => ({ playable: endTurnHasPlayable() }),
+    ctx: () => ({ playable: endTurnHasPlayableCard() }),
     tapWhenNone: true,
     question: 'End your turn and let the enemies act?',
     confirmLabel: 'END TURN',

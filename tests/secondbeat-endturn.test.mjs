@@ -25,6 +25,14 @@ test('the endTurn row is enumerated at both edges and the table is sane', () => 
 
 test('combat.js arms End Turn with a live ctx read from the same fact as the pulse', () => {
   const src = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-  assert.match(src, /arm\(\$\('\.end-turn'\), 'endTurn', \{\s*ctx: \(\) => \(\{ playable: endTurnHasPlayable\(\) \}\)/);
+  assert.match(src, /arm\(\$\('\.end-turn'\), 'endTurn', \{\s*ctx: \(\) => \(\{ playable: endTurnHasPlayableCard\(\) \}\)/);
   assert.match(src, /const hasPlayable = endTurnHasPlayable\(\);\s*\$\('\.end-turn'\)\.classList\.toggle\('pulse', hasPlayable\)/);
+});
+
+test('the End Turn beat is card-only: a control-recovery action does not count as a playable card', () => {
+  const src = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  const cardOnly = src.match(/function endTurnHasPlayableCard\(\) \{([\s\S]*?)\n  \}\n/)?.[1] || '';
+  assert.ok(cardOnly.includes('combat.piles.hand.some'), 'it reads the hand');
+  assert.ok(!/recoveryControls/.test(cardOnly), 'and nothing broader than the hand');
+  assert.match(src, /function endTurnHasPlayable\(\) \{\s*return endTurnHasPlayableCard\(\) \|\| combat\.combatExpansionVersion === 2 && recoveryControls\(/, 'the pulse keeps the broader fact');
 });
