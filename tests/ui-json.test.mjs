@@ -70,6 +70,11 @@ test('an event naming a command that engine/runtime/commands.json lacks is an er
   assert.deepEqual(errors, ['engine/ui/components/card.json: event "tap" names command "card.doesNotExist", which is not in engine/runtime/commands.json']);
 });
 
+test('an event naming an inherited Object property is not a registered command', () => {
+  const errors = plantedErrors(open => { const f = open('engine/ui/components/card.json'); f.doc.events.tap = 'constructor'; f.save(); });
+  assert.deepEqual(errors, ['engine/ui/components/card.json: event "tap" names command "constructor", which is not in engine/runtime/commands.json']);
+});
+
 test('an asset slot that is no catalog id, alias or missing.json entry is an error', () => {
   const errors = plantedErrors(open => { const f = open('engine/ui/components/card.json'); f.doc.assets.push('icon.doesNotExist'); f.save(); });
   assert.deepEqual(errors, ['engine/ui/components/card.json: asset "icon.doesNotExist" is not a catalog id, an alias or a missing.json entry for game ashenspire']);

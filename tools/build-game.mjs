@@ -337,7 +337,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   // reported, not failed, until the art is mapped (see report.unresolvedAssets).
   const aliases = readAliases(ROOT, game);
   const unresolvedAssets = [];
-  const slot = (from, ids) => { for (const id of ids) if (id && !known.has(id) && !(id in aliases)) unresolvedAssets.push({ from, id }); };
+  const slot = (from, ids) => { for (const id of ids) if (id && !known.has(id) && !Object.hasOwn(aliases, id)) unresolvedAssets.push({ from, id }); };
   for (const [id, c] of Object.entries(uiComponents)) slot(`ui.components.${id}`, c.assets || []);
   for (const [id, s] of Object.entries(uiScreens)) slot(`ui.screens.${id}`, s.assets || []);
   for (const [id, c] of Object.entries(mapComponents)) referenced(`map component ${id}`, [c.icon, ...(c.assets || [])]);

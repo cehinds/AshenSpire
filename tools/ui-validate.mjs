@@ -69,7 +69,7 @@ export function visibilityErrors(doc, rel) {
 /** Guards that tie a UI document to the rest of the repo: its command ids, its asset slots and the src files its description names. */
 function commandErrors(doc, rel, commands) {
   const errors = [];
-  for (const [event, command] of Object.entries(doc.events || {})) if (!commands || !(command in commands)) errors.push(`${rel}: event "${event}" names command "${command}", which is not in ${COMMANDS_FILE}`);
+  for (const [event, command] of Object.entries(doc.events || {})) if (!commands || !Object.hasOwn(commands, command)) errors.push(`${rel}: event "${event}" names command "${command}", which is not in ${COMMANDS_FILE}`);
   return errors;
 }
 
@@ -90,8 +90,8 @@ function assetResolver(root, game, errors) {
   let catalog = {};
   try { catalog = buildAssetCatalog({ root, game }).assets; } catch (e) { errors.push(`games/${game}/assets: ${e.message}`); }
   const aliases = readAliases(root, game), missing = readMissing(root, game);
-  for (const [slot, target] of Object.entries(aliases)) if (target !== null && !(target in catalog)) errors.push(`games/${game}/assets/aliases.json: alias "${slot}" names catalog id "${target}", which does not exist`);
-  return { game, resolves: id => id in catalog || id in aliases || id in missing };
+  for (const [slot, target] of Object.entries(aliases)) if (target !== null && !Object.hasOwn(catalog, target)) errors.push(`games/${game}/assets/aliases.json: alias "${slot}" names catalog id "${target}", which does not exist`);
+  return { game, resolves: id => Object.hasOwn(catalog, id) || Object.hasOwn(aliases, id) || Object.hasOwn(missing, id) };
 }
 
 export function validateUi({ games = ['ashenspire'], root = ROOT } = {}) {
