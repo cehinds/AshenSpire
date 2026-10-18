@@ -583,7 +583,7 @@ function verifySettings(modules, instances = {}) {
 // profile falls back, instead of at New Game. The node types live in the pack's route content, not in the module settings.
 function verifyRouteFirstFloor(modules, content) {
   const routes = modules.routes;
-  if (routes?.mode !== 'configured' || !record(content.routes)) return;
+  if (routes?.mode !== 'configured' || !record(content?.routes)) return;
   const {firstFloor = null, restFloors, minimumThreatFloor} = routes;
   if (firstFloor === null) return;
   const alternatives = [...new Set([...(content.routes.hiddenTypes || []), ...(content.routes.visibleTypes || [])])].filter(type => !['rest', 'boss'].includes(type));
@@ -671,6 +671,6 @@ export function validateResolvedGameProfile(snapshot, supportedRuntimeHash) {
     if (!value.schemas[id]) fail(`$/modules/${id}`, 'missing pinned settings schema');
     validateGameSchema(settings,value.schemas[id],`$/modules/${id}`);
   }
-  verifySettings(value.modules, value.instances); verifyContent(value.content); verifyGearContent(value.content, value.modules.gear); verifyEnemyContent(value.content, value.modules.enemies ? characterSettings(value.modules) : null, value.modules.gear);
+  verifySettings(value.modules, value.instances); verifyRouteFirstFloor(value.modules, value.content); verifyContent(value.content); verifyGearContent(value.content, value.modules.gear); verifyEnemyContent(value.content, value.modules.enemies ? characterSettings(value.modules) : null, value.modules.gear);
   return freezeGameData({...value,hash});
 }
