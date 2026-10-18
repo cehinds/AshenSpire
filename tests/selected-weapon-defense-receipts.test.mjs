@@ -56,18 +56,19 @@ test('real expanded Block, Barrier, Ward and typed reduction receipts earn prote
     reactions(events);assert.deepEqual(events,before);assert.deepEqual(combat.rng.getCounters(),rng);
   }
   // Ward is a pool that lets at least 1 through each hit it meets, so a hit that reaches Ward always costs HP.
-  for(const defense of [{camp:'spell',ward:5},{camp:'spell',ward:3,barrier:2}]) {
+  // Owner ruling 2026-10-11: Ward absorbs at most half of the magic after Barrier, not all but 1.
+  for(const [defense,amount,wardResisted,hp] of [[{camp:'spell',ward:5},3,2,97],[{camp:'spell',ward:3,barrier:2},2,3,98]]) {
     const {combat,events}=contact(defense);
     const receipt=events.find(event=>event.type==='damageDealt');
-    assert.deepEqual([receipt.amount,receipt.blocked,receipt.wardResisted],[1,0,4],JSON.stringify(defense));
-    assert.equal(combat.player.hp,99,JSON.stringify(defense));
+    assert.deepEqual([receipt.amount,receipt.blocked,receipt.wardResisted],[amount,0,wardResisted],JSON.stringify(defense));
+    assert.equal(combat.player.hp,hp,JSON.stringify(defense));
     assert.deepEqual(reactions(events),[],JSON.stringify(defense));
   }
   const {combat,events}=contact({damage:10,camp:'spell',ward:8,barrier:1});
   const receipt=events.find(event=>event.type==='damageDealt');
-  // blocked is Block alone; wardResisted is the magic part's Barrier (1) and Ward (8) absorption.
-  assert.deepEqual([receipt.amount,receipt.blocked,receipt.wardResisted],[1,0,9]);
-  assert.equal(combat.player.hp,99);assert.deepEqual(reactions(events),[],'resistance never hides remaining HP damage');
+  // blocked is Block alone; wardResisted is the magic part's Barrier (1) and Ward's half of the rest (floor(9 * 0.5) = 4).
+  assert.deepEqual([receipt.amount,receipt.blocked,receipt.wardResisted],[5,0,5]);
+  assert.equal(combat.player.hp,95);assert.deepEqual(reactions(events),[],'resistance never hides remaining HP damage');
   assert.deepEqual(reactions(contact({damage:0,block:10,ward:10}).events),[],'a zero attack earns no protection reaction');
 });
 

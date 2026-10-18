@@ -59,16 +59,17 @@ const scepter = { cardId: undefined, tags: ['camp:spell', 'maneuver:casting', 'd
   magicShare: 0.4, physicalDamageType: 'blunt', damageSchool: 'magic',
   combatProfile: { camp: 'spell', maneuver: 'casting', school: 'force', damageType: 'arcane', reach: 'near', targeting: 'single' } };
 
-test('a scepter strike of 5 is 2 arcane and 3 blunt: Ward takes the 2, the 3 is HP', () => {
+test('a scepter strike of 5 is 2 arcane and 3 blunt: Ward takes half the 2, the 3 and the other 1 are HP', () => {
   const r = strike(scepter, 5, { ward: 3 });
   assert.equal(r.damage.length, 1);
   const [d] = r.damage;
-  assert.equal(d.amount, 3, 'what reaches Block and HP');
+  // Owner ruling 2026-10-11: Ward absorbs at most half of the magic after Barrier (floor(2 * 0.5) = 1), not all of it.
+  assert.equal(d.amount, 4, 'what reaches Block and HP');
   assert.equal(d.magicAmount, 2);
   assert.equal(d.physicalAmount, 3);
-  assert.equal(d.wardAbsorbed, 2);
-  assert.equal(d.wardRemaining, 1, 'Ward 3 becomes 1');
-  assert.equal(r.hpLost(r.hpBefore), 3, 'total HP loss is 3');
+  assert.equal(d.wardAbsorbed, 1);
+  assert.equal(d.wardRemaining, 2, 'Ward 3 becomes 2');
+  assert.equal(r.hpLost(r.hpBefore), 4, 'total HP loss is 4');
   // The flat force Ward rider is gone: the hit's Ward loss is its magic absorption and nothing more, so no strip event.
   assert.equal(r.events.find(e => e.type === 'combatWardStripped'), undefined, 'no flat Ward strip after the hit');
 });
@@ -158,8 +159,9 @@ test('a physical-camp card whose damage type shares 1 hits Barrier and Ward, not
   assert.equal(d.blocked, 0, 'Block does not soak a magic part');
   assert.equal(r.enemy.block, 3, 'Block untouched');
   assert.equal(r.enemy.barrier, 0, 'Barrier soaks 2 first');
-  assert.equal(d.wardAbsorbed, 2, 'Ward then soaks 2 of the remaining 3: a pure hit lets at least 1 through Ward');
-  assert.equal(r.hpLost(r.hpBefore), 1, 'that 1 reaches HP');
+  // Owner ruling 2026-10-11: Ward soaks at most half of the remaining 3 (floor(1.5) = 1), so 2 reach HP.
+  assert.equal(d.wardAbsorbed, 1, 'Ward then soaks half of the remaining 3');
+  assert.equal(r.hpLost(r.hpBefore), 2, 'that 2 reaches HP');
   assert.equal(r.preview, r.committed);
 });
 
@@ -230,10 +232,11 @@ test('a physical hit is previewed after Block: 5 against Block 3 deals 2, and th
   assert.equal(r.preview, 2);
 });
 
-test('a magic hit is previewed after Ward: 5 fire against Ward 3 deals 2, and the preview says 2', () => {
+test('a magic hit is previewed after Ward: 5 fire against Ward 3 deals 3, and the preview says 3', () => {
   const r = strike(fireBolt, 5, { ward: 3 });
-  assert.equal(r.hpLost(r.hpBefore), 2);
-  assert.equal(r.preview, 2);
+  // Owner ruling 2026-10-11: Ward absorbs floor(5 * 0.5) = 2, so 3 gets through.
+  assert.equal(r.hpLost(r.hpBefore), 3);
+  assert.equal(r.preview, 3);
   assert.equal(r.preview, r.committed);
 });
 
@@ -448,8 +451,9 @@ test('a mixed-component hit of 8 is 4 magic (2 decay, 2 fire) and 4 slashing; a 
 test('a mixed-component hit meets Ward with its magic part and Block with its physical part', () => {
   const r = strike(mixed, 8, { ward: 3, block: 10 });
   const d = hitOf(r);
-  assert.equal(d.wardAbsorbed, 3, 'Ward takes from the 4 magic');
-  assert.equal(r.committed, 1, 'Block soaks the 4 slashing; 1 magic gets past Ward');
+  // Owner ruling 2026-10-11: Ward takes at most half of the 4 magic (floor(4 * 0.5) = 2).
+  assert.equal(d.wardAbsorbed, 2, 'Ward takes half of the 4 magic');
+  assert.equal(r.committed, 2, 'Block soaks the 4 slashing; 2 magic get past Ward');
   assert.equal(r.enemy.block, 6, 'Block soaked only the physical 4');
   assert.equal(r.preview, r.committed, 'preview equals commit');
 });

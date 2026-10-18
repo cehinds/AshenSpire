@@ -118,15 +118,16 @@ test('expanded critical hits multiply once and still announce the original multi
 });
 
 
-test('un-aimed card faces show offense while target inspection shows Ward mitigation down to 1', () => {
+test('un-aimed card faces show offense while target inspection shows Ward mitigation down to half', () => {
   const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 5 }]);
   enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 20;
   const unAimed = previewCard(combat, 'paired');
   const aimed = previewCard(combat, 'paired', enemy.id);
   const row = unAimed.values.find(value => value.op === 'damage');
   assert.equal(unAimed.tokens[row.token], 5);
-  assert.equal(row.perTarget[enemy.id], 1, 'Ward always lets at least 1 damage through');
-  assert.equal(aimed.tokens[row.token], 1);
+  // Owner ruling 2026-10-11: Ward absorbs at most half of the magic in the card, not all but one.
+  assert.equal(row.perTarget[enemy.id], 2, 'Ward absorbs at most half of a spell\'s magic (was 1: all but one)');
+  assert.equal(aimed.tokens[row.token], 2);
 });
 
 test('a physical hit skips Ward: Block soaks, then Health', () => {
@@ -144,7 +145,7 @@ test('a physical hit skips Ward: Block soaks, then Health', () => {
   assert.equal(before - enemy.hp, 7);
 });
 
-test("owner's example: Barrier soaks first and breaks, Ward lets max(5 - 3, 1) through and breaks", () => {
+test("owner's example: Barrier soaks first and breaks, Ward takes its 3 and breaks", () => {
   const { combat } = fixture();
   const mage = combat.player;
   mage.ratings = { ...mage.ratings, ward: 3 };
@@ -157,9 +158,11 @@ test("owner's example: Barrier soaks first and breaks, Ward lets max(5 - 3, 1) t
   const spell = { cardId: 'starstonePebble', damageSchool: 'fire', tags: ['camp:spell', 'maneuver:casting'],
     combatProfile: { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'fire', reach: 'near', targeting: 'single' } };
   const before = mage.hp;
-  applyAttackDamage(combat, combat.enemies[0], mage, 11, [], spell);
+  // Owner ruling 2026-10-11: Ward takes at most half of the magic left after Barrier. 17 - 6 = 11, half is 5,
+  // so Ward's whole 3 is taken and it breaks; 8 gets through. (At 11 damage Ward would only take 2 and not break.)
+  applyAttackDamage(combat, combat.enemies[0], mage, 17, [], spell);
   assert.equal(mage.barrier, 0); assert.equal(mage.persistentWard.value, 0);
-  assert.equal(before - mage.hp, 2);
+  assert.equal(before - mage.hp, 8);
   assert.ok(events.some(e => e.type === 'barrierBroken')); assert.ok(events.some(e => e.type === 'wardBroken'));
   const hit = events.find(e => e.type === 'damageDealt');
   assert.equal(hit.barrierAbsorbed, 6); assert.equal(hit.wardAbsorbed, 3);
@@ -287,9 +290,10 @@ test('Barrier is consumed hit by hit: the first hit is fully stopped, the second
   assert.equal(hits.length, 2);
   assert.equal(hits[0].amount, 0, 'Barrier stops the first hit outright');
   assert.equal(hits[0].barrierAbsorbed, 5);
-  assert.equal(hits[1].wardAbsorbed, 4, 'the second hit meets Ward 5 and spends 4 of it');
-  assert.equal(before - enemy.hp, 1, 'the second hit lets 1 through');
-  assert.equal(enemy.persistentWard.value, 1);
+  // Owner ruling 2026-10-11: Ward takes at most half of the 5 (floor(2.5) = 2), not 4.
+  assert.equal(hits[1].wardAbsorbed, 2, 'the second hit meets Ward 5 and spends 2 of it');
+  assert.equal(before - enemy.hp, 3, 'the second hit lets 3 through');
+  assert.equal(enemy.persistentWard.value, 3);
 });
 
 test('a planned Spell hit does not absorb Ward a rider spent before it lands', () => {
@@ -372,13 +376,16 @@ test('each hit Ward meets still lets at least 1 damage through', () => {
   const before = enemy.hp;
   const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'paired', targetId: enemy.id });
   const damage = out.events.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id);
-  assert.deepEqual(damage.map(event => event.amount), [1, 1]);
-  assert.equal(before - enemy.hp, 2);
-  assert.deepEqual(damage.map(event => event.wardAbsorbed), [4, 4], 'Ward is spent only by the 8 it absorbed');
+  // Owner ruling 2026-10-11: Ward's budget is per action, not per contact. The two contacts carry 10 magic,
+  // Ward takes at most half of it (floor(10 * 0.5) = 5), split between them, so 5 gets through.
+  assert.deepEqual(damage.map(event => event.amount), [2, 3]);
+  assert.equal(before - enemy.hp, 5);
+  assert.deepEqual(damage.map(event => event.wardAbsorbed), [3, 2], 'Ward is spent only by the 5 it absorbed');
   // starstonePebble is a Spell with Flux (reaction rules v2): its on-hit Ward damage spends the pool on top.
   const flux = out.events.filter(event => event.type === 'combatFluxApplied' && event.targetId === enemy.id);
   assert.deepEqual(flux.map(event => event.amount), [1]);
-  assert.equal(enemy.persistentWard.value, 20 - 8 - 1, 'the 8 absorbed and the 1 Flux Ward damage');
+  // Owner ruling 2026-10-11: the 5 absorbed (was 8) and the 1 Flux Ward damage.
+  assert.equal(enemy.persistentWard.value, 20 - 5 - 1, 'the 5 absorbed and the 1 Flux Ward damage');
 });
 
 const physicalCarrier = () => ({ cardId: 'strike', damageSchool: 'physical', tags: ['camp:physical', 'maneuver:attack'],
