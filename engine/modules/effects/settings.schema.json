@@ -31,6 +31,13 @@
       "type": "number",
       "minimum": 0,
       "maximum": 100
+    },
+    "fixCoreVersion": {
+      "type": "integer",
+      "enum": [
+        0,
+        1
+      ]
     }
   },
   "required": [

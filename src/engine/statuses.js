@@ -1,3 +1,4 @@
+import { fixCoreEnabled, fixCoreRules, fixCoreStatusDefinition } from '../model/fixCoreMechanics.js';
 // src/engine/statuses.js — generic status-model interpreter (SPEC §3.7)
 //
 // Statuses are CONTENT, not code: this module interprets stackMode, decay
@@ -56,8 +57,8 @@ export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
 }
 
 function applyStatusRaw(ctx, target, statusId, stacks = 1, source = null) {
-  if (Control.applyExpansionActiveStatus(ctx, target, statusId, stacks, source)) return;
-  const def = ctx.registries.statuses.get(statusId);
+  if (!(fixCoreEnabled(ctx) && fixCoreRules(ctx).statuses.overrides?.[statusId]) && Control.applyExpansionActiveStatus(ctx, target, statusId, stacks, source)) return;
+  const def = statusDefinition(ctx, statusId);
   if (!target || !target.alive) return;
   const wasAbsent = getStacks(target, statusId) <= 0;
   let amount = Math.floor(stacks);
@@ -238,12 +239,12 @@ function removeStatusRaw(ctx, target, statusId, opts = {}) {
       instance.stacks = stackMagnitude(instance.applications, rule.mode, rule.cap);
     }
     if (holder[field] > 0) {
-      if (opts.reason === 'consumed') ctx.emit('statusRemoved', { targetId: target.id, status: statusId, amount: before - getStacks(target, statusId), reason: 'consumed' });
+      if (opts.reason === 'consumed' || opts.reason === 'ownerTurnStart') ctx.emit('statusRemoved', { targetId: target.id, status: statusId, amount: before - getStacks(target, statusId), reason: opts.reason });
       return;
     }
   }
   delete target.statuses[statusId];
-  if (opts.reason === 'consumed') ctx.emit('statusRemoved', { targetId: target.id, status: statusId, amount: before, reason: 'consumed' });
+  if (opts.reason === 'consumed' || opts.reason === 'ownerTurnStart') ctx.emit('statusRemoved', { targetId: target.id, status: statusId, amount: before, reason: 'consumed' });
   if (!opts.silent) {
     ctx.emit('statusExpired', { targetId: target.id, status: statusId, reason: opts.reason || 'removed' });
   }
@@ -256,9 +257,10 @@ function removeStatusRaw(ctx, target, statusId, opts = {}) {
  *   'none' / 'onConsume' → untouched
  */
 export function decayAtTurnEnd(ctx, entity) {
+  if (fixCoreEnabled(ctx)) return;
   for (const statusId of Object.keys(entity.statuses)) {
     const inst = entity.statuses[statusId];
-    const def = ctx.registries.statuses.get(statusId);
+    const def = statusDefinition(ctx, statusId);
     if (ctx.foundation && def.stacking) continue;
     if (def.decay === 'perTurnEnd') {
       if (inst.meter) inst.meter.value -= 1;
@@ -323,7 +325,7 @@ function knownModifier(key) {
 
 function* modifierSources(ctx, entity) {
   for (const statusId of Object.keys(entity.statuses)) {
-    const def = ctx.registries.statuses.get(statusId);
+    const def = statusDefinition(ctx, statusId);
     if (def.modifiers) yield { modifiers: def.modifiers, stacks: getStacks(entity, statusId) };
   }
   if (entity.kind === 'player' && entity.stanceId) {
@@ -381,4 +383,23 @@ export function anyCombatantFlag(ctx, key) {
     if (e.alive && getFlag(ctx, e, key)) return true;
   }
   return false;
+}
+
+export function statusDefinition(ctx, id) {
+  return fixCoreStatusDefinition(ctx, id, ctx.registries.statuses.get(id));
+}
+export function decayAtTurnStart(ctx, entity) {
+  if (!fixCoreEnabled(ctx) || entity.fixCoreDecayRound === ctx.turn) return;
+  entity.fixCoreDecayRound = ctx.turn;
+  const amount = fixCoreRules(ctx).statuses.decayAmount;
+  for (const id of Object.keys(entity.statuses || {})) {
+    const inst = entity.statuses[id], def = statusDefinition(ctx, id);
+    if (def.decay === 'perTurnEnd' || id === 'evade' || id === 'precision') {
+      removeStatus(ctx, entity, id, { amount, reason: 'ownerTurnStart' });
+    } else if (isDurationDecay(def.decay)) {
+      inst.duration -= 1;
+      if (inst.duration <= 0) removeStatus(ctx, entity, id, { reason: 'expired' });
+    }
+  }
+  syncPoolsAfterStatus(ctx, entity);
 }

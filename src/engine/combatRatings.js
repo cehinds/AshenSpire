@@ -1,3 +1,4 @@
+import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { ratingReceipt, ratingValue, sourceRatingValue, attackImpact, isMagicalAttack, isMagicalHit } from '../model/combatRatings.js';
 import * as Properties from './properties.js';
 import { allocateInteger } from '../model/combatRules.js';
@@ -22,6 +23,10 @@ export function refreshCombatRatings(ctx) {
   }
   ctx.player.ratings = receipt.totals;
   ctx.player.ratingSources = receipt.sources;
+  if (fixCoreEnabled(ctx)) {
+    ctx.player.baseEvasionBonus = receipt.baseEvasionBonus || 0;
+    ctx.player.basePrecisionBonus = receipt.basePrecisionBonus || 0;
+  }
   if (usesSingleBreakMeter(ctx)) { delete ctx.player.wardMeter; delete ctx.player.wardGuard; delete ctx.player.arcaneExposure; }
   for (const id of breakMeterIds(ctx)) {
     const key = id + 'Meter';
@@ -117,6 +122,7 @@ export function applyRatingImpact(ctx, source, target, carrier, explicitAmount =
  * "Staggered" means, shared by the rating meter and breakEnemy.
  */
 export function enqueueStaggerOnFill(ctx, enemy) {
+  if (fixCoreEnabled(ctx)) return; // staggerEnemy owns the versioned additive riders.
   const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
   for (const eff of cfg.onFill || []) {
     ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: {} });

@@ -1,3 +1,6 @@
+import { snapshotEnemyKnowledgeRules } from '../model/enemyKnowledgeRules.js';
+import { decayAtTurnStart } from './statuses.js';
+import { damageReceipt, fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
@@ -6,7 +9,7 @@ import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.j
 import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
 import { previewCardAttackHit } from './stanceHit.js';
-import { stanceOf, stanceStaminaCost } from '../model/stanceRules.js';
+import { stanceOf, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
 import { ASHEN_BLIGHT_RULES } from '../content/ashenBlight.js';
@@ -379,6 +382,7 @@ export function createCombat({
 
   initializeFormationOccupancy(combat);
   if (knowledge) initializeCombatKnowledge(combat, knowledge);
+  else if (fixCoreEnabled(combat)) initializeCombatKnowledge(combat, { rules: snapshotEnemyKnowledgeRules(registries) });
   if (combat.ratingsRules) {
     refreshCombatRatings(combat);
     for (const enemy of combat.enemies) {
@@ -390,11 +394,24 @@ export function createCombat({
   if (configuredCombat(combat)) {
     combat.player.ratings = { ar: 0, dr: 0, pr: 0, ward: 0, poise: poiseMax, ...(player.ratings || {}) };
     combat.player.attributes = { ...(player.attributes || {}) };
+    combat.player.ratingSources = structuredClone(player.ratingSources || combat.player.ratingSources || []);
+    if (fixCoreEnabled(combat)) {
+      combat.player.baseEvasionBonus = player.baseEvasionBonus || 0;
+      combat.player.basePrecisionBonus = player.basePrecisionBonus || 0;
+      for (const enemy of combat.enemies) {
+        const definition = registries.enemies.get(enemy.enemyId);
+        enemy.attributes = { ...(definition.attributes || {}) };
+        enemy.baseEvasionBonus = definition.baseEvasionBonus || definition.evasionBonus || 0;
+        enemy.basePrecisionBonus = definition.basePrecisionBonus || definition.precisionBonus || 0;
+        enemy.ratings ||= { ar: definition.ar || 0, dr: definition.dr || 0, pr: 0,
+          ward: definition.ward || definition.poiseMax || 0, poise: definition.poise || definition.poiseMax || 0 };
+      }
+    }
   }
   if (combatExpansionVersion === 2) {
     for (const entity of [combat.player, ...combat.enemies]) {
-      Control.initializePersistentWard(entity, configuredCombat(combat) ? 0 : persistentWardMaximum(combat, entity));
-      Control.initializePersistentPoise(entity, configuredCombat(combat) ? 0 : persistentPoiseMaximum(combat, entity));
+      Control.initializePersistentWard(entity, configuredCombat(combat) && !fixCoreEnabled(combat) ? 0 : persistentWardMaximum(combat, entity));
+      Control.initializePersistentPoise(entity, configuredCombat(combat) && !fixCoreEnabled(combat) ? 0 : persistentPoiseMaximum(combat, entity));
       entity.barrier = 0;
     }
   }
@@ -546,12 +563,13 @@ function finishCombat(combat, result) {
 function startPlayerTurn(combat) {
   combat.turn += 1;
   returnHiddenCards(combat);
-  decayStanceRoundStart(combat);
+  if (!fixCoreEnabled(combat)) decayStanceRoundStart(combat);
   clearEnemyReactionRolls(combat);
   combat.phase = 'player';
   // SPEC §4.11: a turn is a round for normal-combat momentum; each enemy's M decays one step first (rounds rule).
   decayNormalMomentum(combat);
   const p = combat.player;
+  decayAtTurnStart(combat, p);
   R.beginAbilityTurn(p);
   delete p.combatRetainedCards;
   F.startFoundationTurn(combat, p);
@@ -704,6 +722,7 @@ function enemyTurnStart(combat) {
 // One enemy's own turn start: its owner-relative hooks (DoT ticks etc.) and, expanded, its status
 // recovery. Leaves the enemy dead when a tick killed it.
 function enemyOwnerTurnStart(combat, enemy) {
+  decayAtTurnStart(combat, enemy);
   beginEnemyBurdens(combat,enemy,Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId)));
   Reactions.revealActor(combat, enemy);
   proposalTurn(combat,enemy,'start');
@@ -1476,8 +1495,8 @@ function baseCardPriceReceipt(combat, def, claimed = null) {
   const fullStamina = def.cost === 'X' ? combat.player.stamina + (def.upcastSurcharge || 0)
     : Math.max(0, stanceStaminaCost(effectiveCost(combat, def), combat.player, def, combat) + (def.upcastSurcharge || 0) + silenced);
   const player = withoutClaims(combat.player, claimed);
-  const fullMana = Math.max(0, pools.mana + (def.upcastSurcharge || 0)
-    - R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount);
+  const fullMana = stanceManaCost(Math.max(0, pools.mana + (def.upcastSurcharge || 0)
+    - R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount), combat.player, def, combat);
   const stamina = def.cost === 'X' ? fullStamina : Math.max(0, fullStamina - funds.stamina);
   return {
     paid: { energy: stamina, mana: Math.max(0, fullMana - funds.mana), stamina },
@@ -2471,7 +2490,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     }
     const contacts = expandedPreviewTargets.get(enemy.id)[effectIndex].filter(contact => contact.id === enemy.id);
     const hitDamages = contacts.map(contact => contact.amount);
-    return { damage: hitDamages[0] || 0, hits: hitDamages.length, hitDamages, totalDamage: hitDamages.reduce((sum, n) => sum + n, 0), avoidance: contacts[0]?.receipt?.avoidance };
+    return { damage: hitDamages[0] || 0, hits: hitDamages.length, hitDamages, totalDamage: hitDamages.reduce((sum, n) => sum + n, 0), avoidance: contacts[0]?.receipt?.avoidance, damageReceipt: damageReceipt(enemy.id, contacts.map(contact => contact.receipt.damageReceipt?.hits?.[contact.index] || contact.receipt.damageReceipt?.hits?.[0]).filter(Boolean)) };
   };
   // Preparation adds the charge once to the whole Counter. Its display belongs
   // to the first eligible contact, even if an earlier opcode has no contacts.
@@ -2547,7 +2566,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
           entry.perTarget[e.id] = result.damage;
           entry.perTargetHitDamages[e.id] = result.hitDamages;
           if (primary?.id === e.id) Object.assign(entry, { value: result.damage,
-            hitDamages: result.hitDamages, totalDamage: result.totalDamage,
+            hitDamages: result.hitDamages, totalDamage: result.totalDamage, damageReceipt: result.damageReceipt,
             ...(configuredCombat(combat) ? { hitChance: result.hitChance, uncertain: result.uncertain, hpLossBounds: result.hpLossBounds } : {}) });
         }
         if (entry.value == null && isCounterReply) {
@@ -2614,7 +2633,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       case 'heal':
         {
           const amount = evalPreview(combat, action, eff.amount, primary);
-          entry.value = amount + cardRatingBonus(combat, p, action.card, 'heal', amount) + (action.meta.abilityChargeHeal || 0);
+          entry.value = Math.floor((amount + cardRatingBonus(combat, p, action.card, 'heal', amount) + (action.meta.abilityChargeHeal || 0)) * stanceEffectiveness(combat, p, action.card));
         }
         break;
       case 'buildup':

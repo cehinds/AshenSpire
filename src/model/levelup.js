@@ -1,3 +1,4 @@
+import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { gameModule } from './gameProfile.js';
 import { gameProfileServiceActive } from './gameProfileRun.js';
 // src/model/levelup.js — THE CHARACTER LEVEL (plan phase 6, proposal §10).
@@ -173,7 +174,8 @@ export function claimBankedLevel(registries, run, { pointsPerLevel = null, grant
   if (!run || pendingLevelCount(registries, run) < 1) return null;
   const before = characterLevel(run);
   const cost = xpToNext(registries, before);
-  const points = grantStats ? pointsFor(registries, pointsPerLevel) : 0;
+  const configured = gameModule(run,'progression');
+  const points = configured?.entitlementPolicy === 'authored' ? (gameModule(run,'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0) : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
   run.level.xp -= cost;
   run.level.level = before + 1;
   run.level.unspentPoints += points;
@@ -310,7 +312,8 @@ export function awardLevelXp(registries, run, amount, { pointsPerLevel = null, g
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
   if (gain <= 0) return { before, after: before, levelUps: 0, points: 0, thresholds: 0, gained: 0, discarded: 0 };
-  const perLevel = grantStats ? pointsFor(registries, pointsPerLevel) : 0;
+  const configured = gameModule(run,'progression');
+  const perLevel = configured?.entitlementPolicy === 'authored' ? (gameModule(run,'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0) : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
   const climb = climbLevels(registries, { level: row.level, xp: row.xp, gain });
   const levelUps = climb.levelUps;
   const points = levelUps * perLevel;
@@ -346,7 +349,7 @@ export function rederivePools(registries, run, why) {
   const level = characterLevel(run);
   const before = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina };
   const priorEnergy = run.energyMax;
-  const attributes = effectiveAshenBlightAttributes(run);
+  const attributes = gameProfileEffectiveAttributes(registries,run,effectiveAshenBlightAttributes(run));
   let moved = 0;
   for (const [key, statId] of [['energyMax', 'energy'], ['drawPerTurn', 'draw']]) {
     if (run[key] === undefined) continue;

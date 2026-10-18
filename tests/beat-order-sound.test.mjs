@@ -53,8 +53,8 @@ const isHitSound = (w) => /^sound:(hit_|playerHurt)/.test(w);
 test('sequential: the hit sound and the damage buzz fire with the number, not at contact', (t) => {
   const trace = drive(t, enemyHit(6), 'sequential');
   const number = timeOf(trace, (w) => w === 'float:-6');
-  assert.equal(timeOf(trace, (w) => w === 'contact'), IMPACT, 'the slash stays at the contact');
-  assert.equal(number, TOTAL + 60 + ANIM_SPEEDS.normal.reactionMs, 'the number waits reactionMs after the reaction');
+  assert.equal(timeOf(trace, (w) => w === 'contact'), 1000 + IMPACT, 'the slash stays at the contact');
+  assert.equal(number, 1000 + TOTAL + 60 + 500 + 500, 'the number waits reactionMs after the reaction');
   assert.equal(timeOf(trace, isHitSound), number, 'the hit sound comes with the number');
   assert.equal(timeOf(trace, (w) => w === 'haptic:damageTaken'), number, 'so does the damage buzz');
   assert.ok(!trace.some((e) => e.at < number && (isHitSound(e.what) || e.what === 'haptic:damageTaken')), 'nothing sounds at the contact');
@@ -64,7 +64,7 @@ test('sequential: a guarded hit\'s block sound comes with its number', (t) => {
   const trace = drive(t, enemyHit(5, 5), 'sequential');
   // A hit Block takes whole shows its word (BLOCKED) in place of the number; the sound comes with the word.
   assert.equal(timeOf(trace, (w) => w === 'sound:block'), timeOf(trace, (w) => w === 'word:BLOCKED'));
-  assert.equal(timeOf(trace, (w) => w === 'contact'), IMPACT, 'the spark stays at the contact');
+  assert.equal(timeOf(trace, (w) => w === 'contact'), 1000 + IMPACT, 'the spark stays at the contact');
 });
 
 test('impact: the hit sound and the damage buzz stay at the contact', (t) => {

@@ -81,10 +81,13 @@ function assertCarrier(carrier) {
  * confers nothing. Throws, by name, if this source is already mounted for
  * this owner.
  */
+const mechanicMetadata = def => ({ mechanicTags: [...(def?.mechanicTags || [])], mechanicBindings: structuredClone(def?.mechanicBindings || []) });
+const hasMechanics = def => !!(def?.mechanicTags?.length || def?.mechanicBindings?.length);
+
 export function mountProperties(ctx, carrier) {
   assertCarrier(carrier);
   const rules = carrierRules(ctx.registries, carrier.tagIds).map(rule => breakPropertyRule(ctx, rule));
-  if (!rules.length) return null;
+  if (!rules.length && !hasMechanics(carrier)) return null;
   const sourceKey = propertySourceKey(carrier);
   const mounts = ctx.propertyMounts || (ctx.propertyMounts = {});
   const owned = mounts[carrier.ownerKey] || (mounts[carrier.ownerKey] = {});
@@ -96,7 +99,7 @@ export function mountProperties(ctx, carrier) {
   // the class card names) can ask which mounts speak for a track without a
   // second table. Empty for the carriers that carry none.
   owned[sourceKey] = {
-    kind: carrier.kind, id: carrier.id, instanceId: carrier.instanceId || carrier.id, rules, scopeTags: [...(carrier.scopeTags || [])],
+    ...mechanicMetadata(carrier), kind: carrier.kind, id: carrier.id, instanceId: carrier.instanceId || carrier.id, rules, scopeTags: [...(carrier.scopeTags || [])],
     // The worn piece a slotted sigil rides (SPEC §14.4), so the loadout diff
     // knows the mount is its to take away.
     ...(carrier.heldBy ? { heldBy: carrier.heldBy } : {}),
@@ -130,13 +133,13 @@ export function propertyMountsOf(ctx, entity) {
 export function loadoutCarriers(registries, loadout, classId, ownerKey, itemUpgradeLevels = {}, sigilSlots = null) {
   const worn = equippedPieces(registries, loadout, classId, { itemUpgradeLevels });
   const pieces = worn
-    .filter((piece) => Array.isArray(piece.propertyTags) && piece.propertyTags.length)
+    .filter((piece) => (Array.isArray(piece.propertyTags) && piece.propertyTags.length) || hasMechanics(piece))
     .map((piece) => ({
-      kind: piece.kind === 'armor' ? 'armour' : 'armament',
+      ...mechanicMetadata(piece), kind: piece.kind === 'armor' ? 'armour' : 'armament',
       id: piece.id,
       instanceId: pieceItemRef(piece),
       ownerKey,
-      tagIds: [...piece.propertyTags],
+      tagIds: [...(piece.propertyTags || [])],
     }));
   const sigils = [];
   if (sigilSlots && typeof sigilSlots === 'object' && registries.sigils) {
@@ -148,7 +151,7 @@ export function loadoutCarriers(registries, loadout, classId, ownerKey, itemUpgr
       for (const id of sigilSlots[itemRef]) {
         if (typeof id !== 'string' || !registries.sigils.has(id) || sigils.some((c) => c.id === id)) continue;
         const tagIds = registries.sigils.get(id).propertyTags || [];
-        if (tagIds.length) sigils.push({ kind: 'sigil', id, instanceId: id, ownerKey, tagIds: [...tagIds], heldBy: itemRef });
+        if (tagIds.length || hasMechanics(registries.sigils.get(id))) sigils.push({ ...mechanicMetadata(registries.sigils.get(id)), kind: 'sigil', id, instanceId: id, ownerKey, tagIds: [...tagIds], heldBy: itemRef });
       }
     }
   }
@@ -167,7 +170,7 @@ export function loadoutCarriers(registries, loadout, classId, ownerKey, itemUpgr
 export function relicCarrier(registries, relicId, ownerKey) {
   const def = registries.relics.get(relicId);
   const tagIds = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
-  return tagIds.length ? { kind: 'relic', id: relicId, instanceId: relicId, ownerKey, tagIds: [...tagIds] } : null;
+  return tagIds.length || hasMechanics(def) ? { ...mechanicMetadata(def), kind: 'relic', id: relicId, instanceId: relicId, ownerKey, tagIds: [...tagIds] } : null;
 }
 
 /**
@@ -190,8 +193,8 @@ export function classCarrier(registries, classId, ownerKey, coreTags = []) {
   const tree = new Set((Array.isArray(registries.classTree) ? registries.classTree : []).filter((row) => row && row.classId === classId).map((row) => row.nodeId));
   const picked = (Array.isArray(coreTags) ? coreTags : []).filter((id) => tree.has(id) && rules && typeof rules.has === 'function' && rules.has(id) && !own.includes(id));
   const tagIds = [...own, ...picked];
-  return tagIds.length && def
-    ? { kind: 'class', id: classId, instanceId: classId, ownerKey, tagIds, scopeTags: [...(def.tags || [])] }
+  return def && (tagIds.length || hasMechanics(def))
+    ? { ...mechanicMetadata(def), kind: 'class', id: classId, instanceId: classId, ownerKey, tagIds, scopeTags: [...(def.tags || [])] }
     : null;
 }
 
@@ -222,7 +225,7 @@ export function syncClassProperties(combat, entity) {
 export function featCarrier(registries, featId, ownerKey) {
   const def = registries.classSkillFeats?.find(row => row.id === featId);
   const tagIds = def?.propertyTags || [];
-  return tagIds.length ? { kind: 'feat', id: featId, instanceId: featId, ownerKey, tagIds: [...tagIds] } : null;
+  return tagIds.length || hasMechanics(def) ? { ...mechanicMetadata(def), kind: 'feat', id: featId, instanceId: featId, ownerKey, tagIds: [...tagIds] } : null;
 }
 
 export function syncFeatProperties(combat, entity, featIds) {
@@ -252,7 +255,7 @@ export function syncFeatProperties(combat, entity, featIds) {
 export function companionCarrier(registries, companionId, ownerKey) {
   const def = registries.companions && registries.companions.has(companionId) ? registries.companions.get(companionId) : null;
   const tagIds = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
-  return tagIds.length ? { kind: 'companion', id: companionId, instanceId: companionId, ownerKey, tagIds: [...tagIds] } : null;
+  return tagIds.length || hasMechanics(def) ? { ...mechanicMetadata(def), kind: 'companion', id: companionId, instanceId: companionId, ownerKey, tagIds: [...tagIds] } : null;
 }
 
 /**
@@ -281,7 +284,7 @@ export function sigilCarrier(registries, sigilId, ownerKey) {
   const def = registries.sigils && registries.sigils.has(sigilId) ? registries.sigils.get(sigilId) : null;
   if (!def || def.rarity !== 'legendary') return null;
   const tagIds = Array.isArray(def.propertyTags) ? def.propertyTags : [];
-  return tagIds.length ? { kind: 'sigil', id: sigilId, instanceId: sigilId, ownerKey, tagIds: [...tagIds] } : null;
+  return tagIds.length || hasMechanics(def) ? { ...mechanicMetadata(def), kind: 'sigil', id: sigilId, instanceId: sigilId, ownerKey, tagIds: [...tagIds] } : null;
 }
 
 /**

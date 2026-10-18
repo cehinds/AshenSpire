@@ -1,3 +1,4 @@
+import { fixCoreEnabled, fixCoreRules } from './fixCoreMechanics.js';
 import { stanceRules } from '../content/stanceRules.js';
 import { cardPreparationCategory } from './cardClassification.js';
 import { combatProfileFor } from './combatCardProfile.js';
@@ -30,7 +31,7 @@ export function stanceOf(carrier, entity = null) {
   const camp = ['spell', 'spells', 'magic', 'magical'].includes(profile.camp) ? 'spell' : 'physical';
   let maneuver = preparation ? 'casting' : profile.maneuver;
   if (maneuver === 'defense' || maneuver === 'block') maneuver = 'defend';
-  if (maneuver === 'spell' || maneuver === 'cast') maneuver = 'casting';
+  if (maneuver === 'spell' || maneuver === 'cast' || maneuver === 'prepared') maneuver = 'casting';
   const evade = profile.evade && profile.evadeEligible !== false
     && (!profile.evade.whileStatus || profile.evadeEligible === true || entity?.statuses?.[profile.evade.whileStatus]?.stacks > 0);
   if (!preparation && ((evade && ['defend', 'counter'].includes(maneuver)) || maneuver === 'evade')) maneuver = 'evade';
@@ -47,6 +48,11 @@ export function sameStance(entity, carrier) {
 }
 export function stanceStaminaCost(base, entity, carrier, ctx = null) {
   if (ctx?.combatExpansionVersion !== 2 || !sameStance(entity, carrier)) return base;
+  if (fixCoreEnabled(ctx)) {
+    if (!(base > 0) || stanceOf(carrier).camp === 'spell') return base;
+    const cfg = fixCoreRules(ctx).stance;
+    return Math.max(cfg.minimumCost, base - cfg.discount);
+  }
   const cfg = stanceRulesFor(ctx), magical = stanceOf(carrier).camp === 'spell';
   return Math.max(magical ? cfg.magicalMinimumSp : cfg.physicalMinimumSp, base - cfg.sameStanceDiscount);
 }
@@ -73,4 +79,13 @@ export function stanceEntryBonuses(carrier, ctx = null) {
     && (!profile.evade.whileStatus || profile.evadeEligible === true);
   return { precision: offensive ? cfg.offensivePrecision : 0, evade: stance.maneuver === 'evade' || auxiliaryEvade ? cfg.evadeStacks : 0,
     block, barrier: amount - block };
+}
+
+export function stanceManaCost(base, entity, carrier, ctx) {
+  if (!fixCoreEnabled(ctx) || !(base > 0) || !sameStance(entity, carrier) || stanceOf(carrier)?.camp !== 'spell') return base;
+  const cfg = fixCoreRules(ctx).stance;
+  return Math.max(cfg.minimumCost, base - cfg.discount);
+}
+export function stanceEffectiveness(ctx, source, carrier) {
+  return fixCoreEnabled(ctx) && (carrier?.fixCoreSameStance ?? sameStance(source, carrier)) ? fixCoreRules(ctx).stance.effectivenessMultiplier : 1;
 }

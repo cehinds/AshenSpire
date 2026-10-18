@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
+- **Core 2 brings combat calculations and card information together** ([#2129](https://github.com/cehinds/AshenSpire/pull/2129), `0.7.1.1609`). Adds JSON-authored combat rules, typed protection and calculation receipts, equipped-stat and deck progression fixes, weighted rewards and fuller shops, preboss rests and traveled routes, and readable combat pacing with optional automatic play. Earlier Core definitions remain separately available.
+
 - **Hit feel: shake by share of max HP up to 10 px, 120 ms hit-stop on huge hits** ([#2123](https://github.com/cehinds/AshenSpire/pull/2123), `0.7.1.1609`). Big hits shake harder and hold longer: shake scales with the share of health a hit takes, up to 10 px, and a hit for 35% or more of max health pauses 120 ms at impact.
 - **Wave-3 review follow-ups: JSON status provenance; rest-first snapshot refused** ([#2124](https://github.com/cehinds/AshenSpire/pull/2124), `0.7.1.1609`). Housekeeping from review: the mechanics docs and provenance name the JSON status source, and an old rest-first rule preset is refused when loaded from a saved snapshot too.
 

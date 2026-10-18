@@ -1,3 +1,4 @@
+import { fixCoreEnabled, fixCoreRules } from '../model/fixCoreMechanics.js';
 import * as Actions from './actions.js';
 import * as Statuses from './statuses.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
@@ -414,6 +415,7 @@ export function recoverStatusesAtOwnerStart(ctx, entity, options = {}) {
   s.completedActions = {};
   const cfg = rules(ctx), result = [];
   for (const [id, row] of Object.entries(cfg.statuses)) {
+    if (fixCoreEnabled(ctx) && fixCoreRules(ctx).statuses.overrides?.[row.activeStatus]) continue;
     const gauge = s.gauges[id];
     if (!row.chanceRecovery || (!stacks(entity, row.activeStatus) && !(gauge?.value > 0))) continue;
     const traits = entity.combatTraits || {};

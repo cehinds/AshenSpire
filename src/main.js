@@ -128,6 +128,7 @@ import { mountCombat } from './ui/screens/combat.js';
 import { mountCombatTest } from './ui/screens/combatTest.js';
 import { mountRewards } from './ui/screens/reward.js';
 import { mountRest } from './ui/screens/rest.js';
+import { commitDeckEditDraft } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
 import { mountShop, mountConfiguredShop } from './ui/screens/shop.js';
@@ -170,6 +171,7 @@ import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
 import { mountQuitScreen } from './ui/quitGame.js';
 import { lanInfo } from './net/lan.js';
+import { setCombatPacing } from './ui/animationPace.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
@@ -976,6 +978,7 @@ function applyDisplaySettings(settings) {
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
   setAnimSpeed(resolveCombatPacing(settings, quality));
+  setCombatPacing(settings);
   // A cleared key (a Reset, a profile that leaves it out) means the default:
   // setVolumes ignores a missing field, so say the default out loud.
   audio.setVolumes({
@@ -2120,9 +2123,9 @@ function showCharacterSheet(opener, options = {}) {
 // Which doors open it is the settings' answer (DeckEditorModel.deckEditorDoors):
 // under `free` the Armoury, under `restOnly` the
 // Rest screen of a place carrying `deckEdit`, and none with deck editing off.
-// Every door here is out of combat; the fight's Armoury gets none.
+// These navigation doors use the ordinary location policy; combat uses the
+// separate draft door below at a safe action boundary.
 function deckDoors(services = null) {
-  if (isConfiguredRun(run)) return { armoury: false, rest: false };
   return deckEditorDoors({ settings: saves.loadMeta().settings || {}, inCombat: false, services });
 }
 
@@ -2140,6 +2143,31 @@ function showDeckEditor(returnTo = showMap, hub = true) {
     // exactly (cancelDeckEdit), so there is nothing to write.
     onDone: () => { persist(); returnTo(); },
     onCancel: () => returnTo(),
+  });
+}
+
+// The combat screen opens this door only at an idle action boundary. The
+// editor owns a draft; committing it changes the next encounter's deck while
+// the active hand/draw/discard/exhaust piles retain their instance identities.
+function showCombatDeckEditor(combat, nodeId, encounterId) {
+  if (!run || combat.result || combat.pendingReaction) return;
+  const owner = run;
+  const draft = structuredClone(owner);
+  const settings = saves.loadMeta().settings || {};
+  mountDeckEditor(document.body, {
+    registries, run: draft, settings,
+    onDone: () => {
+      if (run !== owner || combat.result) return;
+      try {
+        commitDeckEditDraft(registries, owner, draft, settings);
+        commitCombatSnapshot({ run: owner, combat, nodeId, encounterId });
+        persist();
+        showSettingsNotice('Deck saved. Changes apply next encounter; current combat piles stay unchanged.');
+      } catch (error) {
+        showSettingsNotice(error.message || 'Deck changes could not be saved.');
+      }
+    },
+    onCancel: () => {},
   });
 }
 
@@ -3120,6 +3148,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
+    onEditDeck: () => showCombatDeckEditor(combat, nodeId, encounterId),
     onMenu: showOverlay,
     onLoad: loadActiveSlot,
     onQuitWithoutSave: quitWithoutSaving,
