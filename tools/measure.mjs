@@ -41,6 +41,8 @@
 // are written against. The figures come from the owner's performance review of
 // origin/dev a0b54c60e.
 //
+// A scene is measured once its element count holds still; a scene that fails
+// is tried a second time, and one that fails twice is named on stderr (exit 2).
 // --scenes limits the run to some of title,map,combat,rest,shop (a budget run
 // then reports the budgets it could not measure as missing). MEASURE_DEBUG=1
 // traces the touch plays on stderr.
@@ -176,20 +178,33 @@ async function metrics(cdp) {
   return Object.fromEntries(m.map((x) => [x.name, x.value]));
 }
 
+// The scene is ready when its element count holds still (within 3%) for three
+// looks a second apart; a fixed sleep measured half-drawn scenes on a busy box.
+async function settle(page) {
+  for (let i = 0, last = -1, still = 0; i < 45 && still < 3; i++) {
+    await sleep(1000);
+    const n = await page.evaluate(() => document.querySelectorAll('*').length);
+    still = last > 0 && Math.abs(n - last) <= last * 0.03 ? still + 1 : 0;
+    last = n;
+  }
+}
+
 async function measureScene(browser, base, scene, wantPlays) {
   const ctx = await browser.newContext({ viewport: VIEWPORT, hasTouch: true, isMobile: true, deviceScaleFactor: DPR });
-  const page = await ctx.newPage();
-  page.on('pageerror', (e) => console.error(`measure: ${scene} pageerror: ${String(e).slice(0, 160)}`));
-  await page.addInitScript(initScript);
-  const cdp = await ctx.newCDPSession(page);
-  await cdp.send('Performance.enable');
-  await page.goto(sceneUrl(base, scene), { waitUntil: 'load', timeout: 150000 });
-  await sleep(scene === 'title' ? 3000 : 4000);
-  const counts = await page.evaluate(sceneCounts);
-  let plays = [];
-  if (wantPlays) plays = await touchPlays(page, cdp, wantPlays);
-  await ctx.close();
-  return { counts, plays };
+  try {
+    const page = await ctx.newPage();
+    page.on('pageerror', (e) => console.error(`measure: ${scene} pageerror: ${String(e).slice(0, 160)}`));
+    await page.addInitScript(initScript);
+    const cdp = await ctx.newCDPSession(page);
+    await cdp.send('Performance.enable');
+    await page.goto(sceneUrl(base, scene), { waitUntil: 'load', timeout: 150000 });
+    await settle(page);
+    const counts = await page.evaluate(sceneCounts);
+    const plays = wantPlays ? await touchPlays(page, cdp, wantPlays) : [];
+    return { counts, plays };
+  } finally {
+    await ctx.close().catch(() => {});
+  }
 }
 
 // Combat: tap a card, tap an enemy if the card wants one, repeat; end the turn
@@ -279,10 +294,15 @@ export async function run(opts) {
   const { resolveBrowser } = await import('./browser.mjs');
   const { chromium } = loadPlaywright();
   const browser = await chromium.launch({ executablePath: resolveBrowser() || undefined });
-  const result = { base, scenes: {}, boot: null, play: null };
+  const result = { base, scenes: {}, boot: null, play: null, failed: [] };
   try {
     for (const scene of opts.scenes) {
-      const { counts, plays } = await measureScene(browser, base, scene, scene === 'combat' ? PLAYS_WANTED : 0);
+      let got = null;
+      for (let attempt = 1; attempt <= 2 && !got; attempt++) {
+        try { got = await measureScene(browser, base, scene, scene === 'combat' ? PLAYS_WANTED : 0); } catch (e) { console.error(`measure: ${scene} attempt ${attempt} failed: ${String(e && e.message).split('\n')[0]}`); }
+      }
+      if (!got) { result.failed.push(scene); continue; }
+      const { counts, plays } = got;
       const { dcl, longest, ...c } = counts;
       result.scenes[scene] = c;
       console.log(`MEASURE ${scene} nodes=${c.nodes} filters=${c.filters} anims=${c.anims} requests=${c.requests} bytes=${c.bytes}`);
@@ -317,6 +337,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
       console.log('BUDGET FAILED: at least one count is over budget by more than 25% (or was not measured).');
       process.exit(1);
     }
+    if (result.failed.length) { console.error(`measure: scenes that could not be measured: ${result.failed.join(', ')}`); process.exit(2); }
     process.exit(0);
   }).catch((e) => { console.error(e && e.stack || e); process.exit(2); });
 }
