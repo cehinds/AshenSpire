@@ -1,0 +1,26 @@
+{
+  "id": "status.entombed",
+  "tag": "status.entombed",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Entombed",
+  "description": "Skips its next turn. Takes 25% less damage while entombed.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.entombed"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/cardFaceText.js",
+    "symbol": "fail"
+  }
+}

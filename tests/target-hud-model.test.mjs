@@ -9,7 +9,17 @@ test('target details support every alternative formation form factor', () => {
   assert.equal(targetHudEnabled({ formFactor: 'desktop', classic: true }), false);
   assert.equal(targetHudEnabled({ formFactor: 'desktop', classic: false, layout: 'cards' }), false);
   assert.deepEqual([0, 1, 2].map(lane => targetHudSide('enemy', lane)), ['left', 'below', 'right']);
-  assert.deepEqual([0, 1, 2].map(lane => targetHudSide('player', lane)), ['right', 'left', 'left']);
+  assert.deepEqual([0, 1, 2].map(lane => targetHudSide('player', lane)), ['right', 'right', 'right']);
+});
+test('player panel stays right of the player in every lane, even when enemies crowd that side', () => {
+  for (const lane of [0, 1, 2]) {
+    const bounds = { left: 0, top: 0, width: 390, height: 500 };
+    const player = { id: 'p', role: 'player', lane, anchor: { left: 120, top: 260, width: 90, height: 140 }, width: 145, height: 100 };
+    const enemies = [0, 1, 2].map(i => ({ id: `e${i}`, role: 'enemy', lane: i, anchor: { left: 20 + i * 120, top: 60, width: 90, height: 120 }, width: 145, height: 100 }));
+    const obstacles = [{ left: 215, top: 250, width: 60, height: 60 }];
+    const placed = placeTargetHudPanels({ bounds, panels: [...enemies, player], obstacles }).find(row => row.id === 'p');
+    assert.ok(placed.left >= player.anchor.left + player.anchor.width - 1, `lane ${lane}: player HUD at ${placed.left} left of the player`);
+  }
 });
 function clock() {
   let now = 0, serial = 0; const jobs = new Map();

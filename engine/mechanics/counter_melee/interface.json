@@ -1,0 +1,8 @@
+{
+  "mechanic": "counter_melee",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

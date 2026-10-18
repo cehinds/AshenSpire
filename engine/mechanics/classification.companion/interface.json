@@ -1,0 +1,8 @@
+{
+  "mechanic": "classification.companion",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

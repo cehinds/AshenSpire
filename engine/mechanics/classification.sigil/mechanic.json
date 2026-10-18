@@ -1,0 +1,22 @@
+{
+  "id": "classification.sigil",
+  "tag": "classification.sigil",
+  "version": "1.0.0",
+  "family": "classification",
+  "label": "Sigil",
+  "description": "What a sigil is. Every object in the sigil collection carries this, and nothing outside it may.",
+  "attaches": [
+    "gear"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "classification.sigil"
+  },
+  "portability": "data"
+}

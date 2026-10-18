@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.rallyingStandardUp",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

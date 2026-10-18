@@ -1,0 +1,8 @@
+{
+  "mechanic": "damage.piercing",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

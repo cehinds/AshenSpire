@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.offBalance",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

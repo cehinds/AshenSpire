@@ -1,0 +1,27 @@
+{
+  "id": "item_shield",
+  "tag": "item:shield",
+  "version": "1.0.0",
+  "family": "item",
+  "label": "Shield",
+  "description": "What this piece IS: the Armoury and the smith name it Shield.",
+  "attaches": [
+    "gear"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "item_shield",
+    "color": "7FA8C9"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/counterReturn.js",
+    "symbol": "counterBaseEvasion"
+  }
+}

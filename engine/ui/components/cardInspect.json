@@ -1,0 +1,41 @@
+{
+  "id": "cardInspect",
+  "description": "Full card inspection overlay with an optional play action. Reads src/ui/components/cardInspection.js, handInspectionOverlay.js and src/ui/models/InspectControlModel.js.",
+  "layout": {
+    "ref": "content/config/ui/components/inspect.json"
+  },
+  "viewModel": {
+    "props": {
+      "card": "cardInstanceRef"
+    },
+    "bindings": {
+      "card": "$card",
+      "canPlay": "combat.canPlay($card)",
+      "reason": "combat.unplayableReason($card)"
+    }
+  },
+  "states": [
+    "closed",
+    "open"
+  ],
+  "events": {
+    "play": "combat.playCard",
+    "close": "inspect.close"
+  },
+  "children": [
+    {
+      "component": "card",
+      "slot": "face",
+      "props": {
+        "card": "$card.card",
+        "level": "inspect"
+      }
+    }
+  ],
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "mechanic": "delivery_projectile",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

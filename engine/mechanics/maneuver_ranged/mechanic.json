@@ -1,0 +1,27 @@
+{
+  "id": "maneuver_ranged",
+  "tag": "maneuver:ranged",
+  "version": "1.0.0",
+  "family": "maneuver",
+  "label": "Ranged",
+  "description": "Ranged delivery avoids melee replies. Ranged Counter, spell Counter and defensive Alteration answer it.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "maneuver_ranged",
+    "color": "AAC88A"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/actionCosts.js",
+    "symbol": "actionStance"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.dazed",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

@@ -1,0 +1,27 @@
+{
+  "id": "trait_flux",
+  "tag": "trait:flux",
+  "version": "1.0.0",
+  "family": "trait",
+  "label": "Flux",
+  "description": "On hit: N Ward damage, or double the Ward damage the card already deals.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "trait_flux",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatCardProfile.js",
+    "symbol": "numberedTraitRow"
+  }
+}

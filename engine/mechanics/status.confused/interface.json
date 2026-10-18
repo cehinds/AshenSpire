@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.confused",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

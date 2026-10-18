@@ -1,0 +1,8 @@
+{
+  "mechanic": "equipment.bound",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

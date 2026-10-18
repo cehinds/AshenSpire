@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.bulwarkEcho",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

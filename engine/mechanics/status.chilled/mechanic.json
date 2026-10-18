@@ -1,0 +1,25 @@
+{
+  "id": "status.chilled",
+  "tag": "status.chilled",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Chilled",
+  "description": "The next connected Blunt action deals 25% more damage. Fire thaws.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.chilled"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

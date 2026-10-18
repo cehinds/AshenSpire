@@ -1,0 +1,25 @@
+{
+  "id": "status.stargazer",
+  "tag": "status.stargazer",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Stargazer",
+  "description": "At the start of your turn, gain Starstone Charge.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.stargazer"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

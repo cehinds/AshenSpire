@@ -26,8 +26,12 @@ function equipmentGroupMembers(registries, rules, category, family) {
 }
 function pools(registries, run) {
   const definitions = gameContent(run,'cards') || [];
-  const cards = definitions.filter(card => (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status');
   const rules = gameContent(run,'rewards');
+  // Owner 2026-10-17: a basic (below minRank) card the character already owns is never offered again.
+  const cardRule = rules?.eligibility?.combatCards;
+  const ownedIds = new Set([...(run.deck || []), ...(run.sideboard || [])].map(card => card?.cardId ?? card?.id ?? card));
+  const cards = definitions.filter(card => (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
+    && !(cardRule?.skipOwnedBasics && cardRank(card, rules) < (cardRule.minRank ?? 0) && ownedIds.has(card.id)));
   const equipment = !!gameModule(run,'equipment'), hasCards=!!gameModule(run,'cards');
   const weapons = equipment ? equipmentGroupMembers(registries,rules,'weapons','armament') : new Set();
   const armor = equipment ? equipmentGroupMembers(registries,rules,'armor','armour') : new Set();
@@ -39,10 +43,16 @@ function pools(registries, run) {
     weapons: equipment ? (registries.equipment.armaments||[]).filter(row=>weapons.has(row.id)&&!carried.has(row.id)).map(row=>row.id) : [],
     relics: registries.relics.all().filter(row=>!run.relics.includes(row.id)).map(row=>row.id),
     combatCards: hasCards ? cards.map(row=>row.id) : [],
+    // Rank split for combat-card offers (rewards.json eligibility.combatCards): a card's own rank, else its rarity's.
+    combatCardsLow: hasCards ? cards.filter(row=>cardRank(row,rules)<(rules.eligibility?.combatCards?.minRank??0)).map(row=>row.id) : [],
     weaponArts: hasCards && equipment ? [...new Set(authoredArts)] : [],
     potions: registries.flasks.all().filter(row=>gameModule(run,'resources')?.include?.includes('mp') || !row.effects.some(effect=>effect.op==='restoreMana')).map(row=>row.id),
     armor: equipment ? (registries.equipment.armour||[]).filter(row=>armor.has(`${row.classId}:${row.id}`)&&row.classId===run.class && !(run.loadout.boughtArmour||[]).some(owned=>owned.id===row.id) && !Object.values(run.loadout.sets).flat().includes(row.id)).map(row=>row.id) : [],
   };
+}
+function cardRank(card,rules) {
+  const rule=rules?.eligibility?.combatCards;
+  return Number.isSafeInteger(card.rank) ? card.rank : rule?.rankOfRarity?.[card.rarity] ?? 1;
 }
 function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
@@ -53,8 +63,18 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   while(options.length<count) {
     const kinds=categories.filter(kind=>(available[kind]||[]).length);
     if(!kinds.length)break;
-    const kind=rng.pick('cardRewards',kinds),ids=available[kind];
-    const id=rng.pick('cardRewards',ids);available[kind]=ids.filter(value=>value!==id);
+    const kind=rng.pick('cardRewards',kinds);
+    let ids=available[kind];
+    // Most card rewards are rank 1+; a small authored chance lets a lower-rank card through.
+    const rule=gameContent(run,'rewards')?.eligibility?.combatCards;
+    if(kind==='combatCards'&&rule){
+      const low=new Set(available.combatCardsLow||[]),high=ids.filter(id=>!low.has(id)),lowIds=ids.filter(id=>low.has(id));
+      // The chance is honored even when no rank 1+ card is left: a failed (or zero) roll drops the category.
+      const allowLow=lowIds.length>0&&rng.pick('cardRewards',Array.from({length:100},(_,i)=>i))<Math.round((rule.lowerRankChance??0)*100);
+      if(!allowLow&&!high.length){available[kind]=[];continue;}
+      ids=allowLow?lowIds:high;
+    }
+    const id=rng.pick('cardRewards',ids);available[kind]=available[kind].filter(value=>value!==id);
     options.push({kind,id});
   }
   const offer={id:offerId,source,options,takeCount,taken:[],claimed:null};

@@ -1,0 +1,26 @@
+{
+  "id": "lifecycle.innate",
+  "tag": "lifecycle.innate",
+  "version": "1.0.0",
+  "family": "lifecycle",
+  "label": "Innate",
+  "description": "Tag lifecycle.innate in the lifecycle family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "lifecycle.innate"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combat.js",
+    "symbol": "createCombat"
+  }
+}

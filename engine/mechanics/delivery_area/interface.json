@@ -1,0 +1,8 @@
+{
+  "mechanic": "delivery_area",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

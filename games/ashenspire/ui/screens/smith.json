@@ -1,0 +1,52 @@
+{
+  "id": "smith",
+  "description": "Blacksmith upgrades. Mounted by src/ui/screens/blacksmith.js (mountBlacksmith) with smithServices.js.",
+  "route": "smith",
+  "layout": {
+    "ref": "content/config/ui/screens/smith.json"
+  },
+  "viewModel": {
+    "props": {
+      "run": "runRef",
+      "priceMult": "number"
+    }
+  },
+  "regions": [
+    {
+      "slot": "header",
+      "component": "hud"
+    },
+    {
+      "slot": "candidates",
+      "component": "deckList",
+      "props": {
+        "run": "$run"
+      }
+    },
+    {
+      "slot": "detail",
+      "component": "cardInspect",
+      "props": {
+        "card": "$selectedCandidate"
+      }
+    },
+    {
+      "slot": "footer",
+      "component": "buttons",
+      "props": {
+        "items": [
+          "upgrade",
+          "leave"
+        ]
+      }
+    }
+  ],
+  "events": {
+    "upgrade": "smith.upgrade",
+    "leave": "smith.leave"
+  },
+  "assets": [
+    "scene.smith",
+    "icon.gold"
+  ]
+}

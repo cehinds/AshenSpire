@@ -1,0 +1,31 @@
+{
+  "id": "iconTray",
+  "description": "Row of icons (potions, belt). Reads src/ui/components/iconTray.js and src/ui/models/IconTrayModel.js.",
+  "layout": {
+    "ref": "content/config/ui/components/iconTray.json"
+  },
+  "viewModel": {
+    "props": {
+      "items": "array"
+    },
+    "bindings": {
+      "items": "$items",
+      "iconRem": "layout.sizing.iconRem"
+    }
+  },
+  "states": [
+    "idle",
+    "full",
+    "empty"
+  ],
+  "events": {
+    "tap": "tray.activate",
+    "hold": "inspect.open"
+  },
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

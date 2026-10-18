@@ -1,0 +1,27 @@
+{
+  "id": "counter_melee",
+  "tag": "counter:melee",
+  "version": "1.0.0",
+  "family": "counter",
+  "label": "Melee counter",
+  "description": "Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "counter_melee",
+    "color": "D7B36B"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "applyExpandedDamage"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "status.emberTide",
+  "tag": "status.emberTide",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Ember Tide",
+  "description": "Whenever you heal, gain 1 Strength per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.emberTide"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

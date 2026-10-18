@@ -1,0 +1,26 @@
+{
+  "id": "targeting.allEnemies",
+  "tag": "targeting.allEnemies",
+  "version": "1.0.0",
+  "family": "targeting",
+  "label": "AllEnemies",
+  "description": "Tag targeting.allEnemies in the targeting family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "targeting.allEnemies"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/abilityRiders.js",
+    "symbol": "cardTargetsAllEnemies"
+  }
+}

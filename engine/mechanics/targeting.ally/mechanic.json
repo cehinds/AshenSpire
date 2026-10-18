@@ -1,0 +1,26 @@
+{
+  "id": "targeting.ally",
+  "tag": "targeting.ally",
+  "version": "1.0.0",
+  "family": "targeting",
+  "label": "Ally",
+  "description": "Tag targeting.ally in the targeting family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "targeting.ally"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "resolveRawTargets"
+  }
+}
