@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **Vulnerable adds 25% damage everywhere** ([#2140](https://github.com/cehinds/AshenSpire/pull/2140), `0.7.1.1627`). Vulnerable now adds 25% damage instead of 50% in every mode, matching the Core rules, and card previews show it.
-
+- **Vulnerable adds 25% damage everywhere** ([#2140](https://github.com/cehinds/AshenSpire/pull/2140), `0.7.1.1629`). Vulnerable now adds 25% damage instead of 50% in every mode, matching the Core rules, and card previews show it.
+- **Upcoming combat and rest-site changes are decided** ([#2135](https://github.com/cehinds/AshenSpire/pull/2135), `0.7.1.1629`). Planned changes to stagger, stance costs, hit rolls, rewards, rest sites, combat pacing, automatic reactions, armor and Vulnerable are written down. Nothing changes in play yet.
 - **ModalManager: the co-op seat strip goes inert under a door** ([#2132](https://github.com/cehinds/AshenSpire/pull/2132), `0.7.1.1627`). In couch co-op the seat tabs now sleep under an open dialog instead of answering taps through it.
 - **Core 2 brings combat calculations and card information together** ([#2129](https://github.com/cehinds/AshenSpire/pull/2129), `0.7.1.1625`). Adds JSON-authored combat rules, typed protection and calculation receipts, equipped-stat and deck progression fixes, weighted rewards and fuller shops, preboss rests and traveled routes, and readable combat pacing with optional automatic play. Earlier Core definitions remain separately available.
 - **Rear enemy designs have a feature-only review gallery** ([#2071](https://github.com/cehinds/AshenSpire/pull/2071), `0.7.1.1623`). Compare 130 rear design drafts, original identity references, and three elite pilot sets with nine held poses, attack and evade clips, and static hurt and defeated reactions. Missing clips stay explicit. This draft review is not promoted: runtime alignment, playable unlocks, other motion sets, and external art publication remain pending.
