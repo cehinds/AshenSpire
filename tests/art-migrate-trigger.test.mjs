@@ -11,6 +11,35 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const art = readFileSync(join(ROOT, '.github/workflows/art-migrate.yml'), 'utf8');
 const pages = readFileSync(join(ROOT, '.github/workflows/pages-builds.yml'), 'utf8');
 
+// These bounded expressions use the same string/boolean operators in Actions
+// and JavaScript. Values here are fixtures, never actual repository secrets.
+function tokenExpression(expression, secrets, head = 'owner/game') {
+  return Function('secrets', 'github', `return (${expression});`)(secrets, {
+    repository: 'owner/game', event: {pull_request: {head: {repo: {full_name: head}}}},
+  });
+}
+
+test('every intake, cleanup and pin-bump token consumer accepts the configured alias', () => {
+  const consumers = [...art.matchAll(/^\s+(?:token|ART_REPO_WRITE_TOKEN|GH_TOKEN|BOT_TOKEN): \$\{\{ (.+) \}\}$/gm)]
+    .map(match => match[1]).filter(expression => expression.includes('secrets.ART_REPO_'));
+  assert.equal(consumers.length, 6, 'all six token consumers are covered');
+  for (const expression of consumers) {
+    for (const [preferred, alias, expected] of [['', 'existing', 'existing'], ['preferred', '', 'preferred'], ['preferred', 'existing', 'preferred'], ['', '', '']]) {
+      assert.equal(tokenExpression(expression, {ART_REPO_WRITE_TOKEN: preferred, ART_REPO_TOKEN: alias}), expected, expression);
+    }
+  }
+});
+
+test('either token enables same-repository intake while forks and missing tokens stay blocked', () => {
+  const expression = art.match(/HAS_ART_TOKEN: \$\{\{ (github\.event\..+) \}\}/)?.[1];
+  assert.ok(expression, 'the same-repository token gate exists');
+  for (const preferred of ['', 'preferred']) for (const alias of ['', 'existing']) {
+    const secrets = {ART_REPO_WRITE_TOKEN: preferred, ART_REPO_TOKEN: alias};
+    assert.equal(tokenExpression(expression, secrets), Boolean(preferred || alias));
+    assert.equal(tokenExpression(expression, secrets, 'fork/game'), false);
+  }
+});
+
 // The text of one top-level job (its block runs from `  <name>:` to the next job key).
 function jobBlock(text, name) {
   const lines = text.split('\n');
@@ -47,7 +76,7 @@ test('the pin bump never runs for a pull request event', () => {
 test('a fork run names no art token: the secret is gated on a same-repository head', () => {
   const block = jobBlock(art, 'intake');
   const gate = block.slice(block.indexOf('- name: Decide whether to migrate'), block.indexOf('- name: Check out the art repository'));
-  assert.match(gate, /HAS_ART_TOKEN: \$\{\{ github\.event\.pull_request\.head\.repo\.full_name == github\.repository && secrets\.ART_REPO_WRITE_TOKEN != '' \}\}/);
+  assert.match(gate, /HAS_ART_TOKEN: \$\{\{ github\.event\.pull_request\.head\.repo\.full_name == github\.repository && \(secrets\.ART_REPO_WRITE_TOKEN != '' \|\| secrets\.ART_REPO_TOKEN != ''\) \}\}/);
 });
 
 test('removing the art (state none) never closes the intake: it must stay open to be merged', () => {
@@ -90,7 +119,7 @@ test('art intake: the stage step builds on the existing intake branch when it is
   assert.match(stage, /else\s*\n\s*git checkout -B "\$branch"\n/, 'only a missing branch starts from main');
   assert.doesNotMatch(stage, /ART_REPO_WRITE_TOKEN/, 'the stage step holds no token');
   const fetch = block.slice(block.indexOf('- name: Fetch the existing intake branch'), block.indexOf('- name: Stage the files'));
-  assert.match(fetch, /ART_REPO_WRITE_TOKEN: \$\{\{ secrets\.ART_REPO_WRITE_TOKEN \}\}/, 'the fetch step is the token-bearing one');
+  assert.match(fetch, /ART_REPO_WRITE_TOKEN: \$\{\{ secrets\.ART_REPO_WRITE_TOKEN \|\| secrets\.ART_REPO_TOKEN \}\}/, 'the fetch step is the token-bearing one');
   assert.match(fetch, /git fetch -q origin "\+refs\/heads\/\$BRANCH:refs\/remotes\/origin\/\$BRANCH"/);
 });
 

@@ -57,7 +57,8 @@ name: art-migrate
 #     the migrate state, which requires one). A fork's run gets the manual-path
 #     failure and no secret in any step's environment.
 #
-# SECRETS. ART_REPO_WRITE_TOKEN (owner adds it): contents and pull-requests
+# SECRETS. Prefer ART_REPO_WRITE_TOKEN; fall back to the existing ART_REPO_TOKEN.
+# Either secret needs contents and pull-requests
 # write on cehinds/AshenSpire-art, and (owner, 2026-10-11) contents and
 # pull-requests write on this repository too. In the intake job it is read only
 # by the push and gh steps, and only for a pull request from this repository.
@@ -154,7 +155,7 @@ jobs:
           COUNT: ${{ steps.list.outputs.count }}
           BOOTSTRAP: ${{ steps.list.outputs.bootstrap }}
           # A fork's run names no secret at all: the value is false for it.
-          HAS_ART_TOKEN: ${{ github.event.pull_request.head.repo.full_name == github.repository && secrets.ART_REPO_WRITE_TOKEN != '' }}
+          HAS_ART_TOKEN: ${{ github.event.pull_request.head.repo.full_name == github.repository && (secrets.ART_REPO_WRITE_TOKEN != '' || secrets.ART_REPO_TOKEN != '') }}
         run: |
           set -euo pipefail
           if [ "$BOOTSTRAP" = true ]; then state=skip
@@ -170,7 +171,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: cehinds/AshenSpire-art
-          token: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          token: ${{ secrets.ART_REPO_WRITE_TOKEN || secrets.ART_REPO_TOKEN }}
           path: art-repo
           ref: main
           fetch-depth: 1
@@ -182,7 +183,7 @@ jobs:
         id: fetch-intake
         if: steps.gate.outputs.state == 'migrate'
         env:
-          ART_REPO_WRITE_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          ART_REPO_WRITE_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN || secrets.ART_REPO_TOKEN }}
           BRANCH: intake/ashenspire-pr-${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
@@ -237,7 +238,7 @@ jobs:
       - name: Push the intake branch to the art repository
         if: steps.gate.outputs.state == 'migrate'
         env:
-          ART_REPO_WRITE_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          ART_REPO_WRITE_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN || secrets.ART_REPO_TOKEN }}
           BRANCH: ${{ steps.stage.outputs.branch }}
         run: |
           set -euo pipefail
@@ -257,7 +258,7 @@ jobs:
         id: artpr
         if: steps.gate.outputs.state == 'migrate'
         env:
-          GH_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          GH_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN || secrets.ART_REPO_TOKEN }}
           BRANCH: ${{ steps.stage.outputs.branch }}
         run: |
           set -euo pipefail
@@ -331,7 +332,7 @@ jobs:
               blocked-token)
                 echo "### Art in this pull request: manual path"
                 echo
-                echo "The repository secret ART_REPO_WRITE_TOKEN is not set, so this workflow cannot open the art pull request. Remove the art files from this pull request, and open a pull request in [$ART_REPO](https://github.com/$ART_REPO) that carries them at the paths it keeps them under (\`hd/assets/\`, \`common/\`, \`art/\`). The owner can add the secret to enable this automatically." ;;
+                echo "Neither ART_REPO_WRITE_TOKEN nor ART_REPO_TOKEN is set, so this workflow cannot open the art pull request. Remove the art files from this pull request, and open a pull request in [$ART_REPO](https://github.com/$ART_REPO) that carries them at the paths it keeps them under (\`hd/assets/\`, \`common/\`, \`art/\`). The owner can add the secret to enable this automatically." ;;
             esac
           } > comment.md
           if [ "$STATE" != none ] && [ "$STATE" != skip ]; then
@@ -358,7 +359,7 @@ jobs:
                 echo "::error title=Art pull request not opened::The art was pushed to $ART_REPO but its pull request could not be opened. Keep the files here and re-run this check."
               fi ;;
             blocked-fork) echo "::error title=Art files from a fork::This pull request comes from a fork, so the art cannot be moved automatically. Remove the art files and open the art pull request by hand in $ART_REPO (see the sticky comment, and CONTRIBUTING.md ground rule 2)." ;;
-            blocked-token) echo "::error title=ART_REPO_WRITE_TOKEN is not set::The art cannot be moved automatically. Remove the art files from this pull request and open the art pull request by hand in $ART_REPO (see the sticky comment, and CONTRIBUTING.md ground rule 2)." ;;
+            blocked-token) echo "::error title=Neither ART_REPO_WRITE_TOKEN nor ART_REPO_TOKEN is set::The art cannot be moved automatically. Remove the art files from this pull request and open the art pull request by hand in $ART_REPO (see the sticky comment, and CONTRIBUTING.md ground rule 2)." ;;
           esac
           exit 1
 
@@ -377,15 +378,15 @@ jobs:
       cancel-in-progress: false
     env:
       PR: ${{ github.event.pull_request.number }}
-      HAS_ART_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN != '' }}
-      GH_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+      HAS_ART_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN != '' || secrets.ART_REPO_TOKEN != '' }}
+      GH_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN || secrets.ART_REPO_TOKEN }}
       REASON: "Closing: source PR was closed without merging, so its art is not migrated from this intake branch."
     steps:
       - name: Close the intake pull request in the art repository
         run: |
           set -euo pipefail
           if [ "$HAS_ART_TOKEN" != true ]; then
-            echo "ART_REPO_WRITE_TOKEN is not set: no intake pull request to close."
+            echo "Neither ART_REPO_WRITE_TOKEN nor ART_REPO_TOKEN is set: no intake pull request to close."
             exit 0
           fi
           branch="intake/ashenspire-pr-$PR"
@@ -483,7 +484,7 @@ jobs:
         if: steps.check.outputs.tag != ''
         env:
           TAG: ${{ steps.check.outputs.tag }}
-          BOT_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN }}
+          BOT_TOKEN: ${{ secrets.ART_REPO_WRITE_TOKEN || secrets.ART_REPO_TOKEN }}
           FALLBACK_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
@@ -491,7 +492,7 @@ jobs:
           if [ -n "$BOT_TOKEN" ]; then
             tok="$BOT_TOKEN"
           else
-            echo "::warning title=ART_REPO_WRITE_TOKEN is not set::The pin pull request is opened with GITHUB_TOKEN, which does not trigger CI on it. Add the secret to get CI on pin pull requests."
+            echo "::warning title=Neither ART_REPO_WRITE_TOKEN nor ART_REPO_TOKEN is set::The pin pull request is opened with GITHUB_TOKEN, which does not trigger CI on it. Add the secret to get CI on pin pull requests."
             tok="$FALLBACK_TOKEN"
           fi
           # One-off credential for this step's git and gh only; none is written to disk.
