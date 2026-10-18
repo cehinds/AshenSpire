@@ -351,7 +351,15 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 :root[data-layout='wide']:not([data-composition='short-wide']) .modal:has(.set-railed) { width:72%; max-width:none; margin-inline:auto 2%; }
 .modal.armoury .armoury-sprite-pane .armoury-figure { height:92%; max-height:92%; max-width:88%; }
 :root[data-layout='wide'] .armoury[data-pane='character'] .armoury-character { grid-template-rows:auto minmax(28rem,1fr) auto; }
-.gameover .gameover-door { background-color:#17130fde; max-width:64rem; }
+/* `max-width:64rem` alone beat the modal rung's own `max-width:100%`, so the md
+   door (57rem) stayed 570px wide on a 390px phone and the whole screen scrolled
+   sideways. The cap is the smaller of the two. */
+.gameover .gameover-door { background-color:#17130fde; max-width:min(64rem, 100%); }
+/* Four chips on a phone: two by two, not three and an orphan. */
+:root[data-layout='narrow'] .gameover-door .stats-table {
+  display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); justify-items:center; gap:0.75rem 0.5rem;
+}
+:root[data-layout='narrow'] .gameover-door .stats-table .as-chip { white-space:normal; flex-wrap:wrap; justify-content:center; min-width:0; }
 .history-screen > .modal { background-color:#17130fe8; }
 :root[data-layout='narrow'] .rest-screen { padding:12rem 1rem 1rem; }
 :root[data-layout='narrow'] .rest-screen .rest-door { max-height:62%; }
