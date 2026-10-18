@@ -95,6 +95,11 @@ test('a description naming an existing .json under src/ is not read as a missing
   assert.deepEqual(errors, []);
 });
 
+test('a command whose handler is unresolved is reported as a warning, not an error', () => {
+  assert.ok(result.warnings.includes('command "ui.press" has handler "unresolved" in engine/runtime/commands.json'), result.warnings.join('\n'));
+  assert.ok(!result.errors.some(e => e.includes('ui.press')));
+});
+
 test('every command handler names code that exists today', () => {
   const { commands } = read('engine/runtime/commands.json');
   const mechanicCommands = new Set(readdirSync(`${root}engine/mechanics`)

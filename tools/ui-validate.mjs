@@ -103,6 +103,7 @@ export function validateUi({ games = ['ashenspire'], root = ROOT } = {}) {
     const registry = readJson(COMMANDS_FILE, root);
     validateGameSchema(registry, readJson('engine/contracts/commands.schema.json', root));
     commands = registry.commands;
+    for (const [id, command] of Object.entries(commands)) if (command.handler === 'unresolved') warnings.push(`command "${id}" has handler "unresolved" in ${COMMANDS_FILE}`);
   } catch (e) { errors.push(`${COMMANDS_FILE}: ${e.message}`); }
   const resolvers = games.map(game => assetResolver(root, game, errors));
   const components = {}, screens = {};
