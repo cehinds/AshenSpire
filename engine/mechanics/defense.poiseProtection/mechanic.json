@@ -10,7 +10,8 @@
     "entity",
     "gear",
     "relic",
-    "status"
+    "status",
+    "card"
   ],
   "files": {
     "model": "model.schema.json",

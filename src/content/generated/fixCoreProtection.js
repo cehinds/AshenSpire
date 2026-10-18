@@ -408,6 +408,9 @@ export const fixCoreProtection = [
                         }
                       },
                       "additionalProperties": false
+                    },
+                    "description": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -439,6 +442,9 @@ export const fixCoreProtection = [
                         }
                       },
                       "additionalProperties": false
+                    },
+                    "description": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -470,6 +476,9 @@ export const fixCoreProtection = [
                         }
                       },
                       "additionalProperties": false
+                    },
+                    "description": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -533,7 +542,8 @@ export const fixCoreProtection = [
           "entity",
           "gear",
           "relic",
-          "status"
+          "status",
+          "card"
         ],
         "files": {
           "model": "model.schema.json",
@@ -613,7 +623,8 @@ export const fixCoreProtection = [
           "entity",
           "gear",
           "relic",
-          "status"
+          "status",
+          "card"
         ],
         "files": {
           "model": "model.schema.json",
