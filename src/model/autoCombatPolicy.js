@@ -79,3 +79,7 @@ export function recordManualReaction(run, seat, kind) {
 export function manualReactionPicks(run, seat) {
   return { ...(tallies.get(run)?.[seat || 'player'] || {}) };
 }
+
+// The answer to submit for a chooseReaction result: a null choice is a deliberate decline
+// (optionId null), never "do nothing", so the prompt always resolves.
+export const reactionAnswer = (pending, picked) => ({ offerId: pending.id, optionId: picked?.id ?? null });

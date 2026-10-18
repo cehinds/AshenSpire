@@ -2,7 +2,7 @@ import { fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
-import { chooseReaction, resolveCombatAutomation, recordManualReaction, manualReactionPicks } from '../../model/autoCombatPolicy.js';
+import { chooseReaction, reactionAnswer, resolveCombatAutomation, recordManualReaction, manualReactionPicks } from '../../model/autoCombatPolicy.js';
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
 import { projectCombatIntent } from '../models/CombatIntentProjectionModel.js';
@@ -1345,7 +1345,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const pending = combat.pendingReaction;
     const policy = resolveCombatAutomation(readSettings());
     if (!policy.enabled || !pending || pending.ownerId !== ownSeat() || !reactionShell || busy || combat.result || hasCardChoice(combat)
-      || document.hidden || document.visibilityState === 'hidden' || performance.now() < autoCombatPausedUntil) return null;
+      || document.hidden || document.visibilityState === 'hidden' || performance.now() < autoCombatPausedUntil) return undefined;
     const enemy = combat.enemies.find(row => row.id === pending.sourceId);
     let intent = null;
     try { if (enemy?.alive && (combat.combatExpansionVersion !== 2 || hitChanceKnown(enemy))) intent = projectCombatIntent(combat, enemy.id); } catch { intent = null; }
@@ -1353,6 +1353,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const options = pending.options.map(option => ({ id: option.id, kind: reactionKind(option) }));
     const picked = chooseReaction({ matchups: gameModule(run, 'stances')?.matchups,
       seats: { [seat]: { intent, lastStance: heldKinds.get()?.maneuver ?? null, picks: manualReactionPicks(run, seat) } } }, seat, options);
+    // undefined = automation not eligible; null = chose to decline.
     return picked ? pending.options.find(option => option.id === picked.id) : null;
   }
   function scheduleAutoCombat() {
@@ -1363,7 +1364,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!combatEl.isConnected || combat.result) return;
       const pending = combat.pendingReaction;
       const option = autoReactionChoice();
-      if (option) { reactionShell.dismiss(); answerReaction({ offerId: pending.id, optionId: option.id }, false); }
+      if (option !== undefined) { reactionShell.dismiss(); answerReaction(reactionAnswer(pending, option), false); }
       scheduleAutoCombat();
     }, policy.enabled ? Math.max(100, policy.delayMs / policy.speed) : 500);
   }

@@ -59,3 +59,14 @@ test('manual picks are tallied per run and seat, in memory only', () => {
   assert.deepEqual(manualReactionPicks(other, 'one'), {});
   assert.equal(JSON.stringify(run), '{"id":"r1"}');
 });
+
+import { reactionAnswer } from '../src/model/autoCombatPolicy.js';
+import { readFileSync } from 'node:fs';
+const autoSource = () => { const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  return screen.slice(screen.indexOf('function autoReactionChoice'), screen.indexOf('// ---------- rendering')); };
+test('a deliberate decline is submitted with a null option', () => {
+  assert.deepEqual(reactionAnswer({ id: 'o1' }, null), { offerId: 'o1', optionId: null });
+  assert.deepEqual(reactionAnswer({ id: 'o1' }, { id: 'b' }), { offerId: 'o1', optionId: 'b' });
+  assert.equal(chooseReaction(state({}), 'player', options), null);
+  assert.match(autoSource(), /option !== undefined/);
+});
