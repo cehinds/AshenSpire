@@ -13,6 +13,15 @@ import {
   el, pageDoor, decide, detailCard, statStrip, chip, kitLine, kitItem, eyebrow, titleS, button, choiceRow, statusText,
 } from '../kit/index.js';
 
+// "Slain by Ash Warden · Cleave for 14". The move part drops out when the blow
+// had none (a status tick); a run saved before lastHit existed has no line.
+export function slainByLine(lastHit) {
+  if (!lastHit || !lastHit.sourceName) return '';
+  const move = lastHit.move ? ` · ${lastHit.move}` : '';
+  const amount = Number.isFinite(lastHit.amount) ? ` for ${lastHit.amount}` : '';
+  return `Slain by ${lastHit.sourceName}${move}${amount}`;
+}
+
 export function mountGameOver(app, { registries, game, victory, onTitle, onHistory, onRetry = null, earned = [] }) {
   sfx.play(victory ? 'victory' : 'youDied');
   const name = (game.customization && game.customization.name) || 'Forsaken';
@@ -23,6 +32,8 @@ export function mountGameOver(app, { registries, game, victory, onTitle, onHisto
   const toHistory = onHistory ? button({ label: 'Run history', id: 'to-history' }) : null;
 
   const retry = onRetry ? button({ label: t('save.status.retry'), id: 'retry-finish' }) : null;
+
+  const cause = victory ? '' : slainByLine(game.stats.lastHit);
 
   const deck = kitLine(game.deck.map((inst) => {
     const def = resolveCard(registries, inst);
@@ -37,6 +48,7 @@ export function mountGameOver(app, { registries, game, victory, onTitle, onHisto
         name: `${name} ${glyph}`.trim(),
         line: `Floor ${game.floor}${floors} · ${game.stats.fightsWon} fight${game.stats.fightsWon === 1 ? '' : 's'} won`,
         meta: `Seed ${game.seedString}`,
+        children: cause ? el('div', { class: 'dc-line go-cause', text: cause }) : null,
       }),
       statStrip([
         chip({ key: 'Damage dealt', value: game.stats.damageDealt }),

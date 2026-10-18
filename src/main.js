@@ -4561,6 +4561,7 @@ if (shotState === 'combat-test') {
     run.stats.fightsWon = 3;
     run.stats.damageDealt = 214;
     run.stats.damageTaken = 96;
+    run.stats.lastHit = { sourceId: 'e1', sourceName: 'Ash Warden', move: 'Cleave', amount: 14 };
     run.hp = 0;
     mountGameOver(app, { registries, game: run, victory: false, earned: [], onTitle: showTitle, onHistory: showHistory });
   } else if (shotState === 'victory') {
