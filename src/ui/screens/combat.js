@@ -1411,7 +1411,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     renderControls();
     renderCombatTools();
     renderHand();
-    scheduleAutoCombat();
     // The tools occupy the incoming hand's top band without consuming width.
     // Measure that authored hand before the single full-board HUD/target fit.
     combatTools.flushGeometry();
@@ -1422,6 +1421,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     decorateRoundsScreen();
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
     setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
+    scheduleAutoCombat();
   }
   // The Combat Rounds Preview's additions (SPEC §4.11). A no-op unless combat.combatRounds is set.
   function decorateRoundsScreen() {
@@ -3359,7 +3359,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
   }
   if (onEditDeck) {
-    const deck = document.createElement('button'); deck.className = 'subtle combat-deck-edit'; deck.textContent = 'Deck';
+    const deck = document.createElement('button'); deck.className = 'subtle combat-deck-edit'; deck.textContent = t('deckEditor.open');
     deck.setAttribute('aria-description', tFull('combat.deckEdit.deferred'));
     deck.addEventListener('click', () => {
       if (busy || enemyPlayback || combat.pendingReaction || hasCardChoice(combat) || combat.combatRounds?.playerQueue?.length) return;
