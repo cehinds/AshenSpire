@@ -543,6 +543,9 @@ export function openModal({
     const unregister = unregisterModal;
     release = null;
     unregisterModal = null;
+    // Lift the page lock (inert) before focus returns to the opener: an
+    // element inside an inert subtree cannot take focus.
+    unregister?.unlock?.();
     releaseDismiss?.();
     veil.remove();
     onClose?.();

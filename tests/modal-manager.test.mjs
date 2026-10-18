@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { rewardDom } from './helpers/reward-dom.mjs';
-import { registerModal, resetModalState, openModals } from '../src/ui/modalManager.js';
+import { registerModal, resetModalState, openModals, modalOpen } from '../src/ui/modalManager.js';
 
 // A page: <html> > <body> > #app > [screen, hud], with a veil per modal in body.
 function withPage(fn) {
@@ -61,6 +61,19 @@ test('a modal marks the app behind it inert and clears exactly that on pop', () 
     release();
     assert.equal(screen.hasAttribute('inert'), false);
     assert.equal(hud.hasAttribute('inert'), false);
+  });
+});
+
+test('release.unlock lifts the inert and the depth before the entry leaves the stack', () => {
+  withPage(({ document, screen }) => {
+    const release = registerModal('door', modalIn(document), { dismiss: () => {} });
+    assert.equal(screen.hasAttribute('inert'), true);
+    release.unlock();
+    assert.equal(screen.hasAttribute('inert'), false, 'the opener can take focus again');
+    assert.equal(document.documentElement.dataset.modalDepth, '0');
+    assert.equal(modalOpen(), true, 'still open until release(): waiters have not run');
+    release();
+    assert.equal(modalOpen(), false);
   });
 });
 

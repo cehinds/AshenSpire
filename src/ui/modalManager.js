@@ -95,16 +95,21 @@ function holds(a, b) {
 function syncPage() {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
-  if (root?.dataset) root.dataset.modalDepth = String(stack.length);
-  const top = stack.length ? stack[stack.length - 1] : null;
+  // An entry that has begun closing (release.unlock) no longer holds the page:
+  // its opener must be focusable again BEFORE focus returns to it, and that
+  // happens before the entry leaves the stack (the shell restores focus, then
+  // removes its veil, then releases — so the waiters run last).
+  const live = stack.filter((entry) => !entry.closing);
+  if (root?.dataset) root.dataset.modalDepth = String(live.length);
+  const top = live.length ? live[live.length - 1] : null;
   const want = new Set();
   if (top && top.inert !== false && top.element) {
     const app = typeof document.getElementById === 'function' ? document.getElementById('app') : null;
     for (const child of app?.children ? Array.from(app.children) : []) {
       if (!holds(child, top.element)) want.add(child);
     }
-    for (let i = 0; i < stack.length - 1; i++) {
-      const lower = stack[i];
+    for (let i = 0; i < live.length - 1; i++) {
+      const lower = live[i];
       if (lower.element && lower.inert !== false && !holds(lower.element, top.element)) want.add(lower.element);
     }
   }
@@ -182,7 +187,7 @@ export function registerModal(name, element, opts = {}) {
   enterHistory(entry);
   syncPage();
   let released = false;
-  return function release() {
+  function release() {
     if (released) return;
     released = true;
     const at = stack.indexOf(entry);
@@ -190,7 +195,21 @@ export function registerModal(name, element, opts = {}) {
     leaveHistory(entry);
     syncPage();
     notifyIfEmpty();
+  }
+  /**
+   * release.unlock(): lift this entry's page effects (inert, scroll lock) NOW,
+   * before the entry leaves the stack. A closing modal restores focus to its
+   * opener first and releases last (so the onModalsClosed waiters run after the
+   * veil is gone); an element inside an inert subtree cannot take focus, so the
+   * inert must go before the focus does. modalOpen() still reports the entry
+   * until release().
+   */
+  release.unlock = function unlock() {
+    if (released || entry.closing) return;
+    entry.closing = true;
+    syncPage();
   };
+  return release;
 }
 
 /** True while at least one registered modal is open. */
