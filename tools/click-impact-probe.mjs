@@ -28,6 +28,7 @@
 // Exit 0 when both medians are within budget, 1 when it is not or the drive
 // fails, 2 when no browser or no play was measured (never a pass).
 
+import { assertSourceDisplayArt, readLoadedSourceBody } from './source-display-art.mjs';
 import { installImpactObservations, summarizeImpactObservation } from './click-impact-observations.mjs';
 import { CORE_ENTRY_SEED } from './core-entry-fixture.mjs';
 import { existsSync } from 'node:fs';
@@ -97,6 +98,16 @@ const median = (xs) => {
 async function main() {
   if (!browserPath) { console.error('click-impact-probe: no Chrome/Chromium found — pass --browser PATH or set $CHROME'); process.exit(2); }
   const externalUrl = argOf('--url');
+  if (!externalUrl) {
+    try {
+      const art = assertSourceDisplayArt(ROOT);
+      console.log(`source art preflight: ${art.checked} declared display files match their hashes`);
+    } catch (error) {
+      console.error(`click-impact-probe: cannot measure source artwork: ${error.message}`);
+      process.exitCode = 2;
+      return;
+    }
+  }
   const hosted = externalUrl ? null : await serve({ root: ROOT, port: 8251, open: false });
   const server = hosted?.server;
   const base = externalUrl || `http://localhost:${hosted.port}/`;
@@ -195,6 +206,23 @@ async function main() {
     await until(`!!window.__combat && !!document.querySelector('.hand .card')`, 'the first Core fight');
     await wait(1500);
     if (await evalIn(`(() => { const n=document.querySelector('.combat .tut-skip'); return n && !n.hidden && n.getBoundingClientRect().width>0; })()`)) await click('.combat .tut-skip', 'Skip the first-combat tutorial');
+
+    if (!externalUrl) {
+      try {
+        // The combat screen already imports this exact module URL. stageFor is
+        // a lookup of registered stages, not an initializer or painting API.
+        const body = await evalIn(`(async () => {
+          const { stageFor } = await import('/src/ui/services/PoseAnimator.js');
+          return (${readLoadedSourceBody.toString()})(stageFor(document.querySelector('.combatant.player')));
+        })()`);
+        if (!body?.ready) throw new Error(JSON.stringify(body));
+        console.log('source body precondition: loaded authored image ' + JSON.stringify(body));
+      } catch (error) {
+        console.error(`click-impact-probe: cannot measure an unloaded source body: ${error.message}`);
+        process.exitCode = 2;
+        return;
+      }
+    }
 
     // The page's own clock: pointer releases and visible damage/protection.
     // Dedicated Poise/Ward payloads can update a bar without a damage float.
