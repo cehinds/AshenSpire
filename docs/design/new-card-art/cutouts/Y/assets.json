@@ -123,7 +123,7 @@
       }
     ],
     "displayCode": "Y00",
-    "displayLabel": "Y00 · Blue ethereal sword silhouette · effect"
+    "displayLabel": "Y00 \u00b7 Blue ethereal sword silhouette \u00b7 effect"
   },
   "Y.effect.1": {
     "id": "Y.effect.1",
@@ -249,7 +249,7 @@
       }
     ],
     "displayCode": "Y01",
-    "displayLabel": "Y01 · Blue ethereal hammer silhouette · effect"
+    "displayLabel": "Y01 \u00b7 Blue ethereal hammer silhouette \u00b7 effect"
   },
   "Y.effect.2": {
     "id": "Y.effect.2",
@@ -375,7 +375,7 @@
       }
     ],
     "displayCode": "Y02",
-    "displayLabel": "Y02 · Blue ethereal scythe silhouette · effect"
+    "displayLabel": "Y02 \u00b7 Blue ethereal scythe silhouette \u00b7 effect"
   },
   "Y.effect.3": {
     "id": "Y.effect.3",
@@ -501,7 +501,7 @@
       }
     ],
     "displayCode": "Y03",
-    "displayLabel": "Y03 · Blue ethereal scimitar silhouette · effect"
+    "displayLabel": "Y03 \u00b7 Blue ethereal scimitar silhouette \u00b7 effect"
   },
   "Y.effect.4": {
     "id": "Y.effect.4",
@@ -627,26 +627,26 @@
       }
     ],
     "displayCode": "Y04",
-    "displayLabel": "Y04 · Blue ethereal shield silhouette · effect"
+    "displayLabel": "Y04 \u00b7 Blue ethereal shield silhouette \u00b7 effect"
   },
   "Y.effect.5": {
     "id": "Y.effect.5",
     "kind": "effect",
     "category": "Y",
     "digit": 5,
-    "name": "Green ethereal sword silhouette",
+    "name": "Pale mint ethereal sword silhouette",
     "src": "cutouts/Y/effects/5.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      0,
-      15,
-      482,
-      482
+      16,
+      13,
+      475,
+      512
     ],
-    "sha256": "d88dc3e33fbb7984af67a085893386a2a12f21b0b35dc484200a4ac15ae2062d",
+    "sha256": "6bd3255e9565f4d92e882f6d593dc8dd734367e5f8e6e10b62dc0a2fc9d60047",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -661,7 +661,7 @@
         "x": 0.5,
         "y": 0.5
       },
-      "filter": "saturate(0.45)"
+      "filter": "none"
     },
     "css": {
       "position": "absolute",
@@ -675,7 +675,7 @@
       "opacity": "0.2",
       "mixBlendMode": "normal",
       "pointerEvents": "none",
-      "filter": "saturate(0.45)"
+      "filter": "none"
     },
     "combatReferences": [
       {
@@ -693,8 +693,8 @@
       "method": "image-edit-derived-variant",
       "sourceReference": "cutouts/O/objects/0.png",
       "referenceSha256": "71b36ad4db7d946f02231c33594177a8950ca33e3ede94d9b42c16f4c6db4f88",
-      "sourceFile": "exec-24bf9175-1d2d-464c-bcf4-ef7bbc541255.png",
-      "sourceSha256": "0f66fa239e7307adb1cbb4f440d4c97e9c67c2c21484b656c50e8363382fa593",
+      "sourceFile": "exec-749769c2-b4f0-42b6-852a-7698303b15c4.png",
+      "sourceSha256": "7fc55f13e21d95537a084964d0a3aefd721fa9bc1c3680450e398c59cca090ca",
       "sourceCell": {
         "x": 0,
         "y": 0,
@@ -709,12 +709,12 @@
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "O.object.0",
-      "revisionIntent": "Green color edit with preserved translucent energy silhouette. Render at 20% opacity and 45% saturation for soft ethereal green.",
+      "revisionIntent": "Accepted pale pearl-white/icy mint color pass; 20% rendered opacity. Thinner outlines and a little more green are recorded as the next refinement, not part of this publication.",
       "baseAssetSha256": "71b36ad4db7d946f02231c33594177a8950ca33e3ede94d9b42c16f4c6db4f88",
       "colorEditReference": {
-        "commit": "6e8905767",
+        "commit": "b2e096f2a",
         "src": "cutouts/Y/effects/5.png",
-        "sha256": "9ae1d5a1445fa20b55927fe9017cbf79f50edd1d732fa126e7dc5db3cd819f93"
+        "sha256": "d88dc3e33fbb7984af67a085893386a2a12f21b0b35dc484200a4ac15ae2062d"
       }
     },
     "anchors": {
@@ -760,26 +760,26 @@
       }
     ],
     "displayCode": "Y05",
-    "displayLabel": "Y05 · Green ethereal sword silhouette · effect"
+    "displayLabel": "Y05 \u00b7 Pale mint ethereal sword silhouette \u00b7 effect"
   },
   "Y.effect.6": {
     "id": "Y.effect.6",
     "kind": "effect",
     "category": "Y",
     "digit": 6,
-    "name": "Green ethereal hammer silhouette",
+    "name": "Pale mint ethereal hammer silhouette",
     "src": "cutouts/Y/effects/6.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      17,
       11,
-      498,
-      504
+      7,
+      501,
+      512
     ],
-    "sha256": "8a004b33313eeb6b2a07d90abb61a08f9e93139d5a89ad4ca2d03a3ad21d5bae",
+    "sha256": "8a131dd3c906fe6afbd10e00d8550c30a0dc129d84caf231f4a26ed4ad7c2c4e",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -794,7 +794,7 @@
         "x": 0.5,
         "y": 0.5
       },
-      "filter": "saturate(0.45)"
+      "filter": "none"
     },
     "css": {
       "position": "absolute",
@@ -808,7 +808,7 @@
       "opacity": "0.2",
       "mixBlendMode": "normal",
       "pointerEvents": "none",
-      "filter": "saturate(0.45)"
+      "filter": "none"
     },
     "combatReferences": [
       {
@@ -826,8 +826,8 @@
       "method": "image-edit-derived-variant",
       "sourceReference": "cutouts/O/objects/1.png",
       "referenceSha256": "a3ab159b0d2f66e17aa240eca11c75991f2f770841cae6b0009d5dc20349e583",
-      "sourceFile": "exec-2539d752-7e00-4c92-a6ea-e7679e563ff6.png",
-      "sourceSha256": "2ca6002a8a1f76033ba907d471b45c443731a94d0f1b795e1b949e83d0c9abe5",
+      "sourceFile": "exec-00cf62f3-75be-46e4-ba34-5d028973c921.png",
+      "sourceSha256": "487f429c783d3bc20849e432c491071612f68b0b15c7dd64a31976c302b7b7a8",
       "sourceCell": {
         "x": 0,
         "y": 0,
@@ -842,12 +842,12 @@
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "O.object.1",
-      "revisionIntent": "Green color edit with preserved translucent energy silhouette. Render at 20% opacity and 45% saturation for soft ethereal green.",
+      "revisionIntent": "Accepted pale pearl-white/icy mint color pass; 20% rendered opacity. Thinner outlines and a little more green are recorded as the next refinement, not part of this publication.",
       "baseAssetSha256": "a3ab159b0d2f66e17aa240eca11c75991f2f770841cae6b0009d5dc20349e583",
       "colorEditReference": {
-        "commit": "6e8905767",
+        "commit": "b2e096f2a",
         "src": "cutouts/Y/effects/6.png",
-        "sha256": "43d94236d71a62e8622fb78c1ae0ccd8ceb862ab7408fef629b7c63ae48b34d1"
+        "sha256": "8a004b33313eeb6b2a07d90abb61a08f9e93139d5a89ad4ca2d03a3ad21d5bae"
       }
     },
     "anchors": {
@@ -893,14 +893,14 @@
       }
     ],
     "displayCode": "Y06",
-    "displayLabel": "Y06 · Green ethereal hammer silhouette · effect"
+    "displayLabel": "Y06 \u00b7 Pale mint ethereal hammer silhouette \u00b7 effect"
   },
   "Y.effect.7": {
     "id": "Y.effect.7",
     "kind": "effect",
     "category": "Y",
     "digit": 7,
-    "name": "Green ethereal scythe silhouette",
+    "name": "Pale mint ethereal scythe silhouette",
     "src": "cutouts/Y/effects/7.png",
     "mimeType": "image/png",
     "width": 512,
@@ -908,11 +908,11 @@
     "hasTransparency": true,
     "alphaBounds": [
       0,
-      9,
-      500,
-      475
+      3,
+      506,
+      512
     ],
-    "sha256": "3b652061dfae5fb79c7b9378ab617d09bf3277c6b8ae99b69fd4e1a1e9969f4f",
+    "sha256": "29ea079d9aedd407988e44ee469da4936688f0d5eb6efff86e70dd8b25a13f34",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -927,7 +927,7 @@
         "x": 0.5,
         "y": 0.5
       },
-      "filter": "saturate(0.45)"
+      "filter": "none"
     },
     "css": {
       "position": "absolute",
@@ -941,7 +941,7 @@
       "opacity": "0.2",
       "mixBlendMode": "normal",
       "pointerEvents": "none",
-      "filter": "saturate(0.45)"
+      "filter": "none"
     },
     "combatReferences": [
       {
@@ -959,8 +959,8 @@
       "method": "image-edit-derived-variant",
       "sourceReference": "cutouts/L/objects/4.png",
       "referenceSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea",
-      "sourceFile": "exec-b99b6806-084e-4539-9f7d-a39a18e943e2.png",
-      "sourceSha256": "60f2116275380a7906eae534154a9afe4d4421e324b25ce78a4dcf0f4246b06d",
+      "sourceFile": "exec-1709aa84-3ead-433b-90a8-2bd3a2a8a178.png",
+      "sourceSha256": "95a812d2034fffc308a93791895f6f136b9ab179f3bf542aef8db83fd0be122a",
       "sourceCell": {
         "x": 0,
         "y": 0,
@@ -975,12 +975,12 @@
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "L.object.4",
-      "revisionIntent": "Green color edit with preserved translucent energy silhouette. Render at 20% opacity and 45% saturation for soft ethereal green.",
+      "revisionIntent": "Accepted pale pearl-white/icy mint color pass; 20% rendered opacity. Thinner outlines and a little more green are recorded as the next refinement, not part of this publication.",
       "baseAssetSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea",
       "colorEditReference": {
-        "commit": "6e8905767",
+        "commit": "b2e096f2a",
         "src": "cutouts/Y/effects/7.png",
-        "sha256": "81c48169adea103091862eb945196dd108c7abaca174869656439c657c66e17b"
+        "sha256": "3b652061dfae5fb79c7b9378ab617d09bf3277c6b8ae99b69fd4e1a1e9969f4f"
       }
     },
     "anchors": {
@@ -1026,26 +1026,26 @@
       }
     ],
     "displayCode": "Y07",
-    "displayLabel": "Y07 · Green ethereal scythe silhouette · effect"
+    "displayLabel": "Y07 \u00b7 Pale mint ethereal scythe silhouette \u00b7 effect"
   },
   "Y.effect.8": {
     "id": "Y.effect.8",
     "kind": "effect",
     "category": "Y",
     "digit": 8,
-    "name": "Green ethereal scimitar silhouette",
+    "name": "Pale mint ethereal scimitar silhouette",
     "src": "cutouts/Y/effects/8.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      33,
-      29,
-      483,
-      485
+      0,
+      4,
+      492,
+      500
     ],
-    "sha256": "c946b7e084165f581dfd0e38b61657ebeec16f3f787e68ba778060042d271d56",
+    "sha256": "169e958722d41f02eb4f19cf46cc364a4f10657b9e690a14f6e2eabca52f1518",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -1060,7 +1060,7 @@
         "x": 0.5,
         "y": 0.5
       },
-      "filter": "saturate(0.45)"
+      "filter": "none"
     },
     "css": {
       "position": "absolute",
@@ -1074,7 +1074,7 @@
       "opacity": "0.2",
       "mixBlendMode": "normal",
       "pointerEvents": "none",
-      "filter": "saturate(0.45)"
+      "filter": "none"
     },
     "combatReferences": [
       {
@@ -1092,8 +1092,8 @@
       "method": "image-edit-derived-variant",
       "sourceReference": "cutouts/O/objects/2.png",
       "referenceSha256": "e8921cc489a5c0a74ea222138180cbe06e1e73aebdf8a22df2ff57deb5351609",
-      "sourceFile": "exec-3fb0c65d-d8fc-48aa-a095-d6df719a5c64.png",
-      "sourceSha256": "37cf932c0ff6fc387674e447b0890af7278e5bd0d89942af2df3537ea1b0c155",
+      "sourceFile": "exec-b816ecd0-09b0-4343-a9f9-295374fa481e.png",
+      "sourceSha256": "3509c62cc641ddf4c1c77c99d9572110c90825d3be99bd2198b3204b5181f5a9",
       "sourceCell": {
         "x": 0,
         "y": 0,
@@ -1108,12 +1108,12 @@
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "O.object.2",
-      "revisionIntent": "Green color edit with preserved translucent energy silhouette. Render at 20% opacity and 45% saturation for soft ethereal green.",
+      "revisionIntent": "Accepted pale pearl-white/icy mint color pass; 20% rendered opacity. Thinner outlines and a little more green are recorded as the next refinement, not part of this publication.",
       "baseAssetSha256": "e8921cc489a5c0a74ea222138180cbe06e1e73aebdf8a22df2ff57deb5351609",
       "colorEditReference": {
-        "commit": "6e8905767",
+        "commit": "b2e096f2a",
         "src": "cutouts/Y/effects/8.png",
-        "sha256": "1ab1d3c130eeee377ff03fb77f75ffadbac4430a73c00f3efe04cb7747956d6e"
+        "sha256": "c946b7e084165f581dfd0e38b61657ebeec16f3f787e68ba778060042d271d56"
       }
     },
     "anchors": {
@@ -1159,26 +1159,26 @@
       }
     ],
     "displayCode": "Y08",
-    "displayLabel": "Y08 · Green ethereal scimitar silhouette · effect"
+    "displayLabel": "Y08 \u00b7 Pale mint ethereal scimitar silhouette \u00b7 effect"
   },
   "Y.effect.9": {
     "id": "Y.effect.9",
     "kind": "effect",
     "category": "Y",
     "digit": 9,
-    "name": "Green ethereal shield silhouette",
+    "name": "Pale mint ethereal shield silhouette",
     "src": "cutouts/Y/effects/9.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      8,
-      4,
-      501,
-      502
+      17,
+      11,
+      504,
+      512
     ],
-    "sha256": "0845bd02cefc95f712e546b0dcfba514cf048e1b8fe0fb6c4469ec26adda083d",
+    "sha256": "0410469d53784f7de6b5a07d4e625135d8a913677810f102595c48059b79057d",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -1193,7 +1193,7 @@
         "x": 0.5,
         "y": 0.5
       },
-      "filter": "saturate(0.45)"
+      "filter": "none"
     },
     "css": {
       "position": "absolute",
@@ -1207,7 +1207,7 @@
       "opacity": "0.2",
       "mixBlendMode": "normal",
       "pointerEvents": "none",
-      "filter": "saturate(0.45)"
+      "filter": "none"
     },
     "combatReferences": [
       {
@@ -1225,8 +1225,8 @@
       "method": "image-edit-derived-variant",
       "sourceReference": "cutouts/O/objects/4.png",
       "referenceSha256": "0a81e8f4448f52d4607a9c881c213016a7dbc4848c26f869b9f54e0c93a688d4",
-      "sourceFile": "exec-182c09e4-32b0-43cc-994a-18031a0f4be6.png",
-      "sourceSha256": "e693c458c4e87af43942275bd302db39e20de3960179d87a6401a8b6011b4fa8",
+      "sourceFile": "exec-a595437e-b7f3-4e8a-adbc-2a12065bfbd9.png",
+      "sourceSha256": "3dfa1dbb87f58a4fcd795388d6a8d0b04030ea9c9d9b3cc964fc826f52a59f0a",
       "sourceCell": {
         "x": 0,
         "y": 0,
@@ -1241,12 +1241,12 @@
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "O.object.4",
-      "revisionIntent": "Green color edit with preserved translucent energy silhouette. Render at 20% opacity and 45% saturation for soft ethereal green.",
+      "revisionIntent": "Accepted pale pearl-white/icy mint color pass; 20% rendered opacity. Thinner outlines and a little more green are recorded as the next refinement, not part of this publication.",
       "baseAssetSha256": "0a81e8f4448f52d4607a9c881c213016a7dbc4848c26f869b9f54e0c93a688d4",
       "colorEditReference": {
-        "commit": "6e8905767",
+        "commit": "b2e096f2a",
         "src": "cutouts/Y/effects/9.png",
-        "sha256": "216867963b606ae3dc4a6b66a630b3a21f35473057f576ed043e97bff708928a"
+        "sha256": "0845bd02cefc95f712e546b0dcfba514cf048e1b8fe0fb6c4469ec26adda083d"
       }
     },
     "anchors": {
@@ -1292,6 +1292,6 @@
       }
     ],
     "displayCode": "Y09",
-    "displayLabel": "Y09 · Green ethereal shield silhouette · effect"
+    "displayLabel": "Y09 \u00b7 Pale mint ethereal shield silhouette \u00b7 effect"
   }
 }

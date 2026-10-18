@@ -1,4 +1,10 @@
-## Current revision: one small shared scepter, blue and soft green
+## Current revision: accepted pale-mint color pass
+
+Revision 14 replaces the five strong-green source sprites with a pale pearl-white / icy-mint pass at the existing 20% rendered opacity. Shared scepter size, alignment and all layer transforms are preserved. [View the gallery](weapon-scepter-gallery.html), [see the current set](weapons-and-scepters-v14.png), or [download revision 14](card-art-cutouts-v14.zip).
+
+Published as-is at the user's request. The next refinement is a slightly thinner, more transparent outline with a little green restored.
+
+## Revision 13: one small shared scepter, blue and soft green
 
 Revision 13 uses the same amber scepter sprite at 152.95 × 152.95 in every melee composition. Its grip follows each weapon axis while spectral weapon sizes and positions remain unchanged. Green replaces violet, using 20% opacity and softened saturation; blue retains 40% opacity. [View the gallery](weapon-scepter-gallery.html), [see all weapons](weapons-and-scepters-v13.png), or [download revision 13](card-art-cutouts-v13.zip). Scepter and ethereal layers remain separate. Y00–Y09 are the ten canonical choices; older Y codes redirect to the matching effect.
 

@@ -1,7 +1,7 @@
 # Actual PNG cutouts — selection set 07
 
 Open [cutouts.html](cutouts.html) to select, layer, rotate, resize and keep multiple
-choices. The downloadable `card-art-cutouts-v13.zip` includes the standalone
+choices. The downloadable `card-art-cutouts-v14.zip` includes the standalone
 viewer, all PNGs and the JSON. Extract the ZIP and open `cutouts.html`
 in a browser. It uses plain local scripts and needs no build step. If browser
 policy blocks local files, run `python3 -m http.server 8765` in the extracted
@@ -226,3 +226,7 @@ The physical scepter is now exactly 50% of its revision-10 dimensions: 152.95 ×
 Every Y composition now references the same `V.object.0` sprite with the same 152.95 × 152.95 size. Per-weapon rotation and position put the scepter on the spectral handle axis. The attachment offset, reference size and relative angle preserve the spectral world transform. Blue remains at 40% opacity. Green color edits replace violet PNGs and render at 20% opacity with `filter: saturate(0.45)` to soften the energy. Opacity and filter apply only to the ethereal layer.
 
 Y now presents one shared object and ten effects: Y00–Y04 blue, Y05–Y09 green. The 90 older Y codes remain compatibility aliases using `canonicalCode`; the editor redirects them to Y0y. The retained catalog has 362 PNGs and 2,520 composition codes (including these 90 aliases). All ten original scepter proposals remain available in V. Source green PNGs retain their generated alpha, while JSON controls the softer final appearance. Reset saved canonical compositions to adopt this revision.
+
+## Accepted pale-mint pass (revision 14)
+
+Five source PNG color edits replace the strong green with pearl-white / icy mint. Their render opacity stays at 20%; the earlier saturation filter is removed because the source art itself is now pale. All scepter and spectral layer transforms are unchanged. This pass is published as-is at the user's request. A thinner, more transparent outline with a little more green is recorded in `revision-v14.json` as the next refinement, not applied here.
