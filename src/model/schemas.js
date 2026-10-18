@@ -747,8 +747,16 @@ export const SFX_LAYER_SCHEMAS = Object.freeze({
 // Entity schemas (SPEC §3.3 table)
 // ---------------------------------------------------------------------------
 
+// Optional authored behavior attachments. The shared compiler validates tag
+// registration, attachment eligibility and parameter schemas at the boot door.
+const mechanicAttachmentFields = {
+  mechanicTags: opt(arr(str)),
+  mechanicBindings: opt(arr(obj({tag: str, enabled: opt(bool), parameters: opt(mapOf(any)), upgradeParameters: opt(mapOf(any))}))),
+};
+
 export const SCHEMAS = Object.freeze({
   basicCardProfile: obj({
+    ...mechanicAttachmentFields,
     id: str,
     role: en('attack', 'guard', 'technique'),
     baseCardId: ref('cards'),
@@ -810,6 +818,7 @@ export const SCHEMAS = Object.freeze({
     retired: opt(mapOf(str)),
   }),
   card: obj({
+    ...mechanicAttachmentFields,
     minCombatExpansionVersion: opt(int),
     // Action costs (owner decision, 2026-10-12): 'fixed' keeps a 0-cost card's authored cost and numbers (model/actionCosts.js).
     costRule: opt(str),
@@ -883,6 +892,7 @@ export const SCHEMAS = Object.freeze({
   }),
 
   relic: obj({
+    ...mechanicAttachmentFields,
     id: str,
     name: str,
     rarity: en(...RELIC_RARITIES),
@@ -932,6 +942,7 @@ export const SCHEMAS = Object.freeze({
   }),
 
   status: obj({
+    ...mechanicAttachmentFields,
     id: str,
     name: str,
     icon: opt(str),
@@ -1030,6 +1041,7 @@ export const SCHEMAS = Object.freeze({
   }),
 
   enemy: obj({
+    ...mechanicAttachmentFields,
     id: str,
     name: str,
     hp: arr(int, 2), // [min, max], rolled on stream 'enemyHP'
@@ -1135,6 +1147,7 @@ export const SCHEMAS = Object.freeze({
   }),
 
   class: obj({
+    ...mechanicAttachmentFields,
     id: str,
     name: str,
     maxHp: int,

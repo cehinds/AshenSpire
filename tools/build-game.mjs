@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { canonicalGameJSON, resolveGameAuthor, validateGameSchema } from '../engine/kernel/gameConfig.js';
 import { loadGameProfileCatalog } from './game-config.mjs';
+import { compileBindings, validateModifiers, validateParameters, parameterDefaults } from '../engine/runtime/bindings.mjs';
 import { loadMechanics, loadOps } from '../engine/runtime/interpreter.mjs';
 import { buildAssetCatalog, readAliases } from './asset-catalog.mjs';
 import { contentBundle } from '../src/content/index.js';
@@ -117,7 +118,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const paramOk = (type, x, { staticContent = false } = {}) => {
     if (isVar(x) && !staticContent) return true;
     switch (type) {
-      case 'value': case 'number': return typeof x === 'number' || isFormula(x);
+      case 'value': case 'number': return Number.isFinite(x) || isFormula(x);
       case 'integer': return Number.isInteger(x) || isFormula(x);
       case 'boolean': return typeof x === 'boolean';
       case 'string': return typeof x === 'string';
@@ -144,7 +145,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const catalogOps = loadOps();
   // Condition shapes (SPEC section 5): both runtimes read operands unconditionally.
   const CMP = ['<', '<=', '==', '!=', '>=', '>'];
-  const isValue = x => typeof x === 'number' || (typeof x === 'string' && x.startsWith('$')) || (x && typeof x === 'object' && !Array.isArray(x) && 'f' in x);
+  const isValue = x => Number.isFinite(x) || (typeof x === 'string' && x.startsWith('$')) || (x && typeof x === 'object' && !Array.isArray(x) && 'f' in x);
   const conditionErrors = (c, where) => {
     if (!c || typeof c !== 'object' || Array.isArray(c)) return [`${where}: condition must be an object`];
     const keys = Object.keys(c);
@@ -165,7 +166,7 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const operandOk = (desc, x) => /^array of values/.test(desc) ? Array.isArray(x) && x.every(isValue)
     : /^array/.test(desc) ? Array.isArray(x)
     : /^(entity ref|status id|metric name)/.test(desc) ? typeof x === 'string'
-    : /^number/.test(desc) ? (typeof x === 'number' || (typeof x === 'string' && x.startsWith('$')))  // the evaluator reads number fields directly; no nested formulas
+    : /^number/.test(desc) ? (Number.isFinite(x) || (typeof x === 'string' && x.startsWith('$')))  // the evaluator reads number fields directly; no nested formulas
     : true;
   const PORTABLE_FORMULAS = new Set(['add', 'mul', 'percentMaxHp', 'missingHp', 'missingMana', 'blockOf', 'hpOf', 'energySpent', 'cardsPlayedThisTurn', 'stacks']);
   const portableFormulaErrors = (v, where) => {
@@ -213,6 +214,12 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     for (const key of ['cards', 'enemyCards', 'resourceVariants', 'effectVariants', 'enemies', 'characters']) if (content[key]) { walk(content[key], `content.${key}`); for (const e of formulaErrors(content[key], `content.${key}`)) fail(e); }
   }
   for (const [slug, m] of Object.entries(mechanics)) {
+    try {
+      if (m.manifest.parameters) validateParameters(m.manifest.parameters, parameterDefaults(m.manifest.parameters), `engine/mechanics/${slug}/mechanic.json.parameters`);
+      const typed = (m.service.modifiers || []).filter(row => row.phase !== undefined);
+      if (typed.length) validateModifiers(typed, `engine/mechanics/${slug}/service.json.modifiers`);
+      if (m.manifest.portability === 'portable' && !(m.service.handlers || []).length && !typed.length) fail(`${slug}: required mechanic has no executable behavior`);
+    } catch (error) { fail(error.message); }
     for (const [q, def] of Object.entries(m.interface.queries || {})) for (const e of formulaErrors(def.value, `${slug} query ${q}`)) fail(e);
     // Portable runtimes evaluate only the formulas they carry context for (SPEC section 7); metric and traitBonus
     // read engine-only state (abilityRiders, weapon damage, turn counters) and stay with the legacy engine.
@@ -267,13 +274,26 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
           const entry = catalogOps.ops[step.op];
           if (!entry) fail(`${slug}: op '${step.op}' is not in engine/runtime/ops.json`);
           else if (m.manifest.portability === 'portable' && entry.reference !== 'portable') fail(`${slug}: portable mechanic uses legacy op '${step.op}'`);
-          else for (const [name, param] of Object.entries(entry.params || {})) {
+          else {
+            for (const key of Object.keys(step)) if (key !== 'op' && !Object.hasOwn(entry.params || {}, key)) fail(`${slug}: op ${step.op} unknown parameter '${key}'`);
+            for (const [name, param] of Object.entries(entry.params || {})) {
             if (param.required && step[name] === undefined) fail(`${slug}: op ${step.op} needs '${name}'`);
             else if (step[name] !== undefined && !paramOk(param.type, step[name])) fail(`${slug}: op ${step.op} param '${name}' is not a ${param.type}`);
+            }
           }
         }
       }
     }
+  }
+
+  // Explicit authored behavior bindings use the same compiler as live mounts.
+  const attachmentKinds = {cards:'card',enemyCards:'card',characters:'character',gear:'gear',enemies:'entity',enemyRelics:'relic'};
+  for (const [kind, attachmentKind] of Object.entries(attachmentKinds)) for (const [i, item] of (content[kind] || []).entries()) {
+    if (!item.mechanicBindings) continue;
+    try { compileBindings({mechanics: new Map(Object.entries(mechanics)), attachments:[{
+      ownerId:item.id || `${kind}:${i}`,sourceInstanceId:item.id || `${kind}:${i}`,kind:attachmentKind,
+      tags:item.tags || [],mechanicBindings:item.mechanicBindings,
+    }]}); } catch(error) { fail(`content.${kind}[${i}] (${item.id}): ${error.message}`); }
   }
 
   // ----- runtime -----
