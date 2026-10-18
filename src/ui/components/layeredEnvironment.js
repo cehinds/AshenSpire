@@ -55,6 +55,10 @@ export function layeredEnvironmentHtml(scene) {
 }
 
 export function fitLayeredEnvironment(backdrop, options) {
+  // Hidden screens report zero client dimensions during transitions. Keep the
+  // last painted geometry until the existing resize lifecycle supplies a box.
+  if (!Number.isFinite(options?.width) || !Number.isFinite(options?.height)
+    || options.width <= 0 || options.height <= 0) return null;
   const scene = backdrop.layeredRecipe || recipes.get(backdrop.dataset.layeredKey);
   if (!scene) return null;
   backdrop.layeredRecipe = scene;

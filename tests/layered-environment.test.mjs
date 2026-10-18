@@ -213,3 +213,25 @@ test('battlefield replacement and DOM detachment release layered source listener
     for(const [key,value]of Object.entries(old)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}
   }
 });
+
+test('hidden scene fits preserve existing art and recover when the container returns', async () => {
+  const {fitSceneBackdrop} = await import('../src/ui/components/sceneBackdrop.js');
+  const scene = Object.values(LAYERED_SCENES)[0];
+  const nodes = scene.layers.map((_,i) => ({dataset:{layerIndex:String(i)},style:{setProperty(key,value){this[key]=value;}}}));
+  const backdrop = {layeredRecipe:scene,dataset:{},classList:{contains:()=>true},querySelectorAll:()=>nodes};
+  const config = {skyline:true,floor:true,floorFraction:.3};
+  const fit = (width,height) => fitSceneBackdrop(backdrop,{width,height,groundY:height*.6,config});
+  fit(360,700);
+  const priorArt = nodes.map(node=>({...node.style}));
+  const priorReceipt = {...backdrop.dataset};
+  for (const [width,height] of [[0,700],[360,0],[0,0]]) {
+    assert.equal(fit(width,height),null,'hidden combat/dialogue roots have no new geometry receipt');
+    assert.deepEqual(nodes.map(node=>({...node.style})),priorArt,'hidden sizing preserves the last valid art layout');
+    assert.deepEqual(backdrop.dataset,priorReceipt);
+  }
+  const recovered = fit(1000,600);
+  assert.equal(recovered.frame.floorLine,360);
+  assert.equal(recovered.geometry.length,scene.layers.length);
+  assert.ok(nodes.every(node=>/^[-\d.]+px$/.test(node.style.width)));
+  assert.notEqual(nodes[0].style.width,priorArt[0].width,'visible resize refreshes geometry');
+});
