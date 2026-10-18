@@ -173,6 +173,20 @@ A **screen** (`games/<game>/ui/screens/<id>.json`) composes components into the 
 from `content/config/ui/scenes/`. Layout numbers stay in `content/config/ui` (the existing single
 authority); components and screens reference them, never copy them.
 
+### Commands and asset aliases
+
+`engine/runtime/commands.json` (`ashen.commands@1`, schema `engine/contracts/commands.schema.json`)
+lists every command id an `events` map may name: `{ "kind": "app" | "mechanic", "handler": ..., "description": ... }`.
+An `app` handler is `src/path.js#symbol[.callback]` (the code that handles it today, or `unresolved`);
+a `mechanic` handler is an existing `<mechanic>.<command>` from `engine/mechanics/*/interface.json`.
+`games/<game>/assets/aliases.json` (`ashen.asset-aliases@1`) maps each semantic slot a component or screen
+names in `assets` (`card.frame`, `icon.attack`) to a catalog id, or to `null` for a placeholder on purpose
+(catalog ids come from file paths, so a slot name never equals one). `missing.json` keeps only ids that
+are not UI slots. `node tools/ui-validate.mjs --check` fails when (a) an `events` value is not in
+`commands.json`, (b) an `assets` entry is not a catalog id, an alias key or a `missing.json` entry (or an
+alias targets a catalog id that does not exist), or (c) a `description` names a `src/**/*.js` file that
+does not exist. `tests/ui-json.test.mjs` plants each failure.
+
 ## Maps
 
 A **map component** (`engine/maps/components/<id>.json`) defines a node type — combat, elite, rest,
