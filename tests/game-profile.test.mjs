@@ -97,6 +97,10 @@ test('resumeRun turns a failed profile bind into a refusal instead of a throw',(
  const source=readFileSync(repo+'src/main.js','utf8'),start=source.indexOf('function resumeRun(');assert.ok(start>=0);
  const next=source.indexOf('\nfunction ',start+1),body=source.slice(start,next<0?undefined:next);
  const binds=body.split('bindGameProfileRegistries(').length-1;assert.ok(binds>=1);
- const guarded=[...body.matchAll(/try\s*\{[^{}]*bindGameProfileRegistries\([^{}]*\}\s*catch\s*\((\w+)\)\s*\{[^{}]*showSettingsNotice\([\s\S]*?return refused\(\);/g)].length;
- assert.equal(guarded,binds,'every bindGameProfileRegistries call in resumeRun sits in try/catch that notifies and refuses');
+ const guarded=[...body.matchAll(/try\s*\{[^{}]*bindGameProfileRegistries\([^{}]*\}\s*catch\s*\((\w+)\)\s*\{\s*return refuseWith\(\1\);/g)].length;
+ assert.equal(guarded,binds,'every bindGameProfileRegistries call in resumeRun sits in try/catch that hands the error to refuseWith');
+ // refuseWith lands the refusal first, then says why where the player can see it: the Settings
+ // notice when its host is mounted, else the title failure banner (the run-start idiom).
+ const helper=body.match(/const refuseWith = error => \{[\s\S]*?\n  \};/);assert.ok(helper,'refuseWith helper present');
+ assert.ok(/const landed = refused\(\);[\s\S]*if \(!showSettingsNotice\([\s\S]*failureBanner\(/.test(helper[0]),'refuseWith refuses, then notice-or-banner');
 });
