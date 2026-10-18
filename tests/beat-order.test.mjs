@@ -217,60 +217,72 @@ const accuracyHit = (...amounts) => {
   const [played,...damage] = playerHit(...amounts);
   return [played,{type:'attackHit',sourceId:'player',targetId:'e1'},...damage];
 };
-function shortActor(trace,totalMs=195,remainingMs){
-  return ()=>({impactMs:100,totalMs,remainingMs,hold(){},
-    cancel:()=>trace.push({what:'settle',at:Date.now()})});
+function shortActor(trace, totalMs = 195, remainingMs) {
+  return () => ({ impactMs: IMPACT, totalMs, remainingMs,
+    hold: ms => trace.push({ what: 'hold', ms, at: Date.now() }),
+    cancel: () => trace.push({ what: 'settle', at: Date.now() }) });
 }
 
-for(const [amount,hold]of [[7,60],[22,120]]){
- test(`a late final contact keeps its ${hold} ms hit-stop without an empty inter-contact gap`,t=>{
-  drive(t,({trace,run,finish})=>{
-   run(accuracyHit(amount),{animateActor:shortActor(trace),maxHpFor:()=>54});finish();
-   assert.equal(timeOf(trace,'contact'),300,'the accuracy word keeps its readable lead');
-   assert.equal(timeOf(trace,'settle'),300+hold,'only the final hit-stop remains once the short swing has recovered');
-   assert.equal(timeOf(trace,'reaction:e1'),300+hold,'the defender reacts after the attacker returns to stance');
-   assert.equal(timeOf(trace,`float:-${amount}`),300+hold+ANIM_SPEEDS.normal.reactionMs,'the complete reaction still precedes its number');
+for (const [amount, hold] of [[7, 60], [22, 120]]) {
+  test(`ordered contact keeps its ${hold} ms hit-stop without an empty inter-contact gap`, t => {
+    drive(t, ({ trace, run, finish }) => {
+      run(accuracyHit(amount), { animateActor: shortActor(trace), maxHpFor: () => 54 }); finish();
+      const settled = LEAD + 195 + hold;
+      assert.equal(timeOf(trace, 'contact'), LEAD + IMPACT, 'intent and action words precede the authored contact');
+      assert.deepEqual(trace.filter(row => row.what === 'hold').map(({ ms, at }) => [ms, at]), [[hold, LEAD + IMPACT]]);
+      assert.equal(timeOf(trace, 'settle'), settled, 'only authored recovery and hit-stop follow the final contact');
+      assert.equal(timeOf(trace, 'reaction:e1'), settled + AFTER, 'the configured wait follows the return to stance');
+      assert.equal(timeOf(trace, `float:-${amount}`), settled + AFTER + REACTION, 'the complete reaction wait precedes its number');
+    });
   });
- });
 }
 
-test('a short swing that has not recovered still finishes its total duration plus hit-stop',t=>{
- drive(t,({trace,run,finish})=>{
-  run(playerHit(7),{animateActor:shortActor(trace),maxHpFor:()=>54});finish();
-  assert.equal(timeOf(trace,'contact'),100);
-  assert.equal(timeOf(trace,'settle'),195+60);
-  assert.equal(timeOf(trace,'float:-7'),195+60+ANIM_SPEEDS.normal.reactionMs);
- });
+test('a short ordered swing finishes its total duration plus hit-stop before the two outcome waits', t => {
+  drive(t, ({ trace, run, finish }) => {
+    run(playerHit(7), { animateActor: shortActor(trace), maxHpFor: () => 54 }); finish();
+    assert.equal(timeOf(trace, 'contact'), LEAD + IMPACT);
+    assert.equal(timeOf(trace, 'settle'), LEAD + 195 + 60);
+    assert.equal(timeOf(trace, 'float:-7'), LEAD + 195 + 60 + AFTER + REACTION);
+  });
 });
 
-test('a delayed contact callback retains the full hit-stop from its actual delivery time',t=>{
- drive(t,({trace,run,finish,tick})=>{
-  run(accuracyHit(7),{animateActor:shortActor(trace),maxHpFor:()=>54});tick(350);finish();
-  assert.equal(timeOf(trace,'contact'),350);
-  assert.equal(timeOf(trace,'settle'),350+60);
-  assert.equal(timeOf(trace,'float:-7'),350+60+ANIM_SPEEDS.normal.reactionMs);
- });
+test('a delayed ordered contact retains the full hit-stop and remaining authored frames from delivery', t => {
+  drive(t, ({ trace, run, finish, tick }) => {
+    run(accuracyHit(7), { animateActor: shortActor(trace), maxHpFor: () => 54 });
+    tick(500); tick(500); // Let both required pre-sprite waits finish on time.
+    tick(350); // Deliver the sprite's 100 ms contact callback 250 ms late.
+    finish();
+    const delivered = LEAD + 350;
+    const settled = delivered + (195 - IMPACT) + 60;
+    assert.equal(timeOf(trace, 'contact'), delivered);
+    assert.deepEqual(trace.filter(row => row.what === 'hold').map(({ ms, at }) => [ms, at]), [[60, delivered]]);
+    assert.equal(timeOf(trace, 'settle'), settled, 'a late timer cannot erase the contact hold or remaining frames');
+    assert.equal(timeOf(trace, 'float:-7'), settled + AFTER + REACTION);
+  });
 });
 
-for(const totalMs of [195,800]){
- test(`successive held contacts remain spaced and an actor of ${totalMs} ms fully recovers`,t=>{
-  drive(t,({trace,run,finish})=>{
-   run(accuracyHit(7,7),{animateActor:shortActor(trace,totalMs),maxHpFor:()=>54});finish();
-   const contacts=trace.filter(row=>row.what==='contact').map(row=>row.at);
-   assert.deepEqual(contacts,[300,300+ANIM_SPEEDS.normal.stepMs+60]);
-   const settled=Math.max(contacts[1]+60,totalMs+120);
-   assert.equal(timeOf(trace,'settle'),settled,'all holds and the remaining swing survive');
-   assert.equal(timeOf(trace,'float:-7'),settled+ANIM_SPEEDS.normal.reactionMs);
+for (const totalMs of [195, 800]) {
+  test(`ordered multi-hit contact preserves both holds and an actor of ${totalMs} ms fully recovers`, t => {
+    drive(t, ({ trace, run, finish }) => {
+      run(accuracyHit(7, 7), { animateActor: shortActor(trace, totalMs), maxHpFor: () => 54 }); finish();
+      assert.deepEqual(trace.filter(row => row.what === 'contact').map(row => row.at), [LEAD + IMPACT, LEAD + IMPACT]);
+      assert.deepEqual(trace.filter(row => row.what === 'hold').map(({ ms, at }) => [ms, at]), [[120, LEAD + IMPACT]], 'both qualifying hits extend their shared authored contact');
+      const settled = LEAD + totalMs + 120;
+      assert.equal(timeOf(trace, 'settle'), settled, 'all holds and the remaining swing survive');
+      assert.equal(timeOf(trace, 'float:-7'), settled + AFTER + REACTION);
+      assert.deepEqual(trace.filter(row => row.what === 'reaction:e1').map(row => row.at),
+        [settled + AFTER, settled + AFTER + REACTION + ANIM_SPEEDS.normal.stepMs], 'each hit retains its own reaction before its numeric receipt');
+    });
   });
- });
 }
 
-test('a stage-reported recovery still takes precedence over an expired wall-clock swing',t=>{
- drive(t,({trace,run,finish})=>{
-  run(accuracyHit(7),{animateActor:shortActor(trace,195,()=>75),maxHpFor:()=>54});finish();
-  assert.equal(timeOf(trace,'settle'),300+60+75);
-  assert.equal(timeOf(trace,'float:-7'),300+60+75+ANIM_SPEEDS.normal.reactionMs);
- });
+test('a longer stage-reported recovery takes precedence over the ordered clock estimate', t => {
+  drive(t, ({ trace, run, finish }) => {
+    run(accuracyHit(7), { animateActor: shortActor(trace, 195, () => 250), maxHpFor: () => 54 }); finish();
+    const settled = LEAD + IMPACT + 250;
+    assert.equal(timeOf(trace, 'settle'), settled, '250 ms reported recovery exceeds the 95 ms frames plus 60 ms hold estimate');
+    assert.equal(timeOf(trace, 'float:-7'), settled + AFTER + REACTION);
+  });
 });
 
 test('impact order retains its existing terminal visual delay',t=>{
