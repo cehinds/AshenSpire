@@ -166,6 +166,13 @@ test('the build fails on dangling references', () => {
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { portableHandler(mechanics).do = [{ op: 'heal', amount: { f: 'metric', metric: 'weaponDamage' } }]; } }), /formula 'metric' is legacy-only/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { portableHandler(mechanics).do = [{ op: 'heal', amount: { f: 'add', args: ['bad'] } }]; } }), /operand 'args' has the wrong type/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { portableHandler(mechanics).do = [{ op: 'addCard', card: 'typo' }]; } }), /param 'card' is not a cardRef/);
+  // Static content is read literally by the engine: effect targets are the closed TARGETS set, status ids are known
+  // statuses, and '$name' refs are not resolved, so each fails at build time rather than mid-fight.
+  assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op === 'damage')); c.effects.find(e => e.op === 'damage').target = 'definitelyUnknown'; } }), /op damage param 'target' is not an effect target \(self, enemy/);
+  assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op)); c.effects = [{ op: 'applyStatus', target: 'self', status: 'definitelyUnknown', stacks: 1 }]; } }), /op applyStatus names status 'definitelyUnknown', which this profile does not export/);
+  assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op)); c.effects = [{ op: 'addCard', card: '$bogus' }]; } }), /op addCard param 'card' is not a cardRef/);
+  // Mechanic service steps keep '$' refs and arbitrary entity refs.
+  assert.doesNotThrow(() => buildGame({ patch: ({ mechanics }) => { portableHandler(mechanics).do = [{ op: 'heal', target: '$seat', amount: 1 }, { op: 'heal', target: 'someSeat', amount: 1 }, { op: 'addCard', card: '$bogus' }]; } }));
   assert.throws(() => buildGame({ game: 'nonexistent-game' }));
 });
 
