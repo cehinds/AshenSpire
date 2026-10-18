@@ -1457,7 +1457,12 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
     return refused();
   }
   const loadGameProfile = savedGameProfile || resolveGameProfile('current');
-  const authoredRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, loadGameProfile)), loadGameProfile);
+  let authoredRegistries;
+  try { authoredRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, loadGameProfile)), loadGameProfile); }
+  catch (error) {
+    showSettingsNotice(`Saved game configuration could not be restored: ${error.message}`, 'profile');
+    return refused();
+  }
   let loaded = saves.loadRun(authoredRegistries, slot);
   if (!loaded) return refused();
   rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} }, null, loadGameProfile);
