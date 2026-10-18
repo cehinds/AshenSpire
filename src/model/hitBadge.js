@@ -5,7 +5,8 @@
 const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy'];
 export function cardAffectsEnemies(definition) {
   if (!definition) return false;
-  return !!(definition.counterPayload || definition.effects?.some(effect => ENEMY_TARGETS.includes(effect.target)));
+  // A deferred counterPayload fires later; only immediate enemy-targeted effects make an enemy a valid target now.
+  return !!(definition.effects?.some(effect => ENEMY_TARGETS.includes(effect.target)));
 }
 /** Ids of the living enemies that show a badge for the selected card definition. */
 export function hitBadgeTargetIds(definition, enemies) {
