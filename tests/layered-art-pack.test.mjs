@@ -4,9 +4,27 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import {createHash} from 'node:crypto';
+import {runInNewContext} from 'node:vm';
 import {readLayeredArt,withLayeredArt} from '../tools/layered-art.mjs';
 import {LAYERED_SCENES,LAYERED_SOURCES,LAYERED_TIME_FILTERS,LAYERED_WEATHER_FILTERS,LAYERED_EXPORT_HASHES} from '../src/content/layeredEnvironments.js';
 const root=path.resolve(import.meta.dirname,'..');
+test('portable bundle retains both independent environment and card-cutout art stores',()=>{
+ const source=fs.readFileSync(path.join(root,'tools/bundle.mjs'),'utf8');
+ const start=source.indexOf('const layeredArtId='),end=source.indexOf('const ASSET_PACKS_ID',start);
+ assert.ok(start>=0&&end>start,'exercise the actual adjacent production bundler blocks');
+ const block=source.slice(start,end),envId='src/ui/layeredArt.js',cardId='src/ui/layeredCardArt.js';
+ const env='/* LAYERED_ART_START */\nconst layeredArtMap = {};\n/* LAYERED_ART_END */';
+ const card='/* CARD_CUTOUTS_START */\nconst cardCutoutMap = {};\n/* CARD_CUTOUTS_END */';
+ for(const external of [false,true]){
+  const sources=new Map([[envId,env],[cardId,card]]),calls=[];
+  runInNewContext(block,{sources,ROOT:root,EXTERNAL_ART:external,
+   readLayeredArt:()=>{calls.push('environment');return[{id:'env.webp',bytes:Buffer.from('environment')}];},
+   cardCutoutAssets:()=>{calls.push('cards');return[{id:'card.png',bytes:Buffer.from('card')}];},
+   fail:message=>{throw new Error(message);}});
+  if(external){assert.deepEqual(calls,[]);assert.equal(sources.get(envId),env);assert.equal(sources.get(cardId),card);}
+  else{assert.deepEqual(calls,['environment','cards']);assert.ok(sources.get(envId).includes('data:image/webp;base64,'+Buffer.from('environment').toString('base64')));assert.ok(sources.get(cardId).includes('data:image/png;base64,'+Buffer.from('card').toString('base64')));}
+ }
+});
 test('every runtime layer resolves to a verified portable and web-pack export',()=>{
  const entries=readLayeredArt(root),ids=new Set(entries.map(r=>r.id));assert.ok(entries.length>80);assert.deepEqual(Object.fromEntries(entries.map(e=>[e.id,e.sha256])),LAYERED_EXPORT_HASHES);
  for(const layer of [...Object.values(LAYERED_SCENES).flatMap(s=>s.layers),...Object.values(LAYERED_TIME_FILTERS),...Object.values(LAYERED_WEATHER_FILTERS).flat()]){
