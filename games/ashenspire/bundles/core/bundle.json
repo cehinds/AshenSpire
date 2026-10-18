@@ -1,6 +1,6 @@
 {
   "id": "ashen.core",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "profileId": "core",
   "foundationMode": "configured",
   "modules": {
@@ -41,7 +41,11 @@
     "gear": {
       "version": "1.0.0",
       "settings": {
-        "pools": "merged"
+        "pools": "merged",
+        "armorBudget": {
+          "baseline": 3,
+          "perRank": 1
+        }
       }
     },
     "class-selection": {
@@ -50,7 +54,9 @@
     },
     "progression": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "entitlementPolicy": "authored"
+      }
     },
     "routes": {
       "version": "1.0.0",
@@ -143,7 +149,7 @@
   "packs": [
     {
       "id": "ashen.core-content",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "path": "../../packs/core/pack.json"
     },
     {
