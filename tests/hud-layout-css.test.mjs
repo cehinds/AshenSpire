@@ -260,16 +260,20 @@ test('corner tools dock above the footer and a requested raise cannot cover cont
   const run = ({ dy = 0, split = false, span = 'field', obstacles = [] } = {}) => {
     let rowReads = 0, obstacleReads = 0;
     const hand = { getBoundingClientRect: () => ({ width: 200, right: 300, left: 100, top: 500 }) };
-    const root = { isConnected: true, style: {}, dataset: {}, getBoundingClientRect: () => { rowReads++; return { height: 40 }; } };
+    const properties = new Map();
+    const root = { isConnected: true, style: { setProperty: (key, value) => properties.set(key, value) }, dataset: {}, getBoundingClientRect: () => { rowReads++; return { height: 40 }; } };
+    const logButton = { getBoundingClientRect: () => ({ width: 80 }) };
     const combatEl = { clientWidth: 390, dataset: { desktopFooter: String(split) }, getBoundingClientRect: () => ({ left: 0, width: 390, top: 0, bottom: 844 }), style: { setProperty() {} },
       querySelector: selector => selector === '.hand' ? hand : selector === '.combat-action-row' ? { getBoundingClientRect: () => ({ top: 820 }) } : null };
     const api = runInNewContext(`${tools.slice(begin, end)}\n({ flushGeometry })`, {
       combatToolsTokens: () => ({ span, dy }), CORNER_INSET: 16, toolsRowTop,
       toolsObstacles: () => { obstacleReads++; return obstacles; },
       getComputedStyle: () => ({ getPropertyValue: key => key === '--desktop-tools-top' ? '700' : '20' }),
-      root, combatEl, state: { size: 'Small' }, panel: { style: {} }, drag: null, snapHeights: () => ({ Small: 125 }),
+      root, combatEl, logButton, state: { size: 'Small' }, panel: { style: {} }, drag: null, snapHeights: () => ({ Small: 125 }),
       VIEWPORT_ORIGIN: {}, anchorLocalBox: (_host, rect) => ({ ...rect }), requestAnimationFrame: () => 1, cancelAnimationFrame() {} });
-    api.flushGeometry(); return { rowReads, obstacleReads, top: parseFloat(root.style.top), left: root.style.left, right: root.style.right, width: root.style.width };
+    api.flushGeometry();
+    assert.equal(properties.get('--combat-log-button-width'), '80px', 'Deck offset uses the measured Log button width');
+    return { rowReads, obstacleReads, top: parseFloat(root.style.top), left: root.style.left, right: root.style.right, width: root.style.width };
   };
   assert.deepEqual(run(), { rowReads: 1, obstacleReads: 0, top: 776, left: '16px', right: '16px', width: 'auto' });
   assert.deepEqual(run({ span: 'hand' }), run(), 'a narrow current card band never pulls the approved screen-edge corners inward');
