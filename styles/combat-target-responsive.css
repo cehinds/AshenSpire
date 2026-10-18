@@ -34,8 +34,12 @@
 :root .combat[data-target-hud='true'] .intent > :not(.intent-compact) { display:none!important; }
 :root .combat[data-target-hud='true'] .intent .intent-compact { display:flex!important; justify-content:center; }
 :root .combat[data-target-hud='true'] .intent-actions { display:inline-flex; justify-content:center; align-items:flex-end; gap:calc(5px / var(--ui-zoom,1)); }
-:root .combat[data-target-hud='true'] .intent-action { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:calc(1px / var(--ui-zoom,1)); }
-:root .combat[data-target-hud='true'] .intent-action-value { display:block; font:700 calc(11px / var(--ui-zoom,1))/1 Georgia,serif; color:inherit; }
+/* Owner 2026-10-18: the amount sits LEFT of its maneuver icon on one row, vertically centred
+   with it, at 2x the old size (11px to 22px = the titleM step of content/config/ui/tokens.json).
+   Solo (target HUD) and co-op share one size so neither role drifts. */
+:root .combat { --intent-value-size: calc(22px / var(--ui-zoom,1)); }
+:root .combat .intent-action { display:inline-flex; flex-direction:row; align-items:center; justify-content:flex-end; gap:calc(3px / var(--ui-zoom,1)); }
+:root .combat .intent-action-value { display:block; font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; white-space:nowrap; }
 :root .combat[data-target-hud='true'] .intent-action .intent-icon { width:calc(25px / var(--ui-zoom,1)); height:calc(25px / var(--ui-zoom,1)); }
 :root .combat[data-target-hud='true'] .target-hud-intent { justify-content:center; }
 :root .combat[data-target-hud='true'] .target-hud-intent-name { flex:none; }
