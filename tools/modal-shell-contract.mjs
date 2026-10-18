@@ -93,7 +93,7 @@ for (const rel of ADOPTERS) {
   check(`${rel} builds no veil of its own`, !/className\s*=\s*['"`]modal-veil/.test(source),
     'a hand-built .modal-veil is a second chrome');
   check(`${rel} binds no dismissal of its own`, !source.includes('bindModalDismiss('),
-    'openModal already binds Escape, veil-click and focus return');
+    'openModal already owns Escape (through the modal manager), veil-click and focus return');
 }
 
 // The regression that motivated piles.js: it had NO way out but the veil.
