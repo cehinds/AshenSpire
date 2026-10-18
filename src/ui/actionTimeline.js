@@ -76,5 +76,5 @@ export function runActionTimeline(beats, hooks, timing, { setTimer = setTimeout,
   const budget = 2000 + beats.reduce((budget, beat) => budget + Math.max(perAction + Math.max(0, (safe(() => hooks.reactionGroups?.(beat))?.length || 1) - 1) * (timing.reactionMs + timing.stepMs), timing.bannerMs + timing.stepMs), 0);
   watchdog = setTimer(() => finish(true), budget);
   next();
-  return { pauseForSkip: () => { clearTimer(timer); clearTimer(watchdog); cancelActor(); }, cancel: () => finish(true), skip: () => finish(true), get finished() { return finished; } };
+  return { pauseForSkip: () => { clearTimer(timer); cancelActor(); }, cancel: () => finish(true), skip: () => finish(true), get finished() { return finished; } };
 }

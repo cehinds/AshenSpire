@@ -57,3 +57,11 @@ test('watchdog extends to the real authored handle when its estimate is too shor
   c.advance(6000); assert.deepEqual(trace, [], 'the underestimated watchdog cannot finish a live clip');
   c.advance(10000); assert.deepEqual(trace, ['done']); assert.equal(c.pending, 0);
 });
+
+test('a lost pointer release retains a bounded completion fallback', () => {
+  const { c, trace, handle } = run(); c.advance(1100); handle.pauseForSkip(); c.advance(100000);
+  assert.equal(handle.finished, true); assert.equal(c.pending, 0);
+  assert.equal(trace.filter(row => row[0] === 'flush').length, 1);
+  assert.equal(trace.filter(row => row[0] === 'done').length, 1);
+  assert.ok(!trace.some(row => row[0] === 'hud'), 'a paused timeline cannot resume stale stages');
+});
