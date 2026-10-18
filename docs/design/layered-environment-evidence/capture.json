@@ -2,11 +2,11 @@
   "feature": "feature/ImproveMapBattleFieldArt",
   "capturedDate": "2026-10-18",
   "timezone": "America/Anchorage",
-  "sourceCommitAtCapture": "61b211d0f432dc7f38b624e8848caad03ac2f7fe",
-  "build": "0.7.1.1596",
-  "sourceDigest": "84bbc9b033",
-  "webSha256": "d9a275a59a582429a910119bccffca487275f264a1d63ac475f9a71a78740d3c",
-  "standaloneSha256": "a68e0c69ce4ffb897c1e012016494b71f0e7aa6b86c2a495c25c0a7a63ce5a9b",
+  "sourceCommitAtCapture": "d44aa97342ff6ed1cd8d89a7da278dbbe6391bb8",
+  "build": "0.7.1.1600",
+  "sourceDigest": "4d9df2a632",
+  "webSha256": "16c9a50a0d60d2ed701540086d2c2cc47c6b9c376863ae65395623657e2d2ba3",
+  "standaloneSha256": "a0effcba30437e13893befc6f1e9215bbd3b1ad8fdc7b061b6c0afbc9c42d172",
   "playableUrl": "https://cehinds.github.io/AshenSpire/branches/feature/ImproveMapBattleFieldArt/latest/",
   "viewports": {
     "mobile": [
@@ -27,9 +27,9 @@
     ]
   },
   "screenshots": {
-    "docs/design/layered-environment-evidence/desktop.png": "382fd06440c81222bc64429e00a2fc79b15b0231cadfbeef0166f7afd719873b",
-    "docs/design/layered-environment-evidence/map-archive.png": "d331179a9f6f300c72111739b162c326ad1c125a1737fd7f6b7c8f8a4e2bcccd",
-    "docs/design/layered-environment-evidence/map-forge.png": "848056024245164bb82c06a8544a97e6f6b3738457438008c0a4ae047307ecfc",
+    "docs/design/layered-environment-evidence/desktop.png": "eb2898b4901fe3019556d82f3b438902d044d3158212a1e7f9d494c833623833",
+    "docs/design/layered-environment-evidence/map-archive.png": "b23e3f0179bbb46adc20f219f53075afa39af3d18618736487dc18765f6de0b9",
+    "docs/design/layered-environment-evidence/map-forge.png": "115bae28563349dc333042d7756f8d30816660aeea0b987193d44eb6a638e4ac",
     "docs/design/layered-environment-evidence/mobile.png": "d438a4c077cd3abc2a011936a9d8445618b19c2cba4a75f0b032a672a7116ec3",
     "docs/design/layered-environment-evidence/tablet.png": "9448cc79f02fd904257b53bdd0ee2dbab2d10edcbd404e402dccb6338b7cddba",
     "docs/design/layered-environment-evidence/wide.png": "55aad9f9c4bdfdeaf9c473c739e649f4f6504ee42179cc05995e5c8546c84b54"
