@@ -1046,6 +1046,11 @@ export function holdMs(settings, holdConfirm) {
  *                which of its elements is the one with room.
  *   hintBefore   the child of that host to insert the hint before (default:
  *                appended last).
+ *   tapWhenNone  default false. When true and the action's form is 'none' AT
+ *                THE MOMENT OF THE PRESS, the press has no timer and a tap
+ *                commits with no review (owner, 2026-10-18: End Turn with no
+ *                card left to play). Other forms, and controls that do not
+ *                opt in, are unchanged.
  *
  * EVERY ARMED CONTROL MARKS ITSELF, including the ones that owe no beat:
  * `data-beat="none|hold|confirm"` and `data-beat-action="<id>"`. That is not
@@ -1057,12 +1062,12 @@ export function holdMs(settings, holdConfirm) {
 export function beatArmer(meta, registries) {
   const dialMs = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
 
-  return function arm(el, actionId, { ctx = {}, onConfirm, question, target, message, detailHtml, confirmLabel, policyAction = null, hintHost = null, hintBefore = null, showHint = true } = {}) {
+  return function arm(el, actionId, { ctx = {}, onConfirm, question, target, message, detailHtml, confirmLabel, policyAction = null, hintHost = null, hintBefore = null, showHint = true, tapWhenNone = false } = {}) {
     // `ctxOf` so a row whose stakes move with the game state (End Turn) is
     // evaluated at the moment the finger lands, not at the moment the screen
     // mounted. A screen passes a function; a static action passes an object.
-    // The form it yields is read per press by `owesNoBeat` below: 'none' means
-    // the press commits directly (no hold, no review).
+    // A control that opts in with `tapWhenNone` reads the form per press
+    // (`owesNoBeat` below): 'none' means the press commits directly.
     const ctxOf = typeof ctx === 'function' ? ctx : () => ctx;
     const formNow = () => beatFor(actionId, ctxOf()).form;
 
@@ -1073,9 +1078,9 @@ export function beatArmer(meta, registries) {
     el.dataset.optionTap = 'modal';
     el.dataset.optionHold = dialMs > 0 ? 'commit' : 'disabled';
 
-    // (Owner, 2026-10-18: a row whose form is 'none' owes no review at all —
-    // see `owesNoBeat` below. The contract that follows holds for every row
-    // that owes a beat.)
+    // (Owner, 2026-10-18: a control that opts in with `tapWhenNone` and whose
+    // form is 'none' owes no review at all — see `owesNoBeat` below. The
+    // contract that follows holds for every other control.)
     // Constantine's revised universal option contract: a short activation
     // reviews, while a deliberate hold approves the exact same callback and
     // skips the modal. The old beat classification remains published for
@@ -1115,16 +1120,20 @@ export function beatArmer(meta, registries) {
         returnFocusElement: el,
       });
     };
-    // THE FORM DRIVES THE BEHAVIOUR, not only the `data-beat` label (owner,
-    // 2026-10-18; first wired here when End Turn became state-dependent). Both
-    // are re-read for EVERY press, because the state a row's stakes move with
-    // (a hand that still has a playable card) changes inside one screen:
-    //   form 'none'          ms resolves to 0 and a tap commits at once, with
-    //                        no review. Every tap path (pointer release, a
-    //                        click, a key or pad activation) ends in `onTap`,
-    //                        so the one decision below covers them all.
+    // A CONTROL MAY LET THE FORM DRIVE THE BEHAVIOUR (`tapWhenNone`; owner,
+    // 2026-10-18; first used by End Turn, whose stakes move with the hand). The
+    // form is re-read for EVERY press, because the state a row's stakes move
+    // with (a hand that still has a playable card) changes inside one screen:
+    //   form 'none'           ms resolves to 0 and a tap commits at once, with
+    //                         no review. Every tap path (pointer release, a
+    //                         click, a key or pad activation) ends in `onTap`,
+    //                         so the one decision below covers them all.
     //   form 'hold'|'confirm' unchanged: a tap reviews, a completed hold commits.
-    const owesNoBeat = () => formNow() === 'none';
+    // OPT-IN, because the universal option contract below still stands for
+    // every other control: an event bar whose choice owes no beat is still an
+    // option bar that offers the hold and reviews on a tap (tools/holdconfirm.mjs
+    // "every option bar offers the hold shortcut").
+    const owesNoBeat = () => tapWhenNone && formNow() === 'none';
     const disarm = armHold(el, {
       ms: () => (owesNoBeat() ? 0 : dialMs),
       onConfirm,

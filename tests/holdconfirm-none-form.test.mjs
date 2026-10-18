@@ -60,7 +60,7 @@ test("a 'none' beat commits on a tap with no review and no timer; 'hold' still r
   const control = fakeControl();
   const committed = [];
   const arm = beatArmer({ settings: {} }, REGISTRIES);
-  const disarm = arm(control, 'eventChoice', { ctx: () => ({ binding: state.binding }), onConfirm: () => committed.push('commit'), showHint: false });
+  const disarm = arm(control, 'eventChoice', { ctx: () => ({ binding: state.binding }), onConfirm: () => committed.push('commit'), showHint: false, tapWhenNone: true });
   try {
     assert.equal(control.dataset.beat, 'none', 'a non-binding choice owes no beat');
     assert.equal(control.dataset.holdMs, undefined, 'and draws no hold timer');
@@ -80,6 +80,21 @@ test("a 'none' beat commits on a tap with no review and no timer; 'hold' still r
     state.binding = false;
     withReviewSentinel(() => tap(control));
     assert.deepEqual(committed, ['commit'], "the press after the state returns to 'none' commits directly again");
+  } finally {
+    disarm();
+  }
+});
+
+test("without tapWhenNone a 'none' beat is unchanged: the tap still reviews and the hold stays", () => {
+  const control = fakeControl();
+  const committed = [];
+  const arm = beatArmer({ settings: {} }, REGISTRIES);
+  const disarm = arm(control, 'eventChoice', { ctx: () => ({ binding: false }), onConfirm: () => committed.push('commit'), showHint: false });
+  try {
+    assert.equal(control.dataset.beat, 'none');
+    assert.equal(control.dataset.holdMs, '600', 'the universal option contract keeps its hold');
+    assert.throws(() => withReviewSentinel(() => tap(control)), new RegExp(REVIEW), 'and a tap opens the review');
+    assert.deepEqual(committed, []);
   } finally {
     disarm();
   }
