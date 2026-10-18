@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **Map locations and battles use reusable art layers** ([#2082](https://github.com/cehinds/AshenSpire/pull/2082), `0.7.1.1559`). Crownfall services preview their matching surroundings, and compatible battlefields combine separate back walls or skies, floors, furniture, rugs, day/night tints and weather. Indoor rooms exclude precipitation; existing art remains for unsupported locations. Gameplay, travel and saves are unchanged.
+- **Map locations and battles use reusable art layers** ([#2082](https://github.com/cehinds/AshenSpire/pull/2082), `0.7.1.1561`). Crownfall services preview their matching surroundings, and compatible battlefields combine separate back walls or skies, floors, furniture, rugs, day/night tints and weather. Indoor rooms exclude precipitation; existing art remains for unsupported locations. Gameplay, travel and saves are unchanged.
 
 ## 2026-10-17
 
