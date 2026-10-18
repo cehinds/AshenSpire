@@ -7,7 +7,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BUDGET, checkBudget, budgetFailed, budgetValues, parseArgs, sceneUrl, mean, httpProblem, readinessProblem, pageErrorProblem, turnAdvanced, playSummary, PLAYS_WANTED } from '../tools/measure.mjs';
+import { BUDGET, checkBudget, budgetFailed, budgetValues, parseArgs, sceneUrl, mean, httpProblem, readinessProblem, pageErrorProblem, turnAdvanced, playsBudgetProblem, PLAYS_BUDGET_MS, playSummary, PLAYS_WANTED } from '../tools/measure.mjs';
 import * as size from '../tools/size-budget.mjs';
 
 const within = Object.fromEntries(Object.entries(BUDGET));
@@ -82,6 +82,14 @@ test('turnAdvanced: End Turn worked only on a later player turn or a finished co
   assert.equal(turnAdvanced(2, { phase: 'player', turn: 2 }), false);
   assert.equal(turnAdvanced(2, { phase: 'enemy', turn: 2, result: 'win' }), true);
   assert.equal(turnAdvanced(2, undefined), false);
+});
+
+test('playsBudgetProblem: past the wall-clock budget fails, at it passes', () => {
+  assert.equal(PLAYS_BUDGET_MS, 300000);
+  assert.equal(playsBudgetProblem(1000, 1000 + PLAYS_BUDGET_MS), null);
+  assert.equal(playsBudgetProblem(1000, 61000, 60000), null);
+  assert.match(playsBudgetProblem(1000, 61001, 60000), /ran past their 60 s budget \(60 s\)/);
+  assert.match(playsBudgetProblem(0, PLAYS_BUDGET_MS + 1), /300 s budget/);
 });
 
 test('playSummary: three plays are a sample, fewer are partial and never gated', () => {

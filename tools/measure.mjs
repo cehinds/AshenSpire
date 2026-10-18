@@ -164,6 +164,16 @@ export function pageErrorProblem(errors) {
   return `page error${errors.length > 1 ? ` (1 of ${errors.length})` : ''}: ${errors[0]}`;
 }
 
+// Wall-clock cap for the whole touch-play driver in one attempt. Three plays
+// take about a minute on a healthy scene; 5 minutes means it is stuck.
+export const PLAYS_BUDGET_MS = 5 * 60 * 1000;
+
+/** Why the touch-play driver has run too long (`now - startedAt` past `budgetMs`), or null. */
+export function playsBudgetProblem(startedAt, now, budgetMs = PLAYS_BUDGET_MS) {
+  const used = now - startedAt;
+  return used > budgetMs ? `touch plays ran past their ${Math.round(budgetMs / 1000)} s budget (${Math.round(used / 1000)} s)` : null;
+}
+
 /**
  * Whether End Turn did its job: the combat is over, or it is the player's phase
  * on a later turn than `prev`. `c` is a combat state ({ phase, turn, result }).
@@ -285,7 +295,10 @@ async function touchPlays(page, cdp, want) {
   const rects = (sel) => page.evaluate((s) => [...document.querySelectorAll(s)].map((el, i) => { const r = window.__perf.rect(el); return { i, x: r.left, y: r.top, w: r.width, h: r.height, un: el.classList.contains('unaffordable') }; }), sel);
   const done = [];
   let tried = new Set(); // hand positions that did not play this hand
+  const startedAt = Date.now();
   for (let attempt = 0; attempt < want * 10 && done.length < want; attempt++) {
+    const overrun = playsBudgetProblem(startedAt, Date.now());
+    if (overrun) throw new Error(overrun);
     let s = await state();
     dbg('attempt', attempt, JSON.stringify(s));
     if (s.result) break;
