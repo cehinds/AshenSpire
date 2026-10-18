@@ -76,7 +76,9 @@
     },
     "intent": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "reads": "exact"
+      }
     },
     "reactions": {
       "version": "1.0.0",

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:9c3f1b5a3e4951258dd8721a1e9768b2492f49cc2eba719776d63efa0e681837",
+      "hash": "sha256:a4a547ebbe55b61afa47e1e4128dcaa650764c3f3f5c5f81255c1f382ec0ac81",
       "formatVersion": 1,
       "core": "ashen.core@1.0.0",
       "artifacts": [
@@ -340,7 +340,7 @@
           "path": "engine/modules/intent/defaults.json",
           "id": "intent",
           "version": "1.0.0",
-          "hash": "sha256:6ac228e2ffec18da283cceea5e3fd9ad85b4fc1cac27004af6ba6371132279b4"
+          "hash": "sha256:7c25a3f444232d2a331bf7acadb57740d153bf99c8bb9ed747353c8713c6e8d2"
         },
         {
           "path": "engine/modules/intent/module.json",
@@ -352,7 +352,7 @@
           "path": "engine/modules/intent/settings.schema.json",
           "id": "intent",
           "version": "1.0.0",
-          "hash": "sha256:58360cd61e761c1c0c1f9e7e9fa51e606c9442d8653e6bbba21db12b23faf3c7"
+          "hash": "sha256:5545ab41a00a04239e82576de2f98ac830fa939cf3d296cf3f03c5d48c3e9b29"
         },
         {
           "path": "engine/modules/progression/defaults.json",
@@ -580,7 +580,7 @@
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "1.0.0",
-          "hash": "sha256:05906b73b977762b0cad9d842acb3f106294f98c2b64cd7489737c11c817d14d"
+          "hash": "sha256:4ccfe2f12efe9f210daeb0b69dc47dc497c326b3ebb2281001c493e759621c86"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",
@@ -720,7 +720,7 @@
       "runtimeHash": "sha256:bd9c4387db7e4265da5a5cf4538b05501b76bb4c7d0c5b29e570e2c9ccdb8a28"
     },
     "core": {
-      "hash": "sha256:9c3f1b5a3e4951258dd8721a1e9768b2492f49cc2eba719776d63efa0e681837",
+      "hash": "sha256:a4a547ebbe55b61afa47e1e4128dcaa650764c3f3f5c5f81255c1f382ec0ac81",
       "formatVersion": 1,
       "core": "ashen.core@1.0.0",
       "artifacts": [
@@ -1058,7 +1058,7 @@
           "path": "engine/modules/intent/defaults.json",
           "id": "intent",
           "version": "1.0.0",
-          "hash": "sha256:6ac228e2ffec18da283cceea5e3fd9ad85b4fc1cac27004af6ba6371132279b4"
+          "hash": "sha256:7c25a3f444232d2a331bf7acadb57740d153bf99c8bb9ed747353c8713c6e8d2"
         },
         {
           "path": "engine/modules/intent/module.json",
@@ -1070,7 +1070,7 @@
           "path": "engine/modules/intent/settings.schema.json",
           "id": "intent",
           "version": "1.0.0",
-          "hash": "sha256:58360cd61e761c1c0c1f9e7e9fa51e606c9442d8653e6bbba21db12b23faf3c7"
+          "hash": "sha256:5545ab41a00a04239e82576de2f98ac830fa939cf3d296cf3f03c5d48c3e9b29"
         },
         {
           "path": "engine/modules/progression/defaults.json",
@@ -1298,7 +1298,7 @@
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "1.0.0",
-          "hash": "sha256:05906b73b977762b0cad9d842acb3f106294f98c2b64cd7489737c11c817d14d"
+          "hash": "sha256:4ccfe2f12efe9f210daeb0b69dc47dc497c326b3ebb2281001c493e759621c86"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",
@@ -1438,7 +1438,7 @@
       "runtimeHash": "sha256:bd9c4387db7e4265da5a5cf4538b05501b76bb4c7d0c5b29e570e2c9ccdb8a28"
     },
     "current": {
-      "hash": "sha256:3d4bc406033172df3342024796145bd5faaed794c6ba2e92ccb3aecb504b50a0",
+      "hash": "sha256:0f0e83584966b38878e7b60de0729734fcb3038c296529379ab6c0b55b6c31af",
       "formatVersion": 1,
       "core": "ashen.current@1.0.0",
       "artifacts": [
@@ -1722,7 +1722,7 @@
           "path": "engine/modules/intent/defaults.json",
           "id": "intent",
           "version": "1.0.0",
-          "hash": "sha256:6ac228e2ffec18da283cceea5e3fd9ad85b4fc1cac27004af6ba6371132279b4"
+          "hash": "sha256:7c25a3f444232d2a331bf7acadb57740d153bf99c8bb9ed747353c8713c6e8d2"
         },
         {
           "path": "engine/modules/intent/module.json",
@@ -1734,7 +1734,7 @@
           "path": "engine/modules/intent/settings.schema.json",
           "id": "intent",
           "version": "1.0.0",
-          "hash": "sha256:58360cd61e761c1c0c1f9e7e9fa51e606c9442d8653e6bbba21db12b23faf3c7"
+          "hash": "sha256:5545ab41a00a04239e82576de2f98ac830fa939cf3d296cf3f03c5d48c3e9b29"
         },
         {
           "path": "engine/modules/multiplayer/defaults.json",
