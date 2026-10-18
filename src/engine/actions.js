@@ -539,8 +539,13 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   const afterBarrier = magicHits.map(index => magicTyped[index] - barrierSpent[index]);
   const wardTotal = afterBarrier.reduce((sum, weight) => sum + weight, 0);
   const wardBudget = Math.max(0, target.persistentWard?.value || 0);
-  const ward = !(wardTotal > 0) || !(wardBudget > 0) ? afterBarrier.map(() => 0)
-    : allocateInteger(Math.min(wardBudget, wardTotal), afterBarrier);
+  // Owner ruling (2026-10-11): Ward absorbs at most wardAbsorbShare (default half) of this action's magic
+  // after Barrier, and never more than it holds. A non-finite share falls back to the default; the rest is clamped to [0, 1].
+  const shareRaw = Number(stanceRulesFor(ctx).wardAbsorbShare);
+  const wardShareCap = Number.isFinite(shareRaw) ? Math.min(1, Math.max(0, shareRaw)) : 0.5;
+  const wardCap = Math.min(wardBudget, Math.floor(wardTotal * wardShareCap));
+  const ward = !(wardCap > 0) ? afterBarrier.map(() => 0)
+    : allocateInteger(wardCap, afterBarrier);
   const magicLeft = hits.map(() => 0), wardSpent = hits.map(() => 0);
   magicHits.forEach((index, j) => {
     const after = afterBarrier[j], share = ward[j];
