@@ -16,6 +16,7 @@ async function board(enemyCount, seed = 4, settings = null) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(`${process.env.BASE_URL || server.url}index.html?shot=combat&gameProfile=core&shotSeed=${seed}&shotEnemyCount=${enemyCount}&shotHand=5${settings ? `&shotSettings=${encodeURIComponent(JSON.stringify(settings))}` : ''}`, { waitUntil: 'networkidle' });
+  await page.waitForFunction(() => !!window.__combat);
   return page;
 }
 const state = page => page.evaluate(() => ({
@@ -48,7 +49,16 @@ try {
     const after = await state(page);
     assert.equal(after.hand.length, before.hand.length - 1, '1v1: one tap on Strike played it');
     assert.ok(after.energy < before.energy, '1v1: and spent its cost');
-    assert.ok(after.enemyHp[0] < before.enemyHp[0], '1v1: on the one living enemy');
+    const resolution = await page.evaluate(() => {
+      const combat = window.__combat;
+      const events = combat.eventLog.filter(event => event.sourceId === 'player' && event.cardId === 'core.strike');
+      return { targetId:combat.enemies[0].id,
+        plays:events.filter(event => event.type === 'cardPlayed').map(event => event.targetId),
+        attempts:events.filter(event => ['attackHit','attackMissed'].includes(event.type)).map(event => event.targetId) };
+    });
+    assert.deepEqual(resolution.plays, [resolution.targetId], '1v1: exactly one Strike was dispatched against the sole enemy');
+    assert.ok(resolution.attempts.length > 0, 'the real engine resolved a hit attempt, including a possible range miss');
+    assert.ok(resolution.attempts.every(targetId => targetId === resolution.targetId), 'every hit attempt belongs to the sole enemy');
     await page.close();
   }
   {
@@ -106,6 +116,7 @@ try {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${process.env.BASE_URL || server.url}index.html?shot=combat&gameProfile=core&shotSeed=4&shotEnemyCount=1&shotExpansion=sleep`, { waitUntil: 'networkidle' });
+    await page.waitForFunction(() => !!window.__combat);
     const before = await page.evaluate(() => {
       const combat = window.__combat;
       combat.piles.hand = [];
