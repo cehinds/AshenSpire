@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Re-runnable conversion: legacy weighted `moves` enemies (src/content/enemies/act1-3.js) -> enemies-module
+// Re-runnable conversion: legacy weighted `moves` enemies (content/source/act1-3Enemies.json, via the src/content/enemies/act*.js re-exports) -> enemies-module
 // pack JSON (games/ashenspire/packs/core/characters.json enemy rows, enemyCards.json, enemyRelics.json). Owner 2026-10-17,
 // docs/plans/enemy-decks.md. Enemies follow the player's rules: player-shaped cards with owner-relative
 // targets (`enemy` = the opponent, `self` = the owner), the player's gear (gear.json, lootable), attribute
