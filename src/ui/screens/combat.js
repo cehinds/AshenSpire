@@ -1500,7 +1500,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // M1's "absent at zero", applied to pips too: a spent proc row (💧0
       // after a burst) is an empty frame, not information (Sunna's S-flag).
       if (def.proc && stacks <= 0) continue;
-      const shownValue = def.resists && inst.duration != null ? inst.duration : presentation.valueText;
+      const shownValue = stacks;
       const statusTip = () => {
         let extra = '';
         if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
@@ -1581,13 +1581,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function hitChanceBadge(enemy) {
     if (combat.combatExpansionVersion !== 2 || !enemy.alive || !hitChanceKnown(enemy)) return null;
+    if (!selected) return null;
     let preview;
     try {
       const inst = selected && findInst(selected);
       const carrier = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
       const hostile = carrier?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || carrier?.counterPayload;
-      preview = selected && hostile ? previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected))
-        : attackHitPreview(combat, combat.player, enemy, { combatProfile: { maneuver: 'attack', camp: 'physical', range: 'melee' }, effects: [{ op: 'damage', target: 'enemy', amount: 0 }] });
+      const offensive = hostile && (carrier.effects?.some(effect => effect.op === 'damage') || carrier.counterPayload?.hp);
+      if (!offensive) return null;
+      preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected));
     } catch { return null; }
     if (!preview || !Number.isFinite(preview.hitChance)) return null;
     const node = document.createElement('span');
@@ -1647,7 +1649,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (bar.id === 'hp') {
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const next = el.nextSibling;
-        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 && (entity.kind !== 'enemy' || hitChanceKnown(entity)) ? effectiveEvasion(combat, v, { baseEntity: entity }) : null }, { tooltips, blockHelp: helpText('block') });
+        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null }, { tooltips, blockHelp: helpText('block') });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);

@@ -1935,7 +1935,7 @@
 .target-hud-panel { box-sizing: border-box; padding: .65em .75em; border: 1px solid #84734c; border-radius: .35em; background: linear-gradient(145deg, #28231bf5, #15130ff5); box-shadow: 0 .2em .8em #0008; }
 .target-hud-name { font-family: Georgia, serif; font-size: 1.05em; margin-bottom: .4em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .target-hud-meters.meters { width: 100%; min-width: 0; gap: .4em; display: flex; flex-direction: column; }
-.target-hud-meters :is(.combat-health-row, .as-meter, .m-track) { width: 100% !important; min-width: 0 !important; max-width: none !important; }
+.target-hud-meters :is(.combat-health-row, .combat-health-meter, .m-track) { width: 100% !important; min-width: 0 !important; max-width: none !important; }
 .target-hud-meters .as-meter { font-size: .85em; height: 1.15em !important; min-height: 0; }
 .target-hud-meters .m-track { height: 1.15em !important; min-height: 0; }
 .target-hud-meters .m-value { font-size: 1em !important; line-height: 1; }
@@ -1982,7 +1982,15 @@ body.reduce-motion .target-hud-detail { transition: none; }
 :root .combat[data-target-hud='true'] .combatant.context-selected .sprite { scale: 1 !important; }
 :root .combat[data-target-hud='true'] .target-hud-intent .intent-icon { width: 1.65em; height: 1.65em; }
 :root .combat[data-target-hud='true'] .target-hud-meters .combat-health-row { position: relative; display: flex; padding: 0; }
-:root .combat[data-target-hud='true'] .target-hud-meters .combat-health-badge { display: none; }
+:root .combat[data-target-hud='true'] .target-hud-meters .combat-health-badge {
+  display: grid; flex: 0 0 1.8em; width: 1.8em !important; height: 1.8em;
+  min-width: 0 !important; max-width: 1.8em !important; aspect-ratio: 1; padding: 0;
+}
+:root .combat[data-target-hud='true'] .target-hud-meters .combat-health-row { flex-wrap: wrap; gap: .3em; }
+:root .combat[data-target-hud='true'] .target-hud-meters .combat-health-meter { order: -1; flex: 0 0 100%; }
+:root .combat[data-target-hud='true'] .target-hud-statuses.statuses { flex-wrap: wrap; }
+:root .combat[data-target-hud='true'] .target-hud-statuses .status-icon-glyph svg { width: 100%; height: 100%; object-fit: contain; }
+
 :root .combat[data-target-hud='true'] .target-hud-meters .combat-health-meter { flex: 1; --meter-tone: #ad403a; }
 :root .combat[data-target-hud='true'] .target-hud-meters .m-plate { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; pointer-events: none; }
 :root .combat[data-target-hud='true'] .target-hud-statuses.statuses { justify-content: flex-end !important; }
