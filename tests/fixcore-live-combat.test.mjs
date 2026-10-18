@@ -150,3 +150,29 @@ test('canonical equipped gear bindings mount with copy identity and disappear on
  combat.loadout.sets.leftHand[0]=null;combat.loadout.sets.rightHand[0]=null;syncLoadoutProperties(combat);
  assert.equal(protectionReceipt(combat,combat.player,'magical',20).amount,15);
 });
+
+test('registered spell Block remains Block and refills both protection pools',async()=>{
+ const {expandedEnemyMove,enemyMoveCarrier}=await import('../src/engine/combatCardTactics.js');
+ const {combat,target}=live();const def=reg.enemies.get('briarHermit'),move=def.moves.rootShelter;
+ assert.ok(move.block>0);target.enemyId='briarHermit';target.ratings={ar:0,dr:0,ward:20,poise:20};target.persistentWard={value:2,max:20};target.persistentPoise={value:2,max:20};
+ const projected=expandedEnemyMove(target,move,'rootShelter',combat);
+ assert.equal(projected.block,move.block);assert.equal(projected.barrier,move.barrier);
+ gainBlock(combat,target,projected.block,enemyMoveCarrier(target,move,'rootShelter',combat));
+ assert.equal(target.persistentWard.value,2+move.block);assert.equal(target.persistentPoise.value,2+move.block);
+});
+test('enemy held gear and relic behavior mounts are owner scoped and leave on unequip',async()=>{
+ const {syncConfiguredEnemyProperties}=await import('../src/engine/properties.js');
+ const {protectionReceipt}=await import('../src/model/fixCoreMechanics.js');
+ const {combat,target}=live(),pinned=structuredClone(profile);
+ const definition=pinned.content.enemies.find(row=>row.id===target.enemyId);
+ const gear=pinned.content.gear.find(row=>row.id===definition.defaultGear[0].id);
+ gear.mechanicBindings=[{tag:'defense:wardProtection',parameters:{multiplier:.5}}];
+ const relic=pinned.content.enemyRelics[0];relic.mechanicBindings=[{tag:'defense:poiseProtection',parameters:{multiplier:.6}}];
+ definition.defaultRelics=[{key:'test-relic',id:relic.id}];
+ combat.gameProfile=pinned;syncConfiguredEnemyProperties(combat);
+ assert.equal(protectionReceipt(combat,target,'magical',20).amount,10);
+ assert.equal(protectionReceipt(combat,target,'physical',20).amount,12);
+ assert.equal(protectionReceipt(combat,combat.player,'magical',20).amount,15);
+ definition.defaultGear=[];definition.defaultRelics=[];syncConfiguredEnemyProperties(combat);
+ assert.equal(protectionReceipt(combat,target,'magical',20).amount,15);assert.equal(protectionReceipt(combat,target,'physical',20).amount,15);
+});

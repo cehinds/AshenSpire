@@ -1,3 +1,4 @@
+import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 // src/engine/properties.js — the one mount path for property rules
 // (docs/proposal-progression-and-property-system.md §3, plan phase 1b)
 //
@@ -99,7 +100,7 @@ export function mountProperties(ctx, carrier) {
   // the class card names) can ask which mounts speak for a track without a
   // second table. Empty for the carriers that carry none.
   owned[sourceKey] = {
-    ...mechanicMetadata(carrier), kind: carrier.kind, id: carrier.id, instanceId: carrier.instanceId || carrier.id, rules, scopeTags: [...(carrier.scopeTags || [])],
+    ...(carrier.configuredEnemy ? {configuredEnemy:true} : {}), ...mechanicMetadata(carrier), kind: carrier.kind, id: carrier.id, instanceId: carrier.instanceId || carrier.id, rules, scopeTags: [...(carrier.scopeTags || [])],
     // The worn piece a slotted sigil rides (SPEC §14.4), so the loadout diff
     // knows the mount is its to take away.
     ...(carrier.heldBy ? { heldBy: carrier.heldBy } : {}),
@@ -367,5 +368,30 @@ export function syncLoadoutProperties(combat, entity, loadout, itemUpgradeLevels
   for (const carrier of wanted) {
     const owned = combat.propertyMounts && combat.propertyMounts[ownerKey];
     if (!owned || !owned[propertySourceKey(carrier)]) mountProperties(combat, carrier);
+  }
+}
+
+/** Configured enemies hold exactly their pinned gear and relic slots. */
+export function syncConfiguredEnemyProperties(ctx) {
+  if (!fixCoreEnabled(ctx)) return;
+  const content=ctx.gameProfile?.content;
+  if (!content) return;
+  for(const enemy of ctx.enemies || []) {
+    const definition=content.enemies?.find(row=>row.id===enemy.enemyId);
+    if(!definition) continue;
+    const carriers=[];
+    for(const [field,catalog,relic] of [['defaultGear','gear',false],['defaultRelics','enemyRelics',true]]) {
+      for(const slot of definition[field] || []) {
+        const source=content[catalog]?.find(row=>row.id===slot.id);
+        if(!source || !hasMechanics(source)) continue;
+        carriers.push({...mechanicMetadata(source),kind:relic ? 'relic' : source.kind==='armor' ? 'armour' : 'armament',
+          id:source.id,instanceId:`${source.id}@${slot.key}`,ownerKey:enemy.id,tagIds:source.propertyTags || [],configuredEnemy:true});
+      }
+    }
+    const keys=new Set(carriers.map(propertySourceKey));
+    for(const [key,mount] of Object.entries(ctx.propertyMounts?.[enemy.id] || {})) {
+      if(mount.configuredEnemy && !keys.has(key)) unmountProperties(ctx,{...mount,ownerKey:enemy.id,tagIds:[]});
+    }
+    for(const carrier of carriers) if(!ctx.propertyMounts?.[enemy.id]?.[propertySourceKey(carrier)]) mountProperties(ctx,carrier);
   }
 }
