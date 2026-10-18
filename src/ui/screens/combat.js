@@ -1342,7 +1342,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const ownSeat = () => combat.playerKey || 'player';
   const reactionKind = option => {
     const inst = findInst(option.play?.cardInstanceId);
-    try { return inst ? kindForCard(resolveCombatCard(combat, inst))?.maneuver ?? null : null; } catch { return null; }
+    // The card's combat profile names its maneuver for every card family (counters and prepared
+    // spells included); kindForCard is the at-rest glyph classifier and returns null for those.
+    try {
+      if (!inst) return null;
+      const card = resolveCombatCard(combat, inst);
+      return combatProfileFor(card)?.maneuver ?? kindForCard(card)?.maneuver ?? null;
+    } catch { return null; }
   };
   function autoReactionChoice() {
     const pending = combat.pendingReaction;

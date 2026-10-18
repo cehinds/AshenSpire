@@ -73,3 +73,11 @@ test('a fresh ledger replays a restored eventLog to each seat\'s last confirmed 
   assert.deepEqual(restored.get('p2'), live.get('p2'));
   assert.notEqual(restored.get('p1'), null);
 });
+
+test('counter and defend cards carry a maneuver through their combat profile (kindForCard alone returns null)', async () => {
+  const { combatProfileFor } = await import('../src/model/combatCardProfile.js');
+  for (const id of ['frostCounter', 'fireCounter', 'crystalBarrier', 'frostVeil']) {
+    const maneuver = combatProfileFor({ cardId: id })?.maneuver;
+    assert.ok(maneuver, `${id} has a maneuver`);
+  }
+});
