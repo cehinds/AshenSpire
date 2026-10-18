@@ -45,3 +45,15 @@ test('instant and reduced motion retain semantic event order with zero waits', (
   assert.equal(instant.intentMs + instant.wordMs + instant.afterSpriteMs + instant.reactionMs, 0);
   setAnimSpeed('normal'); assert.equal(actionPacing({ reduced: true }).scale, 0);
 });
+
+test('watchdog extends to the real authored handle when its estimate is too short', () => {
+  const c = clock(), trace = [];
+  const timing = { intentMs: 500, wordMs: 500, afterSpriteMs: 500, reactionMs: 500, stepMs: 0, bannerMs: 0, spriteSpeed: {} };
+  runActionTimeline([{ actorId: 'p', kind: 'attack' }], {
+    maxSpriteMs: () => 1,
+    onSprite: () => ({ impactMs: 5000, totalMs: 10000, cancel() {} }),
+    onFlush: () => trace.push('flush'), onDone: () => trace.push('done'),
+  }, timing, c);
+  c.advance(6000); assert.deepEqual(trace, [], 'the underestimated watchdog cannot finish a live clip');
+  c.advance(10000); assert.deepEqual(trace, ['done']); assert.equal(c.pending, 0);
+});
