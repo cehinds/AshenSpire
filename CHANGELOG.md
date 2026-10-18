@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **Preview defaults: visible map, exact intents, floor 1 is a fight** ([#2117](https://github.com/cehinds/AshenSpire/pull/2117), `0.7.1.1603`). The map is fully visible from the start, enemy intents are always shown exactly, and a run opens on a fight.
+- **Preview defaults: visible map, exact intents, floor 1 is a fight** ([#2117](https://github.com/cehinds/AshenSpire/pull/2117), `0.7.1.1605`). The map is fully visible from the start, enemy intents are always shown exactly, and a run opens on a fight.
+- **CI: the flaky checks explain themselves; the click-impact probe re-measures once** ([#2118](https://github.com/cehinds/AshenSpire/pull/2118), `0.7.1.1605`). CI explains the two slow checks when they fail and re-measures the click-impact probe once before judging it.
 
 - **Content authority: events and their tables are JSON** ([#2115](https://github.com/cehinds/AshenSpire/pull/2115), `0.7.1.1603`). Events are plain data files now; nothing changes in play.
 - **Combat statuses are plain data files now** ([#2113](https://github.com/cehinds/AshenSpire/pull/2113), `0.7.1.1601`). Nothing changes in play. The 56 authored combat statuses are JSON in content/source like the relics, stances and flasks; the derived expansion statuses stay where they were and are joined at load.
