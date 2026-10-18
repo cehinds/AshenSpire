@@ -135,6 +135,7 @@ import {
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { clearSelection, litCard, onSelectionChange } from '../components/cardSelection.js';
 import { smithingStoneNote } from '../../model/rewardplan.js';
+import { cardAffectsEnemies } from '../../model/hitBadge.js';
 
 // LEVEL CARDS (SPEC §15.1) in the co-op spoils and the away-seat catch-up.
 // A tap only SELECTS: the pick is written into `picks` (ordinal → card id)
@@ -1021,9 +1022,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (!actor || actor.combatExpansionVersion !== 2) return;
     const selected = actor.hand?.find(card => card.instanceId === litCard());
     const definition = selected && cardDef(selected);
-    const hostile = definition?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || definition?.counterPayload;
-    const carrier = hostile ? { ...definition, combatProfile: combatProfileFor(definition) } : { combatProfile: { maneuver: 'attack', camp: 'physical', range: 'melee' }, effects: [{ op: 'damage', target: 'enemy', amount: 0 }] };
+    const hostile = cardAffectsEnemies(definition);
+    const carrier = hostile ? { ...definition, combatProfile: combatProfileFor(definition) } : null;
     app.querySelectorAll('.card-hit-chances').forEach(node => node.remove());
+    app.querySelectorAll('.combat-hit-chance').forEach(node => node.remove());
+    if (!carrier) return;
     const selectedCard = hostile && app.querySelector('.hand .card[data-instance-id="' + CSS.escape(selected.instanceId) + '"]');
     const cardOdds = document.createElement('div');
     cardOdds.className = 'card-hit-chances';
@@ -1031,7 +1034,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     for (const enemy of sc.enemies) {
       const frame = app.querySelector('.combatant.enemy[data-eid="' + CSS.escape(enemy.id) + '"]');
       frame?.querySelector('.combat-hit-chance')?.remove();
-      if (!frame || enemy.hp <= 0 || enemy.knowledgeAction?.reads?.[me]?.visibility !== 'exact') continue;
+      if (!frame || enemy.hp <= 0) continue;
       const preview = coopCardHitPreview(sc, registries, actor, enemy, carrier, { selected: !!hostile, member: snap.party.find(member => member.id === actor.id) });
       if (!Number.isFinite(preview?.hitChance)) continue;
       const badge = document.createElement('span');
