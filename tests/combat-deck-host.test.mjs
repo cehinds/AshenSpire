@@ -37,3 +37,13 @@ test('cancel and a replaced run never commit a stale draft', () => {
   f.editor.run.deck.pop(); f.editor.onCancel(); assert.deepEqual(f.owner, original); assert.equal(f.writes, 0);
   f.context.run = structuredClone(f.owner); f.editor.onDone(); assert.equal(f.writes, 0);
 });
+
+test('failed persistence restores the deck and snapshot without touching active piles', () => {
+  const f = fixture(), before = structuredClone(f.owner), piles = structuredClone(f.combat.piles);
+  const moved = f.editor.run.deck.pop(); f.editor.run.sideboard.push(moved);
+  f.context.commitCombatSnapshot = () => { f.owner.combatEntered = { nodeId: 'n' }; };
+  f.context.persist = () => { throw new Error('QuotaExceededError'); };
+  f.editor.onDone();
+  assert.deepEqual(f.owner, before);
+  assert.deepEqual(f.combat.piles, piles);
+});
