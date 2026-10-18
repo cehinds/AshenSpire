@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
+- **Auto-combat answers your reactions only** ([#2147](https://github.com/cehinds/AshenSpire/pull/2147), `0.7.1.1627`). Auto-combat now only answers your reaction prompts, countering the attack you can read or matching your last stance. It never plays your turn.
+
 - **ModalManager: the co-op seat strip goes inert under a door** ([#2132](https://github.com/cehinds/AshenSpire/pull/2132), `0.7.1.1627`). In couch co-op the seat tabs now sleep under an open dialog instead of answering taps through it.
 - **Core 2 brings combat calculations and card information together** ([#2129](https://github.com/cehinds/AshenSpire/pull/2129), `0.7.1.1625`). Adds JSON-authored combat rules, typed protection and calculation receipts, equipped-stat and deck progression fixes, weighted rewards and fuller shops, preboss rests and traveled routes, and readable combat pacing with optional automatic play. Earlier Core definitions remain separately available.
 - **Rear enemy designs have a feature-only review gallery** ([#2071](https://github.com/cehinds/AshenSpire/pull/2071), `0.7.1.1623`). Compare 130 rear design drafts, original identity references, and three elite pilot sets with nine held poses, attack and evade clips, and static hurt and defeated reactions. Missing clips stay explicit. This draft review is not promoted: runtime alignment, playable unlocks, other motion sets, and external art publication remain pending.
