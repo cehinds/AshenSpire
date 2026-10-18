@@ -1,17 +1,6 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — FixCore
 
-[Play FixCore — verified published build 0.7.1.1620](https://cehinds.github.io/AshenSpire/branches/feature/FixCore/latest/)
-· [Download the newer tested build (0.7.1.1622)](https://github.com/cehinds/AshenSpire/actions/runs/39164694361/artifacts/12149454632)
-
-Shared JSON mechanics drive equipped bonuses, card damage, protection and calculation details. The public preview is verified at **1620**; publication of the newer **1622** build is pending. These fresh captures show the merged rainy battlefield with multi-hit cards, known hit odds and compact defense/status indicators. [Capture provenance and verification](docs/preview/features/FixCore/merged/README.md). Artifact downloads require GitHub sign-in.
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Mobile: multi-hit card and defense indicators in the rainy street](docs/preview/features/FixCore/merged/mobile.png) | ![Desktop: damage calculation and named sources in the rainy street](docs/preview/features/FixCore/merged/desktop.png) | ![Wide: selected card hit odds and layered battlefield](docs/preview/features/FixCore/merged/wide.png) | ![Tablet: damage calculation and rainy combat layout](docs/preview/features/FixCore/merged/tablet.png) |
-<!-- feature-preview:end -->
 
 
 
