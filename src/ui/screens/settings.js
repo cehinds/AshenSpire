@@ -645,9 +645,10 @@ const ROWS = [
   { cat: 'Accessibility', key: 'touchFlickDistance', type: 'number', def: UI_DEFAULTS.touchFlick.distance.def,
     min: UI_DEFAULTS.touchFlick.distance.min, max: UI_DEFAULTS.touchFlick.distance.max, slider: true, practice: true, label: t('settings.row.touchFlickDistance'),
     note: tFull('settings.row.touchFlickDistance') },
-  // Owner, 2026-10-18: a tap on a playable card plays it when its target is
-  // unambiguous. On by default; off restores select-then-double-tap.
-  { cat: 'Accessibility', key: 'oneTapPlay', def: true, label: t('settings.row.oneTapPlay'),
+  // Owner ruling, 2026-10-18 14:15: "a tap never plays a card; tap selects, a
+  // second tap or a target pick plays". Off by default. On is an opt-in: a tap
+  // on a card with an unambiguous target plays it. Off is select, then double-tap.
+  { cat: 'Accessibility', key: 'oneTapPlay', def: false, label: t('settings.row.oneTapPlay'),
     note: tFull('settings.row.oneTapPlay') },
   { cat: 'Accessibility', key: 'reducedMotion', def: false, label: t('settings.row.reducedMotion'),
     note: tFull('settings.row.reducedMotion') },

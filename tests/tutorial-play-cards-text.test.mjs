@@ -17,5 +17,5 @@ test('the callout picks its string from the setting combat.js passes', () => {
   const tutorial = read('../src/ui/components/tutorial.js');
   assert.match(tutorial, /text: \(\{ oneTapPlay \}\) => t\(oneTapPlay \? 'tutorial\.playCards\.tap' : 'tutorial\.playCards\.select'\)/);
   assert.match(tutorial, /step\.text\(\{ oneTapPlay \}\)/);
-  assert.match(read('../src/ui/screens/combat.js'), /mountTutorial\(app, \{[^}]*oneTapPlay: \(meta\.settings \|\| \{\}\)\.oneTapPlay !== false/);
+  assert.match(read('../src/ui/screens/combat.js'), /mountTutorial\(app, \{[^}]*oneTapPlay: \(meta\.settings \|\| \{\}\)\.oneTapPlay === true/);
 });

@@ -2548,13 +2548,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
     // THE PLAY IS UNAMBIGUOUS when there is nothing for the player to choose: a
     // card that needs no target (self cards, and a sweep of every enemy), or a
-    // card that asks for ONE enemy while exactly one is alive. Owner, 2026-10-18:
-    // a tap on such a card plays it; the 2026-08-17 "same in all instances" hold
-    // ruling and SPEC §7.3's "selection stays separate from play" stand for
-    // every other case, where the tap still selects and the player picks.
+    // card that asks for ONE enemy while exactly one is alive.
+    // OWNER RULING, 2026-10-18 14:15: "a tap never plays a card; tap selects, a
+    // second tap or a target pick plays". One-tap play is therefore OPT-IN: it is
+    // off by default (oneTapPlay must be exactly true), and only a player who
+    // turns the Settings row on gets a single tap that plays. With it off, a tap
+    // selects and a quick double-tap on the selected card, or a target pick, plays.
+    // The 2026-08-17 "same in all instances" hold ruling and SPEC §7.3's
+    // "selection stays separate from play" still govern every other case.
     const playIsUnambiguous = () => !pv.needsTarget
       || combat.enemies.filter(enemy => enemy.alive).length === 1;
-    const oneTapOn = () => (meta.settings || {}).oneTapPlay !== false;
+    const oneTapOn = () => (meta.settings || {}).oneTapPlay === true;
     const oneTapPlays = () => oneTapOn() && playIsUnambiguous();
     const play = () => {
       if (!pv.needsTarget) playCard(inst.instanceId, null);
@@ -3521,7 +3525,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   animateEvents(combat.eventLog.filter((e) => e.type === 'relicTriggered'), fxCtx, () => {});
 
   // First-run guided callouts (SPEC §9 M4) — once per player, over a live board.
-  if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone(), oneTapPlay: (meta.settings || {}).oneTapPlay !== false });
+  if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone(), oneTapPlay: (meta.settings || {}).oneTapPlay === true });
   showPendingDiscard();
 }
 import { equipmentAnimationForLoadout, combatEquipmentAnimationForLoadout, animationTiming } from '../../model/equipmentAnimation.js';
