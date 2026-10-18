@@ -65,3 +65,13 @@ test('a lost pointer release retains a bounded completion fallback', () => {
   assert.equal(trace.filter(row => row[0] === 'done').length, 1);
   assert.ok(!trace.some(row => row[0] === 'hud'), 'a paused timeline cannot resume stale stages');
 });
+
+test('auto-combat runs at its own multiplier, default ×1.5, and manual play keeps combatSpeed', () => {
+  setAnimSpeed('normal');
+  setCombatPacing({ combatSpeed: 2 }); const manual = actionPacing().scale;
+  setCombatPacing({ combatSpeed: 2, autoCombat: true }); const auto = actionPacing().scale;
+  setCombatPacing({ autoCombat: true, autoCombatSpeed: 99 }); const clamped = actionPacing().scale;
+  setCombatPacing({ autoCombat: true, autoCombatSpeed: 0 }); const floor = actionPacing().scale;
+  setCombatPacing();
+  assert.equal(manual, 1 / 2); assert.equal(auto, 1 / 1.5); assert.equal(clamped, 1 / 3); assert.equal(floor, 1);
+});

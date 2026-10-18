@@ -4,7 +4,8 @@
     "actionWordMs": 500,
     "afterSpriteMs": 500,
     "reactionDelayMs": 500,
-    "spritePlaybackRate": 0.5
+    "spritePlaybackRate": 0.5,
+    "stageGapMs": 1000
   },
   "behavior": {
     "autoCombat": false,
@@ -13,6 +14,11 @@
     "speedMinimum": 0.25,
     "speedMaximum": 8,
     "delayMaximumMs": 5000,
-    "maxActionsPerTurn": 64
+    "maxActionsPerTurn": 64,
+    "autoCombatSpeed": 1.5,
+    "autoSpeedMinimum": 1,
+    "autoSpeedMaximum": 3,
+    "stageGapMinimumMs": 250,
+    "stageGapMaximumMs": 2000
   }
 }
