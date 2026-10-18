@@ -39,3 +39,12 @@ test('creation groups equivalent cards and preserves rank/enhancement identity',
   ];
   assert.deepEqual(groupCardVariants(refs).map(group=>group.count),[2,1,1,1]);
 });
+
+test('draft commits preserve owned enhancements and reject forged carrier fields', async () => {
+  const {commitDeckEditDraft}=await import('../src/model/deckRules.js');
+  const run={gameProfile:profile,class:'reaver',deck:[{instanceId:'old',cardId:'core.strike',upgraded:true}],sideboard:[]};
+  const edited=structuredClone(run);edited.deck=[];
+  assert.throws(()=>commitDeckEditDraft(reg,run,edited,{deckMinUnlimited:true}),/delete an owned/);
+  edited.deck=[...run.deck,{instanceId:'forged',cardId:'core.strike',magicShare:1}];
+  assert.throws(()=>commitDeckEditDraft(reg,run,edited,{deckMinUnlimited:true}),/invent/);
+});

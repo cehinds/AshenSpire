@@ -219,7 +219,7 @@ export function resolveGearItem(item, settings, { rank = item.rank ?? 1 } = {}) 
     const norm = (w, share) => { const s = Object.values(w).reduce((a, b) => a + b, 0) || 1; return Object.fromEntries(Object.entries(w).map(([k, v]) => [k, v / s * share])); };
     const merged = settings.poolSizes.merged?.[item.rarity];
     const whole = armorBudget ?? (merged ? (settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? merged.min : merged.max) : target('ratings') + target('bonus'));
-    const remaining = whole - sum(GEAR_KEYS) - tagCost;
+    const remaining = (settings.fillTo === 'none' ? 0 : whole) - sum(GEAR_KEYS) - tagCost;
     // Share of the single pool by rarity (owner: most commons give AR/DR/Poise only).
     const share = settings.mergedShare[item.rarity] || settings.mergedShare.default;
     fill = gearSplit(remaining, { ...norm(ratingsW, share.ratings), ...norm(bonusW, share.bonus) });
@@ -245,6 +245,10 @@ function verifyGearContent(content, settings) {
     if (!settings.rarities.includes(item.rarity)) fail(`${at}/rarity`, `unknown rarity '${item.rarity}'`);
     for (const t of item.tags || []) if (!settings.tags[t]) fail(`${at}/tags`, `unknown tag '${t}'`);
     for (const k of Object.keys(item.points || {})) if (!GEAR_KEYS.includes(k) || !Number.isSafeInteger(item.points[k]) || item.points[k] < 0) fail(`${at}/points/${k}`, 'expected known key and nonnegative integer');
+    for (const [pool, weights] of Object.entries(item.weights || {})) {
+      if (!['ratings','bonus'].includes(pool)) fail(`${at}/weights/${pool}`, 'unknown weight pool');
+      for (const [key, weight] of Object.entries(weights)) if (!(pool === 'ratings' ? GEAR_RATINGS : GEAR_ATTRIBUTES).includes(key) || !Number.isFinite(weight) || weight < 0) fail(`${at}/weights/${pool}/${key}`, 'expected a supported stat and nonnegative weight');
+    }
     const attrs = GEAR_ATTRIBUTES.filter(k => item.points?.[k] > 0);
     if (attrs.length > settings.maxAttributes) fail(`${at}/points`, `more than ${settings.maxAttributes} attributes`);
     const r = settings.poolSizes.ratings[item.rarity], b = settings.poolSizes.bonus[item.rarity];

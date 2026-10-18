@@ -83,3 +83,12 @@ test('archived Core 1 keeps its original gear and training policy', () => {
   assert.equal(old.content.cards.some(card=>card.id==='core.cantrip'),false);
   assert.ok(old.content.characters.find(row=>row.id==='starseer').tags.includes('training.basic'));
 });
+test('equipment inspection exposes converted values and armor rank budget', async () => {
+  const {equipmentCardModel}=await import('../src/model/equipmentCard.js');
+  const {resolveUpgradedEquipment}=await import('../src/model/itemUpgrades.js');
+  const armor=reg.equipment.armour.find(piece=>piece.classId==='reaver' && piece.id==='wayfarerPlate');
+  assert.ok(armor);
+  const model=equipmentCardModel(reg,resolveUpgradedEquipment(reg,`armor/reaver/${armor.id}`,1));
+  assert.ok(model.bonuses.some(row=>row.label==='Rank 2 · 4 points'));
+  assert.ok(model.facts.every(row=>row.explanation.includes('stat-budget point(s)')));
+});
