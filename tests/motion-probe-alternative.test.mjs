@@ -190,13 +190,19 @@ test('every same-door variant plant still changes the current real source', asyn
   }
   assert.ok(corpus.extraCopy.includes('assets-display'), 'clean and planted copies must contain the same variant artwork');
   const blankCanvas = corpus.plants.find(plant=>plant.name === 'the class canvas paints no character pixels');
-  assert.equal(blankCanvas.find, '    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize,reuse:!!classSmash&&playing?.action===\'smash\'&&!clipping&&!reacting});ctx.restore();');
+  assert.equal(blankCanvas.find, "    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize,\n      reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting,\n      reuseWork:!!pilotFrames&&!bodyReaction&&!clipping&&!reacting\n        && (!playing || !!playing.sequence.pilot&&playing.sequence.travel.every(offset=>offset===0))});ctx.restore();");
   assert.equal(blankCanvas.replace, '    ctx.restore();', 'the plant removes character painting while preserving canvas state cleanup');
   for (const plant of corpus.plants) {
     for (const edit of plant.edits || [plant]) {
       const current = readFileSync(new URL(`../${edit.file}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
       assert.ok(current.includes(edit.find), `${plant.name}: drifted mutation in ${edit.file}`);
       assert.notEqual(edit.find, edit.replace, `${plant.name}: a no-op is not a known-bad`);
+      if (plant === blankCanvas) {
+        const planted = current.replace(edit.find, edit.replace);
+        assert.equal(planted.includes('auraRenderer.draw('), false, 'the complete current character draw call is removed');
+        assert.equal((planted.match(/ctx\.restore\(\)/g) || []).length, (current.match(/ctx\.restore\(\)/g) || []).length,
+          'blanking the character preserves canvas state cleanup');
+      }
     }
   }
 });
