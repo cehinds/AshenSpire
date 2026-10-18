@@ -34,9 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **Relics, stances and flasks are plain data files now** ([#2110](https://github.com/cehinds/AshenSpire/pull/2110), `0.7.1.1593`). Nothing changes in play. The 63 relics, the stances and the 7 flasks are authored as JSON in content/source and compiled into the game like the rest of the content tables; the design notes that lived as code comments are kept beside them.
-
-- **Misspelled targets, statuses and card names are refused at build time** ([#2108](https://github.com/cehinds/AshenSpire/pull/2108), `0.7.1.1593`). A card or enemy move that names an unknown effect target, status or card used to build fine and fail in the middle of a fight; the game build now refuses it with the exact path and the allowed vocabulary.
+- **Relics, stances and flasks are plain data files now** ([#2110](https://github.com/cehinds/AshenSpire/pull/2110), `0.7.1.1595`). Nothing changes in play. The 63 relics, the stances and the 7 flasks are authored as JSON in content/source and compiled into the game like the rest of the content tables; the design notes that lived as code comments are kept beside them.
+- **Misspelled targets, statuses and card names are refused at build time** ([#2108](https://github.com/cehinds/AshenSpire/pull/2108), `0.7.1.1595`). A card or enemy move that names an unknown effect target, status or card used to build fine and fail in the middle of a fight; the game build now refuses it with the exact path and the allowed vocabulary.
 
 - **Hold-to-confirm rings every tick, exactly on pitch** ([#2105](https://github.com/cehinds/AshenSpire/pull/2105), `0.7.1.1593`). The press-and-hold phrase (three ticks and the arrival) no longer loses a tick when a slow frame crosses two marks at once, and its notes no longer wobble: the pitch variance that makes hits sound different each time is switched off for this one authored phrase.
 - **The game file is 1.7 MB smaller: card layouts are stored once, not 376 times** ([#2104](https://github.com/cehinds/AshenSpire/pull/2104), `0.7.1.1591`). The playable file carried a copy of the shared card template inside every one of the 376 cards; it now stores only what each card changes, so the file is back under its size limit and cards look and behave exactly as before.
