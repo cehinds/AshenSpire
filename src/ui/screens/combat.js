@@ -2180,9 +2180,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
   function isUnplayable(inst) { return !!unplayableReason(inst); }
 
-  /** The pulse reports that the player still has an affordable play. */
-  function endTurnHasPlayable() {
-    const anyPlayable = combat.piles.hand.some((inst) => {
+  /** A card in hand the player can still afford and play. The End Turn beat reads this and nothing broader: the ruling is "no card in hand is playable" (owner, 2026-10-18). */
+  function endTurnHasPlayableCard() {
+    // No outer Energy gate: a Light dodge costs 0 Actions and 1 Stamina, so a
+    // player at 0 Energy with Stamina left still holds a playable card, and
+    // the per-card check below already prices every pool.
+    return combat.piles.hand.some((inst) => {
       if (isUnplayable(inst)) return false;
       // The live preview — class-priced dodge costs, Power reductions — the
       // same numbers the badge shows and the engine charges, in all three
@@ -2197,10 +2200,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         && combat.player.mana >= pv.manaCost
         && combat.player.stamina >= (pv.staminaCost || 0);
     });
-    // No outer Energy gate: a Light dodge costs 0 Actions and 1 Stamina, so a
-    // player at 0 Energy with Stamina left still holds a playable card, and
-    // the per-card check above already prices every pool.
-    return anyPlayable || combat.combatExpansionVersion === 2 && recoveryControls(combat, combat.player).some(row => !row.disabled && combat.player.energy >= row.costPerStack);
+  }
+
+  /** The pulse reports that the player still has an affordable play: a card, or (expansion v2) a control-recovery action. */
+  function endTurnHasPlayable() {
+    return endTurnHasPlayableCard() || combat.combatExpansionVersion === 2 && recoveryControls(combat, combat.player).some(row => !row.disabled && combat.player.energy >= row.costPerStack);
   }
 
   function paintActionCounts() {
@@ -2542,10 +2546,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (pv.needsTarget || dragTargetMode === 'all') { selected = inst.instanceId; selfArm = null; syncCardSelection(); }
       else armSelf(inst.instanceId);
     };
-    const confirm = () => {
-      if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-      if (busy || !affordable || dragging) return;
-      if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
+    // THE PLAY IS UNAMBIGUOUS when there is nothing for the player to choose: a
+    // card that needs no target (self cards, and a sweep of every enemy), or a
+    // card that asks for ONE enemy while exactly one is alive. Owner, 2026-10-18:
+    // a tap on such a card plays it; the 2026-08-17 "same in all instances" hold
+    // ruling and SPEC §7.3's "selection stays separate from play" stand for
+    // every other case, where the tap still selects and the player picks.
+    const playIsUnambiguous = () => !pv.needsTarget
+      || combat.enemies.filter(enemy => enemy.alive).length === 1;
+    const oneTapOn = () => (meta.settings || {}).oneTapPlay !== false;
+    const oneTapPlays = () => oneTapOn() && playIsUnambiguous();
+    const play = () => {
       if (!pv.needsTarget) playCard(inst.instanceId, null);
       else {
         const enemies = combat.enemies.filter(enemy => enemy.alive);
@@ -2554,6 +2565,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         else if (enemies.length === 1) playCard(inst.instanceId, enemies[0].id);
         else { focusTargeting(); showTooltipFor(el, '<p>Choose a highlighted enemy to play this card.</p>'); }
       }
+    };
+    const confirm = () => {
+      if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
+      if (busy || !affordable || dragging) return;
+      if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
+      play();
     };
     const tap = () => {
       // A queued card is taken back before the affordable check: `affordable` reads the energy left after queueing.
@@ -2569,17 +2586,28 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         showTooltipFor(el, '<p>' + esc(reasons.join(' ')) + '</p>');
         return;
       }
+      // One tap plays when there is nothing to choose, whether or not a hold has
+      // already selected the card (a held card is selected, not played, so its
+      // next tap must play it). Otherwise a tap selects and the second tap (or
+      // a target pick) plays, as before.
+      if (oneTapPlays()) { play(); return; }
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
       const now = performance.now();
       if (lastConfirmTap && now - lastConfirmTap <= 350) { lastConfirmTap = 0; confirm(); }
       else lastConfirmTap = now;
     };
+    const cardHoldMs = () => holdMs(meta.settings || {}, registries.balance.ui.holdConfirm)
+      || Number(registries.balance.ui.holdConfirm.steps.short) || 350;
     const holdProgress = document.createElement('span');
     holdProgress.className = 'card-hold-progress';
     holdProgress.setAttribute('aria-hidden', 'true');
     el.appendChild(holdProgress);
     return armHold(el, {
-      ms: () => affordable ? holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) : 0,
+      // THE CARD HOLD IS A SELECTION GESTURE, NOT A CONFIRM BEAT, so it does not
+      // follow the confirm dial to zero (owner, 2026-10-18): with holdConfirm
+      // `off` a long press must still select/inspect rather than read as a tap
+      // and play. It takes the dial's own `short` step as its fixed duration.
+      ms: () => affordable ? cardHoldMs() : 0,
       // A card hold is an alternate input for the same selection flow as a tap,
       // not a delayed second route that silently commits before the player has
       // chosen a target. Paint from pointer-down; crossing the shared movement
@@ -2588,18 +2616,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       onTap: tap, tapOnEarlyRelease: true, tapOnPointerRelease: true,
       onConfirm: () => {
         if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-        if (!(holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) > 0)) { tap(); return; }
         if (busy || !affordable || dragging) return;
-        // Only a card that asks for ONE enemy waits for the choice. A card
-        // that sweeps every enemy has nothing to choose (previewCard reports
-        // needsTarget false for it), so a completed hold plays it, as the tap
-        // path's confirm always has.
-        if (pv.needsTarget) {
-          select();
-          focusTargeting();
-          return;
-        }
-        playCard(inst.instanceId, null);
+        // THE COMPLETED HOLD SELECTS AND NEVER PLAYS, whatever oneTapPlay says
+        // (owner, 2026-10-18; SPEC 7.3): selecting is what reveals the
+        // information and Upcast controls and, for a card that asks for one
+        // enemy, starts the target choice. With one-tap play on a tap is the
+        // play; with it off a quick double-tap on the selected card plays.
+        select();
+        if (pv.needsTarget) focusTargeting();
       },
     });
   }
@@ -3193,7 +3217,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (plan.prompt) openHandDiscard(registries, plan, finish, $('.end-turn'));
     else finish();
   }
+  // Read the card-only fact for every press: a spent hand takes one tap,
+  // while an affordable card keeps the configured hold/review. Autoplay uses
+  // the same guarded commitEndTurn command directly.
   endTurnBeat = arm($('.end-turn'), 'endTurn', {
+    ctx: () => ({ playable: endTurnHasPlayableCard() }),
+    tapWhenNone: true,
     question: 'End your turn and let the enemies act?', confirmLabel: 'END TURN', onConfirm: commitEndTurn,
   });
   endTurnBeat.refresh();
@@ -3492,7 +3521,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   animateEvents(combat.eventLog.filter((e) => e.type === 'relicTriggered'), fxCtx, () => {});
 
   // First-run guided callouts (SPEC §9 M4) — once per player, over a live board.
-  if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone() });
+  if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone(), oneTapPlay: (meta.settings || {}).oneTapPlay !== false });
   showPendingDiscard();
 }
 import { equipmentAnimationForLoadout, combatEquipmentAnimationForLoadout, animationTiming } from '../../model/equipmentAnimation.js';

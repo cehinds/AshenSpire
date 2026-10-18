@@ -12,11 +12,14 @@ const out = process.env.FIXCORE_UI_OUT || '/tmp/fixcore-combat-ui';
 mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/chromium', args: ['--no-sandbox'] });
 const results = [], errors = [];
+// This fixture deliberately inspects selected cards; default one-tap play has
+// its own combat-one-tap-play browser coverage.
+const inspectionSettings = encodeURIComponent(JSON.stringify({oneTapPlay:false}));
 try {
   for (const [width, height] of [[390, 844], [1024, 768], [1440, 900], [1920, 1080]]) {
     const page = await browser.newPage({ viewport: { width, height }, hasTouch: true });
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(`${base}index.html?shot=combat&gameProfile=core`, { waitUntil: 'networkidle' });
+    await page.goto(`${base}index.html?shot=combat&gameProfile=core&shotSettings=${inspectionSettings}`, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => !!window.__combat);
     console.log(`Core 2 UI fixture: ${width}×${height}`);
     const fixture = await page.evaluate(async () => {
