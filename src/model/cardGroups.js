@@ -6,6 +6,9 @@ function stable(value) {
 }
 export function cardVariantKey(card) {
   const { instanceId, equipmentAttackSlotId, ...variant } = card;
+  variant.upgraded = !!variant.upgraded;
+  variant.rank = Number.isInteger(variant.rank) ? variant.rank : 1;
+  if (!variant.mods?.length) delete variant.mods;
   return JSON.stringify(stable(variant));
 }
 export function groupCardVariants(cards) {

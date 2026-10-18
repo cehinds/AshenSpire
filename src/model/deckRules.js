@@ -331,14 +331,15 @@ export function commitDeckEditDraft(registries, run, edited, settings = {}) {
   if (refusal) throw new Error(refusal);
   const before = new Map([...(run.deck || []), ...(run.sideboard || [])].map(card => [card.instanceId, card]));
   const after = [...(edited.deck || []), ...(edited.sideboard || [])];
-  if (after.some(card => !card.instanceId || !registries.cards.has(card.cardId))) throw new Error('Invalid edited card identity');
+  if (after.some(card => !card.instanceId)) throw new Error('Invalid edited card identity');
+  for (const card of after) if (!registries.cards.has(card.cardId)) throw new Error(`Unknown edited card '${card.cardId}'`);
   if (new Set(after.map(card => card.instanceId)).size !== after.length) throw new Error('Duplicate edited card identity');
   for (const card of after) {
     const owned = before.get(card.instanceId);
     if (owned && JSON.stringify(owned) !== JSON.stringify(card)) throw new Error('Deck editing cannot modify an owned card');
-    if (!owned && (!isUnlimitedBasic(card, run) || card.upgraded || card.rank > 1 || card.mods?.length)) throw new Error('Deck editing cannot invent a limited or enhanced card');
+    if (!owned && (!isUnlimitedBasic(card, run) || card.upgraded || card.rank > 1 || card.mods?.length || Object.keys(card).some(key => !['instanceId','cardId','upgraded'].includes(key)))) throw new Error('Deck editing cannot invent a limited or enhanced card');
   }
-  for (const [id, card] of before) if (!isUnlimitedBasic(card, run) && !after.some(row => row.instanceId === id)) throw new Error('Deck editing cannot delete an owned limited card');
+  for (const [id, card] of before) if ((!isUnlimitedBasic(card, run) || card.upgraded || card.rank > 1 || card.mods?.length) && !after.some(row => row.instanceId === id)) throw new Error('Deck editing cannot delete an owned limited card');
   for (const id of new Set(edited.deck.map(card => card.cardId))) if (edited.deck.filter(card => card.cardId === id).length > deckCopyLimit(registries, id, settings, run)) throw new Error('Deck editing exceeds the card copy limit');
   for (const key of EDIT_STATE_KEYS) {
     if (edited[key] === undefined) delete run[key];
