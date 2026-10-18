@@ -1,24 +1,6 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — layered card art
 
-[Feature build URL](https://cehinds.github.io/AshenSpire/branches/feature/newCardArt/latest/)
-
-Hosted publication could not be verified from this environment (HTTP 403).
-The local web build and component preview passed browser checks.
-
-Simple card art uses separate PNG backgrounds, objects and effects, selected
-from combat tags and JSON placement data. Shared small scepters retain the
-approved blue and pale mint ethereal weapon layers.
-[Runtime component preview](docs/preview/layered-card-art/index.html) ·
-[Placement JSON](asset-data/card-art/layered-runtime.json) ·
-[Capture record](docs/preview/features/newCardArt/capture.md).
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Mobile layered cards](docs/preview/features/newCardArt/mobile.png) | ![Desktop layered cards](docs/preview/features/newCardArt/desktop.png) | ![Wide layered cards](docs/preview/features/newCardArt/wide.png) | ![Tablet layered cards](docs/preview/features/newCardArt/tablet.png) |
-<!-- feature-preview:end -->
 
 
 
