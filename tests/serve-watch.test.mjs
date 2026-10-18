@@ -150,9 +150,13 @@ for (const [label, env] of [['recursive fs.watch', {}], ['per-directory watchers
 const REPLACES_WATCHED_DIR = process.platform === 'win32'
   && 'the per-directory fallback never runs on Windows (fs.watch is recursive there), and a watched directory cannot be renamed or removed while its handle is open';
 
-test('--watch: a directory deleted and recreated is watched on its new inode (per-directory watchers)', { skip: REPLACES_WATCHED_DIR }, async () => {
+// The recursive watcher holds one handle on the target root, so a subdirectory
+// can be deleted and recreated on every platform (Windows included: that IS its
+// production path); the per-directory fallback can only on POSIX, see above.
+for (const [label, env, skip] of [['recursive fs.watch', {}, false], ['per-directory watchers', { SERVE_WATCH_NO_RECURSIVE: '1' }, REPLACES_WATCHED_DIR]]) {
+test(`--watch: a directory deleted and recreated is watched on its new inode (${label})`, { skip }, async () => {
   const root = makeTree();
-  const { port, child } = await start(root, ['--watch'], { SERVE_WATCH_NO_RECURSIVE: '1' });
+  const { port, child } = await start(root, ['--watch'], env);
   const stream = await events(port);
   mkdirSync(join(root, 'src', 'later'));
   await new Promise((r) => setTimeout(r, 400));
@@ -170,6 +174,7 @@ test('--watch: a directory deleted and recreated is watched on its new inode (pe
   stream.close();
   child.kill();
 });
+}
 
 test('--watch: replacing content/source rebuilds before reload and watches the replacement', { skip: REPLACES_WATCHED_DIR }, async () => {
   const root = makeTree();
