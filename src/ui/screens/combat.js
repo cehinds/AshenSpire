@@ -2663,10 +2663,33 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   addEventListener('keydown', keyHandler);
 
   // ---------- actions ----------
+  // The killing blow is the LAST thing that cost the player HP. hpLost carries
+  // only { targetId, amount, cause } — no source — so the striker is the
+  // enemy of the damageDealt aimed at the player just before it, and the move
+  // is that enemy's latest enemyMoveStarted { sourceId, moveId }. A loss with
+  // another cause (a status tick, an HP-cost effect) has no striker: it names
+  // the cause. run.stats.lastHit is plain JSON, so it saves with the run; an
+  // older save simply has none and the game-over screen draws nothing.
+  const movesStarted = new Map();
+  let lastStrike = null;
   function trackStats(events) {
     for (const e of events) {
       if (e.type === 'damageDealt' && e.sourceId === 'player') run.stats.damageDealt += e.amount;
-      if (e.type === 'hpLost' && e.targetId === 'player') run.stats.damageTaken += e.amount;
+      if (e.type === 'enemyMoveStarted' && e.sourceId) movesStarted.set(e.sourceId, e.moveId || null);
+      if (e.type === 'damageDealt' && e.targetId === 'player' && e.sourceId && e.sourceId !== 'player') lastStrike = e.sourceId;
+      if (e.type === 'hpLost' && e.targetId === 'player') {
+        run.stats.damageTaken += e.amount;
+        const sourceId = e.cause === 'attack' ? lastStrike : null;
+        const striker = sourceId ? getEntity(combat, sourceId) : null;
+        const moveId = sourceId ? movesStarted.get(sourceId) : null;
+        const cause = String(e.cause || '').replace(/^proc:/, '');
+        run.stats.lastHit = {
+          sourceId,
+          sourceName: striker?.name || (sourceId ? words(sourceId) : (cause && cause !== 'effect' ? words(cause) : 'Unknown')),
+          move: moveId ? words(moveId) : null,
+          amount: e.amount,
+        };
+      }
     }
   }
 
