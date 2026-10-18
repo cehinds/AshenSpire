@@ -32,6 +32,15 @@ test('invalid imported rules are rejected and stale preferences fall back safely
   assert.equal(readNewGameProfile({}, fallback), fallback);
 });
 
+test('a Rest-first author fails at resolve time once the Core bundle sets firstFloor', () => {
+  const restFirst = { formatVersion: 1, core: 'ashen.core@1.0.0', modules: { routes: { restFloors: [1, 6] } } };
+  assert.throws(() => resolveGameProfile(restFirst), e => e.path === '$/modules/routes/firstFloor' && /firstFloor/.test(e.message));
+  const fallback = resolveGameProfile('core');
+  assert.equal(readNewGameProfile({ newGameProfile: JSON.stringify(restFirst) }, fallback), fallback, 'a stored Rest-first author falls back instead of crashing New Game');
+  const explicit = { ...restFirst, modules: { routes: { restFloors: [1, 6], firstFloor: null } } };
+  assert.doesNotThrow(() => resolveGameProfile(explicit), 'the Rest-first route stays authorable by clearing firstFloor');
+});
+
 for (const reset of ['all', 'group']) test(`${reset} reset clears both future-game preferences durably`, () => {
   const storage = createMemoryStorage();
   const saves = createSaveManager(storage);

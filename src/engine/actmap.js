@@ -142,10 +142,15 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   const restFloors = rules.restFloors;
   if (!Array.isArray(restFloors)) throw new Error('Configured route requires authored restFloors');
   if (restFloors.length !== rules.restsPerAct || new Set(restFloors).size !== rules.restsPerAct || restFloors.some(n => !Number.isInteger(n) || n < 1 || n > count)) throw new Error('Invalid configured rest floors');
+  const firstFloor = rules.firstFloor ?? null;
   const displayTypes = { fight: 'monster', event: 'event', elite: 'elite', treasure: 'treasure', shop: 'merchant', rest: 'shrine', boss: 'boss' };
   const hidden = new Set(rules.hiddenTypes);
   const alternatives = [...new Set([...(rules.hiddenTypes || []), ...(rules.visibleTypes || [])])].filter(type => !['rest', 'boss'].includes(type));
   if (!alternatives.length || alternatives.some(type => !displayTypes[type])) throw new Error('Invalid configured route node types');
+  // firstFloor (owner, 2026-10-18): depth 1 is forced to one authored node type, so a run can open on a fight. It must be a
+  // real alternative (never rest or boss), an elite only where minimumThreatFloor allows depth 1, and depth 1 cannot also be a rest depth
+  // (a rest floor is a single shared node, not a lane per type).
+  if (firstFloor !== null && (!alternatives.includes(firstFloor) || restFloors.includes(1) || (firstFloor === 'elite' && minimumThreatFloor > 1))) throw new Error('Invalid configured firstFloor');
   const hideUnknown = gameModule(registries, 'routes').hideUnknownNodes;
   const nodes = {}, layers = [], seenEvents = [];
   for (let floor = 1; floor <= count; floor++) {
@@ -155,8 +160,10 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
     if (!rest && !choices.length) throw new Error(`Configured route has no permitted node types at depth ${floor}`);
     for (let lane = 0; lane < (rest ? 1 : columns); lane++) {
       const id = `n${floor}_${lane}`;
-      const actual = rest ? 'rest' : rng.pick('map', choices);
-      const type = hideUnknown && hidden.has(actual) ? 'event' : displayTypes[actual];
+      const forced = !rest && floor === 1 && firstFloor !== null;
+      // A forced opening node is drawn as what it is even when hidden types show as '?': the player must see the opening fight.
+      const actual = rest ? 'rest' : forced ? firstFloor : rng.pick('map', choices);
+      const type = hideUnknown && hidden.has(actual) && !forced ? 'event' : displayTypes[actual];
       const node = { id, floor, col: rest ? (columns - 1) / 2 : lane, type, actualType: actual, next: [] };
       if (type === 'event') {
         node.resolved = actual === 'event' ? resolveUnknownNode({ ...registries, mapConfig: () => ({ unknownWeights: { event: 1 } }) }, rng, { seenEvents, tier, history }) : { kind: actual === 'shop' ? 'merchant' : actual };

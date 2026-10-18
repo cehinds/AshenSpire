@@ -579,6 +579,16 @@ function verifySettings(modules, instances = {}) {
   if (modules.rewards && modules.rewards.takeCount > modules.rewards.offerCount) fail('$/modules/rewards/takeCount', 'cannot exceed offerCount');
   if (modules.stances && modules.stances.minimumHitChance > modules.stances.maximumHitChance) fail('$/modules/stances/minimumHitChance','must not exceed maximumHitChance');
 }
+// firstFloor must hold the rules the map build applies (src/engine/actmap.js), so a Rest-first author fails at resolve time, where a stored
+// profile falls back, instead of at New Game. The node types live in the pack's route content, not in the module settings.
+function verifyRouteFirstFloor(modules, content) {
+  const routes = modules.routes;
+  if (routes?.mode !== 'configured' || !record(content.routes)) return;
+  const {firstFloor = null, restFloors, minimumThreatFloor} = routes;
+  if (firstFloor === null) return;
+  const alternatives = [...new Set([...(content.routes.hiddenTypes || []), ...(content.routes.visibleTypes || [])])].filter(type => !['rest', 'boss'].includes(type));
+  if (!alternatives.includes(firstFloor) || restFloors.includes(1) || (firstFloor === 'elite' && minimumThreatFloor > 1)) fail('$/modules/routes/firstFloor', 'must be a non-rest, non-boss route node type, depth 1 cannot be a rest floor, and an elite needs minimumThreatFloor of 1');
+}
 export function resolveGameAuthor(author, catalog) {
   const source = dataClone(author);
   if (!record(source)) fail('$', 'expected author object');
@@ -635,6 +645,7 @@ export function resolveGameAuthor(author, catalog) {
     for (const [field, setting] of Object.entries(binding.settings)) policy[field] = dataClone(modules[binding.module][setting]);
   }
   verifySettings(modules, instances);
+  verifyRouteFirstFloor(modules, content);
   verifyContent(content); verifyGearContent(content, modules.gear); verifyEnemyContent(content, modules.enemies ? characterSettings(modules) : null, modules.gear);
   if (content.classes) {
     content.classAttributes = Object.fromEntries(content.classes.map(row => [row.id, row.attributes]));

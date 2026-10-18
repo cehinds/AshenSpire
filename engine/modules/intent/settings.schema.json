@@ -9,11 +9,18 @@
     },
     "visible": {
       "type": "boolean"
+    },
+    "reads": {
+      "enum": [
+        "rolled",
+        "exact"
+      ]
     }
   },
   "required": [
     "mode",
-    "visible"
+    "visible",
+    "reads"
   ],
   "additionalProperties": false
 }
