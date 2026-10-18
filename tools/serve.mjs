@@ -3,7 +3,7 @@
 // Serves the project over http://localhost so the ES-module app (index.html →
 // src/main.js) and the optional music/ folder load correctly (file:// blocks
 // module + audio loading in most browsers). Used by tools/launch.mjs, or run
-// directly:  node tools/serve.mjs [--port N] [--no-open] [--no-lan] [--host ADDR] [--root DIR]
+// directly:  node tools/serve.mjs [--port N] [--no-open] [--no-lan] [--host ADDR] [--root DIR] [--watch]
 //
 // WHERE IT LISTENS. Without --host it listens on every interface, as it always
 // has (LAN play needs that). --host ADDR binds only ADDR; `--host localhost`
@@ -22,17 +22,30 @@
 // the browser gates measure. A pack that is not fetched at all answers 404 and
 // the game draws its placeholders (SPEC §2.4). Any other root (a build folder)
 // is served as it is on disk.
+//
+// --watch (opt-in, off by default; tools/launch.mjs does not pass it) is live
+// reload for editing. It watches src, styles, content, games, engine and
+// index.html (fs.watch, recursive where the platform supports it, else one
+// watcher per directory), waits 150 ms for the writes to settle, and sends
+// `event: reload` (data: the changed path) down GET /__dev/events, an
+// EventSource stream. A change under content/config/ (*.json) first runs
+// `node tools/config-build.mjs`, and one under content/source/ runs
+// `node tools/content-build.mjs`, one build at a time with the newest change
+// winning; a failed build sends `event: error` (data: the last 20 lines of its
+// stderr) and no reload. Writes the build makes itself, and changes in the 300
+// ms after it, are not edits and are ignored. Without --watch nothing here exists: no
+// endpoint, no watcher, and every response is byte-identical to before.
 
 import { createServer } from 'node:http';
 import { createServer as createNetServer } from 'node:net';
 import { readFile, stat } from 'node:fs/promises';
-import { resolve, join, extname, normalize } from 'node:path';
+import { resolve, join, extname, normalize, relative, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { spawn } from 'node:child_process';
+import { spawn, execFile } from 'node:child_process';
 import { sourceDigest, stampSource, readOrdinal, padOrdinal, VERSION_MODULE, RUN_PATH_SERVE } from './buildversion.mjs';
 import { saveFirstStepDefaults } from './prologue-editor-save.mjs';
 import { artPath, packTreeOf, HIGH_TREE } from './art-source.mjs';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, statSync, watch as fsWatch } from 'node:fs';
 
 const ROOT_DIR = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
@@ -73,21 +86,148 @@ export function openBrowser(url) {
   }
 }
 
+// ---- --watch: live reload for the source tree (see the header comment) ------
+export const DEV_EVENTS_PATH = '/__dev/events';
+const WATCH_TARGETS = ['src', 'styles', 'content', 'games', 'engine', 'index.html'];
+const WATCH_DEBOUNCE_MS = 150;
+const WATCH_QUIET_MS = 300; // a build's own writes land just after it ends
+const WATCH_SKIP = /(^|\/)(\.|node_modules(\/|$))|~$|\.sw[px]$|\.tmp$/;
+
+/** Which build tool (in tools/) must run before a change under `rel` can be seen. */
+function buildToolFor(rel) {
+  if (rel.startsWith('content/config/') && rel.endsWith('.json')) return 'config-build.mjs';
+  if (rel.startsWith('content/source/')) return 'content-build.mjs';
+  return null;
+}
+
+/** Last 20 lines of a tool's output, for the error banner. */
+function tailLines(text, n = 20) {
+  return String(text || '').trimEnd().split(/\r?\n/).slice(-n).join('\n');
+}
+
+/** Run `node <root>/tools/<tool>` once → null on success, else the message to show. */
+function runBuild(root, tool) {
+  const script = join(root, 'tools', tool);
+  if (!existsSync(script)) return Promise.resolve(`serve --watch: ${tool} not found under ${join(root, 'tools')}`);
+  return new Promise((done) => {
+    execFile(process.execPath, [script], { cwd: root, maxBuffer: 1 << 23, timeout: 120000 }, (err, stdout, stderr) => {
+      if (!err) { done(null); return; }
+      done(tailLines(stderr) || tailLines(stdout) || `${tool} failed: ${err.message}`);
+    });
+  });
+}
+
+/** One SSE message; a multi-line payload becomes one data: line per line. */
+function sseMessage(event, text) {
+  return `event: ${event}\n${String(text).split(/\r?\n/).map((line) => `data: ${line}`).join('\n')}\n\n`;
+}
+
 /**
- * serve({ root, port, open, lan, host }) → Promise<{ server, url, port }>
+ * Watch the source tree under `root`; after a 150 ms quiet spell, run any build
+ * the change needs (one at a time, the newest change wins), then call
+ * emit('reload', path) or, when the build failed, emit('error', stderr tail).
+ * Strategy: fs.watch with { recursive: true } on each target that exists; where
+ * that throws (Linux before Node 20), every directory under the target gets its
+ * own non-recursive watcher, and new directories are picked up as they appear.
+ * SERVE_WATCH_NO_RECURSIVE=1 forces that second strategy (the test uses it).
+ */
+function startWatch(root, emit) {
+  const closers = [];
+  const dirs = new Set();
+  const pending = new Set();
+  let timer = null;
+  let running = false;
+  let quietUntil = 0;
+  const forceDirs = process.env.SERVE_WATCH_NO_RECURSIVE === '1';
+
+  async function flush() {
+    if (running) return; // the loop below picks the new change up
+    running = true;
+    try {
+      while (pending.size) {
+        const batch = [...pending];
+        pending.clear();
+        const tools = new Set(batch.map(buildToolFor).filter(Boolean));
+        let failure = null;
+        for (const tool of tools) { failure = await runBuild(root, tool); if (failure) break; }
+        quietUntil = Date.now() + WATCH_QUIET_MS;
+        if (failure) emit('error', failure); else emit('reload', batch[batch.length - 1]);
+      }
+    } finally { running = false; }
+  }
+
+  function changed(rel) {
+    rel = rel.split(sep).join('/');
+    if (WATCH_SKIP.test(rel)) return;
+    // The generated files and anything else a build writes are its output, not an edit.
+    if (running || Date.now() < quietUntil) return;
+    if (/(^|\/)generated\//.test(rel) || rel.endsWith('.generated.js')) return;
+    pending.add(rel);
+    clearTimeout(timer);
+    timer = setTimeout(flush, WATCH_DEBOUNCE_MS);
+  }
+
+  function watchDir(dir) {
+    if (dirs.has(dir)) return;
+    dirs.add(dir);
+    let entries = [];
+    try { entries = readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    try {
+      const w = fsWatch(dir, (type, name) => {
+        if (!name) return;
+        const abs = join(dir, String(name));
+        changed(relative(root, abs));
+        if (type === 'rename') { try { if (statSync(abs).isDirectory()) watchDir(abs); } catch { /* gone again */ } }
+      });
+      w.on('error', () => {});
+      closers.push(() => w.close());
+    } catch { return; }
+    for (const e of entries) if (e.isDirectory() && !WATCH_SKIP.test(e.name)) watchDir(join(dir, e.name));
+  }
+
+  for (const target of WATCH_TARGETS) {
+    const abs = join(root, target);
+    if (!existsSync(abs)) continue;
+    const isDir = statSync(abs).isDirectory();
+    try {
+      if (!isDir || forceDirs) throw new Error('per-directory');
+      const w = fsWatch(abs, { recursive: true }, (type, name) => changed(relative(root, name ? join(abs, String(name)) : abs)));
+      w.on('error', () => {});
+      closers.push(() => w.close());
+    } catch {
+      if (isDir) watchDir(abs);
+      else {
+        try { const w = fsWatch(abs, () => changed(target)); w.on('error', () => {}); closers.push(() => w.close()); } catch { /* unwatchable */ }
+      }
+    }
+  }
+  return { close() { clearTimeout(timer); for (const c of closers) c(); } };
+}
+
+/**
+ * serve({ root, port, open, lan, host, watch }) → Promise<{ server, url, port }>
  * `host` binds one address ('localhost': 127.0.0.1 and ::1); unset, every interface.
  * Bumps to the next port if the requested one is in use. `lan: true` attaches
  * the Forsaken Together session layer (tools/lan.mjs: discovery + lobby WS).
  */
-export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false, quiet = false, host } = {}) {
+export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false, quiet = false, host, watch = false } = {}) {
   const rootResolved = resolve(root);
   const checkout = existsSync(join(rootResolved, 'art-release.json'));
   const notedMissing = new Set(); // one note per missing pack, not one per request
   let lanLayer = null; // attached after listen (needs the final port)
+  const devClients = new Set(); // --watch: open /__dev/events responses
   const server = createServer(async (req, res) => {
     try {
       if (lanLayer && (await lanLayer.handleHttp(req, res))) return;
       const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
+      // --watch only: the live-reload stream (events are sent by startWatch below).
+      if (watch && urlPath === DEV_EVENTS_PATH) {
+        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Content-Type-Options': 'nosniff' });
+        res.write('retry: 1000\n: connected\n\n');
+        devClients.add(res);
+        req.on('close', () => devClients.delete(res));
+        return;
+      }
       // Which folder this server serves, so the Workbench reuses it only for
       // its own project. Loopback only: the path is not for LAN clients.
       if (urlPath === '/__serve/info') {
@@ -269,6 +409,15 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
         server.on('close', () => lanLayer.close());
         log(`    LAN play: friends on your network can join at http://${lanAddress()}:${port}/`);
       }
+      if (watch) {
+        const sendDev = (event, text) => { const msg = sseMessage(event, text); for (const c of devClients) c.write(msg); };
+        const watcher = startWatch(rootResolved, sendDev);
+        const beat = setInterval(() => { for (const c of devClients) c.write(': keep-alive\n\n'); }, 15000);
+        beat.unref();
+        const closeServer = server.close.bind(server);
+        server.close = (cb) => { watcher.close(); clearInterval(beat); for (const c of devClients) c.end(); devClients.clear(); return closeServer(cb); };
+        log('    Watching src, styles, content, games, engine and index.html: pages reload on change.');
+      }
       log('    Press Ctrl+C to stop.\n');
       if (open) openBrowser(url);
       done({ server, url, port });
@@ -290,5 +439,6 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     lan: !args.includes('--no-lan'),
     editorWrite: args.includes('--editor-write'),
     host: flag('--host', undefined),
+    watch: args.includes('--watch'),
   });
 }
