@@ -163,6 +163,40 @@ test('tokens are exported resolved, and a file-local variable wins over a token'
   assert.deepEqual(config.components.zz, { sizing: { own: 1, shared: 1.5, chained: 1.5 } });
 });
 
+test('the published token groups are exported as written, beside the variables', () => {
+  assert.deepEqual(Object.keys(uiConfig.tokens.layer), ['base', 'scene', 'hud', 'screenChrome', 'environmentEffects', 'sheet', 'popover', 'toast', 'tooltip', 'blocking']);
+  assert.equal(uiConfig.tokens.layer.blocking, 2000);
+  assert.equal(uiConfig.tokens.layer.environmentEffects, 450);
+  assert.equal(uiConfig.tokens.motion.fast, 100);
+  assert.equal(uiConfig.tokens.type.scale.body.px, 14);
+  assert.deepEqual(uiConfig.tokens.type.minimum, { bodyPx: 14, captionPx: 12, textPx: 11 });
+  assert.equal(uiConfig.tokens.touch.primaryRowPx.px, 56);
+});
+
+test('token groups refuse unknown keys, bad values and unordered layers by name', () => {
+  const tk = 'content/config/ui/tokens.json: ';
+  refusedWith(planted('ui/tokens.json', (d) => { d.layer.banner = 5; d.layer.zzz = 5; }),
+    tk + 'layer.zzz 5 is not above the layer written before it (5) — layers are written bottom to top');
+  refusedWith(planted('ui/tokens.json', (d) => { d.layer.base = 1.5; }),
+    tk + 'layer.base must be an integer z-index of 0 or more');
+  refusedWith(planted('ui/tokens.json', (d) => { d.motion.fast = -1; }),
+    tk + 'motion.fast must be a whole number of milliseconds, 0 or more');
+  refusedWith(planted('ui/tokens.json', (d) => { d.type.scale.body.size = 14; }),
+    tk + 'type.scale.body: unknown key "size" — allowed keys are px, css, home, weight, tracking, upper, family');
+  refusedWith(planted('ui/tokens.json', (d) => { d.type.extra = {}; }),
+    tk + 'type: unknown key "extra" — allowed keys are scale, minimum');
+  refusedWith(planted('ui/tokens.json', (d) => { d.type.scale.body.px = 13; }),
+    tk + 'type.scale.body.px 13 is below type.minimum.bodyPx 14');
+  refusedWith(planted('ui/tokens.json', (d) => { delete d.type.scale.micro.px; }), // homed, but typography always carries px
+    tk + 'type.scale.micro.px must be a positive number');
+  refusedWith(planted('ui/tokens.json', (d) => { d.touch.minGapPx.home = 'styles/base.css'; }),
+    tk + 'touch.minGapPx.home needs a css name');
+  refusedWith(planted('ui/tokens.json', (d) => { d.sizing = {}; }),
+    tk + 'tokens.json holds only "vars" and the token groups type, layer, motion, touch, not "sizing"');
+  refusedWith(planted('ui/tokens.json', (d) => { d.vars.layer = 1; }),
+    tk + 'vars.layer: "layer" is a token group name — rename the variable');
+});
+
 test('fractions compile to the same double the old expressions gave', () => {
   assert.equal(uiConfig.components.card.sizing.ratio, 5 / 7);
   assert.equal(uiConfig.screens.shop.sizing.railFraction, 21.6 / 95);

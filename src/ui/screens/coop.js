@@ -288,8 +288,11 @@ export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapti
   // Haptics are personal: a seat this screen does not play (a LAN teammate)
   // makes sound here, but does not buzz this device. No list = every seat.
   const isLocalPlayer = coopLocalSeat(localSeats);
-  if (final) { if (lastSeq > 0) playReceiptHaptics(final.events || [], { isLocalPlayer }); }
-  else if (lastSeq > 0 || scene.opening === true) (hapticsOnly ? playReceiptHaptics : playReceiptSounds)(scene.events || [], { isLocalPlayer });
+  // A big hit is a share of the target's max HP, which the scene's enemies know.
+  const enemies = (final || scene).enemies || scene.enemies || [];
+  const maxHpFor = (id) => enemies.find((enemy) => enemy.id === id)?.maxHp || 0;
+  if (final) { if (lastSeq > 0) playReceiptHaptics(final.events || [], { isLocalPlayer, maxHpFor }); }
+  else if (lastSeq > 0 || scene.opening === true) (hapticsOnly ? playReceiptHaptics : playReceiptSounds)(scene.events || [], { isLocalPlayer, maxHpFor });
   return seq;
 }
 
@@ -2038,8 +2041,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     app.querySelectorAll('[data-cu]').forEach((b) => b.addEventListener('click', () => resolve(b.dataset.cu === 'relic' ? { takeRelic: true } : {})));
   }
+  let victoryCued = false; // the complete scene can render more than once; the buzz is for the moment, not the repaint
   function renderComplete() {
     const win = snap.scene.victory;
+    if (win && !victoryCued) { victoryCued = true; haptic.play('victory'); } // the win's own buzz, as in gameover.js
     const leave = button({ label: 'Return to the fire', weight: 'primary', id: 'coop-leave2' });
     const door = pageDoor({
       eyebrow: 'Forsaken Together', title: win ? 'Victory' : 'Defeat', size: 'md', className: 'coop-door',
@@ -2274,6 +2279,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       isLocalPlayer: coopLocalSeat(seats),
       get layer() { return app.querySelector('.fx-layer'); },
       get combatEl() { return app.querySelector('.combat'); }, anchorFor,
+      maxHpFor: id => entityFor(id)?.maxHp || 0,
       maxActorAnimationMs(speed) {
         return Math.max(0, ...[...app.querySelectorAll('.sprite')].flatMap(sprite => {
           const stage = stageFor(sprite);
@@ -2498,7 +2504,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         put(sel, `float-num ${part.cls}`, part.text, 0.35, 0, receiptRow);
         recoil(`${sel} .sprite`, amount >= 12);
       } else {
-        const parts = guardHitFloatParts(ev);
+        // The damage tier is the hit's share of the target's max HP, as in solo (ui/fx.js dmgClass).
+        const parts = guardHitFloatParts(ev, enemy ? enemy.maxHp || 0 : 0);
         receiptLossByTarget.set(targetKey, (receiptLossByTarget.get(targetKey) || 0) + parts.residual);
         const paired = !!(parts.guard && parts.damage);
         if (parts.guard) put(sel, `float-num ${parts.guard.cls}`, parts.guard.text, 0.35, paired ? -26 : 0, receiptRow);
