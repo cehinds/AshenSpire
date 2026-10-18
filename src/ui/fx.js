@@ -598,7 +598,7 @@ export function clearCallouts(layer) {
  * `amount` is the authoritative pre-block total; `blocked` is guard consumed.
  * Guard consumption is unsigned. Guard gain remains the separate +N channel.
  */
-export function guardHitFloatParts(event) {
+export function guardHitFloatParts(event, targetMaxHp = 0) {
   const amount = Math.max(0, Number(event && event.amount) || 0);
   const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
   const residual = amount - blocked;
@@ -619,13 +619,21 @@ export function guardHitFloatParts(event) {
     poise: poise > 0 ? { text: String(poise), cls: 'poise small' } : null,
     immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
-    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual) } : null,
+    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual, targetMaxHp) } : null,
   };
 }
 
-// Damage magnitude → size tier: crit (big hits pop hardest), heavy, normal, chip.
-function dmgClass(amount) {
-  if (amount >= 25) return 'dmg crit';
+// Damage size tier. A hit that takes a big share of the target's max HP pops
+// biggest (pct35 at 35% or more, pct20 at 20% or more), whatever its absolute
+// size; with no max HP known, or a smaller share, the absolute tiers apply:
+// crit (big hits pop hardest), heavy, normal, chip.
+export const BIG_HIT_SHARE = 0.20; // a hit this share of the target's max HP is a big hit (pct20, and the bigHit haptic)
+export const HUGE_HIT_SHARE = 0.35;
+export function dmgClass(amount, targetMaxHp = 0) {
+  const pct = targetMaxHp > 0 ? amount / targetMaxHp : 0;
+  if (pct >= HUGE_HIT_SHARE) return 'dmg pct35';
+  if (amount >= 25) return 'dmg crit'; // crit (4.4rem) still outranks pct20 (3.6rem): the biggest tier that applies wins
+  if (pct >= BIG_HIT_SHARE) return 'dmg pct20';
   if (amount >= 15) return 'dmg heavy';
   if (amount < 6) return 'dmg small';
   return 'dmg';
@@ -759,7 +767,7 @@ export function animateEvents(events, ctx, done) {
   const beatOf = new Map();
   beats.forEach((beat, b) => { for (const e of beat.events) if (!beatOf.has(e)) beatOf.set(e, b); });
   let cued = 0;
-  const cueThrough = (b) => { while (cued <= b && cued < beats.length) playBeatCues(beats[cued++].events, { isLocalPlayer: ctx.isLocalPlayer }); };
+  const cueThrough = (b) => { while (cued <= b && cued < beats.length) playBeatCues(beats[cued++].events, { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor }); };
   pending = events.filter((e) => visualFor(e, undefined, receiptVisuals) !== null);
   const skip = (event) => {
     // A read-only control (the combat log, the Reaction switch) is not a skip, as in playTimeline.
@@ -952,7 +960,7 @@ export function playTimeline(events, ctx, done) {
   const flushHaptics = () => {
     const rest = beats.slice(cued);
     cued = beats.length;
-    for (const [i, beat] of rest.entries()) playBeatHaptics(beat.events, { isLocalPlayer: ctx.isLocalPlayer, damageBuzz: !damageCued.has(cued - rest.length + i) });
+    for (const [i, beat] of rest.entries()) playBeatHaptics(beat.events, { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor, damageBuzz: !damageCued.has(cued - rest.length + i) });
   };
   let flushed = false;
   let finished = false;
@@ -1072,7 +1080,7 @@ export function playTimeline(events, ctx, done) {
 
     if (beat.banner) {
       cueBeat(beatIndex);
-      safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer }));
+      safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor }));
       const hold = turnBannerHoldMs(speed);
       safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn', hold); });
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
@@ -1233,7 +1241,7 @@ export function playTimeline(events, ctx, done) {
         let reactionEndAt = 0;
         const applyBeat = () => {
           cueBeat(beatIndex);
-          safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer, damageBuzz: !damageCued.has(beatIndex) }));
+          safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor, damageBuzz: !damageCued.has(beatIndex) }));
           // 3) HUD updates for this beat, 4) inter-beat breath. Painted actor
           // sequences retain their recovery frames before the render replaces
           // the sprite host; ordinary CSS lunges update immediately as before.
@@ -1369,13 +1377,40 @@ export function playerLostHp(e, isLocalPlayer) {
 }
 
 /**
+ * bigHitLanded(e, { isLocalPlayer?, maxHpFor? }) → did this receipt take an
+ * enemy down by BIG_HIT_SHARE of its max HP or more? `maxHpFor(entityId)` says
+ * the target's max HP (the screen's, as for the damage float's size); with none
+ * the hit cannot be measured and is not big. In co-op, only a hit a seat this
+ * screen plays landed buzzes this device; a receipt naming no seat is nobody's.
+ */
+export function bigHitLanded(e, { isLocalPlayer, maxHpFor } = {}) {
+  if (!e || e.type !== 'damageDealt' || hurtsPlayer(e) || typeof maxHpFor !== 'function') return false;
+  const maxHp = Number(maxHpFor(e.targetId)) || 0;
+  if (!(maxHp > 0) || guardHitFloatParts(e).residual / maxHp < BIG_HIT_SHARE) return false;
+  if (typeof isLocalPlayer !== 'function') return true;
+  const seat = e.sourcePlayerId ?? e.playerId;
+  return seat != null && isLocalPlayer(seat);
+}
+
+/**
+ * enemyPoiseBroken(e, isLocalPlayer?) → did an enemy's Poise break (the
+ * stagger starts)? The engine's poiseBroken receipt for an enemy carries
+ * `interrupted`. It names no seat, so in co-op it is nobody's here, as in
+ * playerLostHp.
+ */
+export function enemyPoiseBroken(e, isLocalPlayer) {
+  if (!e || e.type !== 'poiseBroken' || !e.interrupted) return false;
+  return typeof isLocalPlayer !== 'function';
+}
+
+/**
  * Once-per-beat cues: the turn stinger and the pile sounds. A five-card
  * refill or a whole-hand discard is ONE sound, not five, and adds no step to
  * the beat's pacing (these events have no visual of their own).
  */
-export function playBeatCues(events, { isLocalPlayer, stinger = true, turnBuzz = true, damageBuzz = true } = {}) {
+export function playBeatCues(events, { isLocalPlayer, maxHpFor, stinger = true, turnBuzz = true, damageBuzz = true } = {}) {
   const has = (type) => events.some((e) => e && e.type === type);
-  playBeatHaptics(events, { isLocalPlayer, turnBuzz, damageBuzz });
+  playBeatHaptics(events, { isLocalPlayer, maxHpFor, turnBuzz, damageBuzz });
   if (stinger && has('playerTurnStart')) sfx.play('turnStinger');
   if (has('deckShuffled')) sfx.play('deckShuffle');
   if (has('cardDrawn')) sfx.play('cardDraw');
@@ -1390,8 +1425,11 @@ export function playBeatCues(events, { isLocalPlayer, stinger = true, turnBuzz =
  * playBeatCues plays it with the beat's sounds; a skipped timeline plays it
  * alone for the beats it jumped past.
  */
-export function playBeatHaptics(events, { isLocalPlayer, turnBuzz = true, damageBuzz = true } = {}) {
+export function playBeatHaptics(events, { isLocalPlayer, maxHpFor, turnBuzz = true, damageBuzz = true } = {}) {
   if (damageBuzz && events.some((e) => playerLostHp(e, isLocalPlayer))) haptic.play('damageTaken');
+  // The player's blows: a big hit on an enemy, and an enemy's Poise breaking (once each per beat).
+  if (events.some((e) => bigHitLanded(e, { isLocalPlayer, maxHpFor }))) haptic.play('bigHit');
+  if (events.some((e) => enemyPoiseBroken(e, isLocalPlayer))) haptic.play('poiseBreak');
   if (turnBuzz && events.some((e) => localTurnStart(e, isLocalPlayer))) haptic.play('turnStart');
 }
 
@@ -1463,7 +1501,7 @@ export function playReceiptSounds(events, opts = {}) {
  * that ends a fight still buzzes, and for combat frames a paced enemy turn
  * held back behind that scene (coop.js paceEnemyTurn).
  */
-export function playReceiptHaptics(events, { isLocalPlayer } = {}) {
+export function playReceiptHaptics(events, { isLocalPlayer, maxHpFor } = {}) {
   const local = (seat) => typeof isLocalPlayer !== 'function' || seat == null || isLocalPlayer(seat);
   for (const e of events || []) if (e && e.type === 'cardPlayed' && local(e.playerId)) haptic.play('cardPlay');
   const buzzed = new Set();
@@ -1471,7 +1509,7 @@ export function playReceiptHaptics(events, { isLocalPlayer } = {}) {
     const mine = beat.events.filter((e) => localTurnStart(e, isLocalPlayer));
     const turnBuzz = mine.some((e) => !buzzed.has(e.turn));
     for (const e of mine) buzzed.add(e.turn);
-    playBeatHaptics(beat.events, { isLocalPlayer, turnBuzz });
+    playBeatHaptics(beat.events, { isLocalPlayer, maxHpFor, turnBuzz });
   }
 }
 
@@ -1697,8 +1735,12 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false });
           if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
             { x: paired ? -26 : 0, jitter: false });
-          if (parts.damage) floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
-            { x: paired ? 26 : 0, jitter: !paired });
+          if (parts.damage) {
+            // The tier is the hit's share of the target's max HP when the screen can say it.
+            const maxHp = typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(e.targetId)) || 0 : 0;
+            floatNum(ctx.layer, anchor, parts.damage.text, dmgClass(parts.residual, maxHp), null,
+              { x: paired ? 26 : 0, jitter: !paired });
+          }
         },
       };
     }

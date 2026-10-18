@@ -422,12 +422,15 @@
   /* A 1px dark outline keeps numbers legible over any sprite. */
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
   transform-origin: center bottom;
-  animation: num-pop 540ms cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+  animation: num-pop 480ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .float-num.dmg { color: #ff4a4a; }
 .float-num.small { font-size: 2rem; }
 .float-num.heavy { font-size: 3.4rem; }
 .float-num.crit { font-size: 4.4rem; color: #ff4a4a; }
+/* A hit that took a big share of the target's max HP (ui/fx.js dmgClass): bigger, and a harder pop. */
+.float-num.pct20 { --pop: 1.6; font-size: 3.6rem; }
+.float-num.pct35 { --pop: 1.9; font-size: 4.6rem; }
 /* Where a hit landed: Barrier blue, Ward purple, Block silver, Poise gold,
    Health red (owner, 2026-10-12). */
 .float-num.barrier { color: #5fa8ff; }
@@ -729,11 +732,11 @@
 @keyframes float-up { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-42px); } }
 /* Punchy number: snap in with an overshoot, settle, then rise and fade. */
 @keyframes num-pop {
-  0% { opacity: 0; transform: translateY(6px) scale(0.5); }
-  16% { opacity: 1; transform: translateY(0) scale(1.22); }
-  30% { transform: translateY(-2px) scale(1); }
-  70% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-48px) scale(1); }
+  0% { opacity: 0; transform: translateY(8px) scale(0.4); }
+  14% { opacity: 1; transform: translateY(0) scale(var(--pop, 1.3)); }
+  30% { transform: translateY(-3px) scale(1); }
+  72% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-52px) scale(1); }
 }
 @keyframes banner-pop { 0% { opacity: 0; letter-spacing: 0.6em; } 30% { opacity: 1; } 100% { opacity: 0; letter-spacing: 0.25em; } }
 /* --shake-px is the hit's amplitude (ui/fx.js shake, content/combatFeel.js); 4px is the old fixed shake. */
