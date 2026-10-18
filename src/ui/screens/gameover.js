@@ -30,7 +30,7 @@ export function mountGameOver(app, { registries, game, victory, onTitle, onHisto
 
   // Run again is the way on when the run is saved away; without it (a failed
   // save offers Retry instead) the title stays the primary exit.
-  const runAgain = onRunAgain ? button({ label: 'Run again', weight: 'primary', id: 'run-again' }) : null;
+  const runAgain = onRunAgain ? button({ label: t('gameover.runAgain'), weight: 'primary', id: 'run-again' }) : null;
   const toTitle = button({ label: 'Return to title', weight: runAgain ? 'secondary' : 'primary', id: 'to-title' });
   const toHistory = onHistory ? button({ label: 'Run history', id: 'to-history' }) : null;
 
