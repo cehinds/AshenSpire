@@ -25,6 +25,8 @@ Magical Defense's 3 entry protection is Block:Barrier, default 30:70, Frost 50:5
 
 **Defense exception:** every card played while using Defense restores 5 Poise and 5 Ward, including another Defense card without a stance change. Overflow beyond each respective maximum becomes Block from Poise and Barrier from Ward.
 
+**Ward absorbs at most half of a spell** (owner, 2026-10-11). Magic meets Barrier first, then Ward. Ward takes at most `stanceRules.wardAbsorbShare` (default 0.5) of one action's remaining magic damage, never more than it holds, and a pure hit still lets at least 1 through. Every point Ward absorbs is spent; at 0 Ward breaks until restored.
+
 ## Maneuver matchups and pressure
 
 Smash and Counter add 3 Poise damage only if that action has no authored Poise damage; do not add 3 to an existing amount.

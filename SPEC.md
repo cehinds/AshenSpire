@@ -16,7 +16,7 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 Numbers in this spec are the **initial balance targets**. They will move during the M3 balance pass, but the *structures* (formulas, orderings, state shapes) are contractual.
 
-> **Stance combat continuation (planned, owner 2026-10-14).** [docs/STANCE-COMBAT-RULES.md](docs/STANCE-COMBAT-RULES.md) is normative for the revised stance discounts, active ratings and entry grants, Defense restoration, maneuver matchups, Evade, hit previews and HUD/floater rules. It supersedes conflicting older prose in this specification and its combat contracts; all unrelated WardToBlock and reaction rules remain in force. Implementation follows in a separate PR under CONTRIBUTING ground rule 1.
+> **Stance combat continuation (planned, owner 2026-10-14).** [docs/STANCE-COMBAT-RULES.md](docs/STANCE-COMBAT-RULES.md) is normative for the revised stance discounts, active ratings and entry grants, Defense restoration, maneuver matchups, Evade, hit previews and HUD/floater rules. It supersedes conflicting older prose in this specification and its combat contracts; all unrelated WardToBlock and reaction rules remain in force. Ward's per-action absorption cap (at most half of a spell's magic, owner 2026-10-11) is in that document's Defense section. Implementation follows in a separate PR under CONTRIBUTING ground rule 1.
 
 ### Scope status — what is built, partly built and planned
 
