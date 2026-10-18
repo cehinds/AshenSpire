@@ -4,8 +4,12 @@ import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync } from
 import { createHash } from 'node:crypto';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import '../docs/design/new-card-art/layer-math.js';
+import { runInNewContext } from 'node:vm';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+// The proposal viewer owns the geometry. Load its standalone script as data;
+// tools must not add a static module dependency on an authoring HTML tree.
+const math = {};
+runInNewContext(readFileSync(resolve(root, 'docs/design/new-card-art/layer-math.js'), 'utf8'), math);
 const read = p => JSON.parse(readFileSync(resolve(root, p), 'utf8'));
 const selection = read('asset-data/card-art/layered-selection.json');
 const source = read(selection.sourceManifest);
@@ -23,7 +27,7 @@ for (const code of codes) {
     if (createHash('sha256').update(bytes).digest('hex') !== a.sha256) throw Error(`Source hash mismatch: ${a.id}`);
     assets[a.id] = {id:a.id, path, sha256:a.sha256, bytes:bytes.length, width:a.width, height:a.height,
       name:a.name, references:{...a.references, proposalAsset:a.id, source:`${dirname(selection.sourceManifest)}/${a.src}`}, anchors:a.anchors || {}, defaultTransform:a.defaultTransform};
-    const resolved = globalThis.CardLayerMath.resolve(source, original, layer);
+    const resolved = math.CardLayerMath.resolve(source, original, layer);
     return {id:layer.id, assetId:a.id, zIndex:layer.zIndex, transform:resolved.transform, affine:resolved.affine,
       css:resolved.css, ...(layer.attachment ? {attachment:layer.attachment} : {})};
   });

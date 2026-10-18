@@ -10,8 +10,10 @@ import { renderCard } from '../src/ui/components/card.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { withModalDom } from './helpers/modal-dom.mjs';
-import '../docs/design/new-card-art/layer-math.js';
+import { runInNewContext } from 'node:vm';
 const root = fileURLToPath(new URL('../', import.meta.url));
+const math = {};
+runInNewContext(readFileSync(new URL('../docs/design/new-card-art/layer-math.js', import.meta.url), 'utf8'), math);
 const art = (camp, maneuver, extra = {}) => simpleCardArt({id:'custom', type:'attack', cardTags:[`camp:${camp}`, `maneuver:${maneuver}`, ...(extra.tags || [])], ...extra});
 
 test('approved PNGs are packaged byte-for-byte and generated JSON agrees with runtime', () => {
@@ -40,7 +42,7 @@ test('melee preserves all ten approved transforms, opacity, shared small sprite 
   for (let i=0;i<10;i++) {
     const code=`Y0${i}`, approved=source.compositions[code], runtime=catalog.compositions[code];
     for (const layer of runtime.layers) {
-      const resolved=globalThis.CardLayerMath.resolve(source,approved,approved.layers.find(l=>l.id===layer.id));
+      const resolved=JSON.parse(JSON.stringify(math.CardLayerMath.resolve(source,approved,approved.layers.find(l=>l.id===layer.id))));
       assert.deepEqual(layer.css,resolved.css);
       assert.deepEqual(layer.affine,resolved.affine.map(n => n || 0));
     }
