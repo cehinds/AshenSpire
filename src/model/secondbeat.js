@@ -146,7 +146,10 @@ export const ACTIONS = Object.freeze({
     // endTurnHasPlayable), read at the moment of the press. With a play still in
     // hand, ending the turn throws it away and the configured beat guards it;
     // with none, there is nothing to lose and the press is a single tap.
-    stakes: (c) => (c.playable ? 'turn' : 'nothing'),
+    // FAIL-OPEN: only an explicit `false` takes the beat off. Anything else a
+    // caller could hand in (undefined, null, a stale value) keeps the hold, so
+    // the way this goes wrong is a safety step that stays, never one that goes.
+    stakes: (c) => (c.playable === false ? 'nothing' : 'turn'),
     undo: 'none',
     hazard: 'pointing',
     edges: { playable: [true, false] },

@@ -10,6 +10,11 @@ test('the endTurn row: a hold while a card is playable, none once the hand is sp
   assert.equal(beatFor('endTurn', { playable: true }).form, 'hold');
   assert.equal(beatFor('endTurn', { playable: false }).form, 'none');
   assert.throws(() => beatFor('endTurn'), /playable/, 'an omitted fact fails by name, never resolves to a default');
+  assert.throws(() => beatFor('endTurn', {}), /playable/, 'and so does an empty context');
+  // Fail-open: only an explicit false takes the beat off.
+  for (const playable of [undefined, null, 0, '', 'no']) {
+    assert.equal(beatFor('endTurn', { playable }).form, 'hold', `playable ${JSON.stringify(playable)} keeps the hold`);
+  }
 });
 
 test('the endTurn row is enumerated at both edges and the table is sane', () => {

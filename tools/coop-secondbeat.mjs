@@ -33,6 +33,13 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL ACTIONS declares unconditional End Turn pointer protection/,
       },
       {
+        name: 'co-op End Turn drops the playable context from its arm',
+        file: 'src/ui/screens/coop.js',
+        find: "      ctx: () => ({ playable: hasPlayable }),\n",
+        replace: "",
+        expectRed: /FAIL co-op End Turn arm declares the playable context and opts in with tapWhenNone/,
+      },
+      {
         name: 'the shared armer stops deriving hold duration from balance data',
         file: 'src/ui/components/holdconfirm.js',
         find: 'registries.balance.ui.holdConfirm',
@@ -60,7 +67,9 @@ const armed = /beatArmer\(meta,\s*registries\)/.test(source)
 // (2026-10-18: the row is state-dependent — a hold while a card is playable,
 // none once the hand is spent — but the pointer hazard stays unconditional.)
 check('ACTIONS declares unconditional End Turn pointer protection',
-  /endTurn:\s*\{[\s\S]{0,1500}stakes:\s*(?:['"]turn['"]|\(c\)\s*=>\s*\(c\.playable\s*\?\s*['"]turn['"]\s*:\s*['"]nothing['"]\))[\s\S]{0,200}hazard:\s*['"]pointing['"]/.test(secondbeat));
+  /endTurn:\s*\{[\s\S]{0,1500}stakes:\s*(?:['"]turn['"]|\(c\)\s*=>\s*\(c\.playable\s*===\s*false\s*\?\s*['"]nothing['"]\s*:\s*['"]turn['"]\))[\s\S]{0,200}hazard:\s*['"]pointing['"]/.test(secondbeat));
+check('co-op End Turn arm declares the playable context and opts in with tapWhenNone',
+  /arm\(et,\s*['"]endTurn['"],\s*\{[\s\S]{0,800}ctx:\s*\(\)\s*=>\s*\(\{\s*playable:\s*hasPlayable\s*\}\)[\s\S]{0,200}tapWhenNone:\s*true[\s\S]{0,800}onConfirm/.test(source));
 check('co-op imports the shared beat armer', /import \{ beatArmer \}/.test(source));
 check('co-op creates the armer from profile settings and registries', /beatArmer\(meta,\s*registries\)/.test(source));
 check('co-op End Turn pointer is armed under the canonical action id', armed);

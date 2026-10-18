@@ -147,8 +147,8 @@
       "digest": "e753cef1956378c6"
     },
     "tools/coop-secondbeat.mjs": {
-      "count": 2,
-      "digest": "2e954ce0cb8cbce7"
+      "count": 3,
+      "digest": "2029f5a47f49c665"
     },
     "tools/derived-runtime-authority.mjs": {
       "count": 3,
