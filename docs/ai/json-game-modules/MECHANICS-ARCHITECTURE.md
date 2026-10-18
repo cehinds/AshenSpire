@@ -175,7 +175,7 @@ authority); components and screens reference them, never copy them.
 
 ### Commands and asset aliases
 
-`engine/runtime/commands.json` (`ashen.commands@1`, schema `engine/contracts/commands.schema.json`)
+`engine/ui/commands.json` (`ashen.commands@1`, schema `engine/contracts/commands.schema.json`)
 lists every command id an `events` map may name: `{ "kind": "app" | "mechanic", "handler": ..., "description": ... }`.
 An `app` handler is `src/path.js#symbol[.callback]` (the code that handles it today, or `unresolved`);
 a `mechanic` handler is an existing `<mechanic>.<command>` from `engine/mechanics/*/interface.json`.
