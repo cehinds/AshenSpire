@@ -3,14 +3,14 @@
 <!-- feature-preview:start -->
 ## Feature preview — FixCore
 
-[Download the tested build (0.7.1.1620)](https://github.com/cehinds/AshenSpire/actions/runs/39162279251/artifacts/12149103656)
-· [Public play route — publication verification pending](https://cehinds.github.io/AshenSpire/branches/feature/FixCore/latest/)
+[Play FixCore — verified published build 0.7.1.1620](https://cehinds.github.io/AshenSpire/branches/feature/FixCore/latest/)
+· [Download the newer tested build (0.7.1.1622)](https://github.com/cehinds/AshenSpire/actions/runs/39164694361/artifacts/12149454632)
 
-Shared JSON mechanics now drive equipped bonuses, card damage, protection and calculation details. These Core 2 captures show multi-hit cards, known hit odds and compact protection/status indicators. The artifact passed CI; GitHub sign-in is required to download it. [Capture source, build and viewport details](docs/preview/features/FixCore/README.md).
+Shared JSON mechanics drive equipped bonuses, card damage, protection and calculation details. The public preview is verified at **1620**; publication of the newer **1622** build is pending. These fresh captures show the merged rainy battlefield with multi-hit cards, known hit odds and compact defense/status indicators. [Capture provenance and verification](docs/preview/features/FixCore/merged/README.md). Artifact downloads require GitHub sign-in.
 
 | Mobile | Desktop | Wide | Tablet |
 | --- | --- | --- | --- |
-| ![Mobile: multi-hit card and defense indicators](docs/preview/features/FixCore/mobile.png) | ![Desktop: damage calculation and named sources](docs/preview/features/FixCore/desktop.png) | ![Wide: selected card hit odds and combat layout](docs/preview/features/FixCore/wide.png) | ![Tablet: damage calculation and combat layout](docs/preview/features/FixCore/tablet.png) |
+| ![Mobile: multi-hit card and defense indicators in the rainy street](docs/preview/features/FixCore/merged/mobile.png) | ![Desktop: damage calculation and named sources in the rainy street](docs/preview/features/FixCore/merged/desktop.png) | ![Wide: selected card hit odds and layered battlefield](docs/preview/features/FixCore/merged/wide.png) | ![Tablet: damage calculation and rainy combat layout](docs/preview/features/FixCore/merged/tablet.png) |
 <!-- feature-preview:end -->
 
 

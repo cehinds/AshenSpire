@@ -16,8 +16,10 @@ Feature: `feature/FixCore`, implementation PR #2129.
 | wide.png | 1920 × 1080 | Multi-hit totals, Perception-gated odds and combat layout |
 | tablet.png | 1024 × 768 | Damage calculation and tablet layout |
 
-Publication target: https://cehinds.github.io/AshenSpire/branches/feature/FixCore/latest/
+[Play the verified published FixCore preview](https://cehinds.github.io/AshenSpire/branches/feature/FixCore/latest/).
 
-Public delivery verification is pending. The environment blocks direct GitHub Pages access; use the trusted `pages-builds` public-delivery check before calling this URL verified. The verified CI build artifact is [feature-preview-97d7b1117](https://github.com/cehinds/AshenSpire/actions/runs/39162279251/artifacts/12149103656): source `97d7b111779a5fca67007917264217f59c7cdd09`, version **0.7.1.1620**, digest **9bfa453b97**. Its later build number reflects the dev receipt restamp; gameplay/UI source is unchanged from the captured integration. GitHub sign-in is required for artifact downloads; the artifact expires on 2026-11-01.
+Public delivery was verified by the trusted Pages workflow: [run 39162811065, deploy job 117786710670](https://github.com/cehinds/AshenSpire/actions/runs/39162811065/job/117786710670). Its public checker passed **24 feature routes**, including `feature/FixCore` at source `97d7b111779a5fca67007917264217f59c7cdd09`, version **0.7.1.1620**, digest **9bfa453b97**. Direct GitHub Pages access remains blocked in this environment; this verification comes from that workflow, not a local public navigation. The matching [feature-preview-97d7b1117 artifact](https://github.com/cehinds/AshenSpire/actions/runs/39162279251/artifacts/12149103656) requires GitHub sign-in and expires on 2026-11-01. Its later build number reflects the dev receipt restamp; it does not change the original captures' `f3929892c` / **1616** provenance above.
+
+[Fresh merged rainy-scene captures and their record](merged/README.md) identify source `39e96eb7c` separately. The corresponding **0.7.1.1622**, digest **9341762dd1**, [tested standalone artifact](https://github.com/cehinds/AshenSpire/actions/runs/39164694361/artifacts/12149454632) is newer than the verified public preview; publication of that update is pending. The four original PNGs in this directory remain unchanged.
 
 The Release gallery remains separate at 0.7.1.1517, source `d310c277fffaaec6ec7a58a87de846577f12312d`. No Release or Main promotion is part of this change.
