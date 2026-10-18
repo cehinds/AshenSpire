@@ -117,6 +117,15 @@ for (const [label, env] of [['recursive fs.watch', {}], ['per-directory watchers
     const again = stream.next('reload', 2000);
     writeFileSync(join(root, 'src', 'later', 'y.js'), 'export const y = 1;\n');
     assert.equal(await again, 'src/later/y.js');
+    // A directory deleted and recreated is watched on its new inode.
+    // (each step waits out the debounce + post-build quiet window, 150 + 300 ms)
+    rmSync(join(root, 'src', 'later'), { recursive: true, force: true });
+    await new Promise((r) => setTimeout(r, 600));
+    mkdirSync(join(root, 'src', 'later'));
+    await new Promise((r) => setTimeout(r, 600));
+    const reborn = stream.next('reload', 2000);
+    writeFileSync(join(root, 'src', 'later', 'z.js'), 'export const z = 1;\n');
+    assert.equal(await reborn, 'src/later/z.js');
     stream.close();
     child.kill();
   });

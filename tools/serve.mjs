@@ -173,7 +173,7 @@ function sseMessage(event, text) {
  */
 function startWatch(root, emit) {
   const closers = [];
-  const dirs = new Set();
+  const dirs = new Map(); // per-directory fallback: absolute dir -> its fs.watch handle
   const pending = new Set();
   let timer = null;
   let running = false;
@@ -218,9 +218,18 @@ function startWatch(root, emit) {
     timer = setTimeout(flush, WATCH_DEBOUNCE_MS);
   }
 
+  // Drops the watcher for `dir` and everything below it (the directory is gone,
+  // or is about to be re-watched on a new inode).
+  function unwatchDir(dir) {
+    for (const [d, w] of dirs) {
+      if (d === dir || d.startsWith(dir + sep)) { dirs.delete(d); try { w.close(); } catch { /* already closed */ } }
+    }
+  }
+
   function watchDir(dir) {
-    if (dirs.has(dir)) return;
-    dirs.add(dir);
+    // A rename on an already-watched name means the directory was replaced:
+    // the old handle watches a dead inode, so re-attach rather than return.
+    if (dirs.has(dir)) unwatchDir(dir);
     let entries = [];
     try { entries = readdirSync(dir, { withFileTypes: true }); } catch { return; }
     try {
@@ -228,10 +237,13 @@ function startWatch(root, emit) {
         if (!name) return;
         const abs = join(dir, String(name));
         changed(relative(root, abs));
-        if (type === 'rename') { try { if (statSync(abs).isDirectory()) watchDir(abs); } catch { /* gone again */ } }
+        if (type !== 'rename') return;
+        let isDir = false;
+        try { isDir = statSync(abs).isDirectory(); } catch { unwatchDir(abs); return; }
+        if (isDir && !WATCH_SKIP.test(String(name))) watchDir(abs);
       });
-      w.on('error', () => {});
-      closers.push(() => w.close());
+      w.on('error', () => unwatchDir(dir));
+      dirs.set(dir, w);
     } catch { return; }
     for (const e of entries) if (e.isDirectory() && !WATCH_SKIP.test(e.name)) watchDir(join(dir, e.name));
   }
@@ -259,7 +271,7 @@ function startWatch(root, emit) {
       }
     }
   }
-  return { close() { clearTimeout(timer); for (const c of closers) c(); } };
+  return { close() { clearTimeout(timer); for (const c of closers) c(); for (const w of dirs.values()) { try { w.close(); } catch { /* already closed */ } } dirs.clear(); } };
 }
 
 /**
