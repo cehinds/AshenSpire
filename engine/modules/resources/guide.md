@@ -59,3 +59,15 @@ node tools/game-config.mjs check
 ```
 
 For runtime changes, use the focused tests in `tests/game-profile-run.test.mjs` and the matching module tests. A passing resolver check proves schema/resolution only, not that every host behavior is covered by browser acceptance.
+
+## Charge-flask acquisition
+
+The optional `chargeFlaskCapacityPerPickup` setting grants permanent reallocatable
+capacity when an HP/MP charge flask is collected. The core uses 1. Rewards,
+shops and event effects call the same acquisition query/commit helper; each
+successful grant increases capacity, its assigned/current pool, and `granted`
+by the configured amount. The ledger remains `base + grown.hp + grown.mana +
+granted = capacity = hp + mana`. Charge flasks do not occupy utility belt slots.
+Utility consumables still use their normal belt limit. Missing or zero settings
+preserve older snapshots' inventory-only acquisition policy. The caller's claim
+receipt, not the helper itself, enforces once-only reward or event collection.

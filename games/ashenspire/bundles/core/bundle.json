@@ -10,7 +10,9 @@
     },
     "resources": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "chargeFlaskCapacityPerPickup": 1
+      }
     },
     "stats": {
       "version": "1.0.0",
