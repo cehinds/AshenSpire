@@ -1,0 +1,56 @@
+name: Prepare rear design merge
+on:
+  push:
+    branches: ['worker/EnemyBackSprites/merge-preparation']
+    paths: ['.github/workflows/enemy-back-merge-preparation.yml']
+permissions:
+  contents: write
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/worker/EnemyBackSprites/merge-preparation'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Merge current dev with bounded derived-file resolution
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin dev test
+          node tools/pr-restamp.mjs --pr 2071 --base origin/dev
+      - name: Remove completed feature preview and backfill worker receipts
+        run: |
+          node tools/feature-preview.mjs --remove
+          git rm -r -- docs/preview/features/enemy-back-sprites
+          node --input-type=module <<'NODE'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          import {rangeSubjects,unreceipted,landedPull} from './tools/receipts.mjs';
+          const path='CHANGELOG.md';
+          let text=readFileSync(path,'utf8');
+          const subjects=rangeSubjects('origin/test');
+          const missing=unreceipted(subjects,text).missing;
+          const box=JSON.parse(readFileSync('buildordinal.json','utf8'));
+          const stamp=box.release+'.'+box.ordinal;
+          const lines=missing.map(n=>{
+            const entry=subjects.find(s=>landedPull(s)===n);
+            const subject=entry.subject.replace(/^Merge pull request #\d+ from [^\n]+\n?/,'Worker contribution '+n).replace(/^Merge PR #\d+: /,'');
+            return '- **Rear-design preparation history: '+subject.replaceAll('*','')+'** ([#'+n+'](https://github.com/cehinds/AshenSpire/pull/'+n+'), `'+stamp+'`). Worker contribution included in this branch; first integration into dev is pending.';
+          });
+          if(lines.length)text=text.replace(/(## \d{4}-\d{2}-\d{2}\n)/,'$1\n'+lines.join('\n')+'\n');
+          writeFileSync(path,text);
+          console.log('Backfilled worker receipts:',missing.join(', '));
+          NODE
+          node tools/about-changelog.mjs --write
+          node tools/about-changelog.mjs --check-order
+          node tools/receipts.mjs --check --since origin/test
+          node tools/receipts.mjs --check --pr 2071
+          node tools/feature-preview.mjs --check
+          git add -- README.md CHANGELOG.md src/content/changelog.generated.js
+          git diff --cached --stat
+          git commit -m "Prepare rear design preview for integration"
+          git push origin HEAD:refs/heads/worker/EnemyBackSprites/merge-preparation
