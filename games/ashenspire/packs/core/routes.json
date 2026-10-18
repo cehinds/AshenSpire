@@ -16,10 +16,11 @@
   ],
   "restFloors": [
     3,
-    6
+    7
   ],
   "branchColumns": 3,
   "minimumThreatFloor": 3,
   "mapMode": "path",
-  "firstFloor": "fight"
+  "firstFloor": "fight",
+  "requirePrebossRest": true
 }
