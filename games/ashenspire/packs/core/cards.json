@@ -281,7 +281,14 @@
     "type": "skill",
     "icon": "\u219d",
     "keywords": [],
-    "effects": [],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "evade",
+        "stacks": 1
+      }
+    ],
     "tags": [
       "camp:physical",
       "maneuver:defend",
@@ -290,7 +297,7 @@
     "stanceTrigger": {
       "stance": "evade"
     },
-    "textTemplate": "Evade the next attack; a failed dodge takes double damage.",
+    "textTemplate": "Gain {evade} Evasion.",
     "flavor": "Core adapter fixture. Evade is available in rewards, never starter."
   },
   {
