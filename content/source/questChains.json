@@ -1,0 +1,43 @@
+{
+  "lastLantern": {
+    "steps": [
+      "lastLantern",
+      "lanternCaravan"
+    ],
+    "completes": [
+      {
+        "eventId": "lanternCaravan",
+        "choiceId": "acceptLesson"
+      },
+      {
+        "eventId": "lanternCaravan",
+        "choiceId": "acceptWages"
+      },
+      {
+        "eventId": "lanternCaravan",
+        "choiceId": "claimStrongbox"
+      }
+    ]
+  },
+  "nameless": {
+    "steps": [
+      "graveOfTheNameless",
+      "namelessKeeper",
+      "namelessRest"
+    ],
+    "completes": [
+      {
+        "eventId": "namelessRest",
+        "choiceId": "keepVigil"
+      },
+      {
+        "eventId": "namelessRest",
+        "choiceId": "restAmongStones"
+      },
+      {
+        "eventId": "namelessRest",
+        "choiceId": "lootBarrow"
+      }
+    ]
+  }
+}
