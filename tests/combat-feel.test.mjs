@@ -265,6 +265,8 @@ test('a damage float sizes by its share of the target max HP; no max HP keeps th
   assert.equal(dmgClass(35, 100), 'dmg pct35');
   assert.equal(dmgClass(20, 100), 'dmg pct20');
   assert.equal(dmgClass(19, 100), 'dmg heavy', 'below 20% the absolute tiers apply');
+  assert.equal(dmgClass(25, 100), 'dmg crit', 'a crit by absolute size outranks pct20; pct35 outranks crit');
+  assert.equal(dmgClass(25, 60), 'dmg pct35');
   assert.equal(dmgClass(5, 100), 'dmg small');
   assert.equal(dmgClass(4, 10), 'dmg pct35', 'a chip that is 40 percent of a small target is a big hit');
   assert.equal(dmgClass(10, 0), 'dmg', 'no max HP known: the absolute rule');

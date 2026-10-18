@@ -632,8 +632,8 @@ export const HUGE_HIT_SHARE = 0.35;
 export function dmgClass(amount, targetMaxHp = 0) {
   const pct = targetMaxHp > 0 ? amount / targetMaxHp : 0;
   if (pct >= HUGE_HIT_SHARE) return 'dmg pct35';
+  if (amount >= 25) return 'dmg crit'; // crit (4.4rem) still outranks pct20 (3.6rem): the biggest tier that applies wins
   if (pct >= BIG_HIT_SHARE) return 'dmg pct20';
-  if (amount >= 25) return 'dmg crit';
   if (amount >= 15) return 'dmg heavy';
   if (amount < 6) return 'dmg small';
   return 'dmg';
