@@ -3405,7 +3405,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   animateEvents(combat.eventLog.filter((e) => e.type === 'relicTriggered'), fxCtx, () => {});
 
   // First-run guided callouts (SPEC §9 M4) — once per player, over a live board.
-  if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone() });
+  if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone(), oneTapPlay: (meta.settings || {}).oneTapPlay !== false });
   showPendingDiscard();
 }
 import { equipmentAnimationForLoadout, combatEquipmentAnimationForLoadout, animationTiming } from '../../model/equipmentAnimation.js';

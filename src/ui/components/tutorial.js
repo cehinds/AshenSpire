@@ -35,7 +35,10 @@ import { el, button, buttonRow, titleS, prose } from '../kit/index.js';
 const STEPS = [
   { sel: '.energy-orb', title: () => t('combat.actions'), text: 'Cards spend stamina. It refills each turn. Sapphire diamonds around the orb show your available mana.' },
   { sel: '.enemy-row .intent', title: 'Enemy intent', text: 'An enemy intent shows an unknown action, a broad clue, or an exact read. Inspect an enemy for learned details and prediction controls.' },
-  { sel: '.hand .card', title: 'Play cards', text: 'Tap a card to play it; with several enemies, tap the one to hit. You can also press 1–9, or drag the card onto an enemy.' },
+  // The Play cards line follows the live `oneTapPlay` setting (combat.js passes it
+  // when the callout is shown): with it on a tap plays, with it off a tap only
+  // selects and the player then picks a target.
+  { sel: '.hand .card', title: 'Play cards', text: ({ oneTapPlay }) => t(oneTapPlay ? 'tutorial.playCards.tap' : 'tutorial.playCards.select') },
   { sel: '.end-turn', title: 'End your turn',
     text: () => `Done? End Turn (or press ${actionLabel('endTurn')}). Unspent stamina and most Block are lost at your next turn.` },
 ];
@@ -45,7 +48,7 @@ const STEPS = [
 // preventing the first self-targeted skill from being confirmed.
 const KEEP_CLEAR = '.hand .card, .combatant';
 
-export function mountTutorial(root, { onDone }) {
+export function mountTutorial(root, { onDone, oneTapPlay = true }) {
   const steps = STEPS.filter((s) => root.querySelector(s.sel));
   if (!steps.length) return onDone();
 
@@ -181,7 +184,7 @@ export function mountTutorial(root, { onDone }) {
   function show() {
     const step = steps[i];
     veil.querySelector('.tut-title').textContent = typeof step.title === 'function' ? step.title() : step.title;
-    veil.querySelector('.tut-text').textContent = typeof step.text === 'function' ? step.text() : step.text;
+    veil.querySelector('.tut-text').textContent = typeof step.text === 'function' ? step.text({ oneTapPlay }) : step.text;
     actions.querySelector('.tut-next').textContent = i === steps.length - 1 ? 'Got it' : `Next (${i + 1}/${steps.length})`;
     if (!place()) next(); // target vanished between filter and show
   }
