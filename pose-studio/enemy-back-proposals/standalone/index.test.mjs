@@ -62,6 +62,6 @@ test('asset resolution is host-injected and stays outside core', async () => {
   assert.equal(resolveFrameAsset({asset:'assets/front.png'}).reason,'asset-unavailable');
   assert.equal(resolveFrameAsset({asset:'art/enemy-back-motion/../evil.png'}).reason,'asset-unavailable');
   const api=await readFile(new URL('./index.mjs',import.meta.url),'utf8');
-  assert.ok(!/\\bimport\\s|registerTool|document\\.|window\\./.test(api));
+  assert.ok(!/\bimport\s|registerTool|document\.|window\./.test(api));
   assert.equal(catalog.runtimeVerified,false);
 });
