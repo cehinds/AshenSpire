@@ -129,3 +129,46 @@ test('hit_heavy carries an 80 ms 60 Hz sine thump from t0 0', () => {
   assert.ok(thump.peak >= 0.4 && thump.peak <= 0.6);
   assert.ok(SFX_RECIPES.hit_heavy.length >= 4, 'the existing layers are still there');
 });
+
+test('the hold phrase: every tick sounds, even twice at the same instant', () => {
+  const tick = SFX_RECIPES.holdTick.length;
+  const engine = fresh();
+  ctx.currentTime = 40;
+  engine.sfx('holdTick');
+  const once = voiceCount();
+  assert.equal(once, tick, 'the first tick sounds its recipe layers');
+  engine.sfx('holdTick');
+  assert.equal(voiceCount(), 2 * tick, 'a second tick at the same instant still sounds');
+
+  const other = fresh();
+  ctx.currentTime = 50;
+  other.sfx('cardDraw');
+  const drawn = voiceCount();
+  assert.ok(drawn > 0, 'the first cardDraw sounds');
+  other.sfx('cardDraw');
+  assert.equal(voiceCount(), drawn, 'a repeat cardDraw at the same instant is still deduped');
+});
+
+test('the hold phrase stays on the score pitch; other cues still take the pitch draw', () => {
+  const tick = SFX_RECIPES.holdTick.find((l) => l.kind === 'tone');
+  const commit = SFX_RECIPES.holdCommit.find((l) => l.kind === 'tone');
+  const hit = SFX_RECIPES.hit_light.find((l) => l.kind === 'tone');
+  withRng(1, () => {
+    const engine = fresh();
+    ctx.currentTime = 60;
+    engine.sfx('holdTick');
+    assert.equal(oscs()[0].frequency.value, tick.freq, 'holdTick is exactly on its score note');
+  });
+  withRng(1, () => {
+    const engine = fresh();
+    ctx.currentTime = 61;
+    engine.sfx('holdCommit');
+    assert.equal(oscs()[0].frequency.value, commit.freq, 'holdCommit first layer is exactly on its score note');
+  });
+  withRng(1, () => {
+    const engine = fresh();
+    ctx.currentTime = 62;
+    engine.sfx('hit_light');
+    assert.ok(Math.abs(oscs()[0].frequency.value - hit.freq * 1.04) < 1e-9, 'hit_light is still scaled by the draw');
+  });
+});
