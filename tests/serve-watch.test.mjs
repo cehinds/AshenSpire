@@ -1,0 +1,168 @@
+// tests/serve-watch.test.mjs — tools/serve.mjs --watch (live reload).
+//
+// Starts the real server as a child process on a throwaway copy of a minimal
+// tree, so nothing here touches the checkout. Covers: a file change arrives as
+// `event: reload` within 2 s (with recursive fs.watch and with the
+// per-directory fallback); a failed build arrives as `event: error` with the
+// stderr tail and no reload; index.html carries the listener only in watch
+// mode; and without --watch the served index.html is byte-identical to the
+// file on disk and the event stream does not exist.
+
+import { test, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { request } from 'node:http';
+import { fileURLToPath } from 'node:url';
+
+const SERVE = fileURLToPath(new URL('../tools/serve.mjs', import.meta.url));
+const INDEX = '<!doctype html>\n<html><head><meta charset="utf-8"><title>t</title></head>\n<body><p>hello</p></body></html>\n';
+const cleanups = [];
+after(() => { for (const fn of cleanups.reverse()) { try { fn(); } catch { /* already gone */ } } });
+
+function makeTree() {
+  const root = mkdtempSync(join(tmpdir(), 'serve-watch-'));
+  mkdirSync(join(root, 'src', 'deep'), { recursive: true });
+  mkdirSync(join(root, 'content', 'source'), { recursive: true });
+  mkdirSync(join(root, 'tools'), { recursive: true });
+  writeFileSync(join(root, 'index.html'), INDEX);
+  writeFileSync(join(root, 'src', 'main.js'), 'export const a = 1;\n');
+  writeFileSync(join(root, 'src', 'deep', 'x.js'), 'export const x = 1;\n');
+  cleanups.push(() => rmSync(root, { recursive: true, force: true }));
+  return root;
+}
+
+/** Start serve.mjs; resolves { port, child } once it prints its address. */
+function start(root, extraArgs = [], env = {}) {
+  return new Promise((done, fail) => {
+    const child = spawn(process.execPath, [SERVE, '--port', '0', '--no-open', '--no-lan', '--root', root, ...extraArgs],
+      { env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] });
+    cleanups.push(() => child.kill());
+    let out = '';
+    const timer = setTimeout(() => fail(new Error(`serve did not start: ${out}`)), 8000);
+    child.stdout.on('data', (chunk) => {
+      out += chunk;
+      const m = out.match(/live at http:\/\/localhost:(\d+)\//);
+      if (m) { clearTimeout(timer); done({ port: Number(m[1]), child }); }
+    });
+    child.stderr.on('data', (chunk) => { out += chunk; });
+    child.on('exit', (code) => { clearTimeout(timer); fail(new Error(`serve exited early (${code}): ${out}`)); });
+  });
+}
+
+function get(port, path) {
+  return new Promise((done, fail) => {
+    request({ host: '127.0.0.1', port, path }, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => done({ status: res.statusCode, body: Buffer.concat(chunks) }));
+    }).on('error', fail).end();
+  });
+}
+
+/** Open the event stream; `next(name, ms)` resolves with the data of the next event of that name. */
+function events(port) {
+  return new Promise((ready, fail) => {
+    const req = request({ host: '127.0.0.1', port, path: '/__dev/events' }, (res) => {
+      let buffer = '';
+      const waiters = [];
+      const seen = [];
+      res.setEncoding('utf8');
+      res.on('data', (text) => {
+        buffer += text;
+        let at;
+        while ((at = buffer.indexOf('\n\n')) >= 0) {
+          const block = buffer.slice(0, at);
+          buffer = buffer.slice(at + 2);
+          const name = /^event: (.*)$/m.exec(block)?.[1];
+          if (!name) continue;
+          const data = [...block.matchAll(/^data: ?(.*)$/gm)].map((m) => m[1]).join('\n');
+          seen.push({ name, data });
+          for (const w of [...waiters]) if (w.name === name) { waiters.splice(waiters.indexOf(w), 1); w.done(data); }
+        }
+      });
+      cleanups.push(() => req.destroy());
+      ready({
+        status: res.statusCode,
+        type: res.headers['content-type'],
+        seen,
+        next: (name, ms) => new Promise((done, giveUp) => {
+          const w = { name, done };
+          waiters.push(w);
+          setTimeout(() => { if (waiters.includes(w)) { waiters.splice(waiters.indexOf(w), 1); giveUp(new Error(`no ${name} event within ${ms} ms`)); } }, ms);
+        }),
+        close: () => req.destroy(),
+      });
+    });
+    req.on('error', fail).end();
+  });
+}
+
+for (const [label, env] of [['recursive fs.watch', {}], ['per-directory watchers', { SERVE_WATCH_NO_RECURSIVE: '1' }]]) {
+  test(`--watch: a changed file arrives as a reload event within 2 s (${label})`, async () => {
+    const root = makeTree();
+    const { port, child } = await start(root, ['--watch'], env);
+    const stream = await events(port);
+    assert.equal(stream.status, 200);
+    assert.match(stream.type, /^text\/event-stream/);
+    const reload = stream.next('reload', 2000);
+    writeFileSync(join(root, 'src', 'deep', 'x.js'), 'export const x = 2;\n');
+    assert.equal(await reload, 'src/deep/x.js');
+    // A directory created after start is watched too.
+    mkdirSync(join(root, 'src', 'later'));
+    await new Promise((r) => setTimeout(r, 400));
+    const again = stream.next('reload', 2000);
+    writeFileSync(join(root, 'src', 'later', 'y.js'), 'export const y = 1;\n');
+    assert.equal(await again, 'src/later/y.js');
+    stream.close();
+    child.kill();
+  });
+}
+
+test('--watch: a failed build sends the stderr tail as an error event and no reload', async () => {
+  const root = makeTree();
+  writeFileSync(join(root, 'tools', 'content-build.mjs'), 'for (let i = 0; i < 30; i++) console.error(`line ${i}`);\nprocess.exit(1);\n');
+  const { port, child } = await start(root, ['--watch']);
+  const stream = await events(port);
+  const error = stream.next('error', 3000);
+  writeFileSync(join(root, 'content', 'source', 'cards.json'), '{}\n');
+  const text = await error;
+  const lines = text.split('\n');
+  assert.equal(lines.length, 20, 'the last 20 lines');
+  assert.equal(lines[0], 'line 10');
+  assert.equal(lines[19], 'line 29');
+  await new Promise((r) => setTimeout(r, 400));
+  assert.ok(!stream.seen.some((e) => e.name === 'reload'), 'a failed build does not reload');
+  // The build passes once fixed: reload follows.
+  writeFileSync(join(root, 'tools', 'content-build.mjs'), 'process.exit(0);\n');
+  const reload = stream.next('reload', 3000);
+  writeFileSync(join(root, 'content', 'source', 'cards.json'), '{"a":1}\n');
+  assert.equal(await reload, 'content/source/cards.json');
+  stream.close();
+  child.kill();
+});
+
+test('--watch: index.html (only) carries the live-reload listener', async () => {
+  const root = makeTree();
+  const { port, child } = await start(root, ['--watch']);
+  const html = (await get(port, '/')).body.toString('utf8');
+  assert.ok(html.startsWith(INDEX.slice(0, INDEX.indexOf('</body>'))));
+  assert.match(html, /new EventSource\('\/__dev\/events'\)/);
+  assert.ok(html.indexOf('<script>') < html.indexOf('</body>'), 'the script goes before </body>');
+  assert.equal(html.match(/<script>[\s\S]*<\/script>/)[0].split('\n').length <= 25, true, 'at most 25 lines');
+  assert.equal((await get(port, '/src/main.js')).body.toString('utf8'), 'export const a = 1;\n');
+  child.kill();
+});
+
+test('without --watch: index.html is byte-identical to the file on disk and there is no event stream', async () => {
+  const root = makeTree();
+  const { port, child } = await start(root);
+  const served = await get(port, '/');
+  assert.equal(served.status, 200);
+  assert.ok(served.body.equals(readFileSync(join(root, 'index.html'))), 'index.html served unchanged');
+  assert.ok((await get(port, '/index.html')).body.equals(readFileSync(join(root, 'index.html'))));
+  assert.equal((await get(port, '/__dev/events')).status, 404);
+  child.kill();
+});
