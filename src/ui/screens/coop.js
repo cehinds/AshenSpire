@@ -26,6 +26,7 @@ import { combatSnapshotCardCosts } from '../models/CombatSnapshotCardCosts.js';
 import { upcastOptions } from '../../model/upcasting.js';
 import { openUpcastChoice } from '../components/upcastChoice.js';
 import { wireCoopUpcastControl } from '../components/coopUpcastControl.js';
+import { wireCoopTapPlay } from '../components/coopTapPlay.js';
 import { controlGate } from '../../engine/combatStatusControl.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
 import { openReactionChoiceModal, committedReactionStack, reactionStackEntryName, stackedCardIds } from '../components/reactionChoiceModal.js';
@@ -297,7 +298,7 @@ export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapti
   return seq;
 }
 
-export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave, bankEnemyKnowledge = null }) {
+export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettings = null, onSettingsChange, onLeave, bankEnemyKnowledge = null }) {
   clearSelection();
   let disposed = false;
   const releaseAppearance = onDisplayAppearanceChange(app, () => { if (!disposed && snap && !busy()) render(); });
@@ -346,6 +347,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     combatantDoor = null;
   }
   let selectedEnemy = null;
+  // Read live, so a Settings toggle mid-fight changes the next click or key.
+  const oneTapPlayOn = () => (readSettings ? readSettings() : meta.settings || {}).oneTapPlay === true;
   let selectedCombatantId = null;
   function selectCombatant(id) {
     if (id && armedFriendlyCard && snap?.scene.kind === 'combat') {
@@ -823,6 +826,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         return;
       }
       if (friendlyTargetPlan(def, me, sc.players).active) { armFriendlyTargeting(c.instanceId); return; }
+      // The key is the click on that card (owner, 2026-10-18 14:15): the first
+      // press selects, the next press on the same card plays, and the one-tap
+      // opt-in plays at once. One door, so keys and clicks cannot disagree.
+      const cardEl = app.querySelector(`.hand .card[data-instance-id="${c.instanceId}"]`);
+      if (cardEl) { cardEl.click(); return; }
       const needs = cardNeedsEnemyTarget(def);
       send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
     }
@@ -1488,6 +1496,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             label: surcharge ? `Upcast +${surcharge}` : 'Upcast',
             disabled: busy() || meP.ended || !meP.alive,
             selectBeforePlay: !friendlyTargetPlan(entry.def, me, sc.players).active,
+            oneTap: oneTapPlayOn,
             onPlay: play,
             onOpen: upcast => {
               closeCardChoice(); const seatAtOpen = me;
@@ -1505,7 +1514,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
               }); cardChoiceShell = shell;
             },
           });
-        } else el.addEventListener('click', play);
+        } else wireCoopTapPlay(el, {
+          selectBeforePlay: !friendlyTargetPlan(entry.def, me, sc.players).active,
+          oneTap: oneTapPlayOn, onPlay: play,
+        });
       },
     });
     // Only this viewer's own stacked cards are hidden; another seat's rc1 is still playable here.
