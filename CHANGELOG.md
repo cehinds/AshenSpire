@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
+- **The game file is 1.7 MB smaller: card layouts are stored once, not 376 times** ([#2104](https://github.com/cehinds/AshenSpire/pull/2104), `0.7.1.1585`). The playable file carried a copy of the shared card template inside every one of the 376 cards; it now stores only what each card changes, so the file is back under its size limit and cards look and behave exactly as before.
+
 - **Hits sound a little different each time, heavy hits land with a thump, no more piled-up clicks** ([#2101](https://github.com/cehinds/AshenSpire/pull/2101), `0.7.1.1585`). Every synthesized sound now varies its pitch by a few percent so repeated cues stop sounding identical; heavy hits carry a short 60 Hz thump; the same cue within 40 ms plays once (a five-card draw is one draw sound) and at most eight sounds play at once.
 
 - **Windows test shard green again (serve --watch tests)** ([#2099](https://github.com/cehinds/AshenSpire/pull/2099), `0.7.1.1583`). Two dev-server watch tests that replace a watched directory now run only where that code path exists (POSIX); nothing player-facing.
