@@ -1,3 +1,4 @@
+import { fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
@@ -1087,6 +1088,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     return {
       id: e.id,
       kind: e.kind,
+      tags: e.tags ? [...e.tags] : undefined,
+      mechanicTags: e.mechanicTags ? [...e.mechanicTags] : undefined,
+      mechanicBindings: e.mechanicBindings ? structuredClone(e.mechanicBindings) : undefined,
+      ratingSources: e.ratingSources ? structuredClone(e.ratingSources) : undefined,
       ...(e.kind === 'enemy' ? { intentPreview: projectCombatIntent(combat, e.id), presentationStance: enemyStanceCategory(e.intent) } : {}),
       hp: e.hp,
       energy: e.energy, energyMax: e.energyMax, stamina: e.stamina, maxStamina: e.maxStamina, maxMana: e.maxMana,
@@ -1720,7 +1725,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (bar.id === 'hp') {
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const next = el.nextSibling;
-        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null }, { tooltips, blockHelp: helpText('block') });
+        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null }, { tooltips, blockHelp: helpText('block'),
+          poiseHelp: fixCoreProtectionDescription(combat, v, 'poise') || tFull('combat.protection.poise'),
+          wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward') });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
