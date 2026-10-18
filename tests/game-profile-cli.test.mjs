@@ -21,7 +21,7 @@ test('CLI apply validates before atomic replacement and export labels host requi
   assert.notEqual(cli('export','--portable','--input',input,'--out',exported).status,0);
  }finally{rmSync(dir,{recursive:true,force:true});}
 });
-test('kernel/runtime edits change the exact behavior pin; docs, other contracts and src edits do not',()=>{
+test('kernel/runtime edits change the behavior pin; docs, other contracts and unrelated src edits do not',()=>{
  const before=loadGameProfileCatalog();
  const probe=(file,text,moves)=>{const marker=resolve(root,file);try{writeFileSync(marker,text,{flag:'wx'});const after=loadGameProfileCatalog();(moves?assert.notEqual:assert.equal)(after.runtimeHash,before.runtimeHash,file);}finally{rmSync(marker,{force:true});}};
  probe('engine/kernel/__gameProfileRuntimeProbe.txt','probe\n',true);
