@@ -374,6 +374,21 @@ async function main() {
     await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 }, S);
     await wait(340);
   };
+  // Card holds select on their final animation frame. Observe that product
+  // state before releasing, rather than assuming a wall-clock sleep painted it.
+  const holdCardToSelect = async ({ x, y, instanceId }) => {
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 }, S);
+    try {
+      const selector = `.hand .card[data-instance-id=${JSON.stringify(instanceId)}]`;
+      await until(`(() => {
+        const card = document.querySelector(${JSON.stringify(selector)});
+        return card?.dataset.hold === 'done' && card.classList.contains('selected');
+      })()`, `completed selection hold for ${instanceId}`);
+    } finally {
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 }, S);
+    }
+    await wait(340);
+  };
   const pressKey = async (key, code, keyCode) => {
     for (const type of ['keyDown', 'keyUp']) {
       await cdp.send('Input.dispatchKeyEvent', { type, key, code, windowsVirtualKeyCode: keyCode, nativeVirtualKeyCode: keyCode }, S);
@@ -434,13 +449,13 @@ async function main() {
         });
         if (!c) return null;
         const r = c.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: c.dataset.cardId };
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: c.dataset.cardId, instanceId: c.dataset.instanceId };
       })()`);
       if (!pt) return { armed: false, card: null };
       // A completed card hold selects without playing, including singleton
       // targets under the shipped oneTapPlay default (SPEC §7.3).
       const beforeHold = await gameplayReceipt();
-      await holdAt(pt.x, pt.y);
+      await holdCardToSelect(pt);
       ok(await gameplayReceipt() === beforeHold, 'attack selection hold leaves gameplay unchanged');
       const state = await evalIn(`({
         armed: !!document.querySelector('.hand .card.selected') && !!document.querySelector('.enemy-row .enemy.targetable'),
@@ -468,13 +483,13 @@ async function main() {
         });
         if (!c) return null;
         const r = c.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, instanceId: c.dataset.instanceId };
       })()`);
       if (!pt) return { armed: false, card: null };
       // A completed card hold selects without playing, including singleton
       // targets under the shipped oneTapPlay default (SPEC §7.3).
       const beforeHold = await gameplayReceipt();
-      await holdAt(pt.x, pt.y);
+      await holdCardToSelect(pt);
       ok(await gameplayReceipt() === beforeHold, 'self-Counter selection hold leaves gameplay unchanged');
       const state = await evalIn(`({
         armed: !!document.querySelector('.hand .card.selected') && !!document.querySelector('.combatant.player.armed'),
