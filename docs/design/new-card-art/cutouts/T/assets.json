@@ -1,0 +1,852 @@
+{
+  "T.object.0": {
+    "id": "T.object.0",
+    "kind": "object",
+    "category": "T",
+    "digit": 0,
+    "name": "Ruined spellbooks 0",
+    "src": "cutouts/T/objects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      480,
+      480
+    ],
+    "sha256": "f4a25adfce2542f3081be816e3a543a0484693feb8555a49d3feac710aa1f2e5",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/T-reference.png",
+      "referenceSha256": "f4a2f19399756579f5709c2950c090e92ca05d144b58ada2aac517bc071f8546",
+      "sourceFile": "exec-781eeffc-76d5-4ebc-aeac-1ff31a147d6f.png",
+      "sourceSha256": "95ddc91257e2f12eb56b6c9b1e76ed7699f4b843fa32ad369227eeb07b78ca2f",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 44,
+        "y": 40,
+        "width": 322,
+        "height": 322
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "I.object.0",
+      "baseAssetSha256": "9f2f5770c2de5d8a6f48089fc423790a49ae8cf059a44deeff3b018075e24fef"
+    },
+    "condition": "broken",
+    "intactAssetId": "I.object.0",
+    "tagReferences": [],
+    "displayCode": "T00",
+    "displayLabel": "T00 \u00b7 Ruined spellbooks 0 \u00b7 object"
+  },
+  "T.object.1": {
+    "id": "T.object.1",
+    "kind": "object",
+    "category": "T",
+    "digit": 1,
+    "name": "Ruined spellbooks 1",
+    "src": "cutouts/T/objects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      117,
+      480,
+      395
+    ],
+    "sha256": "75455b8656b533f6333132323cf0614f464ec370d970475efb0c640cc9eeb9ed",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/T-reference.png",
+      "referenceSha256": "f4a2f19399756579f5709c2950c090e92ca05d144b58ada2aac517bc071f8546",
+      "sourceFile": "exec-781eeffc-76d5-4ebc-aeac-1ff31a147d6f.png",
+      "sourceSha256": "95ddc91257e2f12eb56b6c9b1e76ed7699f4b843fa32ad369227eeb07b78ca2f",
+      "sourceCell": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 426,
+        "y": 99,
+        "width": 368,
+        "height": 228
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "I.object.1",
+      "baseAssetSha256": "3dffea62c7babafb6d42b07d06244bbbb7da588bc33ff05e1c1b10a7ac319971"
+    },
+    "condition": "broken",
+    "intactAssetId": "I.object.1",
+    "tagReferences": [],
+    "displayCode": "T10",
+    "displayLabel": "T10 \u00b7 Ruined spellbooks 1 \u00b7 object"
+  },
+  "T.object.2": {
+    "id": "T.object.2",
+    "kind": "object",
+    "category": "T",
+    "digit": 2,
+    "name": "Ruined spellbooks 2",
+    "src": "cutouts/T/objects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      104,
+      32,
+      408,
+      480
+    ],
+    "sha256": "e188036cb12a30b5aaf904946abb40ae94f65b3b5b6c1bd8b6f80146bacfdbbc",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/T-reference.png",
+      "referenceSha256": "f4a2f19399756579f5709c2950c090e92ca05d144b58ada2aac517bc071f8546",
+      "sourceFile": "exec-781eeffc-76d5-4ebc-aeac-1ff31a147d6f.png",
+      "sourceSha256": "95ddc91257e2f12eb56b6c9b1e76ed7699f4b843fa32ad369227eeb07b78ca2f",
+      "sourceCell": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 876,
+        "y": 38,
+        "width": 223,
+        "height": 329
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "I.object.2",
+      "baseAssetSha256": "51174fb593b5cae636bff4e949d0b9a278268589f700c86039bee1f0e2e0850e"
+    },
+    "condition": "broken",
+    "intactAssetId": "I.object.2",
+    "tagReferences": [],
+    "displayCode": "T20",
+    "displayLabel": "T20 \u00b7 Ruined spellbooks 2 \u00b7 object"
+  },
+  "T.object.3": {
+    "id": "T.object.3",
+    "kind": "object",
+    "category": "T",
+    "digit": 3,
+    "name": "Ruined spellbooks 3",
+    "src": "cutouts/T/objects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      134,
+      480,
+      378
+    ],
+    "sha256": "4a55d74c8bedc180950a6bf074cbe7571b2e396877925016c7664e817fd2bb6e",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/T-reference.png",
+      "referenceSha256": "f4a2f19399756579f5709c2950c090e92ca05d144b58ada2aac517bc071f8546",
+      "sourceFile": "exec-781eeffc-76d5-4ebc-aeac-1ff31a147d6f.png",
+      "sourceSha256": "95ddc91257e2f12eb56b6c9b1e76ed7699f4b843fa32ad369227eeb07b78ca2f",
+      "sourceCell": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1199,
+        "y": 123,
+        "width": 374,
+        "height": 204
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "I.object.3",
+      "baseAssetSha256": "2177cdd3f6a2b71f1b737a1b0a94870a56f3fbecef65de4d61b5c686c3865751"
+    },
+    "condition": "broken",
+    "intactAssetId": "I.object.3",
+    "tagReferences": [],
+    "displayCode": "T30",
+    "displayLabel": "T30 \u00b7 Ruined spellbooks 3 \u00b7 object"
+  },
+  "T.object.4": {
+    "id": "T.object.4",
+    "kind": "object",
+    "category": "T",
+    "digit": 4,
+    "name": "Ruined spellbooks 4",
+    "src": "cutouts/T/objects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      39,
+      480,
+      472
+    ],
+    "sha256": "0187098366ebd2673a5508569fdd605b5dbf02bceca4ef3859d7be332b222f16",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/T-reference.png",
+      "referenceSha256": "f4a2f19399756579f5709c2950c090e92ca05d144b58ada2aac517bc071f8546",
+      "sourceFile": "exec-781eeffc-76d5-4ebc-aeac-1ff31a147d6f.png",
+      "sourceSha256": "95ddc91257e2f12eb56b6c9b1e76ed7699f4b843fa32ad369227eeb07b78ca2f",
+      "sourceCell": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1626,
+        "y": 35,
+        "width": 335,
+        "height": 324
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "I.object.4",
+      "baseAssetSha256": "74a442ddd63123f2ad7754f09d873ce5c6f667e8bbbabe757e89467fafe89e51"
+    },
+    "condition": "broken",
+    "intactAssetId": "I.object.4",
+    "tagReferences": [],
+    "displayCode": "T40",
+    "displayLabel": "T40 \u00b7 Ruined spellbooks 4 \u00b7 object"
+  },
+  "T.object.5": {
+    "id": "T.object.5",
+    "kind": "object",
+    "category": "T",
+    "digit": 5,
+    "name": "Ruined spellbooks 5",
+    "src": "cutouts/T/objects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      41,
+      32,
+      471,
+      480
+    ],
+    "sha256": "7193730642cf6842e6bd6313b90c582833ff3038506acf4b87946f523a422e09",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/T-reference.png",
+      "referenceSha256": "f4a2f19399756579f5709c2950c090e92ca05d144b58ada2aac517bc071f8546",
+      "sourceFile": "exec-781eeffc-76d5-4ebc-aeac-1ff31a147d6f.png",
+      "sourceSha256": "95ddc91257e2f12eb56b6c9b1e76ed7699f4b843fa32ad369227eeb07b78ca2f",
+      "sourceCell": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 35,
+        "y": 409,
+        "width": 327,
+        "height": 341
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "I.object.5",
+      "baseAssetSha256": "d9f4e6c2307f659a03776314e9b59d71f17cbc1c918940f27e8b7bf71a85dd5c"
+    },
+    "condition": "broken",
+    "intactAssetId": "I.object.5",
+    "tagReferences": [],
+    "displayCode": "T50",
+    "displayLabel": "T50 \u00b7 Ruined spellbooks 5 \u00b7 object"
+  },
+  "T.object.6": {
+    "id": "T.object.6",
+    "kind": "object",
+    "category": "T",
+    "digit": 6,
+    "name": "Ruined spellbooks 6",
+    "src": "cutouts/T/objects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      72,
+      32,
+      439,
+      480
+    ],
+    "sha256": "10672a4942269ae34ff218f1fc09f1bc5bb0d034a6e8d10269ddda01e9f9d05d",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/T-reference.png",
+      "referenceSha256": "f4a2f19399756579f5709c2950c090e92ca05d144b58ada2aac517bc071f8546",
+      "sourceFile": "exec-781eeffc-76d5-4ebc-aeac-1ff31a147d6f.png",
+      "sourceSha256": "95ddc91257e2f12eb56b6c9b1e76ed7699f4b843fa32ad369227eeb07b78ca2f",
+      "sourceCell": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 458,
+        "y": 409,
+        "width": 279,
+        "height": 341
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "I.object.6",
+      "baseAssetSha256": "87954d8bfb0550163cc540ecb339968750a52406647732bc9ab8a14ef67cbea8"
+    },
+    "condition": "broken",
+    "intactAssetId": "I.object.6",
+    "tagReferences": [],
+    "displayCode": "T60",
+    "displayLabel": "T60 \u00b7 Ruined spellbooks 6 \u00b7 object"
+  },
+  "T.object.7": {
+    "id": "T.object.7",
+    "kind": "object",
+    "category": "T",
+    "digit": 7,
+    "name": "Ruined spellbooks 7",
+    "src": "cutouts/T/objects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      98,
+      480,
+      414
+    ],
+    "sha256": "f9627822ec0d82e94534736a2ae41393a941a9c30ba9733081923f116a7abe0b",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/T-reference.png",
+      "referenceSha256": "f4a2f19399756579f5709c2950c090e92ca05d144b58ada2aac517bc071f8546",
+      "sourceFile": "exec-781eeffc-76d5-4ebc-aeac-1ff31a147d6f.png",
+      "sourceSha256": "95ddc91257e2f12eb56b6c9b1e76ed7699f4b843fa32ad369227eeb07b78ca2f",
+      "sourceCell": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 800,
+        "y": 469,
+        "width": 359,
+        "height": 253
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "I.object.7",
+      "baseAssetSha256": "196c04d0b8032110a51f51b7692ee1f5216e67838f03cff2f88ce1162f43f125"
+    },
+    "condition": "broken",
+    "intactAssetId": "I.object.7",
+    "tagReferences": [],
+    "displayCode": "T70",
+    "displayLabel": "T70 \u00b7 Ruined spellbooks 7 \u00b7 object"
+  },
+  "T.object.8": {
+    "id": "T.object.8",
+    "kind": "object",
+    "category": "T",
+    "digit": 8,
+    "name": "Ruined spellbooks 8",
+    "src": "cutouts/T/objects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      36,
+      480,
+      476
+    ],
+    "sha256": "ed60ee35b5fbebb963e5e9f3b0fbf9e4c5c9f2a185d2d5e99281b70ff8f6bc72",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/T-reference.png",
+      "referenceSha256": "f4a2f19399756579f5709c2950c090e92ca05d144b58ada2aac517bc071f8546",
+      "sourceFile": "exec-781eeffc-76d5-4ebc-aeac-1ff31a147d6f.png",
+      "sourceSha256": "95ddc91257e2f12eb56b6c9b1e76ed7699f4b843fa32ad369227eeb07b78ca2f",
+      "sourceCell": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1223,
+        "y": 415,
+        "width": 340,
+        "height": 334
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "I.object.8",
+      "baseAssetSha256": "7d8432d16d8434604073a18370cd0230e643c6a4a7274fcea047721d88bee0b6"
+    },
+    "condition": "broken",
+    "intactAssetId": "I.object.8",
+    "tagReferences": [],
+    "displayCode": "T80",
+    "displayLabel": "T80 \u00b7 Ruined spellbooks 8 \u00b7 object"
+  },
+  "T.object.9": {
+    "id": "T.object.9",
+    "kind": "object",
+    "category": "T",
+    "digit": 9,
+    "name": "Ruined spellbooks 9",
+    "src": "cutouts/T/objects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      68,
+      32,
+      443,
+      480
+    ],
+    "sha256": "34b628ba61890851a978b67ada5be683e6082e0b6f7e90e5753a696e74a64679",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "source-art-v6/T-reference.png",
+      "referenceSha256": "f4a2f19399756579f5709c2950c090e92ca05d144b58ada2aac517bc071f8546",
+      "sourceFile": "exec-781eeffc-76d5-4ebc-aeac-1ff31a147d6f.png",
+      "sourceSha256": "95ddc91257e2f12eb56b6c9b1e76ed7699f4b843fa32ad369227eeb07b78ca2f",
+      "sourceCell": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1644,
+        "y": 400,
+        "width": 295,
+        "height": 352
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "I.object.9",
+      "baseAssetSha256": "8304a7725298bda52b7f67bfd9e4c4490f69ce623c38950fe5ac0c8253059cfd"
+    },
+    "condition": "broken",
+    "intactAssetId": "I.object.9",
+    "tagReferences": [],
+    "displayCode": "T90",
+    "displayLabel": "T90 \u00b7 Ruined spellbooks 9 \u00b7 object"
+  }
+}
