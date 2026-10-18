@@ -71,7 +71,7 @@ try {
     }));
     assert.match(textFit.text, /3 hits|×\s*3/);
     assert.ok(textFit.font >= 8, 'multi-hit text remains readable');
-    assert.ok(textFit.scrollHeight <= textFit.clientHeight + 1, `selected multi-hit rules fit: ${JSON.stringify(textFit)}`);
+    assert.ok(textFit.scrollHeight <= Math.min(textFit.clientHeight, textFit.layerHeight) + 1, `selected multi-hit rules fit: ${JSON.stringify(textFit)}`);
     const footerControls = await page.locator('.combat-deck-edit, .energy-orb').evaluateAll(nodes => nodes.map(node => {
       const box = node.getBoundingClientRect();
       return {kind:node.classList.contains('combat-deck-edit')?'deck':'sp',left:box.left,right:box.right,top:box.top,bottom:box.bottom};
