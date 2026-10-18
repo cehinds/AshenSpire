@@ -1007,6 +1007,16 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (!typeOk(snapshot, 'object')) return;
     const knowledge = snapshot.enemyKnowledge;
     if (!run.enemyKnowledgeRules) {
+      // Configured FixCore fights own their cached reads locally. They do not
+      // open the legacy run learning/Perception ledger or bank any knowledge.
+      // The caller still validates the complete combat snapshot above.
+      const battleLocal = isConfiguredRun(run) && run.combatExpansionVersion === 2
+        && gameModule(run, 'effects')?.fixCoreVersion === 1
+        && snapshot.combatExpansionVersion === 2 && snapshot.gameProfile?.hash === run.gameProfile.hash
+        && snapshot.fixCoreRules?.version === 1 && snapshot.fixCoreRules.enabled === true
+        && run.enemyKnowledgeRules === undefined && run.enemyKnowledgeState === undefined
+        && knowledge?.bankable === false && knowledge.encounter === null;
+      if (battleLocal) return;
       if (knowledge !== undefined) problems.push(`${path}.enemyKnowledge requires the run's knowledge rules`);
       return;
     }
