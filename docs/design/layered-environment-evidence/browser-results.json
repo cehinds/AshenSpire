@@ -1,5 +1,5 @@
 {
-  "game": "http://127.0.0.1:8765/build/AshenSpire.html",
+  "game": "http://127.0.0.1:8765/dist/AshenSpire.html",
   "viewports": [
     {
       "name": "mobile",
