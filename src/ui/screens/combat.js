@@ -2672,8 +2672,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // older save simply has none and the game-over screen draws nothing.
   const movesStarted = new Map();
   let lastStrike = null;
+  // A new fight owes nothing to the last one's blows: the line on the defeat
+  // screen must come from THIS fight (or name no striker), never from an
+  // earlier enemy when this fight ends without an hpLost (an Ashen Blight end).
+  run.stats.lastHit = null;
   function trackStats(events) {
     for (const e of events) {
+      if (e.type === 'ashenBlightLost') run.stats.lastHit = { sourceId: null, sourceName: 'Ashen Blight', move: null, amount: null };
       if (e.type === 'damageDealt' && e.sourceId === 'player') run.stats.damageDealt += e.amount;
       if (e.type === 'enemyMoveStarted' && e.sourceId) movesStarted.set(e.sourceId, e.moveId || null);
       if (e.type === 'damageDealt' && e.targetId === 'player' && e.sourceId && e.sourceId !== 'player') lastStrike = e.sourceId;

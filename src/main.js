@@ -1083,7 +1083,6 @@ const QUARANTINE_NOTICE =
 
 // ---- run state ----------------------------------------------------------------
 let run = null;
-const runBeginChoices = new WeakMap(); // run -> the options beginPreparedRun was given, for Run again
 let rng = null;
 let activeSlot = 1; // which save slot the current run persists to (SPEC §3.12 + slots)
 let rewardDoneCount = 0; // shot/read receipt: each mounted reward callback increments once
@@ -1272,9 +1271,11 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   });
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
-  // What the player chose to begin this climb, kept beside the run (not in its
-  // save) so the game-over screen can offer Run again with the same choices.
-  runBeginChoices.set(run, structuredClone({ classId, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile, gameProfile }));
+  // What the player chose to begin this climb, saved with the run so the
+  // game-over screen can offer Run again with the same choices after any
+  // reload. The STARTING attributes, not the levelled ones; the game profile
+  // is already run.gameProfile. A run saved before this field has no Run again.
+  run.beginChoices = structuredClone({ classId, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile });
   if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile, ATLAS, { townsPerActMax: registries.balance.atlas.townsPerActMax });
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
@@ -2368,15 +2369,10 @@ async function showFinishedRun(victory) {
   const retry = () => showFinishedRun(victory);
   // Run again is a NEW climb: same class and choices, a new random seed (a
   // rematch is not a replay). It waits for the finished run to be saved away.
-  const again = () => {
+  const again = finishedRun.beginChoices ? () => {
     if (run !== finishedRun || activeSlot !== finishedSlot) return undefined;
-    const chosen = runBeginChoices.get(finishedRun) || {
-      classId: finishedRun.class, customization: finishedRun.customization, custom: finishedRun.custom,
-      startingKitId: finishedRun.startingKitId, attributeMode: finishedRun.attributeMode, attributes: finishedRun.attributes,
-      gameProfile: finishedRun.gameProfile,
-    };
-    return startRunInSlot({ ...structuredClone(chosen), seedString: randomSeedString() }, finishedSlot);
-  };
+    return startRunInSlot({ ...structuredClone(finishedRun.beginChoices), gameProfile: finishedRun.gameProfile, seedString: randomSeedString() }, finishedSlot);
+  } : null;
   mountGameOver(app, { registries: finishedRegistries, game: finishedRun, victory, earned: result.earned,
     onTitle: showTitle, onHistory: showHistory, onRetry: result.ok ? null : retry, onRunAgain: result.ok ? again : null });
   if (!result.ok) openSaveStatusReview({
