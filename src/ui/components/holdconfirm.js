@@ -1061,6 +1061,8 @@ export function beatArmer(meta, registries) {
     // `ctxOf` so a row whose stakes move with the game state (End Turn) is
     // evaluated at the moment the finger lands, not at the moment the screen
     // mounted. A screen passes a function; a static action passes an object.
+    // The form it yields is read per press by `owesNoBeat` below: 'none' means
+    // the press commits directly (no hold, no review).
     const ctxOf = typeof ctx === 'function' ? ctx : () => ctx;
     const formNow = () => beatFor(actionId, ctxOf()).form;
 
@@ -1071,6 +1073,9 @@ export function beatArmer(meta, registries) {
     el.dataset.optionTap = 'modal';
     el.dataset.optionHold = dialMs > 0 ? 'commit' : 'disabled';
 
+    // (Owner, 2026-10-18: a row whose form is 'none' owes no review at all —
+    // see `owesNoBeat` below. The contract that follows holds for every row
+    // that owes a beat.)
     // Constantine's revised universal option contract: a short activation
     // reviews, while a deliberate hold approves the exact same callback and
     // skips the modal. The old beat classification remains published for
@@ -1110,10 +1115,20 @@ export function beatArmer(meta, registries) {
         returnFocusElement: el,
       });
     };
+    // THE FORM DRIVES THE BEHAVIOUR, not only the `data-beat` label (owner,
+    // 2026-10-18; first wired here when End Turn became state-dependent). Both
+    // are re-read for EVERY press, because the state a row's stakes move with
+    // (a hand that still has a playable card) changes inside one screen:
+    //   form 'none'          ms resolves to 0 and a tap commits at once, with
+    //                        no review. Every tap path (pointer release, a
+    //                        click, a key or pad activation) ends in `onTap`,
+    //                        so the one decision below covers them all.
+    //   form 'hold'|'confirm' unchanged: a tap reviews, a completed hold commits.
+    const owesNoBeat = () => formNow() === 'none';
     const disarm = armHold(el, {
-      ms: dialMs,
+      ms: () => (owesNoBeat() ? 0 : dialMs),
       onConfirm,
-      onTap: review,
+      onTap: (ev) => (owesNoBeat() ? onConfirm(ev) : review(ev)),
       tapOnEarlyRelease: true,
       id: actionId,
       hintHost,
