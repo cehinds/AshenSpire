@@ -374,7 +374,6 @@ export function catalogSchemaVersionSpans(file, text) {
     }
   }
   artifacts(catalog.runtimeArtifacts);
-  artifacts(catalog.runtimeSources);
   let index = 0;
   function visit(value) {
     const current = tokens[index++];
