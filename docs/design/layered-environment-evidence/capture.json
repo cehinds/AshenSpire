@@ -1,12 +1,12 @@
 {
   "feature": "feature/ImproveMapBattleFieldArt",
-  "capturedDate": "2026-10-17",
+  "capturedDate": "2026-10-18",
   "timezone": "America/Anchorage",
-  "sourceCommitAtCapture": "b445052c3ed8ef92a99dcafc5688de32bf0ff4c7",
-  "build": "0.7.1.1562",
-  "sourceDigest": "8c3d65426b",
-  "webSha256": "57eee78c67b7d215eda63dffd7a9729a080f0b145a51f78aa12ae8d2c01c5a97",
-  "standaloneSha256": "995b72c93797d30aa1cb48e54becac3e86fa533ae14eda89ef77fd6212c33b65",
+  "sourceCommitAtCapture": "61b211d0f432dc7f38b624e8848caad03ac2f7fe",
+  "build": "0.7.1.1596",
+  "sourceDigest": "84bbc9b033",
+  "webSha256": "d9a275a59a582429a910119bccffca487275f264a1d63ac475f9a71a78740d3c",
+  "standaloneSha256": "a68e0c69ce4ffb897c1e012016494b71f0e7aa6b86c2a495c25c0a7a63ce5a9b",
   "playableUrl": "https://cehinds.github.io/AshenSpire/branches/feature/ImproveMapBattleFieldArt/latest/",
   "viewports": {
     "mobile": [
@@ -27,12 +27,12 @@
     ]
   },
   "screenshots": {
-    "docs/design/layered-environment-evidence/desktop.png": "428c0d984954aa920f93091fcd07590a687ba8ace857b31ae790c19f370fb0d5",
-    "docs/design/layered-environment-evidence/map-archive.png": "a3bb68f9068700cf537fc1fcb77a7bcd834a057cbf849238d15d31972f8c4310",
-    "docs/design/layered-environment-evidence/map-forge.png": "79743cea90f4adfab1759a40c6ed292cf36abcbf43136225ffdcd4816d94eb03",
-    "docs/design/layered-environment-evidence/mobile.png": "58eca150232a315b698b457de75082cd7aa48656fcc7d966846a8cedab22759b",
-    "docs/design/layered-environment-evidence/tablet.png": "ae2c334cc758d78b94b35359084f0755a32ba313a82d02d27f29cd02875e24a6",
-    "docs/design/layered-environment-evidence/wide.png": "2c86803dea3417ff7b34a9e4f2208fb3a7d2c246c15180d72560b4ff65dec67e"
+    "docs/design/layered-environment-evidence/desktop.png": "382fd06440c81222bc64429e00a2fc79b15b0231cadfbeef0166f7afd719873b",
+    "docs/design/layered-environment-evidence/map-archive.png": "d331179a9f6f300c72111739b162c326ad1c125a1737fd7f6b7c8f8a4e2bcccd",
+    "docs/design/layered-environment-evidence/map-forge.png": "848056024245164bb82c06a8544a97e6f6b3738457438008c0a4ae047307ecfc",
+    "docs/design/layered-environment-evidence/mobile.png": "d438a4c077cd3abc2a011936a9d8445618b19c2cba4a75f0b032a672a7116ec3",
+    "docs/design/layered-environment-evidence/tablet.png": "9448cc79f02fd904257b53bdd0ee2dbab2d10edcbd404e402dccb6338b7cddba",
+    "docs/design/layered-environment-evidence/wide.png": "55aad9f9c4bdfdeaf9c473c739e649f4f6504ee42179cc05995e5c8546c84b54"
   },
   "hostedVerification": "Local merged-dev web pack edition verified in Chromium; no hosted verification claimed. Both web and single-file editions build; these screenshots verify the web edition.",
   "workingTreeWasCleanAtCapture": true
