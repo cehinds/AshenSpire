@@ -122,6 +122,23 @@ test('saved combat preserves exact authored parameters and owner clocks without 
  const altered=structuredClone(snapshot);altered.fixCoreRules.perception.baseDC='oops';
  assert.throws(()=>restoreCombatSnapshot({registries:reg,rng:createRng(1),snapshot:altered}),/finite number/);
 });
+test('a combat saved with the v1 perception shape restores onto the bonuses formula',async()=>{
+ const {serializeCombatSnapshot,restoreCombatSnapshot}=await import('../src/engine/combatSnapshot.js');
+ const {fixCoreRules}=await import('../src/model/fixCoreMechanics.js');
+ const {combat}=live();
+ const snapshot=serializeCombatSnapshot(combat);
+ const restoreOf=snap=>restoreCombatSnapshot({registries:reg,rng:createRng(combat.rng.seed,combat.rng.getCounters()),snapshot:snap,expectedGameProfile:profile});
+ const current=restoreOf(snapshot);
+ assert.deepEqual(current.fixCoreRules.perception,combat.fixCoreRules.perception);
+ const old=structuredClone(snapshot);
+ old.fixCoreRules.perception={baseDC:7,levelBaseline:1,intelligenceBaseline:0,levelWeight:1,intelligenceWeight:1};
+ const restored=restoreOf(old);
+ assert.deepEqual(restored.fixCoreRules.perception,{baseDC:7,bonuses:[]});
+ assert.equal(fixCoreRules(restored).perception.baseDC,7);
+ assert.equal(old.fixCoreRules.perception.levelWeight,1,'caller snapshot untouched');
+ const typo=structuredClone(snapshot);typo.fixCoreRules.perception.levelBaselne=1;
+ assert.throws(()=>restoreOf(typo),/unknown parameter/);
+});
 test('enemy heal-and-block move spends exactly three SP and cannot cast with two',()=>{
  for(const pool of [3,2]) {
   const {combat,target}=live();target.hp=250;target.maxStamina=pool;target.stamina=pool;

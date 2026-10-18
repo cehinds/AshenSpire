@@ -1,4 +1,4 @@
-import { validateFixCoreRules } from '../model/fixCoreMechanics.js';
+import { validateFixCoreRules, normalizeFixCoreRules } from '../model/fixCoreMechanics.js';
 import { formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { enemyBurdenProblems } from './enemyBurdens.js';
 import { hasCardChoice } from './cardZones.js';
@@ -172,6 +172,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // the caller's object is left as saved.
   const saved = structuredClone(snapshot);
   bringRangesForward(saved);
+  if (saved.fixCoreRules) saved.fixCoreRules = normalizeFixCoreRules(saved.fixCoreRules);
   assertCombatSnapshot(saved);
   if (saved.gameProfile) validateGameProfileSnapshot(saved.gameProfile);
   if (expectedGameProfile && saved.gameProfile?.hash !== expectedGameProfile.hash) throw new Error('Combat game profile does not match the run configuration');
