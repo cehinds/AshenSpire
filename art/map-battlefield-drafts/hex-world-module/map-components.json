@@ -17,7 +17,7 @@
     "components/service.json"
   ],
   "sourceManifests": [
-    "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+    "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
     "../batch-01/manifest.json",
     "../batch-02/manifest.json",
     "../batch-03/manifest.json",

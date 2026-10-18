@@ -1,3 +1,4 @@
+import {gameAsset} from '../paired-game.mjs';
 import {readFileSync, writeFileSync, existsSync} from 'node:fs';
 import {dirname, resolve} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
@@ -63,7 +64,7 @@ export function loadArtModules(indexPath = defaultIndex) {
   const composition = {...shared('composition'), presets};
 
   const requireFile = path => {
-    if (typeof path !== 'string' || !existsSync(resolve(assetBase, path))) {
+    if (typeof path !== 'string' || !existsSync(path.startsWith('../../../content/') ? gameAsset(path.slice(9)) : resolve(assetBase, path))) {
       throw new Error(`Missing art/source reference: ${path}`);
     }
   };

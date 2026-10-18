@@ -1,11 +1,12 @@
 import test from 'node:test';
+import {gameAsset} from '../paired-game.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {loadLocationScenes,validateLocationScenes,exportLocationScenes,directory} from './scenes.mjs';
 const fixture=()=>loadLocationScenes();
 const validate=(data,extra={})=>validateLocationScenes(data,{exists:()=>true,...extra});
-const atlasBytes=fs.readFileSync(path.resolve(directory,'../../../content/source/worldAtlas.json'));
+const atlasBytes=fs.readFileSync(gameAsset('content/source/worldAtlas.json'));
 const atlas=JSON.parse(atlasBytes);
 test('requested settings retain86 source references with the legacy combined floor unselected',()=>{
  const data=fixture(),brief=JSON.parse(fs.readFileSync(path.join(directory,'brief.json')));

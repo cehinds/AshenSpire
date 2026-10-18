@@ -1,6 +1,6 @@
 # Map and battlefield source-art library
 
-**251 retained source drafts across eleven batches.** Kept on `feature/ImproveMapBattleFieldArt`; the shared proposal and wiring examples are already in dev. These paintings remain unregistered drafts.
+**251 retained source drafts across eleven batches.** Preserved in the dedicated art repository. The game publishes reviewed components as separate WebP runtime exports; other paintings remain authoring drafts.
 
 | Batch | Source count | Contents |
 | --- | --- | --- |
@@ -29,6 +29,20 @@
 - Scene source canvases currently reach about 1672 × 941; more overscan and registration are still required for wider camera motion. Map masters are 1254px square; 512px/256px exports remain pending.
 - Existing issues include low-alpha edge dust, colored fringes and some small-size silhouette ambiguity. Each batch records its own findings.
 
-Next art families: regional dungeon backdrops/props, coastal dock connections, expanded panoramic masters, and alpha/contact-shadow cleanup. Production integration continues through the [shared handoff](../../docs/design/improve-map-battlefield-art/HANDOFF.md) and the project's art-repository intake.
+Next art families: regional dungeon backdrops/props, coastal dock connections, expanded panoramic masters, and alpha/contact-shadow cleanup. Production integration continues through the [shared handoff](https://github.com/cehinds/AshenSpire/blob/dev/docs/design/improve-map-battlefield-art/HANDOFF.md) and the project's art-repository intake.
 
 Atmosphere fields now use 4096px square vector masters and a 2× viewport coverage rule; seamless particle tiles cover arbitrary field sizes. The earlier painted scene layers still need expanded edges. See batch 04 for crop checks and motion preview.
+
+## Validation dependencies and paired game
+
+Use Node.js 20+ and Python 3 (`python` on PATH). Install schema validation with
+`python -m pip install -r art/map-battlefield-drafts/requirements.txt`.
+The location scenes validate their source atlas against the paired game checkout,
+which defaults to sibling `../AshenSpire` relative to the art repository. Set
+`ASHENSPIRE_DIR` to the absolute game checkout path when using another layout.
+The regional preview renderer uses the same setting for game map images and
+requires Playwright with Chromium. Technical map icon sources are local in
+`technical-map-icons`; their PNG and SVG bytes are preserved from the game gallery.
+
+Run all authoring tests from the art repository root:
+`node --test art/map-battlefield-drafts/*/*.test.mjs`.

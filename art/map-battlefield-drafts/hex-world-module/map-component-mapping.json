@@ -79,7 +79,7 @@
         {
           "artItemId": "technical-bridge",
           "componentId": "bridge",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/bridge.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/bridge.png",
           "weight": 1,
           "tags": [
             "bridge",
@@ -94,7 +94,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "bridge"
         },
         {
@@ -232,7 +232,7 @@
         {
           "artItemId": "technical-ford",
           "componentId": "ford",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/ford.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/ford.png",
           "weight": 1,
           "tags": [
             "ford",
@@ -247,7 +247,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "ford"
         },
         {
@@ -343,7 +343,7 @@
         {
           "artItemId": "technical-path",
           "componentId": "path",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/path.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/path.png",
           "weight": 1,
           "tags": [
             "road",
@@ -358,7 +358,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "path"
         },
         {
@@ -560,7 +560,7 @@
         {
           "artItemId": "technical-tunnel",
           "componentId": "tunnel",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/tunnel.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/tunnel.png",
           "weight": 1,
           "tags": [
             "tunnel",
@@ -576,7 +576,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "tunnel"
         },
         {
@@ -672,7 +672,7 @@
         {
           "artItemId": "technical-ferry",
           "componentId": "ferry",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/ferry.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/ferry.png",
           "weight": 1,
           "tags": [
             "ferry",
@@ -688,7 +688,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "ferry"
         },
         {
@@ -805,7 +805,7 @@
         {
           "artItemId": "technical-portal",
           "componentId": "portal",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/portal.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/portal.png",
           "weight": 1,
           "tags": [
             "portal",
@@ -820,7 +820,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "portal"
         },
         {
@@ -932,7 +932,7 @@
         {
           "artItemId": "technical-boat",
           "componentId": "boat",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/boat.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/boat.png",
           "weight": 1,
           "tags": [
             "boat",
@@ -947,7 +947,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "boat"
         },
         {
@@ -1041,7 +1041,7 @@
         {
           "artItemId": "technical-cave",
           "componentId": "cave",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/cave.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/cave.png",
           "weight": 1,
           "tags": [
             "cave",
@@ -1056,7 +1056,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "cave"
         },
         {
@@ -1170,7 +1170,7 @@
         {
           "artItemId": "technical-dungeon",
           "componentId": "dungeon",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/dungeon.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/dungeon.png",
           "weight": 1,
           "tags": [
             "dungeon",
@@ -1186,7 +1186,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "dungeon"
         },
         {
@@ -1301,7 +1301,7 @@
         {
           "artItemId": "technical-mine",
           "componentId": "mine",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/mine.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/mine.png",
           "weight": 1,
           "tags": [
             "mine",
@@ -1317,7 +1317,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "mine"
         },
         {
@@ -1412,7 +1412,7 @@
         {
           "artItemId": "technical-city",
           "componentId": "city",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/city.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/city.png",
           "weight": 1,
           "tags": [
             "city",
@@ -1427,7 +1427,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "city"
         },
         {
@@ -1521,7 +1521,7 @@
         {
           "artItemId": "technical-town",
           "componentId": "town",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/town.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/town.png",
           "weight": 1,
           "tags": [
             "town",
@@ -1536,7 +1536,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "town"
         },
         {
@@ -1629,7 +1629,7 @@
         {
           "artItemId": "technical-village",
           "componentId": "village",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/village.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/village.png",
           "weight": 1,
           "tags": [
             "village",
@@ -1643,7 +1643,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "village"
         },
         {
@@ -1755,7 +1755,7 @@
         {
           "artItemId": "technical-ruins",
           "componentId": "ruins",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/ruins.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/ruins.png",
           "weight": 1,
           "tags": [
             "ruins",
@@ -1770,7 +1770,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "ruins"
         },
         {
@@ -1884,7 +1884,7 @@
         {
           "artItemId": "technical-shrine",
           "componentId": "shrine",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/shrine.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/shrine.png",
           "weight": 1,
           "tags": [
             "shrine",
@@ -1899,7 +1899,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "shrine"
         },
         {
@@ -2011,7 +2011,7 @@
         {
           "artItemId": "technical-watchtower",
           "componentId": "watchtower",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/watchtower.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/watchtower.png",
           "weight": 1,
           "tags": [
             "watchtower",
@@ -2026,7 +2026,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "watchtower"
         },
         {
@@ -2143,7 +2143,7 @@
         {
           "artItemId": "technical-treasure",
           "componentId": "treasure",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/treasure.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/treasure.png",
           "weight": 1,
           "tags": [
             "treasure",
@@ -2158,7 +2158,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "treasure"
         },
         {
@@ -2272,7 +2272,7 @@
         {
           "artItemId": "technical-enemy-camp",
           "componentId": "enemy-camp",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/enemy-camp.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/enemy-camp.png",
           "weight": 1,
           "tags": [
             "enemy",
@@ -2287,7 +2287,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "enemy-camp"
         },
         {
@@ -2401,7 +2401,7 @@
         {
           "artItemId": "technical-rest-camp",
           "componentId": "rest-camp",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/rest-camp.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/rest-camp.png",
           "weight": 1,
           "tags": [
             "rest",
@@ -2417,7 +2417,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "rest-camp"
         },
         {
@@ -2553,7 +2553,7 @@
         {
           "artItemId": "technical-inn",
           "componentId": "inn",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/inn.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/inn.png",
           "weight": 1,
           "tags": [
             "inn",
@@ -2569,7 +2569,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "inn"
         },
         {
@@ -2664,7 +2664,7 @@
         {
           "artItemId": "technical-trainer",
           "componentId": "trainer",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/trainer.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/trainer.png",
           "weight": 1,
           "tags": [
             "trainer",
@@ -2679,7 +2679,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "trainer"
         },
         {
@@ -2773,7 +2773,7 @@
         {
           "artItemId": "technical-merchant",
           "componentId": "merchant",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/merchant.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/merchant.png",
           "weight": 1,
           "tags": [
             "merchant",
@@ -2788,7 +2788,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "merchant"
         },
         {
@@ -2882,7 +2882,7 @@
         {
           "artItemId": "technical-cartographer",
           "componentId": "cartographer",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/cartographer.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/cartographer.png",
           "weight": 1,
           "tags": [
             "cartographer",
@@ -2897,7 +2897,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "cartographer"
         },
         {
@@ -2991,7 +2991,7 @@
         {
           "artItemId": "technical-fishing",
           "componentId": "fishing",
-          "asset": "docs/design/improve-map-battlefield-art/props-examples/fishing.png",
+          "asset": "art/map-battlefield-drafts/technical-map-icons/fishing.png",
           "weight": 1,
           "tags": [
             "fishing",
@@ -3006,7 +3006,7 @@
           },
           "variantRole": "technical-placeholder",
           "status": "technical-icon-placeholder",
-          "sourceManifest": "../../../docs/design/improve-map-battlefield-art/props-examples/manifest.json",
+          "sourceManifest": "../../../art/map-battlefield-drafts/technical-map-icons/manifest.json",
           "sourceAssetId": "fishing"
         },
         {

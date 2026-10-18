@@ -1,9 +1,10 @@
 """Initialize editable scene JSON from the brief; rerunning replaces module edits."""
+import os
 import hashlib
 import json
 from pathlib import Path
 ROOT=Path(__file__).resolve().parent
-REPO=ROOT.parents[2]
+REPO=Path(os.environ.get('ASHENSPIRE_DIR', ROOT.parents[3]/'AshenSpire')).resolve()
 read=lambda p:json.loads(p.read_text())
 def write(p,d):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(d,indent=2)+'\n')
 brief=read(ROOT/'brief.json');settings=brief['settings']

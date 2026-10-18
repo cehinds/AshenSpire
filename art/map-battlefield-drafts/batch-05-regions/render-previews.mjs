@@ -1,3 +1,4 @@
+import {gameAsset} from '../paired-game.mjs';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {readFileSync,writeFileSync} from 'node:fs';
@@ -8,7 +9,7 @@ const dir=fileURLToPath(new URL('.',import.meta.url));
 const recipe=JSON.parse(readFileSync(resolve(dir,'composition.example.json'))),manifest=JSON.parse(readFileSync(resolve(dir,'manifest.json')));
 const byFile=new Map(manifest.assets.map(a=>[a.file,a])),files=new Map();
 const escape=s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-function url(file){const path=resolve(dir,file);if(!files.has(path))files.set(path,'/asset/'+files.size);return files.get(path);}
+function url(file){const path=file.startsWith('../../../assets-mobile/')?gameAsset(file.slice(9)):resolve(dir,file);if(!files.has(path))files.set(path,'/asset/'+files.size);return files.get(path);}
 const checks=[];
 function scene(preset,width,cameraId='landscape'){
  const c=recipe.cameras[cameraId],scale=width/c.width,height=c.height*scale;
@@ -42,6 +43,6 @@ const pages=new Map([['/',overview],['/matches',matches],['/all',all],['/props',
 const server=createServer((req,res)=>{if(pages.has(req.url)){res.setHeader('Content-Type','text/html; charset=utf-8');res.end(pages.get(req.url));}else if(assets.has(req.url)){const p=assets.get(req.url);res.setHeader('Content-Type',p.endsWith('.webp')?'image/webp':'image/png');res.end(readFileSync(p));}else{res.statusCode=404;res.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
 try{browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});const page=await browser.newPage({deviceScaleFactor:1});
- for(const [route,width,file] of [['/',1264,'preview-regions.png'],['/matches',1264,'preview-map-matches.png'],['/all',1280,'preview-all-combinations.png'],['/props',1216,'preview-props.png'],['/crops',1120,'preview-camera-crops.png']]){await page.setViewportSize({width,height:900});await page.goto('http://127.0.0.1:'+server.address().port+route);await page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode())));await page.screenshot({path:resolve(dir,file),fullPage:true});}
+ for(const [route,width,file] of [['/',1264,'preview-regions.png'],['/matches',1264,'preview-map-matches.png'],['/all',1280,'preview-all-combinations.png'],['/props',1216,'preview-props.png'],['/crops',1120,'preview-camera-crops.png']]){await page.setViewportSize({width,height:900});await page.goto('http://127.0.0.1:'+server.address().port+route);await page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode())));await page.screenshot({path:file.startsWith('../../../assets-mobile/')?gameAsset(file.slice(9)):resolve(dir,file),fullPage:true});}
  console.log('Rendered 5 review sheets; verified '+uniqueChecks.length+' prop/camera bounds.');
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

@@ -22,7 +22,7 @@ export function buildLibrary(){
  const reviews=new Map();
  for(const file of ['audit-map-icons.json','audit-grounds.json','audit-props.json','audit-atmosphere.json','audit-corrections-ground.json','audit-corrections-atmosphere.json','audit-biome-architecture.json','audit-location-streets.json','audit-floor-props.json'])if(fs.existsSync(path.join(root,file)))for(const item of read(path.join(root,file)).items)reviews.set(item.assetKey,item);
  const manifests=catalog.batches.map(b=>({id:b.id,file:path.resolve(root,'..',b.manifest)}));
- manifests.push({id:'technical-map-icons',file:path.resolve(repo,'docs/design/improve-map-battlefield-art/props-examples/manifest.json')});
+ manifests.push({id:'technical-map-icons',file:path.resolve(repo,'art/map-battlefield-drafts/technical-map-icons/manifest.json')});
  const replacements=fs.existsSync(path.join(root,'replacements.json'))?read(path.join(root,'replacements.json')).items:[];
  const items=manifests.flatMap(batch=>read(batch.file).assets.map(asset=>{
   const assetKey=batch.id+'/'+asset.id,profileId=profile(asset),review=reviews.get(assetKey);

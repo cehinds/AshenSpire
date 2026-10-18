@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {gameAsset} from '../paired-game.mjs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
@@ -69,7 +70,7 @@ export function validateLocationScenes(data,{exists=fs.existsSync,library=null,a
 export function loadLocationScenes({moduleRoot=path.join(directory,'modules'),check=false,library}={}){
  const data=exportLocationScenes(moduleRoot),index=read(path.join(moduleRoot,'index.json'));data.assetBase=path.resolve(moduleRoot,index.assetBase);
  const manifestFile=path.join(data.assetBase,'manifest.json');data.manifest=fs.existsSync(manifestFile)?read(manifestFile).assets:[];
- if(check){const atlasFile=path.resolve(data.assetBase,data.introMap.sourceAtlas),bytes=fs.readFileSync(atlasFile),errors=validateLocationScenes(data,{library:library??loadStyleLibrary(),atlas:JSON.parse(bytes),atlasBytes:bytes,manifest:data.manifest});if(errors.length)throw new Error(errors.join('\n'));}
+ if(check){const atlasFile=gameAsset('content/source/worldAtlas.json'),bytes=fs.readFileSync(atlasFile),errors=validateLocationScenes(data,{library:library??loadStyleLibrary(),atlas:JSON.parse(bytes),atlasBytes:bytes,manifest:data.manifest});if(errors.length)throw new Error(errors.join('\n'));}
  return data;
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
