@@ -92,3 +92,12 @@ test('equipment inspection exposes converted values and armor rank budget', asyn
   assert.ok(model.bonuses.some(row=>row.label==='Rank 2 · 4 points'));
   assert.ok(model.facts.every(row=>row.explanation.includes('stat-budget point(s)')));
 });
+test('resolved gear suppresses duplicate legacy pool stats and retains independent effects', async () => {
+  const {runMods}=await import('../src/model/loadout.js');
+  const run=fresh();
+  const registry={...reg,equipment:{...reg.equipment,armaments:reg.equipment.armaments.map(piece=>piece.id==='greatsword' ? {...piece,mods:[...(piece.mods || []),'self.maxHp=+999','self.regen=+2','self.swapCost=+1']} : piece)}};
+  const baseline=runMods(reg,run.loadout,run.class,run), actual=runMods(registry,run.loadout,run.class,run);
+  assert.equal(actual.maxHp,baseline.maxHp);
+  assert.equal(actual.swapCostDelta,baseline.swapCostDelta+1);
+  assert.equal(actual.startStatuses.find(row=>row.status==='regen')?.stacks,(baseline.startStatuses.find(row=>row.status==='regen')?.stacks || 0)+2);
+});

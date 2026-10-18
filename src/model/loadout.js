@@ -2771,12 +2771,13 @@ export function runMods(registries, loadout, classId, run = null) {
   const pools = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, 0]));
   let swapCostDelta = 0;
   for (const piece of equippedPieces(registries, loadout, classId)) {
-    // Configured gear replaces the legacy self-stat authoring for this piece.
-    if (resolvedRefs.has(piece.kind === 'armor' ? `armor/${classId}/${piece.id}` : `armament/${piece.id}`)) continue;
+    const resolvedPiece = resolvedRefs.has(piece.kind === 'armor' ? `armor/${classId}/${piece.id}` : `armament/${piece.id}`);
     for (const raw of piece.mods || []) {
       const mod = parseMod(raw);
       const spec = mod && fields[mod.field];
       if (!spec || spec.scope !== 'run') continue;
+      // Resolved gear replaces pool stats; independent swap/status effects remain.
+      if (resolvedPiece && EQUIPMENT_POOL_FIELDS.includes(spec.apply)) continue;
       if (EQUIPMENT_POOL_FIELDS.includes(spec.apply)) {
         pools[spec.apply] = mod.mode === 'add' ? pools[spec.apply] + mod.value : mod.value;
       } else if (spec.apply === 'swapCost') {
