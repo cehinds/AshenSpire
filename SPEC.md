@@ -426,7 +426,7 @@ crimsonBlight: {
       amount: { f: 'stacks', status: 'crimsonBlight', of: 'owner' } }] }],
 },
 weak:       { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageDealtMult: 0.75 } },
-vulnerable: { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageTakenMult: 1.5 } },
+vulnerable: { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageTakenMult: 1.25 } },
 frost:      { stackMode: 'add', decay: 'none',
   proc: { threshold: 10, burstPercent: 8, burstMin: 4, burstMax: 20,
     effects: [ /* leaves the target Weak and Frost-Exposed */ ] } },
@@ -918,7 +918,7 @@ dmg = dmg + card rating bonus                    // ratings (§13.4l) run first
 dmg = dmg + school damage add                    // player cards with a damage school
 dmg = dmg + attacker.Strength                    // may go below base
 dmg = dmg * (attacker has Weak      ? 0.75 : 1)
-dmg = dmg * (defender has Vulnerable? 1.5  : 1)
+dmg = dmg * (defender has Vulnerable? 1.25 : 1)   // owner D16, 2026-10-18
 dmg = dmg * (defender is Staggered  ? 1.5  : 1)  // legacy ratings only (see below)
 dmg = dmg * defender's Poise or Ward resistance  // ratings on; Ward for magical hits
 dmg = dmg * (school resistance, then school vulnerability)
@@ -991,7 +991,7 @@ Common (StS layer):
 | Strength | any | +N attack damage per hit | permanent |
 | Dexterity | player | +N block from cards | permanent |
 | Weak | any | deal 25% less attack damage | −1 stack at owner's turn end |
-| Vulnerable | any | take 50% more attack damage | −1 stack at owner's turn end |
+| Vulnerable | any | take 25% more attack damage | −1 stack at owner's turn end |
 | Frail | player | 25% less block from cards | −1 stack at turn end |
 
 Elden Ring layer (the thematic differentiator — these must feel distinct):
