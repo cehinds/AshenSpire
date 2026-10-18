@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **Tools are indexed and have npm run aliases** ([#2094](https://github.com/cehinds/AshenSpire/pull/2094), `0.7.1.1565`). Development-process change only, nothing in the game changes. A package.json lists the build, serve, test and validation commands as npm scripts, and tools/README.md indexes every tool with who calls it, naming the ones nothing references.
+- **Tools are indexed and have npm run aliases** ([#2094](https://github.com/cehinds/AshenSpire/pull/2094), `0.7.1.1567`). Development-process change only, nothing in the game changes. A package.json lists the build, serve, test and validation commands as npm scripts, and tools/README.md indexes every tool with who calls it, naming the ones nothing references.
 - **Saved runs survive app updates that do not change the rules** ([#2093](https://github.com/cehinds/AshenSpire/pull/2093), `0.7.1.1565`). A saved run no longer refuses to continue after an update that only touched the game's code; only changes to the rules engine itself pin a save to its build. A save that really cannot be restored now shows a notice and leaves the save untouched instead of crashing.
 
 ## 2026-10-17
