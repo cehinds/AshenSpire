@@ -1348,7 +1348,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       || document.hidden || document.visibilityState === 'hidden' || performance.now() < autoCombatPausedUntil) return undefined;
     const enemy = combat.enemies.find(row => row.id === pending.sourceId);
     let intent = null;
-    try { if (enemy?.alive && (combat.combatExpansionVersion !== 2 || hitChanceKnown(enemy))) intent = projectCombatIntent(combat, enemy.id); } catch { intent = null; }
+    // projectCombatIntent applies the same visibility gate as previewIntent (reveals, proposals, exact reads);
+    // a hidden intent stays unknown to the chooser.
+    try { if (enemy?.alive) intent = projectCombatIntent(combat, enemy.id); } catch { intent = null; }
     const seat = ownSeat();
     const options = pending.options.map(option => ({ id: option.id, kind: reactionKind(option) }));
     const picked = chooseReaction({ matchups: gameModule(run, 'stances')?.matchups,

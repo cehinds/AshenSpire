@@ -80,3 +80,10 @@ test('the last stance is read for the active co-op seat, not player', () => {
   assert.match(autoSource(), /heldKinds\.get\(seat\)/);
   assert.equal(chooseReaction(state({ lastStance: ledger.get('p2').maneuver }, 'p2'), 'p2', options).id, 'b');
 });
+
+test('a publicly revealed intent is countered without requiring a hit-% read', () => {
+  assert.doesNotMatch(autoSource(), /hitChanceKnown/);
+  const revealed = { hidden: false, revealed: true, stance: 'attacking', profile: {} };
+  assert.equal(chooseReaction(state({ intent: revealed }), 'player', options).id, 'a');
+  assert.equal(chooseReaction(state({ intent: { ...revealed, hidden: true } }), 'player', options), null);
+});
