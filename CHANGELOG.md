@@ -36,6 +36,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 - **FixCore requirements are collected in one implementation contract** ([#2127](https://github.com/cehinds/AshenSpire/pull/2127), `0.7.1.1613`). Records the corrected combat, equipment, deck, rewards and interface requirements, JSON authoring architecture and review criteria. The versioned rules contract preserves existing saves; gameplay implementation remains pending.
 
+- **Content authority: enemies and classes are JSON** ([#2130](https://github.com/cehinds/AshenSpire/pull/2130), `0.7.1.1613`). Enemies and classes are plain data files now; nothing changes in play.
 - **Content authority: class and armament cards are JSON** ([#2125](https://github.com/cehinds/AshenSpire/pull/2125), `0.7.1.1613`). Class and armament cards are plain data files now; nothing changes in play.
 - **Hit feel: shake by share of max HP up to 10 px, 120 ms hit-stop on huge hits** ([#2123](https://github.com/cehinds/AshenSpire/pull/2123), `0.7.1.1611`). Big hits shake harder and hold longer: shake scales with the share of health a hit takes, up to 10 px, and a hit for 35% or more of max health pauses 120 ms at impact.
 - **Wave-3 review follow-ups: JSON status provenance; rest-first snapshot refused** ([#2124](https://github.com/cehinds/AshenSpire/pull/2124), `0.7.1.1609`). Housekeeping from review: the mechanics docs and provenance name the JSON status source, and an old rest-first rule preset is refused when loaded from a saved snapshot too.
