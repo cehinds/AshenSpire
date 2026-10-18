@@ -31,12 +31,13 @@
 // EventSource stream. A change under content/config/ (*.json) first runs
 // `node tools/config-build.mjs`, one under content/hud-layout/ (*.json) runs
 // `node tools/hud-layout-css.mjs`, one under content/framework/ (*.json) runs
-// `node tools/framework-data-build.mjs`, and one under content/source/ runs
-// `node tools/content-build.mjs`, one build at a time with the newest change
-// winning; a failed build sends `event: error` (data: the last 20 lines of its
+// `node tools/framework-data-build.mjs`, one under content/source/ runs
+// `node tools/content-build.mjs`, and one under games/ or engine/modules/ runs
+// `node tools/game-config.mjs build` (last: it reads the other outputs), one
+// build at a time with the newest change winning; a failed build sends `event: error` (data: the last 20 lines of its
 // stderr) and no reload. Files a build writes itself (generated/, *.generated.js,
-// *.generated.css) are not edits and are ignored by name; an edit made while a
-// build runs is queued and gets its own round. In watch mode the served
+// *.generated.css, game.lock.json, src/framework/data/) are not edits and are
+// ignored by name; an edit made while a build runs is queued and gets its own round. In watch mode the served
 // index.html (that file only) gets a small inline script before </body> that
 // reloads the page on `reload` and shows `error` text in a banner. Without --watch nothing here exists: no
 // endpoint, no watcher, and every response is byte-identical to before.
@@ -98,7 +99,8 @@ const WATCH_DEBOUNCE_MS = 150;
 const WATCH_SKIP = /(^|\/)(\.|node_modules(\/|$))|~$|\.sw[px]$|\.tmp$/;
 
 /** The order builders run in when one batch needs several. */
-const BUILD_ORDER = ['config-build.mjs', 'hud-layout-css.mjs', 'framework-data-build.mjs', 'content-build.mjs'];
+const BUILD_ORDER = ['config-build.mjs', 'hud-layout-css.mjs', 'framework-data-build.mjs', 'content-build.mjs',
+  'game-config.mjs build']; // last: it hashes src/** and reads the other generated modules
 
 /** Which build tool (in tools/) must run before a change under `rel` can be seen. */
 function buildToolFor(rel) {
@@ -109,6 +111,9 @@ function buildToolFor(rel) {
   // content/framework/*.json → src/framework/data/*.js (no flag = compile + report).
   // Before content-build, whose stray-source sweep wants each JSON's mirror to exist.
   if (rel.startsWith('content/framework/') && rel.endsWith('.json')) return 'framework-data-build.mjs';
+  // games/** and engine/modules/** → src/content/generated/{gameProfiles,baseCards}.js
+  // and games/ashenspire/game.lock.json. Needs the subcommand: bare, it only validates.
+  if (rel.startsWith('games/') || rel.startsWith('engine/modules/')) return 'game-config.mjs build';
   return null;
 }
 
@@ -117,12 +122,13 @@ function tailLines(text, n = 20) {
   return String(text || '').trimEnd().split(/\r?\n/).slice(-n).join('\n');
 }
 
-/** Run `node <root>/tools/<tool>` once → null on success, else the message to show. */
-function runBuild(root, tool) {
+/** Run `node <root>/tools/<tool> [args]` once → null on success, else the message to show. `tool` may carry arguments ('game-config.mjs build'). */
+function runBuild(root, command) {
+  const [tool, ...args] = command.split(' ');
   const script = join(root, 'tools', tool);
   if (!existsSync(script)) return Promise.resolve(`serve --watch: ${tool} not found under ${join(root, 'tools')}`);
   return new Promise((done) => {
-    execFile(process.execPath, [script], { cwd: root, maxBuffer: 1 << 23, timeout: 120000 }, (err, stdout, stderr) => {
+    execFile(process.execPath, [script, ...args], { cwd: root, maxBuffer: 1 << 23, timeout: 120000 }, (err, stdout, stderr) => {
       if (!err) { done(null); return; }
       done(tailLines(stderr) || tailLines(stdout) || `${tool} failed: ${err.message}`);
     });
@@ -198,6 +204,7 @@ function startWatch(root, emit) {
     // `pending` and the loop in flush() runs another round for it.
     if (/(^|\/)generated\//.test(rel) || /\.generated\.(js|css)$/.test(rel)) return;
     if (rel.startsWith('src/framework/data/')) return; // framework-data-build / content-build output
+    if (rel.endsWith('/game.lock.json')) return; // game-config build rewrites it, under the watched games/
     pending.add(rel);
     clearTimeout(timer);
     timer = setTimeout(flush, WATCH_DEBOUNCE_MS);

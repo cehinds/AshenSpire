@@ -208,12 +208,42 @@ test('--watch: a content/framework change runs framework-data-build, reloads onc
   child.kill();
 });
 
+test('--watch: a games/ change runs `game-config build`, reloads once, ignores game.lock.json and generated output', async () => {
+  const root = makeTree();
+  mkdirSync(join(root, 'games', 'ashenspire', 'presets'), { recursive: true });
+  mkdirSync(join(root, 'src', 'content', 'generated'), { recursive: true });
+  mkdirSync(join(root, 'engine', 'modules', 'm'), { recursive: true });
+  const log = join(root, 'order.log');
+  writeFileSync(join(root, 'tools', 'game-config.mjs'),
+    "import { appendFileSync, writeFileSync } from 'node:fs';\n" +
+    `appendFileSync(${JSON.stringify(log)}, process.argv.slice(2).join(' ') + '\\n');\n` +
+    "writeFileSync('games/ashenspire/game.lock.json', '{}\\n');\n" +
+    "writeFileSync('src/content/generated/gameProfiles.js', 'export const g = 1;\\n');\n");
+  const { port, child } = await start(root, ['--watch']);
+  const stream = await events(port);
+  const reload = stream.next('reload', 3000);
+  writeFileSync(join(root, 'games', 'ashenspire', 'presets', 'core.json'), '{}\n');
+  assert.equal(await reload, 'games/ashenspire/presets/core.json');
+  await new Promise((r) => setTimeout(r, 600)); // the lock-file write must not start another round
+  assert.equal(readFileSync(log, 'utf8'), 'build\n', 'ran once, with the build subcommand');
+  assert.equal(stream.seen.filter((e) => e.name === 'reload').length, 1);
+  // engine/modules/ maps to the same builder.
+  const again = stream.next('reload', 3000);
+  writeFileSync(join(root, 'engine', 'modules', 'm', 'module.json'), '{}\n');
+  assert.equal(await again, 'engine/modules/m/module.json');
+  await new Promise((r) => setTimeout(r, 600));
+  assert.equal(readFileSync(log, 'utf8'), 'build\nbuild\n');
+  stream.close();
+  child.kill();
+});
+
 test('--watch: a batch touching config, hud-layout and source runs the builders in a fixed order', async () => {
   const root = makeTree();
   mkdirSync(join(root, 'content', 'hud-layout'), { recursive: true });
   mkdirSync(join(root, 'content', 'framework'), { recursive: true });
+  mkdirSync(join(root, 'games'), { recursive: true });
   const log = join(root, 'order.log');
-  for (const tool of ['config-build', 'hud-layout-css', 'framework-data-build', 'content-build']) {
+  for (const tool of ['config-build', 'hud-layout-css', 'framework-data-build', 'content-build', 'game-config']) {
     writeFileSync(join(root, 'tools', `${tool}.mjs`),
       `import { appendFileSync } from 'node:fs';\nappendFileSync(${JSON.stringify(log)}, ${JSON.stringify(`${tool}\n`)});\n`);
   }
@@ -222,11 +252,12 @@ test('--watch: a batch touching config, hud-layout and source runs the builders 
   const reload = stream.next('reload', 3000);
   // Source first, so insertion order alone would run content-build first.
   writeFileSync(join(root, 'content', 'source', 'cards.json'), '{}\n');
+  writeFileSync(join(root, 'games', 'g.json'), '{}\n');
   writeFileSync(join(root, 'content', 'framework', 'assets.json'), '{}\n');
   writeFileSync(join(root, 'content', 'hud-layout', 'mobile.json'), '{}\n');
   writeFileSync(join(root, 'content', 'config', 'a.json'), '{}\n');
   await reload;
-  assert.deepEqual(readFileSync(log, 'utf8').trim().split('\n'), ['config-build', 'hud-layout-css', 'framework-data-build', 'content-build']);
+  assert.deepEqual(readFileSync(log, 'utf8').trim().split('\n'), ['config-build', 'hud-layout-css', 'framework-data-build', 'content-build', 'game-config']);
   stream.close();
   child.kill();
 });
