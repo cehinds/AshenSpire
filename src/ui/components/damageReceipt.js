@@ -1,4 +1,5 @@
 import { esc, attachTooltip, showTooltipFor } from './tooltip.js';
+import { t } from '../strings.js';
 
 const number = value => Number.isFinite(value) ? String(Number(value.toFixed(4))) : '?';
 
@@ -15,7 +16,7 @@ export function damageReceiptLines(receipt) {
         : `${source.amount >= 0 ? '+' : '−'}${number(Math.abs(source.amount))}`;
       lines.push(`${source.label || source.id}: ${operation}${source.stage ? ` (${source.stage})` : ''}`);
     }
-    const reductions = [['wardReduced', 'Ward'], ['poiseReduced', 'Poise'], ['blocked', 'Block']]
+    const reductions = [['wardReduced', 'Ward'], ['poiseReduced', t('statsPreview.overview.poise')], ['blocked', 'Block']]
       .filter(([key]) => Number.isFinite(hit[key]) && hit[key] > 0)
       .map(([key, label]) => `${label} −${number(hit[key])}`);
     if (reductions.length) lines.push(reductions.join('; '));
