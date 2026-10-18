@@ -6,7 +6,7 @@ const row = combatHealthModel({ evasion: 12, poise: 5, ward: 9, defense: 7, barr
 assert.deepEqual(row.badges.map(badge => badge.kind), ['evade', 'poise', 'ward', 'shield']);
 assert.equal(row.badges[0].value, 12);
 assert.equal(row.badges[2].barrier, 2);
-assert.deepEqual(combatHealthModel({ evasion: 0 }).badges.map(badge => badge.kind), ['evade']);
+assert.deepEqual(combatHealthModel({ evasion: 0 }).badges, [], 'spent Evasion is absent instead of a zero AC reading');
 assert.deepEqual(combatHealthModel({}).badges, []);
 assert.deepEqual(calloutForEvent({ type: 'attackHit', targetId: 'enemy:1', label: 'Hit' }), { kind: 'hit', targetId: 'enemy:1' });
 assert.deepEqual(calloutForEvent({ type: 'attackHit', targetId: 'enemy:1', label: 'Hit — Evade Failed', evadeActive: true }), { kind: 'evadeFailed', targetId: 'enemy:1' });

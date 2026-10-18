@@ -39,6 +39,7 @@ function fixture(code = rendering) {
     // no-op here and leaves the recorded order above unchanged.
     decorateRoundsScreen: () => {}, decorateCombatRoundsScreen: () => {}, targetedEnemyId: () => null, lastTargetId: null, combatEl: null,
     setHintMode: () => events.push('hint'),
+    scheduleAutoCombat: () => events.push('automation'),
   };
   const api = runInNewContext(code + '\n({render, renderCombatantStage})', context);
   return { api, events, fits, field };
@@ -47,7 +48,7 @@ function fixture(code = rendering) {
 test('the actual full combat render fits once after hand layout and measured incoming footer tools', () => {
   const probe = fixture(); probe.api.render();
   assert.deepEqual(probe.fits, [{handWidth:390,handReceipt:390,toolsTop:744,controlsReady:true,toolsReady:true}]);
-  assert.deepEqual(probe.events, ['topbar','potions','hide','player','enemies','controls','tools','hand','measure-tools','fit','formation','targets','aim','hint']);
+  assert.deepEqual(probe.events, ['topbar','potions','hide','player','enemies','controls','tools','hand','measure-tools','fit','formation','targets','aim','hint','automation']);
   assert.equal(probe.field.dataset.playerCell, 'A1');
   assert.deepEqual(JSON.parse(probe.field.dataset.formationOccupancy),[{id:'player',cell:'A1',side:'player'}]);
 });
