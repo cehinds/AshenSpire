@@ -286,6 +286,22 @@ test('back: a sentinel left by an earlier load of the page is replaced, never go
   });
 });
 
+test('back: a bespoke surface above the top back-enabled entry owns the press; the door beneath stays', () => {
+  withHistory(({ history, userBack }) => {
+    resetModalState();
+    const log = [];
+    registerModal('settings', {}, { dismiss: (reason) => log.push(`settings:${reason}`), back: true });
+    const confirm = registerModal('confirm', {}); // no dismiss, no back: a confirmation with its own handling
+    userBack();
+    assert.deepEqual(log, [], 'Settings is not closed underneath the confirmation');
+    assert.deepEqual(openModals().map((m) => m.name), ['settings', 'confirm']);
+    assert.ok(history.state && history.state.ashenModal, 'the sentinel is back in place for the next press');
+    confirm();
+    userBack();
+    assert.deepEqual(log, ['settings:back']);
+  });
+});
+
 test('back: the shared shell pushes on open, goes back on close, and closes on browser back', async () => {
   const { withModalDom } = await import('./helpers/modal-dom.mjs');
   const { openModal } = await import('../src/ui/components/modalShell.js');

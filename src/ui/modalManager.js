@@ -97,6 +97,13 @@ function onPopstate() {
   const top = backEntries().at(-1);
   sentinelUp = false;
   if (!top) return;
+  // Back is one-layer Back (SPEC §7.3). When a surface the manager does not
+  // close sits above the top back-enabled entry (a confirmation over
+  // Settings), that surface owns the moment: swallow the press by restoring
+  // the sentinel and leave both standing, rather than closing the door
+  // underneath the confirmation.
+  const overall = stack.filter((e) => !e.closing).at(-1);
+  if (overall !== top) { pushSentinel(); return; }
   top.popped = true;
   top.dismiss('back');
   // The entry below, if any, still needs a sentinel to catch the next back.
