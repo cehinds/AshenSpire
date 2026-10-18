@@ -16,12 +16,23 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { buildToolFor } from '../tools/serve.mjs';
+import { buildToolFor, reloadLabel } from '../tools/serve.mjs';
 
 const SERVE = fileURLToPath(new URL('../tools/serve.mjs', import.meta.url));
 const INDEX = '<!doctype html>\n<html><head><meta charset="utf-8"><title>t</title></head>\n<body><p>hello</p></body></html>\n';
 const cleanups = [];
 after(() => { for (const fn of cleanups.reverse()) { try { fn(); } catch { /* already gone */ } } });
+
+test('a reload is labelled by the last file in the batch, never by a directory Windows reports alongside it', () => {
+  const root = makeTree();
+  mkdirSync(join(root, 'src', 'later'));
+  writeFileSync(join(root, 'src', 'later', 'y.js'), 'export const y = 1;\n');
+  // Windows: writing y.js also reports its directory as changed, after the file.
+  assert.equal(reloadLabel(root, ['src/later/y.js', 'src/later']), 'src/later/y.js');
+  assert.equal(reloadLabel(root, ['src/later', 'src/later/y.js']), 'src/later/y.js');
+  assert.equal(reloadLabel(root, ['src/later/gone.js', 'src/later']), 'src/later/gone.js', 'a deleted path is an edit');
+  assert.equal(reloadLabel(root, ['src/later']), 'src/later', 'a directory alone keeps its name (a replaced authored tree)');
+});
 
 test('authored directory replacement selects its builder without matching sibling names', () => {
   for (const [path, builder] of [
