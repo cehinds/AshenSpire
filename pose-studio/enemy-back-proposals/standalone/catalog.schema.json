@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Standalone rear sprite catalog",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "source",
+    "publicationStatus",
+    "actors"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "path",
+        "commit"
+      ],
+      "properties": {
+        "path": {
+          "const": "pose-studio/enemy-back-proposals/manifest.json"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        }
+      }
+    },
+    "publicationStatus": {
+      "const": "draft-unpublished"
+    },
+    "actors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "role",
+          "proposals"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "proposals": {
+            "type": "array",
+            "minItems": 10,
+            "maxItems": 10,
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "status",
+                "perspective",
+                "provenance",
+                "stances"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^v(0[1-9]|10)$"
+                },
+                "status": {
+                  "enum": [
+                    "missing",
+                    "draft",
+                    "reviewed",
+                    "selected"
+                  ]
+                },
+                "perspective": {
+                  "const": "rear"
+                },
+                "provenance": {
+                  "type": "object",
+                  "required": [
+                    "sourceSha256",
+                    "prompt",
+                    "publicationStatus"
+                  ],
+                  "properties": {
+                    "sourceSha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "prompt": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "publicationStatus": {
+                      "const": "draft-unpublished"
+                    }
+                  }
+                },
+                "stances": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "neutral": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "smash": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "attack": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "sweep": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "counter": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "defend": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "evade": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "spell": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "preparing": {
+                      "$ref": "#/$defs/sequence"
+                    }
+                  }
+                },
+                "animations": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "neutral": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "smash": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "attack": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "sweep": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "counter": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "defend": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "evade": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "spell": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "preparing": {
+                      "$ref": "#/$defs/sequence"
+                    }
+                  }
+                },
+                "reactions": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "hurt": {
+                      "$ref": "#/$defs/sequence"
+                    },
+                    "defeated": {
+                      "$ref": "#/$defs/sequence"
+                    }
+                  }
+                },
+                "designFrame": {
+                  "$ref": "#/$defs/frame"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "frame": {
+      "type": "object",
+      "required": [
+        "asset",
+        "sha256",
+        "durationMs",
+        "canvas",
+        "anchors"
+      ],
+      "properties": {
+        "asset": {
+          "type": "string",
+          "pattern": "^art/enemy-back-(proposals|motion)/[A-Za-z0-9_./-]+\\.png$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "durationMs": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "canvas": {
+          "$ref": "#/$defs/canvas"
+        },
+        "anchors": {
+          "type": "object",
+          "required": [
+            "feet"
+          ],
+          "additionalProperties": {
+            "$ref": "#/$defs/anchor"
+          }
+        }
+      }
+    },
+    "sequence": {
+      "type": "object",
+      "required": [
+        "frames"
+      ],
+      "properties": {
+        "frames": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/frame"
+          }
+        }
+      }
+    },
+    "canvas": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "integer",
+          "minimum": 1
+        }
+      ],
+      "items": false,
+      "minItems": 2
+    },
+    "anchor": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      ],
+      "items": false,
+      "minItems": 2
+    }
+  }
+}
