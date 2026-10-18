@@ -85,6 +85,11 @@ test('a description naming a src file that does not exist is an error', () => {
   assert.deepEqual(errors, ['games/ashenspire/ui/screens/title.json: description names src/ui/screens/doesNotExist.js, which does not exist']);
 });
 
+test('a description naming an existing .json under src/ is not read as a missing .js file', () => {
+  const errors = plantedErrors(open => { const f = open('games/ashenspire/ui/screens/title.json'); f.doc.description += ' Reads src/content/card-layout.json.'; f.save(); });
+  assert.deepEqual(errors, []);
+});
+
 test('every command handler names code that exists today', () => {
   const { commands } = read('engine/runtime/commands.json');
   const mechanicCommands = new Set(readdirSync(`${root}engine/mechanics`)

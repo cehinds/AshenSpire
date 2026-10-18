@@ -13,7 +13,7 @@ import { buildAssetCatalog, readAliases, readMissing } from './asset-catalog.mjs
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const readJson = (file, root = ROOT) => JSON.parse(readFileSync(path.join(root, file), 'utf8'));
 const COMMANDS_FILE = 'engine/runtime/commands.json';
-const SRC_PATH = /src\/[\w/.-]+\.js/g;
+const SRC_PATH = /src\/[\w/.-]+\.js(?![\w])/g;
 const GATED_FIELDS = ['sp', 'mp', 'cardCosts'];
 const VISIBILITY_QUERY = 'enemy_visibility.visibleFields';
 
