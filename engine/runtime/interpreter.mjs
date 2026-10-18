@@ -3,7 +3,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
-import { compileBindings, evaluateModifiers } from './bindings.mjs';
+import { compileBindings, evaluateModifiers, queryBinding } from './bindings.mjs';
 import { createRuntime as createPureRuntime, createState } from './evaluator.mjs';
 export { createState, MAX_DEPTH, PORTABLE_OPS } from './evaluator.mjs';
 export function createRuntime(options = {}) { return createPureRuntime({ ...options, ops: options.ops ?? loadOps() }); }
@@ -80,6 +80,12 @@ export function runCases(mechanic, runtime) {
         if (when.command) result = runtime.command(state, when.command, when.with || {});
         else if (when.event) result = runtime.emit(state, when.event, when.with || {});
         else if (when.query) value = runtime.query(state, when.query, when.with || {});
+        else if (when.bindingQuery) {
+          const {attachments,moduleParameters,query,params} = when.bindingQuery;
+          const bindings = compileBindings({mechanics:new Map([[mechanic.manifest.id,mechanic]]),attachments,moduleParameters});
+          if (bindings.length !== 1) throw new Error('query requires one active binding');
+          value = queryBinding(bindings[0],query,params);
+        }
         else if (when.modifiers) {
           const { attachments, moduleParameters, ...options } = when.modifiers;
           value = evaluateModifiers({ ...options, bindings: compileBindings({mechanics: new Map([[mechanic.manifest.id, mechanic]]), attachments, moduleParameters}) }).amount;

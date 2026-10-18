@@ -4,12 +4,13 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { loadMechanics } from '../engine/runtime/interpreter.mjs';
-import { validateModifiers, parameterDefaults, validateParameters } from '../engine/runtime/bindings.mjs';
+import { validateModifiers, parameterDefaults, validateParameters, validateParameterSchema } from '../engine/runtime/bindings.mjs';
 export function browserMechanics(rootDir) {
-  return [...loadMechanics(rootDir)].filter(([, m]) => m.manifest.authored && m.service.modifiers?.some(row => row.phase)).map(([id,m]) => {
+  return [...loadMechanics(rootDir)].filter(([, m]) => m.manifest.authored && (m.service.modifiers?.some(row => row.phase) || Object.values(m.interface?.queries || {}).some(q => q.value === '$config'))).map(([id,m]) => {
+    validateParameterSchema(m.manifest.parameters, `engine/mechanics/${id}/mechanic.json.parameters`);
     validateModifiers(m.service.modifiers, `engine/mechanics/${id}/service.json.modifiers`);
-    validateParameters(m.manifest.parameters, parameterDefaults(m.manifest.parameters), `engine/mechanics/${id}/mechanic.json.parameters`);
-    return [id, { manifest: m.manifest, service: m.service }];
+    validateParameters(m.manifest.parameters, parameterDefaults(m.manifest.parameters), `engine/mechanics/${id}/mechanic.json.parameters`, true);
+    return [id, { manifest: m.manifest, interface: m.interface, service: m.service }];
   });
 }
 export function compileBrowserMechanics({check = false, rootDir, outputFile} = {}) {

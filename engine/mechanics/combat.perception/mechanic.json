@@ -1,0 +1,60 @@
+{
+  "id": "combat.perception",
+  "tag": "combat:perception",
+  "version": "1.0.0",
+  "family": "combat",
+  "label": "Perception rules",
+  "description": "Validated parameters queried by the existing live combat primitives.",
+  "attaches": [
+    "run",
+    "entity",
+    "character",
+    "gear",
+    "relic",
+    "status",
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "portability": "portable",
+  "authored": true,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "baseDC": {
+        "type": "number",
+        "minimum": 0
+      },
+      "levelBaseline": {
+        "type": "number",
+        "minimum": 0
+      },
+      "intelligenceBaseline": {
+        "type": "number",
+        "minimum": 0
+      },
+      "levelWeight": {
+        "type": "number",
+        "minimum": 0
+      },
+      "intelligenceWeight": {
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "required": [
+      "baseDC",
+      "levelBaseline",
+      "intelligenceBaseline",
+      "levelWeight",
+      "intelligenceWeight"
+    ],
+    "additionalProperties": false
+  },
+  "stateScope": "instance"
+}

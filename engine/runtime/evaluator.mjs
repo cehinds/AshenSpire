@@ -1,5 +1,5 @@
 // Host-neutral mechanics runtime. Hosts inject compiled mechanics and the op catalog.
-import { compileBindings, evaluateModifiers } from './bindings.mjs';
+import { compileBindings, evaluateModifiers, evaluateCondition } from './bindings.mjs';
 import { evaluate, evaluateRaw } from '../../src/model/formulas.js';
 export const MAX_DEPTH = 32;
 const PILES = ['draw', 'hand', 'discard', 'exhaust'];
@@ -161,6 +161,7 @@ export function createRuntime({ mechanics, ops, bindings, attachments, modulePar
   }
 
   function value(rt, scope, node) {
+    if (typeof node === 'number' && !Number.isFinite(node)) throw new Error('Value must be a finite number');
     if (node === null || typeof node === 'number' || typeof node === 'boolean') return node;
     if (typeof node === 'string') return node.startsWith('$') ? lookup(rt, scope, node) : node;
     if (Array.isArray(node)) return node.map(n => value(rt, scope, n));
@@ -196,33 +197,7 @@ export function createRuntime({ mechanics, ops, bindings, attachments, modulePar
   }
 
   function condition(rt, scope, c) {
-    if ('all' in c) return c.all.every(x => condition(rt, scope, x));
-    if ('any' in c) return c.any.some(x => condition(rt, scope, x));
-    if ('not' in c) return !condition(rt, scope, c.not);
-    if ('cmp' in c) {
-      const [op, a, b] = c.cmp;
-      if (!COMPARATORS.includes(op)) throw new Error(`Unknown comparator '${op}'`);
-      const x = value(rt, scope, a);
-      const y = value(rt, scope, b);
-      if (!['==', '!='].includes(op) && !(Number.isFinite(x) && Number.isFinite(y))) throw new Error(`cmp ${op} needs two numbers, got ${JSON.stringify(x)} and ${JSON.stringify(y)}`);
-      switch (op) {
-        case '<': return x < y;
-        case '<=': return x <= y;
-        case '==': return isDeepStrictEqual(x, y);
-        case '!=': return !isDeepStrictEqual(x, y);
-        case '>=': return x >= y;
-        default: return x > y;
-      }
-    }
-    if ('hasTag' in c) {
-      const [ref, tag] = c.hasTag;
-      return rt.state.entities[entityKey(rt, scope, ref)].tags.includes(value(rt, scope, tag));
-    }
-    if ('hasStatus' in c) {
-      const [ref, status] = c.hasStatus;
-      return (rt.state.entities[entityKey(rt, scope, ref)].statuses[value(rt, scope, status)] || 0) > 0;
-    }
-    throw new Error(`Unknown condition ${JSON.stringify(c)}`);
+    return evaluateCondition(c, { entities: rt.state.entities }, node => value(rt, scope, node));
   }
 
   // ----- events -----
@@ -310,6 +285,16 @@ export function createRuntime({ mechanics, ops, bindings, attachments, modulePar
     for (const key of Object.keys(step)) if (key !== 'op' && !Object.hasOwn(def.params || {}, key)) throw new Error(`op ${step.op} unknown parameter '${key}'`);
     for (const [name, param] of Object.entries(def.params || {})) {
       if (param.required && step[name] === undefined) throw new Error(`op ${step.op} needs '${name}'`);
+      if (step[name] !== undefined) {
+        const resolved = value(rt, scope, step[name]);
+        const good = ['number','value'].includes(param.type) ? Number.isFinite(resolved)
+          : param.type === 'integer' ? Number.isInteger(resolved)
+          : param.type === 'entityRef' ? typeof resolved === 'string' || Array.isArray(resolved) && resolved.every(x => typeof x === 'string')
+          : ['string','cardRef'].includes(param.type) ? typeof resolved === 'string'
+          : param.type === 'boolean' ? typeof resolved === 'boolean'
+          : param.type === 'object' ? isPlain(resolved) : true;
+        if (!good) throw new Error(`op ${step.op} parameter '${name}' must be ${param.type}`);
+      }
     }
     const api = {
       value: (node, vars) => (vars ? value(rt, { ...scope, vars: { ...scope.vars, ...vars } }, node) : value(rt, scope, node)),
@@ -359,7 +344,9 @@ export function createRuntime({ mechanics, ops, bindings, attachments, modulePar
       const { slug, name } = splitName(full, 'query');
       const def = mechanics.get(slug).interface.queries?.[name];
       if (!def) throw new Error(`Unknown query '${full}'`);
-      return value(rt, { slug, vars: structuredClone(params) }, def.value);
+      const selected = activeBindings?.filter(b => b.mechanicId === slug && (params.bindingId ? b.id === params.bindingId : (params.ownerId === undefined || b.ownerId === params.ownerId) && (params.sourceInstanceId === undefined || b.sourceInstanceId === params.sourceInstanceId)));
+      if (selected && selected.length !== 1) throw new Error(`query ${full} requires one active owner/source binding; found ${selected.length}`);
+      return value(rt, { slug, binding: selected?.[0], vars: structuredClone(params) }, def.value);
     },
   };
 }

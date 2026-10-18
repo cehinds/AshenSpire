@@ -2,6 +2,11 @@
 // replaced here: live mounts supply active sources, and receipts are pure data.
 import { evaluateRaw } from './formulas.js';
 
+export const jsonEqual = (a, b) => {
+  if (Object.is(a, b)) return true;
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object' || Array.isArray(a) !== Array.isArray(b)) return false;
+  return Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(k => Object.hasOwn(b, k) && jsonEqual(a[k], b[k]));
+};
 const plain = x => x !== null && typeof x === 'object' && !Array.isArray(x);
 const fail = (path, message) => { throw new Error(`${path}: ${message}`); };
 const freeze = value => {
@@ -44,8 +49,28 @@ export function validateParameters(schema, value, path = '$parameters', partial 
   return value;
 }
 
+export function validateParameterSchema(schema, path = '$schema') {
+  if (!plain(schema) || !['object','array','number','integer','string','boolean'].includes(schema.type)) fail(path, 'unsupported parameter schema type');
+  const allowed = ['type','properties','required','additionalProperties','items','default','minimum','maximum','enum','description','title'];
+  for (const key of Object.keys(schema)) if (!allowed.includes(key)) fail(`${path}.${key}`, 'unsupported parameter schema field');
+  if (schema.minimum !== undefined && !Number.isFinite(schema.minimum) || schema.maximum !== undefined && !Number.isFinite(schema.maximum)) fail(path, 'parameter bounds must be finite');
+  if (schema.minimum !== undefined && schema.maximum !== undefined && schema.minimum > schema.maximum) fail(path, 'inverted parameter bounds');
+  if (schema.type === 'object') {
+    if (!plain(schema.properties)) fail(`${path}.properties`, 'expected object');
+    for (const [key, child] of Object.entries(schema.properties)) validateParameterSchema(child, `${path}.properties.${key}`);
+    for (const key of schema.required || []) if (!Object.hasOwn(schema.properties,key)) fail(`${path}.required`, `unknown parameter ${key}`);
+  }
+  if (schema.type === 'array') validateParameterSchema(schema.items, `${path}.items`);
+  if (Object.hasOwn(schema,'default')) validateParameters(schema,schema.default,`${path}.default`);
+}
+
 export function compileBindings({ mechanics, attachments = [], moduleParameters = {}, enabledMechanics } = {}) {
   if (!(mechanics instanceof Map)) fail('$mechanics', 'expected registered mechanic Map');
+  for (const [slug, mechanic] of mechanics) if (mechanic.manifest.parameters) validateParameterSchema(mechanic.manifest.parameters, `mechanics.${slug}.parameters`);
+  for (const [slug, values] of Object.entries(moduleParameters)) {
+    if (!mechanics.has(slug)) fail(`moduleParameters.${slug}`, 'unknown mechanic');
+    validateParameters(mechanics.get(slug).manifest.parameters, values, `moduleParameters.${slug}`, true);
+  }
   const tags = new Map();
   for (const [slug, mechanic] of mechanics) {
     const tag = mechanic.manifest.tag;
@@ -88,11 +113,11 @@ export function compileBindings({ mechanics, attachments = [], moduleParameters 
       if (seen.has(id)) fail(path, `duplicate attachment ${id}`);
       seen.add(id);
       validateModifiers((mechanic.service.modifiers || []).filter(x => x.phase !== undefined), `${path}.${tag}.modifiers`);
-      const behaviors = (mechanic.service.handlers || []).length + (mechanic.service.modifiers || []).length;
+      const behaviors = (mechanic.service.handlers || []).length + (mechanic.service.modifiers || []).length + Object.keys(mechanic.interface?.queries || {}).length;
       if (!behaviors) fail(`${path}.${tag}`, 'required mechanic has no executable behavior');
       out.push(freeze({ id, mechanicId: manifest.id, tag, ownerId: source.ownerId, sourceInstanceId: source.sourceInstanceId,
         stateKey: manifest.stateScope === 'run' || manifest.stateScope === 'combat' ? JSON.stringify([manifest.stateScope, manifest.id]) : id,
-        label: source.label || manifest.label, config, service: structuredClone(mechanic.service) }));
+        label: source.label || manifest.label, config, interface: structuredClone(mechanic.interface || {}), service: structuredClone(mechanic.service) }));
     }
   }
   return Object.freeze(out.sort((a, b) => a.id.localeCompare(b.id)));
@@ -119,17 +144,31 @@ export function resolveValue(node, scope = {}) {
   }
   return node;
 }
-export function evaluateCondition(node, scope) {
+export function evaluateCondition(node, scope, resolve = value => resolveValue(value, scope)) {
   if (!plain(node) || Object.keys(node).length !== 1) fail('$when', 'expected one condition operator');
-  if (node.all) return node.all.every(c => evaluateCondition(c, scope));
-  if (node.any) return node.any.some(c => evaluateCondition(c, scope));
-  if (node.not) return !evaluateCondition(node.not, scope);
+  if (node.all) return node.all.every(c => evaluateCondition(c, scope, resolve));
+  if (node.any) return node.any.some(c => evaluateCondition(c, scope, resolve));
+  if (node.not) return !evaluateCondition(node.not, scope, resolve);
   if (node.cmp) {
-    const [op, a, b] = node.cmp, x = resolveValue(a, scope), y = resolveValue(b, scope);
-    if (!['==', '!='].includes(op) && !(Number.isFinite(x) && Number.isFinite(y))) fail('$when.cmp', 'ordered comparison needs finite numbers');
-    switch (op) { case '>': return x > y; case '>=': return x >= y; case '<': return x < y; case '<=': return x <= y; case '==': return x === y; case '!=': return x !== y; default: fail('$when.cmp', `unknown comparator ${op}`); }
+    const [op, a, b] = node.cmp, x = resolve(a), y = resolve(b);
+    if (!['==', '!='].includes(op) && !(Number.isFinite(x) && Number.isFinite(y))) fail('$when.cmp', 'cmp ordering needs two numbers (finite)');
+    switch (op) { case '>': return x > y; case '>=': return x >= y; case '<': return x < y; case '<=': return x <= y; case '==': return jsonEqual(x, y); case '!=': return !jsonEqual(x, y); default: fail('$when.cmp', `unknown comparator ${op}`); }
+  }
+  for (const operator of ['hasTag', 'hasStatus']) if (node[operator]) {
+    const [ref, name] = node[operator], target = resolve(ref), id = resolve(name);
+    const entity = typeof target === 'string' ? scope.entities?.[target] : target;
+    if (!entity) fail('$when.'+operator, 'unknown entity reference');
+    return operator === 'hasTag' ? (entity.tags || []).includes(id) : (typeof entity.statuses?.[id] === 'number' ? entity.statuses[id] : entity.statuses?.[id]?.stacks || 0) > 0;
   }
   fail('$when', 'unknown condition');
+}
+
+export function queryBinding(binding, query = 'parameters', params = {}) {
+  const definition = binding.interface?.queries?.[query];
+  if (!definition) fail(`${binding.mechanicId}.${query}`, 'unknown binding query');
+  // Parameter config is immutable; the returned query is a separate frozen
+  // value, so inspection never exposes a mutable reference to live state.
+  return freeze(structuredClone(resolveValue(definition.value, {...params,config:binding.config})));
 }
 
 export const CALCULATION_PHASES = Object.freeze(['stat.derived', 'cost.resource', 'effect.amount', 'damage.mitigation', 'roll.accuracy', 'roll.perception']);
