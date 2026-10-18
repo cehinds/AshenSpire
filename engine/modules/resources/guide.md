@@ -2,7 +2,7 @@
 
 Select the resource pools available to cards and runs. HP is foundational; SP and MP are optional configured pools in the Ashen profile.
 
-**Status:** Listed in `ashen.core@1.0.0`.
+**Status:** Listed in `ashen.core@2.0.0`.
 Runtime scope: Configured HP/SP/MP pool selection and authored per-card resource variants. This adapter does not claim a portable resource VM.
 
 ## Authoring example
@@ -12,7 +12,7 @@ Add one override to `games/ashenspire/game.json`; leave other bundled modules in
 ```json
 {
   "formatVersion": 1,
-  "core": "ashen.core@1.0.0",
+  "core": "ashen.core@2.0.0",
   "modules": {
     "resources": false
   }

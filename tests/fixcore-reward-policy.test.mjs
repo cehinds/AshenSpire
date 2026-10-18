@@ -27,12 +27,12 @@ test('authored 60/10/30 groups govern seeded draws, including exhausted-group re
 test('reward policy rejects missing, duplicate, negative and unknown group assignments', () => {
   for (const groups of [rules.rewardGroups.slice(1), [...rules.rewardGroups, rules.rewardGroups[0]], [{id:'bad',weight:-1,categories:rules.categories}], [{id:'bad',weight:1,categories:['invented']}], rules.rewardGroups.map(group => ({...group,weight:0}))]) {
     assert.ok(rewardGroupProblems(groups, rules.categories).length);
-    assert.throws(() => resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{rewards:{rewardGroups:groups}}}), /rewardGroups|weight/);
+    assert.throws(() => resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{rewards:{rewardGroups:groups}}}), /rewardGroups|weight/);
   }
 });
 test('JSON tuning reaches live offers; exhausted pools fall back and saved offers consume no more RNG', () => {
   const groups=rules.rewardGroups.map(group=>({...group,weight:group.id==='consumables'?1:0}));
-  const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{rewards:{offerCount:100,rewardGroups:groups},shops:{itemsPerCategory:2}}});
+  const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{rewards:{offerCount:100,rewardGroups:groups},shops:{itemsPerCategory:2}}});
   const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
   const run=createRunState({seed:1,classId:'reaver',registries:reg}), rng=createRng(31);
   const offer=gameProfileRewardOffers(reg,run,rng,{offerId:'combat'});
