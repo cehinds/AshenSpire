@@ -66,10 +66,18 @@ try {
     assert.equal(await panel.locator('[data-res="poise"]').count(), 0, 'pressure is not shown as remaining Poise');
     const textFit = await card.locator('[data-card-binding="rules"]').evaluate(node => ({
       text: node.textContent, font: parseFloat(getComputedStyle(node).fontSize),
-      height: node.getBoundingClientRect().height, scrollHeight: node.scrollHeight,
+      height: node.getBoundingClientRect().height, scrollHeight: node.scrollHeight, clientHeight: node.clientHeight,
+      layerHeight: node.parentElement.clientHeight, selectedLines: node.dataset.maxLines,
     }));
     assert.match(textFit.text, /3 hits|×\s*3/);
     assert.ok(textFit.font >= 8, 'multi-hit text remains readable');
+    assert.ok(textFit.scrollHeight <= textFit.clientHeight + 1, `selected multi-hit rules fit: ${JSON.stringify(textFit)}`);
+    const footerControls = await page.locator('.combat-deck-edit, .energy-orb').evaluateAll(nodes => nodes.map(node => {
+      const box = node.getBoundingClientRect();
+      return {kind:node.classList.contains('combat-deck-edit')?'deck':'sp',left:box.left,right:box.right,top:box.top,bottom:box.bottom};
+    }));
+    const deckBox = footerControls.find(box => box.kind === 'deck'), spBox = footerControls.find(box => box.kind === 'sp');
+    if (deckBox && spBox) assert.ok(deckBox.right <= spBox.left || deckBox.left >= spBox.right || deckBox.bottom <= spBox.top || deckBox.top >= spBox.bottom, 'Deck control cannot overlap the SP orb');
     await page.screenshot({ path: resolve(out, `target-${width}.png`) });
     const damage = await card.locator('[data-damage-receipt]').first().boundingBox();
     const played = await page.evaluate(() => window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length);
@@ -122,11 +130,15 @@ try {
     const combat = createRunCombat({registries,rng:createRng(5),run,enemyIds:['wanderingSoldier'],settings:{}});
     if (!combat.combatRounds) throw new Error('Autoplay regression requires a planned rounds queue');
     window.__autoRegression = {combat,settings,initialTurn:combat.turn,samples:[]};
+    Object.defineProperty(document, 'hidden', {configurable:true,value:true});
     window.__autoRegression.timer = setInterval(() => {
       window.__autoRegression.samples.push({turn:combat.turn,queue:(combat.combatRounds.playerQueue || []).map(card=>card.instanceId)});
     },20);
     mountCombat(document.getElementById('app'),{registries,run,combat,meta:{settings},readSettings:()=>settings,onEnd:()=>{}});
   });
+  await autoPage.waitForTimeout(350);
+  assert.equal(await autoPage.evaluate(() => window.__autoRegression.combat.combatRounds.playerQueue.length),0,'hidden pages cannot automate combat');
+  await autoPage.evaluate(() => { delete document.hidden; });
   await autoPage.waitForFunction(() => window.__autoRegression.combat.turn > window.__autoRegression.initialTurn || !!window.__autoRegression.combat.result, null, {timeout:15000});
   const autoplay = await autoPage.evaluate(() => {
     const state = window.__autoRegression;

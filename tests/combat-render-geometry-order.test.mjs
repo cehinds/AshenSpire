@@ -80,13 +80,13 @@ test('the actual tools geometry flush cancels its queued measure and publishes z
   const callbacks = new Map(), canceled = [], properties = new Map();
   let id = 0;
   const hand={getBoundingClientRect:()=>({width:390,right:390,top:356.5775146484375})};
-  const root = {isConnected:true,style:{},dataset:{},getBoundingClientRect:()=>({height:60,top:500})};
+  const root = {isConnected:true,style:{setProperty:(key,value)=>properties.set(key,value)},dataset:{},getBoundingClientRect:()=>({height:60,top:500})};
   const combatEl = {dataset:{desktopFooter:'false'},clientWidth:390/.83,getBoundingClientRect:()=>({left:0,top:0,bottom:844,width:390}),
     style:{setProperty:(key,value)=>properties.set(key,value)},querySelector:selector=>selector==='.hand'?hand:selector==='.combat-action-row'?{getBoundingClientRect:()=>({top:820})}:null,querySelectorAll:()=>[]};
   const api = runInNewContext(tools.slice(begin,end)+'\n({schedule,flushGeometry})', {
     // HUD layout tokens at their defaults: span field, no offset (the old geometry).
     combatToolsTokens:()=>({ span:'field', dy:0 }), cardBand:()=>null, TOOLS_MIN_WIDTH:240, CORNER_INSET:16,
-    root, combatEl, state:{size:'Small'}, panel:{style:{}}, innerHeight:650,
+    root, combatEl, logButton:{getBoundingClientRect:()=>({width:83})}, state:{size:'Small'}, panel:{style:{}}, innerHeight:650,
     window:{}, innerWidth:390, drag:null, snapHeights:()=>({Small:125}), VIEWPORT_ORIGIN:{},
     anchorLocalBox:(_host,rect,{zoom})=>({left:rect.left/zoom,top:rect.top/zoom,width:rect.width/zoom,height:rect.height/zoom}),
     getComputedStyle:()=>({getPropertyValue:key=>key==='--combat-tools-gap'?'8':'136'}),
@@ -96,6 +96,7 @@ test('the actual tools geometry flush cancels its queued measure and publishes z
   api.schedule(); api.flushGeometry();
   assert.deepEqual(canceled,[1]); assert.equal(callbacks.size,0);
   assert.equal(properties.get('--combat-tools-reserve'),'0px');
+  assert.equal(properties.get('--combat-log-button-width'),'100px','Deck placement reads the log width in local layout units');
   assert.equal(root.style.width,'auto','corners follow the combat screen rather than current fan width');
   assert.equal(root.style.left,'16px'); assert.equal(root.style.right,'16px');
   assert.ok(Math.abs(parseFloat(root.style.top)*.83-(820-60-4/.83))<1e-9, 'row clears the measured footer controls');
