@@ -16,12 +16,17 @@ import { applyLevelUp } from '../src/model/levelup.js';
 const profile = resolveGameAuthor(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json',import.meta.url))),loadGameProfileCatalog());
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 const fresh = () => createRunState({registries:reg,classId:'reaver',seed:429});
-test('armor budget grows by actual rank and never rarity', () => {
+test('Core armor budget is 3 for every rank and rarity (D14); rarity bonus defaults to 0', () => {
   const armor = profile.content.gear.find(item=>item.kind==='armor');
   const sum = receipt=>Object.values(receipt.points).reduce((a,b)=>a+b,0)+receipt.tagCost;
   assert.equal(sum(resolveGearItem(armor,profile.modules.gear)),3);
   assert.equal(sum(resolveGearItem({...armor,rarity:'epic'},profile.modules.gear)),3);
-  assert.equal(sum(resolveGearItem(armor,profile.modules.gear,{rank:4})),6);
+  assert.equal(sum(resolveGearItem(armor,profile.modules.gear,{rank:4})),3);
+  assert.equal(profile.modules.gear.armorBudget.perRank,undefined);
+  assert.deepEqual(profile.modules.gear.armorBudget.rarityBonus,{});
+  const bonus={...profile.modules.gear,armorBudget:{...profile.modules.gear.armorBudget,rarityBonus:{epic:2}}};
+  assert.equal(resolveGearItem({...armor,rarity:'epic'},bonus).budget,5);
+  assert.equal(resolveGearItem({...armor,rarity:'common'},bonus).budget,3);
 });
 test('equipped resolved values reach live pools/ratings once and survive restore', () => {
   const run=fresh(), gear=gameProfileEquipmentReceipt(reg,run);
@@ -83,13 +88,13 @@ test('archived Core 1 keeps its original gear and training policy', () => {
   assert.equal(old.content.cards.some(card=>card.id==='core.cantrip'),false);
   assert.ok(old.content.characters.find(row=>row.id==='starseer').tags.includes('training.basic'));
 });
-test('equipment inspection exposes converted values and armor rank budget', async () => {
+test('equipment inspection exposes converted values and armor budget', async () => {
   const {equipmentCardModel}=await import('../src/model/equipmentCard.js');
   const {resolveUpgradedEquipment}=await import('../src/model/itemUpgrades.js');
   const armor=reg.equipment.armour.find(piece=>piece.classId==='reaver' && piece.id==='wayfarerPlate');
   assert.ok(armor);
   const model=equipmentCardModel(reg,resolveUpgradedEquipment(reg,`armor/reaver/${armor.id}`,1));
-  assert.ok(model.bonuses.some(row=>row.label==='Rank 2 · 4 points'));
+  assert.ok(model.bonuses.some(row=>row.label==='Rank 2 · 3 points'));
   assert.ok(model.facts.every(row=>row.explanation.includes('stat-budget point(s)')));
 });
 test('resolved gear suppresses duplicate legacy pool stats and retains independent effects', async () => {
