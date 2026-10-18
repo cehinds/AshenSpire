@@ -13,7 +13,7 @@ import { freezeProfile, configuredCombat } from './gameProfileCombat.js';
 import { bindTurnStamina } from '../model/turnStamina.js';
 import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
-import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncFeatProperties, syncCompanionProperties, syncSigilProperties } from './properties.js';
+import { syncConfiguredEnemyProperties, syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncFeatProperties, syncCompanionProperties, syncSigilProperties } from './properties.js';
 import { stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
@@ -303,6 +303,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   syncFeatProperties(combat);
   syncCompanionProperties(combat);
   syncSigilProperties(combat);
+  syncConfiguredEnemyProperties(combat);
   // The player's poise max is RE-DERIVED, never trusted from the save (plan
   // phase 8): a fight saved before the formula changed keeps its accumulated
   // value and takes the receipt's max — Constitution, body armour, relics —

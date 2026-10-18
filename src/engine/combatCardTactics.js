@@ -291,7 +291,7 @@ export function expandedEnemyMove(enemy, move, moveId, ctx = null) {
       if (effect.op === 'block' && profile.camp === 'spell' && !fixCoreEnabled(ctx)) return { ...effect, op: 'gainBarrier' };
       return structuredClone(effect);
     }) };
-  if (profile.camp === 'spell' && move.block != null) {
+  if (profile.camp === 'spell' && move.block != null && !fixCoreEnabled(ctx)) {
     delete result.block;
     result.barrier = (move.barrier || 0) + move.block;
   }
