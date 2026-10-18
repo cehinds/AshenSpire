@@ -1,0 +1,22 @@
+{
+  "id": "classification.class",
+  "tag": "classification.class",
+  "version": "1.0.0",
+  "family": "classification",
+  "label": "Class",
+  "description": "What a class is. Every object in the class collection carries this, and nothing outside it may.",
+  "attaches": [
+    "character"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "classification.class"
+  },
+  "portability": "data"
+}

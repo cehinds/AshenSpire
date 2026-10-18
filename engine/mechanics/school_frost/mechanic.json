@@ -1,0 +1,27 @@
+{
+  "id": "school_frost",
+  "tag": "school:frost",
+  "version": "1.0.0",
+  "family": "school",
+  "label": "Frost",
+  "description": "Cold control: Frost buildup rewards follow-up attacks and constrains enemy tempo.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "school_frost",
+    "color": "A6D8EF"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/ashenBlight.js",
+    "symbol": "ashenBlightSpellBuildup"
+  }
+}

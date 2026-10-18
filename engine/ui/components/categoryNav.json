@@ -1,0 +1,32 @@
+{
+  "id": "categoryNav",
+  "description": "Category rail or tab strip used by creation and settings. Reads src/ui/kit/categoryNav.js and src/ui/models/CategoryNavModel.js.",
+  "layout": {
+    "ref": "content/config/ui/components/categoryNav.json"
+  },
+  "viewModel": {
+    "props": {
+      "categories": "array",
+      "active": "string"
+    },
+    "bindings": {
+      "items": "$categories",
+      "active": "$active",
+      "asRail": "layout.sizing.railMinHostWidthRem <= $host.widthRem"
+    }
+  },
+  "states": [
+    "rail",
+    "tabs",
+    "collapsed"
+  ],
+  "events": {
+    "tap": "nav.selectCategory"
+  },
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.precision",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

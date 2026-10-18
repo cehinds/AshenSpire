@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "weaponTypes": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "mode",
+    "weaponTypes"
+  ],
+  "additionalProperties": false
+}

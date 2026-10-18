@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.starstoneCharge",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

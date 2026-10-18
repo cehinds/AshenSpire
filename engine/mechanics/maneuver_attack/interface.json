@@ -1,0 +1,8 @@
+{
+  "mechanic": "maneuver_attack",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

@@ -1,0 +1,64 @@
+{
+  "strike": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.strike"
+    },
+    "byClass": {}
+  },
+  "defend": {
+    "slot": "offHand",
+    "fallbackSlot": "mainHand",
+    "byTag": {
+      "default": "core.defend"
+    },
+    "byClass": {}
+  },
+  "counter": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.counter"
+    },
+    "byClass": {}
+  },
+  "smash": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.smash"
+    },
+    "byClass": {}
+  },
+  "sweep": {
+    "slot": "mainHand",
+    "byTag": {
+      "default": "core.sweep"
+    },
+    "byClass": {}
+  },
+  "evade": {
+    "slot": "offHand",
+    "fallbackSlot": "mainHand",
+    "byTag": {
+      "default": "core.evade"
+    },
+    "byClass": {}
+  },
+  "special": {
+    "slot": "mainHand",
+    "byTag": {},
+    "byClass": {
+      "class.reaver": {
+        "default": "core.reaverSpecial"
+      },
+      "class.starseer": {
+        "default": "core.starseerSpecial"
+      },
+      "class.rogue": {
+        "default": "core.rogueSpecial"
+      },
+      "class.herald": {
+        "default": "core.heraldSpecial"
+      }
+    }
+  }
+}

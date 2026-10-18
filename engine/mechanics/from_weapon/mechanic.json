@@ -1,0 +1,23 @@
+{
+  "id": "from_weapon",
+  "tag": "from:weapon",
+  "version": "1.0.0",
+  "family": "from",
+  "label": "Weapon",
+  "description": "Bound to an armament in hand at creation.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "from_weapon",
+    "color": "C9502E"
+  },
+  "portability": "data"
+}

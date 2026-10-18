@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "minRank": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "lowerRankChance": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "rankOfRarity": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 10
+      }
+    },
+    "skipOwnedBasics": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "mode",
+    "minRank",
+    "lowerRankChance",
+    "rankOfRarity",
+    "skipOwnedBasics"
+  ],
+  "additionalProperties": false
+}

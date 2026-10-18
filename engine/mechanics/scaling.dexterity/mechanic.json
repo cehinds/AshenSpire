@@ -1,0 +1,26 @@
+{
+  "id": "scaling.dexterity",
+  "tag": "scaling.dexterity",
+  "version": "1.0.0",
+  "family": "scaling",
+  "label": "Dexterity",
+  "description": "Tag scaling.dexterity in the scaling family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "scaling.dexterity"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/derivedStats.js",
+    "symbol": "restoreDerivedStatRuleSnapshot"
+  }
+}

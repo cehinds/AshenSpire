@@ -1,0 +1,85 @@
+{
+  "$id": "ashen.mechanic-cases@1",
+  "title": "Mechanic behaviour cases",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1
+      },
+      "given": {
+        "type": "object",
+        "properties": {
+          "entities": {
+            "type": "object"
+          },
+          "piles": {
+            "type": "object"
+          },
+          "mechanics": {
+            "type": "object"
+          },
+          "rng": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "when": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "minLength": 1
+          },
+          "event": {
+            "type": "string",
+            "minLength": 1
+          },
+          "query": {
+            "type": "string",
+            "minLength": 1
+          },
+          "with": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "entities": {
+            "type": "object"
+          },
+          "piles": {
+            "type": "object"
+          },
+          "mechanics": {
+            "type": "object"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "value": {},
+          "error": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "name",
+      "when",
+      "then"
+    ],
+    "additionalProperties": false
+  }
+}

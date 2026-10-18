@@ -1,0 +1,8 @@
+{
+  "mechanic": "lifecycle.recall",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

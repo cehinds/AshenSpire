@@ -1,0 +1,25 @@
+{
+  "id": "status.harbingerOfBlight",
+  "tag": "status.harbingerOfBlight",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Harbinger of Blight",
+  "description": "Whenever you apply Blight (Crimson or Necrotic) to an enemy, heal 1 HP per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.harbingerOfBlight"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

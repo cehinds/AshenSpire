@@ -1,0 +1,51 @@
+{
+  "id": "title",
+  "description": "Title screen. Mounted by src/ui/screens/title.js (mountTitle).",
+  "route": "title",
+  "layout": {
+    "ref": "content/config/ui/screens/title.json"
+  },
+  "viewModel": {
+    "props": {
+      "slots": "array",
+      "meta": "object"
+    }
+  },
+  "regions": [
+    {
+      "slot": "menu",
+      "component": "buttons",
+      "props": {
+        "items": [
+          "continue",
+          "new",
+          "quickStart",
+          "history",
+          "profile",
+          "settings",
+          "offline",
+          "quit"
+        ]
+      }
+    },
+    {
+      "slot": "hud",
+      "component": "hud"
+    }
+  ],
+  "events": {
+    "continue": "run.continue",
+    "new": "run.new",
+    "quickStart": "run.quickStart",
+    "custom": "run.custom",
+    "history": "history.open",
+    "profile": "profile.open",
+    "settings": "settings.open",
+    "offline": "offline.open",
+    "quit": "app.quit",
+    "deleteSave": "save.delete"
+  },
+  "assets": [
+    "scene.title"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "x-attach": "combat",
+  "required": [],
+  "additionalProperties": false,
+  "properties": {
+    "spLoss": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 1,
+      "description": "SP lost when poise breaks."
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1,
+      "default": "vulnerable",
+      "description": "Status gained when poise breaks."
+    },
+    "stacks": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 1,
+      "description": "Stacks of the status gained."
+    },
+    "damageTakenMultiplier": {
+      "type": "number",
+      "minimum": 1,
+      "default": 1.25,
+      "description": "Damage taken multiplier while staggered (informational; the status row owns the number)."
+    }
+  }
+}

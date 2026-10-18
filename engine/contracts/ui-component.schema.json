@@ -1,0 +1,124 @@
+{
+  "$id": "ashen.ui-component@1",
+  "title": "UI component",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$"
+    },
+    "description": {
+      "type": "string"
+    },
+    "layout": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "additionalProperties": false
+    },
+    "viewModel": {
+      "type": "object",
+      "properties": {
+        "props": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "object"
+              }
+            ]
+          }
+        },
+        "bindings": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "visibility": {
+          "type": "object"
+        },
+        "derived": {
+          "type": "object"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "states": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "events": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "children": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "component": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$"
+          },
+          "slot": {
+            "type": "string"
+          },
+          "props": {
+            "type": "object"
+          },
+          "when": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "component"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "assets": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "platforms": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "mobile",
+          "tablet",
+          "desktop"
+        ]
+      }
+    }
+  },
+  "required": [
+    "id",
+    "viewModel"
+  ],
+  "additionalProperties": false
+}

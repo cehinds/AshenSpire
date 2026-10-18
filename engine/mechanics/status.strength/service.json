@@ -1,0 +1,41 @@
+{
+  "mechanic": "status.strength",
+  "handlers": [
+    {
+      "on": "command.apply",
+      "do": [
+        {
+          "op": "applyStatus",
+          "target": "$target",
+          "status": "strength",
+          "stacks": "$stacks"
+        },
+        {
+          "emit": "status.strength.applied",
+          "with": {
+            "target": "$target",
+            "stacks": "$stacks"
+          }
+        }
+      ]
+    },
+    {
+      "on": "command.remove",
+      "do": [
+        {
+          "op": "removeStatus",
+          "target": "$target",
+          "status": "strength",
+          "amount": "$amount"
+        },
+        {
+          "emit": "status.strength.removed",
+          "with": {
+            "target": "$target",
+            "amount": "$amount"
+          }
+        }
+      ]
+    }
+  ]
+}

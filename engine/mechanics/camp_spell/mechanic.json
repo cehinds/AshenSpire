@@ -1,0 +1,27 @@
+{
+  "id": "camp_spell",
+  "tag": "camp:spell",
+  "version": "1.0.0",
+  "family": "camp",
+  "label": "Spell",
+  "description": "Selects physical Guard or magical Ward combat rules.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "camp_spell",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/actionCosts.js",
+    "symbol": "actionStance"
+  }
+}

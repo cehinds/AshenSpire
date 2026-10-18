@@ -1,0 +1,50 @@
+{
+  "mode": "configured",
+  "include": [
+    "minion",
+    "elite",
+    "boss"
+  ],
+  "fallback": "legacyMoves",
+  "deck": {
+    "min": 3,
+    "max": 15,
+    "reshuffle": "whenEmpty",
+    "drawTo": "hand",
+    "discardUnplayed": true
+  },
+  "stanceCosts": {
+    "attack": {
+      "sp": 1,
+      "mp": 0
+    },
+    "defend": {
+      "sp": 1,
+      "mp": 0
+    },
+    "smash": {
+      "sp": 2,
+      "mp": 0
+    },
+    "counter": {
+      "sp": 2,
+      "mp": 0
+    },
+    "sweep": {
+      "sp": 2,
+      "mp": 0
+    },
+    "casting": {
+      "sp": 1,
+      "mp": 1
+    }
+  },
+  "ai": {
+    "weightField": "aiWeight",
+    "lowHpThreshold": 0.35,
+    "lowHpDefendBias": 1.5,
+    "lowHpHealBias": 2,
+    "smashIntoBlockBias": 1.3,
+    "respectMaxConsecutive": true
+  }
+}
