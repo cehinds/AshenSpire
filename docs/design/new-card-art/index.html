@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Layered card art · design wireframes</title>
+<link rel="icon" href="data:,">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0c1016;color:#e1e5eb;font:16px/1.5 system-ui,sans-serif}main{max-width:1220px;margin:auto;padding:40px 24px}h1{font:500 36px/1.15 Georgia,serif;margin:8px 0 16px}h2{font:500 25px Georgia,serif;margin:40px 0 15px}p{max-width:810px;color:#a9b3c2}small,.eyebrow{font-size:12px;color:#9aa9b9;letter-spacing:.06em}.eyebrow{color:#b1d6bc}fieldset{border:0;border-top:1px solid #333d49;padding:18px 0;margin:24px 0;display:flex;gap:20px;flex-wrap:wrap}legend{padding:0 12px 0 0;color:#9aa9b9}label{cursor:pointer}input{accent-color:#b6d7c1}button,select{background:#18212d;color:#e5eaf2;border:1px solid #566578;padding:10px;font:inherit;border-radius:4px}select{max-width:100%}button{cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #d9bc75;outline-offset:3px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px 22px}.tile{min-width:0}.tile h3{font-size:16px;margin:12px 0 2px;font-weight:500}.tile p{font-size:12px;margin:0;overflow-wrap:anywhere;color:#9aa9b9}.art{display:block;width:100%;aspect-ratio:1.32;border:1px solid #313c4c;background:repeating-conic-gradient(#111923 0 25%,#141d28 0 50%) 0/16px 16px}.layers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.layers h3{font-size:13px}.inspect{display:grid;grid-template-columns:minmax(0,370px) 1fr;gap:24px;margin-top:20px}pre{white-space:pre-wrap;font:12px/1.6 monospace;background:#111923;padding:20px;margin:0;overflow-wrap:anywhere}.note{border-left:2px solid #638771;padding-left:14px}a{color:#b9d8c8}#error{color:#f4a6a6}footer{margin-top:40px;border-top:1px solid #313c4c;padding-top:20px;color:#8c9bad;font-size:12px}@media(max-width:700px){main{padding:24px 16px}h1{font-size:29px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 12px}.layers{grid-template-columns:repeat(2,minmax(0,1fr))}.inspect{grid-template-columns:1fr}fieldset{gap:12px;font-size:13px}}
+</style>
+<main>
+<div class="eyebrow">ASHEN SPIRE / FEATURE/NEWCARDART / DESIGN DRAFT</div>
+<h1>One action. A small visual vocabulary.</h1>
+<p><a href="proposals.html">View the revised object masters, fog outlines, elements and effect proposals →</a></p>
+<p>Initial structural wireframes: four reusable layers compose the art crop. A central silhouette identifies the action; small marks carry its effects. Most cards show two identities, with room for four. The revised art direction is linked above; these earlier wireframes remain as a layer-layout reference.</p>
+<fieldset><legend>Visible layers</legend>
+<label><input type="checkbox" value="background" checked> Background</label>
+<label><input type="checkbox" value="backEffect" checked> Back effect</label>
+<label><input type="checkbox" value="object" checked> Object</label>
+<label><input type="checkbox" value="foreground" checked> Foreground</label>
+<button id="reset" type="button">Show all layers</button>
+</fieldset>
+<p id="error" role="alert"></p>
+<div class="grid" id="examples"></div>
+<h2>Attack, separated into four layers</h2>
+<div class="layers" id="layers"></div>
+<h2>Browse the component recipes</h2>
+<p>Shared symbols form families: a cracked shield conveys vulnerability; a spiral conveys disorientation. Bindings retain each exact gameplay ID. The JSON supplies the recipe and its component references.</p>
+<label for="recipe">Art recipe </label><select id="recipe"></select>
+<div class="inspect"><div id="selected"></div><pre id="recipe-json"></pre></div>
+<p class="note">Four-identity example: attack + dazed + fire + draw. The sword remains the focal point. Daze occupies the first accent slot, fire the quiet back slot, and draw the last accent slot. Small cue symbols are not additional central props.</p>
+<footer><a href="art-catalog.json">Open art catalog JSON</a> · Design preview only; no game renderer or card details are changed. <span id="coverage"></span></footer>
+</main>
+<script type="module" src="preview.mjs"></script>
+</html>

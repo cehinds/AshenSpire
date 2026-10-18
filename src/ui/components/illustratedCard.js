@@ -1,3 +1,4 @@
+import { cardCutoutUrl } from '../layeredCardArt.js';
 import {cardTagRailHtml} from './cardTagSymbols.js';
 import {CARD_COMPONENTS} from '../../content/cardComponents.generated.js';
 import {assetUrl} from '../assetmap.js';
@@ -73,7 +74,7 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
         const [x,y,w,h]=l.trim||[0,0,l.imageWidth||1,l.imageHeight||1];
         const crop=l.trim?`width:${l.imageWidth/w*100}%;height:${l.imageHeight/h*100}%;left:${-x/w*100}%;top:${-y/h*100}%;`:'width:100%;height:100%;left:0;top:0;';
         const composition=l.bind==='artwork'?artworkComposition:null;
-        body=`<span class="ic-image"${composition?.kind==='simple'?' style="position:relative;display:block;width:100%;height:100%;overflow:hidden"':''}><img${l.bind==='artwork'?` class="playing-card-art" data-card-art="${esc(artworkKind)}"`:''} alt="" aria-hidden="true" src="${esc(assetUrl(href))}" style="${crop}${l.bind==='artwork'&&artworkPosition?`object-position:${esc(artworkPosition)};`:''}${composition?.filter?`filter:${esc(composition.filter)};`:''}object-fit:${l.fit==='cover'?'cover':l.fit==='contain'||l.bind==='artwork'?'contain':'fill'}" />${composition?cardArtLayersHtml(composition):''}</span>`;
+        body=`<span class="ic-image"${composition?.kind==='simple'?' style="position:relative;display:block;width:100%;height:100%;overflow:hidden;isolation:isolate"':''}><img${l.bind==='artwork'?` class="playing-card-art" data-card-art="${esc(artworkKind)}"`:''} alt="" aria-hidden="true" src="${esc(composition?.componentArt ? cardCutoutUrl(href) : assetUrl(href))}" style="${crop}${l.bind==='artwork'&&artworkPosition?`object-position:${esc(artworkPosition)};`:''}${composition?.filter?`filter:${esc(composition.filter)};`:''}object-fit:${l.fit==='cover'?'cover':l.fit==='contain'||l.bind==='artwork'?'contain':'fill'}" />${composition?cardArtLayersHtml(composition):''}</span>`;
       }else body=`<span class="ic-glyph">${glyph}</span>`;
     }else{
       const text=l.bind==='rules'?renderedRules:values[l.bind]??esc(l.text||'');
