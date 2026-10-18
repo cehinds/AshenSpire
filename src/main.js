@@ -170,6 +170,7 @@ import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
 import { mountQuitScreen } from './ui/quitGame.js';
 import { lanInfo } from './net/lan.js';
+import { setCombatPacing } from './ui/animationPace.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
@@ -976,6 +977,7 @@ function applyDisplaySettings(settings) {
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
   setAnimSpeed(resolveCombatPacing(settings, quality));
+  setCombatPacing(settings);
   // A cleared key (a Reset, a profile that leaves it out) means the default:
   // setVolumes ignores a missing field, so say the default out loud.
   audio.setVolumes({

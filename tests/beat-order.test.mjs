@@ -16,7 +16,7 @@ import { playTimeline, setAnimSpeed, setBeatOrder, getBeatOrder, ANIM_SPEEDS } f
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
-const IMPACT = 100, TOTAL = 300;
+const IMPACT = 100, TOTAL = 300, LEAD = 1000, AFTER = 500, REACTION = 500;
 
 function drive(t, fn) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
@@ -79,11 +79,11 @@ test('a player attack: contact at impact, then stance, reaction, number, bars', 
     finish();
     assert.deepEqual(order(trace), ['contact', 'settle', 'reaction:e1', 'float:-4', 'bars']);
     const { reactionMs } = ANIM_SPEEDS.normal;
-    assert.equal(timeOf(trace, 'contact'), IMPACT, 'the contact lands at impactMs');
-    assert.equal(timeOf(trace, 'settle'), TOTAL, 'the swing settles at totalMs');
-    assert.equal(timeOf(trace, 'reaction:e1'), TOTAL, 'the reaction follows the return to stance');
-    assert.equal(timeOf(trace, 'float:-4'), TOTAL + reactionMs, 'the number waits reactionMs');
-    assert.equal(timeOf(trace, 'bars'), TOTAL + reactionMs, 'the bars follow the number');
+    assert.equal(timeOf(trace, 'contact'), LEAD + IMPACT, 'the contact lands at impactMs');
+    assert.equal(timeOf(trace, 'settle'), LEAD + TOTAL, 'the swing settles at totalMs');
+    assert.equal(timeOf(trace, 'reaction:e1'), LEAD + TOTAL + AFTER, 'the reaction follows the return to stance');
+    assert.equal(timeOf(trace, 'float:-4'), LEAD + TOTAL + AFTER + REACTION, 'the number waits reactionMs');
+    assert.equal(timeOf(trace, 'bars'), LEAD + TOTAL + AFTER + REACTION, 'the bars follow the number');
   });
 });
 
@@ -93,7 +93,7 @@ test('an enemy attack plays in the same order, and a hit-stop lengthens the swin
       { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 6, blocked: 0 }]);
     finish();
     assert.deepEqual(order(trace), ['contact', 'settle', 'reaction:player', 'float:-6', 'bars']);
-    assert.equal(timeOf(trace, 'settle'), TOTAL + 60, 'the 60 ms hit-stop holds the swing before it settles');
+    assert.equal(timeOf(trace, 'settle'), LEAD + TOTAL + 60, 'the 60 ms hit-stop holds the swing before it settles');
   });
 });
 
@@ -102,38 +102,38 @@ test('a multi-hit beat: every contact in the swing, then reaction and number per
     run(playerHit(3, 4));
     finish();
     assert.equal(layer.dataset.contact, '2', 'the layer counts each contact (tools/click-impact-probe.mjs watches it)');
-    assert.deepEqual(order(trace), ['contact', 'contact', 'settle', 'reaction:e1', 'float:-3', 'reaction:e1', 'float:-4', 'bars']);
+    assert.deepEqual(order(trace), ['contact', 'contact', 'settle', 'reaction:e1', 'float:-3', 'bars', 'reaction:e1', 'float:-4', 'bars']);
     const { stepMs, reactionMs } = ANIM_SPEEDS.normal;
-    assert.equal(trace.filter((e) => e.what === 'contact')[1].at, IMPACT + stepMs, 'contacts stay stepMs apart');
-    assert.equal(trace.filter((e) => e.what === 'reaction:e1')[1].at, TOTAL + reactionMs + stepMs, 'the next hit reacts a step after the last number');
+    assert.equal(trace.filter((e) => e.what === 'contact')[1].at, LEAD + IMPACT, 'the authored swing contacts precede serial damage receipts');
+    assert.equal(trace.filter((e) => e.what === 'reaction:e1')[1].at, LEAD + TOTAL + AFTER + REACTION + stepMs, 'the next hit reacts a step after the last number');
   });
 });
 
-test('a lethal hit: reaction, number, then the death, then bars', (t) => {
+test('a lethal hit: reaction, number, health update, then death resolution', (t) => {
   drive(t, ({ trace, run, finish }) => {
     run([...playerHit(5), { type: 'hpLost', targetId: 'e1', amount: 5, cause: 'attack' }, { type: 'enemyDied', targetId: 'e1' }]);
     finish();
-    assert.deepEqual(order(trace), ['contact', 'settle', 'reaction:e1', 'float:-5', 'float:✝', 'defeated:e1', 'bars']);
+    assert.deepEqual(order(trace), ['contact', 'settle', 'reaction:e1', 'float:-5', 'bars', 'float:✝', 'defeated:e1']);
   });
 });
 
-test('an attacker out of its stance returns to it and waits stanceLeadMs before swinging', (t) => {
+test('an attacker out of its stance settles before its delayed swing', (t) => {
   drive(t, ({ anchors, trace, run, finish }) => {
     let settled = 0;
     registerStage(anchors.player, { presentation: { action: 'attack' }, settle: () => settled++, play: () => true, hold() {} });
     run(playerHit(4));
     finish();
     assert.equal(settled, 1, 'the stance is restored first');
-    assert.equal(timeOf(trace, 'swing'), ANIM_SPEEDS.normal.stanceLeadMs, 'the swing starts one stance lead later');
+    assert.equal(timeOf(trace, 'swing'), LEAD, 'the swing starts after intent and action words');
   });
 });
 
-test('an attacker already in stance swings at once', (t) => {
+test('an attacker already in stance waits for intent and action wording', (t) => {
   drive(t, ({ anchors, trace, run, finish }) => {
     registerStage(anchors.player, { presentation: { action: undefined }, settle() { throw new Error('no settle'); }, play: () => true, hold() {} });
     run(playerHit(4));
     finish();
-    assert.equal(timeOf(trace, 'swing'), 0);
+    assert.equal(timeOf(trace, 'swing'), LEAD);
   });
 });
 
@@ -145,7 +145,7 @@ for (const mode of ['instant', 'reduced-motion']) {
       run(playerHit(4));
       finish();
       // The fast path passes no beat kind, so it draws no slash (as before).
-      assert.deepEqual(order(trace), ['reaction:e1', 'float:-4', 'bars']);
+      assert.deepEqual(order(trace), ['contact', 'reaction:e1', 'float:-4', 'bars']);
       assert.ok(trace.every((e) => e.at <= 80), 'nothing waits past the fast path\'s own step');
     });
   });
@@ -161,12 +161,12 @@ test('beatOrder impact keeps the older order: reaction and number at impact, bar
   });
 });
 
-test('a counter beat keeps the impact order', (t) => {
+test('a counter beat uses ordered reaction, damage and HUD stages', (t) => {
   drive(t, ({ trace, run, finish }) => {
     run([{ type: 'combatCounterTriggered', sourceId: 'e1', sourceKind: 'enemy', targetId: 'player' },
       { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 3, blocked: 0 }]);
     finish();
-    assert.deepEqual(order(trace), ['reaction:player', 'float:-3', 'settle', 'bars']);
+    assert.deepEqual(order(trace), ['settle', 'reaction:player', 'float:-3', 'bars']);
   });
 });
 
@@ -180,7 +180,7 @@ test('a custom body clip keeps standard numbers but finishes before another reac
     finish();
     const first=timeOf(trace,'pilot:1'),second=timeOf(trace,'pilot:2');
     assert.ok(second-first>=422.5,'the second reaction never replaces an unfinished body clip');
-    assert.equal(trace.find(e=>e.what==='float:-1').at-first,ANIM_SPEEDS.normal.reactionMs,'numbers retain the contractual reaction delay');
+    assert.equal(trace.find(e=>e.what==='float:-1').at-first,REACTION,'numbers retain the contractual reaction delay');
   });
 });
 
@@ -189,7 +189,7 @@ test('a staggering hit: the Stagger sprite plays with the reaction, so the numbe
     run([...playerHit(4), { type: 'enemyStaggered', targetId: 'e1', cause: 'poiseBroken' }]);
     finish();
     assert.equal(layer.dataset.contact, '1', 'the stagger takes no contact step of its own (tools/click-impact-probe.mjs)');
-    assert.equal(timeOf(trace, 'float:-4'), TOTAL + ANIM_SPEEDS.normal.reactionMs, 'the first number lands as on a plain hit');
+    assert.equal(timeOf(trace, 'float:-4'), LEAD + TOTAL + AFTER + REACTION, 'the first number lands as on a plain hit');
   });
 });
 
@@ -200,7 +200,7 @@ test('an identity-bound contact cue runs before hit-stop and also on an avoided 
       hold:()=>trace.push({what:'contact-hold',at:Date.now()}),
       cancel:()=>trace.push({what:'settle',at:Date.now()}),
     })});finish();
-    assert.equal(timeOf(trace,'ack'),100);
+    assert.equal(timeOf(trace,'ack'),LEAD + 100);
     assert.ok(trace.findIndex(row=>row.what==='ack')<trace.findIndex(row=>row.what==='contact-hold'));
   });
 });
@@ -209,6 +209,6 @@ test('an opted-in actor acknowledges its contact even when no hit-stop or outcom
   drive(t,({trace,run,finish})=>{
     run([{type:'cardPlayed',cardType:'attack',cardId:'strike',cardInstanceId:'empty',targetId:'e1'}],{
       animateActor:()=>({impactMs:100,totalMs:300,contact:()=>trace.push({what:'ack',at:Date.now()}),cancel(){}}),
-    });finish();assert.equal(timeOf(trace,'ack'),100);
+    });finish();assert.equal(timeOf(trace,'ack'),LEAD + 100);
   });
 });
