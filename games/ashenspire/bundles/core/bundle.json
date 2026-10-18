@@ -28,7 +28,9 @@
     },
     "effects": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "fixCoreVersion": 1
+      }
     },
     "statuses": {
       "version": "1.0.0",
