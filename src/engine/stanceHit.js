@@ -1,6 +1,8 @@
+import { fixCoreEnabled, fixCoreRules } from '../model/fixCoreMechanics.js';
+import { stanceMitigation } from './stanceMitigation.js';
 import { proposalTargetPlan } from './proposalStatusRuntime.js';
 // One seeded Accuracy decision gates an entire committed hostile action.
-import { attackAccuracy, counterBaseEvasion } from './counterReturn.js';
+import { attackAccuracy, counterBaseEvasion, attributesOf } from './counterReturn.js';
 import * as Statuses from './statuses.js';
 import { RANGES } from '../model/combatRanges.js';
 import { stanceRulesFor, stanceOf, sameStance, stanceEntryBonuses } from '../model/stanceRules.js';
@@ -11,11 +13,11 @@ function hitMode(source, target, { evadeDisabled = false } = {}) {
   const disadvantage = !!(source?.accuracyDisadvantage || (!evadeDisabled && (target?.evadeAdvantage || prepared?.advantage || pending?.advantage)));
   return advantage === disadvantage ? 'normal' : advantage ? 'advantage' : 'disadvantage';
 }
-function diceHit(dice, need, mode) {
+function diceHit(dice, need, mode, strictNatural = false) {
   // A natural twenty always connects, including against advantaged Evasion.
-  if (dice.includes(20)) return true;
+  if (!strictNatural && dice.includes(20)) return true;
   const die = mode === 'disadvantage' ? Math.min(...dice) : Math.max(...dice);
-  return die !== 1 && die >= need;
+  return die === 20 || die !== 1 && die >= need;
 }
 const stacks = (entity, id) => Math.max(0, Number(entity?.statuses?.[id]?.stacks) || 0);
 function eligiblePreparedEvade(entity) {
@@ -29,6 +31,12 @@ function eligibleEvadeMode(entity) {
 }
 export function effectiveEvasion(ctx, entity, { evadeDisabled = false, baseEntity = entity } = {}) {
   const prepared = !evadeDisabled && eligiblePreparedEvade(entity);
+  if (fixCoreEnabled(ctx)) {
+    const cfg = fixCoreRules(ctx).accuracy;
+    const dex = Number(attributesOf(ctx, baseEntity)?.dexterity) || 0;
+    return cfg.baseAC + dex + (Number(baseEntity?.baseEvasionBonus) || 0)
+      + (evadeDisabled ? 0 : cfg.evasionPerStack * stacks(entity, 'evade') + (prepared ? Number(prepared.bonus) || 0 : 0));
+  }
   const preparedBonus = prepared ? stanceRulesFor(ctx).evasionPerStack + (Number.isFinite(prepared.bonus) ? prepared.bonus : 0) : 0;
   return counterBaseEvasion(ctx, baseEntity) + (evadeDisabled ? 0 : stanceRulesFor(ctx).evasionPerStack * stacks(entity, 'evade') + preparedBonus);
 }
@@ -49,20 +57,27 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const precision = stacks(source, 'precision');
   const rules = stanceRulesFor(ctx);
   const sweep = profile.maneuver === 'sweep' ? rules.sweepPrecisionBase + rules.sweepPerAdditionalTarget * Math.max(0, options.additionalTargets ?? carrier?.additionalTargets ?? 0) : 0;
-  const accuracy = attackAccuracy(ctx, source, carrier) + precision + sweep + proposal.accuracyDelta/5;
+  const cfg = fixCoreRules(ctx).accuracy;
+  const accuracy = fixCoreEnabled(ctx)
+    ? precision * cfg.precisionPerStack + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[profile.maneuver] || 0) + proposal.accuracyDelta/5
+    : attackAccuracy(ctx, source, carrier) + precision + sweep + proposal.accuracyDelta/5;
   const evadeStacks = options.evadeDisabled ? 0 : stacks(target, 'evade');
-  const evasion = effectiveEvasion(ctx, target, options);
-  const need = Math.max(2, Math.min(20, 8 + evasion - accuracy));
+  const advantageRating = Number.isFinite(target.stanceAdvantageRating) ? target.stanceAdvantageRating
+    : 1 + (stanceMitigation(ctx, profile.maneuver, target.combatStance?.maneuver).defenseAdvantage ? cfg.stanceAdvantageBonus || 0 : 0);
+  const stanceFactor = fixCoreEnabled(ctx) ? Math.min(cfg.stanceMaximum, Math.max(cfg.stanceMinimum,
+    advantageRating + (Number(target.matchingStanceCardMultiplier) || 0))) : 1;
+  const evasion = effectiveEvasion(ctx, target, options) * stanceFactor;
+  const need = fixCoreEnabled(ctx) ? evasion - accuracy : Math.max(2, Math.min(20, 8 + evasion - accuracy));
   const evadeAttempted = inRange && !bypass && !options.evadeDisabled && (evadeStacks > 0 || !!eligiblePreparedEvade(target));
   const mode = hitMode(source, target, options);
   let hits = 0, outcomes = mode === 'normal' ? 20 : 400;
   if (inRange) for (let first = 1; first <= 20; first++) {
-    if (mode === 'normal') { if (bypass || diceHit([first], need, mode)) hits++; }
-    else for (let second = 1; second <= 20; second++) if (bypass || diceHit([first, second], need, mode)) hits++;
+    if (mode === 'normal') { if (bypass || diceHit([first], need, mode, fixCoreEnabled(ctx))) hits++; }
+    else for (let second = 1; second <= 20; second++) if (bypass || diceHit([first, second], need, mode, fixCoreEnabled(ctx))) hits++;
   }
   const hitChance = 100 * hits / outcomes;
   const evadeActive = evadeAttempted;
-  return { range, requiredRange, inRange, accuracy, evasion, need, bypass, mode, advantage: mode === 'advantage', disadvantage: mode === 'disadvantage', evadeStacks, evadeActive, evadeAttempted, hitChance, chance: hitChance,
+  return { range, requiredRange, inRange, accuracy, evasion, need, stanceFactor, bypass, mode, advantage: mode === 'advantage', disadvantage: mode === 'disadvantage', evadeStacks, evadeActive, evadeAttempted, hitChance, chance: hitChance,
     ...(!inRange ? { missReason: 'range' } : {}) };
 }
 
@@ -72,7 +87,7 @@ export function resolveAttackHit(ctx, source, target, carrier, options = {}) {
   const d20 = preview.inRange && !preview.bypass ? (typeof ctx.rng.int === 'function' ? ctx.rng.int('combatAvoidance', 1, 20) : 1 + Math.floor(ctx.rng.float('combatAvoidance') * 20)) : null;
   const dice = d20 == null ? [] : [d20];
   if (dice.length && preview.mode !== 'normal') dice.push(typeof ctx.rng.int === 'function' ? ctx.rng.int('combatAvoidance', 1, 20) : 1 + Math.floor(ctx.rng.float('combatAvoidance') * 20));
-  const hit = preview.inRange && (preview.bypass || diceHit(dice, preview.need, preview.mode));
+  const hit = preview.inRange && (preview.bypass || diceHit(dice, preview.need, preview.mode, fixCoreEnabled(ctx)));
   if (dice.length && preview.evadeAttempted) {
     if (eligibleEvadeMode(target)) delete target.nextEvadeMode;
     // Prepared charges from v2 saves and dodgeRoll use the same Accuracy decision.

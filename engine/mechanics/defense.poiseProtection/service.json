@@ -1,0 +1,27 @@
+{
+  "mechanic": "defense.poiseProtection",
+  "handlers": [],
+  "modifiers": [
+    {
+      "id": "active-poise-mitigation",
+      "phase": "damage.mitigation",
+      "subject": "target",
+      "when": {
+        "cmp": [
+          ">",
+          "$owner.persistentPoise.value",
+          0
+        ]
+      },
+      "select": {
+        "damageKind": "physical"
+      },
+      "operation": "multiply",
+      "value": "$config.multiplier",
+      "stacking": {
+        "group": "poise-protection",
+        "mode": "strongest"
+      }
+    }
+  ]
+}

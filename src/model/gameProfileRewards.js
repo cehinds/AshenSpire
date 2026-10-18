@@ -2,6 +2,7 @@
 import { gameModule, gameContent } from './gameProfile.js';
 import { syncZones } from './state.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
+import { acquireFlask } from './gracerefill.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -116,9 +117,8 @@ export function claimGameProfileReward(registries,run,offerId,index) {
     if(draft.relics.includes(option.id))throw new Error('Reward relic already owned');
     draft.relics.push(option.id);
   } else if(option.kind==='potions') {
-    registries.flasks.get(option.id);
-    if(draft.flasks.length>=registries.balance.flaskSlots)throw new Error('Potion slots are full');
-    draft.flasks.push({flaskId:option.id});
+    const acquisition=acquireFlask(registries,draft,option.id);
+    if(!acquisition.ok)throw new Error(acquisition.reason);
   } else if(option.kind==='armor') {
     if(!(registries.equipment.armour||[]).some(row=>row.id===option.id&&row.classId===run.class))throw new Error('Unknown reward armor');
     draft.loadout.boughtArmour ||= [];

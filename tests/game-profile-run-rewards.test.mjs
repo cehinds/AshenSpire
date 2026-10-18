@@ -22,7 +22,7 @@ test('all six categories can occur and configured count overrides apply',()=>{
   const run=fresh(),o=gameProfileRewardOffers(reg,run,createRng(seed),{offerId:'fight'});assert.equal(o.options.length,3);o.options.forEach(row=>categories.add(row.kind));
  }
  assert.deepEqual([...categories].sort(),['armor','combatCards','potions','relics','weaponArts','weapons'].sort());
- const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{rewards:{offerCount:2,takeCount:1}}});
+ const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{rewards:{offerCount:2,takeCount:1}}});
  const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile),run=createRunState({seed:1,classId:'reaver',registries:r});
  assert.equal(gameProfileRewardOffers(r,run,createRng(2),{offerId:'fight'}).options.length,2);
 });

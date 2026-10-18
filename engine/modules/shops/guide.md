@@ -2,7 +2,7 @@
 
 Show authored merchant stock and complete purchases through a review step.
 
-**Status:** Listed in `ashen.core@1.0.0`.
+**Status:** Listed in `ashen.core@2.0.0`.
 Runtime scope: Configured offers, stock availability and prices, purchase review of cost/current balance, transaction confirmation, and leaving the merchant while preserving the run.
 
 ## Authoring example
@@ -12,7 +12,7 @@ Add one override to `games/ashenspire/game.json`; leave other bundled modules in
 ```json
 {
   "formatVersion": 1,
-  "core": "ashen.core@1.0.0",
+  "core": "ashen.core@2.0.0",
   "modules": {
     "shops": false
   }

@@ -264,7 +264,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         break;
       default: break;
     }
-    for (const line of [].concat(text || [])) rows.push({ id, round, text: line });
+    for (const line of [].concat(text || [])) rows.push({ id, round, text: line, ...(event.damageReceipt ? { damageReceipt: event.damageReceipt } : {}) });
   });
   return rows;
 }
