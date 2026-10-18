@@ -8,6 +8,14 @@ import { spawnSync } from 'node:child_process';
 
 const workflow = name => readFileSync(new URL(`../.github/workflows/${name}.yml`, import.meta.url), 'utf8');
 
+test('standalone hashes run for artwork-only pull requests', () => {
+  const source = workflow('enemy-back-standalone');
+  const trigger = source.slice(source.indexOf('  pull_request:'), source.indexOf('permissions:'));
+  for (const path of ['art/enemy-back-proposals/**', 'art/enemy-back-motion/**']) {
+    assert.ok(trigger.includes(`'${path}'`), `missing artwork trigger: ${path}`);
+  }
+});
+
 test('rear evidence publication requires successful capture; diagnostics remain always-uploaded', () => {
   const source = workflow('enemy-back-artifact-evidence');
   const commit = source.slice(source.indexOf('      - name: Commit evidence'), source.indexOf('      - uses: actions/upload-artifact'));

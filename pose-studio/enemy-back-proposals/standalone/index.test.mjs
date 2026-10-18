@@ -1,15 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { selectProposal, sequenceFor, sampleSequence, positionFrame, resolveFrameAsset } from './index.mjs';
 const json = async path => JSON.parse(await readFile(new URL(path, import.meta.url), 'utf8'));
 const catalog = await json('./catalog.json');
 const source = await json('../manifest.json');
-function fetchSparseArt(assets) {
-  const cwd = new URL('../../../', import.meta.url);
+function fetchSparseArt(assets, cwd = new URL('../../../', import.meta.url)) {
   const missing = [...new Set(assets)].filter(asset => !existsSync(new URL(asset, cwd)));
   if (!missing.length) return;
   const entries = execFileSync('git', ['ls-files', '-v', '-z', '--', ...missing], { cwd, encoding: 'utf8' }).split('\0');
@@ -21,8 +23,37 @@ function fetchSparseArt(assets) {
     env: { ...process.env, GIT_NO_LAZY_FETCH: '1' } }).trim().split('\n');
   const needed = status.filter(line => line.endsWith(' missing')).map(line => line.split(' ')[0]);
   // Fetch only the required tracked blobs together, not one network round trip per PNG.
-  if (needed.length) execFileSync('git', ['fetch', '--no-tags', '--no-write-fetch-head', '--filter=blob:none', 'origin', ...needed], { cwd, stdio: 'pipe' });
+  // Like Git's lazy fetch, do not negotiate commit history for raw blob wants:
+  // shallow negotiation otherwise treats an absent blob as a bad revision.
+  if (needed.length) execFileSync('git', ['-c', 'fetch.negotiationAlgorithm=noop', 'fetch', '--no-tags', '--no-write-fetch-head', '--filter=blob:none', 'origin', ...needed], { cwd, stdio: 'pipe' });
 }
+test('sparse artwork hydration works in a cold shallow partial clone', () => {
+  const root = mkdtempSync(join(tmpdir(), 'rear-sparse-'));
+  const source = join(root, 'source'), clone = join(root, 'clone');
+  const git = (cwd, ...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+  try {
+    mkdirSync(join(source, 'art/enemy-back-motion/fixture'), { recursive: true });
+    writeFileSync(join(source, 'README.md'), 'fixture');
+    const asset = 'art/enemy-back-motion/fixture/frame.png';
+    writeFileSync(join(source, asset), 'real tracked fixture bytes');
+    git(source, 'init');
+    git(source, 'config', 'uploadpack.allowFilter', 'true');
+    git(source, 'add', '.');
+    git(source, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'fixture');
+    git(root, 'clone', '--depth=1', '--filter=blob:none', '--no-checkout', pathToFileURL(source).href, clone);
+    git(clone, 'sparse-checkout', 'set', '--no-cone', '/README.md');
+    git(clone, 'checkout');
+    assert.equal(git(clone, 'rev-parse', '--is-shallow-repository').trim(), 'true');
+    assert.equal(existsSync(join(clone, asset)), false);
+    const sha = git(clone, 'rev-parse', `HEAD:${asset}`).trim();
+    const before = execFileSync('git', ['cat-file', '--batch-check'], { cwd: clone, input: sha+'\n', encoding: 'utf8', env: { ...process.env, GIT_NO_LAZY_FETCH: '1' } });
+    assert.match(before, / missing\n$/);
+    fetchSparseArt([asset], pathToFileURL(clone+'/'));
+    const bytes = execFileSync('git', ['cat-file', 'blob', sha], { cwd: clone, env: { ...process.env, GIT_NO_LAZY_FETCH: '1' } });
+    assert.equal(bytes.toString(), 'real tracked fixture bytes');
+    assert.equal(existsSync(join(clone, asset)), false, 'index sparsity is not changed');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
 async function sourceArtBytes(asset) {
   try { return await readFile(new URL('../../../'+asset, import.meta.url)); }
   catch (error) {

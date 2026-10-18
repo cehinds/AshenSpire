@@ -3,7 +3,7 @@ on:
   push:
     branches: ['worker/EnemyBackSprites/standalone-module']
   pull_request:
-    paths: ['pose-studio/enemy-back-proposals/**', '.github/workflows/enemy-back-standalone.yml']
+    paths: ['pose-studio/enemy-back-proposals/**', 'art/enemy-back-proposals/**', 'art/enemy-back-motion/**', '.github/workflows/enemy-back-standalone.yml']
 permissions:
   contents: read
 jobs:
