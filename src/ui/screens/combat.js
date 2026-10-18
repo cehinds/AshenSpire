@@ -1717,7 +1717,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // entity still refuses (no meter → ABSENT).
     // Resources the WCF2 stack could not fit stay readable in the inspector.
     const stackHidden = new Set(entity.kind === 'enemy' ? procDisplayPlan(entity).hidden : []);
-    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id));
+    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id) && (combat.combatExpansionVersion !== 2 || bar.id === 'hp'));
     const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind, entity), tooltips, showLabels: entity.kind === 'player' });
     for (const bar of plan) {
       const el = bars.querySelector(`[data-res="${bar.id}"]`);
@@ -1748,7 +1748,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // tint + glyph nub from the row's own data, absent at zero. Numbers
       // live in the tooltip; the bar's job is HOW CLOSE, at a glance.
       const plan = procDisplayPlan(entity);
-      for (const sid of plan.bars) {
+      for (const sid of combat.combatExpansionVersion === 2 ? [] : plan.bars) {
         // v, not entity: the bar is the thing the drain animates, so it must
         // read the paced snapshot like every other meter on this card.
         const inst = v.statuses[sid];
