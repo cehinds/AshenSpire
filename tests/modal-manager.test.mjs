@@ -55,7 +55,7 @@ test('data-modal-depth follows the stack up and down', () => {
 
 test('a modal marks the app behind it inert and clears exactly that on pop', () => {
   withPage(({ document, screen, hud }) => {
-    const release = registerModal('door', modalIn(document));
+    const release = registerModal('door', modalIn(document), { dismiss() {} });
     assert.equal(screen.hasAttribute('inert'), true);
     assert.equal(hud.hasAttribute('inert'), true);
     release();
@@ -81,9 +81,9 @@ test('lower modals go inert under a higher one and wake when it pops', () => {
   withPage(({ document }) => {
     const lower = modalIn(document);
     const upper = modalIn(document);
-    const releaseLower = registerModal('lower', lower);
+    const releaseLower = registerModal('lower', lower, { dismiss() {} });
     assert.equal(lower.hasAttribute('inert'), false, 'the top modal is never inert');
-    const releaseUpper = registerModal('upper', upper);
+    const releaseUpper = registerModal('upper', upper, { dismiss() {} });
     assert.equal(lower.hasAttribute('inert'), true);
     assert.equal(upper.hasAttribute('inert'), false);
     releaseUpper();
@@ -95,7 +95,7 @@ test('lower modals go inert under a higher one and wake when it pops', () => {
 test('an app child that holds the modal stays live; its siblings go inert', () => {
   withPage(({ document, screen, hud }) => {
     const inside = modalIn(document, screen);
-    const release = registerModal('in-screen', inside);
+    const release = registerModal('in-screen', inside, { dismiss() {} });
     assert.equal(screen.hasAttribute('inert'), false);
     assert.equal(hud.hasAttribute('inert'), true);
     release();
@@ -106,7 +106,7 @@ test('an app child that holds the modal stays live; its siblings go inert', () =
 test('an inert the manager did not set survives the pop', () => {
   withPage(({ document, screen, hud }) => {
     screen.setAttribute('inert', '');
-    const release = registerModal('door', modalIn(document));
+    const release = registerModal('door', modalIn(document), { dismiss() {} });
     assert.equal(hud.hasAttribute('inert'), true);
     release();
     assert.equal(screen.hasAttribute('inert'), true, 'the other surface still owns its inert');
@@ -126,7 +126,7 @@ test('inert: false leaves the page behind interactive; depth still counts', () =
 test('a pruned (disconnected) entry clears its inert and depth', () => {
   withPage(({ document, screen }) => {
     const panel = modalIn(document);
-    registerModal('ghost', panel);
+    registerModal('ghost', panel, { dismiss() {} });
     assert.equal(screen.hasAttribute('inert'), true);
     panel.parentNode.remove();
     assert.equal(openModals().length, 0);
@@ -185,7 +185,7 @@ test('back: opening pushes one history state; the browser back dismisses with "b
     let release = null;
     release = registerModal('door', {}, { dismiss: (reason) => { reasons.push(reason); release(); }, back: true });
     assert.equal(history.pushes, 1);
-    assert.equal(typeof history.state.ashenModal, 'number');
+    assert.equal(typeof history.state.ashenModal, 'string', 'the sentinel carries this load\'s nonce');
     userBack();
     assert.deepEqual(reasons, ['back']);
     assert.equal(openModals().length, 0);
@@ -217,10 +217,11 @@ test('back: two stacked entries pop one at a time', () => {
     };
     entry('a');
     entry('b');
-    assert.equal(history.pushes, 2);
+    assert.equal(history.pushes, 1, 'one sentinel however many are stacked');
     userBack();
     assert.deepEqual(log, ['b:back']);
     assert.deepEqual(openModals().map((m) => m.name), ['a']);
+    assert.equal(history.pushes, 2, 'the sentinel is pushed again for the one still open');
     userBack();
     assert.deepEqual(log, ['b:back', 'a:back']);
     assert.equal(history.backCalls, 0);
@@ -235,9 +236,10 @@ test('back: closing the top of two programmatically leaves the lower one standin
     const releaseB = registerModal('b', {}, { dismiss: (reason) => log.push(`b:${reason}`), back: true });
     releaseB();
     settle();
-    assert.deepEqual(log, [], 'a was not dismissed by the pop that b caused');
+    assert.deepEqual(log, [], 'a was not dismissed');
     assert.deepEqual(openModals().map((m) => m.name), ['a']);
-    assert.equal(history.backCalls, 1);
+    assert.equal(history.backCalls, 0, 'the sentinel stays while a back-enabled entry remains');
+    assert.ok(history.state && history.state.ashenModal, 'the sentinel is still current');
   });
 });
 
@@ -252,6 +254,35 @@ test('back: entries without back, or without dismiss, never touch history', () =
     plain();
     noBack();
     assert.equal(history.backCalls, 0);
+  });
+});
+
+test('back: a modal opened in the same tick as the last one closed is not dismissed by that close\'s pop', () => {
+  withHistory(({ history, settle }) => {
+    resetModalState();
+    const log = [];
+    const releaseB = registerModal('b', {}, { dismiss: (reason) => log.push(`b:${reason}`), back: true });
+    releaseB(); // queues history.back() (async)
+    const releaseC = registerModal('c', {}, { dismiss: (reason) => log.push(`c:${reason}`), back: true });
+    assert.equal(history.pushes, 2, 'c pushed a fresh sentinel before the back landed');
+    settle(); // the queued back lands on c's sentinel's predecessor… and is ours to ignore
+    assert.deepEqual(log, [], 'c survives the pop our own back() caused');
+    assert.deepEqual(openModals().map((m) => m.name), ['c']);
+    releaseC();
+    settle();
+    assert.equal(openModals().length, 0);
+  });
+});
+
+test('back: a sentinel left by an earlier load of the page is replaced, never gone back onto', () => {
+  withHistory(({ history }) => {
+    resetModalState();
+    // A reload keeps history.state; this one is from a previous load (a foreign nonce).
+    history.pushState({ ashenModal: 'stale-load' });
+    const replaced = [];
+    history.replaceState = (state) => { replaced.push(state); };
+    registerModal('door', {}, { dismiss() {}, back: true });
+    assert.deepEqual(replaced, [null], 'the stale sentinel was replaced with nothing');
   });
 });
 

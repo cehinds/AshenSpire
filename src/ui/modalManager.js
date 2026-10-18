@@ -24,57 +24,90 @@ function prune() {
   let dropped = false;
   for (let i = stack.length - 1; i >= 0; i--) {
     if (stack[i].element && stack[i].element.isConnected === false) {
-      leaveHistory(stack[i]);
       stack.splice(i, 1);
+      leaveHistory();
       dropped = true;
     }
   }
   if (dropped) syncPage();
 }
 
-// BACK BUTTON. An entry with `back: true` pushes one history state when it
-// opens, so the browser/Android back button has something to pop. The state is
-// { ashenModal: id }. A popstate whose state is no longer the top entry's id
-// means the browser already popped it: dismiss('back'). Closing it any other
-// way pops the state we pushed with history.back(), once. history.back() is
-// async and is never waited on.
-let nextModalId = 0;
+// BACK BUTTON. While any back-enabled entry is open, the history holds ONE
+// sentinel state above the page's own: { ashenModal: LOAD } (LOAD is a nonce
+// minted per page load, so a sentinel a reload left behind is never ours —
+// boot replaces such a leftover with null). The browser/Android back button
+// pops the sentinel: dismiss the top entry with 'back', and if back-enabled
+// entries remain, push the sentinel again. A programmatic close of the LAST
+// back-enabled entry pops the sentinel with history.back(); that back is
+// async, so its popstate is counted and ignored — which also covers a modal
+// opened in the same tick as that close (its sentinel push lands first, the
+// queued back then pops it, and the count says that pop was ours).
+const LOAD = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 let popOn = null;
+let sentinelUp = false; // our sentinel is the current history entry, as far as we know
+let ignorePops = 0;     // popstates owed to our own history.back() calls
 
 function canPush() {
   return typeof history !== 'undefined' && history && typeof history.pushState === 'function';
 }
 
-function enterHistory(entry) {
-  if (!entry.back || !entry.dismiss || entry.pushed || !canPush()) return;
-  entry.id = ++nextModalId;
-  entry.pushed = true;
-  history.pushState({ ashenModal: entry.id }, '');
-  ensurePopstate();
+function ours(state) {
+  return !!state && typeof state === 'object' && state.ashenModal === LOAD;
 }
 
-// Undo enterHistory on a close that was not the browser's own pop. Never goes
-// back() for an entry the browser already popped, or one that never pushed, or
-// one that is no longer the current state (a later push sits on top of it).
-function leaveHistory(entry) {
-  if (!entry.pushed) return;
-  entry.pushed = false;
-  if (entry.popped || !canPush() || typeof history.back !== 'function') return;
-  if (history.state?.ashenModal === entry.id) history.back();
+function backEntries() {
+  return stack.filter((e) => e.back && e.dismiss && !e.closing);
+}
+
+function pushSentinel() {
+  if (sentinelUp || !canPush()) return;
+  history.pushState({ ashenModal: LOAD }, '');
+  sentinelUp = true;
+}
+
+// A sentinel from an earlier load of this page (a reload with a modal open)
+// is dead: going back() onto the entry below it would load the previous
+// document. Replace it with nothing so neither path ever sees it.
+function clearStaleSentinel() {
+  if (!canPush() || typeof history.replaceState !== 'function') return;
+  const state = history.state;
+  if (state && typeof state === 'object' && 'ashenModal' in state && !ours(state)) history.replaceState(null, '');
+}
+
+function enterHistory(entry) {
+  if (!entry.back || !entry.dismiss || !canPush()) return;
+  ensurePopstate();
+  pushSentinel();
+}
+
+// After a close that was not the browser's own pop: when no back-enabled entry
+// is left and the sentinel is current, pop it. The popstate that follows is
+// ours and is ignored.
+function leaveHistory() {
+  if (!sentinelUp || backEntries().length || !canPush() || typeof history.back !== 'function') return;
+  if (!ours(history.state)) { sentinelUp = false; return; }
+  sentinelUp = false;
+  ignorePops++;
+  history.back();
 }
 
 function onPopstate() {
-  const top = topModal();
-  if (!top || !top.back || !top.dismiss || !top.pushed) return;
-  if (typeof history !== 'undefined' && history?.state?.ashenModal === top.id) return;
+  if (ignorePops > 0) { ignorePops--; return; }
+  if (ours(typeof history !== 'undefined' ? history?.state : null)) return; // moved onto, not off, our sentinel
+  const top = backEntries().at(-1);
+  sentinelUp = false;
+  if (!top) return;
   top.popped = true;
   top.dismiss('back');
+  // The entry below, if any, still needs a sentinel to catch the next back.
+  if (backEntries().length) pushSentinel();
 }
 
 function ensurePopstate() {
   const add = globalThis.addEventListener;
   if (typeof add !== 'function' || popOn === add) return;
   popOn = add;
+  clearStaleSentinel();
   globalThis.addEventListener('popstate', onPopstate);
 }
 
@@ -103,14 +136,14 @@ function syncPage() {
   if (root?.dataset) root.dataset.modalDepth = String(live.length);
   const top = live.length ? live[live.length - 1] : null;
   const want = new Set();
-  if (top && top.inert !== false && top.element) {
+  if (top && top.inert === true && top.element) {
     const app = typeof document.getElementById === 'function' ? document.getElementById('app') : null;
     for (const child of app?.children ? Array.from(app.children) : []) {
       if (!holds(child, top.element)) want.add(child);
     }
     for (let i = 0; i < live.length - 1; i++) {
       const lower = live[i];
-      if (lower.element && lower.inert !== false && !holds(lower.element, top.element)) want.add(lower.element);
+      if (lower.element && lower.inert === true && !holds(lower.element, top.element)) want.add(lower.element);
     }
   }
   for (const el of [...inertByUs]) {
@@ -175,11 +208,16 @@ function ensureEscape() {
  *   inert            false → do not make the page behind it inert.
  */
 export function registerModal(name, element, opts = {}) {
+  const dismiss = typeof opts?.dismiss === 'function' ? opts.dismiss : null;
   const entry = {
     name,
     element,
-    inert: opts?.inert,
-    dismiss: typeof opts?.dismiss === 'function' ? opts.dismiss : null,
+    // The page lock is for entries the manager closes (the shared shell) or
+    // that ask for it; a bespoke surface registered as it always was keeps
+    // its own focus handling and its opener focusable (it restores focus
+    // before it releases, and an inert opener cannot take focus).
+    inert: opts?.inert === true ? true : opts?.inert === false ? false : !!dismiss,
+    dismiss,
     back: opts?.back === true,
   };
   stack.push(entry);
@@ -192,7 +230,7 @@ export function registerModal(name, element, opts = {}) {
     released = true;
     const at = stack.indexOf(entry);
     if (at >= 0) stack.splice(at, 1);
-    leaveHistory(entry);
+    leaveHistory();
     syncPage();
     notifyIfEmpty();
   }
@@ -255,5 +293,7 @@ export function onModalsClosed(fn) {
 export function resetModalState() {
   stack.length = 0;
   waiters.length = 0;
+  sentinelUp = false;
+  ignorePops = 0;
   syncPage();
 }
