@@ -1,0 +1,67 @@
+{
+  "game": "http://127.0.0.1:8765/build/AshenSpire.html",
+  "viewports": [
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "state": {
+        "scene": "city-street-rain",
+        "effects": "none",
+        "particles": [
+          "none"
+        ],
+        "cards": 5,
+        "loadedLayers": 4
+      },
+      "errors": []
+    },
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "state": {
+        "scene": "castle-throne-room",
+        "effects": "none",
+        "particles": [],
+        "cards": 5,
+        "loadedLayers": 5
+      },
+      "errors": []
+    },
+    {
+      "name": "wide",
+      "width": 1920,
+      "height": 900,
+      "state": {
+        "scene": "city-street-night",
+        "effects": "none",
+        "particles": [],
+        "cards": 5,
+        "loadedLayers": 4
+      },
+      "errors": []
+    },
+    {
+      "name": "tablet",
+      "width": 768,
+      "height": 1024,
+      "state": {
+        "scene": "forest-path",
+        "effects": "none",
+        "particles": [],
+        "cards": 5,
+        "loadedLayers": 4
+      },
+      "errors": []
+    }
+  ],
+  "introMap": {
+    "locations": [
+      "crownfall/forge",
+      "crownfall/archive"
+    ],
+    "travelUnchanged": true,
+    "errors": []
+  }
+}

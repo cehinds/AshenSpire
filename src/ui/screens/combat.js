@@ -1403,7 +1403,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function render() {
     if (paintedAppearance !== displayAppearance()) {
-      combatEl.querySelectorAll(':scope > .backdrop, :scope > .alternative-card-fade').forEach(node => node.remove());
+      combatEl.querySelectorAll(':scope > .backdrop, :scope > .alternative-card-fade, :scope > .layered-environment-effects').forEach(node => node.remove());
       combatEl.insertAdjacentHTML('afterbegin', combatBackdropHtml(run, previewSceneId));
       paintedAppearance = displayAppearance();
     }

@@ -1383,7 +1383,11 @@ function playLegacyTimeline(events, ctx, done) {
             safe(() => haptic.play('damageTaken'));
           }
           hitStop = 0;
-          schedule(stepV, Math.max(speed.stepMs, event.type === 'attackHit' ? STACK_STEP_MS * 2 : 0) + (held ? holdMs : 0));
+          // stepMs separates contacts. After the last sequential contact there
+          // is no next contact to space: retain its hit-stop and the actor's
+          // recovery below, then begin the defender's full reaction.
+          const stepGap = sequential && vi === visuals.length ? 0 : speed.stepMs;
+          schedule(stepV, Math.max(stepGap, event.type === 'attackHit' ? STACK_STEP_MS * 2 : 0) + (held ? holdMs : 0));
           return;
         }
         let reactionEndAt = 0;

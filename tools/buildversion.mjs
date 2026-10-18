@@ -206,6 +206,7 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/zip.mjs',
   'tools/art-manifest.mjs',
   'tools/asset-pack.mjs',
+  'tools/layered-art.mjs',
   'tools/asset-css.mjs',
   // The art release this tree pins and the manifest every pack is checked
   // against (docs/EXTERNAL-ASSETS-PLAN.md §2 *Build identity*, step 11). Not

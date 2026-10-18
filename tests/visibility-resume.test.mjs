@@ -269,6 +269,39 @@ test('a hidden→visible cycle mid-combat leaves the run and the fight unchanged
   assert.deepStrictEqual(snapshot(combat), before.combat, 'the fight is unchanged: hand, piles, enemies, intents, resources');
 });
 
+test('a mounted layered overlay preserves the fight through resume and art-source refresh, then releases its listener', async () => {
+  const { wireLayeredEnvironment } = await import('../src/ui/components/layeredEnvironment.js');
+  const { ART_SOURCE_EVENT } = await import('../src/ui/highResArt.js');
+  const { LAYERED_SOURCES } = await import('../src/content/layeredEnvironments.js');
+  const { run, combat } = midCombat();
+  const before = { run: snapshot(run), combat: snapshot(combat) };
+  const wasObserver = Object.getOwnPropertyDescriptor(globalThis, 'MutationObserver');
+  let disconnected = false, writes = 0, background = '';
+  const style = { set backgroundImage(value) { background = value; writes++; } };
+  const layer = { dataset: { layerAsset: Object.keys(LAYERED_SOURCES)[0] }, style };
+  const effects = { dataset: {}, querySelectorAll: () => [layer] };
+  globalThis.MutationObserver = class { observe() {} disconnect() { disconnected = true; } };
+  let release;
+  try {
+    release = wireLayeredEnvironment({ querySelector: () => effects });
+    assert.equal(writes, 1, 'mount really paints its decorative source');
+    backgroundAndResume();
+    doc.dispatchEvent(new Event(ART_SOURCE_EVENT));
+    assert.equal(writes, 2, 'the real art-source handler refreshed the mounted overlay');
+    assert.match(background, /^url\(/);
+    assert.deepStrictEqual(snapshot(run), before.run);
+    assert.deepStrictEqual(snapshot(combat), before.combat);
+    release(); release = null;
+    assert.ok(disconnected);
+    doc.dispatchEvent(new Event(ART_SOURCE_EVENT));
+    assert.equal(writes, 2, 'disposed overlays no longer refresh');
+  } finally {
+    release?.();
+    if (wasObserver) Object.defineProperty(globalThis, 'MutationObserver', wasObserver);
+    else delete globalThis.MutationObserver;
+  }
+});
+
 // A HOLD THE BLUR CANCELLED OPENS NOTHING (#1298 post-merge review). End
 // Turn is armed by beatArmer as a review-on-tap hold (`tapOnEarlyRelease`,
 // `onTap` = the confirmation review). A key released EARLY is a tap and opens
@@ -384,6 +417,7 @@ const KNOWN = {
   'src/ui/components/hudQuickSettings.js': ["'fullscreenchange'", "'webkitfullscreenchange'"],
   'src/ui/components/iconTray.js': ["'pointerdown'"],
   'src/ui/components/intro.js': ["'keydown'"],
+  'src/ui/components/layeredEnvironment.js': [['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), sent by an art-source change: rewrites only mounted decorative layer backgroundImage URLs through layeredArtUrl(); reads no run or combat state, dispatches no gameplay action, and disposal removes the listener; covered by the mounted-overlay test above"]],
   'src/ui/components/localMapCamera.js': ["'pointerup'"],
   'src/ui/components/mapDetail.js': [['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), fired when the built-in art source changes (an Art quality switch), not the page cycle: forgets the map layer's failed detail tiles and requests the visible set again through assetUrl() only"]],
   'src/ui/components/modalShell.js': ["'keydown'"],

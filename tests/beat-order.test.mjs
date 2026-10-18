@@ -212,3 +212,72 @@ test('an opted-in actor acknowledges its contact even when no hit-stop or outcom
     });finish();assert.equal(timeOf(trace,'ack'),LEAD + 100);
   });
 });
+
+const accuracyHit = (...amounts) => {
+  const [played,...damage] = playerHit(...amounts);
+  return [played,{type:'attackHit',sourceId:'player',targetId:'e1'},...damage];
+};
+function shortActor(trace,totalMs=195,remainingMs){
+  return ()=>({impactMs:100,totalMs,remainingMs,hold(){},
+    cancel:()=>trace.push({what:'settle',at:Date.now()})});
+}
+
+for(const [amount,hold]of [[7,60],[22,120]]){
+ test(`a late final contact keeps its ${hold} ms hit-stop without an empty inter-contact gap`,t=>{
+  drive(t,({trace,run,finish})=>{
+   run(accuracyHit(amount),{animateActor:shortActor(trace),maxHpFor:()=>54});finish();
+   assert.equal(timeOf(trace,'contact'),300,'the accuracy word keeps its readable lead');
+   assert.equal(timeOf(trace,'settle'),300+hold,'only the final hit-stop remains once the short swing has recovered');
+   assert.equal(timeOf(trace,'reaction:e1'),300+hold,'the defender reacts after the attacker returns to stance');
+   assert.equal(timeOf(trace,`float:-${amount}`),300+hold+ANIM_SPEEDS.normal.reactionMs,'the complete reaction still precedes its number');
+  });
+ });
+}
+
+test('a short swing that has not recovered still finishes its total duration plus hit-stop',t=>{
+ drive(t,({trace,run,finish})=>{
+  run(playerHit(7),{animateActor:shortActor(trace),maxHpFor:()=>54});finish();
+  assert.equal(timeOf(trace,'contact'),100);
+  assert.equal(timeOf(trace,'settle'),195+60);
+  assert.equal(timeOf(trace,'float:-7'),195+60+ANIM_SPEEDS.normal.reactionMs);
+ });
+});
+
+test('a delayed contact callback retains the full hit-stop from its actual delivery time',t=>{
+ drive(t,({trace,run,finish,tick})=>{
+  run(accuracyHit(7),{animateActor:shortActor(trace),maxHpFor:()=>54});tick(350);finish();
+  assert.equal(timeOf(trace,'contact'),350);
+  assert.equal(timeOf(trace,'settle'),350+60);
+  assert.equal(timeOf(trace,'float:-7'),350+60+ANIM_SPEEDS.normal.reactionMs);
+ });
+});
+
+for(const totalMs of [195,800]){
+ test(`successive held contacts remain spaced and an actor of ${totalMs} ms fully recovers`,t=>{
+  drive(t,({trace,run,finish})=>{
+   run(accuracyHit(7,7),{animateActor:shortActor(trace,totalMs),maxHpFor:()=>54});finish();
+   const contacts=trace.filter(row=>row.what==='contact').map(row=>row.at);
+   assert.deepEqual(contacts,[300,300+ANIM_SPEEDS.normal.stepMs+60]);
+   const settled=Math.max(contacts[1]+60,totalMs+120);
+   assert.equal(timeOf(trace,'settle'),settled,'all holds and the remaining swing survive');
+   assert.equal(timeOf(trace,'float:-7'),settled+ANIM_SPEEDS.normal.reactionMs);
+  });
+ });
+}
+
+test('a stage-reported recovery still takes precedence over an expired wall-clock swing',t=>{
+ drive(t,({trace,run,finish})=>{
+  run(accuracyHit(7),{animateActor:shortActor(trace,195,()=>75),maxHpFor:()=>54});finish();
+  assert.equal(timeOf(trace,'settle'),300+60+75);
+  assert.equal(timeOf(trace,'float:-7'),300+60+75+ANIM_SPEEDS.normal.reactionMs);
+ });
+});
+
+test('impact order retains its existing terminal visual delay',t=>{
+ drive(t,({trace,run,finish})=>{
+  run(accuracyHit(7),{animateActor:shortActor(trace),maxHpFor:()=>54,beatOrder:'impact'});finish();
+  assert.equal(timeOf(trace,'contact'),300);
+  assert.equal(timeOf(trace,'float:-7'),300);
+  assert.equal(timeOf(trace,'settle'),300+ANIM_SPEEDS.normal.stepMs+60);
+ });
+});
