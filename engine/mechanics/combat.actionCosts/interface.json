@@ -1,0 +1,14 @@
+{
+  "mechanic": "combat.actionCosts",
+  "commands": {},
+  "events": {},
+  "queries": {
+    "parameters": {
+      "params": {},
+      "returns": "object",
+      "value": "$config"
+    }
+  },
+  "requires": [],
+  "listens": []
+}

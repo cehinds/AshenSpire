@@ -47,6 +47,9 @@
           },
           "modifiers": {
             "type": "object"
+          },
+          "bindingQuery": {
+            "type": "object"
           }
         },
         "additionalProperties": false
