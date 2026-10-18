@@ -37,6 +37,7 @@ These settle every item that was open above. Where a reading above says **open**
 - D13: "Add Block, cap max". A defensive card adds its Block to current Poise, capped at max Poise, and grants its Block.
 - D10: "Heal + floor before boss". Rest sites heal, plus Smith and a free level-up; the guaranteed rest is on the floor directly before the boss.
 - D8: "DC 5 + target INT + WIS + other bonuses". DC = 5 + target's INT + target's WIS + configured bonuses (default none); the observer rolls d20 + own WIS. Hit-% badge (owner, 13:59): "It shows when a card is selected that can inflict an effect or damage to a target, similar to how BG3 does it". The badge shows on each valid target while such a card is selected; Perception does not gate it.
+- D9 (owner, 14:01): "chance a map node is a shop"; then "Keep 60/10/30". Reward groups stay cards 60 / equipment + relics 10 / potions 30. Separately, 15% of randomly typed map nodes are shops.
 - Alignment: "Yes, all". Bring Core 2 on `dev` (after #2129) in line with every ruling, one PR per ruling.
 
 ## #2129 assumptions that differ from these rulings
@@ -44,7 +45,7 @@ These settle every item that was open above. Where a reading above says **open**
 - Ward and damage typing (D3: remove Ward; Poise only).
 - Same-stance effectiveness 1.0025 (D5: keep 1.25).
 - Combat deck drafts taking effect next encounter (D15: no editing in combat).
-- 60/10/30 rewards (D9: 60/10/15/15 with shops).
+- Shop node chance (D9: 15% of randomly typed map nodes; rewards stay 60/10/30).
 - 2 rests per act, Strategize, level-up as an exclusive service (D10: 3 rests, one directly before the boss, Strategize removed, heal + Smith + free level-up).
 - Autoplay of whole turns (D12: reactions only).
 - Staggered as a stacking status with Weak and a skipped turn (D13: a stance, −1 SP, +1 Vulnerable, repeats extend duration).
