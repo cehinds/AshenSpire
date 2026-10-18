@@ -7,7 +7,17 @@
     "version": "0.7.1.1560",
     "digest": "3568240a83"
   },
-  "artifactIdentity": "pending fresh merged-source CI artifact",
+  "artifactIdentity": {
+    "runtimeSourceCommit": "93c799b285e464c64daad6604a182f510dbe15f9",
+    "workflowRunId": 39084603309,
+    "workflowJobId": 117548431748,
+    "artifactId": 12120177516,
+    "version": "0.7.1.1560",
+    "sourceDigest": "e303de8945",
+    "artifactArchiveSha256": "26369b12c5d83987e09268d1205eec7bb5c5bfb4433d2fdbd305fe97fffd9cf9",
+    "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39084603309/artifacts/12120177516",
+    "status": "artifact verified; public route pending"
+  },
   "publicRouteVerification": "pending fresh merged-source identity proof",
   "expectedUrl": "https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/",
   "screenshots": [
@@ -61,5 +71,7 @@
     }
   ],
   "validation": "Existing about/changelog browser check985/985 passed, source plus selected standalone Settings",
-  "limits": "Rendering-only posed combat screenshots. No capture-only CSS. Do not establish latency, every profile, hosted gameplay, or live co-op. Prior026 captures/Qproof remain historical."
+  "limits": "Rendering-only posed combat screenshots. No capture-only CSS. Do not establish latency, every profile, hosted gameplay, or live co-op. Prior026 captures/Qproof remain historical.",
+  "captureRetentionBasis": "Screenshots retain exact bd847 merge-source / local1560 / 3568240a83 provenance. Subsequent catalog encoding decodes to semantically equal JSON values and preserves runtime styling; retained screenshots are not captures of the final artifact.",
+  "currentQuickStart": "CI success: median contact250 ms / first number665 ms; budgets unchanged. Other fast CI pending at metadata update."
 }
