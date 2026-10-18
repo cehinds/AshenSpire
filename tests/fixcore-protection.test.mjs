@@ -39,7 +39,7 @@ for (const kind of ['physical','magical']) test(`${kind} live damage and detache
 test('JSON tuning and independent attachment overrides reach live protection',()=>{
   const {combat,target,carrier}=fixture('magical');
   combat.fixCoreRules=structuredClone(fixCoreRules(combat));
-  combat.fixCoreRules.definitions['defense:wardProtection'].multiplier=.6;
+  combat.fixCoreRules.protectionParameters = {'defense.wardProtection':{multiplier:.6}};
   const action={effect:{op:'damage',target:'enemy',amount:20},source:combat.player,owner:combat.player,target,card:carrier,meta:{}};
   const preview=previewExpandedActions(combat,[action],{source:combat.player,target,carrier});
   assert.equal(preview[0][0].amount,12);
