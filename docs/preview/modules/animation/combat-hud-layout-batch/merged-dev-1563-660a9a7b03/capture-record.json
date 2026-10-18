@@ -15,9 +15,28 @@
     "sourceDigest": "f2ae87772e",
     "artifactArchiveSha256": "e5d15bc8a7d76a8a8705f23165367eaf3264dd8710b19e89eb015a233bc2614c",
     "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39096395333/artifacts/12125171021",
-    "status": "verified CI artifact; current public proof pending"
+    "status": "verified CI artifact and current public identity"
   },
-  "publicRouteVerification": "pending current combined-source public proof",
+  "publicRouteVerification": {
+    "status": "verified read-only current source identity",
+    "runtimeSourceCommit": "c979e9d9c037c685aec3f024aa9975a79775af7b",
+    "checkedAt": "2026-10-18T05:10:08.792Z",
+    "workflowRunId": 39099593742,
+    "workflowJobId": 117592949189,
+    "attempt": 1,
+    "normalAndNonceIndexStatus": 200,
+    "normalAndNonceBuildStatus": 200,
+    "buildContentType": "text/plain",
+    "sourceDigest": "f2ae87772e",
+    "ordinal": 1564,
+    "release": "0.7.1",
+    "payloadCharacters": 93085110,
+    "trustedPin": "b1b passed",
+    "pagesRunId": 39097608768,
+    "deploymentJobId": 117591743358,
+    "deployedAt": "2026-10-18T05:03:59.424Z",
+    "scope": "Publication and payload identity only; local captures do not demonstrate hosted gameplay."
+  },
   "historicalPublicRouteVerification": {
     "status": "verified read-only historical source identity",
     "runtimeSourceCommit": "1a880f97d2abe07029401ddbe07393649c73763e",
@@ -110,5 +129,5 @@
     "diagnostics": "not needed; uninstrumented timing authoritative",
     "scope": "Unchanged budgets; historical local397/779 failure remains separate, no universal latency claim."
   },
-  "currentSourceCI": "All functional source CI passed, including tests39096398033 core plus four shards; only art39096396447 remains queued, with expected conditional stance skip."
+  "currentSourceCI": "All exact-source fast checks passed, including core+4shards/Workbench3OS/Devpreview/HUD/receipts/art/feature; expected stance skip."
 }

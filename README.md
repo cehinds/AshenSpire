@@ -3,9 +3,9 @@
 <!-- feature-preview:start -->
 ## Feature preview — Combat HUD Layout Batch
 
-[Play verified dated 1a build](https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/) · [Capture details](docs/preview/features/combat-hud-layout-batch/README.md).
+[Play this verified feature build](https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/) · [Capture details](docs/preview/features/combat-hud-layout-batch/README.md).
 
-Fresh local captures document the Dev 1563 combined source; the first Play link identifies the separately verified dated 1a build. CURRENT combined-source artifact/publication is pending.
+Fresh local captures document the Dev 1563 combined source; the first Play link identifies the independently verified current c979 feature build. Local capture provenance is recorded separately.
 
 | Mobile | Desktop | Wide | Tablet |
 | --- | --- | --- | --- |
