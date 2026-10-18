@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { selectProposal, sequenceFor, sampleSequence, positionFrame } from './index.mjs';
+import { selectProposal, sequenceFor, sampleSequence, positionFrame, resolveFrameAsset } from './index.mjs';
 const json = async path => JSON.parse(await readFile(new URL(path, import.meta.url), 'utf8'));
 const catalog = await json('./catalog.json');
 const source = await json('../manifest.json');
@@ -54,4 +54,14 @@ test('positioning respects off-center feet, scale and mirrored anchors', () => {
   assert.equal(positionFrame(frame,[0,0],{anchor:'head'}).reason,'anchor-unavailable');
   assert.throws(()=>positionFrame(frame,[NaN,0]),RangeError);
   assert.throws(()=>positionFrame(frame,[0,0],{scale:0}),RangeError);
+});
+
+test('asset resolution is host-injected and stays outside core', async () => {
+  const frame=sequenceFor(selectProposal(catalog,'wyrmLord','v01'),'stances','neutral').frames[0];
+  assert.equal(resolveFrameAsset(frame,p=>'https://example.test/'+p).asset,'https://example.test/'+frame.asset);
+  assert.equal(resolveFrameAsset({asset:'assets/front.png'}).reason,'asset-unavailable');
+  assert.equal(resolveFrameAsset({asset:'art/enemy-back-motion/../evil.png'}).reason,'asset-unavailable');
+  const api=await readFile(new URL('./index.mjs',import.meta.url),'utf8');
+  assert.ok(!/\\bimport\\s|registerTool|document\\.|window\\./.test(api));
+  assert.equal(catalog.runtimeVerified,false);
 });

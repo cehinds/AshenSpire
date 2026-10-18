@@ -6,7 +6,8 @@
     "schemaVersion",
     "source",
     "publicationStatus",
-    "actors"
+    "actors",
+    "runtimeVerified"
   ],
   "properties": {
     "schemaVersion": {
@@ -189,6 +190,9 @@
           }
         }
       }
+    },
+    "runtimeVerified": {
+      "const": false
     }
   },
   "$defs": {

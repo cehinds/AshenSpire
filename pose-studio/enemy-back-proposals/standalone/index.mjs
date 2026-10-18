@@ -42,3 +42,9 @@ export function positionFrame(frame, target, { scale = 1, anchor = 'feet', flipX
   const width = frame.canvas[0] * scale, height = frame.canvas[1] * scale;
   return { available: true, x: target[0] - (flipX ? 1 - xy[0] : xy[0]) * width, y: target[1] - xy[1] * height, width, height, flipX };
 }
+
+export function resolveFrameAsset(frame, resolveAsset = path => path) {
+  if (typeof frame?.asset !== 'string' || !/^art\/enemy-back-(proposals|motion)\/[a-zA-Z0-9_./-]+\.png$/.test(frame.asset) || frame.asset.split('/').includes('..')) return unavailable('asset-unavailable');
+  if (typeof resolveAsset !== 'function') throw new TypeError('resolveAsset must be a function');
+  return { available: true, asset: resolveAsset(frame.asset) };
+}

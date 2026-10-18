@@ -36,3 +36,5 @@ This is coordinate math only; combat camera alignment and gameplay integration r
 
 Run `node --test pose-studio/enemy-back-proposals/standalone/index.test.mjs`.
 The dedicated CI also validates JSON Schema and rejects data drift or changed art hashes.
+
+`resolveFrameAsset(frame, path => hostAssetUrl(path))` provides optional injected path resolution without importing the game's asset map. `runtimeVerified: false` explicitly records that combat integration has not been validated.
