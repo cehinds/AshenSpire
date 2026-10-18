@@ -1,0 +1,131 @@
+{
+  "note": "Technical isolation rectangles remove neighboring atlas fragments. Coordinates are on normalized 400x400 cells; pixels outside each rectangle are omitted, with original placement preserved.",
+  "rectangles": {
+    "A1-glow.png": [
+      91,
+      19,
+      271,
+      381
+    ],
+    "A3-glow.png": [
+      75,
+      35,
+      325,
+      365
+    ],
+    "A4-glow.png": [
+      79,
+      21,
+      311,
+      379
+    ],
+    "A5-glow.png": [
+      53,
+      31,
+      347,
+      346
+    ],
+    "A6-glow.png": [
+      18,
+      35,
+      382,
+      340
+    ],
+    "A7-glow.png": [
+      31,
+      27,
+      369,
+      345
+    ],
+    "A7-object.png": [
+      39,
+      40,
+      329,
+      319
+    ],
+    "A8-glow.png": [
+      101,
+      6,
+      265,
+      390
+    ],
+    "A9-glow.png": [
+      11,
+      77,
+      367,
+      297
+    ],
+    "B1-glow.png": [
+      13,
+      55,
+      387,
+      345
+    ],
+    "B2-glow.png": [
+      42,
+      31,
+      332,
+      369
+    ],
+    "B5-glow.png": [
+      31,
+      16,
+      369,
+      362
+    ],
+    "B6-glow.png": [
+      0,
+      7,
+      400,
+      371
+    ],
+    "B7-glow.png": [
+      12,
+      53,
+      388,
+      321
+    ],
+    "B7-object.png": [
+      30,
+      77,
+      355,
+      263
+    ],
+    "B8-glow.png": [
+      0,
+      15,
+      400,
+      370
+    ],
+    "C1-glow.png": [
+      26,
+      51,
+      374,
+      336
+    ],
+    "C5-glow.png": [
+      22,
+      73,
+      378,
+      267
+    ],
+    "C6-glow.png": [
+      21,
+      26,
+      379,
+      348
+    ],
+    "D6-glow.png": [
+      32,
+      32,
+      357,
+      345
+    ],
+    "D6-object.png": [
+      62,
+      61,
+      292,
+      309
+    ]
+  }
+}
