@@ -157,9 +157,13 @@ function syncPage() {
     for (const child of app?.children ? Array.from(app.children) : []) {
       if (!holdsKept(child)) want.add(child);
     }
+    // Every registered surface beneath the lock goes inert, whether or not it
+    // asked for a lock of its own: `inert` says what an entry does when it is
+    // the lock, not whether a lock above may cover it (a legacy overlay whose
+    // veil is a body sibling is not reached through #app).
     for (let i = 0; i < lockAt; i++) {
       const lower = live[i];
-      if (lower.element && lower.inert === true && !holdsKept(lower.element)) want.add(lower.element);
+      if (lower.element && !holdsKept(lower.element)) want.add(lower.element);
     }
   }
   for (const el of [...inertByUs]) {

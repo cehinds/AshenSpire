@@ -142,6 +142,21 @@ test('a bespoke surface above a locking modal keeps the page locked and stays li
   });
 });
 
+test('a bespoke surface beneath a locking modal goes inert under it and wakes when it pops', () => {
+  withPage(({ document }) => {
+    const overlay = modalIn(document); // a veil that is a body sibling, not an #app child
+    const releaseOverlay = registerModal('overlay', overlay, { inert: false });
+    assert.equal(overlay.hasAttribute('inert'), false);
+    const shell = modalIn(document);
+    const releaseShell = registerModal('offline-play', shell, { dismiss() {} });
+    assert.equal(overlay.hasAttribute('inert'), true, 'the lock above covers the legacy surface');
+    assert.equal(shell.hasAttribute('inert'), false);
+    releaseShell();
+    assert.equal(overlay.hasAttribute('inert'), false);
+    releaseOverlay();
+  });
+});
+
 test('a pruned (disconnected) entry clears its inert and depth', () => {
   withPage(({ document, screen }) => {
     const panel = modalIn(document);
