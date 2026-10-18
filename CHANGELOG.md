@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **Design tokens publish their CSS; a style lint keeps raw sizes, layers and colours from growing** ([#2102](https://github.com/cehinds/AshenSpire/pull/2102), `0.7.1.1575`). Internal: content/config/ui/tokens.json now carries the type scale, stacking layers, motion and touch sizes and publishes them as styles/tokens.generated.css; tools/style-lint.mjs ratchets raw font sizes below 11 px, bare z-index of 100+ and bare hex colours. No player-facing change.
+- **Design tokens publish their CSS; a style lint keeps raw sizes, layers and colours from growing** ([#2102](https://github.com/cehinds/AshenSpire/pull/2102), `0.7.1.1583`). Internal: content/config/ui/tokens.json now carries the type scale, stacking layers, motion and touch sizes and publishes them as styles/tokens.generated.css; tools/style-lint.mjs ratchets raw font sizes below 11 px, bare z-index of 100+ and bare hex colours. No player-facing change.
 
 - **Windows test shard green again (serve --watch tests)** ([#2099](https://github.com/cehinds/AshenSpire/pull/2099), `0.7.1.1583`). Two dev-server watch tests that replace a watched directory now run only where that code path exists (POSIX); nothing player-facing.
 - **The death screen says what killed you, offers Run again, and fits a phone** ([#2098](https://github.com/cehinds/AshenSpire/pull/2098), `0.7.1.1581`). Defeat now names the blow that ended the climb (who, which move, how much). Run again starts a fresh climb with the same class and choices on a new seed, from defeat or victory. The end-of-run door no longer overflows a 390 px phone; the four stat chips sit two by two.
