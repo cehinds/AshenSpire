@@ -699,6 +699,7 @@ export function initAudio(settings = {}) {
     const src = ctx.createBufferSource();
     src.buffer = entry.buffer;
     src.connect(bus);
+    holdVoice(src); // a sample is a voice too, under the same cap as the synth
     src.start();
     return true;
   }
