@@ -11,10 +11,12 @@ if(!fs.existsSync(path.join(drafts,'catalog.json')))throw Error('Layered source 
 process.env.ASHENSPIRE_DIR=root;
 const {exportLocationScenes}=await import(pathToFileURL(path.join(base,'scenes.mjs')));
 const {loadStyleLibrary,checkStyleAsset}=await import(pathToFileURL(path.join(drafts,'style-system/art-style.mjs')));
-const require=createRequire(import.meta.url),sharp=require('sharp'),data=exportLocationScenes(),library=loadStyleLibrary();
+const catalogOnly=process.argv.includes('--catalog-only');
+const sharp=catalogOnly?null:createRequire(import.meta.url)('sharp');
+const data=exportLocationScenes(),library=loadStyleLibrary();
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const records={},sources={},translated=new Map();
-const catalogOnly=process.argv.includes('--catalog-only'),priorFile=path.join(root,'assets-display/layered/manifest.json');
+const priorFile=path.join(root,'assets-display/layered/manifest.json');
 const prior=fs.existsSync(priorFile)?JSON.parse(fs.readFileSync(priorFile)).assets:{};
 const original=new Map();
 for(const batch of JSON.parse(fs.readFileSync(path.join(drafts,'catalog.json'))).batches){

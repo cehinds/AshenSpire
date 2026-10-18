@@ -73,7 +73,7 @@ Checked items are implemented; build channels and older saves can differ.
 [Getting started and project links](docs/PROJECT-GUIDE.md) · [Contributing](CONTRIBUTING.md)
 · [Game rules](SPEC.md) · [Development](DEVELOPER.md) · [Credits](CREDITS.md).
 
-Draft environment art: [251 sources across eleven batches](https://github.com/cehinds/AshenSpire-art/tree/feature/ashenspire-2082-map-battlefield-sources/art/map-battlefield-drafts/README.md), including [28 close-location scenes](https://github.com/cehinds/AshenSpire-art/tree/feature/ashenspire-2082-map-battlefield-sources/art/map-battlefield-drafts/batch-10-location-streets/modules/index.json) and [12 Crownfall intro-map art candidates](https://github.com/cehinds/AshenSpire-art/tree/feature/ashenspire-2082-map-battlefield-sources/art/map-battlefield-drafts/batch-10-location-streets/modules/intro-map.json).
+Draft environment art: [251 sources across eleven batches](https://github.com/cehinds/AshenSpire-art/blob/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts/README.md), including [28 close-location scenes](https://github.com/cehinds/AshenSpire-art/blob/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts/batch-10-location-streets/modules/index.json) and [12 Crownfall intro-map art candidates](https://github.com/cehinds/AshenSpire-art/blob/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts/batch-10-location-streets/modules/intro-map.json).
 
 ## Legal and credits
 

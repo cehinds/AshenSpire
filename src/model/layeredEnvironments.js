@@ -1,5 +1,6 @@
 import { LAYERED_SCENES, INTRO_LAYERED_SCENES, LAYERED_TIME_FILTERS, LAYERED_WEATHER_FILTERS } from '../content/layeredEnvironments.js';
 import { locationPresentation } from '../content/generated/locationPresentation.js';
+import { combatEnvironment } from './environmentArt.js';
 
 const nodeProfiles = new Map(locationPresentation.nodeProfiles.map(row => [row.nodeId, row.profileId]));
 const REGION_SETTINGS = {
@@ -12,8 +13,14 @@ const REGION_SETTINGS = {
 // Art selection reads presentation inputs only. It neither consumes gameplay
 // randomness nor stores scene IDs in the run's existing atlas selection.
 export function layeredCombatScene(run = {}, environment) {
-  const nodeId = run.journey?.currentNodeId || run.mapNodeId;
-  const node = run.mapGraph?.nodes?.[nodeId];
+  const nodeId = run.journey?.currentNodeId || run.mapNodeId || run.cursorId;
+  const node = run.mapGraph?.nodes?.[nodeId]
+    || (Array.isArray(run.map?.nodes) ? run.map.nodes.find(candidate => candidate.id === nodeId) : undefined);
+  // Co-op projects its graph as an array and names the current point cursorId.
+  // Adapt that read-only view for the same seat/final-causeway rules as solo.
+  if (!run.journey && !run.mapNodeId && run.cursorId && node) {
+    environment = combatEnvironment({ ...run, mapNodeId: nodeId, mapGraph: { nodes: { [nodeId]: node } } });
+  }
   const binding = INTRO_LAYERED_SCENES[nodeId];
   let sceneId = typeof binding === 'string' ? binding : binding?.sceneId;
   if (!sceneId && node?.layeredSceneId) sceneId = node.layeredSceneId;
