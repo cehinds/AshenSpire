@@ -96,3 +96,25 @@ test('mounted cards switch style immediately and image failure advances to legac
     assert.equal(image().dataset.cardArt,'simple');
   });
 });
+
+test('an illustrated-card layer emits filter and transform only when hue or rotation is non-zero',()=>{
+  const model={id:'__layerFilterProbe',name:'Probe',costs:{},type:{},sigils:null,sideTags:[],range:null};
+  const layers=CARD_COMPONENTS.template.layers;
+  const saved=layers.map(l=>({hue:l.hue,rotation:l.rotation}));
+  const styleOf=component=>illustratedCardHtml(model,{rules:'Deal damage.',glyph:''})
+    .match(new RegExp(`data-component="${component}" style="([^"]*)"`))?.[1];
+  try{
+    const [plain,tilted]=layers;
+    plain.hue=0;plain.rotation=0;
+    assert.match(styleOf(plain.id),/filter:none;transform:none;/,'zero hue and rotation emit no filter or transform');
+    assert.doesNotMatch(styleOf(plain.id),/hue-rotate\(0deg\)|rotate\(0deg\)/);
+    delete plain.hue;delete plain.rotation;
+    assert.match(styleOf(plain.id),/filter:none;transform:none;/,'absent hue and rotation emit no filter or transform');
+    tilted.hue=30;tilted.rotation=5;
+    assert.match(styleOf(tilted.id),/filter:hue-rotate\(30deg\);transform:rotate\(5deg\);/);
+  }finally{
+    layers.forEach((l,i)=>{
+      for(const k of ['hue','rotation'])if(saved[i][k]===undefined)delete l[k];else l[k]=saved[i][k];
+    });
+  }
+});
