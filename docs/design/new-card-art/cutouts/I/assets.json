@@ -1,0 +1,1572 @@
+{
+  "I.object.0": {
+    "id": "I.object.0",
+    "kind": "object",
+    "category": "I",
+    "digit": 0,
+    "name": "Spellbook variant 0",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/objects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      34,
+      32,
+      477,
+      480
+    ],
+    "sha256": "9f2f5770c2de5d8a6f48089fc423790a49ae8cf059a44deeff3b018075e24fef",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-objects",
+      "sourceFile": "exec-e09c44e5-f022-4661-b8ba-c453a7a2cb5e.png",
+      "sourceSha256": "a899180f509be03b3f38d617e79339799e21dfb67162bb57a406493a27e31699",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 51,
+        "y": 43,
+        "width": 333,
+        "height": 337
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Closed charcoal leather grimoire, simple bronze corner caps, diagonal right",
+    "displayCode": "I00",
+    "displayLabel": "I00 \u00b7 Spellbook variant 0 \u00b7 object"
+  },
+  "I.object.1": {
+    "id": "I.object.1",
+    "kind": "object",
+    "category": "I",
+    "digit": 1,
+    "name": "Spellbook variant 1",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/objects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      118,
+      480,
+      394
+    ],
+    "sha256": "3dffea62c7babafb6d42b07d06244bbbb7da588bc33ff05e1c1b10a7ac319971",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-objects",
+      "sourceFile": "exec-e09c44e5-f022-4661-b8ba-c453a7a2cb5e.png",
+      "sourceSha256": "a899180f509be03b3f38d617e79339799e21dfb67162bb57a406493a27e31699",
+      "sourceCell": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 434,
+        "y": 87,
+        "width": 422,
+        "height": 260
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Open thick tome, blank warm ivory pages, three-quarter tilt left",
+    "displayCode": "I10",
+    "displayLabel": "I10 \u00b7 Spellbook variant 1 \u00b7 object"
+  },
+  "I.object.2": {
+    "id": "I.object.2",
+    "kind": "object",
+    "category": "I",
+    "digit": 2,
+    "name": "Spellbook variant 2",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/objects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      108,
+      32,
+      403,
+      480
+    ],
+    "sha256": "51174fb593b5cae636bff4e949d0b9a278268589f700c86039bee1f0e2e0850e",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-objects",
+      "sourceFile": "exec-e09c44e5-f022-4661-b8ba-c453a7a2cb5e.png",
+      "sourceSha256": "a899180f509be03b3f38d617e79339799e21dfb67162bb57a406493a27e31699",
+      "sourceCell": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 898,
+        "y": 47,
+        "width": 220,
+        "height": 334
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Closed narrow iron-bound book with plain clasp, upright tilted",
+    "displayCode": "I20",
+    "displayLabel": "I20 \u00b7 Spellbook variant 2 \u00b7 object"
+  },
+  "I.object.3": {
+    "id": "I.object.3",
+    "kind": "object",
+    "category": "I",
+    "digit": 3,
+    "name": "Spellbook variant 3",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/objects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      141,
+      480,
+      370
+    ],
+    "sha256": "2177cdd3f6a2b71f1b737a1b0a94870a56f3fbecef65de4d61b5c686c3865751",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-objects",
+      "sourceFile": "exec-e09c44e5-f022-4661-b8ba-c453a7a2cb5e.png",
+      "sourceSha256": "a899180f509be03b3f38d617e79339799e21dfb67162bb57a406493a27e31699",
+      "sourceCell": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1152,
+        "y": 134,
+        "width": 465,
+        "height": 238
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Open low spread spellbook with dark brown cover, shallow diagonal",
+    "displayCode": "I30",
+    "displayLabel": "I30 \u00b7 Spellbook variant 3 \u00b7 object"
+  },
+  "I.object.4": {
+    "id": "I.object.4",
+    "kind": "object",
+    "category": "I",
+    "digit": 4,
+    "name": "Spellbook variant 4",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/objects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      35,
+      32,
+      476,
+      480
+    ],
+    "sha256": "74a442ddd63123f2ad7754f09d873ce5c6f667e8bbbabe757e89467fafe89e51",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-objects",
+      "sourceFile": "exec-e09c44e5-f022-4661-b8ba-c453a7a2cb5e.png",
+      "sourceSha256": "a899180f509be03b3f38d617e79339799e21dfb67162bb57a406493a27e31699",
+      "sourceCell": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1650,
+        "y": 66,
+        "width": 304,
+        "height": 309
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Closed square dark green leather book, worn bronze spine, tilted left",
+    "displayCode": "I40",
+    "displayLabel": "I40 \u00b7 Spellbook variant 4 \u00b7 object"
+  },
+  "I.object.5": {
+    "id": "I.object.5",
+    "kind": "object",
+    "category": "I",
+    "digit": 5,
+    "name": "Spellbook variant 5",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/objects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      34,
+      32,
+      477,
+      480
+    ],
+    "sha256": "d9f4e6c2307f659a03776314e9b59d71f17cbc1c918940f27e8b7bf71a85dd5c",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-objects",
+      "sourceFile": "exec-e09c44e5-f022-4661-b8ba-c453a7a2cb5e.png",
+      "sourceSha256": "a899180f509be03b3f38d617e79339799e21dfb67162bb57a406493a27e31699",
+      "sourceCell": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 36,
+        "y": 386,
+        "width": 360,
+        "height": 364
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Half-open heavy black grimoire, thick parchment page block, diagonal right",
+    "displayCode": "I50",
+    "displayLabel": "I50 \u00b7 Spellbook variant 5 \u00b7 object"
+  },
+  "I.object.6": {
+    "id": "I.object.6",
+    "kind": "object",
+    "category": "I",
+    "digit": 6,
+    "name": "Spellbook variant 6",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/objects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      73,
+      32,
+      439,
+      480
+    ],
+    "sha256": "87954d8bfb0550163cc540ecb339968750a52406647732bc9ab8a14ef67cbea8",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-objects",
+      "sourceFile": "exec-e09c44e5-f022-4661-b8ba-c453a7a2cb5e.png",
+      "sourceSha256": "a899180f509be03b3f38d617e79339799e21dfb67162bb57a406493a27e31699",
+      "sourceCell": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 474,
+        "y": 392,
+        "width": 292,
+        "height": 357
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Closed tall black book with one simple circular bronze medallion, diagonal",
+    "displayCode": "I60",
+    "displayLabel": "I60 \u00b7 Spellbook variant 6 \u00b7 object"
+  },
+  "I.object.7": {
+    "id": "I.object.7",
+    "kind": "object",
+    "category": "I",
+    "digit": 7,
+    "name": "Spellbook variant 7",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/objects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      89,
+      480,
+      422
+    ],
+    "sha256": "196c04d0b8032110a51f51b7692ee1f5216e67838f03cff2f88ce1162f43f125",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-objects",
+      "sourceFile": "exec-e09c44e5-f022-4661-b8ba-c453a7a2cb5e.png",
+      "sourceSha256": "a899180f509be03b3f38d617e79339799e21dfb67162bb57a406493a27e31699",
+      "sourceCell": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 791,
+        "y": 427,
+        "width": 425,
+        "height": 316
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Open battered gray leather tome, blank slightly curled pages, tilted right",
+    "displayCode": "I70",
+    "displayLabel": "I70 \u00b7 Spellbook variant 7 \u00b7 object"
+  },
+  "I.object.8": {
+    "id": "I.object.8",
+    "kind": "object",
+    "category": "I",
+    "digit": 8,
+    "name": "Spellbook variant 8",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/objects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      36,
+      32,
+      475,
+      480
+    ],
+    "sha256": "7d8432d16d8434604073a18370cd0230e643c6a4a7274fcea047721d88bee0b6",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-objects",
+      "sourceFile": "exec-e09c44e5-f022-4661-b8ba-c453a7a2cb5e.png",
+      "sourceSha256": "a899180f509be03b3f38d617e79339799e21dfb67162bb57a406493a27e31699",
+      "sourceCell": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1274,
+        "y": 436,
+        "width": 307,
+        "height": 313
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Closed compact black pocket spellbook with plain leather strap, opposite diagonal",
+    "displayCode": "I80",
+    "displayLabel": "I80 \u00b7 Spellbook variant 8 \u00b7 object"
+  },
+  "I.object.9": {
+    "id": "I.object.9",
+    "kind": "object",
+    "category": "I",
+    "digit": 9,
+    "name": "Spellbook variant 9",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/objects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      66,
+      32,
+      446,
+      480
+    ],
+    "sha256": "8304a7725298bda52b7f67bfd9e4c4490f69ce623c38950fe5ac0c8253059cfd",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-objects",
+      "sourceFile": "exec-e09c44e5-f022-4661-b8ba-c453a7a2cb5e.png",
+      "sourceSha256": "a899180f509be03b3f38d617e79339799e21dfb67162bb57a406493a27e31699",
+      "sourceCell": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1646,
+        "y": 396,
+        "width": 301,
+        "height": 355
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "proposalDescription": "Heavy half-open dark blue tome with brass hinge, strong three-quarter angle",
+    "displayCode": "I90",
+    "displayLabel": "I90 \u00b7 Spellbook variant 9 \u00b7 object"
+  },
+  "I.effect.0": {
+    "id": "I.effect.0",
+    "kind": "effect",
+    "category": "I",
+    "digit": 0,
+    "name": "Violet orbital haze",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/effects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      480,
+      479
+    ],
+    "sha256": "128a0decd4c1c09d84f4782895d73fb6a5e41aa1db3a114d25b8ec9f4ea77395",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-effects",
+      "sourceFile": "exec-8ca31c55-fb8a-4e57-acf3-bda5a81f928c.png",
+      "sourceSha256": "4f8b2193ff5e7430852899a6fd940959e8267fd03d544e2767361cd158e62362",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "displayCode": "I00",
+    "displayLabel": "I00 \u00b7 Violet orbital haze \u00b7 effect"
+  },
+  "I.effect.1": {
+    "id": "I.effect.1",
+    "kind": "effect",
+    "category": "I",
+    "digit": 1,
+    "name": "Teal rising wisps",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/effects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      480,
+      480
+    ],
+    "sha256": "af4f906c51c211c65c32742c04e8a1818ba699f488e75470352fb4d9f3cd671a",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-effects",
+      "sourceFile": "exec-8ca31c55-fb8a-4e57-acf3-bda5a81f928c.png",
+      "sourceSha256": "4f8b2193ff5e7430852899a6fd940959e8267fd03d544e2767361cd158e62362",
+      "sourceCell": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 397,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "displayCode": "I01",
+    "displayLabel": "I01 \u00b7 Teal rising wisps \u00b7 effect"
+  },
+  "I.effect.2": {
+    "id": "I.effect.2",
+    "kind": "effect",
+    "category": "I",
+    "digit": 2,
+    "name": "Blue protective ring",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/effects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      480,
+      479
+    ],
+    "sha256": "d9ddcb2f082ee41e938fe92f6533c38d5d5ece92ffd75cdf7933fcbabe18c66f",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-effects",
+      "sourceFile": "exec-8ca31c55-fb8a-4e57-acf3-bda5a81f928c.png",
+      "sourceSha256": "4f8b2193ff5e7430852899a6fd940959e8267fd03d544e2767361cd158e62362",
+      "sourceCell": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 793,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "displayCode": "I02",
+    "displayLabel": "I02 \u00b7 Blue protective ring \u00b7 effect"
+  },
+  "I.effect.3": {
+    "id": "I.effect.3",
+    "kind": "effect",
+    "category": "I",
+    "digit": 3,
+    "name": "Purple crescent haze",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/effects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      480,
+      480
+    ],
+    "sha256": "f44ebb9a0192b8b61bad69d727c2b57bfc38a16f3a14a54590105001eb901d30",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-effects",
+      "sourceFile": "exec-8ca31c55-fb8a-4e57-acf3-bda5a81f928c.png",
+      "sourceSha256": "4f8b2193ff5e7430852899a6fd940959e8267fd03d544e2767361cd158e62362",
+      "sourceCell": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1190,
+        "y": 0,
+        "width": 396,
+        "height": 396
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "displayCode": "I03",
+    "displayLabel": "I03 \u00b7 Purple crescent haze \u00b7 effect"
+  },
+  "I.effect.4": {
+    "id": "I.effect.4",
+    "kind": "effect",
+    "category": "I",
+    "digit": 4,
+    "name": "Violet ascending curl",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/effects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      33,
+      32,
+      479,
+      480
+    ],
+    "sha256": "3defa05de813be001eb124c55caab7353e67a1d1afe1f916b9b87ebb9f6e6dc0",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-effects",
+      "sourceFile": "exec-8ca31c55-fb8a-4e57-acf3-bda5a81f928c.png",
+      "sourceSha256": "4f8b2193ff5e7430852899a6fd940959e8267fd03d544e2767361cd158e62362",
+      "sourceCell": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "extractionCrop": {
+        "x": 1586,
+        "y": 0,
+        "width": 397,
+        "height": 396
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "displayCode": "I04",
+    "displayLabel": "I04 \u00b7 Violet ascending curl \u00b7 effect"
+  },
+  "I.effect.5": {
+    "id": "I.effect.5",
+    "kind": "effect",
+    "category": "I",
+    "digit": 5,
+    "name": "Gold rising rays",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/effects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      480,
+      480
+    ],
+    "sha256": "2ce5330ac01e4d528ade3f083101099369b2f173de398f24c1d5c4dfd33231db",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-effects",
+      "sourceFile": "exec-8ca31c55-fb8a-4e57-acf3-bda5a81f928c.png",
+      "sourceSha256": "4f8b2193ff5e7430852899a6fd940959e8267fd03d544e2767361cd158e62362",
+      "sourceCell": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 0,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "displayCode": "I05",
+    "displayLabel": "I05 \u00b7 Gold rising rays \u00b7 effect"
+  },
+  "I.effect.6": {
+    "id": "I.effect.6",
+    "kind": "effect",
+    "category": "I",
+    "digit": 6,
+    "name": "Pale violet spiral",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/effects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      479,
+      480
+    ],
+    "sha256": "55c9c06179ed6135f44d0247442c3a23a8f09f6f9a6d40b81dce224bd313a94b",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-effects",
+      "sourceFile": "exec-8ca31c55-fb8a-4e57-acf3-bda5a81f928c.png",
+      "sourceSha256": "4f8b2193ff5e7430852899a6fd940959e8267fd03d544e2767361cd158e62362",
+      "sourceCell": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 397,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "displayCode": "I06",
+    "displayLabel": "I06 \u00b7 Pale violet spiral \u00b7 effect"
+  },
+  "I.effect.7": {
+    "id": "I.effect.7",
+    "kind": "effect",
+    "category": "I",
+    "digit": 7,
+    "name": "Blue radial sparks",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/effects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      480,
+      480
+    ],
+    "sha256": "baeb8227aa0f725f8c343e1fa3cac5c0cfac6d2468ceb2f6e7a78d6cb81cf473",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-effects",
+      "sourceFile": "exec-8ca31c55-fb8a-4e57-acf3-bda5a81f928c.png",
+      "sourceSha256": "4f8b2193ff5e7430852899a6fd940959e8267fd03d544e2767361cd158e62362",
+      "sourceCell": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 793,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "displayCode": "I07",
+    "displayLabel": "I07 \u00b7 Blue radial sparks \u00b7 effect"
+  },
+  "I.effect.8": {
+    "id": "I.effect.8",
+    "kind": "effect",
+    "category": "I",
+    "digit": 8,
+    "name": "Violet fragmented ring",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/effects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      479,
+      480
+    ],
+    "sha256": "24aa757542e6af80c3e2d873bcab0d7e7404604bfc05255d14ad4cb744cc34ca",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-effects",
+      "sourceFile": "exec-8ca31c55-fb8a-4e57-acf3-bda5a81f928c.png",
+      "sourceSha256": "4f8b2193ff5e7430852899a6fd940959e8267fd03d544e2767361cd158e62362",
+      "sourceCell": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1190,
+        "y": 396,
+        "width": 396,
+        "height": 397
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "displayCode": "I08",
+    "displayLabel": "I08 \u00b7 Violet fragmented ring \u00b7 effect"
+  },
+  "I.effect.9": {
+    "id": "I.effect.9",
+    "kind": "effect",
+    "category": "I",
+    "digit": 9,
+    "name": "Blue violet motes",
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "spell"
+    ],
+    "src": "cutouts/I/effects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      32,
+      480,
+      480
+    ],
+    "sha256": "c1e449948702c0dffc7b715433621757e507733c9c615c21bc631510aa455190",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 1,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "1",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "references": {
+      "generationKey": "I-effects",
+      "sourceFile": "exec-8ca31c55-fb8a-4e57-acf3-bda5a81f928c.png",
+      "sourceSha256": "4f8b2193ff5e7430852899a6fd940959e8267fd03d544e2767361cd158e62362",
+      "sourceCell": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "extractionCrop": {
+        "x": 1586,
+        "y": 396,
+        "width": 397,
+        "height": 397
+      },
+      "visualReference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target."
+    },
+    "displayCode": "I09",
+    "displayLabel": "I09 \u00b7 Blue violet motes \u00b7 effect"
+  }
+}
