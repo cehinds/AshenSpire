@@ -1,3 +1,4 @@
+import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { chooseAutoCombatAction, resolveCombatAutomation, AUTOMATION_DEFAULTS } from '../../model/autoCombatPolicy.js';
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
@@ -168,6 +169,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // One preview per (card, target, ranks) until the fight next changes: see
   // PreviewMemoModel. The fight changes only through dispatch and the Classic
   // cell normalisation below.
+  registries = combatStatusPresentationRegistries(registries, combat);
   const configuredArt = run.gameProfile?.foundation?.mode === 'configured';
   const profileArt = (render, options) => {
     if (configuredArt && !gameModule(run, 'art')) return foundationStandin(options);
@@ -1644,7 +1646,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (kind === 'player') {
         return esc(helpText('playerPoise'));
       }
-      const staggered = registries.frameworkTerms.statusDisplay('staggered');
+      const staggered = registries.frameworkTerms.withStatusWords(registries.statuses.get('staggered'));
       const stagDesc = (staggered && staggered.tooltip) || '';
       return esc(helpText('enemyPoise', { effect: stagDesc }));
     };
