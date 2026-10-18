@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // tools/statusreach.mjs — CAN A PLAYER EVER MEET THIS STATUS?
 //
-// Every row in content/statuses.js is applied by something a player can
+// Every row in content/source/statuses.json (plus the derived expansion rows in
+// src/content/combatStatusRules.js) is applied by something a player can
 // actually encounter, or this goes red and names the row.
 //
 // Rune, 2026-08-08. Law 1 clause 1 says adding content never touches code —
@@ -149,8 +150,10 @@
 //      Six, not two: the two proc rows took their resist rows and their
 //      exposure rows down with them, which is R2/R3 being transitive and is
 //      the honest size of the hole.
-//   2. A new row `plantedRimeAsh` appended to src/content/statuses.js — the
-//      population's own door:
+//   2. A new row `plantedRimeAsh` appended to content/source/statuses.json and
+//      recompiled with `node tools/content-build.mjs` (it was appended to
+//      src/content/statuses.js when this was observed; that file is a shim now)
+//      — the population's own door:
 //        FAIL — 7 of 44 … plantedRimeAsh, exit 1.
 //   3. `strike.burn=+2` deleted from `torch` (and `gorefireBrand`) in
 //      content/source/weapons.csv, recompiled — R4's door:
@@ -466,7 +469,7 @@ on the real tree at dev = cd3da94, four times, each plant entering by the door
 the real input enters and travelling every stage the real run travels
 (content-build recompile -> src/content/index.js -> the same statusReach()):
   · no plant at all, the shipped content:  FAIL 6/43, exit 1
-  · a row appended to src/content/statuses.js:  FAIL 7/44, names it, exit 1
+  · a row appended to content/source/statuses.json, recompiled:  FAIL 7/44, names it, exit 1
   · strike.burn=+2 deleted from content/source/weapons.csv, recompiled:  FAIL 7/43, exit 1
   · all 25 bleed appliers deleted from the nine content files:  FAIL 8/43
     (bleed AND bleedResist), exit 1
