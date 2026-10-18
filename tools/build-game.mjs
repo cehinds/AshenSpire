@@ -15,7 +15,7 @@ import path from 'node:path';
 import { canonicalGameJSON, resolveGameAuthor, validateGameSchema } from '../engine/kernel/gameConfig.js';
 import { loadGameProfileCatalog } from './game-config.mjs';
 import { loadMechanics, loadOps } from '../engine/runtime/interpreter.mjs';
-import { buildAssetCatalog } from './asset-catalog.mjs';
+import { buildAssetCatalog, readAliases } from './asset-catalog.mjs';
 import { contentBundle } from '../src/content/index.js';
 const engineCards = Array.isArray(contentBundle.cards) ? contentBundle.cards : Object.values(contentBundle.cards || {});
 import { resolveAtlasPath, validateMaps } from './maps-validate.mjs';
@@ -329,13 +329,16 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const maps = { components: mapComponents, maps: mapDocs, atlas: sortKeys(atlas) };
 
   // ----- assets -----
-  const assets = { catalog: buildAssetCatalog({ game }) };
+  const aliases = readAliases(ROOT, game);
+  // aliases ship beside the catalog so an engine that reads only this artifact can resolve a UI slot (slot -> catalog id, or null for a placeholder).
+  const assets = { catalog: buildAssetCatalog({ game }), aliases };
   const known = new Set(Object.keys(assets.catalog.assets));
   const referenced = (where, ids) => { for (const id of ids) if (id && !known.has(id)) fail(`${where}: asset '${id}' is not in the asset catalog or missing.json`); };
-  // UI components and screens name logical asset slots (card.frame, scene.rest, icon.gold) that no catalog id
-  // or missing.json entry backs yet. They are reported, not failed, until the art is mapped (see report.unresolvedAssets).
+  // UI components and screens name logical asset slots (card.frame, scene.rest, icon.gold). A slot resolves through
+  // the catalog or games/<game>/assets/aliases.json (a null alias is a placeholder on purpose); any other slot is
+  // reported, not failed, until the art is mapped (see report.unresolvedAssets).
   const unresolvedAssets = [];
-  const slot = (from, ids) => { for (const id of ids) if (id && !known.has(id)) unresolvedAssets.push({ from, id }); };
+  const slot = (from, ids) => { for (const id of ids) if (id && !known.has(id) && !Object.hasOwn(aliases, id)) unresolvedAssets.push({ from, id }); };
   for (const [id, c] of Object.entries(uiComponents)) slot(`ui.components.${id}`, c.assets || []);
   for (const [id, s] of Object.entries(uiScreens)) slot(`ui.screens.${id}`, s.assets || []);
   for (const [id, c] of Object.entries(mapComponents)) referenced(`map component ${id}`, [c.icon, ...(c.assets || [])]);
