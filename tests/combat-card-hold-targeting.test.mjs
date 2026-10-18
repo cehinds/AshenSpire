@@ -33,8 +33,12 @@ ok(/playCard\(inst\.instanceId, null\);/.test(completion),
 ok(!/confirm\(\)/.test(completion),
   'the completed hold does not reuse the old same-press confirm path');
 
-ok(/const tap = \(\) => \{[\s\S]*?if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}/.test(wire?.[1] || ''),
-  'the existing tap-to-select route remains present');
+ok(/const tap = \(\) => \{[\s\S]*?if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{[\s\S]*?if \(oneTapPlays\(\)\) play\(\);\s*else select\(\);\s*return;\s*\}/.test(wire?.[1] || ''),
+  'the tap-to-select route remains for an ambiguous target; an unambiguous play goes through oneTapPlays (owner, 2026-10-18)');
+ok(/const playIsUnambiguous = \(\) => !pv\.needsTarget\s*\|\|\s*\(dragTargetMode !== 'all' && combat\.enemies\.filter\(enemy => enemy\.alive\)\.length === 1\);/.test(wire?.[1] || ''),
+  'a play is unambiguous for a no-target card or exactly one living enemy');
+ok(/const confirm = \(\) => \{[\s\S]*?\{ select\(\); return; \}\s*play\(\);/.test(wire?.[1] || ''),
+  'the second tap of the select-then-confirm flow still plays through the same play()');
 // The drop decision lives in finishCardDrag (src/ui/cardDragEnd.js, #1298);
 // combat.js hands it the drop plan and the play of THIS card.
 const dragEnd = strip(readFileSync(new URL('../src/ui/cardDragEnd.js', import.meta.url), 'utf8'));

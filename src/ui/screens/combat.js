@@ -2449,10 +2449,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (pv.needsTarget || dragTargetMode === 'all') { selected = inst.instanceId; selfArm = null; syncCardSelection(); }
       else armSelf(inst.instanceId);
     };
-    const confirm = () => {
-      if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-      if (busy || !affordable || dragging) return;
-      if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
+    // THE PLAY IS UNAMBIGUOUS when there is nothing for the player to choose: a
+    // card that needs no target (self cards, and a sweep of every enemy), or a
+    // card that asks for ONE enemy while exactly one is alive. Owner, 2026-10-18:
+    // a tap on such a card plays it; the 2026-08-17 "same in all instances" hold
+    // ruling and SPEC §7.3's "selection stays separate from play" stand for
+    // every other case, where the tap still selects and the player picks.
+    const playIsUnambiguous = () => !pv.needsTarget
+      || (dragTargetMode !== 'all' && combat.enemies.filter(enemy => enemy.alive).length === 1);
+    const oneTapPlays = () => (meta.settings || {}).oneTapPlay !== false && playIsUnambiguous();
+    const play = () => {
       if (!pv.needsTarget) playCard(inst.instanceId, null);
       else {
         const enemies = combat.enemies.filter(enemy => enemy.alive);
@@ -2461,6 +2467,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         else if (enemies.length === 1) playCard(inst.instanceId, enemies[0].id);
         else { focusTargeting(); showTooltipFor(el, '<p>Choose a highlighted enemy to play this card.</p>'); }
       }
+    };
+    const confirm = () => {
+      if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
+      if (busy || !affordable || dragging) return;
+      if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
+      play();
     };
     const tap = () => {
       // A queued card is taken back before the affordable check: `affordable` reads the energy left after queueing.
@@ -2476,7 +2488,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         showTooltipFor(el, '<p>' + esc(reasons.join(' ')) + '</p>');
         return;
       }
-      if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
+      if (selected !== inst.instanceId && selfArm !== inst.instanceId) {
+        // One tap plays when there is nothing to choose; otherwise it selects
+        // and the second tap (or a target pick) plays, as before.
+        if (oneTapPlays()) play();
+        else select();
+        return;
+      }
       const now = performance.now();
       if (lastConfirmTap && now - lastConfirmTap <= 350) { lastConfirmTap = 0; confirm(); }
       else lastConfirmTap = now;
