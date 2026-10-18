@@ -275,7 +275,7 @@ const isNameKey = (k) => /^[a-z][A-Za-z0-9]*$/.test(k);
  *   type.minimum        { bodyPx, captionPx, textPx }
  *   layer.<name>        integer z-index, strictly increasing in the order written
  *   motion.<name>       non-negative integer milliseconds
- *   touch.<name>        { px, css?, home? }
+ *   touch.<name>        { px?, css?, home? }   (px may be left out only when homed)
  *
  * `css` names the custom property the entry publishes; `home` says that property
  * is already declared in that stylesheet (one home per fact), so the generated
@@ -287,12 +287,13 @@ export function tokenGroupProblems(rel, data) {
   const only = (obj, allowed, path) => {
     for (const k of Object.keys(obj)) if (!allowed.includes(k)) out.push(at(`${path}: unknown key "${k}" — allowed keys are ${allowed.join(', ')}`));
   };
-  const entry = (value, path, extra) => {
+  const entry = (value, path, extra, { pxOptionalWhenHomed = false } = {}) => {
     if (!isObject(value)) { out.push(at(`${path} must be an object`)); return false; }
     only(value, ['px', 'css', 'home', ...extra], path);
-    // A homed entry may leave px out: the home stylesheet owns the value
+    // Only a homed touch entry may leave px out: its home owns a dynamic value
     // (the tap floor is player-tunable, so a literal here would be a second copy).
-    if ('px' in value || !('home' in value)) {
+    // A typography entry always carries px — the minimum-size checks read it.
+    if ('px' in value || !('home' in value) || !pxOptionalWhenHomed) {
       if (!isNum(value.px) || !(value.px > 0)) out.push(at(`${path}.px must be a positive number`));
     }
     if ('css' in value && (typeof value.css !== 'string' || !CSS_NAME.test(value.css))) out.push(at(`${path}.css must be a custom property name like --t-lead`));
@@ -353,7 +354,7 @@ export function tokenGroupProblems(rel, data) {
     });
   }
   if ('touch' in data) {
-    named(data.touch, 'touch', (k, v, path) => { entry(v, path, []); });
+    named(data.touch, 'touch', (k, v, path) => { entry(v, path, [], { pxOptionalWhenHomed: true }); });
   }
   return out;
 }

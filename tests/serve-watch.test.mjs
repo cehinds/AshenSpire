@@ -54,6 +54,7 @@ test('authored directory replacement selects its builder without matching siblin
 test('a change to ui/tokens.json (or a replaced content/config) owes config-build and then tokens-css', () => {
   assert.deepEqual(buildToolsFor('content/config/ui/tokens.json'), ['config-build.mjs', 'tokens-css.mjs']);
   assert.deepEqual(buildToolsFor('content/config'), ['config-build.mjs', 'tokens-css.mjs']);
+  assert.deepEqual(buildToolsFor('content/config/ui'), ['config-build.mjs', 'tokens-css.mjs']); // replaced ui/ dir (atomic save, sync)
   assert.deepEqual(buildToolsFor('content/config/ui/scenes/w4.json'), ['config-build.mjs']);
   assert.deepEqual(buildToolsFor('content/hud-layout/tablet.json'), ['hud-layout-css.mjs']);
   assert.deepEqual(buildToolsFor('src/main.js'), []);

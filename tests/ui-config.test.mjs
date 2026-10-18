@@ -186,6 +186,8 @@ test('token groups refuse unknown keys, bad values and unordered layers by name'
     tk + 'type: unknown key "extra" — allowed keys are scale, minimum');
   refusedWith(planted('ui/tokens.json', (d) => { d.type.scale.body.px = 13; }),
     tk + 'type.scale.body.px 13 is below type.minimum.bodyPx 14');
+  refusedWith(planted('ui/tokens.json', (d) => { delete d.type.scale.micro.px; }), // homed, but typography always carries px
+    tk + 'type.scale.micro.px must be a positive number');
   refusedWith(planted('ui/tokens.json', (d) => { d.touch.minGapPx.home = 'styles/base.css'; }),
     tk + 'touch.minGapPx.home needs a css name');
   refusedWith(planted('ui/tokens.json', (d) => { d.sizing = {}; }),

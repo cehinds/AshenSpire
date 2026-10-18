@@ -108,7 +108,7 @@ export function buildToolFor(rel) {
   // A per-directory watcher reports a replaced authored tree by its own name,
   // not a descendant filename. That event still owes the tree's builder.
   const jsonTree = tree => rel === tree || (rel.startsWith(tree + '/') && rel.endsWith('.json'));
-  if (jsonTree('content/config')) return 'config-build.mjs';
+  if (jsonTree('content/config') || rel === 'content/config/ui') return 'config-build.mjs';
   if (rel === 'content/source' || rel.startsWith('content/source/')) return 'content-build.mjs';
   // content/hud-layout/*.json → styles/hud-layout.generated.css (no flag = --write).
   if (jsonTree('content/hud-layout')) return 'hud-layout-css.mjs';
@@ -129,11 +129,14 @@ export function buildToolFor(rel) {
  */
 export function buildToolsFor(rel) {
   const tool = buildToolFor(rel);
-  if (tool === 'config-build.mjs' && (rel === 'content/config' || rel ==='content/config/ui/tokens.json')) {
+  // ui/tokens.json itself, or any directory above it that a watcher may report
+  // as replaced (content/config, content/config/ui): both could hold new tokens.
+  if (tool === 'config-build.mjs' && TOKENS_JSON_AND_ANCESTORS.includes(rel)) {
     return [tool, 'tokens-css.mjs'];
   }
   return tool ? [tool] : [];
 }
+const TOKENS_JSON_AND_ANCESTORS = ['content/config', 'content/config/ui', 'content/config/ui/tokens.json'];
 
 /** Last 20 lines of a tool's output, for the error banner. */
 function tailLines(text, n = 20) {
