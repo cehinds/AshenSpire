@@ -83,7 +83,13 @@ test('a friendly-target card is not held back (its click is the arming step)', (
 
 test('the 1-9 key goes through the same click door and the setting is read live', () => {
   assert.match(coop, /const oneTapPlayOn = \(\) => \(readSettings \? readSettings\(\) : meta\.settings \|\| \{\}\)\.oneTapPlay === true;/);
-  assert.match(coop, /wireCoopTapPlay\(el, \{[\s\S]*?oneTap: oneTapPlayOn, onPlay: play,/, 'plain card clicks use the select-then-play wrapper');
+  assert.match(coop, /wireCoopTapPlay\(el, \{[\s\S]*?oneTap: \(\) => oneTapPlays\(entry\.def\), onPlay: play,/, 'plain card clicks use the select-then-play wrapper');
   assert.doesNotMatch(coop, /el\.addEventListener\('click', play\)/, 'no click plays on the first click');
   assert.match(coop, /if \(cardEl\) \{ cardEl\.click\(\); return; \}/, 'the number key is the click on that card');
+});
+
+test('one-tap in co-op needs an unambiguous play, upcast wrapper included', () => {
+  assert.match(coop, /const oneTapPlays = \(def\) => oneTapPlayOn\(\)\s*&& \(!cardNeedsEnemyTarget\(def\) \|\| \(snap\?\.scene\?\.enemies \|\| \[\]\)\.filter\(\(e\) => e\.hp > 0\)\.length === 1\);/);
+  assert.equal((coop.match(/oneTap: \(\) => oneTapPlays\(entry\.def\)/g) || []).length, 2, 'plain and Upcast wiring both use the predicate');
+  assert.doesNotMatch(coop, /oneTap: oneTapPlayOn/);
 });

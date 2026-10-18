@@ -348,6 +348,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
   }
   let selectedEnemy = null;
   // Read live, so a Settings toggle mid-fight changes the next click or key.
+  // One click plays only when nothing is left to choose: a card that needs no
+  // enemy (self or all-enemy) or exactly one living enemy. Several living
+  // enemies means the click selects, whatever the setting says.
+  const oneTapPlays = (def) => oneTapPlayOn()
+    && (!cardNeedsEnemyTarget(def) || (snap?.scene?.enemies || []).filter((e) => e.hp > 0).length === 1);
   const oneTapPlayOn = () => (readSettings ? readSettings() : meta.settings || {}).oneTapPlay === true;
   let selectedCombatantId = null;
   function selectCombatant(id) {
@@ -1496,7 +1501,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
             label: surcharge ? `Upcast +${surcharge}` : 'Upcast',
             disabled: busy() || meP.ended || !meP.alive,
             selectBeforePlay: !friendlyTargetPlan(entry.def, me, sc.players).active,
-            oneTap: oneTapPlayOn,
+            oneTap: () => oneTapPlays(entry.def),
             onPlay: play,
             onOpen: upcast => {
               closeCardChoice(); const seatAtOpen = me;
@@ -1516,7 +1521,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
           });
         } else wireCoopTapPlay(el, {
           selectBeforePlay: !friendlyTargetPlan(entry.def, me, sc.players).active,
-          oneTap: oneTapPlayOn, onPlay: play,
+          oneTap: () => oneTapPlays(entry.def), onPlay: play,
         });
       },
     });
