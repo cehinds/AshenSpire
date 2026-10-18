@@ -66,11 +66,11 @@ test('both accessibility inputs update a mounted overlay and listeners release',
   const old = Object.fromEntries(['document','matchMedia','MutationObserver'].map(key => [key,globalThis[key]]));
   let app = false, mediaChanged, bodyChanged, disconnected = false, removed = false;
   const media = {matches:false,addEventListener(type,fn){mediaChanged=fn;},removeEventListener(type,fn){removed=fn===mediaChanged;}};
-  globalThis.document = {body:{classList:{contains:()=>app}}};
+  globalThis.document = {body:{classList:{contains:()=>app}},addEventListener(){},removeEventListener(){}};
   globalThis.matchMedia = () => media;
   globalThis.MutationObserver = class {constructor(fn){bodyChanged=fn;}observe(){}disconnect(){disconnected=true;}};
   try {
-    const effects = {dataset:{}};
+    const effects = {dataset:{},querySelectorAll:()=>[]};
     const release = wireLayeredEnvironment({querySelector:()=>effects});
     assert.equal(effects.dataset.reducedMotion,'false');
     app = true; bodyChanged();
@@ -85,6 +85,41 @@ test('both accessibility inputs update a mounted overlay and listeners release',
     for (const [key,value] of Object.entries(old)) {
       if (value === undefined) delete globalThis[key]; else globalThis[key]=value;
     }
+  }
+});
+
+test('particle markup retains its asset identity for pack recovery', () => {
+  const scene = {id:'rain',layers:[{role:'particles',asset:'assets-display/layered/rain.webp'}]};
+  assert.ok(layeredEnvironmentHtml(scene).includes('data-layer-asset="assets-display/layered/rain.webp"'));
+});
+
+test('mounted weather repoints after pack recovery and releases its source listener', async () => {
+  const {wireLayeredEnvironment} = await import('../src/ui/components/layeredEnvironment.js');
+  const {setBuiltInSource} = await import('../src/ui/assetmap.js');
+  const {builtInArtArrived,resetHighResArt} = await import('../src/ui/highResArt.js');
+  const old = Object.fromEntries(['document','matchMedia','MutationObserver'].map(key => [key,globalThis[key]]));
+  const id='assets-display/layered/rain.webp',node={dataset:{layerAsset:id},style:{backgroundImage:`url("${id}")`}};
+  const effects={dataset:{},querySelectorAll:()=>[node]};
+  const doc=new EventTarget();
+  doc.body={classList:{contains:()=>false}};
+  doc.querySelectorAll=()=>[];
+  globalThis.document=doc;
+  globalThis.matchMedia=()=>({matches:false,addEventListener(){},removeEventListener(){}});
+  globalThis.MutationObserver=class{observe(){}disconnect(){}};
+  let release=()=>{};
+  try {
+    setBuiltInSource(null);
+    release=wireLayeredEnvironment({querySelector:()=>effects});
+    const map=new Map([[id,'./objects/aa/recovered.webp']]);
+    setBuiltInSource(map);builtInArtArrived(map);
+    assert.equal(node.style.backgroundImage,'url("./objects/aa/recovered.webp")');
+    release();
+    const later=new Map([[id,'./objects/bb/later.webp']]);
+    setBuiltInSource(later);builtInArtArrived(later);
+    assert.equal(node.style.backgroundImage,'url("./objects/aa/recovered.webp")','disposed overlays must not be repointed');
+  } finally {
+    release();setBuiltInSource(null);resetHighResArt();
+    for(const [key,value]of Object.entries(old)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}
   }
 });
 

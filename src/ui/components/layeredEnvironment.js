@@ -1,6 +1,7 @@
 import { LAYERED_CANVAS, LAYERED_SOURCES } from '../../content/layeredEnvironments.js';
 import { layeredArtUrl } from '../layeredArt.js';
 import { reducedMotionRequested } from '../motion.js';
+import { ART_SOURCE_EVENT } from '../highResArt.js';
 
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
 const recipes = new Map();
@@ -47,7 +48,7 @@ export function layeredEnvironmentHtml(scene) {
   recipes.set(key, scene);
   // Bound cached recipes across repeated combat mounts; live nodes retain their recipe below.
   if (recipes.size > 64) recipes.delete(recipes.keys().next().value);
-  const image = (layer, index) => `<${layer.role === 'particles' ? 'div' : 'img'} class="layered-environment-layer${layer.role === 'particles' ? ' layered-particles' : ''}" data-layer-index="${index}" data-role="${escape(layer.role)}" data-placement="${escape(layer.placement?.mode || '')}" ${layer.role === 'particles' ? `style="background-image:url('${escape(layeredArtUrl(layer.asset))}')"` : `src="${escape(layeredArtUrl(layer.asset))}" alt="" draggable="false"`}>${layer.role === 'particles' ? '</div>' : ''}`;
+  const image = (layer, index) => `<${layer.role === 'particles' ? 'div' : 'img'} class="layered-environment-layer${layer.role === 'particles' ? ' layered-particles' : ''}" data-layer-index="${index}" data-role="${escape(layer.role)}" data-placement="${escape(layer.placement?.mode || '')}" ${layer.role === 'particles' ? `data-layer-asset="${escape(layer.asset)}" style="background-image:url('${escape(layeredArtUrl(layer.asset))}')"` : `src="${escape(layeredArtUrl(layer.asset))}" alt="" draggable="false"`}>${layer.role === 'particles' ? '</div>' : ''}`;
   const rear = scene.layers.map((layer, i) => !['filter', 'particles'].includes(layer.role) ? image(layer, i) : '').join('');
   const effects = scene.layers.map((layer, i) => ['filter', 'particles'].includes(layer.role) ? image(layer, i) : '').join('');
   return `<div class="backdrop environment-backdrop layered-environment" data-layered-key="${key}" data-scene="${escape(scene.id)}" aria-hidden="true">${rear}</div><div class="layered-environment-effects" data-layered-effects="${key}" aria-hidden="true">${effects}</div>`;
@@ -78,15 +79,22 @@ export function fitLayeredEnvironment(backdrop, options) {
   return geometry;
 }
 
-/** Motion listeners share the battlefield lifecycle; geometry uses its existing fitter. */
+/** Art and motion listeners share the battlefield lifecycle; geometry uses its existing fitter. */
 export function wireLayeredEnvironment(combat) {
   const effects = combat?.querySelector('.layered-environment-effects');
   if (!effects) return () => {};
   const reconcile = () => { effects.dataset.reducedMotion = String(reducedMotionRequested()); };
+  const refreshArt = () => {
+    for (const node of effects.querySelectorAll('[data-layer-asset]')) {
+      node.style.backgroundImage = `url(${JSON.stringify(layeredArtUrl(node.dataset.layerAsset))})`;
+    }
+  };
   const media = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
   const observer = new MutationObserver(reconcile);
   observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
   media?.addEventListener('change', reconcile);
+  document.addEventListener(ART_SOURCE_EVENT, refreshArt);
   reconcile();
-  return () => { observer.disconnect(); media?.removeEventListener('change', reconcile); };
+  refreshArt();
+  return () => { observer.disconnect(); media?.removeEventListener('change', reconcile); document.removeEventListener(ART_SOURCE_EVENT, refreshArt); };
 }
