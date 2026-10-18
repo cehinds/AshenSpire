@@ -374,6 +374,25 @@ async function main() {
     await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 }, S);
     await wait(340);
   };
+  // A completed card hold arms its target while the pointer is still down.
+  // The hand may repaint and reset data-hold, so observe the intended selected
+  // card plus its target, not an inspection highlight or transient fill flag.
+  const holdCardToSelect = async ({ x, y, instanceId }, targetSelector) => {
+    if (await evalIn(`!!document.querySelector('.enemy-row .enemy.targetable, .combatant.player.armed')`)) {
+      throw new Error('selection hold requires an unarmed board');
+    }
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 }, S);
+    try {
+      const selector = `.hand .card[data-instance-id=${JSON.stringify(instanceId)}]`;
+      await until(`(() => {
+        const card = document.querySelector(${JSON.stringify(selector)});
+        return card?.classList.contains('selected') && !!document.querySelector(${JSON.stringify(targetSelector)});
+      })()`, `completed selection hold for ${instanceId}`);
+    } finally {
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 }, S);
+    }
+    await wait(340);
+  };
   const pressKey = async (key, code, keyCode) => {
     for (const type of ['keyDown', 'keyUp']) {
       await cdp.send('Input.dispatchKeyEvent', { type, key, code, windowsVirtualKeyCode: keyCode, nativeVirtualKeyCode: keyCode }, S);
@@ -434,10 +453,14 @@ async function main() {
         });
         if (!c) return null;
         const r = c.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: c.dataset.cardId };
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: c.dataset.cardId, instanceId: c.dataset.instanceId };
       })()`);
       if (!pt) return { armed: false, card: null };
-      await clickAt(pt.x, pt.y);
+      // A completed card hold selects without playing, including singleton
+      // targets under the shipped oneTapPlay default (SPEC §7.3).
+      const beforeHold = await gameplayReceipt();
+      await holdCardToSelect(pt, '.enemy-row .enemy.targetable');
+      ok(await gameplayReceipt() === beforeHold, 'attack selection hold leaves gameplay unchanged');
       const state = await evalIn(`({
         armed: !!document.querySelector('.hand .card.selected') && !!document.querySelector('.enemy-row .enemy.targetable'),
         card: (document.querySelector('.hand .card.selected') || {}).dataset?.cardId || null,
@@ -464,10 +487,14 @@ async function main() {
         });
         if (!c) return null;
         const r = c.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, instanceId: c.dataset.instanceId };
       })()`);
       if (!pt) return { armed: false, card: null };
-      await clickAt(pt.x, pt.y);
+      // A completed card hold selects without playing, including singleton
+      // targets under the shipped oneTapPlay default (SPEC §7.3).
+      const beforeHold = await gameplayReceipt();
+      await holdCardToSelect(pt, '.combatant.player.armed');
+      ok(await gameplayReceipt() === beforeHold, 'self-Counter selection hold leaves gameplay unchanged');
       const state = await evalIn(`({
         armed: !!document.querySelector('.hand .card.selected') && !!document.querySelector('.combatant.player.armed'),
         enemyTarget: !!document.querySelector('.enemy-row .enemy.targetable'),
