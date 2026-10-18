@@ -106,7 +106,7 @@ test('registered owner and active card parameters affect live shared math and re
  entity.mechanicBindings=[{tag:'combat:stance',parameters:{effectivenessMultiplier:1.25}}];
  const card={combatProfile:{camp:'physical',maneuver:'attack'}};entity.combatStance=card.combatProfile;
  assert.equal(stanceEffectiveness(combat,entity,card),1.25);
- assert.equal(fixCoreRules(combat).stance.effectivenessMultiplier,1.0025);
+ assert.equal(fixCoreRules(combat).stance.effectivenessMultiplier,1.25);
  entity.mechanicBindings=[];
  assert.equal(stanceEffectiveness(combat,entity,{...card,instanceId:'first',mechanicBindings:[{tag:'combat:stance',parameters:{effectivenessMultiplier:1.5}}]}),1.5);
  assert.equal(stanceEffectiveness(combat,entity,{...card,instanceId:'second',mechanicBindings:[{tag:'combat:stance',parameters:{effectivenessMultiplier:1.1}}]}),1.1);

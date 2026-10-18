@@ -40,7 +40,7 @@ test('matching stance discounts only the used resource lane and preserves fracti
  const {ctx}=setup();const physical={combatProfile:{camp:'physical',maneuver:'attack'}},magic={combatProfile:{camp:'spell',maneuver:'casting',range:'ranged'}};
  ctx.player.combatStance={camp:'physical',maneuver:'attack'};
  assert.equal(stanceStaminaCost(3,ctx.player,physical,ctx),2);assert.equal(stanceStaminaCost(0,ctx.player,physical,ctx),0);
- assert.equal(stanceEffectiveness(ctx,ctx.player,physical),1.0025);
+ assert.equal(stanceEffectiveness(ctx,ctx.player,physical),1.25);
  ctx.player.combatStance={camp:'spell',maneuver:'casting'};
  assert.equal(stanceManaCost(3,ctx.player,magic,ctx),2);assert.equal(stanceManaCost(1,ctx.player,magic,ctx),1);assert.equal(stanceManaCost(0,ctx.player,magic,ctx),0);
  assert.equal(stanceStaminaCost(3,ctx.player,magic,ctx),3);

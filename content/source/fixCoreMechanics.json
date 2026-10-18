@@ -6,7 +6,7 @@
     "defense:poiseProtection"
   ],
   "stance": {
-    "effectivenessMultiplier": 1.0025,
+    "effectivenessMultiplier": 1.25,
     "discount": 1,
     "minimumCost": 1
   },
