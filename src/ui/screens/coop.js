@@ -1042,7 +1042,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       badge.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
       badge.textContent = Number(preview.hitChance.toFixed(2)) + '%';
       badge.setAttribute('aria-label', 'Chance to hit ' + badge.textContent);
-      (frame.querySelector('.combatant-leading') || frame).append(badge);
+      frame.append(badge);
       if (selectedCard) {
         const odds = badge.cloneNode(true);
         odds.className = 'card-hit-chance';

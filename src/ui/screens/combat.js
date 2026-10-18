@@ -1692,7 +1692,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       frame.querySelector('.combat-hit-chance')?.remove();
       const badge = hitChanceBadge(enemy);
       if (badge) {
-        frame.querySelector('.combatant-leading')?.append(badge);
+        frame.append(badge);
         if (selectedCard) {
           const odds = badge.cloneNode(true);
           odds.className = 'card-hit-chance';

@@ -239,8 +239,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const sprite = frame.querySelector('.sprite'), leading = frame.querySelector('.combatant-leading');
       if (!sprite || !leading) return [];
       const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
+      const body = currentSpriteBodyBounds(sprite, schedule);
+      // The hit-% badge sits on the middle of the painted body, in the frame's own px (owner 2026-10-18).
+      const bodyBox = frame.getBoundingClientRect();
+      const bodyTop = Number.isFinite(body.headY) ? body.headY : body.top, bodyBottom = Number.isFinite(body.feetY) ? body.feetY : body.bottom;
+      if ([body.left, body.right, bodyTop, bodyBottom].every(Number.isFinite)) {
+        frame.style.setProperty('--combat-body-center-x', `${((body.left + body.right) / 2 - bodyBox.left) / zoom}px`);
+        frame.style.setProperty('--combat-body-center-y', `${((bodyTop + bodyBottom) / 2 - bodyBox.top) / zoom}px`);
+      }
       if (rack) {
-        const body = currentSpriteBodyBounds(sprite, schedule);
         const intentHeight = rack.querySelector(':scope > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
         const config = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
         const placement = targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
