@@ -222,7 +222,7 @@ export function evaluateModifiers({ bindings = [], phase, subjectId, actorId, co
     validateModifiers(binding.service.modifiers);
     const scope = { ...context, config: binding.config, owner: context.entities?.[binding.ownerId] || context.owner };
     for (const row of binding.service.modifiers || []) {
-      if (row.phase !== phase || row.subject === 'target' && binding.ownerId !== subjectId || row.subject === 'actor' && binding.ownerId !== actorId) continue;
+      if (row.phase !== phase || row.subject === 'target' && binding.ownerId !== subjectId || row.subject === 'actor' && binding.ownerId !== actorId || row.subject === 'owner' && binding.ownerId !== (context.ownerId ?? subjectId)) continue;
       if (row.select && Object.entries(row.select).some(([key, value]) => context[key] !== value)) continue;
       if (row.when && !evaluateCondition(row.when, scope)) continue;
       const value = resolveValue(row.value, scope);

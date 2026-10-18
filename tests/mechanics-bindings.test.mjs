@@ -94,3 +94,10 @@ test('browser generation detects canonical JSON tuning drift and regenerates it'
     compileBrowserMechanics({rootDir:root,outputFile});assert.match(readFileSync(outputFile,'utf8'),/"default": 0.6/);
   } finally {rmSync(root,{recursive:true,force:true});}
 });
+
+test('owner-subject modifiers apply only to the explicitly queried owner',()=>{
+  const registry=structuredClone(mechanics);registry.get(ward).service.modifiers[0].subject='owner';
+  const bindings=compileBindings({mechanics:registry,attachments:[attachment({ownerId:'someone-else'})]});
+  assert.equal(calculate(bindings).amount,20);
+  assert.equal(calculate(bindings,{context:{ownerId:'someone-else',owner:{persistentWard:{value:1}},damageKind:'magical'}}).amount,15);
+});
