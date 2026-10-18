@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **FixCore owner decisions are recorded** ([#2135](https://github.com/cehinds/AshenSpire/pull/2135), `0.7.1.1621`). Records the owner's answers on Ward, Poise, Staggered, stance costs, hit rolls, Perception, rewards, rest sites, action pacing, auto-combat, armor budget, deck editing and Vulnerable. No gameplay change yet.
+- **Upcoming combat and rest-site changes are decided** ([#2135](https://github.com/cehinds/AshenSpire/pull/2135), `0.7.1.1621`). Planned changes to stagger, stance costs, hit rolls, rewards, rest sites, combat pacing, automatic reactions, armor and Vulnerable are written down. Nothing changes in play yet.
 
 - **Map locations and battles use reusable art layers** ([#2082](https://github.com/cehinds/AshenSpire/pull/2082), `0.7.1.1621`). Crownfall services preview their matching surroundings, and compatible battlefields combine separate back walls or skies, floors, furniture, rugs, day/night tints and weather. Indoor rooms exclude precipitation; existing art remains for unsupported locations. Gameplay, travel and saves are unchanged.
 - **FixCore requirements are collected in one implementation contract** ([#2127](https://github.com/cehinds/AshenSpire/pull/2127), `0.7.1.1619`). Records the corrected combat, equipment, deck, rewards and interface requirements, JSON authoring architecture and review criteria. The versioned rules contract preserves existing saves; gameplay implementation remains pending.
