@@ -30,6 +30,8 @@ import { t } from './strings.js';
 // (model/equipmentAnimation.js animationTiming), so the hit, its number and its
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
+import { runActionTimeline } from './actionTimeline.js';
+import { actionPacing } from './animationPace.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
 export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, getBeatOrder, setBeatOrder };
 
@@ -557,7 +559,7 @@ function layoutCallouts(layer, anchor, q, now, lifeMs = CALLOUT_MS) {
 export function callout(layer, anchor, forId, kind) {
   const isStatus = kind.startsWith('status:');
   const statusId = isStatus ? kind.slice('status:'.length) : null;
-  const def = isStatus
+  const def = kind.startsWith('action:') ? { word: kind.slice(7), tone: 'white' } : isStatus
     ? (Object.prototype.hasOwnProperty.call(STATUS_WORDS, statusId) ? { string: `combat.status.applied.${statusId}`, tone: 'status', colour: STATUS_WORDS[statusId].colour } : null)
     : CALLOUT_KINDS[kind];
   if (!layer || !anchor || !def || forId == null) return null;
@@ -574,7 +576,7 @@ export function callout(layer, anchor, forId, kind) {
   el.setAttribute('aria-hidden', 'true');
   el.textContent = def.word || t(def.string);
   if (def.colour) el.style.color = def.colour;
-  const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS;
+  const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS * (actionPacing().scale || 1);
   el.style.setProperty('--fx-callout-ms', `${ms}ms`);
   // Not started yet: the layout plans it (start Infinity until then).
   const item = { el, kind, arrival: calloutArrival++, start: Infinity, end: undefined, lane: 0, timer: null };
@@ -926,7 +928,153 @@ export function stanceState(stage) {
   return 'unknown';
 }
 
+// Ordered FixCore presentation. Optional impact playback remains available for
+// historical callers explicitly requesting that older presentation policy.
 export function playTimeline(events, ctx, done) {
+  if ((ctx.beatOrder || getBeatOrder()) === 'impact') return playLegacyTimeline(events, ctx, done);
+  const timing = actionPacing({ reduced: reducedMotionRequested() });
+  const beats = groupBeats(events);
+  const receiptOptions = { sequential: true, reactionForReceipt: ctx.reactionForReceipt };
+  const visualSafe = fn => { try { return fn(); } catch (error) { console.warn('[fx] receipt visual failed:', error?.message); } };
+  const parts = new Map(beats.flatMap(beat => beat.events.map(event => [event, visualSafe(() => visualPartsFor(event, beat.kind, receiptOptions))])));
+  const terminal = event => ['enemyDied', 'playerDied', 'combatEnded'].includes(event.type);
+  const runParts = (beat, key) => {
+    for (const event of beat.events) if (!terminal(event)) visualSafe(() => parts.get(event)?.[key]?.(ctx));
+  };
+  // Cues belong to the committed beat, even when its multi-hit reactions are
+  // split into groups. Skipping drains only beats whose numbers were unheard.
+  const originalForEvent = new Map(beats.flatMap(beat => beat.events.map(event => [event, beat])));
+  const cued = new Set(), stung = new Set(), buzzed = new Set();
+  const cue = (beat, sounds = true) => {
+    const original = originalForEvent.get(beat.events[0]) || beat;
+    if (cued.has(original)) return;
+    cued.add(original);
+    const starts = original.events.filter(event => event.type === 'playerTurnStart');
+    const stinger = starts.some(event => !stung.has(event.turn));
+    const mine = starts.filter(event => localTurnStart(event, ctx.isLocalPlayer));
+    const turnBuzz = mine.some(event => !buzzed.has(event.turn));
+    for (const event of starts) stung.add(event.turn);
+    for (const event of mine) buzzed.add(event.turn);
+    const options = { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor, stinger, turnBuzz };
+    if (sounds) playBeatCues(original.events, options);
+    else playBeatHaptics(original.events, options);
+  };
+  let handle, skippedPointer = false;
+  const skip = event => {
+    if (event?.target?.closest?.('[data-combat-read-only], dialog, [role="dialog"]')) return;
+    skippedPointer = true;
+    handle?.pauseForSkip();
+    // Keep the screen busy through pointer release, so the same click cannot
+    // activate a newly rendered card after it skipped this action.
+    clearHeldFigures(); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
+  };
+  const release = () => { if (skippedPointer) handle?.skip(); };
+  const blur = () => handle?.skip();
+  const visibility = () => { if (globalThis.document?.hidden || globalThis.document?.visibilityState === 'hidden') handle?.skip(); };
+  addEventListener('pointerdown', skip, { capture: true });
+  addEventListener('pointerup', release, { capture: true });
+  addEventListener('pointercancel', release, { capture: true });
+  addEventListener('blur', blur);
+  globalThis.document?.addEventListener?.('visibilitychange', visibility);
+  dbg.open = (dbg.open || 0) + 1;
+  handle = runActionTimeline(beats, {
+    onStage: (name, beat) => { traceBeat(name, beat.actorId); ctx.onStage?.(name, beat); },
+    onIntent: beat => {
+      const stage = beat.actorId && stageFor(ctx.anchorFor(beat.actorId));
+      if (stage && stanceState(stage) !== 'in') stage.settle?.();
+      ctx.onIntent?.(beat);
+    },
+    onAction: beat => {
+      const event = beat.events.find(e => ['cardPlayed', 'enemyMoveStarted', 'combatCounterTriggered', 'flaskUsed'].includes(e.type));
+      const maneuver = event?.combatProfile?.maneuver || event?.maneuver;
+      const name = ctx.actionWordForBeat?.(beat) || event?.name || event?.cardName || event?.moveName
+        || (maneuver ? maneuver[0].toUpperCase() + maneuver.slice(1) : null)
+        || (event?.type === 'flaskUsed' ? 'Flask' : beat.kind === 'counter' ? t('deckEditor.stance.counter') : beat.kind === 'attack' ? t('deckEditor.stance.attack') : 'Action');
+      callout(ctx.layer, ctx.anchorFor(beat.actorId), beat.actorId, `action:${name}`);
+    },
+    maxSpriteMs: speed => typeof ctx.maxActorAnimationMs === 'function' ? ctx.maxActorAnimationMs(speed) : Number(ctx.maxActorAnimationMs) || speed.lungeMs,
+    onSprite: (beat, speed) => {
+      if (timing.scale === 0) return null;
+      const actorEl = ctx.anchorFor(beat.actorId);
+      if (!actorEl) return null;
+      const animation = ctx.animateActor?.(beat, actorEl, speed);
+      if (animation && Number.isFinite(animation.totalMs) && typeof animation.cancel === 'function') return animation;
+      if (ctx.figureAnimations !== false) {
+        flash(actorEl, beat.kind === 'attack' || beat.kind === 'counter' ? 'act-attack' : 'act-move', speed.lungeMs);
+        playPoseOn(actorEl, beat.kind === 'attack' || beat.kind === 'counter' ? 'attack' : 'guard', speed.lungeMs);
+      }
+      return { impactMs: speed.lungeMs * COMBAT_TIMING.windupFraction, totalMs: speed.lungeMs,
+        cancel: () => { if (ctx.figureAnimations !== false) stageFor(actorEl)?.settle?.(); } };
+    },
+    onContact: (beat, actor) => {
+      runParts(beat, 'contact');
+      const hits = beat.events.filter(event => event.type === 'damageDealt');
+      const holdMs = timing.scale === 0 ? 0 : hits.reduce((ms, event) => ms + hitStopMsFor(guardHitFloatParts(event).residual || 0, ctx.maxHpFor?.(event.targetId) || 0) * timing.scale, 0);
+      if (holdMs) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs); }
+      if (beat.actorId && ctx.layer?.dataset) ctx.layer.dataset.contact = String((Number(ctx.layer.dataset.contact) || 0) + Math.max(1, hits.length));
+      return holdMs;
+    },
+    reactionGroups: beat => {
+      const groups = []; let group = [], hadHit = false;
+      for (const event of beat.events) {
+        if (hadHit && ['attackHit', 'attackMissed', 'combatAvoidanceResolved', 'damageDealt'].includes(event.type)) {
+          groups.push({ ...beat, events: group }); group = []; hadHit = false;
+        }
+        group.push(event); if (event.type === 'damageDealt') hadHit = true;
+      }
+      if (group.length) groups.push({ ...beat, events: group });
+      return groups;
+    },
+    onReaction: beat => {
+      runParts(beat, 'reaction');
+      // Accuracy receipts cannot say Hit before a miss, full Block or break
+      // receipt that follows them. More specific outcomes take precedence.
+      const outcomeTargets = new Set(beat.events.filter(event => event.type !== 'attackHit' && calloutForEvent(event)).map(event => event.targetId));
+      const saidTargets = new Set(beat.events.filter(event => calloutForEvent(event)).map(event => event.targetId));
+      for (const event of beat.events) {
+        if (terminal(event) || (event.type === 'attackHit' && outcomeTargets.has(event.targetId))) continue;
+        visualSafe(() => parts.get(event)?.callout?.(ctx));
+        // Historical and authored unavoidable hits may carry damage without an
+        // accuracy receipt. The committed HP residual still proves a Hit.
+        if (event.type === 'damageDealt' && guardHitFloatParts(event).residual > 0 && !saidTargets.has(event.targetId)) {
+          visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'hit'));
+          saidTargets.add(event.targetId);
+        }
+      }
+      return Math.max(0, ...beat.events.map(event => Number(ctx.reactionTimingForReceipt?.(event, timing.spriteSpeed)) || 0));
+    },
+    onNumbers: beat => {
+      if (beat.banner) visualSafe(() => banner(ctx.layer, beat.banner, 'turn', timing.bannerMs));
+      if (!beat.actorId || beat.kind === 'reveal') { runParts(beat, 'contact'); runParts(beat, 'reaction'); runParts(beat, 'callout'); }
+      runParts(beat, 'numbers');
+      cue(beat);
+    },
+    onApply: beat => ctx.onBeatApplied?.(beat),
+    onResolution: beat => {
+      for (const event of beat.events) if (terminal(event)) visualSafe(() => visualFor(event, beat.kind, receiptOptions)?.(ctx));
+      ctx.onResolution?.(beat);
+    },
+    onFlush: () => {
+      for (const beat of beats) cue(beat, false);
+      clearHeldFigures(); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
+      for (const sprite of globalThis.document?.querySelectorAll?.('.combatant .sprite') || []) stageFor(sprite)?.endReaction?.();
+      ctx.onFlush?.();
+    },
+    onDone: () => {
+      removeEventListener('pointerdown', skip, { capture: true });
+      removeEventListener('pointerup', release, { capture: true });
+      removeEventListener('pointercancel', release, { capture: true });
+      removeEventListener('blur', blur);
+      globalThis.document?.removeEventListener?.('visibilitychange', visibility);
+      dbg.finished = (dbg.finished || 0) + 1;
+      done?.();
+    },
+    onError: error => console.warn('[fx] ordered presentation step failed:', error?.message),
+  }, timing);
+  return handle;
+}
+
+function playLegacyTimeline(events, ctx, done) {
   const receiptVisuals = { reactionForReceipt: ctx.reactionForReceipt };
   const speed = ANIM_SPEEDS[getAnimSpeed()];
   const reduced = reducedMotionRequested();
@@ -1235,7 +1383,11 @@ export function playTimeline(events, ctx, done) {
             safe(() => haptic.play('damageTaken'));
           }
           hitStop = 0;
-          schedule(stepV, Math.max(speed.stepMs, event.type === 'attackHit' ? STACK_STEP_MS * 2 : 0) + (held ? holdMs : 0));
+          // stepMs separates contacts. After the last sequential contact there
+          // is no next contact to space: retain its hit-stop and the actor's
+          // recovery below, then begin the defender's full reaction.
+          const stepGap = sequential && vi === visuals.length ? 0 : speed.stepMs;
+          schedule(stepV, Math.max(stepGap, event.type === 'attackHit' ? STACK_STEP_MS * 2 : 0) + (held ? holdMs : 0));
           return;
         }
         let reactionEndAt = 0;

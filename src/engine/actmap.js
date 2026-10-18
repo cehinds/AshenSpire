@@ -142,6 +142,7 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   const restFloors = rules.restFloors;
   if (!Array.isArray(restFloors)) throw new Error('Configured route requires authored restFloors');
   if (restFloors.length !== rules.restsPerAct || new Set(restFloors).size !== rules.restsPerAct || restFloors.some(n => !Number.isInteger(n) || n < 1 || n > count)) throw new Error('Invalid configured rest floors');
+  if (rules.requirePrebossRest && !restFloors.includes(count)) throw new Error('Configured route requires a rest immediately before the boss');
   const firstFloor = rules.firstFloor ?? null;
   const displayTypes = { fight: 'monster', event: 'event', elite: 'elite', treasure: 'treasure', shop: 'merchant', rest: 'shrine', boss: 'boss' };
   const hidden = new Set(rules.hiddenTypes);

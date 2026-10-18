@@ -290,7 +290,7 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   }
   for (const [variant, entry] of limited) {
     const row = describe(registries, entry.card, run);
-    const limit = deckCopyLimit(registries, entry.card.cardId, settings, run.class);
+    const limit = deckCopyLimit(registries, entry.card.cardId, settings, run);
     const equipmentEligible = deckCardEquipmentEligible(registries, run, entry.card);
     let tileRefusal = '';
     if (!equipmentEligible) tileRefusal = t('deckEditor.refuse.equipment');
@@ -383,7 +383,8 @@ export function openDeckEdit(registries, run, settings = {}) {
     add(key) {
       live();
       const before = beginDeckEdit(run);
-      const [kind, id] = String(key || '').split(':');
+      const colon = String(key || '').indexOf(':');
+      const kind = String(key || '').slice(0, colon), id = String(key || '').slice(colon + 1);
       if (kind === 'basic') {
         // The mint tile: a fresh copy back, or a new one, never a set-aside
         // (upgraded) copy, which has its own tile.
@@ -409,7 +410,7 @@ export function openDeckEdit(registries, run, settings = {}) {
       }
       if (!deckCardEquipmentEligible(registries, run, loose)) return { ok: false, refusal: t('deckEditor.refuse.equipment') };
       if (moveFromSideboard(registries, run, loose.instanceId, settings)) return remember(before, { ok: true, refusal: '' });
-      const limit = deckCopyLimit(registries, cardId, settings, run.class);
+      const limit = deckCopyLimit(registries, cardId, settings, run);
       return { ok: false, refusal: t('deckEditor.refuse.copyLimit', { name: nameOf(loose), limit }) };
     },
     remove(instanceId) {

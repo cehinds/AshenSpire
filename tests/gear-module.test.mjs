@@ -32,8 +32,9 @@ test('every item spends exactly its pool, minus tag costs, within 3 attributes',
     const s = { ...gearSettings, pools: mode }, r = resolveGearItem(item, s);
     const R = s.poolSizes.ratings[item.rarity].max, B = s.poolSizes.bonus[item.rarity].max;
     const spent = total(r.points, RATINGS) + total(r.points, ATTRS) + r.tagCost;
-    assert.equal(spent, mode === 'merged' ? s.poolSizes.merged[item.rarity].max : R + B, `${mode} ${item.id}`);
-    if (mode === 'split') assert.equal(total(r.points, RATINGS), R, `${item.id} ratings pool`);
+    const armorBudget = item.kind === 'armor' ? s.armorBudget.baseline : null;
+    assert.equal(spent, armorBudget ?? (mode === 'merged' ? s.poolSizes.merged[item.rarity].max : R + B), `${mode} ${item.id}`);
+    if (mode === 'split' && armorBudget === null) assert.equal(total(r.points, RATINGS), R, `${item.id} ratings pool`);
     assert.ok(ATTRS.filter(a => r.points[a] > 0).length <= s.maxAttributes, item.id);
   }
 });
@@ -60,7 +61,7 @@ test('pool size changes re-flow unset points automatically', () => {
 
 test('validator refuses set points that exceed the pool', () => {
   const copy = structuredClone(catalog);
-  copy.packs['ashen.core-content@1.0.0'].content.gear.find(i => i.id === 'dagger').points = { strength: 9 };
+  copy.packs['ashen.core-content@2.0.0'].content.gear.find(i => i.id === 'dagger').points = { strength: 9 };
   assert.throws(() => resolveGameAuthor(structuredClone(author), copy), /exceed the pool/);
 });
 

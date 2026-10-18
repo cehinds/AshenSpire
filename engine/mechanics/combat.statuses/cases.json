@@ -1,0 +1,184 @@
+[
+  {
+    "name": "module-defaults",
+    "when": {
+      "bindingQuery": {
+        "attachments": [
+          {
+            "ownerId": "actor",
+            "sourceInstanceId": "actor",
+            "kind": "entity",
+            "tags": [
+              "combat:statuses"
+            ]
+          }
+        ],
+        "moduleParameters": {
+          "combat.statuses": {
+            "decayAmount": 1,
+            "weakARMultiplier": 0.7,
+            "vulnerabilityMultiplier": 1.3,
+            "staggerRiders": {
+              "weak": 1,
+              "vulnerable": 1
+            },
+            "overrides": {
+              "weak": {
+                "stackMode": "add",
+                "modifiers": {}
+              },
+              "vulnerable": {
+                "stackMode": "add",
+                "modifiers": {
+                  "damageTakenMult": 1.3
+                }
+              },
+              "staggered": {
+                "stackMode": "add",
+                "modifiers": {}
+              }
+            }
+          }
+        },
+        "query": "parameters"
+      }
+    },
+    "then": {
+      "value": {
+        "decayAmount": 1,
+        "weakARMultiplier": 0.7,
+        "vulnerabilityMultiplier": 1.3,
+        "staggerRiders": {
+          "weak": 1,
+          "vulnerable": 1
+        },
+        "overrides": {
+          "weak": {
+            "stackMode": "add",
+            "modifiers": {}
+          },
+          "vulnerable": {
+            "stackMode": "add",
+            "modifiers": {
+              "damageTakenMult": 1.3
+            }
+          },
+          "staggered": {
+            "stackMode": "add",
+            "modifiers": {}
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "source-disable",
+    "when": {
+      "bindingQuery": {
+        "attachments": [
+          {
+            "ownerId": "actor",
+            "sourceInstanceId": "actor",
+            "kind": "entity",
+            "tags": [
+              "combat:statuses"
+            ],
+            "mechanicBindings": [
+              {
+                "tag": "combat:statuses",
+                "enabled": false
+              }
+            ]
+          }
+        ],
+        "moduleParameters": {
+          "combat.statuses": {
+            "decayAmount": 1,
+            "weakARMultiplier": 0.7,
+            "vulnerabilityMultiplier": 1.3,
+            "staggerRiders": {
+              "weak": 1,
+              "vulnerable": 1
+            },
+            "overrides": {
+              "weak": {
+                "stackMode": "add",
+                "modifiers": {}
+              },
+              "vulnerable": {
+                "stackMode": "add",
+                "modifiers": {
+                  "damageTakenMult": 1.3
+                }
+              },
+              "staggered": {
+                "stackMode": "add",
+                "modifiers": {}
+              }
+            }
+          }
+        },
+        "query": "parameters"
+      }
+    },
+    "then": {
+      "error": "one active binding"
+    }
+  },
+  {
+    "name": "invalid-param",
+    "when": {
+      "bindingQuery": {
+        "attachments": [
+          {
+            "ownerId": "actor",
+            "sourceInstanceId": "actor",
+            "kind": "entity",
+            "tags": [
+              "combat:statuses"
+            ],
+            "mechanicBindings": [
+              {
+                "tag": "combat:statuses",
+                "parameters": {
+                  "unknown": 1
+                }
+              }
+            ]
+          }
+        ],
+        "moduleParameters": {
+          "combat.statuses": {
+            "decayAmount": 1,
+            "weakARMultiplier": 0.7,
+            "vulnerabilityMultiplier": 1.3,
+            "staggerRiders": {
+              "weak": 1,
+              "vulnerable": 1
+            },
+            "overrides": {
+              "weak": {
+                "stackMode": "add",
+                "modifiers": {}
+              },
+              "vulnerable": {
+                "stackMode": "add",
+                "modifiers": {
+                  "damageTakenMult": 1.3
+                }
+              },
+              "staggered": {
+                "stackMode": "add",
+                "modifiers": {}
+              }
+            }
+          }
+        },
+        "query": "parameters"
+      }
+    },
+    "then": {
+      "error": "unknown parameter"
+    }
+  }
+]

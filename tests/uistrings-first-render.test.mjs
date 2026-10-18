@@ -198,7 +198,9 @@ test('both boards repaint through the shared paths, not their own literals', asy
   const start = solo.indexOf('function renderControls()');
   const renderControls = solo.slice(start, solo.indexOf('\n  function ', start + 1));
   assert.match(renderControls, /paintEndTurnKey\(\$\('\.end-turn'\), etKey\)/, 'solo renderControls repaints End Turn its own way');
-  assert.match(renderControls, /paintCombatActionCounts\(actionRow, \{ energy: combat\.player\.energy, energyMax: combat\.player\.energyMax,/, 'solo renderControls paints Actions its own way');
+  assert.match(renderControls, /paintActionCounts\(\)/, 'solo renderControls uses the paced shared row adapter');
+  assert.match(solo, /paintCombatActionCounts\(actionRow, \{ energy: p\.energy, energyMax: p\.energyMax,/, 'the adapter paints through the shared renderer');
+  assert.match(solo, /const p = dv\(combat\.player\)/, 'the shared row adapter reads the current presentation snapshot');
   assert.match(solo, /<div class="tt-title">\$\{esc\(t\('combat\.endTurn'\)\)\}<\/div>/, 'solo End Turn tooltip title');
   const coop = read('src/ui/screens/coop.js');
   assert.match(coop, /combatActionRowHtml\(\{ endTurnId: 'coop-endturn' \}\)/);

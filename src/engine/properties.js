@@ -1,3 +1,4 @@
+import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 // src/engine/properties.js — the one mount path for property rules
 // (docs/proposal-progression-and-property-system.md §3, plan phase 1b)
 //
@@ -35,7 +36,7 @@
 
 import { carrierRules } from '../model/registries.js';
 import { breakPropertyRule } from '../model/breakMeter.js';
-import { equippedPieces, pieceItemRef } from '../model/loadout.js';
+import { equippedPieces, equippedIn, pieceItemRef } from '../model/loadout.js';
 import * as Triggers from './triggers.js';
 
 // The carrier kinds the loadout owns. syncLoadoutProperties manages these and
@@ -81,10 +82,13 @@ function assertCarrier(carrier) {
  * confers nothing. Throws, by name, if this source is already mounted for
  * this owner.
  */
+const mechanicMetadata = def => ({ mechanicTags: [...(def?.mechanicTags || [])], mechanicBindings: structuredClone(def?.mechanicBindings || []) });
+const hasMechanics = def => !!(def?.mechanicTags?.length || def?.mechanicBindings?.length);
+
 export function mountProperties(ctx, carrier) {
   assertCarrier(carrier);
   const rules = carrierRules(ctx.registries, carrier.tagIds).map(rule => breakPropertyRule(ctx, rule));
-  if (!rules.length) return null;
+  if (!rules.length && !hasMechanics(carrier)) return null;
   const sourceKey = propertySourceKey(carrier);
   const mounts = ctx.propertyMounts || (ctx.propertyMounts = {});
   const owned = mounts[carrier.ownerKey] || (mounts[carrier.ownerKey] = {});
@@ -96,7 +100,7 @@ export function mountProperties(ctx, carrier) {
   // the class card names) can ask which mounts speak for a track without a
   // second table. Empty for the carriers that carry none.
   owned[sourceKey] = {
-    kind: carrier.kind, id: carrier.id, instanceId: carrier.instanceId || carrier.id, rules, scopeTags: [...(carrier.scopeTags || [])],
+    ...(carrier.configuredEnemy ? {configuredEnemy:true} : {}), ...mechanicMetadata(carrier), kind: carrier.kind, id: carrier.id, instanceId: carrier.instanceId || carrier.id, rules, scopeTags: [...(carrier.scopeTags || [])],
     // The worn piece a slotted sigil rides (SPEC §14.4), so the loadout diff
     // knows the mount is its to take away.
     ...(carrier.heldBy ? { heldBy: carrier.heldBy } : {}),
@@ -128,15 +132,22 @@ export function propertyMountsOf(ctx, entity) {
  * none given, no sigil mounts.
  */
 export function loadoutCarriers(registries, loadout, classId, ownerKey, itemUpgradeLevels = {}, sigilSlots = null) {
-  const worn = equippedPieces(registries, loadout, classId, { itemUpgradeLevels });
+  const modern = registries.gameProfile?.modules?.effects?.fixCoreVersion === 1;
+  const canonical = modern ? registries.gameProfile?.content?.gear || [] : [];
+  const slots = (registries.equipment?.slots || []).filter(slot => equippedIn(registries,loadout,classId,slot.id));
+  const worn = equippedPieces(registries, loadout, classId, { itemUpgradeLevels }).map((piece,index)=>{
+    const authored=canonical.find(row=>(row.source?.id || row.id)===piece.id && (row.kind==='armor')===(piece.kind==='armor') && (!row.classes || row.classes.includes(classId)));
+    return {...piece,...(authored?.mechanicTags ? {mechanicTags:authored.mechanicTags} : {}),
+      ...(authored?.mechanicBindings ? {mechanicBindings:authored.mechanicBindings} : {}),equippedSlotId:slots[index]?.id};
+  });
   const pieces = worn
-    .filter((piece) => Array.isArray(piece.propertyTags) && piece.propertyTags.length)
+    .filter((piece) => (Array.isArray(piece.propertyTags) && piece.propertyTags.length) || hasMechanics(piece))
     .map((piece) => ({
-      kind: piece.kind === 'armor' ? 'armour' : 'armament',
+      ...mechanicMetadata(piece), kind: piece.kind === 'armor' ? 'armour' : 'armament',
       id: piece.id,
-      instanceId: pieceItemRef(piece),
+      instanceId: modern && hasMechanics(piece) ? `${pieceItemRef(piece)}@${piece.equippedSlotId}` : pieceItemRef(piece),
       ownerKey,
-      tagIds: [...piece.propertyTags],
+      tagIds: [...(piece.propertyTags || [])],
     }));
   const sigils = [];
   if (sigilSlots && typeof sigilSlots === 'object' && registries.sigils) {
@@ -148,7 +159,7 @@ export function loadoutCarriers(registries, loadout, classId, ownerKey, itemUpgr
       for (const id of sigilSlots[itemRef]) {
         if (typeof id !== 'string' || !registries.sigils.has(id) || sigils.some((c) => c.id === id)) continue;
         const tagIds = registries.sigils.get(id).propertyTags || [];
-        if (tagIds.length) sigils.push({ kind: 'sigil', id, instanceId: id, ownerKey, tagIds: [...tagIds], heldBy: itemRef });
+        if (tagIds.length || hasMechanics(registries.sigils.get(id))) sigils.push({ ...mechanicMetadata(registries.sigils.get(id)), kind: 'sigil', id, instanceId: id, ownerKey, tagIds: [...tagIds], heldBy: itemRef });
       }
     }
   }
@@ -167,7 +178,7 @@ export function loadoutCarriers(registries, loadout, classId, ownerKey, itemUpgr
 export function relicCarrier(registries, relicId, ownerKey) {
   const def = registries.relics.get(relicId);
   const tagIds = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
-  return tagIds.length ? { kind: 'relic', id: relicId, instanceId: relicId, ownerKey, tagIds: [...tagIds] } : null;
+  return tagIds.length || hasMechanics(def) ? { ...mechanicMetadata(def), kind: 'relic', id: relicId, instanceId: relicId, ownerKey, tagIds: [...tagIds] } : null;
 }
 
 /**
@@ -178,7 +189,9 @@ export function relicCarrier(registries, relicId, ownerKey) {
  * carries no property.
  */
 export function classCarrier(registries, classId, ownerKey, coreTags = []) {
-  const def = registries.classes && registries.classes.get ? registries.classes.get(classId) : null;
+  const base = registries.classes && registries.classes.get ? registries.classes.get(classId) : null;
+  const authored = registries.gameProfile?.modules?.effects?.fixCoreVersion === 1 ? registries.gameProfile.content.characters?.find(row=>row.id===classId) : null;
+  const def = base && {...base,...(authored?.mechanicTags ? {mechanicTags:authored.mechanicTags} : {}),...(authored?.mechanicBindings ? {mechanicBindings:authored.mechanicBindings} : {})};
   const own = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
   // The run's picked tree nodes (plan phase 5b, run.coreTags) are the core
   // card's own tagging rows: they mount beside the class's authored tags.
@@ -190,8 +203,8 @@ export function classCarrier(registries, classId, ownerKey, coreTags = []) {
   const tree = new Set((Array.isArray(registries.classTree) ? registries.classTree : []).filter((row) => row && row.classId === classId).map((row) => row.nodeId));
   const picked = (Array.isArray(coreTags) ? coreTags : []).filter((id) => tree.has(id) && rules && typeof rules.has === 'function' && rules.has(id) && !own.includes(id));
   const tagIds = [...own, ...picked];
-  return tagIds.length && def
-    ? { kind: 'class', id: classId, instanceId: classId, ownerKey, tagIds, scopeTags: [...(def.tags || [])] }
+  return def && (tagIds.length || hasMechanics(def))
+    ? { ...mechanicMetadata(def), kind: 'class', id: classId, instanceId: classId, ownerKey, tagIds, scopeTags: [...(def.tags || [])] }
     : null;
 }
 
@@ -222,7 +235,7 @@ export function syncClassProperties(combat, entity) {
 export function featCarrier(registries, featId, ownerKey) {
   const def = registries.classSkillFeats?.find(row => row.id === featId);
   const tagIds = def?.propertyTags || [];
-  return tagIds.length ? { kind: 'feat', id: featId, instanceId: featId, ownerKey, tagIds: [...tagIds] } : null;
+  return tagIds.length || hasMechanics(def) ? { ...mechanicMetadata(def), kind: 'feat', id: featId, instanceId: featId, ownerKey, tagIds: [...tagIds] } : null;
 }
 
 export function syncFeatProperties(combat, entity, featIds) {
@@ -252,7 +265,7 @@ export function syncFeatProperties(combat, entity, featIds) {
 export function companionCarrier(registries, companionId, ownerKey) {
   const def = registries.companions && registries.companions.has(companionId) ? registries.companions.get(companionId) : null;
   const tagIds = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
-  return tagIds.length ? { kind: 'companion', id: companionId, instanceId: companionId, ownerKey, tagIds: [...tagIds] } : null;
+  return tagIds.length || hasMechanics(def) ? { ...mechanicMetadata(def), kind: 'companion', id: companionId, instanceId: companionId, ownerKey, tagIds: [...tagIds] } : null;
 }
 
 /**
@@ -281,7 +294,7 @@ export function sigilCarrier(registries, sigilId, ownerKey) {
   const def = registries.sigils && registries.sigils.has(sigilId) ? registries.sigils.get(sigilId) : null;
   if (!def || def.rarity !== 'legendary') return null;
   const tagIds = Array.isArray(def.propertyTags) ? def.propertyTags : [];
-  return tagIds.length ? { kind: 'sigil', id: sigilId, instanceId: sigilId, ownerKey, tagIds: [...tagIds] } : null;
+  return tagIds.length || hasMechanics(def) ? { ...mechanicMetadata(def), kind: 'sigil', id: sigilId, instanceId: sigilId, ownerKey, tagIds: [...tagIds] } : null;
 }
 
 /**
@@ -355,5 +368,30 @@ export function syncLoadoutProperties(combat, entity, loadout, itemUpgradeLevels
   for (const carrier of wanted) {
     const owned = combat.propertyMounts && combat.propertyMounts[ownerKey];
     if (!owned || !owned[propertySourceKey(carrier)]) mountProperties(combat, carrier);
+  }
+}
+
+/** Configured enemies hold exactly their pinned gear and relic slots. */
+export function syncConfiguredEnemyProperties(ctx) {
+  if (!fixCoreEnabled(ctx)) return;
+  const content=ctx.gameProfile?.content;
+  if (!content) return;
+  for(const enemy of ctx.enemies || []) {
+    const definition=content.enemies?.find(row=>row.id===enemy.enemyId);
+    if(!definition) continue;
+    const carriers=[];
+    for(const [field,catalog,relic] of [['defaultGear','gear',false],['defaultRelics','enemyRelics',true]]) {
+      for(const slot of definition[field] || []) {
+        const source=content[catalog]?.find(row=>row.id===slot.id);
+        if(!source || !hasMechanics(source)) continue;
+        carriers.push({...mechanicMetadata(source),kind:relic ? 'relic' : source.kind==='armor' ? 'armour' : 'armament',
+          id:source.id,instanceId:`${source.id}@${slot.key}`,ownerKey:enemy.id,tagIds:source.propertyTags || [],configuredEnemy:true});
+      }
+    }
+    const keys=new Set(carriers.map(propertySourceKey));
+    for(const [key,mount] of Object.entries(ctx.propertyMounts?.[enemy.id] || {})) {
+      if(mount.configuredEnemy && !keys.has(key)) unmountProperties(ctx,{...mount,ownerKey:enemy.id,tagIds:[]});
+    }
+    for(const carrier of carriers) if(!ctx.propertyMounts?.[enemy.id]?.[propertySourceKey(carrier)]) mountProperties(ctx,carrier);
   }
 }

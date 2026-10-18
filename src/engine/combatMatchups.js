@@ -1,3 +1,4 @@
+import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
 import { configuredCombat, configuredModule, setProfileStance } from './gameProfileCombat.js';
@@ -298,6 +299,7 @@ function restrictions(ctx, entity, options = {}) {
 
 /** Called only for an accepted play/telegraph; support preserves posture. */
 export function setCombatStance(ctx, entity, carrier) {
+  if (fixCoreEnabled(ctx) && carrier && carrier.fixCoreSameStance === undefined) carrier.fixCoreSameStance = sameStance(entity, carrier);
   if (configuredCombat(ctx)) { setProfileStance(ctx, entity, carrier); return entity?.combatStance; }
   if (!combatExpansionEnabled(ctx) || !entity) return null;
   const profile = normalizedProfile(carrier);
@@ -541,7 +543,13 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
   const receipt = previewTacticalAction(ctx, source, target, carrier, contacts, options);
   receipt.begun = true;
   if (configuredCombat(ctx)) {
-    if (receipt.counterEligible) {
+    if (fixCoreEnabled(ctx)) {
+      const hit = resolveAttackHit(ctx, source, target, carrier);
+      receipt.counterAttack = hit;
+      receipt.avoided = hit ? !hit.hit : false;
+      receipt.connected = !receipt.avoided;
+    }
+    if (receipt.counterEligible && !receipt.avoided) {
       target.combatCounter.charges = 0;
       ctx.emit?.('combatCounterConsumed', { ...eventCarrier(target, receipt.counter.carrier),
         sourceId: target.id, targetId: source?.id, serial: receipt.counter.serial });

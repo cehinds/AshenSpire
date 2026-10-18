@@ -13,7 +13,7 @@ import { compileGameProfiles } from '../tools/game-config.mjs';
 import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
 
 function setup(routes = {}) {
-  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@1.0.0', modules: { routes } });
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { routes } });
   const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ seed: 73, classId: 'reaver', registries: reg });
   return { reg, run };
@@ -46,18 +46,19 @@ test('every seeded core branch visits eight levels and both rests across all thr
     for (let tier = 1; tier <= 3; tier++) {
       const seat = run.seatOrder[tier - 1];
       const map = buildActMap(reg, createRng(seed), seat, tier);
-      verifyPaths(map, [3, 6]);
+      verifyPaths(map, [3, 7]);
       assert.equal(map.floors, 8);
       // Floor 1 is a fight (routes.firstFloor, owner 2026-10-18): three fight lanes to choose from, drawn as fights.
       assert.deepEqual(map.startIds, ['n1_0', 'n1_1', 'n1_2']);
       for (const id of map.startIds) { assert.equal(map.nodes[id].actualType, 'fight'); assert.equal(map.nodes[id].type, 'monster'); assert.ok(map.nodes[id].next.length >= 2); }
       assert.equal(Object.values(map.nodes).filter(node => node.floor === 1).length, 3);
-      assert.equal(map.shrineId, 'n6_0');
+      assert.equal(map.shrineId, 'n7_0');
       for (const node of Object.values(map.nodes)) if (['elite', 'boss'].includes(node.actualType)) assert.ok(node.floor >= 3);
       assert.equal(Object.keys(map.nodes).length, 18);
       assert.ok(Object.values(map.nodes).some(node => node.next.length > 1));
       assert.equal(Object.values(map.nodes).filter(node => node.type === 'shrine').length, 2);
       assert.equal(Object.values(map.nodes).filter(node => node.type === 'boss').length, 1);
+      for (const node of Object.values(map.nodes).filter(node => node.next.includes(map.bossId))) assert.equal(node.type, 'shrine', 'every boss predecessor is a rest');
       assert.equal(bossEncounterForNode(reg, map, map.bossId, { seat, tier }), map.nodes.boss.encounterId);
       bosses.add(map.nodes.boss.encounterId);
       assert.deepEqual(map, buildActMap(reg, createRng(seed), seat, tier));
@@ -70,14 +71,14 @@ test('every seeded core branch visits eight levels and both rests across all thr
   }
 });
 test('branch width, length, rest placement and exposed node types follow JSON settings', () => {
-  const { reg, run } = setup({ branchColumns: 4, prebossNodes: 5, restFloors: [2, 4], hideUnknownNodes: false });
+  const { reg, run } = setup({ branchColumns: 4, prebossNodes: 5, restFloors: [2, 5], hideUnknownNodes: false });
   const map = buildActMap(reg, createRng(7), run.seatOrder[0], 1);
   assert.equal(map.columns, 4);
   assert.equal(map.floors, 6);
-  verifyPaths(map, [2, 4]);
+  verifyPaths(map, [2, 5]);
   assert.ok(Object.values(map.nodes).some(node => ['monster', 'merchant', 'treasure'].includes(node.type)));
   assert.equal(map.nodes.n2_0.col, 1.5);
-  const noRests = setup({ prebossNodes: 3, restsPerAct: 0, restFloors: [], branchColumns: 2 });
+  const noRests = setup({ prebossNodes: 3, restsPerAct: 0, restFloors: [], requirePrebossRest: false, branchColumns: 2 });
   const noRestMap = buildActMap(noRests.reg, createRng(7), noRests.run.seatOrder[0], 1);
   verifyPaths(noRestMap, []);
   assert.equal(noRestMap.shrineId, null);
@@ -97,12 +98,13 @@ test('branched map choices survive a run round trip without regeneration', () =>
 test('route source defaults bind branch width and invalid dimensions fail before play', () => {
   const { catalog, authors } = compileGameProfiles();
   const changed = structuredClone(catalog);
-  changed.packs['ashen.core-content@1.0.0'].content.routes.branchColumns = 5;
+  changed.packs['ashen.core-content@2.0.0'].content.routes.branchColumns = 5;
   const profile = resolveGameAuthor(authors.core, changed);
   assert.equal(profile.modules.routes.branchColumns, 5);
   assert.equal(profile.content.routes.branchColumns, 5);
   for (const branchColumns of [0, 1, 6, 2.5]) assert.throws(() => setup({ branchColumns }), /branchColumns/);
   assert.throws(() => setup({ prebossNodes: 5, restFloors: [2, 6] }), /restFloors/);
+  assert.throws(() => setup({ restFloors: [3, 6] }), /restFloors.*requirePrebossRest/);
 });
 
 test('Core authors a fully visible map and pins it over a stale viewer fog setting (owner, 2026-10-18)', () => {
@@ -120,18 +122,18 @@ test('firstFloor forces depth 1 and is refused where it cannot hold (owner, 2026
   const open = build({});
   assert.deepEqual(open.startIds, ['n1_0', 'n1_1', 'n1_2']);
   assert.equal(open.nodes.n3_0.type, 'shrine', 'rests moved to depth 3 so depth 1 can be a fight');
-  const restFirst = build({ firstFloor: null, restFloors: [1, 6] });
+  const restFirst = build({ firstFloor: null, requirePrebossRest: false, restFloors: [1, 6] });
   assert.deepEqual(restFirst.startIds, ['n1_0']);
   assert.equal(restFirst.nodes.n1_0.type, 'shrine');
   const shop = build({ firstFloor: 'shop' });
   for (const id of shop.startIds) assert.equal(shop.nodes[id].actualType, 'shop');
-  assert.throws(() => build({ firstFloor: 'fight', restFloors: [1, 6] }), /firstFloor/, 'depth 1 cannot be both a rest and a fight');
-  assert.throws(() => setup({ firstFloor: 'rest', restFloors: [3, 6] }), /firstFloor/, 'rest is not a forceable lane type');
+  assert.throws(() => build({ firstFloor: 'fight', requirePrebossRest: false, restFloors: [1, 6] }), /firstFloor/, 'depth 1 cannot be both a rest and a fight');
+  assert.throws(() => setup({ firstFloor: 'rest', restFloors: [3, 7] }), /firstFloor/, 'rest is not a forceable lane type');
   assert.throws(() => setup({ firstFloor: 'boss' }), /firstFloor/);
   assert.throws(() => build({ firstFloor: 'elite' }), /firstFloor/, 'an elite cannot open before minimumThreatFloor');
 });
 test('a configured fog route reveals only landmarks, then the split and next rest; the trail persists on load', () => {
-  const { reg, run } = setup({ mapMode: 'fog', restFloors: [1, 6], firstFloor: null }); // the Rest-first route, authored explicitly
+  const { reg, run } = setup({ mapMode: 'fog', requirePrebossRest: false, restFloors: [1, 6], firstFloor: null }); // the Rest-first route, authored explicitly
   run.mapGraph = buildActMap(reg, createRng(9), run.seatOrder[0], 1);
   const mode = resolveMapMode({ settings: { mapMode: 'path' } }, run);
   assert.equal(mode, 'fog', 'configured policy must not inherit a stale whole-map viewer setting');

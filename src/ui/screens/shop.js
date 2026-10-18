@@ -31,7 +31,7 @@ import { t } from '../strings.js';
 import { purchaseReview, burnReview, sellReview } from '../models/ConfirmationReviewModel.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
-import { flaskSlotCap } from '../../model/gracerefill.js';
+import { acquireFlask, flaskAcquisitionPlan } from '../../model/gracerefill.js';
 import { shopStockOfferings } from '../../model/shopKinds.js';
 import {
   smithStonePurchasePlan, commitSmithStonePurchase, armourPurchasePlan, commitArmourPurchase,
@@ -135,7 +135,8 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onLea
   for (const [index, option] of offer.options.entries()) {
     const card = ['combatCards', 'weaponArts'].includes(option.kind);
     const def = card ? registries.cards.get(option.id) : option.kind === 'relics' ? registries.relics.get(option.id) : option.kind === 'potions' ? registries.flasks.get(option.id) : option.kind === 'weapons' ? registries.equipment.armaments.find(row => row.id === option.id) : registries.equipment.armour.find(row => row.id === option.id && row.classId === run.class);
-    const available = !offer.taken.includes(index) && offer.claimed === null && run.cinders >= offer.price;
+    const flaskPlan = option.kind === 'potions' ? flaskAcquisitionPlan(registries, run, option.id) : null;
+    const available = !offer.taken.includes(index) && offer.claimed === null && run.cinders >= offer.price && (!flaskPlan || flaskPlan.ok);
     const tile = el('div', { class: 'class-pick shop-offer' });
     const visual = card ? renderCard(registries, { cardId: option.id, instanceId: `shop:${index}`, upgraded: false }, { level: 'glance' }) : ['weapons', 'armor'].includes(option.kind) ? renderEquipmentCard(registries, def, { interactive: false, level: 'glance', surface: 'shop' }).card : renderCollectibleCard(registries, def, option.kind === 'potions' ? 'Potion' : 'Relic', { interactive: false, surface: 'shop' }).card;
     const action = { kind: 'buy', label: t('shop.action.buy', { cost: offer.price }), enabled: available };
@@ -163,7 +164,6 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
   // remove's mirror — a possession gone for good — so `shopSell` sits in the
   // same table and takes whatever beat the table derives.
   const arm = beatArmer(meta, registries);
-  const slotsFree = () => run.flasks.length < flaskSlotCap(registries.balance);
   const sellOn = () => settingOn((meta || {}).settings, 'shopSell');
 
   /** Everything the player could sell right now, each row priced by the table. */
@@ -332,14 +332,15 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     const flaskRefs = offerRefs('flasks', stock.flasks.map((item) => item.id));
     stock.flasks.forEach((item, i) => {
       const def = registries.flasks.get(item.id);
-      const avail = offerAvailability({ price: item.cost, cinders: run.cinders, capacityFull: !slotsFree() });
+      const avail = offerAvailability({ price: item.cost, cinders: run.cinders, capacityFull: !flaskAcquisitionPlan(registries, run, item.id).ok });
       const tile = shopItem(flaskIdentityHtml(def), def.textTemplate, item.cost, avail, { titleHtml: true, card: renderCollectibleCard(registries, def, 'Potion', { interactive: false, surface: 'shop' }).card });
       addOffer('flasks', {
         ref: flaskRefs[i], tile, name: def.name, desc: def.textTemplate || '',
         price: t('shop.price', { cost: item.cost }), avail,
         action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: avail.available, beat: { id: 'shopBuy', opts: buyItem('flask', def.name, item.cost, () => {
+          if (run.cinders < item.cost || !stock.flasks.includes(item)) return;
+          if (!acquireFlask(registries, run, item.id).ok) return;
           run.cinders -= item.cost;
-          run.flasks.push({ flaskId: item.id });
           stock.flasks.splice(i, 1);
           sfx.play('buy');
           onChanged();

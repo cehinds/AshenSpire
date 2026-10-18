@@ -11,7 +11,7 @@ export function paintFooterOrb(orb, resource, urls) {
   if (!orb.closest?.('[data-footer-art]')) return false;
   const canvas = orb.querySelector(':scope > svg'), b = plan.groups.sp.bounds;
   canvas.setAttribute('viewBox', `${b.x} ${b.y} ${b.w} ${b.h}`);
-  canvas.innerHTML = footerStaminaLayers(footerLayout, resource).map(n => `<image data-orb-part="${esc(n.asset)}" href="${esc(urls[n.asset])}" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" opacity="${n.opacity}" preserveAspectRatio="none"/>`).join('');
+  canvas.innerHTML = footerStaminaLayers(footerLayout, resource).map(n => `<image data-orb-part="${esc(n.asset)}" href="${esc(urls[n.asset])}" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" opacity="${n.opacity}" preserveAspectRatio="xMidYMid meet"/>`).join('');
   return true;
 }
 // Piles and potions are artwork, not a stretched plate: each image keeps its

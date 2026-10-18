@@ -1,3 +1,4 @@
+import { gameProfileEquipmentReceipt, gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
 import { gameModule, gameContent } from './gameProfile.js';
 import { retiredAttackSlots, isPoolDeckRun } from './cardRemoval.js';
@@ -2761,16 +2762,22 @@ function cardForTarget(eq, target, classId) {
  * exists it works with no code, which test 28b measures with a piece it
  * authors itself rather than waiting for one.
  */
-export function runMods(registries, loadout, classId) {
+export function runMods(registries, loadout, classId, run = null) {
+  const subject = run || {gameProfile:registries.gameProfile,loadout,class:classId};
+  const gear = gameProfileEquipmentReceipt(registries,subject);
+  const resolvedRefs = new Set(gear.sources.map(source=>source.sourceId));
   const fields = (registries.equipment || {}).modFields || {};
   const stacks = new Map();
   const pools = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, 0]));
   let swapCostDelta = 0;
   for (const piece of equippedPieces(registries, loadout, classId)) {
+    const resolvedPiece = resolvedRefs.has(piece.kind === 'armor' ? `armor/${classId}/${piece.id}` : `armament/${piece.id}`);
     for (const raw of piece.mods || []) {
       const mod = parseMod(raw);
       const spec = mod && fields[mod.field];
       if (!spec || spec.scope !== 'run') continue;
+      // Resolved gear replaces pool stats; independent swap/status effects remain.
+      if (resolvedPiece && EQUIPMENT_POOL_FIELDS.includes(spec.apply)) continue;
       if (EQUIPMENT_POOL_FIELDS.includes(spec.apply)) {
         pools[spec.apply] = mod.mode === 'add' ? pools[spec.apply] + mod.value : mod.value;
       } else if (spec.apply === 'swapCost') {
@@ -2781,6 +2788,7 @@ export function runMods(registries, loadout, classId) {
       }
     }
   }
+  pools.maxHp += gear.totals.hp; pools.maxMana += gear.totals.mp; pools.maxStamina += gear.totals.sp;
   return {
     ...pools,
     swapCostDelta,
@@ -2804,11 +2812,11 @@ export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses =
     throw new Error('reconcileRunLoadoutHp requires integer maxHpAdjustment');
   }
   const classDef = registries.classes.get(run.class);
-  const liveMods = runMods(registries, run.loadout, run.class);
+  const liveMods = runMods(registries, run.loadout, run.class, run);
   const priorBonuses = run.equipmentPoolBonuses || Object.fromEntries(
     EQUIPMENT_POOL_FIELDS.map((field) => [field, liveMods[field]]),
   );
-  const bonuses = adoptEquipmentBonuses
+  const bonuses = (adoptEquipmentBonuses || gameModule(run,'gear')?.armorBudget)
     ? Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, liveMods[field]]))
     : priorBonuses;
   const results = {};
@@ -2825,7 +2833,7 @@ export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses =
   // `perLevel` rows move with it, and a run whose snapshot has none reads 0.
   const level = run.level && Number.isInteger(run.level.level) && run.level.level >= 1 ? run.level.level : 1;
   const expanded = run.combatExpansionVersion === 2;
-  const attributes = effectiveAshenBlightAttributes(run);
+  const attributes = gameProfileEffectiveAttributes(registries,run,effectiveAshenBlightAttributes(run));
   const staminaPenalty = expanded ? ashenBlightBonuses(run).maxStaminaPenalty : 0;
   const derived = deriveStat(run.derivedStatRuleSnapshot.rules, 'hp', {
     attributes,

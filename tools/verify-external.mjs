@@ -64,6 +64,7 @@ import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { verifyPacks, withAlternativeArt, PACKS, objectPath, indexText } from './asset-pack.mjs';
+import { withLayeredArt } from './layered-art.mjs';
 import { slotIds, VAR_PREFIX } from './asset-css.mjs';
 import { unmappedFaceDescriptors } from '../src/ui/assetPacks.js';
 import { MAP_ART } from '../src/content/mapArt.generated.js';
@@ -76,7 +77,6 @@ const ARGV = process.argv.slice(2);
 const SELFTEST = ARGV.includes('--selftest');
 const dirFlag = ARGV.indexOf('--dir');
 const OUT = resolve(ROOT, dirFlag >= 0 ? ARGV[dirFlag + 1] : 'build');
-const MANIFEST = resolve(ROOT, 'art-manifest.json');
 
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
 
@@ -131,7 +131,7 @@ function musicTrackIds(manifest, folder = SHIPPED_MUSIC_FOLDER) {
   return ids;
 }
 
-function verify(outDir) {
+export function verify(outDir, { root = ROOT } = {}) {
   const findings = [];
   let checks = 0;
   const html = resolve(outDir, 'AshenSpire.html');
@@ -205,7 +205,7 @@ function verify(outDir) {
   // every index canonical and in agreement with the manifest.
   checks++;
   let manifest = null;
-  try { manifest = withAlternativeArt(JSON.parse(readFileSync(MANIFEST, 'utf8')), ROOT); } catch (e) { findings.push(`art manifests could not be read: ${e.message}`); }
+  try { manifest = withLayeredArt(withAlternativeArt(JSON.parse(readFileSync(resolve(root, 'art-manifest.json'), 'utf8')), root), root); } catch (e) { findings.push(`art manifests could not be read: ${e.message}`); }
   const problems = verifyPacks(outDir, { manifest, packs: pinned.filter((p) => PACKS.includes(p)) });
   for (const p of problems.slice(0, 6)) findings.push(p);
   if (problems.length > 6) findings.push(`… and ${problems.length - 6} more pack problem(s)`);
@@ -298,6 +298,7 @@ function verify(outDir) {
   return { findings, checks, objects, packs: pinned, tiles, tracks };
 }
 
+function main() {
 if (!SELFTEST) {
   const { findings, checks, objects, packs, tiles, tracks } = verify(OUT);
   for (const f of findings) console.log('  RED ' + f);
@@ -447,3 +448,6 @@ rmSync(work, { recursive: true, force: true });
 if (fail) { console.log(`verify-external --selftest: RED — ${fail} of ${pass + fail} did not behave`); process.exit(1); }
 console.log(`  both baselines were green, which is what makes the ${pass - 2} plants mean anything.`);
 console.log(`verify-external --selftest: OK — ${pass - 2} plants, ${pass - 2} caught`);
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

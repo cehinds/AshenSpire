@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync,readdirSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {loadGameProfileCatalog} from '../tools/game-config.mjs';
+import {loadGameProfileCatalog,collectMechanicsRuntimeArtifacts,MECHANIC_RUNTIME_PATH} from '../tools/game-config.mjs';
 import {resolveGameProfile,gameModule,gameContent,projectGameCard,applyGameProfileToContent,bindGameProfileRegistries,validateGameProfileSnapshot} from '../src/model/gameProfile.js';
 import {gameDigest,canonicalGameJSON,mergeGameSettings} from '../engine/kernel/gameConfig.js';
 import {contentBundle} from '../src/content/index.js';
@@ -79,7 +79,7 @@ test('current legacy parity rejects inert changes while allowing equivalent decl
 });
 
 const repo=fileURLToPath(new URL('..',import.meta.url));
-test('run pin hashes the engine kernel, runtime and game-profile contract only, never docs or src/',()=>{
+test('run pin includes the engine and canonical mechanic runtime while excluding unrelated source and docs',()=>{
  const catalog=loadGameProfileCatalog();
  assert.equal('runtimeSources' in catalog,false);
  assert.equal(catalog.runtimeArtifacts.some(a=>a.id==='ashen.source-runtime'),false);
@@ -91,6 +91,8 @@ test('run pin hashes the engine kernel, runtime and game-profile contract only, 
  assert.ok(files.length>=5);assert.equal(files.some(f=>f.startsWith('src/')||f.endsWith('.md')),false);
  const entries=files.map(path=>{const text=readFileSync(repo+path,'utf8');return {path,id:'ashen.kernel-runtime',version:'1.0.0',hash:gameDigest(path.endsWith('.json')?canonicalGameJSON(JSON.parse(text)):text)};});
  assert.equal(kernel[0].hash,gameDigest(entries));
+ const mechanics=catalog.runtimeArtifacts.filter(a=>a.id==='ashen.mechanics-runtime');assert.equal(mechanics.length,1);
+ assert.equal(mechanics[0].path,MECHANIC_RUNTIME_PATH);assert.equal(mechanics[0].hash,gameDigest(collectMechanicsRuntimeArtifacts()));
  assert.equal(catalog.runtimeHash,gameDigest(catalog.runtimeArtifacts));
 });
 test('resumeRun turns a failed profile bind into a refusal instead of a throw',()=>{

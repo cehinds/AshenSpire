@@ -717,6 +717,143 @@ are staged for intake into cehinds/AshenSpire-art and preserved on branch
 
 The original technical illustrations, editable SVG wireframes, and 24 transparent prop-placeholder PNGs in [the map art handoff](docs/design/improve-map-battlefield-art/HANDOFF.md) were authored with Codex under human direction. They are documentation and integration prototypes, not registered production paintings. Their source is the adjacent generator scripts and prop definitions. No third-party artwork or licence is claimed.
 
+Source-art paths in the sections below are relative to the [dedicated art repository](https://github.com/cehinds/AshenSpire-art/tree/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts). Original PNGs, editable JSON, prompts and reviews are retained there; the game keeps only runtime exports.
+
+### Map and battlefield draft paintings (2026-10-17)
+
+Eight original OpenAI-generated paintings under user direction are retained in the dedicated art repository under `art/map-battlefield-drafts/batch-01/`.
+Each source has its exact generation prompt and provenance; the readable manifest
+records dimensions, hashes and review limitations. The scene preview composites
+three unchanged source PNGs. These are unregistered drafts pending palette, alpha,
+canvas and production-intake review. No third-party artwork or license is claimed.
+
+### Map and battlefield draft paintings — batch 02 (2026-10-17)
+
+Ten additional original OpenAI-generated paintings are retained in the dedicated art repository under `art/map-battlefield-drafts/batch-02/`:
+six map props, three night forest layers and one misty forest background.
+Source PNGs, exact prompts, reference provenance, hashes and review limitations
+are retained together. Browser-rendered previews use the editable composition
+recipe and preserve the original source pixels. These remain unregistered drafts;
+no third-party artwork or license is claimed.
+
+### Map and battlefield draft paintings — batch 03 (2026-10-17)
+
+Eight original OpenAI-generated paintings in
+`art/map-battlefield-drafts/batch-03/` add four travel landmarks, separate misty
+tent and arch props, and two ground variants. Exact prompts, source outputs,
+reference provenance and draft QA are retained. Editable preview recipes reuse
+the batch02 misty sky. Sources remain unregistered on the art feature branch;
+no third-party artwork or license is claimed.
+
+### Map atmosphere layers — batch 04 (2026-10-17)
+
+Original editable vector illustrations provide eight translucent color filters,
+three seamless particle patterns and an oversized neutral fog field in
+`art/map-battlefield-drafts/batch-04-atmosphere/`. Browser exports, deterministic
+source scripts and pixel/coverage checks are retained. Two lightning frames and
+one alternate fog texture are original OpenAI-generated paintings with exact
+prompts and provenance. Composition stills and a motion video preserve source
+assets and demonstrate editable placement/timing. These remain unregistered art
+feature drafts; no third-party artwork or license is claimed.
+
+### Regional map and battlefield paintings — batch 05 (2026-10-17)
+
+Thirty-two original OpenAI-generated drafts in
+`art/map-battlefield-drafts/batch-05-regions/` provide twelve grounds, twelve
+independent props and eight backdrops. Existing first-party regional map/combat
+art informed their palettes and materials; exact prompts and reference paths
+are retained with source hashes and measured dimensions. Browser previews
+compose unchanged sources using editable placement and crop recipes. Candidate
+location mappings preserve the existing presentation profile assignments. These
+remain unregistered feature-branch art; no third-party artwork or license is claimed.
+
+### Settlement and regional floor paintings — batch 06 (2026-10-17)
+
+Seventeen original OpenAI-generated drafts in
+`art/map-battlefield-drafts/batch-06-settlements/` add eleven grounds, five
+independent regional buildings and a frozen-inlet backdrop. Existing first-party
+map art and earlier regional drafts informed the palette and material direction.
+Exact prompts, reference paths, original outputs, measured dimensions and hashes
+are retained. Browser previews combine these unchanged sources with earlier
+backdrops and accents through editable recipes. The source library remains
+unregistered feature-branch art; no third-party artwork or license is claimed.
+
+### Hex world authoring module (2026-10-17)
+
+The JSON templates, connected example tiles, schemas and editable SVG overview in
+`art/map-battlefield-drafts/hex-world-module/` were authored with Codex under human
+direction. The diagram's PNG is a browser rendering of its adjacent SVG. Existing
+first-party draft paintings and technical map icons are referenced without new
+image generation or changes to their source files. This remains a proposal module
+with no production world bindings. No third-party artwork or license is claimed.
+
+The map-component catalog sheet in the same module is a browser composition of
+39 existing first-party map icon variants, indexed into 25 object types. Its
+adjacent render script and JSON mappings preserve the original PNG sources.
+No additional painted artwork was generated for this catalog update.
+
+The hex-generation compatibility diagram is an original technical SVG authored
+from the module's generated topology data; its PNG is a browser rendering of that
+SVG. Edge profiles, templates and matching code introduce no third-party artwork.
+
+### Consistent painted map-icon collection — batch 07 (2026-10-17)
+
+Twenty-five original OpenAI-generated transparent map-icon drafts in
+`art/map-battlefield-drafts/batch-07-map-icons/` use a shared first-party art brief
+for camera, palette, materials and lighting. Exact prompts, generated source paths,
+source hashes and measured dimensions are retained with each icon. PNG sources
+are copied unchanged; browser sheets demonstrate the collection and small-size
+contrast. Earlier technical and painted variants remain indexed as inactive
+history. These are unregistered feature-branch drafts; no third-party artwork or
+license is claimed.
+
+### Shared component art direction and corrections — batch 08 (2026-10-17)
+
+Four original OpenAI-generated edits in
+`art/map-battlefield-drafts/batch-08-style-alignment/` correct a frozen ground,
+daylight forest backdrop and two lightning frames using existing first-party
+references. Exact prompts, references, original outputs, hashes and measured
+native dimensions are retained. Sources are copied unchanged; browser sheets
+compose them for review. The adjacent `style-system/` JSON modules document a
+shared art direction, per-role profiles and hash-bound visual reviews for all
+retained component families. Earlier outliers remain indexed as history.
+These are unregistered feature drafts; no third-party artwork or license is claimed.
+
+### Mountain and biome architecture paintings — batch 09 (2026-10-17)
+
+Forty-five original OpenAI-generated source paintings in
+`art/map-battlefield-drafts/batch-09-biome-architecture/` add transparent near and
+faded distant mountain props, desert/jungle/snowy architecture, streets, dungeon
+entrances/floors/interiors, and painted daylight/rain/night environment variants.
+Exact prompts, original generated source paths, native dimensions and hashes are
+retained. PNGs remain byte-identical copies of tool outputs. Browser review sheets
+compose the original paintings with earlier first-party weather/filter layers.
+Editable JSON records responsive placement and any preview ambient grading;
+neutral city/castle/entrance props are not claimed as painted night relights.
+These remain unregistered feature-branch drafts; no third-party artwork or
+license is claimed.
+
+### Close-location layered paintings — batch 10 (2026-10-17)
+
+Eighty-six original OpenAI image_gen paintings in
+`art/map-battlefield-drafts/batch-10-location-streets/` provide 25 opaque
+backdrops, 19 transparent ground planes and 42 transparent nearby props.
+Exact prompts, original generated output paths, native dimensions and SHA-256
+records accompany unchanged source PNGs. Hash-bound reviews are indexed in
+`style-system/audit-location-streets.json`. The [editable modules](https://github.com/cehinds/AshenSpire-art/blob/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts/batch-10-location-streets/modules/index.json)
+define 28 layered scenes and [12 Crownfall intro-map art candidates](https://github.com/cehinds/AshenSpire-art/blob/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts/batch-10-location-streets/modules/intro-map.json).
+Preview crops and declared viewport-edge prop framing do not alter source files.
+These remain unregistered feature-branch drafts; no third-party artwork or
+license is claimed.
+
+### Separate throne-room floor decoration (2026-10-17)
+
+One original OpenAI image_gen transparent rug PNG in `art/map-battlefield-drafts/batch-11-floor-props/`, with exact prompt, native1672×941 dimensions, original output path and SHA-256 provenance. Original bytes preserved. The recipe combines existing bare ground, separate throne, room backdrop and independent translucent day/night filters. No production binding or third-party artwork is claimed.
+
+### Runtime layered environment exports (2026-10-17)
+
+`assets-display/layered/` contains95 native-size WebP derivatives of the reviewed original PNG components in `art/map-battlefield-drafts/`. Source paths and SHA-256 hashes, encoded hashes and dimensions are recorded in its manifest. `tools/layered-environment-build.mjs` uses Sharp/libwebp to encode these separate layers without resizing. They introduce no third-party artwork; original AI-generated source provenance remains alongside the PNGs.
+
 ### Layered card-art runtime cutouts (2026-10-18)
 
 The 44 PNGs in `assets-display/card-cutouts/` are byte-for-byte exports of

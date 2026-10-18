@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {withLayeredArt} from './layered-art.mjs';
 // tools/asset-pack.mjs — the pack format: a content-addressed object store and
 // one hash-pinnable index per pack, written from the trees in this repository.
 //
@@ -187,7 +188,7 @@ export function planPacks(root = ROOT, packs = PACKS, { source: from = 'auto' } 
   if (!SOURCES.includes(from)) return { packs: {}, fonts: null, problems: [`unknown source ${JSON.stringify(from)} (one of ${SOURCES.join(', ')})`] };
   const manifestFile = resolve(root, MANIFEST_PATH);
   if (!existsSync(manifestFile)) return { packs: {}, fonts: null, problems: [`${MANIFEST_PATH} is missing — node tools/art-manifest.mjs --write`] };
-  const manifest = withAlternativeArt(JSON.parse(readFileSync(manifestFile, 'utf8')), root);
+  const manifest = withLayeredArt(withAlternativeArt(JSON.parse(readFileSync(manifestFile, 'utf8')), root),root);
   if (manifest.schema !== 2) problems.push(`${MANIFEST_PATH} is schema ${manifest.schema}; the pack format needs schema 2 (node tools/art-manifest.mjs --write)`);
   let sources = null;
   const treeSources = () => (sources = sources || new Map(commonSources(root).map((c) => [c.id, c.source])));
@@ -542,7 +543,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const packs = packArg ? packArg.split(',').filter(Boolean) : PACKS;
   try {
     if (args.includes('--check')) {
-      const manifest = withAlternativeArt(JSON.parse(readFileSync(resolve(ROOT, MANIFEST_PATH), 'utf8')));
+      const manifest = withLayeredArt(withAlternativeArt(JSON.parse(readFileSync(resolve(ROOT, MANIFEST_PATH), 'utf8'))),ROOT);
       const problems = verifyPacks(out, { manifest, packs });
       if (problems.length) {
         console.error(`asset-pack: FAIL — ${problems.length} problem(s) in ${posix(relative(process.cwd(), out)) || '.'}:`);

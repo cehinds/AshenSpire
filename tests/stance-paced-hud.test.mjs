@@ -14,9 +14,9 @@ const registries = createRegistries({ ...contentBundle,
 const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
 const start = screen.indexOf('  function snapEnt('), end = screen.indexOf('  function takeSnapshot(', start);
 assert.ok(start > 0 && end > start);
-const displayedCall = screen.match(/\? (effectiveEvasion\(combat, v[^\n]*?\)) : null/)[1];
+const displayedCall = screen.match(/evasion: (combat\.combatExpansionVersion[^\n]*?) \},/)[1];
 
-test('paced HUD uses canonical plated armour, buckler, attributes and enemy definition with beat-local Evasion', () => {
+test('paced HUD displays beat-local Evasion stacks, independent of canonical armour, attributes and enemy AC', () => {
   const slots = registries.equipment.slots;
   const armour = slots.find(slot => slot.kinds.includes('armor'));
   const shield = slots.find(slot => slot.kinds.includes('shield'));
@@ -32,16 +32,18 @@ test('paced HUD uses canonical plated armour, buckler, attributes and enemy defi
   for (const entity of [combat.player, combat.enemies[0]]) {
     entity.statuses.evade = { stacks: 1 };
     const v = snapshot(entity, true), expected = effectiveEvasion(combat, entity);
+    assert.ok(expected > 1, 'fixture has additional base or equipment Evasion');
     entity.statuses.evade.stacks = 3;
     const shown = () => vm.runInNewContext(displayedCall, { combat, entity, v, effectiveEvasion });
-    assert.equal(shown(), expected, 'the live rule matches the earlier paced beat');
+    assert.equal(shown(), 1, 'the displayed count belongs to the earlier paced beat');
     assert.equal(effectiveEvasion(combat, entity), expected + 6, 'later live stacks do not leak into the beat');
     v.statuses.evade.stacks = 2;
-    assert.equal(shown(), expected + 3, 'the displayed value changes with the next beat');
+    assert.equal(shown(), 2, 'the displayed count changes with the next beat');
   }
   const v = snapshot(combat.player, true);
   const withShield = vm.runInNewContext(displayedCall, { combat, entity: combat.player, v, effectiveEvasion });
   loadout.sets[shield.id] = [null];
   const withoutShield = vm.runInNewContext(displayedCall, { combat, entity: combat.player, v, effectiveEvasion });
-  assert.notEqual(withShield, withoutShield, 'the actor context includes the active buckler');
+  assert.equal(withShield, 3, 'the live three-stack snapshot is used');
+  assert.equal(withShield, withoutShield, 'equipment AC is not printed as Evasion stacks');
 });

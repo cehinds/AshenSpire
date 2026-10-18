@@ -310,7 +310,7 @@ test('a skipped timeline still buzzes the hit and the turn start it jumped past,
     { type: 'hpLost', targetId: 'player', amount: 6, cause: 'attack' },
     { type: 'playerTurnStart', turn: 2 },
   ];
-  const ctx = { layer: { closest: () => null }, anchorFor: () => null, onFlush: () => {}, onBeatApplied: () => {} };
+  const ctx = { layer: null, anchorFor: () => null, onFlush: () => {}, onBeatApplied: () => {} };
   const stub = stubNavigator();
   const before = haptic.sink;
   const ids = [];
@@ -439,7 +439,7 @@ test('a paced co-op timeline buzzes only for its own seats; solo unchanged', asy
     haptic.sink = (id) => ids.push(id);
     setAnimSpeed(speed);
     try {
-      const ctx = { layer: { closest: () => null }, anchorFor: () => null, onFlush: () => {}, onBeatApplied: () => {}, ...(isLocalPlayer ? { isLocalPlayer } : {}) };
+      const ctx = { layer: null, anchorFor: () => null, onFlush: () => {}, onBeatApplied: () => {}, ...(isLocalPlayer ? { isLocalPlayer } : {}) };
       await new Promise((resolve) => {
         playTimeline(events, ctx, resolve);
         if (skip) { fire('pointerdown'); fire('pointerup'); }

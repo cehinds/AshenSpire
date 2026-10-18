@@ -1,0 +1,104 @@
+[
+  {
+    "name": "module-defaults",
+    "when": {
+      "bindingQuery": {
+        "attachments": [
+          {
+            "ownerId": "actor",
+            "sourceInstanceId": "actor",
+            "kind": "entity",
+            "tags": [
+              "combat:stance"
+            ]
+          }
+        ],
+        "moduleParameters": {
+          "combat.stance": {
+            "effectivenessMultiplier": 1.1,
+            "discount": 1,
+            "minimumCost": 1
+          }
+        },
+        "query": "parameters"
+      }
+    },
+    "then": {
+      "value": {
+        "effectivenessMultiplier": 1.1,
+        "discount": 1,
+        "minimumCost": 1
+      }
+    }
+  },
+  {
+    "name": "source-disable",
+    "when": {
+      "bindingQuery": {
+        "attachments": [
+          {
+            "ownerId": "actor",
+            "sourceInstanceId": "actor",
+            "kind": "entity",
+            "tags": [
+              "combat:stance"
+            ],
+            "mechanicBindings": [
+              {
+                "tag": "combat:stance",
+                "enabled": false
+              }
+            ]
+          }
+        ],
+        "moduleParameters": {
+          "combat.stance": {
+            "effectivenessMultiplier": 1.1,
+            "discount": 1,
+            "minimumCost": 1
+          }
+        },
+        "query": "parameters"
+      }
+    },
+    "then": {
+      "error": "one active binding"
+    }
+  },
+  {
+    "name": "invalid-param",
+    "when": {
+      "bindingQuery": {
+        "attachments": [
+          {
+            "ownerId": "actor",
+            "sourceInstanceId": "actor",
+            "kind": "entity",
+            "tags": [
+              "combat:stance"
+            ],
+            "mechanicBindings": [
+              {
+                "tag": "combat:stance",
+                "parameters": {
+                  "unknown": 1
+                }
+              }
+            ]
+          }
+        ],
+        "moduleParameters": {
+          "combat.stance": {
+            "effectivenessMultiplier": 1.1,
+            "discount": 1,
+            "minimumCost": 1
+          }
+        },
+        "query": "parameters"
+      }
+    },
+    "then": {
+      "error": "unknown parameter"
+    }
+  }
+]
