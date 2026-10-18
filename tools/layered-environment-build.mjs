@@ -3,10 +3,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
-import {fileURLToPath} from 'node:url';
-import {exportLocationScenes} from '../art/map-battlefield-drafts/batch-10-location-streets/scenes.mjs';
-import {loadStyleLibrary,checkStyleAsset} from '../art/map-battlefield-drafts/style-system/art-style.mjs';
-const root=fileURLToPath(new URL('../',import.meta.url)),drafts=path.join(root,'art/map-battlefield-drafts'),base=path.join(drafts,'batch-10-location-streets');
+import {fileURLToPath,pathToFileURL} from 'node:url';
+// The authoring sources live in cehinds/AshenSpire-art (art/map-battlefield-drafts/), not in this repository.
+// A paired checkout of it is read from ASHEN_ART_REPO_DIR, or the sibling ../AshenSpire-art. The committed
+// exports under assets-display/layered/ are what the game ships; this tool only re-derives them.
+const root=fileURLToPath(new URL('../',import.meta.url));
+const artRepo=path.resolve(process.env.ASHEN_ART_REPO_DIR||path.join(root,'..','AshenSpire-art'));
+const drafts=path.join(artRepo,'art/map-battlefield-drafts'),base=path.join(drafts,'batch-10-location-streets');
+if(!fs.existsSync(path.join(drafts,'catalog.json'))){
+ console.error(`layered-environment-build: needs a checkout of cehinds/AshenSpire-art with art/map-battlefield-drafts/ at ${artRepo}\nClone it as a sibling of this repository (../AshenSpire-art) or set ASHEN_ART_REPO_DIR to its path. Until AshenSpire-art PR #26 merges, use its branch intake/ashenspire-pr-2082.`);
+ process.exit(2);
+}
+const {exportLocationScenes}=await import(pathToFileURL(path.join(base,'scenes.mjs')));
+const {loadStyleLibrary,checkStyleAsset}=await import(pathToFileURL(path.join(drafts,'style-system/art-style.mjs')));
 const require=createRequire(import.meta.url),sharp=require('sharp'),data=exportLocationScenes(),library=loadStyleLibrary();
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const records={},sources={},translated=new Map();
@@ -28,7 +37,7 @@ async function component(layer){
   const sourceBytes=fs.readFileSync(input);if(hash(sourceBytes)!==source.sha256)throw Error('Changed source '+relative);
   if(catalogOnly){const old=prior[id];if(!old||old.sourceSha256!==source.sha256||!fs.existsSync(output)||hash(fs.readFileSync(output))!==old.sha256)throw Error('Re-encode required for '+id);}
   else await sharp(sourceBytes).webp({quality:layer.role==='prop'?88:82,alphaQuality:100,effort:6,lossless:layer.role==='filter'||layer.role==='particles'}).toFile(output);
-  const bytes=fs.readFileSync(output);records[id]={sha256:hash(bytes),bytes:bytes.length,source:path.relative(root,input),sourceSha256:source.sha256,width:source.width,height:source.height};
+  const bytes=fs.readFileSync(output);records[id]={sha256:hash(bytes),bytes:bytes.length,source:path.relative(artRepo,input).split(path.sep).join('/'),sourceSha256:source.sha256,width:source.width,height:source.height};
   sources[id]={width:source.width,height:source.height,visibleBoundsAt32:source.visibleBoundsAt32,medianCenterHorizonY:source.medianCenterHorizonY};translated.set(input,id);
  }
  clone.asset=translated.get(input);delete clone.editableSource;return clone;
