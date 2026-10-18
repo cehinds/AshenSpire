@@ -44,7 +44,7 @@ import { usesSingleBreakMeter } from '../model/breakMeter.js';
 import * as Triggers from './triggers.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
-import { flaskSlotCap, chargeFlaskDefinition } from '../model/gracerefill.js';
+import { acquireFlask, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
@@ -333,6 +333,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   const before = target.block || 0;
   target.block = receipt.blockRemaining;
   if (fixCoreEnabled(ctx)) {
+    target.barrier = Math.max(0, (target.barrier || 0) - receipt.barrierMitigated);
     if (target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
     if (target.persistentPoise) target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated);
   }
@@ -340,7 +341,8 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   ctx.emit('damageDealt', { sourceId: source?.id || null, targetId: target.id,
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
     poiseMitigated: receipt.poiseMitigated, wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
-    advantage: receipt.advantage, blockRemaining: target.block, isAttack: true });
+    advantage: receipt.advantage, blockRemaining: target.block, barrierRemaining: target.barrier,
+    wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
   if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
   if (receipt.interrupted && target.kind === 'enemy' && target.alive) {
@@ -918,7 +920,7 @@ export function gainBlock(ctx, entity, base, card = null) {
     return amount;
   }
   if (!entity.alive) return 0;
-  if (fixCoreEnabled(ctx) && card?.cardId) return gainBlockAmount(ctx, entity, computeBlockGain(ctx, entity, base, card), card);
+  if (fixCoreEnabled(ctx) && !card?.syntheticDefense && (card?.cardId || card?.moveId)) return gainBlockAmount(ctx, entity, computeBlockGain(ctx, entity, base, card), card);
   if (ctx.combatExpansionVersion === 2) {
     const split = computeSpellDefenseGain(ctx, entity, base, card);
     if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
@@ -947,7 +949,7 @@ function gainBlockAmount(ctx, entity, amount, card = null, wardProvenance = fals
   }
   reconcileWardBlock(entity);
   entity.block += amt;
-  if (fixCoreEnabled(ctx) && amt > 0 && card?.cardId) {
+  if (fixCoreEnabled(ctx) && amt > 0 && !card?.syntheticDefense && (card?.cardId || card?.moveId)) {
     syncWardMaximum(ctx, entity); syncPoiseMaximum(ctx, entity);
     Control.restorePersistentWard(ctx, entity, amt, { source: 'block-card', overflow: false, modifierPercent: 0 });
     Control.restorePersistentPoise(ctx, entity, amt, { source: 'block-card', overflow: false });
@@ -1060,7 +1062,7 @@ export function staggerEnemy(ctx, enemy, options = {}) {
   enemy.skipNextTurn = true;
   if (fixCoreEnabled(ctx)) {
     statuses.applyStatus(ctx, enemy, 'staggered', 1, enemy);
-    for (const [id, amount] of Object.entries(fixCoreRules(ctx).statuses.staggerRiders)) statuses.applyStatus(ctx, enemy, id, amount, enemy);
+    for (const [id, amount] of Object.entries(fixCoreRules(ctx, enemy).statuses.staggerRiders)) statuses.applyStatus(ctx, enemy, id, amount, enemy);
   }
   if (ctx.foundation) enemy.impactProtectedUntil = ctx.turn + ctx.foundation.rules.impact.protectionTurns;
   enemy.intent = { kind: 'staggered', moveId: null };
@@ -1544,7 +1546,7 @@ function runOpcode(ctx, action, eff) {
         const base = evalNum(ctx, action, eff.amount, 0, t);
         // Stance entry and restoration already own their lane and exact budget.
         if (action.card?.proposalProtectionFloor || ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
-          gainBlockAmount(ctx, t, Math.max(0, Math.floor(base)), { ...action.card, cardId: null }, false);
+          gainBlockAmount(ctx, t, Math.max(0, Math.floor(base)), { ...action.card, cardId: null, syntheticDefense: true }, false);
         } else gainBlock(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
       }
       break;
@@ -2015,8 +2017,6 @@ function runRunOpcode(ctx, action, eff) {
       break;
     }
     case 'addFlask': {
-      const slots = flaskSlotCap(ctx.registries.balance);
-      if (run.flasks.length >= slots) break;
       let flaskId = eff.id || null;
       if (!flaskId && eff.random) {
         const pool = ctx.registries.flasks.ids();
@@ -2024,8 +2024,7 @@ function runRunOpcode(ctx, action, eff) {
         flaskId = ctx.rng.pick('flaskRewards', pool);
       }
       if (flaskId) {
-        ctx.registries.flasks.get(flaskId); // throws on dangling id
-        run.flasks.push({ flaskId });
+        acquireFlask(ctx.registries, run, flaskId);
       }
       break;
     }

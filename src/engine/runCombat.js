@@ -1,4 +1,4 @@
-import { gameProfileRatingReceipt } from '../model/gameProfileRun.js';
+import { gameProfileRatingReceipt, gameProfileEffectiveAttributes } from '../model/gameProfileRun.js';
 import { configuredCombat, configuredModule } from './gameProfileCombat.js';
 // engine/runCombat.js — the one door a run's fight is built through.
 //
@@ -128,6 +128,7 @@ export function createRunCombat({
   if (!configuredCombat(run)) stampSkillBonuses(registries, run);
   const knowledgeRun = run.enemyKnowledgeState ? { ...run, enemyKnowledgeState: structuredClone(run.enemyKnowledgeState) } : null;
   if (knowledgeRun) openKnowledgeEncounter(knowledgeRun, run.mapNodeId || 'combat', encounter?.id || enemyIds.join(','), enemyIds, enemyKnowledgeProfile);
+  const configuredRatings = configuredCombat(run) ? gameProfileRatingReceipt(registries, run) : null;
   const combat = createCombat({
     ...(knowledgeRun ? { knowledge: { rules: run.enemyKnowledgeRules, encounter: knowledgeRun.enemyKnowledgeState.currentEncounter,
       bankable: knowledgeRun.enemyKnowledgeState.bankable, profiles: { player: mergeEnemyKnowledge(knowledgeRun.enemyKnowledgeState.pending, enemyKnowledgeProfile) } } } : {}),
@@ -159,7 +160,9 @@ export function createRunCombat({
     registries,
     rng,
     player: { ...runCombatPlayer(run),
-      ...(configuredCombat(run) ? { ratings: gameProfileRatingReceipt(registries,run).totals } : {}),
+      ...(configuredRatings ? { ratings: configuredRatings.totals, ratingSources: configuredRatings.sources,
+        attributes: gameProfileEffectiveAttributes(registries, run),
+        baseEvasionBonus: configuredRatings.baseEvasionBonus, basePrecisionBonus: configuredRatings.basePrecisionBonus } : {}),
       ...player },
     enemyIds,
     enemyLevels: enemyLevelsForFight(registries, run, enemyIds, encounter),

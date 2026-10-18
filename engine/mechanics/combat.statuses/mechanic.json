@@ -82,6 +82,9 @@
                   }
                 },
                 "additionalProperties": false
+              },
+              "description": {
+                "type": "string"
               }
             },
             "required": [
@@ -113,6 +116,9 @@
                   }
                 },
                 "additionalProperties": false
+              },
+              "description": {
+                "type": "string"
               }
             },
             "required": [
@@ -144,6 +150,9 @@
                   }
                 },
                 "additionalProperties": false
+              },
+              "description": {
+                "type": "string"
               }
             },
             "required": [

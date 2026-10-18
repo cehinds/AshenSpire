@@ -230,7 +230,12 @@
       }
     },
     "dodgeRoll": {
-      "params": {},
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": false
+        }
+      },
       "description": "Rolls the dodge check and grants temporary guard on success.",
       "reference": "legacy",
       "legacy": {
@@ -310,6 +315,22 @@
         },
         "buildup": {
           "type": "value",
+          "required": false
+        },
+        "key": {
+          "type": "string",
+          "required": false
+        },
+        "cardType": {
+          "type": "string",
+          "required": false
+        },
+        "abilityKind": {
+          "type": "string",
+          "required": false
+        },
+        "cardTag": {
+          "type": "string",
           "required": false
         }
       },
@@ -524,6 +545,10 @@
         },
         "position": {
           "type": "string",
+          "required": false
+        },
+        "target": {
+          "type": "entityRef",
           "required": false
         }
       },
@@ -927,6 +952,23 @@
         "file": "src/engine/actions.js",
         "symbol": "runOpcode case refillFlasks"
       }
+    }
+  },
+  "effectEnvelope": {
+    "if": {
+      "type": "object",
+      "required": false,
+      "description": "Live-engine predicate, evaluated at the existing effect boundary; not portable service syntax."
+    },
+    "oncePerTurn": {
+      "type": "string",
+      "required": false,
+      "description": "Live-engine per-owner gate key."
+    },
+    "tags": {
+      "type": "array",
+      "required": false,
+      "description": "Live-engine effect classification tags."
     }
   }
 }

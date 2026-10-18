@@ -303,7 +303,7 @@ test that reads it. The oversized #1781 files were removed from the tree on
 
 Full walkthroughs live in [DEVELOPER.md](DEVELOPER.md). Short version:
 
-- **Card:** add one object to `src/content/cards/<class>.js` — id, name, cost, type, rarity, effect opcodes, text template, upgrade override.
+- **Card:** add a row to `content/source/cards/<class>Cards.json` (`heraldCards`, `reaverCards`, `starseerCards`, `armamentCards`, `colorlessCards`, `corruptedCards`) — id, name, cost, type, rarity, effect opcodes, text template, upgrade override — then `node tools/content-build.mjs` (launch does it). `src/content/cards/<class>.js` is a re-export, not a place to author; `rogue.js` and `coop.js` hold builder functions and stay JS.
 - **Relic:** add a row to `content/source/relics.json` — id, rarity, passives, text template — then `node tools/content-build.mjs` (launch does it). Its combat trigger is a property rule sharing the id (a `nodes.csv` row + `nodeEffects.json` + a `tagging.csv` line; DEVELOPER.md "Add a relic"). `src/content/relics.js` is a re-export, not a place to author. Flasks and stances: `flasks.json`, `stances.json` the same way.
 - **Status:** add a row to `content/source/statuses.json` — stack mode, decay, optional meter/modifiers/hooks — then `node tools/content-build.mjs` (launch does it). No engine code. `src/content/statuses.js` only joins the compiled rows with the expansion rows.
 - **Enemy:** add to `src/content/enemies/act<N>.js` — hp range, poiseMax, weighted move table with `maxConsecutive`.
