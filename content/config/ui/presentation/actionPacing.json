@@ -1,0 +1,17 @@
+{
+  "motion": {
+    "intentDelayMs": 500,
+    "actionWordMs": 500,
+    "afterSpriteMs": 500,
+    "reactionDelayMs": 500,
+    "spritePlaybackRate": 0.5
+  },
+  "behavior": {
+    "autoCombat": false,
+    "combatSpeed": 1,
+    "combatPreference": "offense",
+    "speedMinimum": 0.25,
+    "speedMaximum": 8,
+    "delayMaximumMs": 5000
+  }
+}

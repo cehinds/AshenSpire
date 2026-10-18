@@ -10,6 +10,7 @@ import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 // Settings tab. Each row declares its default so stored settings stay sparse.
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
+import { ACTION_PACING, AUTOMATION_DEFAULTS } from '../../model/autoCombatPolicy.js';
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
 import { advancedSubgroups, statsSection, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
 import { statsTopicPreview, statsExampleClasses, STATS_EXAMPLE_CLASS_KEY } from '../models/StatsPreviewModel.js';
@@ -361,6 +362,16 @@ const ROWS = [
   // combat stops being a dead end.
   { cat: 'Combat', key: 'useSprites', def: true, label: t('settings.row.useSprites'),
     note: tFull('settings.row.useSprites') },
+  { cat: 'Combat', key: 'autoCombat', def: AUTOMATION_DEFAULTS.autoCombat, label: 'Auto combat',
+    note: 'Play legal affordable cards automatically. Pauses while choosing targets, editing the deck, or using a dialog.' },
+  { cat: 'Combat', key: 'combatSpeed', type: 'number', def: AUTOMATION_DEFAULTS.combatSpeed,
+    min: AUTOMATION_DEFAULTS.speedMinimum, max: AUTOMATION_DEFAULTS.speedMaximum, step: 0.25, label: 'Combat speed ×',
+    note: 'Scales action waits and sprite playback together. Does not change combat results.' },
+  { cat: 'Combat', key: 'combatPreference', type: 'choice', def: AUTOMATION_DEFAULTS.combatPreference,
+    choices: ['offense', 'defense'], label: 'Auto combat preference', note: 'Prioritize offensive or defensive cards using known information.' },
+  { cat: 'Combat', key: 'combatActionDelay', type: 'number', def: ACTION_PACING.intentDelayMs,
+    min: 0, max: AUTOMATION_DEFAULTS.delayMaximumMs, step: 50, label: 'Action delay (ms)',
+    note: 'Wait after intent and reaction words. Default 500 ms, before applying the combat speed multiplier.' },
   { cat: 'Combat', key: 'animSpeed', type: 'choice', def: 'auto',
     choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: t('settings.row.animSpeed'),
     note: tFull('settings.row.animSpeed') },
