@@ -254,3 +254,9 @@ test('an ordinary enemy pose holds past its original settle deadline', (t) => {
     stage.dispose();
   });
 });
+
+test('a lite (phone) tier does not drop the shake; only the setting does', () => {
+  const main = src('src/main.js');
+  assert.match(main, /toggle\('no-shake', settings\.screenShake === false\)/);
+  assert.doesNotMatch(main, /toggle\('no-shake'[^)]*quality/);
+});
