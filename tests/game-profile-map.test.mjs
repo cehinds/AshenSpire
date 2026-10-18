@@ -13,7 +13,7 @@ import { compileGameProfiles } from '../tools/game-config.mjs';
 import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
 
 function setup(routes = {}) {
-  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@1.0.0', modules: { routes } });
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { routes } });
   const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ seed: 73, classId: 'reaver', registries: reg });
   return { reg, run };
@@ -98,7 +98,7 @@ test('branched map choices survive a run round trip without regeneration', () =>
 test('route source defaults bind branch width and invalid dimensions fail before play', () => {
   const { catalog, authors } = compileGameProfiles();
   const changed = structuredClone(catalog);
-  changed.packs['ashen.core-content@1.0.0'].content.routes.branchColumns = 5;
+  changed.packs['ashen.core-content@2.0.0'].content.routes.branchColumns = 5;
   const profile = resolveGameAuthor(authors.core, changed);
   assert.equal(profile.modules.routes.branchColumns, 5);
   assert.equal(profile.content.routes.branchColumns, 5);

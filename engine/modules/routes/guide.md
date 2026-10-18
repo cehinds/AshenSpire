@@ -2,7 +2,7 @@
 
 Build a deterministic three-act map with a configured route depth, branching lanes, shared rest levels and a boss level. Provide non-route activities when route generation is off.
 
-**Status:** Listed in `ashen.core@1.0.0`.
+**Status:** Listed in `ashen.core@2.0.0`.
 Runtime scope: Seeded routes with eight levels by default (seven pre-boss levels plus the boss). Each act starts at a single shared Rest node at depth 1, then branches into three lanes. A second shared Rest sits at depth 6; all paths merge at the final boss. Fog of war preserves explored ground and reveals the next choices. Elites and bosses cannot occur before depth 3. Route-free runs retain the activity launcher.
 
 ## Authoring example
@@ -12,7 +12,7 @@ Add one override to `games/ashenspire/game.json`; leave other bundled modules in
 ```json
 {
   "formatVersion": 1,
-  "core": "ashen.core@1.0.0",
+  "core": "ashen.core@2.0.0",
   "modules": {
     "routes": false
   }
