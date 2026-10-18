@@ -1442,25 +1442,37 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   if (terminalResume) return terminalResume;
   const liveRegistries = registries, liveGameProfile = registryGameProfile;
   const refused = () => {
+    // rebuildRegistries sets registryGameProfile before it can throw, so the
+    // profile is restored on every refusal, not only when the registries moved.
+    registryGameProfile = liveGameProfile;
     if (registries !== liveRegistries) {
       registries = liveRegistries;
-      registryGameProfile = liveGameProfile;
       configureTooltipGlossary(registries);
       setClassGlyphs(registries.classes.all());
     }
     return onRefused(slot);
   };
+  // A refusal lands first (the title, or the in-run Load door), then says why:
+  // the Settings notice when a host is mounted, else the title's failure banner,
+  // the same fallback the run-start path uses. The save is never touched.
+  const refuseWith = error => {
+    const message = `Saved game configuration could not be restored: ${error.message}`;
+    dlog('ERROR', `resume refused: ${error.message}`);
+    const landed = refused();
+    if (!showSettingsNotice(message, 'profile')) failureBanner(`run:resume:${error.message}`, 'THIS SAVE COULD NOT BE RESTORED', ` · ${error.message}`);
+    return landed;
+  };
   let savedGameProfile;
   try { savedGameProfile = saves.peekRunGameProfile(slot); }
-  catch (error) {
-    showSettingsNotice(`Saved game configuration could not be restored: ${error.message}`, 'profile');
-    return refused();
-  }
+  catch (error) { return refuseWith(error); }
   const loadGameProfile = savedGameProfile || resolveGameProfile('current');
-  const authoredRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, loadGameProfile)), loadGameProfile);
+  let authoredRegistries;
+  try { authoredRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, loadGameProfile)), loadGameProfile); }
+  catch (error) { return refuseWith(error); }
   let loaded = saves.loadRun(authoredRegistries, slot);
   if (!loaded) return refused();
-  rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} }, null, loadGameProfile);
+  try { rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} }, null, loadGameProfile); }
+  catch (error) { return refuseWith(error); }
   loaded = saves.loadRun(registries, slot);
   if (!loaded) return refused();
   // The load is certain from here; a caller that must tear down what the
