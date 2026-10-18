@@ -5,11 +5,7 @@
 // the original import path and names (same signatures, same semantics) so no
 // importer had to change.
 
-export {
-  registerModal,
-  modalOpen,
-  topModal,
-  openModals,
-  onModalsClosed,
-  resetModalState,
-} from './modalManager.js';
+// tools/bundle.mjs has no `export ... from`: import, then re-export the local
+// bindings on one line.
+import { registerModal, modalOpen, topModal, openModals, onModalsClosed, resetModalState } from './modalManager.js';
+export { registerModal, modalOpen, topModal, openModals, onModalsClosed, resetModalState };
