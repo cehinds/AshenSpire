@@ -1,4 +1,7 @@
-import { fixCoreEnabled, protectionReceipt, damageReceipt } from '../model/fixCoreMechanics.js';
+import { attackHitPreview } from './stanceHit.js';
+import { sourceRatingValue } from '../model/combatRatings.js';
+import { sameStance, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
+import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt } from '../model/fixCoreMechanics.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { cardPreparationCategory } from '../model/cardClassification.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
@@ -24,6 +27,8 @@ export function configuredStance(carrier) {
 }
 export function setProfileStance(ctx, entity, carrier) {
   if (!configuredCombat(ctx)) return false;
+  if (fixCoreEnabled(ctx) && carrier && carrier.fixCoreSameStance === undefined) carrier.fixCoreSameStance = sameStance(entity, carrier);
+  if (fixCoreEnabled(ctx)) entity.matchingStanceCardMultiplier = carrier?.fixCoreSameStance ? fixCoreRules(ctx).stance.effectivenessMultiplier - 1 : 0;
   const previous=entity.combatStance;
   const rule = configuredModule(ctx, 'stances');
   const stance = configuredStance(carrier);
@@ -54,7 +59,8 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const defending = configuredStance(defensiveCombatStance(ctx,target,carrier));
   const advantage = !!stances?.include?.includes(attacking)
     && !!stances?.matchups?.[attacking]?.includes(defending);
-  let raw = Math.max(0, Math.floor(base + rating(source, 'ar') * (effects?.attackRatingWeight || 0)));
+  let raw = Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? sourceRatingValue(ctx, source, 'ar') : rating(source, 'ar')) * (effects?.attackRatingWeight || 0)) * stanceEffectiveness(ctx, source, carrier)));
+  if (fixCoreEnabled(ctx) && target?.statuses?.vulnerable?.stacks > 0) raw = Math.floor(raw * fixCoreRules(ctx).statuses.vulnerabilityMultiplier);
   if(proposal && target) raw=proposalHitPlan(ctx,source,target,raw,carrier).amount;
   const defense = stanceMitigation(ctx, attacking, defending);
   let amount = Math.max(0, Math.floor(raw * (advantage ? stances.advantageMultiplier ?? 1 : 1) * defense.multiplier));
@@ -65,6 +71,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
       + (rating(source, stances.accuracyStat || 'ar') - rating(target, stances.evasionStat || 'dr'))
         * (stances.accuracyWeight ?? 0.02))) : 1;
   hitChance=targeting.unavoidable ? 1 : Math.max(0.05,Math.min(1,hitChance+targeting.accuracyDelta/100));
+  if (fixCoreEnabled(ctx)) hitChance = (attackHitPreview(ctx, source, target, carrier)?.hitChance ?? 100) / 100;
   const evaded = roll !== null && roll >= hitChance;
   if (evaded) amount = 0;
   else if (evade) amount = Math.floor(amount * (stances.evadeFailureMultiplier ?? 2));
@@ -93,8 +100,8 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   }
   return { raw, wardMitigated,
     damageReceipt: damageReceipt(target?.id, [{incoming,physical:magical ? 0 : incoming,magical:magical ? incoming : 0,blocked,wardReduced:wardMitigated,poiseReduced:poiseMitigated,hpLoss:amount,sources}]),
-    hitChance, uncertain: evade && roll === null,
-    hpLossBounds: evade ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated,
+    hitChance, uncertain: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) && roll === null,
+    hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated,
     blockRemaining: Math.max(0, (target?.block || 0) - blocked), evaded, advantage,
     defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,
     attackStance: attacking, defenseStance: defending,
@@ -105,8 +112,9 @@ export function profileCardCosts(ctx, def) {
   const resources = configuredModule(ctx, 'resources');
   const include = resources?.include || [];
   const authored = def.resourceCosts || def.costs || {};
-  const sp = def.cost==='X' && include.includes('sp') ? Math.max(0,ctx.player?.stamina ?? ctx.player?.energy ?? 0) : authored.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : 0);
-  const mp = authored.mp ?? def.manaCost ?? 0;
+  const baseSp = def.cost==='X' && include.includes('sp') ? Math.max(0,ctx.player?.stamina ?? ctx.player?.energy ?? 0) : authored.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : 0);
+  const sp = fixCoreEnabled(ctx) ? stanceStaminaCost(baseSp, ctx.player, def, ctx) : baseSp;
+  const mp = stanceManaCost(authored.mp ?? def.manaCost ?? 0, ctx.player, def, ctx);
   if ((!include.includes('sp') && sp > 0) || (!include.includes('mp') && mp > 0)) {
     throw new Error(`Card ${def.id || 'unknown'} requires an authored disabled-resource variant`);
   }

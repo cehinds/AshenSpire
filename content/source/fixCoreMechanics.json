@@ -33,7 +33,8 @@
       "sweep": 1
     },
     "stanceMinimum": 1,
-    "stanceMaximum": 1.5
+    "stanceMaximum": 1.5,
+    "stanceAdvantageBonus": 0.25
   },
   "perception": {
     "baseDC": 5,
@@ -49,6 +50,22 @@
     "staggerRiders": {
       "weak": 1,
       "vulnerable": 1
+    },
+    "overrides": {
+      "weak": {
+        "stackMode": "add",
+        "modifiers": {}
+      },
+      "vulnerable": {
+        "stackMode": "add",
+        "modifiers": {
+          "damageTakenMult": 1.25
+        }
+      },
+      "staggered": {
+        "stackMode": "add",
+        "modifiers": {}
+      }
     }
   },
   "enemyHealBlockCost": 3

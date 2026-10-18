@@ -1,3 +1,4 @@
+import { fixCoreEnabled, fixCoreRules } from './fixCoreMechanics.js';
 import { gameProfileRatingReceipt } from './gameProfileRun.js';
 import { stanceRatingBonus } from './stanceRules.js';
 import { equippedPieces } from './loadout.js';
@@ -563,11 +564,12 @@ export function ratingReceipt(registries, run, config) {
 export function ratingValue(ctx, entity, id) {
   let value = (entity?.ratings?.[id] || 0) + stanceRatingBonus(ctx, entity, id);
   for (const [status, instance] of Object.entries(entity?.statuses || {})) value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
+  if (fixCoreEnabled(ctx) && id === 'ar' && entity?.statuses?.weak?.stacks > 0) value *= fixCoreRules(ctx).statuses.weakARMultiplier;
   return Math.max(0, value);
 }
 
 export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentScoped = false) {
-  if ((!sourceArmamentId && !equipmentScoped) || !Array.isArray(entity?.ratingSources)) return ratingValue(ctx, entity, id);
+  if (fixCoreEnabled(ctx) || (!sourceArmamentId && !equipmentScoped) || !Array.isArray(entity?.ratingSources)) return ratingValue(ctx, entity, id);
   let value = stanceRatingBonus(ctx, entity, id);
   for (const source of entity.ratingSources) {
     if (source.kind !== 'equipment') value += Number(source[id]) || 0;

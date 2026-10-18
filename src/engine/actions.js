@@ -1,3 +1,5 @@
+import { resolveAttackHit } from './stanceHit.js';
+import { stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt } from '../model/fixCoreMechanics.js';
 import { weaponDamageBasis } from './cardBehavior.js';
 import { MANEUVERS, trimCombatStances } from './concurrentStances.js';
@@ -106,7 +108,7 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
     if(proposal && target) amount=proposalHitPlan(ctx,source,target,amount,carrier || {}).amount;
     return matchups ? Matchups.prepareMatchupHit(ctx, source, target, carrier, amount).amount : amount;
   }
-  let dmg = ratedBase;
+  let dmg = ratedBase * stanceEffectiveness(ctx, source, carrier);
   const school = carrier && carrier.damageSchool;
   if (source && source.kind === 'player' && school) {
     dmg += source.damageBySchoolAdd && Number.isFinite(source.damageBySchoolAdd[school])
@@ -314,9 +316,10 @@ function applyBaseAttackDamage(ctx, source, target, base, attackTags, carrier = 
 
 // One receipt evaluator drives configured live damage and detached previews.
 function applyProfileDamage(ctx, source, target, base, carrier) {
+  if (fixCoreEnabled(ctx) && !carrier?.expansionContact && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
   const chance = profileDamageReceipt(ctx, source, target, base, carrier);
   const receipt = profileDamageReceipt(ctx, source, target, base, carrier,
-    { roll: chance.hitChance < 1 ? ctx.rng.float(configuredModule(ctx, 'stances')?.accuracyStream || 'combatAvoidance') : null });
+    { roll: !fixCoreEnabled(ctx) && chance.hitChance < 1 ? ctx.rng.float(configuredModule(ctx, 'stances')?.accuracyStream || 'combatAvoidance') : null });
   const tactical = carrier?.expansionContact?.receipt;
   if (tactical) {
     // Replace the planned estimate with the executed receipt. No second defense
@@ -833,11 +836,11 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
   if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block')
-    ? Math.max(0, Math.floor(base + (entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0))) : 0;
+    ? Math.max(0, Math.floor((base + (entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0)) * stanceEffectiveness(ctx, entity, card))) : 0;
   const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
-  amt *= statuses.getMult(ctx, entity, 'blockGainedMult');
+  amt *= statuses.getMult(ctx, entity, 'blockGainedMult') * stanceEffectiveness(ctx, entity, card);
   amt = Math.floor(amt);
   return amt < 0 ? 0 : amt;
 }
@@ -1055,6 +1058,10 @@ export function staggerEnemy(ctx, enemy, options = {}) {
   const cancelled = enemy.pendingMove ? enemy.pendingMove.moveId : null;
   enemy.pendingMove = null;
   enemy.skipNextTurn = true;
+  if (fixCoreEnabled(ctx)) {
+    statuses.applyStatus(ctx, enemy, 'staggered', 1, enemy);
+    for (const [id, amount] of Object.entries(fixCoreRules(ctx).statuses.staggerRiders)) statuses.applyStatus(ctx, enemy, id, amount, enemy);
+  }
   if (ctx.foundation) enemy.impactProtectedUntil = ctx.turn + ctx.foundation.rules.impact.protectionTurns;
   enemy.intent = { kind: 'staggered', moveId: null };
   ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled, ...(options.cause ? { cause: options.cause } : {}) });
@@ -1537,7 +1544,7 @@ function runOpcode(ctx, action, eff) {
         const base = evalNum(ctx, action, eff.amount, 0, t);
         // Stance entry and restoration already own their lane and exact budget.
         if (action.card?.proposalProtectionFloor || ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
-          gainBlockAmount(ctx, t, Math.max(0, Math.floor(base)), action.card, false);
+          gainBlockAmount(ctx, t, Math.max(0, Math.floor(base)), { ...action.card, cardId: null }, false);
         } else gainBlock(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
       }
       break;
@@ -1798,7 +1805,7 @@ function runOpcode(ctx, action, eff) {
         const percentage = ctx.combatExpansionVersion === 2 && nominal > 0
           ? (ctx.restorationModifierPercent?.(t, 'hp') || 0) + (eff.ashenBlightBonusPct || 0) : 0;
         const amount = Math.max(0, Math.floor(nominal * mult * (1 + percentage / 100)));
-        const healing=proposalHealingPlan(ctx,t,amount + Ratings.cardRatingBonus(ctx, action.source, action.card, 'heal', amount) + (action.meta?.abilityChargeHeal || 0),eff.damageType || action.card || {});
+        const healing=proposalHealingPlan(ctx,t,Math.floor((amount + Ratings.cardRatingBonus(ctx, action.source, action.card, 'heal', amount) + (action.meta?.abilityChargeHeal || 0)) * stanceEffectiveness(ctx, action.source, action.card)),eff.damageType || action.card || {});
         if(healing.damage) applyLoseHp(ctx,t,healing.damage,'healingInversion');
         applyHeal(ctx, t, healing.healing);
       }
