@@ -1062,7 +1062,7 @@ export function staggerEnemy(ctx, enemy, options = {}) {
   enemy.skipNextTurn = true;
   if (fixCoreEnabled(ctx)) {
     statuses.applyStatus(ctx, enemy, 'staggered', 1, enemy);
-    for (const [id, amount] of Object.entries(fixCoreRules(ctx).statuses.staggerRiders)) statuses.applyStatus(ctx, enemy, id, amount, enemy);
+    for (const [id, amount] of Object.entries(fixCoreRules(ctx, enemy).statuses.staggerRiders)) statuses.applyStatus(ctx, enemy, id, amount, enemy);
   }
   if (ctx.foundation) enemy.impactProtectedUntil = ctx.turn + ctx.foundation.rules.impact.protectionTurns;
   enemy.intent = { kind: 'staggered', moveId: null };

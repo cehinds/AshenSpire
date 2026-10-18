@@ -83,3 +83,39 @@ test('authored enemy defense restores both pools and damage log carries remainin
  const event=combat.eventLog.filter(row=>row.type==='damageDealt').at(-1);
  assert.equal(event.wardRemaining,target.persistentWard.value);assert.equal(event.poiseRemaining,target.persistentPoise.value);
 });
+test('selected card hit odds match configured stance entry and Evade grants actual stacks',async()=>{
+ const {previewCardHit}=await import('../src/engine/combat.js');
+ const {combat,target}=live();target.attributes.dexterity=10;
+ const card=combat.piles.hand.find(row=>row.cardId==='core.strike');assert.ok(card);
+ const preview=previewCardHit(combat,card.instanceId,target.id);primeAccuracyRolls(combat);
+ dispatch(combat,{type:'playCard',cardInstanceId:card.instanceId,targetId:target.id});
+ const actual=combat.eventLog.filter(row=>row.type==='attackHit').at(-1);
+ assert.equal(actual.accuracy,preview.accuracy);assert.equal(actual.hitChance,preview.hitChance);
+ combat.player.energy=10;combat.player.stamina=10;
+ combat.piles.hand.push({cardId:'core.evade',instanceId:'actual-evade',upgraded:false});
+ dispatch(combat,{type:'playCard',cardInstanceId:'actual-evade'});
+ assert.ok(combat.player.statuses.evade?.stacks>0);
+});
+test('registered owner and active card parameters affect live shared math and reject typos',async()=>{
+ const {fixCoreRules,validateFixCoreRules}=await import('../src/model/fixCoreMechanics.js');
+ const {stanceEffectiveness}=await import('../src/model/stanceRules.js');
+ const {combat}=live(), entity=combat.player;
+ entity.mechanicBindings=[{tag:'combat:stance',parameters:{effectivenessMultiplier:1.25}}];
+ const card={combatProfile:{camp:'physical',maneuver:'attack'}};entity.combatStance=card.combatProfile;
+ assert.equal(stanceEffectiveness(combat,entity,card),1.25);
+ assert.equal(fixCoreRules(combat).stance.effectivenessMultiplier,1.0025);
+ entity.mechanicBindings=[];
+ assert.equal(stanceEffectiveness(combat,entity,{...card,instanceId:'first',mechanicBindings:[{tag:'combat:stance',parameters:{effectivenessMultiplier:1.5}}]}),1.5);
+ assert.equal(stanceEffectiveness(combat,entity,{...card,instanceId:'second',mechanicBindings:[{tag:'combat:stance',parameters:{effectivenessMultiplier:1.1}}]}),1.1);
+ const bad=structuredClone(combat.fixCoreRules);bad.accuracy.precisonPerStack=5;
+ assert.throws(()=>validateFixCoreRules(bad),/unknown parameter/);
+});
+test('saved combat preserves exact authored parameters and owner clocks without another roll',async()=>{
+ const {serializeCombatSnapshot,restoreCombatSnapshot}=await import('../src/engine/combatSnapshot.js');
+ const {combat}=live();combat.fixCoreRules.protectionParameters['defense.wardProtection'].multiplier=.6;
+ const snapshot=serializeCombatSnapshot(combat), counters=combat.rng.getCounters();
+ const restored=restoreCombatSnapshot({registries:reg,rng:createRng(combat.rng.seed,counters),snapshot,expectedGameProfile:profile});
+ assert.deepEqual(restored.fixCoreRules,combat.fixCoreRules);assert.deepEqual(restored.rng.getCounters(),counters);
+ const altered=structuredClone(snapshot);altered.fixCoreRules.perception.baseDC='oops';
+ assert.throws(()=>restoreCombatSnapshot({registries:reg,rng:createRng(1),snapshot:altered}),/finite number/);
+});

@@ -29,7 +29,7 @@ export function stanceOf(carrier, entity = null) {
   const preparation = cardPreparationCategory(carrier);
   if (!preparation && !profile.maneuver) return null;
   const camp = ['spell', 'spells', 'magic', 'magical'].includes(profile.camp) ? 'spell' : 'physical';
-  let maneuver = preparation ? 'casting' : profile.maneuver;
+  let maneuver = preparation ? 'casting' : carrier.stanceTrigger?.stance || profile.stanceTrigger?.stance || profile.maneuver;
   if (maneuver === 'defense' || maneuver === 'block') maneuver = 'defend';
   if (maneuver === 'spell' || maneuver === 'cast' || maneuver === 'prepared') maneuver = 'casting';
   const evade = profile.evade && profile.evadeEligible !== false
@@ -50,7 +50,7 @@ export function stanceStaminaCost(base, entity, carrier, ctx = null) {
   if (ctx?.combatExpansionVersion !== 2 || !sameStance(entity, carrier)) return base;
   if (fixCoreEnabled(ctx)) {
     if (!(base > 0) || stanceOf(carrier).camp === 'spell') return base;
-    const cfg = fixCoreRules(ctx).stance;
+    const cfg = fixCoreRules(ctx, entity, carrier).stance;
     return Math.max(cfg.minimumCost, base - cfg.discount);
   }
   const cfg = stanceRulesFor(ctx), magical = stanceOf(carrier).camp === 'spell';
@@ -83,9 +83,9 @@ export function stanceEntryBonuses(carrier, ctx = null) {
 
 export function stanceManaCost(base, entity, carrier, ctx) {
   if (!fixCoreEnabled(ctx) || !(base > 0) || !sameStance(entity, carrier) || stanceOf(carrier)?.camp !== 'spell') return base;
-  const cfg = fixCoreRules(ctx).stance;
+  const cfg = fixCoreRules(ctx, entity, carrier).stance;
   return Math.max(cfg.minimumCost, base - cfg.discount);
 }
 export function stanceEffectiveness(ctx, source, carrier) {
-  return fixCoreEnabled(ctx) && (carrier?.fixCoreSameStance ?? sameStance(source, carrier)) ? fixCoreRules(ctx).stance.effectivenessMultiplier : 1;
+  return fixCoreEnabled(ctx) && (carrier?.fixCoreSameStance ?? sameStance(source, carrier)) ? fixCoreRules(ctx, source, carrier).stance.effectivenessMultiplier : 1;
 }

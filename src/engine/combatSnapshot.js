@@ -1,3 +1,4 @@
+import { validateFixCoreRules } from '../model/fixCoreMechanics.js';
 import { formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { enemyBurdenProblems } from './enemyBurdens.js';
 import { hasCardChoice } from './cardZones.js';
@@ -55,6 +56,7 @@ export function serializeCombatSnapshot(combat) {
   if (formationErrors.length) throw new Error(formationErrors.join('; '));
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
+    ...(combat.fixCoreRules ? {fixCoreRules:validateFixCoreRules(combat.fixCoreRules)} : {}),
     ...(combat.formationPolicy ? { formationPolicy: combat.formationPolicy } : {}),
     ...(combat.gameProfile ? { gameProfile: combat.gameProfile, gameProfileCommands: combat.gameProfileCommands || 0, gameProfileInterrupts: combat.gameProfileInterrupts || {} } : {}),
     ...(combat.combatExpansionVersion === 2 ? { combatExpansionVersion: 2, combatExpansionRules: combat.combatExpansionRules, combatKey: combat.combatKey,
@@ -177,7 +179,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   for(const enemy of saved.enemies) {const errors=enemyBurdenProblems(enemy,registries);if(errors.length)throw new Error(`Malformed enemy burden: ${errors.join('; ')}`);}
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
-    ...(saved.gameProfile ? { gameProfile: freezeProfile(saved.gameProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
+    ...(saved.fixCoreRules ? {fixCoreRules:validateFixCoreRules(saved.fixCoreRules)} : {}),    ...(saved.gameProfile ? { gameProfile: freezeProfile(saved.gameProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
     registries,
     rng,
     ...(saved.formationPolicy ? { formationPolicy: saved.formationPolicy } : {}),

@@ -32,7 +32,7 @@ function eligibleEvadeMode(entity) {
 export function effectiveEvasion(ctx, entity, { evadeDisabled = false, baseEntity = entity } = {}) {
   const prepared = !evadeDisabled && eligiblePreparedEvade(entity);
   if (fixCoreEnabled(ctx)) {
-    const cfg = fixCoreRules(ctx).accuracy;
+    const cfg = fixCoreRules(ctx, entity).accuracy;
     const dex = Number(attributesOf(ctx, baseEntity)?.dexterity) || 0;
     return cfg.baseAC + dex + (Number(baseEntity?.baseEvasionBonus) || 0)
       + (evadeDisabled ? 0 : cfg.evasionPerStack * stacks(entity, 'evade') + (prepared ? Number(prepared.bonus) || 0 : 0));
@@ -57,7 +57,7 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const precision = stacks(source, 'precision');
   const rules = stanceRulesFor(ctx);
   const sweep = profile.maneuver === 'sweep' ? rules.sweepPrecisionBase + rules.sweepPerAdditionalTarget * Math.max(0, options.additionalTargets ?? carrier?.additionalTargets ?? 0) : 0;
-  const cfg = fixCoreRules(ctx).accuracy;
+  const cfg = fixCoreRules(ctx, source, carrier).accuracy;
   const accuracy = fixCoreEnabled(ctx)
     ? precision * cfg.precisionPerStack + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[profile.maneuver] || 0) + proposal.accuracyDelta/5
     : attackAccuracy(ctx, source, carrier) + precision + sweep + proposal.accuracyDelta/5;
