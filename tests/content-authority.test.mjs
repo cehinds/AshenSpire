@@ -20,6 +20,11 @@ import { starseerCards } from '../src/content/cards/starseer.js';
 import { armamentCards } from '../src/content/cards/armaments.js';
 import { colorlessCards } from '../src/content/cards/colorless.js';
 import { corruptedCards } from '../src/content/cards/corrupted.js';
+import { act1Enemies } from '../src/content/enemies/act1.js';
+import { act2Enemies } from '../src/content/enemies/act2.js';
+import { act3Enemies } from '../src/content/enemies/act3.js';
+import { classes, LOCKED_CLASSES } from '../src/content/classes.js';
+import { contentBundle } from '../src/content/index.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const KINDS = { relics, stances, flasks };
@@ -154,6 +159,44 @@ test('cards: the shim for a builder pool (rogue, coop) still authors its cards i
     const text = readFileSync(resolve(ROOT, `src/content/cards/${file}.js`), 'utf8');
     assert.ok(!/generated\/cards\//.test(text), `${file}.js holds builder functions and stays JS`);
   }
+});
+
+// Enemies and classes: act1-3Enemies.json and classes.json sit at the top of
+// content/source (the file name is the export name). The old files are shims.
+const ENEMY_ACTS = { act1: act1Enemies, act2: act2Enemies, act3: act3Enemies };
+
+for (const [act, exported] of Object.entries(ENEMY_ACTS)) {
+  const exportName = `${act}Enemies`;
+  test(`enemies: ${exportName} deep-equals content/source/${exportName}.json`, () => {
+    const authored = JSON.parse(readFileSync(resolve(ROOT, `content/source/${exportName}.json`), 'utf8'));
+    assert.ok(Array.isArray(authored) && authored.length > 0, `${exportName}.json is a non-empty array`);
+    assert.deepStrictEqual(exported, authored);
+  });
+
+  test(`enemies: src/content/enemies/${act}.js is a shim with no enemy literal`, () => {
+    const text = readFileSync(resolve(ROOT, `src/content/enemies/${act}.js`), 'utf8');
+    assert.ok(!/\{\s*id\s*:/.test(text), `${act}.js authors a row (\`{ id:\`) — edit content/source/${exportName}.json instead`);
+    assert.ok(!/^\s*name\s*:/m.test(text), `${act}.js authors a \`name:\` line — edit content/source/${exportName}.json instead`);
+    assert.match(text, new RegExp(`from '\\.\\./generated/${exportName}\\.js'`));
+  });
+}
+
+test('enemies: the three acts still compose the 33-enemy roster', () => {
+  assert.equal(contentBundle.enemies.length, 33);
+});
+
+test('classes: the export deep-equals content/source/classes.json', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/classes.json'), 'utf8'));
+  assert.ok(Array.isArray(authored) && authored.length > 0, 'classes.json is a non-empty array');
+  assert.deepStrictEqual(classes, authored);
+});
+
+test('classes: src/content/classes.js is a shim; LOCKED_CLASSES stays an empty JS export', () => {
+  const text = readFileSync(resolve(ROOT, 'src/content/classes.js'), 'utf8');
+  assert.ok(!/\{\s*id\s*:/.test(text), 'classes.js authors a row (`{ id:`) — edit content/source/classes.json instead');
+  assert.ok(!/^\s*name\s*:/m.test(text), 'classes.js authors a `name:` line — edit content/source/classes.json instead');
+  assert.match(text, /from '\.\/generated\/classes\.js'/);
+  assert.deepStrictEqual(LOCKED_CLASSES, []);
 });
 
 test('the generated modules are current (content-build --check exits 0)', () => {
