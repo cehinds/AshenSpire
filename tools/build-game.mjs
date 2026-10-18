@@ -17,6 +17,7 @@ import { loadGameProfileCatalog } from './game-config.mjs';
 import { loadMechanics, loadOps } from '../engine/runtime/interpreter.mjs';
 import { buildAssetCatalog, readAliases } from './asset-catalog.mjs';
 import { contentBundle } from '../src/content/index.js';
+import { TARGETS } from '../src/model/schemas.js';
 const engineCards = Array.isArray(contentBundle.cards) ? contentBundle.cards : Object.values(contentBundle.cards || {});
 import { resolveAtlasPath, validateMaps } from './maps-validate.mjs';
 import { visibilityErrors, validateUi } from './ui-validate.mjs';
@@ -100,18 +101,26 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   // Literal card ids an op names (addCard) must exist in the shared pool; '$var' names resolve at run time.
   // The pool is the profile's cards and enemy cards plus the engine's built-in cards (status cards such as slimed/dazed/wound).
   const knownCards = new Set([...(content.cards || []), ...(content.enemyCards || []), ...engineCards].map(c => c.id));
+  // Static status literals (applyStatus / removeStatus) name a status the profile exports: the bundle's status registry
+  // (the web runtime reads registries.statuses.get(id) and throws on a miss; the portable interpreter would create an inert key).
+  const knownStatuses = new Set((contentBundle.statuses || []).map(s => s.id));
   // Op parameter literals by catalog type; '$var' strings and { f } formulas are resolved at run time.
   const isVar = x => typeof x === 'string' && x.startsWith('$');
   const isFormula = x => x && typeof x === 'object' && !Array.isArray(x) && 'f' in x;
-  const paramOk = (type, x) => {
-    if (isVar(x)) return true;
+  // staticContent (cards, enemies, variants): the engine reads each literal as written, so '$name' refs are refused and
+  // an entityRef is one of the closed TARGETS ('Unknown effect target' in src/engine/actions.js). Mechanic service
+  // steps keep '$' refs and arbitrary entity refs.
+  const paramOk = (type, x, { staticContent = false } = {}) => {
+    if (isVar(x) && !staticContent) return true;
     switch (type) {
       case 'value': case 'number': return typeof x === 'number' || isFormula(x);
       case 'integer': return Number.isInteger(x) || isFormula(x);
       case 'boolean': return typeof x === 'boolean';
       case 'string': return typeof x === 'string';
       case 'cardRef': return typeof x === 'string' && (knownCards === null || knownCards.has(x));
-      case 'entityRef': return typeof x === 'string' || (Array.isArray(x) && x.every(y => typeof y === 'string'));
+      case 'entityRef':
+        if (staticContent) return (typeof x === 'string' && TARGETS.includes(x)) || (Array.isArray(x) && x.every(y => typeof y === 'string' && TARGETS.includes(y)));
+        return typeof x === 'string' || (Array.isArray(x) && x.every(y => typeof y === 'string'));
       case 'object': return x !== null && typeof x === 'object' && !Array.isArray(x);
       default: return true;
     }
@@ -187,8 +196,9 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
       if ('op' in v && !catalog[v.op]) fail(`${where}: unknown effect op '${v.op}'`);
       else if ('op' in v) for (const [name, param] of Object.entries(catalog[v.op].params || {})) {
         if (param.required && v[name] === undefined && !(param.contentRequiredUnless && v[param.contentRequiredUnless] !== undefined)) fail(`${where}: op ${v.op} needs '${name}'`);
-        else if (v[name] !== undefined && !paramOk(param.type, v[name])) fail(`${where}: op ${v.op} param '${name}' is not a ${param.type}`);
+        else if (v[name] !== undefined && !paramOk(param.type, v[name], { staticContent: true })) fail(`${where}: op ${v.op} param '${name}' is not ${param.type === 'entityRef' ? `an effect target (${TARGETS.join(', ')})` : `a ${param.type}`}`);
       }
+      if ((v.op === 'applyStatus' || v.op === 'removeStatus') && typeof v.status === 'string' && !knownStatuses.has(v.status)) fail(`${where}: op ${v.op} names status '${v.status}', which this profile does not export`);
       for (const [k, x] of Object.entries(v)) walk(x, `${where}.${k}`);
     };
     for (const key of ['cards', 'enemyCards', 'resourceVariants', 'effectVariants', 'enemies', 'characters']) if (content[key]) { walk(content[key], `content.${key}`); for (const e of formulaErrors(content[key], `content.${key}`)) fail(e); }
