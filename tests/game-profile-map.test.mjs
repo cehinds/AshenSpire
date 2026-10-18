@@ -104,8 +104,18 @@ test('route source defaults bind branch width and invalid dimensions fail before
   assert.throws(() => setup({ prebossNodes: 5, restFloors: [2, 6] }), /restFloors/);
 });
 
-test('core fog reveals only landmarks, then the split and next rest; the trail persists on load', () => {
+test('Core authors a fully visible map and pins it over a stale viewer fog setting (owner, 2026-10-18)', () => {
   const { reg, run } = setup();
+  run.mapGraph = buildActMap(reg, createRng(9), run.seatOrder[0], 1);
+  assert.equal(run.gameProfile.modules.routes.mapMode, 'path');
+  const mode = resolveMapMode({ settings: { mapMode: 'fog' } }, run);
+  assert.equal(mode, 'path', 'configured policy must not inherit a stale viewer fog setting');
+  const knowledge = mapKnowledge({ graph: run.mapGraph, run, mode });
+  assert.equal(knowledge.counts.hidden, 0);
+  assert.equal(knowledge.drawn.size, Object.keys(run.mapGraph.nodes).length);
+});
+test('a configured fog route reveals only landmarks, then the split and next rest; the trail persists on load', () => {
+  const { reg, run } = setup({ mapMode: 'fog' });
   run.mapGraph = buildActMap(reg, createRng(9), run.seatOrder[0], 1);
   const mode = resolveMapMode({ settings: { mapMode: 'path' } }, run);
   assert.equal(mode, 'fog', 'configured policy must not inherit a stale whole-map viewer setting');

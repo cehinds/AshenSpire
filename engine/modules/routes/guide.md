@@ -41,7 +41,7 @@ Settings live in `engine/modules/routes/settings.schema.json`; shipped defaults 
 - `/restFloors` (type array; default `[1,6]`; item range 1..1000): Mandatory shared Rest depths; every path visits both by default. Depth 1 supplies the single entrance. Must contain exactly `restsPerAct` unique pre-boss positions.
 - `/branchColumns` (type integer; default `3`; range 2..5): Number of lanes on non-rest pre-boss depths. A shared rest node and the boss merge the lanes.
 - `/minimumThreatFloor` (type integer; default `3`; range 1..101): Earliest depth eligible for elites or the final boss. Earlier branching depths draw only non-elite types; the final boss depth (`prebossNodes + 1`) must meet this minimum.
-- `/mapMode` (type enum; default `"fog"`; allowed "fog", "path"): Configured route visibility policy. It takes precedence over the viewer's legacy Map reveal setting; `"path"` explicitly draws the whole map.
+- `/mapMode` (type enum; default `"fog"`; allowed "fog", "path"): Configured route visibility policy. It takes precedence over the viewer's legacy Map reveal setting; `"path"` explicitly draws the whole map. The Core preview route authors `"path"`, so the whole map is visible from the first screen (owner, 2026-10-18).
 
 The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and `policyBindings` apply next, and the author object applies last. Arrays replace the inherited array. If a field has no bundle binding, its module default is inherited unchanged. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
 
