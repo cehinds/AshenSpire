@@ -1,3 +1,4 @@
+import { ownGameProfile } from '../model/ownedGameProfile.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
@@ -211,7 +212,7 @@ export function createCombat({
       }).value
       : 0);
   const combat = {
-    ...(gameProfile ? { gameProfile: freezeProfile(structuredClone(gameProfile)) } : {}),
+    ...(gameProfile ? { gameProfile: ownGameProfile(gameProfile, freezeProfile) } : {}),
     ...(combatExpansionVersion === 2 ? { combatExpansionVersion, combatKey,
       combatExpansionRules: structuredClone(combatExpansionRules || { matchups: combatExpansionMatchups, statuses: combatStatusRules, ashenBlight: ASHEN_BLIGHT_RULES, equipment: combatExpansionEquipment }),
       allocatedAttributes: structuredClone(player.allocatedAttributes || player.attributes || {}) } : {}),
