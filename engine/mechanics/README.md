@@ -25,12 +25,14 @@ Cases, services and queries all use the state in [SPEC.md section 1](../runtime/
 - `portable`: `service.json` fully describes the behaviour with ops marked `portable` in `engine/runtime/ops.json`.
   Hand-authored (`"authored": true`), at least 3 cases, every case passes through the interpreter
   (`tests/mechanics-runtime.test.mjs`).
-- `legacy`: the behaviour still runs in JavaScript; `legacy.file` and `legacy.symbol` name where.
+- `legacy`: the behaviour still runs in JavaScript; `legacy.file` and `legacy.symbol` name where, and when the definition is data, `legacy.source` names the authored data file that defines it (`content/source/statuses.json` or `src/content/combatStatusRules.js`).
 - `data`: a classification or label with no behaviour of its own; it names no legacy file.
 
 ## Adding a mechanic
 
-1. Add the tag (`content/source/nodes.csv`) or status (`src/content/statuses.js`), then run
+1. Add the tag (`content/source/nodes.csv`) or status (authored rows live in `content/source/statuses.json`,
+   compiled by `tools/content-build.mjs` into `src/content/generated/statuses.js`; the expansion rows are derived
+   in `src/content/combatStatusRules.js`; `src/content/statuses.js` is the shim that joins them), then run
    `node tools/mechanics-generate.mjs`. It writes the folder as `legacy` or `data`.
 2. To author it by hand, set `"authored": true` in `mechanic.json`; the generator never touches that folder again.
 3. Write the five files, with the interface names the cases use.

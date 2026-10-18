@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **Content authority: class and armament cards are JSON** ([#2125](https://github.com/cehinds/AshenSpire/pull/2125), `0.7.1.1607`). Class and armament cards are plain data files now; nothing changes in play.
+- **Content authority: class and armament cards are JSON** ([#2125](https://github.com/cehinds/AshenSpire/pull/2125), `0.7.1.1609`). Class and armament cards are plain data files now; nothing changes in play.
+- **Wave-3 review follow-ups: JSON status provenance; rest-first snapshot refused** ([#2124](https://github.com/cehinds/AshenSpire/pull/2124), `0.7.1.1609`). Housekeeping from review: the mechanics docs and provenance name the JSON status source, and an old rest-first rule preset is refused when loaded from a saved snapshot too.
 
 - **Preview defaults: visible map, exact intents, floor 1 is a fight** ([#2117](https://github.com/cehinds/AshenSpire/pull/2117), `0.7.1.1607`). The map is fully visible from the start, enemy intents are always shown exactly, and a run opens on a fight.
 - **CI: the flaky checks explain themselves; the click-impact probe re-measures once** ([#2118](https://github.com/cehinds/AshenSpire/pull/2118), `0.7.1.1605`). CI explains the two slow checks when they fail and re-measures the click-impact probe once before judging it.
