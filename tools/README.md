@@ -7,7 +7,7 @@ Callers: `wf` workflow, `tests` file under tests/, `tools` other file under tool
 `+N` = more callers than shown. A row with several names groups the tools that have no header comment and share a name
 prefix; its callers are the union.
 
-## Tools something references (325 files, plus the 8 subfolders)
+## Tools something references (327 files, plus the 8 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -283,12 +283,14 @@ prefix; its callers are the union.
 | `startup-gate.mjs` | Issue #229 — the cold boot belongs to the startup gate until one complete | wf ci, dev-preview; tests doorplant-shard; tools plantsites-baseline.json, settingsreach; docs DEVELOPER.md, docs/EXTERNAL-ASSETS-PLAN.md, docs/preview/issue-229-startup-gate-build-1305/README.md |
 | `status-presentation-authority.mjs` | Status instance presentation authority. Names and mechanic fields never | tools plantsites-baseline.json |
 | `statusreach.mjs` | statusreach — CAN A PLAYER EVER MEET THIS STATUS? | tests run-node, statusreach-expansion, statusreach-stance; tools contentreach |
+| `style-lint.mjs` | tools/style-lint.mjs — a ratchet on raw sizes, layers and colours in styles/*.css. | tests run-node, style-lint; docs DEVELOPER.md |
 | `surfaces.mjs` | surfaces — is every navigable surface DECLARED IN DATA also HANDLED? | tests config-migration, run-node; tools gatelist, screen-census; other src/config/authored.js, src/main.js +1 |
 | `swap-cost-relic-surface.mjs` | swap-cost-relic-surface — ARM 2 of MR-41 (as amended by MR-46): | tools equipment-surface-receipts, plantsites-baseline.json; other src/model/equipmentPresentation.js |
 | `swap-row-reads.mjs` | swap-row-reads — Sunna, 2026-08-15. | tools equipment-surface-receipts, plantsites-baseline.json |
 | `sync-alternatives.mjs` | Merge a promoted test snapshot into existing alternative pairs. No force | wf sync-alternatives; tests alternative-branches |
 | `tapsize.mjs` | tapsize — does Minimum tap size actually move the floor, on glass? | tests engine.test.js; tools flaskbox, hud-quick-compact, mapreach +4; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/ui/screens/settings.js +1 |
 | `testnumbers.mjs` | testnumbers — NO TWO TESTS WEAR THE SAME NUMBER. | tests run-node; tools plantsites-baseline.json |
+| `tokens-css.mjs` | tools/tokens-css.mjs — publish the design tokens in content/config/ui/tokens.json as CSS custom properties. | tests run-node, serve-watch, tokens-css; tools launch, serve; docs DEVELOPER.md; other index.html, styles/tokens.generated.css |
 | `text-geometry.mjs` | text-geometry — Law 4: Text size owns text, not component geometry. | tools plantsites-baseline.json |
 | `textfit.mjs` | textfit — THE GATE FOR "NOTHING BLEEDS", MEASURED ON A REAL PAGE. | tests card-presentation-levels |
 | `title-new-slot.mjs` | Focused acceptance for QA remediation #2: New Game keeps the selected empty | tools plantsites-baseline.json |
