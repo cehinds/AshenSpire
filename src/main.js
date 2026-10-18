@@ -913,7 +913,7 @@ function applyDisplaySettings(settings) {
       : (settings.largeText === true ? 'L' : null);
   if (tKey) document.documentElement.style.fontSize = TEXT_SIZES[tKey];
   else document.documentElement.style.removeProperty('font-size');
-  document.body.classList.toggle('no-shake', quality === 'lite' || settings.screenShake === false);
+  document.body.classList.toggle('no-shake', settings.screenShake === false);
   // Card colour motif: mode on the root as a data attr, wash depth as a var, so
   // switching is a re-paint with no re-render. Both defaults live in balance.ui.
   const motif = UI.cardMotifModes.includes(settings.cardMotif) ? settings.cardMotif : UI.cardMotif;
