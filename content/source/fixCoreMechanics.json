@@ -1,20 +1,6 @@
 {
   "version": 1,
   "enabled": true,
-  "definitions": {
-    "defense:wardProtection": {
-      "damageKind": "magical",
-      "pool": "persistentWard",
-      "multiplier": 0.75,
-      "group": "ward-protection"
-    },
-    "defense:poiseProtection": {
-      "damageKind": "physical",
-      "pool": "persistentPoise",
-      "multiplier": 0.75,
-      "group": "poise-protection"
-    }
-  },
   "defaultTags": [
     "defense:wardProtection",
     "defense:poiseProtection"
@@ -68,5 +54,6 @@
       }
     }
   },
-  "enemyHealBlockCost": 3
+  "enemyHealBlockCost": 3,
+  "protectionParameters": {}
 }
