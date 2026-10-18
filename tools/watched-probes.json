@@ -39,7 +39,7 @@
   {
    "id": "P2",
    "by": "Bjorn",
-   "read": "content/source/statuses.json (bleed proc: threshold 7, burst 15% min 8, applies bleedResist) · (bleedResist 'Clotted', icon 🩹) · content/source/cards/reaverCards.json (gorefireSlash 1 energy + 1 MANA) · src/content/classes.js (startingFlaskAllocation mana — the third cast's honest source)",
+   "read": "content/source/statuses.json (bleed proc: threshold 7, burst 15% min 8, applies bleedResist) · (bleedResist 'Clotted', icon 🩹) · content/source/cards/reaverCards.json (gorefireSlash 1 energy + 1 MANA) · content/source/classes.json (startingFlaskAllocation mana — the third cast's honest source)",
    "anchors": [
     "startingFlaskAllocation",
     "gorefireSlash",
@@ -80,9 +80,8 @@
   {
    "id": "P3",
    "by": "Bjorn",
-   "read": "content/source/statuses.json (frost, threshold proc) · appliers now exist: content/source/cards/starseerCards.json (6x applyStatus status:'frost'), src/content/enemies/act2.js (1x)",
+   "read": "content/source/statuses.json (frost, threshold proc) · appliers now exist: content/source/cards/starseerCards.json (6x applyStatus status:'frost'), content/source/act2Enemies.json (1x)",
    "anchors": [
-    "status: 'frost'",
     "\"status\": \"frost\""
    ],
    "screen": "combat › frost is now reachable content (the 08-08 red: zero appliers)",
@@ -150,9 +149,8 @@
   {
    "id": "P5",
    "by": "Bjorn",
-   "read": "content/source/statuses.json (insanity, threshold proc) · appliers now exist: content/source/cards/heraldCards.json (2x), src/content/enemies/act3.js (applyStatus status:'insanity' on player)",
+   "read": "content/source/statuses.json (insanity, threshold proc) · appliers now exist: content/source/cards/heraldCards.json (2x), content/source/act3Enemies.json (applyStatus status:'insanity' on player)",
    "anchors": [
-    "status: 'insanity'",
     "\"status\": \"insanity\""
    ],
    "screen": "combat › insanity is now reachable content (the 08-08 red: zero occurrences)",
