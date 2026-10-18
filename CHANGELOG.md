@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
+- **Hits sound a little different each time, heavy hits land with a thump, no more piled-up clicks** ([#2101](https://github.com/cehinds/AshenSpire/pull/2101), `0.7.1.1583`). Every synthesized sound now varies its pitch by a few percent so repeated cues stop sounding identical; heavy hits carry a short 60 Hz thump; the same cue within 40 ms plays once (a five-card draw is one draw sound) and at most eight sounds play at once.
+
 - **Windows test shard green again (serve --watch tests)** ([#2099](https://github.com/cehinds/AshenSpire/pull/2099), `0.7.1.1583`). Two dev-server watch tests that replace a watched directory now run only where that code path exists (POSIX); nothing player-facing.
 - **The death screen says what killed you, offers Run again, and fits a phone** ([#2098](https://github.com/cehinds/AshenSpire/pull/2098), `0.7.1.1581`). Defeat now names the blow that ended the climb (who, which move, how much). Run again starts a fresh climb with the same class and choices on a new seed, from defeat or victory. The end-of-run door no longer overflows a 390 px phone; the four stat chips sit two by two.
 - **Phones shake on hits, big hits pop bigger numbers, three new vibrations** ([#2097](https://github.com/cehinds/AshenSpire/pull/2097), `0.7.1.1579`). Lite rendering (the phone default) no longer drops the screen shake — only the Screen shake setting and Reduced motion do. Damage numbers now size by the share of the target's max HP they took (a fifth or more pops big, a third or more pops huge), with a snappier pop. New vibrations: a big hit on an enemy, an enemy's poise breaking, and victory.
