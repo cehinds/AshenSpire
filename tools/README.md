@@ -2,12 +2,14 @@
 
 Index of the tools, written 2026-10-17 by hand from each tool's own header comment (no generator yet; update the row when a tool is added) and from
 `git grep -l -F "<name>.mjs" -- ":!tools/<name>.mjs" ":!tools/README.md"` over tracked files (this index names every tool, so it is excluded) (substring match, so a short name can
-pick up a longer one). Nothing is deleted or moved. Common ones run as `npm run <script>` (package.json, DEVELOPER.md).
+pick up a longer one). Nothing is deleted; tools nothing references live in `tools/attic/` (owner, 2026-10-17; the Attic section below). Common ones run as `npm run <script>` (package.json, DEVELOPER.md).
 Callers: `wf` workflow, `tests` file under tests/, `tools` other file under tools/, `docs` markdown, `other` anything else;
 `+N` = more callers than shown. A row with several names groups the tools that have no header comment and share a name
 prefix; its callers are the union.
 
-## Tools something references (327 files, plus the 8 subfolders)
+`tools/attic/`: tools nothing references, kept runnable; see the Attic section.
+
+## Tools something references (328 files, plus the 8 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -61,6 +63,7 @@ prefix; its callers are the union.
 | `bundle.test.mjs` | bundle.test — the parse gate's own fixtures (#77 property 4). | wf ci, worker-check; tests run-node-lanes, run-node; tools art-source, hud-component-studio/README.md, linkcheck; docs DEVELOPER.md, docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md +2 |
 | `card-cutout-assets.mjs` | Branch-owned PNGs use the same verified common-pack path as alternative art | tests layered-card-art; tools asset-pack, buildversion, bundle; docs docs/card-art-composition.md |
 | `card-components.mjs`, `card-layout-save-qa.mjs`, `card-layout-save.mjs`, `card-master-qa.mjs`, `card-rank-layers-qa.mjs`, `card-sigils-qa.mjs` | (no header comment) | tests card-object-ids; tools buildversion, bundle, card-components.test +5; docs docs/workbench/CONSOLIDATION.md, docs/ai/session-continuations/2026-10-08/card-layers-and-rank.md, docs/ai/session-continuations/2026-10-08/combat-mechanics-and-formulas-status.md; other src/content/cardComponents.generated.js, workbench/core/files.mjs +4 |
+| `card-components.test.mjs` | (no header comment) | tests run-node (discovered: every *.test.mjs) |
 | `card-drag-targeting.mjs` | card-drag-targeting — browser acceptance for #150 + #198 + #311 | tools hybrid-input-parity, plantsites-baseline.json |
 | `card-effect-art-build.mjs` | Normalize the authored six-frame refresh; preserve one scale and anchor per sheet. | tools combat-effects-ship; docs CREDITS.md, docs/design/player-components-2026-10-03/SOURCE-CREDITS.md, docs/design/player-polish-asset-kit-2026-10-02/CANONICAL-CREDITS.md; other src/content/combatEffectArt.js |
 | `card-feedback.mjs` | Real browser card feedback gate. Debug fixtures control only initial hand, | docs DEVELOPER.md, docs/COMPONENT-CATALOG.md |
@@ -326,9 +329,9 @@ prefix; its callers are the union.
 | `zoomplace.mjs` | zoomplace — do the cursor-anchored overlays land ON the cursor, at | tests run-node; tools gatelist, mobilefit, plantsites-baseline.json +1; docs SPEC.md; other src/ui/fx.js |
 | `zoomunits.mjs` | zoomunits — one coordinate space, one home. | tests fixtures/verdict/silent_exit_zero, run-node; tools zoomplace; other src/ui/fx.js |
 
-## Not referenced anywhere (candidates for tools/attic/, owner decides) (72 files)
+## Attic — unreferenced tools moved to tools/attic/ (owner, 2026-10-17) (71 files)
 
-No tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool run by hand would show here too: review, do not delete.
+These 71 tools were moved to `tools/attic/`, not deleted: no tracked file outside the tool names it (no workflow, test, launch, doc or tool). A tool is brought back by `git mv tools/attic/<name> tools/<name>` plus a row in the table above. Nothing in CI runs from `tools/attic/`.
 
 | Tool | First header-comment line |
 | --- | --- |
@@ -345,7 +348,7 @@ No tracked file outside the tool names it (no workflow, test, launch, doc or too
 | `attribute-phase1-boundary.mjs` | Attribute integration boundary after the approved derived/equipment slices. |
 | `bjclauses.mjs` | bjclauses — re-derive Constantine's eight D17 map clauses against |
 | `bow-animation-config.mjs` | Rebuild the bow presentation bindings from the authored unarmed outfit sets. |
-| `card-components.test.mjs`, `card-effect-layers-check.mjs` | (no header comment) |
+| `card-effect-layers-check.mjs` | (no header comment) |
 | `card-effect-art-check.mjs` | Real browser evidence for the refreshed registry, gallery and card activations. |
 | `card-flick-pointer-qa.mjs` | Native browser pointer streams: no supplied timestamps or DOM-dispatched events. |
 | `card-hold-targeting-qa.mjs` | Rendered regression for issue #1171: hold a targeted card, then choose the |
