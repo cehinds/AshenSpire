@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **Performance and download-size budgets can be measured** ([#2091](https://github.com/cehinds/AshenSpire/pull/2091), `0.7.1.1563`). Development-process change only, nothing in the game changes. Two tools count the combat screen's layout work per card play and the size of every build output against the preview-build budgets, so later performance fixes can show before and after numbers.
+- **Performance and download-size budgets can be measured** ([#2091](https://github.com/cehinds/AshenSpire/pull/2091), `0.7.1.1565`). Development-process change only, nothing in the game changes. Two tools count the combat screen's layout work per card play and the size of every build output against the preview-build budgets, so later performance fixes can show before and after numbers.
+- **Saved runs survive app updates that do not change the rules** ([#2093](https://github.com/cehinds/AshenSpire/pull/2093), `0.7.1.1565`). A saved run no longer refuses to continue after an update that only touched the game's code; only changes to the rules engine itself pin a save to its build. A save that really cannot be restored now shows a notice and leaves the save untouched instead of crashing.
 
 ## 2026-10-17
 
