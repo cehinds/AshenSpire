@@ -87,3 +87,8 @@ test('a publicly revealed intent is countered without requiring a hit-% read', (
   assert.equal(chooseReaction(state({ intent: revealed }), 'player', options).id, 'a');
   assert.equal(chooseReaction(state({ intent: { ...revealed, hidden: true } }), 'player', options), null);
 });
+
+test('an intent the player sees as unread is unknown to auto-combat', () => {
+  assert.match(autoSource(), /configuredArt && !gameModule\(run, 'intent'\)/);
+  assert.match(autoSource(), /enemy\?\.alive && intentShown/);
+});

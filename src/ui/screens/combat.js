@@ -1350,7 +1350,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     let intent = null;
     // projectCombatIntent applies the same visibility gate as previewIntent (reveals, proposals, exact reads);
     // a hidden intent stays unknown to the chooser.
-    try { if (enemy?.alive) intent = projectCombatIntent(combat, enemy.id); } catch { intent = null; }
+    // The player sees "unread intent" when this game profile has no intent module: unknown here too.
+    const intentShown = !(configuredArt && !gameModule(run, 'intent'));
+    try { if (enemy?.alive && intentShown) intent = projectCombatIntent(combat, enemy.id); } catch { intent = null; }
     const seat = ownSeat();
     const options = pending.options.map(option => ({ id: option.id, kind: reactionKind(option) }));
     const picked = chooseReaction({ matchups: gameModule(run, 'stances')?.matchups,
