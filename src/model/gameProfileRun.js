@@ -1,5 +1,5 @@
 import { gameProfileEquipmentReceipt, gameProfileEffectiveAttributes } from './gameProfileGear.js';
-export { gameProfileEquipmentReceipt, gameProfileEffectiveAttributes } from './gameProfileGear.js';
+export { gameProfileEquipmentReceipt, gameProfileEffectiveAttributes };
 import { deriveStat } from './derivedStats.js';
 // Profile-selected run policies. Legacy profiles never enter these branches.
 import { gameModule, gameContent } from './gameProfile.js';
