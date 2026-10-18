@@ -3,9 +3,9 @@
 <!-- feature-preview:start -->
 ## Feature preview — Combat HUD Layout Batch
 
-[Feature build — merged-source publication pending](https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/) · [Capture details](docs/preview/features/combat-hud-layout-batch/README.md).
+[Play verified dated 1a build](https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/) · [Capture details](docs/preview/features/combat-hud-layout-batch/README.md).
 
-Fresh local captures document the new layered-card hand rendering after the Dev1561 merge; timing and final publication identity require separate checks.
+Fresh local captures document the new layered-card hand rendering after the Dev1561 merge; the linked build was verified as dated 1a, while new Dev integration still requires fresh publication proof.
 
 | Mobile | Desktop | Wide | Tablet |
 | --- | --- | --- | --- |
