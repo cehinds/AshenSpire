@@ -2,14 +2,14 @@
 
 Index of the tools, written 2026-10-17 by hand from each tool's own header comment (no generator yet; update the row when a tool is added) and from
 `git grep -l -F "<name>.mjs" -- ":!tools/<name>.mjs" ":!tools/README.md"` over tracked files (this index names every tool, so it is excluded) (substring match, so a short name can
-pick up a longer one). Nothing is deleted or moved. Common ones run as `npm run <script>` (package.json, DEVELOPER.md).
+pick up a longer one). Nothing is deleted; tools nothing references live in `tools/attic/` (owner, 2026-10-17; the Attic section below). Common ones run as `npm run <script>` (package.json, DEVELOPER.md).
 Callers: `wf` workflow, `tests` file under tests/, `tools` other file under tools/, `docs` markdown, `other` anything else;
 `+N` = more callers than shown. A row with several names groups the tools that have no header comment and share a name
 prefix; its callers are the union.
 
 `tools/attic/`: tools nothing references, kept runnable; see the Attic section.
 
-## Tools something references (327 files, plus the 8 subfolders)
+## Tools something references (328 files, plus the 8 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
