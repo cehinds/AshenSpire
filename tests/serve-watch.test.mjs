@@ -166,6 +166,27 @@ test('--watch: an edit saved while a build runs is not dropped (error, then relo
   child.kill();
 });
 
+test('--watch: a content/hud-layout change runs hud-layout-css, reloads, and ignores its generated CSS', async () => {
+  const root = makeTree();
+  mkdirSync(join(root, 'content', 'hud-layout'), { recursive: true });
+  mkdirSync(join(root, 'styles'), { recursive: true });
+  const log = join(root, 'order.log');
+  writeFileSync(join(root, 'tools', 'hud-layout-css.mjs'),
+    "import { appendFileSync, writeFileSync } from 'node:fs';\n" +
+    `appendFileSync(${JSON.stringify(log)}, 'hud-layout-css\\n');\n` +
+    "writeFileSync('styles/hud-layout.generated.css', ':root{}\\n');\n");
+  const { port, child } = await start(root, ['--watch']);
+  const stream = await events(port);
+  const reload = stream.next('reload', 3000);
+  writeFileSync(join(root, 'content', 'hud-layout', 'mobile.json'), '{}\n');
+  assert.equal(await reload, 'content/hud-layout/mobile.json');
+  await new Promise((r) => setTimeout(r, 600)); // its own CSS write must not start another round
+  assert.equal(readFileSync(log, 'utf8'), 'hud-layout-css\n');
+  assert.equal(stream.seen.filter((e) => e.name === 'reload').length, 1);
+  stream.close();
+  child.kill();
+});
+
 test('--watch: index.html (only) carries the live-reload listener', async () => {
   const root = makeTree();
   const { port, child } = await start(root, ['--watch']);

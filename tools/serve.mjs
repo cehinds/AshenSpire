@@ -29,7 +29,8 @@
 // watcher per directory), waits 150 ms for the writes to settle, and sends
 // `event: reload` (data: the changed path) down GET /__dev/events, an
 // EventSource stream. A change under content/config/ (*.json) first runs
-// `node tools/config-build.mjs`, and one under content/source/ runs
+// `node tools/config-build.mjs`, one under content/hud-layout/ (*.json) runs
+// `node tools/hud-layout-css.mjs`, and one under content/source/ runs
 // `node tools/content-build.mjs`, one build at a time with the newest change
 // winning; a failed build sends `event: error` (data: the last 20 lines of its
 // stderr) and no reload. Files a build writes itself (generated/, *.generated.js,
@@ -99,6 +100,8 @@ const WATCH_SKIP = /(^|\/)(\.|node_modules(\/|$))|~$|\.sw[px]$|\.tmp$/;
 function buildToolFor(rel) {
   if (rel.startsWith('content/config/') && rel.endsWith('.json')) return 'config-build.mjs';
   if (rel.startsWith('content/source/')) return 'content-build.mjs';
+  // content/hud-layout/*.json → styles/hud-layout.generated.css (no flag = --write).
+  if (rel.startsWith('content/hud-layout/') && rel.endsWith('.json')) return 'hud-layout-css.mjs';
   return null;
 }
 
