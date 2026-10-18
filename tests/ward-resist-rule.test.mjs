@@ -117,6 +117,7 @@ function castAction(combat, enemy, profile, { amount = 5, hits = 2 } = {}) {
   const actions = [{ effect, source: combat.player, owner: combat.player, target: enemy, card, meta: {} }];
   enqueueExpandedAction(combat, actions, { source: combat.player, target: enemy, carrier: card });
   drainQueue(combat);
+  return actions[0].meta.expansionGroup;
 }
 
 test('Ward drained by a rider between the contacts of one spell action is not over-reported or over-absorbed', () => {
@@ -134,7 +135,7 @@ test('Ward drained by a rider between the contacts of one spell action is not ov
   enemy.persistentWard.value = enemy.persistentWard.max = 5;
   const seen = captureEvents(combat);
   const before = enemy.hp;
-  castAction(combat, enemy, forceSpell);
+  const group = castAction(combat, enemy, forceSpell);
   const dealt = seen.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id);
   const spent = seen.filter(event => event.type === 'persistentWardChanged' && event.targetId === enemy.id && event.cause === 'resisted')
     .reduce((sum, event) => sum + event.spent, 0);
@@ -144,6 +145,8 @@ test('Ward drained by a rider between the contacts of one spell action is not ov
   assert.equal(dealt.length, 2, 'two hits land');
   assert.ok(stripped.length > 0, 'the rider drains Ward mid-action');
   assert.equal(reported, spent, 'RESISTED reports exactly the Ward that was spent');
+  const receipts = Object.values(group.targets).map(row => row.receipt).filter(Boolean);
+  assert.equal(receipts.reduce((sum, receipt) => sum + receipt.wardResisted, 0), spent, 'Counter receipt counts only Ward actually used');
   assert.equal(enemy.persistentWard.value, 5 - spent - stripped.reduce((sum, event) => sum + event.amount, 0), 'pool drops by spent plus stripped');
   assert.equal(enemy.persistentWard.value, 0, 'Ward is broken at 0 by the end of the action');
   assert.equal(before - enemy.hp, unwarded - spent, 'each point Ward spent is damage not taken; the rest lands');

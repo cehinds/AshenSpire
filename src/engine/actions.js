@@ -315,13 +315,14 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const spell = profile.camp === 'spell';
   // Matchup and control vulnerabilities precede typed defenses and Ward.
   const type = ctx.combatExpansionRules.matchups.damageAliases[profile.damageType] || profile.damageType;
-  const ward = tactical.resistedAmounts[contactIndex] || 0;
   // Ward planned at action start may have dropped since (a rider or effect spent it between contacts).
   // Cap to the live pool; the unabsorbed share is damage that now meets bypass, Block/Barrier and HP.
   const plannedWard = tactical.wardAbsorbed?.[contactIndex] || 0;
   const wardAbsorbed = Math.min(plannedWard, Math.max(0, target.persistentWard?.value || 0));
   amount += plannedWard - wardAbsorbed;
   if (tactical.wardAbsorbed) tactical.wardAbsorbed[contactIndex] = wardAbsorbed;
+  // Typed resistance and armour stay resisted; a shortfall added back into amount is not.
+  const ward = Math.max(0, (tactical.resistedAmounts[contactIndex] || 0) - (plannedWard - wardAbsorbed));
   const pool = spell ? 'barrier' : 'block';
   const bypass = Math.min(amount, tactical.guardBypassRemaining || 0);
   tactical.guardBypassRemaining -= bypass;
