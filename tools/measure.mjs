@@ -269,10 +269,13 @@ async function measureScene(browser, base, scene, wantPlays) {
     await settle(page);
     const unready = readinessProblem(await page.evaluate(readinessProbe));
     if (unready) throw new Error(`${scene} not ready: ${unready}`);
-    const errored = pageErrorProblem(pageErrors);
-    if (errored) throw new Error(`${scene} ${errored}`);
+    // errors accumulate in the page listener: re-checked after each stage, not only before the first
+    const noErrors = () => { const errored = pageErrorProblem(pageErrors); if (errored) throw new Error(`${scene} ${errored}`); };
+    noErrors();
     const counts = await page.evaluate(sceneCounts);
+    noErrors(); // the boot measurement itself can raise one
     const plays = wantPlays ? await touchPlays(page, cdp, wantPlays) : [];
+    noErrors(); // a card tap or its animation can raise one
     if (plays.length < wantPlays) {
       const e = new Error(`only ${plays.length} of ${wantPlays} touch plays landed`);
       e.partial = { counts, plays }; // kept for --json (run marks it partial: true)
