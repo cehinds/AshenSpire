@@ -3,7 +3,10 @@
 <!-- feature-preview:start -->
 ## Feature preview — layered card art
 
-[Play this feature build](https://cehinds.github.io/AshenSpire/branches/feature/newCardArt/latest/)
+[Feature build URL](https://cehinds.github.io/AshenSpire/branches/feature/newCardArt/latest/)
+
+Hosted publication could not be verified from this environment (HTTP 403).
+The local web build and component preview passed browser checks.
 
 Simple card art uses separate PNG backgrounds, objects and effects, selected
 from combat tags and JSON placement data. Shared small scepters retain the
