@@ -534,6 +534,16 @@ node tests/run-node.mjs --selftests-only  # the slow half: each tool's --selftes
 # or open tests/index.html in a browser — same suite, green/red list
 ```
 
+**What is JSON-authored now.** Relics, stances and flasks are authored in
+`content/source/relics.json`, `stances.json` and `flasks.json`;
+`node tools/content-build.mjs` compiles each to `src/content/generated/<kind>.js`
+(`launch.mjs` runs it before every build, `--check` is the drift gate), and
+`src/content/relics.js`, `stances.js` and `flasks.js` just re-export the generated
+module so every importer is unchanged. Base cards come through
+`tools/base-cards.mjs`; the interface strings (`uiStrings.csv`) and the node
+tables are CSV/JSON in `content/source/` too. Statuses, events and the class card
+files are still hand-written JS and follow the same way in later changes.
+
 Every `*.test.mjs` in the repository runs: `tests/run-node.mjs` finds them
 (skipping `node_modules`, `dist`, `build`, `scratch` and dot-directories other
 than `.github`) and hands them to one `node --test`. A new test file needs no
@@ -1062,19 +1072,27 @@ The engine interprets `stackMode` (add/refresh/unique), `decay`
 Bleed, Crimson Blight, and Staggered are all plain data here — test 17 proves a
 brand-new status needs zero engine changes.
 
-## Add a relic (one file: `src/content/relics.js`)
+## Add a relic (one file: `content/source/relics.json`)
 
-```js
+Relics are plain JSON (an array of rows, two-space indent). `src/content/relics.js`
+is only a re-export of the compiled `src/content/generated/relics.js`; do not
+author there. Add the row, then compile (`node tools/launch.mjs` does it for
+you; by hand: `node tools/content-build.mjs`) and commit the regenerated file.
+
+```json
 {
-  id: 'whetstoneFragment', name: 'Whetstone Fragment', rarity: 'common', icon: '🪨',
-  triggers: [{
-    on: 'damageDealt', once: true,
-    if: { p: 'all', preds: [{ p: 'eventIsAttack' }, { p: 'eventSourceIsOwner' }] },
-    do: [{ op: 'damage', amount: 4 }],
+  "id": "whetstoneFragment", "name": "Whetstone Fragment", "rarity": "common", "icon": "🪨",
+  "triggers": [{
+    "on": "damageDealt", "once": true,
+    "if": { "p": "all", "preds": [{ "p": "eventIsAttack" }, { "p": "eventSourceIsOwner" }] },
+    "do": [{ "op": "damage", "amount": 4 }]
   }],
-  textTemplate: 'Your first attack each combat deals {damage} extra damage.',
+  "textTemplate": "Your first attack each combat deals {damage} extra damage."
 }
 ```
+
+A flask is added the same way in `content/source/flasks.json`, and a stance in
+`content/source/stances.json`.
 
 ## Add an enemy (one file: `src/content/enemies/act<N>.js`)
 
