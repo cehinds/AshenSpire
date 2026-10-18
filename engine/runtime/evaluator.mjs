@@ -224,7 +224,7 @@ export function createRuntime({ mechanics, ops, bindings, attachments, modulePar
       if (handler.oncePer && binding) {
         const token = params[`${handler.oncePer}Id`];
         if (token === undefined) throw new Error(`handler ${handler.on} needs ${handler.oncePer}Id`);
-        const key = JSON.stringify([binding.id, handler.on, handler.id || '', handler.oncePer]);
+        const key = JSON.stringify([binding.id, handler.on, handler.id ?? mechanics.get(slug).service.handlers.indexOf(handler), handler.oncePer]);
         rt.state.bindingGates ||= {};
         if (rt.state.bindingGates[key] === token) return;
         if (handler.when && !condition(rt, scope, handler.when)) return;

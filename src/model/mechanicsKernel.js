@@ -7,6 +7,7 @@ export const jsonEqual = (a, b) => {
   if (!a || !b || typeof a !== 'object' || typeof b !== 'object' || Array.isArray(a) !== Array.isArray(b)) return false;
   return Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(k => Object.hasOwn(b, k) && jsonEqual(a[k], b[k]));
 };
+const compare = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 const plain = x => x !== null && typeof x === 'object' && !Array.isArray(x);
 const fail = (path, message) => { throw new Error(`${path}: ${message}`); };
 const freeze = value => {
@@ -53,6 +54,9 @@ export function validateParameterSchema(schema, path = '$schema') {
   if (!plain(schema) || !['object','array','number','integer','string','boolean'].includes(schema.type)) fail(path, 'unsupported parameter schema type');
   const allowed = ['type','properties','required','additionalProperties','items','default','minimum','maximum','enum','description','title'];
   for (const key of Object.keys(schema)) if (!allowed.includes(key)) fail(`${path}.${key}`, 'unsupported parameter schema field');
+  if ((schema.minimum !== undefined || schema.maximum !== undefined) && !['number','integer'].includes(schema.type)) fail(path, 'numeric bounds require a numeric parameter');
+  if (schema.enum !== undefined && (!Array.isArray(schema.enum) || !schema.enum.length)) fail(`${path}.enum`, 'expected nonempty array');
+  if (schema.additionalProperties !== undefined && schema.additionalProperties !== false) fail(`${path}.additionalProperties`, 'parameters must be closed');
   if (schema.minimum !== undefined && !Number.isFinite(schema.minimum) || schema.maximum !== undefined && !Number.isFinite(schema.maximum)) fail(path, 'parameter bounds must be finite');
   if (schema.minimum !== undefined && schema.maximum !== undefined && schema.minimum > schema.maximum) fail(path, 'inverted parameter bounds');
   if (schema.type === 'object') {
@@ -100,6 +104,10 @@ export function compileBindings({ mechanics, attachments = [], moduleParameters 
     for (const tag of new Set([...(source.tags || []).filter(t => tags.has(t)), ...(source.mechanicTags || []), ...explicit.keys()])) {
       const mechanic = tags.get(tag), manifest = mechanic.manifest, row = explicit.get(tag) || {};
       if (!(manifest.attaches || []).includes(source.kind)) fail(`${path}.${tag}`, `cannot attach to ${source.kind}`);
+      for (const required of mechanic.interface?.requires || []) {
+        if (!mechanics.has(required)) fail(`${path}.${tag}`, `requires unknown mechanic ${required}`);
+        if (enabledMechanics && !enabledMechanics.has(required)) fail(`${path}.${tag}`, `requires disabled mechanic ${required}`);
+      }
       const schema = manifest.parameters;
       let config = parameterDefaults(schema);
       validateParameters(schema, config, `${path}.${tag}.defaults`, true);
@@ -120,7 +128,7 @@ export function compileBindings({ mechanics, attachments = [], moduleParameters 
         label: source.label || manifest.label, config, interface: structuredClone(mechanic.interface || {}), service: structuredClone(mechanic.service) }));
     }
   }
-  return Object.freeze(out.sort((a, b) => a.id.localeCompare(b.id)));
+  return Object.freeze(out.sort((a, b) => compare(a.id,b.id)));
 }
 
 export function resolveValue(node, scope = {}) {
@@ -166,6 +174,7 @@ export function evaluateCondition(node, scope, resolve = value => resolveValue(v
 export function queryBinding(binding, query = 'parameters', params = {}) {
   const definition = binding.interface?.queries?.[query];
   if (!definition) fail(`${binding.mechanicId}.${query}`, 'unknown binding query');
+  for (const key of Object.keys(params)) if (!Object.hasOwn(definition.params || {},key)) fail(`${binding.mechanicId}.${query}.${key}`, 'unknown query parameter');
   // Parameter config is immutable; the returned query is a separate frozen
   // value, so inspection never exposes a mutable reference to live state.
   return freeze(structuredClone(resolveValue(definition.value, {...params,config:binding.config})));
@@ -186,6 +195,8 @@ export function validateModifiers(modifiers = [], path = '$modifiers') {
     if (row.value === undefined || !(Number.isFinite(row.value) || typeof row.value === 'string' && row.value.startsWith('$') || plain(row.value) && typeof row.value.f === 'string')) fail(`${at}.value`, 'expected scalar or reference/formula');
     if (row.priority !== undefined && !Number.isFinite(row.priority)) fail(`${at}.priority`, 'expected finite number');
     if (!row.stacking?.group || !['strongest', 'additive', 'multiplicative', 'exclusive'].includes(row.stacking.mode)) fail(`${at}.stacking`, 'explicit group and supported mode required');
+    for (const key of Object.keys(row.stacking)) if (!['group','mode','selection'].includes(key)) fail(`${at}.stacking.${key}`, 'unknown stacking field');
+    if (row.stacking.selection !== undefined && !['minimum','maximum'].includes(row.stacking.selection)) fail(`${at}.stacking.selection`, 'expected minimum or maximum');
     if (row.stacking.mode === 'additive' && row.operation !== 'add' || row.stacking.mode === 'multiplicative' && row.operation !== 'multiply') fail(`${at}.stacking`, 'stacking mode does not match operation');
     if (row.select && (!plain(row.select) || Object.keys(row.select).some(k => k !== 'damageKind') || !['physical', 'magical'].includes(row.select.damageKind))) fail(`${at}.select`, 'unknown damage selector');
     if (row.after !== undefined && (!Array.isArray(row.after) || row.after.some(x => typeof x !== 'string'))) fail(`${at}.after`, 'expected modifier ID array');
@@ -220,15 +231,15 @@ export function evaluateModifiers({ bindings = [], phase, subjectId, actorId, co
     }
   }
   const groups = new Map();
-  for (const row of candidates.sort((a, b) => a.binding.id.localeCompare(b.binding.id) || a.id.localeCompare(b.id))) {
+  for (const row of candidates.sort((a, b) => compare(a.binding.id,b.binding.id) || compare(a.id,b.id))) {
     const group = row.stacking.group, previous = groups.get(group);
-    if (previous && (previous[0].stacking.mode !== row.stacking.mode || previous[0].operation !== row.operation)) fail(group, 'conflicting stacking policy');
+    if (previous && (previous[0].stacking.mode !== row.stacking.mode || previous[0].operation !== row.operation || previous[0].stacking.selection !== row.stacking.selection)) fail(group, 'conflicting stacking policy');
     if (!previous) groups.set(group, [row]);
     else if (row.stacking.mode === 'exclusive') fail(group, 'conflicting exclusive modifiers');
-    else if (row.stacking.mode === 'strongest') { if (row.value < previous[0].value) groups.set(group, [row]); }
+    else if (row.stacking.mode === 'strongest') { const minimum = row.stacking.selection ? row.stacking.selection === 'minimum' : row.operation === 'multiply'; if (minimum ? row.value < previous[0].value : row.value > previous[0].value) groups.set(group, [row]); }
     else previous.push(row);
   }
-  const pending = [...groups.values()].flat().sort((a, b) => (a.priority || 0) - (b.priority || 0) || a.stacking.group.localeCompare(b.stacking.group) || a.binding.id.localeCompare(b.binding.id) || a.id.localeCompare(b.id));
+  const pending = [...groups.values()].flat().sort((a, b) => (a.priority || 0) - (b.priority || 0) || compare(a.stacking.group,b.stacking.group) || compare(a.binding.id,b.binding.id) || compare(a.id,b.id));
   const ordered = [], done = new Set();
   while (pending.length) {
     const index = pending.findIndex(row => (row.after || []).every(dep => done.has(`${row.binding.id}/${dep}`) || !pending.some(x => x.binding.id === row.binding.id && x.id === dep)));

@@ -1,6 +1,6 @@
 # Poise protection
 
-Attach `defense:poiseProtection` to an entity, character, active status, relic or equipped gear source. A tag and matching `mechanicBindings` row activate once. Override `parameters.multiplier` (0 through 1); 0.75 is the default. Module overrides precede attachment parameters; upgradeParameters override both. Inventory alone does not activate gear.
+Attach `defense:poiseProtection` to an entity, character, active status, relic, card in its active play/power window, or equipped gear source. A tag and matching `mechanicBindings` row activate once. Override `parameters.multiplier` (0 through 1); 0.75 is the default. Module overrides precede attachment parameters; upgradeParameters override both. Inventory alone does not activate gear.
 
 The owner must be the incoming target and its persistentPoise value positive. Only physical components are selected. The strongest reduction in `poise-protection` applies once; independent groups compose by priority and stable source identity. Fractions round only at final damage quantity.
 
