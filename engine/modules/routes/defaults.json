@@ -10,5 +10,6 @@
   ],
   "branchColumns": 3,
   "minimumThreatFloor": 3,
-  "mapMode": "fog"
+  "mapMode": "fog",
+  "firstFloor": null
 }

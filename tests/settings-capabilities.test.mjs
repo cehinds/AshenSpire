@@ -40,25 +40,30 @@ test('disabled configured resources/equipment/routes remove their dependent opti
   const display=categoryHtml('General',{settingsGeneralCategory:'Display','settingsGeneralTopic.Display':'Map'},null,null,null,null,'',false,profile);
   assert(!display.includes('data-key="mapZoom"'));assert(display.includes('data-key="viewPreset"'));
 });
-test('fog is the authored default in both profiles and stored eligible choices remain explicit',()=>{
+test('Core authors a visible map, Current authors fog, and stored eligible choices remain explicit',()=>{
   const bundle=JSON.parse(readFileSync(new URL('../games/ashenspire/bundles/current/bundle.json',import.meta.url),'utf8'));
-  assert.equal(bundle.modules.routes.settings.mapMode,'fog');assert.equal(core.modules.routes.mapMode,'fog');
-  assert.equal(resolveMapMode({}, {gameProfile:core}),'fog');assert.equal(resolveMapMode({}, {gameProfile:current}),'fog');
-  assert.equal(resolveMapMode({settings:{mapMode:'path'}},{gameProfile:core}),'fog');
+  assert.equal(bundle.modules.routes.settings.mapMode,'fog');assert.equal(core.modules.routes.mapMode,'path');
+  assert.equal(resolveMapMode({}, {gameProfile:core}),'path');assert.equal(resolveMapMode({}, {gameProfile:current}),'fog');
+  assert.equal(resolveMapMode({settings:{mapMode:'fog'}},{gameProfile:core}),'path');
   assert.equal(resolveMapMode({settings:{mapMode:'path'}},{gameProfile:current}),'path');
   assert.equal(resolveMapMode({settings:{mapMode:'invalid'}},{gameProfile:current}),'fog');
   // The legacy adapter reads its authored fallback rather than a second UI constant.
   const changed={gameProfile:{modules:{routes:{mode:'legacy',mapMode:'path'}}}};
   assert.equal(resolveMapMode({},changed),'path');
 });
-test('clean real Core and Current maps start partially hidden under fog',()=>{
+test('clean real Current map starts partially hidden under fog; Core starts with nothing hidden',()=>{
   for(const profile of [core,current]) {
     const registries=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
     const run=createRunState({seed:3,classId:'reaver',registries});
     run.mapGraph=buildActMap(registries,createRng(3),run.seatOrder[0],1);
     const knowledge=mapKnowledge({graph:run.mapGraph,run,mode:resolveMapMode({},run)});
-    assert(knowledge.counts.hidden>0,profile.id);assert(knowledge.drawn.size>0,profile.id);
-    assert(knowledge.drawn.size<Object.keys(run.mapGraph.nodes).length,profile.id);
+    if(profile===current) {
+      assert(knowledge.counts.hidden>0,profile.id);assert(knowledge.drawn.size>0,profile.id);
+      assert(knowledge.drawn.size<Object.keys(run.mapGraph.nodes).length,profile.id);
+    } else {
+      assert.equal(knowledge.counts.hidden,0,profile.id);
+      assert.equal(knowledge.drawn.size,Object.keys(run.mapGraph.nodes).length,profile.id);
+    }
   }
 });
 
