@@ -165,6 +165,6 @@ test('a two-component tagged card hit: preview == hit, bonus rounded once', () =
   assert.deepEqual(exposed, { preview: 13, amount: 13 });
 });
 
-test('regular Vulnerable still floors: base-3 starbladePhalanx vs Vulnerable deals 4 (3 × 1.5 = 4.5)', () => {
-  assert.deepEqual(solo(shipped, 'starbladePhalanx', 'vulnerable').hits, [4]);
+test('regular Vulnerable still floors: base-3 starbladePhalanx vs Vulnerable deals 3 (3 × 1.25 = 3.75)', () => {
+  assert.deepEqual(solo(shipped, 'starbladePhalanx', 'vulnerable').hits, [3]);
 });
