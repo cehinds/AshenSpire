@@ -38,11 +38,11 @@ test('terminal wins and defeats each unlock one class, durable dedupe survives h
  assert.equal(gameProfileClassAvailable(profile,{},'herald'),false);
 });
 
-test('seeded route has seven branching preboss depths, two mandatory rests on depths 3 and 7, and replay stability',()=>{
+test('seeded route has seven branching preboss depths, three mandatory rests on depths 3, 5 and 7, and replay stability',()=>{
  const run=fresh();let prior;
  for(let tier=1;tier<=3;tier++){
   const map=buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier);
-  assert.ok(Object.keys(map.nodes).length > 8);assert.equal(map.floors,8);assert.equal(map.columns,3);assert.equal(Object.values(map.nodes).filter(n=>n.type==='shrine').length,2);
+  assert.ok(Object.keys(map.nodes).length > 8);assert.equal(map.floors,8);assert.equal(map.columns,3);assert.equal(Object.values(map.nodes).filter(n=>n.type==='shrine').length,3);
   assert.equal(map.nodes.boss.floor,8);assert.notEqual(map.nodes.boss.encounterId,prior);prior=map.nodes.boss.encounterId;
   assert.deepEqual(map,buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier));
   // Depth 1 opens on a fight drawn as a fight (routes.firstFloor, owner 2026-10-18); every other hidden type is still '?'.

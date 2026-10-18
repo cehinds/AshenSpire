@@ -2,7 +2,7 @@
   "acts": 3,
   "prebossNodes": 7,
   "bosses": 3,
-  "restsPerAct": 2,
+  "restsPerAct": 3,
   "hiddenTypes": [
     "event",
     "fight",
@@ -16,6 +16,7 @@
   ],
   "restFloors": [
     3,
+    5,
     7
   ],
   "branchColumns": 3,
