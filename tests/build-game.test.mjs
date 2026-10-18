@@ -107,6 +107,15 @@ test('report counts match the mechanics index, the ui index and the maps', () =>
   for (const m of idx) assert.equal(artifact.tags[m.tag], m.id, m.tag);
 });
 
+test('the artifact ships the asset aliases so an engine reading only the artifact can resolve a UI slot', () => {
+  const aliases = readJson('games/ashenspire/assets/aliases.json').aliases;
+  assert.deepEqual(artifact.assets.aliases, aliases);
+  const target = aliases['icon.health'];
+  assert.equal(typeof target, 'string');
+  assert.equal(artifact.assets.aliases['icon.health'], target);
+  assert.ok(artifact.assets.catalog.assets[target], `catalog has ${target}`);
+});
+
 test('tags, layout refs and references resolve', () => {
   for (const [tag, slug] of Object.entries(artifact.tags)) assert.equal(artifact.mechanics[slug].manifest.tag, tag);
   for (const c of Object.values(artifact.ui.components)) if (c.layout?.ref) assert.ok(artifact.ui.layout[c.layout.ref], c.layout.ref);
@@ -157,6 +166,16 @@ test('the build fails on dangling references', () => {
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { portableHandler(mechanics).do = [{ op: 'heal', amount: { f: 'metric', metric: 'weaponDamage' } }]; } }), /formula 'metric' is legacy-only/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { portableHandler(mechanics).do = [{ op: 'heal', amount: { f: 'add', args: ['bad'] } }]; } }), /operand 'args' has the wrong type/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { portableHandler(mechanics).do = [{ op: 'addCard', card: 'typo' }]; } }), /param 'card' is not a cardRef/);
+  // Static content is read literally by the engine: effect targets are the closed TARGETS set, status ids are known
+  // statuses, and '$name' refs are not resolved, so each fails at build time rather than mid-fight.
+  assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op === 'damage')); c.effects.find(e => e.op === 'damage').target = 'definitelyUnknown'; } }), /op damage param 'target' is not an effect target \(self, enemy/);
+  assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op === 'damage')); c.effects.find(e => e.op === 'damage').target = ['self', 'enemy']; } }), /param 'target' is not an effect target/, 'an array target is not a scalar the legacy runtime can resolve');
+  assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op)); c.effects = [{ op: 'applyStatus', target: 'self', status: 'definitelyUnknown', stacks: 1 }]; } }), /op applyStatus names status 'definitelyUnknown', which this profile does not export/);
+  assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op)); c.effects = [{ op: 'buildup', target: 'enemy', status: 'definitelyUnknown', amount: 3 }]; } }), /op buildup names status 'definitelyUnknown'/);
+  assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op)); c.effects = [{ op: 'grantCardCharge', target: 'self', key: 'x', buildup: 2, buildupStatus: 'definitelyUnknown' }]; } }), /names buildupStatus 'definitelyUnknown'/);
+  assert.throws(() => buildGame({ patch: ({ content }) => { const c = content.cards.find(x => (x.effects || []).some(e => e.op)); c.effects = [{ op: 'addCard', card: '$bogus' }]; } }), /op addCard param 'card' is not a cardRef/);
+  // Mechanic service steps keep '$' refs and arbitrary entity refs.
+  assert.doesNotThrow(() => buildGame({ patch: ({ mechanics }) => { portableHandler(mechanics).do = [{ op: 'heal', target: '$seat', amount: 1 }, { op: 'heal', target: 'someSeat', amount: 1 }, { op: 'addCard', card: '$bogus' }]; } }));
   assert.throws(() => buildGame({ game: 'nonexistent-game' }));
 });
 

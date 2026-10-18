@@ -226,7 +226,9 @@ async function main() {
     ok(true, 'the first card was played');
   };
 
+  const counted = {}; // each route's numbered inputs, kept so a failure can print them again at the end
   const report = (name) => {
+    counted[name] = [...inputs];
     console.log(`    ${name}: ${inputs.length} inputs`);
     inputs.forEach((label, i) => console.log(`      ${String(i + 1).padStart(2)}. ${label}`));
     return inputs.length;
@@ -350,7 +352,13 @@ async function main() {
   console.log('  boundary: real Chromium headless at 1440x900 against the supplied standalone or source server; counted native mouse and keyboard inputs,');
   console.log('  a fresh profile with the shipped defaults (slot 1 empty). Not checked: touch or gamepad input,');
   console.log('  occupied-slot replacement, touch, gamepad, other browsers, and optional detours are not checked.');
-  if (fails.length) process.exit(1);
+  if (fails.length) {
+    // CI shows only the tail of this output as annotations, so a failure repeats what it
+    // counted on one line at the very end: the whole numbered step list, not just the total.
+    for (const f of fails) console.log(`  FAILED: ${f}`);
+    for (const [name, list] of Object.entries(counted)) console.log(`  steps counted (${name}, ${list.length}): ${list.map((label, i) => `${i + 1}. ${label}`).join('; ')}`);
+    process.exit(1);
+  }
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

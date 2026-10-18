@@ -3,7 +3,11 @@
 //
 // Contract: docs/ai/json-game-modules/MECHANICS-ARCHITECTURE.md. Reads the tag tree
 // (content/source/nodes.csv), the node variables and bindings, and the status
-// definitions (src/content/statuses.js), and writes engine/mechanics/<slug>/.
+// definitions (authored rows in content/source/statuses.json, expansion rows derived in
+// src/content/combatStatusRules.js, joined by the src/content/statuses.js shim), and writes
+// engine/mechanics/<slug>/. A status's legacy.file is always its JavaScript home (the shim, or
+// the reader that runs it); legacy.source names the authored data file or the derived rules
+// module that defines the row.
 //
 //   node tools/mechanics-generate.mjs          write what is missing or stale
 //   node tools/mechanics-generate.mjs --check  exit 1 if anything would change
@@ -86,6 +90,7 @@ const nodes = parseCsv('content/source/nodes.csv');
 const variables = parseCsv('content/source/nodeVariables.csv');
 const bindings = parseCsv('content/source/variableBindings.csv').filter(row => row.scope === 'default');
 const { statuses } = await import(pathToFileURL(join(ROOT, 'src/content/statuses.js')));
+const authoredStatusIds = new Set(JSON.parse(read('content/source/statuses.json')).map(row => row.id));
 const { balance } = await import(pathToFileURL(join(ROOT, 'src/content/balance.js')));
 const balanceAt = path => path.split('.').reduce((v, k) => (v == null ? v : v[k]), balance);
 
@@ -124,7 +129,7 @@ function describe(entry) {
   if (status) {
     portability = 'legacy';
     const reader = findReader([...quotedPatterns(status.id), new RegExp(`\\bstatuses\\??\\.${esc(status.id)}\\b`)]);
-    legacy = reader || { file: 'src/content/statuses.js' };
+    legacy = reader || { file: 'src/content/statuses.js', source: authoredStatusIds.has(status.id) ? 'content/source/statuses.json' : 'src/content/combatStatusRules.js' };
   } else if (family === 'classification' || family === 'fx' || /visual identity|presentation only/i.test(node.blurb)) {
     portability = 'data';
   } else {
@@ -157,6 +162,7 @@ function describe(entry) {
     description,
     `- Carried by: ${carried}.`,
     `- Lives in: ${where}.`,
+    ...(legacy?.source ? [`- Defined in: \`${legacy.source}\`.`] : []),
     `- Portability: ${portability}${portability === 'legacy' ? ' (service.json is empty until the behaviour moves to catalog ops)' : portability === 'data' ? ' (classification or presentation only)' : ''}.`,
   ].join('\n') + '\n';
   const iface = { mechanic: manifest.id, commands: {}, events: {}, queries: {}, listens: [], requires: [] };

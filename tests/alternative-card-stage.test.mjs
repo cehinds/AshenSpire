@@ -71,7 +71,11 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.ok(paints.some(p=>p.args[0]?.url?.includes('attack-contact')&&p.args[1]===208&&p.args[2]===16),'the source figure advances 80 pixels at the authored floor anchor');
     assert.deepEqual(paints.at(-1).args.slice(1,3),[0,0],'the materialized aura surface composites at the canvas origin');
     assert.equal(stage.currentArt.left,208,'HUD ink source follows authored canvas travel');
+    const heldSource=stage.currentArt.image;
+    const heldRasterizations=paints.filter(p=>p.args?.[0]===heldSource).length;
     stage.hold(60);step(50);assert.equal(stage.presentation.elapsed,115);
+    assert.equal(paints.filter(p=>p.args?.[0]===heldSource).length,heldRasterizations,
+      'a held immutable outfit composites its existing aura instead of rasterizing the shadows again');
     step(155);assert.equal(stage.pose,'ready');assert.equal(raf.size,0);
     assert.equal(paints.at(-1).args[1],128,'unfiltered rest returns to the original floor anchor');
     stage.play('hit');

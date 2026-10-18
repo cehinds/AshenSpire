@@ -14,8 +14,8 @@ const registries = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 function fixture() {
   const run = createRunState({ seed: 73, classId: 'reaver', registries, runId: 'rest-ui-test' });
   run.mapGraph = buildActMap(registries, createRng(73), run.seatOrder[0], 1);
-  run.mapNodeId = 'n1_0';
-  const visit = beginGameProfileRest(run, '1:n1_0');
+  run.mapNodeId = 'n3_0';
+  const visit = beginGameProfileRest(run, '1:n3_0');
   run.hp = 1; run.mana = 0; run.stamina = 0; run.smithingStones = 0;
   run.flaskCharges.hpCurrent = 0; run.flaskCharges.manaCurrent = 0;
   return { run, visit };

@@ -38,9 +38,10 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'an unknown display token is accepted by the boot schema',
-        file: 'src/content/statuses.js',
-        find: "instancePresentation: { valueToken: 'percent', durationToken: 'turns' },",
-        replace: "instancePresentation: { valueToken: 'percentage', durationToken: 'turns' },",
+        file: 'content/source/statuses.json',
+        find: '"valueToken": "percent"',
+        replace: '"valueToken": "percentage"',
+        prep: [['node', 'tools/content-build.mjs']],
         expectRed: /FAIL shipping status presentation passes the production boot schema/,
       },
       {

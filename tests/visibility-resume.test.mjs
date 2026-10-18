@@ -391,6 +391,7 @@ const KNOWN = {
   'src/ui/components/trayComponents.js': ["'pointermove'", "'pointerup'", "'pointercancel'"],
   'src/ui/components/tutorial.js': ["'keydown'", "'resize'"],
   'src/ui/debuglog.js': ["'error'", "'unhandledrejection'"],
+  'src/ui/modalManager.js': ["'popstate'", "'keydown'"], // the one modal stack: browser Back for entries that opt in; Escape capture for the top entry with dismiss
   'src/ui/fx.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerdown'", '.__fx'],
   'src/ui/gesture.js': [["'blur'", 'aborts the in-flight gesture as CANCELLED; driven above through finishCardDrag, which drops nothing'], "'pointerdown'", "'pointermove'", "'pointerup'", "'pointercancel'"],
   'src/ui/input.js': ["'keydown'", "'keydown'", "'keydown'", "'keyup'", ["'blur'", 'cancels the input gate and ends any held press CANCELLED (nothing commits); both halves armed and exercised above'], "'gamepadconnected'", "'gamepaddisconnected'"],

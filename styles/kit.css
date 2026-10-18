@@ -4714,6 +4714,11 @@ button.primary:disabled, button.primary[aria-disabled='true'],
 :root[data-short='true'] .modal[data-size='lg'], :root[data-short='true'] .modal[data-size='xl'],
 :root[data-short='true'] .as-modal[data-size='lg'], :root[data-short='true'] .as-modal[data-size='xl'] { height: auto; }
 .modal-body, .as-body, .as-pane { overscroll-behavior: contain; scrollbar-gutter: stable; }
+/* SCROLL LOCK. modalManager.js writes the open-modal count on <html>; while any
+   modal is open the page behind it does not scroll. base.css already pins
+   `html, body { overscroll-behavior: none }` and the doors' own bodies keep
+   `contain` above, so a drag inside a door never chains to the page. */
+html[data-modal-depth]:not([data-modal-depth="0"]) body { overflow: hidden; }
 .as-pane > * { flex-shrink: 0; }
 .modal-head-id h2, .as-head-id h2, .as-head-id .as-title-s { white-space: normal; overflow-wrap: anywhere; }
 /* Ready actions rise slightly without moving surrounding layout. */

@@ -107,6 +107,10 @@
         "symbol": {
           "type": "string",
           "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [

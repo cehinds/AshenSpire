@@ -228,7 +228,7 @@
     },
     "tools/motion-probe.mjs": {
       "count": 24,
-      "digest": "40e1c40c9e71e9f9"
+      "digest": "a260a8b30232d6f6"
     },
     "tools/music-toggle-parity.mjs": {
       "count": 16,
@@ -308,11 +308,11 @@
     },
     "tools/status-presentation-authority.mjs": {
       "count": 4,
-      "digest": "a7bf54d937e5a54d"
+      "digest": "8828ae5f798ba270"
     },
     "tools/swap-cost-relic-surface.mjs": {
       "count": 2,
-      "digest": "6aac8989f887c067"
+      "digest": "e838dc2190fb3994"
     },
     "tools/swap-row-reads.mjs": {
       "count": 9,
