@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **71 unused developer scripts moved into tools/attic** ([#2109](https://github.com/cehinds/AshenSpire/pull/2109), `0.7.1.1593`). No change in play. Seventy-one tools that nothing in the repository runs or names were moved, not deleted, into tools/attic/ (owner ruling 2026-10-17); their imports still resolve and tools/README.md says where they are.
+- **71 unused developer scripts moved into tools/attic** ([#2109](https://github.com/cehinds/AshenSpire/pull/2109), `0.7.1.1595`). No change in play. Seventy-one tools that nothing in the repository runs or names were moved, not deleted, into tools/attic/ (owner ruling 2026-10-17); their imports still resolve and tools/README.md says where they are.
+- **Misspelled targets, statuses and card names are refused at build time** ([#2108](https://github.com/cehinds/AshenSpire/pull/2108), `0.7.1.1595`). A card or enemy move that names an unknown effect target, status or card used to build fine and fail in the middle of a fight; the game build now refuses it with the exact path and the allowed vocabulary.
 
 - **Hold-to-confirm rings every tick, exactly on pitch** ([#2105](https://github.com/cehinds/AshenSpire/pull/2105), `0.7.1.1593`). The press-and-hold phrase (three ticks and the arrival) no longer loses a tick when a slow frame crosses two marks at once, and its notes no longer wobble: the pitch variance that makes hits sound different each time is switched off for this one authored phrase.
 - **The game file is 1.7 MB smaller: card layouts are stored once, not 376 times** ([#2104](https://github.com/cehinds/AshenSpire/pull/2104), `0.7.1.1591`). The playable file carried a copy of the shared card template inside every one of the 376 cards; it now stores only what each card changes, so the file is back under its size limit and cards look and behave exactly as before.
