@@ -206,6 +206,8 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
       }
       if ((v.op === 'applyStatus' || v.op === 'removeStatus') && typeof v.status === 'string' && !knownStatuses.has(v.status)) fail(`${where}: op ${v.op} names status '${v.status}', which this profile does not export`);
       if (v.op === 'buildup' && typeof v.status === 'string' && !knownBuildups.has(v.status)) fail(`${where}: op buildup names status '${v.status}', which has no status-control row (src/content/combatStatusRules.js)`);
+      // grantCardCharge's buildup bonus is keyed by buildupStatus and silently matches nothing when misspelled.
+      if (typeof v.buildupStatus === 'string' && !knownBuildups.has(v.buildupStatus)) fail(`${where}: op ${v.op} names buildupStatus '${v.buildupStatus}', which has no status-control row (src/content/combatStatusRules.js)`);
       for (const [k, x] of Object.entries(v)) walk(x, `${where}.${k}`);
     };
     for (const key of ['cards', 'enemyCards', 'resourceVariants', 'effectVariants', 'enemies', 'characters']) if (content[key]) { walk(content[key], `content.${key}`); for (const e of formulaErrors(content[key], `content.${key}`)) fail(e); }
