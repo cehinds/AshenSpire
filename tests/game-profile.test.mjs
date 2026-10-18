@@ -79,16 +79,16 @@ test('current legacy parity rejects inert changes while allowing equivalent decl
 });
 
 const repo=fileURLToPath(new URL('..',import.meta.url));
-test('run pin hashes engine kernel/runtime/contracts only, never src/',()=>{
+test('run pin hashes the engine kernel, runtime and game-profile contract only, never docs or src/',()=>{
  const catalog=loadGameProfileCatalog();
  assert.equal('runtimeSources' in catalog,false);
  assert.equal(catalog.runtimeArtifacts.some(a=>a.id==='ashen.source-runtime'),false);
  const kernel=catalog.runtimeArtifacts.filter(a=>a.id==='ashen.kernel-runtime');assert.equal(kernel.length,1);
- assert.equal(kernel[0].version,'1.0.0');assert.equal(kernel[0].path,'engine/{kernel,runtime,contracts}/**');
+ assert.equal(kernel[0].version,'1.0.0');assert.equal(kernel[0].path,'engine/{kernel,runtime}/** (no *.md) + engine/contracts/game-profile.json');
  assert.equal(catalog.runtimeArtifacts.some(a=>a.path.startsWith('src/')),false);
  const walk=dir=>readdirSync(repo+dir,{withFileTypes:true}).sort((a,b)=>a.name<b.name?-1:1).flatMap(e=>e.isDirectory()?walk(dir+'/'+e.name):[dir+'/'+e.name]);
- const files=['engine/kernel','engine/runtime','engine/contracts'].flatMap(walk);
- assert.ok(files.length>10);assert.equal(files.some(f=>f.startsWith('src/')),false);
+ const files=[...['engine/kernel','engine/runtime'].flatMap(walk).filter(f=>!f.endsWith('.md')),'engine/contracts/game-profile.json'];
+ assert.ok(files.length>=5);assert.equal(files.some(f=>f.startsWith('src/')||f.endsWith('.md')),false);
  const entries=files.map(path=>{const text=readFileSync(repo+path,'utf8');return {path,id:'ashen.kernel-runtime',version:'1.0.0',hash:gameDigest(path.endsWith('.json')?canonicalGameJSON(JSON.parse(text)):text)};});
  assert.equal(kernel[0].hash,gameDigest(entries));
  assert.equal(catalog.runtimeHash,gameDigest(catalog.runtimeArtifacts));

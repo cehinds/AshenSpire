@@ -23,17 +23,20 @@ export function loadGameProfileCatalog() {
     const defaultsPath=referenced(path,manifest.defaults), schemaPath=referenced(path,manifest.settingsSchema);
     catalog.modules[id]={manifest,defaults:json(defaultsPath),schema:json(schemaPath),artifacts:[path,defaultsPath,schemaPath].map(file=>artifact(file,id,manifest.version))};
   }
-  // The save-compatibility hash covers the engine kernel, runtime and contracts only; app code under src/ is not part of the save ABI.
+  // The save-compatibility hash covers what a saved profile is interpreted by: the engine kernel, the
+  // runtime ops/formulas/interpreter and the game-profile contract. Docs (*.md), the UI/map/asset/build
+  // contracts and app code under src/ play no part in resuming a save and are not hashed.
   const kernelRuntime=[];
   const visitRuntime = dir => {
     for (const entry of readdirSync(resolve(ROOT,dir),{withFileTypes:true}).sort((a,b)=>a.name < b.name ? -1 : 1)) {
       const path=dir+'/'+entry.name;
       if(entry.isDirectory())visitRuntime(path);
-      else kernelRuntime.push(artifact(path,'ashen.kernel-runtime','1.0.0'));
+      else if(!path.endsWith('.md'))kernelRuntime.push(artifact(path,'ashen.kernel-runtime','1.0.0'));
     }
   };
-  for(const dir of ['engine/kernel','engine/runtime','engine/contracts'])visitRuntime(dir);
-  catalog.runtimeArtifacts.push({id:'ashen.kernel-runtime',version:'1.0.0',path:'engine/{kernel,runtime,contracts}/**',hash:gameDigest(kernelRuntime)});
+  for(const dir of ['engine/kernel','engine/runtime'])visitRuntime(dir);
+  kernelRuntime.push(artifact('engine/contracts/game-profile.json','ashen.kernel-runtime','1.0.0'));
+  catalog.runtimeArtifacts.push({id:'ashen.kernel-runtime',version:'1.0.0',path:'engine/{kernel,runtime}/** (no *.md) + engine/contracts/game-profile.json',hash:gameDigest(kernelRuntime)});
   catalog.runtimeHash=gameDigest(catalog.runtimeArtifacts);
   for(const name of ['core','current']) {
     const path=`games/ashenspire/bundles/${name}/bundle.json`,manifest=json(path);

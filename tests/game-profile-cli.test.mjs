@@ -21,14 +21,14 @@ test('CLI apply validates before atomic replacement and export labels host requi
   assert.notEqual(cli('export','--portable','--input',input,'--out',exported).status,0);
  }finally{rmSync(dir,{recursive:true,force:true});}
 });
-test('kernel/runtime/contract edits change the exact behavior pin; src edits do not',()=>{
+test('kernel/runtime edits change the exact behavior pin; docs, other contracts and src edits do not',()=>{
  const before=loadGameProfileCatalog();
- for(const dir of ['engine/kernel','engine/runtime','engine/contracts']){
-  const marker=resolve(root,dir,'__gameProfileRuntimeProbe.txt');
-  try{writeFileSync(marker,'probe\n',{flag:'wx'});const after=loadGameProfileCatalog();assert.notEqual(after.runtimeHash,before.runtimeHash,dir);}finally{rmSync(marker,{force:true});}
- }
- const srcMarker=resolve(root,'src/model/__gameProfileRuntimeProbe.js');
- try{writeFileSync(srcMarker,'export const probe = 1;\n',{flag:'wx'});const after=loadGameProfileCatalog();assert.equal(after.runtimeHash,before.runtimeHash);}finally{rmSync(srcMarker,{force:true});}
+ const probe=(file,text,moves)=>{const marker=resolve(root,file);try{writeFileSync(marker,text,{flag:'wx'});const after=loadGameProfileCatalog();(moves?assert.notEqual:assert.equal)(after.runtimeHash,before.runtimeHash,file);}finally{rmSync(marker,{force:true});}};
+ probe('engine/kernel/__gameProfileRuntimeProbe.txt','probe\n',true);
+ probe('engine/runtime/__gameProfileRuntimeProbe.json','{}\n',true);
+ probe('engine/runtime/__gameProfileRuntimeProbe.md','# doc\n',false);
+ probe('engine/contracts/__gameProfileRuntimeProbe.schema.json','{}\n',false);
+ probe('src/model/__gameProfileRuntimeProbe.js','export const probe = 1;\n',false);
 });
 test('unresolved pack/class card references fail before a game can start',()=>{
  const {catalog,authors}=compileGameProfiles(),changed=JSON.parse(JSON.stringify(catalog));changed.packs['ashen.core-content@1.0.0'].content.characters.find(c=>c.tags.includes('character.player')).player.specialCardId='missing';
