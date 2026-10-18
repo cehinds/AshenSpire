@@ -1,3 +1,5 @@
+> Historical capture set: fresh layered-card captures are recorded in [../merged-dev-1561-a3c84a08d0/CAPTURE.md](../merged-dev-1561-a3c84a08d0/CAPTURE.md).
+
 # Merged Dev combat HUD capture
 
 Captured 2026-10-18 from reviewed merge `bd847d3baf00f1af690c2148528d03b98b728a95`, incorporating Dev `a0b54c60e00bfdff3a1bbfb840a949424ed205f1`. A fresh canonical cache build produced local **0.7.1.1560**, digest `3568240a83`; these are new captures of actual `dist/AshenSpire.html?shot=combat`, not reused 026 images. Fonts loaded and no image failures were recorded at all four sizes; all captures were inspected. No capture-only layout CSS was applied.

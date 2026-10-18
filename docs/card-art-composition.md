@@ -1,33 +1,50 @@
 # Simple card art composition
 
-The approved 60-image library supplies each weapon silhouette. Presentation code combines one base with a quiet elemental glow, fine perimeter marks, and up to three small status details. No card definitions, combat rules, schools, or new paintings are introduced.
+Simple artwork now renders the approved revision-14 cutouts as independent PNG layers. Card frames, titles, rules, combat definitions and Legacy artwork are unchanged. Full cards and deck-editor thumbnails use the same composition resolver.
 
-`simpleCardArt(def, { ref, registries, large, variant })` accepts an **already resolved** definition and returns either `null` (keep the existing artwork fallback) or `{ path, kind: 'simple', fit, position, category, maneuver, element, variant, filter, statuses, layers }`. A missing definition returns null; refs never override a supplied definition. Render `filter` on the base image, then `cardArtLayersHtml(composition)` inside the same positioned, clipped art well. The overlay is decorative, ignores pointer events, has no animation, and uses no SVG IDs or external resources. On image failure remove `[data-card-art-layers]` with the failed simple image before showing legacy art.
+## Authoring and runtime data
 
-Identity follows `cardTags ?? tags ?? activeRegistryJunction`; an explicit empty array is authoritative. Static authored tags are consulted only when no active registry or resolved tags are supplied. Camp selects physical versus magical. The six visual maneuvers are attack, smash, counter, evade, sweep, defend. Authored casting/ranged actions share the attack visual. A card with an authored camp and attack type also uses attack when its maneuver tag is absent; conflicting or unsupported explicit maneuvers still fall back. An explicit evade payload or direct dodgeRoll effect selects evade. Ordinary block effects do not imply evade. Unknown or conflicting camp/maneuver tags safely fall back. Names and ref/profile IDs never guess identity.
+Edit `asset-data/card-art/layered-selection.json` to choose approved composition codes for combat identities. Run:
 
-| Element | Base variant | Perimeter detail |
-| --- | --- | --- |
-| Force | 04, muted blue-violet filter | Incomplete pressure rings |
-| Fire | 02 | Sparse embers |
-| Lightning | 03 | Fine broken lightning threads |
-| Earth | 05, mineral brown filter | Angular stone fragments |
-| Frost | 01 | Ice crystals |
-| Psychic | 04, rose-violet filter | Paired ripples |
-| Alteration | 05, teal filter | Orbital diamond marks |
-| Divine | 03, pale gold filter | Halo and rays |
-| Necrotic | 05, desaturated green filter | Thin curling wisps |
+```
+node tools/export-layered-card-art.mjs
+node tools/export-layered-card-art.mjs --check
+```
 
-`element:` tags take precedence over `school:`, followed by a single authored damage type from attack components, attack.damageType, or damage tags. Mixed damage never selects an element. Presentation aliases are `alternation → alteration`, `illusion → psychic`, `decay → necrotic`, `cold → frost`, `holy/sacred → divine`, and `arcane → force`. Earth is a supported presentation theme, not a new gameplay school. Unthemed magical cards use force. Physical cards select a stable variant from the card ID and equipment profile ID, independent of instance IDs or render order. Their elemental overlay appears only when the authored element, school, or single damage identity identifies a theme.
+The exporter selects 28 compositions and 44 component PNGs from `docs/design/new-card-art/cutout-manifest.json`, verifies their hashes, and copies them unchanged into `assets-display/card-cutouts/`. It writes the readable `asset-data/card-art/layered-runtime.json` and its synchronous browser-module twin, `src/content/layeredCardArt.generated.js`. The full proposal library stays separate from the runtime subset.
 
-All 30 magical bases can use every theme. An integer variant override from1 through5 selects the approved base; invalid overrides use the theme default. The override changes neither the silhouette nor the card's identity. Filters are mild palette adjustments, so the original painting remains visible rather than promising every base looks identical to a newly painted elemental weapon.
+Each JSON asset includes its PNG reference, dimensions, hash, source references, anchors and default transform. Each composition layer includes numeric position, size, rotation, opacity, scale, resolved affine matrix, CSS, z-order and any scepter attachment. Geometry is resolved with the proposal viewer's shared layer math at export time. No image is flattened or recolored. Zero is a real choice: `Y00` means the blue sword on the amber scepter.
 
-Status motifs come from authored `status:` tags and nested `applyStatus`/`buildup` nodes in effects, counterPayload, upcast, or schoolEffect, not the target's current combat state. Only statuses present in the active registry are shown. Bespoke conditions include blood drops, frost crystals, sleep/insanity ripples, paralysis sparks, vulnerability fractures, concealment wisps, and protection rings. Every other registry status receives a small star detail using its safely validated tint. Labels and IDs remain data; SVG geometry is fixed and HTML attributes escaped. Status IDs are sorted, deduplicated, and capped at three; recursive effect inspection is cycle-safe and bounded. Layers do not replace the information panel's complete status text.
+| Resolved identity | Runtime art |
+| --- | --- |
+| Physical Attack | O00 sword |
+| Physical Smash | O11 hammer |
+| Physical Sweep | L40 scythe |
+| Physical Defend | O44 shield, secondary sword hidden |
+| Physical Counter | O44 shield and separate sword |
+| Spell melee Attack / Smash / Sweep / Defend | Y00 / Y01 / Y02 / Y04, or their pale mint equivalents |
+| Spell Attack with projectile/ranged delivery | Z00–Z09; elemental projectile plus separate amber scepter |
+| Utility removing a status from self | H00 cleansing fire |
+| Utility draw / retain / reshuffle | F00 cards |
+| Utility heal | G00 leaf |
+| Other spell utility | I00 spellbook |
 
-## Preview fixtures
+All ten approved ethereal weapon/color combinations remain in the runtime JSON, including the scimitar. The melee mapping can select any of the five digit choices without regenerating art. Earth, alteration, necrotic and wind choose pale mint; the other schools use blue. All ten element projectiles are supported. Spell Counter and Evade retain the prior Simple bases until a matching cutout assembly is approved. Other unsupported identities retain Legacy; this pass does not invent additional status, power or consumable object art.
 
-`cardArtPreviewFixtures()` exports 54 fixtures, one per maneuver × element. Each row contains `{ id, title, def, composition }`. Group rows by `composition.maneuver`, put elements in columns, and render each base plus `cardArtLayersHtml(row.composition)` to produce the six-by-nine contact sheet. `cardArtPreviewFixtures({ allVariants: true })` exports270 fixtures for all five approved base variants × six maneuvers × nine themes. These are compositions of existing assets, not54 or270 separately generated bitmaps.
+## Selection and rendering
 
-The host can render fixtures with its usual asset URL resolver; this module deliberately does not fetch assets, read settings, access the DOM, or register a tool page. Example art well: a relative container with `overflow:hidden`, a full-size base image (`object-fit:cover; object-position:50% 50%`) with the returned filter, followed by the overlay markup.
+`simpleCardArt(def, {ref, registries, large, variant})` accepts an already-resolved definition. Identity follows `cardTags ?? tags ?? activeRegistryJunction`. Explicit empty tags are authoritative. Conflicting camps/maneuvers fall back; names and profile IDs never guess a weapon. Cast skills/powers use utility objects; explicit maneuvers still take precedence. A legacy Attack type with an authored camp and no explicit maneuver remains Attack. An evade payload or direct `dodgeRoll` selects Evade; a block effect alone does not.
 
-Verification: `node --test tests/card-art-composition.test.mjs` checks all theme/action/variant combinations, real shipped card identities, resolved equipment tags, explicit empty/custom registries, all current status rows, aliases, deterministic caps, and escaping. Browser QA remains necessary to assess overlays inside actual card crops and thumbnails.
+Elements resolve from `element:`, then `school:`, then a single authored damage identity. Mixed damage does not imply an element. Presentation aliases remain `alternation → alteration`, `illusion → psychic`, `decay → necrotic`, `cold → frost`, `holy/sacred → divine`, and `arcane → force`. Unknown magical schools use force. These themes introduce no combat schools or mechanics.
+
+The result retains `kind: 'simple'`, `path`, `fit`, `position`, `category`, `maneuver`, `element`, `statuses` and `layers`, and adds `componentArt` when an approved assembly exists. `path` is its background PNG. `cardArtLayersHtml` renders the remaining cutouts in a uniformly scaled 512×640 stage, centered inside the clipped artwork well. Backgrounds cover the well; the stage fits inside it, preserving the weapon axis at every aspect ratio. All layers are decorative and ignore pointer input.
+
+Each melee projection uses `V.object.0`, exactly 152.95×152.95 in composition space, on its approved shaft axis. The foreground weapon stays separate; blue opacity is 0.4 and pale mint is 0.2. Existing element/status perimeter accents remain until dedicated status PNGs are approved. An action plus its element and at most two statuses uses at most four visual identities; unthemed physical actions may show three statuses. Statuses remain registry-scoped, deduplicated, deterministic and presentation-only.
+
+If the background **or any cutout** fails, the whole assembly falls back to retained art, then outlines. Removing all overlays prevents orphaned glow/scepter layers. Switching Display → Card artwork refreshes mounted cards and deck thumbnails. Existing 1–5 variant overrides apply to retained flat bases; approved physical objects remain stable across cards.
+
+## Packaging and verification
+
+The existing branch-owned art path adds the hash-verified PNGs to the common pack through `tools/card-cutout-assets.mjs`; both light and high builds share the same cutouts. The portable build inlines the same bytes through `cardCutoutUrl`, while web builds resolve them through `assetUrl`. Neither build depends on hosting proposal pages or fetching the runtime JSON asynchronously. The pinned external art release remains unchanged.
+
+The [runtime preview](preview/layered-card-art/index.html) exercises production card rendering and shows all ten ethereal assemblies. Tests cover selection, real cleansing/healing cards, strict tag precedence, transform fidelity, common-pack membership, status limits and component failure. Browser captures cover desktop, mobile, wide and tablet; the preview also checks Simple/Legacy switching and a deliberately failed component.

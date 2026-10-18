@@ -46,6 +46,21 @@ test('catalog protocol versions clear only their schema sites, including when eq
         if (version === rel) assert.match(row().detail, /arm 1/);
       }
     }
+    const taggingFile = 'src/content/generated/tagging.js';
+    const cleanTagging = readFileSync(resolve(root, taggingFile), 'utf8');
+    const versionRows = Array.from({ length: 20 }, () => ({ version: '9.9.z', repeatedProperty: 'repeated value' }));
+    const encodedTagging = catalogJSONExpression(versionRows);
+    assert.equal(encodedTagging.encoded, true);
+    for (const text of [
+      'export const tagging = ' + encodedTagging.expression + ';',
+      cleanTagging + "\nexport const SHOWN_VERSION = '9.9.z';",
+      'export const tagging = decodeCatalogJSON({"text":"[]","strings":["\\\"9.9.z\\\""]});',
+      'export const tagging = anotherDecoder([]);',
+    ]) {
+      writeFileSync(resolve(root, taggingFile), text);
+      assert.equal(row().ok, false, 'encoded tagging cannot hide a version or malformed payload');
+    }
+    writeFileSync(resolve(root, taggingFile), cleanTagging);
     for (const expression of invalidEncodedExpressions) {
       writeFileSync(resolve(root, file), 'export const gameProfileCatalog = ' + expression + ';');
       assert.equal(row().ok, false, 'invalid encoded catalog fails row B closed');
@@ -87,5 +102,24 @@ const invalidEncodedExpressions = [
 test('encoded catalogs reject malformed, unknown, and unused dictionary material', () => {
   for (const expression of invalidEncodedExpressions) {
     assert.throws(() => catalogVersionScanText(file, 'export const gameProfileCatalog = ' + expression + ';'));
+  }
+});
+
+
+test('tagging transport exposes decoded data and surrounding JavaScript without schema exemptions', () => {
+  const taggingFile = 'src/content/generated/tagging.js';
+  const value = Array.from({ length: 20 }, () => ({ version: '9.9.z', repeatedProperty: 'quoted }; \" value' }));
+  const packed = catalogJSONExpression(value);
+  assert.equal(packed.encoded, true);
+  for (const newline of ['\n', '\r\n']) {
+    const before = "export const BEFORE_VERSION = 'latest';" + newline;
+    const after = newline + "export const AFTER_VERSION = '9.9.z';";
+    const text = before + 'export const tagging = ' + packed.expression + ';' + after;
+    const decoded = catalogVersionScanText(taggingFile, text);
+    assert.equal(decoded, before + 'export const tagging = ' + JSON.stringify(value) + ';' + after);
+    assert.deepEqual(catalogSchemaVersionSpans(taggingFile, decoded), [], 'no tagging version span is exempt');
+  }
+  for (const expression of invalidEncodedExpressions) {
+    assert.throws(() => catalogVersionScanText(taggingFile, 'export const tagging = ' + expression + ';'));
   }
 });

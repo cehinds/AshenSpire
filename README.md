@@ -5,12 +5,14 @@
 
 [Feature build — merged-source publication pending](https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/) · [Capture details](docs/preview/features/combat-hud-layout-batch/README.md).
 
-Fresh local captures document the merged Dev rendering; timing and publication identity require separate checks.
+Fresh local captures document the new layered-card hand rendering after the Dev1561 merge; timing and final publication identity require separate checks.
 
 | Mobile | Desktop | Wide | Tablet |
 | --- | --- | --- | --- |
 | ![Merged combat on mobile](docs/preview/features/combat-hud-layout-batch/mobile.png) | ![Merged combat on desktop](docs/preview/features/combat-hud-layout-batch/desktop.png) | ![Merged combat in wide layout](docs/preview/features/combat-hud-layout-batch/wide.png) | ![Merged combat on tablet](docs/preview/features/combat-hud-layout-batch/tablet.png) |
 <!-- feature-preview:end -->
+
+
 
 
 

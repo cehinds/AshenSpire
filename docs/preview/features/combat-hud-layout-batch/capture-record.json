@@ -1,24 +1,13 @@
 {
   "captureDate": "2026-10-18",
-  "sourceCommit": "bd847d3baf00f1af690c2148528d03b98b728a95",
-  "mergedDevCommit": "a0b54c60e00bfdff3a1bbfb840a949424ed205f1",
-  "method": "Fresh canonical cache build, actual dist/AshenSpire.html?shot=combat; posed default solo combat",
+  "sourceCommit": "a3c84a08d0b5833f3793eff06006862ecfcacc3e",
+  "method": "Fresh parent canonical cache build; actual dist/AshenSpire.html?shot=combat; default solo combat fixture",
   "localBuild": {
-    "version": "0.7.1.1560",
-    "digest": "3568240a83"
+    "version": "0.7.1.1562",
+    "digest": "737e86b2b2"
   },
-  "artifactIdentity": {
-    "runtimeSourceCommit": "93c799b285e464c64daad6604a182f510dbe15f9",
-    "workflowRunId": 39084603309,
-    "workflowJobId": 117548431748,
-    "artifactId": 12120177516,
-    "version": "0.7.1.1560",
-    "sourceDigest": "e303de8945",
-    "artifactArchiveSha256": "26369b12c5d83987e09268d1205eec7bb5c5bfb4433d2fdbd305fe97fffd9cf9",
-    "artifactUrl": "https://github.com/cehinds/AshenSpire/actions/runs/39084603309/artifacts/12120177516",
-    "status": "artifact verified; public route pending"
-  },
-  "publicRouteVerification": "pending fresh merged-source identity proof",
+  "artifactIdentity": "pending new exact-source CI artifact",
+  "publicRouteVerification": "pending new exact-source public identity proof",
   "expectedUrl": "https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/",
   "screenshots": [
     {
@@ -70,8 +59,14 @@
       }
     }
   ],
-  "validation": "Existing about/changelog browser check985/985 passed, source plus selected standalone Settings",
-  "limits": "Rendering-only posed combat screenshots. No capture-only CSS. Do not establish latency, every profile, hosted gameplay, or live co-op. Prior026 captures/Qproof remain historical.",
-  "captureRetentionBasis": "Screenshots retain exact bd847 merge-source / local1560 / 3568240a83 provenance. Subsequent catalog encoding decodes to semantically equal JSON values and preserves runtime styling; retained screenshots are not captures of the final artifact.",
-  "currentQuickStart": "CI success: median contact250 ms / first number665 ms; budgets unchanged. Other fast CI pending at metadata update."
+  "inspection": "Root visually inspected all four new captures; layered hand artwork, player and enemies painted. Fonts loaded and zero failed image elements in every viewport.",
+  "canonicalValidation": "4/4 passed; pack15,929,510 JavaScript string units /70,490 headroom; version9 and census438/20/46 passed",
+  "limits": "Local posed rendering only; not CI/public screenshots, latency measurements, hosted execution or live co-op. No capture-only CSS. Prior galleries remain historical.",
+  "aboutChangelogValidation": {
+    "status": "PASS",
+    "checksPassed": 985,
+    "checksTotal": 985,
+    "scope": "Source plus selected standalone Settings routes",
+    "log": "/tmp/combat-final-a3c84-parent-changelog.log"
+  }
 }
