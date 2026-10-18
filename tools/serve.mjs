@@ -174,6 +174,32 @@ function sseMessage(event, text) {
  * own non-recursive watcher, and new directories are picked up as they appear.
  * SERVE_WATCH_NO_RECURSIVE=1 forces that second strategy (the test uses it).
  */
+/**
+ * The path a reload names: the last FILE the batch saw. Windows reports a
+ * directory as changed whenever a file inside it is written (the entry's
+ * mtime moves), so a batch there reads [file, its directory] and the
+ * directory would otherwise be the label; a path that is gone counts as a
+ * file (a delete is an edit). A batch of directories alone keeps its last.
+ */
+/**
+ * Windows reports a 'change' on a DIRECTORY whenever a file inside it is
+ * written (its mtime moved); the file's own event already says everything.
+ * A build's output write would otherwise land such an event on its parent
+ * (games/ashenspire, src/framework/data) after the quiet window and start
+ * another round. 'rename' on a directory (created, removed, replaced) is
+ * real and is never dropped.
+ */
+function isDirectoryNoise(absPath) {
+  try { return statSync(absPath).isDirectory(); } catch { return false; }
+}
+
+export function reloadLabel(root, batch) {
+  for (let i = batch.length - 1; i >= 0; i--) {
+    try { if (!statSync(join(root, batch[i])).isDirectory()) return batch[i]; } catch { return batch[i]; }
+  }
+  return batch[batch.length - 1];
+}
+
 function startWatch(root, emit) {
   const closers = [];
   const dirs = new Map(); // per-directory fallback: absolute dir -> its fs.watch handle
@@ -202,7 +228,7 @@ function startWatch(root, emit) {
           owed.delete(tools[at]);
         }
         if (failure) { for (const tool of tools.slice(at)) owed.add(tool); emit('error', failure); }
-        else emit('reload', batch[batch.length - 1]);
+        else emit('reload', reloadLabel(root, batch));
       }
     } finally { running = false; }
   }
@@ -239,6 +265,7 @@ function startWatch(root, emit) {
       const w = fsWatch(dir, (type, name) => {
         if (!name) return;
         const abs = join(dir, String(name));
+        if (type === 'change' && isDirectoryNoise(abs)) return;
         changed(relative(root, abs));
         if (type !== 'rename') return;
         let isDir = false;
@@ -257,7 +284,11 @@ function startWatch(root, emit) {
     const isDir = statSync(abs).isDirectory();
     try {
       if (!isDir || forceDirs) throw new Error('per-directory');
-      const w = fsWatch(abs, { recursive: true }, (type, name) => changed(relative(root, name ? join(abs, String(name)) : abs)));
+      const w = fsWatch(abs, { recursive: true }, (type, name) => {
+        const full = name ? join(abs, String(name)) : abs;
+        if (type === 'change' && isDirectoryNoise(full)) return;
+        changed(relative(root, full));
+      });
       w.on('error', () => {});
       closers.push(() => w.close());
     } catch {

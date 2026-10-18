@@ -51,6 +51,7 @@ function plantedErrors(edit = () => {}) {
     mkdirSync(path.join(dir, 'engine/ui'), { recursive: true });
     for (const link of ['contracts', 'runtime']) symlinkSync(`${root}engine/${link}`, path.join(dir, 'engine', link));
     cpSync(`${root}engine/ui/components`, path.join(dir, 'engine/ui/components'), { recursive: true });
+    cpSync(`${root}engine/ui/commands.json`, path.join(dir, 'engine/ui/commands.json'));
     mkdirSync(path.join(dir, 'games/ashenspire'), { recursive: true });
     for (const sub of ['ui', 'assets']) cpSync(`${root}games/ashenspire/${sub}`, path.join(dir, 'games/ashenspire', sub), { recursive: true });
     edit(file => {
@@ -65,14 +66,14 @@ test('the planting harness is clean until something is planted', () => {
   assert.deepEqual(plantedErrors(), []);
 });
 
-test('an event naming a command that engine/runtime/commands.json lacks is an error', () => {
+test('an event naming a command that engine/ui/commands.json lacks is an error', () => {
   const errors = plantedErrors(open => { const f = open('engine/ui/components/card.json'); f.doc.events.tap = 'card.doesNotExist'; f.save(); });
-  assert.deepEqual(errors, ['engine/ui/components/card.json: event "tap" names command "card.doesNotExist", which is not in engine/runtime/commands.json']);
+  assert.deepEqual(errors, ['engine/ui/components/card.json: event "tap" names command "card.doesNotExist", which is not in engine/ui/commands.json']);
 });
 
 test('an event naming an inherited Object property is not a registered command', () => {
   const errors = plantedErrors(open => { const f = open('engine/ui/components/card.json'); f.doc.events.tap = 'constructor'; f.save(); });
-  assert.deepEqual(errors, ['engine/ui/components/card.json: event "tap" names command "constructor", which is not in engine/runtime/commands.json']);
+  assert.deepEqual(errors, ['engine/ui/components/card.json: event "tap" names command "constructor", which is not in engine/ui/commands.json']);
 });
 
 test('an asset slot that is no catalog id, alias or missing.json entry is an error', () => {
@@ -96,12 +97,12 @@ test('a description naming an existing .json under src/ is not read as a missing
 });
 
 test('a command whose handler is unresolved is reported as a warning, not an error', () => {
-  assert.ok(result.warnings.includes('command "ui.press" has handler "unresolved" in engine/runtime/commands.json'), result.warnings.join('\n'));
+  assert.ok(result.warnings.includes('command "ui.press" has handler "unresolved" in engine/ui/commands.json'), result.warnings.join('\n'));
   assert.ok(!result.errors.some(e => e.includes('ui.press')));
 });
 
 test('every command handler names code that exists today', () => {
-  const { commands } = read('engine/runtime/commands.json');
+  const { commands } = read('engine/ui/commands.json');
   const mechanicCommands = new Set(readdirSync(`${root}engine/mechanics`)
     .filter(d => existsSync(`${root}engine/mechanics/${d}/interface.json`))
     .flatMap(d => { const i = read(`engine/mechanics/${d}/interface.json`); return Object.keys(i.commands || {}).map(c => `${i.mechanic}.${c}`); }));
