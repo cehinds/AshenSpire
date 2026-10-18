@@ -103,18 +103,21 @@ const BUILD_ORDER = ['config-build.mjs', 'hud-layout-css.mjs', 'framework-data-b
   'game-config.mjs build']; // last: it hashes src/** and reads the other generated modules
 
 /** Which build tool (in tools/) must run before a change under `rel` can be seen. */
-function buildToolFor(rel) {
-  if (rel.startsWith('content/config/') && rel.endsWith('.json')) return 'config-build.mjs';
-  if (rel.startsWith('content/source/')) return 'content-build.mjs';
+export function buildToolFor(rel) {
+  // A per-directory watcher reports a replaced authored tree by its own name,
+  // not a descendant filename. That event still owes the tree's builder.
+  const jsonTree = tree => rel === tree || (rel.startsWith(tree + '/') && rel.endsWith('.json'));
+  if (jsonTree('content/config')) return 'config-build.mjs';
+  if (rel === 'content/source' || rel.startsWith('content/source/')) return 'content-build.mjs';
   // content/hud-layout/*.json → styles/hud-layout.generated.css (no flag = --write).
-  if (rel.startsWith('content/hud-layout/') && rel.endsWith('.json')) return 'hud-layout-css.mjs';
+  if (jsonTree('content/hud-layout')) return 'hud-layout-css.mjs';
   // content/framework/*.json → src/framework/data/*.js (no flag = compile + report).
   // Before content-build, whose stray-source sweep wants each JSON's mirror to exist.
-  if (rel.startsWith('content/framework/') && rel.endsWith('.json')) return 'framework-data-build.mjs';
+  if (jsonTree('content/framework')) return 'framework-data-build.mjs';
   // games/** and every engine tree game-config.mjs reads (modules, foundation, the
   // game-profile contract, kernel, runtime) → src/content/generated/{gameProfiles,baseCards}.js
   // and games/ashenspire/game.lock.json. Needs the subcommand: bare, it only validates.
-  if (rel.startsWith('games/') || /^engine\/(modules|foundation|contracts|kernel|runtime)\//.test(rel)) return 'game-config.mjs build';
+  if (rel === 'games' || rel.startsWith('games/') || /^engine\/(modules|foundation|contracts|kernel|runtime)(?:\/|$)/.test(rel)) return 'game-config.mjs build';
   return null;
 }
 

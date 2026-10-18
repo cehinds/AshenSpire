@@ -16,11 +16,29 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request } from 'node:http';
 import { fileURLToPath } from 'node:url';
+import { buildToolFor } from '../tools/serve.mjs';
 
 const SERVE = fileURLToPath(new URL('../tools/serve.mjs', import.meta.url));
 const INDEX = '<!doctype html>\n<html><head><meta charset="utf-8"><title>t</title></head>\n<body><p>hello</p></body></html>\n';
 const cleanups = [];
 after(() => { for (const fn of cleanups.reverse()) { try { fn(); } catch { /* already gone */ } } });
+
+test('authored directory replacement selects its builder without matching sibling names', () => {
+  for (const [path, builder] of [
+    ['content/source', 'content-build.mjs'],
+    ['content/config', 'config-build.mjs'],
+    ['content/hud-layout', 'hud-layout-css.mjs'],
+    ['content/framework', 'framework-data-build.mjs'],
+    ['games', 'game-config.mjs build'],
+    ...['modules', 'foundation', 'contracts', 'kernel', 'runtime'].map(name => [`engine/${name}`, 'game-config.mjs build']),
+  ]) {
+    assert.equal(buildToolFor(path), builder, path);
+    assert.equal(buildToolFor(`${path}/authored.json`), builder, `${path}/authored.json`);
+    assert.equal(buildToolFor(`${path}-backup`), null, `${path}-backup`);
+    assert.equal(buildToolFor(`${path}-backup/authored.json`), null, `${path}-backup/authored.json`);
+  }
+  assert.equal(buildToolFor('content/config/notes.txt'), null);
+});
 
 function makeTree() {
   const root = mkdtempSync(join(tmpdir(), 'serve-watch-'));
@@ -130,6 +148,30 @@ for (const [label, env] of [['recursive fs.watch', {}], ['per-directory watchers
     child.kill();
   });
 }
+
+test('--watch: replacing content/source rebuilds before reload and watches the replacement', async () => {
+  const root = makeTree();
+  mkdirSync(join(root, 'src', 'generated'), { recursive: true });
+  writeFileSync(join(root, 'src', 'generated', 'value.json'), '{"value":"old"}\n');
+  writeFileSync(join(root, 'tools', 'content-build.mjs'),
+    "import { readFileSync, writeFileSync } from 'node:fs';\n" +
+    "writeFileSync('src/generated/value.json', readFileSync('content/source/value.json'));\n");
+  mkdirSync(join(root, 'replacement'));
+  writeFileSync(join(root, 'replacement', 'value.json'), '{"value":"replacement"}\n');
+  const { port, child } = await start(root, ['--watch'], { SERVE_WATCH_NO_RECURSIVE: '1' });
+  const stream = await events(port);
+  const reload = stream.next('reload', 3000);
+  renameSync(join(root, 'content', 'source'), join(root, 'previous-source'));
+  renameSync(join(root, 'replacement'), join(root, 'content', 'source'));
+  await reload;
+  assert.equal(JSON.parse(readFileSync(join(root, 'src', 'generated', 'value.json'), 'utf8')).value, 'replacement');
+  const again = stream.next('reload', 3000);
+  writeFileSync(join(root, 'content', 'source', 'value.json'), '{"value":"edited"}\n');
+  await again;
+  assert.equal(JSON.parse(readFileSync(join(root, 'src', 'generated', 'value.json'), 'utf8')).value, 'edited');
+  stream.close();
+  child.kill();
+});
 
 test('--watch: a failed build sends the stderr tail as an error event and no reload', async () => {
   const root = makeTree();
