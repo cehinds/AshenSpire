@@ -21,7 +21,9 @@
 //   SCENES    scenes/*.json get the W4 contract checks (bands, floor, layers,
 //             entrance, footer actions, portrait fraction).
 //
-// Folder → export shape: ui/tokens.json → uiConfig.tokens; ui/scenes/<id>-<name>
+// Folder → export shape: ui/tokens.json → uiConfig.tokens (its `vars` flat, plus
+// the published token groups type, layer, motion, touch under their own names);
+// ui/scenes/<id>-<name>
 // .json → uiConfig.scenes.<id>; ui/components/<name>.json →
 // uiConfig.components.<name>; ui/screens/<name>.json → uiConfig.screens.<name>;
 // ui/presentation/<name>.json → uiConfig.presentation.<name>.
@@ -43,6 +45,10 @@ export const GENERATED = 'src/config/generated/ui.js';
 
 export const SECTIONS = ['vars', 'sizing', 'positioning', 'layering', 'motion', 'components', 'behavior'];
 export const GROUPS = ['scenes', 'components', 'screens', 'presentation'];
+// ui/tokens.json holds `vars` plus these published design-token groups. They are
+// plain values (no "$" references) and reach the game as uiConfig.tokens.<group>;
+// tools/tokens-css.mjs also publishes them as CSS custom properties.
+export const TOKEN_GROUPS = ['type', 'layer', 'motion', 'touch'];
 export const FOOTER_ACTIONS = ['back', 'skipSpeech', 'continue'];
 const NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const REF = /^\$([A-Za-z_][A-Za-z0-9_]*)$/;
@@ -116,12 +122,18 @@ export function compileEntries(entries) {
     for (const d of duplicateKeys(text)) errors.push(`${CONFIG_DIR}/${rel}: duplicate key "${d}" — JSON keeps only the last one`);
     if (!isObject(data)) { errors.push(`${CONFIG_DIR}/${rel}: top level must be an object of sections`); continue; }
     for (const key of Object.keys(data)) {
+      // tokens.json also carries the published token groups; `motion` is both a
+      // section name and a token group, and in tokens.json it is the token group.
+      if (where.group === 'tokens' && TOKEN_GROUPS.includes(key)) continue;
       if (!SECTIONS.includes(key)) errors.push(`${CONFIG_DIR}/${rel}: unknown section "${key}" — sections are ${SECTIONS.join(', ')}`);
     }
     if (where.group === 'tokens') {
       for (const key of Object.keys(data)) {
-        if (key !== 'vars' && SECTIONS.includes(key)) errors.push(`${CONFIG_DIR}/${rel}: tokens.json holds only "vars", not "${key}"`);
+        if (key !== 'vars' && !TOKEN_GROUPS.includes(key) && SECTIONS.includes(key)) {
+          errors.push(`${CONFIG_DIR}/${rel}: tokens.json holds only "vars" and the token groups ${TOKEN_GROUPS.join(', ')}, not "${key}"`);
+        }
       }
+      errors.push(...tokenGroupProblems(rel, data));
     }
     if ('vars' in data && !isObject(data.vars)) errors.push(`${CONFIG_DIR}/${rel}: "vars" must be an object`);
     files.push({ rel, text, data, ...where });
@@ -222,7 +234,17 @@ export function compileEntries(entries) {
 
   // Tokens: resolved inside their own scope and exported as plain values.
   for (const name of Object.keys(tokenVars)) {
+    if (TOKEN_GROUPS.includes(name)) {
+      errors.push(`${CONFIG_DIR}/ui/tokens.json: vars.${name}: "${name}" is a token group name — rename the variable`);
+      continue;
+    }
     config.tokens[name] = resolveValue(tokenVars[name], tokenScope, tokenScope.label, `vars.${name}`, [`${tokenScope.label}:${name}`], false);
+  }
+  // The token groups are plain data: copied through as written.
+  if (tokenFiles[0]) {
+    for (const group of TOKEN_GROUPS) {
+      if (group in tokenFiles[0].data) config.tokens[group] = JSON.parse(JSON.stringify(tokenFiles[0].data[group]));
+    }
   }
   // Audit pass: every declared variable resolves (unknowns and cycles inside
   // variables nobody references are still refused), and every one is used.
@@ -238,6 +260,103 @@ export function compileEntries(entries) {
 
   const sources = files.map((f) => ({ rel: f.rel, hash: hashOf(f.text) }));
   return { config, errors: [...new Set(errors)], sources };
+}
+
+const CSS_NAME = /^--[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
+const isNameKey = (k) => /^[a-z][A-Za-z0-9]*$/.test(k);
+
+/**
+ * The published design-token groups in ui/tokens.json (type, layer, motion,
+ * touch). Pure; returns problem strings that name the file and the path. Unknown
+ * keys are refused at every level, as unknown sections are.
+ *
+ *   type.scale.<name>   { px, weight?, tracking?, upper?, family?, css?, home? }
+ *   type.minimum        { bodyPx, captionPx, textPx }
+ *   layer.<name>        integer z-index, strictly increasing in the order written
+ *   motion.<name>       non-negative integer milliseconds
+ *   touch.<name>        { px?, css?, home? }   (px may be left out only when homed)
+ *
+ * `css` names the custom property the entry publishes; `home` says that property
+ * is already declared in that stylesheet (one home per fact), so the generated
+ * stylesheet does not declare it again.
+ */
+export function tokenGroupProblems(rel, data) {
+  const out = [];
+  const at = (path) => `${CONFIG_DIR}/${rel}: ${path}`;
+  const only = (obj, allowed, path) => {
+    for (const k of Object.keys(obj)) if (!allowed.includes(k)) out.push(at(`${path}: unknown key "${k}" — allowed keys are ${allowed.join(', ')}`));
+  };
+  const entry = (value, path, extra, { pxOptionalWhenHomed = false } = {}) => {
+    if (!isObject(value)) { out.push(at(`${path} must be an object`)); return false; }
+    only(value, ['px', 'css', 'home', ...extra], path);
+    // Only a homed touch entry may leave px out: its home owns a dynamic value
+    // (the tap floor is player-tunable, so a literal here would be a second copy).
+    // A typography entry always carries px — the minimum-size checks read it.
+    if ('px' in value || !('home' in value) || !pxOptionalWhenHomed) {
+      if (!isNum(value.px) || !(value.px > 0)) out.push(at(`${path}.px must be a positive number`));
+    }
+    if ('css' in value && (typeof value.css !== 'string' || !CSS_NAME.test(value.css))) out.push(at(`${path}.css must be a custom property name like --t-lead`));
+    if ('home' in value) {
+      if (typeof value.home !== 'string' || !value.home) out.push(at(`${path}.home must be the stylesheet path that already declares the property`));
+      if (!('css' in value)) out.push(at(`${path}.home needs a css name`));
+    }
+    return true;
+  };
+  const named = (obj, path, each) => {
+    if (!isObject(obj) || Object.keys(obj).length === 0) { out.push(at(`${path} must be a non-empty object`)); return; }
+    for (const [k, v] of Object.entries(obj)) {
+      if (!isNameKey(k)) { out.push(at(`${path}.${k}: name must be camelCase letters and digits`)); continue; }
+      each(k, v, `${path}.${k}`);
+    }
+  };
+
+  if ('type' in data) {
+    const t = data.type;
+    if (!isObject(t)) out.push(at('type must be an object'));
+    else {
+      only(t, ['scale', 'minimum'], 'type');
+      if ('scale' in t) {
+        named(t.scale, 'type.scale', (k, v, path) => {
+          if (!entry(v, path, ['weight', 'tracking', 'upper', 'family'])) return;
+          if ('weight' in v && !(Number.isInteger(v.weight) && v.weight >= 100 && v.weight <= 900 && v.weight % 100 === 0)) out.push(at(`${path}.weight must be 100, 200 … 900`));
+          if ('tracking' in v && !(typeof v.tracking === 'string' && /^-?\d*\.?\d+em$/.test(v.tracking))) out.push(at(`${path}.tracking must be an em length like ".18em"`));
+          if ('upper' in v && typeof v.upper !== 'boolean') out.push(at(`${path}.upper must be true or false`));
+          if ('family' in v && !['display', 'body'].includes(v.family)) out.push(at(`${path}.family must be "display" or "body"`));
+        });
+      } else out.push(at('type.scale is missing'));
+      if ('minimum' in t) {
+        const m = t.minimum;
+        if (!isObject(m)) out.push(at('type.minimum must be an object'));
+        else {
+          only(m, ['bodyPx', 'captionPx', 'textPx'], 'type.minimum');
+          for (const k of ['bodyPx', 'captionPx', 'textPx']) {
+            if (!isNum(m[k]) || !(m[k] > 0)) out.push(at(`type.minimum.${k} must be a positive number`));
+          }
+          const scale = isObject(t.scale) ? t.scale : {};
+          if (isObject(scale.body) && isNum(m.bodyPx) && scale.body.px < m.bodyPx) out.push(at(`type.scale.body.px ${scale.body.px} is below type.minimum.bodyPx ${m.bodyPx}`));
+          if (isObject(scale.caption) && isNum(m.captionPx) && scale.caption.px < m.captionPx) out.push(at(`type.scale.caption.px ${scale.caption.px} is below type.minimum.captionPx ${m.captionPx}`));
+        }
+      } else out.push(at('type.minimum is missing'));
+    }
+  }
+  if ('layer' in data) {
+    let previous = -Infinity;
+    named(data.layer, 'layer', (k, v, path) => {
+      if (!Number.isInteger(v) || v < 0) { out.push(at(`${path} must be an integer z-index of 0 or more`)); return; }
+      if (v <= previous) out.push(at(`${path} ${v} is not above the layer written before it (${previous}) — layers are written bottom to top`));
+      previous = v;
+    });
+  }
+  if ('motion' in data) {
+    named(data.motion, 'motion', (k, v, path) => {
+      if (!Number.isInteger(v) || v < 0) out.push(at(`${path} must be a whole number of milliseconds, 0 or more`));
+    });
+  }
+  if ('touch' in data) {
+    named(data.touch, 'touch', (k, v, path) => { entry(v, path, [], { pxOptionalWhenHomed: true }); });
+  }
+  return out;
 }
 
 /** Cost presentation may regroup pools, but cannot hide or double-count one. */
