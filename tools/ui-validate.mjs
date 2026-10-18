@@ -1,4 +1,6 @@
 // Validates the JSON UI layer (engine/ui/components, games/<game>/ui/screens) and writes engine/ui/index.json.
+// Beyond schema and refs it checks that every event names a command in engine/runtime/commands.json, every asset slot
+// resolves (catalog, games/<game>/assets/aliases.json or missing.json) and every src/ path in a description exists.
 //   node tools/ui-validate.mjs           validate, then write the index
 //   node tools/ui-validate.mjs --check   validate and fail if the index is stale (writes nothing)
 // Contract: docs/ai/json-game-modules/MECHANICS-ARCHITECTURE.md (UI section).
@@ -6,14 +8,17 @@ import { readFileSync, readdirSync, writeFileSync, existsSync, realpathSync } fr
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { validateGameSchema } from '../engine/kernel/gameConfig.js';
+import { buildAssetCatalog, readAliases, readMissing } from './asset-catalog.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const readJson = file => JSON.parse(readFileSync(path.join(ROOT, file), 'utf8'));
+const readJson = (file, root = ROOT) => JSON.parse(readFileSync(path.join(root, file), 'utf8'));
+const COMMANDS_FILE = 'engine/runtime/commands.json';
+const SRC_PATH = /src\/[\w/.-]+\.js/g;
 const GATED_FIELDS = ['sp', 'mp', 'cardCosts'];
 const VISIBILITY_QUERY = 'enemy_visibility.visibleFields';
 
-function jsonFiles(dir) {
-  const abs = path.join(ROOT, dir);
+function jsonFiles(dir, root = ROOT) {
+  const abs = path.join(root, dir);
   return existsSync(abs) ? readdirSync(abs).filter(f => f.endsWith('.json')).sort() : [];
 }
 
@@ -32,12 +37,12 @@ function resolvePath(doc, dotted) {
   return true;
 }
 
-function checkRef(ref, subPath, where, errors) {
+function checkRef(ref, subPath, where, errors, root = ROOT) {
   if (!ref.startsWith('content/config/ui/')) { errors.push(`${where}: ref "${ref}" must live under content/config/ui/`); return; }
-  if (!existsSync(path.join(ROOT, ref))) { errors.push(`${where}: ref "${ref}" does not exist`); return; }
+  if (!existsSync(path.join(root, ref))) { errors.push(`${where}: ref "${ref}" does not exist`); return; }
   // Realpath containment: '..' segments or links must not escape the UI configuration tree.
-  if (!realpathSync(path.join(ROOT, ref)).startsWith(realpathSync(path.join(ROOT, 'content/config/ui')) + path.sep)) { errors.push(`${where}: ref "${ref}" must live under content/config/ui/`); return; }
-  if (subPath !== undefined && !resolvePath(readJson(ref), subPath)) errors.push(`${where}: path "${subPath}" not found in ${ref}`);
+  if (!realpathSync(path.join(root, ref)).startsWith(realpathSync(path.join(root, 'content/config/ui')) + path.sep)) { errors.push(`${where}: ref "${ref}" must live under content/config/ui/`); return; }
+  if (subPath !== undefined && !resolvePath(readJson(ref, root), subPath)) errors.push(`${where}: path "${subPath}" not found in ${ref}`);
 }
 
 /** Enemy-visibility rule: SP, MP and card costs are bound only through the visibility query.
@@ -61,36 +66,73 @@ export function visibilityErrors(doc, rel) {
   return errors;
 }
 
-export function validateUi({ games = ['ashenspire'] } = {}) {
+/** Guards that tie a UI document to the rest of the repo: its command ids, its asset slots and the src files its description names. */
+function commandErrors(doc, rel, commands) {
+  const errors = [];
+  for (const [event, command] of Object.entries(doc.events || {})) if (!commands || !(command in commands)) errors.push(`${rel}: event "${event}" names command "${command}", which is not in ${COMMANDS_FILE}`);
+  return errors;
+}
+
+function assetErrors(doc, rel, resolvers) {
+  const errors = [];
+  for (const id of doc.assets || []) for (const { game, resolves } of resolvers) if (!resolves(id)) errors.push(`${rel}: asset "${id}" is not a catalog id, an alias or a missing.json entry for game ${game}`);
+  return errors;
+}
+
+function descriptionErrors(doc, rel, root) {
+  const errors = [];
+  for (const file of new Set((doc.description || '').match(SRC_PATH) || [])) if (!existsSync(path.join(root, file))) errors.push(`${rel}: description names ${file}, which does not exist`);
+  return errors;
+}
+
+/** The ids a game's UI may name as an asset: catalog ids, alias keys and missing.json entries. */
+function assetResolver(root, game, errors) {
+  let catalog = {};
+  try { catalog = buildAssetCatalog({ root, game }).assets; } catch (e) { errors.push(`games/${game}/assets: ${e.message}`); }
+  const aliases = readAliases(root, game), missing = readMissing(root, game);
+  for (const [slot, target] of Object.entries(aliases)) if (target !== null && !(target in catalog)) errors.push(`games/${game}/assets/aliases.json: alias "${slot}" names catalog id "${target}", which does not exist`);
+  return { game, resolves: id => id in catalog || id in aliases || id in missing };
+}
+
+export function validateUi({ games = ['ashenspire'], root = ROOT } = {}) {
   const errors = [], warnings = [];
-  const componentSchema = readJson('engine/contracts/ui-component.schema.json');
-  const screenSchema = readJson('engine/contracts/ui-screen.schema.json');
+  const componentSchema = readJson('engine/contracts/ui-component.schema.json', root);
+  const screenSchema = readJson('engine/contracts/ui-screen.schema.json', root);
+  let commands = null;
+  try {
+    const registry = readJson(COMMANDS_FILE, root);
+    validateGameSchema(registry, readJson('engine/contracts/commands.schema.json', root));
+    commands = registry.commands;
+  } catch (e) { errors.push(`${COMMANDS_FILE}: ${e.message}`); }
+  const resolvers = games.map(game => assetResolver(root, game, errors));
   const components = {}, screens = {};
   const load = (dir, file, schema, into, label) => {
     const rel = `${dir}/${file}`;
     let doc;
-    try { doc = readJson(rel); } catch (e) { errors.push(`${rel}: ${e.message}`); return; }
+    try { doc = readJson(rel, root); } catch (e) { errors.push(`${rel}: ${e.message}`); return; }
     try { validateGameSchema(doc, schema); } catch (e) { errors.push(`${rel}: ${e.message}`); return; }
     if (doc.id !== file.replace(/\.json$/, '')) errors.push(`${rel}: id "${doc.id}" must match the file name`);
     strings(doc, '$', (s, where) => { if (!/^[\x20-\x7E]*$/.test(s)) errors.push(`${rel}: non-ASCII text at ${where}`); });
     if (into[doc.id]) errors.push(`${rel}: duplicate ${label} id "${doc.id}"`);
-    into[doc.id] = { doc, rel };
+    into[doc.id] = { doc, rel, game: label === 'screen' ? dir.split('/')[1] : null };
   };
-  for (const f of jsonFiles('engine/ui/components')) load('engine/ui/components', f, componentSchema, components, 'component');
-  for (const g of games) for (const f of jsonFiles(`games/${g}/ui/screens`)) load(`games/${g}/ui/screens`, f, screenSchema, screens, 'screen');
+  for (const f of jsonFiles('engine/ui/components', root)) load('engine/ui/components', f, componentSchema, components, 'component');
+  for (const g of games) for (const f of jsonFiles(`games/${g}/ui/screens`, root)) load(`games/${g}/ui/screens`, f, screenSchema, screens, 'screen');
 
   const used = new Set();
   for (const { doc, rel } of Object.values(components)) {
-    if (doc.layout) checkRef(doc.layout.ref, doc.layout.path, `${rel} layout`, errors);
+    if (doc.layout) checkRef(doc.layout.ref, doc.layout.path, `${rel} layout`, errors, root);
+    errors.push(...commandErrors(doc, rel, commands), ...assetErrors(doc, rel, resolvers), ...descriptionErrors(doc, rel, root));
     for (const child of doc.children || []) {
       used.add(child.component);
       if (!components[child.component]) errors.push(`${rel}: child component "${child.component}" does not exist`);
     }
     errors.push(...visibilityErrors(doc, rel));
   }
-  for (const { doc, rel } of Object.values(screens)) {
-    if (doc.layout) checkRef(doc.layout.ref, undefined, `${rel} layout`, errors);
-    if (doc.scene) checkRef(doc.scene.ref, undefined, `${rel} scene`, errors);
+  for (const { doc, rel, game } of Object.values(screens)) {
+    if (doc.layout) checkRef(doc.layout.ref, undefined, `${rel} layout`, errors, root);
+    if (doc.scene) checkRef(doc.scene.ref, undefined, `${rel} scene`, errors, root);
+    errors.push(...commandErrors(doc, rel, commands), ...assetErrors(doc, rel, resolvers.filter(r => r.game === game)), ...descriptionErrors(doc, rel, root));
     for (const region of doc.regions) {
       used.add(region.component);
       if (!components[region.component]) errors.push(`${rel}: region "${region.slot}" uses unknown component "${region.component}"`);
