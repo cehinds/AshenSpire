@@ -41,7 +41,7 @@ function panelFor(entry) {
   panel.append(node('div', 'target-hud-name', entry.name));
   const meters = entry.createMeters();
   meters.classList.add('target-hud-meters');
-  for (const child of [...meters.children]) if (child.dataset.meterRow !== 'hp' && child.dataset.res !== 'poise') child.remove();
+  for (const child of [...meters.children]) if (child.dataset.meterRow !== 'hp') child.remove();
   panel.append(meters, intentRow(entry));
   const statuses = entry.createStatuses();
   statuses.classList.add('target-hud-statuses');
