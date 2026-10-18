@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
+- **Hold-to-confirm rings every tick, exactly on pitch** ([#2105](https://github.com/cehinds/AshenSpire/pull/2105), `0.7.1.1585`). The press-and-hold phrase (three ticks and the arrival) no longer loses a tick when a slow frame crosses two marks at once, and its notes no longer wobble: the pitch variance that makes hits sound different each time is switched off for this one authored phrase.
+
 - **Hits sound a little different each time, heavy hits land with a thump, no more piled-up clicks** ([#2101](https://github.com/cehinds/AshenSpire/pull/2101), `0.7.1.1585`). Every synthesized sound now varies its pitch by a few percent so repeated cues stop sounding identical; heavy hits carry a short 60 Hz thump; the same cue within 40 ms plays once (a five-card draw is one draw sound) and at most eight sounds play at once.
 
 - **Windows test shard green again (serve --watch tests)** ([#2099](https://github.com/cehinds/AshenSpire/pull/2099), `0.7.1.1583`). Two dev-server watch tests that replace a watched directory now run only where that code path exists (POSIX); nothing player-facing.
