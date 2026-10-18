@@ -199,6 +199,25 @@ function compileDir(srcDir, outDir, { write } = {}) {
     stale += place(outDir, name, emit(name, data, file), write, produced);
     results.push({ file, name, rows: Array.isArray(data) ? data.length : Object.keys(data).length });
   }
+  // content/source/cards/<exportName>.json → <outDir>/cards/<exportName>.js. The
+  // plain-data card pools (a file per class pool) live one level down so the
+  // card rows are not mixed with the flat tables; the file name IS the export
+  // name (heraldCards.json → export const heraldCards). JSON only.
+  const cardsSrc = join(srcDir, 'cards');
+  const cardsOut = join(outDir, 'cards');
+  const cardsProduced = new Set();
+  if (existsSync(cardsSrc)) {
+    if (write) mkdirSync(cardsOut, { recursive: true });
+    for (const file of readdirSortedSync(cardsSrc)) {
+      if (extname(file).toLowerCase() !== '.json') continue;
+      const name = basename(file, '.json');
+      let data;
+      try { data = JSON.parse(readFileSync(join(cardsSrc, file), 'utf8')); } catch (e) { bthrow(`cards/${file}: ${e.message}`); }
+      if (!Array.isArray(data)) bthrow(`cards/${file}: a card pool is a JSON array of card rows`);
+      stale += place(cardsOut, name, emit(name, data, `cards/${file}`), write, cardsProduced);
+      results.push({ file: `cards/${file}`, name: `cards/${name}`, rows: data.length });
+    }
+  }
   // THE TREE'S DERIVATIONS. Seven modules used to have sources of their own
   // (tags/tagDomains/tagFamilyDomains/propertyRules/propertyRuleEffects under
   // content/source, properties/relations under content/framework). They are
@@ -223,6 +242,11 @@ function compileDir(srcDir, outDir, { write } = {}) {
       // Do not exempt the filename in arbitrary output trees or other JS files.
       && !(resolve(outDir) === OUT && ['gameProfiles.js', 'baseCards.js'].includes(f)))
     : [];
+  if (existsSync(cardsOut)) {
+    for (const f of readdirSortedSync(cardsOut)) {
+      if (f.endsWith('.js') && !cardsProduced.has(f)) orphans.push(`cards/${f}`);
+    }
+  }
   return { results, stale, orphans, parsed };
 }
 
@@ -467,7 +491,8 @@ function sweepAssets(assetsRoot, bundle) {
  * clause 5 protects: content/weapons.csv saved one level up compiles clean,
  * ships nothing, caught nowhere). Same pattern as sweepAssets: walk, and fail
  * BY NAME anything the compile will never read. compileDir reads exactly the
- * TOP LEVEL of content/source — so both edges are stray: a *.csv/*.json one
+ * TOP LEVEL of content/source (plus *.json one level down in content/source/cards,
+ * the plain-data card pools) — so both edges are stray: a *.csv/*.json one
  * level UP (beside source/) and one level DEEP (a subfolder inside source/).
  */
 function sweepStraySources(contentRoot) {
@@ -495,6 +520,7 @@ function sweepStraySources(contentRoot) {
       const abs = join(dir, ent.name);
       if (ent.isDirectory()) walk(abs);
       else if (/\.json$/i.test(ent.name) && abs.startsWith(configDir + sep)) continue;
+      else if (/\.json$/i.test(ent.name) && dir === join(contentRoot, 'source', 'cards')) continue;
       else if (/\.json$/i.test(ent.name) && dir === hudLayoutDir) {
         if (!HUD_FORM_FACTORS.includes(ent.name.replace(/\.json$/i, ''))) {
           errors.push(`content/hud-layout/${ent.name}: STRAY SOURCE FILE — tools/hud-layout-css.mjs reads only ${HUD_FORM_FACTORS.map((name) => `${name}.json`).join(', ')}; this file compiles to nothing`);
@@ -922,6 +948,32 @@ async function selftest() {
       const deep = r.find((m) => m.includes('content/source/sub/extra.json'));
       const pass = r.length === 2 && !!up && !!deep;
       ok(pass, `K14 [S2 m5] stray source files — weapons.csv one level UP and source/sub/extra.json one level DEEP, each red by name, the legit file untouched\n      → ${pass ? up : `NOT CAUGHT BY NAME (${r.length} error(s): ${r.join(' | ') || 'none'})`}`);
+    }
+    {
+      // K14-cards — content/source/cards/ is the one subfolder the compile
+      // reads (plain-data card pools). The legit file compiles to
+      // generated/cards/<name>.js, a deeper folder or a CSV beside it is
+      // stray by name, a non-array pool fails by file, and a generated card
+      // module with no source is an orphan.
+      const c = join(tmp, 'content-cards');
+      mkdirSync(join(c, 'source', 'cards', 'sub'), { recursive: true });
+      writeFileSync(join(c, 'source', 'cards', 'okCards.json'), '[{"id":"a"}]\n');
+      writeFileSync(join(c, 'source', 'cards', 'sub', 'deep.json'), '[]\n');
+      writeFileSync(join(c, 'source', 'cards', 'rows.csv'), 'a,b\n1,2\n');
+      const r = sweepStraySources(c);
+      const deep = r.find((m) => m.includes('content/source/cards/sub/deep.json'));
+      const csv = r.find((m) => m.includes('content/source/cards/rows.csv'));
+      ok(r.length === 2 && !!deep && !!csv, `K14-cards [S2 m5] content/source/cards/: okCards.json untouched, cards/sub/deep.json and cards/rows.csv each red by name${r.length === 2 && deep && csv ? '' : ` (got ${r.length}: ${r.join(' | ') || 'none'})`}`);
+      const out = join(tmp, 'out-cards');
+      mkdirSync(join(out, 'cards'), { recursive: true });
+      writeFileSync(join(out, 'cards', 'ghostCards.js'), 'export const ghostCards = [];\n');
+      const cr = compileDir(join(c, 'source'), out, { write: true });
+      const emitted = existsSync(join(out, 'cards', 'okCards.js')) && readFileSync(join(out, 'cards', 'okCards.js'), 'utf8').includes('export const okCards = [{"id":"a"}];');
+      ok(emitted && cr.orphans.length === 1 && cr.orphans[0] === 'cards/ghostCards.js', 'K14-cards [S2 m4] cards/okCards.json compiles to generated/cards/okCards.js (export okCards); ghostCards.js with no source is reported as orphan');
+      writeFileSync(join(c, 'source', 'cards', 'okCards.json'), '{"id":"a"}\n');
+      let nonArray = '';
+      try { compileDir(join(c, 'source'), out, { write: false }); } catch (e) { nonArray = e.message; }
+      ok(nonArray.includes('cards/okCards.json') && nonArray.includes('JSON array'), `K14-cards [S2 m3] a card pool that is not an array — file named: ${nonArray || 'NOT CAUGHT'}`);
     }
     {
       // K15 — eight causal missing-key plants. Three must pass through
