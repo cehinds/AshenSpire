@@ -180,6 +180,12 @@ if (argOf('--verify-receipt')) verifyReceiptCli(argOf('--verify-receipt'));
 async function runner() {
   const { installWebAudioStub } = await import('./webaudio-stub.mjs');
   const gains = installWebAudioStub();
+  // The stub's audio clock never moves, and sfx() drops a repeat of one id
+  // inside 40 ms of audio time. The runner's second play is a later cue, so
+  // capture the context initAudio() builds and advance its clock between plays.
+  const BaseCtx = window.AudioContext;
+  let liveCtx = null;
+  window.AudioContext = class extends BaseCtx { constructor() { super(); liveCtx = this; } };
   const proto = window.AudioContext.prototype;
   const createSource = proto.createBufferSource;
   let decodeFails = false;
@@ -238,6 +244,7 @@ async function runner() {
     await wait(30);
     const afterWarm = snapshot();
     gains.length = 0;
+    liveCtx.currentTime += 0.1; // past the 40 ms same-id dedupe in sfx()
     engine.sfx(id);
     const secondImmediate = snapshot();
     await wait(5);
