@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **Map locations and battles use reusable art layers** ([#2082](https://github.com/cehinds/AshenSpire/pull/2082), `0.7.1.1609`). Crownfall services preview their matching surroundings, and compatible battlefields combine separate back walls or skies, floors, furniture, rugs, day/night tints and weather. Indoor rooms exclude precipitation; existing art remains for unsupported locations. Gameplay, travel and saves are unchanged.
-
+- **Map locations and battles use reusable art layers** ([#2082](https://github.com/cehinds/AshenSpire/pull/2082), `0.7.1.1611`). Crownfall services preview their matching surroundings, and compatible battlefields combine separate back walls or skies, floors, furniture, rugs, day/night tints and weather. Indoor rooms exclude precipitation; existing art remains for unsupported locations. Gameplay, travel and saves are unchanged.
+- **Hit feel: shake by share of max HP up to 10 px, 120 ms hit-stop on huge hits** ([#2123](https://github.com/cehinds/AshenSpire/pull/2123), `0.7.1.1611`). Big hits shake harder and hold longer: shake scales with the share of health a hit takes, up to 10 px, and a hit for 35% or more of max health pauses 120 ms at impact.
 - **Wave-3 review follow-ups: JSON status provenance; rest-first snapshot refused** ([#2124](https://github.com/cehinds/AshenSpire/pull/2124), `0.7.1.1609`). Housekeeping from review: the mechanics docs and provenance name the JSON status source, and an old rest-first rule preset is refused when loaded from a saved snapshot too.
 
 - **Preview defaults: visible map, exact intents, floor 1 is a fight** ([#2117](https://github.com/cehinds/AshenSpire/pull/2117), `0.7.1.1607`). The map is fully visible from the start, enemy intents are always shown exactly, and a run opens on a fight.

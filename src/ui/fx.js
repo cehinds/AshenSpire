@@ -11,7 +11,8 @@ import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 import { sfx } from './sfx.js';
 import { haptic } from './haptics.js';
 import { hitTierFor } from '../content/sfx.js';
-import { shakePxFor, hitStopMsFor, SHAKE_MAX_PX } from '../content/combatFeel.js';
+import { shakePxFor, hitStopMsFor, BIG_HIT_SHARE, HUGE_HIT_SHARE } from '../content/combatFeel.js';
+export { BIG_HIT_SHARE, HUGE_HIT_SHARE };
 import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 import { playPoseOn, stageFor } from './services/PoseAnimator.js';
@@ -627,8 +628,6 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
 // biggest (pct35 at 35% or more, pct20 at 20% or more), whatever its absolute
 // size; with no max HP known, or a smaller share, the absolute tiers apply:
 // crit (big hits pop hardest), heavy, normal, chip.
-export const BIG_HIT_SHARE = 0.20; // a hit this share of the target's max HP is a big hit (pct20, and the bigHit haptic)
-export const HUGE_HIT_SHARE = 0.35;
 export function dmgClass(amount, targetMaxHp = 0) {
   const pct = targetMaxHp > 0 ? amount / targetMaxHp : 0;
   if (pct >= HUGE_HIT_SHARE) return 'dmg pct35';
@@ -700,7 +699,8 @@ function clearHeldFigures() {
 // shake at least as big restarts it.
 const SHAKE_MS = 200;
 const shakeStates = new WeakMap();
-function shake(combatEl, px = SHAKE_MAX_PX) {
+const FIXED_SHAKE_PX = 4; // a stagger's shake: the old fixed amplitude, not scaled by a hit
+function shake(combatEl, px = FIXED_SHAKE_PX) {
   if (!combatEl || !(px > 0)) return;
   // Honor the Screen shake setting (and reduced motion, which also drops it).
   if (document.body.classList.contains('no-shake') || reducedMotionRequested()) return;
@@ -1187,7 +1187,7 @@ export function playTimeline(events, ctx, done) {
     // multi-target attacks. Recovery includes only the holds actually played.
     let heldMs = 0;
     const holdFor = (event) => ((beat.kind === 'attack' || beat.kind === 'counter') && event.type === 'damageDealt'
-      ? hitStopMsFor(guardHitFloatParts(event).residual || 0) : 0);
+      ? hitStopMsFor(guardHitFloatParts(event).residual || 0, typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(event.targetId)) || 0 : 0) : 0);
     const markContact = (what) => {
       // An observable contact marker (tools/click-impact-probe.mjs): the
       // effects layer's data-contact counts the impact-frame moments played.
@@ -1720,8 +1720,8 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           }
           if (heavy) flash(anchor, 'hit-heavy', 380 + held);
           hold(anchor, held);
-          // Every HP hit shakes, by the HP it cost (SPEC §7.4).
-          shake(ctx.combatEl, shakePxFor(parts.residual));
+          // Every HP hit shakes, by the share of the target's max HP it cost (SPEC §7.4).
+          shake(ctx.combatEl, shakePxFor(parts.residual, typeof ctx.maxHpFor === 'function' ? Number(ctx.maxHpFor(e.targetId)) || 0 : 0));
         },
         numbers: (ctx) => {
           if (sequential && !outcome) hitSounds();
