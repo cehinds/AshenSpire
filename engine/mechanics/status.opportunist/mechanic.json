@@ -20,6 +20,6 @@
   },
   "portability": "legacy",
   "legacy": {
-    "file": "src/content/statuses.js"
+    "file": "content/source/statuses.json"
   }
 }
