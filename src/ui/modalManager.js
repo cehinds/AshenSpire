@@ -76,12 +76,48 @@ function notifyIfEmpty() {
   for (const fn of waiters.splice(0)) fn();
 }
 
+// ESCAPE. One capture listener on the document, installed the first time an
+// entry with `dismiss` registers (and again if the document object changes,
+// which only tests do). It acts on the TOP entry only, and only when that entry
+// has a `dismiss`; a bespoke surface that never passed one keeps its own Escape
+// handler, and the manager neither closes it nor blocks it.
+let escapeOn = null;
+
+function onEscape(event) {
+  if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
+  const top = topModal();
+  if (!top || !top.dismiss) return;
+  // A layer that is in the page but was never registered (the title's
+  // `.title-modal-veil`, say) can sit above a registered door. The shell used
+  // to refuse Escape unless its panel was the last `[aria-modal]`; keep that.
+  const aria = typeof document.querySelectorAll === 'function' ? document.querySelectorAll('[aria-modal="true"]') : null;
+  const last = aria && aria.length ? aria[aria.length - 1] : null;
+  if (last && last !== top.element && top.element?.isConnected && !holds(top.element, last)) return;
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation?.();
+  top.dismiss('escape');
+}
+
+function ensureEscape() {
+  if (typeof document === 'undefined' || typeof document.addEventListener !== 'function') return;
+  if (escapeOn === document) return;
+  escapeOn = document;
+  document.addEventListener('keydown', onEscape, true);
+}
+
 /**
  * registerModal(name, element, opts = {}) → release()
  *
  * Pushes the modal onto the stack. release() removes exactly that entry, once;
  * calling it again does nothing. Removing the last entry notifies the
  * onModalsClosed waiters.
+ *
+ * opts (all optional):
+ *   dismiss(reason)  closes this modal; reason is 'escape' | 'back' | 'program'.
+ *                    Without it the manager never closes the entry.
+ *   back             true → the browser/Android back button dismisses it.
+ *   inert            false → do not make the page behind it inert.
  */
 export function registerModal(name, element, opts = {}) {
   const entry = {
@@ -92,6 +128,7 @@ export function registerModal(name, element, opts = {}) {
     back: opts?.back === true,
   };
   stack.push(entry);
+  if (entry.dismiss) ensureEscape();
   syncPage();
   let released = false;
   return function release() {

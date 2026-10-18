@@ -128,3 +128,92 @@ test('registering with no document at all does not throw', () => {
   assert.equal(openModals().length, 1);
   release();
 });
+
+// --- Escape ---------------------------------------------------------------
+// The shell is exercised through withModalDom, whose window.press() replays a
+// key the way a browser orders it (window capture, document capture, bubble).
+
+test('Escape on a shell modal closes it through the manager, once', async () => {
+  const { withModalDom } = await import('./helpers/modal-dom.mjs');
+  const { openModal } = await import('../src/ui/components/modalShell.js');
+  resetModalState();
+  withModalDom((dom, win) => {
+    let closes = 0;
+    const shell = openModal({ title: 'Settings', onClose: () => { closes += 1; } });
+    const event = win.press('Escape', { cancelable: true });
+    assert.equal(closes, 1, 'closed once');
+    assert.equal(shell.veil.isConnected, false, 'veil removed synchronously');
+    assert.equal(event.defaultPrevented, true);
+    assert.equal(openModals().length, 0);
+    win.press('Escape');
+    assert.equal(closes, 1, 'a second Escape finds nothing to close');
+    shell.close();
+    assert.equal(closes, 1, 'close after Escape is a no-op');
+  });
+});
+
+test('Escape closes only the top of two shell modals', async () => {
+  const { withModalDom } = await import('./helpers/modal-dom.mjs');
+  const { openModal } = await import('../src/ui/components/modalShell.js');
+  resetModalState();
+  withModalDom((dom, win) => {
+    const log = [];
+    const lower = openModal({ title: 'Lower', onClose: () => log.push('lower') });
+    const upper = openModal({ title: 'Upper', onClose: () => log.push('upper') });
+    win.press('Escape');
+    assert.deepEqual(log, ['upper']);
+    assert.equal(lower.veil.isConnected, true);
+    win.press('Escape');
+    assert.deepEqual(log, ['upper', 'lower']);
+    assert.equal(upper.veil.isConnected, false);
+  });
+});
+
+test('Escape with a bespoke (no dismiss) entry on top is left alone', async () => {
+  const { withModalDom } = await import('./helpers/modal-dom.mjs');
+  const { openModal } = await import('../src/ui/components/modalShell.js');
+  resetModalState();
+  withModalDom((dom, win) => {
+    let closes = 0;
+    const shell = openModal({ title: 'Under', onClose: () => { closes += 1; } });
+    const bespoke = dom.document.createElement('section');
+    bespoke.setAttribute('aria-modal', 'true');
+    dom.document.body.appendChild(bespoke);
+    const release = registerModal('bespoke', bespoke);
+    const event = win.press('Escape');
+    assert.equal(closes, 0, 'the shell underneath did not close');
+    assert.equal(event.defaultPrevented, false, 'the manager did not consume the key');
+    assert.equal(shell.veil.isConnected, true);
+    release();
+    bespoke.remove();
+    win.press('Escape');
+    assert.equal(closes, 1, 'once the bespoke layer is gone the shell answers again');
+  });
+});
+
+test('an entry registered with dismiss gets reason "escape"; repeats are ignored', () => {
+  const calls = [];
+  const listeners = [];
+  const fake = {
+    addEventListener: (type, fn) => listeners.push([type, fn]),
+    removeEventListener() {},
+    querySelectorAll: () => [],
+  };
+  const had = 'document' in globalThis;
+  const saved = globalThis.document;
+  globalThis.document = fake;
+  try {
+    resetModalState();
+    const release = registerModal('mine', {}, { dismiss: (reason) => calls.push(reason) });
+    const [, onKey] = listeners.find(([type]) => type === 'keydown');
+    onKey({ key: 'Escape', preventDefault() {}, stopPropagation() {} });
+    assert.deepEqual(calls, ['escape']);
+    onKey({ key: 'Escape', repeat: true, preventDefault() {}, stopPropagation() {} });
+    onKey({ key: 'Enter', preventDefault() {}, stopPropagation() {} });
+    assert.deepEqual(calls, ['escape'], 'repeat and other keys are ignored');
+    release();
+  } finally {
+    resetModalState();
+    if (had) globalThis.document = saved; else delete globalThis.document;
+  }
+});
