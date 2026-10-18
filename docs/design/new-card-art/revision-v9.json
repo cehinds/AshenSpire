@@ -1,0 +1,36 @@
+{
+  "revision": 9,
+  "sourceCommit": "ade2a282ab71f29fe66f2f04bf8f91d67c69e41b",
+  "request": "Make the ethereal scythe much bigger, following the marked silhouette.",
+  "approvedStyleReference": "Y00",
+  "changedCompositions": [
+    "Y02",
+    "Y07",
+    "Y12",
+    "Y17",
+    "Y22",
+    "Y27",
+    "Y32",
+    "Y37",
+    "Y42",
+    "Y47",
+    "Y52",
+    "Y57",
+    "Y62",
+    "Y67",
+    "Y72",
+    "Y77",
+    "Y82",
+    "Y87",
+    "Y92",
+    "Y97"
+  ],
+  "changedPngs": [],
+  "unchangedPngCount": 362,
+  "scytheScale": {
+    "x": 1.2,
+    "y": 1.35
+  },
+  "placement": "Move scythe/scepter assembly right to retain the enlarged blade inside the art crop; move the emission anchor along the spectral shaft so it reaches the physical pommel.",
+  "resetSavedPlacement": true
+}

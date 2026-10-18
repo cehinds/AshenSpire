@@ -1,0 +1,31 @@
+{
+  "revision": 10,
+  "request": "Make the physical scepter smaller in the enlarged scythe compositions.",
+  "changedCompositions": [
+    "Y02",
+    "Y07",
+    "Y12",
+    "Y17",
+    "Y22",
+    "Y27",
+    "Y32",
+    "Y37",
+    "Y42",
+    "Y47",
+    "Y52",
+    "Y57",
+    "Y62",
+    "Y67",
+    "Y72",
+    "Y77",
+    "Y82",
+    "Y87",
+    "Y92",
+    "Y97"
+  ],
+  "scepterSizeFactor": 0.7,
+  "changedPngs": [],
+  "unchangedPngCount": 362,
+  "placement": "Shrink the physical scepter 30% around its pommel. Compensate the stone attachment offset and referenceParentSize to preserve the enlarged spectral scythe position and scale.",
+  "resetSavedPlacement": true
+}
