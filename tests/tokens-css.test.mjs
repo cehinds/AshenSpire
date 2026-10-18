@@ -70,6 +70,27 @@ test('a home that does not declare the property, and a duplicate of a stylesheet
   assert.ok(twice.errors.includes(`${TOKENS_JSON}: touch.minGapPx and layer.hud both publish --layer-hud`), twice.errors.join('\n'));
 });
 
+test('a homed token whose px disagrees with its home is refused; a calc() home asks for px to be dropped', () => {
+  const drift = tokens();
+  drift.type.scale.micro = { ...drift.type.scale.micro, px: 12 }; // base.css says --t-1: 1rem (10px)
+  const r = generateTokensCss(drift, { stylesheets: BASE });
+  assert.equal(r.css, null);
+  assert.ok(r.errors.some((e) => e.startsWith(`${TOKENS_JSON}: type.scale.micro.px 12 disagrees with styles/base.css's --t-1: 1rem (10px)`)), r.errors.join('\n'));
+
+  const agree = tokens();
+  agree.type.scale.micro = { ...agree.type.scale.micro, px: 10 };
+  assert.equal(generateTokensCss(agree, { stylesheets: BASE }).errors.length, 0, 'a px that matches the home passes');
+
+  const calc = tokens();
+  calc.touch.floorPx = { ...calc.touch.floorPx, px: 44 }; // --tap-floor is a calc() in base.css
+  const c = generateTokensCss(calc, { stylesheets: BASE });
+  assert.ok(c.errors.some((e) => e.includes('touch.floorPx.px 44 cannot be checked against') && e.includes('drop px here')), c.errors.join('\n'));
+
+  const none = tokens(); // the real file: homed touch entries carry no px at all
+  assert.equal(none.touch.floorPx.px, undefined);
+  assert.equal(generateTokensCss(none, { stylesheets: BASE }).errors.length, 0);
+});
+
 test('a bad token is refused by the config-build rules, naming the file', () => {
   const t = tokens();
   t.layer.hud = 1;

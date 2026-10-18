@@ -51,6 +51,7 @@ test('hex colours count in declarations, not in selectors, and not inside the to
   const base = ':root { --bg: #0d0b08; --gold: #c9a227; }\n.k { color: #fff; }\n:root { --x: #123; }';
   assert.equal(lint(base, 'styles/base.css')['hex-colour-bare'], 1, 'base.css :root blocks are the palette home; the rest of base.css counts');
   assert.equal(lint(base, 'styles/kit.css')['hex-colour-bare'], 4, 'any other file counts its :root blocks too');
+  assert.equal(lint(".m { mask: url(#abc); content: '#fff'; quotes: \"#\"; color: #abc }")['hex-colour-bare'], 1, 'a # in url() or a string is not a colour');
 });
 
 test('a rise fails and names file, rule and old → new; a fall passes; the baseline round-trips', () => {

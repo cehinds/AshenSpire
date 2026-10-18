@@ -290,7 +290,11 @@ export function tokenGroupProblems(rel, data) {
   const entry = (value, path, extra) => {
     if (!isObject(value)) { out.push(at(`${path} must be an object`)); return false; }
     only(value, ['px', 'css', 'home', ...extra], path);
-    if (!isNum(value.px) || !(value.px > 0)) out.push(at(`${path}.px must be a positive number`));
+    // A homed entry may leave px out: the home stylesheet owns the value
+    // (the tap floor is player-tunable, so a literal here would be a second copy).
+    if ('px' in value || !('home' in value)) {
+      if (!isNum(value.px) || !(value.px > 0)) out.push(at(`${path}.px must be a positive number`));
+    }
     if ('css' in value && (typeof value.css !== 'string' || !CSS_NAME.test(value.css))) out.push(at(`${path}.css must be a custom property name like --t-lead`));
     if ('home' in value) {
       if (typeof value.home !== 'string' || !value.home) out.push(at(`${path}.home must be the stylesheet path that already declares the property`));

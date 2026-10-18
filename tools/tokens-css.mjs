@@ -39,6 +39,13 @@ const kebab = (key) => key.replace(/([A-Z])/g, '-$1').toLowerCase();
 const num = (n) => String(+n.toFixed(4));
 
 /** Every declared custom property name in a stylesheet's text (comments removed). */
+/** The declared value of one custom property in a stylesheet's text (comments stripped), or null. */
+export function declaredValue(css, name) {
+  const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const m = new RegExp(`(?:^|[{;\\s])${name.replace(/[-]/g, '\\-')}\\s*:\\s*([^;}]+)`).exec(bare);
+  return m ? m[1].trim() : null;
+}
+
 export function declaredProperties(css) {
   const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
   return new Set([...bare.matchAll(/(?:^|[{;\s])(--[A-Za-z0-9_-]+)\s*:/g)].map((m) => m[1]));
@@ -50,14 +57,14 @@ export function declaredProperties(css) {
  */
 export function tokenEntries(data) {
   const out = [];
-  const add = (group, key, path, name, value, entry) => out.push({ group, key, path, name: entry?.css ?? name, value, home: entry?.home ?? null });
+  const add = (group, key, path, name, value, entry) => out.push({ group, key, path, name: entry?.css ?? name, value, home: entry?.home ?? null, px: typeof entry?.px === 'number' ? entry.px : null });
   for (const [key, entry] of Object.entries(data.type?.scale ?? {})) {
-    add('type', key, `type.scale.${key}`, `--t-${kebab(key)}`, `${num(entry.px / REM_PX)}rem`, entry);
+    add('type', key, `type.scale.${key}`, `--t-${kebab(key)}`, entry.px == null ? null : `${num(entry.px / REM_PX)}rem`, entry);
   }
   for (const [key, z] of Object.entries(data.layer ?? {})) add('layer', key, `layer.${key}`, `--layer-${kebab(key)}`, String(z));
   for (const [key, ms] of Object.entries(data.motion ?? {})) add('motion', key, `motion.${key}`, `--motion-${kebab(key)}`, `${ms}ms`);
   for (const [key, entry] of Object.entries(data.touch ?? {})) {
-    add('touch', key, `touch.${key}`, `--touch-${kebab(key.replace(/Px$/, ''))}`, `${num(entry.px)}px`, entry);
+    add('touch', key, `touch.${key}`, `--touch-${kebab(key.replace(/Px$/, ''))}`, entry.px == null ? null : `${num(entry.px)}px`, entry);
   }
   return out;
 }
@@ -86,6 +93,16 @@ export function generateTokensCss(data, { stylesheets = {}, file = TOKENS_JSON }
     if (e.home) {
       if (!(e.home in declared)) errors.push(`${file}: ${e.path}.home ${e.home} was not read — it is not a stylesheet this tool knows`);
       else if (!declared[e.home].has(e.name)) errors.push(`${file}: ${e.path}.home says ${e.home} declares ${e.name}, but it does not`);
+      else if (e.px != null) {
+        // The home owns the value, so tokens.json's px must agree with it
+        // (rem at the 10px root; px as px). A calc() or var() home cannot be
+        // compared and is reported, so the author drops px there.
+        const home = declaredValue(stylesheets[e.home], e.name);
+        const px = home == null ? null : /^([\d.]+)rem$/.test(home) ? Number(RegExp.$1) * 10 : /^([\d.]+)px$/.test(home) ? Number(RegExp.$1) : NaN;
+        if (px == null) errors.push(`${file}: ${e.path}.home ${e.home} declares ${e.name} but its value could not be read`);
+        else if (Number.isNaN(px)) errors.push(`${file}: ${e.path}.px ${e.px} cannot be checked against ${e.home}'s ${e.name}: ${home} — drop px here; the home owns the value`);
+        else if (px !== e.px) errors.push(`${file}: ${e.path}.px ${e.px} disagrees with ${e.home}'s ${e.name}: ${home} (${px}px) — one home per fact, change the home`);
+      }
     } else {
       for (const [path, names] of Object.entries(declared)) {
         if (names.has(e.name)) errors.push(`${file}: ${e.path} would declare ${e.name}, which ${path} already declares — set "home": "${path}" or rename it`);

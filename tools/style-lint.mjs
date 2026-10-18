@@ -61,7 +61,9 @@ export function lintCss(text, file, { textPx }) {
   if (file !== 'styles/combat-symbol-colors.css' && file !== 'styles/tokens.generated.css') {
     if (file === 'styles/base.css') css = css.replace(/:root\s*\{[^}]*\}/g, (m) => m.replace(/[^\n]/g, ' '));
     for (const [, value] of declarations(css)) {
-      counts['hex-colour-bare'] += (value.match(/#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})(?![0-9A-Za-z_-])/g) || []).length;
+      // A # inside url(#id) or a quoted string (content: '#') is not a colour.
+      const colourText = value.replace(/url\([^)]*\)/g, ' ').replace(/'[^']*'|"[^"]*"/g, ' ');
+      counts['hex-colour-bare'] += (colourText.match(/#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})(?![0-9A-Za-z_-])/g) || []).length;
     }
   }
   return counts;
