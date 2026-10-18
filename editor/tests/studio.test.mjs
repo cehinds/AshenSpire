@@ -27,6 +27,20 @@ test('source allowlist excludes generated artifacts and editor code', () => {
   assert.equal(editable('content/source/weapons.csv'), true);
   assert.equal(editable('src/content/cards/reaver.js'), true);
 });
+test('card pool JSON under content/source/cards is editable, one level deep and JSON only', async t => {
+  assert.equal(editable('content/source/cards/heraldCards.json'), true);
+  for (const p of ['src/content/generated/cards/heraldCards.js', 'content/source/cards/sub/heraldCards.json', 'content/source/cards/heraldCards.js', 'content/framework/cards/heraldCards.json']) assert.equal(editable(p), false, p);
+  const { root, workspace } = await fixture(t);
+  await fs.mkdir(path.join(root, 'content/source/cards'), { recursive: true });
+  const text = '[\n  {"id": "strike", "name": "Strike"}\n]\n';
+  await fs.writeFile(path.join(root, 'content/source/cards/heraldCards.json'), text);
+  const read = await workspace.read('content/source/cards/heraldCards.json');
+  assert.equal(read.text, text);
+  const next = text.replace('Strike', 'Smite');
+  await workspace.save([{ path: read.path, text: next, hash: read.hash }]);
+  assert.equal(await fs.readFile(path.join(root, 'content/source/cards/heraldCards.json'), 'utf8'), next);
+  await assert.rejects(workspace.read('src/content/generated/cards/heraldCards.js'), /not an editable source/);
+});
 test('path boundary rejects traversal, hidden files, Windows streams, and symlinks', async t => {
   const { root } = await fixture(t);
   for (const p of ['../secret', '.git/config', 'content/../secret', 'content\\secret', 'file.txt:stream', '/absolute']) await assert.rejects(safePath(root,p,true));
