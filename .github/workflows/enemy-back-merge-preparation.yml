@@ -23,7 +23,9 @@ jobs:
             /CHANGELOG.md
             /buildordinal.json
             /tools/
-            /src/content/changelog.generated.js
+            /src/
+            /game-data/
+            /schemas/
             /docs/preview/features/enemy-back-sprites/
       - uses: actions/setup-node@v5
         with:
