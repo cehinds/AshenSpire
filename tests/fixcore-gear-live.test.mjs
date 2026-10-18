@@ -110,3 +110,9 @@ test('Core 2 weapon upgrades retain each equipped source identity', () => {
   assert.equal(after.sources.find(row=>row.sourceId==='armament/greatsword' && row.weaponTier)?.ar,2);
   assert.equal(after.sources.find(row=>row.sourceId==='armament/dagger' && row.weaponTier)?.ar,1);
 });
+test('combat refresh derives from allocated attributes without counting gear twice', async () => {
+  const {gameProfileEffectiveAttributes}=await import('../src/model/gameProfileGear.js');
+  const run=fresh(), expected=gameProfileRatingReceipt(reg,run);
+  const combat={...run,allocatedAttributes:{...run.attributes},attributes:gameProfileEffectiveAttributes(reg,run)};
+  assert.deepEqual(gameProfileRatingReceipt(reg,combat).totals,expected.totals);
+});

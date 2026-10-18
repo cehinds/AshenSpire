@@ -22,7 +22,7 @@ export function gameProfileEquipmentReceipt(registries, run) {
   }
   return { totals, sources };
 }
-export function gameProfileEffectiveAttributes(registries, run, attributes = run.attributes) {
+export function gameProfileEffectiveAttributes(registries, run, attributes = run.allocatedAttributes ?? run.player?.allocatedAttributes ?? run.attributes) {
   const gear = gameProfileEquipmentReceipt(registries,run);
   return Object.fromEntries(Object.entries(attributes || {}).map(([id,value])=>[id,value+(gear.totals[id] || 0)]));
 }
