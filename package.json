@@ -11,6 +11,8 @@
     "serve": "node tools/serve.mjs --no-open",
     "test": "node tests/run-node.mjs --no-selftests --no-discovered",
     "test:all": "node tests/run-node.mjs",
+    "test:fixcore": "node --test tests/fixcore-*.test.mjs",
+    "test:fixcore:ui": "node tests/fixcore-combat-ui.browser.mjs",
     "validate:ui": "node tools/ui-validate.mjs --check",
     "validate:maps": "node tools/maps-validate.mjs --check",
     "validate:config": "node tools/config-build.mjs --check",

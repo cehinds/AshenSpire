@@ -1,6 +1,6 @@
 # FixCore implementation and authoring map
 
-Branch: `feature/FixCore`. This follow-through records the implementation inspected on 2026-10-18, through `05a84ebe1`, plus the factual Core2 policy-note corrections accompanying this document. [FixCore-complete.md](FixCore-complete.md) remains the original requirements/audit; its historical line references and proposed examples have not been rewritten. [SPEC.md](../../SPEC.md) governs contractual behavior.
+Branch: `feature/FixCore`. This follow-through records the implementation inspected on 2026-10-18, through `b373aa290`, plus the test commands accompanying this document. [FixCore-complete.md](FixCore-complete.md) remains the original requirements/audit; its historical line references and proposed examples have not been rewritten. [SPEC.md](../../SPEC.md) governs contractual behavior.
 
 Checkmarks below mean the requested behavior has an identified implementation, not that every browser scenario or integration suite has passed. Verification and remaining acceptance work are recorded separately.
 
@@ -86,24 +86,18 @@ These resolve ambiguous requests and remain configurable; they are not represent
 
 The remaining balance notes in `packs/core/provisionalPolicies.json` describe Core2 explicitly. Archived Core1 notes preserve their historical formulas.
 
-## Verification and remaining acceptance work
+## Verification
 
-This documentation pass directly ran:
+Use `npm run test:fixcore` for the focused mechanics, equipment, deck, reward, map and flask regressions. Use `npm run test:fixcore:ui` for the four-viewport Chromium acceptance fixture and actual planned-round autoplay. The browser fixture accepts `PLAYWRIGHT_MODULE` (path to an installed Playwright module), `CHROME`, optional `BASE_URL`, and `FIXCORE_UI_OUT`. Without `BASE_URL`, it starts and closes its own source server. It does not install browser dependencies or modify gameplay content.
 
-```sh
-node --test tests/combat-deck-host.test.mjs tests/auto-combat-policy.test.mjs
-```
+The coordinator verified the integrated implementation as follows:
 
-**8 tests passed**, including persistence-failure rollback. Earlier independent review also ran the timeline, policy and deck-host suites together: 13 tests passed before the added rollback regression. That earlier deck-policy run could not initialize because generated runtime hashes were stale; it is not counted as a passing validation. Parent integration regenerates/checks shared artifacts after source changes.
+- Source browser journey: **7 checks passed**, including character creation, an actually played first fight, route to boss, defeat, return to title and a new run; **0 console errors**. Later traversal fights were resolved using the tool's documented debug method, so this is not a full earned campaign. The route's `shrine,boss` ending is the mandatory rest immediately before the boss.
+- Core2 presentation fixture: **390×844, 1024×768, 1440×900 and 1920×1080 passed**, plus hidden/resumed planned-round autoplay; **0 page errors**. Assertions cover allowed PIP facts and geometry, Perception-gated selection odds, multi-hit arithmetic and tooltip parity, touch inspection without playing, actual selected-text containment inside parchment, 24-MP capacity, highest-layer log, hold progress/cancellation and Deck/SP separation. These are explicitly posed fixtures over the real engine/renderers.
+- Profile compilation and save migration: **35 tests passed**. Compiled content/config/profile freshness, the game artifact, standalone build and plantsites checks passed. The built standalone booted Core2 combat over local HTTP with cards, enemies and no page errors.
+- Independent review approved production source through `5bd587a3b`, including the last layout/visibility changes. Its final focused batch passed **36 tests**; earlier focused batches verified the live combat rules and the unchanged legacy event-log golden. The subsequent cantrip classification entry has explicit zero cost and **41 cost tests passed**.
+- The all-in-one `node tests/run-node.mjs` attempt at checkpoint `d5578f985` hit its existing 15-minute discovered-lane limit during the historical balance simulation. That attempt is **not a pass**. Remaining core/selftest guards and current fast/slow lanes are being verified separately; final CI and promotion receipts belong to PR #2129.
 
-Source review confirms the two reported defects were addressed by `597234` (deck rollback) and `04b17c82a` (planned-round autoplay). A real combat-screen autoplay regression remains part of UI acceptance; pure policy tests alone do not prove host behavior. The coordinated browser walk reported `monster,event,shrine,event,event,event,shrine,boss`, consistent with mandatory rests at floors 3 and 7; this observation does not claim the entire playthrough completed successfully.
+Local environment limits: Chromium policy blocks `file://` navigation, so the offline-file check could not run here; HTTP bundle boot is not represented as offline acceptance. Outbound access to GitHub Pages is blocked here, so publication must be verified through the trusted Pages workflow's public-route check and linked CI artifacts. The Release branch remains `0.7.1.1517` at `d310c277fffaaec6ec7a58a87de846577f12312d`, matching the existing gallery's recorded source/digest; no release promotion is part of this change.
 
-Follow-up fixture validation in `9222a8836` ran the collection-row, enemy-module and Rest UI model suites: **39 tests passed**. The two changed CLI negative/reference-policy cases also passed. Mutations now target the pack selected by the author bundle, rather than editing archived Core1 data while resolving Core2. Training tests assert unlimited eligible basics, available-but-not-starter Evade, and finite owned progression cards; explicit editor fallback coverage disables the training module deliberately.
-
-A subsequent full CLI/run/settings run produced 26 passes and 4 failures: three outdated route/version fixtures and the generated profile exact-match check. Generated-file drift is left to the integration rebuild, not hidden by weakening that check. After correcting only those three fixtures, `tests/game-profile-run.test.mjs` and `tests/new-game-profile-settings.test.mjs` passed **25/25**: Core2 uses its actual second rest at depth 7, the archived Core1 Smith fixture builds its map with the matching registry, and the Core2 Rest-first snapshot retains its mandatory preboss rest while testing the intended first-floor rejection. Explicit Core1 author cases remain pinned to version 1.
-
-Relevant executable coverage also exists in `tests/fixcore-{protection,combat-rules,live-combat,gear-live,deck-policy,profile-pins,reward-policy,map-travel,flask-acquisition}.test.mjs`, `tests/combat-card-presentation.test.mjs`, `tests/combat-log-{sources,modal}.test.mjs`, and `tests/action-timeline.test.mjs`. Their existence is not a claim that this documentation pass ran them.
-
-Before merging, record the coordinator's exact final commit and aggregate results for content/config/game builds, conformance, core regression, save/reload and standalone/browser acceptance. Check desktop/mobile/high-MP layouts, all requested PIP stacks, card text/hover/keyboard calculations, log layering during playback, hold cancellation, disable-autoplay mid-sequence and actual queued-round completion. Keep screenshots and feature-preview evidence in the required README block and update the component catalog for changed UI surfaces.
-
-A completeness review found stale Core2 Evade wording claiming failed dodges double damage. The combat/content owner subsequently changed the authored card text to `Gain {evade} Evasion.`; verify the final compiled card face and inspection text during browser acceptance. Core2 provisional policy notes were corrected in `0ca1d2f0b`. No claim of complete visual acceptance or all-green integrated tests is made here.
+Runtime/default ambiguities remain the explicit configurable assumptions above. Core2 Evade now says `Gain {evade} Evasion.` and repeated plays add stacks; archived Core1 text/rules retain their original meaning. The component catalog documents the updated card, HUD, log and control surfaces.
