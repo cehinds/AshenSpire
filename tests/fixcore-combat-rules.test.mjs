@@ -22,7 +22,7 @@ function setup() {
  return {ctx,enemy};
 }
 test('equipped totals affect sourced cards and Weak scales AR only',()=>{
- const {ctx}=setup();ctx.player.ratingSources=[{kind:'equipment',sourceId:'sword',ar:2},{kind:'equipment',sourceId:'armor',ar:1}];
+ const {ctx}=setup();ctx.player.ratingSources=[{kind:'attribute',ar:5},{kind:'equipment',sourceId:'sword',ar:2},{kind:'equipment',sourceId:'other',ar:100},{kind:'equipment',sourceId:'armor/reaver/plate',slot:'armor',ar:1}];
  assert.equal(sourceRatingValue(ctx,ctx.player,'ar','sword',true),8);
  applyStatus(ctx,ctx.player,'weak',2,ctx.player);
  assert.equal(sourceRatingValue(ctx,ctx.player,'ar','sword',true),6);

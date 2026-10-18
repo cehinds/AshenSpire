@@ -31,7 +31,7 @@ export function stanceOf(carrier, entity = null) {
   const camp = ['spell', 'spells', 'magic', 'magical'].includes(profile.camp) ? 'spell' : 'physical';
   let maneuver = preparation ? 'casting' : profile.maneuver;
   if (maneuver === 'defense' || maneuver === 'block') maneuver = 'defend';
-  if (maneuver === 'spell' || maneuver === 'cast') maneuver = 'casting';
+  if (maneuver === 'spell' || maneuver === 'cast' || maneuver === 'prepared') maneuver = 'casting';
   const evade = profile.evade && profile.evadeEligible !== false
     && (!profile.evade.whileStatus || profile.evadeEligible === true || entity?.statuses?.[profile.evade.whileStatus]?.stacks > 0);
   if (!preparation && ((evade && ['defend', 'counter'].includes(maneuver)) || maneuver === 'evade')) maneuver = 'evade';

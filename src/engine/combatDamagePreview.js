@@ -35,6 +35,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
       if (defender) {
         defender.block = receipt.blockRemaining;
         if (fixCoreEnabled(ctx)) {
+          defender.barrier = Math.max(0, (defender.barrier || 0) - receipt.barrierMitigated);
           if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
           if (defender.persistentPoise) defender.persistentPoise.value = Math.max(0, defender.persistentPoise.value - receipt.poiseMitigated);
         }

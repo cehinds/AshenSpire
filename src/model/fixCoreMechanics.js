@@ -45,3 +45,21 @@ export function protectionReceipt(ctx, entity, kind, amount) {
 export function damageReceipt(targetId, hits) {
   return { version: 1, targetId, hits, totalDamage: hits.reduce((sum, hit) => sum + hit.hpLoss, 0) };
 }
+
+// Read-only status projection for cards, PIPs, logs and inspectors. The base
+// registry is explicit so UI facades cannot recursively query themselves.
+export function fixCoreStatusDefinition(ctx, id, baseDefinition) {
+  const base = baseDefinition ?? ctx?.registries?.statuses?.get(id);
+  if (!fixCoreEnabled(ctx)) return base;
+  const rules = fixCoreRules(ctx), overrides = rules.statuses.overrides?.[id];
+  const row = overrides ? {...base,...overrides} : {...base};
+  const facts = {
+    weak: `Attack rating ×${rules.statuses.weakARMultiplier} while active.`,
+    vulnerable: `Damage taken ×${rules.statuses.vulnerabilityMultiplier} while active.`,
+    staggered: 'Interrupts the next action; inflicts Weak and Vulnerable.',
+    evade: `Evasion +${rules.accuracy.evasionPerStack} per stack.`,
+    precision: `Precision +${rules.accuracy.precisionPerStack} per stack.`,
+  };
+  if (facts[id]) row.description = `${facts[id]} Applications add stacks. Lose ${rules.statuses.decayAmount} stack at the start of the owner's turn each round.`;
+  return row;
+}

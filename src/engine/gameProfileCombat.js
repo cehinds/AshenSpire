@@ -1,5 +1,5 @@
 import { attackHitPreview } from './stanceHit.js';
-import { sourceRatingValue } from '../model/combatRatings.js';
+import { sourceRatingValue, magicShareOf, splitContactParts } from '../model/combatRatings.js';
 import { sameStance, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt } from '../model/fixCoreMechanics.js';
 import { stanceMitigation } from './stanceMitigation.js';
@@ -59,11 +59,35 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const defending = configuredStance(defensiveCombatStance(ctx,target,carrier));
   const advantage = !!stances?.include?.includes(attacking)
     && !!stances?.matchups?.[attacking]?.includes(defending);
-  let raw = Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? sourceRatingValue(ctx, source, 'ar') : rating(source, 'ar')) * (effects?.attackRatingWeight || 0)) * stanceEffectiveness(ctx, source, carrier)));
-  if (fixCoreEnabled(ctx) && target?.statuses?.vulnerable?.stacks > 0) raw = Math.floor(raw * fixCoreRules(ctx).statuses.vulnerabilityMultiplier);
-  if(proposal && target) raw=proposalHitPlan(ctx,source,target,raw,carrier).amount;
+  const modern = fixCoreEnabled(ctx);
+  const sources = [{id:'base',label:'Card damage (including enhancements)',amount:base,stage:'offense',operation:'set'}];
+  const transition = (id,label,before,after,stage='offense',multiplier) => {
+    if (before !== after) sources.push({id,label,amount:after-before,requested:before,effective:after,stage,operation:multiplier === undefined ? 'add' : 'multiply',...(multiplier === undefined ? {} : {multiplier})});
+    return after;
+  };
+  const ar = modern ? sourceRatingValue(ctx, source, 'ar', carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
+  const ratingBonus = modern && carrier.skipRatingBonus ? 0 : ar * (effects?.attackRatingWeight || 0);
+  let raw = base;
+  const applicable = (source?.ratingSources || []).filter(row => row.kind !== 'equipment' || !carrier.sourceArmamentId && !carrier.equipmentScoped
+    || row.slot === 'armor' || row.sourceId?.startsWith('armor/') || row.sourceId === carrier.sourceArmamentId || row.sourceId === `armament/${carrier.sourceArmamentId}`);
+  const sourceAR = applicable.reduce((sum,row)=>sum+(row.ar || 0),0);
+  if (modern && sourceAR > 0 && ratingBonus > 0) {
+    for (const [index,row] of applicable.entries()) {
+      const contribution = (row.ar || 0) * (effects?.attackRatingWeight || 0);
+      raw = transition(`ar:${row.sourceId || index}`,`${row.name || row.kind}: AR`,raw,raw+contribution);
+    }
+    raw = transition('ar:adjustments','AR stance/status modifiers (including Weak)',raw,base+ratingBonus);
+  } else raw = transition('ar','Attack rating',raw,raw+ratingBonus);
+  const stanceMultiplier = stanceEffectiveness(ctx,source,carrier);
+  raw = transition('matching-stance','Matching stance effectiveness',raw,raw*stanceMultiplier,'offense',stanceMultiplier);
+  if (modern && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx).statuses.vulnerabilityMultiplier);
+  if (!modern) raw=Math.max(0,Math.floor(raw));
+  if(proposal && target) raw=transition('status-rules','Other status modifiers',raw,proposalHitPlan(ctx,source,target,raw,carrier).amount);
   const defense = stanceMitigation(ctx, attacking, defending);
-  let amount = Math.max(0, Math.floor(raw * (advantage ? stances.advantageMultiplier ?? 1 : 1) * defense.multiplier));
+  const advantageMultiplier = advantage ? stances.advantageMultiplier ?? 1 : 1;
+  let amount=transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
+  amount=transition('stance-defense','Defensive stance advantage',amount,amount*defense.multiplier,'stance',defense.multiplier);
+  amount=transition('quantity-rounding','Damage quantity rounding',amount,Math.max(0,Math.floor(amount)),'rounding');
   const evade = stances?.include?.includes('evade') && defending === 'evade';
   const targeting=proposalTargetPlan(ctx,source,target,carrier);
   let hitChance = evade ? Math.max(stances.minimumHitChance ?? 0.05,
@@ -74,17 +98,24 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   if (fixCoreEnabled(ctx)) hitChance = (attackHitPreview(ctx, source, target, carrier)?.hitChance ?? 100) / 100;
   const evaded = roll !== null && roll >= hitChance;
   if (evaded) amount = 0;
-  else if (evade) amount = Math.floor(amount * (stances.evadeFailureMultiplier ?? 2));
+  else if (evade && !modern) amount = Math.floor(amount * (stances.evadeFailureMultiplier ?? 2));
   let blocked = 0, poiseMitigated = 0, wardMitigated = 0;
   const incoming = amount;
-  const magical = ['spell', 'spells', 'magic', 'magical'].includes(carrier?.combatProfile?.camp) || carrier.damageSchool && carrier.damageSchool !== 'physical';
-  const sources = [{id:'incoming',label:'Offensive damage',amount:incoming,stage:'offense',operation:'set'}];
-  if (fixCoreEnabled(ctx)) {
-    if (!magical) { blocked = Math.min(Math.max(0, target?.block || 0), amount); amount -= blocked; }
-    const protection = protectionReceipt(ctx, target, magical ? 'magical' : 'physical', amount);
-    amount = protection.amount;
-    if (magical) wardMitigated = protection.reduced; else poiseMitigated = protection.reduced;
-    sources.push(...protection.sources, {id:'block',label:'Block',amount:-blocked,stage:'mitigation',operation:'add'});
+  const profile = {...(carrier.combatProfile || {}), ...(Number.isFinite(carrier.magicShare) ? {magicShare:carrier.magicShare} : {})};
+  const share = magicShareOf(profile,ctx.ratingsRules);
+  const parts = splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
+  let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
+  let barrierMitigated = 0;
+  if (modern) {
+    blocked = Math.min(Math.max(0,target?.block || 0),physical);
+    barrierMitigated = Math.min(Math.max(0,target?.barrier || 0),magical);
+    transition('block','Block',physical,physical-blocked,'mitigation');
+    transition('barrier','Barrier',magical,magical-barrierMitigated,'mitigation');
+    const poise = protectionReceipt(ctx,target,'physical',physical-blocked);
+    const ward = protectionReceipt(ctx,target,'magical',magical-barrierMitigated);
+    poiseMitigated=poise.reduced;wardMitigated=ward.reduced;
+    sources.push(...poise.sources,...ward.sources);
+    amount=poise.amount+ward.amount;
   }
   for (const stage of fixCoreEnabled(ctx) ? [] : defenses?.order || []) {
     if (!defenses.include?.includes(stage)) continue;
@@ -98,8 +129,8 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
       poiseMitigated += amount - mitigated; amount = mitigated;
     }
   }
-  return { raw, wardMitigated,
-    damageReceipt: damageReceipt(target?.id, [{incoming,physical:magical ? 0 : incoming,magical:magical ? incoming : 0,blocked,wardReduced:wardMitigated,poiseReduced:poiseMitigated,hpLoss:amount,sources}]),
+  return { raw, wardMitigated, barrierMitigated,
+    damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,hpLoss:amount,sources}]),
     hitChance, uncertain: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) && roll === null,
     hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated,
     blockRemaining: Math.max(0, (target?.block || 0) - blocked), evaded, advantage,

@@ -569,15 +569,17 @@ export function ratingValue(ctx, entity, id) {
 }
 
 export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentScoped = false) {
-  if (fixCoreEnabled(ctx) || (!sourceArmamentId && !equipmentScoped) || !Array.isArray(entity?.ratingSources)) return ratingValue(ctx, entity, id);
+  if ((!sourceArmamentId && !equipmentScoped) || !Array.isArray(entity?.ratingSources)) return ratingValue(ctx, entity, id);
   let value = stanceRatingBonus(ctx, entity, id);
   for (const source of entity.ratingSources) {
     if (source.kind !== 'equipment') value += Number(source[id]) || 0;
-    else if (sourceArmamentId && source.sourceId === sourceArmamentId) value += Number(source.effectiveRatings?.[id] ?? source[id]) || 0;
+    else if (sourceArmamentId && (source.sourceId === sourceArmamentId || source.sourceId === `armament/${sourceArmamentId}`)
+      || fixCoreEnabled(ctx) && (source.slot === 'armor' || source.sourceId?.startsWith('armor/'))) value += Number(source.effectiveRatings?.[id] ?? source[id]) || 0;
   }
   for (const [status, instance] of Object.entries(entity.statuses || {})) {
     value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
   }
+  if (fixCoreEnabled(ctx) && id === 'ar' && entity?.statuses?.weak?.stacks > 0) value *= fixCoreRules(ctx).statuses.weakARMultiplier;
   return Math.max(0, value);
 }
 
