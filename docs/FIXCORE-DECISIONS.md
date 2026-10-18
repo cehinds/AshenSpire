@@ -36,7 +36,7 @@ These settle every item that was open above. Where a reading above says **open**
 - D3: "No Ward, Poise only". Remove Ward from Core; Poise reduces all damage (the physical/spell `camp` stays for matchups).
 - D13: "Add Block, cap max". A defensive card adds its Block to current Poise, capped at max Poise, and grants its Block.
 - D10: "Heal + floor before boss". Rest sites heal, plus Smith and a free level-up; the guaranteed rest is on the floor directly before the boss.
-- D8: "DC 5 + target INT + WIS + other bonuses". DC = 5 + target's INT + target's WIS + configured bonuses (default none); the observer rolls d20 + own WIS. The owner had no preference on badge timing; the session chose: hit-% shows only after a passed roll.
+- D8: "DC 5 + target INT + WIS + other bonuses". DC = 5 + target's INT + target's WIS + configured bonuses (default none); the observer rolls d20 + own WIS. Hit-% badge (owner, 13:59): "It shows when a card is selected that can inflict an effect or damage to a target, similar to how BG3 does it". The badge shows on each valid target while such a card is selected; Perception does not gate it.
 - Alignment: "Yes, all". Bring Core 2 on `dev` (after #2129) in line with every ruling, one PR per ruling.
 
 ## #2129 assumptions that differ from these rulings
