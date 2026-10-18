@@ -1,0 +1,174 @@
+{
+  "id": "combat.statuses",
+  "tag": "combat:statuses",
+  "version": "1.0.0",
+  "family": "combat",
+  "label": "Statuses rules",
+  "description": "Validated parameters queried by the existing live combat primitives.",
+  "attaches": [
+    "run",
+    "entity",
+    "character",
+    "gear",
+    "relic",
+    "status",
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "portability": "portable",
+  "authored": true,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "decayAmount": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "weakARMultiplier": {
+        "type": "number",
+        "minimum": 0
+      },
+      "vulnerabilityMultiplier": {
+        "type": "number",
+        "minimum": 0
+      },
+      "staggerRiders": {
+        "type": "object",
+        "properties": {
+          "weak": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "vulnerable": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "weak",
+          "vulnerable"
+        ],
+        "additionalProperties": false
+      },
+      "overrides": {
+        "type": "object",
+        "properties": {
+          "weak": {
+            "type": "object",
+            "properties": {
+              "stackMode": {
+                "type": "string",
+                "enum": [
+                  "add",
+                  "refresh",
+                  "replace",
+                  "strongest",
+                  "independent",
+                  "unique"
+                ]
+              },
+              "modifiers": {
+                "type": "object",
+                "properties": {
+                  "damageTakenMult": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "stackMode",
+              "modifiers"
+            ],
+            "additionalProperties": false
+          },
+          "vulnerable": {
+            "type": "object",
+            "properties": {
+              "stackMode": {
+                "type": "string",
+                "enum": [
+                  "add",
+                  "refresh",
+                  "replace",
+                  "strongest",
+                  "independent",
+                  "unique"
+                ]
+              },
+              "modifiers": {
+                "type": "object",
+                "properties": {
+                  "damageTakenMult": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "stackMode",
+              "modifiers"
+            ],
+            "additionalProperties": false
+          },
+          "staggered": {
+            "type": "object",
+            "properties": {
+              "stackMode": {
+                "type": "string",
+                "enum": [
+                  "add",
+                  "refresh",
+                  "replace",
+                  "strongest",
+                  "independent",
+                  "unique"
+                ]
+              },
+              "modifiers": {
+                "type": "object",
+                "properties": {
+                  "damageTakenMult": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "stackMode",
+              "modifiers"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "weak",
+          "vulnerable",
+          "staggered"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "decayAmount",
+      "weakARMultiplier",
+      "vulnerabilityMultiplier",
+      "staggerRiders",
+      "overrides"
+    ],
+    "additionalProperties": false
+  },
+  "stateScope": "instance"
+}

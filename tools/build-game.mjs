@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { canonicalGameJSON, resolveGameAuthor, validateGameSchema } from '../engine/kernel/gameConfig.js';
 import { loadGameProfileCatalog } from './game-config.mjs';
-import { compileBindings, validateModifiers, validateParameters, parameterDefaults } from '../engine/runtime/bindings.mjs';
+import { compileBindings, validateModifiers, validateParameters, validateParameterSchema, parameterDefaults } from '../engine/runtime/bindings.mjs';
 import { loadMechanics, loadOps } from '../engine/runtime/interpreter.mjs';
 import { buildAssetCatalog, readAliases } from './asset-catalog.mjs';
 import { contentBundle } from '../src/content/index.js';
@@ -215,10 +215,11 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   }
   for (const [slug, m] of Object.entries(mechanics)) {
     try {
-      if (m.manifest.parameters) validateParameters(m.manifest.parameters, parameterDefaults(m.manifest.parameters), `engine/mechanics/${slug}/mechanic.json.parameters`);
+      if (m.manifest.parameters) validateParameterSchema(m.manifest.parameters, `engine/mechanics/${slug}/mechanic.json.parameters`);
+      if (m.manifest.parameters) validateParameters(m.manifest.parameters, parameterDefaults(m.manifest.parameters), `engine/mechanics/${slug}/mechanic.json.parameters`, true);
       const typed = (m.service.modifiers || []).filter(row => row.phase !== undefined);
       if (typed.length) validateModifiers(typed, `engine/mechanics/${slug}/service.json.modifiers`);
-      if (m.manifest.portability === 'portable' && !(m.service.handlers || []).length && !typed.length) fail(`${slug}: required mechanic has no executable behavior`);
+      if (m.manifest.portability === 'portable' && !(m.service.handlers || []).length && !typed.length && !Object.keys(m.interface.queries || {}).length) fail(`${slug}: required mechanic has no executable behavior`);
     } catch (error) { fail(error.message); }
     for (const [q, def] of Object.entries(m.interface.queries || {})) for (const e of formulaErrors(def.value, `${slug} query ${q}`)) fail(e);
     // Portable runtimes evaluate only the formulas they carry context for (SPEC section 7); metric and traitBonus

@@ -1,0 +1,14 @@
+{
+  "mechanic": "combat.perception",
+  "commands": {},
+  "events": {},
+  "queries": {
+    "parameters": {
+      "params": {},
+      "returns": "object",
+      "value": "$config"
+    }
+  },
+  "requires": [],
+  "listens": []
+}
