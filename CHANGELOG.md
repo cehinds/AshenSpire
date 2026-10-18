@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **Card layers stop carrying empty filters, and the download folder sheds unused files** ([#2089](https://github.com/cehinds/AshenSpire/pull/2089), `0.7.1.1563`). Development-process change only, nothing in the game changes. Every illustrated card layer no longer carries a do-nothing colour filter, and the per-card layout files the game never loads are no longer copied into the download folder (about 13 MB).
+- **Card layers stop carrying empty filters, and the download folder sheds unused files** ([#2089](https://github.com/cehinds/AshenSpire/pull/2089), `0.7.1.1565`). Development-process change only, nothing in the game changes. Every illustrated card layer no longer carries a do-nothing colour filter, and the per-card layout files the game never loads are no longer copied into the download folder (about 13 MB).
+- **Saved runs survive app updates that do not change the rules** ([#2093](https://github.com/cehinds/AshenSpire/pull/2093), `0.7.1.1565`). A saved run no longer refuses to continue after an update that only touched the game's code; only changes to the rules engine itself pin a save to its build. A save that really cannot be restored now shows a notice and leaves the save untouched instead of crashing.
 
 ## 2026-10-17
 
