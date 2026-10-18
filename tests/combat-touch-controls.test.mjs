@@ -66,3 +66,12 @@ test('the log drawer opens beside the left-aligned Log button', () => {
   assert.match(declarations, /(?:^|;)\s*justify-self:\s*start\s*(?:;|$)/);
   assert.match(declarations, /(?:^|;)\s*grid-column:\s*1\s*(?:;|$)/, 'Log occupies the leftmost tools column');
 });
+
+test('a tap on a playable card plays it only when its target is unambiguous (owner, 2026-10-18)', () => {
+  const wire = combat.match(/function wireCardInput\(el, inst, pv, affordable\) \{([\s\S]*?)\n  \}\n\n  combatEl\.addEventListener\('click'/)?.[1] || '';
+  assert.match(wire, /const oneTapOn = \(\) => \(meta\.settings \|\| \{\}\)\.oneTapPlay !== false;\s*const oneTapPlays = \(\) => oneTapOn\(\) && playIsUnambiguous\(\);/, 'the setting defaults on and gates the one-tap play');
+  assert.match(wire, /const tap = \(\) => \{[\s\S]*?if \(!affordable\) \{[\s\S]*?return;\s*\}\s*(?:\/\/[^\n]*\n\s*)*if \(oneTapPlays\(\)\) \{ play\(\); return; \}\s*if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}/, 'after the unaffordable branch, a tap plays when unambiguous (selected by a hold or not) or selects');
+  assert.match(wire, /if \(lastConfirmTap && now - lastConfirmTap <= 350\) \{ lastConfirmTap = 0; confirm\(\); \}/, 'the double-tap confirm of the ambiguous case is kept');
+  assert.match(wire, /const tap = \(\) => \{\s*\/\/[^\n]*\n\s*if \(isRoundQueued\(inst\.instanceId\)\) \{ unqueueCard\(inst\.instanceId\); return; \}/, 'a queued card still unqueues first');
+  assert.match(read('../src/ui/screens/settings.js'), /key: 'oneTapPlay', def: true/, 'the setting is offered, default on');
+});

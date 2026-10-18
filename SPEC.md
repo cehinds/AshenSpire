@@ -2062,6 +2062,11 @@ together.
   focused card, selection glow, revealed information button and legal-target
   highlights. Information opens details without playing. Existing tap, hold,
   keyboard, controller and direct-target drag confirmation remain available.
+  A tap on a playable card plays it when its target is unambiguous (self and
+  all-enemy cards; one living enemy); the hold selects it without playing
+  (inspect, Upcast, target choice) (owner, 2026-10-18).
+- **End Turn.** A single press when no card in hand is playable; otherwise the
+  configured second beat (owner, 2026-10-18).
 - **Card flick to play.** An upward or upward-diagonal primary-pointer flick from a
   playable hand card can play on release without reaching a combatant. A profile
   setting enables it (default on); Card flick distance accepts 32–160 CSS pixels
@@ -3265,3 +3270,13 @@ Each new run snapshots its resolved profile, runtime artifacts and hash. Save sc
 The JSON resolver, host adapter and author CLI are implemented in slices on the feature branch. Their export currently requires `ashen.legacy-adapter@1` and is not a portable rules VM or complete engine-neutral gameplay package. The legacy preset remains the compatibility path. Full browser acceptance is still in progress. Numeric balance settings called provisional in the core product specification or `games/ashenspire/packs/core/provisionalPolicies.json` remain provisional even though working JSON currently supplies values; they are not additional permanent product approvals.
 
 For current usage and checks, see `games/ashenspire/guide.md`; product rules and unresolved choices live in `docs/ai/json-game-modules/CORE-SPEC.md`. The implementation status and next acceptance work are tracked in `docs/ai/json-game-modules/README.md` and `CONTINUE.md`.
+
+## 17. FixCore combat rules (new core rules version)
+
+This contract applies to new runs using **`ashen.core@2.0.0`**, the FixCore rules version 1 profile. It overrides earlier combat rules only for those runs where they conflict with this section. The [FixCore design document](docs/design/FixCore-complete.md)’s corrected requirements, defaults, architecture contracts, detailed behavior, and falsification criteria are normative for this profile; its source snippets and method names are proposals, not claims of shipped implementation. Where this section applies, it supersedes conflicting legacy rules for the named profile. This section specifies behavior; implementation is separate and is not claimed complete here.
+
+FixCore uses the unified damage and combat resolution described in that document. Active Ward reduces magical damage taken by 25% (multiplier 0.75); active Poise reduces physical damage taken by 25% (multiplier 0.75). A Block grant restores Poise and Ward by the final Block amount, each independently capped. Combat PIPs show Block, Poise, Ward, Evasion stacks, and active status stacks; they never show an AC number, and HP remains in its health display. Status stacks add. Natural decay removes one stack at the affected owner's turn start, at most once per round. Weak reduces AR by 25%; Vulnerability increases incoming damage by 25%. Their potency stays fixed while active, with added stacks extending duration by default.
+
+Perception uses a seeded `d20 + WIS` check against a configurable DC. The default base DC is 5; DC increases by 1 for each target level above 1 and each target Intelligence above its canonical baseline. Matching stance retains the literal requested 0.25% effectiveness bonus (multiplier 1.0025); stance resource discounts reduce the applicable SP or MP cost by 1, with minimum payable cost 1.
+
+Runs created under earlier core/profile versions retain their snapshotted rules. Existing runtime-hash compatibility checks remain in force: a save that requires an earlier runtime continues to require its matching build unless a separately tested compatibility adapter supports it. Selecting or editing `ashen.core@2.0.0` affects new runs only; it does not reinterpret existing saves. No automatic migration to FixCore is implied. Any later change to this contract or migration of an existing run requires a separate SPEC change and an explicit, tested migration contract. The legacy preset retains its prior rules.
