@@ -3,6 +3,7 @@
   "rules": {
     "font-size-below-min": {
       "styles/combat.css": 3,
+      "styles/kit.css": 4,
       "styles/map.css": 2,
       "styles/player-polish.css": 1,
       "styles/ui.css": 1

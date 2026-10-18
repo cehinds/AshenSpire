@@ -53,6 +53,11 @@ export function lintCss(text, file, { textPx }) {
     if (prop === 'font-size') {
       const px = /^\s*(\d*\.?\d+)px\b/i.exec(value);
       if (px && Number(px[1]) < textPx) counts['font-size-below-min']++;
+    } else if (prop === 'font') {
+      // The shorthand's size is its first px length (`font: italic 700 10px/1.2 serif`);
+      // a line-height after `/` is not a size.
+      const px = /(?:^|\s)(\d*\.?\d+)px(?=[\s/]|$)/i.exec(value);
+      if (px && Number(px[1]) < textPx) counts['font-size-below-min']++;
     } else if (prop === 'z-index') {
       const z = /^\s*(-?\d+)\s*(?:!important)?\s*$/i.exec(value);
       if (z && Number(z[1]) >= 100) counts['z-index-bare']++;
