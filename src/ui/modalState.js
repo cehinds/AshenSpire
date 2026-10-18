@@ -7,5 +7,5 @@
 
 // tools/bundle.mjs has no `export ... from`: import, then re-export the local
 // bindings on one line.
-import { registerModal, modalOpen, topModal, openModals, onModalsClosed, resetModalState } from './modalManager.js';
-export { registerModal, modalOpen, topModal, openModals, onModalsClosed, resetModalState };
+import { registerModal, modalOpen, topModal, openModals, onModalsClosed, resetModalState, registerPageChrome } from './modalManager.js';
+export { registerModal, modalOpen, topModal, openModals, onModalsClosed, resetModalState, registerPageChrome };
