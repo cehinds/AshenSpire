@@ -171,6 +171,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGr
     if (!root.isConnected) return;
     const combatBox = combatEl.getBoundingClientRect();
     const zoom = combatBox.width / combatEl.clientWidth || 1;
+    root.style.setProperty('--combat-log-button-width', `${logButton.getBoundingClientRect().width / zoom}px`);
     const hand = combatEl.querySelector('.hand');
     const handBox = hand?.getBoundingClientRect();
     // HUD layout tokens (docs/hud-layout-tokens.md), read once per pass.

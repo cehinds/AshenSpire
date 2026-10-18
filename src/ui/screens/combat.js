@@ -1339,7 +1339,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const candidates = [];
     if (autoCombatTurn !== combat.turn) { autoCombatTurn = combat.turn; autoCombatActions = 0; }
     const capped = autoCombatActions >= (AUTOMATION_DEFAULTS.maxActionsPerTurn ?? 64);
-    const blocked = busy || enemyPlayback || !!hasCardChoice(combat) || performance.now() < autoCombatPausedUntil;
+    const blocked = busy || enemyPlayback || document.hidden || document.visibilityState === 'hidden'
+      || !!hasCardChoice(combat) || performance.now() < autoCombatPausedUntil;
     if (!blocked && !capped && combat.phase === 'player' && !combat.result && !veilIsOpen() && !selected && !selfArm && selectedFlask == null) {
       for (const inst of combat.piles.hand) {
         if (isRoundQueued(inst.instanceId) || unplayableReason(inst)) continue;
