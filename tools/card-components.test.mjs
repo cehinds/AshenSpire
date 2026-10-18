@@ -38,6 +38,12 @@ test('the generated module for the real layout stays small',()=>{
  assert.ok(Buffer.byteLength(source)<400*1024,'cardComponents.generated.js is '+Buffer.byteLength(source)+' bytes');
  assert.equal(source,cardComponentsModule(compileCardComponents(layout,contentBundle.cards)),'generated module is current');
 });
+test('a layer id must be a non-empty string: the compact module encodes unchanged layers by id',()=>{
+ const numeric=structuredClone(layout);numeric.layers[0].id=7;
+ assert.throws(()=>compileCardComponents(numeric,contentBundle.cards),/Invalid or duplicate card layer/);
+ const empty=structuredClone(layout);empty.layers[0].id='';
+ assert.throws(()=>compileCardComponents(empty,contentBundle.cards),/Invalid or duplicate card layer/);
+});
 test('every card has an independent resolved object with approved left-side costs',()=>{
  const data=compileCardComponents(layout,contentBundle.cards);
  assert.equal(Object.keys(data.cards).length,contentBundle.cards.length);

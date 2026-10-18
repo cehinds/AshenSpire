@@ -23,7 +23,8 @@ export function compileCardComponents(template,cards,base=root){
   for(const visual of [...Object.values(template.components||{}),...Object.values(template.symbols||{}).flatMap(c=>Object.values(c))])if(visual.href&&!hasAsset(visual.href))throw Error('Missing card component image: '+visual.href);
   const ids=new Set();
   for(const layer of template.layers){
-    if(ids.has(layer.id)||!['image','text'].includes(layer.type))throw Error('Invalid or duplicate card layer');ids.add(layer.id);
+    // A layer id is a non-empty string: the generated module encodes an unchanged layer as its id string.
+    if(typeof layer.id!=='string'||!layer.id||ids.has(layer.id)||!['image','text'].includes(layer.type))throw Error('Invalid or duplicate card layer');ids.add(layer.id);
     for(const key of ['x','y','w','h','rotation','opacity'])if(!Number.isFinite(layer[key]))throw Error('Invalid geometry: '+layer.id);
     if(layer.w<=0||layer.h<=0)throw Error('Invalid layer size');
     if(layer.href&&(!/^assets\/[\w/.-]+\.(png|webp|svg)$/.test(layer.href)||layer.href.includes('..')||!hasAsset(layer.href)))throw Error('Missing or unsafe card component: '+layer.href);
