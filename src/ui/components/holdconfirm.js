@@ -48,6 +48,15 @@ import { t } from '../strings.js';
 //      shortcut is disabled and all three inputs still open the review modal.
 //      There is no per-input or per-action interaction rule left to drift.
 //
+//      ADDED, OWNER, 2026-10-18 (the paragraph above is left as it was):
+//      "End Turn is a single tap when no card is playable; the hold/confirm
+//      stays when a card is still affordable", and "a tap on a playable card
+//      plays it when its target is unambiguous". For exactly those two cases
+//      the 'same in all instances' rule gives way: End Turn's row is
+//      state-dependent (model/secondbeat.js) and arms with `tapWhenNone`, and
+//      the card tap is combat.js's `oneTapPlays`. Every other action is as
+//      ruled on 2026-08-17.
+//
 //      WHAT IT REPLACED, kept because the reasoning was good and is no longer
 //      the ruling. This form used to refuse every non-pointer source on the
 //      argument that it answers a POINTING failure — a 9 px gap only a finger
