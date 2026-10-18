@@ -1342,7 +1342,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const blocked = busy || enemyPlayback || !!hasCardChoice(combat) || performance.now() < autoCombatPausedUntil;
     if (!blocked && !capped && combat.phase === 'player' && !combat.result && !veilIsOpen() && !selected && !selfArm && selectedFlask == null) {
       for (const inst of combat.piles.hand) {
-        if (unplayableReason(inst)) continue;
+        if (isRoundQueued(inst.instanceId) || unplayableReason(inst)) continue;
         try {
           const pv = previewCard(combat, inst.instanceId);
           const def = pv.resolvedDefinition || resolveCombatCard(combat, inst);
@@ -1367,7 +1367,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     return chooseAutoCombatAction({ settings: readSettings(), phase: combat.phase, result: combat.result, busy: blocked,
       pendingReaction: !!combat.pendingReaction, modalOpen: veilIsOpen(), targetUnresolved: !!(selected || selfArm || selectedFlask != null),
-      queued: !!combat.combatRounds?.playerQueue?.length, candidates, canEndTurn: !hasCardChoice(combat) });
+      // An idle round queue is a plan: skip its cards above, then finish
+      // planning or End Turn. busy/enemyPlayback guard executing queues.
+      queued: false, candidates, canEndTurn: !hasCardChoice(combat) });
   }
   function scheduleAutoCombat() {
     if (autoCombatTimer !== null || !combatEl.isConnected) return;
