@@ -941,6 +941,24 @@ export function playTimeline(events, ctx, done) {
   const runParts = (beat, key) => {
     for (const event of beat.events) if (!terminal(event)) visualSafe(() => parts.get(event)?.[key]?.(ctx));
   };
+  // Cues belong to the committed beat, even when its multi-hit reactions are
+  // split into groups. Skipping drains only beats whose numbers were unheard.
+  const originalForEvent = new Map(beats.flatMap(beat => beat.events.map(event => [event, beat])));
+  const cued = new Set(), stung = new Set(), buzzed = new Set();
+  const cue = (beat, sounds = true) => {
+    const original = originalForEvent.get(beat.events[0]) || beat;
+    if (cued.has(original)) return;
+    cued.add(original);
+    const starts = original.events.filter(event => event.type === 'playerTurnStart');
+    const stinger = starts.some(event => !stung.has(event.turn));
+    const mine = starts.filter(event => localTurnStart(event, ctx.isLocalPlayer));
+    const turnBuzz = mine.some(event => !buzzed.has(event.turn));
+    for (const event of starts) stung.add(event.turn);
+    for (const event of mine) buzzed.add(event.turn);
+    const options = { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor, stinger, turnBuzz };
+    if (sounds) playBeatCues(original.events, options);
+    else playBeatHaptics(original.events, options);
+  };
   let handle, skippedPointer = false;
   const skip = event => {
     if (event?.target?.closest?.('[data-combat-read-only], dialog, [role="dialog"]')) return;
@@ -961,13 +979,17 @@ export function playTimeline(events, ctx, done) {
   dbg.open = (dbg.open || 0) + 1;
   handle = runActionTimeline(beats, {
     onStage: (name, beat) => { traceBeat(name, beat.actorId); ctx.onStage?.(name, beat); },
-    onIntent: beat => ctx.onIntent?.(beat),
+    onIntent: beat => {
+      const stage = beat.actorId && stageFor(ctx.anchorFor(beat.actorId));
+      if (stage && stanceState(stage) !== 'in') stage.settle?.();
+      ctx.onIntent?.(beat);
+    },
     onAction: beat => {
       const event = beat.events.find(e => ['cardPlayed', 'enemyMoveStarted', 'combatCounterTriggered', 'flaskUsed'].includes(e.type));
       const maneuver = event?.combatProfile?.maneuver || event?.maneuver;
       const name = ctx.actionWordForBeat?.(beat) || event?.name || event?.cardName || event?.moveName
         || (maneuver ? maneuver[0].toUpperCase() + maneuver.slice(1) : null)
-        || (event?.type === 'flaskUsed' ? 'Flask' : beat.kind === 'counter' ? 'Counter' : beat.kind === 'attack' ? 'Attack' : 'Action');
+        || (event?.type === 'flaskUsed' ? 'Flask' : beat.kind === 'counter' ? t('deckEditor.stance.counter') : beat.kind === 'attack' ? t('deckEditor.stance.attack') : 'Action');
       callout(ctx.layer, ctx.anchorFor(beat.actorId), beat.actorId, `action:${name}`);
     },
     maxSpriteMs: speed => typeof ctx.maxActorAnimationMs === 'function' ? ctx.maxActorAnimationMs(speed) : Number(ctx.maxActorAnimationMs) || speed.lungeMs,
@@ -975,7 +997,6 @@ export function playTimeline(events, ctx, done) {
       if (timing.scale === 0) return null;
       const actorEl = ctx.anchorFor(beat.actorId);
       if (!actorEl) return null;
-      if (stanceState(stageFor(actorEl)) === 'out') stageFor(actorEl)?.settle?.();
       const animation = ctx.animateActor?.(beat, actorEl, speed);
       if (animation && Number.isFinite(animation.totalMs) && typeof animation.cancel === 'function') return animation;
       if (ctx.figureAnimations !== false) {
@@ -989,8 +1010,8 @@ export function playTimeline(events, ctx, done) {
       runParts(beat, 'contact');
       const hits = beat.events.filter(event => event.type === 'damageDealt');
       const holdMs = timing.scale === 0 ? 0 : hits.reduce((ms, event) => ms + hitStopMsFor(guardHitFloatParts(event).residual || 0, ctx.maxHpFor?.(event.targetId) || 0) * timing.scale, 0);
-      if (holdMs) actor?.hold?.(holdMs);
-      if (beat.actorId) ctx.layer.dataset.contact = String((Number(ctx.layer.dataset.contact) || 0) + Math.max(1, hits.length));
+      if (holdMs) { actor?.hold?.(holdMs); hold(ctx.anchorFor(beat.actorId), holdMs); }
+      if (beat.actorId && ctx.layer?.dataset) ctx.layer.dataset.contact = String((Number(ctx.layer.dataset.contact) || 0) + Math.max(1, hits.length));
       return holdMs;
     },
     reactionGroups: beat => {
@@ -1023,10 +1044,10 @@ export function playTimeline(events, ctx, done) {
       return Math.max(0, ...beat.events.map(event => Number(ctx.reactionTimingForReceipt?.(event, timing.spriteSpeed)) || 0));
     },
     onNumbers: beat => {
-      if (beat.banner) banner(ctx.layer, beat.banner, 'turn', timing.bannerMs);
+      if (beat.banner) visualSafe(() => banner(ctx.layer, beat.banner, 'turn', timing.bannerMs));
       if (!beat.actorId || beat.kind === 'reveal') { runParts(beat, 'contact'); runParts(beat, 'reaction'); runParts(beat, 'callout'); }
       runParts(beat, 'numbers');
-      playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer, maxHpFor: ctx.maxHpFor });
+      cue(beat);
     },
     onApply: beat => ctx.onBeatApplied?.(beat),
     onResolution: beat => {
@@ -1034,6 +1055,7 @@ export function playTimeline(events, ctx, done) {
       ctx.onResolution?.(beat);
     },
     onFlush: () => {
+      for (const beat of beats) cue(beat, false);
       clearHeldFigures(); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
       for (const sprite of globalThis.document?.querySelectorAll?.('.combatant .sprite') || []) stageFor(sprite)?.endReaction?.();
       ctx.onFlush?.();
