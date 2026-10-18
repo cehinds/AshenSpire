@@ -37,8 +37,8 @@ ok(!/confirm\(\)/.test(completion),
 
 ok(/const tap = \(\) => \{[\s\S]*?if \(oneTapPlays\(\)\) \{ play\(\); return; \}\s*if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}/.test(wire?.[1] || ''),
   'the tap-to-select route remains for an ambiguous target; an unambiguous play goes through oneTapPlays (owner, 2026-10-18)');
-ok(/const playIsUnambiguous = \(\) => !pv\.needsTarget\s*\|\|\s*\(dragTargetMode !== 'all' && combat\.enemies\.filter\(enemy => enemy\.alive\)\.length === 1\);/.test(wire?.[1] || ''),
-  'a play is unambiguous for a no-target card or exactly one living enemy');
+ok(/const playIsUnambiguous = \(\) => !pv\.needsTarget\s*\|\|\s*combat\.enemies\.filter\(enemy => enemy\.alive\)\.length === 1;/.test(wire?.[1] || ''),
+  'a play is unambiguous for a no-target card (self or all-enemy; needsTarget is false for a sweep) or exactly one living enemy');
 ok(/const confirm = \(\) => \{[\s\S]*?\{ select\(\); return; \}\s*play\(\);/.test(wire?.[1] || ''),
   'the second tap of the select-then-confirm flow still plays through the same play()');
 // The drop decision lives in finishCardDrag (src/ui/cardDragEnd.js, #1298);

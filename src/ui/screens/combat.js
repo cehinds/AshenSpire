@@ -2456,7 +2456,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // ruling and SPEC §7.3's "selection stays separate from play" stand for
     // every other case, where the tap still selects and the player picks.
     const playIsUnambiguous = () => !pv.needsTarget
-      || (dragTargetMode !== 'all' && combat.enemies.filter(enemy => enemy.alive).length === 1);
+      || combat.enemies.filter(enemy => enemy.alive).length === 1;
     const oneTapOn = () => (meta.settings || {}).oneTapPlay !== false;
     const oneTapPlays = () => oneTapOn() && playIsUnambiguous();
     const play = () => {

@@ -79,6 +79,17 @@ try {
     assert.equal((await state(page)).hand.length, before.hand.length - 1, 'the tap after a hold plays the selected self card');
     await page.close();
   }
+  {
+    // A sweep (all-enemy) card has nothing to choose: one tap plays it with two enemies alive.
+    const page = await board(2, 7);
+    const before = await state(page);
+    await tapCard(page, 'core.sweep');
+    await page.waitForTimeout(900);
+    const after = await state(page);
+    assert.equal(after.hand.length, before.hand.length - 1, 'sweep: one tap played an all-enemy card');
+    assert.ok(after.energy < before.energy, 'sweep: and spent its cost');
+    await page.close();
+  }
   assert.deepEqual(errors, []);
   console.log('PASS combat-one-tap-play');
 } catch (error) {
