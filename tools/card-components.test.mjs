@@ -16,6 +16,28 @@ test('compact runtime module preserves every resolved card without repeating the
  const cards=Object.values(runtime.cards);assert.notEqual(cards[0],cards[1]);assert.notEqual(cards[0].layers,cards[1].layers);
  cards[0].layers[0].x+=10;assert.notEqual(cards[0].layers[0].x,cards[1].layers[0].x,'card layers remain independent');
 });
+test('layer diffs resolve to the template layer with only the changed key different',async()=>{
+ const tl=layout.layers.find(l=>l.id==='flag'),other=layout.layers.find(l=>l.id==='title');
+ const withoutKey=Object.fromEntries(Object.entries(other).filter(([k])=>k!=='bind'));
+ const data={schemaVersion:1,template:layout,cards:{
+  diff:{...layout,id:'diff',layers:layout.layers.map(l=>l.id==='flag'?{...l,x:tl.x+7}:structuredClone(l))},
+  full:{...layout,id:'full',layers:layout.layers.map(l=>l.id==='title'?withoutKey:structuredClone(l))},
+  plain:{...layout,id:'plain',layers:layout.layers.map(l=>structuredClone(l))}}};
+ const {CARD_COMPONENTS:runtime}=await import('data:text/javascript,'+encodeURIComponent(cardComponentsModule(data)));
+ assert.deepEqual(runtime.cards.diff,data.cards.diff);
+ const flag=runtime.cards.diff.layers.find(l=>l.id==='flag');
+ assert.equal(flag.x,tl.x+7);assert.deepEqual({...flag,x:tl.x},tl);
+ const title=runtime.cards.full.layers.find(l=>l.id==='title');
+ assert.ok(!('bind' in title),'a card layer lacking a template key resolves without it');assert.ok(!('$full' in title));
+ assert.deepEqual(title,withoutKey);
+ assert.notEqual(runtime.cards.plain.layers[0],runtime.cards.diff.layers[0]);
+ assert.notEqual(runtime.cards.plain.layers[0],layout.layers[0]);
+});
+test('the generated module for the real layout stays small',()=>{
+ const source=readFileSync(new URL('../src/content/cardComponents.generated.js',import.meta.url),'utf8');
+ assert.ok(Buffer.byteLength(source)<400*1024,'cardComponents.generated.js is '+Buffer.byteLength(source)+' bytes');
+ assert.equal(source,cardComponentsModule(compileCardComponents(layout,contentBundle.cards)),'generated module is current');
+});
 test('every card has an independent resolved object with approved left-side costs',()=>{
  const data=compileCardComponents(layout,contentBundle.cards);
  assert.equal(Object.keys(data.cards).length,contentBundle.cards.length);
