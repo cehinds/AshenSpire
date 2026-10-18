@@ -726,10 +726,10 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   creditKnowledgeImpact(ctx, target, amount, tactical.knowledgeBonus > 0);
   Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: resisted });
   ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,
-    damageReceipt: damageReceipt(target.id, [{ ...tactical.damageReceipt?.hits?.[contactIndex],
+    ...(fixCoreEnabled(ctx) ? { damageReceipt: damageReceipt(target.id, [{ ...tactical.damageReceipt?.hits?.[contactIndex],
       incoming: raw, physical: blockable, magical: tactical.magicAmounts?.[contactIndex] || 0,
       blocked, wardReduced: liveWardReduction, poiseReduced: poiseAbsorbed, hpLoss,
-      sources: tactical.damageReceipt?.hits?.[contactIndex]?.sources || [] }]),
+      sources: tactical.damageReceipt?.hits?.[contactIndex]?.sources || [] }]) } : {}),
     // The hit as it arrived, before typed resistance or weakness: the log's starting figure.
     ...(Number.isFinite(tactical.amounts?.[contactIndex]) ? { incoming: tactical.amounts[contactIndex] } : {}),
     // The blow before any status, matchup or critical modifier: the printed amount plus its rating bonus.

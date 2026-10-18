@@ -57,3 +57,20 @@ test('Block cards replenish both pools once and independently cap',()=>{
   gainBlock(combat,target,5,{cardId:'defend',type:'skill',skipRatingBonus:true});
   assert.equal(target.block,5);assert.equal(target.persistentWard.value,20);assert.equal(target.persistentPoise.value,7);
 });
+
+// Partial projections have no active pool unless explicitly present.
+test('partial preview targets treat absent protection pools as inactive without mutation',()=>{
+  const {combat,target}=fixture('physical');
+  delete target.persistentPoise;delete target.persistentWard;
+  const before=JSON.stringify(target);
+  assert.equal(protectionReceipt(combat,target,'physical',20).amount,20);
+  assert.equal(protectionReceipt(combat,target,'magical',20).amount,20);
+  assert.equal(JSON.stringify(target),before);
+});
+
+test('zero typed damage never reports an inapplicable protection multiplier',()=>{
+  const {combat,target}=fixture('physical');
+  const receipt=protectionReceipt(combat,target,'magical',0);
+  assert.equal(receipt.amount,0);
+  assert.deepEqual(receipt.sources,[]);
+});

@@ -64,9 +64,13 @@ export function protectionBindings(ctx, entity, carrier=null) {
   return compileBindings({ mechanics, attachments:fixCoreAttachments(ctx,entity,carrier), moduleParameters:fixCoreModuleParameters(rawRules(ctx)) });
 }
 export function protectionReceipt(ctx, entity, kind, amount) {
+  // Detached preview targets may omit inactive pools. Normalize only the
+  // read model; live entities and strict mechanic reference validation stay intact.
+  const owner = entity ? {...entity, persistentWard: entity.persistentWard ?? {value:0,max:0},
+    persistentPoise: entity.persistentPoise ?? {value:0,max:0}} : entity;
   const ownerId = ctx?.playerIdForEntity?.(entity) || entity?.id;
-  const receipt = evaluateModifiers({ bindings: fixCoreEnabled(ctx) ? protectionBindings(ctx, entity) : [],
-    phase: 'damage.mitigation', subjectId: ownerId, context: { owner: entity, damageKind: kind }, amount, quantity: true });
+  const receipt = evaluateModifiers({ bindings: fixCoreEnabled(ctx) && amount > 0 ? protectionBindings(ctx, entity) : [],
+    phase: 'damage.mitigation', subjectId: ownerId, context: { owner, damageKind: kind }, amount, quantity: true });
   const sources = [...receipt.sources];
   if (receipt.rounding) sources.push({ id: 'rounding', label: 'Final damage rounding', stage: 'rounding', operation: 'add', amount: receipt.rounding });
   return { ...receipt, reduced: Math.max(0, amount - receipt.amount), sources };
