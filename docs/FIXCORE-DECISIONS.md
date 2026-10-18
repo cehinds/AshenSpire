@@ -29,19 +29,25 @@ Contract: #2127 (merged). Implementation: #2129 `feature/FixCore`. Where a
 | D15 | Deck editing in combat | "equipment and deck editing only can happen outside of combat. buttons to change this will be disabled until combat is resolved. also if there is a new item in the armory then the outline should glow blue, instead of black." | No in-combat editing; the equipment and deck buttons are disabled until combat resolves. Armory button outline glows blue when it holds a new item (black otherwise). |
 | D16 | Vulnerable 1.25 for both profiles | "yes vulnerable means target with vulnerable stacks receive 1.25 damage (and cards values and inflicted damage should update to reflect this change automatically)" | Vulnerable ×1.25 damage taken, both profiles; card previews and dealt damage reflect it. |
 
-## Open (owner)
+## Follow-up rulings (owner, 2026-10-18, 13:56 AKDT)
 
-- D8: whose INT and WIS raise the DC (target's?), what the observer rolls (d20 + WIS?), and does hit-% show only after a passed roll?
-- D13: should a defensive card add its Block to current Poise (capped at max), or set Poise to min(Block, max Poise)?
-- D3: does the physical/spell action `camp` count as damage typing (so Ward stays)?
-- D10: is the guaranteed rest on the floor immediately before the boss, and do rest sites still heal (plus Smith and free level-up)?
+These settle every item that was open above. Where a reading above says **open**, this section wins.
+
+- D3: "No Ward, Poise only". Remove Ward from Core; Poise reduces all damage (the physical/spell `camp` stays for matchups).
+- D13: "Add Block, cap max". A defensive card adds its Block to current Poise, capped at max Poise, and grants its Block.
+- D10: "Heal + floor before boss". Rest sites heal, plus Smith and a free level-up; the guaranteed rest is on the floor directly before the boss.
+- D8: "DC 5 + target INT + WIS + other bonuses". DC = 5 + target's INT + target's WIS + configured bonuses (default none); the observer rolls d20 + own WIS. The owner had no preference on badge timing; the session chose: hit-% shows only after a passed roll.
+- Alignment: "Yes, all". Bring Core 2 on `dev` (after #2129) in line with every ruling, one PR per ruling.
 
 ## #2129 assumptions that differ from these rulings
 
-- Ward and damage typing (D3: open. Hold Ward changes until the owner rules; do not remove the physical/spell `camp`).
+- Ward and damage typing (D3: remove Ward; Poise only).
 - Same-stance effectiveness 1.0025 (D5: keep 1.25).
 - Combat deck drafts taking effect next encounter (D15: no editing in combat).
 - 60/10/30 rewards (D9: 60/10/15/15 with shops).
-- Pre-boss rest only (D10: always 3 rests, Strategize removed, Continue button).
+- 2 rests per act, Strategize, level-up as an exclusive service (D10: 3 rests, one directly before the boss, Strategize removed, heal + Smith + free level-up).
 - Autoplay of whole turns (D12: reactions only).
-- Staggered as a stacking status (D13: a stance, Vulnerable stacks extend duration).
+- Staggered as a stacking status with Weak and a skipped turn (D13: a stance, −1 SP, +1 Vulnerable, repeats extend duration).
+- Poise loss = the 25% it prevented (D13: floor(0.2 × damage) before damage).
+- Pacing 0.5 s, auto ×1 (D11: 1 s, auto ×1.5).
+- Vulnerable 1.5 in the Current profile (D16: 1.25).
