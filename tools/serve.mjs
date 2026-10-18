@@ -29,7 +29,8 @@
 // watcher per directory), waits 150 ms for the writes to settle, and sends
 // `event: reload` (data: the changed path) down GET /__dev/events, an
 // EventSource stream. A change under content/config/ (*.json) first runs
-// `node tools/config-build.mjs`, one under content/hud-layout/ (*.json) runs
+// `node tools/config-build.mjs` (and, for ui/tokens.json, then
+// `node tools/tokens-css.mjs`), one under content/hud-layout/ (*.json) runs
 // `node tools/hud-layout-css.mjs`, one under content/framework/ (*.json) runs
 // `node tools/framework-data-build.mjs`, one under content/source/ runs
 // `node tools/content-build.mjs`, and one under games/ or engine/modules/ runs
@@ -99,7 +100,7 @@ const WATCH_DEBOUNCE_MS = 150;
 const WATCH_SKIP = /(^|\/)(\.|node_modules(\/|$))|~$|\.sw[px]$|\.tmp$/;
 
 /** The order builders run in when one batch needs several. */
-const BUILD_ORDER = ['config-build.mjs', 'hud-layout-css.mjs', 'framework-data-build.mjs', 'content-build.mjs',
+const BUILD_ORDER = ['config-build.mjs', 'tokens-css.mjs', 'hud-layout-css.mjs', 'framework-data-build.mjs', 'content-build.mjs',
   'game-config.mjs build']; // last: it hashes src/** and reads the other generated modules
 
 /** Which build tool (in tools/) must run before a change under `rel` can be seen. */
@@ -119,6 +120,19 @@ export function buildToolFor(rel) {
   // and games/ashenspire/game.lock.json. Needs the subcommand: bare, it only validates.
   if (rel === 'games' || rel.startsWith('games/') || /^engine\/(modules|foundation|contracts|kernel|runtime)(?:\/|$)/.test(rel)) return 'game-config.mjs build';
   return null;
+}
+
+/**
+ * Every build tool a change under `rel` owes, in no particular order (the run
+ * order is BUILD_ORDER). Usually the one buildToolFor names; a change that can
+ * touch ui/tokens.json also owes tokens-css.mjs, which reads it.
+ */
+export function buildToolsFor(rel) {
+  const tool = buildToolFor(rel);
+  if (tool === 'config-build.mjs' && (rel === 'content/config' || rel ==='content/config/ui/tokens.json')) {
+    return [tool, 'tokens-css.mjs'];
+  }
+  return tool ? [tool] : [];
 }
 
 /** Last 20 lines of a tool's output, for the error banner. */
@@ -219,7 +233,7 @@ function startWatch(root, emit) {
         // Fixed order, not arrival order: content-build rejects a stale config
         // module, so config-build must finish first. A builder an earlier
         // failure skipped stays owed until a round runs it.
-        const wanted = new Set([...owed, ...batch.map(buildToolFor).filter(Boolean)]);
+        const wanted = new Set([...owed, ...batch.flatMap(buildToolsFor)]);
         const tools = BUILD_ORDER.filter((tool) => wanted.has(tool));
         let failure = null, at = 0;
         for (; at < tools.length; at++) {
