@@ -104,6 +104,8 @@ export const SFX_RECIPES = {
   ],
   hit_medium: HIT_MEDIUM_RECIPE,
   hit_heavy: [
+    // The thump: a short flat 60 Hz sine under the smack, so a heavy hit lands in the chest.
+    { kind: 'tone', type: 'sine', freq: 60, dur: 0.08, peak: 0.5, t0: 0 },
     { kind: 'noise', dur: 0.26, peak: 0.6, hp: 160, lp: 3200 },
     { kind: 'tone', type: 'square', freq: 120, to: 42, dur: 0.24, peak: 0.42 },
     { kind: 'tone', type: 'sine', freq: 70, to: 38, dur: 0.3, peak: 0.3, t0: 0.01 },
