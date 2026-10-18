@@ -1606,8 +1606,9 @@ function withCallout(parts, e) {
   const said = calloutForEvent(e);
   if (!said) return parts;
   // The BLOCKED word carries its hit sound, so the sound and the word land together.
-  const sound = e.type === 'damageDealt' && said.kind === 'blocked';
-  return { ...parts, callout: (ctx) => { callout(ctx.layer, ctx.anchorFor(said.targetId), said.targetId, said.kind); if (sound) sfx.play('block'); } };
+  // The RESISTED word of a Ward-only hit carries the Ward sound, the same way.
+  const sound = e.type === 'damageDealt' ? ({ blocked: 'block', wardResisted: 'wardResist' })[said.kind] : null;
+  return { ...parts, callout: (ctx) => { callout(ctx.layer, ctx.anchorFor(said.targetId), said.targetId, said.kind); if (sound) sfx.play(sound); } };
 }
 
 // An event whose only visual is its callout: it never takes a step of its own.
@@ -1653,6 +1654,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
       const heavy = parts.residual >= 15;
       const hitSounds = () => {
         if (parts.guard) sfx.play('block');
+        if (parts.ward) sfx.play('wardResist');
         if (parts.damage) playHitSound(e);
       };
       return {
