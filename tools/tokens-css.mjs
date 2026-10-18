@@ -52,6 +52,25 @@ export function declaredProperties(css) {
 }
 
 /**
+ * How many times `css` declares the custom property `name` at the root — in a
+ * rule whose selector list names :root or html (comments stripped). A scoped
+ * re-declaration (`.workspace { --tap-floor: … }`) is the cascade doing its
+ * job and is not counted; a second root declaration anywhere would override
+ * the home's value for the whole page.
+ */
+export function rootDeclarationCount(css, name) {
+  const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const prop = new RegExp(`(?:^|[{;\\s])${name.replace(/[-]/g, '\\-')}\\s*:`, 'g');
+  let count = 0;
+  for (const m of bare.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selectors = m[1].split(',').map((sel) => sel.trim().split(/\s+/).pop());
+    if (!selectors.some((sel) => /^(:root|html)(?![\w-])/.test(sel))) continue;
+    count += [...m[2].matchAll(prop)].length;
+  }
+  return count;
+}
+
+/**
  * The flat list of tokens: { group, key, path, name, value, home }.
  * `value` is the CSS text; `home` is the stylesheet that already declares it, if any.
  */
@@ -93,7 +112,16 @@ export function generateTokensCss(data, { stylesheets = {}, file = TOKENS_JSON }
     if (e.home) {
       if (!(e.home in declared)) errors.push(`${file}: ${e.path}.home ${e.home} was not read — it is not a stylesheet this tool knows`);
       else if (!declared[e.home].has(e.name)) errors.push(`${file}: ${e.path}.home says ${e.home} declares ${e.name}, but it does not`);
-      else if (e.px != null) {
+      else if (rootDeclarationCount(stylesheets[e.home], e.name) !== 1
+        || Object.entries(stylesheets).some(([path, text]) => path !== e.home && rootDeclarationCount(text, e.name) > 0)) {
+        // One home per fact means one root declaration: a second one in the
+        // home (a later rule) or in another stylesheet (which may load later)
+        // would override the value the check below verifies. Scoped overrides
+        // inside a component are the cascade's business and are not counted.
+        const inHome = rootDeclarationCount(stylesheets[e.home], e.name);
+        const elsewhere = Object.entries(stylesheets).filter(([path, text]) => path !== e.home && rootDeclarationCount(text, e.name) > 0).map(([path]) => path);
+        errors.push(`${file}: ${e.path}.home ${e.home} must hold the only root declaration of ${e.name} — found ${inHome} there${elsewhere.length ? ` and more in ${elsewhere.join(', ')}` : ''}; one home per fact`);
+      } else if (e.px != null) {
         // The home owns the value, so tokens.json's px must agree with it
         // (rem at the 10px root; px as px). A calc() or var() home cannot be
         // compared and is reported, so the author drops px there.

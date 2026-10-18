@@ -40,8 +40,8 @@ test('font-size counts only px literals below the text minimum', () => {
 });
 
 test('z-index counts bare values of 100 or more, not layers, small values or expressions', () => {
-  const css = '.a{z-index:100}.b{z-index:99}.c{z-index:var(--layer-sheet)}.d{z-index: 2147483647 !important}.e{z-index:700!important}.f{z-index:-1}.g{z-index:calc(var(--layer-hud) + 1)}';
-  assert.equal(lint(css)['z-index-bare'], 3);
+  const css = '.a{z-index:100}.b{z-index:99}.c{z-index:var(--layer-sheet)}.d{z-index: 2147483647 !important}.e{z-index:700!important}.f{z-index:-1}.g{z-index:calc(var(--layer-hud) + 1)}.h{z-index:+100}';
+  assert.equal(lint(css)['z-index-bare'], 4, 'an explicitly signed +100 counts too');
 });
 
 test('hex colours count in declarations, not in selectors, and not inside the token homes', () => {

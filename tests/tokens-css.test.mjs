@@ -64,6 +64,16 @@ test('a home that does not declare the property, and a duplicate of a stylesheet
   const bad = generateTokensCss(lie, { stylesheets: BASE });
   assert.ok(bad.errors.includes(`${TOKENS_JSON}: touch.comfortablePx.home says styles/base.css declares --not-in-base, but it does not`), bad.errors.join('\n'));
 
+  // A homed property is declared at the root exactly once across the sheets:
+  // a later root rule or another stylesheet would override the verified value.
+  const kitRoot = { ...BASE, 'styles/kit.css': ':root { --t-1: 2rem; }' };
+  const overridden = generateTokensCss(tokens(), { stylesheets: kitRoot });
+  assert.ok(overridden.errors.some((e) => e.includes('type.scale.micro.home styles/base.css must hold the only root declaration of --t-1') && e.includes('styles/kit.css')), overridden.errors.join('\n'));
+  const twiceHome = { 'styles/base.css': BASE['styles/base.css'] + '\nhtml { --t-1: 2rem; }' };
+  assert.ok(generateTokensCss(tokens(), { stylesheets: twiceHome }).errors.some((e) => e.includes('found 2 there')));
+  const scoped = { ...BASE, 'styles/kit.css': '.cc-design-workspace { --tap-floor: var(--cc-control-floor); } @media (min-width: 1px) { .x:root-ish { --t-1: 3rem } }' };
+  assert.equal(generateTokensCss(tokens(), { stylesheets: scoped }).errors.length, 0, 'a scoped re-declaration is the cascade, not a second home');
+
   const clash = tokens();
   clash.touch.minGapPx.css = '--layer-hud';
   const twice = generateTokensCss(clash, { stylesheets: BASE });

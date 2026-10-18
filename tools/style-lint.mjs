@@ -59,7 +59,7 @@ export function lintCss(text, file, { textPx }) {
       const px = /(?:^|\s)(\d*\.?\d+)px(?=[\s/]|$)/i.exec(value);
       if (px && Number(px[1]) < textPx) counts['font-size-below-min']++;
     } else if (prop === 'z-index') {
-      const z = /^\s*(-?\d+)\s*(?:!important)?\s*$/i.exec(value);
+      const z = /^\s*([-+]?\d+)\s*(?:!important)?\s*$/i.exec(value); // `+100` is a valid signed integer too
       if (z && Number(z[1]) >= 100) counts['z-index-bare']++;
     }
   }
