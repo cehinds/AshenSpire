@@ -1,0 +1,65 @@
+{
+  "captureDate": "2026-10-18",
+  "sourceCommit": "bd847d3baf00f1af690c2148528d03b98b728a95",
+  "mergedDevCommit": "a0b54c60e00bfdff3a1bbfb840a949424ed205f1",
+  "method": "Fresh canonical cache build, actual dist/AshenSpire.html?shot=combat; posed default solo combat",
+  "localBuild": {
+    "version": "0.7.1.1560",
+    "digest": "3568240a83"
+  },
+  "artifactIdentity": "pending fresh merged-source CI artifact",
+  "publicRouteVerification": "pending fresh merged-source identity proof",
+  "expectedUrl": "https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/",
+  "screenshots": [
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      }
+    },
+    {
+      "name": "wide",
+      "width": 1280,
+      "height": 720,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "name": "tablet",
+      "width": 768,
+      "height": 1024,
+      "fonts": "loaded",
+      "failedImages": 0,
+      "combat": true,
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      }
+    }
+  ],
+  "validation": "Existing about/changelog browser check985/985 passed, source plus selected standalone Settings",
+  "limits": "Rendering-only posed combat screenshots. No capture-only CSS. Do not establish latency, every profile, hosted gameplay, or live co-op. Prior026 captures/Qproof remain historical."
+}

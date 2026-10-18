@@ -1,4 +1,6 @@
-# Combat HUD layout batching capture
+# Historical combat HUD layout batching capture
+
+This gallery retains the historical 026 source captures and Q identity proof. New merged-source captures are in [merged-dev-1559/CAPTURE.md](merged-dev-1559/CAPTURE.md).
 
 Captured locally on 2026-10-17 from source `026f2839e0ea86308a88acf32418b55c34628191`, canonical cache build **0.7.1.1556**, digest `4f155934c2`, served at `dist/AshenSpire.html?shot=combat`. This is a posed solo combat fixture. It documents rendering after batching geometry reads before HUD writes; screenshots do not measure latency or demonstrate a completed playthrough or hosted execution. No capture-only layout CSS was applied. Fonts loaded and zero failed image elements were recorded at all four viewports. All images were inspected.
 
