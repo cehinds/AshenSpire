@@ -7,7 +7,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BUDGET, checkBudget, budgetFailed, budgetValues, parseArgs, sceneUrl, mean, httpProblem, readinessProblem } from '../tools/measure.mjs';
+import { BUDGET, checkBudget, budgetFailed, budgetValues, parseArgs, sceneUrl, mean, httpProblem, readinessProblem, pageErrorProblem } from '../tools/measure.mjs';
 import * as size from '../tools/size-budget.mjs';
 
 const within = Object.fromEntries(Object.entries(BUDGET));
@@ -67,6 +67,13 @@ test('httpProblem / readinessProblem: an error page or an empty shell is not a s
   assert.match(readinessProblem({ appChildren: 0, banners: 0 }), /#app/);
   assert.match(readinessProblem({ appChildren: 3, banners: 1 }), /banner/);
   assert.match(readinessProblem(null), /#app/);
+});
+
+test('pageErrorProblem: any uncaught page error voids the attempt and is named', () => {
+  assert.equal(pageErrorProblem([]), null);
+  assert.equal(pageErrorProblem(undefined), null);
+  assert.equal(pageErrorProblem(['TypeError: x is undefined']), 'page error: TypeError: x is undefined');
+  assert.equal(pageErrorProblem(['a', 'b']), 'page error (1 of 2): a');
 });
 
 // base64 of "AB" (QUI=), "A" (QQ==), "ABC" (QUJD), 6 bytes (QUJDREVG)

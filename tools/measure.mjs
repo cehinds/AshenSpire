@@ -148,6 +148,12 @@ export function readinessProblem(probe) {
   return null;
 }
 
+/** Why uncaught page errors (strings) void a measurement, or null. Names the first. */
+export function pageErrorProblem(errors) {
+  if (!errors || !errors.length) return null;
+  return `page error${errors.length > 1 ? ` (1 of ${errors.length})` : ''}: ${errors[0]}`;
+}
+
 // Runs in the page.
 function readinessProbe() {
   return { appChildren: document.querySelector('#app')?.children.length ?? 0, banners: document.querySelectorAll('.validation-banner').length };
@@ -220,7 +226,8 @@ async function measureScene(browser, base, scene, wantPlays) {
   const ctx = await browser.newContext({ viewport: VIEWPORT, hasTouch: true, isMobile: true, deviceScaleFactor: DPR });
   try {
     const page = await ctx.newPage();
-    page.on('pageerror', (e) => console.error(`measure: ${scene} pageerror: ${String(e).slice(0, 160)}`));
+    const pageErrors = []; // this attempt's uncaught page errors
+    page.on('pageerror', (e) => { pageErrors.push(String(e).slice(0, 160)); console.error(`measure: ${scene} pageerror: ${pageErrors.at(-1)}`); });
     await page.addInitScript(initScript);
     const cdp = await ctx.newCDPSession(page);
     await cdp.send('Performance.enable');
@@ -234,6 +241,8 @@ async function measureScene(browser, base, scene, wantPlays) {
     await settle(page);
     const unready = readinessProblem(await page.evaluate(readinessProbe));
     if (unready) throw new Error(`${scene} not ready: ${unready}`);
+    const errored = pageErrorProblem(pageErrors);
+    if (errored) throw new Error(`${scene} ${errored}`);
     const counts = await page.evaluate(sceneCounts);
     const plays = wantPlays ? await touchPlays(page, cdp, wantPlays) : [];
     return { counts, plays };
