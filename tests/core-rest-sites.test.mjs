@@ -27,3 +27,17 @@ test('Core has three rest sites per act and the floor before the boss is always 
     }
   }
 });
+
+test('15% of the randomly typed Core nodes are shops and fixed nodes never are (D9)', () => {
+  const run = createRunState({ seed: 5, classId: 'reaver', registries, runId: 'shop-share' });
+  let eligible = 0, shops = 0;
+  for (let seed = 1; seed <= 300; seed++) for (const tier of [1, 2, 3]) {
+    const map = buildActMap(registries, createRng(seed), run.seatOrder[tier - 1], tier);
+    for (const node of Object.values(map.nodes)) {
+      if (['rest', 'boss'].includes(node.actualType) || node.floor === 1) { assert.notEqual(node.actualType, 'shop'); continue; }
+      if (node.actualType === 'elite') continue;
+      eligible++; if (node.actualType === 'shop') shops++;
+    }
+  }
+  assert.ok(Math.abs(shops / eligible - 0.15) <= 0.03, `shop share ${shops}/${eligible}`);
+});

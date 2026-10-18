@@ -23,5 +23,6 @@
   "minimumThreatFloor": 3,
   "mapMode": "path",
   "firstFloor": "fight",
+  "shopShare": 0.15,
   "requirePrebossRest": true
 }
