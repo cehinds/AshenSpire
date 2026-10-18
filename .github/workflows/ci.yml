@@ -483,17 +483,18 @@ jobs:
           # that read a build moved to `reproducible`, which builds first.
           lfs: false
           fetch-depth: 0 # verify-shipped --selftest reads a known-bad blob from history
-          # LEAN CHECKOUT (D38; see the note above `test`): history without its
-          # blobs, and the tree without the source PNGs nothing in this job reads.
+          # Lean history and checkout, except the real map-module PNG inputs
+          # discovery's asset-existence and schema validators now read.
           filter: blob:none
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /*
             !/art/**/*.png
             !/docs/**/*.png
+            /art/map-battlefield-drafts/**/*.png
 
       - uses: ./.github/actions/setup-node
-      - name: Install card artwork encoder for conversion tests
+      - name: Install artwork encoder and map-module schema validator
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
@@ -503,7 +504,7 @@ jobs:
             python3 -m venv "$RUNNER_TEMP/card-art-python"
             encoder="$RUNNER_TEMP/card-art-python/bin"
           fi
-          "$encoder/python" -m pip install Pillow==11.1.0
+          "$encoder/python" -m pip install Pillow==11.1.0 -r art/map-battlefield-drafts/requirements.txt
           echo "$encoder" >> "$GITHUB_PATH"
           # Windows has python.exe in the venv, but python3 may resolve outside it.
           echo "ASHEN_PYTHON=$("$encoder/python" -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
