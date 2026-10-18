@@ -1504,8 +1504,9 @@ function baseCardPriceReceipt(combat, def, claimed = null) {
   const funds = ownRestoreFunds(def);
   // Silenced (v2): each stack adds 1 SP to a spell-camp card. An X card already spends every point.
   const silenced = combat.combatExpansionVersion === 2 && def.cost !== 'X' ? spellCardCostSurcharge(combat.player, def) : 0;
+  const cardMana = Math.max(0, pools.mana + (def.upcastSurcharge || 0));
   const fullStamina = def.cost === 'X' ? combat.player.stamina + (def.upcastSurcharge || 0)
-    : Math.max(0, stanceStaminaCost(effectiveCost(combat, def), combat.player, def, combat) + (def.upcastSurcharge || 0) + silenced);
+    : Math.max(0, stanceStaminaCost(effectiveCost(combat, def), combat.player, def, combat, cardMana) + (def.upcastSurcharge || 0) + silenced);
   const player = withoutClaims(combat.player, claimed);
   const fullMana = stanceManaCost(Math.max(0, pools.mana + (def.upcastSurcharge || 0)
     - R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount), combat.player, def, combat);
