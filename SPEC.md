@@ -2062,9 +2062,11 @@ together.
   focused card, selection glow, revealed information button and legal-target
   highlights. Information opens details without playing. Existing tap, hold,
   keyboard, controller and direct-target drag confirmation remain available.
-  A tap on a playable card plays it when its target is unambiguous (self and
-  all-enemy cards; one living enemy); the hold selects it without playing
-  (inspect, Upcast, target choice) (owner, 2026-10-18).
+  By default a tap on a card selects it and never plays it; play needs a second
+  tap on the card or a target pick (owner, 2026-10-18 14:15 and 14:32). The
+  "Tap a card to play it" Settings switch, off by default, restores one-tap play
+  when the target is unambiguous (self and all-enemy cards; one living enemy).
+  The hold selects without playing (inspect, Upcast, target choice).
 - **End Turn.** A single press when no card in hand is playable; otherwise the
   configured second beat (owner, 2026-10-18).
 - **Card flick to play.** An upward or upward-diagonal primary-pointer flick from a
