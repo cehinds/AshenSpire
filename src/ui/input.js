@@ -389,12 +389,15 @@ function scopeRoot() {
   return topVeil() || document.getElementById('app') || document.body;
 }
 
-function focusables() {
+function focusables(key = null) {
   const root = scopeRoot();
   const inModal = root.classList && root.classList.contains('modal-veil');
   const controls = Array.from(root.querySelectorAll(FOCUS_SELECTOR));
   if (root.id === 'app') controls.push(...document.querySelectorAll('#tooltip[data-open="true"][role="dialog"] button:not([disabled])'));
-  return controls.filter(
+  // Focus restoration usually holds a key from a previous screen. Reject
+  // unrelated controls before measuring layout on every child-list mutation.
+  const candidates = key === null ? controls : controls.filter(el => keyOf(el) === key);
+  return candidates.filter(
     (el) => !el.closest?.('[inert]') && visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
   );
 }
@@ -421,7 +424,7 @@ function keyOf(el) {
 }
 function findByKey(k) {
   if (!k) return null;
-  return focusables().find((el) => keyOf(el) === k) || null;
+  return focusables(k)[0] || null;
 }
 
 function setFocus(el, remember = true) {

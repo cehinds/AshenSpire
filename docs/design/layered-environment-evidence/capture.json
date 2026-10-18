@@ -1,0 +1,39 @@
+{
+  "feature": "feature/ImproveMapBattleFieldArt",
+  "capturedDate": "2026-10-18",
+  "timezone": "America/Anchorage",
+  "sourceCommitAtCapture": "d44aa97342ff6ed1cd8d89a7da278dbbe6391bb8",
+  "build": "0.7.1.1600",
+  "sourceDigest": "4d9df2a632",
+  "webSha256": "16c9a50a0d60d2ed701540086d2c2cc47c6b9c376863ae65395623657e2d2ba3",
+  "standaloneSha256": "a0effcba30437e13893befc6f1e9215bbd3b1ad8fdc7b061b6c0afbc9c42d172",
+  "playableUrl": "https://cehinds.github.io/AshenSpire/branches/feature/ImproveMapBattleFieldArt/latest/",
+  "viewports": {
+    "mobile": [
+      390,
+      844
+    ],
+    "desktop": [
+      1440,
+      900
+    ],
+    "wide": [
+      1920,
+      900
+    ],
+    "tablet": [
+      768,
+      1024
+    ]
+  },
+  "screenshots": {
+    "docs/design/layered-environment-evidence/desktop.png": "eb2898b4901fe3019556d82f3b438902d044d3158212a1e7f9d494c833623833",
+    "docs/design/layered-environment-evidence/map-archive.png": "b23e3f0179bbb46adc20f219f53075afa39af3d18618736487dc18765f6de0b9",
+    "docs/design/layered-environment-evidence/map-forge.png": "115bae28563349dc333042d7756f8d30816660aeea0b987193d44eb6a638e4ac",
+    "docs/design/layered-environment-evidence/mobile.png": "d438a4c077cd3abc2a011936a9d8445618b19c2cba4a75f0b032a672a7116ec3",
+    "docs/design/layered-environment-evidence/tablet.png": "9448cc79f02fd904257b53bdd0ee2dbab2d10edcbd404e402dccb6338b7cddba",
+    "docs/design/layered-environment-evidence/wide.png": "55aad9f9c4bdfdeaf9c473c739e649f4f6504ee42179cc05995e5c8546c84b54"
+  },
+  "hostedVerification": "Local merged-dev web pack edition verified in Chromium; no hosted verification claimed. Both web and single-file editions build; these screenshots verify the web edition.",
+  "workingTreeWasCleanAtCapture": true
+}
