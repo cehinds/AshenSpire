@@ -38,7 +38,7 @@ export function loadGameProfileCatalog() {
   kernelRuntime.push(artifact('engine/contracts/game-profile.json','ashen.kernel-runtime','1.0.0'));
   catalog.runtimeArtifacts.push({id:'ashen.kernel-runtime',version:'1.0.0',path:'engine/{kernel,runtime}/** (no *.md) + engine/contracts/game-profile.json',hash:gameDigest(kernelRuntime)});
   catalog.runtimeHash=gameDigest(catalog.runtimeArtifacts);
-  for(const name of ['core','current']) {
+  for(const name of ['core-v1','core','current']) {
     const path=`games/ashenspire/bundles/${name}/bundle.json`,manifest=json(path);
     if (catalog.bundles[`${manifest.id}@${manifest.version}`]) throw new Error(`${path}: duplicate bundle pin`);
     catalog.bundles[`${manifest.id}@${manifest.version}`]={manifest,artifacts:[artifact(path,manifest.id,manifest.version)]};

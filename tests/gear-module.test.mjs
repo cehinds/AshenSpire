@@ -61,7 +61,7 @@ test('pool size changes re-flow unset points automatically', () => {
 
 test('validator refuses set points that exceed the pool', () => {
   const copy = structuredClone(catalog);
-  copy.packs['ashen.core-content@1.0.0'].content.gear.find(i => i.id === 'dagger').points = { strength: 9 };
+  copy.packs['ashen.core-content@2.0.0'].content.gear.find(i => i.id === 'dagger').points = { strength: 9 };
   assert.throws(() => resolveGameAuthor(structuredClone(author), copy), /exceed the pool/);
 });
 

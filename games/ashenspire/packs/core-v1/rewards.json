@@ -1,0 +1,166 @@
+{
+  "offerCount": 3,
+  "takeCount": 1,
+  "categories": [
+    "weapons",
+    "relics",
+    "combatCards",
+    "weaponArts",
+    "potions",
+    "armor"
+  ],
+  "equipmentGroups": {
+    "straightSwords": {
+      "family": "armament",
+      "allTags": [
+        "item:blade"
+      ],
+      "members": [
+        "straightSword"
+      ]
+    },
+    "shields": {
+      "family": "armament",
+      "allTags": [
+        "item:shield"
+      ],
+      "members": [
+        "buckler",
+        "kiteShield",
+        "towerShield",
+        "roundShield",
+        "spikedShield"
+      ]
+    },
+    "scepters": {
+      "family": "armament",
+      "allTags": [
+        "item:magic-focus"
+      ],
+      "members": [
+        "boneSceptre",
+        "emberlightSceptre"
+      ]
+    },
+    "bows": {
+      "family": "armament",
+      "allTags": [
+        "item:blade"
+      ],
+      "members": [
+        "shortbow"
+      ]
+    },
+    "greatswords": {
+      "family": "armament",
+      "allTags": [
+        "item:blade"
+      ],
+      "members": [
+        "greatsword"
+      ]
+    },
+    "daggers": {
+      "family": "armament",
+      "allTags": [
+        "item:blade"
+      ],
+      "members": [
+        "dagger",
+        "parryDagger"
+      ]
+    },
+    "robes": {
+      "family": "armour",
+      "allTags": [
+        "item:armor"
+      ],
+      "members": [
+        "starseer:default",
+        "starseer:eclipse",
+        "starseer:starlit",
+        "starseer:astral",
+        "starseer:rimeweave",
+        "reaver:riteVestments",
+        "starseer:riteVestments",
+        "rogue:riteVestments",
+        "herald:riteVestments"
+      ]
+    },
+    "lightArmor": {
+      "family": "armour",
+      "allTags": [
+        "item:armor"
+      ],
+      "members": [
+        "rogue:default",
+        "rogue:nightveil",
+        "rogue:duelist",
+        "rogue:shadow",
+        "rogue:waywatcher",
+        "herald:emberhabit",
+        "reaver:nightweave",
+        "reaver:gutterLeathers",
+        "starseer:nightweave",
+        "starseer:gutterLeathers",
+        "rogue:nightweave",
+        "rogue:gutterLeathers",
+        "herald:nightweave",
+        "herald:gutterLeathers"
+      ]
+    },
+    "mediumArmor": {
+      "family": "armour",
+      "allTags": [
+        "item:armor"
+      ],
+      "members": [
+        "reaver:default",
+        "reaver:vigil",
+        "reaver:oathsworn",
+        "herald:default",
+        "herald:ossuary",
+        "herald:pilgrim"
+      ]
+    },
+    "heavyArmor": {
+      "family": "armour",
+      "allTags": [
+        "item:armor"
+      ],
+      "members": [
+        "reaver:warden",
+        "reaver:bastion",
+        "reaver:wayfarerPlate",
+        "starseer:wayfarerPlate",
+        "rogue:wayfarerPlate",
+        "herald:wayfarerPlate"
+      ]
+    }
+  },
+  "eligibility": {
+    "weapons": {
+      "groups": [
+        "straightSwords",
+        "shields",
+        "scepters",
+        "bows",
+        "greatswords",
+        "daggers"
+      ]
+    },
+    "armor": {
+      "groups": [
+        "robes",
+        "lightArmor",
+        "mediumArmor",
+        "heavyArmor"
+      ]
+    },
+    "weaponArts": {
+      "cardIds": [
+        "core.reaverSpecial"
+      ]
+    }
+  }
+}

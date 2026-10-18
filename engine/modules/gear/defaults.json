@@ -780,9 +780,5 @@
         "constitution": 1
       }
     }
-  },
-  "armorBudget": {
-    "baseline": 3,
-    "perRank": 1
   }
 }

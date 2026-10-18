@@ -56,7 +56,7 @@ test('configured earned attribute entitlement ignores legacy reward toggles and 
 
 test('authored HP MP SP and attribute gear reaches pools with one contribution on reload', () => {
   const catalog=loadGameProfileCatalog();
-  const armor=catalog.packs['ashen.core-content@1.0.0'].content.gear.find(item=>item.kind==='armor' && item.source.id==='wayfarerPlate');
+  const armor=catalog.packs['ashen.core-content@2.0.0'].content.gear.find(item=>item.kind==='armor' && item.source.id==='wayfarerPlate');
   armor.points={hp:1,mp:1,sp:1};
   const selected=resolveGameAuthor(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json',import.meta.url))),catalog);
   const registries=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,selected)),selected);
@@ -74,4 +74,12 @@ test('authored HP MP SP and attribute gear reaches pools with one contribution o
   run.loadout.sets.armor[0]=null;
   reconcileRunLoadoutHp(registries,run);
   assert.deepEqual([run.maxHp,run.maxMana,run.maxStamina],before.map((n,i)=>n-[10,1,1][i]));
+});
+
+test('archived Core 1 keeps its original gear and training policy', () => {
+  const old=resolveGameAuthor({formatVersion:1,core:'ashen.core@1.0.0',modules:{}},loadGameProfileCatalog());
+  assert.equal(old.modules.gear.armorBudget,undefined);
+  assert.equal(old.modules.progression.entitlementPolicy,undefined);
+  assert.equal(old.content.cards.some(card=>card.id==='core.cantrip'),false);
+  assert.ok(old.content.characters.find(row=>row.id==='starseer').tags.includes('training.basic'));
 });

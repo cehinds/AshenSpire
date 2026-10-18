@@ -175,7 +175,7 @@ export function claimBankedLevel(registries, run, { pointsPerLevel = null, grant
   const before = characterLevel(run);
   const cost = xpToNext(registries, before);
   const configured = gameModule(run,'progression');
-  const points = configured?.mode === 'configured' ? (gameModule(run,'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0) : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
+  const points = configured?.entitlementPolicy === 'authored' ? (gameModule(run,'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0) : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
   run.level.xp -= cost;
   run.level.level = before + 1;
   run.level.unspentPoints += points;
@@ -313,7 +313,7 @@ export function awardLevelXp(registries, run, amount, { pointsPerLevel = null, g
   const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
   if (gain <= 0) return { before, after: before, levelUps: 0, points: 0, thresholds: 0, gained: 0, discarded: 0 };
   const configured = gameModule(run,'progression');
-  const perLevel = configured?.mode === 'configured' ? (gameModule(run,'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0) : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
+  const perLevel = configured?.entitlementPolicy === 'authored' ? (gameModule(run,'stats') && configured.characterLevels ? configured.attributePointsPerLevel : 0) : grantStats ? pointsFor(registries, pointsPerLevel) : 0;
   const climb = climbLevels(registries, { level: row.level, xp: row.xp, gain });
   const levelUps = climb.levelUps;
   const points = levelUps * perLevel;
