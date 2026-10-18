@@ -1,5 +1,5 @@
 import { gameContent } from '../../model/gameProfile.js';
-import { previewGameProfileRest } from '../../model/gameProfileRest.js';
+import { previewGameProfileRest, restServiceSpent, restServicesAll } from '../../model/gameProfileRest.js';
 import { smithingPlan } from '../../model/smithing.js';
 import { smithSelectionModel } from './SmithSelectionModel.js';
 import { t } from '../strings.js';
@@ -9,7 +9,7 @@ import { t } from '../strings.js';
 export function gameProfileRestModel(registries, run, visit) {
   const rules = gameContent(run, 'rests');
   const attempt = (service, payload = {}) => {
-    if (visit.service) return { available: false, reason: t('gameProfile.rest.spent') };
+    if (restServiceSpent(run, visit, service)) return { available: false, reason: t('gameProfile.rest.spent') };
     try { return { available: true, reason: '', preview: previewGameProfileRest(registries, run, service, payload).run }; }
     catch (error) { return { available: false, reason: error.message }; }
   };
@@ -23,20 +23,20 @@ export function gameProfileRestModel(registries, run, visit) {
     const result = id === 'smith' ? [...smithPreviews.values()].find(row => row.available) || [...smithPreviews.values()][0] || { available: false, reason: t('gameProfile.rest.noSmith') }
       : id === 'levelUp' ? attributes.find(row => row.available) || attributes[0] || { available: false, reason: t('gameProfile.rest.noLevel') }
       : attempt(id);
-    if (id === 'levelUp' && !visit.service && !result.available && !(run.level?.unspentPoints > 0)) result.reason = t('gameProfile.rest.noLevel');
-    return { ...result, id, title: t(`gameProfile.rest.service.${id}`), description: t(`gameProfile.rest.description.${id}`) };
+    if (id === 'levelUp' && !restServiceSpent(run, visit, id) && !result.available && !(run.level?.unspentPoints > 0)) result.reason = t('gameProfile.rest.noLevel');
+    return { ...result, id, title: t(`gameProfile.rest.service.${id}`), description: t(`gameProfile.rest.description.${id}${restServicesAll(run) ? 'All' : ''}`) };
   });
   return { services, smith, smithPreviews, attributes };
 }
 
-export function gameProfileSmithModel(registries, plan, previews, selectedItemRef, recoveryHtml) {
+export function gameProfileSmithModel(registries, plan, previews, selectedItemRef, recoveryHtml, { all = false } = {}) {
   const model = smithSelectionModel(registries, plan, selectedItemRef);
   const selected = model.properties.selected;
   const preview = selected ? previews.get(selected.itemRef) : null;
   return { ...model, properties: { ...model.properties,
-    consequence: t('gameProfile.rest.smithConsequence'),
-    consequenceBadge: t('gameProfile.rest.completesVisit'),
-    decisionConsequence: t('gameProfile.rest.smithDecision'),
+    consequence: t(all ? 'gameProfile.rest.smithConsequenceAll' : 'gameProfile.rest.smithConsequence'),
+    consequenceBadge: t(all ? 'gameProfile.rest.staysVisit' : 'gameProfile.rest.completesVisit'),
+    decisionConsequence: t(all ? 'gameProfile.rest.smithDecisionAll' : 'gameProfile.rest.smithDecision'),
     canConfirm: !!selected && preview?.available === true,
     blockedReasons: selected && !preview?.available ? [preview?.reason || t('gameProfile.rest.noSmith')] : [],
     servicePreviewHtml: preview?.available ? recoveryHtml(preview.preview) : '',

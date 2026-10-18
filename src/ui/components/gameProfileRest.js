@@ -1,5 +1,6 @@
 import { t } from '../strings.js';
 import { gameModule } from '../../model/gameProfile.js';
+import { restServicesAll, restServiceUsed } from '../../model/gameProfileRest.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { statProjection } from '../../model/statProjection.js';
 import { runHandRules } from '../../model/handRules.js';
@@ -20,7 +21,9 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
   const model = gameProfileRestModel(registries, run, visit);
   const icons = { strategize: 'deck', smith: 'smith', levelUp: 'progression' };
   const optionIds = { strategize: 'strategize-opt', smith: 'smith-opt', levelUp: 'level-opt' };
-  const availability = restChoiceStatus(model.services.map(service => ({ ...service, used: visit.service === service.id })));
+  const all = restServicesAll(run); // Core: heal on arrival, every service once, only Continue leaves
+  const usedOf = id => all ? restServiceUsed(visit, id) : visit.service === id;
+  const availability = restChoiceStatus(model.services.map(service => ({ ...service, used: usedOf(service.id) })));
   const layout = restPresentation(registries).optionLayout;
   const choices = el('div', { class: 'choice-body-choices rest-choices' }, el('div', {
     class: `class-row shrine-option-${layout}`, dataset: { optionLayout: layout },
@@ -32,7 +35,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
       el('div', { class: 'glyph', html: engravedIconHtml(icons[service.id]) }),
       el('div', { class: 'cp-body' }, [
         el('h3', { text: service.title }),
-        el('p', { text: service.available ? service.description : service.reason }),
+        el('p', { text: service.available ? service.description : usedOf(service.id) ? t('gameProfile.rest.usedService') : service.reason }),
       ]),
     ]);
     return markUiComponent(card, UI.shrineOptionCard, service.id === 'levelUp' ? 'level-up' : service.id);
@@ -54,13 +57,16 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
   };
   const preview = model.services.find(service => service.available)?.preview || run;
   const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') }, [
-    el('p', { class: 'as-flavor', text: visit.service ? t('gameProfile.rest.complete', { service: t(`gameProfile.rest.service.${visit.service}`) }) : t('gameProfile.rest.chooseOne') }),
+    ...(all ? [el('p', { class: 'as-flavor rest-healed', dataset: { restHealed: 'true' }, text: visit.healed && (visit.healed.hp || visit.healed.mana || visit.healed.stamina)
+        ? t('gameProfile.rest.healed', { hp: visit.healed.hp, mp: visit.healed.mana, sp: visit.healed.stamina }) : t('gameProfile.rest.healedFull') })] : []),
+    el('p', { class: 'as-flavor', text: all ? (visit.service ? t('gameProfile.rest.completeAll', { service: t(`gameProfile.rest.service.${visit.service}`) }) : t('gameProfile.rest.chooseAll'))
+      : visit.service ? t('gameProfile.rest.complete', { service: t(`gameProfile.rest.service.${visit.service}`) }) : t('gameProfile.rest.chooseOne') }),
     el('div', { html: recoveryHtml(preview) }),
     el('ul', { class: 'choice-status-list' }, model.services.map(service => el('li', {
-      class: 'choice-status-row', dataset: { option: service.id, state: visit.service === service.id ? 'used' : service.available ? 'available' : 'unavailable' },
+      class: 'choice-status-row', dataset: { option: service.id, state: usedOf(service.id) ? 'used' : service.available ? 'available' : 'unavailable' },
     }, [
       el('span', { class: 'choice-status-name', text: service.title }),
-      el('span', { class: 'choice-status-state', text: visit.service === service.id ? t('rest.state.used') : service.available ? t('rest.state.available') : t('rest.state.unavailable') }),
+      el('span', { class: 'choice-status-state', text: usedOf(service.id) ? t('rest.state.used') : service.available ? t('rest.state.available') : t('rest.state.unavailable') }),
     ]))),
   ]);
   const status = el('p', { class: 'as-status', role: 'alert' });
@@ -80,7 +86,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
   const openSmith = () => {
     let selected = null;
     screen.inert = true;
-    const makeModel = () => gameProfileSmithModel(registries, model.smith, model.smithPreviews, selected, recoveryHtml);
+    const makeModel = () => gameProfileSmithModel(registries, model.smith, model.smithPreviews, selected, recoveryHtml, { all });
     const modal = mountSmithUpgradeModal(app, makeModel(), {
       registries, meta, returnFocusElement: app.querySelector('#smith-opt'),
       onSelect: itemRef => { selected = itemRef; modal.update(makeModel()); },
@@ -101,8 +107,8 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
       const chosen = model.attributes.find(attribute => attribute.id === selected);
       const spec = {
         title: t('gameProfile.rest.service.levelUp'), modal: true,
-        remaining: selected ? 0 : 1, note: t('gameProfile.rest.levelNote'),
-        doneLabel: t('gameProfile.rest.levelConfirm'), doneDisabled: !chosen?.available,
+        remaining: selected ? 0 : 1, note: t(all ? 'gameProfile.rest.levelNoteAll' : 'gameProfile.rest.levelNote'),
+        doneLabel: t(all ? 'gameProfile.rest.levelConfirmAll' : 'gameProfile.rest.levelConfirm'), doneDisabled: !chosen?.available,
         rows: model.attributes.map(attribute => ({ ...attribute, card: cards.get(attribute.id),
           value: attribute.value + (attribute.id === selected ? 1 : 0),
           canDecrease: attribute.id === selected, canIncrease: !selected && attribute.available,
