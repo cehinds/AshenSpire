@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "title": "Attributes Mode Assign",
+  "canvas": {
+    "width": 184,
+    "height": 48,
+    "background": "transparent"
+  },
+  "defaultState": "attributes",
+  "states": [
+    {
+      "id": "attributes",
+      "name": "Attributes"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "attributes-mode-assign",
+      "name": "Attributes Mode Assign",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 184,
+      "height": 48,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "attributes-mode-assign-background",
+      "name": "Attributes Mode Assign Background \u00b7 background",
+      "type": "rect",
+      "parent": "attributes-mode-assign",
+      "x": 0,
+      "y": 0,
+      "width": 184,
+      "height": 48,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "#171510",
+      "stroke": "none",
+      "radius": 4
+    },
+    {
+      "id": "attributes-mode-assign-label",
+      "name": "Attributes Mode Assign Label",
+      "type": "text",
+      "parent": "attributes-mode-assign",
+      "x": 20,
+      "y": 15,
+      "width": 149,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Assign points",
+      "fontSize": 16,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "attributes-mode-assign-background-trim",
+      "name": "Attributes Mode Assign Background \u00b7 independent trim",
+      "type": "rect",
+      "parent": "attributes-mode-assign",
+      "x": 0,
+      "y": 0,
+      "width": 184,
+      "height": 48,
+      "z": 1.1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none",
+      "stroke": "#736242",
+      "radius": 4
+    }
+  ],
+  "metadata": {
+    "componentSource": "attributes-mode-assign",
+    "sourceState": "attributes",
+    "designOnly": true
+  }
+}

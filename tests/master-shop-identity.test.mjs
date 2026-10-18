@@ -14,11 +14,16 @@ import { createRng } from '../src/engine/rng.js';
 import { marketVisitStock, buildBlacksmithStock } from '../src/engine/shopKinds.js';
 
 const FIXTURE = JSON.parse(readFileSync(new URL('./fixtures/shop-stocks-pre-master.json', import.meta.url), 'utf8'));
-// Replay the captured content catalog as well as its seeds. The 2026-10-02
-// book expansion intentionally adds candidates; that is independently tested
-// in book-learning.test.mjs, not a change to the master's stock algorithm.
+// Replay the captured card order/definitions and book candidates, as well as
+// seeds. Shared Base rewards and later books intentionally enlarge today's
+// shelves; those additions must not rewrite this pre-master algorithm oracle.
+const capturedCards = JSON.parse(readFileSync(new URL('./fixtures/shop-card-catalog-pre-master.json', import.meta.url), 'utf8'));
+assert.ok(capturedCards._provenance.ref.startsWith(FIXTURE._provenance.ref));
+const capturedCardIds = new Set(capturedCards.cards.map(card => card.id));
 const capturedBooks = new Set(Object.values(FIXTURE.marketAllOut).flatMap((stock) => (stock.skillBooks || []).map((book) => book.id)));
-const capturedContent = { ...contentBundle, consumables: contentBundle.consumables.filter((row) => row.kind !== 'skillBook' || capturedBooks.has(row.id)) };
+const capturedContent = { ...contentBundle, cards: capturedCards.cards,
+  classes: contentBundle.classes.map(row => ({ ...row, cardPool: row.cardPool.filter(id => capturedCardIds.has(id)) })),
+  consumables: contentBundle.consumables.filter((row) => row.kind !== 'skillBook' || capturedBooks.has(row.id)) };
 const allOut = (kind) => Object.fromEntries(contentBundle.shops[kind].offerings.map((row) => [`gameConfig.shops.${kind}.${row.id}.chance`, 100]));
 const REG = {
   defaults: createRegistries(capturedContent),
@@ -43,7 +48,7 @@ const CASES = {
 };
 
 for (const [name, [registries, build]] of Object.entries(CASES)) {
-  test(`with the captured book catalog, the ${name} stocks are byte-identical to the tree before the wise master`, () => {
+  test(`with captured card and book catalogs, the ${name} stocks are byte-identical to the tree before the wise master`, () => {
     const keys = Object.keys(FIXTURE[name]);
     assert.equal(keys.length, 50, 'every captured seed is replayed');
     for (const key of keys) {
@@ -51,8 +56,8 @@ for (const [name, [registries, build]] of Object.entries(CASES)) {
       assert.equal(JSON.stringify(stock), JSON.stringify(FIXTURE[name][key]), `${name} ${key}`);
       const kept = FIXTURE.counters[`${name}:${key}`];
       // Sigils and intent visibility append after capture; shops use neither.
-      const { sigils: drawnOnSigils = 0, enemyIntentVisibility: intentReads = 0, combatAvoidance: avoidance = 0, statusRecovery: recovery = 0, statusPressure: pressure = 0, ashenBlight: blight = 0, enemyIntentClue: clue = 0, ...existing } = counters;
-      assert.deepEqual([avoidance, recovery, pressure, blight, clue], [0, 0, 0, 0, 0], "legacy shops draw no expanded combat or knowledge streams");
+      const { sigils: drawnOnSigils = 0, enemyIntentVisibility: intentReads = 0, combatAvoidance: avoidance = 0, statusRecovery: recovery = 0, statusPressure: pressure = 0, ashenBlight: blight = 0, enemyIntentClue: clue = 0, enemyReaction: reaction = 0, ...existing } = counters;
+      assert.deepEqual([avoidance, recovery, pressure, blight, clue, reaction], [0, 0, 0, 0, 0, 0], "legacy shops draw no expanded combat or knowledge streams");
       if (kept) assert.equal(drawnOnSigils, 0, `${name} ${key}: nothing drawn on sigils`);
       if (kept) assert.equal(intentReads, 0, `${name} ${key}: nothing drawn on intent visibility`);
       if (kept) assert.deepEqual(existing, kept, `${name} ${key}: the streams drawn`);

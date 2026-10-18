@@ -1,0 +1,79 @@
+{
+  "action": "weapon:attack:dual-daggers",
+  "aliases": [
+    "weapon:attack:dual-daggers",
+    "weapon:spell:dual-daggers",
+    "weapon:ranged:dual-daggers",
+    "weapon:rangedMagic:dual-daggers"
+  ],
+  "origin": "offensive",
+  "timing": {
+    "totalMs": 405,
+    "impactMs": 112.5
+  },
+  "registeredSequence": {
+    "poses": [
+      "starseer.dual-daggers.attack.anticipation",
+      "starseer.dual-daggers.attack.strike",
+      "starseer.dual-daggers.attack.follow-through",
+      "starseer.dual-daggers.attack.recovery"
+    ],
+    "durations": [
+      150,
+      80,
+      130,
+      180
+    ],
+    "impact": 1,
+    "travel": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "hold": false,
+    "action": "attack"
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-offensive",
+      "label": "origin stance-offensive",
+      "weight": 1
+    },
+    {
+      "pose": "starseer.dual-daggers.attack.anticipation",
+      "registeredFrameId": "starseer.dual-daggers.attack.anticipation",
+      "label": "1/4 starseer.dual-daggers.attack.anticipation \u00b7 weight 150",
+      "weight": 150,
+      "timeMs": 56.25
+    },
+    {
+      "pose": "starseer.dual-daggers.attack.strike",
+      "registeredFrameId": "starseer.dual-daggers.attack.strike",
+      "label": "2/4 starseer.dual-daggers.attack.strike \u00b7 weight 80",
+      "weight": 80,
+      "timeMs": 142.5
+    },
+    {
+      "pose": "starseer.dual-daggers.attack.follow-through",
+      "registeredFrameId": "starseer.dual-daggers.attack.follow-through",
+      "label": "3/4 starseer.dual-daggers.attack.follow-through \u00b7 weight 130",
+      "weight": 130,
+      "timeMs": 221.25
+    },
+    {
+      "pose": "starseer.dual-daggers.attack.recovery",
+      "registeredFrameId": "starseer.dual-daggers.attack.recovery",
+      "label": "4/4 starseer.dual-daggers.attack.recovery \u00b7 weight 180",
+      "weight": 180,
+      "timeMs": 337.5
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "return Attack",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

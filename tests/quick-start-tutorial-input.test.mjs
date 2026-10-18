@@ -62,7 +62,8 @@ test('a refused native Skip fails before first-card selection instead of mutatin
 test('the actual route dismisses before card selection and retains its original input and target deadlines', () => {
   const route = source.slice(source.indexOf('  const toFirstCardPlay = async () => {'), source.indexOf('  const report ='));
   assert.ok(route.indexOf('await dismissFirstCombatTutorial();') < route.indexOf('    const kind = await evalIn'));
-  assert.match(source, /const BUDGET = 6;/);
+  assert.match(source, /CORE_INPUT_BUDGET as BUDGET/);
+  assert.match(source, /counts.core <= BUDGET/);
   assert.match(route, /Date\.now\(\) - t0 < 5000/);
   assert.match(route, /'the first card play', 8000/);
 });

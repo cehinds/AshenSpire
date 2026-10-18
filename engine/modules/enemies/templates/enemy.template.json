@@ -1,0 +1,93 @@
+{
+  "$comment": "One row of packs/<pack>/enemies.json. Required: id, name, tier, attributePriority (or attributes), defaultDeck. attributes = points you set (kept); the rest of the tier budget is filled by attributePriority x priorityWeights, capped, with seeded variance. defaultGear/defaultRelics entries carry a unique key per enemy so modules can swap one slot.",
+  "id": "ashenSentry",
+  "name": "Ashen_Sentry",
+  "tier": "minion",
+  "attributes": {
+    "wisdom": 1
+  },
+  "attributePriority": [
+    "strength",
+    "dexterity",
+    "wisdom",
+    "intelligence",
+    "constitution"
+  ],
+  "priorityWeights": [
+    4,
+    3,
+    2,
+    1,
+    0
+  ],
+  "variance": {
+    "points": 1,
+    "among": 3
+  },
+  "defaultDeck": [
+    "ashenSentry.slash",
+    "ashenSentry.slash",
+    "ashenSentry.guard",
+    "ashenSentry.guard",
+    "ashenSentry.warcry",
+    "ashenSentry.warcry"
+  ],
+  "firstCard": "ashenSentry.warcry",
+  "unlockCards": [],
+  "defaultGear": [
+    {
+      "key": "mainHand",
+      "id": "straightSword"
+    },
+    {
+      "key": "armor",
+      "id": "armor.gutterLeathers"
+    }
+  ],
+  "defaultRelics": [
+    {
+      "key": "relic1",
+      "id": "enemy.relic.ashenBlightCore"
+    }
+  ],
+  "levelProfile": {
+    "min": 1,
+    "max": 4
+  },
+  "poiseMax": 10,
+  "phases": [
+    {
+      "on": "hpBelowPct",
+      "pct": 50,
+      "do": [
+        {
+          "op": "applyStatus",
+          "target": "self",
+          "status": "strength",
+          "stacks": 2
+        }
+      ],
+      "unlockCards": []
+    }
+  ],
+  "size": "medium",
+  "art": "ashenSentry",
+  "artFaces": "left",
+  "tint": "rot",
+  "blighted": false,
+  "cardHints": {
+    "ashenSentry.slash": {
+      "aiWeight": 45,
+      "maxConsecutive": 2
+    },
+    "ashenSentry.heldBlade": {
+      "aiWeight": 30,
+      "delay": {
+        "turns": 1,
+        "whileCharging": {
+          "block": 4
+        }
+      }
+    }
+  }
+}

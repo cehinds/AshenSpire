@@ -1,0 +1,37 @@
+{
+  "mechanic": "fx_heal",
+  "commands": {
+    "heal": {
+      "params": {
+        "target": "entityRef",
+        "amount": "value"
+      },
+      "description": "Restore HP to the target, clamped to its max HP."
+    }
+  },
+  "events": {
+    "healed": {
+      "payload": {
+        "target": "entityRef",
+        "amount": "number"
+      },
+      "description": "Raised after a heal resolves."
+    }
+  },
+  "queries": {
+    "healAmount": {
+      "params": {
+        "pct": "number"
+      },
+      "returns": "number",
+      "value": {
+        "f": "percentMaxHp",
+        "of": "target",
+        "pct": "$pct"
+      },
+      "description": "HP restored by a percentage of the target max HP."
+    }
+  },
+  "listens": [],
+  "requires": []
+}

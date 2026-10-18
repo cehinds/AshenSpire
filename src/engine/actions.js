@@ -1,3 +1,9 @@
+import { weaponDamageBasis } from './cardBehavior.js';
+import { MANEUVERS, trimCombatStances } from './concurrentStances.js';
+import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPlan, proposalThreshold, proposalHealingPlan } from './proposalStatusRuntime.js';
+import { addEnemyBurden } from './enemyBurdens.js';
+import { moveCards, hasCardChoice } from './cardZones.js';
+import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
 // A queued ACTION is { effect, source, owner?, target?, card?, meta? }:
@@ -16,7 +22,8 @@
 // Damage math (SPEC §4.2, order contractual, floor ONCE at the end):
 //   dmg = base
 //   dmg += attacker per-stack 'attackDamageAdd' modifiers
-//   dmg *= attacker 'damageDealtMult' modifiers
+//   dmg *= attacker 'damageDealtMult' modifiers (and 'spellDamageDealtMult'
+//          when the carrier is spell-camp)
 //   dmg *= defender 'damageTakenMult' modifiers
 //   dmg = floor(dmg); below 0 → 0
 // The engine consults the generic status model only — never a named status.
@@ -24,7 +31,8 @@
 // Headless: no document/window/localStorage/timers.
 
 import * as F from './combatRules.js';
-import { allocateInteger, resolveDamageComponents, groupedResistance } from '../model/combatRules.js';
+import { stanceRulesFor } from '../model/stanceRules.js';
+import { allocateInteger, resolveDamageComponents, groupedResistance, taggedBonusFloor } from '../model/combatRules.js';
 import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
@@ -39,18 +47,24 @@ import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
-import { isMagicalAttack, ratingDamageMultiplier, attackImpact } from '../model/combatRatings.js';
+import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
+  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf, isForceHit } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 import { reconcileWardBlock, wardBlockReceipt } from '../model/blockPresentation.js';
+import { spellDefenseSplit } from '../model/spellDefense.js';
 import { allowAbilityOnce, grantAbilityCharge, recordAbilityOffering, requestAbilityDiscard } from './abilityRiders.js';
 import * as Matchups from './combatMatchups.js';
+import { typedDefenseAmount } from './combatExpansionEquipment.js';
 import { creditKnowledgeImpact } from './enemyKnowledge.js';
 
 import * as Expanded from './combatExpansionActions.js';
 import * as Control from './combatStatusControl.js';
+import { isSpellCard, silencedStacks, combatProfileFor } from '../model/combatCardProfile.js';
+import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
+export { syncWardMaximum, syncPoiseMaximum };
 import * as Blight from './ashenBlight.js';
 
 // ---------------------------------------------------------------------------
@@ -58,13 +72,37 @@ import * as Blight from './ashenBlight.js';
 // ---------------------------------------------------------------------------
 
 /**
+ * Silenced and its kin: `spellDamageDealtMult` scales only a spell-camp
+ * carrier's damage for its owner (authored profile camp; an unprofiled carrier
+ * falls back to the magical-attack reading). Physical damage is untouched.
+ * Legacy combat only: in expanded combat (v2) Silenced shrinks no damage; it
+ * raises spell costs and wards off Force instead (owner, 2026-10-13).
+ */
+export function spellDamageDealtMultiplier(ctx, source, carrier) {
+  if (!source || ctx.combatExpansionVersion === 2) return 1;
+  // Read the modifier first: with none active the hit's camp never matters.
+  const mult = statuses.getMult(ctx, source, 'spellDamageDealtMult');
+  if (mult === 1) return 1;
+  const profile = Matchups.combatProfileOf(carrier);
+  const spell = profile ? ['spell', 'spells', 'magic', 'magical'].includes(profile.camp) : !!carrier && isMagicalAttack(ctx, carrier);
+  return spell ? mult : 1;
+}
+
+/**
  * computeAttackDamage(ctx, source, target|null, base) → final integer damage.
  * Pure (no mutation). Pass target = null to preview without defender mods.
  */
-export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null, { matchups = true, beforeDefense = false } = {}) {
+export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null, { matchups = true, beforeDefense = false, proposal = true } = {}) {
+  if (configuredCombat(ctx)) {
+    const receipt = profileDamageReceipt(ctx, source, target, base, carrier, { proposal });
+    // Group preparation needs the positive incoming contact before stance and
+    // protection math. Live application supplies that defense receipt once.
+    return beforeDefense ? receipt.raw : receipt.amount;
+  }
   const ratedBase = base + (carrier?.skipRatingBonus ? 0 : Ratings.cardRatingBonus(ctx, source, carrier, 'damage', base));
   if (ctx.foundation) {
-    const amount = F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || [], { beforeDefense }).amount;
+    let amount = F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || [], { beforeDefense }).amount;
+    if(proposal && target) amount=proposalHitPlan(ctx,source,target,amount,carrier || {}).amount;
     return matchups ? Matchups.prepareMatchupHit(ctx, source, target, carrier, amount).amount : amount;
   }
   let dmg = ratedBase;
@@ -75,9 +113,10 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
       : 0;
   }
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
-  dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
+  dmg *= statuses.getMult(ctx, source, 'damageDealtMult') * spellDamageDealtMultiplier(ctx, source, carrier);
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
-  if (target && !beforeDefense) dmg *= ratingDamageMultiplier(ctx, target, isMagicalAttack(ctx, carrier));
+  // Pools only in expanded combat (owner decision, 2026-10-12): no Poise or Ward rating cut. Legacy keeps it.
+  if (target && !beforeDefense && ctx.combatExpansionVersion !== 2) dmg *= ratingDamageMultiplier(ctx, target, isMagicalAttack(ctx, carrier));
   // Tag-scoped extra vulnerability (#61): statuses whose taggedVulnerability
   // tags intersect the hit's effect tags. Composition is the row's DECLARED
   // stacking rule (closed enum, validated): 'multiplicative' sources multiply
@@ -85,6 +124,10 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   // 'additive' sources pool (mult − 1) and apply once. Both lanes are
   // stack-invariant, so the ceiling is the closed-form product of DISTINCT
   // table mults — stacks can never raise it.
+  // THE BONUS ROUNDS UP (owner, 2026-10-12, #12): the tagged factor is kept
+  // apart and its bonus is ceil'd on the otherwise-final damage below, so a
+  // base-3 card still gains a point. Every other multiplier keeps its floor.
+  let tagged = 1;
   if (target && attackTags && attackTags.length) {
     let addPool = 0;
     for (const [id, inst] of Object.entries(target.statuses || {})) {
@@ -92,14 +135,13 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
       const def = ctx.registries.statuses.get(id);
       const tv = def && def.taggedVulnerability;
       if (!tv || !tv.tags.some((t) => attackTags.includes(t))) continue;
-      if (tv.stacking === 'multiplicative') dmg *= tv.mult;
+      if (tv.stacking === 'multiplicative') tagged *= tv.mult;
       else addPool += tv.mult - 1;
     }
-    if (addPool > 0) dmg *= 1 + addPool;
+    if (addPool > 0) tagged *= 1 + addPool;
   }
   if (target && school) {
-    const resistance = target.damageResistanceBySchool && target.damageResistanceBySchool[school];
-    if (!beforeDefense && Number.isFinite(resistance)) dmg *= Math.max(0, 1 - resistance / 100);
+    if (!beforeDefense) dmg *= schoolResistanceMultiplier(ctx, target, school);
     for (const [id, inst] of Object.entries(target.statuses || {})) {
       if (!inst || (inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
       const def = ctx.registries.statuses.get(id);
@@ -108,7 +150,8 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
       }
     }
   }
-  dmg = Math.floor(dmg);
+  dmg = taggedBonusFloor(dmg, tagged);
+  if(proposal && target) dmg=proposalHitPlan(ctx,source,target,dmg,carrier || {}).amount;
   dmg = dmg < 0 ? 0 : dmg;
   return matchups ? Matchups.prepareMatchupHit(ctx, source, target, carrier, dmg).amount : dmg;
 }
@@ -189,18 +232,37 @@ export function rollCrit(ctx, source, tags) {
  * HP was touched), handles deaths and phase checks. Returns final damage.
  */
 export function applyAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
+  if(!target?.alive)return 0;
+  const resolved=carrier || {};
+  if(resolved.expansionContact?.receipt?.avoided)return 0;
+  const decisionKey=ctx.playerIdForEntity?.(target) || target.id,decisions=resolved.proposalTargetDecisions;
+  const cached=decisions?.[decisionKey],targetPlan=cached || proposalTargetPlan(ctx,source,target,resolved,{resolve:true});
+  if(!cached) {if(decisions)decisions[decisionKey]=targetPlan;applyProposalPlan(ctx,{statusChanges:targetPlan.statusChanges},source,target,resolved);}
+  if(!targetPlan.allowed || targetPlan.avoided) {ctx.emit('proposalHitAvoided',{sourceId:source?.id,targetId:target.id,perception:!targetPlan.allowed});return 0;}
+  const raw=configuredCombat(ctx) ? profileDamageReceipt(ctx,source,target,base,resolved,{proposal:false}).raw : computeAttackDamage(ctx,source,target,base,attackTags,resolved,{matchups:false,beforeDefense:true,proposal:false});
+  const plan=proposalHitPlan(ctx,source,target,raw,resolved);
+  const hp=target.hp,eventStart=ctx.eventLog?.length || 0;
+  const amount=plan.healing>0 ? 0 : applyBaseAttackDamage(ctx,source,target,base,attackTags,resolved);
+  if(plan.healing>0) applyHeal(ctx,target,plan.healing);
+  const contact=(ctx.eventLog || []).slice(eventStart).find(event=>event.type==='damageDealt' && event.targetId===target.id);
+  if(plan.healing>0 || raw>0 && contact && !contact.evaded && !contact.immune){applyProposalPlan(ctx,plan,source,target,resolved);proposalAfterHit(ctx,source,target,raw,Math.max(0,hp-target.hp),resolved);}
+  return amount;
+}
+function applyBaseAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if (!target || !target.alive) return 0;
+  if (configuredCombat(ctx)) return applyProfileDamage(ctx, source, target, base, carrier);
   if (ctx.combatExpansionVersion === 2) return applyExpandedDamage(ctx, source, target, base, attackTags, carrier);
   const targetStatusesBefore = structuredClone(target.statuses || {});
   if (F.consumeFoundationEvade(ctx, source, target, carrier)) return 0;
   const ratedBase = base + (carrier?.skipRatingBonus ? 0 : Ratings.cardRatingBonus(ctx, source, carrier, 'damage', base));
   const receipt = ctx.foundation ? F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || []) : null;
-  const computed = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier, { matchups: false });
+  const computed = receipt ? proposalHitPlan(ctx,source,target,receipt.amount,carrier || {}).amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier, { matchups: false });
   // A critical hit multiplies the finished blow, before Block takes its share.
   const critical = carrier && carrier.critMultiplier > 1 ? Math.floor(computed * carrier.critMultiplier) : computed;
   if (critical > computed) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, ...critSeats(ctx, source, target), multiplier: carrier.critMultiplier, amount: critical });
   const tactical = Matchups.prepareMatchupHit(ctx, source, target, carrier, critical);
   const dmg = tactical.amount;
+  const blockBefore = target.block;
   const blocked = Math.min(target.block, Math.max(0, dmg - tactical.guardBypass));
   target.block -= blocked;
   reconcileWardBlock(target);
@@ -228,10 +290,14 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
       tags: receipt.tags } : {}),
     isAttack: true,
   });
+  // Block going from above zero to zero by this hit is a break. A Smash that does it also reports
+  // GUARD BREAK (combatGuardBroken); this blockBroken is marked smash, and fx.js shows GUARD BREAK alone.
+  if (blockBefore > 0 && !(target.block > 0)) ctx.emit('blockBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target),
+    ...(Matchups.isSmashGuardBreak(tactical, target) ? { smash: true } : {}) });
   if (hpLoss > 0) {
     if (ctx.ratingsRules && !carrier?.combatReaction) {
       const multiplier = Matchups.matchupPoiseMultiplier(ctx, source, target, carrier);
-      Ratings.applyRatingImpact(ctx, source, target, carrier, multiplier > 1 ? Math.floor(attackImpact(ctx, source, carrier) * multiplier) : null, { knowledgeMatchup: multiplier > 1 });
+      Ratings.applyRatingImpact(ctx, source, target, carrier, multiplier > 1 ? Math.floor(attackImpact(ctx, source, carrier) * multiplier) : null, { knowledgeMatchup: multiplier > 1, cause: 'hit' });
     }
     ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: hpLoss, cause: 'attack' });
     if (!usesSingleBreakMeter(ctx) && !carrier?.combatReaction) applyArcaneExposure(ctx, source, target, carrier);
@@ -245,32 +311,201 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   return dmg;
 }
 
+// One receipt evaluator drives configured live damage and detached previews.
+function applyProfileDamage(ctx, source, target, base, carrier) {
+  const chance = profileDamageReceipt(ctx, source, target, base, carrier);
+  const receipt = profileDamageReceipt(ctx, source, target, base, carrier,
+    { roll: chance.hitChance < 1 ? ctx.rng.float(configuredModule(ctx, 'stances')?.accuracyStream || 'combatAvoidance') : null });
+  const tactical = carrier?.expansionContact?.receipt;
+  if (tactical) {
+    // Replace the planned estimate with the executed receipt. No second defense
+    // pass or legacy avoidance roll may change the configured contact.
+    const index = carrier.expansionContact.index;
+    tactical.amount += receipt.amount - (tactical.amounts[index] || 0);
+    tactical.amounts[index] = receipt.amount;
+    Matchups.recordTacticalContact(tactical, { hpLoss: receipt.hpLoss, blocked: receipt.blocked });
+    if (receipt.evaded) tactical.avoided = true;
+  }
+  const before = target.block || 0;
+  target.block = receipt.blockRemaining;
+  target.hp -= receipt.hpLoss;
+  ctx.emit('damageDealt', { sourceId: source?.id || null, targetId: target.id,
+    amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
+    poiseMitigated: receipt.poiseMitigated, evaded: receipt.evaded,
+    advantage: receipt.advantage, blockRemaining: target.block, isAttack: true });
+  if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
+  if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
+  if (receipt.interrupted && target.kind === 'enemy' && target.alive) {
+    const limit = configuredModule(ctx, 'stances')?.staggerLimitPerTargetPerRound ?? 1;
+    const ledger = ctx.gameProfileInterrupts ||= {};
+    const key = `${ctx.turn}:${target.id}`;
+    if ((ledger[key] || 0) < limit) { ledger[key] = (ledger[key] || 0) + 1; staggerEnemy(ctx, target); }
+  }
+  afterHpChange(ctx, target, { sourceId: source?.id });
+  return receipt.amount;
+}
+
+/**
+ * Barrier is Ward added past full: gaining it refills Ward first and only the
+ * rest becomes Barrier, the blue layer that lasts until the owner's next turn.
+ */
 export function gainBarrier(ctx, entity, base, card = null) {
+  if (configuredCombat(ctx)) return gainBlock(ctx, entity, base, card);
   if (!entity?.alive) return 0;
-  const amount = computeBlockGain(ctx, entity, base, card);
+  const split = computeSpellDefenseGain(ctx, entity, base, card);
+  if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
+  return gainBarrierAmount(ctx, entity, computeBlockGain(ctx, entity, base, card), card);
+}
+
+// A SPELL refills Ward first; only the overflow becomes Barrier. Every other
+// source (a mana-costing skill, a non-magic move, turn-start protection) adds Barrier alone.
+function gainBarrierAmount(ctx, entity, amount, card = null, spell = isSpellCard(card)) {
+  if (entity.persistentWard && ctx.combatExpansionVersion === 2 && spell) {
+    syncWardMaximum(ctx, entity);
+    // restorePersistentWard refills Ward and emits the Barrier overflow itself. Ashen Blight's
+    // restore percent is already on the gain upstream, so it is not applied a second time here.
+    const granted = Control.restorePersistentWard(ctx, entity, amount, { source: 'card', modifierPercent: 0 });
+    return (granted.restored || 0) + (granted.missingRecovered || 0) + (granted.barrier || 0);
+  }
   entity.barrier = (entity.barrier || 0) + amount;
-  ctx.emit('barrierGained', { targetId: entity.id, amount, total: entity.barrier, ...seatOf(ctx, entity) });
+  ctx.emit('barrierGained', { targetId: entity.id, amount, total: entity.barrier, ...(card?.logSource ? { source: card.logSource } : {}), ...seatOf(ctx, entity) });
   return amount;
 }
 
+/**
+ * The Ward maximum follows the live Ward rating (a power or status that raises
+ * Ward raises it). A rise adds the same amount to current Ward; a fall clamps.
+ */
 export function restoreExpandedWard(ctx, entity, nominal, options = {}) {
+  syncWardMaximum(ctx, entity);
   return Control.restorePersistentWard(ctx, entity, nominal, { source: 'card', ...options });
 }
 
-export function prepareExpandedDefense(ctx, target, receipt, carrier) {
-  if (receipt.defendedAmounts) return;
-  const sums = {}, indices = {};
-  receipt.amounts.forEach((amount, index) => {
-    const profile = receipt.profiles[index];
-    const aliases = { pierce: 'piercing', slash: 'slashing', cold: 'frost', force: 'arcane', holy: 'sacred', necrotic: 'decay' };
-    const type = aliases[profile.damageType] || profile.damageType || 'blunt';
-    const key = `${profile.camp}:${type}`;
-    sums[key] = (sums[key] || 0) + amount;
-    (indices[key] ||= []).push(index);
+// Damage routing. A hit is split into a MAGIC part, which Barrier and Ward take,
+// and a PHYSICAL part, which Block and then Poise take. A contact's magic share
+// comes from its own override, else its damage type (0 for slashing, piercing and
+// blunt; 1 for fire, frost, lightning, sacred and decay; arcane's 0.5 or a tuned row),
+// and only a hit with no damage type falls back to its camp. So a spell-camp card that
+// deals physical damage routes that damage like any physical hit. Card camp still decides
+// non-damage things (Ward-first Barrier gains, mana, tags).
+// The routing rule lives in model/combatRatings.js (magicShareOf) so the card face reads the same split.
+export function contactMagicShare(ctx, profile) {
+  return magicShareOf(profile, ctx.ratingsRules);
+}
+
+// The part a contact's rating bonus lands in: a spell's Power ('pr') is magic, a weapon's Attack ('ar') physical.
+// Another rating, or none, is untyped and joins the card's primary part.
+export function ratingBonusPart(ctx, carrier) {
+  if (carrier?.ratingId === 'pr') return 'magic';
+  if (carrier?.ratingId === 'ar') return 'physical';
+  if (carrier?.ratingId) return null;
+  return isMagicalAttack(ctx, carrier) ? 'magic' : 'physical';
+}
+
+// The damage a carrier's rating adds on top of its card damage: the same figure computeAttackDamage adds to the base.
+export function cardRatingDamage(ctx, source, carrier, base) {
+  if (carrier?.skipRatingBonus) return 0;
+  return Math.max(0, Math.floor(Ratings.cardRatingBonus(ctx, source, carrier, 'damage', base) || 0));
+}
+
+/**
+ * silencedForceContacts(ctx, target, profiles) → per contact, whether it is a Force HIT the
+ * target's Silenced stacks make it immune to (expanded combat, owner 2026-10-13). Decided once,
+ * up front, for the whole action: each Force hit, in order, claims one stack and is negated
+ * whole; once the stacks run out, later hits land. A non-damage contact claims none: every
+ * Force effect spends its stack when it resolves (spendSilencedForEffect), and that spend never
+ * un-immunes a hit already decided.
+ */
+export function silencedForceContacts(ctx, target, profiles) {
+  let left = ctx.combatExpansionVersion === 2 ? silencedStacks(target) : 0;
+  return profiles.map(profile => {
+    if (profile?.effect || !(left > 0) || !isForceHit(profile)) return false;
+    left -= 1;
+    return true;
   });
-  receipt.defendedAmounts = receipt.amounts.map(() => 0);
-  for (const [key, total] of Object.entries(sums)) {
+}
+
+// Ops that, written without a target, act on their owner (hand, piles, Stamina, stance).
+const OWNER_OPS = new Set(['draw', 'discard', 'exhaust', 'addCard', 'gainEnergy', 'retain', 'grantCardCharge',
+  'shuffleDiscardIntoDraw', 'enterStance', 'grantRollMode']);
+
+// Any effect of a Force card other than its damage hits spends one Silenced stack of each
+// creature it resolves onto, per application (owner, 2026-10-13): a status, push, Ward strip,
+// draw (its owner) or any other op. A random target is not re-rolled here, so a randomEnemy
+// effect spends nothing.
+function spendSilencedForEffect(ctx, action, eff) {
+  if (ctx.combatExpansionVersion !== 2 || !action.card || action.meta?.stanceEntry || action.meta?.stanceRestore
+    || ['damage', 'completeCombatAction'].includes(eff.op) || eff.target === 'randomEnemy') return;
+  if (!isForceHit(action.card.combatProfile || combatProfileFor(action.card))) return;
+  const targets = eff.target === undefined && OWNER_OPS.has(eff.op) ? [action.owner || action.source].filter(Boolean) : resolveTargets(ctx, action, eff.target);
+  for (const target of targets) {
+    if (action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(target) || target.id]?.receipt?.avoided) continue;
+    spendSilencedStack(ctx, target);
+  }
+}
+
+/** Spend one Silenced stack for a Force contact; the log shows it as consumed. */
+export function spendSilencedStack(ctx, target) {
+  if (silencedStacks(target) > 0) statuses.removeStatus(ctx, target, 'silenced', { amount: 1, reason: 'consumed' });
+}
+
+export function prepareExpandedDefense(ctx, target, receipt, carrier) {
+  if (configuredCombat(ctx)) return;
+  if (receipt.defendedAmounts) return;
+  // Force hits that meet a Silenced target's stacks: their Force (Arcane) part is negated before any defence.
+  receipt.silencedImmune = silencedForceContacts(ctx, target, receipt.profiles);
+  const hits = receipt.amounts.map((amount, index) => {
+    const profile = receipt.profiles[index];
+    const share = contactMagicShare(ctx, profile);
+    const split = share > 0 && share < 1;
+    // The split is the card's own damage (profile.splitBase, defaulting to the whole hit for a caller without one). Combat-time bonuses join after it.
+    const primary = share >= 1 ? 'magic' : share <= 0 ? 'physical' : profile.camp === 'spell' ? 'magic' : 'physical';
+    const parts = splitContactParts({ amount, base: profile.splitBase ?? amount, ratingBonus: profile.ratingBonus || 0,
+      ratingPart: profile.ratingPart ?? null, share, primary });
+    const legacy = canonicalDamageType(profile.damageType) || 'blunt';
+    // A weapon's authored physical type types the physical part whether or not the hit splits.
+    const physical = profile.physicalDamageType || legacy;
+    const types = split ? splitDamageTypesOf(profile) : { magic: magicDamageTypeOf(profile) || legacy, physical };
+    // A hit that lists its damage components keeps them: each part spreads over its own component types by weight.
+    const components = componentPartsOf(profile);
+    return { amount, split, magic: parts.magic, physical: parts.physical, types,
+      typeWeights: { magic: components?.magic.length ? components.magic : [{ type: types.magic, weight: 1 }],
+        physical: components?.physical.length ? components.physical : [{ type: types.physical, weight: 1 }] } };
+  });
+  // Typed defence, once per (camp, type) group of parts.
+  const parts = [];
+  const pushTyped = (index, magic, amount, weights) => {
+    if (!(amount > 0)) return;
+    const live = weights.filter(row => row.weight > 0);
+    const rows = live.length ? live : [{ type: weights[0].type, weight: 1 }];
+    allocateInteger(amount, rows.map(row => row.weight)).forEach((share, i) => {
+      if (share > 0) parts.push({ index, magic, camp: magic ? 'spell' : 'physical', type: rows[i].type, amount: share });
+    });
+  };
+  hits.forEach((hit, index) => {
+    pushTyped(index, true, hit.magic, hit.typeWeights.magic);
+    pushTyped(index, false, hit.physical, hit.typeWeights.physical);
+  });
+  // A Silenced creature is immune to Force (owner, 2026-10-13): only a Force hit's Arcane parts are
+  // negated; its other parts (Blunt and the rest) go on through Block, Poise and HP. A hit that is all
+  // Arcane is negated whole.
+  receipt.forceImmuneAmounts = hits.map(() => 0);
+  for (let p = parts.length - 1; p >= 0; p--) {
+    if (!receipt.silencedImmune[parts[p].index] || parts[p].type !== 'arcane') continue;
+    receipt.forceImmuneAmounts[parts[p].index] += parts[p].amount;
+    parts.splice(p, 1);
+  }
+  receipt.forceImmuneWhole = hits.map((hit, index) => receipt.silencedImmune[index] && !parts.some(part => part.index === index));
+  const groups = new Map();
+  parts.forEach((part, p) => {
+    const key = `${part.camp}:${part.type}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p);
+  });
+  const typed = parts.map(() => 0);
+  for (const [key, members] of groups) {
     const [camp, type] = key.split(':');
+    const total = members.reduce((sum, p) => sum + parts[p].amount, 0);
     let amount;
     if (ctx.foundation) {
       const defense = F.foundationProfile(ctx, target), rules = ctx.foundation.rules;
@@ -279,74 +514,222 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
         resistances: groupedResistance(rules, defense.resistanceSources || [], defense.resistances || {}),
         immunities: defense.immunities || [], multiplier: 1, flatBonus: 0 }).reduce((sum, part) => sum + part.amount, 0);
     } else {
-      const resistance = target.damageResistanceBySchool?.[carrier?.damageSchool];
-      amount = Math.max(0, Math.floor(total * (camp === 'spell' ? 1 : ratingDamageMultiplier(ctx, target, false))
-        * (Number.isFinite(resistance) ? Math.max(0, 1 - resistance / 100) : 1)));
+      // Pools only: no Poise or Ward rating cut. Only school resistance shapes a typed part before Block and Poise.
+      amount = Math.max(0, Math.floor(total * schoolResistanceMultiplier(ctx, target, carrier?.damageSchool)));
     }
-    amount = Math.max(0, Math.ceil(amount * (1 + Math.max(0, target.damageWeaknessPercent?.[type] || 0) / 100))
-      - Math.max(0, target.damageResistanceFlat?.[type] || 0));
-    const shares = total > 0 ? allocateInteger(amount, indices[key].map(index => receipt.amounts[index])) : indices[key].map(() => 0);
-    indices[key].forEach((index, i) => { receipt.defendedAmounts[index] = shares[i]; });
+    amount = typedDefenseAmount(target, type, amount);
+    const shares = total > 0 ? allocateInteger(amount, members.map(p => parts[p].amount)) : members.map(() => 0);
+    members.forEach((p, i) => { typed[p] = shares[i]; });
   }
-  const magical = receipt.profiles.map((profile, index) => profile.camp === 'spell' ? index : -1).filter(index => index >= 0);
-  const total = magical.reduce((sum, index) => sum + receipt.defendedAmounts[index], 0);
-  // Ward's share is planned here and spent only on commit (applyExpandedDamage); previews never spend it.
-  const weights = magical.map(index => receipt.defendedAmounts[index]);
-  const ward = Math.min(target.persistentWard?.value || 0, Math.floor(total * Control.wardResistShare(ctx)));
-  const shares = total > 0 ? allocateInteger(total - ward, weights) : magical.map(() => 0);
-  const absorbed = ward > 0 ? allocateInteger(ward, weights) : magical.map(() => 0);
-  receipt.wardAbsorbed = receipt.amounts.map(() => 0);
-  magical.forEach((index, i) => { receipt.defendedAmounts[index] = shares[i] || 0; receipt.wardAbsorbed[index] = absorbed[i] || 0; });
+  const magicTyped = hits.map(() => 0), physicalTyped = hits.map(() => 0);
+  parts.forEach((part, p) => {
+    if (part.magic) magicTyped[part.index] += typed[p]; else physicalTyped[part.index] += typed[p];
+  });
+  const magicHits = hits.map((hit, index) => index).filter(index => hits[index].magic > 0);
+  // Magic meets Barrier, then Ward, once per action. Barrier is consumed in hit order and soaks
+  // fully. Ward's budget is shared over the magic parts and spent by what it absorbs.
+  syncWardMaximum(ctx, target);
+  let barrierLeft = Math.max(0, target.barrier || 0);
+  const barrierSpent = hits.map(() => 0);
+  magicHits.forEach(index => {
+    const take = Math.min(barrierLeft, Math.max(0, magicTyped[index]));
+    barrierLeft -= take;
+    barrierSpent[index] = take;
+  });
+  const afterBarrier = magicHits.map(index => magicTyped[index] - barrierSpent[index]);
+  const wardTotal = afterBarrier.reduce((sum, weight) => sum + weight, 0);
+  const wardBudget = Math.max(0, target.persistentWard?.value || 0);
+  const ward = !(wardTotal > 0) || !(wardBudget > 0) ? afterBarrier.map(() => 0)
+    : allocateInteger(Math.min(wardBudget, wardTotal), afterBarrier);
+  const magicLeft = hits.map(() => 0), wardSpent = hits.map(() => 0);
+  magicHits.forEach((index, j) => {
+    const after = afterBarrier[j], share = ward[j];
+    // A pure hit lets at least 1 through Ward before Block, as it always has. A split hit's
+    // at-least-1 is decided once Block and HP are known, below.
+    const left = !hits[index].split && after > 0 && share > 0 ? Math.max(1, after - share) : after - share;
+    magicLeft[index] = left;
+    wardSpent[index] = after - left;
+  });
+  // Block soaks the physical part, in the order contacts strike, and never a magic part.
+  // A split hit that would cost no HP while Ward absorbed some of it lets 1 through from Ward.
+  const blockable = physicalTyped.slice();
+  const residual = hits.map(() => 0);
+  let blockLeft = Math.max(0, target.block || 0);
+  let bypassLeft = receipt.guardBypass || 0;
+  hits.forEach((hit, index) => {
+    const pool = physicalTyped[index];
+    const bypass = Math.min(pool, bypassLeft);
+    bypassLeft -= bypass;
+    const blocked = Math.min(blockLeft, Math.max(0, pool - bypass));
+    blockLeft -= blocked;
+    residual[index] = pool - blocked;
+    if (residual[index] === 0 && magicLeft[index] === 0 && wardSpent[index] > 0) {
+      magicLeft[index] += 1;
+      wardSpent[index] -= 1;
+    }
+  });
+  // Poise soaks what Block left of a physical part, in the same order. Each physical part it
+  // meets still lets at least 1 through. A magic part never meets Poise.
+  syncPoiseMaximum(ctx, target);
+  let poiseLeft = Math.max(0, target.persistentPoise?.value || 0);
+  const poiseAbsorbed = hits.map(() => 0);
+  hits.forEach((hit, index) => {
+    if (residual[index] > 0 && poiseLeft > 0) {
+      poiseAbsorbed[index] = residual[index] - Math.max(1, residual[index] - poiseLeft);
+      poiseLeft -= poiseAbsorbed[index];
+    }
+  });
+  // What each contact costs HP once Block and Poise have done their part: the figure a preview shows.
+  receipt.hpAmounts = hits.map((hit, index) => residual[index] - poiseAbsorbed[index] + magicLeft[index]);
+  receipt.defendedAmounts = hits.map((hit, index) => physicalTyped[index] + magicLeft[index]);
+  receipt.barrierSpentAmounts = barrierSpent;
+  receipt.wardSpentAmounts = wardSpent;
+  // resistedAmounts is the whole protection a hit met; magicResistedAmounts is what Barrier and Ward kept of the magic part alone.
   receipt.resistedAmounts = receipt.amounts.map((amount, index) => Math.max(0, amount - receipt.defendedAmounts[index]));
+  receipt.magicResistedAmounts = hits.map((hit, index) => Math.max(0, hit.magic - magicLeft[index]));
+  receipt.magicAmounts = magicTyped;
+  receipt.physicalAmounts = physicalTyped;
+  receipt.blockableAmounts = blockable;
   receipt.guardBypassRemaining = receipt.guardBypass || 0;
+}
+
+/**
+ * A Poise break staggers an enemy (staggerEnemy, called by the caller after the
+ * log has the hit) and costs a player Stamina next turn (breaks.poiseActionLoss,
+ * 1 by default). A player is never staggered by Poise: staggerPlayer can apply
+ * more than the one Stamina a Poise break costs.
+ */
+function breakPoise(ctx, source, target) {
+  const cost = Math.max(0, ctx.ratingsRules?.breaks?.poiseActionLoss ?? 1);
+  // An enemy is interrupted by interruptForBreak, after the hit's log, and has no Stamina to lose; a player pays here.
+  const loss = target.kind === 'player' ? cost : 0;
+  if (loss) target.pendingActionLoss = (target.pendingActionLoss || 0) + loss;
+  return ['poiseBroken', { targetId: target.id, sourceId: source?.id, staminaLoss: loss, ...(target.kind === 'enemy' ? { interrupted: true } : {}), ...seatOf(ctx, target) }];
 }
 
 function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const planned = carrier.expansionContact;
-  const profile = { ...carrier.combatProfile, reach: carrier.combatProfile?.reach || 'contact', targeting: carrier.combatProfile?.targeting || 'single' };
+  const profile = { ...carrier.combatProfile, range: carrier.combatProfile?.range || 'melee', targeting: carrier.combatProfile?.targeting || 'single' };
   const raw = planned ? planned.receipt.amounts[planned.index] : Math.floor(computeAttackDamage(ctx, source, target, base, tags, carrier, { matchups: false, beforeDefense: true }) * (carrier.critMultiplier || 1));
-  const tactical = planned?.receipt || Matchups.beginTacticalAction(ctx, source, target, carrier, [{ ...profile, amount: raw }],
+  const split = { splitBase: Math.max(0, Math.floor(base)), ratingBonus: cardRatingDamage(ctx, source, carrier, base), ratingPart: ratingBonusPart(ctx, carrier) };
+  const tactical = planned?.receipt || Matchups.beginTacticalAction(ctx, source, target, carrier, [{ ...profile, ...split, amount: raw }],
     { ...Control.statusIncomingModifier(ctx, target, profile), restrictions: Control.controlRestrictions(ctx, target) });
   if (tactical.avoided) return 0;
   if (carrier.critMultiplier > 1) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, ...critSeats(ctx, source, target), multiplier: carrier.critMultiplier, amount: raw });
   prepareExpandedDefense(ctx, target, tactical, carrier);
   const contactIndex = planned?.index || 0;
+  if (tactical.forceImmuneWhole?.[contactIndex]) {
+    // A Silenced creature is immune to Force: a hit that is all Force is negated whole, then it spends one stack.
+    const type = ctx.combatExpansionRules.matchups.damageAliases[profile.damageType] || profile.damageType;
+    Matchups.recordTacticalContact(tactical, { hpLoss: 0, blocked: 0, wardResisted: 0 });
+    ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount: 0, blocked: 0, wardResisted: 0, resisted: raw,
+      immune: true, silencedImmune: true, damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
+      magicAmount: 0, physicalAmount: 0, ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
+      ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
+    spendSilencedStack(ctx, target);
+    return 0;
+  }
   let amount = tactical.defendedAmounts[contactIndex] || 0;
   const spell = profile.camp === 'spell';
   // Matchup and control vulnerabilities precede typed defenses and Ward.
   const type = ctx.combatExpansionRules.matchups.damageAliases[profile.damageType] || profile.damageType;
-  // Ward planned at action start may have dropped since (a rider or effect spent it between contacts).
-  // Cap to the live pool; the unabsorbed share is damage that now meets bypass, Block/Barrier and HP.
-  const plannedWard = tactical.wardAbsorbed?.[contactIndex] || 0;
-  const wardAbsorbed = Math.min(plannedWard, Math.max(0, target.persistentWard?.value || 0));
-  amount += plannedWard - wardAbsorbed;
-  if (tactical.wardAbsorbed) tactical.wardAbsorbed[contactIndex] = wardAbsorbed;
-  // Typed resistance and armour stay resisted; a shortfall added back into amount is not.
-  const ward = Math.max(0, (tactical.resistedAmounts[contactIndex] || 0) - (plannedWard - wardAbsorbed));
-  const pool = spell ? 'barrier' : 'block';
-  const bypass = Math.min(amount, tactical.guardBypassRemaining || 0);
+  // A foundation immunity zeroes this hit's amount; the event says so, so the screen can show IMMUNE.
+  const immune = !!ctx.foundation && (F.foundationProfile(ctx, target).immunities || []).includes(type);
+  // The whole protection a hit met (Block, Poise, Barrier, Ward) decides whether a counter returns; the Ward figure reports only the magic part.
+  const resisted = tactical.resistedAmounts[contactIndex] || 0;
+  const ward = tactical.magicResistedAmounts?.[contactIndex] || 0;
+  // The plan was made for the whole action. A status rider may have spent Barrier or
+  // Ward between hits: what the live pool no longer holds is not absorbed for free,
+  // so it goes back into this hit before Block.
+  const plannedBarrier = tactical.barrierSpentAmounts?.[contactIndex] || 0;
+  const plannedWard = tactical.wardSpentAmounts?.[contactIndex] || 0;
+  const barrierSpent = Math.min(Math.max(0, target.barrier || 0), plannedBarrier);
+  // Break events are collected here and emitted after damageDealt, so the log reads the hit first.
+  const breaks = [];
+  if (barrierSpent > 0) {
+    target.barrier -= barrierSpent;
+    if (target.barrier === 0) breaks.push(['barrierBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) }]);
+  }
+  let wardSpent = 0;
+  if (plannedWard > 0 && target.persistentWard?.value > 0) {
+    const spend = Control.spendPersistentWard(ctx, target, plannedWard, { cause: 'damage', sourceId: source?.id, deferBreak: true });
+    wardSpent = spend.spent;
+    if (spend.breakEvent) breaks.push(['wardBroken', spend.breakEvent]);
+  }
+  amount += (plannedBarrier - barrierSpent) + (plannedWard - wardSpent);
+  // Block soaks the physical part only: a Spell never touches target.block (and spends no guard bypass).
+  const pool = 'block';
+  const blockable = tactical.blockableAmounts?.[contactIndex] ?? (spell ? 0 : amount);
+  const bypass = Math.min(blockable, tactical.guardBypassRemaining || 0);
   tactical.guardBypassRemaining -= bypass;
-  const blocked = Math.min(Math.max(0, target[pool] || 0), Math.max(0, amount - bypass));
+  const blockBefore = target[pool] || 0;
+  const blocked = Math.min(Math.max(0, target[pool] || 0), Math.max(0, blockable - bypass));
   target[pool] = Math.max(0, (target[pool] || 0) - blocked);
-  const hpLoss = amount - blocked;
+  if (blockBefore > 0 && !(target[pool] > 0)) breaks.push(['blockBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target),
+    ...(Matchups.isSmashGuardBreak(tactical, target) ? { smash: true } : {}) }]);
+  // Poise is the physical twin of Ward and sits after Block: it soaks what Block left of the
+  // physical part, and each physical hit it meets still lets at least 1 through. A magic part never meets it.
+  let hpLoss = amount - blocked;
+  const physicalLeft = Math.max(0, blockable - blocked);
+  let poiseAbsorbed = 0;
+  let poiseBroke = false;
+  if (physicalLeft > 0 && target.persistentPoise) {
+    syncPoiseMaximum(ctx, target);
+    const poise = target.persistentPoise;
+    if (poise.value > 0) {
+      const passing = Math.max(1, physicalLeft - poise.value);
+      poiseAbsorbed = physicalLeft - passing;
+      poise.value -= poiseAbsorbed;
+      hpLoss -= poiseAbsorbed;
+      if (poise.value === 0) { poiseBroke = true; breaks.push(breakPoise(ctx, source, target)); }
+    }
+  }
   if (hpLoss) target.hp -= hpLoss;
+  // From here `amount` is what the hit did after Poise, as it is after Ward; the log adds each layer back.
+  amount -= poiseAbsorbed;
   creditKnowledgeImpact(ctx, target, amount, tactical.knowledgeBonus > 0);
-  Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: ward });
-  ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: wardAbsorbed,
+  Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: resisted });
+  ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,
+    // The hit as it arrived, before typed resistance or weakness: the log's starting figure.
+    ...(Number.isFinite(tactical.amounts?.[contactIndex]) ? { incoming: tactical.amounts[contactIndex] } : {}),
+    // The blow before any status, matchup or critical modifier: the printed amount plus its rating bonus.
+    ...(Number.isFinite(split.splitBase) ? { base: split.splitBase + (Number(split.ratingBonus) || 0) } : {}),
+    // The whole protection before Block (typed reduction, immunity, Barrier, Ward), when it differs from the Ward figure.
+    ...(resisted !== ward ? { resisted } : {}),
+    ...(barrierSpent ? { barrierAbsorbed: barrierSpent } : {}),
+    ...(wardSpent ? { wardAbsorbed: wardSpent, wardRemaining: target.persistentWard?.value || 0 } : {}),
+    ...(poiseAbsorbed ? { poiseAbsorbed, poiseRemaining: target.persistentPoise?.value || 0 } : {}),
+    ...(immune && amount === 0 ? { immune: true } : {}),
+    // The Force (Arcane) part a Silenced target was immune to; the rest of the hit landed.
+    ...(tactical.forceImmuneAmounts?.[contactIndex] ? { forceImmune: tactical.forceImmuneAmounts[contactIndex] } : {}),
     damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
+    // The hit's typed parts before Barrier and Ward: magicAmount + physicalAmount is the hit.
+    magicAmount: tactical.magicAmounts?.[contactIndex] || 0, physicalAmount: tactical.physicalAmounts?.[contactIndex] || 0,
     ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
-  // Ward is spent by what it absorbed, after RESISTED is shown; the UI reads WARD after it.
-  if (wardAbsorbed > 0) Control.absorbWithPersistentWard(ctx, target, wardAbsorbed, { sourceId: source?.id });
+  // A hit with a Force part spends one Silenced stack once it has landed.
+  if (tactical.silencedImmune?.[contactIndex]) spendSilencedStack(ctx, target);
+  // A Ward or Poise break interrupts an enemy: its prepared action is cancelled. emitBreak settles
+  // whether it really did (a killing hit or a refused stagger does not) before the break is logged.
+  for (const [type, payload] of breaks) {
+    if (type === 'wardBroken' || type === 'poiseBroken') Control.emitBreak(ctx, target, type, payload, type === 'poiseBroken' ? 'poiseBreak' : 'wardBreak');
+    else ctx.emit(type, payload);
+  }
   if (hpLoss) ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack', ...seatOf(ctx, target) });
-  if (!carrier.combatReaction && !tactical.avoided && target.alive && ctx.ratingsRules) Ratings.applyRatingImpact(ctx, source, target, carrier);
+  if (!carrier.combatReaction && !tactical.avoided && target.alive && ctx.ratingsRules) Ratings.applyRatingImpact(ctx, source, target, carrier, null, { cause: 'hit' });
   // Independent pressure resolves even when all direct damage met protection.
   if (!carrier.combatReaction) for (const effect of Matchups.matchupRiderEffects(ctx, source, target, carrier, { amount, hpLoss })) {
     if (['applyStatus', 'buildup'].includes(effect.op)) {
-      const pressure = Control.applyStatusPressure(ctx, target, effect.status, effect.amount ?? effect.stacks, source, { camp: effect.camp || profile.camp,
+      const authored = effect.amount ?? effect.stacks;
+      // Automatic damage-type and technique riders keep their own content budget.
+      // Only queued authored applyStatus/buildup effects receive the Spell stance bonus.
+      const pressure = Control.applyStatusPressure(ctx, target, effect.status, authored, source, { camp: effect.camp || profile.camp,
         actionKey: carrier.expansionGroup?.key || `${ctx.turn}:${carrier.instanceId || 'reaction'}` });
       Matchups.recordTacticalStatus(tactical, pressure);
-    } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount);
+    } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount, { cause: `rider:${effect.rider || type}` });
+    // Holy's cleanse (target 'self' = the attacker) resolves as on the v1 path;
+    // without this a v2 Holy hit cleansed nothing (SPEC §4.7).
+    else if (effect.op === 'removeStatus') ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
   }
   if (profile.school === 'lightning' && Control.electricalTraits(ctx, target).conductive
     && source?.alive && !Control.electricalTraits(ctx, source).grounded && amount > 0) {
@@ -409,14 +792,41 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
 
 /**
  * computeBlockGain(ctx, entity, base) → final integer block gain:
- * base + per-stack 'blockAdd' modifiers, × 'blockGainedMult' modifiers,
+ * base + the eligible rating bonus + per-stack 'blockAdd' modifiers,
+ * × 'blockGainedMult' modifiers (DR scales spell Block, PR scales spell Ward),
  * floored, min 0 (SPEC §4.2). Pure. Cap NOT applied here.
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
+  if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block')
+    ? Math.max(0, Math.floor(base + (entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0))) : 0;
+  const split = computeSpellDefenseGain(ctx, entity, base, card);
+  if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
   amt *= statuses.getMult(ctx, entity, 'blockGainedMult');
   amt = Math.floor(amt);
   return amt < 0 ? 0 : amt;
+}
+
+/**
+ * The exact parts both execution and live card previews consume. Split the
+ * base protection once, add DR only to Block and PR only to Ward, then apply
+ * guard modifiers while retaining the old once-floored total.
+ */
+export function computeSpellDefenseGain(ctx, entity, base, card = null) {
+  if (ctx.combatExpansionVersion !== 2 || !spellDefenseSplit(card, base)) return null;
+  const add = statuses.getAdd(ctx, entity, 'blockAdd');
+  const parts = spellDefenseSplit(card, base + add);
+  const bonus = Ratings.spellDefenseRatingBonuses(ctx, entity, card, base);
+  const nominalBlock = parts.block + bonus.block;
+  const nominalWard = parts.ward + bonus.ward;
+  const total = Math.max(0, Math.floor((base + add + bonus.block + bonus.ward)
+    * statuses.getMult(ctx, entity, 'blockGainedMult')));
+  if (!(total > 0)) return { block: 0, ward: 0 };
+  // A negative Block add may exceed the base, but must still reduce ratings.
+  // Allocate the final total over the remaining nominal portions in that case.
+  if (!(nominalBlock + nominalWard > 0)) return spellDefenseSplit(card, total);
+  const [block, ward] = allocateInteger(total, [nominalBlock, nominalWard]);
+  return { block, ward };
 }
 
 /**
@@ -453,20 +863,56 @@ export function gainMeterGuard(ctx, entity, meter, base, card = null) {
   return amt;
 }
 
+// Both protection opcodes share the spell-defense allocation. Rating and
+// status modifiers were computed on the total; neither portion reapplies them.
+function gainSpellDefenseAmount(ctx, entity, split, card) {
+  const block = split.block > 0 ? gainBlockAmount(ctx, entity, split.block, card, false) : 0;
+  const ward = split.ward > 0 ? gainBarrierAmount(ctx, entity, split.ward, card, true) : 0;
+  return block + ward;
+}
+
 /** gainBlock — mutating block gain with 'blockCap' modifier honored. */
 export function gainBlock(ctx, entity, base, card = null) {
+  if (configuredCombat(ctx)) {
+    const amount = computeBlockGain(ctx, entity, base, card);
+    entity.block = (entity.block || 0) + amount;
+    ctx.emit('blockGained', { targetId: entity.id, amount, total: entity.block });
+    return amount;
+  }
   if (!entity.alive) return 0;
-  if (ctx.combatExpansionVersion === 2 && card?.combatProfile?.camp === 'spell') return gainBarrier(ctx, entity, base, card);
-  let amt = computeBlockGain(ctx, entity, base, card);
+  if (ctx.combatExpansionVersion === 2) {
+    const split = computeSpellDefenseGain(ctx, entity, base, card);
+    if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
+  }
+  if (ctx.combatExpansionVersion === 2 && card?.combatProfile) {
+    const share = contactMagicShare(ctx, { ...card.combatProfile, ...(Number.isFinite(card.magicShare) ? { magicShare: card.magicShare } : {}) });
+    // A whole magic guard is Barrier (refilling Ward first). A split guard gives its magic share that way and the rest as Block.
+    if (share >= 1) return gainBarrier(ctx, entity, base, card);
+    if (share > 0) {
+      const amount = computeBlockGain(ctx, entity, base, card);
+      const magic = Math.floor(amount * share + 1e-9);
+      if (magic > 0) gainBarrierAmount(ctx, entity, magic, card, true);
+      if (amount - magic > 0) gainBlockAmount(ctx, entity, amount - magic, card, false);
+      return amount;
+    }
+  }
+  return gainBlockAmount(ctx, entity, computeBlockGain(ctx, entity, base, card), card, isMagicalAttack(ctx, card));
+}
+
+// The Block a guard lays down. A magical guard's Block is also Ward-provenance (wardBlock) unless it is a split guard's physical part.
+function gainBlockAmount(ctx, entity, amount, card = null, wardProvenance = false) {
+  let amt = amount;
   const cap = statuses.getCap(ctx, entity, 'blockCap');
   if (cap != null && entity.block + amt > cap) {
     amt = Math.max(0, cap - entity.block);
   }
   reconcileWardBlock(entity);
   entity.block += amt;
-  if (amt > 0 && card && isMagicalAttack(ctx, card)) entity.wardBlock = (entity.wardBlock || 0) + amt;
+  if (amt > 0 && card && wardProvenance) entity.wardBlock = (entity.wardBlock || 0) + amt;
   ctx.emit('blockGained', {
     targetId: entity.id, amount: amt,
+    // A guard no card raised names what did (a Defend stance's turn-start protection), for the log.
+    ...(card?.logSource ? { source: card.logSource } : {}),
     ...wardBlockReceipt(entity),
     ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}),
     // The card that raised it, when one did (engine/skillXp.js pays its piece's
@@ -518,6 +964,7 @@ export function applyHeal(ctx, target, amount) {
 }
 
 function afterHpChange(ctx, target, death = {}) {
+  if(target.hp>0) proposalThreshold(ctx,target);
   // THE DEATH-PREVENTION HOOK (SPEC §14.3): the player about to drop to 0 HP
   // spends one revive token from the fight's copy of the counts and rises at
   // hpPct of max. The copy rides the combat snapshot, so a fight saved after a
@@ -556,18 +1003,58 @@ function afterHpChange(ctx, target, death = {}) {
  * itself; callers decide HOW it was earned — the poise bar filling
  * (dealPoiseDamage) or a direct proc (the 'stagger' opcode, insanity's row).
  * The direct path deliberately bypasses the bar: a guaranteed break that
- * neither consumes nor grows the poise meter.
+ * neither consumes nor grows the poise meter. Returns true when it staggered,
+ * false when it refused (dead, or impact-protected). Callers that mean a full
+ * Stagger go through breakEnemy below.
  */
-export function staggerEnemy(ctx, enemy) {
-  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
-  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return;
+export function staggerEnemy(ctx, enemy, options = {}) {
+  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return false;
+  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return false;
   Matchups.clearCombatCounter(enemy, ctx);
   const cancelled = enemy.pendingMove ? enemy.pendingMove.moveId : null;
   enemy.pendingMove = null;
   enemy.skipNextTurn = true;
   if (ctx.foundation) enemy.impactProtectedUntil = ctx.turn + ctx.foundation.rules.impact.protectionTurns;
   enemy.intent = { kind: 'staggered', moveId: null };
-  ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled });
+  ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled, ...(options.cause ? { cause: options.cause } : {}) });
+  return true;
+}
+
+/**
+ * breakEnemy(ctx, enemy) — the ONE path to a full enemy Stagger (owner
+ * decision 2026-10-12, #1): staggerEnemy, then balance.poise.onFill's
+ * content effects (the `staggered` status: +50% damage taken, and every
+ * card rider gated on it). Both the poise bar filling (dealPoiseDamage) and a
+ * direct proc stagger (the 'stagger' opcode, insanity's row) land here, so an
+ * Insanity break is the same Stagger a full meter is. Meter growth stays with
+ * the bar: the direct path neither consumes nor grows it (SPEC §4.4). Combat
+ * ratings change nothing here (owner, 2026-10-12): every enemy break is a full
+ * Stagger with onFill, and the rating meter's own breaks
+ * (combatRatings.applyRatingImpact), Poise or Ward, run the same onFill.
+ */
+/**
+ * growPoiseMeter(ctx, entity) — after a full Poise fill, the meter's max grows
+ * by balance.poise.growthMult (unless a combatant disables growth). Shared by
+ * dealPoiseDamage and the status-pressure fill in combatStatusControl, so every
+ * full-meter Stagger grows the meter the same way.
+ */
+export function growPoiseMeter(ctx, entity) {
+  const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
+  const growth = cfg.growthMult != null ? cfg.growthMult : 1.25;
+  if (growth === 1 || statuses.anyCombatantFlag(ctx, 'meterMaxGrowthDisabled')) return;
+  entity.poiseMeter.max = Math.ceil(entity.poiseMeter.max * growth);
+  // COUNTED, not multiplied. A later restamp from the receipt (an armament
+  // swap, a restored fight) replays the same rounded steps; one compound
+  // multiply would land a point low, because each live fill rounds up
+  // before the next (Codex, #1203).
+  entity.poiseMeter.growths = (entity.poiseMeter.growths || 0) + 1;
+  entity.poiseMeter.growthMult = growth;
+}
+
+export function breakEnemy(ctx, enemy) {
+  if (!staggerEnemy(ctx, enemy)) return false;
+  Ratings.enqueueStaggerOnFill(ctx, enemy);
+  return true;
 }
 
 /**
@@ -600,10 +1087,13 @@ export function staggerPlayer(ctx, player) {
  * (staggerEnemy + balance.poise.onFill) or the player (staggerPlayer), and the
  * meter grows by balance.poise.growthMult either way.
  */
-export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false } = {}) {
-  if (ctx.ratingsRules) return Ratings.applyRatingImpact(ctx, null, entity, { damageSchool: 'physical' }, amount, { knowledgeMatchup });
+export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false, cause = null, source = null, cardId = null } = {}) {
+  // `source` and `cardId` only name who dealt it in the receipt (an explicit amount never reads the source).
+  if (configuredCombat(ctx)) return; // Core Poise mitigation never fills a legacy break meter.
+  if (ctx.ratingsRules) return Ratings.applyRatingImpact(ctx, source, entity, { damageSchool: 'physical' }, amount, { knowledgeMatchup, cause, cardId });
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
   if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
+  amount = Math.floor(amount * Ratings.roundPoiseMultiplier(ctx, entity));
   const isEnemy = entity.kind === 'enemy';
   // A Poise guard (gainPoise) takes the impact before the meter does.
   const n = Math.max(0, Math.floor(amount)) - Ratings.absorbMeterGuard(entity, 'poise', amount);
@@ -614,30 +1104,17 @@ export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false 
     return;
   }
   entity.poiseMeter.value += n;
-  const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
   let guard = 0;
   while (entity.poiseMeter.value >= entity.poiseMeter.max) {
     if (++guard > 100) throw new Error('Poise meter fill loop did not terminate');
     entity.poiseMeter.value -= entity.poiseMeter.max;
     ctx.emit('meterFilled', { targetId: entity.id, meter: 'poise', threshold: entity.poiseMeter.max, ...(!isEnemy && ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) });
     if (isEnemy) {
-      staggerEnemy(ctx, entity);
-      for (const eff of cfg.onFill || []) {
-        ctx.enqueue({ effect: eff, source: entity, owner: entity, target: entity, meta: {} });
-      }
+      breakEnemy(ctx, entity);
     } else {
       staggerPlayer(ctx, entity);
     }
-    const growth = cfg.growthMult != null ? cfg.growthMult : 1.25;
-    if (growth !== 1 && !statuses.anyCombatantFlag(ctx, 'meterMaxGrowthDisabled')) {
-      entity.poiseMeter.max = Math.ceil(entity.poiseMeter.max * growth);
-      // COUNTED, not multiplied. A later restamp from the receipt (an armament
-      // swap, a restored fight) replays the same rounded steps; one compound
-      // multiply would land a point low, because each live fill rounds up
-      // before the next (Codex, #1203).
-      entity.poiseMeter.growths = (entity.poiseMeter.growths || 0) + 1;
-      entity.poiseMeter.growthMult = growth;
-    }
+    growPoiseMeter(ctx, entity);
     if (ctx.foundation) { entity.poiseMeter.value = Math.min(entity.poiseMeter.max - 1, entity.poiseMeter.value); break; }
   }
 }
@@ -716,6 +1193,16 @@ function livingEnemies(ctx) {
  * target, then its source.
  */
 export function resolveTargets(ctx, action, targetSpec) {
+  const group = action.meta?.expansionGroup;
+  const generic = !['damage', 'applyStatus', 'buildup'].includes(action.effect?.op);
+  const refs = group?.begun && generic ? action.meta?.expansionTargets?.[action.meta?.expansionExecutionRepeat || 0] : null;
+  const targets = refs ? refs.map(ref => Expanded.expansionEntity(ctx, ref)).filter(entity => Expanded.expansionTargetPresent(ctx, entity))
+    : resolveRawTargets(ctx, action, targetSpec);
+  const eligible=targets.filter(entity => !group?.targets?.[ctx.playerIdForEntity?.(entity) || entity.id]?.receipt?.avoided);
+  return targetSpec==='allEnemies' && action.card?.targetLimit !== undefined ? eligible.slice(0,Math.max(0,evalNum(ctx,action,action.card.targetLimit,eligible.length))) : eligible;
+}
+
+function resolveRawTargets(ctx, action, targetSpec) {
   switch (targetSpec) {
     case undefined:
     case null:
@@ -744,6 +1231,8 @@ export function resolveTargets(ctx, action, targetSpec) {
       const living = livingEnemies(ctx);
       return living.length ? [ctx.rng.pick('misc', living)] : [];
     }
+    case 'allAllies':
+      return ctx.players ? [...ctx.players.values()].filter(p=>p.connected && p.entity.alive).map(p=>p.entity) : [ctx.player].filter(p=>p?.alive);
     case 'ally': {
       // Co-op: the explicitly aimed living teammate. Solo — or no pick — falls
       // back to the source, so every ally card stays fully solo-valid.
@@ -768,6 +1257,7 @@ export function formulaCtxFor(ctx, action, primaryTarget) {
       player: ctx.player || null,
       allEnemies: livingEnemies(ctx),
     },
+    weaponDamage:weaponDamageBasis(ctx,action.source),cardId: action.card?.cardId, metricsBefore:meta.abilityBefore, manaSpent:meta.manaSpent || 0, staminaSpent:meta.staminaSpent || 0,
     energySpent: meta.energySpent != null ? meta.energySpent : 0,
     cardsPlayedThisTurn: ctx.player ? ctx.player.counters.cardsPlayedThisTurn : 0,
   };
@@ -802,6 +1292,41 @@ function evalRaw(ctx, action, value, dflt, target) {
 // executeAction — the queue interpreter body
 // ---------------------------------------------------------------------------
 
+/**
+ * Reaction rules version 2: the Poise or Ward a completed card's own effect
+ * dealt to a target, kept on its expansion group for Impact and Flux
+ * (docs/combat-card-traits-contract.md, "Impact and Flux").
+ */
+function splitSmashPressure(ctx, action, target, row) {
+  if (ctx.combatExpansionVersion !== 2 || action.card?.combatProfile?.maneuver !== 'smash'
+    || !['casting', 'spell'].includes(target.combatStance?.maneuver) || !row) return false;
+  const group = action.meta.expansionGroup;
+  const key = ctx.playerIdForEntity?.(target) || target.id;
+  const done = group.smashPressureApplied ||= [];
+  if (done.includes(key)) return true;
+  done.push(key);
+  const total = row.contacts.filter(contact => contact.effect === 'impact').reduce((n, contact) => n + Math.max(0, contact.pressure || 0), 0);
+  const amount = Math.ceil(total * Matchups.stancePressureMultiplier(ctx, action.source, target, action.card, row?.receipt?.counterAttack));
+  const wardShare = stanceRulesFor(ctx).spellSmashWardShare;
+  const [poise, ward] = allocateInteger(amount, [1 - wardShare, wardShare]);
+  if (poise > 0) {
+    const before = Math.max(0, target.poiseGuard || 0);
+    dealPoiseDamage(ctx, target, poise);
+    trackOwnPressure(ctx, action, target, 'poiseDealt', Math.max(0, poise - (before - Math.max(0, target.poiseGuard || 0))));
+  }
+  if (ward > 0) { const spent = Control.spendPersistentWard(ctx, target, ward, { sourceId: action.source?.id }); trackOwnPressure(ctx, action, target, 'wardDealt', spent.spent); }
+  return true;
+}
+
+function trackOwnPressure(ctx, action, target, meter, amount) {
+  const group = action.meta?.expansionGroup;
+  if (ctx.reactionRulesVersion !== 2 || !group || !target || !(amount > 0)) return;
+  const key = ctx.playerIdForEntity?.(target) || target.id;
+  const pressure = group.ownPressure ||= {};
+  const row = pressure[key] ||= { id: target.id, playerId: ctx.playerIdForEntity?.(target), poiseDealt: 0, wardDealt: 0 };
+  row[meter] += amount;
+}
+
 export function executeAction(ctx, action) {
   if (action.effect?.op === 'completeCombatAction') { Expanded.completeExpandedAction(ctx, action); return; }
   if (ctx.result) return; // combat already decided; remaining actions fizzle
@@ -815,6 +1340,8 @@ export function executeAction(ctx, action) {
 
   // Budgeted escape hatch (SPEC §3.1(6)): { script: 'name', ...args }.
   if (typeof eff.script === 'string') {
+    if (action.target && action.target.kind !== action.source?.kind
+      && action.meta?.expansionGroup?.targets?.[ctx.playerIdForEntity?.(action.target) || action.target.id]?.receipt?.avoided) return;
     const fn = ctx.registries.scripts[eff.script];
     if (typeof fn !== 'function') throw new Error(`Unknown script '${eff.script}'`);
     fn(ctx, action);
@@ -838,20 +1365,34 @@ export function executeAction(ctx, action) {
   ctx._abilityAction = action;
   try {
     for (let r = 0; r < repeat; r++) {
+      if (action.meta) action.meta.expansionExecutionRepeat = r;
       runOpcode(ctx, action, eff);
-      if (ctx.result || ctx.pendingAbilityDiscard) return;
+      spendSilencedForEffect(ctx, action, eff);
+      if (ctx.result || hasCardChoice(ctx)) return;
     }
   } finally { if (previous) ctx._abilityAction = previous; else delete ctx._abilityAction; }
+}
+
+function spellAuthoredStatusBonus(ctx, action, authored) {
+  if (ctx.combatExpansionVersion !== 2 || !action.card || (!action.meta?.expansionGroup && !action.meta?.expansionAuthoredAction) || action.meta?.stanceEntry || !(authored > 0)) return 0;
+  const stance = action.source?.combatStance;
+  const eligible = ['casting', 'spell'].includes(stance?.maneuver)
+    || stance?.maneuver === 'counter' && stance?.camp === 'spell';
+  return eligible ? stanceRulesFor(ctx).spellStatusStacks : 0;
 }
 
 function plannedStatusTargets(ctx, action, eff) {
   const refs = action.meta?.expansionTargets?.[action.meta.statusTargetCursor || 0];
   if (!refs) return resolveTargets(ctx, action, eff.target);
   action.meta.statusTargetCursor = (action.meta.statusTargetCursor || 0) + 1;
-  return refs.map(ref => Expanded.expansionEntity(ctx, ref)).filter(entity => Expanded.expansionTargetPresent(ctx, entity));
+  return refs.map(ref => Expanded.expansionEntity(ctx, ref)).filter(entity => Expanded.expansionTargetPresent(ctx, entity)
+    && !action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(entity) || entity.id]?.receipt?.avoided);
 }
 
 function runOpcode(ctx, action, eff) {
+  if(eff.op==='addCinders' && ctx.player && !ctx.run) {
+    const amount=Math.max(0,evalNum(ctx,action,eff.amount,0));ctx.proposalRewards ||= {cinders:0};ctx.proposalRewards.cinders+=amount;if(ctx.playerKey){ctx.proposalRewards.byPlayer ||= {};ctx.proposalRewards.byPlayer[ctx.playerKey]=(ctx.proposalRewards.byPlayer[ctx.playerKey] || 0)+amount;}ctx.emit('cindersChanged',{amount,total:ctx.proposalRewards.cinders,combatReward:true});return;
+  }
   if (RUN_OPCODES.includes(eff.op)) {
     runRunOpcode(ctx, action, eff);
     return;
@@ -874,6 +1415,7 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'damage': {
+      action.meta ||= {};
       // hits may legitimately evaluate to 0 (X-cost at 0 energy whiffs, StS-style).
       const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
       const attackTags = attackTagsFor(action, eff, ctx.registries);
@@ -887,7 +1429,8 @@ function runOpcode(ctx, action, eff) {
         // triggers (e.g. stance-applied build-up) see live state.
         const plannedContacts = action.meta?.expansionContacts?.[action.meta.expansionCursor || 0];
         if (plannedContacts) action.meta.expansionCursor = (action.meta.expansionCursor || 0) + 1;
-        const targets = plannedContacts ? plannedContacts.map(contact => Expanded.expansionEntity(ctx, contact)).filter(Boolean) : resolveTargets(ctx, action, eff.target);
+        let targets = plannedContacts ? plannedContacts.map(contact => Expanded.expansionEntity(ctx, contact)).filter(Boolean) : resolveTargets(ctx, action, eff.target);
+        if(eff.target==='allEnemies' && action.card?.targetLimit!==undefined) targets=targets.slice(0,Math.max(0,evalNum(ctx,action,action.card.targetLimit,targets.length)));
         for (const t of targets) {
           if (!Expanded.expansionTargetPresent(ctx, t)) continue;
           const bonus = (action.meta?.abilityChargeDamageEffect || 0) + (h === 0 && t === targets[0] ? action.meta?.abilityChargeDamage || 0 : 0);
@@ -896,7 +1439,7 @@ function runOpcode(ctx, action, eff) {
             damageSchool: eff.damageSchool || action.card?.damageSchool,
             tags: action.card?.tags || attackTags,
             combatProfile: Expanded.effectCarrier(action.card, eff).combatProfile,
-            combatRiderTargets,
+            combatRiderTargets,proposalTargetDecisions:action.meta ? (action.meta.proposalTargetDecisions ||= {}) : {},
             energySpent: action.meta?.energySpent || 0 };
           if (plannedContacts) {
             const contact = plannedContacts.find(row => Expanded.expansionEntity(ctx, row) === t);
@@ -920,13 +1463,13 @@ function runOpcode(ctx, action, eff) {
           const crit = plannedContacts ? 0 : rollCrit(ctx, action.source, attackTags);
           if (crit) carrier.critMultiplier = crit;
           applyAttackDamage(ctx, action.source, t, base, attackTags, carrier);
-          if (h === 0 && t === targets[0] && t.alive && action.meta?.abilityChargeBreak) dealPoiseDamage(ctx, t, action.meta.abilityChargeBreak);
+          if (h === 0 && t === targets[0] && t.alive && action.meta?.abilityChargeBreak) dealPoiseDamage(ctx, t, action.meta.abilityChargeBreak, { cause: 'charge:break' });
           // OUTSIDE the foundation ruleset (the shipped game creates its combats
           // without one), an enemy blow that draws blood rocks the player by
           // balance.poise.playerImpactPerHit — the one impact the shipped
           // fight has (plan phase 8, SPEC §13.4k). The ruleset's weapon impact
           // below replaces it wherever a ruleset is handed in.
-          if (!ctx.ratingsRules && !ctx.foundation && !carrier.combatReaction && t.kind === 'player' && action.source && action.source.kind === 'enemy' && t.alive && t.hp < hpBefore) {
+          if (!configuredCombat(ctx) && !ctx.ratingsRules && !ctx.foundation && !carrier.combatReaction && t.kind === 'player' && action.source && action.source.kind === 'enemy' && t.alive && t.hp < hpBefore) {
             const perHit = ((ctx.registries.balance || {}).poise || {}).playerImpactPerHit;
             if (Number.isInteger(perHit) && perHit > 0) {
               dealPoiseDamage(ctx, t, perHit);
@@ -935,7 +1478,7 @@ function runOpcode(ctx, action, eff) {
           }
           if (ctx.foundation && !evaded && t.alive && !carrier.combatReaction && !(action.meta?.foundationAncestry?.length)) {
             const resistedImpact = Math.floor((impact[h] || 0) * (1 - (F.foundationProfile(ctx, t).impactResistance || 0)) * Matchups.matchupPoiseMultiplier(ctx, action.source, t, carrier));
-            dealPoiseDamage(ctx, t, resistedImpact);
+            dealPoiseDamage(ctx, t, resistedImpact, { cause: 'hit' });
             // The player's meter is real too (plan phase 8): the receipt is
             // emitted for every target, and the armour skill hooks read it.
             ctx.emit('impactDealt', { sourceId: action.source?.id, targetId: t.id, amount: resistedImpact, ...(t.poiseMeter ? { poiseMeter: { value: t.poiseMeter.value, max: t.poiseMeter.max } } : {}), ...(t.kind === 'player' && ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(t) } : {}) });
@@ -950,18 +1493,31 @@ function runOpcode(ctx, action, eff) {
     }
     case 'block': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        gainBlock(ctx, t, evalNum(ctx, action, eff.amount, 0, t) + (action.meta?.abilityChargeBlock || 0), action.card);
+        const base = evalNum(ctx, action, eff.amount, 0, t);
+        // Stance entry and restoration already own their lane and exact budget.
+        if (action.card?.proposalProtectionFloor || ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
+          gainBlockAmount(ctx, t, Math.max(0, Math.floor(base)), action.card, false);
+        } else gainBlock(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
       }
       break;
     }
     case 'gainBarrier': {
-      for (const t of resolveTargets(ctx, action, eff.target)) gainBarrier(ctx, t, evalNum(ctx, action, eff.amount, 0, t) + (action.meta?.abilityChargeBlock || 0), action.card);
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        const base = evalNum(ctx, action, eff.amount, 0, t);
+        if (action.card?.proposalProtectionFloor || ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
+          gainBarrierAmount(ctx, t, Math.max(0, Math.floor(base)), action.card, false);
+        } else gainBarrier(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
+      }
       break;
     }
     case 'wardDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
+        const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
+        if (row?.receipt?.avoided) continue;
+        if (splitSmashPressure(ctx, action, t, row)) continue;
         const spent = Control.spendPersistentWard(ctx, t,
-        evalNum(ctx, action, eff.amount, 0, t) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
+        evalNum(ctx, action, eff.amount, 0, t) * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
+        trackOwnPressure(ctx, action, t, 'wardDealt', spent.spent);
         creditKnowledgeImpact(ctx, t, spent.spent);
       }
       break;
@@ -973,7 +1529,7 @@ function runOpcode(ctx, action, eff) {
         const cinder = ctx.combatExpansionVersion === 2 && action.source ? Blight.ashenBlightSpellBuildup(ctx, action.source,
           { cycleKey: String(action.source.combatOwnerCycle || 0), school: action.card?.combatProfile?.school, buildups: [{ status: eff.status, amount: authored }] }) : null;
         const pressure = Control.applyStatusPressure(ctx, t, eff.status,
-          authored + (cinder?.amount || 0) + (action.meta?.abilityChargeBuildup || 0), action.source,
+          authored + spellAuthoredStatusBonus(ctx, action, authored) + (cinder?.amount || 0) + (action.meta?.abilityChargeBuildup || 0), action.source,
           { camp: eff.camp || action.card?.combatProfile?.camp, actionKey: action.meta?.expansionGroup?.key || `${ctx.turn}:${action.card?.instanceId || 'effect'}`,
             recoveryProfile: eff.recoveryProfile, traits: eff.traits });
         const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
@@ -983,14 +1539,37 @@ function runOpcode(ctx, action, eff) {
     }
     case 'gainPoise':
     case 'gainWard': {
+      if (configuredCombat(ctx)) {
+        if (eff.op === 'gainPoise' && configuredModule(ctx, 'defenses')?.include?.includes('poise')) {
+          for (const t of resolveTargets(ctx, action, eff.target)) {
+            t.gameProfilePoise = (t.gameProfilePoise || 0) + Math.max(0, evalNum(ctx, action, eff.amount, 0, t));
+            ctx.emit('meterGuardGained', { targetId: t.id, meter: 'poise', amount: t.gameProfilePoise, total: t.gameProfilePoise });
+          }
+        }
+        break;
+      }
       const meter = eff.op === 'gainPoise' ? 'poise' : 'ward';
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        if (ctx.combatExpansionVersion === 2 && meter === 'ward') restoreExpandedWard(ctx, t, evalNum(ctx, action, eff.amount, 0, t), { onceKey: eff.oncePerCombat });
+        // The same amount the preview shows: the base plus the card's rating bonus (computeMeterGuardGain).
+        if (ctx.combatExpansionVersion === 2 && meter === 'ward') restoreExpandedWard(ctx, t, computeMeterGuardGain(ctx, t, evalNum(ctx, action, eff.amount, 0, t), action.card), { onceKey: eff.oncePerCombat });
         else gainMeterGuard(ctx, t, meter, evalNum(ctx, action, eff.amount, 0, t), action.card);
       }
       break;
     }
+    // Poise is refilled (never guarded by this op): the twin of gainWard's restore.
+    case 'restorePoise': {
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        if (ctx.combatExpansionVersion !== 2 || !t.persistentPoise) continue;
+        syncPoiseMaximum(ctx, t);
+        Control.restorePersistentPoise(ctx, t, evalNum(ctx, action, eff.amount, 0, t), { onceKey: eff.oncePerCombat, source: 'card' });
+      }
+      break;
+    }
     case 'dodgeRoll': {
+      if (configuredCombat(ctx)) {
+        if (configuredModule(ctx, 'stances')?.include?.includes('evade')) action.source.combatStance = { maneuver: 'evade', camp: 'physical' };
+        break;
+      }
       if (ctx.combatExpansionVersion === 2) { Matchups.prepareCombatEvade(ctx, action.source, action.card?.combatProfile?.evade || {}); break; }
       if (ctx.foundation) { F.grantFoundationEvade(ctx, action.source); break; }
       // The dodge (framework contract: Weight Class and Dodge Roll). Player
@@ -1019,8 +1598,10 @@ function runOpcode(ctx, action, eff) {
     }
     case 'applyStatus': {
       for (const t of plannedStatusTargets(ctx, action, eff)) {
-        const stacks = evalNum(ctx, action, eff.stacks, 1, t) + (action.meta?.abilityChargeBuildup || 0);
+        const authored = evalNum(ctx, action, eff.stacks, 1, t);
+        const stacks = authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0);
         statuses.applyStatus(ctx, t, eff.status, stacks, action.source);
+        proposalThreshold(ctx,t);
         if (ctx.combatExpansionVersion === 2) {
           const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
           if (row?.receipt) Matchups.recordTacticalStatus(row.receipt, { accepted: stacks });
@@ -1035,6 +1616,7 @@ function runOpcode(ctx, action, eff) {
     case 'removeStatus': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         statuses.removeStatus(ctx, t, eff.status, { reason: 'consumed', ...(eff.amount !== undefined ? { amount: Math.max(0, evalNum(ctx, action, eff.amount, 0, t)) } : {}) });
+        trimCombatStances(ctx,t);
       }
       break;
     }
@@ -1044,6 +1626,32 @@ function runOpcode(ctx, action, eff) {
         for (const field of ['damage', 'manaDiscount', 'block', 'heal', 'break', 'buildup']) if (eff[field] !== undefined) charge[field] = Math.max(0, evalNum(ctx, action, eff[field], 0, target));
         grantAbilityCharge(target, charge);
       }
+      break;
+    }
+    case 'castLinkedSpell': {
+      if((action.meta?.linkedDepth || 0)>=8) throw new Error('Linked spell recursion exceeds bound');
+      const linked=ctx.registries.cards.get(eff.card);
+      for(const effect of linked.effects || []) ctx.enqueue({...action,effect,card:{...action.card,...linked,cardId:linked.id},meta:{...action.meta,linkedDepth:(action.meta?.linkedDepth || 0)+1}});
+      break;
+    }
+    case 'addBurden':
+      for(const enemy of resolveTargets(ctx,action,eff.target)) {if(enemy.kind!=='enemy') throw new Error('Burden targets enemies only');addEnemyBurden(ctx,enemy,eff.card,evalNum(ctx,action,eff.count,1),eff.pile || 'draw');}break;
+    case 'revealIntent':
+      for (const enemy of resolveTargets(ctx, action, eff.target)) {
+        if (enemy.kind !== 'enemy') continue;
+        const until = ctx.turn + Math.max(1, Math.min(10, evalNum(ctx, action, eff.amount, 1)));
+        const owner = action.owner || action.source;
+        const ownerId = typeof owner === 'string' ? owner : ctx.playerIdForEntity?.(owner) || owner?.id || ctx.playerKey;
+        if (!ownerId) throw new Error('Read Intent requires an owning player');
+        enemy.proposalIntentRevealedUntilByOwner ||= {};
+        enemy.proposalIntentRevealedUntilByOwner[ownerId] = until;
+        ctx.emit('intentRevealed', { targetId: enemy.id, ownerId, until });
+      }
+      break;
+    case 'modifyCards':
+    case 'moveCards': {
+      const resolved=eff.changes?.hideTurns && typeof eff.changes.hideTurns==='object' ? {...action,effect:{...eff,changes:{...eff.changes,hideTurns:Math.min(10,Math.max(1,evalNum(ctx,action,eff.changes.hideTurns,1)))}}} : action;
+      moveCards(ctx, resolved, evalNum(ctx, action, eff.amount, 1));
       break;
     }
     case 'draw': {
@@ -1089,7 +1697,8 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'gainEnergy': {
-      const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      // `funded` is the part that already paid the card's own price (owner, 2026-10-13: restores break even).
+      const n = Math.max(0, evalNum(ctx, action, eff.amount, 1) - (Number(eff.funded) || 0));
       ctx.player.energy += n;
       ctx.emit('energyGained', { amount: n });
       break;
@@ -1105,7 +1714,8 @@ function runOpcode(ctx, action, eff) {
       // BY an amount, or TO a floor (plan phase 7's floorOrFull rest): a pool
       // under the floor rises to it; one already at or above it fills.
       const toFloor = eff.toFloorPct !== undefined;
-      const n = toFloor ? 0 : Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      // `funded` is the part that already paid the card's own price (owner, 2026-10-13: restores break even).
+      const n = toFloor ? 0 : Math.max(0, evalNum(ctx, action, eff.amount, 1) - (Number(eff.funded) || 0));
       const pct = toFloor ? Math.max(0, evalNum(ctx, action, eff.toFloorPct, 0)) : 0;
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const before = t.mana;
@@ -1147,7 +1757,9 @@ function runOpcode(ctx, action, eff) {
         const percentage = ctx.combatExpansionVersion === 2 && nominal > 0
           ? (ctx.restorationModifierPercent?.(t, 'hp') || 0) + (eff.ashenBlightBonusPct || 0) : 0;
         const amount = Math.max(0, Math.floor(nominal * mult * (1 + percentage / 100)));
-        applyHeal(ctx, t, amount + Ratings.cardRatingBonus(ctx, action.source, action.card, 'heal', amount) + (action.meta?.abilityChargeHeal || 0));
+        const healing=proposalHealingPlan(ctx,t,amount + Ratings.cardRatingBonus(ctx, action.source, action.card, 'heal', amount) + (action.meta?.abilityChargeHeal || 0),eff.damageType || action.card || {});
+        if(healing.damage) applyLoseHp(ctx,t,healing.damage,'healingInversion');
+        applyHeal(ctx, t, healing.healing);
       }
       break;
     }
@@ -1159,6 +1771,14 @@ function runOpcode(ctx, action, eff) {
       // A chosen stance (Warrior's Vow) is the play intent's pick, validated
       // before the card was paid for (model/cardChoices.js) and carried on meta.
       const stanceId = eff.choose ? action.meta && action.meta.choice : eff.stance;
+      if(eff.maneuver || eff.choose==='maneuver') {
+        const maneuver=eff.maneuver || stanceId;if(!MANEUVERS.includes(maneuver))throw new Error('Choose a valid maneuver');
+        for(const entity of resolveTargets(ctx,action,eff.target || 'self')) {
+          const carrier={...action.card,combatProfile:{...action.card?.combatProfile,maneuver,stanceTrigger:true,range:action.card?.combatProfile?.range || 'melee',camp:action.card?.combatProfile?.camp || 'physical'}};
+          Matchups.setCombatStance(ctx,entity,carrier);
+        }
+        break;
+      }
       // BOUNDARY (#1449 review, Codex P2): only a played card supplies a
       // choice. The validator checks `choose` wherever enterStance may appear
       // (stance onEnter, status hooks, enemy moves...), but no shipped row
@@ -1180,20 +1800,29 @@ function runOpcode(ctx, action, eff) {
     }
     case 'poiseDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
+        const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
+        if (row?.receipt?.avoided) continue;
+        if (splitSmashPressure(ctx, action, t, row)) continue;
         const multiplier = Matchups.matchupPoiseMultiplier(ctx, action.source, t, action.card);
         const authored = evalNum(ctx, action, eff.amount, 0, t);
         const bonus = ctx.combatExpansionVersion === 2 ? Blight.ashenBlightMartialPoise(ctx, action.source,
           { cycleKey: String(action.source?.combatOwnerCycle || 0), camp: action.card?.combatProfile?.camp, authoredPoise: authored }) : 0;
-        const amount = Math.floor((authored + bonus) * multiplier);
+        const amount = Math.ceil((authored + bonus) * multiplier * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1));
+        // Impact doubles only the Poise that passed the target's Poise guard.
+        const guardBefore = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         if (ctx.ratingsRules && action.meta?.combatCounterReaction) {
-          Ratings.applyRatingImpact(ctx, action.source, t, action.card, amount, { triggerHit: false });
+          // An explicit return Poise payload owns the Poise lane even on a spell Counter.
+          const impactCarrier = action.card?.counterReturnAttack ? { damageSchool: 'physical' } : action.card;
+          Ratings.applyRatingImpact(ctx, action.source, t, impactCarrier, amount, { triggerHit: false, cardId: action.card?.cardId });
         } else dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1 });
+        const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
+        trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));
       }
       break;
     }
     case 'stagger': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        staggerEnemy(ctx, t);
+        breakEnemy(ctx, t);
       }
       break;
     }

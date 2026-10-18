@@ -1,0 +1,5 @@
+Edit this Reaver sheet. Redraw ONLY BODIES11/12/13; preserve15/14, costume, sword proportions, two hands gripping one hilt, rearLEFTcamera/rightfacingclosedhelmet. Both boots flat planted.
+TOPLEFT11: dramatic BACKWARD evade, helmet/shoulders LEFT ofbelt, torsoleanback30degrees; LEFTREARknee bent90degrees supportinghips; RIGHTLEADLEG nearlySTRAIGHT projectingright. Keepwaistbladebackleft.
+TOPRIGHT12: pelvis SEATED OVER LEFT REAR HEEL, deeplybentLEFTsupportknee, chestupright; RIGHTFRONTLEG LONG NEARLYSTRAIGHT. Keepverticalsword.
+MIDDLELEFT13: TALL lateralLEFTslip, torsoUPRIGHT, helmet clearly LEFT ofhips, shouldersleanLEFT; wide plantedboots. Keepbladefrontlow. DistinctfromBOTTOMLEFT15whichremainsdeepforwardduck.
+Allcompletefiguresmustfitown512squarecellwithoutoverlap: shrink/moveBOTTOMLEFT15insideleftcell so its swordtipx<490. Portrait1024x1536,2columns3rows,BRemptytransparent. Preservealpha.NoFXlabels.

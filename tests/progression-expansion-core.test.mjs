@@ -1,3 +1,7 @@
+import { cardManaCategory } from '../src/model/cardManaPolicy.js';
+import { cardManaPolicy } from '../src/content/generated/cardManaPolicy.js';
+import { cardCostBudget } from '../src/model/actionCosts.js';
+import { applyAbilityGrade as gradeFace } from '../src/model/abilityGrades.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -28,7 +32,7 @@ function fund(reg,run,amount) {
 function lessons(reg) {
   const defs = new Map();
   for (const [kind,ids] of Object.entries({spell:['cometFragment','crystalBarrier','scholarsInsight','ashenMote'],maneuver:['quickstep','backstep','stomp']})) for (const id of ids) defs.set(id,{
-    ...source.cards.get(id),abilityKind:kind,abilityRank:0,abilityFamily:id,tags:[kind === 'spell' ? 'source:spell':'source:unarmed'],
+    ...source.cards.get(id),costRule:undefined,abilityKind:kind,abilityRank:0,abilityFamily:id,tags:[kind === 'spell' ? 'source:spell':'source:unarmed'],
     gradeProfiles:Array.from({length:6},(_,rank)=>({rank,actionCost:rank ? Math.min(rank,3):1,manaCost:rank,effects:[{op:'block',target:'self',amount:4+rank}],textTemplate:`Grade ${rank}`})),
   });
   return {...reg,masterySource:null,cards:{get:id=>defs.get(id)||source.cards.get(id),has:id=>defs.has(id),all:()=>[...defs.values()]}};
@@ -123,7 +127,11 @@ test('ability offers persist three current-grade families and one bounded INT op
 test('authored grades resolve their exact resource costs and values without an upgrade or rank overlay',()=>{
   const {reg:base}=fresh(),reg=lessons(base);
   const card=resolveCard(reg,{cardId:'cometFragment',abilityRank:4,rank:10,upgraded:true,skillBonus:99});
-  assert.equal(card.cost,3);assert.equal(card.manaCost,4);assert.equal(card.effects[0].amount,8);assert.equal(card.textTemplate,'Grade 4');
+  // The grade's Stamina and Mana are the cost formula's at grade 4 (SPEC §4.3a; authored 3 SP / 4 MP before), and a face
+  // at 2 SP or more carries the 1.8 multiplier on its authored 8.
+  const priced=cardCostBudget(gradeFace(reg.cards.get('cometFragment'),4),{rank:4});
+  assert.equal(card.cost,priced.sp);assert.equal(card.manaCost,priced.mp);
+  assert.equal(card.effects[0].amount,priced.sp>=2?Math.round(8*1.8):8);assert.equal(card.textTemplate,'Grade 4');
 });
 
 test('one resolved spell or maneuver pays its authored track, independent of shared school tags',()=>{
@@ -215,13 +223,14 @@ test('milestone auto collection derives the persisted choice instead of an empty
 test('an advanced default family keeps a rank-zero starter and a class attribute rederives the saved pools',()=>{
   const starting=createRunState({registries:source,classId:'reaver',seed:4});
   const id=starting.deck.find(inst=>!inst.equipmentRole)?.cardId || starting.deck[0].cardId;
-  const update={...source.cards.get(id),abilityKind:'maneuver',abilityRank:3,abilityFamily:id,cost:2,manaCost:3,
+  const update={...source.cards.get(id),costRule:undefined,abilityKind:'maneuver',abilityRank:3,abilityFamily:id,cost:2,manaCost:3,
     gradeProfiles:Array.from({length:6},(_,rank)=>({rank,actionCost:rank?Math.min(rank,3):1,manaCost:rank,effects:[{op:'block',target:'self',amount:4+rank}]}))};
   const bundle=composeProgressionContent(contentBundle,[{abilityCardUpdates:[update]}],{rules:contentBundle.balance.progression,unlocks:contentBundle.classMastery});
   const root=createRegistries(bundle),run=createRunState({registries:root,classId:'reaver',seed:4});
   assert.equal(root.cards.get(id).manaCost,3);
   assert.ok(run.deck.some(inst=>inst.cardId===id));
-  assert.ok(run.deck.filter(inst=>inst.cardId===id).every(inst=>inst.abilityRank===0 && resolveCard(root,inst).manaCost===0));
+  const starterMana = cardManaCategory(root, root.cards.get(id)) ? cardManaPolicy.minimumMana : 0;
+  assert.ok(run.deck.filter(inst=>inst.cardId===id).every(inst=>inst.abilityRank===0 && resolveCard(root,inst).manaCost===starterMana), 'rank zero keeps the base Mana floor for weapon arts and spells');
   openRunClassMastery(root,run,{}, {receiptId:'attributes'});
   const reg=registriesForClassMastery(root,run);
   for(let level=1;level<=5;level++) {fund(reg,run,xpToNext(reg,'class',level-1));claimBankedSkillLevel(reg,run,'class:reaver');}

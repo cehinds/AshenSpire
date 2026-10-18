@@ -3,6 +3,7 @@ import { enemyMoveDamage } from './state.js';
 import { combatProfileFor, combatProfileTags } from './combatCardProfile.js';
 import { combatMatchups } from '../content/combatMatchups.js';
 import { variableIntentDamage } from './intentDamage.js';
+import { enemySmashFallbackPoise, enemyCounterPoiseDamage } from './stanceRules.js';
 const words = (value) => String(value || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').replace(/^./, (c) => c.toUpperCase());
 
 function effectText(effect, registries) {
@@ -13,13 +14,29 @@ function effectText(effect, registries) {
   }
   if (effect.op === 'heal') return `Heal ${target} for ${effect.amount}`;
   if (effect.op === 'block') return `Give ${target} ${effect.amount} base Block`;
+  if (effect.op === 'poiseDamage') return `${effect.amount} base Poise damage to ${target}`;
   if (effect.op === 'addCard') return `Add ${registries?.cards?.get(effect.card)?.name || words(effect.card)} to ${words(effect.pile)}${effect.position ? ` (${effect.position})` : ''}`;
   // Unknown future operations remain visible without invented effect semantics.
   return `${words(effect.op)}: ${JSON.stringify(Object.fromEntries(Object.entries(effect).filter(([key]) => key !== 'op')))}`;
 }
 
+function chargingPoiseText(move, profile, context) {
+  if (context.combatExpansionVersion !== 2) return [];
+  const pieces = [];
+  // Expansion inherits the parent maneuver through every charging payload.
+  for (let charging = move.delay?.whileCharging, stage = 1; charging; charging = charging.delay?.whileCharging, stage++) {
+    const phase = stage === 1 ? 'while charging' : `during charging stage ${stage}`;
+    pieces.push(...(charging.effects || []).filter(effect => effect.op === 'poiseDamage')
+      .map(effect => `${effectText(effect, context.registries)} ${phase}`));
+    const fallback = enemySmashFallbackPoise(charging, profile, context);
+    if (fallback != null) pieces.push(`${fallback} base Poise damage to player ${phase}`);
+  }
+  return pieces;
+}
+
 /** No RNG, mutation, selection or engine dispatch; preview must come from previewIntent. */
-export function enemyMoveCards(def, { enemy = null, preview = null, registries = null, combatMatchupRules = null } = {}) {
+export function enemyMoveCards(def, { enemy = null, preview = null, registries = null, combatMatchupRules = null,
+  combatExpansionVersion = enemy?.combatExpansionVersion || 1, stanceRules = null } = {}) {
   return Object.entries(def.moves || {}).map(([moveId, move]) => {
     const profile = combatProfileFor({ ...move, enemyId: def.id, moveId });
     const combatTags = combatProfileTags(profile, registries);
@@ -35,15 +52,19 @@ export function enemyMoveCards(def, { enemy = null, preview = null, registries =
         damage: move.counterDamage ?? move.damage ?? rules.defaultDamage });
       pieces.push(`${base} base counter damage`);
       pieces.push(`One eligible hit spends the reaction. Incoming eligible damage × ${rules.incomingMultiplier}; reply only after full Guard or Ward absorption: floor(base × ${rules.retaliationMultiplier}) + ${rules.retaliationFlat} + bonus`);
-      if (move.counterPoiseDamage > 0) pieces.push(`${move.counterPoiseDamage} base counter Poise damage × ${rules.poiseMultiplier}`);
+      const poise = enemyCounterPoiseDamage(move, profile, { combatExpansionVersion, stanceRules, registries });
+      if (poise > 0) pieces.push(`${poise} base counter Poise damage${combatExpansionVersion === 2 ? '' : ` × ${rules.poiseMultiplier}`}`);
     }
     const sequence = liveDamage ? variableIntentDamage(preview) : null;
     if (damage != null) pieces.push(`${sequence ? `${sequence.text} (${sequence.totalDamage} total)` : `${damage}${hits > 1 ? ` × ${hits}` : ''}`} ${liveDamage ? 'preview damage before Block' : 'base damage'}`);
     if (move.block != null) pieces.push(`${move.block} base Block`);
     pieces.push(...(move.effects || []).map((effect) => effectText(effect, registries)));
+    const fallback = enemySmashFallbackPoise(move, profile, { combatExpansionVersion, stanceRules, registries });
+    if (fallback != null) pieces.push(`${fallback} base Poise damage to player`);
     if (move.delay) {
       pieces.push(`Delayed ${move.delay.turns} turn${move.delay.turns === 1 ? '' : 's'}`);
       if (move.delay.whileCharging?.block != null) pieces.push(`${move.delay.whileCharging.block} base Block while charging`);
+      pieces.push(...chargingPoiseText(move, profile, { combatExpansionVersion, stanceRules, registries }));
     }
     const phaseRequirements = (def.phases || []).filter((phase) => phase.unlockMoves?.includes(moveId)).map((phase) => (
       phase.on === 'hpBelowPct' ? `Unlocks at ${phase.pct}% HP or below` : `Unlocks on ${words(phase.on)}`

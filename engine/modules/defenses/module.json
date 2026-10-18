@@ -1,0 +1,24 @@
+{
+  "manifestVersion": 1,
+  "id": "defenses",
+  "version": "1.0.0",
+  "runtimeABI": "ashen.runtime@1",
+  "defaults": "defaults.json",
+  "settingsSchema": "settings.schema.json",
+  "implementation": {
+    "kind": "legacy-adapter",
+    "portable": false
+  },
+  "guide": "guide.md",
+  "configuredAdapter": true,
+  "instances": [
+    "block",
+    "poise",
+    "ward",
+    "barrier"
+  ],
+  "unsupportedConfiguredInstances": [
+    "ward",
+    "barrier"
+  ]
+}

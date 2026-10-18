@@ -1,0 +1,83 @@
+{
+  "action": "counter",
+  "aliases": [
+    "counter"
+  ],
+  "origin": "counter",
+  "timing": {
+    "totalMs": 195,
+    "impactMs": 41.25
+  },
+  "registeredSequence": {
+    "selection": "herald-counter-01",
+    "label": "Existing painted parry and riposte",
+    "poses": [
+      "herald.counter.stance",
+      "herald.counter.contact",
+      "herald.counter.recovery",
+      "ready"
+    ],
+    "durations": [
+      55,
+      60,
+      65,
+      80
+    ],
+    "impact": 1,
+    "travel": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "effects": [
+      null,
+      "herald.counter.effect-1",
+      "herald.counter.effect-2",
+      null
+    ],
+    "hold": false
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-counter",
+      "label": "origin stance-counter",
+      "weight": 1
+    },
+    {
+      "pose": "herald.counter.stance",
+      "registeredFrameId": "herald.counter.stance",
+      "label": "1/4 herald.counter.stance \u00b7 weight 55",
+      "weight": 55,
+      "timeMs": 20.625
+    },
+    {
+      "pose": "herald.counter.contact",
+      "registeredFrameId": "herald.counter.contact",
+      "label": "2/4 herald.counter.contact \u00b7 weight 60",
+      "weight": 60,
+      "timeMs": 63.75
+    },
+    {
+      "pose": "herald.counter.recovery",
+      "registeredFrameId": "herald.counter.recovery",
+      "label": "3/4 herald.counter.recovery \u00b7 weight 65",
+      "weight": 65,
+      "timeMs": 110.625
+    },
+    {
+      "pose": "stance-counter",
+      "registeredFrameId": "ready",
+      "label": "4/4 ready \u00b7 weight 80",
+      "weight": 80,
+      "timeMs": 165
+    },
+    {
+      "pose": "stance-counter",
+      "label": "return Counter",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

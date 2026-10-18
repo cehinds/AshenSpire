@@ -1,0 +1,87 @@
+{
+  "action": "defend",
+  "aliases": [
+    "defend"
+  ],
+  "origin": "defensive",
+  "timing": {
+    "totalMs": 195,
+    "impactMs": 86.25
+  },
+  "registeredSequence": {
+    "label": "Defend",
+    "poses": [
+      "ready",
+      "guard-rise",
+      "guard-brace",
+      "guard-return",
+      "ready"
+    ],
+    "durations": [
+      60,
+      55,
+      50,
+      45,
+      50
+    ],
+    "travel": [
+      0,
+      -3,
+      -6,
+      -3,
+      0
+    ],
+    "effect": "ward",
+    "impact": 2,
+    "hold": false
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-defensive",
+      "label": "origin stance-defensive",
+      "weight": 1
+    },
+    {
+      "pose": "stance-defensive",
+      "registeredFrameId": "ready",
+      "label": "1/5 ready \u00b7 weight 60",
+      "weight": 60,
+      "timeMs": 22.5
+    },
+    {
+      "pose": "guard-rise",
+      "registeredFrameId": "guard-rise",
+      "label": "2/5 guard-rise \u00b7 weight 55",
+      "weight": 55,
+      "timeMs": 65.625
+    },
+    {
+      "pose": "guard-brace",
+      "registeredFrameId": "guard-brace",
+      "label": "3/5 guard-brace \u00b7 weight 50",
+      "weight": 50,
+      "timeMs": 105
+    },
+    {
+      "pose": "guard-return",
+      "registeredFrameId": "guard-return",
+      "label": "4/5 guard-return \u00b7 weight 45",
+      "weight": 45,
+      "timeMs": 140.625
+    },
+    {
+      "pose": "stance-defensive",
+      "registeredFrameId": "ready",
+      "label": "5/5 ready \u00b7 weight 50",
+      "weight": 50,
+      "timeMs": 176.25
+    },
+    {
+      "pose": "stance-defensive",
+      "label": "return Defend",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

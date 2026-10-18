@@ -25,21 +25,34 @@ function watchTargetPlacement(host, picker) {
     const zoom = uiZoom();
     const combat = host.closest('.combat');
     const localRect = rect => ({ left: rect.left - box.left, top: rect.top - box.top, width: rect.width, height: rect.height });
-    const obstacles = [combat?.querySelector('.combat-hud'), host.querySelector('.turn-ribbon'),
-      ...host.querySelectorAll('.combatant-leading, .meters')]
-      .filter(Boolean).map(node => node.getBoundingClientRect()).filter(rect => rect.width && rect.height).map(localRect);
+    // A box may cover its own foe's controls (intent, Inspect, HP, armor), which
+    // stay clickable above it through combat-layers.css z-index. It never covers
+    // another foe's controls, so those are obstacles with an owner.
+    const visibleRects = nodes => nodes.map(node => node.getBoundingClientRect()).filter(rect => rect.width && rect.height);
+    const obstacles = [
+      ...visibleRects([combat?.querySelector('.combat-hud'), host.querySelector('.turn-ribbon')].filter(Boolean)).map(localRect),
+      ...[...host.querySelectorAll('.combatant.enemy')].flatMap(figure => visibleRects([...figure.querySelectorAll(':is(.combatant-leading, .meters, .nm)')])
+        .map(rect => ({ ...localRect(rect), owner: figure.dataset.eid }))),
+    ];
     const playerRect = host.querySelector('.combatant.player .sprite')?.getBoundingClientRect();
-    // Cards, combat tools and action buttons paint above the picker: never place a target under them.
-    const hardNodes = [playerRect, ...(combat?.querySelectorAll('.combat-tools, .combat-action-row button, .hand .card') ?? [])];
+    // The player's overhead controls and the cards, combat tools and action buttons
+    // paint above the picker: never place a target under them.
+    const playerControls = [...host.querySelectorAll('.combatant.player :is(.combatant-leading, .meters, .player-action-intent)')];
+    const hardNodes = [playerRect, ...playerControls, ...(combat?.querySelectorAll('.combat-tools, .combat-action-row button, .hand .card') ?? [])];
     const hardObstacles = hardNodes.filter(Boolean)
       .map(node => (node.getBoundingClientRect ? node.getBoundingClientRect() : node))
       .filter(rect => rect.width && rect.height).map(localRect);
     const enemyTargetGrid = classicAppearance() ? classicEnemyTargetGrid : alternativeEnemyTargetGrid;
     const targets = [...picker.children].map(button => {
       const figure = [...host.querySelectorAll('.combatant.enemy')].find(node => node.dataset.eid === button.dataset.eid);
+      // The stage trims .sprite to the painted ink (its marginTop drops the
+      // transparent canvas); the img inside keeps that padding, so centre on .sprite.
       const rect = (figure?.querySelector('.sprite') || figure)?.getBoundingClientRect();
+      // The box's bottom sits on the foe's ground anchor (its shadow point, groundY).
+      const groundY = parseFloat(figure?.dataset.groundY);
       return { id: button.dataset.eid, x: rect ? rect.left + rect.width / 2 - box.left : box.width / 2,
-        y: rect ? rect.top + rect.height / 2 - box.top : box.height / 2 };
+        y: rect ? rect.top + rect.height / 2 - box.top : box.height / 2,
+        ...(Number.isFinite(groundY) ? { ground: groundY - box.top } : {}) };
     });
     const placements = enemyTargetGrid({ width: box.width, height: box.height, targets, obstacles, hardObstacles });
     const placed = new Set(placements.map(placement => placement.id));

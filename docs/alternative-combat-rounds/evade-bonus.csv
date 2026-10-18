@@ -1,0 +1,4 @@
+stance,bonusPct,note
+evade,20,TBD status: evade stance adds to the evade percent for that exchange
+block,5,TBD status: block adds a little to the evade percent for that exchange
+attack,0,TBD status: attacking gives no evade bonus

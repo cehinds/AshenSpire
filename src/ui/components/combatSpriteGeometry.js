@@ -1,6 +1,7 @@
 // Read idle artwork once, excluding transparent padding. Cache by asset URL;
 // animation/stance changes must never resize the formation during a turn.
 import { stageFor } from '../services/PoseAnimator.js';
+import { projectBodyBounds } from '../models/CombatBodyModel.js';
 const boundsCache = new Map();
 // Painted enemy art shares a floor at 364/384 of its canvas height. The light
 // tier resizes that canvas to 120px; pixel 364 is not a floor in that image.
@@ -91,12 +92,18 @@ export function visibleArtBox(host, refresh) {
 }
 
 export function combatSpriteGeometry(sprite, refresh) {
-  const host = sprite.firstElementChild;
+  // A self-target aim outline may precede the directly mounted pilot stage.
+  const host = sprite.querySelector?.(':scope > .painted-stage[data-maximum-width-ratio]') || sprite.firstElementChild;
   const boxHeight = sprite.offsetHeight, boxWidth = sprite.offsetWidth;
-  const stage = host.querySelector('.painted-stage');
+  const stage = host.matches?.('.painted-stage') && host.dataset.maximumWidthRatio
+    ? host : host.querySelector('.painted-stage');
   if (stage && !host.querySelector('.rendered-stage')) {
-    return { boxHeight, visibleHeight: boxHeight * Number(stage.dataset.idleHeightRatio || 1),
-      visibleWidth: boxHeight * Number(stage.dataset.idleWidthRatio || boxWidth / boxHeight), footOffset: 0 };
+    const maximumWidthRatio = Number(stage.dataset.maximumWidthRatio || 0);
+    // A directly mounted pilot previously used its box geometry. Keep those
+    // same dimensions (including DOM rounding), adding only the edge reserve.
+    return { boxHeight, visibleHeight: stage === host ? boxHeight : boxHeight * Number(stage.dataset.idleHeightRatio || 1),
+      visibleWidth: stage === host ? boxWidth : boxHeight * Number(stage.dataset.idleWidthRatio || boxWidth / boxHeight), footOffset: 0,
+      ...(maximumWidthRatio > 0 ? { edgeWidth: boxHeight * maximumWidthRatio } : {}) };
   }
   const img = host.querySelector('.enemy-pose-idle, .painted-presentation, .facing > img');
   const bounds = img && imageBounds(img, refresh);
@@ -150,4 +157,17 @@ export function currentSpriteArtBounds(sprite, refresh = () => {}) {
   if (!boxes.length) return sprite.getBoundingClientRect();
   return { top: Math.min(...boxes.map(box => box.top)), bottom: Math.max(...boxes.map(box => box.bottom)),
     left: Math.min(...boxes.map(box => box.left)), right: Math.max(...boxes.map(box => box.right)) };
+}
+
+
+// Semantic body geometry follows the displayed frame and its physical motion.
+// Callers can distinguish assets awaiting landmarks from authored head/feet.
+export function currentSpriteBodyBounds(sprite, refresh = () => {}) {
+  const stage = stageFor(sprite);
+  if (stage?.currentBody) return stage.currentBody;
+  const current = stage?.currentArt;
+  if (current?.body) return projectBodyBounds(current.body, current.canvas.getBoundingClientRect(), current.canvas.width, current.canvas.height);
+  const bounds = currentSpriteArtBounds(sprite, refresh);
+  return { ...bounds, headY: bounds.top, feetY: bounds.bottom,
+    bodyHeight: bounds.bottom - bounds.top, source: 'unregistered' };
 }

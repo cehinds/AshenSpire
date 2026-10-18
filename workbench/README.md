@@ -8,6 +8,23 @@ it. Local only (127.0.0.1), no npm dependencies, no build step. Node 22+.
 
 ![Home](../docs/workbench/screenshots/01-home.jpg)
 
+## Published Workbench (GitHub Pages)
+
+The Workbench is also published at <https://cehinds.github.io/AshenSpire/workbench/>,
+so it can be opened without a checkout.
+
+- **What works there:** every studio reads a snapshot of `dev` taken when the
+  site was built. The game preview runs the game from source. Edits stay in your
+  browser; the top banner counts them, with **Download changes** and **Discard** (clears them after a confirmation). Library pages
+  open the published site's copies.
+- **What needs the local Workbench:** saving to the repository, builds and jobs,
+  Visual Review captures, and live reload. The page has no server, so none of
+  these run there.
+- **How it is built:** `node tools/workbench-static.mjs --out DIR [--base PATH] [--no-art]`,
+  run by `.github/workflows/pages-builds.yml` on each publish. `--base` sets the
+  path the site is served under (`/AshenSpire/workbench/` on Pages); `--no-art`
+  leaves out the light art pack.
+
 ## Open it
 
 - **Windows:** double-click **Start Workbench.cmd**. It starts the server (or
@@ -78,8 +95,10 @@ then explain how to start each tool.
   `docs/ENGINE-EXPORT.md`. On a checkout without `tools/engine-export.mjs`
   every *Run export* button is disabled and says why.
 - **Build & Checks** — allowlisted jobs only: `content-build`, `config-build`,
-  `build-only` (`tools/launch.mjs --build-only`), `engine-export` and
-  `tool-tests` (`node --test` over editor/, ui-studio/ and workbench/ tests).
+  `build-only` (`tools/launch.mjs --build-only`), `engine-export`, `tool-tests`
+  (`node --test` over editor/, ui-studio/ and workbench/ tests), and the game
+  profile jobs `game-config` (Game profiles), `game-config-check` (Check game
+  profiles) and `hud-layout` (HUD layout).
   One run per job at a time, live log, cancel, re-run, and the last 30 runs
   (kept in `workbench/.state/jobs.json`).
 - **Toasts and notifications** — info and success toasts fade; errors stay
@@ -87,6 +106,17 @@ then explain how to start each tool.
 - **Remembers** the open section, preview width, device, collapsed state,
   auto-reload and Library toggles (browser storage; the Workbench works
   without it).
+
+The **Game Configuration** module edits the authored game profiles: `games/ashenspire/game.json`
+(the product core), every `presets/*.json` and every `bundles/*/bundle.json` (bundles get JSON
+checks only). Its **Modules** panel lists all engine modules under `engine/modules/`, switches
+each one on or off in the draft, and edits its settings from the module's `settings.schema.json`,
+with `defaults.json` as placeholders. Drafts are validated with the same resolver the game-config
+build uses, and either built-in profile can be previewed. The **Data Studio** also browses the
+profile packs (`games/ashenspire/packs/`) and the HUD layout (`content/hud-layout/`); tables it
+cannot edit open read-only. The **Game profiles** and **Check game
+profiles** jobs rebuild and check the generated profiles and `game.lock.json` from
+that JSON, and **HUD layout** does the same for `content/hud-layout/`.
 
 ## Shortcuts
 

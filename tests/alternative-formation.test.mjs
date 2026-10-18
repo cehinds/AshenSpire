@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { alternativeFormation, fitAlternativeSprites, perspectiveCellContains, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
+import { alternativeCombatComposition } from '../src/ui/models/CombatCompositionModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 
 const plan = (count, players = 1) => combatFormation({ width: 1000, height: 500,
@@ -18,11 +19,11 @@ test('the perspective grid is one sheared grid: equal parallelograms on diagonal
     assert.equal(new Set(formation.cells.map(c => Math.round(c.box.width * 1e6))).size, 1, 'every cell has one width');
     const skew = formation.cells[0].box.skew;
     assert(skew > 0, 'the grid leans');
-    for (const lane of [0, 1, 2]) {
-      // Every anchor of a lane lies on one diagonal line of slope -skew.
-      const column = formation.cells.filter(c => c.lane === lane);
-      const intercepts = column.map(c => c.x + skew * c.ground);
-      assert(Math.max(...intercepts) - Math.min(...intercepts) < 1e-6, 'a lane is one straight diagonal');
+    for (const cell of formation.cells) {
+      const anchor = { x: .5, y: cell.side === 'player' ? .4 : .24 };
+      assert(Math.abs(cell.ground - cell.box.top - anchor.y * cell.box.height) < 1e-6);
+      const centre = cell.box.left + cell.box.width / 2 + skew * (cell.box.top + cell.box.height / 2 - cell.ground);
+      assert(Math.abs(cell.x - centre - (anchor.x - .5) * cell.box.width) < 1e-6);
     }
     const back = enemies.filter(c => c.rank === 0), front = enemies.filter(c => c.rank === 1);
     assert(Math.max(...back.map(c => c.ground)) < Math.min(...front.map(c => c.ground)), 'back rank sits behind the front');
@@ -76,13 +77,14 @@ test('fitted sprites stay inside their lane and above their foot anchor', () => 
       for (const [visibleWidth, visibleHeight] of [[240, 700], [700, 320]]) {
         const actors = formation.slots.map(slot => ({ slot, side: slot.side, visibleWidth, visibleHeight,
           leading: 30, ratio: 1.1, multiplier: 1.25 }));
-        const sizes = fitAlternativeSprites({ width, height, actors, narrow });
+        const sizes = alternativeCombatComposition({width,height,actors,perspectiveGrid:true,
+        sizes:fitAlternativeSprites({ width, height, actors, narrow })});
         assert.equal(sizes.length, actors.length);
         sizes.forEach((size, i) => {
           const actor = actors[i], halfWidth = visibleWidth * size.scale / 2;
           assert(size.scale > 0 && Number.isFinite(size.scale));
           assert(size.x - halfWidth >= 5 - 1e-6 && size.x + halfWidth <= width - 5 + 1e-6);
-          assert(halfWidth * 2 <= actor.slot.box.width + 1e-6, 'a body fits its lane');
+          assert(halfWidth * 2 <= actor.slot.box.width * (actor.side === 'player' ? 1.5 : 1) + 1e-6, 'player growth has its explicit width allowance');
           assert(actor.slot.ground - size.visibleHeight >= actor.leading + 6 - 1e-6);
         });
       }
@@ -90,10 +92,10 @@ test('fitted sprites stay inside their lane and above their foot anchor', () => 
   }
 });
 
-test('the party keeps room for its name and meters below the feet on short fields', () => {
+test('the player stands inside the final band with HUD room above rather than below', () => {
   for (const height of [130, 160, 183, 420]) {
     const formation = alternativeFormation(plan(3), 844, height, false);
-    for (const cell of formation.cells.filter(c => c.side === 'player')) assert(cell.ground <= height - 32 + 1e-9);
+    for (const cell of formation.cells.filter(c => c.side === 'player')) assert(cell.ground < height && cell.visualBand === 'D');
   }
 });
 
@@ -117,11 +119,93 @@ test('enemies of one class stand one height in every rank; low creatures stay at
     const formation = alternativeFormation(plan(5), width, height, narrow);
     const actors = formation.slots.map((slot, i) => ({ slot, side: slot.side, visibleWidth: 120 + i * 30, visibleHeight: 300,
       leading: 40, ratio: 1, multiplier: 1, enemyId: slot.side === 'enemy' && i === 2 ? 'blightHound' : `foe${i}` }));
-    const sizes = fitAlternativeSprites({ width, height, actors, narrow });
+    const sizes = alternativeCombatComposition({width,height,actors,perspectiveGrid:true,
+        sizes:fitAlternativeSprites({ width, height, actors, narrow })});
     const enemy = sizes.filter(size => formation.slots.find(s => s.id === size.id).side === 'enemy');
     const hound = enemy.find(size => actors.find(a => a.slot.id === size.id).enemyId === 'blightHound');
     const others = enemy.filter(size => size !== hound);
     assert.equal(new Set(others.map(size => Math.round(size.visibleHeight * 1e6))).size, 1, 'one minion height across both ranks');
     assert(Math.abs(hound.visibleHeight - others[0].visibleHeight * .5) < 1e-6, 'a low creature is half its class height');
+  }
+});
+
+test('the extra band keeps identical geometry when core occupancy is disabled', () => {
+  const plans = [false,true].map(enabled => {
+    const presentation = {perspectiveGrid:true,formationPreset:'straight',formationPolicy:{extraRow:{enabled,sides:['enemy'],capacityPerLane:1}}};
+    return alternativeFormation(combatFormation({width:1440,height:441,presentation,friends:['p'],enemies:['e']}),1440,441,false,presentation);
+  });
+  assert.deepEqual(plans[0].visualBands,plans[1].visualBands);
+  assert.equal(plans[0].visualBands.length,4);
+  assert.equal(plans[0].cells.some(c=>c.visualBand==='C'),false);
+  assert.equal(plans[1].cells.filter(c=>c.visualBand==='C').length,3);
+  const coreVisual = plans[0].visualCells.filter(c=>c.visualBand==='C');
+  assert.equal(coreVisual.length,3);
+  assert.ok(coreVisual.every(c=>c.visualOnly));
+  assert.ok(coreVisual.every(c=>!plans[0].slots.some(slot=>slot.cell===c.cell)));
+  assert.deepEqual(coreVisual.map(c=>c.box),plans[1].visualCells.filter(c=>c.visualBand==='C').map(c=>c.box));
+  assert.equal(plans[0].visualCells.length,12);
+});
+
+test('engine occupancy is authoritative for extra combatants and saved player lanes', () => {
+  const presentation = {perspectiveGrid:true,formationPreset:'straight',formationPolicy:{extraRow:{enabled:true,sides:['enemy'],capacityPerLane:1}},
+    formationOccupancy:[{id:'p',side:'player',cell:'B2'},{id:'e',side:'enemy',cell:'A5'}]};
+  const result=alternativeFormation(combatFormation({width:1440,height:441,presentation,friends:['p'],enemies:['e']}),1440,441,false,presentation);
+  assert.equal(result.slots.find(s=>s.id==='e').visualBand,'C');
+  assert.equal(result.slots.find(s=>s.id==='e').cell,'A5');
+  assert.equal(result.slots.find(s=>s.id==='p').cell,'B1');
+  assert.equal(result.slots.find(s=>s.id==='p').lane,1);
+  const old=plan(2);old.slots.find(s=>s.side==='player').row=0;
+  assert.equal(alternativeFormation(old,1440,441,false).slots.find(s=>s.side==='player').lane,2);
+});
+
+test('malformed visual band configuration fails before producing NaN geometry', async () => {
+  const {validatePerspectiveGrid}=await import('../src/ui/models/AlternativeFormationModel.js');
+  const {uiConfig}=await import('../src/config/generated/ui.js');
+  const grid=structuredClone(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid);
+  grid.bands[2].id='enemy-front';assert.throws(()=>validatePerspectiveGrid(grid),/visual bands/);
+  const invalid=structuredClone(uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid);
+  invalid.wide.rowHeight=NaN;assert.throws(()=>validatePerspectiveGrid(invalid),/wide profile/);
+});
+
+test('a spacious enemy rank keeps its approved body size as independent HUDs grow', () => {
+  const formation=alternativeFormation(plan(2),1440,441,false);
+  const actors=formation.slots.filter(s=>s.side==='enemy').map(slot=>({slot,side:'enemy',enemyId:'stitchedHound',ratio:1,multiplier:1.5,visibleWidth:179,visibleHeight:190,artLeading:0,leading:180}));
+  const sizes=fitAlternativeSprites({width:1440,height:441,actors,narrow:false});
+  for (const fit of sizes) {
+    const actor = actors.find(actor => actor.slot.id === fit.id);
+    assert(fit.visibleHeight > 0);
+    assert(fit.visibleHeight < actor.slot.ground - 6);
+    assert(fit.scale * actor.visibleWidth <= actor.slot.box.width - 12);
+  }
+});
+
+test('right-first phone allocation uses inward cell room before shrinking a whole enemy class', () => {
+  const formation=alternativeFormation(plan(2),390,426,true);
+  const actors=formation.slots.filter(slot=>slot.side==='enemy').map(slot=>({slot,side:'enemy',enemyId:'stitchedHound',ratio:1,multiplier:1,visibleWidth:179,visibleHeight:217.4,leading:66}));
+  assert.deepEqual(actors.map(actor=>actor.slot.cell),['C4','A4']);
+  const fits=fitAlternativeSprites({width:390,height:426,actors,narrow:true});
+  const leftOnly=fitAlternativeSprites({width:390,height:426,actors:[actors[1]],narrow:true})[0];
+  for(const fit of fits) assert.equal(fit.visibleHeight,leftOnly.visibleHeight,'outer right lane retains the same readable class height as the left lane');
+  assert(fits[0].visibleHeight>70,'normal phone enemies do not collapse to the old far-right edge reserve');
+});
+
+
+test('every form factor fits the entire artwork envelope within its own cell', () => {
+  for (const [formFactor, width, height, narrow] of [['mobile',390,426,true], ['tablet',820,650,false], ['desktop',1440,620,false]]) {
+    const formation = alternativeFormation(plan(6), width, height, narrow, { formFactor });
+    const actors = formation.slots.map(slot => ({ slot, side: slot.side, visibleWidth: 700, visibleHeight: 320, leading: 30, ratio: 1, multiplier: 1 }));
+    const sizes = alternativeCombatComposition({ width, height, actors, perspectiveGrid: true, sizes: fitAlternativeSprites({ width, height, actors, narrow }) });
+    for (const actor of actors) {
+      const fit = sizes.find(size => size.id === actor.slot.id), box = actor.slot.box;
+      const half = actor.visibleWidth * fit.scale / 2;
+      const left = box.left + Math.abs(box.skew) * box.height / 2;
+      const right = box.left + box.width - Math.abs(box.skew) * box.height / 2;
+      assert(fit.x - half >= left + 6 - 1e-6, `${formFactor} complete left edge`);
+      assert(fit.x + half <= right - 6 + 1e-6, `${formFactor} complete right edge`);
+      assert.equal(actor.slot.miniHudWidth, box.width - 4);
+      assert(Math.abs(actor.slot.miniHudLeft - (box.left + box.skew * box.height / 2 + 2)) < 1e-6);
+    }
+    const back = formation.slots.filter(slot => slot.formationRole === 'enemy-back');
+    assert.equal(new Set(back.map(slot => slot.miniHudTop)).size, 1, 'back-row HP geometry is level');
   }
 });

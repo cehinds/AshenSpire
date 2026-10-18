@@ -1,0 +1,36 @@
+{
+  "generated_at_utc": "2026-10-12T05:52:53.499422+00:00",
+  "tool": "tools.image_gen__imagegen",
+  "exact_prompt_file": "sheet-a.prompt.txt",
+  "requested_dimensions": [
+    1536,
+    1024
+  ],
+  "actual_dimensions": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    254
+  ],
+  "transparent_pixel_count": 1106503,
+  "original_tool_path": "/workspace/generated_images/exec-1832b041-cb44-4f3f-ae5b-b1a7a7f4b8df.png",
+  "preserved_artifact": "sheet-a.original.png",
+  "sha256": "2286f32853caf4f3505797fa58a5da92a21eed6502e1df86960a6e16764ba00e",
+  "referenced_image_paths": [
+    "/workspace/AshenSpire/assets-display/alternative/stances/reaver/offensive.webp",
+    "/workspace/AshenSpire/pose-studio/stances/source/reaver-default.png"
+  ],
+  "reference_inspection": "Both project images inspected with view_image before generation. External discovered source pixels not inspected; source discovery described as inference.",
+  "transparent_background": true,
+  "raw_output_preserved": true,
+  "review_status": "superseded by anatomy-corrected canonical sheet-a.png",
+  "director_findings": [
+    "Bottom-left pose crosses nominal 512px cell",
+    "Top-middle second gripping hand obscured",
+    "Top-right waist grip too far behind torso"
+  ],
+  "alpha_validation": "Alpha valid. Earlier view_image misleadingly displayed hidden RGB; browser rendering verified transparency. No alpha repair was necessary."
+}

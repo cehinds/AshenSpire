@@ -8,6 +8,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { initialClassTreeChoices } from '../src/model/classTree.js';
 import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
+import { createRng } from '../src/engine/rng.js';
 import { createSession } from '../tools/session.mjs';
 import { coopTimelineRoute, coopPacedRoute, coopReceiptOverlays, coopCardPlayBuzz, coopReceiptSounds, coopFinalFrame } from '../src/ui/screens/coop.js';
 import { haptic } from '../src/ui/haptics.js';
@@ -142,6 +143,16 @@ test('a card plan no swing played (Instant, reduced motion, a skip) plays on the
   assert.match(body('renderCombat'), /for \(const \[ownerId, plan\] of pendingAnimations\) playSeatPlan\(ownerId, plan\);/);
 });
 
+test('the paced frames move the Barrier, Ward and Poise badges with each hit, not only Block and Health', () => {
+  const pace = body('playPacedReceipts');
+  assert.match(pace, /if \(event\.barrierRemaining !== undefined\) target\.barrier = event\.barrierRemaining;/);
+  assert.match(pace, /if \(event\.wardRemaining !== undefined && target\.persistentWard\) target\.persistentWard\.value = event\.wardRemaining;/);
+  assert.match(pace, /if \(event\.poiseRemaining !== undefined && target\.persistentPoise\) target\.persistentPoise\.value = event\.poiseRemaining;/);
+  assert.match(pace, /if \(event\.type === 'barrierGained' && target && event\.total !== undefined\) target\.barrier = event\.total;/);
+  assert.match(pace, /if \(\(event\.type === 'persistentWardChanged' \|\| event\.type === 'combatWardStripped'\) && target\?\.persistentWard && Number\.isFinite\(event\.value\)\)/);
+  assert.match(pace, /if \(event\.type === 'persistentPoiseChanged' && target\?\.persistentPoise\)/);
+});
+
 test('a throw before the timeline starts clears the flag; a cancelled or torn-down run renders nothing', () => {
   const pace = body('paceReactionReceipts');
   assert.match(pace, /try \{\s*playPacedReceipts\(next, setPacing, run, land\);\s*\} catch \(error\) \{/);
@@ -212,7 +223,23 @@ test('the blow that ends a fight is paced once, on the board, before its reward 
   const [last, ...rest] = host.live.combat.enemies.filter(enemy => enemy.alive);
   for (const enemy of rest) { enemy.hp = 0; enemy.alive = false; }
   last.hp = 1;
-  const attack = board.players.find(player => player.id === 'p1').hand.find(card => registries.cards.get(card.cardId)?.type === 'attack');
+  // Isolate a killing contact from the new protection pools: the contract here
+  // is final-scene receipt pacing, while damage/protection has its own tests.
+  last.block = 0; last.barrier = 0;
+  if (last.persistentPoise) last.persistentPoise.value = 0;
+  if (last.persistentWard) last.persistentWard.value = 0;
+  // The pacing contract starts with a landed killing blow. Put this fixture
+  // within melee reach and retain real RNG state with a natural20 next.
+  if (last.combatStance) last.combatStance.range = 'melee';
+  const rng = host.live.combat.rng;
+  const counters = rng.getCounters();
+  const probe = createRng(rng.seed, counters);
+  while (probe.int('combatAvoidance', 1, 20) !== 20) counters.combatAvoidance = (counters.combatAvoidance || 0) + 1;
+  rng.restoreCounters(counters);
+  // Use a direct damage card; an Attack-class Counter defers its payload and
+  // cannot serve as this test's immediate killing blow.
+  const attack = { cardId: 'strike', instanceId: 'ending-strike', upgraded: false };
+  host.live.combat.players.get('p1').piles.hand.push(attack);
   assert.equal(host.combatPlay('p1', attack.instanceId, last.id).ok, true);
   const scene = host.snapshot().scene;
   assert.notEqual(scene.kind, 'combat', 'the fight ended');

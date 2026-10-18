@@ -1,0 +1,5 @@
+# Weathered (`status.frostResist`)
+Just burst - hardened against Frost: incoming build-up reduced {resists.percent}% for {decay.duration} turns.
+- Carried by: statuses on any entity.
+- Lives in: `src/content/statuses.js`.
+- Portability: legacy (service.json is empty until the behaviour moves to catalog ops).

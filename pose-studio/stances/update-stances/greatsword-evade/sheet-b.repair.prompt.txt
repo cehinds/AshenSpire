@@ -1,0 +1,15 @@
+Edit attached Evade16–20 sheet, maintaining exact Reaver costume, rearLEFTcamera facingRIGHT, broad long sword, twohands on samehilt and five distinct poses. IMPORTANT FIRST uniformly SCALE ALL ENTIRE FIGURES DOWN TO HALF CURRENT SIZE, including full sword and cape. Do NOT paint largeheroes: this is a sparse tiny-sprite contact sheet. Each body only210px high, completefigure+weapon<=368square centeredin512squarecell. Huge EMPTY TRANSPARENT gutters. Portrait1024x1536,2columns3rows with fiveoccupantsTL,TR,ML,MR,BL;BRempty. Every opaque pixel belongs inside TLx72..440y72..440,TRx584..952y72..440,MLx72..440y584..952,MRx584..952y584..952,BLx72..440y1096..1464. No image elements beyondthese rectangles. Mostcanvasemptyalpha. Keep sameuniformBODYSCALE; do not shortenweapon. Transparencypreserved fullyemptybackground, opaque characterinteriors. No labelsgridFXtrailsorprops. Everyfullboot/cape/swordtipcontainedandseparated.
+
+Make following THREE ANATOMICAL BODY corrections, not cosmetic sword edits. Keep bothboots FLAT PLANTED for all five, no liftedheels/toes and no kneel. ExactlyTWO gauntleted hands separated on samehilt, both forearms anatomically connected visible. Closed helmet/rightward threat orientation. One continuous crimsoncape.
+
+TL EV16 must be unmistakable BACKWARD DUCK/REVERSE LUNGE. Replace current DEEPLYBENT RIGHT FRONT KNEE: make RIGHT FRONT LEG LONG ALMOST STRAIGHT with slight unlockedknee, full rightbootflat. DEEPLYBEND LEFT REAR KNEE and place pelvis over leftrearboot. Headandchest PULLBACK LEFT awayfromthreat, helmet center visibly LEFT ofbeltbuckle/hips. Still faceRIGHT. Keep swordvertical besidefront/rightshoulder, twohandgrip. WeightonLEFTREARLEG, notfront. A stable backwardevade, notforwardcrouch.
+
+TR EV17 retain existing distinctive narrowupright collectedrecovery, two flatstaggeredboots, sworddiagonalupFORWARDRIGHT withhandsbesideribs. Fullweaponvisible. Resizeonly, preserveidentity.
+
+ML EV18 retain widehipwithdrawal but FIX IMPOSSIBLE BEHIND-BACK GRIP. Movebothgrippinghands onto accessible viewerLEFT SIDE HIP, clearly OUTSIDE cape with BENT CONNECTED ELBOWS and bothforearmsvisible alongnearleftbody. Hilt besideleftwaist, blade trailingdiagonalDOWNLEFT, tipaboveground. Do nottwistwristsbehindspineorhidehandincape. RearLEFTcamera/rightfacing maintained, wideflatboots.
+
+MR EV19 retain distinct settledforwarddiagonalescape, moderateforwardtorso, asymmetricopenplantedbase, compactchestlevelblade horizontalFORWARDRIGHT withbentelbows andtwo separatedhandgrips. Notfullthrustorattack. Resizeonly.
+
+BL EV20 make CLEAR VIEWERLEFT SHOULDER SLIP. Keephips centeredbetweenmediumwideFLAT boots, kneesslightlybent, bodyTALL. Moveheadandupperchest noticeably VIEWERLEFT sohelmetcenter LEFT ofhips/beltbuckle, shouldersleanLEFT awayfromincomingline. StillclosedhelmetfaceRIGHT and rearLEFTcamera, nofrontportrait. Bothhands lowataccessibleRIGHTthigh, broad longblade slopesDOWNFORWARDRIGHT abovefloor. No currentrightwardforwardheadbow. Tallleftlean differsfromEV16lowbackwardduck.
+
+BRentirelyemptytransparent. Preserveoriginalartstyle and exactrustplate/chainmail/helmet/crimsoncape, noextraweapons.

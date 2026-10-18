@@ -25,7 +25,7 @@ test('bow set covers every armor appearance and either hand', () => {
   }
 });
 
-test('Bow Attack fires the bow clip; other ranged cards and spells keep their own motion', () => {
+test('bow clips remain available to previews while combat uses class-default ranged motion', () => {
   const run = createRunState({ seed: 21, classId: 'rogue', registries });
   run.loadout.active.rightHand = 0;
   run.loadout.active.leftHand = 0;
@@ -36,7 +36,7 @@ test('Bow Attack fires the bow clip; other ranged cards and spells keep their ow
   const shot = resolveCard(registries, { cardId: 'strike', profileId: 'bowPierceAttack' });
   const tags = shot.cardTags;
   assert.ok(tags.includes('bow'), 'the profile has an explicit Bow tag');
-  assert.equal(resolveCombatAnimation({ ...shot, cardTags: tags, sourceArmamentId: 'shortbow' }, [bow], { animation: component }).technique, 'bowAttack');
+  assert.equal(resolveCombatAnimation({ ...shot, cardTags: tags, sourceArmamentId: 'shortbow' }, [bow], { animation: component }).technique, 'attack');
   const offhand = resolveCombatAnimation({ ...shot, cardTags: tags, sourceArmamentId: 'parryDagger' }, [bow], { animation: component });
   assert.equal(offhand.technique, 'attack');
   assert.notDeepEqual(animationClip(component, offhand.technique).frames, frames);

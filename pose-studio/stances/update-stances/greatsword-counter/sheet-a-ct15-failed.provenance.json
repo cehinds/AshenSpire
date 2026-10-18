@@ -1,0 +1,101 @@
+{
+  "generated_at_utc": "2026-10-12T16:29:36.317341+00:00",
+  "tool": "tools.image_gen__imagegen",
+  "exact_prompt": "sheet-a-ct15.prompt.txt",
+  "prompt_sha256": "3ab542b2a22df18dc5bdf483eb876af0bbe739e83e0c05f8d7614372a0f61011",
+  "requested_dimensions": [
+    1024,
+    1536
+  ],
+  "actual_dimensions": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "alpha_extrema": [
+    1,
+    253
+  ],
+  "transparent_background": true,
+  "reference_images": [
+    {
+      "path": "pose-studio/stances/update-stances/greatsword-counter/sheet-a-repair-3.png",
+      "sha256": "cdf9e317db377a672a6de09af90516bf903246cd5800727f7acf364d353d49cd",
+      "visually_inspected": true
+    }
+  ],
+  "original_tool_path": "/workspace/generated_images/exec-cbb0371e-b17c-47d6-8714-a3f2c512c079.png",
+  "output_identification": "Exact file path returned by this imagegen call; no newest-file glob or directory comparison",
+  "preserved_artifact": "sheet-a-ct15-failed.png",
+  "raw_bytes_preserved": true,
+  "sha256": "e77f8e3e2d60a5ad18f622b22724dafc0027f0549b4fe3afc6fff8d27050f8ad",
+  "concept_ids": [
+    "CT11",
+    "CT12",
+    "CT13",
+    "CT14",
+    "CT15"
+  ],
+  "layout": "2 columns x 3 rows, row-major; bottom-right empty",
+  "review_status": "failed CT15 grip repair; not canonical or approved",
+  "observations": [
+    "Requested CT15-only two-hand repair did not visibly produce a second gripping hand",
+    "Previous canonical sheet-a.png retained; this exact failed revision preserved"
+  ],
+  "alpha_cell_diagnostics": [
+    {
+      "cell": 1,
+      "alpha_gt_127_bbox_local": [
+        0,
+        0,
+        512,
+        488
+      ]
+    },
+    {
+      "cell": 2,
+      "alpha_gt_127_bbox_local": [
+        0,
+        0,
+        512,
+        492
+      ]
+    },
+    {
+      "cell": 3,
+      "alpha_gt_127_bbox_local": [
+        0,
+        7,
+        512,
+        512
+      ]
+    },
+    {
+      "cell": 4,
+      "alpha_gt_127_bbox_local": [
+        0,
+        119,
+        427,
+        512
+      ]
+    },
+    {
+      "cell": 5,
+      "alpha_gt_127_bbox_local": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    {
+      "cell": 6,
+      "alpha_gt_127_bbox_local": [
+        0,
+        0,
+        512,
+        512
+      ]
+    }
+  ]
+}

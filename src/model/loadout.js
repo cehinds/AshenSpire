@@ -1,3 +1,5 @@
+import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
+import { gameModule, gameContent } from './gameProfile.js';
 import { retiredAttackSlots, isPoolDeckRun } from './cardRemoval.js';
 import { tokenRe } from './tokens.js';
 import {
@@ -22,7 +24,7 @@ import { applyAbilityGrade } from './abilityGrades.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 2;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'ratingId', 'cap']);
-const EQUIPMENT_PROFILE_CARRIER_FIELDS = Object.freeze(['damageSchool', 'exposureBuildupPerHit']);
+const EQUIPMENT_PROFILE_CARRIER_FIELDS = Object.freeze(['damageSchool', 'exposureBuildupPerHit', 'magicShare']);
 // src/model/loadout.js — what you carry, and what it does to your cards.
 //
 // The design rule (SPEC §3.1(2)) is that equipment may not add behaviour the
@@ -148,9 +150,10 @@ export function armamentIntrinsicStatProblems(piece) {
   }
   const isStaffTechnique = (piece?.itemTypeTags || []).includes('item:magic-focus')
     && piece?.techniqueProfile === 'staffTechnique';
-  const expectedManaCost = isStaffTechnique ? 1 : 0;
-  if (piece?.weaponArtManaCost !== expectedManaCost) {
-    problems.push(`${id}: weaponArtManaCost must be ${expectedManaCost} for its authored item type and technique profile`);
+  const hasWeaponArts = (piece?.weaponCardPackage?.weaponArtDefaults || []).length > 0;
+  const minimumManaCost = hasWeaponArts || isStaffTechnique ? cardManaPolicy.minimumMana : 0;
+  if (piece?.weaponArtManaCost < minimumManaCost) {
+    problems.push(`${id}: weaponArtManaCost must be at least ${minimumManaCost} for its authored weapon arts`);
   }
   if (piece?.uniqueSkillStaminaCost !== 0) {
     problems.push(`${id}: uniqueSkillStaminaCost must remain 0 until an explicit unique-skill consumer exists`);
@@ -416,6 +419,7 @@ function collectEquipmentProblems(registries, problems = []) {
     if (!Number.isFinite(profile.baseValue) || profile.baseValue < 0) problems.push(`${profile.id}: baseValue must be finite and non-negative`);
     if (!ratingIds.includes(profile.ratingId)) problems.push(`${profile.id}: unknown ratingId '${profile.ratingId}'`);
     if (profile.cap !== '' && profile.cap != null && (!Number.isFinite(profile.cap) || profile.cap < 0)) problems.push(`${profile.id}: cap must be blank or a finite non-negative number`);
+    if (profile.magicShare !== '' && profile.magicShare != null && (!Number.isFinite(profile.magicShare) || profile.magicShare < 0 || profile.magicShare > 1)) problems.push(`${profile.id}: magicShare must be blank or a number from 0 to 1`);
     if (profile.compatibility !== `${profile.role}-v1`) problems.push(`${profile.id}: compatibility '${profile.compatibility}' must match role vocabulary '${profile.role}-v1'`);
     // The service owns what a family may carry, so this reads the same rule
     // the boot door reads rather than a second copy of it.
@@ -1020,7 +1024,7 @@ function profileById(registries, id) {
 function profileRule(profile) {
   return {
     ...Object.fromEntries(EQUIPMENT_PROFILE_PATCH_FIELDS.map((key) => [key, profile[key] === '' ? null : profile[key]])),
-    ...Object.fromEntries(EQUIPMENT_PROFILE_CARRIER_FIELDS.map((key) => [key, profile[key]])),
+    ...Object.fromEntries(EQUIPMENT_PROFILE_CARRIER_FIELDS.map((key) => [key, profile[key] === '' ? null : profile[key]])),
     compatibility: profile.compatibility,
   };
 }
@@ -1078,6 +1082,9 @@ export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
     // exactly once during migration; every subsequent save owns the values.
     if (rule.damageSchool === undefined) rule.damageSchool = profile.damageSchool;
     if (rule.exposureBuildupPerHit === undefined) rule.exposureBuildupPerHit = profile.exposureBuildupPerHit;
+    // A blank magic share is the card's damage type default (null). Older snapshots adopt the live row once.
+    if (rule.magicShare === undefined) rule.magicShare = profile.magicShare === '' ? null : profile.magicShare;
+    if (rule.magicShare !== null && !(Number.isFinite(rule.magicShare) && rule.magicShare >= 0 && rule.magicShare <= 1)) throw new Error(`${profile.id}.magicShare must be null or 0..1`);
     if (!DAMAGE_SCHOOLS.includes(rule.damageSchool)) throw new Error(`${profile.id}.damageSchool '${rule.damageSchool}' is unknown`);
     if (!Number.isInteger(rule.exposureBuildupPerHit) || rule.exposureBuildupPerHit < 0) throw new Error(`${profile.id}.exposureBuildupPerHit must be a non-negative integer`);
     const legal = [...EQUIPMENT_PROFILE_PATCH_FIELDS, ...EQUIPMENT_PROFILE_CARRIER_FIELDS, 'compatibility'];
@@ -1311,6 +1318,9 @@ function quotaRefs(registries, source, count) {
 
 /** Pure deterministic projection from active hand equipment to authored slots. */
 export function buildEquippedWeaponCardPlan(registries, loadout, classId, { attackSlotCount = undefined, removedAttackSlotIds = [] } = {}) {
+  if (registries.gameProfile?.foundation?.mode === 'configured' && gameModule(registries, 'cards')?.mode !== 'legacy') {
+    return Object.freeze({ attackSlotCount: 0, fingerprint: 'configured-deck', slots: Object.freeze([]) });
+  }
   // WHERE THE DEFAULT COMES FROM. Under the composed starting deck the attack
   // quota is whatever the plan worked out — grants first, then filler split by
   // the class's strikeBias — and roleCopies.attack is the LEGACY answer, right
@@ -2110,6 +2120,7 @@ function playerInstalledGrants(run, desired) {
 }
 
 export function reconcileGrantedCards(registries, run) {
+  if (run.gameProfile?.foundation?.mode !== 'legacy' && run.gameProfile && (!gameModule(run, 'cards') || gameModule(run, 'cards')?.mode === 'configured')) return;
   if (!run.deck) run.deck = [];
   // A dealt deck (Sealed, Draft) keeps only the cards the player installed in
   // the worn equipment's mounts; every other lent card is swept (an older
@@ -2988,6 +2999,10 @@ export function stampDeck(registries, run, cards, {
   reconcileEquipmentPools = true,
 } = {}) {
   if (reconcileEquipmentPools) reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses });
+  // Configured cards own their explicit deck and shared rating receipt. They
+  // have no legacy weapon-card slots to stamp or grants to reconcile; projecting
+  // those slots would also reject the explicitly authored two-dagger Rogue kit.
+  if (run.gameProfile?.foundation?.mode === 'configured' && gameModule(run, 'cards')?.mode !== 'legacy') return 0;
   const list = cards || run.deck || [];
   if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
   // THE QUOTA IS THE RUN'S, NOT THE LOADOUT'S. A composed deck's attack count
@@ -3091,6 +3106,11 @@ export function stampDeck(registries, run, cards, {
       // instance instead of adopting live content changes.
       const authored = registries.cards.get(inst.cardId);
       carrier = schoolAbsent ? applyAbilityGrade(authored, inst.abilityRank) : inst;
+      // A non-attack card may name a school for its status or presentation
+      // without dealing per-hit exposure. Persist its school with an explicit
+      // zero carrier so new instances satisfy the same saved-pair contract.
+      if (schoolAbsent && authored.type !== 'attack' && typeof carrier.damageSchool === 'string'
+        && carrier.exposureBuildupPerHit === undefined) carrier = {...carrier,exposureBuildupPerHit:0};
     }
     const priorSchool = inst.damageSchool;
     const priorBuildup = inst.exposureBuildupPerHit;
@@ -3098,6 +3118,13 @@ export function stampDeck(registries, run, cards, {
     else delete inst.damageSchool;
     if (Number.isInteger(carrier.exposureBuildupPerHit)) inst.exposureBuildupPerHit = carrier.exposureBuildupPerHit;
     else delete inst.exposureBuildupPerHit;
+    // The magic share is the profile's; the physical damage type is the lending weapon's (armaments.csv physicalDamageType).
+    const priorShare = inst.magicShare;
+    const priorPhysical = inst.physicalDamageType;
+    if (Number.isFinite(carrier.magicShare)) inst.magicShare = carrier.magicShare;
+    else delete inst.magicShare;
+    if (row && row.piece && row.piece.physicalDamageType) inst.physicalDamageType = row.piece.physicalDamageType;
+    else delete inst.physicalDamageType;
     const mods = cardMods(registries, run.loadout, run.class, {
       attackSourceWeaponId: inst.kitRole === 'attack' ? inst.grantedBy : inst.equipmentRole === 'attack' ? (inst.weaponId || null) : undefined,
     });
@@ -3105,7 +3132,8 @@ export function stampDeck(registries, run, cards, {
       : row && row.role === 'guard' ? `block=${row.receipt.effectBase}` : null;
     const next = [...(amountMod ? [amountMod] : []), ...((row && row.profile.mods) || []), ...(mods.get(inst.cardId) || [])];
     const prev = inst.mods || [];
-    const carrierChanged = priorSchool !== inst.damageSchool || priorBuildup !== inst.exposureBuildupPerHit;
+    const carrierChanged = priorSchool !== inst.damageSchool || priorBuildup !== inst.exposureBuildupPerHit
+      || priorShare !== inst.magicShare || priorPhysical !== inst.physicalDamageType;
     if (!carrierChanged && next.length === prev.length && next.every((v, i) => v === prev[i])) continue;
     if (next.length) inst.mods = next;
     else delete inst.mods;
@@ -3534,7 +3562,14 @@ export function normalizeArmamentLocations(registries, loadout) {
   const storage = [...new Set(loadout.storage || [])];
   for (const [id, rows] of occurrences) {
     const kept = rows.find((row) => row.active) || rows[0];
-    const cleared = rows.filter((row) => row !== kept);
+    // Configured class packs may explicitly own two same-definition weapons
+    // (the Rogue's dagger/dagger kit). Preserve only its two active hand
+    // occurrences; legacy and unrelated duplicate locations still normalize.
+    const authoredPair = registries.gameProfile?.foundation?.mode === 'configured'
+      && gameContent(registries, 'classes')?.some(row => row.loadout?.rightHand === id && row.loadout?.leftHand === id);
+    const retained = authoredPair ? rows.filter(row => row.active).slice(0, 2) : [kept];
+    if (!retained.length) retained.push(kept);
+    const cleared = rows.filter((row) => !retained.includes(row));
     for (const row of cleared) loadout.sets[row.slotId][row.setIndex] = null;
     const removedFromStorage = storage.includes(id);
     if (removedFromStorage) storage.splice(storage.indexOf(id), 1);

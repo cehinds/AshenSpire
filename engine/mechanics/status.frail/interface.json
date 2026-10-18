@@ -1,0 +1,49 @@
+{
+  "mechanic": "status.frail",
+  "commands": {
+    "apply": {
+      "params": {
+        "target": "entityRef",
+        "stacks": "value"
+      },
+      "description": "Add stacks of Frail to the target."
+    },
+    "remove": {
+      "params": {
+        "target": "entityRef",
+        "amount": "value"
+      },
+      "description": "Remove stacks of Frail from the target."
+    }
+  },
+  "events": {
+    "applied": {
+      "payload": {
+        "target": "entityRef",
+        "stacks": "number"
+      }
+    },
+    "removed": {
+      "payload": {
+        "target": "entityRef",
+        "amount": "number"
+      }
+    }
+  },
+  "queries": {
+    "stacks": {
+      "params": {
+        "target": "entityRef"
+      },
+      "returns": "number",
+      "value": {
+        "f": "stacks",
+        "of": "target",
+        "status": "frail"
+      },
+      "description": "Current Frail stacks on the target."
+    }
+  },
+  "listens": [],
+  "requires": []
+}

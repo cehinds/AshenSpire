@@ -1,0 +1,33 @@
+{
+  "id": "tooltip",
+  "description": "Tooltip with arrow. Reads src/ui/components/tooltip.js and src/ui/models/TooltipPlacementModel.js.",
+  "layout": {
+    "ref": "content/config/ui/components/tooltip.json"
+  },
+  "viewModel": {
+    "props": {
+      "title": "string",
+      "body": "string",
+      "anchor": "object"
+    },
+    "bindings": {
+      "title": "$title",
+      "body": "$body",
+      "arrowWidthRem": "layout.sizing.arrowWidthRem",
+      "arrowHeightRem": "layout.sizing.arrowHeightRem"
+    }
+  },
+  "states": [
+    "hidden",
+    "shown"
+  ],
+  "events": {
+    "dismiss": "tooltip.hide"
+  },
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

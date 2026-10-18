@@ -1,0 +1,26 @@
+{
+  "id": "damage.blade",
+  "tag": "damage.blade",
+  "version": "1.0.0",
+  "family": "damage",
+  "label": "Blade",
+  "description": "Tag damage.blade in the damage family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "damage.blade"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatAnimation.js",
+    "symbol": "resolveCombatAnimation"
+  }
+}

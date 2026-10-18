@@ -1,0 +1,439 @@
+{
+  "schema": 1,
+  "kind": "horizontal-greatsword-sweep-options",
+  "status": "option-review-candidates-not-runtime-selection",
+  "frame_size": [
+    768,
+    512
+  ],
+  "slots_per_example": 5,
+  "examples_count": 10,
+  "exported_slots": 50,
+  "unique_painted_action_frames": 30,
+  "shared_approved_bookend_paintings": 1,
+  "bookend_source": "pose-studio/stances/update-stances/sequence-review/frames/W.webp",
+  "bookend_sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865",
+  "source_ground_y": 467,
+  "examples": [
+    {
+      "id": "SW01",
+      "folder": "Sweep01",
+      "name": "Waist cleave",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "approved-stance",
+          "path": "Sweep01/frame-01.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        },
+        {
+          "slot": 2,
+          "role": "load",
+          "path": "Sweep01/frame-02.webp",
+          "sha256": "4af249d4f406e874fe7b85830b1faebcbcbb333131bbf3e66c5a9a6f9c7ba032"
+        },
+        {
+          "slot": 3,
+          "role": "contact",
+          "path": "Sweep01/frame-03.webp",
+          "sha256": "a9d2a62b7d71fe9255bf1137c5c54af816483460a7085ac2bff01cd7a3c23512"
+        },
+        {
+          "slot": 4,
+          "role": "followthrough",
+          "path": "Sweep01/frame-04.webp",
+          "sha256": "2d74362e8fced20e02938116dae00dcc7a107898a7f3f5c9b4cfb38e1a4e45e5"
+        },
+        {
+          "slot": 5,
+          "role": "approved-stance",
+          "path": "Sweep01/frame-05.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        }
+      ],
+      "strip": "Sweep01/strip.png",
+      "gif": "Sweep01/preview.gif",
+      "raw": "Sweep01/raw-revision2.png",
+      "normalization": "Sweep01/normalization.json",
+      "status": "option-review-candidate"
+    },
+    {
+      "id": "SW02",
+      "folder": "Sweep02",
+      "name": "Chest crosscut",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "approved-stance",
+          "path": "Sweep02/frame-01.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        },
+        {
+          "slot": 2,
+          "role": "load",
+          "path": "Sweep02/frame-02.webp",
+          "sha256": "4e8b1ca5fd34e01e8741a57e92c7d1a0b87d1b42a4886c21615256e2718bb309"
+        },
+        {
+          "slot": 3,
+          "role": "contact",
+          "path": "Sweep02/frame-03.webp",
+          "sha256": "0dd7567b9bcfe12ac52aa23d38283312375e22dcaa9c358272378a4b75b49758"
+        },
+        {
+          "slot": 4,
+          "role": "followthrough",
+          "path": "Sweep02/frame-04.webp",
+          "sha256": "afcdc3f5ff2fe4e2c62e9e00eae030ede77bb92ea86fd96c1d344e42f8b557f3"
+        },
+        {
+          "slot": 5,
+          "role": "approved-stance",
+          "path": "Sweep02/frame-05.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        }
+      ],
+      "strip": "Sweep02/strip.png",
+      "gif": "Sweep02/preview.gif",
+      "raw": "Sweep02/raw.png",
+      "normalization": "Sweep02/normalization.json",
+      "status": "option-review-candidate"
+    },
+    {
+      "id": "SW03",
+      "folder": "Sweep03",
+      "name": "Low knee sweep",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "approved-stance",
+          "path": "Sweep03/frame-01.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        },
+        {
+          "slot": 2,
+          "role": "load",
+          "path": "Sweep03/frame-02.webp",
+          "sha256": "47f9f78225f1f59bed7d1b0d7cc1fd078efa2c5923eaccf073e58f2c714dc94f"
+        },
+        {
+          "slot": 3,
+          "role": "contact",
+          "path": "Sweep03/frame-03.webp",
+          "sha256": "92c835f04431f3af5b03196377143a0ff9ea3e5d646ba91b6c16b4c04ad248c5"
+        },
+        {
+          "slot": 4,
+          "role": "followthrough",
+          "path": "Sweep03/frame-04.webp",
+          "sha256": "4fd65a676b5e553d45c4848b2153b4a63f94ed351a471583633970da08ba5212"
+        },
+        {
+          "slot": 5,
+          "role": "approved-stance",
+          "path": "Sweep03/frame-05.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        }
+      ],
+      "strip": "Sweep03/strip.png",
+      "gif": "Sweep03/preview.gif",
+      "raw": "Sweep03/raw.png",
+      "normalization": "Sweep03/normalization.json",
+      "status": "option-review-candidate"
+    },
+    {
+      "id": "SW04",
+      "folder": "Sweep04",
+      "name": "Travelling step-through",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "approved-stance",
+          "path": "Sweep04/frame-01.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        },
+        {
+          "slot": 2,
+          "role": "load",
+          "path": "Sweep04/frame-02.webp",
+          "sha256": "1dca8335870db1ec4c591408712397d5256e40098e721c175751b3ec064e4ab3"
+        },
+        {
+          "slot": 3,
+          "role": "contact",
+          "path": "Sweep04/frame-03.webp",
+          "sha256": "9ee04a97fd988b00ac06cb0c77d798af775bfdb73d3f43836e96c192339a732a"
+        },
+        {
+          "slot": 4,
+          "role": "followthrough",
+          "path": "Sweep04/frame-04.webp",
+          "sha256": "6d96f0fd7687d3bc3c98254dbd43123c62096d90b1a0ffb98f1ffce4bbf92e0e"
+        },
+        {
+          "slot": 5,
+          "role": "approved-stance",
+          "path": "Sweep04/frame-05.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        }
+      ],
+      "strip": "Sweep04/strip.png",
+      "gif": "Sweep04/preview.gif",
+      "raw": "Sweep04/raw.png",
+      "normalization": "Sweep04/normalization.json",
+      "status": "option-review-candidate"
+    },
+    {
+      "id": "SW05",
+      "folder": "Sweep05",
+      "name": "Planted hip pivot",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "approved-stance",
+          "path": "Sweep05/frame-01.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        },
+        {
+          "slot": 2,
+          "role": "load",
+          "path": "Sweep05/frame-02.webp",
+          "sha256": "f46e4f5945bc56d0dc0730d70945091aa8fa363a33ffcf8990137b371c6a0e63"
+        },
+        {
+          "slot": 3,
+          "role": "contact",
+          "path": "Sweep05/frame-03.webp",
+          "sha256": "762b89720d19148fb7d05f611d89e4cd7ed7125d938953f62d6f086958d452e7"
+        },
+        {
+          "slot": 4,
+          "role": "followthrough",
+          "path": "Sweep05/frame-04.webp",
+          "sha256": "daec7cd2c01cb773857d55a4916f73905521f364f96353e5c91e734b6c77bf32"
+        },
+        {
+          "slot": 5,
+          "role": "approved-stance",
+          "path": "Sweep05/frame-05.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        }
+      ],
+      "strip": "Sweep05/strip.png",
+      "gif": "Sweep05/preview.gif",
+      "raw": "Sweep05/raw.png",
+      "normalization": "Sweep05/normalization.json",
+      "status": "option-review-candidate"
+    },
+    {
+      "id": "SW06",
+      "folder": "Sweep06",
+      "name": "Retreat cut",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "approved-stance",
+          "path": "Sweep06/frame-01.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        },
+        {
+          "slot": 2,
+          "role": "load",
+          "path": "Sweep06/frame-02.webp",
+          "sha256": "1f28243e30931fcfb7792db5fe942d94c0b11cc5fed9bf397cc3f0d813f676b2"
+        },
+        {
+          "slot": 3,
+          "role": "contact",
+          "path": "Sweep06/frame-03.webp",
+          "sha256": "34429066c9c1ca175f2618331b06a3798efa04df99bd716dfdceb8a4f952dea1"
+        },
+        {
+          "slot": 4,
+          "role": "followthrough",
+          "path": "Sweep06/frame-04.webp",
+          "sha256": "b340be9a506c2a4bbaa395d271c183a7eaac40250178c80727ac90ed88a5c2dd"
+        },
+        {
+          "slot": 5,
+          "role": "approved-stance",
+          "path": "Sweep06/frame-05.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        }
+      ],
+      "strip": "Sweep06/strip.png",
+      "gif": "Sweep06/preview.gif",
+      "raw": "Sweep06/raw.png",
+      "normalization": "Sweep06/normalization.json",
+      "status": "option-review-candidate"
+    },
+    {
+      "id": "SW07",
+      "folder": "Sweep07",
+      "name": "Reverse return arc",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "approved-stance",
+          "path": "Sweep07/frame-01.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        },
+        {
+          "slot": 2,
+          "role": "load",
+          "path": "Sweep07/frame-02.webp",
+          "sha256": "343ff7a4c1d8d711830188ad4faad817a881f7e4585364f6b2c1f481e2be794f"
+        },
+        {
+          "slot": 3,
+          "role": "contact",
+          "path": "Sweep07/frame-03.webp",
+          "sha256": "e42060ee770a5c98a51a0d11825dfc573364b817bbf26ff7e72fbb6ff421434f"
+        },
+        {
+          "slot": 4,
+          "role": "followthrough",
+          "path": "Sweep07/frame-04.webp",
+          "sha256": "91816de4853694de13c67428fca0afb530441e1018d411ebed3e35431c8dbf77"
+        },
+        {
+          "slot": 5,
+          "role": "approved-stance",
+          "path": "Sweep07/frame-05.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        }
+      ],
+      "strip": "Sweep07/strip.png",
+      "gif": "Sweep07/preview.gif",
+      "raw": "Sweep07/raw.png",
+      "normalization": "Sweep07/normalization.json",
+      "status": "option-review-candidate"
+    },
+    {
+      "id": "SW08",
+      "folder": "Sweep08",
+      "name": "Broad heavy cleave",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "approved-stance",
+          "path": "Sweep08/frame-01.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        },
+        {
+          "slot": 2,
+          "role": "load",
+          "path": "Sweep08/frame-02.webp",
+          "sha256": "48569df2c2347e9dfccdb47ad6f26e307834e72a63f3ed97963d81b7b8f86107"
+        },
+        {
+          "slot": 3,
+          "role": "contact",
+          "path": "Sweep08/frame-03.webp",
+          "sha256": "f7e190a8993d1bd0239d5a2e5634a1bb04659d2d5edbc26589688d20c5cebf0e"
+        },
+        {
+          "slot": 4,
+          "role": "followthrough",
+          "path": "Sweep08/frame-04.webp",
+          "sha256": "50a7a016d8bb0a70704c150e3d0621c495dad1652c2fa017ba377dd3e4193cd1"
+        },
+        {
+          "slot": 5,
+          "role": "approved-stance",
+          "path": "Sweep08/frame-05.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        }
+      ],
+      "strip": "Sweep08/strip.png",
+      "gif": "Sweep08/preview.gif",
+      "raw": "Sweep08/raw.png",
+      "normalization": "Sweep08/normalization.json",
+      "status": "option-review-candidate"
+    },
+    {
+      "id": "SW09",
+      "folder": "Sweep09",
+      "name": "Compact parry riposte",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "approved-stance",
+          "path": "Sweep09/frame-01.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        },
+        {
+          "slot": 2,
+          "role": "load",
+          "path": "Sweep09/frame-02.webp",
+          "sha256": "1e2abb210a7bff8dcac397c3a2912151451ae0b554508c77c71775af9d95cdab"
+        },
+        {
+          "slot": 3,
+          "role": "contact",
+          "path": "Sweep09/frame-03.webp",
+          "sha256": "a7b5876e864e2aa507bb20ccd96d3b72c302e649d2af52002db72ae5b6dcf5ac"
+        },
+        {
+          "slot": 4,
+          "role": "followthrough",
+          "path": "Sweep09/frame-04.webp",
+          "sha256": "553ede125a51e7369956d992aaa89885bf0723a6bea166bd2674bfb3482d4951"
+        },
+        {
+          "slot": 5,
+          "role": "approved-stance",
+          "path": "Sweep09/frame-05.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        }
+      ],
+      "strip": "Sweep09/strip.png",
+      "gif": "Sweep09/preview.gif",
+      "raw": "Sweep09/raw.png",
+      "normalization": "Sweep09/normalization.json",
+      "status": "option-review-candidate"
+    },
+    {
+      "id": "SW10",
+      "folder": "Sweep10",
+      "name": "Advancing draw cut",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "approved-stance",
+          "path": "Sweep10/frame-01.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        },
+        {
+          "slot": 2,
+          "role": "load",
+          "path": "Sweep10/frame-02.webp",
+          "sha256": "583de327f853d49589805b5ff7bbbcbc0e89d71fe5f845101afc7c1ab08d5349"
+        },
+        {
+          "slot": 3,
+          "role": "contact",
+          "path": "Sweep10/frame-03.webp",
+          "sha256": "ddda1c5b1af7bd4098323c6324daf4b7b5a25d197cfcc6d9ba1623304cdb46c5"
+        },
+        {
+          "slot": 4,
+          "role": "followthrough",
+          "path": "Sweep10/frame-04.webp",
+          "sha256": "1d96465935e25a9c46b7051a7ffc00150c84134d555286fe2836a80a9d10769c"
+        },
+        {
+          "slot": 5,
+          "role": "approved-stance",
+          "path": "Sweep10/frame-05.webp",
+          "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+        }
+      ],
+      "strip": "Sweep10/strip.png",
+      "gif": "Sweep10/preview.gif",
+      "raw": "Sweep10/raw.png",
+      "normalization": "Sweep10/normalization.json",
+      "status": "option-review-candidate"
+    }
+  ]
+}

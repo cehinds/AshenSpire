@@ -1,3 +1,4 @@
+import { hasCardChoice } from './cardZones.js';
 // Shared data-driven ability riders. State is per entity and bounded to a turn;
 // it is saved with the combat entity, never reconstructed from a growing log.
 import { ABILITY_TURN_METRICS } from '../model/schemas.js';
@@ -20,7 +21,7 @@ export function beginAbilityTurn(entity) {
     hpLostThisRound: 0, offeringsPaid: 0, previousSpell: 0,
     turnStartHpPct: entity.maxHp > 0 ? 100 * entity.hp / entity.maxHp : 0,
     charges: {}, once: {},
-    sameCardPlays: {}, attacksPlayed: 0, cardPlaysCombat: old.cardPlaysCombat || 0,
+    instanceUsesCombat:old.instanceUsesCombat || {},cardUsesCombat:old.cardUsesCombat || {}, typePlays: {}, sameCardPlays: {}, attacksPlayed: 0, cardPlaysCombat: old.cardPlaysCombat || 0,
   };
 }
 
@@ -38,6 +39,9 @@ export function abilityMetric(entity, predicate, snapshot) {
 
 export function recordAbilityCard(entity, card, manaSpent) {
   const state = stateFor(entity);
+  state.typePlays ||= {}; state.typePlays[card.type]=(state.typePlays[card.type] || 0)+1;
+  if(card.instanceId) {state.instanceUsesCombat ||= {};state.instanceUsesCombat[card.instanceId]=(state.instanceUsesCombat[card.instanceId] || 0)+1;}
+  state.cardUsesCombat ||= {}; state.cardUsesCombat[card.cardId]=(state.cardUsesCombat[card.cardId] || 0)+1;
   state.cardsPlayed += 1;
   state.cardPlaysCombat = (state.cardPlaysCombat || 0) + 1;
   state.attacksPlayed = (state.attacksPlayed || 0) + (card.type === 'attack' ? 1 : 0);
@@ -161,8 +165,22 @@ export function priorAbilityEntity(ctx, entity, meta) {
   return meta?.abilityEntities?.[abilityEntityKey(ctx, entity)] || entity;
 }
 
+// Cards this seat already committed to the reaction stack wait to resolve; they are not discard fodder.
+function stackedInstanceIds(ctx) {
+  const seat = ctx.playerKey || 'player';
+  return new Set((ctx.reactionStack?.entries || []).filter(entry => entry.side === 'player' && entry.ownerId === seat)
+    .map(entry => entry.play?.cardInstanceId));
+}
+
+// The hand cards the choosing seat may discard: its stacked cards wait to resolve, so they are excluded.
+export function discardCandidates(ctx) {
+  const stacked = stackedInstanceIds(ctx);
+  return ctx.piles.hand.filter(card => !stacked.has(card.instanceId));
+}
+
 export function requestAbilityDiscard(ctx, action, amount) {
-  const count = Math.min(Math.max(0, amount), ctx.piles.hand.length);
+  const stacked = stackedInstanceIds(ctx);
+  const count = Math.min(Math.max(0, amount), ctx.piles.hand.filter(c => !stacked.has(c.instanceId)).length);
   if (!count) return;
   if (!ctx.pendingAbilityPlay) throw new Error('Chosen discard requires a resolving card');
   ctx.pendingAbilityDiscard = { count, playerId: ctx.playerKey || null, cardId: ctx.pendingAbilityPlay.instance.cardId };
@@ -171,7 +189,8 @@ export function requestAbilityDiscard(ctx, action, amount) {
 export function chooseAbilityDiscard(ctx, ids) {
   const pending = ctx.pendingAbilityDiscard;
   if (!pending) throw new Error('No discard choice is pending');
-  if (!Array.isArray(ids) || ids.length !== pending.count || new Set(ids).size !== ids.length || ids.some(id => !ctx.piles.hand.some(c => c.instanceId === id))) throw new Error(`Choose exactly ${pending.count} distinct cards from your hand`);
+  const stacked = stackedInstanceIds(ctx);
+  if (!Array.isArray(ids) || ids.length !== pending.count || new Set(ids).size !== ids.length || ids.some(id => stacked.has(id) || !ctx.piles.hand.some(c => c.instanceId === id))) throw new Error(`Choose exactly ${pending.count} distinct cards from your hand`);
   for (const id of ids) {
     const index = ctx.piles.hand.findIndex(c => c.instanceId === id);
     const card = ctx.piles.hand.splice(index, 1)[0];
@@ -182,12 +201,12 @@ export function chooseAbilityDiscard(ctx, ids) {
 }
 
 export function assertNoAbilityChoice(ctx) {
-  if (ctx.pendingAbilityDiscard) throw new Error('Choose the cards to discard before taking another action');
+  if (hasCardChoice(ctx)) throw new Error('Choose the cards to discard before taking another action');
 }
 
 export function abilityResolved(ctx) {
   const play = ctx.pendingAbilityPlay;
-  if (!play || ctx.pendingAbilityDiscard) return null;
+  if (!play || hasCardChoice(ctx)) return null;
   delete ctx.pendingAbilityPlay;
   ctx.emit('cardResolved', { ...play.before, cardInstanceId: play.instance.instanceId, cardId: play.instance.cardId, cardType: play.kind, cardTags: play.ref.authoredTags || play.ref.tags || [], abilityKind: play.ref.abilityKind, printedManaCost: play.printedManaCost, targetId: play.targetId, sourceId: ctx.player.id, ...(ctx.playerKey ? { sourcePlayerId: ctx.playerKey, playerId: ctx.playerKey } : {}), magicalResolved: play.ref.abilityKind === 'spell' });
   return play;

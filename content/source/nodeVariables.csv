@@ -75,6 +75,7 @@ sentinelsOath,n,n
 forsakenWarflag,weak,stacks
 wrathCoil,damage,amount
 favored,skillXpMult,skillXpMult
+oathKept,block,amount
 ashenGrip,restoreStamina,amount
 lodestarShard,restoreMana,amount
 waxenSeal,heal,amount

@@ -1,0 +1,25 @@
+{
+  "id": "status.frostExposed",
+  "tag": "status.frostExposed",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Frost-Exposed",
+  "description": "Takes {tv.pct}% more damage from starstone attacks. Stacks with Vulnerable. {decay.duration} turns.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.frostExposed"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

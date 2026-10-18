@@ -288,9 +288,16 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
   const addedSinceCapture = new Set(['hewingArc', 'sunderingChop', 'setTheShield', 'aegisOfEmbers', 'shieldCrash',
     'pinningShot', 'arrowVolley', 'nockAndWait', 'aimedShot', 'barbedArrow', 'bindingParry', 'whirlingGuard',
     'cinderSigil', 'ashenMote', 'emberVigil', 'readTheAsh', 'pyreOfCharts', 'ashCircle', 'kindledOmen', 'cinderLance',
-    'ashfallRite', 'phoenixChart', 'pyreLight', 'riteOfCinders', 'emberCommunion']);
-  const CAPTURE_REG = createRegistries({ ...legacyContentBundle,
-    classes: legacyContentBundle.classes.map((c) => ({ ...c, cardPool: c.cardPool.filter((id) => !addedSinceCapture.has(id)) })) });
+    'ashfallRite', 'phoenixChart', 'pyreLight', 'riteOfCinders', 'emberCommunion',
+    'aspDart', 'viperStrike', 'septicBlade', 'lethalDose', 'mindSpike', 'dissonance', 'mindFracture', 'wakingNightmare',
+    'stoneSling', 'rockfall', 'stoneskin', 'entomb']);
+  // The immutable pre-master catalog still has the original card definitions;
+  // the exclusions above restore this earlier shelf capture's class pools.
+  // Freeze colorless candidates too, since shops draw those outside cardPool.
+  const capturedCards = JSON.parse(readFileSync(new URL('./fixtures/shop-card-catalog-pre-master.json', import.meta.url), 'utf8')).cards;
+  const capturedIds = new Set(capturedCards.map(card => card.id));
+  const CAPTURE_REG = createRegistries({ ...legacyContentBundle, cards: capturedCards,
+    classes: legacyContentBundle.classes.map((c) => ({ ...c, cardPool: c.cardPool.filter((id) => capturedIds.has(id) && !addedSinceCapture.has(id)) })) });
   for (const n of seeds) {
     const before = fixture.shelves[n];
     const run = createRunState({ seed: before.runSeed, classId: before.classId, registries: CAPTURE_REG, combatExpansionVersion: 1 });
@@ -312,8 +319,8 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
     // Nothing new is drawn on any existing stream. Only the additions' own
     // rolls (§14.3, on shopOffers after the offering roll) draw on the new one.
     // Sigils and intent visibility were appended after the fixture; shops use neither.
-    const { shopOffers: _offers, sigils: _sigils, enemyIntentVisibility: _intentReads, combatAvoidance: _avoidance, statusRecovery: _recovery, statusPressure: _pressure, ashenBlight: _blight, enemyIntentClue: _clue, ...counters } = rng.getCounters();
-    assert.deepEqual([_avoidance, _recovery, _pressure, _blight, _clue], [0, 0, 0, 0, 0]);
+    const { shopOffers: _offers, sigils: _sigils, enemyIntentVisibility: _intentReads, combatAvoidance: _avoidance, statusRecovery: _recovery, statusPressure: _pressure, ashenBlight: _blight, enemyIntentClue: _clue, enemyReaction: _reaction, ...counters } = rng.getCounters();
+    assert.deepEqual([_avoidance, _recovery, _pressure, _blight, _clue, _reaction], [0, 0, 0, 0, 0, 0]);
     assert.equal(_sigils, 0);
     assert.equal(_intentReads, 0);
     assert.deepEqual(counters, before.counters, `seed ${n}: every existing stream`);
@@ -328,7 +335,7 @@ test('shopOffers retains its appended index after later stream additions', () =>
   // Sigils and intent visibility append after it, preserving historical indices.
   assert.equal(STREAM_NAMES.indexOf('shopOffers'), 15);
   assert.equal(STREAM_NAMES.indexOf('rewardRolls'), 14);
-  assert.deepEqual(STREAM_NAMES.slice(15), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue']);
+  assert.deepEqual(STREAM_NAMES.slice(15), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction', 'combatRounds']);
   assert.equal(STREAM_NAMES.indexOf('shop'), 9);
   // A save written before the stream existed restores it at 0.
   assert.equal(createRng(7, { shop: 3 }).getCounters().shopOffers, 0);

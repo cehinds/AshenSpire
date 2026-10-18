@@ -47,7 +47,7 @@ test('rewardRolls is appended after every stream before it, so no existing strea
   // `shopOffers` (SPEC §14.2), `sigils` (SPEC §15.4) and intent reads (§4.7) were appended
   // after it; tests/shop-kinds.test.mjs and tests/legendary-sigils.test.mjs hold those.
   const at = STREAM_NAMES.indexOf('rewardRolls');
-  assert.deepEqual(STREAM_NAMES.slice(at + 1), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue']);
+  assert.deepEqual(STREAM_NAMES.slice(at + 1), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction', 'combatRounds']);
   assert.deepEqual(STREAM_NAMES.slice(0, at), [
     'map', 'shuffle', 'cardRewards', 'relicRewards', 'flaskRewards', 'armaments', 'enemyAI', 'enemyHP',
     'events', 'shop', 'misc', 'smith', 'combatProcs', 'seats',
@@ -380,6 +380,9 @@ test('the reward screen draws the level card row, takes it through the chooser, 
     row.click();
     app.querySelectorAll('.reward-row .card')[1].click();
     app.querySelector('#reward-card-confirm').click();
+    assert.deepEqual(run.deck, [], 'Confirm only stages review');
+    assert.equal(app.querySelector('#reward-card-confirm').textContent, t('common.continue'));
+    app.querySelector('#reward-card-confirm').click();
     assert.deepEqual(run.deck.map((c) => c.cardId), ['rend']);
     assert.equal(checkpoint.states['levelCard:0'], 'taken');
     assert.deepEqual(checkpoint.chosenDraftCardIds, { 'levelCard:0': 'rend' });
@@ -422,6 +425,8 @@ test('two level cards are taken, and both picks persist in chosenDraftCardIds[<r
       app.querySelector(`[data-key="${key}"]`).click();
       app.querySelectorAll('.reward-row .card')[2].click();
       picks[key] = app.querySelectorAll('.reward-row .card')[2].dataset.cardId;
+      app.querySelector('#reward-card-confirm').click();
+      assert.equal(app.querySelector('#reward-card-confirm').textContent, t('common.continue'));
       app.querySelector('#reward-card-confirm').click();
     }
     app.remove();
@@ -519,6 +524,8 @@ test('a taken level card never reuses an instance id a sideboarded card holds', 
     mountRewards(app, { registries: REG, run, checkpoint, onDone() {}, onPersist() {}, rewards: { cardIds: [], levelCards: [{ ordinal: 0, cardIds: ['rend', 'stomp'] }] } });
     app.querySelector('[data-kind="levelCard"]').click();
     app.querySelectorAll('.reward-row .card')[0].click();
+    app.querySelector('#reward-card-confirm').click();
+    assert.equal(app.querySelector('#reward-card-confirm').textContent, t('common.continue'));
     app.querySelector('#reward-card-confirm').click();
     assert.equal(run.deck.length, 1);
     assert.equal(run.deck[0].cardId, 'rend');

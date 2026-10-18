@@ -17,9 +17,7 @@ test('rear class choreography follows resolved cards with stationary guard and r
     const maneuver = action === 'spell' ? 'attack' : action === 'rangedMagic' ? 'ranged' : action;
     const card = { cardTags: ['maneuver:' + maneuver, 'camp:' + (magical ? 'spell' : 'physical')] };
     const plan = resolveCombatAnimation(card, [], { classId });
-    assert.equal(plan.technique, action === 'spell' ? 'weapon:spell:energy-blade'
-      : action === 'rangedMagic' ? 'weapon:rangedMagic:staff-casting'
-      : action === 'counter' ? 'counterPrepare' : action);
+    assert.equal(plan.technique, action === 'counter' ? 'counterPrepare' : action);
     assert.equal(plan.family, ['counter', 'defend'].includes(action) ? 'guard'
       : action.startsWith('ranged') ? 'projectile' : action === 'spell' ? 'spell' : 'strike');
     const sequence = actions.classes[classId].sequences[action];
@@ -36,7 +34,7 @@ test('rear class choreography follows resolved cards with stationary guard and r
   setAnimSpeed('invalid'); assert.equal(getAnimSpeed(), 'normal');
 });
 
-test('confirmed card stances persist per player until their next turn', () => {
+test('confirmed card stances persist per player until their next confirmed card', () => {
   const ledger = createStanceLedger();
   ledger.accept({ type: 'cardPlayed', playerId: 'one' }, { cardTags: ['maneuver:attack', 'camp:physical'] });
   ledger.accept({ type: 'cardPlayed', playerId: 'two' }, { cardTags: ['maneuver:defend', 'camp:physical'] });
@@ -44,7 +42,7 @@ test('confirmed card stances persist per player until their next turn', () => {
   ledger.accept({ type: 'hpLost', targetId: 'one' });
   assert.equal(ledger.get('one'), 'offensive');
   ledger.accept({ type: 'playerTurnStart', playerId: 'one' });
-  assert.equal(ledger.get('one'), null);
+  assert.equal(ledger.get('one'), 'offensive', 'a new turn keeps the held stance');
   assert.equal(ledger.get('two'), 'defensive');
   ledger.accept({ type: 'combatStarted' });
   assert.deepEqual(ledger.snapshot(), {});
@@ -107,14 +105,33 @@ test('rear stages keep fixed frame geometry and held stances during automatic co
       assert.equal(stage.stance, 'defensive');
       stage.settle();
       assert.equal(stage.pose, 'stance-defensive');
+      const heldArt = stage.currentArt;
+      const heldBodyHeight = heldArt.body?.feetY - heldArt.body?.headY;
+      const heldLeft = heldArt.left;
       for (const action of CARD_ACTIONS) {
         const positions = [];
         for (const fraction of [0, .2, .4, .6, .8, 1]) {
           stage.seek(action, fraction * 260);
           const art = stage.currentArt;
-          positions.push(art.left);
+          if (art.image !== heldArt.image || !(heldBodyHeight > 0)) positions.push(art.left);
           assert.equal(stage.el.style.cssText, dimensions);
-          assert.deepEqual([art.top, art.width, art.height], [16, 512, 512]);
+          if (art.image === heldArt.image) {
+            assert.deepEqual([art.top, art.width, art.height],
+              [heldArt.top, heldArt.width, heldArt.height],
+              'same-image action bookends retain the held body registration');
+            if (heldBodyHeight > 0) {
+              assert.ok(Math.abs((art.body.feetY - art.body.headY) - heldBodyHeight) < 1e-8,
+                `held artwork keeps normalized body height ${art.image.url} (${art.body.feetY-art.body.headY} vs ${heldBodyHeight})`);
+              const cssTop = Number(art.canvas.style.cssText.match(/top:([-.\d]+)px/)[1]);
+              const cssWidth = Number(art.canvas.style.cssText.match(/width:([\d.]+)px/)[1]);
+              const scale = cssWidth / art.canvas.width;
+              assert.ok(Math.abs(cssTop + art.body.feetY * scale - 190) < 1e-8,
+                'held artwork remains on the semantic floor');
+            }
+          } else {
+            assert.deepEqual([art.top, art.width, art.height], [16, 512, 512],
+              'transient action frames retain their authored raster geometry');
+          }
           assert(!art.image.url.includes('-mobile.webp'), 'fixed foreground artwork uses the full source on phones');
           if (['counter', 'sweep'].includes(action) && fraction < .69) {
             assert(art.image.url.includes(`/player-counter-sweep/${classId}/${action}/`), 'selected body phases own the counter/sweep motion');
@@ -123,7 +140,7 @@ test('rear stages keep fixed frame geometry and held stances during automatic co
         if (['attack', 'smash', 'sweep'].includes(action)) assert(positions.some(x => x > 128));
         else assert(positions.every(x => x === 128), `${action} must stay anchored`);
         stage.settle();
-        assert.equal(stage.currentArt.left, 128);
+        assert.equal(stage.currentArt.left, heldLeft, `${action} returns to the normalized held position`);
         assert.equal(stage.pose, 'stance-defensive');
       }
       stage.dispose();

@@ -1,3 +1,5 @@
+import { validateZoneEffect } from '../engine/cardZones.js';
+import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
 // src/model/validate.js — content validation (SPEC §3.14)
 //
 // Runs at boot in dev mode and from the test page. Checks, across ALL content:
@@ -120,6 +122,7 @@ export const REQUIRED_TOKEN_OPS = Object.freeze([
 ]);
 
 const KNOWN_BUNDLE_KEYS = new Set([
+  'proposalStatusRules',
   ...REGISTRY_TYPES,
   'version',
   'contentVersion',
@@ -555,7 +558,14 @@ function collectContentProblems(bundle, errors = []) {
       const ranks = card.gradeProfiles.map(row => row.rank).sort((a,b)=>a-b);
       if (JSON.stringify(ranks) !== '[0,1,2,3,4,5]') err(`cards.${card.id}.gradeProfiles`,'must author exactly the six ranks 0..5');
       for (const profile of card.gradeProfiles) {
-        if (profile.manaCost !== profile.rank || profile.actionCost < 1 || profile.actionCost > [3,1,2,3,4,5][profile.rank]) err(`cards.${card.id}.gradeProfiles.${profile.rank}`,'Actions/Mana costs are outside the ability grade contract');
+        const wholePrices = Number.isSafeInteger(profile.actionCost) && Number.isSafeInteger(profile.manaCost);
+        // Fixed grades author the previously resolved price, rather than the
+        // grade number used by formula-priced recipes. Keep the established
+        // six-grade maximum and reject fractional or resource-minting prices.
+        const validPrices = profile.traits?.costRule === 'fixed'
+          ? wholePrices && profile.actionCost >= 1 && profile.actionCost <= 5 && profile.manaCost >= 0 && profile.manaCost <= 5
+          : wholePrices && profile.manaCost === profile.rank && profile.actionCost >= 1 && profile.actionCost <= [3,1,2,3,4,5][profile.rank];
+        if (!validPrices) err(`cards.${card.id}.gradeProfiles.${profile.rank}`,'Actions/Mana costs are outside the ability grade contract');
       }
       if (!Number.isInteger(card.abilityRank) || card.abilityRank < 0 || card.abilityRank > 5) err(`cards.${card.id}.abilityRank`,'default grade must be 0..5');
     }
@@ -1073,6 +1083,10 @@ function collectContentProblems(bundle, errors = []) {
           err(`equipment.armaments.${id}.${field}`, `must be an explicit non-negative integer, got ${JSON.stringify(value)}`);
         }
       }
+      // Every armament has one physical damage type: its Block-facing part of a hit (magic share < 1).
+      if (!['blunt', 'slashing', 'piercing'].includes(row?.physicalDamageType)) {
+        err(`equipment.armaments.${id}.physicalDamageType`, `must be blunt, slashing or piercing, got ${JSON.stringify(row?.physicalDamageType)}`);
+      }
       if (Number.isInteger(row?.weight) && row.weight !== row.poiseThreshold) {
         err(`equipment.armaments.${id}.weight`, `must equal authored poiseThreshold ${JSON.stringify(row.poiseThreshold)}`);
       }
@@ -1081,9 +1095,10 @@ function collectContentProblems(bundle, errors = []) {
       // model/registries.js stamps `itemTypeTags` onto the piece.
       const isStaffTechnique = armamentTagIds(id).includes('item:magic-focus')
         && row?.techniqueProfile === 'staffTechnique';
-      const expectedManaCost = isStaffTechnique ? 1 : 0;
-      if (row?.weaponArtManaCost !== expectedManaCost) {
-        err(`equipment.armaments.${id}.weaponArtManaCost`, `must be ${expectedManaCost} for its authored item type and technique profile`);
+      const hasWeaponArts = (row?.weaponCardPackage?.weaponArtDefaults || []).length > 0;
+      const minimumManaCost = hasWeaponArts || isStaffTechnique ? cardManaPolicy.minimumMana : 0;
+      if (row?.weaponArtManaCost < minimumManaCost) {
+        err(`equipment.armaments.${id}.weaponArtManaCost`, `must be at least ${minimumManaCost} for its authored weapon arts`);
       }
       if (row?.uniqueSkillStaminaCost !== 0) {
         err(`equipment.armaments.${id}.uniqueSkillStaminaCost`, 'must remain 0 until an explicit unique-skill consumer exists');
@@ -1952,6 +1967,14 @@ function collectContentProblems(bundle, errors = []) {
       err(`${path}.class`, `class '${card.class}' is neither a class id nor 'colorless'`);
     }
     validateCardTemplates(card, path, err);
+    if (card.burden) {
+      for(const key of ['skipActions','staminaTax','manaTax']) if(card.burden[key]!==undefined && (!Number.isSafeInteger(card.burden[key]) || card.burden[key]<0 || card.burden[key]>10)) err(`${path}.burden.${key}`,'must be bounded nonnegative integer');
+    }
+    if (card.costGrowth) {
+      for (const key of ['stamina','mana']) if (card.costGrowth[key]!==undefined && (!Number.isSafeInteger(card.costGrowth[key]) || Math.abs(card.costGrowth[key])>10)) err(`${path}.costGrowth.${key}`,'must be an integer from -10 to 10');
+      for (const key of ['perUse','max']) if (card.costGrowth[key]!==undefined && (!Number.isSafeInteger(card.costGrowth[key]) || card.costGrowth[key]<1 || card.costGrowth[key]>100)) err(`${path}.costGrowth.${key}`,'must be an integer from 1 to 100');
+    }
+    for (const [i,variant] of (card.effectVariants || []).entries()) { validatePredicate(variant.if,`${path}.effectVariants[${i}].if`,vctx);validateEffects(variant.effects,`${path}.effectVariants[${i}].effects`,vctx); }
   }
 
   const relicTagsByRelic = relicPropertyTagIndex(b);
@@ -2076,6 +2099,22 @@ function collectContentProblems(bundle, errors = []) {
     const moveIds = new Set(Object.keys(enemy.moves || {}));
     if (enemy.firstMove != null && !moveIds.has(enemy.firstMove)) {
       err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is not one of this enemy's moves`);
+    } else if (enemy.firstMove != null && enemy.moves[enemy.firstMove].reaction !== undefined) {
+      err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is a reaction move and is never rolled as an intent`);
+    }
+    // A reaction move is never rolled, so it carries no weight; every other move
+    // is rolled and needs one. `reaction` bounds mirror docs/combat-card-traits-contract.md.
+    for (const [moveId, move] of Object.entries(enemy.moves || {})) {
+      const movePath = `${path}.moves.${moveId}`;
+      if (move.reaction !== undefined) {
+        const { on, minIncoming, chance } = move.reaction;
+        if (!Array.isArray(on) || on.length === 0) err(`${movePath}.reaction.on`, 'reaction.on must be a non-empty list');
+        if (move.weight !== undefined) err(`${movePath}.weight`, 'a reaction move is never rolled and must not carry a weight');
+        if (minIncoming !== undefined && !(Number.isInteger(minIncoming) && minIncoming >= 0)) err(`${movePath}.reaction.minIncoming`, 'minIncoming must be an integer >= 0 (0: no incoming damage required)');
+        if (chance !== undefined && !(typeof chance === 'number' && chance >= 0 && chance <= 1)) err(`${movePath}.reaction.chance`, 'chance must be a number in [0, 1]');
+      } else if (typeof move.weight !== 'number' || Number.isNaN(move.weight)) {
+        err(`${movePath}.weight`, `Expected number, got ${describe(move.weight)}`);
+      }
     }
     for (const [pi, phase] of (enemy.phases || []).entries()) {
       for (const mv of phase.unlockMoves || []) {
@@ -2413,8 +2452,11 @@ export function validateEffects(effects, path, vctx) {
       return;
     }
     const spec = EFFECT_SPECS[eff.op];
+    if (['moveCards','modifyCards'].includes(eff.op)) { try { validateZoneEffect(eff); } catch (error) { err(p, error.message); } }
+    if(eff.op==='modifyCards' && eff.changes?.hideTurns && typeof eff.changes.hideTurns==='object') validateFormula(eff.changes.hideTurns,`${p}.changes.hideTurns`,vctx);
     if (eff.oncePerTurn !== undefined && (typeof eff.oncePerTurn !== 'string' || !eff.oncePerTurn.trim())) err(`${p}.oncePerTurn`, 'must be a non-empty family marker');
     for (const flag of ['nonlethal', 'offering', ...(eff.op === 'discard' ? ['choose'] : [])]) if (eff[flag] !== undefined && typeof eff[flag] !== 'boolean') err(`${p}.${flag}`, 'must be a boolean');
+    if(eff.op==='addBurden' && eff.pile!==undefined && !['draw','hand'].includes(eff.pile)) err(`${p}.pile`,'Enemy burden pile must be draw or hand');
     if (eff.op === 'discard' && eff.choose && eff.random) err(p, 'chosen discard cannot also be random');
     if (eff.op === 'grantCardCharge') {
       if (typeof eff.key !== 'string' || !eff.key.trim()) err(`${p}.key`, 'must be a non-empty charge key');
@@ -2465,7 +2507,8 @@ export function validateEffects(effects, path, vctx) {
     // when it resolves (engine/actions.js enterStance;
     // tests/warriors-vow.test.mjs pins the throw).
     if (eff.op === 'enterStance') {
-      const named = eff.stance !== undefined;
+      const named = eff.stance !== undefined || eff.maneuver!==undefined;
+      if(eff.maneuver!==undefined && !['attack','smash','defend','sweep','counter','casting','evade'].includes(eff.maneuver))err(`${p}.maneuver`,'Unknown maneuver');
       const chosen = eff.choose !== undefined;
       if (named === chosen) err(p, `Opcode 'enterStance' takes exactly one of 'stance' or 'choose'`);
       else if (chosen && !STANCE_CHOICE_SELECTORS.includes(eff.choose)) err(`${p}.choose`, `Opcode 'enterStance' choose must be one of: ${STANCE_CHOICE_SELECTORS.join(', ')}`);
@@ -2623,6 +2666,7 @@ const PREDICATE_FIELDS = {
   enemyNegativeStatusNew: ['statuses'],
   cardAbilityKindIs: ['kind'],
   cardTargetsAllEnemies: [],
+  resourcePaid:['resource','amount'],
   inStance: ['stance'],
   hasStatus: ['of', 'status', 'atLeast', 'snapshot'],
   hasBlock: ['of', 'snapshot'],
@@ -2676,7 +2720,7 @@ export function validatePredicate(pred, path, vctx) {
       if (pred.atLeast !== undefined && pred.atMost !== undefined && pred.atLeast > pred.atMost) err(path, 'turn metric bounds are reversed');
       break;
     case 'inStance':
-      if (typeof pred.stance !== 'string' || !vctx.ids.stances.has(pred.stance)) {
+      if (typeof pred.stance !== 'string' || !vctx.ids.stances.has(pred.stance) && !['attack','smash','defend','counter','sweep','casting','prepared','evade'].includes(pred.stance)) {
         err(`${path}.stance`, `Dangling reference: unknown stance id '${pred.stance}'`);
       }
       break;
@@ -2726,6 +2770,9 @@ export function validatePredicate(pred, path, vctx) {
     case 'classLevelAtLeast':
       if (!Number.isInteger(pred.level) || pred.level < 1) err(`${path}.level`, 'level must be a positive integer');
       break;
+    case 'resourcePaid':
+      if (!['mana','stamina'].includes(pred.resource) || !Number.isSafeInteger(pred.amount ?? 1) || (pred.amount ?? 1)<0) err(path,'resourcePaid requires mana/stamina and nonnegative amount');
+      break;
     case 'all':
     case 'any':
       if (!Array.isArray(pred.preds)) err(`${path}.preds`, `'${pred.p}' requires a preds array`);
@@ -2740,8 +2787,8 @@ export function validatePredicate(pred, path, vctx) {
 }
 
 const FORMULA_FIELDS = {
-  add: ['args'],
-  mul: ['args'],
+  add: ['args', 'min', 'max'], // evaluateRaw clamps any node; a graded sum (Reclamation) caps the total
+  mul: ['args', 'min', 'max'],
   percentMaxHp: ['of', 'pct', 'min', 'max'],
   missingHp: ['of', 'min', 'max'],
   missingMana: ['of', 'min', 'max'],
@@ -2750,6 +2797,8 @@ const FORMULA_FIELDS = {
   blockOf: ['of', 'min', 'max'],
   hpOf: ['of', 'min', 'max'],
   cardsPlayedThisTurn: ['per', 'min', 'max'],
+  metric: ['metric','statuses','of','per','min','max'],
+  traitBonus: ['base', 'pct', 'min', 'max'],
 };
 
 export function validateFormula(value, path, vctx) {
@@ -2777,6 +2826,8 @@ export function validateFormula(value, path, vctx) {
     if (!Array.isArray(value.args)) err(`${path}.args`, `'${value.f}' requires an args array`);
     else value.args.forEach((a, i) => validateFormula(a, `${path}.args[${i}]`, vctx));
   }
+  if (value.f === 'metric' && value.statuses !== undefined && (!Array.isArray(value.statuses) || value.statuses.some(id=>!vctx.ids.statuses.has(id)))) err(`${path}.statuses`,'Unknown metric status reference');
+  if (value.f === 'metric' && !['weaponDamage','negativeStatusTypes','negativeStatusStacks','damageTakenThisTurn','sameCardPlays','cardsPlayed','distinctTypes','manaSpent','staminaSpent'].includes(value.metric)) err(`${path}.metric`, 'Unknown combat metric');
   if (value.f === 'stacks') {
     if (typeof value.status !== 'string' || !vctx.ids.statuses.has(value.status)) {
       err(`${path}.status`, `Dangling reference: unknown status id '${value.status}'`);
@@ -2785,6 +2836,11 @@ export function validateFormula(value, path, vctx) {
   }
   if (['percentMaxHp', 'missingHp', 'missingMana', 'blockOf', 'hpOf'].includes(value.f) && value.of === undefined) {
     err(`${path}.of`, `'${value.f}' requires 'of'`);
+  }
+  if (value.f === 'traitBonus') {
+    if (value.base === undefined) err(`${path}.base`, "'traitBonus' requires a base");
+    else validateFormula(value.base, `${path}.base`, vctx);
+    if (typeof value.pct !== 'number') err(`${path}.pct`, "'traitBonus' requires a numeric pct");
   }
   if (value.f === 'percentMaxHp' && typeof value.pct !== 'number') {
     err(`${path}.pct`, "'percentMaxHp' requires a numeric pct");

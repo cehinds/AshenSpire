@@ -124,6 +124,16 @@ if (content.code !== 0) {
   process.exit(content.code || 1);
 }
 
+// Compile the authored JSON game profiles into the immutable catalog imported by
+// the runtime. Profile data is independent of content tables but must be current
+// before the bundler starts reading the game graph.
+console.log('launch: compiling JSON game profiles…');
+const gameProfiles = await steps.run(resolve(ROOT, 'tools/game-config.mjs'), ['build']);
+if (gameProfiles.code !== 0) {
+  console.error('launch: game profile build failed — fix games/ashenspire and retry.');
+  process.exit(gameProfiles.code || 1);
+}
+
 const buildDir = resolve(ROOT, 'build');
 const distDir = resolve(ROOT, 'dist');
 
@@ -185,7 +195,9 @@ if (removed.length) console.log(`launch: removed ${removed.length} stale launche
 const html = resolve(buildDir, 'AshenSpire.html');
 const singleFile = resolve(buildDir, 'download', 'AshenSpire.html');
 mkdirSync(resolve(distDir, 'download'), { recursive: true });
-for (const part of ['packs', 'objects', 'cards']) cpSync(resolve(buildDir, part), resolve(distDir, part), { recursive: true });
+// build/cards/ (per-card layout JSON, ~13 MB) stays a build-tree export for
+// tooling: the game never requests it, so it is not copied into dist/.
+for (const part of ['packs', 'objects']) cpSync(resolve(buildDir, part), resolve(distDir, part), { recursive: true });
 for (const part of ['asset-base.json', '.asset-pack']) copyFileSync(resolve(buildDir, part), resolve(distDir, part));
 const aliases = [
   [html, resolve(distDir, 'AshenSpire.html')],

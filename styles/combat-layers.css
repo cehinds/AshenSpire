@@ -56,12 +56,13 @@
    must not split the physical tap area into strips: the transparent square
    belongs to the frame and uses the fitted height. On enemies it occupies the
    left side of the full footer, leaving the name's center for inspection.
-   Explicit overhead reading controls retain priority above this square. */
+   Explicit overhead reading controls retain priority above this square.
+   Until geometry is measured, no auxiliary square owns an input region. */
 :root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox):not(.dead)::before {
   content: ''; display: block; position: absolute;
   left: var(--enemy-core-x, var(--enemy-hit-x)); top: var(--enemy-core-y, var(--enemy-hit-y));
-  width: min(var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))), var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1))));
-  height: var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1)));
+  width: min(var(--enemy-hit-width, 0px), var(--enemy-hit-height, 0px));
+  height: var(--enemy-hit-height, 0px);
   transform: translate(-50%, -50%); pointer-events: auto;
   background: none; border: 0; box-shadow: none;
   z-index: calc(var(--combat-layer-selection) + 2) !important;
@@ -153,7 +154,7 @@
 :root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info {
   position: absolute; right: auto; bottom: auto;
 }
-@media (max-height: 480px) and (min-width: 600px) {
+@container game-viewport (max-height: 480px) and (min-width: 600px) {
   :root .combat[data-layout='formation'] .combat-tools {
     right: auto; left: calc(8px / var(--ui-zoom,1)); grid-template-columns: 1fr;
   }
@@ -164,14 +165,14 @@
 
 /* The hand owns a slim tool row; no side panel steals a phone's card slots. */
 :root .combat[data-layout='formation'] .combat-tools {
-  display: grid; grid-template-columns: 1fr 1fr; gap: calc(8px / var(--ui-zoom,1));
+  display: grid; grid-template-columns: auto auto minmax(0,1fr); gap: calc(8px / var(--ui-zoom,1));
   padding: 0; border: 0;
   /* HUD layout tokens: the row's backing (transparent = off). */
   background: var(--hud-tools-bg); box-shadow: var(--hud-panel-shadow, none);
   border-radius: var(--hud-panel-radius, 0px);
 }
-:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='log'] { justify-self: start; text-shadow: var(--hud-text-shadow, none); }
-:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='reaction'] { justify-self: end; }
+:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='log'] { grid-column: 1; grid-row: 1; justify-self: start; text-shadow: var(--hud-text-shadow, none); }
+:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='reaction'] { grid-column: 3; grid-row: 1; justify-self: end; }
 :root .combat[data-layout='formation'] .combat-tools > button {
   min-height: calc(30px / var(--ui-zoom,1)); height: calc(30px / var(--ui-zoom,1));
   padding: 0; border: 0; background: none; box-shadow: none;
@@ -387,7 +388,10 @@
 }
 :root .combat[data-layout='formation'] .player-action-intent:not([data-placed]) { visibility: hidden; }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-row { --health-row-h: calc(7px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(10px / var(--ui-zoom,1)); min-height: var(--health-row-h); padding-bottom: calc(12px / var(--ui-zoom,1)); }
-:root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-meter > .m-plate { top: calc(8px / var(--ui-zoom,1)); bottom: auto; }
+/* Owner (2026-10-12): HP numbers sit BELOW the bar, centred under its track, in
+   every state. The plate hangs from the track's bottom edge, at least 2px clear. */
+:root .combat[data-layout='formation'] .enemy .combat-health-meter > .m-plate,
+:root .combat[data-layout='formation'] .player .combat-health-meter > .m-plate { position: absolute; inset: auto 0 auto 0; top: calc(100% + 2px / var(--ui-zoom,1)); bottom: auto; display: flex; justify-content: center; align-items: flex-start; pointer-events: none; }
 /* HUD layout tokens: an optional backing plate behind the idle HP value
    (transparent = off; radius and pad default to 0, the value's own box). */
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-meter .m-value {
@@ -405,16 +409,32 @@
   --combatant-value-text: calc(11px / var(--ui-zoom,1));
   height: var(--health-row-h); min-height: var(--health-row-h);
 }
-@media (max-width: 320px) {
+@container game-viewport (max-width: 320px) {
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-leading { width: calc(146px / var(--ui-zoom,1)); }
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud { display: grid; grid-template-columns: 1fr 1fr; column-gap: calc(4px / var(--ui-zoom,1)); }
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .nm {
-    grid-column: 1; grid-row: 1; height: calc(12px / var(--ui-zoom,1));
+    grid-column: 1 / -1; grid-row: 1; height: calc(12px / var(--ui-zoom,1));
     font-size: calc(9px / var(--ui-zoom,1)); line-height: calc(12px / var(--ui-zoom,1));
   }
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .meters { display: contents; }
-  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .combat-health-row { grid-column: 2; grid-row: 1; min-width: 0; }
-  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud [data-meter-row='resource'] { grid-row: 2; min-width: 0; }
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .combat-health-row { grid-column: 1 / -1; grid-row: 2; min-width: 0; }
+  :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud [data-meter-row='resource'] { grid-row: 3; min-width: 0; }
+}
+
+
+/* HP values hang below the track. Reserve their painted line in the selected
+   player's grid item so the following Poise/Ward row cannot occupy that line.
+   Keep this after the compact and 320px rules: both use the same reservation. */
+:root .combat[data-layout='formation'] .player.context-selected .combatant-mini-hud .combat-health-row {
+  --hp-value-line: calc(var(--hud-details-value-size, var(--combatant-value-text, calc(12px / var(--ui-zoom,1)))) * 1.25);
+  box-sizing: border-box;
+  height: auto;
+  min-height: calc(var(--health-row-h) + var(--hp-value-line) + 4px / var(--ui-zoom,1));
+  padding-bottom: calc(var(--hp-value-line) + 4px / var(--ui-zoom,1));
+  align-items: flex-start;
+}
+:root .combat[data-layout='formation'] .player.context-selected .combatant-mini-hud .combat-health-meter .m-value {
+  line-height: 1.25;
 }
 
 /* Co-op's protection readout (screens/coop.js: "Ward 0/0 · Barrier 0 · Attack")
@@ -464,4 +484,16 @@
    counts and the SPACE key keep their authored size. */
 :root[data-form-factor='desktop'] .combat-action-row[data-footer-art] .footer-art-face text:is([data-footer-binding='endTurn'],[data-footer-binding='drawLabel'],[data-footer-binding='discard'],[data-footer-binding='exhaust'],[data-footer-binding='potions']) {
   transform: scale(1.15); transform-box: fill-box; transform-origin: center;
+}
+/* Desktop corner tools (owner, 2026-10-12): the log and reaction switch sit in
+   the screen's bottom corners, so the row draws no backing strip between them. */
+:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] { background: none; box-shadow: none; pointer-events: none; }
+/* The corner row spans the hand; only its buttons and open log take input,
+   and they sit above any card that reaches a corner. */
+:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] { z-index: calc(var(--combat-layer-cards) + 1) !important; }
+:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] > * { pointer-events: auto; }
+
+/* Text feedback portals out of sprite effects so 800 is a root paint level. */
+:root .combat[data-layout='formation'] > .combat-floater-layer {
+  position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 800;
 }

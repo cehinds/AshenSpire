@@ -1,0 +1,27 @@
+{
+  "id": "school_fire",
+  "tag": "school:fire",
+  "version": "1.0.0",
+  "family": "school",
+  "label": "Fire",
+  "description": "Fire pressure: Burn buildup keeps pressure between turns.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "school_fire",
+    "color": "E47C43"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/ashenBlight.js",
+    "symbol": "ashenBlightSpellBuildup"
+  }
+}

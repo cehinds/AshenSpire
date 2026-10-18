@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Review Attributes Edit Control",
+  "canvas": {
+    "width": 60,
+    "height": 30,
+    "background": "transparent"
+  },
+  "defaultState": "review",
+  "states": [
+    {
+      "id": "review",
+      "name": "Review"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "review-attributes-edit",
+      "name": "Review Attributes Edit",
+      "type": "text",
+      "parent": "review-attributes-edit-control",
+      "x": 0,
+      "y": 0,
+      "width": 60,
+      "height": 30,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Edit",
+      "fontSize": 15,
+      "fontFamily": "Arial",
+      "fill": "#a9c9ae",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "review-attributes-edit-control",
+      "name": "Review Attributes Edit Control",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 60,
+      "height": 30,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    }
+  ],
+  "metadata": {
+    "componentSource": "review-attributes-edit-control",
+    "sourceState": "review",
+    "designOnly": true
+  }
+}

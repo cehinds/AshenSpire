@@ -133,7 +133,16 @@ jobs:
 
       - name: CHANGELOG receipts run newest first and name builds that exist (no browser)
         if: always() # independent of the step above; a red there must not hide this
-        run: node tools/verdict.mjs -- node tools/about-changelog.mjs --check-order
+        run: |
+          # PENDING RECEIPTS (tools/about-changelog.mjs, --pending). On a pull request into dev, and on a
+          # push to dev, a receipt whose stamp build-stamp has not yet re-pointed is exempt from the
+          # ORDER checks but still shape-checked, and each one is printed as a NOTE. On test, release and
+          # main the order is strict: a promoted receipt must already name its build.
+          pending=""
+          case "$GITHUB_EVENT_NAME:$GITHUB_REF_NAME" in
+            pull_request:*|push:dev|push:alternative/dev|push:alternative/*/dev) pending="--pending auto" ;;
+          esac
+          node tools/verdict.mjs -- node tools/about-changelog.mjs --check-order $pending
 
       - name: The ordering check still catches its own known-bads
         if: always()

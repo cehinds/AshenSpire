@@ -1,3 +1,5 @@
+import { uiConfig } from '../../config/generated/ui.js';
+
 // Presentation transforms after the shared fit. The foreground player and
 // distant enemy group do not change gameplay formation addresses or stature.
 export function stableHandAnchor(previous, layoutKey, { left, top } = {}) {
@@ -13,7 +15,7 @@ export function combatArtworkKey({ width, height, zoom, wide = false, presentati
   return JSON.stringify([width, height, zoom, wide, presentation, appearance, handAnchor, actors.map(actor => [
     actor.slot.id, actor.slot.cell, actor.slot.x, actor.slot.ground, actor.slot.fitGround,
     actor.slot.depth, actor.slot.artWidth, actor.ratio, actor.multiplier, actor.art,
-    actor.boxHeight, actor.visibleHeight, actor.visibleWidth, actor.footOffset,
+    actor.boxHeight, actor.visibleHeight, actor.visibleWidth, actor.edgeWidth, actor.footOffset,
   ])], (_key, value) => typeof value === 'number' ? Math.round(value * 1000) / 1000 : value);
 }
 
@@ -70,22 +72,17 @@ export function combatComposition({ sizes, actors, width, height, handTop, solo 
 // the turn ribbon (the headroom clamp), so the lift shortens the figure-to-plate gap.
 export const SHORT_PHONE_ENEMY_LIFT = .05;
 
-// Desktop-sized fields (height > 300) stand their enemies in one back row on a
-// shared foot line, centred on SPACIOUS_ROW_CENTRE of the width and kept left of
-// SPACIOUS_ROW_MAX_X. TODO(config): move these to the combat layout config.
+// Fields taller than 300 px (tablets and larger) spread their enemies across
+// the field's width about SPACIOUS_ROW_CENTRE. TODO(config): move these to the
+// combat layout config.
 export const SPACIOUS_ROW_CENTRE = .66;
-export const SPACIOUS_ROW_MAX_X = .8;
 const SPACIOUS_SPREAD = 1.3;
-// Desktop backdrop camera: the landmark horizon sits this share of the field
-// down from its top edge (the phone's sits near 13%). TODO(config).
-export const DESKTOP_HORIZON_SHARE = .2;
 // Room the intent and HP plates need under the turn ribbon, above each figure.
 export const SPACIOUS_RIBBON_RESERVE = 30;
 
-// `desktop` (the desktop form factor only) turns on the shared back row below;
-// tablets and phones keep the spacious path they had.
-// `horizonFloor` (desktop only, same units as height) is the standing-area top the
-// camera needs the shared row to stand on; the row moves down to it, never up.
+// The perspective grid is the live path (the default appearance). The legacy
+// composition below is kept for the classic-field tests and any caller that
+// passes no perspectiveGrid; every form factor takes the same placement.
 export function alternativeCombatComposition(options) {
   return options.perspectiveGrid
     ? perspectiveGridComposition(options)
@@ -98,35 +95,47 @@ export function alternativeCombatComposition(options) {
 function perspectiveGridComposition({ sizes, actors, width }) {
   return sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
+    // The selected pilot's wide blade/cape uses the existing screen-edge clamp.
+    // Keep idle fitting, uniform pose scale, and domain cell addresses intact.
     const halfWidth = actor.visibleWidth * size.scale / 2;
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, actor.slot.x));
-    return { ...size, x, ground: actor.slot.ground };
+    const foot = actor.side === 'enemy' && actor.slot.box ? insetPerspectiveFootprint(actor.slot,
+      { width: halfWidth * 2, height: (actor.boxHeight ?? actor.visibleHeight ?? 150) * size.scale * .08 }) : { x, ground: actor.slot.ground };
+    return { ...size, ...foot };
   });
 }
 
-// Keep the pre-grid composition available for the non-perspective path and
-// its desktop-only layout. The perspective path above deliberately owns its
-// foot anchors, while the desktop bands, hand, HUD and horizon remain shared.
-function legacyAlternativeComposition({ sizes, actors, width, height, handTop, handLeft = 0, solo = true, desktop = false, horizonFloor }) {
+// Constrain the shadow's complete bounding envelope inside its skewed cell.
+// The active kit draws an 8%-high ellipse centred on the sprite's foot.
+// Its full bounding envelope, rather than only its centre, owns this cell.
+// Configured clearance is in physical field pixels, independent of CSS zoom.
+// Moving the anchor never refits artwork.
+export function insetPerspectiveFootprint(slot, { width, height = 12,
+  inset = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.footprintInsetPx }) {
+  const box = slot.box;
+  if (!box) return { x: slot.x, ground: slot.ground };
+  const above = height / 2, below = height / 2;
+  const ground = Math.max(box.top + above + inset,
+    Math.min(box.top + box.height - below - inset, slot.ground));
+  const skew = box.skew || 0;
+  const centreAt = y => box.left + box.width / 2 + skew * (box.top + box.height / 2 - y);
+  const half = width / 2 + inset;
+  const low = Math.max(centreAt(ground - above), centreAt(ground + below)) - box.width / 2 + half;
+  const high = Math.min(centreAt(ground - above), centreAt(ground + below)) + box.width / 2 - half;
+  // Extremely wide custom art may exceed a cell. Preserve its authored size
+  // and centre it rather than silently shrinking it to satisfy presentation.
+  return { x: low <= high ? Math.max(low, Math.min(high, slot.x)) : (low + high) / 2, ground,
+    footprintFits: low <= high && box.height >= above + below + 2 * inset };
+}
+
+// The pre-grid composition: a spacious field (above 300 px) spreads its back
+// row; a shorter one keeps the phone's depth rows.
+function legacyAlternativeComposition({ sizes, actors, width, height, handTop, handLeft = 0, solo = true }) {
   const enemies = actors.filter(actor => actor.side === 'enemy');
   const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
   const center = enemyFits.length ? (Math.min(...enemyFits.map(f => f.x)) + Math.max(...enemyFits.map(f => f.x))) / 2 : width * .55;
   const spacious = height > 300;
-  // The desktop form factor shares the row at any field height: a 1280x720
-  // window leaves its field near 297px, under the spacious threshold.
-  const sharedRow = desktop;
-  // One foot line for the whole back row: the tallest enemy's headroom, never
-  // higher than the floor's standing share of the field.
-  const floor = sharedRow && Number.isFinite(horizonFloor) ? Math.min(horizonFloor, height) : 0;
-  const spaciousRow = sharedRow ? Math.max(height * .48, floor, ...enemyFits.map(size => {
-    const actor = actors.find(actor => actor.slot.id === size.id);
-    return Math.min(size.visibleHeight, height * .7) + actor.leading + SPACIOUS_RIBBON_RESERVE;
-  })) : 0;
-  // Spread the row about its centre by the spacious factor; on desktop, shrink
-  // it only when its far enemy would pass SPACIOUS_ROW_MAX_X of the width.
-  const maxOffset = Math.max(0, ...enemyFits.map(f => Math.abs(f.x - center)));
-  const spread = !spacious && !sharedRow ? 1 : !sharedRow || maxOffset === 0 ? SPACIOUS_SPREAD
-    : Math.min(SPACIOUS_SPREAD, (SPACIOUS_ROW_MAX_X - SPACIOUS_ROW_CENTRE) * width / maxOffset);
+  const spread = spacious ? SPACIOUS_SPREAD : 1;
   const fitted = sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
     const player = actor.side === 'player';
@@ -137,7 +146,7 @@ function legacyAlternativeComposition({ sizes, actors, width, height, handTop, h
     const ratio = visibleHeight / size.visibleHeight;
     const halfWidth = actor.visibleWidth * size.scale * ratio / 2;
     const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth) : size.x)
-      : (size.x - center) * spread + width * (spacious || sharedRow ? SPACIOUS_ROW_CENTRE : .68);
+      : (size.x - center) * spread + width * (spacious ? SPACIOUS_ROW_CENTRE : .68);
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
     // Enemies stand back on the floor, about half-way up the field. A short
     // portrait field (a phone with browser bars) keeps that depth too, rather
@@ -153,16 +162,14 @@ function legacyAlternativeComposition({ sizes, actors, width, height, handTop, h
     const lift = !player && backRow && !spacious ? height * SHORT_PHONE_ENEMY_LIFT : 0;
     const ground = player && solo && Number.isFinite(handTop)
       ? Math.max(visibleHeight + actor.leading + 6, handTop - 26)
-      : !player && sharedRow ? spaciousRow
       : Math.max(visibleHeight + actor.leading + 6 - lift, player ? (size.ground ?? actor.slot.ground)
         : backRow ? backGround - lift
           : nearRow);
     // A short portrait field frames its backdrop on the near row, as it did
     // before its enemies moved back, so the horizon and landmark stay in view;
-    // the backdrop then keeps the back-row feet on its floor. A desktop field
-    // frames the same way.
-    const sceneryGround = !player && (sharedRow || (backRow && !spacious)) ? nearRow : undefined;
-    const standingGround = !player && sharedRow ? spaciousRow : lift ? backGround : undefined;
+    // the backdrop then keeps the back-row feet on its floor.
+    const sceneryGround = !player && backRow && !spacious ? nearRow : undefined;
+    const standingGround = lift ? backGround : undefined;
     return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio,
       ...(sceneryGround === undefined ? {} : { sceneryGround }),
       ...(standingGround === undefined ? {} : { standingGround }),

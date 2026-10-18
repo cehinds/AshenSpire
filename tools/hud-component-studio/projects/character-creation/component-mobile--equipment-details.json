@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "title": "Equipment Details",
+  "canvas": {
+    "width": 354,
+    "height": 443,
+    "background": "transparent"
+  },
+  "defaultState": "equipment",
+  "states": [
+    {
+      "id": "equipment",
+      "name": "Equipment"
+    }
+  ],
+  "assets": {
+    "divider-ornate": {
+      "src": "assets/divider-ornate.png",
+      "width": 1440,
+      "height": 60
+    },
+    "nightweave": {
+      "src": "assets/nightweave.png",
+      "width": 256,
+      "height": 256
+    },
+    "panel-frame": {
+      "src": "assets/panel-frame.png",
+      "width": 1080,
+      "height": 720
+    },
+    "soot-material": {
+      "src": "assets/soot-material.png",
+      "width": 256,
+      "height": 256
+    }
+  },
+  "nodes": [
+    {
+      "id": "equipment-details",
+      "name": "Equipment Details",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 354,
+      "height": 443,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "equipment-details-surface",
+      "name": "Reusable antique brass trim",
+      "type": "image",
+      "parent": "equipment-details",
+      "x": 0,
+      "y": 0,
+      "width": 354,
+      "height": 443,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "panel-frame",
+      "fit": "stretch"
+    },
+    {
+      "id": "equipment-detail-art",
+      "name": "Equipment Detail Art",
+      "type": "image",
+      "parent": "equipment-details",
+      "x": 93,
+      "y": 20,
+      "width": 168,
+      "height": 180,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "nightweave",
+      "fit": "contain"
+    },
+    {
+      "id": "equipment-detail-name",
+      "name": "Equipment Detail Name",
+      "type": "text",
+      "parent": "equipment-details",
+      "x": 20,
+      "y": 223,
+      "width": 314,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Nightweave",
+      "fontSize": 26,
+      "fontFamily": "Georgia",
+      "fill": "#d7b45f",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "equipment-detail-divider",
+      "name": "Equipment Detail Divider",
+      "type": "image",
+      "parent": "equipment-details",
+      "x": 24,
+      "y": 268,
+      "width": 306,
+      "height": 18,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "divider-ornate",
+      "fit": "stretch"
+    },
+    {
+      "id": "equipment-detail-description",
+      "name": "Equipment Detail Description",
+      "type": "text",
+      "parent": "equipment-details",
+      "x": 20,
+      "y": 304,
+      "width": 314,
+      "height": 91.80000000000001,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Review protection and weight\nbefore choosing.\n\nArmour \u00b7 Main hand \u00b7 Relic",
+      "fontSize": 17,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "equipment-details-surface-background",
+      "name": "Reusable soot material background",
+      "type": "image",
+      "parent": "equipment-details",
+      "x": 0,
+      "y": 0,
+      "width": 354,
+      "height": 443,
+      "z": 0,
+      "visible": true,
+      "locked": false,
+      "opacity": 0.45,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "soot-material",
+      "fit": "stretch"
+    }
+  ],
+  "metadata": {
+    "componentSource": "equipment-details",
+    "sourceState": "equipment",
+    "designOnly": true
+  }
+}

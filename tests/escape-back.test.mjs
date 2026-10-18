@@ -131,6 +131,20 @@ function resetDom() {
 // ---- the screens ------------------------------------------------------------
 
 for (const [name, press] of Object.entries(PRESSES)) {
+  test(`${name}: the mounted farewell Return runs exactly once and cancels closing`, async () => {
+    resetDom();
+    const { mountQuitScreen } = await import('../src/ui/quitGame.js');
+    let backs = 0, cancels = 0, closes = 0;
+    mountQuitScreen(app(), { onBack: () => { backs += 1; },
+      closeWindow: () => { closes += 1; }, windowClosed: () => false,
+      schedule: () => 17, cancel: id => { assert.equal(id, 17); cancels += 1; } });
+    assert.ok(app().querySelector('#farewell-back[data-back]'), 'the actual helper marks Return');
+    await press();
+    assert.equal(backs, 1, 'one physical input invokes one Return');
+    assert.equal(cancels, 1, 'Return cancels the queued close attempt once');
+    assert.equal(closes, 0, 'backing out does not close the window');
+  });
+
   test(`${name}: Run history's Back runs exactly once`, async () => {
     resetDom();
     const { mountHistory } = await import('../src/ui/screens/history.js');
@@ -458,7 +472,14 @@ test('the inventory: every screen with a plain Back marks it, and each row of th
   }
   assert.ok(SCREENS.some((row) => row.id === 'title' && row.why), 'the title documents its Back');
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.match(main, /id="farewell-back" data-back/, 'the farewell screen marks Return to title');
+  const quit = readFileSync(new URL('../src/ui/quitGame.js', import.meta.url), 'utf8');
+  assert.match(quit, /id="farewell-back" data-back/, 'the extracted farewell screen marks Return to title');
+  assert.match(main, /import\s*\{\s*mountQuitScreen\s*\}\s*from\s*'\.\/ui\/quitGame\.js'/, 'main imports the tested Quit helper');
+  const quitRoute = main.match(/function quitGame\(\)\s*\{([\s\S]*?)^\}/m)?.[1];
+  assert.ok(quitRoute, 'main defines the actual Quit route');
+  assert.equal(quitRoute.match(/mountQuitScreen\(/g)?.length, 1, 'the route mounts one farewell screen');
+  assert.match(quitRoute, /mountQuitScreen\(app,\s*\{\s*savedRun,\s*onBack:\s*showCollapsedTitle\s*\}\)/,
+    'the actual Quit route binds Return to the collapsed title');
   assert.ok(SCREENS.some((row) => row.back === '#farewell-back'), 'the farewell screen is a row');
   assert.ok(NOT_DRIVEN.every(([name, how]) => name && how));
 });

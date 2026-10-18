@@ -1,0 +1,12 @@
+Create a NEW SMALL-SPRITE atlas from the attached costume and greatsword reference images. Transparent PNG 1024x1536 portrait. Exactly FIVE TINY full-body Reaver defensive sprites in a spacious 2-column 3-row grid, last bottom-right empty. No text, scenery, ground, glow or effects. The sprites must be small: each helmet-to-boots body ONLY 210 pixels high, entire sword+cape+body under 330x330 pixels. This is about ONE FIFTH of canvas width per body, with HUGE transparent space around each. Do not zoom in or fill cells. Keep each complete silhouette centered on these pixel centers: (256,256),(768,256),(256,768),(768,768),(256,1280). Every opaque pixel must remain at least72 pixels inside its 512 square cell. Thus five isolated small game sprites surrounded by broad blank transparent gutters, NOT five large illustrations.
+
+Same finned closed helmet, worn silver/rust plate armor, mail and connected crimson cape as costume reference. Same broad LONG greatsword as weapon reference. Keep sword long relative to body by shrinking the entire character and sword together. Rear LEFT shoulder camera facing RIGHT for every sprite. Exactly TWO hands visibly separated along SAME long hilt below crossguard, no blade grip. Both boots fully flat, both arms anatomically natural. Held defensive readiness, no attack.
+
+Top-left: high hanging cover. Two visible hands in front above brow, blade descends down-right, upright planted medium base.
+Top-right: low plough. Two hands low at forward/right HIP, blade rises up-right, tall torso with narrow-medium flat-foot base.
+Middle-left: high horizontal point-forward. Two hands side by side along hilt clearly IN FRONT of helmet at temple height, long blade horizontal right, no hidden second hand behind head.
+Middle-right: low broad chest barrier. Deep visibly lower WIDE knee bend, flat boots two shoulders apart, hips down, torso25% shorter than tall pose. Both hands in front of CENTER CHEST, blade up-right. Distinct low base from top-right hip-level plough.
+Bottom-left: low hanging cover. Tall rear-weighted body, two hands waist-forward, long blade down-right.
+Bottom-right: empty.
+
+All five same anatomical scale210 pixels body before crouch. Preserve small size rather than illustrating armor close-up. HUGE empty gutters and no silhouette crossing cell edges.

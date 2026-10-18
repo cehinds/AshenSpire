@@ -1,0 +1,1847 @@
+[
+  {
+    "src": "component-desktop--class-header.json",
+    "preview": "exports/components/desktop--class-header.png",
+    "wireframe": "exports/components/desktop--class-header-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-top-1190.json",
+    "preview": "exports/components/desktop--class-top-1190.png",
+    "wireframe": "exports/components/desktop--class-top-1190-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-top-1260.json",
+    "preview": "exports/components/desktop--class-top-1260.png",
+    "wireframe": "exports/components/desktop--class-top-1260-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-top-1345.json",
+    "preview": "exports/components/desktop--class-top-1345.png",
+    "wireframe": "exports/components/desktop--class-top-1345-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-navigation.json",
+    "preview": "exports/components/desktop--class-navigation.png",
+    "wireframe": "exports/components/desktop--class-navigation-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-nav-class.json",
+    "preview": "exports/components/desktop--class-nav-class.png",
+    "wireframe": "exports/components/desktop--class-nav-class-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-nav-attributes.json",
+    "preview": "exports/components/desktop--class-nav-attributes.png",
+    "wireframe": "exports/components/desktop--class-nav-attributes-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-nav-keepsake.json",
+    "preview": "exports/components/desktop--class-nav-keepsake.png",
+    "wireframe": "exports/components/desktop--class-nav-keepsake-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-nav-equipment.json",
+    "preview": "exports/components/desktop--class-nav-equipment.png",
+    "wireframe": "exports/components/desktop--class-nav-equipment-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-nav-feats.json",
+    "preview": "exports/components/desktop--class-nav-feats.png",
+    "wireframe": "exports/components/desktop--class-nav-feats-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-nav-spells.json",
+    "preview": "exports/components/desktop--class-nav-spells.png",
+    "wireframe": "exports/components/desktop--class-nav-spells-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-nav-review.json",
+    "preview": "exports/components/desktop--class-nav-review.png",
+    "wireframe": "exports/components/desktop--class-nav-review-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-intro.json",
+    "preview": "exports/components/desktop--class-intro.png",
+    "wireframe": "exports/components/desktop--class-intro-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-content.json",
+    "preview": "exports/components/desktop--class-content.png",
+    "wireframe": "exports/components/desktop--class-content-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-footer.json",
+    "preview": "exports/components/desktop--class-footer.png",
+    "wireframe": "exports/components/desktop--class-footer-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-back.json",
+    "preview": "exports/components/desktop--class-back.png",
+    "wireframe": "exports/components/desktop--class-back-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-next.json",
+    "preview": "exports/components/desktop--class-next.png",
+    "wireframe": "exports/components/desktop--class-next-wireframe.png"
+  },
+  {
+    "src": "component-desktop--reaver-class-card.json",
+    "preview": "exports/components/desktop--reaver-class-card.png",
+    "wireframe": "exports/components/desktop--reaver-class-card-wireframe.png"
+  },
+  {
+    "src": "component-desktop--starseer-class-card.json",
+    "preview": "exports/components/desktop--starseer-class-card.png",
+    "wireframe": "exports/components/desktop--starseer-class-card-wireframe.png"
+  },
+  {
+    "src": "component-desktop--rogue-class-card.json",
+    "preview": "exports/components/desktop--rogue-class-card.png",
+    "wireframe": "exports/components/desktop--rogue-class-card-wireframe.png"
+  },
+  {
+    "src": "component-desktop--herald-class-card.json",
+    "preview": "exports/components/desktop--herald-class-card.png",
+    "wireframe": "exports/components/desktop--herald-class-card-wireframe.png"
+  },
+  {
+    "src": "component-desktop--class-summary.json",
+    "preview": "exports/components/desktop--class-summary.png",
+    "wireframe": "exports/components/desktop--class-summary-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-navigation.json",
+    "preview": "exports/components/desktop--attributes-navigation.png",
+    "wireframe": "exports/components/desktop--attributes-navigation-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-nav-class.json",
+    "preview": "exports/components/desktop--attributes-nav-class.png",
+    "wireframe": "exports/components/desktop--attributes-nav-class-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-nav-attributes.json",
+    "preview": "exports/components/desktop--attributes-nav-attributes.png",
+    "wireframe": "exports/components/desktop--attributes-nav-attributes-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-intro.json",
+    "preview": "exports/components/desktop--attributes-intro.png",
+    "wireframe": "exports/components/desktop--attributes-intro-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-content.json",
+    "preview": "exports/components/desktop--attributes-content.png",
+    "wireframe": "exports/components/desktop--attributes-content-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-footer.json",
+    "preview": "exports/components/desktop--attributes-footer.png",
+    "wireframe": "exports/components/desktop--attributes-footer-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-next.json",
+    "preview": "exports/components/desktop--attributes-next.png",
+    "wireframe": "exports/components/desktop--attributes-next-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-allocation.json",
+    "preview": "exports/components/desktop--attribute-allocation.png",
+    "wireframe": "exports/components/desktop--attribute-allocation-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-might.json",
+    "preview": "exports/components/desktop--attribute-might.png",
+    "wireframe": "exports/components/desktop--attribute-might-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-agility.json",
+    "preview": "exports/components/desktop--attribute-agility.png",
+    "wireframe": "exports/components/desktop--attribute-agility-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-vitality.json",
+    "preview": "exports/components/desktop--attribute-vitality.png",
+    "wireframe": "exports/components/desktop--attribute-vitality-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-intellect.json",
+    "preview": "exports/components/desktop--attribute-intellect.png",
+    "wireframe": "exports/components/desktop--attribute-intellect-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-will.json",
+    "preview": "exports/components/desktop--attribute-will.png",
+    "wireframe": "exports/components/desktop--attribute-will-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-impact.json",
+    "preview": "exports/components/desktop--attribute-impact.png",
+    "wireframe": "exports/components/desktop--attribute-impact-wireframe.png"
+  },
+  {
+    "src": "component-desktop--keepsake-navigation.json",
+    "preview": "exports/components/desktop--keepsake-navigation.png",
+    "wireframe": "exports/components/desktop--keepsake-navigation-wireframe.png"
+  },
+  {
+    "src": "component-desktop--keepsake-nav-keepsake.json",
+    "preview": "exports/components/desktop--keepsake-nav-keepsake.png",
+    "wireframe": "exports/components/desktop--keepsake-nav-keepsake-wireframe.png"
+  },
+  {
+    "src": "component-desktop--keepsake-intro.json",
+    "preview": "exports/components/desktop--keepsake-intro.png",
+    "wireframe": "exports/components/desktop--keepsake-intro-wireframe.png"
+  },
+  {
+    "src": "component-desktop--keepsake-content.json",
+    "preview": "exports/components/desktop--keepsake-content.png",
+    "wireframe": "exports/components/desktop--keepsake-content-wireframe.png"
+  },
+  {
+    "src": "component-desktop--keepsake-footer.json",
+    "preview": "exports/components/desktop--keepsake-footer.png",
+    "wireframe": "exports/components/desktop--keepsake-footer-wireframe.png"
+  },
+  {
+    "src": "component-desktop--keepsake-next.json",
+    "preview": "exports/components/desktop--keepsake-next.png",
+    "wireframe": "exports/components/desktop--keepsake-next-wireframe.png"
+  },
+  {
+    "src": "component-desktop--keepsake-choice-0.json",
+    "preview": "exports/components/desktop--keepsake-choice-0.png",
+    "wireframe": "exports/components/desktop--keepsake-choice-0-wireframe.png"
+  },
+  {
+    "src": "component-desktop--keepsake-choice-1.json",
+    "preview": "exports/components/desktop--keepsake-choice-1.png",
+    "wireframe": "exports/components/desktop--keepsake-choice-1-wireframe.png"
+  },
+  {
+    "src": "component-desktop--keepsake-choice-2.json",
+    "preview": "exports/components/desktop--keepsake-choice-2.png",
+    "wireframe": "exports/components/desktop--keepsake-choice-2-wireframe.png"
+  },
+  {
+    "src": "component-desktop--keepsake-choice-3.json",
+    "preview": "exports/components/desktop--keepsake-choice-3.png",
+    "wireframe": "exports/components/desktop--keepsake-choice-3-wireframe.png"
+  },
+  {
+    "src": "component-desktop--keepsake-details.json",
+    "preview": "exports/components/desktop--keepsake-details.png",
+    "wireframe": "exports/components/desktop--keepsake-details-wireframe.png"
+  },
+  {
+    "src": "component-desktop--equipment-navigation.json",
+    "preview": "exports/components/desktop--equipment-navigation.png",
+    "wireframe": "exports/components/desktop--equipment-navigation-wireframe.png"
+  },
+  {
+    "src": "component-desktop--equipment-nav-equipment.json",
+    "preview": "exports/components/desktop--equipment-nav-equipment.png",
+    "wireframe": "exports/components/desktop--equipment-nav-equipment-wireframe.png"
+  },
+  {
+    "src": "component-desktop--equipment-intro.json",
+    "preview": "exports/components/desktop--equipment-intro.png",
+    "wireframe": "exports/components/desktop--equipment-intro-wireframe.png"
+  },
+  {
+    "src": "component-desktop--equipment-content.json",
+    "preview": "exports/components/desktop--equipment-content.png",
+    "wireframe": "exports/components/desktop--equipment-content-wireframe.png"
+  },
+  {
+    "src": "component-desktop--equipment-footer.json",
+    "preview": "exports/components/desktop--equipment-footer.png",
+    "wireframe": "exports/components/desktop--equipment-footer-wireframe.png"
+  },
+  {
+    "src": "component-desktop--equipment-next.json",
+    "preview": "exports/components/desktop--equipment-next.png",
+    "wireframe": "exports/components/desktop--equipment-next-wireframe.png"
+  },
+  {
+    "src": "component-desktop--equipment-choice-0.json",
+    "preview": "exports/components/desktop--equipment-choice-0.png",
+    "wireframe": "exports/components/desktop--equipment-choice-0-wireframe.png"
+  },
+  {
+    "src": "component-desktop--equipment-choice-1.json",
+    "preview": "exports/components/desktop--equipment-choice-1.png",
+    "wireframe": "exports/components/desktop--equipment-choice-1-wireframe.png"
+  },
+  {
+    "src": "component-desktop--equipment-choice-2.json",
+    "preview": "exports/components/desktop--equipment-choice-2.png",
+    "wireframe": "exports/components/desktop--equipment-choice-2-wireframe.png"
+  },
+  {
+    "src": "component-desktop--equipment-details.json",
+    "preview": "exports/components/desktop--equipment-details.png",
+    "wireframe": "exports/components/desktop--equipment-details-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-navigation.json",
+    "preview": "exports/components/desktop--feats-navigation.png",
+    "wireframe": "exports/components/desktop--feats-navigation-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-nav-feats.json",
+    "preview": "exports/components/desktop--feats-nav-feats.png",
+    "wireframe": "exports/components/desktop--feats-nav-feats-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-intro.json",
+    "preview": "exports/components/desktop--feats-intro.png",
+    "wireframe": "exports/components/desktop--feats-intro-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-content.json",
+    "preview": "exports/components/desktop--feats-content.png",
+    "wireframe": "exports/components/desktop--feats-content-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-footer.json",
+    "preview": "exports/components/desktop--feats-footer.png",
+    "wireframe": "exports/components/desktop--feats-footer-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-next.json",
+    "preview": "exports/components/desktop--feats-next.png",
+    "wireframe": "exports/components/desktop--feats-next-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-choice-0.json",
+    "preview": "exports/components/desktop--feats-choice-0.png",
+    "wireframe": "exports/components/desktop--feats-choice-0-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-choice-1.json",
+    "preview": "exports/components/desktop--feats-choice-1.png",
+    "wireframe": "exports/components/desktop--feats-choice-1-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-choice-2.json",
+    "preview": "exports/components/desktop--feats-choice-2.png",
+    "wireframe": "exports/components/desktop--feats-choice-2-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-choice-3.json",
+    "preview": "exports/components/desktop--feats-choice-3.png",
+    "wireframe": "exports/components/desktop--feats-choice-3-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-choice-4.json",
+    "preview": "exports/components/desktop--feats-choice-4.png",
+    "wireframe": "exports/components/desktop--feats-choice-4-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-choice-5.json",
+    "preview": "exports/components/desktop--feats-choice-5.png",
+    "wireframe": "exports/components/desktop--feats-choice-5-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-details.json",
+    "preview": "exports/components/desktop--feats-details.png",
+    "wireframe": "exports/components/desktop--feats-details-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spells-navigation.json",
+    "preview": "exports/components/desktop--spells-navigation.png",
+    "wireframe": "exports/components/desktop--spells-navigation-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spells-nav-spells.json",
+    "preview": "exports/components/desktop--spells-nav-spells.png",
+    "wireframe": "exports/components/desktop--spells-nav-spells-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spells-intro.json",
+    "preview": "exports/components/desktop--spells-intro.png",
+    "wireframe": "exports/components/desktop--spells-intro-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spells-content.json",
+    "preview": "exports/components/desktop--spells-content.png",
+    "wireframe": "exports/components/desktop--spells-content-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spells-footer.json",
+    "preview": "exports/components/desktop--spells-footer.png",
+    "wireframe": "exports/components/desktop--spells-footer-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spells-next.json",
+    "preview": "exports/components/desktop--spells-next.png",
+    "wireframe": "exports/components/desktop--spells-next-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spells-details.json",
+    "preview": "exports/components/desktop--spells-details.png",
+    "wireframe": "exports/components/desktop--spells-details-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-navigation.json",
+    "preview": "exports/components/desktop--review-navigation.png",
+    "wireframe": "exports/components/desktop--review-navigation-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-nav-review.json",
+    "preview": "exports/components/desktop--review-nav-review.png",
+    "wireframe": "exports/components/desktop--review-nav-review-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-intro.json",
+    "preview": "exports/components/desktop--review-intro.png",
+    "wireframe": "exports/components/desktop--review-intro-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-content.json",
+    "preview": "exports/components/desktop--review-content.png",
+    "wireframe": "exports/components/desktop--review-content-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-footer.json",
+    "preview": "exports/components/desktop--review-footer.png",
+    "wireframe": "exports/components/desktop--review-footer-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-next.json",
+    "preview": "exports/components/desktop--review-next.png",
+    "wireframe": "exports/components/desktop--review-next-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-identity.json",
+    "preview": "exports/components/desktop--review-identity.png",
+    "wireframe": "exports/components/desktop--review-identity-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-attributes.json",
+    "preview": "exports/components/desktop--review-attributes.png",
+    "wireframe": "exports/components/desktop--review-attributes-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-keepsake.json",
+    "preview": "exports/components/desktop--review-keepsake.png",
+    "wireframe": "exports/components/desktop--review-keepsake-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-equipment.json",
+    "preview": "exports/components/desktop--review-equipment.png",
+    "wireframe": "exports/components/desktop--review-equipment-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-feats.json",
+    "preview": "exports/components/desktop--review-feats.png",
+    "wireframe": "exports/components/desktop--review-feats-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-spells.json",
+    "preview": "exports/components/desktop--review-spells.png",
+    "wireframe": "exports/components/desktop--review-spells-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-choice-art-0.json",
+    "preview": "exports/components/desktop--feats-choice-art-0.png",
+    "wireframe": "exports/components/desktop--feats-choice-art-0-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-choice-art-1.json",
+    "preview": "exports/components/desktop--feats-choice-art-1.png",
+    "wireframe": "exports/components/desktop--feats-choice-art-1-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-choice-art-2.json",
+    "preview": "exports/components/desktop--feats-choice-art-2.png",
+    "wireframe": "exports/components/desktop--feats-choice-art-2-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-choice-art-3.json",
+    "preview": "exports/components/desktop--feats-choice-art-3.png",
+    "wireframe": "exports/components/desktop--feats-choice-art-3-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-choice-art-4.json",
+    "preview": "exports/components/desktop--feats-choice-art-4.png",
+    "wireframe": "exports/components/desktop--feats-choice-art-4-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-choice-art-5.json",
+    "preview": "exports/components/desktop--feats-choice-art-5.png",
+    "wireframe": "exports/components/desktop--feats-choice-art-5-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-detail-art.json",
+    "preview": "exports/components/desktop--feats-detail-art.png",
+    "wireframe": "exports/components/desktop--feats-detail-art-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spell-card-0.json",
+    "preview": "exports/components/desktop--spell-card-0.png",
+    "wireframe": "exports/components/desktop--spell-card-0-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spell-card-1.json",
+    "preview": "exports/components/desktop--spell-card-1.png",
+    "wireframe": "exports/components/desktop--spell-card-1-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spell-card-2.json",
+    "preview": "exports/components/desktop--spell-card-2.png",
+    "wireframe": "exports/components/desktop--spell-card-2-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-name-field.json",
+    "preview": "exports/components/desktop--attributes-name-field.png",
+    "wireframe": "exports/components/desktop--attributes-name-field-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-mode-tabs.json",
+    "preview": "exports/components/desktop--attributes-mode-tabs.png",
+    "wireframe": "exports/components/desktop--attributes-mode-tabs-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-mode-standard.json",
+    "preview": "exports/components/desktop--attributes-mode-standard.png",
+    "wireframe": "exports/components/desktop--attributes-mode-standard-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-mode-assign.json",
+    "preview": "exports/components/desktop--attributes-mode-assign.png",
+    "wireframe": "exports/components/desktop--attributes-mode-assign-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-run-settings.json",
+    "preview": "exports/components/desktop--review-run-settings.png",
+    "wireframe": "exports/components/desktop--review-run-settings-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-journey.json",
+    "preview": "exports/components/desktop--review-journey.png",
+    "wireframe": "exports/components/desktop--review-journey-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-seed.json",
+    "preview": "exports/components/desktop--review-seed.png",
+    "wireframe": "exports/components/desktop--review-seed-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-destination.json",
+    "preview": "exports/components/desktop--review-destination.png",
+    "wireframe": "exports/components/desktop--review-destination-wireframe.png"
+  },
+  {
+    "src": "component-desktop--feats-rules-note.json",
+    "preview": "exports/components/desktop--feats-rules-note.png",
+    "wireframe": "exports/components/desktop--feats-rules-note-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spells-selected-spells.json",
+    "preview": "exports/components/desktop--spells-selected-spells.png",
+    "wireframe": "exports/components/desktop--spells-selected-spells-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-might-label-control.json",
+    "preview": "exports/components/desktop--attribute-might-label-control.png",
+    "wireframe": "exports/components/desktop--attribute-might-label-control-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-might-value-control.json",
+    "preview": "exports/components/desktop--attribute-might-value-control.png",
+    "wireframe": "exports/components/desktop--attribute-might-value-control-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-agility-label-control.json",
+    "preview": "exports/components/desktop--attribute-agility-label-control.png",
+    "wireframe": "exports/components/desktop--attribute-agility-label-control-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-vitality-label-control.json",
+    "preview": "exports/components/desktop--attribute-vitality-label-control.png",
+    "wireframe": "exports/components/desktop--attribute-vitality-label-control-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-intellect-label-control.json",
+    "preview": "exports/components/desktop--attribute-intellect-label-control.png",
+    "wireframe": "exports/components/desktop--attribute-intellect-label-control-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-intellect-value-control.json",
+    "preview": "exports/components/desktop--attribute-intellect-value-control.png",
+    "wireframe": "exports/components/desktop--attribute-intellect-value-control-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-will-label-control.json",
+    "preview": "exports/components/desktop--attribute-will-label-control.png",
+    "wireframe": "exports/components/desktop--attribute-will-label-control-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attribute-will-value-control.json",
+    "preview": "exports/components/desktop--attribute-will-value-control.png",
+    "wireframe": "exports/components/desktop--attribute-will-value-control-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-identity-form.json",
+    "preview": "exports/components/desktop--attributes-identity-form.png",
+    "wireframe": "exports/components/desktop--attributes-identity-form-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-impact-heading.json",
+    "preview": "exports/components/desktop--attributes-impact-heading.png",
+    "wireframe": "exports/components/desktop--attributes-impact-heading-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-impact-body.json",
+    "preview": "exports/components/desktop--attributes-impact-body.png",
+    "wireframe": "exports/components/desktop--attributes-impact-body-wireframe.png"
+  },
+  {
+    "src": "component-desktop--attributes-derived-stats.json",
+    "preview": "exports/components/desktop--attributes-derived-stats.png",
+    "wireframe": "exports/components/desktop--attributes-derived-stats-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-attributes-heading.json",
+    "preview": "exports/components/desktop--review-attributes-heading.png",
+    "wireframe": "exports/components/desktop--review-attributes-heading-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-attributes-body.json",
+    "preview": "exports/components/desktop--review-attributes-body.png",
+    "wireframe": "exports/components/desktop--review-attributes-body-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-attributes-edit-control.json",
+    "preview": "exports/components/desktop--review-attributes-edit-control.png",
+    "wireframe": "exports/components/desktop--review-attributes-edit-control-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-keepsake-heading.json",
+    "preview": "exports/components/desktop--review-keepsake-heading.png",
+    "wireframe": "exports/components/desktop--review-keepsake-heading-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-keepsake-body.json",
+    "preview": "exports/components/desktop--review-keepsake-body.png",
+    "wireframe": "exports/components/desktop--review-keepsake-body-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-equipment-heading.json",
+    "preview": "exports/components/desktop--review-equipment-heading.png",
+    "wireframe": "exports/components/desktop--review-equipment-heading-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-equipment-body.json",
+    "preview": "exports/components/desktop--review-equipment-body.png",
+    "wireframe": "exports/components/desktop--review-equipment-body-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-feats-heading.json",
+    "preview": "exports/components/desktop--review-feats-heading.png",
+    "wireframe": "exports/components/desktop--review-feats-heading-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-feats-body.json",
+    "preview": "exports/components/desktop--review-feats-body.png",
+    "wireframe": "exports/components/desktop--review-feats-body-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-spells-heading.json",
+    "preview": "exports/components/desktop--review-spells-heading.png",
+    "wireframe": "exports/components/desktop--review-spells-heading-wireframe.png"
+  },
+  {
+    "src": "component-desktop--review-spells-body.json",
+    "preview": "exports/components/desktop--review-spells-body.png",
+    "wireframe": "exports/components/desktop--review-spells-body-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spell-card-0-artwork.json",
+    "preview": "exports/components/desktop--spell-card-0-artwork.png",
+    "wireframe": "exports/components/desktop--spell-card-0-artwork-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spell-card-0-header.json",
+    "preview": "exports/components/desktop--spell-card-0-header.png",
+    "wireframe": "exports/components/desktop--spell-card-0-header-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spell-card-0-body.json",
+    "preview": "exports/components/desktop--spell-card-0-body.png",
+    "wireframe": "exports/components/desktop--spell-card-0-body-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spell-card-0-rank.json",
+    "preview": "exports/components/desktop--spell-card-0-rank.png",
+    "wireframe": "exports/components/desktop--spell-card-0-rank-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spell-card-1-artwork.json",
+    "preview": "exports/components/desktop--spell-card-1-artwork.png",
+    "wireframe": "exports/components/desktop--spell-card-1-artwork-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spell-card-1-body.json",
+    "preview": "exports/components/desktop--spell-card-1-body.png",
+    "wireframe": "exports/components/desktop--spell-card-1-body-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spell-card-2-artwork.json",
+    "preview": "exports/components/desktop--spell-card-2-artwork.png",
+    "wireframe": "exports/components/desktop--spell-card-2-artwork-wireframe.png"
+  },
+  {
+    "src": "component-desktop--spell-card-2-body.json",
+    "preview": "exports/components/desktop--spell-card-2-body.png",
+    "wireframe": "exports/components/desktop--spell-card-2-body-wireframe.png"
+  },
+  {
+    "src": "page-class-desktop-noncaster.json",
+    "preview": "exports/class-desktop-noncaster.png",
+    "wireframe": "exports/class-desktop-noncaster-wireframe.png"
+  },
+  {
+    "src": "page-attributes-desktop-noncaster.json",
+    "preview": "exports/attributes-desktop-noncaster.png",
+    "wireframe": "exports/attributes-desktop-noncaster-wireframe.png"
+  },
+  {
+    "src": "page-keepsake-desktop-noncaster.json",
+    "preview": "exports/keepsake-desktop-noncaster.png",
+    "wireframe": "exports/keepsake-desktop-noncaster-wireframe.png"
+  },
+  {
+    "src": "page-equipment-desktop-noncaster.json",
+    "preview": "exports/equipment-desktop-noncaster.png",
+    "wireframe": "exports/equipment-desktop-noncaster-wireframe.png"
+  },
+  {
+    "src": "page-feats-desktop-noncaster.json",
+    "preview": "exports/feats-desktop-noncaster.png",
+    "wireframe": "exports/feats-desktop-noncaster-wireframe.png"
+  },
+  {
+    "src": "page-review-desktop-noncaster.json",
+    "preview": "exports/review-desktop-noncaster.png",
+    "wireframe": "exports/review-desktop-noncaster-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--class-header.json",
+    "preview": "exports/components/desktop-noncaster--class-header.png",
+    "wireframe": "exports/components/desktop-noncaster--class-header-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--class-navigation.json",
+    "preview": "exports/components/desktop-noncaster--class-navigation.png",
+    "wireframe": "exports/components/desktop-noncaster--class-navigation-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--class-content.json",
+    "preview": "exports/components/desktop-noncaster--class-content.png",
+    "wireframe": "exports/components/desktop-noncaster--class-content-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--reaver-class-card.json",
+    "preview": "exports/components/desktop-noncaster--reaver-class-card.png",
+    "wireframe": "exports/components/desktop-noncaster--reaver-class-card-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--starseer-class-card.json",
+    "preview": "exports/components/desktop-noncaster--starseer-class-card.png",
+    "wireframe": "exports/components/desktop-noncaster--starseer-class-card-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--class-summary.json",
+    "preview": "exports/components/desktop-noncaster--class-summary.png",
+    "wireframe": "exports/components/desktop-noncaster--class-summary-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--attributes-navigation.json",
+    "preview": "exports/components/desktop-noncaster--attributes-navigation.png",
+    "wireframe": "exports/components/desktop-noncaster--attributes-navigation-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--keepsake-navigation.json",
+    "preview": "exports/components/desktop-noncaster--keepsake-navigation.png",
+    "wireframe": "exports/components/desktop-noncaster--keepsake-navigation-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--equipment-navigation.json",
+    "preview": "exports/components/desktop-noncaster--equipment-navigation.png",
+    "wireframe": "exports/components/desktop-noncaster--equipment-navigation-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--equipment-content.json",
+    "preview": "exports/components/desktop-noncaster--equipment-content.png",
+    "wireframe": "exports/components/desktop-noncaster--equipment-content-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--equipment-choice-0.json",
+    "preview": "exports/components/desktop-noncaster--equipment-choice-0.png",
+    "wireframe": "exports/components/desktop-noncaster--equipment-choice-0-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--equipment-choice-1.json",
+    "preview": "exports/components/desktop-noncaster--equipment-choice-1.png",
+    "wireframe": "exports/components/desktop-noncaster--equipment-choice-1-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--equipment-choice-2.json",
+    "preview": "exports/components/desktop-noncaster--equipment-choice-2.png",
+    "wireframe": "exports/components/desktop-noncaster--equipment-choice-2-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--equipment-choice-3.json",
+    "preview": "exports/components/desktop-noncaster--equipment-choice-3.png",
+    "wireframe": "exports/components/desktop-noncaster--equipment-choice-3-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--equipment-details.json",
+    "preview": "exports/components/desktop-noncaster--equipment-details.png",
+    "wireframe": "exports/components/desktop-noncaster--equipment-details-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--feats-navigation.json",
+    "preview": "exports/components/desktop-noncaster--feats-navigation.png",
+    "wireframe": "exports/components/desktop-noncaster--feats-navigation-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--feats-footer.json",
+    "preview": "exports/components/desktop-noncaster--feats-footer.png",
+    "wireframe": "exports/components/desktop-noncaster--feats-footer-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--feats-next.json",
+    "preview": "exports/components/desktop-noncaster--feats-next.png",
+    "wireframe": "exports/components/desktop-noncaster--feats-next-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--review-navigation.json",
+    "preview": "exports/components/desktop-noncaster--review-navigation.png",
+    "wireframe": "exports/components/desktop-noncaster--review-navigation-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--review-content.json",
+    "preview": "exports/components/desktop-noncaster--review-content.png",
+    "wireframe": "exports/components/desktop-noncaster--review-content-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--review-identity.json",
+    "preview": "exports/components/desktop-noncaster--review-identity.png",
+    "wireframe": "exports/components/desktop-noncaster--review-identity-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--review-equipment.json",
+    "preview": "exports/components/desktop-noncaster--review-equipment.png",
+    "wireframe": "exports/components/desktop-noncaster--review-equipment-wireframe.png"
+  },
+  {
+    "src": "component-desktop-noncaster--review-equipment-body.json",
+    "preview": "exports/components/desktop-noncaster--review-equipment-body.png",
+    "wireframe": "exports/components/desktop-noncaster--review-equipment-body-wireframe.png"
+  },
+  {
+    "src": "page-class-mobile.json",
+    "preview": "exports/class-mobile.png",
+    "wireframe": "exports/class-mobile-wireframe.png"
+  },
+  {
+    "src": "page-attributes-mobile.json",
+    "preview": "exports/attributes-mobile.png",
+    "wireframe": "exports/attributes-mobile-wireframe.png"
+  },
+  {
+    "src": "page-keepsake-mobile.json",
+    "preview": "exports/keepsake-mobile.png",
+    "wireframe": "exports/keepsake-mobile-wireframe.png"
+  },
+  {
+    "src": "page-equipment-mobile.json",
+    "preview": "exports/equipment-mobile.png",
+    "wireframe": "exports/equipment-mobile-wireframe.png"
+  },
+  {
+    "src": "page-feats-mobile.json",
+    "preview": "exports/feats-mobile.png",
+    "wireframe": "exports/feats-mobile-wireframe.png"
+  },
+  {
+    "src": "page-spells-mobile.json",
+    "preview": "exports/spells-mobile.png",
+    "wireframe": "exports/spells-mobile-wireframe.png"
+  },
+  {
+    "src": "page-review-mobile.json",
+    "preview": "exports/review-mobile.png",
+    "wireframe": "exports/review-mobile-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-header.json",
+    "preview": "exports/components/mobile--class-header.png",
+    "wireframe": "exports/components/mobile--class-header-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-navigation.json",
+    "preview": "exports/components/mobile--class-navigation.png",
+    "wireframe": "exports/components/mobile--class-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-nav-class.json",
+    "preview": "exports/components/mobile--class-nav-class.png",
+    "wireframe": "exports/components/mobile--class-nav-class-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-nav-attributes.json",
+    "preview": "exports/components/mobile--class-nav-attributes.png",
+    "wireframe": "exports/components/mobile--class-nav-attributes-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-nav-keepsake.json",
+    "preview": "exports/components/mobile--class-nav-keepsake.png",
+    "wireframe": "exports/components/mobile--class-nav-keepsake-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-nav-equipment.json",
+    "preview": "exports/components/mobile--class-nav-equipment.png",
+    "wireframe": "exports/components/mobile--class-nav-equipment-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-nav-feats.json",
+    "preview": "exports/components/mobile--class-nav-feats.png",
+    "wireframe": "exports/components/mobile--class-nav-feats-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-nav-spells.json",
+    "preview": "exports/components/mobile--class-nav-spells.png",
+    "wireframe": "exports/components/mobile--class-nav-spells-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-nav-review.json",
+    "preview": "exports/components/mobile--class-nav-review.png",
+    "wireframe": "exports/components/mobile--class-nav-review-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-intro.json",
+    "preview": "exports/components/mobile--class-intro.png",
+    "wireframe": "exports/components/mobile--class-intro-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-content.json",
+    "preview": "exports/components/mobile--class-content.png",
+    "wireframe": "exports/components/mobile--class-content-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-footer.json",
+    "preview": "exports/components/mobile--class-footer.png",
+    "wireframe": "exports/components/mobile--class-footer-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-back.json",
+    "preview": "exports/components/mobile--class-back.png",
+    "wireframe": "exports/components/mobile--class-back-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-next.json",
+    "preview": "exports/components/mobile--class-next.png",
+    "wireframe": "exports/components/mobile--class-next-wireframe.png"
+  },
+  {
+    "src": "component-mobile--reaver-class-card.json",
+    "preview": "exports/components/mobile--reaver-class-card.png",
+    "wireframe": "exports/components/mobile--reaver-class-card-wireframe.png"
+  },
+  {
+    "src": "component-mobile--starseer-class-card.json",
+    "preview": "exports/components/mobile--starseer-class-card.png",
+    "wireframe": "exports/components/mobile--starseer-class-card-wireframe.png"
+  },
+  {
+    "src": "component-mobile--rogue-class-card.json",
+    "preview": "exports/components/mobile--rogue-class-card.png",
+    "wireframe": "exports/components/mobile--rogue-class-card-wireframe.png"
+  },
+  {
+    "src": "component-mobile--herald-class-card.json",
+    "preview": "exports/components/mobile--herald-class-card.png",
+    "wireframe": "exports/components/mobile--herald-class-card-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-summary.json",
+    "preview": "exports/components/mobile--class-summary.png",
+    "wireframe": "exports/components/mobile--class-summary-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-navigation.json",
+    "preview": "exports/components/mobile--attributes-navigation.png",
+    "wireframe": "exports/components/mobile--attributes-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-nav-class.json",
+    "preview": "exports/components/mobile--attributes-nav-class.png",
+    "wireframe": "exports/components/mobile--attributes-nav-class-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-nav-attributes.json",
+    "preview": "exports/components/mobile--attributes-nav-attributes.png",
+    "wireframe": "exports/components/mobile--attributes-nav-attributes-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-intro.json",
+    "preview": "exports/components/mobile--attributes-intro.png",
+    "wireframe": "exports/components/mobile--attributes-intro-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-content.json",
+    "preview": "exports/components/mobile--attributes-content.png",
+    "wireframe": "exports/components/mobile--attributes-content-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-footer.json",
+    "preview": "exports/components/mobile--attributes-footer.png",
+    "wireframe": "exports/components/mobile--attributes-footer-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-next.json",
+    "preview": "exports/components/mobile--attributes-next.png",
+    "wireframe": "exports/components/mobile--attributes-next-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-allocation.json",
+    "preview": "exports/components/mobile--attribute-allocation.png",
+    "wireframe": "exports/components/mobile--attribute-allocation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-might.json",
+    "preview": "exports/components/mobile--attribute-might.png",
+    "wireframe": "exports/components/mobile--attribute-might-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-agility.json",
+    "preview": "exports/components/mobile--attribute-agility.png",
+    "wireframe": "exports/components/mobile--attribute-agility-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-vitality.json",
+    "preview": "exports/components/mobile--attribute-vitality.png",
+    "wireframe": "exports/components/mobile--attribute-vitality-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-intellect.json",
+    "preview": "exports/components/mobile--attribute-intellect.png",
+    "wireframe": "exports/components/mobile--attribute-intellect-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-will.json",
+    "preview": "exports/components/mobile--attribute-will.png",
+    "wireframe": "exports/components/mobile--attribute-will-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-impact.json",
+    "preview": "exports/components/mobile--attribute-impact.png",
+    "wireframe": "exports/components/mobile--attribute-impact-wireframe.png"
+  },
+  {
+    "src": "component-mobile--keepsake-navigation.json",
+    "preview": "exports/components/mobile--keepsake-navigation.png",
+    "wireframe": "exports/components/mobile--keepsake-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--keepsake-nav-keepsake.json",
+    "preview": "exports/components/mobile--keepsake-nav-keepsake.png",
+    "wireframe": "exports/components/mobile--keepsake-nav-keepsake-wireframe.png"
+  },
+  {
+    "src": "component-mobile--keepsake-intro.json",
+    "preview": "exports/components/mobile--keepsake-intro.png",
+    "wireframe": "exports/components/mobile--keepsake-intro-wireframe.png"
+  },
+  {
+    "src": "component-mobile--keepsake-content.json",
+    "preview": "exports/components/mobile--keepsake-content.png",
+    "wireframe": "exports/components/mobile--keepsake-content-wireframe.png"
+  },
+  {
+    "src": "component-mobile--keepsake-footer.json",
+    "preview": "exports/components/mobile--keepsake-footer.png",
+    "wireframe": "exports/components/mobile--keepsake-footer-wireframe.png"
+  },
+  {
+    "src": "component-mobile--keepsake-next.json",
+    "preview": "exports/components/mobile--keepsake-next.png",
+    "wireframe": "exports/components/mobile--keepsake-next-wireframe.png"
+  },
+  {
+    "src": "component-mobile--keepsake-choice-0.json",
+    "preview": "exports/components/mobile--keepsake-choice-0.png",
+    "wireframe": "exports/components/mobile--keepsake-choice-0-wireframe.png"
+  },
+  {
+    "src": "component-mobile--keepsake-choice-1.json",
+    "preview": "exports/components/mobile--keepsake-choice-1.png",
+    "wireframe": "exports/components/mobile--keepsake-choice-1-wireframe.png"
+  },
+  {
+    "src": "component-mobile--keepsake-choice-2.json",
+    "preview": "exports/components/mobile--keepsake-choice-2.png",
+    "wireframe": "exports/components/mobile--keepsake-choice-2-wireframe.png"
+  },
+  {
+    "src": "component-mobile--keepsake-choice-3.json",
+    "preview": "exports/components/mobile--keepsake-choice-3.png",
+    "wireframe": "exports/components/mobile--keepsake-choice-3-wireframe.png"
+  },
+  {
+    "src": "component-mobile--keepsake-details.json",
+    "preview": "exports/components/mobile--keepsake-details.png",
+    "wireframe": "exports/components/mobile--keepsake-details-wireframe.png"
+  },
+  {
+    "src": "component-mobile--equipment-navigation.json",
+    "preview": "exports/components/mobile--equipment-navigation.png",
+    "wireframe": "exports/components/mobile--equipment-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--equipment-nav-equipment.json",
+    "preview": "exports/components/mobile--equipment-nav-equipment.png",
+    "wireframe": "exports/components/mobile--equipment-nav-equipment-wireframe.png"
+  },
+  {
+    "src": "component-mobile--equipment-intro.json",
+    "preview": "exports/components/mobile--equipment-intro.png",
+    "wireframe": "exports/components/mobile--equipment-intro-wireframe.png"
+  },
+  {
+    "src": "component-mobile--equipment-content.json",
+    "preview": "exports/components/mobile--equipment-content.png",
+    "wireframe": "exports/components/mobile--equipment-content-wireframe.png"
+  },
+  {
+    "src": "component-mobile--equipment-footer.json",
+    "preview": "exports/components/mobile--equipment-footer.png",
+    "wireframe": "exports/components/mobile--equipment-footer-wireframe.png"
+  },
+  {
+    "src": "component-mobile--equipment-next.json",
+    "preview": "exports/components/mobile--equipment-next.png",
+    "wireframe": "exports/components/mobile--equipment-next-wireframe.png"
+  },
+  {
+    "src": "component-mobile--equipment-choice-0.json",
+    "preview": "exports/components/mobile--equipment-choice-0.png",
+    "wireframe": "exports/components/mobile--equipment-choice-0-wireframe.png"
+  },
+  {
+    "src": "component-mobile--equipment-choice-1.json",
+    "preview": "exports/components/mobile--equipment-choice-1.png",
+    "wireframe": "exports/components/mobile--equipment-choice-1-wireframe.png"
+  },
+  {
+    "src": "component-mobile--equipment-choice-2.json",
+    "preview": "exports/components/mobile--equipment-choice-2.png",
+    "wireframe": "exports/components/mobile--equipment-choice-2-wireframe.png"
+  },
+  {
+    "src": "component-mobile--equipment-details.json",
+    "preview": "exports/components/mobile--equipment-details.png",
+    "wireframe": "exports/components/mobile--equipment-details-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-navigation.json",
+    "preview": "exports/components/mobile--feats-navigation.png",
+    "wireframe": "exports/components/mobile--feats-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-nav-feats.json",
+    "preview": "exports/components/mobile--feats-nav-feats.png",
+    "wireframe": "exports/components/mobile--feats-nav-feats-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-intro.json",
+    "preview": "exports/components/mobile--feats-intro.png",
+    "wireframe": "exports/components/mobile--feats-intro-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-content.json",
+    "preview": "exports/components/mobile--feats-content.png",
+    "wireframe": "exports/components/mobile--feats-content-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-footer.json",
+    "preview": "exports/components/mobile--feats-footer.png",
+    "wireframe": "exports/components/mobile--feats-footer-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-next.json",
+    "preview": "exports/components/mobile--feats-next.png",
+    "wireframe": "exports/components/mobile--feats-next-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-choice-0.json",
+    "preview": "exports/components/mobile--feats-choice-0.png",
+    "wireframe": "exports/components/mobile--feats-choice-0-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-choice-1.json",
+    "preview": "exports/components/mobile--feats-choice-1.png",
+    "wireframe": "exports/components/mobile--feats-choice-1-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-choice-2.json",
+    "preview": "exports/components/mobile--feats-choice-2.png",
+    "wireframe": "exports/components/mobile--feats-choice-2-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-choice-3.json",
+    "preview": "exports/components/mobile--feats-choice-3.png",
+    "wireframe": "exports/components/mobile--feats-choice-3-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-choice-4.json",
+    "preview": "exports/components/mobile--feats-choice-4.png",
+    "wireframe": "exports/components/mobile--feats-choice-4-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-choice-5.json",
+    "preview": "exports/components/mobile--feats-choice-5.png",
+    "wireframe": "exports/components/mobile--feats-choice-5-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-details.json",
+    "preview": "exports/components/mobile--feats-details.png",
+    "wireframe": "exports/components/mobile--feats-details-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spells-navigation.json",
+    "preview": "exports/components/mobile--spells-navigation.png",
+    "wireframe": "exports/components/mobile--spells-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spells-nav-spells.json",
+    "preview": "exports/components/mobile--spells-nav-spells.png",
+    "wireframe": "exports/components/mobile--spells-nav-spells-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spells-intro.json",
+    "preview": "exports/components/mobile--spells-intro.png",
+    "wireframe": "exports/components/mobile--spells-intro-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spells-content.json",
+    "preview": "exports/components/mobile--spells-content.png",
+    "wireframe": "exports/components/mobile--spells-content-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spells-footer.json",
+    "preview": "exports/components/mobile--spells-footer.png",
+    "wireframe": "exports/components/mobile--spells-footer-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spells-next.json",
+    "preview": "exports/components/mobile--spells-next.png",
+    "wireframe": "exports/components/mobile--spells-next-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spells-details.json",
+    "preview": "exports/components/mobile--spells-details.png",
+    "wireframe": "exports/components/mobile--spells-details-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-navigation.json",
+    "preview": "exports/components/mobile--review-navigation.png",
+    "wireframe": "exports/components/mobile--review-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-nav-review.json",
+    "preview": "exports/components/mobile--review-nav-review.png",
+    "wireframe": "exports/components/mobile--review-nav-review-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-intro.json",
+    "preview": "exports/components/mobile--review-intro.png",
+    "wireframe": "exports/components/mobile--review-intro-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-content.json",
+    "preview": "exports/components/mobile--review-content.png",
+    "wireframe": "exports/components/mobile--review-content-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-footer.json",
+    "preview": "exports/components/mobile--review-footer.png",
+    "wireframe": "exports/components/mobile--review-footer-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-next.json",
+    "preview": "exports/components/mobile--review-next.png",
+    "wireframe": "exports/components/mobile--review-next-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-identity.json",
+    "preview": "exports/components/mobile--review-identity.png",
+    "wireframe": "exports/components/mobile--review-identity-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-attributes.json",
+    "preview": "exports/components/mobile--review-attributes.png",
+    "wireframe": "exports/components/mobile--review-attributes-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-keepsake.json",
+    "preview": "exports/components/mobile--review-keepsake.png",
+    "wireframe": "exports/components/mobile--review-keepsake-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-equipment.json",
+    "preview": "exports/components/mobile--review-equipment.png",
+    "wireframe": "exports/components/mobile--review-equipment-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-feats.json",
+    "preview": "exports/components/mobile--review-feats.png",
+    "wireframe": "exports/components/mobile--review-feats-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-spells.json",
+    "preview": "exports/components/mobile--review-spells.png",
+    "wireframe": "exports/components/mobile--review-spells-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-choice-art-0.json",
+    "preview": "exports/components/mobile--feats-choice-art-0.png",
+    "wireframe": "exports/components/mobile--feats-choice-art-0-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-choice-art-1.json",
+    "preview": "exports/components/mobile--feats-choice-art-1.png",
+    "wireframe": "exports/components/mobile--feats-choice-art-1-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-choice-art-2.json",
+    "preview": "exports/components/mobile--feats-choice-art-2.png",
+    "wireframe": "exports/components/mobile--feats-choice-art-2-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-choice-art-3.json",
+    "preview": "exports/components/mobile--feats-choice-art-3.png",
+    "wireframe": "exports/components/mobile--feats-choice-art-3-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-choice-art-4.json",
+    "preview": "exports/components/mobile--feats-choice-art-4.png",
+    "wireframe": "exports/components/mobile--feats-choice-art-4-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-choice-art-5.json",
+    "preview": "exports/components/mobile--feats-choice-art-5.png",
+    "wireframe": "exports/components/mobile--feats-choice-art-5-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-detail-art.json",
+    "preview": "exports/components/mobile--feats-detail-art.png",
+    "wireframe": "exports/components/mobile--feats-detail-art-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spell-card-0.json",
+    "preview": "exports/components/mobile--spell-card-0.png",
+    "wireframe": "exports/components/mobile--spell-card-0-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spell-card-1.json",
+    "preview": "exports/components/mobile--spell-card-1.png",
+    "wireframe": "exports/components/mobile--spell-card-1-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spell-card-2.json",
+    "preview": "exports/components/mobile--spell-card-2.png",
+    "wireframe": "exports/components/mobile--spell-card-2-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-name-field.json",
+    "preview": "exports/components/mobile--attributes-name-field.png",
+    "wireframe": "exports/components/mobile--attributes-name-field-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-mode-tabs.json",
+    "preview": "exports/components/mobile--attributes-mode-tabs.png",
+    "wireframe": "exports/components/mobile--attributes-mode-tabs-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-mode-standard.json",
+    "preview": "exports/components/mobile--attributes-mode-standard.png",
+    "wireframe": "exports/components/mobile--attributes-mode-standard-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-mode-assign.json",
+    "preview": "exports/components/mobile--attributes-mode-assign.png",
+    "wireframe": "exports/components/mobile--attributes-mode-assign-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-run-settings.json",
+    "preview": "exports/components/mobile--review-run-settings.png",
+    "wireframe": "exports/components/mobile--review-run-settings-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-journey.json",
+    "preview": "exports/components/mobile--review-journey.png",
+    "wireframe": "exports/components/mobile--review-journey-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-seed.json",
+    "preview": "exports/components/mobile--review-seed.png",
+    "wireframe": "exports/components/mobile--review-seed-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-destination.json",
+    "preview": "exports/components/mobile--review-destination.png",
+    "wireframe": "exports/components/mobile--review-destination-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-expanded-navigation.json",
+    "preview": "exports/components/mobile--class-expanded-navigation.png",
+    "wireframe": "exports/components/mobile--class-expanded-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-current-step.json",
+    "preview": "exports/components/mobile--class-current-step.png",
+    "wireframe": "exports/components/mobile--class-current-step-wireframe.png"
+  },
+  {
+    "src": "component-mobile--class-all-steps-control.json",
+    "preview": "exports/components/mobile--class-all-steps-control.png",
+    "wireframe": "exports/components/mobile--class-all-steps-control-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-expanded-navigation.json",
+    "preview": "exports/components/mobile--attributes-expanded-navigation.png",
+    "wireframe": "exports/components/mobile--attributes-expanded-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-current-step.json",
+    "preview": "exports/components/mobile--attributes-current-step.png",
+    "wireframe": "exports/components/mobile--attributes-current-step-wireframe.png"
+  },
+  {
+    "src": "component-mobile--keepsake-expanded-navigation.json",
+    "preview": "exports/components/mobile--keepsake-expanded-navigation.png",
+    "wireframe": "exports/components/mobile--keepsake-expanded-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--keepsake-current-step.json",
+    "preview": "exports/components/mobile--keepsake-current-step.png",
+    "wireframe": "exports/components/mobile--keepsake-current-step-wireframe.png"
+  },
+  {
+    "src": "component-mobile--equipment-expanded-navigation.json",
+    "preview": "exports/components/mobile--equipment-expanded-navigation.png",
+    "wireframe": "exports/components/mobile--equipment-expanded-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--equipment-current-step.json",
+    "preview": "exports/components/mobile--equipment-current-step.png",
+    "wireframe": "exports/components/mobile--equipment-current-step-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-expanded-navigation.json",
+    "preview": "exports/components/mobile--feats-expanded-navigation.png",
+    "wireframe": "exports/components/mobile--feats-expanded-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-current-step.json",
+    "preview": "exports/components/mobile--feats-current-step.png",
+    "wireframe": "exports/components/mobile--feats-current-step-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spells-expanded-navigation.json",
+    "preview": "exports/components/mobile--spells-expanded-navigation.png",
+    "wireframe": "exports/components/mobile--spells-expanded-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spells-current-step.json",
+    "preview": "exports/components/mobile--spells-current-step.png",
+    "wireframe": "exports/components/mobile--spells-current-step-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-expanded-navigation.json",
+    "preview": "exports/components/mobile--review-expanded-navigation.png",
+    "wireframe": "exports/components/mobile--review-expanded-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-current-step.json",
+    "preview": "exports/components/mobile--review-current-step.png",
+    "wireframe": "exports/components/mobile--review-current-step-wireframe.png"
+  },
+  {
+    "src": "component-mobile--feats-rules-note.json",
+    "preview": "exports/components/mobile--feats-rules-note.png",
+    "wireframe": "exports/components/mobile--feats-rules-note-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spells-selected-spells.json",
+    "preview": "exports/components/mobile--spells-selected-spells.png",
+    "wireframe": "exports/components/mobile--spells-selected-spells-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-might-label-control.json",
+    "preview": "exports/components/mobile--attribute-might-label-control.png",
+    "wireframe": "exports/components/mobile--attribute-might-label-control-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-might-value-control.json",
+    "preview": "exports/components/mobile--attribute-might-value-control.png",
+    "wireframe": "exports/components/mobile--attribute-might-value-control-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-agility-label-control.json",
+    "preview": "exports/components/mobile--attribute-agility-label-control.png",
+    "wireframe": "exports/components/mobile--attribute-agility-label-control-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-vitality-label-control.json",
+    "preview": "exports/components/mobile--attribute-vitality-label-control.png",
+    "wireframe": "exports/components/mobile--attribute-vitality-label-control-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-intellect-label-control.json",
+    "preview": "exports/components/mobile--attribute-intellect-label-control.png",
+    "wireframe": "exports/components/mobile--attribute-intellect-label-control-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-intellect-value-control.json",
+    "preview": "exports/components/mobile--attribute-intellect-value-control.png",
+    "wireframe": "exports/components/mobile--attribute-intellect-value-control-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-will-label-control.json",
+    "preview": "exports/components/mobile--attribute-will-label-control.png",
+    "wireframe": "exports/components/mobile--attribute-will-label-control-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attribute-will-value-control.json",
+    "preview": "exports/components/mobile--attribute-will-value-control.png",
+    "wireframe": "exports/components/mobile--attribute-will-value-control-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-identity-form.json",
+    "preview": "exports/components/mobile--attributes-identity-form.png",
+    "wireframe": "exports/components/mobile--attributes-identity-form-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-impact-heading.json",
+    "preview": "exports/components/mobile--attributes-impact-heading.png",
+    "wireframe": "exports/components/mobile--attributes-impact-heading-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-impact-body.json",
+    "preview": "exports/components/mobile--attributes-impact-body.png",
+    "wireframe": "exports/components/mobile--attributes-impact-body-wireframe.png"
+  },
+  {
+    "src": "component-mobile--attributes-derived-stats.json",
+    "preview": "exports/components/mobile--attributes-derived-stats.png",
+    "wireframe": "exports/components/mobile--attributes-derived-stats-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-attributes-heading.json",
+    "preview": "exports/components/mobile--review-attributes-heading.png",
+    "wireframe": "exports/components/mobile--review-attributes-heading-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-attributes-body.json",
+    "preview": "exports/components/mobile--review-attributes-body.png",
+    "wireframe": "exports/components/mobile--review-attributes-body-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-attributes-edit-control.json",
+    "preview": "exports/components/mobile--review-attributes-edit-control.png",
+    "wireframe": "exports/components/mobile--review-attributes-edit-control-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-keepsake-heading.json",
+    "preview": "exports/components/mobile--review-keepsake-heading.png",
+    "wireframe": "exports/components/mobile--review-keepsake-heading-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-keepsake-body.json",
+    "preview": "exports/components/mobile--review-keepsake-body.png",
+    "wireframe": "exports/components/mobile--review-keepsake-body-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-equipment-heading.json",
+    "preview": "exports/components/mobile--review-equipment-heading.png",
+    "wireframe": "exports/components/mobile--review-equipment-heading-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-equipment-body.json",
+    "preview": "exports/components/mobile--review-equipment-body.png",
+    "wireframe": "exports/components/mobile--review-equipment-body-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-feats-heading.json",
+    "preview": "exports/components/mobile--review-feats-heading.png",
+    "wireframe": "exports/components/mobile--review-feats-heading-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-feats-body.json",
+    "preview": "exports/components/mobile--review-feats-body.png",
+    "wireframe": "exports/components/mobile--review-feats-body-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-spells-heading.json",
+    "preview": "exports/components/mobile--review-spells-heading.png",
+    "wireframe": "exports/components/mobile--review-spells-heading-wireframe.png"
+  },
+  {
+    "src": "component-mobile--review-spells-body.json",
+    "preview": "exports/components/mobile--review-spells-body.png",
+    "wireframe": "exports/components/mobile--review-spells-body-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spell-card-0-artwork.json",
+    "preview": "exports/components/mobile--spell-card-0-artwork.png",
+    "wireframe": "exports/components/mobile--spell-card-0-artwork-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spell-card-0-body.json",
+    "preview": "exports/components/mobile--spell-card-0-body.png",
+    "wireframe": "exports/components/mobile--spell-card-0-body-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spell-card-0-rank.json",
+    "preview": "exports/components/mobile--spell-card-0-rank.png",
+    "wireframe": "exports/components/mobile--spell-card-0-rank-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spell-card-1-artwork.json",
+    "preview": "exports/components/mobile--spell-card-1-artwork.png",
+    "wireframe": "exports/components/mobile--spell-card-1-artwork-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spell-card-1-body.json",
+    "preview": "exports/components/mobile--spell-card-1-body.png",
+    "wireframe": "exports/components/mobile--spell-card-1-body-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spell-card-2-artwork.json",
+    "preview": "exports/components/mobile--spell-card-2-artwork.png",
+    "wireframe": "exports/components/mobile--spell-card-2-artwork-wireframe.png"
+  },
+  {
+    "src": "component-mobile--spell-card-2-body.json",
+    "preview": "exports/components/mobile--spell-card-2-body.png",
+    "wireframe": "exports/components/mobile--spell-card-2-body-wireframe.png"
+  },
+  {
+    "src": "page-class-mobile-noncaster.json",
+    "preview": "exports/class-mobile-noncaster.png",
+    "wireframe": "exports/class-mobile-noncaster-wireframe.png"
+  },
+  {
+    "src": "page-attributes-mobile-noncaster.json",
+    "preview": "exports/attributes-mobile-noncaster.png",
+    "wireframe": "exports/attributes-mobile-noncaster-wireframe.png"
+  },
+  {
+    "src": "page-keepsake-mobile-noncaster.json",
+    "preview": "exports/keepsake-mobile-noncaster.png",
+    "wireframe": "exports/keepsake-mobile-noncaster-wireframe.png"
+  },
+  {
+    "src": "page-equipment-mobile-noncaster.json",
+    "preview": "exports/equipment-mobile-noncaster.png",
+    "wireframe": "exports/equipment-mobile-noncaster-wireframe.png"
+  },
+  {
+    "src": "page-feats-mobile-noncaster.json",
+    "preview": "exports/feats-mobile-noncaster.png",
+    "wireframe": "exports/feats-mobile-noncaster-wireframe.png"
+  },
+  {
+    "src": "page-review-mobile-noncaster.json",
+    "preview": "exports/review-mobile-noncaster.png",
+    "wireframe": "exports/review-mobile-noncaster-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--class-header.json",
+    "preview": "exports/components/mobile-noncaster--class-header.png",
+    "wireframe": "exports/components/mobile-noncaster--class-header-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--class-navigation.json",
+    "preview": "exports/components/mobile-noncaster--class-navigation.png",
+    "wireframe": "exports/components/mobile-noncaster--class-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--class-content.json",
+    "preview": "exports/components/mobile-noncaster--class-content.png",
+    "wireframe": "exports/components/mobile-noncaster--class-content-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--reaver-class-card.json",
+    "preview": "exports/components/mobile-noncaster--reaver-class-card.png",
+    "wireframe": "exports/components/mobile-noncaster--reaver-class-card-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--starseer-class-card.json",
+    "preview": "exports/components/mobile-noncaster--starseer-class-card.png",
+    "wireframe": "exports/components/mobile-noncaster--starseer-class-card-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--class-summary.json",
+    "preview": "exports/components/mobile-noncaster--class-summary.png",
+    "wireframe": "exports/components/mobile-noncaster--class-summary-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--attributes-navigation.json",
+    "preview": "exports/components/mobile-noncaster--attributes-navigation.png",
+    "wireframe": "exports/components/mobile-noncaster--attributes-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--keepsake-navigation.json",
+    "preview": "exports/components/mobile-noncaster--keepsake-navigation.png",
+    "wireframe": "exports/components/mobile-noncaster--keepsake-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--equipment-navigation.json",
+    "preview": "exports/components/mobile-noncaster--equipment-navigation.png",
+    "wireframe": "exports/components/mobile-noncaster--equipment-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--equipment-content.json",
+    "preview": "exports/components/mobile-noncaster--equipment-content.png",
+    "wireframe": "exports/components/mobile-noncaster--equipment-content-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--equipment-choice-0.json",
+    "preview": "exports/components/mobile-noncaster--equipment-choice-0.png",
+    "wireframe": "exports/components/mobile-noncaster--equipment-choice-0-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--equipment-choice-1.json",
+    "preview": "exports/components/mobile-noncaster--equipment-choice-1.png",
+    "wireframe": "exports/components/mobile-noncaster--equipment-choice-1-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--equipment-choice-2.json",
+    "preview": "exports/components/mobile-noncaster--equipment-choice-2.png",
+    "wireframe": "exports/components/mobile-noncaster--equipment-choice-2-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--equipment-choice-3.json",
+    "preview": "exports/components/mobile-noncaster--equipment-choice-3.png",
+    "wireframe": "exports/components/mobile-noncaster--equipment-choice-3-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--equipment-details.json",
+    "preview": "exports/components/mobile-noncaster--equipment-details.png",
+    "wireframe": "exports/components/mobile-noncaster--equipment-details-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--feats-navigation.json",
+    "preview": "exports/components/mobile-noncaster--feats-navigation.png",
+    "wireframe": "exports/components/mobile-noncaster--feats-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--feats-footer.json",
+    "preview": "exports/components/mobile-noncaster--feats-footer.png",
+    "wireframe": "exports/components/mobile-noncaster--feats-footer-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--feats-next.json",
+    "preview": "exports/components/mobile-noncaster--feats-next.png",
+    "wireframe": "exports/components/mobile-noncaster--feats-next-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--review-navigation.json",
+    "preview": "exports/components/mobile-noncaster--review-navigation.png",
+    "wireframe": "exports/components/mobile-noncaster--review-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--review-content.json",
+    "preview": "exports/components/mobile-noncaster--review-content.png",
+    "wireframe": "exports/components/mobile-noncaster--review-content-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--review-identity.json",
+    "preview": "exports/components/mobile-noncaster--review-identity.png",
+    "wireframe": "exports/components/mobile-noncaster--review-identity-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--review-equipment.json",
+    "preview": "exports/components/mobile-noncaster--review-equipment.png",
+    "wireframe": "exports/components/mobile-noncaster--review-equipment-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--class-expanded-navigation.json",
+    "preview": "exports/components/mobile-noncaster--class-expanded-navigation.png",
+    "wireframe": "exports/components/mobile-noncaster--class-expanded-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--class-current-step.json",
+    "preview": "exports/components/mobile-noncaster--class-current-step.png",
+    "wireframe": "exports/components/mobile-noncaster--class-current-step-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--attributes-expanded-navigation.json",
+    "preview": "exports/components/mobile-noncaster--attributes-expanded-navigation.png",
+    "wireframe": "exports/components/mobile-noncaster--attributes-expanded-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--attributes-current-step.json",
+    "preview": "exports/components/mobile-noncaster--attributes-current-step.png",
+    "wireframe": "exports/components/mobile-noncaster--attributes-current-step-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--keepsake-expanded-navigation.json",
+    "preview": "exports/components/mobile-noncaster--keepsake-expanded-navigation.png",
+    "wireframe": "exports/components/mobile-noncaster--keepsake-expanded-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--keepsake-current-step.json",
+    "preview": "exports/components/mobile-noncaster--keepsake-current-step.png",
+    "wireframe": "exports/components/mobile-noncaster--keepsake-current-step-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--equipment-expanded-navigation.json",
+    "preview": "exports/components/mobile-noncaster--equipment-expanded-navigation.png",
+    "wireframe": "exports/components/mobile-noncaster--equipment-expanded-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--equipment-current-step.json",
+    "preview": "exports/components/mobile-noncaster--equipment-current-step.png",
+    "wireframe": "exports/components/mobile-noncaster--equipment-current-step-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--feats-expanded-navigation.json",
+    "preview": "exports/components/mobile-noncaster--feats-expanded-navigation.png",
+    "wireframe": "exports/components/mobile-noncaster--feats-expanded-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--feats-current-step.json",
+    "preview": "exports/components/mobile-noncaster--feats-current-step.png",
+    "wireframe": "exports/components/mobile-noncaster--feats-current-step-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--review-expanded-navigation.json",
+    "preview": "exports/components/mobile-noncaster--review-expanded-navigation.png",
+    "wireframe": "exports/components/mobile-noncaster--review-expanded-navigation-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--review-current-step.json",
+    "preview": "exports/components/mobile-noncaster--review-current-step.png",
+    "wireframe": "exports/components/mobile-noncaster--review-current-step-wireframe.png"
+  },
+  {
+    "src": "component-mobile-noncaster--review-equipment-body.json",
+    "preview": "exports/components/mobile-noncaster--review-equipment-body.png",
+    "wireframe": "exports/components/mobile-noncaster--review-equipment-body-wireframe.png"
+  },
+  {
+    "src": "component-assign-attribute-row.json",
+    "preview": "exports/components/assign-attribute-row.png",
+    "wireframe": "exports/components/assign-attribute-row-wireframe.png"
+  }
+]

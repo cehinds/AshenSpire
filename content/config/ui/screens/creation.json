@@ -46,8 +46,11 @@
   "behavior": {
     "categories": [
       "class",
-      "character",
+      "attributes",
+      "keepsake",
       "equipment",
+      "feats",
+      "spells",
       "review"
     ],
     "fitChoicesToPane": true,

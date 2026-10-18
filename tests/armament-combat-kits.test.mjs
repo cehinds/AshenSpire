@@ -38,6 +38,10 @@ function play(combat, id) {
   combat.piles.hand.push(ref);
   combat.player.energy = 20;
   combat.player.stamina = combat.player.maxStamina;
+  // Frost Nova's Art costs 2 MP under the cost formula (SPEC §4.3a), above a 1-Mana class's maximum; the check here is
+  // that the engine plays it, so the pool is topped up to its price.
+  const price = resolveCard(combat.registries, ref).manaCost || 0;
+  combat.player.maxMana = Math.max(combat.player.maxMana, price);
   combat.player.mana = combat.player.maxMana;
   dispatch(combat, { type: 'playCard', cardInstanceId: ref.instanceId });
   return ref;

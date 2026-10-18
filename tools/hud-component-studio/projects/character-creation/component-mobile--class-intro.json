@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "title": "Class / Intro",
+  "canvas": {
+    "width": 354,
+    "height": 125,
+    "background": "transparent"
+  },
+  "defaultState": "class",
+  "states": [
+    {
+      "id": "class",
+      "name": "Class"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "class-intro",
+      "name": "Class / Intro",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 354,
+      "height": 125,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "class-eyebrow",
+      "name": "Class Eyebrow",
+      "type": "text",
+      "parent": "class-intro",
+      "x": 0,
+      "y": 0,
+      "width": 354,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "YOUR ORIGIN",
+      "fontSize": 14,
+      "fontFamily": "Arial",
+      "fill": "#b9a36e",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "class-heading",
+      "name": "Class Heading",
+      "type": "text",
+      "parent": "class-intro",
+      "x": 0,
+      "y": 29,
+      "width": 354,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Choose your class",
+      "fontSize": 28,
+      "fontFamily": "Georgia",
+      "fill": "#d7b45f",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "class-subheading",
+      "name": "Class Subheading",
+      "type": "text",
+      "parent": "class-intro",
+      "x": 0,
+      "y": 93,
+      "width": 354,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Find the fighting style that feels like you.",
+      "fontSize": 16,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    }
+  ],
+  "metadata": {
+    "componentSource": "class-intro",
+    "sourceState": "class",
+    "designOnly": true
+  }
+}

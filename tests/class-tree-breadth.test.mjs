@@ -9,6 +9,7 @@ import { legacyContentBundle as contentBundle } from './helpers/legacy-progressi
 import { createRegistries } from '../src/model/registries.js';
 import { classTreeRows } from '../src/model/classTree.js';
 import { createRunState } from '../src/model/state.js';
+import { resolveCard } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 
@@ -38,8 +39,12 @@ function fight(classId, coreTags) {
   if (!cb.piles.hand.includes(inst)) { cb.piles.draw.splice(cb.piles.draw.indexOf(inst), 1); cb.piles.hand.push(inst); }
   const foe = cb.enemies[0];
   foe.block = 0;
+  // The ability card's Mana is the cost formula's (SPEC §4.3a): Attune and Warm Litany are spells and pay 1 MP, so the
+  // fight opens with that much Mana.
+  const price = resolveCard(REG, inst).manaCost || 0;
+  cb.player.mana = price;
   const play = () => dispatch(cb, { type: 'playCard', cardInstanceId: inst.instanceId });
-  return { cb, foe, play };
+  return { cb, foe, play, price };
 }
 
 test('Parting Blow: leaving a stance for Brace strikes a foe', () => {
@@ -52,11 +57,11 @@ test('Parting Blow: leaving a stance for Brace strikes a foe', () => {
 });
 
 test('Falling Star and Spent Stars: Attune restores Mana, exhausts, and both answer', () => {
-  const { cb, foe, play } = fight('starseer', ['fallingStar', 'spentStars']);
+  const { cb, foe, play, price } = fight('starseer', ['fallingStar', 'spentStars']);
   const hp = foe.hp; const mana = cb.player.mana;
   play();
   assert.equal(hp - foe.hp, REG.balance.classTree.fallingStar.damage, 'the first Mana restored this turn falls on a foe');
-  assert.ok(cb.player.mana - mana >= 1 + REG.balance.classTree.spentStars.restoreMana, 'the exhausted Attune gives Mana back');
+  assert.ok(cb.player.mana - mana + price >= 1 + REG.balance.classTree.spentStars.restoreMana, 'the exhausted Attune gives Mana back (net of its own Mana price)');
 });
 
 test('Burning Grace and Dazzling Light: Warm Litany scalds and dazzles', () => {

@@ -107,7 +107,7 @@ export const progressionRelics = [
     "passives": {
       "modifiers": []
     },
-    "textTemplate": "Your first credited kill of an enemy with Crimson Blight buildup each combat restores {restoreMana} Mana.",
+    "textTemplate": "Your first credited kill of an enemy with Crimson or Necrotic Blight buildup each combat restores {restoreMana} Mana.",
     "flavor": "A keepsake of the road through ash."
   }
 ];

@@ -8,8 +8,11 @@ import { stanceInventory } from '../tools/alternative-stances-inventory.mjs';
 import { validate } from '../src/model/presentationSequence.js';
 
 const card = (maneuver, camp='physical') => ({cardTags:[`camp:${camp}`,`maneuver:${maneuver}`]});
-test('Attack and Smash retain offensive; Counter and physical Sweep use their reviewed stances',()=>{
-  for(const maneuver of ['attack','smash','ranged'])assert.equal(stanceForCard(card(maneuver)),'offensive');
+// Owner (2026-10-12): physical Smash holds its own painted wind-up stance.
+test('Attack retains offensive; Counter, physical Sweep and physical Smash use their reviewed stances',()=>{
+  for(const maneuver of ['attack','ranged'])assert.equal(stanceForCard(card(maneuver)),'offensive');
+  assert.equal(stanceForCard(card('smash')),'smash');
+  assert.equal(stanceForCard(card('smash','spell')),'casting');
   assert.equal(stanceForCard(card('defend')),'defensive');
   assert.equal(stanceForCard(card('counter')),'counter');
   assert.equal(stanceForCard(card('sweep')),'sweep');
@@ -20,10 +23,10 @@ test('Attack and Smash retain offensive; Counter and physical Sweep use their re
 test('resolved card tags own identity; damage colour and equipped weapons cannot select stance',()=>{
   assert.equal(stanceForCard({type:'attack',cardTags:[{id:'camp:spell'},{id:'maneuver:ranged'}]}),'casting');
   assert.equal(stanceForCard({id:'attack',type:'attack',cardTags:['camp:spell','maneuver:ranged'],damageSchool:'fire'}),'casting');
-  assert.equal(stanceForCard({type:'attack',cardTags:['camp:physical','maneuver:smash'],damageSchool:'frost',weaponId:'staff'}),'offensive');
-  assert.equal(stanceForCard({type:'skill',cardTags:[],tags:['camp:spell']}),null);
+  assert.equal(stanceForCard({type:'attack',cardTags:['camp:physical','maneuver:smash'],damageSchool:'frost',weaponId:'staff'}),'smash');
+  assert.equal(stanceForCard({type:'skill',cardTags:[],tags:['camp:spell']}),'casting');
 });
-test('only confirmed plays replace the latest stance; new turn clears the same actor',()=>{
+test('only confirmed plays replace the latest stance; a new turn keeps it until the next play',()=>{
   const ledger=createStanceLedger();
   ledger.accept({type:'cardPlayed',sourceId:'player'},card('attack'));
   ledger.accept({type:'cardPlayed',sourceId:'player'},card('defend'));
@@ -35,19 +38,19 @@ test('only confirmed plays replace the latest stance; new turn clears the same a
   assert.equal(ledger.get(),'casting');
   ledger.accept({type:'enemyTurnStart'});
   assert.equal(ledger.get(),'casting');
-  ledger.accept({type:'playerTurnStart'});assert.equal(ledger.get(),null);
+  ledger.accept({type:'playerTurnStart'});assert.equal(ledger.get(),'casting');
 });
 test('co-op seats are independent and a new combat clears both',()=>{
   const ledger=createStanceLedger();
   ledger.accept({type:'cardPlayed',playerId:'a'},card('defend'));
   ledger.accept({type:'cardPlayed',playerId:'b'},card('smash'));
   ledger.accept({type:'playerTurnStart',playerId:'a'});
-  assert.equal(ledger.get('a'),null);assert.equal(ledger.get('b'),'offensive');
+  assert.equal(ledger.get('a'),'defensive');assert.equal(ledger.get('b'),'smash');
   ledger.accept({type:'combatStarted'});assert.deepEqual(ledger.snapshot(),{});
 });
-test('an unclassified latest card clears a previous defensive stance',()=>{
+test('an untyped latest card is prepare (casting) and replaces a previous defensive stance',()=>{
   const ledger=createStanceLedger();ledger.accept({type:'cardPlayed'},card('defend'));
-  ledger.accept({type:'cardPlayed'},{type:'skill',cardTags:[]});assert.equal(ledger.get(),null);
+  ledger.accept({type:'cardPlayed'},{type:'skill',cardTags:[]});assert.equal(ledger.get(),'casting');
 });
 test('hidden and revealed public committed projections choose the same broad family',()=>{
   for(const maneuver of ['attack','smash','sweep','ranged','counter','defend']){

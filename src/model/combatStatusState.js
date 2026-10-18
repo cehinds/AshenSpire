@@ -7,7 +7,14 @@ export function statusControlProblems(entity, path, { required = false, rules = 
   const ward = entity?.persistentWard;
   if (ward !== undefined || required) {
     if (!record(ward) || !whole(ward.max) || !whole(ward.value) || ward.value > ward.max) problems.push(`${path}.persistentWard must contain whole max/value with 0 <= value <= max`);
-    else if (Object.keys(ward).some(key => !['max', 'value'].includes(key))) problems.push(`${path}.persistentWard contains unknown fields`);
+    else if (Object.keys(ward).some(key => !['max', 'value', 'missing'].includes(key))) problems.push(`${path}.persistentWard contains unknown fields`);
+    else if (ward.missing !== undefined && (!whole(ward.missing) || ward.value !== 0)) problems.push(`${path}.persistentWard.missing is kept only while the pool is empty`);
+  }
+  const poise = entity?.persistentPoise;
+  if (poise !== undefined) {
+    if (!record(poise) || !whole(poise.max) || !whole(poise.value) || poise.value > poise.max) problems.push(`${path}.persistentPoise must contain whole max/value with 0 <= value <= max`);
+    else if (Object.keys(poise).some(key => !['max', 'value', 'missing'].includes(key))) problems.push(`${path}.persistentPoise contains unknown fields`);
+    else if (poise.missing !== undefined && (!whole(poise.missing) || poise.value !== 0)) problems.push(`${path}.persistentPoise.missing is kept only while the pool is empty`);
   }
   const s = entity?.statusControl;
   if (s === undefined && !required) return problems;

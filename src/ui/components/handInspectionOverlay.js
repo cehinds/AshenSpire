@@ -1,3 +1,4 @@
+import { viewViewportBox } from '../viewViewport.js';
 import { anchorLocalBox } from '../fx.js';
 import { inspectControlRisePx } from '../models/InspectControlModel.js';
 import { handInfoPosition } from '../models/HandLayout.js';
@@ -5,7 +6,7 @@ import { handInfoPosition } from '../models/HandLayout.js';
 // Focus cannot reveal an absolute control on the outside card of a fitted fan.
 // Prefer its scroller; an overflow-visible hand translates only its active
 // owning face. Keep the chooser beneath the card that owns its rank.
-export function revealHandUpcastControl(hand, control, viewportWidth = window.innerWidth) {
+export function revealHandUpcastControl(hand, control, viewportWidth = viewViewportBox().right) {
   const card = control.classList?.contains('card') ? control : control.parentElement;
   const port = hand.getBoundingClientRect();
   if (!control.getBoundingClientRect().width) return;
@@ -19,7 +20,7 @@ export function revealHandUpcastControl(hand, control, viewportWidth = window.in
   };
   let box = measure();
   if (!hand.clientWidth || !port.width || !box.width) return;
-  const left = Math.max(0, port.left);
+  const left = Math.max(viewViewportBox().left, port.left);
   const right = Math.min(viewportWidth, port.right);
   if (right <= left) return;
   const scale = port.width / hand.clientWidth;
@@ -39,8 +40,8 @@ export function revealHandUpcastControl(hand, control, viewportWidth = window.in
   if (control !== card && card && Number.isFinite(port.bottom)) {
     box = measure();
     const rise = parseFloat(card.style.getPropertyValue('--hand-upcast-rise')) || 0;
-    const top = Math.max(0, port.top ?? 0) + 1;
-    const bottom = Math.min(globalThis.window?.innerHeight || Infinity, port.bottom) - 1;
+    const top = Math.max(viewViewportBox().top, port.top ?? 0) + 1;
+    const bottom = Math.min(viewViewportBox().bottom, port.bottom) - 1;
     // Never fix a bottom overflow by clipping the face above the port.
     const lower = top - box.top, upper = bottom - box.bottom;
     const deltaY = lower <= upper ? Math.max(lower, Math.min(upper, 0)) : 0;
@@ -104,7 +105,7 @@ export function mountHandInspectionOverlay(hand) {
       .filter(({ box, style }) => box.width && box.height && style.visibility !== 'hidden' && style.display !== 'none')
       .map(({ box }) => box);
     const position = handInfoPosition({ card: anchor, port: hand.getBoundingClientRect(), size: infoSize,
-      gap: Math.max(0, inspectControlRisePx() - infoSize), viewportWidth: window.innerWidth, obstacles: hud });
+      gap: Math.max(0, inspectControlRisePx() - infoSize), viewportWidth: viewViewportBox().right, obstacles: hud });
     const local = anchorLocalBox(hand.parentElement, {
       ...position,
       width: 0,

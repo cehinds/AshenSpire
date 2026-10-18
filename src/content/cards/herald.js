@@ -15,28 +15,28 @@ const one = { f: 'add', args: [1] };
 export const heraldCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, manaCost: 1, type: 'skill',
+    id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, manaCost: 1, costRule: 'fixed', type: 'skill',
     flavor: "Rite of the Furnace Chapel, for wounds taken in its service.\n\nPerformed swiftly, its prayer cut to the first line. The rubric bids the wound be bound beneath the brand, never over it, that the mark be left clear.\n\nWe bind the wound beneath the unspent brand.",
     keywords: ['retain'], icon: '✚',
-    effects: [{ op: 'heal', target: 'self', amount: 4 }],
+    effects: [{ op: 'heal', target: 'self', amount: 8 }],
     textTemplate: 'Heal {heal} HP.',
-    upgrade: { effects: [{ op: 'heal', target: 'self', amount: 6 }] },
+    upgrade: { effects: [{ op: 'heal', target: 'self', amount: 10 }] },
   },
 
   // ---- Commons ----------------------------------------------------------------
   {
-    id: 'emberCommunion', name: 'Ember Communion', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
+    id: 'emberCommunion', name: 'Ember Communion', class: 'herald', rarity: 'common', cost: 1, manaCost: 1, costRule: 'fixed', type: 'skill',
     flavor: "The Chapel's last cup.\n\nWhen the censer cooled, the celebrant passed its remaining warmth among the wounded. The rubric called the sharing a waste. Those who received it called it enough.\n\nNo name was entered in the Chapel's ledger that night.",
     keywords: ['exhaust'], icon: '✚',
     effects: [
-      { op: 'restoreMana', target: 'self', amount: 1 },
-      { op: 'heal', target: 'self', amount: 2 },
+      { op: 'restoreMana', target: 'self', amount: 2 },
+      { op: 'heal', target: 'self', amount: 5 },
     ],
     textTemplate: 'Restore {restoreMana} Mana. Heal {heal} HP. Exhaust.',
     upgrade: { keywords: [], textTemplate: 'Restore {restoreMana} Mana. Heal {heal} HP.' },
   },
   {
-    id: 'bloodPact', name: 'Blood Pact', class: 'herald', rarity: 'common', cost: 0, type: 'skill',
+    id: 'bloodPact', name: 'Blood Pact', class: 'herald', rarity: 'common', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Second office of the birth-rite.\n\nThe flame-mark was pressed into the newborn's wrist, and the parents answered in the child's stead. The Chapel called it a promise and a privilege.\n\nIn the birth-roll of the crown-born wards, beside the Herald's name, one word is struck through.",
     keywords: [], icon: '🩸',
     effects: [
@@ -150,7 +150,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'bloodletting', name: 'Bloodletting', class: 'herald', rarity: 'common', cost: 0, type: 'skill',
+    id: 'bloodletting', name: 'Bloodletting', class: 'herald', rarity: 'common', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Bleeding before the blessing of bread.\n\nThe Saints bled into the bowl first, that nothing be taken from the congregation the Saint had not first given. The Chapel taught it as humility.\n\nOn the days of the rite, the bread ran short, and the Saints ate first.",
     keywords: [], icon: '🩸',
     effects: [
@@ -179,23 +179,23 @@ export const heraldCards = [
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
-      { op: 'damage', target: 'enemy', amount: 4, if: { p: 'hasStatus', of: 'target', status: 'crimsonBlight' } },
+      { op: 'damage', target: 'enemy', amount: 4, if: { p: 'any', preds: [{ p: 'hasStatus', of: 'target', status: 'crimsonBlight' }, { p: 'hasStatus', of: 'target', status: 'necroticBlight' }] } },
     ],
-    textTemplate: 'Deal {damage} damage. If the target has Crimson Blight: deal {damage.2} more.',
+    textTemplate: 'Deal {damage} damage. If the target has Blight: deal {damage.2} more.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 8 },
-        { op: 'damage', target: 'enemy', amount: 6, if: { p: 'hasStatus', of: 'target', status: 'crimsonBlight' } },
+        { op: 'damage', target: 'enemy', amount: 6, if: { p: 'any', preds: [{ p: 'hasStatus', of: 'target', status: 'crimsonBlight' }, { p: 'hasStatus', of: 'target', status: 'necroticBlight' }] } },
       ],
     },
   },
   {
-    id: 'transfusion', name: 'Transfusion', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
+    id: 'transfusion', name: 'Transfusion', class: 'herald', rarity: 'common', cost: 1, manaCost: 1, costRule: 'fixed', type: 'skill',
     flavor: "Communion of blood, between Saint and dying.\n\nBlood poured from cup to cup, for the dying of good family. The rubric speaks of the Saint giving, never receiving. Novice Wen wrote that the flow ran both ways.\n\nThe Saints rose from the rite looking younger.",
     keywords: ['retain'], icon: '➕',
-    effects: [{ op: 'heal', target: 'self', amount: 6 }],
+    effects: [{ op: 'heal', target: 'self', amount: 8 }],
     textTemplate: 'Heal {heal} HP.',
-    upgrade: { effects: [{ op: 'heal', target: 'self', amount: 9 }] },
+    upgrade: { effects: [{ op: 'heal', target: 'self', amount: 10 }] },
   },
   {
     id: 'blightward', name: 'Blightward', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
@@ -239,9 +239,17 @@ export const heraldCards = [
     keywords: ['exhaust', 'retain'], icon: '🌺',
     effects: [
       { op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: { f: 'stacks', status: 'crimsonBlight', of: 'target' } },
+      { op: 'applyStatus', target: 'enemy', status: 'necroticBlight', stacks: { f: 'stacks', status: 'necroticBlight', of: 'target' }, if: { p: 'hasStatus', of: 'target', status: 'necroticBlight' } },
     ],
-    textTemplate: "Double the target's Crimson Blight. Exhaust.",
-    upgrade: { keywords: ['retain'], textTemplate: "Double the target's Crimson Blight." },
+    textTemplate: "Double the target's Blight (Crimson and Necrotic). In expanded combat, stops at 3 stacks each. Exhaust.",
+    upgrade: {
+      keywords: ['retain'],
+      effects: [
+        { op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: { f: 'stacks', status: 'crimsonBlight', of: 'target' } },
+        { op: 'applyStatus', target: 'enemy', status: 'necroticBlight', stacks: { f: 'stacks', status: 'necroticBlight', of: 'target' }, if: { p: 'hasStatus', of: 'target', status: 'necroticBlight' } },
+      ],
+      textTemplate: "Double the target's Blight (Crimson and Necrotic). In expanded combat, stops at 3 stacks each.",
+    },
   },
   {
     id: 'sacredHarvest', name: 'Sacred Harvest', class: 'herald', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'attack',
@@ -315,13 +323,13 @@ export const heraldCards = [
     keywords: [], icon: '🔻',
     effects: [
       { op: 'loseHp', target: 'self', amount: 3 },
-      { op: 'damage', target: 'enemy', amount: 14 },
+      { op: 'damage', target: 'enemy', amount: 12 },
     ],
     textTemplate: 'Lose {loseHp} HP. Deal {damage} damage.',
     upgrade: {
       effects: [
         { op: 'loseHp', target: 'self', amount: 3 },
-        { op: 'damage', target: 'enemy', amount: 18 },
+        { op: 'damage', target: 'enemy', amount: 16 },
       ],
     },
   },
@@ -354,15 +362,15 @@ export const heraldCards = [
     flavor: "Return of warmth lent to the dying.\n\nPerformed at the deathbed once the name was read, and called a courtesy returned. After the rite the dying were colder, and the Saint warmer.\n\nThe rubric closes: do not explain this to the family.",
     keywords: ['exhaust', 'retain'], icon: '🍂',
     effects: [
-      { op: 'heal', target: 'self', amount: { f: 'stacks', status: 'crimsonBlight', of: 'allEnemies', per: 2 } },
+      { op: 'heal', target: 'self', amount: { f: 'mul', args: [0.5, { f: 'add', args: [{ f: 'stacks', status: 'crimsonBlight', of: 'allEnemies' }, { f: 'stacks', status: 'necroticBlight', of: 'allEnemies' }] }] } },
     ],
-    textTemplate: 'Heal 1 HP for every 2 Crimson Blight on all enemies. Exhaust.',
+    textTemplate: 'Heal 1 HP for every 2 Blight (Crimson or Necrotic) on all enemies. Exhaust.',
     upgrade: {
       keywords: ['exhaust', 'retain'],
       effects: [
-        { op: 'heal', target: 'self', amount: { f: 'stacks', status: 'crimsonBlight', of: 'allEnemies' } },
+        { op: 'heal', target: 'self', amount: { f: 'add', args: [{ f: 'stacks', status: 'crimsonBlight', of: 'allEnemies' }, { f: 'stacks', status: 'necroticBlight', of: 'allEnemies' }] } },
       ],
-      textTemplate: 'Heal 1 HP for every Crimson Blight on all enemies. Exhaust.',
+      textTemplate: 'Heal 1 HP for every Blight (Crimson or Necrotic) on all enemies. Exhaust.',
     },
   },
 
@@ -423,14 +431,14 @@ export const heraldCards = [
     flavor: "Reading of every name, aloud and at once.\n\nComposed by the Furnace Saint after the Burning. The novices say it is what the fire did that night, and that the rite exists so it will be remembered. The remnant holds it holiest of the liturgies.\n\nIt has never been performed to its end.",
     keywords: ['retain'], icon: '💥',
     effects: [
-      { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [2, { f: 'stacks', status: 'crimsonBlight', of: 'target' }] } },
+      { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [2, { f: 'add', args: [{ f: 'stacks', status: 'crimsonBlight', of: 'target' }, { f: 'stacks', status: 'necroticBlight', of: 'target' }] }] } },
     ],
-    textTemplate: "Deal damage equal to twice the target's Crimson Blight.",
+    textTemplate: "Deal damage equal to twice the target's Blight.",
     upgrade: {
       effects: [
-        { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [3, { f: 'stacks', status: 'crimsonBlight', of: 'target' }] } },
+        { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [3, { f: 'add', args: [{ f: 'stacks', status: 'crimsonBlight', of: 'target' }, { f: 'stacks', status: 'necroticBlight', of: 'target' }] }] } },
       ],
-      textTemplate: "Deal damage equal to three times the target's Crimson Blight.",
+      textTemplate: "Deal damage equal to three times the target's Blight.",
     },
   },
   {
@@ -478,7 +486,7 @@ export const heraldCards = [
   // uncommons (an HP-gated finisher and a heal-fed power), two rares (a heavy
   // HP-for-damage attack and a Blight-fed power) — rounding the pool to 36.
   {
-    id: 'painOffering', name: 'Pain Offering', class: 'herald', rarity: 'common', cost: 0, type: 'attack',
+    id: 'painOffering', name: 'Pain Offering', class: 'herald', rarity: 'common', cost: 0, costRule: 'fixed', type: 'attack',
     flavor: "Small pain, offered in advance.\n\nTaught to crown-born children as good citizenship; the children called it paying early. The habit outlived the Chapel among the Forsaken hamlets, learned from refugees after the Burning.\n\nThey keep it without knowing whom they pay.",
     keywords: [], icon: '🩸',
     effects: [
@@ -539,13 +547,13 @@ export const heraldCards = [
     keywords: [], icon: '⚰',
     effects: [
       { op: 'loseHp', target: 'self', amount: 6 },
-      { op: 'damage', target: 'enemy', amount: 24 },
+      { op: 'damage', target: 'enemy', amount: 20 },
     ],
     textTemplate: 'Lose {loseHp} HP. Deal {damage} damage.',
     upgrade: {
       effects: [
         { op: 'loseHp', target: 'self', amount: 6 },
-        { op: 'damage', target: 'enemy', amount: 30 },
+        { op: 'damage', target: 'enemy', amount: 26 },
       ],
     },
   },
@@ -554,7 +562,7 @@ export const heraldCards = [
     flavor: "Title of the Feral Ember's preachers.\n\nThe Chapel gave the same name to the novice who walked before a bier with a bell. The Feral Ember holds that the word was never the Chapel's to give, but the fire's.\n\nWe go before the fire, and it follows us gladly.",
     keywords: [], icon: '❀',
     effects: [{ op: 'applyStatus', target: 'self', status: 'harbingerOfBlight', stacks: one }],
-    textTemplate: 'Whenever Crimson Blight is applied to an enemy, heal 1 HP.',
+    textTemplate: 'Whenever Blight (Crimson or Necrotic) is applied to an enemy, heal 1 HP.',
     upgrade: { cost: 1 },
   },
 
@@ -597,13 +605,13 @@ export const heraldCards = [
   // Litany: the Herald's loop is overheal turned to offence; one card that
   // heals and braces in the same breath.
   {
-    id: 'warmLitany', name: 'Warm Litany', class: 'herald', rarity: 'starter', cost: 1, type: 'skill',
+    id: 'warmLitany', name: 'Warm Litany', class: 'herald', rarity: 'starter', cost: 1, manaCost: 1, costRule: 'fixed', type: 'skill',
     flavor: "First prayer of the Furnace Chapel's novices.\n\nSaid over a small hurt, to keep it warm. The novices were taught its words were older than the Chapel, found by the first Saint cut into the caldera wall.\n\nWe give the name. We keep the warmth.",
     keywords: ['retain'], icon: '📿',
-    effects: [{ op: 'heal', target: 'self', amount: 3 }, { op: 'block', target: 'self', amount: 3 }],
+    effects: [{ op: 'heal', target: 'self', amount: 5 }, { op: 'block', target: 'self', amount: 5 }],
     textTemplate: 'Heal {heal}. Gain {block} Block.',
     upgrade: {
-      effects: [{ op: 'heal', target: 'self', amount: 5 }, { op: 'block', target: 'self', amount: 5 }],
+      effects: [{ op: 'heal', target: 'self', amount: 7 }, { op: 'block', target: 'self', amount: 7 }],
     },
   },
 ];

@@ -169,3 +169,46 @@ test('a counter beat keeps the impact order', (t) => {
     assert.deepEqual(order(trace), ['reaction:player', 'float:-3', 'settle', 'bars']);
   });
 });
+
+test('a custom body clip keeps standard numbers but finishes before another reaction in the same beat', (t) => {
+  drive(t,({trace,run,finish})=>{
+    let index=0;
+    run(playerHit(1,1),{
+      reactionTimingForReceipt:()=>422.5,
+      reactionForReceipt:event=>event.type==='damageDealt'?()=>trace.push({what:'pilot:'+ ++index,at:Date.now()}):null,
+    });
+    finish();
+    const first=timeOf(trace,'pilot:1'),second=timeOf(trace,'pilot:2');
+    assert.ok(second-first>=422.5,'the second reaction never replaces an unfinished body clip');
+    assert.equal(trace.find(e=>e.what==='float:-1').at-first,ANIM_SPEEDS.normal.reactionMs,'numbers retain the contractual reaction delay');
+  });
+});
+
+test('a staggering hit: the Stagger sprite plays with the reaction, so the number keeps its plain-hit time', (t) => {
+  drive(t, ({ layer, trace, run, finish }) => {
+    run([...playerHit(4), { type: 'enemyStaggered', targetId: 'e1', cause: 'poiseBroken' }]);
+    finish();
+    assert.equal(layer.dataset.contact, '1', 'the stagger takes no contact step of its own (tools/click-impact-probe.mjs)');
+    assert.equal(timeOf(trace, 'float:-4'), TOTAL + ANIM_SPEEDS.normal.reactionMs, 'the first number lands as on a plain hit');
+  });
+});
+
+test('an identity-bound contact cue runs before hit-stop and also on an avoided or empty contact', (t) => {
+  drive(t,({trace,run,finish})=>{
+    run(playerHit(6),{animateActor:()=>({impactMs:100,totalMs:300,
+      contact:()=>trace.push({what:'ack',at:Date.now()}),
+      hold:()=>trace.push({what:'contact-hold',at:Date.now()}),
+      cancel:()=>trace.push({what:'settle',at:Date.now()}),
+    })});finish();
+    assert.equal(timeOf(trace,'ack'),100);
+    assert.ok(trace.findIndex(row=>row.what==='ack')<trace.findIndex(row=>row.what==='contact-hold'));
+  });
+});
+
+test('an opted-in actor acknowledges its contact even when no hit-stop or outcome is drawn', (t) => {
+  drive(t,({trace,run,finish})=>{
+    run([{type:'cardPlayed',cardType:'attack',cardId:'strike',cardInstanceId:'empty',targetId:'e1'}],{
+      animateActor:()=>({impactMs:100,totalMs:300,contact:()=>trace.push({what:'ack',at:Date.now()}),cancel(){}}),
+    });finish();assert.equal(timeOf(trace,'ack'),100);
+  });
+});

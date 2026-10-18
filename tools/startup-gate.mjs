@@ -6,6 +6,7 @@
 //
 // Usage: node tools/startup-gate.mjs
 //        node tools/startup-gate.mjs --selftest
+//        node tools/startup-gate.mjs --only reduced-motion-clock
 // Exit: 0 all contracts green · 1 product finding · 2 unavailable/tool failure
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -235,6 +236,7 @@ if (args.includes('--selftest')) {
       },
       {
         name: 'reveal transition skips its deterministic cleanup deadline',
+        args: ['--only', 'reduced-motion-clock'],
         file: 'src/ui/components/startupGate.js',
         find: "    const delay = reducedMotion ? 140 : lightUpMs + holdMs + fadeMs;",
         replace: "    const delay = reducedMotion ? 900 : lightUpMs + holdMs + fadeMs; // startup-gate selftest plant",
@@ -263,6 +265,22 @@ if (args.includes('--selftest')) {
         find: "  done.addEventListener('click', () => {",
         replace: "  document.body.appendChild(document.createElement('div')).setAttribute('aria-modal', 'true'); // startup-gate selftest plant\n  done.addEventListener('click', () => {",
         expectRed: /RED A8\.SETTINGS-ESCAPE-PRECEDENCE/,
+      },
+      {
+        name: 'reveal cleanup leaves an ash particle behind the title',
+        args: ['--only', 'reduced-motion-clock'],
+        file: 'src/ui/components/startupGate.js',
+        find: '      onReveal({ source, family });',
+        replace: "      onReveal({ source, family });\n      if (reducedMotion) document.body.insertAdjacentHTML('beforeend', '<span class=\"startup-ash\"></span>'); // startup-gate selftest plant",
+        expectRed: /RED A10\.REVEAL-CLEANUP/,
+      },
+      {
+        name: 'reveal removes startup without mounting the title',
+        args: ['--only', 'reduced-motion-clock'],
+        file: 'src/ui/components/startupGate.js',
+        find: '      onReveal({ source, family });',
+        replace: '      if (reducedMotion) root.remove(); else onReveal({ source, family }); // startup-gate selftest plant',
+        expectRed: /RED A10\.REVEAL-CLEANUP/,
       },
     ],
   };
@@ -309,7 +327,7 @@ function verdict(condition, code, detail) {
 
 async function page({
   query = '', width = 1200, height = 730, mobile = false,
-  pad = false, heldButton = null, secondHeldButton = null, corruptProfile = false, reduced = false,
+  pad = false, heldButton = null, secondHeldButton = null, corruptProfile = false, reduced = false, cleanupProbe = false,
 } = {}) {
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -324,6 +342,26 @@ async function page({
   }, sessionId);
   const bootstrap = `(() => {
     localStorage.clear();
+    ${cleanupProbe ? `
+    window.addEventListener('keyup', (event) => {
+      if (event.key !== 'Enter') return;
+      const probe = window.__startupCleanup = { started: performance.now(), completed: null, readable: false };
+      const observer = new MutationObserver(() => {
+        const root = document.querySelector('.startup-gate');
+        if (!root && document.querySelector('.title-screen') && document.querySelectorAll('.startup-ash').length === 0) {
+          probe.completed = performance.now();
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-busy'] });
+      setTimeout(() => {
+        const root = document.querySelector('.startup-gate');
+        probe.readable = root?.classList.contains('is-revealing') === true && root.getAttribute('aria-busy') === 'true';
+      }, 100);
+      setTimeout(() => observer.disconnect(), 600);
+    }, { capture: true, once: true });
+    ` : ''}
+
     ${corruptProfile ? "localStorage.setItem('sote_meta_v1', '{torn'); localStorage.removeItem('sote_meta_backup_v1');" : ''}
     const state = { connected: ${pad}, buttons: Array.from({length: 16}, () => ({pressed:false,value:0})) };
     ${Number.isInteger(heldButton) ? `state.buttons[${heldButton}]={pressed:true,value:1};` : ''}
@@ -851,23 +889,26 @@ async function motionSignature() {
   return fact;
 }
 
-async function assertReducedMotion() {
+async function assertReducedMotion({ hostDelayMs = 0 } = {}) {
   const a = await motionSignature();
   const b = await motionSignature();
   const short = a.particles.every(({ duration }) => duration.split(',').every((d) => d.endsWith('ms') ? parseFloat(d) <= 20 : parseFloat(d) <= 0.02));
   verdict(a.reduced && short, 'A10.REDUCED-MOTION', `class=${a.reduced}, particle durations=${[...new Set(a.particles.map(x=>x.duration))].join('/')}`);
   verdict(JSON.stringify(a.particles.map(({ p, style }) => [p, style])) === JSON.stringify(b.particles.map(({ p, style }) => [p, style])), 'A10.DETERMINISTIC-ASH', `${a.particles.length} authored particle records are byte-stable across fresh boots`);
 
-  const p = await page({ query: `?shot=startup&shotInput=keyboard&shotSettings=${encodeURIComponent(JSON.stringify({ reducedMotion: true }))}`, reduced: true });
+  const p = await page({ query: `?shot=startup&shotInput=keyboard&shotSettings=${encodeURIComponent(JSON.stringify({ reducedMotion: true }))}`, reduced: true, cleanupProbe: true });
   await p.until(`!!document.querySelector('.startup-gate')`, 'reduced-motion reveal startup');
-  const started = Date.now();
+  // The pre-boot capture listener timestamps keyup before production input
+  // handles it, and observes the first complete DOM state in the same clock.
+  // CDP round trips and host scheduling do not consume the 600ms contract.
   const release = await p.key('Enter'); await release();
-  const during = await p.ev(`({revealing:document.querySelector('.startup-gate')?.classList.contains('is-revealing')===true,busy:document.querySelector('.startup-gate')?.getAttribute('aria-busy')})`);
-  await wait(180);
+  if (hostDelayMs) await wait(hostDelayMs);
+  await p.ev(`new Promise(resolve => { const remaining = Math.max(0, 600 - (performance.now() - window.__startupCleanup.started)); setTimeout(resolve, remaining); })`);
   const after = await p.ev(`({startup:!!document.querySelector('.startup-gate'),title:!!document.querySelector('.title-screen'),ash:document.querySelectorAll('.startup-ash').length})`);
-  const elapsed = Date.now() - started;
-  verdict(during.revealing && during.busy === 'true', 'A10.READABLE-EXIT', `reduced-motion reveal retains a short marked exit state (${JSON.stringify(during)})`);
-  verdict(!after.startup && after.title && after.ash === 0 && elapsed < 600, 'A10.REVEAL-CLEANUP', `startup unmounted by deterministic deadline (${elapsed}ms, ${JSON.stringify(after)})`);
+  const timing = await p.ev(`window.__startupCleanup`);
+  const elapsed = timing.completed === null || timing.started === null ? null : timing.completed - timing.started;
+  verdict(timing.readable, 'A10.READABLE-EXIT', `reduced-motion reveal retains a short marked exit state (${JSON.stringify(timing)})`);
+  verdict(!after.startup && after.title && after.ash === 0 && elapsed !== null && elapsed < 600, 'A10.REVEAL-CLEANUP', `startup unmounted by deterministic deadline (${elapsed}ms, ${JSON.stringify(after)})`);
   await p.close();
 }
 
@@ -1051,24 +1092,30 @@ async function main() {
   browser = launched.child; dropBrowser = launched.close;
   cdp = connectCdp(launched.wsUrl); await cdp.ready;
 
-  await assertColdAndStamp();
-  await assertPromptFamilies();
-  await assertKeyboard('Enter', 'A4.ENTER');
-  await assertKeyboard(' ', 'A5.SPACE');
-  await assertPointerCursor();
-  if (!SELFTEST_LANE) await assertTouch();
-  await assertGamepad(0);
-  await assertGamepad(9);
-  await assertInterruptedPresses();
-  await assertReturnBypass();
-  await assertContextualTitleBack();
-  await assertSettingsModalStack();
-  await assertLoadSlotSelection();
-  await assertCrisisPrecedence();
-  await assertReducedMotion();
-  if (!SELFTEST_LANE) {
-    const shapes = [{ tag:'390x844', w:390, h:844 }, { tag:'844x344', w:844, h:344 }, { tag:'1200x730', w:1200, h:730 }, { tag:'2550x1305', w:2550, h:1305 }];
-    for (const textSize of ['M', 'XL']) for (const shape of shapes) await assertShape(shape, textSize);
+  if (ONLY === 'reduced-motion-clock') {
+    // A real reveal followed by a deliberately late host read must retain its
+    // actual renderer cleanup time. The former Date.now check fails here.
+    await assertReducedMotion({ hostDelayMs: 700 });
+  } else {
+    await assertColdAndStamp();
+    await assertPromptFamilies();
+    await assertKeyboard('Enter', 'A4.ENTER');
+    await assertKeyboard(' ', 'A5.SPACE');
+    await assertPointerCursor();
+    if (!SELFTEST_LANE) await assertTouch();
+    await assertGamepad(0);
+    await assertGamepad(9);
+    await assertInterruptedPresses();
+    await assertReturnBypass();
+    await assertContextualTitleBack();
+    await assertSettingsModalStack();
+    await assertLoadSlotSelection();
+    await assertCrisisPrecedence();
+    await assertReducedMotion();
+    if (!SELFTEST_LANE) {
+      const shapes = [{ tag:'390x844', w:390, h:844 }, { tag:'844x344', w:844, h:344 }, { tag:'1200x730', w:1200, h:730 }, { tag:'2550x1305', w:2550, h:1305 }];
+      for (const textSize of ['M', 'XL']) for (const shape of shapes) await assertShape(shape, textSize);
+    }
   }
 
   if (!checks) { console.error('startup-gate: UNKNOWN — NOTHING RAN.'); process.exitCode = 2; return; }

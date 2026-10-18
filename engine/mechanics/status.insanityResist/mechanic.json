@@ -1,0 +1,25 @@
+{
+  "id": "status.insanityResist",
+  "tag": "status.insanityResist",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Resolute",
+  "description": "Just burst - hardened against Insanity: incoming build-up reduced {resists.percent}% for {decay.duration} turns.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.insanityResist"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

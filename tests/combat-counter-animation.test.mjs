@@ -64,7 +64,7 @@ for (const version of [1, 2]) test(`actual mounted Shield Bash version ${version
     assert.notEqual(receipt.cardInstance, instance);
     assert.equal(definition.upcastTier, 2);
     assert.deepEqual(definition.counterPayload, expected.counterPayload);
-    assert.deepEqual([plan.group, plan.technique, plan.rest], ['defend', 'shieldGuard', 'shieldGuard']);
+    assert.deepEqual([plan.group, plan.technique, plan.rest], ['defend', 'guard', 'guard']);
     const alternative = resolveCombatAnimation(definition, equippedPieces(registries, run.loadout, run.class),
       { combatExpansionVersion: version, classId: run.class, appearance: 'alternative' });
     assert.deepEqual([alternative.group, alternative.technique, alternative.rest], ['defend', 'counterPrepare', 'counter'],
@@ -76,7 +76,7 @@ for (const version of [1, 2]) test(`actual mounted Shield Bash version ${version
   } else {
     assert.equal(receipt.cardInstance, undefined);
     assert.equal(receipt.upcastTier, undefined);
-    assert.deepEqual([plan.group, plan.technique, plan.rest], ['attack', 'shieldBash', null]);
+    assert.deepEqual([plan.group, plan.technique, plan.rest], ['attack', 'attack', null]);
     assert.ok(combat.enemies[0].hp < hp);
   }
 });
@@ -85,10 +85,10 @@ test('expanded Dodge and dagger Counter prepare defense; a Spell Counter prepare
   const { run } = mounted(2);
   const context = { registries, player: run, combatExpansionVersion: 2, breakMeterVersion: 2 };
   const dodge = resolveCombatCard(context, { cardId: 'dodgeRoll' });
-  assert.deepEqual([route(dodge, run, 2).group, route(dodge, run, 2).technique], ['defend', 'shieldGuard']);
+  assert.deepEqual([route(dodge, run, 2).group, route(dodge, run, 2).technique], ['defend', 'guard']);
   const dagger = resolveCombatCard(context, { cardId: 'rondelParry' });
   const parry = resolveCombatAnimation(dagger, [{ id: 'parryDagger' }], { combatExpansionVersion: 2 });
-  assert.deepEqual([parry.group, parry.technique, parry.rest], ['defend', 'parry', 'parry']);
+  assert.deepEqual([parry.group, parry.technique, parry.rest], ['defend', 'guard', 'guard']);
   const spell = resolveCombatCard(context, { cardId: 'barrageCounter' });
   const plan = route(spell, run, 2);
   assert.deepEqual([plan.group, plan.technique, plan.rest, plan.family], ['cast', 'cast', 'cast', 'spell']);
@@ -140,6 +140,6 @@ for (const convertedSeat of ['p1', 'p2']) test(`co-op p2 visual receipt uses its
   assert.deepEqual(definition.cardTags, receipt.cardTags);
   assert.equal(definition.sourceArmamentId, instance.sourceArmamentId);
   const plan = route(definition, rows[1].run, 2);
-  assert.deepEqual([plan.group, plan.technique, plan.rest], ['defend', 'shieldGuard', 'shieldGuard']);
+  assert.deepEqual([plan.group, plan.technique, plan.rest], ['defend', 'guard', 'guard']);
   assert.equal(combat.enemies[0].hp, hp);
 });

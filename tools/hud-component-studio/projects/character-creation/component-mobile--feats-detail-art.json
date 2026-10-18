@@ -1,0 +1,144 @@
+{
+  "version": 1,
+  "title": "Feat emblem \u00b7 reusable background / trim / symbols / props",
+  "canvas": {
+    "width": 168,
+    "height": 180,
+    "background": "transparent"
+  },
+  "defaultState": "feats",
+  "states": [
+    {
+      "id": "feats",
+      "name": "Feats"
+    }
+  ],
+  "assets": {
+    "medallion-background": {
+      "src": "assets/medallion-background.png",
+      "width": 296,
+      "height": 292
+    },
+    "medallion-trim": {
+      "src": "assets/medallion-trim.png",
+      "width": 397,
+      "height": 380
+    },
+    "symbol-book": {
+      "src": "assets/symbol-book.png",
+      "width": 414,
+      "height": 216
+    },
+    "symbol-star": {
+      "src": "assets/symbol-star.png",
+      "width": 337,
+      "height": 318
+    }
+  },
+  "nodes": [
+    {
+      "id": "feats-detail-art",
+      "name": "Feat emblem \u00b7 reusable background / trim / symbols / props",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 168,
+      "height": 180,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "feats-detail-art-medallion-background",
+      "name": "Medallion Background",
+      "type": "image",
+      "parent": "feats-detail-art",
+      "x": 21.381818181818183,
+      "y": 21.381818181818183,
+      "width": 125.23636363636363,
+      "height": 125.23636363636363,
+      "z": 0,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "medallion-background",
+      "fit": "contain"
+    },
+    {
+      "id": "feats-detail-art-medallion-trim",
+      "name": "Medallion Trim",
+      "type": "image",
+      "parent": "feats-detail-art",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 168.0,
+      "height": 168.0,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "medallion-trim",
+      "fit": "contain"
+    },
+    {
+      "id": "feats-detail-art-symbol-book",
+      "name": "Symbol Book",
+      "type": "image",
+      "parent": "feats-detail-art",
+      "x": 29.985198720877115,
+      "y": 75.80338053905894,
+      "width": 108.02960255824578,
+      "height": 66.79323892188214,
+      "z": 2,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "symbol-book",
+      "fit": "contain"
+    },
+    {
+      "id": "feats-detail-art-symbol-star",
+      "name": "Symbol Star",
+      "type": "image",
+      "parent": "feats-detail-art",
+      "x": 51.92727272727272,
+      "y": 19.854545454545455,
+      "width": 64.14545454545454,
+      "height": 62.61818181818182,
+      "z": 3,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "symbol-star",
+      "fit": "contain"
+    }
+  ],
+  "metadata": {
+    "componentSource": "feats-detail-art",
+    "sourceState": "feats",
+    "designOnly": true
+  }
+}

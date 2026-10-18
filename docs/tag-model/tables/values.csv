@@ -1,0 +1,98 @@
+key,value,unit,scope,description
+ar,24,rating,character,Preview value for the AR tag
+pr,10,rating,character,Preview value for the PR tag
+dr,18,rating,character,Preview value for the DR tag
+strength,14,points,character,Preview value
+dexterity,10,points,character,Preview value
+burned,3,stacks,status,Preview stacks of Burned
+crit.mult,1.5,×,global,Crit damage multiplier
+weak.mult,0.75,×,status,Damage dealt while Weak
+vulnerable.mult,1.5,×,status,Damage taken while Vulnerable
+burned.tickPerStack,1,HP,status,HP lost per Burned stack at turn start
+strike.baseDamage,6,damage,strike,Base damage at rank 1
+strike.arScale,0.25,×AR,strike,Share of AR added to damage
+strike.cost,1,SP,strike,Stamina cost
+strike.expSkill,4,EXP,strike,Blade skill EXP per play
+strike.expClass,2,EXP,strike,Class EXP per play
+sword.arBonus,3,damage,straightSword,Flat damage a sword adds to sword attacks
+straightSword.ar,12,rating,straightSword,Weapon AR
+dodgeRoll.base,3,points,dodgeRoll,"Base Block, Poise and Ward"
+dodgeRoll.cost,1,SP,dodgeRoll,Stamina cost (Light/Medium); Heavy pays 2
+wayfarerPlate.dr,6,rating,wayfarerPlate,Armor DR
+wayfarerPlate.poise,8,points,wayfarerPlate,Poise threshold
+studded.resist.physical,TBD,TBD,armor,"Resistance of studded to physical damage (TBD placeholder, owner decision 8)"
+studded.resist.magic,TBD,TBD,armor,"Resistance of studded to magic damage (TBD placeholder, owner decision 8)"
+studded.resist.hybrid,TBD,TBD,armor,"Resistance of studded to hybrid damage (TBD placeholder, owner decision 8)"
+leather.resist.physical,TBD,TBD,armor,"Resistance of leather to physical damage (TBD placeholder, owner decision 8)"
+leather.resist.magic,TBD,TBD,armor,"Resistance of leather to magic damage (TBD placeholder, owner decision 8)"
+leather.resist.hybrid,TBD,TBD,armor,"Resistance of leather to hybrid damage (TBD placeholder, owner decision 8)"
+plated.resist.physical,TBD,TBD,armor,"Resistance of plated to physical damage (TBD placeholder, owner decision 8)"
+plated.resist.magic,TBD,TBD,armor,"Resistance of plated to magic damage (TBD placeholder, owner decision 8)"
+plated.resist.hybrid,TBD,TBD,armor,"Resistance of plated to hybrid damage (TBD placeholder, owner decision 8)"
+absorption.resist.physical,TBD,TBD,armor,"Resistance of absorption to physical damage (TBD placeholder, owner decision 8)"
+absorption.resist.magic,TBD,TBD,armor,"Resistance of absorption to magic damage (TBD placeholder, owner decision 8)"
+absorption.resist.hybrid,TBD,TBD,armor,"Resistance of absorption to hybrid damage (TBD placeholder, owner decision 8)"
+siphon.resist.physical,TBD,TBD,armor,"Resistance of siphon to physical damage (TBD placeholder, owner decision 8)"
+siphon.resist.magic,TBD,TBD,armor,"Resistance of siphon to magic damage (TBD placeholder, owner decision 8)"
+siphon.resist.hybrid,TBD,TBD,armor,"Resistance of siphon to hybrid damage (TBD placeholder, owner decision 8)"
+cloth.resist.physical,TBD,TBD,armor,"Resistance of cloth to physical damage (TBD placeholder, owner decision 8)"
+cloth.resist.magic,TBD,TBD,armor,"Resistance of cloth to magic damage (TBD placeholder, owner decision 8)"
+cloth.resist.hybrid,TBD,TBD,armor,"Resistance of cloth to hybrid damage (TBD placeholder, owner decision 8)"
+chain.resist.physical,TBD,TBD,armor,"Resistance of chain to physical damage (TBD placeholder, owner decision 8)"
+chain.resist.magic,TBD,TBD,armor,"Resistance of chain to magic damage (TBD placeholder, owner decision 8)"
+chain.resist.hybrid,TBD,TBD,armor,"Resistance of chain to hybrid damage (TBD placeholder, owner decision 8)"
+scale.resist.physical,TBD,TBD,armor,"Resistance of scale to physical damage (TBD placeholder, owner decision 8)"
+scale.resist.magic,TBD,TBD,armor,"Resistance of scale to magic damage (TBD placeholder, owner decision 8)"
+scale.resist.hybrid,TBD,TBD,armor,"Resistance of scale to hybrid damage (TBD placeholder, owner decision 8)"
+dodgeBlock.mod,1,×,dodgeRoll,"Modifier on Dodge Block; relics and stances change this (owner decision 9)"
+cloth.evasionBase,0,rating,armor,"Evasion base of cloth armour (evasion table, decision 11)"
+cloth.dexCap,4,points,armor,"DEX cap of cloth armour for the evasion DEX term (decision 11)"
+leather.evasionBase,0,rating,armor,"Evasion base of leather armour (decision 11)"
+leather.dexCap,6,points,armor,"DEX cap of leather armour (decision 11)"
+studded.evasionBase,1,rating,armor,"Evasion base of studded armour (decision 11)"
+studded.dexCap,3,points,armor,"DEX cap of studded armour (decision 11)"
+chain.evasionBase,1,rating,armor,"Evasion base of chain armour (decision 11)"
+chain.dexCap,2,points,armor,"DEX cap of chain armour (decision 11)"
+scale.evasionBase,1,rating,armor,"Evasion base of scale armour (decision 11)"
+scale.dexCap,1,points,armor,"DEX cap of scale armour (decision 11)"
+plated.evasionBase,1,rating,armor,"Evasion base of plated armour (decision 11)"
+plated.dexCap,0,points,armor,"DEX cap of plated armour (decision 11)"
+armor.evasionBase,0,rating,armor,"Preview of the equipped armour evasion base; 0 with no armour. Runtime input resolved from the material rows"
+armor.dexCap,0,points,armor,"Preview of the equipped armour DEX cap; 0 with no armour. Runtime input resolved from the material rows"
+buckler.evasion,1,rating,shield,"Evasion a buckler adds (decision 11)"
+otherShield.evasion,0,rating,shield,"Evasion any other shield adds (decision 11)"
+shield.evasion,0,rating,shield,"Preview of the equipped shield evasion; 0 with no shield. Runtime input resolved from the shield rows"
+backstep.evasion,5,rating,evasion,"Evasion card bonus: Backstep (decision 11)"
+shadowstep.evasion,4,rating,evasion,"Evasion card bonus: Shadowstep (decision 11)"
+quickstep.evasion,3,rating,evasion,"Evasion card bonus: Quickstep (decision 11)"
+acrobatics.evasion,3,rating,evasion,"Evasion card bonus: Acrobatics (decision 11)"
+dodge.evasion,3,rating,evasion,"Evasion card bonus: Dodge (decision 11)"
+evasiveGuard.evasion,2,rating,evasion,"Evasion card bonus: Evasive Guard (decision 11)"
+evasion.cardBonus,0,rating,evasion,"Preview of the evasion card bonus in effect; 0 with no card. Runtime input resolved from the card rows"
+quick.accuracy,1,rating,accuracy,"Accuracy tag bonus: quick (decision 11)"
+telegraphed.accuracy,-2,rating,accuracy,"Accuracy tag bonus: telegraphed (decision 11)"
+accuracy.tagBonus,0,rating,accuracy,"Preview of the accuracy tag bonus in effect; 0 with no tag. Runtime input resolved from the tag rows"
+precision.perStack,1,rating,accuracy,"Accuracy added per precision stack (owner decision 16, 2026-10-13). Proposed"
+pierce.base,1,stacks,pierce,"Pierce base: a Pierce card starts at 1 stack (owner decision 17, 2026-10-13). Proposed"
+pierce.perStack,2,points,pierce,"Points each Pierce stack reduces the defender's guard by: Block and Barrier, and Poise and Ward, 2 per stack (owner decision 17, 2026-10-13). Proposed"
+pierce.stacks,0,stacks,pierce,"Preview of the Pierce stacks on an attack, for pierce.blockIgnored, pierce.poiseIgnored, pierce.barrierIgnored and pierce.wardIgnored; 0 is the preview with no Pierce tag. Runtime input from the attack's tags. Proposed"
+pierce.poiseEdge,1.25,multiplier,pierce,"Physical Pierce edge against Poise, matching the magical 1.25x Ward edge pierceWard at origin/dev src/engine/combatMatchups.js:570 (owner decision 17, 2026-10-13: ""Same with poise as 1.25x""). Proposed"
+pierce.wardEdge,1.25,multiplier,pierce,"Magical Pierce edge against Ward. Mirrors the existing code-only rule pierceWard at origin/dev src/engine/combatMatchups.js:570 (1.25x Ward edge for Piercing); this row makes it a value. Proposed"
+sweep.targets,1,targets,sweep,"Preview of the enemies a Sweep attack targets, for sweep.accuracyBonus; 1 is the preview. Runtime input from the attack's target count. Proposed"
+wisdom,0,points,character,"Preview of WIS for the accuracy formula; placeholder, class stats not in the decision"
+intelligence,0,points,character,"Preview of INT for the accuracy formula; placeholder, class stats not in the decision"
+level,1,level,character,"Preview character level for the accuracy formula (level 1)"
+enemy.accuracy,5,rating,enemy,"Enemy accuracy used in the miss examples (decision 11)"
+wanderingSoldier.evasion,1,rating,enemy,"Enemy evasion: Wandering Soldier (decision 11)"
+blightHound.evasion,3,rating,enemy,"Enemy evasion: Blight Hound (decision 11)"
+huskBrute.evasion,0,rating,enemy,"Enemy evasion: Husk Brute (decision 11)"
+fellWarden.evasion,2,rating,enemy,"Enemy evasion: Fell Warden (decision 11)"
+evade.baseEvade,3,rating,evasion,"Base evasion per stack of Evade (DECISIONS section 15, ruling 1). Proposed"
+evade.stacks,0,stacks,evasion,"Preview of the Evade stacks in effect; 0 with no Evade. Runtime input. Proposed"
+evade.dexCap.cloth,99,points,evasion,"Default DEX cap for Evade with cloth: uncapped. 99 means uncapped (ruling 6). Proposed"
+evade.dexCap.light,99,points,evasion,"Default DEX cap for Evade with light armour: uncapped. 99 means uncapped (ruling 6). Proposed"
+evade.dexCap.medium,5,points,evasion,"Default DEX cap for Evade with medium armour (ruling 6). Higher ranks may raise it (open). Proposed"
+evade.dexCap.heavy,2,points,evasion,"Default DEX cap for Evade with heavy armour (ruling 6). Higher ranks may raise it (open). Proposed"
+evade.dexCap,2,points,evasion,"Runtime input: the effective DEX cap for Evade = band cap + floor(armour skill rank / evade.dexCap.rankStep) + feat raises (DECISIONS section 15, owner tuning 2026-10-13). Band cap is evade.dexCap.light, medium or heavy for the wearer load band (light from 0, medium from 10, heavy from 18); cloth is in the light band. Preview 2 (heavy, rank 0, no feats). Feat raises are open (proposals/evade-cap-feats.md). Proposed"
+evade.dexCap.rankStep,3,ranks,evasion,"Armour skill ranks (armour:medium, armour:heavy; ranks 1 to 10) per +1 to the Evade DEX cap: floor(rank / 3). At rank 10 medium is 8 and heavy is 5. Owner tuning, 2026-10-13 (DECISIONS section 15). Proposed"
+evade.stanceBonus,3,rating,evasion,"Evasion bonus of the Evade stance itself, added to evade.evasion while the Evade stance is active (0 otherwise; runtime gating like evade.stacks). Owner tuning, 2026-10-13 (DECISIONS section 15). Proposed"

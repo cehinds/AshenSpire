@@ -1,0 +1,25 @@
+{
+  "id": "status.magicVulnerable",
+  "tag": "status.magicVulnerable",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Magic Vulnerable",
+  "description": "Magic-school HP damage is increased while this lasts.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.magicVulnerable"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

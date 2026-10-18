@@ -1,0 +1,174 @@
+{
+  "reviewOnly": true,
+  "registeredCanvas": [
+    932,
+    625
+  ],
+  "padding": {
+    "left": 83,
+    "right": 81,
+    "top": 81
+  },
+  "floorY": 561,
+  "slots": 5,
+  "durationsMs": [
+    350,
+    350,
+    350,
+    350,
+    350
+  ],
+  "drawing": "Exact registered source dimensions and offsets; no resizing or alpha-bound fitting",
+  "sources": [
+    {
+      "id": "SM03",
+      "slot": 1,
+      "key": "smash",
+      "path": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+      "logicalSize": [
+        512,
+        512
+      ],
+      "placement": [
+        133,
+        97
+      ]
+    },
+    {
+      "id": "SW09",
+      "slot": 1,
+      "key": "sweep",
+      "path": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+      "sha256": "81d348d0382b9a99c1f72d5d23dab4975bbe648b3db979d8f725fc250d02db7c",
+      "logicalSize": [
+        1024,
+        1024
+      ],
+      "placement": [
+        -53,
+        -173
+      ]
+    },
+    {
+      "id": "SM03",
+      "slot": 2,
+      "key": "smash-takeoff",
+      "path": "assets-display/alternative/reaver-greatsword-pilot-smash-takeoff.webp",
+      "sha256": "3ea4253510405611871fecb84d896f251a16d0acfcf7fd3bf03875ab1a2be5ba",
+      "logicalSize": [
+        768,
+        768
+      ],
+      "placement": [
+        5,
+        -95
+      ]
+    },
+    {
+      "id": "SW09",
+      "slot": 2,
+      "key": "sweep-windup",
+      "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-windup.webp",
+      "sha256": "e42ea1976a0a162c78098cb7a13010cc1b855d5baf6f4fe0fe90e42cc9991f4d",
+      "logicalSize": [
+        1024,
+        1024
+      ],
+      "placement": [
+        -53,
+        -173
+      ]
+    },
+    {
+      "id": "SM03",
+      "slot": 3,
+      "key": "smash-airborne",
+      "path": "assets-display/alternative/reaver-greatsword-pilot-smash-airborne.webp",
+      "sha256": "c4ac87cae60eba72c3ecfdb3b2ece7361d7134b22818f56362d353e0a86b0041",
+      "logicalSize": [
+        768,
+        768
+      ],
+      "placement": [
+        5,
+        -95
+      ]
+    },
+    {
+      "id": "SW09",
+      "slot": 3,
+      "key": "sweep-contact",
+      "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp",
+      "sha256": "2f57d14e2f17a7366977829957514d0a97f64adf91cb24c26ede51a25e56bbb2",
+      "logicalSize": [
+        1024,
+        1024
+      ],
+      "placement": [
+        -53,
+        -173
+      ]
+    },
+    {
+      "id": "SM03",
+      "slot": 4,
+      "key": "smash-impact",
+      "path": "assets-display/alternative/reaver-greatsword-pilot-smash-impact.webp",
+      "sha256": "3962cbdeccb8dae3c2a93e4f84c60bf7172bdda56c26c42ad521d167e13ca945",
+      "logicalSize": [
+        768,
+        768
+      ],
+      "placement": [
+        5,
+        -95
+      ]
+    },
+    {
+      "id": "SW09",
+      "slot": 4,
+      "key": "sweep-finish",
+      "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-finish.webp",
+      "sha256": "96a520910a6962ade28c268da0cc34fed5c747b309b6a60580a32ebdd58c429b",
+      "logicalSize": [
+        1024,
+        1024
+      ],
+      "placement": [
+        -53,
+        -173
+      ]
+    },
+    {
+      "id": "SM03",
+      "slot": 5,
+      "key": "smash",
+      "path": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+      "logicalSize": [
+        512,
+        512
+      ],
+      "placement": [
+        133,
+        97
+      ]
+    },
+    {
+      "id": "SW09",
+      "slot": 5,
+      "key": "sweep",
+      "path": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+      "sha256": "81d348d0382b9a99c1f72d5d23dab4975bbe648b3db979d8f725fc250d02db7c",
+      "logicalSize": [
+        1024,
+        1024
+      ],
+      "placement": [
+        -53,
+        -173
+      ]
+    }
+  ]
+}

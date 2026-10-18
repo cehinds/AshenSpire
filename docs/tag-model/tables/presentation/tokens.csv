@@ -1,0 +1,727 @@
+token,value,theme,file,tag,liveRef
+--edge-color,#d9bd7b,scoped .combat .combatant .alternative-silhouette,styles/alternative-combat.css:12,token,styles/alternative-combat.css:12
+--edge,"calc(.65px / var(--sprite-zoom,1))",scoped .combat .combatant .alternative-silhouette,styles/alternative-combat.css:12,token,styles/alternative-combat.css:12
+--edge-color,#c84136,scoped .combat .combatant.enemy .alternative-silhouette,styles/alternative-combat.css:13,token,styles/alternative-combat.css:13
+--bg,#0d0b08,default,styles/base.css:3,token,styles/base.css:3
+--bg-raise,#171310,default,styles/base.css:3,token,styles/base.css:3
+--panel,#241d15,default,styles/base.css:3,token,styles/base.css:3
+--line,#3a3226,default,styles/base.css:3,token,styles/base.css:3
+--line-soft,#4a4034,default,styles/base.css:3,token,styles/base.css:3
+--map-structure,#7a6b54,default,styles/base.css:3,token,styles/base.css:3
+--parchment,#e8dcc0,default,styles/base.css:3,token,styles/base.css:3
+--muted,#8e826a,default,styles/base.css:3,token,styles/base.css:3
+--gold,#c9a227,default,styles/base.css:3,token,styles/base.css:3
+--accent-rgb,"201, 162, 39",default,styles/base.css:3,token,styles/base.css:3
+--blood,#8a1a1a,default,styles/base.css:3,token,styles/base.css:3
+--res-hp,#a43c35,default,styles/base.css:3,token,styles/base.css:3
+--rot,#b5541c,default,styles/base.css:3,token,styles/base.css:3
+--frost,#7fa8c9,default,styles/base.css:3,token,styles/base.css:3
+--grace,#9fc3e8,default,styles/base.css:3,token,styles/base.css:3
+--ember,#e46a44,default,styles/base.css:3,token,styles/base.css:3
+--green,#7fd97f,default,styles/base.css:3,token,styles/base.css:3
+--bleed,var(--ember),default,styles/base.css:3,token,styles/base.css:3
+--tap-floor,"calc(var(--tap-target) / var(--ui-zoom, 1))",default,styles/base.css:3,token,styles/base.css:3
+--iconbtn-size,var(--tap-floor),default,styles/base.css:3,token,styles/base.css:3
+--tap-floor-default,"calc(var(--tap-floor-default-target) / var(--ui-zoom, 1))",default,styles/base.css:3,token,styles/base.css:3
+--r-1,3px,default,styles/base.css:3,token,styles/base.css:3
+--r-2,6px,default,styles/base.css:3,token,styles/base.css:3
+--r-3,8px,default,styles/base.css:3,token,styles/base.css:3
+--r-4,12px,default,styles/base.css:3,token,styles/base.css:3
+--r-pill,999px,default,styles/base.css:3,token,styles/base.css:3
+--r-round,50%,default,styles/base.css:3,token,styles/base.css:3
+--r-1-glass,"calc(var(--r-1) / var(--ui-zoom, 1))",default,styles/base.css:3,token,styles/base.css:3
+--r-2-glass,"calc(var(--r-2) / var(--ui-zoom, 1))",default,styles/base.css:3,token,styles/base.css:3
+--r-3-glass,"calc(var(--r-3) / var(--ui-zoom, 1))",default,styles/base.css:3,token,styles/base.css:3
+--r-4-glass,"calc(var(--r-4) / var(--ui-zoom, 1))",default,styles/base.css:3,token,styles/base.css:3
+--t-1,1rem,default,styles/base.css:3,token,styles/base.css:3
+--t-2,1.2rem,default,styles/base.css:3,token,styles/base.css:3
+--t-3,1.5rem,default,styles/base.css:3,token,styles/base.css:3
+--t-4,1.8rem,default,styles/base.css:3,token,styles/base.css:3
+--font-display,"'Cinzel', Georgia, 'Times New Roman', serif",default,styles/base.css:3,token,styles/base.css:3
+--font-body,"Inter, 'Segoe UI', system-ui, sans-serif",default,styles/base.css:3,token,styles/base.css:3
+--parchment,#fdf6e6,scoped body.hi-contrast,styles/base.css:187,token,styles/base.css:187
+--muted,#a89571,scoped body.hi-contrast,styles/base.css:187,token,styles/base.css:187
+--line,#6a5b43,scoped body.hi-contrast,styles/base.css:187,token,styles/base.css:187
+--line-soft,#85714f,scoped body.hi-contrast,styles/base.css:187,token,styles/base.css:187
+--map-structure,#85714f,scoped body.hi-contrast,styles/base.css:187,token,styles/base.css:187
+--blood,#d55e00,scoped body.cb-safe,styles/base.css:205,token,styles/base.css:205
+--res-hp,#d55e00,scoped body.cb-safe,styles/base.css:205,token,styles/base.css:205
+--ember,#d55e00,scoped body.cb-safe,styles/base.css:205,token,styles/base.css:205
+--green,#009e73,scoped body.cb-safe,styles/base.css:205,token,styles/base.css:205
+--frost,#56b4e9,scoped body.cb-safe,styles/base.css:205,token,styles/base.css:205
+--grace,#56b4e9,scoped body.cb-safe,styles/base.css:205,token,styles/base.css:205
+--rot,#e69f00,scoped body.cb-safe,styles/base.css:205,token,styles/base.css:205
+--danger,#d55e00,scoped body.cb-safe,styles/base.css:205,token,styles/base.css:205
+--bleed,#cc79a7,scoped body.cb-safe,styles/base.css:205,token,styles/base.css:205
+--font-display,var(--font-body),scoped body.readable-ui,styles/base.css:223,token,styles/base.css:223
+--combat-layer-scenery,0,scoped :root .combat[data-layout='formation'],styles/combat-layers.css:3,token,styles/combat-layers.css:3
+--combat-layer-shadows,100,scoped :root .combat[data-layout='formation'],styles/combat-layers.css:3,token,styles/combat-layers.css:3
+--combat-layer-enemy,200,scoped :root .combat[data-layout='formation'],styles/combat-layers.css:3,token,styles/combat-layers.css:3
+--combat-layer-player,300,scoped :root .combat[data-layout='formation'],styles/combat-layers.css:3,token,styles/combat-layers.css:3
+--combat-layer-fade,150,scoped :root .combat[data-layout='formation'],styles/combat-layers.css:3,token,styles/combat-layers.css:3
+--combat-layer-selection,500,scoped :root .combat[data-layout='formation'],styles/combat-layers.css:3,token,styles/combat-layers.css:3
+--combat-layer-cards,600,scoped :root .combat[data-layout='formation'],styles/combat-layers.css:3,token,styles/combat-layers.css:3
+--combat-layer-hud,700,scoped :root .combat[data-layout='formation'],styles/combat-layers.css:3,token,styles/combat-layers.css:3
+--combat-layer-banner,900,scoped :root .combat[data-layout='formation'],styles/combat-layers.css:3,token,styles/combat-layers.css:3
+--combat-state-opacity,.62,scoped :root .combat[data-layout='formation'] .combatant.ended,styles/combat-layers.css:33,token,styles/combat-layers.css:33
+--combat-state-opacity,.45,scoped :root .combat[data-layout='formation'] .combatant:is(.down | .away),styles/combat-layers.css:34,token,styles/combat-layers.css:34
+--combat-state-opacity,.25,scoped :root .combat[data-layout='formation'] .combatant.dead,styles/combat-layers.css:35,token,styles/combat-layers.css:35
+--combat-state-filter,grayscale(1),scoped :root .combat[data-layout='formation'] .combatant:is(.down | .dead),styles/combat-layers.css:36,token,styles/combat-layers.css:36
+--inspect-box,"calc(22px / var(--ui-zoom,1))",scoped :root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info,styles/combat-layers.css:218,token,styles/combat-layers.css:218
+--health-row-h,"calc(16px / var(--ui-zoom,1))",scoped :root .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-row,styles/combat-layers.css:223,token,styles/combat-layers.css:223
+--inspect-box,"calc(44px / var(--ui-zoom, 1))",scoped :root .combat[data-layout='formation'] :is(.card > .card-info-button | .hand-info-portal),styles/combat-layers.css:246,token,styles/combat-layers.css:246
+--combatant-highlight,#ef4949,scoped :root .combat[data-layout='formation'] .combatant,styles/combat-layers.css:258,token,styles/combat-layers.css:258
+--combatant-highlight,#65df68,scoped :root .combat[data-layout='formation'] .combatant.player,styles/combat-layers.css:259,token,styles/combat-layers.css:259
+--inspect-box,"calc(22px / var(--ui-zoom,1))",scoped :root .combat[data-layout='formation'] .combatant-leading > .combatant-info,styles/combat-layers.css:263,token,styles/combat-layers.css:263
+--health-row-h,"calc(12px / var(--ui-zoom,1))",scoped :root .combat[data-compact-combat='true'] .enemy.context-selected .combat-health-row,styles/combat-layers.css:329,token,styles/combat-layers.css:329
+--combatant-hp-h,var(--health-row-h),scoped :root .combat[data-compact-combat='true'] .enemy.context-selected .combat-health-row,styles/combat-layers.css:329,token,styles/combat-layers.css:329
+--health-row-h,"calc(7px / var(--ui-zoom,1))",scoped :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-row,styles/combat-layers.css:340,token,styles/combat-layers.css:340
+--combatant-hp-h,var(--health-row-h),scoped :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-row,styles/combat-layers.css:340,token,styles/combat-layers.css:340
+--combatant-value-text,"calc(10px / var(--ui-zoom,1))",scoped :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-row,styles/combat-layers.css:340,token,styles/combat-layers.css:340
+--health-row-h,"calc(12px / var(--ui-zoom,1))",scoped :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .combat-health-row,styles/combat-layers.css:348,token,styles/combat-layers.css:348
+--combatant-hp-h,var(--health-row-h),scoped :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .combat-health-row,styles/combat-layers.css:348,token,styles/combat-layers.css:348
+--combatant-value-text,"calc(11px / var(--ui-zoom,1))",scoped :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .combat-health-row,styles/combat-layers.css:348,token,styles/combat-layers.css:348
+--safe-top-local,"calc(env(safe-area-inset-top, 0px) / var(--ui-zoom, 1))",scoped .combat,styles/combat.css:3,token,styles/combat.css:3
+--safe-right-local,"calc(env(safe-area-inset-right, 0px) / var(--ui-zoom, 1))",scoped .combat,styles/combat.css:3,token,styles/combat.css:3
+--safe-bottom-local,"calc(env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1))",scoped .combat,styles/combat.css:3,token,styles/combat.css:3
+--safe-left-local,"calc(env(safe-area-inset-left, 0px) / var(--ui-zoom, 1))",scoped .combat,styles/combat.css:3,token,styles/combat.css:3
+--safe-edge-local,"calc(2px / var(--ui-zoom, 1))",scoped .combat,styles/combat.css:3,token,styles/combat.css:3
+--combatant-edge,drop-shadow(0.7px 0 0 #f4e6c4) drop-shadow(-0.7px 0 0 #f4e6c4) drop-shadow(0 0.7px 0 #f4e6c4) drop-shadow(0 -0.7px 0 #f4e6c4) drop-shadow(0 0 2px #100e0c),scoped .combat .combatant .sprite,styles/combat.css:59,token,styles/combat.css:59
+--battlefield-edge-gap,"clamp(0.35rem, 1.2%, 0.8rem)",scoped .field,styles/combat.css:81,token,styles/combat.css:81
+--player-hud-gap,10px,scoped :root .combat[data-layout='formation'] .combatant.player .combatant-leading,styles/combat.css:168,token,styles/combat.css:168
+--action-row-drop,7.6rem,scoped .combat,styles/combat.css:296,token,styles/combat.css:296
+--card-name-h,1.3rem,scoped :root[data-composition='short-wide'] .combat.coop .hand .card,styles/combat.css:743,token,styles/combat.css:743
+--card-art-h,2.2rem,scoped :root[data-composition='short-wide'] .combat.coop .hand .card,styles/combat.css:743,token,styles/combat.css:743
+--card-band-h,1.1rem,scoped :root[data-composition='short-wide'] .combat.coop .hand .card,styles/combat.css:743,token,styles/combat.css:743
+--card-row,0.75rem,scoped :root[data-composition='short-wide'] .combat.coop .hand .card,styles/combat.css:743,token,styles/combat.css:743
+--card-gap,0.2rem,scoped :root[data-composition='short-wide'] .combat.coop .hand .card,styles/combat.css:743,token,styles/combat.css:743
+--action-row-drop,11.2rem,scoped :root[data-composition='short-wide'] .combat,styles/combat.css:771,token,styles/combat.css:771
+--card-w,11.6rem,scoped :root[data-layout='narrow'] .hand .card,styles/combat.css:926,token,styles/combat.css:926
+--card-w,"max(178px, calc(178px / var(--ui-zoom, 1)))",scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1031,token,styles/combat.css:1031
+--card-name-h,"max(32px, calc(32px / var(--ui-zoom, 1)))",scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1031,token,styles/combat.css:1031
+--card-art-h,"max(70px, calc(70px / var(--ui-zoom, 1)))",scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1031,token,styles/combat.css:1031
+--card-band-h,"max(22px, calc(22px / var(--ui-zoom, 1)))",scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1031,token,styles/combat.css:1031
+--card-row,"max(22px, calc(22px / var(--ui-zoom, 1)))",scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1031,token,styles/combat.css:1031
+--card-pad,"max(8px, calc(8px / var(--ui-zoom, 1)))",scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1031,token,styles/combat.css:1031
+--card-gap,"max(5px, calc(5px / var(--ui-zoom, 1)))",scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1031,token,styles/combat.css:1031
+--combat-control-size,"max(64px, calc(64px / var(--ui-zoom, 1)))",scoped :root .combat:is(.coop | :not(.coop)) > .hand-area > .combat-action-row,styles/combat.css:1036,token,styles/combat.css:1036
+--card-w,"calc(146.5px / var(--ui-zoom, 1))",scoped :root .combat:not(.coop) .hand .card @media (max-width: 480px),styles/combat.css:1057,token,styles/combat.css:1057
+--card-art-h,calc(var(--card-w) * 0.30),scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1087,token,styles/combat.css:1087
+--card-name-h,calc(var(--card-w) * 0.18),scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1087,token,styles/combat.css:1087
+--card-w,178px,scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1096,token,styles/combat.css:1096
+--card-name-h,32px,scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1096,token,styles/combat.css:1096
+--card-art-h,53.4px,scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1096,token,styles/combat.css:1096
+--card-band-h,17px,scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1096,token,styles/combat.css:1096
+--card-row,22px,scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1096,token,styles/combat.css:1096
+--card-pad,8px,scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1096,token,styles/combat.css:1096
+--card-gap,4px,scoped :root .combat:not(.coop) .hand .card,styles/combat.css:1096,token,styles/combat.css:1096
+--combat-control-size,"calc(52px / var(--ui-zoom,1))",scoped :root .combat[data-layout='formation'] .combat-action-row,styles/combat.css:1250,token,styles/combat.css:1250
+--potion-stagger,0ms,scoped :root .combat[data-layout='formation'] .combat-potion-tray > *:nth-last-child(1),styles/combat.css:1268,token,styles/combat.css:1268
+--potion-stagger,40ms,scoped :root .combat[data-layout='formation'] .combat-potion-tray > *:nth-last-child(2),styles/combat.css:1269,token,styles/combat.css:1269
+--potion-stagger,80ms,scoped :root .combat[data-layout='formation'] .combat-potion-tray > *:nth-last-child(3),styles/combat.css:1270,token,styles/combat.css:1270
+--potion-stagger,120ms,scoped :root .combat[data-layout='formation'] .combat-potion-tray > *:nth-last-child(4),styles/combat.css:1271,token,styles/combat.css:1271
+--combat-control-size,"calc(42px / var(--ui-zoom,1))",scoped :root .combat[data-layout='formation'] .combat-action-row @media (max-height: 500px),styles/combat.css:1353,token,styles/combat.css:1353
+--card-w,178px,scoped :root .combat.coop[data-layout='formation'] .hand .card,styles/combat.css:1359,token,styles/combat.css:1359
+--card-name-h,32px,scoped :root .combat.coop[data-layout='formation'] .hand .card,styles/combat.css:1359,token,styles/combat.css:1359
+--card-art-h,53.4px,scoped :root .combat.coop[data-layout='formation'] .hand .card,styles/combat.css:1359,token,styles/combat.css:1359
+--card-band-h,17px,scoped :root .combat.coop[data-layout='formation'] .hand .card,styles/combat.css:1359,token,styles/combat.css:1359
+--card-row,22px,scoped :root .combat.coop[data-layout='formation'] .hand .card,styles/combat.css:1359,token,styles/combat.css:1359
+--card-pad,8px,scoped :root .combat.coop[data-layout='formation'] .hand .card,styles/combat.css:1359,token,styles/combat.css:1359
+--card-gap,4px,scoped :root .combat.coop[data-layout='formation'] .hand .card,styles/combat.css:1359,token,styles/combat.css:1359
+--grid-stroke,"var(--selection-color, #59bd75)",scoped .formation-grid-cell.formation-selected,styles/combat.css:1493,token,styles/combat.css:1493
+--grid-stroke,"var(--player-grid-color, #d5cc63)",scoped .formation-grid-cell,styles/combat.css:1498,token,styles/combat.css:1498
+--grid-stroke,"var(--enemy-grid-color, #e1a679)",scoped .formation-grid-cell[data-side='enemy'],styles/combat.css:1513,token,styles/combat.css:1513
+--intent-accent,#ef4949,scoped .combatant-leading .intent,styles/combat.css:1545,token,styles/combat.css:1545
+--intent-accent,#e7c65c,scoped .combatant-leading .intent[data-intent-visibility='partial'],styles/combat.css:1570,token,styles/combat.css:1570
+--intent-accent,#c88aeb,scoped .combatant-leading .intent[data-intent-visibility='unknown'],styles/combat.css:1571,token,styles/combat.css:1571
+--enemy-intent-accent,#ef4949,scoped .combatant.enemy,styles/combat.css:1622,token,styles/combat.css:1622
+--enemy-intent-outline,solid,scoped .combatant.enemy,styles/combat.css:1622,token,styles/combat.css:1622
+--enemy-intent-accent,#e7c65c,scoped .combatant.enemy[data-intent-visibility='partial'],styles/combat.css:1623,token,styles/combat.css:1623
+--enemy-intent-outline,dashed,scoped .combatant.enemy[data-intent-visibility='partial'],styles/combat.css:1623,token,styles/combat.css:1623
+--enemy-intent-accent,#c88aeb,scoped .combatant.enemy[data-intent-visibility='unknown'],styles/combat.css:1624,token,styles/combat.css:1624
+--enemy-intent-outline,dashed,scoped .combatant.enemy[data-intent-visibility='unknown'],styles/combat.css:1624,token,styles/combat.css:1624
+--player-hud-gap,10px,scoped :root .combat[data-layout='formation'] .combatant.player .combatant-leading,styles/combat.css:1643,token,styles/combat.css:1643
+--combat-tools-gap,8,scoped .combat-tools,styles/combat.css:1649,token,styles/combat.css:1649
+--combat-tools-physical-width,136,scoped .combat-tools,styles/combat.css:1649,token,styles/combat.css:1649
+--blight-value,0%,scoped .ashen-blight,styles/corrupted-cards.css:17,token,styles/corrupted-cards.css:17
+--ink-dim,#b9ac91,default,styles/kit.css:26,token,styles/kit.css:26
+--rule,#2a2419,default,styles/kit.css:26,token,styles/kit.css:26
+--r-pill,999px,default,styles/kit.css:26,token,styles/kit.css:26
+--track,0.05em,scoped .as-title-l,styles/kit.css:35,token,styles/kit.css:35
+--n,1,scoped .as-btnrow | .modal-btnrow,styles/kit.css:152,token,styles/kit.css:152
+--step,15rem,scoped .as-btnrow | .modal-btnrow,styles/kit.css:152,token,styles/kit.css:152
+--n,2,scoped .as-btnrow:has(> :nth-child(2):last-child) | .modal-btnrow:has(> :nth-child(2):last-child),styles/kit.css:158,token,styles/kit.css:158
+--n,3,scoped .as-btnrow:has(> :nth-child(3):last-child) | .modal-btnrow:has(> :nth-child(3):last-child),styles/kit.css:159,token,styles/kit.css:159
+--n,4,scoped .as-btnrow:has(> :nth-child(4):last-child) | .modal-btnrow:has(> :nth-child(4):last-child),styles/kit.css:160,token,styles/kit.css:160
+--n,5,scoped .as-btnrow:has(> :nth-child(5):last-child) | .modal-btnrow:has(> :nth-child(5):last-child),styles/kit.css:161,token,styles/kit.css:161
+--step,10rem,"scoped .as-btnrow[data-size=""short""] | .modal-btnrow[data-size='short']",styles/kit.css:162,token,styles/kit.css:162
+--step,15rem,"scoped .as-btnrow[data-size=""medium""] | .modal-btnrow[data-size='medium']",styles/kit.css:163,token,styles/kit.css:163
+--step,21rem,"scoped .as-btnrow[data-size=""long""] | .modal-btnrow[data-size='long']",styles/kit.css:164,token,styles/kit.css:164
+--modal-inset,1.4rem,scoped .as-modal | .modal,styles/kit.css:441,token,styles/kit.css:441
+--modal-rung-width,43rem,"scoped .modal[data-size='sm'] | .as-modal[data-size=""sm""]",styles/kit.css:460,token,styles/kit.css:460
+--modal-rung-width,57rem,"scoped .modal[data-size='md'] | .as-modal[data-size=""md""]",styles/kit.css:461,token,styles/kit.css:461
+--modal-rung-width,76rem,"scoped .modal[data-size='lg'] | .as-modal[data-size=""lg""]",styles/kit.css:462,token,styles/kit.css:462
+--modal-rung-width,96rem,"scoped .modal[data-size='xl'] | .as-modal[data-size=""xl""]",styles/kit.css:463,token,styles/kit.css:463
+--place-gap,6px,scoped .as-pop,styles/kit.css:532,token,styles/kit.css:532
+--track,0.08em,scoped .as-titlemenu .tm-name,styles/kit.css:596,token,styles/kit.css:596
+--ink-bias,0.0185em,scoped .as-titlemenu .tm-name,styles/kit.css:596,token,styles/kit.css:596
+--track,0.28em,scoped .as-titlemenu .tm-sub,styles/kit.css:597,token,styles/kit.css:597
+--track,0.1em,scoped .as-titlemenu .tm-entry,styles/kit.css:600,token,styles/kit.css:600
+--track,0.2em,scoped .as-titlemenu .tm-foot,styles/kit.css:614,token,styles/kit.css:614
+--modal-inset,1rem,scoped .as-modal | .modal @media (max-width: 640px),styles/kit.css:631,token,styles/kit.css:631
+--place-gap,14px,scoped #tooltip | #tooltip-2,styles/kit.css:684,token,styles/kit.css:684
+--tip-w,25.5rem,"scoped #tooltip[data-size=""small""] | #tooltip-2[data-size=""small""]",styles/kit.css:716,token,styles/kit.css:716
+--tip-h,12rem,"scoped #tooltip[data-size=""small""] | #tooltip-2[data-size=""small""]",styles/kit.css:716,token,styles/kit.css:716
+--tip-w,31.5rem,"scoped #tooltip[data-size=""medium""] | #tooltip-2[data-size=""medium""]",styles/kit.css:717,token,styles/kit.css:717
+--tip-h,19.5rem,"scoped #tooltip[data-size=""medium""] | #tooltip-2[data-size=""medium""]",styles/kit.css:717,token,styles/kit.css:717
+--tip-w,37.5rem,"scoped #tooltip[data-size=""large""] | #tooltip-2[data-size=""large""]",styles/kit.css:718,token,styles/kit.css:718
+--tip-h,27rem,"scoped #tooltip[data-size=""large""] | #tooltip-2[data-size=""large""]",styles/kit.css:718,token,styles/kit.css:718
+--tip-w,37.5rem,"scoped #tooltip[data-size=""expanded""] | #tooltip-2[data-size=""expanded""]",styles/kit.css:719,token,styles/kit.css:719
+--tip-h,42rem,"scoped #tooltip[data-size=""expanded""] | #tooltip-2[data-size=""expanded""]",styles/kit.css:719,token,styles/kit.css:719
+--tip-w,28.5rem,scoped #tooltip[data-tooltip-variant='combatant-folded'],styles/kit.css:761,token,styles/kit.css:761
+--tip-w,36rem,scoped #tooltip[data-tooltip-variant='combatant-expanded'],styles/kit.css:762,token,styles/kit.css:762
+--place-gap,6px,scoped #tooltip[data-tooltip-variant='combatant-context'],styles/kit.css:763,token,styles/kit.css:763
+--tip-w,31.5rem,scoped #tooltip[data-tooltip-variant='combatant-context'],styles/kit.css:763,token,styles/kit.css:763
+--tip-w,42rem,scoped #tooltip[data-tooltip-variant='equipment-comparison'],styles/kit.css:771,token,styles/kit.css:771
+--card-w,14rem,default,styles/kit.css:798,token,styles/kit.css:798
+--card-name-h,2.6rem,default,styles/kit.css:798,token,styles/kit.css:798
+--card-art-h,6rem,default,styles/kit.css:798,token,styles/kit.css:798
+--card-band-h,1.7rem,default,styles/kit.css:798,token,styles/kit.css:798
+--card-row,1.5rem,default,styles/kit.css:798,token,styles/kit.css:798
+--card-body-rows,4,default,styles/kit.css:798,token,styles/kit.css:798
+--card-pad,0.8rem,default,styles/kit.css:798,token,styles/kit.css:798
+--card-gap,0.4rem,default,styles/kit.css:798,token,styles/kit.css:798
+--track,0.02em,scoped .card .cname | .as-card .cd-name,styles/kit.css:896,token,styles/kit.css:896
+--track,0.22em,scoped .card .ctype | .as-typeband,styles/kit.css:919,token,styles/kit.css:919
+--stature,1,scoped .combatant,styles/kit.css:1019,token,styles/kit.css:1019
+--stature,1.15,"scoped .combatant[data-stature=""large""]",styles/kit.css:1020,token,styles/kit.css:1020
+--stature,1.3,"scoped .combatant[data-stature=""huge""]",styles/kit.css:1021,token,styles/kit.css:1021
+--quick-corner,"calc(var(--iconbtn-size) + (2 * var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)))",default,styles/kit.css:1084,token,styles/kit.css:1084
+--track,0.06em,scoped .screen > h2 | .screen > .as-title-l,styles/kit.css:1129,token,styles/kit.css:1129
+--card-shelf-track,"max( min(var(--card-shelf-min, 120px), var(--card-w-glance, 152px)), calc((100% - (var(--card-shelf-cols, 4) - 1) * var(--card-shelf-gap, 12px)) / var(--card-shelf-cols, 4)) )",scoped .card-shelf,styles/kit.css:1184,token,styles/kit.css:1184
+--card-w,100%,scoped .card-shelf .card,styles/kit.css:1309,token,styles/kit.css:1309
+--tray-compact,35%,scoped .armoury .as-tray,styles/kit.css:1388,token,styles/kit.css:1388
+--tray-compact,none,scoped .armoury-body .as-tray.armoury-equipment,styles/kit.css:1397,token,styles/kit.css:1397
+--opt-min,9rem,scoped .armoury-position-grid-tiles > .as-options.grid,styles/kit.css:1472,token,styles/kit.css:1472
+--shrine-card-h,"max(6rem, min(var(--shrine-folded-card-height, 10vh), var(--shrine-folded-card-max-height, 8.4rem)))",scoped .shrine-option-list | .shrine-option-grid,styles/kit.css:1537,token,styles/kit.css:1537
+--level-ready-blue,#75bfff,scoped .reward-door .reward-level-ready,styles/kit.css:1634,token,styles/kit.css:1634
+--meter-tone,var(--level-ready-blue),scoped .reward-door .rp-bar-ready,styles/kit.css:1635,token,styles/kit.css:1635
+--level-ready-blue,#75bfff,scoped .reward-door .reward-kind.reward-level-offer,styles/kit.css:1654,token,styles/kit.css:1654
+--split-share,30%,scoped .as-split,styles/kit.css:1734,token,styles/kit.css:1734
+--tray-compact,none,scoped .as-tray,styles/kit.css:1981,token,styles/kit.css:1981
+--modal-inset,1.4rem,scoped .screen > .as-pane,styles/kit.css:2415,token,styles/kit.css:2415
+--modal-inset,1.4rem,scoped .screen > .as-railed,styles/kit.css:2416,token,styles/kit.css:2416
+--modal-inset,1rem,scoped .screen > .as-railed | .screen > .as-pane @media (max-width: 640px),styles/kit.css:2417,token,styles/kit.css:2417
+--danger,#d4622e,default,styles/kit.css:2440,token,styles/kit.css:2440
+--focus-ring,2px solid var(--gold),default,styles/kit.css:2447,token,styles/kit.css:2447
+--focus-ring-offset,2px,default,styles/kit.css:2447,token,styles/kit.css:2447
+--door-ms,150ms,default,styles/kit.css:2447,token,styles/kit.css:2447
+--meter-h,10px,scoped .as-meter,styles/kit.css:2455,token,styles/kit.css:2455
+--meter-tone,var(--gold),scoped .as-meter,styles/kit.css:2455,token,styles/kit.css:2455
+--meter-tone,"var(--res-hp, var(--blood))","scoped .as-meter[data-tone=""hp""]",styles/kit.css:2495,token,styles/kit.css:2495
+--meter-tone,#4f82d8,"scoped .as-meter[data-tone=""mp""] | .as-meter[data-tone=""mana""]",styles/kit.css:2496,token,styles/kit.css:2496
+--meter-tone,#5f925d,"scoped .as-meter[data-tone=""sp""] | .as-meter[data-tone=""stamina""]",styles/kit.css:2497,token,styles/kit.css:2497
+--meter-tone,var(--gold),"scoped .as-meter[data-tone=""poise""]",styles/kit.css:2498,token,styles/kit.css:2498
+--meter-tone,#8a6fd6,"scoped .as-meter[data-tone=""arcane""]",styles/kit.css:2499,token,styles/kit.css:2499
+--meter-tone,var(--danger),"scoped .as-meter[data-tone=""danger""]",styles/kit.css:2500,token,styles/kit.css:2500
+--meter-tone,var(--gold),"scoped .as-meter[data-tone=""xp""]",styles/kit.css:2503,token,styles/kit.css:2503
+--meter-tone,#7fa8c9,"scoped .as-meter[data-tone=""skill""]",styles/kit.css:2504,token,styles/kit.css:2504
+--meter-h,13px,scoped .as-meter.inset,styles/kit.css:2505,token,styles/kit.css:2505
+--meter-h,4px,scoped .as-meter.skinny,styles/kit.css:2509,token,styles/kit.css:2509
+--band-fold-gap,"calc(8px / var(--ui-zoom, 1))","scoped .as-band-fold | .shared-hud[data-hud-layout=""map-compact""] | .dialogue-screen[data-hud-compact='true'] .shared-hud",styles/kit.css:2598,token,styles/kit.css:2598
+--hud-quick-tile-size,"max(2.8rem, var(--tap-floor))",scoped .shared-hud,styles/kit.css:2736,token,styles/kit.css:2736
+--hud-quick-tile-gap,0.45rem,scoped .shared-hud,styles/kit.css:2736,token,styles/kit.css:2736
+--meter-h,12px,scoped .combatant .as-meter,styles/kit.css:2886,token,styles/kit.css:2886
+--meter-h,6px,scoped .combatant .as-meter.skinny,styles/kit.css:2887,token,styles/kit.css:2887
+--meter-h,8px,scoped .combatant .as-meter.procbar,styles/kit.css:2888,token,styles/kit.css:2888
+--mh-inset,"calc(var(--map-header-inset-px, 4) * 1px / var(--ui-zoom, 1))","scoped .shared-hud[data-hud-layout=""map-compact""]",styles/kit.css:2982,token,styles/kit.css:2982
+--mh-gap,"calc(var(--map-header-gap-px, 2) * 1px / var(--ui-zoom, 1))","scoped .shared-hud[data-hud-layout=""map-compact""]",styles/kit.css:2982,token,styles/kit.css:2982
+--place-gap,6px,scoped .as-pop.flask-action-menu,styles/kit.css:3196,token,styles/kit.css:3196
+--card-w,"calc(220px / var(--ui-zoom, 1))",scoped .pile-body .card,styles/kit.css:3304,token,styles/kit.css:3304
+--card-name-h,"calc(32px / var(--ui-zoom, 1))",scoped .pile-body .card,styles/kit.css:3304,token,styles/kit.css:3304
+--card-art-h,"calc(52px / var(--ui-zoom, 1))",scoped .pile-body .card,styles/kit.css:3304,token,styles/kit.css:3304
+--card-band-h,"calc(20px / var(--ui-zoom, 1))",scoped .pile-body .card,styles/kit.css:3304,token,styles/kit.css:3304
+--card-gap,"calc(5px / var(--ui-zoom, 1))",scoped .pile-body .card,styles/kit.css:3304,token,styles/kit.css:3304
+--card-pad,"calc(8px / var(--ui-zoom, 1))",scoped .pile-body .card,styles/kit.css:3304,token,styles/kit.css:3304
+--card-w,100%,scoped .armoury-card-gallery > .card,styles/kit.css:3463,token,styles/kit.css:3463
+--card-art-h,5rem,scoped .armoury-card-gallery > .card,styles/kit.css:3463,token,styles/kit.css:3463
+--card-name-h,3.5rem,scoped .armoury-card-gallery > .card,styles/kit.css:3463,token,styles/kit.css:3463
+--playing-frame,#b39760,scoped .card.playing-poker-card,styles/kit.css:3620,token,styles/kit.css:3620
+--playing-frame,#87b5d0,scoped .playing-poker-card.rarity-uncommon,styles/kit.css:3627,token,styles/kit.css:3627
+--playing-frame,#e0bd68,scoped .playing-poker-card.rarity-rare,styles/kit.css:3628,token,styles/kit.css:3628
+--playing-frame,#b78ec9,scoped .playing-poker-card.rarity-special,styles/kit.css:3629,token,styles/kit.css:3629
+--modal-inset,1.4rem,scoped .shop-frame,styles/kit.css:3731,token,styles/kit.css:3731
+--inspect-box,"var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))))",scoped .card-inspection-target > .card-info-button | .combatant-leading > .combatant-info,styles/kit.css:3844,token,styles/kit.css:3844
+--cc-choice-rise,"calc(var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))) + 26px)",scoped .cc-equip-group > .cc-card-selectors,styles/kit.css:3956,token,styles/kit.css:3956
+--cc-choice-head,"max(80px, var(--cc-choice-rise))",scoped .cc-equip-group > .cc-card-selectors,styles/kit.css:3956,token,styles/kit.css:3956
+--step,26rem,scoped .as-btnrow:has(> .cz-next) | .modal-btnrow:has(> .cz-next),styles/kit.css:4074,token,styles/kit.css:4074
+--cz-continue-row,calc(var(--tap-floor) + 22px),scoped .cz-stage,styles/kit.css:4088,token,styles/kit.css:4088
+--lore-font,"'AS Lore Fell', Georgia, serif",default,styles/kit.css:4299,token,styles/kit.css:4299
+--lore-size,1.7rem,default,styles/kit.css:4299,token,styles/kit.css:4299
+--lore-scale,1,default,styles/kit.css:4299,token,styles/kit.css:4299
+--lore-leading,1.6,default,styles/kit.css:4299,token,styles/kit.css:4299
+--lore-tracking,0em,default,styles/kit.css:4299,token,styles/kit.css:4299
+--lore-slant,italic,default,styles/kit.css:4299,token,styles/kit.css:4299
+--lore-identity-slant,italic,default,styles/kit.css:4299,token,styles/kit.css:4299
+--lore-font,"'AS Lore Fell', Georgia, serif","scoped :root[data-lore-face=""fell""]",styles/kit.css:4300,token,styles/kit.css:4300
+--lore-font,"'AS Lore Garamond', Georgia, serif","scoped :root[data-lore-face=""garamond""]",styles/kit.css:4301,token,styles/kit.css:4301
+--lore-font,"'AS Lore Cormorant', Georgia, serif","scoped :root[data-lore-face=""cormorant""]",styles/kit.css:4302,token,styles/kit.css:4302
+--lore-font,"'AS Lore Crimson', Georgia, serif","scoped :root[data-lore-face=""crimson""]",styles/kit.css:4303,token,styles/kit.css:4303
+--lore-font,"'AS Lore Spectral', Georgia, serif","scoped :root[data-lore-face=""spectral""]",styles/kit.css:4304,token,styles/kit.css:4304
+--lore-font,"'AS Lore Baskerville', Georgia, serif","scoped :root[data-lore-face=""baskerville""]",styles/kit.css:4305,token,styles/kit.css:4305
+--lore-font,"'AS Lore Cinzel', Georgia, serif","scoped :root[data-lore-face=""cinzel""]",styles/kit.css:4306,token,styles/kit.css:4306
+--lore-font,"'AS Lore Inter', 'Segoe UI', system-ui, sans-serif","scoped :root[data-lore-face=""inter""]",styles/kit.css:4307,token,styles/kit.css:4307
+--lore-font,"Georgia, 'Times New Roman', serif","scoped :root[data-lore-face=""georgia""]",styles/kit.css:4308,token,styles/kit.css:4308
+--lore-size,1.5rem,"scoped :root[data-lore-size=""S""]",styles/kit.css:4309,token,styles/kit.css:4309
+--lore-scale,0.9,"scoped :root[data-lore-size=""S""]",styles/kit.css:4309,token,styles/kit.css:4309
+--lore-size,1.7rem,"scoped :root[data-lore-size=""M""]",styles/kit.css:4310,token,styles/kit.css:4310
+--lore-scale,1,"scoped :root[data-lore-size=""M""]",styles/kit.css:4310,token,styles/kit.css:4310
+--lore-size,1.9rem,"scoped :root[data-lore-size=""L""]",styles/kit.css:4311,token,styles/kit.css:4311
+--lore-scale,1.1,"scoped :root[data-lore-size=""L""]",styles/kit.css:4311,token,styles/kit.css:4311
+--lore-size,2.2rem,"scoped :root[data-lore-size=""XL""]",styles/kit.css:4312,token,styles/kit.css:4312
+--lore-scale,1.25,"scoped :root[data-lore-size=""XL""]",styles/kit.css:4312,token,styles/kit.css:4312
+--lore-leading,1.4,"scoped :root[data-lore-leading=""tight""]",styles/kit.css:4313,token,styles/kit.css:4313
+--lore-leading,1.6,"scoped :root[data-lore-leading=""normal""]",styles/kit.css:4314,token,styles/kit.css:4314
+--lore-leading,1.85,"scoped :root[data-lore-leading=""loose""]",styles/kit.css:4315,token,styles/kit.css:4315
+--lore-tracking,-0.01em,"scoped :root[data-lore-tracking=""tight""]",styles/kit.css:4316,token,styles/kit.css:4316
+--lore-tracking,0em,"scoped :root[data-lore-tracking=""normal""]",styles/kit.css:4317,token,styles/kit.css:4317
+--lore-tracking,0.04em,"scoped :root[data-lore-tracking=""wide""]",styles/kit.css:4318,token,styles/kit.css:4318
+--lore-slant,normal,"scoped :root[data-lore-slant=""upright""]",styles/kit.css:4319,token,styles/kit.css:4319
+--lore-identity-slant,normal,"scoped :root[data-lore-identity-slant=""upright""]",styles/kit.css:4320,token,styles/kit.css:4320
+--lore-slant,normal,"scoped :root[data-lore-face=""cinzel""]",styles/kit.css:4322,token,styles/kit.css:4322
+--lore-identity-slant,normal,"scoped :root[data-lore-face=""cinzel""]",styles/kit.css:4322,token,styles/kit.css:4322
+--reward-status-gap,6px,scoped .reward-door .reward-row,styles/kit.css:4568,token,styles/kit.css:4568
+--reward-new-badge-height,calc(1.08rem + 6px),scoped .reward-door .reward-row,styles/kit.css:4568,token,styles/kit.css:4568
+--reward-status-stack-height,"calc(var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))) + var(--reward-new-badge-height) + var(--reward-status-gap) + var(--reward-status-gap))",scoped .reward-door .reward-row,styles/kit.css:4568,token,styles/kit.css:4568
+--control-positive-fill,#255c39,default,styles/kit.css:4604,token,styles/kit.css:4604
+--control-positive-border,#6fb580,default,styles/kit.css:4604,token,styles/kit.css:4604
+--control-positive-text,#f0fff3,default,styles/kit.css:4604,token,styles/kit.css:4604
+--veil-pad-top,"max(8px, calc(env(safe-area-inset-top, 0px) / var(--ui-zoom, 1)))",scoped .modal-veil:not(dialog) | .as-veil,styles/kit.css:4637,token,styles/kit.css:4637
+--veil-pad-bottom,"max(8px, calc(env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1)))",scoped .modal-veil:not(dialog) | .as-veil,styles/kit.css:4637,token,styles/kit.css:4637
+--w4-context-fallback,"max(calc(208px / var(--ui-zoom, 1)), 30%)",scoped :root .combat[data-layout='formation'],styles/kit.css:4845,token,styles/kit.css:4845
+--w4-footer-fallback,"max(calc(56px / var(--ui-zoom, 1)), 5%)",scoped :root .combat[data-layout='formation'],styles/kit.css:4845,token,styles/kit.css:4845
+--combat-control-size,"calc(48px / var(--ui-zoom, 1))",scoped :root .combat[data-layout='formation'] .combat-action-row,styles/kit.css:4894,token,styles/kit.css:4894
+--combat-control-size,var(--footer-circle),scoped :root .combat[data-layout='formation']:is(.coop | :not(.coop)) .combat-action-row[data-footer-geometry='supported'],styles/kit.css:4917,token,styles/kit.css:4917
+--s,"var(--defense-right-player, 1)",scoped :root .combat[data-layout='formation']:not(.coop) .combatant .sprite > .block-badge,styles/kit.css:5140,token,styles/kit.css:5140
+--f,"var(--defense-fraction-player, .12)",scoped :root .combat[data-layout='formation']:not(.coop) .combatant .sprite > .block-badge,styles/kit.css:5140,token,styles/kit.css:5140
+--s,"var(--defense-right-enemy, 0)",scoped :root .combat[data-layout='formation']:not(.coop) .combatant.enemy .sprite > .block-badge,styles/kit.css:5154,token,styles/kit.css:5154
+--f,"var(--defense-fraction-enemy, .88)",scoped :root .combat[data-layout='formation']:not(.coop) .combatant.enemy .sprite > .block-badge,styles/kit.css:5154,token,styles/kit.css:5154
+--button-reference-rem,"max(calc(16px / var(--ui-zoom, 1)), 1rem)",default,styles/kit.css:5190,token,styles/kit.css:5190
+--button-gap,"calc(var(--button-gap-rem, 0) * var(--button-reference-rem))",default,styles/kit.css:5190,token,styles/kit.css:5190
+--button-minimum,"calc(var(--button-minimum-rem, 0) * var(--button-reference-rem))",default,styles/kit.css:5190,token,styles/kit.css:5190
+--button-height-multiplier,var(--button-height-standard),scoped button[data-button-size$='-standard'],styles/kit.css:5195,token,styles/kit.css:5195
+--button-height-multiplier,var(--button-height-tall),scoped button[data-button-size$='-tall'],styles/kit.css:5196,token,styles/kit.css:5196
+--button-height-multiplier,var(--button-height-double),scoped button[data-button-size$='-double'],styles/kit.css:5197,token,styles/kit.css:5197
+--button-preset,var(--button-third),scoped .as-choicerow > button[data-button-size^='third-'],styles/kit.css:5205,token,styles/kit.css:5205
+--button-preset,var(--button-half),scoped .as-choicerow > button[data-button-size^='half-'],styles/kit.css:5206,token,styles/kit.css:5206
+--button-preset,var(--button-full),scoped .as-choicerow > button[data-button-size^='full-'],styles/kit.css:5207,token,styles/kit.css:5207
+--inspect-box,"var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))",scoped .hand-overlay > .hand-info-portal,styles/kit.css:5217,token,styles/kit.css:5217
+--dialogue-own-z,"var(--dialogue-z-player-portrait, 4)",scoped .dialogue-portrait[data-layer='playerPortrait'],styles/kit.css:5394,token,styles/kit.css:5394
+--dialogue-own-z,"var(--dialogue-z-npc-portrait, 4)",scoped .dialogue-portrait[data-layer='npcPortrait'],styles/kit.css:5395,token,styles/kit.css:5395
+--cc-choice-head,14px,scoped .customize .cc-equip-group > .cc-card-selectors,styles/kit.css:5639,token,styles/kit.css:5639
+--place-gap,8px,scoped .customize .cz-head-tools.cz-header-menu,styles/kit.css:5772,token,styles/kit.css:5772
+--health-red,#ad403a,scoped :root .combat .combatant .combat-health-row,styles/kit.css:5838,token,styles/kit.css:5838
+--health-blue,#348fcb,scoped :root .combat .combatant .combat-health-row,styles/kit.css:5838,token,styles/kit.css:5838
+--ward-purple,#9a63d9,scoped :root .combat .combatant .combat-health-row,styles/kit.css:5838,token,styles/kit.css:5838
+--ward-gold,#d8b354,scoped :root .combat .combatant .combat-health-row,styles/kit.css:5838,token,styles/kit.css:5838
+--health-row-h,"var(--combatant-hp-h, max(.85rem, calc(14px / var(--ui-zoom, 1))))",scoped :root .combat .combatant .combat-health-row,styles/kit.css:5838,token,styles/kit.css:5838
+--meter-tone,var(--health-red),scoped :root .combat .combatant .combat-health-row > .combat-health-meter,styles/kit.css:5844,token,styles/kit.css:5844
+--meter-tone,var(--health-blue),scoped :root .combat .combatant .combat-health-row > .combat-health-meter[data-protected='true'],styles/kit.css:5848,token,styles/kit.css:5848
+--health-red,var(--res-hp),scoped :root body.cb-safe .combat .combatant .combat-health-row,styles/kit.css:5868,token,styles/kit.css:5868
+--legacy-mist,#090c09,scoped .legacy-dungeon,styles/legacy-dungeon.css:2,token,styles/legacy-dungeon.css:2
+--legacy-mist,#0b0b12,data-theme=indigo,styles/legacy-dungeon.css:3,token,styles/legacy-dungeon.css:3
+--legacy-mist,#130b09,data-theme=ember,styles/legacy-dungeon.css:4,token,styles/legacy-dungeon.css:4
+--halo-peak,1.35,scoped .mapscreen,styles/map.css:126,token,styles/map.css:126
+--map-potions-size,calc(var(--iconbtn-size) + 3.2rem),scoped .mapscreen,styles/map.css:155,token,styles/map.css:155
+--fog-parchment,#17130d,scoped .map-scroll.parch-1,styles/map.css:352,token,styles/map.css:352
+--fog-parchment,#14140f,scoped .map-scroll.parch-2,styles/map.css:353,token,styles/map.css:353
+--fog-parchment,#191009,scoped .map-scroll.parch-3,styles/map.css:354,token,styles/map.css:354
+--engraving-fallback,url('../assets/player-polish/ui/icons/accessibility.svg'),scoped .engraved-icon[data-engraved-icon='accessibility'],styles/player-polish-icons.css:2,token,styles/player-polish-icons.css:2
+--engraving-fallback,url('../assets/player-polish/ui/icons/actions.svg'),scoped .engraved-icon[data-engraved-icon='actions'],styles/player-polish-icons.css:3,token,styles/player-polish-icons.css:3
+--engraving-fallback,url('../assets/player-polish/ui/icons/armour.svg'),scoped .engraved-icon[data-engraved-icon='armour'],styles/player-polish-icons.css:4,token,styles/player-polish-icons.css:4
+--engraving-fallback,url('../assets/player-polish/ui/icons/attack.svg'),scoped .engraved-icon[data-engraved-icon='attack'],styles/player-polish-icons.css:5,token,styles/player-polish-icons.css:5
+--engraving-fallback,url('../assets/player-polish/ui/icons/audio.svg'),scoped .engraved-icon[data-engraved-icon='audio'],styles/player-polish-icons.css:6,token,styles/player-polish-icons.css:6
+--engraving-fallback,url('../assets/player-polish/ui/icons/back.svg'),scoped .engraved-icon[data-engraved-icon='back'],styles/player-polish-icons.css:7,token,styles/player-polish-icons.css:7
+--engraving-fallback,url('../assets/player-polish/ui/icons/bleed.svg'),scoped .engraved-icon[data-engraved-icon='bleed'],styles/player-polish-icons.css:8,token,styles/player-polish-icons.css:8
+--engraving-fallback,url('../assets/player-polish/ui/icons/blight.svg'),scoped .engraved-icon[data-engraved-icon='blight'],styles/player-polish-icons.css:9,token,styles/player-polish-icons.css:9
+--engraving-fallback,url('../assets/player-polish/ui/icons/block.svg'),scoped .engraved-icon[data-engraved-icon='block'],styles/player-polish-icons.css:10,token,styles/player-polish-icons.css:10
+--engraving-fallback,url('../assets/player-polish/ui/icons/boss.svg'),scoped .engraved-icon[data-engraved-icon='boss'],styles/player-polish-icons.css:11,token,styles/player-polish-icons.css:11
+--engraving-fallback,url('../assets/player-polish/ui/icons/burn.svg'),scoped .engraved-icon[data-engraved-icon='burn'],styles/player-polish-icons.css:12,token,styles/player-polish-icons.css:12
+--engraving-fallback,url('../assets/player-polish/ui/icons/check.svg'),scoped .engraved-icon[data-engraved-icon='check'],styles/player-polish-icons.css:13,token,styles/player-polish-icons.css:13
+--engraving-fallback,url('../assets/player-polish/ui/icons/cinders.svg'),scoped .engraved-icon[data-engraved-icon='cinders'],styles/player-polish-icons.css:14,token,styles/player-polish-icons.css:14
+--engraving-fallback,url('../assets/player-polish/ui/icons/close.svg'),scoped .engraved-icon[data-engraved-icon='close'],styles/player-polish-icons.css:15,token,styles/player-polish-icons.css:15
+--engraving-fallback,url('../assets/player-polish/ui/icons/collapse.svg'),scoped .engraved-icon[data-engraved-icon='collapse'],styles/player-polish-icons.css:16,token,styles/player-polish-icons.css:16
+--engraving-fallback,url('../assets/player-polish/ui/icons/combat.svg'),scoped .engraved-icon[data-engraved-icon='combat'],styles/player-polish-icons.css:17,token,styles/player-polish-icons.css:17
+--engraving-fallback,url('../assets/player-polish/ui/icons/compare.svg'),scoped .engraved-icon[data-engraved-icon='compare'],styles/player-polish-icons.css:18,token,styles/player-polish-icons.css:18
+--engraving-fallback,url('../assets/player-polish/ui/icons/compendium.svg'),scoped .engraved-icon[data-engraved-icon='compendium'],styles/player-polish-icons.css:19,token,styles/player-polish-icons.css:19
+--engraving-fallback,url('../assets/player-polish/ui/icons/connected.svg'),scoped .engraved-icon[data-engraved-icon='connected'],styles/player-polish-icons.css:20,token,styles/player-polish-icons.css:20
+--engraving-fallback,url('../assets/player-polish/ui/icons/contrast.svg'),scoped .engraved-icon[data-engraved-icon='contrast'],styles/player-polish-icons.css:21,token,styles/player-polish-icons.css:21
+--engraving-fallback,url('../assets/player-polish/ui/icons/controls.svg'),scoped .engraved-icon[data-engraved-icon='controls'],styles/player-polish-icons.css:22,token,styles/player-polish-icons.css:22
+--engraving-fallback,url('../assets/player-polish/ui/icons/coop.svg'),scoped .engraved-icon[data-engraved-icon='coop'],styles/player-polish-icons.css:23,token,styles/player-polish-icons.css:23
+--engraving-fallback,url('../assets/player-polish/ui/icons/deck.svg'),scoped .engraved-icon[data-engraved-icon='deck'],styles/player-polish-icons.css:24,token,styles/player-polish-icons.css:24
+--engraving-fallback,url('../assets/player-polish/ui/icons/dexterity.svg'),scoped .engraved-icon[data-engraved-icon='dexterity'],styles/player-polish-icons.css:25,token,styles/player-polish-icons.css:25
+--engraving-fallback,url('../assets/player-polish/ui/icons/dialogue.svg'),scoped .engraved-icon[data-engraved-icon='dialogue'],styles/player-polish-icons.css:26,token,styles/player-polish-icons.css:26
+--engraving-fallback,url('../assets/player-polish/ui/icons/discard.svg'),scoped .engraved-icon[data-engraved-icon='discard'],styles/player-polish-icons.css:27,token,styles/player-polish-icons.css:27
+--engraving-fallback,url('../assets/player-polish/ui/icons/disconnected.svg'),scoped .engraved-icon[data-engraved-icon='disconnected'],styles/player-polish-icons.css:28,token,styles/player-polish-icons.css:28
+--engraving-fallback,url('../assets/player-polish/ui/icons/display.svg'),scoped .engraved-icon[data-engraved-icon='display'],styles/player-polish-icons.css:29,token,styles/player-polish-icons.css:29
+--engraving-fallback,url('../assets/player-polish/ui/icons/draw.svg'),scoped .engraved-icon[data-engraved-icon='draw'],styles/player-polish-icons.css:30,token,styles/player-polish-icons.css:30
+--engraving-fallback,url('../assets/player-polish/ui/icons/equipment.svg'),scoped .engraved-icon[data-engraved-icon='equipment'],styles/player-polish-icons.css:31,token,styles/player-polish-icons.css:31
+--engraving-fallback,url('../assets/player-polish/ui/icons/expand.svg'),scoped .engraved-icon[data-engraved-icon='expand'],styles/player-polish-icons.css:32,token,styles/player-polish-icons.css:32
+--engraving-fallback,url('../assets/player-polish/ui/icons/flask-health.svg'),scoped .engraved-icon[data-engraved-icon='flask-health'],styles/player-polish-icons.css:33,token,styles/player-polish-icons.css:33
+--engraving-fallback,url('../assets/player-polish/ui/icons/flask-mana.svg'),scoped .engraved-icon[data-engraved-icon='flask-mana'],styles/player-polish-icons.css:34,token,styles/player-polish-icons.css:34
+--engraving-fallback,url('../assets/player-polish/ui/icons/frail.svg'),scoped .engraved-icon[data-engraved-icon='frail'],styles/player-polish-icons.css:35,token,styles/player-polish-icons.css:35
+--engraving-fallback,url('../assets/player-polish/ui/icons/frost.svg'),scoped .engraved-icon[data-engraved-icon='frost'],styles/player-polish-icons.css:36,token,styles/player-polish-icons.css:36
+--engraving-fallback,url('../assets/player-polish/ui/icons/health.svg'),scoped .engraved-icon[data-engraved-icon='health'],styles/player-polish-icons.css:37,token,styles/player-polish-icons.css:37
+--engraving-fallback,url('../assets/player-polish/ui/icons/history.svg'),scoped .engraved-icon[data-engraved-icon='history'],styles/player-polish-icons.css:38,token,styles/player-polish-icons.css:38
+--engraving-fallback,url('../assets/player-polish/ui/icons/info.svg'),scoped .engraved-icon[data-engraved-icon='info'],styles/player-polish-icons.css:39,token,styles/player-polish-icons.css:39
+--engraving-fallback,url('../assets/player-polish/ui/icons/insanity.svg'),scoped .engraved-icon[data-engraved-icon='insanity'],styles/player-polish-icons.css:40,token,styles/player-polish-icons.css:40
+--engraving-fallback,url('../assets/player-polish/ui/icons/inventory.svg'),scoped .engraved-icon[data-engraved-icon='inventory'],styles/player-polish-icons.css:41,token,styles/player-polish-icons.css:41
+--engraving-fallback,url('../assets/player-polish/ui/icons/journey.svg'),scoped .engraved-icon[data-engraved-icon='journey'],styles/player-polish-icons.css:42,token,styles/player-polish-icons.css:42
+--engraving-fallback,url('../assets/player-polish/ui/icons/link.svg'),scoped .engraved-icon[data-engraved-icon='link'],styles/player-polish-icons.css:43,token,styles/player-polish-icons.css:43
+--engraving-fallback,url('../assets/player-polish/ui/icons/location.svg'),scoped .engraved-icon[data-engraved-icon='location'],styles/player-polish-icons.css:44,token,styles/player-polish-icons.css:44
+--engraving-fallback,url('../assets/player-polish/ui/icons/lock.svg'),scoped .engraved-icon[data-engraved-icon='lock'],styles/player-polish-icons.css:45,token,styles/player-polish-icons.css:45
+--engraving-fallback,url('../assets/player-polish/ui/icons/madness.svg'),scoped .engraved-icon[data-engraved-icon='madness'],styles/player-polish-icons.css:46,token,styles/player-polish-icons.css:46
+--engraving-fallback,url('../assets/player-polish/ui/icons/mana.svg'),scoped .engraved-icon[data-engraved-icon='mana'],styles/player-polish-icons.css:47,token,styles/player-polish-icons.css:47
+--engraving-fallback,url('../assets/player-polish/ui/icons/map.svg'),scoped .engraved-icon[data-engraved-icon='map'],styles/player-polish-icons.css:48,token,styles/player-polish-icons.css:48
+--engraving-fallback,url('../assets/player-polish/ui/icons/menu.svg'),scoped .engraved-icon[data-engraved-icon='menu'],styles/player-polish-icons.css:49,token,styles/player-polish-icons.css:49
+--engraving-fallback,url('../assets/player-polish/ui/icons/merchant.svg'),scoped .engraved-icon[data-engraved-icon='merchant'],styles/player-polish-icons.css:50,token,styles/player-polish-icons.css:50
+--engraving-fallback,url('../assets/player-polish/ui/icons/motion.svg'),scoped .engraved-icon[data-engraved-icon='motion'],styles/player-polish-icons.css:51,token,styles/player-polish-icons.css:51
+--engraving-fallback,url('../assets/player-polish/ui/icons/next.svg'),scoped .engraved-icon[data-engraved-icon='next'],styles/player-polish-icons.css:52,token,styles/player-polish-icons.css:52
+--engraving-fallback,url('../assets/player-polish/ui/icons/poise.svg'),scoped .engraved-icon[data-engraved-icon='poise'],styles/player-polish-icons.css:53,token,styles/player-polish-icons.css:53
+--engraving-fallback,url('../assets/player-polish/ui/icons/profile.svg'),scoped .engraved-icon[data-engraved-icon='profile'],styles/player-polish-icons.css:54,token,styles/player-polish-icons.css:54
+--engraving-fallback,url('../assets/player-polish/ui/icons/progression.svg'),scoped .engraved-icon[data-engraved-icon='progression'],styles/player-polish-icons.css:55,token,styles/player-polish-icons.css:55
+--engraving-fallback,url('../assets/player-polish/ui/icons/quest.svg'),scoped .engraved-icon[data-engraved-icon='quest'],styles/player-polish-icons.css:56,token,styles/player-polish-icons.css:56
+--engraving-fallback,url('../assets/player-polish/ui/icons/regen.svg'),scoped .engraved-icon[data-engraved-icon='regen'],styles/player-polish-icons.css:57,token,styles/player-polish-icons.css:57
+--engraving-fallback,url('../assets/player-polish/ui/icons/relic.svg'),scoped .engraved-icon[data-engraved-icon='relic'],styles/player-polish-icons.css:58,token,styles/player-polish-icons.css:58
+--engraving-fallback,url('../assets/player-polish/ui/icons/reset.svg'),scoped .engraved-icon[data-engraved-icon='reset'],styles/player-polish-icons.css:59,token,styles/player-polish-icons.css:59
+--engraving-fallback,url('../assets/player-polish/ui/icons/rest.svg'),scoped .engraved-icon[data-engraved-icon='rest'],styles/player-polish-icons.css:60,token,styles/player-polish-icons.css:60
+--engraving-fallback,url('../assets/player-polish/ui/icons/reward.svg'),scoped .engraved-icon[data-engraved-icon='reward'],styles/player-polish-icons.css:61,token,styles/player-polish-icons.css:61
+--engraving-fallback,url('../assets/player-polish/ui/icons/save.svg'),scoped .engraved-icon[data-engraved-icon='save'],styles/player-polish-icons.css:62,token,styles/player-polish-icons.css:62
+--engraving-fallback,url('../assets/player-polish/ui/icons/search.svg'),scoped .engraved-icon[data-engraved-icon='search'],styles/player-polish-icons.css:63,token,styles/player-polish-icons.css:63
+--engraving-fallback,url('../assets/player-polish/ui/icons/seed.svg'),scoped .engraved-icon[data-engraved-icon='seed'],styles/player-polish-icons.css:64,token,styles/player-polish-icons.css:64
+--engraving-fallback,url('../assets/player-polish/ui/icons/settings.svg'),scoped .engraved-icon[data-engraved-icon='settings'],styles/player-polish-icons.css:65,token,styles/player-polish-icons.css:65
+--engraving-fallback,url('../assets/player-polish/ui/icons/shield.svg'),scoped .engraved-icon[data-engraved-icon='shield'],styles/player-polish-icons.css:66,token,styles/player-polish-icons.css:66
+--engraving-fallback,url('../assets/player-polish/ui/icons/skill.svg'),scoped .engraved-icon[data-engraved-icon='skill'],styles/player-polish-icons.css:67,token,styles/player-polish-icons.css:67
+--engraving-fallback,url('../assets/player-polish/ui/icons/smith.svg'),scoped .engraved-icon[data-engraved-icon='smith'],styles/player-polish-icons.css:68,token,styles/player-polish-icons.css:68
+--engraving-fallback,url('../assets/player-polish/ui/icons/staggered.svg'),scoped .engraved-icon[data-engraved-icon='staggered'],styles/player-polish-icons.css:69,token,styles/player-polish-icons.css:69
+--engraving-fallback,url('../assets/player-polish/ui/icons/stamina.svg'),scoped .engraved-icon[data-engraved-icon='stamina'],styles/player-polish-icons.css:70,token,styles/player-polish-icons.css:70
+--engraving-fallback,url('../assets/player-polish/ui/icons/strength.svg'),scoped .engraved-icon[data-engraved-icon='strength'],styles/player-polish-icons.css:71,token,styles/player-polish-icons.css:71
+--engraving-fallback,url('../assets/player-polish/ui/icons/sword.svg'),scoped .engraved-icon[data-engraved-icon='sword'],styles/player-polish-icons.css:72,token,styles/player-polish-icons.css:72
+--engraving-fallback,url('../assets/player-polish/ui/icons/target.svg'),scoped .engraved-icon[data-engraved-icon='target'],styles/player-polish-icons.css:73,token,styles/player-polish-icons.css:73
+--engraving-fallback,url('../assets/player-polish/ui/icons/touch.svg'),scoped .engraved-icon[data-engraved-icon='touch'],styles/player-polish-icons.css:74,token,styles/player-polish-icons.css:74
+--engraving-fallback,url('../assets/player-polish/ui/icons/unknown.svg'),scoped .engraved-icon[data-engraved-icon='unknown'],styles/player-polish-icons.css:75,token,styles/player-polish-icons.css:75
+--engraving-fallback,url('../assets/player-polish/ui/icons/vulnerable.svg'),scoped .engraved-icon[data-engraved-icon='vulnerable'],styles/player-polish-icons.css:76,token,styles/player-polish-icons.css:76
+--engraving-fallback,url('../assets/player-polish/ui/icons/warning.svg'),scoped .engraved-icon[data-engraved-icon='warning'],styles/player-polish-icons.css:77,token,styles/player-polish-icons.css:77
+--engraving-fallback,url('../assets/player-polish/ui/icons/weak.svg'),scoped .engraved-icon[data-engraved-icon='weak'],styles/player-polish-icons.css:78,token,styles/player-polish-icons.css:78
+--engraving-fallback,url('../assets/player-polish/ui/icons/weight.svg'),scoped .engraved-icon[data-engraved-icon='weight'],styles/player-polish-icons.css:79,token,styles/player-polish-icons.css:79
+--engraving-fallback,url('../assets/player-polish/ui/icons/world.svg'),scoped .engraved-icon[data-engraved-icon='world'],styles/player-polish-icons.css:80,token,styles/player-polish-icons.css:80
+--polish-frame,url('../assets/player-polish/ui/components/panel-frame.svg'),default,styles/player-polish.css:4,token,styles/player-polish.css:4
+--polish-slot,url('../assets/player-polish/ui/components/item-slot.svg'),default,styles/player-polish.css:4,token,styles/player-polish.css:4
+--polish-slot-selected,url('../assets/player-polish/ui/components/item-slot-selected.svg'),default,styles/player-polish.css:4,token,styles/player-polish.css:4
+--polish-card-material,"linear-gradient(color-mix(in srgb, var(--bg) 88%, transparent), color-mix(in srgb, var(--bg) 88%, transparent))",default,styles/player-polish.css:4,token,styles/player-polish.css:4
+--combatant-edge,drop-shadow(0 2px 2px #100b08a0),scoped :root .combat[data-layout='formation'] .combatant .sprite,styles/player-polish.css:390,token,styles/player-polish.css:390
+--combat-tools-physical-width,112,scoped :root .combat[data-layout='formation'] .combat-tools @media (max-width:359px),styles/player-polish.css:459,token,styles/player-polish.css:459
+--merchant-gold,var(--gold),scoped :root .shop-workspace.merchant-workspace,styles/player-polish.css:578,token,styles/player-polish.css:578
+--gold,var(--merchant-gold),scoped :root .merchant-workspace #shop-skillBooks > .is-selected | :root .shop-workspace.merchant-workspace .shop-shelf .is-selected,styles/player-polish.css:593,token,styles/player-polish.css:593
+--gold,var(--merchant-gold),scoped :root .shop-workspace.merchant-workspace .merchant-category-dock .shop-railitem.on,styles/player-polish.css:617,token,styles/player-polish.css:617
+--prologue-text-scale,1,scoped .prologue-screen,styles/prologue.css:112,token,styles/prologue.css:112
+--prologue-text-align,center,scoped .prologue-screen,styles/prologue.css:112,token,styles/prologue.css:112
+--prologue-box,"rgba(16,14,12,.72)",scoped .prologue-screen,styles/prologue.css:112,token,styles/prologue.css:112
+--prologue-outline-color,#100e0c,scoped .prologue-screen,styles/prologue.css:112,token,styles/prologue.css:112
+--prologue-outline-width,0px,scoped .prologue-screen,styles/prologue.css:112,token,styles/prologue.css:112
+--prologue-fit,cover,scoped .prologue-screen,styles/prologue.css:112,token,styles/prologue.css:112
+--prologue-focus,50% 50%,scoped .prologue-screen,styles/prologue.css:112,token,styles/prologue.css:112
+--prologue-scale,1,scoped .prologue-screen,styles/prologue.css:112,token,styles/prologue.css:112
+--type-label-min,"max(1.1rem, calc(12px / var(--ui-zoom, 1)))",default,styles/responsive-type.css:4,token,styles/responsive-type.css:4
+--type-copy-min,"max(1.15rem, calc(13px / var(--ui-zoom, 1)))",default,styles/responsive-type.css:4,token,styles/responsive-type.css:4
+--type-heading-min,"max(1.5rem, calc(16px / var(--ui-zoom, 1)))",default,styles/responsive-type.css:4,token,styles/responsive-type.css:4
+--card-title-min,"max(1.1rem, calc(12px / var(--ui-zoom, 1) / max(.1, var(--card-scale, 1))))",scoped .equipment-poker-card .epc-frame > .epc-name,styles/responsive-type.css:54,token,styles/responsive-type.css:54
+--ui-section-control-gap,0.6rem,default,styles/ui.css:3,token,styles/ui.css:3
+--ui-section-label-size,1.2rem,default,styles/ui.css:3,token,styles/ui.css:3
+--ui-section-letter-spacing,0.08em,default,styles/ui.css:3,token,styles/ui.css:3
+--ui-tray-side-margin,0.4rem,default,styles/ui.css:3,token,styles/ui.css:3
+--ui-tray-control-size,var(--iconbtn-size),default,styles/ui.css:3,token,styles/ui.css:3
+--ui-tray-resize-surface,44px,default,styles/ui.css:3,token,styles/ui.css:3
+--ui-tray-expanded-block-max,36rem,default,styles/ui.css:3,token,styles/ui.css:3
+--ui-tray-expanded-panel-max,34%,default,styles/ui.css:3,token,styles/ui.css:3
+--card-motif-strength,0.10,default,styles/ui.css:97,token,styles/ui.css:97
+--selection-glow,"drop-shadow(0 0 6px var(--selection-color, #59bd75))",scoped :root .combatant.context-selected .sprite,styles/ui.css:1301,token,styles/ui.css:1301
+--selection-glow,"drop-shadow(0 0 6px var(--selection-color, #59bd75))",scoped :root .card.selected | :root .card[data-selected='true'] | :root .as-card[data-selected='true'] | :root .as-option[aria-checked='true'] | :root .as-option[aria-pressed='true'] | :root .as-option.is-selected | :root .class-pick.selected | :root .class-pick[aria-checked='true'] | :root .as-railitem[aria-current='true'],styles/ui.css:1303,token,styles/ui.css:1303
+--gold,"var(--selection-color, #59bd75)",scoped :root :is(.selected | .is-selected | .reward-selected | .selected-target | .skill-selected | .tooltip-selected | [data-selected='true'] | [aria-selected='true'] | .choice.on | .modal-tab.on | .as-tab.on | .as-railitem.on | .as-railitem[aria-current='true'] | .as-option[aria-checked='true'] | .as-option[aria-pressed='true'] | .class-pick[aria-checked='true']),styles/ui.css:1312,token,styles/ui.css:1312
+--selection-glow,"drop-shadow(0 0 6px var(--selection-color, #59bd75))",scoped :root :is(.selected | .is-selected | .reward-selected | .selected-target | .skill-selected | .tooltip-selected | [data-selected='true'] | [aria-selected='true'] | .choice.on | .modal-tab.on | .as-tab.on | .as-railitem.on | .as-railitem[aria-current='true'] | .as-option[aria-checked='true'] | .as-option[aria-pressed='true'] | .class-pick[aria-checked='true']),styles/ui.css:1312,token,styles/ui.css:1312
+--deck-editor-target,"max(calc(var(--tap-target, 44px) / var(--ui-zoom, 1)), calc(44px / var(--ui-zoom, 1)))",scoped .deck-editor-veil,styles/ui.css:1339,token,styles/ui.css:1339
+--deck-editor-text,"max(1.3rem, calc(11px / var(--ui-zoom, 1)))",scoped .deck-editor-veil,styles/ui.css:1339,token,styles/ui.css:1339
+--deck-editor-target,"max(calc(var(--tap-target, 44px) / var(--ui-zoom, 1)), calc(48px / var(--ui-zoom, 1)))",scoped .deck-editor-veil @media (pointer: coarse),styles/ui.css:1345,token,styles/ui.css:1345
+--deck-editor-text,"max(1.6rem, calc(12px / var(--ui-zoom, 1)))",scoped .deck-editor,styles/ui.css:1414,token,styles/ui.css:1414
+--deck-min-text,"calc(11px / var(--ui-zoom, 1))",scoped .deck-editor,styles/ui.css:1414,token,styles/ui.css:1414
+--muted,#b8a88b,scoped .deck-editor,styles/ui.css:1414,token,styles/ui.css:1414
+--line,#51432c,scoped .deck-editor,styles/ui.css:1414,token,styles/ui.css:1414
+--line-soft,#665339,scoped .deck-editor,styles/ui.css:1414,token,styles/ui.css:1414
+--control-positive-fill,#c9a227,scoped .deck-editor,styles/ui.css:1414,token,styles/ui.css:1414
+--control-positive-border,#f1cf71,scoped .deck-editor,styles/ui.css:1414,token,styles/ui.css:1414
+--control-positive-text,#181006,scoped .deck-editor,styles/ui.css:1414,token,styles/ui.css:1414
+--card-w,100%,scoped .deck-editor .deck-editor-reading > .card,styles/ui.css:1460,token,styles/ui.css:1460
+--deck-row-art,5.6rem,scoped .deck-editor,styles/ui.css:1590,token,styles/ui.css:1590
+--deck-row-height,8.2rem,scoped .deck-editor,styles/ui.css:1590,token,styles/ui.css:1590
+--deck-row-cost,"max(3.4rem, calc(30px / var(--ui-zoom, 1)))",scoped .deck-editor,styles/ui.css:1590,token,styles/ui.css:1590
+--deck-cost-count,2,scoped .deck-editor,styles/ui.css:1590,token,styles/ui.css:1590
+--deck-row-costs,calc(var(--deck-row-cost) * var(--deck-cost-count) + .4rem * (var(--deck-cost-count) - 1)),scoped .deck-editor,styles/ui.css:1590,token,styles/ui.css:1590
+--deck-inline-inspect,"max(5.4rem, var(--deck-editor-target))",scoped .deck-editor,styles/ui.css:1590,token,styles/ui.css:1590
+--deck-editor-text,"max(1.35rem, calc(12px / var(--ui-zoom, 1)))",scoped .deck-editor @media (min-width: 1001px),styles/ui.css:1692,token,styles/ui.css:1692
+--deck-row-art,4.4rem,scoped .deck-editor @media (max-width: 1000px),styles/ui.css:1720,token,styles/ui.css:1720
+--deck-row-cost,"max(3.2rem, calc(28px / var(--ui-zoom, 1)))",scoped .deck-editor @media (max-width: 1000px),styles/ui.css:1720,token,styles/ui.css:1720
+--deck-inline-inspect,"max(4.8rem, var(--deck-editor-target))",scoped .deck-editor @media (max-width: 1000px),styles/ui.css:1720,token,styles/ui.css:1720
+--armoury-sigils-target,"max(var(--tap-floor), calc(44px / var(--ui-zoom, 1)))",scoped .armoury-sigils,styles/ui.css:1735,token,styles/ui.css:1735
+--armoury-sigils-target,"max(var(--tap-floor), calc(48px / var(--ui-zoom, 1)))",scoped .armoury-sigils @media (pointer: coarse),styles/ui.css:1741,token,styles/ui.css:1741
+--epc-level-w,calc(var(--armament-inspection-width) * 1px),scoped .armoury .armament-card-thumbnail .equipment-poker-card,styles/ui.css:1759,token,styles/ui.css:1759
+--epc-level-w,calc(var(--armament-inspection-width) * 1px),scoped .armoury .armament-list-inspection .equipment-poker-card,styles/ui.css:1777,token,styles/ui.css:1777
+--armament-thumb-width,var(--armament-phone-thumb-width),"scoped .armoury[data-responsive=""phone""] .armament-list-workspace",styles/ui.css:1778,token,styles/ui.css:1778
+--hud-resource-max-vw,`${hudMaxViewportPct}vw`,runtime-js,src/main.js:410,token,src/main.js:410
+--hud-resource-available-pct,`${hudAvailableWidthPct}%`,runtime-js,src/main.js:415,token,src/main.js:415
+--hud-resource-available-vw,`${hudAvailableWidthPct}vw`,runtime-js,src/main.js:416,token,src/main.js:416
+--selection-glow,selectionGlowFilter(),runtime-js,src/main.js:418,token,src/main.js:418
+--inspect-size,inspect.size,runtime-js,src/main.js:422,token,src/main.js:422
+--inspect-label,inspect.label,runtime-js,src/main.js:423,token,src/main.js:423
+--inspect-gap,inspect.gap,runtime-js,src/main.js:424,token,src/main.js:424
+--visible-height,visibleHeight + 'px',runtime-js,src/main.js:667,token,src/main.js:667
+--ui-zoom,String(zoom),runtime-js,src/main.js:672,token,src/main.js:672
+--tap-target,`${px}px`,runtime-js,src/main.js:733,token,src/main.js:733
+--tap-floor-default-target,`${UI.tapSize.def}px`,runtime-js,src/main.js:739,token,src/main.js:739
+--card-w-glance,`${resting}px`,runtime-js,src/main.js:794,token,src/main.js:794
+--selection-color,advancedPresentation.selectionColor,runtime-js,src/main.js:840,token,src/main.js:840
+--settings-window-width,`${advancedPresentation.settingsWidthPercent}vw`,runtime-js,src/main.js:843,token,src/main.js:843
+--settings-window-height,`${advancedPresentation.settingsHeightPercent}dvh`,runtime-js,src/main.js:844,token,src/main.js:844
+--card-motif-strength,String(strengths[sKey]),runtime-js,src/main.js:893,token,src/main.js:893
+--gold,accent.hex,runtime-js,src/main.js:924,token,src/main.js:924
+--accent-rgb,accent.rgb,runtime-js,src/main.js:925,token,src/main.js:925
+--equip-equipped-tag-color,model.properties.equippedTagColor || 'var(--gold)',runtime-js,src/ui/components/armouryComponents.js:27,token,src/ui/components/armouryComponents.js:27
+--battlefield-hud-clearance,"`calc(${model.tokens.hudClearanceViewportPct}vh / var(--ui-zoom, 1))`",runtime-js,src/ui/components/battlefieldStage.js:128,token,src/ui/components/battlefieldStage.js:128
+--battlefield-action-clearance,"`calc(${model.tokens.actionClearanceViewportPct}vh / var(--ui-zoom, 1))`",runtime-js,src/ui/components/battlefieldStage.js:129,token,src/ui/components/battlefieldStage.js:129
+--combatant-stage-center,`${model.tokens.centerPct}%`,runtime-js,src/ui/components/battlefieldStage.js:130,token,src/ui/components/battlefieldStage.js:130
+--combat-header-opaque-end,"`${Math.max(0, (vitality.getBoundingClientRect().bottom - hudBand.getBoundingClientRect().top) / zoom)}px`",runtime-js,src/ui/components/battlefieldStage.js:358,token,src/ui/components/battlefieldStage.js:358
+--turn-ribbon-top,`${ceiling}px`,runtime-js,src/ui/components/battlefieldStage.js:366,token,src/ui/components/battlefieldStage.js:366
+--player-grid-color,presentation.playerGridColor,runtime-js,src/ui/components/battlefieldStage.js:396,token,src/ui/components/battlefieldStage.js:396
+--enemy-grid-color,presentation.enemyGridColor,runtime-js,src/ui/components/battlefieldStage.js:397,token,src/ui/components/battlefieldStage.js:397
+--tile-transform,geometry.transform,runtime-js,src/ui/components/battlefieldStage.js:414,token,src/ui/components/battlefieldStage.js:414
+--combat-depth,String(depthOrder.indexOf(slot.layer)),runtime-js,src/ui/components/battlefieldStage.js:615,token,src/ui/components/battlefieldStage.js:615
+--overhead-top,`${-overheadGap / zoom}px`,runtime-js,src/ui/components/battlefieldStage.js:632,token,src/ui/components/battlefieldStage.js:632
+--enemy-hit-width,"`${Math.max(COMBAT_TARGET_HIT_PX,boxes[i].footerWidth) / zoom}px`",runtime-js,src/ui/components/battlefieldStage.js:770,token,src/ui/components/battlefieldStage.js:770
+--enemy-hit-height,`${COMBAT_TARGET_HIT_PX / zoom}px`,runtime-js,src/ui/components/battlefieldStage.js:773,token,src/ui/components/battlefieldStage.js:773
+--enemy-hit-x,`${local.left}px`,runtime-js,src/ui/components/battlefieldStage.js:781,token,src/ui/components/battlefieldStage.js:781
+--enemy-hit-y,`${local.top}px`,runtime-js,src/ui/components/battlefieldStage.js:782,token,src/ui/components/battlefieldStage.js:782
+--sprite-zoom,String(scale / zoom),runtime-js,src/ui/components/battlefieldStage.js:815,token,src/ui/components/battlefieldStage.js:815
+--art-left,`${(artRect.left - hostRect.left) / zoom}px`,runtime-js,src/ui/components/battlefieldStage.js:816,token,src/ui/components/battlefieldStage.js:816
+--art-right,`${(artRect.right - hostRect.left) / zoom}px`,runtime-js,src/ui/components/battlefieldStage.js:817,token,src/ui/components/battlefieldStage.js:817
+--art-top,`${(artRect.top - hostRect.top) / zoom}px`,runtime-js,src/ui/components/battlefieldStage.js:818,token,src/ui/components/battlefieldStage.js:818
+--art-height,`${artRect.height / zoom}px`,runtime-js,src/ui/components/battlefieldStage.js:819,token,src/ui/components/battlefieldStage.js:819
+--target-outline-width,`${outline.width}px`,runtime-js,src/ui/components/battlefieldStage.js:823,token,src/ui/components/battlefieldStage.js:823
+--target-outline-offset,`${outline.offset}px`,runtime-js,src/ui/components/battlefieldStage.js:824,token,src/ui/components/battlefieldStage.js:824
+--enemy-core-x,`${(fieldRect.left+core.x-box.left)/zoom}px`,runtime-js,src/ui/components/battlefieldStage.js:878,token,src/ui/components/battlefieldStage.js:878
+--enemy-core-y,`${(fieldRect.top+core.y-box.top)/zoom}px`,runtime-js,src/ui/components/battlefieldStage.js:879,token,src/ui/components/battlefieldStage.js:879
+--environment-top,'0px',runtime-js,src/ui/components/battlefieldStage.js:895,token,src/ui/components/battlefieldStage.js:895
+--environment-height,`${rect.height / zoom}px`,runtime-js,src/ui/components/battlefieldStage.js:896,token,src/ui/components/battlefieldStage.js:896
+--card-type-color,model.paint.typeColor,runtime-js,src/ui/components/card.js:189,token,src/ui/components/card.js:189
+--card-radius,`${model.paint.radiusPx}px`,runtime-js,src/ui/components/card.js:190,token,src/ui/components/card.js:190
+--card-art-radius,`${model.paint.artRadiusPx}px`,runtime-js,src/ui/components/card.js:191,token,src/ui/components/card.js:191
+--card-tint,model.paint.tint,runtime-js,src/ui/components/card.js:196,token,src/ui/components/card.js:196
+--boost-tint,model.paint.boostTint,runtime-js,src/ui/components/card.js:310,token,src/ui/components/card.js:310
+--card-shelf-cols,`${cardShelfColumnsAt(width)}`,runtime-js,src/ui/components/cardShelf.js:60,token,src/ui/components/cardShelf.js:60
+--potion-reveal-delay,`${reveal.open}ms`,runtime-js,src/ui/components/combatActionRow.js:62,token,src/ui/components/combatActionRow.js:62
+--potion-focus-delay,`${reveal.focus}ms`,runtime-js,src/ui/components/combatActionRow.js:63,token,src/ui/components/combatActionRow.js:63
+--potion-reveal-fade,`${reveal.fade}ms`,runtime-js,src/ui/components/combatActionRow.js:64,token,src/ui/components/combatActionRow.js:64
+--potion-tray-right,`${row.clientWidth - control.offsetLeft - control.offsetWidth}px`,runtime-js,src/ui/components/combatActionRow.js:207,token,src/ui/components/combatActionRow.js:207
+--potion-control-top,`${control.offsetTop}px`,runtime-js,src/ui/components/combatActionRow.js:208,token,src/ui/components/combatActionRow.js:208
+--potion-control-width,`${control.offsetWidth}px`,runtime-js,src/ui/components/combatActionRow.js:209,token,src/ui/components/combatActionRow.js:209
+--icon-tray-slots,String(wireframeUi.iconTray.footerPotionIcons),runtime-js,src/ui/components/combatActionRow.js:245,token,src/ui/components/combatActionRow.js:245
+--w4-band-hud,bands.hud + 'px',runtime-js,src/ui/components/combatLayout.js:37,token,src/ui/components/combatLayout.js:37
+--w4-band-context,bands.hand + 'px',runtime-js,src/ui/components/combatLayout.js:38,token,src/ui/components/combatLayout.js:38
+--w4-band-footer,bands.footer + 'px',runtime-js,src/ui/components/combatLayout.js:39,token,src/ui/components/combatLayout.js:39
+--combatant-hp-h,meters.hp + 'px',runtime-js,src/ui/components/combatLayout.js:43,token,src/ui/components/combatLayout.js:43
+--combatant-secondary-h,meters.secondary + 'px',runtime-js,src/ui/components/combatLayout.js:44,token,src/ui/components/combatLayout.js:44
+--combatant-stance-h,meters.stance + 'px',runtime-js,src/ui/components/combatLayout.js:45,token,src/ui/components/combatLayout.js:45
+--combatant-value-text,meters.valueText + 'px',runtime-js,src/ui/components/combatLayout.js:46,token,src/ui/components/combatLayout.js:46
+--combatant-meter-gap,meters.gap + 'px',runtime-js,src/ui/components/combatLayout.js:47,token,src/ui/components/combatLayout.js:47
+--defense-min,overlay.defenseMin + 'px',runtime-js,src/ui/components/combatLayout.js:50,token,src/ui/components/combatLayout.js:50
+--intent-min,overlay.intentMin + 'px',runtime-js,src/ui/components/combatLayout.js:51,token,src/ui/components/combatLayout.js:51
+--overlay-value-font,overlay.valueFont + 'px',runtime-js,src/ui/components/combatLayout.js:52,token,src/ui/components/combatLayout.js:52
+--defense-gap,overlay.gap + 'px',runtime-js,src/ui/components/combatLayout.js:53,token,src/ui/components/combatLayout.js:53
+--wireframe-rail-width,bands.rails.railWidth + 'px',runtime-js,src/ui/components/combatLayout.js:62,token,src/ui/components/combatLayout.js:62
+--wireframe-rail-gap,bands.rails.gap + 'px',runtime-js,src/ui/components/combatLayout.js:63,token,src/ui/components/combatLayout.js:63
+--footer-art-width,"footerArtWidth(width, zoom) + 'px'",runtime-js,src/ui/components/combatLayout.js:66,token,src/ui/components/combatLayout.js:66
+--footer-gap,footer.gap + 'px',runtime-js,src/ui/components/combatLayout.js:71,token,src/ui/components/combatLayout.js:71
+--footer-circle,footer.diameter + 'px',runtime-js,src/ui/components/combatLayout.js:72,token,src/ui/components/combatLayout.js:72
+--footer-pile-width,footer.pileWidth + 'px',runtime-js,src/ui/components/combatLayout.js:73,token,src/ui/components/combatLayout.js:73
+--footer-spent-width,footer.spentWidth + 'px',runtime-js,src/ui/components/combatLayout.js:74,token,src/ui/components/combatLayout.js:74
+--footer-pile-height,footer.pileHeight + 'px',runtime-js,src/ui/components/combatLayout.js:75,token,src/ui/components/combatLayout.js:75
+--footer-end-width,footer.endWidth + 'px',runtime-js,src/ui/components/combatLayout.js:76,token,src/ui/components/combatLayout.js:76
+--combat-tools-reserve,'0px',runtime-js,src/ui/components/combatTools.js:89,token,src/ui/components/combatTools.js:89
+--inspector-preview-fraction,String(previewFraction),runtime-js,src/ui/components/combatantInspector.js:146,token,src/ui/components/combatantInspector.js:146
+--combatant-inspector-width-rem,String(model.tokens.widthRem),runtime-js,src/ui/components/combatantInspector.js:157,token,src/ui/components/combatantInspector.js:157
+--combatant-inspector-mobile-vw,`${model.tokens.mobileWidthViewportPct}vw`,runtime-js,src/ui/components/combatantInspector.js:158,token,src/ui/components/combatantInspector.js:158
+--swatch,tint.css,runtime-js,src/ui/components/creationCards.js:321,token,src/ui/components/creationCards.js:321
+--dialogue-response-columns,String(candidate.columns),runtime-js,src/ui/components/dialogueStage.js:125,token,src/ui/components/dialogueStage.js:125
+--dialogue-beside-text,String(candidate.textShare),runtime-js,src/ui/components/dialogueStage.js:127,token,src/ui/components/dialogueStage.js:127
+--dialogue-response-row-h,`${grown}px`,runtime-js,src/ui/components/dialogueStage.js:180,token,src/ui/components/dialogueStage.js:180
+--w4-vw,`${width / 100}px`,runtime-js,src/ui/components/dialogueStage.js:205,token,src/ui/components/dialogueStage.js:205
+--w4-vh,`${height / 100}px`,runtime-js,src/ui/components/dialogueStage.js:206,token,src/ui/components/dialogueStage.js:206
+--w4-band-hud,`${bands.hud}px`,runtime-js,src/ui/components/dialogueStage.js:207,token,src/ui/components/dialogueStage.js:207
+--w4-band-scene,`${bands.scene}px`,runtime-js,src/ui/components/dialogueStage.js:208,token,src/ui/components/dialogueStage.js:208
+--w4-band-context,`${bands.context}px`,runtime-js,src/ui/components/dialogueStage.js:209,token,src/ui/components/dialogueStage.js:209
+--w4-band-footer,`${bands.footer}px`,runtime-js,src/ui/components/dialogueStage.js:210,token,src/ui/components/dialogueStage.js:210
+--dialogue-scene-top,`${sceneTop}px`,runtime-js,src/ui/components/dialogueStage.js:222,token,src/ui/components/dialogueStage.js:222
+--dialogue-reveal-line,`${revealLine}px`,runtime-js,src/ui/components/dialogueStage.js:223,token,src/ui/components/dialogueStage.js:223
+--dialogue-floor-line,`${floorLine}px`,runtime-js,src/ui/components/dialogueStage.js:239,token,src/ui/components/dialogueStage.js:239
+--engraving,maskValue(url),runtime-js,src/ui/components/engravedIcon.js:44,token,src/ui/components/engravedIcon.js:44
+--engraving,maskValue(url),runtime-js,src/ui/components/engravedIcon.js:52,token,src/ui/components/engravedIcon.js:52
+--card-scale,entries[0].contentRect.width / width,runtime-js,src/ui/components/equipmentCard.js:27,token,src/ui/components/equipmentCard.js:27
+--accent,model.accent,runtime-js,src/ui/components/equipmentCard.js:145,token,src/ui/components/equipmentCard.js:145
+--epc-level-w,cardLevelWidthCss(at),runtime-js,src/ui/components/equipmentCard.js:204,token,src/ui/components/equipmentCard.js:204
+--art-x,`${(box.x - b.x) / b.w * 100}%`,runtime-js,src/ui/components/footerArt.js:35,token,src/ui/components/footerArt.js:35
+--art-y,`${(box.y - b.y) / b.h * 100}%`,runtime-js,src/ui/components/footerArt.js:36,token,src/ui/components/footerArt.js:36
+--art-w,`${box.w / b.w * 100}%`,runtime-js,src/ui/components/footerArt.js:37,token,src/ui/components/footerArt.js:37
+--art-h,`${box.h / b.h * 100}%`,runtime-js,src/ui/components/footerArt.js:38,token,src/ui/components/footerArt.js:38
+--player-grid-color,draft.playerGridColor,runtime-js,src/ui/components/formationSettings.js:94,token,src/ui/components/formationSettings.js:94
+--enemy-grid-color,draft.enemyGridColor,runtime-js,src/ui/components/formationSettings.js:95,token,src/ui/components/formationSettings.js:95
+--target-color,color,runtime-js,src/ui/components/friendlyTargets.js:62,token,src/ui/components/friendlyTargets.js:62
+--hand-controls-max-width,"`${Math.max(0, handEl.clientWidth - 2 / zoom)}px`",runtime-js,src/ui/components/hand.js:133,token,src/ui/components/hand.js:133
+--hand-card-zoom,'1',runtime-js,src/ui/components/hand.js:147,token,src/ui/components/hand.js:147
+--hand-span,plan.span + 'px',runtime-js,src/ui/components/hand.js:148,token,src/ui/components/hand.js:148
+--hand-rest-left,plan.restLeft + 'px',runtime-js,src/ui/components/hand.js:149,token,src/ui/components/hand.js:149
+--hand-rest-top,(toolsHeight + plan.restTop) + 'px',runtime-js,src/ui/components/hand.js:150,token,src/ui/components/hand.js:150
+--hand-clearance-top,(toolsHeight + plan.clearanceTop) + 'px',runtime-js,src/ui/components/hand.js:151,token,src/ui/components/hand.js:151
+--hand-selection-lift,plan.lift + 'px',runtime-js,src/ui/components/hand.js:153,token,src/ui/components/hand.js:153
+--hand-card-width,plan.cardWidth + 'px',runtime-js,src/ui/components/hand.js:156,token,src/ui/components/hand.js:156
+--hand-card-height,plan.cardHeight + 'px',runtime-js,src/ui/components/hand.js:157,token,src/ui/components/hand.js:157
+--hand-card-x,slot.x + 'px',runtime-js,src/ui/components/hand.js:158,token,src/ui/components/hand.js:158
+--hand-card-y,(toolsHeight + plan.top + slot.y) + 'px',runtime-js,src/ui/components/hand.js:159,token,src/ui/components/hand.js:159
+--hand-card-angle,slot.angle + 'deg',runtime-js,src/ui/components/hand.js:160,token,src/ui/components/hand.js:160
+--hand-card-arc,slot.y + 'px',runtime-js,src/ui/components/hand.js:161,token,src/ui/components/hand.js:161
+--hand-hit-width,(i === cards.length - 1 ? plan.cardWidth : plan.step) + 'px',runtime-js,src/ui/components/hand.js:162,token,src/ui/components/hand.js:162
+--card-fan-transform,'rotate(' + slot.angle + 'deg)',runtime-js,src/ui/components/hand.js:170,token,src/ui/components/hand.js:170
+--card-fan-transform,el.style.transform,runtime-js,src/ui/components/hand.js:324,token,src/ui/components/hand.js:324
+--hand-upcast-shift,`${-remaining / scale}px`,runtime-js,src/ui/components/handInspectionOverlay.js:35,token,src/ui/components/handInspectionOverlay.js:35
+--hand-upcast-rise,`${rise + deltaY / scale}px`,runtime-js,src/ui/components/handInspectionOverlay.js:48,token,src/ui/components/handInspectionOverlay.js:48
+--hold,String(p),runtime-js,src/ui/components/holdconfirm.js:214,token,src/ui/components/holdconfirm.js:214
+--hold,'0',runtime-js,src/ui/components/holdconfirm.js:231,token,src/ui/components/holdconfirm.js:231
+--hold,'0',runtime-js,src/ui/components/holdconfirm.js:261,token,src/ui/components/holdconfirm.js:261
+--icon-tray-size,`${plan.size}px`,runtime-js,src/ui/components/iconTray.js:168,token,src/ui/components/iconTray.js:168
+--icon-tray-gap,`${plan.gap}px`,runtime-js,src/ui/components/iconTray.js:169,token,src/ui/components/iconTray.js:169
+--map-route-width,policy.routeWidth + 'px',runtime-js,src/ui/components/mapDetail.js:33,token,src/ui/components/mapDetail.js:33
+--map-route-outline-width,policy.routeOutlineWidth + 'px',runtime-js,src/ui/components/mapDetail.js:34,token,src/ui/components/mapDetail.js:34
+--map-header-height-px,String(layout.heightPx),runtime-js,src/ui/components/mapHeader.js:27,token,src/ui/components/mapHeader.js:27
+--map-header-inset-px,String(layout.insetPx),runtime-js,src/ui/components/mapHeader.js:28,token,src/ui/components/mapHeader.js:28
+--map-header-gap-px,String(layout.gapPx),runtime-js,src/ui/components/mapHeader.js:29,token,src/ui/components/mapHeader.js:29
+--potion-reveal-delay,`${hover.open}ms`,runtime-js,src/ui/components/runPotions.js:44,token,src/ui/components/runPotions.js:44
+--potion-focus-delay,`${hover.focus}ms`,runtime-js,src/ui/components/runPotions.js:45,token,src/ui/components/runPotions.js:45
+--potion-reveal-fade,`${hover.fade}ms`,runtime-js,src/ui/components/runPotions.js:46,token,src/ui/components/runPotions.js:46
+--icon-tray-slots,String(wireframeUi.iconTray.footerPotionIcons),runtime-js,src/ui/components/runPotions.js:49,token,src/ui/components/runPotions.js:49
+--scene-paint-bottom,`${paintBottom}px`,runtime-js,src/ui/components/sceneBackdrop.js:52,token,src/ui/components/sceneBackdrop.js:52
+--book-buy-art,"`url(""${artUrl}"")`",runtime-js,src/ui/components/skillBookOffer.js:32,token,src/ui/components/skillBookOffer.js:32
+--tower-light-ms,`${lightUpMs}ms`,runtime-js,src/ui/components/startupGate.js:73,token,src/ui/components/startupGate.js:73
+--tower-fade-ms,`${fadeMs}ms`,runtime-js,src/ui/components/startupGate.js:74,token,src/ui/components/startupGate.js:74
+--tower-fade-delay,`${lightUpMs + holdMs}ms`,runtime-js,src/ui/components/startupGate.js:75,token,src/ui/components/startupGate.js:75
+--tip-arrow-left,`${arrow.left}px`,runtime-js,src/ui/components/tooltip.js:256,token,src/ui/components/tooltip.js:256
+--tip-arrow-top,`${arrow.top}px`,runtime-js,src/ui/components/tooltip.js:257,token,src/ui/components/tooltip.js:257
+--tip-arrow-w,`${arrow.width}px`,runtime-js,src/ui/components/tooltip.js:258,token,src/ui/components/tooltip.js:258
+--tip-arrow-h,`${arrow.height}px`,runtime-js,src/ui/components/tooltip.js:259,token,src/ui/components/tooltip.js:259
+--tooltip-fade-duration,`${tooltipSettings.fade}ms`,runtime-js,src/ui/components/tooltip.js:337,token,src/ui/components/tooltip.js:337
+--rot,`${Math.round(Math.random() * 50 - 25)}deg`,runtime-js,src/ui/fx.js:413,token,src/ui/fx.js:413
+--shake-px,`${px}px`,runtime-js,src/ui/fx.js:470,token,src/ui/fx.js:470
+--hurt-duration,`${ms}ms`,runtime-js,src/ui/fx.js:489,token,src/ui/fx.js:489
+--pulse-delay,`${-(Date.now() % TIME.pulseCycleMs)}ms`,runtime-js,src/ui/paintedOutfits.js:121,token,src/ui/paintedOutfits.js:121
+--pose-color,state.color,runtime-js,src/ui/paintedOutfits.js:145,token,src/ui/paintedOutfits.js:145
+--hurt-duration,`${duration}ms`,runtime-js,src/ui/screens/coop.js:2152,token,src/ui/screens/coop.js:2152
+--split-share,`${state.classPreviewPercent}%`,runtime-js,src/ui/screens/customize.js:234,token,src/ui/screens/customize.js:234
+--split-share,`${state.classPreviewPercent}%`,runtime-js,src/ui/screens/customize.js:427,token,src/ui/screens/customize.js:427
+--creation-attribute-columns,String(columns),runtime-js,src/ui/screens/customize.js:1746,token,src/ui/screens/customize.js:1746
+--deck-cost-count,String(deckEditorResourceGroups().length),runtime-js,src/ui/screens/deckEditor.js:96,token,src/ui/screens/deckEditor.js:96
+--deck-inspect-width,cardLevelWidthCss('inspect'),runtime-js,src/ui/screens/deckEditor.js:239,token,src/ui/screens/deckEditor.js:239
+--armament-thumb-width,compact.thumbnailWidthPx,runtime-js,src/ui/screens/equipment.js:400,token,src/ui/screens/equipment.js:400
+--armament-phone-thumb-width,compact.phoneThumbnailWidthPx,runtime-js,src/ui/screens/equipment.js:401,token,src/ui/screens/equipment.js:401
+--armament-inspection-width,compact.inspectionWidthPx,runtime-js,src/ui/screens/equipment.js:402,token,src/ui/screens/equipment.js:402
+--armoury-collection-track,split.collectionTrack,runtime-js,src/ui/screens/equipment.js:2403,token,src/ui/screens/equipment.js:2403
+--armoury-detail-track,split.detailTrack,runtime-js,src/ui/screens/equipment.js:2404,token,src/ui/screens/equipment.js:2404
+--prologue-controls-align,"{left:'flex-start',right:'flex-end'}[p.controlsAlign] || 'center'",runtime-js,src/ui/screens/prologue.js:96,token,src/ui/screens/prologue.js:96
+--prologue-text-scale,String((stage.textScale ?? 1) * factor),runtime-js,src/ui/screens/prologue.js:160,token,src/ui/screens/prologue.js:160
+--prologue-caption-vh,String(Number(stage.captionHeightVh) || 18),runtime-js,src/ui/screens/prologue.js:161,token,src/ui/screens/prologue.js:161
+--prologue-text-scale,'1',runtime-js,src/ui/screens/prologue.js:184,token,src/ui/screens/prologue.js:184
+--prologue-text-scale,String((stage.textScale ?? 1) * (fixedCaption(stage) ? captionFit() : 1)),runtime-js,src/ui/screens/prologue.js:240,token,src/ui/screens/prologue.js:240
+--prologue-text-align,stage.textAlign || 'center',runtime-js,src/ui/screens/prologue.js:241,token,src/ui/screens/prologue.js:241
+--prologue-box,prologueBoxBackground(stage),runtime-js,src/ui/screens/prologue.js:242,token,src/ui/screens/prologue.js:242
+--prologue-caption-vh,String(Number(stage.captionHeightVh) || 18),runtime-js,src/ui/screens/prologue.js:243,token,src/ui/screens/prologue.js:243
+--prologue-banner-box,"`rgba(${bannerRgb.join(',')},${Math.max(0, Math.min(1, Number(stage.bannerBoxOpacity ?? 1)))})`",runtime-js,src/ui/screens/prologue.js:246,token,src/ui/screens/prologue.js:246
+--prologue-outline-color,stage.textOutlineColor || '#100e0c',runtime-js,src/ui/screens/prologue.js:247,token,src/ui/screens/prologue.js:247
+--prologue-outline-width,`${Number(stage.textOutlineWidth) || 0}px`,runtime-js,src/ui/screens/prologue.js:248,token,src/ui/screens/prologue.js:248
+--prologue-inset-x,String(Number(stage.textInsetX) || 0),runtime-js,src/ui/screens/prologue.js:253,token,src/ui/screens/prologue.js:253
+--prologue-inset-y,String(Number(stage.textInsetY) || 0),runtime-js,src/ui/screens/prologue.js:254,token,src/ui/screens/prologue.js:254
+--prologue-filter,`brightness(${stage.imageBrightness ?? 1}) contrast(${stage.imageContrast ?? 1}) saturate(${stage.imageSaturation ?? 1}) blur(${Number(stage.imageBlur) || 0}px),runtime-js,src/ui/screens/prologue.js:282,token,src/ui/screens/prologue.js:282
+--prologue-focus,`${stage.imageFocusX ?? 50}% ${stage.imageFocusY ?? 50}%`,runtime-js,src/ui/screens/prologue.js:292,token,src/ui/screens/prologue.js:292
+--pse-grid-step,`${stepInput.value}%`,runtime-js,src/ui/screens/prologueSceneEditor.js:201,token,src/ui/screens/prologueSceneEditor.js:201
+--prologue-focus,`${drag.next.x}% ${drag.next.y}%`,runtime-js,src/ui/screens/prologueSceneEditor.js:278,token,src/ui/screens/prologueSceneEditor.js:278
+--prologue-focus,`${position.x}% ${position.y}%`,runtime-js,src/ui/screens/prologueSceneEditor.js:295,token,src/ui/screens/prologueSceneEditor.js:295
+--receipt-rows,String(options.visibleRows),runtime-js,src/ui/screens/reward.js:1436,token,src/ui/screens/reward.js:1436
+--merchant-hud-clearance,`${clearance}px`,runtime-js,src/ui/screens/shop.js:923,token,src/ui/screens/shop.js:923
+--shop-rail-width,`${plan.railWidth}px`,runtime-js,src/ui/screens/shop.js:935,token,src/ui/screens/shop.js:935
+--shop-offers-fr,`${plan.offersFr}fr`,runtime-js,src/ui/screens/shop.js:937,token,src/ui/screens/shop.js:937
+--shop-detail-fr,`${plan.detailFr}fr`,runtime-js,src/ui/screens/shop.js:938,token,src/ui/screens/shop.js:938
+--shop-gap,`${plan.gap}px`,runtime-js,src/ui/screens/shop.js:939,token,src/ui/screens/shop.js:939
+--merchant-row-height,"`${Math.max(88 / zoom, Math.floor((port.clientHeight - gap * 3 - 4) / 4))}px`",runtime-js,src/ui/screens/shop.js:945,token,src/ui/screens/shop.js:945
+--shop-detail-max,`${plan.detailMax}px`,runtime-js,src/ui/screens/shop.js:948,token,src/ui/screens/shop.js:948
+--atlas-zoom,j.view.zoom || 1,runtime-js,src/ui/screens/worldAtlas.js:198,token,src/ui/screens/worldAtlas.js:198
+--atlas-face-scale,"String(Math.max(.52, Math.min(2, (j.view.zoom || 1) / close.zoom)))",runtime-js,src/ui/screens/worldAtlas.js:199,token,src/ui/screens/worldAtlas.js:199
+config.components.choiceBody.bandMinVh,10,config-var,content/config/ui/components/choiceBody.json,token,content/config/ui/components/choiceBody.json
+config.presentation.combatAura.fadedBlur,3,config-var,content/config/ui/presentation/combatAura.json,token,content/config/ui/presentation/combatAura.json
+config.presentation.combatEffectAnchors.weaponSize,260,config-var,content/config/ui/presentation/combatEffectAnchors.json,token,content/config/ui/presentation/combatEffectAnchors.json
+config.presentation.combatEffectPlayback.effectMs,260,config-var,content/config/ui/presentation/combatEffectPlayback.json,token,content/config/ui/presentation/combatEffectPlayback.json
+config.presentation.combatEffectPlayback.castMs,110,config-var,content/config/ui/presentation/combatEffectPlayback.json,token,content/config/ui/presentation/combatEffectPlayback.json
+config.presentation.combatEffectPlayback.impactLeadMs,96,config-var,content/config/ui/presentation/combatEffectPlayback.json,token,content/config/ui/presentation/combatEffectPlayback.json
+config.presentation.combatEffectPresentation.fadedOpacity,0.55,config-var,content/config/ui/presentation/combatEffectPresentation.json,token,content/config/ui/presentation/combatEffectPresentation.json
+config.presentation.combatEffectPresentation.restingEndScale,1.04,config-var,content/config/ui/presentation/combatEffectPresentation.json,token,content/config/ui/presentation/combatEffectPresentation.json
+config.presentation.environments.paneWidth,768,config-var,content/config/ui/presentation/environments.json,token,content/config/ui/presentation/environments.json
+config.presentation.environments.paneHeight,512,config-var,content/config/ui/presentation/environments.json,token,content/config/ui/presentation/environments.json
+config.presentation.environments.atlasWidth,[object Object],config-var,content/config/ui/presentation/environments.json,token,content/config/ui/presentation/environments.json
+config.presentation.environments.atlasHeight,[object Object],config-var,content/config/ui/presentation/environments.json,token,content/config/ui/presentation/environments.json
+config.presentation.environments.fieldRatio,0.6,config-var,content/config/ui/presentation/environments.json,token,content/config/ui/presentation/environments.json
+config.presentation.environments.groundAnchor,0.76,config-var,content/config/ui/presentation/environments.json,token,content/config/ui/presentation/environments.json
+config.presentation.mapPresentation.tile,512,config-var,content/config/ui/presentation/mapPresentation.json,token,content/config/ui/presentation/mapPresentation.json
+config.presentation.paintedOutfits.canvas,640,config-var,content/config/ui/presentation/paintedOutfits.json,token,content/config/ui/presentation/paintedOutfits.json
+config.presentation.paintedOutfits.transitionMs,360,config-var,content/config/ui/presentation/paintedOutfits.json,token,content/config/ui/presentation/paintedOutfits.json
+config.presentation.paintedOutfits.reactionMs,260,config-var,content/config/ui/presentation/paintedOutfits.json,token,content/config/ui/presentation/paintedOutfits.json
+config.presentation.paintedOutfits.percent,100,config-var,content/config/ui/presentation/paintedOutfits.json,token,content/config/ui/presentation/paintedOutfits.json
+config.presentation.reaverAttack.frameMs,56,config-var,content/config/ui/presentation/reaverAttack.json,token,content/config/ui/presentation/reaverAttack.json
+config.scenes.w4a-combat.meterRowRem,0.85,config-var,content/config/ui/scenes/w4a-combat.json,token,content/config/ui/scenes/w4a-combat.json
+config.scenes.w4c-dialogue.compactLineHeight,1.2,config-var,content/config/ui/scenes/w4c-dialogue.json,token,content/config/ui/scenes/w4c-dialogue.json
+config.scenes.w4c-dialogue.titleLineHeight,1.45,config-var,content/config/ui/scenes/w4c-dialogue.json,token,content/config/ui/scenes/w4c-dialogue.json
+config.scenes.w4c-dialogue.bandGapRem,0.25,config-var,content/config/ui/scenes/w4c-dialogue.json,token,content/config/ui/scenes/w4c-dialogue.json
+config.scenes.w4c-dialogue.portraitGapPx,24,config-var,content/config/ui/scenes/w4c-dialogue.json,token,content/config/ui/scenes/w4c-dialogue.json
+config.screens.creation.portraitRem,3.5,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.narrowBelowRem,64,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.choiceLines,2,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.railGapPx,2,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.railValueScale,0.85,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.attributeGapPx,8,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.reviewPadRem,1.4,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.headToolsGapRem,0.4,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.portraitGapRem,0.6,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.viewSwitchPadRem,0.6,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.viewSwitchGlyphRem,1.6,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.compactPadRem,0.4,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.compactGapRem,0.4,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.barePadRem,0.3,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.bareGapRem,0.3,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.unfoldPortraitShare,30,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.unfoldSummaryShare,70,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.unfoldHeightVh,30,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.screens.creation.unfoldMinRem,17,config-var,content/config/ui/screens/creation.json,token,content/config/ui/screens/creation.json
+config.tokens.gutterVw,2.5,config-var,content/config/ui/tokens.json,token,content/config/ui/tokens.json
+config.tokens.gapVw,1.5,config-var,content/config/ui/tokens.json,token,content/config/ui/tokens.json
+config.tokens.insetVh,2,config-var,content/config/ui/tokens.json,token,content/config/ui/tokens.json
+config.tokens.targetPx,44,config-var,content/config/ui/tokens.json,token,content/config/ui/tokens.json
+config.tokens.footerMinPx,56,config-var,content/config/ui/tokens.json,token,content/config/ui/tokens.json
+config.tokens.compactBelowPx,768,config-var,content/config/ui/tokens.json,token,content/config/ui/tokens.json
+config.tokens.sceneBleed,0.02,config-var,content/config/ui/tokens.json,token,content/config/ui/tokens.json
+config.tokens.targetRem,2.75,config-var,content/config/ui/tokens.json,token,content/config/ui/tokens.json
+config.tokens.refRemPx,16,config-var,content/config/ui/tokens.json,token,content/config/ui/tokens.json
+config.tokens.selectionGlowRem,0.35,config-var,content/config/ui/tokens.json,token,content/config/ui/tokens.json
+config.tokens.revealDelayMs,1000,config-var,content/config/ui/tokens.json,token,content/config/ui/tokens.json
+config.tokens.w1RailMinRem,11,config-var,content/config/ui/tokens.json,token,content/config/ui/tokens.json

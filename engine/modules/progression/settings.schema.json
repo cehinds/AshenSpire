@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "characterLevels": {
+      "type": "boolean"
+    },
+    "classUnlocks": {
+      "type": "boolean"
+    },
+    "attributePointsPerLevel": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    }
+  },
+  "required": [
+    "mode",
+    "characterLevels",
+    "classUnlocks",
+    "attributePointsPerLevel"
+  ],
+  "additionalProperties": false
+}

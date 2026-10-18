@@ -636,7 +636,7 @@ without the zip of step 7, and the higher estimate applies.
 If step 6b keeps light single files only for each branch's latest build, every older retained build must hide its per-build Download cell and use the offline zip path inside the game; no link may target an absent `download/AshenSpire.html`. Its check iterates every rendered build-list link and every offered offline-download action and verifies that the destination exists. Keeping a single file for every retained build keeps those links and uses the higher storage estimate.
 
 - **The published site is already far over the documented 1 GB Pages limit**
-  (docs/plan-polish-review-2026-09.md:452), mostly because of the inline full
+  (the former polish review, removed 2026-10-11, line 452), mostly because of the inline full
   and test builds. Deploys still succeed, so the limit is not hard-enforced
   today, but the plan should not count on that.
 - **Transition peak.** While old inline builds and the new store are both

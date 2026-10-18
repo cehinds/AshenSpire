@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "title": "Spell Card 0 Header",
+  "canvas": {
+    "width": 52,
+    "height": 82,
+    "background": "transparent"
+  },
+  "defaultState": "spells",
+  "states": [
+    {
+      "id": "spells",
+      "name": "Spells"
+    }
+  ],
+  "assets": {
+    "medallion-background": {
+      "src": "assets/medallion-background.png",
+      "width": 296,
+      "height": 292
+    }
+  },
+  "nodes": [
+    {
+      "id": "spell-card-0-cost-medallion",
+      "name": "Spell Card 0 Cost Medallion",
+      "type": "image",
+      "parent": "spell-card-0-header",
+      "x": 0,
+      "y": 0,
+      "width": 52,
+      "height": 52,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "medallion-background",
+      "fit": "contain"
+    },
+    {
+      "id": "spell-card-0-cost-number",
+      "name": "Spell Card 0 Cost Number",
+      "type": "text",
+      "parent": "spell-card-0-header",
+      "x": 18,
+      "y": 17,
+      "width": 27,
+      "height": 65,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "1",
+      "fontSize": 20,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "spell-card-0-header",
+      "name": "Spell Card 0 Header",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 52,
+      "height": 82,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    }
+  ],
+  "metadata": {
+    "componentSource": "spell-card-0-header",
+    "sourceState": "spells",
+    "designOnly": true
+  }
+}

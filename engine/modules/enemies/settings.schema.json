@@ -1,0 +1,136 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "include": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "fallback": {
+      "enum": [
+        "legacyMoves",
+        "none"
+      ]
+    },
+    "deck": {
+      "type": "object",
+      "properties": {
+        "min": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 99
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 99
+        },
+        "reshuffle": {
+          "enum": [
+            "whenEmpty",
+            "endOfTurn",
+            "never"
+          ]
+        },
+        "drawTo": {
+          "enum": [
+            "hand"
+          ]
+        },
+        "discardUnplayed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "min",
+        "max",
+        "reshuffle",
+        "drawTo",
+        "discardUnplayed"
+      ],
+      "additionalProperties": false
+    },
+    "stanceCosts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "sp": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          },
+          "mp": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          }
+        },
+        "required": [
+          "sp",
+          "mp"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "ai": {
+      "type": "object",
+      "properties": {
+        "weightField": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lowHpThreshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "lowHpDefendBias": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "lowHpHealBias": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "smashIntoBlockBias": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "respectMaxConsecutive": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "weightField",
+        "lowHpThreshold",
+        "lowHpDefendBias",
+        "lowHpHealBias",
+        "smashIntoBlockBias",
+        "respectMaxConsecutive"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "mode",
+    "include",
+    "fallback",
+    "deck",
+    "stanceCosts",
+    "ai"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,26 @@
+{
+  "id": "status.grounded",
+  "tag": "status.grounded",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Grounded",
+  "description": "Prevents electrical conductivity and backlash; grants Advantage on Paralysis recovery.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.grounded"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "runOpcode"
+  }
+}

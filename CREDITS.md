@@ -1,8 +1,80 @@
 # Credits & Asset Licenses
 
+## Mineral component proposals (2026-10-18)
+
+The [mineral proposal collection](docs/design/new-card-art/minerals/README.md)
+contains 50 objects with separate crack and glow layers (150 transparent PNGs).
+The artwork was generated with OpenAI ImageGen under human direction, referencing
+an earlier generated dark-pebble concept. Original sheets, hashes, effect prompts
+and extraction metadata accompany the collection. ImageMagick performs fixed-grid
+cropping and normalization. These are review assets, not runtime replacements.
+No third-party artwork was downloaded and no third-party licence is claimed.
+
+## Starter-class Smash paintings (2026-10-14)
+
+The Rogue dagger-and-buckler, Starseer ash-staff and Herald bone-sceptre
+[Smash strips](pose-studio/stances/class-smash/README.md) are first-party
+OpenAI ImageGen paintings created under human direction from the shipped rear-view
+class seeds. Each complete strip was generated in one edit; director-requested
+anatomy, handedness and rear-facing corrections are retained with prompts and
+raw source hashes in each class provenance record. Five slots repeat the exact
+held bookend around takeoff, airborne load and ground impact. Normalization uses
+one shared scale and fixed world ground registration per class, preserving the
+airborne displacement. Full/Lite WebPs and production registration preserve
+source hashes; review GIF exposures are separate from gameplay timing. No
+third-party artwork was downloaded and no third-party licence is asserted.
+
+## Card art library (2026-10-12)
+
+The 60 original paintings under `assets/cards/library/` were generated with
+OpenAI image generation under human direction: Physical and Magical Attack,
+Smash, Counter, Evade, Sweep and Defend, each in five color and aura variants.
+Each family retains one weapon or shield design. Physical Sweep uses the
+owner-selected Option 14; Counter depicts a shield and sword. The
+[source library and runtime provenance](https://github.com/cehinds/AshenSpire-art/tree/06170d86c6ba6baa24cd60dd516edf21180450f7/art/card-art-library-60)
+preserve PNG masters, prompts, revision history and source/runtime hashes.
+High exports and generated light twins are supplied by the art release pinned
+in `art-release.json`. Existing artwork remains available at its original IDs.
+No third-party artwork was downloaded and no third-party licence is claimed.
+
 ## HUD Component Studio authoring fixture (2026-10-10)
 
 The standalone [HUD Component Studio](tools/hud-component-studio/README.md) reuses existing game/review artwork without changing its bytes. Its [asset manifest](tools/hud-component-studio/assets.manifest.json) records source repository paths, the `hd-assets-v18` art release where applicable, and SHA-256 receipts. Original authorship and licence records remain those documented here. The four simple SVG UI shapes and editor code were authored with Codex under human direction; they are recorded separately from copied source art. The packaged IM Fell English and Libre Baskerville font files retain their original notices and SIL OFL 1.1 in [FONT-LICENSE.txt](tools/hud-component-studio/FONT-LICENSE.txt).
+
+## Weapon stance exploration (2026-10-11)
+
+The [Update Stances pilot](pose-studio/stances/update-stances/README.md) contains
+original OpenAI ImageGen comparison paintings made from this project's existing
+Reaver references under human direction. Exact prompts, source hashes and revision
+records accompany the paintings. The comparison sheets remain review sources.
+The original PR #1890 delivery used five owner-selected derivatives: Sweep ← Smash04, Counter ← Smash06,
+Smash ← Smash05, held Evade ← Smash08, and Guard-break ← Guard-break06.
+The [selection manifest](pose-studio/stances/update-stances/selections.json)
+records exact source sheets, hashes, isolated figure bounds and crop bounds.
+The reproducible exporter `tools/selected-weapon-profile-export.mjs` writes the
+512px/full and 256px/mobile WebPs under
+`assets-display/alternative/reaver-greatsword-pilot-*.webp` and the selected
+Sprite Workshop project; `src/content/alternativeSelectedStances.js` records
+profile registration, export hashes and shared floor anchors. These poses apply
+only to default-armour Reaver holding the sole greatsword in either active hand
+with the other hand empty. The paintings visually use both hands on the sword;
+eligibility does not depend on the equipment grip-mode field. They add held preparation and bounded target reactions; existing full
+attack/retaliation sequences remain. Co-op does not opt into this pilot.
+The [external reference ledger](docs/design/update-stances/references.md)
+records research links and evidence limits; no external reference artwork was
+imported. First-party generated artwork; no third-party asset license is claimed.
+
+### Greatsword follow-up concepts (2026-10-12)
+
+The Sweep, Counter and Evade boards under `pose-studio/stances/update-stances/greatsword-sweep/`, `greatsword-counter/` and `greatsword-evade/` are first-party paintings generated with OpenAI image generation from this project's Reaver references under human art direction. Exact prompts, original outputs, superseded repairs and SHA-256 provenance accompany each family. The gallery displays intact source files plus director-approved standalone replacement figures for Sweep17, Counter15 and Evade20. Original board depictions remain preserved as superseded context. These comparison sources are not runtime cutouts. The [director review record](docs/design/update-stances/followup-art-review.md) distinguishes concept approval from outstanding grip repairs. No external reference artwork or third-party licence is asserted for these generated boards.
+
+### Sequence-order previews (2026-10-12)
+
+The [labeled sequence review](pose-studio/stances/update-stances/sequence-review/README.md) reuses the recorded project-owned stance paintings as normalized preview frames. Its source/asset manifests retain exact original identities, hashes, scale and body-anchor recipes. Counter uses the owner's **original board Counter15**, while the earlier two-hand replacement remains an unselected alternate. EV1 uses a recorded ImageGen background/alpha repair of Evade16, preserving the pose. EV2 is the explicitly recorded OpenAI ImageGen sword-front edit of Evade11, with the original painting preserved and prompt/output/hash provenance linked by the Evade source README. The GIF renderer composes those frames with labels and hard cuts; it paints no intermediate character poses. The review GIFs remain authoring artifacts. The owner subsequently approved the P order and supplied attack/Evade routes for runtime; `sequence-production.json` and `sequence-production-provenance.json` record the exact Full/Lite exports and preserved Smash/Guard-break bytes. The body-registered profile is limited to default-armour Reaver with a sole greatsword; other loadouts and co-op are unchanged. No third-party artwork or licence is introduced.
+
+### Sweep and Smash example art (2026-10-12)
+
+The [five-slot option gallery](pose-studio/stances/update-stances/smash-sweep-examples/README.md) uses first-party OpenAI ImageGen paintings from the project's Reaver references under human art direction. The owner superseded the earlier horizontal Sweep and jump/vault Smash studies with low iai-inspired draw/whirlwind Sweep and heavy jumping ground-slam Smash. Earlier raw paintings and provenance remain preserved as source history. The revised Smash set records 30 action paintings and 20 repeated S exposures, preserving S decoded RGBA pixels at the approved unscaled padded placement. Selected SW09 uses its separately approved straight-arm low stance, now registered as the held Sweep; all earlier source artwork remains preserved. Exact raw outputs, prompts, repairs, crop/scale/placement and source hashes accompany the artist manifests. The gallery renderer composes labels and hard cuts only. SM03, Twisting aerial slam, is owner-selected for Smash and implemented in the runtime candidate; compiled gameplay validation is pending. SW09 is also owner-selected for Sweep; its approved straight sword-arm correction and clearer low iai hold are recorded separately in `sweep/selected-sweep-sw09/` with original/repair prompts, normalized frames and hash provenance. Full/Lite production exports and runtime registration are integrated; combined compiled gameplay validation is pending. Other examples remain references, and the original SW09 source is preserved as history. External references contribute documented research/inference only; no third-party artwork or licence is asserted.
 
 ## Molten River Blight meter (2026-10-08)
 
@@ -631,3 +703,27 @@ OpenAI image generation. Separate steel, arcane staff, gold palm and paired dagg
 effects follow the attack and recovery. The pinned art release ships
 `assets/animations/player-counter-sweep/`. No third-party artwork was downloaded
 and no third-party license is claimed.
+
+### Original character-creation feat emblems (2026-10-12)
+
+The layered ornate feat emblems are reused first-party OpenAI-generated artwork
+from the approved [Character Creation concept](https://github.com/cehinds/AshenSpire/tree/7602ec929/tools/hud-component-studio/projects/character-creation/assets).
+No new generation, third-party artwork or Creative Commons license is introduced.
+Separate transparent PNG layers, exact geometry and reproducible 420×468 composites
+are staged for intake into cehinds/AshenSpire-art and preserved on branch
+`worker/updateCharacterCreation/ornate-art-preview`. The game release pin remains unchanged.
+
+## Layered map design and prop wireframes
+
+The original technical illustrations, editable SVG wireframes, and 24 transparent prop-placeholder PNGs in [the map art handoff](docs/design/improve-map-battlefield-art/HANDOFF.md) were authored with Codex under human direction. They are documentation and integration prototypes, not registered production paintings. Their source is the adjacent generator scripts and prop definitions. No third-party artwork or licence is claimed.
+
+### Layered card-art runtime cutouts (2026-10-18)
+
+The 44 PNGs in `assets-display/card-cutouts/` are byte-for-byte exports of
+first-party OpenAI-generated and reconstructed components approved in the
+[card-art proposal library](docs/design/new-card-art/README.md).
+[Runtime JSON](asset-data/card-art/layered-runtime.json) records each source
+reference and SHA-256; the proposal manifest records the original generation
+and extraction provenance. The implementation adds no third-party artwork
+and claims no third-party license. Scepters, ethereal outlines, objects,
+backgrounds and effects remain separate components.

@@ -1,0 +1,22 @@
+{
+  "id": "internal.upgraded",
+  "tag": "internal.upgraded",
+  "version": "1.0.0",
+  "family": "internal",
+  "label": "Upgraded",
+  "description": "Tag internal.upgraded in the internal family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "internal.upgraded"
+  },
+  "portability": "data"
+}

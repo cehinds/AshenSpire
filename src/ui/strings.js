@@ -34,12 +34,27 @@ import { uiStrings } from '../content/generated/uiStrings.js';
 
 const FORMS = ['short', 'full', 'tip'];
 
+/**
+ * devMessage(id, tokens) — the text of this lookup's own developer errors.
+ * These must NOT go through resolve(): resolve() is what throws the unknown-id
+ * error, so a message fetched with it would ask for its own (missing) message
+ * and recurse. This reads the row directly, never throws, and fills only the
+ * {tokens} it was given (a token it was not given stays visible). If the
+ * message's own row is missing, the message is its key plus the tokens, so the
+ * error still names what went wrong.
+ */
+function devMessage(id, tokens = {}) {
+  const row = rows.get(id);
+  const text = row && row.short ? String(row.short) : `${id} ${JSON.stringify(tokens)}`;
+  return text.replace(/\{(\w+)\}/g, (match, key) => (Object.hasOwn(tokens, key) ? String(tokens[key]) : match));
+}
+
 /** The table as authored, indexed by id, before inheritance. */
 const rows = new Map();
 for (const row of uiStrings) {
   const id = String(row?.id || '').trim();
-  if (!id) throw new Error('uiStrings: a row has no id');
-  if (rows.has(id)) throw new Error(`uiStrings: duplicate id '${id}'`);
+  if (!id) throw new Error(devMessage('strings.error.noId'));
+  if (rows.has(id)) throw new Error(devMessage('strings.error.duplicateId', { id }));
   rows.set(id, row);
 }
 
@@ -55,8 +70,8 @@ const resolved = new Map();
 function resolve(id, seen = []) {
   if (resolved.has(id)) return resolved.get(id);
   const row = rows.get(id);
-  if (!row) throw new Error(`uiStrings: unknown id '${id}'`);
-  if (seen.includes(id)) throw new Error(`uiStrings: extends cycle ${[...seen, id].join(' → ')}`);
+  if (!row) throw new Error(devMessage('strings.error.unknownId', { id }));
+  if (seen.includes(id)) throw new Error(devMessage('strings.error.extendsCycle', { chain: [...seen, id].join(' → ') }));
   const parentId = String(row.extends || '').trim();
   const parent = parentId ? resolve(parentId, [...seen, id]) : null;
   const out = {};
@@ -82,7 +97,7 @@ function fill(text, tokens, id, form) {
 
 function read(id, form, tokens) {
   const text = resolve(id)[form];
-  if (!text) throw new Error(`uiStrings: '${id}' has no ${form} form`);
+  if (!text) throw new Error(devMessage('strings.error.noForm', { id, form }));
   return fill(text, tokens, id, form);
 }
 

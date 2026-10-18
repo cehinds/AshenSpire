@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "id": "J-B",
+  "tool": "image_gen.imagegen",
+  "rawSha256": "690fae5c7c154a30c823233e90a06f80281fa93b9763749e79a4a4736a28b033",
+  "rawDimensions": [
+    2172,
+    724
+  ],
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "seedPath": "pose-studio/stances/update-stances/sequence-review/frames/S.webp",
+  "seedSha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+  "frameCount": 5,
+  "frameSize": [
+    768,
+    768
+  ],
+  "sharedActionScale": 1.1035502958579881,
+  "groundY": 658,
+  "seedPlacement": [
+    128,
+    192
+  ],
+  "extraction": [
+    {
+      "frame": 2,
+      "bounds": [
+        500,
+        192,
+        839,
+        548
+      ],
+      "rawGround": 548,
+      "placement": [
+        197,
+        265
+      ]
+    },
+    {
+      "frame": 3,
+      "bounds": [
+        852,
+        208,
+        1397,
+        511
+      ],
+      "rawGround": 548,
+      "placement": [
+        84,
+        283
+      ]
+    },
+    {
+      "frame": 4,
+      "bounds": [
+        1266,
+        267,
+        1860,
+        548
+      ],
+      "rawGround": 548,
+      "placement": [
+        56,
+        348
+      ]
+    }
+  ],
+  "bookends": "Original S decoded RGBA pixels padded without resize; identical 01/05 containers, different from source S container",
+  "normalizationNotes": "Alpha-connected whole-figure extraction; one action scale per strip; grounded contacts calibrated; airborne frame3 preserves height above landing raw ground, not independently floored",
+  "status": "director_accepted_for_option_review",
+  "runtimeChanged": false,
+  "catalogId": "SM02",
+  "motif": "Short hop cleave",
+  "frameSlots": [
+    "S",
+    "action-2",
+    "action-3",
+    "action-4",
+    "S"
+  ],
+  "uniqueActionPaintings": 3,
+  "unchangedGeneratedOriginal": "/workspace/generated_images/exec-c05d09ac-bafe-42a8-87b5-9b855ae4e58f.png",
+  "initialGeneration": "/workspace/generated_images/exec-c05d09ac-bafe-42a8-87b5-9b855ae4e58f.png",
+  "promptFiles": [
+    "prompt.txt"
+  ],
+  "inputCanvasSha256": "c284d5b4b8c9f97b162dd1530c027510d4d32dfe3b1ecb7fe8a89e7d5cbdfb3b",
+  "reviewScope": "Animation option concepts only; not runtime adoption",
+  "normalizationAlphaHandling": "Isolate each large alpha-connected figure and nearby fringe within5pixels; omit disconnected far specks; do not alter original S bookends",
+  "qa": "Independent read-only agent: fifty768RGBA frames, ten5frameGIFs, exactSbookends, fullbodyweapon margins, airbornefeet aboveground; repaired G orientation checked separately",
+  "fileSha256": {
+    "frames/01.png": "45e710d9e001eb9f7e1b1b0f42296564c30a5b556169e4000cb7eb0194a0ae41",
+    "frames/02.png": "2bc59af8d4948c5a42bd36c008f05aaa00cd6117d910e1f067900077692b1cc6",
+    "frames/03.png": "53678b004141cf4c6250e2ac31ace5e307b41fb64ed746cd464c6be0feeb92d8",
+    "frames/04.png": "f138e119922281a4828e30b6a7497493565f64fecf262953edac1ff08c5f3817",
+    "frames/05.png": "45e710d9e001eb9f7e1b1b0f42296564c30a5b556169e4000cb7eb0194a0ae41",
+    "preview.gif": "74dd2336036d1c02479b052c27de0b45ed9c55f396398574b3c7a9b927e8c321",
+    "preview.png": "0d1819a84d71daaa3f80fd05eee1563127d68f736bec4692e1552d7c07aee645",
+    "prompt.txt": "ee33313e1bc77a3abd40d95b879d25cc3c20cc6b67fc6377adb0e73c801e8aea",
+    "raw.png": "690fae5c7c154a30c823233e90a06f80281fa93b9763749e79a4a4736a28b033"
+  }
+}

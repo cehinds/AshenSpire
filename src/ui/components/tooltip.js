@@ -1,3 +1,4 @@
+import { viewViewportBox } from '../viewViewport.js';
 // src/ui/components/tooltip.js — ONE tooltip service: one panel per level,
 // one placer, one timing machine (kit §08 Tooltips, §09 Three tiers).
 //
@@ -28,7 +29,7 @@
 // The public entry points below are the ones 23 surfaces already call; their
 // shape is unchanged so nothing had to be re-wired to inherit the machine.
 
-import { placeAnchored, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { placeAnchored, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN, uiZoom } from '../fx.js';
 import {
   tooltipPlacementIntent, TOOLTIP_RUNGS, tooltipWireframe, tooltipArrow, tooltipArrowSize,
 } from '../models/TooltipPlacementModel.js';
@@ -56,7 +57,7 @@ let fadeTimer = null;
 let expander = null; // the `full` tier opener, injected to avoid a circular import
 let selectedControl = null;
 let touchSelectedControl = null;
-function clearControlSelection() {
+export function clearControlSelection() {
   selectedControl?.classList.remove("tooltip-selected");
   selectedControl = touchSelectedControl = null;
 }
@@ -249,7 +250,7 @@ function fitRung(el, pinned) {
  */
 function pointArrow(t, placed, anchor) {
   const root = getComputedStyle(document.documentElement);
-  const zoom = parseFloat(root.getPropertyValue('--ui-zoom')) || 1;
+  const zoom = uiZoom();
   const rootFontPx = parseFloat(root.fontSize) || 16;
   const arrow = tooltipArrow(placed, anchorLocalBox(VIEWPORT_ORIGIN, anchor), tooltipArrowSize({ zoom, rootFontPx }));
   t.dataset.arrow = arrow.edge;
@@ -367,8 +368,10 @@ function showWith(html, anchor, clear = null, intent = 'above', appearance = nul
   t.setAttribute('aria-hidden', 'false');
   fitRung(t, appearance?.rung);
   if (appearance?.maxHeightRatio) t.style.maxHeight = `${Math.max(0, room.height * appearance.maxHeightRatio)}px`;
+  const frame = viewViewportBox();
+  const relativeAnchor = { width: anchor.width, height: anchor.height, left: anchor.left - frame.left, top: anchor.top - frame.top };
   const resolvedIntent = placementModel
-    ? tooltipPlacementIntent(anchor, { width: innerWidth, height: innerHeight }, placementModel, {
+    ? tooltipPlacementIntent(relativeAnchor, frame, placementModel, {
       narrow: document.documentElement.dataset.layout === 'narrow',
     })
     : intent;
@@ -632,14 +635,26 @@ function wireTitles() {
   document.addEventListener('pointerover', adopt, true);
   document.addEventListener('focusin', adopt, true);
   const explain = ev => {
-    const term = ev.target?.closest?.('.tooltip-keyword[data-tip], .inspection-tag[data-tip], .as-tip [data-tip][role="button"]');
+    // A click on a tag symbol through the hand's hit lane explains that symbol: the press
+    // stops here, so the card is not selected or played, and the click is re-dispatched to the symbol.
+    if (ev.type === 'click') {
+      const sym = symbolUnderLane(ev);
+      if (sym) {
+        ev.stopPropagation(); ev.preventDefault();
+        sym.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: ev.clientX, clientY: ev.clientY }));
+        return;
+      }
+    }
+    const term = ev.target?.closest?.('.tooltip-keyword[data-tip], .inspection-tag[data-tip], .card-tag-symbol[data-tip], .as-tip [data-tip][role="button"]');
     if (!term || panels[1]?.contains(term)) return;
     if (ev.type === 'keydown' && !['Enter', ' '].includes(ev.key)) return;
     ev.preventDefault(); ev.stopPropagation();
     if (panels[0]?.contains(term)) { cancelNested(); showNested(term); return; }
     // Outside the panels the same two-tap rule holds: a click selects the
     // term, the next click explains it; a key press explains at once.
-    if (ev.type === 'click' && selectedControl !== term) {
+    // A tag symbol explains on one press (touch, mouse or Enter); other inspection terms keep the two-tap rule.
+    const oneTap = term.classList.contains('card-tag-symbol');
+    if (ev.type === 'click' && !oneTap && selectedControl !== term) {
       if (selectedControl) { clearControlSelection(); hideTooltip(); }
       selectedControl = term;
       term.classList.add('tooltip-selected');
@@ -649,8 +664,23 @@ function wireTitles() {
   };
   document.addEventListener('click', explain, true);
   document.addEventListener('keydown', explain, true);
+  // The hand's hit lane covers a whole card, and a tag symbol's rail sits under it in the
+  // card's stacking context. A press on a symbol through the lane explains the symbol and
+  // never reaches the card (no select, no play); the click is redirected to the symbol.
+  const symbolUnderLane = ev => {
+    const lane = ev.target?.closest?.('.hand-hit-lane');
+    if (!lane || !lane.parentElement) return null;
+    for (const sym of lane.parentElement.querySelectorAll('.card-tag-symbol[data-tip]')) {
+      const r = sym.getBoundingClientRect();
+      if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) return sym;
+    }
+    return null;
+  };
   document.addEventListener('pointerdown', ev => {
-    if (!panels.some(p => p?.contains(ev.target)) && !state[0].target?.contains(ev.target) && !selectedControl?.contains(ev.target)) {
+    // A press on a symbol through the hand lane is the symbol's own press: it keeps the selection,
+    // and it does not reach the hand, whose press handling would re-render the lane under the finger.
+    if (symbolUnderLane(ev)) ev.stopPropagation();
+    if (!panels.some(p => p?.contains(ev.target)) && !state[0].target?.contains(ev.target) && !selectedControl?.contains(ev.target) && !symbolUnderLane(ev)) {
       clearControlSelection(); hideTooltip();
     }
   }, true);

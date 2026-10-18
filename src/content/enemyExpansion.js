@@ -144,7 +144,7 @@ const sizes = {
     "idleHeight": 360
   },
   "stitchedHound": {
-    "idleWidth": 347,
+    "idleWidth": 329,
     "idleHeight": 343
   },
   "courtMarionette": {

@@ -1,0 +1,44 @@
+{
+  "generator": "image_gen.imagegen",
+  "whole_strip_generation": true,
+  "active_raw": "raw.png",
+  "raws": [
+    {
+      "path": "raw-overlap-superseded.png",
+      "sha256": "f8b06ec7d43b90bc6b3102442319d54be30d1e71d3cd87693e9ae48eef5f80b7",
+      "dimensions": [
+        2170,
+        725
+      ]
+    },
+    {
+      "path": "raw.png",
+      "sha256": "ce0b72a293d1a6d30b413a013aae726aa4e2e44da215d9492ae6eceeddbb9cf4",
+      "dimensions": [
+        2169,
+        725
+      ]
+    }
+  ],
+  "prompts": [
+    {
+      "path": "prompt.txt",
+      "sha256": "e42edc8ed23809b0cd48425a4c1fb0c1a7f0f742f5c9a3d8523879106fe1e179"
+    },
+    {
+      "path": "spacing-repair-prompt.txt",
+      "sha256": "378a953a7c64237711d282b240cd3d7574eeecd6af0b83e0f14bd650780634f1"
+    }
+  ],
+  "seed": "seed/stance-final.png",
+  "seed_sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405",
+  "bookends": "Exact approved normalized NEW seed PNG bytes copied to slots01/05; original runtimeW not used or modified",
+  "effects": "Curved slash arcs painted by ImageGen inside whole-strip generation, no mechanical effect painting",
+  "anatomy": "Low iai-inspired gather; visible palm-up underhand hilt grip, thumb above, knuckles below, inner elbow crease facing camera; level flat blade in approved idle seed",
+  "normalization": "Shared body scale from approved seed/raw idle height; anatomical helmet registration and manually identified boot contact plane; effect bounds not used for centering/scale",
+  "references": [
+    "https://www.meikyokan.org/hawaiikendo_lessons-in-iaido",
+    "https://www.northlondonbudo.co.uk/iaido-information/a-sample-iaido-kata-a-sequence-of-moves"
+  ],
+  "reference_limitations": "Dojo text observations inform low coil/turn/draw vocabulary only. Katana/seated motions adapted artistically to armored greatsword. No external character art or effects imported."
+}

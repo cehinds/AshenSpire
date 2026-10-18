@@ -45,9 +45,9 @@ test('the footer always has two actions: Back leaves or steps back, the primary 
 
 test('the rail names every category, carries its value, and selects exactly one', () => {
   const items = creationRailItems({
-    categories, current: 'character',
-    labels: { class: 'Class', character: 'Character' },
-    values: { class: 'Reaver', character: 'Forsaken' },
+    categories, current: 'attributes',
+    labels: { class: 'Class', attributes: 'Character' },
+    values: { class: 'Reaver', attributes: 'Forsaken' },
   });
   assert.equal(items.length, categories.length);
   assert.equal(items.filter((item) => item.selected).length, 1);

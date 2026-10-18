@@ -1,0 +1,27 @@
+{
+  "id": "damage_sacred",
+  "tag": "damage:sacred",
+  "version": "1.0.0",
+  "family": "damage",
+  "label": "Holy",
+  "description": "Removes 1 hostile debuff from the attacker after a Health hit.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "damage_sacred",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatExpansionActions.js",
+    "symbol": "beginExpandedAction"
+  }
+}

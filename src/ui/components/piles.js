@@ -25,7 +25,7 @@ import { SPENT_PILES, spentPileView } from '../models/PileViewerModel.js';
 // regression it exists to stop.
 import { t } from '../strings.js';
 
-export function openPileModal(registries, title, cards, { shuffleForDisplay = false } = {}) {
+export function openPileModal(registries, title, cards, { shuffleForDisplay = false, rules = null } = {}) {
   let list = [...cards];
   if (shuffleForDisplay) {
     for (let i = list.length - 1; i > 0; i--) {
@@ -52,7 +52,7 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
     body: (host) => {
       // The body is the kit's CardGrid: the same faces the fan draws, wrapped,
       // at one gap. An empty pile says so in Flavour rather than drawing air.
-      const grid = cardGrid(list.map((inst) => renderCard(registries, inst, { small: true, inspectReadOnly: true })), { class: 'grid' });
+      const grid = cardGrid(list.map((inst) => renderCard(registries, inst, { small: true, inspectReadOnly: true, rules })), { class: 'grid' });
       if (!list.length) grid.appendChild(flavour(t('piles.empty'), { class: 'pile-empty' }));
       host.appendChild(grid);
     },
@@ -73,7 +73,7 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
  * the HUD tools read. The arrows and the pad are the input router's; the kit
  * adds Home / End.
  */
-export function openSpentPileModal(registries, piles, opener = document.activeElement) {
+export function openSpentPileModal(registries, piles, opener = document.activeElement, { rules = null } = {}) {
   let active = 'discard';
   let selectedId = null;
   const items = SPENT_PILES.map((id) => railItem({ label: id, id: 'spent-tab-' + id, member: id,
@@ -82,7 +82,7 @@ export function openSpentPileModal(registries, piles, opener = document.activeEl
   const detail = el('div', { class: 'pile-detail', 'aria-live': 'polite' });
   const pane = el('div', { class: 'pile-pane', id: 'spent-pile-panel', role: 'tabpanel' }, [collection, detail]);
   const read = (inst) => {
-    detail.innerHTML = inst ? cardDetailHtml(registries, inst) : '';
+    detail.innerHTML = inst ? cardDetailHtml(registries, inst, { rules }) : '';
     if (inst) decorateKeywords(detail);
   };
   const paint = () => {
@@ -96,7 +96,7 @@ export function openSpentPileModal(registries, piles, opener = document.activeEl
     });
     pane.setAttribute('aria-labelledby', 'spent-tab-' + active);
     const faces = view.cards.map((inst) => {
-      const face = renderCard(registries, inst, { small: true, inspectReadOnly: true });
+      const face = renderCard(registries, inst, { small: true, inspectReadOnly: true, rules });
       face.addEventListener('cardinspectionselect', () => { selectedId = inst.instanceId; read(inst); });
       return face;
     });

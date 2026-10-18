@@ -42,7 +42,7 @@
 /* Approved environment paintings are selected with an SVG atlas viewBox. */
 .environment-backdrop { opacity: 1; overflow: hidden; background: #17130f; top: var(--environment-top, 0); bottom: auto; height: var(--environment-height, 65%); }
 .environment-backdrop > svg { position: absolute; inset: 0; width: 100%; height: 100%; transform:scale(1.06); transform-origin:center; }
-@media (max-width:600px) { .environment-backdrop > svg { transform:scale(1.02); } }
+@container game-viewport (max-width:600px) { .environment-backdrop > svg { transform:scale(1.02); } }
 /* WGS1: once the battlefield stage has fitted the plate (SceneLayerModel), its
    viewBox already carries the bleed and the floor alignment; a CSS zoom about
    the centre would move the painted ground off the floor band. */
@@ -124,7 +124,7 @@
 .combatant.inspectable:not(.targetable) { cursor: help; }
 
 :root[data-layout='narrow'] .combatant-inspector-host {
-  width: min(var(--combatant-inspector-mobile-vw, 62vw), calc(var(--combatant-inspector-width-rem, 20) * 1rem));
+  width: min(var(--combatant-inspector-mobile-vw, calc(62 * var(--view-vw, 1vw))), calc(var(--combatant-inspector-width-rem, 20) * 1rem));
 }
 :root[data-layout='narrow'] .combatant-inspector-host.right { right: 0; }
 
@@ -351,6 +351,8 @@
 }
 /* The selected card's glow is the shared WCF3 filter (kit.css); no second outline. */
 .hand .card.selected { border-color: var(--gold); }
+/* A card already on the reaction stack: muted until the stack resolves. */
+.hand .card.is-stacked { opacity: .55; filter: saturate(.4); }
 
 /* #198: drag aiming deliberately reuses the click-selected `.aim-silho`
    visual above. The ghost names whether the current point can commit; enemies
@@ -417,17 +419,23 @@
   translate: -50% 0;
   position: absolute; font-family: var(--font-display); font-weight: 800; font-size: 2.5rem;
   color: var(--parchment);
-  /* A dark outline keeps numbers legible over any sprite. */
-  text-shadow: 0 0 3px #000, 0 0 3px #000, 0 2px 5px #000;
+  /* A 1px dark outline keeps numbers legible over any sprite. */
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
   transform-origin: center bottom;
   animation: num-pop 540ms cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
 }
-.float-num.dmg { color: #ff8f6b; }
+.float-num.dmg { color: #ff4a4a; }
 .float-num.small { font-size: 2rem; }
 .float-num.heavy { font-size: 3.4rem; }
-.float-num.crit { font-size: 4.4rem; color: #ffc861; text-shadow: 0 0 4px #000, 0 0 10px rgba(201, 162, 39, 0.7), 0 2px 6px #000; }
-.float-num.blk { color: var(--frost); }
-.float-num.ward { color: #c3a6ff; text-shadow: 0 0 4px #000, 0 0 10px rgba(150, 110, 255, 0.75), 0 2px 6px #000; white-space: nowrap; font-size: 1.6rem; }
+.float-num.crit { font-size: 4.4rem; color: #ff4a4a; }
+/* Where a hit landed: Barrier blue, Ward purple, Block silver, Poise gold,
+   Health red (owner, 2026-10-12). */
+.float-num.barrier { color: #5fa8ff; }
+.float-num.ward { color: #b38ae8; }
+.float-num.poise { color: #ffd34d; }
+/* The Force part a Silenced target was immune to: the IMMUNE callout's pale grey. */
+.float-num.immune { color: #cfd3d8; }
+.float-num.blk { color: #d8dde3; }
 .float-num.heal { color: var(--green); }
 .float-num.burst { color: var(--ember); font-size: 3.6rem; }
 /* Reduced motion: a plain rise, no bounce/overshoot. */
@@ -442,10 +450,30 @@
   font-family: var(--font-display); font-weight: 800; font-size: 2.8rem; letter-spacing: 0.08em;
   color: var(--gold); pointer-events: none;
   text-shadow: var(--hud-text-shadow, 0 0 3px #000, 0 2px 5px #000);
+  /* A 1px outline under the HUD shadow (owner, 2026-10-12). */
+  -webkit-text-stroke: 1px #000; paint-order: stroke fill;
   animation: callout-rise var(--fx-callout-ms, 900ms) ease-out forwards,
     callout-glow var(--fx-callout-ms, 900ms) ease-out forwards;
 }
 .fx-callout.red { color: var(--ember); }
+.fx-callout.ward { color: #b38ae8; }
+.fx-callout.barrier { color: #5fa8ff; }
+.fx-callout.block { color: #d8dde3; }
+.fx-callout.immune { color: #cfd3d8; }
+.fx-callout.interrupt { color: #ff9a3c; }
+/* A break's shatter ring, in its tone: silver Block, blue Barrier, purple Ward, gold Poise, orange INTERRUPTED. */
+.fx-shatter { position: absolute; width: 46px; height: 46px; border-radius: 50%; border: 3px solid var(--shatter, #fff);
+  translate: -50% -50%; pointer-events: none; animation: fx-shatter-ring 420ms ease-out forwards; }
+.fx-shatter.block { --shatter: #d8dde3; }
+.fx-shatter.barrier { --shatter: #5fa8ff; }
+.fx-shatter.ward { --shatter: #b38ae8; }
+.fx-shatter.gold { --shatter: #ffd34d; }
+.fx-shatter.interrupt { --shatter: #ff9a3c; }
+@keyframes fx-shatter-ring { from { opacity: 1; transform: scale(0.3); } to { opacity: 0; transform: scale(1.9) rotate(20deg); } }
+.fx-miss-streak { position: absolute; width: 96px; height: 4px; translate: -50% -50%; border-radius: 2px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, #fff, transparent); animation: fx-miss-swish 380ms ease-out forwards; }
+@keyframes fx-miss-swish { from { opacity: 0; transform: translateX(-30px) scaleX(0.4); } 40% { opacity: 1; } to { opacity: 0; transform: translateX(30px) scaleX(1.2); } }
+.fx-callout.white { color: #fff; }
 .float-num { z-index: 1; }
 .reduce-flashes .fx-callout { animation: callout-rise var(--fx-callout-ms, 900ms) ease-out forwards; }
 .reduced-motion .fx-callout { animation: callout-fade var(--fx-callout-ms, 900ms) ease-out forwards; }
@@ -1030,7 +1058,7 @@
 .combat-art-choice > .card { align-self: center; }
 .combat-art-choice > button { min-height: max(44px, calc(44px / var(--ui-zoom, 1))); white-space: normal; }
 .combat-potion-menu .as-option { width: 100%; min-height: max(44px, calc(44px / var(--ui-zoom, 1))); }
-@media (max-width: 480px) {
+@container game-viewport (max-width: 480px) {
   .combat > .hand-area > .combat-action-row { inset-inline: 8px; gap: 4px; }
   .combat-action-row > button { padding-inline: 2px; font-size: 1.1rem; }
 }
@@ -1088,7 +1116,7 @@
 .hand .card.beat-hold[data-hold='holding']::after { content:''; position:absolute; inset:0; z-index:6; pointer-events:none; border-radius:inherit; background:linear-gradient(0deg,rgba(72,166,98,.42),rgba(121,204,132,.22)); clip-path:inset(calc((1 - var(--hold,0)) * 100%) 0 0 0); }
 .hand .card > .hold-hint { position:absolute; bottom:10px; left:0; right:0; margin:0; text-align:center; pointer-events:none; }
 
-@media (max-width: 480px) {
+@container game-viewport (max-width: 480px) {
   :root .combat:not(.coop) .hand { padding-inline: 16px; }
   :root .combat:not(.coop) .hand .card { --card-w: calc(146.5px / var(--ui-zoom, 1)); }
 }
@@ -1102,7 +1130,7 @@
 :root .combat:not(.coop) .combatant .sprite { flex: 0 0 auto; min-width: max-content; overflow: visible; }
 
 /* Normal encounters fit the viewport. Only four or more enemies may scroll. */
-@media(max-width:640px) {
+@container game-viewport (max-width:640px) {
   /* The shared fitter still owns the row. Art may cross adjacent cells a
      little; scale only the figures so meters, labels and intent stay readable. */
   :root .combat:not(.coop) .combatant .sprite { scale:0.9; transform-origin:bottom center; }
@@ -1152,7 +1180,7 @@
 :root .combat:not(.coop) .hand .card .art { width:100%; height:var(--card-art-h); margin:0; }
 
 /* A short landscape viewport gets a scrollable battle, not miniature cards. */
-@media(max-height:620px) {
+@container game-viewport (max-height:620px) {
   :root .combat:not(.coop) { overflow-y:auto; }
   :root .combat:not(.coop) .field { flex:1 0 calc(300px / var(--ui-zoom,1)); min-height:calc(300px / var(--ui-zoom,1)); }
   :root .combat:not(.coop) > .hand-area { flex:0 0 auto; }
@@ -1197,14 +1225,14 @@
 }
 
 /* A horizontal body needs room to the right of the leftmost solo player. */
-@media (max-width: 600px) {
+@container game-viewport (max-width: 600px) {
   .combat:not(.coop) .player .defeated-frame { left: 100% !important; }
 }
 
 /* Stable combat composition. Percent tracks share one viewport-sized parent;
    disappearing cards, status chips and turn banners cannot resize the field. */
 :root .combat[data-layout='formation'] {
-  flex: none; height: calc(100dvh / var(--ui-zoom, 1)); min-height: 0;
+  flex: none; height: calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1)); min-height: 0;
   display: grid; grid-template-rows: 10% 45% 45%; overflow: clip;
 }
 :root .combat[data-layout='formation'] > .topbar { grid-row: 1; min-height: var(--w4-band-hud, 0px); height: auto; box-sizing: border-box; overflow: visible; }
@@ -1234,7 +1262,9 @@
 :root .combat[data-layout='formation'] .combatant:is(.enemy-target-hitbox,.player-target-hitbox)::after {
   content: ''; position: absolute;
   left: var(--enemy-hit-x); top: var(--enemy-hit-y);
-  width: var(--enemy-hit-width, calc(44px / var(--ui-zoom, 1))); height: var(--enemy-hit-height, calc(44px / var(--ui-zoom, 1)));
+  /* Both target surfaces wait for battlefield geometry; an unresolved center
+     must not produce a default square over the shared header. */
+  width: var(--enemy-hit-width, 0px); height: var(--enemy-hit-height, 0px);
   transform: translate(-50%, -50%); z-index: 900; pointer-events: auto;
 }
 :root .combat[data-layout='formation'] .combatant .sprite > :first-child { flex-shrink: 0; }
@@ -1352,8 +1382,8 @@
    contract tools/combat-action-row.mjs states — Actions and Potions pinned to
    the edges, Draw / End Turn / Discard a centre cluster, End Turn the wide
    one — and sizes it from the viewport instead of the window's width: the
-   round controls and End Turn stand ~13vh tall, the piles ~60% of that, the
-   cluster is 15vw / 30vw / 15vw with the leftover width spent between the
+   round controls and End Turn stand ~calc(13 * var(--view-vh, 1vh)) tall, the piles ~60% of that, the
+   cluster is calc(15 * var(--view-vw, 1vw)) / calc(30 * var(--view-vw, 1vw)) / calc(15 * var(--view-vw, 1vw)) with the leftover width spent between the
    edges and the cluster rather than inside the piles. The `/ var(--ui-zoom)`
    is the shape every viewport length wears under the body zoom (base.css).
    Below 600px tall the formation's own 52/42 px rule above still stands. */
@@ -1386,7 +1416,7 @@
 }
 .victory-beat-title::before { content: '‹ ✧ '; } .victory-beat-title::after { content: ' ✧ ›'; }
 [data-turn='enemy'] .turn-ribbon { color: #ffc0a4; border-color: #9f492f; background: linear-gradient(90deg, transparent, #5a2017ec 20%, #5a2017ec 80%, transparent); }
-@media (max-height: 500px) {
+@container game-viewport (max-height: 500px) {
   :root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(42px / var(--ui-zoom,1)) !important; padding-block: 0; }
   :root .combat[data-layout='formation'] > .topbar .hud-info-row { display: none; }
   .turn-ribbon { font-size: calc(12px / var(--ui-zoom,1)); padding-block: 1px; }
@@ -1455,9 +1485,19 @@
 }
 :root .combat[data-layout='formation'] .hand::-webkit-scrollbar { display:none; }
 
+/* Co-op uses its own HUD markup, without the shared-hud grid. Keep Leave
+   beside the resources so the fixed formation band also contains the label. */
+:root .combat.coop[data-layout='formation'] .topbar .hud-top {
+ display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
+ column-gap:calc(8px / var(--ui-zoom,1)); width:100%;
+}
+:root .combat.coop[data-layout='formation'] .topbar .resbars-host { grid-column:1; min-width:0; }
+:root .combat.coop[data-layout='formation'] .topbar .fight-label { grid-column:1; }
+:root .combat.coop[data-layout='formation'] .topbar .coop-leave { grid-column:2; grid-row:1 / span 2; }
+
 /* Short landscape keeps meters inline in the left resource column.
    Relics remain below them; the compact band preserves battlefield space. */
-@media (max-height:500px) {
+@container game-viewport (max-height:500px) {
  :root :is(.combat[data-layout='formation'], .w4-frame) > .topbar { padding:0 calc(8px / var(--ui-zoom,1)); }
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .hud-top { width:100%; height:auto; justify-content:center; }
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resbars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
@@ -1466,9 +1506,9 @@
  /* INTENDED, measured in Chromium (#1368; D29 in docs/FINISH.md). The co-op
     board's `.hud-top` (src/ui/screens/coop.js) is not the shared run HUD: it
     has no `.shared-hud` ancestor, so kit.css's `.shared-hud > .hud-top` grid
-    never applies and this row overrides nothing shared; without it the box is
-    block flow. In short landscape block flow drops Leave to a second line and
-    the band takes that height from the battlefield. This row keeps the bars
+    never applies. The co-op grid above serves taller screens; short landscape
+    needs its resources and Leave inline to preserve battlefield space.
+    This row keeps the bars
     (flex:1) and Leave on one row, fight label hidden: the compact band above.
     tools/coop-hud-top.mjs holds it (overlap, clipping, lost parts, horizontal
     overflow at 390x844, 844x390, 1280x800; one row at 844x390). */
@@ -1478,7 +1518,7 @@
  :root .combat.coop[data-layout='formation'] .topbar .coop-leave { height:calc(32px / var(--ui-zoom,1)); min-height:0; }
 }
 
-@media (max-height:500px) {
+@container game-viewport (max-height:500px) {
  :root .combat[data-layout='formation'] .combat-action-row .combat-potions { font-size:calc(10px / var(--ui-zoom,1)); }
  :root .combat[data-layout='formation'] .combat-action-row .energy-orb .sp-k { font-size:calc(7px / var(--ui-zoom,1)); }
 }
@@ -1564,11 +1604,18 @@
   border-radius: .2rem;
 }
 /* Perspective grid: uniform cells; the shadow is each body's foot anchor. */
-:root:not([data-display-appearance='classic']) .formation-grid[data-perspective='true'] { display: grid; }
+:root:not([data-display-appearance='classic'])[data-formation-grid='true'] .formation-grid[data-perspective='true'] { display: grid; }
 .formation-grid[data-perspective='true'] .formation-grid-cell { transform: none; }
 .formation-grid[data-perspective='true'] .formation-grid-outline { display: none; }
+:root[data-formation-grid='true'] .formation-grid[data-perspective='true'] .formation-grid-outline { display: block; }
+/* One uniform, unfilled outline follows each actual skewed cell box. */
+.formation-grid[data-perspective='true'] .formation-grid-outline > * {
+  display: none; fill: none; stroke: rgb(238 232 220 / 32%);
+  stroke-width: calc(1px / var(--ui-zoom, 1));
+}
+.formation-grid[data-perspective='true'] .formation-grid-outline > [data-perspective-outline] { display: block; }
 .formation-grid[data-perspective='true'] .formation-grid-cell span { display: none; }
-/* Owner (2026-10-12): no grid lines; only the foot shadows mark the cells. */
+/* Grid visibility is independent from movement and the foot-anchor marks. */
 .formation-grid[data-perspective='true'] .formation-grid-cell { border: 0; }
 .formation-grid[data-perspective='true'] .formation-grid-cell::before {
   content: ''; position: absolute; left: 50%; top: var(--foot-y, 70%);
@@ -1592,7 +1639,7 @@
 
 /* Overhead controls are screen-sized, independent of sprite zoom and animation. */
 :root .combat[data-layout='formation'] .combatant-leading {
-  top: var(--overhead-top, 0); bottom: auto;
+  top: var(--combat-elev, 0); bottom: auto;
   transform: translateY(-100%);
   display: flex; flex-direction: column; align-items: center;
   gap: calc(4px / var(--ui-zoom, 1)); z-index: 1100;
@@ -1629,6 +1676,14 @@
 .intent-value { display: inline-flex; align-items: center; gap: calc(4px / var(--ui-zoom, 1)); }
 .intent-icon { width: calc(21px / var(--ui-zoom, 1)); height: calc(21px / var(--ui-zoom, 1)); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .intent-icon[data-solid='true'] { fill: currentColor; fill-rule: evenodd; stroke: none; }
+/* A read that passes tints its intent by damage class (owner, 2026-10-13):
+   silver with a black outline for physical, blue with a purple outline for magic. */
+/* Line-art icons (prepare, power) have open subpaths, so they keep fill:none:
+   the line takes the inner colour and a drop shadow draws the outline. */
+.intent[data-damage-class='physical'] .intent-icon { stroke: #c7ccd4; filter: drop-shadow(0 0 1px #0d0d0f) drop-shadow(0 0 1px #0d0d0f); }
+.intent[data-damage-class='magic'] .intent-icon { stroke: #4f63e6; filter: drop-shadow(0 0 1px #8a3fd6) drop-shadow(0 0 1px #8a3fd6); }
+.intent[data-damage-class='physical'] .intent-icon[data-solid='true'] { fill: #c7ccd4; stroke: #0d0d0f; stroke-width: 1.5; filter: none; }
+.intent[data-damage-class='magic'] .intent-icon[data-solid='true'] { fill: #4f63e6; stroke: #8a3fd6; stroke-width: 1.5; filter: none; }
 .combatant-leading .intent[data-intent-visibility='partial'] { --intent-accent: #e7c65c; }
 .combatant-leading .intent[data-intent-visibility='unknown'] { --intent-accent: #c88aeb; color: var(--intent-accent); }
 .combatant-leading .intent[data-intent-visibility='unknown'] .intent-stance { font-size: calc(28px / var(--ui-zoom, 1)); }
@@ -1640,10 +1695,10 @@
   box-shadow: 0 0 12px #f8d98588, inset 0 1px 0 #ffffff55;
 }
 .combatant-leading .enemy-key { position: absolute; left: calc(100% + 3px); bottom: 0; }
-@media (max-height: 700px) {
+@container game-viewport (max-height: 700px) {
   :root .combat[data-layout='formation'] { grid-template-rows: 10% 55% 35%; }
 }
-@media (max-height: 480px) and (min-width: 600px) {
+@container game-viewport (max-height: 480px) and (min-width: 600px) {
   /* Keep inspection beside the intent on short screens so selection does
      not consume another row above the fixed card-to-action gap. */
   :root .combat[data-layout='formation'] .combatant-leading {
@@ -1726,11 +1781,11 @@
 .reaction-switch[data-enabled='false'] .reaction-switch-track { background:#923d36; }
 .reaction-switch[data-enabled='false'] .reaction-switch-thumb { right:auto; left:calc(2px / var(--ui-zoom,1)); }
 .reaction-switch[data-enabled='false'] .reaction-switch-value { padding-left:calc(23px / var(--ui-zoom,1)); }
-.combat-log-panel { position:absolute; right:0; bottom:calc(100% + 6px / var(--ui-zoom,1)); width:min(calc(300px / var(--ui-zoom,1)),calc(100vw / var(--ui-zoom,1) - 24px / var(--ui-zoom,1))); display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box; border:1px solid var(--gold); border-radius:4px; background:rgba(19,16,12,.82); color:#fff7e4; box-shadow:0 4px 18px #0008; }
+.combat-log-panel { position:absolute; right:0; bottom:calc(100% + 6px / var(--ui-zoom,1)); width:min(calc(300px / var(--ui-zoom,1)),calc(calc(100 * var(--view-vw, 1vw)) / var(--ui-zoom,1) - 24px / var(--ui-zoom,1))); display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box; border:1px solid var(--gold); border-radius:4px; background:rgba(19,16,12,.82); color:#fff7e4; box-shadow:0 4px 18px #0008; }
 .combat-log-panel[hidden] { display:none; }
 /* The "no reaction: why" note (components/reactionNote.js), placed by JS just
    above the Reaction switch. It never takes a click. */
-.reaction-note { position:absolute; z-index:calc(var(--combat-layer-hud, 700) + 2); max-width:min(calc(280px / var(--ui-zoom,1)),calc(100vw / var(--ui-zoom,1) - 24px / var(--ui-zoom,1)));
+.reaction-note { position:absolute; z-index:calc(var(--combat-layer-hud, 700) + 2); max-width:min(calc(280px / var(--ui-zoom,1)),calc(calc(100 * var(--view-vw, 1vw)) / var(--ui-zoom,1) - 24px / var(--ui-zoom,1)));
   padding:calc(5px / var(--ui-zoom,1)) calc(9px / var(--ui-zoom,1)); border:1px solid var(--gold); border-radius:4px;
   background:rgba(19,16,12,.88); color:#fff7e4; font-size:calc(12px / var(--ui-zoom,1)); line-height:1.3;
   text-shadow: var(--hud-text-shadow, none); box-shadow:0 2px 10px #0008; pointer-events:none;
@@ -1751,7 +1806,7 @@
    background runs under the notch and home bar, and its padding keeps the
    head and the entries clear of them. Specificity beats the rung's width. */
 .modal-veil:has(> .combat-log-modal) { padding: 0 !important; }
-.modal.combat-log-modal[data-size] { --modal-rung-width: calc(100vw / var(--ui-zoom,1)); width: calc(100vw / var(--ui-zoom,1)); max-width: none; height: calc(100dvh / var(--ui-zoom,1)); max-height: none; border: 0; border-radius: 0; box-sizing: border-box; padding: calc(env(safe-area-inset-top,0px) / var(--ui-zoom,1)) calc(env(safe-area-inset-right,0px) / var(--ui-zoom,1)) calc(env(safe-area-inset-bottom,0px) / var(--ui-zoom,1)) calc(env(safe-area-inset-left,0px) / var(--ui-zoom,1)); }
+.modal.combat-log-modal[data-size] { --modal-rung-width: calc(calc(100 * var(--view-vw, 1vw)) / var(--ui-zoom,1)); width: calc(calc(100 * var(--view-vw, 1vw)) / var(--ui-zoom,1)); max-width: none; height: calc(calc(100 * var(--view-vh, 1dvh)) / var(--ui-zoom,1)); max-height: none; border: 0; border-radius: 0; box-sizing: border-box; padding: calc(env(safe-area-inset-top,0px) / var(--ui-zoom,1)) calc(env(safe-area-inset-right,0px) / var(--ui-zoom,1)) calc(env(safe-area-inset-bottom,0px) / var(--ui-zoom,1)) calc(env(safe-area-inset-left,0px) / var(--ui-zoom,1)); }
 .combat-log-modal-entries { padding: 0.6rem 1.4rem 2rem; font-size: calc(15px / var(--ui-zoom,1)); line-height: 1.45; }
 .combat-log-modal-entries h3 { font-size: inherit; color: var(--gold); margin: 1rem 0 0.3rem; }
 .combat-log-modal-entries ol { list-style: none; padding: 0; margin: 0; }
@@ -1765,3 +1820,219 @@
 .combat-log-entries li { border-bottom:1px solid #b4925438; padding:3px 0; }
 @media (prefers-reduced-motion:no-preference) { .combat-log-panel:not([hidden]) { animation:combat-log-open 120ms ease-out; } }
 @keyframes combat-log-open { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+
+/* Approved original composition: preserve groups, enlarge readable content. */
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] {
+  background: #211d16;
+  grid-template-rows: var(--w4-band-hud) minmax(0,1fr) calc(var(--w4-band-context) + var(--w4-band-footer));
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] > .hand-area {
+  background: #211d16;
+  grid-template-rows: minmax(0,1fr) var(--w4-band-footer);
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combat-action-row { background: none !important; box-shadow: none; }
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .alternative-card-fade { display: none; }
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant-mini-hud { zoom: var(--combat-mini-hud-scale,1.8); }
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combat-tools { font-size: calc(17px / var(--ui-zoom,1)); }
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .turn-ribbon { font-size: calc(18px / var(--ui-zoom,1)); }
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant .combatant-mini-hud {
+  width: calc(112px / var(--ui-zoom,1)); flex: none;
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant.enemy .combatant-card > :is(.meters,.nm) {
+  width: calc(104px * var(--combat-enemy-hud-scale,1.8) / var(--ui-zoom,1));
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant.enemy:not(.context-selected) .combat-health-row {
+  --health-row-h: calc(7px * var(--combat-enemy-hud-scale,1.8) / var(--ui-zoom,1));
+  --combatant-hp-h: var(--health-row-h);
+  --combatant-value-text: calc(10px * var(--combat-enemy-hud-scale,1.8) / var(--ui-zoom,1));
+  padding-bottom: calc(12px * var(--combat-enemy-hud-scale,1.8) / var(--ui-zoom,1));
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant.enemy:not(.context-selected) .combat-health-meter .m-value {
+  font-size: calc(10px * var(--combat-enemy-hud-scale,1.8) / var(--ui-zoom,1));
+}
+
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant.player .combatant-leading {
+  width: calc(112px * var(--combat-mini-hud-scale,1.8) / var(--ui-zoom,1));
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant.enemy .intent { zoom: var(--combat-enemy-hud-scale,1.8); }
+/* A compact face keeps its prose inside the parchment; Inspect retains all lines. */
+:root .combat .hand .card .ic-layer[data-component='rules'] { overflow: hidden; }
+/* The real artwork/HUD and bounded 44px core remain targets. A second,
+   footer-wide transparent proxy would steal artwork in the next depth band. */
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .combatant.enemy.enemy-target-hitbox::after {
+  pointer-events: none;
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .enemy .combatant-leading > .statuses:empty {
+  display: none;
+}
+
+/* Approved desktop D: the upper hand is transparent; fixed original footer
+   controls share the combat root ruler rather than the current card count. */
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'][data-desktop-footer='true'] > .hand-area {
+  position:relative; background:transparent; overflow:visible; pointer-events:none;
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'][data-desktop-footer='true'] > .hand-area::before {
+  content:''; position:absolute; inset:var(--desktop-background-top) 0 0; pointer-events:none;
+  background:linear-gradient(to bottom, rgb(33 29 22 / 0), #211d16 var(--desktop-background-fade-height));
+}
+:root .combat[data-layout='formation'][data-desktop-footer='true']:is(.coop,:not(.coop)) .hand-overlay {
+  position:absolute; inset:var(--desktop-hand-top) 0 auto; height:var(--desktop-hand-height); width:100%; overflow:visible;
+}
+:root .combat[data-layout='formation'][data-desktop-footer='true']:is(.coop,:not(.coop)) .hand[data-wireframe-hand='true'] {
+  width:100%; height:100%; background:transparent; pointer-events:none;
+}
+:root .combat[data-layout='formation'][data-desktop-footer='true'] .hand .card { pointer-events:auto; }
+:root .combat[data-layout='formation'][data-desktop-footer='true']:is(.coop,:not(.coop)) > .hand-area > .combat-action-row[data-footer-art] {
+  grid-area:auto !important; position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; max-width:none !important; margin:0 !important; padding:0; pointer-events:none;
+}
+:root .combat[data-layout='formation'][data-desktop-footer='true']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > :is(.energy-orb,.pile,.end-turn,.combat-potions) {
+  left:var(--desktop-x) !important; top:calc(var(--desktop-y) - var(--desktop-area-top, 0px)) !important;
+  width:var(--desktop-w) !important; height:var(--desktop-h) !important; min-width:0 !important; min-height:0 !important; max-width:none; max-height:none; pointer-events:auto;
+}
+:root .combat[data-layout='formation'][data-desktop-footer='true'] .footer-art-rails { display:none; }
+:root .combat[data-layout='formation'][data-desktop-footer='true'] .end-turn > .footer-art-face {
+  position:absolute; width:var(--desktop-end-art-width); height:var(--desktop-end-art-height); left:50%; top:auto; bottom:0; transform:translateX(-50%);
+}
+:root .combat[data-layout='formation'][data-desktop-footer='true'] .end-turn > .hold-hint { position:absolute; bottom:0; left:0; right:0; }
+
+/* The enabled purse stays inside the existing floating header; it must not
+   create an implicit grid row and push the battlefield down. */
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-info-row.hud-cinders-strip {
+  position:absolute; grid-area:auto; display:flex; top:calc(38px / var(--ui-zoom,1));
+  left:50%; transform:translateX(-50%); width:max-content; max-width:45%; margin:0;
+  justify-content:center; pointer-events:auto;
+}
+
+/* The display preference shares the measured Log/Reaction row so the hand
+   can keep its paint and input priority above UI without covering this switch. */
+:root .combat[data-layout='formation'] .combat-tools > .combat-grid-toggle {
+  position:static; grid-column:2; grid-row:1; align-self:center;
+  display:flex; align-items:center; gap:calc(6px / var(--ui-zoom,1));
+  height:calc(28px / var(--ui-zoom,1)); min-height:0; margin:0; padding:0 calc(2px / var(--ui-zoom,1));
+  width:max-content; min-width:calc(58px / var(--ui-zoom,1));
+  color:#eee8dc; font:calc(12px / var(--ui-zoom,1))/1 var(--font-ui,sans-serif);
+  text-shadow:0 1px 3px #000,0 0 4px #000; pointer-events:auto; cursor:pointer;
+}
+:root .combat[data-layout='formation'] .combat-tools > .combat-grid-toggle > input {
+  appearance:auto; width:calc(18px / var(--ui-zoom,1)); height:calc(18px / var(--ui-zoom,1));
+  min-width:0; min-height:0; max-width:none; max-height:none; margin:0; padding:0;
+  accent-color:#d4bd82; cursor:pointer; flex:none;
+}
+
+/* Desktop alternative formation: contextual target details. The battlefield
+   still owns all sprite/overhead geometry; this layer never reserves hand space. */
+.combat[data-target-hud='true'] .target-hud-layer,
+.combat[data-target-hud='true'] .target-hud-cells { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.combat[data-target-hud='true'] .target-hud-cells { z-index: 1; }
+.combat[data-target-hud='true'] .target-hud-layer { z-index: 28; }
+.target-hud-layer[hidden], .target-hud-cells[hidden] { display: none !important; }
+.target-hud-detail { position: absolute; box-sizing: border-box; pointer-events: auto; opacity: 0; transition: opacity var(--target-hud-fade, 150ms) ease; font-size: var(--target-hud-font, 13px); line-height: 1.2; color: #e9dfc8; }
+.target-hud-detail.visible { opacity: 1; }
+.target-hud-detail.leaving { opacity: 0; pointer-events: none; }
+.target-hud-panel { box-sizing: border-box; padding: .65em .75em; border: 1px solid #84734c; border-radius: .35em; background: linear-gradient(145deg, #28231bf5, #15130ff5); box-shadow: 0 .2em .8em #0008; }
+.target-hud-name { font-family: Georgia, serif; font-size: 1.05em; margin-bottom: .4em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.target-hud-meters.meters { width: 100%; min-width: 0; gap: .4em; display: flex; flex-direction: column; }
+.target-hud-meters :is(.combat-health-row, .as-meter, .m-track) { width: 100% !important; min-width: 0 !important; max-width: none !important; }
+.target-hud-meters .as-meter { font-size: .85em; height: 1.15em !important; min-height: 0; }
+.target-hud-meters .m-track { height: 1.15em !important; min-height: 0; }
+.target-hud-meters .m-value { font-size: 1em !important; line-height: 1; }
+.target-hud-meters .m-label { display: none; }
+.target-hud-meters .combat-health-row { height: auto !important; min-height: 0; }
+.target-hud-meters .combat-health-badge { font-size: .8em; }
+.target-hud-intent { display: flex; align-items: center; gap: .45em; margin-top: .45em; min-height: 1.65em; }
+.target-hud-intent .intent-icon { width: 1.65em; height: 1.65em; flex: none; }
+.target-hud-intent-name { flex: 1; }
+.target-hud-damage { color: #f17e73; font-variant-numeric: tabular-nums; }
+.target-hud-intent[data-damage-tone='green'] .target-hud-damage { color: #8ad498; }
+.target-hud-statuses.statuses { display: flex !important; justify-content: flex-end; gap: .35em; margin: .4em 0 0; padding: 0; width: 100%; min-height: 0; overflow: visible; }
+.target-hud-statuses .tray-icon { flex: none; width: var(--target-hud-status-size) !important; height: var(--target-hud-status-size) !important; min-width: 0; min-height: 0; font-size: 1em; }
+.target-hud-statuses .combat-evade-icon > svg { position: absolute; width: 82%; height: 82%; inset: 9%; margin: 0; }
+.target-hud-statuses .as-pip-count { position: absolute; right: -.15em; bottom: -.12em; top: auto; font-size: .72em; line-height: 1; }
+.combat[data-target-hud='true'] .combatant .combatant-card > :is(.nm, .meters, .statuses),
+.combat[data-target-hud='true'] .combatant .combatant-mini-hud > :not(.meters),
+.combat[data-target-hud='true'] .combatant .combatant-leading > .statuses { display: none !important; }
+.combat[data-target-hud='true'] .combatant .combatant-leading .meters > :not([data-meter-row='hp']),
+.combat[data-target-hud='true'] .combatant.target-hud-selected .combatant-leading [data-meter-row='hp'] { display: none !important; }
+.combat[data-target-hud='true'] .combatant.target-hud-candidate .sprite { filter: drop-shadow(0 0 2px #d99b64); }
+.combat[data-target-hud='true'] .combatant:is(.target-hud-selected, .target-hud-focused) .sprite { filter: drop-shadow(0 0 2px #ffe0a4) drop-shadow(0 0 2px #ffe0a4); }
+.combat[data-target-hud='true'] .combatant.player:is(.target-hud-selected, .target-hud-focused) .sprite { filter: drop-shadow(0 0 2px #87caff) drop-shadow(0 0 2px #87caff); }
+@media (prefers-reduced-motion: reduce) { .target-hud-detail { transition: none; } }
+body.reduce-motion .target-hud-detail { transition: none; }
+.combat[data-target-hud='true'] .target-hud-overhead-meters { width: 100%; }
+.combat[data-target-hud='true'] .target-hud-overhead-meters .meters > :not([data-meter-row='hp']) { display: none !important; }
+.combat[data-target-hud='true'] .combatant.target-hud-selected .target-hud-overhead-meters { display: none !important; }
+:root .combat[data-target-hud='true'] .target-hud-layer { z-index: calc(var(--combat-layer-selection, 500) + 2); }
+:root .combat[data-target-hud='true'] .target-hud-cells { z-index: calc(var(--combat-layer-grid, 100) + 1); }
+:root .combat[data-target-hud='true'] .combatant .combatant-leading { display: flex; flex-direction: column; align-items: center; gap: calc(4px / var(--ui-zoom,1)); padding-bottom: 0 !important; width: calc(130px / var(--ui-zoom,1)) !important; }
+:root .combat[data-target-hud='true'] .combatant .combatant-leading > :is(.combatant-info, .combatant-mini-hud, .statuses) { display: none !important; }
+:root .combat[data-target-hud='true'] .combatant .combatant-leading > :is(.intent, .player-action-intent) {
+  position: static !important; inset: auto !important; translate: none !important; transform: none !important; zoom: 1 !important;
+  visibility: visible !important; display: flex; align-items: center; justify-content: center; width: auto !important; min-width: 0 !important;
+  min-height: calc(30px / var(--ui-zoom,1)) !important; height: calc(30px / var(--ui-zoom,1)) !important;
+  padding: 0 !important; margin: 0; border: 0 !important; background: transparent !important; box-shadow: none !important;
+  font-size: calc(16px / var(--ui-zoom,1)); color: #ffe7ab;
+}
+:root .combat[data-target-hud='true'] .combatant .intent > :not(.intent-compact) { display: none !important; }
+:root .combat[data-target-hud='true'] .combatant .intent .intent-compact { display: inline-flex !important; align-items: center; gap: calc(5px / var(--ui-zoom,1)); }
+:root .combat[data-target-hud='true'] .combatant .combatant-leading .intent-icon { width: calc(28px / var(--ui-zoom,1)); height: calc(28px / var(--ui-zoom,1)); }
+:root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row { margin: 0; padding-bottom: calc(13px / var(--ui-zoom,1)); --health-row-h: calc(7px / var(--ui-zoom,1)); }
+:root .combat[data-target-hud='true'] .combatant.context-selected .sprite { scale: 1 !important; }
+:root .combat[data-target-hud='true'] .target-hud-intent .intent-icon { width: 1.65em; height: 1.65em; }
+:root .combat[data-target-hud='true'] .target-hud-meters .combat-health-row { position: relative; display: flex; padding: 0; }
+:root .combat[data-target-hud='true'] .target-hud-meters .combat-health-badge { display: none; }
+:root .combat[data-target-hud='true'] .target-hud-meters .combat-health-meter { flex: 1; --meter-tone: #ad403a; }
+:root .combat[data-target-hud='true'] .target-hud-meters .m-plate { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; pointer-events: none; }
+:root .combat[data-target-hud='true'] .target-hud-statuses.statuses { justify-content: flex-end !important; }
+:root .combat[data-target-hud='true'] .target-hud-statuses .stk { position: absolute; right: -.12em; bottom: -.12em; top: auto; min-width: 1em; padding: 0 .15em; font-size: .7em; line-height: 1.2; }
+:root .combat[data-target-hud='true'] .intent-compact-damage { color: #f17e73; }
+:root .combat[data-target-hud='true'] .intent-compact-damage[data-damage-tone='green'] { color: #8ad498; }
+:root .combat[data-target-hud='true'] .combatant.enemy:is(.target-hud-selected, .target-hud-focused) .sprite { filter: drop-shadow(0 0 2px #ef6660) drop-shadow(0 0 2px #ef6660); }
+:root .combat[data-target-hud='true'] .target-hud-statuses[hidden] { display: none !important; }
+:root .combat[data-target-hud='true'] .target-hud-panel { padding: var(--target-hud-padding-block, .65em) var(--target-hud-padding-inline, .75em); }
+:root .combat[data-target-hud='true'] .target-hud-detail[data-crowded='true'] .target-hud-name { margin-bottom: .3em; }
+:root .combat[data-target-hud='true'] .target-hud-detail[data-crowded='true'] .target-hud-intent { margin-top: .3em; }
+:root .combat[data-target-hud='true'] .aim-silho { display: none !important; }
+:root .combat[data-target-hud='true'] .combatant.enemy:is(.targetable, .target-hud-candidate) .sprite { outline: none; filter: drop-shadow(1px 0 0 #de6c5b99) drop-shadow(-1px 0 0 #de6c5b99); }
+:root .combat[data-target-hud='true'] .combatant.enemy:is(.target-hud-selected, .target-hud-focused) .sprite { outline: none; filter: drop-shadow(1px 0 0 #ef756bcc) drop-shadow(-1px 0 0 #ef756bcc) drop-shadow(0 1px 0 #ef756bcc); }
+:root .combat[data-target-hud='true'] .combatant.enemy::after { background: none !important; border: 0 !important; box-shadow: none !important; }
+/* Tactical preview previously painted four cumulative bright edges directly
+   on the artwork. The target HUD owns its subtle host outline instead. */
+:root .combat[data-target-hud='true'] .combatant .sprite [data-target-outline] { filter: none !important; }
+/* A host outline must follow opaque art, not the broad readability shadow
+   already painted on each frame; otherwise that shadow becomes a red halo. */
+:root .combat[data-target-hud='true'] .combatant:is(.target-hud-candidate, .target-hud-selected, .target-hud-focused) .sprite { --combatant-edge: none; }
+:root .combat[data-target-hud='true'] .combatant.enemy.target-hud-candidate:not(.target-hud-focused) .sprite { filter: drop-shadow(1px 0 0 #de6c5b99) drop-shadow(-1px 0 0 #de6c5b99); }
+
+/* Mobile player mini HUD: the existing HP meter spans the complete inner
+ width, with the existing defense badges and HP fraction beneath it. Undo
+ the player's mini-HUD zoom for enemy-matched physical thickness and type. */
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-row {
+  --health-row-h: calc(7px * var(--combat-enemy-hud-scale, 1) / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
+  --combatant-hp-h: var(--health-row-h);
+  --combatant-value-text: calc(10px * var(--combat-enemy-hud-scale, 1) / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
+  --mini-health-badge: calc(16px * var(--combat-enemy-hud-scale, 1) / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
+  --mini-health-gap: calc(3px / var(--combat-mini-hud-scale, 1.8) / var(--ui-zoom, 1));
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start;
+  width: 100% !important; min-width: 0; height: auto !important;
+  min-height: calc(var(--health-row-h) + var(--mini-health-gap) + var(--mini-health-badge)) !important;
+  gap: var(--mini-health-gap); padding: 0 !important;
+}
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter {
+  order: -1; flex: 0 0 100%; width: 100% !important; height: var(--health-row-h);
+  margin: 0; min-height: 0;
+}
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter .m-track {
+  width: 100% !important; height: var(--health-row-h); min-height: 0;
+}
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter > .m-plate {
+  inset: auto 0 auto auto; top: calc(100% + var(--mini-health-gap));
+  width: auto; min-height: var(--mini-health-badge); justify-content: flex-end; align-items: center;
+}
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter .m-value {
+  font-size: var(--combatant-value-text) !important; line-height: 1; padding: 0;
+}
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-meter .m-value::after { content: none; }
+:root[data-display-appearance='alternative'][data-form-factor='mobile'] .combat[data-layout='formation'] .player .combatant-mini-hud .combat-health-badge {
+  flex: 0 0 var(--mini-health-badge); width: var(--mini-health-badge); height: var(--mini-health-badge);
+  min-width: 0; aspect-ratio: auto; font-size: var(--combatant-value-text); line-height: 1;
+}

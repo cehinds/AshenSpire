@@ -1,0 +1,26 @@
+{
+  "id": "status.dexterity",
+  "tag": "status.dexterity",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Dexterity",
+  "description": "Cards grant +1 Block per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.dexterity"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/derivedStats.js",
+    "symbol": "restoreDerivedStatRuleSnapshot"
+  }
+}

@@ -1,0 +1,9 @@
+object,rank,key,change,note
+strike,2,strike.baseDamage,+1,
+strike,3,strike.arScale,+0.05,
+strike,4,strike.baseDamage,+1,
+strike,5,strike.cost,=0,Free at max rank
+straightSword,2,straightSword.ar,+3,
+straightSword,3,sword.arBonus,+2,
+wayfarerPlate,2,wayfarerPlate.dr,+2,
+wayfarerPlate,3,wayfarerPlate.poise,×1.25,

@@ -1,0 +1,7 @@
+import {createRequire} from 'node:module';
+import test from 'node:test';
+import assert from 'node:assert/strict';
+const {projectPath,assetSource,snapRect}=createRequire(import.meta.url)('../project.js');
+test('project paths cannot escape the tool projects directory',()=>{assert.equal(projectPath('projects/character-creation/scene.json'),'projects/character-creation/scene.json');for(const value of ['../scene.json','https://example.com/scene.json','projects/../scene.json','projects/a/%2e%2e/scene.json','/projects/a/scene.json','projects/a/scene.json?x=1'])assert.throws(()=>projectPath(value));});
+test('assets follow scene directory and embedded exports remain portable',()=>{assert.equal(assetSource('assets/frame.png','projects/character/scene.json'),'projects/character/assets/frame.png');assert.equal(assetSource('data:image/png;base64,AA','projects/a/scene.json'),'data:image/png;base64,AA');assert.throws(()=>assetSource('assets/../frame.png','projects/a/scene.json'));});
+test('snapping uses grid, canvas and sibling anchors within tolerance',()=>{assert.equal(snapRect({x:17,y:19,width:30,height:30},{width:500,height:500},[]).dx,-1);const result=snapRect({x:45,y:80,width:50,height:30},{width:500,height:500},[{x:100,y:200,width:30,height:30}],100,6);assert.equal(result.dx,5);assert.ok(result.guides.some(g=>g.axis==='x'&&g.value===100));assert.equal(snapRect({x:43,y:43,width:5,height:5},{width:500,height:500},[],100,2).dx,0);});

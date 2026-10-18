@@ -184,6 +184,7 @@ export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'asset-
  */
 export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/bundle.mjs',
+  'tools/card-cutout-assets.mjs',
   'tools/card-components.mjs',
   'tools/assetmime.mjs',
   'tools/buildversion.mjs',
@@ -324,6 +325,86 @@ function isProse(value) {
 /** True for a named contract column whose value is prose — the only clearance. */
 function isContractColumn(file, key, value) {
   return CONTRACT_COLUMN_SITES.some((c) => c.file === file && c.key === key) && isProse(value);
+}
+
+/** Independent catalog protocol/package versions, identified by their exact schema locations.
+ * Never clear a whole generated file: UI/release fields and appended declarations
+ * still pass through both second-copy detectors. Invalid JSON fails closed.
+ */
+export function catalogSchemaVersionSpans(file, text) {
+  const spans = [];
+  if (file !== 'src/content/generated/gameProfiles.js') return spans;
+  const declaration = /^export const gameProfileCatalog\s*=\s*/m.exec(text);
+  if (!declaration) return spans;
+  const start = declaration.index + declaration[0].length;
+  // Tokenize only the JSON export, never JavaScript expressions. JSON.parse
+  // validates the complete literal before any exact value token is cleared.
+  const token = /"(?:\\[\s\S]|[^"\\])*"|[{}\[\],:]|[^\s{}\[\],:"]+/gy;
+  const tokens = [];
+  let cursor = start, depth = 0;
+  do {
+    while (/\s/.test(text[cursor] || '') && cursor < text.length) cursor++;
+    token.lastIndex = cursor;
+    const match = token.exec(text);
+    if (!match) return spans;
+    tokens.push({ text: match[0], start: cursor, end: token.lastIndex });
+    cursor = token.lastIndex;
+    if (match[0] === '{' || match[0] === '[') depth++;
+    if (match[0] === '}' || match[0] === ']') depth--;
+  } while (depth > 0);
+  if (tokens[0].text !== '{' || !/^\s*;/.test(text.slice(cursor))) return spans;
+  let catalog;
+  try { catalog = JSON.parse(text.slice(start, cursor)); } catch { return spans; }
+  const owners = new WeakSet();
+  const allow = value => { if (value && typeof value === 'object') owners.add(value); };
+  const artifacts = values => { for (const value of values || []) allow(value); };
+  allow(catalog.contracts);
+  allow(catalog.foundation);
+  for (const entry of Object.values(catalog.modules || {})) {
+    allow(entry.manifest);
+    artifacts(entry.artifacts);
+  }
+  for (const kind of ['bundles', 'packs']) {
+    for (const entry of Object.values(catalog[kind] || {})) {
+      allow(entry.manifest);
+      artifacts(entry.artifacts);
+      if (kind === 'bundles') {
+        for (const module of Object.values(entry.manifest?.modules || {})) allow(module);
+        artifacts(entry.manifest?.packs);
+      }
+    }
+  }
+  artifacts(catalog.runtimeArtifacts);
+  let index = 0;
+  function visit(value) {
+    const current = tokens[index++];
+    if (current.text === '{') {
+      const keys = new Set();
+      while (tokens[index].text !== '}') {
+        const key = JSON.parse(tokens[index++].text);
+        if (keys.has(key)) throw new Error('duplicate JSON key');
+        keys.add(key);
+        index++; // colon, already validated by JSON.parse
+        const valueToken = tokens[index];
+        if (key === 'version' && typeof value[key] === 'string' && owners.has(value)) {
+          spans.push({ start: valueToken.start, end: valueToken.end });
+        }
+        visit(value[key]);
+        if (tokens[index].text === ',') index++;
+      }
+      index++;
+    } else if (current.text === '[') {
+      let item = 0;
+      while (tokens[index].text !== ']') {
+        visit(value[item++]);
+        if (tokens[index].text === ',') index++;
+      }
+      index++;
+    }
+  }
+  try { visit(catalog); } catch { return []; }
+  return spans;
+
 }
 
 /**
@@ -871,7 +952,16 @@ export function check(root = REPO_ROOT) {
     if (f === RELEASE_HOME) continue;
     if (!/\.(js|css|html|json)$/.test(f)) continue;
     const text = readFileSync(resolve(root, f), 'utf8');
-    text.split('\n').forEach((line, i) => {
+    const schemaVersions = catalogSchemaVersionSpans(f, text);
+    // Preserve offsets/newlines and inspect everything beside each approved
+    // value, including unknown fields on the same compact catalog line.
+    let scan = '', offset = 0;
+    for (const span of schemaVersions) {
+      scan += text.slice(offset, span.start) + ' '.repeat(span.end - span.start);
+      offset = span.end;
+    }
+    scan += text.slice(offset);
+    scan.split('\n').forEach((line, i) => {
       const t = line.trim();
       // arm 1 — the value equals the release
       if (line.includes(`'${rel}'`) || line.includes(`"${rel}"`) || line.includes(`\`${rel}\``)) {
@@ -914,7 +1004,7 @@ export function check(root = REPO_ROOT) {
   } else {
     add(true, 'B NO SECOND COPY',
       `no second home for the release under ${INPUT_ROOTS.join(', ')}: no file re-types '${rel}'`
-      + ` outside ${RELEASE_HOME} (arm 1), and no other site declares a version at all (arm 2,`
+      + ` outside ${RELEASE_HOME} (arm 1), and no other release-version site is declared (arm 2,`
       + ` which never compares the value to the release, so it does not go quiet when the value drifts).`
       + ` ${commentHits} prose mention${commentHits === 1 ? '' : 's'} in comments, which assert nothing and are not copies.`);
   }

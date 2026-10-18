@@ -1,0 +1,79 @@
+{
+  "action": "weapon:attack:greatsword",
+  "aliases": [
+    "weapon:attack:greatsword",
+    "weapon:spell:greatsword",
+    "weapon:ranged:greatsword",
+    "weapon:rangedMagic:greatsword"
+  ],
+  "origin": "offensive",
+  "timing": {
+    "totalMs": 465,
+    "impactMs": 135
+  },
+  "registeredSequence": {
+    "poses": [
+      "starseer.greatsword.attack.anticipation",
+      "starseer.greatsword.attack.strike",
+      "starseer.greatsword.attack.follow-through",
+      "starseer.greatsword.attack.recovery"
+    ],
+    "durations": [
+      180,
+      90,
+      150,
+      200
+    ],
+    "impact": 1,
+    "travel": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "hold": false,
+    "action": "attack"
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-offensive",
+      "label": "origin stance-offensive",
+      "weight": 1
+    },
+    {
+      "pose": "starseer.greatsword.attack.anticipation",
+      "registeredFrameId": "starseer.greatsword.attack.anticipation",
+      "label": "1/4 starseer.greatsword.attack.anticipation \u00b7 weight 180",
+      "weight": 180,
+      "timeMs": 67.5
+    },
+    {
+      "pose": "starseer.greatsword.attack.strike",
+      "registeredFrameId": "starseer.greatsword.attack.strike",
+      "label": "2/4 starseer.greatsword.attack.strike \u00b7 weight 90",
+      "weight": 90,
+      "timeMs": 168.75
+    },
+    {
+      "pose": "starseer.greatsword.attack.follow-through",
+      "registeredFrameId": "starseer.greatsword.attack.follow-through",
+      "label": "3/4 starseer.greatsword.attack.follow-through \u00b7 weight 150",
+      "weight": 150,
+      "timeMs": 258.75
+    },
+    {
+      "pose": "starseer.greatsword.attack.recovery",
+      "registeredFrameId": "starseer.greatsword.attack.recovery",
+      "label": "4/4 starseer.greatsword.attack.recovery \u00b7 weight 200",
+      "weight": 200,
+      "timeMs": 390
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "return Attack",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

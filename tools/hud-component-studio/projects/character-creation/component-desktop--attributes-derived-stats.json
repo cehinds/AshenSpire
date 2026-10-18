@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Attributes Derived Stats",
+  "canvas": {
+    "width": 335,
+    "height": 42,
+    "background": "transparent"
+  },
+  "defaultState": "attributes",
+  "states": [
+    {
+      "id": "attributes",
+      "name": "Attributes"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "attribute-concept-note",
+      "name": "Attribute Concept Note",
+      "type": "text",
+      "parent": "attributes-derived-stats",
+      "x": 0,
+      "y": 0,
+      "width": 335,
+      "height": 42,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "HP 66 \u00b7 Stamina 3 \u00b7 Mana 3\nHand capacity 7 \u00b7 Draw 4",
+      "fontSize": 15,
+      "fontFamily": "Arial",
+      "fill": "#b8aa87",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "attributes-derived-stats",
+      "name": "Attributes Derived Stats",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 335,
+      "height": 42,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    }
+  ],
+  "metadata": {
+    "componentSource": "attributes-derived-stats",
+    "sourceState": "attributes",
+    "designOnly": true
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "action": "spell",
+  "aliases": [
+    "spell"
+  ],
+  "origin": "casting",
+  "timing": {
+    "totalMs": 195,
+    "impactMs": 86.25
+  },
+  "registeredSequence": {
+    "label": "Spell",
+    "poses": [
+      "spell-return",
+      "spell-load",
+      "spell-release",
+      "spell-release",
+      "spell-return"
+    ],
+    "durations": [
+      60,
+      55,
+      50,
+      45,
+      50
+    ],
+    "travel": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "effect": "ward",
+    "impact": 2,
+    "hold": false
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-casting",
+      "label": "origin stance-casting",
+      "weight": 1
+    },
+    {
+      "pose": "spell-return",
+      "registeredFrameId": "spell-return",
+      "label": "1/5 spell-return \u00b7 weight 60",
+      "weight": 60,
+      "timeMs": 22.5
+    },
+    {
+      "pose": "spell-load",
+      "registeredFrameId": "spell-load",
+      "label": "2/5 spell-load \u00b7 weight 55",
+      "weight": 55,
+      "timeMs": 65.625
+    },
+    {
+      "pose": "spell-release",
+      "registeredFrameId": "spell-release",
+      "label": "3/5 spell-release \u00b7 weight 50",
+      "weight": 50,
+      "timeMs": 105
+    },
+    {
+      "pose": "spell-release",
+      "registeredFrameId": "spell-release",
+      "label": "4/5 spell-release \u00b7 weight 45",
+      "weight": 45,
+      "timeMs": 140.625
+    },
+    {
+      "pose": "spell-return",
+      "registeredFrameId": "spell-return",
+      "label": "5/5 spell-return \u00b7 weight 50",
+      "weight": 50,
+      "timeMs": 176.25
+    },
+    {
+      "pose": "stance-casting",
+      "label": "return Magic",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

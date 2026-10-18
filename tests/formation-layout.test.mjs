@@ -142,3 +142,9 @@ test('a player cell saved in a front column stands in the same lane on the persp
   assert.equal(formationMovePlan({ ...combat, player: { ...combat.player, formationCell: 'B3' } }, 'A1', settings).current, 'B1',
     'a third Classic column collapses too');
 });
+
+test('a perspective lane past Classic\'s rows stands in Classic\'s last row', () => {
+  const settings = { 'gameConfig.presentation.movementEnabled': true, classicAppearance: true };
+  const combat = { player: { energy: 3, formationCell: 'C1' }, phase: 'player', enemies: [] };
+  assert.equal(formationMovePlan(combat, 'A1', settings).current, 'B1');
+});

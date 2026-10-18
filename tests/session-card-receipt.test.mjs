@@ -86,6 +86,8 @@ for(const convertedSeat of [null,'p1','p2']) test(`real session projects p2's pa
   const wire=projectLanSnapshot(snapshot,['p1']),wireEvent=wire.scene.events.find(event=>event.type==='cardPlayed');
   assert.deepEqual(wireEvent.cardInstance,instance,'the played public card survives the actual connection projection');
   assert.equal(wireEvent.upcastTier,2);
+  // The fight's frozen trait tuning reaches the receipt context, so Impact/Flux match what the host applied.
+  if(snapshot.scene.reactionRulesVersion===2){assert.ok(snapshot.scene.reactionRules);assert.deepEqual(wire.scene.reactionRules,snapshot.scene.reactionRules);}
   assert.equal(wire.party.find(member=>member.id==='p2').enemyKnowledgeState,undefined);
   for(const held of wire.scene.players.find(player=>player.id==='p2').hand) {
     assert.equal(held.combatPreview,undefined);assert.equal(held.upcastPreviews,undefined);

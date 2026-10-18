@@ -1,0 +1,1647 @@
+{
+  "base.persistent-protection": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 2
+    },
+    "sp": {
+      "cost": 3,
+      "staminaCost": 3,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 3
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.greased": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.divine-strike": {
+    "sp,mp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 3,
+      "staminaCost": 3,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 3
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.poison": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.blight": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.weak": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.charm": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.bind": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.restrained": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.foresight": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.evade": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.intangible": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 2
+    },
+    "sp": {
+      "cost": 3,
+      "staminaCost": 3,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 3
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.mirrors": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 2
+    },
+    "sp": {
+      "cost": 3,
+      "staminaCost": 3,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 3
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.elemental-weapon": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.fire-cleanse": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.divine-cleanse": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.necrotic-heal": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.divine-harm": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.shuffle-hand": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.shuffle-deck": {
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.draw": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.retain": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.scout": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.reveal-opponent-hand": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.recall-choose": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.recover-exile": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.exhaust-choose": {
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.transform": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.status-card-stagger": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.status-card-paralyze": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.exhaust": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.ethereal": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.stat-buff": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.drain-allies": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.scale-negative-status": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.scale-damage-taken": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.growth-per-type": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.cost-per-use": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1,
+      "costGrowth": {
+        "stamina": 0,
+        "mana": 1,
+        "perUse": 1,
+        "max": 3
+      }
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0,
+      "costGrowth": {
+        "stamina": 0,
+        "mana": 0,
+        "perUse": 1,
+        "max": 3
+      }
+    }
+  },
+  "base.damage-per-use": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.pay-x-effect": {
+    "sp,mp": {
+      "cost": "X",
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": "X",
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1,
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 6
+        }
+      ],
+      "textTemplate": "Deal {damage} damage to one enemy."
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0,
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 6
+        }
+      ],
+      "textTemplate": "Deal {damage} damage to one enemy."
+    }
+  },
+  "base.pay-x-targets": {
+    "sp,mp": {
+      "cost": "X",
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": "X",
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1,
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 8
+        }
+      ],
+      "targetLimit": 1,
+      "textTemplate": "Deal {damage} damage to one enemy."
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0,
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 8
+        }
+      ],
+      "targetLimit": 1,
+      "textTemplate": "Deal {damage} damage to one enemy."
+    }
+  },
+  "base.hide-cards": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.force-stance": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.multi-stance": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.current-stance-variant": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.paid-resource-variant": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.attack-then-defend": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.modify-card-stance": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.modify-card-range": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.extra-weapon": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.extra-shield": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.auto-counter": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.auto-sweep": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.reflect": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.guard-allies": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.transmute": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.one-use-scroll": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.gain-resource": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2,
+      "effects": [
+        {
+          "op": "restoreMana",
+          "target": "self",
+          "amount": 3
+        }
+      ],
+      "textTemplate": "Restore {restoreMana} MP."
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0,
+      "effects": [
+        {
+          "op": "draw",
+          "amount": 1
+        }
+      ],
+      "textTemplate": "Draw {draw} card."
+    }
+  },
+  "base.buff-ally": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.break-ward": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.break-poise": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.generate-smash": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.conditional-damage-bonus": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.perception-untargetable": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 1
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.retain-block": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.immediate-stance-transition": {
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.stagger-status-card": {
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.multi-hit": {
+    "sp,mp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.paralysis-status-card": {
+    "sp,mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.restrained-status-card": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.strike": {
+    "sp,mp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 1,
+      "staminaCost": 1,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 1
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  },
+  "base.smash": {
+    "sp,mp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "sp": {
+      "cost": 2,
+      "staminaCost": 2,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 1,
+      "staminaCost": 0,
+      "manaCost": 2
+    },
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    }
+  }
+}

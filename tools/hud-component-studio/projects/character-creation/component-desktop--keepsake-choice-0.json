@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "title": "Keepsake Choice 0",
+  "canvas": {
+    "width": 346,
+    "height": 244,
+    "background": "transparent"
+  },
+  "defaultState": "keepsake",
+  "states": [
+    {
+      "id": "keepsake",
+      "name": "Keepsake"
+    }
+  ],
+  "assets": {
+    "medallion-trim": {
+      "src": "assets/medallion-trim.png",
+      "width": 397,
+      "height": 380
+    },
+    "panel-frame": {
+      "src": "assets/panel-frame.png",
+      "width": 1080,
+      "height": 720
+    },
+    "soot-material": {
+      "src": "assets/soot-material.png",
+      "width": 256,
+      "height": 256
+    }
+  },
+  "nodes": [
+    {
+      "id": "keepsake-choice-0",
+      "name": "Keepsake Choice 0",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 346,
+      "height": 244,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "keepsake-choice-0-surface",
+      "name": "Reusable antique brass trim",
+      "type": "image",
+      "parent": "keepsake-choice-0",
+      "x": 0,
+      "y": 0,
+      "width": 346,
+      "height": 244,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "panel-frame",
+      "fit": "stretch"
+    },
+    {
+      "id": "keepsake-choice-art-0",
+      "name": "Keepsake Choice Art 0",
+      "type": "image",
+      "parent": "keepsake-choice-0",
+      "x": 16,
+      "y": 22,
+      "width": 105,
+      "height": 202,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "medallion-trim",
+      "fit": "contain"
+    },
+    {
+      "id": "keepsake-choice-label-0",
+      "name": "Keepsake Choice Label 0",
+      "type": "text",
+      "parent": "keepsake-choice-0",
+      "x": 135,
+      "y": 38,
+      "width": 203,
+      "height": 30.799999999999997,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Nothing",
+      "fontSize": 22,
+      "fontFamily": "Georgia",
+      "fill": "#d7b45f",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "keepsake-choice-description-0",
+      "name": "Keepsake Choice Description 0",
+      "type": "text",
+      "parent": "keepsake-choice-0",
+      "x": 135,
+      "y": 86,
+      "width": 198,
+      "height": 30,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Walk alone. The climb is enough.",
+      "fontSize": 15,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "keepsake-choice-0-surface-background",
+      "name": "Reusable soot material background",
+      "type": "image",
+      "parent": "keepsake-choice-0",
+      "x": 0,
+      "y": 0,
+      "width": 346,
+      "height": 244,
+      "z": 0,
+      "visible": true,
+      "locked": false,
+      "opacity": 0.45,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "soot-material",
+      "fit": "stretch"
+    }
+  ],
+  "metadata": {
+    "componentSource": "keepsake-choice-0",
+    "sourceState": "keepsake",
+    "designOnly": true
+  }
+}

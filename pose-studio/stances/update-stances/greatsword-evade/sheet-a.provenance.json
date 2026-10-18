@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "family": "evade",
+  "actor": "reaver",
+  "weapon": "greatsword",
+  "optionIds": [
+    "EV11",
+    "EV12",
+    "EV13",
+    "EV14",
+    "EV15"
+  ],
+  "tool": "image_gen.imagegen",
+  "transparentBackgroundRequested": true,
+  "unchangedOriginal": "/workspace/generated_images/exec-569348b9-df5c-4b7a-843e-4fc2821edb12.png",
+  "output": "sheet-a.png",
+  "sha256": "e19fe59da17dfb2b52b07cddcd3f2400bd70145aeb6c647322ef821894665c75",
+  "dimensions": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "alphaExtrema": [
+    0,
+    254
+  ],
+  "createdUtc": "2026-10-12T16:22:40.015578+00:00",
+  "references": [
+    {
+      "path": "sheet-a.revision-1.png",
+      "sha256": "d397a0dee7fbab250838e5385a47e7e9f54b342ca7896292cb7d78abc04ed8dd"
+    }
+  ],
+  "prompt": "sheet-a.repair-2.prompt.txt",
+  "status": "director_concept_approved_not_user_selected",
+  "initialConcerns": [
+    "11rearweight and13taller body differentiation improved.12deepkneeload still not clearrear support.",
+    "Generator enlargedfiguresagain;leftcolumnboots/swordtips cross512cellborderandrowboundaries.",
+    "No automatic approval;directorreviewrequested."
+  ],
+  "revision": 2,
+  "supersededOriginal": "sheet-a.original.png",
+  "supersededRevision": "sheet-a.revision-1.png",
+  "actualOptionNames": {
+    "EV11": "Rear-weighted low blade",
+    "EV12": "Deep planted landing with upright blade",
+    "EV13": "Tall wide low carry",
+    "EV14": "Long lateral high carry",
+    "EV15": "Deep forward duck"
+  },
+  "reviewNotes": [
+    "Rootdirectorapprovedallfiveactualconcepts;do notforceoriginalpromptnames.",
+    "Fixed512cropscantruncateart;intactboardswithperoptioncontrolsplanned.",
+    "No additional layout-onlygeneration;confirmedruntimefiveunchanged."
+  ],
+  "runtimeChanged": false
+}

@@ -21,6 +21,32 @@ export function creationCategories(config = CONFIG) {
   return Object.freeze([...list]);
 }
 
+/** Spells follow the class's canonical casting tag or authored starting-ability skill. */
+export function creationHasSpells(registries, classId) {
+  return registries.classes.get(classId).tags?.includes('item:magic-focus') === true
+    || registries.characterCreation.classes[classId]?.startingAbility?.skillId === 'item:magic-focus';
+}
+
+/** The authored steps with only the conditional spell step removed for a noncaster. */
+export function creationFlowCategories(registries, classId, config = CONFIG) {
+  return Object.freeze(creationCategories(config).filter(id => id !== 'spells' || creationHasSpells(registries, classId)));
+}
+
+/** Keep legal, distinct ability families after a class, attribute or armament change. */
+export function creationAbilitySelection(cardIds, plan) {
+  if (!plan) return [];
+  const allowed = new Map(plan.choices.map(card => [card.id, card]));
+  const families = new Set();
+  return (cardIds || []).filter(id => {
+    const card = allowed.get(id);
+    if (!card || families.size >= plan.count) return false;
+    const family = card.abilityFamily || id;
+    if (families.has(family)) return false;
+    families.add(family);
+    return true;
+  });
+}
+
 /**
  * creationStep(categories, current, direction) → the category one step away,
  * or null at either end. `direction` is +1 (Next) or -1 (Back).

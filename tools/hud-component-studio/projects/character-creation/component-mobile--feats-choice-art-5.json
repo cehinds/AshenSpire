@@ -1,0 +1,144 @@
+{
+  "version": 1,
+  "title": "Feat emblem \u00b7 reusable background / trim / symbols / props",
+  "canvas": {
+    "width": 112,
+    "height": 112,
+    "background": "transparent"
+  },
+  "defaultState": "feats",
+  "states": [
+    {
+      "id": "feats",
+      "name": "Feats"
+    }
+  ],
+  "assets": {
+    "medallion-background": {
+      "src": "assets/medallion-background.png",
+      "width": 296,
+      "height": 292
+    },
+    "medallion-trim": {
+      "src": "assets/medallion-trim.png",
+      "width": 397,
+      "height": 380
+    },
+    "prop-leaf": {
+      "src": "assets/prop-leaf.png",
+      "width": 201,
+      "height": 198
+    },
+    "symbol-sun-rays": {
+      "src": "assets/symbol-sun-rays.png",
+      "width": 377,
+      "height": 393
+    }
+  },
+  "nodes": [
+    {
+      "id": "feats-choice-art-5",
+      "name": "Feat emblem \u00b7 reusable background / trim / symbols / props",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 112,
+      "height": 112,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "feats-choice-art-5-medallion-background",
+      "name": "Medallion Background",
+      "type": "image",
+      "parent": "feats-choice-art-5",
+      "x": 14.254545454545454,
+      "y": 14.254545454545454,
+      "width": 83.4909090909091,
+      "height": 83.4909090909091,
+      "z": 0,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "medallion-background",
+      "fit": "contain"
+    },
+    {
+      "id": "feats-choice-art-5-medallion-trim",
+      "name": "Medallion Trim",
+      "type": "image",
+      "parent": "feats-choice-art-5",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 112.0,
+      "height": 112.0,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "medallion-trim",
+      "fit": "contain"
+    },
+    {
+      "id": "feats-choice-art-5-symbol-sun-rays",
+      "name": "Symbol Sun Rays",
+      "type": "image",
+      "parent": "feats-choice-art-5",
+      "x": 19.345454545454544,
+      "y": 19.345454545454544,
+      "width": 76.36363636363636,
+      "height": 77.38181818181818,
+      "z": 2,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "symbol-sun-rays",
+      "fit": "contain"
+    },
+    {
+      "id": "feats-choice-art-5-prop-leaf",
+      "name": "Prop Leaf",
+      "type": "image",
+      "parent": "feats-choice-art-5",
+      "x": 40.727272727272734,
+      "y": 39.709090909090904,
+      "width": 32.581818181818186,
+      "height": 34.61818181818182,
+      "z": 3,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "prop-leaf",
+      "fit": "contain"
+    }
+  ],
+  "metadata": {
+    "componentSource": "feats-choice-art-5",
+    "sourceState": "feats",
+    "designOnly": true
+  }
+}

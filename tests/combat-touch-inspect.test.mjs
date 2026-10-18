@@ -1,8 +1,9 @@
 // Combat inspection on touch. The full read (openCombatantDoor) used to hang
 // off an "Inspect" action inside the combatant's interactive tooltip. It is now
 // the overhead Information control (WCO1: Inspect above the intent;
-// docs/component-catalog.html `combatant-frame`: "Touch selects before delayed
-// help; a second Information tap opens inspection"), built by
+// docs/component-catalog.html `combatant-frame`: one tap on the Information
+// control opens inspection on mouse, touch and keyboard (owner, 2026-10-13)),
+// built by
 // combatantOverhead.combatantInfo and wired by combat.js for the player and
 // every living enemy. The old sprite-overlaid combatantInspectControl stays gone.
 import assert from 'node:assert/strict';
@@ -53,13 +54,9 @@ try {
   click('mouse');
   check(() => assert.deepEqual(opened, [info]));
 
-  // Touch: the first tap only selects (and queues the glance); the second
-  // tap on the same control opens the full read.
+  // Touch: one tap opens the full read at once (owner, 2026-10-13).
   click('touch');
-  check(() => assert.equal(opened.length, 1, 'first touch tap must not open the door'));
-  check(() => assert.ok(info.classList.contains('tooltip-selected'), 'first touch tap selects the control'));
-  click('touch');
-  check(() => assert.deepEqual(opened, [info, info], 'second touch tap opens the door'));
+  check(() => assert.deepEqual(opened, [info, info], 'first touch tap opens the door'));
   check(() => assert.ok(!info.classList.contains('tooltip-selected'), 'opening clears the selection'));
 } finally {
   for (const [key, value] of Object.entries(saved)) {
@@ -67,4 +64,4 @@ try {
   }
 }
 
-console.log(`PASS ${checks}/${checks}; combat inspection opens from the overhead Information control, one tap on desktop, select-then-open on touch; enemy name opens the full read, core selects`);
+console.log(`PASS ${checks}/${checks}; combat inspection opens from the overhead Information control, one tap on mouse, touch and keyboard; enemy name opens the full read, core selects`);

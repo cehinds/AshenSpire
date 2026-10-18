@@ -1,0 +1,54 @@
+{
+  "generated_at_utc": "2026-10-12T16:21:26.872678+00:00",
+  "tool": "tools.image_gen__imagegen",
+  "exact_prompt": "sheet-a-repair.prompt.txt",
+  "prompt_sha256": "c789ecc6d99584fc1c66e278d40a51a5b787f5a1611f0126f32345c0d3e49e85",
+  "requested_dimensions": [
+    1024,
+    1536
+  ],
+  "actual_dimensions": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    254
+  ],
+  "transparent_background": true,
+  "reference_images": [
+    {
+      "path": "pose-studio/stances/update-stances/greatsword-counter/sheet-a.original.png",
+      "sha256": "6ebb2770f132fa2a99745286ff58a4efee233c93093d4fea70052109fd62c9c3",
+      "visually_inspected": true
+    },
+    {
+      "path": "/workspace/AshenSpire/docs/design/class-armor-rear-2026-10-06/references/reaver-default-rear.png",
+      "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd",
+      "visually_inspected": true
+    },
+    {
+      "path": "/workspace/AshenSpire/assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+      "visually_inspected": true
+    }
+  ],
+  "original_tool_path": "/workspace/generated_images/exec-b972a1bd-dda1-4251-a1a0-cbc22dad56f7.png",
+  "preserved_artifact": "sheet-a-repair-1.png",
+  "raw_bytes_preserved": true,
+  "sha256": "a072fe00348d8a904f2fd2ceef37bdf38b23d1c518e8b17a4a065613a2553919",
+  "concept_ids": [
+    "CT11",
+    "CT12",
+    "CT13",
+    "CT14",
+    "CT15"
+  ],
+  "layout": "2 columns x 3 rows, row-major; bottom-right empty",
+  "review_status": "layout repair failed; preserved revision for provenance",
+  "observations": [
+    "CT14 lower wider base improved",
+    "Generator did not honor half-size body/margins; CT13 and CT15 remain across nominal column boundary"
+  ]
+}

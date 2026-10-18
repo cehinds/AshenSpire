@@ -4,7 +4,10 @@
 - Version-2 effects keep damage types in words beside the damage amount: **5 Fire damage**, **3 Piercing damage**, or **4 Blunt damage**. Mixed contacts keep their actual types; Counter HP returns stay distinct from Poise and Ward impact.
   - Lightning spells use Piercing; Force spells use Blunt. The school never substitutes for the actual damage type.
   - Complex effects keep their full authored text with a short damage-type prefix. Historical version-1 face text stays unchanged.
-- School sigils and extra source, range, counter-mode, technique and theme tags stay in Information.
+- The side rail starts with the physical shield or magical sparkle, then the card's actual damage types (school when no damage type is authored), then up to three relevant status effects. It has at most five icons and never adds filler ability tags. Full source, range, counter-mode, technique and theme tags remain in Information.
+- Damage-type icons require an actual Health-damage effect or Health-damaging Counter payload. Inherited school damage metadata alone does not make a healing, restoration, or barrier card damaging; those cards use their relevant school/effect identity. Conditional damage remains represented, while pure Ward/Poise returns do not claim Health damage.
+- Slashing uses crossed swords, Blunt a hammer, Piercing a pointed blade, Frost a snowflake, Fire a flame, Earth a faceted stone, and authored Evade/Dodge a boot. Physical category and the Smash action retain separate symbols.
+- A small status badge shows a known stack quantity only for one unconditional direct application. Numeric live preview values take precedence over constant authored values. Conditional effects, multiple applications or targets, unknown formulas, optional upcasts, and buildup pressure never become a misleading summed stack count. Authored layout overrides preserve these badges and use the same approved glyphs.
 - All marks use monochrome geometry. Colour is optional emphasis, never the only distinction.
 - Information repeats the mark, its name and its explanation. Cards retain accessible names, existing selection controls and focus restoration.
 - Effect text retains its numbers, conditions, targets and durations. Redundant damage verbs and layout whitespace are shortened. Long effects borrow room from the artwork instead of being cut off.
@@ -17,7 +20,7 @@
 - Sweep: a broad arc with a horizontal arrow.
 - Ranged: a bow and arrow.
 - Smash: a hammer with impact marks.
-- Spell: a wand with an arcane orb.
+- Spell: one gold outlined four-point sparkle with an open diamond center, shared by current card footers, Spell/source tags, spell intents, and the deck editor's magical marker. Fire school and Fire/Burn/Gorefire tags retain flame symbols.
 - Power: an upward buff arrow with sparks; cast once and keep its buff for the combat. Expanded Powers Exhaust after casting.
 - Skill: an open hand; reusable utility or buffs. Information includes any authored lifecycle exception.
 - Status: a warning triangle; injected status-effect cards, usually harmful.

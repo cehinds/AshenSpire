@@ -1,5 +1,9 @@
+import { cardManaCategory } from '../src/model/cardManaPolicy.js';
+import { cardManaPolicy } from '../src/content/generated/cardManaPolicy.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { cardCostBudget, isCostOptOut } from '../src/model/actionCosts.js';
+import { applyAbilityGrade } from '../src/model/abilityGrades.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
@@ -10,8 +14,10 @@ const legacyReg = reg.legacyProgressionSource;
 const rewardIds = new Set(contentBundle.legacyProgression.classes.flatMap(c => c.cardPool));
 
 test('preserved legacy reward cards retain their pinned Mana rarity shares and one turn cost', () => {
-  for (const [rarity, count, manaShare, exceptions] of [['common',62,0.15,5], ['uncommon',63,0.3,0], ['rare',49,0.5,0]]) {
-    const cards = legacyReg.cards.all().filter(c => rewardIds.has(c.id) && c.rarity === rarity);
+  for (const [rarity, count, manaShare, exceptions] of [['common',64,0.15,4], ['uncommon',64,0.3,0], ['rare',50,0.5,0]]) {
+    // The modular base pack adds rewards; this fixture pins the original class roster.
+    // Two restoration cards now pay upfront MP, reducing common rarity exceptions to four.
+    const cards = legacyReg.cards.all().filter(c => rewardIds.has(c.id) && !c.id.startsWith('base.') && c.rarity === rarity);
     assert.equal(cards.length, count);
     assert.equal(cards.filter(c => c.manaCost > 0).length, Math.round(count * manaShare) - exceptions);
     for (const c of cards) for (const upgraded of [false,true]) {
@@ -19,12 +25,17 @@ test('preserved legacy reward cards retain their pinned Mana rarity shares and o
       const cost = legacyReg.framework.costProfile(def);
       assert.equal(cost.stamina, def.cost === 'X' ? 0 : def.cost);
       assert.equal(def.staminaCost || 0, 0, 'no obsolete additive stamina charge');
-      assert.ok(!def.manaCost || def.cost === 'X' || def.cost >= 1);
+      // A 0-SP magic card is possible under the cost formula (owner, 2026-10-12): every priced card costs something.
+      assert.ok(isCostOptOut(def) || def.cost + (def.manaCost || 0) >= 1, `${c.id}: a priced card costs something`);
     }
   }
 });
 
-test('every expanded ability grade pays its authored Action cost and Mana equal to rank', () => {
+
+// Every ability grade is priced by the cost formula at its own rank (SPEC §4.3a, owner 2026-10-12): the authored
+// actionCost and manaCost are the inputs no longer; the face's effects and tags are. Replaced rule: the grade's Mana was
+// its rank and its Actions were the authored number (later, the stance price plus the grade's delta).
+test('every expanded ability grade pays its fixed or formula price with the authored Mana floor', () => {
   const families = reg.cards.all().filter(card => card.gradeProfiles);
   assert.equal(families.length, 82, 'forty new families and forty-two retuned existing abilities');
   for (const card of families) {
@@ -34,10 +45,19 @@ test('every expanded ability grade pays its authored Action cost and Mana equal 
       const def = resolveCard(reg, { cardId: card.id, abilityRank: rank });
       const cost = reg.framework.costProfile(def);
       assert.equal(profile.rank, rank, card.id);
-      assert.equal(def.manaCost || 0, rank, `${card.id} grade ${rank}: printed Mana`);
-      assert.equal(def.cost, profile.actionCost, `${card.id} grade ${rank}: authored Actions`);
-      assert.ok(def.cost >= 1 && def.cost <= (rank === 0 ? 3 : rank));
+      const grade = applyAbilityGrade(card, rank);
+      if (isCostOptOut(grade)) {
+        assert.equal(def.cost, profile.actionCost, `${card.id} grade ${rank}: fixed authored SP`);
+        assert.equal(def.manaCost || 0, Math.max(profile.manaCost || 0, cardManaCategory(reg, grade) ? cardManaPolicy.minimumMana : 0), `${card.id} grade ${rank}: fixed authored MP`);
+        assert.equal(cost.stamina, def.cost); assert.equal(cost.mana, def.manaCost || 0);
+        continue;
+      }
+      const priced = cardCostBudget(grade, { rank });
+      assert.equal(def.cost, priced.sp, `${card.id} grade ${rank}: the formula's Stamina`);
+      assert.equal(def.manaCost || 0, Math.max(priced.mp, cardManaCategory(reg, grade) ? cardManaPolicy.minimumMana : 0), `${card.id} grade ${rank}: the formula's Mana`);
+      assert.ok(def.cost + (def.manaCost || 0) >= 1, `${card.id} grade ${rank}: a priced card always costs something`);
       assert.equal(cost.stamina, def.cost, 'Actions and Stamina are the same resource');
+      assert.equal(cost.mana, def.manaCost || 0, 'the framework reads the derived Mana');
       assert.equal(def.staminaCost || 0, 0, 'no additional Stamina charge');
     }
   }

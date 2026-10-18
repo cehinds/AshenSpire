@@ -66,7 +66,36 @@ export function rollRuneReward(registries, rng, pool, relicIds) {
 // that judges a draw without making it uses the same odds; re-exported here,
 // where every caller already finds them.
 import { cardRewardRarityWeights } from '../model/rewardOdds.js';
+import { tagIdsFor } from '../content/tags.js';
 export { cardRewardRarityWeights };
+
+/**
+ * The class's element affinity (owner decision #13), or null: { elements,
+ * mult } when the class has elements and a multiplier above 1.
+ */
+function elementAffinityFor(registries, classId) {
+  const cfg = registries.balance.rewards.elementAffinity;
+  const elements = cfg && cfg.classes && cfg.classes[classId];
+  const mult = Number(cfg && cfg.offerWeightMult);
+  if (!elements || !elements.length || !(mult > 1)) return null;
+  return { elements: elements.map((el) => `damage:${el}`), mult };
+}
+
+/**
+ * One draw from the pool. With no affinity, or no affinity card among the
+ * options, this IS rng.pick (same single draw), so seeded streams are unchanged.
+ */
+function pickWithAffinity(rng, options, affinity) {
+  if (!affinity) return rng.pick('cardRewards', options);
+  const weights = options.map((id) => (tagIdsFor(id).some((t) => affinity.elements.includes(t)) ? affinity.mult : 1));
+  if (weights.every((w) => w === 1)) return rng.pick('cardRewards', options);
+  let roll = rng.float('cardRewards') * weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < options.length; i++) {
+    roll -= weights[i];
+    if (roll < 0) return options[i];
+  }
+  return options[options.length - 1];
+}
 
 /**
  * rollCardRewardIds(registries, rng, { classId, pool, relicIds }) → distinct
@@ -91,6 +120,7 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
   const total = rarities.reduce((a, r) => a + weights[r], 0);
   if (!total) return [];
 
+  const affinity = elementAffinityFor(registries, classId);
   const picks = [];
   let guard = 0;
   while (picks.length < count && guard++ < 100) {
@@ -105,7 +135,7 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
     }
     const options = byRarity[rarity].filter((id) => !picks.includes(id));
     if (!options.length) continue;
-    picks.push(rng.pick('cardRewards', options));
+    picks.push(pickWithAffinity(rng, options, affinity));
   }
   return picks;
 }
@@ -257,6 +287,23 @@ export function rollRelicReward(registries, rng, ownedIds, { rarities = ['common
     .filter((r) => relicInRewardPool(r) && rarities.includes(r.rarity) && !ownedIds.includes(r.id))
     .map((r) => r.id);
   return pool.length ? rng.pick('relicRewards', pool) : null;
+}
+
+/**
+ * rollRelicChoices(registries, rng, ownedIds, { rarities, count }) → relic ids.
+ * Up to `count` DISTINCT relics the run does not own, drawn one at a time with
+ * rollRelicReward on 'relicRewards' (each pick is excluded from the next). The
+ * list is shorter when the pool runs low, and [] when nothing is left to give.
+ * Used for a boss victory's choice of relics; elite drops still roll one.
+ */
+export function rollRelicChoices(registries, rng, ownedIds, { rarities = ['boss'], count = 3 } = {}) {
+  const picks = [];
+  while (picks.length < count) {
+    const id = rollRelicReward(registries, rng, [...ownedIds, ...picks], { rarities });
+    if (id === null) break;
+    picks.push(id);
+  }
+  return picks;
 }
 
 /**

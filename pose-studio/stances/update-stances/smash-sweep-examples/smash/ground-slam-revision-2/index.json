@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 2,
+  "family": "smash",
+  "revision": "ground-slam-revision-2",
+  "supersedes": "Previous J-A..J-E and VK-F..VK-J concepts retained as historical artwork",
+  "exampleCount": 10,
+  "slotsPerExample": 5,
+  "totalSlots": 50,
+  "uniqueActionPaintings": 30,
+  "bookendSource": "../../../sequence-review/frames/S.webp",
+  "bookendPreservation": "Exact S decoded RGBA pixels padded128,192 in768canvas; first/last PNG bytes identical",
+  "sharedGroundY": 658,
+  "effects": "Ground impact in slot4; dust may extend below inferred contact plane, but airborne feet never independently floored",
+  "reviewScope": "Option review only; no gameplay selection",
+  "comparison": "comparison.gif",
+  "examples": [
+    {
+      "id": "SM01",
+      "name": "Forward plunge slam",
+      "frames": [
+        "SM01/frames/01.png",
+        "SM01/frames/02.png",
+        "SM01/frames/03.png",
+        "SM01/frames/04.png",
+        "SM01/frames/05.png"
+      ],
+      "gif": "SM01/preview.gif",
+      "provenance": "SM01/provenance.json"
+    },
+    {
+      "id": "SM02",
+      "name": "Power-hop cleave slam",
+      "frames": [
+        "SM02/frames/01.png",
+        "SM02/frames/02.png",
+        "SM02/frames/03.png",
+        "SM02/frames/04.png",
+        "SM02/frames/05.png"
+      ],
+      "gif": "SM02/preview.gif",
+      "provenance": "SM02/provenance.json"
+    },
+    {
+      "id": "SM03",
+      "name": "Twisting aerial slam",
+      "frames": [
+        "SM03/frames/01.png",
+        "SM03/frames/02.png",
+        "SM03/frames/03.png",
+        "SM03/frames/04.png",
+        "SM03/frames/05.png"
+      ],
+      "gif": "SM03/preview.gif",
+      "provenance": "SM03/provenance.json"
+    },
+    {
+      "id": "SM04",
+      "name": "High vertical hammer",
+      "frames": [
+        "SM04/frames/01.png",
+        "SM04/frames/02.png",
+        "SM04/frames/03.png",
+        "SM04/frames/04.png",
+        "SM04/frames/05.png"
+      ],
+      "gif": "SM04/preview.gif",
+      "provenance": "SM04/provenance.json"
+    },
+    {
+      "id": "SM05",
+      "name": "Lateral bound slam",
+      "frames": [
+        "SM05/frames/01.png",
+        "SM05/frames/02.png",
+        "SM05/frames/03.png",
+        "SM05/frames/04.png",
+        "SM05/frames/05.png"
+      ],
+      "gif": "SM05/preview.gif",
+      "provenance": "SM05/provenance.json"
+    },
+    {
+      "id": "SM06",
+      "name": "Long-leap crater slam",
+      "frames": [
+        "SM06/frames/01.png",
+        "SM06/frames/02.png",
+        "SM06/frames/03.png",
+        "SM06/frames/04.png",
+        "SM06/frames/05.png"
+      ],
+      "gif": "SM06/preview.gif",
+      "provenance": "SM06/provenance.json"
+    },
+    {
+      "id": "SM07",
+      "name": "Turning drop slam",
+      "frames": [
+        "SM07/frames/01.png",
+        "SM07/frames/02.png",
+        "SM07/frames/03.png",
+        "SM07/frames/04.png",
+        "SM07/frames/05.png"
+      ],
+      "gif": "SM07/preview.gif",
+      "provenance": "SM07/provenance.json"
+    },
+    {
+      "id": "SM08",
+      "name": "One-knee falling hammer",
+      "frames": [
+        "SM08/frames/01.png",
+        "SM08/frames/02.png",
+        "SM08/frames/03.png",
+        "SM08/frames/04.png",
+        "SM08/frames/05.png"
+      ],
+      "gif": "SM08/preview.gif",
+      "provenance": "SM08/provenance.json"
+    },
+    {
+      "id": "SM09",
+      "name": "Compact two-foot hammer",
+      "frames": [
+        "SM09/frames/01.png",
+        "SM09/frames/02.png",
+        "SM09/frames/03.png",
+        "SM09/frames/04.png",
+        "SM09/frames/05.png"
+      ],
+      "gif": "SM09/preview.gif",
+      "provenance": "SM09/provenance.json"
+    },
+    {
+      "id": "SM10",
+      "name": "Wide scissor spiral slam",
+      "frames": [
+        "SM10/frames/01.png",
+        "SM10/frames/02.png",
+        "SM10/frames/03.png",
+        "SM10/frames/04.png",
+        "SM10/frames/05.png"
+      ],
+      "gif": "SM10/preview.gif",
+      "provenance": "SM10/provenance.json"
+    }
+  ],
+  "status": "director_accepted_option_review_QA_passed",
+  "qa": {
+    "reviewers": [
+      "sweep_sequences_art",
+      "integration_audit"
+    ],
+    "result": "APPROVE",
+    "frameCount": 50,
+    "exactBookends": 20,
+    "gifSlotsPerExample": 5,
+    "minimumVisibleMarginPx": 24,
+    "metadataHashAssertions": 122
+  }
+}

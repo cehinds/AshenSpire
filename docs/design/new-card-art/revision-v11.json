@@ -1,0 +1,33 @@
+{
+  "revision": 11,
+  "request": "Scale the physical scepter down by 50% and align it with the spectral staff. Keep the scythe the same size.",
+  "changedCompositions": [
+    "Y02",
+    "Y07",
+    "Y12",
+    "Y17",
+    "Y22",
+    "Y27",
+    "Y32",
+    "Y37",
+    "Y42",
+    "Y47",
+    "Y52",
+    "Y57",
+    "Y62",
+    "Y67",
+    "Y72",
+    "Y77",
+    "Y82",
+    "Y87",
+    "Y92",
+    "Y97"
+  ],
+  "scepterSizeBefore": 305.9,
+  "scepterSizeAfter": 152.95,
+  "scepterScaleFactor": 0.5,
+  "changedPngs": [],
+  "unchangedPngCount": 362,
+  "placement": "Place the physical pommel at the spectral shaft endpoint and rotate its grip onto the transformed staff centerline. Compensate the attachment offset, relative rotation and reference size to preserve the scythe world pose.",
+  "resetSavedPlacement": true
+}

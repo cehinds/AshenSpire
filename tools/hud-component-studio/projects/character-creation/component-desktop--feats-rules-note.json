@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Feats / rules pending note",
+  "canvas": {
+    "width": 500,
+    "height": 30,
+    "background": "transparent"
+  },
+  "defaultState": "feats",
+  "states": [
+    {
+      "id": "feats",
+      "name": "Feats"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "feat-rules-undecided",
+      "name": "Feat Rules Undecided",
+      "type": "text",
+      "parent": "feats-rules-note",
+      "x": 0,
+      "y": 0,
+      "width": 500,
+      "height": 30,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Concept \u00b7 starting-feat rules to be decided",
+      "fontSize": 13,
+      "fontFamily": "Arial",
+      "fill": "#b8aa87",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "feats-rules-note",
+      "name": "Feats / rules pending note",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 500,
+      "height": 30,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    }
+  ],
+  "metadata": {
+    "componentSource": "feats-rules-note",
+    "sourceState": "feats",
+    "designOnly": true
+  }
+}

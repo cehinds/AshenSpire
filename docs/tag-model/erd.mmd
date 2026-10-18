@@ -1,0 +1,182 @@
+erDiagram
+  TAG_NODE ||--o{ TAG_NODE : "parent of"
+  TAG_NODE ||--o{ TAG_RELATION : "source"
+  TAG_NODE ||--o{ TAG_RELATION : "target"
+  TAG_NODE ||--o{ TAG_EFFECT : "defines"
+  TAG_NODE ||--o{ TAG_ASSIGNMENT : "assigned as"
+  CHARACTER }o--|| CLASS : "plays as"
+  CLASS ||--o{ CLASS_STANCE : "grants"
+  CLASS }o--o{ SKILL : "favours"
+  CHARACTER ||--o{ SKILL : "levels"
+  CHARACTER }o--o{ WEAPON : "wields"
+  CHARACTER }o--o{ ARMOR : "wears"
+  CHARACTER }o--o{ RELIC : "holds"
+  CHARACTER }o--o{ FEAT : "earns"
+  CHARACTER }o--o{ CONSUMABLE : "carries"
+  CHARACTER }o--o{ CARD : "deck"
+  CHARACTER ||--o{ CURRENCY : "balance"
+  WEAPON }o--|| SKILL : "trains"
+  WEAPON }o--o{ DAMAGE_TYPE : "deals"
+  WEAPON }o--o{ CARD : "grants"
+  SKILL }o--o| DAMAGE_TYPE : "deals"
+  CLASS_STANCE ||--|| CARD : "entered by"
+  CARD }o--o| STANCE : "is"
+  CARD }o--o{ DAMAGE_TYPE : "deals"
+  CARD }o--o{ STATUS_EFFECT : "applies"
+  ENEMY_MOVE }o--|| STANCE : "shows"
+  ENEMY_MOVE }o--o| DAMAGE_TYPE : "deals"
+  CREATURE ||--o{ ENEMY_MOVE : "uses"
+  DAMAGE_TYPE }o--o| STATUS_EFFECT : "on hit"
+  STANCE }o--o{ STANCE : "strong vs"
+  CONSUMABLE }o--o{ LOCATION : "refills at"
+  TAG_ASSIGNMENT }o--|| CARD : "carrier"
+  TAG_ASSIGNMENT }o--|| WEAPON : "carrier"
+  TAG_ASSIGNMENT }o--|| ARMOR : "carrier"
+  TAG_ASSIGNMENT }o--|| CREATURE : "carrier"
+
+  TAG_NODE {
+    string id PK "dotted path"
+    string parentId FK
+    string label
+    string root "meta | card"
+    string status "existing | new | moved"
+    string visibility
+  }
+  TAG_RELATION {
+    string sourceId FK
+    string relation "REQUIRES CONFLICTS_WITH STRONG_VS WEAK_VS"
+    string targetId FK
+    int precedence
+  }
+  TAG_EFFECT {
+    string tagId FK
+    string trigger
+    json ops
+    json variables
+  }
+  TAG_ASSIGNMENT {
+    string carrierType
+    string carrierId
+    string tagId FK
+  }
+  CHARACTER {
+    string id PK
+    string classId FK
+    json attributes
+    json resources
+    json level
+    json exp
+    json currency
+    json stats
+    json equipment
+  }
+  CLASS {
+    string id PK
+    string archetypeTag FK
+    json skillTags
+    json startingDeck
+  }
+  CLASS_STANCE {
+    string id PK
+    string skillTag FK
+    string cardId FK
+    json modifiers
+  }
+  SKILL {
+    string id PK "tag id"
+    string kind
+    string parentSkillId FK
+    string damageTypeId FK
+    int levelCap
+  }
+  WEAPON {
+    string id PK
+    string grip FK
+    string skillTag FK
+    json damageTypes
+    json scaling
+  }
+  ARMOR {
+    string id PK
+    string slot FK
+    string weight FK
+    string material FK
+    json properties
+    int dr
+    int poise
+    int ward
+    json resistances
+  }
+  RELIC {
+    string id PK
+    string rarity FK
+    string trigger FK
+    json effects
+  }
+  FEAT {
+    string id PK
+    string kind FK
+    json requires
+    json effects
+  }
+  CONSUMABLE {
+    string id PK
+    string kind FK
+    json charges
+    json effects
+  }
+  CREATURE {
+    string id PK
+    string type FK
+    string rank FK
+    int hp
+    int poiseMax
+    json resistances
+  }
+  ENEMY_MOVE {
+    string creatureId FK
+    string moveId
+    string stance FK
+    string delivery FK
+    string damageType FK
+    int damage
+  }
+  CARD {
+    string id PK
+    string type FK
+    string rarity FK
+    json keywords
+    json cost
+    string source FK
+    json effects
+  }
+  STATUS_EFFECT {
+    string id PK
+    string tag FK
+    string polarity
+    string stacking
+    json decay
+    json tick
+  }
+  DAMAGE_TYPE {
+    string id PK
+    string category "physical magic hybrid"
+    json stoppedBy
+    json onHit
+  }
+  STANCE {
+    string id PK
+    string group "offensive defensive counter"
+    json strongVs
+    json weakVs
+  }
+  LOCATION {
+    string id PK
+    json restores
+    json offers
+  }
+  CURRENCY {
+    string id PK
+    json earnedFrom
+    json spentAt
+  }

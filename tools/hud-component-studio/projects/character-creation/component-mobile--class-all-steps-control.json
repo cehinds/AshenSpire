@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "title": "Class All Steps Control",
+  "canvas": {
+    "width": 156,
+    "height": 48,
+    "background": "transparent"
+  },
+  "defaultState": "class",
+  "states": [
+    {
+      "id": "class",
+      "name": "Class"
+    }
+  ],
+  "assets": {
+    "panel-frame": {
+      "src": "assets/panel-frame.png",
+      "width": 1080,
+      "height": 720
+    },
+    "soot-material": {
+      "src": "assets/soot-material.png",
+      "width": 256,
+      "height": 256
+    }
+  },
+  "nodes": [
+    {
+      "id": "class-all-steps-control",
+      "name": "Class All Steps Control",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 156,
+      "height": 48,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "class-all-steps-control-background",
+      "name": "Class All Steps Control Background",
+      "type": "image",
+      "parent": "class-all-steps-control",
+      "x": 0,
+      "y": 0,
+      "width": 156,
+      "height": 48,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "soot-material"
+    },
+    {
+      "id": "class-all-steps-control-trim",
+      "name": "Class All Steps Control Trim",
+      "type": "image",
+      "parent": "class-all-steps-control",
+      "x": 0,
+      "y": 0,
+      "width": 156,
+      "height": 48,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "panel-frame"
+    },
+    {
+      "id": "class-all-steps-control-label",
+      "name": "Class All Steps Control Label",
+      "type": "text",
+      "parent": "class-all-steps-control",
+      "x": 12,
+      "y": 16,
+      "width": 132,
+      "height": 32,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "All steps  \u25be",
+      "fontSize": 16,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8"
+    }
+  ],
+  "metadata": {
+    "componentSource": "class-all-steps-control",
+    "sourceState": "class",
+    "designOnly": true
+  }
+}

@@ -12,6 +12,8 @@
 //
 // Headless: no document/window/localStorage/timers.
 
+import { counterstrikeAmount } from '../engine/combatCardTraitMath.js';
+
 export const FORMULA_OPS = Object.freeze([
   'add',
   'mul',
@@ -23,6 +25,8 @@ export const FORMULA_OPS = Object.freeze([
   'blockOf',
   'hpOf',
   'cardsPlayedThisTurn',
+  'metric',
+  'traitBonus',
 ]);
 
 // Entity references usable in a formula's `of` field.
@@ -79,6 +83,74 @@ export function constantFormulaValue(formula) {
 
 /** State-dependent stack quantities on authored faces, without evaluating an actor. */
 export function describeFormula(formula) {
+  // A sum of describable stack counts (Herald payoffs read Crimson + Necrotic
+  // Blight together, SPEC §4.4) reads as its terms joined by "plus".
+  if (isFormula(formula) && formula.f === 'add') {
+    if (!Array.isArray(formula.args) || !formula.args.length
+        || Object.keys(formula).some(key => !['f', 'args', 'min', 'max'].includes(key))
+        || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isFinite(formula[key]))) return undefined;
+    const parts = formula.args.map(part => Number.isFinite(part)
+      ? String(part) : describeFormula(part));
+    if (parts.some(part => part === undefined)) return undefined;
+    let text = parts.join(' plus ');
+    if (formula.min !== undefined) text += ` (minimum ${formula.min})`;
+    if (formula.max !== undefined) text += ` (maximum ${formula.max})`;
+    if (['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
+    return text;
+  }
+  // A constant 1/N share of a describable count — Reclamation's "1 per 2
+  // Blight", floored once on the sum (the evaluator's single final floor).
+  if (isFormula(formula) && formula.f === 'mul') {
+    if (!Array.isArray(formula.args) || formula.args.length !== 2
+        || Object.keys(formula).some(key => !['f', 'args', 'min', 'max'].includes(key))
+        || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isFinite(formula[key]))) return undefined;
+    const [share, inner] = formula.args;
+    const per = typeof share === 'number' && share > 0 ? 1 / share : NaN;
+    const described = describeFormula(inner);
+    if (!Number.isInteger(per) || per < 2 || described === undefined) return undefined;
+    let text = `1 per ${per} of (${described}) (whole groups)`;
+    if (formula.min !== undefined) text += ` (minimum ${formula.min})`;
+    if (formula.max !== undefined) text += ` (maximum ${formula.max})`;
+    if (['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
+    return text;
+  }
+  // Some authored damage cards combine a fixed base with a per-status rider.
+  // Their live value still belongs to combat preview, but the card face can
+  // describe the authored arithmetic without guessing the target's statuses.
+  if (isFormula(formula) && formula.f === 'metric'
+      && Number.isFinite(formula.per) && formula.per > 0
+      && ['min', 'max'].every(key => formula[key] === undefined || Number.isFinite(formula[key]))
+      && !(formula.min !== undefined && formula.max !== undefined && formula.min > formula.max)
+      && Object.keys(formula).every(key => ['f', 'metric', 'of', 'statuses', 'per', 'min', 'max'].includes(key))) {
+    const metricText = {
+      negativeStatusTypes: formula.of === 'target' && Array.isArray(formula.statuses)
+        && formula.statuses.length > 0 && formula.statuses.every(status => typeof status === 'string' && status.length > 0)
+        ? 'distinct negative status' : null,
+      damageTakenThisTurn: formula.of === 'self' ? 'HP lost this turn' : null,
+      distinctTypes: formula.of === 'self' ? 'distinct card type played this turn' : null,
+      sameCardPlays: formula.of === 'self' ? 'play of this card this combat' : null,
+    }[formula.metric];
+    if (metricText) {
+      const scale = formula.per === 0.5 && formula.metric === 'damageTakenThisTurn'
+        ? 'half of ' : `${formula.per} per `;
+      let text = `${scale}${metricText}`;
+      if (formula.min !== undefined) text += ` (minimum ${formula.min})`;
+      if (formula.max !== undefined) text += ` (maximum ${formula.max})`;
+      if (!Number.isInteger(formula.per) || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
+      return text;
+    }
+  }
+  if (isFormula(formula) && formula.f === 'energySpent'
+      && Number.isFinite(formula.per) && formula.per > 0
+      && ['min', 'max'].every(key => formula[key] === undefined || Number.isFinite(formula[key]))
+      && !(formula.min !== undefined && formula.max !== undefined && formula.min > formula.max)
+      && Object.keys(formula).every(key => ['f', 'per', 'min', 'max'].includes(key))) {
+    let text = `${formula.per} per SP spent`;
+    if (formula.min !== undefined) text += ` (minimum ${formula.min})`;
+    if (formula.max !== undefined) text += ` (maximum ${formula.max})`;
+    if (!Number.isInteger(formula.per) || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
+    return text;
+  }
   if (!isFormula(formula) || formula.f !== 'stacks'
       || Object.keys(formula).some(key => !['f', 'status', 'of', 'per', 'min', 'max'].includes(key))
       || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isFinite(formula[key]))) return undefined;
@@ -144,8 +216,16 @@ function evalNode(node, ctx) {
       const ents = resolveMany(ctx, node.of, node.f);
       let total = 0;
       for (const ent of ents) total += stacksOf(ent, node.status);
+      if (node.per != null && !(Number.isFinite(node.per) && node.per > 0)) throw new Error(`stacks per must be a positive number, got ${node.per}`);
       v = node.per != null ? Math.floor(total / node.per) : total;
       break;
+    }
+    case 'metric': {
+      const ent = resolveOne(ctx, node.of || 'self', node.f), state=(node.of===undefined || node.of==='self' || node.of==='owner') && ctx.metricsBefore ? ctx.metricsBefore : ent.abilityRiders || {};
+      const active=Object.entries(ent.statuses || {}).filter(([id,row])=>(row.stacks || row.meter?.value || 0)>0 && (node.statuses || []).includes(id)).map(([,row])=>row);
+      const values={weaponDamage:ctx.weaponDamage || 0,negativeStatusTypes:active.length,negativeStatusStacks:active.reduce((n,row)=>n+(row.stacks || row.meter?.value || 0),0),damageTakenThisTurn:state.hpLostSinceTurnStart || 0,sameCardPlays:state.cardUsesCombat?.[ctx.cardId] || 0,cardsPlayed:state.cardsPlayed || 0,distinctTypes:Object.keys(state.typePlays || {}).length,manaSpent:ctx.manaSpent || 0,staminaSpent:ctx.staminaSpent || 0};
+      if (!(node.metric in values)) throw new Error('Unknown combat metric');
+      v=values[node.metric]*(node.per ?? 1);break;
     }
     case 'energySpent': {
       const spent = ctx.energySpent != null ? ctx.energySpent : 0;
@@ -165,6 +245,12 @@ function evalNode(node, ctx) {
     case 'cardsPlayedThisTurn': {
       const n = ctx.cardsPlayedThisTurn != null ? ctx.cardsPlayedThisTurn : 0;
       v = n * (node.per != null ? node.per : 1);
+      break;
+    }
+    case 'traitBonus': {
+      // Counterstrike on a formula amount (docs/combat-card-traits-contract.md):
+      // the base is floored, then a + max(floor(a × pct), 1) for a > 0.
+      v = counterstrikeAmount(evaluate(node.base, ctx), numField(node, 'pct'));
       break;
     }
     default:

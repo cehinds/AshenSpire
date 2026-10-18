@@ -1,0 +1,3589 @@
+{
+  "schemaVersion": 1,
+  "project": "AshenSpire",
+  "branchRequested": "Feature/UpdateStances",
+  "createdUtc": "2026-10-12",
+  "purpose": "Art production definition; not a runtime registration or equip compatibility manifest.",
+  "sources": [
+    "current-art.md",
+    "references.md"
+  ],
+  "camera": {
+    "view": "rear_three_quarter",
+    "viewerPosition": "behind_left_shoulder",
+    "facingScreen": "right",
+    "fullBody": true,
+    "bodyEffectsSeparated": true,
+    "fullSourceCanvas": [
+      512,
+      512
+    ],
+    "sourceFloorAnchorReference": [
+      256,
+      464
+    ],
+    "runtimeReferenceCanvas": [
+      256,
+      256
+    ],
+    "fullSilhouetteAndWeaponTipsVisible": true,
+    "supportVisibility": "Standing poses retain visible feet; guard-break shows exactly one grounded knee and the opposite planted boot.",
+    "sourceDimensionsApplyTo": "Existing selected runtime art reference, not a requirement for generated concept-board dimensions."
+  },
+  "countingPolicy": {
+    "optionUnit": "One genuinely distinct weapon-specific composition or action storyboard; four class appearances are adapters, not additional choices.",
+    "requestedNewFamilies": 6,
+    "weaponGroups": 10,
+    "optionsPerWeaponPerFamily": 10,
+    "coreBaseConceptsPlanned": 600,
+    "coreClassAdaptationsPlanned": 2400,
+    "coreAdditionalMagicConceptsPlanned": 500,
+    "coreAdditionalMagicClassAdaptationsPlanned": 2000,
+    "coreMaxTreatmentClassAdaptationsPlanned": 4400,
+    "proposedBackfillFamilies": 3,
+    "backfillBaseConceptsPlanned": 300,
+    "backfillBaseClassAdaptationsPlanned": 1200,
+    "backfillAdditionalMagicConceptsPlanned": 300,
+    "backfillAdditionalMagicClassAdaptationsPlanned": 1200,
+    "allBaseConceptsPlannedIncludingProposed": 900,
+    "allBaseClassAdaptationsPlannedIncludingProposed": 3600,
+    "allAdditionalMagicConceptsPlannedIncludingProposed": 800,
+    "allAdditionalMagicClassAdaptationsPlannedIncludingProposed": 3200,
+    "allMaxTreatmentClassAdaptationsPlannedIncludingProposed": 6800,
+    "countsAreUpperBoundsBeforeFeasibilityAndSelection": true,
+    "briefedBaseConcepts": 20,
+    "generatedConceptsAtDefinitionTime": 20,
+    "reviewedConceptsAtDefinitionTime": 20,
+    "selectedConceptsAtDefinitionTime": 5,
+    "registeredSequencesAtDefinitionTime": 0,
+    "frameCount": "Unspecified until selected concepts receive per-action phase and in-between plans; a storyboard panel is not a registered frame.",
+    "coreRequestedHeldMagicConceptsPlanned": 200,
+    "coreRequestedHeldMagicClassAdaptationsPlanned": 800,
+    "coreProposedDerivedMagicSequenceConceptsPlanned": 300,
+    "coreProposedDerivedMagicSequenceClassAdaptationsPlanned": 1200,
+    "magicSequenceExpansionScopeStatus": "proposed_interpretation_of_magic_stances_not_explicit_sequence_request",
+    "generatedCountSnapshotScope": "Existing canonical A/B concept-board candidates at snapshot. Preliminary and repair sheets do not count as extra options.",
+    "reviewCountPolicy": "Reviewed means art-director concept review only. Selectable means available for user comparison; neither count implies user selection or production approval.",
+    "conceptDirectorReviewed": 20,
+    "conceptSelectable": 19,
+    "conceptNeedsRevision": 1,
+    "userSelected": 5,
+    "productionApproved": 5,
+    "selectedRoleAssignments": 5,
+    "productionApprovalMeaning": "Final visual/gameplay delivery acceptance within the selected pilot scope; five browser-validated poses merged in PR1890. No new full animation sequences or other-class/weapon coverage implied.",
+    "registeredPoseExports": 5,
+    "newFullAnimationSequences": 0,
+    "selectedPilotGameplayValidated": 5
+  },
+  "normalization": {
+    "dagger": "single_dagger",
+    "daggers": "dual_daggers",
+    "single-dagger": "single_dagger",
+    "dual-daggers": "dual_daggers",
+    "twin daggers": "dual_daggers",
+    "sword+shield": "sword_shield",
+    "sword-shield": "sword_shield",
+    "staff-casting": "staff",
+    "single-sword": "single_sword",
+    "shortbow": "bow",
+    "rule": "In this requested weapon list, dagger maps to single_dagger and daggers maps to dual_daggers. Item catalog plurals alone do not establish equip legality; inspect actual equipped loadout before runtime mapping."
+  },
+  "families": [
+    {
+      "id": "guard_break",
+      "label": "Kneeling guard-break",
+      "outputKind": "held_pose",
+      "scopeStatus": "requested",
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "definition": "A living, staggered character on one knee after guard loss; distinct from defeat and voluntary preparation.",
+      "conceptCountPerWeaponPlanned": 10,
+      "sequenceBeatContract": null,
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "smash_stance",
+      "label": "Dedicated smash stance",
+      "outputKind": "held_pose",
+      "scopeStatus": "requested",
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "definition": "Sustained heavy-action readiness; no contact, recoil or finished strike in the held pose.",
+      "conceptCountPerWeaponPlanned": 10,
+      "sequenceBeatContract": null,
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "smash_attack",
+      "label": "Smash attack sequence",
+      "outputKind": "sequence",
+      "scopeStatus": "requested",
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "definition": "Load, commit, contact, follow-through, recovery and return to the matching equipped rest pose.",
+      "conceptCountPerWeaponPlanned": 10,
+      "sequenceBeatContract": [
+        "prepare",
+        "defend_or_commit",
+        "aim_or_contact",
+        "release_or_follow_through",
+        "recover",
+        "equipped_rest"
+      ],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "counter_melee",
+      "label": "Melee counter sequence",
+      "outputKind": "sequence",
+      "scopeStatus": "requested",
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "definition": "Separate armed preparation, defense event, retaliatory melee commitment, contact, recovery and equipped rest.",
+      "conceptCountPerWeaponPlanned": 10,
+      "sequenceBeatContract": [
+        "prepare",
+        "defend_or_commit",
+        "aim_or_contact",
+        "release_or_follow_through",
+        "recover",
+        "equipped_rest"
+      ],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "counter_ranged",
+      "label": "Ranged counter sequence",
+      "outputKind": "sequence",
+      "scopeStatus": "requested",
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "definition": "Separate preparation, evade/intercept, aim, release, recovery and equipped rest; non-bow physical payload capability remains unresolved.",
+      "conceptCountPerWeaponPlanned": 10,
+      "sequenceBeatContract": [
+        "prepare",
+        "defend_or_commit",
+        "aim_or_contact",
+        "release_or_follow_through",
+        "recover",
+        "equipped_rest"
+      ],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "counter_magic",
+      "label": "Magic counter sequence",
+      "outputKind": "sequence",
+      "scopeStatus": "requested",
+      "treatments": [
+        "magic"
+      ],
+      "definition": "Separate channel-ready, ward/intercept, focus, release, recover and equipped rest; inherently magical.",
+      "conceptCountPerWeaponPlanned": 10,
+      "sequenceBeatContract": [
+        "prepare",
+        "defend_or_commit",
+        "aim_or_contact",
+        "release_or_follow_through",
+        "recover",
+        "equipped_rest"
+      ],
+      "magicTreatmentScopeStatus": "intrinsic_requested"
+    },
+    {
+      "id": "attack_stance",
+      "label": "Existing attack stance weapon backfill",
+      "outputKind": "held_pose",
+      "scopeStatus": "proposed_backfill",
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "definition": "Weapon-aware offensive readiness; the extra ten-option exploration count is proposed scope.",
+      "conceptCountPerWeaponPlanned": 10,
+      "sequenceBeatContract": null,
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "defend_stance",
+      "label": "Existing defend stance weapon backfill",
+      "outputKind": "held_pose",
+      "scopeStatus": "proposed_backfill",
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "definition": "Weapon-aware forward guard; extra ten-option exploration count is proposed scope.",
+      "conceptCountPerWeaponPlanned": 10,
+      "sequenceBeatContract": null,
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "prepare_stance",
+      "label": "Existing prepare stance weapon backfill",
+      "outputKind": "held_pose",
+      "scopeStatus": "proposed_backfill",
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "definition": "Weapon-aware preparation with class casting identity when magical; extra ten-option exploration count is proposed scope.",
+      "conceptCountPerWeaponPlanned": 10,
+      "sequenceBeatContract": null,
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    }
+  ],
+  "weaponGroups": [
+    {
+      "id": "sword_shield",
+      "label": "Sword + shield",
+      "existingActionFamily": "sword-shield",
+      "itemReferenceIds": [
+        "straightSword"
+      ],
+      "itemReferencesAreNotEquipPermission": true,
+      "anatomyAndEquipment": "Keep sword and shield in their established hands. Shield is a real equipped shield, not any arbitrary offhand item. Two independent silhouettes; sword tips clear the shield.",
+      "heavyActionDirection": "Shield stays toward screen-right; heavy options use shield bash or sword leverage only when action identity permits; otherwise use the selected heavy sword cut.",
+      "defenseDirection": "Forward shield guard; never place a conjured second weapon in the shield hand.",
+      "exactNewArtFeasibility": "existing_action_reference",
+      "nonBowPhysicalRangedPayload": "unresolved_no_projectile_invention",
+      "runtimeEquipLegality": "not_audited_here"
+    },
+    {
+      "id": "greatsword",
+      "label": "Greatsword",
+      "existingActionFamily": "greatsword",
+      "itemReferenceIds": [
+        "greatsword"
+      ],
+      "itemReferencesAreNotEquipPermission": true,
+      "anatomyAndEquipment": "Both hands hold the same long hilt; body rotation and rear heel transmit weight. Preserve full blade, helmet and cape clearance.",
+      "heavyActionDirection": "Heavy downward or diagonal cut with credible shoulder/hip load; no thin-rapier wrist flick.",
+      "defenseDirection": "Two-hand crossguard or blade-line defense; no invented shield.",
+      "exactNewArtFeasibility": "existing_action_reference",
+      "nonBowPhysicalRangedPayload": "unresolved_no_projectile_invention",
+      "runtimeEquipLegality": "not_audited_here"
+    },
+    {
+      "id": "staff",
+      "label": "Staff",
+      "existingActionFamily": "staff-casting",
+      "itemReferenceIds": [
+        "ashStaff",
+        "starstoneStaff"
+      ],
+      "itemReferencesAreNotEquipPermission": true,
+      "anatomyAndEquipment": "Keep staff length, tip and grip readable. Melee and casting grips differ; established casting may use one-hand staff plus existing book only when loadout-compatible.",
+      "heavyActionDirection": "Physical heavy staff blow uses a supported two-hand lever; magical smash is a staff-focused discharge with altered channel pose.",
+      "defenseDirection": "Staff intercept uses shaft placement and rear-foot brace; spell ward uses focus and grip without adding gear.",
+      "exactNewArtFeasibility": "existing_action_reference",
+      "nonBowPhysicalRangedPayload": "unresolved_no_projectile_invention",
+      "runtimeEquipLegality": "not_audited_here"
+    },
+    {
+      "id": "bow",
+      "label": "Bow",
+      "existingActionFamily": "bow",
+      "itemReferenceIds": [
+        "shortbow"
+      ],
+      "itemReferencesAreNotEquipPermission": true,
+      "anatomyAndEquipment": "Preserve bow limbs, string, arrow and finger clearance. Lower or safely release draw during collapse; no string passes through the torso.",
+      "heavyActionDirection": "Proposed semantic mapping: forceful braced shot, distinct from normal aimed release; needs explicit action-identity review. Never smash a bow into the ground or invent a melee weapon.",
+      "defenseDirection": "Physical defense favors displacement and bow protection; do not present bow limbs as a heavy shield.",
+      "exactNewArtFeasibility": "existing_action_reference",
+      "nonBowPhysicalRangedPayload": "existing_bow_release_reference",
+      "runtimeEquipLegality": "not_audited_here"
+    },
+    {
+      "id": "single_dagger",
+      "label": "Single dagger",
+      "existingActionFamily": "single-dagger",
+      "itemReferenceIds": [
+        "dagger"
+      ],
+      "itemReferencesAreNotEquipPermission": true,
+      "anatomyAndEquipment": "Exactly one equipped dagger; empty offhand remains empty. Use close elbow/hip geometry rather than a long-weapon arc.",
+      "heavyActionDirection": "Short committed stab or descending close cut; distinguish body drive from ordinary light knife strike.",
+      "defenseDirection": "Blade deflection supported by footwork; no second dagger or invisible shield.",
+      "exactNewArtFeasibility": "existing_action_reference",
+      "nonBowPhysicalRangedPayload": "unresolved_no_projectile_invention",
+      "runtimeEquipLegality": "not_audited_here"
+    },
+    {
+      "id": "dual_daggers",
+      "label": "Dual daggers",
+      "existingActionFamily": "dual-daggers",
+      "itemReferenceIds": [
+        "dagger"
+      ],
+      "itemReferencesAreNotEquipPermission": true,
+      "anatomyAndEquipment": "Exactly two equipped daggers, one per hand. Separate both blade tips and wrists; crossed guards must not fuse hands.",
+      "heavyActionDirection": "Paired descending commitment or staggered heavy close strikes; two hands stay anatomically distinct.",
+      "defenseDirection": "Cross or staggered blade interception, followed by a hand-specific return.",
+      "exactNewArtFeasibility": "existing_action_reference",
+      "nonBowPhysicalRangedPayload": "unresolved_no_projectile_invention",
+      "runtimeEquipLegality": "not_audited_here"
+    },
+    {
+      "id": "single_sword",
+      "label": "Single sword",
+      "existingActionFamily": "single-sword",
+      "itemReferenceIds": [
+        "straightSword",
+        "katana"
+      ],
+      "itemReferencesAreNotEquipPermission": true,
+      "anatomyAndEquipment": "One-hand sword read; empty offhand balances unless the selected item requires a two-hand grip. Do not relabel greatsword art.",
+      "heavyActionDirection": "Committed diagonal or descending cut driven from hips, keeping sword length appropriate to item.",
+      "defenseDirection": "Forward sword line, beat or bind with a clear empty offhand.",
+      "exactNewArtFeasibility": "existing_action_reference",
+      "nonBowPhysicalRangedPayload": "unresolved_no_projectile_invention",
+      "runtimeEquipLegality": "not_audited_here"
+    },
+    {
+      "id": "spear",
+      "label": "Spear",
+      "existingActionFamily": null,
+      "itemReferenceIds": [
+        "frostSpear"
+      ],
+      "itemReferencesAreNotEquipPermission": true,
+      "anatomyAndEquipment": "Distinct straight point and long shaft; rear hand drives and front hand guides. No axe head or generic greatsword substitute.",
+      "heavyActionDirection": "Heavy braced thrust or controlled shaft-down finish; do not pretend a spear has a halberd blade.",
+      "defenseDirection": "Point-line interception or shaft deflection; retain space between hands and keep point toward screen-right.",
+      "exactNewArtFeasibility": "new_dedicated_family_required",
+      "nonBowPhysicalRangedPayload": "unresolved_no_projectile_invention",
+      "runtimeEquipLegality": "not_audited_here"
+    },
+    {
+      "id": "halberd",
+      "label": "Halberd",
+      "existingActionFamily": null,
+      "itemReferenceIds": [
+        "halberd"
+      ],
+      "itemReferencesAreNotEquipPermission": true,
+      "anatomyAndEquipment": "Show axe head, top point and rear hook in the correct orientation. Two-hand leverage and complete head clearance matter.",
+      "heavyActionDirection": "Heavy diagonal head chop or controlled hook-and-drive where action identity permits; no staff tip replacement.",
+      "defenseDirection": "Long shaft barrier or head-line bind; keep the axe head distinct from spear geometry.",
+      "exactNewArtFeasibility": "new_dedicated_family_required",
+      "nonBowPhysicalRangedPayload": "unresolved_no_projectile_invention",
+      "runtimeEquipLegality": "not_audited_here"
+    },
+    {
+      "id": "unarmed",
+      "label": "Unarmed",
+      "existingActionFamily": null,
+      "itemReferenceIds": [],
+      "itemReferencesAreNotEquipPermission": true,
+      "anatomyAndEquipment": "Empty hands stay empty. Distinct fists, palms, elbows and knee silhouettes; no conjured staff or weapon disguised as equipment.",
+      "heavyActionDirection": "Committed hammerfist, elbow or palm drive with hip load; never add an impact tool.",
+      "defenseDirection": "Forearm cover, open-palm redirection or footwork; physical ranged retaliation has no presumed projectile.",
+      "exactNewArtFeasibility": "new_dedicated_family_required",
+      "nonBowPhysicalRangedPayload": "unresolved_no_projectile_invention",
+      "runtimeEquipLegality": "not_audited_here"
+    }
+  ],
+  "classes": [
+    {
+      "id": "reaver",
+      "identity": "Rusty plate, closed helmet, continuous crimson cape. Maintain armor mass and established body proportions.",
+      "magic_identity": "Use existing card/spell identity when selected; this brief does not assign a new school."
+    },
+    {
+      "id": "rogue",
+      "identity": "Hood, brown Gutter Leathers, faded teal cloak; agile low center without changing the selected weapon count.",
+      "magic_identity": "Use existing card/spell identity; smoke/poison is not automatically a magical projectile."
+    },
+    {
+      "id": "starseer",
+      "identity": "Navy/gold Nightweave and established silhouette; staff and front-held reader-facing book only where loadout and casting pose support them.",
+      "magic_identity": "Existing astral/card identity, with explicit channel hand/grip; never force staff into a non-staff loadout."
+    },
+    {
+      "id": "herald",
+      "identity": "Red hood and layered Rite Vestments; established empty-hand/book casting identity is reference, not a universal forced loadout.",
+      "magic_identity": "Existing rite/card identity; keep any supported book in front with pages toward its reader."
+    }
+  ],
+  "magicRule": {
+    "intrinsicallyMagicalFamily": "counter_magic",
+    "extraPhysicalCounterpartForMagicCounter": false,
+    "requiresBodyMotionDifference": true,
+    "paletteOnlyVariantsCountAsNewConcepts": false,
+    "retainSelectedEquipment": true,
+    "spellIdentitySource": "Existing resolved card/spell identity, not invented class-school assignment.",
+    "heldStanceRule": "Change weight, torso/grip/hand configuration and sustained focus; keep effects separately removable.",
+    "sequenceRule": "Use channel, release and recovery choreography appropriate to the same weapon; do not recolor a physical impact and call it new animation."
+  },
+  "rangedCounterOpenDecision": {
+    "status": "unresolved",
+    "question": "Does ranged mean a ranged retaliatory payload or a counter against incoming ranged attacks?",
+    "currentAuthoringRule": "Bow supports a ranged physical reply. Non-bow physical packages remain pending; no thrown swords, invented bows or presumed projectile skills. Evade/intercept plus melee return is a separate interpretation requiring action-identity decision.",
+    "fallbackRule": "Retain a reviewed registered action only if later runtime routing supports it; no art-only document promises fallback correctness."
+  },
+  "waves": [
+    {
+      "id": 1,
+      "purpose": "Establish stance grammar: greatsword smash stance and on-knee guard-break, ten options each.",
+      "packages": [
+        "greatsword--smash_stance",
+        "greatsword--guard_break"
+      ],
+      "status": "20_director_reviewed_concepts_19_selectable_1_needs_revision",
+      "deliverable": "Two labeled concept boards. One Reaver identity pilot per option; class/magic adaptation follows pose review.",
+      "conceptCountPlanned": 20,
+      "conceptCountGenerated": 20,
+      "conceptDirectorReviewed": 20,
+      "conceptSelectable": 19,
+      "conceptNeedsRevision": 1,
+      "userSelected": 5,
+      "productionApproved": 5
+    },
+    {
+      "id": 2,
+      "purpose": "Selected pose grammar adapted across all weapon groups and four classes; resolve bow heavy semantics and non-bow ranged meaning before those boards.",
+      "status": "planned"
+    },
+    {
+      "id": 3,
+      "purpose": "Ten smash-attack and melee/ranged/magic-counter options per weapon group; explicit timed storyboards before sprite-frame production.",
+      "status": "planned"
+    },
+    {
+      "id": 4,
+      "purpose": "Magic variants and attack/defend/prepare weapon-aware backfill; backfill ten-option expansion is proposed scope.",
+      "status": "planned"
+    },
+    {
+      "id": 5,
+      "purpose": "Selected concept production, separate body/FX export, catalog registration and solo gameplay validation. Co-op remains paused.",
+      "status": "planned"
+    }
+  ],
+  "productionStates": [
+    "planned_not_briefed",
+    "briefed_not_generated",
+    "generated_review_pending",
+    "director_reviewed_selectable_concept",
+    "director_reviewed_needs_revision",
+    "user_selected",
+    "production_approved",
+    "frames_authored",
+    "exported",
+    "registered",
+    "validated_solo"
+  ],
+  "completionRules": [
+    "A concept sheet is an exploration artifact, never a finished registered sequence.",
+    "Generated requires an existing art path and provenance record; package counts change only after evidence exists.",
+    "Selection is explicit owner/art-director choice; not implied by generation.",
+    "Registration and runtime equip legality require a later implementation and review.",
+    "Co-op work is paused."
+  ],
+  "workPackages": [
+    {
+      "id": "sword_shield--guard_break",
+      "weaponGroup": "sword_shield",
+      "family": "guard_break",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "greatsword--guard_break",
+      "weaponGroup": "greatsword",
+      "family": "guard_break",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 10,
+      "conceptCountGenerated": 10,
+      "conceptCountReviewed": 10,
+      "conceptCountSelected": 1,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "selected_poses_exported_registered_browser_validated_merged",
+      "optionSpecifications": [
+        {
+          "id": "greatsword-guard_break-01",
+          "number": 1,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/guard-break/briefs.md",
+          "artistOptionNumber": 1,
+          "sheet": "A",
+          "rowMajorOccupiedCell": 1,
+          "status": "director_reviewed_selectable_concept",
+          "artPaths": [
+            "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_concept",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": false,
+          "productionApproved": false,
+          "canonicalGenerationPrompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a-prompt.md"
+        },
+        {
+          "id": "greatsword-guard_break-02",
+          "number": 2,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/guard-break/briefs.md",
+          "artistOptionNumber": 2,
+          "sheet": "A",
+          "rowMajorOccupiedCell": 2,
+          "status": "director_reviewed_selectable_concept",
+          "artPaths": [
+            "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_concept",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": false,
+          "productionApproved": false,
+          "canonicalGenerationPrompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a-prompt.md"
+        },
+        {
+          "id": "greatsword-guard_break-03",
+          "number": 3,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/guard-break/briefs.md",
+          "artistOptionNumber": 3,
+          "sheet": "A",
+          "rowMajorOccupiedCell": 3,
+          "status": "director_reviewed_selectable_concept",
+          "artPaths": [
+            "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_concept",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": false,
+          "productionApproved": false,
+          "canonicalGenerationPrompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a-prompt.md"
+        },
+        {
+          "id": "greatsword-guard_break-04",
+          "number": 4,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/guard-break/briefs.md",
+          "artistOptionNumber": 4,
+          "sheet": "A",
+          "rowMajorOccupiedCell": 4,
+          "status": "director_reviewed_needs_revision",
+          "artPaths": [
+            "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_needs_revision",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": false,
+          "userSelected": false,
+          "productionApproved": false,
+          "revisionReason": "Greatsword blade reads short and touches/overlaps neighboring A05 rear boot near source coordinate(630,880); handling remains a caveat.",
+          "canonicalGenerationPrompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a-prompt.md"
+        },
+        {
+          "id": "greatsword-guard_break-05",
+          "number": 5,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/guard-break/briefs.md",
+          "artistOptionNumber": 5,
+          "sheet": "A",
+          "rowMajorOccupiedCell": 5,
+          "status": "director_reviewed_selectable_concept",
+          "artPaths": [
+            "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_concept",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": false,
+          "productionApproved": false,
+          "canonicalGenerationPrompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a-prompt.md"
+        },
+        {
+          "id": "greatsword-guard_break-06",
+          "number": 6,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/guard-break/briefs.md",
+          "artistOptionNumber": 6,
+          "sheet": "B",
+          "rowMajorOccupiedCell": 1,
+          "status": "exported_registered_pose_browser_validated_merged",
+          "artPaths": [
+            "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "selected_export_runtime_and_browser_validation_complete_merged",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": true,
+          "productionApproved": true,
+          "canonicalGenerationPrompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b-prompt.md",
+          "selectedTargetRole": "guard_break",
+          "registeredPoseRole": "guard-break",
+          "exportPaths": {
+            "full": "assets-display/alternative/reaver-greatsword-pilot-guard-break.webp",
+            "mobile": "assets-display/alternative/reaver-greatsword-pilot-guard-break-mobile.webp"
+          },
+          "browserValidated": true
+        },
+        {
+          "id": "greatsword-guard_break-07",
+          "number": 7,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/guard-break/briefs.md",
+          "artistOptionNumber": 7,
+          "sheet": "B",
+          "rowMajorOccupiedCell": 2,
+          "status": "director_reviewed_selectable_concept",
+          "artPaths": [
+            "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_concept",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": false,
+          "productionApproved": false,
+          "canonicalGenerationPrompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b-prompt.md"
+        },
+        {
+          "id": "greatsword-guard_break-08",
+          "number": 8,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/guard-break/briefs.md",
+          "artistOptionNumber": 8,
+          "sheet": "B",
+          "rowMajorOccupiedCell": 3,
+          "status": "director_reviewed_selectable_concept",
+          "artPaths": [
+            "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_concept",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": false,
+          "productionApproved": false,
+          "canonicalGenerationPrompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b-prompt.md"
+        },
+        {
+          "id": "greatsword-guard_break-09",
+          "number": 9,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/guard-break/briefs.md",
+          "artistOptionNumber": 9,
+          "sheet": "B",
+          "rowMajorOccupiedCell": 4,
+          "status": "director_reviewed_selectable_concept",
+          "artPaths": [
+            "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_concept",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": false,
+          "productionApproved": false,
+          "canonicalGenerationPrompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b-prompt.md"
+        },
+        {
+          "id": "greatsword-guard_break-10",
+          "number": 10,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/guard-break/briefs.md",
+          "artistOptionNumber": 10,
+          "sheet": "B",
+          "rowMajorOccupiedCell": 5,
+          "status": "director_reviewed_selectable_concept",
+          "artPaths": [
+            "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_concept",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": false,
+          "productionApproved": false,
+          "canonicalGenerationPrompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b-prompt.md"
+        }
+      ],
+      "magicTreatmentScopeStatus": "requested_held_stance",
+      "reviewNote": "All ten options received art-director concept review. One selected option is exported, browser-validated, and merged. See art-review.md for pose/anatomy/readiness caveats. Guard-break04 is not selectable: blade length remains short and touches neighboring A05 boot.",
+      "artifactAuthority": "canonicalArtistBrief and artPaths; duplicate physical/magic pose descriptions intentionally omitted",
+      "conceptDirectorReviewed": 10,
+      "conceptSelectable": 9,
+      "conceptNeedsRevision": 1,
+      "userSelected": 1,
+      "productionApproved": 1,
+      "provenancePath": "pose-studio/stances/update-stances/guard-break/provenance.json",
+      "registeredPoseCount": 1
+    },
+    {
+      "id": "staff--guard_break",
+      "weaponGroup": "staff",
+      "family": "guard_break",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "bow--guard_break",
+      "weaponGroup": "bow",
+      "family": "guard_break",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "single_dagger--guard_break",
+      "weaponGroup": "single_dagger",
+      "family": "guard_break",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "dual_daggers--guard_break",
+      "weaponGroup": "dual_daggers",
+      "family": "guard_break",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "single_sword--guard_break",
+      "weaponGroup": "single_sword",
+      "family": "guard_break",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "spear--guard_break",
+      "weaponGroup": "spear",
+      "family": "guard_break",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "halberd--guard_break",
+      "weaponGroup": "halberd",
+      "family": "guard_break",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "unarmed--guard_break",
+      "weaponGroup": "unarmed",
+      "family": "guard_break",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "sword_shield--smash_stance",
+      "weaponGroup": "sword_shield",
+      "family": "smash_stance",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "greatsword--smash_stance",
+      "weaponGroup": "greatsword",
+      "family": "smash_stance",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 10,
+      "conceptCountGenerated": 10,
+      "conceptCountReviewed": 10,
+      "conceptCountSelected": 4,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "selected_poses_exported_registered_browser_validated_merged",
+      "optionSpecifications": [
+        {
+          "id": "greatsword-smash_stance-01",
+          "number": 1,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-smash/briefs.md",
+          "artistOptionNumber": 1,
+          "sheet": "A",
+          "rowMajorOccupiedCell": 1,
+          "status": "director_reviewed_selectable_concept",
+          "artPaths": [
+            "pose-studio/stances/update-stances/greatsword-smash/sheet-a.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_concept",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": false,
+          "productionApproved": false
+        },
+        {
+          "id": "greatsword-smash_stance-02",
+          "number": 2,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-smash/briefs.md",
+          "artistOptionNumber": 2,
+          "sheet": "A",
+          "rowMajorOccupiedCell": 2,
+          "status": "director_reviewed_selectable_concept",
+          "artPaths": [
+            "pose-studio/stances/update-stances/greatsword-smash/sheet-a.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_concept",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": false,
+          "productionApproved": false
+        },
+        {
+          "id": "greatsword-smash_stance-03",
+          "number": 3,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-smash/briefs.md",
+          "artistOptionNumber": 3,
+          "sheet": "A",
+          "rowMajorOccupiedCell": 3,
+          "status": "director_reviewed_selectable_concept",
+          "artPaths": [
+            "pose-studio/stances/update-stances/greatsword-smash/sheet-a.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_concept",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": false,
+          "productionApproved": false
+        },
+        {
+          "id": "greatsword-smash_stance-04",
+          "number": 4,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-smash/briefs.md",
+          "artistOptionNumber": 4,
+          "sheet": "A",
+          "rowMajorOccupiedCell": 4,
+          "status": "exported_registered_pose_browser_validated_merged",
+          "artPaths": [
+            "pose-studio/stances/update-stances/greatsword-smash/sheet-a.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "selected_export_runtime_and_browser_validation_complete_merged",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": true,
+          "productionApproved": true,
+          "selectedTargetRole": "sweep",
+          "registeredPoseRole": "sweep",
+          "exportPaths": {
+            "full": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+            "mobile": "assets-display/alternative/reaver-greatsword-pilot-sweep-mobile.webp"
+          },
+          "browserValidated": true
+        },
+        {
+          "id": "greatsword-smash_stance-05",
+          "number": 5,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-smash/briefs.md",
+          "artistOptionNumber": 5,
+          "sheet": "A",
+          "rowMajorOccupiedCell": 5,
+          "status": "exported_registered_pose_browser_validated_merged",
+          "artPaths": [
+            "pose-studio/stances/update-stances/greatsword-smash/sheet-a.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "selected_export_runtime_and_browser_validation_complete_merged",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": true,
+          "productionApproved": true,
+          "selectedTargetRole": "smash",
+          "registeredPoseRole": "smash",
+          "exportPaths": {
+            "full": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+            "mobile": "assets-display/alternative/reaver-greatsword-pilot-smash-mobile.webp"
+          },
+          "browserValidated": true
+        },
+        {
+          "id": "greatsword-smash_stance-06",
+          "number": 6,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-smash/briefs.md",
+          "artistOptionNumber": 6,
+          "sheet": "B",
+          "rowMajorOccupiedCell": 1,
+          "status": "exported_registered_pose_browser_validated_merged",
+          "artPaths": [
+            "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "selected_export_runtime_and_browser_validation_complete_merged",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": true,
+          "productionApproved": true,
+          "selectedTargetRole": "counter",
+          "registeredPoseRole": "counter",
+          "exportPaths": {
+            "full": "assets-display/alternative/reaver-greatsword-pilot-counter.webp",
+            "mobile": "assets-display/alternative/reaver-greatsword-pilot-counter-mobile.webp"
+          },
+          "browserValidated": true
+        },
+        {
+          "id": "greatsword-smash_stance-07",
+          "number": 7,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-smash/briefs.md",
+          "artistOptionNumber": 7,
+          "sheet": "B",
+          "rowMajorOccupiedCell": 2,
+          "status": "director_reviewed_selectable_concept",
+          "artPaths": [
+            "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_concept",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": false,
+          "productionApproved": false
+        },
+        {
+          "id": "greatsword-smash_stance-08",
+          "number": 8,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-smash/briefs.md",
+          "artistOptionNumber": 8,
+          "sheet": "B",
+          "rowMajorOccupiedCell": 3,
+          "status": "exported_registered_pose_browser_validated_merged",
+          "artPaths": [
+            "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "selected_export_runtime_and_browser_validation_complete_merged",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": true,
+          "productionApproved": true,
+          "selectedTargetRole": "evade",
+          "registeredPoseRole": "evade",
+          "exportPaths": {
+            "full": "assets-display/alternative/reaver-greatsword-pilot-evade.webp",
+            "mobile": "assets-display/alternative/reaver-greatsword-pilot-evade-mobile.webp"
+          },
+          "browserValidated": true
+        },
+        {
+          "id": "greatsword-smash_stance-09",
+          "number": 9,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-smash/briefs.md",
+          "artistOptionNumber": 9,
+          "sheet": "B",
+          "rowMajorOccupiedCell": 4,
+          "status": "director_reviewed_selectable_concept",
+          "artPaths": [
+            "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_concept",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": false,
+          "productionApproved": false
+        },
+        {
+          "id": "greatsword-smash_stance-10",
+          "number": 10,
+          "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-smash/briefs.md",
+          "artistOptionNumber": 10,
+          "sheet": "B",
+          "rowMajorOccupiedCell": 5,
+          "status": "director_reviewed_selectable_concept",
+          "artPaths": [
+            "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png"
+          ],
+          "magicAdaptationStatus": "planned_not_briefed",
+          "classAdaptationStatus": {
+            "reaver": "pilot_director_reviewed_concept",
+            "rogue": "planned",
+            "starseer": "planned",
+            "herald": "planned"
+          },
+          "conceptDirectorReviewed": true,
+          "selectableForUserComparison": true,
+          "userSelected": false,
+          "productionApproved": false
+        }
+      ],
+      "magicTreatmentScopeStatus": "requested_held_stance",
+      "reviewNote": "All ten options received art-director concept review. Four selected options are exported, browser-validated, and merged; the remaining options are concepts. See art-review.md for pose/anatomy/readiness caveats.",
+      "artifactAuthority": "canonicalArtistBrief and artPaths; duplicate physical/magic pose descriptions intentionally omitted",
+      "conceptDirectorReviewed": 10,
+      "conceptSelectable": 10,
+      "conceptNeedsRevision": 0,
+      "userSelected": 4,
+      "productionApproved": 4,
+      "registeredPoseCount": 4
+    },
+    {
+      "id": "staff--smash_stance",
+      "weaponGroup": "staff",
+      "family": "smash_stance",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "bow--smash_stance",
+      "weaponGroup": "bow",
+      "family": "smash_stance",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "single_dagger--smash_stance",
+      "weaponGroup": "single_dagger",
+      "family": "smash_stance",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "dual_daggers--smash_stance",
+      "weaponGroup": "dual_daggers",
+      "family": "smash_stance",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "single_sword--smash_stance",
+      "weaponGroup": "single_sword",
+      "family": "smash_stance",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "spear--smash_stance",
+      "weaponGroup": "spear",
+      "family": "smash_stance",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "halberd--smash_stance",
+      "weaponGroup": "halberd",
+      "family": "smash_stance",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "unarmed--smash_stance",
+      "weaponGroup": "unarmed",
+      "family": "smash_stance",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "requested_held_stance"
+    },
+    {
+      "id": "sword_shield--smash_attack",
+      "weaponGroup": "sword_shield",
+      "family": "smash_attack",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "greatsword--smash_attack",
+      "weaponGroup": "greatsword",
+      "family": "smash_attack",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "staff--smash_attack",
+      "weaponGroup": "staff",
+      "family": "smash_attack",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "bow--smash_attack",
+      "weaponGroup": "bow",
+      "family": "smash_attack",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "single_dagger--smash_attack",
+      "weaponGroup": "single_dagger",
+      "family": "smash_attack",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "dual_daggers--smash_attack",
+      "weaponGroup": "dual_daggers",
+      "family": "smash_attack",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "single_sword--smash_attack",
+      "weaponGroup": "single_sword",
+      "family": "smash_attack",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "spear--smash_attack",
+      "weaponGroup": "spear",
+      "family": "smash_attack",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "halberd--smash_attack",
+      "weaponGroup": "halberd",
+      "family": "smash_attack",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "unarmed--smash_attack",
+      "weaponGroup": "unarmed",
+      "family": "smash_attack",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "sword_shield--counter_melee",
+      "weaponGroup": "sword_shield",
+      "family": "counter_melee",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "greatsword--counter_melee",
+      "weaponGroup": "greatsword",
+      "family": "counter_melee",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "staff--counter_melee",
+      "weaponGroup": "staff",
+      "family": "counter_melee",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "bow--counter_melee",
+      "weaponGroup": "bow",
+      "family": "counter_melee",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "single_dagger--counter_melee",
+      "weaponGroup": "single_dagger",
+      "family": "counter_melee",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "dual_daggers--counter_melee",
+      "weaponGroup": "dual_daggers",
+      "family": "counter_melee",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "single_sword--counter_melee",
+      "weaponGroup": "single_sword",
+      "family": "counter_melee",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "spear--counter_melee",
+      "weaponGroup": "spear",
+      "family": "counter_melee",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "halberd--counter_melee",
+      "weaponGroup": "halberd",
+      "family": "counter_melee",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "unarmed--counter_melee",
+      "weaponGroup": "unarmed",
+      "family": "counter_melee",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "sword_shield--counter_ranged",
+      "weaponGroup": "sword_shield",
+      "family": "counter_ranged",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "unresolved_non_bow_physical_ranged_payload",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "greatsword--counter_ranged",
+      "weaponGroup": "greatsword",
+      "family": "counter_ranged",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "unresolved_non_bow_physical_ranged_payload",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "staff--counter_ranged",
+      "weaponGroup": "staff",
+      "family": "counter_ranged",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "unresolved_non_bow_physical_ranged_payload",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "bow--counter_ranged",
+      "weaponGroup": "bow",
+      "family": "counter_ranged",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "single_dagger--counter_ranged",
+      "weaponGroup": "single_dagger",
+      "family": "counter_ranged",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "unresolved_non_bow_physical_ranged_payload",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "dual_daggers--counter_ranged",
+      "weaponGroup": "dual_daggers",
+      "family": "counter_ranged",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "unresolved_non_bow_physical_ranged_payload",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "single_sword--counter_ranged",
+      "weaponGroup": "single_sword",
+      "family": "counter_ranged",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "unresolved_non_bow_physical_ranged_payload",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "spear--counter_ranged",
+      "weaponGroup": "spear",
+      "family": "counter_ranged",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "unresolved_non_bow_physical_ranged_payload",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "halberd--counter_ranged",
+      "weaponGroup": "halberd",
+      "family": "counter_ranged",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "unresolved_non_bow_physical_ranged_payload",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "unarmed--counter_ranged",
+      "weaponGroup": "unarmed",
+      "family": "counter_ranged",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "unresolved_non_bow_physical_ranged_payload",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_derived_sequence"
+    },
+    {
+      "id": "sword_shield--counter_magic",
+      "weaponGroup": "sword_shield",
+      "family": "counter_magic",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "intrinsic_requested"
+    },
+    {
+      "id": "greatsword--counter_magic",
+      "weaponGroup": "greatsword",
+      "family": "counter_magic",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "intrinsic_requested"
+    },
+    {
+      "id": "staff--counter_magic",
+      "weaponGroup": "staff",
+      "family": "counter_magic",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "intrinsic_requested"
+    },
+    {
+      "id": "bow--counter_magic",
+      "weaponGroup": "bow",
+      "family": "counter_magic",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "intrinsic_requested"
+    },
+    {
+      "id": "single_dagger--counter_magic",
+      "weaponGroup": "single_dagger",
+      "family": "counter_magic",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "intrinsic_requested"
+    },
+    {
+      "id": "dual_daggers--counter_magic",
+      "weaponGroup": "dual_daggers",
+      "family": "counter_magic",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "intrinsic_requested"
+    },
+    {
+      "id": "single_sword--counter_magic",
+      "weaponGroup": "single_sword",
+      "family": "counter_magic",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "intrinsic_requested"
+    },
+    {
+      "id": "spear--counter_magic",
+      "weaponGroup": "spear",
+      "family": "counter_magic",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "intrinsic_requested"
+    },
+    {
+      "id": "halberd--counter_magic",
+      "weaponGroup": "halberd",
+      "family": "counter_magic",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "intrinsic_requested"
+    },
+    {
+      "id": "unarmed--counter_magic",
+      "weaponGroup": "unarmed",
+      "family": "counter_magic",
+      "scopeStatus": "requested",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "intrinsic_requested"
+    },
+    {
+      "id": "sword_shield--attack_stance",
+      "weaponGroup": "sword_shield",
+      "family": "attack_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "greatsword--attack_stance",
+      "weaponGroup": "greatsword",
+      "family": "attack_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "staff--attack_stance",
+      "weaponGroup": "staff",
+      "family": "attack_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "bow--attack_stance",
+      "weaponGroup": "bow",
+      "family": "attack_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "single_dagger--attack_stance",
+      "weaponGroup": "single_dagger",
+      "family": "attack_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "dual_daggers--attack_stance",
+      "weaponGroup": "dual_daggers",
+      "family": "attack_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "single_sword--attack_stance",
+      "weaponGroup": "single_sword",
+      "family": "attack_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "spear--attack_stance",
+      "weaponGroup": "spear",
+      "family": "attack_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "halberd--attack_stance",
+      "weaponGroup": "halberd",
+      "family": "attack_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "unarmed--attack_stance",
+      "weaponGroup": "unarmed",
+      "family": "attack_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "sword_shield--defend_stance",
+      "weaponGroup": "sword_shield",
+      "family": "defend_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "greatsword--defend_stance",
+      "weaponGroup": "greatsword",
+      "family": "defend_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "staff--defend_stance",
+      "weaponGroup": "staff",
+      "family": "defend_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "bow--defend_stance",
+      "weaponGroup": "bow",
+      "family": "defend_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "single_dagger--defend_stance",
+      "weaponGroup": "single_dagger",
+      "family": "defend_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "dual_daggers--defend_stance",
+      "weaponGroup": "dual_daggers",
+      "family": "defend_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "single_sword--defend_stance",
+      "weaponGroup": "single_sword",
+      "family": "defend_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "spear--defend_stance",
+      "weaponGroup": "spear",
+      "family": "defend_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "halberd--defend_stance",
+      "weaponGroup": "halberd",
+      "family": "defend_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "unarmed--defend_stance",
+      "weaponGroup": "unarmed",
+      "family": "defend_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "sword_shield--prepare_stance",
+      "weaponGroup": "sword_shield",
+      "family": "prepare_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "greatsword--prepare_stance",
+      "weaponGroup": "greatsword",
+      "family": "prepare_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "staff--prepare_stance",
+      "weaponGroup": "staff",
+      "family": "prepare_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "bow--prepare_stance",
+      "weaponGroup": "bow",
+      "family": "prepare_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "single_dagger--prepare_stance",
+      "weaponGroup": "single_dagger",
+      "family": "prepare_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "dual_daggers--prepare_stance",
+      "weaponGroup": "dual_daggers",
+      "family": "prepare_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "single_sword--prepare_stance",
+      "weaponGroup": "single_sword",
+      "family": "prepare_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "existing_action_reference",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "spear--prepare_stance",
+      "weaponGroup": "spear",
+      "family": "prepare_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "halberd--prepare_stance",
+      "weaponGroup": "halberd",
+      "family": "prepare_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    },
+    {
+      "id": "unarmed--prepare_stance",
+      "weaponGroup": "unarmed",
+      "family": "prepare_stance",
+      "scopeStatus": "proposed_backfill",
+      "conceptCountPlanned": 10,
+      "conceptCountBriefed": 0,
+      "conceptCountGenerated": 0,
+      "conceptCountReviewed": 0,
+      "conceptCountSelected": 0,
+      "registeredSpriteSequenceCount": 0,
+      "classAdapters": [
+        "reaver",
+        "rogue",
+        "starseer",
+        "herald"
+      ],
+      "treatments": [
+        "physical",
+        "magic"
+      ],
+      "feasibilityStatus": "new_dedicated_family_required",
+      "status": "planned_not_briefed",
+      "optionSpecifications": [],
+      "magicTreatmentScopeStatus": "proposed_backfill"
+    }
+  ],
+  "snapshotStatus": "selected_pilot_merged_PR1890;50_total_concept_options_generated_reviewed;49_total_selectable,1_original_guardbreak04_revision;SW17_CT15_EV20_standalone_replacements_same_option_ids;no_new_followup_runtime_assets",
+  "artReviewPath": "docs/design/update-stances/art-review.md",
+  "userDecisions": {
+    "status": "explicit_numeric_selections_authorized_for_use_and_merge",
+    "scope": "Reaver greatsword held/reaction poses; no full animation sequence or four-class coverage implied.",
+    "canonicalCropManifest": "pose-studio/stances/update-stances/selections.json",
+    "assignments": [
+      {
+        "targetRole": "sweep",
+        "sourceGalleryFamily": "smash",
+        "sourceOptionNumber": 4,
+        "sourceGalleryId": "reaver-greatsword-smash-04",
+        "sourceMatrixId": "greatsword-smash_stance-04",
+        "authorizedForUse": true
+      },
+      {
+        "targetRole": "counter",
+        "sourceGalleryFamily": "smash",
+        "sourceOptionNumber": 6,
+        "sourceGalleryId": "reaver-greatsword-smash-06",
+        "sourceMatrixId": "greatsword-smash_stance-06",
+        "authorizedForUse": true
+      },
+      {
+        "targetRole": "guard_break",
+        "sourceGalleryFamily": "guard-break",
+        "sourceOptionNumber": 6,
+        "sourceGalleryId": "reaver-greatsword-guard-break-06",
+        "sourceMatrixId": "greatsword-guard_break-06",
+        "authorizedForUse": true
+      },
+      {
+        "targetRole": "evade",
+        "sourceGalleryFamily": "smash",
+        "sourceOptionNumber": 8,
+        "sourceGalleryId": "reaver-greatsword-smash-08",
+        "sourceMatrixId": "greatsword-smash_stance-08",
+        "authorizedForUse": true
+      },
+      {
+        "targetRole": "smash",
+        "sourceGalleryFamily": "smash",
+        "sourceOptionNumber": 5,
+        "sourceGalleryId": "reaver-greatsword-smash-05",
+        "sourceMatrixId": "greatsword-smash_stance-05",
+        "authorizedForUse": true
+      }
+    ],
+    "contextImages": "Image1 showing guard-break03 is reference context only, not an extra explicit numeric selection.",
+    "mergeAuthorization": "User explicitly requested use and merge; implementation/merge work is handled separately.",
+    "runtimeStatus": "complete_browser_validated_merged",
+    "soloGameplayValidation": "confirmed_for_selected_pilot_scope"
+  },
+  "nextExpansion": {
+    "status": "all_thirty_director_approved_concepts_three_standalone_replacements",
+    "weaponGroup": "greatsword",
+    "classPilot": "reaver",
+    "families": [
+      {
+        "id": "sweep",
+        "conceptCountPlanned": 10,
+        "conceptCountGenerated": 10,
+        "status": "director_reviewed_ten_candidates_with_standalone_replacement",
+        "conceptCountReviewed": 10,
+        "conceptCountSelectable": 10,
+        "conceptCountNeedsRevision": 0,
+        "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-sweep/README.md",
+        "sourceSheets": [
+          "pose-studio/stances/update-stances/greatsword-sweep/sheet-a.png",
+          "pose-studio/stances/update-stances/greatsword-sweep/sheet-b.png"
+        ],
+        "integratedArtistCommit": "0b9073a48",
+        "revisionOptions": [],
+        "replacementOptions": [
+          {
+            "number": 17,
+            "name": "Two-hand high diagonal side coil",
+            "imagePath": "pose-studio/stances/update-stances/greatsword-sweep/sw17-replacement.png",
+            "sha256": "36e1eaea0b21ef33fd2f02e926c5d1819b779443bd11c964ff31665d0387b18a",
+            "directorApproved": true,
+            "selectionRequiresImageLoad": true,
+            "supersedesOriginalBoardFigure": true,
+            "countsAsSameOption": true
+          }
+        ]
+      },
+      {
+        "id": "counter",
+        "conceptCountPlanned": 10,
+        "conceptCountGenerated": 10,
+        "status": "director_reviewed_ten_candidates_with_standalone_replacement",
+        "conceptCountReviewed": 10,
+        "conceptCountSelectable": 10,
+        "conceptCountNeedsRevision": 0,
+        "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-counter/README.md",
+        "sourceSheets": [
+          "pose-studio/stances/update-stances/greatsword-counter/sheet-a.png",
+          "pose-studio/stances/update-stances/greatsword-counter/sheet-b.png"
+        ],
+        "revisionOptions": [],
+        "integratedArtistCommit": "66edccac1",
+        "replacementOptions": [
+          {
+            "number": 15,
+            "name": "Two-hand low hanging cover",
+            "imagePath": "pose-studio/stances/update-stances/greatsword-counter/ct15-replacement.png",
+            "sha256": "7a332139be986d3642ec72a2f99b51cc075ed8f41e926ea050c7c4188aae66ea",
+            "directorApproved": true,
+            "selectionRequiresImageLoad": true,
+            "supersedesOriginalBoardFigure": true,
+            "countsAsSameOption": true
+          }
+        ]
+      },
+      {
+        "id": "evade",
+        "conceptCountPlanned": 10,
+        "conceptCountGenerated": 10,
+        "status": "director_reviewed_ten_candidates_with_standalone_replacement",
+        "conceptCountReviewed": 10,
+        "conceptCountSelectable": 10,
+        "conceptCountNeedsRevision": 0,
+        "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-evade/README.md",
+        "sourceSheets": [
+          "pose-studio/stances/update-stances/greatsword-evade/sheet-a.png",
+          "pose-studio/stances/update-stances/greatsword-evade/sheet-b.png"
+        ],
+        "revisionOptions": [],
+        "integratedArtistCommit": "371f6c8c4",
+        "replacementOptions": [
+          {
+            "number": 20,
+            "name": "Upright two-hand recovery carry",
+            "imagePath": "pose-studio/stances/update-stances/greatsword-evade/ev20-replacement.png",
+            "sha256": "0c48fafcd4069a16dfe2e2794681bcd4c1751bd3ad4565932f1e9c8054a22243",
+            "directorApproved": true,
+            "selectionRequiresImageLoad": true,
+            "supersedesOriginalBoardFigure": true,
+            "countsAsSameOption": true
+          }
+        ]
+      }
+    ],
+    "conceptCountPlanned": 30,
+    "conceptCountGenerated": 30,
+    "relationshipToBaseline": "Separate requested follow-up exploration; does not complete or replace the 600-option baseline or all counter delivery modes.",
+    "requiresAdditionalApprovalBeforeBeginning": false,
+    "generatedCountBoundary": "Count only landed canonical option boards; generation requests in flight are not generated assets.",
+    "brief": "docs/design/update-stances/followup-reference-brief.md",
+    "conceptCountReviewed": 30,
+    "conceptCountSelectable": 30,
+    "conceptCountNeedsRevision": 0,
+    "registeredPoseExports": 0,
+    "reviewRecord": "docs/design/update-stances/followup-art-review.md",
+    "pullRequest": {
+      "number": 1897,
+      "url": "https://github.com/cehinds/AshenSpire/pull/1897",
+      "mergeStatus": "open_ready_for_concept_review"
+    },
+    "build": "0.7.1.1420",
+    "buildDigest": "9393e58e56",
+    "galleryQA": "passed_final50IDs_49totalSelectable_30followup_3replacements",
+    "independentReview": "approved_39general_and23SW17_browser_assertions",
+    "portablePreview": "docs/preview/update-stances-options-20261012/README.md"
+  },
+  "selectedDelivery": {
+    "status": "export_runtime_browser_QA_complete_merged_to_dev",
+    "classId": "reaver",
+    "armourId": "default",
+    "eligibility": "Sole actual greatsword in either active hand, other hand empty; canonical single-weapon mode may be one or two. This is not a class-default weapon assumption or mechanical two-hand-only predicate.",
+    "eligibilityCorrectionCommit": "44496130",
+    "selectionManifest": "pose-studio/stances/update-stances/selections.json",
+    "exporter": "tools/selected-weapon-profile-export.mjs",
+    "runtimeCatalog": "src/content/alternativeSelectedStances.js",
+    "runtimeProfileKey": "reaver-greatsword-pilot",
+    "selectedProject": "pose-studio/stances/selected-projects/reaver-greatsword-pilot.rig.json",
+    "registeredPoseExports": 5,
+    "registeredNewFullSequences": 0,
+    "exports": {
+      "sweep": {
+        "full": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+        "mobile": "assets-display/alternative/reaver-greatsword-pilot-sweep-mobile.webp"
+      },
+      "counter": {
+        "full": "assets-display/alternative/reaver-greatsword-pilot-counter.webp",
+        "mobile": "assets-display/alternative/reaver-greatsword-pilot-counter-mobile.webp"
+      },
+      "smash": {
+        "full": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+        "mobile": "assets-display/alternative/reaver-greatsword-pilot-smash-mobile.webp"
+      },
+      "evade": {
+        "full": "assets-display/alternative/reaver-greatsword-pilot-evade.webp",
+        "mobile": "assets-display/alternative/reaver-greatsword-pilot-evade-mobile.webp"
+      },
+      "guard-break": {
+        "full": "assets-display/alternative/reaver-greatsword-pilot-guard-break.webp",
+        "mobile": "assets-display/alternative/reaver-greatsword-pilot-guard-break-mobile.webp"
+      }
+    },
+    "routingModel": "src/model/selectedWeaponStances.js",
+    "runtimeStage": "src/ui/alternativeCardStage.js",
+    "behavior": "Selected Sweep, Counter and Smash holds; Evade hold for pure-dodge preparation/readiness; finite player-target Guard-break and successful Evade reactions restore the current action or newest held pose. Existing full action/retaliation clips remain.",
+    "coop": "paused_no_pilot_opt_in",
+    "independentCodeReview": "approved",
+    "testEvidence": [
+      {
+        "scope": "initial focused runtime/animation tests",
+        "passed": 97,
+        "evidenceSource": "implementation workstream report; before the final real-loadout eligibility correction"
+      },
+      {
+        "scope": "final selected-weapon registry/routing/reaction tests including real starting-kit projection",
+        "file": "tests/selected-weapon-stances.test.mjs",
+        "passed": 5,
+        "evidenceSource": "parent validation report after correction44496130"
+      }
+    ],
+    "pullRequest": {
+      "number": 1890,
+      "url": "https://github.com/cehinds/AshenSpire/pull/1890",
+      "mergeStatus": "merged",
+      "mergeCommit": "5852a791b59024235c826249a0704bc8d0e034d6"
+    },
+    "build": "0.7.1.1417",
+    "buildDigest": "b1ec8952f6",
+    "receiptSourceCommit": "e8efd0244",
+    "browserQA": "passed_final_reactions_1417_and_unchanged_pose_layout_1415",
+    "soloGameplayValidation": "passed_selected_pilot_scope",
+    "mergedToDev": true,
+    "reviewBoundary": "Validated selected default-armour Reaver/sole-greatsword pilot. Five registered poses do not imply full new animations or coverage of other weapons, classes or appearances.",
+    "evidencePaths": [
+      "docs/preview/update-stances-selected-20261012/1417/README.md",
+      "docs/preview/update-stances-selected-20261012/1415/README.md"
+    ],
+    "finalHeadFastCI": "passed_core_four_test_shards_preview_receipts_workbench_and_quick_start"
+  }
+}

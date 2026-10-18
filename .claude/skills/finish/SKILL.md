@@ -56,8 +56,9 @@ not overlap.
 
 ## Phase 3 — Execute (Workflow, wave by wave)
 For each wave, run a pipeline with one agent per task, in parallel. Task agents
-run on Haiku (`model: 'haiku'`) from an orchestrator brief, and risky diffs are
-reviewed on Opus (docs/ai/AI-ROUTING.md §5–§8). Receipts, merges and promotion
+run from an orchestrator brief: coding tasks on Sonnet (`model: 'sonnet'`, or the
+`ashen-coder` agent), and Haiku (`model: 'haiku'`, `ashen-worker`) only for simple
+or mechanical tasks. Risky diffs are reviewed on Opus (docs/ai/AI-ROUTING.md §5–§8). Receipts, merges and promotion
 stay with the orchestrator:
 a. Branch `feature/<topic>` from `dev`; the PR targets `dev`.
 b. Write a failing test or reproduction first, when one applies.
@@ -89,9 +90,11 @@ While PRs stay open, schedule an hourly re-check. If two PRs touch the same
 code, agree which lands first. Update FINISH.md.
 Every 2 waves, a **QA agent** plays full runs end-to-end and files new bugs
 into FINISH.md as blockers.
-Send each reviewed, green PR to the owner with its preview and screenshots, and
-merge it into `dev` only when the owner says to merge that PR; then promote
-`dev` to `test` once per wave (CONTRIBUTING rule 6). Never merge to `release` or `main`.
+Send the owner each PR's preview and screenshots. Under the standing merge
+approval (owner, 2026-10-13), merge a PR into `dev` once another agent or session
+has reviewed it, conflicts are resolved and fast checks are green, with no
+per-PR owner wait; then promote `dev` to `test` once per wave (CONTRIBUTING
+rule 6). Never merge to `release` or `main`; those stay owner-only.
 
 ## Phase 4 — Release candidate
 Freeze features (the owner cuts `release`; agents don't). Run 3 full runs per class, the soft-lock sweep, perf and

@@ -9,10 +9,12 @@
 export const act1Enemies = [
   {
     id: 'wanderingSoldier',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 6, dexterity: 4, constitution: 3, wisdom: 2, intelligence: 2 },
     equipmentPower: 0.2,
     size: 'medium',
     name: 'Wandering Soldier',
-    hp: [22, 26],
+    hp: [31, 36],
     poiseMax: 10,
     levelProfile: { min: 1, max: 4 },
     arcaneExposure: {
@@ -26,7 +28,7 @@ export const act1Enemies = [
     },
     art: '⚔',
     moves: {
-      slash: { intent: 'attack', damage: 7, weight: 45, maxConsecutive: 2 },
+      slash: { intent: 'attack', damage: 8, weight: 45, maxConsecutive: 2 },
       guard: { intent: 'block', block: 6, weight: 30, maxConsecutive: 1 },
       warcry: {
         intent: 'buff', weight: 25, maxConsecutive: 1,
@@ -36,10 +38,13 @@ export const act1Enemies = [
   },
   {
     id: 'blightHound',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 5, dexterity: 6, constitution: 1, wisdom: 3, intelligence: 3 },
+    blighted: true,
     size: 'small',
     tint: 'var(--rot)',
     name: 'Blight Hound',
-    hp: [12, 15],
+    hp: [14, 18],
     poiseMax: 6,
     levelProfile: { min: 1, max: 3 },
     art: '🐕',
@@ -54,6 +59,8 @@ export const act1Enemies = [
   },
   {
     id: 'huskBrute',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 7, dexterity: 4, constitution: 3, wisdom: 2, intelligence: 2 },
     size: 'medium',
     name: 'Husk Brute',
     hp: [30, 34],
@@ -61,7 +68,7 @@ export const act1Enemies = [
     levelProfile: { min: 2, max: 5 },
     art: '🪨',
     moves: {
-      club: { intent: 'attack', damage: 9, weight: 50 },
+      club: { intent: 'attack', damage: 15, weight: 50 },
       bellow: {
         intent: 'debuff', weight: 25, maxConsecutive: 1,
         effects: [
@@ -75,10 +82,12 @@ export const act1Enemies = [
   },
   {
     id: 'graveWisp',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 3, dexterity: 3, constitution: 3, wisdom: 5, intelligence: 4 },
     size: 'small',
     tint: 'var(--grace)',
     name: 'Grave Wisp',
-    hp: [10, 12],
+    hp: [12, 14],
     poiseMax: 4,
     levelProfile: { min: 1, max: 4 },
     art: '👻',
@@ -88,7 +97,7 @@ export const act1Enemies = [
         effects: [{ op: 'addCard', card: 'dazed', pile: 'draw', position: 'random' }],
       },
       drain: {
-        intent: 'attack', damage: 4, weight: 50,
+        intent: 'attack', damage: 8, weight: 50,
         effects: [{ op: 'heal', target: 'self', amount: 4 }],
       },
     },
@@ -97,11 +106,13 @@ export const act1Enemies = [
   // ---- Elite (SPEC §5.3) ----------------------------------------------------
   {
     id: 'wyrmAspirant',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 7, dexterity: 4, constitution: 3, wisdom: 2, intelligence: 2 },
     equipmentPower: 0.3,
     size: 'large',
     tint: 'var(--gold)',
     name: 'Wyrm Aspirant',
-    hp: [68, 72],
+    hp: [82, 86],
     poiseMax: 24,
     levelProfile: { min: 4, max: 6 },
     art: '🐲',
@@ -111,9 +122,9 @@ export const act1Enemies = [
         intent: 'buff', weight: 10, maxConsecutive: 1,
         effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 3 }],
       },
-      halberdSweep: { intent: 'attack', damage: 11, weight: 50, maxConsecutive: 2 },
+      halberdSweep: { intent: 'attack', damage: 17, weight: 50, maxConsecutive: 2 },
       tailSlam: {
-        intent: 'attack', damage: 7, weight: 30,
+        intent: 'attack', damage: 11, weight: 30,
         effects: [{ op: 'applyStatus', target: 'player', status: 'weak', stacks: 1 }],
       },
       goldenGuard: {
@@ -126,6 +137,8 @@ export const act1Enemies = [
   // ---- Boss: The Fell Warden (SPEC §5.3 — the Fell Warden-inspired) -----------------
   {
     id: 'fellWarden',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 9, dexterity: 4, constitution: 4, wisdom: 3, intelligence: 3 },
     equipmentPower: 0.3,
     size: 'large',
     tint: 'var(--blood)',
@@ -136,16 +149,16 @@ export const act1Enemies = [
     art: '👁',
     firstMove: 'caneStrike',
     moves: {
-      caneStrike: { intent: 'attack', damage: 8, weight: 40, maxConsecutive: 2 },
-      hammerToss: { intent: 'attack', damage: 5, hits: 2, weight: 30, maxConsecutive: 2 },
+      caneStrike: { sp: 1, intent: 'attack', damage: 8, weight: 40, maxConsecutive: 2 },
+      hammerToss: { sp: 1, intent: 'attack', damage: 5, hits: 2, weight: 30, maxConsecutive: 2 },
       heldBlade: {
         // Signature delayed attack: telegraphs 16, holds (gaining 8 Block),
         // lands the following turn regardless of newly rolled intents.
         // Staggering him cancels it (engine-generic delayed-move rule).
-        intent: 'attack', damage: 14, weight: 30, maxConsecutive: 1,
+        sp: 1, intent: 'attack', damage: 14, weight: 30, maxConsecutive: 1,
         delay: { turns: 1, whileCharging: { block: 8 } },
       },
-      twinDaggers: { intent: 'attack', damage: 3, hits: 4, weight: 35, locked: true },
+      twinDaggers: { sp: 3, intent: 'attack', damage: 3, hits: 4, weight: 35, locked: true },
     },
     phases: [
       {
@@ -165,11 +178,18 @@ export const act1Enemies = [
   // Expanded destinations: authored weighted moves use the existing phase and delay engine.
   {
     "id": "lanternMoth",
+    "attributes": {
+      "strength": 3,
+      "dexterity": 3,
+      "constitution": 3,
+      "wisdom": 5,
+      "intelligence": 4
+    },
     "name": "Lantern Moth",
     "size": "small",
     "hp": [
-      14,
-      17
+      15,
+      19
     ],
     "poiseMax": 5,
     "levelProfile": {
@@ -194,7 +214,8 @@ export const act1Enemies = [
       },
       "wingSparks": {
         "intent": "attack",
-        "damage": 2,
+        "sp": 1,
+        "damage": 3,
         "weight": 65,
         "hits": 3
       }
@@ -202,11 +223,18 @@ export const act1Enemies = [
   },
   {
     "id": "briarHermit",
+    "attributes": {
+      "strength": 6,
+      "dexterity": 3,
+      "constitution": 3,
+      "wisdom": 5,
+      "intelligence": 2
+    },
     "name": "Briar Hermit",
     "size": "medium",
     "hp": [
-      24,
-      28
+      48,
+      56
     ],
     "poiseMax": 9,
     "levelProfile": {
@@ -224,7 +252,8 @@ export const act1Enemies = [
       },
       "briarCast": {
         "intent": "attack",
-        "damage": 5,
+        "sp": 1,
+        "damage": 16,
         "weight": 45,
         "effects": [
           {
@@ -252,11 +281,18 @@ export const act1Enemies = [
   },
   {
     "id": "chainScavenger",
+    "attributes": {
+      "strength": 7,
+      "dexterity": 4,
+      "constitution": 3,
+      "wisdom": 2,
+      "intelligence": 2
+    },
     "name": "Chain Scavenger",
     "size": "medium",
     "hp": [
-      20,
-      24
+      28,
+      34
     ],
     "poiseMax": 8,
     "levelProfile": {
@@ -268,7 +304,7 @@ export const act1Enemies = [
     "moves": {
       "hookCast": {
         "intent": "attack",
-        "damage": 6,
+        "damage": 20,
         "weight": 60
       },
       "chainSnare": {
@@ -287,7 +323,7 @@ export const act1Enemies = [
       },
       "draggingBlow": {
         "intent": "attack",
-        "damage": 12,
+        "damage": 41,
         "weight": 20,
         "maxConsecutive": 1,
         "delay": {
@@ -301,6 +337,13 @@ export const act1Enemies = [
   },
   {
     "id": "bellKeeper",
+    "attributes": {
+      "strength": 10,
+      "dexterity": 4,
+      "constitution": 4,
+      "wisdom": 5,
+      "intelligence": 3
+    },
     "name": "The Bell Keeper",
     "size": "large",
     "hp": [
@@ -316,6 +359,7 @@ export const act1Enemies = [
     "artFaces": "left",
     "moves": {
       "bronzeToll": {
+        "sp": 1,
         "intent": "attack",
         "damage": 19,
         "weight": 35,
@@ -328,18 +372,21 @@ export const act1Enemies = [
         }
       },
       "clapperSwing": {
+        "sp": 1,
         "intent": "attack",
         "damage": 9,
         "weight": 45,
         "maxConsecutive": 2
       },
       "muffledPrayer": {
+        "sp": 1,
         "intent": "block",
         "block": 9,
         "weight": 20,
         "maxConsecutive": 1
       },
       "crackedPeal": {
+        "sp": 1,
         "intent": "attack",
         "damage": 6,
         "weight": 25,
@@ -362,6 +409,13 @@ export const act1Enemies = [
   },
   {
     "id": "thornMatriarch",
+    "attributes": {
+      "strength": 6,
+      "dexterity": 4,
+      "constitution": 3,
+      "wisdom": 5,
+      "intelligence": 5
+    },
     "name": "The Thorn Matriarch",
     "size": "large",
     "hp": [
@@ -377,12 +431,14 @@ export const act1Enemies = [
     "artFaces": "left",
     "moves": {
       "rootCrown": {
+        "sp": 1,
         "intent": "block",
         "block": 8,
         "weight": 25,
         "maxConsecutive": 1
       },
       "thornNeedles": {
+        "sp": 1,
         "intent": "attack",
         "damage": 4,
         "weight": 45,
@@ -390,6 +446,7 @@ export const act1Enemies = [
         "maxConsecutive": 2
       },
       "entwiningRoots": {
+        "sp": 2,
         "intent": "attack",
         "damage": 15,
         "weight": 30,

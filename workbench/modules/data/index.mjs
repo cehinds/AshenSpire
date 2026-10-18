@@ -10,7 +10,7 @@ import * as G from '../../ui/kit/grid-model.mjs';
 import { icon } from '../../ui/icons.mjs';
 import { saveFailure } from '../../ui/logic.mjs';
 import { hashFor } from '../host.mjs';
-import { TAG_MODEL_GROUP, refocusesGrid, listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges, isMissingFile, withoutTable, importStillTargets, savedTable, tagModelLock } from './model.mjs';
+import { TAG_MODEL_GROUP, PACKS_GROUP, HUD_GROUP, refocusesGrid, listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges, isMissingFile, withoutTable, importStillTargets, savedTable, tagModelLock } from './model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const basename = (p) => p.split('/').pop();
@@ -34,6 +34,7 @@ export default {
           <span class="ds-file"></span>
         </div>
         <div class="ds-grid"><div class="ds-note">Loading tables…</div></div>
+        <pre class="ds-jsonview" tabindex="0" aria-label="Read-only JSON" hidden></pre>
       </section>
       <aside class="ds-side">
         <div class="ds-tabs" role="tablist"><button type="button" class="btn btn-sm" role="tab" data-tab="row" aria-selected="true">Row</button><button type="button" class="btn btn-sm" role="tab" data-tab="check" aria-selected="false">Check</button><button type="button" class="btn btn-sm ds-drawer-close">Close</button></div>
@@ -41,6 +42,7 @@ export default {
         <div class="ds-panel-check ds-hidden"></div>
       </aside></div></div>`;
     const $ = (s) => el.querySelector(s);
+    const viewEl = $('.ds-jsonview');
     const groupsEl = $('.ds-groups'), gridEl = $('.ds-grid'), fileEl = $('.ds-file'), rowPanel = $('.ds-panel-row'), checkPanel = $('.ds-panel-check');
     const fileIn = $('.ds-file-in');
     // Below 1100px the Row/Check panel is an overlay (.row-open) that opens on a row pick or a tab click.
@@ -65,12 +67,15 @@ export default {
     }
 
     async function loadList() {
-      const [src, fw, tm] = await Promise.all([
+      const none = { files: [] };
+      const [src, fw, tm, packs, hud] = await Promise.all([
         ctx.api('files/list?dir=content/source&ext=csv,json'),
         ctx.api('files/list?dir=content/framework&ext=json'),
         ctx.api('files/list?dir=docs/tag-model/tables&ext=csv'),
+        ctx.api('files/list?dir=games/ashenspire/packs&ext=json').catch(() => none),
+        ctx.api('files/list?dir=content/hud-layout&ext=json').catch(() => none),
       ]);
-      const found = listTables([...src.files, ...fw.files, ...tm.files]);
+      const found = listTables([...src.files, ...fw.files, ...tm.files, ...packs.files, ...hud.files]);
       const tables = [];
       for (const t of found) {
         // A JSON file is a table only when it is an array of objects.
@@ -92,7 +97,7 @@ export default {
       const q = state.filter.trim().toLowerCase();
       const shown = state.tables.filter((t) => !q || t.name.toLowerCase().includes(q) || t.path.toLowerCase().includes(q));
       let html = '';
-      for (const group of ['Source', 'Framework', TAG_MODEL_GROUP]) {
+      for (const group of ['Source', 'Framework', PACKS_GROUP, HUD_GROUP, TAG_MODEL_GROUP]) {
         const items = shown.filter((t) => t.group === group);
         if (!items.length) continue;
         html += `<div class="ds-group">${group}</div>`;
@@ -191,7 +196,12 @@ export default {
     async function openReview() {
       const paths = changedPaths();
       if (!paths.length) { ctx.toast({ kind: 'info', title: 'Nothing to save', detail: 'No table has changes.' }); return; }
-      const { changes, skipped } = reviewableChanges(paths.map((p) => ({ path: p, table: state.parsed.get(p), doc: state.drafts.get(p) })));
+      const { changes, skipped, blocked } = reviewableChanges(paths.map((p) => ({ path: p, table: state.parsed.get(p), doc: state.drafts.get(p) })));
+      // A table that cannot be written (empty, duplicate or reserved ids) blocks the whole save until it is fixed.
+      if (blocked.length) {
+        ctx.toast({ kind: 'error', title: 'Cannot save: fix the ids first', detail: blocked.map((b) => `${b.path}: ${b.message}`).join(' | ') });
+        return;
+      }
       if (skipped.length) ctx.toast({ kind: 'warn', title: `Skipped ${skipped.length} table${skipped.length === 1 ? '' : 's'} with no parsed copy`, detail: `${skipped.join(', ')}. Reopen the table to read it again.` });
       if (!changes.length) return;
       const diffs = await Promise.all(changes.map((c) => ctx.api('files/diff', { path: c.path, text: c.text })
@@ -268,6 +278,7 @@ export default {
     function showFile() {
       if (!state.selected) return;
       const doc = state.drafts.get(state.selected) ?? { rows: [] };
+      if (state.parsed.get(state.selected)?.format === 'view') { fileEl.textContent = `${state.selected} · read-only JSON (not a table)`; return; }
       fileEl.textContent = `${state.selected} · ${doc.rows.length} rows${dirtyOf(state.selected) ? ' · unsaved changes' : ''}`;
     }
     // The grid redraws its rows on mousedown, which takes focus off the clicked cell; focus the grid again so its keys work.
@@ -299,8 +310,23 @@ export default {
         return;
       }
       if (!gate.current(generation)) return;
+      const leaving = state.selected && state.selected !== path ? state.parsed.get(state.selected) : null;
+      if (table.format === 'view') {
+        // A pack or HUD file that is not a table: shown as read-only JSON, never drafted or saved.
+        if (leaving && leaving.format !== 'view' && state.grid) state.drafts.set(state.selected, state.grid.getData());
+        state.selected = path;
+        try { history.replaceState(null, '', hashFor('data', { table: path })); } catch { /* the hash is a convenience */ }
+        state.drafts.set(path, { columns: [], rows: [] });
+        state.activeRow = null;
+        gridEl.hidden = true; viewEl.hidden = false; viewEl.textContent = table.meta.pretty;
+        for (const b of el.querySelectorAll('.ds-toolbar [data-act="add"], .ds-toolbar [data-act="dup"], .ds-toolbar [data-act="del"], .ds-toolbar [data-act="import"]')) b.disabled = true;
+        refresh();
+        return;
+      }
+      gridEl.hidden = false; viewEl.hidden = true;
+      for (const b of el.querySelectorAll('.ds-toolbar [data-act="add"], .ds-toolbar [data-act="dup"], .ds-toolbar [data-act="del"], .ds-toolbar [data-act="import"]')) b.disabled = false;
       const grid = ensureGrid();
-      if (state.selected && state.selected !== path) state.drafts.set(state.selected, grid.getData());
+      if (leaving && leaving.format !== 'view') state.drafts.set(state.selected, grid.getData());
       state.selected = path;
       try { history.replaceState(null, '', hashFor('data', { table: path })); } catch { /* the hash is a convenience */ }
       const doc = state.drafts.get(path) ?? { columns: table.columns, rows: table.rows };
@@ -410,7 +436,10 @@ export default {
     });
     function exportTable() {
       const table = state.parsed.get(state.selected);
-      const text = serializeTable(table, state.grid.getData());
+      let text;
+      try { text = serializeTable(table, table.format === 'view' ? undefined : state.grid.getData()); } catch (e) {
+        return ctx.toast({ kind: 'error', title: 'Export refused', detail: e.message });
+      }
       const url = URL.createObjectURL(new Blob([text], { type: table.format === 'csv' ? 'text/csv' : 'application/json' }));
       const a = document.createElement('a');
       a.href = url; a.download = basename(state.selected); a.click();

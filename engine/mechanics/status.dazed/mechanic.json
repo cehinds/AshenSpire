@@ -1,0 +1,26 @@
+{
+  "id": "status.dazed",
+  "tag": "status.dazed",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Dazed",
+  "description": "Locks ordinary cards, Counter and card Evade. Clear Dazed: 1 SP per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.dazed"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/abilityRiders.js",
+    "symbol": "abilityChargedEffects"
+  }
+}

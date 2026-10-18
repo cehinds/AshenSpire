@@ -1,0 +1,464 @@
+{
+  "schema": 2,
+  "kind": "low-iai-greatsword-whirlwind-options",
+  "status": "director-reviewed-candidates-await-user-selection",
+  "frame_size": [
+    1024,
+    1024
+  ],
+  "slots_per_example": 5,
+  "examples_count": 10,
+  "exported_slots": 50,
+  "unique_painted_action_frames": 30,
+  "shared_new_bookend_paintings": 1,
+  "bookend_source": "seed/stance-final.png",
+  "bookend_sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405",
+  "bookend_preservation": "20 exported bookend files byte-identical to new approved normalized seed; source raw separately preserved",
+  "runtime_W_changed": false,
+  "source_ground_y": 726,
+  "legacy_revision": "../legacy-horizontal-v1/manifest.json",
+  "comparison": "comparison-2x5.gif",
+  "contact_sheet": "all-ten-contact-sheet.jpg",
+  "examples": [
+    {
+      "id": "SW01",
+      "folder": "Sweep01",
+      "name": "Waist whirlwind draw",
+      "description": "Counter-coil, rightward waist crosscut and low forward left-blade finish.",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "new-low-iai-stance",
+          "path": "Sweep01/frame-01.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        },
+        {
+          "slot": 2,
+          "role": "counter-coil",
+          "path": "Sweep01/frame-02.png",
+          "sha256": "1887d1bd5031f34124deee5c3cede0fe7004797a8cd1ca15ebc06e33d4d27cfc"
+        },
+        {
+          "slot": 3,
+          "role": "turning-cut",
+          "path": "Sweep01/frame-03.png",
+          "sha256": "f913afe2422fa79bff3325233cd60b6fae084a3147b0c42b61ba30be4c8f00b1"
+        },
+        {
+          "slot": 4,
+          "role": "low-followthrough",
+          "path": "Sweep01/frame-04.png",
+          "sha256": "de55ebf163dc699ab0aaaccdb91a99887352e4c96eb5522e2e35b35cd872964e"
+        },
+        {
+          "slot": 5,
+          "role": "new-low-iai-stance",
+          "path": "Sweep01/frame-05.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        }
+      ],
+      "strip": "Sweep01/strip.png",
+      "gif": "Sweep01/preview.gif",
+      "raw": "Sweep01/raw.png",
+      "provenance": "Sweep01/provenance.json",
+      "normalization": "Sweep01/normalization.json",
+      "review": "director-reviewed-option-candidate-not-runtime-selection"
+    },
+    {
+      "id": "SW02",
+      "folder": "Sweep02",
+      "name": "Reverse half-turn",
+      "description": "Right blade preload, body half-turn into left return cut, then rightward low completion.",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "new-low-iai-stance",
+          "path": "Sweep02/frame-01.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        },
+        {
+          "slot": 2,
+          "role": "counter-coil",
+          "path": "Sweep02/frame-02.png",
+          "sha256": "127342cc7026c08c948efecc55ae5137cb5bd5e5fbdbbf4f23265453a0dd83a3"
+        },
+        {
+          "slot": 3,
+          "role": "turning-cut",
+          "path": "Sweep02/frame-03.png",
+          "sha256": "635f03b78df16a897c5367266d3963575a8ca0a8d4b4832f12fd3166b3948291"
+        },
+        {
+          "slot": 4,
+          "role": "low-followthrough",
+          "path": "Sweep02/frame-04.png",
+          "sha256": "1b5f340ad9379722438b3ad4335d2ad7db125cd1b26c84625e78b5d4383fcfb0"
+        },
+        {
+          "slot": 5,
+          "role": "new-low-iai-stance",
+          "path": "Sweep02/frame-05.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        }
+      ],
+      "strip": "Sweep02/strip.png",
+      "gif": "Sweep02/preview.gif",
+      "raw": "Sweep02/raw.png",
+      "provenance": "Sweep02/provenance.json",
+      "normalization": "Sweep02/normalization.json",
+      "review": "director-reviewed-option-candidate-not-runtime-selection"
+    },
+    {
+      "id": "SW03",
+      "folder": "Sweep03",
+      "name": "Cross-step whirlwind",
+      "description": "Crossed-foot coil and mid-turn, then uncrossed wide low landing.",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "new-low-iai-stance",
+          "path": "Sweep03/frame-01.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        },
+        {
+          "slot": 2,
+          "role": "counter-coil",
+          "path": "Sweep03/frame-02.png",
+          "sha256": "0a8f8c4b3d0980f140c38808e87e780ddf6f7f027d3d160ea39f2ab98b25afbf"
+        },
+        {
+          "slot": 3,
+          "role": "turning-cut",
+          "path": "Sweep03/frame-03.png",
+          "sha256": "1e2de994d13c5e6af1dadfff8e6cbfbde557726a47584f077ad98e4f81fe6552"
+        },
+        {
+          "slot": 4,
+          "role": "low-followthrough",
+          "path": "Sweep03/frame-04.png",
+          "sha256": "db88a4f836fe54742f2deee339a056cf927b4deacd1cd6ef0f655d990e01174a"
+        },
+        {
+          "slot": 5,
+          "role": "new-low-iai-stance",
+          "path": "Sweep03/frame-05.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        }
+      ],
+      "strip": "Sweep03/strip.png",
+      "gif": "Sweep03/preview.gif",
+      "raw": "Sweep03/raw.png",
+      "provenance": "Sweep03/provenance.json",
+      "normalization": "Sweep03/normalization.json",
+      "review": "director-reviewed-option-candidate-not-runtime-selection"
+    },
+    {
+      "id": "SW04",
+      "folder": "Sweep04",
+      "name": "Planted deep pivot",
+      "description": "Wide planted squat with hip pivot and deeper compact finish.",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "new-low-iai-stance",
+          "path": "Sweep04/frame-01.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        },
+        {
+          "slot": 2,
+          "role": "counter-coil",
+          "path": "Sweep04/frame-02.png",
+          "sha256": "42f8126385fe09ab124a405aac8060b9076650596af5e77c28666ee558b6f547"
+        },
+        {
+          "slot": 3,
+          "role": "turning-cut",
+          "path": "Sweep04/frame-03.png",
+          "sha256": "4283f7d141cf81de1e3a24379c94d0182876223fe90167abe52d0c32ce005620"
+        },
+        {
+          "slot": 4,
+          "role": "low-followthrough",
+          "path": "Sweep04/frame-04.png",
+          "sha256": "68aae8299ebcabdc34156944a783332256623b35639e2ecb1bbcb2cf828c12b1"
+        },
+        {
+          "slot": 5,
+          "role": "new-low-iai-stance",
+          "path": "Sweep04/frame-05.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        }
+      ],
+      "strip": "Sweep04/strip.png",
+      "gif": "Sweep04/preview.gif",
+      "raw": "Sweep04/raw.png",
+      "provenance": "Sweep04/provenance.json",
+      "normalization": "Sweep04/normalization.json",
+      "review": "director-reviewed-option-candidate-not-runtime-selection"
+    },
+    {
+      "id": "SW05",
+      "folder": "Sweep05",
+      "name": "Rising spiral",
+      "description": "A rising diagonal spiral crosses from waist toward chest before a low recovery.",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "new-low-iai-stance",
+          "path": "Sweep05/frame-01.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        },
+        {
+          "slot": 2,
+          "role": "counter-coil",
+          "path": "Sweep05/frame-02.png",
+          "sha256": "f997a6f7b6221b6614cdfe144d9d735145566ccb1e01d1fec8fd8d775f4b8904"
+        },
+        {
+          "slot": 3,
+          "role": "turning-cut",
+          "path": "Sweep05/frame-03.png",
+          "sha256": "b720a26f778f5c18762f97ef3ca369fab55647b425e50d2f5fc685df56382da0"
+        },
+        {
+          "slot": 4,
+          "role": "low-followthrough",
+          "path": "Sweep05/frame-04.png",
+          "sha256": "58f7c61e6fb4ff2a58785355620509a8024d25bab6ca445c3566f1cb4925b33d"
+        },
+        {
+          "slot": 5,
+          "role": "new-low-iai-stance",
+          "path": "Sweep05/frame-05.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        }
+      ],
+      "strip": "Sweep05/strip.png",
+      "gif": "Sweep05/preview.gif",
+      "raw": "Sweep05/raw.png",
+      "provenance": "Sweep05/provenance.json",
+      "normalization": "Sweep05/normalization.json",
+      "review": "director-reviewed-option-candidate-not-runtime-selection"
+    },
+    {
+      "id": "SW06",
+      "folder": "Sweep06",
+      "name": "Low leg orbit",
+      "description": "The strike and surrounding orbit drop toward knee level with a compressed body.",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "new-low-iai-stance",
+          "path": "Sweep06/frame-01.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        },
+        {
+          "slot": 2,
+          "role": "counter-coil",
+          "path": "Sweep06/frame-02.png",
+          "sha256": "68fcd15d0de7a906d58c00b359a1a5929e0be5829b043df97593a9eaec9275de"
+        },
+        {
+          "slot": 3,
+          "role": "turning-cut",
+          "path": "Sweep06/frame-03.png",
+          "sha256": "2fc01f8432becb2d88d8c5005766749fcaa228c1df2fc86d3b25324626f4c707"
+        },
+        {
+          "slot": 4,
+          "role": "low-followthrough",
+          "path": "Sweep06/frame-04.png",
+          "sha256": "b03f41d186b8957578ebf3adaa79ba543d928b95c6b850c7219f3554cec54ad7"
+        },
+        {
+          "slot": 5,
+          "role": "new-low-iai-stance",
+          "path": "Sweep06/frame-05.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        }
+      ],
+      "strip": "Sweep06/strip.png",
+      "gif": "Sweep06/preview.gif",
+      "raw": "Sweep06/raw.png",
+      "provenance": "Sweep06/provenance.json",
+      "normalization": "Sweep06/normalization.json",
+      "review": "director-reviewed-option-candidate-not-runtime-selection"
+    },
+    {
+      "id": "SW07",
+      "folder": "Sweep07",
+      "name": "Compact low finish",
+      "description": "The turning crosscut settles into a narrower compact low finish; arms extend during contact.",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "new-low-iai-stance",
+          "path": "Sweep07/frame-01.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        },
+        {
+          "slot": 2,
+          "role": "counter-coil",
+          "path": "Sweep07/frame-02.png",
+          "sha256": "463e872b34bc243d616d866ddf492dbe7d26e0574fa7f024daa9ae400ef3d6bf"
+        },
+        {
+          "slot": 3,
+          "role": "turning-cut",
+          "path": "Sweep07/frame-03.png",
+          "sha256": "ba4df6b2cf554cbd8de26548ddbc9c98d951e57ec562c7f7f21d4a7fb1977d27"
+        },
+        {
+          "slot": 4,
+          "role": "low-followthrough",
+          "path": "Sweep07/frame-04.png",
+          "sha256": "d8bda8bf0a51ca7144315850804d62cde4b4997af9bbaa95e0a828018aa8be7e"
+        },
+        {
+          "slot": 5,
+          "role": "new-low-iai-stance",
+          "path": "Sweep07/frame-05.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        }
+      ],
+      "strip": "Sweep07/strip.png",
+      "gif": "Sweep07/preview.gif",
+      "raw": "Sweep07/raw.png",
+      "provenance": "Sweep07/provenance.json",
+      "normalization": "Sweep07/normalization.json",
+      "review": "director-reviewed-option-candidate-not-runtime-selection"
+    },
+    {
+      "id": "SW08",
+      "folder": "Sweep08",
+      "name": "Broad orbit",
+      "description": "Wide base and broad surrounding arc with an extended waist cut.",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "new-low-iai-stance",
+          "path": "Sweep08/frame-01.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        },
+        {
+          "slot": 2,
+          "role": "counter-coil",
+          "path": "Sweep08/frame-02.png",
+          "sha256": "5238d3555ae73751f9d6b636b529cb5244afb95e1440870f6ac73e011cb9e473"
+        },
+        {
+          "slot": 3,
+          "role": "turning-cut",
+          "path": "Sweep08/frame-03.png",
+          "sha256": "a633aa580d9c29eb2b861b505a33d0aa0b8f79ba38d7130c311e48b58ed5d9f6"
+        },
+        {
+          "slot": 4,
+          "role": "low-followthrough",
+          "path": "Sweep08/frame-04.png",
+          "sha256": "f604ab5658b593b15cbf646751660f4a9bf99f416521411f4ee293e7a9d72c18"
+        },
+        {
+          "slot": 5,
+          "role": "new-low-iai-stance",
+          "path": "Sweep08/frame-05.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        }
+      ],
+      "strip": "Sweep08/strip.png",
+      "gif": "Sweep08/preview.gif",
+      "raw": "Sweep08/raw.png",
+      "provenance": "Sweep08/provenance.json",
+      "normalization": "Sweep08/normalization.json",
+      "review": "director-reviewed-option-candidate-not-runtime-selection"
+    },
+    {
+      "id": "SW09",
+      "folder": "Sweep09",
+      "name": "Two-direction unwind",
+      "description": "Rightward preload reverses into a leftward body turn, then a low rightward unwind.",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "new-low-iai-stance",
+          "path": "Sweep09/frame-01.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        },
+        {
+          "slot": 2,
+          "role": "counter-coil",
+          "path": "Sweep09/frame-02.png",
+          "sha256": "02c4b4c94d6dfa06d4db370a9a12a9fc8f4952c57fa767dfc46679effcf45fda"
+        },
+        {
+          "slot": 3,
+          "role": "turning-cut",
+          "path": "Sweep09/frame-03.png",
+          "sha256": "701dace9bead9161c20cddc4e3afd4dca40a24c6a1014c5178fb696743ec1e4d"
+        },
+        {
+          "slot": 4,
+          "role": "low-followthrough",
+          "path": "Sweep09/frame-04.png",
+          "sha256": "4623d31a8cb5e1218531ab93e8c54438f8e27e939ab8798585c2d23f335de2d7"
+        },
+        {
+          "slot": 5,
+          "role": "new-low-iai-stance",
+          "path": "Sweep09/frame-05.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        }
+      ],
+      "strip": "Sweep09/strip.png",
+      "gif": "Sweep09/preview.gif",
+      "raw": "Sweep09/raw.png",
+      "provenance": "Sweep09/provenance.json",
+      "normalization": "Sweep09/normalization.json",
+      "review": "director-reviewed-option-candidate-not-runtime-selection"
+    },
+    {
+      "id": "SW10",
+      "folder": "Sweep10",
+      "name": "Advancing low whirlwind",
+      "description": "Lifted front boot starts a forward step; the cut plants and advances into a wide low finish.",
+      "frames": [
+        {
+          "slot": 1,
+          "role": "new-low-iai-stance",
+          "path": "Sweep10/frame-01.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        },
+        {
+          "slot": 2,
+          "role": "counter-coil",
+          "path": "Sweep10/frame-02.png",
+          "sha256": "a5d0f2bdf34fff1882bd473a456e001f93ba67c0eb8fed6d96d66fcb21b39813"
+        },
+        {
+          "slot": 3,
+          "role": "turning-cut",
+          "path": "Sweep10/frame-03.png",
+          "sha256": "fb5620f0275fa5bda118362b73b485bcbae0689047eeb891234d2ef9d6ecbdf6"
+        },
+        {
+          "slot": 4,
+          "role": "low-followthrough",
+          "path": "Sweep10/frame-04.png",
+          "sha256": "2e020a9c13bcfc4fd7168289f50aca06ab82202dc391a78b8baae7d37da9893a"
+        },
+        {
+          "slot": 5,
+          "role": "new-low-iai-stance",
+          "path": "Sweep10/frame-05.png",
+          "sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405"
+        }
+      ],
+      "strip": "Sweep10/strip.png",
+      "gif": "Sweep10/preview.gif",
+      "raw": "Sweep10/raw.png",
+      "provenance": "Sweep10/provenance.json",
+      "normalization": "Sweep10/normalization.json",
+      "review": "director-reviewed-option-candidate-not-runtime-selection"
+    }
+  ]
+}

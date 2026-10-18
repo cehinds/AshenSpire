@@ -4,6 +4,7 @@
 // and a click-skip ends them.
 
 import test from 'node:test';
+import { selectedWeaponReactionFor, REAVER_GREATSWORD_PILOT } from '../src/model/selectedWeaponStances.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { callout, clearCallouts, CALLOUT_KINDS, playTimeline, setAnimSpeed, setBeatOrder, ANIM_SPEEDS, calloutForEvent } from '../src/ui/fx.js';
@@ -15,38 +16,62 @@ const callouts = (layer) => layer.children.filter((node) => node.dataset?.callou
 
 test('every callout kind has a localized word', () => {
   for (const [kind, def] of Object.entries(CALLOUT_KINDS)) {
-    assert.match(t(def.string), /^[A-Z ]+$/, `${kind} is a short uppercase word`);
+    assert.match(t(def.string), /^[A-Za-z —]+$/, `${kind} is a localized outcome phrase`);
   }
   assert.equal(t(CALLOUT_KINDS.guardBreak.string), 'GUARD BREAK');
+  assert.equal(t(CALLOUT_KINDS.hit.string), 'Hit');
+  assert.equal(t(CALLOUT_KINDS.evadeFailed.string), 'Hit — Evade Failed');
+  assert.equal(t(CALLOUT_KINDS.missed.string), 'Missed');
 });
 
-test('a callout names its fighter, stacks a second, keeps at most two, and skips a repeat', (t2) => {
-  t2.mock.timers.enable({ apis: ['setTimeout'] });
+test('a callout names its fighter, shows three in lanes, queues the rest, and skips a repeat', (t2) => {
+  t2.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
   withKitDom((dom) => {
     const layer = dom.document.createElement('div');
     const anchor = dom.document.createElement('div');
     const first = callout(layer, anchor, 'e1', 'staggered');
     assert.equal(first.textContent, 'STAGGERED');
     assert.equal(first.dataset.calloutFor, 'e1');
-    assert.equal(first.dataset.calloutSlot, '0');
+    assert.equal(first.dataset.calloutSlot, '2', 'lane 0 is the top slot');
     assert.match(first.className, /\bfx-callout\b.*\bgold\b/);
     assert.equal(callout(layer, anchor, 'e1', 'staggered'), null, 'the same word is not repeated on one fighter');
     const second = callout(layer, anchor, 'e1', 'critical');
-    assert.equal(second.dataset.calloutSlot, '1', 'the second stacks above the first');
+    assert.equal(second.dataset.calloutSlot, '1', 'lane 1 sits under lane 0');
     assert.match(second.className, /\bred\b/);
     const other = callout(layer, anchor, 'player', 'evaded');
-    assert.equal(other.dataset.calloutSlot, '0', 'another fighter has its own stack');
-    callout(layer, anchor, 'e1', 'guardBreak');
-    const e1 = callouts(layer).filter((node) => node.dataset.calloutFor === 'e1');
-    assert.equal(e1.length, 2, 'at most two per fighter');
-    assert.deepEqual(e1.map((node) => node.dataset.calloutKind).sort(), ['critical', 'guardBreak'], 'the oldest gives way');
-    assert.deepEqual(e1.map((node) => node.dataset.calloutSlot).sort(), ['0', '1'], 'no two share a slot');
-    t2.mock.timers.tick(900);
-    assert.equal(callouts(layer).length, 0, 'each fades out after its life');
-    callout(layer, anchor, 'e1', 'countered');
+    assert.equal(other.dataset.calloutSlot, '2', 'another fighter has its own stack');
+    const third = callout(layer, anchor, 'e1', 'guardBreak');
+    assert.equal(third.dataset.calloutSlot, '0', 'lane 2 is the bottom slot');
+    const fourth = callout(layer, anchor, 'e1', 'countered');
+    const starts = [first, second, third].map((node) => Number.parseInt(node.style.animationDelay || '0', 10));
+    assert.deepEqual(starts, [0, 150, 300], 'each word starts one step after the one before');
+    const delayMs = Number.parseInt(fourth.style.animationDelay, 10);
+    assert.ok(delayMs >= 890 && delayMs <= 900, 'the fourth waits for the earliest visible word to finish');
+    assert.equal(callouts(layer).length, 5, 'nothing is dropped: the fourth is queued');
     clearCallouts(layer);
-    assert.equal(callouts(layer).length, 0, 'a skip ends them');
+    assert.equal(callouts(layer).length, 0, 'a skip ends the visible words and the queue');
   });
+});
+
+test('instant speed: the lanes and removal use the 500ms lifetime callout() actually picked', (t2) => {
+  t2.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  try {
+    withKitDom((dom) => {
+      setAnimSpeed('instant');
+      const layer = dom.document.createElement('div');
+      const anchor = dom.document.createElement('div');
+      const kinds = ['staggered', 'disrupted', 'countered', 'critical', 'guardBreak', 'wardBreak'];
+      const nodes = kinds.map((kind) => callout(layer, anchor, 'e1', kind));
+      const starts = nodes.map((node) => Number.parseInt(node.style.animationDelay || '0', 10));
+      assert.deepEqual(starts, [0, 150, 300, 500, 650, 800], 'the fourth word waits for the first 500ms word, not a 900ms one');
+      t2.mock.timers.tick(499);
+      assert.ok(layer.children.includes(nodes[0]), 'the first word is still up at 499ms');
+      t2.mock.timers.tick(1);
+      assert.ok(!layer.children.includes(nodes[0]), 'the first word is removed at its 500ms lifetime');
+    });
+  } finally {
+    setAnimSpeed('normal');
+  }
 });
 
 test('callout CSS: larger than a float, HUD text shadow, reduced motion and Reduce flashes', () => {
@@ -88,7 +113,7 @@ function drive(t2, fn) {
     let completed = 0;
     const run = (events, extra = {}) => playTimeline(events, { ...ctx, ...extra }, () => completed++);
     const finish = () => { for (let i = 0; i < 4000 && !completed; i++) t2.mock.timers.tick(1); assert.equal(completed, 1, 'the timeline completes'); };
-    try { fn({ dom, layer, trace, run, finish, tick: (ms) => t2.mock.timers.tick(ms) }); }
+    try { fn({ dom, layer, anchors, trace, run, finish, tick: (ms) => t2.mock.timers.tick(ms) }); }
     finally { setAnimSpeed('normal'); setBeatOrder('sequential'); dom.document.body.classList.remove('reduced-motion'); }
   });
 }
@@ -96,6 +121,37 @@ const timeOf = (trace, what) => trace.find((e) => e.what === what)?.at;
 const enemyAttack = (...events) => [{ type: 'enemyMoveStarted', sourceId: 'e1', kind: 'attack' }, ...events];
 const playerAttack = (...events) => [{ type: 'cardPlayed', cardType: 'attack', cardId: 'strike', cardInstanceId: 'c1', targetId: 'e1' }, ...events];
 const hit = (sourceId, targetId, amount = 4) => ({ type: 'damageDealt', sourceId, targetId, amount, blocked: 0 });
+
+for (const mode of ['sequential', 'impact', 'instant', 'reduced']) test(`selected player receipt reactions execute once in ${mode} playback`, t2 => {
+  drive(t2, ({dom, run, finish, trace}) => {
+    if (mode === 'instant') setAnimSpeed('instant');
+    if (mode === 'reduced') dom.document.body.classList.add('reduced-motion');
+    const reactions=[];
+    const events=enemyAttack(
+      {type:'attackEvaded',targetId:'player'},
+      {type:'combatAvoidanceResolved',targetId:'player',avoided:false,evade:{success:false}},
+      {type:'combatAvoidanceResolved',targetId:'player',avoided:true,distance:{success:true}},
+      {type:'combatGuardBroken',targetId:'player',poise:0},
+      {type:'combatGuardBroken',targetId:'e1',poise:0});
+    run(events,{beatOrder:mode==='impact'?'impact':'sequential',reactionForReceipt:event=>{
+      const kind=selectedWeaponReactionFor(event,REAVER_GREATSWORD_PILOT);
+      return kind?()=>reactions.push({kind,targetId:event.targetId,at:Date.now()}):null;
+    }});
+    finish();
+    assert.deepEqual(reactions.map(({kind,targetId})=>({kind,targetId})),[
+      {kind:'evade',targetId:'player'},{kind:'guard-break',targetId:'player'}]);
+    if(mode==='sequential')assert.ok(reactions.every(reaction=>reaction.at>=TOTAL),'defender reactions follow the complete swing');
+    assert.ok(trace.some(entry=>entry.what==='callout:evaded@player'),'the existing successful callout remains');
+  });
+});
+
+test('an unsupported receipt reaction hook preserves callout-only pacing',t2=>{
+  drive(t2,({trace,run,finish})=>{
+    // A callout-only event: a miss now has its own streak and swish, so it no longer serves here.
+    run(enemyAttack({type:'combatCounterTriggered',sourceId:'e1',targetId:'player'}),{reactionForReceipt:()=>null});finish();
+    assert.equal(timeOf(trace,'bars'),TOTAL,'no extra reaction wait when the fighter has no selected profile');
+  });
+});
 
 const CASES = [
   ['CRITICAL on the target, with its hurt pose', enemyAttack({ type: 'critHit', sourceId: 'e1', targetId: 'player', multiplier: 2 }, hit('e1', 'player')), 'critical@player'],
@@ -135,6 +191,22 @@ test('a failed avoidance roll and an unbroken rating say nothing', () => {
   assert.equal(calloutForEvent({ type: 'combatAvoidanceResolved', targetId: 'player', avoided: false, evade: { success: false } }), null);
   assert.equal(calloutForEvent({ type: 'ratingImpact', targetId: 'e1', breaks: 0, label: 'Stagger' }), null);
   assert.deepEqual(calloutForEvent({ type: 'ratingImpact', targetId: 'e1', breaks: 1, label: 'Disruption' }), { kind: 'disrupted', targetId: 'e1' });
+  // A distance roll or a prevention charge that stops a hit is a miss too, over the fighter it missed.
+  assert.deepEqual(calloutForEvent({ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', avoided: true, distance: { roll: 4, chance: 30, success: true } }), { kind: 'evaded', targetId: 'player' });
+  assert.deepEqual(calloutForEvent({ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', avoided: true, prevention: 'decoy' }), { kind: 'evaded', targetId: 'player' });
+  // Each break earns its own word over the fighter it broke; an enemy's cancelled action reads INTERRUPTED.
+  assert.deepEqual(calloutForEvent({ type: 'blockBroken', targetId: 'player' }), { kind: 'blockBreak', targetId: 'player' });
+  // A Smash that breaks the last Block shows GUARD BREAK alone: its blockBroken earns no BREAK word.
+  assert.equal(calloutForEvent({ type: 'blockBroken', targetId: 'e1', smash: true }), null);
+  assert.deepEqual(calloutForEvent({ type: 'combatGuardBroken', targetId: 'e1', poise: 0 }), { kind: 'guardBreak', targetId: 'e1' });
+  assert.deepEqual(calloutForEvent({ type: 'wardBroken', targetId: 'e1', staminaLoss: 0 }), { kind: 'wardBreak', targetId: 'e1' });
+  assert.deepEqual(calloutForEvent({ type: 'poiseBroken', targetId: 'e1', interrupted: true, staminaLoss: 1 }), { kind: 'poiseBreak', targetId: 'e1' });
+  assert.deepEqual(calloutForEvent({ type: 'enemyInterrupted', targetId: 'e1', cancelledMove: 'slam', cause: 'poiseBreak' }), { kind: 'interrupted', targetId: 'e1' });
+  // A stagger a break caused shows no second word: the break's word and INTERRUPTED carry it.
+  assert.equal(calloutForEvent({ type: 'enemyStaggered', targetId: 'e1', cause: 'poiseBreak' }), null);
+  assert.deepEqual(calloutForEvent({ type: 'enemyStaggered', targetId: 'e1' }), { kind: 'staggered', targetId: 'e1' });
+  assert.equal(CALLOUT_KINDS.interrupted.string, 'combat.callout.interrupted');
+  assert.equal(CALLOUT_KINDS.barrierBreak.tone, 'barrier');
 });
 
 test('COUNTERED shows on the attacker who got countered, at the counter\'s impact', (t2) => {
@@ -185,5 +257,41 @@ test('a click-skip ends the callouts', (t2) => {
     assert.equal(callouts(layer).length, 0, 'the skip removed it');
     globalThis.dispatchEvent(new dom.Event('pointerup'));
     finish();
+  });
+});
+
+for (const mode of ['impact', 'sequential', 'instant', 'reduced']) test('accuracy outcome leads damage in ' + mode + ' playback', t2 => {
+  drive(t2, ({ dom, trace, run, finish }) => {
+    if (mode === 'instant') setAnimSpeed('instant');
+    if (mode === 'reduced') dom.document.body.classList.add('reduced-motion');
+    run(enemyAttack({ type: 'attackHit', sourceId: 'e1', targetId: 'player', evadeActive: true }, hit('e1', 'player')), { beatOrder: mode });
+    finish();
+    const outcome = timeOf(trace, 'callout:evadeFailed@player');
+    const damage = timeOf(trace, 'float:-4');
+    assert.ok(Number.isFinite(outcome) && Number.isFinite(damage), 'both production visuals execute');
+    assert.ok(damage > outcome, 'the outcome has a visible lead before damage');
+    assert.ok(damage - outcome >= 300, 'outcome gets its readable lead in every playback mode');
+    assert.ok(damage <= 750, 'the readable outcome hold overlaps swing recovery within the first-number budget');
+  });
+});
+
+test('accuracy hold overlaps stance entry before the first sequential hit', t2 => {
+  drive(t2, ({ anchors, trace, run, finish }) => {
+    const stage = { pose: 'hit', rest: 'idle', settle() { this.pose = this.rest; }, hold() {} };
+    registerStage(anchors.e1, stage);
+    run(enemyAttack({ type: 'attackHit', sourceId: 'e1', targetId: 'player' }, hit('e1', 'player')), {
+      animateActor: () => {
+        trace.push({ what: 'swing-start', at: Date.now() });
+        return { impactMs: IMPACT, totalMs: TOTAL, hold() {}, cancel() {} };
+      },
+    });
+    finish();
+    const outcome = timeOf(trace, 'callout:hit@player');
+    const damage = timeOf(trace, 'float:-4');
+    assert.equal(outcome, 0, 'the accuracy word starts before stance entry');
+    assert.equal(timeOf(trace, 'swing-start'), ANIM_SPEEDS.normal.stanceLeadMs, 'stance entry still precedes the swing');
+    assert.ok(damage - outcome >= 300, 'the hit-only hold remains readable');
+    assert.ok(damage <= 650, 'stance entry shares the accuracy hold instead of adding a second wait');
+    assert.equal(trace.filter(e => e.what === 'callout:hit@player').length, 1, 'the accuracy word is shown once');
   });
 });

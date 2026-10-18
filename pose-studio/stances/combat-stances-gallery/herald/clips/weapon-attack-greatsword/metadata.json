@@ -1,0 +1,79 @@
+{
+  "action": "weapon:attack:greatsword",
+  "aliases": [
+    "weapon:attack:greatsword",
+    "weapon:spell:greatsword",
+    "weapon:ranged:greatsword",
+    "weapon:rangedMagic:greatsword"
+  ],
+  "origin": "offensive",
+  "timing": {
+    "totalMs": 465,
+    "impactMs": 135
+  },
+  "registeredSequence": {
+    "poses": [
+      "herald.greatsword.attack.anticipation",
+      "herald.greatsword.attack.strike",
+      "herald.greatsword.attack.follow-through",
+      "herald.greatsword.attack.recovery"
+    ],
+    "durations": [
+      180,
+      90,
+      150,
+      200
+    ],
+    "impact": 1,
+    "travel": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "hold": false,
+    "action": "attack"
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-offensive",
+      "label": "origin stance-offensive",
+      "weight": 1
+    },
+    {
+      "pose": "herald.greatsword.attack.anticipation",
+      "registeredFrameId": "herald.greatsword.attack.anticipation",
+      "label": "1/4 herald.greatsword.attack.anticipation \u00b7 weight 180",
+      "weight": 180,
+      "timeMs": 67.5
+    },
+    {
+      "pose": "herald.greatsword.attack.strike",
+      "registeredFrameId": "herald.greatsword.attack.strike",
+      "label": "2/4 herald.greatsword.attack.strike \u00b7 weight 90",
+      "weight": 90,
+      "timeMs": 168.75
+    },
+    {
+      "pose": "herald.greatsword.attack.follow-through",
+      "registeredFrameId": "herald.greatsword.attack.follow-through",
+      "label": "3/4 herald.greatsword.attack.follow-through \u00b7 weight 150",
+      "weight": 150,
+      "timeMs": 258.75
+    },
+    {
+      "pose": "herald.greatsword.attack.recovery",
+      "registeredFrameId": "herald.greatsword.attack.recovery",
+      "label": "4/4 herald.greatsword.attack.recovery \u00b7 weight 200",
+      "weight": 200,
+      "timeMs": 390
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "return Attack",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

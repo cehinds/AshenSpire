@@ -1,0 +1,44 @@
+{
+  "generated_at_utc": "2026-10-12T16:22:00Z",
+  "tool": "tools.image_gen__imagegen",
+  "exact_prompt_file": null,
+  "prompt_file_unavailable_reason": "The exact prompt used for this 2026-10-12T16:22:00Z output is absent from the repository and tracked history. The available sheet-a.prompt.txt belongs to the separate sheet-a record, and sheet-a-revision-pass1.prompt.txt belongs to the earlier pass1 output; neither is verified as this output’s exact prompt.",
+  "requested_dimensions": [1024, 1536],
+  "actual_dimensions": [1024, 1536],
+  "mode": "RGBA",
+  "alpha_extrema": [0, 254],
+  "transparent_background": true,
+  "original_tool_output": "/workspace/generated_images/exec-a9530da8-a1e8-44ed-add1-715e74287631.png",
+  "preserved_canonical_file": "sheet-a.png",
+  "sha256": "0fe543067cb65beecc2be7c214c75dbe35bd5e270dde92d9cb67998e6f271f3d",
+  "referenced_images": [
+    {
+      "path": "pose-studio/stances/update-stances/greatsword-sweep/sheet-a-original.png",
+      "sha256": "1d17d81b813d247b89e53ea4f6fa6919679ab96512087a343fc5e5641a32def1",
+      "use": "revise grips and pose composition"
+    },
+    {
+      "path": "docs/design/class-armor-rear-2026-10-06/masters/reaver-default.png",
+      "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd",
+      "use": "costume identity"
+    },
+    {
+      "path": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+      "sha256": "d34545f9058599fa53380e732aea7013bfbc18c38daacbf085b3222c9932a35b",
+      "use": "selected Sweep camera, body scale, and greatsword proportions"
+    },
+    {
+      "path": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+      "use": "selected Smash camera, body scale, and greatsword proportions"
+    }
+  ],
+  "raw_output_preserved": true,
+  "review_status": "pending art director review",
+  "production_status": "concept only; not selected or runtime art",
+  "observed_deviations": [
+    "This is the imagegen path explicitly returned for the grip-edit request; it is the canonical revision receipt after correcting the earlier worker file-selection mistake.",
+    "All figures are still larger than the centered 368x368 safe boxes; some silhouettes cross cell bounds.",
+    "SW11/SW13 distinction and second-hand visibility remain for art director review."
+  ]
+}

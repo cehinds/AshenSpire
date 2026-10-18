@@ -1,45 +1,87 @@
+import { stanceRulesFor, enemySmashFallbackPoise, enemyCounterPoiseDamage } from '../model/stanceRules.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
-import { evaluate } from '../model/formulas.js';
+import { evaluate, isFormula } from '../model/formulas.js';
+import { counterstrikeAmount, counterstrikePct, hasStanceAdvantage, stanceManeuverOf } from './combatCardTraitMath.js';
 import { evalPredicate } from './triggers.js';
 import { cardRatingBonus } from './combatRatings.js';
 import { armCombatCounter, matchupRules, combatExpansionEnabled, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
-import { attackDescriptor } from '../model/attackTags.js';
+import { attackDescriptor, weaponDamageType, weaponDamageComponents, dominantDamageType } from '../model/attackTags.js';
+import { combatRules } from '../content/combatRules.js';
+import { canonicalDamageType, isPhysicalDamageType, techniqueNeedsWeaponType } from '../model/combatRatings.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { enemyMoveDamage } from '../model/state.js';
 import { expansionCarrierTraits } from './combatExpansionEquipment.js';
 
 export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
   const metadata = {};
-  for (const key of ['reach', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
-    'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'comboHook']) {
+  for (const key of ['targetLimit', 'range', 'defenseRange', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
+    'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'comboHook', 'traitValues']) {
     if (def[key] !== undefined) metadata[key] = structuredClone(def[key]);
   }
   const carrier = { ...metadata, ...extra, tags: def.cardTags ?? def.tags ?? extra.tags, attack: extra.attack ?? def.attack,
     damageSchool: extra.damageSchool ?? def.damageSchool,
+    ...(Number.isFinite(extra.magicShare ?? def.magicShare) ? { magicShare: extra.magicShare ?? def.magicShare } : {}),
+    ...(typeof (extra.physicalDamageType ?? def.physicalDamageType) === 'string' ? { physicalDamageType: extra.physicalDamageType ?? def.physicalDamageType } : {}),
     appliedStatuses: (def.effects || []).filter(effect => effect.op === 'applyStatus').map(effect => effect.status),
     appliedStatusEffects: (def.effects || []).filter(effect => effect.op === 'applyStatus'),
     appliedBuildupStatuses: (def.effects || []).filter(effect => effect.op === 'buildup').map(effect => effect.status),
     combatRiderTargets: [] };
   if (combatExpansionEnabled(ctx) && extra.ratingId === undefined && def.ratingId !== undefined) carrier.ratingId = def.ratingId;
   carrier.combatProfile = { ...combatProfileFor(carrier), ...(def.combatProfile || {}), ...(extra.combatProfile || {}) };
-  if (!carrier.combatProfile.damageType && carrier.combatProfile.camp && ctx?.registries && source?.kind !== 'enemy' && !source?.enemyId) {
+  if (carrier.combatProfile.evade?.whileStatus && source) carrier.combatProfile.evadeEligible = source.statuses?.[carrier.combatProfile.evade.whileStatus]?.stacks > 0;
+  // A mixed card's weapon part is resolved like an untagged card's whole type.
+  const weaponPart = !!(carrier.attack?.weaponDamage && carrier.attack.components);
+  if ((!carrier.combatProfile.damageType || weaponPart) && carrier.combatProfile.camp && ctx?.registries && source?.kind !== 'enemy' && !source?.enemyId) {
     const attack = attackDescriptor(carrier);
     const kind = attack.source || (carrier.combatProfile.camp === 'spell' ? 'spell' : 'weapon');
-    const pieces = ctx.registries.equipment?.armaments || [];
-    let piece = carrier.sourceArmamentId && pieces.find(row => row.id === carrier.sourceArmamentId);
-    if (!piece && ctx.loadout) {
-      const hand = { right: 'mainHand', left: 'offHand' }[carrier.sourceHand] || carrier.sourceHand || 'mainHand';
-      for (const slot of ctx.registries.equipment?.slots || []) {
-        if (slotHand(slot) !== (hand === 'offHand' ? 'left' : 'right')) continue;
-        const equipped = equippedIn(ctx.registries, ctx.loadout, source?.classId, slot.id);
-        if (equipped && attackDescriptor(equipped).source === kind) { piece = equipped; break; }
-      }
-    }
-    const identity = piece && attackDescriptor(piece);
-    carrier.combatProfile.damageType = identity?.damageType || (kind === 'unarmed' ? 'blunt' : null);
+    const piece = wieldedArmament(ctx, carrier, source, kind);
+    // No piece of that kind in hand: a physical weapon card is thrown with bare hands
+    // and deals the unarmed profile's type (owner #19), as foundationSource does.
+    const rules = ctx.foundation?.rules || combatRules;
+    const unarmed = (ctx.registries.equipment?.basicCardProfiles || []).find(row => row.id === 'unarmedAttack');
+    // A magical face (a staff's Strike, lent with a magic school) is never a bare-handed blow.
+    const magical = carrier.combatProfile.camp === 'spell' || (carrier.damageSchool && carrier.damageSchool !== 'physical');
+    const bare = piece || !['weapon', 'unarmed'].includes(kind) || magical ? null
+      : (unarmed && attackDescriptor(unarmed).damageType) || rules.fallbackSource.damageType;
+    const family = piece ? rules.equipmentSources?.itemFamilies?.[piece.id] || rules.equipmentSources?.profileFamilies?.[piece.attackProfile]
+      : rules.fallbackSource.family;
+    const pieceType = (piece && attackDescriptor(piece).damageType) || bare;
+    if (weaponPart) {
+      // The resolved parts travel on the carrier, so every effect and the
+      // rules foundation read the same split as this profile.
+      const components = weaponDamageComponents(attack, family, pieceType);
+      carrier.attack = { ...carrier.attack, components };
+      carrier.combatProfile.damageComponents = components.map(({ type, weight }) => ({ type, weight }));
+      carrier.combatProfile.damageType = dominantDamageType(components);
+    } else carrier.combatProfile.damageType = weaponDamageType(attack, family, pieceType) || null;
+  }
+  // A technique's physical part (Poison, fire or another magic type on a physical maneuver) is the
+  // wielded weapon's blow (owner, 2026-10-13): its physical type, else bare-handed Blunt downstream.
+  if (ctx?.registries && source?.kind !== 'enemy' && !source?.enemyId && techniqueNeedsWeaponType(carrier)) {
+    const piece = wieldedArmament(ctx, carrier, source, 'weapon');
+    const type = canonicalDamageType(piece && attackDescriptor(piece).damageType);
+    if (isPhysicalDamageType(type)) carrier.physicalDamageType = type;
   }
   return combatExpansionEnabled(ctx) ? expansionCarrierTraits(carrier, source) : carrier;
 }
+
+// The armament a card is dealt with: its lending piece, else the first piece of that kind in its hand.
+function wieldedArmament(ctx, carrier, source, kind) {
+  const pieces = ctx.registries.equipment?.armaments || [];
+  let piece = carrier.sourceArmamentId && pieces.find(row => row.id === carrier.sourceArmamentId);
+  if (!piece && ctx.loadout) {
+    const hand = { right: 'mainHand', left: 'offHand' }[carrier.sourceHand] || carrier.sourceHand || 'mainHand';
+    for (const slot of ctx.registries.equipment?.slots || []) {
+      if (slotHand(slot) !== (hand === 'offHand' ? 'left' : 'right')) continue;
+      const equipped = equippedIn(ctx.registries, ctx.loadout, source?.classId, slot.id);
+      if (equipped && attackDescriptor(equipped).source === kind) { piece = equipped; break; }
+    }
+  }
+  return piece || null;
+}
+
+const counterPayloadOps = ctx => combatExpansionEnabled(ctx)
+  ? ['damage', 'poiseDamage', 'wardDamage'] : ['damage', 'poiseDamage'];
 
 function counterFormulaContext(ctx, source, target, meta) {
   return { entities: { self: source, owner: source, player: ctx.player, target, enemy: target,
@@ -51,7 +93,7 @@ function counterFormulaContext(ctx, source, target, meta) {
 export function counterEffectPreview(ctx, source, target, carrier, effect, meta = {}, { ignoreCondition = false } = {}) {
   const action = { source, owner: source, target, card: carrier, meta };
   const formulas = counterFormulaContext(ctx, source, target, meta);
-  const payloadOps = combatExpansionEnabled(ctx) ? ['damage', 'poiseDamage', 'wardDamage'] : ['damage', 'poiseDamage'];
+  const payloadOps = counterPayloadOps(ctx);
   if (!payloadOps.includes(effect.op) || (!ignoreCondition && effect.if && !evalPredicate(ctx, effect.if, action))) return null;
   const base = Math.max(0, Math.floor(evaluate(effect.amount ?? 0, formulas)));
   const hits = Math.max(0, Math.floor(evaluate(effect.hits ?? 1, formulas)))
@@ -81,8 +123,57 @@ function counterNumbers(ctx, source, target, carrier, effects, meta) {
   return combatExpansionEnabled(ctx) ? { damage, poiseDamage, wardDamage } : { damage, poiseDamage };
 }
 
+// Effect ops whose `amount` Counterstrike scales (docs/combat-card-traits-contract.md).
+const COUNTERSTRIKE_AMOUNT_OPS = ['damage', 'block', 'gainBarrier', 'poiseDamage', 'wardDamage', 'gainPoise', 'gainWard', 'heal', 'buildup'];
+
+// The enemy a Counterstrike card answers: the chosen enemy target, else the
+// incoming attacker of the reaction in progress, else none.
+function counterstrikeTarget(ctx, target) {
+  if (target?.kind === 'enemy') return target;
+  const id = ctx._reactionSourceId;
+  return id == null ? null : (ctx.enemies || []).find(enemy => enemy.id === id) || null;
+}
+
+/**
+ * Reaction rules v2: a played card carrying traitValues.counterstrike scales its
+ * effect amounts on a per-play copy. Counter cards are left to their return payload.
+ */
+function counterstrikeEffects(ctx, source, target, carrier, effects, arm) {
+  if (ctx.reactionRulesVersion !== 2 || carrier.traitValues?.counterstrike !== true) return effects;
+  const cardManeuver = carrier.combatProfile?.maneuver || null;
+  const setStance = arm && cardManeuver && carrier.combatProfile.stanceTrigger !== false;
+  const playerManeuver = setStance ? cardManeuver : stanceManeuverOf(source);
+  const enemy = counterstrikeTarget(ctx, target);
+  const targetManeuver = enemy ? stanceManeuverOf(enemy) : null;
+  const pct = counterstrikePct(ctx, playerManeuver, targetManeuver);
+  const advantaged = hasStanceAdvantage(ctx, playerManeuver, targetManeuver);
+  carrier.counterstrikePct = pct;
+  ctx.emit?.('combatCounterstrikeApplied', { cardId: carrier.cardId, pct, advantaged });
+  const scaled = effects.map(effect => {
+    if (!COUNTERSTRIKE_AMOUNT_OPS.includes(effect.op) || effect.amount === undefined) return effect;
+    const amount = isFormula(effect.amount)
+      ? { f: 'traitBonus', base: effect.amount, pct }
+      : counterstrikeAmount(effect.amount, pct);
+    return { ...effect, amount };
+  });
+  return scaled;
+}
+
 /** Counter keeps support actions, postponing its printed damage to retaliation. */
 export function prepareTacticalCard(ctx, source, target, carrier, effects, meta = {}, { arm = true, damageBonus = 0, poiseBonus = 0 } = {}) {
+  // A reaction Sweep intercepts the physical melee attacker's break pools.
+  if (combatExpansionEnabled(ctx) && arm && ctx._reactionPlaying && carrier.combatProfile?.maneuver === 'sweep') {
+    const enemy = counterstrikeTarget(ctx, target);
+    const pending = (ctx.reactionResume?.queue || []).find(action =>
+      action.meta?.expansionGroup?.sourceId === enemy?.id)?.meta?.expansionGroup?.carrier?.combatProfile;
+    const incoming = pending || enemy?.intent?.combatProfile;
+    const range = incoming?.range || (incoming?.maneuver === 'ranged' || incoming?.projectile ? 'ranged' : 'melee');
+    if (enemy?.alive && incoming?.camp === 'physical' && range === 'melee') {
+      const cfg = stanceRulesFor(ctx);
+      effects = [...effects, { op: 'poiseDamage', target: 'enemy', amount: cfg.sweepReactionPoise },
+        { op: 'wardDamage', target: 'enemy', amount: cfg.sweepReactionWard }];
+    }
+  }
   // Feats may inject an application after the printed face was snapshotted.
   // The final action list owns duplicate-rider suppression, including charges.
   carrier.appliedStatusEffects = effects.filter(effect => effect.op === 'applyStatus');
@@ -90,9 +181,9 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
   carrier.appliedBuildupStatuses = effects.filter(effect => effect.op === 'buildup').map(effect => effect.status);
   if (combatExpansionEnabled(ctx) && arm) {
     setCombatStance(ctx, source, carrier);
-    if (carrier.combatProfile?.evade) prepareCombatEvade(ctx, source, carrier.combatProfile.evade);
+    // Evade's entry stack is granted only by a real stance change.
   }
-  if (carrier.combatProfile?.maneuver !== 'counter') return effects;
+  if (carrier.combatProfile?.maneuver !== 'counter') return counterstrikeEffects(ctx, source, target, carrier, effects, arm);
   const rules = matchupRules(ctx).counter;
   if (arm) {
     const numbers = counterNumbers(ctx, source, target, carrier, effects, meta);
@@ -106,8 +197,13 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
         const formulas = counterFormulaContext(ctx, source, target, meta);
         for (const key of ['hp', 'poise', 'ward', 'smashPoiseBonus']) if (authored[key] !== undefined) {
           const base = Math.max(0, evaluate(authored[key], formulas));
-          payload[key] = base + (key === 'hp' && base > 0 && authored.hpRating !== false
-            ? cardRatingBonus(ctx, source, { ...carrier, ratingId: undefined }, 'damage', base) : 0);
+          const rating = key === 'hp' && base > 0 && authored.hpRating !== false
+            ? cardRatingBonus(ctx, source, { ...carrier, ratingId: undefined }, 'damage', base) : 0;
+          payload[key] = base + rating;
+          // Counterstrike scales the authored base, then re-derives the rating bonus from it (contract).
+          if (key === 'hp' && ctx.reactionRulesVersion === 2 && carrier.traitValues?.counterstrike) Object.assign(payload, { hpBase: base, hpRating: rating });
+          // Counterstrike scales only the authored Poise; charge and conditional Poise ride on top unscaled.
+          if (key === 'poise' && ctx.reactionRulesVersion === 2 && carrier.traitValues?.counterstrike) payload.poiseBase = base;
         }
         if (authored.hp !== undefined) payload.hp += Math.max(0, Number(damageBonus) || 0);
         if (authored.poise !== undefined) payload.poise += Math.max(0, Number(poiseBonus) || 0);
@@ -118,16 +214,43 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
           payload.poise += counterEffectPreview(ctx, source, target, carrier, effect, meta)?.total || 0;
         }
         if (authored.hpAgainstNonCaster !== undefined) payload.hpAgainstNonCaster = authored.hpAgainstNonCaster;
+      } else if (ctx.reactionRulesVersion === 2 && carrier.traitValues?.counterstrike) {
+        // A reply derived from the card's own damage effect: record its base and rating so
+        // Counterstrike scales the base and re-derives the rating (one single-hit damage effect).
+        const damaging = effects.map(effect => ({ effect, preview: effect.op === 'damage' ? counterEffectPreview(ctx, source, target, carrier, effect, meta) : null }))
+          .filter(row => row.preview);
+        if (damaging.length === 1 && damaging[0].preview.hits === 1) {
+          const base = Math.max(0, Math.floor(evaluate(damaging[0].effect.amount ?? 0, counterFormulaContext(ctx, source, target, meta))));
+          Object.assign(payload, { hpBase: base, hpRating: damaging[0].preview.value - base });
+        }
+        payload.poiseBase = Math.max(0, numbers.poiseDamage - Math.max(0, Number(poiseBonus) || 0));
+      }
+      // A Counter with no authored Poise impact receives the shared fallback once.
+      if (!(payload.poise > 0) && !effects.some(effect => effect.op === 'poiseDamage')) {
+        payload.poise = stanceRulesFor(ctx).fallbackPoise;
       }
       armCombatCounter(ctx, source, carrier, { ...numbers, payload });
     } else armCombatCounter(ctx, source, carrier, numbers);
     // Enemy stances are armed before player phase and expire on enemy turn start.
     if (source.kind === 'enemy') delete source.combatCounter.expiresOnTurn;
   }
-  const payloadOps = combatExpansionEnabled(ctx) ? ['damage', 'poiseDamage', 'wardDamage'] : ['damage', 'poiseDamage'];
+  const payloadOps = counterPayloadOps(ctx);
   const support = effects.filter(effect => !payloadOps.includes(effect.op));
   if (!combatExpansionEnabled(ctx) && !support.some(effect => effect.op === 'block')) support.unshift({ op: 'block', target: 'self', amount: rules.guard });
-  return support;
+  return counterstrikeEffects(ctx, source, target, carrier, support, arm);
+}
+
+/** Project immediate preparation through the live rule without arming a reply. */
+export function previewTacticalEffects(ctx, source, target, carrier, effects, meta = {}) {
+  if (!combatExpansionEnabled(ctx)) return effects;
+  const prepared = prepareTacticalCard(ctx, source, target, carrier, effects, meta, { arm: false });
+  if (carrier.combatProfile?.maneuver !== 'counter') return prepared;
+  // The face retains its deferred payload rows. Only its support effects run
+  // now, so preserve those authored positions while using their prepared values.
+  const payloadOps = counterPayloadOps(ctx);
+  let supportIndex = 0;
+  return effects.map(effect => payloadOps.includes(effect.op)
+    ? effect : prepared[supportIndex++]);
 }
 
 /** Ward is provenance within Block; buildup protection remains gainWard. */
@@ -152,9 +275,9 @@ const ENEMY_PRESSURE = {
 export function expandedEnemyMove(enemy, move, moveId, ctx = null) {
   if (!combatExpansionEnabled(ctx)) return move;
   const profile = combatProfileFor({ ...move, enemyId: enemy.enemyId, moveId });
-  const reach = profile.reach || (profile.maneuver === 'ranged' || profile.camp === 'spell' ? 'near' : 'contact');
+  const range = profile.range || (profile.maneuver === 'ranged' || profile.camp === 'spell' ? 'reach' : 'melee');
   const targeting = profile.targeting || (profile.maneuver === 'sweep' ? 'area' : 'single');
-  const result = { ...move, reach, targeting,
+  const result = { ...move, range, targeting,
     ...(profile.maneuver === 'smash' ? { breakPoiseBonus: move.breakPoiseBonus ?? 3 } : {}),
     ...(!profile.maneuver ? { stanceTrigger: false } : {}),
     effects: (move.effects || []).map(effect => {
@@ -171,12 +294,16 @@ export function expandedEnemyMove(enemy, move, moveId, ctx = null) {
     delete result.block;
     result.barrier = (move.barrier || 0) + move.block;
   }
+  const fallbackPoise = enemySmashFallbackPoise(result, profile, ctx);
+  if (fallbackPoise != null) {
+    result.effects.push({ op: 'poiseDamage', target: 'player', amount: fallbackPoise });
+  }
   if (profile.maneuver === 'ranged') result.projectile = true;
   if (move.delay?.whileCharging) result.delay = { ...move.delay,
     whileCharging: expandedEnemyMove(enemy, { ...move.delay.whileCharging, tags: move.tags, cardTags: move.cardTags }, moveId, ctx) };
   if (profile.maneuver === 'counter' && !result.counterCoverage) {
     const ranged = profile.counterMode === 'ranged', spell = profile.camp === 'spell';
-    result.counterCoverage = { camps: [spell ? 'spell' : 'physical'], reaches: spell ? ['contact', 'near', 'far'] : ranged ? ['near', 'far'] : ['contact'],
+    result.counterCoverage = { camps: [spell ? 'spell' : 'physical'], ranges: spell ? ['melee', 'reach', 'ranged'] : ranged ? ['reach', 'ranged'] : ['melee'],
       targeting: ['single'], effects: spell ? ['damage', 'status'] : ['damage'], ...(!ranged && !spell ? { maneuvers: ['attack', 'smash'] } : {}) };
   }
   return result;
@@ -201,11 +328,12 @@ export function primeEnemyCounter(ctx, enemy, move, moveId) {
   if (combatExpansionEnabled(ctx)) {
     const payload = carrier.combatProfile.counterPayload;
     const damage = move.counterDamage ?? move.damage;
+    const poiseDamage = enemyCounterPoiseDamage(move, carrier.combatProfile, ctx);
     armCombatCounter(ctx, enemy, carrier, { damage: damage === undefined ? 0 : enemyMoveDamage(enemy, { ...move, damage }),
-      poiseDamage: move.counterPoiseDamage || 0, wardDamage: move.counterWardDamage || 0,
-      ...(payload ? { payload } : {}) });
-    if (move.block > 0) ctx.enqueue({ effect: { op: 'block', target: 'self', amount: move.block }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId } });
-    if (move.barrier > 0) ctx.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: move.barrier }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId } });
+      poiseDamage, wardDamage: move.counterWardDamage || 0,
+      ...(payload ? { payload: { ...payload, poise: poiseDamage } } : {}) });
+    if (move.block > 0) ctx.enqueue({ effect: { op: 'block', target: 'self', amount: move.block }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, preparing: true } });
+    if (move.barrier > 0) ctx.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: move.barrier }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, preparing: true } });
     if (enemy.intent?.moveId === moveId) enemy.intent.counterDefensePrimed = true;
     return;
   }
@@ -213,7 +341,7 @@ export function primeEnemyCounter(ctx, enemy, move, moveId) {
     damage: move.counterDamage ?? move.damage ?? matchupRules(ctx).counter.defaultDamage });
   armCombatCounter(ctx, enemy, carrier, { damage, poiseDamage: move.counterPoiseDamage || 0 });
   delete enemy.combatCounter.expiresOnTurn;
-  ctx.enqueue({ effect: { op: 'block', target: 'self', amount: move.block ?? matchupRules(ctx).counter.guard }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId } });
-  enqueueCounterWard(ctx, enemy, carrier, { moveId });
+  ctx.enqueue({ effect: { op: 'block', target: 'self', amount: move.block ?? matchupRules(ctx).counter.guard }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, preparing: true } });
+  enqueueCounterWard(ctx, enemy, carrier, { moveId, preparing: true });
   if (enemy.intent?.moveId === moveId) enemy.intent.counterDefensePrimed = true;
 }

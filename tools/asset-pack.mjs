@@ -65,6 +65,7 @@
 // tests/asset-pack.test.mjs proves that, and plants a wrong hash, a stray and a
 // twin that does not match, each of which --check must catch.
 
+import { withCardCutouts } from './card-cutout-assets.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -129,6 +130,7 @@ const FONTS_FN = '__ashenFonts';
  * 'auto' (each pack's verified cache, else its tree: tools/art-source.mjs).
  */
 export function withAlternativeArt(manifest, root = ROOT) {
+  manifest = withCardCutouts(manifest, root);
   const catalogFile = resolve(root, 'src/ui/alternativeArtCatalog.js');
   if (!existsSync(catalogFile)) return manifest;
   const match = readFileSync(catalogFile, 'utf8').match(/^export const alternativeArtCatalog = (.+);\r?$/m);
@@ -155,6 +157,16 @@ export function withAlternativeArt(manifest, root = ROOT) {
       if (Object.hasOwn(catalog.hashes, file)) throw new Error(`Duplicate alternative art: ${file}`);
       catalog.hashes[file] = hash;
       if (stancesCatalog.filePaths?.[file]) catalog.filePaths[file] = stancesCatalog.filePaths[file];
+    }
+  }
+  const smashFile = resolve(root, 'src/content/classSmashAnimations.js');
+  if (existsSync(smashFile)) {
+    const match = readFileSync(smashFile, 'utf8').match(/^export const classSmashAnimations = (.+);\r?$/m);
+    if (!match) throw new Error('Class Smash must be exported before packing');
+    const smash = JSON.parse(match[1]);
+    for (const [file, hash] of Object.entries(smash.hashes)) {
+      if (Object.hasOwn(catalog.hashes, file)) throw new Error(`Duplicate alternative art: ${file}`);
+      catalog.hashes[file] = hash;catalog.filePaths[file] = smash.filePaths[file];
     }
   }
   const assets = { ...manifest.assets };

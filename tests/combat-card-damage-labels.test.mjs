@@ -11,11 +11,17 @@ const reg = createRegistries(contentBundle);
 const card = id => applyCombatExpansionCard(reg.cards.get(id));
 
 test('damage words describe actual types rather than the spell school', () => {
-  for (const [id, label] of [['emberDart', 'Fire'], ['rimeNeedle', 'Cold'],
-    ['staticNeedle', 'Piercing'], ['forceNudge', 'Blunt']]) {
+  for (const [id, label] of [['emberDart', 'Fire'], ['rimeNeedle', 'Cold']]) {
     assert.equal(combatCardDamageLabel(card(id), null, reg), label, id);
     assert.match(combatCardSummary(card(id), null, reg), new RegExp(`\\d+ ${label} damage`), id);
   }
+});
+
+test('an all-magic lightning spell with a piercing tag reads both words; a split force hit keeps its split form', () => {
+  assert.equal(combatCardDamageLabel(card('staticNeedle'), null, reg), 'Lightning · Piercing');
+  assert.match(combatCardSummary(card('staticNeedle'), null, reg), /\d+ Lightning · Piercing damage/);
+  assert.equal(combatCardDamageLabel(card('forceNudge'), null, reg), 'Blunt');
+  assert.match(combatCardSummary(card('forceNudge'), null, reg), /Deal \d+ damage \(\d+ blunt, \d+ arcane\)/);
 });
 
 test('active renamed and absent metadata never fall back to shipped damage labels', () => {
@@ -46,11 +52,11 @@ test('each contact follows its resolved preview, including explicitly empty tags
   const preview = { tokens: { damage: 7, 'damage.2': 3 }, values: [
     { op: 'damage', value: 7, tags: ['damage:piercing'] },
     { op: 'damage', value: 3, tags: [] }] };
-  assert.equal(combatCardSummary(def, preview, reg), 'Deal 7 Piercing damage. Deal 3 damage.');
-  assert.equal(combatCardDamageLabel(def, preview, reg), 'Piercing');
+  assert.equal(combatCardSummary(def, preview, reg), 'Deal 7 Fire · Piercing damage. Deal 3 damage.');
+  assert.equal(combatCardDamageLabel(def, preview, reg), 'Fire · Piercing');
   const partial = { ...preview, values: [preview.values[0], { op: 'damage', value: 3 }] };
   assert.equal(combatCardDamageLabel(def, partial, reg), 'Piercing/Cold');
-  assert.equal(combatCardSummary(def, null, reg), 'Deal 5 Blunt damage. Deal 2 Cold damage.');
+  assert.equal(combatCardSummary(def, null, reg), 'Deal 5 Fire · Blunt damage. Deal 2 Cold damage.');
   assert.equal(combatCardDamageLabel(def, null, reg), 'Blunt/Cold');
 });
 

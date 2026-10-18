@@ -1,0 +1,40 @@
+/* Combat Rounds Preview screen (SPEC §4.11, PREVIEW-PLAN "Screen"). Every rule here is scoped to
+   .combat[data-combat-rounds='preview'], which combatRoundsScreen.js sets only when combat.combatRounds is
+   present, or to the .cr- classes the screen adds. With the rounds mode off no rule here applies. Lengths divide by
+   --ui-zoom, as combat.css does, so a 1px line stays 1px on screen at any UI zoom.
+   The selection colour, the shadows and the target outline are NOT here: they are on in every fight (owner decision
+   2026-10-12), in combat-visuals.css. */
+
+/* Intent box follow-ups: smaller symbols in the same box, shown whatever the layout's compact rule says. */
+.cr-followups { display: inline-flex !important; align-items: center; gap: calc(2px / var(--ui-zoom,1)); margin-inline-start: calc(4px / var(--ui-zoom,1)); }
+.cr-followup { display: inline-flex; align-items: center; justify-content: center; width: calc(13px / var(--ui-zoom,1)); height: calc(13px / var(--ui-zoom,1)); font: bold calc(11px / var(--ui-zoom,1))/1 Georgia, serif; opacity: .85; }
+.cr-followup .intent-icon { width: 100%; height: 100%; }
+.cr-followup[data-unknown='true'] { color: #c88aeb; }
+
+/* Hand: a speed arrow against the targeted enemy (green faster, red slower) on the card's left edge, and the
+   queue order on its right edge. Both sit mid-height, clear of the energy badge at the top left and the key hint. */
+.combat[data-combat-rounds='preview'] .hand .card { position: relative; }
+.cr-speed { position: absolute; left: calc(4px / var(--ui-zoom,1)); top: 42%; z-index: 4; pointer-events: none;
+  min-width: calc(22px / var(--ui-zoom,1)); padding: calc(1px / var(--ui-zoom,1)) calc(3px / var(--ui-zoom,1)); border-radius: calc(4px / var(--ui-zoom,1));
+  text-align: center; background: rgba(12,9,5,.82); font: bold calc(34px / var(--ui-zoom,1))/1 Georgia, serif; text-shadow: 0 1px 2px #000; }
+.cr-speed[data-tone='faster'] { color: #5ccf6a; }
+.cr-speed[data-tone='slower'] { color: #ef4949; }
+/* The dim is a pseudo-element; illustrated cards hide every ::after with :root .card.illustrated-card::after (0,3,1), so
+   this rule is scoped to the preview and written with more specificity, and sets its own display. */
+.combat[data-combat-rounds='preview'] .hand .card.cr-queued::after { display: block; content: ''; position: absolute; inset: 0; z-index: 3; border-radius: inherit; background: rgba(0,0,0,.5); pointer-events: none; }
+.cr-queue { position: absolute; right: calc(4px / var(--ui-zoom,1)); top: 42%; z-index: 5; pointer-events: none;
+  min-width: calc(26px / var(--ui-zoom,1)); height: calc(26px / var(--ui-zoom,1)); padding: 0 calc(4px / var(--ui-zoom,1)); border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center; background: #16120b; border: calc(2px / var(--ui-zoom,1)) solid var(--gold);
+  color: var(--gold); font: bold calc(16px / var(--ui-zoom,1))/1 Georgia, serif; box-shadow: 0 1px 4px #000; }
+
+/* Momentum on the turn banner: the outline and the tab for the targeted enemy. */
+.combat[data-combat-rounds='preview'] .turn-ribbon[data-momentum] { outline: calc(1px / var(--ui-zoom,1)) solid var(--cr-tone, #5ccf6a); outline-offset: calc(2px / var(--ui-zoom,1)); }
+.combat[data-combat-rounds='preview'] .turn-ribbon[data-momentum='good'] { --cr-tone: #5ccf6a; }
+.combat[data-combat-rounds='preview'] .turn-ribbon[data-momentum='warn'] { --cr-tone: #f0a040; }
+.combat[data-combat-rounds='preview'] .turn-ribbon[data-momentum='bad'] { --cr-tone: #ef4949; }
+.cr-momentum { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); margin-inline-start: calc(4px / var(--ui-zoom,1));
+  padding: 0 calc(4px / var(--ui-zoom,1)); border-radius: calc(3px / var(--ui-zoom,1)); background: var(--cr-tone, #5ccf6a); color: #111;
+  font: bold calc(12px / var(--ui-zoom,1))/1.4 Georgia, serif; pointer-events: none; }
+.cr-momentum[data-tone='good'] { background: #5ccf6a; }
+.cr-momentum[data-tone='warn'] { background: #f0a040; }
+.cr-momentum[data-tone='bad'] { background: #ef4949; }

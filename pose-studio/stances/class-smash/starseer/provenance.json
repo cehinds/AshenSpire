@@ -1,0 +1,188 @@
+{
+  "status": "director-approved-source",
+  "frameSize": [
+    1024,
+    1024
+  ],
+  "groundAnchor": [
+    512,
+    880
+  ],
+  "bodyHeight": 466,
+  "bodyHeightDefinition": "Takeoff anatomical hood top y257 to lowest boot y681 in raw strip, excluding elevated hands/staff/effects; 424 source pixels \u00d7 sharedScale 1.10 = 466 normalized pixels. Crouched held/impact intentionally compressed.",
+  "seed": {
+    "path": "pose-studio/renewal/starseer/frames/ready.png",
+    "sha256": "f370649322a99ed28f281ffd87dd001a68b1fed202445bdc112fee84872a3be6",
+    "bodyHeight": 339,
+    "bodyHeightDefinition": "Ready seed hood top y126 to boot sole y465, excludes staff."
+  },
+  "rawStrip": {
+    "path": "pose-studio/stances/class-smash/starseer/raw-strip.png",
+    "size": [
+      1983,
+      793
+    ],
+    "sha256": "1123fe0c7b9095724dfae7e247293020423b8fb793709ce7d0ffda9230ee1ee8"
+  },
+  "normalization": {
+    "sharedScale": 1.1,
+    "sourceGroundY": 691,
+    "method": "Shared whole-slot Lanczos scale, source world ground translation, horizontal actor center registration; no per-frame resizing or foot locking.",
+    "airbornePreserved": true
+  },
+  "frames": [
+    {
+      "file": "01-held.png",
+      "sourceRect": [
+        0,
+        0,
+        410,
+        793
+      ],
+      "sourceCenterX": 225,
+      "offset": [
+        264,
+        120
+      ],
+      "alphaBounds": [
+        283,
+        174,
+        710,
+        972
+      ],
+      "sha256": "bbdadcbcaf9575ed6481c455780b358724c66c76d5a9188c084362a30656b70f",
+      "alphaExtrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "file": "02-takeoff.png",
+      "sourceRect": [
+        410,
+        0,
+        775,
+        793
+      ],
+      "sourceCenterX": 640,
+      "offset": [
+        259,
+        120
+      ],
+      "alphaBounds": [
+        274,
+        174,
+        640,
+        937
+      ],
+      "sha256": "803b644f9cef9406c4b0e8b2bc59cab57d6433ee760fc6e5e289840442442fe4",
+      "alphaExtrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "file": "03-airborne.png",
+      "sourceRect": [
+        775,
+        0,
+        1135,
+        793
+      ],
+      "sourceCenterX": 998,
+      "offset": [
+        267,
+        120
+      ],
+      "alphaBounds": [
+        267,
+        143,
+        663,
+        957
+      ],
+      "sha256": "62824f814c0cd16a0907f9f06e1b290d6ad61f6b40e30b5f13c8ced64735df70",
+      "alphaExtrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "file": "04-impact.png",
+      "sourceRect": [
+        1135,
+        0,
+        1638,
+        793
+      ],
+      "sourceCenterX": 1404,
+      "offset": [
+        216,
+        120
+      ],
+      "alphaBounds": [
+        216,
+        181,
+        769,
+        918
+      ],
+      "sha256": "d278ef011c19344dc8a96923df8b618965b2b46c9c940849d5a8e1c5443225df",
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "source": "raw-strip-corrected.png"
+    },
+    {
+      "file": "05-held.png",
+      "sourceRect": [
+        1638,
+        0,
+        1983,
+        793
+      ],
+      "sourceCenterX": 1820,
+      "offset": [
+        312,
+        120
+      ],
+      "alphaBounds": [
+        283,
+        174,
+        710,
+        972
+      ],
+      "lockTo": "01-held.png",
+      "sha256": "bbdadcbcaf9575ed6481c455780b358724c66c76d5a9188c084362a30656b70f",
+      "alphaExtrema": [
+        0,
+        255
+      ]
+    }
+  ],
+  "reference": "https://news.blizzard.com/en-us/article/24239492/weekly-recall-animation-station",
+  "notes": [
+    "Frame05 byte-identical to Frame01.",
+    "No production files exported."
+  ],
+  "prompt": {
+    "path": "pose-studio/stances/class-smash/starseer/prompt.txt",
+    "sha256": "17c14b2b29cd7c42f81e00cd0863a5d745ec4cb493ad888d747396a014deb272"
+  },
+  "correction": {
+    "raw": "raw-strip-corrected.png",
+    "sha256": "3fdd6757c4dc3e9d33e1bb44751377144ca9cf392c64d95dea1f141a2b0dcda0",
+    "scope": "Only slot04 taken from full-strip correction; other source frames unchanged.",
+    "neighborFragmentRemoved": {
+      "normalizedRect": [
+        737,
+        583,
+        771,
+        627
+      ],
+      "reason": "Disconnected sliver of adjacent slot05 staff protruding into slot04 crop; main impact component preserved."
+    },
+    "promptSha256": "7ac71da5b35a6e016a52a3cf4002db74eb0f07bb2ac1fbada82f6d543efa811a"
+  },
+  "directorApproved": true,
+  "approvalNote": "Root art director approved revised strip and impact closeup: rear view, stable costume, staff butt contact, airborne progression and restrained blue shockwave. 2026-10-14."
+}

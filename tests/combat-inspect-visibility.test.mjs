@@ -110,6 +110,21 @@ test('A: solo combat passes its .combat board and still fires the listener once'
   assert.equal(runs, 1);
 });
 
+test('A: clearing a selection that is already clear does not refit the battlefield', () => {
+  const { combat } = battlefieldTree();
+  let runs = 0;
+  combat.addEventListener('combatantselectionchange', () => { runs += 1; });
+  selectCombatantInfo(combat, null);
+  assert.equal(runs, 0, 'nothing was selected, so nothing to refit (every card tap clears first)');
+  selectCombatantInfo(combat, 'e1');
+  selectCombatantInfo(combat, 'e1');
+  assert.equal(runs, 1, 'selecting the same enemy again changes nothing');
+  selectCombatantInfo(combat, 'e2');
+  assert.equal(runs, 2, 'moving the selection refits');
+  selectCombatantInfo(combat, null);
+  assert.equal(runs, 3, 'clearing a real selection refits');
+});
+
 test('B: the selected enemy gets context-selected and aria-pressed from the app root', () => {
   const { app, enemy } = battlefieldTree();
   selectCombatantInfo(app, 'e1');

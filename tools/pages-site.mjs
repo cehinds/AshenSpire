@@ -229,6 +229,11 @@ function showIfPresent(rev, path) {
 function gitBuf(args) {
   return execFileSync('git', args, { cwd: ROOT, maxBuffer: 1 << 28 });
 }
+/** The newest stamp commit (`build: stamp … [build-stamp]`) on `ref`'s first-parent line, or null. */
+export function newestStampOf(ref, run = git) {
+  if (!ref) return null;
+  try { return run(['log', '--first-parent', '-1', '--format=%H', '--grep=^build: stamp .*\\[build-stamp\\]$', ref]).trim() || null; } catch { return null; }
+}
 function refFor(branch) {
   // Prefer the remote-tracking ref (CI fetches all four); fall back to a local branch.
   for (const r of [`${REMOTE}/${branch}`, branch]) {
@@ -903,9 +908,9 @@ export function publishBranchPreviews(outDir, previews) {
 
 export function branchPreviewSection(previews) {
   const head = '<h2 id="branch-builds">Feature branch builds</h2>';
-  if (!previews.length) return `${head}\n<p>No open pull request into <code>dev</code> has a playable build right now.</p>`;
-  const cards = previews.map((p) => `<section class="card"><h3>${esc(p.branch)}</h3><p class="role">open pull request${p.pr ? ` #${p.pr}` : ''} into dev</p>${p.sha ? `<p class="meta">commit <a href="${REPO_URL}/commit/${p.sha}">${p.sha.slice(0, 10)}</a></p>` : ''}<a class="play" href="branches/${esc(p.path)}/latest/">Sandboxed preview of ${esc(p.branch)}</a> <a href="branches/${esc(p.path)}/latest/${PREVIEW_BUILD_FILE}" download="${esc(p.file)}">Download build</a></section>`).join('\n');
-  return `${head}\n<p>Each open pull request into <code>dev</code> has its newest build here, played in a sandbox that does not keep progress. A build leaves this page when its pull request merges or closes.</p>\n<div class="grid">${cards}</div>`;
+  if (!previews.length) return `${head}\n<p>No feature branch has a playable build right now.</p>`;
+  const cards = previews.map((p) => `<section class="card"><h3>${esc(p.branch)}</h3><p class="role">${p.pr ? `open pull request #${p.pr} into dev` : 'feature branch build'}</p>${p.sha ? `<p class="meta">commit <a href="${REPO_URL}/commit/${p.sha}">${p.sha.slice(0, 10)}</a></p>` : ''}<a class="play" href="branches/${esc(p.path)}/latest/">Sandboxed preview of ${esc(p.branch)}</a> <a href="branches/${esc(p.path)}/latest/${PREVIEW_BUILD_FILE}" download="${esc(p.file)}">Download build</a></section>`).join('\n');
+  return `${head}\n<p>Current feature, fix and chore branch builds appear here, played in a sandbox that does not keep progress. Only builds matching current code are published.</p>\n<div class="grid">${cards}</div>`;
 }
 
 export function rootIndex(branchData, generatedAt, otherPages, previews = null) {
@@ -1942,7 +1947,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     const savedBuildMissing = BUILD_MISSING;
     BUILD_MISSING = rbDir;
     try {
-      const devRef = refFor('dev') || 'HEAD';
+      // dev's newest [build-stamp] commit, not its live tip: a merge that lands
+      // on dev mid-run is unstamped, and its rebuild rewrites buildordinal.json.
+      const devRef = newestStampOf(refFor('dev')) || refFor('dev') || 'HEAD';
       const headSha = git(['rev-parse', devRef]).trim();
       const box = JSON.parse(git(['show', `${headSha}:buildordinal.json`]));
       const probe = { branch: 'dev', ordinal: Number(box.ordinal), sha: headSha, source: 'rebuild' };

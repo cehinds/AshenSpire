@@ -88,7 +88,7 @@ architecture reason. The intended categories are:
 | Root entry | Purpose |
 |---|---|
 | `.claude/`, `.github/`, `.gitignore`, `.gitattributes` | Repository automation and contributor guidance |
-| `README.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `DEVELOPER.md`, `SPEC.md`, `PROMPT.md`, `CHANGELOG.md`, `CREDITS.md`, `LICENSE` | Human entry points, contracts, receipts, and licensing |
+| `README.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `DEVELOPER.md`, `SPEC.md`, `CHANGELOG.md`, `CREDITS.md`, `LICENSE` | Human entry points, contracts, receipts, and licensing |
 | `index.html`, `run.bat`, `run.sh` | Obvious player/developer entry points |
 | `src/`, `content/` | Runtime source and authoritative source data |
 | `styles/`, `music/` | Static presentation resources: the stylesheets, and `music/score/` (the score as code; its renders are the art release's). `assets/`, `assets-mobile/` and `map-detail/` left the root at EXTERNAL-ASSETS-PLAN step 13 (2026-10-03): they are the art release's packs, fetched into the ignored `.art-cache/` (`tools/fetch-art.mjs`) |

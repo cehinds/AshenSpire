@@ -1,0 +1,80 @@
+{
+  "generator": "image_gen.imagegen",
+  "whole_strip_generation": true,
+  "active_raw": "raw.png",
+  "raws": [
+    {
+      "path": "raw-aura-superseded.png",
+      "sha256": "5b149786a7dad1f6676da05a84be5e057bd1401e8a434dd8480ee9877cffd657",
+      "dimensions": [
+        2170,
+        725
+      ]
+    },
+    {
+      "path": "raw-direction-only.png",
+      "sha256": "7e33ffc4e26ee5d0f4ef318167e2f38db96658d427f8682d89bfe28449c1a625",
+      "dimensions": [
+        2172,
+        724
+      ]
+    },
+    {
+      "path": "raw-motion-overhand-superseded.png",
+      "sha256": "71bbf8cd5e1794150d668dda2bf068987eb21142f6ac0b8127222f0ca4385260",
+      "dimensions": [
+        2169,
+        725
+      ]
+    },
+    {
+      "path": "raw-underhand-superseded.png",
+      "sha256": "7537e0646c668e06deba6541f9cc6eba2720a15e5c7467a43318c2d8956769d4",
+      "dimensions": [
+        2170,
+        725
+      ]
+    },
+    {
+      "path": "raw.png",
+      "sha256": "ddbea99c93dd090682ecc35009286fdb4e394bbc5d69433b41b4edce232924aa",
+      "dimensions": [
+        2170,
+        725
+      ]
+    }
+  ],
+  "prompts": [
+    {
+      "path": "aura-superseded-prompt.txt",
+      "sha256": "3ad729d303a6194d71741be543624599ecf4bd8c43c633a8009b184e3bdff6bd"
+    },
+    {
+      "path": "direction-only-prompt.txt",
+      "sha256": "a3952af7206af56eacaebb3c9880665e78aa9ca050ed0ea712b6661cb4a1502b"
+    },
+    {
+      "path": "motion-overhand-superseded-prompt.txt",
+      "sha256": "f97a5029e6ccc6cc9e8be9db4ff95628d9c0af133f0cf634b2b087fea5ddd97c"
+    },
+    {
+      "path": "prompt.txt",
+      "sha256": "89dca35e0eb721683083cdf07b228de20e9bbb0ed7e627ee1fdda7a56a88b49f"
+    },
+    {
+      "path": "underhand-superseded-prompt.txt",
+      "sha256": "e6ab7e688d15cd9dd47604fca83ee76d5e8210d47ffb723c1caa9a5eb2e35682"
+    }
+  ],
+  "seed": "seed/stance-final.png",
+  "seed_sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405",
+  "bookends": "Exact approved normalized NEW seed PNG bytes copied to slots01/05; original runtimeW not used or modified",
+  "effects": "Curved slash arcs painted by ImageGen inside whole-strip generation, no mechanical effect painting",
+  "anatomy": "Low iai-inspired gather; visible palm-up underhand hilt grip, thumb above, knuckles below, inner elbow crease facing camera; level flat blade in approved idle seed",
+  "normalization": "Shared body scale from approved seed/raw idle height; anatomical helmet registration and manually identified boot contact plane; effect bounds not used for centering/scale",
+  "references": [
+    "https://www.meikyokan.org/hawaiikendo_lessons-in-iaido",
+    "https://www.northlondonbudo.co.uk/iaido-information/a-sample-iaido-kata-a-sequence-of-moves"
+  ],
+  "reference_limitations": "Dojo text observations inform low coil/turn/draw vocabulary only. Katana/seated motions adapted artistically to armored greatsword. No external character art or effects imported."
+}

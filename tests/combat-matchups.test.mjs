@@ -13,7 +13,7 @@ function fixture() {
   const source = { id: 'enemy', kind: 'enemy', alive: true, hp: 30, block: 0, statuses: {} };
   const target = { id: 'player', kind: 'player', alive: true, hp: 30, block: 4, statuses: {} };
   const ctx = { turn: 1, emit: (type, payload) => events.push({ type, ...payload }), enqueue: action => queue.push(action),
-    registries: { statuses: new Map(['bleed', 'frost', 'burn', 'weak', 'crimsonBlight', 'venom'].map(id => [id, { id }])) } };
+    registries: { statuses: new Map(['bleed', 'frost', 'burn', 'weak', 'crimsonBlight', 'necroticBlight', 'venom'].map(id => [id, { id }])) } };
   return { ctx, source, target, events, queue };
 }
 function landed(f, incoming, base) {

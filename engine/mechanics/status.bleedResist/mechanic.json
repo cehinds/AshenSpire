@@ -1,0 +1,25 @@
+{
+  "id": "status.bleedResist",
+  "tag": "status.bleedResist",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Clotted",
+  "description": "Just burst - hardened against Bleed: incoming build-up reduced {resists.percent}% for {decay.duration} turns.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.bleedResist"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

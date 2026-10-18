@@ -12,7 +12,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { pullFromEnv, ownReceipt, receiptStamp, stampMismatch } from '../tools/receipts.mjs';
+import { pullFromEnv, ownReceipt, receiptStamp, stampVerdict } from '../tools/receipts.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TOOL = join(ROOT, 'tools', 'receipts.mjs');
@@ -42,28 +42,36 @@ test('ownReceipt: named is green, unnamed is red', () => {
 });
 
 // #1315 merged with a receipt stamped 0.7.1.518 while its merge shipped box 519.
-test('stampMismatch: the pull request\'s own receipt must carry the committed box', () => {
+// A stamp one build off the box is a PASS with a note now: a pull request cannot
+// know the box it merges at, and build-stamp re-points the stamp after merge.
+// Another release, and no stamp, stay FAILS: nothing after merge fixes them.
+test('stampVerdict: an exact stamp passes; skew of this release is a repoint; the rest fail', () => {
   const box = { release: '0.5.5', ordinal: 1 };
   assert.equal(receiptStamp('12', MD), '0.5.5.1');
-  assert.equal(stampMismatch('12', MD, box), null);
-  assert.match(stampMismatch('12', MD, { release: '0.5.5', ordinal: 2 }), /BELOW/);
-  assert.match(stampMismatch('12', MD, { release: '0.5.5', ordinal: 0 }), /ABOVE/);
-  assert.match(stampMismatch('12', MD, { release: '0.5.6', ordinal: 1 }), /release 0\.5\.5/);
-  assert.match(stampMismatch('12', MD.replace(', `0.5.5.1`', ''), box), /no `<release>\.<ordinal>` stamp/);
+  assert.equal(stampVerdict('12', MD, box), null);
+  assert.equal(stampVerdict('12', MD, { release: '0.5.5', ordinal: 2 }).kind, 'repoint');
+  assert.match(stampVerdict('12', MD, { release: '0.5.5', ordinal: 2 }).reason, /BELOW/);
+  assert.equal(stampVerdict('12', MD, { release: '0.5.5', ordinal: 0 }).kind, 'repoint');
+  assert.match(stampVerdict('12', MD, { release: '0.5.5', ordinal: 0 }).reason, /ABOVE/);
+  assert.equal(stampVerdict('12', MD, { release: '0.5.6', ordinal: 1 }).kind, 'fail');
+  assert.match(stampVerdict('12', MD, { release: '0.5.6', ordinal: 1 }).reason, /release 0\.5\.5/);
+  assert.equal(stampVerdict('12', MD.replace(', `0.5.5.1`', ''), box).kind, 'fail');
+  assert.match(stampVerdict('12', MD.replace(', `0.5.5.1`', ''), box).reason, /no `<release>\.<ordinal>` stamp/);
   // A prefix of the pull request number is not its receipt.
   assert.equal(receiptStamp('1', MD), null);
 });
 
 // Codex review on #1356: the gate must agree with about-changelog's reading.
-test('stampMismatch: leading-zero spellings are the same build; padded stamps are prose', () => {
+test('stampVerdict: leading-zero spellings are the same build; padded stamps are prose', () => {
   const box = { release: '0.5.5', ordinal: 1 };
-  assert.equal(stampMismatch('12', MD.replace('`0.5.5.1`', '`00.5.5.1`'), box), null);
-  assert.equal(stampMismatch('12', MD.replace('`0.5.5.1`', '`0.5.5.0001`'), box), null);
-  assert.match(stampMismatch('12', MD.replace('`0.5.5.1`', '`00.5.5.2`'), box), /ABOVE/);
-  assert.match(stampMismatch('12', MD.replace('`0.5.5.1`', '`0.5.05.0`'), box), /BELOW/);
+  assert.equal(stampVerdict('12', MD.replace('`0.5.5.1`', '`00.5.5.1`'), box), null);
+  assert.equal(stampVerdict('12', MD.replace('`0.5.5.1`', '`0.5.5.0001`'), box), null);
+  assert.match(stampVerdict('12', MD.replace('`0.5.5.1`', '`00.5.5.2`'), box).reason, /ABOVE/);
+  assert.match(stampVerdict('12', MD.replace('`0.5.5.1`', '`0.5.05.0`'), box).reason, /BELOW/);
   assert.equal(receiptStamp('12', MD.replace('`0.5.5.1`', '` 0.5.5.1 `')), ' 0.5.5.1 ');
-  assert.match(stampMismatch('12', MD.replace('`0.5.5.1`', '` 0.5.5.1 `'), box), /not a build/);
-  assert.match(stampMismatch('12', MD.replace('`0.5.5.1`', '`0.5.5.1 `'), box), /not a build/);
+  assert.equal(stampVerdict('12', MD.replace('`0.5.5.1`', '` 0.5.5.1 `'), box).kind, 'fail');
+  assert.match(stampVerdict('12', MD.replace('`0.5.5.1`', '` 0.5.5.1 `'), box).reason, /not a build/);
+  assert.match(stampVerdict('12', MD.replace('`0.5.5.1`', '`0.5.5.1 `'), box).reason, /not a build/);
 });
 
 function cli(args, env) {
@@ -87,12 +95,23 @@ test('--check --pr: this repository\'s CHANGELOG decides the pull request head',
     const green = cli(['--check', '--pr', onBox]);
     assert.equal(green.status, 0, green.stdout + green.stderr);
   }
-  // A receipted pull request stamped with an older box is red on this tree.
+  // A receipted pull request stamped with another build of this release passes
+  // with a note (build-stamp re-points it after merge); another release fails.
   const offBox = stamped((s) => s !== `${box.release}.${box.ordinal}`);
-  assert.ok(offBox, 'the repository must retain an older receipt to exercise stamp rejection');
+  assert.ok(offBox, 'the repository must retain an older receipt to exercise the re-point note');
   const behind = cli(['--check', '--pr', offBox]);
-  assert.equal(behind.status, 1, behind.stdout + behind.stderr);
-  assert.match(behind.stdout, new RegExp(`#${offBox}'s receipt is stamped`));
+  const sameRelease = [...md.matchAll(/\/pull\/(\d+)\), `([^`]+)`/g)].find(([, n]) => n === offBox)[2].startsWith(`${box.release}.`);
+  if (sameRelease) {
+    assert.equal(behind.status, 0, behind.stdout + behind.stderr);
+    assert.match(behind.stdout, new RegExp(`NOTE  #${offBox}'s receipt is stamped`));
+    // The closing line must be one verdict.mjs recognises (it rejects a trailing "(1 note)" as SILENCE).
+    const door = spawnSync(process.execPath, [join(ROOT, 'tools', 'verdict.mjs'), '--', process.execPath, TOOL, '--check', '--pr', offBox], {
+      cwd: ROOT, encoding: 'utf8', env: { ...process.env, GITHUB_EVENT_PATH: '', GITHUB_REF: '' },
+    });
+    assert.equal(door.status, 0, door.stdout + door.stderr);
+  } else {
+    assert.equal(behind.status, 1, behind.stdout + behind.stderr);
+  }
   const red = cli(['--check', '--pr', '999999']);
   assert.equal(red.status, 1, red.stdout + red.stderr);
   assert.match(red.stdout, /#999999/);

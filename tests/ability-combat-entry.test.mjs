@@ -24,6 +24,10 @@ function runFor(inst,{legacy=false,classId='starseer',combatExpansionVersion=2}=
   run.deck.unshift(inst);
   return deserializeRun(serializeRun(run));
 }
+// A grade's printed Mana is the cost formula's at that grade (SPEC §4.3a); the XP pays 5 plus 1 per printed Mana.
+// Replaced rule: printed Mana equal to the grade's rank.
+const printedMana=(cardId,abilityRank)=>resolveCard(root,{cardId,abilityRank}).manaCost||0;
+const spellXp=(mana)=>5+mana;
 function durableEnemies(combat){for(const enemy of combat.enemies)enemy.hp=enemy.maxHp=10000;}
 
 for(const abilityRank of [0,5])test(`solo combat entry and snapshot retain earned grade ${abilityRank} and pay its printed spell XP once`,()=>{
@@ -33,7 +37,8 @@ for(const abilityRank of [0,5])test(`solo combat entry and snapshot retain earne
   durableEnemies(fresh);
   const copied=liveCard(fresh.piles,inst.instanceId);
   assert.equal(copied.abilityRank,abilityRank,'the production draw-pile copy must retain rank zero too');
-  assert.equal(resolveCard(reg,copied).manaCost,abilityRank);
+  const mana=printedMana('starShower',abilityRank);
+  assert.equal(resolveCard(reg,copied).manaCost||0,mana);
   const combat=restoreCombatSnapshot({registries:reg,rng,snapshot:serializeCombatSnapshot(fresh)});
   const card=liveCard(combat.piles,inst.instanceId);assert.equal(card.abilityRank,abilityRank);
   assert.ok(combat.piles.hand.includes(card),'the original production opening draw is used');
@@ -41,11 +46,11 @@ for(const abilityRank of [0,5])test(`solo combat entry and snapshot retain earne
   previewCard(combat,card.instanceId);assert.deepEqual(combat.skillXp,prior);
   const face=resolveCard(reg,card);
   dispatch(combat,{type:'playCard',cardInstanceId:card.instanceId,targetId:combat.enemies[0].id});
-  assert.equal(combat.player.mana,beforeMana-abilityRank);
+  assert.equal(combat.player.mana,beforeMana-mana);
   assert.equal(combat.player.energy,beforeActions-face.cost);
   const resolved=combat.eventLog.filter(event=>event.type==='cardResolved'&&event.cardInstanceId===card.instanceId);
-  assert.equal(resolved.length,1);assert.equal(resolved[0].printedManaCost,abilityRank);
-  assert.equal(skillXpReceipt(combat)['item:magic-focus'],abilityRank===0?5:10);
+  assert.equal(resolved.length,1);assert.equal(resolved[0].printedManaCost,mana);
+  assert.equal(skillXpReceipt(combat)['item:magic-focus'],spellXp(mana));
 });
 
 test('legacy marker survives the production solo draw copy and combat snapshot without adopting a new grade',()=>{
@@ -96,11 +101,12 @@ for(const abilityRank of [0,5])test(`actual co-op session save/entry preserves g
   assert.equal(card.abilityRank,abilityRank);assert.ok(seat.piles.hand.includes(card));
   const beforeMana=seat.entity.mana,beforeActions=seat.entity.energy;
   assert.equal(session.combatPlay('a',card.instanceId,combat.enemies[0].id).ok,true);
-  assert.equal(seat.entity.mana,beforeMana-abilityRank);
+  const mana=printedMana('starShower',abilityRank);
+  assert.equal(seat.entity.mana,beforeMana-mana);
   assert.equal(seat.entity.energy,beforeActions-resolveCard(root,card).cost);
   const event=combat.eventLog.find(event=>event.type==='cardResolved'&&event.cardInstanceId===card.instanceId);
-  assert.equal(event.printedManaCost,abilityRank);assert.equal(event.sourcePlayerId,'a');
-  assert.equal(skillXpReceipt(combat,'a')['item:magic-focus'],abilityRank===0?5:10);
+  assert.equal(event.printedManaCost,mana);assert.equal(event.sourcePlayerId,'a');
+  assert.equal(skillXpReceipt(combat,'a')['item:magic-focus'],spellXp(mana));
 });
 
 test('an actual mixed legacy/new co-op session keeps each face and ability-XP mode with its owner',()=>{
@@ -120,7 +126,7 @@ test('an actual mixed legacy/new co-op session keeps each face and ability-XP mo
     const event=combat.eventLog.find(event=>event.type==='cardResolved'&&event.cardInstanceId===card.instanceId);
     assert.equal(event.printedManaCost,face.manaCost||0);assert.equal(event.sourcePlayerId,id);
   }
-  assert.equal(skillXpReceipt(combat,'new')['item:magic-focus'],10);
+  assert.equal(skillXpReceipt(combat,'new')['item:magic-focus'],spellXp(printedMana('starShower',5)));
   assert.equal(skillXpReceipt(combat,'old')['item:magic-focus'],undefined,'the legacy seat receives no new per-resolved-spell payout');
   assert.equal(skillXpReceipt(combat,'old').combatManeuvers,undefined);
   assert.equal(combat.eventLog.filter(event=>event.type==='cardResolved').length,2);
@@ -129,14 +135,15 @@ test('an actual mixed legacy/new co-op session keeps each face and ability-XP mo
 test('actual co-op settlement banks printed spell XP on the saved linear curve for a manual claim',()=>{
   const inst=graded('starShower',5,'settlement-grade5'),session=sessionFor([{id:'a',card:inst}]);
   const member=session.session.members.get('a'),reg=registriesForClassMastery(root,member.run);
-  bankSkillXp(reg,member.run,'item:magic-focus',90);
+  const payout=spellXp(printedMana('starShower',5));
+  bankSkillXp(reg,member.run,'item:magic-focus',100-payout);
   assert.equal(member.run.skills['item:magic-focus'].level,1);
   enterFirstCombat(session);
   const combat=session.live.combat,seat=combat.players.get('a'),card=liveCard(seat.piles,inst.instanceId);
   for(const enemy of combat.enemies)enemy.hp=1;
   assert.equal(session.combatPlay('a',card.instanceId,combat.enemies[0].id).ok,true);
   assert.equal(session.scene.kind,'reward');
-  assert.equal(skillXpReceipt(combat,'a')['item:magic-focus'],10,'no legacy equipped-focus victory bonus');
+  assert.equal(skillXpReceipt(combat,'a')['item:magic-focus'],payout,'no legacy equipped-focus victory bonus');
   assert.equal(member.run.skills['item:magic-focus'].xp,100);
   assert.equal(member.run.skills['item:magic-focus'].level,1,'the victory banks rather than auto-claims the new ability level');
   assert.equal(pendingSkillLevelCount(reg,member.run,'item:magic-focus'),1);

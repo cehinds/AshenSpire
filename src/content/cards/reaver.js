@@ -87,12 +87,14 @@ export const reaverCards = [
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
       { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 },
+      { op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 1 },
     ],
-    textTemplate: 'Deal {damage} damage. Apply {bleed} Bleed.',
+    textTemplate: 'Deal {damage} damage. Apply {bleed} Bleed and {burn} Burn.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 5 },
         { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 5 },
+        { op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 1 },
       ],
     },
   },
@@ -480,7 +482,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'warriorsVow', name: "Warrior's Vow", class: 'reaver', rarity: 'rare', cost: 0, type: 'skill',
+    id: 'warriorsVow', name: "Warrior's Vow", class: 'reaver', rarity: 'rare', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Contract of the sellswords of the Fell Courtyard.\n\nHold the gate until relieved; pay in advance. The weald's hired blades held a paid contract sacred, having few other sacred things, and the Wardens despised them for it.\n\nThe last was signed the week before the Burning. Its date of release is blank.",
     keywords: ['innate', 'exhaust'], icon: '📜',
     // "A Stance of your choice" (SPEC §5.2): the play offers every stance the
@@ -497,6 +499,8 @@ export const reaverCards = [
   },
   {
     id: 'ruinousBlow', name: 'Ruinous Blow', class: 'reaver', rarity: 'rare', cost: 3, type: 'attack',
+    // 60% Blunt, 40% Force: the heavy blow leans physical (owner #23, confirmed 2026-10-13).
+    attack: { components: [{ type: 'blunt', weight: 60 }, { type: 'arcane', weight: 40 }] },
     flavor: "Whole-body blow of the Wardens.\n\nReserved for a gate where all else has failed, and called a Warden's last argument. What becomes of the Warden who makes it, the drill does not say.\n\nThe pages that follow are stained through.",
     keywords: [], icon: '🔨',
     effects: [
@@ -516,13 +520,13 @@ export const reaverCards = [
     flavor: "Strike of the Bastion kennels.\n\nTaught by the kennelmaster before the hounds turned. The kennel book names them the finest in the three cities, trained upon the scent of blood alone, and never loosed on the weald's own people.\n\nAfter the Burning, the hamlets' dogs were found in those same kennels.",
     keywords: [], icon: '🩸',
     effects: [
-      { op: 'damage', target: 'enemy', amount: 4 },
+      { op: 'damage', target: 'enemy', amount: 6 },
       { op: 'damage', target: 'enemy', amount: { f: 'stacks', status: 'bleed', of: 'target' } },
     ],
     textTemplate: 'Deal {damage} damage, plus 1 for each Bleed on the target.',
     upgrade: {
       effects: [
-        { op: 'damage', target: 'enemy', amount: 6 },
+        { op: 'damage', target: 'enemy', amount: 8 },
         { op: 'damage', target: 'enemy', amount: { f: 'stacks', status: 'bleed', of: 'target' } },
       ],
     },
@@ -600,17 +604,27 @@ export const reaverCards = [
   },
   {
     id: 'bloodTithe', name: 'Blood Tithe', class: 'reaver', rarity: 'rare', cost: 2, type: 'attack',
+    // Half weapon, half Necrotic (owner #24; 50/50 is the orchestrator's
+    // assumption). The weapon half cuts or stabs with a blade, stabs with a
+    // piercing shield or bow, and cuts with anything else or bare hands.
+    attack: {
+      weaponDamage: { families: ['blade', 'hammer', 'bow'], types: ['slashing', 'piercing'] },
+      components: [{ type: 'slashing', weight: 50 }, { type: 'decay', weight: 50 }],
+    },
     flavor: "Harvest tithe of the weald, paid in blood.\n\nGiven at the Bastion's field-shrine in years the grain failed. The Wardens called it voluntary, and kept no names, as a courtesy to the givers.\n\nThe tithe-roll lengthens with each year of the Mark Trade, and the villages it lists grow fewer.",
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
       { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [2, { f: 'stacks', status: 'bleed', of: 'target' }] } },
+      // Bleeds on hit with any weapon (owner #24), after the payoff reads the Bleed.
+      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2 },
     ],
-    textTemplate: 'Deal {damage} damage, plus double the Bleed on the target.',
+    textTemplate: 'Deal {damage} damage, plus double the Bleed on the target. Apply {bleed} Bleed.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 9 },
         { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [2, { f: 'stacks', status: 'bleed', of: 'target' }] } },
+        { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 },
       ],
     },
   },
@@ -686,18 +700,19 @@ export const reaverCards = [
   // A levelled sword or shield drafts from its own school at every rarity it
   // has opened; these join the retagged pool so each has at least four.
   {
-    id: 'hewingArc', name: 'Hewing Arc', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'attack',
+    id: 'hewingArc', name: 'Hewing Arc', class: 'reaver', rarity: 'uncommon', cost: 2, manaCost: 0, costRule: 'fixed', type: 'attack',
     flavor: "A wide cut that opens old wounds.\n\nTaught in the Vanguard's yard to recruits who had never held a blade. The sergeants said the arc forgives a poor grip, and the Gorefire does the rest.\n\nThe yard is ash now. The recruits still swing it wide, as they were shown.",
     keywords: [], icon: '⌒',
     effects: [
-      { op: 'damage', target: 'enemy', amount: 6 },
-      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3, if: { p: 'inStance', stance: 'gorefire' } },
+      { op: 'damage', target: 'allEnemies', amount: 6 },
+      { op: 'applyStatus', target: 'allEnemies', status: 'bleed', stacks: 3, if: { p: 'inStance', stance: 'gorefire' } },
     ],
-    textTemplate: 'Deal {damage} damage. If in Gorefire Stance: apply {bleed} Bleed.',
-    upgrade: {
+    textTemplate: 'Deal {damage} damage to ALL enemies. If in Gorefire Stance: apply {bleed} Bleed to ALL.',
+    // Keep its pre-fix resolved price; area targeting must not add a tax.
+    upgrade: { cost: 3,
       effects: [
-        { op: 'damage', target: 'enemy', amount: 8 },
-        { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 4, if: { p: 'inStance', stance: 'gorefire' } },
+        { op: 'damage', target: 'allEnemies', amount: 8 },
+        { op: 'applyStatus', target: 'allEnemies', status: 'bleed', stacks: 4, if: { p: 'inStance', stance: 'gorefire' } },
       ],
     },
   },
@@ -756,13 +771,13 @@ export const reaverCards = [
     flavor: "The whole weight of the wall, thrown forward.\n\nA Vanguard shieldman who has held long enough may drive his shield into the line before him. The chronicles of the siege praise it; the surgeons who reset the shieldmen's shoulders afterward do not.\n\nBoth kept their records honestly.",
     keywords: [], icon: '💥',
     effects: [
-      { op: 'block', target: 'self', amount: 5 },
+      { op: 'block', target: 'self', amount: 8 },
       { op: 'damage', target: 'enemy', amount: { f: 'blockOf', of: 'self' } },
     ],
     textTemplate: 'Gain {block} Block. Deal damage equal to your Block.',
     upgrade: {
       effects: [
-        { op: 'block', target: 'self', amount: 9 },
+        { op: 'block', target: 'self', amount: 12 },
         { op: 'damage', target: 'enemy', amount: { f: 'blockOf', of: 'self' } },
       ],
     },

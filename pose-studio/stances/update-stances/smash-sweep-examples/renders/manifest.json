@@ -1,0 +1,567 @@
+{
+  "reviewOnly": true,
+  "examples": [
+    {
+      "id": "SW01",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep01/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep01/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep01/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep01/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep01/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW01.gif",
+      "storyboard": "SW01-storyboard.png"
+    },
+    {
+      "id": "SW02",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep02/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep02/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep02/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep02/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep02/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW02.gif",
+      "storyboard": "SW02-storyboard.png"
+    },
+    {
+      "id": "SW03",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep03/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep03/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep03/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep03/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep03/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW03.gif",
+      "storyboard": "SW03-storyboard.png"
+    },
+    {
+      "id": "SW04",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep04/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep04/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep04/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep04/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep04/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW04.gif",
+      "storyboard": "SW04-storyboard.png"
+    },
+    {
+      "id": "SW05",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep05/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep05/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep05/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep05/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep05/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW05.gif",
+      "storyboard": "SW05-storyboard.png"
+    },
+    {
+      "id": "SW06",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep06/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep06/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep06/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep06/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep06/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW06.gif",
+      "storyboard": "SW06-storyboard.png"
+    },
+    {
+      "id": "SW07",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep07/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep07/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep07/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep07/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep07/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW07.gif",
+      "storyboard": "SW07-storyboard.png"
+    },
+    {
+      "id": "SW08",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep08/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep08/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep08/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep08/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep08/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW08.gif",
+      "storyboard": "SW08-storyboard.png"
+    },
+    {
+      "id": "SW09",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/selected-sweep-sw09/SW09/frame-01.png",
+        "sweep/selected-sweep-sw09/SW09/frame-02.png",
+        "sweep/selected-sweep-sw09/SW09/frame-03.png",
+        "sweep/selected-sweep-sw09/SW09/frame-04.png",
+        "sweep/selected-sweep-sw09/SW09/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW09.gif",
+      "storyboard": "SW09-storyboard.png"
+    },
+    {
+      "id": "SW10",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep10/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep10/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep10/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep10/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep10/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW10.gif",
+      "storyboard": "SW10-storyboard.png"
+    },
+    {
+      "id": "SM01",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM01/frames/01.png",
+        "smash/ground-slam-revision-2/SM01/frames/02.png",
+        "smash/ground-slam-revision-2/SM01/frames/03.png",
+        "smash/ground-slam-revision-2/SM01/frames/04.png",
+        "smash/ground-slam-revision-2/SM01/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM01.gif",
+      "storyboard": "SM01-storyboard.png"
+    },
+    {
+      "id": "SM02",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM02/frames/01.png",
+        "smash/ground-slam-revision-2/SM02/frames/02.png",
+        "smash/ground-slam-revision-2/SM02/frames/03.png",
+        "smash/ground-slam-revision-2/SM02/frames/04.png",
+        "smash/ground-slam-revision-2/SM02/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM02.gif",
+      "storyboard": "SM02-storyboard.png"
+    },
+    {
+      "id": "SM03",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM03/frames/01.png",
+        "smash/ground-slam-revision-2/SM03/frames/02.png",
+        "smash/ground-slam-revision-2/SM03/frames/03.png",
+        "smash/ground-slam-revision-2/SM03/frames/04.png",
+        "smash/ground-slam-revision-2/SM03/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM03.gif",
+      "storyboard": "SM03-storyboard.png"
+    },
+    {
+      "id": "SM04",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM04/frames/01.png",
+        "smash/ground-slam-revision-2/SM04/frames/02.png",
+        "smash/ground-slam-revision-2/SM04/frames/03.png",
+        "smash/ground-slam-revision-2/SM04/frames/04.png",
+        "smash/ground-slam-revision-2/SM04/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM04.gif",
+      "storyboard": "SM04-storyboard.png"
+    },
+    {
+      "id": "SM05",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM05/frames/01.png",
+        "smash/ground-slam-revision-2/SM05/frames/02.png",
+        "smash/ground-slam-revision-2/SM05/frames/03.png",
+        "smash/ground-slam-revision-2/SM05/frames/04.png",
+        "smash/ground-slam-revision-2/SM05/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM05.gif",
+      "storyboard": "SM05-storyboard.png"
+    },
+    {
+      "id": "SM06",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM06/frames/01.png",
+        "smash/ground-slam-revision-2/SM06/frames/02.png",
+        "smash/ground-slam-revision-2/SM06/frames/03.png",
+        "smash/ground-slam-revision-2/SM06/frames/04.png",
+        "smash/ground-slam-revision-2/SM06/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM06.gif",
+      "storyboard": "SM06-storyboard.png"
+    },
+    {
+      "id": "SM07",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM07/frames/01.png",
+        "smash/ground-slam-revision-2/SM07/frames/02.png",
+        "smash/ground-slam-revision-2/SM07/frames/03.png",
+        "smash/ground-slam-revision-2/SM07/frames/04.png",
+        "smash/ground-slam-revision-2/SM07/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM07.gif",
+      "storyboard": "SM07-storyboard.png"
+    },
+    {
+      "id": "SM08",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM08/frames/01.png",
+        "smash/ground-slam-revision-2/SM08/frames/02.png",
+        "smash/ground-slam-revision-2/SM08/frames/03.png",
+        "smash/ground-slam-revision-2/SM08/frames/04.png",
+        "smash/ground-slam-revision-2/SM08/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM08.gif",
+      "storyboard": "SM08-storyboard.png"
+    },
+    {
+      "id": "SM09",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM09/frames/01.png",
+        "smash/ground-slam-revision-2/SM09/frames/02.png",
+        "smash/ground-slam-revision-2/SM09/frames/03.png",
+        "smash/ground-slam-revision-2/SM09/frames/04.png",
+        "smash/ground-slam-revision-2/SM09/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM09.gif",
+      "storyboard": "SM09-storyboard.png"
+    },
+    {
+      "id": "SM10",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM10/frames/01.png",
+        "smash/ground-slam-revision-2/SM10/frames/02.png",
+        "smash/ground-slam-revision-2/SM10/frames/03.png",
+        "smash/ground-slam-revision-2/SM10/frames/04.png",
+        "smash/ground-slam-revision-2/SM10/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM10.gif",
+      "storyboard": "SM10-storyboard.png"
+    }
+  ],
+  "totalSlots": 100,
+  "timing": "Uniform 350 ms review exposures, not gameplay timing"
+}

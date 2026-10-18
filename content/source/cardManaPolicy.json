@@ -1,0 +1,9 @@
+{
+  "minimumMana": 1,
+  "spellCamp": "spell",
+  "spellAbilityKind": "spell",
+  "weaponArtTags": ["extractable"],
+  "excludedSpellTypes": ["power", "status", "curse", "consumable"],
+  "equipmentBasicRoles": ["attack", "guard"],
+  "respectDisabledMana": true
+}

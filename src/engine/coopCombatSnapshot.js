@@ -1,3 +1,5 @@
+import { formationOccupancyProblems } from '../model/formationOccupancy.js';
+import { hasCardChoice } from './cardZones.js';
 import { ashenBlightProblems, ashenBlightCombatProblems } from '../model/ashenBlight.js';
 import { statusControlProblems } from '../model/combatStatusState.js';
 import { combatExpansionEntityProblems } from '../model/combatTacticsRules.js';
@@ -5,13 +7,16 @@ import { combatExpansionRulesProblems } from '../model/combatExpansionRules.js';
 import { combatEnemyKnowledgeProblems } from '../model/enemyKnowledgeCombat.js';
 import { combatReactionProblems } from '../model/combatReactionState.js';
 import { perceptionProblems } from '../model/perception.js';
+import { bringRangesForward } from '../model/combatRanges.js';
 
 // A reference table preserves queued ally/source references and Map identity.
 // Runtime callbacks, catalogue projections and RNG objects never enter the save.
 const forbidden = new Set(['__proto__', 'prototype', 'constructor']);
 export function serializeCoopCombatSnapshot(combat) {
-  if (!combat?.players || combat._buffer !== null || (combat.queue?.length && !combat.pendingAbilityDiscard && !combat.pendingReaction
-    && !(combat.reactionCursor && combat.phase === 'suspended'))) throw new Error('Co-op combat is still resolving');
+  if (!combat?.players || combat._buffer !== null || (combat.queue?.length && !hasCardChoice(combat) && !combat.pendingReaction
+    && !(combat.phase === 'suspended' && (combat.reactionCursor || combat.reactionStack || combat.reactionRootPlay)))) throw new Error('Co-op combat is still resolving');
+  const formationErrors = formationOccupancyProblems(combat);
+  if (formationErrors.length) throw new Error(formationErrors.join('; '));
   const nodes = [], seen = new Map();
   function encode(value) {
     if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
@@ -68,6 +73,8 @@ export function decodeCoopCombatSnapshot(snapshot) {
     }
   });
   const combat = decode(snapshot.root);
+  // A fight saved before the range rename reads melee/reach/ranged (combatRanges.js).
+  bringRangesForward(combat);
   if (!(combat?.players instanceof Map) || !combat.players.size || !(combat.triggerState instanceof Map)
     || !Array.isArray(combat.enemies) || !Array.isArray(combat.queue) || !Array.isArray(combat.order)
     || !['player', 'enemy', 'ended', 'suspended'].includes(combat.phase) || ![null, 'victory', 'defeat'].includes(combat.result)

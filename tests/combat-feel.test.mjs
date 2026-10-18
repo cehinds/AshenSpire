@@ -62,7 +62,7 @@ test('fx shakes every HP hit by its HP and holds the figures on paced playback o
   assert.match(fx, /combatEl\.style\.setProperty\('--shake-px', `\$\{px\}px`\)/, 'the amplitude reaches the CSS');
   assert.match(fx, /document\.body\.classList\.contains\('no-shake'\) \|\| reducedMotionRequested\(\)\) return;/, 'the setting and reduced motion drop the shake');
   assert.match(fx, /activeActorAnimation\.hold\(holdMs\)/, 'a painted swing is held by its own sequence');
-  assert.match(fx, /schedule\(stepV, speed\.stepMs \+ \(held \? holdMs : 0\)\)/, 'the hold lengthens that hit\'s step');
+  assert.match(fx, /schedule\(stepV, [^;\n]+ \+ \(held \? holdMs : 0\)\)/, 'the hold is added after the base visual delay, including any outcome lead');
   assert.match(fx, /flash\(anchor, 'hitflash', heavy \? 380 : 220, held\)/, 'the recoil keeps its authored duration and extends cleanup by the pause');
   assert.match(fx, /actorAnimation\.totalMs \+ heldMs/, 'all played holds lengthen recovery');
   assert.match(fx, /if \(now < shakeUntil && px < shakeNow\) return;/, 'a smaller hit does not cut a bigger shake short');
@@ -109,7 +109,7 @@ test('a painted sequence holds: its remaining frames move back by the hold', asy
   // reaverAttack's handle and the painted stage both expose hold(ms).
   assert.match(src('src/ui/reaverAttack.js'), /hold\(ms\) \{[\s\S]{0,250}schedule\(Math\.max\(0, due - Date\.now\(\)\) \+ ms\);/);
   assert.match(src('src/ui/paintedOutfits.js'), /hold\(ms\) \{[\s\S]{0,600}due: entry\.due \+ ms/);
-  assert.match(src('src/ui/screens/combat.js'), /hold: \(ms\) => \{ stage\?\.hold\?\.\(ms\); \}/);
+  assert.match(src('src/ui/screens/combat.js'), /hold: \(ms\) => \{ if \(fxCtx\.figureAnimations !== false\) stage\?\.hold\?\.\(ms\); \}/);
 });
 
 function drive(t, fn) {

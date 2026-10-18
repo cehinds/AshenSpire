@@ -1,0 +1,22 @@
+{
+  "id": "equipment.parryTool",
+  "tag": "equipment.parryTool",
+  "version": "1.0.0",
+  "family": "equipment",
+  "label": "ParryTool",
+  "description": "Tag equipment.parryTool in the equipment family.",
+  "attaches": [
+    "gear"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "equipment.parryTool"
+  },
+  "portability": "data"
+}

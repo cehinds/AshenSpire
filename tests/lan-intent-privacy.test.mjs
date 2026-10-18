@@ -168,6 +168,10 @@ for (const combatExpansionVersion of [1, 2]) test(`version ${combatExpansionVers
     enemyMoves: legacyContentBundle.enemyMoves.map(move => ({ ...move,
       tags: ['camp:physical', 'maneuver:counter', 'damage:slashing'],
       damage: 6, block: 3, effects: [] })),
+    // Tags are stamped from the tagging table, so the move rows' own `tags`
+    // above are overwritten; retag every move as a Counter here too.
+    tagging: legacyContentBundle.tagging.map(row => row.family === 'enemyMove' && row.tagId.startsWith('maneuver:')
+      ? { ...row, tagId: 'maneuver:counter' } : row),
   });
   const host = createSession({ registries, seedString: 'GUARD2', combatExpansionVersion });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
@@ -187,6 +191,7 @@ for (const combatExpansionVersion of [1, 2]) test(`version ${combatExpansionVers
   assert.ok(gains.length, 'selected Counter stances really prime defense before the player phase');
   for (const event of gains) {
     for (const field of ['moveId', 'cardId', 'cardInstanceId', 'profileId', 'school']) assert.equal(event[field], undefined, field);
+    assert.equal(event.preparing, true, 'a priming gain says only that the enemy is preparing');
   }
   for (const enemy of message.snapshot.scene.enemies) {
     assert.equal(enemy.intent.hidden, true);

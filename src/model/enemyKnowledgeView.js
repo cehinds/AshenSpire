@@ -5,9 +5,11 @@ import { enemyMoveCards } from './enemyMoveCards.js';
 import { predictionCategory, broadIntentLabel } from './enemyIntentKnowledge.js';
 import { enemyKnowledge } from '../content/enemyKnowledge.js';
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
+import { schoolResistanceMultiplier } from './combatRatings.js';
 const words = value => String(value || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').replace(/^./, char => char.toUpperCase());
 
-export function learnedEnemyMoveCards(def, stage, { registries = null, combatMatchupRules = null } = {}) {
+export function learnedEnemyMoveCards(def, stage, { registries = null, combatMatchupRules = null,
+  combatExpansionVersion = 1, stanceRules = null } = {}) {
   if (stage < 3) return null;
   if (stage === 3) return Object.entries(def.moves || {}).map(([moveId, move]) => {
     const profile = combatProfileFor({ ...move, enemyId: def.id, moveId });
@@ -20,12 +22,13 @@ export function learnedEnemyMoveCards(def, stage, { registries = null, combatMat
   const catalog = stage >= 5 ? def : {
     id: def.id,
     moves: Object.fromEntries(Object.entries(def.moves || {}).map(([moveId, move]) => [moveId,
-      Object.fromEntries(Object.entries(move).filter(([key]) => ['name', 'intent', 'damage', 'hits', 'block', 'effects', 'tags', 'counterDamage', 'counterPoiseDamage'].includes(key)))])),
+      Object.fromEntries(Object.entries(move).filter(([key]) => ['name', 'intent', 'damage', 'hits', 'block', 'effects', 'tags', 'counterDamage', 'counterPoiseDamage', 'counterPayload'].includes(key)))])),
   };
-  return enemyMoveCards(catalog, { registries, combatMatchupRules });
+  return enemyMoveCards(catalog, { registries, combatMatchupRules, combatExpansionVersion, stanceRules });
 }
 
-export function projectEnemyKnowledge(def, record, { target = enemyKnowledge.bestiary.encountersToMaster, registries = null, combatMatchupRules = null, equipmentRules = combatExpansionEquipment } = {}) {
+export function projectEnemyKnowledge(def, record, { target = enemyKnowledge.bestiary.encountersToMaster, registries = null, combatMatchupRules = null, equipmentRules = combatExpansionEquipment, ratingsRules = null,
+  combatExpansionVersion = 1, stanceRules = null } = {}) {
   const progress = knowledgeProgress(record, target);
   const stage = progress.stage;
   const defenses = equipmentRules.enemies?.[def.id];
@@ -40,14 +43,15 @@ export function projectEnemyKnowledge(def, record, { target = enemyKnowledge.bes
       def.poiseMax != null && { label: 'Base Poise', value: String(def.poiseMax) },
       { label: 'Base Ward rating', value: String(def.poiseMax || 1) },
       { label: 'Base armor class', value: words(defenses?.armorClass || 'medium') },
-      ...Object.entries(def.damageResistanceBySchool || {}).map(([school, amount]) => ({ label: `${words(school)} resistance`, value: String(amount) })),
+      ...Object.keys(def.damageResistanceBySchool || {}).map(school => ({ label: `${words(school)} resistance`, value: `${Math.round((1 - schoolResistanceMultiplier({ ratingsRules }, def, school)) * 100)}%` })),
       ...Object.entries(defenses?.flat || {}).map(([type, amount]) => ({ label: `${words(type)} flat resistance`, value: `${amount} point${amount === 1 ? '' : 's'}` })),
       ...Object.entries(defenses?.weak || {}).map(([type, amount]) => ({ label: `${words(type)} weakness`, value: `${amount}%` })),
+      ...Object.entries(defenses?.resist || {}).map(([type, amount]) => ({ label: `${words(type)} resistance`, value: `${amount}%` })),
     ].filter(Boolean) : null,
     traits: stage >= 2 ? [
       ...(def.traits || []).map(trait => typeof trait === 'string' ? { name: words(trait) } : { name: trait.name, detail: trait.detail || '' }),
       ...Object.entries(defenses?.traits || {}).filter(([, value]) => value === true || (value && typeof value === 'object')).map(([name, value]) => ({ name: words(name), detail: value === true ? '' : Object.entries(value).map(([type, amount]) => `${words(type)}: ${amount}%`).join(', ') })),
     ] : null,
-    moveCards: learnedEnemyMoveCards(def, stage, { registries, combatMatchupRules }),
+    moveCards: learnedEnemyMoveCards(def, stage, { registries, combatMatchupRules, combatExpansionVersion, stanceRules }),
   };
 }

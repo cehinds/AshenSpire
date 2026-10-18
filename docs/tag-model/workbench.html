@@ -1,0 +1,1156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body>
+<title>Ashen Spire Tag Workbench</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: header + status line, tab bar (six tables + Sheet + Check), then the active panel: a toolbar over an editable grid, or the object sheet. */
+:root{
+  --bg:#f3f1ee; --panel:#fbfaf8; --sunk:#ebe7e2; --fg:#24201d; --muted:#6c645d; --line:#d3cbc3;
+  --ember:#b4471f; --teal:#2f6f6a; --ok:#2f7a45; --warn:#9a6a00; --bad:#b3261e;
+  --display:"Marcellus","Cormorant Garamond",Georgia,serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#171412; --panel:#201b18; --sunk:#2a2420; --fg:#ece6df; --muted:#a39a91; --line:#3f3731;
+  --ember:#e2774c; --teal:#5fb3aa; --ok:#6cc48a; --warn:#e0b04a; --bad:#f08a80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171412; --panel:#201b18; --sunk:#2a2420; --fg:#ece6df; --muted:#a39a91; --line:#3f3731;
+  --ember:#e2774c; --teal:#5fb3aa; --ok:#6cc48a; --warn:#e0b04a; --bad:#f08a80; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);margin:0;padding-inline:16px;padding-block:18px 40px;font-size:14px}
+.wrap{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-family:var(--display);font-weight:400;font-size:1.65rem;margin:0;letter-spacing:.02em}
+.sub{color:var(--muted);margin:3px 0 0;font-size:.88rem;max-width:80ch;line-height:1.45}
+.status{font:.78rem var(--mono);color:var(--muted)}
+.status b{font-weight:500}
+.status .ok{color:var(--ok)} .status .warn{color:var(--warn)} .status .bad{color:var(--bad)}
+.tabs{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid var(--line)}
+.tab{font:500 .85rem var(--body);background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:8px 10px;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--ember)}
+.tab .n{font:.72rem var(--mono);color:var(--muted);margin-left:4px}
+button,select,input,textarea{font:inherit;color:var(--fg)}
+button{font-weight:500;font-size:.8rem;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--ember);border-color:var(--ember);color:#fff}
+button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--ember);outline-offset:1px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.banner{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border:1px solid var(--warn);border-radius:8px;padding:8px 10px;background:var(--panel)}
+.banner.bad{border-color:var(--bad)}
+.toolbar .grow{flex:1}
+input[type=search],select{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 9px}
+input[type=search]{min-width:0;width:260px;max-width:100%}
+.help{font-size:.82rem;color:var(--muted);line-height:1.5;max-width:110ch;margin:0}
+.help code,.mono{font-family:var(--mono);font-size:.78rem}
+.grid{overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel);max-height:68vh}
+table{border-collapse:collapse;font-size:.8rem}
+th{position:sticky;top:0;z-index:1;background:var(--sunk);text-align:left;font-weight:600;color:var(--muted);padding:6px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{border-bottom:1px solid var(--line);padding:0;vertical-align:top}
+td.act{padding:3px 4px;white-space:nowrap}
+td input{width:100%;border:0;background:transparent;padding:6px 6px;font:inherit;font-size:.8rem;min-width:70px;box-sizing:border-box}
+td input:focus{background:var(--sunk);outline:none;box-shadow:inset 0 0 0 1.5px var(--ember)}
+td.c-description input,td.c-effect input,td.c-expr input,td.c-tags input{min-width:260px}
+td.c-id input{min-width:230px;font-family:var(--mono);font-size:.74rem}
+td.c-key input,td.c-parent input,td.c-source input,td.c-target input,td.c-object input{font-family:var(--mono);font-size:.74rem;min-width:150px}
+td.c-expr input{font-family:var(--mono);font-size:.76rem}
+td.bad input{box-shadow:inset 0 -2px 0 var(--bad)}
+td.warn input{box-shadow:inset 0 -2px 0 var(--warn)}
+td.out{padding:6px 8px;font:.76rem var(--mono);white-space:nowrap;color:var(--teal)}
+td.out.bad{color:var(--bad)} td.out.warn{color:var(--warn)} td.out.note{color:var(--muted)}
+.x{border:0;background:none;color:var(--muted);padding:2px 6px;font-size:.9rem}
+.x:hover{color:var(--bad)}
+.more{padding:10px;text-align:center}
+.pill{display:inline-block;font:500 .7rem var(--body);padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.pill.new{color:var(--ember);border-color:var(--ember)} .pill.moved{color:var(--teal);border-color:var(--teal)}
+.sheet{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.sheet{grid-template-columns:1fr}}
+.cardart{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.cardart .img{aspect-ratio:2/3;max-width:100%;border-radius:8px;background:var(--sunk);display:grid;place-items:center;overflow:hidden}
+.cardart img{width:100%;height:100%;object-fit:cover}
+.cardart h2{font-family:var(--display);font-weight:400;font-size:1.35rem;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:.8rem}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-family:var(--mono);font-size:.76rem;overflow-wrap:anywhere}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.box h3{font:600 .9rem var(--body);margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:.76rem;border:1px solid var(--line);border-radius:6px;padding:3px 7px;background:var(--sunk)}
+.chip small{display:block;font:.68rem var(--mono);color:var(--muted)}
+.chip.bad{border-color:var(--bad);color:var(--bad)}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.tbl{overflow-x:auto}
+.tbl table{width:100%}
+.tbl td,.tbl th{padding:5px 8px;font-size:.78rem}
+.tbl td.num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.issues li{margin:3px 0;font-size:.82rem}
+.issues code{font-family:var(--mono);font-size:.76rem}
+dialog{border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--fg);max-width:min(760px,92vw);width:100%;padding:16px}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog textarea{width:100%;min-height:260px;box-sizing:border-box;font:.76rem var(--mono);background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:8px}
+dialog .row{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:10px}
+.empty{padding:28px;text-align:center;color:var(--muted);line-height:1.6}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.76rem;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:4px}
+.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px}
+.fcol{display:flex;flex-direction:column;gap:2px;font-size:.72rem;color:var(--muted);min-width:0}
+.fcol input,.fcol select{width:100%;min-width:0;box-sizing:border-box;font-size:.8rem}
+.fcol.check{flex-direction:row;align-items:center;gap:6px;color:var(--fg);white-space:nowrap}
+.fbar{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.count{font:.76rem var(--mono);color:var(--muted)}
+/* tag links: parent and related values are buttons under their inputs; the side panel sits beside the grid */
+.reflinks{display:flex;flex-wrap:wrap;gap:4px;padding:0 6px 6px}
+button.reflink{font:500 .7rem var(--mono);padding:1px 7px;border-radius:999px;background:var(--sunk)}
+button.reflink.bad{color:var(--bad);border-color:var(--bad)}
+.split{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start}
+.split>.grid{flex:1 1 520px;min-width:0}
+.sidepanel{flex:0 1 280px;min-width:0;max-width:100%;max-height:68vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.sidepanel h3{font:600 .95rem var(--body);margin:0}
+.sidepanel h4{font:600 .8rem var(--body);margin:8px 0 2px;color:var(--muted)}
+.sidepanel .plinks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:.8rem}
+.sidepanel .plinks li{display:flex;flex-wrap:wrap;align-items:center;gap:4px;min-width:0;overflow-wrap:anywhere}
+tr.hi td{background:color-mix(in srgb,var(--teal) 18%,transparent)}
+/* keyboard: a cell in edit mode shows its own background; a read-only cell shows the default caret-less focus */
+td.editing input{background:var(--sunk)}
+td input[readonly]{cursor:default}
+/* changed view: a changed row is tinted with a marker on its action cell; a changed cell is tinted on its own */
+tr.chg td{background:color-mix(in srgb,var(--ember) 10%,transparent)}
+tr.chg-new td{background:color-mix(in srgb,var(--ok) 12%,transparent)}
+tr.chg td.act{box-shadow:inset 3px 0 0 var(--ember)}
+tr.chg-new td.act{box-shadow:inset 3px 0 0 var(--ok)}
+td.chg input{background:color-mix(in srgb,var(--ember) 24%,transparent)}
+tr.chg-new td.chg input{background:color-mix(in srgb,var(--ok) 26%,transparent)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>Ashen Spire Tag Workbench</h1>
+    <p class="sub">Every tag, object, value and formula in one editable set of tables. Formulas reference anything by key in square brackets, for example <code class="mono">[strike.baseDamage] + floor([ar] * 0.25)</code>. Import and export each table as CSV.</p>
+    <div class="status" id="status">Connecting…</div>
+  </div>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <section id="panel"></section>
+</div>
+
+<dialog id="dlg">
+  <h3 id="dlg-title" style="margin:0 0 8px;font:600 1rem var(--body)"></h3>
+  <p id="dlg-help" class="help" style="margin-bottom:8px"></p>
+  <textarea id="dlg-text" spellcheck="false"></textarea>
+  <div class="row" id="dlg-actions"></div>
+</dialog>
+<input type="file" id="file" accept=".csv,text/csv" hidden>
+
+<script>
+"use strict";
+/* formula-columns:begin */
+const FORMULA_COLUMNS=['key','expr','scope','description','status']; /* status: 'proposed' rows have no expression yet */
+/* formula-columns:end */
+const TABLES = {
+  tags:{label:'Tags', key:'id', help:'One row per tag. <b>id</b> is the full path, <b>key</b> the short unique name formulas use. <b>erd</b> names the model it belongs to, <b>school</b> its magic class, <b>related</b> other tag keys (space separated). Text in <b>effect</b> can cite <code>[key]</code>; <b>variables</b> lists the value keys the tag reads, so its numbers live in Values, never in the tag.',
+    columns:['id','key','label','parent','erd','school','description','effect','variables','duration','stacking','related','status','liveId','glyph','color'],
+    refs:{parent:'tag', school:'tag', related:'tags', variables:'values'}},
+  objects:{label:'Objects', key:'id', help:'Cards, weapons, armor and anything else that carries tags. <b>tags</b>, <b>exp</b> are tag keys; <b>grants</b> are object ids; <b>art</b> and <b>artDefault</b> are game asset ids from the Assets table; <b>cost</b> and <b>description</b> can cite <code>[key]</code>. <b>rankMode</b> is <code>list</code> (use the Ranks table) or <code>formula</code> (formulas read <code>[rank]</code>). <code>rankMode=list</code> with <b>maxRank</b> 1 means no rank progression (Dodge).',
+    columns:['id','kind','name','erd','cardType','stance','rarity','costResource','cost','tags','skill','exp','grants','art','artDefault','placement','rankMode','maxRank','description'],
+    refs:{cardType:'tag', stance:'tag', rarity:'tag', costResource:'tag', skill:'tag', tags:'tags', exp:'tags', grants:'objects', art:'asset', artDefault:'asset'}},
+  values:{label:'Values', key:'key', help:'Plain numbers. A value whose key matches a tag key is that tag\'s preview number (for example <code>ar</code> = 24), used when formulas are previewed. <b>scope</b> is the object or area it belongs to.',
+    columns:['key','value','unit','scope','description'], refs:{}},
+  formulas:{label:'Formulas', key:'key', help:'Expressions over <code>[key]</code> references to values, other formulas, tags with a preview value, and <code>[rank]</code>. Operators <code>+ - * / % ^</code>, comparisons, and <code>min max floor ceil round abs clamp(x,lo,hi) if(cond,a,b)</code>. The result column previews at rank 1.',
+    columns:FORMULA_COLUMNS, refs:{}},
+  ranks:{label:'Ranks', key:null, help:'Rank progression as a list. Each row changes a value key from that rank on: <code>+1</code>, <code>-0.5</code>, <code>=8</code> or <code>×1.25</code> (also <code>*1.25</code>). Changes add up rank by rank.',
+    columns:['object','rank','key','change','note'], refs:{object:'object', key:'value'}},
+  assets:{label:'Assets', key:'id', help:'Game art ids, exactly as the game names them (<code>assets/cards/extended/card-strike-512.webp</code>). The game resolves them through <code>assetUrl()</code>. This page cannot load the game\'s art, so <b>preview</b> holds an image you upload here to see it on the Object sheet.',
+    columns:['id','category','subcategory','lightPath','lightW','lightH','highPath','highW','highH','bytesHigh','usedBy','preview','tag','liveRef'], refs:{tag:'tag'}, group:'presentation'},
+  components:{label:'Components', key:'id', group:'presentation', help:'Every screen, region, component, button, modal, menu and card layer. <b>parent</b> is the containing component, <b>tag</b> its Presentation tag, <b>assetRefs</b> and <b>textKeys</b> what it shows, <b>symbol</b> its icon.',
+    columns:['id','label','group','parent','kind','file','selector','wireframe','assetRefs','symbol','textKeys','zLayer','notes','tag','liveRef','cssClasses'], refs:{parent:'component', tag:'tag'}},
+  layouts:{label:'Layouts', key:null, group:'presentation', help:'Position and size per device band. <b>band</b> is mobile (phone, up to 600px), tablet (601–1023px), desktop (1024–1439px), wide (1440px and up), all, state or other; <b>breakpoint</b> keeps the original condition. <b>source</b> names the CSS line or the function that computes it.',
+    columns:['componentId','breakpoint','band','x','y','w','h','anchor','unit','source','tag','liveRef'], refs:{componentId:'component', tag:'tag'}},
+  styles:{label:'Styles', key:null, group:'presentation', help:'One row per styling value: colour, size, font, spacing, radius, shadow, z-order, transition. Edit <b>value</b>; <b>selector</b> and <b>source</b> say where it lives. <b>band</b> is mobile (phone, up to 600px), tablet (601–1023px), desktop (1024–1439px), wide (1440px and up), all, state or other.',
+    columns:['componentId','selector','property','value','breakpoint','band','source','tag','liveRef','cssComponentId'], refs:{componentId:'component', tag:'tag'}},
+  tokens:{label:'Tokens', key:null, group:'presentation', help:'Shared style variables (CSS custom properties) and their values per theme or scope.', columns:['token','value','theme','file','tag','liveRef'], refs:{tag:'tag'}},
+  breakpoints:{label:'Breakpoints', key:'name', group:'presentation', help:'Every size or state condition the layout switches on, and the band it maps to.', columns:['name','condition','file','usedBy','tag','liveRef'], refs:{tag:'tag'}},
+  animations:{label:'Animations', key:'id', group:'presentation', help:'Sprite sequences and CSS or scripted animations: frames, fps, duration, loop, anchor, offset, scale.', columns:['id','owner','action','framePattern','frameCount','fps','durationMs','loop','anchor','offsetX','offsetY','scale','flip','source','tag','liveRef'], refs:{tag:'tag'}},
+  effects:{label:'Effects', key:'id', group:'presentation', help:'Sprite effects, auras, shadows, glows, floating text, flashes, tints and particles, with anchor, offset, blend and colour.', columns:['id','kind','assetRefs','trigger','anchor','offsetX','offsetY','scale','blend','opacity','color','durationMs','source','tag','liveRef'], refs:{tag:'tag'}},
+  resolutions:{label:'Resolutions', key:'tier', group:'presentation', help:'Art tiers and image sizes, and when each is used.', columns:['tier','description','maxWidth','format','usedWhen','source','tag','liveRef'], refs:{tag:'tag'}},
+  symbols:{label:'Symbols', key:'id', group:'presentation', help:'Every icon and glyph, its asset and colour, and what it is used for.', columns:['id','glyph','assetRef','shape','color','usedFor','file','tag','liveRef'], refs:{tag:'tag'}},
+  combatSymbols:{label:'Combat symbols', key:'tagKey', group:'presentation', help:'One icon per combat concept. <b>placeholder</b> rows borrow the closest existing icon until art is made.', columns:['tagKey','label','currentSymbol','currentAssetRef','suggestedAssetRef','status','assignedAssetRef','tag','liveRef','artBrief','priority'], refs:{tag:'tag'}},
+  settings:{label:'Settings', key:'key', group:'presentation', help:'Player settings and game tuning values, with defaults, ranges and where they are read. <b>scope</b> is player or tuning; <b>deviceScope</b> is device (per device: layout, text size, display) or global.', columns:['key','label','group','type','default','options','min','max','step','storage','readBy','file','scope','deviceScope','tag','liveRef'], refs:{tag:'tag'}},
+  strings:{label:'Strings', key:'key', group:'presentation', help:'Every label and tooltip. <b>context</b> hardcoded marks text written directly in UI code instead of the shared strings file.', columns:['key','text','tooltip','context','file','tag','liveRef','proposedKey','migrateTo'], refs:{tag:'tag'}},
+  artSizes:{label:'Art sizes', key:'id', help:'Pixel size of each game asset id the tables point at, with its <b>kind</b> (card art, card icon and so on). Sizes come from the game\'s art files. <b>preview</b> names a preview image, if there is one; <b>note</b> says anything unusual about the file.',
+    columns:['id','kind','width','height','preview','note'], refs:{}},
+  relations:{label:'Relations', key:null, help:'Typed links between tags: STRONG_VS, WEAK_VS, BYPASSES, APPLIES, CLEARS, REQUIRES, CONFLICTS_WITH, REFERENCES. <b>value</b> is the multiplier or amount when there is one.',
+    columns:['source','relation','target','value','note'], refs:{source:'tag', target:'tag'}},
+};
+const ORDER = ['tags','objects','values','formulas','ranks','relations','artSizes','components','layouts','styles','tokens','breakpoints','assets','animations','effects','resolutions','symbols','combatSymbols','settings','strings'];
+const CORE = new Set(['tags','objects','values','formulas','ranks','relations','artSizes']);
+const loaded = new Set(); const pending = new Set();
+const PAGE = 150;
+
+const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1, colf:{}, tagf:{}, fopen:{}, cmp:{}, changedOnly:{}, panel:null, hi:null }; /* colf: per-column text filters; tagf: tags status / subtree / emptyDesc; fopen: filter panel open; cmp: 'load' or 'save' base for the changed view; changedOnly: show only changed rows; panel: the tag whose links panel is open; hi: the row a link jumped to */
+for (const t of ORDER) { state.data[t] = {columns:[...TABLES[t].columns], rows:[]}; state.shown[t]=PAGE; }
+let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
+const dirty=new Set(), saving=new Set(), timers={}, editGen={}; /* editGen[t] counts the edits to table t; a save remembers the count it started with */
+/* storage:begin */
+/* content-addressed blobs: a blob is {rows} as JSON, named by hashText of that JSON */
+const BLOB_MAX=170000, BLOB_ROW_MAX=250000, BLOB_CUT=64, BLOB_FALLBACK=8, GC_AGE_MS=120000;
+const TEXT_ENC=new TextEncoder();
+function byteLen(s){ return TEXT_ENC.encode(s).length; }
+function hash32(s){ let h=0x811c9dc5; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193); } return h>>>0; }
+/* FNV-1a 64-bit over UTF-16 code units, split into two 32-bit words; returns 16 hex digits */
+function hashText(s){
+  let hi=0xcbf29ce4, lo=0x84222325;
+  for(let i=0;i<s.length;i++){
+    lo=(lo ^ s.charCodeAt(i))>>>0;
+    const p=lo*0x1b3, nlo=p%4294967296, carry=Math.floor(p/4294967296);
+    hi=(carry+hi*0x1b3+lo*0x100)%4294967296; lo=nlo;
+  }
+  return hi.toString(16).padStart(8,'0')+lo.toString(16).padStart(8,'0');
+}
+/* content-defined cuts: after a row whose hash32 % 64 is 0; when a chunk passes the size cap, cut after the last row
+   whose hash32 % 8 is 0 (a fallback candidate), else before the row that overflowed. Every cut depends on row content,
+   so one inserted row changes only the chunks around it, even when the rows are wide. */
+function chunkRows(rows){
+  const out=[]; let cur=[], sizes=[], hs=[], total=12;
+  const cut=(n)=>{ out.push(cur.slice(0,n)); cur=cur.slice(n); sizes=sizes.slice(n); hs=hs.slice(n); total=12+sizes.reduce((a,b)=>a+b,0); };
+  for(const r of rows){
+    const js=JSON.stringify(r), n=byteLen(js)+1;
+    cur.push(r); sizes.push(n); hs.push(hash32(js)); total+=n;
+    while(total>BLOB_MAX && cur.length>1){
+      let c=-1;
+      for(let i=cur.length-2;i>=0;i--) if(hs[i]%BLOB_FALLBACK===0){ c=i; break; }
+      cut(c>=0? c+1 : cur.length-1);
+    }
+    if(hs[cur.length-1]%BLOB_CUT===0) cut(cur.length);
+  }
+  if(cur.length) out.push(cur);
+  return out;
+}
+/* ---------- reader: subscribe to the head, assemble only complete heads ---------- */
+const BLOB_RETRY_MS=[250,500];
+const tstate={};
+const sleepMs=ms=>new Promise(r=>setTimeout(r,ms));
+function TS(t){ return tstate[t]||(tstate[t]={seq:0, base:'', blobs:new Map(), latest:undefined, lastSaveAt:0, conflict:null, incomplete:null, legacy:null, legacyDocs:[], unsub:[], partsUnsub:null, parts:new Map(), snapLoad:null, snapSave:null}); }
+/* copies of a table as it was loaded (snapLoad) and as it was last saved (snapSave), for the changed view; a copy, so later edits do not move it */
+function snapshotOf(cols, rows){ return {columns:[...cols], rows:rows.map(r=>({...r}))}; }
+function headPath(t){ return 'tables/'+t; }
+function blobPath(t,h){ return 'tables/'+t+'/blobs/'+h; }
+/* a blob head's rev; legacy heads have none, so their base is '' */
+/* a blob head's rev; a legacy head gets an identity derived from its JSON, so a later legacy write is a change; absent is '' */
+function revOf(h){ if(!h) return ''; if(h.format==='blobs') return h.rev||''; return 'legacy:'+hashText(JSON.stringify(h)); }
+function headCols(h,t){ return Array.isArray(h.columns)&&h.columns.length? h.columns : TABLES[t].columns; }
+/* positional rows need the head's own column list: the defaults could shift their cells, so such a head is blocked */
+const NO_COLUMNS='This table is stored as positional rows with no column list, so this page cannot tell which cell is which. It is blocked and cannot be saved over. Reload later.';
+function positionalWithoutColumns(h, rows){ return !(Array.isArray(h.columns)&&h.columns.length) && rows.some(r=>Array.isArray(r)); }
+function objectRows(hc, arrs){ return arrs.map(a=>{ const o={}; hc.forEach((c,j)=>{ o[c]=a[j]??''; }); return o; }); }
+function adoptRows(t, hc, objs){
+  if(dirty.has(t)||saving.has(t)) return;
+  const cols=[...hc]; for(const c of TABLES[t].columns) if(!cols.includes(c)) cols.push(c);
+  loaded.add(t); pending.delete(t);
+  TS(t).snapLoad=TS(t).snapSave=snapshotOf(cols, objs);
+  if(JSON.stringify(objs)===JSON.stringify(state.data[t].rows) && JSON.stringify(cols)===JSON.stringify(state.data[t].columns)){ render(); return; }
+  state.data[t]={columns:cols, rows:objs};
+  rebuild(); setStatus(); render();
+}
+/* one blob doc; retried twice with backoff when it is missing or unreadable, then null */
+async function fetchBlob(t,h){
+  for(let i=0;;i++){
+    try{ const s=await db.doc(blobPath(t,h)).get(); if(s.exists){ const d=s.data();
+      /* the id is the hash of the content: a blob whose content does not hash to its id is treated as missing */
+      if(d&&Array.isArray(d.rows)&&hashText(JSON.stringify({rows:d.rows}))===h) return d.rows; } }
+    catch(e){ /* counted as missing */ }
+    if(i>=BLOB_RETRY_MS.length) return null;
+    await sleepMs(BLOB_RETRY_MS[i]);
+  }
+}
+async function assembleBlobs(t,h){
+  const ts=TS(t), want=[...new Set(h.blobs||[])], got=new Map(); let missing=null;
+  await Promise.all(want.map(async x=>{ const rows=ts.blobs.get(x)||await fetchBlob(t,x); if(rows) got.set(x,rows); else missing=missing||x; }));
+  return {missing, got};
+}
+function stopParts(t){ const ts=TS(t); if(ts.partsUnsub){ ts.partsUnsub(); ts.partsUnsub=null; } ts.parts=new Map(); }
+function legacyAssemble(t){
+  const ts=TS(t), h=ts.legacy; if(!h||dirty.has(t)||saving.has(t)) return;
+  const n=Number(h.parts)||0, hc=headCols(h,t), arrs=[], ids=[];
+  for(let i=0;i<n;i++){
+    const p=ts.parts.get(i); if(!p) return;
+    /* a legacy head with revs lists the rev of each part; a part from another save is still in flight, so wait */
+    if(Array.isArray(h.revs) && p.rev!==h.revs[i]){ setStatus('warn','Waiting for every part of '+TABLES[t].label+' to match its head.'); return; }
+    ids.push(p.id); arrs.push(...p.rows);
+  }
+  ts.legacyDocs=ids;
+  if(positionalWithoutColumns(h,arrs)){ blockTable(t,NO_COLUMNS); return; }
+  adoptRows(t, hc, arrs.map(r=>Array.isArray(r)? objectRows(hc,[r])[0] : r));
+}
+function ensureParts(t){
+  const ts=TS(t); if(ts.partsUnsub) return;
+  ts.partsUnsub=db.collection('tables/'+t+'/parts').onSnapshot(q=>{
+    ts.parts=new Map(q.docs.map(d=>{ const b=d.data()||{}; return [Number(b.index), {id:d.id, rev:b.rev, rows:Array.isArray(b.rows)? b.rows : []}]; }));
+    legacyAssemble(t);
+  }, e=>setStatus('bad','Lost the live connection to "'+t+'" ('+(e&&e.code)+'). Reload to reconnect.'));
+}
+async function applyHead(t,h){
+  const ts=TS(t), seq=++ts.seq;
+  if(!h){ stopParts(t); ts.base=''; ts.blobs=new Map(); ts.legacy=null; ts.incomplete=null; adoptRows(t, TABLES[t].columns, []); return; }
+  if(h.format==='blobs'){
+    stopParts(t); ts.legacy=null;
+    if(!Array.isArray(h.blobs)){ blockTable(t,UNKNOWN_FORMAT); return; }
+    if(loaded.has(t)&&!ts.incomplete&&revOf(h)===ts.base) return;
+    const r=await assembleBlobs(t,h);
+    if(seq!==ts.seq||dirty.has(t)||saving.has(t)) return;
+    if(r.missing){ blockTable(t,'This table is incomplete on the server (missing part '+r.missing+'). Reload later.'); return; }
+    /* backstop: a head not written on top of our last save, arriving soon after it, means a peer raced us: show the conflict.
+       Known false positive, accepted: a chain ours -> P1 -> P2 whose P1 snapshot never reached this tab reads as a race.
+       The user's choice (Load theirs or Keep mine) resolves it, and it cannot silently lose rows. */
+    if(ts.lastSaveAt&&Date.now()-ts.lastSaveAt<10000&&revOf(h)!==ts.base&&(h.base||'')!==ts.base){ ts.conflict={theirRev:revOf(h)}; dirty.add(t); setStatus('warn','Someone else saved this table while you were editing.'); render(); return; }
+    const arrs=[]; for(const x of h.blobs||[]) arrs.push(...r.got.get(x));
+    if(positionalWithoutColumns(h,arrs)){ blockTable(t,NO_COLUMNS); return; }
+    ts.incomplete=null; ts.base=revOf(h); ts.blobs=r.got; ts.legacyDocs=[];
+    adoptRows(t, headCols(h,t), objectRows(headCols(h,t), arrs));
+    return;
+  }
+  if(h.format!==undefined&&h.format!=='arrays'&&h.format!=='blobs'){ blockTable(t,UNKNOWN_FORMAT); return; }
+  if(Array.isArray(h.rows)){ /* oldest inline format: the rows are in the head itself */
+    if(positionalWithoutColumns(h,h.rows)){ blockTable(t,NO_COLUMNS); return; }
+    stopParts(t); ts.legacy=null; ts.base=revOf(h); ts.blobs=new Map(); ts.incomplete=null; ts.legacyDocs=[];
+    const hc=headCols(h,t); adoptRows(t, hc, h.rows.map(r=>Array.isArray(r)? objectRows(hc,[r])[0] : r)); return;
+  }
+  if(!Number.isInteger(h.parts)||h.parts<1){ blockTable(t,UNKNOWN_FORMAT); return; } /* never adopt an empty table from an unknown head */
+  /* legacy head: read only, its parts are assembled when all are present */
+  ts.legacy=h; ts.base=revOf(h); ts.blobs=new Map(); ts.incomplete=null;
+  ensureParts(t); legacyAssemble(t);
+}
+const UNKNOWN_FORMAT='This table is stored in a format this page does not recognise, so it is blocked and cannot be saved over. Reload later.';
+function blockTable(t,message){ const ts=TS(t); stopParts(t); ts.legacy=null; ts.incomplete={message}; loaded.delete(t); setStatus('bad',message); render(); }
+function onHead(t,h){
+  const ts=TS(t); ts.latest=h;
+  if(dirty.has(t)||saving.has(t)){ ts.seq++; return; } /* keep local edits; the save step's get() detects a newer head */
+  applyHead(t,h);
+}
+function subscribeTable(t){
+  const ts=TS(t); if(ts.unsub.length) return;
+  ts.unsub.push(db.doc(headPath(t)).onSnapshot(s=>onHead(t, s.exists? s.data() : null), e=>setStatus('bad','Lost the live connection to "'+t+'" ('+(e&&e.code)+'). Reload to reconnect.')));
+}
+/* ---------- writer: blobs first, then one head write guarded by the rev this view loaded ---------- */
+/* lists the blob collection once; deletes a blob only if it is not in `keep` and its createdAt is over 2 minutes old.
+   Blobs without createdAt are never deleted. Failures are ignored: garbage can wait for the next save. */
+async function gcBlobs(t, keep){
+  try{
+    /* the listing can be stale: read the live head after it, keep its blobs, and re-get each candidate before deleting */
+    const q=await db.collection('tables/'+t+'/blobs').get();
+    const live=await db.doc(headPath(t)).get();
+    const lh=live.exists? live.data() : null;
+    const kept=new Set([...keep, ...(lh&&lh.format==='blobs'&&Array.isArray(lh.blobs)? lh.blobs : [])]);
+    for(const d of q.docs){
+      if(kept.has(d.id)) continue;
+      const cur=await db.doc(blobPath(t,d.id)).get();
+      if(!cur.exists) continue;
+      const b=cur.data()||{};
+      if(typeof b.createdAt!=='number'||Date.now()-b.createdAt<=GC_AGE_MS) continue;
+      await db.doc(blobPath(t,d.id)).delete().catch(()=>{});
+    }
+  }
+  catch(e){ /* best effort */ }
+}
+/* a short lease on the head doc, held only across its get and set. Every attempt uses a fresh holder id, so no
+   attempt can renew a lease another attempt holds. Each lease lapses within one ttl (1.5 s); a waiter gets a turn
+   within the 10 s budget or reports a conflict. Leases have no release verb, so they lapse on their own. */
+async function acquireHead(t){
+  const end=Date.now()+10000;
+  for(;;){
+    const holder='save-'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+    const sent=Date.now(); /* taken before the request, so it is never later than the grant */
+    const r=await db.doc(headPath(t)).acquire({holder, ttlMs:1500}).catch(()=>null);
+    if(r&&r.acquired) return {acquiredAt:sent, ttlMs:1500};
+    if(Date.now()>end) return false;
+    await sleepMs(50+Math.random()*350);
+  }
+}
+/* a conflict keeps local edits dirty and waits for the user; opts.overwrite writes the head on top of their rev */
+/* an edit marks its table dirty and arms a save 900 ms later; a save already waiting is not replaced by a retry (see retryFlush) */
+function markDirty(t){
+  editGen[t]=(editGen[t]||0)+1; /* every edit bumps the generation, so a save that began earlier knows its rows are stale */
+  if(!localMode && !loaded.has(t)){ setStatus('warn','Still loading '+t+'; that edit was not saved.'); return; }
+  dirty.add(t); rebuild(); setStatus();
+  if(localMode||!db||!canWrite){ saveLocal(); return; }
+  clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t),900);
+}
+/* arms a retry of a save. If an edit happened since this save began, the retry starts fresh (new deadline, nothing written yet)
+   but keeps the save's write intent, so a Keep mine stays a Keep mine. Otherwise the retry keeps the save's own budget. */
+function retryFlush(t,opts,ms){
+  clearTimeout(timers[t]);
+  const stale=opts.gen!==(editGen[t]||0);
+  const next=stale? {overwrite:opts.overwrite} : opts;
+  timers[t]=setTimeout(()=>flush(t,next),ms);
+}
+/* the set of blob hashes a head names (empty for a missing head or another format) */
+function headBlobs(h){ return new Set(h&&h.format==='blobs'&&Array.isArray(h.blobs)? h.blobs : []); }
+async function flush(t, opts){
+  opts=opts||{};
+  if(opts.gen===undefined) opts.gen=editGen[t]||0; /* the edit generation this save started with */
+  const ts=TS(t);
+  if(saving.has(t)){ retryFlush(t,opts,500); return; }
+  if(!dirty.has(t)) return;
+  if(ts.pinned) return; /* a rejected table is never saved again from this view, Keep mine included */
+  if(ts.conflict&&!opts.overwrite) return;
+  /* one 10 s budget for the whole save, retries included; blobs written by earlier attempts stay written */
+  opts.deadline=opts.deadline??(Date.now()+10000);
+  opts.written=opts.written||new Set();
+  const written=opts.written;
+  const giveUp=()=>{ ts.conflict={theirRev:null}; dirty.add(t); setStatus('warn','Could not save this table in time. Choose which version to keep.'); render(); };
+  if(Date.now()>opts.deadline){ giveUp(); return; }
+  const cols0=[...state.data[t].columns], keyCol=TABLES[t].key;
+  const tooBig=state.data[t].rows.findIndex(r=>byteLen(JSON.stringify(cols0.map(c=>r[c]??'')))>BLOB_ROW_MAX);
+  if(tooBig>=0){ const k=keyCol&&state.data[t].rows[tooBig][keyCol]; setStatus('bad','Row '+(tooBig+1)+(k?' ('+k+')':'')+' is over 250 KB, so this table cannot be saved yet. Shorten that row.'); return; }
+  dirty.delete(t); saving.add(t); setStatus();
+  const cols=[...state.data[t].columns];
+  const now=Date.now();
+  const built=chunkRows(state.data[t].rows.map(r=>cols.map(c=>r[c]??''))).map(rows=>({hash:hashText(JSON.stringify({rows})), rows}));
+  const hashes=built.map(b=>b.hash);
+  const savedSnap=snapshotOf(cols, state.data[t].rows); /* what this save writes, for the changed view once it lands */
+  let newer=null;
+  try{
+    /* before the lease: write every blob the server head does not carry. Blobs are immutable, so a hash the head
+       already carries is never rewritten. A slow write here cannot expire the lease, and the deadline bounds it. */
+    const pre=await db.doc(headPath(t)).get();
+    const carried=headBlobs(pre.exists? pre.data() : null);
+    for(const b of built){
+      if(carried.has(b.hash)||written.has(b.hash)) continue;
+      if(Date.now()>opts.deadline){ giveUp(); return; }
+      await db.doc(blobPath(t,b.hash)).set({rows:b.rows, createdAt:Date.now()}); /* stamped when written, not when the save began */
+      written.add(b.hash);
+    }
+    /* the head's get and set run under a short lease, so a peer cannot slip a head in between them */
+    const lease=await acquireHead(t);
+    if(!lease){ ts.conflict={theirRev:null}; dirty.add(t); setStatus('warn','Another tab kept saving this table. Choose which version to keep.'); render(); return; }
+    const s=await db.doc(headPath(t)).get();
+    const curHead=s.exists? s.data() : null, curRev=revOf(curHead);
+    if(!opts.overwrite && curRev!==ts.base){
+      ts.conflict={theirRev:curRev}; dirty.add(t);
+      setStatus('warn','Someone else saved this table while you were editing.'); render();
+      return;
+    }
+    /* the leased head must need no blob we have neither written nor seen: if a peer changed it under us, retry the save.
+       Fencing: if the get took most of the lease, another tab may hold it by now, so do not write under it. Both retry. */
+    const verified=new Set([...written, ...headBlobs(curHead)]);
+    if(hashes.some(h=>!verified.has(h)) || Date.now()-lease.acquiredAt>lease.ttlMs-300){ dirty.add(t); retryFlush(t,opts,50); return; }
+    const rev=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+    const base=opts.overwrite? curRev : ts.base, prevBase=ts.base;
+    await db.doc(headPath(t)).set({format:'blobs', columns:cols, blobs:hashes, rev, base, savedAt:now});
+    /* GC may have deleted a blob this save wrote, between its write and the head landing: re-check each one and write any that are gone */
+    const rowsOf=new Map(built.map(b=>[b.hash,b.rows]));
+    for(const h of written){
+      if(!rowsOf.has(h)) continue; /* a hash from an earlier attempt's rows: this build has no rows for it, so there is nothing to write */
+      const g=await db.doc(blobPath(t,h)).get();
+      if(!g.exists) await db.doc(blobPath(t,h)).set({rows:rowsOf.get(h), createdAt:Date.now()});
+    }
+    ts.base=rev; ts.lastSaveAt=Date.now(); ts.conflict=null; ts.incomplete=null; ts.legacy=null; ts.snapSave=savedSnap;
+    ts.blobs=new Map(built.map(b=>[b.hash,b.rows]));
+    /* a legacy table converts on this first save: delete only the legacy part docs we read, now that the new head is written */
+    const oldParts=ts.legacyDocs||[]; ts.legacyDocs=[]; stopParts(t);
+    for(const id of oldParts) await db.doc('tables/'+t+'/parts/'+id).delete().catch(()=>{});
+    /* blobs referenced by neither the new head nor the head this save replaced are garbage */
+    await gcBlobs(t, new Set([...hashes, ...(curHead&&curHead.format==='blobs'&&Array.isArray(curHead.blobs)? curHead.blobs : [])]));
+    /* a head seen during the save that is neither ours nor the one we started from came after ours (no clocks compared):
+       if it was written on top of ours, apply it; otherwise a peer raced us and the conflict banner shows */
+    const L=ts.latest;
+    if(L!==undefined&&revOf(L)!==rev&&revOf(L)!==prevBase) newer=(L&&L.base||'')===rev? L : 'conflict';
+  }
+  catch(e){
+    /* rejected: the edits stay on screen, pinned and unsaved; no peer head replaces them until the user chooses */
+    if(e&&e.code==='invalid_argument'){ dirty.add(t); ts.pinned=true; ts.conflict=null; canWrite=false; setStatus('warn','This view can read but not save. Your edits are shown here, not saved; export them as CSV.'); saveLocal(); render(); }
+    else { dirty.add(t); setStatus('bad','Save failed ('+(e&&e.code||'error')+'). Retrying.'); retryFlush(t,opts,3000); }
+  }
+  finally{ saving.delete(t); setStatus(); }
+  if(newer==='conflict'){ ts.conflict={theirRev:revOf(ts.latest)}; dirty.add(t); setStatus('warn','Someone else saved this table while you were editing.'); render(); }
+  else if(newer&&!dirty.has(t)) applyHead(t,newer);
+}
+/* conflict choices: drop local edits and show theirs, or write ours on top of their rev */
+async function loadTheirs(t){
+  const ts=TS(t);
+  while(saving.has(t)) await sleepMs(20); /* an in-flight save must end first, or the local rows would win */
+  const s=await db.doc(headPath(t)).get();
+  /* an explicit choice adopts that head: clear the recent-save marker so the backstop does not refuse it again */
+  /* base '' makes applyHead adopt even a head we already hold (its early return skips a head whose rev equals base);
+     adoption sets base to the head's own rev again */
+  ts.conflict=null; ts.pinned=false; ts.lastSaveAt=0; ts.base=''; dirty.delete(t);
+  await applyHead(t, s.exists? s.data() : null);
+  render();
+}
+function keepMine(t){ return flush(t,{overwrite:true}).then(()=>render()); }
+/* the banners a table shows above its grid, and what their buttons do (the page draws them; tests run them) */
+const BANNER_ACTIONS={ export:(t)=>exportCSV(t), theirs:(t)=>loadTheirs(t), keep:(t)=>keepMine(t) };
+function tableBanners(t){
+  const ts=TS(t), out=[];
+  if(ts.pinned) out.push({kind:'warn', text:'This table could not be saved. Your edits are kept here, read-only.', buttons:[{id:'export',label:'Export my edits (CSV)'},{id:'theirs',label:'Load theirs (discard mine)'}]});
+  if(ts.conflict) out.push({kind:'warn', text:'Someone else saved this table while you were editing.', buttons:[{id:'theirs',label:'Load theirs (discard mine)'},{id:'keep',label:'Keep mine (overwrite)'}]});
+  if(ts.incomplete) out.push({kind:'bad', text:ts.incomplete.message, buttons:[]});
+  return out;
+}
+function runBanner(t,id){ return Promise.resolve(BANNER_ACTIONS[id](t)).then(()=>{ if(id!=='export') focusStatus(); }); }
+/* storage:end */
+
+/* ---------- indexes ---------- */
+let IX={};
+function rebuild(){
+  const tagByKey=new Map(), tagById=new Map(), val=new Map(), frm=new Map(), obj=new Map(), ast=new Map(), cmp=new Map();
+  for (const r of state.data.components.rows) if(r.id) cmp.set(String(r.id),r);
+  for (const r of state.data.assets.rows) if(r.id) ast.set(String(r.id),r);
+  for (const r of state.data.tags.rows){ if(r.key) tagByKey.set(String(r.key),r); if(r.id) tagById.set(String(r.id),r); }
+  for (const r of state.data.values.rows) if(r.key) val.set(String(r.key),r);
+  for (const r of state.data.formulas.rows) if(r.key) frm.set(String(r.key),r);
+  for (const r of state.data.objects.rows) if(r.id) obj.set(String(r.id),r);
+  IX={tagByKey,tagById,val,frm,obj,ast,cmp}; ISSUES=null;
+}
+function findTag(k){ k=String(k||'').trim(); return IX.tagByKey.get(k)||IX.tagById.get(k)||null; }
+function refKind(k){
+  if(k==='rank') return 'rank';
+  if(IX.frm.has(k)) return 'formula';
+  if(IX.val.has(k)) return 'value';
+  if(findTag(k)) return 'tag';
+  if(IX.obj.has(k)) return 'object';
+  return null;
+}
+
+/* ---------- formula engine ---------- */
+function tokenize(s){
+  const out=[]; let i=0;
+  while(i<s.length){
+    const c=s[i];
+    if(/\s/.test(c)){i++;continue;}
+    if(c==='['){const j=s.indexOf(']',i); if(j<0) throw new Error('missing ]'); out.push({t:'ref',v:s.slice(i+1,j).trim()}); i=j+1; continue;}
+    if(/[0-9.]/.test(c)){let j=i; while(j<s.length&&/[0-9.]/.test(s[j]))j++; out.push({t:'num',v:parseFloat(s.slice(i,j))}); i=j; continue;}
+    if(/[a-zA-Z_]/.test(c)){let j=i; while(j<s.length&&/[a-zA-Z_0-9]/.test(s[j]))j++; out.push({t:'id',v:s.slice(i,j)}); i=j; continue;}
+    const two=s.slice(i,i+2);
+    if(['<=','>=','==','!=','&&','||'].includes(two)){out.push({t:'op',v:two});i+=2;continue;}
+    if('+-*/%^()<>,!×'.includes(c)){out.push({t:'op',v:c==='×'?'*':c});i++;continue;}
+    throw new Error('unexpected "'+c+'"');
+  }
+  return out;
+}
+function parse(s){
+  const tk=tokenize(s); let p=0;
+  const peek=()=>tk[p], eat=v=>{ if(tk[p]&&tk[p].v===v){p++;return true;} return false; };
+  const need=v=>{ if(!eat(v)) throw new Error('expected '+v); };
+  const bin=(next,ops)=>()=>{ let l=next(); for(;;){ const o=peek(); if(o&&o.t==='op'&&ops.includes(o.v)){p++; l={op:o.v,l,r:next()};} else return l; } };
+  function unary(){ if(eat('-')) return {op:'neg',a:unary()}; if(eat('!')) return {op:'not',a:unary()}; return pow(); }
+  function pow(){ const b=prim(); if(eat('^')) return {op:'^',l:b,r:unary()}; return b; }
+  function prim(){
+    const t=tk[p++]; if(!t) throw new Error('unexpected end');
+    if(t.t==='num') return {num:t.v};
+    if(t.t==='ref') return {ref:t.v};
+    if(t.t==='id'){ need('('); const args=[]; if(!eat(')')){ do{args.push(or());}while(eat(',')); need(')'); } return {fn:t.v.toLowerCase(),args}; }
+    if(t.v==='('){ const e=or(); need(')'); return e; }
+    throw new Error('unexpected "'+t.v+'"');
+  }
+  const mul=bin(unary,['*','/','%']), add=bin(mul,['+','-']), cmp=bin(add,['<','>','<=','>=','==','!=']), and=bin(cmp,['&&']), or=bin(and,['||']);
+  const e=or(); if(p<tk.length) throw new Error('unexpected "'+tk[p].v+'"'); return e;
+}
+const FN={min:Math.min,max:Math.max,floor:Math.floor,ceil:Math.ceil,round:Math.round,abs:Math.abs,
+  clamp:(x,a,b)=>Math.min(Math.max(x,a),b), if:(c,a,b)=>c?a:b};
+function refsIn(s){ const r=[]; String(s||'').replace(/\[([^\]]+)\]/g,(m,k)=>{r.push(k.trim());return m;}); return r; }
+
+function makeEnv(rank, objectId){
+  const overrides=rankedValues(objectId, rank);
+  const memo=new Map(), stack=new Set();
+  function get(k){
+    if(k==='rank') return rank;
+    if(overrides.has(k)) return overrides.get(k);
+    if(IX.frm.has(k)){
+      if(memo.has(k)) return memo.get(k);
+      if(stack.has(k)) throw new Error('loop through '+k);
+      stack.add(k); try{ const v=evalNode(parse(String(IX.frm.get(k).expr||'')),get); memo.set(k,v); return v; } finally{ stack.delete(k); }
+    }
+    if(IX.val.has(k)){ const v=Number(IX.val.get(k).value); if(Number.isNaN(v)) throw new Error(k+' is not a number'); return v; }
+    if(findTag(k)) { const e=new Error('['+k+'] has no preview value'); e.soft=true; throw e; }
+    throw new Error('unknown ['+k+']');
+  }
+  return get;
+}
+function evalNode(n,get){
+  if('num' in n) return n.num;
+  if('ref' in n) return get(n.ref);
+  if(n.fn){ const f=FN[n.fn]; if(!f) throw new Error('unknown function '+n.fn); return f(...n.args.map(a=>evalNode(a,get))); }
+  if(n.op==='neg') return -evalNode(n.a,get);
+  if(n.op==='not') return evalNode(n.a,get)?0:1;
+  const l=evalNode(n.l,get), r=evalNode(n.r,get);
+  switch(n.op){case'+':return l+r;case'-':return l-r;case'*':return l*r;case'/':return r===0?NaN:l/r;case'%':return l%r;case'^':return Math.pow(l,r);
+    case'<':return +(l<r);case'>':return +(l>r);case'<=':return +(l<=r);case'>=':return +(l>=r);case'==':return +(l===r);case'!=':return +(l!==r);case'&&':return +(l&&r);case'||':return +(l||r);}
+  throw new Error('bad operator');
+}
+function rankedValues(objectId, rank){
+  const m=new Map(); if(!objectId) return m;
+  const rows=state.data.ranks.rows.filter(r=>String(r.object)===objectId && Number(r.rank)<=rank && Number(r.rank)>=2).sort((a,b)=>Number(a.rank)-Number(b.rank));
+  for(const r of rows){
+    const k=String(r.key||''); const base=m.has(k)?m.get(k):Number(IX.val.get(k)?.value);
+    const ch=String(r.change||'').trim(); const n=parseFloat(ch.replace(/^[+=×*x]/,''));
+    if(Number.isNaN(n)||Number.isNaN(base)) continue;
+    let v=base; if(/^=/.test(ch)) v=n; else if(/^[×*x]/.test(ch)) v=base*n; else v=base+parseFloat(ch);
+    m.set(k,Math.round(v*1000)/1000);
+  }
+  return m;
+}
+function evalExpr(expr, rank=1, objectId=null, status){
+  if(!String(expr??'').trim() && status==='proposed') return {err:'proposed, no formula yet', soft:true, note:true};
+  try{ const v=evalNode(parse(String(expr||'')), makeEnv(rank,objectId)); return {v}; }
+  catch(e){ return {err:e.message, soft:!!e.soft}; }
+}
+function fmt(v){ if(typeof v!=='number'||!isFinite(v)) return String(v); return Math.round(v*100)/100+''; }
+function fillText(text, rank, objectId){
+  return String(text||'').replace(/\[([^\]]+)\]/g,(m,k)=>{ const r=evalExpr('['+k+']',rank,objectId); if('v' in r) return fmt(r.v); const t=findTag(k.trim()); return t? t.label : m; });
+}
+
+/* ---------- validation ---------- */
+function cellIssue(table, col, raw){
+  const v=String(raw??'').trim(); if(!v) return null;
+  const kind=TABLES[table].refs[col];
+  const missing=[];
+  if(kind==='tag'){ if(!findTag(v)) missing.push(v); }
+  else if(kind==='tags'){ for(const k of v.split(/\s+/)) if(!findTag(k)) missing.push(k); }
+  else if(kind==='objects'){ for(const k of v.split(/\s+/)) if(!IX.obj.has(k)) missing.push(k); }
+  else if(kind==='object'){ if(!IX.obj.has(v)) missing.push(v); }
+  else if(kind==='value'){ if(!IX.val.has(v)) missing.push(v); }
+  else if(kind==='values'){ for(const k of v.split(/\s+/)) if(!IX.val.has(k)&&!IX.frm.has(k)) missing.push(k); }
+  else if(kind==='asset'){ if(loaded.has('assets')&&!IX.ast.has(v)) missing.push(v); }
+  else if(kind==='component'){ if(loaded.has('components')&&!IX.cmp.has(v)) missing.push(v); }
+  for(const k of refsIn(v)) if(!refKind(k)) missing.push('['+k+']');
+  return missing.length? 'Unknown: '+missing.join(', ') : null;
+}
+let ISSUES=null;
+function issuesCount(){ return ISSUES? ISSUES.filter(x=>!x.note).length : null; } /* notes are shown in the list but are not problems */
+function allIssues(){ if(ISSUES) return ISSUES; ISSUES=computeIssues(); return ISSUES; }
+/* formula-issues:begin */
+/* one formula row's issue: a proposed formula with no expression is a note ("proposed, no formula yet"), not a problem */
+function formulaRowIssue(row, evalExpr){
+  if(!String(row.expr??'').trim() && row.status==='proposed') return {note:true, msg:'proposed, no formula yet'};
+  const e=evalExpr(row.expr); return e.err && !e.soft ? {msg:e.err} : null;
+}
+/* a formula cell's style for a result that is not a value: a note is muted, a soft error warns, anything else is an error */
+function formulaCellClass(e){ return e.note? 'note' : e.soft? 'warn' : 'bad'; }
+/* formula-issues:end */
+function computeIssues(){
+  const out=[];
+  for(const t of ORDER){
+    if(!loaded.has(t)&&!localMode) continue;
+    const keyCol=TABLES[t].key, seen=new Map();
+    state.data[t].rows.forEach((r,i)=>{
+      for(const c of state.data[t].columns){ const m=cellIssue(t,c,r[c]); if(m) out.push({t,i,c,msg:m,row:r}); }
+      if(keyCol){ const k=String(r[keyCol]??'').trim(); if(!k) out.push({t,i,c:keyCol,msg:'Empty '+keyCol,row:r}); else if(seen.has(k)) out.push({t,i,c:keyCol,msg:'Duplicate '+keyCol+' "'+k+'"',row:r}); else seen.set(k,1); }
+    });
+  }
+  const tk=new Map(); state.data.tags.rows.forEach((r,i)=>{ const k=String(r.key||''); if(k){ if(tk.has(k)) out.push({t:'tags',i,c:'key',msg:'Duplicate key "'+k+'"',row:r}); tk.set(k,1);} });
+  for(const r of state.data.formulas.rows){ const fi=formulaRowIssue(r, evalExpr); if(fi) out.push({t:'formulas',i:state.data.formulas.rows.indexOf(r),c:'expr',msg:fi.msg,row:r,note:!!fi.note}); }
+  return out;
+}
+
+/* ---------- CSV ---------- */
+/* csv:begin */
+function toCSV(cols, rows){
+  const esc=v=>{ v=v==null?'':String(v); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  return [cols.map(esc).join(','), ...rows.map(r=>cols.map(c=>esc(r[c])).join(','))].join('\n')+'\n';
+}
+function parseCSV(text){
+  const rows=[]; let row=[], f='', q=false, i=0; text=String(text).replace(/^﻿/,'');
+  while(i<text.length){
+    const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){f+='"';i+=2;continue;} q=false; i++; continue;} f+=c; i++; continue; }
+    if(c==='"'){q=true;i++;continue;}
+    if(c===','){row.push(f);f='';i++;continue;}
+    if(c==='\r'){i++;continue;}
+    if(c==='\n'){row.push(f);rows.push(row);row=[];f='';i++;continue;}
+    f+=c;i++;
+  }
+  if(f!==''||row.length){row.push(f);rows.push(row);}
+  const nonEmpty=rows.filter(r=>r.some(x=>x!==''));
+  if(!nonEmpty.length) return {columns:[],rows:[]};
+  const cols=nonEmpty[0].map(s=>s.trim());
+  return {columns:cols, rows:nonEmpty.slice(1).map(r=>{ const o={}; cols.forEach((c,j)=>{ o[c]=coerce(r[j]??''); }); return o; })};
+}
+function coerce(s){ const raw=String(s), t=raw.trim(); return (/^-?\d+(\.\d+)?$/.test(t) && String(Number(t))===t)? Number(t) : raw; }
+/* merges parsed CSV into a table: columns the CSV names are added; merge updates rows by key and adds new ones; replace swaps the rows */
+function importRows(tbl, key, parsed, mode){
+  for(const c of parsed.columns) if(!tbl.columns.includes(c)) tbl.columns.push(c);
+  if(mode==='replace'||!key){ if(mode==='replace') tbl.rows=parsed.rows; else tbl.rows.push(...parsed.rows); }
+  else { const at=new Map(tbl.rows.map((r,i)=>[String(r[key]),i])); for(const r of parsed.rows){ const k=String(r[key]??''); if(k&&at.has(k)) Object.assign(tbl.rows[at.get(k)],r); else tbl.rows.push(r); } }
+}
+/* csv:end */
+
+/* ---------- persistence ---------- */
+const LS='ashen-tag-workbench-v1';
+function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(state.data)); if(localMode) for(const t of ORDER) TS(t).snapSave=snapshotOf(state.data[t].columns, state.data[t].rows); }catch(e){ setStatus('bad','Browser storage is full or blocked, so this edit is only in this tab. Export CSV now.'); } }
+function loadLocal(){ try{ const s=localStorage.getItem(LS); if(s){ const d=JSON.parse(s); for(const t of ORDER) if(d[t]&&Array.isArray(d[t].rows)){ const cols=Array.isArray(d[t].columns)? d[t].columns.slice() : []; for(const c of TABLES[t].columns) if(!cols.includes(c)) cols.push(c); state.data[t]={columns:cols, rows:d[t].rows}; } } }catch(e){} }
+function editable(t){ return localMode || (!!db && canWrite && loaded.has(t)); }
+function setStatus(level,msg){
+  const el=document.getElementById('status');
+  const pend=dirty.size+saving.size;
+  const where=localMode?'<b class="warn">Local only</b>: saved in this browser; export CSV to keep it':(canWrite?'<b class="ok">Shared</b>: edits save to this page\'s table store':'<b class="warn">Read only</b>');
+  el.innerHTML=where+' · '+(pend?'<b>Saving…</b>':'All changes saved')+(msg?' · <span class="'+(level||'')+'">'+escapeHtml(msg)+'</span>':'');
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* view:begin */
+/* Pure helpers for the table view: filters, changed rows, tag links and keyboard moves. They take rows and
+   arguments only (no page globals), so workbench-view.test.mjs can load this block on its own. */
+const TAG_STATUS=['live-tag','game-concept','new'];
+function containsText(v,q){ return String(v??'').toLowerCase().includes(q); }
+/* true when `row` is `root` or sits under it: following parent links from row reaches root. lookup(v) gives the tag row for a key or id */
+function underTag(row, root, lookup){
+  let cur=row;
+  for(let n=0;cur&&n<1000;n++){ if(cur===root) return true; const p=String(cur.parent??'').trim(); if(!p) return false; cur=lookup(p); }
+  return false;
+}
+/* the filter spec: text (any column), cols ({column: text}); for tags also status, subtree (a tag id or key) and emptyDesc */
+function rowPasses(t, row, f, columns, lookup){
+  const q=String(f.text??'').trim().toLowerCase();
+  if(q && !columns.some(c=>containsText(row[c],q))) return false;
+  for(const c of Object.keys(f.cols||{})){ const v=String(f.cols[c]??'').trim().toLowerCase(); if(v && !containsText(row[c],v)) return false; }
+  if(t==='tags'){
+    if(f.status && String(row.status??'')!==f.status) return false;
+    if(f.emptyDesc && String(row.description??'').trim()!=='') return false;
+    if(f.subtree){ const root=lookup(f.subtree); if(!root||!underTag(row,root,lookup)) return false; }
+  }
+  return true;
+}
+/* tag links: the keys a related value names, the children of a tag, and the tags whose related list names it */
+function relatedKeys(v){ return String(v??'').split(/\s+/).filter(Boolean); }
+function childTags(tags, row, lookup){ return tags.filter(r=>r!==row && lookup(String(r.parent??'').trim())===row); }
+function incomingRelated(tags, row, lookup){ return tags.filter(r=>r!==row && relatedKeys(r.related).some(k=>lookup(k)===row)); }
+/* keyboard: the cell an arrow key moves to, the nearest one in that direction that has an input (has(r,c)); null at the edge */
+function nextCell(pos, key, nr, nc, has){
+  const d={ArrowUp:[-1,0], ArrowDown:[1,0], ArrowLeft:[0,-1], ArrowRight:[0,1]}[key];
+  if(!d) return null;
+  let r=pos.r+d[0], c=pos.c+d[1];
+  while(r>=0 && c>=0 && r<nr && c<nc){ if(has(r,c)) return {r,c}; r+=d[0]; c+=d[1]; }
+  return null;
+}
+/* whether an arrow key moves between cells, or belongs to the caret of the cell being edited. Up and Down always move (leaving a cell commits it). */
+function arrowMoves(key, editing, atStart, atEnd){
+  if(!editing || key==='ArrowUp' || key==='ArrowDown') return true;
+  if(key==='ArrowLeft') return atStart;
+  if(key==='ArrowRight') return atEnd;
+  return false;
+}
+/* changed view: a row is matched to its base row by its key, or by its whole content when the table has no key */
+function rowSig(r,columns){ return columns.map(c=>String(r[c]??'')).join('\u0001'); }
+function baseKey(r,columns,key){ return key? String(r[key]??'') : rowSig(r,columns); }
+/* the base rows indexed for matching (first row wins for a repeated key); null when there is no base */
+function baseIndex(columns, key, base){
+  if(!base) return null;
+  const idx=new Map();
+  for(const b of base.rows||[]){ const k=baseKey(b,columns,key); if(!idx.has(k)) idx.set(k,b); }
+  return idx;
+}
+/* how a row differs from its base: {kind:'new'|'changed', cols:Set of changed columns}, or null when unchanged or no base */
+function classifyRow(columns, key, row, idx){
+  if(!idx) return null;
+  const b=idx.get(baseKey(row,columns,key));
+  if(!b) return {kind:'new', cols:new Set()};
+  if(!key) return null; /* a keyless row matches its base only when its content is the same */
+  const cols=new Set(columns.filter(c=>String(row[c]??'')!==String(b[c]??'')));
+  return cols.size? {kind:'changed', cols} : null;
+}
+/* the rows of the base that the table no longer has */
+function removedCount(columns, key, rows, base){
+  if(!base) return 0;
+  const have=new Set(rows.map(r=>baseKey(r,columns,key)));
+  const seen=new Set(); let n=0;
+  for(const b of base.rows||[]){ const k=baseKey(b,columns,key); if(seen.has(k)) continue; seen.add(k); if(!have.has(k)) n++; }
+  return n;
+}
+/* every changed row of a table: map row index -> classifyRow result, plus how many base rows are gone */
+function changeMap(columns, key, rows, base){
+  const idx=baseIndex(columns,key,base), map=new Map();
+  if(!idx) return {map, removed:0};
+  rows.forEach((r,i)=>{ const c=classifyRow(columns,key,r,idx); if(c) map.set(i,c); });
+  return {map, removed:removedCount(columns,key,rows,base)};
+}
+/* view:end */
+
+/* ---------- rendering ---------- */
+function renderTabs(){
+  const el=document.getElementById('tabs'); el.textContent='';
+  const views=[...ORDER.filter(t=>TABLES[t].group!=='presentation'),'sheet','|',...ORDER.filter(t=>TABLES[t].group==='presentation'),'|','check'];
+  for(const v of views){
+    if(v==='|'){ const sp=document.createElement('span'); sp.style.cssText='width:1px;align-self:stretch;background:var(--line);margin:6px 6px'; sp.setAttribute('aria-hidden','true'); el.appendChild(sp); continue; }
+    const b=document.createElement('button'); b.className='tab'; b.type='button'; b.setAttribute('role','tab');
+    b.setAttribute('aria-selected', String(state.view===v));
+    b.textContent= TABLES[v]? TABLES[v].label : (v==='sheet'?'Object sheet':'Check');
+    if(TABLES[v]){ const n=document.createElement('span'); n.className='n'; n.textContent= loaded.has(v)||localMode? state.data[v].rows.length : '·'; b.appendChild(n); }
+    if(v==='check'){ const n=document.createElement('span'); n.className='n'; const c=issuesCount(); n.textContent= c==null? '·' : c; b.appendChild(n); }
+    b.onclick=()=>{ state.view=v; if(TABLES[v]) ensure(v); render(); };
+    el.appendChild(b);
+  }
+}
+function render(){ renderTabs(); const p=document.getElementById('panel'); p.textContent='';
+  if(TABLES[state.view]) renderTable(p,state.view); else if(state.view==='sheet') renderSheet(p); else renderCheck(p); }
+
+/* after a banner choice, move focus to the status line so it is not lost when the banner goes */
+/* banners:begin */
+/* a table's banners as buttons; a button runs its action (runBanner) and then moves focus to the status line */
+function btn(label,fn,cls){ const b=document.createElement('button'); b.type='button'; b.textContent=label; if(cls) b.className=cls; b.onclick=fn; return b; }
+function focusStatus(){ const s=document.getElementById('status'); if(s){ s.tabIndex=-1; s.focus(); } }
+function renderBanners(p,t){
+  const ts=TS(t), banners=tableBanners(t), seen=ts.announced||new Set();
+  for(const bn of banners){
+    const box=document.createElement('div'); box.className='banner '+bn.kind;
+    box.setAttribute('role', seen.has(bn.text)? 'group' : 'alert'); /* each banner text is announced once, when it first appears */
+    const msg=document.createElement('span'); msg.textContent=bn.text+' '; box.appendChild(msg);
+    for(const x of bn.buttons) box.appendChild(btn(x.label,()=>runBanner(t,x.id)));
+    p.appendChild(box);
+  }
+  ts.announced=new Set(banners.map(b=>b.text)); /* a banner that goes away and comes back is announced again */
+}
+/* banners:end */
+function renderTable(p,t){
+  const def=TABLES[t], tbl=state.data[t];
+  renderBanners(p,t);
+  const tools=document.createElement('div'); tools.className='toolbar';
+  const q=document.createElement('input'); q.type='search'; q.id='q-'+t; q.placeholder='Filter rows'; q.setAttribute('aria-label','Filter rows');
+  const count=document.createElement('span'); count.className='count'; count.setAttribute('aria-live','polite');
+  const add=btn('Add row',()=>{ const r={}; tbl.columns.forEach(c=>r[c]=''); tbl.rows.unshift(r); state.filter[t]=''; markDirty(t); render(); },'primary');
+  const col=btn('Add column',()=>openText('Add a column to '+def.label,'Type the new column name.','',[['Add',v=>{ v=v.trim(); if(v&&!tbl.columns.includes(v)){ tbl.columns.push(v); markDirty(t); render(); } }]],true));
+  const exp=btn('Export CSV',()=>exportCSV(t));
+  const imp=btn('Import CSV',()=>importDialog(t));
+  const nActive=activeFilters(t);
+  const fb=btn('Filters'+(nActive? ' ('+nActive+')' : ''),()=>{ state.fopen[t]=!state.fopen[t]; render(); });
+  fb.setAttribute('aria-expanded', String(!!(state.fopen[t]||nActive)));
+  const cmpSel=document.createElement('select'); cmpSel.setAttribute('aria-label','Compare with');
+  for(const [v,l] of [['load','Changed since load'],['save','Changed since last save']]){ const o=document.createElement('option'); o.value=v; o.textContent=l; if(v===(state.cmp[t]||'load')) o.selected=true; cmpSel.appendChild(o); }
+  cmpSel.onchange=()=>{ state.cmp[t]=cmpSel.value; draw(); };
+  const onlyLab=document.createElement('label'); onlyLab.className='fcol check'; const only=document.createElement('input'); only.type='checkbox'; only.checked=!!state.changedOnly[t]; only.setAttribute('aria-label','Changed rows only');
+  const onlySpan=document.createElement('span'); onlySpan.textContent='Changed only'; onlyLab.append(only,onlySpan);
+  only.onchange=()=>{ state.changedOnly[t]=only.checked; state.shown[t]=PAGE; draw(); };
+  tools.append(q,fb,cmpSel,onlyLab,count,add,col,imp,exp); if(!editable(t)){ add.disabled=col.disabled=imp.disabled=true; }
+  p.appendChild(tools);
+  const help=document.createElement('p'); help.className='help'; help.style.margin='8px 0'; help.innerHTML=def.help; p.appendChild(help);
+  if(t==='formulas'||t==='objects'||t==='tags'){ const lg=document.createElement('div'); lg.className='legend'; lg.innerHTML='<span><i style="background:var(--bad)"></i>unknown reference</span><span><i style="background:var(--warn)"></i>tag has no preview value</span>'; p.appendChild(lg); }
+  if(state.fopen[t]||nActive) p.appendChild(filterPanel(t,()=>draw()));
+  if(editable(t)){ const kb=document.createElement('p'); kb.className='count'; kb.style.margin='6px 0'; kb.textContent='Keys: arrows move between cells · Enter or a letter edits · Enter saves · Esc cancels'; p.appendChild(kb); }
+  q.value=state.filter[t]||'';
+  const grid=document.createElement('div'); grid.className='grid';
+  /* keys: arrows move between cells; Enter (or a letter, or a click) starts an edit; Enter commits; Esc cancels */
+  const enterEdit=(inp,td)=>{ if(!inp.readOnly||!editable(t)) return false; inp.dataset.orig=inp.value; inp.readOnly=false; td.classList.add('editing'); return true; };
+  grid.addEventListener('keydown',e=>{
+    const inp=e.target; if(!(inp instanceof HTMLInputElement)||!inp.classList.contains('cellin')) return;
+    const td=inp.parentElement, tr=td.parentElement, editing=!inp.readOnly;
+    if(e.key==='Enter'){
+      e.preventDefault();
+      if(!editing){ if(enterEdit(inp,td)) inp.select(); return; }
+      state.focusCell={t, i:Number(tr.dataset.i), c:td.dataset.c};
+      inp.blur(); /* the change event commits the edit; a formula table redraws and restores the focus itself */
+      if(inp.isConnected){ state.focusCell=null; inp.focus(); }
+      return;
+    }
+    if(e.key==='Escape'){ if(editing){ e.preventDefault(); inp.value=inp.dataset.orig??inp.value; inp.readOnly=true; td.classList.remove('editing'); } return; }
+    if(e.key.startsWith('Arrow')){
+      const atStart=inp.selectionStart===0&&inp.selectionEnd===0, atEnd=inp.selectionEnd===inp.value.length;
+      if(!arrowMoves(e.key,editing,atStart,atEnd)) return;
+      e.preventDefault();
+      const rowsEl=[...tr.parentElement.rows];
+      const to=nextCell({r:rowsEl.indexOf(tr), c:td.cellIndex}, e.key, rowsEl.length, tr.cells.length, (r,c)=>!!rowsEl[r].cells[c]?.querySelector('input.cellin'));
+      if(to) rowsEl[to.r].cells[to.c].querySelector('input.cellin').focus();
+      return;
+    }
+    if(!editing && e.key.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey) enterEdit(inp,td); /* typing starts an edit and keeps the typed letter */
+  });
+  if(t==='tags'&&state.panel&&tbl.rows.includes(state.panel)){ const split=document.createElement('div'); split.className='split'; split.append(grid, sidePanel(state.panel)); p.appendChild(split); }
+  else p.appendChild(grid);
+  /* the changed view compares with the loaded version or with the last save (TS snapshots, set by the storage block) */
+  const baseOf=()=>TS(t)[state.cmp[t]==='save'? 'snapSave' : 'snapLoad'];
+  let chg={map:new Map(), removed:0}, shownN=tbl.rows.length;
+  const summary=()=>{
+    const parts=[]; if(shownN!==tbl.rows.length) parts.push('Showing '+shownN+' of '+tbl.rows.length);
+    const news=[...chg.map.values()].filter(v=>v.kind==='new').length, mod=chg.map.size-news;
+    const bits=[mod&&mod+' changed', news&&news+' new', chg.removed&&chg.removed+' removed'].filter(Boolean);
+    if(bits.length) parts.push(bits.join(', '));
+    count.textContent=parts.join(' · ');
+  };
+  const recheck=()=>{ chg=changeMap(tbl.columns,def.key,tbl.rows,baseOf()); };
+  const markChanged=(tr,r)=>{ const k=classifyRow(tbl.columns,def.key,r,baseIndex(tbl.columns,def.key,baseOf())); tr.classList.remove('chg','chg-new'); if(k) tr.classList.add(k.kind==='new'? 'chg-new' : 'chg'); for(const td of tr.querySelectorAll('td[data-c]')) td.classList.toggle('chg', !!(k&&k.cols.has(td.dataset.c))); };
+  const draw=()=>{
+    grid.textContent=''; let scrollHere=null;
+    const spec=filterSpec(t), lookup=findTag;
+    recheck();
+    const rows=tbl.rows.map((r,i)=>[r,i]).filter(([r,i])=>rowPasses(t,r,spec,tbl.columns,lookup) && (!state.changedOnly[t] || chg.map.has(i)));
+    shownN=rows.length; summary();
+    if(!tbl.rows.length && !localMode && !loaded.has(t)){ grid.innerHTML='<div class="empty">Loading '+escapeHtml(def.label)+'…</div>'; return; }
+    if(!tbl.rows.length){ grid.innerHTML='<div class="empty">No rows yet. Add a row, or import a CSV whose first line names the columns:<br><code class="mono">'+escapeHtml(tbl.columns.join(','))+'</code></div>'; return; }
+    const table=document.createElement('table');
+    const head=document.createElement('tr'); head.appendChild(document.createElement('th'));
+    for(const c of tbl.columns){ const th=document.createElement('th'); th.textContent=c; head.appendChild(th); }
+    if(t==='formulas'){ const th=document.createElement('th'); th.textContent='result (rank 1)'; head.appendChild(th); }
+    const thead=document.createElement('thead'); thead.appendChild(head); table.appendChild(thead);
+    const body=document.createElement('tbody');
+    for(const [r,i] of rows.slice(0,state.shown[t])){
+      const tr=document.createElement('tr'); tr.dataset.i=i; const k=chg.map.get(i); if(k) tr.className=k.kind==='new'? 'chg-new' : 'chg';
+      if(state.hi&&state.hi.t===t&&state.hi.row===r){ tr.classList.add('hi'); if(state.hi.scroll){ state.hi.scroll=false; scrollHere=tr; } }
+      const act=document.createElement('td'); act.className='act';
+      const del=document.createElement('button'); del.className='x'; del.type='button'; del.title='Delete row'; del.setAttribute('aria-label','Delete row'); del.textContent='×';
+      del.onclick=()=>{ tbl.rows.splice(i,1); markDirty(t); render(); }; if(!editable(t)) del.disabled=true;
+      if(t==='assets'&&assetsCap&&canWrite){ const up=document.createElement('button'); up.className='x'; up.type='button'; up.title='Upload preview image'; up.textContent='⤒'; up.onclick=()=>uploadPreview(r); act.appendChild(up); }
+      if(t==='tags'){ const lk=document.createElement('button'); lk.className='x'; lk.type='button'; lk.title='Children and incoming links'; lk.setAttribute('aria-label','Show children and incoming links'); lk.setAttribute('aria-pressed',String(state.panel===r)); lk.textContent='⇄'; lk.onclick=()=>keepScroll(()=>{ state.panel= state.panel===r? null : r; render(); }); act.appendChild(lk); }
+      if(t==='objects'){ const go=document.createElement('button'); go.className='x'; go.type='button'; go.title='Open sheet'; go.textContent='↗'; go.onclick=()=>{ state.sheet=String(r.id); state.view='sheet'; render(); }; act.appendChild(go); }
+      act.appendChild(del); tr.appendChild(act);
+      for(const c of tbl.columns){
+        const td=document.createElement('td'); td.className='c-'+c; td.dataset.c=c; if(k&&k.cols.has(c)) td.classList.add('chg');
+        const inp=document.createElement('input'); inp.className='cellin'; inp.value=r[c]??''; inp.setAttribute('aria-label',c);
+        inp.readOnly=true; /* cells start in navigation mode: a click, Enter or a letter starts an edit (see the grid keydown) */
+        inp.addEventListener('click',()=>enterEdit(inp,td));
+        inp.addEventListener('blur',()=>{ inp.readOnly=true; td.classList.remove('editing'); });
+        const issue=cellIssue(t,c,r[c]); if(issue){ td.classList.add('bad'); inp.title=issue; } else if(r[c]!=null&&String(r[c]).length>30) inp.title=String(r[c]);
+        inp.addEventListener('change',()=>{ r[c]=coerce(inp.value); markDirty(t); const is=cellIssue(t,c,r[c]); td.classList.toggle('bad',!!is); inp.title=is||''; markChanged(tr,r); recheck(); summary(); if(t==='formulas') draw(); renderTabs(); });
+        td.appendChild(inp); if(t==='tags'&&(c==='parent'||c==='related')){ const links=linkChips(r,c); if(links) td.appendChild(links); } tr.appendChild(td);
+      }
+      if(t==='formulas'){ const td=document.createElement('td'); td.className='out'; const e=evalExpr(r.expr,1,null,r.status); if('v' in e) td.textContent=fmt(e.v); else { td.textContent=e.err; td.classList.add(formulaCellClass(e)); } tr.appendChild(td); }
+      body.appendChild(tr);
+    }
+    table.appendChild(body); grid.appendChild(table);
+    if(scrollHere) scrollHere.scrollIntoView({block:'center'});
+    if(state.focusCell&&state.focusCell.t===t){ const f=state.focusCell; state.focusCell=null; for(const trEl of body.rows) if(Number(trEl.dataset.i)===f.i){ [...trEl.cells].find(td=>td.dataset.c===f.c)?.querySelector('input')?.focus(); break; } }
+    if(rows.length>state.shown[t]){ const m=document.createElement('div'); m.className='more'; m.appendChild(btn(`Show ${Math.min(PAGE,rows.length-state.shown[t])} more of ${rows.length-state.shown[t]}`,()=>{ state.shown[t]+=PAGE; draw(); })); grid.appendChild(m); }
+  };
+  let tmr; q.addEventListener('input',()=>{ clearTimeout(tmr); tmr=setTimeout(()=>{ state.filter[t]=q.value; state.shown[t]=PAGE; draw(); },150); });
+  draw();
+}
+/* jumps to a row: clears the filters so it is in the grid, and marks it for a highlight and a scroll */
+function jumpTo(t,row){
+  const i=state.data[t].rows.indexOf(row); if(i<0) return;
+  state.filter[t]=''; state.colf[t]={}; state.tagf[t]={}; state.changedOnly[t]=false;
+  state.shown[t]=Math.max(state.shown[t], i+1);
+  state.view=t; state.hi={t, row, scroll:true}; render();
+}
+/* a tag link button for a parent or related key; a key with no tag is shown, disabled */
+function linkButton(key, target){
+  const b=btn(target? (target.key||target.id) : key, ()=>jumpTo('tags',target), 'reflink');
+  if(target) b.title=target.id+(target.label? ' · '+target.label : '')+' · jump to this row'; else { b.disabled=true; b.className+=' bad'; b.title='No tag with this key'; }
+  return b;
+}
+function linkChips(row, c){
+  const keys= c==='parent'? [String(row.parent??'').trim()].filter(Boolean) : relatedKeys(row.related);
+  if(!keys.length) return null;
+  const box=document.createElement('div'); box.className='reflinks';
+  for(const k of keys) box.appendChild(linkButton(k, findTag(k)));
+  return box;
+}
+/* the side panel for one tag: its children and the tags that link to it */
+function sidePanel(row){
+  const tags=state.data.tags.rows, box=document.createElement('aside'); box.className='sidepanel'; box.setAttribute('aria-label','Links for '+(row.key||row.id));
+  const h=document.createElement('h3'); h.textContent=row.label||row.key||row.id; box.appendChild(h);
+  const sub=document.createElement('p'); sub.className='mono'; sub.textContent=row.id; box.appendChild(sub);
+  const section=(title,list)=>{
+    const hh=document.createElement('h4'); hh.textContent=title+' ('+list.length+')'; box.appendChild(hh);
+    if(!list.length){ const p=document.createElement('p'); p.className='help'; p.textContent='None.'; box.appendChild(p); return; }
+    const ul=document.createElement('ul'); ul.className='plinks';
+    for(const r of list){ const li=document.createElement('li'); li.appendChild(linkButton(r.key||r.id, r)); if(r.label){ const s=document.createElement('span'); s.textContent=' '+r.label; li.appendChild(s); } ul.appendChild(li); }
+    box.appendChild(ul);
+  };
+  section('Children', childTags(tags,row,findTag));
+  section('Incoming related links', incomingRelated(tags,row,findTag));
+  box.appendChild(btn('Close',()=>keepScroll(()=>{ state.panel=null; render(); })));
+  return box;
+}
+/* re-renders with the grid's scroll position kept (the grid is rebuilt on every render) */
+function keepScroll(fn){
+  const g=document.querySelector('#panel .grid'), top=g? g.scrollTop : 0;
+  fn();
+  const g2=document.querySelector('#panel .grid'); if(g2) g2.scrollTop=top;
+}
+/* the active column and tag filters of a table (the search box is counted separately) */
+function activeFilters(t){
+  const tf=state.tagf[t]||{};
+  return Object.values(state.colf[t]||{}).filter(v=>String(v||'').trim()).length + (t==='tags'? (tf.status?1:0)+(tf.subtree?1:0)+(tf.emptyDesc?1:0) : 0);
+}
+function filterSpec(t){
+  const tf=state.tagf[t]||{};
+  return {text:state.filter[t]||'', cols:state.colf[t]||{}, status:tf.status||'', subtree:tf.subtree||'', emptyDesc:!!tf.emptyDesc};
+}
+/* the filter panel: one box per column, and for tags a status, a parent subtree and an empty-description switch */
+function filterPanel(t, onChange){
+  const tbl=state.data[t], cf=state.colf[t]||(state.colf[t]={}), tf=state.tagf[t]||(state.tagf[t]={});
+  const box=document.createElement('div'); box.className='filters'; box.setAttribute('role','group'); box.setAttribute('aria-label','Column filters');
+  const field=(label,control,cls)=>{ const l=document.createElement('label'); l.className='fcol'+(cls? ' '+cls : ''); const s=document.createElement('span'); s.textContent=label; l.append(cls==='check'? control : s, cls==='check'? s : control); return l; };
+  let tmr;
+  const schedule=()=>{ clearTimeout(tmr); tmr=setTimeout(()=>{ state.shown[t]=PAGE; onChange(); },120); };
+  if(t==='tags'){
+    const st=document.createElement('select'); st.setAttribute('aria-label','Status');
+    for(const [v,l] of [['','Any status'],...TAG_STATUS.map(s=>[s,s])]){ const o=document.createElement('option'); o.value=v; o.textContent=l; if(v===(tf.status||'')) o.selected=true; st.appendChild(o); }
+    st.onchange=()=>{ tf.status=st.value; state.shown[t]=PAGE; onChange(); };
+    box.appendChild(field('status',st));
+    const sub=document.createElement('select'); sub.setAttribute('aria-label','Parent subtree');
+    const none=document.createElement('option'); none.value=''; none.textContent='Any parent'; sub.appendChild(none);
+    for(const r of [...tbl.rows].filter(r=>r.id).sort((a,b)=>String(a.id)<String(b.id)?-1:1)){ const o=document.createElement('option'); o.value=String(r.id); o.textContent=String(r.id); if(String(r.id)===(tf.subtree||'')) o.selected=true; sub.appendChild(o); }
+    sub.onchange=()=>{ tf.subtree=sub.value; state.shown[t]=PAGE; onChange(); };
+    box.appendChild(field('parent subtree',sub));
+    const ed=document.createElement('input'); ed.type='checkbox'; ed.checked=!!tf.emptyDesc; ed.setAttribute('aria-label','Empty description only');
+    ed.onchange=()=>{ tf.emptyDesc=ed.checked; state.shown[t]=PAGE; onChange(); };
+    box.appendChild(field('empty description only',ed,'check'));
+  }
+  for(const c of tbl.columns){
+    const inp=document.createElement('input'); inp.type='search'; inp.value=cf[c]||''; inp.placeholder=c; inp.setAttribute('aria-label','Filter '+c);
+    inp.addEventListener('input',()=>{ cf[c]=inp.value; schedule(); });
+    box.appendChild(field(c,inp));
+  }
+  const bar=document.createElement('div'); bar.className='fbar';
+  bar.appendChild(btn('Clear filters',()=>{ state.colf[t]={}; state.tagf[t]={}; state.filter[t]=''; state.shown[t]=PAGE; render(); }));
+  box.appendChild(bar);
+  return box;
+}
+function uploadPreview(row){
+  const f=document.getElementById('file'); f.accept='image/*'; f.value='';
+  f.onchange=async()=>{ const file=f.files[0]; f.accept='.csv,text/csv'; if(!file) return;
+    try{ setStatus('','Uploading '+file.name+'…'); const res=await assetsCap.upload(file); row.preview=res.url; markDirty('assets'); setStatus('ok','Preview uploaded for '+row.id); render(); }
+    catch(e){ setStatus('bad','Upload failed ('+(e&&e.code||'error')+').'); } };
+  f.click();
+}
+
+function renderSheet(p){
+  const objs=state.data.objects.rows;
+  if(!objs.length){ p.innerHTML='<div class="empty">No objects yet. Add a card, weapon or armor row on the Objects tab.</div>'; return; }
+  if(!state.sheet||!IX.obj.has(state.sheet)) state.sheet=String(objs[0].id);
+  const o=IX.obj.get(state.sheet), id=String(o.id), maxRank=Math.max(1,Number(o.maxRank)||1);
+  if(state.sheetRank>maxRank) state.sheetRank=1;
+  const tools=document.createElement('div'); tools.className='toolbar';
+  const sel=document.createElement('select'); sel.setAttribute('aria-label','Object');
+  for(const r of objs){ const op=document.createElement('option'); op.value=r.id; op.textContent=(r.name||r.id)+' · '+(r.kind||''); if(String(r.id)===id) op.selected=true; sel.appendChild(op); }
+  sel.onchange=()=>{ state.sheet=sel.value; state.sheetRank=1; render(); };
+  const rk=document.createElement('select'); rk.setAttribute('aria-label','Rank');
+  for(let i=1;i<=maxRank;i++){ const op=document.createElement('option'); op.value=i; op.textContent='Rank '+i; if(i===state.sheetRank) op.selected=true; rk.appendChild(op); }
+  rk.onchange=()=>{ state.sheetRank=Number(rk.value); render(); };
+  tools.append(sel,rk); p.appendChild(tools);
+  const rank=state.sheetRank;
+  const wrap=document.createElement('div'); wrap.className='sheet'; wrap.style.marginTop='12px'; p.appendChild(wrap);
+
+  const card=document.createElement('div'); card.className='cardart';
+  const img=document.createElement('div'); img.className='img';
+  const href=String(o.art||'').trim();
+  const pv=String(IX.ast.get(href)?.preview||IX.ast.get(String(o.artDefault||''))?.preview||'');
+  const src=/^(data:image|\/_blob\/|https?:)/.test(pv)? pv : (/^(data:image|\/_blob\/)/.test(href)? href : '');
+  if(src){ const im=document.createElement('img'); im.alt=o.name||id; im.src=src; im.onerror=()=>{ im.replaceWith(placeholder(o)); }; img.appendChild(im); }
+  else img.appendChild(placeholder(o));
+  const h=document.createElement('h2'); h.textContent=o.name||id;
+  const desc=document.createElement('p'); desc.className='help'; desc.style.color='var(--fg)'; desc.textContent=fillText(o.description,rank,id);
+  const cost=String(o.cost||'').trim()? fillText(o.cost,rank,id)+' '+(findTag(o.costResource)?.label||o.costResource||'') : '—';
+  const kv=document.createElement('dl'); kv.className='kv';
+  const add=(k,v)=>{ const dt=document.createElement('dt'); dt.textContent=k; const dd=document.createElement('dd'); dd.textContent=v||'—'; kv.append(dt,dd); };
+  add('kind',o.kind); add('type',findTag(o.cardType)?.label||o.cardType); add('stance',findTag(o.stance)?.label||o.stance); add('rarity',findTag(o.rarity)?.label||o.rarity);
+  add('cost',cost); add('skill',findTag(o.skill)?.label||o.skill); add('placement',o.placement); add('art',href||('default: '+(o.artDefault||'none'))); add('model',o.erd); add('ranks',(o.rankMode||'list')+' · max '+maxRank);
+  card.append(img,h,desc,kv); wrap.appendChild(card);
+
+  const right=document.createElement('div'); right.className='stack'; wrap.appendChild(right);
+  // tags
+  const tb=document.createElement('div'); tb.className='box'; tb.innerHTML='<h3>Tags</h3>';
+  const chips=document.createElement('div'); chips.className='chips';
+  const groups=[['tags','tag'],['exp','EXP'],['skill','skill'],['stance','stance'],['cardType','type'],['costResource','cost resource']];
+  for(const [col,lab] of groups){ for(const k of String(o[col]||'').split(/\s+/).filter(Boolean)){ const t=findTag(k); const c=document.createElement('span'); c.className='chip'+(t?'':' bad');
+    c.textContent=t? t.label : k; const s=document.createElement('small'); s.textContent=lab+' · '+(t? (t.erd||'')+(t.school?' · '+t.school:'') : 'unknown'); c.appendChild(s); c.title=t? t.id : 'No tag with this key'; chips.appendChild(c); } }
+  for(const g of String(o.grants||'').split(/\s+/).filter(Boolean)){ const c=document.createElement('span'); c.className='chip'+(IX.obj.has(g)?'':' bad'); c.textContent=IX.obj.get(g)?.name||g; const s=document.createElement('small'); s.textContent='grants'; c.appendChild(s); chips.appendChild(c); }
+  tb.appendChild(chips); right.appendChild(tb);
+  // values & formulas
+  const own=k=>k===id||k.startsWith(id+'.')||IX.val.get(k)?.scope===id||IX.frm.get(k)?.scope===id;
+  const vrows=state.data.values.rows.filter(r=>own(String(r.key)));
+  const frows=state.data.formulas.rows.filter(r=>own(String(r.key)));
+  const used=new Set(); frows.forEach(f=>refsIn(f.expr).forEach(k=>used.add(k))); refsIn(o.description).forEach(k=>used.add(k)); refsIn(o.cost).forEach(k=>used.add(k));
+  const outside=[...used].filter(k=>!own(k)&&k!=='rank');
+  const vb=document.createElement('div'); vb.className='box'; vb.innerHTML='<h3>Values and formulas at rank '+rank+'</h3>';
+  const vt=document.createElement('div'); vt.className='tbl';
+  const rowsHtml=[];
+  const env=makeEnv(rank,id);
+  for(const r of vrows){ let v; try{ v=fmt(env(String(r.key))); }catch(e){ v=e.message; } rowsHtml.push(['value',r.key,v,r.unit,r.description]); }
+  for(const r of frows){ const e=evalExpr(r.expr,rank,id,r.status); rowsHtml.push(['formula',r.key,'v' in e?fmt(e.v):e.err,'',r.expr]); }
+  for(const k of outside){ const kind=refKind(k)||'unknown'; let v='—'; try{ v=fmt(env(k)); }catch(e){ v=e.soft?'runtime':e.message; } rowsHtml.push(['uses '+kind,k,v,'',(IX.val.get(k)||IX.frm.get(k))?.description||findTag(k)?.label||'']); }
+  vt.innerHTML='<table><thead><tr><th>kind</th><th>key</th><th>value</th><th>unit</th><th>detail</th></tr></thead><tbody>'+rowsHtml.map(r=>'<tr><td>'+escapeHtml(r[0])+'</td><td class="mono">'+escapeHtml(r[1])+'</td><td class="num">'+escapeHtml(r[2])+'</td><td>'+escapeHtml(r[3]||'')+'</td><td class="mono">'+escapeHtml(r[4]||'')+'</td></tr>').join('')+'</tbody></table>';
+  vb.appendChild(vt); right.appendChild(vb);
+  // progression
+  const pb=document.createElement('div'); pb.className='box'; pb.innerHTML='<h3>Rank progression</h3>';
+  const keys=[...vrows.map(r=>String(r.key)),...frows.map(r=>String(r.key))];
+  if(keys.length){
+    let html='<table><thead><tr><th>key</th>'; for(let i=1;i<=maxRank;i++) html+='<th style="text-align:right">R'+i+'</th>'; html+='</tr></thead><tbody>';
+    for(const k of keys){ html+='<tr><td class="mono">'+escapeHtml(k)+'</td>'; for(let i=1;i<=maxRank;i++){ let v; try{ v=fmt(makeEnv(i,id)(k)); }catch(e){ v='—'; } html+='<td class="num">'+escapeHtml(v)+'</td>'; } html+='</tr>'; }
+    html+='</tbody></table>'; const d=document.createElement('div'); d.className='tbl'; d.innerHTML=html; pb.appendChild(d);
+  }
+  const rl=state.data.ranks.rows.filter(r=>String(r.object)===id);
+  const note=document.createElement('p'); note.className='help';
+  note.textContent= (o.rankMode==='formula'? 'Algorithm: formulas read [rank]. ' : '') + (rl.length? rl.map(r=>'R'+r.rank+': '+r.key+' '+r.change).join(' · ') : 'No rank rows for this object.');
+  pb.appendChild(note); right.appendChild(pb);
+  // relations
+  const tagKeys=new Set(String(o.tags||'').split(/\s+/).concat([o.stance,o.skill]).filter(Boolean));
+  const rel=state.data.relations.rows.filter(r=>tagKeys.has(String(r.source))||tagKeys.has(String(r.target)));
+  if(rel.length){ const rb=document.createElement('div'); rb.className='box'; rb.innerHTML='<h3>Relations through its tags</h3>';
+    const ul=document.createElement('ul'); ul.className='issues'; for(const r of rel){ const li=document.createElement('li'); li.textContent=(findTag(r.source)?.label||r.source)+' '+String(r.relation).toLowerCase().replace(/_/g,' ')+' '+(findTag(r.target)?.label||r.target)+(r.value!==''&&r.value!=null?' ('+r.value+')':'')+(r.note?' · '+r.note:''); ul.appendChild(li); }
+    rb.appendChild(ul); right.appendChild(rb); }
+}
+function placeholder(o){
+  const s=document.createElementNS('http://www.w3.org/2000/svg','svg'); s.setAttribute('viewBox','0 0 200 300'); s.setAttribute('width','100%'); s.setAttribute('height','100%'); s.setAttribute('role','img'); s.setAttribute('aria-label','Default art for '+(o.name||o.id));
+  const kind=String(o.kind||'');
+  const glyph={card:'M100 70 L130 150 L100 230 L70 150 Z',weapon:'M96 40 h8 v160 h18 v10 h-18 v40 h-8 v-40 h-18 v-10 h18 Z',armor:'M60 80 h80 l-10 120 l-30 30 l-30 -30 Z'}[kind]||'M100 90 a60 60 0 1 0 0.1 0 Z';
+  s.innerHTML='<rect width="200" height="300" fill="var(--sunk)"/><rect x="10" y="10" width="180" height="280" rx="10" fill="none" stroke="var(--line)" stroke-width="2"/><path d="'+glyph+'" fill="none" stroke="var(--ember)" stroke-width="3"/><text x="100" y="275" text-anchor="middle" fill="var(--muted)" font-family="IBM Plex Mono, monospace" font-size="11">'+escapeHtml(o.artDefault||'default art')+'</text>';
+  return s;
+}
+function renderCheck(p){
+  const notLoaded=ORDER.filter(t=>!localMode&&!loaded.has(t));
+  if(notLoaded.length){ const w=document.createElement('div'); w.className='toolbar'; const m=document.createElement('p'); m.className='help'; m.textContent='Not checked yet, because these tables are not loaded: '+notLoaded.map(t=>TABLES[t].label).join(', ')+'.'; w.append(m, btn('Load all tables',()=>{ notLoaded.forEach(ensure); render(); })); p.appendChild(w); }
+  const iss=allIssues();
+  const probs=iss.filter(x=>!x.note).length;
+  const h=document.createElement('p'); h.className='help'; h.textContent= probs? probs+' problems across all tables. Click one to jump to its table.' : 'No problems: every reference resolves and every formula computes.';
+  p.appendChild(h);
+  const ul=document.createElement('ul'); ul.className='issues';
+  for(const it of iss.slice(0,400)){ const li=document.createElement('li'); const b=document.createElement('button'); b.className='x'; b.style.color='var(--fg)'; b.type='button';
+    const kc=TABLES[it.t].key; b.textContent=TABLES[it.t].label+' › '+(kc? it.row[kc] : 'row '+(it.i+1))+' › '+it.c+': '+it.msg;
+    b.onclick=()=>{ state.view=it.t; state.filter[it.t]=String(kc? it.row[kc] : it.row[it.c]||''); render(); }; li.appendChild(b); ul.appendChild(li); }
+  p.appendChild(ul);
+  const ex=document.createElement('div'); ex.className='toolbar'; ex.style.marginTop='12px';
+  ex.append(btn('Export every table as one JSON file',()=>{ if(notLoaded.length){ notLoaded.forEach(ensure); setStatus('warn','Loading every table first; export again when the counts on the tabs fill in.'); render(); return; } const all={}; for(const t of ORDER) all[t]=state.data[t]; offer('ashen-tag-workbench.json', JSON.stringify(all,null,1)); }));
+  p.appendChild(ex);
+}
+
+/* ---------- import / export ---------- */
+async function offer(filename, text){
+  if(downloads){ try{ await downloads.save({filename, data:text}); setStatus('ok','Saved '+filename); return; } catch(e){ if(e&&e.code==='declined') return; } }
+  openText(filename,'Copy this text and save it as '+filename+'.',text,[['Copy',v=>{ try{ navigator.clipboard.writeText(v).then(()=>setStatus('ok','Copied'),()=>{}); }catch(e){} }]],false);
+}
+function exportCSV(t){ offer('ashen-'+t+'.csv', toCSV(state.data[t].columns, state.data[t].rows)); }
+function importDialog(t){
+  const def=TABLES[t];
+  openText('Import CSV into '+def.label,'Paste CSV below, or choose a file. The first line must name the columns. Merge updates rows with the same '+(def.key||'content')+' and adds new ones; Replace swaps the whole table.','',[
+    ['Choose file…',()=>{ const f=document.getElementById('file'); f.accept='.csv,text/csv'; f.value=''; f.onchange=async()=>{ const file=f.files[0]; if(!file) return; document.getElementById('dlg-text').value=await file.text(); document.getElementById('dlg').showModal(); }; f.click(); }, true],
+    ['Merge',v=>applyImport(t,v,'merge')],['Replace',v=>applyImport(t,v,'replace')]],false);
+}
+function applyImport(t,text,mode){
+  if(!editable(t)){ setStatus('warn','This table is not loaded or not editable yet.'); return; }
+  const parsed=parseCSV(text); if(!parsed.columns.length){ setStatus('bad','That CSV has no header row.'); return; }
+  importRows(state.data[t], TABLES[t].key, parsed, mode);
+  markDirty(t); setStatus('ok','Imported '+parsed.rows.length+' rows into '+TABLES[t].label+' ('+mode+')'); render();
+}
+function openText(title,help,text,actions,keepOpen){
+  const d=document.getElementById('dlg'); document.getElementById('dlg-title').textContent=title; document.getElementById('dlg-help').textContent=help;
+  const ta=document.getElementById('dlg-text'); ta.value=text; ta.style.minHeight= text||actions.length>2?'260px':'60px';
+  const row=document.getElementById('dlg-actions'); row.textContent='';
+  for(const [label,fn,stay] of actions){ row.appendChild(btn(label,()=>{ const v=ta.value; if(!stay) d.close(); fn(v); }, label==='Merge'||label==='Add'?'primary':'')); }
+  row.appendChild(btn('Close',()=>d.close())); d.showModal(); ta.focus();
+}
+
+/* ---------- lazy loading ---------- */
+function ensure(t){
+  if(loaded.has(t)||pending.has(t)||localMode) return;
+  if(!window.__subscribe) return;
+  pending.add(t); window.__subscribe(t);
+  for(const r of Object.values(TABLES[t].refs||{})){ const dep={tag:'tags',tags:'tags',object:'objects',objects:'objects',value:'values',values:'values',asset:'assets',component:'components'}[r]; if(dep&&dep!==t) ensure(dep); }
+}
+/* ---------- boot ---------- */
+rebuild(); setStatus(); render();
+(async()=>{
+  const cl=window.claude;
+  const [d,u,dl,as]=await Promise.all([cl?.use?.('db')??null, cl?.use?.('user')??null, cl?.use?.('downloads')??null, cl?.use?.('assets')??null]).catch(()=>[null,null,null,null]);
+  db=d; downloads=dl; assetsCap=as; render();
+  if(!db){ localMode=true; ORDER.forEach(t=>loaded.add(t)); loadLocal(); for(const t of ORDER) TS(t).snapLoad=TS(t).snapSave=snapshotOf(state.data[t].columns, state.data[t].rows); rebuild(); setStatus('warn','The shared table store is not available here.'); render(); return; }
+  if(u){ try{ const w=await u.can('data.write'); if(w===false) canWrite=false; }catch(e){} }
+  window.__subscribe=subscribeTable;
+  for(const t of ORDER) if(CORE.has(t)) ensure(t);
+  if(TABLES[state.view]) ensure(state.view);
+})();
+</script>
+
+</body>
+</html>

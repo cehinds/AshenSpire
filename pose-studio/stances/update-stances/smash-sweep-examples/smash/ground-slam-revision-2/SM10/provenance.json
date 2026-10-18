@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 2,
+  "catalogId": "SM10",
+  "revision": "ground-slam-revision-2",
+  "frameCount": 5,
+  "frameSlots": [
+    "S",
+    "takeoff",
+    "airborne",
+    "ground-impact",
+    "S"
+  ],
+  "tool": "image_gen.imagegen",
+  "rawSha256": "223fc2dc08e7464e45bfcbda6a103a53ba67a2aa4cdf6b7922df1081fd35a723",
+  "rawDimensions": [
+    2172,
+    724
+  ],
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "seedPath": "pose-studio/stances/update-stances/sequence-review/frames/S.webp",
+  "seedPathBase": "repository root",
+  "seedSha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+  "frameSize": [
+    768,
+    768
+  ],
+  "sharedActionScale": 1.214983713355049,
+  "groundY": 658,
+  "seedPlacement": [
+    128,
+    192
+  ],
+  "extraction": [
+    {
+      "frame": 2,
+      "bounds": [
+        497,
+        230,
+        821,
+        583
+      ],
+      "rawGround": 583,
+      "placement": [
+        187,
+        229
+      ]
+    },
+    {
+      "frame": 3,
+      "bounds": [
+        923,
+        161,
+        1271,
+        528
+      ],
+      "rawGround": 580,
+      "placement": [
+        172,
+        149
+      ]
+    },
+    {
+      "frame": 4,
+      "bounds": [
+        1270,
+        385,
+        1767,
+        599
+      ],
+      "rawGround": 580,
+      "placement": [
+        82,
+        421
+      ]
+    }
+  ],
+  "bookends": "Exact original S decoded RGBA pixels padded without resize; first/last PNG bytes identical; source WebP container differs",
+  "normalizationNotes": "Five alpha-connected figures isolated; detached particles assigned to closest full figure through nearest-alpha map within90px. One action scale across strip preserves airborne offset. Impact floor inferred from blade contact/boot plane, not effect bottom; dust can extend belowfloor. Airborne feet never independently floored.",
+  "status": "director_accepted_normalized_option_review_QA_passed",
+  "runtimeChanged": false,
+  "motif": "Wide scissor spiral slam",
+  "uniqueActionPaintings": 3,
+  "unchangedGeneratedOriginal": "/workspace/generated_images/exec-33044301-309f-45c2-a0da-998b36edebc7.png",
+  "initialGeneration": "/workspace/generated_images/exec-8aa3316a-9110-49b0-96fd-44aaaa1886f3.png",
+  "promptFiles": [
+    "prompt.txt",
+    "spacing-repair.prompt.txt"
+  ],
+  "inputCanvasSha256": "c284d5b4b8c9f97b162dd1530c027510d4d32dfe3b1ecb7fe8a89e7d5cbdfb3b",
+  "reviewScope": "New heavy jumping ground-slam option concepts only; supersedes prior vault/horizontal studies; no gameplay adoption",
+  "normalizationAlphaHandling": "Retain whole connected figure/impact footprint; detached visible debris assigned via closest alpha support within90pixels. Omit disconnected islands maxalpha<=16. Source S unchanged.",
+  "fileSha256": {
+    "frames/01.png": "45e710d9e001eb9f7e1b1b0f42296564c30a5b556169e4000cb7eb0194a0ae41",
+    "frames/02.png": "3fb2004a37b2fa537cee7fa111be32c5ad8d636a0d2a490d8e4b5a7784a9d4c0",
+    "frames/03.png": "a5fa47814c4740e5681de8343c3d20e2082eacf6d978b194b61161a1a4b4afea",
+    "frames/04.png": "3c7e7ebcd7eef4c2975be004e1b58e401417384b4bc99877eeed7665eb42d84c",
+    "frames/05.png": "45e710d9e001eb9f7e1b1b0f42296564c30a5b556169e4000cb7eb0194a0ae41",
+    "preview.gif": "1ee8ada0e682f482df6c69caeaec08746df23f5ccd22c242c783666879078d5f",
+    "preview.png": "d12e74d79d5f266059e254657566acc61215f07234b1a107542c505ae927df7a",
+    "prompt.txt": "d87391b960c26095bd96aec997ebfc3589b33a5070407af7a5a60a011bd619b2",
+    "raw-before-spacing-repair.png": "d7efe2bc79ad406dcb41830beb5ecd4b5458c4614f9390076e156dc1f1a54a37",
+    "raw.png": "223fc2dc08e7464e45bfcbda6a103a53ba67a2aa4cdf6b7922df1081fd35a723",
+    "spacing-repair.prompt.txt": "e3bf815e0b31e02f2735195cda3ef710b8eed81e9c91c90f1599d7c3971ce253"
+  },
+  "qa": {
+    "reviewers": [
+      "sweep_sequences_art",
+      "integration_audit"
+    ],
+    "result": "APPROVE",
+    "verified": "50 RGBA frames, 20 exact padded S bookends, ten GIFs of five slots, complete blades and impact effects, fixed floor with airborne offsets",
+    "metadataHashAssertions": 122,
+    "minimumVisibleMarginPx": 24,
+    "scope": "Option artwork only; not gameplay selection"
+  }
+}

@@ -1,0 +1,13 @@
+Make one tightly focused edit to the supplied approved Sweep B board. Preserve SW16, SW19, and SW20 unchanged in pose and silhouette. Change ONLY SW17 in the top-right cell and SW18 in the middle-left cell, to create two clearly different options from each other and from Sweep A12. Do not alter the other three poses, character identity, camera, or weapon design.
+
+Output exactly 1024x1536 transparent PNG with a 2-column x 3-row layout of equal 512x512 cells. Keep five figures row-major: SW16 top-left, SW17 top-right, SW18 middle-left, SW19 middle-right, SW20 bottom-left; bottom-right cell remains empty. Keep all figures and complete swords inside their cells with no collision between neighboring figures. Match the same small gameplay-scale Reaver and established long two-handed greatsword.
+
+Preserve all five original Reaver designs: closed helmet, worn rusty silver/bronze armor, continuous crimson cape; rear-left three-quarter view facing screen-right; no shield, added props, environment, text, labels, borders, or effects. Each pose has exactly two visible hands gripping the same connected two-handed greatsword hilt, with both forearms traceable to the hands; both boots planted flat.
+
+Keep SW16 exactly as the low-forward/downward narrow hold with its downward diagonal blade. Keep SW19 exactly as the very wide low-forward sweep with blade forward. Keep SW20 exactly as the high-arc extended lunge; retain its long rear leg and do not reinterpret it as a neutral side coil.
+
+Edit SW17 only: make the body's weight visibly rearward, with the torso leaning backward; one long front leg reaches forward while the rear leg is bent and loaded. Retain the shoulder-high lateral greatsword blade, held across/behind the shoulder, not overhead. Its silhouette should read rear-weighted and braced, distinct from SW18 and A12.
+
+Edit SW18 only: make feet narrow and close, torso upright. Put both separated hands and hilt at low ribs/waist. The blade runs horizontally to screen-left, clearly below the shoulders. Use a compact low-waist cross-coil, distinct from SW17's backward lean, long front leg, and shoulder-high blade.
+
+Render a clean semi-realistic isolated game concept sheet with consistent anatomy and proportions. Preserve the untouched SW16, SW19, and SW20 designs from the supplied board.

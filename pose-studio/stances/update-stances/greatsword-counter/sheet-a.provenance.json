@@ -1,0 +1,113 @@
+{
+  "generated_at_utc": "2026-10-12T16:25:29.204775+00:00",
+  "tool": "tools.image_gen__imagegen",
+  "exact_prompt": "sheet-a-repair-final.prompt.txt",
+  "prompt_sha256": "ab839ee18254aadbd81dec6defa729878a8047e602b9a294d9fcc2cefaad01e3",
+  "requested_dimensions": [
+    1024,
+    1536
+  ],
+  "actual_dimensions": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    254
+  ],
+  "transparent_background": true,
+  "reference_images": [
+    {
+      "path": "pose-studio/stances/update-stances/greatsword-counter/sheet-a-repair-2.png",
+      "sha256": "ac43c85c1a98463114b4b94c8490316663adcd46db553a4796ea70fbb6a0b1f8",
+      "visually_inspected": true
+    }
+  ],
+  "original_tool_path": "/workspace/generated_images/exec-7bff1bac-30e7-4813-97bf-a91245f3a162.png",
+  "preserved_artifact": "sheet-a.png",
+  "raw_bytes_preserved": true,
+  "sha256": "cdf9e317db377a672a6de09af90516bf903246cd5800727f7acf364d353d49cd",
+  "concept_ids": [
+    "CT11",
+    "CT12",
+    "CT13",
+    "CT14",
+    "CT15"
+  ],
+  "layout": "2 columns x 3 rows, row-major; bottom-right empty",
+  "review_status": "director concept-approved CT11\u201314 source; old depicted CT15 superseded by approved ct15-replacement.png; not runtime registered",
+  "observations": [
+    "All five complete silhouettes now appear inside nominal cells, with no overlap",
+    "CT14 distinctly lower and wider; CT13 visible hilt grips",
+    "Figures remain above requested210px standing height; exact72px margins not consistently achieved",
+    "CT12/14/15 grip clarity remains art director review item",
+    "CT15-only followup did not clarify second grip; canonical board retains prior revision",
+    "Final short navel-grip repair also failed; CT15 remains flagged one-hand concept"
+  ],
+  "alpha_cell_diagnostics": [
+    {
+      "cell": 1,
+      "alpha_gt_127_bbox_local": [
+        131,
+        168,
+        436,
+        487
+      ]
+    },
+    {
+      "cell": 2,
+      "alpha_gt_127_bbox_local": [
+        81,
+        197,
+        419,
+        490
+      ]
+    },
+    {
+      "cell": 3,
+      "alpha_gt_127_bbox_local": [
+        97,
+        142,
+        499,
+        424
+      ]
+    },
+    {
+      "cell": 4,
+      "alpha_gt_127_bbox_local": [
+        70,
+        118,
+        427,
+        425
+      ]
+    },
+    {
+      "cell": 5,
+      "alpha_gt_127_bbox_local": [
+        94,
+        87,
+        462,
+        384
+      ]
+    },
+    {
+      "cell": 6,
+      "alpha_gt_127_bbox_local": null
+    }
+  ],
+  "approved_concept_ids": [
+    "CT11",
+    "CT12",
+    "CT13",
+    "CT14"
+  ],
+  "superseded_depictions": [
+    {
+      "concept_id": "CT15",
+      "replacement": "ct15-replacement.png",
+      "replacement_label": "Two-hand low hanging cover",
+      "reason": "old sheet depiction lacks a clearly visible second hilt grip"
+    }
+  ]
+}

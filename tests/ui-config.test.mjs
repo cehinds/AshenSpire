@@ -63,7 +63,7 @@ test('the W4 parent and combat scene carry the contract values', () => {
     sizing: { minimums: { footerPx: 56, targetPx: 44 }, compactBelowPx: 768 },
     layering: { plate: { bleedFraction: 0.02 } },
   });
-  assert.deepEqual(w4a.sizing.bands, { hud: 10, scene: 55, context: 30, footer: 5 });
+  assert.deepEqual(w4a.sizing.bands, { hud: 10, scene: 49, context: 27, footer: 14 });
   assert.equal(w4a.sizing.floorPercent, 80);
   assert.deepEqual(w4a.layering.layers.map((l) => [l.id, l.z, l.enabled]), [
     ['skyline', 1, true], ['floor', 2, true], ['actors', 3, true], ['targets', 4, true],
@@ -226,14 +226,9 @@ test('scene bands that do not sum to 100 are refused by name', () => {
     'content/config/ui/scenes/w4c-dialogue.json: sizing.bands sum to 105, not 100');
 });
 
-test('desktop-band scene bands with a negative entry are refused by name, even when they sum to 100', () => {
-  refusedWith(planted('ui/scenes/w4a-combat.json', (d) => { d.sizing.desktopBands = { hud: -5, scene: 45, context: 60, footer: 0 }; }),
-    'content/config/ui/scenes/w4a-combat.json: sizing.desktopBands must map each band to a non-negative percent');
-});
-
-test('desktop-band scene bands that do not sum to 100 are refused by name', () => {
-  refusedWith(planted('ui/scenes/w4a-combat.json', (d) => { d.sizing.desktopBands.footer = 10; }),
-    'content/config/ui/scenes/w4a-combat.json: sizing.desktopBands sum to 106, not 100');
+test('a retired desktopBands table is refused by name: desktop and widescreen use sizing.bands', () => {
+  refusedWith(planted('ui/scenes/w4a-combat.json', (d) => { d.sizing.desktopBands = { hud: 8, scene: 50, context: 38, footer: 4 }; }),
+    'content/config/ui/scenes/w4a-combat.json: sizing.desktopBands is retired; desktop and widescreen use sizing.bands');
 });
 
 test('a floorPercent outside 0–100 is refused by name', () => {
@@ -298,7 +293,7 @@ test('a content/config JSON is stray, by name, unless the generated module was c
 
 // ---- the compatibility shim -------------------------------------------------
 
-test('wireframeUi still equals the pre-migration snapshot, key order included', () => {
+test('wireframeUi equals the approved composition snapshot, key order included', () => {
   const snapshot = readFileSync(new URL('./fixtures/wireframe-ui-snapshot.json', import.meta.url), 'utf8');
   assert.deepStrictEqual(JSON.parse(JSON.stringify(wireframeUi)), JSON.parse(snapshot));
   assert.equal(`${JSON.stringify(wireframeUi, null, 2)}\n`, lf(snapshot), 'same keys in the same order with the same numbers');

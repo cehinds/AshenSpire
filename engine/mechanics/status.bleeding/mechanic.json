@@ -1,0 +1,25 @@
+{
+  "id": "status.bleeding",
+  "tag": "status.bleeding",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Bleeding",
+  "description": "Lose 1 HP per stack at turn start. Bodily Chance Recovery.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.bleeding"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

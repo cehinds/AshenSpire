@@ -1,0 +1,193 @@
+{
+  "schemaVersion": 1,
+  "id": "reaver-greatsword-pilot",
+  "classId": "reaver",
+  "weaponFamily": "greatsword",
+  "reviewManifest": "pose-studio/stances/update-stances/sequence-review/preview-assets.json",
+  "canvas": [
+    768,
+    512
+  ],
+  "stageAnchor": [
+    384,
+    464
+  ],
+  "approval": "Owner approved implementation and merge of reviewed held poses and combat sequences; no new image generation.",
+  "choices": [
+    {
+      "role": "counter",
+      "previewId": "C",
+      "sourceOption": "greatsword-counter-15-original"
+    },
+    {
+      "role": "defend",
+      "previewId": "D",
+      "sourceOption": "greatsword-counter-12"
+    },
+    {
+      "role": "evade",
+      "previewId": "E",
+      "sourceOption": "greatsword-evade-15"
+    },
+    {
+      "role": "sweep",
+      "previewId": "W",
+      "sourceOption": "greatsword-sweep-18"
+    },
+    {
+      "role": "smash",
+      "previewId": "S",
+      "sourceOption": "greatsword-smash-05",
+      "preserve": true,
+      "drawOffset": [
+        50,
+        0
+      ]
+    },
+    {
+      "role": "guard-break",
+      "sourceOption": "greatsword-guard-break-06",
+      "preserve": true,
+      "drawOffset": [
+        128,
+        0
+      ]
+    },
+    {
+      "role": "impact-v",
+      "previewId": "V",
+      "sourceOption": "greatsword-evade-12"
+    },
+    {
+      "role": "impact-g",
+      "previewId": "G",
+      "sourceOption": "greatsword-counter-20"
+    },
+    {
+      "role": "impact-h",
+      "previewId": "H",
+      "sourceOption": "greatsword-counter-16"
+    },
+    {
+      "role": "evade-1",
+      "previewId": "EV1",
+      "sourceOption": "greatsword-evade-16-transparent"
+    },
+    {
+      "role": "evade-2",
+      "previewId": "EV2",
+      "sourceOption": "greatsword-evade-11-front-sword"
+    },
+    {
+      "role": "evade-3",
+      "previewId": "EV3",
+      "sourceOption": "greatsword-evade-13"
+    },
+    {
+      "role": "attack-1",
+      "aliasOf": "smash",
+      "previewId": "AT1",
+      "sourceOption": "greatsword-smash-05"
+    },
+    {
+      "role": "attack-2",
+      "previewId": "AT2",
+      "sourceOption": "greatsword-sweep-20"
+    },
+    {
+      "role": "attack-3",
+      "previewId": "AT3",
+      "sourceOption": "greatsword-smash-06"
+    },
+    {
+      "role": "attack-4",
+      "previewId": "AT4",
+      "sourceOption": "greatsword-sweep-16"
+    },
+    {
+      "role": "attack-5",
+      "aliasOf": "evade",
+      "previewId": "AT5",
+      "sourceOption": "greatsword-evade-15"
+    },
+    {
+      "role": "attack-6",
+      "aliasOf": "evade-3",
+      "previewId": "AT6",
+      "sourceOption": "greatsword-evade-13"
+    }
+  ],
+  "legacyAttack3Source": {
+    "path": "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png",
+    "width": 1536,
+    "height": 1024,
+    "sha256": "9bfd8c7b13ae42ae55d06718d03cec89c47947c4fc017b1ba61b8e8a50bf0bda",
+    "sourceBounds": [
+      40,
+      15,
+      431,
+      506
+    ],
+    "cropBounds": [
+      37,
+      12,
+      434,
+      509
+    ],
+    "scale": 0.8553971486761711
+  },
+  "sequences": {
+    "impact": {
+      "previewIds": [
+        "D",
+        "V",
+        "G",
+        "H",
+        "C",
+        "D"
+      ],
+      "holds": [
+        2,
+        3,
+        1,
+        2,
+        3,
+        2
+      ]
+    },
+    "attack": {
+      "previewIds": [
+        "AT1",
+        "AT2",
+        "AT3",
+        "AT4",
+        "AT5",
+        "AT6"
+      ]
+    },
+    "evade": {
+      "previewIds": [
+        "EV1",
+        "EV2",
+        "EV3"
+      ]
+    },
+    "counterGuard": {
+      "prelude": "impact",
+      "then": [
+        "S",
+        "attack",
+        "C"
+      ]
+    },
+    "counterEvasion": {
+      "prelude": "evade",
+      "then": [
+        "attack",
+        "C"
+      ],
+      "intermediateStanceReturn": false
+    }
+  },
+  "scope": "Only default Reaver + sole greatsword receives this profile; runtime eligibility and receipt semantics belong to the runtime model."
+}

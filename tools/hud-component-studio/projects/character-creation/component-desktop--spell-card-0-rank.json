@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "title": "Spell Card 0 Rank",
+  "canvas": {
+    "width": 96,
+    "height": 71,
+    "background": "transparent"
+  },
+  "defaultState": "spells",
+  "states": [
+    {
+      "id": "spells",
+      "name": "Spells"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "spell-card-0-rank-background",
+      "name": "Spell Card 0 Rank Background \u00b7 background",
+      "type": "rect",
+      "parent": "spell-card-0-rank",
+      "x": 0,
+      "y": 0,
+      "width": 96,
+      "height": 28,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "#1e415a",
+      "stroke": "none"
+    },
+    {
+      "id": "spell-card-0-rank-text",
+      "name": "Spell Card 0 Rank Text",
+      "type": "text",
+      "parent": "spell-card-0-rank",
+      "x": 25,
+      "y": 6,
+      "width": 70,
+      "height": 65,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Rank 1",
+      "fontSize": 13,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "spell-card-0-rank-background-trim",
+      "name": "Spell Card 0 Rank Background \u00b7 independent trim",
+      "type": "rect",
+      "parent": "spell-card-0-rank",
+      "x": 0,
+      "y": 0,
+      "width": 96,
+      "height": 28,
+      "z": 1.1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none",
+      "stroke": "#ad985b"
+    },
+    {
+      "id": "spell-card-0-rank",
+      "name": "Spell Card 0 Rank",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 96,
+      "height": 71,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    }
+  ],
+  "metadata": {
+    "componentSource": "spell-card-0-rank",
+    "sourceState": "spells",
+    "designOnly": true
+  }
+}

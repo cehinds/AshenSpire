@@ -80,6 +80,7 @@ default,,sentinelsOath,n,powers.sentinelsOath.n
 default,,forsakenWarflag,weak,powers.forsakenWarflag.weak
 default,,wrathCoil,damage,powers.wrathCoil.damage
 default,,favored,skillXpMult,skill.favoredXpMult
+default,,oathKept,block,tagMechanics.oath.block
 default,,ashenGrip,restoreStamina,powers.ashenGrip.restoreStamina
 default,,lodestarShard,restoreMana,powers.lodestarShard.restoreMana
 default,,waxenSeal,heal,powers.waxenSeal.heal

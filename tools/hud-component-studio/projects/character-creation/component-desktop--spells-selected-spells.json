@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Spells / selected spell summary",
+  "canvas": {
+    "width": 680,
+    "height": 65,
+    "background": "transparent"
+  },
+  "defaultState": "spells",
+  "states": [
+    {
+      "id": "spells",
+      "name": "Spells"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "spells-selected-summary",
+      "name": "Spells Selected Summary",
+      "type": "text",
+      "parent": "spells-selected-spells",
+      "x": 0,
+      "y": 0,
+      "width": 680,
+      "height": 65,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Selected: Comet Fragment  \u00b7  Choose another spell",
+      "fontSize": 18,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "spells-selected-spells",
+      "name": "Spells / selected spell summary",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 680,
+      "height": 65,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    }
+  ],
+  "metadata": {
+    "componentSource": "spells-selected-spells",
+    "sourceState": "spells",
+    "designOnly": true
+  }
+}

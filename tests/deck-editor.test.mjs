@@ -15,12 +15,26 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { locationServices, locationTags } from '../src/model/locations.js';
 import { deckEditorModel, deckEditorDoors, deckVariantKey, openDeckEdit, nextFilterPreset, deckEditorView } from '../src/ui/models/DeckEditorModel.js';
+import { deckEditorCollectionRows } from '../src/ui/models/deckEditorCollectionRows.js';
 import { setKeyBindings } from '../src/ui/input.js';
-import { withModalDom as withDom } from './helpers/modal-dom.mjs';
+import { withModalDom as withBaseDom } from './helpers/modal-dom.mjs';
+
+// The shared discard confirmation owns a short input-shield timer. Keep it
+// inside this synchronous DOM fixture instead of leaking into the next test.
+const withDom = fn => withBaseDom((...args) => {
+  const nativeTimeout = globalThis.setTimeout;
+  const nativeElement = globalThis.HTMLElement;
+  globalThis.HTMLElement = args[0].document.body.constructor;
+  const timers = new Set();
+  globalThis.setTimeout = (...params) => { const id = nativeTimeout(...params); timers.add(id); return id; };
+  try { return fn(...args); }
+  finally { for (const id of timers) clearTimeout(id); globalThis.setTimeout = nativeTimeout;
+    if (nativeElement === undefined) delete globalThis.HTMLElement; else globalThis.HTMLElement = nativeElement; }
+});
 
 const REG = createRegistries(contentBundle);
 // Keep the historical equipment filler allocation used by these edit plants.
@@ -404,6 +418,7 @@ test('DOM: inspection is read-only; explicit actions, keyboard and pad edit; Don
 
     // B cancels: everything the session changed is back, and the veil is gone.
     editor.dispatch({ family: 'controller', button: 1 });
+    document.querySelector('.confirmation-confirm').click();
     assert.equal(cancelled, 1);
     assert.deepEqual(editState(run), before, 'Cancel restores both piles, the slots, the guards and the mint counter');
     assert.equal(root.isConnected, false);
@@ -431,6 +446,7 @@ test('DOM: Start confirms inside the bounds, and the Escape key cancels', async 
     const second = mountDeckEditor(document.body, { registries: REG, run: again, settings: {}, onCancel: () => { cancelled += 1; } });
     second.root.querySelector('.deck-editor-tile[data-key="basic:guard"] .deck-editor-step[data-action="add"]').click();
     win.dispatchEvent(new dom.Event('keydown', { key: 'Escape' }));
+    document.querySelector('.confirmation-confirm').click();
     assert.equal(cancelled, 1);
     assert.deepEqual(editState(again), before);
   });
@@ -444,7 +460,9 @@ test('Reading Desk: text search is off by default (owner, 2026-10-11)', async ()
     assert.equal(editor.root.querySelector('.deck-editor-search'), null, 'no collection search by default');
     assert.equal(editor.root.querySelector('[data-focus-key="deck-search"]'), null, 'no deck search by default');
     assert.equal(editor.root.querySelector('input[type="search"]'), null, 'no search input at all by default');
-    assert.ok(editor.root.querySelector('[data-focus-key="scope:all"]'), 'the All / In Deck chips stay');
+    assert.equal(editor.root.querySelector('[data-focus-key="scope:all"]'), null, 'redundant scope tabs are omitted');
+    assert.equal(editor.root.querySelector('[data-focus-key="scope:deck"]'), null);
+    assert.equal(editor.root.querySelector('[data-pane="collection"] .deck-editor-pane-title'), null, 'the header already reports the deck count');
     editor.close();
   });
 });
@@ -469,7 +487,7 @@ test('Reading Desk: search accepts hotkey characters without mutating or closing
   });
 });
 
-test('Reading Desk: inspector uses one native artwork image across card selection', async () => {
+test('Reading Desk: inspector uses one artwork background with independent cutout layers', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   const { illustratedArtwork } = await import('../src/ui/components/illustratedCard.js');
   withDom(() => {
@@ -481,29 +499,36 @@ test('Reading Desk: inspector uses one native artwork image across card selectio
         editor.root.querySelector(`[data-focus-key="tile:${tile.key}"]`).click();
         editor.root.querySelector(`[data-focus-key="inspect:collection:${tile.key}"]`).click();
         const face = editor.root.querySelector('.deck-editor-reading .card');
-        const images = face.querySelectorAll('[data-component="art"] img');
+        const images = face.querySelectorAll('[data-component="art"] .playing-card-art');
         assert.equal(images.length, 1, tile.name);
         assert.ok(images[0].classList.contains('playing-card-art'));
-        assert.equal(images[0].getAttribute('data-card-art'), illustratedArtwork(tile.ref, face.dataset.cardId, { large: true }).kind);
+        const art = illustratedArtwork(tile.ref, face.dataset.cardId, { large: true, definition:resolveCard(REG,tile.ref), registries:REG });
+        assert.equal(images[0].getAttribute('data-card-art'), art.kind);
+        const cutouts = face.querySelectorAll('[data-card-art-component]');
+        assert.equal(cutouts.length, art.componentArt?.sprites.filter(layer => layer.id !== 'background').length || 0);
+        if (cutouts.length) {
+          cutouts[0].dispatchEvent(new Event('error'));
+          assert.notEqual(images[0].getAttribute('data-card-art'), 'simple');
+          assert.equal(face.querySelectorAll('[data-card-art-component]').length, 0);
+        }
         assert.equal(face.querySelector('.deck-editor-art'), null, 'no second Reading Desk artwork overlay');
       }
     } finally { editor.close(); }
   });
 });
 
-test('Reading Desk: Undo reverses a row action and Cancel still restores the opening state', async () => {
+test('Reading Desk: footer omits Undo and Cancel restores the opening state after confirmation', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
     const run = freshRun(), before = editState(run);
     const editor = mountDeckEditor(document.body, { registries: REG, run });
     editor.root.querySelector('.deck-editor-tile .deck-editor-step[data-action="add"]').click();
     assert.equal(run.deck.length, before.deck.length + 1);
-    assert.equal(editor.root.querySelector('.deck-editor-undo').disabled, false);
-    editor.root.querySelector('.deck-editor-undo').click();
-    assert.deepEqual(editState(run), before);
-    assert.equal(editor.root.querySelector('.deck-editor-undo').disabled, true);
-    editor.root.querySelector('.deck-editor-tile .deck-editor-step[data-action="add"]').click();
+    assert.equal(editor.root.querySelector('.deck-editor-undo'), null);
+    assert.equal(editor.root.querySelector('#deck-editor-close'), null);
     editor.root.querySelector('#deck-editor-cancel').click();
+    document.querySelector('.confirmation-confirm')?.click();
+    document.querySelector('.confirmation-confirm')?.click();
     assert.deepEqual(editState(run), before);
   });
 });
@@ -529,16 +554,42 @@ test('Reading Desk: deck search and Cards mode preserve the run and Back returns
   });
 });
 
-test('Reading Desk: In Deck hides a removed reward and Undo restores it', async () => {
+test('Reading Desk: thumbnail art follows the live style preference and retains legacy fallback', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const { applyCardArtStyle } = await import('../src/ui/cardArtStyle.js');
+  withDom(dom => {
+    applyCardArtStyle({});
+    const run=freshRun(),before=editState(run);
+    const editor=mountDeckEditor(document.body,{registries:REG,run,search:true});
+    try {
+      const search=editor.root.querySelector('[data-focus-key="deck-search"]');
+      search.value='Gorefire';
+      search.dispatchEvent(new dom.Event('input'));
+      editor.root.querySelector('[data-focus-key="display:cards"]').click();
+      const well=()=>editor.root.querySelector('.deck-editor-row .deck-editor-art');
+      assert.equal(well().dataset.cardArt,'simple');
+      well().querySelector('img').dispatchEvent(new dom.Event('error'));
+      assert.equal(well().dataset.cardArt,'official');
+      assert.equal(well().querySelector('[data-card-art-layers]'),null);
+      applyCardArtStyle({cardArtStyle:'Legacy'});
+      assert.equal(well().dataset.cardArt,'official');
+      applyCardArtStyle({});
+      assert.equal(well().dataset.cardArt,'simple');
+      assert.deepEqual(editState(run),before);
+    } finally {editor.close();applyCardArtStyle({});}
+  });
+});
+
+test('Reading Desk: removed cards remain available and Undo restores their deck count', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
     const run = freshRun();
     const editor = mountDeckEditor(document.body, { registries: REG, run });
     const reward = deckEditorModel({ registries: REG, run }).deck.find(row => row.cardId === 'gorefireSlash');
     editor.root.querySelector(`[data-focus-key="row-remove:${reward.groupKey}"]`).click();
-    editor.root.querySelector('[data-focus-key="scope:deck"]').click();
-    assert.equal([...editor.root.querySelectorAll('.deck-editor-tile .deck-editor-name')].some(node => node.textContent === reward.name), false);
-    editor.root.querySelector('.deck-editor-undo').click();
+    const removed = editor.root.querySelector(`.deck-editor-tile[data-key="card:${deckVariantKey(reward.ref)}"]`);
+    assert.equal(removed.querySelector('.deck-editor-stepper-count').textContent, '0/1', 'owned cards remain available without another tab');
+    removed.querySelector('.deck-editor-step[data-action="add"]').click();
     assert.equal([...editor.root.querySelectorAll('.deck-editor-tile .deck-editor-name')].some(node => node.textContent === reward.name), true);
     editor.close();
   });
@@ -674,7 +725,7 @@ test('Reading Desk: selection reveals inline Inspect without navigating or chang
     inspect.click();
     assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'inspect');
     assert.equal(editor.root.querySelector('.deck-editor-reading .card').dataset.cardId, 'defend');
-    assert.equal(editor.root.querySelector('.deck-editor-art-toggle input').hasAttribute('disabled'), true);
+    assert.equal(editor.root.querySelector('.deck-editor-animation'), null, 'animation is hidden until requested');
     assert.deepEqual(editState(run), before);
     editor.close();
   });
@@ -908,14 +959,14 @@ test('DOM: a known attack card shows its stance type on the row and in the inspe
       || [...editor.root.querySelectorAll('.deck-editor-row')].find(node => node.querySelector('.deck-editor-name')?.textContent === strike.name);
     const stance = row.querySelector('.deck-editor-stance');
     assert.ok(stance, 'the row carries a stance label');
-    assert.equal(stance.textContent, 'Attack');
+    assert.equal(stance.textContent, 'Stance · Attack');
     assert.equal(stance.dataset.stance, 'attack');
     row.querySelector('.deck-editor-main').click();
     row.querySelector('.deck-editor-inline-inspect').click();
     const reason = editor.root.querySelector('.deck-editor-inspector .deck-editor-selected-reason');
     // A refusal shown on the reason line (here the Strike is already in the
     // deck) leads the line, and the stance still follows it.
-    assert.equal(reason?.textContent, 'Every Shield Strike you own is already in the deck. · Attack', 'the refusal leads and the stance follows');
+    assert.equal(reason?.textContent, 'Every Shield Strike you own is already in the deck. · Stance · Attack', 'the refusal leads and the stance follows');
     assert.equal(editor.root.querySelector('.deck-editor-inspector .deck-editor-reading .deck-editor-stance'), null, 'no stance label over the card face');
     // A library tile with no refusal names the stance on the reason line.
     const clean = deckEditorModel({ registries: REG, run, settings: {} }).collection.find(tile => tile.addable && !tile.refusal && tile.equipmentEligible !== false);
@@ -1105,7 +1156,7 @@ test('DOM: the inspector offers Add and Remove side by side, each enabled only w
     const model = () => deckEditorModel({ registries: REG, run, settings: {} });
     const add = () => editor.root.querySelector('.deck-editor-inspector [data-focus-key="selected-add"]');
     const remove = () => editor.root.querySelector('.deck-editor-inspector [data-focus-key="selected-remove"]');
-    const off = (node) => node.disabled === true || node.hasAttribute('disabled');
+    const off = (node) => !node || node.disabled === true || node.hasAttribute('disabled');
     const inspectDeckRow = (groupKey) => {
       editor.root.querySelector(`[data-focus-key="row:${groupKey}"]`).click();
       editor.root.querySelector(`[data-focus-key="inspect:deck:${groupKey}"]`).click();
@@ -1283,7 +1334,7 @@ test('DOM: an ordered deck on a phone shows one Draw order chip, and it toggles 
 
 test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical cards and Basic for the rest', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
-  const stances = new Set(['attack', 'defend', 'counter', 'smash', 'sweep', 'ranged', 'spell', 'skill', 'power', 'consumable']);
+  const stances = new Set(['attack', 'defense', 'evade', 'counter', 'smash', 'sweep', 'skill', 'power', 'consumable', 'spell', 'prepare', 'status']);
   for (const classId of ['rogue', 'starseer', 'reaver']) {
     withDom(() => {
       const run = createRunState({ seed: 0x5eed, classId, registries: REG, combatExpansionVersion: 1 });
@@ -1292,7 +1343,7 @@ test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical
         const stance = item.querySelector('.deck-editor-stance');
         assert.ok(stance && stances.has(stance.dataset.stance), `${classId}: every row names a known stance`);
         const rank = item.querySelector('.deck-editor-rank');
-        const ranksAlways = !['skill', 'power', 'consumable'].includes(stance.dataset.stance);
+        const ranksAlways = !['skill', 'power', 'consumable', 'prepare', 'status'].includes(stance.dataset.stance);
         assert.ok(!ranksAlways || rank, `${classId}: a ${stance.dataset.stance} row always shows its rank`);
         assert.ok(['physical', 'magical'].includes(item.querySelector('.deck-editor-camp')?.dataset.camp), `${classId}: every row marks physical or magical`);
         if (!rank) continue;
@@ -1306,25 +1357,53 @@ test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical
   }
 });
 
-test('DOM: range follows the player card combat default; the mark follows the camp', async () => {
+test('DOM: range follows the expanded combat delivery; the mark follows the camp', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
-  const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 1 });
-  for (const cardId of ['cometFragment', 'ricochet', 'strike', 'phaseWard', 'stargazerCard']) {
+  const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 2 });
+  for (const cardId of ['cometFragment', 'starbladePhalanx', 'ricochet', 'strike', 'phaseWard', 'stargazerCard']) {
     if (!run.deck.some(c => c.cardId === cardId)) run.sideboard.push({ instanceId: `probe-${cardId}`, cardId, upgraded: false });
   }
   withDom(() => {
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
     const row = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')].find(t => t.dataset.key?.startsWith(`card:${cardId}~`));
     const read = (cardId) => { const r = row(cardId); return [r?.querySelector('.deck-editor-range')?.dataset.range, r?.querySelector('.deck-editor-camp')?.dataset.camp]; };
-    // An untagged spell resolves at contact in combat (combatMatchups.js), so it reads Melee.
-    assert.deepEqual(read('cometFragment'), ['melee', 'magical']);
-    assert.deepEqual(read('ricochet'), ['reach', 'physical'], 'a ranged maneuver reaches near');
-    // Phase Ward carries reach:contact but attacks nothing: no range.
+    // A v2 spell takes its delivery as range: a projectile reads Ranged, a melee blade Melee.
+    assert.deepEqual(read('cometFragment'), ['ranged', 'magical']);
+    assert.deepEqual(read('starbladePhalanx'), ['melee', 'magical']);
+    // Canonical Attack identity leaves delivery range to the separate range chip.
+    assert.deepEqual(read('ricochet'), ['reach', 'physical'], 'a ranged attack retains its authored Reach delivery');
+    assert.equal(row('ricochet').querySelector('.deck-editor-stance')?.dataset.stance, 'attack');
+    // Physical marks carry the approved shield; magical marks carry the Spell sparkle.
+    const mark = (cardId) => row(cardId).querySelector('.deck-editor-camp .combat-sigil')?.dataset.sigil;
+    assert.equal(mark('ricochet'), 'physical');
+    assert.equal(mark('cometFragment'), 'spell');
+    const spellMark = row('cometFragment').querySelector('.deck-editor-camp .combat-sigil');
+    assert.equal(spellMark.querySelectorAll('path').length, 1);
+    assert.equal(spellMark.querySelector('path').getAttribute('d'), 'm16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z');
+    // Phase Ward carries range:melee but attacks nothing: no range.
     assert.equal(read('phaseWard')[0], undefined, 'a card that attacks nothing shows no range');
     // A magical Power is a Power, with no Cantrip badge.
     const stargazer = row('stargazerCard');
-    assert.equal(stargazer?.querySelector('.deck-editor-stance')?.dataset.stance, 'power');
+    assert.equal(stargazer?.querySelector('.deck-editor-stance')?.dataset.stance, 'prepare');
     assert.equal(stargazer.querySelector('.deck-editor-rank'), null);
+    editor.close();
+  });
+});
+
+test('DOM: the range chip reads Melee, Reach and Ranged from the card\'s own range (owner, 2026-10-12)', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 2 });
+  for (const cardId of ['starbladePhalanx', 'rimeNeedle', 'cometFragment']) {
+    if (!run.deck.some(c => c.cardId === cardId)) run.sideboard.push({ instanceId: `probe-${cardId}`, cardId, upgraded: false });
+  }
+  withDom(() => {
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const chip = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')]
+      .find(t => t.dataset.key?.startsWith(`card:${cardId}~`))?.querySelector('.deck-editor-range');
+    for (const [cardId, range, label] of [['starbladePhalanx', 'melee', 'Melee'], ['rimeNeedle', 'reach', 'Reach'], ['cometFragment', 'ranged', 'Ranged']]) {
+      assert.equal(chip(cardId)?.dataset.range, range, cardId);
+      assert.equal(chip(cardId)?.textContent, label, cardId);
+    }
     editor.close();
   });
 });
@@ -1340,13 +1419,14 @@ test('DOM: the stepper reads in-deck / owned (∞ for a basic); its label is the
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
     const model = deckEditorModel({ registries: REG, run, settings: {} });
     const basic = editor.root.querySelector('.deck-editor-tile[data-key="basic:attack"] .deck-editor-stepper-count');
-    assert.equal(basic.textContent, `${model.collection.find(t => t.key === 'basic:attack').inDeck}/∞`);
+    const groupedBasic = deckEditorCollectionRows({ registries: REG, run, collection: model.collection }).find(t => t.key === 'basic:attack');
+    assert.equal(basic.textContent, `${groupedBasic.inDeck}/∞`);
     const limited = editor.root.querySelector(`.deck-editor-tile[data-key="card:${variant}"] .deck-editor-stepper-count`);
     assert.equal(limited.textContent, '1/2', 'one in the deck of two owned');
     const tile = model.collection.find(t => t.key === `card:${variant}`);
     assert.equal(limited.getAttribute('aria-label'), '1 in deck of 2 owned.', 'the label speaks the same numbers');
     assert.equal(limited.getAttribute('title'), '1 in deck of 2 owned.');
-    assert.equal(basic.getAttribute('aria-label'), `${model.collection.find(t => t.key === 'basic:attack').inDeck} in deck; unlimited copies.`);
+    assert.equal(basic.getAttribute('aria-label'), `${groupedBasic.inDeck} in deck; unlimited copies.`);
     editor.close();
   });
 });
@@ -1405,6 +1485,7 @@ test('DOM: with a row held, Escape and pad B cancel the whole edit; Enter, A and
       pickUp(editor, run);
       editor.dispatch({ family: 'controller', button: 13 }); // move it, so there is something to restore
       fire(editor);
+      document.querySelector('.confirmation-confirm').click();
       assert.equal(cancelled, 1, `${how} cancels the edit`);
       assert.equal(editor.root.isConnected, false, `${how} closes the editor`);
       assert.deepEqual(editState(run), before, `${how} restores the deck order`);
@@ -1496,5 +1577,107 @@ test('Hub tabs confirm valid deck edits before navigation and refuse an invalid 
     assert.equal(valid.session.closed, true);
     assert.equal(valid.root.isConnected, false);
     assert.equal(run.deck.length, savedLength);
+  });
+});
+
+test('DOM: a Counter shows a range only when its reply deals damage (v2)', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const run = createRunState({ seed: 0x5eed, classId: 'reaver', registries: REG, combatExpansionVersion: 2 });
+  const probes = ['evasiveGuard', 'backstep', 'dodgeRoll', 'quickstep', 'guardCounter'];
+  for (const cardId of probes) {
+    if (!run.deck.some(c => c.cardId === cardId)) run.sideboard.push({ instanceId: `probe-${cardId}`, cardId, upgraded: false });
+  }
+  withDom(() => {
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const row = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')].find(t => t.dataset.key?.startsWith(`card:${cardId}~`));
+    const rangeOf = (cardId) => row(cardId)?.querySelector('.deck-editor-range')?.dataset.range;
+    // Version-two Poise replies are offensive payloads and show their return range.
+    assert.equal(rangeOf('evasiveGuard'), 'melee', 'Evasive Guard returns Poise at Melee');
+    assert.equal(rangeOf('backstep'), 'melee', 'Backstep returns Poise at Melee');
+    // Dodge Roll and Quickstep reply with 3 damage (counterPayload hp 3), so they read Melee.
+    assert.equal(rangeOf('dodgeRoll'), 'melee', 'Dodge Roll replies with 3 damage');
+    assert.equal(rangeOf('quickstep'), 'melee', 'Quickstep replies with 3 damage');
+    // Guard Counter's reply is a damage effect, so it keeps its Melee range.
+    assert.equal(rangeOf('guardCounter'), 'melee', 'Guard Counter deals damage');
+    editor.close();
+  });
+});
+
+test('public deck group headings use canonical categories while raw filter kinds and saved refs remain intact', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 2 });
+    run.deck.push({ instanceId: 'category-force', cardId: 'forceCounter', upgraded: false });
+    run.deck.push({ instanceId: 'category-frost', cardId: 'frostCounter', upgraded: false });
+    const saved = JSON.stringify(run.deck.filter(card => card.instanceId.startsWith('category-')));
+    const model = deckEditorModel({ registries: REG, run, settings: {} });
+    for (const cardId of ['forceCounter', 'frostCounter']) {
+      const row = model.deck.find(row => row.cardId === cardId);
+      assert.equal(row.type, 'skill', 'raw compatibility filter kind remains');
+      assert.equal(row.cardCategory, 'spell');
+    }
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const groups = editor.root.querySelectorAll('.deck-editor-group');
+    assert.ok([...groups].some(group => /^Spell ·/.test(group.querySelector('summary').textContent)));
+    for (const group of groups) {
+      const name = group.querySelector('summary').textContent.split(' ·')[0];
+      for (const row of group.querySelectorAll('.deck-editor-item')) {
+        const ref = run.deck.find(card => card.instanceId === row.dataset.instanceId);
+        if (ref?.cardId === 'forceCounter' || ref?.cardId === 'frostCounter') assert.equal(name, 'Spell');
+      }
+    }
+    assert.equal(JSON.stringify(run.deck.filter(card => card.instanceId.startsWith('category-'))), saved,
+      'presentation does not migrate saved Counter card references');
+    editor.close();
+  });
+});
+
+
+test('Reading Desk: selecting or focusing a new row immediately replaces a previously opened inspection', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun(), before = editState(run);
+    const editor = mountDeckEditor(document.body, { registries: REG, run });
+    const counter = editor.root.querySelector('.deck-editor-row[data-instance-id="' + run.deck.find(card => card.cardId === 'guardCounter').instanceId + '"]');
+    counter.querySelector('.deck-editor-main').click();
+    counter.querySelector('.deck-editor-inline-inspect').click();
+    assert.equal(editor.root.querySelector('.deck-editor-reading .card').dataset.cardId, 'guardCounter');
+    const defend = editor.root.querySelector('.deck-editor-tile[data-key="basic:guard"] .deck-editor-main');
+    defend.focus();
+    assert.equal(editor.root.querySelector('.deck-editor-reading .card').dataset.cardId, 'defend', 'focus updates the face without another inspection action');
+    editor.root.querySelector('.deck-editor-tile[data-key="basic:attack"] .deck-editor-main').click();
+    assert.equal(editor.root.querySelector('.deck-editor-reading .card').dataset.cardId, 'strike', 'click updates an inspection that was already open');
+    assert.equal(editor.root.querySelector('.deck-editor-animation'), null);
+    assert.deepEqual(editState(run), before);
+    editor.close();
+  });
+});
+
+
+test('Reading Desk: Cancel and Escape guard edits, Keep editing preserves them, Accept uses the actual minimum', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun(), minimum = run.deck.length;
+    let saved = 0;
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: { deckMinSize: minimum }, onDone: () => saved++ });
+    const main = editor.root.querySelector('.deck-editor-tile .deck-editor-main');
+    main.click();
+    const buttons = editor.root.querySelector('.deck-editor-selected-buttons');
+    assert.equal(buttons.children[0].dataset.focusKey, 'selected-remove');
+    assert.equal(buttons.children[1].dataset.focusKey, 'selected-add');
+    editor.root.querySelector('.deck-editor-tile .deck-editor-step[data-action="remove"]').click();
+    assert.equal(editor.root.querySelector('#deck-editor-done').disabled, true);
+    assert.equal(editor.root.querySelector('.deck-editor-counter').getAttribute('aria-invalid'), 'true');
+    editor.root.querySelector('#deck-editor-cancel').click();
+    assert.ok(document.querySelector('.confirmation-modal'));
+    assert.equal(run.deck.length, minimum - 1, 'opening the confirmation does not discard');
+    document.querySelector('.confirmation-cancel').click();
+    assert.equal(editor.root.isConnected, true);
+    assert.equal(run.deck.length, minimum - 1, 'Keep editing preserves edits');
+    editor.root.querySelector('.deck-editor-tile .deck-editor-step[data-action="add"]').click();
+    assert.equal(editor.root.querySelector('#deck-editor-done').disabled, false);
+    assert.equal(editor.root.querySelector('.deck-editor-counter').getAttribute('aria-invalid'), 'false');
+    editor.root.querySelector('#deck-editor-done').click();
+    assert.equal(saved, 1);
   });
 });

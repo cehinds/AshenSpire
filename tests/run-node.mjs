@@ -11,7 +11,7 @@
 // tools/gatelist.mjs and tools/testnumbers.mjs still read this invocation list.
 
 import { runTests } from './engine.test.js';
-import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup } from './run-node-lanes.mjs';
+import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
 
 let options;
 try {
@@ -166,7 +166,8 @@ if (DISCOVER) {
     console.log(out || String(result.error));
     for (const file of stale) console.log(`  NOT_SPAWNED names ${file}, which no longer exists — remove the entry`);
   }
-  console.log(`${ok ? 'PASS' : 'FAIL'}  every discovered test file passes — ${files.length} files, ${count('tests')} tests, ${count('fail')} failed` +
+  const counts = shardSummaryCounts({ out, timedOut: result.error?.code === 'ETIMEDOUT', limitMinutes: SHARD_LIMIT_MS / 60000, files: files.length });
+  console.log(`${ok ? 'PASS' : 'FAIL'}  every discovered test file passes — ${counts}` +
     ` (${NOT_SPAWNED.size} run elsewhere, each with its reason in NOT_SPAWNED)` +
     (options.slow === 'exclude' ? ` (${SLOW_DISCOVERED.size} slow files left to --slow-only)` : options.slow === 'only' ? ' [slow files only]' : '') +
     (options.shard ? ` [shard ${options.shard.index}/${options.shard.count}]` : ''));

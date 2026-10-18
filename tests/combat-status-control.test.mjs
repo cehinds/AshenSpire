@@ -112,7 +112,7 @@ test('waiting breaks one lock and guarantees a Resolve window without clearing b
   assert.equal(S.controlRestrictions(ctx, entity).locked, false);
   assert.equal(S.controlRestrictions(ctx, entity).counterDisabled, false);
   assert.equal(S.sleepRestoration(ctx, entity).hp, 0);
-  assert.equal(S.statusIncomingModifier(ctx, entity, { reach: 'contact' }).percent, 0);
+  assert.equal(S.statusIncomingModifier(ctx, entity, { range: 'melee' }).percent, 0);
   S.endControlTurn(ctx, entity);
   assert.equal(S.controlRestrictions(ctx, entity).locked, true);
 });
@@ -186,10 +186,10 @@ test('fractional explicit Ward pressure carries while restore bonuses/penalties 
 
 test('Sleep and Prone add received percentages; ranged Area ignores projectile exceptions by default', () => {
   const { ctx, entity } = setup(); applyStatus(ctx, entity, 'sleep', 3); applyStatus(ctx, entity, 'prone', 1);
-  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', reach: 'contact', targeting: 'area' }), { percent: 55, evadeBonus: 0 });
-  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', reach: 'far', targeting: 'single' }), { percent: 5, evadeBonus: 4 });
-  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', reach: 'far', targeting: 'area' }), { percent: 30, evadeBonus: 0 });
-  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', reach: 'near', targeting: 'area', projectile: true }), { percent: 5, evadeBonus: 2 });
+  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', range: 'melee', targeting: 'area' }), { percent: 55, evadeBonus: 0 });
+  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', range: 'ranged', targeting: 'single' }), { percent: 5, evadeBonus: 4 });
+  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', range: 'ranged', targeting: 'area' }), { percent: 30, evadeBonus: 0 });
+  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', range: 'reach', targeting: 'area', projectile: true }), { percent: 5, evadeBonus: 2 });
   assert.equal(S.recoveryControls(ctx, entity).find(row => row.status === 'prone').disabled, true);
 });
 
@@ -249,4 +249,25 @@ test('aggregate elemental flags include later contacts and finalize once', () =>
   assert.equal(entity.statuses.decoy, undefined); assert.equal(entity.statuses.concealed, undefined);
   S.completeStatusAction(ctx, entity, { containsBlunt: true }, { actionKey: 'mixed' });
   assert.equal(entity.statuses.frozen.stacks, 1);
+});
+
+test('a physical gauge that fills an enemy Poise bar breaks it through the one break path (staggered status, meterFilled)', async () => {
+  const { balance } = await import('../src/content/balance.js');
+  const { ctx, events, queued } = setup();
+  ctx.registries.balance = balance;
+  const enemy = { id: 'e1', enemyId: 'tDummy', kind: 'enemy', alive: true, hp: 30, maxHp: 30, statuses: {},
+    poiseMeter: { value: 1, max: 2 }, pendingMove: { moveId: 'slam' } };
+  S.applyStatusPressure(ctx, enemy, 'weak', 6, null, { camp: 'physical' });
+  assert.equal(enemy.poiseMeter.value, 0, 'the gauge strain filled the bar');
+  assert.equal(enemy.skipNextTurn, true, 'the enemy is Staggered');
+  assert.equal(enemy.pendingMove, null, 'its pending move is cancelled');
+  assert.deepEqual(events.filter(e => ['statusPoiseBreak', 'meterFilled', 'enemyStaggered'].includes(e.type)).map(e => e.type),
+    ['statusPoiseBreak', 'meterFilled', 'enemyStaggered']);
+  assert.deepEqual(events.find(e => e.type === 'meterFilled'), { type: 'meterFilled', targetId: 'e1', meter: 'poise', threshold: 2 });
+  const onFill = queued.filter(a => a.target === enemy && a.effect.op === 'applyStatus');
+  assert.deepEqual(onFill.map(a => a.effect), balance.poise.onFill, 'balance.poise.onFill (the staggered status) is queued, as for a full bar');
+  assert.ok(onFill.some(a => a.effect.status === 'staggered'));
+  // Like a full bar from dealPoiseDamage, the break grows the meter (Codex, #1900).
+  assert.equal(enemy.poiseMeter.max, Math.ceil(2 * balance.poise.growthMult), 'the Poise meter grew');
+  assert.equal(enemy.poiseMeter.growths, 1, 'the growth is counted for restamps');
 });

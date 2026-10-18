@@ -1,0 +1,25 @@
+{
+  "id": "status.regen",
+  "tag": "status.regen",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Regen",
+  "description": "At the start of its turn, heals HP equal to Regen stacks. Lasts the whole fight.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.regen"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

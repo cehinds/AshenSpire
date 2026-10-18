@@ -1,0 +1,38 @@
+{
+  "mode": "configured",
+  "shown": [
+    "hp",
+    "poise",
+    "intent",
+    "defense",
+    "statuses"
+  ],
+  "revealedBy": {
+    "sp": [
+      "insight",
+      "bestiary"
+    ],
+    "mp": [
+      "insight",
+      "bestiary"
+    ],
+    "cardCosts": [
+      "insight"
+    ],
+    "deck": [
+      "bestiary"
+    ],
+    "hand": [
+      "insight"
+    ],
+    "gear": [
+      "bestiary"
+    ],
+    "relics": [
+      "bestiary"
+    ],
+    "attributes": [
+      "bestiary"
+    ]
+  }
+}

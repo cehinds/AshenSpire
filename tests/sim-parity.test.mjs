@@ -1,4 +1,4 @@
-// The simulators measure the fight a player gets (plan A1, docs/plan-polish-review-2026-09.md).
+// The simulators measure the fight a player gets (plan A1, the former polish review removed 2026-10-11).
 //
 // src/main.js and every headless simulator build a run's fight through one
 // door, engine/runCombat.js, and settle it through one exit. These checks

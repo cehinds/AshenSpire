@@ -1,0 +1,27 @@
+{
+  "id": "from_global",
+  "tag": "from:global",
+  "version": "1.0.0",
+  "family": "from",
+  "label": "Global",
+  "description": "Dealt to every class whatever it wears - balance.equipment.startingDeck.global.grants.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "from_global",
+    "color": "B8B0A0"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatExpansionStarter.js",
+    "symbol": "ensureExpandedStarterCoverage"
+  }
+}

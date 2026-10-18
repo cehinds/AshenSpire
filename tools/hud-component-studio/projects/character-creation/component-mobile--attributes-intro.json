@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "title": "Attributes / Intro",
+  "canvas": {
+    "width": 354,
+    "height": 125,
+    "background": "transparent"
+  },
+  "defaultState": "attributes",
+  "states": [
+    {
+      "id": "attributes",
+      "name": "Attributes"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "attributes-intro",
+      "name": "Attributes / Intro",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 354,
+      "height": 125,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "attributes-eyebrow",
+      "name": "Attributes Eyebrow",
+      "type": "text",
+      "parent": "attributes-intro",
+      "x": 0,
+      "y": 0,
+      "width": 354,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "YOUR FOUNDATION",
+      "fontSize": 14,
+      "fontFamily": "Arial",
+      "fill": "#b9a36e",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "attributes-heading",
+      "name": "Attributes Heading",
+      "type": "text",
+      "parent": "attributes-intro",
+      "x": 0,
+      "y": 29,
+      "width": 354,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Shape your attributes",
+      "fontSize": 28,
+      "fontFamily": "Georgia",
+      "fill": "#d7b45f",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "attributes-subheading",
+      "name": "Attributes Subheading",
+      "type": "text",
+      "parent": "attributes-intro",
+      "x": 0,
+      "y": 93,
+      "width": 354,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Make each point count.",
+      "fontSize": 16,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    }
+  ],
+  "metadata": {
+    "componentSource": "attributes-intro",
+    "sourceState": "attributes",
+    "designOnly": true
+  }
+}

@@ -56,8 +56,8 @@ const riders = {
   'blight-litany': () => [status('crimsonBlight', 3)],
   'pallbearer-s-ward': () => [draw(1, { if: lowHp() })],
   'ember-tithe': () => [offering(3), status('regen', 1, { target: 'self' })],
-  'ossuary-cant': () => [{ op: 'gainEnergy', amount: 1, if: has('crimsonBlight', 'allEnemies') }],
-  'requiem-brand': () => [status('weak', 1, { if: has('crimsonBlight') })],
+  'ossuary-cant': () => [{ op: 'gainEnergy', amount: 1, if: { p: 'any', preds: [has('crimsonBlight', 'allEnemies'), has('necroticBlight', 'allEnemies')] } }],
+  'requiem-brand': () => [status('weak', 1, { if: { p: 'any', preds: [has('crimsonBlight'), has('necroticBlight')] } })],
   'pilgrim-s-shelter': () => [{ op: 'heal', target: 'self', amount: 3, if: { p: 'turnMetric', metric: 'turnStartHpPct', atMost: 50 } }],
   'crown-of-scars': () => [offering(3), damage(5, 'enemy', { if: metric('offeringsPaid') })],
   'dawn-after-ash': () => [{ op: 'removeStatus', target: 'self', status: 'weak', amount: 1 }],
@@ -67,6 +67,15 @@ const budget = [6, 9, 13, 18, 24, 30];
 const areaFamilies = new Set(['ashen-cleaver', 'falling-constellation']);
 
 export function familyGrade(family, rank) {
+  if (family.grades) {
+    const grade = structuredClone(family.grades[rank]);
+    const magical = ['starseer', 'herald'].includes(family.classId);
+    return { rank, ...grade, textTemplate: recipeText(grade.effects, combatProfileFor(family.id)),
+      traits: { costRule: 'fixed',
+        ...(family.primary === 'damage' ? { damageSchool: magical ? 'magic' : 'physical', exposureBuildupPerHit: magical ? (rank > 0 ? 5 : 1) : 0 } : {}),
+      },
+    };
+  }
   const key = family.id.replace(/^progression-/, '');
   const advanced = rank >= 2 ? riders[key](rank) : [];
   const riderBudget = advanced.filter(e => ['damage', 'block'].includes(e.op)).reduce((sum, e) => sum + e.amount * (e.hits || 1), 0);

@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { enemyTargetGrid } from '../src/ui/models/EnemyTargetGridModel.js';
+import { alternativeEnemyTargetGrid } from '../src/ui/models/AlternativeEnemyTargetGridModel.js';
 
 const overlaps = (a, b) => a.left < b.left + b.width && a.left + a.width > b.left
   && a.top < b.top + b.height && a.top + a.height > b.top;
@@ -78,3 +80,195 @@ test('crowded fallback keeps the player sprite clear', () => {
   assert.ok(slots.every((slot, index) => !overlaps(slot, player)
     && !slots.slice(index + 1).some(other => overlaps(slot, other))));
 });
+
+for (const [label, grid] of [['Classic', enemyTargetGrid], ['Alternative', alternativeEnemyTargetGrid]]) {
+  test(`${label} grid centres a lone foe even when its own controls cover the centre`, () => {
+    const target = { id: 'a', x: 200, y: 200 };
+    const [slot] = grid({ width: 420, height: 420, targets: [target],
+      obstacles: [{ left: 170, top: 170, width: 60, height: 60, owner: 'a' }] });
+    assert.equal(slot.left + slot.width / 2, target.x);
+    assert.equal(slot.top + slot.height / 2, target.y);
+  });
+
+  test(`${label} grid keeps a foe off a neighbour's controls`, () => {
+    const neighbour = { left: 170, top: 170, width: 60, height: 60, owner: 'b' };
+    const placements = grid({ width: 420, height: 420, targets: [
+      { id: 'a', x: 200, y: 200 }, { id: 'b', x: 300, y: 200 }], obstacles: [neighbour] });
+    assert.equal(placements.length, 2);
+    const a = placements.find(slot => slot.id === 'a');
+    assert.ok(a, 'foe a is placed');
+    assert.ok(!overlaps(a, neighbour), 'a box never covers b\'s controls');
+  });
+
+  test(`${label} grid places every foe in a distinct cell when owned controls overlap`, () => {
+    // Overlapping owned controls leave each foe a single cell; the lattice is kept
+    // only when the final assignment places both foes in distinct cells.
+    const placements = grid({ width: 320, height: 150, targets: [
+      { id: 'a', x: 40, y: 37 }, { id: 'b', x: 63, y: 16 }],
+    obstacles: [
+      { left: 150, top: 26, width: 122, height: 87, owner: 'a' }, { left: 199, top: 69, width: 129, height: 41, owner: 'a' },
+      { left: 203, top: -13, width: 115, height: 62, owner: 'b' }, { left: 238, top: -3, width: 96, height: 103, owner: 'b' },
+    ] });
+    assert.equal(placements.length, 2);
+    assert.notDeepEqual(placements[0], placements[1]);
+    assert.ok(!overlaps(placements[0], placements[1]), 'the two foes do not share a cell');
+  });
+
+  test(`${label} grid still pushes a foe off unowned obstacles`, () => {
+    const blocker = { left: 170, top: 170, width: 60, height: 60 };
+    const [slot] = grid({ width: 420, height: 420, targets: [{ id: 'a', x: 200, y: 200 }], obstacles: [blocker] });
+    assert.ok(slot, 'foe a is placed');
+    assert.ok(!overlaps(slot, blocker));
+  });
+}
+
+// A small foe's intent, Inspect, HP bar and armor sit directly above its art.
+// The picker used to pass them as obstacles, which pushed the target box below
+// the foe's feet. The box now centres on the visible art (the `.sprite` rect,
+// which the stage trims to the ink) and the overhead controls stay clickable
+// above it through their combat-layers.css z-index.
+const pickerSource = readFileSync(new URL('../src/ui/components/enemyTargetPicker.js', import.meta.url), 'utf8');
+const layerCss = readFileSync(new URL('../styles/combat-layers.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+test('picker tags each foe\'s controls with its owner and keeps player controls as plain obstacles', () => {
+  assert.match(pickerSource, /\.combat-hud/);
+  assert.match(pickerSource, /\.turn-ribbon/);
+  assert.match(pickerSource, /\.combatant\.player :is\(\.combatant-leading, \.meters, \.player-action-intent\)/, 'player controls, including the placed action intent, are hard obstacles');
+  assert.match(pickerSource, /\.combatant\.enemy/);
+  assert.match(pickerSource, /:is\(\.combatant-leading, \.meters, \.nm\)/, 'foe controls include the name plate');
+  assert.match(pickerSource, /owner:\s*figure\.dataset\.eid/, 'foe controls carry their owner');
+  assert.match(pickerSource, /hardObstacles/, 'hard obstacles stay in place');
+});
+
+for (const [label, grid] of [['Classic', enemyTargetGrid], ['Alternative', alternativeEnemyTargetGrid]]) {
+  test(`${label} grid centres an isolated small foe's box on its art with overhead controls above it`, () => {
+    // 320x568 phone geometry measured in Chromium: a 42px foe under its HP row
+    // and intent/Inspect row, with the HUD and turn ribbon along the top.
+    const target = { id: 'e1', x: 182, y: 176 };
+    const meters = { left: 138, top: 132, width: 88, height: 19 };
+    const leading = { left: 92, top: 103, width: 180, height: 54 };
+    const obstacles = [{ left: 0, top: 0, width: 320, height: 60 }, { left: 110, top: 64, width: 100, height: 22 }];
+    const width = 320, height = 420;
+    // The foe's own controls are owned, so its box may still centre over them.
+    const owned = [{ ...meters, owner: target.id }, { ...leading, owner: target.id }];
+    const [slot] = grid({ width, height, targets: [target], obstacles: [...obstacles, ...owned] });
+    assert.ok(slot, 'the foe gets a box');
+    assert.ok(Math.abs(slot.left + slot.width / 2 - target.x) <= 0.5, `box centre x ${slot.left + slot.width / 2} = ${target.x}`);
+    assert.ok(Math.abs(slot.top + slot.height / 2 - target.y) <= 0.5, `box centre y ${slot.top + slot.height / 2} = ${target.y}`);
+    assert.ok(overlaps(slot, meters), 'the box may now cover the HP row, which stays clickable above it');
+    // The defect: with the overhead controls as obstacles the box sank below
+    // the art centre (Alternative: under the feet; Classic: shrunk to 48px).
+    const [old] = grid({ width, height, targets: [target], obstacles: [...obstacles, meters, leading] });
+    assert.ok(old.top + old.height / 2 - target.y > 4, 'old obstacle list dropped the box below the art centre');
+  });
+}
+
+test('overhead controls paint above the target picker in the formation stacking context', () => {
+  const z = selector => {
+    const rule = [...layerCss.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(([, sel, body]) => sel.trim().endsWith(selector) && /z-index/.test(body));
+    assert.ok(rule, `rule for ${selector}`);
+    const value = rule[2].match(/z-index:\s*([^;]+)/)?.[1].trim();
+    assert.ok(value, `${selector} sets z-index`);
+    return value;
+  };
+  assert.equal(z('.enemy-target-picker'), 'var(--combat-layer-selection)');
+  // !important beats the inline z-index (the selection layer itself) that the
+  // stage writes on a packed footer; without it the later picker would win.
+  assert.equal(z('.combatant :is(.nm,.meters,.statuses)'), 'calc(var(--combat-layer-selection) + 1) !important');
+  assert.equal(z('.combatant .combatant-leading'), 'calc(var(--combat-layer-selection) + 3) !important');
+});
+
+// A foe's box sits on its ground anchor (the shadow point under its feet): the
+// square's bottom edge is `ground`, and foes in one row share that bottom edge.
+for (const [label, grid] of [['Classic', enemyTargetGrid], ['Alternative', alternativeEnemyTargetGrid]]) {
+  test(`${label} grid puts a lone grounded foe's box bottom on its ground line, centred on x`, () => {
+    const target = { id: 'a', x: 200, y: 150, ground: 300 };
+    const [slot] = grid({ width: 420, height: 420, targets: [target] });
+    assert.ok(slot, 'the foe gets a box');
+    assert.ok(Math.abs(slot.top + slot.height - target.ground) <= 0.5, `box bottom ${slot.top + slot.height} = ${target.ground}`);
+    assert.ok(Math.abs(slot.left + slot.width / 2 - target.x) <= 0.5, `box centre x ${slot.left + slot.width / 2} = ${target.x}`);
+  });
+
+  test(`${label} grid gives two far-apart foes on one ground line identical top and height`, () => {
+    const targets = [{ id: 'l', x: 110, y: 120, ground: 300 }, { id: 'r', x: 310, y: 120, ground: 300 }];
+    const slots = grid({ width: 420, height: 420, targets });
+    assert.equal(slots.length, 2);
+    const [left, right] = targets.map(target => slots.find(slot => slot.id === target.id));
+    assert.equal(left.top, right.top, 'shared ground line gives one top');
+    assert.equal(left.height, right.height, 'every foe gets the same square size');
+    assert.equal(left.top + left.height, 300);
+    assert.equal(right.top + right.height, 300);
+  });
+
+  test(`${label} grid keeps centring a foe without a ground anchor on its y`, () => {
+    const target = { id: 'c', x: 200, y: 200 };
+    const [slot] = grid({ width: 420, height: 420, targets: [target] });
+    assert.ok(Math.abs(slot.top + slot.height / 2 - target.y) <= 0.5, `box centre y ${slot.top + slot.height / 2} = ${target.y}`);
+  });
+}
+
+// Direct placement: each foe's square sits on its own anchor when every foe fits,
+// so a crowded pair keeps centred, grounded boxes sharing one edge.
+for (const [label, grid, fullSize, firstFit] of [['Classic', enemyTargetGrid, 64, 64], ['Alternative', alternativeEnemyTargetGrid, 88, 72]]) {
+  test(`${label} grid places two close foes directly on their ground line with one shared edge`, () => {
+    const targets = [{ id: 'a', x: 120, y: 150, ground: 300 }, { id: 'b', x: 208, y: 150, ground: 300 }];
+    const obstacles = [{ left: 76, top: 200, width: 88, height: 40, owner: 'a' }, { left: 164, top: 200, width: 88, height: 40, owner: 'b' }];
+    const slots = grid({ width: 320, height: 420, targets, obstacles });
+    assert.equal(slots.length, 2);
+    const [a, b] = targets.map(target => slots.find(slot => slot.id === target.id));
+    assert.equal(a.width, a.height);
+    assert.equal(a.width, b.width, 'both boxes share one edge');
+    assert.equal(a.width, firstFit, `the first edge that fits every foe (${firstFit}px)`);
+    for (const [slot, target] of [[a, targets[0]], [b, targets[1]]]) {
+      assert.ok(Math.abs(slot.left + slot.width / 2 - target.x) <= 0.5, `centre x ${slot.left + slot.width / 2} = ${target.x}`);
+      assert.equal(slot.top + slot.height, target.ground, 'bottom on the ground line');
+    }
+    assert.ok(!overlaps(a, b), 'boxes do not overlap');
+  });
+
+  test(`${label} grid gives a lone grounded foe its full size, centred, bottom on the ground`, () => {
+    const target = { id: 'a', x: 200, y: 150, ground: 300 };
+    const [slot] = grid({ width: 420, height: 420, targets: [target] });
+    assert.equal(slot.width, fullSize);
+    assert.equal(slot.left + slot.width / 2, target.x);
+    assert.equal(slot.top + slot.height, target.ground);
+  });
+}
+
+// Codex's field (320x150): a's owned controls cover the right of the lattice and
+// hard obstacles cover x>=190 and y>=104. A complete assignment exists (a takes the
+// owned cell, b the free one); greedy nearest-first stranded b and fell through to
+// a hard-only pass that put b over a's controls.
+for (const [label, grid, size] of [['Classic', enemyTargetGrid, 64], ['Alternative', alternativeEnemyTargetGrid, 72]]) {
+  test(`${label} grid places both foes in a complete lattice assignment, clear of a's controls`, () => {
+    const owned = { left: 96, top: 0, width: 94, height: 104, owner: 'a' };
+    const hardObstacles = [{ left: 190, top: 0, width: 130, height: 150 }, { left: 0, top: 104, width: 320, height: 46 }];
+    const placements = grid({ width: 320, height: 150, size, targets: [
+      { id: 'a', x: 52, y: 52 }, { id: 'b', x: 95, y: 52 }], obstacles: [owned], hardObstacles });
+    assert.equal(placements.length, 2, 'both foes are placed');
+    const [a, b] = ['a', 'b'].map(id => placements.find(slot => slot.id === id));
+    assert.ok(a && b, 'foes a and b are placed');
+    assert.ok(!overlaps(b, owned), 'b never sits on a\'s controls (gap 0)');
+    assert.ok(!overlaps(a, b), 'the two cells are distinct');
+  });
+}
+
+// Fallback passes keep other foes' controls and the player's overhead controls
+// blocked: only unowned soft obstacles are dropped once the lattice fails.
+for (const [label, grid] of [['Classic', enemyTargetGrid], ['Alternative', alternativeEnemyTargetGrid]]) {
+  test(`${label} grid never covers another foe's controls when the first lattice fails`, () => {
+    const bControls = { left: 0, top: 0, width: 200, height: 120, owner: 'b' };
+    const placements = grid({ width: 200, height: 200, targets: [{ id: 'a', x: 100, y: 60 }],
+      obstacles: [bControls, { left: 0, top: 120, width: 200, height: 80 }] });
+    const a = placements.find(slot => slot.id === 'a');
+    assert.ok(a, 'a legal cell exists below b\'s controls, so a is placed');
+    assert.ok(!overlaps(a, bControls), 'a box never covers b\'s controls (gap 0)');
+  });
+
+  test(`${label} grid never covers a player overhead control passed as a hard obstacle`, () => {
+    const player = { left: 60, top: 60, width: 80, height: 80 };
+    const placements = grid({ width: 200, height: 200, targets: [{ id: 'a', x: 100, y: 100 }], hardObstacles: [player] });
+    assert.equal(placements.length, 1, 'foe a is placed');
+    assert.ok(!overlaps(placements[0], player), 'the box stays clear of the player controls (gap 0)');
+  });
+}

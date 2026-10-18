@@ -28,6 +28,9 @@ function fixture(coop = false) {
     ? createCoopCombat({ registries, rng: createRng(91), players: [player('a'), player('b')], enemyIds: ['wanderingSoldier'] })
     : createCombat({ registries, rng: createRng(91), player: player('a'), enemyIds: ['wanderingSoldier'] });
   combat.enemies[0].hp = combat.enemies[0].maxHp = 1000;
+  // Every class mount carries the Oath rule, which listens to cardPreparing.
+  // These tests are about a bus nobody listens on, so drop class mounts.
+  for (const mounts of Object.values(combat.propertyMounts || {})) for (const [id, m] of Object.entries(mounts)) if (m?.kind === 'class') delete mounts[id];
   return combat;
 }
 function data(combat) {
@@ -153,6 +156,9 @@ test('real run fights retain every valid bot decision, save and RNG versus force
   function fight(classId, forcePreview) {
     const run = createRunState({ seed: 1, classId, registries: base });
     const combat = createRunCombat({ registries: base, run, rng: createRng(11), enemyIds: base.encounters.get('patrol').enemies });
+    // Tougher foes: under the cost formula (SPEC §4.3a) a Rogue's 2-SP Ambush can end the patrol on turn 1, before any
+    // defensive play this check needs to see.
+    for (const enemy of combat.enemies) enemy.hp = enemy.maxHp = enemy.maxHp * 4;
     if (forcePreview) combat._emitEvent = (...args) => emitEvent(...args);
     const decisions = []; let guard = 0;
     while (!combat.result && combat.turn <= 150 && guard++ < 8000) {

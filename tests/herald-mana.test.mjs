@@ -15,23 +15,30 @@ function fight({ upgraded = false, hp = 60, mana = 0 } = {}) {
 }
 const play = c => dispatch(c, { type: 'playCard', cardInstanceId: 'communion' });
 
-test('a dry Herald buys Mana and healing with Stamina, then exhausts the base card', () => {
-  const c = fight(); const before = c.player.stamina;
+// Communion pays its fixed 1 MP before restoring 2 MP and healing 5 HP.
+test('a dry Herald cannot fund Communion from its later restore', () => {
+  const c = fight(); const before = JSON.stringify({ player: c.player, piles: c.piles });
+  assert.throws(() => play(c), /Not enough mana/);
+  assert.equal(JSON.stringify({ player: c.player, piles: c.piles }), before);
+});
+
+test('a funded Herald pays both pools, restores Mana, heals and exhausts the base card', () => {
+  const c = fight({ mana: 1 }); const before = c.player.stamina;
   play(c);
-  assert.equal(c.player.mana, 1);
-  assert.equal(c.player.hp, 62);
+  assert.equal(c.player.mana, 2);
+  assert.equal(c.player.hp, 65);
   assert.equal(c.player.stamina, before - 1);
   assert.equal(c.piles.exhaust.length, 1);
   assert.equal(c.piles.discard.length, 0);
 });
 
 test('the upgrade removes Exhaust without changing either recovery amount or cost', () => {
-  const c = fight({ upgraded: true });
+  const c = fight({ upgraded: true, mana: 1 });
   play(c);
-  assert.equal(c.player.mana, 1); assert.equal(c.player.hp, 62);
+  assert.equal(c.player.mana, 2); assert.equal(c.player.hp, 65);
   assert.equal(c.piles.exhaust.length, 0); assert.equal(c.piles.discard.length, 1);
   const def = resolveCard(reg, { cardId: 'emberCommunion', upgraded: true });
-  assert.equal(def.cost, 1); assert.ok(!def.manaCost);
+  assert.equal(def.cost, 1); assert.equal(def.manaCost, 1);
 });
 
 test('recovery respects the Mana and HP caps', () => {

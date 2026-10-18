@@ -14,7 +14,7 @@ import { combatRules } from '../src/content/combatRules.js';
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 
 const SLASH = { intent: 'attack', damage: 1, hits: 2, weight: 1 };
-const SWEEP = ['camp:physical', 'maneuver:sweep', 'reach:contact', 'targeting:single'];
+const SWEEP = ['camp:physical', 'maneuver:sweep', 'range:melee', 'targeting:single'];
 
 // An HP offering on the Counter: `offer` is the nonlethal HP payment it asks for.
 const withOffering = (card, amount) => {
@@ -25,7 +25,8 @@ const withOffering = (card, amount) => {
 function registriesWith(move = {}, offer = null) {
   const cards = offer === null ? contentBundle.cards : contentBundle.cards.map(card => card.id === 'guardCounter' ? withOffering(card, offer) : card);
   return createRegistries({ ...contentBundle, cards, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
-    ? { ...enemy, firstMove: 'slash', moves: { slash: { ...SLASH, ...move } } } : enemy) });
+    // spPool 1: this file tests one incoming action per enemy turn; the per-enemy pool override (owner 2026-10-12) keeps it.
+    ? { ...enemy, firstMove: 'slash', spPool: 1, moves: { slash: { ...SLASH, ...move } } } : enemy) });
 }
 const seatStats = { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20 };
 
@@ -63,6 +64,7 @@ test('a melee Counter facing a Sweep reports notCovered with the attack kind', (
 test('a Counter the seat cannot pay for reports cost with need and have', () => {
   const combat = solo();
   combat.player.energy = 0;
+  // guardCounter costs 1 SP under the cost formula (SPEC §4.3a), so the refusal needs 1.
   assert.deepEqual(unavailable(soloEnd(combat)), [{ ownerId: 'player', sourceId: 'e1', reason: 'cost',
     cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
 });
@@ -141,11 +143,11 @@ test('a staggered or controlled attacker reports the halt once per root', () => 
 });
 
 test('a status-only root is notCovered, and a seat it control-locks reports controlled', () => {
-  const ATTACK = ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'];
+  const ATTACK = ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'];
   const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
-    ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'debuff', weight: 1,
+    ? { ...enemy, firstMove: 'slash', spPool: 1, moves: { slash: { intent: 'debuff', weight: 1,
       effects: [{ op: 'applyStatus', status: 'paralysis', stacks: 2, target: 'player' }] } } }
-    : enemy.id === 'blightHound' ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 1, weight: 1, cardTags: ATTACK } } } : enemy) });
+    : enemy.id === 'blightHound' ? { ...enemy, firstMove: 'slash', spPool: 1, moves: { slash: { intent: 'attack', damage: 1, weight: 1, cardTags: ATTACK } } } : enemy) });
   const combat = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, reactionRulesVersion: 1,
     enemyIds: ['wanderingSoldier', 'blightHound'], player: { ...seatStats, drawPerTurn: 1,
       deck: [{ cardId: 'guardCounter', instanceId: 'r0', upgraded: false }] } });
@@ -189,6 +191,8 @@ test('a reaction that kills the attacker reports no alreadyAnswered for the canc
   const [option] = combat.pendingReaction.options;
   assert.ok(option, 'Whirling Guard is offered');
   combat.enemies[0].hp = 1;
+  // This lifecycle case needs a landed reaction; keep seed701's real draw.
+  combat.player.accuracy = 100; combat.enemies[0].evasion = 0;
   const events = dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: option.id }).events;
   assert.ok(events.some(event => event.type === 'enemyDied'), 'the reaction killed the attacker');
   assert.deepEqual(unavailable(events), [], 'nothing claims the rest of a cancelled attack');
@@ -256,13 +260,13 @@ test('mixed-version co-op reports an expanded seat reaction using that seat\'s c
   endTurn(combat, 'expanded');
   endTurn(combat, 'legacy');
   assert.deepEqual(unavailable(combat.eventLog), [{ ownerId: 'expanded', sourceId: 'e1', reason: 'cost',
-    cardId: 'whirlingGuard', cardIds: ['whirlingGuard'], attackKind: 'sweep', resource: 'stamina', need: 1, have: 0 }]);
+    cardId: 'whirlingGuard', cardIds: ['whirlingGuard'], attackKind: 'sweep', resource: 'stamina', need: 2, have: 0 }]); // Whirling Guard: 2 SP under the cost formula (SPEC §4.3a)
 });
 
 const guardBroken = events => events.filter(event => event.type === 'combatGuardBroken').map(({ type, ...payload }) => payload);
 
 test('v2: an enemy Smash that breaks a defending seat\'s Guard emits combatGuardBroken once per root', () => {
-  const SMASH = { damage: 20, hits: 1, cardTags: ['camp:physical', 'maneuver:smash', 'reach:contact', 'targeting:single'] };
+  const SMASH = { damage: 20, hits: 1, cardTags: ['camp:physical', 'maneuver:smash', 'range:melee', 'targeting:single'] };
   for (const [block, broken] of [[0, true], [200, false]]) {
     const combat = solo({ cardIds: ['defend'], move: SMASH });
     combat.player.block = 0;
@@ -277,7 +281,7 @@ test('v2: an enemy Smash that breaks a defending seat\'s Guard emits combatGuard
 
 test('v2: a lethal Smash still reports Guard broken without applying break Poise to the dead seat', () => {
   const combat = solo({ cardIds: ['defend'], move: { damage: 20, hits: 1,
-    cardTags: ['camp:physical', 'maneuver:smash', 'reach:contact', 'targeting:single'] } });
+    cardTags: ['camp:physical', 'maneuver:smash', 'range:melee', 'targeting:single'] } });
   combat.player.block = 0;
   combat.player.hp = 1;
   dispatch(combat, { type: 'playCard', cardInstanceId: 'r0' });
@@ -301,8 +305,8 @@ test('v1: a Smash that breaks Guard emits combatGuardBroken once, queued or sync
   assert.deepEqual(guardBroken(c.eventLog).map(({ targetId, sourceId, poise }) => ({ targetId, sourceId, poise })),
     [{ targetId: 'e1', sourceId: 'player', poise: 3 }]);
   // The bonus is nominal (Poise Guard may absorb it), so the log claims pressure, not damage taken.
-  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => text.startsWith('Guard broken')),
-    ['Guard broken! (+3 Poise pressure)']);
+  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => / Guard!/.test(text)),
+    ["Forsaken's attack broke Enemy's Guard! (+3 Poise pressure)"]);
 });
 
 test('v1: a lethal Smash still reports Guard broken without applying break Poise to the dead target', () => {
@@ -333,13 +337,13 @@ test('v1: a Smash with a zero break bonus still reports the Guard break, with no
   applyAttackDamage(c, c.player, enemy, 5, [], { combatProfile: { camp: 'physical', maneuver: 'smash', damageType: 'slashing', breakPoiseBonus: 0 },
     attack: { source: 'weapon', damageType: 'slashing' }, combatRiderTargets: [] });
   assert.deepEqual(guardBroken(c.eventLog).map(({ targetId, poise }) => ({ targetId, poise })), [{ targetId: 'e1', poise: 0 }]);
-  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => text.startsWith('Guard broken')),
-    ['Guard broken!']);
+  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => / Guard!/.test(text)),
+    ["Forsaken's attack broke Enemy's Guard!"]);
   assert.equal(enemy.poiseMeter?.value, poiseBefore, 'no bonus Poise was applied');
 });
 
 test('v2: a lethal Smash that breaks Guard still emits combatGuardBroken once, with no bonus Poise queued', () => {
-  const SMASH = { damage: 20, hits: 1, cardTags: ['camp:physical', 'maneuver:smash', 'reach:contact', 'targeting:single'] };
+  const SMASH = { damage: 20, hits: 1, cardTags: ['camp:physical', 'maneuver:smash', 'range:melee', 'targeting:single'] };
   const combat = solo({ cardIds: ['defend'], move: SMASH });
   combat.player.block = 0;
   dispatch(combat, { type: 'playCard', cardInstanceId: 'r0' });
@@ -382,7 +386,7 @@ test('v1: a Smash into an armed Counter breaks Guard through the synchronous doo
       effects: [{ op: 'damage', target: 'enemy', amount: 4, combatProfile: profile }] } : card),
     enemies: legacyContentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy) });
   const c = createCombat({ registries, rng: createRng(50), enemyIds: ['gildedKnight', 'wanderingSoldier'], ratingsRules: null,
-    player: { classId: 'reaver', hp: 200, maxHp: 200, energyMax: 10, drawPerTurn: 1,
+    player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20, energyMax: 10, drawPerTurn: 1,
       deck: [{ instanceId: 'smash1', cardId: 'kilnCleave' }], relicIds: [] } });
   const enemy = c.enemies[0];
   enemy.block = 3; enemy.wardBlock = 0; enemy.poiseGuard = 0; enemy.poiseMeter = { value: 0, max: 100 };

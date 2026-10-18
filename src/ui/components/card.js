@@ -1,3 +1,7 @@
+import { bindCardComponentFailures } from '../cardArtLayers.js';
+import { baseCardPresentation } from '../../content/generated/baseCards.js';
+import { gameModule } from '../../model/gameProfile.js';
+import { stanceOf, stanceEntryBonuses, stanceRulesFor, stanceRatingBonus } from '../../model/stanceRules.js';
 import { cardSideTags } from './cardTagSymbols.js';
 import { illustratedCardHtml, illustratedArtwork, fitIllustratedCards } from './illustratedCard.js';
 import {applyCardAppearance} from './cardAppearance.js';
@@ -11,7 +15,7 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 // computeTokenBindings. No math happens here.
 
 import { resolveCard, relicPropertyRules } from '../../model/registries.js';
-import { playingCardModel, playingCardClasses, staticCardTokens, combatCardType, combatCardSummary, combatCardDamageLabel } from '../../model/playingCard.js';
+import { playingCardModel, playingCardDefinition, playingCardClasses, staticCardTokens, combatCardType, combatCardDamageLabel } from '../../model/playingCard.js';
 import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
 import { cardShape } from '../models/CardSizeModel.js';
 import { litCard } from './cardSelection.js';
@@ -21,19 +25,24 @@ import { esc } from './tooltip.js';
 import { statusTooltipText } from '../uiContent.js';
 import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
+import { cardTagExplanation } from '../../model/cardTagExplanation.js';
 import { tagService } from '../../model/tagService.js';
 import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
-import { defaultCardArtFallbacks } from '../cardArtwork.js';
+import { cardArtFallbacks } from '../cardArtwork.js';
+import { markArtPlaceholder } from '../artFallback.js';
+import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
 import { t } from '../strings.js';
 import { loreLine } from './loreLine.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
-import { combatProfileFor, combatProfileTags } from '../../model/combatCardProfile.js';
+import { combatCardRange, combatProfileFor, combatProfileTags, numberedTraitRow } from '../../model/combatCardProfile.js';
 import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
+import { cardFaceLines } from '../../model/cardFaceText.js';
+import { spellDefenseSplit } from '../../model/spellDefense.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -101,6 +110,21 @@ export function relicText(def, registries = null) {
 function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
   let template = def.textTemplate;
   const liveTokens = { ...tokens };
+  let comparedTokens = baseTokens;
+  // Complex cards retain authored clauses; their defensive amount still reads
+  // the same allocation as the compact face and combat execution.
+  template = template.replace(/\{((?:gainBarrier|block)(?:\.\d+)?)\}(?: (?:temporary )?(?:Barrier|Ward|Block))?/g, (match, token) => {
+    if (token.startsWith('block') && def.defenseRulesVersion !== 2 && def.minCombatExpansionVersion !== 2) return match;
+    const liveBlock = liveTokens[token + '.block'], liveWard = liveTokens[token + '.ward'];
+    const split = Number.isFinite(liveBlock) && Number.isFinite(liveWard)
+      ? { block: liveBlock, ward: liveWard } : spellDefenseSplit(def, liveTokens[token]);
+    if (!split) return match;
+    liveTokens[token + '.block'] = split.block;
+    liveTokens[token + '.ward'] = split.ward;
+    const baseSplit = baseTokens && spellDefenseSplit(def, baseTokens[token]);
+    if (baseSplit) comparedTokens = { ...comparedTokens, [token + '.block']: baseSplit.block, [token + '.ward']: baseSplit.ward };
+    return `{${token}.block} Block, {${token}.ward} Ward`;
+  });
   for (const sequence of damageSequences) {
     if (!sequence?.amountToken || !sequence?.hitsToken || !Array.isArray(sequence.hitDamages)
       || sequence.hitDamages.length < 2 || sequence.hitDamages.every(amount => amount === sequence.hitDamages[0])) continue;
@@ -116,9 +140,9 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
     const v = liveTokens[tok];
     if (v == null) return m;
     let cls = 'val';
-    if (baseTokens && typeof v === 'number' && typeof baseTokens[tok] === 'number') {
-      if (v > baseTokens[tok]) cls += ' up';
-      else if (v < baseTokens[tok]) cls += ' down';
+    if (comparedTokens && typeof v === 'number' && typeof comparedTokens[tok] === 'number') {
+      if (v > comparedTokens[tok]) cls += ' up';
+      else if (v < comparedTokens[tok]) cls += ' down';
     }
     return `<span class="${cls}">${esc(v)}</span>`;
   });
@@ -135,30 +159,32 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
  *   opts — { preview?    (previewCard result → live numbers),
  *            affordable? (bool; greys out when false),
  *            small?      (scale for reward/pile grids),
- *            tooltip?    (false suppresses the shared hover/focus tooltip) }
+ *            tooltip?    (false suppresses the shared hover/focus tooltip),
+ *            definition? (an already projected definition, e.g. the run's trait projection),
+ *            rules?      (run rules for faces outside combat) }
  */
 export function renderCard(registries, ref, opts = {}) {
   configureTooltipGlossary(registries);
-  const def = opts.preview?.resolvedDefinition || resolveCard(registries, ref);
+  const def = playingCardDefinition(registries, ref, opts);
   // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
   // way to innerHTML — the tag junction, the cost profile, the type row, the
   // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
   // left. The output is byte-identical by construction: the model's bodies are
   // the ones that stood here.
-  const rawModel = playingCardModel(registries, ref, { preview: opts.preview || null });
+  const rawModel = playingCardModel(registries, ref, { preview: opts.preview || null, definition: def });
   const combatProfile = combatProfileFor(def);
   const combatTags = combatProfileTags(combatProfile, registries);
-  const expanded = opts.preview?.combatExpansionVersion === 2 || def.minCombatExpansionVersion === 2;
-  const stanceLabel = combatProfile.maneuver && `${combatProfile.maneuver[0].toUpperCase()}${combatProfile.maneuver.slice(1)}`;
-  const model = { ...rawModel, ...(expanded && stanceLabel ? { type: { ...rawModel.type, label: stanceLabel,
-    subtype: combatProfile.camp === 'spell' ? 'Spell' : 'Martial' } } : {}),
-    ...(expanded ? { faceType: combatCardType(def) } : {}),
+  const expanded = opts.preview?.combatExpansionVersion === 2 || opts.rules?.combatExpansionVersion === 2
+    || def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2;
+  const model = { ...rawModel, ...(expanded ? { faceType: combatCardType(def) } : {}),
     tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
-  model.sideTags = cardSideTags(model, def, registries);
-  // Authored clauses carry family limits and charge/payment constraints that
-  // the generic effect summary cannot express. Keep those complete on the face.
-  const faceSummary = expanded ? combatCardSummary(def, opts.preview, registries) : null;
-  const fallbackDamageLabel = expanded && !faceSummary
+  model.sideTags = cardSideTags(model, def, registries, opts.preview || null);
+  // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
+  model.range = opts.range ? combatCardRange(def) : null;
+  // When the shared face model refuses a card, the authored clauses (family
+  // limits, charge and payment constraints) stay complete on the face, led by
+  // the damage label in an expanded combat view.
+  const fallbackDamageLabel = expanded
     && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
     ? combatCardDamageLabel(def, opts.preview, registries) : '';
   const damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
@@ -166,8 +192,10 @@ export function renderCard(registries, ref, opts = {}) {
     model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
     damageWords.length && `Damage: ${damageWords.join(', ')}`,
     ...model.sideTags.map(tag => tag.label),
-    model.abilityRank !== null && rawModel.type.label,
-    model.abilityRank !== null && rawModel.type.subtype,
+    rawModel.type.label,
+    rawModel.type.subtype,
+    rawModel.type.abilityLabel,
+    rawModel.type.weaponArt,
     model.abilityRank !== null ? `rank ${model.abilityRank}` : model.rankBadge?.toLowerCase(),
   ].filter(Boolean).join(', ') + (opts.inspectReadOnly && opts.inspection !== false ? '. Enter to inspect. On touch, tap then Information.' : '');
   const sourcePiece = ref.sourceArmamentId
@@ -266,20 +294,41 @@ export function renderCard(registries, ref, opts = {}) {
     floor, lit: litCard() === identity,
   });
   let drawn = levelNow();
+  // ONE TEXT FOR EVERY VIEW. The face lines are the shared model's output
+  // (cardFaceText.js); a weight-priced card adds its pricing note as a detail line.
+  const faceRules = gameModule(registries, 'cards');
+  const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries);
+  const faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
+    ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
+  if (faceLines && def.weightClassPriced) faceLines.push({ kind: 'detail', html: 'Cost reflects your current weight' });
+  // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
+  const faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
+  // In the hand, detail lines (a partial chance, usable-through, pricing) wait for selection: hidden at rest, shown when selected.
+  const extraLine = (line, i) => faceLineLimit !== null && (i >= faceLineLimit || (line.kind === 'detail' && i > 0));
   const paint = (at) => {
-    const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting});
+    const visualCardId = baseCardPresentation[model.id]?.canonicalCardRef;
+    const artwork = illustratedArtwork(visualCardId ? { cardId: visualCardId } : ref, visualCardId || model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
+      definition:def,registries});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
+    const visibleLines = at === 'inspect' ? allFaceLines : faceLines;
+    const rulesHtml = visibleLines
+      ? compactCardRules(visibleLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${extraLine(line, i) ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
+      // A face the shared model refused keeps the authored rules, never the looser summary.
+      : compactCardRules(`${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`);
+    el.dataset.faceLines = faceLines ? String(faceLines.length) : '';
     el.innerHTML = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
-      rules: compactCardRules(faceSummary ? esc(faceSummary)
-        : `${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`),
+      rules: rulesHtml,
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
       artworkPosition:artwork?.position,
+      artworkComposition:artwork,
+      completeRules: at === 'inspect',
+      rulesOverflow: at !== 'inspect' && Boolean(allFaceLines?.length > (faceLines?.length ?? 0)),
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
     applyCardAppearance(el.querySelector('.illustrated-card-face'));
@@ -294,12 +343,26 @@ export function renderCard(registries, ref, opts = {}) {
     const image = el.querySelector?.('.playing-card-art');
     if(image){
       image.dataset.cardArt = artwork?.kind || 'illustrated';
-      const fallbacks = defaultCardArtFallbacks(ref).filter(path=>path!==artwork?.path);
-      image.addEventListener('error',()=>{const next=fallbacks.shift();if(next){image.dataset.cardArt='outline';image.style.objectFit='contain';image.style.objectPosition='center';image.src=assetUrl(next);}});
+      const fallbacks = cardArtFallbacks(ref, artwork, {large:at==='inspect',
+        legacy:artwork?.kind==='simple'?illustratedArtwork(ref,model.id,{large:at==='inspect',equipmentArt:equipmentPainting,style:'Legacy'}):null});
+      image.addEventListener('error',()=>{
+        markArtPlaceholder(el, () => paint(drawn));
+        const next=fallbacks.shift();
+        if(next){
+          image.parentNode?.querySelectorAll('[data-card-art-layers]').forEach(node=>node.remove());
+          image.dataset.cardArt=next.kind;
+          image.style.filter='';
+          image.style.objectFit=next.fit||(next.extended?'cover':'contain');
+          image.style.objectPosition=next.position||'center';
+          image.src=assetUrl(next.path);
+        }
+      });
+      bindCardComponentFailures(image.parentNode, image);
     }
 
   };
   paint(drawn);
+  registerCardArtRefresh(el, () => paint(drawn));
 
   // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
   // number in the status row's own tint — "these cards just lit up" instead
@@ -337,7 +400,7 @@ export function renderCard(registries, ref, opts = {}) {
       // element the equipment card uses, so the two card kinds read alike.
       const lore = loreLine({ text: def.flavor, title: def.name });
       if (lore) details.append(lore);
-      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false, level: 'inspect' });
+      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false, level: 'inspect', faceLineLimit: undefined });
       details.classList.add('playing-card-details');
       // NO DEFAULT VERB. This line used to read
       //   `opts.inspectionAction || (() => ({ enabled: false, reason: 'Play cards from your combat hand.' }))`
@@ -389,6 +452,14 @@ export function renderCard(registries, ref, opts = {}) {
  */
 const pendingFits = new Set();
 let fitFrame = 0;
+
+// The combat hand shows three face lines at rest and five when selected.
+export function setHandFaceBudget(el, selected) {
+  const rules = el?.querySelector?.('.ic-text[data-face-lines="true"]');
+  if (!rules) return;
+  rules.dataset.maxLines = selected ? '5' : '3';
+  scheduleCardFits([el]);
+}
 
 export function scheduleCardFits(cards) {
   for (const card of cards) pendingFits.add(card);
@@ -503,6 +574,26 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 }
 
 /**
+ * cardPlainText(registries, ref) → the card's effect text as a plain string:
+ * the same template the face fills, with tags stripped. Pure string work, no
+ * DOM, so it runs the same headless and in a browser.
+ */
+export function cardPlainText(registries, ref, opts = {}) {
+  const def = playingCardDefinition(registries, ref, opts);
+  const model = opts.preview ? playingCardModel(registries, ref, { ...opts, definition: def })
+    : { tokens: staticTokens(def), damageSequences: [] };
+  const lines = opts.rules?.combatExpansionVersion === 2 || opts.preview?.combatExpansionVersion === 2
+    ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries)) : null;
+  // Plain string work only: no DOM, so it runs the same headless and in a
+  // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
+  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences))
+    .replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ').trim();
+}
+
+/**
  * Tooltip HTML previewing what a card becomes when Smithed: current text in
  * muted, upgraded text below with changed values highlighted green/red (the
  * same up/down coloring cards use in play). All numbers come from the defs.
@@ -554,9 +645,10 @@ function glossaryEntry(registries, kind, id) {
 
 /** W1h: the read-only reading a pile viewer shows beside its collection —
  *  the same body the card's own inspect door and tooltip use. */
-export function cardDetailHtml(registries, ref) {
-  const def = resolveCard(registries, ref);
-  return cardTooltip(registries, def, playingCardModel(registries, ref).tokens);
+export function cardDetailHtml(registries, ref, opts = {}) {
+  const def = playingCardDefinition(registries, ref, opts);
+  const model = playingCardModel(registries, ref, { ...opts, definition: def });
+  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences);
 }
 
 function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = []) {
@@ -570,20 +662,48 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '');
   // THE TITLE IS THE NAME AND NOTHING ELSE (kit §08): type and cost sit on the
   // meta line as the same tag and value atoms the card face uses.
+  const identity = playingCardModel(registries, { cardId: def.id }, { definition: def });
+  const typeText = [identity.type.label, identity.type.subtype, identity.type.abilityLabel, identity.type.weaponArt].filter(Boolean).join(' · ');
   let html = `<div class="tt-title">${esc(def.name)}</div>`
-    + `<div class="ti-meta"><span class="as-tag">${esc(def.type)}</span><span class="ti-cost">${costText}</span></div>`;
+    + `<div class="ti-meta"><span class="as-tag">${esc(typeText)}</span><span class="ti-cost">${costText}</span></div>`;
   if (pools.estimated) html += '<div class="combat-rule-hint">Estimated price; temporary discounts may lower it.</div>';
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
   const combatProfile = combatProfileFor(def);
   html += sigilExplanationHtml(cardSigilIdentity(combatCardType(def), combatProfile));
+  if (registries.gameProfile?.foundation?.mode !== 'configured' && (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2)) {
+    const stance = stanceOf(def);
+    if (stance) {
+      const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries.balance?.stanceRules };
+      const rules = stanceRulesFor(ctx), entry = stanceEntryBonuses(def, ctx);
+      const magical = stance.camp === 'spell';
+      const rated = { combatStance: stance };
+      const bonuses = ['ar', 'pr', 'dr', 'ward'].map(id => [id, stanceRatingBonus(ctx, rated, id)]);
+      const offense = bonuses.some(([id, amount]) => ['ar', 'pr'].includes(id) && amount > 0);
+      const active = bonuses.filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + (id === 'ward' ? 'Ward rating' : id.toUpperCase()));
+      const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
+      html += '<div class="combat-rule-hint"><strong>Stance:</strong> ' + esc(active.join(', ')) + ' while active; does not stack.'
+        + (grants.length ? ' On changing stance: ' + esc(grants.join(', ')) + '.' : '')
+        + ' Repeating the same stance grants no entry bonuses and costs ' + esc(rules.sameStanceDiscount) + ' less SP.'
+        + (stance.maneuver === 'defend' ? ' Every play restores ' + esc(rules.defenseRestore) + ' Poise and Ward; excess becomes Block and Barrier.' : '')
+        + (magical && offense ? ' Each existing status applied gains +' + esc(rules.spellStatusStacks) + ' stack.' : '') + '</div>';
+    }
+  }
   if (combatProfile.maneuver === 'counter') {
     if (def.counterCoverage) {
       const c = def.counterCoverage;
-      const names = { physical: 'Martial', spell: 'Spell', contact: 'Contact', near: 'Near', far: 'Far', single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
-      const coverage = [c.camps, c.reaches, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
+      const names = { physical: 'Martial', spell: 'Spell', melee: t('deckEditor.range.melee'), reach: t('deckEditor.range.reach'), ranged: t('deckEditor.range.ranged'), single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
+      const coverage = [c.camps, c.ranges, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
       html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.</div>`;
     } else html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
+  }
+  if (def.defenseRange) html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(def.defenseRange[0].toUpperCase() + def.defenseRange.slice(1))} · Covers ${esc(['melee', 'reach', 'ranged'].slice(0, ['melee', 'reach', 'ranged'].indexOf(def.defenseRange) + 1).map(range => t('deckEditor.range.' + range)).join(' + '))}.</div>`;
+  if (identity.cardCategory === 'stance') {
+    html += `<div class="combat-rule-hint"><strong>Stance group:</strong> ${esc(identity.stanceGroups.map(group => group === 'offense' ? 'Offense' : 'Defensive').join(' + '))}.</div>`;
+    if (combatProfile.maneuver === 'counter' && def.defenseRulesVersion === 2)
+      html += `<div class="combat-rule-hint"><strong>Return range:</strong> ${esc((combatProfile.range || 'melee')[0].toUpperCase() + (combatProfile.range || 'melee').slice(1))}. Return misses out of range, on a failed Accuracy check against base Evasion, or when avoided. A miss deals no HP, Poise, or Ward damage.</div>`;
+    if (combatProfile.maneuver === 'sweep' && (def.tags || def.cardTags || []).includes('trait:reaction'))
+      html += '<div class="combat-rule-hint">Reaction Sweep resolves before the incoming attack. Killing, staggering or controlling its attacker can interrupt it; otherwise the attack resumes.</div>';
   }
   html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
@@ -627,9 +747,10 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     }
   }
   const service = tagService(registries);
-  const tags = def.cardTags != null ? service.resolve(def.cardTags) : service.tagsOf('card', def);
-  for (const tag of tags) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
-  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
+  const tags = def.cardTags != null ? service.resolve(def.cardTags)
+    : def.traitValues && Array.isArray(def.tags) ? service.resolve(def.tags) : service.tagsOf('card', def);
+  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, row))}">${esc(row.label)}</span>`); }
+  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, tag))}">${esc(tag.label)}</span>`);
   if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
   return html;
 }

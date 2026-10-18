@@ -23,8 +23,8 @@ test('log contains executed public receipts by round, never predictions or unsta
   const rows = combatLogEntries(events, { registries, players: [{ id: 'p1', name: 'Reaver' }], enemies: [{ id: 'e1', enemyId: 'soldier' }] });
   assert.deepEqual(rows.map(row => [row.id, row.round]), [[2, 1], [3, 1], [4, 1], [7, 2], [8, 2]]);
   assert.match(rows[0].text, /Reaver played Guard Counter \(Upcast 2\).*2 SP, 3 MP/);
-  assert.equal(rows[2].text, 'Reaver blocked 7 damage.');
-  assert.equal(rows[4].text, 'Reaver dealt 9 damage to Soldier (1 blocked).');
+  assert.equal(rows[2].text, "Soldier's Slash hit Reaver for 7: Block absorbed 7 (7 → 0); 0 HP dealt.");
+  assert.equal(rows[4].text, "Reaver's attack hit Soldier for 10: Block absorbed 1 (1 → 0); 9 HP dealt.");
   assert.doesNotMatch(JSON.stringify(rows), /privateFuture|secretGuess|hpLost/);
   assert.deepEqual(combatLogEntries(JSON.parse(JSON.stringify(events)), { registries, players: [{ id: 'p1', name: 'Reaver' }], enemies: [{ id: 'e1', enemyId: 'soldier' }] }), rows);
 });
@@ -44,7 +44,7 @@ test('log says why no reaction was offered and when a Smash breaks Guard', () =>
     'No reaction: Reactions are off.',
     'No reaction: Soldier is staggered.',
     "One reaction per attack: the rest of this attack can't be answered.",
-    'Guard broken! (+3 Poise pressure)']);
+    "Reaver's attack broke Soldier's Guard! (+3 Poise pressure)"]);
   const coopRows = combatLogEntries([{ ...why('switchOff'), ownerId: 'p1' }],
     { registries, players: [{ id: 'p1', name: 'Reaver' }, { id: 'p2', name: 'Herald' }] });
   assert.equal(coopRows[0].text, 'Reaver: No reaction: Reactions are off.');
@@ -203,4 +203,32 @@ test('Full log reads as a text link in the log header, keeping its 44px tap targ
   for (const rule of [/background:transparent/, /border:0/, /box-shadow:none/, /color:var\(--gold\)/, /font-size:inherit/]) assert.match(link, rule);
   assert.match(css, /\.combat-log-head > \.combat-log-full:is\(:hover, :focus-visible[^)]*\) \{[^}]*text-decoration:underline/);
   assert.match(css, /\.combat-log-head > \.combat-log-full:focus-visible \{[^}]*outline:2px solid/);
+});
+
+test('live Grid checkbox waits for persistence and rolls back a refused preference', async () => {
+  for (const accepted of [true,false]) {
+    let checkbox, settle, root;
+    withToolsDom(dom => {
+      dom.document.documentElement = {dataset:{formationGrid:'true'}};
+      root = dom.document.documentElement;
+      const combatEl=dom.document.createElement('section');
+      dom.document.body.appendChild(combatEl);
+      mountCombatTools(combatEl,{state:{},onViewChange(){},onToggle(){},
+        onGridToggle:enabled=>new Promise(resolve=>{settle=()=>{
+          if(accepted) root.dataset.formationGrid=String(enabled);
+          resolve({ok:accepted});
+        };})});
+      checkbox=combatEl.querySelector('input[data-combat-tool="grid"]');
+      assert.equal(checkbox.getAttribute('aria-label'),'Show battlefield grid');
+      assert.equal(checkbox.checked,true);
+      checkbox.checked=false;
+      checkbox.dispatchEvent(new dom.Event('change'));
+      assert.equal(checkbox.disabled,true,'another write cannot race the pending save');
+      assert.equal(root.dataset.formationGrid,'true','no optimistic visual-grid change');
+      settle();
+    });
+    await Promise.resolve(); await Promise.resolve();
+    assert.equal(checkbox.disabled,false);
+    assert.equal(checkbox.checked,!accepted,'control reflects the actually persisted root value');
+  }
 });

@@ -1,0 +1,12 @@
+Repair the attached Counter sheet into a SPACIOUS atlas of five SMALL full-body sprites on transparent background, portrait1024x1536. Same five characters and camera, same sword, but REDUCE EVERY WHOLE FIGURE TO60% of the current size and center it in its own512x512 cell. Keep sword, body and cape at the same relative proportions. A lot of empty transparent space must surround EACH sprite, especially between columns and rows. Each complete silhouette occupies just the MIDDLE HALF of its cell, not nearly the whole cell. Two columns by three rows; bottom-right EMPTY. No sword tip or cape can cross a cell boundary. No text, ground, glow or effects.
+
+Preserve identical Reaver armor, connected crimson cape, broad long greatsword, rear LEFT camera facing RIGHT. Both boots FLAT in every pose. TWO separately legible gauntlets grip different places on the same long hilt BELOW crossguard with a short visible gap. Trace both forearms naturally to shoulders. No hand on blade.
+
+Top-left CT16: compact crown roof cover, long blade horizontal RIGHT just above head. TWO separated hands entirely on hilt below crossguard, one towards pommel and one towards guard. Hilt held just forward/right of helmet, never gripping blade.
+Top-right CT17 IMPORTANT ANATOMY FIX: Move BOTH hilt-holding hands visibly FORWARD/RIGHT of shoulder and helmet, not behind the neck or across upper back. Let arms naturally reach ahead with bent elbows. Keep blade descending diagonally down RIGHT as a hanging cover, slight BACK lean. No stored sword across back.
+Middle-left CT18: preserve distinct withdrawn point-on-line: hands at sternum, horizontal forward RIGHT blade, rear lean.
+Middle-right CT19: preserve lowered WIDE flat-foot knee bend with high hanging cover, blade down RIGHT.
+Bottom-left CT20: preserve outside cut-ready angle, hands in front of upper ribs, blade diagonal up RIGHT, subtle shoulder coil.
+Bottom-right: empty.
+
+MAKE ALL FIVE SMALLER AND KEEP THEIR ENTIRE BLADE/CAPE/BOOT SILHOUETTES STRICTLY INSIDE THEIR OWN CELL. Keep every blade tip well away from the right cell edge and cape well away from left edge. Desired72px or more blank margins. Large clear gutters. The change in figure scale is essential.

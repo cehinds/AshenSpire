@@ -1,0 +1,21 @@
+Edit the attached five-pose Reaver concept sheet. Deliver a transparent RGBA PNG, portrait 1024 pixels wide by 1536 pixels tall. This is a precise layout and anatomy repair, maintaining the recognizable original costume, rear-left camera facing screen RIGHT, and five different held defensive covers. No effects, impact, shadows, ground, opponents, text, labels, numbers, grid lines or background.
+
+CRITICAL LAYOUT: The source figures are MUCH TOO LARGE. Redraw ALL FIVE as small sprites at approximately HALF their current linear size. Anatomical helmet-to-boot body height about 210 pixels, NOT 400 pixels. Same physical character and weapon scale in every cell. Use exact TWO columns and THREE rows of 512x512 pixels. Each entire silhouette, including sword tip and cape ends, must fit inside a centered 368x368 square in its own cell, with AT LEAST 72 pixels of transparent space on every cell edge. Make the total occupied silhouette typically 280 to 330 pixels wide, not filling 368 pixels. Place silhouette centers at (256,256), (768,256), (256,768), (768,768), (256,1280). Bottom-right cell stays completely empty. Entire figure visible: both feet, helmet, blade tip, all cape edges. Very generous transparent gutters; do not fill the sheet with large characters. These are five small isolated sprites on a large canvas.
+
+COSTUME: Preserve the identical enclosed finned steel helmet, weathered silver and rust plate, mail, belt and segmented greaves/boots. A single continuous crimson cape attached at shoulders, with restrained tattered hem and folds. Use the costume reference for identity and selected Smash reference for the long broad two-handed greatsword: straight long steel blade, broad blade root, crossguard and long hilt. Scale the whole figure and sword together, do not shorten the sword or shrink just the body. Rear-left shoulder camera, head and threats always towards screen RIGHT.
+
+ANATOMY IN EVERY CELL: Exactly TWO visible hands gripping TWO SEPARATE places on the SAME LONG HILT, both below the crossguard. One hand near crossguard, the other closer to pommel, with a visible short gap. No hand on blade. Both arms connect naturally to shoulders, bent elbows. Both boots FLAT on the same floor plane, no raised heel or lifted foot. Stable anticipation held before interception, no attacking swing.
+
+TOP LEFT CT11: Preserve the high hanging defensive cover. Hilt in front/right above brow, sword descends diagonally down RIGHT, both separated hands clearly on hilt. Upright medium stagger, boots flat.
+
+TOP RIGHT CT12: Preserve low forward plough. Hands and hilt LOW at the forward/right HIP, sword rises diagonally up RIGHT. Relatively tall torso, medium narrow staggered base. Do not raise this hilt to chest.
+
+MIDDLE LEFT CT13: Preserve the high horizontal point-forward line, long blade almost horizontal towards RIGHT at helmet height. FIX HIDDEN SECOND GRIP: place BOTH hands visibly forward/right of the helmet, separated along the hilt; neither hand hidden behind head or forearms. Hilt at far temple height, naturally bent arms, open elbows, no contorted wrist. Upright slightly open base.
+
+MIDDLE RIGHT CT14: MAKE THIS SILHOUETTE VISIBLY DIFFERENT FROM CT12. A LOWER and WIDER planted defensive base: both knees substantially bent, hips clearly lower, boots about two shoulder widths apart, torso dropped roughly one quarter of standing height. Hilt at CENTER OF CHEST, hands visible in front/right of sternum rather than at hip. Long blade angles up RIGHT as an inclined chest barrier. Squat cover, not a tall walking pose. Two flat soles. Same anatomical scale as others but bent legs give shorter silhouette.
+
+BOTTOM LEFT CT15: Preserve tall rear-weighted low hanging cover. Hilt forward/right at WAIST height, blade descends diagonally down RIGHT. Two separated visible hilt grips, boots flat, no stepping.
+
+BOTTOM RIGHT: Absolutely empty transparent cell.
+
+The first attached image is the original sheet being edited. Additional references identify costume and the broad long greatsword only. Deliver five small complete sprites with the exact margins; do not preserve the oversized layout.

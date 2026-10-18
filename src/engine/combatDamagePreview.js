@@ -1,5 +1,6 @@
+import { configuredCombat, profileDamageReceipt } from './gameProfileCombat.js';
 import { computeAttackDamage } from './actions.js';
-import { prepareMatchupHit, matchupRules } from './combatMatchups.js';
+import { prepareMatchupHit, matchupRules, hitRiders } from './combatMatchups.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
 
 /**
@@ -23,6 +24,20 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
   const local = state || damagePreviewState(ctx, target);
   const { defender, previewCtx, targetKey } = local;
   const attack = { ...carrier, combatRiderTargets: local.combatRiderTargets };
+  if (configuredCombat(ctx)) {
+    const receipts = [];
+    for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
+      const receipt = profileDamageReceipt(previewCtx, source, defender, base, carrier);
+      receipts.push(receipt);
+      if (defender) defender.block = receipt.blockRemaining;
+    }
+    return { damage: receipts[0]?.amount || 0, hits: receipts.length,
+      hitDamages: receipts.map(receipt => receipt.amount),
+      totalDamage: receipts.reduce((sum, receipt) => sum + receipt.amount, 0),
+      hpLoss: receipts.reduce((sum, receipt) => sum + receipt.hpLoss, 0),
+      hitChance: receipts[0]?.hitChance ?? 1, uncertain: receipts.some(receipt => receipt.uncertain),
+      hpLossBounds: [receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[0], 0), receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[1], 0)] };
+  }
   const rules = matchupRules(ctx);
   const hitDamages = [];
   for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
@@ -37,12 +52,14 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
     // Typed penetration and synchronous Ward stripping use the same once-per-
     // target budget as execution. Queued statuses/impact do not run in preview.
     const type = rules.damageAliases?.[receipt.profile?.damageType] || receipt.profile?.damageType;
-    const rider = rules.damageRiders?.[type];
-    if (!attack.combatReaction && receipt.profile && receipt.amount > 0 && rider
-      && !local.combatRiderTargets.includes(targetKey)
-      && (!rider.requiresHpLoss || receipt.amount > blocked)) {
+    // Mirrors matchupRiderEffects: damage-type and technique riders share
+    // one once-per-target budget, spent when any of them applies.
+    const riders = hitRiders(rules, type, attack).filter(row => !row.requiresHpLoss || receipt.amount > blocked);
+    if (!attack.combatReaction && receipt.profile && receipt.amount > 0 && riders.length
+      && !local.combatRiderTargets.includes(targetKey)) {
       local.combatRiderTargets.push(targetKey);
-      if (rider.wardDrain > 0) {
+      // Every rider of a mixed hit drains, as matchupRiderEffects does.
+      for (const rider of riders) if (rider.wardDrain > 0) {
         const ward = Math.max(0, Math.min(defender.block, defender.wardBlock || 0));
         const loss = Math.min(ward, rider.wardDrain);
         defender.block -= loss;

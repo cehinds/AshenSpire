@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "title": "Review Current Step",
+  "canvas": {
+    "width": 198,
+    "height": 48,
+    "background": "transparent"
+  },
+  "defaultState": "review",
+  "states": [
+    {
+      "id": "review",
+      "name": "Review"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "review-current-step",
+      "name": "Review Current Step",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 198,
+      "height": 48,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "review-current-step-background",
+      "name": "Review Current Step Background \u00b7 background",
+      "type": "rect",
+      "parent": "review-current-step",
+      "x": 0,
+      "y": 0,
+      "width": 198,
+      "height": 48,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "#163e2b",
+      "stroke": "none",
+      "strokeWidth": 1,
+      "radius": 4
+    },
+    {
+      "id": "review-current-step-label",
+      "name": "Review Current Step Label",
+      "type": "text",
+      "parent": "review-current-step",
+      "x": 12,
+      "y": 16,
+      "width": 174,
+      "height": 32,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "6 of 6 \u00b7 Review",
+      "fontSize": 16,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8"
+    },
+    {
+      "id": "review-current-step-background-trim",
+      "name": "Review Current Step Background \u00b7 independent trim",
+      "type": "rect",
+      "parent": "review-current-step",
+      "x": 0,
+      "y": 0,
+      "width": 198,
+      "height": 48,
+      "z": 1.1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none",
+      "stroke": "#72ce94",
+      "strokeWidth": 1,
+      "radius": 4
+    }
+  ],
+  "metadata": {
+    "componentSource": "review-current-step",
+    "sourceState": "review",
+    "designOnly": true
+  }
+}

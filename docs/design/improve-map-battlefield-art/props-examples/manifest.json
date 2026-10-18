@@ -1,0 +1,675 @@
+{
+  "formatVersion": 1,
+  "status": "wireframe-placeholder",
+  "description": "Original technical diagram examples for design handoff. Unregistered; not painted production game assets.",
+  "source": "../render-discovery.mjs",
+  "metadataSource": "prop-definitions.mjs",
+  "canvas": {
+    "width": 512,
+    "height": 512,
+    "background": "transparent"
+  },
+  "coordinates": {
+    "units": "normalized-canvas",
+    "origin": "top-left",
+    "xDirection": "right",
+    "yDirection": "down",
+    "anchorMeaning": "Schematic ground/water contact used for placement and depth sorting; not an enforced collision boundary.",
+    "footprintMeaning": "Illustrative ground-plane placement rectangle; not alpha bounds, a click target, tile occupancy or a validated collision shape."
+  },
+  "assets": [
+    {
+      "id": "bridge",
+      "sourceIconId": "bridge",
+      "category": "crossing",
+      "tags": [
+        "bridge",
+        "water-crossing",
+        "stone"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.12,
+        "y": 0.78,
+        "width": 0.76,
+        "height": 0.14
+      },
+      "name": "Bridge",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "bridge.png",
+      "svg": "bridge.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "path",
+      "sourceIconId": "path",
+      "category": "route",
+      "tags": [
+        "road",
+        "junction",
+        "route"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.14,
+        "y": 0.17,
+        "width": 0.72,
+        "height": 0.76
+      },
+      "name": "Road / junction",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "path.png",
+      "svg": "path.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "tunnel",
+      "sourceIconId": "tunnel",
+      "category": "transport",
+      "tags": [
+        "tunnel",
+        "entrance",
+        "rock",
+        "paired-connection"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.12,
+        "y": 0.78,
+        "width": 0.76,
+        "height": 0.14
+      },
+      "name": "Tunnel mouth",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "tunnel.png",
+      "svg": "tunnel.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "cave",
+      "sourceIconId": "cave",
+      "category": "adventure",
+      "tags": [
+        "cave",
+        "entrance",
+        "rock"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.14,
+        "y": 0.78,
+        "width": 0.72,
+        "height": 0.14
+      },
+      "name": "Cave entrance",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "cave.png",
+      "svg": "cave.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "ferry",
+      "sourceIconId": "ferry",
+      "category": "transport",
+      "tags": [
+        "ferry",
+        "dock",
+        "water",
+        "shore"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.12,
+        "y": 0.75,
+        "width": 0.76,
+        "height": 0.2
+      },
+      "name": "Ferry dock",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "ferry.png",
+      "svg": "ferry.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "ford",
+      "sourceIconId": "ford",
+      "category": "crossing",
+      "tags": [
+        "ford",
+        "river",
+        "water-crossing"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.12,
+        "y": 0.36,
+        "width": 0.76,
+        "height": 0.5
+      },
+      "name": "River ford",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "ford.png",
+      "svg": "ford.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "portal",
+      "sourceIconId": "portal",
+      "category": "transport",
+      "tags": [
+        "portal",
+        "magic",
+        "paired-connection"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.16,
+        "y": 0.79,
+        "width": 0.68,
+        "height": 0.12
+      },
+      "name": "Portal",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "portal.png",
+      "svg": "portal.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "boat",
+      "sourceIconId": "boat",
+      "category": "transport",
+      "tags": [
+        "boat",
+        "landing",
+        "water"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.16,
+        "y": 0.72,
+        "width": 0.68,
+        "height": 0.18
+      },
+      "name": "Boat / landing",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "boat.png",
+      "svg": "boat.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "city",
+      "sourceIconId": "city",
+      "category": "settlement",
+      "tags": [
+        "city",
+        "settlement",
+        "stone"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.15,
+        "y": 0.77,
+        "width": 0.7,
+        "height": 0.16
+      },
+      "name": "City",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "city.png",
+      "svg": "city.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "town",
+      "sourceIconId": "town",
+      "category": "settlement",
+      "tags": [
+        "town",
+        "settlement",
+        "services"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.14,
+        "y": 0.77,
+        "width": 0.72,
+        "height": 0.16
+      },
+      "name": "Town",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "town.png",
+      "svg": "town.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "village",
+      "sourceIconId": "village",
+      "category": "settlement",
+      "tags": [
+        "village",
+        "settlement"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.18,
+        "y": 0.78,
+        "width": 0.64,
+        "height": 0.14
+      },
+      "name": "Village",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "village.png",
+      "svg": "village.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "ruins",
+      "sourceIconId": "ruins",
+      "category": "landmark",
+      "tags": [
+        "ruins",
+        "stone",
+        "danger"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.16,
+        "y": 0.78,
+        "width": 0.68,
+        "height": 0.14
+      },
+      "name": "Ruins",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "ruins.png",
+      "svg": "ruins.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "dungeon",
+      "sourceIconId": "dungeon",
+      "category": "adventure",
+      "tags": [
+        "dungeon",
+        "gate",
+        "stone",
+        "danger"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.18,
+        "y": 0.78,
+        "width": 0.64,
+        "height": 0.14
+      },
+      "name": "Dungeon gate",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "dungeon.png",
+      "svg": "dungeon.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "treasure",
+      "sourceIconId": "treasure",
+      "category": "accessory",
+      "tags": [
+        "treasure",
+        "chest",
+        "reward"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.19,
+        "y": 0.77,
+        "width": 0.62,
+        "height": 0.14
+      },
+      "name": "Treasure cache",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "treasure.png",
+      "svg": "treasure.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "enemy-camp",
+      "sourceIconId": "enemy",
+      "category": "encounter",
+      "tags": [
+        "enemy",
+        "camp",
+        "danger"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.13,
+        "y": 0.78,
+        "width": 0.78,
+        "height": 0.14
+      },
+      "name": "Enemy camp",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "enemy-camp.png",
+      "svg": "enemy-camp.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "rest-camp",
+      "sourceIconId": "rest",
+      "category": "service",
+      "tags": [
+        "rest",
+        "camp",
+        "campfire",
+        "shelter"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.12,
+        "y": 0.78,
+        "width": 0.76,
+        "height": 0.14
+      },
+      "name": "Rest camp",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "rest-camp.png",
+      "svg": "rest-camp.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "inn",
+      "sourceIconId": "inn",
+      "category": "service",
+      "tags": [
+        "inn",
+        "settlement",
+        "rest",
+        "shelter"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.22,
+        "y": 0.78,
+        "width": 0.56,
+        "height": 0.14
+      },
+      "name": "Inn",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "inn.png",
+      "svg": "inn.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "trainer",
+      "sourceIconId": "trainer",
+      "category": "service",
+      "tags": [
+        "trainer",
+        "skills",
+        "weapons"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.15,
+        "y": 0.79,
+        "width": 0.7,
+        "height": 0.14
+      },
+      "name": "Trainer",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "trainer.png",
+      "svg": "trainer.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "merchant",
+      "sourceIconId": "merchant",
+      "category": "service",
+      "tags": [
+        "merchant",
+        "market",
+        "supplies"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.22,
+        "y": 0.78,
+        "width": 0.56,
+        "height": 0.14
+      },
+      "name": "Merchant",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "merchant.png",
+      "svg": "merchant.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "shrine",
+      "sourceIconId": "shrine",
+      "category": "landmark",
+      "tags": [
+        "shrine",
+        "blessing",
+        "stone"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.16,
+        "y": 0.79,
+        "width": 0.68,
+        "height": 0.12
+      },
+      "name": "Shrine",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "shrine.png",
+      "svg": "shrine.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "watchtower",
+      "sourceIconId": "watchtower",
+      "category": "landmark",
+      "tags": [
+        "watchtower",
+        "scouting",
+        "stone"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.26,
+        "y": 0.78,
+        "width": 0.48,
+        "height": 0.14
+      },
+      "name": "Watchtower",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "watchtower.png",
+      "svg": "watchtower.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "cartographer",
+      "sourceIconId": "cartographer",
+      "category": "service",
+      "tags": [
+        "cartographer",
+        "map",
+        "reward"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.15,
+        "y": 0.76,
+        "width": 0.7,
+        "height": 0.17
+      },
+      "name": "Cartographer",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "cartographer.png",
+      "svg": "cartographer.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "mine",
+      "sourceIconId": "mine",
+      "category": "adventure",
+      "tags": [
+        "mine",
+        "entrance",
+        "resource",
+        "rock"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.16,
+        "y": 0.78,
+        "width": 0.68,
+        "height": 0.14
+      },
+      "name": "Mine entrance",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "mine.png",
+      "svg": "mine.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    },
+    {
+      "id": "fishing",
+      "sourceIconId": "fishing",
+      "category": "service",
+      "tags": [
+        "fishing",
+        "water",
+        "shore"
+      ],
+      "footprint": {
+        "shape": "rectangle",
+        "x": 0.14,
+        "y": 0.79,
+        "width": 0.72,
+        "height": 0.14
+      },
+      "name": "Fishing spot",
+      "status": "wireframe-placeholder",
+      "placeholder": true,
+      "pngAssetId": null,
+      "png": "fishing.png",
+      "svg": "fishing.svg",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      }
+    }
+  ]
+}

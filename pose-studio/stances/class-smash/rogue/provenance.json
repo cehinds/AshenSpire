@@ -1,0 +1,184 @@
+{
+  "status": "director-approved-source",
+  "frameSize": [
+    1024,
+    1024
+  ],
+  "groundAnchor": [
+    512,
+    930
+  ],
+  "bodyHeight": 700,
+  "bodyHeightNote": "Reference ready foot-to-head height approximately351px at512px source, or702px at1024; crouching animation keeps shared full-character scale.",
+  "frames": [
+    "01-held.png",
+    "02-takeoff.png",
+    "03-airborne.png",
+    "04-impact.png",
+    "05-held.png"
+  ],
+  "sourceStrip": "generated-raw.png",
+  "sourceStripSha256": "da4c882a0883dbb676a447b8f7810fcaef88e186631ee04449d5897730145565",
+  "slotRects": [
+    [
+      0,
+      0,
+      435,
+      724
+    ],
+    [
+      435,
+      0,
+      875,
+      724
+    ],
+    [
+      815,
+      0,
+      1240,
+      724
+    ],
+    [
+      1200,
+      0,
+      1710,
+      724
+    ],
+    [
+      1690,
+      0,
+      2172,
+      724
+    ]
+  ],
+  "normalization": {
+    "sharedScale": 1.25,
+    "rawGroundY": 689,
+    "horizontalRegistration": "slot center to512",
+    "verticalRegistration": "all slots raw y689 to y930, no per-frame foot alignment",
+    "extraction": "Five disjoint main alpha components at threshold10, ids9,2,1,25,10; nearest-main-component assignment retains low-alpha edges/dust. Overlapping x-ranges stay separated without painting."
+  },
+  "alphaBounds": [
+    [
+      261,
+      133,
+      779,
+      939
+    ],
+    [
+      250,
+      110,
+      779,
+      932
+    ],
+    [
+      257,
+      186,
+      771,
+      894
+    ],
+    [
+      203,
+      279,
+      807,
+      934
+    ],
+    [
+      261,
+      133,
+      779,
+      939
+    ]
+  ],
+  "bookends": "05 is byte-identical copy of01",
+  "reference": "https://thearma.org/Manuals/i33/i33.htm",
+  "qaConcerns": [],
+  "seeds": [
+    {
+      "path": "pose-studio/renewal/rogue/frames/ready.png",
+      "sha256": "8b4b29992e0a6faba19d6c999621226b52dc63f84419c5809494801222b300cd"
+    },
+    {
+      "path": "assets-display/alternative/card-rogue-smash-load.webp",
+      "sha256": "dcf86eab9b7d55aacc628517439b4e8dcaa3a0622f09c73e1808a75a4c027f7e"
+    },
+    {
+      "path": "assets-display/alternative/card-rogue-ready.webp",
+      "sha256": "689dd8d9f6f4b938a55d99ecfca450bdb73bf43df76cf8120a89ac41c8ed3b00"
+    }
+  ],
+  "generationOutput": "/workspace/generated_images/exec-f42dbef0-d37e-42bf-b0a0-65ce3ca6e9a5.png",
+  "extractionChecks": [
+    {
+      "slot": 1,
+      "sourceAlphaBounds": [
+        17,
+        51,
+        431,
+        696
+      ],
+      "allSourceAlphaContained": true
+    },
+    {
+      "slot": 2,
+      "sourceAlphaBounds": [
+        446,
+        33,
+        869,
+        690
+      ],
+      "allSourceAlphaContained": true
+    },
+    {
+      "slot": 3,
+      "sourceAlphaBounds": [
+        824,
+        94,
+        1235,
+        660
+      ],
+      "allSourceAlphaContained": true
+    },
+    {
+      "slot": 4,
+      "sourceAlphaBounds": [
+        1208,
+        168,
+        1691,
+        692
+      ],
+      "allSourceAlphaContained": true
+    },
+    {
+      "slot": 5,
+      "sourceAlphaBounds": [
+        1698,
+        83,
+        2138,
+        696
+      ],
+      "allSourceAlphaContained": true
+    }
+  ],
+  "prompt": "generation-prompt.txt",
+  "editReference": {
+    "path": "generated-edit-reference.png",
+    "sha256": "29e69deaab7bbdc5d037720f4ca2b4ed43c77b2b462dd4b46011fd711bc9533a",
+    "note": "Whole-strip regeneration from approved ready seed; final entire-strip edit corrects airborne arms."
+  },
+  "directorApproved": true,
+  "directorApproval": {
+    "by": "root art director",
+    "date": "2026-10-14",
+    "notes": "All five complete silhouettes; right dagger/left buckler; airborne height; restrained grounded dust; extraction preserves RGBA across separate connected figures."
+  },
+  "componentMaskAlgorithm": "normalize.py scipy label alpha>10; five principal components9,2,1,25,10; assign other pixels to nearest principal component via distance_transform_edt; preserve exact RGBA before shared resample",
+  "foregroundIntegrity": "All five source alpha assignments contained by extraction rectangles; no cropped foreground. Tiny generator low-alpha flecks retained, no extra large unrelated components.",
+  "frameSha256": {
+    "01-held.png": "8384178d191cd7d3e3601742ee618860537b22a7303d6c24b58f25b41ffbc2b6",
+    "02-takeoff.png": "36a5a7075399fca0583c4c6fca2c591b75cf13dea224461a67bc4581398896d4",
+    "03-airborne.png": "67bbce96c89beaa819b84e6b2957395100d3902a5d1d7f7869ad9849b98fea0e",
+    "04-impact.png": "7bd3dae8afdf4b27d636612af480ebfd66b0e150a31d866e7158a9ae6e5d0cb9",
+    "05-held.png": "8384178d191cd7d3e3601742ee618860537b22a7303d6c24b58f25b41ffbc2b6"
+  }
+}

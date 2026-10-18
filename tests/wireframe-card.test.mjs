@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { cardMarkupDom } from './helpers/card-markup-dom.mjs';
 
@@ -24,8 +24,13 @@ assert.match(free, /data-cost-layout="staminaOnly"/);
 assert.doesNotMatch(free, /data-component="mana-(icon|value)"/);
 const flurry = renderCard(registries, { cardId: 'twinbladeFlurry' }, { tooltip: false, inspection: false,
   preview: { cost: 1, staminaCost: 1, manaCost: 0, tokens: { damage: 1, hits: 3 },
+    values: [{ op: 'damage', value: 1, hits: 3, hitDamages: [1, 3, 3], totalDamage: 7 }],
     damageSequences: [{ amountToken: 'damage', hitsToken: 'hits', hitDamages: [1, 3, 3], totalDamage: 7 }] } }).innerHTML;
-assert.match(flurry, /1 \+ 3 \+ 3<\/span> damage \(7 total across 3 hits\)/);
+// The face is the shared face text (cardFaceText.js): each number is its own .val span, marked
+// against the resolved per-hit base (action costs derive it, SPEC §4.3a) and its total.
+const flurryBase = resolveCard(registries, { cardId: 'twinbladeFlurry' }).effects[0].amount;
+const mark = value => value < flurryBase ? 'val down' : value > flurryBase ? 'val up' : 'val';
+assert.match(flurry, new RegExp(`<span class="${mark(1)}">1</span> \\+ <span class="${mark(3)}">3</span> \\+ <span class="${mark(3)}">3</span> Slashing damage \\(<span class="${7 < flurryBase * 3 ? 'val down' : 'val'}">7</span> total across 3 hits\\)`));
 assert.doesNotMatch(flurry, />1<\/span> damage <span class="val">3<\/span> times/);
 assert.match(render(undefined), /illustrated-card-face/);
 console.log('12 illustrated resource and tactical preview checks passed');

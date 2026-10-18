@@ -89,7 +89,7 @@ test('all tagged enemy moves project camp, delivery, gauged pressure and spell B
     const enemy = { enemyId: def.id, ...expandedEnemyProjection(def.id) }, original = JSON.stringify(move);
     const projected = expandedEnemyMove(enemy, move, id, ctx), profile = enemyMoveCarrier(enemy, move, id, ctx).combatProfile;
     assert.ok(['physical', 'spell'].includes(profile.camp), `${def.id}/${id}`);
-    assert.ok(['contact', 'near', 'far'].includes(profile.reach)); assert.ok(['single', 'area'].includes(profile.targeting));
+    assert.ok(['melee', 'reach', 'ranged'].includes(profile.range)); assert.ok(['single', 'area'].includes(profile.targeting));
     assert.equal(JSON.stringify(move), original);
     assert.equal(expandedEnemyMove(enemy, move, id, { combatExpansionVersion: 1 }), move);
     for (const effect of projected.effects) {

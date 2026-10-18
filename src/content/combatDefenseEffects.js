@@ -3,6 +3,6 @@ export const STANCE_EFFECTS = Object.freeze({bulwark:'bulwarkStance',gorefire:'b
 export const STATUS_EFFECTS = Object.freeze({
  bleed:'bloodAura',frost:'frostAura',venom:'poisoned',
  prepared:'duelistStance',starstoneCharge:'channelStance',
- crimsonBlight:'crimsonBlight',weak:'weak',vulnerable:'vulnerable',frail:'frail',strength:'strength',dexterity:'dexterity',
+ crimsonBlight:'crimsonBlight',necroticBlight:'crimsonBlight',weak:'weak',silenced:'weak',vulnerable:'vulnerable',frail:'frail',strength:'strength',dexterity:'dexterity',
 });
 export const PROC_EFFECTS = Object.freeze({bleed:'bloodLoss',frost:'frostbite',insanity:'insanity'});

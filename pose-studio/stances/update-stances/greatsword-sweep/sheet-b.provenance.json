@@ -1,0 +1,63 @@
+{
+  "generated_at_utc": "2026-10-12T16:45:00Z",
+  "tool": "tools.image_gen__imagegen",
+  "exact_prompt_file": "sheet-b.prompt.txt",
+  "requested_dimensions": [
+    1024,
+    1536
+  ],
+  "actual_dimensions": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    254
+  ],
+  "transparent_background": true,
+  "original_tool_output": "/workspace/generated_images/exec-532fb87d-d92c-4b85-959a-deca98504da6.png",
+  "preserved_canonical_file": "sheet-b.png",
+  "sha256": "8b9deed36436a27db6e884d7009350b1698ddd6f61339383bf3dffea4bcc3dcc",
+  "input_images": [
+    {
+      "path": "pose-studio/stances/update-stances/greatsword-sweep/sheet-b-pre17-18edit.original.png",
+      "sha256": "accc940c276cfe87eee1f49bcd5692cbdeef8d7b018dfe5af766fdd4bf1fecee",
+      "use": "verified prior Sweep B concept board"
+    },
+    {
+      "path": "docs/design/class-armor-rear-2026-10-06/masters/reaver-default.png",
+      "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd",
+      "use": "costume identity"
+    },
+    {
+      "path": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+      "sha256": "d34545f9058599fa53380e732aea7013bfbc18c38daacbf085b3222c9932a35b",
+      "use": "selected Sweep camera, body scale, and greatsword proportions"
+    },
+    {
+      "path": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+      "use": "selected Smash camera, body scale, and greatsword proportions"
+    }
+  ],
+  "review_status": "pending root review of targeted SW17/SW18 edit",
+  "production_status": "concept candidates only; not runtime art",
+  "director_record": {
+    "approved_concepts_before_edit": {
+      "SW16": "low-forward/downward narrow hold",
+      "SW19": "very wide low-forward sweep",
+      "SW20": "high-arc extended lunge"
+    },
+    "requested_edit": {
+      "SW17": "rear-weighted backward lean, long front leg, bent rear leg; shoulder-high lateral blade",
+      "SW18": "narrow feet, upright torso, hands low at ribs/waist, horizontal blade left below shoulders"
+    },
+    "visual_check": "SW17 has a visibly extended front leg and bent rear leg with the blade at shoulder height. SW18 is narrow and upright with low horizontal blade. The source board is preserved; this generated output redraws the sheet, so exact pixel identity of SW16/SW19/SW20 is not asserted.",
+    "SW17_supersession": {
+      "previous_board_pose": "sheet-b.png SW17 slot has cropped right boot and lifted left rear heel; root rejected this board pose.",
+      "replacement": "sw17-replacement.png, standalone same-ID concept; gallery should use it in place of the board SW17.",
+      "replacement_sha256": "36e1eaea0b21ef33fd2f02e926c5d1819b779443bd11c964ff31665d0387b18a"
+    }
+  }
+}

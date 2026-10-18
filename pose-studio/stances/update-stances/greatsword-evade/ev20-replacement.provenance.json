@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "family": "evade",
+  "actor": "reaver",
+  "weapon": "greatsword",
+  "optionId": "EV20",
+  "replacementFor": "sheet-b.png bottom-left EV20",
+  "optionCountChange": 0,
+  "tool": "image_gen.imagegen",
+  "transparentBackgroundRequested": true,
+  "unchangedOriginal": "/workspace/generated_images/exec-dc5a3c60-eebd-4de2-b656-820f530060a2.png",
+  "output": "ev20-replacement.png",
+  "sha256": "0c48fafcd4069a16dfe2e2794681bcd4c1751bd3ad4565932f1e9c8054a22243",
+  "requestedDimensions": [
+    1024,
+    1024
+  ],
+  "dimensions": [
+    1254,
+    1254
+  ],
+  "mode": "RGBA",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "createdUtc": "2026-10-12T16:41:04.138723+00:00",
+  "references": [
+    {
+      "path": "/workspace/AshenSpire/docs/design/class-armor-rear-2026-10-06/references/reaver-default-rear.png",
+      "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd"
+    },
+    {
+      "path": "/workspace/AshenSpire/assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2"
+    }
+  ],
+  "prompt": "ev20-replacement.prompt.txt",
+  "status": "director_concept_approved_not_user_selected",
+  "actualName": "Upright two-hand recovery carry",
+  "actualObservations": [
+    "Two distinctgauntlets separated byvisiblebrownleather ononehilt.",
+    "Nearforearm fullyvisible;farhand/wrist emerges infrontabdomen.",
+    "Fullcape/boots/swordtipvisible withsame rearleft/rightfacingidentity.",
+    "Bodybase wider andleftslip lesspronounced thanrequested;directionsdescribe actualresult."
+  ],
+  "runtimeChanged": false,
+  "directorReview": {
+    "decision": "approved",
+    "observations": [
+      "Two distinct grips with leather gap.",
+      "Fullfigure/cape/sword visible.",
+      "Rearleftcamera and upright low recovery carry readable."
+    ],
+    "limits": [
+      "Not strong lateral slip or narrow stance.",
+      "Concept approval only;no runtimecutouts or animations implied."
+    ]
+  }
+}
