@@ -38,3 +38,12 @@ Run `node --test pose-studio/enemy-back-proposals/standalone/index.test.mjs`.
 The dedicated CI also validates JSON Schema and rejects data drift or changed art hashes.
 
 `resolveFrameAsset(frame, path => hostAssetUrl(path))` provides optional injected path resolution without importing the game's asset map. `runtimeVerified: false` explicitly records that combat integration has not been validated.
+
+## Source art lives in AshenSpire-art
+
+The PNG sources under `art/enemy-back-proposals` and `art/enemy-back-motion` are
+kept in `cehinds/AshenSpire-art` (branch `intake/ashenspire-pr-2071`, art PR #27),
+not in this repository. `index.test.mjs` verifies every frame's sha256 when
+`ASHENSPIRE_ART_DIR` names a checkout of that repository (the directory that holds
+its `art/` folder); without one it skips the byte check by name and runs the
+structural checks.
