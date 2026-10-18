@@ -41,6 +41,18 @@ export function effectiveEvasion(ctx, entity, { evadeDisabled = false, baseEntit
   return counterBaseEvasion(ctx, baseEntity) + (evadeDisabled ? 0 : stanceRulesFor(ctx).evasionPerStack * stacks(entity, 'evade') + preparedBonus);
 }
 
+/** Perception gate for the hit-% preview: only an exact read of the enemy shows odds that depend on its telegraphed stance. */
+export function hitReadExact(enemy, observerId = 'player') {
+  return enemy?.knowledgeAction?.reads?.[observerId]?.visibility === 'exact';
+}
+/** The target the preview prices: itself on an exact read, else a stance-neutral shallow copy so the badge cannot leak the telegraph. Preview only; execution never calls this. */
+export function previewTargetFor(target, observerId = 'player') {
+  if (!target || hitReadExact(target, observerId)) return target;
+  const blind = { ...target, combatStance: { maneuver: 'neutral', camp: 'physical', range: 'melee' }, matchingStanceCardMultiplier: 0 };
+  delete blind.stanceAdvantageRating;
+  return blind;
+}
+
 export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   if (ctx.combatExpansionVersion !== 2 || !source || !target || source === target || source.kind === target.kind) return null;
   const profile = carrier?.combatProfile || {};

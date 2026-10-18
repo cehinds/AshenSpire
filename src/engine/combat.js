@@ -9,7 +9,7 @@ import { selectCardVariant } from './cardBehavior.js';
 import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
 import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
-import { previewCardAttackHit } from './stanceHit.js';
+import { previewCardAttackHit, previewTargetFor } from './stanceHit.js';
 import { stanceOf, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
@@ -2782,7 +2782,7 @@ export function previewIntent(combat, enemyInstanceId) {
 }
 
 /** The card's hit preview uses the same carrier and d20 rule as execution. */
-export function previewCardHit(combat, cardInstanceId, targetId, upcastRanks) {
+export function previewCardHit(combat, cardInstanceId, targetId, upcastRanks, { observerId } = {}) {
   const inst = combat.piles.hand.find(card => card.instanceId === cardInstanceId);
   const target = (combat.enemies || []).find(enemy => enemy.id === targetId);
   if (!inst || !target) return null;
@@ -2791,5 +2791,5 @@ export function previewCardHit(combat, cardInstanceId, targetId, upcastRanks) {
   const profile = carrier.combatProfile;
   const additionalTargets = profile?.targeting === 'area'
     ? Math.max(0, (combat.enemies || []).filter(enemy => enemy.alive).length - 1) : 0;
-  return previewCardAttackHit(combat, combat.player, target, carrier, { additionalTargets });
+  return previewCardAttackHit(combat, combat.player, observerId ? previewTargetFor(target, observerId) : target, carrier, { additionalTargets });
 }
