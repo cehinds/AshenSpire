@@ -209,10 +209,10 @@ async function touchPlays(page, cdp, want) {
     if (s.result) break;
     for (let i = 0; i < 60 && s.phase !== 'player'; i++) { await sleep(500); s = await state(); }
     // the hand is dealt card by card: wait until its size holds still
-    for (let i = 0, last = -1; i < 20; i++) {
+    for (let i = 0, last = -1, still = 0; i < 30 && still < 2; i++) {
       const n = (await state()).hand;
-      if (n === last) break;
-      last = n; await sleep(700);
+      still = n === last ? still + 1 : 0;
+      last = n; await sleep(900);
     }
     const hand = await rects('.hand .card');
     const pick = hand.filter((c) => !c.un && !tried.has(c.i)).at(-1);
