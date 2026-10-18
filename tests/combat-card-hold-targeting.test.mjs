@@ -24,14 +24,12 @@ ok(/onHoldStart:\s*\(\)\s*=>\s*\{\s*el\.dispatchEvent\(new CustomEvent\('cardhol
   'starting the visible hold preserves the shared card-selection signal without arming combat early');
 
 const completion = hold?.[1].match(/onConfirm:\s*\(\)\s*=>\s*\{([\s\S]*)\n      \},?/)?.[1] || '';
-ok(/if \(oneTapOn\(\)\) \{\s*select\(\);\s*if \(pv\.needsTarget\) focusTargeting\(\);\s*return;\s*\}/.test(completion),
-  'with one-tap play on, a completed hold SELECTS any card without playing it (owner, 2026-10-18)');
-ok(/if \(pv\.needsTarget\) \{\s*select\(\);\s*focusTargeting\(\);\s*return;\s*\}/.test(completion),
-  'a completed hold on a single-target card arms the existing target-selection flow');
-ok(!/dragTargetMode === 'all'/.test(completion),
-  'a card that sweeps every enemy has no target to choose, so its completed hold plays it');
-ok(/playCard\(inst\.instanceId, null\);/.test(completion),
-  'a completed hold on an untargeted card retains direct play');
+ok(/\n\s*select\(\);\s*if \(pv\.needsTarget\) focusTargeting\(\);\s*$/.test(completion),
+  'a completed hold SELECTS any card (and starts the target choice for a single-target one) (owner, 2026-10-18)');
+ok(!/oneTapOn\(\)/.test(completion),
+  'and does so whatever the oneTapPlay setting says');
+ok(!/playCard\(/.test(completion),
+  'a completed hold never plays a card: a tap does, or the double-tap with one-tap play off');
 ok(!/confirm\(\)/.test(completion),
   'the completed hold does not reuse the old same-press confirm path');
 

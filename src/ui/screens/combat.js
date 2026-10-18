@@ -2519,24 +2519,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
         if (!(holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) > 0)) { tap(); return; }
         if (busy || !affordable || dragging) return;
-        // With one-tap play on, a tap is the play, so the completed hold is the
-        // other half: it SELECTS the card without playing it, which is what
-        // reveals the information and Upcast controls (owner, 2026-10-18).
-        if (oneTapOn()) {
-          select();
-          if (pv.needsTarget) focusTargeting();
-          return;
-        }
-        // Only a card that asks for ONE enemy waits for the choice. A card
-        // that sweeps every enemy has nothing to choose (previewCard reports
-        // needsTarget false for it), so a completed hold plays it, as the tap
-        // path's confirm always has.
-        if (pv.needsTarget) {
-          select();
-          focusTargeting();
-          return;
-        }
-        playCard(inst.instanceId, null);
+        // THE COMPLETED HOLD SELECTS AND NEVER PLAYS, whatever oneTapPlay says
+        // (owner, 2026-10-18; SPEC 7.3): selecting is what reveals the
+        // information and Upcast controls and, for a card that asks for one
+        // enemy, starts the target choice. With one-tap play on a tap is the
+        // play; with it off a quick double-tap on the selected card plays.
+        select();
+        if (pv.needsTarget) focusTargeting();
       },
     });
   }
