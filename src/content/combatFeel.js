@@ -8,9 +8,10 @@
 // SHAKE_STEPS_HP is the 2026-10-05 rule (1-4 px by absolute HP, 1/6/10/15); a
 // hit whose target's max HP is unknown falls back to it.
 //
-// HIT_STOP: a hit that costs at least `minHp` holds the attacker's impact frame
-// and the target's recoil for `ms` before the swing recovers; a hit that costs
-// `hugeShare` of the target's max HP or more holds `hugeMs` instead. The damage
+// HIT_STOP: a hit that costs `hugeShare` of the target's max HP or more holds
+// the attacker's impact frame and the target's recoil for `hugeMs`, with no HP
+// floor; a hit that costs at least `minHp` holds them for `ms` before the swing
+// recovers. The huge share is judged first. The damage
 // number, sound and haptic fire at impact; only the two figures pause. `ms` 0
 // turns it off. Instant speed and Reduced motion never reach it: they play the
 // fast path, which has no swing to hold (ui/fx.js animateEvents).
@@ -58,11 +59,14 @@ export function shakePxFor(hpLost, targetMaxHp = 0, steps = SHAKE_STEPS, hpSteps
   return Math.min(SHAKE_MAX_PX, px);
 }
 
-/** hitStopMsFor(hpLost, targetMaxHp?, row?) → how long the figures hold at impact; 0 means none. */
+/**
+ * hitStopMsFor(hpLost, targetMaxHp?, row?) → how long the figures hold at impact; 0 means none.
+ * The huge share (of the target's max HP) is judged first and needs no HP floor; below it, the minHp floor gates ms.
+ */
 export function hitStopMsFor(hpLost, targetMaxHp = 0, row = HIT_STOP) {
-  if (!(row.ms > 0) || hpLost < row.minHp) return 0;
+  if (!(row.ms > 0) || !(hpLost > 0)) return 0;
   if (targetMaxHp > 0 && row.hugeMs > 0 && hpLost / targetMaxHp >= row.hugeShare) return row.hugeMs;
-  return row.ms;
+  return hpLost >= row.minHp ? row.ms : 0;
 }
 
 /** combatFeelIssues(steps?, row?, hpSteps?) → a list of problems, each naming its row; [] is valid. */

@@ -68,7 +68,10 @@ test('the hit-stop starts at its floor and doubles on a huge hit', () => {
   assert.equal(hitStopMsFor(34, 100), 60, '34% is not yet huge');
   assert.equal(hitStopMsFor(35, 100), 120, '35% of max HP: 120 ms');
   assert.equal(hitStopMsFor(60, 100), 120);
-  assert.equal(hitStopMsFor(2, 4), 0, 'a huge share of a tiny target still needs the HP floor');
+  assert.equal(hitStopMsFor(2, 4), 120, 'a huge share of a tiny target holds the long stop; the HP floor does not gate it');
+  assert.equal(hitStopMsFor(5, 12), 120, '5 of 12 HP (41.7%) is huge: 120 ms, though 5 is under the 6 HP floor');
+  assert.equal(hitStopMsFor(5, 100), 0, '5 of 100 HP: under the floor and not huge: no hold');
+  assert.equal(hitStopMsFor(6, 100), 60, '6 of 100 HP: the floor: 60 ms');
   assert.equal(hitStopMsFor(6, 10), 120, 'a hit of 6 HP that is 60% of a small target is huge');
   assert.equal(hitStopMsFor(35), 60, 'unknown max HP: the plain hold');
   assert.deepEqual({ ...HIT_STOP }, { minHp: 6, ms: 60, hugeShare: 0.35, hugeMs: 120 });
