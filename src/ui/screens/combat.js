@@ -2558,7 +2558,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // "selection stays separate from play" still govern every other case.
     const playIsUnambiguous = () => !pv.needsTarget
       || combat.enemies.filter(enemy => enemy.alive).length === 1;
-    const oneTapOn = () => (meta.settings || {}).oneTapPlay === true;
+    // Read live through readSettings() so toggling the row mid-fight takes effect
+    // on the next tap; meta.settings is only the fallback when no reader is wired.
+    const oneTapOn = () => (readSettings ? readSettings() : meta.settings || {}).oneTapPlay === true;
     const oneTapPlays = () => oneTapOn() && playIsUnambiguous();
     const play = () => {
       if (!pv.needsTarget) playCard(inst.instanceId, null);
@@ -3525,7 +3527,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   animateEvents(combat.eventLog.filter((e) => e.type === 'relicTriggered'), fxCtx, () => {});
 
   // First-run guided callouts (SPEC §9 M4) — once per player, over a live board.
-  if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone(), oneTapPlay: (meta.settings || {}).oneTapPlay === true });
+  if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone(), oneTapPlay: (readSettings ? readSettings() : meta.settings || {}).oneTapPlay === true });
   showPendingDiscard();
 }
 import { equipmentAnimationForLoadout, combatEquipmentAnimationForLoadout, animationTiming } from '../../model/equipmentAnimation.js';
