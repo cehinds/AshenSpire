@@ -84,7 +84,7 @@ jobs:
           node tools/about-changelog.mjs --check-order
           node tools/receipts.mjs --check --since origin/test
           node tools/receipts.mjs --check --pr 2071
-          node tools/feature-preview.mjs --check
+          node --input-type=module -e "import {readFileSync} from 'node:fs'; import {featurePreviewRange} from './tools/feature-preview.mjs'; if(featurePreviewRange(readFileSync('README.md','utf8'))!==null)throw new Error('Feature block remains'); console.log('Completed feature preview removed');"
           git add -- README.md CHANGELOG.md src/content/changelog.generated.js
           git diff --cached --stat
           git commit -m "Prepare rear design preview for integration"
