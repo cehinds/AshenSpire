@@ -1,0 +1,1297 @@
+{
+  "Y.effect.0": {
+    "id": "Y.effect.0",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 0,
+    "name": "Blue ethereal sword silhouette",
+    "src": "cutouts/Y/effects/0.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      75,
+      33,
+      437,
+      478
+    ],
+    "sha256": "6a8dd01223a7a4d7dabada8dacd2b1e696727e9d9fb7dd191ff19880dc812146",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 0.4,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "0.4",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "cutouts/O/objects/0.png",
+      "referenceSha256": "71b36ad4db7d946f02231c33594177a8950ca33e3ede94d9b42c16f4c6db4f88",
+      "sourceFile": "exec-2af7e2f4-3270-471f-98e6-a13202fbc847.png",
+      "sourceSha256": "999445446647ca93ed5e4233cd027c441abc5b37f165d6ad4f601822c7f8c800",
+      "sourceCell": {
+        "x": 143,
+        "y": 13,
+        "width": 698,
+        "height": 864
+      },
+      "extractionCrop": {
+        "x": 143,
+        "y": 13,
+        "width": 698,
+        "height": 864
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "O.object.0",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "71b36ad4db7d946f02231c33594177a8950ca33e3ede94d9b42c16f4c6db4f88"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.355,
+        "y": 0.668
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "sword",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:attack",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "attack"
+        }
+      }
+    ],
+    "displayCode": "Y00",
+    "displayLabel": "Y00 \u00b7 Blue ethereal sword silhouette \u00b7 effect"
+  },
+  "Y.effect.1": {
+    "id": "Y.effect.1",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 1,
+    "name": "Blue ethereal hammer silhouette",
+    "src": "cutouts/Y/effects/1.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      61,
+      33,
+      450,
+      480
+    ],
+    "sha256": "e566e4e1b1e688dcb4a8b5875cfac1895c651292f84211566e00985cf1ce6d89",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 0.4,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "0.4",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "cutouts/O/objects/1.png",
+      "referenceSha256": "a3ab159b0d2f66e17aa240eca11c75991f2f770841cae6b0009d5dc20349e583",
+      "sourceFile": "exec-75cc7ec1-ff47-4aa3-acad-80ec82b8624c.png",
+      "sourceSha256": "1bd63c4cc24a59bb1743b066e33cf43702a625480e905ba4cdc7b9b8bbec39ff",
+      "sourceCell": {
+        "x": 100,
+        "y": 25,
+        "width": 741,
+        "height": 853
+      },
+      "extractionCrop": {
+        "x": 100,
+        "y": 25,
+        "width": 741,
+        "height": 853
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "O.object.1",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "a3ab159b0d2f66e17aa240eca11c75991f2f770841cae6b0009d5dc20349e583"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.557,
+        "y": 0.51
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "hammer",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ],
+    "displayCode": "Y01",
+    "displayLabel": "Y01 \u00b7 Blue ethereal hammer silhouette \u00b7 effect"
+  },
+  "Y.effect.2": {
+    "id": "Y.effect.2",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 2,
+    "name": "Blue ethereal scythe silhouette",
+    "src": "cutouts/Y/effects/2.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      32,
+      42,
+      480,
+      471
+    ],
+    "sha256": "52c831dfa5f633283e0b69a8feb8996cb2305ad80e2567f6c9760bd29f6abab4",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 0.4,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "0.4",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "cutouts/L/objects/4.png",
+      "referenceSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea",
+      "sourceFile": "exec-f6e975ae-75f5-4f78-a612-c09e8327debb.png",
+      "sourceSha256": "b2a7cf6f37667f63f7a6468b706ebdedad41849e56a97ca0e193cdb659a42106",
+      "sourceCell": {
+        "x": 73,
+        "y": 54,
+        "width": 814,
+        "height": 781
+      },
+      "extractionCrop": {
+        "x": 73,
+        "y": 54,
+        "width": 814,
+        "height": 781
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.4",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.583,
+        "y": 0.35752
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "scythe",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ],
+    "displayCode": "Y02",
+    "displayLabel": "Y02 \u00b7 Blue ethereal scythe silhouette \u00b7 effect"
+  },
+  "Y.effect.3": {
+    "id": "Y.effect.3",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 3,
+    "name": "Blue ethereal scimitar silhouette",
+    "src": "cutouts/Y/effects/3.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      35,
+      32,
+      476,
+      480
+    ],
+    "sha256": "963a1d2119b07e3299a5e22f2e16e7debf1b346edcb9cacaba1d6d66f0ed1666",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 0.4,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "0.4",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "cutouts/O/objects/2.png",
+      "referenceSha256": "e8921cc489a5c0a74ea222138180cbe06e1e73aebdf8a22df2ff57deb5351609",
+      "sourceFile": "exec-148d5d78-5937-4b85-8bac-8128c4358587.png",
+      "sourceSha256": "9eee6be3a53623d0d1535187c298ddebb199c3881ae0b02687e6dc419d4d3b48",
+      "sourceCell": {
+        "x": 120,
+        "y": 61,
+        "width": 745,
+        "height": 756
+      },
+      "extractionCrop": {
+        "x": 120,
+        "y": 61,
+        "width": 745,
+        "height": 756
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "O.object.2",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "e8921cc489a5c0a74ea222138180cbe06e1e73aebdf8a22df2ff57deb5351609"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.27,
+        "y": 0.287
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "scimitar",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ],
+    "displayCode": "Y03",
+    "displayLabel": "Y03 \u00b7 Blue ethereal scimitar silhouette \u00b7 effect"
+  },
+  "Y.effect.4": {
+    "id": "Y.effect.4",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 4,
+    "name": "Blue ethereal shield silhouette",
+    "src": "cutouts/Y/effects/4.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      92,
+      32,
+      420,
+      480
+    ],
+    "sha256": "34b31ab69d6bb9d8961c331b66125a72a30ca7c0f94e8750effce5517585f9e3",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 0.4,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "0.4",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "cutouts/O/objects/4.png",
+      "referenceSha256": "0a81e8f4448f52d4607a9c881c213016a7dbc4848c26f869b9f54e0c93a688d4",
+      "sourceFile": "exec-faca88be-84c3-454e-9e43-84e37002ed29.png",
+      "sourceSha256": "dfcf94b97702b530b7d6a39c720fb15e94d66d9515ed1ae290d8b48b9a4ec294",
+      "sourceCell": {
+        "x": 154,
+        "y": 19,
+        "width": 613,
+        "height": 836
+      },
+      "extractionCrop": {
+        "x": 154,
+        "y": 19,
+        "width": 613,
+        "height": 836
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "O.object.4",
+      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
+      "baseAssetSha256": "0a81e8f4448f52d4607a9c881c213016a7dbc4848c26f869b9f54e0c93a688d4"
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.5,
+        "y": 0.465
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "shield ward",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:defend",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "defend"
+        }
+      }
+    ],
+    "displayCode": "Y04",
+    "displayLabel": "Y04 \u00b7 Blue ethereal shield silhouette \u00b7 effect"
+  },
+  "Y.effect.5": {
+    "id": "Y.effect.5",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 5,
+    "name": "Pale mint ethereal sword silhouette",
+    "src": "cutouts/Y/effects/5.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      16,
+      13,
+      475,
+      512
+    ],
+    "sha256": "6bd3255e9565f4d92e882f6d593dc8dd734367e5f8e6e10b62dc0a2fc9d60047",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 0.2,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "filter": "none"
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "0.2",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none",
+      "filter": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "attack",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "cutouts/O/objects/0.png",
+      "referenceSha256": "71b36ad4db7d946f02231c33594177a8950ca33e3ede94d9b42c16f4c6db4f88",
+      "sourceFile": "exec-749769c2-b4f0-42b6-852a-7698303b15c4.png",
+      "sourceSha256": "7fc55f13e21d95537a084964d0a3aefd721fa9bc1c3680450e398c59cca090ca",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "extractionCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "O.object.0",
+      "revisionIntent": "Accepted pale pearl-white/icy mint color pass; 20% rendered opacity. Thinner outlines and a little more green are recorded as the next refinement, not part of this publication.",
+      "baseAssetSha256": "71b36ad4db7d946f02231c33594177a8950ca33e3ede94d9b42c16f4c6db4f88",
+      "colorEditReference": {
+        "commit": "b2e096f2a",
+        "src": "cutouts/Y/effects/5.png",
+        "sha256": "d88dc3e33fbb7984af67a085893386a2a12f21b0b35dc484200a4ac15ae2062d"
+      }
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.355,
+        "y": 0.668
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "sword",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:attack",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "attack"
+        }
+      }
+    ],
+    "displayCode": "Y05",
+    "displayLabel": "Y05 \u00b7 Pale mint ethereal sword silhouette \u00b7 effect"
+  },
+  "Y.effect.6": {
+    "id": "Y.effect.6",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 6,
+    "name": "Pale mint ethereal hammer silhouette",
+    "src": "cutouts/Y/effects/6.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      11,
+      7,
+      501,
+      512
+    ],
+    "sha256": "8a131dd3c906fe6afbd10e00d8550c30a0dc129d84caf231f4a26ed4ad7c2c4e",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 0.2,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "filter": "none"
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "0.2",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none",
+      "filter": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "smash",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "cutouts/O/objects/1.png",
+      "referenceSha256": "a3ab159b0d2f66e17aa240eca11c75991f2f770841cae6b0009d5dc20349e583",
+      "sourceFile": "exec-00cf62f3-75be-46e4-ba34-5d028973c921.png",
+      "sourceSha256": "487f429c783d3bc20849e432c491071612f68b0b15c7dd64a31976c302b7b7a8",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "extractionCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "O.object.1",
+      "revisionIntent": "Accepted pale pearl-white/icy mint color pass; 20% rendered opacity. Thinner outlines and a little more green are recorded as the next refinement, not part of this publication.",
+      "baseAssetSha256": "a3ab159b0d2f66e17aa240eca11c75991f2f770841cae6b0009d5dc20349e583",
+      "colorEditReference": {
+        "commit": "b2e096f2a",
+        "src": "cutouts/Y/effects/6.png",
+        "sha256": "8a004b33313eeb6b2a07d90abb61a08f9e93139d5a89ad4ca2d03a3ad21d5bae"
+      }
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.557,
+        "y": 0.51
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "hammer",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:smash",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "smash"
+        }
+      }
+    ],
+    "displayCode": "Y06",
+    "displayLabel": "Y06 \u00b7 Pale mint ethereal hammer silhouette \u00b7 effect"
+  },
+  "Y.effect.7": {
+    "id": "Y.effect.7",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 7,
+    "name": "Pale mint ethereal scythe silhouette",
+    "src": "cutouts/Y/effects/7.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      0,
+      3,
+      506,
+      512
+    ],
+    "sha256": "29ea079d9aedd407988e44ee469da4936688f0d5eb6efff86e70dd8b25a13f34",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 0.2,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "filter": "none"
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "0.2",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none",
+      "filter": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "cutouts/L/objects/4.png",
+      "referenceSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea",
+      "sourceFile": "exec-1709aa84-3ead-433b-90a8-2bd3a2a8a178.png",
+      "sourceSha256": "95a812d2034fffc308a93791895f6f136b9ab179f3bf542aef8db83fd0be122a",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "extractionCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "L.object.4",
+      "revisionIntent": "Accepted pale pearl-white/icy mint color pass; 20% rendered opacity. Thinner outlines and a little more green are recorded as the next refinement, not part of this publication.",
+      "baseAssetSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea",
+      "colorEditReference": {
+        "commit": "b2e096f2a",
+        "src": "cutouts/Y/effects/7.png",
+        "sha256": "3b652061dfae5fb79c7b9378ab617d09bf3277c6b8ae99b69fd4e1a1e9969f4f"
+      }
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.583,
+        "y": 0.35752
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "scythe",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ],
+    "displayCode": "Y07",
+    "displayLabel": "Y07 \u00b7 Pale mint ethereal scythe silhouette \u00b7 effect"
+  },
+  "Y.effect.8": {
+    "id": "Y.effect.8",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 8,
+    "name": "Pale mint ethereal scimitar silhouette",
+    "src": "cutouts/Y/effects/8.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      0,
+      4,
+      492,
+      500
+    ],
+    "sha256": "169e958722d41f02eb4f19cf46cc364a4f10657b9e690a14f6e2eabca52f1518",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 0.2,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "filter": "none"
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "0.2",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none",
+      "filter": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "sweep",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "cutouts/O/objects/2.png",
+      "referenceSha256": "e8921cc489a5c0a74ea222138180cbe06e1e73aebdf8a22df2ff57deb5351609",
+      "sourceFile": "exec-b816ecd0-09b0-4343-a9f9-295374fa481e.png",
+      "sourceSha256": "3509c62cc641ddf4c1c77c99d9572110c90825d3be99bd2198b3204b5181f5a9",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "extractionCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "O.object.2",
+      "revisionIntent": "Accepted pale pearl-white/icy mint color pass; 20% rendered opacity. Thinner outlines and a little more green are recorded as the next refinement, not part of this publication.",
+      "baseAssetSha256": "e8921cc489a5c0a74ea222138180cbe06e1e73aebdf8a22df2ff57deb5351609",
+      "colorEditReference": {
+        "commit": "b2e096f2a",
+        "src": "cutouts/Y/effects/8.png",
+        "sha256": "c946b7e084165f581dfd0e38b61657ebeec16f3f787e68ba778060042d271d56"
+      }
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.27,
+        "y": 0.287
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "scimitar",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:sweep",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "sweep"
+        }
+      }
+    ],
+    "displayCode": "Y08",
+    "displayLabel": "Y08 \u00b7 Pale mint ethereal scimitar silhouette \u00b7 effect"
+  },
+  "Y.effect.9": {
+    "id": "Y.effect.9",
+    "kind": "effect",
+    "category": "Y",
+    "digit": 9,
+    "name": "Pale mint ethereal shield silhouette",
+    "src": "cutouts/Y/effects/9.png",
+    "mimeType": "image/png",
+    "width": 512,
+    "height": 512,
+    "hasTransparency": true,
+    "alphaBounds": [
+      17,
+      11,
+      504,
+      512
+    ],
+    "sha256": "0410469d53784f7de6b5a07d4e625135d8a913677810f102595c48059b79057d",
+    "defaultTransform": {
+      "x": 256,
+      "y": 320,
+      "width": 460,
+      "height": 460,
+      "rotationDeg": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "opacity": 0.2,
+      "blendMode": "normal",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.5
+      },
+      "filter": "none"
+    },
+    "css": {
+      "position": "absolute",
+      "left": "50%",
+      "top": "50%",
+      "width": "89.8438%",
+      "height": "71.875%",
+      "objectFit": "contain",
+      "transformOrigin": "50% 50%",
+      "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
+      "opacity": "0.2",
+      "mixBlendMode": "normal",
+      "pointerEvents": "none",
+      "filter": "none"
+    },
+    "combatReferences": [
+      {
+        "kind": "tag",
+        "id": "maneuver:casting",
+        "scope": "current",
+        "relation": "exact"
+      }
+    ],
+    "suggestedCardTypes": [
+      "defend",
+      "spell"
+    ],
+    "references": {
+      "method": "image-edit-derived-variant",
+      "sourceReference": "cutouts/O/objects/4.png",
+      "referenceSha256": "0a81e8f4448f52d4607a9c881c213016a7dbc4848c26f869b9f54e0c93a688d4",
+      "sourceFile": "exec-a595437e-b7f3-4e8a-adbc-2a12065bfbd9.png",
+      "sourceSha256": "3dfa1dbb87f58a4fcd795388d6a8d0b04030ea9c9d9b3cc964fc826f52a59f0a",
+      "sourceCell": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "extractionCrop": {
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
+      },
+      "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
+      "baseAssetId": "O.object.4",
+      "revisionIntent": "Accepted pale pearl-white/icy mint color pass; 20% rendered opacity. Thinner outlines and a little more green are recorded as the next refinement, not part of this publication.",
+      "baseAssetSha256": "0a81e8f4448f52d4607a9c881c213016a7dbc4848c26f869b9f54e0c93a688d4",
+      "colorEditReference": {
+        "commit": "b2e096f2a",
+        "src": "cutouts/Y/effects/9.png",
+        "sha256": "0845bd02cefc95f712e546b0dcfba514cf048e1b8fe0fb6c4469ec26adda083d"
+      }
+    },
+    "anchors": {
+      "emissionRoot": {
+        "x": 0.5,
+        "y": 0.465
+      }
+    },
+    "magicRole": "ethereal-melee",
+    "weaponShape": "shield ward",
+    "tagReferences": [
+      {
+        "id": "source:spell",
+        "binding": {
+          "domain": "attackSource",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "fx:magic",
+        "binding": {
+          "domain": "presentation",
+          "role": "secondary",
+          "recipe": "symbol.orb"
+        }
+      },
+      {
+        "id": "delivery:melee",
+        "binding": {
+          "domain": "delivery",
+          "role": "metadata",
+          "reason": "Retain identity; no additional art mark by default."
+        }
+      },
+      {
+        "id": "maneuver:defend",
+        "binding": {
+          "domain": "maneuver",
+          "role": "primary",
+          "recipe": "defend"
+        }
+      }
+    ],
+    "displayCode": "Y09",
+    "displayLabel": "Y09 \u00b7 Pale mint ethereal shield silhouette \u00b7 effect"
+  }
+}

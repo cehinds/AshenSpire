@@ -24,7 +24,7 @@ export function alternativeAuraLayers(filter) {
 }
 
 export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=544, createCanvas = () => document.createElement('canvas') } = {}) {
-  let surface = null, work = null, disposed = false;
+  let surface = null, work = null, disposed = false, current = null;
   const parsed = new Map();
   const rendered = []; // Opt-in fixed-travel actions retain at most four phase surfaces.
   function layers(filter) {
@@ -37,7 +37,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
     return parsed.get(filter);
   }
   return Object.freeze({
-    draw(context, image, filter, x, y, width = 512, height = 512, { materialize = false, reuse = false } = {}) {
+    draw(context, image, filter, x, y, width = 512, height = 512, { materialize = false, reuse = false, immutable = false } = {}) {
       if (disposed || !image) return false;
       const plan = layers(filter);
       context.save();
@@ -47,8 +47,12 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
           // than silently discarding effects. Authored filters use the fast path.
           context.filter = filter; context.drawImage(image, x, y, width, height);
         } else {
-          const cached = reuse && rendered.find(entry => entry.image === image && entry.filter === filter
-            && entry.x === x && entry.y === y && entry.width === width && entry.height === height);
+          // Hit-stop and contact holds can request the same immutable bitmap at
+          // the same placement on successive frames. The work surface already
+          // contains those pixels; do not rasterize its shadows again.
+          const matches = entry => entry && entry.image === image && entry.filter === filter
+            && entry.x === x && entry.y === y && entry.width === width && entry.height === height;
+          const cached = (reuse && rendered.find(matches)) || (immutable && matches(current) && current);
           if (cached) {
             context.filter = plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`;
             context.drawImage(cached.surface, 0, 0);
@@ -60,6 +64,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
             work = surface.getContext('2d');
             if (!work) throw new Error('Character aura requires a canvas context');
           }
+          current = null;
           work.clearRect(0, 0, canvasWidth, canvasHeight);
           // Move the source wholly beyond the work surface while compensating
           // each shadow offset. Only the source-alpha shadow enters the stage.
@@ -70,6 +75,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
             work.drawImage(image, x + outside, y, width, height); work.restore();
           }
           work.save(); work.filter = 'none'; work.drawImage(image, x, y, width, height); work.restore();
+          current = immutable ? {image,filter,x,y,width,height,surface} : null;
           if (reuse) {
             const copy = createCanvas(); copy.width = canvasWidth; copy.height = canvasHeight;
             const copyContext = copy.getContext('2d');
@@ -89,7 +95,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
       disposed = true; parsed.clear();
       if (surface) { surface.width = 0; surface.height = 0; }
       for (const entry of rendered) entry.surface.width = entry.surface.height = 0;
-      rendered.length = 0;surface = null; work = null;
+      rendered.length = 0;surface = null; work = null; current = null;
     },
   });
 }

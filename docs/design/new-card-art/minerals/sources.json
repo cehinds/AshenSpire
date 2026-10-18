@@ -1,0 +1,223 @@
+{
+  "generator": "OpenAI image_gen",
+  "created": "2026-10-18",
+  "purpose": "Proposal components; no gameplay bindings",
+  "processing": "Fixed 5x2 grid extraction and normalization to 400x400 with ImageMagick. No painted effects added by code.",
+  "families": [
+    {
+      "code": "A",
+      "name": "shard",
+      "names": [
+        "Obsidian wedge",
+        "Needle shard",
+        "Triangular flake",
+        "Crescent chip",
+        "Split spear",
+        "Wide flake",
+        "Long sliver",
+        "Broken plate",
+        "Arrow shard",
+        "Oblique splinter"
+      ],
+      "description": "thin jagged fragments of dark obsidian, triangular slivers, spear-shaped chips, curved chips, fractured wedges; ONE single piece per cell",
+      "layers": {
+        "object": {
+          "path": "sources/A-object.png",
+          "originalFilename": "exec-4cff7818-bbcc-4403-b615-4f2ebbcfdc15.png",
+          "sha256": "7fb2c722c225d7861e1efb16bd104f4f12c07d0434487fd006590fa41691511e",
+          "prompt": null,
+          "reference": "Prior generated dark pebble concept exec-0978ebfe-48a8-47d3-aedd-2eb74e21feb2.png",
+          "brief": "thin jagged fragments of dark obsidian, triangular slivers, spear-shaped chips, curved chips, fractured wedges; ONE single piece per cell; dark material, no magical cracks or glow, five columns by two rows, transparent alpha"
+        },
+        "cracks": {
+          "path": "sources/A-cracks.png",
+          "originalFilename": "exec-5b4894fd-f849-4aa0-b6a6-53c59ab82caa.png",
+          "sha256": "9a9bc37d0079f6c992f1f402e177f7f55f1b9c2c2c4c39fa521fbad3d1afc95a",
+          "prompt": "Produce a SEPARATE SURFACE CRACK DECAL atlas from this shard reference. Same exact 5 columns x 2 rows grid on wide 5:2 canvas, same ten object positions. Remove all objects: only ten clusters of thin DARK CHARCOAL fissure linework, narrow gray bevel at edges, remain on transparent alpha. These are NON-EMISSIVE dry physical cracks, like fine ink hairlines; ABSOLUTELY NO blue, no luminescence, no bloom, no aura, no smoke, no glow, no filled stone silhouettes. Each cluster is one short jagged central crack with 2-3 fine short branches confined to the INNER MIDDLE HALF of its original object. Crack line thickness about 1 to 3 pixels at 400pixel cell scale. Do not span full width of cells, no background or shadows or labels. Everything except the tiny thin fissure strokes must be transparent. The colored illumination will be provided in a DIFFERENT asset, so this atlas MUST remain achromatic, dark gray fine linework only. Retain original cell alignment.",
+          "reference": "sources/A-object.png",
+          "brief": null
+        },
+        "glow": {
+          "path": "sources/A-glow.png",
+          "originalFilename": "exec-d64a46df-11d7-45ae-96e5-80a4661280cb.png",
+          "sha256": "3cc579fc652b8d73a062b1f55ff3a34d2b18c5d22d9bf9a9d908f1dc868f08d9",
+          "prompt": "Make a matching GLOW ONLY alpha sprite atlas for the ten shard objects in this reference. Keep exact wide 5:2 canvas, FIVE columns TWO rows grid, and all ten silhouette locations and orientations. Remove EVERY solid object. Only a delicate transparent wisp of PALE ICY BLUE and a hint of desaturated mint fog around the silhouette perimeter remains. Hollow completely transparent interior; softly feathered translucent outer aura. Each aura confined to its cell with generous transparent padding. Thin wispy contour not a thick neon line, low intensity, dark fantasy game card effects. NO surface cracks, NO lightning, NO sharp internal strokes, NO stars, NO rocks, NO gemstones, NO opaque shapes, NO white filled centers, NO ground shadows, NO background, NO labels or grid. Separate reusable gentle edge glow overlay on actual transparent alpha.",
+          "reference": "sources/A-object.png",
+          "brief": null
+        }
+      }
+    },
+    {
+      "code": "B",
+      "name": "pebble",
+      "names": [
+        "River oval",
+        "Flat pebble",
+        "Teardrop pebble",
+        "Rounded triangle",
+        "Skipping stone",
+        "Egg pebble",
+        "Pocket oval",
+        "Round pebble",
+        "River chip",
+        "Long pebble"
+      ],
+      "description": "small rounded smooth dark river pebbles, oval, flattened oval, egg shape, squat rounded triangular and rounded trapezoidal shapes; ONE single pebble per cell",
+      "layers": {
+        "object": {
+          "path": "sources/B-object.png",
+          "originalFilename": "exec-18781bda-cc3f-4bdd-9733-6ef1e1023d46.png",
+          "sha256": "7fed98f70db996c9fbf28224ce0aa2c09dfa18e16c43499de0b384aa220629fc",
+          "prompt": null,
+          "reference": "Prior generated dark pebble concept exec-0978ebfe-48a8-47d3-aedd-2eb74e21feb2.png",
+          "brief": "small rounded smooth dark river pebbles, oval, flattened oval, egg shape, squat rounded triangular and rounded trapezoidal shapes; ONE single pebble per cell; dark material, no magical cracks or glow, five columns by two rows, transparent alpha"
+        },
+        "cracks": {
+          "path": "sources/B-cracks.png",
+          "originalFilename": "exec-e2a43c7a-ebd7-4490-8467-7600ab7dbc75.png",
+          "sha256": "14f0cf997d4d5395a0a9f9d290a7fa255135529329eb179c7ed4b5b437293e9d",
+          "prompt": "Produce a SEPARATE SURFACE CRACK DECAL atlas from this pebble reference. Same exact 5 columns x 2 rows grid on wide 5:2 canvas, same ten object positions. Remove all objects: only ten clusters of thin DARK CHARCOAL fissure linework, narrow gray bevel at edges, remain on transparent alpha. These are NON-EMISSIVE dry physical cracks, like fine ink hairlines; ABSOLUTELY NO blue, no luminescence, no bloom, no aura, no smoke, no glow, no filled stone silhouettes. Each cluster is one short jagged central crack with 2-3 fine short branches confined to the INNER MIDDLE HALF of its original object. Crack line thickness about 1 to 3 pixels at 400pixel cell scale. Do not span full width of cells, no background or shadows or labels. Everything except the tiny thin fissure strokes must be transparent. The colored illumination will be provided in a DIFFERENT asset, so this atlas MUST remain achromatic, dark gray fine linework only. Retain original cell alignment.",
+          "reference": "sources/B-object.png",
+          "brief": null
+        },
+        "glow": {
+          "path": "sources/B-glow.png",
+          "originalFilename": "exec-1718d7f5-922a-4d05-adf2-c92fe26a32c0.png",
+          "sha256": "c95049ec89ba8b011c05611ad6068567c56a82e5ab4490dc4d6eaf707bdb0290",
+          "prompt": "Make a matching GLOW ONLY alpha sprite atlas for the ten pebble objects in this reference. Keep exact wide 5:2 canvas, FIVE columns TWO rows grid, and all ten silhouette locations and orientations. Remove EVERY solid object. Only a delicate transparent wisp of PALE ICY BLUE and a hint of desaturated mint fog around the silhouette perimeter remains. Hollow completely transparent interior; softly feathered translucent outer aura. Each aura confined to its cell with generous transparent padding. Thin wispy contour not a thick neon line, low intensity, dark fantasy game card effects. NO surface cracks, NO lightning, NO sharp internal strokes, NO stars, NO rocks, NO gemstones, NO opaque shapes, NO white filled centers, NO ground shadows, NO background, NO labels or grid. Separate reusable gentle edge glow overlay on actual transparent alpha.",
+          "reference": "sources/B-object.png",
+          "brief": null
+        }
+      }
+    },
+    {
+      "code": "C",
+      "name": "stone",
+      "names": [
+        "Basalt block",
+        "Rough cube",
+        "Slate point",
+        "Meteor fragment",
+        "Layered chunk",
+        "Flat rock",
+        "Crag stone",
+        "Split block",
+        "Standing stone",
+        "River boulder"
+      ],
+      "description": "chunky rough charcoal rocks, angular basalt and slate, squat natural boulders, one flattish layered stone, one compact meteorite; ONE single stone per cell",
+      "layers": {
+        "object": {
+          "path": "sources/C-object.png",
+          "originalFilename": "exec-53737250-85d5-4d76-a9f3-2ee0e696520c.png",
+          "sha256": "85c079962eec774f1f86009ccf54132b49f41ea0bb1d447b9b59a1c4b486749a",
+          "prompt": null,
+          "reference": "Prior generated dark pebble concept exec-0978ebfe-48a8-47d3-aedd-2eb74e21feb2.png",
+          "brief": "chunky rough charcoal rocks, angular basalt and slate, squat natural boulders, one flattish layered stone, one compact meteorite; ONE single stone per cell; dark material, no magical cracks or glow, five columns by two rows, transparent alpha"
+        },
+        "cracks": {
+          "path": "sources/C-cracks.png",
+          "originalFilename": "exec-4ecec206-22a5-482b-ab4d-b3ec5e8dbf26.png",
+          "sha256": "984b004f4fa84b5d7f7c871b15dad68cc1d5b933458790aa2840b1f06c9f1892",
+          "prompt": "Produce a SEPARATE SURFACE CRACK DECAL atlas from this stone reference. Same exact 5 columns x 2 rows grid on wide 5:2 canvas, same ten object positions. Remove all objects: only ten clusters of thin DARK CHARCOAL fissure linework, narrow gray bevel at edges, remain on transparent alpha. These are NON-EMISSIVE dry physical cracks, like fine ink hairlines; ABSOLUTELY NO blue, no luminescence, no bloom, no aura, no smoke, no glow, no filled stone silhouettes. Each cluster is one short jagged central crack with 2-3 fine short branches confined to the INNER MIDDLE HALF of its original object. Crack line thickness about 1 to 3 pixels at 400pixel cell scale. Do not span full width of cells, no background or shadows or labels. Everything except the tiny thin fissure strokes must be transparent. The colored illumination will be provided in a DIFFERENT asset, so this atlas MUST remain achromatic, dark gray fine linework only. Retain original cell alignment.",
+          "reference": "sources/C-object.png",
+          "brief": null
+        },
+        "glow": {
+          "path": "sources/C-glow.png",
+          "originalFilename": "exec-a385d535-43e3-4b35-977a-7c2a7fb4b608.png",
+          "sha256": "482edaa1ad9a0759ad4f2581e828f1bd0a5a82ae5aa090c06878bcf44bce88d3",
+          "prompt": "Make a matching GLOW ONLY alpha sprite atlas for the ten stone objects in this reference. Keep exact wide 5:2 canvas, FIVE columns TWO rows grid, and all ten silhouette locations and orientations. Remove EVERY solid object. Only a delicate transparent wisp of PALE ICY BLUE and a hint of desaturated mint fog around the silhouette perimeter remains. Hollow completely transparent interior; softly feathered translucent outer aura. Each aura confined to its cell with generous transparent padding. Thin wispy contour not a thick neon line, low intensity, dark fantasy game card effects. NO surface cracks, NO lightning, NO sharp internal strokes, NO stars, NO rocks, NO gemstones, NO opaque shapes, NO white filled centers, NO ground shadows, NO background, NO labels or grid. Separate reusable gentle edge glow overlay on actual transparent alpha.",
+          "reference": "sources/C-object.png",
+          "brief": null
+        }
+      }
+    },
+    {
+      "code": "D",
+      "name": "crystal",
+      "names": [
+        "Rough quartz",
+        "Quartz point",
+        "Twin crystals",
+        "Slender crystal",
+        "Short prism",
+        "Long prism",
+        "Broken prism",
+        "Tall crystal",
+        "Joined points",
+        "Oblique crystal"
+      ],
+      "description": "natural dark translucent smoky-quartz crystals, pointed hexagonal prisms with rough bases, some short and some elongated; one or two joined crystal points at most per cell",
+      "layers": {
+        "object": {
+          "path": "sources/D-object.png",
+          "originalFilename": "exec-60beae48-d11f-415e-b610-d8505a74f01a.png",
+          "sha256": "9234fe41f3218a94e2e1beb54fe59029bfaa0c825164d8e0199f0ddbe384f2cb",
+          "prompt": null,
+          "reference": "Prior generated dark pebble concept exec-0978ebfe-48a8-47d3-aedd-2eb74e21feb2.png",
+          "brief": "natural dark translucent smoky-quartz crystals, pointed hexagonal prisms with rough bases, some short and some elongated; one or two joined crystal points at most per cell; dark material, no magical cracks or glow, five columns by two rows, transparent alpha"
+        },
+        "cracks": {
+          "path": "sources/D-cracks.png",
+          "originalFilename": "exec-c279e465-fa17-40d7-84eb-c60db6686b2a.png",
+          "sha256": "a172f5ce76d6d91d2e1b62a25c6393a1bb2423fe39adacf88053ad481d3c81cc",
+          "prompt": "Produce a SEPARATE SURFACE CRACK DECAL atlas from this crystal reference. Same exact 5 columns x 2 rows grid on wide 5:2 canvas, same ten object positions. Remove all objects: only ten clusters of thin DARK CHARCOAL fissure linework, narrow gray bevel at edges, remain on transparent alpha. These are NON-EMISSIVE dry physical cracks, like fine ink hairlines; ABSOLUTELY NO blue, no luminescence, no bloom, no aura, no smoke, no glow, no filled stone silhouettes. Each cluster is one short jagged central crack with 2-3 fine short branches confined to the INNER MIDDLE HALF of its original object. Crack line thickness about 1 to 3 pixels at 400pixel cell scale. Do not span full width of cells, no background or shadows or labels. Everything except the tiny thin fissure strokes must be transparent. The colored illumination will be provided in a DIFFERENT asset, so this atlas MUST remain achromatic, dark gray fine linework only. Retain original cell alignment.",
+          "reference": "sources/D-object.png",
+          "brief": null
+        },
+        "glow": {
+          "path": "sources/D-glow.png",
+          "originalFilename": "exec-8307c32d-d680-4121-b88c-750bb30ffbb9.png",
+          "sha256": "91e4ef59c4d90ef0cc4928b55b7f200e74286ce143bb3bc135618b38689050c4",
+          "prompt": "Make a matching GLOW ONLY alpha sprite atlas for the ten crystal objects in this reference. Keep exact wide 5:2 canvas, FIVE columns TWO rows grid, and all ten silhouette locations and orientations. Remove EVERY solid object. Only a delicate transparent wisp of PALE ICY BLUE and a hint of desaturated mint fog around the silhouette perimeter remains. Hollow completely transparent interior; softly feathered translucent outer aura. Each aura confined to its cell with generous transparent padding. Thin wispy contour not a thick neon line, low intensity, dark fantasy game card effects. NO surface cracks, NO lightning, NO sharp internal strokes, NO stars, NO rocks, NO gemstones, NO opaque shapes, NO white filled centers, NO ground shadows, NO background, NO labels or grid. Separate reusable gentle edge glow overlay on actual transparent alpha.",
+          "reference": "sources/D-object.png",
+          "brief": null
+        }
+      }
+    },
+    {
+      "code": "E",
+      "name": "diamond",
+      "names": [
+        "Round brilliant",
+        "Princess cut",
+        "Emerald cut",
+        "Cushion cut",
+        "Pear cut",
+        "Marquise cut",
+        "Oval cut",
+        "Trillion cut",
+        "Kite cut",
+        "Pointed diamond"
+      ],
+      "description": "deliberately CUT faceted gemstones in dark smoky blue-gray material, round brilliant, princess square, emerald rectangular, cushion, pear, marquise, oval, trillion, kite, and classic pointed diamond; ONE gemstone per cell",
+      "layers": {
+        "object": {
+          "path": "sources/E-object.png",
+          "originalFilename": "exec-ae041709-493a-44e9-a46a-cbadf1c4765c.png",
+          "sha256": "78062180c637922056e173029d54e5dd7385ec322f445bc7666d89edf3e2b4b4",
+          "prompt": null,
+          "reference": "Prior generated dark pebble concept exec-0978ebfe-48a8-47d3-aedd-2eb74e21feb2.png",
+          "brief": "deliberately CUT faceted gemstones in dark smoky blue-gray material, round brilliant, princess square, emerald rectangular, cushion, pear, marquise, oval, trillion, kite, and classic pointed diamond; ONE gemstone per cell; dark material, no magical cracks or glow, five columns by two rows, transparent alpha"
+        },
+        "cracks": {
+          "path": "sources/E-cracks.png",
+          "originalFilename": "exec-296851af-d150-49fe-8769-7d3ae416f2d3.png",
+          "sha256": "2b5387a6dafa488e0bc7f47f62dfc16bfc54ca77b812007fcb2db5d6355685cc",
+          "prompt": "Produce a SEPARATE SURFACE CRACK DECAL atlas from this diamond reference. Same exact 5 columns x 2 rows grid on wide 5:2 canvas, same ten object positions. Remove all objects: only ten clusters of thin DARK CHARCOAL fissure linework, narrow gray bevel at edges, remain on transparent alpha. These are NON-EMISSIVE dry physical cracks, like fine ink hairlines; ABSOLUTELY NO blue, no luminescence, no bloom, no aura, no smoke, no glow, no filled stone silhouettes. Each cluster is one short jagged central crack with 2-3 fine short branches confined to the INNER MIDDLE HALF of its original object. Crack line thickness about 1 to 3 pixels at 400pixel cell scale. Do not span full width of cells, no background or shadows or labels. Everything except the tiny thin fissure strokes must be transparent. The colored illumination will be provided in a DIFFERENT asset, so this atlas MUST remain achromatic, dark gray fine linework only. Retain original cell alignment.",
+          "reference": "sources/E-object.png",
+          "brief": null
+        },
+        "glow": {
+          "path": "sources/E-glow.png",
+          "originalFilename": "exec-79b2e9c6-0229-4f94-bdcf-3ed8ca7a4905.png",
+          "sha256": "2ba0cc6ff51a11c3647ee9890dc2c2f424354fb2dfad47dfbfa0c1c81d708e5b",
+          "prompt": "Make a matching GLOW ONLY alpha sprite atlas for the ten diamond objects in this reference. Keep exact wide 5:2 canvas, FIVE columns TWO rows grid, and all ten silhouette locations and orientations. Remove EVERY solid object. Only a delicate transparent wisp of PALE ICY BLUE and a hint of desaturated mint fog around the silhouette perimeter remains. Hollow completely transparent interior; softly feathered translucent outer aura. Each aura confined to its cell with generous transparent padding. Thin wispy contour not a thick neon line, low intensity, dark fantasy game card effects. NO surface cracks, NO lightning, NO sharp internal strokes, NO stars, NO rocks, NO gemstones, NO opaque shapes, NO white filled centers, NO ground shadows, NO background, NO labels or grid. Separate reusable gentle edge glow overlay on actual transparent alpha.",
+          "reference": "sources/E-object.png",
+          "brief": null
+        }
+      }
+    }
+  ]
+}
