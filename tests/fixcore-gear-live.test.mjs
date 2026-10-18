@@ -92,3 +92,27 @@ test('equipment inspection exposes converted values and armor rank budget', asyn
   assert.ok(model.bonuses.some(row=>row.label==='Rank 2 · 4 points'));
   assert.ok(model.facts.every(row=>row.explanation.includes('stat-budget point(s)')));
 });
+test('resolved gear suppresses duplicate legacy pool stats and retains independent effects', async () => {
+  const {runMods}=await import('../src/model/loadout.js');
+  const run=fresh();
+  const registry={...reg,equipment:{...reg.equipment,armaments:reg.equipment.armaments.map(piece=>piece.id==='greatsword' ? {...piece,mods:[...(piece.mods || []),'self.maxHp=+999','self.regen=+2','self.swapCost=+1']} : piece)}};
+  const baseline=runMods(reg,run.loadout,run.class,run), actual=runMods(registry,run.loadout,run.class,run);
+  assert.equal(actual.maxHp,baseline.maxHp);
+  assert.equal(actual.swapCostDelta,baseline.swapCostDelta+1);
+  assert.equal(actual.startStatuses.find(row=>row.status==='regen')?.stacks,(baseline.startStatuses.find(row=>row.status==='regen')?.stacks || 0)+2);
+});
+test('Core 2 weapon upgrades retain each equipped source identity', () => {
+  const run=fresh();run.loadout.sets.leftHand[0]='dagger';
+  const before=gameProfileRatingReceipt(reg,run);
+  run.itemUpgradeLevels={'armament/greatsword':2,'armament/dagger':1};
+  const after=gameProfileRatingReceipt(reg,run);
+  assert.equal(after.totals.ar,before.totals.ar+3);
+  assert.equal(after.sources.find(row=>row.sourceId==='armament/greatsword' && row.weaponTier)?.ar,2);
+  assert.equal(after.sources.find(row=>row.sourceId==='armament/dagger' && row.weaponTier)?.ar,1);
+});
+test('combat refresh derives from allocated attributes without counting gear twice', async () => {
+  const {gameProfileEffectiveAttributes}=await import('../src/model/gameProfileGear.js');
+  const run=fresh(), expected=gameProfileRatingReceipt(reg,run);
+  const combat={...run,allocatedAttributes:{...run.attributes},attributes:gameProfileEffectiveAttributes(reg,run)};
+  assert.deepEqual(gameProfileRatingReceipt(reg,combat).totals,expected.totals);
+});
