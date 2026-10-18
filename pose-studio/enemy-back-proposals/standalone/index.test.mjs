@@ -11,6 +11,12 @@ import { selectProposal, sequenceFor, sampleSequence, positionFrame, resolveFram
 const json = async path => JSON.parse(await readFile(new URL(path, import.meta.url), 'utf8'));
 const catalog = await json('./catalog.json');
 const source = await json('../manifest.json');
+function localObjectIds(cwd) {
+  // Enumerate only objects already in this checkout; unlike probing absent
+  // objects, this cannot trigger lazy fetches and works with older Git too.
+  return new Set(execFileSync('git', ['cat-file', '--batch-all-objects', '--batch-check=%(objectname)', '--unordered'],
+    { cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).trim().split('\n'));
+}
 function fetchSparseArt(assets, cwd = new URL('../../../', import.meta.url)) {
   const missing = [...new Set(assets)].filter(asset => !existsSync(new URL(asset, cwd)));
   if (!missing.length) return;
@@ -19,9 +25,8 @@ function fetchSparseArt(assets, cwd = new URL('../../../', import.meta.url)) {
   if (!sparse.length) return;
   const objects = execFileSync('git', ['ls-tree', '-r', '-z', 'HEAD', '--', ...sparse], { cwd, encoding: 'utf8' })
     .split('\0').filter(Boolean).map(entry => entry.split('\t')[0].split(' ')[2]);
-  const status = execFileSync('git', ['cat-file', '--batch-check'], { cwd, input: objects.join('\n')+'\n', encoding: 'utf8',
-    env: { ...process.env, GIT_NO_LAZY_FETCH: '1' } }).trim().split('\n');
-  const needed = status.filter(line => line.endsWith(' missing')).map(line => line.split(' ')[0]);
+  const local = localObjectIds(cwd);
+  const needed = objects.filter(sha => !local.has(sha));
   // Fetch only the required tracked blobs together, not one network round trip per PNG.
   // Like Git's lazy fetch, do not negotiate commit history for raw blob wants:
   // shallow negotiation otherwise treats an absent blob as a bad revision.
@@ -46,10 +51,10 @@ test('sparse artwork hydration works in a cold shallow partial clone', () => {
     assert.equal(git(clone, 'rev-parse', '--is-shallow-repository').trim(), 'true');
     assert.equal(existsSync(join(clone, asset)), false);
     const sha = git(clone, 'rev-parse', `HEAD:${asset}`).trim();
-    const before = execFileSync('git', ['cat-file', '--batch-check'], { cwd: clone, input: sha+'\n', encoding: 'utf8', env: { ...process.env, GIT_NO_LAZY_FETCH: '1' } });
-    assert.match(before, / missing\n$/);
+    assert.equal(localObjectIds(clone).has(sha), false, 'the fixture starts with a missing promised blob');
     fetchSparseArt([asset], pathToFileURL(clone+'/'));
-    const bytes = execFileSync('git', ['cat-file', 'blob', sha], { cwd: clone, env: { ...process.env, GIT_NO_LAZY_FETCH: '1' } });
+    assert.equal(localObjectIds(clone).has(sha), true, 'hydration really stored the blob locally');
+    const bytes = execFileSync('git', ['cat-file', 'blob', sha], { cwd: clone });
     assert.equal(bytes.toString(), 'real tracked fixture bytes');
     assert.equal(existsSync(join(clone, asset)), false, 'index sparsity is not changed');
   } finally { rmSync(root, { recursive: true, force: true }); }
