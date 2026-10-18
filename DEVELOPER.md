@@ -1128,7 +1128,11 @@ Special moves: `delay: { turns, whileCharging }` makes a telegraphed
 delayed attack (Held Blade pattern — Stagger cancels it); `locked: true` +
 `phases[].unlockMoves` gates moves behind HP-threshold phase changes.
 
-## Add an event (one file: `src/content/events.js`)
+## Add an event (`content/source/events.json`, plus its choice ids)
+
+Add one object to the array in `content/source/events.json` (JSON, so quoted keys; then
+`node tools/content-build.mjs`, which launch does). `src/content/events.js` is a shim, not a
+place to author.
 
 ```js
 {
@@ -1149,11 +1153,19 @@ but run-level (SPEC §3.4): `addCinders`, `addRelic {random?|id}`,
 `startCombat {encounterId}`, plus `heal`/`damage`/`addCardToDeck`. `requires?`
 (e.g. `{ cinders: 50 }`) gates a choice; a `startCombat` effect hands control to
 the combat orchestrator after `resultText` shows. Nothing to register — every
-shipped event is reachable via Unknown nodes.
+shipped event is reachable via Unknown nodes — except its **choice ids**: add
+`"testShrine": ["pray", "leave"]` to `content/source/eventChoiceIds.json`, one
+durable id per choice in order. `eventChoicesWithHistory` needs
+`eventChoiceIds[event.id]` to be the same length as `choices`; if it is not, the
+event offers no choices at all. A choice that needs an earlier choice in the run
+goes in `eventChoiceHistoryRequirements.json` (one slot per choice, `null` for
+none); an event that should wait for one goes in `eventHistoryRequirements.json`.
+Design notes that used to be comments live in `content/source/CONTENT-NOTES.md`
+under "Events".
 
-A **quest chain** is a sidecar beside the events in the same file: list its
-steps and completing choices in `questChains`, and name each step's speaker in
-`eventSpeakers`. A speaker is a row in `content/source/speakers.csv`
+A **quest chain** is a sidecar beside the events: list its steps and completing
+choices in `content/source/questChains.json`, and name each step's speaker in
+`content/source/eventSpeakers.json`. A speaker is a row in `content/source/speakers.csv`
 (`id,name,portraitKey`; the key names existing art, and a blank key shows the
 name plate). A chain's steps open in the dialogue screen, one beat per
 blank-line paragraph of the event's `text`. Both event screens commit a choice

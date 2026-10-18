@@ -13,7 +13,7 @@ import { createSaveManager,createMemoryStorage,runKey } from '../src/engine/save
 const profile=resolveGameProfile('core');
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 const fresh=()=>createRunState({seed:73,classId:'reaver',registries:reg,runId:'unique-run'});
-const visit=run=>{ run.mapGraph=buildActMap(reg,createRng(73),run.seatOrder[0],1);run.mapNodeId='n1_0'; return beginGameProfileRest(run,'1:n1_0'); };
+const visit=run=>{ run.mapGraph=buildActMap(reg,createRng(73),run.seatOrder[0],1);run.mapNodeId='n3_0'; return beginGameProfileRest(run,'1:n3_0'); };
 
 test('fixed classes, ten starters, persistent pin and restamping do not mint equipment grants',()=>{
  const run=fresh(); assert.equal(Object.values(run.attributes).reduce((a,b)=>a+b),6);
@@ -37,14 +37,16 @@ test('terminal wins and defeats each unlock one class, durable dedupe survives h
  assert.equal(gameProfileClassAvailable(profile,{},'herald'),false);
 });
 
-test('seeded route has seven branching preboss depths, two mandatory rests, and replay stability',()=>{
+test('seeded route has seven branching preboss depths, two mandatory rests on depths 3 and 6, and replay stability',()=>{
  const run=fresh();let prior;
  for(let tier=1;tier<=3;tier++){
   const map=buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier);
   assert.ok(Object.keys(map.nodes).length > 8);assert.equal(map.floors,8);assert.equal(map.columns,3);assert.equal(Object.values(map.nodes).filter(n=>n.type==='shrine').length,2);
   assert.equal(map.nodes.boss.floor,8);assert.notEqual(map.nodes.boss.encounterId,prior);prior=map.nodes.boss.encounterId;
   assert.deepEqual(map,buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier));
-  for(const n of Object.values(map.nodes))if(!['rest','elite','boss'].includes(n.actualType))assert.equal(n.type,'event');
+  // Depth 1 opens on a fight drawn as a fight (routes.firstFloor, owner 2026-10-18); every other hidden type is still '?'.
+  for(const n of Object.values(map.nodes)){if(n.floor===1){assert.equal(n.actualType,'fight');assert.equal(n.type,'monster');}
+   else if(!['rest','elite','boss'].includes(n.actualType))assert.equal(n.type,'event');}
  }
 });
 
@@ -134,7 +136,7 @@ test('core Smith is a free single-tier service without stones, with paid overrid
  assert.throws(()=>commitGameProfileRest(reg,run,'smith',{itemRef:item.itemRef}),/spent/);
  const paid=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{rest:{smith:{free:false,tiersPerService:1}}}});
  const r=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,paid)),paid);
- const next=createRunState({seed:1,classId:'reaver',registries:r});next.mapGraph=buildActMap(r,createRng(1),next.seatOrder[0],1);next.mapNodeId='n1_0';beginGameProfileRest(next);
+ const next=createRunState({seed:1,classId:'reaver',registries:r});next.mapGraph=buildActMap(r,createRng(1),next.seatOrder[0],1);next.mapNodeId='n3_0';beginGameProfileRest(next);
  const before=JSON.stringify(next);assert.throws(()=>commitGameProfileRest(r,next,'smith',{itemRef:item.itemRef}),/Insufficient/);assert.equal(JSON.stringify(next),before);
 });
 

@@ -1,4 +1,4 @@
-# Content authoring notes (relics, stances, flasks, statuses)
+# Content authoring notes (relics, stances, flasks, statuses, events)
 
 The relics are `content/source/relics.json`, compiled to `src/content/generated/relics.js` by
 `tools/content-build.mjs`. These are the design notes that lived as comments in the old
@@ -116,3 +116,40 @@ Starstone combo engine (SPEC §5.1 identity) · Herald: blood economy powers (SP
 - **stanceShifted** — fight-long marker for the Oath rule (`oathKept`): set when its owner enters a stance, it never decays, so Oath stays broken for the fight.
 - **silenced** — Psychic family (design elements-and-tag-mechanics §2.1). Expanded combat (owner, 2026-10-13): +1 SP per stack on spell-camp cards, and immunity to Force, each Force hit or effect spending a stack. The `spellDamageDealtMult` modifier is read by legacy combat only. `decay.duration` 2 is PROVISIONAL.
 - **stoneskin** — Earth family (design elements-and-tag-mechanics 2.2). Applied by the Stoneskin card. Ticks down at the owner's turn end, so two ticks carry its Block through exactly one turn start. `decay.duration` 2 is PROVISIONAL.
+
+## Events (content/source/events.json and its five tables)
+
+The Unknown-node events are `content/source/events.json` (an array); the five tables beside them are
+`eventChoiceIds.json`, `eventChoiceHistoryRequirements.json`, `eventHistoryRequirements.json`,
+`questChains.json` and `eventSpeakers.json` (each an object keyed by event id, or chain id).
+`tools/content-build.mjs` compiles each to `src/content/generated/<name>.js`; `src/content/events.js` is a
+shim that re-exports them under the same names with the same freeze depths (`events` unfrozen; the three
+`event*` tables frozen at the top level; `questChains` and `eventSpeakers` frozen deeply) and keeps
+`eventChoicesWithHistory`, which is code. These are the design notes that lived as comments in the old
+`src/content/events.js`; keep a note under its event id when you change one.
+
+`eventChoicesWithHistory` needs `eventChoiceIds[event.id]` to be the same length as the event's `choices`,
+or it returns no choices. In `eventChoiceHistoryRequirements.json`, `null` in a slot means "no requirement
+for this choice" (the shim exports it as `undefined`, as the hand-written table held it).
+
+### File header
+
+Unknown-node events (SPEC §5.6; grown to 10 in M3, 24 with the Nameless and Last Lantern quest chains).
+Every choice is a real trade-off, StS-style. `requires` is checked by the event screen (e.g. `{ cinders: 50 }`);
+`effects` are run-level opcodes executed via executeRunEffects. A startCombat effect hands control to the combat
+orchestrator after resultText is shown. SPEC §9 M3 target: 10 events.
+
+### Per-event notes
+
+- **turncoatMirror** — Plan phase 5c: the one shipped door to the class swap — an event, never a menu. The glass shows another calling; the run keeps its deck, relics, hands and weapon skills, and starts its class over.
+- **handspiderNest** — first of the content-pass additions (round 3): every event from here to `twoFingersRiddle` came in that pass.
+- **namelessKeeper** — THE FIRST QUEST CHAIN (E12, #257: "questing and previous choices to influence other events"). Three steps over the run: the Grave of the Nameless is step one; this event and `namelessRest` are gated by what was chosen there (`eventHistoryRequirements`) and branch on it (choice-level `requiresHistory`), so a later act answers an earlier act's choice. A gated event never enters an Unknown node's pool until its step is earned.
+- **lastLantern** — A two-step investment in the road, answered at a later Unknown node (`lanternCaravan`).
+
+### Tables
+
+- **eventChoiceIds** — Stable history ids live beside event content without widening the validated event opcode schema. Labels may change; these ids are durable save facts.
+- **eventChoiceHistoryRequirements** — The merchant (`merchantsGhost`) will not trade with a traveler who previously looted the abandoned cart. Stealing remains available, and Leave is deliberately requirement-free so this history branch can never trap the player. `namelessKeeper`: the keeper answers what was done at the grave — the digger may pay or fight, the mourner is thanked; Leave stays free so no branch can trap. `namelessRest`: the second cairn answers the keeper — the thanked keep the vigil, the penitent rest, the one who fought the followers loots again.
+- **eventHistoryRequirements** — EVENT-LEVEL history gates (quest steps). An event listed here enters an Unknown node's pool only once the run's history satisfies its requirement (engine/encounters.js resolveUnknownNode via model/quests.js) — so a chain step cannot be met before the step it answers. Events not listed are ungated, exactly as before.
+- **questChains** — QUEST CHAINS (plan phase 10a; proposal §7.5). A chain names its steps and the choices that complete it; committing a completing choice completes the quest through the one door (engine/quests.js), at most once per run. Every step is spoken in the dialogue screen. A Leave never completes a quest (validate.js refuses it by name). Grave of the Nameless is the first chain: any answer at the second cairn but Leave finishes the walk.
+- **eventSpeakers** — Who speaks each chain step (content/source/speakers.csv rows). Every chain event names one; validation refuses a step without a speaker and a speaker no row defines. PROVISIONAL (owner decision, 2026-09-14): the grave and the second cairn are spoken by the Nameless themselves, the fork in the road by their Keeper (docs/LORE-CAST.md).

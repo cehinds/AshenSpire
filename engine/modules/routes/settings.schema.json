@@ -54,6 +54,17 @@
         "path"
       ],
       "description": "Map visibility policy for configured routes; fog reveals the trail and next choices."
+    },
+    "firstFloor": {
+      "enum": [
+        "fight",
+        "event",
+        "treasure",
+        "shop",
+        "elite",
+        null
+      ],
+      "description": "Node type every lane on depth 1 is forced to; null leaves depth 1 to the ordinary draw. It must be one of the route's alternatives, and depth 1 cannot also be a rest depth."
     }
   },
   "required": [
@@ -65,7 +76,8 @@
     "restFloors",
     "branchColumns",
     "minimumThreatFloor",
-    "mapMode"
+    "mapMode",
+    "firstFloor"
   ],
   "additionalProperties": false
 }
