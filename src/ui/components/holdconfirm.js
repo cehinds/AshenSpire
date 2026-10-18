@@ -214,6 +214,11 @@ export function armHold(btn, {
     for (const target of [btn, ...activeFeedback]) {
       target.style.setProperty('--hold', String(p));
       target.dataset.holdProgress = p.toFixed(3);
+      const hint = target.querySelector?.('.hold-hint');
+      if (hint) {
+        hint.textContent = target.dataset.hold === 'holding' ? `${Math.round(p * 100)}%` : 'HOLD';
+        hint.setAttribute('aria-label', target.dataset.hold === 'holding' ? `Hold progress ${Math.round(p * 100)} percent` : 'Hold to confirm');
+      }
     }
   };
 
