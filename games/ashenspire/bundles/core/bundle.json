@@ -181,7 +181,8 @@
       "module": "rewards",
       "settings": {
         "offerCount": "offerCount",
-        "takeCount": "takeCount"
+        "takeCount": "takeCount",
+        "rewardGroups": "rewardGroups"
       }
     },
     {
@@ -189,7 +190,8 @@
       "module": "shops",
       "settings": {
         "offerCount": "options",
-        "price": "price"
+        "price": "price",
+        "itemsPerCategory": "itemsPerCategory"
       }
     },
     {
