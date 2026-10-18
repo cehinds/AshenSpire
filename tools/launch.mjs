@@ -114,6 +114,15 @@ if (hudLayout.code !== 0) {
   process.exit(hudLayout.code || 1);
 }
 
+// 0c. Publish the design tokens (content/config/ui/tokens.json →
+// styles/tokens.generated.css). Same reason: the bundler inlines it.
+console.log('launch: compiling design tokens…');
+const tokensCss = await steps.run(resolve(ROOT, 'tools/tokens-css.mjs'), ['--write']);
+if (tokensCss.code !== 0) {
+  console.error('launch: token CSS build failed — fix content/config/ui/tokens.json and retry.');
+  process.exit(tokensCss.code || 1);
+}
+
 // 0. Compile authored content (content/source/*.csv|json → src/content/generated).
 // Runs first so a spreadsheet edit is picked up by the very next launch without
 // anyone remembering a separate command.
