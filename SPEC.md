@@ -2062,7 +2062,8 @@ together.
   highlights. Information opens details without playing. Existing tap, hold,
   keyboard, controller and direct-target drag confirmation remain available.
   A tap on a playable card plays it when its target is unambiguous (self cards;
-  one living enemy); the hold still selects without playing (owner, 2026-10-18).
+  one living enemy); the hold still selects a target-needing card without
+  playing it (owner, 2026-10-18).
 - **End Turn.** A single press when no card in hand is playable; otherwise the
   configured second beat (owner, 2026-10-18).
 - **Card flick to play.** An upward or upward-diagonal primary-pointer flick from a
