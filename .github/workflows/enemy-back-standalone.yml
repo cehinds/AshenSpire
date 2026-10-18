@@ -34,6 +34,8 @@ jobs:
           const catalog = JSON.parse(readFileSync(root+'catalog.json'));
           if (!validate(catalog)) throw new Error(JSON.stringify(validate.errors));
           const invalid = structuredClone(catalog);
-          invalid.actors[0].proposals[0].stances.neutral.frames[0].asset = 'art/enemy-back-motion/../evil.png';
-          if (validate(invalid)) throw new Error('Schema accepted parent path traversal');
+          for (const asset of ['art/enemy-back-motion/../evil.png', 'art/enemy-back-motion/actor/../evil.png']) {
+            invalid.actors[0].proposals[0].stances.neutral.frames[0].asset = asset;
+            if (validate(invalid)) throw new Error('Schema accepted parent path traversal: '+asset);
+          }
           JS
