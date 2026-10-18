@@ -53,10 +53,14 @@ export function compileBindings({ mechanics, attachments = [], moduleParameters 
     if (tags.has(tag)) fail(`mechanics.${slug}.tag`, `duplicate behavior tag ${tag}`);
     tags.set(tag, mechanic);
   }
+  const knownTags = new Set([...mechanics.values()].map(m => m.manifest.tag));
+  const behaviorFamilies = new Set([...tags.keys()].map(tag => tag.split(':')[0]));
   const out = [], seen = new Set();
   for (const [i, source] of attachments.entries()) {
     const path = `attachments[${i}]`;
     for (const key of ['ownerId', 'sourceInstanceId', 'kind']) if (typeof source[key] !== 'string' || !source[key]) fail(`${path}.${key}`, 'required nonempty string');
+    for (const tag of source.tags || []) if (behaviorFamilies.has(String(tag).split(':')[0]) && !knownTags.has(tag)) fail(`${path}.tags`, `unknown behavior tag ${tag}`);
+    for (const tag of source.mechanicTags || []) if (!tags.has(tag)) fail(`${path}.mechanicTags`, `unknown behavior tag ${tag}`);
     const explicit = new Map();
     for (const [j, row] of (source.mechanicBindings || []).entries()) {
       const at = `${path}.mechanicBindings[${j}]`;
@@ -68,12 +72,12 @@ export function compileBindings({ mechanics, attachments = [], moduleParameters 
     }
     // Classification/presentation tags do not activate behavior; an explicit
     // mechanicBindings row always requires a registered behavior tag.
-    for (const tag of new Set([...(source.tags || []).filter(t => tags.has(t)), ...explicit.keys()])) {
+    for (const tag of new Set([...(source.tags || []).filter(t => tags.has(t)), ...(source.mechanicTags || []), ...explicit.keys()])) {
       const mechanic = tags.get(tag), manifest = mechanic.manifest, row = explicit.get(tag) || {};
       if (!(manifest.attaches || []).includes(source.kind)) fail(`${path}.${tag}`, `cannot attach to ${source.kind}`);
       const schema = manifest.parameters;
       let config = parameterDefaults(schema);
-      validateParameters(schema, config, `${path}.${tag}.defaults`);
+      validateParameters(schema, config, `${path}.${tag}.defaults`, true);
       for (const [layer, values] of [['module', moduleParameters[manifest.id] || {}], ['parameters', row.parameters || {}], ['upgradeParameters', row.upgradeParameters || {}]]) {
         validateParameters(schema, values, `${path}.${tag}.${layer}`, true);
         config = merge(config, values);
@@ -83,9 +87,11 @@ export function compileBindings({ mechanics, attachments = [], moduleParameters 
       const id = JSON.stringify([source.ownerId, source.sourceInstanceId, manifest.id]);
       if (seen.has(id)) fail(path, `duplicate attachment ${id}`);
       seen.add(id);
+      validateModifiers((mechanic.service.modifiers || []).filter(x => x.phase !== undefined), `${path}.${tag}.modifiers`);
       const behaviors = (mechanic.service.handlers || []).length + (mechanic.service.modifiers || []).length;
-      if (!behaviors && manifest.portability === 'portable') fail(`${path}.${tag}`, 'required mechanic has no executable behavior');
+      if (!behaviors) fail(`${path}.${tag}`, 'required mechanic has no executable behavior');
       out.push(freeze({ id, mechanicId: manifest.id, tag, ownerId: source.ownerId, sourceInstanceId: source.sourceInstanceId,
+        stateKey: manifest.stateScope === 'run' || manifest.stateScope === 'combat' ? JSON.stringify([manifest.stateScope, manifest.id]) : id,
         label: source.label || manifest.label, config, service: structuredClone(mechanic.service) }));
     }
   }
@@ -126,6 +132,7 @@ export function evaluateCondition(node, scope) {
   fail('$when', 'unknown condition');
 }
 
+export const CALCULATION_PHASES = Object.freeze(['stat.derived', 'cost.resource', 'effect.amount', 'damage.mitigation', 'roll.accuracy', 'roll.perception']);
 const MODIFIER_FIELDS = ['id', 'phase', 'subject', 'when', 'select', 'operation', 'value', 'stacking', 'priority', 'after'];
 export function validateModifiers(modifiers = [], path = '$modifiers') {
   const ids = new Set();
@@ -133,6 +140,7 @@ export function validateModifiers(modifiers = [], path = '$modifiers') {
     const at = `${path}[${i}]`;
     for (const key of Object.keys(row)) if (!MODIFIER_FIELDS.includes(key)) fail(`${at}.${key}`, 'unknown modifier field');
     for (const key of ['id', 'phase']) if (typeof row[key] !== 'string' || !row[key]) fail(`${at}.${key}`, 'required nonempty string');
+    if (!CALCULATION_PHASES.includes(row.phase)) fail(`${at}.phase`, `unknown calculation phase ${row.phase}`);
     if (ids.has(row.id)) fail(`${at}.id`, `duplicate modifier ${row.id}`); ids.add(row.id);
     if (!['target', 'actor', 'owner'].includes(row.subject)) fail(`${at}.subject`, 'expected target, actor or owner');
     if (!['multiply', 'add'].includes(row.operation)) fail(`${at}.operation`, `unknown operation ${row.operation}`);

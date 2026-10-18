@@ -1,4 +1,5 @@
 // Host-neutral mechanics runtime. Hosts inject compiled mechanics and the op catalog.
+import { compileBindings, evaluateModifiers } from './bindings.mjs';
 import { evaluate, evaluateRaw } from '../../src/model/formulas.js';
 export const MAX_DEPTH = 32;
 const PILES = ['draw', 'hand', 'discard', 'exhaust'];
@@ -69,7 +70,8 @@ function mergeDeep(base, over) {
 // Runtime
 // ---------------------------------------------------------------------------
 
-export function createRuntime({ mechanics, ops } = {}) {
+export function createRuntime({ mechanics, ops, bindings, attachments, moduleParameters, enabledMechanics } = {}) {
+  const activeBindings = bindings ?? (attachments ? compileBindings({ mechanics, attachments, moduleParameters, enabledMechanics }) : null);
   if (!(mechanics instanceof Map)) throw new Error('createRuntime needs mechanics as a Map of slug to mechanic');
   if (!ops?.ops) throw new Error('createRuntime needs the compiled op catalog');
   for (const [name, def] of Object.entries(ops.ops)) {
@@ -90,7 +92,13 @@ export function createRuntime({ mechanics, ops } = {}) {
   function lookup(rt, scope, ref) {
     const path = ref.slice(1).split('.');
     if (path[0] === 'state') {
-      let cur = rt.state.mechanics[scope.slug];
+      let cur = scope.binding ? rt.state.bindingState?.[scope.binding.stateKey || scope.binding.id] : rt.state.mechanics[scope.slug];
+      for (const key of path.slice(1)) cur = cur == null ? undefined : cur[key];
+      if (cur === undefined) throw new Error(`Unresolved ${ref}`);
+      return cur;
+    }
+    if (path[0] === 'config') {
+      let cur = scope.binding?.config;
       for (const key of path.slice(1)) cur = cur == null ? undefined : cur[key];
       if (cur === undefined) throw new Error(`Unresolved ${ref}`);
       return cur;
@@ -98,7 +106,7 @@ export function createRuntime({ mechanics, ops } = {}) {
     if (path[0] === 'model') {
       // The mechanic's own state over the defaults of its model.schema.json.
       const defaults = schemaDefaults(mechanics.get(scope.slug)?.model);
-      let cur = mergeDeep(defaults, rt.state.mechanics[scope.slug] || {});
+      let cur = scope.binding ? mergeDeep(defaults, rt.state.bindingState?.[scope.binding.stateKey || scope.binding.id] || {}) : mergeDeep(defaults, rt.state.mechanics[scope.slug] || {});
       for (const key of path.slice(1)) cur = cur == null ? undefined : cur[key];
       if (cur === undefined) throw new Error(`Unresolved ${ref}`);
       return cur;
@@ -220,19 +228,33 @@ export function createRuntime({ mechanics, ops } = {}) {
   // ----- events -----
   function dispatchEvent(rt, name, payload) {
     rt.events.push({ name, payload });
-    for (const [slug, mechanic] of mechanics) {
+    const targets = activeBindings === null
+      ? [...mechanics].map(([slug, mechanic]) => ({ slug, mechanic }))
+      : activeBindings.filter(binding => binding.ownerId === (payload.ownerId ?? payload.target ?? payload.owner)
+          && (payload.sourceInstanceId === undefined || payload.sourceInstanceId === binding.sourceInstanceId))
+        .map(binding => ({ slug: binding.mechanicId, mechanic: mechanics.get(binding.mechanicId), binding }));
+    for (const { slug, mechanic, binding } of targets) {
       for (const handler of mechanic.service.handlers || []) {
-        if (handler.on === `event.${name}`) runHandler(rt, slug, handler, { ...payload });
+        if (handler.on === `event.${name}`) runHandler(rt, slug, handler, { ...payload }, binding);
       }
     }
   }
 
   // ----- handlers and steps -----
-  function runHandler(rt, slug, handler, params) {
+  function runHandler(rt, slug, handler, params, binding) {
     if (rt.depth >= MAX_DEPTH) throw new Error(`Recursion depth exceeds ${MAX_DEPTH}`);
     rt.depth++;
     try {
-      const scope = { slug, vars: { ...params } };
+      const scope = { slug, binding, vars: { ...params, ...(binding ? { owner: binding.ownerId, sourceInstanceId: binding.sourceInstanceId } : {}) } };
+      if (handler.oncePer && binding) {
+        const token = params[`${handler.oncePer}Id`];
+        if (token === undefined) throw new Error(`handler ${handler.on} needs ${handler.oncePer}Id`);
+        const key = JSON.stringify([binding.id, handler.on, handler.id || '', handler.oncePer]);
+        rt.state.bindingGates ||= {};
+        if (rt.state.bindingGates[key] === token) return;
+        if (handler.when && !condition(rt, scope, handler.when)) return;
+        rt.state.bindingGates[key] = token;
+      }
       if (handler.when && !condition(rt, scope, handler.when)) return;
       runSteps(rt, scope, handler.do);
     } finally {
@@ -260,7 +282,7 @@ export function createRuntime({ mechanics, ops } = {}) {
         }
         return [value(rt, scope, item)];
       });
-      for (const item of items) runSteps(rt, { slug: scope.slug, vars: { ...scope.vars, [step.as]: item } }, step.do);
+      for (const item of items) runSteps(rt, { ...scope, vars: { ...scope.vars, [step.as]: item } }, step.do);
       return undefined;
     }
     if ('emit' in step) {
@@ -271,7 +293,7 @@ export function createRuntime({ mechanics, ops } = {}) {
     }
     if ('set' in step) {
       const path = String(step.set).split('.');
-      let cur = (rt.state.mechanics[scope.slug] ||= {});
+      let cur = scope.binding ? ((rt.state.bindingState ||= {})[scope.binding.stateKey || scope.binding.id] ||= {}) : (rt.state.mechanics[scope.slug] ||= {});
       // Replace any non-record prefix (SPEC §6), as the C# runtime does.
       for (const key of path.slice(0, -1)) { if (!cur[key] || typeof cur[key] !== 'object' || Array.isArray(cur[key])) cur[key] = {}; cur = cur[key]; }
       // Clone so a later set never writes through into the caller's params or an emitted payload (SPEC §1).
@@ -285,13 +307,14 @@ export function createRuntime({ mechanics, ops } = {}) {
     const def = ops.ops[step.op];
     if (!def) throw new Error(`Unknown op '${step.op}'`);
     if (def.reference !== 'portable') throw new Error(`legacy op ${step.op} is not portable`);
+    for (const key of Object.keys(step)) if (key !== 'op' && !Object.hasOwn(def.params || {}, key)) throw new Error(`op ${step.op} unknown parameter '${key}'`);
     for (const [name, param] of Object.entries(def.params || {})) {
       if (param.required && step[name] === undefined) throw new Error(`op ${step.op} needs '${name}'`);
     }
     const api = {
-      value: (node, vars) => (vars ? value(rt, { slug: scope.slug, vars: { ...scope.vars, ...vars } }, node) : value(rt, scope, node)),
+      value: (node, vars) => (vars ? value(rt, { ...scope, vars: { ...scope.vars, ...vars } }, node) : value(rt, scope, node)),
       number: (node, fallback, vars, what = step.op) => (node === undefined ? fallback
-        : numberValue(rt, vars ? { slug: scope.slug, vars: { ...scope.vars, ...vars } } : scope, node, `${step.op} ${what}`)),
+        : numberValue(rt, vars ? { ...scope, vars: { ...scope.vars, ...vars } } : scope, node, `${step.op} ${what}`)),
       targets: () => entityKeys(rt, scope, step.target !== undefined ? step.target
         : (Object.hasOwn(scope.vars, 'target') ? '$target' : 'self')),
       emit: (name, payload) => dispatchEvent(rt, name, payload),
@@ -303,14 +326,24 @@ export function createRuntime({ mechanics, ops } = {}) {
     const { slug, name } = splitName(full, 'command');
     const handlers = (mechanics.get(slug).service.handlers || []).filter(h => h.on === `command.${name}`);
     if (!handlers.length) throw new Error(`Unknown command '${full}'`);
-    for (const handler of handlers) runHandler(rt, slug, handler, { ...params });
+    if (activeBindings === null) for (const handler of handlers) runHandler(rt, slug, handler, { ...params });
+    else {
+      const selected = activeBindings.filter(b => b.mechanicId === slug && (params.bindingId ? b.id === params.bindingId
+        : (params.ownerId === undefined || b.ownerId === params.ownerId) && (params.sourceInstanceId === undefined || b.sourceInstanceId === params.sourceInstanceId)));
+      if (selected.length !== 1) throw new Error(`command ${full} requires one active owner/source binding; found ${selected.length}`);
+      for (const handler of handlers) runHandler(rt, slug, handler, { ...params }, selected[0]);
+    }
   }
 
   function start(state) {
-    return { state: createState(state), events: [], depth: 0 };
+    if (state?.bindingStateVersion !== undefined && state.bindingStateVersion !== 1) throw new Error('Unsupported binding state version');
+    const copy = createState(state);
+    if (activeBindings !== null) copy.bindingStateVersion = 1;
+    return { state: copy, events: [], depth: 0 };
   }
 
   return {
+    calculate(options) { return evaluateModifiers({ ...options, bindings: activeBindings ?? [] }); },
     command(state, full, params = {}) {
       const rt = start(state);
       invokeCommand(rt, full, structuredClone(params)); // host values are snapshotted at the boundary
