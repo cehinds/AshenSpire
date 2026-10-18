@@ -19,6 +19,7 @@
    const root=point(m,anchorVector(a,t,link.selfAnchor));t.x=attachmentPoint.x-root.x;t.y=attachmentPoint.y-root.y;
   }
   const styles=css(t,m);
+  if(t.filter)styles.filter=t.filter;
   // Keep the longstanding readable CSS for ordinary independent layers.
   if(!attachmentPoint&&!layer.detachedAffine)styles.transform=`translate(-50%, -50%) rotate(${t.rotationDeg}deg) scale(${t.scaleX}, ${t.scaleY})`;
   return {...layer,src:a.src,references:a.references,transform:t,affine:m,attachmentPoint,css:{...styles,zIndex:String(layer.zIndex),display:layer.visible?'block':'none'}};

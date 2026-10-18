@@ -32,7 +32,7 @@ for asset in assets.values():
 for c in data['categories']:
     for kind in ['object', 'effect']:
         ids = c[kind + 'Ids']
-        expected_count = 2 if c['letter']=='P' and kind=='object' else 10
+        expected_count = 1 if c.get('sharedObjectId') and kind=='object' else 2 if c['letter']=='P' and kind=='object' else 10
         assert len(ids) == expected_count
         assert [assets[id]['digit'] for id in ids] == list(range(expected_count))
     for i in range(len(c['objectIds'])):
@@ -91,7 +91,7 @@ if data['revision'] >= 6:
         for i in range(10):
             for j in range(10):
                 c=data['compositions'][f'{letter}{i}{j}'];layers={l['id']:l for l in c['layers']}
-                assert layers['object']['assetId']==f'V.object.{i}'
+                assert layers['object']['assetId']==('V.object.0' if letter=='Y' and data['revision']>=13 else f'V.object.{i}')
                 assert layers['foreground']['assetId']==f'{letter}.effect.{j}'
                 assert layers['foreground']['attachment']['enabled']
                 assert not layers['backEffect']['visible']

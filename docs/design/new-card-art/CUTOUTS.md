@@ -1,7 +1,7 @@
 # Actual PNG cutouts — selection set 07
 
 Open [cutouts.html](cutouts.html) to select, layer, rotate, resize and keep multiple
-choices. The downloadable `card-art-cutouts-v12.zip` includes the standalone
+choices. The downloadable `card-art-cutouts-v13.zip` includes the standalone
 viewer, all PNGs and the JSON. Extract the ZIP and open `cutouts.html`
 in a browser. It uses plain local scripts and needs no build step. If browser
 policy blocks local files, run `python3 -m http.server 8765` in the extracted
@@ -220,3 +220,9 @@ The physical scepter is now exactly 50% of its revision-10 dimensions: 152.95 ×
 ## More transparent ethereal weapons (revision 12)
 
 “50% more ethereal” is implemented as halving the spectral layer opacity from 0.8 to 0.4 in all 100 Y compositions. Y asset defaults and CSS also use 0.4, so isolated previews match the composed projections. This changes rendering, leaving all original PNG pixels and the approved geometry intact. The physical weapons and scepters retain their opacity. `weapon-scepter-gallery.html` shows the five physical model references, ten scepter previews, and isolated blue/violet energy layers with labels and direct PNG links. Reset saved compositions to use the revised defaults.
+
+## Shared small scepter, blue and soft green (revision 13)
+
+Every Y composition now references the same `V.object.0` sprite with the same 152.95 × 152.95 size. Per-weapon rotation and position put the scepter on the spectral handle axis. The attachment offset, reference size and relative angle preserve the spectral world transform. Blue remains at 40% opacity. Green color edits replace violet PNGs and render at 20% opacity with `filter: saturate(0.45)` to soften the energy. Opacity and filter apply only to the ethereal layer.
+
+Y now presents one shared object and ten effects: Y00–Y04 blue, Y05–Y09 green. The 90 older Y codes remain compatibility aliases using `canonicalCode`; the editor redirects them to Y0y. The retained catalog has 362 PNGs and 2,520 composition codes (including these 90 aliases). All ten original scepter proposals remain available in V. Source green PNGs retain their generated alpha, while JSON controls the softer final appearance. Reset saved canonical compositions to adopt this revision.

@@ -32,7 +32,7 @@
   paintStage($('stage'),current);showJSON();renderKept();
  }
  function showJSON(){$('json').textContent=JSON.stringify(resolved(current.layers.find(l=>l.id===$('layer').value)),null,2);}
- function selectCode(code){activeCode=code;current=copy(edits[code]||data.compositions[code]);current.displayName=data.compositions[code].displayName;current.displayLabel=data.compositions[code].displayLabel;if(edits[code]&&edits[code].designRevision!==data.compositions[code].designRevision)$('status').textContent='Saved custom placement shown. Reset this composition to use the revised proportions.';$('object').value=current.objectDigit;$('effect').value=current.effectDigit;syncEditor();}
+ function selectCode(code){code=data.compositions[code].canonicalCode||code;activeCode=code;current=copy(edits[code]||data.compositions[code]);current.displayName=data.compositions[code].displayName;current.displayLabel=data.compositions[code].displayLabel;if(edits[code]&&edits[code].designRevision!==data.compositions[code].designRevision)$('status').textContent='Saved custom placement shown. Reset this composition to use the revised proportions.';$('object').value=current.objectDigit;$('effect').value=current.effectDigit;syncEditor();}
  function toggleKeep(key,row){if(kept[key])delete kept[key];else kept[key]=row;save();renderKept();$('status').textContent=`${Object.keys(kept).length} choices kept.`;}
  function renderKept(){
   $('kept').innerHTML=Object.keys(kept).length?Object.entries(kept).map(([key,row])=>`<li>${esc(row.label)} <button data-remove="${esc(key)}" aria-label="Remove ${esc(row.label)}">Remove</button></li>`).join(''):'<li>No choices kept yet.</li>';
@@ -42,7 +42,7 @@
  function candidateTile(a,kind){
   const ref=kind==='object'?`${a.category}${a.digit}0`:`${a.category}0${a.digit}`;
   const orientations=kind==='object'?`<div class="orientations">${[-25,0,25].map(angle=>`<figure><img loading="lazy" src="${a.src}" alt="Same object rotated ${angle} degrees" style="transform:rotate(${angle}deg)"><figcaption>${angle}°</figcaption></figure>`).join('')}</div>`:'';
-  return `<article class="tile"><a href="${a.src}" target="_blank" rel="noopener"><img class="cutout" loading="lazy" src="${a.src}" alt="${esc(a.name)} — ${kind} ${a.digit} alone"></a><h3>${ref} · ${kind} view</h3><div class="small">${esc(a.name)} · other layer hidden</div>${orientations}<button data-use="${kind}:${a.digit}">Use ${category.secondaryObjectIds&&kind==='object'?'pair':kind} ${a.digit}</button><a href="${a.src}" download="${a.category}-${kind}-${a.digit}.png">PNG</a></article>`;
+  return `<article class="tile"><a href="${a.src}" target="_blank" rel="noopener"><img class="cutout" loading="lazy" src="${a.src}" alt="${esc(a.name)} — ${kind} ${a.digit} alone" style="opacity:${kind==='effect'?a.defaultTransform.opacity:1};filter:${esc(a.defaultTransform.filter||'none')}"></a><h3>${ref} · ${kind} view</h3><div class="small">${esc(a.name)} · other layer hidden</div>${orientations}<button data-use="${kind}:${a.digit}">Use ${category.secondaryObjectIds&&kind==='object'?'pair':kind} ${a.digit}</button><a href="${a.src}" download="${a.category}-${kind}-${a.digit}.png">PNG</a></article>`;
  }
  function renderCategory(){
   $('categories').innerHTML=categories.map(c=>`<button data-category="${c.letter}" aria-pressed="${c.letter===category.letter}">${c.letter} · ${esc(c.label)}</button>`).join('');
@@ -50,9 +50,9 @@
   $('object').innerHTML=category.objectIds.map(id=>{const a=asset(id);return `<option value="${a.digit}">${a.digit} — ${esc(a.name)}</option>`;}).join('');
   $('effect').innerHTML=category.effectIds.map(id=>{const a=asset(id);return `<option value="${a.digit}">${a.digit} — ${esc(a.name)}</option>`;}).join('');
   selectCode(`${category.letter}00`);
-  $('object-heading').textContent=category.magicMode?'Scepter bases alone':category.secondaryObjectIds?'Shield components alone':'Objects alone';
+  $('object-heading').textContent=category.magicMode?(category.sharedObjectId?'Shared scepter sprite':'Scepter bases alone'):category.secondaryObjectIds?'Shield components alone':'Objects alone';
   $('magic-note').hidden=!category.magicMode;
-  $('magic-note').textContent=category.magicMode==='melee'?'Y: the ethereal weapon grows from the stone. Rotate the scepter to move both layers; edit the foreground for relative rotation.':'Z: scepter plus separate projectile. The projectile has a small forward gap and remains its own PNG. Edit X/Y to detach it for free placement.';
+  $('magic-note').textContent=category.magicMode==='melee'?'Y: one shared small scepter, aligned with each weapon. Blue and soft green projections are separate layers. Rotate the scepter to move both; detach the foreground to edit it independently.':'Z: scepter plus separate projectile. The projectile has a small forward gap and remains its own PNG. Edit X/Y to detach it for free placement.';
   $('pair-note').hidden=!category.secondaryObjectIds;
   $('paired-objects').hidden=!category.secondaryObjectIds;
   $('paired-objects').innerHTML=category.secondaryObjectIds?'<h2>Sword components alone</h2><div class="grid">'+category.secondaryObjectIds.map(id=>{const a=asset(id);return `<article class="tile"><a href="${a.src}" download><img class="cutout" src="${a.src}" alt="${esc(a.name)}"></a><h3>${esc(a.displayLabel||a.name)}</h3><a href="${a.src}" download>PNG</a></article>`;}).join('')+'</div>':'';

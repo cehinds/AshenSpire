@@ -123,7 +123,7 @@
       }
     ],
     "displayCode": "Y00",
-    "displayLabel": "Y00 \u00b7 Blue ethereal sword silhouette \u00b7 effect"
+    "displayLabel": "Y00 · Blue ethereal sword silhouette · effect"
   },
   "Y.effect.1": {
     "id": "Y.effect.1",
@@ -249,7 +249,7 @@
       }
     ],
     "displayCode": "Y01",
-    "displayLabel": "Y01 \u00b7 Blue ethereal hammer silhouette \u00b7 effect"
+    "displayLabel": "Y01 · Blue ethereal hammer silhouette · effect"
   },
   "Y.effect.2": {
     "id": "Y.effect.2",
@@ -375,7 +375,7 @@
       }
     ],
     "displayCode": "Y02",
-    "displayLabel": "Y02 \u00b7 Blue ethereal scythe silhouette \u00b7 effect"
+    "displayLabel": "Y02 · Blue ethereal scythe silhouette · effect"
   },
   "Y.effect.3": {
     "id": "Y.effect.3",
@@ -501,7 +501,7 @@
       }
     ],
     "displayCode": "Y03",
-    "displayLabel": "Y03 \u00b7 Blue ethereal scimitar silhouette \u00b7 effect"
+    "displayLabel": "Y03 · Blue ethereal scimitar silhouette · effect"
   },
   "Y.effect.4": {
     "id": "Y.effect.4",
@@ -627,26 +627,26 @@
       }
     ],
     "displayCode": "Y04",
-    "displayLabel": "Y04 \u00b7 Blue ethereal shield silhouette \u00b7 effect"
+    "displayLabel": "Y04 · Blue ethereal shield silhouette · effect"
   },
   "Y.effect.5": {
     "id": "Y.effect.5",
     "kind": "effect",
     "category": "Y",
     "digit": 5,
-    "name": "Violet ethereal sword silhouette",
+    "name": "Green ethereal sword silhouette",
     "src": "cutouts/Y/effects/5.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      74,
-      33,
-      436,
-      478
+      0,
+      15,
+      482,
+      482
     ],
-    "sha256": "9ae1d5a1445fa20b55927fe9017cbf79f50edd1d732fa126e7dc5db3cd819f93",
+    "sha256": "d88dc3e33fbb7984af67a085893386a2a12f21b0b35dc484200a4ac15ae2062d",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -655,12 +655,13 @@
       "rotationDeg": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "opacity": 0.4,
+      "opacity": 0.2,
       "blendMode": "normal",
       "anchor": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "filter": "saturate(0.45)"
     },
     "css": {
       "position": "absolute",
@@ -671,9 +672,10 @@
       "objectFit": "contain",
       "transformOrigin": "50% 50%",
       "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
-      "opacity": "0.4",
+      "opacity": "0.2",
       "mixBlendMode": "normal",
-      "pointerEvents": "none"
+      "pointerEvents": "none",
+      "filter": "saturate(0.45)"
     },
     "combatReferences": [
       {
@@ -691,24 +693,29 @@
       "method": "image-edit-derived-variant",
       "sourceReference": "cutouts/O/objects/0.png",
       "referenceSha256": "71b36ad4db7d946f02231c33594177a8950ca33e3ede94d9b42c16f4c6db4f88",
-      "sourceFile": "exec-2af7e2f4-3270-471f-98e6-a13202fbc847.png",
-      "sourceSha256": "999445446647ca93ed5e4233cd027c441abc5b37f165d6ad4f601822c7f8c800",
+      "sourceFile": "exec-24bf9175-1d2d-464c-bcf4-ef7bbc541255.png",
+      "sourceSha256": "0f66fa239e7307adb1cbb4f440d4c97e9c67c2c21484b656c50e8363382fa593",
       "sourceCell": {
-        "x": 1027,
-        "y": 13,
-        "width": 700,
-        "height": 864
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
       },
       "extractionCrop": {
-        "x": 1027,
-        "y": 13,
-        "width": 700,
-        "height": 864
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "O.object.0",
-      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
-      "baseAssetSha256": "71b36ad4db7d946f02231c33594177a8950ca33e3ede94d9b42c16f4c6db4f88"
+      "revisionIntent": "Green color edit with preserved translucent energy silhouette. Render at 20% opacity and 45% saturation for soft ethereal green.",
+      "baseAssetSha256": "71b36ad4db7d946f02231c33594177a8950ca33e3ede94d9b42c16f4c6db4f88",
+      "colorEditReference": {
+        "commit": "6e8905767",
+        "src": "cutouts/Y/effects/5.png",
+        "sha256": "9ae1d5a1445fa20b55927fe9017cbf79f50edd1d732fa126e7dc5db3cd819f93"
+      }
     },
     "anchors": {
       "emissionRoot": {
@@ -753,26 +760,26 @@
       }
     ],
     "displayCode": "Y05",
-    "displayLabel": "Y05 \u00b7 Violet ethereal sword silhouette \u00b7 effect"
+    "displayLabel": "Y05 · Green ethereal sword silhouette · effect"
   },
   "Y.effect.6": {
     "id": "Y.effect.6",
     "kind": "effect",
     "category": "Y",
     "digit": 6,
-    "name": "Violet ethereal hammer silhouette",
+    "name": "Green ethereal hammer silhouette",
     "src": "cutouts/Y/effects/6.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      60,
-      32,
-      451,
-      480
+      17,
+      11,
+      498,
+      504
     ],
-    "sha256": "43d94236d71a62e8622fb78c1ae0ccd8ceb862ab7408fef629b7c63ae48b34d1",
+    "sha256": "8a004b33313eeb6b2a07d90abb61a08f9e93139d5a89ad4ca2d03a3ad21d5bae",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -781,12 +788,13 @@
       "rotationDeg": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "opacity": 0.4,
+      "opacity": 0.2,
       "blendMode": "normal",
       "anchor": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "filter": "saturate(0.45)"
     },
     "css": {
       "position": "absolute",
@@ -797,9 +805,10 @@
       "objectFit": "contain",
       "transformOrigin": "50% 50%",
       "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
-      "opacity": "0.4",
+      "opacity": "0.2",
       "mixBlendMode": "normal",
-      "pointerEvents": "none"
+      "pointerEvents": "none",
+      "filter": "saturate(0.45)"
     },
     "combatReferences": [
       {
@@ -817,24 +826,29 @@
       "method": "image-edit-derived-variant",
       "sourceReference": "cutouts/O/objects/1.png",
       "referenceSha256": "a3ab159b0d2f66e17aa240eca11c75991f2f770841cae6b0009d5dc20349e583",
-      "sourceFile": "exec-75cc7ec1-ff47-4aa3-acad-80ec82b8624c.png",
-      "sourceSha256": "1bd63c4cc24a59bb1743b066e33cf43702a625480e905ba4cdc7b9b8bbec39ff",
+      "sourceFile": "exec-2539d752-7e00-4c92-a6ea-e7679e563ff6.png",
+      "sourceSha256": "2ca6002a8a1f76033ba907d471b45c443731a94d0f1b795e1b949e83d0c9abe5",
       "sourceCell": {
-        "x": 983,
-        "y": 25,
-        "width": 745,
-        "height": 854
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
       },
       "extractionCrop": {
-        "x": 983,
-        "y": 25,
-        "width": 745,
-        "height": 854
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "O.object.1",
-      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
-      "baseAssetSha256": "a3ab159b0d2f66e17aa240eca11c75991f2f770841cae6b0009d5dc20349e583"
+      "revisionIntent": "Green color edit with preserved translucent energy silhouette. Render at 20% opacity and 45% saturation for soft ethereal green.",
+      "baseAssetSha256": "a3ab159b0d2f66e17aa240eca11c75991f2f770841cae6b0009d5dc20349e583",
+      "colorEditReference": {
+        "commit": "6e8905767",
+        "src": "cutouts/Y/effects/6.png",
+        "sha256": "43d94236d71a62e8622fb78c1ae0ccd8ceb862ab7408fef629b7c63ae48b34d1"
+      }
     },
     "anchors": {
       "emissionRoot": {
@@ -879,26 +893,26 @@
       }
     ],
     "displayCode": "Y06",
-    "displayLabel": "Y06 \u00b7 Violet ethereal hammer silhouette \u00b7 effect"
+    "displayLabel": "Y06 · Green ethereal hammer silhouette · effect"
   },
   "Y.effect.7": {
     "id": "Y.effect.7",
     "kind": "effect",
     "category": "Y",
     "digit": 7,
-    "name": "Violet ethereal scythe silhouette",
+    "name": "Green ethereal scythe silhouette",
     "src": "cutouts/Y/effects/7.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      32,
-      56,
-      480,
-      456
+      0,
+      9,
+      500,
+      475
     ],
-    "sha256": "81c48169adea103091862eb945196dd108c7abaca174869656439c657c66e17b",
+    "sha256": "3b652061dfae5fb79c7b9378ab617d09bf3277c6b8ae99b69fd4e1a1e9969f4f",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -907,12 +921,13 @@
       "rotationDeg": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "opacity": 0.4,
+      "opacity": 0.2,
       "blendMode": "normal",
       "anchor": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "filter": "saturate(0.45)"
     },
     "css": {
       "position": "absolute",
@@ -923,9 +938,10 @@
       "objectFit": "contain",
       "transformOrigin": "50% 50%",
       "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
-      "opacity": "0.4",
+      "opacity": "0.2",
       "mixBlendMode": "normal",
-      "pointerEvents": "none"
+      "pointerEvents": "none",
+      "filter": "saturate(0.45)"
     },
     "combatReferences": [
       {
@@ -943,24 +959,29 @@
       "method": "image-edit-derived-variant",
       "sourceReference": "cutouts/L/objects/4.png",
       "referenceSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea",
-      "sourceFile": "exec-f6e975ae-75f5-4f78-a612-c09e8327debb.png",
-      "sourceSha256": "b2a7cf6f37667f63f7a6468b706ebdedad41849e56a97ca0e193cdb659a42106",
+      "sourceFile": "exec-b99b6806-084e-4539-9f7d-a39a18e943e2.png",
+      "sourceSha256": "60f2116275380a7906eae534154a9afe4d4421e324b25ce78a4dcf0f4246b06d",
       "sourceCell": {
-        "x": 887,
-        "y": 49,
-        "width": 879,
-        "height": 784
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
       },
       "extractionCrop": {
-        "x": 887,
-        "y": 49,
-        "width": 879,
-        "height": 784
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "L.object.4",
-      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
-      "baseAssetSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea"
+      "revisionIntent": "Green color edit with preserved translucent energy silhouette. Render at 20% opacity and 45% saturation for soft ethereal green.",
+      "baseAssetSha256": "6914181c80ba9a59a7ca4f60ee267fe9cb919d199842ef7fc4430b97c2623fea",
+      "colorEditReference": {
+        "commit": "6e8905767",
+        "src": "cutouts/Y/effects/7.png",
+        "sha256": "81c48169adea103091862eb945196dd108c7abaca174869656439c657c66e17b"
+      }
     },
     "anchors": {
       "emissionRoot": {
@@ -1005,26 +1026,26 @@
       }
     ],
     "displayCode": "Y07",
-    "displayLabel": "Y07 \u00b7 Violet ethereal scythe silhouette \u00b7 effect"
+    "displayLabel": "Y07 · Green ethereal scythe silhouette · effect"
   },
   "Y.effect.8": {
     "id": "Y.effect.8",
     "kind": "effect",
     "category": "Y",
     "digit": 8,
-    "name": "Violet ethereal scimitar silhouette",
+    "name": "Green ethereal scimitar silhouette",
     "src": "cutouts/Y/effects/8.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      36,
-      32,
-      475,
-      480
+      33,
+      29,
+      483,
+      485
     ],
-    "sha256": "1ab1d3c130eeee377ff03fb77f75ffadbac4430a73c00f3efe04cb7747956d6e",
+    "sha256": "c946b7e084165f581dfd0e38b61657ebeec16f3f787e68ba778060042d271d56",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -1033,12 +1054,13 @@
       "rotationDeg": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "opacity": 0.4,
+      "opacity": 0.2,
       "blendMode": "normal",
       "anchor": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "filter": "saturate(0.45)"
     },
     "css": {
       "position": "absolute",
@@ -1049,9 +1071,10 @@
       "objectFit": "contain",
       "transformOrigin": "50% 50%",
       "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
-      "opacity": "0.4",
+      "opacity": "0.2",
       "mixBlendMode": "normal",
-      "pointerEvents": "none"
+      "pointerEvents": "none",
+      "filter": "saturate(0.45)"
     },
     "combatReferences": [
       {
@@ -1069,24 +1092,29 @@
       "method": "image-edit-derived-variant",
       "sourceReference": "cutouts/O/objects/2.png",
       "referenceSha256": "e8921cc489a5c0a74ea222138180cbe06e1e73aebdf8a22df2ff57deb5351609",
-      "sourceFile": "exec-148d5d78-5937-4b85-8bac-8128c4358587.png",
-      "sourceSha256": "9eee6be3a53623d0d1535187c298ddebb199c3881ae0b02687e6dc419d4d3b48",
+      "sourceFile": "exec-3fb0c65d-d8fc-48aa-a095-d6df719a5c64.png",
+      "sourceSha256": "37cf932c0ff6fc387674e447b0890af7278e5bd0d89942af2df3537ea1b0c155",
       "sourceCell": {
-        "x": 997,
-        "y": 61,
-        "width": 739,
-        "height": 754
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
       },
       "extractionCrop": {
-        "x": 997,
-        "y": 61,
-        "width": 739,
-        "height": 754
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "O.object.2",
-      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
-      "baseAssetSha256": "e8921cc489a5c0a74ea222138180cbe06e1e73aebdf8a22df2ff57deb5351609"
+      "revisionIntent": "Green color edit with preserved translucent energy silhouette. Render at 20% opacity and 45% saturation for soft ethereal green.",
+      "baseAssetSha256": "e8921cc489a5c0a74ea222138180cbe06e1e73aebdf8a22df2ff57deb5351609",
+      "colorEditReference": {
+        "commit": "6e8905767",
+        "src": "cutouts/Y/effects/8.png",
+        "sha256": "1ab1d3c130eeee377ff03fb77f75ffadbac4430a73c00f3efe04cb7747956d6e"
+      }
     },
     "anchors": {
       "emissionRoot": {
@@ -1131,26 +1159,26 @@
       }
     ],
     "displayCode": "Y08",
-    "displayLabel": "Y08 \u00b7 Violet ethereal scimitar silhouette \u00b7 effect"
+    "displayLabel": "Y08 · Green ethereal scimitar silhouette · effect"
   },
   "Y.effect.9": {
     "id": "Y.effect.9",
     "kind": "effect",
     "category": "Y",
     "digit": 9,
-    "name": "Violet ethereal shield silhouette",
+    "name": "Green ethereal shield silhouette",
     "src": "cutouts/Y/effects/9.png",
     "mimeType": "image/png",
     "width": 512,
     "height": 512,
     "hasTransparency": true,
     "alphaBounds": [
-      92,
-      32,
-      420,
-      480
+      8,
+      4,
+      501,
+      502
     ],
-    "sha256": "216867963b606ae3dc4a6b66a630b3a21f35473057f576ed043e97bff708928a",
+    "sha256": "0845bd02cefc95f712e546b0dcfba514cf048e1b8fe0fb6c4469ec26adda083d",
     "defaultTransform": {
       "x": 256,
       "y": 320,
@@ -1159,12 +1187,13 @@
       "rotationDeg": 0,
       "scaleX": 1,
       "scaleY": 1,
-      "opacity": 0.4,
+      "opacity": 0.2,
       "blendMode": "normal",
       "anchor": {
         "x": 0.5,
         "y": 0.5
-      }
+      },
+      "filter": "saturate(0.45)"
     },
     "css": {
       "position": "absolute",
@@ -1175,9 +1204,10 @@
       "objectFit": "contain",
       "transformOrigin": "50% 50%",
       "transform": "translate(-50%, -50%) rotate(0deg) scale(1, 1)",
-      "opacity": "0.4",
+      "opacity": "0.2",
       "mixBlendMode": "normal",
-      "pointerEvents": "none"
+      "pointerEvents": "none",
+      "filter": "saturate(0.45)"
     },
     "combatReferences": [
       {
@@ -1195,24 +1225,29 @@
       "method": "image-edit-derived-variant",
       "sourceReference": "cutouts/O/objects/4.png",
       "referenceSha256": "0a81e8f4448f52d4607a9c881c213016a7dbc4848c26f869b9f54e0c93a688d4",
-      "sourceFile": "exec-faca88be-84c3-454e-9e43-84e37002ed29.png",
-      "sourceSha256": "dfcf94b97702b530b7d6a39c720fb15e94d66d9515ed1ae290d8b48b9a4ec294",
+      "sourceFile": "exec-182c09e4-32b0-43cc-994a-18031a0f4be6.png",
+      "sourceSha256": "e693c458c4e87af43942275bd302db39e20de3960179d87a6401a8b6011b4fa8",
       "sourceCell": {
-        "x": 1006,
-        "y": 18,
-        "width": 613,
-        "height": 837
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
       },
       "extractionCrop": {
-        "x": 1006,
-        "y": 18,
-        "width": 613,
-        "height": 837
+        "x": 0,
+        "y": 0,
+        "width": 1254,
+        "height": 1254
       },
       "fidelity": "Generated variant referenced to existing artwork; not a pixel-identical edit.",
       "baseAssetId": "O.object.4",
-      "revisionIntent": "Reference-model silhouette with transparent core and flowing energy; full contour continues through the grip and pommel around the physical scepter.",
-      "baseAssetSha256": "0a81e8f4448f52d4607a9c881c213016a7dbc4848c26f869b9f54e0c93a688d4"
+      "revisionIntent": "Green color edit with preserved translucent energy silhouette. Render at 20% opacity and 45% saturation for soft ethereal green.",
+      "baseAssetSha256": "0a81e8f4448f52d4607a9c881c213016a7dbc4848c26f869b9f54e0c93a688d4",
+      "colorEditReference": {
+        "commit": "6e8905767",
+        "src": "cutouts/Y/effects/9.png",
+        "sha256": "216867963b606ae3dc4a6b66a630b3a21f35473057f576ed043e97bff708928a"
+      }
     },
     "anchors": {
       "emissionRoot": {
@@ -1257,6 +1292,6 @@
       }
     ],
     "displayCode": "Y09",
-    "displayLabel": "Y09 \u00b7 Violet ethereal shield silhouette \u00b7 effect"
+    "displayLabel": "Y09 · Green ethereal shield silhouette · effect"
   }
 }

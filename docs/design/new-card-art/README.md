@@ -1,4 +1,8 @@
-## Current revision: more transparent ethereal weapons
+## Current revision: one small shared scepter, blue and soft green
+
+Revision 13 uses the same amber scepter sprite at 152.95 × 152.95 in every melee composition. Its grip follows each weapon axis while spectral weapon sizes and positions remain unchanged. Green replaces violet, using 20% opacity and softened saturation; blue retains 40% opacity. [View the gallery](weapon-scepter-gallery.html), [see all weapons](weapons-and-scepters-v13.png), or [download revision 13](card-art-cutouts-v13.zip). Scepter and ethereal layers remain separate. Y00–Y09 are the ten canonical choices; older Y codes redirect to the matching effect.
+
+## Revision 12: more transparent ethereal weapons
 
 Revision 12 halves spectral opacity from 80% to 40% across all 100 melee scepter combinations. The approved shapes, sizes and physical scepter placements remain unchanged. [View all five weapons and both scepter colors](weapon-scepter-gallery.html), [open the labelled overview](weapons-and-scepters-v12.png), or [download revision 12](card-art-cutouts-v12.zip). The gallery includes isolated energy-layer previews and direct PNG links.
 
