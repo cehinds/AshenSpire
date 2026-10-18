@@ -9,8 +9,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { SHAKE_STEPS, SHAKE_MAX_PX, HIT_STOP, shakePxFor, hitStopMsFor, combatFeelIssues } from '../src/content/combatFeel.js';
-import { ANIM_SPEEDS, playTimeline, setAnimSpeed, setBeatOrder, dmgClass, guardHitFloatParts } from '../src/ui/fx.js';
+import { SHAKE_STEPS, SHAKE_STEPS_HP, SHAKE_MAX_PX, SHAKE_FLOOR_PX, BIG_HIT_SHARE, HUGE_HIT_SHARE, HIT_STOP, shakePxFor, hitStopMsFor, combatFeelIssues } from '../src/content/combatFeel.js';
+import { BIG_HIT_SHARE as fxBigHitShare, HUGE_HIT_SHARE as fxHugeHitShare, ANIM_SPEEDS, playTimeline, setAnimSpeed, setBeatOrder, dmgClass, guardHitFloatParts } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { playReaverAttack } from '../src/ui/reaverAttack.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -19,46 +19,92 @@ import { createEnemyPoseStage } from '../src/ui/enemyPoseStage.js';
 
 const src = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('the shipped table is valid, and the top step is the old 4 px from 15 HP', () => {
+test('the shipped table is valid, and tops out at 10 px from 35% of max HP', () => {
   assert.deepEqual(combatFeelIssues(), []);
   const top = SHAKE_STEPS.at(-1);
-  assert.deepEqual({ minHp: top.minHp, px: top.px }, { minHp: 15, px: 4 });
-  assert.equal(SHAKE_MAX_PX, 4);
+  assert.deepEqual({ minShare: top.minShare, px: top.px }, { minShare: 0.35, px: 10 });
+  assert.equal(SHAKE_MAX_PX, 10);
+  assert.equal(SHAKE_FLOOR_PX, 1);
+  assert.equal(BIG_HIT_SHARE, 0.20);
+  assert.equal(HUGE_HIT_SHARE, 0.35);
+  assert.equal(SHAKE_STEPS_HP.at(-1).px, 4, 'the 2026-10-05 absolute steps stay as the no-max-HP fallback');
 });
 
-test('every HP hit shakes, by the step its HP reaches; no HP, no shake', () => {
-  assert.equal(shakePxFor(0), 0, 'a fully blocked hit does not shake');
-  for (const [i, step] of SHAKE_STEPS.entries()) {
+test('fx still exports the two hit shares it re-exports from combatFeel', () => {
+  assert.equal(fxBigHitShare, BIG_HIT_SHARE);
+  assert.equal(fxHugeHitShare, HUGE_HIT_SHARE);
+});
+
+test('a hit shakes by its share of the target max HP: 1/2/4/7/10 px at 1/2/8/20/35%', () => {
+  assert.equal(shakePxFor(0, 100), 0, 'a fully blocked hit does not shake');
+  assert.equal(shakePxFor(-3, 100), 0);
+  assert.equal(shakePxFor(1, 100), 1, '1% shakes the floor');
+  assert.equal(shakePxFor(2, 100), 2);
+  assert.equal(shakePxFor(7, 100), 2, 'just under 8% stays on the step below');
+  assert.equal(shakePxFor(8, 100), 4);
+  assert.equal(shakePxFor(19, 100), 4);
+  assert.equal(shakePxFor(20, 100), 7);
+  assert.equal(shakePxFor(34, 100), 7);
+  assert.equal(shakePxFor(35, 100), 10);
+  for (const step of SHAKE_STEPS) assert.equal(shakePxFor(step.minShare * 1000, 1000), step.px, `${step.minShare} of max HP reaches its own step`);
+  assert.equal(shakePxFor(999, 100), SHAKE_MAX_PX, 'never over the cap');
+  assert.equal(shakePxFor(5, 4), SHAKE_MAX_PX, 'a hit bigger than the whole max HP still stops at the cap');
+});
+
+test('with no known max HP the absolute-HP steps decide, as before', () => {
+  assert.equal(shakePxFor(0), 0);
+  for (const [i, step] of SHAKE_STEPS_HP.entries()) {
     assert.equal(shakePxFor(step.minHp), step.px, `${step.minHp} HP reaches its own step`);
-    if (step.minHp > 1) assert.equal(shakePxFor(step.minHp - 1), i ? SHAKE_STEPS[i - 1].px : 0, `${step.minHp - 1} HP stays on the step below`);
+    if (step.minHp > 1) assert.equal(shakePxFor(step.minHp - 1), i ? SHAKE_STEPS_HP[i - 1].px : 0);
   }
-  assert.equal(shakePxFor(999), SHAKE_MAX_PX, 'never over the cap');
+  assert.equal(shakePxFor(999, 0), 4);
+  assert.equal(shakePxFor(15, NaN), 4);
+  assert.equal(shakePxFor(15, -5), 4);
 });
 
-test('the hit-stop starts at its floor', () => {
-  assert.equal(hitStopMsFor(HIT_STOP.minHp - 1), 0, `${HIT_STOP.minHp - 1} HP: no hold`);
-  assert.equal(hitStopMsFor(HIT_STOP.minHp), HIT_STOP.ms, `${HIT_STOP.minHp} HP: ${HIT_STOP.ms} ms`);
-  assert.deepEqual({ minHp: HIT_STOP.minHp, ms: HIT_STOP.ms }, { minHp: 6, ms: 60 });
+test('the hit-stop starts at its floor and doubles on a huge hit', () => {
+  assert.equal(hitStopMsFor(HIT_STOP.minHp - 1, 100), 0, `${HIT_STOP.minHp - 1} HP: no hold`);
+  assert.equal(hitStopMsFor(HIT_STOP.minHp, 100), HIT_STOP.ms, `${HIT_STOP.minHp} HP of 100: ${HIT_STOP.ms} ms`);
+  assert.equal(hitStopMsFor(34, 100), 60, '34% is not yet huge');
+  assert.equal(hitStopMsFor(35, 100), 120, '35% of max HP: 120 ms');
+  assert.equal(hitStopMsFor(60, 100), 120);
+  assert.equal(hitStopMsFor(2, 4), 120, 'a huge share of a tiny target holds the long stop; the HP floor does not gate it');
+  assert.equal(hitStopMsFor(5, 12), 120, '5 of 12 HP (41.7%) is huge: 120 ms, though 5 is under the 6 HP floor');
+  assert.equal(hitStopMsFor(5, 100), 0, '5 of 100 HP: under the floor and not huge: no hold');
+  assert.equal(hitStopMsFor(6, 100), 60, '6 of 100 HP: the floor: 60 ms');
+  assert.equal(hitStopMsFor(6, 10), 120, 'a hit of 6 HP that is 60% of a small target is huge');
+  assert.equal(hitStopMsFor(35), 60, 'unknown max HP: the plain hold');
+  assert.deepEqual({ ...HIT_STOP }, { minHp: 6, ms: 60, hugeShare: 0.35, hugeMs: 120 });
 });
 
 test('overriding each row changes the answer (D1)', () => {
-  assert.equal(shakePxFor(3, [{ minHp: 2, px: 3 }]), 3);
-  assert.equal(shakePxFor(3, [{ minHp: 5, px: 3 }]), 0);
-  assert.equal(shakePxFor(3, [{ minHp: 1, px: 9 }]), SHAKE_MAX_PX, 'the cap holds over a mistyped row');
-  assert.equal(hitStopMsFor(6, { minHp: 6, ms: 0 }), 0, 'ms 0 turns the hit-stop off');
-  assert.equal(hitStopMsFor(4, { minHp: 3, ms: 90 }), 90);
+  assert.equal(shakePxFor(3, 100, [{ minShare: 0.02, px: 3 }]), 3);
+  assert.equal(shakePxFor(3, 100, [{ minShare: 0.05, px: 3 }]), SHAKE_FLOOR_PX, 'under the first step: the floor');
+  assert.equal(shakePxFor(3, 100, [{ minShare: 0.01, px: 30 }]), SHAKE_MAX_PX, 'the cap holds over a mistyped row');
+  assert.equal(shakePxFor(3, 0, SHAKE_STEPS, [{ minHp: 2, px: 3 }]), 3);
+  assert.equal(shakePxFor(3, 0, SHAKE_STEPS, [{ minHp: 5, px: 3 }]), 0);
+  assert.equal(hitStopMsFor(6, 100, { minHp: 6, ms: 0, hugeShare: 0.35, hugeMs: 120 }), 0, 'ms 0 turns the hit-stop off');
+  assert.equal(hitStopMsFor(4, 100, { minHp: 3, ms: 90, hugeShare: 0.35, hugeMs: 150 }), 90);
+  assert.equal(hitStopMsFor(50, 100, { minHp: 6, ms: 60, hugeShare: 0.5, hugeMs: 200 }), 200);
 });
 
 test('a malformed table is refused, naming its row', () => {
-  assert.match(combatFeelIssues([{ minHp: 0, px: 1 }]).join(), /SHAKE_STEPS\[0\]\.minHp/);
-  assert.match(combatFeelIssues([{ minHp: 1, px: 5 }]).join(), /SHAKE_STEPS\[0\]\.px/);
-  assert.match(combatFeelIssues([{ minHp: 5, px: 1 }, { minHp: 5, px: 2 }]).join(), /SHAKE_STEPS\[1\]\.minHp must rise/);
-  assert.match(combatFeelIssues(SHAKE_STEPS, { minHp: 6, ms: -1 }).join(), /HIT_STOP\.ms/);
+  assert.match(combatFeelIssues([{ minShare: 0, px: 1 }]).join(), /SHAKE_STEPS\[0\]\.minShare/);
+  assert.match(combatFeelIssues([{ minShare: 1.5, px: 1 }]).join(), /SHAKE_STEPS\[0\]\.minShare/);
+  assert.match(combatFeelIssues([{ minShare: 0.1, px: 11 }]).join(), /SHAKE_STEPS\[0\]\.px/);
+  assert.match(combatFeelIssues([{ minShare: 0.2, px: 3 }, { minShare: 0.1, px: 5 }]).join(), /SHAKE_STEPS\[1\]\.minShare must rise/, 'a falling share');
+  assert.match(combatFeelIssues([{ minShare: 0.1, px: 5 }, { minShare: 0.2, px: 3 }]).join(), /SHAKE_STEPS\[1\]\.px must rise/, 'a falling amplitude');
+  assert.match(combatFeelIssues(SHAKE_STEPS, HIT_STOP, [{ minHp: 0, px: 1 }]).join(), /SHAKE_STEPS_HP\[0\]\.minHp/);
+  assert.match(combatFeelIssues(SHAKE_STEPS, { ...HIT_STOP, ms: -1 }).join(), /HIT_STOP\.ms/);
+  assert.match(combatFeelIssues(SHAKE_STEPS, { ...HIT_STOP, hugeMs: 30 }).join(), /HIT_STOP\.hugeMs/, 'hugeMs under ms');
+  assert.match(combatFeelIssues(SHAKE_STEPS, { ...HIT_STOP, hugeShare: 0 }).join(), /HIT_STOP\.hugeShare/);
+  assert.match(combatFeelIssues(SHAKE_STEPS, { ...HIT_STOP, hugeShare: 1.2 }).join(), /HIT_STOP\.hugeShare/);
 });
 
 test('fx shakes every HP hit by its HP and holds the figures on paced playback only', () => {
   const fx = src('src/ui/fx.js');
-  assert.match(fx, /shake\(ctx\.combatEl, shakePxFor\(parts\.residual\)\)/, 'the damage visual shakes by the residual HP');
+  assert.match(fx, /shake\(ctx\.combatEl, shakePxFor\(parts\.residual, [^\n]*maxHpFor/, 'the damage visual shakes by the residual HP as a share of the target max HP');
+  assert.match(fx, /hitStopMsFor\(guardHitFloatParts\(event\)\.residual \|\| 0, [^\n]*maxHpFor/, 'the hit-stop reads the target max HP too');
   assert.match(fx, /combatEl\.style\.setProperty\('--shake-px', `\$\{px\}px`\)/, 'the amplitude reaches the CSS');
   assert.match(fx, /document\.body\.classList\.contains\('no-shake'\) \|\| reducedMotionRequested\(\)\) return;/, 'the setting and reduced motion drop the shake');
   assert.match(fx, /activeActorAnimation\.hold\(holdMs\)/, 'a painted swing is held by its own sequence');
@@ -112,7 +158,7 @@ test('a painted sequence holds: its remaining frames move back by the hold', asy
   assert.match(src('src/ui/screens/combat.js'), /hold: \(ms\) => \{ if \(fxCtx\.figureAnimations !== false\) stage\?\.hold\?\.\(ms\); \}/);
 });
 
-function drive(t, fn) {
+function drive(t, fn, { maxHp } = {}) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 10000 });
   withKitDom((dom, win, listeners) => {
     const actor = dom.document.createElement('div');
@@ -132,7 +178,7 @@ function drive(t, fn) {
     const ctx = { layer, combatEl, anchorFor: (id) => id === 'enemy' ? actor : target,
       animateActor: () => ({ impactMs: 100, totalMs: 800,
         hold: (ms) => holds.push(['actor', ms, Date.now()]), cancel() {} }),
-      onFlush: () => flushes++, onBeatApplied() {} };
+      onFlush: () => flushes++, onBeatApplied() {}, ...(maxHp ? { maxHpFor: () => maxHp } : {}) };
     const events = (amounts, opener) => [opener || { type: 'enemyMoveStarted', sourceId: 'enemy', kind: 'attack' },
       ...amounts.map((amount) => ({ type: 'damageDealt', sourceId: 'enemy', targetId: 'player', amount }))];
     const start = (amounts, opener) => playTimeline(events(amounts, opener), ctx, () => completed++);
@@ -178,6 +224,23 @@ test('beatOrder impact holds both figures at impact, as before', (t) => {
     });
   } finally { setBeatOrder('sequential'); }
 });
+
+for (const [amount, ms, px] of [[35, 120, '10px'], [6, 60, '2px']]) {
+  test(`with the target max HP 100 known, a ${amount} HP hit holds ${ms} ms and shakes ${px}`, (t) => {
+    setBeatOrder('impact');
+    try {
+      drive(t, ({ start, tick, holds, combatEl }) => {
+        const shakes = [];
+        const setProperty = combatEl.style.setProperty.bind(combatEl.style);
+        combatEl.style.setProperty = (name, value) => { if (name === '--shake-px') shakes.push(value); return setProperty(name, value); };
+        start([amount]); tick(100);
+        assert.deepEqual(holds, [['actor', ms, 10100], ['target', ms, 10100]]);
+        for (let i = 0; i < 100; i++) tick(20);
+        assert.deepEqual(shakes, [px]);
+      }, { maxHp: 100 });
+    } finally { setBeatOrder('sequential'); }
+  });
+}
 
 test('a click during hit-stop clears the held attacker and flushes once without a second buzz', (t) => {
   drive(t, ({ start, tick, actor, target, fire, stats, buzzes }) => {
