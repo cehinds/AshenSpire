@@ -645,9 +645,9 @@ const ROWS = [
   { cat: 'Accessibility', key: 'touchFlickDistance', type: 'number', def: UI_DEFAULTS.touchFlick.distance.def,
     min: UI_DEFAULTS.touchFlick.distance.min, max: UI_DEFAULTS.touchFlick.distance.max, slider: true, practice: true, label: t('settings.row.touchFlickDistance'),
     note: tFull('settings.row.touchFlickDistance') },
-  // Owner ruling, 2026-10-18 14:15: "a tap never plays a card; tap selects, a
-  // second tap or a target pick plays". Off by default. On is an opt-in: a tap
-  // on a card with an unambiguous target plays it. Off is select, then double-tap.
+  // Owner, 2026-10-18 14:15: "make sure I don't auto play a card when I click on it once"; 14:32: "keep the switch but make it default to not be 1 tap".
+  // Off by default. On is an opt-in: a tap on a card with an unambiguous target
+  // plays it. Off is select, then the next tap on the selected card.
   { cat: 'Accessibility', key: 'oneTapPlay', def: false, label: t('settings.row.oneTapPlay'),
     note: tFull('settings.row.oneTapPlay') },
   { cat: 'Accessibility', key: 'reducedMotion', def: false, label: t('settings.row.reducedMotion'),

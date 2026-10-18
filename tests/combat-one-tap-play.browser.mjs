@@ -1,6 +1,7 @@
 // One tap plays a card when its target is unambiguous, but only when the player
-// has opted in to oneTapPlay (owner ruling, 2026-10-18 14:15: "a tap never plays
-// a card; tap selects, a second tap or a target pick plays"). Default settings:
+// has opted in to oneTapPlay (owner, 2026-10-18 14:15: "make sure I don't auto
+// play a card when I click on it once"; 14:32: "keep the switch but make it
+// default to not be 1 tap"). Default settings:
 //   - a single tap on a self card or a single-enemy card SELECTS and plays nothing.
 // With oneTapPlay true (opt-in):
 //   - a self card plays on one tap, whatever the enemy count;

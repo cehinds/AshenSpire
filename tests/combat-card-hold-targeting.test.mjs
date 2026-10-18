@@ -29,7 +29,7 @@ ok(/\n\s*select\(\);\s*if \(pv\.needsTarget\) focusTargeting\(\);\s*$/.test(comp
 ok(!/oneTapOn\(\)/.test(completion),
   'and does so whatever the oneTapPlay setting says');
 ok(!/playCard\(/.test(completion),
-  'a completed hold never plays a card: a tap does, or the double-tap with one-tap play off');
+  'a completed hold never plays a card: a tap does, or the next tap on the selected card with one-tap play off');
 ok(!/confirm\(\)/.test(completion),
   'the completed hold does not reuse the old same-press confirm path');
 

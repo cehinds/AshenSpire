@@ -2546,11 +2546,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // THE PLAY IS UNAMBIGUOUS when there is nothing for the player to choose: a
     // card that needs no target (self cards, and a sweep of every enemy), or a
     // card that asks for ONE enemy while exactly one is alive.
-    // OWNER RULING, 2026-10-18 14:15: "a tap never plays a card; tap selects, a
-    // second tap or a target pick plays". One-tap play is therefore OPT-IN: it is
-    // off by default (oneTapPlay must be exactly true), and only a player who
-    // turns the Settings row on gets a single tap that plays. With it off, a tap
-    // selects and a quick double-tap on the selected card, or a target pick, plays.
+    // OWNER RULING. Owner, 2026-10-18 14:15: "make sure I don't auto play a card when I click on it once"; 14:32: "keep the switch but make it default to not be 1 tap".
+    // One-tap play is therefore OPT-IN: it is off by default (oneTapPlay must be
+    // exactly true), and only a player who turns the Settings row on gets a
+    // single tap that plays. With it off, a tap selects and the next tap on the
+    // selected card, or a target pick, plays.
     // The 2026-08-17 "same in all instances" hold ruling and SPEC §7.3's
     // "selection stays separate from play" still govern every other case.
     const playIsUnambiguous = () => !pv.needsTarget
@@ -2596,7 +2596,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (oneTapPlays()) { play(); return; }
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
       // The card is already selected: this is the NEXT tap on it, and it plays,
-      // with no timing window (owner, 2026-10-18 14:15).
+      // with no timing window ("make sure I don't auto play a card when I click on it once", owner, 2026-10-18 14:15).
       play();
     };
     const cardHoldMs = () => holdMs(meta.settings || {}, registries.balance.ui.holdConfirm)
