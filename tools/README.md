@@ -9,7 +9,7 @@ prefix; its callers are the union.
 
 `tools/attic/`: tools nothing references, kept runnable; see the Attic section.
 
-## Tools something references (328 files, plus the 8 subfolders)
+## Tools something references (329 files, plus the 8 subfolders)
 
 | Tool | What it does (its header comment) | Who calls it |
 | --- | --- | --- |
@@ -79,6 +79,7 @@ prefix; its callers are the union.
 | `class-smash-aura-qa.mjs`, `class-smash-gameplay-qa.mjs` | (no header comment) | docs pose-studio/stances/class-smash/qa/README.md |
 | `click-impact-card.mjs` | (no header comment) | tests click-impact-card; tools click-impact-probe, combat-action-row, motion-probe +1 |
 | `click-impact-probe.mjs` | click-impact-probe — how long from the click that plays a card | wf quick-start; tests beat-order, click-impact; tools map-tap-latency; docs DEVELOPER.md, docs/FINISH.md, docs/preview/combat-targeting-1115/README.md +2; other docs/preview/combat-targeting-1127/results.json, src/ui/fx.js |
+| `click-impact-rounds.mjs` | tools/click-impact-rounds.mjs — the click-impact probe's judgement, apart from the drive | tests click-impact-rounds; tools click-impact-probe |
 | `closedsets.mjs` | closedsets — Viki, 2026-08-08. | tests closedsets, run-node, spell-damage-dealt-mult; tools doorplant, onevocab; docs docs/plan-progression-and-property-system.md; other src/buildversion.js, src/content/encounters/weald.js +2 |
 | `collect-feature-previews.mjs` | Trusted Pages collector: download data only; never run a feature checkout. | wf pages-builds; tests art-migrate-trigger, collect-feature-previews; tools combat-audit/hosted-preview |
 | `combat-action-row.mjs` | combat-action-row — #21's single-owner combat action-row gate. | tools plantsites-baseline.json; other docs/design/battlefield-options-2026-10-16/visual-preview.html, src/ui/components/armamentRadial.js +1 |
