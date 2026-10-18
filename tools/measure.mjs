@@ -344,17 +344,19 @@ async function endTurn(page, cdp, state) {
 
 export async function run(opts) {
   let server = null;
-  let base = opts.url;
-  if (opts.serve) {
-    const { serve } = await import('./serve.mjs');
-    server = await serve({ port: 0, open: false, lan: false, quiet: true, host: 'localhost' });
-    base = server.url;
-  }
-  const { resolveBrowser } = await import('./browser.mjs');
-  const { chromium } = loadPlaywright();
-  const browser = await chromium.launch({ executablePath: resolveBrowser() || undefined });
-  const result = { base, scenes: {}, boot: null, play: null, failed: [] };
+  let browser = null;
+  const result = { base: opts.url, scenes: {}, boot: null, play: null, failed: [] };
   try {
+    // inside the try: a throw from serve, loadPlaywright or launch still reaches the finally
+    if (opts.serve) {
+      const { serve } = await import('./serve.mjs');
+      server = await serve({ port: 0, open: false, lan: false, quiet: true, host: 'localhost' });
+      result.base = server.url;
+    }
+    const base = result.base;
+    const { resolveBrowser } = await import('./browser.mjs');
+    const { chromium } = loadPlaywright();
+    browser = await chromium.launch({ executablePath: resolveBrowser() || undefined });
     for (const scene of opts.scenes) {
       let got = null;
       let partial = null; // the last failed attempt's numbers, when it had any (fewer plays than wanted)
@@ -380,7 +382,7 @@ export async function run(opts) {
       }
     }
   } finally {
-    await browser.close();
+    if (browser) await browser.close().catch(() => {});
     if (server) server.server.close();
   }
   if (opts.budget) {
