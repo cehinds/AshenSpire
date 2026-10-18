@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **ModalManager: the co-op seat strip goes inert under a door** ([#2132](https://github.com/cehinds/AshenSpire/pull/2132), `0.7.1.1617`). In couch co-op the seat tabs now sleep under an open dialog instead of answering taps through it.
+- **ModalManager: the co-op seat strip goes inert under a door** ([#2132](https://github.com/cehinds/AshenSpire/pull/2132), `0.7.1.1619`). In couch co-op the seat tabs now sleep under an open dialog instead of answering taps through it.
+- **FixCore requirements are collected in one implementation contract** ([#2127](https://github.com/cehinds/AshenSpire/pull/2127), `0.7.1.1619`). Records the corrected combat, equipment, deck, rewards and interface requirements, JSON authoring architecture and review criteria. The versioned rules contract preserves existing saves; gameplay implementation remains pending.
 - **One-tap combat: End Turn with nothing playable, and cards with one target** ([#2121](https://github.com/cehinds/AshenSpire/pull/2121), `0.7.1.1617`). End Turn is one tap when you have nothing left to play. Tap a card to play it when there is only one target.
 - **Content authority: enemies and classes are JSON** ([#2130](https://github.com/cehinds/AshenSpire/pull/2130), `0.7.1.1615`). Enemies and classes are plain data files now; nothing changes in play.
 - **Content authority: class and armament cards are JSON** ([#2125](https://github.com/cehinds/AshenSpire/pull/2125), `0.7.1.1613`). Class and armament cards are plain data files now; nothing changes in play.
