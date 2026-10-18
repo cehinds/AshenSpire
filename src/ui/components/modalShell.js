@@ -160,8 +160,13 @@ export function modalFooter({ note = '', secondary = [], primary = null, classNa
  *   and not `!panel.contains(e.target)`: the second form closes the modal when
  *   a drag that began on a slider ends outside the panel, which is a real way
  *   to lose a settings change mid-gesture.
+ *
+ * `escape: false` leaves Escape to the modal manager (modalManager.js): the
+ * shell's own openModal registers with a `dismiss` and the manager closes the
+ * top entry once. The other callers (classMastery, bookLearning, deckEditor)
+ * register no `dismiss`, so they keep the Escape handling here until they move.
  */
-export function bindModalDismiss({ veil, panel, close, opener = document.activeElement } = {}) {
+export function bindModalDismiss({ veil, panel, close, opener = document.activeElement, escape = true } = {}) {
   // Promote overflowing dialogs once per opening; shrinking back would oscillate
   // when content or scrollbars change the available width.
   const promote = () => {
@@ -193,7 +198,7 @@ export function bindModalDismiss({ veil, panel, close, opener = document.activeE
       }
       return;
     }
-    if (event.key !== 'Escape' || event.repeat) return;
+    if (!escape || event.key !== 'Escape' || event.repeat) return;
     const top = [...document.querySelectorAll('[aria-modal="true"]')].at(-1);
     if (top !== panel) return;
     event.preventDefault();
@@ -538,6 +543,9 @@ export function openModal({
     const unregister = unregisterModal;
     release = null;
     unregisterModal = null;
+    // Lift the page lock (inert) before focus returns to the opener: an
+    // element inside an inert subtree cannot take focus.
+    unregister?.unlock?.();
     releaseDismiss?.();
     veil.remove();
     onClose?.();
@@ -579,8 +587,10 @@ export function openModal({
 
   veil.appendChild(panel);
   host.appendChild(veil);
-  unregisterModal = registerModal(name || title || 'modal', panel);
-  release = bindModalDismiss({ veil, panel, close, opener });
+  // The manager owns Escape for this door: it calls dismiss() on the top entry.
+  // close() is idempotent, so a dismiss after a programmatic close is a no-op.
+  unregisterModal = registerModal(name || title || 'modal', panel, { dismiss: () => close(), back: true });
+  release = bindModalDismiss({ veil, panel, close, opener, escape: false });
 
   // Focus the way FORWARD when there is one, else the way out. Never the veil.
   // A footer exit (the wide Close) outranks the head's small ✕.
