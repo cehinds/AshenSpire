@@ -985,8 +985,14 @@ function presentIntent(combat, enemy, def, moveId) {
   if (combat.enemyKnowledge) {
     rollEnemyKnowledge(combat, enemy, { charging: !!def.moves[moveId].delay });
     delete enemy.intentRevealed;
-  } else if (enemy.intent.combatProfile.camp) enemy.intentRevealed = combat.rng.float('enemyIntentVisibility') >= hiddenIntentChance(combat.attributes || {}, combat.combatIntentRules || {});
-  else delete enemy.intentRevealed;
+  } else if (enemy.intent.combatProfile.camp) {
+    // A configured profile whose intent module reads `exact` (the Core preview route, owner, 2026-10-18) shows every
+    // intent and skips the hidden-intent roll. `enemyIntentVisibility` is its own rng stream, so not drawing it moves
+    // no other roll. The profile is frozen into the fight and its save, so a saved fight keeps this rule.
+    enemy.intentRevealed = configuredModule(combat, 'intent')?.reads === 'exact'
+      ? true
+      : combat.rng.float('enemyIntentVisibility') >= hiddenIntentChance(combat.attributes || {}, combat.combatIntentRules || {});
+  } else delete enemy.intentRevealed;
   primeEnemyCounter(combat, enemy, def.moves[moveId], moveId);
 }
 

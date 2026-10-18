@@ -101,7 +101,10 @@ jobs:
       - uses: ./.github/actions/which-browser
 
       - name: Quick start reaches the first card play within its input budget
-        run: node tools/verdict.mjs -- node tools/quick-start-inputs.mjs --only quick
+        run: |
+          set +e; node tools/verdict.mjs -- node tools/quick-start-inputs.mjs --only quick 2>&1 | tee /tmp/quick-start.log; rc=${PIPESTATUS[0]}; set -e
+          tail -n 12 /tmp/quick-start.log | while IFS= read -r l; do echo "::notice title=quick-start::${l//::/:}"; done
+          exit $rc
 
       # docs/FINISH.md §5: click to contact ≤ 400 ms at Normal pacing, and (owner,
       # 2026-10-11, sequential beat order) click to the first number ≤ 750 ms.
@@ -111,7 +114,10 @@ jobs:
       # (about a minute).
       - name: Click to contact within 400 ms and first number within 750 ms at Normal pacing
         id: click_impact
-        run: node tools/verdict.mjs -- node tools/click-impact-probe.mjs
+        run: |
+          set +e; node tools/verdict.mjs -- node tools/click-impact-probe.mjs 2>&1 | tee /tmp/probe.log; rc=${PIPESTATUS[0]}; set -e
+          tail -n 12 /tmp/probe.log | while IFS= read -r l; do echo "::notice title=click-impact::${l//::/:}"; done
+          exit $rc
 
       - name: Diagnose failed click timing without replacing acceptance
         # Instrumentation is failure evidence, never a replacement acceptance run.

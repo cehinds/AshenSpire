@@ -4,6 +4,7 @@ import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { readNewGameProfile, resolveNewGameProfile } from '../src/ui/components/gameProfileSelector.js';
 import { allResettableKeys, resetKeys, generalGroups } from '../src/ui/screens/settings.js';
 import { resolveGameProfile } from '../src/model/gameProfile.js';
+import { validateResolvedGameProfile, gameDigest, dataClone } from '../engine/kernel/gameConfig.js';
 
 const author = { formatVersion: 1, core: 'ashen.core@1.0.0', modules: { routes: { prebossNodes: 5, restFloors: [2, 4] } } };
 
@@ -30,6 +31,28 @@ test('invalid imported rules are rejected and stale preferences fall back safely
   const fallback = resolveGameProfile('core');
   assert.equal(readNewGameProfile({ newGameProfile: '{' }, fallback), fallback);
   assert.equal(readNewGameProfile({}, fallback), fallback);
+});
+
+test('a Rest-first author fails at resolve time once the Core bundle sets firstFloor', () => {
+  const restFirst = { formatVersion: 1, core: 'ashen.core@1.0.0', modules: { routes: { restFloors: [1, 6] } } };
+  assert.throws(() => resolveGameProfile(restFirst), e => e.path === '$/modules/routes/firstFloor' && /firstFloor/.test(e.message));
+  const fallback = resolveGameProfile('core');
+  assert.equal(readNewGameProfile({ newGameProfile: JSON.stringify(restFirst) }, fallback), fallback, 'a stored Rest-first author falls back instead of crashing New Game');
+  const explicit = { ...restFirst, modules: { routes: { restFloors: [1, 6], firstFloor: null } } };
+  assert.doesNotThrow(() => resolveGameProfile(explicit), 'the Rest-first route stays authorable by clearing firstFloor');
+});
+
+test('a stored snapshot with an old Rest-first preset is refused when loaded', () => {
+  const core = dataClone(resolveGameProfile('core'));
+  delete core.hash;
+  core.modules.routes.restFloors = [1, 6];
+  core.modules.routes.firstFloor = 'fight';
+  core.content.routes.restFloors = [1, 6];
+  const snapshot = { ...core, hash: gameDigest(core) };
+  assert.throws(() => validateResolvedGameProfile(snapshot), e => e.path === '$/modules/routes/firstFloor' && /firstFloor/.test(e.message));
+  const cleared = dataClone(core);
+  cleared.modules.routes.firstFloor = null;
+  assert.doesNotThrow(() => validateResolvedGameProfile({ ...cleared, hash: gameDigest(cleared) }), 'clearing firstFloor keeps the Rest-first snapshot valid');
 });
 
 for (const reset of ['all', 'group']) test(`${reset} reset clears both future-game preferences durably`, () => {

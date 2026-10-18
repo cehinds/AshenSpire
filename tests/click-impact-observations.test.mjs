@@ -46,5 +46,5 @@ test('native observation is explicit and cannot change the original verdict or s
   assert.match(source,/const DIAGNOSTICS = args.includes\('--diagnostics'\)/);
   assert.match(source,/const BUDGET_MS = 400;/);assert.match(source,/const NUMBER_BUDGET_MS = 750;/);
   assert.match(source,/contact: Math.round\(c - up\), number: Math.round\(f - up\)/);
-  assert.match(source,/process.exitCode = okay \? 0 : 1;\s+if \(DIAGNOSTICS && !okay\)/);
+  assert.match(source,/process.exitCode = exitCode;\s+if \(DIAGNOSTICS && exitCode !== 0\)/);
 });

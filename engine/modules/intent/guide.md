@@ -34,12 +34,13 @@ That object is only meaningful when the module is supported by the selected bund
 Settings live in `engine/modules/intent/settings.schema.json`; shipped defaults are in `defaults.json`. Every listed setting is required after resolution unless the schema marks it otherwise.
 - `/mode` (type enum; default `"configured"`; allowed "legacy", "configured"): Validated setting; no configured gameplay behavior is promised unless listed in Runtime scope above.
 - `/visible` (type boolean; default `false`): Display visibility only; false leaves enemy planning active.
+- `/reads` (type enum; default `"rolled"`; allowed "rolled", "exact"): How an enemy move's intent is read when enemy knowledge is off. `rolled`: each camp move rolls the hidden-intent chance (SPEC §4.7), so some intents show as hidden. `exact`: every enemy intent is read exactly; the hidden-intent roll (SPEC §4.7) is skipped and the `enemyIntentVisibility` stream is not drawn. The Core preview route sets `exact` (owner, 2026-10-18). Combat reads it from the profile frozen into the fight, so a saved fight keeps the rule it began with.
 
 The exact provenance is recorded in `games/ashenspire/bundles/core/bundle.json`: module defaults are the base, selected bundle settings and `policyBindings` apply next, and the author object applies last. Arrays replace the inherited array. If a field has no bundle binding, its module default is inherited unchanged. `false` disables; `true` selects inherited defaults; null has no removal meaning. Unknown keys and invalid values fail validation.
 
 ## Content changes
 
-Enemy intent content remains in the host enemy registry. Set `visible` to false to hide the display only. Enemy selection and planning continue unchanged.
+Enemy intent content remains in the host enemy registry. Set `visible` to false to hide the display only. Enemy selection and planning continue unchanged. `reads` decides whether the hidden-intent roll runs at all; it never changes which move an enemy plans.
 
 The referenced pack JSON is gameplay authoring data; it is not executable module code. Keep stable IDs and update every reference when renaming an item.
 
