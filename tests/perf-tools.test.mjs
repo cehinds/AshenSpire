@@ -7,7 +7,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BUDGET, checkBudget, budgetFailed, budgetValues, parseArgs, sceneUrl, mean } from '../tools/measure.mjs';
+import { BUDGET, checkBudget, budgetFailed, budgetValues, parseArgs, sceneUrl, mean, httpProblem, readinessProblem } from '../tools/measure.mjs';
 import * as size from '../tools/size-budget.mjs';
 
 const within = Object.fromEntries(Object.entries(BUDGET));
@@ -55,6 +55,18 @@ test('measure: arguments and scene URLs', () => {
   assert.equal(sceneUrl('http://localhost:8080/AshenSpire.html', 'map'), 'http://localhost:8080/AshenSpire.html?shot=map');
   assert.equal(mean([1, 2, 6]), 3);
   assert.equal(mean([]), 0);
+});
+
+test('httpProblem / readinessProblem: an error page or an empty shell is not a scene', () => {
+  assert.equal(httpProblem(200), null);
+  assert.equal(httpProblem(404), 'HTTP 404');
+  assert.equal(httpProblem(500), 'HTTP 500');
+  assert.equal(httpProblem(null), 'no HTTP response');
+  assert.equal(httpProblem(null, 'file:'), null);
+  assert.equal(readinessProblem({ appChildren: 3, banners: 0 }), null);
+  assert.match(readinessProblem({ appChildren: 0, banners: 0 }), /#app/);
+  assert.match(readinessProblem({ appChildren: 3, banners: 1 }), /banner/);
+  assert.match(readinessProblem(null), /#app/);
 });
 
 // base64 of "AB" (QUI=), "A" (QQ==), "ABC" (QUJD), 6 bytes (QUJDREVG)

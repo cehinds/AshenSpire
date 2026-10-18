@@ -130,6 +130,29 @@ export function sceneUrl(base, scene) {
 export const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 const round1 = (n) => Math.round(n * 10) / 10;
 
+/** Why an HTTP status is not a loaded game, or null. A file: URL has no status. */
+export function httpProblem(status, protocol = 'http:') {
+  if (protocol === 'file:' && status == null) return null;
+  if (!Number.isFinite(status)) return 'no HTTP response';
+  return status >= 200 && status < 300 ? null : `HTTP ${status}`;
+}
+
+/**
+ * Why a probe of the page (`{ appChildren, banners }`, see readinessProbe) is
+ * not a mounted screen, or null: #app must have drawn something and the
+ * failure banner (`.validation-banner`, src/ui/debuglog.js) must be absent.
+ */
+export function readinessProblem(probe) {
+  if (!probe || !(probe.appChildren > 0)) return 'no screen mounted in #app';
+  if (probe.banners > 0) return `failure banner on the page (${probe.banners})`;
+  return null;
+}
+
+// Runs in the page.
+function readinessProbe() {
+  return { appChildren: document.querySelector('#app')?.children.length ?? 0, banners: document.querySelectorAll('.validation-banner').length };
+}
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const dbg = (...a) => { if (process.env.MEASURE_DEBUG) console.error('measure:', ...a); };
 
@@ -197,8 +220,16 @@ async function measureScene(browser, base, scene, wantPlays) {
     await page.addInitScript(initScript);
     const cdp = await ctx.newCDPSession(page);
     await cdp.send('Performance.enable');
-    await page.goto(sceneUrl(base, scene), { waitUntil: 'load', timeout: 150000 });
+    const url = sceneUrl(base, scene);
+    const response = await page.goto(url, { waitUntil: 'load', timeout: 150000 });
+    const bad = httpProblem(response ? response.status() : null, new URL(url).protocol);
+    if (bad) throw new Error(`${bad} for ${url}`);
+    // a banner counts at once; an empty #app gets 60 s to fill, then the probe below fails it
+    await page.waitForFunction(() => document.querySelector('#app')?.children.length > 0 || document.querySelector('.validation-banner'), null, { timeout: 60000 })
+      .catch(() => {});
     await settle(page);
+    const unready = readinessProblem(await page.evaluate(readinessProbe));
+    if (unready) throw new Error(`${scene} not ready: ${unready}`);
     const counts = await page.evaluate(sceneCounts);
     const plays = wantPlays ? await touchPlays(page, cdp, wantPlays) : [];
     return { counts, plays };
