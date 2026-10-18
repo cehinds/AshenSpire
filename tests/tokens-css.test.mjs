@@ -71,6 +71,9 @@ test('a home that does not declare the property, and a duplicate of a stylesheet
   assert.ok(overridden.errors.some((e) => e.includes('type.scale.micro.home styles/base.css must hold the only root declaration of --t-1') && e.includes('styles/kit.css')), overridden.errors.join('\n'));
   const twiceHome = { 'styles/base.css': BASE['styles/base.css'] + '\nhtml { --t-1: 2rem; }' };
   assert.ok(generateTokensCss(tokens(), { stylesheets: twiceHome }).errors.some((e) => e.includes('found 2 there')));
+  const scopedFirst = { 'styles/base.css': '.component { --t-1: 1rem; }\n' + BASE['styles/base.css'].replace('--t-1: 1rem', '--t-1: 2rem') };
+  const wrongRoot = generateTokensCss(tokens(), { stylesheets: scopedFirst });
+  assert.ok(wrongRoot.errors.some((e) => e.includes('type.scale.micro.px 10 disagrees with styles/base.css\'s --t-1: 2rem')), 'the root value is checked, not an earlier scoped one: ' + wrongRoot.errors.join('\n'));
   const scoped = { ...BASE, 'styles/kit.css': '.cc-design-workspace { --tap-floor: var(--cc-control-floor); } @media (min-width: 1px) { .x:root-ish { --t-1: 3rem } }' };
   assert.equal(generateTokensCss(tokens(), { stylesheets: scoped }).errors.length, 0, 'a scoped re-declaration is the cascade, not a second home');
 

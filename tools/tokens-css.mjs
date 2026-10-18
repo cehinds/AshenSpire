@@ -39,11 +39,29 @@ const kebab = (key) => key.replace(/([A-Z])/g, '-$1').toLowerCase();
 const num = (n) => String(+n.toFixed(4));
 
 /** Every declared custom property name in a stylesheet's text (comments removed). */
-/** The declared value of one custom property in a stylesheet's text (comments stripped), or null. */
-export function declaredValue(css, name) {
+/** A stylesheet's rule blocks as { selectors (last compound of each), body } (comments stripped; nested blocks are not parsed). */
+function ruleBlocks(css) {
   const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
-  const m = new RegExp(`(?:^|[{;\\s])${name.replace(/[-]/g, '\\-')}\\s*:\\s*([^;}]+)`).exec(bare);
-  return m ? m[1].trim() : null;
+  return [...bare.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
+    selectors: m[1].split(',').map((sel) => sel.trim().split(/\s+/).pop()),
+    body: m[2],
+  }));
+}
+const isRootRule = (block) => block.selectors.some((sel) => /^(:root|html)(?![\w-])/.test(sel));
+const propPattern = (name, flags = '') => new RegExp(`(?:^|[{;\\s])${name.replace(/[-]/g, '\\-')}\\s*:\\s*([^;}]+)`, flags);
+
+/**
+ * The value one custom property is declared with at the root — in a rule whose
+ * selector list names :root or html — or null. A scoped re-declaration earlier
+ * in the file (`.component { --t-1: … }`) is not the token's value and is skipped.
+ */
+export function declaredValue(css, name) {
+  for (const block of ruleBlocks(css)) {
+    if (!isRootRule(block)) continue;
+    const m = propPattern(name).exec(block.body);
+    if (m) return m[1].trim();
+  }
+  return null;
 }
 
 export function declaredProperties(css) {
@@ -59,14 +77,8 @@ export function declaredProperties(css) {
  * the home's value for the whole page.
  */
 export function rootDeclarationCount(css, name) {
-  const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
-  const prop = new RegExp(`(?:^|[{;\\s])${name.replace(/[-]/g, '\\-')}\\s*:`, 'g');
   let count = 0;
-  for (const m of bare.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-    const selectors = m[1].split(',').map((sel) => sel.trim().split(/\s+/).pop());
-    if (!selectors.some((sel) => /^(:root|html)(?![\w-])/.test(sel))) continue;
-    count += [...m[2].matchAll(prop)].length;
-  }
+  for (const block of ruleBlocks(css)) if (isRootRule(block)) count += [...block.body.matchAll(propPattern(name, 'g'))].length;
   return count;
 }
 

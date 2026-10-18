@@ -128,6 +128,10 @@ export function buildToolFor(rel) {
  * touch ui/tokens.json also owes tokens-css.mjs, which reads it.
  */
 export function buildToolsFor(rel) {
+  // tokens-css reads every authored stylesheet (a homed value, a second root
+  // declaration), so a stylesheet change owes its check too — cheap, and the
+  // page must not reload onto a token state the check would refuse.
+  if ((rel === 'styles' || /^styles\/[^/]+\.css$/.test(rel)) && rel !== 'styles/tokens.generated.css') return ['tokens-css.mjs'];
   const tool = buildToolFor(rel);
   // ui/tokens.json itself, or any directory above it that a watcher may report
   // as replaced (content/config, content/config/ui): both could hold new tokens.

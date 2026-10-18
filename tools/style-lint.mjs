@@ -51,12 +51,12 @@ export function lintCss(text, file, { textPx }) {
   const counts = { 'font-size-below-min': 0, 'z-index-bare': 0, 'hex-colour-bare': 0 };
   for (const [prop, value] of declarations(css)) {
     if (prop === 'font-size') {
-      const px = /^\s*(\d*\.?\d+)px\b/i.exec(value);
+      const px = /^\s*\+?(\d*\.?\d+)px\b/i.exec(value); // `+10px` is a valid signed dimension
       if (px && Number(px[1]) < textPx) counts['font-size-below-min']++;
     } else if (prop === 'font') {
       // The shorthand's size is its first px length (`font: italic 700 10px/1.2 serif`);
       // a line-height after `/` is not a size.
-      const px = /(?:^|\s)(\d*\.?\d+)px(?=[\s/]|$)/i.exec(value);
+      const px = /(?:^|\s)\+?(\d*\.?\d+)px(?=[\s/]|$)/i.exec(value);
       if (px && Number(px[1]) < textPx) counts['font-size-below-min']++;
     } else if (prop === 'z-index') {
       const z = /^\s*([-+]?\d+)\s*(?:!important)?\s*$/i.exec(value); // `+100` is a valid signed integer too

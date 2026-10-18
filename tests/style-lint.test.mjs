@@ -34,9 +34,9 @@ const run = (root, ...args) => {
 const lint = (css, file = 'styles/x.css') => lintCss(css, file, { textPx: 11 });
 
 test('font-size counts only px literals below the text minimum', () => {
-  assert.equal(lint('.a{font-size:10px}.b{font-size: 10.5px !important}.c{font-size:11px}.d{font-size:12px}.e{font-size:1rem}.f{font-size:var(--t-1)}.g{font-size:calc(9px + 1px)}')['font-size-below-min'], 2);
+  assert.equal(lint('.a{font-size:10px}.b{font-size: 10.5px !important}.c{font-size:11px}.d{font-size:12px}.e{font-size:1rem}.f{font-size:var(--t-1)}.g{font-size:calc(9px + 1px)}.h{font-size:+10px}')['font-size-below-min'], 3);
   assert.equal(lint('/* .a{font-size:8px} */ .b{font-size:12px}')['font-size-below-min'], 0, 'comments are not code');
-  assert.equal(lint('.a{font:10px/1.1 Arial}.b{font: italic 700 10.5px serif}.c{font:600 max(12px,1.1rem)/1.2 serif}.d{font:500 1.38rem/1 serif}.e{font:12px/10px serif}.f{font:inherit}')['font-size-below-min'], 2, 'the font shorthand counts its size, not its line-height or a max()');
+  assert.equal(lint('.a{font:10px/1.1 Arial}.b{font: italic 700 10.5px serif}.c{font:600 max(12px,1.1rem)/1.2 serif}.d{font:500 1.38rem/1 serif}.e{font:12px/10px serif}.f{font:inherit}.g{font:+10px serif}')['font-size-below-min'], 3, 'the font shorthand counts its size, not its line-height or a max()');
 });
 
 test('z-index counts bare values of 100 or more, not layers, small values or expressions', () => {

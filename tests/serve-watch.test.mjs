@@ -56,6 +56,8 @@ test('a change to ui/tokens.json (or a replaced content/config) owes config-buil
   assert.deepEqual(buildToolsFor('content/config'), ['config-build.mjs', 'tokens-css.mjs']);
   assert.deepEqual(buildToolsFor('content/config/ui'), ['config-build.mjs', 'tokens-css.mjs']); // replaced ui/ dir (atomic save, sync)
   assert.deepEqual(buildToolsFor('content/config/ui/scenes/w4.json'), ['config-build.mjs']);
+  assert.deepEqual(buildToolsFor('styles/base.css'), ['tokens-css.mjs'], 'a stylesheet change re-checks the token homes');
+  assert.deepEqual(buildToolsFor('styles/tokens.generated.css'), [], 'the file tokens-css writes does not owe it');
   assert.deepEqual(buildToolsFor('content/hud-layout/tablet.json'), ['hud-layout-css.mjs']);
   assert.deepEqual(buildToolsFor('src/main.js'), []);
 });
