@@ -1,0 +1,48 @@
+{
+  "id": "reward",
+  "description": "Reward after combat. Mounted by src/ui/screens/reward.js (mountRewards).",
+  "route": "reward",
+  "viewModel": {
+    "props": {
+      "run": "runRef",
+      "rewards": "array"
+    }
+  },
+  "regions": [
+    {
+      "slot": "body",
+      "component": "choiceBody",
+      "props": {
+        "title": "reward.title",
+        "choices": "$rewards"
+      }
+    },
+    {
+      "slot": "offers",
+      "component": "rewardChoice",
+      "props": {
+        "reward": "$rewards[i]"
+      }
+    },
+    {
+      "slot": "footer",
+      "component": "buttons",
+      "props": {
+        "items": [
+          "continue"
+        ]
+      }
+    }
+  ],
+  "events": {
+    "claim": "reward.claim",
+    "skip": "reward.skip",
+    "claimLevel": "reward.claimLevel",
+    "claimSkill": "reward.claimSkill",
+    "allocateStat": "reward.allocateStat",
+    "done": "reward.done"
+  },
+  "assets": [
+    "scene.reward"
+  ]
+}

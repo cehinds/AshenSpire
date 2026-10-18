@@ -1,0 +1,26 @@
+{
+  "id": "damage.holy",
+  "tag": "damage.holy",
+  "version": "1.0.0",
+  "family": "damage",
+  "label": "Holy",
+  "description": "Tag damage.holy in the damage family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "damage.holy"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatExpansionActions.js",
+    "symbol": "beginExpandedAction"
+  }
+}

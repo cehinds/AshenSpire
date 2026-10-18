@@ -36,6 +36,12 @@
       "version": "1.0.0",
       "settings": {}
     },
+    "gear": {
+      "version": "1.0.0",
+      "settings": {
+        "pools": "merged"
+      }
+    },
     "class-selection": {
       "version": "1.0.0",
       "settings": {}
@@ -76,6 +82,14 @@
       "version": "1.0.0",
       "settings": {}
     },
+    "characters": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "enemies": {
+      "version": "1.0.0",
+      "settings": {}
+    },
     "formation": {
       "version": "1.0.0",
       "settings": {
@@ -88,6 +102,38 @@
           "capacityPerLane": 1
         }
       }
+    },
+    "heal-rules": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "stagger": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "enemy-visibility": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "enemy-relics": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "attribute-variance": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "deck-training": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "card-pools": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "reward-ranks": {
+      "version": "1.0.0",
+      "settings": {}
     }
   },
   "packs": [

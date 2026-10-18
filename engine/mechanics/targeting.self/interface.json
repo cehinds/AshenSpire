@@ -1,0 +1,8 @@
+{
+  "mechanic": "targeting.self",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

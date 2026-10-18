@@ -1,0 +1,30 @@
+{
+  "id": "monster",
+  "kind": "node",
+  "label": "Monster",
+  "description": "A fight. Cinders and a card reward.",
+  "icon": "node-monster",
+  "encounter": {
+    "pool": "normal",
+    "resolver": "rollEncounter"
+  },
+  "placement": {
+    "fixedFloor": {
+      "at": "first"
+    },
+    "rollable": true,
+    "noSameTypeAdjacent": false,
+    "source": "src/content/mapconfig.js:82"
+  },
+  "rewards": {
+    "cinders": "normal",
+    "cardOffer": "normal"
+  },
+  "assets": [
+    "node-monster"
+  ],
+  "tags": [
+    "combat",
+    "default"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "school_force",
+  "tag": "school:force",
+  "version": "1.0.0",
+  "family": "school",
+  "label": "Force",
+  "description": "Force pressure: strip Ward and bypass melee Counter.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "school_force",
+    "color": "B99DEC"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatCardProfile.js"
+  }
+}

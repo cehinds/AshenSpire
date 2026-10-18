@@ -1,0 +1,8 @@
+{
+  "mechanic": "equipment.shield",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

@@ -1,0 +1,219 @@
+[
+  {
+    "name": "breakPoise drains the poise meter",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "poise": 10,
+          "poiseMax": 10,
+          "sp": 5,
+          "spMax": 8,
+          "statuses": {}
+        }
+      }
+    },
+    "when": {
+      "command": "mechanic.stagger.breakPoise",
+      "with": {
+        "target": "enemy",
+        "amount": 4
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "poise": 6,
+          "sp": 5
+        }
+      },
+      "events": []
+    }
+  },
+  {
+    "name": "emptying the meter staggers through the command",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "poise": 3,
+          "poiseMax": 10,
+          "sp": 5,
+          "spMax": 8,
+          "statuses": {}
+        }
+      }
+    },
+    "when": {
+      "command": "mechanic.stagger.breakPoise",
+      "with": {
+        "target": "enemy",
+        "amount": 5
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "poise": 0,
+          "sp": 4,
+          "statuses": {
+            "vulnerable": 1
+          }
+        }
+      },
+      "events": [
+        "mechanic.stagger.staggered"
+      ]
+    }
+  },
+  {
+    "name": "a broken poise staggers: Vulnerable 1 and 1 SP lost",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "poise": 0,
+          "poiseMax": 10,
+          "sp": 5,
+          "spMax": 8,
+          "statuses": {}
+        }
+      }
+    },
+    "when": {
+      "event": "runtime.poiseBroken",
+      "with": {
+        "target": "enemy"
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "sp": 4,
+          "statuses": {
+            "vulnerable": 1
+          }
+        }
+      },
+      "events": [
+        "mechanic.stagger.staggered"
+      ]
+    }
+  },
+  {
+    "name": "a second break stacks Vulnerable",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "poise": 0,
+          "poiseMax": 10,
+          "sp": 3,
+          "spMax": 8,
+          "statuses": {
+            "vulnerable": 1
+          }
+        }
+      }
+    },
+    "when": {
+      "event": "runtime.poiseBroken",
+      "with": {
+        "target": "enemy"
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "sp": 2,
+          "statuses": {
+            "vulnerable": 2
+          }
+        }
+      },
+      "events": [
+        "mechanic.stagger.staggered"
+      ]
+    }
+  },
+  {
+    "name": "the model state overrides the defaults",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "poise": 0,
+          "poiseMax": 10,
+          "sp": 5,
+          "spMax": 8,
+          "statuses": {}
+        }
+      },
+      "mechanics": {
+        "mechanic.stagger": {
+          "spLoss": 2,
+          "stacks": 3
+        }
+      }
+    },
+    "when": {
+      "event": "runtime.poiseBroken",
+      "with": {
+        "target": "enemy"
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "sp": 3,
+          "statuses": {
+            "vulnerable": 3
+          }
+        }
+      },
+      "events": [
+        "mechanic.stagger.staggered"
+      ]
+    }
+  },
+  {
+    "name": "SP never drops below zero",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "poise": 0,
+          "poiseMax": 10,
+          "sp": 0,
+          "spMax": 8,
+          "statuses": {}
+        }
+      }
+    },
+    "when": {
+      "event": "runtime.poiseBroken",
+      "with": {
+        "target": "enemy"
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "sp": 0,
+          "statuses": {
+            "vulnerable": 1
+          }
+        }
+      },
+      "events": [
+        "mechanic.stagger.staggered"
+      ]
+    }
+  }
+]

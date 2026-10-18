@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.burn",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

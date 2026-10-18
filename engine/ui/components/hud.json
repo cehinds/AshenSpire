@@ -1,0 +1,44 @@
+{
+  "id": "hud",
+  "description": "Run HUD layers (potions, resources, menu). Reads src/ui/components/runHud.js, src/ui/models/RunHudLayerModel.js, RunHeaderModel.js and src/ui/viewModels/RunHudViewModel.js.",
+  "layout": {
+    "ref": "content/config/ui/components/hud.json"
+  },
+  "viewModel": {
+    "props": {
+      "run": "runRef"
+    },
+    "bindings": {
+      "hp": "$run.hp",
+      "maxHp": "$run.maxHp",
+      "gold": "$run.gold",
+      "potions": "$run.flasks",
+      "floor": "$run.floor",
+      "layers": "layout.layering.layers"
+    }
+  },
+  "states": [
+    "visible",
+    "minimal",
+    "hidden"
+  ],
+  "events": {
+    "menu": "menu.open",
+    "potion": "run.usePotion"
+  },
+  "children": [
+    {
+      "component": "iconTray",
+      "slot": "potions"
+    }
+  ],
+  "assets": [
+    "icon.gold",
+    "icon.health"
+  ],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

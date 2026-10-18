@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.regen",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

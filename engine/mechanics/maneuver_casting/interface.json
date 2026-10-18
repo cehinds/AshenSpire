@@ -1,0 +1,8 @@
+{
+  "mechanic": "maneuver_casting",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

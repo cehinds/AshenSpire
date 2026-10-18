@@ -1,0 +1,270 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "rounding": {
+      "enum": [
+        "down",
+        "nearest",
+        "up"
+      ]
+    },
+    "levelFrom": {
+      "enum": [
+        "levelProfile.min",
+        "levelProfile.max",
+        "encounter"
+      ]
+    },
+    "statRules": {
+      "type": "object",
+      "properties": {
+        "hp": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "sp": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "mp": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "ar": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "dr": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "hand": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        }
+      },
+      "required": [
+        "hp",
+        "sp",
+        "mp",
+        "ar",
+        "dr",
+        "hand"
+      ],
+      "additionalProperties": false
+    },
+    "attributeFill": {
+      "type": "object",
+      "properties": {
+        "defaultPriority": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 1,
+          "items": {
+            "enum": [
+              "strength",
+              "dexterity",
+              "constitution",
+              "wisdom",
+              "intelligence"
+            ]
+          }
+        },
+        "priorityWeights": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "caps": {
+          "type": "object",
+          "properties": {
+            "strength": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99
+            },
+            "dexterity": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99
+            },
+            "constitution": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99
+            },
+            "wisdom": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99
+            },
+            "intelligence": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "defaultPriority",
+        "priorityWeights",
+        "caps"
+      ],
+      "additionalProperties": false
+    },
+    "penaltyFloor": {
+      "type": "object",
+      "properties": {
+        "sp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "mp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "hp": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        }
+      },
+      "required": [
+        "sp",
+        "mp",
+        "hp"
+      ],
+      "additionalProperties": false
+    },
+    "tagRules": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "requires": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "variance": {
+            "type": "boolean"
+          },
+          "pools": {
+            "type": "object",
+            "properties": {
+              "hp": {
+                "type": "integer",
+                "minimum": -1000,
+                "maximum": 100000
+              },
+              "sp": {
+                "type": "integer",
+                "minimum": -99,
+                "maximum": 99
+              },
+              "mp": {
+                "type": "integer",
+                "minimum": -99,
+                "maximum": 99
+              }
+            },
+            "additionalProperties": false
+          },
+          "hand": {
+            "type": "integer",
+            "minimum": -20,
+            "maximum": 20
+          },
+          "attributeBudget": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 200
+            }
+          },
+          "deckSize": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99
+            }
+          },
+          "spRange": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99
+            }
+          },
+          "deckDefault": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 99
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "mode",
+    "rounding",
+    "levelFrom",
+    "statRules",
+    "attributeFill",
+    "penaltyFloor",
+    "tagRules"
+  ],
+  "additionalProperties": false
+}

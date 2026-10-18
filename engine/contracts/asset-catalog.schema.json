@@ -1,0 +1,65 @@
+{
+  "$id": "ashen.asset-catalog@1",
+  "title": "Asset catalog",
+  "type": "object",
+  "properties": {
+    "format": {
+      "const": "ashen.assets@1"
+    },
+    "source": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "tiers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "enum": [
+              "image",
+              "audio",
+              "font",
+              "data",
+              "text",
+              "model",
+              "other"
+            ]
+          },
+          "files": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "placeholder": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "kind",
+          "files"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "format",
+    "assets"
+  ],
+  "additionalProperties": false
+}

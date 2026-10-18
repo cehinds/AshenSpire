@@ -1,0 +1,26 @@
+{
+  "id": "targeting.enemy",
+  "tag": "targeting.enemy",
+  "version": "1.0.0",
+  "family": "targeting",
+  "label": "Enemy",
+  "description": "Tag targeting.enemy in the targeting family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "targeting.enemy"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/abilityRiders.js",
+    "symbol": "abilityChargedEffects"
+  }
+}

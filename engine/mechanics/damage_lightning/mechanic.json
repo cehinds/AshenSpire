@@ -1,0 +1,27 @@
+{
+  "id": "damage_lightning",
+  "tag": "damage:lightning",
+  "version": "1.0.0",
+  "family": "damage",
+  "label": "Lightning",
+  "description": "Applies 1 Weak (Sap) on a Health hit unless the card already prints a Weak effect.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "damage_lightning",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "applyExpandedDamage"
+  }
+}

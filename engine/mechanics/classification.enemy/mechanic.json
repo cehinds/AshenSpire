@@ -1,0 +1,22 @@
+{
+  "id": "classification.enemy",
+  "tag": "classification.enemy",
+  "version": "1.0.0",
+  "family": "classification",
+  "label": "Enemy",
+  "description": "What a enemy is. Every object in the enemy collection carries this, and nothing outside it may.",
+  "attaches": [
+    "entity"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "classification.enemy"
+  },
+  "portability": "data"
+}

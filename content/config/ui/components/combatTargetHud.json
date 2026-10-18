@@ -28,8 +28,8 @@
     ],
     "playerLaneSides": [
       "right",
-      "left",
-      "left"
+      "right",
+      "right"
     ]
   },
   "motion": {

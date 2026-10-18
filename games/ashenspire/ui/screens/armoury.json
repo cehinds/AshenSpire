@@ -1,0 +1,57 @@
+{
+  "id": "armoury",
+  "description": "Armoury and equipment. Mounted by src/ui/screens/equipment.js (mountEquipment).",
+  "route": "armoury",
+  "layout": {
+    "ref": "content/config/ui/screens/armoury.json"
+  },
+  "viewModel": {
+    "props": {
+      "run": "runRef"
+    }
+  },
+  "regions": [
+    {
+      "slot": "workspace",
+      "component": "workspace"
+    },
+    {
+      "slot": "identity",
+      "component": "identity",
+      "props": {
+        "character": "$run.player"
+      }
+    },
+    {
+      "slot": "belt",
+      "component": "iconTray",
+      "props": {
+        "items": "$run.belt"
+      }
+    },
+    {
+      "slot": "detail",
+      "component": "inspector",
+      "props": {
+        "entity": "$run.player"
+      }
+    },
+    {
+      "slot": "footer",
+      "component": "buttons",
+      "props": {
+        "items": [
+          "close"
+        ]
+      }
+    }
+  ],
+  "events": {
+    "equip": "gear.equip",
+    "unequip": "gear.unequip",
+    "close": "armoury.close"
+  },
+  "assets": [
+    "portrait"
+  ]
+}

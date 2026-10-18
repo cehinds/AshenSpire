@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "points": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "among": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 5
+    }
+  },
+  "required": [
+    "mode",
+    "points",
+    "among"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,23 @@
+{
+  "id": "fx_riposte",
+  "tag": "fx:riposte",
+  "version": "1.0.0",
+  "family": "fx",
+  "label": "Riposte",
+  "description": "Riposte visual identity; no combat modifier.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "fx_riposte",
+    "color": "9FC3E8"
+  },
+  "portability": "data"
+}

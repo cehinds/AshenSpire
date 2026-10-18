@@ -1,0 +1,23 @@
+{
+  "id": "trait_shattering",
+  "tag": "trait:shattering",
+  "version": "1.0.0",
+  "family": "trait",
+  "label": "Shattering",
+  "description": "Shattering combat interaction.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "trait_shattering",
+    "color": "9FC3E8"
+  },
+  "portability": "data"
+}

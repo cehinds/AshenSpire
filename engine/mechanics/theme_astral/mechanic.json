@@ -1,0 +1,23 @@
+{
+  "id": "theme_astral",
+  "tag": "theme:astral",
+  "version": "1.0.0",
+  "family": "theme",
+  "label": "Astral",
+  "description": "Categorized Astral identity; effects are authored separately.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "theme_astral",
+    "color": "9FC3E8"
+  },
+  "portability": "data"
+}

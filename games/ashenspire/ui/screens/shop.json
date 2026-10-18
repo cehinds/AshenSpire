@@ -1,0 +1,60 @@
+{
+  "id": "shop",
+  "description": "Shop. Mounted by src/ui/screens/shop.js (mountShop, mountConfiguredShop).",
+  "route": "shop",
+  "layout": {
+    "ref": "content/config/ui/screens/shop.json"
+  },
+  "viewModel": {
+    "props": {
+      "run": "runRef",
+      "offer": "object",
+      "priceMult": "number"
+    }
+  },
+  "regions": [
+    {
+      "slot": "header",
+      "component": "hud"
+    },
+    {
+      "slot": "rail",
+      "component": "categoryNav",
+      "props": {
+        "categories": "shop.categories"
+      }
+    },
+    {
+      "slot": "offers",
+      "component": "rewardChoice",
+      "props": {
+        "reward": "$offers[i]"
+      }
+    },
+    {
+      "slot": "detail",
+      "component": "cardInspect",
+      "props": {
+        "card": "$selectedOffer"
+      }
+    },
+    {
+      "slot": "footer",
+      "component": "buttons",
+      "props": {
+        "items": [
+          "leave"
+        ]
+      }
+    }
+  ],
+  "events": {
+    "buy": "shop.buy",
+    "leave": "shop.leave",
+    "restAtInn": "rest.inn"
+  },
+  "assets": [
+    "scene.shop",
+    "icon.gold"
+  ]
+}

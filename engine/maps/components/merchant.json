@@ -1,0 +1,20 @@
+{
+  "id": "merchant",
+  "kind": "node",
+  "label": "Merchant",
+  "description": "Cards, relics, flasks and card removal.",
+  "icon": "node-merchant",
+  "encounter": {},
+  "placement": {
+    "minPerAct": 1,
+    "noSameTypeAdjacent": true,
+    "source": "src/content/mapconfig.js:122; src/engine/mapgen.js:178"
+  },
+  "rewards": {},
+  "assets": [
+    "node-merchant"
+  ],
+  "tags": [
+    "shop"
+  ]
+}

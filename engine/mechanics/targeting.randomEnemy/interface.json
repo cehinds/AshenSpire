@@ -1,0 +1,8 @@
+{
+  "mechanic": "targeting.randomEnemy",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

@@ -30,7 +30,7 @@ test('listTables adds the profile packs and the HUD layout files, one table per 
 });
 
 test('a pack array of objects is a table and round-trips', () => {
-  const rel = 'games/ashenspire/packs/core/classes.json';
+  const rel = 'games/ashenspire/packs/core/characters.json';
   const text = read(rel);
   const table = D.parseTable(rel, text);
   assert.equal(table.format, 'json');

@@ -1,0 +1,22 @@
+{
+  "id": "lifecycle.seal",
+  "tag": "lifecycle.seal",
+  "version": "1.0.0",
+  "family": "lifecycle",
+  "label": "Seal",
+  "description": "Tag lifecycle.seal in the lifecycle family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "lifecycle.seal"
+  },
+  "portability": "data"
+}

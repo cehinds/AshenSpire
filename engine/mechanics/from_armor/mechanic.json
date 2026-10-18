@@ -1,0 +1,23 @@
+{
+  "id": "from_armor",
+  "tag": "from:armor",
+  "version": "1.0.0",
+  "family": "from",
+  "label": "Armor",
+  "description": "Bound to the outfit the run begins wearing.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "from_armor",
+    "color": "7FA8C9"
+  },
+  "portability": "data"
+}

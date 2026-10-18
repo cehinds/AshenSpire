@@ -1,0 +1,43 @@
+{
+  "id": "deck",
+  "description": "Deck editing and strategize. Mounted by src/ui/screens/deckEditor.js (mountDeckEditor).",
+  "route": "deck",
+  "viewModel": {
+    "props": {
+      "run": "runRef",
+      "search": "boolean"
+    }
+  },
+  "regions": [
+    {
+      "slot": "list",
+      "component": "deckList",
+      "props": {
+        "run": "$run"
+      }
+    },
+    {
+      "slot": "detail",
+      "component": "cardInspect",
+      "props": {
+        "card": "$selected"
+      }
+    },
+    {
+      "slot": "footer",
+      "component": "buttons",
+      "props": {
+        "items": [
+          "done",
+          "cancel"
+        ]
+      }
+    }
+  ],
+  "events": {
+    "done": "deck.done",
+    "cancel": "deck.cancel",
+    "navigate": "nav.to"
+  },
+  "assets": []
+}

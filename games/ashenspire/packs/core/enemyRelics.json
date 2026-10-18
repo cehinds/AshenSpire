@@ -1,0 +1,58 @@
+[
+  {
+    "id": "enemy.relic.ashenBlightCore",
+    "name": "Ashen_Blight_Core",
+    "modifiers": [
+      "self.strength=+2",
+      "self.constitution=+2",
+      "self.wisdom=-1",
+      "self.sp=-2"
+    ],
+    "text": "STR +2, CON +2, WIS -1, SP -2"
+  },
+  {
+    "id": "enemy.relic.emberBand",
+    "name": "Ember_Band",
+    "modifiers": [
+      "self.constitution=+1"
+    ],
+    "text": "CON +1"
+  },
+  {
+    "id": "enemy.relic.graveSeal",
+    "name": "Grave_Seal",
+    "modifiers": [
+      "self.strength=+2"
+    ],
+    "text": "STR +2"
+  },
+  {
+    "id": "enemy.relic.titanHeart",
+    "name": "Titan_Heart",
+    "modifiers": [
+      "self.constitution=+2",
+      "self.strength=+1"
+    ],
+    "text": "CON +2, STR +1"
+  },
+  {
+    "id": "enemy.relic.ashenCore",
+    "name": "Ashen_Core",
+    "modifiers": [
+      "self.constitution=+2",
+      "self.strength=+2",
+      "self.wisdom=+1"
+    ],
+    "text": "CON +2, STR +2, WIS +1"
+  },
+  {
+    "id": "enemy.relic.abyssalCrown",
+    "name": "Abyssal_Crown",
+    "modifiers": [
+      "self.constitution=+2",
+      "self.wisdom=+2",
+      "self.intelligence=+1"
+    ],
+    "text": "CON +2, WIS +2, INT +1"
+  }
+]

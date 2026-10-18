@@ -1,0 +1,27 @@
+{
+  "id": "trait_reaction",
+  "tag": "trait:reaction",
+  "version": "1.0.0",
+  "family": "trait",
+  "label": "Reaction",
+  "description": "Playable from hand during the opponent's turn, before the pending action resolves.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "trait_reaction",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatReactions.js",
+    "symbol": "eligible"
+  }
+}

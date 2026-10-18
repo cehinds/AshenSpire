@@ -1,0 +1,8 @@
+{
+  "mechanic": "classification.event",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

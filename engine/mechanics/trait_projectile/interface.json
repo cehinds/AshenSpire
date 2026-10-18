@@ -1,0 +1,8 @@
+{
+  "mechanic": "trait_projectile",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

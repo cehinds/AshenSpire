@@ -463,6 +463,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     });
   }
   let inspectTick = 0;
+  // Pose animations (attacks, hurt, stance) settle well inside this window.
+  const TRACK_WINDOW_MS = 900;
+  let trackUntil = 0;
+  const extendTracking = () => { trackUntil = performance.now() + TRACK_WINDOW_MS; };
   function trackPlayerHud() {
     // Reduced motion has no idle or pose drift to follow. Do not turn the HUD
     // into a script-driven animation by rewriting its settled coordinates.
@@ -472,9 +476,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // A neighbour's intent that moves between refits re-picks the spot about
     // four times a second; the Inspect itself never follows the body's bob.
     if (++inspectTick % 15 === 0 && field.closest('.combat')?.dataset.targetHud !== 'true') placeEnemyInspect();
-    // Idle breathing also moves the painted body. Keep the physical gap during
-    // those CSS transforms as well as explicit attack and movement poses.
-    trackingRequest = field.isConnected && field.querySelector('.combatant.player')
+    // Follow pose/stance motion only for a bounded window after it changes.
+    // Tracking idle breathing every frame forced a full layout read per frame
+    // and made combat unplayable on phones; the bob's few pixels are tolerated.
+    trackingRequest = field.isConnected && field.querySelector('.combatant.player') && performance.now() < trackUntil
       ? requestAnimationFrame(trackPlayerHud) : 0;
   }
   const refresh = () => {
@@ -1322,12 +1327,16 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       'data-wireframe-scene-skyline', 'data-wireframe-scene-floor'],
   });
   window.addEventListener('resize', schedule);
-  const poseObserver = new MutationObserver(() => {
+  const poseObserver = new MutationObserver(mutations => {
     // A deliberate stance still settles its readout when idle motion is off.
     if (reducedMotionRequested()) {
       if (field.closest('.combat')?.dataset.targetHud === 'true') centerTargetOverheads();
       return;
     }
+    // Class churn inside the HUD (highlights, hover) is not body motion; only
+    // pose attributes or a combatant/sprite class change open a tracking window.
+    if (!mutations.some(m => m.attributeName !== 'class' || m.target.matches?.('.combatant, .sprite'))) return;
+    extendTracking();
     if (!trackingRequest) trackingRequest = requestAnimationFrame(trackPlayerHud);
   });
   poseObserver.observe(field, { subtree: true, attributes: true,

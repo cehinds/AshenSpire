@@ -1,0 +1,27 @@
+{
+  "id": "damage_decay",
+  "tag": "damage:decay",
+  "version": "1.0.0",
+  "family": "damage",
+  "label": "Necrotic",
+  "description": "Applies Blight on a Health hit (Crimson in classic combat; Necrotic in expanded combat) unless the card already prints a Crimson Blight effect.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "damage_decay",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatRounds/resolver.js",
+    "symbol": "resolveRound"
+  }
+}

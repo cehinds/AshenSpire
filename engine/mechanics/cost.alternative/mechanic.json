@@ -1,0 +1,26 @@
+{
+  "id": "cost.alternative",
+  "tag": "cost.alternative",
+  "version": "1.0.0",
+  "family": "cost",
+  "label": "Alternative",
+  "description": "Tag cost.alternative in the cost family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "cost.alternative"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatAnimation.js",
+    "symbol": "resolveCombatAnimation"
+  }
+}

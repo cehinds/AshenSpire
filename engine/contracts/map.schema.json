@@ -1,0 +1,109 @@
+{
+  "$id": "ashen.map@1",
+  "title": "Map",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$"
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1
+    },
+    "act": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "generator": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "branching",
+            "authored",
+            "atlas"
+          ]
+        },
+        "steps": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "paths": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "weights": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "seedStream": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposed": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "nodes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "environment": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]*$"
+    },
+    "atlas": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref"
+      ],
+      "additionalProperties": false
+    },
+    "assets": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "id",
+    "label",
+    "generator",
+    "nodes"
+  ],
+  "additionalProperties": false
+}

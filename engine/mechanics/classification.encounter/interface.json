@@ -1,0 +1,8 @@
+{
+  "mechanic": "classification.encounter",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

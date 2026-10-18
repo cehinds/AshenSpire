@@ -1,0 +1,83 @@
+{
+  "id": "combat",
+  "description": "Combat. Mounted by src/ui/screens/combat.js (mountCombat); regions follow the w4a-combat scene bands.",
+  "route": "combat",
+  "scene": {
+    "ref": "content/config/ui/scenes/w4a-combat.json"
+  },
+  "viewModel": {
+    "props": {
+      "run": "runRef",
+      "combat": "combatRef"
+    }
+  },
+  "regions": [
+    {
+      "slot": "header",
+      "component": "hud"
+    },
+    {
+      "slot": "formation.enemies",
+      "component": "enemyPanel",
+      "props": {
+        "entity": "$combat.enemies[i]"
+      }
+    },
+    {
+      "slot": "formation.player",
+      "component": "playerPanel",
+      "props": {
+        "entity": "$combat.player"
+      }
+    },
+    {
+      "slot": "targetLayer",
+      "component": "combatTargetHud",
+      "props": {
+        "entity": "$combat.focus"
+      }
+    },
+    {
+      "slot": "hand",
+      "component": "hand",
+      "props": {
+        "cards": "$combat.hand"
+      }
+    },
+    {
+      "slot": "footer",
+      "component": "endTurnButton",
+      "props": {
+        "combat": "$combat"
+      }
+    },
+    {
+      "slot": "overlay.inspect",
+      "component": "cardInspect",
+      "props": {
+        "card": "$combat.inspected"
+      }
+    },
+    {
+      "slot": "overlay.inspector",
+      "component": "inspector",
+      "props": {
+        "entity": "$combat.inspectedEntity"
+      }
+    }
+  ],
+  "events": {
+    "endTurn": "combat.endTurn",
+    "playCard": "combat.playCard",
+    "selectTarget": "combat.selectTarget",
+    "menu": "menu.open",
+    "armoury": "armoury.open",
+    "save": "save.write",
+    "quit": "app.quit"
+  },
+  "assets": [
+    "scene.combat",
+    "enemy.sprite",
+    "player.sprite"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "cost.action",
+  "tag": "cost.action",
+  "version": "1.0.0",
+  "family": "cost",
+  "label": "Action",
+  "description": "Tag cost.action in the cost family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "cost.action"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatRounds/timeline.js",
+    "symbol": "enterEntry"
+  }
+}

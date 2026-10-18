@@ -1,0 +1,26 @@
+{
+  "id": "item_magic-focus",
+  "tag": "item:magic-focus",
+  "version": "1.0.0",
+  "family": "item",
+  "label": "Magic Focus",
+  "description": "What this piece IS: the Armoury and the smith name it Magic Focus.",
+  "attaches": [
+    "gear"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "item_magic-focus",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/skillXp.js"
+  }
+}
