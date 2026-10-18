@@ -25,7 +25,7 @@ jobs:
       - name: Remove completed feature preview and backfill worker receipts
         run: |
           node tools/feature-preview.mjs --remove
-          git rm -r -- docs/preview/features/enemy-back-sprites
+          git rm -r --ignore-unmatch -- docs/preview/features/enemy-back-sprites
           node --input-type=module <<'NODE'
           import {readFileSync,writeFileSync} from 'node:fs';
           import {execFileSync} from 'node:child_process';
@@ -34,11 +34,12 @@ jobs:
           let text=readFileSync(path,'utf8');
           const subjects=rangeSubjects('origin/test');
           const missing=unreceipted(subjects,text).missing;
+          if(!text.includes('/pull/2085)')) missing.unshift('2085');
           const box=JSON.parse(readFileSync('buildordinal.json','utf8'));
           const stamp=box.release+'.'+box.ordinal;
           const lines=missing.map(n=>{
             const entry=subjects.find(s=>landedPull(s)===n);
-            const subject=entry.subject.replace(/^Merge pull request #\d+ from [^\n]+\n?/,'Worker contribution '+n).replace(/^Merge PR #\d+: /,'');
+            const subject=n==='2085' ? 'Prepare rear design branch for integration' : entry.subject.replace(/^Merge pull request #\d+ from [^\n]+\n?/,'Worker contribution '+n).replace(/^Merge PR #\d+: /,'');
             return '- **Rear-design preparation history: '+subject.replaceAll('*','')+'** ([#'+n+'](https://github.com/cehinds/AshenSpire/pull/'+n+'), `'+stamp+'`). Worker contribution included in this branch; first integration into dev is pending.';
           });
           if(lines.length)text=text.replace(/(## \d{4}-\d{2}-\d{2}\n)/,'$1\n'+lines.join('\n')+'\n');
