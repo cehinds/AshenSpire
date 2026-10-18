@@ -28,9 +28,16 @@ if (process.argv.includes('--selftest')) {
         // The find-string reaches into the endTurn row specifically — the file
         // holds five `hazard: 'pointing'` rows and a plant on the first one is
         // a plant on a different action.
-        find: "    stakes: 'turn',\n    undo: 'none',\n    hazard: 'pointing',\n    note: 'the button sits at the edge of a hand",
-        replace: "    stakes: 'turn',\n    undo: 'none',\n    hazard: 'plantedNone',\n    note: 'the button sits at the edge of a hand",
+        find: "    undo: 'none',\n    hazard: 'pointing',\n    edges: { playable: [true, false] },",
+        replace: "    undo: 'none',\n    hazard: 'plantedNone',\n    edges: { playable: [true, false] },",
         expectRed: /FAIL ACTIONS declares unconditional End Turn pointer protection/,
+      },
+      {
+        name: 'co-op End Turn drops the playable context from its arm',
+        file: 'src/ui/screens/coop.js',
+        find: "      ctx: () => ({ playable: hasPlayable }),\n",
+        replace: "",
+        expectRed: /FAIL co-op End Turn arm declares the playable context and opts in with tapWhenNone/,
       },
       {
         name: 'the shared armer stops deriving hold duration from balance data',
@@ -57,8 +64,12 @@ const directClick = /#coop-endturn[\s\S]{0,500}addEventListener\(['"]click['"],\
 const armed = /beatArmer\(meta,\s*registries\)/.test(source)
   && /arm\(et,\s*['"]endTurn['"],\s*\{[\s\S]{0,500}onConfirm/.test(source);
 
+// (2026-10-18: the row is state-dependent — a hold while a card is playable,
+// none once the hand is spent — but the pointer hazard stays unconditional.)
 check('ACTIONS declares unconditional End Turn pointer protection',
-  /endTurn:\s*\{[\s\S]{0,500}stakes:\s*['"]turn['"][\s\S]{0,200}hazard:\s*['"]pointing['"]/.test(secondbeat));
+  /endTurn:\s*\{[\s\S]{0,1500}stakes:\s*(?:['"]turn['"]|\(c\)\s*=>\s*\(c\.playable\s*===\s*false\s*\?\s*['"]nothing['"]\s*:\s*['"]turn['"]\))[\s\S]{0,200}hazard:\s*['"]pointing['"]/.test(secondbeat));
+check('co-op End Turn arm declares the playable context and opts in with tapWhenNone',
+  /arm\(et,\s*['"]endTurn['"],\s*\{[\s\S]{0,800}ctx:\s*\(\)\s*=>\s*\(\{\s*playable:\s*hasPlayable\s*\}\)[\s\S]{0,200}tapWhenNone:\s*true[\s\S]{0,800}onConfirm/.test(source));
 check('co-op imports the shared beat armer', /import \{ beatArmer \}/.test(source));
 check('co-op creates the armer from profile settings and registries', /beatArmer\(meta,\s*registries\)/.test(source));
 check('co-op End Turn pointer is armed under the canonical action id', armed);
