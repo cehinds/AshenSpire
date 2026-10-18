@@ -1,6 +1,7 @@
+import { applyStatus } from './statuses.js';
 import { attackHitPreview } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts } from '../model/combatRatings.js';
-import { sameStance, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
+import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt } from '../model/fixCoreMechanics.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { cardPreparationCategory } from '../model/cardClassification.js';
@@ -28,13 +29,16 @@ export function configuredStance(carrier) {
 export function setProfileStance(ctx, entity, carrier) {
   if (!configuredCombat(ctx)) return false;
   if (fixCoreEnabled(ctx) && carrier && carrier.fixCoreSameStance === undefined) carrier.fixCoreSameStance = sameStance(entity, carrier);
-  if (fixCoreEnabled(ctx)) entity.matchingStanceCardMultiplier = carrier?.fixCoreSameStance ? fixCoreRules(ctx).stance.effectivenessMultiplier - 1 : 0;
+  if (fixCoreEnabled(ctx)) entity.matchingStanceCardMultiplier = carrier?.fixCoreSameStance ? fixCoreRules(ctx, entity, carrier).stance.effectivenessMultiplier - 1 : 0;
   const previous=entity.combatStance;
+  const grants = fixCoreEnabled(ctx) && !sameStance(entity,carrier) ? stanceEntryBonuses(carrier,ctx) : null;
   const rule = configuredModule(ctx, 'stances');
   const stance = configuredStance(carrier);
   entity.combatStance = rule?.include?.includes(stance)
     ? { maneuver: stance, camp: carrier?.combatProfile?.camp || 'physical', range: carrier?.combatProfile?.range || 'melee' }
     : { maneuver: 'neutral', camp: 'physical', range: 'melee' };
+  if (grants?.precision > 0) applyStatus(ctx,entity,'precision',grants.precision,entity);
+  if (grants?.evade > 0) applyStatus(ctx,entity,'evade',grants.evade,entity);
   rememberCombatStance(ctx,entity,previous);
   ctx.emit?.('combatStanceChanged', { targetId: entity.id, maneuver: entity.combatStance.maneuver });
   return true;
@@ -80,7 +84,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   } else raw = transition('ar','Attack rating',raw,raw+ratingBonus);
   const stanceMultiplier = stanceEffectiveness(ctx,source,carrier);
   raw = transition('matching-stance','Matching stance effectiveness',raw,raw*stanceMultiplier,'offense',stanceMultiplier);
-  if (modern && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx).statuses.vulnerabilityMultiplier);
+  if (modern && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
   if (!modern) raw=Math.max(0,Math.floor(raw));
   if(proposal && target) raw=transition('status-rules','Other status modifiers',raw,proposalHitPlan(ctx,source,target,raw,carrier).amount);
   const defense = stanceMitigation(ctx, attacking, defending);

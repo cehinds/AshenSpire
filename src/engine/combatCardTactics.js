@@ -1,3 +1,4 @@
+import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { stanceRulesFor, enemySmashFallbackPoise, enemyCounterPoiseDamage } from '../model/stanceRules.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
 import { evaluate, isFormula } from '../model/formulas.js';
@@ -15,7 +16,7 @@ import { expansionCarrierTraits } from './combatExpansionEquipment.js';
 export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
   const metadata = {};
   for (const key of ['targetLimit', 'range', 'defenseRange', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
-    'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'comboHook', 'traitValues']) {
+    'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'comboHook', 'traitValues', 'mechanicTags', 'mechanicBindings']) {
     if (def[key] !== undefined) metadata[key] = structuredClone(def[key]);
   }
   const carrier = { ...metadata, ...extra, tags: def.cardTags ?? def.tags ?? extra.tags, attack: extra.attack ?? def.attack,
@@ -287,10 +288,10 @@ export function expandedEnemyMove(enemy, move, moveId, ctx = null) {
         return { ...rest, ...pressure, op: 'buildup', camp: profile.camp || 'physical',
           amount: typeof stacks === 'number' ? stacks * 4 : { f: 'mul', args: [stacks ?? 1, 4] } };
       }
-      if (effect.op === 'block' && profile.camp === 'spell') return { ...effect, op: 'gainBarrier' };
+      if (effect.op === 'block' && profile.camp === 'spell' && !fixCoreEnabled(ctx)) return { ...effect, op: 'gainBarrier' };
       return structuredClone(effect);
     }) };
-  if (profile.camp === 'spell' && move.block != null) {
+  if (profile.camp === 'spell' && move.block != null && !fixCoreEnabled(ctx)) {
     delete result.block;
     result.barrier = (move.barrier || 0) + move.block;
   }

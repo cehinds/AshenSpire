@@ -83,3 +83,96 @@ test('authored enemy defense restores both pools and damage log carries remainin
  const event=combat.eventLog.filter(row=>row.type==='damageDealt').at(-1);
  assert.equal(event.wardRemaining,target.persistentWard.value);assert.equal(event.poiseRemaining,target.persistentPoise.value);
 });
+test('selected card hit odds match configured stance entry and Evade grants actual stacks',async()=>{
+ const {previewCardHit}=await import('../src/engine/combat.js');
+ const {combat,target}=live();target.attributes.dexterity=10;
+ const card=combat.piles.hand.find(row=>row.cardId==='core.strike');assert.ok(card);
+ const preview=previewCardHit(combat,card.instanceId,target.id);primeAccuracyRolls(combat);
+ dispatch(combat,{type:'playCard',cardInstanceId:card.instanceId,targetId:target.id});
+ const actual=combat.eventLog.filter(row=>row.type==='attackHit').at(-1);
+ assert.equal(actual.accuracy,preview.accuracy);assert.equal(actual.hitChance,preview.hitChance);
+ combat.player.energy=10;combat.player.stamina=10;
+ combat.piles.hand.push({cardId:'core.evade',instanceId:'actual-evade',upgraded:false});
+ dispatch(combat,{type:'playCard',cardInstanceId:'actual-evade'});
+ assert.ok(combat.player.statuses.evade?.stacks>0);
+});
+test('registered owner and active card parameters affect live shared math and reject typos',async()=>{
+ const {fixCoreRules,validateFixCoreRules}=await import('../src/model/fixCoreMechanics.js');
+ const {stanceEffectiveness}=await import('../src/model/stanceRules.js');
+ const {combat}=live(), entity=combat.player;
+ entity.mechanicBindings=[{tag:'combat:stance',parameters:{effectivenessMultiplier:1.25}}];
+ const card={combatProfile:{camp:'physical',maneuver:'attack'}};entity.combatStance=card.combatProfile;
+ assert.equal(stanceEffectiveness(combat,entity,card),1.25);
+ assert.equal(fixCoreRules(combat).stance.effectivenessMultiplier,1.0025);
+ entity.mechanicBindings=[];
+ assert.equal(stanceEffectiveness(combat,entity,{...card,instanceId:'first',mechanicBindings:[{tag:'combat:stance',parameters:{effectivenessMultiplier:1.5}}]}),1.5);
+ assert.equal(stanceEffectiveness(combat,entity,{...card,instanceId:'second',mechanicBindings:[{tag:'combat:stance',parameters:{effectivenessMultiplier:1.1}}]}),1.1);
+ const bad=structuredClone(combat.fixCoreRules);bad.accuracy.precisonPerStack=5;
+ assert.throws(()=>validateFixCoreRules(bad),/unknown parameter/);
+});
+test('saved combat preserves exact authored parameters and owner clocks without another roll',async()=>{
+ const {serializeCombatSnapshot,restoreCombatSnapshot}=await import('../src/engine/combatSnapshot.js');
+ const {combat}=live();combat.fixCoreRules.protectionParameters['defense.wardProtection'].multiplier=.6;
+ const snapshot=serializeCombatSnapshot(combat), counters=combat.rng.getCounters();
+ const restored=restoreCombatSnapshot({registries:reg,rng:createRng(combat.rng.seed,counters),snapshot,expectedGameProfile:profile});
+ assert.deepEqual(restored.fixCoreRules,combat.fixCoreRules);assert.deepEqual(restored.rng.getCounters(),counters);
+ const altered=structuredClone(snapshot);altered.fixCoreRules.perception.baseDC='oops';
+ assert.throws(()=>restoreCombatSnapshot({registries:reg,rng:createRng(1),snapshot:altered}),/finite number/);
+});
+test('enemy heal-and-block move spends exactly three SP and cannot cast with two',()=>{
+ for(const pool of [3,2]) {
+  const {combat,target}=live();target.hp=250;target.maxStamina=pool;target.stamina=pool;
+  const move={intent:'block',block:4,sp:1,effects:[{op:'heal',target:'self',amount:4}],tags:['camp:physical','maneuver:defend']};
+  const enemies=reg.enemies;
+  combat.registries={...reg,enemies:{...enemies,get:id=>id===target.enemyId ? {...enemies.get(id),moves:{...enemies.get(id).moves,healguard:move}} : enemies.get(id)}};
+  target.intent={kind:'block',moveId:'healguard'};target.plannedMoves=[];target.planDue=false;
+  dispatch(combat,{type:'endTurn'});
+  const played=combat.eventLog.some(row=>row.type==='enemyMoveStarted' && row.moveId==='healguard');
+  assert.equal(played,pool===3);
+  if(pool===3)assert.equal(combat.enemies[0].fixCoreStaminaRemaining,0);
+  else assert.ok(combat.eventLog.some(row=>row.type==='enemyMoveUnavailable' && row.required===3 && row.available===2));
+ }
+});
+test('canonical equipped gear bindings mount with copy identity and disappear on unequip',async()=>{
+ const {syncLoadoutProperties}=await import('../src/engine/properties.js');
+ const {protectionReceipt}=await import('../src/model/fixCoreMechanics.js');
+ const {combat}=live();const pinned=structuredClone(profile);
+ const gear=pinned.content.gear.find(row=>row.source?.id==='greatsword');assert.ok(gear);
+ gear.mechanicTags=['defense:wardProtection'];gear.mechanicBindings=[{tag:'defense:wardProtection',parameters:{multiplier:.5}}];
+ combat.registries={...reg,gameProfile:pinned};combat.gameProfile=pinned;
+ combat.player.ratings.ward=20;combat.player.persistentWard={value:20,max:20};
+ syncLoadoutProperties(combat);
+ assert.equal(protectionReceipt(combat,combat.player,'magical',20).amount,10);
+ assert.ok(Object.keys(combat.propertyMounts.player).some(id=>id.includes('greatsword@rightHand')));
+ combat.loadout.sets.leftHand[0]='greatsword';syncLoadoutProperties(combat);
+ assert.equal(Object.keys(combat.propertyMounts.player).filter(id=>id.includes('greatsword@')).length,2);
+ assert.equal(protectionReceipt(combat,combat.player,'magical',20).amount,10,'strongest protection group does not multiply identical copies');
+ combat.loadout.sets.leftHand[0]=null;combat.loadout.sets.rightHand[0]=null;syncLoadoutProperties(combat);
+ assert.equal(protectionReceipt(combat,combat.player,'magical',20).amount,15);
+});
+
+test('registered spell Block remains Block and refills both protection pools',async()=>{
+ const {expandedEnemyMove,enemyMoveCarrier}=await import('../src/engine/combatCardTactics.js');
+ const {combat,target}=live();const def=reg.enemies.get('briarHermit'),move=def.moves.rootShelter;
+ assert.ok(move.block>0);target.enemyId='briarHermit';target.ratings={ar:0,dr:0,ward:20,poise:20};target.persistentWard={value:2,max:20};target.persistentPoise={value:2,max:20};
+ const projected=expandedEnemyMove(target,move,'rootShelter',combat);
+ assert.equal(projected.block,move.block);assert.equal(projected.barrier,move.barrier);
+ gainBlock(combat,target,projected.block,enemyMoveCarrier(target,move,'rootShelter',combat));
+ assert.equal(target.persistentWard.value,2+move.block);assert.equal(target.persistentPoise.value,2+move.block);
+});
+test('enemy held gear and relic behavior mounts are owner scoped and leave on unequip',async()=>{
+ const {syncConfiguredEnemyProperties}=await import('../src/engine/properties.js');
+ const {protectionReceipt}=await import('../src/model/fixCoreMechanics.js');
+ const {combat,target}=live(),pinned=structuredClone(profile);
+ const definition=pinned.content.enemies.find(row=>row.id===target.enemyId);
+ const gear=pinned.content.gear.find(row=>row.id===definition.defaultGear[0].id);
+ gear.mechanicBindings=[{tag:'defense:wardProtection',parameters:{multiplier:.5}}];
+ const relic=pinned.content.enemyRelics[0];relic.mechanicBindings=[{tag:'defense:poiseProtection',parameters:{multiplier:.6}}];
+ definition.defaultRelics=[{key:'test-relic',id:relic.id}];
+ combat.gameProfile=pinned;syncConfiguredEnemyProperties(combat);
+ assert.equal(protectionReceipt(combat,target,'magical',20).amount,10);
+ assert.equal(protectionReceipt(combat,target,'physical',20).amount,12);
+ assert.equal(protectionReceipt(combat,combat.player,'magical',20).amount,15);
+ definition.defaultGear=[];definition.defaultRelics=[];syncConfiguredEnemyProperties(combat);
+ assert.equal(protectionReceipt(combat,target,'magical',20).amount,15);assert.equal(protectionReceipt(combat,target,'physical',20).amount,15);
+});

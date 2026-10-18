@@ -1,4 +1,4 @@
-# Content authoring notes (relics, stances, flasks, statuses, events)
+# Content authoring notes (relics, stances, flasks, statuses, events, cards)
 
 The relics are `content/source/relics.json`, compiled to `src/content/generated/relics.js` by
 `tools/content-build.mjs`. These are the design notes that lived as comments in the old
@@ -153,3 +153,101 @@ orchestrator after resultText is shown. SPEC §9 M3 target: 10 events.
 - **eventHistoryRequirements** — EVENT-LEVEL history gates (quest steps). An event listed here enters an Unknown node's pool only once the run's history satisfies its requirement (engine/encounters.js resolveUnknownNode via model/quests.js) — so a chain step cannot be met before the step it answers. Events not listed are ungated, exactly as before.
 - **questChains** — QUEST CHAINS (plan phase 10a; proposal §7.5). A chain names its steps and the choices that complete it; committing a completing choice completes the quest through the one door (engine/quests.js), at most once per run. Every step is spoken in the dialogue screen. A Leave never completes a quest (validate.js refuses it by name). Grave of the Nameless is the first chain: any answer at the second cairn but Leave finishes the walk.
 - **eventSpeakers** — Who speaks each chain step (content/source/speakers.csv rows). Every chain event names one; validation refuses a step without a speaker and a speaker no row defines. PROVISIONAL (owner decision, 2026-09-14): the grave and the second cairn are spoken by the Nameless themselves, the fork in the road by their Keeper (docs/LORE-CAST.md).
+
+## Cards (content/source/cards/*.json)
+
+Six plain-data card pools are JSON files under `content/source/cards/`, one array each, named for the
+export they compile to: `heraldCards.json`, `reaverCards.json`, `starseerCards.json`,
+`armamentCards.json`, `colorlessCards.json`, `corruptedCards.json`. `tools/content-build.mjs` compiles each
+to `src/content/generated/cards/<name>.js`, and the old `src/content/cards/{herald,reaver,starseer,armaments,
+colorless,corrupted}.js` are shims that re-export it (the pools were unfrozen before and still are).
+`rogue.js` and `coop.js` stay JS: they hold builder functions, which JSON cannot carry. These are the design
+notes that lived as comments in the old JS files (JSON has no comments); keep a note under the card id when
+you change one. The shared constants the old files declared (`one = { f: 'add', args: [1] }`, and in the
+Starseer file `CHARGED` and `GAIN_CHARGE`) are written out inline in every row that used them; the values are
+unchanged.
+
+### armamentCards
+
+Item-lent shield Arts and Guardian's combat-only skill. Existing effect DSL.
+
+### corruptedCards
+
+Native corruption is an explicit play price, never an ailment or damage type.
+
+### colorlessCards
+
+File header: statuses/curses (injected) + neutral colorless cards any class can pick up (SPEC §5.2, §1). The
+status/curse cards (rarity `special`) are injected by enemies and events; unplayability is keyword-driven
+(SPEC §4.3 note). The playable colorless cards (common/uncommon/rare) are class-agnostic utility, sold at
+Merchants. StS-faithful: colorless comes from shops, not standard combat rewards (`rollShopCards` in
+engine/encounters.js appends them to every class's stock).
+- **katanaDrawCut** (and the weapon arts that open the file) — Weapon arts are ordinary loose cards when purchased. Their source items lend mounted copies; the smith uses the existing extractable tag rules.
+- **twinFang** — The pool's first colorless ATTACK: a neutral multi-hit that rides Strength/Vulnerable well in any class. It opens the "Neutral playable colorless (Merchant stock, SPEC §1)" run of rows.
+- **bashingBlow** — opens the "Content-pass additions (round 5)" rows.
+- **mindSpike** — opens the "Psychic and Earth" rows (owner decision #13: no class owns them). Reward-pool membership is by class `cardPool`, and nothing weights a card per class, so these ride the expanded-combat colorless door: any class meets them.
+- **wound** — opens the "Statuses (the card kind) + curses (enemy/event injected)" rows.
+
+### heraldCards
+
+File header: the Herald pool (SPEC §5.1: M3). Class identity: HP AS A RESOURCE. Pay life for tempo (`loseHp`
+riders), spread Crimson Blight, and claw the blood back through heals that the Gold Figurine converts into
+armor. Mistakes compound: HP is one pool (GDD §4.3).
+
+M3 note: pool grown to 30 rewardable cards in the M3 content pass (toward SPEC's ~50). New cards deepen the
+blood/Blight identity: Blight spread and payoff (Contagion, Scourge, Cull the Weak, Blight Nova, Reclamation),
+HP-for-value (Bloodletting, Exsanguinate, Blood Harvest), and blood-fed powers (Stigmata heals on HP loss,
+Zealotry retaliates on HP loss). The round-2 additions (two commons, two uncommons, two rares) rounded the
+pool to 36: a cheap blood-payment attack and a Blight poke, an HP-gated finisher and a heal-fed power, a heavy
+HP-for-damage attack and a Blight-fed power. Section order in the file: Starter, Commons, Uncommons, Rares,
+round 2, round 4, the class ability card.
+- **blightTouch** — A2 Herald starvation: no Mana line (Stamina 1 stays), so its Exposure row reads the no-Mana 1 (SPEC §13.4k). The Herald's one starting attack cost Mana that carries between fights, so a dry Herald could only stall: with every #1284 row live, `node tools/runsim.mjs 120 --seeded-seats` (seat order drawn per run), Herald 47 -> 66/120 wins and stalled fights 8 -> 5 without the Mana line.
+- **litany** — THE HERALD IS WHERE INSANITY LIVES (Rune, 2026-08-08). The Insanity row shipped complete (threshold 14, the biggest burst, +8 Poise, a guaranteed Stagger, `insanityExposed`) and NOTHING in the game applied it. It belongs to this class and not to the Reaver or the Starseer for a reason already in the data: `insanityExposed` raises `ritual`- and `blight`-tagged damage, and those two tags are the Herald's (content/source/tagging.csv). A chant repeated until the mind gives is the cheapest, slowest door in; 14 is deliberately the hardest threshold to fill, so a common has to be able to start it. Numbers PROVISIONAL, like the row's.
+- **warmLitany** — the class ability card (plan phase 5a, proposal §4). Litany: the Herald's loop is overheal turned to offence; one card that heals and braces in the same breath.
+
+### reaverCards
+
+File header: the Reaver pool (SPEC §5.2; grown to 30 rewardable cards to match the other classes). Pure data.
+Every card's numbers come from the SPEC §5.2 table; text tokens bind to effects per SPEC §3.13. Powers with
+invisible stack counts use formula-valued stacks (`{f:'add',args:[1]}`); formula values are exempt from the
+literal-number token rule (documented in DEVELOPER.md). Content-pass additions deepen the stance / Bleed /
+Poise identity: Riposte and Cleaving Blow (Poise), Rend and Bloodhunter's Strike (Bleed), Warding Lunge
+(defense + Gorefire), Impale (Stagger to Bleed), and Sanguine Pact (a power that turns Bleed bursts into
+Strength). The round-2 additions (two commons, two uncommons, two rares) rounded the pool to 36: Bleed/Poise
+upkeep, a stance-flip attack and a power that turns HP loss into Block, a Bleed-scaling finisher and a
+Poise-scaling finisher. Section order in the file: Starters, the unarmed package, Commons, Uncommons, Rares,
+round 2, round 4, the class ability card, skill-draft depth.
+- **strike** — Shared basic (all three classes start with Strikes/Defends; colorless).
+- **evasiveGuard**, **dodgeRoll** — THE UNARMED PACKAGE (framework contract: Unarmed fallback). The entities `framework.evasiveGuard` and `framework.dodgeRoll`, authored here as the base cards the unarmed guard and technique profiles resolve to. Evasive Guard is a guard that also dodges (it rolls); Dodge Roll is the pure dodge, a flat Block, Poise and Ward since 2026-10-05, priced by the Weight Class the player stands in (mechanics.json), not by this cost.
+- **dodgeRoll** — Owner, 2026-10-05: "change dodge card. Just make it add a flat block and ward and poise equal to 3 + dr bonuses". No roll: 3 Block, 3 Poise and 3 Ward, each plus the DR bonus a physical skill's Block reads (engine/combatRatings.js `cardRatingBonus`). Poise and Ward absorb impact before the matching meter fills, until the next turn, as Block does damage. The price is still the Weight Class's (`weightClassPriced`). No `upgrade`: the flat dodge is one fixed number (the owner's 3) plus DR, and its price is the class's. As an equipment-composed weapon art it rides no armament, so an upgrade would have nowhere to live; the upgrade opcode never lists a composed instance (see actions.js).
+- **warriorsVow** — "A Stance of your choice" (SPEC §5.2): the play offers every stance the player's class owns, and the pick rides the play intent (model/cardChoices.js).
+- **ruinousBlow** — 60% Blunt, 40% Force: the heavy blow leans physical (owner #23, confirmed 2026-10-13).
+- **bloodTithe** — Half weapon, half Necrotic (owner #24; 50/50 is the orchestrator's assumption). The weapon half cuts or stabs with a blade, stabs with a piercing shield or bow, and cuts with anything else or bare hands. It bleeds on hit with any weapon (owner #24), after the payoff reads the Bleed (so the Bleed effect is the last row).
+- **brace** — the class ability card (plan phase 5a, proposal §4). Brace: the Reaver's loop is stance switching as tempo. Enter Brace, a stance that holds the line; leaving it hits harder (stances.js `brace`).
+- **hewingArc**, **sunderingChop**, **setTheShield**, **aegisOfEmbers**, **shieldCrash** — Skill-draft depth (blade and shield tracks). A levelled sword or shield drafts from its own school at every rarity it has opened; these join the retagged pool so each has at least four.
+- **hewingArc** — Keep its pre-fix resolved price; area targeting must not add a tax (the upgrade carries `cost: 3`).
+
+### starseerCards
+
+File header: the Starseer pool (SPEC §5.1: M3). Class identity: STARSTONE COMBOS, the 2nd+ spell each turn is
+empowered. Mechanically pure data: each spell checks `starstoneCharge` FIRST (its "Starstone:" bonus), then
+applies the charge for the next spell. The charge is unique + turn-end decay (content/statuses.js). Weak early
+block is the designed weakness (GDD §4.3).
+
+M3 note: pool grown to 30 rewardable cards in the M3 content pass (toward SPEC's ~50). New cards deepen the
+Starstone identity: multi-hit (Star Slicer), AoE combos (Meteor Swarm, Radiant Spray, Starfall Beam), control
+(Frost Nova, Gravity Well), and scaling powers (Azure Coil, Waxing Moon). The round-2 additions (two commons, two
+uncommons, two rares) rounded the pool to 36: a cheap combo-piece and a defensive combo-piece, a card-draw combo
+skill and a scaling shield power, a heavy Starstone-gated attack and a combo-fed draw power. All follow the same
+"check charge first, then GAIN_CHARGE last" shape as the rest of the pool. In the old file `one`, `CHARGED` and
+`GAIN_CHARGE` were shared constants; every row now spells the same value out.
+
+A2 Starseer starvation: the starter and common attacks (Starstone Pebble, Comet Fragment, Starblade Phalanx,
+Starlance, Frost Nova) cost actions only (no Mana, no Stamina), so a Starseer whose Mana carries between fights
+can still fight; their cardExposure.csv rows drop to the action-only 1 (SPEC: "action-only spells keep 1").
+Measured with every #1284 row live, `node tools/runsim.mjs 120 --seeded-seats` (seat order drawn per run):
+Starseer 51/120 wins; 47/120 with these five back on 1 Stamina + 1 Mana.
+- **frostVeil** — FROST, not Weak (#127-adjacent, Rune 2026-08-08). The Frost row's own proc LEAVES Weak, so a frost card that also applied Weak directly paid the same debuff twice and made the build-up pointless. The card seeds the build-up; the proc pays the Weak. Numbers PROVISIONAL, like the row's.
+- **frostNova** — THE CARD NAMED FROST NOVA NOW APPLIES FROST (Rune, 2026-08-08). It applied `weak` + `vulnerable` and nothing in the game applied `frost` at all: a complete threshold-proc row (threshold, burst, Frost-Exposed, a resist row and its own SFX row) that no player could reach. Weak and Vulnerable are what the Frost PROC leaves behind; this is the card that fills the meter, and it is the Starseer's because `frostExposed` raises `starstone`-tagged damage. Numbers PROVISIONAL, like the row's.
+- **attune** — the class ability card (plan phase 5a, proposal §4). Attune: the Starseer's loop is stamina tension around scarce casts; one card that buys the next cast.
+- **cinderSigil**, **ashenMote** — Ash rites (skill-draft depth for the Ash Focus). The Ash Focus is a ritual staff: a levelled one drafts ritual cards, and until these the Starseer's pool held none, so its baseline staff drafted nothing. Starstone combos still apply.

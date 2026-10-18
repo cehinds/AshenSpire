@@ -28,7 +28,7 @@ export function broadIntentLabel(category) {
 }
 export function rollKnowledgeRead(rng, rules, observer, category, { ctx = null, target = {} } = {}) {
   if (fixCoreEnabled(ctx)) {
-    const cfg = fixCoreRules(ctx).perception;
+    const cfg = fixCoreRules(ctx, observer.entity).perception;
     const roll = 1 + Math.floor(rng.float('enemyIntentVisibility') * 20);
     // Keep the legacy clue stream deterministic without exposing a failed exact check.
     rng.float('enemyIntentClue');

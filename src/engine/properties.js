@@ -1,3 +1,4 @@
+import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 // src/engine/properties.js — the one mount path for property rules
 // (docs/proposal-progression-and-property-system.md §3, plan phase 1b)
 //
@@ -35,7 +36,7 @@
 
 import { carrierRules } from '../model/registries.js';
 import { breakPropertyRule } from '../model/breakMeter.js';
-import { equippedPieces, pieceItemRef } from '../model/loadout.js';
+import { equippedPieces, equippedIn, pieceItemRef } from '../model/loadout.js';
 import * as Triggers from './triggers.js';
 
 // The carrier kinds the loadout owns. syncLoadoutProperties manages these and
@@ -99,7 +100,7 @@ export function mountProperties(ctx, carrier) {
   // the class card names) can ask which mounts speak for a track without a
   // second table. Empty for the carriers that carry none.
   owned[sourceKey] = {
-    ...mechanicMetadata(carrier), kind: carrier.kind, id: carrier.id, instanceId: carrier.instanceId || carrier.id, rules, scopeTags: [...(carrier.scopeTags || [])],
+    ...(carrier.configuredEnemy ? {configuredEnemy:true} : {}), ...mechanicMetadata(carrier), kind: carrier.kind, id: carrier.id, instanceId: carrier.instanceId || carrier.id, rules, scopeTags: [...(carrier.scopeTags || [])],
     // The worn piece a slotted sigil rides (SPEC §14.4), so the loadout diff
     // knows the mount is its to take away.
     ...(carrier.heldBy ? { heldBy: carrier.heldBy } : {}),
@@ -131,13 +132,20 @@ export function propertyMountsOf(ctx, entity) {
  * none given, no sigil mounts.
  */
 export function loadoutCarriers(registries, loadout, classId, ownerKey, itemUpgradeLevels = {}, sigilSlots = null) {
-  const worn = equippedPieces(registries, loadout, classId, { itemUpgradeLevels });
+  const modern = registries.gameProfile?.modules?.effects?.fixCoreVersion === 1;
+  const canonical = modern ? registries.gameProfile?.content?.gear || [] : [];
+  const slots = (registries.equipment?.slots || []).filter(slot => equippedIn(registries,loadout,classId,slot.id));
+  const worn = equippedPieces(registries, loadout, classId, { itemUpgradeLevels }).map((piece,index)=>{
+    const authored=canonical.find(row=>(row.source?.id || row.id)===piece.id && (row.kind==='armor')===(piece.kind==='armor') && (!row.classes || row.classes.includes(classId)));
+    return {...piece,...(authored?.mechanicTags ? {mechanicTags:authored.mechanicTags} : {}),
+      ...(authored?.mechanicBindings ? {mechanicBindings:authored.mechanicBindings} : {}),equippedSlotId:slots[index]?.id};
+  });
   const pieces = worn
     .filter((piece) => (Array.isArray(piece.propertyTags) && piece.propertyTags.length) || hasMechanics(piece))
     .map((piece) => ({
       ...mechanicMetadata(piece), kind: piece.kind === 'armor' ? 'armour' : 'armament',
       id: piece.id,
-      instanceId: pieceItemRef(piece),
+      instanceId: modern && hasMechanics(piece) ? `${pieceItemRef(piece)}@${piece.equippedSlotId}` : pieceItemRef(piece),
       ownerKey,
       tagIds: [...(piece.propertyTags || [])],
     }));
@@ -181,7 +189,9 @@ export function relicCarrier(registries, relicId, ownerKey) {
  * carries no property.
  */
 export function classCarrier(registries, classId, ownerKey, coreTags = []) {
-  const def = registries.classes && registries.classes.get ? registries.classes.get(classId) : null;
+  const base = registries.classes && registries.classes.get ? registries.classes.get(classId) : null;
+  const authored = registries.gameProfile?.modules?.effects?.fixCoreVersion === 1 ? registries.gameProfile.content.characters?.find(row=>row.id===classId) : null;
+  const def = base && {...base,...(authored?.mechanicTags ? {mechanicTags:authored.mechanicTags} : {}),...(authored?.mechanicBindings ? {mechanicBindings:authored.mechanicBindings} : {})};
   const own = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
   // The run's picked tree nodes (plan phase 5b, run.coreTags) are the core
   // card's own tagging rows: they mount beside the class's authored tags.
@@ -358,5 +368,30 @@ export function syncLoadoutProperties(combat, entity, loadout, itemUpgradeLevels
   for (const carrier of wanted) {
     const owned = combat.propertyMounts && combat.propertyMounts[ownerKey];
     if (!owned || !owned[propertySourceKey(carrier)]) mountProperties(combat, carrier);
+  }
+}
+
+/** Configured enemies hold exactly their pinned gear and relic slots. */
+export function syncConfiguredEnemyProperties(ctx) {
+  if (!fixCoreEnabled(ctx)) return;
+  const content=ctx.gameProfile?.content;
+  if (!content) return;
+  for(const enemy of ctx.enemies || []) {
+    const definition=content.enemies?.find(row=>row.id===enemy.enemyId);
+    if(!definition) continue;
+    const carriers=[];
+    for(const [field,catalog,relic] of [['defaultGear','gear',false],['defaultRelics','enemyRelics',true]]) {
+      for(const slot of definition[field] || []) {
+        const source=content[catalog]?.find(row=>row.id===slot.id);
+        if(!source || !hasMechanics(source)) continue;
+        carriers.push({...mechanicMetadata(source),kind:relic ? 'relic' : source.kind==='armor' ? 'armour' : 'armament',
+          id:source.id,instanceId:`${source.id}@${slot.key}`,ownerKey:enemy.id,tagIds:source.propertyTags || [],configuredEnemy:true});
+      }
+    }
+    const keys=new Set(carriers.map(propertySourceKey));
+    for(const [key,mount] of Object.entries(ctx.propertyMounts?.[enemy.id] || {})) {
+      if(mount.configuredEnemy && !keys.has(key)) unmountProperties(ctx,{...mount,ownerKey:enemy.id,tagIds:[]});
+    }
+    for(const carrier of carriers) if(!ctx.propertyMounts?.[enemy.id]?.[propertySourceKey(carrier)]) mountProperties(ctx,carrier);
   }
 }

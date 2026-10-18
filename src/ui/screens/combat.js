@@ -1,3 +1,5 @@
+import { fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
+import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { chooseAutoCombatAction, resolveCombatAutomation, AUTOMATION_DEFAULTS } from '../../model/autoCombatPolicy.js';
@@ -1086,6 +1088,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     return {
       id: e.id,
       kind: e.kind,
+      tags: e.tags ? [...e.tags] : undefined,
+      mechanicTags: e.mechanicTags ? [...e.mechanicTags] : undefined,
+      mechanicBindings: e.mechanicBindings ? structuredClone(e.mechanicBindings) : undefined,
+      ratingSources: e.ratingSources ? structuredClone(e.ratingSources) : undefined,
       ...(e.kind === 'enemy' ? { intentPreview: projectCombatIntent(combat, e.id), presentationStance: enemyStanceCategory(e.intent) } : {}),
       hp: e.hp,
       energy: e.energy, energyMax: e.energyMax, stamina: e.stamina, maxStamina: e.maxStamina, maxMana: e.maxMana,
@@ -1130,6 +1136,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const eventIndex = combat.eventLog.indexOf(e);
       if (eventIndex >= 0) disp.logLength = Math.max(disp.logLength, eventIndex + 1);
       const t = e.targetId && disp.ents[e.targetId];
+      if (applyCombatDisplayReceipt(disp.ents, e)) continue;
       switch (e.type) {
         case 'combatCounterTriggered': {
           const actor = disp.ents[e.sourceId];
@@ -1273,16 +1280,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'stanceEntered':
           if (disp.ents.player) disp.ents.player.stanceId = e.stance;
           break;
-        // Expanded combat posture advances with its beat, not at playback end.
-        case 'combatStanceChanged': {
-          const actor = disp.ents[e.sourceId];
-          if (actor) {
-            const { maneuver, camp, reach, school, expiresOnOwnerCycle } = e;
-            actor.combatStance = { maneuver, camp, reach, ...(school ? { school } : {}),
-              ...(expiresOnOwnerCycle != null ? { expiresOnOwnerCycle } : {}) };
-          }
-          break;
-        }
         case 'evadeGained': {
           // Only the expansion's prepared Evade; the foundation Evade has its own row.
           if (!e.combatEvade) break;
@@ -1345,7 +1342,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const blocked = busy || enemyPlayback || !!hasCardChoice(combat) || performance.now() < autoCombatPausedUntil;
     if (!blocked && !capped && combat.phase === 'player' && !combat.result && !veilIsOpen() && !selected && !selfArm && selectedFlask == null) {
       for (const inst of combat.piles.hand) {
-        if (unplayableReason(inst)) continue;
+        if (isRoundQueued(inst.instanceId) || unplayableReason(inst)) continue;
         try {
           const pv = previewCard(combat, inst.instanceId);
           const def = pv.resolvedDefinition || resolveCombatCard(combat, inst);
@@ -1370,7 +1367,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     return chooseAutoCombatAction({ settings: readSettings(), phase: combat.phase, result: combat.result, busy: blocked,
       pendingReaction: !!combat.pendingReaction, modalOpen: veilIsOpen(), targetUnresolved: !!(selected || selfArm || selectedFlask != null),
-      queued: !!combat.combatRounds?.playerQueue?.length, candidates, canEndTurn: !hasCardChoice(combat) });
+      // An idle round queue is a plan: skip its cards above, then finish
+      // planning or End Turn. busy/enemyPlayback guard executing queues.
+      queued: false, candidates, canEndTurn: !hasCardChoice(combat) });
   }
   function scheduleAutoCombat() {
     if (autoCombatTimer !== null || !combatEl.isConnected) return;
@@ -1728,7 +1727,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (bar.id === 'hp') {
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const next = el.nextSibling;
-        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null }, { tooltips, blockHelp: helpText('block') });
+        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null }, { tooltips, blockHelp: helpText('block'),
+          poiseHelp: fixCoreProtectionDescription(combat, v, 'poise') || tFull('combat.protection.poise'),
+          wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward') });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
