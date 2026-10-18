@@ -12,13 +12,6 @@ const reg = createRegistries(applyGameProfileToContent(contentBundle, profile));
 for (const classId of ['reaver','rogue','starseer','herald']) test(`${classId} editor uses the kernel trait policy and keeps owned cards`, () => {
   const run = { gameProfile: profile, class: classId, deck: [], sideboard: [] };
   const ids = unlimitedCardIds(run);
-  if (['starseer','herald'].includes(classId)) {
-    // The current Core catalog has no non-special starter spells; exercise the authored policy with a cantrip fixture.
-    const fixture = structuredClone(profile);
-    fixture.content.cards.push({...fixture.content.cards.find(c=>c.id==='core.starseerSpecial'),id:'fixture.cantrip'});
-    run.gameProfile=fixture;
-    ids.splice(0,ids.length,...unlimitedCardIds(run));
-  }
   assert.ok(ids.length > 0);
   for (const id of ids) {
     const def = run.gameProfile.content.cards.find(c => c.id === id);
@@ -35,4 +28,14 @@ for (const classId of ['reaver','rogue','starseer','herald']) test(`${classId} e
   assert.equal(deckCopyLimit(reg,special,{},run),1);
   assert.equal(moveToSideboard(reg,run,'owned'),true);
   assert.equal(run.sideboard[0].rank,2);
+});
+
+test('creation groups equivalent cards and preserves rank/enhancement identity', async () => {
+  const { groupCardVariants } = await import('../src/model/cardGroups.js');
+  const refs = [
+    {instanceId:'1',cardId:'strike'}, {instanceId:'2',cardId:'strike'},
+    {instanceId:'3',cardId:'strike',rank:2}, {instanceId:'4',cardId:'strike',upgraded:true},
+    {instanceId:'5',cardId:'strike',mods:['strike.damage=+1']},
+  ];
+  assert.deepEqual(groupCardVariants(refs).map(group=>group.count),[2,1,1,1]);
 });
