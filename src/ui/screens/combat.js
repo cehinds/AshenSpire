@@ -2309,7 +2309,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     let gripY = 0;
     let ghostWidth = 0;
     let ghostHeight = 0;
-    let lastConfirmTap = 0;
     let flickStart = null;
     let flickPoints = [];
     const flickRules = registries.balance.ui.touchFlick;
@@ -2467,7 +2466,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (el.dataset.inspect === 'open') return;
         if (!dragging && Math.hypot(mv.clientX - startX, mv.clientY - startY) > 12) {
           dragging = true;
-          lastConfirmTap = 0;
           el.dispatchEvent(new Event('carddragstart'));
           el.classList.add('drag-source');
           hideTooltip();
@@ -2539,7 +2537,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
 
     const select = () => {
-      lastConfirmTap = 0;
       selectedFlask = null;
       // A queued card (Combat Rounds Preview) is taken back by its tap, not armed again.
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
@@ -2598,9 +2595,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // a target pick) plays, as before.
       if (oneTapPlays()) { play(); return; }
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
-      const now = performance.now();
-      if (lastConfirmTap && now - lastConfirmTap <= 350) { lastConfirmTap = 0; confirm(); }
-      else lastConfirmTap = now;
+      // The card is already selected: this is the NEXT tap on it, and it plays,
+      // with no timing window (owner, 2026-10-18 14:15).
+      play();
     };
     const cardHoldMs = () => holdMs(meta.settings || {}, registries.balance.ui.holdConfirm)
       || Number(registries.balance.ui.holdConfirm.steps.short) || 350;

@@ -43,6 +43,10 @@ try {
     await page.waitForTimeout(900);
     assert.deepEqual(await state(page), before, 'default, 1 enemy: a single tap on Strike plays nothing');
     assert.ok(await page.locator('.hand .card.selected[data-card-id="core.strike"]').count() > 0, 'default, 1 enemy: the tap selects Strike');
+    await page.waitForTimeout(1500);
+    await tapCard(page, 'core.strike');
+    await page.waitForTimeout(900);
+    assert.equal((await state(page)).hand.length, before.hand.length - 1, 'default, 1 enemy: the NEXT tap on the selected Strike plays it, with no timing window');
     await page.close();
   }
   {
@@ -52,6 +56,10 @@ try {
     await page.waitForTimeout(900);
     assert.deepEqual(await state(page), before, 'default, self card: a single tap selects and plays nothing');
     assert.ok(await page.locator('.hand .card.selected[data-card-id="core.defend"]').count() > 0, 'default, self card: the tap selects Defend');
+    await page.waitForTimeout(1500);
+    await tapCard(page, 'core.defend');
+    await page.waitForTimeout(900);
+    assert.equal((await state(page)).hand.length, before.hand.length - 1, 'default, self card: Defend plays on exactly the second tap');
     await page.close();
   }
   {
@@ -157,7 +165,7 @@ try {
     await page.close();
   }
   {
-    // With one-tap play OFF the hold still never plays, and the double-tap does.
+    // With one-tap play OFF the hold still never plays, and the NEXT tap does.
     const page = await board(2, 4, { oneTapPlay: false });
     const before = await state(page);
     const box = await page.locator('.hand .card[data-card-id="core.defend"]').first().boundingBox();
@@ -169,12 +177,8 @@ try {
     assert.deepEqual(await state(page), before, 'setting off: a completed hold plays nothing');
     assert.ok(await page.locator('.hand .card.selected[data-card-id="core.defend"]').count() > 0, 'setting off: it leaves the card selected');
     await tapCard(page, 'core.defend');
-    await page.waitForTimeout(600);
-    assert.deepEqual(await state(page), before, 'setting off: a single tap on the selected card does not play it');
-    await tapCard(page, 'core.defend');
-    await tapCard(page, 'core.defend');
     await page.waitForTimeout(900);
-    assert.equal((await state(page)).hand.length, before.hand.length - 1, 'setting off: the quick double-tap on the selected card plays it');
+    assert.equal((await state(page)).hand.length, before.hand.length - 1, 'setting off: the NEXT tap on the hold-selected card plays it');
     await page.close();
   }
   {
