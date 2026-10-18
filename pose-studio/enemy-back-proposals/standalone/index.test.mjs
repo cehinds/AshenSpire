@@ -1,15 +1,52 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { selectProposal, sequenceFor, sampleSequence, positionFrame, resolveFrameAsset } from './index.mjs';
 const json = async path => JSON.parse(await readFile(new URL(path, import.meta.url), 'utf8'));
 const catalog = await json('./catalog.json');
 const source = await json('../manifest.json');
+function fetchSparseArt(assets) {
+  const cwd = new URL('../../../', import.meta.url);
+  const missing = [...new Set(assets)].filter(asset => !existsSync(new URL(asset, cwd)));
+  if (!missing.length) return;
+  const entries = execFileSync('git', ['ls-files', '-v', '-z', '--', ...missing], { cwd, encoding: 'utf8' }).split('\0');
+  const sparse = entries.filter(entry => entry.startsWith('S ')).map(entry => entry.slice(2));
+  if (!sparse.length) return;
+  const objects = execFileSync('git', ['ls-tree', '-r', '-z', 'HEAD', '--', ...sparse], { cwd, encoding: 'utf8' })
+    .split('\0').filter(Boolean).map(entry => entry.split('\t')[0].split(' ')[2]);
+  const status = execFileSync('git', ['cat-file', '--batch-check'], { cwd, input: objects.join('\n')+'\n', encoding: 'utf8',
+    env: { ...process.env, GIT_NO_LAZY_FETCH: '1' } }).trim().split('\n');
+  const needed = status.filter(line => line.endsWith(' missing')).map(line => line.split(' ')[0]);
+  // Fetch only the required tracked blobs together, not one network round trip per PNG.
+  if (needed.length) execFileSync('git', ['fetch', '--no-tags', '--no-write-fetch-head', '--filter=blob:none', 'origin', ...needed], { cwd, stdio: 'pipe' });
+}
+async function sourceArtBytes(asset) {
+  try { return await readFile(new URL('../../../'+asset, import.meta.url)); }
+  catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    const cwd = new URL('../../../', import.meta.url);
+    // Lean CI omits authoring PNGs; hash their real tracked bytes, not substitutes.
+    const entry = execFileSync('git', ['ls-files', '-v', '-z', '--', asset], { cwd, encoding: 'utf8' });
+    if (entry !== `S ${asset}\0`) throw error; // Ordinary deletions still fail.
+    return execFileSync('git', ['show', `HEAD:${asset}`], { cwd, maxBuffer: 16 * 1024 * 1024 });
+  }
+}
 test('catalog preserves all source artwork and provenance exactly', async () => {
   assert.deepEqual(catalog.actors, source.actors);
   assert.equal(catalog.actors.length, 13);
   assert.equal(catalog.actors.reduce((n,a)=>n+a.proposals.length,0),130);
+  const assets = catalog.actors.flatMap(actor => actor.proposals.flatMap(proposal => [
+    ...[...Object.values(proposal.stances), ...Object.values(proposal.animations||{}), ...Object.values(proposal.reactions||{})].flatMap(s=>s.frames),
+    ...(proposal.designFrame ? [proposal.designFrame] : []),
+  ].map(frame => frame.asset)));
+  for (const asset of assets) {
+    assert.match(asset, /^art\/enemy-back-(proposals|motion)\/[a-zA-Z0-9_./-]+\.png$/);
+    assert.ok(!asset.split('/').includes('..'));
+  }
+  fetchSparseArt(assets);
   const motion = new Set();
   for (const actor of catalog.actors) for (const proposal of actor.proposals) {
     const frames = [...Object.values(proposal.stances), ...Object.values(proposal.animations||{}), ...Object.values(proposal.reactions||{})].flatMap(s=>s.frames);
@@ -17,12 +54,15 @@ test('catalog preserves all source artwork and provenance exactly', async () => 
     for (const frame of frames) {
       assert.match(frame.asset,/^art\/enemy-back-(proposals|motion)\/[a-zA-Z0-9_./-]+\.png$/);
       assert.ok(!frame.asset.split('/').includes('..'));
-      const bytes = await readFile(new URL('../../../'+frame.asset, import.meta.url));
+      const bytes = await sourceArtBytes(frame.asset);
       assert.equal(createHash('sha256').update(bytes).digest('hex'),frame.sha256);
       if(frame.asset.startsWith('art/enemy-back-motion/')) motion.add(frame.asset);
     }
   }
   assert.equal(motion.size,57);
+});
+test('source verification does not hide an ordinary missing asset behind git', async () => {
+  await assert.rejects(sourceArtBytes('art/enemy-back-motion/not-a-tracked-frame.png'), { code: 'ENOENT' });
 });
 test('explicit selection and absent states never substitute artwork', () => {
   assert.equal(selectProposal(catalog,'unknown','v01').reason,'unknown-actor');
