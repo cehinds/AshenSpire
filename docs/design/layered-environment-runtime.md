@@ -17,7 +17,7 @@ The throne-room recipe uses a bare floor, independent rug and independent throne
 
 ## Selection
 
-`src/model/layeredEnvironments.js` reads current journey/node IDs, authored location profiles, setting tags, time and weather. It does not mutate runs, alter travel/discovery, consume gameplay RNG or replace saved atlas selections. All12 Crownfall bindings are explicit; the gates remain in Crownfall. Node `layeredSceneId` can explicitly name any published recipe.
+`src/model/layeredEnvironments.js` reads current journey/node IDs, authored location profiles, setting tags, time and weather. It does not mutate runs, alter travel/discovery, consume gameplay RNG or replace saved atlas selections. Co-op snapshots supply `cursorId` and projected `map.nodes`; a read-only adapter uses the same seat and final-causeway presentation rules as solo. All12 Crownfall bindings are explicit; the gates remain in Crownfall. Node `layeredSceneId` can explicitly name any published recipe.
 
 Only compatible region/setting mappings select new art. Examples: Ashen Crown city/road, Hollow Weald forest/village, Pale Marches town, and explicitly tagged Cinder castle/tower. Unknown/unsupported combinations retain existing art. Explicit legacy dungeons and existing art previews retain precedence. City night uses painted night layers; other time adjustments are tints and do not invent night windows.
 
@@ -36,7 +36,7 @@ To refresh JSON without re-encoding unchanged art:
 ASHENSPIRE_ART_DIR=/path/to/AshenSpire-art node tools/layered-environment-build.mjs --catalog-only
 ```
 
-To re-encode reviewed PNGs at native size, omit `--catalog-only`. This authoring command needs the source-art checkout and Sharp. A sibling `../AshenSpire-art` checkout is the default. The command supplies this game checkout to the authoring module through `ASHENSPIRE_DIR`, so intro-map bindings are validated against its actual atlas. Manifest source paths are relative to the art repository, independent of checkout names. Ordinary game builds use committed exports and require no image tooling.
+To re-encode reviewed PNGs at native size, omit `--catalog-only`. Re-encoding needs the source-art checkout and Sharp; `--catalog-only` verifies existing exports without loading that optional encoder. A sibling `../AshenSpire-art` checkout is the default. The command supplies this game checkout to the authoring module through `ASHENSPIRE_DIR`, so intro-map bindings are validated against its actual atlas. Manifest source paths are relative to the art repository, independent of checkout names. Ordinary game builds use committed exports and require no image tooling.
 
 ## Evidence and limits
 
