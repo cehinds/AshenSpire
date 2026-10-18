@@ -1,0 +1,36 @@
+{
+  "mode": "configured",
+  "match": "mostSpecific",
+  "authoredCostWins": true,
+  "shapes": [
+    {
+      "id": "full",
+      "tags": [
+        "fx:heal"
+      ],
+      "cost": {
+        "sp": 3,
+        "mp": 2
+      },
+      "amount": {
+        "percentMaxHp": 10
+      },
+      "exhaust": false
+    },
+    {
+      "id": "cheap",
+      "tags": [
+        "fx:heal",
+        "lifecycle.exhaust"
+      ],
+      "cost": {
+        "sp": 1,
+        "mp": 1
+      },
+      "amount": {
+        "percentMaxHp": 10
+      },
+      "exhaust": true
+    }
+  ]
+}

@@ -610,3 +610,6 @@ workbench/.state/
 # docs/qa is not kept in the tree (owner decision, 2026-10-11): QA evidence goes
 # to CI artifacts, and the local QA tools write to scratch/qa/.
 /docs/qa/
+
+# Compiled build artifact (tools/build-game.mjs); CI publishes it. games/<game>/build.summary.json is committed.
+/dist/build/

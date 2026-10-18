@@ -1,0 +1,22 @@
+{
+  "id": "classification.attack",
+  "tag": "classification.attack",
+  "version": "1.0.0",
+  "family": "classification",
+  "label": "Attack",
+  "description": "Tag classification.attack in the classification family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "classification.attack"
+  },
+  "portability": "data"
+}

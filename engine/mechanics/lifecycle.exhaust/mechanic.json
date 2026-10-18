@@ -1,0 +1,27 @@
+{
+  "id": "lifecycle.exhaust",
+  "tag": "lifecycle.exhaust",
+  "version": "1.0.0",
+  "family": "lifecycle",
+  "label": "Exhaust",
+  "description": "The card leaves play for the rest of the combat after it is used.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "lifecycle.exhaust"
+  },
+  "portability": "portable",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "runOpcode"
+  },
+  "authored": true
+}

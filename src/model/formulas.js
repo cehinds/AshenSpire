@@ -216,6 +216,7 @@ function evalNode(node, ctx) {
       const ents = resolveMany(ctx, node.of, node.f);
       let total = 0;
       for (const ent of ents) total += stacksOf(ent, node.status);
+      if (node.per != null && !(Number.isFinite(node.per) && node.per > 0)) throw new Error(`stacks per must be a positive number, got ${node.per}`);
       v = node.per != null ? Math.floor(total / node.per) : total;
       break;
     }

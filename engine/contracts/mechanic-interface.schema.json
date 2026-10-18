@@ -1,0 +1,120 @@
+{
+  "$id": "ashen.mechanic-interface@1",
+  "title": "Mechanic interface",
+  "type": "object",
+  "properties": {
+    "mechanic": {
+      "type": "string",
+      "pattern": "^[a-z0-9][A-Za-z0-9_.-]*$"
+    },
+    "commands": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "params": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    "events": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    "queries": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "params": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "returns": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {},
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "returns",
+          "value"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "listens": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "requires": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "mechanic"
+  ],
+  "additionalProperties": false
+}

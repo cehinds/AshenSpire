@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.afterimage",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

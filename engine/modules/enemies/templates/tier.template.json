@@ -1,0 +1,23 @@
+{
+  "$comment": "One entry of settings.tiers (enemies module). Override from game.json: { \"modules\": { \"enemies\": { \"tiers\": { \"minion\": { ... } } } } }.",
+  "minion": {
+    "attributeBudget": [
+      2,
+      2
+    ],
+    "pools": {
+      "hp": 10,
+      "sp": 2,
+      "mp": 1
+    },
+    "hand": 2,
+    "deckSize": [
+      4,
+      8
+    ],
+    "spRange": [
+      1,
+      3
+    ]
+  }
+}

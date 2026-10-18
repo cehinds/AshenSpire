@@ -28,12 +28,18 @@ test('tracking pass reserves the same settled target cores as the main placement
 
 test('reduced motion never starts or continues the frame-by-frame HUD tracker', () => {
   assert.match(stage, /function trackPlayerHud\(\) \{[\s\S]*?if \(reducedMotionRequested\(\)\) \{ trackingRequest = 0; return; \}/);
-  assert.match(stage, /const poseObserver = new MutationObserver\(\(\) => \{[\s\S]*?if \(reducedMotionRequested\(\)\) \{[\s\S]*?centerTargetOverheads\(\);[\s\S]*?return;[\s\S]*?if \(!trackingRequest\) trackingRequest = requestAnimationFrame\(trackPlayerHud\);/);
+  assert.match(stage, /const poseObserver = new MutationObserver\(mutations => \{[\s\S]*?if \(reducedMotionRequested\(\)\) \{[\s\S]*?centerTargetOverheads\(\);[\s\S]*?return;[\s\S]*?if \(!trackingRequest\) trackingRequest = requestAnimationFrame\(trackPlayerHud\);/);
   assert.match(stage, /reducedMedia\?\.addEventListener\('change', reconcileReducedMotion\);/);
   assert.match(stage, /reducedSettingObserver\.observe\(document\.body, \{ attributes: true, attributeFilter: \['class'\] \}\);/);
   assert.match(stage, /cancelAnimationFrame\(trackingRequest\);\n\s*trackingRequest = 0;\n\s*schedule\(\);\n\s*if \(!next\) trackingRequest = requestAnimationFrame\(trackPlayerHud\);/);
   assert.match(stage, /reducedMedia\?\.removeEventListener\('change', reconcileReducedMotion\);/);
   assert.match(stage, /reducedSettingObserver\.disconnect\(\);/);
+});
+
+test('HUD tracker stops after a bounded pose window instead of running every frame', () => {
+  assert.match(stage, /const TRACK_WINDOW_MS = \d+;/);
+  assert.match(stage, /function trackPlayerHud\(\) \{[\s\S]*?performance\.now\(\) < trackUntil[\s\S]*?\? requestAnimationFrame\(trackPlayerHud\) : 0;/);
+  assert.match(stage, /extendTracking\(\);\s*if \(!trackingRequest\) trackingRequest = requestAnimationFrame\(trackPlayerHud\);/);
 });
 
 test('combat-layer QA probe validates the sprite pseudo-element shadows, not the removed layer', () => {

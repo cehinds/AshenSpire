@@ -1,0 +1,8 @@
+{
+  "mechanic": "classification.guard",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

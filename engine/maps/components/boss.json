@@ -1,0 +1,26 @@
+{
+  "id": "boss",
+  "kind": "node",
+  "label": "Boss",
+  "description": "The act boss. Sits one floor above the pre-boss shrine; the destination is drawn from the seat boss pool.",
+  "icon": "node-boss",
+  "encounter": {
+    "pool": "boss",
+    "resolver": "assignBossDestinations"
+  },
+  "placement": {
+    "floorAboveShrine": 1,
+    "column": "middle",
+    "source": "src/engine/mapgen.js:167"
+  },
+  "rewards": {
+    "cinders": "boss"
+  },
+  "assets": [
+    "node-boss"
+  ],
+  "tags": [
+    "combat",
+    "terminal"
+  ]
+}

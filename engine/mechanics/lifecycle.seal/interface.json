@@ -1,0 +1,8 @@
+{
+  "mechanic": "lifecycle.seal",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

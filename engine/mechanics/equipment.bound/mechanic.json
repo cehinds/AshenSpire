@@ -1,0 +1,26 @@
+{
+  "id": "equipment.bound",
+  "tag": "equipment.bound",
+  "version": "1.0.0",
+  "family": "equipment",
+  "label": "Bound",
+  "description": "Tag equipment.bound in the equipment family.",
+  "attaches": [
+    "gear"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "equipment.bound"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/loadout.js",
+    "symbol": "startingDeckSettings"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "status.stigmata",
+  "tag": "status.stigmata",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Stigmata",
+  "description": "Whenever you lose HP, heal 2 HP per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.stigmata"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

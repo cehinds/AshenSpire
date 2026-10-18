@@ -1,0 +1,32 @@
+{
+  "id": "event",
+  "kind": "node",
+  "label": "Unknown",
+  "description": "An event, a fight, a shrine or a cache. Resolved at map birth from the unknown-node weights.",
+  "icon": "node-event",
+  "encounter": {
+    "resolver": "resolveUnknownNode",
+    "pools": [
+      "normal"
+    ]
+  },
+  "placement": {
+    "rollable": true,
+    "noSameTypeAdjacent": true,
+    "unknownWeights": {
+      "event": 55,
+      "fight": 25,
+      "shrine": 12,
+      "treasure": 8
+    },
+    "source": "src/content/mapconfig.js:79; src/engine/mapgen.js:214"
+  },
+  "rewards": {},
+  "assets": [
+    "node-event"
+  ],
+  "tags": [
+    "hidden",
+    "event"
+  ]
+}

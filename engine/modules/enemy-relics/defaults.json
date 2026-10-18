@@ -1,0 +1,8 @@
+{
+  "mode": "configured",
+  "equipment": {
+    "maxPoints": 5,
+    "maxStats": 3,
+    "source": "player"
+  }
+}

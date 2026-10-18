@@ -1,0 +1,133 @@
+[
+  {
+    "name": "applies Bleed to a clean target",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {}
+        }
+      }
+    },
+    "when": {
+      "command": "status.bleed.apply",
+      "with": {
+        "stacks": 2,
+        "target": "enemy"
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "bleed": 2
+          }
+        }
+      },
+      "events": [
+        "status.bleed.applied"
+      ]
+    }
+  },
+  {
+    "name": "stacks add onto existing Bleed",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {
+            "bleed": 2
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "status.bleed.apply",
+      "with": {
+        "stacks": 3,
+        "target": "enemy"
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "bleed": 5
+          }
+        }
+      },
+      "events": [
+        "status.bleed.applied"
+      ]
+    }
+  },
+  {
+    "name": "removes part of the Bleed stacks",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {
+            "bleed": 4
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "status.bleed.remove",
+      "with": {
+        "amount": 1,
+        "target": "enemy"
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "bleed": 3
+          }
+        }
+      },
+      "events": [
+        "status.bleed.removed"
+      ]
+    }
+  },
+  {
+    "name": "leaves other statuses on the target alone",
+    "given": {
+      "entities": {
+        "enemy": {
+          "hp": 30,
+          "maxHp": 30,
+          "statuses": {
+            "dazed": 1
+          }
+        }
+      }
+    },
+    "when": {
+      "command": "status.bleed.apply",
+      "with": {
+        "target": "enemy",
+        "stacks": 1
+      }
+    },
+    "then": {
+      "entities": {
+        "enemy": {
+          "statuses": {
+            "dazed": 1,
+            "bleed": 1
+          }
+        }
+      },
+      "events": [
+        "status.bleed.applied"
+      ]
+    }
+  }
+]

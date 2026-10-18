@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.stanceShifted",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

@@ -1,0 +1,20 @@
+{
+  "mechanic": "lifecycle.exhaust",
+  "handlers": [
+    {
+      "on": "command.exhaust",
+      "do": [
+        {
+          "op": "exhaust",
+          "amount": "$amount"
+        },
+        {
+          "emit": "lifecycle.exhaust.exhausted",
+          "with": {
+            "amount": "$amount"
+          }
+        }
+      ]
+    }
+  ]
+}

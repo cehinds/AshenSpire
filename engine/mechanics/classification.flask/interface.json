@@ -1,0 +1,8 @@
+{
+  "mechanic": "classification.flask",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

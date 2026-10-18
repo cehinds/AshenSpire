@@ -1,0 +1,26 @@
+{
+  "id": "damage_earth",
+  "tag": "damage:earth",
+  "version": "1.0.0",
+  "family": "damage",
+  "label": "Earth",
+  "description": "Applies 1 Slowed on a Health hit unless the card already prints a Slowed effect. Not reduced by armour class; absorbed by Ward.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "damage_earth",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatCardProfile.js"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "id": "dialogueFrame",
+  "description": "Portrait share and scene minimum for dialogue. Reads src/ui/models/DialogueModel.js and src/ui/components/dialogueStage.js.",
+  "layout": {
+    "ref": "content/config/ui/components/dialogueFrame.json"
+  },
+  "viewModel": {
+    "props": {
+      "speaker": "string",
+      "line": "string",
+      "responses": "array"
+    },
+    "bindings": {
+      "speaker": "$speaker",
+      "line": "$line",
+      "responses": "$responses",
+      "portraitShare": "layout.sizing.portraitShare"
+    }
+  },
+  "states": [
+    "speaking",
+    "awaitingResponse",
+    "ended"
+  ],
+  "events": {
+    "tap": "dialogue.advance",
+    "respond": "dialogue.respond"
+  },
+  "assets": [
+    "portrait"
+  ],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

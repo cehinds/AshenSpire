@@ -1,0 +1,26 @@
+{
+  "id": "scaling.constitution",
+  "tag": "scaling.constitution",
+  "version": "1.0.0",
+  "family": "scaling",
+  "label": "Constitution",
+  "description": "Tag scaling.constitution in the scaling family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "scaling.constitution"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/ashenBlight.js",
+    "symbol": "ashenBlightBonuses"
+  }
+}

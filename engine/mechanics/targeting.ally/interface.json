@@ -1,0 +1,8 @@
+{
+  "mechanic": "targeting.ally",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

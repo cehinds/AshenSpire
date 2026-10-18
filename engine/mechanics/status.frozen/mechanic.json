@@ -1,0 +1,25 @@
+{
+  "id": "status.frozen",
+  "tag": "status.frozen",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Frozen",
+  "description": "One stack denies one Action. Fire thaws; Blunt shatters. Elemental Chance Recovery.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.frozen"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js"
+  }
+}

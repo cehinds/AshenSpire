@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.silenced",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

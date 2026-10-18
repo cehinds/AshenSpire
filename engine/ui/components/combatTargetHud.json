@@ -1,0 +1,72 @@
+{
+  "id": "combatTargetHud",
+  "description": "Floating detail panel over a combatant. Reads src/ui/components/combatTargetHud.js and src/ui/models/TargetHudModel.js. Shows only the always-visible enemy fields; SP, MP and card costs never appear here.",
+  "layout": {
+    "ref": "content/config/ui/components/combatTargetHud.json"
+  },
+  "viewModel": {
+    "props": {
+      "entity": "entityRef",
+      "role": "string",
+      "lane": "string"
+    },
+    "bindings": {
+      "name": "$entity.name",
+      "hp": "$entity.pools.hp",
+      "poise": "$entity.pools.poise",
+      "intent": "intent.of($entity)",
+      "statuses": "$entity.statuses",
+      "side": "layout.positioning.enemyLaneSides[$lane]"
+    },
+    "visibility": {
+      "query": "enemy_visibility.visibleFields",
+      "appliesTo": "enemy",
+      "fields": {
+        "hp": "hp",
+        "poise": "poise",
+        "intent": "intent",
+        "statuses": "statuses"
+      }
+    }
+  },
+  "states": [
+    "hidden",
+    "candidate",
+    "focused",
+    "crowded"
+  ],
+  "events": {
+    "tap": "combat.selectTarget",
+    "hold": "inspect.open",
+    "doubleTap": "inspect.open"
+  },
+  "children": [
+    {
+      "component": "meter",
+      "slot": "hp",
+      "props": {
+        "kind": "hp"
+      }
+    },
+    {
+      "component": "meter",
+      "slot": "poise",
+      "props": {
+        "kind": "poise"
+      }
+    },
+    {
+      "component": "intent",
+      "slot": "intent"
+    },
+    {
+      "component": "statusTray",
+      "slot": "statuses"
+    }
+  ],
+  "assets": [],
+  "platforms": [
+    "tablet",
+    "desktop"
+  ]
+}

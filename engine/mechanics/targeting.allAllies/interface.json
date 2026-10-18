@@ -1,0 +1,8 @@
+{
+  "mechanic": "targeting.allAllies",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}
