@@ -1,5 +1,18 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — FixCore
+
+[Download the tested build (0.7.1.1620)](https://github.com/cehinds/AshenSpire/actions/runs/39162279251/artifacts/12149103656)
+· [Public play route — publication verification pending](https://cehinds.github.io/AshenSpire/branches/feature/FixCore/latest/)
+
+Shared JSON mechanics now drive equipped bonuses, card damage, protection and calculation details. These Core 2 captures show multi-hit cards, known hit odds and compact protection/status indicators. The artifact passed CI; GitHub sign-in is required to download it. [Capture source, build and viewport details](docs/preview/features/FixCore/README.md).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile: multi-hit card and defense indicators](docs/preview/features/FixCore/mobile.png) | ![Desktop: damage calculation and named sources](docs/preview/features/FixCore/desktop.png) | ![Wide: selected card hit odds and combat layout](docs/preview/features/FixCore/wide.png) | ![Tablet: damage calculation and combat layout](docs/preview/features/FixCore/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 
