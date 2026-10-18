@@ -56,10 +56,18 @@ test('d20 odds exactly match resolution, including natural limits and stance cla
  ctx.rng={int:()=>1};assert.equal(resolveAttackHit(ctx,ctx.player,enemy,carrier).hit,false);
  enemy.attributes.dexterity=1000;ctx.rng={int:()=>20};assert.equal(resolveAttackHit(ctx,ctx.player,enemy,carrier).hit,true);
 });
-test('Perception uses target level/INT and WIS d20, with stable read metadata',()=>{
- const {ctx}=setup();const target={level:3,attributes:{intelligence:2}},observer={attributes:{wisdom:2}};
- // DC5 +2 levels +2 INT =9; roll7 + WIS2 meets it.
- const passed=rollKnowledgeRead({float:()=>.3},enemyKnowledge,observer,'Attack',{ctx,target});
- assert.deepEqual(passed.perception,{roll:7,wisdom:2,dc:9,total:9,passed:true});
- assert.equal(rollKnowledgeRead({float:()=>.25},enemyKnowledge,observer,'Attack',{ctx,target}).visibility,'unknown');
+test('Perception DC is 5 + target INT + target WIS + bonuses; level is ignored; observer rolls d20 + own WIS (D8)',()=>{
+ const {ctx}=setup();const target={level:9,attributes:{intelligence:2,wisdom:3}},observer={attributes:{wisdom:2}};
+ // DC 5 + INT 2 + WIS 3 = 10; the target's level adds nothing. Roll 7 + WIS 2 = 9 fails.
+ const failed=rollKnowledgeRead({float:()=>.3},enemyKnowledge,observer,'Attack',{ctx,target});
+ assert.deepEqual(failed.perception,{roll:7,wisdom:2,dc:10,total:9,passed:false});
+ assert.equal(failed.visibility,'unknown');
+ // Roll 8 + WIS 2 = 10 meets the DC.
+ const passed=rollKnowledgeRead({float:()=>.35},enemyKnowledge,observer,'Attack',{ctx,target});
+ assert.deepEqual(passed.perception,{roll:8,wisdom:2,dc:10,total:10,passed:true});
+ assert.equal(passed.visibility,'exact');
+ // Configured bonuses sum into the DC.
+ const bonus={...ctx,fixCoreRules:{...ctx.fixCoreRules,perception:{baseDC:5,bonuses:[2,-1]}}};
+ assert.equal(rollKnowledgeRead({float:()=>.35},enemyKnowledge,observer,'Attack',{ctx:bonus,target}).perception.dc,11);
+ assert.deepEqual(fixCoreRules(ctx).perception,{baseDC:5,bonuses:[]});
 });
