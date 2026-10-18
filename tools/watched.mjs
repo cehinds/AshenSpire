@@ -533,7 +533,7 @@ async function walkRow({ row, probe, shape, cdp, S, ev, BASE }) {
   }
 
   // A CONTENT ROW HAS NO PIXEL OF ITS OWN. `frost` and `insanity` are full
-  // threshold-proc rows in `src/content/statuses.js` and NOTHING IN THE SHIPPED
+  // threshold-proc rows in `content/source/statuses.json` and NOTHING IN THE SHIPPED
   // CONTENT APPLIES EITHER — so no drive of the game, however long, can put one
   // on a screen, and "I played and did not see it" is a weak sentence. This
   // expectation is DERIVED from the source the bundle is built from, counted, and
