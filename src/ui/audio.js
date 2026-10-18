@@ -161,13 +161,17 @@ export function initAudio(settings = {}) {
     // bed, not a report about an event, and music() keeps its own path.
     if (ctx.state !== 'running') return;
     // The same id inside 40 ms is one sound (a five-card draw is one draw
-    // cue), and a full house of 8 live voices refuses the cue. Both drop
+    // cue), and a cue whose voices would pass 8 live is refused. Both drop
     // silently: a late or clipped cue is worse than none, same as above.
     const gate = state.sfxVoices;
     const at = now();
     const prev = gate.lastAt.get(id);
     if (prev !== undefined && at - prev < gate.dedupeSec) return;
-    if (gate.voices >= gate.max) return;
+    // Reserve the whole cue: a sample is one voice, a synth cue one per layer
+    // of its recipe, so a 4-layer burst on 6 live voices is refused, not
+    // let through to 10.
+    const layers = own(SFX_MANIFEST, id) ? 1 : Math.max(1, resolveRecipe(id).recipe.length);
+    if (gate.voices + layers > gate.max) return;
     gate.lastAt.set(id, at);
     const sample = assetUrl(own(SFX_MANIFEST, id) || `assets/sfx/${encodeURIComponent(id)}.ogg`);
     if (playCachedSample(sample, sfxBus)) return;

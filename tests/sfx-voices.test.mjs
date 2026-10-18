@@ -75,7 +75,7 @@ test('at most 8 voices are live; a refused cue is dropped silently; ended voices
   const perCue = live();
   assert.ok(perCue >= 1 && perCue <= 8);
   for (let i = 0; i < 20; i++) cue();
-  assert.ok(live() >= 8 && live() < 8 + perCue, `cap holds (live ${live()}, per cue ${perCue})`);
+  assert.ok(live() <= 8 && live() > 8 - perCue, `the cap is hard: a cue that would pass 8 is refused whole (live ${live()}, per cue ${perCue})`);
   const made = voiceCount();
   cue();
   assert.equal(voiceCount(), made, 'a cue past the cap makes no sound');
