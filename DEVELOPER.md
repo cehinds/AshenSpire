@@ -1052,7 +1052,7 @@ pools, `rogue.js` and `coop.js`, hold functions and stay JS: author those in the
 }
 ```
 
-Then add its id to the class `cardPool` in `src/content/classes.js` if it
+Then add its id to the class `cardPool` in `content/source/classes.json` if it
 should appear in rewards. Notes:
 
 - `{damage}` tokens bind to effects **in order**; repeats are `{damage.2}`.
@@ -1123,17 +1123,22 @@ comments in the JS live in `content/source/CONTENT-NOTES.md`, keyed by id.
 A flask is added the same way in `content/source/flasks.json`, and a stance in
 `content/source/stances.json`.
 
-## Add an enemy (one file: `src/content/enemies/act<N>.js`)
+## Add an enemy (one file: `content/source/act<N>Enemies.json`)
 
-```js
+```json
 {
-  id: 'gildedKnight', name: 'Gilded Knight', hp: [40, 44], poiseMax: 18, art: '♞',
-  moves: {
-    thrust: { intent: 'attack', damage: 10, weight: 55, maxConsecutive: 2 },
-    parry:  { intent: 'block', block: 9, weight: 45, maxConsecutive: 1 },
-  },
+  "id": "gildedKnight", "name": "Gilded Knight", "hp": [40, 44], "poiseMax": 18, "art": "♞",
+  "moves": {
+    "thrust": { "intent": "attack", "damage": 10, "weight": 55, "maxConsecutive": 2 },
+    "parry": { "intent": "block", "block": 9, "weight": 45, "maxConsecutive": 1 }
+  }
 }
 ```
+
+Then `node tools/content-build.mjs` (launch does it). `src/content/enemies/act<N>.js` is a
+re-export, not a place to author; the design notes that were comments in it are in
+`content/source/CONTENT-NOTES.md`. The pack rows are converted from these files by
+`tools/enemy-decks-convert.mjs`.
 
 Add it to an encounter in `src/content/encounters/act<N>.js` so it can appear.
 Special moves: `delay: { turns, whileCharging }` makes a telegraphed
