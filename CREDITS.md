@@ -1,5 +1,15 @@
 # Credits & Asset Licenses
 
+## Mineral component proposals (2026-10-18)
+
+The [mineral proposal collection](docs/design/new-card-art/minerals/README.md)
+contains 50 objects with separate crack and glow layers (150 transparent PNGs).
+The artwork was generated with OpenAI ImageGen under human direction, referencing
+an earlier generated dark-pebble concept. Original sheets, hashes, effect prompts
+and extraction metadata accompany the collection. ImageMagick performs fixed-grid
+cropping and normalization. These are review assets, not runtime replacements.
+No third-party artwork was downloaded and no third-party licence is claimed.
+
 ## Starter-class Smash paintings (2026-10-14)
 
 The Rogue dagger-and-buckler, Starseer ash-staff and Herald bone-sceptre
@@ -843,3 +853,14 @@ One original OpenAI image_gen transparent rug PNG in `art/map-battlefield-drafts
 ### Runtime layered environment exports (2026-10-17)
 
 `assets-display/layered/` contains95 native-size WebP derivatives of the reviewed original PNG components in `art/map-battlefield-drafts/`. Source paths and SHA-256 hashes, encoded hashes and dimensions are recorded in its manifest. `tools/layered-environment-build.mjs` uses Sharp/libwebp to encode these separate layers without resizing. They introduce no third-party artwork; original AI-generated source provenance remains alongside the PNGs.
+
+### Layered card-art runtime cutouts (2026-10-18)
+
+The 44 PNGs in `assets-display/card-cutouts/` are byte-for-byte exports of
+first-party OpenAI-generated and reconstructed components approved in the
+[card-art proposal library](docs/design/new-card-art/README.md).
+[Runtime JSON](asset-data/card-art/layered-runtime.json) records each source
+reference and SHA-256; the proposal manifest records the original generation
+and extraction provenance. The implementation adds no third-party artwork
+and claims no third-party license. Scepters, ethereal outlines, objects,
+backgrounds and effects remain separate components.
