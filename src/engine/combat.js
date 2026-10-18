@@ -1,3 +1,4 @@
+import { damageReceipt } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import { beginEnemyBurdens, endEnemyBurdens, allowBurdenMove } from './enemyBurdens.js';
@@ -2471,7 +2472,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     }
     const contacts = expandedPreviewTargets.get(enemy.id)[effectIndex].filter(contact => contact.id === enemy.id);
     const hitDamages = contacts.map(contact => contact.amount);
-    return { damage: hitDamages[0] || 0, hits: hitDamages.length, hitDamages, totalDamage: hitDamages.reduce((sum, n) => sum + n, 0), avoidance: contacts[0]?.receipt?.avoidance };
+    return { damage: hitDamages[0] || 0, hits: hitDamages.length, hitDamages, totalDamage: hitDamages.reduce((sum, n) => sum + n, 0), avoidance: contacts[0]?.receipt?.avoidance, damageReceipt: damageReceipt(enemy.id, contacts.map(contact => contact.receipt.damageReceipt?.hits?.[contact.index] || contact.receipt.damageReceipt?.hits?.[0]).filter(Boolean)) };
   };
   // Preparation adds the charge once to the whole Counter. Its display belongs
   // to the first eligible contact, even if an earlier opcode has no contacts.
@@ -2547,7 +2548,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
           entry.perTarget[e.id] = result.damage;
           entry.perTargetHitDamages[e.id] = result.hitDamages;
           if (primary?.id === e.id) Object.assign(entry, { value: result.damage,
-            hitDamages: result.hitDamages, totalDamage: result.totalDamage,
+            hitDamages: result.hitDamages, totalDamage: result.totalDamage, damageReceipt: result.damageReceipt,
             ...(configuredCombat(combat) ? { hitChance: result.hitChance, uncertain: result.uncertain, hpLossBounds: result.hpLossBounds } : {}) });
         }
         if (entry.value == null && isCounterReply) {

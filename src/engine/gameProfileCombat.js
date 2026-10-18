@@ -1,3 +1,4 @@
+import { fixCoreEnabled, protectionReceipt, damageReceipt } from '../model/fixCoreMechanics.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { cardPreparationCategory } from '../model/cardClassification.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
@@ -67,8 +68,18 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const evaded = roll !== null && roll >= hitChance;
   if (evaded) amount = 0;
   else if (evade) amount = Math.floor(amount * (stances.evadeFailureMultiplier ?? 2));
-  let blocked = 0, poiseMitigated = 0;
-  for (const stage of defenses?.order || []) {
+  let blocked = 0, poiseMitigated = 0, wardMitigated = 0;
+  const incoming = amount;
+  const magical = ['spell', 'spells', 'magic', 'magical'].includes(carrier?.combatProfile?.camp) || carrier.damageSchool && carrier.damageSchool !== 'physical';
+  const sources = [{id:'incoming',label:'Offensive damage',amount:incoming,stage:'offense',operation:'set'}];
+  if (fixCoreEnabled(ctx)) {
+    if (!magical) { blocked = Math.min(Math.max(0, target?.block || 0), amount); amount -= blocked; }
+    const protection = protectionReceipt(ctx, target, magical ? 'magical' : 'physical', amount);
+    amount = protection.amount;
+    if (magical) wardMitigated = protection.reduced; else poiseMitigated = protection.reduced;
+    sources.push(...protection.sources, {id:'block',label:'Block',amount:-blocked,stage:'mitigation',operation:'add'});
+  }
+  for (const stage of fixCoreEnabled(ctx) ? [] : defenses?.order || []) {
     if (!defenses.include?.includes(stage)) continue;
     if (stage === 'block') {
       const spent = Math.min(Math.max(0, target?.block || 0), amount);
@@ -80,7 +91,9 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
       poiseMitigated += amount - mitigated; amount = mitigated;
     }
   }
-  return { raw, hitChance, uncertain: evade && roll === null,
+  return { raw, wardMitigated,
+    damageReceipt: damageReceipt(target?.id, [{incoming,physical:magical ? 0 : incoming,magical:magical ? incoming : 0,blocked,wardReduced:wardMitigated,poiseReduced:poiseMitigated,hpLoss:amount,sources}]),
+    hitChance, uncertain: evade && roll === null,
     hpLossBounds: evade ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated,
     blockRemaining: Math.max(0, (target?.block || 0) - blocked), evaded, advantage,
     defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,

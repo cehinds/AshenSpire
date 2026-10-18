@@ -1,3 +1,4 @@
+import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt } from '../model/fixCoreMechanics.js';
 import { weaponDamageBasis } from './cardBehavior.js';
 import { MANEUVERS, trimCombatStances } from './concurrentStances.js';
 import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPlan, proposalThreshold, proposalHealingPlan } from './proposalStatusRuntime.js';
@@ -328,10 +329,14 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   }
   const before = target.block || 0;
   target.block = receipt.blockRemaining;
+  if (fixCoreEnabled(ctx)) {
+    if (target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
+    if (target.persistentPoise) target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated);
+  }
   target.hp -= receipt.hpLoss;
   ctx.emit('damageDealt', { sourceId: source?.id || null, targetId: target.id,
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
-    poiseMitigated: receipt.poiseMitigated, evaded: receipt.evaded,
+    poiseMitigated: receipt.poiseMitigated, wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
     advantage: receipt.advantage, blockRemaining: target.block, isAttack: true });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
   if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
@@ -537,18 +542,26 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     barrierSpent[index] = take;
   });
   const afterBarrier = magicHits.map(index => magicTyped[index] - barrierSpent[index]);
-  const wardTotal = afterBarrier.reduce((sum, weight) => sum + weight, 0);
-  const wardBudget = Math.max(0, target.persistentWard?.value || 0);
-  const ward = !(wardTotal > 0) || !(wardBudget > 0) ? afterBarrier.map(() => 0)
-    : allocateInteger(Math.min(wardBudget, wardTotal), afterBarrier);
-  const magicLeft = hits.map(() => 0), wardSpent = hits.map(() => 0);
+  let wardBudget = Math.max(0, target.persistentWard?.value || 0);
+  const legacyWardTotal = afterBarrier.reduce((sum, value) => sum + value, 0);
+  const legacyWard = legacyWardTotal > 0 ? allocateInteger(Math.min(wardBudget, legacyWardTotal), afterBarrier) : afterBarrier.map(() => 0);
+  const magicLeft = hits.map(() => 0), wardSpent = hits.map(() => 0), wardReduced = hits.map(() => 0);
+  const protectionSources = hits.map(() => []);
   magicHits.forEach((index, j) => {
-    const after = afterBarrier[j], share = ward[j];
-    // A pure hit lets at least 1 through Ward before Block, as it always has. A split hit's
-    // at-least-1 is decided once Block and HP are known, below.
-    const left = !hits[index].split && after > 0 && share > 0 ? Math.max(1, after - share) : after - share;
-    magicLeft[index] = left;
-    wardSpent[index] = after - left;
+    const after = afterBarrier[j];
+    if (fixCoreEnabled(ctx)) {
+      const shadow = { ...target, persistentWard: { ...target.persistentWard, value: wardBudget } };
+      const protection = protectionReceipt(ctx, shadow, 'magical', after);
+      magicLeft[index] = protection.amount;
+      wardReduced[index] = protection.reduced;
+      wardSpent[index] = Math.min(wardBudget, protection.reduced);
+      protectionSources[index].push(...protection.sources);
+    } else {
+      const share = legacyWard[j];
+      magicLeft[index] = !hits[index].split && after > 0 && share > 0 ? Math.max(1, after - share) : after - share;
+      wardSpent[index] = wardReduced[index] = after - magicLeft[index];
+    }
+    wardBudget -= wardSpent[index];
   });
   // Block soaks the physical part, in the order contacts strike, and never a magic part.
   // A split hit that would cost no HP while Ward absorbed some of it lets 1 through from Ward.
@@ -563,7 +576,7 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     const blocked = Math.min(blockLeft, Math.max(0, pool - bypass));
     blockLeft -= blocked;
     residual[index] = pool - blocked;
-    if (residual[index] === 0 && magicLeft[index] === 0 && wardSpent[index] > 0) {
+    if (!fixCoreEnabled(ctx) && residual[index] === 0 && magicLeft[index] === 0 && wardSpent[index] > 0) {
       magicLeft[index] += 1;
       wardSpent[index] -= 1;
     }
@@ -575,8 +588,13 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   const poiseAbsorbed = hits.map(() => 0);
   hits.forEach((hit, index) => {
     if (residual[index] > 0 && poiseLeft > 0) {
-      poiseAbsorbed[index] = residual[index] - Math.max(1, residual[index] - poiseLeft);
-      poiseLeft -= poiseAbsorbed[index];
+      if (fixCoreEnabled(ctx)) {
+        const shadow = { ...target, persistentPoise: { ...target.persistentPoise, value: poiseLeft } };
+        const protection = protectionReceipt(ctx, shadow, 'physical', residual[index]);
+        poiseAbsorbed[index] = protection.reduced;
+        protectionSources[index].push(...protection.sources);
+      } else poiseAbsorbed[index] = residual[index] - Math.max(1, residual[index] - poiseLeft);
+      poiseLeft = Math.max(0, poiseLeft - poiseAbsorbed[index]);
     }
   });
   // What each contact costs HP once Block and Poise have done their part: the figure a preview shows.
@@ -584,6 +602,16 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   receipt.defendedAmounts = hits.map((hit, index) => physicalTyped[index] + magicLeft[index]);
   receipt.barrierSpentAmounts = barrierSpent;
   receipt.wardSpentAmounts = wardSpent;
+  receipt.wardReducedAmounts = wardReduced;
+  receipt.poiseReducedAmounts = poiseAbsorbed;
+  receipt.damageReceipt = damageReceipt(target.id, hits.map((hit, index) => ({
+    incoming: hit.amount, physical: physicalTyped[index], magical: magicTyped[index],
+    blocked: physicalTyped[index] - residual[index], wardReduced: wardReduced[index],
+    poiseReduced: poiseAbsorbed[index], hpLoss: receipt.hpAmounts[index],
+    sources: [{ id: 'incoming', label: 'Offensive damage', amount: hit.amount, stage: 'offense', operation: 'set' },
+      ...protectionSources[index],
+      { id: 'block', label: 'Block', amount: residual[index] - physicalTyped[index], stage: 'mitigation', operation: 'add' }]
+  })));
   // resistedAmounts is the whole protection a hit met; magicResistedAmounts is what Barrier and Ward kept of the magic part alone.
   receipt.resistedAmounts = receipt.amounts.map((amount, index) => Math.max(0, amount - receipt.defendedAmounts[index]));
   receipt.magicResistedAmounts = hits.map((hit, index) => Math.max(0, hit.magic - magicLeft[index]));
@@ -656,7 +684,10 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     wardSpent = spend.spent;
     if (spend.breakEvent) breaks.push(['wardBroken', spend.breakEvent]);
   }
-  amount += (plannedBarrier - barrierSpent) + (plannedWard - wardSpent);
+  const plannedReduction = fixCoreEnabled(ctx) ? tactical.wardReducedAmounts?.[contactIndex] ?? plannedWard : plannedWard;
+  // Revalidate the current active pool: status riders between contacts can change it.
+  const liveWardReduction = fixCoreEnabled(ctx) ? (plannedWard > 0 && wardSpent > 0 ? plannedReduction : 0) : wardSpent;
+  amount += (plannedBarrier - barrierSpent) + (plannedReduction - liveWardReduction);
   // Block soaks the physical part only: a Spell never touches target.block (and spends no guard bypass).
   const pool = 'block';
   const blockable = tactical.blockableAmounts?.[contactIndex] ?? (spell ? 0 : amount);
@@ -677,9 +708,9 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     syncPoiseMaximum(ctx, target);
     const poise = target.persistentPoise;
     if (poise.value > 0) {
-      const passing = Math.max(1, physicalLeft - poise.value);
+      const passing = fixCoreEnabled(ctx) ? protectionReceipt(ctx, target, 'physical', physicalLeft).amount : Math.max(1, physicalLeft - poise.value);
       poiseAbsorbed = physicalLeft - passing;
-      poise.value -= poiseAbsorbed;
+      poise.value = Math.max(0, poise.value - poiseAbsorbed);
       hpLoss -= poiseAbsorbed;
       if (poise.value === 0) { poiseBroke = true; breaks.push(breakPoise(ctx, source, target)); }
     }
@@ -690,6 +721,10 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   creditKnowledgeImpact(ctx, target, amount, tactical.knowledgeBonus > 0);
   Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: resisted });
   ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,
+    damageReceipt: damageReceipt(target.id, [{ ...tactical.damageReceipt?.hits?.[contactIndex],
+      incoming: raw, physical: blockable, magical: tactical.magicAmounts?.[contactIndex] || 0,
+      blocked, wardReduced: liveWardReduction, poiseReduced: poiseAbsorbed, hpLoss,
+      sources: tactical.damageReceipt?.hits?.[contactIndex]?.sources || [] }]),
     // The hit as it arrived, before typed resistance or weakness: the log's starting figure.
     ...(Number.isFinite(tactical.amounts?.[contactIndex]) ? { incoming: tactical.amounts[contactIndex] } : {}),
     // The blow before any status, matchup or critical modifier: the printed amount plus its rating bonus.
@@ -873,13 +908,14 @@ function gainSpellDefenseAmount(ctx, entity, split, card) {
 
 /** gainBlock — mutating block gain with 'blockCap' modifier honored. */
 export function gainBlock(ctx, entity, base, card = null) {
-  if (configuredCombat(ctx)) {
+  if (configuredCombat(ctx) && !fixCoreEnabled(ctx)) {
     const amount = computeBlockGain(ctx, entity, base, card);
     entity.block = (entity.block || 0) + amount;
     ctx.emit('blockGained', { targetId: entity.id, amount, total: entity.block });
     return amount;
   }
   if (!entity.alive) return 0;
+  if (fixCoreEnabled(ctx) && card?.cardId) return gainBlockAmount(ctx, entity, computeBlockGain(ctx, entity, base, card), card);
   if (ctx.combatExpansionVersion === 2) {
     const split = computeSpellDefenseGain(ctx, entity, base, card);
     if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
@@ -908,6 +944,11 @@ function gainBlockAmount(ctx, entity, amount, card = null, wardProvenance = fals
   }
   reconcileWardBlock(entity);
   entity.block += amt;
+  if (fixCoreEnabled(ctx) && amt > 0 && card?.cardId) {
+    syncWardMaximum(ctx, entity); syncPoiseMaximum(ctx, entity);
+    Control.restorePersistentWard(ctx, entity, amt, { source: 'block-card', overflow: false, modifierPercent: 0 });
+    Control.restorePersistentPoise(ctx, entity, amt, { source: 'block-card', overflow: false });
+  }
   if (amt > 0 && card && wardProvenance) entity.wardBlock = (entity.wardBlock || 0) + amt;
   ctx.emit('blockGained', {
     targetId: entity.id, amount: amt,
