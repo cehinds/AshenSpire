@@ -1352,7 +1352,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const seat = ownSeat();
     const options = pending.options.map(option => ({ id: option.id, kind: reactionKind(option) }));
     const picked = chooseReaction({ matchups: gameModule(run, 'stances')?.matchups,
-      seats: { [seat]: { intent, lastStance: heldKinds.get()?.maneuver ?? null, picks: manualReactionPicks(run, seat) } } }, seat, options);
+      seats: { [seat]: { intent, lastStance: heldKinds.get(seat)?.maneuver ?? null, picks: manualReactionPicks(run, seat) } } }, seat, options);
     // undefined = automation not eligible; null = chose to decline.
     return picked ? pending.options.find(option => option.id === picked.id) : null;
   }

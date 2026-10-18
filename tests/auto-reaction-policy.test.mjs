@@ -70,3 +70,13 @@ test('a deliberate decline is submitted with a null option', () => {
   assert.equal(chooseReaction(state({}), 'player', options), null);
   assert.match(autoSource(), /option !== undefined/);
 });
+
+import { createStanceLedger, kindForCard } from '../src/model/alternativeStance.js';
+test('the last stance is read for the active co-op seat, not player', () => {
+  const ledger = createStanceLedger(card => ({ maneuver: card.maneuver }));
+  ledger.accept({ type: 'cardPlayed', playerId: 'p2' }, { maneuver: 'counter' });
+  assert.equal(ledger.get('player'), null);
+  assert.equal(ledger.get('p2').maneuver, 'counter');
+  assert.match(autoSource(), /heldKinds\.get\(seat\)/);
+  assert.equal(chooseReaction(state({ lastStance: ledger.get('p2').maneuver }, 'p2'), 'p2', options).id, 'b');
+});
