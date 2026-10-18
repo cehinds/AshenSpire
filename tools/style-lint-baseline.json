@@ -1,0 +1,44 @@
+{
+  "note": "Ratchet baseline for tools/style-lint.mjs: per-file counts of raw font sizes below the text minimum, bare z-index of 100 or more, and bare hex colours. --check fails when a count rises; lower a count and run --write-baseline in the same change. Never raise it to go green.",
+  "rules": {
+    "font-size-below-min": {
+      "styles/combat.css": 3,
+      "styles/map.css": 2,
+      "styles/player-polish.css": 1,
+      "styles/ui.css": 1
+    },
+    "z-index-bare": {
+      "styles/combat-layers.css": 2,
+      "styles/combat-target-responsive.css": 4,
+      "styles/combat.css": 13,
+      "styles/kit.css": 14,
+      "styles/map.css": 1,
+      "styles/responsive-combat-chrome.css": 5,
+      "styles/ui.css": 1
+    },
+    "hex-colour-bare": {
+      "styles/alternative-combat.css": 4,
+      "styles/base.css": 18,
+      "styles/combat-expansion.css": 4,
+      "styles/combat-layers.css": 23,
+      "styles/combat-poses.css": 6,
+      "styles/combat-rounds-preview.css": 15,
+      "styles/combat-target-responsive.css": 22,
+      "styles/combat-test.css": 22,
+      "styles/combat-visuals.css": 16,
+      "styles/combat.css": 145,
+      "styles/corrupted-cards.css": 33,
+      "styles/hud-layout.generated.css": 28,
+      "styles/illustrated-cards.css": 51,
+      "styles/kit.css": 263,
+      "styles/legacy-dungeon.css": 6,
+      "styles/map.css": 95,
+      "styles/player-polish.css": 96,
+      "styles/prologue.css": 87,
+      "styles/responsive-combat-chrome.css": 6,
+      "styles/shared-run-hud.css": 8,
+      "styles/ui.css": 149,
+      "styles/weapon-cards-preview.css": 9
+    }
+  }
+}

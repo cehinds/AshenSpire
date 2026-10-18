@@ -1229,6 +1229,17 @@ if (CORE) {
     console.log(`FAIL  generated token CSS: ${error.stderr || error.stdout || error.message}`);
     zoomExtra++;
   }
+  // The style ratchet: raw font sizes below the text minimum, bare z-index of
+  // 100+ and bare hex colours in styles/*.css may fall but never rise above
+  // tools/style-lint-baseline.json (tests/style-lint.test.mjs holds the rules).
+  try {
+    execFileSync(process.execPath, ['tools/style-lint.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  style lint is within its baseline (style-lint --check)');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  style lint: ${error.stderr || error.stdout || error.message}`);
+    zoomExtra++;
+  }
   // The tag tree's derived views — tags, domains, pairings, property rules and
   // src/framework/data/{properties,relations}.js (which bakes the default
   // balance bindings in) — are generated, and nothing at runtime checks them
