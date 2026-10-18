@@ -1,5 +1,19 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — layered map and battlefield art
+
+[Feature build](https://cehinds.github.io/AshenSpire/branches/feature/ImproveMapBattleFieldArt/latest/) — published by branch CI. Local web and standalone builds are verified; hosted verification is pending publication.
+
+Separate back walls/skies, grounds, furniture/rugs, time-of-day tints and weather. Crownfall's location inspector previews the same components used in combat.
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile layered city street](docs/preview/features/improve-map-battlefield-art/mobile.png) | ![Desktop separate throne and rug](docs/preview/features/improve-map-battlefield-art/desktop.png) | ![Wide painted night street](docs/preview/features/improve-map-battlefield-art/wide.png) | ![Tablet forest layers](docs/preview/features/improve-map-battlefield-art/tablet.png) |
+
+[Capture record](docs/preview/features/improve-map-battlefield-art/CAPTURE.md) · [Runtime component guide](docs/design/layered-environment-runtime.md) · [Component catalog](docs/component-catalog.html)
+<!-- feature-preview:end -->
+
 
 
 A browser roguelike: build a character, explore a seeded world, and fight with cards.

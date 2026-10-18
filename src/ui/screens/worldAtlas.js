@@ -1,3 +1,5 @@
+import { layeredCombatScene } from '../../model/layeredEnvironments.js';
+import { layeredEnvironmentHtml, fitLayeredEnvironment, wireLayeredEnvironment } from '../components/layeredEnvironment.js';
 import { surveyQuestPresentation } from '../models/SurveyQuestModel.js';
 import { locationScene } from '../../content/locationScenes.js';
 import { mountLocalMapCamera } from '../components/localMapCamera.js';
@@ -229,8 +231,15 @@ export function mountWorldAtlas(
     const dialog = document.createElement("dialog");
     dialog.className = "atlas-dialog modal-veil";
     dialog.dataset.localMap = String(!!local);
+    const layeredSceneAt = pointId => layeredCombatScene({ ...run,
+      environmentRegionId: a.regionOf(pointId) || a.regionOf(id),
+      journey: { ...run.journey, currentNodeId: pointId },
+    });
+    const layeredScene = layeredSceneAt(id);
     const scene = locationScene(id, run);
-    const illustration = scene
+    const illustration = layeredScene
+      ? `<div class="atlas-layered-preview">${layeredEnvironmentHtml(layeredScene)}</div>`
+      : scene
       ? `<svg viewBox="${scene.box.join(' ')}" role="img" aria-label="${esc(n.displayName)} — ${esc(scene.name)}" data-location-scene="${esc(scene.id)}"><image href="${esc(assetUrl(scene.atlas))}" width="1536" height="1024"/></svg>`
       : coreArt(id);
     dialog.setAttribute("aria-labelledby", "atlas-location-title");
@@ -242,8 +251,23 @@ export function mountWorldAtlas(
     }
     dialog.showModal();
     let disposeLocal = () => {};
+    let disposePreview = () => {};
+    const mountPreview = host => {
+      disposePreview();
+      disposePreview = () => {};
+      if (!host) return;
+      const backdrop = host.querySelector('.layered-environment');
+      const fit = () => fitLayeredEnvironment(backdrop, { width:host.clientWidth, height:host.clientHeight, groundY:host.clientHeight*.63 });
+      const observer = new ResizeObserver(fit);
+      observer.observe(host);
+      const releaseMotion = wireLayeredEnvironment(host);
+      fit();
+      disposePreview = () => { observer.disconnect(); releaseMotion(); };
+    };
+    if (!local && layeredScene) mountPreview(dialog.querySelector('.atlas-layered-preview'));
     const close = () => {
       disposeLocal();
+      disposePreview();
       dialog.close();
       dialog.remove();
       returnFocus?.focus();
@@ -332,7 +356,10 @@ export function mountWorldAtlas(
           `data-local-explore ${!here || j.localCompletedIds.includes(pointId) ? "disabled" : ""}`,
         );
       const pane = dialog.querySelector(".atlas-location-detail");
-      pane.innerHTML = `<div class="atlas-detail-scroll">${html}</div>`;
+      disposePreview();
+      const previewScene = layeredSceneAt(pointId);
+      pane.innerHTML = `<div class="atlas-detail-scroll">${previewScene ? `<div class="atlas-layered-preview">${layeredEnvironmentHtml(previewScene)}</div>` : ''}${html}</div>`;
+      mountPreview(pane.querySelector('.atlas-layered-preview'));
       const actions = dialog.querySelector('.atlas-detail-actions');
       actions.replaceChildren();
       pane.querySelectorAll('[data-local-service], [data-local-quest], [data-local-board], [data-local-gate], [data-local-boss], [data-local-explore]').forEach(b => actions.append(b));

@@ -1,0 +1,767 @@
+{
+  "schema": 1,
+  "styleFamilyId": "ashen-spire-painted-v1",
+  "sourceModule": "art/map-battlefield-drafts/batch-10-location-streets/modules/index.json",
+  "assets": {
+    "assets-display/layered/batch-10-location-streets--city-street--backdrop.webp": {
+      "sha256": "22f5edc44562fb509f1f14a1172b057630dca2265b9a7be79c67e583655db87b",
+      "bytes": 340738,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/city-street/backdrop.png",
+      "sourceSha256": "8e7d3bfb63f304f31ac0e3d9bcb4d5a7f96454b91cf6c14a39d36026b326ccfd",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--city-street--prop-left.webp": {
+      "sha256": "8f21f2ca77ad75feaeeea4b960b6b18f5ec4c3ee600772708d20d3bcbc7b5d50",
+      "bytes": 457226,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/city-street/prop-left.png",
+      "sourceSha256": "a9aaacbfe9095b70829f474d708b0e499cac037f7d8c07411eb1c1ce70a9f8f6",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--city-street--prop-right.webp": {
+      "sha256": "6c9330dd14f1bc6450bd55e484f099238bebddd8d22669c30b4bbdaa54f301a5",
+      "bytes": 402012,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/city-street/prop-right.png",
+      "sourceSha256": "ef49759ac97c2c07108d541eac744c2f306b6329554faca940593cd675a55559",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--city-street--ground.webp": {
+      "sha256": "b043808afe6d244ad82f90a77cde87939439dd6b67a7a0efd590bbae6831c89c",
+      "bytes": 223238,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/city-street/ground.png",
+      "sourceSha256": "df388cac1b7afe8dc3f0c9822cf4751adfd4c52ab7900884795b2449b5cbbcf7",
+      "width": 1672,
+      "height": 940
+    },
+    "assets-display/layered/batch-04-atmosphere--filters--filter-day.webp": {
+      "sha256": "675b16a69824eed9f3029c960cf5b1f48026d5e7e7d2602bc5e45f0a8f530899",
+      "bytes": 706,
+      "source": "art/map-battlefield-drafts/batch-04-atmosphere/filters/filter-day.png",
+      "sourceSha256": "5e01e1a0b4d246dbfa748f1f4bc774e024f7e8366ea164c69fa6c8510f9c0eef",
+      "width": 4096,
+      "height": 4096
+    },
+    "assets-display/layered/batch-10-location-streets--desert-street--backdrop.webp": {
+      "sha256": "9598b9cede0708bcf2c04a82d0a65bbde9f40b8db387773f1f3f9dd25f2dbfb1",
+      "bytes": 295532,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/desert-street/backdrop.png",
+      "sourceSha256": "9e2e4a63888b0549d3eec9e817630a6eb32408fb67bbb9596dcf86ca6c422d1e",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--desert-street--prop-left.webp": {
+      "sha256": "d0fedcb4bca2d7d7a8bdb147a7c5e30a24ff1daef9f135677ff9f9167df95e46",
+      "bytes": 466634,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/desert-street/prop-left.png",
+      "sourceSha256": "58fdc7f8fe0574d424f98d7d8ef67b8dd6de25b1561394c6bc3e866df40ef1b0",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--desert-street--prop-right.webp": {
+      "sha256": "18a81c671c2105da356367a186fc6c3e1ecd21e2d751d600a073b6acb1ab7822",
+      "bytes": 439286,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/desert-street/prop-right.png",
+      "sourceSha256": "037cefbec6ac59ba2325d6853b947c16a4f5b4fa127a7137de5a0ff0ef64a858",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--desert-street--ground.webp": {
+      "sha256": "8f0a44fa55307ec323ef08bf9fc4849b6bc686c3566380cb5099f79b1d2e6632",
+      "bytes": 203278,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/desert-street/ground.png",
+      "sourceSha256": "0ac0fb00bb5f8bb11ae0e1bacac85d3b611b28055ee91fbc99c4120ad822c332",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--jungle-street--backdrop.webp": {
+      "sha256": "55ad4a69130cf8cbf763636ef2e52bb607ce75eb8982f4f1a4eb6db98b339a95",
+      "bytes": 388872,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/jungle-street/backdrop.png",
+      "sourceSha256": "1f472543924801477aa1e6a27002d4e467f30ffad73f90720ddfef2efb0577aa",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--jungle-street--prop-left.webp": {
+      "sha256": "4f76e9a469ea91e847e6fe549cd3fb8a208e73626cd047c33bd13b87bb1b9d2e",
+      "bytes": 539340,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/jungle-street/prop-left.png",
+      "sourceSha256": "998c741fdc5e385ed4fc95803005b14f4ddfa8c8826fd32a6ea4dcc4d0f41c75",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--jungle-street--prop-right.webp": {
+      "sha256": "6a4f16aefa0e416187c39ee599f663d37b72babdb5acb3f137a81aef58582d68",
+      "bytes": 529806,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/jungle-street/prop-right.png",
+      "sourceSha256": "6f458e9bc63764df93c15f3cad80bfed0f116751b05676d97f66ced0f1498f4e",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--jungle-street--ground.webp": {
+      "sha256": "23fa2370537619260ff005b4aee9e7fb4bd65c31c59a50f9173bb40c7e2110e0",
+      "bytes": 203700,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/jungle-street/ground.png",
+      "sourceSha256": "e3bccb8b8f96a018335170aaa1400107cea76c09d4cb7496170bcbabf16a46e5",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--snowy-street--backdrop.webp": {
+      "sha256": "7af5822410d6b9f3e43292746653c5b597155b6ad794d619201eb8beae5fe015",
+      "bytes": 324004,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/snowy-street/backdrop.png",
+      "sourceSha256": "ae44a1292107c2e047966f25da5d46e5d24412a24f148c84bd4e8967a5320d63",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--snowy-street--prop-left.webp": {
+      "sha256": "7eed69c3e8a95dbba0828b45a298bced9cb7d8d277ce91f64f76b480b66ec48c",
+      "bytes": 418138,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/snowy-street/prop-left.png",
+      "sourceSha256": "1c0d3f078c44cec2e4dbab18541b5dd905096ee600728e4ffbc9529c65630562",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--snowy-street--prop-right.webp": {
+      "sha256": "9d61d192df39194f7ce32ae1cbe6aafd444340212db4f0149295d07b40c695f3",
+      "bytes": 426902,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/snowy-street/prop-right.png",
+      "sourceSha256": "3562332a6d28c3564a8c945ed4953123117a4d76e33093600ea6504402412e50",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--snowy-street--ground.webp": {
+      "sha256": "4587449a094d7c4062939ce36e8dd583658955060ee12f9a296b6087769c928a",
+      "bytes": 180442,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/snowy-street/ground.png",
+      "sourceSha256": "6e20646fe28068277b374a2047d23f4dd3c6e6937e8a226df993bb99fb9d56c9",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--city-street-night--backdrop.webp": {
+      "sha256": "6fd93bbe4b285e0da1b0376846baa805e6019eb2e514abd6bb69a16c13f925db",
+      "bytes": 241996,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/city-street-night/backdrop.png",
+      "sourceSha256": "87f5f76076ffcc1f3bb7d20995e85a4670a2f5e985dda243f63838ac6656dd50",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--city-street-night--prop-left.webp": {
+      "sha256": "30a9e8b6dd70065bf4a9906f383f2bee2794c8cfbc2b3bdb7bb032f34d2fec62",
+      "bytes": 335258,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/city-street-night/prop-left.png",
+      "sourceSha256": "b1dfdbe0477dd55264f49b7e05776168a85fb6088f987fc8b23a7531df3b0fae",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--city-street-night--prop-right.webp": {
+      "sha256": "0718bb691d48f42914be145c7ca0ff77346a84d294679cbd4cdde3edccf2bec7",
+      "bytes": 347042,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/city-street-night/prop-right.png",
+      "sourceSha256": "3d6bb114b39c83ab31af1f70cfed0d18d8449a7c57195725f276007f15818d1b",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--city-street-night--ground.webp": {
+      "sha256": "7e1bf2dca7c086716ad6590121e37c132816de374b37ca16e5bab95c9015e4be",
+      "bytes": 188082,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/city-street-night/ground.png",
+      "sourceSha256": "3c898c6141d5b4a364e98e2aaa028f4b7f26042b765537673f4cbf6cdcf0e311",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-04-atmosphere--filters--filter-night.webp": {
+      "sha256": "38545a1292b9a4a19b63ca32ad7b2577f3b9c10cc5bf522e3b70b983ccfb59bd",
+      "bytes": 706,
+      "source": "art/map-battlefield-drafts/batch-04-atmosphere/filters/filter-night.png",
+      "sourceSha256": "2b1ed3aadec271a639f4a82882d8faef02951474c3f7afac1b1159b317a7a706",
+      "width": 4096,
+      "height": 4096
+    },
+    "assets-display/layered/batch-10-location-streets--village-lane--backdrop.webp": {
+      "sha256": "b84b0db34f01f11fb66ead16ee5bd34719953d86bdbe4602e3fd17e58e4935ef",
+      "bytes": 357186,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/village-lane/backdrop.png",
+      "sourceSha256": "6f861984d54fe33ca0f9f1fa001288c86052e0abd5f3a8d1c582e0715b0fa7f6",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--village-lane--prop-left.webp": {
+      "sha256": "b5c71c069103c917ddf1928da182318b0583a462374452dd936dd624104fd938",
+      "bytes": 505630,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/village-lane/prop-left.png",
+      "sourceSha256": "262de1961af0121ba5facf19f2943c54b09fb1d72decc296797b9d4b391167f0",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--village-lane--prop-right.webp": {
+      "sha256": "6b43bb33ebeadaa2e4c65f1c9e88fd8f1907841526395945ccd05a4ecf37ba65",
+      "bytes": 368622,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/village-lane/prop-right.png",
+      "sourceSha256": "5c0baecee571c406d51af7663dee0a7d23eacab01c91546e6144f0aecff14cee",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--village-lane--ground.webp": {
+      "sha256": "0aa1b4cbb78c41ebb8263ba0d2ecaeb4ea0f7c163c3ef02ffff59a16d98df964",
+      "bytes": 262118,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/village-lane/ground.png",
+      "sourceSha256": "98f85873a4e9254f29e2044a19c6a069322eec83f923565922056b63081f6148",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--dungeon-corridor--backdrop.webp": {
+      "sha256": "e146db1ac88776868245a2f142a9ba8e3ae389c74f39ab5159e986f6ab97cbef",
+      "bytes": 248912,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/dungeon-corridor/backdrop.png",
+      "sourceSha256": "7af33df551cb6ce3530342bcbb8296eed4bbfa13b320ff913783d462d88a7e48",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--dungeon-corridor--prop-left.webp": {
+      "sha256": "d11521e3bd17d1790ff52ba45c5da75230c700be7ad28a5ef9768f076a982abc",
+      "bytes": 244378,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/dungeon-corridor/prop-left.png",
+      "sourceSha256": "f7e5455636e3dfef8015f1f51a729ed73efc1f0c2ab9f8e8c02bdb011334682f",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--dungeon-corridor--prop-right.webp": {
+      "sha256": "b61d3ea77b60f7f5a3b4343b609d270fa50d79936c53f5ead896ce3d722e6aad",
+      "bytes": 319850,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/dungeon-corridor/prop-right.png",
+      "sourceSha256": "442aefdae179311fbc165d2eb7ce5bf129e8d69d8aed7a02ad0d2ba92e9dcf98",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--dungeon-corridor--ground.webp": {
+      "sha256": "67ab8237f4122e0f4facce9c91e233b5893c11987a79d30c6e2fe63ee8d1e725",
+      "bytes": 231304,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/dungeon-corridor/ground.png",
+      "sourceSha256": "cab211482404bc0b09b6978bbd310e0924457be935b875ad7d7eea30bcca978a",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--cave-interior--backdrop.webp": {
+      "sha256": "b724195a61bd047578bc285db8a7c2eae7bb037e2fc237d47a19987c6c100115",
+      "bytes": 328742,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/cave-interior/backdrop.png",
+      "sourceSha256": "5eb5c1bf2466fc044fa517fcadbd55d3423c3836fb3786b7d5f6fc6dd12ec487",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--cave-interior--prop-left.webp": {
+      "sha256": "f695ec5c3a71f5a3fc3f204903d99493f12b67bf9278e87422b974c78dbce0f7",
+      "bytes": 312294,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/cave-interior/prop-left.png",
+      "sourceSha256": "3dead9f86ff1691627d19baf2715c40ebd42b2f37f42364706397587e5879d8b",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--cave-interior--prop-right.webp": {
+      "sha256": "ef8374a0bfb47194ab9e2cc1baeff4fd9326cf9ee0f97fe4f6e2b2b85c348b6b",
+      "bytes": 277924,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/cave-interior/prop-right.png",
+      "sourceSha256": "1f42f1b425e01aea9dfe90bcde7e811067b872305b6a02fdda3017a6bdacea7b",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--cave-interior--ground.webp": {
+      "sha256": "0abb6e814f31d73dc92ccb2df66c09570ce7026fd6be422c7630cba7bcf82e4d",
+      "bytes": 251068,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/cave-interior/ground.png",
+      "sourceSha256": "e2ec32f3242d1c52b55655a849dcdd4fe1c6322173b47d6bb30948b16905679d",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--cave-approach--backdrop.webp": {
+      "sha256": "aa7b7222dfce58c6c8bd5fe96037ad4fb436501cb40a8446d9c6ce1e912772f8",
+      "bytes": 395896,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/cave-approach/backdrop.png",
+      "sourceSha256": "aa6aae95eb44f679c76b905be231a3c6c03c555ae107f24e1ce2a7e629c79224",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--cave-approach--prop-left.webp": {
+      "sha256": "0d615fb0ea7b4ab7444bbd0b44b17d6dc44124785fd3280862bfbea8e0361121",
+      "bytes": 401148,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/cave-approach/prop-left.png",
+      "sourceSha256": "6ce664fc6628e0e48d2108eeba718e4171803542ca66e20aebb6dba576f57a50",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--cave-approach--prop-right.webp": {
+      "sha256": "ac0ebfe88558effa9d611bf3be2eb497bef6f8817629cba2536711476c89d62e",
+      "bytes": 491526,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/cave-approach/prop-right.png",
+      "sourceSha256": "d4b1f3232382036e4351f4c50d13c345e19e3e6a7170fb35c8f22141c39883a8",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--cave-approach--ground.webp": {
+      "sha256": "487fefa7468fc849384108ae1847555fc8070c0f98e040e9dec0199eab29aa21",
+      "bytes": 273198,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/cave-approach/ground.png",
+      "sourceSha256": "e5cb729119c3035379ca38cfc002a0e42cfd999b339e502e4bc91b88ad8b9d97",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--forest-path--backdrop.webp": {
+      "sha256": "89f74b100e6693e80a2ac280d2c0b2c09a5b18e2daa5475209ce4f6580f03761",
+      "bytes": 399930,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/forest-path/backdrop.png",
+      "sourceSha256": "b992c3cd851b3320173489b8c723171be712002f7c12233ed50571893f23caac",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--forest-path--prop-left.webp": {
+      "sha256": "3b1576df5b96d9309c674835f21fa1057e52d0e474788bfdf242773146e0b63d",
+      "bytes": 406844,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/forest-path/prop-left.png",
+      "sourceSha256": "a77996eb662142449d7d5edf6a99bfc9011be3e074cc79123878afa519af8519",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--forest-path--prop-right.webp": {
+      "sha256": "78eb1714da3ef89379096d7a9d36cb30207c81920e6f9cf50fdbd0a921fc85db",
+      "bytes": 470492,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/forest-path/prop-right.png",
+      "sourceSha256": "ccebf860c44d176cddd8dea70c7b789c447cd302116b831d3862ff78b1f1d4d6",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--forest-path--ground.webp": {
+      "sha256": "11ebad9a7a97de6ce8bb6bd9fcf8a960914d63ddd38968d387d7c81c583d6bf8",
+      "bytes": 232024,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/forest-path/ground.png",
+      "sourceSha256": "aca987e61aafa773a917a9f079c3069022c7b3ca35b2ec4003a798e78dd569da",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--mountain-road--backdrop.webp": {
+      "sha256": "52fce5c1577c32631044a85ab2697de5fc0cbdaa6c9c1c19d9a02d04265cbc3d",
+      "bytes": 404064,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/mountain-road/backdrop.png",
+      "sourceSha256": "fdbebda5a60bcbda9a369cc9c18abc60941836157ba0bdcd65011ef4470a1353",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--mountain-road--prop-left.webp": {
+      "sha256": "591cb3c36719f01164fdc3719f19f40713fede0f32b99ca0b10b632c058cb11f",
+      "bytes": 464808,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/mountain-road/prop-left.png",
+      "sourceSha256": "4c96ac5aad4897a06cd48cc7c7b86f756e258ca57e35c7ce3f317743281af66a",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--mountain-road--prop-right.webp": {
+      "sha256": "a5780534031d9432824c8f96e7fc23369250b8e82f119a8c08e6c60f9b29244c",
+      "bytes": 377716,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/mountain-road/prop-right.png",
+      "sourceSha256": "80d50db1be3254b7fc07ff616a537f1722e5a26ec8e995c2f191fb3639b97eb6",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--mountain-road--ground.webp": {
+      "sha256": "8091cfdea8e0302dfc1258e5ab7fc9d1eb9061bb50a52acff0a863ce8c7ad941",
+      "bytes": 236276,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/mountain-road/ground.png",
+      "sourceSha256": "90498e7b5dcf315ab1bb3513fef107ce541610305032d8cf5c6591b6ea5b81e8",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--castle-grounds--backdrop.webp": {
+      "sha256": "eb21266bcdeb4fa3f8b0bda03b7acf41431cc4203b6662399b739fd8a07e2c6b",
+      "bytes": 336578,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/castle-grounds/backdrop.png",
+      "sourceSha256": "42dfd917bc2037f62e0d6be78d67e01034ed5bc9521e7dc395dab8e30e06247b",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--castle-grounds--prop-left.webp": {
+      "sha256": "20a87272672a9442498298596742e85ab5e995197def99abf4ac5ed47ad63e40",
+      "bytes": 547110,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/castle-grounds/prop-left.png",
+      "sourceSha256": "881d40d8b1e5a6224b724b175429605764c7692f051aed30b46cbc3bb86059e3",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--castle-grounds--prop-right.webp": {
+      "sha256": "86cebb55ec7be06f21bf364355d3a52deb8490c28ec055e79aa821f05d18a5d2",
+      "bytes": 331272,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/castle-grounds/prop-right.png",
+      "sourceSha256": "06d4ccfda293097e2c22082916782bc41db0475d009db1ab67f245588526b7e5",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--castle-grounds--ground.webp": {
+      "sha256": "bb782f3fece137213db15dee5a18cdaffcee84be119981adce0e6a2e6ccf0806",
+      "bytes": 296354,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/castle-grounds/ground.png",
+      "sourceSha256": "e94ea3b1f2e070fa04effd766bb759f455e5d328fde9e05f914f89ccd99e9e0c",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--fortress-gate--backdrop.webp": {
+      "sha256": "dee3c4e6b8aaa7c705c46f6f98684005fab17228369ae1c80850283175032d2c",
+      "bytes": 328958,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/fortress-gate/backdrop.png",
+      "sourceSha256": "1b5e42e3b8ba764f8886bdf1af30c155114dac014067104372ba601b1a29d052",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--fortress-gate--prop-left.webp": {
+      "sha256": "78c431a480d4418d6cae664de493b3fae99e6d407d14743c2c6008305103a87d",
+      "bytes": 395092,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/fortress-gate/prop-left.png",
+      "sourceSha256": "0739a826f6e2d0217ccc700d85c38ee37b3e432b42b7c94bd40638941552550b",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--fortress-gate--prop-right.webp": {
+      "sha256": "f312c71e34a42542cf9047b2d49f10d5f08c346282f0b46d4612d29074b96c24",
+      "bytes": 322160,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/fortress-gate/prop-right.png",
+      "sourceSha256": "bcfc6c23a618000701f61857f43c91ee74c52bfb1a89e99cb041026cb953b3ba",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--fortress-gate--ground.webp": {
+      "sha256": "f71ce56c6c5df830740a6d197030ecb79b1b0e47e4b3c3459952547664a056b4",
+      "bytes": 247704,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/fortress-gate/ground.png",
+      "sourceSha256": "4f8d34eadbf7d96db084f621f9d68338c72797e70e7397502159236f9d186f13",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--great-tree--backdrop.webp": {
+      "sha256": "0801c57b685be6add7261f805b38fb32813cc88a9aefc722c3f5f55678cbb92f",
+      "bytes": 406942,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/great-tree/backdrop.png",
+      "sourceSha256": "43f02161aef78d44f1eeb0e765b8ca15534a29974d84b48d0e3d87cef474a269",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--great-tree--prop-left.webp": {
+      "sha256": "7159120bb1e51d2c66ae0a6eb864d15cb52d1d2605b47002f0b8057bd8666ed1",
+      "bytes": 484402,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/great-tree/prop-left.png",
+      "sourceSha256": "de0fe38ca2a7d6a6812e604a971c12558f5fb55779eaebfce8e6b35e4860297c",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--great-tree--prop-right.webp": {
+      "sha256": "249aa0ed67a7f21b6cb640694d61420bd6891a68ea1171f40359f45654807bfa",
+      "bytes": 466034,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/great-tree/prop-right.png",
+      "sourceSha256": "1b235d39a2bc2acac07c680bfa21ce785d2b464908bf4e3c8a9b611cf2c185dc",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--great-tree--ground.webp": {
+      "sha256": "3cc639ca9cea0571a19a9937af6475d95f0afebc31839d46aefc9a56a6cf8f3d",
+      "bytes": 272710,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/great-tree/ground.png",
+      "sourceSha256": "694eaa6feeb7b3c25bbcb79d213578eb01d141e23ace9d741d58b6af8e37b1f2",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--tunnel-interior--backdrop.webp": {
+      "sha256": "3a0d447e2c67501daf12e0839bd1f6ad1b9756c93d175cc8f07510b500974bea",
+      "bytes": 304260,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/tunnel-interior/backdrop.png",
+      "sourceSha256": "eb1ed8c77ccb95f469860cf3be4645b936537dcc8638adbc57d6caa571e6d041",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--tunnel-interior--prop-left.webp": {
+      "sha256": "ecc201c0a3177964054c9d61d590b9b601d8cc008afc223e78fc9b2c6103ce3e",
+      "bytes": 420134,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/tunnel-interior/prop-left.png",
+      "sourceSha256": "4830c69e588a1e4ce17470e41c11e77fcc13f3b16a3c8d16e82c6434c283d70a",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--tunnel-interior--prop-right.webp": {
+      "sha256": "0ad7c6a6914a93226d303f030ff084f87cca6d7540c512c89b27ceb4510abdbd",
+      "bytes": 428292,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/tunnel-interior/prop-right.png",
+      "sourceSha256": "e78751100d52280b2c93b6aa613cc160b1ad66ef2019caaf012b6d57d91609dd",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--tunnel-interior--ground.webp": {
+      "sha256": "924b9a48b656c68ea0c1440b0b2ec6d9d254be98ec9978af8ad78a967fe23767",
+      "bytes": 252548,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/tunnel-interior/ground.png",
+      "sourceSha256": "45ac2b3f22809e33dd680e223f91b6c0c9436a4bd00148ec9f6ae55d18a3fce8",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--open-road--backdrop.webp": {
+      "sha256": "016ef118ffabef36a4cfff7993480670b00ec85bace8a7ed548ece2c39d94b90",
+      "bytes": 343386,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/open-road/backdrop.png",
+      "sourceSha256": "adb4fce128bacdf505ee659e82a9ddc7a43373d14e15cdb1c4e830c1d7f34090",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--open-road--prop-left.webp": {
+      "sha256": "10de62fc40b337661cf39dd510b8f9e20edd2994569bee17de9de79b8fc29567",
+      "bytes": 404976,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/open-road/prop-left.png",
+      "sourceSha256": "0e4b8f9fb75cb970c520462899a0fa775b86ccd40d253adc01a4d204c8b3d96e",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--open-road--prop-right.webp": {
+      "sha256": "6d4d5c1a98ee63ccf577c1bedc5efbefc0c932b8383e8e3398ba1141e151cc96",
+      "bytes": 315346,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/open-road/prop-right.png",
+      "sourceSha256": "ba0f2746b25d5e8ecf9642b3d6d29e582361b3ebe80b84adc8480d0c0f3c6c53",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--open-road--ground.webp": {
+      "sha256": "8b5b3895000fb114e78fa018ddcc2623a868bb054bcd9c55769d6d3bfedb834e",
+      "bytes": 321416,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/open-road/ground.png",
+      "sourceSha256": "0c70e63cef12f106726b04a289d289e72a18e01bbbb6ff075346d6e75e1703ce",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--dungeon-stairs--backdrop.webp": {
+      "sha256": "28ff20aa64c949df2bab405c422e2e94fe14d63f50680ac625501925a7371b63",
+      "bytes": 207486,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/dungeon-stairs/backdrop.png",
+      "sourceSha256": "63b21978194762a2792a642ddbc39e005dd664d0e940d5a732fb96c902d4109f",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--dungeon-stairs--prop-left.webp": {
+      "sha256": "d732b4cccc04eef33aabca4a58c279d3d3aa857ac04525b7009743a173219764",
+      "bytes": 292458,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/dungeon-stairs/prop-left.png",
+      "sourceSha256": "6273bafce4cd51da6a525e2ab402fcbba4a841fb4d249fd4a644b594a0ba37ec",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--boss-arena-interior--backdrop.webp": {
+      "sha256": "c2661979f39cd4c92c2085732c777c026535f5773fa3cb2094a9f7b30ca02a36",
+      "bytes": 242554,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/boss-arena-interior/backdrop.png",
+      "sourceSha256": "7494d4107889c01ce7c2713d0132128326b652969c9132c0005cad8ed2f8133d",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--boss-arena-interior--prop-left.webp": {
+      "sha256": "29a128e2eb757c5954a1bcbafd62a47e38cf1760fbb03caf9aab0e35b94092e7",
+      "bytes": 364318,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/boss-arena-interior/prop-left.png",
+      "sourceSha256": "8ec782c3d32184e5376cb2d7731ae80d357a1891bada42d6bc8f2808fc5a5afc",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--boss-arena-exterior--backdrop.webp": {
+      "sha256": "b32688a69e781c50fc3fb0e9e7b6272fe54119c8c7c74972b81136e808392f8e",
+      "bytes": 355372,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/boss-arena-exterior/backdrop.png",
+      "sourceSha256": "3b9fd114d1a3ccbc10cc814c848f7a37dcd48d12c91cf6cd944da7f789caa884",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--castle-throne-room--backdrop.webp": {
+      "sha256": "faf3ce19d8aac75992be588120234ec95c19b09b22eabfcf745dc052e526736e",
+      "bytes": 264032,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/castle-throne-room/backdrop.png",
+      "sourceSha256": "47d6e4ba047594374396e027cfaa19a4838ff3a452eb3afd74f793f4d636362e",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--castle-throne-room--prop-left.webp": {
+      "sha256": "be731a64d9c71fc06c6c986d903a56cc9111280dcde680cb0f73f58dac0fe559",
+      "bytes": 189268,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/castle-throne-room/prop-left.png",
+      "sourceSha256": "26b19a41147aa0e99e0ffb8a609aaa9eb6ae4769ab3f4e34c223ca595dd4ec83",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-11-floor-props--prop-throne-runner.webp": {
+      "sha256": "59e512ec62bf166ca0387d0b0461051c050eafe4186f34bc2578c1c76b04c66b",
+      "bytes": 386094,
+      "source": "art/map-battlefield-drafts/batch-11-floor-props/prop-throne-runner.png",
+      "sourceSha256": "b142b8280f5c4e32cfb74263d45831ffc71e37d0eee77a49bf50103cc9476f40",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--volcanic-castle-exterior--backdrop.webp": {
+      "sha256": "1d88acf534bf6a1df7fb305643d3b298b0f18c497164760f7ad5702531524eb0",
+      "bytes": 295346,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/volcanic-castle-exterior/backdrop.png",
+      "sourceSha256": "e639a90e683d2775d6a942012fc104ee8914b3c3d0bd6f83b47483e5c00f1a60",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--volcanic-castle-exterior--prop-left.webp": {
+      "sha256": "25cf5d9dcc1f591a36ffd097ba3a9b014b0540fcbd1415ce873d8d869432b7e9",
+      "bytes": 382362,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/volcanic-castle-exterior/prop-left.png",
+      "sourceSha256": "cc1a6f3a6e8e83bb63396bed0edc25f7b0090168981d7db62d5de46b0f20b700",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--volcanic-castle-exterior--prop-right.webp": {
+      "sha256": "2d510754d0cf55dee5ea188ce2a67e778bc1f7e46c83041e4898cded4d6da1b6",
+      "bytes": 330116,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/volcanic-castle-exterior/prop-right.png",
+      "sourceSha256": "02782eba2414c41cde9f40498750f9608badb87e26042873b6ad40b826bfcd75",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--volcanic-castle-exterior--ground.webp": {
+      "sha256": "f8f863540bfadf15c77e35168db63e401d6271ff33407ed99616edde5f307f75",
+      "bytes": 220100,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/volcanic-castle-exterior/ground.png",
+      "sourceSha256": "10d93555a5773dfc8d031c29b03e0f3c998f5e96865d1e83942913b78a919d4a",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--volcanic-castle-interior--backdrop.webp": {
+      "sha256": "06fbdc3718eced743a1b99076f99010108dbcbad74914d7cc2c5c25ee270f669",
+      "bytes": 249002,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/volcanic-castle-interior/backdrop.png",
+      "sourceSha256": "9a51ba31718829c29b3848c1ce7b22a69fdc19de4680b0a83c6073b4c6f68ef5",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--cinder-tower--backdrop.webp": {
+      "sha256": "da9dc5e0cea06a4a3204bcef6149f0ac8b628c96c4519d8bbff557fac5ce2e3e",
+      "bytes": 242526,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/cinder-tower/backdrop.png",
+      "sourceSha256": "cd639fca433e14d80aef80f6600a77e525251573e86cd23f2c1cea1152e3aa46",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--cinder-tower--prop-left.webp": {
+      "sha256": "304380efc9a67f64064acc54bc1ac92263866ba00ae4608245abf8ad50ef5896",
+      "bytes": 238922,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/cinder-tower/prop-left.png",
+      "sourceSha256": "30bc517c2f5fa614ba0f4313de84e691375d1d458e75a174c8eafd7f447f5f4c",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--astrologer-chamber--backdrop.webp": {
+      "sha256": "b79eecede95d3448ef951cd9bb414a0de8229b8a1714bb9cc9d71d1df1c6119c",
+      "bytes": 226946,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/astrologer-chamber/backdrop.png",
+      "sourceSha256": "66cd045920ac1bbe700fe1165d146c930603f5da3b9e1127a54443a8aa2bd8f8",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--astrologer-chamber--prop-left.webp": {
+      "sha256": "18152cfcb6764b2da428e4af972fa5e631296df912531ef6ab3e066b571c7768",
+      "bytes": 290176,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/astrologer-chamber/prop-left.png",
+      "sourceSha256": "4dfb52247f08d3e69b2bb47f5bc0dd9f16b6c32bf1234f55720976034d5793ca",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--astrologer-chamber--prop-right.webp": {
+      "sha256": "85cd98efd76a8566e09395f2abed7326edb4039f2e2fd9a86cddb7eae71836bf",
+      "bytes": 249002,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/astrologer-chamber/prop-right.png",
+      "sourceSha256": "05dac93805c664aa3968cfb1c7034b5fac8ba2a0accdd7c561a8c36c19415d68",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--astrologer-chamber--ground.webp": {
+      "sha256": "59f5815b057edd34ae25fbe16815a3be59bc32063e7be207a25e38760220e8b8",
+      "bytes": 224840,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/astrologer-chamber/ground.png",
+      "sourceSha256": "7beb160021927a6bf34986fd8a2f8aff502130adf3140f78595ddd7de98371e0",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-10-location-streets--intro-forge--prop-left.webp": {
+      "sha256": "314be257e50b84de4b0a26fe162620011b713d166119e45b76b16606b101fee3",
+      "bytes": 414024,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/intro-forge/prop-left.png",
+      "sourceSha256": "e29f6bd7d625c024c1c3525bcaa61a0565f0b4a599e89cbb321caa79318f64e8",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--intro-chapel--prop-left.webp": {
+      "sha256": "2618f6d9d700a4b58d47352a70626879cea00a810c11077b781764e4f43044c5",
+      "bytes": 363240,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/intro-chapel/prop-left.png",
+      "sourceSha256": "02013b1027749113557e99bd4d5fe63f70c75cfca4eaa0f7a1d8355e6127fea7",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-10-location-streets--intro-archive--backdrop.webp": {
+      "sha256": "4d227e2e545bf6d3168f995c64490bb1d0b8bcc0ef271734d8d2d1e8b8a48847",
+      "bytes": 293886,
+      "source": "art/map-battlefield-drafts/batch-10-location-streets/intro-archive/backdrop.png",
+      "sourceSha256": "b4e624acd3f1a5336145eb837b2220acb500d76a614f320f927aa96a2a29240e",
+      "width": 1672,
+      "height": 941
+    },
+    "assets-display/layered/batch-04-atmosphere--filters--filter-rain.webp": {
+      "sha256": "0c78e727c317395375c0528947dc3795bc0cc80bc0a43aad316cf0d37ecdc83c",
+      "bytes": 37526,
+      "source": "art/map-battlefield-drafts/batch-04-atmosphere/filters/filter-rain.png",
+      "sourceSha256": "93b390da04b2e5b8c4ab8752b6933b49aec399a591a7cf9bcdef1619e8c1fde6",
+      "width": 4096,
+      "height": 4096
+    },
+    "assets-display/layered/batch-04-atmosphere--particles--rain.webp": {
+      "sha256": "f1f5fab279f312a8aea0c7fc0814a1d7d5889f805027999f2a22a99967e5374c",
+      "bytes": 3486,
+      "source": "art/map-battlefield-drafts/batch-04-atmosphere/particles/rain.png",
+      "sourceSha256": "68d4f5bf58474d928fa8a6f683cdf8860db6e05eebe3a52b6aad90fed5ecdde8",
+      "width": 1024,
+      "height": 1024
+    },
+    "assets-display/layered/batch-05-regions--ashen-crown--prop-market-stall.webp": {
+      "sha256": "4e9a9e138f371102fb61476986d03f4105c5f8db160439e8aac770991ab1236d",
+      "bytes": 325114,
+      "source": "art/map-battlefield-drafts/batch-05-regions/ashen-crown/prop-market-stall.png",
+      "sourceSha256": "a365d4d2aac30e29507557fce836827af289531b33f02af821236ed63daea680",
+      "width": 1254,
+      "height": 1254
+    },
+    "assets-display/layered/batch-04-atmosphere--filters--filter-cold.webp": {
+      "sha256": "664d6c9de7484b5227a3693d51a3d227698a3b410bef2d766144899535783141",
+      "bytes": 41478,
+      "source": "art/map-battlefield-drafts/batch-04-atmosphere/filters/filter-cold.png",
+      "sourceSha256": "67aff39986172d764f7a212106b0aed5504e8aee7d5dfb7f86d27dbea8a1f71c",
+      "width": 4096,
+      "height": 4096
+    },
+    "assets-display/layered/batch-04-atmosphere--particles--snow.webp": {
+      "sha256": "8da89a1fb8d9d3f9ce6c929b3055c50e0d64432189524d1d8e5581043e694cc8",
+      "bytes": 1424,
+      "source": "art/map-battlefield-drafts/batch-04-atmosphere/particles/snow.png",
+      "sourceSha256": "a4a75a850b7653bb21c764e61fea3e13bfa2dbb53fe37378218766b1ae32451f",
+      "width": 1024,
+      "height": 1024
+    },
+    "assets-display/layered/batch-04-atmosphere--filters--filter-hot.webp": {
+      "sha256": "c5b601ff466266cde3eac727e687ca7a2a1428ea3fdc2b4c1bc555bb3f2c97f6",
+      "bytes": 809608,
+      "source": "art/map-battlefield-drafts/batch-04-atmosphere/filters/filter-hot.png",
+      "sourceSha256": "3a405a7d9bf00abecac059297fb186f81c70ac1a7d745617bd2ffe8bc157976c",
+      "width": 4096,
+      "height": 4096
+    },
+    "assets-display/layered/batch-04-atmosphere--particles--ash.webp": {
+      "sha256": "412bf2ffaaaf50d1e65996e694445e2de9c5c73e89547537c16e5b18f339f5c5",
+      "bytes": 1500,
+      "source": "art/map-battlefield-drafts/batch-04-atmosphere/particles/ash.png",
+      "sourceSha256": "694429fc3874e7b5ae874d47ea0a50d2442fe66f06644db5db48887094d539af",
+      "width": 1024,
+      "height": 1024
+    }
+  }
+}

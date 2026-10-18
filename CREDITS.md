@@ -839,3 +839,7 @@ license is claimed.
 ### Separate throne-room floor decoration (2026-10-17)
 
 One original OpenAI image_gen transparent rug PNG in `art/map-battlefield-drafts/batch-11-floor-props/`, with exact prompt, native1672×941 dimensions, original output path and SHA-256 provenance. Original bytes preserved. The recipe combines existing bare ground, separate throne, room backdrop and independent translucent day/night filters. No production binding or third-party artwork is claimed.
+
+### Runtime layered environment exports (2026-10-17)
+
+`assets-display/layered/` contains95 native-size WebP derivatives of the reviewed original PNG components in `art/map-battlefield-drafts/`. Source paths and SHA-256 hashes, encoded hashes and dimensions are recorded in its manifest. `tools/layered-environment-build.mjs` uses Sharp/libwebp to encode these separate layers without resizing. They introduce no third-party artwork; original AI-generated source provenance remains alongside the PNGs.

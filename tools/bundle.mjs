@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {readLayeredArt} from './layered-art.mjs';
 // tools/bundle.mjs — produce the built game: the pack-shaped HTML at
 // build/AshenSpire.html (its packs/ and objects/ beside it), or with
 // --single-file the self-contained light single file at
@@ -597,6 +598,13 @@ if (!EXTERNAL_ART && sources.has(alternativeId)) {
     () => `/* ALTERNATIVE_ART_START */\nconst alternativeArtMap = ${JSON.stringify(map)};\n`
       + (aliases.length ? `for (const [alias, key] of ${JSON.stringify(aliases)}) alternativeArtMap[alias] = alternativeArtMap[key];\n` : '')
       + '/* ALTERNATIVE_ART_END */'));
+}
+const layeredArtId='src/ui/layeredArt.js';
+if(!EXTERNAL_ART&&sources.has(layeredArtId)){
+ const map=Object.fromEntries(readLayeredArt(ROOT).map(({id,bytes})=>[id,'data:image/webp;base64,'+bytes.toString('base64')]));
+ const markers=/\/\* LAYERED_ART_START \*\/[\s\S]*?\/\* LAYERED_ART_END \*\//;
+ if(!markers.test(sources.get(layeredArtId)))fail('Layered art markers missing');
+ sources.set(layeredArtId,sources.get(layeredArtId).replace(markers,()=>`/* LAYERED_ART_START */\nconst layeredArtMap = ${JSON.stringify(map)};\n/* LAYERED_ART_END */`));
 }
 const ASSET_PACKS_ID = 'src/ui/assetPacks.js';
 const ASSET_PACKS_MARKERS = /\/\* ASSET_PACKS_START \*\/[\s\S]*?\/\* ASSET_PACKS_END \*\//;
