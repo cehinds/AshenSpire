@@ -1,0 +1,179 @@
+{
+  "revision": 5,
+  "sourceRevision": 4,
+  "policy": "Prefer existing authored pixels. Preserve native transparent art through lossless PNG conversion. Flattened card layers are reconstructed by image editing, not represented as exact recovered original layers.",
+  "sources": [
+    {
+      "digit": 0,
+      "action": "attack",
+      "palette": "silver-blue",
+      "originalAssetId": "assets/cards/library/physical-attack-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-attack-01-1024.webp",
+      "reference": "source-art-v5/physical-attack-01-1024.webp",
+      "sourceSha256": "502fc25bc48c9e0aa88f51c9df255c56cb9ec751ee66c14bb1ebc3dfae69ee0c",
+      "sourceTier": "light",
+      "sourceDimensions": [
+        480,
+        720
+      ],
+      "object": "straight sword"
+    },
+    {
+      "digit": 1,
+      "action": "smash",
+      "palette": "silver-blue",
+      "originalAssetId": "assets/cards/library/physical-smash-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-smash-01-1024.webp",
+      "reference": "source-art-v5/physical-smash-01-1024.webp",
+      "sourceSha256": "a7b168470ba736827ef9c20f9c58958ea6e5cf1078a635b567298dbc0ca12209",
+      "sourceTier": "light",
+      "sourceDimensions": [
+        480,
+        720
+      ],
+      "object": "block hammer"
+    },
+    {
+      "digit": 2,
+      "action": "sweep",
+      "palette": "silver-blue",
+      "originalAssetId": "assets/cards/library/physical-sweep-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-sweep-01-1024.webp",
+      "reference": "source-art-v5/physical-sweep-01-1024.webp",
+      "sourceSha256": "e987392bbc2259129073ddf152751575602a070fd72662e070ce09d8cf1b6362",
+      "sourceTier": "light",
+      "sourceDimensions": [
+        480,
+        720
+      ],
+      "object": "curved saber"
+    },
+    {
+      "digit": 3,
+      "action": "defend",
+      "palette": "silver-blue",
+      "originalAssetId": "assets/cards/library/physical-defend-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-defend-01-1024.webp",
+      "reference": "source-art-v5/physical-defend-01-1024.webp",
+      "sourceSha256": "bf39bc3d1867790a5eacc41209825d41b8dd0adde4fe39c994c09b7d9303c9ee",
+      "sourceTier": "light",
+      "sourceDimensions": [
+        480,
+        720
+      ],
+      "object": "shield"
+    },
+    {
+      "digit": 4,
+      "action": "counter",
+      "palette": "silver-blue",
+      "originalAssetId": "assets/cards/library/physical-counter-01-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-counter-01-1024.webp",
+      "reference": "source-art-v5/physical-counter-01-1024.webp",
+      "sourceSha256": "c489b31d90b7fbab57d9947b70a8406d01b4d6238f4b312a7bd8d6ed5d53f656",
+      "sourceTier": "light",
+      "sourceDimensions": [
+        480,
+        720
+      ],
+      "object": "shield only"
+    },
+    {
+      "digit": 5,
+      "action": "attack",
+      "palette": "red-black",
+      "originalAssetId": "assets/cards/library/physical-attack-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-attack-03-1024.webp",
+      "reference": "source-art-v5/physical-attack-03-1024.webp",
+      "sourceSha256": "127feb8dce89d2c4105256b31664574aa42ea2c8f6e69e6be40894f4699feaaf",
+      "sourceTier": "light",
+      "sourceDimensions": [
+        480,
+        720
+      ],
+      "object": "straight sword"
+    },
+    {
+      "digit": 6,
+      "action": "smash",
+      "palette": "red-black",
+      "originalAssetId": "assets/cards/library/physical-smash-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-smash-03-1024.webp",
+      "reference": "source-art-v5/physical-smash-03-1024.webp",
+      "sourceSha256": "43e289c61fbfc55be03311e38471a82ffc8e28823171b085d1acc325061879e5",
+      "sourceTier": "light",
+      "sourceDimensions": [
+        480,
+        720
+      ],
+      "object": "block hammer"
+    },
+    {
+      "digit": 7,
+      "action": "sweep",
+      "palette": "red-black",
+      "originalAssetId": "assets/cards/library/physical-sweep-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-sweep-03-1024.webp",
+      "reference": "source-art-v5/physical-sweep-03-1024.webp",
+      "sourceSha256": "9455a2b0a4d7157521bd725b0325e66c3014240117b739dbaf3b563bec7b9402",
+      "sourceTier": "light",
+      "sourceDimensions": [
+        480,
+        720
+      ],
+      "object": "curved saber"
+    },
+    {
+      "digit": 8,
+      "action": "defend",
+      "palette": "red-black",
+      "originalAssetId": "assets/cards/library/physical-defend-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-defend-03-1024.webp",
+      "reference": "source-art-v5/physical-defend-03-1024.webp",
+      "sourceSha256": "39fc22bbff12b00ae85bde057c7a38f8f77a4444a10728998101b5190934c453",
+      "sourceTier": "light",
+      "sourceDimensions": [
+        480,
+        720
+      ],
+      "object": "shield"
+    },
+    {
+      "digit": 9,
+      "action": "counter",
+      "palette": "red-black",
+      "originalAssetId": "assets/cards/library/physical-counter-03-1024.webp",
+      "repositoryPath": "assets-mobile/cards/library/physical-counter-03-1024.webp",
+      "reference": "source-art-v5/physical-counter-03-1024.webp",
+      "sourceSha256": "0fb2a10a4bba97e94dbae4cadfc711cc0bcfe7d7895c124e2c6a26ba7d5f991c",
+      "sourceTier": "light",
+      "sourceDimensions": [
+        480,
+        720
+      ],
+      "object": "shield only"
+    }
+  ],
+  "nativeObjects": [
+    {
+      "digit": 0,
+      "name": "Existing inventory sword",
+      "repositoryPath": "assets-mobile/equipment/icon_straightSwordInventory2026.webp",
+      "reference": "source-art-v5/icon_straightSwordInventory2026.webp",
+      "sourceSha256": "bd08c827485098f0238121a863dcb03a1caaa831d700a689a91015389b200a8d",
+      "sourceTier": "light",
+      "originalAssetId": "assets/equipment/icon_straightSwordInventory2026.webp"
+    },
+    {
+      "digit": 1,
+      "name": "Existing inventory shield",
+      "repositoryPath": "assets-mobile/equipment/icon_kiteShieldInventory2026.webp",
+      "reference": "source-art-v5/icon_kiteShieldInventory2026.webp",
+      "sourceSha256": "5ecee420ef668b37b18e9305e386537a374132b2652c053941ac13325ceead23",
+      "sourceTier": "light",
+      "originalAssetId": "assets/equipment/icon_kiteShieldInventory2026.webp"
+    }
+  ],
+  "originalArtRelease": "hd-assets-v23",
+  "originalGameCommit": "72a4e640a4efd09c1242756895cf100c46d17074"
+}

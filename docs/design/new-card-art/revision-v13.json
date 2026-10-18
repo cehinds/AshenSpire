@@ -1,0 +1,89 @@
+{
+  "revision": 13,
+  "request": "One shared small scepter, aligned with each weapon axis; unchanged ethereal weapon geometry; blue and softer transparent green.",
+  "sharedScepterId": "V.object.0",
+  "sharedScepterSize": 152.95,
+  "blueOpacity": 0.4,
+  "greenOpacity": 0.2,
+  "greenFilter": "saturate(0.45)",
+  "changedPngs": [
+    "Y.effect.5",
+    "Y.effect.6",
+    "Y.effect.7",
+    "Y.effect.8",
+    "Y.effect.9"
+  ],
+  "unchangedPngCount": 357,
+  "canonicalCodes": [
+    "Y00",
+    "Y01",
+    "Y02",
+    "Y03",
+    "Y04",
+    "Y05",
+    "Y06",
+    "Y07",
+    "Y08",
+    "Y09"
+  ],
+  "legacyAliasCount": 90,
+  "axisLandmarks": [
+    {
+      "end": [
+        0.221,
+        0.857
+      ],
+      "neck": [
+        0.355,
+        0.668
+      ]
+    },
+    {
+      "end": [
+        0.775,
+        0.145
+      ],
+      "neck": [
+        0.557,
+        0.51
+      ]
+    },
+    {
+      "end": [
+        0.898,
+        0.859
+      ],
+      "neck": [
+        0.52,
+        0.182
+      ]
+    },
+    {
+      "end": [
+        0.15,
+        0.14
+      ],
+      "neck": [
+        0.27,
+        0.287
+      ]
+    },
+    {
+      "end": [
+        0.5,
+        0.86
+      ],
+      "neck": [
+        0.5,
+        0.465
+      ]
+    }
+  ],
+  "greenSources": [
+    "exec-24bf9175-1d2d-464c-bcf4-ef7bbc541255.png",
+    "exec-2539d752-7e00-4c92-a6ea-e7679e563ff6.png",
+    "exec-b99b6806-084e-4539-9f7d-a39a18e943e2.png",
+    "exec-3fb0c65d-d8fc-48aa-a095-d6df719a5c64.png",
+    "exec-182c09e4-32b0-43cc-994a-18031a0f4be6.png"
+  ]
+}

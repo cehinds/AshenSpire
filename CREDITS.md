@@ -706,3 +706,14 @@ are staged for intake into cehinds/AshenSpire-art and preserved on branch
 ## Layered map design and prop wireframes
 
 The original technical illustrations, editable SVG wireframes, and 24 transparent prop-placeholder PNGs in [the map art handoff](docs/design/improve-map-battlefield-art/HANDOFF.md) were authored with Codex under human direction. They are documentation and integration prototypes, not registered production paintings. Their source is the adjacent generator scripts and prop definitions. No third-party artwork or licence is claimed.
+
+### Layered card-art runtime cutouts (2026-10-18)
+
+The 44 PNGs in `assets-display/card-cutouts/` are byte-for-byte exports of
+first-party OpenAI-generated and reconstructed components approved in the
+[card-art proposal library](docs/design/new-card-art/README.md).
+[Runtime JSON](asset-data/card-art/layered-runtime.json) records each source
+reference and SHA-256; the proposal manifest records the original generation
+and extraction provenance. The implementation adds no third-party artwork
+and claims no third-party license. Scepters, ethereal outlines, objects,
+backgrounds and effects remain separate components.

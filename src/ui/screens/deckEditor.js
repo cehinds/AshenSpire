@@ -1,3 +1,4 @@
+import { cardCutoutUrl } from '../layeredCardArt.js';
 import { matchViewMedia } from '../viewViewport.js';
 import { anchorLocalBox } from '../fx.js';
 import { progressionTip } from '../components/progressionCards.js';
@@ -41,7 +42,7 @@ import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
 import { cardClassification } from '../../model/cardClassification.js';
 import { playingCardModel, playingCardDefinition } from '../../model/playingCard.js';
 import { playingCardArt, cardArtFallbacks } from '../cardArtwork.js';
-import { cardArtLayersHtml } from '../cardArtLayers.js';
+import { cardArtLayersHtml, bindCardComponentFailures } from '../cardArtLayers.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
 import { markArtPlaceholder } from '../artFallback.js';
@@ -200,11 +201,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   function artwork(row, large = false) {
     const well = el('span', {class:'deck-editor-art', 'aria-hidden':'true'});
-    Object.assign(well.style, {position:'relative',overflow:'hidden',display:'block'});
+    Object.assign(well.style, {position:'relative',overflow:'hidden',display:'block',isolation:'isolate'});
     const paint = () => {
       const art = playingCardArt(row.ref, {large, definition:combatDef(row), registries});
       well.dataset.cardArt=art?.kind||'outline';
-      const img = el('img', {src:art?assetUrl(art.path):'',alt:'',draggable:'false'});
+      const img = el('img', {src:art?(art.componentArt?cardCutoutUrl(art.path):assetUrl(art.path)):'',alt:'',draggable:'false'});
       Object.assign(img.style, {width:'100%',height:'100%',objectFit:art?.fit||(art?.kind==='outline'?'contain':'cover'),objectPosition:art?.position||'center',filter:art?.filter||''});
       well.classList.toggle('outline', art?.kind==='outline');
       well.replaceChildren(img);
@@ -220,6 +221,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         Object.assign(img.style,{filter:'',objectFit:next.fit||(next.extended?'cover':'contain'),objectPosition:next.position||'center'});
         img.src=assetUrl(next.path);
       });
+      bindCardComponentFailures(well, img);
     };
     paint();
     registerCardArtRefresh(well,paint);

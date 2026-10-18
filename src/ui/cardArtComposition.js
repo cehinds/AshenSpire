@@ -1,9 +1,11 @@
+import { approvedCardArt } from './layeredCardArt.js';
 import { objectTagIds } from '../content/tags.js';
 import { tagService } from '../model/tagService.js';
 
 export const CARD_ART_MANEUVERS = Object.freeze(['attack', 'smash', 'counter', 'evade', 'sweep', 'defend']);
 // Presentation only: these palettes do not introduce damage schools or rules.
 export const CARD_ART_ELEMENTS = Object.freeze(Object.fromEntries(Object.entries({
+  wind: { variant: 1, color: '#c8e3df', glow: '#81b5af', motif: 'wisps', filter: '' },
   force: { variant: 4, color: '#b7baff', glow: '#777fe8', motif: 'rings', filter: 'hue-rotate(-28deg) saturate(.75)' },
   fire: { variant: 2, color: '#ffc17e', glow: '#ee7237', motif: 'embers', filter: '' },
   lightning: { variant: 3, color: '#fff0a2', glow: '#ddbb4e', motif: 'bolts', filter: '' },
@@ -91,8 +93,10 @@ export function simpleCardArt(def, { ref, registries = null, large = false, vari
   // Evade is an explicit authored payload in the current combat schema.
   if ((def.evade && (def.evade === true || typeof def.evade === 'object'))
     || (Array.isArray(def.effects) && def.effects.some(effect => effect?.op === 'dodgeRoll'))) maneuver = 'evade';
-  if (['casting', 'ranged'].includes(maneuver)) maneuver = 'attack';
-  if (!CARD_ART_MANEUVERS.includes(maneuver)) return null;
+  if (maneuver === 'casting' && ['skill', 'power'].includes(def.type)) maneuver = 'skill';
+  else if (['casting', 'ranged'].includes(maneuver)) maneuver = 'attack';
+  if (!maneuver && !tags.some(tag => tag.startsWith('maneuver:')) && ['skill', 'power'].includes(def.type)) maneuver = 'skill';
+  if (!CARD_ART_MANEUVERS.includes(maneuver) && maneuver !== 'skill') return null;
   const category = camp === 'spell' ? 'magical' : 'physical';
   const school = uniqueIdentity(tags, 'school:');
   const element = cardArtElement(uniqueIdentity(tags, 'element:')) || cardArtElement(school) || damageElement(def, tags)
@@ -101,16 +105,19 @@ export function simpleCardArt(def, { ref, registries = null, large = false, vari
   const requestedVariant = variant ?? def.art?.variant;
   const selectedVariant = Number.isInteger(requestedVariant) && requestedVariant >= 1 && requestedVariant <= 5
     ? requestedVariant : category === 'magical' ? theme.variant : physicalVariant(def, ref);
-  const statuses = cardArtStatuses(def, tags, registries);
+  const componentArt = approvedCardArt({category, maneuver, element, tags, def});
+  if (maneuver === 'skill' && !componentArt) return null;
+  // Primary action consumes one of four visual identities; element consumes another.
+  const statuses = Object.freeze(cardArtStatuses(def, tags, registries).slice(0, element ? 2 : 3));
   const layers = Object.freeze([...(theme ? [Object.freeze({ kind: 'element', ...theme })] : []), ...statuses.map(status => Object.freeze({ kind: 'status', ...status }))]);
   return Object.freeze({
-    path: `assets/cards/library/${category}-${maneuver}-${String(selectedVariant).padStart(2, '0')}-${large ? 1024 : 512}.webp`,
+    path: componentArt?.path || `assets/cards/library/${category}-${maneuver}-${String(selectedVariant).padStart(2, '0')}-${large ? 1024 : 512}.webp`,
     kind: 'simple', fit: 'cover', position: '50% 50%', category, maneuver, element, variant: selectedVariant,
-    filter: category === 'magical' ? theme.filter : '', statuses, layers,
+    filter: !componentArt && category === 'magical' ? theme.filter : '', statuses, layers, componentArt,
   });
 }
 
-/** 54 preview faces by default; pass allVariants for all 270 base/theme combinations. */
+/** Six actions × ten presentation elements; variants apply to retained flat bases. */
 export function cardArtPreviewFixtures({ allVariants = false } = {}) {
   return CARD_ART_MANEUVERS.flatMap(maneuver => Object.keys(CARD_ART_ELEMENTS).flatMap(element =>
     (allVariants ? [1, 2, 3, 4, 5] : [undefined]).map(variant => {

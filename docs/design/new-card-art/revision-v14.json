@@ -1,0 +1,16 @@
+{
+  "revision": 14,
+  "request": "Reduce the strong green toward an aetherial pale mint, then push the current pass as-is.",
+  "changedPngs": [
+    "Y.effect.5",
+    "Y.effect.6",
+    "Y.effect.7",
+    "Y.effect.8",
+    "Y.effect.9"
+  ],
+  "unchangedPngCount": 357,
+  "preserved": "Shared scepter sprite, identical small size, axis alignment, all layer transforms and existing rendered opacity.",
+  "mintOpacity": 0.2,
+  "filter": "none",
+  "nextRefinement": "Slightly thinner, more transparent outlines with a little green restored. Deferred at user request to publish the current pass."
+}
