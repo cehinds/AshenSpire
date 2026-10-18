@@ -205,6 +205,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let timelinePlayback = null;
   let autoCombatTimer = null;
   let autoCombatPausedUntil = 0;
+  let autoArmedReaction = null;
   let formationMovement = null;
   const previewParams = new URLSearchParams(window.location.search);
   const previewSceneId = previewParams.get('shot') === 'combat' ? previewParams.get('shotScene') : null;
@@ -287,8 +288,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const actionRow = $('.combat-action-row');
   // User interaction yields the automation seat immediately. A later idle
   // check re-evaluates current settings and all legal-action guards.
-  combatEl.addEventListener('pointerdown', () => { autoCombatPausedUntil = performance.now() + 1000; }, true);
-  combatEl.addEventListener('keydown', () => { autoCombatPausedUntil = performance.now() + 1000; }, true);
+  // The reaction modal mounts under document.body, outside combatEl, so the pause
+  // listens at document level while this combat is mounted.
+  const pauseAutoCombat = () => { autoCombatPausedUntil = performance.now() + 1000; };
+  document.addEventListener('pointerdown', pauseAutoCombat, true);
+  document.addEventListener('keydown', pauseAutoCombat, true);
   setPotionRevealTiming(actionRow, potionReveal);
   // The bar ceilings, DERIVED from the content (classes + equipment for the
   // player surface, plus every enemy for the under-model one) rather than typed.
@@ -1381,6 +1385,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       autoCombatTimer = null;
       if (!combatEl.isConnected || combat.result) return;
       const pending = combat.pendingReaction;
+      // Arm the delay when an offer first appears, so the answer waits a full
+      // combatActionDelay after the reaction words rather than the rest of an old tick.
+      if (pending && pending !== autoArmedReaction) { autoArmedReaction = pending; scheduleAutoCombat(); return; }
       const option = autoReactionChoice();
       if (option !== undefined) { reactionShell.dismiss(); answerReaction(reactionAnswer(pending, option), false); }
       scheduleAutoCombat();
@@ -3440,6 +3447,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
         if (autoCombatTimer !== null) clearTimeout(autoCombatTimer);
         autoCombatTimer = null;
+        document.removeEventListener('pointerdown', pauseAutoCombat, true);
+        document.removeEventListener('keydown', pauseAutoCombat, true);
         timelinePlayback?.cancel?.(); timelinePlayback = null;
         reactionShell?.dismiss();
         handStrip.teardown();
