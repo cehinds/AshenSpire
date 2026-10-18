@@ -2457,7 +2457,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // every other case, where the tap still selects and the player picks.
     const playIsUnambiguous = () => !pv.needsTarget
       || (dragTargetMode !== 'all' && combat.enemies.filter(enemy => enemy.alive).length === 1);
-    const oneTapPlays = () => (meta.settings || {}).oneTapPlay !== false && playIsUnambiguous();
+    const oneTapOn = () => (meta.settings || {}).oneTapPlay !== false;
+    const oneTapPlays = () => oneTapOn() && playIsUnambiguous();
     const play = () => {
       if (!pv.needsTarget) playCard(inst.instanceId, null);
       else {
@@ -2488,13 +2489,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         showTooltipFor(el, '<p>' + esc(reasons.join(' ')) + '</p>');
         return;
       }
-      if (selected !== inst.instanceId && selfArm !== inst.instanceId) {
-        // One tap plays when there is nothing to choose; otherwise it selects
-        // and the second tap (or a target pick) plays, as before.
-        if (oneTapPlays()) play();
-        else select();
-        return;
-      }
+      // One tap plays when there is nothing to choose, whether or not a hold has
+      // already selected the card (a held card is selected, not played, so its
+      // next tap must play it). Otherwise a tap selects and the second tap (or
+      // a target pick) plays, as before.
+      if (oneTapPlays()) { play(); return; }
+      if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
       const now = performance.now();
       if (lastConfirmTap && now - lastConfirmTap <= 350) { lastConfirmTap = 0; confirm(); }
       else lastConfirmTap = now;
@@ -2515,6 +2515,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
         if (!(holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) > 0)) { tap(); return; }
         if (busy || !affordable || dragging) return;
+        // With one-tap play on, a tap is the play, so the completed hold is the
+        // other half: it SELECTS the card without playing it, which is what
+        // reveals the information and Upcast controls (owner, 2026-10-18).
+        if (oneTapOn()) {
+          select();
+          if (pv.needsTarget) focusTargeting();
+          return;
+        }
         // Only a card that asks for ONE enemy waits for the choice. A card
         // that sweeps every enemy has nothing to choose (previewCard reports
         // needsTarget false for it), so a completed hold plays it, as the tap

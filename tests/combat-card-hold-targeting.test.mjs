@@ -24,6 +24,8 @@ ok(/onHoldStart:\s*\(\)\s*=>\s*\{\s*el\.dispatchEvent\(new CustomEvent\('cardhol
   'starting the visible hold preserves the shared card-selection signal without arming combat early');
 
 const completion = hold?.[1].match(/onConfirm:\s*\(\)\s*=>\s*\{([\s\S]*)\n      \},?/)?.[1] || '';
+ok(/if \(oneTapOn\(\)\) \{\s*select\(\);\s*if \(pv\.needsTarget\) focusTargeting\(\);\s*return;\s*\}/.test(completion),
+  'with one-tap play on, a completed hold SELECTS any card without playing it (owner, 2026-10-18)');
 ok(/if \(pv\.needsTarget\) \{\s*select\(\);\s*focusTargeting\(\);\s*return;\s*\}/.test(completion),
   'a completed hold on a single-target card arms the existing target-selection flow');
 ok(!/dragTargetMode === 'all'/.test(completion),
@@ -33,7 +35,7 @@ ok(/playCard\(inst\.instanceId, null\);/.test(completion),
 ok(!/confirm\(\)/.test(completion),
   'the completed hold does not reuse the old same-press confirm path');
 
-ok(/const tap = \(\) => \{[\s\S]*?if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{[\s\S]*?if \(oneTapPlays\(\)\) play\(\);\s*else select\(\);\s*return;\s*\}/.test(wire?.[1] || ''),
+ok(/const tap = \(\) => \{[\s\S]*?if \(oneTapPlays\(\)\) \{ play\(\); return; \}\s*if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}/.test(wire?.[1] || ''),
   'the tap-to-select route remains for an ambiguous target; an unambiguous play goes through oneTapPlays (owner, 2026-10-18)');
 ok(/const playIsUnambiguous = \(\) => !pv\.needsTarget\s*\|\|\s*\(dragTargetMode !== 'all' && combat\.enemies\.filter\(enemy => enemy\.alive\)\.length === 1\);/.test(wire?.[1] || ''),
   'a play is unambiguous for a no-target card or exactly one living enemy');

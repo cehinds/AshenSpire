@@ -12,10 +12,10 @@ const browser = await chromium.launch({ executablePath: process.env.CHROME || '/
 const errors = [];
 
 // Seed 4 deals Defend (self), Strike (one enemy), Smash, Counter, Strike.
-async function board(enemyCount) {
+async function board(enemyCount, seed = 4) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto(`${process.env.BASE_URL || server.url}index.html?shot=combat&gameProfile=core&shotSeed=4&shotEnemyCount=${enemyCount}&shotHand=5`, { waitUntil: 'networkidle' });
+  await page.goto(`${process.env.BASE_URL || server.url}index.html?shot=combat&gameProfile=core&shotSeed=${seed}&shotEnemyCount=${enemyCount}&shotHand=5`, { waitUntil: 'networkidle' });
   return page;
 }
 const state = page => page.evaluate(() => ({
@@ -59,6 +59,24 @@ try {
     const after = await state(page);
     assert.equal(after.hand.length, before.hand.length - 1, 'self card: one tap played Defend even with two enemies');
     assert.ok(after.energy < before.energy, 'self card: and spent its cost');
+    await page.close();
+  }
+  {
+    // A COMPLETED HOLD SELECTS, never plays (it is what reveals the info and Upcast controls).
+    const page = await board(2);
+    const before = await state(page);
+    const box = await page.locator('.hand .card[data-card-id="core.defend"]').first().boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(1100);
+    await page.mouse.up();
+    await page.waitForTimeout(500);
+    assert.deepEqual(await state(page), before, 'a completed hold on a self card dispatches no playCard');
+    assert.ok(await page.locator('.hand .card.selected[data-card-id="core.defend"]').count() > 0, 'and leaves it selected');
+    // ...and the next tap on the selected card plays it.
+    await tapCard(page, 'core.defend');
+    await page.waitForTimeout(900);
+    assert.equal((await state(page)).hand.length, before.hand.length - 1, 'the tap after a hold plays the selected self card');
     await page.close();
   }
   assert.deepEqual(errors, []);
