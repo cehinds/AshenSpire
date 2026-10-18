@@ -16,6 +16,7 @@ import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { coopEnemyIntent, publicCounterIntent } from '../models/CoopIntentModel.js';
 import { createStanceLedger } from '../../model/alternativeStance.js';
 import { openModal } from '../kit/index.js';
+import { registerPageChrome } from '../modalState.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { cardTargetPlan, upcastNextStep } from '../../model/cardTargets.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
@@ -732,6 +733,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     return false;
   }
 
+  // The strip is page chrome, not a modal: a door above it puts it to sleep
+  // (inert) but it never counts as an open modal. One registration per strip.
+  let releaseSeatChrome = null;
   function renderSeatTabs() {
     if (seats.length < 2) return;
     // The tab bar lives on document.body (a fixed overlay), so look it up there
@@ -750,10 +754,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     });
     const strip = dock(tabs, { trail: [keycap('Tab', { class: 'seat-hint' })], attrs: { class: 'coop-seat-tabs', 'aria-label': 'Seats on this screen' } });
     const previous = document.querySelector('.coop-seat-tabs');
+    releaseSeatChrome?.();
     if (previous) previous.replaceWith(strip); else document.body.appendChild(strip);
+    // Registered once it is in the page: the manager drops a disconnected element.
+    releaseSeatChrome = registerPageChrome(strip);
   }
 
   function removeSeatTabs() {
+    releaseSeatChrome?.();
+    releaseSeatChrome = null;
     const d = document.querySelector('.coop-seat-tabs');
     if (d) d.remove();
   }
