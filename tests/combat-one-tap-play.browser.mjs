@@ -132,6 +132,27 @@ try {
     assert.equal((await state(page)).hand.length, before.hand.length - 1, 'setting off: the quick double-tap on the selected card plays it');
     await page.close();
   }
+  {
+    // The card hold is a SELECTION gesture: with the confirm dial OFF a long press
+    // still selects (it does not collapse to a tap that plays), a short press plays.
+    const page = await board(2, 4, { holdConfirm: 'off' });
+    const before = await state(page);
+    const box = await page.locator('.hand .card[data-card-id="core.defend"]').first().boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(1100);
+    await page.mouse.up();
+    await page.waitForTimeout(500);
+    assert.deepEqual(await state(page), before, 'dial off: a long press on a self card dispatches no playCard');
+    assert.ok(await page.locator('.hand .card.selected[data-card-id="core.defend"]').count() > 0, 'dial off: it selects the card');
+    await page.close();
+    const page2 = await board(2, 4, { holdConfirm: 'off' });
+    const before2 = await state(page2);
+    await tapCard(page2, 'core.defend');
+    await page2.waitForTimeout(900);
+    assert.equal((await state(page2)).hand.length, before2.hand.length - 1, 'dial off: a short press plays the self card');
+    await page2.close();
+  }
   assert.deepEqual(errors, []);
   console.log('PASS combat-one-tap-play');
 } catch (error) {

@@ -2503,12 +2503,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (lastConfirmTap && now - lastConfirmTap <= 350) { lastConfirmTap = 0; confirm(); }
       else lastConfirmTap = now;
     };
+    const cardHoldMs = () => holdMs(meta.settings || {}, registries.balance.ui.holdConfirm)
+      || Number(registries.balance.ui.holdConfirm.steps.short) || 350;
     const holdProgress = document.createElement('span');
     holdProgress.className = 'card-hold-progress';
     holdProgress.setAttribute('aria-hidden', 'true');
     el.appendChild(holdProgress);
     return armHold(el, {
-      ms: () => affordable ? holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) : 0,
+      // THE CARD HOLD IS A SELECTION GESTURE, NOT A CONFIRM BEAT, so it does not
+      // follow the confirm dial to zero (owner, 2026-10-18): with holdConfirm
+      // `off` a long press must still select/inspect rather than read as a tap
+      // and play. It takes the dial's own `short` step as its fixed duration.
+      ms: () => affordable ? cardHoldMs() : 0,
       // A card hold is an alternate input for the same selection flow as a tap,
       // not a delayed second route that silently commits before the player has
       // chosen a target. Paint from pointer-down; crossing the shared movement
@@ -2517,7 +2523,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       onTap: tap, tapOnEarlyRelease: true, tapOnPointerRelease: true,
       onConfirm: () => {
         if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-        if (!(holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) > 0)) { tap(); return; }
         if (busy || !affordable || dragging) return;
         // THE COMPLETED HOLD SELECTS AND NEVER PLAYS, whatever oneTapPlay says
         // (owner, 2026-10-18; SPEC 7.3): selecting is what reveals the
