@@ -2502,7 +2502,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         put(sel, `float-num ${part.cls}`, part.text, 0.35, 0, receiptRow);
         recoil(`${sel} .sprite`, amount >= 12);
       } else {
-        const parts = guardHitFloatParts(ev);
+        // The damage tier is the hit's share of the target's max HP, as in solo (ui/fx.js dmgClass).
+        const parts = guardHitFloatParts(ev, enemy ? enemy.maxHp || 0 : 0);
         receiptLossByTarget.set(targetKey, (receiptLossByTarget.get(targetKey) || 0) + parts.residual);
         const paired = !!(parts.guard && parts.damage);
         if (parts.guard) put(sel, `float-num ${parts.guard.cls}`, parts.guard.text, 0.35, paired ? -26 : 0, receiptRow);
