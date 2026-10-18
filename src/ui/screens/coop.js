@@ -1559,6 +1559,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     et.classList.toggle('pulse', hasPlayable);
     et.dataset.confirmReady = String(canEnd && !hasPlayable);
     endTurnBeat = arm(et, 'endTurn', {
+      // The row's stakes move with whether a card is playable (owner,
+      // 2026-10-18: End Turn is one tap when none is). `hasPlayable` is the
+      // same fact the pulse above reports; this armer is rebuilt on every render
+      // (each snapshot), so the closure always holds the seat's current hand,
+      // and it is read per press.
+      ctx: () => ({ playable: hasPlayable }),
+      tapWhenNone: true,
       onConfirm: () => {
         const current = snap && snap.scene && snap.scene.kind === 'combat'
           ? snap.scene.players.find((p) => p.id === me)
