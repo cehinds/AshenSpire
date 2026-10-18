@@ -193,6 +193,41 @@
       ]
     },
     {
+      "id": "combat.accuracy",
+      "tag": "combat:accuracy",
+      "family": "combat",
+      "portability": "portable",
+      "modules": []
+    },
+    {
+      "id": "combat.actionCosts",
+      "tag": "combat:actionCosts",
+      "family": "combat",
+      "portability": "portable",
+      "modules": []
+    },
+    {
+      "id": "combat.perception",
+      "tag": "combat:perception",
+      "family": "combat",
+      "portability": "portable",
+      "modules": []
+    },
+    {
+      "id": "combat.stance",
+      "tag": "combat:stance",
+      "family": "combat",
+      "portability": "portable",
+      "modules": []
+    },
+    {
+      "id": "combat.statuses",
+      "tag": "combat:statuses",
+      "family": "combat",
+      "portability": "portable",
+      "modules": []
+    },
+    {
       "id": "cost.action",
       "tag": "cost.action",
       "family": "cost",
