@@ -142,6 +142,12 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         text = `${source} counterattacked ${target}${label ? ` with ${label}` : ''}.`;
         break;
       }
+      case 'attackHit': case 'attackMissed': {
+        const outcome = event.type === 'attackHit' ? 'hit' : 'missed';
+        const dice = Array.isArray(event.dice) && event.dice.length ? event.dice.join(', ') : event.d20 ?? 'automatic';
+        text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} vs Evasion ${event.evasion ?? 0} · ${event.mode || 'normal'} · stance ×${event.stanceFactor ?? 1} · ${event.hitChance ?? 100}% chance${event.missReason === 'range' ? ' (out of range)' : ''}.`;
+        break;
+      }
       case 'damageDealt': {
         const hit = `${attackText()} hit ${target}`;
         // Silenced: a hit that is all Force is negated whole.
@@ -264,7 +270,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         break;
       default: break;
     }
-    for (const line of [].concat(text || [])) rows.push({ id, round, text: line });
+    for (const line of [].concat(text || [])) rows.push({ id, round, text: line, ...(event.damageReceipt ? { damageReceipt: event.damageReceipt } : {}) });
   });
   return rows;
 }

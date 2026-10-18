@@ -20,6 +20,7 @@
 // down, and the arriving screen is the one that must not inherit.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { combatStatusPresentationRegistries } from '../src/ui/models/CombatStatusPresentationModel.js';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const strip = (text) => text.split('\n').filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line)).join('\n');
@@ -45,8 +46,8 @@ for (const screen of SCREENS) {
     const start = source.indexOf('{', source.indexOf('}) {', source.indexOf('export function mount')));
     const prologue = source.slice(start + 1, source.indexOf('clearSelection();', start) + 'clearSelection();'.length);
     let cleared = 0;
-    new Function('run','combat','registries','clearSelection','createPreviewMemo','enginePreviewCard','engineDispatch','fixedClasses', prologue)(
-      {}, {}, {}, () => cleared++, () => ({}), () => {}, () => {}, null);
+    new Function('run','combat','registries','clearSelection','createPreviewMemo','enginePreviewCard','engineDispatch','fixedClasses','combatStatusPresentationRegistries', prologue)(
+      {}, {}, { statuses: { get: () => null, all: () => [] } }, () => cleared++, () => ({}), () => {}, () => {}, null, combatStatusPresentationRegistries);
     ok(cleared === 1, `${screen} clears the selection unconditionally before screen setup`);
     continue;
   }

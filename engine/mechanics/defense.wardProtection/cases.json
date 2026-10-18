@@ -1,0 +1,98 @@
+[
+  {
+    "name": "active",
+    "when": {
+      "modifiers": {
+        "attachments": [
+          {
+            "ownerId": "target",
+            "sourceInstanceId": "base",
+            "kind": "entity",
+            "tags": [
+              "defense:wardProtection"
+            ]
+          }
+        ],
+        "phase": "damage.mitigation",
+        "subjectId": "target",
+        "context": {
+          "owner": {
+            "persistentWard": {
+              "value": 1
+            }
+          },
+          "damageKind": "magical"
+        },
+        "amount": 20,
+        "quantity": true
+      }
+    },
+    "then": {
+      "value": 15
+    }
+  },
+  {
+    "name": "empty",
+    "when": {
+      "modifiers": {
+        "attachments": [
+          {
+            "ownerId": "target",
+            "sourceInstanceId": "base",
+            "kind": "entity",
+            "tags": [
+              "defense:wardProtection"
+            ]
+          }
+        ],
+        "phase": "damage.mitigation",
+        "subjectId": "target",
+        "context": {
+          "owner": {
+            "persistentWard": {
+              "value": 0
+            }
+          },
+          "damageKind": "magical"
+        },
+        "amount": 20,
+        "quantity": true
+      }
+    },
+    "then": {
+      "value": 20
+    }
+  },
+  {
+    "name": "other-kind",
+    "when": {
+      "modifiers": {
+        "attachments": [
+          {
+            "ownerId": "target",
+            "sourceInstanceId": "base",
+            "kind": "entity",
+            "tags": [
+              "defense:wardProtection"
+            ]
+          }
+        ],
+        "phase": "damage.mitigation",
+        "subjectId": "target",
+        "context": {
+          "owner": {
+            "persistentWard": {
+              "value": 1
+            }
+          },
+          "damageKind": "physical"
+        },
+        "amount": 20,
+        "quantity": true
+      }
+    },
+    "then": {
+      "value": 20
+    }
+  }
+]

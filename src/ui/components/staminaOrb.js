@@ -33,5 +33,7 @@ export function paintStaminaOrb(orb, values) {
     const l = staminaOrb.layers[id];
     if (l.visible) html += `<text data-orb-part="${id}" x="${450 + l.x * 9}" y="${baseline + l.y * 9}" text-anchor="middle" dominant-baseline="central" opacity="${l.opacity / 100}" style="font:${font * l.size / 100}px Georgia,serif;fill:#f1f1dc">${value}</text>`;
   }
-  orb.querySelector('svg').innerHTML = html;
+  const canvas = orb.querySelector('svg');
+  canvas.style?.setProperty('overflow', 'visible');
+  canvas.innerHTML = html;
 }

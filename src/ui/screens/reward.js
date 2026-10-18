@@ -61,7 +61,7 @@ import { relicText, cardPlainText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
-import { flaskSlotCap } from '../../model/gracerefill.js';
+import { acquireFlask, flaskAcquisitionPlan, flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, rewardClaimStatus, resolveContinue, unownedRelicChoices, unseenIds, rewardNotes, CARD_CHOICE_KINDS, isRelicChoice, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
 import { orderedXpRows, xpFillDurations } from '../../model/rewardXpPresentation.js';
@@ -103,6 +103,7 @@ export function mountRewards(app, {
   clearSelection();
   const planOptions = () => ({
     flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
+    ...(rewards.flaskId ? { flaskCanAcquire: flaskAcquisitionPlan(registries, run, rewards.flaskId).ok } : {}),
     // The bag's room, read from the same array addToStorage writes — one
     // home, two questions (the model asks "is there room", the collector's
     // own gate asks "did THIS store land"). Derived here so the ninth piece
@@ -288,8 +289,7 @@ export function mountRewards(app, {
       return true;
     },
     flask(row) {
-      run.flasks.push({ flaskId: row.flaskId });
-      recordSeen('flask', [row.flaskId]);
+      if (!acquireFlask(registries, run, row.flaskId).ok) return false;
       return true;
     },
     relic(row) {
@@ -318,7 +318,7 @@ export function mountRewards(app, {
     },
   };
 
-  function take(row, viaKind) {
+  function take(row, viaKind, { present = true } = {}) {
     if (skillClaimPending || states[row.key]) return false;
     // A row may say Taken only after its persistence door says it landed. The
     // armament collector returns false at the storage/duplicate boundary; a
@@ -326,8 +326,8 @@ export function mountRewards(app, {
     const raised = row.kind === 'skillRankUp' ? ownedInstance(row.instanceId) : null;
     // An attribute pick moves attributes and every derived pool: the whole run
     // is the record a refused save puts back.
-    const runBefore = row.kind === 'skillAttribute' || row.kind === 'skillFeat' || row.kind === 'classMilestone' || row.kind === 'skillDraft' || isRelicChoice(row) ? structuredClone(run) : null;
-    const cardBefore = CARD_CHOICE_KINDS.includes(row.kind) || isRelicChoice(row) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' ? {
+    const runBefore = row.kind === 'flask' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' || row.kind === 'classMilestone' || row.kind === 'skillDraft' || isRelicChoice(row) ? structuredClone(run) : null;
+    const cardBefore = row.kind === 'flask' || CARD_CHOICE_KINDS.includes(row.kind) || isRelicChoice(row) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' ? {
       deck: [...run.deck], chosenCardId, chosenRelicId, chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
       feats: [...(run.feats || [])],
       // A draft's take spends the ledger's queued draft; only a draft's rollback puts it back.
@@ -380,8 +380,11 @@ export function mountRewards(app, {
       throw error;
     }
     if (CARD_CHOICE_KINDS.includes(row.kind)) recordSeen('card', [row.cardId]);
-    sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
-    backTo(viaKind || row.key);
+    if (row.kind === 'flask') recordSeen('flask', [row.flaskId]);
+    if (present) {
+      sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
+      backTo(viaKind || row.key);
+    }
     return true;
   }
 
@@ -930,12 +933,7 @@ export function mountRewards(app, {
       const { take: offered } = resolveContinue({ rows }, states, mode, pickFn);
       // Level cards belong to a level claim, never to auto-collect on Continue.
       const toTake = offered.filter((row) => !isProgressionReward(row));
-      for (const row of toTake) {
-        if (apply[row.kind](row)) {
-          states[row.key] = 'taken';
-          persistProgress();
-        }
-      }
+      for (const row of toTake) take(row, null, { present: false });
       if (toTake.length) sfx.play('rewardTake');
       onDone(chosenCardId);
     };

@@ -1,3 +1,4 @@
+import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
@@ -13,7 +14,7 @@ import { createSaveManager,createMemoryStorage,runKey } from '../src/engine/save
 const profile=resolveGameProfile('core');
 const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 const fresh=()=>createRunState({seed:73,classId:'reaver',registries:reg,runId:'unique-run'});
-const visit=run=>{ run.mapGraph=buildActMap(reg,createRng(73),run.seatOrder[0],1);run.mapNodeId='n3_0'; return beginGameProfileRest(run,'1:n3_0'); };
+const visit=(run,registries=reg)=>{ run.mapGraph=buildActMap(registries,createRng(73),run.seatOrder[0],1);run.mapNodeId='n3_0'; return beginGameProfileRest(run,'1:n3_0'); };
 
 test('fixed classes, ten starters, persistent pin and restamping do not mint equipment grants',()=>{
  const run=fresh(); assert.equal(Object.values(run.attributes).reduce((a,b)=>a+b),6);
@@ -22,7 +23,7 @@ test('fixed classes, ten starters, persistent pin and restamping do not mint equ
  stampDeck(reg,run);assert.equal(run.deck.length,10);assert.equal(run.deck.filter(c=>c.cardId==='core.strike').length,3);
  assert.throws(()=>createRunState({seed:1,classId:'starseer',registries:reg}),/locked/);
  const meta={gameProfileUnlocks:{[profile.id]:{completedRunIds:['one']}}};
- const star=createRunState({seed:1,classId:'starseer',registries:reg,profileMeta:meta});assert.equal(star.drawPerTurn,6);
+ const star=createRunState({seed:1,classId:'starseer',registries:reg,profileMeta:meta});assert.equal(star.drawPerTurn,4+gameProfileEffectiveAttributes(reg,star).intelligence);
  const restored=deserializeRun(serializeRun(run));assert.equal(restored.gameProfile.hash,profile.hash);assert.equal(restored.runId,run.runId);
 });
 
@@ -37,7 +38,7 @@ test('terminal wins and defeats each unlock one class, durable dedupe survives h
  assert.equal(gameProfileClassAvailable(profile,{},'herald'),false);
 });
 
-test('seeded route has seven branching preboss depths, two mandatory rests on depths 3 and 6, and replay stability',()=>{
+test('seeded route has seven branching preboss depths, two mandatory rests on depths 3 and 7, and replay stability',()=>{
  const run=fresh();let prior;
  for(let tier=1;tier<=3;tier++){
   const map=buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier);
@@ -65,7 +66,7 @@ test('failed/rest forgery is atomic; empty Strategize remains available without 
  assert.throws(()=>commitGameProfileRest(reg,run,'levelUp',{attributeId:'strength'}),/no attribute point/);assert.equal(JSON.stringify(run),before);
  const draft=createGameProfileRestDraft(run);draft.deck[0].cardId='unknown';
  assert.throws(()=>commitGameProfileRest(reg,run,'strategize',{draft}),/Unknown/);assert.equal(JSON.stringify(run),before);
- const forged=createGameProfileRestDraft(run);forged.deck.push({instanceId:'fake',cardId:'core.smash',upgraded:false});
+ const forged=createGameProfileRestDraft(run);forged.deck.push({instanceId:'fake',cardId:'core.reaverSpecial',upgraded:false});
  assert.throws(()=>commitGameProfileRest(reg,run,'strategize',{draft:forged}),/invent/);assert.equal(JSON.stringify(run),before);
  commitGameProfileRest(reg,run,'strategize');assert.equal(run.hp,run.maxHp);
 });
@@ -113,7 +114,7 @@ test('profile completion ledger persists independently from bounded history and 
 test('two CON increases add one authored SP, and Smith commits an equipment tier before full recovery',async()=>{
  const run=fresh();visit(run);run.level.unspentPoints=2;const initial=run.maxStamina;
  commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
- run.mapNodeId='n6_0';beginGameProfileRest(run,'1:n6_0');commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
+ run.mapNodeId='n7_0';beginGameProfileRest(run,'1:n7_0');commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
  assert.equal(run.maxStamina,initial+1);
  const smith=fresh();visit(smith);smith.smithingStones=999;smith.hp=1;
  const {smithingPlan}=await import('../src/model/smithing.js');const candidate=smithingPlan(reg,smith).candidates.find(row=>row.affordable);
@@ -162,12 +163,16 @@ test('configured equipment requirements default none across six families and fou
 });
 
 test('Smith tier bonuses share UI combat preview and real damage/block, survive load and disappear on swapping gear',async()=>{
+ // These exact upgrade coefficients are the archived Core 1 contract.
+ const original=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{}});
+ const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,original)),original);
+ const fresh=()=>createRunState({seed:73,classId:'reaver',registries:reg,runId:'unique-run'});
  const {gameProfileRatingReceipt}=await import('../src/model/gameProfileRun.js');
  const {ratingReceipt}=await import('../src/model/combatRatings.js');
  const {createRunCombat}=await import('../src/engine/runCombat.js');
  const {previewCard,dispatch}=await import('../src/engine/combat.js');
  const {smithingPlan}=await import('../src/model/smithing.js');
- const run=fresh();visit(run);
+ const run=fresh();visit(run,reg);
  // Leave enough health to measure the full upgraded hit rather than overkill.
  const fight=()=>{const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});combat.enemies[0].hp=combat.enemies[0].maxHp=1000;return combat;};
  const before=fight(),beforeRatings=ratingReceipt(reg,run,{}).totals;
@@ -185,6 +190,10 @@ test('Smith tier bonuses share UI combat preview and real damage/block, survive 
 
 
 test('configured upgrade groups take highest active tiers without summing and honor JSON coefficients',async()=>{
+ // These exact upgrade coefficients are the archived Core 1 contract.
+ const original=resolveGameProfile({formatVersion:1,core:'ashen.core@1.0.0',modules:{}});
+ const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,original)),original);
+ const fresh=()=>createRunState({seed:73,classId:'reaver',registries:reg,runId:'unique-run'});
  const {gameProfileRatingReceipt}=await import('../src/model/gameProfileRun.js');
  const run=fresh(),base=gameProfileRatingReceipt(reg,run).totals;
  run.loadout.sets.leftHand[0]='dagger';run.itemUpgradeLevels={'armament/greatsword':3,'armament/dagger':2};assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,base.ar+3);
@@ -201,7 +210,7 @@ test('all four unlocked core classes instantiate exact kits and decks, construct
   const run=createRunState({seed:17,classId,registries:reg,profileMeta:meta});assert.equal(run.deck.length,10,classId);
   assert.deepEqual([run.loadout.sets.rightHand[0],run.loadout.sets.leftHand[0]],expected,classId);
   stampDeck(reg,run);assert.equal(run.deck.length,10,classId);
-  const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});assert.ok(combat.enemies[0].alive,classId);assert.equal(combat.piles.hand.length,classId==='starseer'?6:5,classId);
+  const combat=createRunCombat({registries:reg,run,rng:createRng(17),enemyIds:['wanderingSoldier']});assert.ok(combat.enemies[0].alive,classId);assert.equal(combat.piles.hand.length,run.drawPerTurn,classId);
   const save=createSaveManager(createMemoryStorage());save.saveRun(run,null);const restored=save.loadRun(reg);assert.ok(restored,`${classId}: ${JSON.stringify(save.runStatus())}`);assert.equal(restored.deck.length,10,classId);assert.deepEqual([restored.loadout.sets.rightHand[0],restored.loadout.sets.leftHand[0]],expected,classId);
  }
 });

@@ -18,5 +18,9 @@
   "presentation": {
     "icon": "internal.upgraded"
   },
-  "portability": "data"
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/deckRules.js",
+    "symbol": "commitDeckEditDraft"
+  }
 }

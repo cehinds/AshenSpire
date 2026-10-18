@@ -334,8 +334,9 @@ function isContractColumn(file, key, value) {
  */
 export function catalogSchemaVersionSpans(file, text) {
   const spans = [];
-  if (file !== 'src/content/generated/gameProfiles.js') return spans;
-  const declaration = /^export const gameProfileCatalog\s*=\s*/m.exec(text);
+  const mechanics = file === 'src/content/generated/fixCoreProtection.js';
+  if (file !== 'src/content/generated/gameProfiles.js' && !mechanics) return spans;
+  const declaration = (mechanics ? /^export const fixCoreProtection\s*=\s*/m : /^export const gameProfileCatalog\s*=\s*/m).exec(text);
   if (!declaration) return spans;
   const start = declaration.index + declaration[0].length;
   // Tokenize only the JSON export, never JavaScript expressions. JSON.parse
@@ -353,12 +354,19 @@ export function catalogSchemaVersionSpans(file, text) {
     if (match[0] === '{' || match[0] === '[') depth++;
     if (match[0] === '}' || match[0] === ']') depth--;
   } while (depth > 0);
-  if (tokens[0].text !== '{' || !/^\s*;/.test(text.slice(cursor))) return spans;
+  if (tokens[0].text !== (mechanics ? '[' : '{') || !/^\s*;/.test(text.slice(cursor))) return spans;
   let catalog;
   try { catalog = JSON.parse(text.slice(start, cursor)); } catch { return spans; }
   const owners = new WeakSet();
   const allow = value => { if (value && typeof value === 'object') owners.add(value); };
   const artifacts = values => { for (const value of values || []) allow(value); };
+  if (mechanics) {
+    if (!Array.isArray(catalog)) return [];
+    for (const row of catalog) {
+      if (!Array.isArray(row) || row.length !== 2 || typeof row[0] !== 'string' || row[1]?.manifest?.id !== row[0]) return [];
+      allow(row[1].manifest);
+    }
+  }
   allow(catalog.contracts);
   allow(catalog.foundation);
   for (const entry of Object.values(catalog.modules || {})) {

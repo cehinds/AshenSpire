@@ -34,7 +34,20 @@ test('a group naming a nonexistent card is refused, and nothing is written', asy
   const problems = await files.validate([{ path: GROUPS, kind: 'json', text }]);
   assert.equal(problems.length, 1);
   assert.equal(problems[0].path, GROUPS);
-  assert.ok(problems[0].message.length > 0);
+  assert.match(problems[0].message, /unknown card 'base\.no-such-card-xyz'/, 'the complete candidate reaches semantic validation rather than failing on a missing dependency');
   await assert.rejects(files.save([{ path: GROUPS, text, baseHash: before.hash }]), (err) => err.status === 422);
   assert.equal(await fs.readFile(path.join(root, GROUPS), 'utf8'), before.text);
+});
+
+
+test('an unchanged Core 2 profile validates with canonical mechanic source dependencies', async (t) => {
+  const files = await service(t);
+  const profile = 'games/ashenspire/game.json';
+  const source = path.join(root, 'content/source/fixCoreMechanics.json');
+  const sourceBefore = await fs.readFile(source, 'utf8');
+  const before = await files.read(profile);
+  assert.equal(JSON.parse(before.text).core, 'ashen.core@2.0.0');
+  assert.deepEqual(await files.validate([{path:profile,kind:'json',text:before.text}]), []);
+  assert.equal(await fs.readFile(source, 'utf8'), sourceBefore, 'candidate validation does not modify canonical source');
+  assert.equal((await files.read(profile)).text, before.text, 'candidate validation does not modify the profile');
 });

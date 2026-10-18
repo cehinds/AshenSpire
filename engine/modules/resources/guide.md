@@ -2,7 +2,7 @@
 
 Select the resource pools available to cards and runs. HP is foundational; SP and MP are optional configured pools in the Ashen profile.
 
-**Status:** Listed in `ashen.core@1.0.0`.
+**Status:** Listed in `ashen.core@2.0.0`.
 Runtime scope: Configured HP/SP/MP pool selection and authored per-card resource variants. This adapter does not claim a portable resource VM.
 
 ## Authoring example
@@ -12,7 +12,7 @@ Add one override to `games/ashenspire/game.json`; leave other bundled modules in
 ```json
 {
   "formatVersion": 1,
-  "core": "ashen.core@1.0.0",
+  "core": "ashen.core@2.0.0",
   "modules": {
     "resources": false
   }
@@ -59,3 +59,15 @@ node tools/game-config.mjs check
 ```
 
 For runtime changes, use the focused tests in `tests/game-profile-run.test.mjs` and the matching module tests. A passing resolver check proves schema/resolution only, not that every host behavior is covered by browser acceptance.
+
+## Charge-flask acquisition
+
+The optional `chargeFlaskCapacityPerPickup` setting grants permanent reallocatable
+capacity when an HP/MP charge flask is collected. The core uses 1. Rewards,
+shops and event effects call the same acquisition query/commit helper; each
+successful grant increases capacity, its assigned/current pool, and `granted`
+by the configured amount. The ledger remains `base + grown.hp + grown.mana +
+granted = capacity = hp + mana`. Charge flasks do not occupy utility belt slots.
+Utility consumables still use their normal belt limit. Missing or zero settings
+preserve older snapshots' inventory-only acquisition policy. The caller's claim
+receipt, not the helper itself, enforces once-only reward or event collection.

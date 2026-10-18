@@ -55,9 +55,11 @@ function cardBand(hand) {
 
 /** Closes the Full log door for good: the combat has ended or the screen is leaving. */
 export function closeCombatFullLog(state) {
-  const door = state.fullLog;
-  state.fullLog = null;
+  const door = state.fullLog, drawer = state.drawerLog;
+  state.fullLog = state.drawerLog = null;
+  state.open = false;
   door?.close();
+  drawer?.close();
 }
 
 // Gap between a corner tool and the combat screen's edge, in CSS px.
@@ -169,6 +171,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGr
     if (!root.isConnected) return;
     const combatBox = combatEl.getBoundingClientRect();
     const zoom = combatBox.width / combatEl.clientWidth || 1;
+    root.style.setProperty('--combat-log-button-width', `${logButton.getBoundingClientRect().width / zoom}px`);
     const hand = combatEl.querySelector('.hand');
     const handBox = hand?.getBoundingClientRect();
     // HUD layout tokens (docs/hud-layout-tokens.md), read once per pass.
@@ -243,12 +246,20 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGr
     reaction.setAttribute('aria-label', t('combat.reactions.state', { state: stateLabel }));
     reaction.dataset.enabled = String(toggle.enabled);
     value.textContent = stateLabel;
-    panel.hidden = !log.open; logButton.setAttribute('aria-expanded', String(log.open));
+    // Expanded reading uses the same body portal, focus/back handling and layer
+    // as the full log, so battlefield stacking contexts cannot cover it.
+    panel.hidden = true;
+    if (log.open && !state.drawerLog) state.drawerLog = openCombatLogModal({
+      entries: log.entries, opener: logButton, detailed: false,
+      onClose: () => { state.drawerLog = null; state.open = false; onViewChange(); },
+    });
+    if (!log.open && state.drawerLog) { const drawer = state.drawerLog; state.drawerLog = null; drawer.close(); }
+    logButton.setAttribute('aria-expanded', String(log.open));
     logButton.setAttribute('aria-description', `${log.size}. Tap to open or close; drag up or down to resize. Arrow keys change size.`);
     latestEntries = log.entries;
     const key = JSON.stringify(log.entries);
     if (key !== entryKey) {
-      entryKey = key; renderCombatLogEntries(list, log.entries); state.fullLog?.setEntries(log.entries);
+      entryKey = key; renderCombatLogEntries(list, log.entries); state.fullLog?.setEntries(log.entries); state.drawerLog?.setEntries(log.entries);
       list.scrollTop = state.followLatest !== false ? list.scrollHeight : state.scrollTop || 0;
     }
     schedule();

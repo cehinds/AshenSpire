@@ -1,3 +1,4 @@
+import { fixCoreEnabled, fixCoreRules } from './fixCoreMechanics.js';
 // The authority creates a read once. UI/preview callers only project it.
 export const PREDICTION_CHOICES = Object.freeze(['Attack', 'Smash', 'Sweep', 'Ranged', 'Defend', 'Counter', 'Spell', 'Casting', 'Preparing']);
 export const HIDDEN_INTENT_LABELS = Object.freeze(['?', 'Attack?', 'Magic?', 'Preparing?']);
@@ -25,7 +26,21 @@ export function broadIntentLabel(category) {
   if (['Attack', 'Smash', 'Sweep', 'Ranged'].includes(category)) return 'Attack?';
   return category === 'Spell' ? 'Magic?' : 'Preparing?';
 }
-export function rollKnowledgeRead(rng, rules, observer, category) {
+export function rollKnowledgeRead(rng, rules, observer, category, { ctx = null, target = {} } = {}) {
+  if (fixCoreEnabled(ctx)) {
+    const cfg = fixCoreRules(ctx, observer.entity).perception;
+    const roll = 1 + Math.floor(rng.float('enemyIntentVisibility') * 20);
+    // Keep the legacy clue stream deterministic without exposing a failed exact check.
+    rng.float('enemyIntentClue');
+    const wisdom = Number(observer.attributes?.wisdom) || 0;
+    const level = Number(target.level?.level ?? target.level) || cfg.levelBaseline;
+    const intelligence = Number(target.attributes?.intelligence) || cfg.intelligenceBaseline;
+    const dc = cfg.baseDC + Math.max(0, level - cfg.levelBaseline) * cfg.levelWeight
+      + Math.max(0, intelligence - cfg.intelligenceBaseline) * cfg.intelligenceWeight;
+    const total = roll + wisdom, passed = total >= dc;
+    return {visibility:passed ? 'exact' : 'unknown',label:passed ? null : '?',
+      perception:{roll,wisdom,dc,total,passed},prediction:null,resolved:false,correct:null,credited:false};
+  }
   // Both draws are unconditional; an exact success never shifts future clues.
   const exact = rng.float('enemyIntentVisibility');
   const clue = rng.float('enemyIntentClue');
