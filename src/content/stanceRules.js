@@ -4,6 +4,9 @@ export const stanceRules = Object.freeze({
   roundStartDecay: Object.freeze({ evade: 1 }),
   fallbackPoise: 3,
   smashMultiplier: 1.5, counterMultiplier: 1.5, sweepCounterMultiplier: 2,
+  // Ward absorbs at most this share of one action's magic damage after Barrier, and never more than it holds
+  // (owner ruling 2026-10-11: spells fairly reliable, Ward must not block all damage, up to half).
+  wardAbsorbShare: 0.5,
   spellSmashWardShare: 0.3, sweepReactionPoise: 3, sweepReactionWard: 3,
   sameStanceDiscount: 1, physicalMinimumSp: 1, magicalMinimumSp: 0,
   offensiveRating: 1, offensivePrecision: 1, defensiveRating: 3,
