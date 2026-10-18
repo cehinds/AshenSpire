@@ -2,12 +2,11 @@
   "feature": "feature/ImproveMapBattleFieldArt",
   "capturedDate": "2026-10-17",
   "timezone": "America/Anchorage",
-  "sourceCommitAtCapture": "5493728fc31696bd84364d12ab8b255e81f845bd",
-  "workingTreeContainsImplementation": false,
+  "sourceCommitAtCapture": "b445052c3ed8ef92a99dcafc5688de32bf0ff4c7",
   "build": "0.7.1.1562",
-  "sourceDigest": "657c207b21",
-  "webSha256": "e3317475c80b7cdceda3aaf3b953572c4cd6dab2c2699c56f31e837f11727581",
-  "standaloneSha256": "53580c03a81f2a0be56ca45c13ccc419222073224cba32d0910873867ddd1778",
+  "sourceDigest": "8c3d65426b",
+  "webSha256": "57eee78c67b7d215eda63dffd7a9729a080f0b145a51f78aa12ae8d2c01c5a97",
+  "standaloneSha256": "995b72c93797d30aa1cb48e54becac3e86fa533ae14eda89ef77fd6212c33b65",
   "playableUrl": "https://cehinds.github.io/AshenSpire/branches/feature/ImproveMapBattleFieldArt/latest/",
   "viewports": {
     "mobile": [
@@ -29,11 +28,12 @@
   },
   "screenshots": {
     "docs/design/layered-environment-evidence/desktop.png": "428c0d984954aa920f93091fcd07590a687ba8ace857b31ae790c19f370fb0d5",
-    "docs/design/layered-environment-evidence/map-archive.png": "d331179a9f6f300c72111739b162c326ad1c125a1737fd7f6b7c8f8a4e2bcccd",
+    "docs/design/layered-environment-evidence/map-archive.png": "a3bb68f9068700cf537fc1fcb77a7bcd834a057cbf849238d15d31972f8c4310",
     "docs/design/layered-environment-evidence/map-forge.png": "79743cea90f4adfab1759a40c6ed292cf36abcbf43136225ffdcd4816d94eb03",
     "docs/design/layered-environment-evidence/mobile.png": "58eca150232a315b698b457de75082cd7aa48656fcc7d966846a8cedab22759b",
     "docs/design/layered-environment-evidence/tablet.png": "ae2c334cc758d78b94b35359084f0755a32ba313a82d02d27f29cd02875e24a6",
-    "docs/design/layered-environment-evidence/wide.png": "70667359a55a857576cade95559050fa2d38d8fbccd2f2d0e16487b2ef1b2bb4"
+    "docs/design/layered-environment-evidence/wide.png": "2c86803dea3417ff7b34a9e4f2208fb3a7d2c246c15180d72560b4ff65dec67e"
   },
-  "hostedVerification": "Local merged-dev web build verified in Chromium; no hosted verification claimed. The earlier standalone capture is superseded by these web-build captures."
+  "hostedVerification": "Local merged-dev web pack edition verified in Chromium; no hosted verification claimed. Both web and single-file editions build; these screenshots verify the web edition.",
+  "workingTreeWasCleanAtCapture": true
 }
