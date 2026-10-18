@@ -23,7 +23,9 @@
 //
 // `combat.play` is THREE REAL TOUCH PLAYS (tap a card in the hand, then tap the
 // enemy when the card wants a target) and every figure on it is the MEAN PER
-// PLAY over the plays that landed (`plays=` says how many did). layouts and
+// PLAY. Fewer than three landing is a failed attempt (retried once, then exit 2
+// and a budget run fails too); --json still gets the partial means under
+// `play.partial: true`, which budget checks ignore. layouts and
 // recalcs are CDP Performance.getMetrics deltas over the play window; forcedReads
 // counts getBoundingClientRect + getComputedStyle calls the page made (a
 // page.addInitScript wrapper; this tool's own reads go around it);
@@ -78,7 +80,7 @@ export function budgetValues(result) {
   const combat = result?.scenes?.combat;
   if (combat) for (const k of ['nodes', 'filters']) if (Number.isFinite(combat[k])) v[`combat.${k}`] = combat[k];
   const play = result?.play;
-  if (play && play.plays > 0) {
+  if (play && !play.partial && play.plays >= PLAYS_WANTED) {
     for (const k of ['layouts', 'recalcs', 'forcedReads', 'mutations', 'longTasks']) {
       if (Number.isFinite(play[k])) v[`play.${k}`] = play[k];
     }
@@ -129,6 +131,14 @@ export function sceneUrl(base, scene) {
 
 export const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 const round1 = (n) => Math.round(n * 10) / 10;
+
+/** Mean per play over the plays that landed; `partial: true` when fewer than `wanted` did. */
+export function playSummary(plays, wanted = PLAYS_WANTED) {
+  const key = (k) => round1(mean(plays.map((p) => p[k])));
+  const out = { plays: plays.length, layouts: key('layouts'), recalcs: key('recalcs'), forcedReads: key('forcedReads'), mutations: key('mutations'), longTasks: key('longTasks'), longTasksMs: key('longTasksMs') };
+  if (plays.length < wanted) out.partial = true;
+  return out;
+}
 
 /** Why an HTTP status is not a loaded game, or null. A file: URL has no status. */
 export function httpProblem(status, protocol = 'http:') {
@@ -245,6 +255,11 @@ async function measureScene(browser, base, scene, wantPlays) {
     if (errored) throw new Error(`${scene} ${errored}`);
     const counts = await page.evaluate(sceneCounts);
     const plays = wantPlays ? await touchPlays(page, cdp, wantPlays) : [];
+    if (plays.length < wantPlays) {
+      const e = new Error(`only ${plays.length} of ${wantPlays} touch plays landed`);
+      e.partial = { counts, plays }; // kept for --json (run marks it partial: true)
+      throw e;
+    }
     return { counts, plays };
   } finally {
     await ctx.close().catch(() => {});
@@ -342,11 +357,16 @@ export async function run(opts) {
   try {
     for (const scene of opts.scenes) {
       let got = null;
+      let partial = null; // the last failed attempt's numbers, when it had any (fewer plays than wanted)
       for (let attempt = 1; attempt <= 2 && !got; attempt++) {
-        try { got = await measureScene(browser, base, scene, scene === 'combat' ? PLAYS_WANTED : 0); } catch (e) { console.error(`measure: ${scene} attempt ${attempt} failed: ${String(e && e.message).split('\n')[0]}`); }
+        try { got = await measureScene(browser, base, scene, scene === 'combat' ? PLAYS_WANTED : 0); } catch (e) {
+          partial = (e && e.partial) || null;
+          console.error(`measure: ${scene} attempt ${attempt} failed: ${String(e && e.message).split('\n')[0]}`);
+        }
       }
-      if (!got) { result.failed.push(scene); continue; }
-      const { counts, plays } = got;
+      if (!got) result.failed.push(scene);
+      if (!got && !partial) continue;
+      const { counts, plays } = got || partial;
       const { dcl, longest, ...c } = counts;
       result.scenes[scene] = c;
       console.log(`MEASURE ${scene} nodes=${c.nodes} filters=${c.filters} anims=${c.anims} requests=${c.requests} bytes=${c.bytes}`);
@@ -355,10 +375,8 @@ export async function run(opts) {
         console.log(`MEASURE boot dcl_ms=${dcl} longest_task_ms=${longest}`);
       }
       if (scene === 'combat') {
-        const key = (k) => round1(mean(plays.map((p) => p[k])));
-        result.play = { plays: plays.length, layouts: key('layouts'), recalcs: key('recalcs'), forcedReads: key('forcedReads'), mutations: key('mutations'), longTasks: key('longTasks'), longTasksMs: key('longTasksMs') };
-        const p = result.play;
-        console.log(`MEASURE combat.play plays=${p.plays} layouts=${p.layouts} recalcs=${p.recalcs} forcedReads=${p.forcedReads} mutations=${p.mutations} longTasks=${p.longTasks} longTasksMs=${p.longTasksMs}`);
+        const p = result.play = playSummary(plays, PLAYS_WANTED);
+        console.log(`MEASURE combat.play plays=${p.plays} layouts=${p.layouts} recalcs=${p.recalcs} forcedReads=${p.forcedReads} mutations=${p.mutations} longTasks=${p.longTasks} longTasksMs=${p.longTasksMs}${p.partial ? ' partial=true' : ''}`);
       }
     }
   } finally {

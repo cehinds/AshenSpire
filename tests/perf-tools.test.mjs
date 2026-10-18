@@ -7,7 +7,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BUDGET, checkBudget, budgetFailed, budgetValues, parseArgs, sceneUrl, mean, httpProblem, readinessProblem, pageErrorProblem } from '../tools/measure.mjs';
+import { BUDGET, checkBudget, budgetFailed, budgetValues, parseArgs, sceneUrl, mean, httpProblem, readinessProblem, pageErrorProblem, playSummary, PLAYS_WANTED } from '../tools/measure.mjs';
 import * as size from '../tools/size-budget.mjs';
 
 const within = Object.fromEntries(Object.entries(BUDGET));
@@ -74,6 +74,22 @@ test('pageErrorProblem: any uncaught page error voids the attempt and is named',
   assert.equal(pageErrorProblem(undefined), null);
   assert.equal(pageErrorProblem(['TypeError: x is undefined']), 'page error: TypeError: x is undefined');
   assert.equal(pageErrorProblem(['a', 'b']), 'page error (1 of 2): a');
+});
+
+test('playSummary: three plays are a sample, fewer are partial and never gated', () => {
+  const one = { layouts: 4, recalcs: 8, forcedReads: 20, mutations: 30, longTasks: 1, longTasksMs: 90 };
+  assert.equal(PLAYS_WANTED, 3);
+  const full = playSummary([one, one, { ...one, layouts: 7 }]);
+  assert.equal(full.plays, 3);
+  assert.equal(full.layouts, 5);
+  assert.equal(full.partial, undefined);
+  const part = playSummary([one, one]);
+  assert.equal(part.plays, 2);
+  assert.equal(part.partial, true);
+  const result = (play) => ({ scenes: { combat: { nodes: 5, filters: 6 } }, play });
+  assert.equal(Object.keys(budgetValues(result(full))).filter((k) => k.startsWith('play.')).length, 5);
+  assert.equal(Object.keys(budgetValues(result(part))).filter((k) => k.startsWith('play.')).length, 0);
+  assert.ok(budgetFailed(checkBudget(budgetValues(result(part)))));
 });
 
 // base64 of "AB" (QUI=), "A" (QQ==), "ABC" (QUJD), 6 bytes (QUJDREVG)
