@@ -1,0 +1,41 @@
+name: Recover enemy rear evidence
+on:
+  push:
+    branches: ['worker/EnemyBackSprites/artifact-evidence']
+permissions:
+  contents: write
+  actions: read
+jobs:
+  recover:
+    if: github.event.head_commit.message == '[recover enemy rear evidence]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools
+            README.md
+            CHANGELOG.md
+            buildordinal.json
+            pose-studio/enemy-back-proposals
+            docs/preview/features/enemy-back-sprites
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Recover existing four viewport evidence without browser rerun
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 39061742409 --repo cehinds/AshenSpire --name enemy-rear-artifact-evidence --dir docs/preview/features/enemy-back-sprites
+          node pose-studio/enemy-back-proposals/recover-evidence.mjs
+      - name: Commit verified evidence on worker only
+        run: |
+          test "$GITHUB_REF_NAME" = worker/EnemyBackSprites/artifact-evidence
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --sparse -f -- README.md CHANGELOG.md docs/preview/features/enemy-back-sprites/
+          git commit -m "Record four exact-artifact rear gallery views and draft receipt"
+          git push --force-with-lease=refs/heads/worker/EnemyBackSprites/artifact-evidence:$GITHUB_SHA origin HEAD:worker/EnemyBackSprites/artifact-evidence
