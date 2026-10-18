@@ -24,9 +24,17 @@ export const AUDIO_DEFAULTS = balance.ui.audio;
 // 1 + (rng() * 2 * spread - spread), drawn once per cue and shared by its
 // tone layers, so the same cue never sounds twice the same (+/-4 %) and its
 // intervals never drift against themselves. `rng` is a hook so a test can pin
-// the factor; noise bursts are unaffected.
+// the factor; noise bursts are unaffected. The hold-confirmation phrase is
+// exempt: its notes sit exactly where the score puts them (see isPhrase).
 export const sfxVariance = { spread: 0.04, rng: Math.random };
 const pitchFactor = () => 1 + (sfxVariance.rng() * 2 * sfxVariance.spread - sfxVariance.spread);
+
+// The hold-confirmation phrase (holdTick ×3 then holdCommit, see
+// components/holdbeat.js) is one authored line, not a stream of events:
+// every crossed mark must sound even inside one frame, and every note sits
+// exactly where the score puts it. So it skips the 40 ms dedupe and the
+// per-cue pitch draw. `holdTick_endTurn` and the like are the same phrase.
+const isPhrase = (id) => /^hold(Tick|Commit)(?:_|$)/.test(String(id));
 
 /** Resolve the sparse music-only preference without deriving it from volume. */
 export function resolveMusicEnabled(settings = {}) {
@@ -166,8 +174,9 @@ export function initAudio(settings = {}) {
     // silently: a late or clipped cue is worse than none, same as above.
     const gate = state.sfxVoices;
     const at = now();
+    const phrase = isPhrase(id);
     const prev = gate.lastAt.get(id);
-    if (prev !== undefined && at - prev < gate.dedupeSec) return;
+    if (!phrase && prev !== undefined && at - prev < gate.dedupeSec) return;
     // Reserve the whole cue by what will actually sound: a cached sample is
     // one voice; anything else (no sample, or one still warming or failed)
     // falls back to the synth, one voice per recipe layer, so a 4-layer burst
@@ -266,7 +275,9 @@ export function initAudio(settings = {}) {
           `, in src/content/sfx.js.`
       );
     }
-    const k = pitchFactor(); // one draw per cue: layers stay in tune with each other
+    // One draw per cue keeps its layers in tune with each other. The hold
+    // phrase draws none: its notes sit exactly on the score's pitch.
+    const k = isPhrase(id) ? 1 : pitchFactor();
     for (const { kind, ...params } of recipe) {
       if (kind === 'noise') noise(params);
       else tone({ ...params, k });
