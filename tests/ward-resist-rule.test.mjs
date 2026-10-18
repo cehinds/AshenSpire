@@ -109,3 +109,56 @@ test('saved rules without statuses.ward stay valid; resistMaxShare outside 0 to 
   const bad = structuredClone(good); bad.statuses.ward.resistMaxShare = 2;
   assert.ok(combatExpansionRulesProblems(bad).some(problem => /resistMaxShare/.test(problem)));
 });
+
+// Queue one action of any camp (two hits by default) through the played-card planning path.
+function castAction(combat, enemy, profile, { amount = 5, hits = 2 } = {}) {
+  const card = { cardId: 'starstonePebble', tags: [`camp:${profile.camp}`] };
+  const effect = { op: 'damage', target: 'enemy', amount, hits, combatProfile: { reach: 'near', targeting: 'single', ...profile } };
+  const actions = [{ effect, source: combat.player, owner: combat.player, target: enemy, card, meta: {} }];
+  enqueueExpandedAction(combat, actions, { source: combat.player, target: enemy, carrier: card });
+  drainQueue(combat);
+}
+
+test('Ward drained by a rider between the contacts of one spell action is not over-reported or over-absorbed', () => {
+  const forceSpell = { camp: 'spell', maneuver: 'casting', school: 'force', damageType: 'force' };
+  // Control: the same two-hit spell into a target with no Ward.
+  const plain = fixture(); plain.enemy.hp = plain.enemy.maxHp = 1000;
+  plain.enemy.persistentWard.value = plain.enemy.persistentWard.max = 0;
+  const plainBefore = plain.enemy.hp;
+  castAction(plain.combat, plain.enemy, forceSpell);
+  const unwarded = plainBefore - plain.enemy.hp;
+
+  // Ward 5 absorbs its planned share on hit one; the force rider then strips 2 more before hit two lands.
+  const { combat, enemy } = fixture();
+  enemy.hp = enemy.maxHp = 1000;
+  enemy.persistentWard.value = enemy.persistentWard.max = 5;
+  const seen = captureEvents(combat);
+  const before = enemy.hp;
+  castAction(combat, enemy, forceSpell);
+  const dealt = seen.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id);
+  const spent = seen.filter(event => event.type === 'persistentWardChanged' && event.targetId === enemy.id && event.cause === 'resisted')
+    .reduce((sum, event) => sum + event.spent, 0);
+  const reported = dealt.reduce((sum, event) => sum + event.wardResisted, 0);
+  const stripped = seen.filter(event => event.type === 'combatWardStripped' && event.targetId === enemy.id);
+
+  assert.equal(dealt.length, 2, 'two hits land');
+  assert.ok(stripped.length > 0, 'the rider drains Ward mid-action');
+  assert.equal(reported, spent, 'RESISTED reports exactly the Ward that was spent');
+  assert.equal(enemy.persistentWard.value, 5 - spent - stripped.reduce((sum, event) => sum + event.amount, 0), 'pool drops by spent plus stripped');
+  assert.equal(enemy.persistentWard.value, 0, 'Ward is broken at 0 by the end of the action');
+  assert.equal(before - enemy.hp, unwarded - spent, 'each point Ward spent is damage not taken; the rest lands');
+  for (const event of dealt) assert.ok(event.wardResisted >= 0);
+});
+
+test('a physical two-hit action never emits wardResisted or touches the Ward pool', () => {
+  const { combat, enemy } = fixture();
+  enemy.hp = enemy.maxHp = 1000;
+  enemy.persistentWard.value = enemy.persistentWard.max = 10;
+  const seen = captureEvents(combat);
+  castAction(combat, enemy, { camp: 'physical', maneuver: 'attack', school: 'steel', damageType: 'slashing' });
+  const dealt = seen.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id);
+  assert.equal(dealt.length, 2, 'two hits land');
+  for (const event of dealt) assert.equal(event.wardResisted, 0);
+  assert.equal(seen.filter(event => event.type === 'persistentWardChanged' && event.targetId === enemy.id).length, 0);
+  assert.equal(enemy.persistentWard.value, 10);
+});
