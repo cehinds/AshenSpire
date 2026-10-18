@@ -244,7 +244,7 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
       // Real path: game-config.mjs runs main() only when argv[1] is its own resolved path (macOS /var is a symlink).
       const tmp = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'wb-gamecfg-')));
       try {
-        for (const rel of ['src', 'engine', 'games/ashenspire', 'tools/game-config.mjs', 'tools/base-cards.mjs']) {
+        for (const rel of ['src', 'engine', 'games/ashenspire', 'tools/game-config.mjs', 'tools/base-cards.mjs', 'tools/catalog-json.mjs']) {
           await fs.mkdir(path.dirname(path.join(tmp, rel)), { recursive: true });
           await fs.cp(path.join(root, rel), path.join(tmp, rel), { recursive: true });
         }

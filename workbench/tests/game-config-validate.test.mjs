@@ -34,7 +34,7 @@ test('a group naming a nonexistent card is refused, and nothing is written', asy
   const problems = await files.validate([{ path: GROUPS, kind: 'json', text }]);
   assert.equal(problems.length, 1);
   assert.equal(problems[0].path, GROUPS);
-  assert.ok(problems[0].message.length > 0);
+  assert.match(problems[0].message, /unknown card 'base\.no-such-card-xyz'/, 'the compiler must reject authored content, not fail to import its dependencies');
   await assert.rejects(files.save([{ path: GROUPS, text, baseHash: before.hash }]), (err) => err.status === 422);
   assert.equal(await fs.readFile(path.join(root, GROUPS), 'utf8'), before.text);
 });
