@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
+- **Relics, stances and flasks are plain data files now** ([#2110](https://github.com/cehinds/AshenSpire/pull/2110), `0.7.1.1593`). Nothing changes in play. The 63 relics, the stances and the 7 flasks are authored as JSON in content/source and compiled into the game like the rest of the content tables; the design notes that lived as code comments are kept beside them.
+
 - **Misspelled targets, statuses and card names are refused at build time** ([#2108](https://github.com/cehinds/AshenSpire/pull/2108), `0.7.1.1593`). A card or enemy move that names an unknown effect target, status or card used to build fine and fail in the middle of a fight; the game build now refuses it with the exact path and the allowed vocabulary.
 
 - **Hold-to-confirm rings every tick, exactly on pitch** ([#2105](https://github.com/cehinds/AshenSpire/pull/2105), `0.7.1.1593`). The press-and-hold phrase (three ticks and the arrival) no longer loses a tick when a slow frame crosses two marks at once, and its notes no longer wobble: the pitch variance that makes hits sound different each time is switched off for this one authored phrase.
