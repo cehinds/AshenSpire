@@ -76,7 +76,7 @@ function timeline(t, enabled, { fallback = false, lethal = false, cancel = false
     ];
     playTimeline(events, ctx, () => at('done'));
     if (cancel) { if (getBeatOrder() === 'sequential') for (let i = 0; i < 1100; i++) t.mock.timers.tick(1); win.dispatchEvent({ type: 'pointerdown' }); win.dispatchEvent({ type: 'pointerup' }); }
-    for (let i = 0; i < 4000 && !trace.some(row => row.what === 'done'); i++) t.mock.timers.tick(1);
+    for (let i = 0; i < 20000 && !trace.some(row => row.what === 'done'); i++) t.mock.timers.tick(1);
     assert.equal(trace.filter(row => row.what === 'done').length, 1);
     if (!enabled) assert.equal(anchors.player.classList.contains('act-attack'), false);
     if (cancel && !fallback) assert.ok(calls.includes('cancel-effect'), 'cancellation releases the effect handle');

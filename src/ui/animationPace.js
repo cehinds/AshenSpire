@@ -73,9 +73,12 @@ export function actionPacing({ reduced = false } = {}) {
   const scale = !pace || reduced ? 0 : (pace.beatMs / ANIM_SPEEDS.normal.beatMs) / combatPacing.speed;
   const scaled = value => Math.max(0, Number(value) || 0) * scale;
   const spriteScale = scale / ACTION_PACING.spritePlaybackRate;
+  const gapMs = scaled(combatPacing.gapMs);
+  // D11: the actor's action, its animation, the result word, the sprite
+  // reaction, the damage, the reset, then the next item, with one gap at each
+  // boundary. The action word fires with the action itself, so intentMs is 0.
   return {
-    intentMs: scaled(combatPacing.delayMs), wordMs: scaled(ACTION_PACING.actionWordMs),
-    afterSpriteMs: scaled(ACTION_PACING.afterSpriteMs), reactionMs: scaled(combatPacing.delayMs),
+    gapMs, intentMs: 0, wordMs: gapMs, afterSpriteMs: gapMs, resultMs: gapMs, reactionMs: gapMs, damageMs: gapMs, resetMs: gapMs,
     stepMs: scaled(pace?.stepMs || 0), bannerMs: scaled(pace ? turnBannerHoldMs(pace) : 0),
     // Animation services consume the same lunge/cap duration object as before.
     spriteSpeed: Object.fromEntries(Object.entries(pace || ANIM_SPEEDS.normal).map(([key, value]) => [key, value * spriteScale])),

@@ -197,7 +197,7 @@ test('multi-hit contact holds the attacker and buzzes once with the first number
   drive(t, ({ start, tick, holds, buzzes, reactions }) => {
     const timing = actionPacing();
     const contactAt = timing.intentMs + timing.wordMs + 100;
-    const reactionAt = timing.intentMs + timing.wordMs + 800 + 120 + timing.afterSpriteMs;
+    const reactionAt = timing.intentMs + timing.wordMs + 800 + 120 + timing.afterSpriteMs + timing.resultMs;
     start([6, 10]); tick(contactAt - 1);
     assert.deepEqual(holds, [], 'no hold before the authored contact frame');
     tick(1);
@@ -209,7 +209,7 @@ test('multi-hit contact holds the attacker and buzzes once with the first number
     assert.deepEqual(buzzes, [], 'no buzz at reaction');
     tick(timing.reactionMs);
     assert.deepEqual(buzzes, [['damageTaken', 10000 + reactionAt + timing.reactionMs]], 'buzz comes with the first number');
-    tick(2000);
+    tick(5000);
     assert.equal(reactions.length, 2, 'the second hit reacts too');
     assert.ok(holds.every(([who]) => who === 'actor'), 'the target is never held');
     assert.equal(buzzes.length, 1, 'later numbers do not buzz twice');
@@ -220,7 +220,7 @@ test('skipping after the first multi-hit number does not replay its damage hapti
   drive(t, ({ start, tick, buzzes, fire, stats }) => {
     const timing = actionPacing();
     start([6, 10]);
-    tick(timing.intentMs + timing.wordMs + 800 + 120 + timing.afterSpriteMs + timing.reactionMs);
+    tick(timing.intentMs + timing.wordMs + 800 + 120 + timing.afterSpriteMs + timing.resultMs + timing.reactionMs);
     assert.equal(buzzes.length, 1, 'the first number has sounded');
     fire('pointerdown'); fire('pointerup'); tick(1000);
     assert.equal(buzzes.length, 1, 'flushing the remaining hit cannot buzz this beat again');

@@ -24,10 +24,12 @@ function run(multiplier = 1) {
 }
 test('ordered actions and counters finish every stage before the next actor begins', () => {
   const { c, trace } = run(); c.advance(20000);
-  const expected = ['intent', 'action', 'sprite', 'contact', 'reaction', 'damage', 'hud', 'resolution'];
-  assert.deepEqual(trace.slice(0, 8).map(row => row[0]), expected);
-  assert.deepEqual(trace.slice(8, 16).map(row => row[0]), expected);
-  assert.deepEqual(trace.slice(0, 8).map(row => row[2]), [0, 500, 1000, 1195, 1890, 2390, 2390, 2390]);
+  const expected = ['intent', 'action', 'sprite', 'contact', 'result', 'reaction', 'damage', 'hud', 'resolution'];
+  assert.deepEqual(trace.slice(0, 9).map(row => row[0]), expected);
+  assert.deepEqual(trace.slice(9, 18).map(row => row[0]), expected);
+  // D11: a 1000 ms gap at each boundary (action, animation, result, reaction, damage, reset, next).
+  assert.deepEqual(trace.slice(0, 9).map(row => row[2]), [0, 0, 1000, 1195, 2390, 3390, 4390, 4390, 5390]);
+  assert.equal(trace[9][2], 6390, 'the next actor starts one gap after the reset');
   assert.equal(trace.at(-1)[0], 'done'); assert.equal(c.pending, 0);
 });
 test('× speed scales every action stage and sprite while retaining receipt order', () => {
@@ -42,7 +44,7 @@ test('cancel and repeated skips flush once and leave no late mutation or next ac
 });
 test('instant and reduced motion retain semantic event order with zero waits', () => {
   setAnimSpeed('instant'); const instant = actionPacing();
-  assert.equal(instant.intentMs + instant.wordMs + instant.afterSpriteMs + instant.reactionMs, 0);
+  assert.equal(instant.gapMs + instant.wordMs + instant.afterSpriteMs + instant.resultMs + instant.reactionMs + instant.damageMs + instant.resetMs, 0);
   setAnimSpeed('normal'); assert.equal(actionPacing({ reduced: true }).scale, 0);
 });
 
@@ -74,4 +76,38 @@ test('auto-combat runs at its own multiplier, default ×1.5, and manual play kee
   setCombatPacing({ autoCombat: true, autoCombatSpeed: 0 }); const floor = actionPacing().scale;
   setCombatPacing();
   assert.equal(manual, 1 / 2); assert.equal(auto, 1 / 1.5); assert.equal(clamped, 1 / 3); assert.equal(floor, 1);
+});
+
+test('D11: the default gap is 1 s at every stage boundary and the active speed scales it', () => {
+  setAnimSpeed('normal'); setCombatPacing();
+  const gaps = t => [t.wordMs, t.afterSpriteMs, t.resultMs, t.reactionMs, t.damageMs, t.resetMs];
+  const normal = actionPacing();
+  assert.equal(normal.gapMs, 1000); assert.equal(normal.intentMs, 0);
+  assert.deepEqual(gaps(normal), [1000, 1000, 1000, 1000, 1000, 1000]);
+  setCombatPacing({ combatSpeed: 2 }); assert.deepEqual(gaps(actionPacing()), Array(6).fill(500));
+  setCombatPacing({ autoCombat: true }); assert.ok(Math.abs(actionPacing().gapMs - 1000 / 1.5) < 1e-9, 'auto-combat defaults to ×1.5');
+  setCombatPacing({ combatActionDelay: 250 }); assert.equal(actionPacing().gapMs, 250);
+  setCombatPacing({ combatActionDelay: 2000 }); assert.equal(actionPacing().gapMs, 2000);
+  setCombatPacing({ combatActionDelay: 60000 }); assert.equal(actionPacing().gapMs, 2000, 'capped at 2 s');
+  setCombatPacing({ combatActionDelay: 10 }); assert.equal(actionPacing().gapMs, 250, 'floored at 0.25 s');
+  setCombatPacing();
+});
+
+test('D11: the watchdog budget follows the real gaps, so 1 s gaps and a multi-hit beat never trip it', () => {
+  setAnimSpeed('normal'); setCombatPacing({ combatActionDelay: 2000 });
+  const c = clock(), trace = [], timing = actionPacing();
+  const beat = { actorId: 'player', kind: 'attack', events: [{ type: 'damageDealt' }, { type: 'damageDealt' }, { type: 'damageDealt' }] };
+  runActionTimeline([beat, { ...beat, actorId: 'enemy' }], {
+    reactionGroups: b => b.events.map(event => ({ ...b, events: [event] })),
+    onSprite: (_beat, speed) => ({ impactMs: speed.lungeMs / 2, totalMs: speed.lungeMs, cancel() {} }),
+    maxSpriteMs: speed => speed.lungeMs,
+    onStage: (stage, b) => trace.push([stage, b.actorId, c.now]),
+    onFlush: () => trace.push(['flush', '', c.now]), onDone: () => trace.push(['done', '', c.now]),
+  }, timing, c);
+  c.advance(300000); setCombatPacing();
+  assert.ok(!trace.some(row => row[0] === 'flush'), 'the watchdog never forced a flush');
+  assert.equal(trace.at(-1)[0], 'done'); assert.equal(c.pending, 0);
+  assert.equal(trace.filter(row => row[0] === 'resolution').length, 2, 'every beat reached its reset');
+  const first = trace.filter(row => row[1] === 'player').map(row => row[0]);
+  assert.deepEqual(first.slice(0, 5), ['intent', 'action', 'sprite', 'contact', 'result']);
 });

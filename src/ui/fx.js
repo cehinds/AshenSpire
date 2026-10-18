@@ -1025,8 +1025,9 @@ export function playTimeline(events, ctx, done) {
       if (group.length) groups.push({ ...beat, events: group });
       return groups;
     },
-    onReaction: beat => {
-      runParts(beat, 'reaction');
+    // The result word (Hit, Miss, Block, Countered) is its own stage, one gap
+    // before the sprite reaction (owner, D11, 2026-10-18).
+    onResult: beat => {
       // Accuracy receipts cannot say Hit before a miss, full Block or break
       // receipt that follows them. More specific outcomes take precedence.
       const outcomeTargets = new Set(beat.events.filter(event => event.type !== 'attackHit' && calloutForEvent(event)).map(event => event.targetId));
@@ -1041,6 +1042,9 @@ export function playTimeline(events, ctx, done) {
           saidTargets.add(event.targetId);
         }
       }
+    },
+    onReaction: beat => {
+      runParts(beat, 'reaction');
       return Math.max(0, ...beat.events.map(event => Number(ctx.reactionTimingForReceipt?.(event, timing.spriteSpeed)) || 0));
     },
     onNumbers: beat => {
