@@ -6,6 +6,7 @@ import { chooseAutoCombatAction, resolveCombatAutomation, AUTOMATION_DEFAULTS } 
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
 import { projectCombatIntent } from '../models/CombatIntentProjectionModel.js';
+import { followUpPlan, remainingFollowUps } from '../models/IntentFollowUpModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
 import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
@@ -1116,11 +1117,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function takeSnapshot() {
     const ents = { player: snapEnt(combat.player, true) };
     for (const e of combat.enemies) ents[e.id] = snapEnt(e, e.alive);
+    // The "?" rule (IntentFollowUpModel.js): the observer's existing read of each actor's intent decides whether its
+    // queued follow-ups are named or "?". The plan keeps a count, and icons only for a passed read.
+    const followPlans = {};
+    for (const e of combat.enemies) if (e.alive && e.plannedMoves?.length) {
+      followPlans[e.id] = followUpPlan({ passed: ents[e.id].intentPreview?.hidden !== true, queue: e.plannedMoves, def: registries.enemies.get(e.enemyId) });
+    }
     const handPreviews = new Map();
     for (const inst of combat.piles.hand) {
       try { handPreviews.set(inst.instanceId, previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId))); } catch {}
     }
-    return { ents, hand: [...combat.piles.hand], handPreviews,
+    return { ents, followPlans, hand: [...combat.piles.hand], handPreviews,
       pileCounts: { draw: combat.piles.draw.length, discard: combat.piles.discard.length, exhaust: combat.piles.exhaust.length },
       arcaneEvents: [], logLength: combat.eventLog.length };
   }
@@ -1150,6 +1157,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // Reactions return to the planned hold; pooled follow-ups replace it.
           if (e.reaction) break;
           const actor = disp.ents[e.sourceId];
+          // The actor has acted and may still have SP: its remaining queue is "?" unless the read passed.
+          if (actor) actor.followUps = remainingFollowUps(disp.followPlans?.[e.sourceId], e.queued);
           const enemy = combat.enemies.find(row => row.id === e.sourceId);
           const move = registries.enemies.get(e.enemyId || enemy?.enemyId)?.moves?.[e.moveId];
           if (actor && enemy && move) actor.presentationStance = enemyStanceCategory({
@@ -1921,7 +1930,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's
   // `pill.lg` (uiContent.js intentBadge picks the tone and the words).
   function intentEl(enemy) {
-    return combatantIntent(disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id), () => {
+    const shown = disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id);
+    const followUps = disp?.ents[enemy.id]?.followUps;
+    return combatantIntent(followUps?.length ? { ...shown, followUps } : shown, () => {
       const intent = combatantSubject('enemy', enemy).intent;
       return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
     }, registries, { onTarget: () => {

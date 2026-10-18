@@ -899,7 +899,8 @@ function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, r
   move = expandedEnemyMove(enemy, move, moveId, combat);
   // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
   // cancels never happens. This is what did — the inspector's history.
-  const start = { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent };
+  // `queued`: how many planned follow-ups remain after this move (a count only; the UI shows them as "?" or by the read).
+  const start = { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent, queued: enemy.plannedMoves?.length ?? 0 };
   if (!Reactions.usesReactions(combat)) {
     (enemy.performedMoves ||= []).push(moveId);
     combat.emit('enemyMoveStarted', start);
