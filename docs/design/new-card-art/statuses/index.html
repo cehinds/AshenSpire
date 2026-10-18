@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>71 statuses · layered art proposals</title>
+<link rel="stylesheet" href="style.css">
+<header>
+  <p class="eyebrow">ASHENSPIRE / ART COMPONENT PROPOSALS</p>
+  <h1>Status objects, marks & glow</h1>
+  <p id="coverage">71 current statuses. Ten assembled options per status, with separate transparent PNG layers.</p>
+  <nav id="downloads"><a href="manifest.json">Full JSON</a><a href="README.md">Component guide</a></nav>
+  <p class="muted">Codes use three volumes: <code>statuses-01/A00</code>. Letter = status category, first digit = object, second digit = effect. Zero is a real option. Related statuses share consistent object models.</p>
+</header>
+<main>
+  <section id="editor" aria-labelledby="editor-title">
+    <h2 id="editor-title">Adjust layers</h2>
+    <div class="selectors">
+      <label>Find status <input id="search" type="search" placeholder="Name or game ID"></label>
+      <label>Status <select id="status"></select></label>
+      <label>Object <select id="object"></select></label>
+      <label>Effect pair <select id="effect"></select></label>
+      <button id="reset">Reset placement</button><button id="export">Download placement JSON</button>
+    </div>
+    <p id="selection-label"></p><p id="status-description" class="muted"></p>
+    <div class="workspace"><div><div id="stage" class="stage"></div><p class="muted">Dark preview background is separate from the transparent artwork. Glow sits behind the object; the unlit mark sits above it.</p></div><div id="controls"></div></div>
+    <div id="isolated" class="isolated"></div>
+  </section>
+  <section aria-labelledby="collection-title">
+    <div class="collection-heading"><h2 id="collection-title">Ten options</h2><label>Show <select id="view"><option value="all">Assembled</option><option value="object">Objects only</option><option value="effect">Unlit marks only</option><option value="glow">Glow only</option></select></label></div>
+    <p class="muted">Choose an option to edit. Each mark and luminous effect is independently generated and positioned; mixed pairs may need adjustment. Isolated previews show the full PNG opacity.</p>
+    <div id="gallery" class="grid"></div>
+  </section>
+  <section aria-labelledby="overview-title"><h2 id="overview-title">All status categories</h2><p class="muted">Each category opens its ten options. These are art proposals; gameplay and runtime artwork are unchanged.</p><div id="overview" class="grid"></div></section>
+</main>
+<script src="data.js"></script><script src="viewer.js"></script>
+</html>

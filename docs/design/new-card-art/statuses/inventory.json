@@ -1,0 +1,717 @@
+{
+  "format": "ashenspire.status-art-inventory/1",
+  "status": "proposal-complete",
+  "scope": "All 71 current game statuses; reference-only statuses excluded at user request.",
+  "statuses": [
+    {
+      "id": "precision",
+      "name": "Precision",
+      "tooltip": "Each stack adds 1 Accuracy.",
+      "profile": "current",
+      "recipe": "symbol.eye",
+      "volume": 1,
+      "letter": "A",
+      "codePrefix": "statuses-01/A"
+    },
+    {
+      "id": "evade",
+      "name": "Evade",
+      "tooltip": "Each stack adds 3 Evasion. Lose 1 stack at the start of each round.",
+      "profile": "current",
+      "recipe": "symbol.feather",
+      "volume": 1,
+      "letter": "B",
+      "codePrefix": "statuses-01/B"
+    },
+    {
+      "id": "strength",
+      "name": "Strength",
+      "tooltip": "Attacks deal +1 damage per stack.",
+      "profile": "current",
+      "recipe": "symbol.fist",
+      "volume": 1,
+      "letter": "C",
+      "codePrefix": "statuses-01/C"
+    },
+    {
+      "id": "dexterity",
+      "name": "Dexterity",
+      "tooltip": "Cards grant +1 Block per stack.",
+      "profile": "current",
+      "recipe": "symbol.feather",
+      "volume": 1,
+      "letter": "D",
+      "codePrefix": "statuses-01/D"
+    },
+    {
+      "id": "weak",
+      "name": "Weak",
+      "tooltip": "Deals 25% less attack damage. 1 stack expires each turn.",
+      "profile": "current",
+      "recipe": "symbol.broken-sword",
+      "volume": 1,
+      "letter": "E",
+      "codePrefix": "statuses-01/E"
+    },
+    {
+      "id": "vulnerable",
+      "name": "Vulnerable",
+      "tooltip": "Takes 50% more attack damage. 1 stack expires each turn.",
+      "profile": "current",
+      "recipe": "symbol.cracked-shield",
+      "volume": 1,
+      "letter": "F",
+      "codePrefix": "statuses-01/F"
+    },
+    {
+      "id": "frail",
+      "name": "Frail",
+      "tooltip": "Gains 25% less Block from cards. 1 stack expires each turn.",
+      "profile": "current",
+      "recipe": "symbol.cracked-shield",
+      "volume": 1,
+      "letter": "G",
+      "codePrefix": "statuses-01/G"
+    },
+    {
+      "id": "bleed",
+      "name": "Bleed",
+      "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, plus {proc.poiseDamage} Poise damage \u2014 then the build-up resets to zero. Fleshy targets briefly resist further Bleed after a burst.",
+      "profile": "current",
+      "recipe": "symbol.drop",
+      "volume": 1,
+      "letter": "H",
+      "codePrefix": "statuses-01/H"
+    },
+    {
+      "id": "frost",
+      "name": "Frost",
+      "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, and the target is left Weak and Frost-Exposed \u2014 then the build-up resets to zero.",
+      "profile": "current",
+      "recipe": "symbol.crystal",
+      "volume": 1,
+      "letter": "I",
+      "codePrefix": "statuses-01/I"
+    },
+    {
+      "id": "insanity",
+      "name": "Insanity",
+      "tooltip": "Build-up: points do not decay. At {proc.threshold}, burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max {proc.burstMax}), ignoring Block, with {proc.poiseDamage} Poise damage and a guaranteed Stagger \u2014 then the build-up resets to zero.",
+      "profile": "current",
+      "recipe": "symbol.spiral",
+      "volume": 1,
+      "letter": "J",
+      "codePrefix": "statuses-01/J"
+    },
+    {
+      "id": "bleedResist",
+      "name": "Clotted",
+      "tooltip": "Just burst \u2014 hardened against Bleed: incoming build-up reduced {resists.percent}% for {decay.duration} turns.",
+      "profile": "current",
+      "recipe": "symbol.drop",
+      "volume": 1,
+      "letter": "K",
+      "codePrefix": "statuses-01/K"
+    },
+    {
+      "id": "frostResist",
+      "name": "Weathered",
+      "tooltip": "Just burst \u2014 hardened against Frost: incoming build-up reduced {resists.percent}% for {decay.duration} turns.",
+      "profile": "current",
+      "recipe": "symbol.crystal",
+      "volume": 1,
+      "letter": "L",
+      "codePrefix": "statuses-01/L"
+    },
+    {
+      "id": "insanityResist",
+      "name": "Resolute",
+      "tooltip": "Just burst \u2014 hardened against Insanity: incoming build-up reduced {resists.percent}% for {decay.duration} turns.",
+      "profile": "current",
+      "recipe": "symbol.spiral",
+      "volume": 1,
+      "letter": "M",
+      "codePrefix": "statuses-01/M"
+    },
+    {
+      "id": "frostExposed",
+      "name": "Frost-Exposed",
+      "tooltip": "Takes {tv.pct}% more damage from starstone attacks. Stacks with Vulnerable. {decay.duration} turns.",
+      "profile": "current",
+      "recipe": "symbol.crystal",
+      "volume": 1,
+      "letter": "N",
+      "codePrefix": "statuses-01/N"
+    },
+    {
+      "id": "insanityExposed",
+      "name": "Unraveled",
+      "tooltip": "Takes {tv.pct}% more damage from ritual and blight attacks. Stacks with Vulnerable. {decay.duration} turns.",
+      "profile": "current",
+      "recipe": "symbol.spiral",
+      "volume": 1,
+      "letter": "O",
+      "codePrefix": "statuses-01/O"
+    },
+    {
+      "id": "crimsonBlight",
+      "name": "Crimson Blight",
+      "tooltip": "At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down; the Blight expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.",
+      "profile": "current",
+      "recipe": "symbol.fang",
+      "volume": 1,
+      "letter": "P",
+      "codePrefix": "statuses-01/P"
+    },
+    {
+      "id": "necroticBlight",
+      "name": "Necrotic Blight",
+      "tooltip": "At the start of its turn, loses HP equal to Necrotic Blight stacks (ignores Block). Applied by Necrotic damage. Stacks do not tick down and it lasts the whole fight; only a cleanse removes it.",
+      "profile": "current",
+      "recipe": "symbol.fang",
+      "volume": 1,
+      "letter": "Q",
+      "codePrefix": "statuses-01/Q"
+    },
+    {
+      "id": "burn",
+      "name": "Burn",
+      "tooltip": "At the start of its turn, loses HP equal to Burn stacks (ignores Block). One stack burns out each turn.",
+      "profile": "current",
+      "recipe": "symbol.flame",
+      "volume": 1,
+      "letter": "R",
+      "codePrefix": "statuses-01/R"
+    },
+    {
+      "id": "regen",
+      "name": "Regen",
+      "tooltip": "At the start of its turn, heals HP equal to Regen stacks. Lasts the whole fight.",
+      "profile": "current",
+      "recipe": "symbol.leaf",
+      "volume": 1,
+      "letter": "S",
+      "codePrefix": "statuses-01/S"
+    },
+    {
+      "id": "madness",
+      "name": "Madness",
+      "tooltip": "At the start of your turn: lose 2 HP per stack, gain 1 Energy per stack, then Madness clears.",
+      "profile": "current",
+      "recipe": "symbol.spiral",
+      "volume": 1,
+      "letter": "T",
+      "codePrefix": "statuses-01/T"
+    },
+    {
+      "id": "staggered",
+      "name": "Staggered",
+      "tooltip": "Poise broken: skips its next turn and takes 50% more attack damage until the end of your next turn.",
+      "profile": "current",
+      "recipe": "symbol.hammer",
+      "volume": 1,
+      "letter": "U",
+      "codePrefix": "statuses-01/U"
+    },
+    {
+      "id": "rallyingStandard",
+      "name": "Rallying Standard",
+      "tooltip": "At the start of your turn: gain 1 Strength and take 1 damage (per stack).",
+      "profile": "current",
+      "recipe": "symbol.banner",
+      "volume": 1,
+      "letter": "V",
+      "codePrefix": "statuses-01/V"
+    },
+    {
+      "id": "rallyingStandardUp",
+      "name": "Rallying Standard+",
+      "tooltip": "At the start of your turn: gain 1 Strength (per stack).",
+      "profile": "current",
+      "recipe": "symbol.banner",
+      "volume": 1,
+      "letter": "W",
+      "codePrefix": "statuses-01/W"
+    },
+    {
+      "id": "unbreakable",
+      "name": "Unbreakable",
+      "tooltip": "Block no longer expires at the start of your turn. Block is capped at 30.",
+      "profile": "current",
+      "recipe": "symbol.shield",
+      "volume": 1,
+      "letter": "X",
+      "codePrefix": "statuses-01/X"
+    },
+    {
+      "id": "unbreakableUp",
+      "name": "Unbreakable+",
+      "tooltip": "Block no longer expires at the start of your turn. Block is capped at 40.",
+      "profile": "current",
+      "recipe": "symbol.shield",
+      "volume": 1,
+      "letter": "Y",
+      "codePrefix": "statuses-01/Y"
+    },
+    {
+      "id": "goreblood",
+      "name": "Goreblood",
+      "tooltip": "Poise thresholds no longer increase after filling.",
+      "profile": "current",
+      "recipe": "symbol.drop",
+      "volume": 1,
+      "letter": "Z",
+      "codePrefix": "statuses-01/Z"
+    },
+    {
+      "id": "sanguinePact",
+      "name": "Sanguine Pact",
+      "tooltip": "Whenever Bleed bursts on an enemy, gain 2 Strength per stack.",
+      "profile": "current",
+      "recipe": "symbol.drop",
+      "volume": 2,
+      "letter": "A",
+      "codePrefix": "statuses-02/A"
+    },
+    {
+      "id": "starstoneCharge",
+      "name": "Starstone Charge",
+      "tooltip": "A spell was cast this turn: your next Starstone bonus is live. Fades at end of turn.",
+      "profile": "current",
+      "recipe": "symbol.orb",
+      "volume": 2,
+      "letter": "B",
+      "codePrefix": "statuses-02/B"
+    },
+    {
+      "id": "stargazer",
+      "name": "Stargazer",
+      "tooltip": "At the start of your turn, gain Starstone Charge.",
+      "profile": "current",
+      "recipe": "symbol.eye",
+      "volume": 2,
+      "letter": "C",
+      "codePrefix": "statuses-02/C"
+    },
+    {
+      "id": "astralArmor",
+      "name": "Astral Armor",
+      "tooltip": "At the end of your turn, gain 4 Block per stack.",
+      "profile": "current",
+      "recipe": "symbol.ring",
+      "volume": 2,
+      "letter": "D",
+      "codePrefix": "statuses-02/D"
+    },
+    {
+      "id": "constellation",
+      "name": "Constellation",
+      "tooltip": "Whenever you gain Starstone Charge, deal 4 damage per stack to a random enemy.",
+      "profile": "current",
+      "recipe": "symbol.star",
+      "volume": 2,
+      "letter": "E",
+      "codePrefix": "statuses-02/E"
+    },
+    {
+      "id": "azureCoil",
+      "name": "Azure Coil",
+      "tooltip": "Whenever you play a Skill, gain 2 Block per stack.",
+      "profile": "current",
+      "recipe": "symbol.ring",
+      "volume": 2,
+      "letter": "F",
+      "codePrefix": "statuses-02/F"
+    },
+    {
+      "id": "waxingMoon",
+      "name": "Waxing Moon",
+      "tooltip": "At the start of your turn, apply 2 Vulnerable to ALL enemies per stack.",
+      "profile": "current",
+      "recipe": "symbol.moon",
+      "volume": 2,
+      "letter": "G",
+      "codePrefix": "statuses-02/G"
+    },
+    {
+      "id": "moonlitShield",
+      "name": "Moonlit Shield",
+      "tooltip": "Whenever you gain Starstone Charge, gain 3 Block per stack.",
+      "profile": "current",
+      "recipe": "symbol.ring",
+      "volume": 2,
+      "letter": "H",
+      "codePrefix": "statuses-02/H"
+    },
+    {
+      "id": "astromancer",
+      "name": "Astromancer",
+      "tooltip": "At the start of your turn, gain Starstone Charge and draw a card.",
+      "profile": "current",
+      "recipe": "symbol.star",
+      "volume": 2,
+      "letter": "I",
+      "codePrefix": "statuses-02/I"
+    },
+    {
+      "id": "thornHalo",
+      "name": "Thorn Halo",
+      "tooltip": "At the start of your turn, apply 1 Crimson Blight per stack to ALL enemies.",
+      "profile": "current",
+      "recipe": "symbol.ring",
+      "volume": 2,
+      "letter": "J",
+      "codePrefix": "statuses-02/J"
+    },
+    {
+      "id": "communion",
+      "name": "Communion",
+      "tooltip": "At the start of your turn, heal 3 HP per stack.",
+      "profile": "current",
+      "recipe": "symbol.heart",
+      "volume": 2,
+      "letter": "K",
+      "codePrefix": "statuses-02/K"
+    },
+    {
+      "id": "lifeTithe",
+      "name": "Life Tithe",
+      "tooltip": "Whenever an enemy dies, heal 8 HP per stack.",
+      "profile": "current",
+      "recipe": "symbol.drop",
+      "volume": 2,
+      "letter": "L",
+      "codePrefix": "statuses-02/L"
+    },
+    {
+      "id": "stigmata",
+      "name": "Stigmata",
+      "tooltip": "Whenever you lose HP, heal 2 HP per stack.",
+      "profile": "current",
+      "recipe": "symbol.drop",
+      "volume": 2,
+      "letter": "M",
+      "codePrefix": "statuses-02/M"
+    },
+    {
+      "id": "zealotry",
+      "name": "Zealotry",
+      "tooltip": "Whenever you lose HP, deal 3 damage to a random enemy per stack.",
+      "profile": "current",
+      "recipe": "symbol.sun",
+      "volume": 2,
+      "letter": "N",
+      "codePrefix": "statuses-02/N"
+    },
+    {
+      "id": "emberTide",
+      "name": "Ember Tide",
+      "tooltip": "Whenever you heal, gain 1 Strength per stack.",
+      "profile": "current",
+      "recipe": "symbol.flame",
+      "volume": 2,
+      "letter": "O",
+      "codePrefix": "statuses-02/O"
+    },
+    {
+      "id": "harbingerOfBlight",
+      "name": "Harbinger of Blight",
+      "tooltip": "Whenever you apply Blight (Crimson or Necrotic) to an enemy, heal 1 HP per stack.",
+      "profile": "current",
+      "recipe": "symbol.fang",
+      "volume": 2,
+      "letter": "P",
+      "codePrefix": "statuses-02/P"
+    },
+    {
+      "id": "bloodUnction",
+      "name": "Blood Unction",
+      "tooltip": "Your attacks apply 2 extra Bleed per hit this turn.",
+      "profile": "current",
+      "recipe": "symbol.drop",
+      "volume": 2,
+      "letter": "Q",
+      "codePrefix": "statuses-02/Q"
+    },
+    {
+      "id": "ironVow",
+      "name": "Iron Vow",
+      "tooltip": "Whenever you lose HP, gain 3 Block per stack.",
+      "profile": "current",
+      "recipe": "symbol.shield",
+      "volume": 2,
+      "letter": "R",
+      "codePrefix": "statuses-02/R"
+    },
+    {
+      "id": "bulwarkEcho",
+      "name": "Shieldwall Echo",
+      "tooltip": "At the start of your next turn: gain 4 Block per stack.",
+      "profile": "current",
+      "recipe": "symbol.shield",
+      "volume": 2,
+      "letter": "S",
+      "codePrefix": "statuses-02/S"
+    },
+    {
+      "id": "prepared",
+      "name": "Prepared",
+      "tooltip": "Your next setup payoff is empowered. Expires at turn end.",
+      "profile": "current",
+      "recipe": "symbol.shield",
+      "volume": 2,
+      "letter": "T",
+      "codePrefix": "statuses-02/T"
+    },
+    {
+      "id": "venom",
+      "name": "Venom",
+      "tooltip": "At turn start, lose HP equal to Venom. 1 stack expires each turn.",
+      "profile": "current",
+      "recipe": "symbol.vial",
+      "volume": 2,
+      "letter": "U",
+      "codePrefix": "statuses-02/U"
+    },
+    {
+      "id": "afterimage",
+      "name": "Afterimage",
+      "tooltip": "Every third card played each combat grants 3 Block per stack.",
+      "profile": "current",
+      "recipe": "symbol.feather",
+      "volume": 2,
+      "letter": "V",
+      "codePrefix": "statuses-02/V"
+    },
+    {
+      "id": "deadlyTempo",
+      "name": "Deadly Tempo",
+      "tooltip": "At turn start, become Prepared and draw 1 card per stack.",
+      "profile": "current",
+      "recipe": "symbol.hourglass",
+      "volume": 2,
+      "letter": "W",
+      "codePrefix": "statuses-02/W"
+    },
+    {
+      "id": "opportunist",
+      "name": "Opportunist",
+      "tooltip": "When an enemy staggers, become Prepared and draw 1 card per stack.",
+      "profile": "current",
+      "recipe": "symbol.eye",
+      "volume": 2,
+      "letter": "X",
+      "codePrefix": "statuses-02/X"
+    },
+    {
+      "id": "envenom",
+      "name": "Envenom",
+      "tooltip": "Your attacks apply 1 Venom per stack.",
+      "profile": "current",
+      "recipe": "symbol.vial",
+      "volume": 2,
+      "letter": "Y",
+      "codePrefix": "statuses-02/Y"
+    },
+    {
+      "id": "glassCannon",
+      "name": "Glass Cannon",
+      "tooltip": "Deal 25% more attack damage, and take 25% more.",
+      "profile": "current",
+      "recipe": "symbol.cracked-shield",
+      "volume": 2,
+      "letter": "Z",
+      "codePrefix": "statuses-02/Z"
+    },
+    {
+      "id": "magicVulnerable",
+      "name": "Magic Vulnerable",
+      "tooltip": "Magic-school HP damage is increased while this lasts.",
+      "profile": "current",
+      "recipe": "symbol.cracked-shield",
+      "volume": 3,
+      "letter": "A",
+      "codePrefix": "statuses-03/A"
+    },
+    {
+      "id": "stanceShifted",
+      "name": "Stance Shifted",
+      "tooltip": "You have entered a stance this fight: Oath cards no longer grant Block.",
+      "profile": "current",
+      "recipe": "symbol.ring",
+      "volume": 3,
+      "letter": "B",
+      "codePrefix": "statuses-03/B"
+    },
+    {
+      "id": "silenced",
+      "name": "Silenced",
+      "tooltip": "Spells cost 1 more Stamina per stack. Immune to Force: each Force hit or effect is stopped and removes 1 stack.",
+      "profile": "current",
+      "recipe": "symbol.chain",
+      "volume": 3,
+      "letter": "C",
+      "codePrefix": "statuses-03/C"
+    },
+    {
+      "id": "stoneskin",
+      "name": "Stoneskin",
+      "tooltip": "Your Block is not removed at the start of your next turn.",
+      "profile": "current",
+      "recipe": "symbol.stone",
+      "volume": 3,
+      "letter": "D",
+      "codePrefix": "statuses-03/D"
+    },
+    {
+      "id": "bleeding",
+      "name": "Bleeding",
+      "tooltip": "Lose 1 HP per stack at turn start. Bodily Chance Recovery.",
+      "profile": "current",
+      "recipe": "symbol.drop",
+      "volume": 3,
+      "letter": "E",
+      "codePrefix": "statuses-03/E"
+    },
+    {
+      "id": "frozen",
+      "name": "Frozen",
+      "tooltip": "One stack denies one Action. Fire thaws; Blunt shatters. Elemental Chance Recovery.",
+      "profile": "current",
+      "recipe": "symbol.crystal",
+      "volume": 3,
+      "letter": "F",
+      "codePrefix": "statuses-03/F"
+    },
+    {
+      "id": "chilled",
+      "name": "Chilled",
+      "tooltip": "The next connected Blunt action deals 25% more damage. Fire thaws.",
+      "profile": "current",
+      "recipe": "symbol.crystal",
+      "volume": 3,
+      "letter": "G",
+      "codePrefix": "statuses-03/G"
+    },
+    {
+      "id": "sleep",
+      "name": "Sleep",
+      "tooltip": "Locks ordinary cards, Counter and card Evade. Rest restores up to 6 HP and 1 Ward per combat. +10% direct damage received per active stack. Break Sleep: 2 SP per stack.",
+      "profile": "current",
+      "recipe": "symbol.moon",
+      "volume": 3,
+      "letter": "H",
+      "codePrefix": "statuses-03/H"
+    },
+    {
+      "id": "paralysis",
+      "name": "Paralysis",
+      "tooltip": "Locks ordinary cards, Counter and card Evade. Break Paralysis: 3 SP per stack. Grounding clears its pressure.",
+      "profile": "current",
+      "recipe": "symbol.bolt",
+      "volume": 3,
+      "letter": "I",
+      "codePrefix": "statuses-03/I"
+    },
+    {
+      "id": "dazed",
+      "name": "Dazed",
+      "tooltip": "Locks ordinary cards, Counter and card Evade. Clear Dazed: 1 SP per stack.",
+      "profile": "current",
+      "recipe": "dazed",
+      "volume": 3,
+      "letter": "J",
+      "codePrefix": "statuses-03/J"
+    },
+    {
+      "id": "offBalance",
+      "name": "Off Balance",
+      "tooltip": "Disadvantage on bodily recovery. One stack expires at turn end.",
+      "profile": "current",
+      "recipe": "symbol.hammer",
+      "volume": 3,
+      "letter": "K",
+      "codePrefix": "statuses-03/K"
+    },
+    {
+      "id": "prone",
+      "name": "Prone",
+      "tooltip": "+25% Contact damage, \u221225% Single Near/Far damage. +2/+4 Evade against Near/Far Martial weapons. Stand Up: 1 SP after hand locks clear.",
+      "profile": "current",
+      "recipe": "symbol.hammer",
+      "volume": 3,
+      "letter": "L",
+      "codePrefix": "statuses-03/L"
+    },
+    {
+      "id": "grounded",
+      "name": "Grounded",
+      "tooltip": "Prevents electrical conductivity and backlash; grants Advantage on Paralysis recovery.",
+      "profile": "current",
+      "recipe": "symbol.stone",
+      "volume": 3,
+      "letter": "M",
+      "codePrefix": "statuses-03/M"
+    },
+    {
+      "id": "invulnerability",
+      "name": "Invulnerability",
+      "tooltip": "Consume one stack to avoid the next direct damaging action, including all its hits. Status buildup still applies; no Counter return. Damage over time does not consume it.",
+      "profile": "current",
+      "recipe": "symbol.ring",
+      "volume": 3,
+      "letter": "N",
+      "codePrefix": "statuses-03/N"
+    },
+    {
+      "id": "decoy",
+      "name": "Decoy",
+      "tooltip": "Consume one stack to avoid a Single Near/Far damaging action. Status buildup still applies. Sweep and Holy revelation clear it.",
+      "profile": "current",
+      "recipe": "symbol.mask",
+      "volume": 3,
+      "letter": "O",
+      "codePrefix": "statuses-03/O"
+    },
+    {
+      "id": "concealed",
+      "name": "Concealed",
+      "tooltip": "Concealment. Sweep and Holy revelation clear it.",
+      "profile": "current",
+      "recipe": "symbol.smoke",
+      "volume": 3,
+      "letter": "P",
+      "codePrefix": "statuses-03/P"
+    },
+    {
+      "id": "confused",
+      "name": "Confused",
+      "tooltip": "Deals 10% less damage. At the start of its turn, 50% chance to take 3 Poise damage per stack. 1 stack expires each turn.",
+      "profile": "current",
+      "recipe": "symbol.spiral",
+      "volume": 3,
+      "letter": "Q",
+      "codePrefix": "statuses-03/Q"
+    },
+    {
+      "id": "slowed",
+      "name": "Slowed",
+      "tooltip": "Deals 10% less damage and gains 25% less Block. 1 stack expires each turn.",
+      "profile": "current",
+      "recipe": "symbol.hourglass",
+      "volume": 3,
+      "letter": "R",
+      "codePrefix": "statuses-03/R"
+    },
+    {
+      "id": "entombed",
+      "name": "Entombed",
+      "tooltip": "Skips its next turn. Takes 25% less damage while entombed.",
+      "profile": "current",
+      "recipe": "symbol.tomb",
+      "volume": 3,
+      "letter": "S",
+      "codePrefix": "statuses-03/S"
+    }
+  ]
+}

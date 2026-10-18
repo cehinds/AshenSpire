@@ -1,0 +1,1147 @@
+{
+  "generator": "OpenAI ImageGen",
+  "objects": [
+    {
+      "id": "eye",
+      "brief": "a single sculpted iron eye-shaped amulet with a dark glass pupil, no chain",
+      "prompt": "Dark fantasy game inventory sprite atlas showing TEN variations of a single sculpted iron eye-shaped amulet with a dark glass pupil, no chain. For EYE specifically the silhouette MUST be a horizontal almond EYE with visible iris/pupil, NOT a shield or triangular amulet. Worn blackened iron and charcoal material, small tarnished bronze accents, restrained natural highlights, near-black outer edges. Very simple large readable single-object silhouettes, tactile material with moderate painterly detail, no ornament clutter. Exactly FIVE columns TWO rows on a wide 5:2 transparent canvas. ONE complete object per square cell with at least 20 percent empty transparent padding on all four sides; fully inside central 60 percent of cell. Same object model at ten distinct orientations: front, three-quarter left, three-quarter right, diagonal left/right, side profile, upright, low/high angle, compact. Objects ONLY; NO aura or lighting effects or glows, no background, labels, text, grid, shadows, checkerboard or card borders. Genuine transparent alpha; independent clean cutouts with no overlapping cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-eye.png",
+      "originalFilename": "exec-3658b453-23b3-43b7-89e2-b1e4bd48a4d9.png",
+      "sha256": "18c26ea5077c9d691bf381f5413da26050c269ba5361f5ff7213f9d9738f6d7b"
+    },
+    {
+      "id": "feather",
+      "brief": "a single dark charcoal feather with a metallic silvery quill",
+      "prompt": "Create a game-art OBJECT cutout atlas: TEN variations of a single dark charcoal feather with a metallic silvery quill. Match the reference's simple worn dark material, restrained natural highlights, almost black edges, readable tactile dark-fantasy inventory silhouette. No ornamental complexity. Exactly FIVE columns TWO rows on a wide 5:2 transparent canvas. ONE complete object per square cell, each centered, fully contained in the CENTRAL 65 percent of its cell, at least 17 percent blank transparent margin on all sides. Keep one consistent object model but vary angle, facing and small silhouette details across ten variants: frontal, three-quarter left, three-quarter right, diagonal left, diagonal right, side profile, upright, lower view, upper view, compact variant. Pure object material ONLY: NO magical effects, NO glow, NO aura, NO symbols floating around it, NO ground shadows. NO background, frames, labels, text, grid or checkerboard. True transparent alpha. No neighboring objects may cross cell boundaries.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-feather.png",
+      "originalFilename": "exec-7f0966e8-ea15-46a8-aa86-98cb71fc7ec8.png",
+      "sha256": "f6d0b1db13bb6f051f872e70d6613ec745d13003198cdac285e73cd73af0f80d"
+    },
+    {
+      "id": "fist",
+      "brief": "a single closed armored gauntlet fist in worn dark steel, no arm",
+      "prompt": "Create a game-art OBJECT cutout atlas: TEN variations of a single closed armored gauntlet fist in worn dark steel, no arm. Match the reference's simple worn dark material, restrained natural highlights, almost black edges, readable tactile dark-fantasy inventory silhouette. No ornamental complexity. Exactly FIVE columns TWO rows on a wide 5:2 transparent canvas. ONE complete object per square cell, each centered, fully contained in the CENTRAL 65 percent of its cell, at least 17 percent blank transparent margin on all sides. Keep one consistent object model but vary angle, facing and small silhouette details across ten variants: frontal, three-quarter left, three-quarter right, diagonal left, diagonal right, side profile, upright, lower view, upper view, compact variant. Pure object material ONLY: NO magical effects, NO glow, NO aura, NO symbols floating around it, NO ground shadows. NO background, frames, labels, text, grid or checkerboard. True transparent alpha. No neighboring objects may cross cell boundaries.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-fist.png",
+      "originalFilename": "exec-08b2c4a6-4fea-4d27-8a6c-acc1d35a440b.png",
+      "sha256": "ad7aaadf3554009685fc55cfcb300e934d1f6c45843c07ab29fdf5573d7fbc94"
+    },
+    {
+      "id": "drop",
+      "brief": "a single solid blood-drop-shaped garnet relic, very dark red stone with muted highlights",
+      "prompt": "Create a game-art OBJECT cutout atlas: TEN variations of a single solid blood-drop-shaped garnet relic, very dark red stone with muted highlights. Match the reference's simple worn dark material, restrained natural highlights, almost black edges, readable tactile dark-fantasy inventory silhouette. No ornamental complexity. Exactly FIVE columns TWO rows on a wide 5:2 transparent canvas. ONE complete object per square cell, each centered, fully contained in the CENTRAL 65 percent of its cell, at least 17 percent blank transparent margin on all sides. Keep one consistent object model but vary angle, facing and small silhouette details across ten variants: frontal, three-quarter left, three-quarter right, diagonal left, diagonal right, side profile, upright, lower view, upper view, compact variant. Pure object material ONLY: NO magical effects, NO glow, NO aura, NO symbols floating around it, NO ground shadows. NO background, frames, labels, text, grid or checkerboard. True transparent alpha. No neighboring objects may cross cell boundaries.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-drop.png",
+      "originalFilename": "exec-8bed609c-4ffb-4e22-b7e7-2877eb56cce9.png",
+      "sha256": "203619e43d00cd691806ba1c149483eb70ed99eee4d27e6c3e415bcf91fdaf99"
+    },
+    {
+      "id": "spiral",
+      "brief": "a single curled spiral relic carved in smoky dark stone, simple readable curling silhouette",
+      "prompt": "Create a game-art OBJECT cutout atlas: TEN variations of a single curled spiral relic carved in smoky dark stone, simple readable curling silhouette. Match the reference's simple worn dark material, restrained natural highlights, almost black edges, readable tactile dark-fantasy inventory silhouette. No ornamental complexity. Exactly FIVE columns TWO rows on a wide 5:2 transparent canvas. ONE complete object per square cell, each centered, fully contained in the CENTRAL 65 percent of its cell, at least 17 percent blank transparent margin on all sides. Keep one consistent object model but vary angle, facing and small silhouette details across ten variants: frontal, three-quarter left, three-quarter right, diagonal left, diagonal right, side profile, upright, lower view, upper view, compact variant. Pure object material ONLY: NO magical effects, NO glow, NO aura, NO symbols floating around it, NO ground shadows. NO background, frames, labels, text, grid or checkerboard. True transparent alpha. No neighboring objects may cross cell boundaries.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-spiral.png",
+      "originalFilename": "exec-e66dd0ca-1c1f-4892-b52e-bb2cd3e22f35.png",
+      "sha256": "998a0acdd225f9915705933416e146bdc95779d0d55e44b5b78e36f6ef4ae167"
+    },
+    {
+      "id": "fang",
+      "brief": "a single curved dark ivory fang with a worn iron base",
+      "prompt": "Create a game-art OBJECT cutout atlas: TEN variations of a single curved dark ivory fang with a worn iron base. Match the reference's simple worn dark material, restrained natural highlights, almost black edges, readable tactile dark-fantasy inventory silhouette. No ornamental complexity. Exactly FIVE columns TWO rows on a wide 5:2 transparent canvas. ONE complete object per square cell, each centered, fully contained in the CENTRAL 65 percent of its cell, at least 17 percent blank transparent margin on all sides. Keep one consistent object model but vary angle, facing and small silhouette details across ten variants: frontal, three-quarter left, three-quarter right, diagonal left, diagonal right, side profile, upright, lower view, upper view, compact variant. Pure object material ONLY: NO magical effects, NO glow, NO aura, NO symbols floating around it, NO ground shadows. NO background, frames, labels, text, grid or checkerboard. True transparent alpha. No neighboring objects may cross cell boundaries.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-fang.png",
+      "originalFilename": "exec-41c77977-3eea-46f8-a23d-b27780be5263.png",
+      "sha256": "ebfc0d310b7e5137b73e5f0b33faf6020ddc038fc05dc9716a192788eadab777"
+    },
+    {
+      "id": "banner",
+      "brief": "one short tattered dark cloth pennant on a short dark metal crossbar, no text or insignia",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one short tattered dark cloth pennant on a short dark metal crossbar, no text or insignia. The only subject is a banner. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-banner.png",
+      "originalFilename": "exec-243b1681-4942-4dd3-8952-b736c8988cd7.png",
+      "sha256": "551c7354e799f830a20bdad7caa42c3b9cb38e11e1705065c3123c45f33c2a7c"
+    },
+    {
+      "id": "orb",
+      "brief": "one smoky starstone sphere in a small dark bronze cradle, plain central dark stone",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one smoky starstone sphere in a small dark bronze cradle, plain central dark stone. The only subject is a orb. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-orb.png",
+      "originalFilename": "exec-6285ed57-8bc4-4d43-a112-ed4f332c02f3.png",
+      "sha256": "7a3bc72d76d43907da0d61fc9a062220db4afdf10bea4fd71175ac5f90871706"
+    },
+    {
+      "id": "ring",
+      "brief": "one plain open circular forged dark iron ring with small irregular facets, not jewelry on a hand",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one plain open circular forged dark iron ring with small irregular facets, not jewelry on a hand. The only subject is a ring. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-ring.png",
+      "originalFilename": "exec-89457a7e-ff35-4a9d-b339-abb758f33d70.png",
+      "sha256": "c3ae694528493043efb0b0209eed652dad2593d552a3a3018acfd502b5309f5e"
+    },
+    {
+      "id": "star",
+      "brief": "one simple five-point star relic carved in dark charcoal crystal",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one simple five-point star relic carved in dark charcoal crystal. The only subject is a star. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-star.png",
+      "originalFilename": "exec-47f0fe79-906a-47ae-8492-3fc0e477b468.png",
+      "sha256": "f66f6d7d68762b302e54ea81fedef5fc1d73aaf8aacc4be72b64c56e09ca5825"
+    },
+    {
+      "id": "moon",
+      "brief": "one thick crescent moon relic in tarnished dark silver",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one thick crescent moon relic in tarnished dark silver. The only subject is a moon. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-moon.png",
+      "originalFilename": "exec-4c302ec9-799f-4a9a-b36a-2a2939a189bd.png",
+      "sha256": "9830d1b9e28e09d23d62c9028a5e46db267ebb7e27e06e1b9b1ee4b4888b1434"
+    },
+    {
+      "id": "heart",
+      "brief": "one small simple stylized heart relic in blackened red stone with subtle faceting",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one small simple stylized heart relic in blackened red stone with subtle faceting. The only subject is a heart. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-heart.png",
+      "originalFilename": "exec-9d6acdb7-ad47-4659-a0ac-225d020fdb5f.png",
+      "sha256": "e517e0e57af4a33376bf0e31d32a1c622887d81580768c2ff83d00aa41b071c6"
+    },
+    {
+      "id": "sun",
+      "brief": "one simple dark bronze sun disk with eight broad short rays",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one simple dark bronze sun disk with eight broad short rays. The only subject is a sun. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-sun.png",
+      "originalFilename": "exec-aa42ab6a-866e-44f1-88fa-0873289d2caa.png",
+      "sha256": "d9e014bcc396f3aac15a1b9b7485de6a54647f4d2cd6251564e414aa018ea88f"
+    },
+    {
+      "id": "vial",
+      "brief": "one squat small glass poison vial with a dark cork stopper, cloudy nearly black liquid, no label",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one squat small glass poison vial with a dark cork stopper, cloudy nearly black liquid, no label. The only subject is a vial. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-vial.png",
+      "originalFilename": "exec-20b1e7b0-cf6c-4026-b6fc-b3412b920629.png",
+      "sha256": "bd69c77c8c979a39eb2ff36f11d4c999eb574ea8e9d5cc53d0d950d336c1f1f0"
+    },
+    {
+      "id": "hourglass",
+      "brief": "one small simple dark iron hourglass with charcoal sand, two glass chambers",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one small simple dark iron hourglass with charcoal sand, two glass chambers. The only subject is a hourglass. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-hourglass.png",
+      "originalFilename": "exec-aa38d62f-7adb-4ce3-8918-f8c008d34306.png",
+      "sha256": "af2223922a25ea0a67ccd6b8c081a7bc85526f121f5fd7cdd101f77199794843"
+    },
+    {
+      "id": "chain",
+      "brief": "one short curved segment of three to five large dark iron chain links, compact isolated cluster",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one short curved segment of three to five large dark iron chain links, compact isolated cluster. The only subject is a chain. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-chain.png",
+      "originalFilename": "exec-f2efbcc4-784e-4724-aa1c-7475791bff07.png",
+      "sha256": "8c890de22239848a1e7c0857bdec63ea28e44c7c20ccf3db060e8e0d9ba0fc23"
+    },
+    {
+      "id": "bolt",
+      "brief": "one jagged lightning-bolt-shaped dark silver shard, solid material, not energy",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one jagged lightning-bolt-shaped dark silver shard, solid material, not energy. The only subject is a bolt. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-bolt.png",
+      "originalFilename": "exec-aab3650a-b08b-43c9-8683-8414170a4575.png",
+      "sha256": "8432222aafee7c0ebcd2a63fa87a2c7ad954608bb333914bceaaa4cb5fdaabee"
+    },
+    {
+      "id": "dazed",
+      "brief": "one dented small dark bronze handbell with a short grip, no clapper motion or energy",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one dented small dark bronze handbell with a short grip, no clapper motion or energy. The only subject is a dazed. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-dazed.png",
+      "originalFilename": "exec-9db074c1-0008-43ab-958d-ac746ac81c15.png",
+      "sha256": "e9b0633c13ecbe02b94bd1a11bdeb4ee85ce0631691a1f0b044dc42958b2ae5d"
+    },
+    {
+      "id": "mask",
+      "brief": "one simple expressionless dark iron face mask with two eye holes, no head or person",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one simple expressionless dark iron face mask with two eye holes, no head or person. The only subject is a mask. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-mask.png",
+      "originalFilename": "exec-5214420b-47b6-41a5-9c98-dff92eb419af.png",
+      "sha256": "19825873d83c0a38f87fb38e284b36c500ba8e13c6b40a8e77f5336cc4635b84"
+    },
+    {
+      "id": "smoke",
+      "brief": "one folded torn strip of dark charcoal veil cloth, compact curling shape, NO actual smoke",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one folded torn strip of dark charcoal veil cloth, compact curling shape, NO actual smoke. The only subject is a smoke. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-smoke.png",
+      "originalFilename": "exec-948ada9e-cedd-49ed-9239-a7c7fb728670.png",
+      "sha256": "4d7bef4761e03b61df9b072f87cc67b30d3e4afe1f3877dd028ad678862653c3"
+    },
+    {
+      "id": "tomb",
+      "brief": "one small upright dark stone coffin-shaped slab with a simple recessed face, no text or gravestone cross",
+      "prompt": "Create ten standalone game inventory sprites of this specific object: one small upright dark stone coffin-shaped slab with a simple recessed face, no text or gravestone cross. The only subject is a tomb. Consistent simple model, different angles. Dark fantasy material: near-black iron or charcoal stone as appropriate, worn silver edges and tiny bronze details, highly readable silhouette, no embellishments or extra emblems. Exactly five columns and two rows on wide 5:2 canvas. Ten independent objects, each at center of its own square cell, occupying ONLY 60% of cell width and height, with generous 20% transparent padding. Variants front, 3/4 left, 3/4 right, tilted left/right, profile, upright, high/low angles, compact. NO background, cast shadows, labels, text, grids, decorative glyphs, aura, glow or surrounding effects. Actual transparent alpha. Entire objects must be contained within cells.",
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/object-tomb.png",
+      "originalFilename": "exec-6f59b283-03bc-4cab-bd80-658a4e7a94e9.png",
+      "sha256": "3857ab11aad7b7035cf23e1dccd399ac82f3807026a188fc76907cc7b6dc6061"
+    }
+  ],
+  "effects": [
+    {
+      "type": "effects",
+      "index": 0,
+      "prompt": "Extract a NON-EMISSIVE LINEWORK layer of this exact atlas. Preserve the exact 10 column, 5 row layout and each of its fifty symbol shapes, positions and sizes. Keep ONLY the narrow central strokes, rendered as thin DARK GRAY etched lines with tiny muted material-colored edge accents. For blood shapes retain narrow dark crimson drip strokes. REMOVE absolutely ALL surrounding glow, bloom, fog, haze, colored fills and solid background shapes. Nothing behind or between the thin strokes: everything except the sparse fine lines must become truly transparent. This is like a matte ink decal or fine engraved crack pattern, NOT a luminous VFX sprite. NO light emission anywhere, NO blue halo, NO gray filled silhouettes, no background, text or grid. 1 to 2 pixel thin dark strokes at source cell scale. Same overall canvas and same exact grid alignment as reference.",
+      "group": [
+        [
+          "precision",
+          "pale silver precise aiming reticle with tiny inward ticks"
+        ],
+        [
+          "evade",
+          "icy blue curved sidestep speed streaks, one displaced echo crescent"
+        ],
+        [
+          "strength",
+          "muted amber upward power strokes and a compact knuckle impact burst"
+        ],
+        [
+          "dexterity",
+          "pale mint nimble double swoosh with fine directional chevrons"
+        ],
+        [
+          "weak",
+          "dull violet fractured downward strokes, sparse drained energy cracks"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/effects-00.png",
+      "originalFilename": "exec-42b50916-bf81-49a6-a925-42d90499573e.png",
+      "sha256": "7126c77d4e83936a21d641bc66d61424a179629fa580ec68b5850fdd9ee9d254"
+    },
+    {
+      "type": "effects",
+      "index": 1,
+      "prompt": "Extract a NON-EMISSIVE LINEWORK layer of this exact atlas. Preserve the exact 10 column, 5 row layout and each of its fifty symbol shapes, positions and sizes. Keep ONLY the narrow central strokes, rendered as thin DARK GRAY etched lines with tiny muted material-colored edge accents. For blood shapes retain narrow dark crimson drip strokes. REMOVE absolutely ALL surrounding glow, bloom, fog, haze, colored fills and solid background shapes. Nothing behind or between the thin strokes: everything except the sparse fine lines must become truly transparent. This is like a matte ink decal or fine engraved crack pattern, NOT a luminous VFX sprite. NO light emission anywhere, NO blue halo, NO gray filled silhouettes, no background, text or grid. 1 to 2 pixel thin dark strokes at source cell scale. Same overall canvas and same exact grid alignment as reference.",
+      "group": [
+        [
+          "vulnerable",
+          "muted red open breach slash with two diverging fine cracks"
+        ],
+        [
+          "frail",
+          "pale gray fine branching fracture network, crumbling tiny flecks"
+        ],
+        [
+          "bleed",
+          "dark crimson thin blood drip trails, one to three small falling drops"
+        ],
+        [
+          "frost",
+          "icy blue delicate crystalline branching frost veins"
+        ],
+        [
+          "insanity",
+          "muted lavender broken spiral with angular erratic offshoots"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/effects-01.png",
+      "originalFilename": "exec-5427c473-64fa-4797-a963-c92091a6939a.png",
+      "sha256": "bc99ecba82ef55a79736b0c2a852c4f02405b8faa2fb4aa423fbaa68172ef882"
+    },
+    {
+      "type": "effects",
+      "index": 2,
+      "prompt": "Extract a NON-EMISSIVE LINEWORK layer of this exact atlas. Preserve the exact 10 column, 5 row layout and each of its fifty symbol shapes, positions and sizes. Keep ONLY the narrow central strokes, rendered as thin DARK GRAY etched lines with tiny muted material-colored edge accents. For blood shapes retain narrow dark crimson drip strokes. REMOVE absolutely ALL surrounding glow, bloom, fog, haze, colored fills and solid background shapes. Nothing behind or between the thin strokes: everything except the sparse fine lines must become truly transparent. This is like a matte ink decal or fine engraved crack pattern, NOT a luminous VFX sprite. NO light emission anywhere, NO blue halo, NO gray filled silhouettes, no background, text or grid. 1 to 2 pixel thin dark strokes at source cell scale. Same overall canvas and same exact grid alignment as reference.",
+      "group": [
+        [
+          "bleedResist",
+          "dark crimson sealed drop outline crossed by a small pale silver closing arc"
+        ],
+        [
+          "frostResist",
+          "pale blue frost flecks deflecting from a short curved silver barrier"
+        ],
+        [
+          "insanityResist",
+          "lavender spiral contained inside a quiet silver circular arc"
+        ],
+        [
+          "frostExposed",
+          "icy blue split crystalline fissure with outward fracture rays"
+        ],
+        [
+          "insanityExposed",
+          "pale lavender unraveling spiral threads peeling outward"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/effects-02.png",
+      "originalFilename": "exec-6b72e997-bc81-422e-838c-f2b0fc8ab06a.png",
+      "sha256": "8af129cfbd8ba31d9ea2f295d50ad210756f5b34c9e1c7e708b14b9e2739e092"
+    },
+    {
+      "type": "effects",
+      "index": 3,
+      "prompt": "Extract a NON-EMISSIVE LINEWORK layer of this exact atlas. Preserve the exact 10 column, 5 row layout and each of its fifty symbol shapes, positions and sizes. Keep ONLY the narrow central strokes, rendered as thin DARK GRAY etched lines with tiny muted material-colored edge accents. For blood shapes retain narrow dark crimson drip strokes. REMOVE absolutely ALL surrounding glow, bloom, fog, haze, colored fills and solid background shapes. Nothing behind or between the thin strokes: everything except the sparse fine lines must become truly transparent. This is like a matte ink decal or fine engraved crack pattern, NOT a luminous VFX sprite. NO light emission anywhere, NO blue halo, NO gray filled silhouettes, no background, text or grid. 1 to 2 pixel thin dark strokes at source cell scale. Same overall canvas and same exact grid alignment as reference.",
+      "group": [
+        [
+          "crimsonBlight",
+          "muted crimson thorny branching tendrils with sparse dark red spores"
+        ],
+        [
+          "necroticBlight",
+          "desaturated mint blackened vein-like tendrils with small withering motes"
+        ],
+        [
+          "burn",
+          "restrained amber narrow upward flame tongues, no object or logs"
+        ],
+        [
+          "regen",
+          "soft mint emerging leaf-vein strokes and two tiny upward seed sparks"
+        ],
+        [
+          "madness",
+          "muted red-violet unstable double spiral, broken circular fragments"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/effects-03.png",
+      "originalFilename": "exec-4764d369-5713-4b07-b53e-c780ecfc970b.png",
+      "sha256": "6f4eb3a9ff63cdb57901769d886c097f9b423000692867203e565c8d054f9f6e"
+    },
+    {
+      "type": "effects",
+      "index": 4,
+      "prompt": "Extract a NON-EMISSIVE LINEWORK layer of this exact atlas. Preserve the exact 10 column, 5 row layout and each of its fifty symbol shapes, positions and sizes. Keep ONLY the narrow central strokes, rendered as thin DARK GRAY etched lines with tiny muted material-colored edge accents. For blood shapes retain narrow dark crimson drip strokes. REMOVE absolutely ALL surrounding glow, bloom, fog, haze, colored fills and solid background shapes. Nothing behind or between the thin strokes: everything except the sparse fine lines must become truly transparent. This is like a matte ink decal or fine engraved crack pattern, NOT a luminous VFX sprite. NO light emission anywhere, NO blue halo, NO gray filled silhouettes, no background, text or grid. 1 to 2 pixel thin dark strokes at source cell scale. Same overall canvas and same exact grid alignment as reference.",
+      "group": [
+        [
+          "staggered",
+          "pale silver short radial impact marks and a skewed broken arc"
+        ],
+        [
+          "rallyingStandard",
+          "muted gold upward rally rays fanning from one point"
+        ],
+        [
+          "rallyingStandardUp",
+          "muted gold two layered upward rally fans, sparse paired rays"
+        ],
+        [
+          "unbreakable",
+          "pale silver intact hexagonal ward outline, one line thick"
+        ],
+        [
+          "unbreakableUp",
+          "pale silver double nested hexagonal ward outline"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/effects-04.png",
+      "originalFilename": "exec-00ac94da-0438-4fa9-afc6-b8e0bb43bae0.png",
+      "sha256": "608397efd31df15015cd69e4db462fe5cc16657a5a50d31335bbfd03486c8d71"
+    },
+    {
+      "type": "effects",
+      "index": 5,
+      "prompt": "Extract a separate UNLIT EFFECT MARK layer from this exact atlas. Preserve its 10 columns and 5 rows, all motif shapes, relative positions, orientations and sizes. Remove all light emission, glow, bloom, fog, haze and broad colored fills. Retain only the narrow central motif strokes as matte dark gray etched marks with tiny muted material-colored accents, like fine painted or engraved decals. Blood remains dark crimson thin drips, not glowing. Everything between and behind strokes must be fully transparent. Do not add solid backing shapes, new symbols, physical objects, borders, text, labels or a checkerboard. Actual transparent alpha. The goal is non-emissive symbols and fissures which can remain visible when their separate glow layer is switched off. Narrow clean strokes, no luminous aura anywhere.",
+      "group": [
+        [
+          "goreblood",
+          "dark red compact blood splash with rising fine droplets"
+        ],
+        [
+          "sanguinePact",
+          "dark crimson two linked drop outlines connected by a thin covenant arc"
+        ],
+        [
+          "starstoneCharge",
+          "icy blue small orbiting star sparks and short charge filaments"
+        ],
+        [
+          "stargazer",
+          "pale blue eye-like constellation arc of five tiny star points"
+        ],
+        [
+          "astralArmor",
+          "pale blue segmented hexagonal armor lattice, transparent gaps"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/effects-05.png",
+      "originalFilename": "exec-90a6c1fe-355e-4c3d-b17a-efe5967a006a.png",
+      "sha256": "f2dcc5f16a1d7631265f18798adfc5cc5ec87e3e0c1c845ce5168f7dd9699ba1"
+    },
+    {
+      "type": "effects",
+      "index": 6,
+      "prompt": "Extract a separate UNLIT EFFECT MARK layer from this exact atlas. Preserve its 10 columns and 5 rows, all motif shapes, relative positions, orientations and sizes. Remove all light emission, glow, bloom, fog, haze and broad colored fills. Retain only the narrow central motif strokes as matte dark gray etched marks with tiny muted material-colored accents, like fine painted or engraved decals. Blood remains dark crimson thin drips, not glowing. Everything between and behind strokes must be fully transparent. Do not add solid backing shapes, new symbols, physical objects, borders, text, labels or a checkerboard. Actual transparent alpha. The goal is non-emissive symbols and fissures which can remain visible when their separate glow layer is switched off. Narrow clean strokes, no luminous aura anywhere.",
+      "group": [
+        [
+          "constellation",
+          "pale blue five tiny stars joined by fine constellation lines"
+        ],
+        [
+          "azureCoil",
+          "icy blue two concentric coil arcs with a small tapered tail"
+        ],
+        [
+          "waxingMoon",
+          "pale blue two growing crescent arcs and sparse moon dust"
+        ],
+        [
+          "moonlitShield",
+          "pale silver crescent barrier rim with two small blue star accents"
+        ],
+        [
+          "astromancer",
+          "pale blue small radial constellation with fine orbital strokes"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/effects-06.png",
+      "originalFilename": "exec-ae21d111-535a-4786-9863-306321e1b43a.png",
+      "sha256": "bb6af2091459ff24d05e6e7a8e209b8f879a1b283b69ff157386950694edf771"
+    },
+    {
+      "type": "effects",
+      "index": 7,
+      "prompt": "Extract a separate UNLIT EFFECT MARK layer from this exact atlas. Preserve its 10 columns and 5 rows, all motif shapes, relative positions, orientations and sizes. Remove all light emission, glow, bloom, fog, haze and broad colored fills. Retain only the narrow central motif strokes as matte dark gray etched marks with tiny muted material-colored accents, like fine painted or engraved decals. Blood remains dark crimson thin drips, not glowing. Everything between and behind strokes must be fully transparent. Do not add solid backing shapes, new symbols, physical objects, borders, text, labels or a checkerboard. Actual transparent alpha. The goal is non-emissive symbols and fissures which can remain visible when their separate glow layer is switched off. Narrow clean strokes, no luminous aura anywhere.",
+      "group": [
+        [
+          "thornHalo",
+          "muted gold thin open halo with sparse pointed thorn strokes"
+        ],
+        [
+          "communion",
+          "soft mint two inward-joining curved rays with a tiny central spark"
+        ],
+        [
+          "lifeTithe",
+          "muted crimson one fine descending stream terminating in a small drop"
+        ],
+        [
+          "stigmata",
+          "muted crimson short cross-shaped fissure with a few falling drops"
+        ],
+        [
+          "zealotry",
+          "muted gold thin sunburst rays around an empty center"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/effects-07.png",
+      "originalFilename": "exec-1a081bea-dd98-426a-9606-8cdaa043b2f5.png",
+      "sha256": "d8577b4a2f8581c86a42d5412878206265ff8351420aa949b6070022466ea4cb"
+    },
+    {
+      "type": "effects",
+      "index": 8,
+      "prompt": "Extract a separate UNLIT EFFECT MARK layer from this exact atlas. Preserve its 10 columns and 5 rows, all motif shapes, relative positions, orientations and sizes. Remove all light emission, glow, bloom, fog, haze and broad colored fills. Retain only the narrow central motif strokes as matte dark gray etched marks with tiny muted material-colored accents, like fine painted or engraved decals. Blood remains dark crimson thin drips, not glowing. Everything between and behind strokes must be fully transparent. Do not add solid backing shapes, new symbols, physical objects, borders, text, labels or a checkerboard. Actual transparent alpha. The goal is non-emissive symbols and fissures which can remain visible when their separate glow layer is switched off. Narrow clean strokes, no luminous aura anywhere.",
+      "group": [
+        [
+          "emberTide",
+          "muted amber sweeping wave of small ember tongues"
+        ],
+        [
+          "harbingerOfBlight",
+          "muted crimson hooked rot tendrils fanning out with sparse spores"
+        ],
+        [
+          "bloodUnction",
+          "dark crimson thin anointing streak with three suspended tiny droplets"
+        ],
+        [
+          "ironVow",
+          "pale silver interlocked angular oath arcs with small gold binding tick"
+        ],
+        [
+          "bulwarkEcho",
+          "pale silver three displaced protective arc echoes"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/effects-08.png",
+      "originalFilename": "exec-6f0e53ff-a8eb-4da0-a2a2-40113f3e452e.png",
+      "sha256": "21367237772aab39829fedad36c50bee8a9fc6492c8299bff742dc74029d372d"
+    },
+    {
+      "type": "effects",
+      "index": 9,
+      "prompt": "Extract a separate UNLIT EFFECT MARK layer from this exact atlas. Preserve its 10 columns and 5 rows, all motif shapes, relative positions, orientations and sizes. Remove all light emission, glow, bloom, fog, haze and broad colored fills. Retain only the narrow central motif strokes as matte dark gray etched marks with tiny muted material-colored accents, like fine painted or engraved decals. Blood remains dark crimson thin drips, not glowing. Everything between and behind strokes must be fully transparent. Do not add solid backing shapes, new symbols, physical objects, borders, text, labels or a checkerboard. Actual transparent alpha. The goal is non-emissive symbols and fissures which can remain visible when their separate glow layer is switched off. Narrow clean strokes, no luminous aura anywhere.",
+      "group": [
+        [
+          "prepared",
+          "muted gold braced corner marks and two inward-ready chevrons"
+        ],
+        [
+          "venom",
+          "desaturated green thin acidic drip trails and two small toxin bubbles"
+        ],
+        [
+          "afterimage",
+          "icy blue two displaced ghost crescents with tiny trailing streaks"
+        ],
+        [
+          "deadlyTempo",
+          "muted crimson rhythmic paired slash ticks in a rising curve"
+        ],
+        [
+          "opportunist",
+          "muted amber precise hooked opening slash with one target tick"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/effects-09.png",
+      "originalFilename": "exec-8c194aa0-43fc-48c0-abf5-d493f6d023f8.png",
+      "sha256": "f6175b5232043fc0ec991ff4e6a1504581f32826465fe5dae3c21cb764caa0ee"
+    },
+    {
+      "type": "effects",
+      "index": 10,
+      "prompt": "Extract a separate UNLIT EFFECT MARK layer from this exact atlas. Preserve its 10 columns and 5 rows, all motif shapes, relative positions, orientations and sizes. Remove all light emission, glow, bloom, fog, haze and broad colored fills. Retain only the narrow central motif strokes as matte dark gray etched marks with tiny muted material-colored accents, like fine painted or engraved decals. Blood remains dark crimson thin drips, not glowing. Everything between and behind strokes must be fully transparent. Do not add solid backing shapes, new symbols, physical objects, borders, text, labels or a checkerboard. Actual transparent alpha. The goal is non-emissive symbols and fissures which can remain visible when their separate glow layer is switched off. Narrow clean strokes, no luminous aura anywhere.",
+      "group": [
+        [
+          "envenom",
+          "desaturated green thin venom coating streak with suspended poison drops"
+        ],
+        [
+          "glassCannon",
+          "pale red sharp outward energy rays and fine glasslike stress fissures"
+        ],
+        [
+          "magicVulnerable",
+          "muted lavender split rune arc with an open central breach"
+        ],
+        [
+          "stanceShifted",
+          "pale silver two opposing curved directional arcs with small chevrons"
+        ],
+        [
+          "silenced",
+          "muted lavender interrupted concentric sound waves crossed by one fine diagonal"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/effects-10.png",
+      "originalFilename": "exec-aa9fe897-91b7-4dfe-9c80-a7eef7032f1f.png",
+      "sha256": "b6c7aa3e426d220a6e99037839a8075cbb547b208f0c710f2e7531560a9dfb2c"
+    },
+    {
+      "type": "effects",
+      "index": 11,
+      "prompt": "Extract a separate UNLIT EFFECT MARK layer from this exact atlas. Preserve its 10 columns and 5 rows, all motif shapes, relative positions, orientations and sizes. Remove all light emission, glow, bloom, fog, haze and broad colored fills. Retain only the narrow central motif strokes as matte dark gray etched marks with tiny muted material-colored accents, like fine painted or engraved decals. Blood remains dark crimson thin drips, not glowing. Everything between and behind strokes must be fully transparent. Do not add solid backing shapes, new symbols, physical objects, borders, text, labels or a checkerboard. Actual transparent alpha. The goal is non-emissive symbols and fissures which can remain visible when their separate glow layer is switched off. Narrow clean strokes, no luminous aura anywhere.",
+      "group": [
+        [
+          "stoneskin",
+          "pale stone-gray angular plate seams and tiny rock dust flecks"
+        ],
+        [
+          "bleeding",
+          "dark crimson three continuous thin drip lines and scattered small droplets"
+        ],
+        [
+          "frozen",
+          "icy blue angular ice cage edges with several sharp frost tips"
+        ],
+        [
+          "chilled",
+          "pale blue fine sparse frost rim strokes and three tiny snow flakes"
+        ],
+        [
+          "sleep",
+          "pale blue drooping crescent with three tiny falling star motes"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/effects-11.png",
+      "originalFilename": "exec-8ae24442-0ab4-4cbd-8869-8fc1af0ae55a.png",
+      "sha256": "8e06290ce6664450d5f851d0fb1f77159799c368ee9e5cbbc2cc67a9254dd34f"
+    },
+    {
+      "type": "effects",
+      "index": 12,
+      "prompt": "Extract a separate UNLIT EFFECT MARK layer from this exact atlas. Preserve its 10 columns and 5 rows, all motif shapes, relative positions, orientations and sizes. Remove all light emission, glow, bloom, fog, haze and broad colored fills. Retain only the narrow central motif strokes as matte dark gray etched marks with tiny muted material-colored accents, like fine painted or engraved decals. Blood remains dark crimson thin drips, not glowing. Everything between and behind strokes must be fully transparent. Do not add solid backing shapes, new symbols, physical objects, borders, text, labels or a checkerboard. Actual transparent alpha. The goal is non-emissive symbols and fissures which can remain visible when their separate glow layer is switched off. Narrow clean strokes, no luminous aura anywhere.",
+      "group": [
+        [
+          "paralysis",
+          "pale blue branching electrical filaments in a narrow zigzag"
+        ],
+        [
+          "dazed",
+          "pale silver three small asymmetric stars with a short broken orbit"
+        ],
+        [
+          "offBalance",
+          "pale gray skewed balance arc and short diagonal wobble ticks"
+        ],
+        [
+          "prone",
+          "pale gray low horizontal impact streaks and a downward falling chevron"
+        ],
+        [
+          "grounded",
+          "pale blue short downward electrical threads ending in three horizontal grounding strokes"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/effects-12.png",
+      "originalFilename": "exec-7280034b-5c70-41ef-9a53-eaa2c7eef5f3.png",
+      "sha256": "031fa39cd0d135d853979c3e3af81c4e2c2d9285e517790cc79ffda5d90d05a7"
+    },
+    {
+      "type": "effects",
+      "index": 13,
+      "prompt": "Extract a separate UNLIT EFFECT MARK layer from this exact atlas. Preserve its 10 columns and 5 rows, all motif shapes, relative positions, orientations and sizes. Remove all light emission, glow, bloom, fog, haze and broad colored fills. Retain only the narrow central motif strokes as matte dark gray etched marks with tiny muted material-colored accents, like fine painted or engraved decals. Blood remains dark crimson thin drips, not glowing. Everything between and behind strokes must be fully transparent. Do not add solid backing shapes, new symbols, physical objects, borders, text, labels or a checkerboard. Actual transparent alpha. The goal is non-emissive symbols and fissures which can remain visible when their separate glow layer is switched off. Narrow clean strokes, no luminous aura anywhere.",
+      "group": [
+        [
+          "invulnerability",
+          "pale silver complete thin diamond ward with tiny deflected impact sparks"
+        ],
+        [
+          "decoy",
+          "pale blue displaced pair of hollow face-shaped outline traces"
+        ],
+        [
+          "concealed",
+          "desaturated gray-blue soft partial veil wisps with a faint broken crescent"
+        ],
+        [
+          "confused",
+          "muted lavender opposing tangled spiral traces with tiny irregular stars"
+        ],
+        [
+          "slowed",
+          "pale gray drooping curved motion ticks and falling fine dust grains"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/effects-13.png",
+      "originalFilename": "exec-70b0f4d8-c7ba-4533-8a98-0bf27dc00ae3.png",
+      "sha256": "723de1a9cecf1b06baa5eb6bcc6984c09303665eddf8e96ca12010e991c3b402"
+    },
+    {
+      "type": "effects",
+      "index": 14,
+      "prompt": "Extract a separate UNLIT EFFECT MARK layer from this exact atlas. Preserve its 5 columns and 2 rows, all motif shapes, relative positions, orientations and sizes. Remove all light emission, glow, bloom, fog, haze and broad colored fills. Retain only the narrow central motif strokes as matte dark gray etched marks with tiny muted material-colored accents, like fine painted or engraved decals. Blood remains dark crimson thin drips, not glowing. Everything between and behind strokes must be fully transparent. Do not add solid backing shapes, new symbols, physical objects, borders, text, labels or a checkerboard. Actual transparent alpha. The goal is non-emissive symbols and fissures which can remain visible when their separate glow layer is switched off. Narrow clean strokes, no luminous aura anywhere.",
+      "group": [
+        [
+          "entombed",
+          "muted stone-gray angular closing stone seam marks with sparse grit"
+        ]
+      ],
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/effects-14.png",
+      "originalFilename": "exec-e5718a77-ff85-46ca-94af-21066fca90ab.png",
+      "sha256": "0eeb79eec84dcc77d54622719f910703a372a3344c89cc131bab4d9da8eee78f"
+    }
+  ],
+  "glows": [
+    {
+      "type": "glows",
+      "index": 0,
+      "prompt": "Generate a transparent VFX DECAL ATLAS for dark fantasy card art. Exactly FIFTY distinct small overlay effects in TEN equal columns by FIVE equal rows on a 2:1 canvas. Each row has TEN variations of its specified motif. ROWS FROM TOP TO BOTTOM:\nRow 1, precision: pale silver precise aiming reticle with tiny inward ticks.\nRow 2, evade: icy blue curved sidestep speed streaks, one displaced echo crescent.\nRow 3, strength: muted amber upward power strokes and a compact knuckle impact burst.\nRow 4, dexterity: pale mint nimble double swoosh with fine directional chevrons.\nRow 5, weak: dull violet fractured downward strokes, sparse drained energy cracks.\nEach row's columns should vary stroke shape, angle, number of small accents and asymmetry while preserving the same meaning. Every effect is a small sparse arrangement of fine translucent strokes, not an object. Thin luminous core lines only with minimal soft edges: NO wide bloom, fog, large aura, filled background or solid physical objects. Glow will be a SEPARATE layer. Occupy only the central 60% of each cell with at least 20% transparent padding. No cross-cell trails or overlaps. All 50 marks fully isolated. Actual transparent alpha everywhere between the marks. NO text, labels, numbers, grid lines, borders, checkerboard, cards, weapons or badges. Keep a quiet restrained palette, mostly pale silver/blue with the small muted color accents specified per row.",
+      "group": [
+        [
+          "precision",
+          "pale silver precise aiming reticle with tiny inward ticks"
+        ],
+        [
+          "evade",
+          "icy blue curved sidestep speed streaks, one displaced echo crescent"
+        ],
+        [
+          "strength",
+          "muted amber upward power strokes and a compact knuckle impact burst"
+        ],
+        [
+          "dexterity",
+          "pale mint nimble double swoosh with fine directional chevrons"
+        ],
+        [
+          "weak",
+          "dull violet fractured downward strokes, sparse drained energy cracks"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/glows-00.png",
+      "originalFilename": "exec-049d83cd-0b9e-4cad-b86e-e7825cd87947.png",
+      "sha256": "565c1195590eb8c385380e622925c3ea6117f71c4efe1d0f7ac9a2e97b649f4c"
+    },
+    {
+      "type": "glows",
+      "index": 1,
+      "prompt": "Generate a transparent VFX DECAL ATLAS for dark fantasy card art. Exactly FIFTY distinct small overlay effects in TEN equal columns by FIVE equal rows on a 2:1 canvas. Each row has TEN variations of its specified motif. ROWS FROM TOP TO BOTTOM:\nRow 1, vulnerable: muted red open breach slash with two diverging fine cracks.\nRow 2, frail: pale gray fine branching fracture network, crumbling tiny flecks.\nRow 3, bleed: dark crimson thin blood drip trails, one to three small falling drops.\nRow 4, frost: icy blue delicate crystalline branching frost veins.\nRow 5, insanity: muted lavender broken spiral with angular erratic offshoots.\nEach row's columns should vary stroke shape, angle, number of small accents and asymmetry while preserving the same meaning. Every effect is a small sparse arrangement of fine translucent strokes, not an object. Thin luminous core lines only with minimal soft edges: NO wide bloom, fog, large aura, filled background or solid physical objects. Glow will be a SEPARATE layer. Occupy only the central 60% of each cell with at least 20% transparent padding. No cross-cell trails or overlaps. All 50 marks fully isolated. Actual transparent alpha everywhere between the marks. NO text, labels, numbers, grid lines, borders, checkerboard, cards, weapons or badges. Keep a quiet restrained palette, mostly pale silver/blue with the small muted color accents specified per row.",
+      "group": [
+        [
+          "vulnerable",
+          "muted red open breach slash with two diverging fine cracks"
+        ],
+        [
+          "frail",
+          "pale gray fine branching fracture network, crumbling tiny flecks"
+        ],
+        [
+          "bleed",
+          "dark crimson thin blood drip trails, one to three small falling drops"
+        ],
+        [
+          "frost",
+          "icy blue delicate crystalline branching frost veins"
+        ],
+        [
+          "insanity",
+          "muted lavender broken spiral with angular erratic offshoots"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/glows-01.png",
+      "originalFilename": "exec-e83342ed-967c-4ed5-8f57-f29039ad8ac8.png",
+      "sha256": "ffba3e58a022d102f3479a659154c1b7350fe503656140ee17c7f003f80ccff5"
+    },
+    {
+      "type": "glows",
+      "index": 2,
+      "prompt": "Generate a transparent VFX DECAL ATLAS for dark fantasy card art. Exactly FIFTY distinct small overlay effects in TEN equal columns by FIVE equal rows on a 2:1 canvas. Each row has TEN variations of its specified motif. ROWS FROM TOP TO BOTTOM:\nRow 1, bleedResist: dark crimson sealed drop outline crossed by a small pale silver closing arc.\nRow 2, frostResist: pale blue frost flecks deflecting from a short curved silver barrier.\nRow 3, insanityResist: lavender spiral contained inside a quiet silver circular arc.\nRow 4, frostExposed: icy blue split crystalline fissure with outward fracture rays.\nRow 5, insanityExposed: pale lavender unraveling spiral threads peeling outward.\nEach row's columns should vary stroke shape, angle, number of small accents and asymmetry while preserving the same meaning. Every effect is a small sparse arrangement of fine translucent strokes, not an object. Thin luminous core lines only with minimal soft edges: NO wide bloom, fog, large aura, filled background or solid physical objects. Glow will be a SEPARATE layer. Occupy only the central 60% of each cell with at least 20% transparent padding. No cross-cell trails or overlaps. All 50 marks fully isolated. Actual transparent alpha everywhere between the marks. NO text, labels, numbers, grid lines, borders, checkerboard, cards, weapons or badges. Keep a quiet restrained palette, mostly pale silver/blue with the small muted color accents specified per row.",
+      "group": [
+        [
+          "bleedResist",
+          "dark crimson sealed drop outline crossed by a small pale silver closing arc"
+        ],
+        [
+          "frostResist",
+          "pale blue frost flecks deflecting from a short curved silver barrier"
+        ],
+        [
+          "insanityResist",
+          "lavender spiral contained inside a quiet silver circular arc"
+        ],
+        [
+          "frostExposed",
+          "icy blue split crystalline fissure with outward fracture rays"
+        ],
+        [
+          "insanityExposed",
+          "pale lavender unraveling spiral threads peeling outward"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/glows-02.png",
+      "originalFilename": "exec-d8fcf6a8-20c3-4713-88e5-93b20b956ebc.png",
+      "sha256": "293fe2d8526737c37afd0ff0f3a624fdb2668e0f3ebc6b4731b3d7b3d0338038"
+    },
+    {
+      "type": "glows",
+      "index": 3,
+      "prompt": "Generate a transparent VFX DECAL ATLAS for dark fantasy card art. Exactly FIFTY distinct small overlay effects in TEN equal columns by FIVE equal rows on a 2:1 canvas. Each row has TEN variations of its specified motif. ROWS FROM TOP TO BOTTOM:\nRow 1, crimsonBlight: muted crimson thorny branching tendrils with sparse dark red spores.\nRow 2, necroticBlight: desaturated mint blackened vein-like tendrils with small withering motes.\nRow 3, burn: restrained amber narrow upward flame tongues, no object or logs.\nRow 4, regen: soft mint emerging leaf-vein strokes and two tiny upward seed sparks.\nRow 5, madness: muted red-violet unstable double spiral, broken circular fragments.\nEach row's columns should vary stroke shape, angle, number of small accents and asymmetry while preserving the same meaning. Every effect is a small sparse arrangement of fine translucent strokes, not an object. Thin luminous core lines only with minimal soft edges: NO wide bloom, fog, large aura, filled background or solid physical objects. Glow will be a SEPARATE layer. Occupy only the central 60% of each cell with at least 20% transparent padding. No cross-cell trails or overlaps. All 50 marks fully isolated. Actual transparent alpha everywhere between the marks. NO text, labels, numbers, grid lines, borders, checkerboard, cards, weapons or badges. Keep a quiet restrained palette, mostly pale silver/blue with the small muted color accents specified per row.",
+      "group": [
+        [
+          "crimsonBlight",
+          "muted crimson thorny branching tendrils with sparse dark red spores"
+        ],
+        [
+          "necroticBlight",
+          "desaturated mint blackened vein-like tendrils with small withering motes"
+        ],
+        [
+          "burn",
+          "restrained amber narrow upward flame tongues, no object or logs"
+        ],
+        [
+          "regen",
+          "soft mint emerging leaf-vein strokes and two tiny upward seed sparks"
+        ],
+        [
+          "madness",
+          "muted red-violet unstable double spiral, broken circular fragments"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/glows-03.png",
+      "originalFilename": "exec-a5e11991-a6fc-4298-a0f0-0a0a895a7765.png",
+      "sha256": "8e694359bca51d983a008e04d51e07189cef4616da19666c40ab4199e36f23a8"
+    },
+    {
+      "type": "glows",
+      "index": 4,
+      "prompt": "Generate a transparent VFX DECAL ATLAS for dark fantasy card art. Exactly FIFTY distinct small overlay effects in TEN equal columns by FIVE equal rows on a 2:1 canvas. Each row has TEN variations of its specified motif. ROWS FROM TOP TO BOTTOM:\nRow 1, staggered: pale silver short radial impact marks and a skewed broken arc.\nRow 2, rallyingStandard: muted gold upward rally rays fanning from one point.\nRow 3, rallyingStandardUp: muted gold two layered upward rally fans, sparse paired rays.\nRow 4, unbreakable: pale silver intact hexagonal ward outline, one line thick.\nRow 5, unbreakableUp: pale silver double nested hexagonal ward outline.\nEach row's columns should vary stroke shape, angle, number of small accents and asymmetry while preserving the same meaning. Every effect is a small sparse arrangement of fine translucent strokes, not an object. Thin luminous core lines only with minimal soft edges: NO wide bloom, fog, large aura, filled background or solid physical objects. Glow will be a SEPARATE layer. Occupy only the central 60% of each cell with at least 20% transparent padding. No cross-cell trails or overlaps. All 50 marks fully isolated. Actual transparent alpha everywhere between the marks. NO text, labels, numbers, grid lines, borders, checkerboard, cards, weapons or badges. Keep a quiet restrained palette, mostly pale silver/blue with the small muted color accents specified per row.",
+      "group": [
+        [
+          "staggered",
+          "pale silver short radial impact marks and a skewed broken arc"
+        ],
+        [
+          "rallyingStandard",
+          "muted gold upward rally rays fanning from one point"
+        ],
+        [
+          "rallyingStandardUp",
+          "muted gold two layered upward rally fans, sparse paired rays"
+        ],
+        [
+          "unbreakable",
+          "pale silver intact hexagonal ward outline, one line thick"
+        ],
+        [
+          "unbreakableUp",
+          "pale silver double nested hexagonal ward outline"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/glows-04.png",
+      "originalFilename": "exec-8613dd82-ba22-46d2-88e1-8ad03dc80c89.png",
+      "sha256": "fa1cbc082aeaa289ceb0be4e39cc82da88cc733b127c900d61a04ce45bb4568d"
+    },
+    {
+      "type": "glows",
+      "index": 5,
+      "prompt": "Transparent luminous status-effect sprite atlas for dark fantasy card art. Exactly TEN columns and FIVE rows, wide 2:1 canvas, 50 isolated marks. Rows top to bottom:\nROW 1 (goreblood): dark red compact blood splash with rising fine droplets. TEN variations across row.\nROW 2 (sanguinePact): dark crimson two linked drop outlines connected by a thin covenant arc. TEN variations across row.\nROW 3 (starstoneCharge): icy blue small orbiting star sparks and short charge filaments. TEN variations across row.\nROW 4 (stargazer): pale blue eye-like constellation arc of five tiny star points. TEN variations across row.\nROW 5 (astralArmor): pale blue segmented hexagonal armor lattice, transparent gaps. TEN variations across row.\nVary fine stroke geometry, angle and small accents in each of the ten columns. Soft restrained translucent emission, mostly transparent interiors, fine central lines with delicately feathered glow. Each mark wholly within central 60 percent of cell, leave generous blank margins, especially between rows. No objects, solid material, badges, colored disks, scenery, text, labels, numbers, grids, frames or checkerboard. Real transparent alpha. These are glow overlays to be rendered faintly above separate object and unlit motif layers.",
+      "group": [
+        [
+          "goreblood",
+          "dark red compact blood splash with rising fine droplets"
+        ],
+        [
+          "sanguinePact",
+          "dark crimson two linked drop outlines connected by a thin covenant arc"
+        ],
+        [
+          "starstoneCharge",
+          "icy blue small orbiting star sparks and short charge filaments"
+        ],
+        [
+          "stargazer",
+          "pale blue eye-like constellation arc of five tiny star points"
+        ],
+        [
+          "astralArmor",
+          "pale blue segmented hexagonal armor lattice, transparent gaps"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/glows-05.png",
+      "originalFilename": "exec-5b9436fb-8a90-4dd7-b68e-45ad2f133b00.png",
+      "sha256": "0a627752d63daf6fd1b5b5f4393406b15a53fc666e70f90393accc2095186fb9"
+    },
+    {
+      "type": "glows",
+      "index": 6,
+      "prompt": "Transparent luminous status-effect sprite atlas for dark fantasy card art. Exactly TEN columns and FIVE rows, wide 2:1 canvas, 50 isolated marks. Rows top to bottom:\nROW 1 (constellation): pale blue five tiny stars joined by fine constellation lines. TEN variations across row.\nROW 2 (azureCoil): icy blue two concentric coil arcs with a small tapered tail. TEN variations across row.\nROW 3 (waxingMoon): pale blue two growing crescent arcs and sparse moon dust. TEN variations across row.\nROW 4 (moonlitShield): pale silver crescent barrier rim with two small blue star accents. TEN variations across row.\nROW 5 (astromancer): pale blue small radial constellation with fine orbital strokes. TEN variations across row.\nVary fine stroke geometry, angle and small accents in each of the ten columns. Soft restrained translucent emission, mostly transparent interiors, fine central lines with delicately feathered glow. Each mark wholly within central 60 percent of cell, leave generous blank margins, especially between rows. No objects, solid material, badges, colored disks, scenery, text, labels, numbers, grids, frames or checkerboard. Real transparent alpha. These are glow overlays to be rendered faintly above separate object and unlit motif layers.",
+      "group": [
+        [
+          "constellation",
+          "pale blue five tiny stars joined by fine constellation lines"
+        ],
+        [
+          "azureCoil",
+          "icy blue two concentric coil arcs with a small tapered tail"
+        ],
+        [
+          "waxingMoon",
+          "pale blue two growing crescent arcs and sparse moon dust"
+        ],
+        [
+          "moonlitShield",
+          "pale silver crescent barrier rim with two small blue star accents"
+        ],
+        [
+          "astromancer",
+          "pale blue small radial constellation with fine orbital strokes"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/glows-06.png",
+      "originalFilename": "exec-2ac49036-65d5-46b7-9793-4d164bd9d8a1.png",
+      "sha256": "86e907a1830961ea2869627e4da2bce7d71c50e2e8436adaa03b187e9074e967"
+    },
+    {
+      "type": "glows",
+      "index": 7,
+      "prompt": "Transparent luminous status-effect sprite atlas for dark fantasy card art. Exactly TEN columns and FIVE rows, wide 2:1 canvas, 50 isolated marks. Rows top to bottom:\nROW 1 (thornHalo): muted gold thin open halo with sparse pointed thorn strokes. TEN variations across row.\nROW 2 (communion): soft mint two inward-joining curved rays with a tiny central spark. TEN variations across row.\nROW 3 (lifeTithe): muted crimson one fine descending stream terminating in a small drop. TEN variations across row.\nROW 4 (stigmata): muted crimson short cross-shaped fissure with a few falling drops. TEN variations across row.\nROW 5 (zealotry): muted gold thin sunburst rays around an empty center. TEN variations across row.\nVary fine stroke geometry, angle and small accents in each of the ten columns. Soft restrained translucent emission, mostly transparent interiors, fine central lines with delicately feathered glow. Each mark wholly within central 60 percent of cell, leave generous blank margins, especially between rows. No objects, solid material, badges, colored disks, scenery, text, labels, numbers, grids, frames or checkerboard. Real transparent alpha. These are glow overlays to be rendered faintly above separate object and unlit motif layers.",
+      "group": [
+        [
+          "thornHalo",
+          "muted gold thin open halo with sparse pointed thorn strokes"
+        ],
+        [
+          "communion",
+          "soft mint two inward-joining curved rays with a tiny central spark"
+        ],
+        [
+          "lifeTithe",
+          "muted crimson one fine descending stream terminating in a small drop"
+        ],
+        [
+          "stigmata",
+          "muted crimson short cross-shaped fissure with a few falling drops"
+        ],
+        [
+          "zealotry",
+          "muted gold thin sunburst rays around an empty center"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/glows-07.png",
+      "originalFilename": "exec-19a55628-f8f6-4a75-bca1-b31dee3665d4.png",
+      "sha256": "4a0b8497f4a9d83a83b2119fb6b0a689ea2eb1b5d6d920e63b0353eaf6d91afe"
+    },
+    {
+      "type": "glows",
+      "index": 8,
+      "prompt": "Transparent luminous status-effect sprite atlas for dark fantasy card art. Exactly TEN columns and FIVE rows, wide 2:1 canvas, 50 isolated marks. Rows top to bottom:\nROW 1 (emberTide): muted amber sweeping wave of small ember tongues. TEN variations across row.\nROW 2 (harbingerOfBlight): muted crimson hooked rot tendrils fanning out with sparse spores. TEN variations across row.\nROW 3 (bloodUnction): dark crimson thin anointing streak with three suspended tiny droplets. TEN variations across row.\nROW 4 (ironVow): pale silver interlocked angular oath arcs with small gold binding tick. TEN variations across row.\nROW 5 (bulwarkEcho): pale silver three displaced protective arc echoes. TEN variations across row.\nVary fine stroke geometry, angle and small accents in each of the ten columns. Soft restrained translucent emission, mostly transparent interiors, fine central lines with delicately feathered glow. Each mark wholly within central 60 percent of cell, leave generous blank margins, especially between rows. No objects, solid material, badges, colored disks, scenery, text, labels, numbers, grids, frames or checkerboard. Real transparent alpha. These are glow overlays to be rendered faintly above separate object and unlit motif layers.",
+      "group": [
+        [
+          "emberTide",
+          "muted amber sweeping wave of small ember tongues"
+        ],
+        [
+          "harbingerOfBlight",
+          "muted crimson hooked rot tendrils fanning out with sparse spores"
+        ],
+        [
+          "bloodUnction",
+          "dark crimson thin anointing streak with three suspended tiny droplets"
+        ],
+        [
+          "ironVow",
+          "pale silver interlocked angular oath arcs with small gold binding tick"
+        ],
+        [
+          "bulwarkEcho",
+          "pale silver three displaced protective arc echoes"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/glows-08.png",
+      "originalFilename": "exec-71e1f349-9fdc-4867-b499-b30df11743d2.png",
+      "sha256": "52794c243eab6fe99ca01bb12365908fa394802adb282132d2f5bc4e55093677"
+    },
+    {
+      "type": "glows",
+      "index": 9,
+      "prompt": "Transparent luminous status-effect sprite atlas for dark fantasy card art. Exactly TEN columns and FIVE rows, wide 2:1 canvas, 50 isolated marks. Rows top to bottom:\nROW 1 (prepared): muted gold braced corner marks and two inward-ready chevrons. TEN variations across row.\nROW 2 (venom): desaturated green thin acidic drip trails and two small toxin bubbles. TEN variations across row.\nROW 3 (afterimage): icy blue two displaced ghost crescents with tiny trailing streaks. TEN variations across row.\nROW 4 (deadlyTempo): muted crimson rhythmic paired slash ticks in a rising curve. TEN variations across row.\nROW 5 (opportunist): muted amber precise hooked opening slash with one target tick. TEN variations across row.\nVary fine stroke geometry, angle and small accents in each of the ten columns. Soft restrained translucent emission, mostly transparent interiors, fine central lines with delicately feathered glow. Each mark wholly within central 60 percent of cell, leave generous blank margins, especially between rows. No objects, solid material, badges, colored disks, scenery, text, labels, numbers, grids, frames or checkerboard. Real transparent alpha. These are glow overlays to be rendered faintly above separate object and unlit motif layers.",
+      "group": [
+        [
+          "prepared",
+          "muted gold braced corner marks and two inward-ready chevrons"
+        ],
+        [
+          "venom",
+          "desaturated green thin acidic drip trails and two small toxin bubbles"
+        ],
+        [
+          "afterimage",
+          "icy blue two displaced ghost crescents with tiny trailing streaks"
+        ],
+        [
+          "deadlyTempo",
+          "muted crimson rhythmic paired slash ticks in a rising curve"
+        ],
+        [
+          "opportunist",
+          "muted amber precise hooked opening slash with one target tick"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/glows-09.png",
+      "originalFilename": "exec-23cd91ad-a09c-4ef2-8e6c-8859e0104652.png",
+      "sha256": "d365ffeee414b1f08c2f263a7d1c4bf65cc17bfdf1da66520578d1b0feeea96d"
+    },
+    {
+      "type": "glows",
+      "index": 10,
+      "prompt": "Transparent luminous status-effect atlas for dark fantasy card art. Exactly TEN columns FIVE rows on 2:1 canvas, 50 marks. Rows top to bottom:\nROW 1 (envenom): desaturated green thin venom coating streak with suspended poison drops. TEN variations across row.\nROW 2 (glassCannon): pale red sharp outward energy rays and fine glasslike stress fissures. TEN variations across row.\nROW 3 (magicVulnerable): muted lavender split rune arc with an open central breach. TEN variations across row.\nROW 4 (stanceShifted): pale silver two opposing curved directional arcs with small chevrons. TEN variations across row.\nROW 5 (silenced): muted lavender interrupted concentric sound waves crossed by one fine diagonal. TEN variations across row.\nVary fine stroke geometry, angle and small accents. Soft restrained translucent emission with fine central lines. Each mark wholly within central 60 percent of its cell with generous blank margins. No objects, solid material, badges, colored disks, scenery, text, labels, grids, frames or checkerboard. Real transparent alpha. Independent glow overlays above separate object and unlit motif layers.",
+      "group": [
+        [
+          "envenom",
+          "desaturated green thin venom coating streak with suspended poison drops"
+        ],
+        [
+          "glassCannon",
+          "pale red sharp outward energy rays and fine glasslike stress fissures"
+        ],
+        [
+          "magicVulnerable",
+          "muted lavender split rune arc with an open central breach"
+        ],
+        [
+          "stanceShifted",
+          "pale silver two opposing curved directional arcs with small chevrons"
+        ],
+        [
+          "silenced",
+          "muted lavender interrupted concentric sound waves crossed by one fine diagonal"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/glows-10.png",
+      "originalFilename": "exec-8e92364d-bfb1-4697-ae09-ed2bc7f06c77.png",
+      "sha256": "7362eab028499d07655f58c149dd830934423395a79144c4c5206eb358862941"
+    },
+    {
+      "type": "glows",
+      "index": 11,
+      "prompt": "Transparent luminous status-effect atlas for dark fantasy card art. Exactly TEN columns FIVE rows on 2:1 canvas, 50 marks. Rows top to bottom:\nROW 1 (stoneskin): pale stone-gray angular plate seams and tiny rock dust flecks. TEN variations across row.\nROW 2 (bleeding): dark crimson three continuous thin drip lines and scattered small droplets. TEN variations across row.\nROW 3 (frozen): icy blue angular ice cage edges with several sharp frost tips. TEN variations across row.\nROW 4 (chilled): pale blue fine sparse frost rim strokes and three tiny snow flakes. TEN variations across row.\nROW 5 (sleep): pale blue drooping crescent with three tiny falling star motes. TEN variations across row.\nVary fine stroke geometry, angle and small accents. Soft restrained translucent emission with fine central lines. Each mark wholly within central 60 percent of its cell with generous blank margins. No objects, solid material, badges, colored disks, scenery, text, labels, grids, frames or checkerboard. Real transparent alpha. Independent glow overlays above separate object and unlit motif layers.",
+      "group": [
+        [
+          "stoneskin",
+          "pale stone-gray angular plate seams and tiny rock dust flecks"
+        ],
+        [
+          "bleeding",
+          "dark crimson three continuous thin drip lines and scattered small droplets"
+        ],
+        [
+          "frozen",
+          "icy blue angular ice cage edges with several sharp frost tips"
+        ],
+        [
+          "chilled",
+          "pale blue fine sparse frost rim strokes and three tiny snow flakes"
+        ],
+        [
+          "sleep",
+          "pale blue drooping crescent with three tiny falling star motes"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/glows-11.png",
+      "originalFilename": "exec-13caa555-fa1b-40a7-87fd-14169e477c70.png",
+      "sha256": "3043d92b3472ee9677a58b660f6fb554ff1955105cad8bda55765b09ebfa14e1"
+    },
+    {
+      "type": "glows",
+      "index": 12,
+      "prompt": "Transparent luminous status-effect atlas for dark fantasy card art. Exactly TEN columns FIVE rows on 2:1 canvas, 50 marks. Rows top to bottom:\nROW 1 (paralysis): pale blue branching electrical filaments in a narrow zigzag. TEN variations across row.\nROW 2 (dazed): pale silver three small asymmetric stars with a short broken orbit. TEN variations across row.\nROW 3 (offBalance): pale gray skewed balance arc and short diagonal wobble ticks. TEN variations across row.\nROW 4 (prone): pale gray low horizontal impact streaks and a downward falling chevron. TEN variations across row.\nROW 5 (grounded): pale blue short downward electrical threads ending in three horizontal grounding strokes. TEN variations across row.\nVary fine stroke geometry, angle and small accents. Soft restrained translucent emission with fine central lines. Each mark wholly within central 60 percent of its cell with generous blank margins. No objects, solid material, badges, colored disks, scenery, text, labels, grids, frames or checkerboard. Real transparent alpha. Independent glow overlays above separate object and unlit motif layers.",
+      "group": [
+        [
+          "paralysis",
+          "pale blue branching electrical filaments in a narrow zigzag"
+        ],
+        [
+          "dazed",
+          "pale silver three small asymmetric stars with a short broken orbit"
+        ],
+        [
+          "offBalance",
+          "pale gray skewed balance arc and short diagonal wobble ticks"
+        ],
+        [
+          "prone",
+          "pale gray low horizontal impact streaks and a downward falling chevron"
+        ],
+        [
+          "grounded",
+          "pale blue short downward electrical threads ending in three horizontal grounding strokes"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/glows-12.png",
+      "originalFilename": "exec-e0c2aeb5-0ce8-4c73-b696-8e9e38d8885e.png",
+      "sha256": "1bb6d947323b573041319cbf8fbba219bb33cca106316c13f114856bb7e8b065"
+    },
+    {
+      "type": "glows",
+      "index": 13,
+      "prompt": "Transparent luminous status-effect atlas for dark fantasy card art. Exactly TEN columns FIVE rows on 2:1 canvas, 50 marks. Rows top to bottom:\nROW 1 (invulnerability): pale silver complete thin diamond ward with tiny deflected impact sparks. TEN variations across row.\nROW 2 (decoy): pale blue displaced pair of hollow face-shaped outline traces. TEN variations across row.\nROW 3 (concealed): desaturated gray-blue soft partial veil wisps with a faint broken crescent. TEN variations across row.\nROW 4 (confused): muted lavender opposing tangled spiral traces with tiny irregular stars. TEN variations across row.\nROW 5 (slowed): pale gray drooping curved motion ticks and falling fine dust grains. TEN variations across row.\nVary fine stroke geometry, angle and small accents. Soft restrained translucent emission with fine central lines. Each mark wholly within central 60 percent of its cell with generous blank margins. No objects, solid material, badges, colored disks, scenery, text, labels, grids, frames or checkerboard. Real transparent alpha. Independent glow overlays above separate object and unlit motif layers.",
+      "group": [
+        [
+          "invulnerability",
+          "pale silver complete thin diamond ward with tiny deflected impact sparks"
+        ],
+        [
+          "decoy",
+          "pale blue displaced pair of hollow face-shaped outline traces"
+        ],
+        [
+          "concealed",
+          "desaturated gray-blue soft partial veil wisps with a faint broken crescent"
+        ],
+        [
+          "confused",
+          "muted lavender opposing tangled spiral traces with tiny irregular stars"
+        ],
+        [
+          "slowed",
+          "pale gray drooping curved motion ticks and falling fine dust grains"
+        ]
+      ],
+      "columns": 10,
+      "rows": 5,
+      "path": "sources/glows-13.png",
+      "originalFilename": "exec-821c8e04-28a9-40ab-8916-08968ee07d3e.png",
+      "sha256": "bcc78273d23c8b7a14fdf1fc33dcc1750a3c1b89911a80982492eec99585a433"
+    },
+    {
+      "type": "glows",
+      "index": 14,
+      "prompt": "Transparent luminous status-effect atlas for dark fantasy card art. TEN isolated marks in FIVE columns TWO rows, wide 5:2 canvas. All ten variants depict muted stone-gray angular closing stone seam marks with sparse grit\nVary fine stroke geometry, angle and small accents. Soft restrained translucent emission with fine central lines. Each mark wholly within central 60 percent of its cell with generous blank margins. No objects, solid material, badges, colored disks, scenery, text, labels, grids, frames or checkerboard. Real transparent alpha. Independent glow overlays above separate object and unlit motif layers.",
+      "group": [
+        [
+          "entombed",
+          "muted stone-gray angular closing stone seam marks with sparse grit"
+        ]
+      ],
+      "columns": 5,
+      "rows": 2,
+      "path": "sources/glows-14.png",
+      "originalFilename": "exec-449da350-3346-41e5-9f51-7e83f11c215c.png",
+      "sha256": "fda14b819d0d06737ce7aa06b7e0fd19faa459bdb538d07dbb0e1aefb9684fa8"
+    }
+  ]
+}

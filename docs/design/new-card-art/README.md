@@ -1,5 +1,7 @@
 ## Mineral proposals: separate object, crack and glow layers
 
+[Browse all 71 status categories](statuses/index.html): 710 layered proposals with separate object, unlit mark and glow PNGs, editable placements and three downloadable volumes. [Status collection guide](statuses/README.md).
+
 [Browse 50 mineral options](minerals/index.html): ten shards, pebbles, stones, crystals and diamonds, with 150 transparent PNG components and editable placement JSON. Mineral codes use their own namespace; the accepted weapon revision below is unchanged.
 
 ## Current revision: accepted pale-mint color pass

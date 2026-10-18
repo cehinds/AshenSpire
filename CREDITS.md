@@ -1,5 +1,17 @@
 # Credits & Asset Licenses
 
+## Status component proposals (2026-10-17)
+
+The [status proposal library](docs/design/new-card-art/statuses/README.md) covers
+71 current game statuses with 710 assembled recipes and 1,710 transparent PNG
+components. Related statuses share 290 object variants across 29 families.
+Twenty-one object atlases and separate status-mark and luminous-effect atlases
+were created using OpenAI ImageGen under human direction. Eight object families
+reuse first-party weapon and mineral cutouts. Exact prompts, source PNGs, hashes,
+source crops and reuse references are preserved in the collection. ImageMagick
+performs technical crop/resize/padding only. These are proposals, not runtime
+replacements. No third-party artwork was downloaded or licence claimed.
+
 ## Mineral component proposals (2026-10-18)
 
 The [mineral proposal collection](docs/design/new-card-art/minerals/README.md)
