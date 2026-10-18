@@ -23,9 +23,59 @@ const inertByUs = new Set();
 function prune() {
   let dropped = false;
   for (let i = stack.length - 1; i >= 0; i--) {
-    if (stack[i].element && stack[i].element.isConnected === false) { stack.splice(i, 1); dropped = true; }
+    if (stack[i].element && stack[i].element.isConnected === false) {
+      leaveHistory(stack[i]);
+      stack.splice(i, 1);
+      dropped = true;
+    }
   }
   if (dropped) syncPage();
+}
+
+// BACK BUTTON. An entry with `back: true` pushes one history state when it
+// opens, so the browser/Android back button has something to pop. The state is
+// { ashenModal: id }. A popstate whose state is no longer the top entry's id
+// means the browser already popped it: dismiss('back'). Closing it any other
+// way pops the state we pushed with history.back(), once. history.back() is
+// async and is never waited on.
+let nextModalId = 0;
+let popOn = null;
+
+function canPush() {
+  return typeof history !== 'undefined' && history && typeof history.pushState === 'function';
+}
+
+function enterHistory(entry) {
+  if (!entry.back || !entry.dismiss || entry.pushed || !canPush()) return;
+  entry.id = ++nextModalId;
+  entry.pushed = true;
+  history.pushState({ ashenModal: entry.id }, '');
+  ensurePopstate();
+}
+
+// Undo enterHistory on a close that was not the browser's own pop. Never goes
+// back() for an entry the browser already popped, or one that never pushed, or
+// one that is no longer the current state (a later push sits on top of it).
+function leaveHistory(entry) {
+  if (!entry.pushed) return;
+  entry.pushed = false;
+  if (entry.popped || !canPush() || typeof history.back !== 'function') return;
+  if (history.state?.ashenModal === entry.id) history.back();
+}
+
+function onPopstate() {
+  const top = topModal();
+  if (!top || !top.back || !top.dismiss || !top.pushed) return;
+  if (typeof history !== 'undefined' && history?.state?.ashenModal === top.id) return;
+  top.popped = true;
+  top.dismiss('back');
+}
+
+function ensurePopstate() {
+  const add = globalThis.addEventListener;
+  if (typeof add !== 'function' || popOn === add) return;
+  popOn = add;
+  globalThis.addEventListener('popstate', onPopstate);
 }
 
 // a is b, or a contains b. A stand-in element with no DOM answers false.
@@ -129,6 +179,7 @@ export function registerModal(name, element, opts = {}) {
   };
   stack.push(entry);
   if (entry.dismiss) ensureEscape();
+  enterHistory(entry);
   syncPage();
   let released = false;
   return function release() {
@@ -136,6 +187,7 @@ export function registerModal(name, element, opts = {}) {
     released = true;
     const at = stack.indexOf(entry);
     if (at >= 0) stack.splice(at, 1);
+    leaveHistory(entry);
     syncPage();
     notifyIfEmpty();
   };

@@ -129,6 +129,141 @@ test('registering with no document at all does not throw', () => {
   release();
 });
 
+// --- Back button ----------------------------------------------------------
+// A fake `history` with the browser's one important property: back() is async.
+// It queues a traversal; settle() performs it and fires popstate.
+function withHistory(fn) {
+  const entries = [{ state: null }];
+  let at = 0;
+  let queued = 0;
+  const popListeners = [];
+  const history = {
+    get state() { return entries[at].state; },
+    backCalls: 0,
+    pushes: 0,
+    pushState(state) { entries.splice(at + 1); entries.push({ state }); at += 1; this.pushes += 1; },
+    back() { this.backCalls += 1; queued += 1; },
+  };
+  const settle = () => {
+    while (queued > 0) {
+      queued -= 1;
+      if (at > 0) at -= 1;
+      for (const l of popListeners.slice()) l({ type: 'popstate', state: entries[at].state });
+    }
+  };
+  // The user's own back press: the traversal happens, then popstate.
+  const userBack = () => { queued += 1; settle(); };
+  const keys = ['history', 'addEventListener', 'removeEventListener'];
+  const saved = Object.fromEntries(keys.map((k) => [k, Object.getOwnPropertyDescriptor(globalThis, k)]));
+  Object.defineProperty(globalThis, 'history', { value: history, configurable: true, writable: true });
+  globalThis.addEventListener = (type, fn) => { if (type === 'popstate') popListeners.push(fn); };
+  globalThis.removeEventListener = () => {};
+  try { return fn({ history, settle, userBack }); } finally {
+    for (const k of keys) {
+      if (saved[k]) Object.defineProperty(globalThis, k, saved[k]); else delete globalThis[k];
+    }
+  }
+}
+
+test('back: opening pushes one history state; the browser back dismisses with "back"', () => {
+  withHistory(({ history, userBack }) => {
+    resetModalState();
+    const reasons = [];
+    let release = null;
+    release = registerModal('door', {}, { dismiss: (reason) => { reasons.push(reason); release(); }, back: true });
+    assert.equal(history.pushes, 1);
+    assert.equal(typeof history.state.ashenModal, 'number');
+    userBack();
+    assert.deepEqual(reasons, ['back']);
+    assert.equal(openModals().length, 0);
+    assert.equal(history.backCalls, 0, 'closing after the browser popped it does not go back again');
+  });
+});
+
+test('back: a programmatic close goes back once, and that popstate dismisses nothing', () => {
+  withHistory(({ history, settle }) => {
+    resetModalState();
+    const reasons = [];
+    const release = registerModal('door', {}, { dismiss: (reason) => reasons.push(reason), back: true });
+    release();
+    release();
+    assert.equal(history.backCalls, 1, 'one back() for one push, however often release runs');
+    settle();
+    assert.deepEqual(reasons, [], 'the popstate from our own back() found nothing to dismiss');
+    assert.equal(history.state, null);
+  });
+});
+
+test('back: two stacked entries pop one at a time', () => {
+  withHistory(({ history, userBack }) => {
+    resetModalState();
+    const log = [];
+    const entry = (name) => {
+      const release = registerModal(name, {}, { dismiss: (reason) => { log.push(`${name}:${reason}`); release(); }, back: true });
+      return release;
+    };
+    entry('a');
+    entry('b');
+    assert.equal(history.pushes, 2);
+    userBack();
+    assert.deepEqual(log, ['b:back']);
+    assert.deepEqual(openModals().map((m) => m.name), ['a']);
+    userBack();
+    assert.deepEqual(log, ['b:back', 'a:back']);
+    assert.equal(history.backCalls, 0);
+  });
+});
+
+test('back: closing the top of two programmatically leaves the lower one standing', () => {
+  withHistory(({ history, settle }) => {
+    resetModalState();
+    const log = [];
+    registerModal('a', {}, { dismiss: (reason) => log.push(`a:${reason}`), back: true });
+    const releaseB = registerModal('b', {}, { dismiss: (reason) => log.push(`b:${reason}`), back: true });
+    releaseB();
+    settle();
+    assert.deepEqual(log, [], 'a was not dismissed by the pop that b caused');
+    assert.deepEqual(openModals().map((m) => m.name), ['a']);
+    assert.equal(history.backCalls, 1);
+  });
+});
+
+test('back: entries without back, or without dismiss, never touch history', () => {
+  withHistory(({ history, userBack }) => {
+    resetModalState();
+    const plain = registerModal('plain', {});
+    const noBack = registerModal('no-back', {}, { dismiss() {} });
+    assert.equal(history.pushes, 0);
+    userBack();
+    assert.equal(openModals().length, 2, 'a popstate closes neither');
+    plain();
+    noBack();
+    assert.equal(history.backCalls, 0);
+  });
+});
+
+test('back: the shared shell pushes on open, goes back on close, and closes on browser back', async () => {
+  const { withModalDom } = await import('./helpers/modal-dom.mjs');
+  const { openModal } = await import('../src/ui/components/modalShell.js');
+  withModalDom(() => {
+    withHistory(({ history, settle, userBack }) => {
+      resetModalState();
+      let closes = 0;
+      const first = openModal({ title: 'One', onClose: () => { closes += 1; } });
+      assert.equal(history.pushes, 1);
+      first.close();
+      assert.equal(first.veil.isConnected, false, 'the veil is gone synchronously, before any popstate');
+      assert.equal(history.backCalls, 1);
+      settle();
+      const second = openModal({ title: 'Two', onClose: () => { closes += 1; } });
+      userBack();
+      assert.equal(closes, 2);
+      assert.equal(second.veil.isConnected, false);
+      assert.equal(history.backCalls, 1, 'no extra back() after the browser popped it');
+    });
+  });
+});
+
 // --- Escape ---------------------------------------------------------------
 // The shell is exercised through withModalDom, whose window.press() replays a
 // key the way a browser orders it (window capture, document capture, bubble).

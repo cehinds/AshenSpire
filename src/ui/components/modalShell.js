@@ -586,7 +586,7 @@ export function openModal({
   host.appendChild(veil);
   // The manager owns Escape for this door: it calls dismiss() on the top entry.
   // close() is idempotent, so a dismiss after a programmatic close is a no-op.
-  unregisterModal = registerModal(name || title || 'modal', panel, { dismiss: () => close() });
+  unregisterModal = registerModal(name || title || 'modal', panel, { dismiss: () => close(), back: true });
   release = bindModalDismiss({ veil, panel, close, opener, escape: false });
 
   // Focus the way FORWARD when there is one, else the way out. Never the veil.
