@@ -36,11 +36,12 @@ jobs:
           const subjects=rangeSubjects('origin/test');
           const missing=unreceipted(subjects,text).missing;
           if(!text.includes('/pull/2085)')) missing.unshift('2085');
+          if(!text.includes('/pull/2086)')) missing.unshift('2086');
           const box=JSON.parse(readFileSync('buildordinal.json','utf8'));
           const stamp=box.release+'.'+box.ordinal;
           const lines=missing.map(n=>{
-            const entry=subjects.find(s=>landedPull(s)===n);
-            const full=n==='2085' ? '' : execFileSync('git',['log','--all','--merges','--grep','^Merge pull request #'+n+' ','--format=%B','-1'],{encoding:'utf8'}).trim().split('\n').slice(1).join(' ').trim();
+            const entry=subjects.find(s=>landedPull(s)===n) || {subject:'Package enemy rear designs as standalone JSON module'};
+            const full=['2085','2086'].includes(n) ? '' : execFileSync('git',['log','--all','--merges','--grep','^Merge pull request #'+n+' ','--format=%B','-1'],{encoding:'utf8'}).trim().split('\n').slice(1).join(' ').trim();
             const subject=n==='2085' ? 'Prepare rear design branch for integration' : full || entry.subject.replace(/^Merge pull request #\d+ from [^\n]+\n?/,'Worker contribution '+n).replace(/^Merge PR #\d+: /,'');
             return '- **Rear-design preparation history: '+subject.replaceAll('*','')+'** ([#'+n+'](https://github.com/cehinds/AshenSpire/pull/'+n+'), `'+stamp+'`). Worker contribution included in this branch; first integration into dev is pending.';
           });
