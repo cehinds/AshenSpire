@@ -135,7 +135,8 @@ if (argv.includes('--selftest')) {
     // seed's Reaver fights in the sword-and-shield set's outfit frames.
     extraCopy: ['assets/enemy-poses', 'assets/enemy-states', 'assets/defeated-poses', 'assets/painted-outfits',
       'assets/animations/sword-shield-outfits', 'assets/cards', 'assets/card-components',
-      'assets/player-polish/illustrations', 'assets/equipment', ...(ALTERNATIVE ? ['assets-display'] : [])],
+      'assets/player-polish/illustrations', 'assets/equipment', 'assets/fonts', 'music', 'map-detail',
+      'assets/combat-effects', 'assets/animations/player-counter-sweep', ...(ALTERNATIVE ? ['assets-display'] : [])],
     plants: [
       {
         name: 'the idle bob goes back to the dead `.sprite > img` selector',
@@ -574,18 +575,21 @@ async function playTurn(s) {
     targetId: window.__combat.enemies.find(enemy => enemy.alive)?.id,
     hp: window.__combat.enemies.reduce((t, e) => t + (e.hp || 0) + (e.block || 0), 0) })`);
   if (!before.targetId) throw new Error('no living enemy for the sampled attack');
-  // The target picker is the visible input surface above the artwork. Its
-  // button may cover the whole figure, so press the same enemy's legal button
-  // rather than searching behind it for an exposed combatant frame.
-  const targetSelector = await evaluate(`'.enemy-target-picker:not([hidden]) .enemy-target-button[data-eid="'
-    + CSS.escape(${JSON.stringify(before.targetId)}) + '"]:not([disabled])'`);
+  // Use the same living enemy's legal input surface: the picker when shown,
+  // or the targetable battlefield frame when the current target HUD owns it.
+  const targetSelectorExpression = `(() => {
+    const id = CSS.escape(${JSON.stringify(before.targetId)});
+    const picker = '.enemy-target-picker:not([hidden]) .enemy-target-button[data-eid="' + id + '"]:not([disabled])';
+    return document.querySelector(picker) ? picker
+      : '.combat[data-target-hud="true"] .combatant.enemy.targetable[data-eid="' + id + '"]:not([inert])';
+  })()`;
   // Select the card, then the target. A press that lands while the board is
   // still settling can be read as a hover; the pair is retried, never forced.
   for (let attempt = 1; ; attempt++) {
     await press(s, `.hand .card[data-card-id="${attack}"]`);
     await wait(300);
-    await until(evaluate, `!!document.querySelector(${JSON.stringify(targetSelector)})`, 'the selected enemy target button to be ready');
-    await press(s, targetSelector);
+    await until(evaluate, `!!document.querySelector(${targetSelectorExpression})`, 'the selected legal enemy target to be ready');
+    await press(s, await evaluate(targetSelectorExpression));
     try {
       await until(evaluate, `window.__combat.piles.hand.length < ${before.hand}`, `${attack} to leave the hand`, 3000);
       break;

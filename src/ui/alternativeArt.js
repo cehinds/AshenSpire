@@ -177,9 +177,10 @@ export function wireAlternativeBackdrop(combat) {
   const move = event => {
     // The in-game Reduced motion setting counts as much as the OS preference.
     const off = reducedMotionRequested() || document.documentElement.dataset.ambient === 'off' || event.pointerType === 'touch';
+    if (off) { reset(); return; }
     const bounds = combat.getBoundingClientRect();
-    const x = off ? 0 : (event.clientX - bounds.left) / bounds.width * 2 - 1;
-    const y = off ? 0 : (event.clientY - bounds.top) / bounds.height * 2 - 1;
+    const x = (event.clientX - bounds.left) / bounds.width * 2 - 1;
+    const y = (event.clientY - bounds.top) / bounds.height * 2 - 1;
     for (const layer of layers) {
       const id = layer.firstElementChild?.dataset.layer;
       const groundedFloor = combat.querySelector('.alternative-backdrop')?.dataset.mobileFloorPaintTop !== undefined
@@ -188,7 +189,7 @@ export function wireAlternativeBackdrop(combat) {
       layer.style.transform = `translate(${x * depth * 9}px,${y * depth * 3}px)`;
     }
   };
-  const reset = () => layers.forEach(layer => { layer.style.transform = ''; });
+  const reset = () => layers.forEach(layer => { if (layer.style.transform) layer.style.transform = ''; });
   combat.addEventListener('pointermove', move);
   combat.addEventListener('pointerleave', reset);
   reduced.addEventListener('change', reset);
