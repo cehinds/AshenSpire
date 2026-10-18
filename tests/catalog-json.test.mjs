@@ -5,6 +5,7 @@ import { decodeCatalogJSONText, decodeCatalogJSON } from '../src/model/catalogJs
 import { compileGameProfiles } from '../tools/game-config.mjs';
 import { gameProfileCatalog } from '../src/content/generated/gameProfiles.js';
 const payload = expression => JSON.parse(expression.slice('decodeCatalogJSON('.length, -1));
+const assertSizeBudget = (expression, limit) => assert.ok(expression.length < limit);
 
 test('catalog transport reconstructs the exact canonical text, values and provenance', () => {
   const { catalog } = compileGameProfiles();
@@ -13,7 +14,26 @@ test('catalog transport reconstructs the exact canonical text, values and proven
   assert.deepEqual(catalogJSONExpression(catalog), packed, 'deterministic emission');
   assert.equal(decodeCatalogJSONText(payload(packed.expression)), JSON.stringify(catalog));
   assert.deepEqual(gameProfileCatalog, catalog, 'real generated import retains all catalog and provenance fields');
-  assert.ok(packed.expression.length < JSON.stringify(catalog).length - 180000);
+  // The kernel-only save pin removed the app-file provenance rows. Measure the
+  // smaller live catalog proportionally; keep the original byte guard below.
+  const budget = JSON.stringify(catalog).length * 2 / 3;
+  assertSizeBudget(packed.expression, budget);
+  assert.throws(() => assertSizeBudget(JSON.stringify(catalog), budget), assert.AssertionError);
+});
+
+test('fixed provenance corpus retains the original 180 KB reduction guard', () => {
+  const catalog = { runtimeSources: Array.from({ length: 8192 }, (_, index) => ({
+    path: `src/fixed-provenance/module-${index}.js`,
+    id: 'ashen.source-runtime',
+    version: '1.0.0',
+    hash: `sha256:${index.toString(16).padStart(64, '0')}`,
+  })) };
+  const text = JSON.stringify(catalog);
+  const packed = catalogJSONExpression(catalog);
+  assert.equal(packed.encoded, true);
+  assert.equal(decodeCatalogJSONText(payload(packed.expression)), text);
+  assertSizeBudget(packed.expression, text.length - 180000);
+  assert.throws(() => assertSizeBudget(text, text.length - 180000), assert.AssertionError);
 });
 
 test('repeated objects remain distinct and hostile-looking strings remain data', () => {

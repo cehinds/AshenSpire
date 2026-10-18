@@ -79,7 +79,7 @@ test('unrecognized generated fields and other files never receive a catalog-wide
     catalog.display = { note: 'escaped quote " and }; and [brackets]', version: 'latest' };
     const text = catalogVersionScanText(file, moduleText(catalog, format));
     const exempt = catalogSchemaVersionSpans(file, text);
-    assert.ok(exempt.length > 1000, name);
+    assert.ok(exempt.length > 200, name); // 252 sites since the src/** hashes left the catalog (was >1000 with them)
     for (const span of exempt) assert.equal(JSON.parse(text.slice(span.start, span.end)), '1.0.0');
     for (const match of text.matchAll(/"latest"/g)) {
       assert.equal(exempt.some(span => span.start <= match.index && match.index < span.end), false, name);
