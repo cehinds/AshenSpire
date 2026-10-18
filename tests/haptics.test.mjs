@@ -11,9 +11,9 @@ import { readFileSync } from 'node:fs';
 import { HAPTIC_PATTERNS, HAPTICS_DEFAULT_ON, HAPTIC_BATCH_GAP_MS, HAPTIC_BATCH_MAX_MS, hapticPatternIssues } from '../src/content/haptics.js';
 import { createHaptics, hapticsEnabled, haptic, joinPatterns } from '../src/ui/haptics.js';
 import { sfx } from '../src/ui/sfx.js';
-import { playBeatCues, playReceiptSounds, playTimeline } from '../src/ui/fx.js';
+import { playBeatCues, playReceiptSounds, playTimeline, bigHitLanded } from '../src/ui/fx.js';
 
-const NAMED = ['cardPlay', 'damageTaken', 'turnStart'];
+const NAMED = ['cardPlay', 'damageTaken', 'turnStart', 'bigHit', 'poiseBreak', 'victory'];
 const src = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
 function stubNavigator() {
@@ -457,4 +457,41 @@ test('a paced co-op timeline buzzes only for its own seats; solo unchanged', asy
   } finally {
     globalThis.addEventListener = saved.add; globalThis.removeEventListener = saved.remove;
   }
+});
+
+test('bigHit, poiseBreak and victory rows are pinned', () => {
+  assert.deepEqual([...HAPTIC_PATTERNS.bigHit], [35]);
+  assert.deepEqual([...HAPTIC_PATTERNS.poiseBreak], [30, 20, 50]);
+  assert.deepEqual([...HAPTIC_PATTERNS.victory], [20, 40, 20, 40, 80]);
+  assert.deepEqual(hapticPatternIssues(), []);
+});
+
+test('bigHit: an enemy losing 20%+ of its max HP to a hit buzzes once per beat', () => {
+  const maxHpFor = (id) => (id === 'e1' ? 50 : 0);
+  const hit = (amount, extra = {}) => ({ type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount, blocked: 0, ...extra });
+  assert.deepEqual(felt(() => playBeatCues([hit(10)], { maxHpFor })), ['bigHit'], 'exactly 20% is a big hit');
+  assert.deepEqual(felt(() => playBeatCues([hit(9)], { maxHpFor })), [], 'just under 20% is not');
+  assert.deepEqual(felt(() => playBeatCues([hit(12), hit(30)], { maxHpFor })), ['bigHit'], 'two big hits in one beat are one buzz');
+  assert.deepEqual(felt(() => playBeatCues([hit(20, { blocked: 15 })], { maxHpFor })), [], 'guard soaks it: the share is the HP lost');
+  assert.deepEqual(felt(() => playBeatCues([hit(40)], {})), [], 'no max HP known: not measurable, not big');
+  assert.deepEqual(felt(() => playBeatCues([{ type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 40, blocked: 0 }], { maxHpFor: () => 50 })),
+    ['damageTaken'], 'a hit on the player is damageTaken, never bigHit');
+  // Co-op: only a seat this screen plays feels its own big hit.
+  const mine = (id) => id === 'p1';
+  assert.equal(bigHitLanded(hit(25, { sourcePlayerId: 'p1' }), { isLocalPlayer: mine, maxHpFor }), true);
+  assert.equal(bigHitLanded(hit(25, { sourcePlayerId: 'p2' }), { isLocalPlayer: mine, maxHpFor }), false, 'a teammate\'s hit');
+  assert.equal(bigHitLanded(hit(25), { isLocalPlayer: mine, maxHpFor }), false, 'no seat named: nobody\'s');
+});
+
+test('poiseBreak: an enemy\'s Poise breaking buzzes once per beat; a player\'s does not', () => {
+  const broke = { type: 'poiseBroken', targetId: 'e1', sourceId: 'player', staminaLoss: 0, interrupted: true };
+  assert.deepEqual(felt(() => playBeatCues([broke, { ...broke }])), ['poiseBreak']);
+  assert.deepEqual(felt(() => playBeatCues([{ type: 'poiseBroken', targetId: 'player', sourceId: 'e1', staminaLoss: 1 }])), [], 'the player\'s own Poise break');
+  assert.deepEqual(felt(() => playBeatCues([broke], { isLocalPlayer: () => true })), [], 'co-op: the receipt names no seat');
+});
+
+test('victory: the win screen buzzes once; the defeat screen does not', async () => {
+  const src_ = src('src/ui/screens/gameover.js');
+  assert.equal([...src_.matchAll(/haptic\.play\('victory'\)/g)].length, 1, 'one victory haptic site');
+  assert.match(src_, /if \(victory\) haptic\.play\('victory'\)/, 'only on a win');
 });

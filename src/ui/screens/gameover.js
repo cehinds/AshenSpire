@@ -9,12 +9,14 @@
 import { resolveCard } from '../../model/registries.js';
 import { t } from '../strings.js';
 import { sfx } from '../sfx.js';
+import { haptic } from '../haptics.js';
 import {
   el, pageDoor, decide, detailCard, statStrip, chip, kitLine, kitItem, eyebrow, titleS, button, choiceRow, statusText,
 } from '../kit/index.js';
 
 export function mountGameOver(app, { registries, game, victory, onTitle, onHistory, onRetry = null, earned = [] }) {
   sfx.play(victory ? 'victory' : 'youDied');
+  if (victory) haptic.play('victory'); // the win's own buzz, not the sound id's
   const name = (game.customization && game.customization.name) || 'Forsaken';
   const glyph = (game.customization && game.customization.glyph) || '';
   const floors = game.mapGraph ? ` / ${game.mapGraph.floors}` : '';

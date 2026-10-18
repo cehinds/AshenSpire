@@ -15,6 +15,13 @@
 //   damageTaken — the player loses HP, attack or not (Guilt, Herald, Gorefire,
 //                 Venom's hpLost too): ui/fx.js playBeatCues, once per beat.
 //   turnStart   — the player's turn begins: ui/fx.js playBeatCues.
+//   bigHit      — the player's hit takes an enemy down by 20% of its max HP or
+//                 more: ui/fx.js playBeatHaptics, once per beat (a co-op seat
+//                 feels its own hits only).
+//   poiseBreak  — an enemy's Poise breaks and its stagger starts: ui/fx.js
+//                 playBeatHaptics, on the engine's poiseBroken receipt (solo
+//                 only; the receipt names no seat, so co-op leaves it still).
+//   victory     — the run is won: ui/screens/gameover.js mountGameOver.
 //
 // Retuning a buzz, or giving another moment one, is an edit to this table and
 // one call site. The setting that turns all of them off is `haptics` in
@@ -25,6 +32,9 @@ export const HAPTIC_PATTERNS = Object.freeze({
   cardPlay: Object.freeze([12]),            // a card leaves the hand
   damageTaken: Object.freeze([40, 30, 60]), // the player loses HP
   turnStart: Object.freeze([20, 40, 20]),   // the player's turn begins
+  bigHit: Object.freeze([35]),              // an enemy loses 20%+ of its max HP to the player's hit
+  poiseBreak: Object.freeze([30, 20, 50]),  // an enemy's Poise breaks, the stagger starts
+  victory: Object.freeze([20, 40, 20, 40, 80]), // the run is won
 });
 
 // Cues asked for in one tick (an instant replay, a co-op receipt batch) are

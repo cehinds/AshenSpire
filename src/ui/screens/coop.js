@@ -288,8 +288,11 @@ export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapti
   // Haptics are personal: a seat this screen does not play (a LAN teammate)
   // makes sound here, but does not buzz this device. No list = every seat.
   const isLocalPlayer = coopLocalSeat(localSeats);
-  if (final) { if (lastSeq > 0) playReceiptHaptics(final.events || [], { isLocalPlayer }); }
-  else if (lastSeq > 0 || scene.opening === true) (hapticsOnly ? playReceiptHaptics : playReceiptSounds)(scene.events || [], { isLocalPlayer });
+  // A big hit is a share of the target's max HP, which the scene's enemies know.
+  const enemies = (final || scene).enemies || scene.enemies || [];
+  const maxHpFor = (id) => enemies.find((enemy) => enemy.id === id)?.maxHp || 0;
+  if (final) { if (lastSeq > 0) playReceiptHaptics(final.events || [], { isLocalPlayer, maxHpFor }); }
+  else if (lastSeq > 0 || scene.opening === true) (hapticsOnly ? playReceiptHaptics : playReceiptSounds)(scene.events || [], { isLocalPlayer, maxHpFor });
   return seq;
 }
 
