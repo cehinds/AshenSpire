@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
-    tool: 'attribute-phase1-boundary.mjs',
+    tool: 'attic/attribute-phase1-boundary.mjs',
     plants: [
       {
         name: 'a gameplay action learns to read attributes',

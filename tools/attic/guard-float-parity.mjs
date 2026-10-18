@@ -95,13 +95,13 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     ['coop-heal-maps-active-instead-of-target', 'src/engine/coopCombat.js', 'if (P.entity === entity) return id;', 'if (id === C.playerKey) return id;'],
   ];
   const sourceStatus = await doorSelftest({
-    tool: 'guard-float-parity.mjs', timeoutMs: 300000,
+    tool: 'attic/guard-float-parity.mjs', timeoutMs: 300000,
     plants: plants.map(([name, file, find, replace]) => ({ name, file, find, replace, expectRed: /GUARD FLOAT PARITY FAILED/ })),
   });
   if (sourceStatus || args.includes('--selftest-source')) process.exit(sourceStatus);
   const artifactFiles = ['AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html', 'tools/session.mjs', 'src/engine/actions.js', 'src/engine/coopCombat.js'];
   const artifactStatus = await doorSelftest({
-    tool: 'guard-float-parity.mjs', args: ['--artifact-check'], timeoutMs: 300000,
+    tool: 'attic/guard-float-parity.mjs', args: ['--artifact-check'], timeoutMs: 300000,
     extraCopy: ['AshenSpire.html'],
     plants: plants.map(([name, , find, replace], index) => ({
       name: `selected-artifact twin: ${name}`, file: artifactFiles[index], find, replace,

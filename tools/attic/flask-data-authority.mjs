@@ -20,7 +20,7 @@ import * as G from '../../src/model/gracerefill.js';
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('../doorplant.mjs');
   process.exit(await doorSelftest({
-    tool: 'flask-data-authority.mjs',
+    tool: 'attic/flask-data-authority.mjs',
     plants: [
       {
         name: 'silent fallback 3 ships in a carry-cap reader',

@@ -296,7 +296,7 @@ if (process.argv.includes('--selftest-artifact')) {
     ['selected-root snapshot drops relic ids', 'tools/session.mjs', 'relicIds: [...P.entity.relicIds]', 'relicIds: []'],
   ];
   const status = await doorSelftest({
-    tool: 'friendly-target-parity.mjs', args: ['--artifact-check'], timeoutMs: 300000,
+    tool: 'attic/friendly-target-parity.mjs', args: ['--artifact-check'], timeoutMs: 300000,
     extraCopy: ['AshenSpire.html'],
     plants: artifactPlants.map(([name, file, find, replace, all = false]) => ({
       name, file, find, replace, all, expectRed: /friendly target artifact parity: RED/,
