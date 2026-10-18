@@ -29,6 +29,25 @@ short names: `npm start` (launch), `npm run build:standalone` (`launch.mjs --bui
 and `npm run art:fetch`. Each is the `node tools/...` command it names. Every
 tool, what it does and who calls it: [tools/README.md](tools/README.md).
 
+**`styles/tokens.generated.css` is generated** from the design tokens in
+`content/config/ui/tokens.json` (`type`, `layer`, `motion`, `touch`, beside `vars`).
+Edit the JSON, then `npm run tokens:css` (`node tools/tokens-css.mjs --write`; `--check`
+exits 1 on drift and runs in `tests/run-node.mjs`). A token whose custom property
+`styles/base.css` already declares (`--t-1`, `--t-2`, `--t-4`, `--tap-floor`,
+`--iconbtn-size`) is marked `home` and is not declared again: one home per fact.
+`launch.mjs` writes the file before it bundles, `serve.mjs --watch` rebuilds it after
+`config-build`, and `index.html` links it straight after `base.css`.
+
+**`npm run lint:style` (`node tools/style-lint.mjs --check`) is a ratchet.** It counts,
+per file in `styles/*.css`, the `font-size` px literals below `type.minimum.textPx`, the
+bare `z-index` of 100 or more that is not `var(--layer-*)`, and the bare hex colours outside
+the token homes (`base.css` `:root` blocks, `combat-symbol-colors.css`,
+`tokens.generated.css`), and fails when a count rises above
+`tools/style-lint-baseline.json`. To lower it, replace raw values with tokens, run
+`node tools/style-lint.mjs --write-baseline` in the same change, and commit the new
+baseline; a count that fell without a baseline write still passes, but the gain is not
+locked in. Never raise the baseline to go green.
+
 **The built standalone HTML is not committed on `dev`** (since 2026-09-26).
 Every rebuild used to upload ~284 MB of new Git LFS objects (the 255 MB full file
 and the 29 MB mobile one) and the repository's LFS budget ran out. Now the root
