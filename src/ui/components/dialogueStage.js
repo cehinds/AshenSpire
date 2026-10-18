@@ -17,6 +17,7 @@ import { closeUpPlacement } from '../models/PortraitCropModel.js';
 import { visibleArtBox } from './combatSpriteGeometry.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { fitAlternativeBackdrop } from '../alternativeArt.js';
+import { wireLayeredEnvironment } from './layeredEnvironment.js';
 
 let releaseActive = null;
 
@@ -38,6 +39,7 @@ const awaitingArt = new WeakSet();
 export function wireDialogueStage(root, { layout, parent, scene }) {
   if (releaseActive) releaseActive();
   const sceneConfig = dialogueSceneConfig(layout, parent, scene);
+  const releasePlates = [...root.querySelectorAll(':scope > .dialogue-plate-layer')].map(wireLayeredEnvironment);
   let frame = 0;
   let observer = null;
   let artObserver = null;
@@ -259,6 +261,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     artObserver = null;
     sceneChoiceObserver?.disconnect();
     sceneChoiceObserver = null;
+    for (const releasePlate of releasePlates) releasePlate();
     window.removeEventListener('resize', schedule);
     if (releaseActive === release) releaseActive = null;
   }

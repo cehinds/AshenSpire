@@ -1,3 +1,5 @@
+import { layeredCombatScene } from '../../model/layeredEnvironments.js';
+import { layeredEnvironmentHtml } from './layeredEnvironment.js';
 import { illustratedBackgroundHtml } from './illustratedBackground.js';
 import { alternativeBackdropHtml, alternativeCardFadeHtml } from '../alternativeArt.js';
 import { mapFogDefs } from './mapFog.js';
@@ -13,7 +15,10 @@ export function combatBackdropHtml(run, previewSceneId = null) {
   }
   const legacy = !previewSceneId && dungeonScene(run);
   if (legacy) return alternativeBackdropHtml(legacy.id) || illustratedBackgroundHtml({region:legacy.region,scene:legacy.id,viewBox:[0,0,1536,1024],layers:[{id:'floor',href:legacy.floor,width:1536,height:1024},{id:'background',href:legacy.background,width:1536,height:1024}]}) + alternativeCardFadeHtml();
-  let { region, scene } = combatEnvironment(run);
+  const environment = combatEnvironment(run);
+  const liveLayered = !previewSceneId && layeredCombatScene(run, environment);
+  if (liveLayered) return layeredEnvironmentHtml(liveLayered);
+  let { region, scene } = environment;
   if (previewSceneId) {
     region = ENVIRONMENTS.find(r => r.scenes.some(s => s.id === previewSceneId));
     if (!region) throw Error(`Unknown combat preview scene: ${previewSceneId}`);

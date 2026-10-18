@@ -4893,6 +4893,11 @@ if (shotState === 'combat-test') {
     const isFight = node => ['monster', 'fight', 'elite'].includes(node.type) || node.resolved?.kind === 'fight';
     const node = g.startIds.map(id => g.nodes[id]).find(isFight)
       || Object.values(g.nodes).find(isFight) || g.nodes[g.startIds[0]];
+    // Presentation-only QA overrides stay inside the existing memory-only shot gate.
+    // They exercise the production selector and renderer, without altering saves.
+    if (shotParams.has('shotLayeredScene')) node.layeredSceneId = shotParams.get('shotLayeredScene');
+    if (shotParams.has('shotTime')) run.presentationTimeId = shotParams.get('shotTime');
+    if (shotParams.has('shotWeather')) run.presentationWeatherId = shotParams.get('shotWeather');
     run.mapNodeId = node.id; run.floor = node.floor;
     run.path = screenshotRoutePath(g, node.id);
     if (shotParams.get('shotArcane') === 'matrix') enterCombat(node.id, 'packHunt');

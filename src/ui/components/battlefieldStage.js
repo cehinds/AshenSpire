@@ -1,3 +1,4 @@
+import { wireLayeredEnvironment } from './layeredEnvironment.js';
 import { mobileFloorShadowTop } from '../models/MobileFloorModel.js';
 import { uiConfig } from '../../config/generated/ui.js';
 import { logicalViewport } from '../viewViewport.js';
@@ -489,7 +490,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const combat = field.closest('.combat');
     if (wiredAppearance !== displayAppearance()) {
       releaseBackdrop();
+      releaseLayeredEnvironment();
       releaseBackdrop = wireAlternativeBackdrop(combat);
+      releaseLayeredEnvironment = wireLayeredEnvironment(combat);
       wiredAppearance = displayAppearance();
     }
     combat.dataset.layout = 'formation';
@@ -1293,6 +1296,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,
+      groundY: fieldTop + combatSceneryGround(sizes, actors, plan.ground) / zoom,
       config: battlefieldBackdropConfig({ height: sceneHeight, appearance: displayAppearance(),
         fieldTop, fieldHeight: fieldRect.height / zoom,
         formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
@@ -1304,6 +1308,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const combatHost = field.closest('.combat');
   let wiredAppearance = displayAppearance();
   let releaseBackdrop = wireAlternativeBackdrop(combatHost);
+  let releaseLayeredEnvironment = wireLayeredEnvironment(combatHost);
   // A selection change places the newly shown Info door in the same task that
   // shows it, so the first paint already has its spot; the frame refit follows.
   const selectionChanged = () => { refresh(); schedule(); };
@@ -1363,6 +1368,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   });
   const release = () => {
     releaseBackdrop();
+    releaseLayeredEnvironment();
     combatHost.removeEventListener('combatantselectionchange', selectionChanged);
     combatHost.removeEventListener('handlayoutchange', schedule);
     cancelAnimationFrame(frameRequest);
