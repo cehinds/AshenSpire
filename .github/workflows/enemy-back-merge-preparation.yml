@@ -17,6 +17,14 @@ jobs:
         with:
           fetch-depth: 0
           filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /README.md
+            /CHANGELOG.md
+            /buildordinal.json
+            /tools/
+            /src/content/changelog.generated.js
+            /docs/preview/features/enemy-back-sprites/
       - uses: actions/setup-node@v5
         with:
           node-version: 22
