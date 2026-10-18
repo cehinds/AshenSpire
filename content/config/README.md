@@ -23,7 +23,7 @@ One JSON file per subject. The folder decides where the file appears in
 
 | File | Becomes | Owns |
 | --- | --- | --- |
-| `ui/tokens.json` | `uiConfig.tokens` | shared variables (design tokens), nothing else |
+| `ui/tokens.json` | `uiConfig.tokens` | shared variables (`vars`) and the published token groups `type`, `layer`, `motion`, `touch` (also emitted as CSS custom properties), nothing else |
 | `ui/scenes/w4.json` | `uiConfig.scenes.w4` | the W4 parent: band minimums, compact breakpoint, scene plate bleed |
 | `ui/scenes/w4a-combat.json` | `uiConfig.scenes.w4a` | combat: bands, floor, hand, formation, target layer, overlays, combatant stack and meters, combat footer, layers |
 | `ui/scenes/w4b-map.json` | `uiConfig.scenes.w4b` | map: header band, repeat-pick delay |

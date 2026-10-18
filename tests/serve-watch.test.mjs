@@ -16,7 +16,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { buildToolFor, reloadLabel } from '../tools/serve.mjs';
+import { buildToolFor, buildToolsFor, reloadLabel } from '../tools/serve.mjs';
 
 const SERVE = fileURLToPath(new URL('../tools/serve.mjs', import.meta.url));
 const INDEX = '<!doctype html>\n<html><head><meta charset="utf-8"><title>t</title></head>\n<body><p>hello</p></body></html>\n';
@@ -49,6 +49,17 @@ test('authored directory replacement selects its builder without matching siblin
     assert.equal(buildToolFor(`${path}-backup/authored.json`), null, `${path}-backup/authored.json`);
   }
   assert.equal(buildToolFor('content/config/notes.txt'), null);
+});
+
+test('a change to ui/tokens.json (or a replaced content/config) owes config-build and then tokens-css', () => {
+  assert.deepEqual(buildToolsFor('content/config/ui/tokens.json'), ['config-build.mjs', 'tokens-css.mjs']);
+  assert.deepEqual(buildToolsFor('content/config'), ['config-build.mjs', 'tokens-css.mjs']);
+  assert.deepEqual(buildToolsFor('content/config/ui'), ['config-build.mjs', 'tokens-css.mjs']); // replaced ui/ dir (atomic save, sync)
+  assert.deepEqual(buildToolsFor('content/config/ui/scenes/w4.json'), ['config-build.mjs']);
+  assert.deepEqual(buildToolsFor('styles/base.css'), ['tokens-css.mjs'], 'a stylesheet change re-checks the token homes');
+  assert.deepEqual(buildToolsFor('styles/tokens.generated.css'), [], 'the file tokens-css writes does not owe it');
+  assert.deepEqual(buildToolsFor('content/hud-layout/tablet.json'), ['hud-layout-css.mjs']);
+  assert.deepEqual(buildToolsFor('src/main.js'), []);
 });
 
 function makeTree() {
