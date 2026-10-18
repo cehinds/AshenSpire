@@ -16,10 +16,12 @@ const readJson = f => JSON.parse(readFileSync(join(ROOT, f), 'utf8'));
 const first = buildGame();
 const artifact = first.artifact;
 
+// Catalog formula validation is probed on a legacy mechanic: portable mechanics additionally refuse
+// legacy-only formulas (metric, traitBonus), which has its own test.
 function queryFormula(formula) {
   return buildGame({ patch: ({ mechanics }) => {
-    mechanics.fx_heal.interface.queries ||= {};
-    mechanics.fx_heal.interface.queries.validationProbe = { params: {}, returns: 'number', value: formula };
+    mechanics.camp_physical.interface.queries ||= {};
+    mechanics.camp_physical.interface.queries.validationProbe = { params: {}, returns: 'number', value: formula };
   } });
 }
 
@@ -151,6 +153,10 @@ test('the build fails on dangling references', () => {
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { firstHandler(mechanics).do = [{ op: 'heal', amount: { f: 'metric', metric: 'typo' } }]; } }), /unknown metric 'typo'/);
   assert.throws(() => buildGame({ patch: ({ mechanics }) => { firstHandler(mechanics).do = [{ op: 'heal', amount: { f: 'add', args: [1], min: 'bad' } }]; } }), /min must be a number/);
   assert.throws(() => buildGame({ patch: ({ uiComponents }) => { uiComponents.hud.layout = { ref: 'content/config/ui/../../../engine/runtime/formulas.json' }; } }), /must live under content\/config\/ui\//);
+  const portableHandler = mechanics => Object.values(mechanics).find(x => x.manifest.portability === 'portable' && (x.service.handlers || []).length).service.handlers[0];
+  assert.throws(() => buildGame({ patch: ({ mechanics }) => { portableHandler(mechanics).do = [{ op: 'heal', amount: { f: 'metric', metric: 'weaponDamage' } }]; } }), /formula 'metric' is legacy-only/);
+  assert.throws(() => buildGame({ patch: ({ mechanics }) => { portableHandler(mechanics).do = [{ op: 'heal', amount: { f: 'add', args: ['bad'] } }]; } }), /operand 'args' has the wrong type/);
+  assert.throws(() => buildGame({ patch: ({ mechanics }) => { portableHandler(mechanics).do = [{ op: 'addCard', card: 'typo' }]; } }), /param 'card' is not a cardRef/);
   assert.throws(() => buildGame({ game: 'nonexistent-game' }));
 });
 

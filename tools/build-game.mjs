@@ -16,6 +16,8 @@ import { canonicalGameJSON, resolveGameAuthor, validateGameSchema } from '../eng
 import { loadGameProfileCatalog } from './game-config.mjs';
 import { loadMechanics, loadOps } from '../engine/runtime/interpreter.mjs';
 import { buildAssetCatalog } from './asset-catalog.mjs';
+import { contentBundle } from '../src/content/index.js';
+const engineCards = Array.isArray(contentBundle.cards) ? contentBundle.cards : Object.values(contentBundle.cards || {});
 import { resolveAtlasPath, validateMaps } from './maps-validate.mjs';
 import { visibilityErrors, validateUi } from './ui-validate.mjs';
 
@@ -95,6 +97,9 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   const mapComponents = loadDir('engine/maps/components');
   const mapDocs = loadDir(`games/${game}/maps`);
   patch?.({ content, mechanics, uiComponents, uiScreens, mapComponents, mapDocs });
+  // Literal card ids an op names (addCard) must exist in the shared pool; '$var' names resolve at run time.
+  // The pool is the profile's cards and enemy cards plus the engine's built-in cards (status cards such as slimed/dazed/wound).
+  const knownCards = new Set([...(content.cards || []), ...(content.enemyCards || []), ...engineCards].map(c => c.id));
   // Op parameter literals by catalog type; '$var' strings and { f } formulas are resolved at run time.
   const isVar = x => typeof x === 'string' && x.startsWith('$');
   const isFormula = x => x && typeof x === 'object' && !Array.isArray(x) && 'f' in x;
@@ -104,7 +109,8 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
       case 'value': case 'number': return typeof x === 'number' || isFormula(x);
       case 'integer': return Number.isInteger(x) || isFormula(x);
       case 'boolean': return typeof x === 'boolean';
-      case 'string': case 'cardRef': return typeof x === 'string';
+      case 'string': return typeof x === 'string';
+      case 'cardRef': return typeof x === 'string' && (knownCards === null || knownCards.has(x));
       case 'entityRef': return typeof x === 'string' || (Array.isArray(x) && x.every(y => typeof y === 'string'));
       case 'object': return x !== null && typeof x === 'object' && !Array.isArray(x);
       default: return true;
@@ -141,10 +147,18 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
     return [`${where}: unknown condition '${k}'`];
   };
   // Operand types from the catalog's field descriptions: arrays, entity refs/ids (strings), numbers (or $var / nested formula).
-  const operandOk = (desc, x) => /^array/.test(desc) ? Array.isArray(x)
+  const operandOk = (desc, x) => /^array of values/.test(desc) ? Array.isArray(x) && x.every(isValue)
+    : /^array/.test(desc) ? Array.isArray(x)
     : /^(entity ref|status id|metric name)/.test(desc) ? typeof x === 'string'
     : /^number/.test(desc) ? (typeof x === 'number' || (typeof x === 'string' && x.startsWith('$')))  // the evaluator reads number fields directly; no nested formulas
     : true;
+  const PORTABLE_FORMULAS = new Set(['add', 'mul', 'percentMaxHp', 'missingHp', 'missingMana', 'blockOf', 'hpOf', 'energySpent', 'cardsPlayedThisTurn', 'stacks']);
+  const portableFormulaErrors = (v, where) => {
+    if (Array.isArray(v)) return v.flatMap(x => portableFormulaErrors(x, where));
+    if (!v || typeof v !== 'object') return [];
+    const own = typeof v.f === 'string' && !PORTABLE_FORMULAS.has(v.f) ? [`${where}: formula '${v.f}' is legacy-only; portable mechanics cannot use it`] : [];
+    return [...own, ...Object.values(v).flatMap(x => portableFormulaErrors(x, where))];
+  };
   const formulaCatalog = readJson('engine/runtime/formulas.json').ops || {};
   const formulaOps = new Set(Object.keys(formulaCatalog));
   // formulas.json marks each operand "…, required"; a recognized operator missing one fails at run time.
@@ -181,6 +195,9 @@ export function buildGame({ game = 'ashenspire', patch = null } = {}) {
   }
   for (const [slug, m] of Object.entries(mechanics)) {
     for (const [q, def] of Object.entries(m.interface.queries || {})) for (const e of formulaErrors(def.value, `${slug} query ${q}`)) fail(e);
+    // Portable runtimes evaluate only the formulas they carry context for (SPEC section 7); metric and traitBonus
+    // read engine-only state (abilityRiders, weapon damage, turn counters) and stay with the legacy engine.
+    if (m.manifest.portability === 'portable') for (const e of portableFormulaErrors([m.interface.queries || {}, m.service.handlers || []], slug)) fail(e);
     for (const handler of m.service.handlers || []) if (handler.when !== undefined) for (const e of formulaErrors(handler.when, `${slug} handler ${handler.on} when`)) fail(e);
     for (const handler of m.service.handlers || []) if (handler.when !== undefined) for (const e of conditionErrors(handler.when, `${slug} handler ${handler.on} when`)) fail(e);
     // A portable mechanic implements every command it advertises (a host calls them directly).

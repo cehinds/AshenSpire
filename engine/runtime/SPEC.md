@@ -116,6 +116,9 @@ Load order is folder-name order (sorted ascending by folder name).
 ## 7. Formulas
 
 Closed set in `formulas.json`; code reference `src/model/formulas.js`. A port reimplements it there.
+Portable mechanics use only `add mul percentMaxHp missingHp missingMana blockOf hpOf energySpent
+cardsPlayedThisTurn stacks`; `metric` and `traitBonus` read engine-only state and are refused in portable
+mechanics by the build.
 Rules that matter to a port:
 
 - The final result of an evaluation is floored once toward negative infinity.
@@ -169,7 +172,7 @@ Pile ops (no `target`):
 | `draw` amount (default 1) | move up to `amount` cards from the front of `draw` to the end of `hand` |
 | `discard` amount (default 1), random | move up to `amount` cards from `hand` to the end of `discard`: the first card, or with `random` the card at index `floor(r * hand.length)` |
 | `exhaust` amount (default 1), random | same, into `exhaust` |
-| `addCard` card, count (default 1, min 1), pile (default `discard`), position (`top` or `bottom`, default `bottom`) | insert `count` copies of the card id at the front (`top`) or end (`bottom`) of the pile. Unknown pile: error `Unknown pile`. |
+| `addCard` card, count (default 1, min 1), pile (default `discard`), position (`top`, `bottom` or `random`, default `bottom`) | insert `count` copies of the card id at the front (`top`), the end (`bottom`), or, for `random`, each copy at index `floor(r * (length + 1))` with `r` drawn per copy (section 9). Unknown pile: error `Unknown pile`; any other position: error. |
 
 ## 9. Determinism
 
@@ -187,7 +190,7 @@ r = ((t xor (t >> 14)) as uint32) / 4294967296
 ```
 
   (`>>` is unsigned shift, `imul` is 32-bit integer multiply, `+` after `imul` wraps at 32 bits.)
-  Only `discard` and `exhaust` with `random` use it today.
+  `discard` and `exhaust` with `random`, and `addCard` with `position: random`, use it.
 - The same state, command and params always give the same result and events.
 
 ## 10. Cases

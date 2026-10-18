@@ -674,8 +674,14 @@ namespace Ashen.Runtime
                         var pileName = step.TryGetProperty("pile", out var p) ? (string)Value(call, scope, p) : "discard";
                         if (!s.Piles.TryGetValue(pileName, out var pile)) throw new InvalidOperationException($"Unknown pile '{pileName}'");
                         int count = (int)Math.Max(1, Math.Floor(Num("count", 1)));
-                        bool top = step.TryGetProperty("position", out var pos) && (string)Value(call, scope, pos) == "top";
-                        for (int i = 0; i < count; i++) { if (top) pile.Insert(0, card); else pile.Add(card); }
+                        var position = step.TryGetProperty("position", out var pos) ? Value(call, scope, pos) as string ?? "bottom" : "bottom";
+                        if (position != "top" && position != "bottom" && position != "random") throw new InvalidOperationException($"addCard position must be top, bottom or random, got '{position}'");
+                        for (int i = 0; i < count; i++)
+                        {
+                            if (position == "top") pile.Insert(0, card);
+                            else if (position == "random") pile.Insert((int)Math.Floor(Mulberry32.Next(s) * (pile.Count + 1)), card);
+                            else pile.Add(card);
+                        }
                         break;
                     }
                 case "gainEnergy":   // same arithmetic as restoreStamina plus "funded"

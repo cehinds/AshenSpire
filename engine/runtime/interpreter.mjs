@@ -453,7 +453,13 @@ const OPS = {
     const pile = cardSource(state, step.pile ? api.value(step.pile) : 'discard');
     const count = Math.max(1, Math.floor(api.number(step.count, 1)));
     const position = step.position ? api.value(step.position) : 'bottom';
-    for (let i = 0; i < count; i++) { if (position === 'top') pile.unshift(card); else pile.push(card); }
+    if (!['top', 'bottom', 'random'].includes(position)) throw new Error(`addCard position must be top, bottom or random, got '${position}'`);
+    // random: the legacy engine's seeded insertion, an index in [0, length] (src/engine/actions.js).
+    for (let i = 0; i < count; i++) {
+      if (position === 'top') pile.unshift(card);
+      else if (position === 'random') pile.splice(Math.floor(nextRandom(state) * (pile.length + 1)), 0, card);
+      else pile.push(card);
+    }
   },
   gainEnergy(state, step, api) {
     perTarget(state, step, api, (e, key, vars) => {

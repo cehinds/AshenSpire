@@ -515,3 +515,13 @@ test('emit snapshots the host payload', () => {
   payload.nested.n = 2;
   assert.equal(out.events[0].payload.nested.n, 1);
 });
+
+test('addCard position random inserts at a seeded index; unknown positions are refused', () => {
+  const state = { entities: { self: ent() }, piles: { draw: ['a', 'b', 'c'] }, rng: { seed: 7 } };
+  const a = run([{ op: 'addCard', card: 'x', pile: 'draw', position: 'random' }], state);
+  const b = run([{ op: 'addCard', card: 'x', pile: 'draw', position: 'random' }], state);
+  assert.deepEqual(a.state.piles.draw, b.state.piles.draw);
+  assert.equal(a.state.piles.draw.length, 4);
+  assert.notEqual(a.state.rng.seed, 7);
+  assert.throws(() => run([{ op: 'addCard', card: 'x', position: 'middle' }], state), /position must be top, bottom or random/);
+});
