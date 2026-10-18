@@ -102,12 +102,22 @@ try {
     assert.equal(await log.evaluate(node => node.parentElement.parentElement === document.body),true,'expanded log shares the body modal portal');
     await page.screenshot({ path: resolve(out, `log-${width}.png`) });
     await page.keyboard.press('Escape');
+    await log.waitFor({state:'detached'});
     const end = page.locator('.end-turn'), endBox = await end.boundingBox();
     await page.mouse.move(endBox.x+endBox.width/2,endBox.y+endBox.height/2);
-    await page.mouse.down(); await page.waitForTimeout(180);
-    assert.match(await end.locator('.hold-hint').textContent(),/^\d+%$/);
-    await end.dispatchEvent('pointercancel',{pointerId:1,pointerType:'mouse',bubbles:true});
-    await page.mouse.up(); await page.waitForTimeout(50);
+    await end.evaluate(node => {
+      const hint = node.querySelector('.hold-hint');
+      const observer = new MutationObserver(() => {
+        if (!/^\d+%$/.test(hint.textContent) || parseInt(hint.textContent,10) <= 0) return;
+        node.dataset.qaHoldProgress = hint.textContent; observer.disconnect();
+        node.dispatchEvent(new PointerEvent('pointercancel',{pointerId:1,pointerType:'mouse',bubbles:true}));
+      });
+      observer.observe(hint,{childList:true,characterData:true,subtree:true});
+    });
+    await page.mouse.down();
+    await page.waitForFunction(() => !!document.querySelector('.end-turn')?.dataset.qaHoldProgress);
+    assert.match(await end.getAttribute('data-qa-hold-progress'),/^\d+%$/);
+    await page.mouse.up();
     assert.equal(await end.locator('.hold-hint').textContent(),'HOLD');
     results.push({ width, height, fixture, pips, textFit, mana });
     await page.close();
