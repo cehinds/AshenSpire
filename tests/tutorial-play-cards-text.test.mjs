@@ -10,7 +10,7 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
 test('both Play cards strings are authored rows', () => {
   assert.match(t('tutorial.playCards.tap'), /^Tap a card to play it; with several enemies, tap the one to hit\./);
-  assert.match(t('tutorial.playCards.select'), /^Click a card or press 1–9\. Attacks need a target/);
+  assert.match(t('tutorial.playCards.select'), /^Click a card or press 1–9 to select it; click it again to play it\. Attacks need a target/);
 });
 
 test('the callout picks its string from the setting combat.js passes', () => {
