@@ -29,7 +29,8 @@
 // watcher per directory), waits 150 ms for the writes to settle, and sends
 // `event: reload` (data: the changed path) down GET /__dev/events, an
 // EventSource stream. A change under content/config/ (*.json) first runs
-// `node tools/config-build.mjs`, one under content/hud-layout/ (*.json) runs
+// `node tools/config-build.mjs` (and, for ui/tokens.json, then
+// `node tools/tokens-css.mjs`), one under content/hud-layout/ (*.json) runs
 // `node tools/hud-layout-css.mjs`, one under content/framework/ (*.json) runs
 // `node tools/framework-data-build.mjs`, one under content/source/ runs
 // `node tools/content-build.mjs`, and one under games/ or engine/modules/ runs
@@ -99,7 +100,7 @@ const WATCH_DEBOUNCE_MS = 150;
 const WATCH_SKIP = /(^|\/)(\.|node_modules(\/|$))|~$|\.sw[px]$|\.tmp$/;
 
 /** The order builders run in when one batch needs several. */
-const BUILD_ORDER = ['config-build.mjs', 'hud-layout-css.mjs', 'framework-data-build.mjs', 'content-build.mjs',
+const BUILD_ORDER = ['config-build.mjs', 'tokens-css.mjs', 'hud-layout-css.mjs', 'framework-data-build.mjs', 'content-build.mjs',
   'game-config.mjs build']; // last: it hashes src/** and reads the other generated modules
 
 /** Which build tool (in tools/) must run before a change under `rel` can be seen. */
@@ -107,7 +108,7 @@ export function buildToolFor(rel) {
   // A per-directory watcher reports a replaced authored tree by its own name,
   // not a descendant filename. That event still owes the tree's builder.
   const jsonTree = tree => rel === tree || (rel.startsWith(tree + '/') && rel.endsWith('.json'));
-  if (jsonTree('content/config')) return 'config-build.mjs';
+  if (jsonTree('content/config') || rel === 'content/config/ui') return 'config-build.mjs';
   if (rel === 'content/source' || rel.startsWith('content/source/')) return 'content-build.mjs';
   // content/hud-layout/*.json → styles/hud-layout.generated.css (no flag = --write).
   if (jsonTree('content/hud-layout')) return 'hud-layout-css.mjs';
@@ -120,6 +121,26 @@ export function buildToolFor(rel) {
   if (rel === 'games' || rel.startsWith('games/') || /^engine\/(modules|foundation|contracts|kernel|runtime)(?:\/|$)/.test(rel)) return 'game-config.mjs build';
   return null;
 }
+
+/**
+ * Every build tool a change under `rel` owes, in no particular order (the run
+ * order is BUILD_ORDER). Usually the one buildToolFor names; a change that can
+ * touch ui/tokens.json also owes tokens-css.mjs, which reads it.
+ */
+export function buildToolsFor(rel) {
+  // tokens-css reads every authored stylesheet (a homed value, a second root
+  // declaration), so a stylesheet change owes its check too — cheap, and the
+  // page must not reload onto a token state the check would refuse.
+  if ((rel === 'styles' || /^styles\/[^/]+\.css$/.test(rel)) && rel !== 'styles/tokens.generated.css') return ['tokens-css.mjs'];
+  const tool = buildToolFor(rel);
+  // ui/tokens.json itself, or any directory above it that a watcher may report
+  // as replaced (content/config, content/config/ui): both could hold new tokens.
+  if (tool === 'config-build.mjs' && TOKENS_JSON_AND_ANCESTORS.includes(rel)) {
+    return [tool, 'tokens-css.mjs'];
+  }
+  return tool ? [tool] : [];
+}
+const TOKENS_JSON_AND_ANCESTORS = ['content/config', 'content/config/ui', 'content/config/ui/tokens.json'];
 
 /** Last 20 lines of a tool's output, for the error banner. */
 function tailLines(text, n = 20) {
@@ -219,7 +240,7 @@ function startWatch(root, emit) {
         // Fixed order, not arrival order: content-build rejects a stale config
         // module, so config-build must finish first. A builder an earlier
         // failure skipped stays owed until a round runs it.
-        const wanted = new Set([...owed, ...batch.map(buildToolFor).filter(Boolean)]);
+        const wanted = new Set([...owed, ...batch.flatMap(buildToolsFor)]);
         const tools = BUILD_ORDER.filter((tool) => wanted.has(tool));
         let failure = null, at = 0;
         for (; at < tools.length; at++) {
