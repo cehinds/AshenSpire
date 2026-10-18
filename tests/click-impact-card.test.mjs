@@ -33,5 +33,5 @@ test('expanded Shield Bash samples immediate protection, never its deferred Coun
   const replyOnly = { ...expanded, effects: expanded.effects.filter(effect => effect.op !== 'block') };
   assert.equal(hasImmediateCombatImpact(replyOnly), false);
   assert.equal(hasImmediateCombatImpact({ effects: [{ op: 'poiseDamage', target: 'enemy', amount: 3 }] }), true);
-  assert.equal(hasImmediateCombatImpact(card('defend')), false);
+  assert.equal(hasImmediateCombatImpact(card('defend')), true, 'ordinary immediate protection is a real numeric sample');
 });

@@ -62,11 +62,18 @@ test('a first round that cannot measure is exit 2, never a pass', async () => {
   const r = await run([{ samples: [200, 210], numbers: [600, 610] }, within]);
   assert.equal(r.exitCode, 2);
   assert.equal(r.calls, 1);
-  assert.match(r.errors[0], /only 2 play\(s\) measured in round 1; need 3/);
+  assert.match(r.errors[0], /only 2 contact\(s\) and 2 numeric readout\(s\) measured in round 1; need 3/);
 });
 
 test('a re-measure that cannot measure leaves the first round\'s verdict (1)', async () => {
   const r = await run([overNumber, { samples: [], numbers: [] }]);
   assert.equal(r.exitCode, 1);
   assert.ok(r.lines.some((l) => /round 2: could not measure/.test(l)));
+});
+
+test('enough contacts with fewer than three real numbers can never pass', async () => {
+  const result = await judgeRounds(async () => ({ samples: [10, 20, 30], numbers: [10, 20] }), {
+    rounds: 1, budgetMs: 400, numberBudgetMs: 750, log() {}, error() {},
+  });
+  assert.equal(result.exitCode, 2);
 });
