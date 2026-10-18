@@ -33,7 +33,9 @@
 // `node tools/content-build.mjs`, one build at a time with the newest change
 // winning; a failed build sends `event: error` (data: the last 20 lines of its
 // stderr) and no reload. Writes the build makes itself, and changes in the 300
-// ms after it, are not edits and are ignored. Without --watch nothing here exists: no
+// ms after it, are not edits and are ignored. In watch mode the served
+// index.html (that file only) gets a small inline script before </body> that
+// reloads the page on `reload` and shows `error` text in a banner. Without --watch nothing here exists: no
 // endpoint, no watcher, and every response is byte-identical to before.
 
 import { createServer } from 'node:http';
@@ -116,6 +118,27 @@ function runBuild(root, tool) {
     });
   });
 }
+
+/** --watch only: what index.html gets before </body>. Plain DOM, no CSS file. */
+const DEV_RELOAD_SCRIPT = `<script>
+(function () {
+  var es = new EventSource('${DEV_EVENTS_PATH}'), bar = null;
+  es.addEventListener('reload', function () { location.reload(); });
+  es.addEventListener('error', function (e) {
+    if (!e.data) return; // a dropped connection, not a build error: EventSource retries by itself
+    if (!bar) {
+      bar = document.createElement('pre');
+      bar.setAttribute('style', 'position:fixed;top:0;left:0;right:0;z-index:2147483647;margin:0;padding:8px 12px;' +
+        'max-height:40vh;overflow:auto;background:#7a1010;color:#fff;font:12px/1.4 monospace;white-space:pre-wrap');
+      bar.onclick = function () { bar.style.display = 'none'; };
+      document.body.appendChild(bar);
+    }
+    bar.style.display = 'block';
+    bar.textContent = 'Build failed (click to hide)\\n' + e.data;
+  });
+})();
+</script>
+`;
 
 /** One SSE message; a multi-line payload becomes one data: line per line. */
 function sseMessage(event, text) {
@@ -365,6 +388,12 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
           console.error(`serve: could not stamp ${VERSION_MODULE} — ${err.message}`);
           console.error('       the page will read UNSTAMPED, which is what it now knows.');
         }
+      }
+      // --watch only, and only the root's index.html: the live-reload listener.
+      if (watch && resolve(filePath) === join(rootResolved, 'index.html')) {
+        const html = body.toString('utf8');
+        const at = html.toLowerCase().lastIndexOf('</body>');
+        body = Buffer.from(at < 0 ? html + DEV_RELOAD_SCRIPT : html.slice(0, at) + DEV_RELOAD_SCRIPT + html.slice(at), 'utf8');
       }
       const type = MIME[extname(filePath).toLowerCase()] || 'application/octet-stream';
       res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache' });
