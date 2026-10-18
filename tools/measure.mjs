@@ -203,13 +203,17 @@ async function metrics(cdp) {
 
 // The scene is ready when its element count holds still (within 3%) for three
 // looks a second apart; a fixed sleep measured half-drawn scenes on a busy box.
+// Throws when 45 looks never gave three still ones: a half-drawn scene is a
+// failed attempt, not a sample.
 async function settle(page) {
-  for (let i = 0, last = -1, still = 0; i < 45 && still < 3; i++) {
+  let still = 0;
+  for (let i = 0, last = -1; i < 45 && still < 3; i++) {
     await sleep(1000);
     const n = await page.evaluate(() => document.querySelectorAll('*').length);
     still = last > 0 && Math.abs(n - last) <= last * 0.03 ? still + 1 : 0;
     last = n;
   }
+  if (still < 3) throw new Error('element count never held still (45 looks)');
 }
 
 async function measureScene(browser, base, scene, wantPlays) {
