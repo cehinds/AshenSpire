@@ -164,6 +164,6 @@ try {
 } finally {
   writeFileSync(resolve(out, 'checks.json'), JSON.stringify({ results, errors }, null, 2));
   await browser.close();
-  await server?.close();
+  if (server) await new Promise((resolve, reject) => server.server.close(error => error ? reject(error) : resolve()));
 }
 console.log('FixCore combat UI browser checks passed (4 viewports + planned-round autoplay).');
