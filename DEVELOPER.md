@@ -1072,24 +1072,31 @@ The engine interprets `stackMode` (add/refresh/unique), `decay`
 Bleed, Crimson Blight, and Staggered are all plain data here — test 17 proves a
 brand-new status needs zero engine changes.
 
-## Add a relic (one file: `content/source/relics.json`)
+## Add a relic (`content/source/relics.json`, plus one node for its combat trigger)
 
 Relics are plain JSON (an array of rows, two-space indent). `src/content/relics.js`
 is only a re-export of the compiled `src/content/generated/relics.js`; do not
-author there. Add the row, then compile (`node tools/launch.mjs` does it for
-you; by hand: `node tools/content-build.mjs`) and commit the regenerated file.
+author there. A relic row holds its identity, rarity, run-system `passives` and
+the one `textTemplate` that describes the whole relic. Add the row, then compile
+(`node tools/launch.mjs` does it for you; by hand: `node tools/content-build.mjs`)
+and commit the regenerated file.
 
 ```json
 {
   "id": "whetstoneFragment", "name": "Whetstone Fragment", "rarity": "common", "icon": "🪨",
-  "triggers": [{
-    "on": "damageDealt", "once": true,
-    "if": { "p": "all", "preds": [{ "p": "eventIsAttack" }, { "p": "eventSourceIsOwner" }] },
-    "do": [{ "op": "damage", "amount": 4 }]
-  }],
-  "textTemplate": "Your first attack each combat deals {damage} extra damage."
+  "passives": { "poiseThresholdAdd": 1 },
+  "textTemplate": "Your first attack each combat deals {damage} extra damage. Poise threshold +1.",
+  "flavor": "Worn smooth by a thousand blades."
 }
 ```
+
+A relic's COMBAT behaviour is not in the row: since plan phase 2 `validate.js`
+refuses `triggers` on a relic. They are a property rule that shares the relic's
+id — a `property` node row in `content/source/nodes.csv`, its triggers under that
+id in `content/source/nodeEffects.json`, and a `relic,,<id>,<id>` line in
+`content/source/tagging.csv` (see `forsakenMedallion` in all three). The relic's
+`textTemplate` is checked against both halves. Design notes that used to be
+comments in the JS live in `content/source/CONTENT-NOTES.md`, keyed by id.
 
 A flask is added the same way in `content/source/flasks.json`, and a stance in
 `content/source/stances.json`.
