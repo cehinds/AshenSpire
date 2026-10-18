@@ -513,7 +513,18 @@ jobs:
           packs: ${{ env.ART_PACKS }}
 
       - name: Every discovered test file, partitioned without omissions
-        run: node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --shard ${{ matrix.shard }}
+        shell: bash
+        run: |
+          set +e
+          node tools/verdict.mjs -- node tests/run-node.mjs --discovered-only --shard ${{ matrix.shard }} > "$RUNNER_TEMP/shard.log" 2>&1
+          code=$?
+          cat "$RUNNER_TEMP/shard.log"
+          # DIAG (throwaway branch): surface the failing tests as annotations, which the REST API can read.
+          if [ $code -ne 0 ]; then
+            grep -E "^not ok|^# (pass|fail)|failing tests|EPERM|EBUSY|ENOTEMPTY|ENOENT|Error:" "$RUNNER_TEMP/shard.log" | head -10 | while IFS= read -r line; do echo "::error::${line:0:400}"; done
+            grep -n -A12 "^not ok" "$RUNNER_TEMP/shard.log" | head -80 | while IFS= read -r line; do echo "::warning::${line:0:400}"; done
+          fi
+          exit $code
 
   # Windows linkcheck's complete five-plant corpus took 15 minutes at test6a903.
   # Give it its own job; `other` runs every remaining self-test unchanged.
