@@ -109,12 +109,12 @@ test('portable mechanics are authored, use catalog ops and carry at least three 
   for (const [slug, m] of portable) {
     assert.equal(m.authored, true, `${slug}: portable mechanics are hand-authored`);
     const service = readJson(`${MECHANICS}${slug}/service.json`), cases = readJson(`${MECHANICS}${slug}/cases.json`);
-    assert.ok(service.handlers.length > 0, `${slug}: service has handlers`);
+    assert.ok(service.handlers.length > 0 || service.modifiers?.length > 0, `${slug}: service has handlers`);
     for (const handler of service.handlers) for (const step of steps(handler.do)) if (step.op) assert.ok(PORTABLE_OPS.has(step.op), `${slug}: op ${step.op} is not in the portable catalog`);
     assert.ok(cases.length >= 3, `${slug}: needs at least 3 cases`);
     const iface = readJson(`${MECHANICS}${slug}/interface.json`);
     for (const c of cases) {
-      assert.ok(c.when.command || c.when.event, `${slug}: case "${c.name}" has no command or event`);
+      assert.ok(c.when.command || c.when.event || c.when.modifiers, `${slug}: case "${c.name}" has no command or event`);
       if (c.when.command) assert.ok(c.when.command.startsWith(`${slug}.`) && c.when.command.slice(slug.length + 1) in (iface.commands || {}), `${slug}: case "${c.name}" names an unknown command`);
       for (const event of c.then.events || []) assert.ok(event.startsWith(`${slug}.`) && event.slice(slug.length + 1) in (iface.events || {}), `${slug}: case "${c.name}" expects an unknown event`);
     }

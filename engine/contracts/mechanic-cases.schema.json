@@ -44,6 +44,9 @@
           },
           "with": {
             "type": "object"
+          },
+          "modifiers": {
+            "type": "object"
           }
         },
         "additionalProperties": false
