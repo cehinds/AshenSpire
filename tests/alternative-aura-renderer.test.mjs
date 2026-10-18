@@ -141,3 +141,36 @@ test('opt-in fixed phase reuse preserves pixels, filter and materialization with
   assert.ok(draws.length>brightBefore+2,'a changed placement cannot use stale cached geometry');
   renderer.dispose();assert.ok(surfaces.every(surface=>surface.width===0&&surface.height===0));
 });
+
+test('last-work memo has baseline miss work and no allocations or copies beyond one surface', () => {
+  const f = fixture(), image = {}, other = {}, filter = auraFilter('power2', 'idle', ['stamina'], true);
+  const paint = (source = image, text = filter, x = 128, y = 16, width = 512, height = 512, options = { reuseWork: true }) => {
+    const before = { draws: f.draws.length, clears: f.clears.length, reads: f.reads.length };
+    f.renderer.draw(f.target, source, text, x, y, width, height, { ...options, materialize: true });
+    return { draws: f.draws.length - before.draws, clears: f.clears.length - before.clears, reads: f.reads.length - before.reads };
+  };
+  const miss = paint();
+  assert.deepEqual(miss, { draws: 5, clears: 1, reads: 1 }, 'three glows, body, visible surface: the original miss work');
+  const hit = { draws: 1, clears: 0, reads: 1 };
+  assert.deepEqual(paint(), hit);
+  for (const values of [[other, filter, 128, 16, 512, 512], [image, filter, 128, 16, 512, 512],
+    [image, filter, 128.25, 16, 512, 512], [image, filter, 128.25, 16.5, 512, 512],
+    [image, filter, 128.25, 16.5, 511, 512], [image, filter, 128.25, 16.5, 511, 510]]) {
+    assert.deepEqual(paint(...values), miss, 'every changed key rerenders without additional copy work');
+    assert.deepEqual(paint(...values), hit);
+  }
+  const changedFilter = auraFilter('power3', 'idle', ['stamina'], true);
+  assert.deepEqual(paint(image, changedFilter), miss);
+  assert.deepEqual(paint(image, changedFilter), hit);
+  assert.deepEqual(paint(other, filter, 128, 16, 512, 512, {}), miss, 'non-memo painting mutates and invalidates the work surface');
+  assert.deepEqual(paint(image, changedFilter), miss, 'old key is no longer reusable after any work mutation');
+  f.surfaces[0].width = 1;
+  assert.deepEqual(paint(image, changedFilter), miss, 'resizing clears the memo');
+  assert.equal(f.surfaces[0].width, 768);
+  assert.deepEqual(paint(image, changedFilter), hit);
+  assert.equal(f.surfaces.length, 1);
+  f.renderer.dispose();
+  assert.equal(f.surfaces[0].width, 0);
+  assert.equal(f.renderer.draw(f.target, image, filter, 128, 16, 512, 512, { reuseWork: true }), false);
+  assert.equal(f.surfaces.length, 1, 'disposed memo cannot allocate');
+});

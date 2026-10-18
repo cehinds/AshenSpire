@@ -158,7 +158,13 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     } : null);
     currentArt={canvas,image:source,left,top,width,height,body};
     ctx.save();
-    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();
+    // Loaded pilot Images are immutable. Static holds and fixed-travel phases
+    // can reuse identical work pixels without skipping any lifecycle calls;
+    // unlike the class-Smash cache, a miss allocates/copies no extra surface.
+    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize,
+      reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting,
+      reuseWork:!!pilotFrames&&!bodyReaction&&!clipping&&!reacting
+        && (!playing || !!playing.sequence.pilot&&playing.sequence.travel.every(offset=>offset===0))});ctx.restore();
     // Trails share body registration, but never enter its aura or hit mask.
     if(effect && !still && !reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
       const overlay=images.get(effect);
