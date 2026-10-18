@@ -2048,6 +2048,6 @@ body.reduce-motion .target-hud-detail { transition: none; }
   min-width: 0; aspect-ratio: auto; font-size: var(--combatant-value-text); line-height: 1;
 }
 
-.combat-log-calculation { white-space: pre-wrap; margin-top: .35em; padding: .5em; border-left: 2px solid var(--gold); font-variant-numeric: tabular-nums; background: #0003; }
+.combat-log-calculation { white-space: pre-wrap; margin-top: .35em; padding: .5em; border-left: 2px solid var(--gold); font-variant-numeric: tabular-nums; background: var(--panel); }
 .damage-receipt { line-height: 1.45; font-variant-numeric: tabular-nums; }
 [data-damage-receipt] { cursor: help; text-decoration: underline dotted; text-underline-offset: .15em; }

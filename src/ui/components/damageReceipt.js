@@ -8,6 +8,7 @@ export function damageReceiptLines(receipt) {
   const lines = [];
   for (const [index, hit] of receipt.hits.entries()) {
     lines.push(`Hit ${index + 1}: ${number(hit.incoming)} incoming → ${number(hit.hpLoss)} HP damage`);
+    if (Number.isFinite(hit.physical) && Number.isFinite(hit.magical)) lines.push(`Components: ${number(hit.physical)} physical + ${number(hit.magical)} magical`);
     for (const source of hit.sources || []) {
       const operation = source.operation === 'multiply' || Number.isFinite(source.multiplier)
         ? `×${number(source.multiplier ?? source.amount)}`
