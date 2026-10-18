@@ -22,11 +22,13 @@
 //
 //   node tools/click-impact-probe.mjs                 (judge the median)
 //   node tools/click-impact-probe.mjs --plays 6 --seed 3
+//   node tools/click-impact-probe.mjs --diagnostics (bounded native-failure rows)
 //   CHROME=/path/to/chrome node tools/click-impact-probe.mjs
 //
 // Exit 0 when both medians are within budget, 1 when it is not or the drive
 // fails, 2 when no browser or no play was measured (never a pass).
 
+import { installImpactObservations, summarizeImpactObservation } from './click-impact-observations.mjs';
 import { CORE_ENTRY_SEED } from './core-entry-fixture.mjs';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -53,6 +55,7 @@ const BUDGET_MS = 400;
 // defender's reaction (SPEC §7.4, beatOrder 'sequential').
 const NUMBER_BUDGET_MS = 750;
 const args = process.argv.slice(2);
+const DIAGNOSTICS = args.includes('--diagnostics');
 const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : null; };
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const PLAYS = Number(argOf('--plays') || 5);
@@ -212,10 +215,13 @@ async function main() {
       return true;
     })()`);
 
+    if (DIAGNOSTICS) await evalIn(`(${installImpactObservations.toString()})()`);
+
     const played = () => evalIn(`window.__combat?.player?.counters?.cardsPlayedThisCombat || 0`);
     const idle = `!!window.__combat && window.__combat.result == null && window.__combat.phase === 'player' && !!document.querySelector('.hand .card') && !document.querySelector('.combat .end-turn')?.disabled`;
     const samples = [];
     const numbers = [];
+    const observations = [];
     for (let guard = 0; samples.length < PLAYS && guard < PLAYS * 4; guard += 1) {
       if (await evalIn(`!window.__combat || window.__combat.result != null`)) break;
       await until(idle, 'an idle hand', 15000);
@@ -262,7 +268,7 @@ async function main() {
         continue;
       }
       const before = await played();
-      const mark = await evalIn(`(() => { window.__impact.measureMeters = ${!!picked.meterImpact}; return performance.now(); })()`);
+      const mark = await evalIn(`(() => { window.__impact.measureMeters = ${!!picked.meterImpact}; ${DIAGNOSTICS ? 'window.__impactObservation.start();' : ''} return performance.now(); })()`);
       // Park the pointer off the hand so a hover lift or tooltip from the last
       // play does not cover the next card.
       await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 700, y: 120 }, S);
@@ -282,9 +288,11 @@ async function main() {
         const c = window.__impact.contacts.find((t) => t > ${mark});
         if (f == null || c == null) return null;
         const up = window.__impact.ups.filter((t) => t > ${mark} && t < Math.min(c, f)).pop();
-        return up == null ? null : { contact: Math.round(c - up), number: Math.round(f - up) };
+        return up == null ? null : { contact: Math.round(c - up), number: Math.round(f - up) ${DIAGNOSTICS ? ', up, contactAt: c, numberAt: f' : ''} };
       })()`);
+      const observation = DIAGNOSTICS ? await evalIn('window.__impactObservation.finish()') : null;
       if (sample != null) {
+        if (DIAGNOSTICS) observations.push({ card: picked.cardId, sample, observation });
         samples.push(sample.contact); numbers.push(sample.number);
         console.log(`    play ${samples.length}: contact ${sample.contact} ms, number ${sample.number} ms (${picked.cardId}${picked.maneuver === 'counter' ? ', Counter protection' : ''})`);
       }
@@ -303,6 +311,13 @@ async function main() {
     console.log('  boundary: real Chromium headless, 1440x900, Normal pacing, the Quick start class and seed, mouse clicks only.');
     console.log('  Not checked: touch input, slow or fast pacing, phone layouts, or classes other than the Quick start one.');
     process.exitCode = okay ? 0 : 1;
+    if (DIAGNOSTICS && !okay) {
+      console.log('FAILURE OBSERVATIONS: same native plays; bounded timer/rAF/longtask instrumentation adds nonzero overhead. No CPU profile; no causal stack attribution. Budgets and verdict unchanged.');
+      for (const { card, sample, observation } of observations) {
+        try { console.log('NATIVE FAILURE PHASES', summarizeImpactObservation(card, sample, observation)); }
+        catch (error) { console.error('Observation summary unavailable:', error.message); }
+      }
+    }
   } catch (e) {
     console.error(`click-impact-probe: ${e.message}`);
     console.error('last picked card:', JSON.stringify(lastPicked));

@@ -110,4 +110,4 @@ jobs:
       # effects layer's data-contact) and to the first damage or guard number
       # (about a minute).
       - name: Click to contact within 400 ms and first number within 750 ms at Normal pacing
-        run: node tools/verdict.mjs -- node tools/click-impact-probe.mjs
+        run: node tools/verdict.mjs -- node tools/click-impact-probe.mjs --diagnostics
