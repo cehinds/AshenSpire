@@ -16,12 +16,23 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { request } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { buildToolFor } from '../tools/serve.mjs';
+import { buildToolFor, reloadLabel } from '../tools/serve.mjs';
 
 const SERVE = fileURLToPath(new URL('../tools/serve.mjs', import.meta.url));
 const INDEX = '<!doctype html>\n<html><head><meta charset="utf-8"><title>t</title></head>\n<body><p>hello</p></body></html>\n';
 const cleanups = [];
 after(() => { for (const fn of cleanups.reverse()) { try { fn(); } catch { /* already gone */ } } });
+
+test('a reload is labelled by the last file in the batch, never by a directory Windows reports alongside it', () => {
+  const root = makeTree();
+  mkdirSync(join(root, 'src', 'later'));
+  writeFileSync(join(root, 'src', 'later', 'y.js'), 'export const y = 1;\n');
+  // Windows: writing y.js also reports its directory as changed, after the file.
+  assert.equal(reloadLabel(root, ['src/later/y.js', 'src/later']), 'src/later/y.js');
+  assert.equal(reloadLabel(root, ['src/later', 'src/later/y.js']), 'src/later/y.js');
+  assert.equal(reloadLabel(root, ['src/later/gone.js', 'src/later']), 'src/later/gone.js', 'a deleted path is an edit');
+  assert.equal(reloadLabel(root, ['src/later']), 'src/later', 'a directory alone keeps its name (a replaced authored tree)');
+});
 
 test('authored directory replacement selects its builder without matching sibling names', () => {
   for (const [path, builder] of [
@@ -135,21 +146,48 @@ for (const [label, env] of [['recursive fs.watch', {}], ['per-directory watchers
     const again = stream.next('reload', 2000);
     writeFileSync(join(root, 'src', 'later', 'y.js'), 'export const y = 1;\n');
     assert.equal(await again, 'src/later/y.js');
-    // A directory deleted and recreated is watched on its new inode.
-    // (each step waits out the debounce + post-build quiet window, 150 + 300 ms)
-    rmSync(join(root, 'src', 'later'), { recursive: true, force: true });
-    await new Promise((r) => setTimeout(r, 600));
-    mkdirSync(join(root, 'src', 'later'));
-    await new Promise((r) => setTimeout(r, 600));
-    const reborn = stream.next('reload', 2000);
-    writeFileSync(join(root, 'src', 'later', 'z.js'), 'export const z = 1;\n');
-    assert.equal(await reborn, 'src/later/z.js');
     stream.close();
     child.kill();
   });
 }
 
-test('--watch: replacing content/source rebuilds before reload and watches the replacement', async () => {
+// Replacing a WATCHED directory (rm + mkdir, or a rename over it) is a POSIX
+// scenario: on Windows the per-directory handle (ReadDirectoryChangesW) keeps
+// the directory from being renamed or removed while it is open, and that
+// fallback never runs there anyway — fs.watch is recursive on Windows, so the
+// one handle sits on the target root and its subdirectories come and go
+// freely. The two tests below therefore assert the fallback's behaviour where
+// the fallback is used.
+const REPLACES_WATCHED_DIR = process.platform === 'win32'
+  && 'the per-directory fallback never runs on Windows (fs.watch is recursive there), and a watched directory cannot be renamed or removed while its handle is open';
+
+// The recursive watcher holds one handle on the target root, so a subdirectory
+// can be deleted and recreated on every platform (Windows included: that IS its
+// production path); the per-directory fallback can only on POSIX, see above.
+for (const [label, env, skip] of [['recursive fs.watch', {}, false], ['per-directory watchers', { SERVE_WATCH_NO_RECURSIVE: '1' }, REPLACES_WATCHED_DIR]]) {
+test(`--watch: a directory deleted and recreated is watched on its new inode (${label})`, { skip }, async () => {
+  const root = makeTree();
+  const { port, child } = await start(root, ['--watch'], env);
+  const stream = await events(port);
+  mkdirSync(join(root, 'src', 'later'));
+  await new Promise((r) => setTimeout(r, 400));
+  const first = stream.next('reload', 2000);
+  writeFileSync(join(root, 'src', 'later', 'y.js'), 'export const y = 1;\n');
+  assert.equal(await first, 'src/later/y.js');
+  // (each step waits out the debounce + post-build quiet window, 150 + 300 ms)
+  rmSync(join(root, 'src', 'later'), { recursive: true, force: true });
+  await new Promise((r) => setTimeout(r, 600));
+  mkdirSync(join(root, 'src', 'later'));
+  await new Promise((r) => setTimeout(r, 600));
+  const reborn = stream.next('reload', 2000);
+  writeFileSync(join(root, 'src', 'later', 'z.js'), 'export const z = 1;\n');
+  assert.equal(await reborn, 'src/later/z.js');
+  stream.close();
+  child.kill();
+});
+}
+
+test('--watch: replacing content/source rebuilds before reload and watches the replacement', { skip: REPLACES_WATCHED_DIR }, async () => {
   const root = makeTree();
   mkdirSync(join(root, 'src', 'generated'), { recursive: true });
   writeFileSync(join(root, 'src', 'generated', 'value.json'), '{"value":"old"}\n');
