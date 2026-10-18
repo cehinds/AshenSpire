@@ -21,7 +21,16 @@ test('auto-combat never plays cards or ends turns (D12)', () => {
 test('automation settings participate in durable profile export and reset rows', () => {
   const rows = settingsRows();
   const keys = profileKeys(rows);
-  for (const key of ['autoCombat', 'combatSpeed', 'combatPreference', 'combatActionDelay']) {
+  for (const key of ['autoCombat', 'combatSpeed', 'combatActionDelay']) {
     assert.ok(rows.some(row => row.key === key)); assert.ok(keys.includes(key), key);
   }
+});
+test('the unused combat preference row is hidden but its key survives', () => {
+  const row = settingsRows().find(candidate => candidate.key === 'combatPreference');
+  assert.ok(row && row.retired === true);
+  assert.equal(resolveCombatAutomation({ combatPreference: 'defense' }).preference, 'defense');
+});
+test('the auto combat setting says it answers reactions only', () => {
+  const note = settingsRows().find(row => row.key === 'autoCombat').note;
+  assert.match(note, /reaction/i); assert.doesNotMatch(note, /Play legal/);
 });
