@@ -1017,7 +1017,8 @@ async function main() {
       try {
         const b = await import(pathToFileURL(resolve(ROOT, 'src/model/secondbeat.js')).href);
         return { rows: b.enumerateBeats(), owed: b.beatsOwed(), sane: b.assertTableSane(),
-                 ids: Object.keys(b.ACTIONS), endTurnForm: b.beatFor('endTurn').form };
+                 ids: Object.keys(b.ACTIONS), endTurnForm: b.beatFor('endTurn', { playable: true }).form,
+                 endTurnSpentForm: b.beatFor('endTurn', { playable: false }).form };
       } catch (e) { return { skip: `could not read src/model/secondbeat.js at this ref: ${e.message}` }; }
     })();
     if (table && table.skip) skip('the-set', 'structural', table.skip);
@@ -1179,8 +1180,12 @@ async function main() {
       ok(`with a play still in hand, End Turn owes a HOLD`, a.beat === 'hold' && a.holdMs > 0,
         `beat=${a.beat} ms=${a.holdMs} energy=${a.energy} pulse=${a.pulse}`);
       ok(`and it SAYS so on the button`, a.hint === true, `HOLD hint present=${a.hint}`);
-      ok(`the table rules End Turn as an unconditional hold`, table && !table.skip && table.endTurnForm === 'hold',
-        `beatFor('endTurn') = ${table && table.endTurnForm}`);
+      // OWNER, 2026-10-18: End Turn is a single tap when no card is playable;
+      // the configured beat stays when a card is still affordable. Both cells
+      // of the row are asserted, so neither edge can drift unseen.
+      ok(`the table rules End Turn a hold while a card is playable and a single tap once none is`,
+        table && !table.skip && table.endTurnForm === 'hold' && table.endTurnSpentForm === 'none',
+        `beatFor('endTurn', playable) = ${table && table.endTurnForm}; spent = ${table && table.endTurnSpentForm}`);
 
       const p = await pointOf('.end-turn');
       if (!p) ok(`End Turn is pressable`, false, 'the button has no box');
@@ -1205,20 +1210,30 @@ async function main() {
           `turn ${a.turn} -> ${b2 && b2.turn}, phase ${a.phase} -> ${b2 && b2.phase}`);
       }
 
-      // 3. THE SPENT EDGE. The ruling is state-independent: energy reaching 0
-      // does not take the safety step off End Turn.
+      // 3. THE SPENT EDGE (owner, 2026-10-18; it was "state-independent" from
+      // 2026-08-17). With no card left to play End Turn is ONE TAP: no timer, no
+      // review. The hand is emptied on the live combat and the press is made
+      // before any repaint, so what is measured is the decision taken at the
+      // moment of the press, which is what the player gets.
       await openShot('combat');
       const c0 = await ev(`(() => {
         const c = window.__combat; if (!c) return null;
-        c.player.energy = 0;
+        c.player.energy = 0; c.piles.hand = [];
         const b = document.querySelector('.end-turn');
-        return { turn: c.turn, beat: b && b.dataset.beat, holdMs: Number((b && b.dataset.holdMs) || 0) };
+        return { turn: c.turn, phase: c.phase, beat: b && b.dataset.beat };
       })()`);
       if (!c0) skip('end-turn spent edge', 'unasked', 'no combat handle');
       else {
-        ok(`with nothing left to spend, End Turn still owes the enabled hold`,
-          c0.beat === 'hold' && c0.holdMs > 0,
-          `energy=0 beat=${c0.beat} ms=${c0.holdMs}`);
+        const sp = await pointOf('.end-turn');
+        if (!sp) ok(`End Turn is pressable with a spent hand`, false, 'the button has no box');
+        else {
+          await press(sp, 40); await wait(900);
+          const c1 = await st();
+          const c1Review = await ev(`!!document.querySelector('.confirmation-modal')`);
+          ok(`with nothing left to play, ONE short tap ends the turn and opens no review`,
+            c1 && (c1.turn > c0.turn || c1.phase !== c0.phase) && !c1Review,
+            `turn ${c0.turn} -> ${c1 && c1.turn}, phase ${c0.phase} -> ${c1 && c1.phase}, confirmation=${c1Review}`);
+        }
       }
 
       // 4. OFF IS STILL OFF. The characteristic remains `hold`, but the dial
