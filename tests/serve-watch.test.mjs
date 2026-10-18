@@ -208,6 +208,21 @@ test('--watch: a batch touching config, hud-layout and source runs the builders 
   child.kill();
 });
 
+test('--watch: index.html replaced by rename (an editor\'s atomic save) reloads every time', async () => {
+  const root = makeTree();
+  const { port, child } = await start(root, ['--watch']);
+  const stream = await events(port);
+  for (const n of [1, 2]) {
+    const reload = stream.next('reload', 2000);
+    writeFileSync(join(root, 'index.html.new'), INDEX.replace('hello', `saved ${n}`));
+    renameSync(join(root, 'index.html.new'), join(root, 'index.html'));
+    assert.equal(await reload, 'index.html', `rename ${n}`);
+    await new Promise((r) => setTimeout(r, 400));
+  }
+  stream.close();
+  child.kill();
+});
+
 test('--watch: index.html (only) carries the live-reload listener', async () => {
   const root = makeTree();
   const { port, child } = await start(root, ['--watch']);

@@ -228,7 +228,14 @@ function startWatch(root, emit) {
     } catch {
       if (isDir) watchDir(abs);
       else {
-        try { const w = fsWatch(abs, () => changed(target)); w.on('error', () => {}); closers.push(() => w.close()); } catch { /* unwatchable */ }
+        // A file-level watcher follows the inode, so an editor that saves by
+        // renaming a temp file over it would fire once and go silent. Watch the
+        // parent directory (not recursive) and filter on the name instead.
+        try {
+          const w = fsWatch(root, (type, name) => { if (String(name || '') === target) changed(target); });
+          w.on('error', () => {});
+          closers.push(() => w.close());
+        } catch { /* unwatchable */ }
       }
     }
   }
