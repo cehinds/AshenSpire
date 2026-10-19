@@ -43,3 +43,12 @@ test('Core editor offers only owned cards (owner ruling 2026-10-19)', async () =
   const { unlimitedCardIds } = await import('../src/model/deckRules.js');
   for (const id of ['reaver', 'rogue', 'starseer', 'herald']) assert.deepEqual(unlimitedCardIds(start(id)), []);
 });
+
+test('a non-Core profile with deck-training keeps its unlimited-copy collection entries', async () => {
+  const { unlimitedCardIds } = await import('../src/model/deckRules.js');
+  const run = start('reaver');
+  assert.equal(run.gameProfile.modules['deck-training'].ownedOnlyCollection, true, 'only the Core bundle sets the flag');
+  const other = { ...run, gameProfile: { ...run.gameProfile, modules: { ...run.gameProfile.modules, 'deck-training': { ...run.gameProfile.modules['deck-training'], ownedOnlyCollection: undefined } } } };
+  assert.ok(unlimitedCardIds(other).length > 0, 'unlimited basics are offered when the flag is absent');
+  assert.ok(unlimitedCardIds(other).includes('core.strike'));
+});

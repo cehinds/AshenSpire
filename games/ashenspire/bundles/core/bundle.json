@@ -139,7 +139,9 @@
     },
     "deck-training": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "ownedOnlyCollection": true
+      }
     },
     "card-pools": {
       "version": "1.0.0",
