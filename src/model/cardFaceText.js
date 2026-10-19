@@ -58,16 +58,16 @@ export function withChargedEffects(def, preview = null) {
 }
 
 /** The card-face lines for `def`, or null when a part of it cannot be phrased. */
-export function cardFaceLines(def, preview = null, registries = null) {
+export function cardFaceLines(def, preview = null, registries = null, rules = null) {
   try {
-    return buildLines(def, preview, registries);
+    return buildLines(def, preview, registries, rules);
   } catch (error) {
     if (error === UNPHRASEABLE) return null;
     throw error;
   }
 }
 
-function buildLines(def, preview, registries) {
+function buildLines(def, preview, registries, rules = null) {
   // A live preview prices the effects an active charge expands (an added buildup row); its values follow that list.
   def = withChargedEffects(def, preview);
   if (def.comboHook) return null;
@@ -76,7 +76,7 @@ function buildLines(def, preview, registries) {
   if (AUTHORED_DAMAGE_RIDER_CARDS.includes(def.id)) return null;
   // A curse's hand trigger and an Ashen Blight price live only in the authored text.
   if (def.onTurnEndInHand?.length || def.ashenBlightCost) return null;
-  const { value, defenseValue, title, condition, profile: p, bindings, tokens, poiseMerge } = cardSummaryContext(def, preview, registries);
+  const { value, defenseValue, title, condition, profile: p, bindings, tokens, poiseMerge } = cardSummaryContext(def, preview, registries, rules);
   const ratings = registries?.balance?.combatRatings ?? null;
   // A self status consumed after a payoff must read after the condition that uses it.
   // Walk nested predicates too, so the face never implies the prerequisite is removed first.
@@ -325,7 +325,7 @@ function buildLines(def, preview, registries) {
   // Live Precision grant when a preview has an actor, else the 1 + stat mix formula.
   const entryPrecisionText = (amount, preview) => Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount) + ' + stat mix';
   // gameProfile lets the face apply the same Core 2 rounding as combat (stanceEntryBonuses floors under FixCore).
-  const entryCtx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules, gameProfile: registries?.gameProfile };
+  const entryCtx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules, gameProfile: rules?.gameProfile ?? registries?.gameProfile };
   // The Entry Precision line follows the active Core profile, the predicate the live grant uses, not a per-card version field.
   const coreProfile = fixCoreEnabled(entryCtx);
   const versioned = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2;
