@@ -1,6 +1,6 @@
 // Co-op reuses the selected-card control surface from solo. A selecting click
 // must be observed before shared inspection lights the card in its bubble phase.
-export function wireCoopUpcastControl(card, { label = 'Upcast', disabled = false, selectBeforePlay = false, onOpen, onPlay }) {
+export function wireCoopUpcastControl(card, { label = 'Upcast', disabled = false, selectBeforePlay = false, oneTap = () => false, onOpen, onPlay }) {
   const controls = document.createElement('div');
   controls.className = 'card-upcast-controls';
   const button = document.createElement('button');
@@ -17,7 +17,7 @@ export function wireCoopUpcastControl(card, { label = 'Upcast', disabled = false
   let selectingClick = false;
   card.addEventListener('click', event => {
     if (controls.contains(event.target)) return;
-    selectingClick = selectBeforePlay && !card.classList.contains('selected') && !card.classList.contains('inspection-selected');
+    selectingClick = selectBeforePlay && !oneTap() && !card.classList.contains('selected') && !card.classList.contains('inspection-selected');
   }, true);
   card.addEventListener('click', () => { if (!selectingClick) onPlay(); });
   return controls;
