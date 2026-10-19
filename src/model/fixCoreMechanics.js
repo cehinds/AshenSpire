@@ -130,11 +130,14 @@ export function fixCoreProtectionDescription(ctx,entity,kind) {
   const shadow = {...entity,persistentWard:{...entity.persistentWard,value:1},persistentPoise:{...entity.persistentPoise,value:1}};
   const receipt = protectionReceipt(ctx,shadow,damageKind,100);
   const restores = fixCoreWardDisabled(ctx) ? 'Poise' : 'both Poise and Ward';
+  const ratio = fixCorePoiseRules(rawRules(ctx));
+  // Owner D13: with depletion by ratio, a hit costs Poise floor(ratio x its damage); otherwise the prevented damage.
+  const spends = ratio.depletes ? `Each hit costs Poise ${Math.round(ratio.damageRatio * 100)}% of its damage (rounded down), before it lands. Breaking Poise leaves the owner Staggered.` : 'The prevented damage spends this pool.';
   if (fixCoreWardDisabled(ctx)) {
     const poise = protectionReceipt(ctx,shadow,'physical',100);
-    return `While active, Poise reduces all damage by ${poise.reduced}%. The prevented damage spends this pool. Block cards restore Poise by their Block amount, up to its maximum.`;
+    return `While active, Poise reduces all damage by ${poise.reduced}%. ${spends} Block cards restore Poise by their Block amount, up to its maximum.`;
   }
-  return `While active, reduces ${damageKind} damage by ${receipt.reduced}%. The prevented damage spends this pool. Block cards restore ${restores} by their Block amount, up to each maximum.`;
+  return `While active, reduces ${damageKind} damage by ${receipt.reduced}%. ${spends} Block cards restore ${restores} by their Block amount, up to each maximum.`;
 }
 
 export function snapshotFixCoreRules(ctx) {
@@ -160,3 +163,6 @@ export function fixCorePoiseSpent(ctx, receipt) {
 }
 /** True when FixCore is active and Poise is spent by ratio damage (Poise.depletes), not by what it prevented. */
 export function fixCorePoiseDepletes(ctx) { return fixCoreEnabled(ctx) && fixCorePoiseRules(rawRules(ctx)).depletes; }
+
+/** The combat stance a Staggered owner stands in until its next turn begins (shared by live play and previews). */
+export const fixCoreStaggeredStance = entity => ({ maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + 1 });

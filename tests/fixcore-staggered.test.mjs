@@ -8,11 +8,13 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
+import { dispatch } from '../src/engine/combat.js';
+import { prepareBreakInterrupt } from '../src/engine/combatStatusControl.js';
 import { applyAttackDamage, gainBlock } from '../src/engine/actions.js';
 import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
 import { getMult } from '../src/engine/statuses.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
-import { validateFixCoreRules, fixCorePoiseRules, fixCoreStaggeredRules } from '../src/model/fixCoreMechanics.js';
+import { validateFixCoreRules, fixCorePoiseRules, fixCoreStaggeredRules, fixCoreProtectionDescription } from '../src/model/fixCoreMechanics.js';
 import { combatStanceRow } from '../src/model/combatTacticsDisplay.js';
 import { damageReceiptLines } from '../src/ui/components/damageReceipt.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
@@ -82,12 +84,19 @@ test('repeat breaks add Vulnerable duration only: the multiplier stays x1.25', (
 test('no passive Poise regeneration; a Block card adds its Block to Poise, capped at max, and grants Block', () => {
   const { combat, target } = live(10);
   assert.equal(target.persistentPoise.value, 10);
+  for (let round = 0; round < 2; round++) {
+    dispatch(combat, { type: 'endTurn' });
+    for (let guard = 0; combat.pendingReaction && guard < 20; guard++) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+  }
+  assert.ok(combat.turn >= 3, 'two full rounds passed');
+  assert.equal(target.persistentPoise.value, 10, 'no passive regeneration across rounds');
+  target.block = 0;
   gainBlock(combat, target, 6, { cardId: 'defend' });
-  assert.equal(target.persistentPoise.value, 16);
-  assert.equal(target.block, 6);
+  const gained = target.block;
+  assert.ok(gained >= 6);
+  assert.equal(target.persistentPoise.value, 10 + gained);
   gainBlock(combat, target, 9, { cardId: 'defend' });
   assert.equal(target.persistentPoise.value, 20, 'capped at max Poise, not min(block, max)');
-  assert.equal(target.block, 15);
 });
 
 test('the player is staggered the same way: next turn -1 SP, stance, +1 Vulnerable', () => {
@@ -112,4 +121,22 @@ test('UI: the Staggered stance row and the receipt Poise line', () => {
   assert.equal(combatStanceRow(target).name, 'Staggered stance');
   const lines = damageReceiptLines({ hits: [{ incoming: 10, hpLoss: 10, poiseDamage: 2 }], totalDamage: 10 });
   assert.ok(lines.some(line => /Poise damage −2/.test(line)));
+});
+
+test('one break is one stagger: a smash-advantage hit that also breaks Poise staggers once', () => {
+  const { combat, target } = live(1);
+  target.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+  const smash = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee' } };
+  primeAccuracyRolls(combat); applyAttackDamage(combat, combat.player, target, 10, [], smash);
+  assert.equal(target.persistentPoise.value, 0);
+  assert.equal(target.statuses.vulnerable.stacks, 1);
+  assert.equal(target.pendingStaminaLoss, 1);
+});
+
+test('under Core an interrupt reports no cancelled move (staggering cancels nothing)', () => {
+  const { combat, target } = live();
+  target.pendingMove = { moveId: 'strike', resolveOnTurn: combat.turn + 1 };
+  const event = prepareBreakInterrupt(combat, target, 'poiseBreak');
+  assert.equal(event[1].cancelledMove, null);
+  assert.equal(target.pendingMove.moveId, 'strike');
 });

@@ -100,7 +100,8 @@ export function interruptForBreak(ctx, entity, cause) {
 export function prepareBreakInterrupt(ctx, entity, cause) {
   // A killing hit breaks nothing that can act again: no INTERRUPTED for a dead enemy.
   if (entity?.kind !== 'enemy' || !entity.alive || !(entity.hp > 0)) return null;
-  const cancelledMove = entity.pendingMove ? entity.pendingMove.moveId : null;
+  // Under FixCore a stagger is a stance and cancels nothing.
+  const cancelledMove = !fixCoreEnabled(ctx) && entity.pendingMove ? entity.pendingMove.moveId : null;
   if (!Actions.staggerEnemy(ctx, entity, { cause })) return null;
   return ['enemyInterrupted', { targetId: entity.id, cancelledMove, cause }];
 }

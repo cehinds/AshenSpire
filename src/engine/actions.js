@@ -1,6 +1,6 @@
 import { resolveAttackHit } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCorePoiseSpent, fixCorePoiseDamage, fixCorePoiseDepletes, fixCoreStaggeredRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreRules, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCorePoiseSpent, fixCorePoiseDamage, fixCorePoiseDepletes, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
 import { weaponDamageBasis } from './cardBehavior.js';
 import { MANEUVERS, trimCombatStances } from './concurrentStances.js';
 import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPlan, proposalThreshold, proposalHealingPlan } from './proposalStatusRuntime.js';
@@ -314,6 +314,18 @@ function applyBaseAttackDamage(ctx, source, target, base, attackTags, carrier = 
   return dmg;
 }
 
+// One stagger per target per round (stances.staggerLimitPerTargetPerRound), whether a Poise break or an
+// advantage interrupt earns it. Records the stagger and returns true while the round's limit is not used up.
+// A Poise break (owner D13: repeat breaks stack Vulnerable) always staggers but still counts against the round.
+function claimStagger(ctx, target) {
+  const limit = configuredModule(ctx, 'stances')?.staggerLimitPerTargetPerRound ?? 1;
+  const ledger = ctx.gameProfileInterrupts ||= {};
+  const key = `${ctx.turn}:${target.id}`;
+  if ((ledger[key] || 0) >= limit) return false;
+  ledger[key] = (ledger[key] || 0) + 1;
+  return true;
+}
+
 // One receipt evaluator drives configured live damage and detached previews.
 function applyProfileDamage(ctx, source, target, base, carrier) {
   if (fixCoreEnabled(ctx) && !carrier?.expansionContact && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
@@ -350,16 +362,15 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
   if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
   // Poise taken from above zero to zero is a break: the owner takes the Staggered stance (D13).
-  if (fixCoreEnabled(ctx) && poiseBefore > 0 && target.persistentPoise?.value === 0 && target.alive && target.hp > 0) {
+  const poiseBroke = fixCoreEnabled(ctx) && poiseBefore > 0 && target.persistentPoise?.value === 0 && target.alive && target.hp > 0;
+  if (poiseBroke) {
     ctx.emit('poiseBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) });
-    if (target.kind === 'enemy') staggerEnemy(ctx, target, { cause: 'poiseBreak' });
+    if (target.kind === 'enemy') { claimStagger(ctx, target); staggerEnemy(ctx, target, { cause: 'poiseBreak' }); }
     else fixCoreStagger(ctx, target, { cause: 'poiseBreak' });
   }
-  if (receipt.interrupted && target.kind === 'enemy' && target.alive) {
-    const limit = configuredModule(ctx, 'stances')?.staggerLimitPerTargetPerRound ?? 1;
-    const ledger = ctx.gameProfileInterrupts ||= {};
-    const key = `${ctx.turn}:${target.id}`;
-    if ((ledger[key] || 0) < limit) { ledger[key] = (ledger[key] || 0) + 1; staggerEnemy(ctx, target); }
+  // One break is one stagger: a hit that already broke Poise has staggered the target.
+  if (receipt.interrupted && !poiseBroke && target.kind === 'enemy' && target.alive) {
+    if (claimStagger(ctx, target)) staggerEnemy(ctx, target);
   }
   afterHpChange(ctx, target, { sourceId: source?.id });
   return receipt.amount;
@@ -1096,7 +1107,7 @@ export function fixCoreStagger(ctx, entity, options = {}) {
   const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
   Matchups.clearCombatCounter(entity, ctx);
   if (rules.stance) {
-    entity.combatStance = { maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + 1 };
+    entity.combatStance = fixCoreStaggeredStance(entity);
     ctx.emit('combatStanceChanged', { targetId: entity.id, maneuver: 'staggered' });
   }
   if (rules.staminaLoss > 0) {
