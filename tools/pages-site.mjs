@@ -296,10 +296,22 @@ function buildsOf(branch, keep) {
 
 // Builds skipped this run, each with its reason — printed above the verdict and
 // on the branch's page, so a gap in the list is explained rather than silent.
+/**
+ * A GitHub warning annotation, except during --selftest. The selftest assembles
+ * a throwaway site with --keep 1, no --build-missing and every committed build
+ * simulated as purged, so its "skipped … LFS object unavailable" and "has no
+ * /latest/ … newest served build is 548" warnings are the PLANT, not the site.
+ * They landed on the real run's annotation list (run 39267231395) and read as
+ * "dev/latest is not published" when the real assemble step had served it.
+ */
+function annotate(title, message) {
+  if (process.env.GITHUB_ACTIONS && !process.argv.includes('--selftest')) console.log(`::warning title=${title}::${message}`);
+}
+
 const skippedBuilds = [];
 function skip(b, reason) {
   skippedBuilds.push({ branch: b.branch, ordinal: b.ordinal, sha: b.sha, reason });
-  if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site skipped ${b.branch}/${b.ordinal}::${reason}`);
+  annotate(`pages-site skipped ${b.branch}/${b.ordinal}`, reason);
 }
 
 /**
@@ -326,6 +338,24 @@ function purgedOrThrow(error) {
   const text = `${error.message || ''}\n${error.stderr || ''}`;
   if (/Object does not exist|\[404\]|404 Not Found/i.test(text) && !/does not match|Malformed/.test(text)) return null;
   throw error;
+}
+
+/**
+ * WHAT A FAILED REBUILD SAYS (2026-10-19). The old text was the LAST TWO lines of
+ * stderr, and bundle.mjs ends every failure with "NOTE: dist/AshenSpire.html is
+ * untouched…" after the launcher's "mobile build failed — aborting." — so the
+ * annotation named neither the real cause (bundle.mjs: ERROR — the mobile build
+ * is … over its … budget) nor the commit's step. Now: the lines that name an
+ * error come first, the boilerplate that follows every failure is dropped, and
+ * the launcher's own verdict line closes it.
+ */
+function rebuildFailureDetail(error) {
+  const text = `${error.stderr || ''}\n${error.message || ''}`;
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
+    .filter((l) => !/^NOTE: dist\/AshenSpire\.html is untouched/.test(l) && !/now holds a build-failed page/.test(l));
+  const causes = lines.filter((l) => /\bERROR\b|\bError:|failed|refus|ENOSPC|ENOENT|not found/i.test(l));
+  const picked = [...new Set(causes.length ? causes.slice(0, 4) : lines.slice(-3))];
+  return picked.join(' | ').slice(0, 900) || String(error.message || error).slice(0, 300);
 }
 
 const rebuilt = new Map();   // `${sha}:${tier}` → { dir } | { error }
@@ -395,8 +425,7 @@ function rebuildAt(sha, fullArt) {
     console.log(`  rebuilt ${sha.slice(0, 10)} (${fullArt ? 'full' : 'light'} art requested${!fullArt && existsSync(join(dir, MOBILE_ARTIFACT)) ? '; this commit predates the light tier and built full art with its mobile twin' : ''}) in ${Math.round((Date.now() - t0) / 1000)}s`);
     result = { dir };
   } catch (error) {
-    const detail = String(error.stderr || error.message || error).trim().split('\n').slice(-2).join(' ');
-    result = { error: `rebuild failed: ${detail}` };
+    result = { error: `rebuild failed: ${rebuildFailureDetail(error)}` };
   }
   rebuilt.set(key, result);
   return result;
@@ -990,7 +1019,7 @@ function writeOgImage(outDir, mainRef) {
   if (!pick) {
     const why = `no object in the store and no published branch's tree carries ${OG_IMAGE.source}; /${OG_IMAGE.sitePath} (every build's og:image) is not served`;
     console.log(`  NO OG IMAGE ${why}`);
-    if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site has no og:image::${why}`);
+    annotate(`pages-site has no og:image`, why);
     return;
   }
   writeFileSync(join(outDir, OG_IMAGE.sitePath), ogImageBytes(outDir, pick));
@@ -1034,7 +1063,7 @@ function writeSourceAssets(outDir, mainRef) {
   if (missing) {
     const why = `${missing} of main's ${plan.length} assets/ ids have no object in the store; those images are missing on /index-game.html and the preview pages`;
     console.log(`  ${why}`);
-    if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site /assets/ incomplete::${why}`);
+    annotate(`pages-site /assets/ incomplete`, why);
   }
 }
 /** The bytes a choice names: the store's object, or the branch tree's art. */
@@ -1308,7 +1337,7 @@ function assemble(outDir, keep) {
     if (builds[0] && !current) {
       const why = `${branch}/latest/ not published: the head's build ${headOrdinal ?? '(unnamed)'} is not served; the newest served build is ${builds[0].ordinal}`;
       console.log(`  NO LATEST ${why}`);
-      if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site ${branch} has no /latest/::${why}`);
+      annotate(`pages-site ${branch} has no /latest/`, why);
     }
     if (builds[0] && current) {
       const latest = join(outDir, branch, 'latest');
