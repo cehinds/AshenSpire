@@ -303,7 +303,7 @@ export function setCombatStance(ctx, entity, carrier) {
   if (configuredCombat(ctx)) { setProfileStance(ctx, entity, carrier); return entity?.combatStance; }
   if (!combatExpansionEnabled(ctx) || !entity) return null;
   const profile = normalizedProfile(carrier);
-  if (!profile.maneuver || profile.stanceTrigger === false) return entity.combatStance || null;
+  if ((!profile.maneuver && !profile.mirrors) || profile.stanceTrigger === false) return entity.combatStance || null;
   if (profile.evade?.whileStatus) profile.evadeEligible = entity.statuses?.[profile.evade.whileStatus]?.stacks > 0;
   const next = stanceOf({ combatProfile: profile }, entity);
   if (!next) return entity.combatStance || null;

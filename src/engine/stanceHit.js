@@ -6,7 +6,7 @@ import { attackAccuracy, counterBaseEvasion, attributesOf } from './counterRetur
 import * as Statuses from './statuses.js';
 import { RANGES } from '../model/combatRanges.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
-import { stanceRulesFor, stanceOf, sameStance, stanceEntryBonuses } from '../model/stanceRules.js';
+import { stanceRulesFor, stanceOf, effectiveManeuver, sameStance, stanceEntryBonuses } from '../model/stanceRules.js';
 
 function hitMode(source, target, { evadeDisabled = false } = {}) {
   const pending = eligibleEvadeMode(target), prepared = eligiblePreparedEvade(target);
@@ -72,17 +72,18 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const override = profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach');
   // Target bypasses Evasion only; its spell still needs sufficient reach.
   const inRange = override || (RANGES.includes(range) && RANGES.includes(requiredRange) && RANGES.indexOf(range) >= RANGES.indexOf(requiredRange));
+  const maneuver = effectiveManeuver({ combatProfile: profile, mirrors: carrier?.mirrors });
   const precision = stacks(source, 'precision');
   const rules = stanceRulesFor(ctx);
-  const sweep = profile.maneuver === 'sweep' ? rules.sweepPrecisionBase + rules.sweepPerAdditionalTarget * Math.max(0, options.additionalTargets ?? carrier?.additionalTargets ?? 0) : 0;
+  const sweep = maneuver === 'sweep' ? rules.sweepPrecisionBase + rules.sweepPerAdditionalTarget * Math.max(0, options.additionalTargets ?? carrier?.additionalTargets ?? 0) : 0;
   const cfg = fixCoreRules(ctx, source, carrier).accuracy;
   // Under FixCore, Accuracy and Evasion are whole numbers, rounded down at the end of their chains (owner, 2026-10-18).
   const accuracy = fixCoreEnabled(ctx)
-    ? Math.floor(precision * cfg.precisionPerStack + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[profile.maneuver] || 0) + proposal.accuracyDelta/5)
+    ? Math.floor(precision * cfg.precisionPerStack + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[maneuver] || 0) + proposal.accuracyDelta/5)
     : attackAccuracy(ctx, source, carrier) + precision + sweep + proposal.accuracyDelta/5;
   const evadeStacks = options.evadeDisabled ? 0 : stacks(target, 'evade');
   const advantageRating = Number.isFinite(target.stanceAdvantageRating) ? target.stanceAdvantageRating
-    : 1 + (stanceMitigation(ctx, profile.maneuver, target.combatStance?.maneuver).defenseAdvantage ? cfg.stanceAdvantageBonus || 0 : 0);
+    : 1 + (stanceMitigation(ctx, maneuver, target.combatStance?.maneuver).defenseAdvantage ? cfg.stanceAdvantageBonus || 0 : 0);
   const stanceFactor = fixCoreEnabled(ctx) ? Math.min(cfg.stanceMaximum, Math.max(cfg.stanceMinimum,
     advantageRating + (Number(target.matchingStanceCardMultiplier) || 0))) : 1;
   const evasion = fixCoreEnabled(ctx) ? Math.floor(effectiveEvasion(ctx, target, options) * stanceFactor) : effectiveEvasion(ctx, target, options) * stanceFactor;

@@ -40,7 +40,7 @@ import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
 import { combatCardRange, combatProfileFor, combatProfileTags, numberedTraitRow } from '../../model/combatCardProfile.js';
 import { ashenBlightCardLabel } from './ashenBlight.js';
-import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
+import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity, mirrorSigil } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
 import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
@@ -194,7 +194,7 @@ export function renderCard(registries, ref, opts = {}) {
     && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
     ? combatCardDamageLabel(def, opts.preview, registries) : '';
   const damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
-  const accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label,
+  const accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label, model.sigils.mirror && mirrorSigil(model.sigils.mirror).mark.label,
     model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
     damageWords.length && `Damage: ${damageWords.join(', ')}`,
     ...model.sideTags.map(tag => tag.label),
