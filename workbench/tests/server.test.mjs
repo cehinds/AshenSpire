@@ -16,6 +16,7 @@ import { Tool, toolDefs } from '../core/tools.mjs';
 import { buildsFor, isBuildOutput } from '../core/watch.mjs';
 import { resolveExternal } from '../core/settings.mjs';
 import { serve } from '../../tools/serve.mjs';
+import { CLI_WAIT_MS } from '../../tools/lib/build-lock.mjs';
 import { manifestTables, manifestSummary, EXPORT_FORMAT } from '../ui/logic.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -169,7 +170,12 @@ process.exit(r.status ?? 1);\n`);
   const { defs } = await (await call('/api/jobs')).json();
   assert.equal(defs.find((d) => d.id === 'engine-export').available, true);
   const started = await (await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'engine-export' }) })).json();
-  for (let i = 0; i < 600 && app.jobs.active.size; i++) await new Promise((r) => setTimeout(r, 50));
+  // The real exporter takes the repository's own .build-lock (its root is the checkout, not this temp
+  // project), the same lock tests/engine-export.test.mjs holds for ~100 s while `node --test` runs the
+  // files side by side. holdForCli legitimately waits up to CLI_WAIT_MS for it, so wait that long
+  // plus the export itself, not a fixed 30 s, or a slow runner (Windows CI) fails on contention alone.
+  const deadline = Date.now() + CLI_WAIT_MS + 60 * 1000;
+  while (app.jobs.active.size && Date.now() < deadline) await new Promise((r) => setTimeout(r, 50));
   const run = await (await call(`/api/jobs/runs/${started.runId}`)).json();
   assert.equal(run.status, 'passed', run.log);
   assert.match(run.log, /engine-export: OK — 2 tables/);
