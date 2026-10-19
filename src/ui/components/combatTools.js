@@ -289,7 +289,10 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     const key = JSON.stringify(log.entries);
     if (key !== entryKey) {
       entryKey = key; renderCombatLogEntries(list, log.entries); state.fullLog?.setEntries(log.entries); state.drawerLog?.setEntries(log.entries);
-      list.scrollTop = state.followLatest !== false ? list.scrollHeight : state.scrollTop || 0;
+      // The panel is never shown (the log reads in a modal), so its list has no
+      // box to scroll: this assignment did nothing, and reading scrollHeight made
+      // the update a forced layout of the screen on every log change.
+      if (!panel.hidden) list.scrollTop = state.followLatest !== false ? list.scrollHeight : state.scrollTop || 0;
     }
     schedule();
   }
