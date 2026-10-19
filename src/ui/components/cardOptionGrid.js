@@ -14,7 +14,7 @@ const ARROWS = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
 
 function effectLine(summary) {
   const line = summary.line || [];
-  if (!line.length) return el('span', { class: 'co-effect', text: summary.text || '' });
+  if (!line.length) return el('span', { class: 'co-effect co-effect-text', text: summary.text || '' });
   const node = el('span', { class: 'co-effect' });
   line.forEach((part, index) => {
     if (index) node.append(el('span', { class: 'co-sep', text: ' · ' }));
@@ -39,7 +39,7 @@ export function cardOptionGrid(summaries, { onSelect = null, selectedId = null, 
       ? el('span', { class: 'co-costs' }, summary.costs.map(cost => el('span', { class: 'co-chip', text: String(cost) })))
       : null;
     const tile = el('button', { type: 'button', class: `card-option${summary.className ? ` ${summary.className}` : ''}`, [idAttr]: summary.id, 'data-focusable': 'true',
-      'aria-pressed': String(summary.id === selectedId), title: summary.title || summary.name, ...(summary.attrs || {}) },
+      'aria-pressed': String(summary.id === selectedId), ...(summary.attrs || {}) },
     [el('span', { class: 'co-name', text: summary.name }), effectLine(summary), costs]);
     if (disabled) { tile.disabled = true; tile.setAttribute('aria-disabled', 'true'); }
     tile.addEventListener('click', () => { if (!tile.disabled) onSelect?.(summary.id, tile); });
