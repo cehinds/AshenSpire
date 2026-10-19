@@ -69,7 +69,7 @@ import {
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import { cardRewardPlan } from '../src/model/rewardplan.js';
 import {
-  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, setReactions, previewCoopCard, previewCoopCards, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
+  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, setReactions, previewCoopCard, previewCoopCards, classifyPreviewCandidates, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
   recoverControl, chooseBlightFeat,
 } from '../src/engine/coopCombat.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
@@ -780,18 +780,11 @@ export function createSession({ registries, seedString, endless = false, restore
       try {
         const seat = c.players.get(playerId);
         const ctx = { ...c, registries: c.registriesForPlayer(playerId), player: seat.entity, combatExpansionVersion: c.combatExpansionVersion };
-        const charged = Object.keys(seat.entity.abilityRiders?.charges || {}).length > 0;
-        const liveIds = [], plainIds = [], defs = {};
-        for (const card of choice.candidates || []) {
-          const def = defs[card.instanceId] = resolveCombatCard(ctx, card);
-          // A card whose numbers depend on live state (an effect variant, a condition, a held ability charge) is
-          // previewed first; plain cards fill the remaining slots (stance and advantage still tint their numbers).
-          (charged || def.effectVariants?.length || (def.effects || []).some(effect => effect?.if) ? liveIds : plainIds).push(card.instanceId);
-        }
-        const ordered = [...liveIds, ...plainIds], full = ordered.slice(0, FULL_PREVIEW_CAP), cheap = {};
-        // Past the cap: the resolved definition only, so the numbers are right without green or red. A variant card gets
-        // none: which branch applies depends on what is paid, so its tile reads the card text instead of a guess.
-        for (const id of liveIds.slice(FULL_PREVIEW_CAP)) if (!defs[id].effectVariants?.length) cheap[id] = { resolvedDefinition: defs[id], values: [] };
+        const { liveIds, plainIds } = classifyPreviewCandidates(ctx, seat.entity, choice.candidates || [], c.enemies.some(enemy => enemy.alive));
+        const full = [...liveIds, ...plainIds].slice(0, FULL_PREVIEW_CAP), cheap = {};
+        // A state-dependent card past the cap has no numbers to trust (its branch or charge is unknown): its tile
+        // reads the card text, never the authored or uncharged numbers.
+        for (const id of liveIds.slice(FULL_PREVIEW_CAP)) cheap[id] = { textOnly: true, values: [] };
         previews = { ...cheap, ...(full.length ? previewCoopCards(c, playerId, full) : {}) };
       } catch { previews = {}; }
       choicePreviews.set(choice, previews);

@@ -12,6 +12,7 @@ import { initialClassTreeChoices } from '../src/model/classTree.js';
 import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 import { createSession } from '../tools/session.mjs';
 import { projectLanSnapshot } from '../tools/lan-state.mjs';
+import { classifyPreviewCandidates } from '../src/engine/coopCombat.js';
 import { summarizeCardOption } from '../src/ui/models/CardOptionSummaryModel.js';
 
 // Bashing Blow is rewired to open a real card-zone choice from the draw pile (a custom id would need its own
@@ -85,8 +86,20 @@ test('past eight, a variant card gets no preview and its tile reads the card tex
   assert.equal(variant.filter(row => row.combatPreview?.values.length).length, 8, 'the first eight carry the full preview');
   const overflow = variant.filter(row => !row.combatPreview?.values.length);
   assert.equal(overflow.length, 4);
-  assert.ok(overflow.every(row => row.combatPreview === undefined), 'a variant card past the cap gets no guessed branch');
+  assert.ok(overflow.every(row => row.combatPreview.textOnly && !row.combatPreview.resolvedDefinition), 'a variant card past the cap gets no guessed branch');
   const tile = summarizeCardOption(registries, null, { id: overflow[0].instanceId, name: 'x' }, { defOf: () => registries.cards.get(VARIANT), previewOf: () => null });
   assert.ok(tile.html && !tile.line.length, 'its tile reads the card text, not a branch number');
   assert.ok(plain.every(row => row.combatPreview === undefined), 'plain cards past the cap read their authored numbers');
+});
+
+test('a held ability charge makes only the cards it matches state-dependent, so unrelated cards do not eat the slots', () => {
+  const host = fixture(), combat = host.live.combat, seat = combat.players.get('p2');
+  const row = (cardId, n) => ({ instanceId: `t${n}`, cardId });
+  const cards = [...Array.from({ length: 9 }, (_, n) => row('defend', n)), row('strike', 9)];
+  const ctx = { ...combat, registries: combat.registriesForPlayer('p2'), player: seat.entity, combatExpansionVersion: combat.combatExpansionVersion };
+  const entity = { ...seat.entity, abilityRiders: { charges: { attackOnly: { cardType: 'attack', damage: 3 } } } };
+  const { liveIds, plainIds } = classifyPreviewCandidates(ctx, entity, cards);
+  assert.deepEqual(liveIds, ['t9'], 'only the attack the charge matches is state-dependent');
+  assert.equal(plainIds.length, 9);
+  assert.deepEqual(classifyPreviewCandidates(ctx, { ...seat.entity, abilityRiders: { charges: {} } }, cards).liveIds, [], 'no charge: nothing is state-dependent');
 });

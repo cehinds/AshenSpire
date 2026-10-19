@@ -195,6 +195,8 @@ export function summarizeCardOption(registries, combat, option, readers = {}) {
   // A card with effect variants but no preview (an old save, a snapshot without one) would show the authored
   // variant's numbers, which may be the wrong branch: use its text, which states them.
   if (def?.effectVariants?.length && !preview?.resolvedDefinition) complete = false;
+  // The host marked this card's numbers as state-dependent but unpriced (a co-op pile past its preview budget).
+  if (preview?.textOnly) complete = false;
   return freeze({
     id: option.id ?? option.instanceId ?? null,
     name: option.name ?? def?.name ?? '',

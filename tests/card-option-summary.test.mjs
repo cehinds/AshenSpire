@@ -204,3 +204,10 @@ test('gainPoise (Dodge Roll) reads as a Poise guard gain, not Poise damage', () 
   assert.equal(`${row.before}${row.value}${row.after}`.replace(/\s+/g, ' ').trim(), `+${row.value} Poise guard`);
   assert.ok(!summary.line.some(part => /^Poise /.test(part.before)), 'no "Poise N" damage label');
 });
+test('a host textOnly preview makes the tile read the card text, never the authored numbers', () => {
+  const registries = registriesByProfile.current, def = registries.cards.get('strike');
+  const run = preview => summarizeCardOption(registries, null, { id: 's', name: def.name }, { defOf: () => def, previewOf: () => preview });
+  assert.ok(run(null).line.length, 'without the marker the tile shows numbers');
+  const text = run({ textOnly: true, values: [] });
+  assert.ok(text.html && !text.line.length);
+});
