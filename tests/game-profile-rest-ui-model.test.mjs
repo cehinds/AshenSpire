@@ -1,4 +1,5 @@
 import test from 'node:test';
+import '../src/engine/runCombat.js'; // binds the combat engine Core Smith card rows run
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
