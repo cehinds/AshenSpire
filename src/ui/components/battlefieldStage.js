@@ -237,11 +237,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     return envelope;
   }
   // The hit-% badge sits on the middle of the painted body, in the frame's own px (owner 2026-10-18). Independent of the
-  // target HUD (Classic appearance has none), and only for a combatant that shows a badge: all reads first, then the
-  // writes, and a value that did not change is not written again (this runs per animation frame while tracking).
-  function placeHitBadges() {
+  // target HUD (Classic appearance has none), and only for a combatant that shows a badge. Split in two so a caller that
+  // also reads (centerTargetOverheads) can read everything, then write everything: readHitBadges() does the reads and
+  // returns the writes (null when there is no badge), and a value that did not change is not written again (this runs per
+  // animation frame while tracking).
+  function readHitBadges() {
     const frames = [...field.querySelectorAll('.combatant')].filter(frame => frame.querySelector(':scope > .combat-hit-chance'));
-    if (!frames.length) return;
+    if (!frames.length) return null;
     const zoom = uiZoom();
     const reads = frames.map(frame => {
       const sprite = frame.querySelector('.sprite');
@@ -251,43 +253,56 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (![body.left, body.right, top, bottom].every(Number.isFinite)) return null;
       return { frame, x: `${((body.left + body.right) / 2 - box.left) / zoom}px`, y: `${((top + bottom) / 2 - box.top) / zoom}px` };
     });
-    for (const row of reads) {
-      if (!row) continue;
-      if (row.frame.style.getPropertyValue('--combat-body-center-x') !== row.x) row.frame.style.setProperty('--combat-body-center-x', row.x);
-      if (row.frame.style.getPropertyValue('--combat-body-center-y') !== row.y) row.frame.style.setProperty('--combat-body-center-y', row.y);
-    }
+    return () => {
+      for (const row of reads) {
+        if (!row) continue;
+        if (row.frame.style.getPropertyValue('--combat-body-center-x') !== row.x) row.frame.style.setProperty('--combat-body-center-x', row.x);
+        if (row.frame.style.getPropertyValue('--combat-body-center-y') !== row.y) row.frame.style.setProperty('--combat-body-center-y', row.y);
+      }
+    };
   }
+  function placeHitBadges() { readHitBadges()?.(); }
   // The detailed-target presentation owns its side panels. Only the compact
   // overhead follows the visible figure; selecting it never moves that figure.
+  // One pass, in phases: every read (hit badges, each figure's body and box),
+  // then every style write, then the reads that depend on those writes (the
+  // overhead's own box after its reset), then the final translate. A write
+  // between two reads made each following read a forced layout, once per
+  // combatant per tracked frame.
   function centerTargetOverheads() {
     const zoom = uiZoom();
-    placeHitBadges();
-    const rows = [...field.querySelectorAll('.combatant')].flatMap(frame => {
+    const commitBadges = readHitBadges();
+    const config = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
+    const racked = [], plain = [];
+    for (const frame of field.querySelectorAll('.combatant')) {
       const sprite = frame.querySelector('.sprite'), leading = frame.querySelector('.combatant-leading');
-      if (!sprite || !leading) return [];
+      if (!sprite || !leading) continue;
       const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
-      const body = currentSpriteBodyBounds(sprite, schedule);
       if (rack) {
+        const body = currentSpriteBodyBounds(sprite, schedule);
         const intentHeight = rack.querySelector(':scope > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
-        const config = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
-        const placement = targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
-          groupHeight: config.miniHudGroupHeightPx, intentHeight, gap: config.miniHudSpriteGapPx, zoom });
-        frame.style.setProperty('--combat-mini-hud-top', `${placement.miniTop}px`);
-        frame.style.setProperty('--combat-selected-intent-top', `${placement.selectedTop}px`);
-        frame.style.setProperty('--combat-selected-intent-center', `${placement.center}px`);
-        frame.dataset.miniHudHeadY = String(body.headY ?? body.top);
-        return [];
-      }
+        racked.push({ frame, body, placement: targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
+          groupHeight: config.miniHudGroupHeightPx, intentHeight, gap: config.miniHudSpriteGapPx, zoom }) });
+      } else plain.push({ frame, sprite, leading });
+    }
+    const headerBottom = plain.length ? field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom : undefined;
+    commitBadges?.();
+    for (const { frame, body, placement } of racked) {
+      frame.style.setProperty('--combat-mini-hud-top', `${placement.miniTop}px`);
+      frame.style.setProperty('--combat-selected-intent-top', `${placement.selectedTop}px`);
+      frame.style.setProperty('--combat-selected-intent-center', `${placement.center}px`);
+      frame.dataset.miniHudHeadY = String(body.headY ?? body.top);
+    }
+    for (const { frame, leading } of plain) {
       leading.style.left = '0px';
       leading.style.top = 'var(--combat-elev, 0px)';
       leading.style.translate = 'none';
       delete frame.dataset.overheadObstructed;
-      return [{ frame, sprite, leading }];
-    });
-    const headerBottom = field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom;
-    const placements = rows.map(({ frame, sprite, leading }) => {
+    }
+    if (!plain.length) return;
+    const gap = field.closest('.combat')?.dataset.compactCombat === 'true' ? 4 : 14;
+    const placements = plain.map(({ frame, sprite, leading }) => {
       const art = currentSpriteArtBounds(sprite, schedule), box = leading.getBoundingClientRect();
-      const gap = field.closest('.combat')?.dataset.compactCombat === 'true' ? 4 : 14;
       return { frame, leading, ...targetOverheadPlacement({ art, box, headerBottom, gap, zoom }) };
     });
     for (const { leading, dx, dy } of placements) leading.style.translate = `${dx}px ${dy}px`;
