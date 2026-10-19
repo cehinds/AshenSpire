@@ -85,7 +85,9 @@ test('callout CSS: larger than a float, HUD text shadow, reduced motion and Redu
 });
 
 // ---- through the shipped timeline (the beat-order harness) ----------------
-const IMPACT = 100, TOTAL = 300, LEAD = 1000, AFTER = 500, REACTION = 500;
+const IMPACT = 100, TOTAL = 300, LEAD = 1000, AFTER = 1000, REACTION = 1000;
+// D11 (2026-10-18): the result word comes one 1000 ms gap after the swing, the sprite reaction one gap
+// after the word, and the number one gap after the reaction.
 function drive(t2, fn) {
   t2.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
   withKitDom((dom) => {
@@ -112,7 +114,7 @@ function drive(t2, fn) {
     };
     let completed = 0;
     const run = (events, extra = {}) => playTimeline(events, { ...ctx, ...extra }, () => completed++);
-    const finish = () => { for (let i = 0; i < 10000 && !completed; i++) t2.mock.timers.tick(1); assert.equal(completed, 1, 'the timeline completes'); };
+    const finish = () => { for (let i = 0; i < 20000 && !completed; i++) t2.mock.timers.tick(1); assert.equal(completed, 1, 'the timeline completes'); };
     try { fn({ dom, layer, anchors, trace, run, finish, tick: (ms) => t2.mock.timers.tick(ms) }); }
     finally { setAnimSpeed('normal'); setBeatOrder('sequential'); dom.document.body.classList.remove('reduced-motion'); }
   });
@@ -149,7 +151,7 @@ test('an unsupported receipt reaction hook preserves callout-only pacing',t2=>{
   drive(t2,({trace,run,finish})=>{
     // A callout-only event: a miss now has its own streak and swish, so it no longer serves here.
     run(enemyAttack({type:'combatCounterTriggered',sourceId:'e1',targetId:'player'}),{reactionForReceipt:()=>null});finish();
-    assert.equal(timeOf(trace,'bars'),LEAD + TOTAL + AFTER + REACTION,'ordered callout-only actions retain the shared action delays');
+    assert.equal(timeOf(trace,'bars'),LEAD + TOTAL + AFTER + 2 * REACTION,'ordered callout-only actions retain the shared action delays');
   });
 });
 
@@ -172,7 +174,7 @@ for (const [name, events, want] of CASES) {
       const shown = trace.filter((e) => e.what.startsWith('callout:') && !e.what.startsWith('callout:action:'));
       assert.deepEqual(shown.map((e) => e.what), [`callout:${want}`], 'one callout, on the right fighter');
       assert.ok(shown[0].at >= LEAD + TOTAL + AFTER, 'after the attacker is back in its stance, not at contact');
-      assert.ok(shown[0].at <= LEAD + TOTAL + AFTER, 'with the reaction');
+      assert.ok(shown[0].at <= LEAD + TOTAL + AFTER, 'in the result stage, one gap before the sprite reaction');
     });
   });
 }
@@ -182,8 +184,8 @@ test('sequential: CRITICAL shows with the hurt pose before the configured number
     run(CASES[0][1]);
     finish();
     assert.equal(timeOf(trace, 'callout:critical@player'), LEAD + TOTAL + AFTER);
-    assert.equal(timeOf(trace, 'reaction:player'), LEAD + TOTAL + AFTER);
-    assert.equal(timeOf(trace, 'float:-4'), LEAD + TOTAL + AFTER + REACTION, 'the number waits the configured reaction delay');
+    assert.equal(timeOf(trace, 'reaction:player'), LEAD + TOTAL + AFTER + REACTION, 'the sprite reaction follows the result word by a gap');
+    assert.equal(timeOf(trace, 'float:-4'), LEAD + TOTAL + AFTER + 2 * REACTION, 'the number waits a gap after the reaction');
   });
 });
 
@@ -214,7 +216,7 @@ test('COUNTERED shows on the attacker who got countered, after the counter\'s sp
     run([{ type: 'combatCounterTriggered', sourceId: 'player', sourceKind: 'player', targetId: 'e1', amount: 3 }, hit('player', 'e1', 3)]);
     finish();
     assert.equal(timeOf(trace, 'callout:countered@e1'), LEAD + TOTAL + AFTER, 'counter outcomes follow their sprite');
-    assert.equal(timeOf(trace, 'float:-3'), LEAD + TOTAL + AFTER + REACTION, 'the counter damage follows its reaction delay');
+    assert.equal(timeOf(trace, 'float:-3'), LEAD + TOTAL + AFTER + 2 * REACTION, 'the counter damage follows its reaction by a gap');
   });
 });
 
@@ -272,7 +274,7 @@ for (const mode of ['impact', 'sequential', 'instant', 'reduced']) test('accurac
     if (mode === 'impact') {
       assert.ok(damage - outcome >= 300, 'legacy impact retains its readable accuracy lead');
     } else if (mode === 'sequential') {
-      assert.equal(damage - outcome, REACTION, 'the reaction word leads damage by the configured delay');
+      assert.equal(damage - outcome, 2 * REACTION, 'the result word leads damage by two gaps (result → reaction → damage)');
     } else assert.equal(damage, outcome, 'instant and reduced motion preserve order without adding waits');
   });
 });
@@ -293,7 +295,7 @@ test('accuracy wording follows stance entry and the first sequential swing', t2 
     assert.equal(outcome, LEAD + TOTAL + AFTER, 'the accuracy word follows the sprite');
     assert.equal(timeOf(trace, 'swing-start'), LEAD, 'intent and action wording precede the swing');
     assert.ok(damage - outcome >= 300, 'the hit-only hold remains readable');
-    assert.equal(damage, outcome + REACTION, 'damage follows the reaction-word delay');
+    assert.equal(damage, outcome + 2 * REACTION, 'damage follows the result word by two gaps');
     assert.equal(trace.filter(e => e.what === 'callout:hit@player').length, 1, 'the accuracy word is shown once');
   });
 });
@@ -302,6 +304,6 @@ test('committed damage without accuracy receipts says Hit, while a fully guarded
   drive(t2, ({ trace, run, finish }) => {
     run(playerAttack(hit('player', 'e1'))); finish();
     assert.equal(timeOf(trace, 'callout:hit@e1'), LEAD + TOTAL + AFTER);
-    assert.equal(timeOf(trace, 'float:-4'), LEAD + TOTAL + AFTER + REACTION);
+    assert.equal(timeOf(trace, 'float:-4'), LEAD + TOTAL + AFTER + 2 * REACTION);
   });
 });
