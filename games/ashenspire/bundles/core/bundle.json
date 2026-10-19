@@ -48,6 +48,7 @@
         "pools": "merged",
         "armorBudget": {
           "baseline": 3,
+          "perRank": 1,
           "rarityBonus": {}
         }
       }

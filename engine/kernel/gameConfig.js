@@ -223,7 +223,9 @@ export function resolveGearItem(item, settings, { rank = item.rank ?? 1 } = {}) 
   if (settings.pools === 'merged' || armorBudget !== null) {
     const norm = (w, share) => { const s = Object.values(w).reduce((a, b) => a + b, 0) || 1; return Object.fromEntries(Object.entries(w).map(([k, v]) => [k, v / s * share])); };
     const merged = settings.poolSizes.merged?.[item.rarity];
-    const whole = armorBudget ?? (merged ? (settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? merged.min : merged.max) : target('ratings') + target('bonus'));
+    // A shield has no armor budget, but each tier adds `perRank` points to its merged pool (parity with armor).
+    const shieldTierPoints = item.kind === 'shield' && settings.armorBudget ? (rank - 1) * (settings.armorBudget.perRank ?? 0) : 0;
+    const whole = armorBudget ?? shieldTierPoints + (merged ? (settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? merged.min : merged.max) : target('ratings') + target('bonus'));
     const remaining = (settings.fillTo === 'none' ? 0 : whole) - sum(GEAR_KEYS) - tagCost;
     // Share of the single pool by rarity (owner: most commons give AR/DR/Poise only).
     const share = settings.mergedShare[item.rarity] || settings.mergedShare.default;
