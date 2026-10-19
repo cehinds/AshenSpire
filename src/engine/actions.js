@@ -1,6 +1,6 @@
 import { resolveAttackHit } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreRules, protectionReceipt, fixCoreWardDisabled, damageReceipt } from '../model/fixCoreMechanics.js';
 import { weaponDamageBasis } from './cardBehavior.js';
 import { MANEUVERS, trimCombatStances } from './concurrentStances.js';
 import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPlan, proposalThreshold, proposalHealingPlan } from './proposalStatusRuntime.js';
@@ -587,15 +587,19 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     }
   });
   // Poise soaks what Block left of a physical part, in the same order. Each physical part it
-  // meets still lets at least 1 through. A magic part never meets Poise.
+  // meets still lets at least 1 through. With Ward on, a magic part never meets Poise. With Ward
+  // switched off (fixCoreWardDisabled) the magic Barrier left meets Poise like a physical residual,
+  // so Poise cuts all damage; Block still never soaks magic.
+  const poiseMeetsMagic = fixCoreEnabled(ctx) && fixCoreWardDisabled(ctx);
   syncPoiseMaximum(ctx, target);
   let poiseLeft = Math.max(0, target.persistentPoise?.value || 0);
   const poiseAbsorbed = hits.map(() => 0);
   hits.forEach((hit, index) => {
-    if (residual[index] > 0 && poiseLeft > 0) {
+    const poiseIn = residual[index] + (poiseMeetsMagic ? magicLeft[index] : 0);
+    if (poiseIn > 0 && poiseLeft > 0) {
       if (fixCoreEnabled(ctx)) {
         const shadow = { ...target, persistentPoise: { ...target.persistentPoise, value: poiseLeft } };
-        const protection = protectionReceipt(ctx, shadow, 'physical', residual[index]);
+        const protection = protectionReceipt(ctx, shadow, 'physical', poiseIn);
         poiseAbsorbed[index] = protection.reduced;
         protectionSources[index].push(...protection.sources);
       } else poiseAbsorbed[index] = residual[index] - Math.max(1, residual[index] - poiseLeft);
@@ -704,9 +708,11 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   if (blockBefore > 0 && !(target[pool] > 0)) breaks.push(['blockBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target),
     ...(Matchups.isSmashGuardBreak(tactical, target) ? { smash: true } : {}) }]);
   // Poise is the physical twin of Ward and sits after Block: it soaks what Block left of the
-  // physical part, and each physical hit it meets still lets at least 1 through. A magic part never meets it.
+  // physical part, and each physical hit it meets still lets at least 1 through. A magic part never meets it,
+  // unless Ward is switched off: then the magic Barrier left joins the physical residual (as in prepareExpandedDefense).
   let hpLoss = amount - blocked;
-  const physicalLeft = Math.max(0, blockable - blocked);
+  const poiseMeetsMagic = fixCoreEnabled(ctx) && fixCoreWardDisabled(ctx);
+  const physicalLeft = Math.max(0, blockable - blocked) + (poiseMeetsMagic ? Math.max(0, amount - blockable) : 0);
   let poiseAbsorbed = 0;
   let poiseBroke = false;
   if (physicalLeft > 0 && target.persistentPoise) {
@@ -951,7 +957,7 @@ function gainBlockAmount(ctx, entity, amount, card = null, wardProvenance = fals
   entity.block += amt;
   if (fixCoreEnabled(ctx) && amt > 0 && !card?.syntheticDefense && (card?.cardId || card?.moveId)) {
     syncWardMaximum(ctx, entity); syncPoiseMaximum(ctx, entity);
-    Control.restorePersistentWard(ctx, entity, amt, { source: 'block-card', overflow: false, modifierPercent: 0 });
+    if (!fixCoreWardDisabled(ctx)) Control.restorePersistentWard(ctx, entity, amt, { source: 'block-card', overflow: false, modifierPercent: 0 });
     Control.restorePersistentPoise(ctx, entity, amt, { source: 'block-card', overflow: false });
   }
   if (amt > 0 && card && wardProvenance) entity.wardBlock = (entity.wardBlock || 0) + amt;
