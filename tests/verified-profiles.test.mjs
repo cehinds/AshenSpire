@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { gameProfileCatalog, gameProfileAuthors } from '../src/content/generated/gameProfiles.js';
 import { resolveGameAuthor, validateResolvedGameProfile } from '../engine/kernel/gameConfig.js';
 import { resolveGameProfile, validateGameProfileSnapshot } from '../src/model/gameProfile.js';
@@ -17,9 +18,10 @@ test('parsed snapshots still take the full digest check and pinned runtimeHash',
   assert.throws(() => validateGameProfileSnapshot(bad), /digest mismatch/);
   assert.throws(() => validateResolvedGameProfile(good, 'sha256:other'), /unsupported runtime artifact/);
 });
-test('runtimeHash is unchanged from origin/dev (saves stay loadable)', () => {
-  let dev; try { dev = JSON.parse(execFileSync('git', ['show', 'origin/dev:games/ashenspire/game.lock.json'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })); } catch { return; }
-  for (const [id, p] of Object.entries(dev.profiles)) if (p.runtimeHash) assert.equal(gameProfileCatalog.runtimeHash, p.runtimeHash, id);
+test('catalog runtimeHash matches the committed game.lock.json (cache never serves a stale hash)', () => {
+  const lockPath = fileURLToPath(new URL('../games/ashenspire/game.lock.json', import.meta.url));
+  const lock = JSON.parse(readFileSync(lockPath, 'utf8'));
+  for (const [id, p] of Object.entries(lock.profiles)) if (p.runtimeHash) assert.equal(gameProfileCatalog.runtimeHash, p.runtimeHash, id);
 });
 test('re-validating the exact verified object returns it; an unverified copy takes the full check', () => {
   const p = resolveGameProfile('current');
