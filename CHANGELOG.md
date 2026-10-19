@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Auto switch in the combat footer** ([#2168](https://github.com/cehinds/AshenSpire/pull/2168), `0.7.1.1669`). Combat now has an Auto switch next to the Reaction switch. It turns auto combat on or off mid-fight and stays in step with the Settings screen, and both switches fit on phones.
+- **Auto switch in the combat footer** ([#2168](https://github.com/cehinds/AshenSpire/pull/2168), `0.7.1.1671`). Combat now has an Auto switch next to the Reaction switch. It turns auto combat on or off mid-fight and stays in step with the Settings screen, and both switches fit on phones.
 - **Attacks hit caster enemies again** ([#2167](https://github.com/cehinds/AshenSpire/pull/2167), `0.7.1.1669`). Attacks no longer miss caster enemies like the Grave Wisp and Wyrm Aspirant every time; melee cards now roll to hit them normally.
 - **Poise breaks leave you Staggered** ([#2164](https://github.com/cehinds/AshenSpire/pull/2164), `0.7.1.1667`). Poise now absorbs a quarter of each hit and loses what it absorbed (the hit says "Poise absorbed 2"). Breaking an enemy's (or your) Poise leaves them in a Staggered stance with 1 less SP next turn and Vulnerable, instead of a skipped turn.
 - **HUD clearance check follows the Defense-first badges** ([#2174](https://github.com/cehinds/AshenSpire/pull/2174), `0.7.1.1665`). The HUD clearance check now expects the Block (Defense) badge first, matching #2162; it had been failing on every pull request since.
