@@ -14,6 +14,7 @@ import { t } from '../strings.js';
 const ARROWS = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
 
 function effectLine(summary) {
+  if (summary.html) return el('span', { class: 'co-effect co-effect-html', html: summary.html });
   const line = summary.line || [];
   if (!line.length) return el('span', { class: 'co-effect co-effect-text', text: summary.text || '' });
   const node = el('span', { class: 'co-effect' });

@@ -88,3 +88,28 @@ test('a non-counter Ward damage effect is shown, and reads as Poise when Ward is
   const merged = { ...ward, effects: [{ op: 'poiseDamage', target: 'enemy', amount: 3 }, { op: 'wardDamage', target: 'enemy', amount: 8 }] };
   assert.deepEqual(cardEffectLine(merged, null, core).map(row => `${row.before}${row.value}${row.after}`), ['Poise 11']);
 });
+test('repeated same-kind effects add up, and a dropped conditional part ends in an ellipsis', () => {
+  const twice = { id: 'testTwice', name: 'Twin', type: 'attack', effects: [{ op: 'damage', target: 'enemy', amount: 6 }, { op: 'damage', target: 'enemy', amount: 4 },
+    { op: 'damage', target: 'enemy', amount: 9, if: { p: 'hasBlock', of: 'self' } }] };
+  const [row] = cardEffectLine(twice, { values: [{ op: 'damage', value: 7 }, { op: 'damage', value: 4 }, { op: 'damage', value: 9 }] }, null);
+  assert.deepEqual([row.value, row.base, row.dir, row.after], [11, 10, 'up', '…']);
+});
+test('a card with an effect that has no number falls back to its own text, never an empty row', () => {
+  const poison = { id: 'testPoison', name: 'Venom', type: 'skill', effects: [{ op: 'block', target: 'self', amount: 5 }, { op: 'applyStatus', target: 'enemy', status: 'poison', stacks: 3 }] };
+  const summary = summarizeCardOption(null, null, { id: 'p', name: 'Venom' }, { defOf: () => poison, previewOf: () => null });
+  assert.deepEqual(summary.line, []);
+  assert.ok(summary.html.length > 0, 'the compact card text stands in');
+});
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const registriesByProfile = { current: createRegistries(contentBundle),
+  core: bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile) };
+for (const [name, registries] of Object.entries(registriesByProfile)) {
+  test(`every ${name} card gets a non-empty tile effect`, () => {
+    const empty = [];
+    for (const def of registries.cards.all()) {
+      const summary = summarizeCardOption(registries, null, { id: def.id, name: def.name }, { defOf: () => def, previewOf: () => null });
+      if (!summary.line.length && !String(summary.html || '').trim()) empty.push(def.id);
+    }
+    assert.deepEqual(empty, [], `${empty.length} cards have an empty effect row`);
+  });
+}

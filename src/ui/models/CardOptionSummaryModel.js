@@ -9,7 +9,8 @@
 // card definition and preview from its own state (the engine in solo, the seat snapshot in
 // co-op) and hands them in through `readers`.
 
-import { cardSummaryContext } from '../../model/playingCard.js';
+import { cardSummaryContext, combatCardSummary } from '../../model/playingCard.js';
+import { cardFaceLines } from '../../model/cardFaceText.js';
 import { isSpellCard } from '../../model/combatCardProfile.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
 import { t } from '../strings.js';
@@ -18,9 +19,14 @@ const freeze = Object.freeze;
 const MARK = '\u0000';
 const direction = (value, base) => (Number.isFinite(value) && Number.isFinite(base) ? value > base ? 'up' : value < base ? 'down' : null : null);
 
-/** The effect line of a resolved card: `[{ label, value, base, dir }]`, empty when nothing is phrased. */
-export function cardEffectLine(def, preview = null, registries = null) {
-  if (!def) return freeze([]);
+/**
+ * analyzeCardEffects(def, preview, registries) -> { line, complete }. `line` is the numeric parts
+ * `[{ label, value, base, dir }]`. `complete` is false when some effect has no numeric part (a status, a
+ * draw, a cleanse, a formula): the tile then reads the card's own compact text instead.
+ */
+export function analyzeCardEffects(def, preview = null, registries = null) {
+  if (!def) return { line: freeze([]), complete: false };
+  let complete = true;
   const { value, defenseValue, bindings, tokens, profile, poiseMerge } = cardSummaryContext(def, preview, registries);
   const live = Boolean(preview);
   const counter = profile?.maneuver === 'counter';
@@ -28,15 +34,14 @@ export function cardEffectLine(def, preview = null, registries = null) {
     const token = bindings.find(row => row.index === index && row.field === 'amount')?.token;
     return typeof tokens[token] === 'number' ? tokens[token] : typeof effect.amount === 'number' ? effect.amount : undefined;
   };
-  const found = new Map();
+  const groups = new Map();
   const add = (key, effect, row) => {
-    const prior = found.get(key);
-    // An unconditional effect outranks a conditional branch; otherwise the first one stands.
-    if (!prior || (prior.conditional && !effect.if)) found.set(key, { ...row, conditional: Boolean(effect.if) });
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push({ ...row, conditional: Boolean(effect.if) });
   };
   (def.effects || []).forEach((effect, index) => {
     const amount = value(effect, index), base = baseOf(effect, index);
-    if (typeof amount !== 'number') return;
+    if (typeof amount !== 'number') { complete = false; return; }
     switch (effect.op) {
       case 'damage': {
         // A multi-hit card keeps its hit count ("Dmg 3 ×3"), read from the live preview first.
@@ -77,9 +82,22 @@ export function cardEffectLine(def, preview = null, registries = null) {
       }
       case 'gainPoise': add('poise', effect, { labelId: 'cardOption.label.poise', amount, base }); break;
       case 'heal': add('heal', effect, { labelId: 'cardOption.label.heal', amount, base }); break;
-      default: break;
+      default: complete = false; break;
     }
   });
+  // Repeated parts of one kind add up ("Dmg 10" for a weapon hit and a rider). A conditional part is left out
+  // when an unconditional one is shown, and the figure ends in an ellipsis to say so.
+  const found = new Map();
+  for (const [key, parts] of groups) {
+    const unconditional = parts.filter(part => !part.conditional), use = unconditional.length ? unconditional : parts.slice(0, 1);
+    const sum = pick => use.reduce((total, part) => total + pick(part), 0);
+    const numeric = pick => use.every(part => Number.isFinite(pick(part)));
+    const ref = use.some(part => part.ref);
+    found.set(key, { labelId: use[0].labelId, amount: sum(part => part.amount), base: numeric(part => part.base) ? sum(part => part.base) : undefined,
+      hits: use.length === 1 ? use[0].hits : 0, dropped: parts.length > use.length,
+      ...(ref ? { ref: { amount: sum(part => part.ref?.amount ?? part.amount),
+        base: numeric(part => part.ref?.base ?? part.base) ? sum(part => part.ref?.base ?? part.base) : undefined } } : {}) });
+  }
   // A counter whose reply is a payload (no matching effect) reads it from the live preview.
   // The payload can return HP damage, Poise and Ward: each shows as its own "Return" part.
   if (counter) for (const [field, op, key] of [['hp', 'damage', 'return'], ['poise', 'poiseDamage', 'returnPoise'], ['ward', 'wardDamage', 'returnWard']]) {
@@ -97,14 +115,41 @@ export function cardEffectLine(def, preview = null, registries = null) {
     found.set(key, { labelId: `cardOption.label.${key}`, amount: typeof liveValue === 'number' ? liveValue : authored, base: authored });
   }
   const order = ['def', 'barrier', 'ward', 'dmg', 'return', 'returnPoise', 'returnWard', 'poise', 'wardDamage', 'heal'];
-  return freeze(order.filter(key => found.has(key)).map(key => {
+  const line = freeze(order.filter(key => found.has(key)).map(key => {
     const row = found.get(key), ref = row.ref || row;
     // A split defense shows its own share but moves with the whole gain it came from.
     // The row places the number ("Def {amount}"); before/after carry that placement to the view.
     const [before, after] = t(row.labelId, { amount: MARK }).split(MARK);
-    return freeze({ label: `${before}${after}`.replace(/[^\p{L}\s]/gu, '').trim(), before, after: row.hits ? `${after} \u00d7${row.hits}` : after, hits: row.hits || 1, value: row.amount, base: row.base ?? ref.base,
+    return freeze({ label: `${before}${after}`.replace(/[^\p{L}\s]/gu, '').trim(), before, after: `${after}${row.hits ? ` \u00d7${row.hits}` : ''}${row.dropped ? '\u2026' : ''}`, hits: row.hits || 1, value: row.amount, base: row.base ?? ref.base,
       dir: live ? direction(ref.amount, ref.base) : null });
   }));
+  return { line, complete: complete && line.length > 0 };
+}
+
+/** The numeric effect line of a resolved card: `[{ label, value, base, dir }]`, empty when nothing is phrased. */
+export const cardEffectLine = (def, preview = null, registries = null) => analyzeCardEffects(def, preview, registries).line;
+
+const esc = text => String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// The card face's changed numbers are `<span class="val up">`; give them the tile's arrow and spoken words.
+const withDirections = html => html.replace(/<span class="val (up|down)">(.*?)<\/span>/g, (span, dir) =>
+  `${span}<span class="co-arrow" aria-hidden="true">${dir === 'up' ? '\u25b2' : '\u25bc'}</span><span class="co-sr"> ${t(`cardOption.dir.${dir}`)}</span>`);
+
+/**
+ * cardEffectHtml(def, preview, registries) -> escaped HTML of the card's own compact effect text, from the same
+ * source as the card face (cardFaceText), else the plain effect summary, else the authored text; '' only for a card
+ * with no text at all. A tile never shows an empty effect row.
+ */
+export function cardEffectHtml(def, preview = null, registries = null) {
+  if (!def) return '';
+  let lines = null;
+  try { lines = cardFaceLines(def, preview, registries); } catch { lines = null; }
+  if (lines?.length) return withDirections(lines.map(row => row.html).join(' \u00b7 '));
+  let summary = null;
+  try { summary = combatCardSummary(def, preview, registries); } catch { summary = null; }
+  const text = typeof summary === 'string' ? summary : Array.isArray(summary) ? summary.join(' ') : summary?.text;
+  if (text) return esc(text);
+  const authored = String(def.textTemplate || def.text || def.description || '').replace(/\{[^}]*\}/g, '').replace(/\s+/g, ' ').trim();
+  return esc(authored || def.name || '');
 }
 
 /** The cost chips of a reaction option: SP, MP, upcast tier and the choice it names. */
@@ -128,10 +173,13 @@ export function summarizeCardOption(registries, combat, option, readers = {}) {
   let def = null, preview = null;
   try { def = readers.defOf?.(option, combat) ?? null; } catch { def = null; }
   try { preview = def ? readers.previewOf?.(option, combat) ?? null : null; } catch { preview = null; }
+  const { line, complete } = analyzeCardEffects(def, preview, registries);
   return freeze({
     id: option.id ?? option.instanceId ?? null,
     name: option.name ?? def?.name ?? '',
-    line: cardEffectLine(def, preview, registries),
+    // Numbers when every effect has one; otherwise the card's own compact text, so no tile has an empty effect row.
+    line: complete ? line : freeze([]),
+    ...(!complete && def ? { html: cardEffectHtml(def, preview, registries) } : {}),
     costs: option.play ? costsOf(option) : freeze([]),
   });
 }
