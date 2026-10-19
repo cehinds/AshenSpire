@@ -23,6 +23,7 @@ import { combatBackdropHtml } from '../components/environmentArt.js';
 import { displayAppearance, onDisplayAppearanceChange } from '../displayAppearance.js';
 import { alternativeCompanionIcon } from '../alternativeArt.js';
 import { targetLayer } from '../models/TargetLayerModel.js';
+import { cardAffectsEnemies, hitBadgeTargetIds } from '../../model/hitBadge.js';
 import { cardTargetPlan, forbiddenCardDrop, upcastNextStep } from '../../model/cardTargets.js';
 import { renderEnemyTargetPicker } from '../components/enemyTargetPicker.js';
 import { touchPoint, recordFlickPoint, flickVerdict, nearestFlickTarget } from '../models/TouchFlickModel.js';
@@ -1361,7 +1362,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             candidates.push({ cardInstanceId: inst.instanceId, targetId, legal: true,
               affordable: combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0),
               offense, defense, stanceAdvantage: matchup === 'advantage' ? 1 : 0,
-              ...(known && offense ? { knownHitChance: previewCardHit(combat, inst.instanceId, targetId)?.hitChance / 100 } : {}) });
+              ...(known && offense ? { knownHitChance: previewCardHit(combat, inst.instanceId, targetId, undefined, { observerId: combat.playerKey || 'player' })?.hitChance / 100 } : {}) });
           }
         } catch { /* A refused preview cannot become an automated play. */ }
       }
@@ -1652,23 +1653,20 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
   }
 
-  // The first Perception roll is the exact read. A clue alone reveals no odds.
+  // Perception gates intent knowledge (and what auto-play may know), not the hit-% badge.
   function hitChanceKnown(enemy) {
     const ownerId = combat.playerKey || 'player';
     return enemy.knowledgeAction?.reads?.[ownerId]?.visibility === 'exact';
   }
 
   function hitChanceBadge(enemy) {
-    if (combat.combatExpansionVersion !== 2 || !enemy.alive || !hitChanceKnown(enemy)) return null;
-    if (!selected) return null;
+    if (combat.combatExpansionVersion !== 2 || !enemy.alive || !selected) return null;
     let preview;
     try {
       const inst = selected && findInst(selected);
       const carrier = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
-      const hostile = carrier?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || carrier?.counterPayload;
-      const offensive = hostile && (carrier.effects?.some(effect => effect.op === 'damage') || carrier.counterPayload?.hp);
-      if (!offensive) return null;
-      preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected));
+      if (!hitBadgeTargetIds(carrier, [enemy]).length) return null;
+      preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected), { observerId: combat.playerKey || 'player' });
     } catch { return null; }
     if (!preview || !Number.isFinite(preview.hitChance)) return null;
     const node = document.createElement('span');
@@ -1683,7 +1681,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     combatEl.querySelectorAll('.card-hit-chances').forEach(node => node.remove());
     const inst = selected && findInst(selected);
     const definition = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
-    const hostile = definition?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || definition?.counterPayload;
+    const hostile = cardAffectsEnemies(definition);
     const selectedCard = hostile && combatEl.querySelector('.hand .card[data-instance-id="' + CSS.escape(selected) + '"]');
     const cardOdds = document.createElement('div');
     cardOdds.className = 'card-hit-chances';

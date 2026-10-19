@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Matching stances hit harder and hit chances show when you pick a card** ([#2144](https://github.com/cehinds/AshenSpire/pull/2144), `0.7.1.1639`). Matching stances now add 25% effectiveness. Enemy intent checks use the target's Intelligence and Wisdom against your Wisdom roll. Hit chances show on every target as soon as you pick a card that can hit it.
 - **Armor has a flat 3-point budget** ([#2145](https://github.com/cehinds/AshenSpire/pull/2145), `0.7.1.1637`). Armor now has a flat budget of 3 points whatever its rank, with a rarity bonus ready for later (0 for now).
 
 ## 2026-10-18
