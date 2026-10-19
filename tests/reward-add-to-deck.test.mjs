@@ -68,3 +68,68 @@ test('add to deck refuses non-card rewards', () => {
   assert.equal(rewardDeckAddRefusal(reg, found.r, found.o.id, found.at), 'notCard');
   void run;
 });
+
+// ---- review step UI ----------------------------------------------------------
+import { rewardDom } from './helpers/reward-dom.mjs';
+import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
+
+async function withDom(fn) {
+  const dom = rewardDom();
+  const before = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try { await fn(); } finally { for (const [key, value] of Object.entries(before)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; } }
+}
+function mount(extra = {}) {
+  const run = { class: 'reaver', deck: [], cinders: 0 };
+  const app = document.createElement('main'); document.body.append(app);
+  const offer = { id: 'ui', options: [{ kind: 'combatCards', id: 'core.strike' }], taken: [], claimed: null, takeCount: 1 };
+  const calls = [];
+  mountGameProfileOffers(app, { registries: reg, run, offer, title: 'Reward',
+    onTake(i) { calls.push('take'); offer.taken.push(i); offer.claimed = i; },
+    onAddToDeck(i) { calls.push('add'); offer.taken.push(i); offer.claimed = i; },
+    addRefusal: () => '', onEditDeck: (i, back) => { calls.push('edit'); back(); },
+    onContinue() { calls.push('continue'); }, canEditDeck: true, ...extra });
+  return { app, calls };
+}
+const review = app => { app.querySelector('.reward-pick').click(); app.querySelector('#reward-card-confirm').click(); };
+
+test('review step shows Add to deck and Edit deck; Add claims into the deck once', async () => {
+  await withDom(async () => {
+    const { app, calls } = mount();
+    review(app);
+    const confirm = app.querySelector('#reward-card-confirm'), edit = app.querySelector('#reward-edit-deck');
+    assert.equal(confirm.textContent, 'Add to deck'); assert.ok(edit); assert.equal(edit.textContent, 'Edit deck');
+    confirm.click(); confirm.click(); await Promise.resolve(); await Promise.resolve();
+    assert.deepEqual(calls, ['add', 'continue']);
+  });
+});
+test('Edit deck claims, opens the editor, and the editor returning continues the reward', async () => {
+  await withDom(async () => {
+    const { app, calls } = mount();
+    review(app);
+    app.querySelector('#reward-edit-deck').click(); await Promise.resolve(); await Promise.resolve();
+    assert.deepEqual(calls, ['take', 'edit', 'continue']);
+  });
+});
+test('Edit deck is hidden when no deck door is open', async () => {
+  await withDom(async () => {
+    const { app } = mount({ canEditDeck: false });
+    review(app);
+    assert.equal(app.querySelector('#reward-edit-deck'), null);
+    assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Add to deck');
+  });
+});
+test('an illegal Add is disabled with a reason, and Keep in collection stands in when Edit is hidden', async () => {
+  await withDom(async () => {
+    const full = mount({ addRefusal: () => 'full', deckMax: 40 });
+    review(full.app);
+    assert.equal(full.app.querySelector('#reward-card-confirm').disabled, true);
+    assert.match(full.app.querySelector('.reward-confirm-status').textContent, /deck is full \(40 cards\)/);
+    assert.ok(full.app.querySelector('#reward-edit-deck')); assert.equal(full.app.querySelector('#reward-keep'), null);
+    const shut = mount({ addRefusal: () => 'limit', canEditDeck: false });
+    review(shut.app);
+    assert.equal(shut.app.querySelector('#reward-edit-deck'), null);
+    shut.app.querySelector('#reward-keep').click(); await Promise.resolve(); await Promise.resolve();
+    assert.deepEqual(shut.calls, ['take', 'continue']);
+  });
+});
