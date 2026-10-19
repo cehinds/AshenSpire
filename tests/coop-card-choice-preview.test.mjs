@@ -68,16 +68,23 @@ test("another seat's view drops the candidate preview, as it does for a hand", (
   assert.ok(own.combatPreview, "the owner's own view keeps it");
 });
 
-test('only cards with live-state numbers earn a full preview, capped at eight; the rest get the cheap variant definition', () => {
+test('state-dependent cards take the eight full previews first, plain cards fill the rest, the overflow gets the cheap definition', () => {
+  const host = fixture(); withDrawChoice(host, 6);
+  const rows = host.snapshot().scene.players.find(player => player.id === 'p2').pendingCardChoice.candidates;
+  const variant = rows.filter(row => row.cardId === VARIANT), plain = rows.filter(row => row.cardId !== VARIANT);
+  assert.equal(variant.length, 6);
+  assert.ok(variant.every(row => row.combatPreview.values.length), 'every state-dependent card has the full preview');
+  assert.equal(plain.filter(row => row.combatPreview?.values.length).length, Math.min(plain.length, 2), 'plain cards fill the two slots left');
+  assert.ok(plain.length <= 2 || plain.slice(2).every(row => row.combatPreview === undefined));
+});
+
+test('past eight, state-dependent overflow carries the resolved definition only', () => {
   const host = fixture(); withDrawChoice(host, 12);
   const rows = host.snapshot().scene.players.find(player => player.id === 'p2').pendingCardChoice.candidates;
   const variant = rows.filter(row => row.cardId === VARIANT), plain = rows.filter(row => row.cardId !== VARIANT);
-  assert.equal(variant.length, 12);
-  assert.ok(plain.length >= 1 && plain.every(row => row.combatPreview === undefined), 'a plain card reads its authored numbers: no preview');
-  const full = variant.filter(row => row.combatPreview.values.length);
-  assert.equal(full.length, 8, 'the first eight carry the full preview');
+  assert.equal(variant.filter(row => row.combatPreview.values.length).length, 8, 'the first eight carry the full preview');
   const cheap = variant.filter(row => !row.combatPreview.values.length);
   assert.equal(cheap.length, 4);
-  assert.ok(cheap.every(row => row.combatPreview.resolvedDefinition?.id === VARIANT), 'the rest carry the resolved definition only');
-  assert.ok(cheap.every(row => row.combatPreview.resolvedDefinition), 'a cheap preview still carries the definition');
+  assert.ok(cheap.every(row => row.combatPreview.resolvedDefinition?.id === VARIANT));
+  assert.ok(plain.every(row => row.combatPreview === undefined), 'plain cards past the cap read their authored numbers');
 });

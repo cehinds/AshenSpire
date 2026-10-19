@@ -782,16 +782,16 @@ export function createSession({ registries, seedString, endless = false, restore
         const seat = c.players.get(playerId);
         const ctx = { ...c, registries: c.registriesForPlayer(playerId), player: seat.entity, combatExpansionVersion: c.combatExpansionVersion };
         const charged = Object.keys(seat.entity.abilityRiders?.charges || {}).length > 0;
-        const full = [], cheap = {};
+        const liveIds = [], plainIds = [], defs = {};
         for (const card of choice.candidates || []) {
-          const def = resolveCombatCard(ctx, card);
-          // Only a card whose numbers depend on live state (an effect variant, a condition, a held ability charge)
-          // earns a full preview, the first FULL_PREVIEW_CAP of them; a plain card reads its authored numbers.
-          const live = charged || def.effectVariants?.length || (def.effects || []).some(effect => effect?.if);
-          if (!live) continue;
-          if (full.length < FULL_PREVIEW_CAP) full.push(card.instanceId);
-          else cheap[card.instanceId] = { resolvedDefinition: selectCardVariant(ctx, def, {}, null), values: [] };
+          const def = defs[card.instanceId] = resolveCombatCard(ctx, card);
+          // A card whose numbers depend on live state (an effect variant, a condition, a held ability charge) is
+          // previewed first; plain cards fill the remaining slots (stance and advantage still tint their numbers).
+          (charged || def.effectVariants?.length || (def.effects || []).some(effect => effect?.if) ? liveIds : plainIds).push(card.instanceId);
         }
+        const ordered = [...liveIds, ...plainIds], full = ordered.slice(0, FULL_PREVIEW_CAP), cheap = {};
+        // Past the cap: the variant-resolved definition only, so the numbers are right without green or red.
+        for (const id of liveIds.slice(FULL_PREVIEW_CAP)) cheap[id] = { resolvedDefinition: selectCardVariant(ctx, defs[id], {}, null), values: [] };
         previews = { ...cheap, ...(full.length ? previewCoopCards(c, playerId, full) : {}) };
       } catch { previews = {}; }
       choicePreviews.set(choice, previews);
