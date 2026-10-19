@@ -37,6 +37,9 @@ test('shipped data and validator: smashVsDefensive {2, 0.25, 0.5}', () => {
   assert.deepEqual(fixCoreSmashVsDefensiveRules({}), shipped.smashVsDefensive, 'old saves fall back to the ruling');
   assert.throws(() => validateFixCoreRules({ ...shipped, smashVsDefensive: { ...shipped.smashVsDefensive, damageMultiplier: 0.5 } }), /smashVsDefensive/);
   assert.throws(() => validateFixCoreRules({ ...shipped, smashVsDefensive: { ...shipped.smashVsDefensive, extra: 1 } }), /smashVsDefensive/);
+  for (const field of ['damageMultiplier', 'blockFraction', 'poiseFraction'])
+    for (const bad of [null, '0.25', '2', true, NaN, Infinity])
+      assert.throws(() => validateFixCoreRules({ ...shipped, smashVsDefensive: { ...shipped.smashVsDefensive, [field]: bad } }), /smashVsDefensive/, `${field}=${String(bad)}`);
 });
 
 test('worked example: Smash 12 vs a defending target with 10 Block = 24 + floor(0.25 x 10) = 26 total; Block takes 10, 16 reaches HP; Poise -13 (floor(0.5 x 26))', () => {
