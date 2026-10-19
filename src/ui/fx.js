@@ -548,15 +548,18 @@ function layoutCallouts(layer, anchor, q, now, lifeMs = CALLOUT_MS) {
   const floor = overheadFloor(layer, anchor, b);
   const base = floor == null ? b.top + 4 : Math.max(b.top + 4, floor + 2 + (q.items[0]?.el.offsetHeight || 30) + CALLOUT_RISE_PX);
   const centre = b.left + b.width / 2;
-  for (const it of q.items) {
+  // Every word's box is read before any word is moved: a left/top write
+  // between two offsetWidth reads made each later read a forced layout.
+  const bounds = anchorLocalBox(layer, layer);
+  const boxes = q.items.map((it) => ({ it, width: it.el.offsetWidth || 0, height: it.el.offsetHeight || 30 }));
+  for (const { it, width, height } of boxes) {
     const el = it.el;
     // Lane 0 is the top: its slot is the highest. Slot 0 sits nearest the head.
     const slot = floor == null ? (STACK_LANES - 1 - it.lane) : it.lane;
     el.dataset.calloutSlot = String(slot);
-    const width = el.offsetWidth || 0, height = el.offsetHeight || 30;
     const bottom = base + (floor == null ? -1 : 1) * slot * CALLOUT_SLOT_PX;
     let at = { left: centre - width / 2, top: bottom - height };
-    if (width) at = clampBox({ left: at.left, top: at.top, width, height }, anchorLocalBox(layer, layer), { pad: 6 });
+    if (width) at = clampBox({ left: at.left, top: at.top, width, height }, bounds, { pad: 6 });
     el.style.left = `${at.left + width / 2}px`;
     el.style.top = `${at.top + height}px`;
   }
