@@ -158,7 +158,7 @@
 :root[data-layout='narrow'] .master-workspace {
   background-image:linear-gradient(#0d0b0830, #0d0b0870), url('../assets/player-polish/scenes/armoury-still-life-master.webp');
 }
-:root[data-layout='narrow'] .title-screen { justify-content:flex-end; padding:1.6rem; }
+:root[data-layout='narrow'] .title-screen { justify-content:center; padding:1.6rem; }
 :root[data-layout='narrow'] .title-screen .as-titlemenu { width:100%; margin:0; max-width:none; padding:1.6rem; box-sizing:border-box; }
 :root[data-layout='narrow'] .title-screen .tm-name { font-size:min(11cqi, 4.8rem); }
 :root[data-layout='narrow'] .shop-workspace { padding-top:18%; }
@@ -315,7 +315,7 @@ body.reduced-motion :is(.ember,.title-glow) { animation:none; }
 @media (prefers-reduced-motion:reduce) {
   .screen, :is(.tm-entry,.as-btn,.as-iconbtn,.as-option,.as-tab,.as-railitem,.cp-cell) { animation:none !important; transition:none; }
 }
-:root[data-layout='narrow'] .title-screen { justify-content:flex-end; padding:1.8rem 1.6rem 3.6rem; }
+:root[data-layout='narrow'] .title-screen { justify-content:center; padding:12rem 1.6rem 3.6rem; }
 :root[data-layout='narrow'] .title-screen .as-titlemenu { width:100%; margin:0; padding:0; background:none; }
 :root[data-layout='narrow'] .title-screen .tm-name { font-size:min(10cqi,4.4rem); }
 :root[data-layout='narrow'] .title-screen .title-menu { gap:.6rem; margin-block:1rem; }
@@ -444,7 +444,7 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 /* Dodge already reveals its full rules through normal card selection. */
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-card-id='dodgeRoll'] > .card-more-button { display:none; }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-card-id='dodgeRoll'][data-truncated='true'] .cname { padding-left:0; }
-:root[data-layout='narrow'] .title-screen .as-titlemenu { position:static; max-height:calc(100% - 12rem); overflow:auto; }
+:root[data-layout='narrow'] .title-screen .as-titlemenu { position:static; max-height:100%; overflow:auto; }
 :root[data-layout='narrow'] .title-screen .tm-name { position:absolute; top:5rem; left:0; width:100%; margin:0; font-size:3.5rem; }
 :root[data-layout='narrow'] .title-screen .tm-sub { position:absolute; top:10rem; left:0; width:100%; }
 :root[data-layout='narrow'] .title-screen .as-titlemenu > .as-ornament:first-child { display:none; }
