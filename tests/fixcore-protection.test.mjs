@@ -13,6 +13,7 @@ function fixture(kind, points=20) {
   const combat=createCombat({registries:createRegistries(contentBundle),rng:createRng(901),combatExpansionVersion:2,
     enemyIds:['wanderingSoldier'],player:{classId:'starseer',maxHp:100,hp:100,maxMana:10,mana:10,maxStamina:10,stamina:10,energyMax:10,drawPerTurn:1,deck:[]}});
   combat.fixCoreRules=structuredClone(fixCoreRules(combat));
+  combat.fixCoreRules.ward={enabled:true}; // Ward is off in shipped data; these tests cover the Ward path
   const target=combat.enemies[0];
   Object.assign(target,{hp:100,maxHp:100,block:0,barrier:0,statuses:{},ratings:{ar:0,dr:0,pr:0,ward:points,poise:points},
     persistentWard:{value:points,max:points},persistentPoise:{value:points,max:points},damageResistanceFlat:{},damageWeaknessPercent:{}});
@@ -39,6 +40,7 @@ for (const kind of ['physical','magical']) test(`${kind} live damage and detache
 test('JSON tuning and independent attachment overrides reach live protection',()=>{
   const {combat,target,carrier}=fixture('magical');
   combat.fixCoreRules=structuredClone(fixCoreRules(combat));
+  combat.fixCoreRules.ward={enabled:true};
   combat.fixCoreRules.protectionParameters = {'defense.wardProtection':{multiplier:.6}};
   const action={effect:{op:'damage',target:'enemy',amount:20},source:combat.player,owner:combat.player,target,card:carrier,meta:{}};
   const preview=previewExpandedActions(combat,[action],{source:combat.player,target,carrier});
