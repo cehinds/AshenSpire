@@ -12,10 +12,10 @@ export function fixCoreModuleParameters(rules = defaults) {
     id === 'actionCosts' ? {enemyHealBlockCost:rules.enemyHealBlockCost} : rules[id]])) };
 }
 // Owner, 2026-10-18: Ward code stays; `ward.enabled: false` in fixCoreMechanics.json switches it off. Missing = on.
-// Owner, 2026-10-18 (D13/D4): Poise damage is floor(damageRatio x incoming damage), dealt before the hit lands;
+// Owner, 2026-10-18 (D13/D4, ruling 20:09): Poise loses what it absorbed (the damage it prevented) plus any extra Poise damage the hit carries;
 // a Poise break puts the owner in the Staggered stance (-staminaLoss SP, +vulnerableStacks Vulnerable that only
 // extends duration). Missing blocks (saves from before this ruling) fall back to these defaults.
-export const FIXCORE_POISE_DEFAULTS = Object.freeze({ damageRatio: 0.2, depletes: true });
+export const FIXCORE_POISE_DEFAULTS = Object.freeze({ drain: 'prevented' });
 export const FIXCORE_STAGGERED_DEFAULTS = Object.freeze({ stance: true, staminaLoss: 1, vulnerableStacks: 1, extendOnly: true });
 export const fixCorePoiseRules = rules => ({ ...FIXCORE_POISE_DEFAULTS, ...(rules?.poise || {}) });
 export const fixCoreStaggeredRules = rules => ({ ...FIXCORE_STAGGERED_DEFAULTS, ...(rules?.staggered || {}) });
@@ -38,7 +38,7 @@ export function validateFixCoreRules(rules) {
   const known = new Set(['version','enabled','ward','poise','staggered','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
   if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => key !== 'enabled'))) throw new Error('FixCore ward requires {enabled:boolean}');
   const poise = rules.poise, stag = rules.staggered;
-  if (poise !== undefined && (typeof poise !== 'object' || poise === null || !(poise.damageRatio >= 0 && poise.damageRatio <= 1) || typeof poise.depletes !== 'boolean' || Object.keys(poise).some(key => !['damageRatio','depletes'].includes(key)))) throw new Error('FixCore poise requires {damageRatio:0..1, depletes:boolean}');
+  if (poise !== undefined && (typeof poise !== 'object' || poise === null || poise.drain !== 'prevented' || Object.keys(poise).some(key => key !== 'drain'))) throw new Error('FixCore poise requires {drain:"prevented"}');
   if (stag !== undefined && (typeof stag !== 'object' || stag === null || typeof stag.stance !== 'boolean' || typeof stag.extendOnly !== 'boolean' || !Number.isInteger(stag.staminaLoss) || stag.staminaLoss < 0 || !Number.isInteger(stag.vulnerableStacks) || stag.vulnerableStacks < 0 || Object.keys(stag).some(key => !['stance','staminaLoss','vulnerableStacks','extendOnly'].includes(key)))) throw new Error('FixCore staggered requires {stance:boolean, staminaLoss:int, vulnerableStacks:int, extendOnly:boolean}');
   for(const key of Object.keys(rules)) if(!known.has(key)) throw new Error(`FixCore unknown configuration field ${key}`);
   for (const tag of rules.defaultTags || []) if (!behaviorTags.has(tag)) throw new Error(`FixCore unknown behavior tag ${tag}`);
@@ -100,7 +100,11 @@ export function protectionReceipt(ctx, entity, kind, amount) {
     phase: 'damage.mitigation', subjectId: ownerId, context: { owner, damageKind: kind }, amount, quantity: true });
   const sources = [...receipt.sources];
   if (receipt.rounding) sources.push({ id: 'rounding', label: 'Final damage rounding', stage: 'rounding', operation: 'add', amount: receipt.rounding });
-  return { ...receipt, reduced: Math.max(0, amount - receipt.amount), sources };
+  // Poise cannot absorb more than it holds (owner, 2026-10-18 20:09): the rest of the hit gets through.
+  const held = kind === 'physical' && owner?.persistentPoise ? Math.max(0, owner.persistentPoise.value) : Infinity;
+  let reduced = Math.max(0, amount - receipt.amount), taken = receipt.amount;
+  if (reduced > held) { taken += reduced - held; sources.push({ id: 'poise-cap', label: 'Poise cannot absorb more than it holds', stage: 'mitigation', operation: 'add', amount: reduced - held }); reduced = held; }
+  return { ...receipt, amount: taken, reduced, sources };
 }
 export function damageReceipt(targetId, hits) {
   return { version: 1, targetId, hits, totalDamage: hits.reduce((sum, hit) => sum + hit.hpLoss, 0) };
@@ -116,28 +120,29 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition) {
   const facts = {
     weak: `Attack rating ×${rules.statuses.weakARMultiplier} while active.`,
     vulnerable: `Damage taken ×${rules.statuses.vulnerabilityMultiplier} while active.`,
-    staggered: 'Interrupts the next action; inflicts Weak and Vulnerable.',
+    staggered: `Poise broke: lose ${fixCoreStaggeredRules(rules).staminaLoss} SP next turn and gain ${fixCoreStaggeredRules(rules).vulnerableStacks} Vulnerable. Repeat breaks only extend Vulnerable.`,
     evade: `Evasion +${rules.accuracy.evasionPerStack} per stack.`,
     precision: `Precision +${rules.accuracy.precisionPerStack} per stack.`,
   };
-  if (facts[id]) row.tooltip = row.description = `${facts[id]} Applications add stacks. Lose ${rules.statuses.decayAmount} stack at the start of the owner's turn each round.`;
+  if (id === 'staggered') row.tooltip = row.description = facts[id];
+  else if (facts[id]) row.tooltip = row.description = `${facts[id]} Applications add stacks. Lose ${rules.statuses.decayAmount} stack at the start of the owner's turn each round.`;
   return row;
 }
 
 export function fixCoreProtectionDescription(ctx,entity,kind) {
   if (!fixCoreEnabled(ctx) || !entity) return null;
   const damageKind = kind === 'ward' || kind === 'magical' ? 'magical' : 'physical';
-  const shadow = {...entity,persistentWard:{...entity.persistentWard,value:1},persistentPoise:{...entity.persistentPoise,value:1}};
+  // A deep pool, so the percentages shown are the uncapped absorbed shares.
+  const shadow = {...entity,persistentWard:{...entity.persistentWard,value:1000},persistentPoise:{...entity.persistentPoise,value:1000}};
   const receipt = protectionReceipt(ctx,shadow,damageKind,100);
   const restores = fixCoreWardDisabled(ctx) ? 'Poise' : 'both Poise and Ward';
-  const ratio = fixCorePoiseRules(rawRules(ctx));
-  // Owner D13: with depletion by ratio, a hit costs Poise floor(ratio x its damage); otherwise the prevented damage.
-  const spends = ratio.depletes ? `Each hit costs Poise ${Math.round(ratio.damageRatio * 100)}% of its damage (rounded down), before it lands. Breaking Poise leaves the owner Staggered.` : 'The prevented damage spends this pool.';
+  // Owner, 2026-10-18 20:09: Poise absorbs a share of each hit and loses exactly what it absorbed.
+  const spends = 'The damage it absorbs is taken off the pool, and when the pool is empty the owner is Staggered.';
   if (fixCoreWardDisabled(ctx)) {
     const poise = protectionReceipt(ctx,shadow,'physical',100);
-    return `While active, Poise reduces all damage by ${poise.reduced}%. ${spends} Block cards restore Poise by their Block amount, up to its maximum.`;
+    return `While active, Poise absorbs ${poise.reduced}% of each hit (a quarter, rounded down). ${spends} Block cards restore Poise by their Block amount, up to its maximum.`;
   }
-  return `While active, reduces ${damageKind} damage by ${receipt.reduced}%. ${spends} Block cards restore ${restores} by their Block amount, up to each maximum.`;
+  return `While active, absorbs ${receipt.reduced}% of ${damageKind} damage. ${spends} Block cards restore ${restores} by their Block amount, up to each maximum.`;
 }
 
 export function snapshotFixCoreRules(ctx) {
@@ -145,24 +150,6 @@ export function snapshotFixCoreRules(ctx) {
   rules.protectionParameters=Object.fromEntries(fixCoreProtection.filter(([id])=>id.startsWith('defense.')).map(([id,row])=>[id,{...parameterDefaults(row.manifest.parameters),...(rules.protectionParameters?.[id] || {})}]));
   return validateFixCoreRules(rules);
 }
-
-/**
- * Poise damage a hit deals under FixCore: floor(damageRatio x incoming damage), whole, never more than the pool
- * holds. Null when Poise does not deplete by ratio (depletes:false) or the owner has no Poise left.
- * Owner D13: "poise damage is floor(.2 of the total damage) inflicted and calculated before damage".
- */
-export function fixCorePoiseDamage(ctx, entity, incoming) {
-  if (!fixCoreEnabled(ctx) || !(incoming > 0) || !(entity?.persistentPoise?.value > 0)) return 0;
-  const rules = fixCorePoiseRules(rawRules(ctx));
-  if (!rules.depletes) return 0;
-  return Math.min(entity.persistentPoise.value, Math.max(0, Math.floor(incoming * rules.damageRatio + 1e-9)));
-}
-/** The Poise a receipt spends: its ratio damage when Poise depletes by ratio, else the legacy prevented amount. */
-export function fixCorePoiseSpent(ctx, receipt) {
-  return fixCorePoiseRules(rawRules(ctx)).depletes ? receipt.poiseDamage || 0 : receipt.poiseMitigated || 0;
-}
-/** True when FixCore is active and Poise is spent by ratio damage (Poise.depletes), not by what it prevented. */
-export function fixCorePoiseDepletes(ctx) { return fixCoreEnabled(ctx) && fixCorePoiseRules(rawRules(ctx)).depletes; }
 
 /** The combat stance a Staggered owner stands in until its next turn begins (shared by live play and previews). */
 export const fixCoreStaggeredStance = entity => ({ maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + 1 });

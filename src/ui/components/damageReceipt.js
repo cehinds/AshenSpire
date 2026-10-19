@@ -16,12 +16,10 @@ export function damageReceiptLines(receipt) {
         : `${source.amount >= 0 ? '+' : '−'}${number(Math.abs(source.amount))}`;
       lines.push(`${source.label || source.id}: ${operation}${source.stage ? ` (${source.stage})` : ''}`);
     }
-    const reductions = [['wardReduced', 'Ward'], ['poiseReduced', t('statsPreview.overview.poise')], ['blocked', 'Block']]
+    const reductions = [['wardReduced', 'Ward'], ['poiseReduced', null], ['blocked', 'Block']]
       .filter(([key]) => Number.isFinite(hit[key]) && hit[key] > 0)
-      .map(([key, label]) => `${label} −${number(hit[key])}`);
+      .map(([key, label]) => label ? `${label} −${number(hit[key])}` : t('combat.receipt.poiseAbsorbed', { n: number(hit[key]) }));
     if (reductions.length) lines.push(reductions.join('; '));
-    // Core: Poise damage is a share of the whole hit, dealt before it lands (D13).
-    if (Number.isFinite(hit.poiseDamage) && hit.poiseDamage > 0) lines.push(`${t('statsPreview.overview.poise')} damage −${number(hit.poiseDamage)} (dealt before the hit)`);
     lines.push(`Final HP damage: ${number(hit.hpLoss)}${hit.rounding ? ` (${hit.rounding})` : ''}`);
   }
   lines.push(`${receipt.hits.length} hit${receipt.hits.length === 1 ? '' : 's'} · ${number(receipt.totalDamage)} total HP damage`);

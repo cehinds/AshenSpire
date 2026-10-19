@@ -1,6 +1,6 @@
 import { resolveAttackHit } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCorePoiseSpent, fixCorePoiseDamage, fixCorePoiseDepletes, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreRules, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
 import { weaponDamageBasis } from './cardBehavior.js';
 import { MANEUVERS, trimCombatStances } from './concurrentStances.js';
 import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPlan, proposalThreshold, proposalHealingPlan } from './proposalStatusRuntime.js';
@@ -326,6 +326,27 @@ function claimStagger(ctx, target) {
   return true;
 }
 
+// A Poise break (owner D13): the owner is Staggered. An enemy's break counts against the round's stagger limit.
+function fixCorePoiseBreak(ctx, source, target) {
+  ctx.emit('poiseBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) });
+  if (target.kind === 'enemy') { claimStagger(ctx, target); staggerEnemy(ctx, target, { cause: 'poiseBreak' }); }
+  else fixCoreStagger(ctx, target, { cause: 'poiseBreak' });
+}
+
+/**
+ * Extra Poise damage a card or trigger carries (Smash pressure, a Poise rider) under FixCore: whole numbers,
+ * never more than the pool holds; emptying it breaks Poise. Poise absorbed by a hit is spent in the hit itself.
+ */
+export function drainFixCorePoise(ctx, source, target, amount) {
+  const poise = target?.persistentPoise, n = Math.max(0, Math.floor(amount));
+  if (!target?.alive || !(n > 0) || !(poise?.value > 0)) return 0;
+  const spent = Math.min(poise.value, n);
+  poise.value -= spent;
+  ctx.emit('persistentPoiseChanged', { targetId: target.id, spent, value: poise.value, max: poise.max, source: 'poiseDamage', ...seatOf(ctx, target) });
+  if (poise.value === 0 && target.hp > 0) fixCorePoiseBreak(ctx, source, target);
+  return spent;
+}
+
 // One receipt evaluator drives configured live damage and detached previews.
 function applyProfileDamage(ctx, source, target, base, carrier) {
   if (fixCoreEnabled(ctx) && !carrier?.expansionContact && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
@@ -350,24 +371,20 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     if (target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
     if (target.persistentPoise) {
       poiseBefore = target.persistentPoise.value;
-      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - fixCorePoiseSpent(ctx, receipt));
+      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated);
     }
   }
   target.hp -= receipt.hpLoss;
   ctx.emit('damageDealt', { sourceId: source?.id || null, targetId: target.id,
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
-    poiseMitigated: receipt.poiseMitigated, ...(receipt.poiseDamage ? { poiseSpent: receipt.poiseDamage } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
+    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
     advantage: receipt.advantage, blockRemaining: target.block, barrierRemaining: target.barrier,
     wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
   if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
   // Poise taken from above zero to zero is a break: the owner takes the Staggered stance (D13).
   const poiseBroke = fixCoreEnabled(ctx) && poiseBefore > 0 && target.persistentPoise?.value === 0 && target.alive && target.hp > 0;
-  if (poiseBroke) {
-    ctx.emit('poiseBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) });
-    if (target.kind === 'enemy') { claimStagger(ctx, target); staggerEnemy(ctx, target, { cause: 'poiseBreak' }); }
-    else fixCoreStagger(ctx, target, { cause: 'poiseBreak' });
-  }
+  if (poiseBroke) fixCorePoiseBreak(ctx, source, target);
   // One break is one stagger: a hit that already broke Poise has staggered the target.
   if (receipt.interrupted && !poiseBroke && target.kind === 'enemy' && target.alive) {
     if (claimStagger(ctx, target)) staggerEnemy(ctx, target);
@@ -615,21 +632,16 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   syncPoiseMaximum(ctx, target);
   let poiseLeft = Math.max(0, target.persistentPoise?.value || 0);
   const poiseAbsorbed = hits.map(() => 0);
-  const poiseSpent = hits.map(() => 0);
   hits.forEach((hit, index) => {
     const poiseIn = residual[index] + (poiseMeetsMagic ? magicLeft[index] : 0);
-    // Owner D13: Poise damage floor(ratio x the hit) is dealt first; the hit then meets what Poise is left.
-    const ratioDamage = poiseLeft > 0 ? fixCorePoiseDamage(ctx, { ...target, persistentPoise: { ...target.persistentPoise, value: poiseLeft } }, hit.amount) : 0;
-    poiseLeft -= ratioDamage;
-    poiseSpent[index] = ratioDamage;
-    if (poiseIn > 0 && poiseLeft + ratioDamage > 0) {
+    if (poiseIn > 0 && poiseLeft > 0) {
       if (fixCoreEnabled(ctx)) {
         const shadow = { ...target, persistentPoise: { ...target.persistentPoise, value: poiseLeft } };
         const protection = protectionReceipt(ctx, shadow, 'physical', poiseIn);
         poiseAbsorbed[index] = protection.reduced;
         protectionSources[index].push(...protection.sources);
       } else poiseAbsorbed[index] = residual[index] - Math.max(1, residual[index] - poiseLeft);
-      if (!fixCorePoiseDepletes(ctx)) poiseLeft = Math.max(0, poiseLeft - poiseAbsorbed[index]);
+      poiseLeft = Math.max(0, poiseLeft - poiseAbsorbed[index]);
     }
   });
   // What each contact costs HP once Block and Poise have done their part: the figure a preview shows.
@@ -639,7 +651,6 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   receipt.wardSpentAmounts = wardSpent;
   receipt.wardReducedAmounts = wardReduced;
   receipt.poiseReducedAmounts = poiseAbsorbed;
-  receipt.poiseDamageAmounts = poiseSpent;
   receipt.damageReceipt = damageReceipt(target.id, hits.map((hit, index) => ({
     incoming: hit.amount, physical: physicalTyped[index], magical: magicTyped[index],
     blocked: physicalTyped[index] - residual[index], wardReduced: wardReduced[index],
@@ -748,21 +759,15 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const physicalLeft = Math.max(0, blockable - blocked) + (poiseMeetsMagic ? Math.max(0, amount - blockable) : 0);
   let poiseAbsorbed = 0;
   let poiseBroke = false;
-  let poiseSpent = 0;
-  if ((physicalLeft > 0 || fixCoreEnabled(ctx)) && target.persistentPoise) {
+  if (physicalLeft > 0 && target.persistentPoise) {
     syncPoiseMaximum(ctx, target);
     const poise = target.persistentPoise;
     if (poise.value > 0) {
-      const poiseBefore = poise.value;
-      // Owner D13: the hit deals floor(ratio x its damage) to Poise first, then meets what Poise is left.
-      const ratioDamage = fixCorePoiseDamage(ctx, target, tactical.amounts?.[contactIndex] ?? raw);
-      const met = ratioDamage ? { ...target, persistentPoise: { ...poise, value: poise.value - ratioDamage } } : target;
-      const passing = physicalLeft <= 0 ? 0 : fixCoreEnabled(ctx) ? protectionReceipt(ctx, met, 'physical', physicalLeft).amount : Math.max(1, physicalLeft - poise.value);
-      poiseAbsorbed = physicalLeft > 0 ? physicalLeft - passing : 0;
-      poiseSpent = fixCorePoiseDepletes(ctx) ? ratioDamage : poiseAbsorbed;
-      poise.value = Math.max(0, poise.value - poiseSpent);
+      const passing = fixCoreEnabled(ctx) ? protectionReceipt(ctx, target, 'physical', physicalLeft).amount : Math.max(1, physicalLeft - poise.value);
+      poiseAbsorbed = physicalLeft - passing;
+      poise.value = Math.max(0, poise.value - poiseAbsorbed);
       hpLoss -= poiseAbsorbed;
-      if (poise.value === 0 && poiseBefore > 0) { poiseBroke = true; breaks.push(breakPoise(ctx, source, target)); }
+      if (poise.value === 0) { poiseBroke = true; breaks.push(breakPoise(ctx, source, target)); }
     }
   }
   if (hpLoss) target.hp -= hpLoss;
@@ -773,7 +778,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,
     ...(fixCoreEnabled(ctx) ? { damageReceipt: damageReceipt(target.id, [{ ...tactical.damageReceipt?.hits?.[contactIndex],
       incoming: raw, physical: blockable, magical: tactical.magicAmounts?.[contactIndex] || 0,
-      blocked, wardReduced: liveWardReduction, poiseReduced: poiseAbsorbed, poiseDamage: poiseSpent, hpLoss,
+      blocked, wardReduced: liveWardReduction, poiseReduced: poiseAbsorbed, hpLoss,
       sources: tactical.damageReceipt?.hits?.[contactIndex]?.sources || [] }]) } : {}),
     // The hit as it arrived, before typed resistance or weakness: the log's starting figure.
     ...(Number.isFinite(tactical.amounts?.[contactIndex]) ? { incoming: tactical.amounts[contactIndex] } : {}),
@@ -783,7 +788,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     ...(resisted !== ward ? { resisted } : {}),
     ...(barrierSpent ? { barrierAbsorbed: barrierSpent } : {}),
     ...(wardSpent ? { wardAbsorbed: wardSpent, wardRemaining: target.persistentWard?.value || 0 } : {}),
-    ...(poiseAbsorbed || poiseSpent ? { poiseAbsorbed, poiseSpent, poiseRemaining: target.persistentPoise?.value || 0 } : {}),
+    ...(poiseAbsorbed ? { poiseAbsorbed, poiseRemaining: target.persistentPoise?.value || 0 } : {}),
     ...(immune && amount === 0 ? { immune: true } : {}),
     // The Force (Arcane) part a Silenced target was immune to; the rest of the hit landed.
     ...(tactical.forceImmuneAmounts?.[contactIndex] ? { forceImmune: tactical.forceImmuneAmounts[contactIndex] } : {}),
@@ -1208,7 +1213,10 @@ export function staggerPlayer(ctx, player) {
  */
 export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false, cause = null, source = null, cardId = null } = {}) {
   // `source` and `cardId` only name who dealt it in the receipt (an explicit amount never reads the source).
-  if (configuredCombat(ctx)) return; // Core Poise mitigation never fills a legacy break meter.
+  if (configuredCombat(ctx)) { // Core Poise never fills a legacy break meter; extra Poise damage drains the pool.
+    if (fixCoreEnabled(ctx)) drainFixCorePoise(ctx, source, entity, amount);
+    return;
+  }
   if (ctx.ratingsRules) return Ratings.applyRatingImpact(ctx, source, entity, { damageSchool: 'physical' }, amount, { knowledgeMatchup, cause, cardId });
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
   if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
@@ -1633,6 +1641,7 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
         if (row?.receipt?.avoided) continue;
+        if (fixCoreEnabled(ctx) && t.persistentPoise) { drainFixCorePoise(ctx, action.source, t, evalNum(ctx, action, eff.amount, 0, t)); continue; }
         if (splitSmashPressure(ctx, action, t, row)) continue;
         const spent = Control.spendPersistentWard(ctx, t,
         evalNum(ctx, action, eff.amount, 0, t) * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });

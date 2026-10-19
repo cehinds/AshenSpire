@@ -9,8 +9,7 @@
     "defense:poiseProtection"
   ],
   "poise": {
-    "damageRatio": 0.2,
-    "depletes": true
+    "drain": "prevented"
   },
   "staggered": {
     "stance": true,

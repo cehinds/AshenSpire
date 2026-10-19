@@ -1657,3 +1657,4 @@ settings.row.combatSpeed,,Combat speed ×,Scales action waits and sprite playbac
 settings.row.combatPreference,,Auto combat preference,Prioritize offensive or defensive cards using known information.,
 settings.row.combatActionDelay,,Action delay (ms),"Wait after intent and reaction words. Default 500 ms, before applying the combat speed multiplier.",
 combat.deckEdit.deferred,,,Changes apply next encounter; current combat piles stay unchanged.,
+combat.receipt.poiseAbsorbed,,Poise absorbed {n},,

@@ -1,4 +1,4 @@
-import { fixCoreEnabled, damageReceipt, fixCorePoiseSpent, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
 import { configuredCombat, profileDamageReceipt } from './gameProfileCombat.js';
 import { computeAttackDamage } from './actions.js';
 import { prepareMatchupHit, matchupRules, hitRiders } from './combatMatchups.js';
@@ -39,7 +39,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
           if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
           if (defender.persistentPoise) {
             const poiseBefore = defender.persistentPoise.value;
-            defender.persistentPoise.value = Math.max(0, poiseBefore - fixCorePoiseSpent(ctx, receipt));
+            defender.persistentPoise.value = Math.max(0, poiseBefore - receipt.poiseMitigated);
             // A Poise break staggers the owner exactly as live play does (D13): same guards, stance and Vulnerable.
             if (poiseBefore > 0 && defender.persistentPoise.value === 0 && !(ctx.foundation && defender.impactProtectedUntil >= ctx.turn)) {
               {

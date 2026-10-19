@@ -10,11 +10,11 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { prepareBreakInterrupt } from '../src/engine/combatStatusControl.js';
-import { applyAttackDamage, gainBlock } from '../src/engine/actions.js';
+import { applyAttackDamage, gainBlock, drainFixCorePoise } from '../src/engine/actions.js';
 import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
 import { getMult } from '../src/engine/statuses.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
-import { validateFixCoreRules, fixCorePoiseRules, fixCoreStaggeredRules, fixCoreProtectionDescription } from '../src/model/fixCoreMechanics.js';
+import { validateFixCoreRules, fixCorePoiseRules, fixCoreStaggeredRules, fixCoreProtectionDescription, fixCoreStatusDefinition } from '../src/model/fixCoreMechanics.js';
 import { combatStanceRow } from '../src/model/combatTacticsDisplay.js';
 import { damageReceiptLines } from '../src/ui/components/damageReceipt.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
@@ -31,36 +31,57 @@ function live(poise = 20) {
 }
 const hit = (combat, target, amount, source = combat.player) => { primeAccuracyRolls(combat); applyAttackDamage(combat, source, target, amount, [], carrier); return combat.eventLog.filter(row => row.type === 'damageDealt').at(-1); };
 
-test('shipped Core data: Poise 0.2 depleting, Staggered stance -1 SP +1 Vulnerable extend-only', () => {
-  assert.deepEqual(shipped.poise, { damageRatio: 0.2, depletes: true });
+test('shipped Core data: Poise drains what it prevented; Staggered stance -1 SP +1 Vulnerable extend-only', () => {
+  assert.deepEqual(shipped.poise, { drain: 'prevented' });
   assert.deepEqual(shipped.staggered, { stance: true, staminaLoss: 1, vulnerableStacks: 1, extendOnly: true });
   assert.equal(shipped.statuses.staggerRiders.weak, 0);
-  assert.deepEqual(fixCorePoiseRules({}), { damageRatio: 0.2, depletes: true }, 'old saves fall back to the ruling');
+  assert.deepEqual(fixCorePoiseRules({}), { drain: 'prevented' }, 'old saves fall back to the ruling');
   assert.equal(fixCoreStaggeredRules({}).staminaLoss, 1);
-  assert.throws(() => validateFixCoreRules({ ...shipped, poise: { damageRatio: 2, depletes: true } }), /poise/);
+  assert.throws(() => validateFixCoreRules({ ...shipped, poise: { drain: 'ratio' } }), /poise/);
   assert.throws(() => validateFixCoreRules({ ...shipped, staggered: { ...shipped.staggered, staminaLoss: 1.5 } }), /staggered/);
 });
 
-test('Poise damage is floor(0.2 x the whole hit), dealt before it lands', () => {
-  for (const [damage, lost] of [[4, 0], [5, 1], [9, 1], [10, 2], [24, 4]]) {
+test('Poise absorbs a quarter of the hit and loses what it absorbed (8 -> 6, Poise -2)', () => {
+  for (const [damage, absorbed] of [[4, 1], [8, 2], [9, 3], [20, 5]]) {
     const { combat, target } = live();
     const event = hit(combat, target, damage);
-    assert.equal(20 - target.persistentPoise.value, lost, `${damage} damage`);
-    assert.equal(event.poiseSpent ?? 0, lost);
+    assert.equal(500 - target.hp, damage - absorbed, `${damage} damage`);
+    assert.equal(20 - target.persistentPoise.value, absorbed);
+    assert.equal(event.poiseAbsorbed, absorbed, 'the event says how much Poise absorbed');
   }
 });
 
-test('Poise damage is a whole share even when Block soaks the hit', () => {
+test('Block comes first: Poise absorbs only what Block left', () => {
   const { combat, target } = live(); target.block = 50;
   hit(combat, target, 20);
-  assert.equal(target.persistentPoise.value, 16);
+  assert.equal(target.persistentPoise.value, 20);
+  const second = live(); second.target.block = 12;
+  hit(second.combat, second.target, 20);
+  assert.equal(20 - second.target.persistentPoise.value, 2, 'floor(8 x 0.75) = 6, so Poise absorbed 2 of the 8 Block left');
 });
 
-test('a hit that breaks Poise lands unmitigated and staggers: stance, -1 SP, +1 Vulnerable', () => {
+test('Poise cannot absorb more than it holds: the rest of the hit gets through', () => {
+  const { combat, target } = live(1);
+  hit(combat, target, 8);
+  assert.equal(500 - target.hp, 7, 'absorbed 1, not 2');
+  assert.equal(target.persistentPoise.value, 0);
+});
+
+test('extra Poise damage a card carries adds to the pool loss, in whole numbers, capped at the pool', () => {
+  const { combat, target } = live();
+  hit(combat, target, 8);
+  assert.equal(drainFixCorePoise(combat, combat.player, target, 3.9), 3);
+  assert.equal(target.persistentPoise.value, 15);
+  assert.equal(drainFixCorePoise(combat, combat.player, target, 50), 15);
+  assert.equal(target.persistentPoise.value, 0);
+  assert.equal(target.combatStance.maneuver, 'staggered');
+});
+
+test('a hit that breaks Poise staggers: stance, -1 SP, +1 Vulnerable', () => {
   const { combat, target } = live(2);
   hit(combat, target, 10);
   assert.equal(target.persistentPoise.value, 0);
-  assert.equal(target.hp, 490, 'the breaking hit met no Poise mitigation');
+  assert.equal(500 - target.hp, 8, '10 damage, Poise absorbed its last 2');
   assert.equal(target.combatStance.maneuver, 'staggered');
   assert.equal(target.pendingStaminaLoss, 1);
   assert.equal(target.statuses.vulnerable.stacks, 1);
@@ -112,15 +133,7 @@ test('the player is staggered the same way: next turn -1 SP, stance, +1 Vulnerab
 test('preview of a multihit card sees the break: later hits take Vulnerable', () => {
   const { combat, target } = live(1);
   const preview = previewDamageHits(combat, combat.player, target, 20, [], carrier, 2);
-  assert.equal(preview.hitDamages[1], Math.floor(preview.hitDamages[0] * 1.25));
-});
-
-test('UI: the Staggered stance row and the receipt Poise line', () => {
-  const { combat, target } = live(2);
-  hit(combat, target, 10);
-  assert.equal(combatStanceRow(target).name, 'Staggered stance');
-  const lines = damageReceiptLines({ hits: [{ incoming: 10, hpLoss: 10, poiseDamage: 2 }], totalDamage: 10 });
-  assert.ok(lines.some(line => /Poise damage −2/.test(line)));
+  assert.deepEqual(preview.hitDamages, [19, 25], 'hit 1: Poise absorbed its last 1; hit 2 meets Vulnerable x1.25');
 });
 
 test('one break is one stagger: a smash-advantage hit that also breaks Poise staggers once', () => {
@@ -146,7 +159,7 @@ test('preview skips the break Vulnerable when impact protection would refuse the
   combat.foundation = { rules: { impact: { protectionTurns: 1 } } };
   target.impactProtectedUntil = combat.turn;
   const preview = previewDamageHits(combat, combat.player, target, 20, [], carrier, 2);
-  assert.equal(preview.hitDamages[1], preview.hitDamages[0], 'no Vulnerable on the second hit');
+  assert.deepEqual(preview.hitDamages, [19, 20], 'no Vulnerable on the second hit');
 });
 
 test('preview equals live when an earlier hit breaks Poise (stance replaced, one stagger per round)', () => {
@@ -160,10 +173,20 @@ test('preview equals live when an earlier hit breaks Poise (stance replaced, one
   assert.deepEqual(preview, live2);
 });
 
-test('the Poise description follows the depletion rule', () => {
+test('UI: the Staggered stance row and the receipt line say what Poise absorbed', () => {
+  const { combat, target } = live(2);
+  hit(combat, target, 10);
+  assert.equal(combatStanceRow(target).name, 'Staggered stance');
+  const lines = damageReceiptLines({ hits: [{ incoming: 10, hpLoss: 8, poiseReduced: 2 }], totalDamage: 8 });
+  assert.ok(lines.some(line => /Poise absorbed 2/.test(line)));
+});
+
+test('the Poise tooltip and the Core Staggered definition describe the stance rules', () => {
   const { combat, target } = live();
-  assert.match(fixCoreProtectionDescription(combat, target, 'poise'), /costs Poise 20% of its damage/);
-  assert.doesNotMatch(fixCoreProtectionDescription(combat, target, 'poise'), /prevented damage spends/);
-  combat.fixCoreRules = { ...structuredClone(combat.fixCoreRules || combat.gameProfile.fixCoreRules), poise: { damageRatio: 0.2, depletes: false } };
-  assert.match(fixCoreProtectionDescription(combat, target, 'poise'), /prevented damage spends/);
+  const text = fixCoreProtectionDescription(combat, target, 'poise');
+  assert.match(text, /absorbs 25% of each hit/);
+  assert.match(text, /Staggered/);
+  const def = fixCoreStatusDefinition(combat, 'staggered', { id: 'staggered', name: 'Staggered' });
+  assert.match(def.tooltip, /1 SP next turn.*1 Vulnerable.*only extend/);
+  assert.doesNotMatch(def.tooltip, /Weak|Interrupt|stacks/i);
 });
