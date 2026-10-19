@@ -74,6 +74,9 @@ function levelsWith(run, itemRef, level) {
   return (current[itemRef] || 0) === level ? { ...current } : { ...current, [itemRef]: level };
 }
 
+// One entry per distinct fight: the shared "before" fight plus one "after" per upgradable item, so a whole LAN
+// snapshot (every item's card rows) fits and a second snapshot of the same run runs no fights at all.
+const MEMO_LIMIT = 64;
 const memo = new Map();
 // Rest previews commit every candidate on a draft only to see recovery; they must not run card simulations.
 let simulationOff = 0;
@@ -101,7 +104,7 @@ function memoized(run, parts, compute) {
   if (key !== null && memo.has(key)) return memo.get(key);
   const value = compute();
   if (key !== null) {
-    if (memo.size >= 12) memo.delete(memo.keys().next().value);
+    if (memo.size >= MEMO_LIMIT) memo.delete(memo.keys().next().value);
     memo.set(key, value);
   }
   return value;

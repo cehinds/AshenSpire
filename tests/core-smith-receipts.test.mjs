@@ -10,6 +10,7 @@ import { createRunState } from '../src/model/state.js';
 import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
 import { gameProfileEquipmentReceipt } from '../src/model/gameProfileRun.js';
 import { smithingPlan } from '../src/model/smithing.js';
+import { coreCardSimulationCount } from '../src/model/smithingCore.js';
 import { smithSelectionModel } from '../src/ui/models/SmithSelectionModel.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
@@ -227,4 +228,13 @@ test('a Core Smith plan keeps its card rows through JSON (co-op snapshot), and t
   const shown = (source) => smithSelectionModel(reg, source, 'armament/greatsword').properties.selected.affectedRows;
   assert.ok(shown(wire).some((row) => row.role === 'card' || row.cardId), 'the client lists card rows');
   assert.deepEqual(JSON.parse(JSON.stringify(shown(wire))), JSON.parse(JSON.stringify(shown(plan))), 'the client shows what the host shows');
+});
+
+test('serializing a Core Smith plan again (or a fresh plan of the same run) runs no extra card fights', () => {
+  const run = fresh(); visit(run);
+  JSON.stringify(smithingPlan(reg, run));
+  const fights = coreCardSimulationCount();
+  const plan = smithingPlan(reg, run);
+  JSON.stringify(plan); JSON.stringify(plan); JSON.stringify(smithingPlan(reg, run));
+  assert.equal(coreCardSimulationCount(), fights, 'the memo holds every candidate of one snapshot');
 });
