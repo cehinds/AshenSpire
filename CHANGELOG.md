@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Precision shows on the HUD badge row** ([#2188](https://github.com/cehinds/AshenSpire/pull/2188), `0.7.1.1689`). Precision now shows as a badge on the combat HUD pip next to Evade, for you and for enemies, instead of in the status tray.
+- **Precision shows on the HUD badge row** ([#2188](https://github.com/cehinds/AshenSpire/pull/2188), `0.7.1.1691`). Precision now shows as a badge on the combat HUD pip next to Evade, for you and for enemies, instead of in the status tray.
+- **Reward picks go straight to your deck** ([#2196](https://github.com/cehinds/AshenSpire/pull/2196), `0.7.1.1691`). Winning a card reward now lets you add it straight to your deck or open the deck editor with it ready; winning a weapon or armour lets you equip it right away.
 - **Faster card previews** ([#2198](https://github.com/cehinds/AshenSpire/pull/2198), `0.7.1.1689`). Card previews and rule checks no longer re-copy the whole rule set each time, so tapping and aiming cards responds faster on phones.
 - **Defensive stances add Block** ([#2191](https://github.com/cehinds/AshenSpire/pull/2191), `0.7.1.1687`). Defend and other Block cards now count your stance's Defense Rating bonus, so a defensive stance really gives more Block.
 - **Co-op HUD check back to green** ([#2186](https://github.com/cehinds/AshenSpire/pull/2186), `0.7.1.1685`). The co-op browser check now turns on one-tap play for its Counter and vow shortcut steps, since one tap only selects a card by default. Nothing changes in play.
