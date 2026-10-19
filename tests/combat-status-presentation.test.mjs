@@ -12,7 +12,7 @@ test('Core 2 PIPs and card glossary share effective status tooltips without muta
   const view = combatStatusPresentationRegistries(registries,combat);
   assert.match(view.statuses.get('weak').tooltip,/Attack rating.*0\.75/);
   assert.match(view.statuses.get('vulnerable').tooltip,/1\.25/);
-  assert.match(view.statuses.get('evade').tooltip,/Evasion \+1 per stack/);
+  assert.match(view.statuses.get('evade').tooltip,/Each stack adds 1 \(base 1\) plus the holder's DEX to its Evasion roll/);
   assert.match(view.statuses.all()[0].tooltip,/start of the owner's turn/);
   assert.equal(registries.statuses.get('weak'),weak);
   assert.equal(weak.tooltip,'Legacy damage reduction.');
