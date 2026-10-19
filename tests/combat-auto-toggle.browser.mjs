@@ -23,6 +23,12 @@ try {
     assert.ok(a.x + a.width <= r.x || r.x + r.width <= a.x, `${profile} ${width}: Auto does not overlap Reaction`);
     assert.ok(Math.abs((a.y + a.height / 2) - (r.y + r.height / 2)) < 14, `${profile} ${width}: same row`);
     assert.equal(await auto.getAttribute('aria-checked'), 'false');
+    const clipped = await page.evaluate(() => [...document.querySelectorAll('.combat-tools [data-combat-tool], .combat-tools [data-combat-tool] span')]
+      .filter(node => node.scrollWidth > node.clientWidth + 1).map(node => node.className || node.dataset.combatTool));
+    assert.deepEqual(clipped, [], `${profile} ${width}: no footer text is clipped`);
+    if (width <= 480) {
+      for (const sw of ['auto', 'reaction']) assert.equal(await page.locator(`[data-combat-tool="${sw}"] .reaction-switch-value`).isVisible(), false, `${sw} state text hidden on phone`);
+    } else assert.equal(await auto.locator('.reaction-switch-value').isVisible(), true, 'state text kept on desktop');
     if (out) await page.screenshot({ path: `${out}/${profile}-${width}x${height}-off.png` });
     await auto.focus(); await page.keyboard.press('Enter');
     await page.waitForFunction(() => document.querySelector('[data-combat-tool="auto"]').getAttribute('aria-checked') === 'true');
