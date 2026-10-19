@@ -275,3 +275,17 @@ test('a skipped playback flushes the un-applied receipts into the row memo once 
   run(events.slice(0, 1), reduced, memo, advanceFollowUps, null, c);
   assert.equal(memo.row(e.id, true).length, 2, 'a receipt already reduced is not reduced twice');
 });
+
+test('a screen remounted during the second follow-up\'s reaction pairs its slots with the right trace entries', () => {
+  const def = registries.enemies.get('wanderingSoldier');
+  // The live trace already holds two presented follow-ups (the second one is in flight); one move remains planned.
+  const trace = [{ read: true, outcome: 'played' }, { read: true, outcome: 'played' }];
+  const plan = followUpPlan({ queue: [{ moveId: 'guard' }], def, offset: trace.length });
+  assert.deepEqual(advanceFollowUps(plan, trace).map((s) => s.kind), ['unknown'], 'the remaining move is not read yet: "?", not an earlier move\'s read');
+  // Later reads land at offset + slot: with one earlier entry, slot 0 is trace[1] (unread) and slot 1 is trace[2] (read).
+  const later = followUpPlan({ queue: [{ moveId: 'guard' }, { moveId: 'slash' }], def, offset: 1 });
+  assert.deepEqual(advanceFollowUps(later, [{ read: true }, { read: false }, { read: true }]).map((s) => s.kind + (s.icon ?? '')), ['unknown', 'actionattack']);
+});
+  next.headDone = true;
+  assert.deepEqual(advanceFollowUps(followUpPlan({ queue: [{ moveId: 'guard' }, { moveId: 'slash' }], def, offset: 1 }), [{ read: true }, { read: false }, { read: true }]).map((s) => s.kind + (s.icon ?? '')), ['unknown', 'actionattack'].slice(0, 2).map((x, i) => i === 0 ? x : x));
+});

@@ -21,9 +21,11 @@ import { combatIntentPresentation } from './CombatIntentModel.js';
  * followUpPlan({ queue, def }) → the actor's turn plan, taken before its phase. queue: its planned follow-ups
  * ({ moveId }) in play order, the head excluded; def: its enemy definition, read for an icon only on a read entry.
  */
-export function followUpPlan({ queue = [], def = null, enemyId = null, combat = null } = {}) {
+export function followUpPlan({ queue = [], def = null, enemyId = null, combat = null, offset = 0 } = {}) {
   const ids = Array.isArray(queue) ? queue.map(entry => entry?.moveId ?? null) : [];
-  return { ids, def, enemyId, combat, total: ids.length, cursor: 0, headDone: false };
+  // `offset`: trace entries already made for follow-ups presented before this plan's slot 0 (a screen remounted
+  // mid-turn rebuilds the plan from the remaining queue, while the live trace still holds the earlier moves).
+  return { ids, def, enemyId, combat, offset: Math.max(0, Number(offset) || 0), total: ids.length, cursor: 0, headDone: false };
 }
 
 // The symbol is what the current-intent presentation draws for that move (same function, same profile), so a read
@@ -52,7 +54,7 @@ export function remainingFollowUps(plan, trace) {
   if (!plan) return [];
   const out = [];
   for (let i = plan.cursor; i < plan.total; i++) {
-    out.push(Array.isArray(trace) && trace[i]?.read === true ? { kind: 'action', icon: iconFor(plan, i) } : { kind: 'unknown' });
+    out.push(Array.isArray(trace) && trace[(plan.offset || 0) + i]?.read === true ? { kind: 'action', icon: iconFor(plan, i) } : { kind: 'unknown' });
   }
   return out;
 }

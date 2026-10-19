@@ -1130,7 +1130,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const followPlans = {};
     for (const e of combat.enemies) {
       const plan = followMemo.plan(e.id, { resuming: !!combat.reactionCursor,
-        build: () => e.alive && e.plannedMoves?.length ? followUpPlan({ queue: e.plannedMoves, def: registries.enemies.get(e.enemyId), enemyId: e.id, combat }) : null });
+        build: () => e.alive && e.plannedMoves?.length ? followUpPlan({ queue: e.plannedMoves, def: registries.enemies.get(e.enemyId), enemyId: e.id, combat,
+          offset: combat.reactionCursor ? combat.followTrace?.[e.id]?.length || 0 : 0 }) : null });
       if (plan) followPlans[e.id] = plan;
     }
     const handPreviews = new Map();
