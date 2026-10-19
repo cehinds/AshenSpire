@@ -14,7 +14,7 @@ Contract: #2127 (merged). Implementation: #2129 `feature/FixCore`. Where a
 |---|---|---|---|
 | D1 | Core only (A) or Core + Current/v2 (B) | "a" | FixCore combat rules target the Core configured profile; Current/v2 untouched (except D16). |
 | D2 | JSON modules/content are the one authority; tag-binding runtime is its own epic | "y" | Yes. |
-| D3 | Add a Ward stage with physical/magical typing | "if core doesn't have damage typing, then remove ward then and just use poise" | Core's defense stages have no Ward and no damage-type split, but actions do carry a physical/spell `camp` (`combatMatchups.js`). Whether that counts as damage typing: **open**. Until answered: no Ward; Poise is the only protection pool. |
+| D3 | Add a Ward stage with physical/magical typing | "if core doesn't have damage typing, then remove ward then and just use poise" | Core's defense stages have no Ward and no damage-type split, but actions do carry a physical/spell `camp` (`combatMatchups.js`). Whether that counts as damage typing: **open**. Until answered: no Ward; Poise is the only protection pool. Owner, 2026-10-18 15:55: "I like ward I just want it toggled off in the json for now"; Ward is kept and switched off by `ward.enabled: false` in `content/source/fixCoreMechanics.json`. |
 | D4 | Poise becomes a depleting pool restored by Block | "block restores poise" | Option A as asked (Poise becomes a depleting pool that Block restores); restore rule detailed by the owner under D13. |
 | D5 | Matching-stance effectiveness 1.25 (A) or 1.0025 (B) | "A" | Matching-stance effectiveness 1.25: `stance.effectivenessMultiplier` in `content/source/fixCoreMechanics.json` (read by `src/model/stanceRules.js`). `advantageMultiplier` is a separate matchup modifier. |
 | D6 | Matching-stance cost discount lane | "if it has mp then mp first, if it is only sp, then sp" | The question's discount `max(cost−1, 1)` applies to MP when the card costs MP; else to SP. |
@@ -33,7 +33,7 @@ Contract: #2127 (merged). Implementation: #2129 `feature/FixCore`. Where a
 
 These settle every item that was open above. Where a reading above says **open**, this section wins.
 
-- D3: "No Ward, Poise only". Remove Ward from Core; Poise reduces all damage (the physical/spell `camp` stays for matchups).
+- D3: "No Ward, Poise only". Remove Ward from Core; Poise reduces all damage (the physical/spell `camp` stays for matchups). Follow-up (owner, 2026-10-18 15:55): "I like ward I just want it toggled off in the json for now". Ward code stays; `ward.enabled: false` in `content/source/fixCoreMechanics.json` switches it off in Core 2.
 - D13: "Add Block, cap max". A defensive card adds its Block to current Poise, capped at max Poise, and grants its Block.
 - D10: "Heal + floor before boss". Rest sites heal, plus Smith and a free level-up; the guaranteed rest is on the floor directly before the boss.
 - D8: "DC 5 + target INT + WIS + other bonuses". DC = 5 + target's INT + target's WIS + configured bonuses (default none); the observer rolls d20 + own WIS. Hit-% badge (owner, 13:59): "It shows when a card is selected that can inflict an effect or damage to a target, similar to how BG3 does it". The badge shows on each valid target while such a card is selected; Perception does not gate it.
