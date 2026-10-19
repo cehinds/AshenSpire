@@ -70,6 +70,15 @@ export function createStanceLedger(classify = stanceForCard) {
       const stance = classify(resolvedCard || { id: receipt.cardId, type: receipt.cardType, cardTags: receipt.cardTags });
       actors.set(actorId, stance); return stance;
     },
+    // Rebuild each actor's last confirmed card from a restored event log (a loaded save starts with an empty ledger).
+    // resolve(receipt) may return the resolved card; a missing or throwing resolver falls back to the receipt's own fields.
+    replay(events = [], resolve) {
+      for (const receipt of events) {
+        let card;
+        try { card = resolve?.(receipt); } catch { card = undefined; }
+        this.accept(receipt, card);
+      }
+    },
     get(actorId = 'player') { return actors.get(actorId) ?? null; },
     reset(actorId) { actorId === undefined ? actors.clear() : actors.delete(actorId); },
     snapshot() { return Object.fromEntries(actors); },
