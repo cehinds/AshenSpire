@@ -514,6 +514,18 @@ jobs:
           echo "Workbench published at https://cehinds.github.io/AshenSpire/workbench/ from $(git rev-parse --short HEAD)" >> "$GITHUB_STEP_SUMMARY"
       - name: The generator's own drift plant is still caught
         run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest ${MAIN_BUILD_ARGS:-}
+      # Say where the bytes are: Pages refuses an oversized artifact with no detail
+      # (run 39236238774), so the next growth is read here, not guessed.
+      - name: Report the assembled site's size by section
+        run: |
+          {
+            echo "### Assembled site size"
+            echo
+            echo '```'
+            du -sm _site | sed 's/\t/ MB total /'
+            du -sm _site/* | sort -rn | head -15
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
