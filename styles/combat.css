@@ -2057,3 +2057,20 @@ body.reduce-motion .target-hud-detail { transition: none; }
   grid-column:1; grid-row:1; justify-self:start; align-self:center;
   margin-inline-start:calc(var(--combat-log-button-width, 80px) + 8px);
 }
+/* Card option tiles: the picker grid for reactions, discards and card choices. */
+.card-option-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin-block: 0.5rem; }
+@media (min-width: 768px) { .card-option-grid { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); } }
+.card-option {
+  position: relative; display: flex; flex-direction: column; justify-content: center; gap: 0.3rem;
+  box-sizing: border-box; width: 100%; height: 6.25rem; min-height: 48px; padding: 0.6rem 0.7rem;
+  text-align: left; overflow: hidden;
+}
+.card-option .co-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-option .co-effect { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.2em; font-size: 0.92em; }
+.card-option .co-costs { display: flex; gap: 0.3rem; overflow: hidden; margin-top: auto; }
+.card-option .co-chip { flex: 0 0 auto; padding: 0 0.4rem; border: 1px solid var(--line-soft); border-radius: 999px; font-size: 0.75em; white-space: nowrap; }
+.card-option .co-order { position: absolute; top: 0.3rem; right: 0.4rem; font-weight: 700; color: var(--gold); }
+.card-option .val.up { color: var(--green); font-weight: 700; }
+.card-option .val.down { color: var(--ember); font-weight: 700; }
+.card-option[aria-pressed='true'] { outline: var(--focus-ring); }
+.card-option:disabled { opacity: 0.55; }
