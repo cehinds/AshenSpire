@@ -97,5 +97,6 @@ test('one-tap in co-op needs an unambiguous play, upcast wrapper included', () =
 test('co-op render drops a selection whose card left every hand', async () => {
   const { readFileSync } = await import('node:fs');
   const src = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
-  assert.match(src, /litCard\(\) !== null\s*\n\s*&& !\(snap\.scene\.players \|\| \[\]\)\.some\(p => \(p\.hand \|\| \[\]\)\.some\(card => card\.instanceId === litCard\(\)\)\)\) clearSelection\(\);/);
+  // Only the active seat's hand keeps a selection alive (instance ids repeat across seats).
+  assert.match(src, /litCard\(\) !== null\s*\n\s*&& !\(\(snap\.scene\.players \|\| \[\]\)\.find\(p => p\.id === me\)\?\.hand \|\| \[\]\)\.some\(card => card\.instanceId === litCard\(\)\)\) clearSelection\(\);/);
 });
