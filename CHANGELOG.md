@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Reward picks go straight to your deck** ([#2196](https://github.com/cehinds/AshenSpire/pull/2196), `0.7.1.1685`). Winning a card reward now lets you add it straight to your deck or open the deck editor with it ready; winning a weapon or armour lets you equip it right away.
+
 - **Co-op HUD check back to green** ([#2186](https://github.com/cehinds/AshenSpire/pull/2186), `0.7.1.1685`). The co-op browser check now turns on one-tap play for its Counter and vow shortcut steps, since one tap only selects a card by default. Nothing changes in play.
 - **Pages assemble reports real rebuild failures** ([#2185](https://github.com/cehinds/AshenSpire/pull/2185), `0.7.1.1683`). A failed rebuild in the Pages assemble now reports its real cause (for example the mobile build's size budget) instead of the boilerplate NOTE line, and the assemble selftest no longer posts warnings that looked like missing /latest/ pages.
 
