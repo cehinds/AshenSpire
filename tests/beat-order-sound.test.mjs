@@ -38,7 +38,7 @@ function drive(t, events, beatOrder) {
       playTimeline(events, { layer, combatEl: el(), beatOrder, anchorFor: (id) => anchors[id] || null,
         animateActor: () => ({ impactMs: IMPACT, totalMs: TOTAL, hold() {}, cancel() {} }),
         onBeatApplied() {}, onFlush() {} }, () => completed++);
-      for (let i = 0; i < 4000 && !completed; i++) t.mock.timers.tick(1);
+      for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1);
       assert.equal(completed, 1);
     });
   } finally { sfx.sink = oldSfx; haptic.sink = oldHaptic; setAnimSpeed('normal'); setBeatOrder('sequential'); }
@@ -54,7 +54,7 @@ test('sequential: the hit sound and the damage buzz fire with the number, not at
   const trace = drive(t, enemyHit(6), 'sequential');
   const number = timeOf(trace, (w) => w === 'float:-6');
   assert.equal(timeOf(trace, (w) => w === 'contact'), 1000 + IMPACT, 'the slash stays at the contact');
-  assert.equal(number, 1000 + TOTAL + 60 + 500 + 500, 'the number waits reactionMs after the reaction');
+  assert.equal(number, 1000 + TOTAL + 60 + 3000, 'the number waits a 1000 ms gap after each of the result word and the reaction');
   assert.equal(timeOf(trace, isHitSound), number, 'the hit sound comes with the number');
   assert.equal(timeOf(trace, (w) => w === 'haptic:damageTaken'), number, 'so does the damage buzz');
   assert.ok(!trace.some((e) => e.at < number && (isHitSound(e.what) || e.what === 'haptic:damageTaken')), 'nothing sounds at the contact');
