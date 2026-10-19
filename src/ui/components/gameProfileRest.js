@@ -59,7 +59,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
   const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') }, [
     ...(all ? [el('p', { class: 'as-flavor rest-healed', dataset: { restHealed: 'true' }, text: restHealedAny(visit.healed)
         ? t('gameProfile.rest.healed', { hp: visit.healed.hp, mp: visit.healed.mana, sp: visit.healed.stamina }) : t('gameProfile.rest.healedFull') })] : []),
-    el('p', { class: 'as-flavor', text: all ? (visit.service ? t(`gameProfile.rest.${restCompletionKey(model.services, usedOf)}`, { service: t(`gameProfile.rest.service.${visit.service}`) }) : t(`gameProfile.rest.${restIntroKey(model.services)}`))
+    el('p', { class: 'as-flavor', text: all ? (visit.service ? t(`gameProfile.rest.${restCompletionKey(model.services, usedOf)}`, { service: t(`gameProfile.rest.service.${visit.service}`) }) : t(`gameProfile.rest.${restIntroKey(model.services, { smithFree: model.smithFree })}`))
       : visit.service ? t('gameProfile.rest.complete', { service: t(`gameProfile.rest.service.${visit.service}`) }) : t('gameProfile.rest.chooseOne') }),
     el('div', { html: recoveryHtml(preview) }),
     el('ul', { class: 'choice-status-list' }, model.services.map(service => el('li', {
@@ -86,7 +86,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
   const openSmith = () => {
     let selected = null;
     screen.inert = true;
-    const makeModel = () => gameProfileSmithModel(registries, model.smith, model.smithPreviews, selected, recoveryHtml, { all });
+    const makeModel = () => gameProfileSmithModel(registries, model.smith, model.smithPreviews, selected, recoveryHtml, { all, levelUpOffered: model.services.some(service => service.id === 'levelUp') });
     const modal = mountSmithUpgradeModal(app, makeModel(), {
       registries, meta, returnFocusElement: app.querySelector('#smith-opt'),
       onSelect: itemRef => { selected = itemRef; modal.update(makeModel()); },

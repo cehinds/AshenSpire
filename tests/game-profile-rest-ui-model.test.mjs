@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
-import { beginGameProfileRest, commitGameProfileRest, restHealedAny, restCompletionKey, restIntroKey } from '../src/model/gameProfileRest.js';
+import { beginGameProfileRest, commitGameProfileRest, restHealedAny, restCompletionKey, restIntroKey, restSmithFree } from '../src/model/gameProfileRest.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { smithingPlan } from '../src/model/smithing.js';
@@ -144,9 +144,28 @@ test('the rest completion copy follows what is actually still open (review findi
 
 test('the all-services intro names Smith and Level Up only when those are exactly the services', () => {
   const ids = (...list) => list.map(id => ({ id }));
-  assert.equal(restIntroKey(ids('smith', 'levelUp')), 'chooseAll');
-  assert.equal(restIntroKey(ids('levelUp', 'smith')), 'chooseAll');
-  assert.equal(restIntroKey(ids('strategize')), 'chooseAllAny');
-  assert.equal(restIntroKey(ids('strategize', 'smith', 'levelUp')), 'chooseAllAny');
-  assert.equal(restIntroKey(ids('smith')), 'chooseAllAny');
+  assert.equal(restIntroKey(ids('smith', 'levelUp'), { smithFree: true }), 'chooseAll');
+  assert.equal(restIntroKey(ids('levelUp', 'smith'), { smithFree: true }), 'chooseAll');
+  assert.equal(restIntroKey(ids('smith', 'levelUp')), 'chooseAllAny', 'a paid Smith is not called free');
+  assert.equal(restIntroKey(ids('strategize'), { smithFree: true }), 'chooseAllAny');
+  assert.equal(restIntroKey(ids('strategize', 'smith', 'levelUp'), { smithFree: true }), 'chooseAllAny');
+  assert.equal(restIntroKey(ids('smith'), { smithFree: true }), 'chooseAllAny');
+});
+
+test('free-Smith copy is gated on rests.smith.free, the flag the commit reads', () => {
+  const free = fixture();
+  const freeModel = gameProfileRestModel(registries, free.run, free.visit);
+  assert.equal(freeModel.smithFree, true);
+  assert.match(freeModel.services.find(row => row.id === 'smith').description, /for free/);
+  assert.equal(restIntroKey(freeModel.services, { smithFree: freeModel.smithFree }), 'chooseAll');
+  const paid = fixture();
+  paid.run.gameProfile = structuredClone(paid.run.gameProfile);
+  paid.run.gameProfile.content.rests.smith.free = false;
+  assert.equal(restSmithFree(paid.run), false);
+  const paidModel = gameProfileRestModel(registries, paid.run, paid.visit);
+  assert.equal(paidModel.smithFree, false);
+  assert.doesNotMatch(paidModel.services.find(row => row.id === 'smith').description, /free/i);
+  assert.equal(restIntroKey(paidModel.services, { smithFree: paidModel.smithFree }), 'chooseAllAny');
+  const noLevel = gameProfileSmithModel(registries, paidModel.smith, paidModel.smithPreviews, null, () => '', { all: true, levelUpOffered: false });
+  assert.doesNotMatch(noLevel.properties.consequence, /Level Up/);
 });
