@@ -73,7 +73,7 @@ test('first follow-up misses its own read, second passes: "?" then the real icon
   assert.deepEqual(kinds(rows[0]), ['?', read]);
   const [html, aria] = rows[0].html.split('|aria:');
   assert.ok(!html.includes(`"${unread}"`) && !new RegExp(`data-[a-z-]+="${unread}"`).test(html), 'the unread move leaves no icon or data attribute in the row');
-  assert.match(aria, /2 more actions unread\.$/, 'the aria label counts the row and names nothing');
+  assert.ok(aria.endsWith(`2 more actions: unknown, ${read}.`), 'the aria label names only the read kinds, the rest unknown');
   assert.deepEqual(kinds(rows[1]), [read], 'the row shrinks as the enemy acts');
   assert.deepEqual(rows[2].symbols, []);
   assert.ok(c.followTrace[c.enemies[0].id].every((t) => !('moveId' in t)), 'the engine trace holds no move id');
@@ -241,4 +241,14 @@ test('a read counter follow-up shows the counter icon, as the current intent doe
   const plan = followUpPlan({ queue: [{ moveId: 'parry' }, { moveId: 'thrust' }], def, enemyId: e.id, combat: c });
   const row = advanceFollowUps(plan, [{ read: true, outcome: 'played' }, { read: false, outcome: 'played' }]);
   assert.deepEqual(row.map((s) => (s.kind === 'unknown' ? '?' : s.icon)), ['counter', '?']);
+});
+
+test('a read buff and a read spell follow-up show the icon they would show as the current intent', () => {
+  const run = createRunState({ seed: 5, classId: 'reaver', registries, profileMeta: { settings: {} } });
+  const c = createRunCombat({ registries, rng: createRng(5), run, enemyIds: ['wanderingSoldier'], settings: {} });
+  const e = c.enemies[0], real = registries.enemies.get('wanderingSoldier');
+  const def = { ...real, moves: { ...real.moves, hex: { intent: 'attack', tags: ['camp:spell'] } } };
+  const plan = followUpPlan({ queue: [{ moveId: 'warcry' }, { moveId: 'hex' }], def, enemyId: e.id, combat: c });
+  const read = [{ read: true, outcome: 'played' }, { read: true, outcome: 'played' }];
+  assert.deepEqual(advanceFollowUps(plan, read).map((s) => s.icon), ['buff', 'cast']);
 });

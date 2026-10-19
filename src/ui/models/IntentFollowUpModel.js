@@ -14,7 +14,8 @@
 import { stanceFor, moveKind } from '../../engine/combatRounds/stance.js';
 import { iconForStance } from './CombatRoundsScreenModel.js';
 import { enemyMoveCarrier } from '../../engine/combatCardTactics.js';
-import { enemyStanceCategory } from '../../model/enemyStancePose.js';
+import { combatIntentStance } from '../../model/combatIntentVisibility.js';
+import { combatIntentPresentation } from './CombatIntentModel.js';
 
 /**
  * followUpPlan({ queue, def }) → the actor's turn plan, taken before its phase. queue: its planned follow-ups
@@ -25,18 +26,19 @@ export function followUpPlan({ queue = [], def = null, enemyId = null, combat = 
   return { ids, def, enemyId, combat, total: ids.length, cursor: 0, headDone: false };
 }
 
-const CATEGORY_ICON = Object.freeze({ attack: 'attack', sweep: 'attack', smash: 'smash', counter: 'counter', defend: 'defend' });
-
-// The same symbol the current-intent presentation draws: the move's combat profile (maneuver) decides, so a counter
-// authored as intent:'block' shows the counter icon, not the defend one. Called only for a slot whose read passed.
+// The symbol is what the current-intent presentation draws for that move (same function, same profile), so a read
+// follow-up shows exactly the icon it would show as the current intent: counter for a counter authored as a block,
+// buff for a buff, cast for a spell. Called only for a slot whose read passed.
 function iconFor(plan, index) {
   const move = plan.def?.moves?.[plan.ids[index]];
   if (!move) return 'prepare';
   const enemy = plan.combat?.enemies?.find(row => row.id === plan.enemyId);
   if (enemy) {
     try {
-      const category = enemyStanceCategory({ kind: move.intent, combatProfile: enemyMoveCarrier(enemy, move, plan.ids[index], plan.combat).combatProfile });
-      return CATEGORY_ICON[category] ?? 'prepare';
+      const profile = enemyMoveCarrier(enemy, move, plan.ids[index], plan.combat).combatProfile || {};
+      const intent = { kind: move.intent, moveId: plan.ids[index], combatProfile: profile, profile, hidden: false };
+      intent.stance = combatIntentStance(intent, profile);
+      return combatIntentPresentation(intent).parts[0]?.icon || 'prepare';
     } catch { /* fall through to the tags */ }
   }
   return iconForStance(stanceFor(moveKind(move), Array.isArray(move.tags) ? move.tags : []));
