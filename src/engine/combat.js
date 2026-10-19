@@ -2538,7 +2538,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
           // return is: no attack-rating bonus, no second stance multiplier. Without a revealed attack the face
           // states the printed amount.
           const live = effectIndex === bonusIndex && reply && resolvedTarget?.kind === 'enemy'
-            ? counterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id)) : null;
+            ? counterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id), action.card) : null;
           const hits = previewDamageHits(combat, p, resolvedTarget,
             live ? live.hp : (reply?.value || 0) + (effectIndex === bonusIndex ? bonus : 0),
             action.card.tags || [], { ...action.card, combatReaction: true, counterReturnAttack: true, ...(fixCoreEnabled(combat) ? { skipRatingBonus: true } : {}) },

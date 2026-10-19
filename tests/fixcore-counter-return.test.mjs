@@ -14,7 +14,8 @@ import { counterReturn, counterBeats } from '../src/engine/counterRule.js';
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const houndBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'blightHound' ? { ...row, firstMove: 'lunge' } : row) };
 const mantisBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'cinderMantis' ? { ...row, firstMove: 'scythePair' } : row) };
-const regs = { cinderMantis: bindGameProfileRegistries(createRegistries(applyGameProfileToContent(mantisBundle, profile)), profile), wanderingSoldier: bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile),
+const wyrmBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'wyrmLord' ? { ...row, firstMove: 'tailSweep' } : row) };
+const regs = { wyrmLord: bindGameProfileRegistries(createRegistries(applyGameProfileToContent(wyrmBundle, profile)), profile), cinderMantis: bindGameProfileRegistries(createRegistries(applyGameProfileToContent(mantisBundle, profile)), profile), wanderingSoldier: bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile),
   blightHound: bindGameProfileRegistries(createRegistries(applyGameProfileToContent(houndBundle, profile)), profile) };
 const reg = regs.wanderingSoldier;
 function live(enemyId = 'wanderingSoldier') {
@@ -248,4 +249,13 @@ test('the Counter face token reads the return (6), not the post-protection HP lo
   const { combat, enemy } = live();
   const row = previewCard(combat, 'cx1', enemy.id).values.find(v => v.op === 'damage');
   assert.equal(row.value, 6); assert.equal(row.totalDamage, 6); assert.deepEqual(row.hitDamages, [6]);
+});
+
+test('the Counter preview answers a covered Attack (6) but not an uncovered area Sweep (wyrmLord tailSweep)', () => {
+  const sweep = live('wyrmLord');
+  assert.equal(sweep.enemy.intent.moveId, 'tailSweep');
+  const row = previewCard(sweep.combat, 'cx1', sweep.enemy.id).values.find(v => v.op === 'damage');
+  assert.equal(row.counterReturn, undefined, 'no return previewed for an uncovered hit');
+  const soldier = live();
+  assert.equal(previewCard(soldier.combat, 'cx1', soldier.enemy.id).values.find(v => v.op === 'damage').counterReturn.hp, 6);
 });

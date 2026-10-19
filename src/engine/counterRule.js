@@ -8,6 +8,7 @@ import { fixCoreEnabled, fixCoreRules, fixCoreCounterRules } from '../model/fixC
 import { configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
 import { previewDamageHits, damagePreviewState } from './combatDamagePreview.js';
 import { enemyMoveCarrier, expandedEnemyMove } from './combatCardTactics.js';
+import { counterCoversAttack } from './combatReactions.js';
 
 /** True when the Core 2 Counter rule governs this fight. Legacy and co-op profiles keep their own return. */
 export const counterRuleActive = ctx => fixCoreEnabled(ctx);
@@ -54,10 +55,12 @@ export function counterBlockBonus(ctx, receipt, index, incoming) {
  * `intent` is the observer-gated read (previewIntent) and only decides visibility (its own `damage` is the projected HP loss); the base is the enemy's committed intent, read only once revealed. The attack is
  * priced against a defender standing in Counter stance, as it would land once the Counter is armed.
  */
-export function counterPreviewAgainst(ctx, enemy, intent) {
+export function counterPreviewAgainst(ctx, enemy, intent, card = null) {
   if (!counterRuleActive(ctx) || !enemy?.alive || !intent || intent.hidden || intent.revealed === false || enemy.intent?.damage == null) return null;
   const maneuver = intent.profile?.maneuver;
   if (!maneuver) return null;
+  // Only an attack the played Counter covers is answered (the live predicate, not a copy).
+  if (card && !counterCoversAttack(ctx, card, intent.profile, 'damage')) return null;
   const move = expandedEnemyMove(enemy, ctx.registries.enemies.get(enemy.enemyId).moves[intent.moveId] || {}, intent.moveId, ctx);
   const carrier = enemyMoveCarrier(enemy, move, intent.moveId, ctx);
   const defender = { ...ctx.player, combatStance: { maneuver: 'counter', camp: 'physical', range: 'melee' } };
