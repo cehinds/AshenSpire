@@ -79,7 +79,7 @@ test('paced player Poise follows each shipped impact, including fill overflow an
   const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   const start = screen.indexOf('  function applyBeatToDisp(beat) {');
   const end = screen.indexOf('  // ---------- rendering ----------', start);
-  const applyBeat = new Function('disp', 'combat', 'getEntity', 'reconcileWardBlock', 'applyCombatDisplayReceipt', `${screen.slice(start, end)}; return applyBeatToDisp;`)(disp, combat, (c, id) => id === 'player' ? c.player : c.enemies.find(e => e.id === id), reconcileWardBlock, applyCombatDisplayReceipt);
+  const applyBeat = new Function('disp', 'combat', 'getEntity', 'reconcileWardBlock', 'applyCombatDisplayReceipt', 'reduceFollowRows', `${screen.slice(start, end)}; return applyBeatToDisp;`)(disp, combat, (c, id) => id === 'player' ? c.player : c.enemies.find(e => e.id === id), reconcileWardBlock, applyCombatDisplayReceipt, () => {});
   function hit() {
     const before = combat.eventLog.length;
     executeAction(combat, { effect: { op: 'damage', target: 'player', amount: 1 }, source: combat.enemies[0], owner: combat.enemies[0], target: combat.player, meta: {} });
