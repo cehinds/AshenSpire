@@ -63,7 +63,7 @@ function metadataBand(rarity, owned) {
  * this stays as the name five files already import, so the extraction costs
  * no call site a rename that would prove nothing.
  */
-export function staticTokens(def) { return staticCardTokens(def); }
+export function staticTokens(def, registries = null) { return staticCardTokens(def, registries); }
 
 /**
  * relicText(def) → plain text with every {token} replaced by the number the

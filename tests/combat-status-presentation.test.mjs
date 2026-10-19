@@ -16,6 +16,9 @@ test('Core 2 PIPs and card glossary share effective status tooltips without muta
   const gearedPlayer = {id:'player',baseEvasionBonus:2}, enemy = {id:'e1'};
   const neutral = combat.player = gearedPlayer, tip = holder => view.statuses.get('evade',holder).tooltip;
   assert.equal(neutral,gearedPlayer);
+  // The holder's own resolved rules (a scoped baseAC) feed its tooltip, not the global block.
+  const scoped = {id:'e2',mechanicBindings:[{tag:'combat:accuracy',parameters:{baseAC:3}}]};
+  assert.match(tip(scoped),/^Each stack adds 3 \(base 3\) plus the holder's DEX/);
   assert.match(view.statuses.get('evade').tooltip,/^Each stack adds 1 plus the holder's gear Evasion and DEX/);
   assert.doesNotMatch(view.statuses.get('evade').tooltip,/gear \+2/);
   assert.match(tip(enemy),/^Each stack adds 1 \(base 1\) plus the holder's DEX/);

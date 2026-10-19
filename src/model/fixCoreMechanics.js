@@ -124,10 +124,15 @@ export function damageReceipt(targetId, hits) {
 
 // Read-only status projection for cards, PIPs, logs and inspectors. The base
 // registry is explicit so UI facades cannot recursively query themselves.
+/** The off-combat phrase for Evade's gain, from the configured (and card-scoped) accuracy block: "1 plus DEX", "3 plus 2× DEX". */
+export function evadeStackGainPhrase(ctx, carrier = null) {
+  const { evadeStackBase: base, evadeStackDex: dex } = fixCoreRules(ctx, { id: 'card-face' }, carrier).accuracy;
+  return dex === 0 ? String(base) : `${base} plus ${dex === 1 ? '' : dex + '× '}DEX`;
+}
 export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) {
   const base = baseDefinition ?? ctx?.registries?.statuses?.get(id);
   if (!fixCoreEnabled(ctx)) return base;
-  const rules = fixCoreRules(ctx), overrides = rules.statuses.overrides?.[id];
+  const rules = fixCoreRules(ctx, holder), overrides = rules.statuses.overrides?.[id];
   const row = overrides ? {...base,...overrides} : {...base};
   const facts = {
     weak: `Attack rating ×${rules.statuses.weakARMultiplier} while active.`,

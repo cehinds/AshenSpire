@@ -253,3 +253,11 @@ test('the Evade card outside combat fills its {evade} token with a phrase, never
  assert.equal(staticCardTokens(def).evade,'1 plus DEX');
  assert.equal(playingCardModel(reg,{cardId:'core.evade'}).tokens.evade,'1 plus DEX');
 });
+test('the off-combat Evade phrase follows the configured gain, card overrides included',async()=>{
+ const {staticCardTokens}=await import('../src/model/playingCard.js');
+ const def=reg.cards.get('core.evade');
+ const scoped=(base,dex)=>({...def,mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{evadeStackBase:base,evadeStackDex:dex}}]});
+ assert.equal(staticCardTokens(scoped(1,1),reg).evade,'1 plus DEX');
+ assert.equal(staticCardTokens(scoped(3,2),reg).evade,'3 plus 2× DEX');
+ assert.equal(staticCardTokens(scoped(2,0),reg).evade,'2');
+});
