@@ -328,7 +328,8 @@ function claimStagger(ctx, target) {
 
 // A Poise break (owner D13): the owner is Staggered. An enemy's break counts against the round's stagger limit.
 function fixCorePoiseBreak(ctx, source, target) {
-  ctx.emit('poiseBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) });
+  // `interrupted` marks an enemy's break for the break haptic (fx.enemyPoiseBroken).
+  ctx.emit('poiseBroken', { targetId: target.id, sourceId: source?.id, ...(target.kind === 'enemy' ? { interrupted: true } : {}), ...seatOf(ctx, target) });
   if (target.kind === 'enemy') { claimStagger(ctx, target); staggerEnemy(ctx, target, { cause: 'poiseBreak' }); }
   else fixCoreStagger(ctx, target, { cause: 'poiseBreak' });
 }
@@ -1112,7 +1113,7 @@ export function fixCoreStagger(ctx, entity, options = {}) {
   const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
   Matchups.clearCombatCounter(entity, ctx);
   if (rules.stance) {
-    entity.combatStance = fixCoreStaggeredStance(entity);
+    entity.combatStance = fixCoreStaggeredStance(entity, rules);
     ctx.emit('combatStanceChanged', { targetId: entity.id, maneuver: 'staggered' });
   }
   if (rules.staminaLoss > 0) {

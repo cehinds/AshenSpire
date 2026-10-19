@@ -217,3 +217,22 @@ test('floating text names why damage dropped: Poise absorbed N', async () => {
   const { guardHitFloatParts } = await import('../src/ui/fx.js');
   assert.equal(guardHitFloatParts({ amount: 6, blocked: 0, poiseAbsorbed: 2 }, 100).poise.text, 'Poise absorbed 2');
 });
+
+test('the break haptic fires on a Core enemy Poise break', async () => {
+  const { enemyPoiseBroken } = await import('../src/ui/fx.js');
+  const { combat, target } = live(2);
+  hit(combat, target, 10);
+  const event = combat.eventLog.find(row => row.type === 'poiseBroken');
+  assert.ok(event);
+  assert.equal(enemyPoiseBroken(event), true);
+});
+
+test('the Staggered row carries the profile\'s costs, hiding a zero clause', () => {
+  const { combat, target } = live(2);
+  combat.fixCoreRules = { ...structuredClone(combat.fixCoreRules || combat.gameProfile.fixCoreRules), staggered: { stance: true, staminaLoss: 2, vulnerableStacks: 0, extendOnly: true } };
+  hit(combat, target, 10);
+  const row = combatStanceRow(target);
+  assert.match(row.detail, /Loses 2 SP next turn/);
+  assert.doesNotMatch(row.detail, /Vulnerable/);
+  assert.equal(target.pendingStaminaLoss, 2);
+});

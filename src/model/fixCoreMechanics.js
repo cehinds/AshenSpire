@@ -152,4 +152,6 @@ export function snapshotFixCoreRules(ctx) {
 }
 
 /** The combat stance a Staggered owner stands in until its next turn begins (shared by live play and previews). */
-export const fixCoreStaggeredStance = entity => ({ maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true, expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + 1 });
+// It carries the resolved costs so the inspector row reads the profile's numbers, not hard-coded ones.
+export const fixCoreStaggeredStance = (entity, rules = FIXCORE_STAGGERED_DEFAULTS) => ({ maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true,
+  staminaLoss: rules.staminaLoss, vulnerableStacks: rules.vulnerableStacks, expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + 1 });

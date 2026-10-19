@@ -44,7 +44,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
             if (poiseBefore > 0 && defender.persistentPoise.value === 0 && !(ctx.foundation && defender.impactProtectedUntil >= ctx.turn)) {
               {
                 const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
-                if (rules.stance) defender.combatStance = fixCoreStaggeredStance(defender);
+                if (rules.stance) defender.combatStance = fixCoreStaggeredStance(defender, rules);
                 if (rules.vulnerableStacks > 0) defender.statuses = { ...defender.statuses, vulnerable: { ...defender.statuses?.vulnerable, stacks: (defender.statuses?.vulnerable?.stacks || 0) + rules.vulnerableStacks } };
               }
             }
