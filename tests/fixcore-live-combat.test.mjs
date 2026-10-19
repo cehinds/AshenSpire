@@ -161,17 +161,26 @@ test('a card-scoped accuracy override changes the Evade stacks that card gains',
  assert.equal(formulaCtxFor(combat,{source:combat.player,card:{cardId:'core.evade'}}).evadeStackGain,1+dexterity);
  assert.equal(formulaCtxFor(combat,{source:combat.player,card}).evadeStackGain,3+2*dexterity);
 });
-test('card face prints the live Precision entry grant with an actor and a stat-mix phrase without one',async()=>{
+test('card face prints the live Precision entry grant on the shipped Core strike and sweep, and nothing under a legacy profile',async()=>{
  const {cardFaceLines}=await import('../src/model/cardFaceText.js');
  const {precisionStatMix}=await import('../src/engine/stanceHit.js');
  const {combat,target}=live();
+ const entry=lines=>(lines||[]).map(line=>line.html.replace(/<[^>]+>/g,'')).find(text=>text.startsWith('Entry: '));
+ for(const id of ['core.strike','core.sweep']) {
+  const def=reg.cards.get(id);assert.ok(def,id);
+  assert.ok(!def.defenseRulesVersion&&!def.minCombatExpansionVersion,id+' is the shipped definition, no per-card version field');
+  assert.match(entry(cardFaceLines(def,null,reg)),/^Entry: \+1 \+ stat mix Precision/,id);
+ }
  const card=combat.piles.hand.find(row=>row.cardId==='core.strike');assert.ok(card);
  const preview=previewCard(combat,card.instanceId,target.id);
- const def={...reg.cards.get('core.strike'),defenseRulesVersion:2}; // the flag that makes a face print its Entry clause
- const entry=lines=>(lines||[]).map(line=>line.html.replace(/<[^>]+>/g,'')).find(text=>text.startsWith('Entry: '));
  assert.equal(preview.entryPrecision,1+precisionStatMix(combat,combat.player));
- assert.match(entry(cardFaceLines(def,preview,reg)),new RegExp(`^Entry: \\+${preview.entryPrecision} Precision`));
- assert.match(entry(cardFaceLines(def,null,reg)),/^Entry: \+1 \+ stat mix Precision/);
+ assert.match(entry(cardFaceLines(reg.cards.get('core.strike'),preview,reg)),new RegExp(`^Entry: \\+${preview.entryPrecision} Precision`));
+ const legacy=resolveGameProfile('current');
+ const legacyReg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,legacy)),legacy);
+ for(const id of ['core.strike','core.sweep']) {
+  // The legacy profile has no Core cards, so show the shipped Core definition against the legacy registries.
+  assert.equal(entry(cardFaceLines(reg.cards.get(id),null,legacyReg)),undefined,id+' under a legacy profile shows no Entry line');
+ }
 });
 test('enemy heal-and-block move spends exactly three SP and cannot cast with two',()=>{
  for(const pool of [3,2]) {

@@ -322,14 +322,24 @@ function buildLines(def, preview, registries) {
   }
   if (counter && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   if (def.pronePoiseBonus) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
-  if (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2) {
-    // gameProfile lets the face apply the same Core 2 rounding as combat (stanceEntryBonuses floors under FixCore).
-    const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules, gameProfile: registries?.gameProfile };
+  // Live Precision grant when a preview has an actor, else the 1 + stat mix formula.
+  const entryPrecisionText = (amount, preview) => Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount) + ' + stat mix';
+  // gameProfile lets the face apply the same Core 2 rounding as combat (stanceEntryBonuses floors under FixCore).
+  const entryCtx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules, gameProfile: registries?.gameProfile };
+  // The Entry Precision line follows the active Core profile, the predicate the live grant uses, not a per-card version field.
+  const coreProfile = fixCoreEnabled(entryCtx);
+  const versioned = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2;
+  if (!versioned && coreProfile) {
+    const precision = stanceEntryBonuses(def, entryCtx).precision;
+    if (precision > 0) unconditional.push({ cat: 'bonus', text: 'Entry: ' + entryPrecisionText(precision, preview) + ' Precision' });
+  }
+  if (versioned) {
+    const ctx = entryCtx;
     const entry = stanceEntryBonuses(def, ctx);
     // Core grants 1 + the actor's stat mix of Precision: the live figure when a preview has an actor, else the formula (owner, 2026-10-19).
-    const statMixGrant = entry.precision > 0 && fixCoreEnabled(ctx);
+    const statMixGrant = entry.precision > 0 && coreProfile;
     const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => (id === 'precision' && statMixGrant
-      ? (Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount) + ' + stat mix')
+      ? entryPrecisionText(amount, preview)
       : '+' + num(amount)) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
     if (grants.length) unconditional.push({ cat: 'bonus', text: 'Entry: ' + grants.join(', ') });
     if (stanceOf(def)?.maneuver === 'defend') {
