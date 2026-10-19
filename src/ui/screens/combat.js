@@ -1394,7 +1394,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const option = autoReactionChoice();
       if (option !== undefined) { reactionShell.dismiss(); answerReaction(reactionAnswer(pending, option), false); }
       scheduleAutoCombat();
-    }, policy.enabled ? Math.max(100, policy.delayMs / policy.speed) : 500);
+    }, policy.enabled ? Math.max(100, policy.delayMs / policy.autoSpeed) : 500);
   }
 
   // ---------- rendering ----------

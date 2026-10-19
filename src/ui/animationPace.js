@@ -52,19 +52,13 @@ export function getBeatOrder() {
 
 // One presentation-only multiplier for the entire ordered action. The classic
 // pace remains a compatibility choice, with ×1 preserving its relative scale.
-import { ACTION_PACING, AUTOMATION_DEFAULTS, resolveCombatAutomation } from '../model/autoCombatPolicy.js';
-const boundedNumber = (value, fallback, minimum, maximum) => Number.isFinite(Number(value)) && value !== null && value !== ''
-  ? Math.min(maximum, Math.max(minimum, Number(value))) : fallback;
+import { ACTION_PACING, resolveCombatAutomation } from '../model/autoCombatPolicy.js';
 // The speed multiplier in force: the manual one, or the auto-combat one while
 // auto-combat is on (owner, D11, 2026-10-18). The gap between stages is the
 // player's "Pause between steps" row (combatActionDelay, ms).
 function resolvePacing(settings = {}) {
   const base = resolveCombatAutomation(settings);
-  const autoSpeed = boundedNumber(settings.autoCombatSpeed, AUTOMATION_DEFAULTS.autoCombatSpeed ?? 1.5,
-    AUTOMATION_DEFAULTS.autoSpeedMinimum ?? 1, AUTOMATION_DEFAULTS.autoSpeedMaximum ?? 3);
-  return { ...base, autoSpeed, speed: base.enabled ? autoSpeed : base.speed,
-    gapMs: boundedNumber(settings.combatActionDelay, ACTION_PACING.stageGapMs ?? ACTION_PACING.intentDelayMs,
-      AUTOMATION_DEFAULTS.stageGapMinimumMs ?? 0, AUTOMATION_DEFAULTS.stageGapMaximumMs ?? AUTOMATION_DEFAULTS.delayMaximumMs) };
+  return { ...base, speed: base.enabled ? base.autoSpeed : base.speed, gapMs: base.delayMs };
 }
 let combatPacing = resolvePacing();
 export function setCombatPacing(settings = {}) { combatPacing = resolvePacing(settings); }
