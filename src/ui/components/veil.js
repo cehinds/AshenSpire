@@ -132,3 +132,13 @@ export function veilIsOpen() {
 // Fired on window when the in-run overlay (Menu) closes. Settings may have changed behind the
 // screen; a screen that mirrors a setting (the combat footer's Auto switch) repaints from it.
 export const OVERLAY_CLOSED_EVENT = 'ashenspire:overlay-closed';
+
+// Fired on window when a settings write settles, saved or rolled back (main.js persistSettingsChange).
+// The Settings toggles do not await the save, so a menu can close before a failed save undoes the
+// value; a screen that mirrors a setting repaints from the settled value.
+export const SETTINGS_SETTLED_EVENT = 'ashenspire:settings-settled';
+
+export function announceSettingsSettled() {
+  if (typeof window === 'undefined' || typeof CustomEvent !== 'function') return;
+  window.dispatchEvent(new CustomEvent(SETTINGS_SETTLED_EVENT));
+}

@@ -322,6 +322,45 @@ test('closing the overlay repaints the combat footer: closeOverlay announces it 
   assert.match(combat, /readAuto: \(\) => resolveCombatAutomation\(readSettings\(\)\)\.enabled/);
 });
 
+test('a settings save that settles (saved or rolled back) announces it and combat repaints from the settled value', () => {
+  const veil = readFileSync(new URL('../src/ui/components/veil.js', import.meta.url), 'utf8');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const combat = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  const persist = main.slice(main.indexOf('async function persistSettingsChange'), main.indexOf('const quickMenuControls'));
+  // Rollback path: announce sits in a finally after the run restore, so it runs even if the restore throws; then the early return.
+  assert.match(persist, /activeSettings = settingsBefore;[\s\S]*finally \{[\s\S]*showSettingsNotice\(QUARANTINE_NOTICE\);\s*announceSettingsSettled\(\);\s*\}\s*return res;/);
+  // Success path: announce comes last.
+  assert.match(persist, /announceSettingsSettled\(\);\s*return res;\s*}\s*$/);
+  assert.equal((persist.match(/announceSettingsSettled\(\)/g) || []).length, 2);
+  assert.match(veil, /SETTINGS_SETTLED_EVENT = 'ashenspire:settings-settled'/);
+  assert.match(combat, /addEventListener\(SETTINGS_SETTLED_EVENT, repaintAutoSwitch\)/);
+  assert.match(combat, /removeEventListener\(SETTINGS_SETTLED_EVENT, repaintAutoSwitch\)/);
+});
+
+test('announceSettingsSettled dispatches on window, and combat repaints the footer from the rolled-back value', async () => {
+  const { announceSettingsSettled, SETTINGS_SETTLED_EVENT } = await import('../src/ui/components/veil.js');
+  const had = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  const target = new EventTarget();
+  Object.defineProperty(globalThis, 'window', { value: target, configurable: true, writable: true });
+  try {
+    const settings = { autoCombat: false };
+    let painted = null;
+    const repaint = () => { painted = settings.autoCombat; };
+    target.addEventListener(SETTINGS_SETTLED_EVENT, repaint);
+    // Menu toggled Auto on, closed, the footer repainted "on"; then the save failed and rolled back.
+    settings.autoCombat = true; repaint();
+    assert.equal(painted, true);
+    settings.autoCombat = false; // persistSettingsChange rollback
+    assert.equal(painted, true, 'no repaint yet: the stale switch is the bug');
+    announceSettingsSettled();
+    assert.equal(painted, false, 'the settled event repaints from the rolled-back value');
+    target.removeEventListener(SETTINGS_SETTLED_EVENT, repaint);
+  } finally {
+    if (had) Object.defineProperty(globalThis, 'window', had); else delete globalThis.window;
+  }
+  assert.doesNotThrow(() => announceSettingsSettled(), 'no window: a no-op, not a throw');
+});
+
 test('co-op mounts the tools without an Auto switch', () => {
   withToolsDom((dom) => {
     resetModalState();
