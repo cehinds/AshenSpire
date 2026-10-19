@@ -24,6 +24,12 @@ export const FIXCORE_COUNTER_DEFAULTS = Object.freeze({ returnFraction: 0.5, poi
 export const FIXCORE_REACTION_DEFAULTS = Object.freeze({ handCostDiscount: 1 });
 export const fixCoreCounterRules = rules => ({ ...FIXCORE_COUNTER_DEFAULTS, ...(rules?.counter || {}) });
 export const fixCoreReactionRules = rules => ({ ...FIXCORE_REACTION_DEFAULTS, ...(rules?.reaction || {}) });
+/** The SP a Core 2 `trait:reaction` card costs from hand: max(SP - handCostDiscount, 0) (owner, 2026-10-19; SPEC §17). */
+export function fixCoreReactionHandCost(ctx, def, sp) {
+  if (!fixCoreEnabled(ctx) || !(sp > 0) || def?.cost === 'X') return sp;
+  if (!(def?.cardTags || def?.tags || []).includes('trait:reaction')) return sp;
+  return Math.max(0, sp - fixCoreReactionRules(fixCoreRules(ctx)).handCostDiscount);
+}
 export const fixCorePoiseRules = rules => ({ ...FIXCORE_POISE_DEFAULTS, ...(rules?.poise || {}) });
 export const fixCoreStaggeredRules = rules => ({ ...FIXCORE_STAGGERED_DEFAULTS, ...(rules?.staggered || {}) });
 export const fixCoreWardEnabled = rules => rules?.ward?.enabled !== false;

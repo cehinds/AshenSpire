@@ -88,3 +88,24 @@ test('preview equals live against an enemy whose attack carries rating bonuses',
   assert.ok(returned.length, 'the Counter fired');
   assert.equal(returned.reduce((sum, e) => sum + e.hpLoss, 0), damage.totalDamage);
 });
+
+import { profileCardCosts } from '../src/engine/gameProfileCombat.js';
+import { cardPlayCosts } from '../src/engine/combat.js';
+test('a reaction card played from hand costs max(SP - 1, 0); other cards are untouched', () => {
+  const { combat } = live();
+  const reaction = base => ({ id: 'x.reaction', staminaCost: base, manaCost: 0, tags: ['trait:reaction', 'maneuver:attack'] });
+  const plain = base => ({ id: 'x.plain', staminaCost: base, manaCost: 0, tags: ['maneuver:attack'] });
+  delete combat.player.combatStance;
+  assert.deepEqual([0, 1, 2, 3].map(sp => profileCardCosts(combat, reaction(sp)).stamina), [0, 0, 1, 2]);
+  assert.deepEqual([0, 1, 2, 3].map(sp => profileCardCosts(combat, plain(sp)).stamina), [0, 1, 2, 3]);
+});
+
+test('the real Counter card is free to play from hand; the playability check and card face read the same price', () => {
+  const { combat } = live();
+  assert.equal(cardPlayCosts(combat, 'cx1').stamina, 0);
+  combat.player.stamina = 0;
+  const before = combat.player.stamina;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
+  assert.equal(combat.player.stamina, before);
+  assert.ok(combat.player.combatCounter, 'the zero-cost Counter still arms');
+});
