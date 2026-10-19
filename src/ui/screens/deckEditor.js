@@ -78,7 +78,7 @@ let liveEditor = null;
 // Text search is off for now (owner, 2026-10-11): the search inputs are not
 // rendered unless a mount passes `search: true`. The filter code stays so the
 // search comes back by flipping that one option.
-export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, onNavigate = null, dragHoldMs = DRAG_HOLD_MS, search: searchEnabled = false }) {
+export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, onNavigate = null, focusCard = null, dragHoldMs = DRAG_HOLD_MS, search: searchEnabled = false }) {
   if (liveEditor && liveEditor.root.isConnected && !liveEditor.session.closed) return liveEditor;
   const session = openDeckEdit(registries, run, settings);
   let view = deckEditorView({});
@@ -89,6 +89,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let model = null;
   let releaseGate = null;
   let selected = null;
+  // The card a reward just handed over starts selected (once), so the player sees it first.
+  let focusKeyOnce = focusCard ? `card:${deckVariantKey(focusCard)}` : null;
   let inspected = null;
   let query = '';
   let mobileView = 'collection';
@@ -833,7 +835,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const current = selected && rows.find(row => selectionKey(row, selected.source) === selected.key);
     if (current) selected = { ...selected, row: current };
     else {
-      const row = model.collection[0] || model.deck[0];
+      const row = (focusKeyOnce && model.collection.find(r => r.key === focusKeyOnce)) || model.collection[0] || model.deck[0];
+      focusKeyOnce = null;
       const source = model.collection.length ? 'collection' : 'deck';
       selected = row ? { row, source, key: selectionKey(row, source) } : null;
     }

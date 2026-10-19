@@ -2,7 +2,7 @@ import { persistRewardChange as transactReward } from './model/rewardTransaction
 import { applyViewViewport, resolveViewViewport } from './ui/viewViewport.js';
 import { screenshotRoutePath } from './ui/models/ScreenshotFixtureModel.js';
 import { t } from './ui/strings.js';
-import { gameProfileRewardOffers, claimGameProfileReward, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
+import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { announceSettingsSettled } from './ui/components/veil.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
@@ -129,7 +129,7 @@ import { mountCombat } from './ui/screens/combat.js';
 import { mountCombatTest } from './ui/screens/combatTest.js';
 import { mountRewards } from './ui/screens/reward.js';
 import { mountRest } from './ui/screens/rest.js';
-import { commitDeckEditDraft } from './model/deckRules.js';
+import { commitDeckEditDraft, deckEditBounds } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
 import { armouryHasNew, armouryOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
@@ -2145,11 +2145,12 @@ function deckDoors(services = null) {
   return armouryOpensDeckEditor(run, settings) ? Object.freeze({ ...doors, armoury: true }) : doors;
 }
 
-function showDeckEditor(returnTo = showMap, hub = true) {
+function showDeckEditor(returnTo = showMap, hub = true, focusCard = null) {
   if (!run) return;
   mountDeckEditor(document.body, {
     registries,
     run,
+    focusCard,
     settings: saves.loadMeta().settings || {},
     onNavigate: hub ? destination => {
       persist(); showArmoury(destination === 'character' ? 'grid' : 'rack', returnTo);
@@ -3880,6 +3881,13 @@ function showGameProfileReward() {
   const persistRewardChange = change => transactReward(run, pending.offerId, change, persist);
   mountGameProfileOffers(app, { registries, run, settings: saves.loadMeta().settings || {}, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
     onTake: index => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index)),
+    // Owner 2026-10-18: a won card may go straight into the deck, or open the editor with it ready; a won item opens the Armoury.
+    // Both doors return into the same exit as Continue, and the claim is already persisted, so a reload mid-editor lands back here.
+    onAddToDeck: index => persistRewardChange(() => claimGameProfileRewardToDeck(registries, run, pending.offerId, index, saves.loadMeta().settings || {})),
+    addRefusal: index => rewardDeckAddRefusal(registries, run, pending.offerId, index, saves.loadMeta().settings || {}),
+    deckMax: deckEditBounds(saves.loadMeta().settings || {}).max,
+    canEditDeck: !!deckDoors().armoury,
+    onEditDeck: (index, back) => showDeckEditor(back, false, run.sideboard.find(card => card.instanceId === rewardInstanceId(pending.offerId, index)) || null),
     onContinue: () => {
       persistRewardChange(() => {
         delete run.gameProfilePendingReward;
