@@ -288,11 +288,10 @@ function liveWith(cardId) {
   return { combat, enemy };
 }
 
-test('a support-only Counter (frostCounter) previews the conditional return and the SP shift marker', () => {
+test('a spell Counter (frostCounter) previews no return but still marks its SP shift', () => {
   const { combat, enemy } = liveWith('frostCounter');
   const view = previewCard(combat, 'cy1', enemy.id);
-  assert.ok(view.counterReturn, 'the return is previewed without a damage opcode');
-  assert.equal(view.counterReturn.incoming > 0, true);
+  assert.equal(view.counterReturn, undefined, 'a spell Counter live play never arms promises no return');
   assert.equal(view.costShift, -1, 'the reaction-from-hand discount reads from the authored cost (1 -> 0)');
 });
 
@@ -355,8 +354,8 @@ function faceAgainst12(cardId) {
   return { view, text: lines.map(line => line.html).join(' | ').replace(/<[^>]+>/g, '') };
 }
 
-test('the card face renders the computed return against a 12-damage Attack (core.counter, frostCounter, lowGuardRiposte)', () => {
-  for (const cardId of ['core.counter', 'frostCounter', 'lowGuardRiposte']) {
+test('the card face renders the computed return against a 12-damage Attack (core.counter, lowGuardRiposte)', () => {
+  for (const cardId of ['core.counter', 'lowGuardRiposte']) {
     const { view, text } = faceAgainst12(cardId);
     const r = view.counterReturn;
     assert.ok(r, `${cardId}: return computed`);
@@ -383,5 +382,22 @@ test('the face lists only what live resolution delivers: no legacy Smash, Prone 
     assert.ok(text.length > 0, `${cardId}: face builds`);
     assert.doesNotMatch(text, /against Smash|while Prone/, `${cardId}: ${text}`);
     assert.doesNotMatch(text, /\b0 Poise/, `${cardId}: ${text}`);
+  }
+});
+
+test('preview follows live eligibility: a spell Counter (frostCounter) shows no return and is not consumed; Counters that arm still show and apply theirs', () => {
+  const frost = faceAgainst12('frostCounter');
+  assert.equal(frost.view.counterReturn, undefined, 'no return promised for a Counter live play never arms');
+  const { combat } = live();
+  combat.piles.hand.push({ instanceId: 'cz1', cardId: 'frostCounter' });
+  Object.assign(combat.player, { mana: 9, maxMana: 9 });
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cz1' });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  assert.equal(combat.eventLog.slice(start).some(e => e.type === 'combatCounterTriggered'), false, 'live: not triggered either');
+  for (const cardId of ['core.counter', 'lowGuardRiposte']) {
+    const { view } = faceAgainst12(cardId);
+    assert.ok(view.counterReturn?.hp > 0, `${cardId} still previews its return`);
   }
 });

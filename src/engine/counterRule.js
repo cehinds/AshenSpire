@@ -5,7 +5,7 @@
 // Barrier, Ward or Poise take anything: the `incoming` figure of the damage receipt (gameProfileCombat.js).
 // Pure: no state, no RNG. The fractions are data (content/source/fixCoreMechanics.json `counter`).
 import { fixCoreEnabled, fixCoreRules, fixCoreCounterRules } from '../model/fixCoreMechanics.js';
-import { configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
+import { configuredModule, configuredStance, profileDamageReceipt } from './gameProfileCombat.js';
 import { previewDamageHits, damagePreviewState } from './combatDamagePreview.js';
 import { enemyMoveCarrier, expandedEnemyMove } from './combatCardTactics.js';
 import { counterCoversAttack } from './combatReactions.js';
@@ -68,6 +68,12 @@ export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected
   if (!maneuver) return null;
   // Only an attack the played Counter covers is answered (the live predicate, not a copy).
   if (card && !counterCoversAttack(ctx, card, intent.profile, 'damage')) return null;
+  // Live play arms the Counter only when the card's configured stance is Counter (preparedCounter); a spell Counter
+  // stands in the 'prepared' stance there and is never consumed, so the preview promises it no return.
+  if (card && configuredModule(ctx, 'stances')) {
+    const rule = configuredModule(ctx, 'stances');
+    if (!(rule.include?.includes('counter') && configuredStance(card) === 'counter')) return null;
+  }
   const move = expandedEnemyMove(enemy, ctx.registries.enemies.get(enemy.enemyId).moves[intent.moveId] || {}, intent.moveId, ctx);
   const carrier = enemyMoveCarrier(enemy, move, intent.moveId, ctx);
   // `projected` is the player after the card's immediate defensive effects (its Block, the stance-entry grants),
