@@ -161,3 +161,16 @@ test('an armament reward offers Equip now when the Armoury is open, claims first
     }
   });
 });
+
+test('Keep in collection shows whenever Edit deck is hidden, even when Add is legal', async () => {
+  await withDom(async () => {
+    const { app, calls } = mount({ canEditDeck: false });
+    review(app);
+    assert.equal(app.querySelector('#reward-card-confirm').disabled, false);
+    app.querySelector('#reward-keep').click(); await Promise.resolve(); await Promise.resolve();
+    assert.deepEqual(calls, ['take', 'continue']);
+    const open = mount();
+    review(open.app);
+    assert.equal(open.app.querySelector('#reward-keep'), null, 'Edit deck covers the way forward when it is open');
+  });
+});

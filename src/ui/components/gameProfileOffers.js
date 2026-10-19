@@ -137,8 +137,9 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
       if (refusal) {
         confirm.disabled = true;
         status.textContent = refusalText(refusal);
-        keep.hidden = !editDeck.hidden;
       }
+      // With no Edit deck door, a legal Add must not be the only way forward: the card can stay in the collection.
+      keep.hidden = !editDeck.hidden;
       mountDoor(); confirm.focus?.({ preventScroll: true });
       return;
     }
