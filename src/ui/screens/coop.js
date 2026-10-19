@@ -961,11 +961,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     // too: mountCoop outlives the scene change. A redraw of the same surface keeps a reward
     // card's select tap. The surface is what this seat sees: a catch-up reward overrides the
     // party's combat scene, and each catch-up entry is its own surface (keyed by queue length).
-    const catchupLeft = myMember()?.catchupQueue?.length || 0;
-    const surface = catchupLeft ? `catchup:${catchupLeft}` : snap.scene.kind;
+    // Pending progression rows count too: claiming one row while another offers the same
+    // card id must not hand that row the spent selection.
+    const mine = myMember();
+    const catchupLeft = mine?.catchupQueue?.length || 0;
+    const progressionLeft = Object.values(mine?.pendingProgression || {}).reduce((n, rows) => n + (Array.isArray(rows) ? rows.length : 0), 0);
+    const surface = `${catchupLeft ? `catchup:${catchupLeft}` : snap.scene.kind}|progression:${progressionLeft}`;
     const changedSurface = lastSurface !== null && surface !== lastSurface;
     lastSurface = surface;
-    if (litCard() !== null && (changedSurface || (surface === 'combat'
+    if (litCard() !== null && (changedSurface || (snap.scene.kind === 'combat' && !catchupLeft
       && !((snap.scene.players || []).find(p => p.id === me)?.hand || []).some(card => card.instanceId === litCard())))) clearSelection();
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
     else { heldStances.reset(); combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
