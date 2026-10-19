@@ -33,16 +33,16 @@ function rewardNote(profileId, options, { editorWhere, servicesPerVisit, editorE
 
 test('a Core reward names the Armoury for deck edits and Current keeps Strategize', () => {
   const core = rewardNote('core', ['core.strike', 'core.defend']);
-  assert.equal(core, 'Choose 1. Cards join your collection; edit your deck at the Armoury.');
+  assert.equal(core, 'Choose 1. Add the card to your deck or edit your deck now; the rest stays in your collection.');
   assert.doesNotMatch(core, /Strategize/);
   const current = rewardNote('current', ['frostNova', 'scholarsInsight']);
-  assert.equal(current, 'Choose 1. Cards join your collection; edit your deck at Strategize.');
+  assert.equal(current, 'Choose 1. Add the card to your deck or keep it in your collection; edit your deck at Strategize.');
 });
 
 // The note follows cards.editorWhere, independent of the rest servicesPerVisit.
 test('the reward note follows editorWhere, not rest servicesPerVisit', () => {
-  const armoury = 'Choose 1. Cards join your collection; edit your deck at the Armoury.';
-  const strategize = 'Choose 1. Cards join your collection; edit your deck at Strategize.';
+  const armoury = 'Choose 1. Add the card to your deck or edit your deck now; the rest stays in your collection.';
+  const strategize = 'Choose 1. Add the card to your deck or keep it in your collection; edit your deck at Strategize.';
   const ids = ['core.strike', 'core.defend'];
   assert.equal(rewardNote('core', ids, { editorWhere: 'noncombat', servicesPerVisit: 'one' }), armoury);
   assert.equal(rewardNote('core', ids, { editorWhere: 'strategize', servicesPerVisit: 'all' }), strategize);
@@ -52,12 +52,12 @@ test('the reward note follows editorWhere, not rest servicesPerVisit', () => {
 
 test('a Core reward promises no editing when the deck editor is disabled', () => {
   const ids = ['core.strike', 'core.defend'];
-  assert.equal(rewardNote('core', ids, { editorEnabled: false }), 'Choose 1. Cards join your collection.');
-  assert.equal(rewardNote('core', ids, { editorEnabled: true }), 'Choose 1. Cards join your collection; edit your deck at the Armoury.');
+  assert.equal(rewardNote('core', ids, { editorEnabled: false }), 'Choose 1. Add the card to your deck or keep it in your collection.');
+  assert.equal(rewardNote('core', ids, { editorEnabled: true }), 'Choose 1. Add the card to your deck or edit your deck now; the rest stays in your collection.');
 });
 
 test('a Core reward promises no editing when the player turns Deck editing off', () => {
   const ids = ['core.strike', 'core.defend'];
-  assert.equal(rewardNote('core', ids, { settings: { deckEditing: false } }), 'Choose 1. Cards join your collection.');
-  assert.equal(rewardNote('core', ids, { settings: { deckEditing: true } }), 'Choose 1. Cards join your collection; edit your deck at the Armoury.');
+  assert.equal(rewardNote('core', ids, { settings: { deckEditing: false } }), 'Choose 1. Add the card to your deck or keep it in your collection.');
+  assert.equal(rewardNote('core', ids, { settings: { deckEditing: true } }), 'Choose 1. Add the card to your deck or edit your deck now; the rest stays in your collection.');
 });
