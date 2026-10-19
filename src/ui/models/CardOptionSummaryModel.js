@@ -53,9 +53,13 @@ export function analyzeCardEffects(def, preview = null, registries = null, holds
     switch (effect.op) {
       case 'damage': {
         // A multi-hit card keeps its hit count ("Dmg 3 ×3"), read from the live preview first.
-        const hits = preview?.values?.[index]?.hits ?? effect.hits ?? 1;
-        add(counter ? 'return' : 'dmg', effect, { labelId: counter ? 'cardOption.label.return' : 'cardOption.label.dmg', amount, base,
-          hits: typeof hits === 'number' && hits > 1 ? hits : 0 });
+        const liveRow = preview?.values?.[index], hits = liveRow?.hits ?? effect.hits ?? 1, sequence = liveRow?.hitDamages;
+        const labelId = counter ? 'cardOption.label.return' : 'cardOption.label.dmg';
+        // Hits that differ (a first hit weaker than the rest) read as the total with each hit, not "N x hits".
+        if (Array.isArray(sequence) && sequence.length > 1 && sequence.every(Number.isFinite) && sequence.some(each => each !== sequence[0])) {
+          const total = Number.isFinite(liveRow.totalDamage) ? liveRow.totalDamage : sequence.reduce((sum, each) => sum + each, 0);
+          add(counter ? 'return' : 'dmg', effect, { labelId, amount: total, base: typeof base === 'number' ? base * sequence.length : undefined, hits: 0, detail: `(${sequence.join('+')})` });
+        } else add(counter ? 'return' : 'dmg', effect, { labelId, amount, base, hits: typeof hits === 'number' && hits > 1 ? hits : 0 });
         break;
       }
       case 'block': case 'gainBarrier': {
@@ -100,7 +104,7 @@ export function analyzeCardEffects(def, preview = null, registries = null, holds
     const numeric = pick => use.every(part => Number.isFinite(pick(part)));
     const ref = use.some(part => part.ref);
     found.set(key, { labelId: use[0].labelId, amount: sum(part => part.amount), base: numeric(part => part.base) ? sum(part => part.base) : undefined,
-      hits: use.length === 1 ? use[0].hits : 0,
+      hits: use.length === 1 ? use[0].hits : 0, detail: use.length === 1 ? use[0].detail : undefined,
       ...(ref ? { ref: { amount: sum(part => part.ref?.amount ?? part.amount),
         base: numeric(part => part.ref?.base ?? part.base) ? sum(part => part.ref?.base ?? part.base) : undefined } } : {}) });
   }
@@ -126,7 +130,7 @@ export function analyzeCardEffects(def, preview = null, registries = null, holds
     // A split defense shows its own share but moves with the whole gain it came from.
     // The row places the number ("Def {amount}"); before/after carry that placement to the view.
     const [before, after] = t(row.labelId, { amount: MARK }).split(MARK);
-    return freeze({ label: `${before}${after}`.replace(/[^\p{L}\s]/gu, '').trim(), before, after: `${after}${row.hits ? ` \u00d7${row.hits}` : ''}`, hits: row.hits || 1, value: row.amount, base: row.base ?? ref.base,
+    return freeze({ label: `${before}${after}`.replace(/[^\p{L}\s]/gu, '').trim(), before, after: `${after}${row.hits ? ` \u00d7${row.hits}` : ''}${row.detail ? ` ${row.detail}` : ''}`, hits: row.hits || 1, value: row.amount, base: row.base ?? ref.base,
       dir: live ? direction(ref.amount, ref.base) : null });
   }));
   return { line, complete: complete && line.length > 0 };

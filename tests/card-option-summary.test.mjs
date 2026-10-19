@@ -211,3 +211,15 @@ test('a host textOnly preview makes the tile read the card text, never the autho
   const text = run({ textOnly: true, values: [] });
   assert.ok(text.html && !text.line.length);
 });
+test('unequal multi-hit damage shows the total with each hit; equal hits keep "N x hits"', () => {
+  const registries = registriesByProfile.current, base = registries.cards.get('strike');
+  const def = { ...base, effects: [{ op: 'damage', amount: 2, hits: 3, target: 'enemy' }] };
+  const run = values => summarizeCardOption(registries, null, { id: 't', name: 'Twin' }, { defOf: () => def, previewOf: () => ({ values }) }).line[0];
+  const unequal = run([{ op: 'damage', value: 2, hits: 3, hitDamages: [2, 5, 5], totalDamage: 12 }]);
+  assert.equal(unequal.value, 12);
+  assert.match(unequal.after, /\(2\+5\+5\)/);
+  assert.ok(!/×/.test(unequal.after), 'no "x hits" on an unequal sequence');
+  const equal = run([{ op: 'damage', value: 4, hits: 3, hitDamages: [4, 4, 4], totalDamage: 12 }]);
+  assert.equal(equal.value, 4);
+  assert.match(equal.after, /×3/);
+});
