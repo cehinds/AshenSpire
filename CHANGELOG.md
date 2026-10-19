@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Smith upgrades work in Core** ([#2195](https://github.com/cehinds/AshenSpire/pull/2195), `0.7.1.1701`). Smith upgrades now do what they say: weapons add AR, armor and shields add a stat point per tier, and the upgrade screen shows the real change to your cards' Damage and Block.
+- **Smith upgrades work in Core** ([#2195](https://github.com/cehinds/AshenSpire/pull/2195), `0.7.1.1703`). Smith upgrades now do what they say: weapons add AR, armor and shields add a stat point per tier, and the upgrade screen shows the real change to your cards' Damage and Block.
+- **Precision shows on the HUD badge row** ([#2188](https://github.com/cehinds/AshenSpire/pull/2188), `0.7.1.1703`). Precision now shows as a badge on the combat HUD pip next to Evade, for you and for enemies, instead of in the status tray.
 - **Faster start-up** ([#2205](https://github.com/cehinds/AshenSpire/pull/2205), `0.7.1.1701`). The game starts faster on phones: it no longer re-computes its rules checksum or re-scans the class-mastery tag table at every launch.
 - **Snappier taps in combat** ([#2204](https://github.com/cehinds/AshenSpire/pull/2204), `0.7.1.1699`). Playing a card and moving the target highlight now does far less layout work, so taps respond faster on phones.
 - **Spells use your PR** ([#2203](https://github.com/cehinds/AshenSpire/pull/2203), `0.7.1.1697`). Spells and cantrips now grow with your PR (Power Rating from INT and staves) instead of AR. The PR bonus lands on the magical part of a split hit, and enemy spells are unchanged.
