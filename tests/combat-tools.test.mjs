@@ -264,3 +264,40 @@ test('Auto switch mirrors the Reaction switch and follows the autoCombat setting
     tools.release();
   });
 });
+
+test('Auto switch waits for the write, blocks overlapping toggles and repaints after a rollback', async () => {
+  let auto, tools, settle, calls = 0;
+  const settings = { autoCombat: false };
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    tools = mountCombatTools(combatEl, { state: {}, onViewChange() {}, onToggle() {},
+      onAutoToggle: enabled => new Promise(resolve => { calls++; settle = () => { resolve({ ok: false }); }; }) });
+    tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }), { auto: settings.autoCombat });
+    auto = combatEl.querySelector('[data-combat-tool="auto"]');
+    auto.click();
+    assert.equal(auto.disabled, true, 'a pending write blocks another toggle');
+    auto.click();
+    assert.equal(calls, 1);
+    tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }), { auto: settings.autoCombat });
+    assert.equal(auto.disabled, true, 'a repaint does not re-enable a pending switch');
+    settle();
+  });
+  await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+  assert.equal(auto.disabled, false);
+  assert.equal(auto.getAttribute('aria-checked'), 'false', 'refused write: still shows the persisted value');
+});
+
+test('co-op mounts the tools without an Auto switch', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const tools = mountCombatTools(combatEl, { state: {}, onViewChange() {}, onToggle() {} });
+    tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }));
+    assert.equal(combatEl.querySelector('[data-combat-tool="auto"]'), null);
+    assert.ok(combatEl.querySelector('[data-combat-tool="reaction"]'));
+    tools.release();
+  });
+});

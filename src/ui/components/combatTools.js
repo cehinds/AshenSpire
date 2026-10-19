@@ -112,7 +112,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, onVi
   head.append(title, fullLog);
   const list = el('div', { class: 'combat-log-entries', 'data-combat-tool': 'entries', tabindex: '0', role: 'region', 'aria-label': t('combat.log.actions') });
   list.addEventListener('scroll', () => { state.scrollTop = list.scrollTop; state.followLatest = list.scrollTop + list.clientHeight >= list.scrollHeight - 4; });
-  panel.append(head, list); root.append(panel, logButton, reaction, auto, gridLabel); combatEl.append(root);
+  panel.append(head, list); root.append(panel, logButton, reaction, ...(onAutoToggle ? [auto] : []), gridLabel); combatEl.append(root);
   let drag = null, suppressClick = false, released = false;
   const snapHeights = () => {
     const menuBottom = [...combatEl.querySelectorAll('.topbar button')].reduce((max, node) => Math.max(max, node.getBoundingClientRect().bottom), 0);
@@ -172,7 +172,20 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, onVi
     state.fullLog = openCombatLogModal({ entries: latestEntries, opener: fullLog, onClose: () => { state.fullLog = null; } });
   });
   reaction.addEventListener('click', () => onToggle(reaction.getAttribute('aria-checked') !== 'true'));
-  auto.addEventListener('click', () => onAutoToggle?.(auto.getAttribute('aria-checked') !== 'true'));
+  // Like the Grid checkbox: wait for the write, block overlapping toggles, and repaint from the persisted
+  // setting after success or rollback (the screen's handler repaints from readSettings()).
+  let autoBusy = false, autoSupported = true;
+  auto.addEventListener('click', async () => {
+    const enabled = auto.getAttribute('aria-checked') !== 'true';
+    const hadFocus = document.activeElement === auto;
+    autoBusy = true; auto.disabled = true;
+    try { await onAutoToggle?.(enabled); }
+    catch (error) { console.warn('[combat] auto combat preference refused:', error.message); }
+    finally {
+      autoBusy = false;
+      if (!released) { auto.disabled = !autoSupported; if (hadFocus) auto.focus({ preventScroll: true }); }
+    }
+  });
   let frame = 0, entryKey = '';
   function measure() {
     frame = 0;
@@ -254,7 +267,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, onVi
     reaction.setAttribute('aria-label', t('combat.reactions.state', { state: stateLabel }));
     reaction.dataset.enabled = String(toggle.enabled);
     value.textContent = stateLabel;
-    auto.disabled = toggle.disabled && !toggle.supported;
+    autoSupported = !!toggle.supported;
+    if (!autoBusy) auto.disabled = !autoSupported;
     auto.setAttribute('aria-checked', String(!!autoOn));
     auto.dataset.enabled = String(!!autoOn);
     const autoLabel = t(autoOn ? 'combat.reactions.enabled' : 'combat.reactions.disabled');

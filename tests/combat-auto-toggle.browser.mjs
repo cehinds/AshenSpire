@@ -42,4 +42,5 @@ try {
   }
   assert.deepEqual(errors, []);
   console.log('combat auto toggle browser: ok');
-} finally { await browser.close(); await server?.close?.(); process.exit(errors.length ? 1 : 0); }
+} catch (error) { console.error(error); errors.push(String(error)); }
+finally { await browser.close(); await server?.close?.(); process.exit(errors.length ? 1 : 0); }

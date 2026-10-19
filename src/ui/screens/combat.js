@@ -274,11 +274,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const combatToolsState = { open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true };
   const combatTools = mountCombatTools(combatEl, { state: combatToolsState,
     onGridToggle: enabled => onSettingsChange?.({ 'gameConfig.presentation.showFormationGrid': enabled }),
-    onAutoToggle: enabled => {
-      // Same write the Settings row makes, so both stay in sync.
-      try { onSettingsChange?.({ autoCombat: enabled }); }
+    onAutoToggle: async enabled => {
+      // Same write the Settings row makes. A refused write rolls the setting back, so repaint from readSettings().
+      try { await onSettingsChange?.({ autoCombat: enabled }); }
       catch (error) { console.warn('[combat] auto combat preference refused:', error.message); }
-      renderCombatTools();
+      finally { if (combatEl.isConnected) renderCombatTools(); }
     },
     onViewChange: () => renderCombatTools(),
     onToggle: enabled => {
