@@ -10,17 +10,15 @@ import { rememberCombatStance, defensiveCombatStance } from './concurrentStances
 import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js';
 // Configured combat adapter. All rules are scoped to the saved resolved profile;
 // a missing/current profile leaves the existing interpreter untouched.
-import { gameModule, gameContent } from '../model/gameProfile.js';
+import { gameContent } from '../model/gameProfile.js';
+import { configuredModule } from '../model/profileModule.js';
 
 export function configuredCombat(subject) {
   const profile = subject?.gameProfile;
   return !!profile && (profile.foundation?.mode === 'configured'
     || Object.values(profile.modules || {}).some(rule => rule?.mode === 'configured'));
 }
-export function configuredModule(subject, id) {
-  const rule = gameModule(subject, id);
-  return rule?.mode === 'configured' ? rule : null;
-}
+export { configuredModule };
 // A Spell that mirrors a basic card (owner 2026-10-18) keeps that basic's stance; it is still a Spell.
 export const mirroredStance = mirroredManeuver;
 export function configuredStance(carrier) {
