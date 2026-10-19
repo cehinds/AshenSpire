@@ -79,6 +79,7 @@ import { staminaAtCombatStart } from '../src/framework/resources.js';
 import { serializeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
 import { recoveryControls } from '../src/engine/combatStatusControl.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
+import { selectCardVariant } from '../src/engine/cardBehavior.js';
 import { upcastOptions } from '../src/model/upcasting.js';
 
 // Focused browser gates may establish only the starting HP/Block named by the
@@ -773,10 +774,26 @@ export function createSession({ registries, seedString, endless = false, restore
   // A card-zone choice's candidate previews, computed once per choice (they ride every snapshot until it is
   // answered) and from a single detached state. Keyed on the live choice object, so a new choice recomputes.
   const choicePreviews = new WeakMap();
+  const FULL_PREVIEW_CAP = 8;
   function candidatePreviews(c, playerId, choice) {
     if (!choicePreviews.has(choice)) {
       let previews = {};
-      try { previews = previewCoopCards(c, playerId, (choice.candidates || []).map(card => card.instanceId)); } catch { previews = {}; }
+      try {
+        const seat = c.players.get(playerId);
+        const ctx = { ...c, registries: c.registriesForPlayer(playerId), player: seat.entity, combatExpansionVersion: c.combatExpansionVersion };
+        const charged = Object.keys(seat.entity.abilityRiders?.charges || {}).length > 0;
+        const full = [], cheap = {};
+        for (const card of choice.candidates || []) {
+          const def = resolveCombatCard(ctx, card);
+          // Only a card whose numbers depend on live state (an effect variant, a condition, a held ability charge)
+          // earns a full preview, the first FULL_PREVIEW_CAP of them; a plain card reads its authored numbers.
+          const live = charged || def.effectVariants?.length || (def.effects || []).some(effect => effect?.if);
+          if (!live) continue;
+          if (full.length < FULL_PREVIEW_CAP) full.push(card.instanceId);
+          else cheap[card.instanceId] = { resolvedDefinition: selectCardVariant(ctx, def, {}, null), values: [] };
+        }
+        previews = { ...cheap, ...(full.length ? previewCoopCards(c, playerId, full) : {}) };
+      } catch { previews = {}; }
       choicePreviews.set(choice, previews);
     }
     return choicePreviews.get(choice);

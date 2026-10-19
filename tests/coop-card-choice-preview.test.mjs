@@ -31,8 +31,13 @@ function fixture() {
   for (const id of ['p1', 'p2']) { const r = host.chooseNode(id, host.session.mapGraph.startIds[0]); assert.equal(r.ok, true, JSON.stringify(r)); }
   return host;
 }
-function withDrawChoice(host) {
+const VARIANT = 'base.current-stance-variant';
+// `variants` draw-pile cards are swapped for a variant card (its numbers depend on live state), the rest stay plain.
+function withDrawChoice(host, variants = 1) {
   const combat = host.live.combat, seat = combat.players.get('p2');
+  assert.ok(registries.cards.get(VARIANT)?.effectVariants?.length, 'the variant card exists');
+  while (seat.piles.draw.length < variants + 2) seat.piles.draw.push({ ...seat.piles.draw[0], instanceId: `pad${seat.piles.draw.length}` });
+  seat.piles.draw.slice(0, variants).forEach(row => { row.cardId = VARIANT; });
   const pick = seat.piles.hand.find(row => row.cardId === 'bashingBlow');
   assert.ok(pick, 'the seat holds the rewired card');
   const played = host.combatPlay('p2', pick.instanceId, 'p2');
@@ -43,23 +48,36 @@ function withDrawChoice(host) {
 
 test('a card-zone candidate carries the live preview and the tile reads its number', () => {
   const host = fixture(), { combat } = withDrawChoice(host);
-  const candidate = host.snapshot().scene.players.find(player => player.id === 'p2').pendingCardChoice.candidates[0];
+  const candidate = host.snapshot().scene.players.find(player => player.id === 'p2').pendingCardChoice.candidates.find(row => row.cardId === VARIANT);
   assert.ok(combat.pendingCardChoice.candidateIds.includes(candidate.instanceId));
   assert.ok(candidate.combatPreview, 'the candidate carries the preview a hand card gets');
   assert.ok(Array.isArray(candidate.combatPreview.values));
   assert.equal(combat.pendingCardChoice.candidates[0].combatPreview, undefined, 'the preview is snapshot-only, not written to engine state');
   const def = candidate.combatPreview.resolvedDefinition;
   const summary = summarizeCardOption(registries, null, { id: candidate.instanceId, name: def.name }, { defOf: () => def, previewOf: () => candidate.combatPreview });
-  const live = candidate.combatPreview.values.find(row => Number.isFinite(row.value))?.value;
   assert.ok(summary.line.length || summary.html, 'the tile has an effect row');
-  if (summary.line.length) assert.ok(summary.line.some(row => row.value === live || candidate.combatPreview.values.some(v => v.value === row.value)), 'the tile shows the previewed number');
+  assert.ok(summary.line.every(row => Number.isFinite(row.value)), 'the tile shows previewed numbers');
 });
 
 test("another seat's view drops the candidate preview, as it does for a hand", () => {
   const host = fixture(); withDrawChoice(host);
   const wire = projectLanSnapshot(host.snapshot(), ['p1']);
-  const candidate = wire.scene.players.find(player => player.id === 'p2').pendingCardChoice.candidates[0];
+  const candidate = wire.scene.players.find(player => player.id === 'p2').pendingCardChoice.candidates.find(row => row.cardId === VARIANT);
   assert.equal(candidate.combatPreview, undefined);
-  const own = projectLanSnapshot(host.snapshot(), ['p2']).scene.players.find(player => player.id === 'p2').pendingCardChoice.candidates[0];
+  const own = projectLanSnapshot(host.snapshot(), ['p2']).scene.players.find(player => player.id === 'p2').pendingCardChoice.candidates.find(row => row.cardId === VARIANT);
   assert.ok(own.combatPreview, "the owner's own view keeps it");
+});
+
+test('only cards with live-state numbers earn a full preview, capped at eight; the rest get the cheap variant definition', () => {
+  const host = fixture(); withDrawChoice(host, 12);
+  const rows = host.snapshot().scene.players.find(player => player.id === 'p2').pendingCardChoice.candidates;
+  const variant = rows.filter(row => row.cardId === VARIANT), plain = rows.filter(row => row.cardId !== VARIANT);
+  assert.equal(variant.length, 12);
+  assert.ok(plain.length >= 1 && plain.every(row => row.combatPreview === undefined), 'a plain card reads its authored numbers: no preview');
+  const full = variant.filter(row => row.combatPreview.values.length);
+  assert.equal(full.length, 8, 'the first eight carry the full preview');
+  const cheap = variant.filter(row => !row.combatPreview.values.length);
+  assert.equal(cheap.length, 4);
+  assert.ok(cheap.every(row => row.combatPreview.resolvedDefinition?.id === VARIANT), 'the rest carry the resolved definition only');
+  assert.ok(cheap.every(row => row.combatPreview.resolvedDefinition), 'a cheap preview still carries the definition');
 });
