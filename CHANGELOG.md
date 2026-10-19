@@ -38,9 +38,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
-- **Combat numbers are always whole** ([#2152](https://github.com/cehinds/AshenSpire/pull/2152), `0.7.1.1635`). Combat numbers are now always whole, with no decimals in damage, Block, Poise, hit chances or the damage breakdown.
+- **Combat numbers are always whole** ([#2152](https://github.com/cehinds/AshenSpire/pull/2152), `0.7.1.1637`). Combat numbers are now always whole, with no decimals in damage, Block, Poise, hit chances, Accuracy, Evasion or the damage breakdown.
 
-- **Matching-stance discounts follow what a card costs** ([#2142](https://github.com/cehinds/AshenSpire/pull/2142), `0.7.1.1635`). Matching-stance cards now get their cost discount on mana if they cost mana, otherwise on stamina.
 - **Matching-stance discounts follow what a card costs** ([#2142](https://github.com/cehinds/AshenSpire/pull/2142), `0.7.1.1635`). Matching-stance cards now get their cost discount on mana if they cost mana, otherwise on stamina.
 - **Vulnerable adds 25% damage everywhere** ([#2140](https://github.com/cehinds/AshenSpire/pull/2140), `0.7.1.1633`). Vulnerable now adds 25% damage instead of 50% in every mode, matching the Core rules, and card previews show it.
 - **Core 2 fights resume with their Perception reads intact** ([#2138](https://github.com/cehinds/AshenSpire/pull/2138), `0.7.1.1631`). Continue accepts a validated fight's local knowledge without requiring legacy progression records. Pending or hidden hover tips no longer consume Escape before card targeting can cancel; deliberate tap-to-inspect selection still survives a redraw. Tutorial checks wait for the completed hold under OneTap and verify that selection spends nothing. Save-loading failure checks run in two complete CI shards within the existing time limit.
