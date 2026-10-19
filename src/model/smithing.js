@@ -428,7 +428,14 @@ export function smithingPlan(registries, run, explicitRules = undefined, { free 
     // A stored armament composes no live cards, so its preview is what the
     // upgrade does to the cards it WOULD supply (the authored role previews,
     // `used: false`), never an empty list that reads as "nothing changes".
-    const changes = core ? Object.freeze(core.map((row) => Object.freeze({ ...row })))
+    // Core keeps the authored non-card deltas the upgrade still applies: attribute requirements and the
+    // equipment Poise threshold (itemUpgrades.js). An item with no Core effect stays off the grid.
+    const coreExtras = core?.length ? [
+      ...requirements.filter((row) => row.currentRequired !== row.nextRequired)
+        .map((row) => ({ kind: 'requirement', tag: `requirement:${row.attributeId}`, label: `${row.label} requirement`, before: row.currentRequired, after: row.nextRequired })),
+      ...(identity.itemKind === 'armor' ? itemUpgradeValueReceipts(registries, itemRef, currentLevel, nextLevel) : []),
+    ] : [];
+    const changes = core ? Object.freeze([...core, ...coreExtras].map((row) => Object.freeze({ ...row })))
       : identity.itemKind === 'armament'
       ? genericCardChanges(affectedCards.length ? affectedCards : previewCards, requirements)
       : itemUpgradeValueReceipts(registries, itemRef, currentLevel, nextLevel);

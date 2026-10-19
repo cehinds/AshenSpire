@@ -92,7 +92,9 @@ test('Core shield tier adds a stat point; receipts never carry legacy +3 card ro
   const points = shield.changes.find((row) => row.label === 'Stat points');
   assert.equal(points.after, points.before + 1);
   for (const row of plan.candidates) {
-    assert.ok(row.changes.every((change) => change.tag.startsWith('core:')), row.itemRef);
+    // Core rows, plus the authored non-card deltas the tier still applies (requirements, Poise threshold).
+    assert.ok(row.changes.every((change) => /^(core:|requirement:|equipment:poise)/.test(change.tag) || change.kind === 'equipmentPoise'), row.itemRef);
+    assert.ok(row.changes.every((change) => !/^(card:|upgrade:)/.test(change.tag)), row.itemRef);
     assert.equal(row.affectedCards.length, 0);
     const model = smithSelectionModel(reg, plan, row.itemRef).properties.selected;
     const text = JSON.stringify(model.affectedRows);
@@ -186,4 +188,16 @@ test('an armor tier always raises DR, and Defend block preview equals the played
   const now = defendBlock(fight(run));
   assert.ok(now > was);
   assert.equal(now - was, Math.floor((after - dr) * weight));
+});
+
+test('Core receipts keep the authored requirement and Poise threshold deltas a tier still applies', () => {
+  const run = fresh(); run.loadout.sets.rightHand[0] = 'straightSword'; run.loadout.sets.armor[0] = 'vigil';
+  // Core ships no equipment requirements; a legacy-gated override still gets its authored tier delta.
+  const gated = { ...reg, equipment: { ...reg.equipment, armaments: reg.equipment.armaments.map((piece) => piece.id === 'straightSword' ? { ...piece, requirements: { attributes: { strength: 8 } } } : piece) } };
+  const plan = smithingPlan(gated, run);
+  const sword = plan.candidates.find((row) => row.itemRef === 'armament/straightSword');
+  assert.ok(sword.requirements.some((row) => row.change !== 0), 'the fixture tier changes a requirement');
+  assert.ok(sword.changes.some((row) => row.kind === 'requirement'));
+  const armor = plan.candidates.find((row) => row.itemRef === 'armor/reaver/vigil');
+  assert.ok(armor.changes.some((row) => row.kind === 'equipmentPoise' && row.after > row.before));
 });
