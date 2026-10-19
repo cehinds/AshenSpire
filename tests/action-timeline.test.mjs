@@ -111,3 +111,29 @@ test('D11: the watchdog budget follows the real gaps, so 1 s gaps and a multi-hi
   const first = trace.filter(row => row[1] === 'player').map(row => row[0]);
   assert.deepEqual(first.slice(0, 5), ['intent', 'action', 'sprite', 'contact', 'result']);
 });
+
+// One enemy turn of three enemies, as the combat screen runs it. A watchdog
+// flush here would mean the budget is shorter than the real gaps.
+function enemyTurn(settings) {
+  setAnimSpeed('normal'); setCombatPacing(settings);
+  const c = clock(), trace = [], timing = actionPacing();
+  runActionTimeline(['e1', 'e2', 'e3'].map(actorId => ({ actorId, kind: 'attack' })), {
+    onSprite: (_beat, speed) => ({ impactMs: speed.lungeMs / 2, totalMs: speed.lungeMs, cancel() {} }),
+    maxSpriteMs: speed => speed.lungeMs,
+    onFlush: () => trace.push('flush'), onDone: () => trace.push(['done', c.now]),
+  }, timing, c);
+  c.advance(10 * 60 * 1000); setCombatPacing();
+  return trace;
+}
+test('D11: three enemies finish by themselves at every pause and speed, with no watchdog flush', () => {
+  const measured = {};
+  for (const [name, settings] of [['default', {}], ['auto x1.5', { autoCombat: true }], ['gap 2000', { combatActionDelay: 2000 }],
+    ['gap 2000 auto x3', { combatActionDelay: 2000, autoCombat: true, autoCombatSpeed: 3 }], ['gap 250', { combatActionDelay: 250 }]]) {
+    const trace = enemyTurn(settings);
+    assert.ok(!trace.includes('flush'), `${name}: the watchdog must not fire`);
+    measured[name] = trace.find(row => row[0] === 'done')[1];
+  }
+  assert.equal(measured.default, 3 * 6390, 'three actors at 6390 ms each (six 1000 ms gaps plus the 390 ms clip), the last reset included');
+  assert.ok(Math.abs(measured['auto x1.5'] * 1.5 - measured.default) < 1, 'auto combat divides every gap and clip by x1.5');
+  assert.ok(measured['gap 2000'] > measured.default && measured['gap 250'] < measured.default, 'the pause setting moves the whole turn');
+});
