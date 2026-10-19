@@ -2773,6 +2773,9 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   if (coreCounterCard) {
     const read = coreCounterReturn();
     if (read) supportCounterReturn = { incoming: read.incoming, hp: read.hp, poise: read.poise, block: read.block, advantaged: read.advantaged };
+    // A support-only Counter (no damage effect) against a revealed attack it does not cover will not arm: the face must not fall
+    // back to the authored payload as if the intent were merely hidden. A damage-opcode Counter carries this on its damage row.
+    else if (coreCounterUncovered() && !(preparedEffects || []).some(effect => effect.op === 'damage')) supportCounterReturn = { uncovered: true };
   }
 
   return {

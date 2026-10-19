@@ -307,7 +307,9 @@ function buildLines(def, preview, registries) {
   }
 
   // Counter: what the payload returns, for each part the effects do not already deal.
-  if (counter) {
+  // An uncovered revealed attack (the Counter will not arm): no return lines, not even the authored payload.
+  const counterUncovered = counter && preview?.counterReturn?.uncovered === true;
+  if (counter && !counterUncovered) {
     const payload = def.counterPayload || {};
     // Ward off (Core 2): the payload's Ward drains Poise too, so it joins the Poise figure.
     let poiseReturn = 0, poiseAuthored = 0;
@@ -326,7 +328,7 @@ function buildLines(def, preview, registries) {
     // Beating the revealed hit also adds Block before it lands.
     if (preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', text: `+${num(preview.counterReturn.block)} Block against it` });
   }
-  if (counter && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
+  if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   if (def.pronePoiseBonus && !(counter && preview?.counterReturn)) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
   if (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2) {
     // gameProfile lets the face apply the same Core 2 rounding as combat (stanceEntryBonuses floors under FixCore).

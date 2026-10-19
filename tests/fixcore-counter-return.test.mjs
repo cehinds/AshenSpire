@@ -291,7 +291,7 @@ function liveWith(cardId) {
 test('a spell Counter (frostCounter) previews no return but still marks its SP shift', () => {
   const { combat, enemy } = liveWith('frostCounter');
   const view = previewCard(combat, 'cy1', enemy.id);
-  assert.equal(view.counterReturn, undefined, 'a spell Counter live play never arms promises no return');
+  assert.deepEqual(view.counterReturn, { uncovered: true }, 'a spell Counter live play never arms promises no return (only the uncovered marker)');
   assert.equal(view.costShift, -1, 'the reaction-from-hand discount reads from the authored cost (1 -> 0)');
 });
 
@@ -387,7 +387,7 @@ test('the face lists only what live resolution delivers: no legacy Smash, Prone 
 
 test('preview follows live eligibility: a spell Counter (frostCounter) shows no return and is not consumed; Counters that arm still show and apply theirs', () => {
   const frost = faceAgainst12('frostCounter');
-  assert.equal(frost.view.counterReturn, undefined, 'no return promised for a Counter live play never arms');
+  assert.deepEqual(frost.view.counterReturn, { uncovered: true }, 'no return promised for a Counter live play never arms (only the uncovered marker)');
   const { combat } = live();
   combat.piles.hand.push({ instanceId: 'cz1', cardId: 'frostCounter' });
   Object.assign(combat.player, { mana: 9, maxMana: 9 });
@@ -420,4 +420,28 @@ test('Crimson Reprisal rank 3 leaves no orphaned condition line once the Core re
   const text = (cardFaceLines(view.resolvedDefinition, view, reg) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
   assert.doesNotMatch(text, /If HP lost[^|]*:\s*(\||$)/, text);
   assert.doesNotMatch(text, /If HP lost/, text);
+});
+
+function supportFace(enemyId, setup) {
+  const { combat, enemy } = live(enemyId);
+  combat.piles.hand.push({ instanceId: 'cs1', cardId: 'lowGuardRiposte' });
+  Object.assign(combat.player, { mana: 9, maxMana: 9 });
+  setup?.(enemy);
+  const view = previewCard(combat, 'cs1', enemy.id);
+  return { view, text: (cardFaceLines(view.resolvedDefinition, view, regs[enemyId]) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '') };
+}
+
+test('a support-only Core Counter (lowGuardRiposte) vs an uncovered revealed attack shows no return and no Prone bonus', () => {
+  const { view, text } = supportFace('wyrmLord');
+  assert.equal(view.counterReturn?.uncovered, true, 'the uncovered state is kept');
+  assert.doesNotMatch(text, /Return|\bPoise\b|while Prone|against Smash/, text);
+});
+
+test('a support-only Core Counter vs a hidden intent keeps the authored payload; vs a covered attack shows the computed return', () => {
+  const hidden = supportFace('wanderingSoldier', enemy => { enemy.intent = null; });
+  assert.equal(hidden.view.counterReturn, undefined, 'hidden: no computed return');
+  assert.match(hidden.text, /Poise/, hidden.text);
+  const covered = supportFace('wanderingSoldier');
+  assert.ok(covered.view.counterReturn?.poise > 0 && !covered.view.counterReturn.uncovered);
+  assert.match(covered.text, /Poise/, covered.text);
 });
