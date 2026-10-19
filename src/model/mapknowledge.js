@@ -64,20 +64,16 @@ export function rungHeight(rung) {
 /* --------------------------------------------------------------- the mode -- */
 
 /**
- * The two map modes. `fog` IS THE GAME NOW — Constantine, 2026-08-08: "ok, the
- * fog needs to be the default".
+ * The two map modes. The default is `path` — fog of war is OFF by default in
+ * every profile (owner, 2026-10-19: "map fog isn't off by default"). The player
+ * turns fog on in Settings → Display, where the row is shown.
  *
- * WHAT THIS TOKEN USED TO SAY, AND WHY IT WAS WRONG IN EXACTLY ONE WAY. It said
- * `path`, and the reasoning under it was Sunna's and mine and it was sound:
- * NOBODY'S FIRST RUN IS THE EXPERIMENT, and an A/B needs a control. It is also
- * precisely how he came to open a build, see every node, and be told the fog was
- * done. A default is not a neutral position — it is the only reading most runs
- * will ever get, and we shipped the one he had asked us to replace.
+ * HISTORY. On 2026-08-08 Constantine asked for fog as the default, and this token
+ * said `fog` until 2026-10-19. His 2026-10-19 ruling moves it back to `path`.
  *
- * SO ONE THING MOVED AND THE REST STANDS. His word closes the DEFAULT. It does
- * not close Ruling 1: `path` stays a real, reachable value of the setting and
- * must keep working byte-for-byte, because the comparison is still the thing he
- * is judging — it is now reached by choosing it rather than by doing nothing.
+ * `fog` stays a real, reachable value of the setting and must keep working
+ * byte-for-byte, because the comparison is still the thing he is judging — it is
+ * reached by choosing it rather than by doing nothing.
  *
  * THE COMPARISON IS STILL THE DELIVERABLE. The toggle lives in Settings →
  * Display rather than in Custom Climb — Marina's ruling, on the argument that
@@ -87,7 +83,7 @@ export function rungHeight(rung) {
  * existing seed field plus this toggle.
  */
 export const MAP_MODES = Object.freeze(['path', 'fog']);
-export const MAP_MODE_DEFAULT = 'fog';
+export const MAP_MODE_DEFAULT = 'path';
 
 /**
  * resolveMapMode(meta, run?) → 'path' | 'fog'.
@@ -296,8 +292,8 @@ export function nodeReading(node, { reveal = false } = {}) {
  * mechanism; the default itself is ours, question open, see the D19 note
  * above). It is one home, one reader,
  * and the monotone property in `--selftest` is the thing that can falsify it.
- * It matters tonight rather than eventually: fog is the DEFAULT now, so this is
- * the first thing a new player reads about the mode they are already in.
+ * It matters whenever a player turns fog on: this is the first thing they read
+ * about the mode they have just chosen.
  */
 export const FOG_TRAIL_CLAUSE = 'Fog never closes behind you — anywhere you have seen stays seen.';
 

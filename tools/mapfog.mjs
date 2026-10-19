@@ -496,7 +496,7 @@ function runSelftest() {
     // get, and it should not drift by accident. The value is HIS, and the row
     // now names whose it is — so the next person to move it has to argue with
     // him rather than with me.
-    ['the default is `fog` — Constantine, 2026-08-08, and a default is not an accident', MAP_MODE_DEFAULT === 'fog'],
+    ['the default is `path` — fog is off by default, owner 2026-10-19, and a default is not an accident', MAP_MODE_DEFAULT === 'path'],
     ['the ladder has three rungs, low to high', RUNGS.length === 3 && rungHeight(HIDDEN) === 0 && rungHeight(KNOWN) === 2],
   ];
   let modeOk = true;
