@@ -1121,7 +1121,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const ents = { player: snapEnt(combat.player, true) };
     for (const e of combat.enemies) ents[e.id] = snapEnt(e, e.alive);
     // The "?" rule (IntentFollowUpModel.js): each planned move shows by its own read, which the engine records per move
-    // (enemy.followTrace). A reaction pause resumes the same turn, so its plan is kept, not rebuilt from what is left.
+    // (combat.followTrace). A reaction pause resumes the same turn, so its plan is kept, not rebuilt from what is left.
     const followPlans = {};
     for (const e of combat.enemies) {
       const plan = followMemo.plan(e.id, { resuming: !!combat.reactionCursor,
@@ -1164,7 +1164,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           const actor = disp.ents[e.sourceId];
           // The actor has acted and may still have SP: its remaining queue is "?" unless the read passed.
           const enemy = combat.enemies.find(row => row.id === e.sourceId);
-          if (actor) actor.followUps = followMemo.setRow(e.sourceId, advanceFollowUps(disp.followPlans?.[e.sourceId], enemy?.followTrace));
+          if (actor) actor.followUps = followMemo.setRow(e.sourceId, advanceFollowUps(disp.followPlans?.[e.sourceId], combat.followTrace?.[e.sourceId]));
           const move = registries.enemies.get(e.enemyId || enemy?.enemyId)?.moves?.[e.moveId];
           if (actor && enemy && move) actor.presentationStance = enemyStanceCategory({
             kind: e.kind || move.intent,
@@ -1174,7 +1174,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         }
         case 'enemyMoveUnavailable': {
           const actor = disp.ents[e.sourceId];
-          if (actor) actor.followUps = followMemo.setRow(e.sourceId, advanceFollowUps(disp.followPlans?.[e.sourceId], combat.enemies.find(row => row.id === e.sourceId)?.followTrace));
+          if (actor) actor.followUps = followMemo.setRow(e.sourceId, advanceFollowUps(disp.followPlans?.[e.sourceId], combat.followTrace?.[e.sourceId]));
           break;
         }
         case 'enemyActorTurnStarted': {

@@ -290,7 +290,6 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
 
   function placePlayerHud(reserveFirst = false, targetCores = [], tick = false) {
     if (field.closest('.combat')?.dataset.targetHud === 'true') { centerTargetOverheads(); return; }
-    placeHitBadges();
     // A player's Inspect over the head must not hide an enemy's intent or
     // Inspect. It takes the head's left, the field's left edge, or the head's
     // right before accepting an overlap. Declared here so the placement source
@@ -497,6 +496,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (reducedMotionRequested()) { trackingRequest = 0; return; }
     // Keep the settled target cores reserved, or the HUD can snap back over the player target.
     placePlayerHud(false, settledTargetCores, true);
+    if (field.closest('.combat')?.dataset.targetHud !== 'true') placeHitBadges();
     // A neighbour's intent that moves between refits re-picks the spot about
     // four times a second; the Inspect itself never follows the body's bob.
     if (++inspectTick % 15 === 0 && field.closest('.combat')?.dataset.targetHud !== 'true') placeEnemyInspect();
@@ -1287,8 +1287,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const rect = combat.getBoundingClientRect();
     // Last layout write of the refit: the HUD, ribbon and intents are settled.
     // The combat box above is unchanged by the Inspect marks.
-    if (!targetHud) { placeEnemyInspect(); placeHitBadges(); }
+    if (!targetHud) placeEnemyInspect();
     else centerTargetOverheads();
+    if (!targetHud) placeHitBadges();
     syncFloorShadows();
     // Fit the sky from the top of the combat screen, including the HUD.
     // Extending a field-only crop upward can expose empty space above the

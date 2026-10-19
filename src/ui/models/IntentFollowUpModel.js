@@ -3,7 +3,7 @@
 // "?". Headless: no DOM, no rolls.
 //
 // Per-move read: the engine rolls the read once per move, as the move is presented (presentIntent), and records it with
-// the move's outcome in `enemy.followTrace` ([{ read, outcome }] in play order, no move id). This model only reads that
+// the move's outcome in `combat.followTrace[enemyId]` ([{ read, outcome }] in play order, no move id). This model only reads that
 // trace, so it never re-rolls. The icon of a move is looked up ONLY for an entry whose own read succeeded; a failed
 // read never reaches a symbol, the DOM, a data attribute, an aria label or a tooltip.
 //
@@ -47,7 +47,7 @@ export function remainingFollowUps(plan, trace) {
  * advanceFollowUps(plan, trace) → the symbols after the next action event of one actor's turn. Call it once per
  * `enemyMoveStarted` (not a reaction) or `enemyMoveUnavailable` of that actor, in order. The first call is the head
  * move, which is not in the trace; each later call consumes one trace entry (skipping charges and burden stops, which
- * emit no action event). `trace` is the engine's `enemy.followTrace`.
+ * emit no action event). `trace` is the engine's `combat.followTrace[enemyId]`.
  */
 export function advanceFollowUps(plan, trace) {
   if (!plan) return [];

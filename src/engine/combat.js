@@ -745,7 +745,7 @@ function enemyPhase(combat) {
   const preview = Boolean(combat.combatRounds);
   if (!combat.reactionCursor) {
     combat.phase = 'enemy';
-    for (const e of combat.enemies) delete e.followTrace;
+    delete combat.followTrace;
     if (!preview) {
       enemyTurnStart(combat);
       if (combat.result) return;
@@ -823,7 +823,7 @@ function enemyPhase(combat) {
       // The UI's "?" row (SPEC §4.6a): this follow-up's own read, rolled once by presentIntent, and what became of it.
       // No move id: a failed read must leave nothing about the move in state.
       const traced = { read: perceptionRead(combat, enemy), outcome: 'played' };
-      (enemy.followTrace ||= []).push(traced);
+      ((combat.followTrace ||= {})[enemy.id] ||= []).push(traced);
       const move = expandedEnemyMove(enemy, def.moves[next.moveId], next.moveId, combat);
       if (move.delay) {
         enemy.plannedMoves = [];
