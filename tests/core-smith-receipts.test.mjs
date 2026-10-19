@@ -201,3 +201,17 @@ test('Core receipts keep the authored requirement and Poise threshold deltas a t
   const armor = plan.candidates.find((row) => row.itemRef === 'armor/reaver/vigil');
   assert.ok(armor.changes.some((row) => row.kind === 'equipmentPoise' && row.after > row.before));
 });
+
+test('Core run: a Sleeping Smith card-upgrade reward upgrades a Core item and its live cards change', async () => {
+  const { executeAction } = await import('../src/engine/actions.js');
+  const run = fresh();
+  const before = JSON.stringify(run.itemUpgradeLevels || {});
+  const emitted = [];
+  executeAction({ registries: reg, run, rng: { float: () => 0.5, pick: (_s, list) => list[0] }, emit: (name, payload) => emitted.push([name, payload]) },
+    { effect: { op: 'upgradeCard', random: true } });
+  assert.notEqual(JSON.stringify(run.itemUpgradeLevels || {}), before, 'a Core item tier was set');
+  const smithed = emitted.find(([name]) => name === 'armamentSmithed');
+  assert.ok(smithed, 'the upgrade committed');
+  assert.ok(smithed[1].changes.some((row) => row.kind === 'card'), 'at least one live card number changed');
+  assert.ok(smithed[1].affectedCards.length > 0);
+});
