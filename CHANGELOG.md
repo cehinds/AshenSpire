@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Counter reworked** ([#2200](https://github.com/cehinds/AshenSpire/pull/2200), `0.7.1.1685`). Counter now answers any attack it covers: it returns half the damage it takes, a quarter more with extra Block when it beats the attack, and reaction cards cost 1 less stamina from your hand.
+
 - **Co-op HUD check back to green** ([#2186](https://github.com/cehinds/AshenSpire/pull/2186), `0.7.1.1685`). The co-op browser check now turns on one-tap play for its Counter and vow shortcut steps, since one tap only selects a card by default. Nothing changes in play.
 - **Pages assemble reports real rebuild failures** ([#2185](https://github.com/cehinds/AshenSpire/pull/2185), `0.7.1.1683`). A failed rebuild in the Pages assemble now reports its real cause (for example the mobile build's size budget) instead of the boilerplate NOTE line, and the assemble selftest no longer posts warnings that looked like missing /latest/ pages.
 
