@@ -24,7 +24,7 @@ export function gameProfileRestModel(registries, run, visit) {
       : id === 'levelUp' ? attributes.find(row => row.available) || attributes[0] || { available: false, reason: t('gameProfile.rest.noLevel') }
       : attempt(id);
     if (id === 'levelUp' && !restServiceSpent(run, visit, id) && !result.available && !(run.level?.unspentPoints > 0)) result.reason = t('gameProfile.rest.noLevel');
-    return { ...result, id, title: t(`gameProfile.rest.service.${id}`), description: t(`gameProfile.rest.description.${id}${restServicesAll(run) ? 'All' : ''}`) };
+    return { ...result, id, title: t(`gameProfile.rest.service.${id}`), description: t(restServicesAll(run) ? `gameProfile.rest.description.${id}All` : `gameProfile.rest.description.${id}`) };
   });
   return { services, smith, smithPreviews, attributes };
 }
