@@ -1385,9 +1385,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       autoCombatTimer = null;
       if (!combatEl.isConnected || combat.result) return;
       const pending = combat.pendingReaction;
-      // Arm the delay when an offer first appears, so the answer waits a full
-      // combatActionDelay after the reaction words rather than the rest of an old tick.
-      if (pending && pending !== autoArmedReaction) { autoArmedReaction = pending; scheduleAutoCombat(); return; }
+      // Arm the delay when the offer's modal is open and playback is idle, so the answer
+      // waits a full combatActionDelay after the reaction words rather than the rest of an old tick.
+      if (pending && reactionShell && !busy && autoArmedReaction !== reactionShell) { autoArmedReaction = reactionShell; scheduleAutoCombat(); return; }
       const option = autoReactionChoice();
       if (option !== undefined) { reactionShell.dismiss(); answerReaction(reactionAnswer(pending, option), false); }
       scheduleAutoCombat();
