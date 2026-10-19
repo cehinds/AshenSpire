@@ -76,3 +76,26 @@ test('the text follows the active rules: a profile with a 3x multiplier, 30% Blo
   assert.match(withCoreSmashBlurb({ id: 'maneuver:smash', blurb: 'x' }, ctx).blurb, /3× damage/);
   assert.doesNotMatch(coreSmashClause(reaver, core), /3×/);
 });
+
+test('Reframe-projected Smash (combatProfile.maneuver, tag still maneuver:attack) shows the Core Smash clause', () => {
+  const attack = core.cards.all().find(def => def.tags?.includes('maneuver:attack') && !def.tags.includes('maneuver:smash') && cardFaceLines(def, null, core));
+  assert.ok(attack, 'a Core Attack card exists');
+  assert.equal(coreSmashClause(attack, core), '');
+  const projected = { ...attack, combatProfile: { ...attack.combatProfile, maneuver: 'smash' } };
+  assert.match(coreSmashClause(projected, core), RULE);
+  assert.match(coreSmashHelp(projected, core), RULE);
+  assert.match(plain(cardFaceLines(projected, null, core)), RULE);
+  assert.equal(coreSmashClause(projected, current), '');
+});
+
+test('the stance list is read from the active smash matchup table', () => {
+  const reaver = core.cards.get('core.reaverSpecial');
+  assert.match(coreSmashClause(reaver, core), /Against Defend or Prepared:/);
+  const withMatchup = smash => {
+    const stances = { ...core.gameProfile.modules.stances, matchups: { ...core.gameProfile.modules.stances.matchups, smash } };
+    return { ...core, gameProfile: { ...core.gameProfile, modules: { ...core.gameProfile.modules, stances } } };
+  };
+  assert.match(coreSmashClause(reaver, withMatchup(['counter'])), /Against Counter:/);
+  assert.match(coreSmashHelp(reaver, withMatchup(['counter', 'evade', 'sweep'])), /Against Counter, Evade or Sweep:/);
+  assert.equal(coreSmashClause(reaver, withMatchup([])), '', 'a Smash that beats nothing says nothing');
+});
