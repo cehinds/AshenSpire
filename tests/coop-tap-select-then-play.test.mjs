@@ -98,9 +98,10 @@ test('co-op render drops a selection whose card left every hand', async () => {
   const { readFileSync } = await import('node:fs');
   const src = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
   // Only the active seat's hand keeps a selection alive (instance ids repeat across seats).
-  assert.match(src, /litCard\(\) !== null && \(snap\.scene\.kind !== 'combat'\s*\n\s*\|\| !\(\(snap\.scene\.players \|\| \[\]\)\.find\(p => p\.id === me\)\?\.hand \|\| \[\]\)\.some\(card => card\.instanceId === litCard\(\)\)\)\) clearSelection\(\);/);
-  // Leaving combat (a kill by another seat, then reward/map) clears it as well.
-  assert.match(src, /snap\.scene\.kind !== 'combat'/);
+  assert.match(src, /litCard\(\) !== null && \(leftCombat \|\| \(snap\.scene\.kind === 'combat'\s*\n\s*&& !\(\(snap\.scene\.players \|\| \[\]\)\.find\(p => p\.id === me\)\?\.hand \|\| \[\]\)\.some\(card => card\.instanceId === litCard\(\)\)\)\)\) clearSelection\(\);/);
+  // Leaving combat (a kill by another seat, then reward/map) clears it as well, but only on the
+  // transition: a redraw of the same reward scene keeps a reward card's first, selecting tap.
+  assert.match(src, /const leftCombat = lastSceneKind === 'combat' && snap\.scene\.kind !== 'combat';\s*\n\s*lastSceneKind = snap\.scene\.kind;/);
 });
 
 test('an automatic seat switch for a reaction clears the previous seat\'s selection', async () => {

@@ -390,6 +390,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
   const upcastTiersByCard = new Map();
   const upcastKey = instanceId => `${me}:${instanceId}`;
   let prevCombat = null; // last combat scene, for snapshot-diff FX
+  let lastSceneKind = null; // scene kind of the previous render, to clear selection on leaving combat
   // Receipt renders replace the field DOM, but keep the encounter's fitted art.
   // The stage invalidates this cache when viewport, formation or artwork changes.
   let combatLayoutState = {};
@@ -956,9 +957,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     // later (from the discard, or in a later encounter) needs a fresh select tap. Only the
     // active seat's hand counts: instance ids repeat across seats (each run's id generator
     // starts at rc1), so another seat holding the same id must not keep this one lit.
-    // Leaving combat (reward, map) drops it too: mountCoop outlives the scene change.
-    if (litCard() !== null && (snap.scene.kind !== 'combat'
-      || !((snap.scene.players || []).find(p => p.id === me)?.hand || []).some(card => card.instanceId === litCard()))) clearSelection();
+    // Leaving combat (reward, map) drops it too: mountCoop outlives the scene change. Only the
+    // transition clears; a redraw of the same noncombat scene keeps a reward card's select tap.
+    const leftCombat = lastSceneKind === 'combat' && snap.scene.kind !== 'combat';
+    lastSceneKind = snap.scene.kind;
+    if (litCard() !== null && (leftCombat || (snap.scene.kind === 'combat'
+      && !((snap.scene.players || []).find(p => p.id === me)?.hand || []).some(card => card.instanceId === litCard())))) clearSelection();
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
     else { heldStances.reset(); combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
     if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
