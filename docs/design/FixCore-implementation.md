@@ -17,7 +17,7 @@ Edit authored files, then rebuild/check through the repository tools. Do not edi
 | `content/source/fixCoreMechanics.json` | Stance, accuracy, Perception, status decay/riders, enemy combined-action cost, default protection tags and parameter overrides. |
 | `engine/mechanics/defense.wardProtection/` and `defense.poiseProtection/` | Registered protection tags, multiplier schemas, declarative services and conformance cases; default multiplier `0.75`. |
 | `engine/mechanics/combat.{stance,accuracy,perception,statuses,actionCosts}/` | Registered parameter-query families, validated attachment overrides and instance-scoped binding contracts. |
-| `games/ashenspire/bundles/core/bundle.json` | Activation, `resources.chargeFlaskCapacityPerPickup: 1`, `gear.armorBudget: {baseline:3,perRank:1}`, authored progression entitlement policy and content-to-module policy bindings. |
+| `games/ashenspire/bundles/core/bundle.json` | Activation, `resources.chargeFlaskCapacityPerPickup: 1`, `gear.armorBudget: {baseline:3,rarityBonus:{}}`, authored progression entitlement policy and content-to-module policy bindings. |
 | `games/ashenspire/packs/core/rewards.json` | `offerCount:3`, `takeCount:1`, weighted `rewardGroups`, categories and eligibility. |
 | `games/ashenspire/packs/core/shops.json` | `itemsPerCategory:3`, fallback offer count and price. |
 | `games/ashenspire/packs/core/routes.json` | `prebossNodes:7`, `restFloors:[3,7]`, `requirePrebossRest:true`, three columns and path mode. |
@@ -50,7 +50,7 @@ To tune the matching-stance bonus globally, change the existing `stance.effectiv
 }
 ```
 
-This example deliberately changes that source to a 25% bonus; the shipped default is **1.0025**, not 1.25. Merge these entries with any existing tags/bindings rather than dropping unrelated behavior. Omitted binding parameters inherit module values. The adapter reads active equipped mounts, actors, statuses and the current card window, not carried inventory. Conflicting exclusive family overrides are rejected. Protection tuning uses `protectionParameters`, for example `{"defense.wardProtection":{"multiplier":0.6}}` for 40% magical reduction while active. These are authoring examples, not additional shipped balance changes.
+This example restates the shipped 25% bonus (`effectivenessMultiplier` **1.25**, owner D5) as an authored override. Merge these entries with any existing tags/bindings rather than dropping unrelated behavior. Omitted binding parameters inherit module values. The adapter reads active equipped mounts, actors, statuses and the current card window, not carried inventory. Conflicting exclusive family overrides are rejected. Protection tuning uses `protectionParameters`, for example `{"defense.wardProtection":{"multiplier":0.6}}` for 40% magical reduction while active. These are authoring examples, not additional shipped balance changes.
 
 ## Runtime methods and request coverage
 
@@ -67,7 +67,7 @@ This example deliberately changes that source to a 25% bonus; the shipped defaul
 - [x] **Rewards, shops and flask collection:** `src/model/gameProfileRewards.js` persists seeded offers/stock and once-only claims. `src/model/gracerefill.js` (`flaskAcquisitionPlan`, `acquireFlask`) handles charge-capacity growth; reward/shop/event acquisition paths share it. Capacity, allocation, current charges and acquisition ledger move together; utility consumables stay separate inventory items.
 - [x] **Routes and travel:** `src/engine/actmap.js` builds mandatory singleton rest depths that merge all lanes, so every boss predecessor is a rest. Runtime `type:"shrine"` means rest (`actualType:"rest"`); a walk ending `shrine,boss` satisfies the requirement. `src/ui/components/mapboard.js` draws only consecutive recorded travel pairs, including their outlines, while preserving navigation edges and revisit semantics.
 - [x] **Deck editing and creation:** `src/model/deckRules.js` validates ownership/identity and training-aware copy limits. `src/main.js` (`showCombatDeckEditor`) uses a draft, applies the saved composition next encounter and leaves active combat piles unchanged. Commit/snapshot/persistence failure restores the entire owner run. Character creation groups equivalent card instances with ×N, preserving differences in rank/enhancement.
-- [x] **Progression and armor:** authored progression entitlements feed claim/attribute allocation through `src/model/levelup.js`; derived values update after spending. Armor receives 3 budget points at baseline rank plus 1 per additional rank, with supported resources, ratings, defenses, Evasion, Precision and attributes. Weapons retain their own budget policy. Item conversion/aggregation and equipment inspection share resolved values.
+- [x] **Progression and armor:** authored progression entitlements feed claim/attribute allocation through `src/model/levelup.js`; derived values update after spending. Armor receives a flat 3 budget points plus an optional per-rarity bonus (default 0; owner D14, 2026-10-18), with supported resources, ratings, defenses, Evasion, Precision and attributes. Weapons retain their own budget policy. Item conversion/aggregation and equipment inspection share resolved values.
 
 ## Explicit assumptions retained
 
@@ -77,7 +77,7 @@ These resolve ambiguous requests and remain configurable; they are not represent
 | --- | --- |
 | Perception base DC | 5 from the explicit equation, rather than the separately mentioned 8. |
 | Perception scaling | Target level above 1 and target Intelligence above baseline 0, each weighted +1. Roll uses observer WIS. |
-| Same-stance effectiveness | Literal +0.25% = multiplier 1.0025. The correction to 25% applied to Poise. |
+| Same-stance effectiveness | Multiplier 1.25 (+25%), owner D5. |
 | Precision and Evasion | +1 per stack, +1 additional Precision for Smash/Sweep; base Evasion 1 and stance clamp 1–1.5. |
 | Status decay/riders | Remove 1 stack at owner turn start once per round; stagger adds 1 Weak and 1 Vulnerability. |
 | Reward interpretation | Weighted group draw per ordinary offer slot; take one from three. |

@@ -32,11 +32,10 @@ export function rollKnowledgeRead(rng, rules, observer, category, { ctx = null, 
     const roll = 1 + Math.floor(rng.float('enemyIntentVisibility') * 20);
     // Keep the legacy clue stream deterministic without exposing a failed exact check.
     rng.float('enemyIntentClue');
+    // D8: DC = base + target INT + target WIS + configured bonuses; observer rolls d20 + own WIS.
     const wisdom = Number(observer.attributes?.wisdom) || 0;
-    const level = Number(target.level?.level ?? target.level) || cfg.levelBaseline;
-    const intelligence = Number(target.attributes?.intelligence) || cfg.intelligenceBaseline;
-    const dc = cfg.baseDC + Math.max(0, level - cfg.levelBaseline) * cfg.levelWeight
-      + Math.max(0, intelligence - cfg.intelligenceBaseline) * cfg.intelligenceWeight;
+    const bonus = (cfg.bonuses || []).reduce((sum, value) => sum + (Number(value) || 0), 0);
+    const dc = cfg.baseDC + (Number(target.attributes?.intelligence) || 0) + (Number(target.attributes?.wisdom) || 0) + bonus;
     const total = roll + wisdom, passed = total >= dc;
     return {visibility:passed ? 'exact' : 'unknown',label:passed ? null : '?',
       perception:{roll,wisdom,dc,total,passed},prediction:null,resolved:false,correct:null,credited:false};

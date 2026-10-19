@@ -2,10 +2,11 @@ import { fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
-import { chooseAutoCombatAction, resolveCombatAutomation, AUTOMATION_DEFAULTS } from '../../model/autoCombatPolicy.js';
+import { chooseReaction, reactionAnswer, resolveCombatAutomation, recordManualReaction, manualReactionPicks } from '../../model/autoCombatPolicy.js';
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
 import { projectCombatIntent } from '../models/CombatIntentProjectionModel.js';
+import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
 import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
@@ -23,6 +24,7 @@ import { combatBackdropHtml } from '../components/environmentArt.js';
 import { displayAppearance, onDisplayAppearanceChange } from '../displayAppearance.js';
 import { alternativeCompanionIcon } from '../alternativeArt.js';
 import { targetLayer } from '../models/TargetLayerModel.js';
+import { cardAffectsEnemies, hitBadgeTargetIds } from '../../model/hitBadge.js';
 import { cardTargetPlan, forbiddenCardDrop, upcastNextStep } from '../../model/cardTargets.js';
 import { renderEnemyTargetPicker } from '../components/enemyTargetPicker.js';
 import { touchPoint, recordFlickPoint, flickVerdict, nearestFlickTarget } from '../models/TouchFlickModel.js';
@@ -204,8 +206,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let timelinePlayback = null;
   let autoCombatTimer = null;
   let autoCombatPausedUntil = 0;
-  let autoCombatTurn = combat.turn;
-  let autoCombatActions = 0;
+  let autoArmedReaction = null;
   let formationMovement = null;
   const previewParams = new URLSearchParams(window.location.search);
   const previewSceneId = previewParams.get('shot') === 'combat' ? previewParams.get('shotScene') : null;
@@ -288,8 +289,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const actionRow = $('.combat-action-row');
   // User interaction yields the automation seat immediately. A later idle
   // check re-evaluates current settings and all legal-action guards.
-  combatEl.addEventListener('pointerdown', () => { autoCombatPausedUntil = performance.now() + 1000; }, true);
-  combatEl.addEventListener('keydown', () => { autoCombatPausedUntil = performance.now() + 1000; }, true);
+  // The reaction modal mounts under document.body, outside combatEl, so the pause
+  // listens at document level while this combat is mounted.
+  const pauseAutoCombat = () => { autoCombatPausedUntil = performance.now() + 1000; };
+  document.addEventListener('pointerdown', pauseAutoCombat, true);
+  document.addEventListener('keydown', pauseAutoCombat, true);
   setPotionRevealTiming(actionRow, potionReveal);
   // The bar ceilings, DERIVED from the content (classes + equipment for the
   // player surface, plus every enemy for the under-model one) rather than typed.
@@ -303,6 +307,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The player's last confirmed card kind: the at-rest intent glyph above the head.
   const heldKinds = createStanceLedger(kindForCard);
   const heldCards = createStanceLedger(card => card);
+  // A loaded fight starts with empty ledgers: rebuild each seat's last stance from the restored cardPlayed receipts.
+  heldKinds.replay(combat.eventLog, receipt => receipt.cardInstance ? resolveCombatCard(combat, receipt.cardInstance) : undefined);
   function smashProfile() {
     return combatWeaponProfilesFor({appearance:displayAppearance(), classId:run.class, armourId:figureSpec(registries,run.loadout,run.class).armourId, grip:gripOf(registries,run.loadout,run.class)}).smashProfile;
   }
@@ -1335,42 +1341,43 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     targetHud.update({ combatants, eligibleIds: eligibleIds || (selected || selfArm || selectedFlask != null ? pendingTargetPlan().legalIds : []), focusedId: selectedCombatantId });
   }
 
-  function autoCombatChoice() {
-    const candidates = [];
-    if (autoCombatTurn !== combat.turn) { autoCombatTurn = combat.turn; autoCombatActions = 0; }
-    const capped = autoCombatActions >= (AUTOMATION_DEFAULTS.maxActionsPerTurn ?? 64);
-    const blocked = busy || enemyPlayback || document.hidden || document.visibilityState === 'hidden'
-      || !!hasCardChoice(combat) || performance.now() < autoCombatPausedUntil;
-    if (!blocked && !capped && combat.phase === 'player' && !combat.result && !veilIsOpen() && !selected && !selfArm && selectedFlask == null) {
-      for (const inst of combat.piles.hand) {
-        if (isRoundQueued(inst.instanceId) || unplayableReason(inst)) continue;
-        try {
-          const pv = previewCard(combat, inst.instanceId);
-          const def = pv.resolvedDefinition || resolveCombatCard(combat, inst);
-          // Card-choice and payment prompts remain deliberate user decisions.
-          if (cardChoicePlan(combat, inst.instanceId) || upcastOptions(def).length && readSettings().askToUpcastAfterTarget) continue;
-          const plan = cardTargets(inst.instanceId);
-          const targets = pv.needsTarget ? plan.legalIds : [null];
-          const offense = (def.effects || []).filter(effect => effect.op === 'damage').length + (def.counterPayload?.hp ? 1 : 0);
-          const defense = (def.effects || []).filter(effect => ['block', 'gainPoise', 'gainWard', 'gainBarrier', 'heal', 'dodgeRoll'].includes(effect.op)).length;
-          for (const targetId of targets) {
-            const enemy = combat.enemies.find(row => row.id === targetId);
-            const known = enemy && hitChanceKnown(enemy);
-            const profile = combatProfileFor(def);
-            const matchup = known ? targetHudMatchup(profile, projectCombatIntent(combat, targetId), gameModule(run, 'stances')) : 'neutral';
-            candidates.push({ cardInstanceId: inst.instanceId, targetId, legal: true,
-              affordable: combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0),
-              offense, defense, stanceAdvantage: matchup === 'advantage' ? 1 : 0,
-              ...(known && offense ? { knownHitChance: previewCardHit(combat, inst.instanceId, targetId)?.hitChance / 100 } : {}) });
-          }
-        } catch { /* A refused preview cannot become an automated play. */ }
-      }
-    }
-    return chooseAutoCombatAction({ settings: readSettings(), phase: combat.phase, result: combat.result, busy: blocked,
-      pendingReaction: !!combat.pendingReaction, modalOpen: veilIsOpen(), targetUnresolved: !!(selected || selfArm || selectedFlask != null),
-      // An idle round queue is a plan: skip its cards above, then finish
-      // planning or End Turn. busy/enemyPlayback guard executing queues.
-      queued: false, candidates, canEndTurn: !hasCardChoice(combat) });
+  // Auto-combat (D12) answers this seat's reaction prompts only. It never plays a card or ends
+  // a turn. Every input is what this seat can see: its own intent read, its last stance, and
+  // its own manual picks; another seat's prompt is never answered here.
+  const ownSeat = () => combat.playerKey || 'player';
+  const reactionKind = option => {
+    const inst = findInst(option.play?.cardInstanceId);
+    // The card's combat profile names its maneuver for every card family (counters and prepared
+    // spells included); kindForCard is the at-rest glyph classifier and returns null for those.
+    try {
+      if (!inst) return null;
+      const card = resolveCombatCard(combat, inst);
+      return combatProfileFor(card)?.maneuver ?? kindForCard(card)?.maneuver ?? null;
+    } catch { return null; }
+  };
+  function autoReactionChoice() {
+    const pending = combat.pendingReaction;
+    const policy = resolveCombatAutomation(readSettings());
+    if (!policy.enabled || !pending || pending.ownerId !== ownSeat() || !reactionShell || busy || combat.result || hasCardChoice(combat)
+      || document.hidden || document.visibilityState === 'hidden' || performance.now() < autoCombatPausedUntil) return undefined;
+    const enemy = combat.enemies.find(row => row.id === pending.sourceId);
+    let intent = null;
+    // projectCombatIntent applies the same visibility gate as previewIntent (reveals, proposals, exact reads);
+    // a hidden intent stays unknown to the chooser.
+    // The player sees "unread intent" when this game profile has no intent module: unknown here too.
+    const intentShown = !(configuredArt && !gameModule(run, 'intent'));
+    const seat = ownSeat();
+    // A prompt answering a stacked enemy reaction move reads that stack entry (public in the modal),
+    // not the enemy's separate normal intent.
+    try {
+      intent = stackedEnemyReactionIntent(combat, pending, seat);
+      if (!intent && enemy?.alive && intentShown) intent = projectCombatIntent(combat, enemy.id);
+    } catch { intent = null; }
+    const options = pending.options.map(option => ({ id: option.id, kind: reactionKind(option) }));
+    const picked = chooseReaction({ matchups: gameModule(run, 'stances')?.matchups,
+      seats: { [seat]: { intent, lastStance: heldKinds.get(seat)?.maneuver ?? null, picks: manualReactionPicks(run, seat) } } }, seat, options);
+    // undefined = automation not eligible; null = chose to decline.
+    return picked ? pending.options.find(option => option.id === picked.id) : null;
   }
   function scheduleAutoCombat() {
     if (autoCombatTimer !== null || !combatEl.isConnected) return;
@@ -1378,9 +1385,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     autoCombatTimer = setTimeout(() => {
       autoCombatTimer = null;
       if (!combatEl.isConnected || combat.result) return;
-      const action = autoCombatChoice();
-      if (action?.type === 'playCard') { autoCombatActions++; playCard(action.cardInstanceId, action.targetId); }
-      else if (action?.type === 'endTurn') commitEndTurn();
+      const pending = combat.pendingReaction;
+      // Arm the delay when the offer's modal is open and playback is idle, so the answer
+      // waits a full combatActionDelay after the reaction words rather than the rest of an old tick.
+      // Arming also needs a visible page: an offer that opened while hidden arms when the player returns.
+      if (pending && reactionShell && !busy && !document.hidden && document.visibilityState !== 'hidden'
+        && autoArmedReaction !== reactionShell) { autoArmedReaction = reactionShell; scheduleAutoCombat(); return; }
+      const option = autoReactionChoice();
+      if (option !== undefined) { reactionShell.dismiss(); answerReaction(reactionAnswer(pending, option), false); }
       scheduleAutoCombat();
     }, policy.enabled ? Math.max(100, policy.delayMs / policy.speed) : 500);
   }
@@ -1652,23 +1664,20 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
   }
 
-  // The first Perception roll is the exact read. A clue alone reveals no odds.
+  // Perception gates intent knowledge (and what auto-play may know), not the hit-% badge.
   function hitChanceKnown(enemy) {
     const ownerId = combat.playerKey || 'player';
     return enemy.knowledgeAction?.reads?.[ownerId]?.visibility === 'exact';
   }
 
   function hitChanceBadge(enemy) {
-    if (combat.combatExpansionVersion !== 2 || !enemy.alive || !hitChanceKnown(enemy)) return null;
-    if (!selected) return null;
+    if (combat.combatExpansionVersion !== 2 || !enemy.alive || !selected) return null;
     let preview;
     try {
       const inst = selected && findInst(selected);
       const carrier = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
-      const hostile = carrier?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || carrier?.counterPayload;
-      const offensive = hostile && (carrier.effects?.some(effect => effect.op === 'damage') || carrier.counterPayload?.hp);
-      if (!offensive) return null;
-      preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected));
+      if (!hitBadgeTargetIds(carrier, [enemy]).length) return null;
+      preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected), { observerId: combat.playerKey || 'player' });
     } catch { return null; }
     if (!preview || !Number.isFinite(preview.hitChance)) return null;
     const node = document.createElement('span');
@@ -1683,7 +1692,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     combatEl.querySelectorAll('.card-hit-chances').forEach(node => node.remove());
     const inst = selected && findInst(selected);
     const definition = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
-    const hostile = definition?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || definition?.counterPayload;
+    const hostile = cardAffectsEnemies(definition);
     const selectedCard = hostile && combatEl.querySelector('.hand .card[data-instance-id="' + CSS.escape(selected) + '"]');
     const cardOdds = document.createElement('div');
     cardOdds.className = 'card-hit-chances';
@@ -2309,7 +2318,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     let gripY = 0;
     let ghostWidth = 0;
     let ghostHeight = 0;
-    let lastConfirmTap = 0;
     let flickStart = null;
     let flickPoints = [];
     const flickRules = registries.balance.ui.touchFlick;
@@ -2467,7 +2475,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (el.dataset.inspect === 'open') return;
         if (!dragging && Math.hypot(mv.clientX - startX, mv.clientY - startY) > 12) {
           dragging = true;
-          lastConfirmTap = 0;
           el.dispatchEvent(new Event('carddragstart'));
           el.classList.add('drag-source');
           hideTooltip();
@@ -2539,7 +2546,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
 
     const select = () => {
-      lastConfirmTap = 0;
       selectedFlask = null;
       // A queued card (Combat Rounds Preview) is taken back by its tap, not armed again.
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
@@ -2548,13 +2554,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
     // THE PLAY IS UNAMBIGUOUS when there is nothing for the player to choose: a
     // card that needs no target (self cards, and a sweep of every enemy), or a
-    // card that asks for ONE enemy while exactly one is alive. Owner, 2026-10-18:
-    // a tap on such a card plays it; the 2026-08-17 "same in all instances" hold
-    // ruling and SPEC §7.3's "selection stays separate from play" stand for
-    // every other case, where the tap still selects and the player picks.
+    // card that asks for ONE enemy while exactly one is alive.
+    // OWNER RULING. Owner, 2026-10-18 14:15: "make sure I don't auto play a card when I click on it once"; 14:32: "keep the switch but make it default to not be 1 tap".
+    // One-tap play is therefore OPT-IN: it is off by default (oneTapPlay must be
+    // exactly true), and only a player who turns the Settings row on gets a
+    // single tap that plays. With it off, a tap selects and the next tap on the
+    // selected card, or a target pick, plays.
+    // The 2026-08-17 "same in all instances" hold ruling and SPEC §7.3's
+    // "selection stays separate from play" still govern every other case.
     const playIsUnambiguous = () => !pv.needsTarget
       || combat.enemies.filter(enemy => enemy.alive).length === 1;
-    const oneTapOn = () => (meta.settings || {}).oneTapPlay !== false;
+    // Read live through readSettings() so toggling the row mid-fight takes effect
+    // on the next tap; meta.settings is only the fallback when no reader is wired.
+    const oneTapOn = () => (readSettings ? readSettings() : meta.settings || {}).oneTapPlay === true;
     const oneTapPlays = () => oneTapOn() && playIsUnambiguous();
     const play = () => {
       if (!pv.needsTarget) playCard(inst.instanceId, null);
@@ -2592,9 +2604,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // a target pick) plays, as before.
       if (oneTapPlays()) { play(); return; }
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
-      const now = performance.now();
-      if (lastConfirmTap && now - lastConfirmTap <= 350) { lastConfirmTap = 0; confirm(); }
-      else lastConfirmTap = now;
+      // The card is already selected: this is the NEXT tap on it, and it plays,
+      // with no timing window ("make sure I don't auto play a card when I click on it once", owner, 2026-10-18 14:15).
+      play();
     };
     const cardHoldMs = () => holdMs(meta.settings || {}, registries.balance.ui.holdConfirm)
       || Number(registries.balance.ui.holdConfirm.steps.short) || 350;
@@ -2853,16 +2865,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       .map(entry => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
     reactionShell = openReactionChoiceModal({ pending, stack,
       onClosed: () => { reactionShell = null; },
-      onAnswer: intent => {
-        if (!combatEl.isConnected || combat.pendingReaction?.id !== intent.offerId) return;
-        disp = takeSnapshot();
-        try {
-          const out = dispatch(combat, { type: 'chooseReaction', ...intent });
-          enemyPlayback = combat.phase === 'enemy' || !!combat.reactionCursor;
-          busy = true; afterDispatch(out.events);
-        } catch (error) { disp = null; console.warn('[combat] reaction refused:', error.message); render(); showPendingReaction(); }
-      },
+      onAnswer: intent => answerReaction(intent, true),
     });
+  }
+  function answerReaction(intent, manual) {
+    if (!combatEl.isConnected || combat.pendingReaction?.id !== intent.offerId) return;
+    // Only a deliberate pick teaches the auto choice; its own picks never feed it.
+    const chosen = manual && intent.optionId ? combat.pendingReaction.options.find(option => option.id === intent.optionId) : null;
+    const kind = chosen ? reactionKind(chosen) : null;
+    const owner = combat.pendingReaction.ownerId;
+    disp = takeSnapshot();
+    try {
+      const out = dispatch(combat, { type: 'chooseReaction', ...intent });
+      if (kind) recordManualReaction(run, owner || ownSeat(), kind);
+      enemyPlayback = combat.phase === 'enemy' || !!combat.reactionCursor;
+      busy = true; afterDispatch(out.events);
+    } catch (error) { disp = null; console.warn('[combat] reaction refused:', error.message); render(); showPendingReaction(); }
   }
   function showPendingDiscard() {
     if (!hasCardChoice(combat)) { showPendingReaction(); return; }
@@ -3432,6 +3450,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
         if (autoCombatTimer !== null) clearTimeout(autoCombatTimer);
         autoCombatTimer = null;
+        document.removeEventListener('pointerdown', pauseAutoCombat, true);
+        document.removeEventListener('keydown', pauseAutoCombat, true);
         timelinePlayback?.cancel?.(); timelinePlayback = null;
         reactionShell?.dismiss();
         handStrip.teardown();
@@ -3521,7 +3541,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   animateEvents(combat.eventLog.filter((e) => e.type === 'relicTriggered'), fxCtx, () => {});
 
   // First-run guided callouts (SPEC §9 M4) — once per player, over a live board.
-  if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone(), oneTapPlay: (meta.settings || {}).oneTapPlay !== false });
+  if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone(), oneTapPlay: (readSettings ? readSettings() : meta.settings || {}).oneTapPlay === true });
   showPendingDiscard();
 }
 import { equipmentAnimationForLoadout, combatEquipmentAnimationForLoadout, animationTiming } from '../../model/equipmentAnimation.js';

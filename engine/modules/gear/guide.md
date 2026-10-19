@@ -51,7 +51,7 @@ costs above the pool.
 Data, settings, the fill algorithm (`resolveGearItem` in `engine/kernel/gameConfig.js`) and the
 validator. Profiles carrying `armorBudget` aggregate converted equipped values through
 `gameProfileEquipmentReceipt`; matched items replace legacy self-stat modifiers.
-Armor uses baseline 3 points plus 1 per additional rank, independent of rarity.
+Armor budget, Core: 3 points flat; `rarityBonus` per rarity (default 0); `perRank` optional for other profiles.
 One upgrade tier adds one rank. Weapons retain their rarity pools.
 
 Additional point conversions: HP 10, MP 1, SP 1, Ward 3, Evasion 1 and

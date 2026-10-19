@@ -65,8 +65,11 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     && !!stances?.matchups?.[attacking]?.includes(defending);
   const modern = fixCoreEnabled(ctx);
   const sources = [{id:'base',label:'Card damage (including enhancements)',amount:base,stage:'offense',operation:'set'}];
+  // The chain keeps full precision and is floored once where it is applied (the quantity-rounding step);
+  // receipt lines show the running floor so every shown number is whole (owner, 2026-10-18 16:05).
+  const whole = value => modern ? Math.max(0, Math.floor(value)) : value;
   const transition = (id,label,before,after,stage='offense',multiplier) => {
-    if (before !== after) sources.push({id,label,amount:after-before,requested:before,effective:after,stage,operation:multiplier === undefined ? 'add' : 'multiply',...(multiplier === undefined ? {} : {multiplier})});
+    if (before !== after) sources.push({id,label,amount:whole(after)-whole(before),requested:whole(before),effective:whole(after),stage,operation:multiplier === undefined ? 'add' : 'multiply',...(multiplier === undefined ? {} : {multiplier})});
     return after;
   };
   const ar = modern ? sourceRatingValue(ctx, source, 'ar', carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
@@ -91,7 +94,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const advantageMultiplier = advantage ? stances.advantageMultiplier ?? 1 : 1;
   let amount=transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
   amount=transition('stance-defense','Defensive stance advantage',amount,amount*defense.multiplier,'stance',defense.multiplier);
-  amount=transition('quantity-rounding','Damage quantity rounding',amount,Math.max(0,Math.floor(amount)),'rounding');
+  amount=modern ? Math.max(0,Math.floor(amount)) : transition('quantity-rounding','Damage quantity rounding',amount,Math.max(0,Math.floor(amount)),'rounding');
   const evade = stances?.include?.includes('evade') && defending === 'evade';
   const targeting=proposalTargetPlan(ctx,source,target,carrier);
   let hitChance = evade ? Math.max(stances.minimumHitChance ?? 0.05,
@@ -148,8 +151,9 @@ export function profileCardCosts(ctx, def) {
   const include = resources?.include || [];
   const authored = def.resourceCosts || def.costs || {};
   const baseSp = def.cost==='X' && include.includes('sp') ? Math.max(0,ctx.player?.stamina ?? ctx.player?.energy ?? 0) : authored.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : 0);
-  const sp = fixCoreEnabled(ctx) ? stanceStaminaCost(baseSp, ctx.player, def, ctx) : baseSp;
-  const mp = stanceManaCost(authored.mp ?? def.manaCost ?? 0, ctx.player, def, ctx);
+  const baseMp = authored.mp ?? def.manaCost ?? 0;
+  const sp = fixCoreEnabled(ctx) ? stanceStaminaCost(baseSp, ctx.player, def, ctx, baseMp) : baseSp;
+  const mp = stanceManaCost(baseMp, ctx.player, def, ctx);
   if ((!include.includes('sp') && sp > 0) || (!include.includes('mp') && mp > 0)) {
     throw new Error(`Card ${def.id || 'unknown'} requires an authored disabled-resource variant`);
   }

@@ -106,7 +106,7 @@ test('registered owner and active card parameters affect live shared math and re
  entity.mechanicBindings=[{tag:'combat:stance',parameters:{effectivenessMultiplier:1.25}}];
  const card={combatProfile:{camp:'physical',maneuver:'attack'}};entity.combatStance=card.combatProfile;
  assert.equal(stanceEffectiveness(combat,entity,card),1.25);
- assert.equal(fixCoreRules(combat).stance.effectivenessMultiplier,1.0025);
+ assert.equal(fixCoreRules(combat).stance.effectivenessMultiplier,1.25);
  entity.mechanicBindings=[];
  assert.equal(stanceEffectiveness(combat,entity,{...card,instanceId:'first',mechanicBindings:[{tag:'combat:stance',parameters:{effectivenessMultiplier:1.5}}]}),1.5);
  assert.equal(stanceEffectiveness(combat,entity,{...card,instanceId:'second',mechanicBindings:[{tag:'combat:stance',parameters:{effectivenessMultiplier:1.1}}]}),1.1);
@@ -121,6 +121,23 @@ test('saved combat preserves exact authored parameters and owner clocks without 
  assert.deepEqual(restored.fixCoreRules,combat.fixCoreRules);assert.deepEqual(restored.rng.getCounters(),counters);
  const altered=structuredClone(snapshot);altered.fixCoreRules.perception.baseDC='oops';
  assert.throws(()=>restoreCombatSnapshot({registries:reg,rng:createRng(1),snapshot:altered}),/finite number/);
+});
+test('a combat saved with the v1 perception shape restores onto the bonuses formula',async()=>{
+ const {serializeCombatSnapshot,restoreCombatSnapshot}=await import('../src/engine/combatSnapshot.js');
+ const {fixCoreRules}=await import('../src/model/fixCoreMechanics.js');
+ const {combat}=live();
+ const snapshot=serializeCombatSnapshot(combat);
+ const restoreOf=snap=>restoreCombatSnapshot({registries:reg,rng:createRng(combat.rng.seed,combat.rng.getCounters()),snapshot:snap,expectedGameProfile:profile});
+ const current=restoreOf(snapshot);
+ assert.deepEqual(current.fixCoreRules.perception,combat.fixCoreRules.perception);
+ const old=structuredClone(snapshot);
+ old.fixCoreRules.perception={baseDC:7,levelBaseline:1,intelligenceBaseline:0,levelWeight:1,intelligenceWeight:1};
+ const restored=restoreOf(old);
+ assert.deepEqual(restored.fixCoreRules.perception,{baseDC:7,bonuses:[]});
+ assert.equal(fixCoreRules(restored).perception.baseDC,7);
+ assert.equal(old.fixCoreRules.perception.levelWeight,1,'caller snapshot untouched');
+ const typo=structuredClone(snapshot);typo.fixCoreRules.perception.levelBaselne=1;
+ assert.throws(()=>restoreOf(typo),/unknown parameter/);
 });
 test('enemy heal-and-block move spends exactly three SP and cannot cast with two',()=>{
  for(const pool of [3,2]) {
@@ -187,9 +204,11 @@ test('fractional offense reaches final rounding without a fabricated status modi
  target.statuses={};combat.player.statuses={};
  const receipt=profileDamageReceipt(combat,combat.player,target,13,card);
  const sources=receipt.damageReceipt.hits[0].sources;
- assert.ok(sources.some(row=>row.id==='matching-stance' && row.effective>13));
+ // Owner 2026-10-18: no decimals. The chain floors once; the stance line shows its running floor (13 x 1.25 = 16.25 -> 16) and there is no separate rounding line.
+ assert.ok(sources.some(row=>row.id==='matching-stance' && row.effective===16 && Number.isInteger(row.amount)));
  assert.equal(sources.some(row=>row.id==='status-rules'),false);
- assert.ok(sources.some(row=>row.id==='quantity-rounding' && row.amount<0));
+ assert.equal(sources.some(row=>row.id==='quantity-rounding'),false);
+ assert.equal(receipt.damageReceipt.hits[0].incoming,16);
  const before=target.hp;primeAccuracyRolls(combat);
  applyAttackDamage(combat,combat.player,target,13,[],card);
  assert.equal(before-target.hp,receipt.hpLoss);

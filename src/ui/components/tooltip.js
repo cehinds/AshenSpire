@@ -57,9 +57,18 @@ let fadeTimer = null;
 let expander = null; // the `full` tier opener, injected to avoid a circular import
 let selectedControl = null;
 let touchSelectedControl = null;
+let selectionOrigin = null;
 export function clearControlSelection() {
   selectedControl?.classList.remove("tooltip-selected");
   selectedControl = touchSelectedControl = null;
+  selectionOrigin = null;
+}
+function selectControl(el, origin) {
+  if (selectedControl !== el) clearControlSelection();
+  selectedControl = el;
+  // Hover/focus can revisit a deliberate selection without taking it over.
+  if (selectionOrigin !== 'explicit' || origin === 'explicit') selectionOrigin = origin;
+  el.classList.add('tooltip-selected');
 }
 let pending = null;  // { el, show } — the show an open timer is counting down to
 let nestedOpenTimer = null;
@@ -167,7 +176,7 @@ let hoverCloseCallback = null;
 function closeAfterHover() {
   if (panels.some(p => p?.contains(document.activeElement))) return;
   const callback = hoverCloseCallback;
-  if (selectedControl === state[0].target && pending?.el !== selectedControl) clearControlSelection();
+  if (selectionOrigin === 'transient' && selectedControl === state[0].target && pending?.el !== selectedControl) clearControlSelection();
   hoverCloseCallback = null;
   // The old owner's close and a new owner's open can expire on the same tick.
   // Dismiss only the old panels; do not cancel the new owner's pending hover.
@@ -430,12 +439,9 @@ export function attachTooltip(el, contentFn, {
     const avoid = clear || (information ? [el.parentElement, information] : el.parentElement);
     return showFn ? showFn() : showWith(contentFn(), el.getBoundingClientRect(), avoid, intent, appearance, placementModel, 0, align, 0, el);
   };
-  const queue = delay => {
+  const queue = (delay, origin = 'transient') => {
     if (selectedControl && selectedControl !== el) { clearControlSelection(); hideTooltip(); }
-    if (selectionFirst) {
-      selectedControl = el;
-      el.classList.add('tooltip-selected');
-    }
+    if (selectionFirst) selectControl(el, origin);
     // A repeated hover or focus on the element already counting down keeps
     // that countdown (CURRENT-SPECIFICATION, Tooltips); restarting it made a
     // second event push the tooltip a whole delay further away.
@@ -460,7 +466,7 @@ export function attachTooltip(el, contentFn, {
   el.addEventListener('pointerleave', (ev) => {
     if (selectionFirst && (ev.pointerType === 'touch' || touchSelectedControl === el)) return;
     cancelOpen(el);
-    if (selectionFirst && selectedControl === el && state[0].target !== el) clearControlSelection();
+    if (selectionOrigin === 'transient' && selectedControl === el && state[0].target !== el) clearControlSelection();
     if (stuck) return; // E8: a completed hold outlives the pointer leaving
     if (panels.some((p) => p && p.contains(ev.relatedTarget))) return;
     if (state[0].target === el) scheduleClose();
@@ -471,7 +477,7 @@ export function attachTooltip(el, contentFn, {
   const blur = ev => {
     if (ev.target !== el) return;
     cancelOpen(el);
-    if (selectionFirst && selectedControl === el && state[0].target !== el) clearControlSelection();
+    if (selectionOrigin === 'transient' && selectedControl === el && state[0].target !== el) clearControlSelection();
     if (stuck) return;
     if (state[0].target === el && !panels.some(p => p?.contains(ev.relatedTarget))) scheduleClose();
   };
@@ -486,7 +492,7 @@ export function attachTooltip(el, contentFn, {
       if (activate && (!touch || (touchSelectedControl === el && selectedControl === el))) {
         clearControlSelection(); hideTooltip(); activate(el); return;
       }
-      queue(delayMs ?? tooltipSettings.open);
+      queue(delayMs ?? tooltipSettings.open, 'explicit');
       if (touch) touchSelectedControl = el;
     });
     el.addEventListener('keydown', ev => {
@@ -507,11 +513,10 @@ export function attachTooltip(el, contentFn, {
     // click now that hideTooltip keeps it. The second press is the
     // explanation's own — combat closes tooltips on any board click, so it
     // must not run on top of the panel this just opened.
-    if (selectedControl === el) { ev.stopPropagation(); cancelOpen(); show(); return; }
+    if (selectedControl === el) { selectControl(el, 'explicit'); ev.stopPropagation(); cancelOpen(); show(); return; }
     if (selectedControl && selectedControl !== el) { clearControlSelection(); hideTooltip(); }
     cancelOpen(el);
-    selectedControl = el;
-    el.classList.add('tooltip-selected');
+    selectControl(el, 'explicit');
   };
   if (tapToExplain) {
     if (!el.hasAttribute('tabindex')) el.tabIndex = 0;
@@ -520,7 +525,7 @@ export function attachTooltip(el, contentFn, {
       if (typeof tapToExplain === 'function' && !tapToExplain()) return;
       if (ev.type === 'keydown' && !['Enter', ' '].includes(ev.key)) return;
       ev.preventDefault(); ev.stopPropagation();
-      if (ev.type === 'keydown') { cancelOpen(); show(); return; }
+      if (ev.type === 'keydown') { if (selectedControl === el) selectControl(el, 'explicit'); cancelOpen(); show(); return; }
       explainOnSecondTap(ev);
     };
     el.addEventListener('click', answer); el.addEventListener('keydown', answer);
@@ -591,12 +596,14 @@ export function stickTooltip(el) {
 export function showTooltipAt(x, y, html) {
   return showWith(html, { left: x, top: y, width: 0, height: 0 });
 }
-// Closes the panels. It does NOT forget a tap-selection: screens call this on
+// Closes the panels and releases transient hover/focus ownership. It does NOT
+// forget a tap-selection: screens call this on
 // every render and on any board click (combat's syncCardSelection), and the
 // first tap of "tap to select, tap again to explain" lands in exactly such a
 // click. The selection ends by its own doors — a press elsewhere, Escape, an
 // activation, or the element leaving the DOM (watchScene).
 export function hideTooltip() {
+  if (selectionOrigin === 'transient') clearControlSelection();
   sceneAnchor = null;
   unstick();
   clearTimers();
@@ -656,10 +663,10 @@ function wireTitles() {
     const oneTap = term.classList.contains('card-tag-symbol');
     if (ev.type === 'click' && !oneTap && selectedControl !== term) {
       if (selectedControl) { clearControlSelection(); hideTooltip(); }
-      selectedControl = term;
-      term.classList.add('tooltip-selected');
+      selectControl(term, 'explicit');
       return;
     }
+    if (selectedControl === term) selectControl(term, 'explicit');
     showTooltipFor(term, `<div>${esc(term.dataset.tip)}</div>`);
   };
   document.addEventListener('click', explain, true);
@@ -687,8 +694,10 @@ function wireTitles() {
   document.addEventListener('keydown', (ev) => {
     if (ev.key !== 'Escape') return;
     if (state[1].open) { hide(1); ev.stopImmediatePropagation(); }
-    else if (state[0].open || selectedControl) { clearControlSelection(); hideTooltip(); ev.stopImmediatePropagation(); }
-    else { cancelOpen(); cancelNested(); }
+    else if (state[0].open || (selectedControl && selectionOrigin === 'explicit')) { clearControlSelection(); hideTooltip(); ev.stopImmediatePropagation(); }
+    // A pending hover/focus has shown nothing to dismiss. Cancel it without
+    // stealing the same Escape from the selected card or underlying screen.
+    else { if (selectionOrigin === 'transient') clearControlSelection(); cancelOpen(); cancelNested(); }
   }, true);
   const replace = () => {
     for (const [i, st] of state.entries()) {

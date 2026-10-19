@@ -26,6 +26,6 @@ and each additional WIS still contributes another MP.
 
 Core Strike is 6 damage for 1 SP. Its same-rank damage-focused Smash is 12 for
 2 SP. Sundering Art is 36 for 2 SP + 1 MP, three times that Smash's base damage.
-Star Spark keeps 9 damage and applies 2 Vulnerable; Vulnerable gives 50% more
+Star Spark keeps 9 damage and applies 2 Vulnerable; Vulnerable gives 25% more
 incoming attack damage, with one stack decaying at turn end. Powers and ordinary
 class skills were not given a blanket damage multiplier.
