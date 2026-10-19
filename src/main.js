@@ -3888,6 +3888,8 @@ function showGameProfileReward() {
     deckMax: deckEditBounds(saves.loadMeta().settings || {}).max,
     canEditDeck: !!deckDoors().armoury,
     onEditDeck: (index, back) => showDeckEditor(back, false, run.sideboard.find(card => card.instanceId === rewardInstanceId(pending.offerId, index)) || null),
+    canEditEquipment: !!gameModule(run, 'equipment'),
+    onEditEquipment: (index, back) => showArmoury('', back),
     onContinue: () => {
       persistRewardChange(() => {
         delete run.gameProfilePendingReward;

@@ -12,7 +12,7 @@ const rewardDoorOwners = new WeakMap();
 
 // Configured mixed rewards share the full-game reward door, option columns,
 // card faces and explicit selection/confirmation. Claims remain host-owned.
-export function mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue, settings, onAddToDeck = null, addRefusal = null, onEditDeck = null, canEditDeck = false, deckMax = null }) {
+export function mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue, settings, onAddToDeck = null, addRefusal = null, onEditDeck = null, canEditDeck = false, deckMax = null, onEditEquipment = null, canEditEquipment = false }) {
   clearSelection();
   let presentation = rewardDoorOwners.get(run);
   if (!presentation || presentation.offerId !== offer.id) {
@@ -28,6 +28,8 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   const confirm = button({ label: t('common.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true });
   // Owner 2026-10-18: reviewing a card offers "Add to deck" and (when a deck door is open) "Edit deck".
   const editDeck = button({ label: t('reward.configured.editDeck'), id: 'reward-edit-deck', className: 'reward-edit-deck' });
+  const equip = button({ label: t('reward.configured.equipNow'), id: 'reward-equip-now', className: 'reward-equip-now' });
+  equip.hidden = true;
   const keep = button({ label: t('reward.configured.keep'), id: 'reward-keep', className: 'reward-keep' });
   editDeck.hidden = true; keep.hidden = true;
   const next = button({ label: t('common.skip'), id: 'reward-continue', className: 'danger' });
@@ -72,7 +74,7 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   const cardPick = () => selected !== null && ['combatCards', 'weaponArts'].includes(offer.options[selected]?.kind);
   const resetReview = () => {
     reviewing = false; addToDeckMode = false;
-    editDeck.hidden = true; keep.hidden = true; status.textContent = '';
+    editDeck.hidden = true; keep.hidden = true; equip.hidden = true; status.textContent = '';
     confirm.disabled = selected === null;
     mountDoor();
   };
@@ -96,22 +98,22 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
         onContinue();
         completed = true;
       } else {
-        mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue, settings, onAddToDeck, addRefusal, onEditDeck, canEditDeck, deckMax });
+        mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue, settings, onAddToDeck, addRefusal, onEditDeck, canEditDeck, deckMax, onEditEquipment, canEditEquipment });
       }
     } catch (error) {
-      status.textContent = error.message; pending = false; confirm.disabled = false; next.disabled = false; editDeck.disabled = false; keep.disabled = false;
+      status.textContent = error.message; pending = false; confirm.disabled = false; next.disabled = false; editDeck.disabled = false; equip.disabled = false; keep.disabled = false;
     }
   }
   async function commit(take, afterClaim = proceed) {
     if (pending || completed || selected === null) return;
-    pending = true; confirm.disabled = true; next.disabled = true; editDeck.disabled = true; keep.disabled = true;
+    pending = true; confirm.disabled = true; next.disabled = true; editDeck.disabled = true; equip.disabled = true; keep.disabled = true;
     try {
       const updated = await take(selected);
       if (updated?.id === offer.id) offer = updated;
       afterClaim();
     } catch (error) {
       status.textContent = error.message;
-      confirm.disabled = false; next.disabled = false; editDeck.disabled = false; keep.disabled = false;
+      confirm.disabled = false; next.disabled = false; editDeck.disabled = false; equip.disabled = false; keep.disabled = false;
     } finally { if (!completed && afterClaim === proceed) pending = false; }
   }
   const claimOnly = index => offer.taken.includes(index) ? undefined : onTake(index);
@@ -124,7 +126,11 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
       for (const column of strip.children) column.hidden = Number(column.dataset.pickId) !== selected;
       next.textContent = t('common.back');
       addToDeckMode = !!(onAddToDeck && cardPick());
-      if (!addToDeckMode) { confirm.textContent = t('common.continue'); mountDoor(); return; }
+      if (!addToDeckMode) {
+        confirm.textContent = t('common.continue');
+        equip.hidden = !(onEditEquipment && canEditEquipment && ['weapons', 'armor'].includes(offer.options[selected]?.kind));
+        mountDoor(); return;
+      }
       const refusal = addRefusal ? addRefusal(selected) : '';
       confirm.textContent = t('reward.configured.addToDeck');
       editDeck.hidden = !(onEditDeck && canEditDeck);
@@ -139,10 +145,11 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
     return commit(addToDeckMode ? index => onAddToDeck(index) : claimOnly);
   });
   keep.addEventListener('click', () => commit(claimOnly));
+  equip.addEventListener('click', () => commit(claimOnly, () => onEditEquipment(selected, proceed)));
   editDeck.addEventListener('click', () => commit(claimOnly, () => onEditDeck(selected, proceed)));
   // The footer drops hidden buttons when built, so the door is rebuilt (same owner: in place) whenever the review changes them.
   function mountDoor() {
-    mountRewardDoor(app, { owner: presentation.owner, title, body: [note, strip, status], foot: modalFooter({ secondary: [next, editDeck, keep], primary: confirm, className: 'reward-foot reward-chooser-foot', size: 'medium' }) });
+    mountRewardDoor(app, { owner: presentation.owner, title, body: [note, strip, status], foot: modalFooter({ secondary: [next, editDeck, equip, keep], primary: confirm, className: 'reward-foot reward-chooser-foot', size: 'medium' }) });
   }
   mountDoor();
 }

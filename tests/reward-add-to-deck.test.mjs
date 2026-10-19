@@ -74,9 +74,12 @@ import { rewardDom } from './helpers/reward-dom.mjs';
 import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.js';
 
 async function withDom(fn) {
-  const dom = rewardDom();
+  const dom = { customElements: { define() {}, get: () => true }, HTMLElement: class {}, ...rewardDom() };
   const before = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
   Object.assign(globalThis, dom);
+  // The minimal DOM has no insertAdjacentHTML; the equipment face paints with it and is not under test.
+  const make = document.createElement.bind(document);
+  document.createElement = (...args) => { const node = make(...args); node.insertAdjacentHTML ||= () => {}; return node; };
   try { await fn(); } finally { for (const [key, value] of Object.entries(before)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; } }
 }
 function mount(extra = {}) {
@@ -131,5 +134,30 @@ test('an illegal Add is disabled with a reason, and Keep in collection stands in
     assert.equal(shut.app.querySelector('#reward-edit-deck'), null);
     shut.app.querySelector('#reward-keep').click(); await Promise.resolve(); await Promise.resolve();
     assert.deepEqual(shut.calls, ['take', 'continue']);
+  });
+});
+
+test('an armament reward offers Equip now when the Armoury is open, claims first, and returns into the reward', async () => {
+  await withDom(async () => {
+    const ids = { weapons: reg.equipment.armaments[0].id, armor: reg.equipment.armour.find(row => row.classId === 'reaver').id };
+    for (const gate of [true, false]) for (const kind of ['weapons', 'armor']) {
+      const run = { class: 'reaver', deck: [], cinders: 0 };
+      const app = document.createElement('main'); document.body.append(app);
+      const offer = { id: `eq-${kind}-${gate}`, options: [{ kind, id: ids[kind] }], taken: [], claimed: null, takeCount: 1 };
+      const calls = [];
+      mountGameProfileOffers(app, { registries: reg, run, offer, title: 'Reward',
+        onTake(i) { calls.push('take'); offer.taken.push(i); offer.claimed = i; },
+        onAddToDeck() { calls.push('add'); }, onEditDeck() { calls.push('deck'); },
+        canEditEquipment: gate, onEditEquipment: (i, back) => { calls.push('equip'); back(); }, onContinue() { calls.push('continue'); } });
+      review(app);
+      const equip = app.querySelector('#reward-equip-now');
+      assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
+      assert.equal(app.querySelector('#reward-edit-deck'), null, 'no deck editor for an item');
+      if (!gate) { assert.equal(equip, null); app.remove(); continue; }
+      assert.equal(equip.textContent, 'Equip now');
+      equip.click(); await Promise.resolve(); await Promise.resolve();
+      assert.deepEqual(calls, ['take', 'equip', 'continue']);
+      app.remove();
+    }
   });
 });
