@@ -112,7 +112,7 @@ export function quickAccessPanelHtml(model) {
     if(icon){
       const [x,y,w,h]=icon.trim;
       node.classList.add('illustrated-hud-button');
-      node.innerHTML=`<span class="illustrated-hud-icon" aria-hidden="true" style="width:${Math.min(1,w/h)*100}%;height:${Math.min(1,h/w)*100}%"><img alt="" src="${esc(assetUrl(icon.href))}" style="width:${1254/w*100}%;height:${1254/h*100}%;left:${-x/w*100}%;top:${-y/h*100}%"></span>`;
+      node.innerHTML=`<span class="illustrated-hud-icon" aria-hidden="true"><svg viewBox="${x} ${y} ${w} ${h}" preserveAspectRatio="xMidYMid meet" focusable="false"><image href="${esc(assetUrl(icon.href))}" width="1254" height="1254"/></svg></span>`;
     }
     return html(node);
   };
