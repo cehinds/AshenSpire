@@ -296,10 +296,22 @@ function buildsOf(branch, keep) {
 
 // Builds skipped this run, each with its reason — printed above the verdict and
 // on the branch's page, so a gap in the list is explained rather than silent.
+/**
+ * A GitHub warning annotation, except during --selftest. The selftest assembles
+ * a throwaway site with --keep 1, no --build-missing and every committed build
+ * simulated as purged, so its "skipped … LFS object unavailable" and "has no
+ * /latest/ … newest served build is 548" warnings are the PLANT, not the site.
+ * They landed on the real run's annotation list (run 39267231395) and read as
+ * "dev/latest is not published" when the real assemble step had served it.
+ */
+function annotate(title, message) {
+  if (process.env.GITHUB_ACTIONS && !process.argv.includes('--selftest')) console.log(`::warning title=${title}::${message}`);
+}
+
 const skippedBuilds = [];
 function skip(b, reason) {
   skippedBuilds.push({ branch: b.branch, ordinal: b.ordinal, sha: b.sha, reason });
-  if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site skipped ${b.branch}/${b.ordinal}::${reason}`);
+  annotate(`pages-site skipped ${b.branch}/${b.ordinal}`, reason);
 }
 
 /**
@@ -1007,7 +1019,7 @@ function writeOgImage(outDir, mainRef) {
   if (!pick) {
     const why = `no object in the store and no published branch's tree carries ${OG_IMAGE.source}; /${OG_IMAGE.sitePath} (every build's og:image) is not served`;
     console.log(`  NO OG IMAGE ${why}`);
-    if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site has no og:image::${why}`);
+    annotate(`pages-site has no og:image`, why);
     return;
   }
   writeFileSync(join(outDir, OG_IMAGE.sitePath), ogImageBytes(outDir, pick));
@@ -1051,7 +1063,7 @@ function writeSourceAssets(outDir, mainRef) {
   if (missing) {
     const why = `${missing} of main's ${plan.length} assets/ ids have no object in the store; those images are missing on /index-game.html and the preview pages`;
     console.log(`  ${why}`);
-    if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site /assets/ incomplete::${why}`);
+    annotate(`pages-site /assets/ incomplete`, why);
   }
 }
 /** The bytes a choice names: the store's object, or the branch tree's art. */
@@ -1325,7 +1337,7 @@ function assemble(outDir, keep) {
     if (builds[0] && !current) {
       const why = `${branch}/latest/ not published: the head's build ${headOrdinal ?? '(unnamed)'} is not served; the newest served build is ${builds[0].ordinal}`;
       console.log(`  NO LATEST ${why}`);
-      if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site ${branch} has no /latest/::${why}`);
+      annotate(`pages-site ${branch} has no /latest/`, why);
     }
     if (builds[0] && current) {
       const latest = join(outDir, branch, 'latest');
