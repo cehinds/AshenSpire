@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
-import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
+import { beginGameProfileRest, commitGameProfileRest, restHealedAny, restCompletionKey, restIntroKey, restSmithFree } from '../src/model/gameProfileRest.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { smithingPlan } from '../src/model/smithing.js';
@@ -21,14 +21,14 @@ function fixture() {
   return { run, visit };
 }
 
-test('configured Rest uses exact non-mutating previews and preserves three service identities', () => {
+test('configured Rest uses exact non-mutating previews and preserves the two service identities (D10: Strategize is gone)', () => {
   const { run, visit } = fixture();
   const before = structuredClone(run);
   const model = gameProfileRestModel(registries, run, visit);
-  assert.deepEqual(model.services.map(row => row.id), ['strategize', 'smith', 'levelUp']);
+  assert.deepEqual(model.services.map(row => row.id), ['smith', 'levelUp']);
   assert.equal(model.services.find(row => row.id === 'levelUp').available, false);
   assert.ok(model.services.find(row => row.id === 'levelUp').reason);
-  const preview = model.services.find(row => row.id === 'strategize').preview;
+  const preview = model.services.find(row => row.id === 'smith').preview;
   assert.equal(preview.hp, preview.maxHp);
   assert.equal(preview.flaskCharges.hpCurrent, preview.flaskCharges.hp);
   assert.deepEqual(run, before, 'opening or cancelling a review has no transaction to undo');
@@ -50,8 +50,10 @@ test('a free Smith quote and shared review agree with the configured commit at z
   commitGameProfileRest(registries, run, 'smith', { itemRef: candidate.itemRef });
   assert.deepEqual(run, expected);
   assert.equal(run.smithingStones, 0);
+  // D10: Smith being used leaves Level Up usable in the same visit (not exclusive).
   const spent = gameProfileRestModel(registries, run, run.gameProfileRestVisits[visit.id]);
-  assert.ok(spent.services.every(row => !row.available && row.reason));
+  assert.equal(spent.services.find(row => row.id === 'smith').available, false);
+  assert.ok(spent.services.find(row => row.id === 'smith').reason);
 });
 
 test('earned Constitution selection previews its new maximum and exactly matches confirmation', () => {
@@ -76,7 +78,7 @@ test('normal Smithing quotes keep their authored cost and affordability', () => 
   assert.ok(free.candidates.every(row => row.cost === 0 && row.affordable));
 });
 
-test('Strategize exposes only authored basics and rejects the legacy attack mint before mutation', async () => {
+test('the deck editor exposes only authored basics and rejects the legacy attack mint before mutation', async () => {
   const { deckEditorModel, openDeckEdit, deckVariantKey } = await import('../src/ui/models/DeckEditorModel.js');
   const { createGameProfileRestDraft } = await import('../src/model/gameProfileRest.js');
   const { run } = fixture();
@@ -97,12 +99,7 @@ test('Strategize exposes only authored basics and rejects the legacy attack mint
   assert.equal(session.add(`card:${deckVariantKey(removed)}`).ok, true);
   assert.equal(draft.deck.at(-1).instanceId, removed.instanceId);
   assert.equal(session.confirm().ok, true);
-  commitGameProfileRest(registries, run, 'strategize', { draft });
-  assert.equal(run.deck.length, before.deck.length);
-  assert.equal(run.deck.at(-1).instanceId, removed.instanceId);
-  assert.equal(run.sideboard.some(card => card.instanceId === removed.instanceId), false);
-  assert.equal(run.hp, run.maxHp);
-  assert.equal(run.gameProfileRestVisits[run.gameProfileRestVisitId].service, 'strategize');
+  assert.throws(() => commitGameProfileRest(registries, run, 'strategize', { draft }), /Unknown rest service/, 'D10: deck editing is not a rest service');
 });
 
 test('the editor follows an explicit nonempty configured basic policy without legacy equipment slots', async () => {
@@ -121,4 +118,54 @@ test('the editor follows an explicit nonempty configured basic policy without le
   assert.equal(run.deck.at(-1).equipmentRole, undefined);
   assert.equal(run.equipmentAttackSlotCount, slots);
   session.cancel();
+});
+
+test('arriving with full pools but a spent flask records the flask refill (review finding)', () => {
+  const run = createRunState({ seed: 74, classId: 'reaver', registries, runId: 'rest-flask-heal' });
+  run.mapGraph = buildActMap(registries, createRng(74), run.seatOrder[0], 1);
+  run.mapNodeId = 'n3_0';
+  run.hp = run.maxHp; run.mana = run.maxMana; run.stamina = run.maxStamina;
+  run.flaskCharges.hpCurrent = 0;
+  const visit = beginGameProfileRest(run, '1:n3_0');
+  assert.equal(visit.healed.hp + visit.healed.mana + visit.healed.stamina, 0);
+  assert.ok(visit.healed.flaskHp > 0);
+  assert.equal(restHealedAny(visit.healed), true);
+  assert.equal(restHealedAny({ hp: 0, mana: 0, stamina: 0 }), false, 'older saves count missing flask fields as 0');
+});
+
+test('the rest completion copy follows what is actually still open (review finding)', () => {
+  const rows = (smith, level) => [{ id: 'smith', available: smith }, { id: 'levelUp', available: level }];
+  const used = ids => id => ids.includes(id);
+  assert.equal(restCompletionKey(rows(true, true), used([])), 'chooseAll');
+  assert.equal(restCompletionKey(rows(false, true), used(['smith'])), 'completeAll');
+  assert.equal(restCompletionKey(rows(false, false), used(['smith'])), 'completeDoneAll', 'no earned point left');
+  assert.equal(restCompletionKey(rows(false, false), used(['smith', 'levelUp'])), 'completeDoneAll');
+});
+
+test('the all-services intro names Smith and Level Up only when those are exactly the services', () => {
+  const ids = (...list) => list.map(id => ({ id }));
+  assert.equal(restIntroKey(ids('smith', 'levelUp'), { smithFree: true }), 'chooseAll');
+  assert.equal(restIntroKey(ids('levelUp', 'smith'), { smithFree: true }), 'chooseAll');
+  assert.equal(restIntroKey(ids('smith', 'levelUp')), 'chooseAllAny', 'a paid Smith is not called free');
+  assert.equal(restIntroKey(ids('strategize'), { smithFree: true }), 'chooseAllAny');
+  assert.equal(restIntroKey(ids('strategize', 'smith', 'levelUp'), { smithFree: true }), 'chooseAllAny');
+  assert.equal(restIntroKey(ids('smith'), { smithFree: true }), 'chooseAllAny');
+});
+
+test('free-Smith copy is gated on rests.smith.free, the flag the commit reads', () => {
+  const free = fixture();
+  const freeModel = gameProfileRestModel(registries, free.run, free.visit);
+  assert.equal(freeModel.smithFree, true);
+  assert.match(freeModel.services.find(row => row.id === 'smith').description, /for free/);
+  assert.equal(restIntroKey(freeModel.services, { smithFree: freeModel.smithFree }), 'chooseAll');
+  const paid = fixture();
+  paid.run.gameProfile = structuredClone(paid.run.gameProfile);
+  paid.run.gameProfile.content.rests.smith.free = false;
+  assert.equal(restSmithFree(paid.run), false);
+  const paidModel = gameProfileRestModel(registries, paid.run, paid.visit);
+  assert.equal(paidModel.smithFree, false);
+  assert.doesNotMatch(paidModel.services.find(row => row.id === 'smith').description, /free/i);
+  assert.equal(restIntroKey(paidModel.services, { smithFree: paidModel.smithFree }), 'chooseAllAny');
+  const noLevel = gameProfileSmithModel(registries, paidModel.smith, paidModel.smithPreviews, null, () => '', { all: true, levelUpOffered: false });
+  assert.doesNotMatch(noLevel.properties.consequence, /Level Up/);
 });

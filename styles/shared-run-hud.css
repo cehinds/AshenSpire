@@ -62,3 +62,15 @@
   text-shadow: -1px -1px #000,1px -1px #000,-1px 1px #000,1px 1px #000;
 }
 :root header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .act-route-strip { grid-area: route; }
+
+/* D15: the Armoury outline glows blue while it holds an item the player has not looked at (black otherwise, as drawn). */
+:root { --armoury-new-glow: rgb(117, 191, 255); }
+:root .topbar-btn[data-armoury-new='true'] {
+  border-radius: 6px; outline: 2px solid var(--armoury-new-glow); outline-offset: -1px;
+  box-shadow: 0 0 6px 2px var(--armoury-new-glow), 0 0 16px 5px rgba(74, 163, 255, 0.65);
+}
+:root .topbar-btn[data-armoury-new='true'] .illustrated-hud-icon { filter: drop-shadow(0 0 3px var(--armoury-new-glow)); }
+/* D15: deck and equipment buttons read as disabled until the fight resolves. */
+:root .combat-deck-edit[aria-disabled='true'] { opacity: 0.4; cursor: not-allowed; }
+:root #combat-armoury[aria-disabled='true'] { cursor: not-allowed; }
+:root #combat-armoury[aria-disabled='true'] .illustrated-hud-icon { opacity: 0.4; }

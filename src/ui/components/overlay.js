@@ -11,7 +11,7 @@ import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { isEngaged, focusFirst, setTabRing } from '../input.js';
 import { menuTabs } from '../uiContent.js';
-import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
+import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction, lockEquipmentRows } from './quicknav.js';
 import { statProjection } from '../../model/statProjection.js';
 import { characterLevelOf } from '../../model/state.js';
 import { closeFlaskActionMenu } from './flask.js';
@@ -120,7 +120,7 @@ export function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onOffline, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave, quickControls = {}, initialTab = 'settings', gameProfile = null }) {
+export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onOffline, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave, quickControls = {}, initialTab = 'settings', gameProfile = null, editLocked = null }) {
   closeFlaskActionMenu({ cancelled: true });
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
@@ -233,8 +233,8 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   // The quick-nav list, mirrored (A) or folded-into (B). Both open the SAME list
   // over the SAME table; only which control opens it differs, which is the whole
   // difference between the two variants at this one screen.
-  const openHere = (anchor) =>
-    openQuickNav(anchor, 'overlay', {
+  const openHere = (anchor) => {
+    const panel = openQuickNav(anchor, 'overlay', {
       counts: { deck: run.deck.length },
       current: currentTab,
       hasSave,
@@ -260,6 +260,9 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
         ...(onQuitWithoutSave ? { quit: () => { const quit = onQuitWithoutSave({ returnFocusElement: anchor }); if (quit) closeOverlay(); return quit; } } : {}),
       },
     });
+    if (editLocked?.()) lockEquipmentRows(panel);
+    return panel;
+  };
   const overlayHead = veil.querySelector('.overlay-head');
   const syncQuickLauncher = () => {
     if (!overlayHead) return;

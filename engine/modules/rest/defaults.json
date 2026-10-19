@@ -6,7 +6,6 @@
     "smith",
     "levelUp"
   ],
-  "allowEmptyStrategize": true,
   "recovery": {
     "hp": "full",
     "sp": "full",

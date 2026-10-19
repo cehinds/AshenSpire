@@ -131,6 +131,7 @@ import { mountRest } from './ui/screens/rest.js';
 import { commitDeckEditDraft } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
+import { armouryHasNew, armouryOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
 import { mountShop, mountConfiguredShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
@@ -1268,6 +1269,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   // the old Exposure states; the pose must also carry their older rules.
   if (legacyArcaneShot) delete configSnapshot.breakMeterVersion;
   rebuildRegistries(configSnapshot, null, gameProfile);
+  xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
     gameProfile, profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
@@ -1488,6 +1490,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   onLoaded?.();
   resetArmouryTraySession();
   activeSlot = slot;
+  xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = loaded;
   if (!isConfiguredRun(run)) refreshRunClassMastery(run, saves.loadMeta(), registries);
   if (!isConfiguredRun(run)) registries = registriesForClassMastery(registries, run);
@@ -1646,6 +1649,7 @@ function quitWithoutSaving({ returnFocusElement } = {}) {
     onConfirm: () => {
       closeOverlay();
       audio.stopMusic();
+      xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
       run = null;
       showCollapsedTitle();
     },
@@ -1803,6 +1807,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
   if (showProfileNoticeIfNeeded()) return;
   audio.music('title');
   resetArmouryTraySession();
+  xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
   if (startupGatePending && !skipStartup) {
@@ -2066,6 +2071,8 @@ function showOfflinePlay() {
 // those rooms now carry opens the Armoury too and a close that went to the
 // map would abandon the room mid-visit.
 function showArmoury(request = '', returnTo = showMap) {
+  // A glow cleared by looking must survive a reload even when nothing in the Armoury changes.
+  if (armouryHasNew(run)) { markArmourySeen(run); persist(); } else markArmourySeen(run);
   const initialView = typeof request === 'string' ? request : '';
   const destination = request && typeof request === 'object' ? request.destination || '' : '';
   const armouryMeta = saves.loadMeta();
@@ -2126,7 +2133,10 @@ function showCharacterSheet(opener, options = {}) {
 // These navigation doors use the ordinary location policy; combat uses the
 // separate draft door below at a safe action boundary.
 function deckDoors(services = null) {
-  return deckEditorDoors({ settings: saves.loadMeta().settings || {}, inCombat: false, services });
+  const settings = saves.loadMeta().settings || {};
+  const doors = deckEditorDoors({ settings, inCombat: false, services });
+  // D10/D15: Core edits the deck at will outside combat, from the Armoury, whatever the Current-profile location setting says.
+  return armouryOpensDeckEditor(run, settings) ? Object.freeze({ ...doors, armoury: true }) : doors;
 }
 
 function showDeckEditor(returnTo = showMap, hub = true) {
@@ -2201,6 +2211,7 @@ function quitGame() {
   closeOverlay();
   dropLanLink();
   audio.stopMusic();
+  xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = null;
   mountQuitScreen(app, { savedRun, onBack: showCollapsedTitle });
 }
@@ -2225,6 +2236,8 @@ function showOverlay(initialTab = 'settings') {
     saves,
     onSettingsChange: persistSettingsChange,
     quickControls: quickMenuControls,
+    // D15: the overlay opened from a fight shares the combat edit lock, so its equipment rows are not dead doors.
+    editLocked: () => editingLocked(run, xpCombat),
     onArmoury: (view) => {
       const combatArmoury = app.querySelector('#combat-armoury');
       closeOverlay();
@@ -3859,7 +3872,7 @@ function showGameProfileReward() {
   const pending = run.gameProfilePendingReward;
   const offer = run.gameProfileRewardOffers[pending.offerId];
   const persistRewardChange = change => transactReward(run, pending.offerId, change, persist);
-  mountGameProfileOffers(app, { registries, run, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
+  mountGameProfileOffers(app, { registries, run, settings: saves.loadMeta().settings || {}, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
     onTake: index => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index)),
     onContinue: () => {
       persistRewardChange(() => {

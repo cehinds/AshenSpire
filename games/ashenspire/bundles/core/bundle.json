@@ -6,7 +6,9 @@
   "modules": {
     "cards": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "editorWhere": "noncombat"
+      }
     },
     "resources": {
       "version": "1.0.0",
@@ -173,6 +175,7 @@
         "minimumThreatFloor": "minimumThreatFloor",
         "mapMode": "mapMode",
         "firstFloor": "firstFloor",
+        "shopShare": "shopShare",
         "requirePrebossRest": "requirePrebossRest"
       }
     },
@@ -182,7 +185,6 @@
       "settings": {
         "servicesPerVisit": "servicesPerVisit",
         "services": "services",
-        "allowEmptyStrategize": "allowEmptyStrategize",
         "recovery": "recovery",
         "smith": "smith"
       }
