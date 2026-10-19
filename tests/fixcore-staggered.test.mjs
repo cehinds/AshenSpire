@@ -140,3 +140,22 @@ test('under Core an interrupt reports no cancelled move (staggering cancels noth
   assert.equal(event[1].cancelledMove, null);
   assert.equal(target.pendingMove.moveId, 'strike');
 });
+
+test('preview skips the break Vulnerable when impact protection would refuse the stagger', () => {
+  const { combat, target } = live(1);
+  combat.foundation = { rules: { impact: { protectionTurns: 1 } } };
+  target.impactProtectedUntil = combat.turn;
+  const preview = previewDamageHits(combat, combat.player, target, 20, [], carrier, 2);
+  assert.equal(preview.hitDamages[1], preview.hitDamages[0], 'no Vulnerable on the second hit');
+});
+
+test('preview equals live when an earlier hit breaks Poise (stance replaced, one stagger per round)', () => {
+  const smash = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee' } };
+  const setup = () => { const f = live(2); f.target.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' }; return f; };
+  const a = setup();
+  const preview = previewDamageHits(a.combat, a.combat.player, a.target, 10, [], smash, 2).hitDamages;
+  const b = setup();
+  const live2 = [];
+  for (let i = 0; i < 2; i++) { const before = b.target.hp; primeAccuracyRolls(b.combat); applyAttackDamage(b.combat, b.combat.player, b.target, 10, [], smash); live2.push(before - b.target.hp); }
+  assert.deepEqual(preview, live2);
+});

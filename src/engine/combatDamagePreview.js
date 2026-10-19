@@ -1,4 +1,4 @@
-import { fixCoreEnabled, damageReceipt, fixCorePoiseSpent, fixCoreStaggeredRules } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, damageReceipt, fixCorePoiseSpent, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
 import { configuredCombat, profileDamageReceipt } from './gameProfileCombat.js';
 import { computeAttackDamage } from './actions.js';
 import { prepareMatchupHit, matchupRules, hitRiders } from './combatMatchups.js';
@@ -40,10 +40,13 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
           if (defender.persistentPoise) {
             const poiseBefore = defender.persistentPoise.value;
             defender.persistentPoise.value = Math.max(0, poiseBefore - fixCorePoiseSpent(ctx, receipt));
-            // A Poise break leaves the owner Vulnerable (D13), so the next hit of the card meets it.
-            if (poiseBefore > 0 && defender.persistentPoise.value === 0) {
-              const stacks = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules).vulnerableStacks;
-              if (stacks > 0) defender.statuses = { ...defender.statuses, vulnerable: { ...defender.statuses?.vulnerable, stacks: (defender.statuses?.vulnerable?.stacks || 0) + stacks } };
+            // A Poise break staggers the owner exactly as live play does (D13): same guards, stance and Vulnerable.
+            if (poiseBefore > 0 && defender.persistentPoise.value === 0 && !(ctx.foundation && defender.impactProtectedUntil >= ctx.turn)) {
+              {
+                const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
+                if (rules.stance) defender.combatStance = fixCoreStaggeredStance(defender);
+                if (rules.vulnerableStacks > 0) defender.statuses = { ...defender.statuses, vulnerable: { ...defender.statuses?.vulnerable, stacks: (defender.statuses?.vulnerable?.stacks || 0) + rules.vulnerableStacks } };
+              }
             }
           }
         }
