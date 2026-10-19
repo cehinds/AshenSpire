@@ -104,7 +104,7 @@ import { openQuickNav, closeQuickNav, quickNavMode, saveAction, lockEquipmentRow
 import { sfx } from '../sfx.js';
 import { haptic } from '../haptics.js';
 import { mountTutorial } from '../components/tutorial.js';
-import { veilIsOpen } from '../components/veil.js';
+import { veilIsOpen, OVERLAY_CLOSED_EVENT } from '../components/veil.js';
 import { focusElement, focusFirst, matchAction, actionDestinationForEvent, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } from '../input.js';
 import { clearTargetSilhouettes, renderTargetSilhouette } from '../components/friendlyTargets.js';
 import { friendlyTargetMode, friendlyTargetPlan } from '../../model/friendlyTargets.js';
@@ -277,6 +277,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const combatToolsState = { open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true };
   const combatTools = mountCombatTools(combatEl, { state: combatToolsState,
     onGridToggle: enabled => onSettingsChange?.({ 'gameConfig.presentation.showFormationGrid': enabled }),
+    readAuto: () => resolveCombatAutomation(readSettings()).enabled,
+    onAutoToggle: async enabled => {
+      // Same write the Settings row makes. A refused write rolls the setting back, so repaint from readSettings().
+      try { await onSettingsChange?.({ autoCombat: enabled }); }
+      catch (error) { console.warn('[combat] auto combat preference refused:', error.message); }
+      finally { if (combatEl.isConnected) renderCombatTools(); }
+    },
     onViewChange: () => renderCombatTools(),
     onToggle: enabled => {
       try { dispatch(combat, { type: 'setReactions', enabled }); }
@@ -284,6 +291,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       render();
     },
   });
+  // Menu > Settings can change Auto combat behind this screen; repaint the footer switch when the overlay closes.
+  const repaintAutoSwitch = () => { if (combatEl.isConnected && app.querySelector('.combat') === combatEl) renderCombatTools(); else window.removeEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch); };
+  window.addEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch);
+
   // "No reaction: why", above the Reaction switch, for notes logged from now on.
   const reactionNote = createReactionNote();
   let reactionNoteSeen = combat.eventLog.length - 1;
@@ -1511,7 +1522,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       enabled: combat.player.reactionsEnabled !== false,
       disabled: busy || combat.phase !== 'player' || hasCardChoice(combat) || !!combat.pendingReaction,
       ...combatToolsState, entries: combatLogEntries(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length),
-        { registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies }) }));
+        { registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies }) }), { auto: resolveCombatAutomation(readSettings()).enabled });
     renderReactionNote();
   }
 
@@ -3557,6 +3568,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         expansionChoiceShell?.close?.(); expansionChoiceShell = null;
         clearCardFeedback();
         pagerVeilObserver.disconnect();
+        window.removeEventListener(OVERLAY_CLOSED_EVENT, repaintAutoSwitch);
         document.removeEventListener(ART_REDRAW_EVENT, redrawArt);
         delete combatEl.dataset.handPagerOwner;
         return;
