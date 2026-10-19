@@ -17,7 +17,7 @@ import {
   parseItemUpgradeTag,
   resolveUpgradedItem,
 } from './itemUpgrades.js';
-import { coreSmithingActive, coreSmithingStats, coreSmithingCards, coreSmithingPreviewRows } from './smithingCore.js';
+import { coreSmithingActive, coreSmithingStats, coreSmithingCards, coreSmithingPreviewRows, coreCardSimulationAllowed, coreAffectedCards } from './smithingCore.js';
 
 export { normalizeSmithingRules };
 
@@ -523,9 +523,10 @@ export function commitItemUpgrade(registries, run, requestedItemRef, explicitRul
     free,
     purse: refinedPurse ? 'refined' : 'stones',
     ...(refinedPurse ? { refinedSpent: candidate.refinedCost, refinedBalanceBefore: beforeRefined, refinedBalanceAfter: run.smithingStonesRefined } : {}),
-    changes: candidate.core ? Object.freeze([...candidate.changes, ...candidate.coreCardRows]) : candidate.changes,
+    // Core card rows run combats: skipped while a rest previews every candidate, added by the real commit.
+    changes: candidate.core && coreCardSimulationAllowed() ? Object.freeze([...candidate.changes, ...candidate.coreCardRows]) : candidate.changes,
     // Core: the cards whose live numbers changed (co-op announces this count).
-    affectedCards: candidate.core ? candidate.coreCardRows : candidate.affectedCards,
+    affectedCards: candidate.core && coreCardSimulationAllowed() ? Object.freeze(coreAffectedCards(candidate.coreCardRows)) : candidate.affectedCards,
   });
   // The transaction's durable read-back. Solo Armoury/map and every co-op
   // snapshot project this same receipt; presentation never reconstructs what

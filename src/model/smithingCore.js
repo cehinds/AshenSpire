@@ -69,6 +69,26 @@ function levelsWith(run, itemRef, level) {
 }
 
 const memo = new Map();
+// Rest previews commit every candidate on a draft only to see recovery; they must not run card simulations.
+let simulationOff = 0;
+let simulations = 0;
+export const coreCardSimulationCount = () => simulations;
+export const coreCardSimulationAllowed = () => simulationOff === 0;
+export function withoutCoreCardSimulation(operation) {
+  simulationOff++;
+  try { return operation(); } finally { simulationOff--; }
+}
+/** One row per changed card copy, for the co-op banner's count (distinct faces expanded by their copies). */
+export function coreAffectedCards(cards) {
+  const seen = new Set(), out = [];
+  for (const row of cards) {
+    const face = row.tag.slice(0, row.tag.lastIndexOf(':'));
+    if (seen.has(face)) continue;
+    seen.add(face);
+    for (let i = 0; i < row.copies; i++) out.push(row);
+  }
+  return out;
+}
 function memoized(run, parts, compute) {
   let key = null;
   try { key = JSON.stringify([run.gameProfile?.hash, { ...run, gameProfile: undefined, itemUpgradeLevels: undefined }, parts]); } catch { key = null; }
@@ -85,6 +105,7 @@ function memoized(run, parts, compute) {
 function liveCardValues(registries, run, itemRef, level) {
   const levels = levelsWith(run, itemRef, level);
   return memoized(run, levels, () => {
+    simulations++;
     const enemyId = registries.enemies?.ids?.()[0];
     if (!enemyId) return new Map();
     const staged = { ...run, itemUpgradeLevels: levels };

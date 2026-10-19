@@ -145,3 +145,24 @@ test('card rows record the printed face number, not the number against the first
   const entry = previewCard(combat, card.instanceId).values.find((e) => e.op === 'damage');
   assert.equal(smash.before, entry.faceValue ?? entry.value);
 });
+
+test('opening the rest runs no card simulation; the real commit adds the chosen item\'s card rows once', async () => {
+  const { gameProfileRestModel } = await import('../src/ui/models/GameProfileRestModel.js');
+  const { coreCardSimulationCount } = await import('../src/model/smithingCore.js');
+  const run = fresh(); run.loadout.sets.leftHand[0] = 'kiteShield'; run.loadout.sets.armor[0] = 'vigil';
+  const visitState = visit(run);
+  const before = coreCardSimulationCount();
+  const model = gameProfileRestModel(reg, run, visitState);
+  assert.ok(model.smith.candidates.length >= 3);
+  assert.equal(coreCardSimulationCount(), before, 'building the model with N candidates simulates no combat');
+  assert.ok([...model.smithPreviews.values()].every((row) => row.available));
+  assert.equal(coreCardSimulationCount(), before);
+  const smash = run.deck.find((card) => card.cardId === 'core.smash');
+  run.deck.push({ ...smash, instanceId: 'smash-copy' });
+  commitGameProfileRest(reg, run, 'smith', { itemRef: 'armament/greatsword' });
+  assert.ok(coreCardSimulationCount() > before);
+  const receipt = run.lastSmithingReceipt;
+  assert.ok(receipt.changes.some((row) => row.kind === 'card'));
+  const copies = receipt.affectedCards.filter((row) => row.cardId === 'core.smash').length;
+  assert.equal(copies, 2, 'affectedCards counts every changed copy');
+});
