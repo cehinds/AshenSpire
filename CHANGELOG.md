@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Phone menu centred again; lighter combat on phones** ([#2156](https://github.com/cehinds/AshenSpire/pull/2156), `0.7.1.1651`). The main menu sits in the middle of the phone screen again, and combat taps and enemy turns are lighter on phones.
+- **Phone menu centred again; lighter combat on phones** ([#2156](https://github.com/cehinds/AshenSpire/pull/2156), `0.7.1.1653`). The main menu sits in the middle of the phone screen again, and combat taps and enemy turns are lighter on phones.
 - **Ward switched off in Core 2** ([#2150](https://github.com/cehinds/AshenSpire/pull/2150), `0.7.1.1651`). Ward is switched off in Core 2 for now and can be turned back on in the game data. Block cards now restore only Poise.
 - **Map fog reveals a clean circle** ([#2155](https://github.com/cehinds/AshenSpire/pull/2155), `0.7.1.1649`). The fog on the map now fades out in a clean circle around your location instead of being cut off in a straight line on one side.
 - **Combat numbers are always whole** ([#2152](https://github.com/cehinds/AshenSpire/pull/2152), `0.7.1.1647`). Combat numbers are now always whole, with no decimals in damage, Block, Poise, hit chances, Accuracy, Evasion or the damage breakdown.
