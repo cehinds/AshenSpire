@@ -129,7 +129,7 @@ test('full detail shows shared damage receipts and can return to compact reading
     const receipt = { version: 1, hits: [{incoming:20,hpLoss:15,poiseReduced:5,sources:[{id:'armor',label:'Iron Cuirass',amount:3}]}],totalDamage:15 };
     const log = openCombatLogModal({entries:[{id:1,round:1,text:'Strike hit.',damageReceipt:receipt}],opener:openerButton(dom)});
     assert.match(log.panel.querySelector('.combat-log-calculation').textContent,/Iron Cuirass: \+3/);
-    assert.match(log.panel.querySelector('.combat-log-calculation').textContent,/Poise −5/);
+    assert.match(log.panel.querySelector('.combat-log-calculation').textContent,/Poise absorbed 5/);
     [...log.panel.querySelectorAll('button')].find(node=>node.textContent==='Compact log').click();
     assert.equal(log.panel.querySelector('.combat-log-calculation'),null);
     [...log.panel.querySelectorAll('button')].find(node=>node.textContent==='Full detail').click();

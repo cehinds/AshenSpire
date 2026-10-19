@@ -73,6 +73,8 @@ export function combatCounterProblems(counter, path, version = 1) {
 const CAMPS = ['physical', 'spell'];
 const TARGETING = ['single', 'area'];
 const MANEUVERS = ['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting', 'evade'];
+// A saved combatStance may also be the Poise-break Staggered stance; counter coverage (MANEUVERS) must not accept it.
+const STANCE_MANEUVERS = [...MANEUVERS, 'staggered'];
 const SCHOOLS = ['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth'];
 
 function stringsProblems(value, path, allowed = null, required = false) {
@@ -155,7 +157,7 @@ export function combatExpansionEntityProblems(entity, path = 'entity') {
   if (stance !== undefined) {
     if (!record(stance)) problems.push(`${path}.combatStance must be an object`);
     else {
-      for (const [key, allowed] of [['maneuver', MANEUVERS], ['camp', CAMPS], ['range', RANGES]]) {
+      for (const [key, allowed] of [['maneuver', STANCE_MANEUVERS], ['camp', CAMPS], ['range', RANGES]]) {
         if (!allowed.includes(stance[key])) problems.push(`${path}.combatStance.${key} is unsupported`);
       }
       if (stance.counterStance !== undefined && (stance.counterStance !== true || stance.maneuver !== 'evade')) problems.push(`${path}.combatStance.counterStance requires true in Evade stance`);

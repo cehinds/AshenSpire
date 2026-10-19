@@ -8,6 +8,15 @@
     "defense:wardProtection",
     "defense:poiseProtection"
   ],
+  "poise": {
+    "drain": "prevented"
+  },
+  "staggered": {
+    "stance": true,
+    "staminaLoss": 1,
+    "vulnerableStacks": 1,
+    "extendOnly": true
+  },
   "stance": {
     "effectivenessMultiplier": 1.25,
     "discount": 1,
@@ -34,7 +43,7 @@
     "weakARMultiplier": 0.75,
     "vulnerabilityMultiplier": 1.25,
     "staggerRiders": {
-      "weak": 1,
+      "weak": 0,
       "vulnerable": 1
     },
     "overrides": {
