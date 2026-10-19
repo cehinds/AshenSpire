@@ -80,7 +80,8 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const profile = {...(carrier.combatProfile || {}), ...(Number.isFinite(carrier.magicShare) ? {magicShare:carrier.magicShare} : {})};
   const share = magicShareOf(profile,ctx.ratingsRules);
   // Owner, 2026-10-19: spell effectiveness uses PR; a spell (camp spell or magic school, whatever its Barrier split) reads PR where a physical attack reads AR.
-  const ratingId = modern && (profile.camp === 'spell' || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar', ratingLabel = ratingId.toUpperCase();
+  // Enemies keep AR for their spells: their PR is 0 in data, so reading it would zero their spell damage.
+  const ratingId = modern && source?.kind !== 'enemy' && (profile.camp === 'spell' || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar', ratingLabel = ratingId.toUpperCase();
   const ar = modern ? sourceRatingValue(ctx, source, ratingId, carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
   const ratingBonus = modern && carrier.skipRatingBonus ? 0 : ar * (effects?.attackRatingWeight || 0);
   let raw = base;
@@ -117,7 +118,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   else if (evade && !modern) amount = Math.floor(amount * (stances.evadeFailureMultiplier ?? 2));
   let blocked = 0, poiseMitigated = 0, wardMitigated = 0;
   const incoming = amount;
-  const parts = splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
+  const parts = splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
   let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
   let barrierMitigated = 0;
   if (modern) {
