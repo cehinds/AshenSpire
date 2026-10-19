@@ -2,7 +2,7 @@ import { applyStatus } from './statuses.js';
 import { attackHitPreview } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts } from '../model/combatRatings.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { cardPreparationCategory } from '../model/cardClassification.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
@@ -115,8 +115,10 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     barrierMitigated = Math.min(Math.max(0,target?.barrier || 0),magical);
     transition('block','Block',physical,physical-blocked,'mitigation');
     transition('barrier','Barrier',magical,magical-barrierMitigated,'mitigation');
-    const poise = protectionReceipt(ctx,target,'physical',physical-blocked);
-    const ward = protectionReceipt(ctx,target,'magical',magical-barrierMitigated);
+    // Ward off: the magic Barrier left meets Poise with the physical residual (matches actions.js).
+    const poiseMeetsMagic = fixCoreWardDisabled(ctx);
+    const poise = protectionReceipt(ctx,target,'physical',physical-blocked+(poiseMeetsMagic ? magical-barrierMitigated : 0));
+    const ward = protectionReceipt(ctx,target,'magical',poiseMeetsMagic ? 0 : magical-barrierMitigated);
     poiseMitigated=poise.reduced;wardMitigated=ward.reduced;
     sources.push(...poise.sources,...ward.sources);
     amount=poise.amount+ward.amount;

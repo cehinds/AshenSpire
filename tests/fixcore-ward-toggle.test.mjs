@@ -6,7 +6,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
-import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
+import { enqueueExpandedAction, previewExpandedActions } from '../src/engine/combatExpansionActions.js';
 import { executeAction, gainBlock } from '../src/engine/actions.js';
 import { fixCoreRules, fixCoreWardEnabled, fixCoreProtectionDescription, protectionReceipt, validateFixCoreRules } from '../src/model/fixCoreMechanics.js';
 import { persistentWardMaximum } from '../src/model/combatRatings.js';
@@ -52,7 +52,7 @@ test('ward off: Block restores Poise only, damage not reduced by Ward', () => {
   target.block = 0;
   enqueueExpandedAction(combat, [{ effect: { op: 'damage', target: 'enemy', amount: 20 }, source: combat.player, owner: combat.player, target, card: carrier, meta: {} }], { source: combat.player, target, carrier });
   while (combat.queue.length) executeAction(combat, combat.queue.shift());
-  assert.equal(target.hp, 80);
+  assert.equal(target.hp, 85, 'Poise (6 pts) now cuts the magic hit: 20 x 0.75 = 15');
 });
 
 test('ward on (override): old behaviour', () => {
@@ -63,4 +63,75 @@ test('ward on (override): old behaviour', () => {
   gainBlock(combat, target, 6, { cardId: 'defend' });
   assert.equal(target.persistentWard.value, 6);
   assert.equal(target.persistentPoise.value, 6);
+});
+
+const MAGIC = { skipRatingBonus: true, tags: ['camp:spell', 'maneuver:attack', 'damage:arcane'],
+  combatProfile: { camp: 'spell', maneuver: 'attack', damageType: 'arcane', range: 'melee', targeting: 'single' }, magicShare: 1 };
+function hit(combat, target, amount, card) {
+  enqueueExpandedAction(combat, [{ effect: { op: 'damage', target: 'enemy', amount }, source: combat.player, owner: combat.player, target, card, meta: {} }], { source: combat.player, target, carrier: card });
+  while (combat.queue.length) executeAction(combat, combat.queue.shift());
+}
+
+test('ward off: Poise cuts a magic hit x0.75 and spends Poise', () => {
+  const { combat, target } = fixture(false);
+  hit(combat, target, 8, MAGIC);
+  assert.equal(target.hp, 94, '8 x 0.75 = 6');
+  assert.equal(target.persistentPoise.value, 18, 'spent the 2 prevented');
+});
+
+test('ward off: Barrier still soaks magic first, Block never does', () => {
+  const { combat, target } = fixture(false);
+  target.block = 50; target.barrier = 4;
+  hit(combat, target, 8, MAGIC);
+  assert.equal(target.barrier, 0);
+  assert.equal(target.block, 50, 'Block untouched by magic');
+  assert.equal(target.hp, 97, '4 left x 0.75 = 3');
+});
+
+const SPLIT = { cardId: undefined, tags: ['camp:spell', 'maneuver:casting', 'damage:arcane'], skipRatingBonus: true,
+  magicShare: 0.5, physicalDamageType: 'blunt', damageSchool: 'magic',
+  combatProfile: { camp: 'spell', maneuver: 'casting', school: 'force', damageType: 'arcane', reach: 'near', targeting: 'single' } };
+const action = (combat, target, amount, card) => ({ effect: { op: 'damage', target: 'enemy', amount }, source: combat.player, owner: combat.player, target, card, meta: {} });
+
+test('ward off: a split hit shares one Poise budget (physical and magic together)', () => {
+  const { combat, target } = fixture(false, 2);
+  const before = target.hp;
+  hit(combat, target, 8, SPLIT);
+  assert.equal(target.persistentPoise.value, 0, 'both parts drew on the same 2 points');
+  const lost = before - target.hp;
+  assert.ok(lost < 8 && lost >= 8 - 2, `lost ${lost}: reduced, but by no more than the 2-point pool`);
+});
+
+test('ward off: Poise spends across hits in contact order', () => {
+  const { combat, target } = fixture(false, 3);
+  const first = []; const emit = combat.emit;
+  combat.emit = (type, payload) => { if (type === 'damageDealt') first.push(payload); return emit(type, payload); };
+  enqueueExpandedAction(combat, [action(combat, target, 8, MAGIC), action(combat, target, 8, MAGIC)], { source: combat.player, target, carrier: MAGIC });
+  while (combat.queue.length) executeAction(combat, combat.queue.shift());
+  assert.equal(target.persistentPoise.value, 0);
+  assert.ok((first[0].poiseAbsorbed || 0) >= (first[1].poiseAbsorbed || 0), 'the first contact meets the fuller pool');
+});
+
+test('ward off: preview equals applied (magic and split)', () => {
+  for (const carrier of [MAGIC, SPLIT]) {
+    const { combat, target } = fixture(false);
+    const preview = previewExpandedActions(combat, [action(combat, target, 8, carrier)], { source: combat.player, target, carrier })
+      .flat().reduce((sum, contact) => sum + contact.amount, 0);
+    hit(combat, target, 8, carrier);
+    assert.equal(100 - target.hp, preview);
+    assert.ok(preview < 8, 'Poise reduced it');
+  }
+});
+
+test('ward on: magic is not reduced by Poise (old behaviour)', () => {
+  const { combat, target } = fixture(true);
+  target.ratings.ward = 0; target.persistentWard.value = 0; target.persistentWard.max = 0;
+  hit(combat, target, 8, MAGIC);
+  assert.equal(target.hp, 92);
+  assert.equal(target.persistentPoise.value, 20);
+});
+
+test('ward off: tooltip says Poise reduces all damage', () => {
+  const { combat, target } = fixture(false);
+  assert.match(fixCoreProtectionDescription(combat, target, 'poise'), /Poise reduces all damage by 25%/);
 });
