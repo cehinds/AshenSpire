@@ -15,7 +15,7 @@ import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFold
 import { statProjection } from '../../model/statProjection.js';
 import { characterLevelOf } from '../../model/state.js';
 import { closeFlaskActionMenu } from './flask.js';
-import { topVeil } from './veil.js';
+import { topVeil, OVERLAY_CLOSED_EVENT } from './veil.js';
 import { menuOverlayModel } from '../models/MenuModels.js';
 import { renderMenuOverlay, updateMenuSelection } from './menuComponents.js';
 import { registerModal } from '../modalState.js';
@@ -108,6 +108,8 @@ export function closeOverlay() {
     openVeil = null;
     closeQuickNav(); // the mirrored list has nothing behind it any more
     setTabRing(null); // the bumpers go back to their global bindings
+    // Settings may have changed behind the screen; a screen that mirrors one (the combat footer's Auto switch) repaints.
+    window.dispatchEvent(new CustomEvent(OVERLAY_CLOSED_EVENT));
   }
   if (escHandler) {
     removeEventListener('keydown', escHandler, true);
