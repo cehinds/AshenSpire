@@ -194,3 +194,13 @@ test('the text fallback fills template tokens with the card numbers', () => {
   const live = summarizeCardOption(registriesByProfile.current, null, { id: 'g', name: 'Guilt' }, { defOf: () => guilt, previewOf: () => ({ tokens: { loseHp: 3 }, values: [] }) });
   assert.match(live.html, /lose 3 HP/);
 });
+test('gainPoise (Dodge Roll) reads as a Poise guard gain, not Poise damage', () => {
+  const registries = registriesByProfile.current, def = registries.cards.get('dodgeRoll');
+  const gain = def.effects.find(effect => effect.op === 'gainPoise');
+  assert.ok(gain, 'Dodge Roll gains Poise');
+  const summary = summarizeCardOption(registries, null, { id: 'd', name: def.name }, { defOf: () => def, previewOf: () => null });
+  const row = summary.line.find(part => part.label === 'poiseGuard' || /Poise guard/.test(`${part.before}${part.after}`));
+  assert.ok(row, JSON.stringify(summary.line));
+  assert.equal(`${row.before}${row.value}${row.after}`.replace(/\s+/g, ' ').trim(), `+${row.value} Poise guard`);
+  assert.ok(!summary.line.some(part => /^Poise /.test(part.before)), 'no "Poise N" damage label');
+});

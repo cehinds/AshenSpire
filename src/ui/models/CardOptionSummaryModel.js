@@ -88,7 +88,7 @@ export function analyzeCardEffects(def, preview = null, registries = null, holds
         add(key, effect, { labelId: `cardOption.label.${key}`, amount, base });
         break;
       }
-      case 'gainPoise': add('poise', effect, { labelId: 'cardOption.label.poise', amount, base }); break;
+      case 'gainPoise': add('poiseGuard', effect, { labelId: 'cardOption.label.poiseGuard', amount, base }); break;
       case 'heal': add('heal', effect, { labelId: 'cardOption.label.heal', amount, base }); break;
       default: complete = false; break;
     }
@@ -120,7 +120,7 @@ export function analyzeCardEffects(def, preview = null, registries = null, holds
     }
     found.set(key, { labelId: `cardOption.label.${key}`, amount: typeof liveValue === 'number' ? liveValue : authored, base: authored });
   }
-  const order = ['def', 'barrier', 'ward', 'dmg', 'return', 'returnPoise', 'returnWard', 'poise', 'wardDamage', 'heal'];
+  const order = ['def', 'barrier', 'ward', 'dmg', 'return', 'returnPoise', 'returnWard', 'poise', 'poiseGuard', 'wardDamage', 'heal'];
   const line = freeze(order.filter(key => found.has(key)).map(key => {
     const row = found.get(key), ref = row.ref || row;
     // A split defense shows its own share but moves with the whole gain it came from.
