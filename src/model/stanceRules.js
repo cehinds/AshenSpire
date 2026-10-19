@@ -74,7 +74,7 @@ export function stanceEntryBonuses(carrier, ctx = null) {
   const defensive = ['defend', 'counter', 'evade'].includes(stance.maneuver);
   const amount = defensive ? cfg.entryProtection : 0;
   const share = cfg.schoolBlockShares?.[stance.school] ?? cfg.spellBlockShare;
-  const block = stance.camp === 'spell' ? Math.round(amount * share) : amount;
+  const block = stance.camp === 'spell' ? (fixCoreEnabled(ctx) ? Math.floor(amount * share) : Math.round(amount * share)) : amount;
   const profile = carrier.combatProfile || carrier;
   const auxiliaryEvade = profile.evade && profile.evadeEligible !== false
     && (!profile.evade.whileStatus || profile.evadeEligible === true);

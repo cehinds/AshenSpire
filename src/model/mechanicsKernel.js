@@ -267,14 +267,19 @@ export function evaluateModifiers({ bindings = [], phase, subjectId, actorId, co
     const [row] = pending.splice(index, 1); ordered.push(row); done.add(`${row.binding.id}/${row.id}`);
   }
   let value = amount;
+  // A quantity is a whole number (owner, 2026-10-18 16:05: "Floor operator so that there are no decimal values").
+  // The chain keeps full precision and floors once at the end; each source line shows the running
+  // floor of that precise value, so the lines are whole numbers and still add up to the final amount.
+  const shown = number => quantity ? Math.max(0, Math.floor(number)) : number;
   const sources = ordered.map(row => {
     const before = value; value = row.operation === 'multiply' ? value * row.value : value + row.value;
     if (!Number.isFinite(value)) fail(row.id, 'nonfinite result');
+    const requested = shown(before), effective = shown(value);
     return { id: row.binding.id, modifierId: row.id, mechanicId: row.binding.mechanicId, tag: row.binding.tag,
       ownerId: row.binding.ownerId, sourceInstanceId: row.binding.sourceInstanceId, label: row.binding.label,
       group: row.stacking.group, stage: phase, operation: row.operation, multiplier: row.operation === 'multiply' ? row.value : undefined,
-      value: row.value, requested: before, effective: value, amount: value - before };
+      value: row.value, requested, effective, amount: effective - requested };
   });
-  const final = quantity ? Math.max(0, Math.floor(value)) : value;
-  return { requested: amount, amount: final, unrounded: value, rounding: final - value, sources };
+  const final = shown(value);
+  return { requested: amount, amount: final, unrounded: value, rounding: quantity ? 0 : final - value, sources };
 }

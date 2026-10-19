@@ -36,7 +36,9 @@ test('JSON tuning changes the same receipt and scalar formulas retain fractions'
   const receipt=calculate(bindings);assert.equal(receipt.amount,12);assert.equal(receipt.sources[0].value,0.6);assert.equal(receipt.sources[0].effective,12);assert.equal(receipt.sources[0].sourceInstanceId,'armor-a');
   const fractional=structuredClone(mechanics);fractional.get(ward).service.modifiers[0].value={f:'mul',args:[0.75,1]};
   const result=calculate(compileBindings({mechanics:fractional,attachments:[attachment()]}),{amount:3});
-  assert.equal(result.unrounded,2.25);assert.equal(result.amount,2);assert.equal(result.rounding,-0.25);
+  assert.equal(result.unrounded,2.25);assert.equal(result.amount,2);
+  // Owner 2026-10-18: no decimals. The scalar keeps 2.25, but the quantity receipt shows whole running floors (3 -> 2) and no fractional rounding line.
+  assert.equal(result.rounding,0);assert.deepEqual([result.sources[0].requested,result.sources[0].effective,result.sources[0].amount],[3,2,-1]);
 });
 test('bad parameters, duplicate sources, unknown behavior bindings and invalid kinds fail with paths',()=>{
   for(const [source,match] of [
