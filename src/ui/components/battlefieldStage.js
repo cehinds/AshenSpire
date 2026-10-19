@@ -209,6 +209,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // and this loop made three per label (a phone profile put the reads at
     // about as much time as the fitting itself).
     const zoom = uiZoom();
+    // Read every box and style first, then write every font size: a write
+    // between two reads makes the next clientWidth a forced layout, once per
+    // label.
+    const fits = [];
     for (const label of field.querySelectorAll('.nm .ls-label, .intent-stance')) {
       const box = label.closest('.nm, .intent');
       const width = box.clientWidth - 8 / zoom;
@@ -217,8 +221,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const maximum = (label.closest('.player.context-selected') && logicalViewport().width > 320 ? 12 : 11) / zoom;
       labelMeasure.font = `${style.fontWeight} ${maximum}px ${style.fontFamily}`;
       const measured = labelMeasure.measureText(label.textContent).width;
-      label.style.fontSize = `${Math.max(8 / zoom, maximum * Math.min(1, width / Math.max(1, measured)))}px`;
+      fits.push([label, `${Math.max(8 / zoom, maximum * Math.min(1, width / Math.max(1, measured)))}px`]);
     }
+    for (const [label, size] of fits) label.style.fontSize = size;
   }
   function readRestingHand() {
     const hand = field.closest('.combat').querySelector('.hand');
