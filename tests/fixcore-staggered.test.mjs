@@ -10,13 +10,15 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { prepareBreakInterrupt } from '../src/engine/combatStatusControl.js';
-import { applyAttackDamage, gainBlock, drainFixCorePoise, executeAction } from '../src/engine/actions.js';
+import { applyAttackDamage, gainBlock, drainFixCorePoise, executeAction, fixCoreStagger } from '../src/engine/actions.js';
 import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
 import { getMult } from '../src/engine/statuses.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
 import { validateFixCoreRules, fixCorePoiseRules, fixCoreStaggeredRules, fixCoreProtectionDescription, fixCoreStatusDefinition } from '../src/model/fixCoreMechanics.js';
 import { combatStanceRow } from '../src/model/combatTacticsDisplay.js';
 import { damageReceiptLines } from '../src/ui/components/damageReceipt.js';
+import { setProfileStance } from '../src/engine/gameProfileCombat.js';
+import { serializeCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -288,4 +290,17 @@ test('mechanics: legacy status.staggered keeps its stacking implementation; the 
   const read = slug => JSON.parse(readFileSync(new URL(`../engine/mechanics/${slug}/mechanic.json`, import.meta.url), 'utf8'));
   assert.equal(read('status.staggered').legacy.symbol, 'staggerEnemy');
   assert.equal(read('stance.staggered').legacy.symbol, 'fixCoreStagger');
+});
+
+test('Staggered is a forced condition: a reaction played while staggered never remembers it as a concurrent stance (Many Forms)', () => {
+  const { combat } = live(); const player = combat.player;
+  player.statuses['base.many-forms'] = { stacks: 1 };
+  player.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+  player.concurrentStances = [{ maneuver: 'counter', camp: 'physical', range: 'melee' }];
+  fixCoreStagger(combat, player, { cause: 'poiseBreak' });
+  assert.equal(player.combatStance.maneuver, 'staggered');
+  setProfileStance(combat, player, { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } });
+  assert.ok(!(player.concurrentStances || []).some(row => row.maneuver === 'staggered'), 'Staggered is never remembered');
+  assert.ok(player.concurrentStances.some(row => row.maneuver === 'counter'), 'the earlier concurrent stance is intact');
+  assert.doesNotThrow(() => serializeCombatSnapshot(combat));
 });

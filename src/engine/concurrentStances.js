@@ -16,9 +16,10 @@ export function activeCombatStances(ctx,entity) {
  for(const stance of [...(entity.concurrentStances || []),entity.combatStance]) if(stance?.maneuver && (stance.expiresOnOwnerCycle==null || stance.expiresOnOwnerCycle>(entity.combatOwnerCycle || 0))) unique.set(`${stance.camp}:${stance.maneuver}`,stance);
  return [...unique.values()].slice(-stanceCapacity(ctx,entity));
 }
+// Staggered is a forced, temporary condition (owner D13): it is never a chosen stance, so it is never remembered.
 export function rememberCombatStance(ctx,entity,previous) {
  if(stanceCapacity(ctx,entity)<=1){delete entity.concurrentStances;return;}
- const existing=[...(entity.concurrentStances || []),previous,entity.combatStance].filter(Boolean),unique=new Map();
+ const existing=[...(entity.concurrentStances || []),previous,entity.combatStance].filter(row=>row && row.maneuver!=='staggered'),unique=new Map();
  for(const stance of existing) unique.set(`${stance.camp}:${stance.maneuver}`,stance);
  entity.concurrentStances=[...unique.values()].slice(-stanceCapacity(ctx,entity));
 }
