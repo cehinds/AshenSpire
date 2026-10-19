@@ -611,7 +611,7 @@ function verifyRewardGroups(modules, content) {
   if (modules.rewards?.mode !== 'configured' || !content.rewards) return;
   for (const message of rewardGroupProblems(modules.rewards.rewardGroups || [], content.rewards.categories || [])) fail('$/modules/rewards/rewardGroups', message);
 }
-export function resolveGameAuthor(author, catalog, options = {}) {
+export function resolveGameAuthor(author, catalog) {
   const source = dataClone(author);
   if (!record(source)) fail('$', 'expected author object');
   for (const key of Object.keys(source)) if (!['formatVersion','core','modules'].includes(key)) fail(`$/${key}`, 'unknown author property');
@@ -682,15 +682,10 @@ export function resolveGameAuthor(author, catalog, options = {}) {
     contracts:catalog.contracts,schemas,provenance,instances,
     lock:{formatVersion:1,core:source.core,artifacts:artifacts.sort((a,b)=>a.path < b.path ? -1 : a.path > b.path ? 1 : 0),runtimeABI:catalog.contracts.runtimeABI,numericPolicy:catalog.contracts.numericPolicy,runtimeHash:catalog.runtimeHash},
     portability:{portable:false,requiredCapabilities:['ashen.legacy-adapter@1'],reason:'Host gameplay adapter; no portable rules VM is claimed.'}};
-  profile.hash = options.knownHash || gameDigest(profile);
-  verifiedProfiles.add(profile);
+  profile.hash = gameDigest(profile);
   return freezeGameData(profile);
 }
-// Profiles this module built (or already verified) and deep-froze: immutable, so
-// their digest cannot have changed since it was computed and need not be redone.
-const verifiedProfiles = new WeakSet();
 export function validateResolvedGameProfile(snapshot, supportedRuntimeHash) {
-  if (verifiedProfiles.has(snapshot) && (!supportedRuntimeHash || snapshot.lock?.runtimeHash === supportedRuntimeHash)) return snapshot;
   const value = dataClone(snapshot), hash = value.hash; delete value.hash;
   if (typeof hash !== 'string' || gameDigest(value) !== hash) fail('$/hash', 'profile snapshot digest mismatch');
   if (supportedRuntimeHash && value.lock?.runtimeHash !== supportedRuntimeHash) fail('$/lock/runtimeHash', 'unsupported runtime artifact snapshot; preserve original save and use its matching build');
@@ -700,7 +695,5 @@ export function validateResolvedGameProfile(snapshot, supportedRuntimeHash) {
     validateGameSchema(settings,value.schemas[id],`$/modules/${id}`);
   }
   verifySettings(value.modules, value.instances); verifyRouteFirstFloor(value.modules, value.content); verifyRewardGroups(value.modules, value.content); verifyContent(value.content); verifyGearContent(value.content, value.modules.gear); verifyEnemyContent(value.content, value.modules.enemies ? characterSettings(value.modules) : null, value.modules.gear);
-  const verified = freezeGameData({...value,hash});
-  verifiedProfiles.add(verified);
-  return verified;
+  return freezeGameData({...value,hash});
 }
