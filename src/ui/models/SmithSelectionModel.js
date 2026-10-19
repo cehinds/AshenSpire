@@ -118,10 +118,11 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       affordable: candidate.affordable,
       affectedCount: candidate.affectedCards.length,
       // Only the item under review pays for its rows: a Core candidate's card rows run real combats.
-      affectedRows: candidate.core
-        ? (itemRef === selectedItemRef || candidate.armamentId === selectedItemRef ? groupedAffected(coreSmithingPreviewRows(candidate.itemName, candidate.changes, candidate.coreCardRows)) : freeze([]))
-        : itemKind === 'armament'
-          ? groupedAffected(candidate.previewCards || candidate.affectedCards)
+      affectedRows: itemKind === 'armament' && !candidate.core
+        ? groupedAffected(candidate.previewCards || candidate.affectedCards)
+        : candidate.core
+          // Only the item under review pays for its rows: a Core candidate's card rows run real combats.
+          ? (itemRef === selectedItemRef || candidate.armamentId === selectedItemRef ? groupedAffected(coreSmithingPreviewRows(candidate.itemName, candidate.changes, candidate.coreCardRows)) : freeze([]))
           : genericAffected(candidate),
       requirements: freeze(candidate.requirements.map((row) => freeze({ ...row }))),
     });
