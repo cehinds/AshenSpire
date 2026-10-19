@@ -70,7 +70,7 @@ function buildLines(def, preview, registries) {
   if (AUTHORED_DAMAGE_RIDER_CARDS.includes(def.id)) return null;
   // A curse's hand trigger and an Ashen Blight price live only in the authored text.
   if (def.onTurnEndInHand?.length || def.ashenBlightCost) return null;
-  const { value, defenseValue, title, condition, profile: p, bindings, tokens } = cardSummaryContext(def, preview, registries);
+  const { value, defenseValue, title, condition, profile: p, bindings, tokens, poiseMerge } = cardSummaryContext(def, preview, registries);
   const ratings = registries?.balance?.combatRatings ?? null;
   // A self status consumed after a payoff must read after the condition that uses it.
   // Walk nested predicates too, so the face never implies the prerequisite is removed first.
@@ -153,8 +153,17 @@ function buildLines(def, preview, registries) {
         }
         return frag('damage', text + area);
       }
-      case 'poiseDamage': return frag('damage', `${num(n, base)} Poise damage${area}`);
-      case 'wardDamage': return frag('damage', `${num(n, base)} Ward damage${area}`);
+      case 'poiseDamage': case 'wardDamage': {
+        // Ward off (Core 2): Ward damage drains Poise, so the face reads one combined Poise figure.
+        const merged = poiseMerge?.get(index);
+        if (merged) {
+          if (!merged.leader) return [];
+          const live = merged.indices.map(i => value(def.effects[i], i)), authored = merged.indices.map(i => baseOf(def.effects[i], i, 'amount'));
+          const sum = list => list.reduce((total, amount) => total + amount, 0);
+          return frag('damage', `${num(sum(live), authored.every(amount => typeof amount === 'number') ? sum(authored) : undefined)} Poise damage${area}`);
+        }
+        return frag('damage', `${num(n, base)} ${effect.op === 'poiseDamage' ? 'Poise' : 'Ward'} damage${area}`);
+      }
       case 'block': {
         const defense = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2
           ? (defenseValue(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n)) : null;
@@ -292,14 +301,18 @@ function buildLines(def, preview, registries) {
   // Counter: what the payload returns, for each part the effects do not already deal.
   if (counter) {
     const payload = def.counterPayload || {};
+    // Ward off (Core 2): the payload's Ward drains Poise too, so it joins the Poise figure.
+    let poiseReturn = 0, poiseAuthored = 0;
     for (const [key, label, op] of [['hp', 'damage', 'damage'], ['poise', 'Poise', 'poiseDamage'], ['ward', 'Ward', 'wardDamage']]) {
       if ((def.effects || []).some(effect => effect.op === op)) continue;
       const live = preview?.values?.find(row => row.op === op)?.value;
       const amount = live ?? payload[key];
       if (typeof amount !== 'number' || !(amount > 0)) continue;
+      if (poiseMerge && key !== 'hp') { poiseReturn += amount; poiseAuthored += payload[key] || 0; continue; }
       const type = key === 'hp' ? combatCardDamageLabel(def, preview, registries) : '';
       unconditional.push({ cat: 'damage', text: `${typed(num(amount, payload[key]), type)} ${label}` });
     }
+    if (poiseReturn > 0) unconditional.push({ cat: 'damage', text: `${num(poiseReturn, poiseAuthored)} Poise` });
   }
   if (counter && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   if (def.pronePoiseBonus) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
