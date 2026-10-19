@@ -5,6 +5,7 @@ import { proposalTargetPlan } from './proposalStatusRuntime.js';
 import { attackAccuracy, counterBaseEvasion, attributesOf } from './counterReturn.js';
 import * as Statuses from './statuses.js';
 import { RANGES } from '../model/combatRanges.js';
+import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
 import { stanceRulesFor, stanceOf, sameStance, stanceEntryBonuses } from '../model/stanceRules.js';
 
 function hitMode(source, target, { evadeDisabled = false } = {}) {
@@ -42,12 +43,14 @@ export function effectiveEvasion(ctx, entity, { evadeDisabled = false, baseEntit
 }
 
 /** Perception gate for the hit-% preview: only an exact read of the enemy shows odds that depend on its telegraphed stance. */
-export function hitReadExact(enemy, observerId = 'player') {
-  return enemy?.knowledgeAction?.reads?.[observerId]?.visibility === 'exact';
+export function hitReadExact(enemy, observerId = 'player', { turn, legacySolo = false } = {}) {
+  // An active Read Intent reveal exposes the exact intent and stance, so it counts as an exact read.
+  return enemy?.knowledgeAction?.reads?.[observerId]?.visibility === 'exact'
+    || proposalIntentRevealUntil(enemy, observerId, turn, { legacySolo }) !== null;
 }
 /** The target the preview prices: itself on an exact read, else a stance-neutral shallow copy so the badge cannot leak the telegraph. Preview only; execution never calls this. */
-export function previewTargetFor(target, observerId = 'player') {
-  if (!target || hitReadExact(target, observerId)) return target;
+export function previewTargetFor(target, observerId = 'player', reveal = {}) {
+  if (!target || hitReadExact(target, observerId, reveal)) return target;
   const blind = { ...target, combatStance: { maneuver: 'neutral', camp: 'physical', range: 'melee' }, matchingStanceCardMultiplier: 0 };
   delete blind.stanceAdvantageRating;
   return blind;

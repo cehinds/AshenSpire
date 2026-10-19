@@ -2791,5 +2791,5 @@ export function previewCardHit(combat, cardInstanceId, targetId, upcastRanks, { 
   const profile = carrier.combatProfile;
   const additionalTargets = profile?.targeting === 'area'
     ? Math.max(0, (combat.enemies || []).filter(enemy => enemy.alive).length - 1) : 0;
-  return previewCardAttackHit(combat, combat.player, observerId ? previewTargetFor(target, observerId) : target, carrier, { additionalTargets });
+  return previewCardAttackHit(combat, combat.player, observerId ? previewTargetFor(target, observerId, { turn: combat.turn, legacySolo: !(combat.players instanceof Map) }) : target, carrier, { additionalTargets });
 }

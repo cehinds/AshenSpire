@@ -68,3 +68,21 @@ test('helper returns the same object on an exact read and a neutral copy otherwi
   const blind = previewTargetFor({ ...t, knowledgeAction: read('hidden') }, 'player');
   assert.deepEqual(blind.combatStance, { maneuver: 'neutral', camp: 'physical', range: 'melee' });
 });
+
+test('an active Read Intent reveal keeps the target stance in the badge price', async () => {
+  const { previewTargetFor } = await import('../src/engine/stanceHit.js');
+  const enemy = { id: 'e1', combatStance: { maneuver: 'smash', camp: 'physical', range: 'ranged' }, proposalIntentRevealedUntilByOwner: { player: 5 } };
+  assert.equal(previewTargetFor(enemy, 'player', { turn: 3 }), enemy);
+  assert.equal(previewTargetFor(enemy, 'player', { turn: 5 }).combatStance.maneuver, 'neutral');
+});
+
+test('a counter whose reply is stored as enemy damage shows no hit badge', async () => {
+  const { cardAffectsEnemies } = await import('../src/model/hitBadge.js');
+  const cards = Array.isArray(contentBundle.cards) ? contentBundle.cards : Object.values(contentBundle.cards);
+  for (const id of ['guardCounter', 'riposte', 'rondelParry']) {
+    const card = cards.find(row => row.id === id);
+    if (!card) continue;
+    assert.ok(card.effects.some(effect => effect.target === 'enemy'), `${id} stores an enemy-targeted reply`);
+    assert.equal(cardAffectsEnemies(card), false, id);
+  }
+});

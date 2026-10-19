@@ -16,7 +16,7 @@ export function coopCombatantEvasion(scene, registries, entity, member) {
 // Rebuild the observing seat's Accuracy context from its public combat row.
 export function coopCardHitPreview(scene, registries, actor, enemy, carrier, { selected = true, member = actor, observerId } = {}) {
   const source = { ...actor, kind: 'player' };
-  const target = observerId ? previewTargetFor({ ...enemy, kind: 'enemy' }, observerId) : { ...enemy, kind: 'enemy' };
+  const target = observerId ? previewTargetFor({ ...enemy, kind: 'enemy' }, observerId, { turn: scene?.turn }) : { ...enemy, kind: 'enemy' };
   const context = coopCombatantContext(scene, registries, source, member);
   const definition = { ...carrier, combatProfile: combatProfileFor(carrier) };
   const preview = selected ? previewCardAttackHit : attackHitPreview;
