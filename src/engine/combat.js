@@ -2539,10 +2539,12 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
           // states the printed amount.
           const live = effectIndex === bonusIndex && reply && resolvedTarget?.kind === 'enemy'
             ? counterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id)) : null;
-          return previewDamageHits(combat, p, resolvedTarget,
+          const hits = previewDamageHits(combat, p, resolvedTarget,
             live ? live.hp : (reply?.value || 0) + (effectIndex === bonusIndex ? bonus : 0),
             action.card.tags || [], { ...action.card, combatReaction: true, counterReturnAttack: true, ...(fixCoreEnabled(combat) ? { skipRatingBonus: true } : {}) },
             live ? 1 : reply?.hits || 0);
+          // The return's own Poise damage and the Block the Counter adds ride with its HP damage (SPEC §17).
+          return live ? { ...hits, counterReturn: { incoming: live.incoming, hp: live.hp, poise: live.poise, block: live.block, advantaged: live.advantaged } } : hits;
         }
         const hitDamages = Array.from({ length: reply?.hits || 0 }, () => reply.value);
         if (effectIndex === bonusIndex && bonus) {
@@ -2594,6 +2596,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
               attackTags, carrier, entry.hits, damagePreviewStates.get(e.id));
           entry.perTarget[e.id] = result.damage;
           entry.perTargetHitDamages[e.id] = result.hitDamages;
+          if (primary?.id === e.id && result.counterReturn) entry.counterReturn = result.counterReturn;
           if (primary?.id === e.id) Object.assign(entry, { value: result.damage,
             hitDamages: result.hitDamages, totalDamage: result.totalDamage, damageReceipt: result.damageReceipt,
             ...(configuredCombat(combat) ? { hitChance: result.hitChance, uncertain: result.uncertain, hpLossBounds: result.hpLossBounds } : {}) });

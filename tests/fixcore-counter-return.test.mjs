@@ -13,7 +13,8 @@ import { counterReturn, counterBeats } from '../src/engine/counterRule.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const houndBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'blightHound' ? { ...row, firstMove: 'lunge' } : row) };
-const regs = { wanderingSoldier: bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile),
+const mantisBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'cinderMantis' ? { ...row, firstMove: 'scythePair' } : row) };
+const regs = { cinderMantis: bindGameProfileRegistries(createRegistries(applyGameProfileToContent(mantisBundle, profile)), profile), wanderingSoldier: bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile),
   blightHound: bindGameProfileRegistries(createRegistries(applyGameProfileToContent(houndBundle, profile)), profile) };
 const reg = regs.wanderingSoldier;
 function live(enemyId = 'wanderingSoldier') {
@@ -205,4 +206,26 @@ test('a Core Counter return ignores the target\'s Vulnerable: 8 incoming returns
   const receipt = profileDamageReceipt(combat, combat.player, enemy, counterReturn(combat, 8, true).hp, carrier);
   assert.equal(receipt.damageReceipt.hits[0].incoming, 6);
   assert.equal(receipt.hpLoss, 6);
+});
+
+import { counterPreviewAgainst } from '../src/engine/counterRule.js';
+import { previewIntent } from '../src/engine/combat.js';
+test('multi-hit preview grants each hit its Counter Block and carries Vulnerable only after the break (Cinder Mantis, 0 Block, 2 Poise)', () => {
+  const { combat, enemy } = live('cinderMantis');
+  Object.assign(enemy, { ratings: {}, ratingSources: [], statuses: {} });
+  combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  Object.assign(combat.player, { block: 0, statuses: {}, ratings: {}, ratingSources: [], persistentPoise: { value: 2, max: 20 } });
+  assert.equal(enemy.intent.moveId, 'scythePair');
+  const row = counterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
+  assert.equal(row.hits, 2);
+  assert.equal(row.incoming, 10, 'Vulnerable from the Poise break lands only after hit 2 completes');
+  assert.equal(row.hp, 6); assert.equal(row.poise, 2); assert.equal(row.block, 2);
+});
+
+test('the Counter preview carries the return\'s Poise damage and the Block it adds (8-damage attack: Poise 3, Block +2)', () => {
+  const { combat, enemy } = live();
+  const damage = previewCard(combat, 'cx1', enemy.id).values.find(row => row.op === 'damage');
+  assert.equal(damage.counterReturn.poise, 3);
+  assert.equal(damage.counterReturn.block, 2);
+  assert.equal(damage.counterReturn.hp, 6);
 });
