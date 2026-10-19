@@ -281,3 +281,29 @@ test('multi-hit preview starts from the player after the Counter\'s own Block, s
   const returned = combat.eventLog.slice(start).filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
   assert.equal(returned.reduce((sum, e) => sum + e.hpLoss + (e.poiseAbsorbed || 0), 0), damage.counterReturn.hp, 'preview == live');
 });
+
+function liveWith(cardId) {
+  const { combat, enemy } = live();
+  combat.piles.hand.push({ instanceId: 'cy1', cardId });
+  return { combat, enemy };
+}
+
+test('a support-only Counter (frostCounter) previews the conditional return and the SP shift marker', () => {
+  const { combat, enemy } = liveWith('frostCounter');
+  const view = previewCard(combat, 'cy1', enemy.id);
+  assert.ok(view.counterReturn, 'the return is previewed without a damage opcode');
+  assert.equal(view.counterReturn.incoming > 0, true);
+  assert.equal(view.costShift, -1, 'the reaction-from-hand discount reads from the authored cost (1 -> 0)');
+});
+
+test('Core 2 fixed return is not rewritten by the legacy Impact edge (lowGuardRiposte poise stays 3, not 6)', () => {
+  const { combat, enemy } = liveWith('lowGuardRiposte');
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cy1' });
+  Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const triggered = combat.eventLog.slice(start).find(e => e.type === 'combatCounterTriggered' && e.cardId === 'lowGuardRiposte');
+  assert.equal(triggered.amount, 6);
+  assert.equal(triggered.poiseDamage, 3);
+});

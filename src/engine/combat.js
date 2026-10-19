@@ -2741,6 +2741,17 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     }
     values.push(entry);
   });
+  // A Counter with no authored damage effect (a support-only Counter) still returns half the incoming hit under Core 2:
+  // the conditional return is read from the revealed attack, independent of any damage opcode.
+  const authoredCosts = def.resourceCosts || def.costs || {};
+  const authoredSp = authoredCosts.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : undefined); // profileCardCosts' chain
+  let supportCounterReturn = null;
+  if (configuredCombat(combat) && fixCoreEnabled(combat) && action.card.combatProfile?.maneuver === 'counter'
+    && !chargedEffects.some(effect => effect.op === 'damage')) {
+    const enemyTarget = action.target?.kind === 'enemy' ? action.target : living[0];
+    const read = enemyTarget ? counterPreviewAgainst(combat, enemyTarget, previewIntent(combat, enemyTarget.id), action.card, counterDefenseProjection()) : null;
+    if (read) supportCounterReturn = { incoming: read.incoming, hp: read.hp, poise: read.poise, block: read.block, advantaged: read.advantaged };
+  }
 
   return {
     // The effects the play will run, a charge's added rows included; `values` follow this list (the card face reads it).
@@ -2754,12 +2765,13 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     manaCost: paidCosts.mana,
     ...(priceReceipt.selfFunded ? { displayCosts } : {}),
     // Core 2: whether a rule moved the SP price off the printed one (-1 cheaper, 1 dearer), so the face can mark it.
-    ...(configuredCombat(combat) && !isX && Number.isFinite(def.staminaCost) && paidCosts.stamina !== def.staminaCost
-      ? { costShift: Math.sign(paidCosts.stamina - def.staminaCost) } : {}),
+    ...(configuredCombat(combat) && !isX && Number.isFinite(authoredSp) && paidCosts.stamina !== authoredSp
+      ? { costShift: Math.sign(paidCosts.stamina - authoredSp) } : {}),
     // Affordability keeps the net payment requirement, including restore funding.
     staminaCost: combat.combatExpansionVersion === 2 ? paidCosts.stamina : shownCost,
     needsTarget: needsEnemyTarget({ ...def, effects: chargedEffects }),
     values,
+    ...(supportCounterReturn ? { counterReturn: supportCounterReturn } : {}),
     tokens,
     damageSequences,
   };
