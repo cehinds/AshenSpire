@@ -2058,8 +2058,8 @@ body.reduce-motion .target-hud-detail { transition: none; }
   margin-inline-start:calc(var(--combat-log-button-width, 80px) + 8px);
 }
 /* Card option tiles: the picker grid for reactions, discards and card choices. */
-.card-option-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin-block: 0.5rem; }
-@media (min-width: 768px) { .card-option-grid { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); } }
+.as-options.card-option-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin-block: 0.5rem; }
+@media (min-width: 768px) { .as-options.card-option-grid { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); } }
 .card-option {
   position: relative; display: flex; flex-direction: column; justify-content: center; gap: 0.3rem;
   box-sizing: border-box; width: 100%; height: 6.25rem; min-height: 48px; padding: 0.6rem 0.7rem;
