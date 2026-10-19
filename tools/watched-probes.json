@@ -1410,7 +1410,7 @@
    "reach": [
     {
      "op": "goto",
-     "q": "?shot=map&shotWalk=4",
+     "q": "?shot=map&shotWalk=4&shotSettings=%7B%22mapMode%22%3A%22fog%22%7D",
      "ms": 2000
     }
    ],
