@@ -34,7 +34,7 @@ export function equipmentCardModel(registries, piece) {
     facts = Object.entries(receipt.values).filter(([,value])=>value !== 0).map(([id,value])=>field(labels[id] || id,value,
       `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} = ${value} equipped ${labels[id] || id}.`));
     bonuses = armor ? [field(`Rank ${receipt.rank} · ${receipt.budget} points`,receipt.budget,
-      `Armor budget: ${configuredGear.armorBudget.baseline} baseline + ${receipt.rank-1} additional rank(s) × ${configuredGear.armorBudget.perRank}. Rarity is separate from rank.`)] : [];
+      `Armor budget: ${receipt.budget} points (${configuredGear.armorBudget.baseline} baseline + ${receipt.budget-configuredGear.armorBudget.baseline} rarity/rank bonus).`)] : [];
   }
   const requirements = Object.entries(piece.requirements?.attributes || {}).map(([id, value]) => `${registries.attributes.get(id)?.shortLabel || id} ${value}`).join(' · ');
   return { id: piece.id, name: piece.name, armor, type, facts, bonuses,
