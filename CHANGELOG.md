@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **The FixCore rules contract follows the owner's rulings** ([#2141](https://github.com/cehinds/AshenSpire/pull/2141), `0.7.1.1641`). The written combat rules now describe the owner's decisions on Poise, Staggered, stance costs, Perception, rest sites, pacing and automatic reactions. Play changes arrive in separate updates.
+- **The FixCore rules contract follows the owner's rulings** ([#2141](https://github.com/cehinds/AshenSpire/pull/2141), `0.7.1.1643`). The written combat rules now describe the owner's decisions on Poise, Staggered, stance costs, Perception, rest sites, pacing and automatic reactions. Play changes arrive in separate updates.
 - **One tap no longer plays a card** ([#2146](https://github.com/cehinds/AshenSpire/pull/2146), `0.7.1.1641`). A tap now selects a card and shows its targets. A second tap or a target pick plays it. Players who want one-tap play can turn on "Tap a card to play it" in Settings.
 - **Matching stances hit harder and hit chances show when you pick a card** ([#2144](https://github.com/cehinds/AshenSpire/pull/2144), `0.7.1.1639`). Matching stances now add 25% effectiveness. Enemy intent checks use the target's Intelligence and Wisdom against your Wisdom roll. Hit chances show on every target as soon as you pick a card that can hit it.
 - **Armor has a flat 3-point budget** ([#2145](https://github.com/cehinds/AshenSpire/pull/2145), `0.7.1.1637`). Armor now has a flat budget of 3 points whatever its rank, with a rarity bonus ready for later (0 for now).
