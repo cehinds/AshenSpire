@@ -52,3 +52,20 @@ test('a non-Core profile with deck-training keeps its unlimited-copy collection 
   assert.ok(unlimitedCardIds(other).length > 0, 'unlimited basics are offered when the flag is absent');
   assert.ok(unlimitedCardIds(other).includes('core.strike'));
 });
+
+// Codex P2 (PR #2199): starterDeck.classDecks is validated at profile construction, not at class start.
+test('classDecks validation fails at profile construction with a message naming the class and row', async () => {
+  const { compileGameProfiles } = await import('../tools/game-config.mjs');
+  const { resolveGameAuthor } = await import('../engine/kernel/gameConfig.js');
+  const { catalog, authors } = compileGameProfiles();
+  const pack = catalog.bundles[authors.core.core].manifest.packs.find(row => row.id === 'ashen.core-content');
+  const build = (mutate) => { const copy = JSON.parse(JSON.stringify(catalog)); mutate(copy.packs[`${pack.id}@${pack.version}`].content.starterDeck); return () => resolveGameAuthor(authors.core, copy); };
+  assert.doesNotThrow(build(() => {}), 'the shipped Core bundle validates');
+  assert.throws(build(sd => { sd.classDecks.reaver[0].copies = '4'; }), /classDecks\/reaver\/0\/copies.*positive integer copies for class reaver row 0/);
+  assert.throws(build(sd => { sd.classDecks.reaver[1].copies = -1; }), /classDecks\/reaver\/1\/copies.*positive integer copies for class reaver row 1/);
+  assert.throws(build(sd => { sd.classDecks.reaver[0].copies = 1.5; }), /positive integer copies/);
+  assert.throws(build(sd => { sd.classDecks.nobody = [{ card: 'core.strike', copies: 1 }]; }), /classDecks\/nobody.*unknown class/);
+  assert.throws(build(sd => { sd.classDecks.rogue[2].card = 'core.missing'; }), /classDecks\/rogue\/2\/card.*unknown card reference "core.missing" for class rogue row 2/);
+  assert.throws(build(sd => { sd.classDecks = []; }), /classDecks.*expected class-id map/);
+  assert.throws(build(sd => { sd.classDecks.rogue = 'x'; }), /classDecks\/rogue.*expected an array/);
+});
