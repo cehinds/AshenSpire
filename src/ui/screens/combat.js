@@ -1376,7 +1376,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             candidates.push({ cardInstanceId: inst.instanceId, targetId, legal: true,
               affordable: combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0),
               offense, defense, stanceAdvantage: matchup === 'advantage' ? 1 : 0,
-              ...(known && offense ? { knownHitChance: previewCardHit(combat, inst.instanceId, targetId)?.hitChance / 100 } : {}) });
+              ...(known && offense ? { knownHitChance: previewCardHit(combat, inst.instanceId, targetId, undefined, { observerId: combat.playerKey || 'player' })?.hitChance / 100 } : {}) });
           }
         } catch { /* A refused preview cannot become an automated play. */ }
       }
@@ -1680,7 +1680,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const inst = selected && findInst(selected);
       const carrier = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
       if (!hitBadgeTargetIds(carrier, [enemy]).length) return null;
-      preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected));
+      preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected), { observerId: combat.playerKey || 'player' });
     } catch { return null; }
     if (!preview || !Number.isFinite(preview.hitChance)) return null;
     const node = document.createElement('span');

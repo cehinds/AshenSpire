@@ -1035,7 +1035,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const frame = app.querySelector('.combatant.enemy[data-eid="' + CSS.escape(enemy.id) + '"]');
       frame?.querySelector('.combat-hit-chance')?.remove();
       if (!frame || enemy.hp <= 0) continue;
-      const preview = coopCardHitPreview(sc, registries, actor, enemy, carrier, { selected: !!hostile, member: snap.party.find(member => member.id === actor.id) });
+      const preview = coopCardHitPreview(sc, registries, actor, enemy, carrier, { selected: !!hostile, member: snap.party.find(member => member.id === actor.id), observerId: actor.id });
       if (!Number.isFinite(preview?.hitChance)) continue;
       const badge = document.createElement('span');
       badge.className = 'combat-hit-chance';

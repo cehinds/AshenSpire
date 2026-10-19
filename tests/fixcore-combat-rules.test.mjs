@@ -43,7 +43,22 @@ test('matching stance discounts only the used resource lane and preserves fracti
  assert.equal(stanceEffectiveness(ctx,ctx.player,physical),1.25);
  ctx.player.combatStance={camp:'spell',maneuver:'casting'};
  assert.equal(stanceManaCost(3,ctx.player,magic,ctx),2);assert.equal(stanceManaCost(1,ctx.player,magic,ctx),1);assert.equal(stanceManaCost(0,ctx.player,magic,ctx),0);
- assert.equal(stanceStaminaCost(3,ctx.player,magic,ctx),3);
+ assert.equal(stanceStaminaCost(3,ctx.player,magic,ctx),2); // D6: an SP-only spell is discounted on SP; lane follows cost, not camp
+});
+test('D6: matching-stance discount lands on MP when the card costs MP, else on SP; one lane only',()=>{
+ const {ctx}=setup();const physical={combatProfile:{camp:'physical',maneuver:'attack'}},magic={combatProfile:{camp:'spell',maneuver:'casting',range:'ranged'}};
+ ctx.player.combatStance={camp:'physical',maneuver:'attack'};
+ // physical card with an MP cost: MP discounted, SP untouched
+ assert.equal(stanceManaCost(3,ctx.player,physical,ctx),2);assert.equal(stanceStaminaCost(3,ctx.player,physical,ctx,2),3);
+ // physical card with SP only: SP discounted
+ assert.equal(stanceStaminaCost(3,ctx.player,physical,ctx,0),2);assert.equal(stanceManaCost(0,ctx.player,physical,ctx),0);
+ ctx.player.combatStance={camp:'spell',maneuver:'casting'};
+ // spell with SP only: SP discounted (camp no longer picks the lane)
+ assert.equal(stanceStaminaCost(3,ctx.player,magic,ctx,0),2);
+ // spell with both: MP only
+ assert.equal(stanceManaCost(3,ctx.player,magic,ctx),2);assert.equal(stanceStaminaCost(3,ctx.player,magic,ctx,3),3);
+ // minimum-cost clamp on both lanes
+ assert.equal(stanceManaCost(1,ctx.player,magic,ctx),1);assert.equal(stanceStaminaCost(1,ctx.player,magic,ctx,0),1);
 });
 test('d20 odds exactly match resolution, including natural limits and stance clamp',()=>{
  const {ctx,enemy}=setup();const carrier={combatProfile:{camp:'physical',maneuver:'smash',range:'melee'}};

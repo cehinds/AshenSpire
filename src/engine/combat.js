@@ -9,7 +9,7 @@ import { selectCardVariant } from './cardBehavior.js';
 import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
 import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
-import { previewCardAttackHit } from './stanceHit.js';
+import { previewCardAttackHit, previewTargetFor } from './stanceHit.js';
 import { stanceOf, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
@@ -1504,8 +1504,9 @@ function baseCardPriceReceipt(combat, def, claimed = null) {
   const funds = ownRestoreFunds(def);
   // Silenced (v2): each stack adds 1 SP to a spell-camp card. An X card already spends every point.
   const silenced = combat.combatExpansionVersion === 2 && def.cost !== 'X' ? spellCardCostSurcharge(combat.player, def) : 0;
+  const cardMana = Math.max(0, pools.mana + (def.upcastSurcharge || 0));
   const fullStamina = def.cost === 'X' ? combat.player.stamina + (def.upcastSurcharge || 0)
-    : Math.max(0, stanceStaminaCost(effectiveCost(combat, def), combat.player, def, combat) + (def.upcastSurcharge || 0) + silenced);
+    : Math.max(0, stanceStaminaCost(effectiveCost(combat, def), combat.player, def, combat, cardMana) + (def.upcastSurcharge || 0) + silenced);
   const player = withoutClaims(combat.player, claimed);
   const fullMana = stanceManaCost(Math.max(0, pools.mana + (def.upcastSurcharge || 0)
     - R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount), combat.player, def, combat);
@@ -2782,7 +2783,7 @@ export function previewIntent(combat, enemyInstanceId) {
 }
 
 /** The card's hit preview uses the same carrier and d20 rule as execution. */
-export function previewCardHit(combat, cardInstanceId, targetId, upcastRanks) {
+export function previewCardHit(combat, cardInstanceId, targetId, upcastRanks, { observerId } = {}) {
   const inst = combat.piles.hand.find(card => card.instanceId === cardInstanceId);
   const target = (combat.enemies || []).find(enemy => enemy.id === targetId);
   if (!inst || !target) return null;
@@ -2791,5 +2792,5 @@ export function previewCardHit(combat, cardInstanceId, targetId, upcastRanks) {
   const profile = carrier.combatProfile;
   const additionalTargets = profile?.targeting === 'area'
     ? Math.max(0, (combat.enemies || []).filter(enemy => enemy.alive).length - 1) : 0;
-  return previewCardAttackHit(combat, combat.player, target, carrier, { additionalTargets });
+  return previewCardAttackHit(combat, combat.player, observerId ? previewTargetFor(target, observerId, { turn: combat.turn, legacySolo: !(combat.players instanceof Map) }) : target, carrier, { additionalTargets });
 }

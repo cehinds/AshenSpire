@@ -64,8 +64,8 @@ const browserPath = [
 ].find((candidate) => candidate && existsSync(candidate));
 
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
-  const code = await doorSelftest({
+  const { doorSelftest, resolveShard, selectShard } = await import('./doorplant.mjs');
+  const SELFTEST = {
     tool: 'slot-load-door.mjs',
     timeoutMs: 120000,
     plants: [
@@ -138,8 +138,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /RED SLOT-LOAD-KNOWLEDGE-SNAPSHOT/,
       },
     ],
-  });
-  if (code === 0) console.log('slot-load-door --selftest: OK — 8/8 known-bads observed red');
+  };
+  const shard = resolveShard();
+  const ran = selectShard(SELFTEST.plants, shard).length;
+  const code = await doorSelftest({ ...SELFTEST, shard });
+  if (code === 0 && shard) console.log(`slot-load-door --selftest: shard ${shard.index}/${shard.count} of a ${SELFTEST.plants.length}-plant corpus`);
+  if (code === 0) console.log(`slot-load-door --selftest: OK — ${ran}/${ran} known-bads observed red`);
   process.exit(code);
 }
 
