@@ -140,3 +140,14 @@ test('tier DR point comes only from unspent budget: authored DR that spends the 
   assert.ok(resolveGearItem(bare,s,{rank:2}).points.dr >= resolveGearItem(bare,s,{rank:1}).points.dr + 1);
   assert.equal(Object.values(resolveGearItem(bare,s,{rank:2}).points).reduce((a,b)=>a+b,0),4);
 });
+test('tier DR point is a Core policy flag: Core raises DR, a perRank profile without perRankStat keeps the weighted split', () => {
+  const armor = profile.content.gear.find(item=>item.kind==='armor'), s = profile.modules.gear;
+  assert.equal(s.armorBudget.perRankStat,'dr');
+  const bare = {...armor,tags:[],points:{}, weights:{ratings:{poise:1}}};
+  const dr = (settings,rank)=>resolveGearItem(bare,settings,{rank}).points.dr;
+  assert.equal(dr(s,2),dr(s,1)+1);
+  const generic = {...s,armorBudget:{...s.armorBudget,perRankStat:undefined}};
+  assert.equal(dr(generic,2),dr(generic,1));
+  const p1 = resolveGearItem(bare,generic,{rank:1}).points, p2 = resolveGearItem(bare,generic,{rank:2}).points;
+  assert.equal(p2.poise,p1.poise+1);
+});

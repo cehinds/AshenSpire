@@ -213,10 +213,10 @@ export function resolveGearItem(item, settings, { rank = item.rank ?? 1 } = {}) 
   // upgrade always raises DR (and the Block of every card that reads it). It is taken from the same pool.
   const tagCost = (item.tags || []).reduce((s, t) => s + (settings.tags[t]?.cost || 0), 0);
   const sum = keys => keys.reduce((s, k) => s + explicit[k], 0);
-  // The tier DR point is taken only from budget the item has not already spent: authored points that use the
+  // Core policy (armorBudget.perRankStat: 'dr'): the tier DR point is taken only from budget the item has not already spent: authored points that use the
   // allowance (rank 2, 4-point budget, 4 authored DR) are not topped up a second time.
   const tierPoints = (rank - 1) * (settings.armorBudget?.perRank ?? 0);
-  if ((item.kind === 'armor' || item.kind === 'shield') && settings.armorBudget && tierPoints > 0) {
+  if ((item.kind === 'armor' || item.kind === 'shield') && settings.armorBudget?.perRankStat === 'dr' && tierPoints > 0) {
     const merged0 = settings.poolSizes.merged?.[item.rarity];
     const whole0 = armorBudget ?? tierPoints + (merged0 ? (settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? merged0.min : merged0.max) : target('ratings') + target('bonus'));
     explicit.dr += Math.max(0, Math.min(tierPoints, (settings.fillTo === 'none' ? 0 : whole0) - sum(GEAR_KEYS) - tagCost));

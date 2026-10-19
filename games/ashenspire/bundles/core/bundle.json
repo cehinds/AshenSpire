@@ -49,6 +49,7 @@
         "armorBudget": {
           "baseline": 3,
           "perRank": 1,
+          "perRankStat": "dr",
           "rarityBonus": {}
         }
       }
