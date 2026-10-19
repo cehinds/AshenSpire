@@ -68,7 +68,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
   }
   const shelfCounts=new Map();
   // Owner 2026-10-19: reserve slot(s) for a basic/cantrip card of a stance the character lacks (never in a shop).
-  if(source!=='shop'&&categories.includes('combatCards'))for(const id of reserveStanceCards(registries,run,rng,stream,available.combatCards)) {
+  if(source!=='shop'&&categories.includes('combatCards')&&(!groups.length||groups.some(group=>group.weight>0&&group.categories.includes('combatCards'))))for(const id of reserveStanceCards(registries,run,rng,stream,available.combatCards)) {
     if(options.length>=count)break;
     options.push({kind:'combatCards',id});available.combatCards=available.combatCards.filter(value=>value!==id);
   }
