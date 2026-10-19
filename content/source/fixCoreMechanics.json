@@ -6,7 +6,7 @@
     "defense:poiseProtection"
   ],
   "stance": {
-    "effectivenessMultiplier": 1.0025,
+    "effectivenessMultiplier": 1.25,
     "discount": 1,
     "minimumCost": 1
   },
@@ -24,10 +24,7 @@
   },
   "perception": {
     "baseDC": 5,
-    "levelBaseline": 1,
-    "intelligenceBaseline": 0,
-    "levelWeight": 1,
-    "intelligenceWeight": 1
+    "bonuses": []
   },
   "statuses": {
     "decayAmount": 1,
