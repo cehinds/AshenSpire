@@ -27,6 +27,7 @@ import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from 
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
 import { targetBodyHudPlacement } from '../models/TargetHudModel.js';
 import { reducedMotionRequested } from '../motion.js';
+import { layoutMetrics } from '../layoutMetrics.js';
 
 // Formation positions and adjustment deltas already use field-local physical
 // coordinates. A centred view preset must not subtract its viewport inset again.
@@ -229,7 +230,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const hand = field.closest('.combat').querySelector('.hand');
     if (!hand) return null;
     const envelope = restingHandEnvelope({ rect: hand.getBoundingClientRect(), clientWidth: hand.clientWidth,
-      clientHeight: hand.clientHeight, fontSize: getComputedStyle(document.documentElement).fontSize,
+      clientHeight: hand.clientHeight, fontSize: layoutMetrics().fontSize,
       geometry: hand.dataset.handGeometry, restLeft: parseFloat(hand.style.getPropertyValue('--hand-rest-left')),
       restTop: parseFloat(hand.style.getPropertyValue('--hand-rest-top')),
       clearanceTop: parseFloat(hand.style.getPropertyValue('--hand-clearance-top')) }, layoutState.restHandAnchor);
@@ -728,7 +729,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Keep it across screen remounts until viewport geometry or text scale changes.
     const handKey = handRect && hand.clientWidth > 0
       ? handGeometryKey({ width: hand.clientWidth, height: hand.clientHeight, zoom: handRect.width / hand.clientWidth,
-        fontSize: getComputedStyle(document.documentElement).fontSize, left: handRect.left }) : null;
+        fontSize: layoutMetrics().fontSize, left: handRect.left }) : null;
     const handLeft = readRestingHand()?.left ?? fieldRect.left;
     // Preserve the incoming remount cache's subpixel tolerance; raw geometry
     // still validates the hand's authored resting envelope above.

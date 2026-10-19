@@ -9,16 +9,14 @@
 // layout passes: main.js applyUiScale / applyDisplaySettings / applyCardSizeSettings
 // write them as inline style or data attributes on <html> (after a debounced
 // resize), and a Text size change rewrites <html style>. So a MutationObserver
-// on <html> and <body> (no page-level listener) is the invalidation, plus the
-// window size as a cheap second key for a change CSS made without a write.
+// on <html> and <body> (no page-level listener) is the invalidation. The window
+// size is deliberately not a key: window.innerWidth flushes style and layout.
 //
 // `takeRecords()` is checked at every read: a write made earlier in the same
 // task has not been delivered to the observer yet, and must not be served stale.
 let cache = null;
 let observer = null;
 const vars = new Map();
-
-function size() { return `${window.innerWidth}x${window.innerHeight}`; }
 
 function watch() {
   if (observer || typeof MutationObserver === 'undefined') return;
@@ -35,7 +33,6 @@ function fresh() {
   watch();
   // A queued, undelivered attribute change on <html>/<body> means the cache is stale.
   if (observer && observer.takeRecords().length) invalidateLayoutMetrics();
-  if (cache && cache.size !== size()) invalidateLayoutMetrics();
 }
 
 /**
@@ -49,7 +46,7 @@ export function layoutMetrics() {
   const fontSize = getComputedStyle(document.documentElement).fontSize;
   const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
   const rem = Math.max(16 / zoom, parseFloat(fontSize) || 16);
-  cache = { zoom, rem, fontSize, size: size() };
+  cache = { zoom, rem, fontSize };
   return cache;
 }
 

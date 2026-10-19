@@ -57,6 +57,7 @@ import { armInspect } from '../../framework/optionDecision.js';
 import { stickTooltip } from './tooltip.js';
 import { applyHandExemption } from '../handAxis.js';
 import { keycap, pill } from '../kit/index.js';
+import { layoutMetrics } from '../layoutMetrics.js';
 
 // Whether this browser lays out CSS `zoom` at all (hand.js reads card widths
 // against it). Asked once; the answer does not change while the page lives.
@@ -125,7 +126,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       handEl.dataset.wireframeHand = 'true';
       const rect = handEl.getBoundingClientRect();
       const zoom = rect.width / handEl.clientWidth || 1;
-      const fontSize = getComputedStyle(document.documentElement).fontSize;
+      const fontSize = layoutMetrics().fontSize;
       const rem = Math.max(16 / zoom, parseFloat(fontSize) || 16);
       const compact = handEl.closest('.combat')?.dataset.compactCombat === 'true';
       // The HUD form factor main.js writes to <html>. Read the live root first: the
@@ -205,7 +206,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // viewport. First cut mixed them and shipped 115 px of travel at 390x844 —
     // observed, not hypothetical. Everything below is LOCAL: the card's bcr
     // width is divided back through the body zoom it rendered under.
-    const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
+    const zoom = layoutMetrics().zoom;
     // clientWidth is integer-rounded; solving against it exactly can leave the
     // content edge a sub-pixel past it, which scrollWidth then rounds UP into
     // one pixel of travel. One px is donated to certainty instead: the row is
