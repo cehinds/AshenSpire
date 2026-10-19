@@ -1148,8 +1148,48 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     return null;
   }
+  // The "?" row follows the enemy's own events (IntentFollowUpModel.js). Each receipt is reduced once, whether its beat
+  // played or a skipped playback flushes it, so the row and the memo agree with the cursor at a pending reaction.
+  const followReduced = new WeakSet();
+  function reduceFollowRows(events) {
+    for (const e of events) {
+      if (followReduced.has(e)) continue;
+      const row = (id, symbols) => { const symbolsNow = followMemo.setRow(id, symbols); if (disp?.ents[id]) disp.ents[id].followUps = symbolsNow; };
+      switch (e.type) {
+        case 'enemyMoveStarted':
+          if (e.reaction) continue;
+          // The actor has acted and may still have SP: its remaining queue is "?" unless the read passed.
+          row(e.sourceId, advanceFollowUps(disp?.followPlans?.[e.sourceId] ?? followMemo.planFor(e.sourceId), combat.followTrace?.[e.sourceId]));
+          break;
+        case 'enemyBurdenBlocked':
+        case 'enemyMoveUnavailable': {
+          const id = e.sourceId ?? e.targetId;
+          row(id, advanceFollowUps(disp?.followPlans?.[id] ?? followMemo.planFor(id), combat.followTrace?.[id]));
+          break;
+        }
+        case 'enemyStaggered':
+          // A stagger breaks the rest of that enemy's plan: its remaining moves leave the row with the event.
+          if (followMemo.row(e.targetId, true)?.length) row(e.targetId, []);
+          break;
+        case 'enemyTurnEnd':
+        case 'playerTurnStart':
+          // The turn is over: a charge or a halt that sent no event of its own leaves the row now.
+          followMemo.clear();
+          for (const id of Object.keys(disp?.ents || {})) if (disp.ents[id].followUps?.length) disp.ents[id].followUps = [];
+          break;
+        case 'enemyActorTurnStarted':
+          followMemo.clearRow(e.sourceId);
+          if (disp?.ents[e.sourceId]) disp.ents[e.sourceId].followUps = [];
+          break;
+        default: continue;
+      }
+      followReduced.add(e);
+    }
+  }
+
   function applyBeatToDisp(beat) {
     if (!disp) return;
+    reduceFollowRows(beat.events);
     for (const e of beat.events) {
       const eventIndex = combat.eventLog.indexOf(e);
       if (eventIndex >= 0) disp.logLength = Math.max(disp.logLength, eventIndex + 1);
@@ -1167,9 +1207,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // Reactions return to the planned hold; pooled follow-ups replace it.
           if (e.reaction) break;
           const actor = disp.ents[e.sourceId];
-          // The actor has acted and may still have SP: its remaining queue is "?" unless the read passed.
           const enemy = combat.enemies.find(row => row.id === e.sourceId);
-          if (actor) actor.followUps = followMemo.setRow(e.sourceId, advanceFollowUps(disp.followPlans?.[e.sourceId], combat.followTrace?.[e.sourceId]));
           const move = registries.enemies.get(e.enemyId || enemy?.enemyId)?.moves?.[e.moveId];
           if (actor && enemy && move) actor.presentationStance = enemyStanceCategory({
             kind: e.kind || move.intent,
@@ -1177,28 +1215,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           });
           break;
         }
-        case 'enemyBurdenBlocked':
-        case 'enemyMoveUnavailable': {
-          const actorId = e.sourceId ?? e.targetId, actor = disp.ents[actorId];
-          if (actor) actor.followUps = followMemo.setRow(actorId, advanceFollowUps(disp.followPlans?.[actorId], combat.followTrace?.[actorId]));
-          break;
-        }
-        case 'enemyStaggered': {
-          // A stagger breaks the rest of that enemy's plan: its remaining moves leave the row with the event.
-          const actor = disp.ents[e.targetId];
-          if (actor?.followUps?.length) actor.followUps = followMemo.setRow(e.targetId, []);
-          break;
-        }
-        case 'enemyTurnEnd':
-          // The enemy turn is over: a charge or a halt that sent no event of its own leaves the row now.
-          for (const id of Object.keys(disp.ents)) if (disp.ents[id].followUps?.length) disp.ents[id].followUps = [];
-          followMemo.clear();
-          break;
         case 'enemyActorTurnStarted': {
           const actor = disp.ents[e.sourceId];
           if (actor) actor.presentationStance = enemyStanceCategory(e.intent);
-          if (actor) actor.followUps = [];
-          followMemo.clearRow(e.sourceId);
           if (actor) actor.intentPreview = { ...e.intent, profile: e.intent?.combatProfile || {},
             stance: combatIntentStance(e.intent, e.intent?.combatProfile), revealed: true, hidden: false };
           break;
@@ -1206,9 +1225,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'playerTurnStart':
           // Unused Evade charges expire as the player's turn starts.
           if (disp.ents.player) disp.ents.player.combatEvade = null;
-          followMemo.clear();
           for (const enemy of combat.enemies) if (disp.ents[enemy.id]) {
-            disp.ents[enemy.id].followUps = [];
             disp.ents[enemy.id].intentPreview = projectCombatIntent(combat, enemy.id);
             disp.ents[enemy.id].presentationStance = enemyStanceCategory(enemy.intent);
           }
@@ -3066,6 +3083,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         },
         onFlush: () => {
           applyVisualEvents(events);
+          // A skipped playback never applied the remaining beats: reduce their receipts into the row memo first.
+          reduceFollowRows(events);
           disp = null;
           render();
           clearCardFeedback();

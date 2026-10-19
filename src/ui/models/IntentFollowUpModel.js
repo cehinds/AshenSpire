@@ -89,6 +89,7 @@ export function createFollowMemo() {
       if (plan) plans.set(id, plan); else plans.delete(id);
       return plan;
     },
+    planFor(id) { return plans.get(id) ?? null; },
     setRow(id, symbols) { rows.set(id, symbols); return symbols; },
     row(id, live = true) { return live ? rows.get(id) ?? null : null; },
     clearRow(id) { rows.delete(id); },

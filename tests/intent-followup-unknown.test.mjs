@@ -252,3 +252,26 @@ test('a read buff and a read spell follow-up show the icon they would show as th
   const read = [{ read: true, outcome: 'played' }, { read: true, outcome: 'played' }];
   assert.deepEqual(advanceFollowUps(plan, read).map((s) => s.icon), ['buff', 'cast']);
 });
+
+test('a skipped playback flushes the un-applied receipts into the row memo once (the reducer the screen runs)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  const body = source.match(/function reduceFollowRows\(events\) \{([\s\S]*?)\n  \}\n\n  function applyBeatToDisp/)?.[1];
+  assert.ok(body, 'the screen has one reducer for the follow-up receipts');
+  const c = fight({ reads: [MISS, READ], plan: two(registries) });
+  const e = c.enemies[0], def = registries.enemies.get('wanderingSoldier'), [, read] = planIcons(c);
+  const memo = createFollowMemo();
+  memo.plan(e.id, { resuming: false, build: () => followUpPlan({ queue: e.plannedMoves, def }) });
+  dispatch(c, { type: 'endTurn' });
+  while (c.pendingReaction) dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: null });
+  const events = c.eventLog.filter((ev) => ev.type === 'enemyMoveStarted' && !ev.reaction && ev.sourceId === e.id);
+  assert.ok(events.length >= 1);
+  const reduced = new WeakSet();
+  const run = new Function('events', 'followReduced', 'followMemo', 'advanceFollowUps', 'disp', 'combat',
+    `for (const e of events) {${body.replace(/^\s*for \(const e of events\) \{/, '').replace(/\n    \}\s*$/, '')}\n}`);
+  // The flush path: no playback state (disp is null), the head's receipt only (the pause came before the follow-up).
+  run(events.slice(0, 1), reduced, memo, advanceFollowUps, null, c);
+  assert.deepEqual((memo.row(e.id, true) || []).map((s) => (s.kind === 'unknown' ? '?' : s.icon)), ['?', read], 'the row is in the memo for the reaction window');
+  run(events.slice(0, 1), reduced, memo, advanceFollowUps, null, c);
+  assert.equal(memo.row(e.id, true).length, 2, 'a receipt already reduced is not reduced twice');
+});
