@@ -97,10 +97,10 @@ test('selected card hit odds match configured stance entry and Evade grants actu
  combat.player.energy=10;combat.player.stamina=10;
  combat.piles.hand.push({cardId:'core.evade',instanceId:'actual-evade',upgraded:false});
  dispatch(combat,{type:'playCard',cardInstanceId:'actual-evade'});
- assert.equal(combat.player.statuses.evade?.stacks,1);
+ const dexterity=combat.player.attributes.dexterity;assert.equal(combat.player.statuses.evade?.stacks,1+dexterity);
  combat.piles.hand.push({cardId:'core.evade',instanceId:'actual-evade-second',upgraded:false});
  dispatch(combat,{type:'playCard',cardInstanceId:'actual-evade-second'});
- assert.equal(combat.player.statuses.evade.stacks,2);
+ assert.equal(combat.player.statuses.evade.stacks,2*(1+dexterity));
 });
 test('registered owner and active card parameters affect live shared math and reject typos',async()=>{
  const {fixCoreRules,validateFixCoreRules}=await import('../src/model/fixCoreMechanics.js');

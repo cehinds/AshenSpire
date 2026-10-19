@@ -274,8 +274,8 @@
     "name": "Evade",
     "class": "colorless",
     "rarity": "common",
-    "cost": 1,
-    "staminaCost": 1,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
@@ -286,7 +286,17 @@
         "op": "applyStatus",
         "target": "self",
         "status": "evade",
-        "stacks": 1
+        "stacks": {
+          "f": "add",
+          "args": [
+            1,
+            {
+              "f": "metric",
+              "metric": "dexterity",
+              "of": "self"
+            }
+          ]
+        }
       }
     ],
     "tags": [

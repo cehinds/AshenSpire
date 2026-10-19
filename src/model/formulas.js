@@ -129,10 +129,11 @@ export function describeFormula(formula) {
       damageTakenThisTurn: formula.of === 'self' ? 'HP lost this turn' : null,
       distinctTypes: formula.of === 'self' ? 'distinct card type played this turn' : null,
       sameCardPlays: formula.of === 'self' ? 'play of this card this combat' : null,
+      dexterity: formula.of === 'self' ? 'DEX' : null,
     }[formula.metric];
     if (metricText) {
       const scale = formula.per === 0.5 && formula.metric === 'damageTakenThisTurn'
-        ? 'half of ' : `${formula.per} per `;
+        ? 'half of ' : formula.metric === 'dexterity' && formula.per === 1 ? '' : `${formula.per} per `;
       let text = `${scale}${metricText}`;
       if (formula.min !== undefined) text += ` (minimum ${formula.min})`;
       if (formula.max !== undefined) text += ` (maximum ${formula.max})`;
@@ -223,7 +224,7 @@ function evalNode(node, ctx) {
     case 'metric': {
       const ent = resolveOne(ctx, node.of || 'self', node.f), state=(node.of===undefined || node.of==='self' || node.of==='owner') && ctx.metricsBefore ? ctx.metricsBefore : ent.abilityRiders || {};
       const active=Object.entries(ent.statuses || {}).filter(([id,row])=>(row.stacks || row.meter?.value || 0)>0 && (node.statuses || []).includes(id)).map(([,row])=>row);
-      const values={weaponDamage:ctx.weaponDamage || 0,negativeStatusTypes:active.length,negativeStatusStacks:active.reduce((n,row)=>n+(row.stacks || row.meter?.value || 0),0),damageTakenThisTurn:state.hpLostSinceTurnStart || 0,sameCardPlays:state.cardUsesCombat?.[ctx.cardId] || 0,cardsPlayed:state.cardsPlayed || 0,distinctTypes:Object.keys(state.typePlays || {}).length,manaSpent:ctx.manaSpent || 0,staminaSpent:ctx.staminaSpent || 0};
+      const values={weaponDamage:ctx.weaponDamage || 0,negativeStatusTypes:active.length,negativeStatusStacks:active.reduce((n,row)=>n+(row.stacks || row.meter?.value || 0),0),damageTakenThisTurn:state.hpLostSinceTurnStart || 0,sameCardPlays:state.cardUsesCombat?.[ctx.cardId] || 0,cardsPlayed:state.cardsPlayed || 0,distinctTypes:Object.keys(state.typePlays || {}).length,manaSpent:ctx.manaSpent || 0,staminaSpent:ctx.staminaSpent || 0,dexterity:Number(ctx.attributes?.dexterity) || 0};
       if (!(node.metric in values)) throw new Error('Unknown combat metric');
       v=values[node.metric]*(node.per ?? 1);break;
     }
