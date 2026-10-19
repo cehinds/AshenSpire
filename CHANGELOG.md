@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Counter reworked** ([#2200](https://github.com/cehinds/AshenSpire/pull/2200), `0.7.1.1705`). Counter now answers any attack it covers: it returns half the damage it takes, a quarter more with extra Block when it beats the attack, and reaction cards cost 1 less stamina from your hand.
-- **Card pickers show effects at a glance** ([#2194](https://github.com/cehinds/AshenSpire/pull/2194), `0.7.1.1705`). Reaction, discard and stance pickers now show cards as a grid of equal-size tiles with each card's name and effect; numbers raised by advantage or stance show green, lowered ones red.
+- **Counter reworked** ([#2200](https://github.com/cehinds/AshenSpire/pull/2200), `0.7.1.1707`). Counter now answers any attack it covers: it returns half the damage it takes, a quarter more with extra Block when it beats the attack, and reaction cards cost 1 less stamina from your hand.
+- **Card pickers show effects at a glance** ([#2194](https://github.com/cehinds/AshenSpire/pull/2194), `0.7.1.1707`). Reaction, discard and stance pickers now show cards as a grid of equal-size tiles with each card's name and effect; numbers raised by advantage or stance show green, lowered ones red.
 - **Rewards fill missing stances** ([#2193](https://github.com/cehinds/AshenSpire/pull/2193), `0.7.1.1705`). Card rewards now always include a basic version of a stance you don't have yet, such as Evade, until you own one of each.
 - **Precision shows on the HUD badge row** ([#2188](https://github.com/cehinds/AshenSpire/pull/2188), `0.7.1.1703`). Precision now shows as a badge on the combat HUD pip next to Evade, for you and for enemies, instead of in the status tray.
 - **Faster start-up** ([#2205](https://github.com/cehinds/AshenSpire/pull/2205), `0.7.1.1701`). The game starts faster on phones: it no longer re-computes its rules checksum or re-scans the class-mastery tag table at every launch.
