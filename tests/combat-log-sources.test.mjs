@@ -192,3 +192,14 @@ test('a hidden charging enemy logs its Block and Barrier as preparing, never nam
     for (const text of lines) assert.ok(!text.includes(name), `the log never names the hidden move: ${text}`);
   }
 });
+
+test('Core automatic outcomes (Evasion bypassed, out of range) log without the removed stance term', () => {
+  const lines = log([
+    { type: 'attackHit', sourceId: 'player', targetId: 'e1', opposed: true, bypass: true, dice: [], d20: null, accuracy: 4, evasion: 3, hitChance: 100, mode: 'normal' },
+    { type: 'attackMissed', sourceId: 'player', targetId: 'e1', opposed: true, inRange: false, missReason: 'range', dice: [], d20: null, accuracy: 4, evasion: 3, hitChance: 0, mode: 'normal' },
+  ]);
+  assert.equal(lines.length, 2);
+  assert.match(lines[0], /hit .*: Evasion bypassed · Precision 4 · 100% chance\.$/);
+  assert.match(lines[1], /missed .*: out of range · Precision 4 · 0% chance\.$/);
+  for (const line of lines) assert.doesNotMatch(line, /stance/);
+});
