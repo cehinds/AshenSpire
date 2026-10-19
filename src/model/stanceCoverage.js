@@ -33,19 +33,20 @@ function tierMembers(registries, run, rule) {
 }
 
 /**
- * Up to `reservedSlots` card ids for the offer: each a basic/cantrip card (from `eligibleIds`) of a stance the
+ * Up to min(`reservedSlots`, `limit`) card ids for the offer: each a basic/cantrip card (from `eligibleIds`) of a stance the
  * character lacks, distinct stances, seeded draws on `stream`. Draws nothing when no candidate exists.
  */
-export function reserveStanceCards(registries, run, rng, stream, eligibleIds) {
+export function reserveStanceCards(registries, run, rng, stream, eligibleIds, limit = Infinity) {
   const rule = stanceCoverageRule(run);
-  if (!rule) return [];
+  const slots = Math.min(rule?.reservedSlots ?? 0, limit);   // never draw for a slot the offer cannot show
+  if (!rule || !(slots > 0)) return [];
   const inTier = tierMembers(registries, run, rule), byStance = new Map();
   for (const stance of missingBasicStances(run, registries)) {
     const ids = eligibleIds.filter(id => inTier(id) && stanceOfId(registries, id) === stance);
     if (ids.length) byStance.set(stance, ids);
   }
   const picked = [];
-  while (picked.length < rule.reservedSlots && byStance.size) {
+  while (picked.length < slots && byStance.size) {
     const stance = rng.pick(stream, [...byStance.keys()]);
     picked.push(rng.pick(stream, byStance.get(stance)));
     byStance.delete(stance);

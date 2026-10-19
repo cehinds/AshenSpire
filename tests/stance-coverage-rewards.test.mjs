@@ -73,3 +73,23 @@ test('shops and Core 1 are untouched', () => {
   const v1 = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@1.0.0', modules: {} });
   assert.equal(v1.content.rewards.eligibility.combatCards.stanceCoverage.enabled, false);
 });
+test('reservations never exceed the offer size and draw nothing for slots the offer cannot show', () => {
+  const tuned = (offerCount, reservedSlots) => {
+    const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { rewards: { offerCount, takeCount: Math.min(1, offerCount) }, 'reward-ranks': { stanceCoverage: { reservedSlots } } } });
+    return bind(profile);
+  };
+  // The run carries its own profile, so each tuned run is created under its tuned registries.
+  const draws = r => {
+    const run = fresh(r); own(run, 'core.evade'); run.deck = run.deck.filter(card => !['core.sweep', 'core.counter'].includes(card.cardId));
+    assert.equal(missingBasicStances(run, r).length, 2, 'sweep and counter (smash is still held by the Reaver special)');
+    const rng = createRng(5), o = gameProfileRewardOffers(r, run, rng, { offerId: 'x', source: 'level' });
+    return { o, c: rng.getCounters().cardRewards };
+  };
+  const one = draws(tuned(1, 10)), cap = draws(tuned(1, 1));
+  assert.equal(one.o.options.length, 1);
+  assert.deepEqual(one.o.options, cap.o.options);
+  assert.equal(one.c, cap.c, 'same draws as one reserved slot');
+  const none = draws(tuned(0, 10));
+  assert.equal(none.o.options.length, 0);
+  assert.ok(!none.c, 'no cardRewards draws for an empty offer');
+});
