@@ -123,3 +123,27 @@ for (const [name, registries] of Object.entries(registriesByProfile)) {
     assert.deepEqual(empty, [], `${empty.length} cards have an empty effect row`);
   });
 }
+test('with a condition reader only the branch that holds is summarized; without one the card text states both', () => {
+  const registries = registriesByProfile.current, iron = registries.cards.get('ironResolve');
+  const preview = { values: [{ op: 'block', value: 5 }, { op: 'block', value: 9 }] };
+  const summarize = holds => summarizeCardOption(registries, null, { id: 'i', name: iron.name },
+    { defOf: () => iron, previewOf: () => preview, ...(holds ? { conditionHolds: effect => holds(effect.if) } : {}) });
+  const inBulwark = pred => (pred.p === 'inStance' ? true : pred.p === 'not' ? !inBulwark(pred.pred) : undefined);
+  const outside = pred => (pred.p === 'inStance' ? false : pred.p === 'not' ? !outside(pred.pred) : undefined);
+  const under = summarize(inBulwark), without = summarize(outside);
+  assert.deepEqual(under.line.map(row => `${row.before}${row.value}${row.after}`), ['Def 9']);
+  assert.deepEqual(without.line.map(row => `${row.before}${row.value}${row.after}`), ['Def 5']);
+  assert.equal(under.html, undefined, 'a decided card needs no text fallback');
+  const unknown = summarize(() => undefined);
+  assert.deepEqual(unknown.line, [], 'an undecided condition falls back to the card text');
+  assert.match(unknown.html, /bulwark/i);
+  assert.match(summarize(null).html, /bulwark/i, 'no reader at all: the card text');
+});
+test('the engine predicate evaluator decides ironResolve by stance', async () => {
+  const { evalPredicate } = await import('../src/engine/triggers.js');
+  const registries = registriesByProfile.current, iron = registries.cards.get('ironResolve');
+  const holds = stance => effect => { const player = { stanceId: stance }; return evalPredicate({ player, combatExpansionVersion: 1 }, effect.if, { owner: player, source: player, meta: {} }); };
+  const rows = stance => summarizeCardOption(registries, null, { id: 'i', name: 'Iron' }, { defOf: () => iron, previewOf: () => ({ values: [{ op: 'block', value: 5 }, { op: 'block', value: 9 }] }), conditionHolds: holds(stance) }).line.map(row => row.value);
+  assert.deepEqual(rows('bulwark'), [9], 'in Bulwark the Bulwark branch is the figure');
+  assert.deepEqual(rows(null), [5], 'outside it the other branch is');
+});

@@ -146,6 +146,7 @@ import { formationGridHtml } from '../components/formationGrid.js';
 import { formationMovePlan, normalizeClassicPlayerFormationCell } from '../../model/formationMovement.js';
 import { discardChoicePlan } from '../../engine/handRules.js';
 import { openHandDiscard } from '../components/handDiscard.js';
+import { evalPredicate } from '../../engine/triggers.js';
 import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 import { resolveCombatCard } from '../../engine/combatExpansion.js';
 import { resolvePlayedCombatCard } from '../models/PlayedCombatCard.js';
@@ -2945,6 +2946,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const summarize = option => summarizeCardOption(registries, combat, option, {
       defOf: o => { const inst = handCard(o); return inst ? resolveCombatCard(combat, inst, { upcastTier: o.play.upcastTier }) : null; },
       previewOf: o => previewCard(combat, o.play.cardInstanceId, o.play.targetId ?? o.sourceId ?? pending.sourceId, o.play.upcastTier),
+      // The engine's own predicate evaluator, for the card owner against the fight as it stands now.
+      conditionHolds: (effect, o) => evalPredicate(combat, effect.if, { owner: combat.player, source: combat.player, meta: {},
+        target: combat.enemies.find(enemy => enemy.id === (o.play.targetId ?? o.sourceId ?? pending.sourceId)) }),
     });
     reactionShell = openReactionChoiceModal({ pending, stack, summarize,
       onClosed: () => { reactionShell = null; },

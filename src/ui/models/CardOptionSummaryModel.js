@@ -24,7 +24,7 @@ const direction = (value, base) => (Number.isFinite(value) && Number.isFinite(ba
  * `[{ label, value, base, dir }]`. `complete` is false when some effect has no numeric part (a status, a
  * draw, a cleanse, a formula): the tile then reads the card's own compact text instead.
  */
-export function analyzeCardEffects(def, preview = null, registries = null) {
+export function analyzeCardEffects(def, preview = null, registries = null, holds = null) {
   if (!def) return { line: freeze([]), complete: false };
   let complete = true;
   const { value, defenseValue, bindings, tokens, profile, poiseMerge } = cardSummaryContext(def, preview, registries);
@@ -38,11 +38,16 @@ export function analyzeCardEffects(def, preview = null, registries = null) {
   const add = (key, effect, row) => {
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(row);
-    // A conditional effect (mutually exclusive branches, riders) cannot be shown as one number; the card's
-    // own text already resolves the live branch, so the tile uses that.
-    if (effect.if) complete = false;
   };
   (def.effects || []).forEach((effect, index) => {
+    // A conditional effect: when the caller can evaluate the condition for the card's owner, only the branches
+    // that hold are summarized ("Def 9" in Bulwark). Without that answer one number would mislead, so the tile
+    // uses the card's own text, which states every branch.
+    if (effect.if) {
+      const holding = holds ? holds(effect) : undefined;
+      if (holding === false) return;
+      if (holding !== true) complete = false;
+    }
     const amount = value(effect, index), base = baseOf(effect, index);
     if (typeof amount !== 'number') { complete = false; return; }
     switch (effect.op) {
@@ -128,7 +133,7 @@ export function analyzeCardEffects(def, preview = null, registries = null) {
 }
 
 /** The numeric effect line of a resolved card: `[{ label, value, base, dir }]`, empty when nothing is phrased. */
-export const cardEffectLine = (def, preview = null, registries = null) => analyzeCardEffects(def, preview, registries).line;
+export const cardEffectLine = (def, preview = null, registries = null, holds = null) => analyzeCardEffects(def, preview, registries, holds).line;
 
 const esc = text => String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 // The card face's changed numbers are `<span class="val up">`; give them the tile's arrow and spoken words.
@@ -168,13 +173,16 @@ function costsOf(option) {
  * `option` is a reaction option (`play.cardInstanceId`, `play.targetId`, costs) or a plain card
  * `{ instanceId, name }`. `readers.defOf(option, combat)` returns the resolved card definition and
  * `readers.previewOf(option, combat)` its live preview for the option's target; either may be
- * absent, giving a name-only tile.
+ * absent, giving a name-only tile. `readers.conditionHolds(effect, option, combat)` is optional.
  */
 export function summarizeCardOption(registries, combat, option, readers = {}) {
   let def = null, preview = null;
   try { def = readers.defOf?.(option, combat) ?? null; } catch { def = null; }
   try { preview = def ? readers.previewOf?.(option, combat) ?? null : null; } catch { preview = null; }
-  const { line, complete } = analyzeCardEffects(def, preview, registries);
+  // `readers.conditionHolds(effect, option, combat)` answers true or false for the card owner right now; a throw
+  // or any other answer means "unknown".
+  const holds = readers.conditionHolds ? effect => { try { return readers.conditionHolds(effect, option, combat); } catch { return undefined; } } : null;
+  const { line, complete } = analyzeCardEffects(def, preview, registries, holds);
   return freeze({
     id: option.id ?? option.instanceId ?? null,
     name: option.name ?? def?.name ?? '',
