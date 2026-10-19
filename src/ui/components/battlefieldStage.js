@@ -1420,7 +1420,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   document.fonts?.addEventListener?.('loadingdone', fontsLoaded);
   releaseActiveStage = release;
   refresh();
-  return Object.freeze({ refresh, release });
+  return Object.freeze({ refresh, release, placeHitBadges });
 }
 
 // In the perspective grid the whole cell is the enemy's target: a press

@@ -219,3 +219,16 @@ test('a burden-blocked head sends no enemyMoveStarted: its enemyBurdenBlocked ke
   const out = [advanceFollowUps(next, trace), advanceFollowUps(next, [{ read: false, outcome: 'blocked' }, trace[1]]), advanceFollowUps(next, trace)];
   assert.deepEqual(out.map((row) => row.length), [2, 1, 0]);
 });
+
+test('a selected (expanded) intent carries the same follow-up row as the compact one, and no more', () => {
+  withKitDom(() => {
+    const followUps = [{ kind: 'unknown' }, { kind: 'action', icon: 'defend' }];
+    const node = combatantIntent({ kind: 'attack', moveId: 'x', damage: 5, hits: 1, profile: {}, stance: 'attacking', revealed: true, hidden: false, followUps });
+    const compact = node.querySelector('.intent-compact .intent-followups'), expanded = node.querySelector('.intent-followups-expanded');
+    assert.ok(compact && expanded, 'both presentations hold the row');
+    assert.equal(expanded.textContent, compact.textContent);
+    assert.deepEqual([...expanded.querySelectorAll('.intent-followup')].map((n) => n.textContent + (n.dataset.unknown ?? '')), [...compact.querySelectorAll('.intent-followup')].map((n) => n.textContent + (n.dataset.unknown ?? '')));
+    assert.equal(node.getAttribute('aria-label').match(/2 more actions/g).length, 1, 'one aria label, not two');
+    assert.equal(combatantIntent({ kind: 'attack', moveId: 'x', damage: 5, hits: 1, profile: {}, stance: 'attacking', revealed: true, hidden: false }).querySelector('.intent-followups-expanded'), null);
+  });
+});

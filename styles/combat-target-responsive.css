@@ -100,5 +100,8 @@
 /* Remaining queued actions after an actor has acted: "?" per unread one (owner 2026-10-18). Same size step as
    the amount's neighbours; the icon form (a passed read) matches the maneuver icon's row. */
 :root .combat .intent .intent-followups { display:inline-flex; align-items:center; gap:calc(3px / var(--ui-zoom,1)); margin-inline-start:calc(4px / var(--ui-zoom,1)); }
+/* The expanded copy of the row shows only where the compact row is hidden: a selected enemy in the formation layout. */
+:root .combat .intent > .intent-followups.intent-followups-expanded { display:none; }
+:root .combat[data-layout='formation'] .combatant.context-selected .intent > .intent-followups.intent-followups-expanded { display:inline-flex; }
 :root .combat .intent .intent-followup { display:inline-flex; align-items:center; justify-content:center; min-width:calc(14px / var(--ui-zoom,1)); font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; }
 :root .combat .intent .intent-followup .intent-icon { width:calc(18px / var(--ui-zoom,1)); height:calc(18px / var(--ui-zoom,1)); }

@@ -85,6 +85,8 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
     }
     node.append(values);
   }
+  // The selected (expanded) presentation hides the compact row, so it carries the same symbols itself.
+  if (followUps.length) { const expanded = intentFollowUps(followUps); expanded.classList.add('intent-followups-expanded'); node.append(expanded); }
   markUiComponent(node, UI.intentIndicator, badge.visibility);
   const tooltip = () => {
     if (intent?.hidden) return `<div class="tt-title">Stance: ${esc(stanceLabel)}</div>Exact move, damage, and effects unread. Wisdom and Intelligence improve intent reads.`;
