@@ -189,7 +189,7 @@ export function renderCard(registries, ref, opts = {}) {
     && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
     ? combatCardDamageLabel(def, opts.preview, registries) : '';
   const damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
-  const accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label,
+  const accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label, model.sigils.mirror && ACTION_SIGILS[model.sigils.mirror].label,
     model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
     damageWords.length && `Damage: ${damageWords.join(', ')}`,
     ...model.sideTags.map(tag => tag.label),

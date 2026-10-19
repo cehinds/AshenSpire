@@ -35,5 +35,7 @@ export function cardSigilIdentity(primaryType, profile) {
   // Earth is an alteration school (see the Alteration sigil's help); it has no mark of its own.
   const school = profile.school === 'earth' ? 'alteration' : profile.school || null;
   if (school && !Object.hasOwn(SCHOOL_SIGILS, school)) throw new Error(`Unknown card school: ${school}`);
-  return Object.freeze({ action, school });
+  // A Spell that mirrors a basic card (owner 2026-10-18) shows the Spell mark and its basic's mark.
+  const mirror = action === 'spell' && Object.hasOwn(ACTION_SIGILS, profile.mirrors) && profile.mirrors !== 'spell' ? profile.mirrors : null;
+  return Object.freeze({ action, school, ...(mirror ? { mirror } : {}) });
 }

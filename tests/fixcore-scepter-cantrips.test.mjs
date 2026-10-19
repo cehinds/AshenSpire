@@ -65,3 +65,32 @@ test('successive Spells still cut Mana after a mirrored cantrip, both ways', () 
   setProfileStance(combat, combat.player, { ...card('core.strike'), combatProfile: combatProfileFor(card('core.strike')) });
   assert.equal(stanceManaCost(3, combat.player, costly, combat), 3, 'a physical Strike breaks the chain');
 });
+
+// ---- Card face: Spell mark + the basic's mark + the basic's word ----
+import { cardSigilIdentity } from '../src/content/combatSigils.js';
+import { cardSigilsHtml, sigilExplanationHtml } from '../src/ui/components/combatSigilView.js';
+import { playingCardModel } from '../src/model/playingCard.js';
+
+test('footer of a mirrored cantrip: two marks and the basic\'s word', () => {
+  const model = playingCardModel(reg, { cardId: 'core.cantrip', instanceId: 'x', upgraded: false });
+  assert.deepEqual(model.sigils, { action: 'spell', school: null, mirror: 'attack' });
+  const html = cardSigilsHtml(model.sigils);
+  assert.match(html, /data-primary-sigil="spell"/);
+  assert.match(html, /data-mirror="attack"/);
+  const marks = [...html.matchAll(/data-sigil="(\w+)"/g)].map(m => m[1]);
+  assert.deepEqual(marks, ['spell', 'attack'], 'Spell mark first, then the Attack mark');
+  assert.match(html, /card-type-name[^>]*>Attack</);
+  assert.match(sigilExplanationHtml(model.sigils), /Spell[\s\S]*Attack/);
+});
+
+test('footer of a smash mirror reads Smash; a spell that mirrors nothing still reads Spell', () => {
+  assert.deepEqual(cardSigilIdentity('Spell', { camp: 'spell', mirrors: 'smash' }), { action: 'spell', school: null, mirror: 'smash' });
+  assert.match(cardSigilsHtml(cardSigilIdentity('Spell', { camp: 'spell', mirrors: 'smash' })), /card-type-name[^>]*>Smash</);
+  const special = playingCardModel(reg, { cardId: 'core.starseerSpecial', instanceId: 'y', upgraded: false });
+  assert.deepEqual(special.sigils, { action: 'spell', school: null });
+  const html = cardSigilsHtml(special.sigils);
+  assert.deepEqual([...html.matchAll(/data-sigil="(\w+)"/g)].map(m => m[1]), ['spell']);
+  assert.match(html, /card-type-name[^>]*>Spell</);
+  assert.doesNotMatch(html, /data-mirror/);
+  assert.deepEqual(cardSigilIdentity('Attack', { camp: 'physical', mirrors: 'smash' }), { action: 'attack', school: null }, 'only a Spell mirrors');
+});

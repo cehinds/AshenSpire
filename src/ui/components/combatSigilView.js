@@ -10,14 +10,16 @@ export function sigilHtml(id, kind = 'action', { tooltip = true } = {}) {
 
 export function cardSigilsHtml(identity) {
   if (!identity) return '';
-  const mark = ACTION_SIGILS[identity.action];
+  const mark = ACTION_SIGILS[identity.mirror || identity.action];
   // The existing bottom layer owns the footer. School and other tags use the rail.
-  return `<div class="card-sigil-band" data-card-binding="tags" data-primary-sigil="${esc(identity.action)}"><span class="card-action-icon" data-card-layer="7">${sigilHtml(identity.action, 'action', {tooltip:false})}</span><span class="card-type-name" data-card-layer="8">${esc(mark.label)}</span></div>`;
+  // A mirrored Spell shows two marks, the Spell mark then its basic's, and the basic's word.
+  const mirror = identity.mirror ? `<span class="card-action-icon card-mirror-icon" data-card-layer="7">${sigilHtml(identity.mirror, 'action', {tooltip:false})}</span>` : '';
+  return `<div class="card-sigil-band" data-card-binding="tags" data-primary-sigil="${esc(identity.action)}"${identity.mirror ? ` data-mirror="${esc(identity.mirror)}"` : ''}><span class="card-action-icon" data-card-layer="7">${sigilHtml(identity.action, 'action', {tooltip:false})}</span>${mirror}<span class="card-type-name" data-card-layer="8">${esc(mark.label)}</span></div>`;
 }
 
 export function sigilExplanationHtml(identity) {
   if (!identity) return '';
-  return `<div class="inspection-sigils">${[['action', identity.action], ['school', identity.school]].map(([kind, id]) => {
+  return `<div class="inspection-sigils">${[['action', identity.action], ['action', identity.mirror], ['school', identity.school]].map(([kind, id]) => {
     const catalog = kind === 'school' ? SCHOOL_SIGILS : ACTION_SIGILS;
     const mark = Object.hasOwn(catalog, id) ? catalog[id] : null;
     return mark ? `<div class="inspection-sigil-row">${sigilHtml(id, kind)}<span><b>${esc(mark.label)}</b> — ${esc(mark.help)}</span></div>` : '';
