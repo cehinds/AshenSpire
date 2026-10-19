@@ -76,7 +76,7 @@ test('state-dependent cards take the eight full previews first, plain cards fill
   assert.equal(variant.length, 6);
   assert.ok(variant.every(row => row.combatPreview.values.length), 'every state-dependent card has the full preview');
   assert.equal(plain.filter(row => row.combatPreview?.values.length).length, Math.min(plain.length, 2), 'plain cards fill the two slots left');
-  assert.ok(plain.length <= 2 || plain.slice(2).every(row => row.combatPreview === undefined));
+  assert.ok(plain.length <= 2 || plain.slice(2).every(row => row.combatPreview?.textOnly));
 });
 
 test('past eight, a variant card gets no preview and its tile reads the card text', () => {
@@ -89,7 +89,7 @@ test('past eight, a variant card gets no preview and its tile reads the card tex
   assert.ok(overflow.every(row => row.combatPreview.textOnly && !row.combatPreview.resolvedDefinition), 'a variant card past the cap gets no guessed branch');
   const tile = summarizeCardOption(registries, null, { id: overflow[0].instanceId, name: 'x' }, { defOf: () => registries.cards.get(VARIANT), previewOf: () => null });
   assert.ok(tile.html && !tile.line.length, 'its tile reads the card text, not a branch number');
-  assert.ok(plain.every(row => row.combatPreview === undefined), 'plain cards past the cap read their authored numbers');
+  assert.ok(plain.every(row => row.combatPreview?.textOnly), 'plain cards past the cap read card text');
 });
 
 test('a held ability charge makes only the cards it matches state-dependent, so unrelated cards do not eat the slots', () => {
@@ -102,4 +102,17 @@ test('a held ability charge makes only the cards it matches state-dependent, so 
   assert.deepEqual(liveIds, ['t9'], 'only the attack the charge matches is state-dependent');
   assert.equal(plainIds.length, 9);
   assert.deepEqual(classifyPreviewCandidates(ctx, { ...seat.entity, abilityRiders: { charges: {} } }, cards).liveIds, [], 'no charge: nothing is state-dependent');
+});
+
+test('twelve plain candidates: the first eight are previewed, the last four read card text', () => {
+  // Pad the draw pile to plain cards before the choice is built.
+  const fresh = fixture(), seat = fresh.live.combat.players.get('p2');
+  while (seat.piles.draw.length < 14) seat.piles.draw.push({ ...seat.piles.draw[0], instanceId: `pad${seat.piles.draw.length}` });
+  seat.piles.draw.forEach(row => { row.cardId = 'strike'; });
+  const pick = seat.piles.hand.find(row => row.cardId === 'bashingBlow');
+  assert.equal(fresh.combatPlay('p2', pick.instanceId, 'p2').ok, true);
+  const rows = fresh.snapshot().scene.players.find(player => player.id === 'p2').pendingCardChoice.candidates;
+  assert.ok(rows.length >= 12);
+  assert.equal(rows.filter(row => row.combatPreview?.values.length).length, 8);
+  assert.equal(rows.filter(row => row.combatPreview?.textOnly).length, rows.length - 8);
 });

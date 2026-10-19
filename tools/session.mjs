@@ -782,9 +782,9 @@ export function createSession({ registries, seedString, endless = false, restore
         const ctx = { ...c, registries: c.registriesForPlayer(playerId), player: seat.entity, combatExpansionVersion: c.combatExpansionVersion };
         const { liveIds, plainIds } = classifyPreviewCandidates(ctx, seat.entity, choice.candidates || [], c.enemies.some(enemy => enemy.alive));
         const full = [...liveIds, ...plainIds].slice(0, FULL_PREVIEW_CAP), cheap = {};
-        // A state-dependent card past the cap has no numbers to trust (its branch or charge is unknown): its tile
-        // reads the card text, never the authored or uncharged numbers.
-        for (const id of liveIds.slice(FULL_PREVIEW_CAP)) cheap[id] = { textOnly: true, values: [] };
+        // Any candidate past the cap has no priced numbers (a state-dependent card's branch or charge is unknown, and a
+        // plain card would read numbers a stance or advantage may change): its tile reads the card text.
+        for (const id of [...liveIds, ...plainIds].slice(FULL_PREVIEW_CAP)) cheap[id] = { textOnly: true, values: [] };
         previews = { ...cheap, ...(full.length ? previewCoopCards(c, playerId, full) : {}) };
       } catch { previews = {}; }
       choicePreviews.set(choice, previews);
