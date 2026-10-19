@@ -263,10 +263,17 @@ export function consumeFoundationEvade(ctx, source, target, carrier) {
  */
 export function candidateState(ctx, { detached = false } = {}) {
   const data = {};
+  // Immutable data is shared by reference, never cloned: the game profile is
+  // deep-frozen at combat start (freezeProfile), so a candidate that tries to
+  // mutate it throws instead of corrupting the fight. Cloning it cost ~150 ms
+  // per preview on a phone.
+  const shared = {};
   for (const [key, value] of Object.entries(ctx)) {
-    if (typeof value !== 'function' && key !== 'registries' && key !== 'rng' && !(detached && key === 'eventLog')) data[key] = value;
+    if (typeof value === 'function' || key === 'registries' || key === 'rng' || (detached && key === 'eventLog')) continue;
+    if (key === 'gameProfile' && value && typeof value === 'object' && Object.isFrozen(value)) shared[key] = value;
+    else data[key] = value;
   }
-  const candidate = { ...structuredClone(data), ...(detached ? { eventLog: [] } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
+  const candidate = { ...structuredClone(data), ...shared, ...(detached ? { eventLog: [] } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
   // Catalogue accessors are immutable context, never serializable combat data.
   if (ctx.registriesForPlayer) candidate.registriesForPlayer = ctx.registriesForPlayer;
   if (ctx.registerPlayerRegistries) candidate.registerPlayerRegistries = ctx.registerPlayerRegistries;
