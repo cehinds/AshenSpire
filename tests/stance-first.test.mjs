@@ -38,7 +38,7 @@ function swingAt(t, stage) {
         animateActor: () => { swing ??= Date.now(); return { impactMs: 100, totalMs: 300, hold() {}, cancel() {} }; },
         onBeatApplied() {}, onFlush() {},
       }, () => completed++);
-      for (let i = 0; i < 4000 && !completed; i++) t.mock.timers.tick(1);
+      for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1);
     } finally { setAnimSpeed('normal'); setBeatOrder('sequential'); }
   });
   assert.equal(completed, 1);

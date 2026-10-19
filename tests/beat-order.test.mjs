@@ -16,7 +16,8 @@ import { playTimeline, setAnimSpeed, setBeatOrder, getBeatOrder, ANIM_SPEEDS } f
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
-const IMPACT = 100, TOTAL = 300, LEAD = 1000, AFTER = 500, REACTION = 500;
+// D11 (2026-10-18): a 1000 ms gap at every stage boundary. AFTER spans animation → result → reaction.
+const IMPACT = 100, TOTAL = 300, LEAD = 1000, AFTER = 2000, REACTION = 1000, GAP = 1000;
 
 function drive(t, fn) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
@@ -49,7 +50,7 @@ function drive(t, fn) {
     };
     let completed = 0;
     const run = (events, extra = {}) => playTimeline(events, { ...ctx, ...extra }, () => completed++);
-    const finish = () => { for (let i = 0; i < 4000 && !completed; i++) t.mock.timers.tick(1); assert.equal(completed, 1, 'the timeline completes'); };
+    const finish = () => { for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1); assert.equal(completed, 1, 'the timeline completes'); };
     try { fn({ dom, anchors, layer, trace, run, finish, tick: (ms) => t.mock.timers.tick(ms) }); }
     finally { setAnimSpeed('normal'); setBeatOrder('sequential'); dom.document.body.classList.remove('reduced-motion'); }
   });
@@ -103,9 +104,8 @@ test('a multi-hit beat: every contact in the swing, then reaction and number per
     finish();
     assert.equal(layer.dataset.contact, '2', 'the layer counts each contact (tools/click-impact-probe.mjs watches it)');
     assert.deepEqual(order(trace), ['contact', 'contact', 'settle', 'reaction:e1', 'float:-3', 'bars', 'reaction:e1', 'float:-4', 'bars']);
-    const { stepMs, reactionMs } = ANIM_SPEEDS.normal;
     assert.equal(trace.filter((e) => e.what === 'contact')[1].at, LEAD + IMPACT, 'the authored swing contacts precede serial damage receipts');
-    assert.equal(trace.filter((e) => e.what === 'reaction:e1')[1].at, LEAD + TOTAL + AFTER + REACTION + stepMs, 'the next hit reacts a step after the last number');
+    assert.equal(trace.filter((e) => e.what === 'reaction:e1')[1].at, LEAD + TOTAL + AFTER + REACTION + 2 * GAP, 'the next hit reacts two gaps after the last number (damage → result → reaction)');
   });
 });
 
@@ -271,7 +271,7 @@ for (const totalMs of [195, 800]) {
       assert.equal(timeOf(trace, 'settle'), settled, 'all holds and the remaining swing survive');
       assert.equal(timeOf(trace, 'float:-7'), settled + AFTER + REACTION);
       assert.deepEqual(trace.filter(row => row.what === 'reaction:e1').map(row => row.at),
-        [settled + AFTER, settled + AFTER + REACTION + ANIM_SPEEDS.normal.stepMs], 'each hit retains its own reaction before its numeric receipt');
+        [settled + AFTER, settled + AFTER + REACTION + 2 * GAP], 'each hit retains its own reaction before its numeric receipt');
     });
   });
 }
