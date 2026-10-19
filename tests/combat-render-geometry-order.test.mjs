@@ -23,7 +23,7 @@ function fixture(code = rendering) {
     $: selector => { assert.equal(selector, '.field'); return field; },
     hideTooltip: () => events.push('hide'),
     renderPlayer: () => events.push('player'), renderEnemies: () => events.push('enemies'),
-    renderTopbar: () => events.push('topbar'), renderPotionTray: () => events.push('potions'),
+    renderTopbar: () => events.push('topbar'), syncEditLock: () => {}, renderPotionTray: () => events.push('potions'),
     renderControls: () => { controlsReady = true; events.push('controls'); },
     renderCombatTools: () => { toolsReady = true; events.push('tools'); },
     combatTools: { flushGeometry() {
