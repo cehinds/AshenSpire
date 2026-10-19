@@ -13,6 +13,8 @@ import { payAshenBlight } from '../src/engine/ashenBlight.js';
 import { refreshExpandedLoadout } from '../src/engine/combatExpansionProjection.js';
 import { initialClassTreeChoices } from '../src/model/classTree.js';
 import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
+import { fixCoreStaggeredStance } from '../src/model/fixCoreMechanics.js';
+import { decodeCoopCombatSnapshot, serializeCoopCombatSnapshot as serializeSnap } from '../src/engine/coopCombatSnapshot.js';
 import { createSession, restoreSession } from '../tools/session.mjs';
 
 const registries = createRegistries(contentBundle);
@@ -157,4 +159,17 @@ test('older co-op seat restores missing equipment context from its saved member,
   assert.equal(cardsOf(after).some(card => card.equipmentAttackSlotId === 'attack:0'), false);
   assertReceipts(after, run);
   assert.deepEqual(restored.rng.getCounters(), counters);
+});
+
+test('co-op snapshot serializes and decodes an entity in the Staggered stance', () => {
+  const a = createRunState({ registries, seed: 21, classId: 'reaver' });
+  const combat = createCoopCombat({ registries, rng: createRng(21), ratingsRules: null, combatExpansionVersion: 2,
+    players: [{ ...input(a, 'a'), registries: registriesForClassMastery(registries, a) }], enemyIds: ['wanderingSoldier'] });
+  const enemy = combat.enemies[0];
+  enemy.combatStance = fixCoreStaggeredStance(enemy);
+  combat.players.get('a').entity.combatStance = fixCoreStaggeredStance(combat.players.get('a').entity);
+  const snapshot = serializeSnap(combat);
+  const decoded = decodeCoopCombatSnapshot(JSON.parse(JSON.stringify(snapshot)));
+  assert.equal(decoded.players.get('a').entity.combatStance.maneuver, 'staggered');
+  assert.equal(decoded.enemies[0].combatStance.maneuver, 'staggered');
 });
