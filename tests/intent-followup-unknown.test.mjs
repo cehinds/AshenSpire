@@ -10,7 +10,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewIntent } from '../src/engine/combat.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { advanceFollowUps, followUpPlan } from '../src/ui/models/IntentFollowUpModel.js';
+import { advanceFollowUps, createFollowMemo, followUpPlan } from '../src/ui/models/IntentFollowUpModel.js';
 import { stanceFor, moveKind } from '../src/engine/combatRounds/stance.js';
 import { iconForStance } from '../src/ui/models/CombatRoundsScreenModel.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -145,4 +145,28 @@ test('the engine event stays count-free: the saved golden event log is unchanged
   const acts = c.eventLog.filter((e) => (e.type === 'enemyMoveStarted' && !e.reaction) || e.type === 'enemyMoveUnavailable');
   assert.equal(acts.length, planned + 1);
   assert.ok(c.eventLog.filter((e) => e.type === 'enemyMoveStarted').every((e) => !('queued' in e) && !('read' in e)));
+});
+
+test('the row stays visible while a player reaction is pending, and the resumed turn keeps its plan', () => {
+  // A reaction window opens after the head move: playback state is cleared, then the resume snapshots again.
+  const c = fight({ reads: [MISS, READ], plan: two(registries) });
+  const e = c.enemies[0], def = registries.enemies.get('wanderingSoldier'), [unread, read] = planIcons(c);
+  const memo = createFollowMemo();
+  const first = memo.plan(e.id, { resuming: false, build: () => followUpPlan({ queue: e.plannedMoves, def }) });
+  dispatch(c, { type: 'endTurn' });
+  while (c.pendingReaction) dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: null });
+  const row = memo.setRow(e.id, advanceFollowUps(first, e.followTrace)); // the head's enemyMoveStarted beat
+  assert.deepEqual(row.map((s) => (s.kind === 'unknown' ? '?' : s.icon)), ['?', read]);
+  // The reaction modal opens: playback cleared (no disp), enemy phase live. The row is still there.
+  assert.deepEqual(memo.row(e.id, true), row, 'the row survives the cleared playback record');
+  assert.equal(memo.row(e.id, false), null, 'but only while the enemy phase is live');
+  // The resumed dispatch snapshots again, with the queue half spent: the same plan comes back, not a rebuilt one.
+  const resumed = memo.plan(e.id, { resuming: true, build: () => followUpPlan({ queue: [], def }) });
+  assert.equal(resumed, first);
+  assert.deepEqual(advanceFollowUps(resumed, e.followTrace).map((s) => (s.kind === 'unknown' ? '?' : s.icon)), [read], 'the next beat continues the row');
+  // A fresh turn rebuilds and the row clears.
+  memo.clear();
+  assert.equal(memo.row(e.id, true), null);
+  assert.notEqual(memo.plan(e.id, { resuming: false, build: () => followUpPlan({ queue: e.plannedMoves, def }) }), first);
+  assert.ok(unread !== read);
 });

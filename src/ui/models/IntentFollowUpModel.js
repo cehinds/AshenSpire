@@ -58,3 +58,26 @@ export function advanceFollowUps(plan, trace) {
   }
   return remainingFollowUps(plan, trace);
 }
+
+/**
+ * createFollowMemo() → the per-screen memory that outlives the playback record. A reaction window opens mid-turn with
+ * the playback state cleared and the resumed dispatch snapshots again, so the plan (built once, before the phase) and
+ * the row on screen are kept here per enemy until the turn ends.
+ *   plan(id, { resuming, build }): the kept plan while the same turn resumes, else a fresh one from build().
+ *   setRow / row(id, live) / clearRow / clear: the symbols on screen; row() answers only while the enemy phase is live.
+ */
+export function createFollowMemo() {
+  const plans = new Map(), rows = new Map();
+  return {
+    plan(id, { resuming = false, build }) {
+      const kept = resuming ? plans.get(id) : null;
+      const plan = kept || build?.() || null;
+      if (plan) plans.set(id, plan); else plans.delete(id);
+      return plan;
+    },
+    setRow(id, symbols) { rows.set(id, symbols); return symbols; },
+    row(id, live = true) { return live ? rows.get(id) ?? null : null; },
+    clearRow(id) { rows.delete(id); },
+    clear() { rows.clear(); },
+  };
+}
