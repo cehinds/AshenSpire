@@ -7,7 +7,7 @@ dexterity,10,points,character,Preview value
 burned,3,stacks,status,Preview stacks of Burned
 crit.mult,1.5,×,global,Crit damage multiplier
 weak.mult,0.75,×,status,Damage dealt while Weak
-vulnerable.mult,1.5,×,status,Damage taken while Vulnerable
+vulnerable.mult,1.25,×,status,Damage taken while Vulnerable
 burned.tickPerStack,1,HP,status,HP lost per Burned stack at turn start
 strike.baseDamage,6,damage,strike,Base damage at rank 1
 strike.arScale,0.25,×AR,strike,Share of AR added to damage

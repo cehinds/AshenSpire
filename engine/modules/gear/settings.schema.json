@@ -652,11 +652,18 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 99
+        },
+        "rarityBonus": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          }
         }
       },
       "required": [
-        "baseline",
-        "perRank"
+        "baseline"
       ],
       "additionalProperties": false
     }

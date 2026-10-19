@@ -64,7 +64,7 @@ test('Star Spark pays one MP and actually applies two decaying Vulnerable stacks
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: combat.enemies[0].id });
   assert.equal(combat.player.mana, before - 1);
   assert.equal(getStacks(combat.enemies[0], 'vulnerable'), 2);
-  assert.equal(registries.statuses.get('vulnerable').modifiers.damageTakenMult, 1.5);
+  assert.equal(registries.statuses.get('vulnerable').modifiers.damageTakenMult, 1.25);
   assert.equal(registries.statuses.get('vulnerable').decay, 'perTurnEnd');
 });
 

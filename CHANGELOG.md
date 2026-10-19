@@ -32,8 +32,20 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-19
+
+- **Combat numbers are always whole** ([#2152](https://github.com/cehinds/AshenSpire/pull/2152), `0.7.1.1647`). Combat numbers are now always whole, with no decimals in damage, Block, Poise, hit chances, Accuracy, Evasion or the damage breakdown.
+- **Auto-combat answers your reactions only** ([#2147](https://github.com/cehinds/AshenSpire/pull/2147), `0.7.1.1645`). Auto-combat now only answers your reaction prompts, countering the attack you can read or matching your last stance. It never plays your turn.
+- **The FixCore rules contract follows the owner's rulings** ([#2141](https://github.com/cehinds/AshenSpire/pull/2141), `0.7.1.1643`). The written combat rules now describe the owner's decisions on Poise, Staggered, stance costs, Perception, rest sites, pacing and automatic reactions. Play changes arrive in separate updates.
+- **One tap no longer plays a card** ([#2146](https://github.com/cehinds/AshenSpire/pull/2146), `0.7.1.1641`). A tap now selects a card and shows its targets. A second tap or a target pick plays it. Players who want one-tap play can turn on "Tap a card to play it" in Settings.
+- **Matching stances hit harder and hit chances show when you pick a card** ([#2144](https://github.com/cehinds/AshenSpire/pull/2144), `0.7.1.1639`). Matching stances now add 25% effectiveness. Enemy intent checks use the target's Intelligence and Wisdom against your Wisdom roll. Hit chances show on every target as soon as you pick a card that can hit it.
+- **Armor has a flat 3-point budget** ([#2145](https://github.com/cehinds/AshenSpire/pull/2145), `0.7.1.1637`). Armor now has a flat budget of 3 points whatever its rank, with a rarity bonus ready for later (0 for now).
+
 ## 2026-10-18
 
+- **Matching-stance discounts follow what a card costs** ([#2142](https://github.com/cehinds/AshenSpire/pull/2142), `0.7.1.1635`). Matching-stance cards now get their cost discount on mana if they cost mana, otherwise on stamina.
+- **Vulnerable adds 25% damage everywhere** ([#2140](https://github.com/cehinds/AshenSpire/pull/2140), `0.7.1.1633`). Vulnerable now adds 25% damage instead of 50% in every mode, matching the Core rules, and card previews show it.
+- **Core 2 fights resume with their Perception reads intact** ([#2138](https://github.com/cehinds/AshenSpire/pull/2138), `0.7.1.1631`). Continue accepts a validated fight's local knowledge without requiring legacy progression records. Pending or hidden hover tips no longer consume Escape before card targeting can cancel; deliberate tap-to-inspect selection still survives a redraw. Tutorial checks wait for the completed hold under OneTap and verify that selection spends nothing. Save-loading failure checks run in two complete CI shards within the existing time limit.
 - **Upcoming combat and rest-site changes are decided** ([#2135](https://github.com/cehinds/AshenSpire/pull/2135), `0.7.1.1629`). Planned changes to stagger, stance costs, hit rolls, rewards, rest sites, combat pacing, automatic reactions, armor and Vulnerable are written down. Nothing changes in play yet.
 - **ModalManager: the co-op seat strip goes inert under a door** ([#2132](https://github.com/cehinds/AshenSpire/pull/2132), `0.7.1.1627`). In couch co-op the seat tabs now sleep under an open dialog instead of answering taps through it.
 - **Core 2 brings combat calculations and card information together** ([#2129](https://github.com/cehinds/AshenSpire/pull/2129), `0.7.1.1625`). Adds JSON-authored combat rules, typed protection and calculation receipts, equipped-stat and deck progression fixes, weighted rewards and fuller shops, preboss rests and traveled routes, and readable combat pacing with optional automatic play. Earlier Core definitions remain separately available.
