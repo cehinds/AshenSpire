@@ -58,3 +58,6 @@ export function rootCssVar(name) {
   vars.set(name, value);
   return value;
 }
+
+/** A getComputedStyle(root)-shaped reader backed by rootCssVar, for models that take a style object. */
+export const rootStyle = Object.freeze({ getPropertyValue: rootCssVar });

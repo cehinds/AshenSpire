@@ -118,12 +118,16 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   const upcastMeasurements = new WeakMap();
   const handLayoutWord = () => document.documentElement.dataset.handLayout;
 
+  // A layout pass repeats the same numbers on most renders; a style a card
+  // already holds is not written again (each write dirties style, and the next
+  // measure then forces a layout).
+  const setVar = (target, name, value) => { if (target.style.getPropertyValue(name) !== value) target.style.setProperty(name, value); };
   function applyHandLayout() {
     if (fitFan) {
       const cards = handEls.filter(el => el.parentNode === handEl);
       if (!cards.length || !handEl.isConnected) return;
       // Scoped physical touch targets must apply on the very first measure.
-      handEl.dataset.wireframeHand = 'true';
+      if (handEl.dataset.wireframeHand !== 'true') handEl.dataset.wireframeHand = 'true';
       const rect = handEl.getBoundingClientRect();
       const zoom = rect.width / handEl.clientWidth || 1;
       const fontSize = layoutMetrics().fontSize;
@@ -134,7 +138,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const formFactor = document.documentElement.dataset.formFactor || handEl.closest('.combat')?.dataset.formFactor || null;
       // Log and reactions are below the resting fan on every form factor.
       const toolsHeight = 0;
-      handEl.style.setProperty('--hand-controls-max-width', `${Math.max(0, handEl.clientWidth - 2 / zoom)}px`);
+      setVar(handEl, '--hand-controls-max-width', `${Math.max(0, handEl.clientWidth - 2 / zoom)}px`);
       // Measure the complete row, including the normally hidden native picker.
       // Hidden, inert clones reserve its space before a press selects a face;
       // selection must never resize the fan underneath that pointer.
@@ -153,23 +157,24 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const input = { width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
         count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0, formFactor };
       const plan = responsiveHandLayout(input, layoutHand(input));
-      handEl.dataset.wireframeHand = 'true';
-      handEl.style.setProperty('--hand-card-zoom', '1');
-      handEl.style.setProperty('--hand-span', plan.span + 'px');
-      handEl.style.setProperty('--hand-rest-left', plan.restLeft + 'px');
-      handEl.style.setProperty('--hand-rest-top', (toolsHeight + plan.restTop) + 'px');
-      handEl.style.setProperty('--hand-clearance-top', (toolsHeight + plan.clearanceTop) + 'px');
-      handEl.dataset.handGeometry = handGeometryKey({ width: handEl.clientWidth, height: handEl.clientHeight, zoom, fontSize, left: rect.left });
-      handEl.style.setProperty('--hand-selection-lift', plan.lift + 'px');
+      if (handEl.dataset.wireframeHand !== 'true') handEl.dataset.wireframeHand = 'true';
+      setVar(handEl, '--hand-card-zoom', '1');
+      setVar(handEl, '--hand-span', plan.span + 'px');
+      setVar(handEl, '--hand-rest-left', plan.restLeft + 'px');
+      setVar(handEl, '--hand-rest-top', (toolsHeight + plan.restTop) + 'px');
+      setVar(handEl, '--hand-clearance-top', (toolsHeight + plan.clearanceTop) + 'px');
+      const geometryKey = handGeometryKey({ width: handEl.clientWidth, height: handEl.clientHeight, zoom, fontSize, left: rect.left });
+      if (handEl.dataset.handGeometry !== geometryKey) handEl.dataset.handGeometry = geometryKey;
+      setVar(handEl, '--hand-selection-lift', plan.lift + 'px');
       cards.forEach((el, i) => {
         const slot = plan.cards[i];
-        el.style.setProperty('--hand-card-width', plan.cardWidth + 'px');
-        el.style.setProperty('--hand-card-height', plan.cardHeight + 'px');
-        el.style.setProperty('--hand-card-x', slot.x + 'px');
-        el.style.setProperty('--hand-card-y', (toolsHeight + plan.top + slot.y) + 'px');
-        el.style.setProperty('--hand-card-angle', slot.angle + 'deg');
-        el.style.setProperty('--hand-card-arc', slot.y + 'px');
-        el.style.setProperty('--hand-hit-width', (i === cards.length - 1 ? plan.cardWidth : plan.step) + 'px');
+        setVar(el, '--hand-card-width', plan.cardWidth + 'px');
+        setVar(el, '--hand-card-height', plan.cardHeight + 'px');
+        setVar(el, '--hand-card-x', slot.x + 'px');
+        setVar(el, '--hand-card-y', (toolsHeight + plan.top + slot.y) + 'px');
+        setVar(el, '--hand-card-angle', slot.angle + 'deg');
+        setVar(el, '--hand-card-arc', slot.y + 'px');
+        setVar(el, '--hand-hit-width', (i === cards.length - 1 ? plan.cardWidth : plan.step) + 'px');
         let lane = el.querySelector('.hand-hit-lane');
         if (!lane) {
           lane = document.createElement('span');
@@ -177,9 +182,10 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
           lane.setAttribute('aria-hidden', 'true');
           el.appendChild(lane);
         }
-        el.style.setProperty('--card-fan-transform', 'rotate(' + slot.angle + 'deg)');
-        el.style.marginLeft = '0px';
-        el.style.transform = 'rotate(' + slot.angle + 'deg)';
+        setVar(el, '--card-fan-transform', 'rotate(' + slot.angle + 'deg)');
+        if (el.style.marginLeft !== '0px') el.style.marginLeft = '0px';
+        const turn = 'rotate(' + slot.angle + 'deg)';
+        if (el.style.transform !== turn) el.style.transform = turn;
       });
       handEl.dispatchEvent(new Event('handlayoutchange', { bubbles: true }));
       return;

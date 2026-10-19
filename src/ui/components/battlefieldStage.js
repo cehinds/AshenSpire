@@ -27,7 +27,7 @@ import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from 
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
 import { targetBodyHudPlacement } from '../models/TargetHudModel.js';
 import { reducedMotionRequested } from '../motion.js';
-import { layoutMetrics } from '../layoutMetrics.js';
+import { layoutMetrics, rootStyle } from '../layoutMetrics.js';
 
 // Formation positions and adjustment deltas already use field-local physical
 // coordinates. A centred view preset must not subtract its viewport inset again.
@@ -338,7 +338,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const zoom = uiZoom();
     const combat = field.closest('.combat');
     // HUD layout geometry tokens (docs/hud-layout-tokens.md), read once per pass.
-    const hudOffsets = hudGeometry(getComputedStyle(combat));
+    const hudOffsets = hudGeometry(rootStyle);
     const panels = [...field.querySelectorAll(reserveFirst === true
       ? '.enemy .intent, .enemy .combatant-info, .enemy .sprite, .turn-ribbon'
       : '.enemy .intent, .enemy .combatant-info, .enemy .nm, .enemy .meters, .enemy .sprite, .turn-ribbon')]
@@ -571,7 +571,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // every figure whose art or overhead stack shares its columns (below).
     const ribbonEl = field.querySelector(':scope > .turn-ribbon');
     // HUD layout geometry tokens (docs/hud-layout-tokens.md), read once per pass.
-    const hudOffsets = hudGeometry(getComputedStyle(combat));
+    const hudOffsets = hudGeometry(rootStyle);
     if (ribbonEl) {
       // The ribbon offset token is added below the band's edge and clamped:
       // never up under the HUD band, never past the field's floor.
