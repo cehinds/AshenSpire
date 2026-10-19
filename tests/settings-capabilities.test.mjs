@@ -40,31 +40,33 @@ test('disabled configured resources/equipment/routes remove their dependent opti
   const display=categoryHtml('General',{settingsGeneralCategory:'Display','settingsGeneralTopic.Display':'Map'},null,null,null,null,'',false,profile);
   assert(!display.includes('data-key="mapZoom"'));assert(display.includes('data-key="viewPreset"'));
 });
-test('Core authors a visible map, Current authors fog, and stored eligible choices remain explicit',()=>{
+test('Core and Current author path (fog off by default, owner 2026-10-19), and stored eligible choices remain explicit',()=>{
   const bundle=JSON.parse(readFileSync(new URL('../games/ashenspire/bundles/current/bundle.json',import.meta.url),'utf8'));
-  assert.equal(bundle.modules.routes.settings.mapMode,'fog');assert.equal(core.modules.routes.mapMode,'path');
-  assert.equal(resolveMapMode({}, {gameProfile:core}),'path');assert.equal(resolveMapMode({}, {gameProfile:current}),'fog');
+  assert.equal(bundle.modules.routes.settings.mapMode,'path');assert.equal(core.modules.routes.mapMode,'path');
+  assert.equal(resolveMapMode({}, {gameProfile:core}),'path');assert.equal(resolveMapMode({}, {gameProfile:current}),'path');
   assert.equal(resolveMapMode({settings:{mapMode:'fog'}},{gameProfile:core}),'path');
+  assert.equal(resolveMapMode({settings:{mapMode:'fog'}},{gameProfile:current}),'fog');
   assert.equal(resolveMapMode({settings:{mapMode:'path'}},{gameProfile:current}),'path');
-  assert.equal(resolveMapMode({settings:{mapMode:'invalid'}},{gameProfile:current}),'fog');
+  assert.equal(resolveMapMode({settings:{mapMode:'invalid'}},{gameProfile:current}),'path');
   // The legacy adapter reads its authored fallback rather than a second UI constant.
   const changed={gameProfile:{modules:{routes:{mode:'legacy',mapMode:'path'}}}};
   assert.equal(resolveMapMode({},changed),'path');
 });
-test('clean real Current map starts partially hidden under fog; Core starts with nothing hidden',()=>{
+test('clean real Current and Core maps start with nothing hidden by default; an explicit fog choice still fogs Current (owner, 2026-10-19)',()=>{
   for(const profile of [core,current]) {
     const registries=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
     const run=createRunState({seed:3,classId:'reaver',registries});
     run.mapGraph=buildActMap(registries,createRng(3),run.seatOrder[0],1);
     const knowledge=mapKnowledge({graph:run.mapGraph,run,mode:resolveMapMode({},run)});
-    if(profile===current) {
-      assert(knowledge.counts.hidden>0,profile.id);assert(knowledge.drawn.size>0,profile.id);
-      assert(knowledge.drawn.size<Object.keys(run.mapGraph.nodes).length,profile.id);
-    } else {
-      assert.equal(knowledge.counts.hidden,0,profile.id);
-      assert.equal(knowledge.drawn.size,Object.keys(run.mapGraph.nodes).length,profile.id);
-    }
+    assert.equal(knowledge.counts.hidden,0,profile.id);
+    assert.equal(knowledge.drawn.size,Object.keys(run.mapGraph.nodes).length,profile.id);
   }
+  const registries=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,current)),current);
+  const run=createRunState({seed:3,classId:'reaver',registries});
+  run.mapGraph=buildActMap(registries,createRng(3),run.seatOrder[0],1);
+  const fogged=mapKnowledge({graph:run.mapGraph,run,mode:resolveMapMode({settings:{mapMode:'fog'}},run)});
+  assert(fogged.counts.hidden>0,current.id);assert(fogged.drawn.size>0,current.id);
+  assert(fogged.drawn.size<Object.keys(run.mapGraph.nodes).length,current.id);
 });
 
 test('active run capabilities win over a future new-game choice',()=>{

@@ -171,7 +171,7 @@ test('authored threat threshold controls generation, validates boss depth, and c
   assert.ok(elites > 0, 'eligible later depths still offer elites');
   assert.throws(() => setup({ minimumThreatFloor: 9 }), /prebossNodes.*minimumThreatFloor/);
   assert.throws(() => setup({ prebossNodes: 1, restsPerAct: 1, restFloors: [1] }), /prebossNodes.*minimumThreatFloor/);
-  assert.equal(resolveMapMode({}, { gameProfile: resolveGameProfile('current') }), 'fog');
+  assert.equal(resolveMapMode({}, { gameProfile: resolveGameProfile('current') }), 'path', 'fog is off by default (owner, 2026-10-19)');
   assert.equal(resolveMapMode({ settings: { mapMode: 'path' } }, { gameProfile: resolveGameProfile('current') }), 'path');
   const authored = setup({ mapMode: 'path' });
   assert.equal(resolveMapMode({}, authored.run), 'path');

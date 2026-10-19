@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:dac208e7649583ead49d50a0164a229405aa2f361eebd57904481b2cab4a2216",
+      "hash": "sha256:3a64c3dbea5a459cfd781fcfc115b8747989c3983489bfd4e7843eb6cb40394f",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -472,7 +472,7 @@
           "path": "engine/modules/routes/defaults.json",
           "id": "routes",
           "version": "1.0.0",
-          "hash": "sha256:7fb93e70ada2481b9a071cd2713aa087e85213e174b889f40f8621bb6442217e"
+          "hash": "sha256:c14e12f228c180ed53343bbf085d9bd7e345f07e6b80fe7267f440ffbbc6fed8"
         },
         {
           "path": "engine/modules/routes/module.json",
@@ -726,7 +726,7 @@
       "runtimeHash": "sha256:bc16da82a437cc04ce66860d0b3a026593e9b929444ab78a12725d0a43c3317f"
     },
     "core": {
-      "hash": "sha256:dac208e7649583ead49d50a0164a229405aa2f361eebd57904481b2cab4a2216",
+      "hash": "sha256:3a64c3dbea5a459cfd781fcfc115b8747989c3983489bfd4e7843eb6cb40394f",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -1196,7 +1196,7 @@
           "path": "engine/modules/routes/defaults.json",
           "id": "routes",
           "version": "1.0.0",
-          "hash": "sha256:7fb93e70ada2481b9a071cd2713aa087e85213e174b889f40f8621bb6442217e"
+          "hash": "sha256:c14e12f228c180ed53343bbf085d9bd7e345f07e6b80fe7267f440ffbbc6fed8"
         },
         {
           "path": "engine/modules/routes/module.json",
@@ -1450,7 +1450,7 @@
       "runtimeHash": "sha256:bc16da82a437cc04ce66860d0b3a026593e9b929444ab78a12725d0a43c3317f"
     },
     "current": {
-      "hash": "sha256:7349334d65457cea5d50ad76d7b583498bed117e1c109319076fa04901e5f7c5",
+      "hash": "sha256:62bcd73a153638956a4b48282abf9b2e6ebbd66c55e9ecd8fdace4fc2da7bfc1",
       "formatVersion": 1,
       "core": "ashen.current@1.0.0",
       "artifacts": [
@@ -1902,7 +1902,7 @@
           "path": "engine/modules/routes/defaults.json",
           "id": "routes",
           "version": "1.0.0",
-          "hash": "sha256:7fb93e70ada2481b9a071cd2713aa087e85213e174b889f40f8621bb6442217e"
+          "hash": "sha256:c14e12f228c180ed53343bbf085d9bd7e345f07e6b80fe7267f440ffbbc6fed8"
         },
         {
           "path": "engine/modules/routes/module.json",
@@ -1998,7 +1998,7 @@
           "path": "games/ashenspire/bundles/current/bundle.json",
           "id": "ashen.current",
           "version": "1.0.0",
-          "hash": "sha256:1188f17631662bc46fbad4519d79184c31bb5c87f15110271a9c715cb4a73f9a"
+          "hash": "sha256:af621614eef9654d35806d73e14e4ace4db38ffd3560f82fccee1961caa515be"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",

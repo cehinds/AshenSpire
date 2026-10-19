@@ -68,7 +68,7 @@
       "version": "1.0.0",
       "settings": {
         "mode": "legacy",
-        "mapMode": "fog"
+        "mapMode": "path"
       }
     },
     "rest": {
