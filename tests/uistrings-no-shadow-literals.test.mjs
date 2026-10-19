@@ -240,7 +240,9 @@ test('all 19 reaction and log rows remain covered after promotion, including tok
     assert.ok(permanent.has(id), `missing permanent coverage for ${id}`);
     assert.ok(uiStrings.some(row => row.id === id), `missing authored row ${id}`);
   }
-  const renderer = stripComments(readFileSync(join(ROOT, 'src/ui/components/reactionChoiceModal.js'), 'utf8'));
+  // The price chips are built by the card option summary model the reaction tiles render, so the row is read there.
+  const renderer = ['src/ui/components/reactionChoiceModal.js', 'src/ui/models/CardOptionSummaryModel.js']
+    .map(file => stripComments(readFileSync(join(ROOT, file), 'utf8'))).join('\n');
   for (const id of ['combat.reaction.sp', 'combat.reaction.mp']) {
     assert.ok(renderer.includes(`t('${id}',`), `the token-first price must still consume ${id}`);
     assert.match(uiStrings.find(row => row.id === id).short, /\{amount\}/);
