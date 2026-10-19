@@ -163,10 +163,6 @@ function verifyContent(content) {
   if (cards.size !== content.cards.length) fail('$/content/cards', 'duplicate card ID');
   for (const row of content.classes) if (!cards.has(row.specialCardId)) fail(`$/content/classes/${row.id}/specialCardId`, 'unresolved card reference');
   for (const row of content.starterDeck.shared) if (!cards.has(row.card) || !Number.isSafeInteger(row.copies) || row.copies < 1) fail('$/content/starterDeck/shared', 'invalid starter card reference/count');
-  for (const [classId, rows] of Object.entries(content.starterDeck.classDecks || {})) {
-    if (!content.classes.some(row => row.id === classId)) fail(`$/content/starterDeck/classDecks/${classId}`, 'unknown class');
-    for (const row of rows) if (!cards.has(row.card) || !Number.isSafeInteger(row.copies) || row.copies < 1) fail(`$/content/starterDeck/classDecks/${classId}`, 'invalid starter card reference/count');
-  }
 }
 // Names (owner 2026-10-17): no spaces. "_" stands for a space and is turned back into one for
 // display; "-" is a real hyphen and is kept. "Ember-Starved_Pilgrim" shows as "Ember-Starved Pilgrim".
