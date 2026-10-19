@@ -90,7 +90,9 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     }
     raw = transition('ar:adjustments','AR stance/status modifiers (including Weak)',raw,base+ratingBonus);
   } else raw = transition('ar','Attack rating',raw,raw+ratingBonus);
-  const stanceMultiplier = stanceEffectiveness(ctx,source,carrier);
+  // A Core 2 Counter return is final pre-protection damage (SPEC §17): no matching-stance or defensive-stance stage.
+  const flatReturn = modern && carrier.counterReturnAttack;
+  const stanceMultiplier = flatReturn ? 1 : stanceEffectiveness(ctx,source,carrier);
   raw = transition('matching-stance','Matching stance effectiveness',raw,raw*stanceMultiplier,'offense',stanceMultiplier);
   if (modern && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
   if (!modern) raw=Math.max(0,Math.floor(raw));
@@ -99,7 +101,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   // Core 2 Counter returns carry their advantage in the return itself (SPEC §17), so the chain does not multiply it again.
   const advantageMultiplier = advantage && !(modern && carrier.counterReturnAttack) ? stances.advantageMultiplier ?? 1 : 1;
   let amount=transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
-  amount=transition('stance-defense','Defensive stance advantage',amount,amount*defense.multiplier,'stance',defense.multiplier);
+  amount=transition('stance-defense','Defensive stance advantage',amount,amount*(flatReturn?1:defense.multiplier),'stance',flatReturn?1:defense.multiplier);
   amount=modern ? Math.max(0,Math.floor(amount)) : transition('quantity-rounding','Damage quantity rounding',amount,Math.max(0,Math.floor(amount)),'rounding');
   const evade = stances?.include?.includes('evade') && defending === 'evade';
   const targeting=proposalTargetPlan(ctx,source,target,carrier);

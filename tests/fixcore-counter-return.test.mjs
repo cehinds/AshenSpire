@@ -132,3 +132,27 @@ test('Core: the Counter returns even when damage gets through (no Poise: 8 into 
   const returned = events.filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
   assert.equal(returned.reduce((sum, e) => sum + e.hpLoss + e.poiseAbsorbed, 0), 6);
 });
+
+import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
+test('a Core Counter return skips matching-stance and defensive-stance stages (Sweep target keeps 4)', () => {
+  const { combat, enemy } = live();
+  Object.assign(combat.player, { ratings: {}, ratingSources: [], statuses: {}, combatStance: { maneuver: 'counter', camp: 'physical', range: 'melee' } });
+  enemy.combatStance = { maneuver: 'sweep', camp: 'physical', range: 'melee' };
+  const carrier = { skipRatingBonus: true, counterReturnAttack: true, combatReaction: true,
+    combatProfile: { camp: 'physical', maneuver: 'counter', damageType: 'slashing', range: 'melee', targeting: 'single' } };
+  const incoming = base => profileDamageReceipt(combat, combat.player, enemy, base, carrier).damageReceipt.hits[0].incoming;
+  assert.equal(incoming(4), 4);
+  assert.equal(incoming(6), 6);
+});
+
+test('Counter played while already in Counter stance still returns 6 in the worked example', () => {
+  const { combat, enemy } = live();
+  combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
+  Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const returned = combat.eventLog.slice(start).filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
+  assert.equal(returned.reduce((sum, e) => sum + e.hpLoss + e.poiseAbsorbed, 0), 6);
+});
