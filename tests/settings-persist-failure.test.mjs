@@ -12,6 +12,7 @@ test('a thrown settings save restores live preference and cannot leak into a lat
   assert.ok(start>=0&&end>start);
   let stored={settings:{[grid]:true,[SEED_KEY]:{[grid]:true}}},fail=true;
   const painted=[];
+  let settled=0;
   const context={structuredClone,seedAfterChange,SEED_KEY,run:null,xpCombat:null,
     activeMeta:null,activeSettings:null,app:{},
     STAT_ROWS_CHANGED_MEANING:/$^/,STAT_ROWS_MARKER:'unused',STAT_ROWS_VERSION:1,
@@ -19,14 +20,17 @@ test('a thrown settings save restores live preference and cannot leak into a lat
       saveMeta:async meta=>{if(fail)throw new Error('storage interrupted');stored=structuredClone(meta);return{ok:true};}},
     applyDisplaySettings:settings=>painted.push(structuredClone(settings)),
     refreshHudQuickSettings(){},showSettingsNotice(){},QUARANTINE_NOTICE:'save refused',remountMapIfShowing(){},
+    announceSettingsSettled:()=>{settled+=1;},
   };
   const persist=runInNewContext(source.slice(start,end)+'\npersistSettingsChange;',context);
   const refused=await persist({[grid]:false});
   assert.equal(refused.ok,false);
+  assert.equal(settled,1,'a rolled-back write announces that it settled');
   assert.equal(context.activeSettings[grid],true,'live state rolls back');
   assert.equal(painted.at(-1)[grid],true,'grid reflects the durable value');
   fail=false;
   await persist({musicEnabled:false});
+  assert.equal(settled,2,'a saved write announces that it settled');
   assert.equal(stored.settings[grid],true,'a later successful preference never saves the refused grid state');
   assert.equal(stored.settings.musicEnabled,false);
   await persist({[grid]:false});
