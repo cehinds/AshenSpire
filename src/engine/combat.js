@@ -2519,6 +2519,19 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   // Preparation adds the charge once to the whole Counter. Its display belongs
   // to the first eligible contact, even if an earlier opcode has no contacts.
   const counterPreviews = new Map();
+  // The player once the Counter's immediate defensive effects (its Block, the stance-entry grants) have resolved, on a
+  // detached copy through the same queue the live play drains; the return is simulated against this defender.
+  let counterProjection;
+  const counterDefenseProjection = () => {
+    if (counterProjection !== undefined) return counterProjection;
+    const sim = F.candidateState(combat, { detached: true });
+    for (const effect of chargedEffects) {
+      if (effect.op === 'damage' || effect.target !== 'self') continue;
+      sim.queue.push({ effect, source: sim.player, owner: sim.player, target: sim.player, card: action.card, meta: { energySpent: shownCost } });
+    }
+    drainQueue(sim);
+    return (counterProjection = sim.player);
+  };
   const previewCounter = (resolvedTarget, index) => {
     const key = resolvedTarget?.id || null;
     if (!counterPreviews.has(key)) {
@@ -2538,7 +2551,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
           // return is: no attack-rating bonus, no second stance multiplier. Without a revealed attack the face
           // states the printed amount.
           const live = effectIndex === bonusIndex && reply && resolvedTarget?.kind === 'enemy'
-            ? counterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id), action.card) : null;
+            ? counterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id), action.card, counterDefenseProjection()) : null;
           const hits = previewDamageHits(combat, p, resolvedTarget,
             live ? live.hp : (reply?.value || 0) + (effectIndex === bonusIndex ? bonus : 0),
             action.card.tags || [], { ...action.card, combatReaction: true, counterReturnAttack: true, ...(fixCoreEnabled(combat) ? { skipRatingBonus: true } : {}) },

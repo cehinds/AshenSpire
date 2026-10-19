@@ -259,3 +259,25 @@ test('the Counter preview answers a covered Attack (6) but not an uncovered area
   const soldier = live();
   assert.equal(previewCard(soldier.combat, 'cx1', soldier.enemy.id).values.find(v => v.op === 'damage').counterReturn.hp, 6);
 });
+
+test('multi-hit preview starts from the player after the Counter\'s own Block, so Poise breaks when live play breaks it', () => {
+  const heavy = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'blightHound'
+    ? { ...row, firstMove: 'lunge', moves: { ...row.moves, lunge: { ...row.moves.lunge, damage: 7 } } } : row) };
+  const heavyReg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(heavy, profile)), profile);
+  const run = createRunState({ registries: heavyReg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries: heavyReg, run, rng: createRng(511), enemyIds: ['blightHound'] });
+  const enemy = combat.enemies[0];
+  Object.assign(enemy, { hp: 500, maxHp: 500, statuses: {}, ratings: {}, ratingSources: [], persistentPoise: { value: 0, max: 0 } });
+  combat.piles.hand.push({ instanceId: 'cx1', cardId: 'core.counter' });
+  const poise = { value: 6, max: 20 };
+  Object.assign(combat.player, { block: 0, statuses: {}, ratings: {}, ratingSources: [], persistentPoise: { ...poise } });
+  const damage = previewCard(combat, 'cx1', enemy.id).values.find(row => row.op === 'damage');
+  assert.ok(damage.counterReturn, 'the Counter return is previewed');
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
+  Object.assign(combat.player, { persistentPoise: { ...poise } });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const returned = combat.eventLog.slice(start).filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
+  assert.equal(returned.reduce((sum, e) => sum + e.hpLoss + (e.poiseAbsorbed || 0), 0), damage.counterReturn.hp, 'preview == live');
+});
