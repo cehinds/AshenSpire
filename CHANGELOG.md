@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Co-op cards always need a select tap** ([#2157](https://github.com/cehinds/AshenSpire/pull/2157), `0.7.1.1653`). In co-op, a card that comes back to your hand after being played no longer plays on a single tap; it has to be selected first, like every other card.
 - **Phone menu centred again; lighter combat on phones** ([#2156](https://github.com/cehinds/AshenSpire/pull/2156), `0.7.1.1653`). The main menu sits in the middle of the phone screen again, and combat taps and enemy turns are lighter on phones.
 - **Ward switched off in Core 2** ([#2150](https://github.com/cehinds/AshenSpire/pull/2150), `0.7.1.1651`). Ward is switched off in Core 2 for now and can be turned back on in the game data. Block cards now restore only Poise.
 - **Map fog reveals a clean circle** ([#2155](https://github.com/cehinds/AshenSpire/pull/2155), `0.7.1.1649`). The fog on the map now fades out in a clean circle around your location instead of being cut off in a straight line on one side.
