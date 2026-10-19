@@ -316,3 +316,15 @@ test('a zero-HP Counter grade (Crimson Reprisal rank 3) shows the computed Poise
   assert.ok(rows.length > 0, 'the grade authors Poise rows');
   assert.equal(rows.reduce((sum, row) => sum + row.value, 0), 3, 'one computed Poise return (8 incoming -> 3)');
 });
+
+test('the Counter\'s pre-hit Block honors the Unbreakable cap (29 Block, cap 30, +2 stops at 30)', () => {
+  const { combat } = live();
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
+  Object.assign(combat.player, { block: 29, persistentPoise: { value: 20, max: 20 }, statuses: { unbreakable: { stacks: 1 } } });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const gained = combat.eventLog.slice(start).find(e => e.type === 'blockGained' && e.source === 'counter');
+  assert.equal(gained.total, 30, 'capped at 30, not 31');
+  assert.equal(gained.amount, 1);
+});

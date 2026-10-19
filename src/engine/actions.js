@@ -359,8 +359,11 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   const counterBlock = fixCoreEnabled(ctx) && carrier?.expansionContact
     ? counterBlockBonus(ctx, carrier.expansionContact.receipt, carrier.expansionContact.index, chance.damageReceipt?.hits?.[0]?.incoming) : 0;
   if (counterBlock > 0) {
-    target.block = (target.block || 0) + counterBlock;
-    ctx.emit('blockGained', { targetId: target.id, amount: counterBlock, total: target.block, source: 'counter', ...seatOf(ctx, target) });
+    // The same blockCap (Unbreakable) clamp gainBlock applies.
+    const cap = statuses.getCap(ctx, target, 'blockCap');
+    const gained = cap != null ? Math.max(0, Math.min(counterBlock, cap - (target.block || 0))) : counterBlock;
+    target.block = (target.block || 0) + gained;
+    if (gained > 0) ctx.emit('blockGained', { targetId: target.id, amount: gained, total: target.block, source: 'counter', ...seatOf(ctx, target) });
   }
   const receipt = profileDamageReceipt(ctx, source, target, base, carrier,
     { roll: !fixCoreEnabled(ctx) && chance.hitChance < 1 ? ctx.rng.float(configuredModule(ctx, 'stances')?.accuracyStream || 'combatAvoidance') : null });
