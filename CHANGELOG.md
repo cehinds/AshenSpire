@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Runtime changes no longer fail the save-hash test** ([#2206](https://github.com/cehinds/AshenSpire/pull/2206), `0.7.1.1709`). The verified-profiles test now checks that the cached runtime hash matches the committed game lock, so pull requests that change the runtime on purpose no longer fail it.
 - **Core hit rolls are Precision against Evasion** ([#2192](https://github.com/cehinds/AshenSpire/pull/2192), `0.7.1.1707`). In Core, an attack now rolls Precision against Evasion: Evade grants stacks that decay each turn, Precision stances grant stacks, the combat log shows the roll, and Evade text follows the game's settings.
 - **Card pickers show effects at a glance** ([#2194](https://github.com/cehinds/AshenSpire/pull/2194), `0.7.1.1707`). Reaction, discard and stance pickers now show cards as a grid of equal-size tiles with each card's name and effect; numbers raised by advantage or stance show green, lowered ones red.
 - **Rewards fill missing stances** ([#2193](https://github.com/cehinds/AshenSpire/pull/2193), `0.7.1.1705`). Card rewards now always include a basic version of a stance you don't have yet, such as Evade, until you own one of each.
