@@ -131,6 +131,8 @@ import { mountRest } from './ui/screens/rest.js';
 import { commitDeckEditDraft } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
+import { markArmourySeen, noncombatEditing } from './model/armouryRules.js';
+import { deckEditingOn } from './model/deckRules.js';
 import { mountShop, mountConfiguredShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
@@ -2066,6 +2068,7 @@ function showOfflinePlay() {
 // those rooms now carry opens the Armoury too and a close that went to the
 // map would abandon the room mid-visit.
 function showArmoury(request = '', returnTo = showMap) {
+  markArmourySeen(run);
   const initialView = typeof request === 'string' ? request : '';
   const destination = request && typeof request === 'object' ? request.destination || '' : '';
   const armouryMeta = saves.loadMeta();
@@ -2126,7 +2129,10 @@ function showCharacterSheet(opener, options = {}) {
 // These navigation doors use the ordinary location policy; combat uses the
 // separate draft door below at a safe action boundary.
 function deckDoors(services = null) {
-  return deckEditorDoors({ settings: saves.loadMeta().settings || {}, inCombat: false, services });
+  const settings = saves.loadMeta().settings || {};
+  const doors = deckEditorDoors({ settings, inCombat: false, services });
+  // D10/D15: Core edits the deck at will outside combat, from the Armoury, whatever the Current-profile location setting says.
+  return noncombatEditing(run) && deckEditingOn(settings) ? Object.freeze({ ...doors, armoury: true }) : doors;
 }
 
 function showDeckEditor(returnTo = showMap, hub = true) {
