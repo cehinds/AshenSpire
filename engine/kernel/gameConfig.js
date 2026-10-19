@@ -211,9 +211,16 @@ export function resolveGearItem(item, settings, { rank = item.rank ?? 1 } = {}) 
   const explicit = Object.fromEntries(GEAR_KEYS.map(k => [k, item.points?.[k] || 0]));
   // Core Smith tiers (armor and shield): every tier's extra point is a DR point, not a weighted draw, so an
   // upgrade always raises DR (and the Block of every card that reads it). It is taken from the same pool.
-  if ((item.kind === 'armor' || item.kind === 'shield') && settings.armorBudget) explicit.dr += (rank - 1) * (settings.armorBudget.perRank ?? 0);
   const tagCost = (item.tags || []).reduce((s, t) => s + (settings.tags[t]?.cost || 0), 0);
   const sum = keys => keys.reduce((s, k) => s + explicit[k], 0);
+  // The tier DR point is taken only from budget the item has not already spent: authored points that use the
+  // allowance (rank 2, 4-point budget, 4 authored DR) are not topped up a second time.
+  const tierPoints = (rank - 1) * (settings.armorBudget?.perRank ?? 0);
+  if ((item.kind === 'armor' || item.kind === 'shield') && settings.armorBudget && tierPoints > 0) {
+    const merged0 = settings.poolSizes.merged?.[item.rarity];
+    const whole0 = armorBudget ?? tierPoints + (merged0 ? (settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? merged0.min : merged0.max) : target('ratings') + target('bonus'));
+    explicit.dr += Math.max(0, Math.min(tierPoints, (settings.fillTo === 'none' ? 0 : whole0) - sum(GEAR_KEYS) - tagCost));
+  }
   const attrKeys = GEAR_ATTRIBUTES;
   // At most maxAttributes attributes: those the item set, then the heaviest-weighted.
   const limitAttributes = weights => {

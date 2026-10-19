@@ -128,3 +128,15 @@ test('armor rarity bonus ignores inherited keys such as constructor', () => {
   assert.equal(armorBudgetFor({ rarity: 'toString' }, settings, 4), 3);
   assert.equal(armorBudgetFor({ rarity: 'epic' }, settings, 1), 5);
 });
+test('tier DR point comes only from unspent budget: authored DR that spends the allowance is not topped up', () => {
+  const armor = profile.content.gear.find(item=>item.kind==='armor'), s = profile.modules.gear;
+  const authored = {...armor,tags:[],points:{dr:4}};
+  const r2 = resolveGearItem(authored,s,{rank:2});
+  assert.equal(r2.budget,4);
+  assert.equal(r2.points.dr,4);
+  assert.equal(Object.values(r2.points).reduce((a,b)=>a+b,0),4);
+  // Nothing authored: the tier point is a DR point and the budget is still exactly spent.
+  const bare = {...armor,tags:[],points:{}};
+  assert.ok(resolveGearItem(bare,s,{rank:2}).points.dr >= resolveGearItem(bare,s,{rank:1}).points.dr + 1);
+  assert.equal(Object.values(resolveGearItem(bare,s,{rank:2}).points).reduce((a,b)=>a+b,0),4);
+});
