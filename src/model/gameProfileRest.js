@@ -5,6 +5,7 @@ import { withGameProfileService } from './gameProfileRun.js';
 import { gameModule, gameContent } from './gameProfile.js';
 import { applyLevelUp, rederivePools } from './levelup.js';
 import { commitSmithing } from './smithing.js';
+import { coreSmithingActive, coreSmithingCards, coreAffectedCards, withoutCoreCardSimulation } from './smithingCore.js';
 import { refillFlaskCharges } from './gracerefill.js';
 import { syncZones } from './state.js';
 import { commitDeckEditDraft } from './deckRules.js';
@@ -88,10 +89,16 @@ function applyService(registries, draft, service, payload) {
 }
 export function previewGameProfileRest(registries, run, service, payload = {}) {
   const draft = structuredClone(run);
-  return { run: draft, receipt: applyService(registries, draft, service, payload) };
+  return { run: draft, receipt: withoutCoreCardSimulation(() => applyService(registries, draft, service, payload)) };
 }
 export function commitGameProfileRest(registries, run, service, payload = {}) {
   const { run: draft, receipt } = previewGameProfileRest(registries, run, service, payload);
+  // The preview skipped card simulation (a rest previews every candidate); the chosen item's rows are added once, here.
+  if (service === 'smith' && draft.lastSmithingReceipt && coreSmithingActive(run)) {
+    const last = draft.lastSmithingReceipt;
+    const cards = coreSmithingCards(registries, run, last.itemRef, last.beforeLevel, last.afterLevel);
+    draft.lastSmithingReceipt = Object.freeze({ ...last, changes: Object.freeze([...last.changes, ...cards]), affectedCards: Object.freeze(coreAffectedCards(cards)) });
+  }
   Object.assign(run, draft);
   return receipt;
 }

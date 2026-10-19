@@ -145,7 +145,9 @@ test('Counter keeps its printed Block plus DR plus the Counter stance DR bonus (
 test('Core armor Smith tiers follow the armor budget (D14: flat across ranks), not a flat DR per tier', () => {
   // Owner question raised by the ratings audit: if armor Smith tiers should add DR, armorBudget.perRank must say so.
   const perRank = profile.modules.gear.armorBudget.perRank || 0;
-  const base = world('reaver'), up = world('reaver', run => { run.itemUpgradeLevels['armor/reaver/default'] = 2; });
+  // Reaver starts with no armor ('default' is an empty set), so wear a real Reaver armor in both worlds.
+  const wear = run => { run.loadout.sets.armor = ['warden']; };
+  const base = world('reaver', wear), up = world('reaver', run => { wear(run); run.itemUpgradeLevels['armor/reaver/warden'] = 2; });
   const delta = ratings(up).dr - ratings(base).dr;
   if (perRank > 0) assert.ok(delta > 0, 'a configured armor rank budget must reach DR'); else assert.equal(delta, 0);
 });

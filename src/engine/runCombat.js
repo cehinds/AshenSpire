@@ -15,7 +15,10 @@ import { configuredCombat, configuredModule } from './gameProfileCombat.js';
 // equipment pool deficits) are written back to the run, as the live
 // onCombatEnd does, so the next fight opens where this one ended.
 
-import { createCombat } from './combat.js';
+import { createCombat, previewCard } from './combat.js';
+import { createRng } from './rng.js';
+import { resolveCombatCard } from './combatExpansion.js';
+import { bindCoreSmithingEngine } from '../model/smithingCore.js';
 import { runHandRules } from '../model/handRules.js';
 import { playInDeckOrder } from '../model/deckRules.js';
 import { combatRoundsFor, normalPreviewFor } from '../model/combatRounds.js';
@@ -204,3 +207,6 @@ export function runCombatEnd(run, combat) {
   settleFightConsumables(run, combat);
   tickCompanions(run);
 }
+
+// Core Smith card rows run real fights through this engine (model/smithingCore.js binds rather than imports it).
+bindCoreSmithingEngine({ createRunCombat, previewCard, createRng, resolveCombatCard });
