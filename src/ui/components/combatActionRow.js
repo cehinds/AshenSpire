@@ -27,6 +27,7 @@ import { flaskTooltipHtml, flaskDetailLines, flaskPresentation } from './flask.j
 import { observeIconTray, unobserveIconTray, setIconTrayItems, setIconTrayOverflow, trayIcon } from './iconTray.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs } from './uiComponents.js';
 import { el, statPair, button, html, openModal, detailCard, optionCard, flavour, keycap } from '../kit/index.js';
+import { scheduleLayoutPass, cancelLayoutPass } from '../layoutFrame.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 export function pileButton(kind, label) {
@@ -200,14 +201,20 @@ export function openCombatPotions({ rows, opener, shortcut = null, arm, useReaso
 // (offsets, so no zoom arithmetic): the minis' right edge goes on the
 // control's, and on a narrow layout they ride inside its top edge at its
 // width (styles/combat.css reads the three values).
-function placePotionTray(tray) {
+// Reads the offsets and returns the writes (null when there is nothing to
+// place), so a caller can read now and write with the other layout work of the
+// frame; a value that did not change is not written again.
+function readPotionTray(tray) {
   const row = tray.offsetParent;
   const control = tray.parentElement?.querySelector('.combat-potions');
-  if (!control || !row || control.offsetParent !== row) return;
-  tray.style.setProperty('--potion-tray-right', `${row.clientWidth - control.offsetLeft - control.offsetWidth}px`);
-  tray.style.setProperty('--potion-control-top', `${control.offsetTop}px`);
-  tray.style.setProperty('--potion-control-width', `${control.offsetWidth}px`);
+  if (!control || !row || control.offsetParent !== row) return null;
+  const values = { '--potion-tray-right': `${row.clientWidth - control.offsetLeft - control.offsetWidth}px`,
+    '--potion-control-top': `${control.offsetTop}px`, '--potion-control-width': `${control.offsetWidth}px` };
+  return () => {
+    for (const [name, value] of Object.entries(values)) if (tray.style.getPropertyValue(name) !== value) tray.style.setProperty(name, value);
+  };
 }
+function placePotionTray(tray) { readPotionTray(tray)?.(); }
 
 // THE POTIONS MINIS (owner, 2026-09-14): the WGH8 entries — the charge
 // flasks and the carried consumables, each with its count — as the shared
@@ -221,6 +228,7 @@ const trayObservers = new WeakMap();
 
 /** Stop a tray's observers, placement and icon fit (a board replacing or tearing down its row). */
 export function disposeCombatPotionTray(tray) {
+  cancelLayoutPass(tray);
   trayObservers.get(tray)?.disconnect();
   trayObservers.delete(tray);
   unobserveIconTray(tray);
@@ -237,7 +245,7 @@ export function renderCombatPotionTray(tray, rows, open) {
     const observer = new ResizeObserver(() => placePotionTray(tray));
     observer.observe(tray.parentElement);
     trayObservers.set(tray, observer);
-  } else placePotionTray(tray);
+  } else scheduleLayoutPass(tray, () => readPotionTray(tray));
   const shown = rows.filter((row) => row.def);
   const key = JSON.stringify(shown.map(({ entry }) => [entry.key, entry.count]));
   if (tray.dataset.renderKey === key) return;

@@ -467,7 +467,11 @@ let fitFrame = 0;
 export function setHandFaceBudget(el, selected) {
   const rules = el?.querySelector?.('.ic-text[data-face-lines="true"]');
   if (!rules) return;
-  rules.dataset.maxLines = selected ? '5' : '3';
+  const lines = selected ? '5' : '3';
+  // The hand calls this for every card on every render; a budget that did not
+  // change leaves the fit it has (a new face is fitted by its own render).
+  if (rules.dataset.maxLines === lines) return;
+  rules.dataset.maxLines = lines;
   scheduleCardFits([el]);
 }
 
