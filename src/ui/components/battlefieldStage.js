@@ -231,22 +231,37 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (envelope?.validated) layoutState.restHandAnchor = envelope;
     return envelope;
   }
+  // The hit-% badge sits on the middle of the painted body, in the frame's own px (owner 2026-10-18). Independent of the
+  // target HUD (Classic appearance has none), and only for a combatant that shows a badge: all reads first, then the
+  // writes, and a value that did not change is not written again (this runs per animation frame while tracking).
+  function placeHitBadges() {
+    const frames = [...field.querySelectorAll('.combatant')].filter(frame => frame.querySelector(':scope > .combat-hit-chance'));
+    if (!frames.length) return;
+    const zoom = uiZoom();
+    const reads = frames.map(frame => {
+      const sprite = frame.querySelector('.sprite');
+      if (!sprite) return null;
+      const body = currentSpriteBodyBounds(sprite, schedule), box = frame.getBoundingClientRect();
+      const top = Number.isFinite(body.headY) ? body.headY : body.top, bottom = Number.isFinite(body.feetY) ? body.feetY : body.bottom;
+      if (![body.left, body.right, top, bottom].every(Number.isFinite)) return null;
+      return { frame, x: `${((body.left + body.right) / 2 - box.left) / zoom}px`, y: `${((top + bottom) / 2 - box.top) / zoom}px` };
+    });
+    for (const row of reads) {
+      if (!row) continue;
+      if (row.frame.style.getPropertyValue('--combat-body-center-x') !== row.x) row.frame.style.setProperty('--combat-body-center-x', row.x);
+      if (row.frame.style.getPropertyValue('--combat-body-center-y') !== row.y) row.frame.style.setProperty('--combat-body-center-y', row.y);
+    }
+  }
   // The detailed-target presentation owns its side panels. Only the compact
   // overhead follows the visible figure; selecting it never moves that figure.
   function centerTargetOverheads() {
     const zoom = uiZoom();
+    placeHitBadges();
     const rows = [...field.querySelectorAll('.combatant')].flatMap(frame => {
       const sprite = frame.querySelector('.sprite'), leading = frame.querySelector('.combatant-leading');
       if (!sprite || !leading) return [];
       const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
       const body = currentSpriteBodyBounds(sprite, schedule);
-      // The hit-% badge sits on the middle of the painted body, in the frame's own px (owner 2026-10-18).
-      const bodyBox = frame.getBoundingClientRect();
-      const bodyTop = Number.isFinite(body.headY) ? body.headY : body.top, bodyBottom = Number.isFinite(body.feetY) ? body.feetY : body.bottom;
-      if ([body.left, body.right, bodyTop, bodyBottom].every(Number.isFinite)) {
-        frame.style.setProperty('--combat-body-center-x', `${((body.left + body.right) / 2 - bodyBox.left) / zoom}px`);
-        frame.style.setProperty('--combat-body-center-y', `${((bodyTop + bodyBottom) / 2 - bodyBox.top) / zoom}px`);
-      }
       if (rack) {
         const intentHeight = rack.querySelector(':scope > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
         const config = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
@@ -275,6 +290,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
 
   function placePlayerHud(reserveFirst = false, targetCores = [], tick = false) {
     if (field.closest('.combat')?.dataset.targetHud === 'true') { centerTargetOverheads(); return; }
+    placeHitBadges();
     // A player's Inspect over the head must not hide an enemy's intent or
     // Inspect. It takes the head's left, the field's left edge, or the head's
     // right before accepting an overlap. Declared here so the placement source
@@ -1271,7 +1287,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const rect = combat.getBoundingClientRect();
     // Last layout write of the refit: the HUD, ribbon and intents are settled.
     // The combat box above is unchanged by the Inspect marks.
-    if (!targetHud) placeEnemyInspect();
+    if (!targetHud) { placeEnemyInspect(); placeHitBadges(); }
     else centerTargetOverheads();
     syncFloorShadows();
     // Fit the sky from the top of the combat screen, including the HUD.
