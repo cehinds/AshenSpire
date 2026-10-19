@@ -13,3 +13,11 @@ test('every narrow .title-screen rule centres the menu, none uses flex-end', () 
   for (const body of rules) assert.doesNotMatch(body, /justify-content\s*:\s*flex-end/);
   assert.ok(rules.some((b) => /justify-content\s*:\s*center/.test(b)));
 });
+
+test('the 12rem wordmark band is offset once: padding on .title-screen, not also in the menu max-height', () => {
+  const pad = css.match(/:root\[data-layout='narrow'\] \.title-screen \{[^}]*padding\s*:\s*12rem/);
+  assert.ok(pad, 'narrow .title-screen carries the 12rem top padding');
+  const menu = [...css.matchAll(/:root\[data-layout='narrow'\] \.title-screen \.as-titlemenu \{([^}]*)\}/g)].map((m) => m[1]).join(';');
+  assert.match(menu, /max-height\s*:\s*100%/);
+  assert.doesNotMatch(menu, /max-height\s*:\s*calc\([^)]*12rem/);
+});
