@@ -12,6 +12,8 @@ import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
 import { foundationStandin } from '../components/foundationStandin.js';
 import { gameModule } from '../../model/gameProfile.js';
+import { editingLocked, markArmourySeen } from '../../model/armouryRules.js';
+import { syncArmouryNew } from '../components/runHud.js';
 import { figureAnimationsEnabled } from '../../model/gameAnimationPolicy.js';
 import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
@@ -1420,6 +1422,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       paintedAppearance = displayAppearance();
     }
     renderTopbar();
+    syncEditLock();
     renderPotionTray();
     renderCombatantStage({ fit: false });
     renderControls();
@@ -3326,7 +3329,21 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The Armoury mid-fight is the SAME panel, told it is in combat. Both active
   // set switches and item replacement route through engine intents so Energy,
   // live card piles, resources, Poise, and the combat snapshot stay atomic.
+  // D15: Core changes equipment and the deck outside combat only. Every door (button, D/R/T keys, quick-nav rows) lands here
+  // or on the deck button, so the lock is one predicate and a pending reaction or choice counts as still in the fight.
+  const editLocked = () => editingLocked(run, combat);
+  function syncEditLock() {
+    const locked = editLocked();
+    syncArmouryNew($('#combat-armoury'), run);
+    for (const node of combatEl.querySelectorAll('#combat-armoury, .combat-deck-edit')) {
+      node.setAttribute('aria-disabled', String(locked));
+      node.classList.toggle('edit-locked', locked);
+      node.title = locked ? tFull('combat.editLocked') : '';
+      if (locked) node.dataset.editLocked = 'true'; else delete node.dataset.editLocked;
+    }
+  }
   function openCombatArmoury(request = '') {
+    if (editLocked()) return;
     // YOU LEFT THE BATTLEFIELD, SO THE AIM GOES DOWN — all of it, and here
     // rather than in a store watcher, because only ONE of the ways to arm goes
     // through the shared selection store. The positional card key and the
@@ -3366,6 +3383,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       renderCombatantStage();
       syncCardSelection();
     }
+    markArmourySeen(run);
+    syncArmouryNew($('#combat-armoury'), run);
     if (onArmoury) return onArmoury();
     const equipView = typeof request === 'string' ? request : '';
     const destination = request && typeof request === 'object' ? request.destination || '' : '';
@@ -3413,7 +3432,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const deck = document.createElement('button'); deck.className = 'subtle combat-deck-edit'; deck.textContent = t('deckEditor.open');
     deck.setAttribute('aria-description', tFull('combat.deckEdit.deferred'));
     deck.addEventListener('click', () => {
-      if (busy || enemyPlayback || combat.pendingReaction || hasCardChoice(combat) || combat.combatRounds?.playerQueue?.length) return;
+      if (editLocked() || busy || enemyPlayback || combat.pendingReaction || hasCardChoice(combat) || combat.combatRounds?.playerQueue?.length) return;
       selected = selfArm = null; selectedFlask = null; clearSelection(); syncCardSelection();
       onEditDeck({ inCombat: true, note: tFull('combat.deckEdit.deferred') });
     });
@@ -3421,6 +3440,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
   $('#combat-armoury')?.addEventListener('click', (event) => openCombatArmoury(event.currentTarget.dataset.equipView || ''));
 
+  syncEditLock();
   render();
   showPendingDiscard();
 
