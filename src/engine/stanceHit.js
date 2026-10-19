@@ -34,6 +34,14 @@ function eligibleEvadeMode(entity) {
   const eligible = stacks(entity, 'evade') > 0 || eligiblePreparedEvade(entity);
   return eligible && mode && (!mode.whileStatus || stacks(entity, mode.whileStatus) > 0) ? mode : null;
 }
+/** FixCore stat mix: floor(0.5 DEX + 0.1 STR + 0.2 (WIS + INT) + level), weights from `accuracy.precisionWeights`. */
+export function precisionStatMix(ctx, entity) {
+  const wt = fixCoreRules(ctx, entity).accuracy.precisionWeights, attrs = attributesOf(ctx, entity) || {};
+  return Math.floor(wt.dex * (Number(attrs.dexterity) || 0) + wt.str * (Number(attrs.strength) || 0)
+    + wt.wis * (Number(attrs.wisdom) || 0) + wt.int * (Number(attrs.intelligence) || 0) + wt.level * levelOf(ctx, entity));
+}
+/** Precision stacks an offensive stance entry grants under FixCore: the base grant plus the stat mix, like Evade's 1 + DEX (owner, 2026-10-19). */
+export const precisionEntryGrant = (ctx, entity, base) => base > 0 ? base + precisionStatMix(ctx, entity) : 0;
 export function effectiveEvasion(ctx, entity, { evadeDisabled = false, baseEntity = entity } = {}) {
   const prepared = !evadeDisabled && eligiblePreparedEvade(entity);
   if (fixCoreEnabled(ctx)) {
@@ -83,9 +91,7 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const sweep = maneuver === 'sweep' ? rules.sweepPrecisionBase + rules.sweepPerAdditionalTarget * Math.max(0, options.additionalTargets ?? carrier?.additionalTargets ?? 0) : 0;
   const cfg = fixCoreRules(ctx, source, carrier).accuracy;
   // Under FixCore, Precision and Evasion are whole numbers, rounded down (owner, 2026-10-18); the roll is opposed (owner, 2026-10-19).
-  const attrs = fixCoreEnabled(ctx) ? attributesOf(ctx, source) || {} : null, wt = cfg.precisionWeights;
-  const precisionMultiplier = fixCoreEnabled(ctx) ? Math.floor(wt.dex * (Number(attrs.dexterity) || 0) + wt.str * (Number(attrs.strength) || 0)
-    + wt.wis * (Number(attrs.wisdom) || 0) + wt.int * (Number(attrs.intelligence) || 0) + wt.level * levelOf(ctx, source)) * (precision + 1) : 0;
+  const precisionMultiplier = fixCoreEnabled(ctx) ? precisionStatMix(ctx, source) * (precision + 1) : 0;
   const accuracy = fixCoreEnabled(ctx)
     ? Math.floor(cfg.precisionBase + precisionMultiplier + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[maneuver] || 0) + proposal.accuracyDelta/5)
     : attackAccuracy(ctx, source, carrier) + precision + sweep + proposal.accuracyDelta/5;
@@ -150,6 +156,7 @@ export function previewCardAttackHit(ctx, source, target, carrier, options = {})
   const next = stanceOf(selected, source);
   if (!next) return attackHitPreview(ctx, source, target, carrier, options);
   const grants = !sameStance(source, selected) ? stanceEntryBonuses(selected, ctx) : { precision: 0 };
+  if (fixCoreEnabled(ctx)) grants.precision = precisionEntryGrant(ctx, source, grants.precision);
   const projected = { ...source, combatStance: next, statuses: { ...source.statuses } };
   if (grants.precision > 0) projected.statuses.precision = { ...source.statuses?.precision, stacks: stacks(source, 'precision') + grants.precision };
   const entity = value => value === projected ? source : value;

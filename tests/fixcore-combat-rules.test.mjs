@@ -9,7 +9,7 @@ import { staggerEnemy } from '../src/engine/actions.js';
 import { fixCoreRules } from '../src/model/fixCoreMechanics.js';
 import { sourceRatingValue } from '../src/model/combatRatings.js';
 import { stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../src/model/stanceRules.js';
-import { attackHitPreview, resolveAttackHit, effectiveEvasion } from '../src/engine/stanceHit.js';
+import { attackHitPreview, resolveAttackHit, effectiveEvasion, precisionStatMix, precisionEntryGrant } from '../src/engine/stanceHit.js';
 import { rollKnowledgeRead } from '../src/model/enemyIntentKnowledge.js';
 import { enemyKnowledge } from '../src/content/enemyKnowledge.js';
 
@@ -93,6 +93,13 @@ test('Evasion follows 1 + stacks x (baseAC + DEX): the owner worked example at D
  assert.equal(evasion(3),10);assert.equal(evasion(2),7);assert.equal(evasion(1),4);assert.equal(evasion(0),1);
  defender.baseEvasionBonus=2; // gear Evasion adds to the per-stack base
  assert.equal(evasion(3),1+3*(1+2+2));
+});
+test('Precision stacks are gained like Evade: 1 + stat mix; DEX 2, level 1 gives 3 stacks and Precision 9 (owner, 2026-10-19)',()=>{
+ const {ctx,enemy}=setup();ctx.player.attributes={dexterity:2,strength:0,wisdom:0,intelligence:0};ctx.player.level=1;
+ assert.equal(precisionStatMix(ctx,ctx.player),2);
+ const grant=precisionEntryGrant(ctx,ctx.player,1);assert.equal(grant,3);assert.equal(precisionEntryGrant(ctx,ctx.player,0),0);
+ ctx.player.statuses.precision={stacks:grant};
+ assert.equal(attackHitPreview(ctx,ctx.player,enemy,{combatProfile:{camp:'physical',maneuver:'attack',range:'melee'}}).accuracy,1+2*4);
 });
 test('Perception DC is 5 + target INT + target WIS + bonuses; level is ignored; observer rolls d20 + own WIS (D8)',()=>{
  const {ctx}=setup();const target={level:9,attributes:{intelligence:2,wisdom:3}},observer={attributes:{wisdom:2}};
