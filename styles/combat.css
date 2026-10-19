@@ -2062,7 +2062,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
 @media (min-width: 768px) { .as-options.grid.card-option-grid { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); } }
 .card-option {
   position: relative; display: flex; flex-direction: column; justify-content: center; gap: 0.3rem;
-  box-sizing: border-box; width: 100%; height: 7.5rem; min-height: 48px; padding: 0.6rem 0.7rem;
+  box-sizing: border-box; width: 100%; height: 8.75rem; min-height: 48px; padding: 0.6rem 0.7rem;
   text-align: left; overflow: hidden;
 }
 .card-option .co-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -2074,7 +2074,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
 .card-option .val.down { color: var(--ember); font-weight: 700; }
 .card-option[aria-pressed='true'] { outline: var(--focus-ring); }
 .card-option:disabled { opacity: 0.55; }
-.card-option .co-effect-text { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.card-option .co-effect-text, .card-option .co-effect-html { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .card-option .co-arrow { font-size: 0.6em; margin-left: 0.15em; vertical-align: 0.15em; }
 .card-option .co-part[data-dir='up'] .co-arrow { color: var(--green); }
 .card-option .co-part[data-dir='down'] .co-arrow { color: var(--ember); }
