@@ -328,3 +328,18 @@ test('the Counter\'s pre-hit Block honors the Unbreakable cap (29 Block, cap 30,
   assert.equal(gained.total, 30, 'capped at 30, not 31');
   assert.equal(gained.amount, 1);
 });
+
+test('Counter preview grants capped Block like live: Unbreakable at 29/30 previews +1, not +2', () => {
+  let { combat, enemy } = live();
+  Object.assign(combat.player, { block: 20, statuses: { unbreakable: { stacks: 1 } }, persistentPoise: { value: 20, max: 20 } }); // the card's own 9 Block brings it to 29
+  const damage = previewCard(combat, 'cx1', enemy.id).values.find(row => row.op === 'damage');
+  const fresh = live(); combat = fresh.combat;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
+  Object.assign(combat.player, { block: 29, statuses: { unbreakable: { stacks: 1 } }, persistentPoise: { value: 20, max: 20 } });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const liveBlock = combat.eventLog.slice(start).filter(e => e.type === 'blockGained' && e.source === 'counter').reduce((n, e) => n + e.amount, 0);
+  assert.equal(liveBlock, 1);
+  assert.equal(damage.counterReturn.block, liveBlock, 'preview == live');
+});

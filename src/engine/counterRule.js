@@ -9,6 +9,7 @@ import { configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
 import { previewDamageHits, damagePreviewState } from './combatDamagePreview.js';
 import { enemyMoveCarrier, expandedEnemyMove } from './combatCardTactics.js';
 import { counterCoversAttack } from './combatReactions.js';
+import * as statuses from '../framework/statusSemantics.js';
 
 /** True when the Core 2 Counter rule governs this fight. Legacy and co-op profiles keep their own return. */
 export const counterRuleActive = ctx => fixCoreEnabled(ctx);
@@ -40,6 +41,12 @@ export function counterReturnForReceipt(ctx, receipt) {
     total.hp += row.hp; total.poise += row.poise; total.block += row.block;
   });
   return total;
+}
+
+/** The part of `amount` Block `entity` can take under its blockCap (Unbreakable): one rule for the live gain and the preview. */
+export function counterBlockGrant(ctx, entity, amount) {
+  const cap = statuses.getCap(ctx, entity, 'blockCap');
+  return cap == null ? amount : Math.max(0, Math.min(amount, cap - (entity.block || 0)));
 }
 
 /** The Block a covered, advantaged hit adds to the Counter's owner before it is absorbed (0 otherwise). */
@@ -79,9 +86,10 @@ export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected
   for (let hit = 0; hit < hits; hit++) {
     const seen = profileDamageReceipt(state.previewCtx, enemy, state.defender, enemy.intent.damage, carrier).damageReceipt?.hits?.[0]?.incoming ?? 0;
     const row = counterReturn(ctx, seen, advantaged);
-    state.defender.block = (state.defender.block || 0) + row.block;
+    const granted = counterBlockGrant(state.previewCtx, state.defender, row.block);
+    state.defender.block = (state.defender.block || 0) + granted;
     previewDamageHits(ctx, enemy, defender, enemy.intent.damage, carrier.tags || [], carrier, 1, state);
-    incoming += seen; total.hp += row.hp; total.poise += row.poise; total.block += row.block;
+    incoming += seen; total.hp += row.hp; total.poise += row.poise; total.block += granted;
   }
   return { incoming, advantaged, hits, ...total };
 }

@@ -7,7 +7,7 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
-import { counterBlockBonus } from './counterRule.js';
+import { counterBlockBonus, counterBlockGrant } from './counterRule.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
 // A queued ACTION is { effect, source, owner?, target?, card?, meta? }:
@@ -360,8 +360,7 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     ? counterBlockBonus(ctx, carrier.expansionContact.receipt, carrier.expansionContact.index, chance.damageReceipt?.hits?.[0]?.incoming) : 0;
   if (counterBlock > 0) {
     // The same blockCap (Unbreakable) clamp gainBlock applies.
-    const cap = statuses.getCap(ctx, target, 'blockCap');
-    const gained = cap != null ? Math.max(0, Math.min(counterBlock, cap - (target.block || 0))) : counterBlock;
+    const gained = counterBlockGrant(ctx, target, counterBlock);
     target.block = (target.block || 0) + gained;
     if (gained > 0) ctx.emit('blockGained', { targetId: target.id, amount: gained, total: target.block, source: 'counter', ...seatOf(ctx, target) });
   }
