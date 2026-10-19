@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Core map starts in fog** ([#2197](https://github.com/cehinds/AshenSpire/pull/2197), `0.7.1.1685`). The act map is fog of war by default in the Core ruleset: the route ahead stays hidden until you reach it.
+
 - **Co-op HUD check back to green** ([#2186](https://github.com/cehinds/AshenSpire/pull/2186), `0.7.1.1685`). The co-op browser check now turns on one-tap play for its Counter and vow shortcut steps, since one tap only selects a card by default. Nothing changes in play.
 - **Pages assemble reports real rebuild failures** ([#2185](https://github.com/cehinds/AshenSpire/pull/2185), `0.7.1.1683`). A failed rebuild in the Pages assemble now reports its real cause (for example the mobile build's size budget) instead of the boilerplate NOTE line, and the assemble selftest no longer posts warnings that looked like missing /latest/ pages.
 
