@@ -32,9 +32,13 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-19
+
+- **Armor has a flat 3-point budget** ([#2145](https://github.com/cehinds/AshenSpire/pull/2145), `0.7.1.1635`). Armor now has a flat budget of 3 points whatever its rank, with a rarity bonus ready for later (0 for now).
+
 ## 2026-10-18
 
-- **Armor has a flat 3-point budget** ([#2145](https://github.com/cehinds/AshenSpire/pull/2145), `0.7.1.1633`). Armor now has a flat budget of 3 points whatever its rank, with a rarity bonus ready for later (0 for now).
+- **Matching-stance discounts follow what a card costs** ([#2142](https://github.com/cehinds/AshenSpire/pull/2142), `0.7.1.1635`). Matching-stance cards now get their cost discount on mana if they cost mana, otherwise on stamina.
 - **Vulnerable adds 25% damage everywhere** ([#2140](https://github.com/cehinds/AshenSpire/pull/2140), `0.7.1.1633`). Vulnerable now adds 25% damage instead of 50% in every mode, matching the Core rules, and card previews show it.
 - **Core 2 fights resume with their Perception reads intact** ([#2138](https://github.com/cehinds/AshenSpire/pull/2138), `0.7.1.1631`). Continue accepts a validated fight's local knowledge without requiring legacy progression records. Pending or hidden hover tips no longer consume Escape before card targeting can cancel; deliberate tap-to-inspect selection still survives a redraw. Tutorial checks wait for the completed hold under OneTap and verify that selection spends nothing. Save-loading failure checks run in two complete CI shards within the existing time limit.
 - **Upcoming combat and rest-site changes are decided** ([#2135](https://github.com/cehinds/AshenSpire/pull/2135), `0.7.1.1629`). Planned changes to stagger, stance costs, hit rolls, rewards, rest sites, combat pacing, automatic reactions, armor and Vulnerable are written down. Nothing changes in play yet.
