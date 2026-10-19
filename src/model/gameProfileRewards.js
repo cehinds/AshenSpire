@@ -3,6 +3,7 @@ import { gameModule, gameContent } from './gameProfile.js';
 import { syncZones } from './state.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
 import { acquireFlask } from './gracerefill.js';
+import { reserveStanceCards } from './stanceCoverage.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -66,6 +67,11 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
     if(problems.length)throw new Error(problems.join('; '));
   }
   const shelfCounts=new Map();
+  // Owner 2026-10-19: reserve slot(s) for a basic/cantrip card of a stance the character lacks (never in a shop).
+  if(source!=='shop'&&categories.includes('combatCards'))for(const id of reserveStanceCards(registries,run,rng,stream,available.combatCards)) {
+    if(options.length>=count)break;
+    options.push({kind:'combatCards',id});available.combatCards=available.combatCards.filter(value=>value!==id);
+  }
   // Ordinary combat draws weighted groups. Shops independently fill each shelf.
   while(options.length<count) {
     const kinds=categories.filter(kind=>(available[kind]||[]).length && (itemsPerCategory===null || (shelfCounts.get(kind)||0)<itemsPerCategory));
