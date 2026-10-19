@@ -903,12 +903,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
   const memberRegistries=()=>{const member=myMember();return member?registriesForClassMastery(registries,{...member,class:member.classId}):registries;};
-  const cardDef = (c) => {
+  const cardDef = (c, tier = upcastTiersByCard.get(upcastKey(c.instanceId))) => {
     const seat = snap?.scene?.players?.find(entry => entry.id === me);
     return combatCardView({ registries: memberRegistries(), player: seat,
       combatExpansionVersion: seat?.combatExpansionVersion || 1,
       breakMeterVersion: snap?.scene?.breakMeterVersion ?? c.breakMeterVersion ?? 0 },
-    c, upcastTiersByCard.get(upcastKey(c.instanceId)));
+    c, tier);
   };
   guardCoopTool = typeof window !== 'undefined' && new URLSearchParams(location.search).has('guardTool') ? {
     resync: () => send({ t: 'resync' }),
@@ -1267,11 +1267,18 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; clearSelection(); }
     const stack = committedReactionStack(sc.reactionStack, owner.pendingReaction.groupKey)
       .map((entry) => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
-    // The client reads a seat snapshot, not the engine: a tile's numbers come from the seat's card view
-    // (and the host's receipt when it sent one), compared with the authored base, as the hand faces do.
+    // The client reads a seat snapshot, not the engine. A tile shows the card at the option's own upcast tier.
+    // The host's hand receipt (combatPreview) prices the hand tier against no target, so it is used only when
+    // the option has neither a target nor an upcast tier and the hand tier is unchanged; otherwise the tile shows
+    // the authored base, uncoloured, rather than a possibly wrong number.
+    const handCard = o => owner.hand.find(card => card.instanceId === o.play.cardInstanceId);
     const summarize = option => summarizeCardOption(registries, sc, option, {
-      defOf: o => { const inst = owner.hand.find(card => card.instanceId === o.play.cardInstanceId); return inst ? cardDef(inst) : null; },
-      previewOf: o => cardDef(owner.hand.find(card => card.instanceId === o.play.cardInstanceId))?.combatPreview ?? null,
+      defOf: o => { const inst = handCard(o); return inst ? cardDef(inst, o.play.upcastTier || undefined) : null; },
+      previewOf: o => {
+        const inst = handCard(o);
+        if (!inst || o.play.targetId || o.play.upcastTier || upcastTiersByCard.get(upcastKey(inst.instanceId))) return null;
+        return cardDef(inst)?.combatPreview ?? null;
+      },
     });
     reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack, summarize,
       onClosed: () => { reactionShell = null; reactionOfferId = null; },

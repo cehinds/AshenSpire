@@ -45,8 +45,10 @@ export function cardEffectLine(def, preview = null, registries = null) {
           if (split.block > 0) add('def', effect, { labelId: 'cardOption.label.def', amount: split.block, base: undefined, ref: { amount, base } });
           if (split.ward > 0) add('ward', effect, { labelId: 'cardOption.label.ward', amount: split.ward, base: undefined, ref: { amount, base } });
         } else {
-          const ward = effect.op === 'gainBarrier' && isSpellCard({ combatProfile: profile, tags: def.tags });
-          add(ward ? 'ward' : 'def', effect, { labelId: ward ? 'cardOption.label.ward' : 'cardOption.label.def', amount, base });
+          const barrier = effect.op === 'gainBarrier';
+          const ward = barrier && isSpellCard({ combatProfile: profile, tags: def.tags });
+          const key = ward ? 'ward' : barrier ? 'barrier' : 'def';
+          add(key, effect, { labelId: `cardOption.label.${key}`, amount, base });
         }
         break;
       }
@@ -62,7 +64,7 @@ export function cardEffectLine(def, preview = null, registries = null) {
     const liveHp = preview?.values?.find(row => row.op === 'damage')?.value;
     found.set('return', { labelId: 'cardOption.label.return', amount: typeof liveHp === 'number' ? liveHp : payloadHp, base: payloadHp });
   }
-  const order = ['def', 'ward', 'dmg', 'return', 'poise', 'heal'];
+  const order = ['def', 'barrier', 'ward', 'dmg', 'return', 'poise', 'heal'];
   return freeze(order.filter(key => found.has(key)).map(key => {
     const row = found.get(key), ref = row.ref || row;
     // A split defense shows its own share but moves with the whole gain it came from.

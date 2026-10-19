@@ -1684,6 +1684,7 @@ combat.editLocked,,Locked in combat,Deck and equipment can only be changed outsi
 armoury.hud.newItem,,new item,The Armoury holds an item you have not looked at yet.,
 cardOption.label.def,,Def {amount},,
 cardOption.label.ward,,+{amount} Ward,,
+cardOption.label.barrier,,+{amount} Barrier,,
 cardOption.label.dmg,,Dmg {amount},,
 cardOption.label.return,,Return {amount},,
 cardOption.label.heal,,+{amount} HP,,
