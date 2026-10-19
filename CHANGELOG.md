@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Auto-combat answers your reactions only** ([#2147](https://github.com/cehinds/AshenSpire/pull/2147), `0.7.1.1635`). Auto-combat now only answers your reaction prompts, countering the attack you can read or matching your last stance. It never plays your turn.
+- **Auto-combat answers your reactions only** ([#2147](https://github.com/cehinds/AshenSpire/pull/2147), `0.7.1.1637`). Auto-combat now only answers your reaction prompts, countering the attack you can read or matching your last stance. It never plays your turn.
+- **Armor has a flat 3-point budget** ([#2145](https://github.com/cehinds/AshenSpire/pull/2145), `0.7.1.1637`). Armor now has a flat budget of 3 points whatever its rank, with a rarity bonus ready for later (0 for now).
 
 ## 2026-10-18
 
