@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Auto switch in the combat footer** ([#2168](https://github.com/cehinds/AshenSpire/pull/2168), `0.7.1.1653`). Combat now has an Auto switch next to the Reaction switch. It turns auto combat on or off mid-fight and stays in step with the Settings screen, and both switches fit on phones.
 - **Phone menu centred again; lighter combat on phones** ([#2156](https://github.com/cehinds/AshenSpire/pull/2156), `0.7.1.1653`). The main menu sits in the middle of the phone screen again, and combat taps and enemy turns are lighter on phones.
 - **Ward switched off in Core 2** ([#2150](https://github.com/cehinds/AshenSpire/pull/2150), `0.7.1.1651`). Ward is switched off in Core 2 for now and can be turned back on in the game data. Block cards now restore only Poise.
 - **Map fog reveals a clean circle** ([#2155](https://github.com/cehinds/AshenSpire/pull/2155), `0.7.1.1649`). The fog on the map now fades out in a clean circle around your location instead of being cut off in a straight line on one side.
@@ -281,8 +282,6 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-09
 
-
-
 - **Weapon attacks use four painted phases** ([#1789](https://github.com/cehinds/AshenSpire/pull/1789), `0.7.1.1229`). Reaver, Starseer, Herald and Rogue use reviewed greatsword, sword and shield, bow, casting, energy blade, paired dagger, dagger and sword sequences. Supported attacks share their timing with card previews and co-op, preserve casting effects and return to the selected stance. Unsupported weapon combinations retain their existing class actions; provisional spear paintings remain excluded. Smaller 256 px sprites and backgrounds reduce the standalone download while keeping the same on-screen placement.
 
 - **Selected combatants come forward with a compact HUD** ([#1787](https://github.com/cehinds/AshenSpire/pull/1787), `0.7.1.1227`). Keep the existing cards and footer while showing compact intent icons and HP strips. Selecting a sprite, intent or HP reveals that character's details, outlines enemies red and players green, and brings the sprite forward at 105% scale. Deselect restores its exact size and layer. Small Information controls stay above the sprite, self-cast cards work through player HP, selected cards show their action icon, and header HP fills proportionally toward Armoury. On narrow phones, compact selected details and the log toolbar stay clear of target controls and cards.
@@ -296,8 +295,6 @@ A receipt here names the pull request that landed a change; inventing one to fit
 - **The historical Alternative Test promotion is recorded** ([#1783](https://github.com/cehinds/AshenSpire/pull/1783), `0.7.1.1205`). Restore the missing receipt for the reviewed alternative combat promotion without changing its original build identity or the surrounding history.
 
 - **Alternative combat perspective becomes the default** ([#1781](https://github.com/cehinds/AshenSpire/pull/1781), `0.7.1.1203`). Regular Dev/Test inherit the approved alternative battlefield, artwork and animations together with readable card effects, primary bottom-band actions, stance counters, persistent Ward, status stacks, Upcast, hidden intents, enemy knowledge and Ashen Blight. Compact hand, Info and fighter targets stay reachable. The former root alternative branches are frozen; future updates use regular Dev/Test.
-
-
 
 - **Readable card effects and stable combat targets** ([#1768](https://github.com/cehinds/AshenSpire/pull/1768), `0.7.1.1198`). Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable. Counters retain their visible preparation through first-render work, and phone Upcast controls clear the footer.
 
@@ -430,8 +427,6 @@ A receipt here names the pull request that landed a change; inventing one to fit
 - **Skill Level Up works after victory** ([#1692](https://github.com/cehinds/AshenSpire/pull/1692), `0.7.1.1059`). Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the standalone build. Earned XP and queued choices are retained.
 
 ## 2026-10-06
-
-
 
 - **Lighter alternative characters, clearer scenery** ([#1694](https://github.com/cehinds/AshenSpire/pull/1694), `0.7.1.1059`). The alternative version uses the shared 480px sprite and 720p scenery export policy. Its custom figures keep their original crop alignment and display size while using smaller files. Original paintings remain available for future exports.
 
