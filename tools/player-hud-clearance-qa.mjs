@@ -16,9 +16,9 @@ const views = [['mobile',390,844],['desktop',1440,900],['wide',2560,1080],['tabl
 // Pressure deliberately differs from remaining Poise so the old bar cannot pass.
 const fixtures = [
   { profile:'core', fixCore:true, views, wardBlock:0, barrier:0,
-    expected:[['shield','12'],['evade','2'],['poise','4'],['ward','5']] },
+    expected:[['shield','12'],['evade','2'],['precision','3'],['poise','4'],['ward','5']] },
   { profile:'current', fixCore:false, views:[['legacy-desktop',1440,900]], wardBlock:3, barrier:4,
-    expected:[['shield','9'],['evade','2'],['poise','4'],['ward','12']] },
+    expected:[['shield','9'],['evade','2'],['precision','3'],['poise','4'],['ward','12']] },
 ];
 try {
   for (const fixture of fixtures) for (const [name, width, height] of fixture.views) {
@@ -36,7 +36,7 @@ try {
       p.persistentWard = { value: 5, max: 5 };
       p.persistentPoise = { value: 4, max: 20 };
       p.poiseMeter = { value: 17, max: 31 };
-      p.statuses = { ...p.statuses, evade: { stacks: 2 } };
+      p.statuses = { ...p.statuses, evade: { stacks: 2 }, precision: { stacks: 3 } };
       window.__renderCombatForShot();
       return { fixCore:fixCoreEnabled(combat), version:combat.combatExpansionVersion,
         hp:`${p.hp}/${p.maxHp}`, block:p.block, wardBlock:p.wardBlock, barrier:p.barrier,
@@ -71,7 +71,7 @@ try {
       });
       return { panel:box(detail), hp:box(hp), hpText:hp.textContent, badges,
         resourceKinds:[...panel.querySelectorAll('[data-meter-row="resource"]')].map(e=>e.dataset.res),
-        hasAc:/\bAC\b|armou?r class/i.test(detail.textContent),
+        statusTrayIds:[...document.querySelectorAll('.combatant.player .statuses [data-status-id], .combatant.player .statuses [data-status]')].map(e=>e.dataset.statusId||e.dataset.status), hasAc:/\bAC\b|armou?r class/i.test(detail.textContent),
         text:text.map(e=>({text:e.textContent,box:box(e)})),
         order:[...hpRow.children].map(e=>e.dataset.defenseKind || e.dataset.res), viewport:{width:innerWidth,height:innerHeight} };
     });
@@ -86,7 +86,7 @@ try {
       assert.equal(geometry.hasAc, false, name+': the selected panel contains no AC');
       assert.deepEqual(geometry.resourceKinds.filter(kind=>kind!=='hp'), [], name+': no extra pressure/resource bar replaces a defense badge');
       for (const badge of geometry.badges) {
-        assert.ok(badge.label?.toLowerCase().includes(badge.kind === 'shield' ? 'block' : badge.kind === 'evade' ? 'evade' : badge.kind), name+': accessible defense label '+badge.kind);
+        assert.ok(badge.label?.toLowerCase().includes(badge.kind === 'shield' ? 'block' : badge.kind === 'evade' ? 'evade' : badge.kind === 'precision' ? 'precision' : badge.kind), name+': accessible defense label '+badge.kind);
         assert.ok(badge.valueBox.width > 0 && badge.valueBox.height > 0, name+': selected '+badge.kind+' value is visible');
         assert.ok(Math.abs(badge.box.width-badge.box.height) < 1, name+': '+badge.kind+' retains its square aspect');
         assert.ok(badge.box.left >= geometry.panel.left && badge.box.right <= geometry.panel.right && badge.box.top >= geometry.panel.top && badge.box.bottom <= geometry.panel.bottom, name+': '+badge.kind+' fits panel');
@@ -96,7 +96,8 @@ try {
       assert.ok(geometry.hp.left >= geometry.panel.left && geometry.hp.right <= geometry.panel.right, name+': HP value fits panel');
       assert.ok(geometry.panel.left >= 0 && geometry.panel.right <= width && geometry.panel.top >= 0 && geometry.panel.bottom <= height, name+': panel fits viewport');
       assert.equal(geometry.badges.find(badge=>badge.kind==='ward').barrier, fixture.barrier ? '4' : null, name+': Barrier provenance stays on the legacy Ward badge only');
-      assert.deepEqual(geometry.order, ['shield','evade','poise','ward','hp'], name+': defense order');
+      assert.deepEqual(geometry.order, ['shield','evade','precision','poise','ward','hp'], name+': defense order');
+      assert.ok(!geometry.statusTrayIds.some(id=>['evade','precision'].includes(id)), name+': Evade and Precision live only in the defense badges, not the status tray');
       assert.deepEqual(errors, [], name+': no browser errors');
     } catch(error) { report.failures.push(error.message); }
     await page.close();
