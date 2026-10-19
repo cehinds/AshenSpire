@@ -26,4 +26,7 @@ try {
     await page.close();
   }
   console.log('HUD badges and icon buttons stay square at portrait, desktop and short landscape sizes.');
-} finally { await browser.close(); await server?.close?.(); process.exit(process.exitCode ?? 0); }
+} catch (error) { console.error(error); process.exitCode = 1; }
+finally { await browser.close(); await server?.close?.(); }
+// Exit explicitly (the static server can hold the loop open) but keep the failure code.
+process.exit(process.exitCode ?? 0);
