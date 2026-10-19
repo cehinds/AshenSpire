@@ -1,4 +1,4 @@
-import { fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
@@ -1813,7 +1813,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         const next = el.nextSibling;
         const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null }, { tooltips, blockHelp: helpText('block'),
           // The holder's own numbers (its gear Evasion), not the player's.
-          evadeHelp: combat.combatExpansionVersion === 2 ? registries.statuses.get('evade', entity)?.tooltip : undefined,
+          evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
           poiseHelp: fixCoreProtectionDescription(combat, v, 'poise') || tFull('combat.protection.poise'),
           wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward') });
         bars.insertBefore(row, next);
