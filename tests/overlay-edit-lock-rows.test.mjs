@@ -38,3 +38,10 @@ test('the overlay and main.js route the combat edit lock into the overlay switch
   assert.match(readFileSync(new URL('../src/ui/components/overlay.js', import.meta.url), 'utf8'), /editLocked\?\.\(\)\) lockEquipmentRows\(panel\)/);
   assert.match(readFileSync(new URL('../src/main.js', import.meta.url), 'utf8'), /editLocked: \(\) => editingLocked\(run, xpCombat\)/);
 });
+
+test('every place main.js swaps or drops the run also clears the live combat, so the lock cannot leak into the next run', () => {
+  const lines = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8').split('\n');
+  const swaps = lines.map((line, at) => [line, at]).filter(([line]) => /^\s*run = (null|loaded|createRunState)\b/.test(line));
+  assert.ok(swaps.length >= 5);
+  for (const [line, at] of swaps) assert.match(lines[at - 1] + (lines[at - 2] || ''), /xpCombat = null/, `line ${at + 1}: ${line.trim()}`);
+});

@@ -1270,6 +1270,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   // the old Exposure states; the pose must also carry their older rules.
   if (legacyArcaneShot) delete configSnapshot.breakMeterVersion;
   rebuildRegistries(configSnapshot, null, gameProfile);
+  xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
     gameProfile, profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
@@ -1490,6 +1491,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   onLoaded?.();
   resetArmouryTraySession();
   activeSlot = slot;
+  xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = loaded;
   if (!isConfiguredRun(run)) refreshRunClassMastery(run, saves.loadMeta(), registries);
   if (!isConfiguredRun(run)) registries = registriesForClassMastery(registries, run);
@@ -1648,6 +1650,7 @@ function quitWithoutSaving({ returnFocusElement } = {}) {
     onConfirm: () => {
       closeOverlay();
       audio.stopMusic();
+      xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
       run = null;
       showCollapsedTitle();
     },
@@ -1805,6 +1808,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
   if (showProfileNoticeIfNeeded()) return;
   audio.music('title');
   resetArmouryTraySession();
+  xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
   if (startupGatePending && !skipStartup) {
@@ -2208,6 +2212,7 @@ function quitGame() {
   closeOverlay();
   dropLanLink();
   audio.stopMusic();
+  xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = null;
   mountQuitScreen(app, { savedRun, onBack: showCollapsedTitle });
 }
