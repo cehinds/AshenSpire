@@ -135,6 +135,20 @@ export function unobserveIconTray(row) {
 }
 
 // Reuse each icon and its listeners when space changes; only what shows moves.
+// Body zoom and the root font size are computed-style reads, and every tray
+// fit is followed by style writes, so each read after the first tray's write
+// flushed style again (a render fits a tray per combatant). Neither changes
+// within a task, so the pair is read once and dropped at the end of the task.
+let metrics = null;
+function trayMetrics() {
+  if (metrics) return metrics;
+  const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
+  const rem = Math.max(16 / zoom, parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
+  metrics = { zoom, rem };
+  queueMicrotask(() => { metrics = null; });
+  return metrics;
+}
+
 export function fitIconTray(row, width) {
   if (!row) return;
   let state = trays.get(row);
@@ -176,8 +190,7 @@ export function fitIconTray(row, width) {
   const { items, overflow, summary, list } = state;
   // `width` arrives in viewport px; the tray is laid out in local (pre-zoom) px.
   // A reference rem is at least 16 physical px, as in the hand and footer plans.
-  const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
-  const rem = Math.max(16 / zoom, parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
+  const { zoom, rem } = trayMetrics();
   const plan = planIconTray({ count: items.length, width: width / zoom, rem });
   row.style.setProperty('--icon-tray-size', `${plan.size}px`);
   row.style.setProperty('--icon-tray-gap', `${plan.gap}px`);
