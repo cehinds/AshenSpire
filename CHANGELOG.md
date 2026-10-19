@@ -34,11 +34,12 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Map fog reveals a clean circle** ([#2155](https://github.com/cehinds/AshenSpire/pull/2155), `0.7.1.1641`). The fog on the map now fades out in a clean circle around your location instead of being cut off in a straight line on one side.
+- **One tap no longer plays a card** ([#2146](https://github.com/cehinds/AshenSpire/pull/2146), `0.7.1.1641`). A tap now selects a card and shows its targets. A second tap or a target pick plays it. Players who want one-tap play can turn on "Tap a card to play it" in Settings.
+- **Matching stances hit harder and hit chances show when you pick a card** ([#2144](https://github.com/cehinds/AshenSpire/pull/2144), `0.7.1.1639`). Matching stances now add 25% effectiveness. Enemy intent checks use the target's Intelligence and Wisdom against your Wisdom roll. Hit chances show on every target as soon as you pick a card that can hit it.
 - **Armor has a flat 3-point budget** ([#2145](https://github.com/cehinds/AshenSpire/pull/2145), `0.7.1.1637`). Armor now has a flat budget of 3 points whatever its rank, with a rarity bonus ready for later (0 for now).
 
 ## 2026-10-18
-
-- **Map fog reveals a clean circle** ([#2155](https://github.com/cehinds/AshenSpire/pull/2155), `0.7.1.1637`). The fog on the map now fades out in a clean circle around your location instead of being cut off in a straight line on one side.
 
 - **Matching-stance discounts follow what a card costs** ([#2142](https://github.com/cehinds/AshenSpire/pull/2142), `0.7.1.1635`). Matching-stance cards now get their cost discount on mana if they cost mana, otherwise on stamina.
 - **Vulnerable adds 25% damage everywhere** ([#2140](https://github.com/cehinds/AshenSpire/pull/2140), `0.7.1.1633`). Vulnerable now adds 25% damage instead of 50% in every mode, matching the Core rules, and card previews show it.
