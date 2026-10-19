@@ -1,0 +1,37 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { resolveGameProfile,applyGameProfileToContent,bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { createRunState } from '../src/model/state.js';
+import { createRng } from '../src/engine/rng.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { dispatch,previewCard } from '../src/engine/combat.js';
+import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
+import { applyAttackDamage,executeRunEffects,gainBlock } from '../src/engine/actions.js';
+import { profileDamageReceipt,setProfileStance,profileCardCosts } from '../src/engine/gameProfileCombat.js';
+import { gameProfileEquipmentReceipt,gameProfileEffectiveAttributes,gameProfileRatingReceipt } from '../src/model/gameProfileRun.js';
+import { rollKnowledgeRead } from '../src/model/enemyIntentKnowledge.js';
+import { enemyKnowledge } from '../src/content/enemyKnowledge.js';
+import { attackHitPreview } from '../src/engine/stanceHit.js';
+const profile=resolveGameProfile({formatVersion:1,core:'ashen.core@2.0.0',modules:{}});
+const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
+function liveCore() {
+ const run=createRunState({registries:reg,classId:'reaver',seed:511,profileMeta:{gameProfileUnlocks:{core:{completedRunIds:['a','b','c']}}}});
+ const combat=createRunCombat({registries:reg,run,rng:createRng(511),enemyIds:['wanderingSoldier']});
+ delete combat.player.combatStance;
+ return combat;
+}
+test('Core defend stance adds its DR bonus to Block: face, preview and live gain agree (owner 2026-10-19)',()=>{
+ const combat=liveCore(),weight=combat.gameProfile.modules?.effects?.defenseRatingWeight??1;
+ const inst={instanceId:'stance-defend',cardId:'core.defend',upgraded:false};combat.piles.hand.push(inst);
+ const shown=previewCard(combat,inst.instanceId).values.find(v=>v.op==='block');
+ combat.player.combatStance={maneuver:'defend',camp:'physical',range:'melee'};
+ const afterStance=previewCard(combat,inst.instanceId).values.find(v=>v.op==='block');
+ assert.ok(afterStance.value>=shown.value);
+ const base=5,dr=combat.player.ratings.dr||0,eff=combat.player.combatStance?1.25:1;
+ const out=dispatch(combat,{type:'playCard',cardInstanceId:inst.instanceId});
+ const gained=out.events.find(e=>e.type==='blockGained'&&e.targetId===combat.player.id);
+ assert.equal(gained.amount,afterStance.value,'preview == live');
+ assert.equal(gained.amount,Math.floor((base+(dr+3)*weight)*eff));
+});
