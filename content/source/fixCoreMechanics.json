@@ -1,6 +1,9 @@
 {
   "version": 1,
   "enabled": true,
+  "ward": {
+    "enabled": false
+  },
   "defaultTags": [
     "defense:wardProtection",
     "defense:poiseProtection"
