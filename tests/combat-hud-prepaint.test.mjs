@@ -32,7 +32,7 @@ test('current HUD tracking and footer reads reserve the incoming independent Inf
   combat.querySelectorAll=()=>[]; // The hidden reading door has no painted DOM rectangle.
   field.querySelectorAll=selector=>selector==='.combatant.player'?[player]:[];
   const settledTargets=[{id:'e1',x:264,y:200,width:88},{id:'e3',x:264,y:154,width:88}];
-  const context={hudGeometry,offsetPlacement,classicAppearance:()=>true,getComputedStyle:()=>({}),field,settledTargets,settledFooterSize:44,playerInfoRects:[],combatTargetHudFootprints,
+  const context={hudGeometry,offsetPlacement,classicAppearance:()=>true,getComputedStyle:()=>({}),rootStyle:{getPropertyValue:()=>''},field,settledTargets,settledFooterSize:44,playerInfoRects:[],combatTargetHudFootprints,
     combatPlayerInfoRect,combatPlayerActionRect,placePlayerIntentGlyph:()=>null,visibleCombatPanelRect,uiZoom:()=>zoom,
     currentSpriteArtBounds:()=>({left:50,right:130,top:230+delta,bottom:300+delta}),readRestingHand:()=>({clearanceTop:404+delta}),
     playerDetailsPlacement:input=>{options=input;return playerDetailsPlacement(input);},
@@ -80,7 +80,7 @@ test('the first co-op panel reserves every later independently anchored Info bef
   });
   const field={closest:()=>combat,getBoundingClientRect:()=>({left:0,top:80}),
     querySelectorAll:selector=>selector==='.combatant.player'?players:[]};
-  const tracking=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,classicAppearance:()=>true,getComputedStyle:()=>({}),
+  const tracking=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,classicAppearance:()=>true,getComputedStyle:()=>({}),rootStyle:{getPropertyValue:()=>''},
     field,uiZoom:()=>1,visibleCombatPanelRect:()=>null,settledTargets:[],settledFooterSize:44,
     readRestingHand:()=>null,currentSpriteArtBounds:sprite=>({left:60+sprite.index*280,right:104+sprite.index*280,top:224,bottom:300}),
     combatPlayerInfoRect:node=>node.infoRect,combatPlayerActionRect,placePlayerIntentGlyph:()=>null,combatTargetHudFootprints,playerInfoRects:[],

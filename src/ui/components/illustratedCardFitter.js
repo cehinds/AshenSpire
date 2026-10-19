@@ -1,15 +1,39 @@
 import {resetCardLayout,applyCardLayouts} from './cardLayout.js';
+import {layoutMetrics} from '../layoutMetrics.js';
 const ruleGeometry = new WeakMap();
+// A face's fit is a pure function of its width, its text, its line budgets, the
+// page scale and the loaded fonts, and a full fit is a search of many forced
+// layouts. The inputs the last fit used are kept per face, and a face asked to
+// fit again with the same inputs keeps the result it has (the hand refits every
+// card on each render, and almost none of them changed).
+const fitSignatures = new WeakMap();
+let fontEpoch = 0, fontsWatched = false;
+function watchFonts() {
+  if (fontsWatched || typeof document === 'undefined' || !document.fonts?.addEventListener) return;
+  fontsWatched = true;
+  document.fonts.addEventListener('loadingdone', () => { fontEpoch++; });
+}
+function fitSignature(face, width) {
+  const { fontSize, zoom } = layoutMetrics();
+  const texts = [...face.querySelectorAll('.ic-text[data-auto-fit="true"]')]
+    .map(text => `${text.dataset.maxLines}|${text.dataset.minFont}|${text.dataset.maxFont}|${text.dataset.cardBinding}`);
+  return [width, fontEpoch, fontSize, zoom, face.className, face.parentElement?.className, face.dataset.designWidth,
+    face.dataset.fullRules, face.dataset.cardLayoutId, face.querySelector('[data-face-overflow="true"]') ? 1 : 0,
+    face.textContent, texts.join(',')].join('\u0001');
+}
 
 // Search every text in one batch. Complete effects use the authored readable
 // floor, then borrow artwork height; names and costs keep their line budgets.
 export function fitIllustratedCards(cards) {
   const faces=[];
   for(const card of cards){const face=card?.querySelector('.illustrated-card-face');if(face)faces.push(face);}
+  watchFonts();
   const widths=faces.map(face=>face.clientWidth);
-  const texts=[];
+  const signatures=faces.map((face,i)=>widths[i]?fitSignature(face,widths[i]):null);
+  const texts=[],skipped=new Set();
   faces.forEach((face,i)=>{
     if(!widths[i])return;
+    if(fitSignatures.get(face)===signatures[i]){skipped.add(face);return;}
     resetCardLayout(face);
     const scale=widths[i]/Number(face.dataset.designWidth);
     for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
@@ -138,5 +162,6 @@ export function fitIllustratedCards(cards) {
     if(row.rank)row.rank.style.top=(parseFloat(row.panel.style.top)+Number(row.rank.dataset.panelInset))+'%';
     row.face.dataset.rulesExpanded=String(extra>1);row.text.dataset.rulesComplete='true';
   }
-  applyCardLayouts(faces);
+  applyCardLayouts(faces.filter(face=>!skipped.has(face)));
+  faces.forEach((face,i)=>{if(signatures[i]&&!skipped.has(face))fitSignatures.set(face,signatures[i]);});
 }
