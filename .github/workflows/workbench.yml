@@ -86,7 +86,7 @@ jobs:
   workbench:
     name: Workbench, studios and engine export
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
         with:
@@ -164,7 +164,9 @@ jobs:
           LOG="${RUNNER_TEMP:-/tmp}/workbench-tap.log"
           # --test-reporter=tap pins the format the reader below parses, so it is the
           # same on windows-latest and macos-latest whatever the runner's default is.
-          set +e; node --test --test-reporter=tap --test-timeout=180000 workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/engine-export.test.mjs tests/build-lock.test.mjs tests/build-steps.test.mjs tests/write-atomic.test.mjs tests/shot-match.test.mjs 2>&1 | tee "$LOG"; rc=${PIPESTATUS[0]}; set -e
+          # --test-timeout (8 min) must exceed the engine-export job test's wait for the repo
+          # .build-lock: CLI_WAIT_MS (5 min) + 60 s in workbench/tests/server.test.mjs.
+          set +e; node --test --test-reporter=tap --test-timeout=480000 workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/engine-export.test.mjs tests/build-lock.test.mjs tests/build-steps.test.mjs tests/write-atomic.test.mjs tests/shot-match.test.mjs 2>&1 | tee "$LOG"; rc=${PIPESTATUS[0]}; set -e
           # The TAP failures (first 10 not-ok lines, each with its preceding subtest
           # name and the 10 lines after it) and the pass/fail totals become annotations.
           # The summary notice is unconditional: with no "# pass" line it says so. The
