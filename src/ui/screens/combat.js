@@ -3298,7 +3298,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (fightOver) return;
       if (quickNavMode() === 'off') return onMenu('settings');
       e.stopPropagation();
-      openQuickNav(menuBtn, 'combat', {
+      const panel = openQuickNav(menuBtn, 'combat', {
         counts: { deck: run.deck.length, draw: combat.piles.draw.length, discard: combat.piles.discard.length },
         hasSave: !!(onSave || onQuit),
         controls: quickControls,
@@ -3312,6 +3312,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave({ returnFocusElement: menuBtn }) } : {}),
         },
       });
+      // D15: the equipment rows read as disabled, and are not actionable, until the fight resolves.
+      if (panel && editLocked()) for (const act of ['inventory', 'character']) {
+        const row = panel.querySelector(`.qn-row[data-act="${act}"]`);
+        if (row) { row.disabled = true; row.setAttribute('aria-disabled', 'true'); row.title = tFull('combat.editLocked'); }
+      }
     });
   }
 

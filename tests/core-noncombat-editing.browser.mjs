@@ -37,6 +37,11 @@ try {
       await page.evaluate(() => { window.__combatRunForShot.loadout.storage.push('qa-new-item'); window.__renderCombatForShot(); });
       assert.equal((await state()).glow, 'true', 'new item glows');
       if (shots) await page.screenshot({ path: `${shots}/armoury-glow-locked.png`, clip: { x: 0, y: 0, width: 1024, height: 200 } });
+      // Quick-nav equipment rows are disabled too while locked.
+      await page.evaluate(() => { document.querySelector('#combat-menu')?.click(); });
+      const rows = await page.evaluate(() => ['inventory', 'character'].map(act => { const r = document.querySelector(`.qn-row[data-act="${act}"]`); return r ? [r.disabled, r.getAttribute('aria-disabled')] : null; }));
+      console.log('quick-nav rows', JSON.stringify(rows)); for (const row of rows) if (row) assert.deepEqual(row, [true, 'true'], 'quick-nav equipment row disabled in combat');
+      await page.keyboard.press('Escape');
       // Resolved: buttons enable and the Armoury opens, which marks the item seen.
       await page.evaluate(() => { window.__combat.result = 'win'; window.__renderCombatForShot(); });
       s = await state();
