@@ -94,7 +94,7 @@ try {
       for (const enemy of window.__combat.enemies) enemy.knowledgeAction.reads.player.visibility = 'unknown';
       window.__renderCombatForShot();
     });
-    assert.equal(await card.locator('.card-hit-chances').count(), 0, 'failed reads hide selected-card odds');
+    assert.match(await card.locator('.card-hit-chances').textContent(), /\d+(?:\.\d+)?%/, 'a failed Perception read no longer hides selected-card odds (D8)');
     const mana = await page.locator('.energy-orb svg image').evaluateAll(nodes => nodes.filter(node => ['diamond','spent'].includes(node.dataset.orbPart)).map(node => ({ kind:node.dataset.orbPart, x:Number(node.getAttribute('x')), y:Number(node.getAttribute('y')), w:Number(node.getAttribute('width')), h:Number(node.getAttribute('height')) })));
     assert.equal(mana.filter(gem => gem.kind === 'diamond').length,6);
     assert.equal(mana.filter(gem => gem.kind === 'spent').length,18);

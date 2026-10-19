@@ -50,7 +50,7 @@ To tune the matching-stance bonus globally, change the existing `stance.effectiv
 }
 ```
 
-This example deliberately changes that source to a 25% bonus; the shipped default is **1.0025**, not 1.25. Merge these entries with any existing tags/bindings rather than dropping unrelated behavior. Omitted binding parameters inherit module values. The adapter reads active equipped mounts, actors, statuses and the current card window, not carried inventory. Conflicting exclusive family overrides are rejected. Protection tuning uses `protectionParameters`, for example `{"defense.wardProtection":{"multiplier":0.6}}` for 40% magical reduction while active. These are authoring examples, not additional shipped balance changes.
+This example restates the shipped 25% bonus (`effectivenessMultiplier` **1.25**, owner D5) as an authored override. Merge these entries with any existing tags/bindings rather than dropping unrelated behavior. Omitted binding parameters inherit module values. The adapter reads active equipped mounts, actors, statuses and the current card window, not carried inventory. Conflicting exclusive family overrides are rejected. Protection tuning uses `protectionParameters`, for example `{"defense.wardProtection":{"multiplier":0.6}}` for 40% magical reduction while active. These are authoring examples, not additional shipped balance changes.
 
 ## Runtime methods and request coverage
 
@@ -77,7 +77,7 @@ These resolve ambiguous requests and remain configurable; they are not represent
 | --- | --- |
 | Perception base DC | 5 from the explicit equation, rather than the separately mentioned 8. |
 | Perception scaling | Target level above 1 and target Intelligence above baseline 0, each weighted +1. Roll uses observer WIS. |
-| Same-stance effectiveness | Literal +0.25% = multiplier 1.0025. The correction to 25% applied to Poise. |
+| Same-stance effectiveness | Multiplier 1.25 (+25%), owner D5. |
 | Precision and Evasion | +1 per stack, +1 additional Precision for Smash/Sweep; base Evasion 1 and stance clamp 1–1.5. |
 | Status decay/riders | Remove 1 stack at owner turn start once per round; stagger adds 1 Weak and 1 Vulnerability. |
 | Reward interpretation | Weighted group draw per ordinary offer slot; take one from three. |
