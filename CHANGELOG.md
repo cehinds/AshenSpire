@@ -34,13 +34,12 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Ward switched off in Core 2** ([#2150](https://github.com/cehinds/AshenSpire/pull/2150), `0.4.0.1903`). Ward is switched off in Core 2 for now and can be turned back on in the game data. Block cards now restore only Poise.
 - **One tap no longer plays a card** ([#2146](https://github.com/cehinds/AshenSpire/pull/2146), `0.7.1.1641`). A tap now selects a card and shows its targets. A second tap or a target pick plays it. Players who want one-tap play can turn on "Tap a card to play it" in Settings.
 - **Matching stances hit harder and hit chances show when you pick a card** ([#2144](https://github.com/cehinds/AshenSpire/pull/2144), `0.7.1.1639`). Matching stances now add 25% effectiveness. Enemy intent checks use the target's Intelligence and Wisdom against your Wisdom roll. Hit chances show on every target as soon as you pick a card that can hit it.
 - **Armor has a flat 3-point budget** ([#2145](https://github.com/cehinds/AshenSpire/pull/2145), `0.7.1.1637`). Armor now has a flat budget of 3 points whatever its rank, with a rarity bonus ready for later (0 for now).
 
 ## 2026-10-18
-
-- **Ward switched off in Core 2** ([#2150](https://github.com/cehinds/AshenSpire/pull/2150), `0.7.1.1635`). Ward is switched off in Core 2 for now and can be turned back on in the game data. Block cards now restore only Poise.
 
 - **Matching-stance discounts follow what a card costs** ([#2142](https://github.com/cehinds/AshenSpire/pull/2142), `0.7.1.1635`). Matching-stance cards now get their cost discount on mana if they cost mana, otherwise on stamina.
 - **Vulnerable adds 25% damage everywhere** ([#2140](https://github.com/cehinds/AshenSpire/pull/2140), `0.7.1.1633`). Vulnerable now adds 25% damage instead of 50% in every mode, matching the Core rules, and card previews show it.
@@ -277,8 +276,6 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-09
 
-
-
 - **Weapon attacks use four painted phases** ([#1789](https://github.com/cehinds/AshenSpire/pull/1789), `0.7.1.1229`). Reaver, Starseer, Herald and Rogue use reviewed greatsword, sword and shield, bow, casting, energy blade, paired dagger, dagger and sword sequences. Supported attacks share their timing with card previews and co-op, preserve casting effects and return to the selected stance. Unsupported weapon combinations retain their existing class actions; provisional spear paintings remain excluded. Smaller 256 px sprites and backgrounds reduce the standalone download while keeping the same on-screen placement.
 
 - **Selected combatants come forward with a compact HUD** ([#1787](https://github.com/cehinds/AshenSpire/pull/1787), `0.7.1.1227`). Keep the existing cards and footer while showing compact intent icons and HP strips. Selecting a sprite, intent or HP reveals that character's details, outlines enemies red and players green, and brings the sprite forward at 105% scale. Deselect restores its exact size and layer. Small Information controls stay above the sprite, self-cast cards work through player HP, selected cards show their action icon, and header HP fills proportionally toward Armoury. On narrow phones, compact selected details and the log toolbar stay clear of target controls and cards.
@@ -292,8 +289,6 @@ A receipt here names the pull request that landed a change; inventing one to fit
 - **The historical Alternative Test promotion is recorded** ([#1783](https://github.com/cehinds/AshenSpire/pull/1783), `0.7.1.1205`). Restore the missing receipt for the reviewed alternative combat promotion without changing its original build identity or the surrounding history.
 
 - **Alternative combat perspective becomes the default** ([#1781](https://github.com/cehinds/AshenSpire/pull/1781), `0.7.1.1203`). Regular Dev/Test inherit the approved alternative battlefield, artwork and animations together with readable card effects, primary bottom-band actions, stance counters, persistent Ward, status stacks, Upcast, hidden intents, enemy knowledge and Ashen Blight. Compact hand, Info and fighter targets stay reachable. The former root alternative branches are frozen; future updates use regular Dev/Test.
-
-
 
 - **Readable card effects and stable combat targets** ([#1768](https://github.com/cehinds/AshenSpire/pull/1768), `0.7.1.1198`). Damage effects show their damage types while action names stay at the bottom. Authored card faces resolve fixed formula values and explain supported state-dependent quantities. Fighters anchor to the hand viewport, and small-screen player and enemy tap areas remain reachable. Counters retain their visible preparation through first-render work, and phone Upcast controls clear the footer.
 
@@ -426,8 +421,6 @@ A receipt here names the pull request that landed a change; inventing one to fit
 - **Skill Level Up works after victory** ([#1692](https://github.com/cehinds/AshenSpire/pull/1692), `0.7.1.1059`). Class, Spellcraft, weapon and Combat Maneuvers claims no longer crash in the standalone build. Earned XP and queued choices are retained.
 
 ## 2026-10-06
-
-
 
 - **Lighter alternative characters, clearer scenery** ([#1694](https://github.com/cehinds/AshenSpire/pull/1694), `0.7.1.1059`). The alternative version uses the shared 480px sprite and 720p scenery export policy. Its custom figures keep their original crop alignment and display size while using smaller files. Original paintings remain available for future exports.
 
