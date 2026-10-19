@@ -76,7 +76,7 @@ test('ward off: Poise cuts a magic hit x0.75 and spends Poise', () => {
   const { combat, target } = fixture(false);
   hit(combat, target, 8, MAGIC);
   assert.equal(target.hp, 94, '8 x 0.75 = 6');
-  assert.equal(target.persistentPoise.value, 18, 'spent the 2 prevented');
+  assert.equal(target.persistentPoise.value, 19, 'D13: Poise damage floor(0.2 x 8) = 1, not the 2 prevented');
 });
 
 test('ward off: Barrier still soaks magic first, Block never does', () => {
@@ -97,7 +97,7 @@ test('ward off: a split hit shares one Poise budget (physical and magic together
   const { combat, target } = fixture(false, 2);
   const before = target.hp;
   hit(combat, target, 8, SPLIT);
-  assert.equal(target.persistentPoise.value, 0, 'both parts drew on the same 2 points');
+  assert.equal(target.persistentPoise.value, 1, 'D13: one Poise damage point (floor(0.2 x 8)) off the shared 2-point pool');
   const lost = before - target.hp;
   assert.ok(lost < 8 && lost >= 8 - 2, `lost ${lost}: reduced, but by no more than the 2-point pool`);
 });
@@ -108,7 +108,7 @@ test('ward off: Poise spends across hits in contact order', () => {
   combat.emit = (type, payload) => { if (type === 'damageDealt') first.push(payload); return emit(type, payload); };
   enqueueExpandedAction(combat, [action(combat, target, 8, MAGIC), action(combat, target, 8, MAGIC)], { source: combat.player, target, carrier: MAGIC });
   while (combat.queue.length) executeAction(combat, combat.queue.shift());
-  assert.equal(target.persistentPoise.value, 0);
+  assert.equal(target.persistentPoise.value, 1, 'D13: floor(0.2 x 8) = 1 Poise damage per contact off a pool of 3');
   assert.ok((first[0].poiseAbsorbed || 0) >= (first[1].poiseAbsorbed || 0), 'the first contact meets the fuller pool');
 });
 
@@ -128,7 +128,7 @@ test('ward on: magic is not reduced by Poise (old behaviour)', () => {
   target.ratings.ward = 0; target.persistentWard.value = 0; target.persistentWard.max = 0;
   hit(combat, target, 8, MAGIC);
   assert.equal(target.hp, 92);
-  assert.equal(target.persistentPoise.value, 20);
+  assert.equal(target.persistentPoise.value, 19, 'Poise damage is a share of the whole hit, even when Ward on keeps magic out of Poise mitigation');
 });
 
 test('ward off: tooltip says Poise reduces all damage', () => {

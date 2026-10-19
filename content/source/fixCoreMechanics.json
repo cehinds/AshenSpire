@@ -44,7 +44,7 @@
     "weakARMultiplier": 0.75,
     "vulnerabilityMultiplier": 1.25,
     "staggerRiders": {
-      "weak": 1,
+      "weak": 0,
       "vulnerable": 1
     },
     "overrides": {

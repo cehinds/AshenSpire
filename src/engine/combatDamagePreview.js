@@ -1,4 +1,4 @@
-import { fixCoreEnabled, damageReceipt } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, damageReceipt, fixCorePoiseSpent, fixCoreStaggeredRules } from '../model/fixCoreMechanics.js';
 import { configuredCombat, profileDamageReceipt } from './gameProfileCombat.js';
 import { computeAttackDamage } from './actions.js';
 import { prepareMatchupHit, matchupRules, hitRiders } from './combatMatchups.js';
@@ -37,7 +37,15 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
         if (fixCoreEnabled(ctx)) {
           defender.barrier = Math.max(0, (defender.barrier || 0) - receipt.barrierMitigated);
           if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
-          if (defender.persistentPoise) defender.persistentPoise.value = Math.max(0, defender.persistentPoise.value - receipt.poiseMitigated);
+          if (defender.persistentPoise) {
+            const poiseBefore = defender.persistentPoise.value;
+            defender.persistentPoise.value = Math.max(0, poiseBefore - fixCorePoiseSpent(ctx, receipt));
+            // A Poise break leaves the owner Vulnerable (D13), so the next hit of the card meets it.
+            if (poiseBefore > 0 && defender.persistentPoise.value === 0) {
+              const stacks = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules).vulnerableStacks;
+              if (stacks > 0) defender.statuses = { ...defender.statuses, vulnerable: { ...defender.statuses?.vulnerable, stacks: (defender.statuses?.vulnerable?.stacks || 0) + stacks } };
+            }
+          }
         }
       }
     }

@@ -727,7 +727,11 @@ function enemyTurnStart(combat) {
 // recovery. Leaves the enemy dead when a tick killed it.
 function enemyOwnerTurnStart(combat, enemy) {
   decayAtTurnStart(combat, enemy);
-  if (fixCoreEnabled(combat)) enemy.fixCoreStaminaRemaining = enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId));
+  if (fixCoreEnabled(combat)) {
+    // A Poise break (Staggered stance) took SP from this turn's pool; it is owed once.
+    enemy.fixCoreStaminaRemaining = Math.max(0, (enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId))) - (enemy.pendingStaminaLoss || 0));
+    enemy.pendingStaminaLoss = 0;
+  }
   beginEnemyBurdens(combat,enemy,Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId)));
   Reactions.revealActor(combat, enemy);
   proposalTurn(combat,enemy,'start');

@@ -59,10 +59,10 @@ test('mixed multihit receipt spends Block Barrier Ward and Poise sequentially an
  const before=JSON.stringify({target,rng:combat.rng.getCounters()});
  const preview=previewDamageHits(combat,combat.player,target,20,[],carrier,3);
  assert.equal(JSON.stringify({target,rng:combat.rng.getCounters()}),before);
- assert.deepEqual(preview.hitDamages,[6,17,20]);assert.equal(preview.totalDamage,43);
+ assert.deepEqual(preview.hitDamages,[6,25,25]);assert.equal(preview.totalDamage,56);// the first hit breaks Poise: Vulnerable x1.25 from then on
  const receipts=[];for(let i=0;i<3;i++){primeAccuracyRolls(combat);applyAttackDamage(combat,combat.player,target,20,[],carrier);receipts.push(combat.eventLog.filter(row=>row.type==='damageDealt').at(-1).damageReceipt.hits[0]);}
- assert.deepEqual(receipts.map(row=>row.hpLoss),preview.hitDamages);assert.equal(500-target.hp,43);
- assert.deepEqual(receipts.map(row=>[row.blocked,row.barrierReduced,row.wardReduced,row.poiseReduced]),[[10,2,2,0],[0,0,0,3],[0,0,0,0]]);
+ assert.deepEqual(receipts.map(row=>row.hpLoss),preview.hitDamages);assert.equal(500-target.hp,56);
+ assert.deepEqual(receipts.map(row=>[row.blocked,row.barrierReduced,row.wardReduced,row.poiseReduced]),[[10,2,2,0],[0,0,0,0],[0,0,0,0]]);
 });
 test('prepared spell stance matches casting cards for MP and fractional effect',()=>{
  const {combat}=live();const card={resourceCosts:{sp:0,mp:3},combatProfile:{camp:'spell',maneuver:'casting',range:'melee'}};

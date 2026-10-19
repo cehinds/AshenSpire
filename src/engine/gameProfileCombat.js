@@ -2,7 +2,7 @@ import { applyStatus } from './statuses.js';
 import { attackHitPreview } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts } from '../model/combatRatings.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, fixCorePoiseDamage } from '../model/fixCoreMechanics.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { cardPreparationCategory } from '../model/cardClassification.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
@@ -106,7 +106,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const evaded = roll !== null && roll >= hitChance;
   if (evaded) amount = 0;
   else if (evade && !modern) amount = Math.floor(amount * (stances.evadeFailureMultiplier ?? 2));
-  let blocked = 0, poiseMitigated = 0, wardMitigated = 0;
+  let blocked = 0, poiseMitigated = 0, wardMitigated = 0, poiseDamage = 0;
   const incoming = amount;
   const profile = {...(carrier.combatProfile || {}), ...(Number.isFinite(carrier.magicShare) ? {magicShare:carrier.magicShare} : {})};
   const share = magicShareOf(profile,ctx.ratingsRules);
@@ -120,7 +120,11 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     transition('barrier','Barrier',magical,magical-barrierMitigated,'mitigation');
     // Ward off: the magic Barrier left meets Poise with the physical residual (matches actions.js).
     const poiseMeetsMagic = fixCoreWardDisabled(ctx);
-    const poise = protectionReceipt(ctx,target,'physical',physical-blocked+(poiseMeetsMagic ? magical-barrierMitigated : 0));
+    // Poise damage is dealt first (owner D13): the pool is spent before this hit meets it, so a hit that
+    // breaks Poise lands without Poise mitigation.
+    poiseDamage = fixCorePoiseDamage(ctx,target,incoming);
+    const poiseTarget = poiseDamage > 0 ? {...target,persistentPoise:{...target.persistentPoise,value:Math.max(0,target.persistentPoise.value-poiseDamage)}} : target;
+    const poise = protectionReceipt(ctx,poiseTarget,'physical',physical-blocked+(poiseMeetsMagic ? magical-barrierMitigated : 0));
     const ward = protectionReceipt(ctx,target,'magical',poiseMeetsMagic ? 0 : magical-barrierMitigated);
     poiseMitigated=poise.reduced;wardMitigated=ward.reduced;
     sources.push(...poise.sources,...ward.sources);
@@ -139,9 +143,9 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     }
   }
   return { raw, wardMitigated, barrierMitigated,
-    damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,hpLoss:amount,sources}]),
+    damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,poiseDamage,hpLoss:amount,sources}]),
     hitChance, uncertain: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) && roll === null,
-    hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated,
+    hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDamage,
     blockRemaining: Math.max(0, (target?.block || 0) - blocked), evaded, advantage,
     defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,
     attackStance: attacking, defenseStance: defending,

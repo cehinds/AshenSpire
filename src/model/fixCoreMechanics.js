@@ -142,3 +142,21 @@ export function snapshotFixCoreRules(ctx) {
   rules.protectionParameters=Object.fromEntries(fixCoreProtection.filter(([id])=>id.startsWith('defense.')).map(([id,row])=>[id,{...parameterDefaults(row.manifest.parameters),...(rules.protectionParameters?.[id] || {})}]));
   return validateFixCoreRules(rules);
 }
+
+/**
+ * Poise damage a hit deals under FixCore: floor(damageRatio x incoming damage), whole, never more than the pool
+ * holds. Null when Poise does not deplete by ratio (depletes:false) or the owner has no Poise left.
+ * Owner D13: "poise damage is floor(.2 of the total damage) inflicted and calculated before damage".
+ */
+export function fixCorePoiseDamage(ctx, entity, incoming) {
+  if (!fixCoreEnabled(ctx) || !(incoming > 0) || !(entity?.persistentPoise?.value > 0)) return 0;
+  const rules = fixCorePoiseRules(rawRules(ctx));
+  if (!rules.depletes) return 0;
+  return Math.min(entity.persistentPoise.value, Math.max(0, Math.floor(incoming * rules.damageRatio + 1e-9)));
+}
+/** The Poise a receipt spends: its ratio damage when Poise depletes by ratio, else the legacy prevented amount. */
+export function fixCorePoiseSpent(ctx, receipt) {
+  return fixCorePoiseRules(rawRules(ctx)).depletes ? receipt.poiseDamage || 0 : receipt.poiseMitigated || 0;
+}
+/** True when FixCore is active and Poise is spent by ratio damage (Poise.depletes), not by what it prevented. */
+export function fixCorePoiseDepletes(ctx) { return fixCoreEnabled(ctx) && fixCorePoiseRules(rawRules(ctx)).depletes; }
