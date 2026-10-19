@@ -1177,6 +1177,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           if (actor) actor.followUps = followMemo.setRow(e.sourceId, advanceFollowUps(disp.followPlans?.[e.sourceId], combat.followTrace?.[e.sourceId]));
           break;
         }
+        case 'enemyStaggered': {
+          // A stagger breaks the rest of that enemy's plan: its remaining moves leave the row with the event.
+          const actor = disp.ents[e.targetId];
+          if (actor?.followUps?.length) actor.followUps = followMemo.setRow(e.targetId, []);
+          break;
+        }
+        case 'enemyTurnEnd':
+          // The enemy turn is over: a charge or a halt that sent no event of its own leaves the row now.
+          for (const id of Object.keys(disp.ents)) if (disp.ents[id].followUps?.length) disp.ents[id].followUps = [];
+          followMemo.clear();
+          break;
         case 'enemyActorTurnStarted': {
           const actor = disp.ents[e.sourceId];
           if (actor) actor.presentationStance = enemyStanceCategory(e.intent);

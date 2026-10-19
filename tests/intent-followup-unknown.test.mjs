@@ -102,8 +102,8 @@ test('a follow-up that becomes a charge is not shown, and the row clears', () =>
   const plan = (c) => { const [a, b] = c.enemies[0].plannedMoves; return c.enemies[0].plannedMoves.length === 2 && a.moveId !== 'guard' && b.moveId === 'guard'; };
   const c = fight({ regs, reads: [MISS, MISS], plan });
   const rows = rowsAfterPhase(c, regs);
-  assert.deepEqual(kinds(rows[0]), ['?'], 'only the first follow-up can still play; the charge takes the enemy\'s turn');
-  assert.deepEqual(rows[1].symbols, []);
+  assert.deepEqual(kinds(rows[0]), ['?', '?'], 'both planned moves show until each one\'s own event: nothing about the charge shows early');
+  assert.deepEqual(kinds(rows[1]), ['?'], 'the first follow-up has played; the charge sent no event of its own, so it stays until the turn ends');
   assert.equal(c.followTrace[c.enemies[0].id][1].outcome, 'charging');
 });
 
@@ -114,7 +114,7 @@ test('a stagger that lands mid-turn ends the row', () => {
   const c = fight({ regs, reads: [], plan: (cc) => cc.enemies[0].plannedMoves.length === 2 });
   const rows = rowsAfterPhase(c, regs);
   assert.equal(rows.length, 1, 'only the head played');
-  assert.deepEqual(rows[0].symbols, [], 'nothing can still play, so no "?" is left standing');
+  assert.deepEqual(kinds(rows[0]), ['?', '?'], 'the halt is not shown before it plays; the turn end clears the row');
 });
 
 test('a move refused for SP is not shown', () => {
@@ -122,17 +122,17 @@ test('a move refused for SP is not shown', () => {
   const regs = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ registries: regs, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const c = createRunCombat({ registries: regs, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
-  assert.ok(c.enemies[0].plannedMoves.length >= 1);
+  const planned = c.enemies[0].plannedMoves.length;
+  assert.ok(planned >= 1);
   const rows = rowsAfterPhase(c, regs);
   assert.equal(c.followTrace[c.enemies[0].id][0].outcome, 'refused');
-  assert.deepEqual(rows[0].symbols, [], 'the refused move cannot play, so it is not previewed');
-  assert.equal(rows.at(-1).symbols.length, 0);
+  assert.equal(rows[0].symbols.length, planned, 'the planned move shows until its own event, refused or not');
+  assert.equal(rows.at(-1).symbols.length, 0, 'the refusal event removes it');
 });
 
 test('no follow-up trace before the enemy phase: nothing shows (pre-play stays with the multi-action toggle)', () => {
   const c = fight();
   assert.equal(c.followTrace, undefined);
-  assert.deepEqual(advanceFollowUps(followUpPlan({ queue: c.enemies[0].plannedMoves, def: registries.enemies.get('wanderingSoldier') }), undefined), []);
   assert.deepEqual(advanceFollowUps(null, []), []);
 });
 
@@ -147,26 +147,55 @@ test('the engine event stays count-free: the saved golden event log is unchanged
   assert.ok(c.eventLog.filter((e) => e.type === 'enemyMoveStarted').every((e) => !('queued' in e) && !('read' in e)));
 });
 
+test('the row stays complete while a reaction window is open, with "?" for moves not read yet', () => {
+  // Core 2 fight with reactions: the window opens on the head move, before any follow-up is presented or read.
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const regs = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const make = (seed) => {
+    const run = createRunState({ registries: regs, classId: 'reaver', seed, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+    const c = createRunCombat({ registries: regs, run, rng: createRng(seed), enemyIds: ['wanderingSoldier'] });
+    c.enemies[0].maxStamina = 3;
+    return c;
+  };
+  const c = make(511), e = c.enemies[0], def = regs.enemies.get('wanderingSoldier');
+  const planned = e.plannedMoves.length;
+  const plan = followUpPlan({ queue: e.plannedMoves, def });
+  dispatch(c, { type: 'endTurn' });
+  assert.ok(c.pendingReaction, 'a reaction window is open');
+  assert.equal(c.followTrace?.[e.id], undefined, 'no follow-up has been read yet');
+  const head = advanceFollowUps(plan, c.followTrace?.[e.id]);
+  assert.equal(head.length, planned, 'every planned follow-up is in the row');
+  assert.ok(head.every((s) => s.kind === 'unknown'), 'unread moves are "?", never a real icon');
+});
+
 test('the row stays visible while a player reaction is pending, and the resumed turn keeps its plan', () => {
-  // A reaction window opens after the head move: playback state is cleared, then the resume snapshots again.
   const c = fight({ reads: [MISS, READ], plan: two(registries) });
-  const e = c.enemies[0], def = registries.enemies.get('wanderingSoldier'), [unread, read] = planIcons(c);
+  const e = c.enemies[0], def = registries.enemies.get('wanderingSoldier'), [, read] = planIcons(c);
   const memo = createFollowMemo();
   const first = memo.plan(e.id, { resuming: false, build: () => followUpPlan({ queue: e.plannedMoves, def }) });
   dispatch(c, { type: 'endTurn' });
   while (c.pendingReaction) dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: null });
   const row = memo.setRow(e.id, advanceFollowUps(first, c.followTrace?.[e.id])); // the head's enemyMoveStarted beat
   assert.deepEqual(row.map((s) => (s.kind === 'unknown' ? '?' : s.icon)), ['?', read]);
-  // The reaction modal opens: playback cleared (no disp), enemy phase live. The row is still there.
   assert.deepEqual(memo.row(e.id, true), row, 'the row survives the cleared playback record');
   assert.equal(memo.row(e.id, false), null, 'but only while the enemy phase is live');
-  // The resumed dispatch snapshots again, with the queue half spent: the same plan comes back, not a rebuilt one.
   const resumed = memo.plan(e.id, { resuming: true, build: () => followUpPlan({ queue: [], def }) });
   assert.equal(resumed, first);
-  assert.deepEqual(advanceFollowUps(resumed, c.followTrace?.[e.id]).map((s) => (s.kind === 'unknown' ? '?' : s.icon)), [read], 'the next beat continues the row');
-  // A fresh turn rebuilds and the row clears.
+  assert.deepEqual(advanceFollowUps(resumed, c.followTrace?.[e.id]).map((s) => (s.kind === 'unknown' ? '?' : s.icon)), [read]);
   memo.clear();
   assert.equal(memo.row(e.id, true), null);
   assert.notEqual(memo.plan(e.id, { resuming: false, build: () => followUpPlan({ queue: e.plannedMoves, def }) }), first);
-  assert.ok(unread !== read);
+});
+
+test('a reload during a reaction window: the rebuilt plan treats the next event as a follow-up and shows only "?"', () => {
+  const def = registries.enemies.get('wanderingSoldier');
+  const memo = createFollowMemo(); // a fresh screen: nothing kept
+  const plan = memo.plan('e1', { resuming: true, build: () => followUpPlan({ queue: [{ moveId: 'slash' }, { moveId: 'guard' }], def }) });
+  assert.equal(plan.headDone, true, 'the head has already played');
+  // No trace after a reload (it is not saved): the remaining planned moves are "?", never icons from the definition.
+  const row = advanceFollowUps(plan, undefined);
+  assert.deepEqual(row.map((s) => s.kind), ['unknown'], 'the first event consumed one follow-up slot');
+  assert.doesNotMatch(JSON.stringify(row), /attack|defend|slash|guard/);
+  // A new turn builds a head-first plan again.
+  assert.equal(memo.plan('e2', { resuming: false, build: () => followUpPlan({ queue: [{ moveId: 'slash' }], def }) }).headDone, false);
 });

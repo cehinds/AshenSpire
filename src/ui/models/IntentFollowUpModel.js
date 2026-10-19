@@ -7,12 +7,12 @@
 // trace, so it never re-rolls. The icon of a move is looked up ONLY for an entry whose own read succeeded; a failed
 // read never reaches a symbol, the DOM, a data attribute, an aria label or a tooltip.
 //
-// Only moves that can still play count: outcome 'played'. A follow-up that turned into a charge, was refused for SP or
-// by a burden, or sits after a stagger halt, is not shown (the trace never holds moves past a halt or a charge).
+// Nothing about a move's fate shows before its own event: every remaining PLANNED follow-up stays in the row (icon if its
+// own read passed, else "?") until its event plays in playback (played, refused for SP) or the turn ends / a stagger
+// breaks it. The phase resolves before playback, so a charge, a refusal or a halt known to the trace is not used to
+// drop an entry early. A move whose read is not recorded yet (a reaction window paused the phase before it) is "?".
 import { stanceFor, moveKind } from '../../engine/combatRounds/stance.js';
 import { iconForStance } from './CombatRoundsScreenModel.js';
-
-const SKIPPED = new Set(['charging', 'blocked']);
 
 /**
  * followUpPlan({ queue, def }) → the actor's turn plan, taken before its phase. queue: its planned follow-ups
@@ -29,16 +29,14 @@ function iconFor(plan, index) {
 }
 
 /**
- * remainingFollowUps(plan, trace) → the symbols for the moves still to play after the cursor, in play order:
- * [{ kind: 'unknown' } | { kind: 'action', icon }]. [] when no trace exists (nothing is planned or it has not run).
+ * remainingFollowUps(plan, trace) → the symbols for the planned moves after the cursor, in play order:
+ * [{ kind: 'unknown' } | { kind: 'action', icon }]. An icon only where that slot's own recorded read passed.
  */
 export function remainingFollowUps(plan, trace) {
-  if (!plan || !Array.isArray(trace)) return [];
+  if (!plan) return [];
   const out = [];
-  for (let i = plan.cursor; i < trace.length; i++) {
-    const entry = trace[i];
-    if (entry?.outcome !== 'played') continue;
-    out.push(entry.read === true ? { kind: 'action', icon: iconFor(plan, i) } : { kind: 'unknown' });
+  for (let i = plan.cursor; i < plan.total; i++) {
+    out.push(Array.isArray(trace) && trace[i]?.read === true ? { kind: 'action', icon: iconFor(plan, i) } : { kind: 'unknown' });
   }
   return out;
 }
@@ -46,15 +44,16 @@ export function remainingFollowUps(plan, trace) {
 /**
  * advanceFollowUps(plan, trace) → the symbols after the next action event of one actor's turn. Call it once per
  * `enemyMoveStarted` (not a reaction) or `enemyMoveUnavailable` of that actor, in order. The first call is the head
- * move, which is not in the trace; each later call consumes one trace entry (skipping charges and burden stops, which
- * emit no action event). `trace` is the engine's `combat.followTrace[enemyId]`.
+ * move (already played when `plan.headDone` is set, as on a resume), which owns no slot; each later call consumes one
+ * slot, skipping a burden stop, which emits no action event. A charge emits none either, so its slot stays until the
+ * turn ends. `trace` is the engine's `combat.followTrace[enemyId]`, possibly partial or absent.
  */
 export function advanceFollowUps(plan, trace) {
   if (!plan) return [];
   if (!plan.headDone) plan.headDone = true;
   else {
-    while (trace?.[plan.cursor] && SKIPPED.has(trace[plan.cursor].outcome)) plan.cursor++;
-    plan.cursor++;
+    while (trace?.[plan.cursor]?.outcome === 'blocked') plan.cursor++;
+    plan.cursor = Math.min(plan.total, plan.cursor + 1);
   }
   return remainingFollowUps(plan, trace);
 }
@@ -72,6 +71,9 @@ export function createFollowMemo() {
     plan(id, { resuming = false, build }) {
       const kept = resuming ? plans.get(id) : null;
       const plan = kept || build?.() || null;
+      // A resume with no kept plan (a reload during a reaction window) rebuilds from what is left of the queue, and the
+      // head has played by then: the first event after it is a follow-up, not the head.
+      if (resuming && !kept && plan) plan.headDone = true;
       if (plan) plans.set(id, plan); else plans.delete(id);
       return plan;
     },
