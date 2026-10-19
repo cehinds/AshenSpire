@@ -154,7 +154,11 @@ export function cardEffectHtml(def, preview = null, registries = null) {
   try { summary = combatCardSummary(def, preview, registries); } catch { summary = null; }
   const text = typeof summary === 'string' ? summary : Array.isArray(summary) ? summary.join(' ') : summary?.text;
   if (text) return esc(text);
-  const authored = String(def.textTemplate || def.text || def.description || '').replace(/\{[^}]*\}/g, '').replace(/\s+/g, ' ').trim();
+  // The authored sentence with its tokens filled from the live preview, else the card's static tokens (the card
+  // face's own token source); only a token that cannot resolve to a number is dropped.
+  const { tokens } = cardSummaryContext(def, preview, registries);
+  const fill = token => { const figure = preview?.tokens?.[token] ?? tokens[token]; return Number.isFinite(figure) ? String(figure) : ''; };
+  const authored = String(def.textTemplate || def.text || def.description || '').replace(/\{([^}]*)\}/g, (match, token) => fill(token)).replace(/\s+/g, ' ').trim();
   return esc(authored || def.name || '');
 }
 

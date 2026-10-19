@@ -184,3 +184,13 @@ test('a card with effect variants and no preview shows its text, not the authore
   const live = summarizeCardOption(null, null, { id: 'e', name: 'Stance Echo' }, { defOf: () => echo, previewOf: () => ({ resolvedDefinition: resolved, values: [{ op: 'block', value: 6 }] }) });
   assert.deepEqual(live.line.map(row => row.value), [6], 'with the preview, the variant it picked shows');
 });
+test('the text fallback fills template tokens with the card numbers', () => {
+  const html = (registries, id) => summarizeCardOption(registries, null, { id, name: id }, { defOf: () => registries.cards.get(id), previewOf: () => null }).html;
+  assert.match(html(registriesByProfile.current, 'guilt'), /lose 1 HP/);
+  assert.match(html(registriesByProfile.current, 'lastRites'), /Draw 2 cards/);
+  assert.match(html(registriesByProfile.core, 'base.transmute'), /Gain 10 cinders/);
+  // A live preview token wins over the static one.
+  const guilt = registriesByProfile.current.cards.get('guilt');
+  const live = summarizeCardOption(registriesByProfile.current, null, { id: 'g', name: 'Guilt' }, { defOf: () => guilt, previewOf: () => ({ tokens: { loseHp: 3 }, values: [] }) });
+  assert.match(live.html, /lose 3 HP/);
+});
