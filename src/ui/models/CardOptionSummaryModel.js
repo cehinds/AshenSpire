@@ -187,7 +187,10 @@ export function summarizeCardOption(registries, combat, option, readers = {}) {
   // `readers.conditionHolds(effect, option, combat)` answers true or false for the card owner right now; a throw
   // or any other answer means "unknown".
   const holds = readers.conditionHolds ? effect => { try { return readers.conditionHolds(effect, option, combat); } catch { return undefined; } } : null;
-  const { line, complete } = analyzeCardEffects(def, preview, registries, holds);
+  let { line, complete } = analyzeCardEffects(def, preview, registries, holds);
+  // A card with effect variants but no preview (an old save, a snapshot without one) would show the authored
+  // variant's numbers, which may be the wrong branch: use its text, which states them.
+  if (def?.effectVariants?.length && !preview?.resolvedDefinition) complete = false;
   return freeze({
     id: option.id ?? option.instanceId ?? null,
     name: option.name ?? def?.name ?? '',

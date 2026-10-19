@@ -875,7 +875,15 @@ export function createSession({ registries, seedString, endless = false, restore
         combatStance: P.entity.combatStance, persistentWard: P.entity.persistentWard, barrier: P.entity.barrier,
         statusControl: P.entity.statusControl, recoveryControls: recoveryControls({ ...c, combatExpansionVersion: P.entity.combatExpansionVersion || 1 }, P.entity),
         pendingAbilityDiscard: c.pendingAbilityDiscard?.playerId===P.id ? c.pendingAbilityDiscard : null,
-        pendingCardChoice:c.pendingCardChoice?.playerId===P.id ? structuredClone(c.pendingCardChoice) : null,
+        // Snapshot only: each candidate carries the preview a hand card gets (below), so a client prices a pile card by
+        // its live effect variant. Nothing here is written back to the engine state or a save.
+        pendingCardChoice:c.pendingCardChoice?.playerId===P.id ? (() => {
+          const choice = structuredClone(c.pendingCardChoice);
+          choice.candidates = (choice.candidates || []).map(card => {
+            try { return { ...card, combatPreview: previewCoopCard(c, P.id, card.instanceId) }; } catch { return card; }
+          });
+          return choice;
+        })() : null,
         pendingReaction: c.pendingReaction?.ownerId === P.id ? structuredClone(c.pendingReaction) : null,
         ...(c.reactionRulesVersion >= 1 ? { reactionsEnabled: P.entity.reactionsEnabled !== false } : {}),
         abilityRiders: P.entity.abilityRiders,

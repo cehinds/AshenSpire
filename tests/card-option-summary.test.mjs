@@ -174,3 +174,13 @@ test('a charged buildup inserted before a Block keeps the Block figure aligned a
   const rows = cardEffectLine({ ...card, effects: [card.effects[0]] }, { values: [{ op: 'block', value: 7 }] }, null);
   assert.deepEqual(rows.map(row => row.value), [7]);
 });
+test('a card with effect variants and no preview shows its text, not the authored variant numbers', () => {
+  const echo = { id: 'testEcho', name: 'Stance Echo', type: 'skill', effects: [{ op: 'block', target: 'self', amount: 4 }],
+    effectVariants: [{ if: { p: 'inStance', stance: 'smash' }, effects: [{ op: 'block', target: 'self', amount: 9 }] }] };
+  const bare = summarizeCardOption(null, null, { id: 'e', name: 'Stance Echo' }, { defOf: () => echo, previewOf: () => null });
+  assert.deepEqual(bare.line, [], 'no numbers without a preview that picked the variant');
+  assert.ok(bare.html.length > 0, 'the card text stands in');
+  const resolved = { ...echo, effects: [{ op: 'block', target: 'self', amount: 6 }], activeEffectVariant: -1 };
+  const live = summarizeCardOption(null, null, { id: 'e', name: 'Stance Echo' }, { defOf: () => echo, previewOf: () => ({ resolvedDefinition: resolved, values: [{ op: 'block', value: 6 }] }) });
+  assert.deepEqual(live.line.map(row => row.value), [6], 'with the preview, the variant it picked shows');
+});

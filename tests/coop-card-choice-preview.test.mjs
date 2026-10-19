@@ -1,0 +1,65 @@
+// tests/coop-card-choice-preview.test.mjs — a co-op card-zone choice carries the same live preview a hand card does.
+//
+// The host builds each seat's pendingCardChoice by cloning engine state; before this, only hand cards got a
+// combatPreview, so a client priced a pile card by its authored effects (the wrong variant, no green or red).
+// The snapshot now attaches the preview to each candidate (snapshot only, never engine state), other seats'
+// views drop it as they do for hands, and the tile shows the previewed number.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { initialClassTreeChoices } from '../src/model/classTree.js';
+import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
+import { createSession } from '../tools/session.mjs';
+import { projectLanSnapshot } from '../tools/lan-state.mjs';
+import { summarizeCardOption } from '../src/ui/models/CardOptionSummaryModel.js';
+
+// Bashing Blow is rewired to open a real card-zone choice from the draw pile (a custom id would need its own
+// classification row; tests/card-zones.test.mjs rewires an existing card the same way).
+const PICK = { ...contentBundle.cards.find(card => card.id === 'bashingBlow'), costRule: 'fixed', cost: 0, manaCost: 0, upgrade: {},
+  effects: [{ op: 'moveCards', from: 'draw', to: 'hand', amount: 1, selection: 'choose' }], textTemplate: 'Choose a card.' };
+const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => (card.id === 'bashingBlow' ? PICK : card)) });
+function fixture() {
+  const host = createSession({ registries, seedString: 'CHOICE1', combatExpansionVersion: 2, saveSession: () => true });
+  host.addMember({ id: 'p1', name: 'One', classId: 'rogue', playInDeckOrder: true });
+  host.addMember({ id: 'p2', name: 'Two', classId: 'reaver', playInDeckOrder: true });
+  host.start();
+  for (const member of host.session.members.values()) while (member.run.classMasteryState?.initialTreeTiers.length) {
+    const choices = initialClassTreeChoices(registriesForClassMastery(registries, member.run), member.run);
+    assert.equal(host.chooseMasteryNode(member.id, choices[0]).ok, true);
+  }
+  for (const id of ['p1', 'p2']) { const r = host.chooseNode(id, host.session.mapGraph.startIds[0]); assert.equal(r.ok, true, JSON.stringify(r)); }
+  return host;
+}
+function withDrawChoice(host) {
+  const combat = host.live.combat, seat = combat.players.get('p2');
+  const pick = seat.piles.hand.find(row => row.cardId === 'bashingBlow');
+  assert.ok(pick, 'the seat holds the rewired card');
+  const played = host.combatPlay('p2', pick.instanceId, 'p2');
+  assert.equal(played.ok, true, JSON.stringify(played));
+  assert.ok(combat.pendingCardChoice, 'a real card-zone choice is pending');
+  return { combat };
+}
+
+test('a card-zone candidate carries the live preview and the tile reads its number', () => {
+  const host = fixture(), { combat } = withDrawChoice(host);
+  const candidate = host.snapshot().scene.players.find(player => player.id === 'p2').pendingCardChoice.candidates[0];
+  assert.ok(combat.pendingCardChoice.candidateIds.includes(candidate.instanceId));
+  assert.ok(candidate.combatPreview, 'the candidate carries the preview a hand card gets');
+  assert.ok(Array.isArray(candidate.combatPreview.values));
+  assert.equal(combat.pendingCardChoice.candidates[0].combatPreview, undefined, 'the preview is snapshot-only, not written to engine state');
+  const def = candidate.combatPreview.resolvedDefinition;
+  const summary = summarizeCardOption(registries, null, { id: candidate.instanceId, name: def.name }, { defOf: () => def, previewOf: () => candidate.combatPreview });
+  const live = candidate.combatPreview.values.find(row => Number.isFinite(row.value))?.value;
+  assert.ok(summary.line.length || summary.html, 'the tile has an effect row');
+  if (summary.line.length) assert.ok(summary.line.some(row => row.value === live || candidate.combatPreview.values.some(v => v.value === row.value)), 'the tile shows the previewed number');
+});
+
+test("another seat's view drops the candidate preview, as it does for a hand", () => {
+  const host = fixture(); withDrawChoice(host);
+  const wire = projectLanSnapshot(host.snapshot(), ['p1']);
+  const candidate = wire.scene.players.find(player => player.id === 'p2').pendingCardChoice.candidates[0];
+  assert.equal(candidate.combatPreview, undefined);
+  const own = projectLanSnapshot(host.snapshot(), ['p2']).scene.players.find(player => player.id === 'p2').pendingCardChoice.candidates[0];
+  assert.ok(own.combatPreview, "the owner's own view keeps it");
+});
