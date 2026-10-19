@@ -25,7 +25,7 @@ import { expandedEquipmentProjection, expandedEnemyProjection } from './combatEx
 import { settleExpandedPools, refreshExpandedLoadout } from './combatExpansionProjection.js';
 import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade, liveCounterCovers } from './combatMatchups.js';
-import { damagePreviewState, previewDamageHits } from './combatDamagePreview.js';
+import { damagePreviewState, previewDamageHits, previewPoiseDrain } from './combatDamagePreview.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, cancelKnowledgeAction } from './enemyKnowledge.js';
 import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
@@ -2666,6 +2666,14 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       case 'poiseDamage':
       case 'addCinders': {
         entry.value = evalPreview(combat, action, eff.amount != null ? eff.amount : 1, primary);
+        if (configuredCombat(combat) && (eff.op === 'poiseDamage' || eff.op === 'wardDamage')) {
+          // Under Core a Poise drain can break Poise mid-card; later hits of this card see the broken target (as live).
+          const hit = eff.target === 'allEnemies' ? living : eff.target === 'enemy' || eff.target == null ? [primary] : [];
+          for (const e of hit) {
+            const state = e?.kind === 'enemy' && damagePreviewStates.get(e.id);
+            if (state) previewPoiseDrain(combat, p, state, eff, action.card, evalPreview(combat, action, eff.amount != null ? eff.amount : 1, e));
+          }
+        }
         break;
       }
       case 'loseMaxHpPct': {
