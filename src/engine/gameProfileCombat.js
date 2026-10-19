@@ -3,6 +3,7 @@ import { attackHitPreview } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts } from '../model/combatRatings.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
+import { mirroredManeuver } from '../model/stanceRules.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { cardPreparationCategory } from '../model/cardClassification.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
@@ -20,7 +21,10 @@ export function configuredModule(subject, id) {
   const rule = gameModule(subject, id);
   return rule?.mode === 'configured' ? rule : null;
 }
+// A Spell that mirrors a basic card (owner 2026-10-18) keeps that basic's stance; it is still a Spell.
+export const mirroredStance = mirroredManeuver;
 export function configuredStance(carrier) {
+  if (mirroredStance(carrier)) return mirroredStance(carrier);
   if (cardPreparationCategory(carrier)) return 'prepared';
   const raw = carrier?.stanceTrigger?.stance || carrier?.combatProfile?.maneuver || carrier?.maneuver
     || (carrier?.cardTags || carrier?.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id).find(tag => tag.startsWith('maneuver:'))?.slice(9);
@@ -35,7 +39,8 @@ export function setProfileStance(ctx, entity, carrier) {
   const rule = configuredModule(ctx, 'stances');
   const stance = configuredStance(carrier);
   entity.combatStance = rule?.include?.includes(stance)
-    ? { maneuver: stance, camp: carrier?.combatProfile?.camp || 'physical', range: carrier?.combatProfile?.range || 'melee' }
+    ? { maneuver: stance, camp: carrier?.combatProfile?.camp || 'physical', range: carrier?.combatProfile?.range || 'melee',
+      ...(mirroredStance(carrier) ? { mirrored: true, camp: 'spell' } : {}) }
     : { maneuver: 'neutral', camp: 'physical', range: 'melee' };
   if (grants?.precision > 0) applyStatus(ctx,entity,'precision',grants.precision,entity);
   if (grants?.evade > 0 && !carrier?.appliedStatuses?.includes('evade')) applyStatus(ctx,entity,'evade',grants.evade,entity);
