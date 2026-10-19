@@ -390,6 +390,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
   const upcastTiersByCard = new Map();
   const upcastKey = instanceId => `${me}:${instanceId}`;
   let prevCombat = null; // last combat scene, for snapshot-diff FX
+  let lastSurface = null; // what this seat saw last render (scene kind, or catch-up entry), to clear selection on a change
   // Receipt renders replace the field DOM, but keep the encounter's fitted art.
   // The stage invalidates this cache when viewport, formation or artwork changes.
   let combatLayoutState = {};
@@ -952,6 +953,24 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     // ride into the new layer to finish their float, each on its own timer.
     const carriedFx = snap.scene.kind === 'combat' ? [...(app.querySelector('.fx-layer')?.children || [])] : [];
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
+    // A played card leaves the hand; drop its selection so the same instance coming back
+    // later (from the discard, or in a later encounter) needs a fresh select tap. Only the
+    // active seat's hand counts: instance ids repeat across seats (each run's id generator
+    // starts at rc1), so another seat holding the same id must not keep this one lit.
+    // Changing surface (combat to reward or map, or one catch-up entry to the next) drops it
+    // too: mountCoop outlives the scene change. A redraw of the same surface keeps a reward
+    // card's select tap. The surface is what this seat sees: a catch-up reward overrides the
+    // party's combat scene, and each catch-up entry is its own surface (keyed by queue length).
+    // Pending progression rows count too: claiming one row while another offers the same
+    // card id must not hand that row the spent selection.
+    const mine = myMember();
+    const catchupLeft = mine?.catchupQueue?.length || 0;
+    const progressionLeft = Object.values(mine?.pendingProgression || {}).reduce((n, rows) => n + (Array.isArray(rows) ? rows.length : 0), 0);
+    const surface = `${catchupLeft ? `catchup:${catchupLeft}` : snap.scene.kind}|progression:${progressionLeft}`;
+    const changedSurface = lastSurface !== null && surface !== lastSurface;
+    lastSurface = surface;
+    if (litCard() !== null && (changedSurface || (snap.scene.kind === 'combat' && !catchupLeft
+      && !((snap.scene.players || []).find(p => p.id === me)?.hand || []).some(card => card.instanceId === litCard())))) clearSelection();
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
     else { heldStances.reset(); combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
     if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
@@ -1234,7 +1253,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     if (!owner || reactionShell || busy() || sc.players.some(player => player.pendingAbilityDiscard || player.pendingCardChoice)) return;
     const ownerId = owner.id;
     reactionOfferId = owner.pendingReaction.id;
-    if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; }
+    // An automatic seat switch drops the old seat's selection, as setSeat does (ids repeat across seats).
+    if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; clearSelection(); }
     const stack = committedReactionStack(sc.reactionStack, owner.pendingReaction.groupKey)
       .map((entry) => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
     reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack,
