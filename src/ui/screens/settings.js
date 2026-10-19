@@ -419,8 +419,9 @@ const ROWS = [
   // comparison is Custom Climb's existing seed field plus this row — same seed,
   // same act, two readings — and Custom Climb grows nothing new.
   //
-  // DEFAULT IS `fog` since 2026-08-08 — his word, and the one token is in
-  // model/mapknowledge.js so this row cannot disagree with the resolver.
+  // DEFAULT IS `path` (fog off) per owner 2026-10-19 — it was `fog` from
+  // 2026-08-08 to 2026-10-19. The one token is in model/mapknowledge.js so this
+  // row cannot disagree with the resolver. The row stays: the player turns fog on here.
   //
   // AND THE TRAIL SENTENCE IS NOT TYPED HERE ANY MORE. It read "Fog never closes
   // behind you — somewhere you have seen stays seen" — the WIDE reading, written
@@ -428,9 +429,8 @@ const ROWS = [
   // (Bjorn). Constantine has since answered the fork question the wide way, so
   // the sentence is true; it moved to `FOG_TRAIL_CLAUSE`, beside the function
   // that makes it true, because a promise typed on the screen it is displayed on
-  // is a promise nothing can check. Sunna's ruling, and it could not wait: fog
-  // is the default, so this is the first thing a new player reads about the mode
-  // they are already in.
+  // is a promise nothing can check. Sunna's ruling. It is the first thing a
+  // player reads when they turn fog on.
   //
   // `choices` and `def` are the ladder's own, never a second list (the row three
   // above learned this the hard way — it carried four of the zoom ladder's six
