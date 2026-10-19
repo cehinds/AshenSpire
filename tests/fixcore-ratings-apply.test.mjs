@@ -7,8 +7,9 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
-import { configuredModule } from '../src/engine/gameProfileCombat.js';
+import { configuredModule, profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { stanceRulesFor } from '../src/model/stanceRules.js';
+import { fixCoreRules } from '../src/model/fixCoreMechanics.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
 // Owner, 2026-10-19: AR, DR, PR and Poise still apply to cards in Core, and spell effectiveness still uses PR.
@@ -127,11 +128,13 @@ for (const card of ['core.defend', 'core.counter']) {
   }
 }
 test('the stance DR bonus applies to Block on top of the DR rating (Defend stance)', () => {
-  const plain = world('reaver'), stanced = world('reaver');
+  const stanced = world('reaver'), dr = ratings(stanced).dr;
   stanced.combat.player.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
-  const bonus = stanceRulesFor(stanced.combat).defensiveRating;
-  assert.ok(bonus > 0, 'the defensive stance rating is configured');
-  assert.equal(block(stanced, 'core.defend') - block(plain, 'core.defend'), Math.floor(bonus * weights(stanced.combat).dr));
+  const cfg = stanceRulesFor(stanced.combat), printed = reg.cards.get('core.defend').effects.find(e => e.op === 'block').amount;
+  assert.ok(cfg.defensiveRating > 0, 'the defensive stance rating is configured');
+  // Matching stance also scales the Block by its effectiveness (SPEC; same formula as fixcore-stance-block).
+  assert.equal(block(stanced, 'core.defend'),
+    Math.floor((printed + (dr + cfg.defensiveRating) * weights(stanced.combat).dr) * fixCoreRules(stanced.combat).stance.effectivenessMultiplier));
 });
 test('Counter keeps its printed Block plus DR plus the Counter stance DR bonus (no AR in the Block)', () => {
   const w = world('reaver'), r = ratings(w);
@@ -180,4 +183,31 @@ test('PR (INT) does not change a physical attack card', () => {
   const base = world('reaver'), up = world('reaver', stat('intelligence'));
   assert.ok(ratings(up).pr > ratings(base).pr && ratings(up).ar === ratings(base).ar);
   assert.equal(damage(up, 'core.strike').incoming, damage(base, 'core.strike').incoming);
+});
+
+// ---- PR bonus routes to the magical part of a split; enemies keep AR for their spells --------------------------------
+test('PR bonus lands in the magical half of Arcane Spark; the physical half is unchanged', () => {
+  const base = world('starseer'), up = world('starseer', stat('intelligence'));
+  const part = w => { const { combat, target } = w; const id = hand(combat, 'core.cantrip');
+    const hit = previewCard(combat, id, target.id).values.find(v => v.op === 'damage').damageReceipt.hits[0]; return hit; };
+  const a = part(base), b = part(up), w = weights(up.combat).pr, delta = ratings(up).pr - ratings(base).pr;
+  assert.ok(a.magical > 0 && a.physical > 0, 'Arcane Spark is a split hit');
+  assert.equal(b.magical - a.magical, Math.floor(delta * w), 'PR goes to the magical part');
+  assert.equal(b.physical, a.physical, 'the physical part does not move');
+});
+test('AR bonus keeps its routing on a physical card (physical part)', () => {
+  const base = world('reaver'), up = world('reaver', stat('strength'));
+  const hit = w => previewCard(w.combat, hand(w.combat, 'core.strike'), w.target.id).values.find(v => v.op === 'damage').damageReceipt.hits[0];
+  const a = hit(base), b = hit(up);
+  assert.equal(b.magical, a.magical);
+  assert.ok(b.physical > a.physical);
+});
+test('an enemy spell-camp attack keeps reading AR (its PR is 0), exactly as before', () => {
+  const { combat, target } = world('starseer');
+  const enemy = combat.enemies[0];
+  enemy.ratings = { ...enemy.ratings, ar: 4, pr: 0 };
+  const carrier = { cardId: 'core.cantrip', damageSchool: 'magic', combatProfile: { camp: 'spell', maneuver: 'casting', range: 'melee' } };
+  const noBonus = profileDamageReceipt(combat, { ...enemy, ratings: { ar: 0, pr: 0 } }, combat.player, 10, carrier).damageReceipt.hits[0].incoming;
+  const rated = profileDamageReceipt(combat, enemy, combat.player, 10, carrier).damageReceipt.hits[0].incoming;
+  assert.equal(rated - noBonus, Math.floor(4 * weights(combat).ar));
 });
