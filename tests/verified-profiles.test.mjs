@@ -21,3 +21,12 @@ test('runtimeHash is unchanged from origin/dev (saves stay loadable)', () => {
   let dev; try { dev = JSON.parse(execFileSync('git', ['show', 'origin/dev:games/ashenspire/game.lock.json'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })); } catch { return; }
   for (const [id, p] of Object.entries(dev.profiles)) if (p.runtimeHash) assert.equal(gameProfileCatalog.runtimeHash, p.runtimeHash, id);
 });
+test('re-validating the exact verified object returns it; an unverified copy takes the full check', () => {
+  const p = resolveGameProfile('current');
+  assert.equal(validateGameProfileSnapshot(p), p);
+  const copy = JSON.parse(JSON.stringify(p));
+  const out = validateGameProfileSnapshot(copy);
+  assert.notEqual(out, p);
+  assert.equal(validateGameProfileSnapshot(out), out);
+  assert.equal(p.lock.runtimeHash, gameProfileCatalog.runtimeHash);
+});
