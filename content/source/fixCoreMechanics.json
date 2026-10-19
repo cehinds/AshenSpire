@@ -24,6 +24,8 @@
   },
   "accuracy": {
     "baseAC": 1,
+    "evadeStackBase": 1,
+    "evadeStackDex": 1,
     "precisionBase": 1,
     "evasionBase": 1,
     "precisionWeights": {

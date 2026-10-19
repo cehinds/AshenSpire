@@ -16,6 +16,8 @@
         "moduleParameters": {
           "combat.accuracy": {
             "baseAC": 1,
+            "evadeStackBase": 1,
+            "evadeStackDex": 1,
             "precisionBase": 1,
             "evasionBase": 1,
             "precisionWeights": {
@@ -40,6 +42,8 @@
     "then": {
       "value": {
         "baseAC": 1,
+        "evadeStackBase": 1,
+        "evadeStackDex": 1,
         "precisionBase": 1,
         "evasionBase": 1,
         "precisionWeights": {
@@ -82,6 +86,8 @@
         "moduleParameters": {
           "combat.accuracy": {
             "baseAC": 1,
+            "evadeStackBase": 1,
+            "evadeStackDex": 1,
             "precisionBase": 1,
             "evasionBase": 1,
             "precisionWeights": {
@@ -132,6 +138,8 @@
         "moduleParameters": {
           "combat.accuracy": {
             "baseAC": 1,
+            "evadeStackBase": 1,
+            "evadeStackDex": 1,
             "precisionBase": 1,
             "evasionBase": 1,
             "precisionWeights": {

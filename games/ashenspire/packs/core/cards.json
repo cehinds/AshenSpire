@@ -287,15 +287,9 @@
         "target": "self",
         "status": "evade",
         "stacks": {
-          "f": "add",
-          "args": [
-            1,
-            {
-              "f": "metric",
-              "metric": "dexterity",
-              "of": "self"
-            }
-          ]
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
         }
       }
     ],

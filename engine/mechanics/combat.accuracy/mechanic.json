@@ -30,6 +30,14 @@
         "type": "number",
         "minimum": 0
       },
+      "evadeStackBase": {
+        "type": "number",
+        "minimum": 0
+      },
+      "evadeStackDex": {
+        "type": "number",
+        "minimum": 0
+      },
       "precisionBase": {
         "type": "number",
         "minimum": 0
@@ -104,6 +112,8 @@
     },
     "required": [
       "baseAC",
+      "evadeStackBase",
+      "evadeStackDex",
       "precisionBase",
       "evasionBase",
       "precisionWeights",

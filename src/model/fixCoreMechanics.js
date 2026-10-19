@@ -121,7 +121,7 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition) {
     weak: `Attack rating ×${rules.statuses.weakARMultiplier} while active.`,
     vulnerable: `Damage taken ×${rules.statuses.vulnerabilityMultiplier} while active.`,
     staggered: `Poise broke: lose ${fixCoreStaggeredRules(rules).staminaLoss} SP next turn and gain ${fixCoreStaggeredRules(rules).vulnerableStacks} Vulnerable. Repeat breaks only extend Vulnerable.`,
-    evade: `Each stack adds ${rules.accuracy.baseAC} plus your DEX to your Evasion roll.`,
+    evade: `Each stack adds ${rules.accuracy.baseAC + (Number(ctx?.player?.baseEvasionBonus) || 0)} (base ${rules.accuracy.baseAC}${ctx?.player?.baseEvasionBonus ? `, gear +${ctx.player.baseEvasionBonus}` : ''}) plus the holder's DEX to its Evasion roll.`,
     precision: `Each stack adds another multiple of your Precision score (attributes and level) to your Precision roll.`,
   };
   if (id === 'staggered') row.tooltip = row.description = facts[id];

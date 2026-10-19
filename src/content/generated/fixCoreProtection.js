@@ -35,6 +35,14 @@ export const fixCoreProtection = [
               "type": "number",
               "minimum": 0
             },
+            "evadeStackBase": {
+              "type": "number",
+              "minimum": 0
+            },
+            "evadeStackDex": {
+              "type": "number",
+              "minimum": 0
+            },
             "precisionBase": {
               "type": "number",
               "minimum": 0
@@ -109,6 +117,8 @@ export const fixCoreProtection = [
           },
           "required": [
             "baseAC",
+            "evadeStackBase",
+            "evadeStackDex",
             "precisionBase",
             "evasionBase",
             "precisionWeights",
