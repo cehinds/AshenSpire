@@ -131,7 +131,7 @@ import { mountRest } from './ui/screens/rest.js';
 import { commitDeckEditDraft } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
-import { armouryHasNew, editingLocked, markArmourySeen, profileOpensDeckEditor } from './model/armouryRules.js';
+import { armouryHasNew, armouryOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
 import { deckEditingOn } from './model/deckRules.js';
 import { mountShop, mountConfiguredShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
@@ -2137,7 +2137,7 @@ function deckDoors(services = null) {
   const settings = saves.loadMeta().settings || {};
   const doors = deckEditorDoors({ settings, inCombat: false, services });
   // D10/D15: Core edits the deck at will outside combat, from the Armoury, whatever the Current-profile location setting says.
-  return profileOpensDeckEditor(run) && deckEditingOn(settings) ? Object.freeze({ ...doors, armoury: true }) : doors;
+  return armouryOpensDeckEditor(run, settings) ? Object.freeze({ ...doors, armoury: true }) : doors;
 }
 
 function showDeckEditor(returnTo = showMap, hub = true) {
@@ -3873,7 +3873,7 @@ function showGameProfileReward() {
   const pending = run.gameProfilePendingReward;
   const offer = run.gameProfileRewardOffers[pending.offerId];
   const persistRewardChange = change => transactReward(run, pending.offerId, change, persist);
-  mountGameProfileOffers(app, { registries, run, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
+  mountGameProfileOffers(app, { registries, run, settings: saves.loadMeta().settings || {}, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
     onTake: index => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index)),
     onContinue: () => {
       persistRewardChange(() => {
