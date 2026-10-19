@@ -38,8 +38,8 @@ export function cardOptionGrid(summaries, { onSelect = null, selectedId = null, 
     const costs = (summary.costs || []).length
       ? el('span', { class: 'co-costs' }, summary.costs.map(cost => el('span', { class: 'co-chip', text: String(cost) })))
       : null;
-    const tile = el('button', { type: 'button', class: 'card-option', [idAttr]: summary.id, 'data-focusable': 'true',
-      'aria-pressed': String(summary.id === selectedId), title: summary.title || summary.name },
+    const tile = el('button', { type: 'button', class: `card-option${summary.className ? ` ${summary.className}` : ''}`, [idAttr]: summary.id, 'data-focusable': 'true',
+      'aria-pressed': String(summary.id === selectedId), title: summary.title || summary.name, ...(summary.attrs || {}) },
     [el('span', { class: 'co-name', text: summary.name }), effectLine(summary), costs]);
     if (disabled) { tile.disabled = true; tile.setAttribute('aria-disabled', 'true'); }
     tile.addEventListener('click', () => { if (!tile.disabled) onSelect?.(summary.id, tile); });
