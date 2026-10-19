@@ -2,7 +2,7 @@
 // Under a Core profile a Smash into Defend or Prepared deals damageMultiplier x its damage plus blockFraction of the
 // target's Block, poiseFraction of that to Poise (smashVsDefensive in fixCoreMechanics.json). The words are read from the
 // same rules combat uses, so a profile with other numbers says them; other profiles keep the legacy wording.
-import { configuredStance } from '../engine/gameProfileCombat.js';
+import { configuredStance } from './profileStance.js';
 import { smashBeatsStances, fill, ruleCtx, withCoreSmashBlurb } from './smashBlurb.js';
 export { smashBeatsStances, withCoreSmashBlurb };
 import { fixCoreEnabled } from './fixCoreMechanics.js';
