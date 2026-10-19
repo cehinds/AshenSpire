@@ -226,6 +226,9 @@ try {
   await cdp.send('Runtime.enable', {}, sessionId);
   await cdp.send('Network.enable', {}, sessionId);
   await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1200, height: 730, deviceScaleFactor: 1, mobile: false }, sessionId);
+  // This door checks save/load, not pacing: reduced motion zeroes the D11 stage gaps
+  // (#2161), which otherwise push the clean run past the selftest's 120 s budget.
+  await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] }, sessionId);
   await cdp.send('Page.bringToFront', {}, sessionId);
 
   const ev = async (expression) => {
