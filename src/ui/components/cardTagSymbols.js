@@ -43,6 +43,8 @@ const SHAPES = Object.freeze({
 const ALIASES = Object.freeze({ fire:'fire', burn:'fire', cold:'frost', arcane:'force', psychic:'illusion', alternation:'alteration', sacred:'divine', holy:'divine', necrotic:'decay', crimsonBlight:'decay', necroticBlight:'decay', blight:'decay', blood:'bleed', gorefire:'fire', blade:'slashing', pierce:'piercing', heavy:'blunt', starstone:'force', astral:'force', venom:'decay', oath:'divine', weak:'lightning', vulnerable:'guard', staggered:'blunt', poise:'blunt', precision:'ranged', cleave:'attack', counter:'counter', flourish:'skill', prepared:'guile', concealed:'guile', ash:'guile' });
 
 function shapeFor(tag) {
+  // The defense badge's reticle; card-rail precision tags (status:precision) keep the ranged alias below.
+  if (tag.id === 'effect:precision') return SHAPES.precision;
   const key = tag.id.split(':').at(-1);
   const id = key === 'physical' ? 'guard' : ['evade', 'evasion', 'dodge'].includes(key) ? 'evade' : key === 'slashing' || key === 'blade' ? 'attack' : ALIASES[key] || key;
   return ACTION_SIGILS[id]?.solid ? ACTION_SIGILS[id].shape : SHAPES[id] || SHAPES.skill;

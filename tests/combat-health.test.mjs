@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatHealthModel } from '../src/ui/models/CombatHealthModel.js';
+import { tagSymbolSvg } from '../src/ui/components/cardTagSymbols.js';
 import { combatHealthRow } from '../src/ui/components/combatHealth.js';
 import { meter } from '../src/ui/kit/index.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -72,3 +73,11 @@ test('spent Evasion stacks disappear from the PIP instead of showing a zero rati
   for (const evasion of [0,-2,null,undefined]) assert.ok(!combatHealthModel({evasion}).badges.some(badge=>badge.kind==='evade'));
   assert.equal(combatHealthModel({evasion:3}).badges.find(badge=>badge.kind==='evade').value,3);
 });
+
+test('the Precision badge glyph is the reticle, not the ranged arrow the card-rail alias gives status:precision', () => withKitDom(() => {
+  const reticle = tagSymbolSvg('effect:precision').outerHTML;
+  assert.match(reticle, /<circle/, 'the reticle has its centre dot');
+  assert.notEqual(reticle, tagSymbolSvg('status:precision').outerHTML, 'card-rail precision keeps its ranged glyph');
+  const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }), { precision: 2 }, { tooltips: false });
+  assert.equal(row.querySelector('.combat-health-precision-icon svg').outerHTML, reticle);
+}));
