@@ -4,6 +4,7 @@ import { screenshotRoutePath } from './ui/models/ScreenshotFixtureModel.js';
 import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, claimGameProfileReward, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
+import { announceSettingsSettled } from './ui/components/veil.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
 import { readNewGameProfile } from './ui/components/gameProfileSelector.js';
 import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest } from './model/gameProfileRest.js';
@@ -1967,6 +1968,7 @@ async function persistSettingsChange(changed) {
     applyDisplaySettings(activeSettings);
     refreshHudQuickSettings(app, activeSettings);
     showSettingsNotice(QUARANTINE_NOTICE);
+    announceSettingsSettled();
     return res;
   }
   if (Object.hasOwn(changed, 'newGameProfile')) selectedGameProfile = readNewGameProfile(activeSettings, resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile));
@@ -1976,6 +1978,7 @@ async function persistSettingsChange(changed) {
   if (changed.bindings) setBindings(changed.bindings);
   if (changed.keyBindings) setKeyBindings(changed.keyBindings);
   if (res && res.ok === false) showSettingsNotice(QUARANTINE_NOTICE);
+  announceSettingsSettled();
   return res;
 }
 
