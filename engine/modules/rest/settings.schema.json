@@ -9,8 +9,10 @@
     },
     "servicesPerVisit": {
       "enum": [
-        1
-      ]
+        1,
+        "all"
+      ],
+      "description": "1: exactly one listed service closes the visit. \"all\": every listed service is usable once in the same visit and none closes another."
     },
     "services": {
       "type": "array",
@@ -91,7 +93,6 @@
     "mode",
     "servicesPerVisit",
     "services",
-    "allowEmptyStrategize",
     "recovery",
     "smith"
   ],

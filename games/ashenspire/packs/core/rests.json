@@ -1,7 +1,6 @@
 {
-  "servicesPerVisit": 1,
+  "servicesPerVisit": "all",
   "services": [
-    "strategize",
     "smith",
     "levelUp"
   ],
@@ -12,8 +11,6 @@
     "healingFlasks": "full",
     "mpFlasks": "full"
   },
-  "deckEditingService": "strategize",
-  "allowEmptyStrategize": true,
   "smith": {
     "free": true,
     "tiersPerService": 1

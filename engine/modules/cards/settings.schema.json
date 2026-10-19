@@ -42,7 +42,8 @@
     },
     "editorWhere": {
       "enum": [
-        "strategize"
+        "strategize",
+        "noncombat"
       ]
     },
     "faceMaxEffects": {
