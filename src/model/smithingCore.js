@@ -8,11 +8,17 @@
 // preview), so the receipt cannot disagree with the fight.
 import { gameModule, gameContent } from './gameProfile.js';
 import { resolveGearItem } from '../../engine/kernel/gameConfig.js';
-import { createRunCombat } from '../engine/runCombat.js';
-import { previewCard } from '../engine/combat.js';
-import { createRng } from '../engine/rng.js';
-import { resolveCombatCard } from '../engine/combatExpansion.js';
 import { itemRefIdentity } from './itemUpgrades.js';
+// The combat engine is bound, not imported: this module is reached from the Smith screens and from actions.js, and a
+// static import of runCombat/combat here would reorder the engine's import cycle, which the production bundler does
+// not keep live (named imports inside a cycle read undefined). runCombat.js binds it once it has loaded.
+let engine = null;
+export function bindCoreSmithingEngine(bound) { engine = bound; }
+const need = () => { if (!engine) throw new Error('Core Smith card simulation needs the combat engine (load engine/runCombat.js first)'); return engine; };
+const createRunCombat = (...args) => need().createRunCombat(...args);
+const previewCard = (...args) => need().previewCard(...args);
+const createRng = (...args) => need().createRng(...args);
+const resolveCombatCard = (...args) => need().resolveCombatCard(...args);
 
 const STAT_ORDER = ['ar', 'dr', 'poise', 'ward', 'hp', 'mp', 'sp', 'evasion', 'precision',
   'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
