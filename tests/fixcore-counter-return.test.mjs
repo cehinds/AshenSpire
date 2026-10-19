@@ -109,3 +109,12 @@ test('the real Counter card is free to play from hand; the playability check and
   assert.equal(combat.player.stamina, before);
   assert.ok(combat.player.combatCounter, 'the zero-cost Counter still arms');
 });
+
+test('the preview marks a reduced SP price so the card face can show it down; an untouched card has no mark', () => {
+  const { combat } = live();
+  delete combat.player.combatStance;
+  assert.equal(previewCard(combat, 'cx1').costShift, -1);
+  assert.equal(previewCard(combat, 'cx1').cost, 0);
+  const strike = combat.piles.hand.find(row => row.cardId === 'core.strike');
+  assert.equal(previewCard(combat, strike.instanceId).costShift, undefined);
+});

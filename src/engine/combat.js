@@ -2737,6 +2737,9 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     costIsX: isX,
     manaCost: paidCosts.mana,
     ...(priceReceipt.selfFunded ? { displayCosts } : {}),
+    // Core 2: whether a rule moved the SP price off the printed one (-1 cheaper, 1 dearer), so the face can mark it.
+    ...(configuredCombat(combat) && !isX && Number.isFinite(def.staminaCost) && paidCosts.stamina !== def.staminaCost
+      ? { costShift: Math.sign(paidCosts.stamina - def.staminaCost) } : {}),
     // Affordability keeps the net payment requirement, including restore funding.
     staminaCost: combat.combatExpansionVersion === 2 ? paidCosts.stamina : shownCost,
     needsTarget: needsEnemyTarget({ ...def, effects: chargedEffects }),
