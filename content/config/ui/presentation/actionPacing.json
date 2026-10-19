@@ -1,6 +1,5 @@
 {
   "motion": {
-    "intentDelayMs": 500,
     "spritePlaybackRate": 0.5,
     "stageGapMs": 1000
   },
