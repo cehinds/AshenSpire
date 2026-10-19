@@ -207,9 +207,11 @@ test('fractional offense reaches final rounding without a fabricated status modi
  target.statuses={};combat.player.statuses={};
  const receipt=profileDamageReceipt(combat,combat.player,target,13,card);
  const sources=receipt.damageReceipt.hits[0].sources;
- assert.ok(sources.some(row=>row.id==='matching-stance' && row.effective>13));
+ // Owner 2026-10-18: no decimals. The chain floors once; the stance line shows its running floor (13 x 1.25 = 16.25 -> 16) and there is no separate rounding line.
+ assert.ok(sources.some(row=>row.id==='matching-stance' && row.effective===16 && Number.isInteger(row.amount)));
  assert.equal(sources.some(row=>row.id==='status-rules'),false);
- assert.ok(sources.some(row=>row.id==='quantity-rounding' && row.amount<0));
+ assert.equal(sources.some(row=>row.id==='quantity-rounding'),false);
+ assert.equal(receipt.damageReceipt.hits[0].incoming,16);
  const before=target.hp;primeAccuracyRolls(combat);
  applyAttackDamage(combat,combat.player,target,13,[],card);
  assert.equal(before-target.hp,receipt.hpLoss);
