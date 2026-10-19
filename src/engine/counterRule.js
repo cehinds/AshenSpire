@@ -5,7 +5,8 @@
 // Barrier, Ward or Poise take anything: the `incoming` figure of the damage receipt (gameProfileCombat.js).
 // Pure: no state, no RNG. The fractions are data (content/source/fixCoreMechanics.json `counter`).
 import { fixCoreEnabled, fixCoreRules, fixCoreCounterRules } from '../model/fixCoreMechanics.js';
-import { configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
+import { configuredModule } from './gameProfileCombat.js';
+import { previewDamageHits } from './combatDamagePreview.js';
 import { enemyMoveCarrier, expandedEnemyMove } from './combatCardTactics.js';
 
 /** True when the Core 2 Counter rule governs this fight. Legacy and co-op profiles keep their own return. */
@@ -61,9 +62,16 @@ export function counterPreviewAgainst(ctx, enemy, intent) {
   const carrier = enemyMoveCarrier(enemy, move, intent.moveId, ctx);
   const defender = { ...ctx.player, combatStance: { maneuver: 'counter', camp: 'physical', range: 'melee' } };
   delete defender.concurrentStances;
-  const incoming = profileDamageReceipt(ctx, enemy, defender, enemy.intent.damage, carrier).damageReceipt?.hits?.[0]?.incoming ?? 0;
-  const advantaged = counterBeats(ctx, maneuver);
+  // Hit by hit, as the live exchange resolves them: Poise breaks, Vulnerable and the like carry into later hits.
   const hits = Math.max(1, Math.floor(enemy.intent.hits ?? 1));
-  const row = counterReturn(ctx, incoming, advantaged);
-  return { incoming, advantaged, hits, hp: row.hp * hits, poise: row.poise * hits, block: row.block * hits };
+  const sequence = previewDamageHits(ctx, enemy, defender, enemy.intent.damage, carrier.tags || [], carrier, hits)
+    .damageReceipt?.hits || [];
+  const advantaged = counterBeats(ctx, maneuver);
+  const total = { hp: 0, poise: 0, block: 0 };
+  let incoming = 0;
+  for (const hit of sequence) {
+    const row = counterReturn(ctx, hit.incoming, advantaged);
+    incoming += hit.incoming; total.hp += row.hp; total.poise += row.poise; total.block += row.block;
+  }
+  return { incoming, advantaged, hits: sequence.length, ...total };
 }

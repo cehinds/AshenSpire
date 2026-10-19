@@ -12,10 +12,13 @@ import { dispatch } from '../src/engine/combat.js';
 import { counterReturn, counterBeats } from '../src/engine/counterRule.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
-const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function live() {
-  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+const houndBundle = { ...contentBundle, enemies: contentBundle.enemies.map(row => row.id === 'blightHound' ? { ...row, firstMove: 'lunge' } : row) };
+const regs = { wanderingSoldier: bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile),
+  blightHound: bindGameProfileRegistries(createRegistries(applyGameProfileToContent(houndBundle, profile)), profile) };
+const reg = regs.wanderingSoldier;
+function live(enemyId = 'wanderingSoldier') {
+  const run = createRunState({ registries: regs[enemyId], classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries: regs[enemyId], run, rng: createRng(511), enemyIds: [enemyId] });
   const enemy = combat.enemies[0];
   // A plain 8-damage Attack: no rating, status or Poise noise on either side of the exchange.
   Object.assign(enemy, { hp: 500, maxHp: 500, statuses: {}, ratings: { poise: 20 }, ratingSources: [], attributes: { dexterity: 0 } });
@@ -155,4 +158,24 @@ test('Counter played while already in Counter stance still returns 6 in the work
   dispatch(combat, { type: 'endTurn' });
   const returned = combat.eventLog.slice(start).filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
   assert.equal(returned.reduce((sum, e) => sum + e.hpLoss + e.poiseAbsorbed, 0), 6);
+});
+
+test('multi-hit preview sums the hits one by one (sequential receipts) and equals the live return', () => {
+  const { combat, enemy } = live('blightHound');
+  Object.assign(enemy, { ratings: {}, persistentPoise: { value: 0, max: 0 } });
+  Object.assign(combat.player, { block: 999, persistentPoise: { value: 20, max: 20 } });
+  const damage = previewCard(combat, 'cx1', enemy.id).values.find(row => row.op === 'damage');
+  const single = previewCard(combat, 'cx1', enemy.id).values.find(row => row.op === 'damage').totalDamage;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
+  Object.assign(combat.player, { block: 999, persistentPoise: { value: 20, max: 20 } });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const events = combat.eventLog.slice(start);
+  const taken = events.filter(e => e.type === 'damageDealt' && e.targetId === 'player');
+  assert.equal(taken.length, 2, 'two hits land');
+  const returned = events.filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
+  assert.ok(returned.length);
+  assert.equal(returned.reduce((sum, e) => sum + e.hpLoss, 0), damage.totalDamage);
+  assert.equal(single, damage.totalDamage);
 });
