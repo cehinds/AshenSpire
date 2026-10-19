@@ -34,17 +34,19 @@ export function combatBackdropHtml(run, previewSceneId = null) {
 }
 let nextMapId = 0;
 
-// The mask region spans well past the canvas: a light at the canvas edge (the start node sits 60 units in, its light is 74) must not be cut at x=0 into a hard straight edge, and the viewBox grows past the canvas by half a viewport.
 // The map's existing knowledge set owns the reveal. This adds no travel rules
 // and no persistence beyond the run.path already saved by the engine.
 export function mapTerrainHtml({ world, width, height, points, fog }) {
   const id = `terrain-${++nextMapId}`;
+  // The reveal mask pads the canvas by one light radius: a light at the canvas edge (the start node sits
+  // 60 in, its light is 74) must not be cut into a hard straight edge. Kept to the lights' reach so mobile
+  // rasterizes no more mask than it needs.
   const circles = points.map(({ id: node, x, y }) =>
     `<circle data-terrain-node="${node}" cx="${x}" cy="${y}" r="${MAP_TERRAIN_REVEAL_RADIUS}" fill="url(#${id}-light)"/>`).join('');
   return `<g class="map-terrain" data-world="${world.id}" aria-hidden="true" pointer-events="none">
     <defs>${mapFogDefs(id)}
       <radialGradient id="${id}-light"><stop offset="0.56" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></radialGradient>
-      <mask id="${id}-reveal" maskUnits="userSpaceOnUse" x="${-width}" y="${-height}" width="${width * 3}" height="${height * 3}" style="mask-type:alpha">${circles}</mask>
+      <mask id="${id}-reveal" maskUnits="userSpaceOnUse" x="${-MAP_TERRAIN_REVEAL_RADIUS}" y="${-MAP_TERRAIN_REVEAL_RADIUS}" width="${width + 2 * MAP_TERRAIN_REVEAL_RADIUS}" height="${height + 2 * MAP_TERRAIN_REVEAL_RADIUS}" style="mask-type:alpha">${circles}</mask>
     </defs>
     <g class="map-fog-ground"><rect class="terrain-paper" style="fill:url(#${id}-paper)" width="${width}" height="${height}"/></g>
     <g class="map-detail-surface"${fog ? ` mask="url(#${id}-reveal)"` : ''}><image class="terrain-detail" href="${assetUrl(world.map)}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid slice"/></g>
