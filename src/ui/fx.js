@@ -74,7 +74,14 @@ export const VIEWPORT_ORIGIN = {
  * item reads it once, before its writes, and passes it as `zoom`.
  */
 export function uiZoom() {
-  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) * viewScale() || 1;
+  // main.js applyUiScale writes --ui-zoom inline on <html>; the inline read is
+  // free, where a computed read flushes pending style and layout. It runs per
+  // combatant per render (a third of an enemy turn on a throttled phone), so
+  // the computed read is only the fallback for a page that set it in CSS.
+  const root = document.documentElement;
+  const inline = parseFloat(root.style.getPropertyValue('--ui-zoom'));
+  const zoom = Number.isFinite(inline) ? inline : parseFloat(getComputedStyle(root).getPropertyValue('--ui-zoom'));
+  return zoom * viewScale() || 1;
 }
 
 export function anchorLocalBox(layer, anchor, { zoom } = {}) {
