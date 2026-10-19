@@ -956,7 +956,7 @@
    "reach": [
     {
      "op": "goto",
-     "q": "?shot=map&shotWalk=4&shotSettings=%7B%22mapMode%22%3A%22path%22%7D",
+     "q": "?shot=map&shotWalk=4&gameProfile=current&shotSettings=%7B%22mapMode%22%3A%22path%22%7D",
      "ms": 2000
     }
    ],

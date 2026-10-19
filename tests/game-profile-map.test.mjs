@@ -109,15 +109,15 @@ test('route source defaults bind branch width and invalid dimensions fail before
   assert.throws(() => setup({ restFloors: [3, 6] }), /restFloors.*requirePrebossRest/);
 });
 
-test('Core authors a fully visible map and pins it over a stale viewer fog setting (owner, 2026-10-18)', () => {
+test('Core authors fog and pins it over a stale viewer path setting (owner, 2026-10-19)', () => {
   const { reg, run } = setup();
   run.mapGraph = buildActMap(reg, createRng(9), run.seatOrder[0], 1);
-  assert.equal(run.gameProfile.modules.routes.mapMode, 'path');
-  const mode = resolveMapMode({ settings: { mapMode: 'fog' } }, run);
-  assert.equal(mode, 'path', 'configured policy must not inherit a stale viewer fog setting');
+  assert.equal(run.gameProfile.modules.routes.mapMode, 'fog');
+  const mode = resolveMapMode({ settings: { mapMode: 'path' } }, run);
+  assert.equal(mode, 'fog', 'configured policy must not inherit a stale viewer path setting');
   const knowledge = mapKnowledge({ graph: run.mapGraph, run, mode });
-  assert.equal(knowledge.counts.hidden, 0);
-  assert.equal(knowledge.drawn.size, Object.keys(run.mapGraph.nodes).length);
+  assert(knowledge.counts.hidden > 0, 'fog hides the unvisited route');
+  assert(knowledge.drawn.size < Object.keys(run.mapGraph.nodes).length);
 });
 test('firstFloor forces depth 1 and is refused where it cannot hold (owner, 2026-10-18)', () => {
   const build = routes => { const { reg, run } = setup(routes); return buildActMap(reg, createRng(5), run.seatOrder[0], 1); };
