@@ -17,6 +17,16 @@
     "vulnerableStacks": 1,
     "extendOnly": true
   },
+  "counter": {
+    "returnFraction": 0.5,
+    "poiseFraction": 0.2,
+    "advantageIncomingFraction": 0.25,
+    "advantagePoiseFraction": 0.5,
+    "advantageBlockFraction": 0.25
+  },
+  "reaction": {
+    "handCostDiscount": 1
+  },
   "stance": {
     "effectivenessMultiplier": 1.25,
     "discount": 1,
