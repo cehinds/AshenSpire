@@ -17,3 +17,5 @@ export function newArmouryItems(run) {
 }
 export const armouryHasNew = run => noncombatEditing(run) && newArmouryItems(run).length > 0;
 export function markArmourySeen(run) { if (run?.loadout) run.armorySeen = carriedIds(run.loadout); }
+/** Core opens the deck editor from the Armoury at will, unless the cards module disables manual editing. */
+export const profileOpensDeckEditor = run => noncombatEditing(run) && gameModule(run, 'cards')?.editorEnabled !== false;

@@ -131,7 +131,7 @@ import { mountRest } from './ui/screens/rest.js';
 import { commitDeckEditDraft } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
-import { armouryHasNew, markArmourySeen, noncombatEditing } from './model/armouryRules.js';
+import { armouryHasNew, markArmourySeen, profileOpensDeckEditor } from './model/armouryRules.js';
 import { deckEditingOn } from './model/deckRules.js';
 import { mountShop, mountConfiguredShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
@@ -2133,7 +2133,7 @@ function deckDoors(services = null) {
   const settings = saves.loadMeta().settings || {};
   const doors = deckEditorDoors({ settings, inCombat: false, services });
   // D10/D15: Core edits the deck at will outside combat, from the Armoury, whatever the Current-profile location setting says.
-  return noncombatEditing(run) && deckEditingOn(settings) ? Object.freeze({ ...doors, armoury: true }) : doors;
+  return profileOpensDeckEditor(run) && deckEditingOn(settings) ? Object.freeze({ ...doors, armoury: true }) : doors;
 }
 
 function showDeckEditor(returnTo = showMap, hub = true) {

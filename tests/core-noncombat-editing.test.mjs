@@ -42,3 +42,13 @@ test('opening the Armoury persists the seen list (review finding)', async () => 
   const src = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(src, /if \(armouryHasNew\(run\)\) \{ markArmourySeen\(run\); persist\(\); \}/);
 });
+
+test('a cards module with editorEnabled false never opens the Armoury deck door (review finding)', async () => {
+  const { profileOpensDeckEditor } = await import('../src/model/armouryRules.js');
+  const run = make('core');
+  assert.equal(profileOpensDeckEditor(run), true);
+  run.gameProfile = structuredClone(run.gameProfile);
+  run.gameProfile.modules.cards.editorEnabled = false;
+  assert.equal(profileOpensDeckEditor(run), false);
+  assert.equal(profileOpensDeckEditor(make('current')), false);
+});
