@@ -98,7 +98,9 @@ test('co-op render drops a selection whose card left every hand', async () => {
   const { readFileSync } = await import('node:fs');
   const src = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
   // Only the active seat's hand keeps a selection alive (instance ids repeat across seats).
-  assert.match(src, /litCard\(\) !== null\s*\n\s*&& !\(\(snap\.scene\.players \|\| \[\]\)\.find\(p => p\.id === me\)\?\.hand \|\| \[\]\)\.some\(card => card\.instanceId === litCard\(\)\)\) clearSelection\(\);/);
+  assert.match(src, /litCard\(\) !== null && \(snap\.scene\.kind !== 'combat'\s*\n\s*\|\| !\(\(snap\.scene\.players \|\| \[\]\)\.find\(p => p\.id === me\)\?\.hand \|\| \[\]\)\.some\(card => card\.instanceId === litCard\(\)\)\)\) clearSelection\(\);/);
+  // Leaving combat (a kill by another seat, then reward/map) clears it as well.
+  assert.match(src, /snap\.scene\.kind !== 'combat'/);
 });
 
 test('an automatic seat switch for a reaction clears the previous seat\'s selection', async () => {
