@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Precision shows on the HUD badge row** ([#2188](https://github.com/cehinds/AshenSpire/pull/2188), `0.7.1.1697`). Precision now shows as a badge on the combat HUD pip next to Evade, for you and for enemies, instead of in the status tray.
+- **Precision shows on the HUD badge row** ([#2188](https://github.com/cehinds/AshenSpire/pull/2188), `0.7.1.1699`). Precision now shows as a badge on the combat HUD pip next to Evade, for you and for enemies, instead of in the status tray.
+- **Snappier taps in combat** ([#2204](https://github.com/cehinds/AshenSpire/pull/2204), `0.7.1.1699`). Playing a card and moving the target highlight now does far less layout work, so taps respond faster on phones.
 - **Spells use your PR** ([#2203](https://github.com/cehinds/AshenSpire/pull/2203), `0.7.1.1697`). Spells and cantrips now grow with your PR (Power Rating from INT and staves) instead of AR. The PR bonus lands on the magical part of a split hit, and enemy spells are unchanged.
 - **Enemies start with less Poise** ([#2202](https://github.com/cehinds/AshenSpire/pull/2202), `0.7.1.1695`). Enemies start with half the Poise they used to, so they break sooner in fights.
 - **Core map starts in fog** ([#2197](https://github.com/cehinds/AshenSpire/pull/2197), `0.7.1.1693`). The act map is fog of war by default in the Core ruleset: the route ahead stays hidden until you reach it.

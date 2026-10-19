@@ -6,6 +6,7 @@ import { uiConfig } from '../../config/generated/ui.js';
 import { combatantMeterGeometry } from '../models/CombatantMeterModel.js';
 import { overlayGeometry, OVERLAY_ROLES } from '../models/CombatOverlayModel.js';
 import { fitFooterCompactLabels } from './footerArt.js';
+import { layoutMetrics } from '../layoutMetrics.js';
 
 // Horizontal padding of a band host, in its local px. kit.css pads the hand
 // band by the device's safe-area insets (zero on hosts without a notch).
@@ -66,7 +67,7 @@ export function wireCombatLayout(combatEl) {
     frame = 0;
     if (!combatEl.isConnected) { release(); return; }
     const zoom = combatEl.getBoundingClientRect().width / combatEl.clientWidth || 1;
-    const rem = Math.max(16 / zoom, parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
+    const rem = Math.max(16 / zoom, parseFloat(layoutMetrics().fontSize) || 16);
     // The plan gets the width between the safe-area insets, so the rails and
     // the hand they wrap stay clear of a notch.
     const width = combatEl.clientWidth - inlinePadding(handArea);
