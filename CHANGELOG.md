@@ -34,6 +34,12 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Faster start-up** ([#2205](https://github.com/cehinds/AshenSpire/pull/2205), `0.7.1.1701`). The game starts faster on phones: it no longer re-computes its rules checksum or re-scans the class-mastery tag table at every launch.
+- **Snappier taps in combat** ([#2204](https://github.com/cehinds/AshenSpire/pull/2204), `0.7.1.1699`). Playing a card and moving the target highlight now does far less layout work, so taps respond faster on phones.
+- **Spells use your PR** ([#2203](https://github.com/cehinds/AshenSpire/pull/2203), `0.7.1.1697`). Spells and cantrips now grow with your PR (Power Rating from INT and staves) instead of AR. The PR bonus lands on the magical part of a split hit, and enemy spells are unchanged.
+- **Enemies start with less Poise** ([#2202](https://github.com/cehinds/AshenSpire/pull/2202), `0.7.1.1695`). Enemies start with half the Poise they used to, so they break sooner in fights.
+- **Core map starts in fog** ([#2197](https://github.com/cehinds/AshenSpire/pull/2197), `0.7.1.1693`). The act map is fog of war by default in the Core ruleset: the route ahead stays hidden until you reach it.
+- **Reward picks go straight to your deck** ([#2196](https://github.com/cehinds/AshenSpire/pull/2196), `0.7.1.1691`). Winning a card reward now lets you add it straight to your deck or open the deck editor with it ready; winning a weapon or armour lets you equip it right away.
 - **New starting decks** ([#2199](https://github.com/cehinds/AshenSpire/pull/2199), `0.7.1.1689`). Each class now starts with its own 10-card deck, and the deck editor lists only cards you own.
 - **Faster card previews** ([#2198](https://github.com/cehinds/AshenSpire/pull/2198), `0.7.1.1689`). Card previews and rule checks no longer re-copy the whole rule set each time, so tapping and aiming cards responds faster on phones.
 - **Defensive stances add Block** ([#2191](https://github.com/cehinds/AshenSpire/pull/2191), `0.7.1.1687`). Defend and other Block cards now count your stance's Defense Rating bonus, so a defensive stance really gives more Block.
