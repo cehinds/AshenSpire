@@ -1,6 +1,6 @@
 import { objectTagIds, resolve } from '../content/tags.js';
 import { tagService } from './tagService.js';
-import { withCoreSmashBlurb } from './smashClause.js';
+import { withCoreSmashBlurb } from './smashBlurb.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { dominantDamageType } from './attackTags.js';
 
