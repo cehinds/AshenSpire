@@ -190,8 +190,8 @@ try {
           drawn: n.querySelectorAll(".map-node").length,
         }));
         assert.ok(
-          fog.hidden > 0 && fog.drawn < fog.total,
-          "fresh map defaults to fog",
+          fog.hidden === 0 && fog.drawn === fog.total,
+          "fresh map defaults to path, fog off (owner, 2026-10-19)",
         );
         if (profile === "current")
           assert.equal(
