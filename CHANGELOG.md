@@ -34,8 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Rewards fill missing stances** ([#2193](https://github.com/cehinds/AshenSpire/pull/2193), `0.7.1.1683`). Card rewards now always include a basic version of a stance you don't have yet, such as Evade, until you own one of each.
-
+- **Rewards fill missing stances** ([#2193](https://github.com/cehinds/AshenSpire/pull/2193), `0.7.1.1685`). Card rewards now always include a basic version of a stance you don't have yet, such as Evade, until you own one of each.
+- **Co-op HUD check back to green** ([#2186](https://github.com/cehinds/AshenSpire/pull/2186), `0.7.1.1685`). The co-op browser check now turns on one-tap play for its Counter and vow shortcut steps, since one tap only selects a card by default. Nothing changes in play.
 - **Pages assemble reports real rebuild failures** ([#2185](https://github.com/cehinds/AshenSpire/pull/2185), `0.7.1.1683`). A failed rebuild in the Pages assemble now reports its real cause (for example the mobile build's size budget) instead of the boilerplate NOTE line, and the assemble selftest no longer posts warnings that looked like missing /latest/ pages.
 
 - **Test checks back to green** ([#2180](https://github.com/cehinds/AshenSpire/pull/2180), `0.7.1.1681`). The save-and-load browser check now runs without combat pacing so it finishes in time, and the balance report is refreshed for this week's combat fixes. Nothing changes in play.
