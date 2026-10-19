@@ -248,8 +248,10 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       panel.node.dataset.crowded = String(crowded);
       panel.node.style.setProperty('--target-hud-padding-block', `${crowded ? config.sizing.crowdedPaddingBlockEm : .65}em`);
       panel.node.style.setProperty('--target-hud-padding-inline', `${crowded ? config.sizing.crowdedPaddingInlineEm : .75}em`);
-      // anchorLocalBox's width term only: the origin it subtracts from `left` is not used.
-      panel.node.style.width = `${width / zoom}px`;
+      // The width term only. A plain origin stands in for VIEWPORT_ORIGIN, whose
+      // getters read window.innerWidth (a forced layout) for a `left` not used here.
+      const panelLocalWidth = anchorLocalBox({ left: 0, top: 0 }, { left: 0, top: 0, width, height: 0 }, { zoom }).width;
+      panel.node.style.width = `${panelLocalWidth}px`;
       panel.node.style.setProperty('--target-hud-font', `${font / zoom}px`);
       panel.node.style.setProperty('--target-hud-status-size', `${statusSize / zoom}px`);
     }
@@ -260,8 +262,9 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     const positioned = [];
     for (const box of placed) {
       const panel = panels.get(box.id)?.node; if (!panel) continue;
-      // anchorLocalBox(field, { left, top, width: 0, height: 0 }, { zoom }) with the field box read above.
-      panel.style.left = `${(box.left + 25 - fieldBox.left) / zoom}px`; panel.style.top = `${(box.top - fieldBox.top) / zoom}px`;
+      // anchorLocalBox(field, ...) with the field box read above, not read again.
+      const panelLocal = anchorLocalBox(fieldBox, { left: box.left + 25, top: box.top, width: 0, height: 0 }, { zoom });
+      panel.style.left = `${panelLocal.left}px`; panel.style.top = `${panelLocal.top}px`;
       panel.dataset.side = box.side; panel.classList.add('visible');
       const info = infoButtons.get(box.id);
       if (info) positioned.push({ info, panel });
