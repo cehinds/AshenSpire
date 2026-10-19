@@ -65,7 +65,10 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const proposal=proposalTargetPlan(ctx,source,target,carrier);
   const bypass = proposal.unavoidable || spell && tags.includes('target');
   const range = profile.range || 'melee';
-  const requiredRange = carrier?.counterRequiredRange || target?.combatStance?.range || 'melee';
+  // A spell stance at Reach is delivery (how the caster casts), not a held distance, so melee still connects (owner bug, 2026-10-18).
+  // A physical Reach stance (Crawling Shot) and any Far stance still hold distance.
+  const stance = target?.combatStance, delivery = stance?.camp === 'spell' && stance.range === 'reach';
+  const requiredRange = carrier?.counterRequiredRange || (delivery ? 'melee' : stance?.range) || 'melee';
   const override = profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach');
   // Target bypasses Evasion only; its spell still needs sufficient reach.
   const inRange = override || (RANGES.includes(range) && RANGES.includes(requiredRange) && RANGES.indexOf(range) >= RANGES.indexOf(requiredRange));

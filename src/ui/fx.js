@@ -626,7 +626,7 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
     // A hit Barrier stopped outright reads RESISTED.
     barrier: barrier > 0 ? { text: amount === 0 && ward === 0 ? `${barrier} RESISTED` : String(barrier), cls: 'barrier small' } : null,
     ward: ward > 0 ? { text: String(ward), cls: 'ward small' } : null,
-    poise: poise > 0 ? { text: String(poise), cls: 'poise small' } : null,
+    poise: poise > 0 ? { text: t('combat.receipt.poiseAbsorbed', { n: poise }), cls: 'poise small' } : null,
     immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
     damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual, targetMaxHp) } : null,
@@ -1032,8 +1032,9 @@ export function playTimeline(events, ctx, done) {
       if (group.length) groups.push({ ...beat, events: group });
       return groups;
     },
-    onReaction: beat => {
-      runParts(beat, 'reaction');
+    // The result word (Hit, Miss, Block, Countered) is its own stage, one gap
+    // before the sprite reaction (owner, D11, 2026-10-18).
+    onResult: beat => {
       // Accuracy receipts cannot say Hit before a miss, full Block or break
       // receipt that follows them. More specific outcomes take precedence.
       const outcomeTargets = new Set(beat.events.filter(event => event.type !== 'attackHit' && calloutForEvent(event)).map(event => event.targetId));
@@ -1048,6 +1049,9 @@ export function playTimeline(events, ctx, done) {
           saidTargets.add(event.targetId);
         }
       }
+    },
+    onReaction: beat => {
+      runParts(beat, 'reaction');
       return Math.max(0, ...beat.events.map(event => Number(ctx.reactionTimingForReceipt?.(event, timing.spriteSpeed)) || 0));
     },
     onNumbers: beat => {
@@ -1553,12 +1557,12 @@ export function bigHitLanded(e, { isLocalPlayer, maxHpFor } = {}) {
 
 /**
  * enemyPoiseBroken(e, isLocalPlayer?) → did an enemy's Poise break (the
- * stagger starts)? The engine's poiseBroken receipt for an enemy carries
- * `interrupted`. It names no seat, so in co-op it is nobody's here, as in
+ * stagger starts)? A player's Poise break (targetKind 'player') is not an enemy's and is false.
+ * Legacy events without targetKind keep the old reading. The receipt names no seat, so in co-op it is nobody's here, as in
  * playerLostHp.
  */
 export function enemyPoiseBroken(e, isLocalPlayer) {
-  if (!e || e.type !== 'poiseBroken' || !e.interrupted) return false;
+  if (!e || e.type !== 'poiseBroken' || e.targetKind === 'player' || !(e.interrupted || e.poiseBreak)) return false;
   return typeof isLocalPlayer !== 'function';
 }
 

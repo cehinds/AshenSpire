@@ -5,8 +5,8 @@ import { combatHealthRow } from '../src/ui/components/combatHealth.js';
 import { meter } from '../src/ui/kit/index.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
-test('protection badges are independent, Ward is first, and broken protection disappears', () => {
-  for (const [defense, ward, kinds] of [[12, 8, ['ward', 'shield']], [12, 0, ['shield']], [0, 8, ['ward']], [0, 0, []]]) {
+test('protection badges are independent, Defense (Block) is first, then Ward, and broken protection disappears', () => {
+  for (const [defense, ward, kinds] of [[12, 8, ['shield', 'ward']], [12, 0, ['shield']], [0, 8, ['ward']], [0, 0, []]]) {
     const model = combatHealthModel({ defense, ward });
     assert.deepEqual(model.badges.map(b => b.kind), kinds);
     assert.equal(model.protected, defense > 0);
@@ -23,8 +23,8 @@ test('the compact row preserves health facts and the original total trough lengt
   assert.equal(hp.querySelector('.m-fill').style.width, '80.00%');
   assert.equal(hp.querySelector('.m-value').textContent, '64/80');
   assert.equal(row.children.length, 3);
-  assert.equal(row.children[0].dataset.defenseKind, 'ward');
-  assert.equal(row.children[1].dataset.defenseKind, 'shield');
+  assert.equal(row.children[0].dataset.defenseKind, 'shield');
+  assert.equal(row.children[1].dataset.defenseKind, 'ward');
   assert.equal(hp.dataset.protected, 'true');
   assert.equal(hp.dataset.warded, 'true');
 }));
@@ -53,7 +53,7 @@ test('PIP badges preserve actual Evasion stacks independently of other defenses'
     { evasion: 2, poise: 3, poiseMax: 8, ward: 4, defense: 5 }, { tooltips: false });
   assert.deepEqual(row.querySelectorAll('.combat-health-badge').map(node =>
     [node.dataset.defenseKind, node.querySelector('.combat-health-badge-value').textContent]),
-  [['evade', '2'], ['poise', '3'], ['ward', '4'], ['shield', '5']]);
+  [['shield', '5'], ['evade', '2'], ['poise', '3'], ['ward', '4']]);
   assert.equal(row.querySelector('.combat-health-meter .m-value').textContent, '18/20');
 }));
 

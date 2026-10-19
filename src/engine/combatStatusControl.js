@@ -102,6 +102,8 @@ export function prepareBreakInterrupt(ctx, entity, cause) {
   if (entity?.kind !== 'enemy' || !entity.alive || !(entity.hp > 0)) return null;
   const cancelledMove = entity.pendingMove ? entity.pendingMove.moveId : null;
   if (!Actions.staggerEnemy(ctx, entity, { cause })) return null;
+  // Under FixCore a stagger is a stance: it cancels nothing and is not an interrupt, so no enemyInterrupted event.
+  if (fixCoreEnabled(ctx)) return null;
   return ['enemyInterrupted', { targetId: entity.id, cancelledMove, cause }];
 }
 
