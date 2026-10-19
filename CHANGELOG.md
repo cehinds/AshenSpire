@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Co-op cards always need a select tap** ([#2157](https://github.com/cehinds/AshenSpire/pull/2157), `0.7.1.1643`). In co-op, a card that comes back to your hand after being played no longer plays on a single tap; it has to be selected first, like every other card.
+- **Co-op cards always need a select tap** ([#2157](https://github.com/cehinds/AshenSpire/pull/2157), `0.7.1.1645`). In co-op, a card that comes back to your hand after being played no longer plays on a single tap; it has to be selected first, like every other card.
+- **Auto-combat answers your reactions only** ([#2147](https://github.com/cehinds/AshenSpire/pull/2147), `0.7.1.1645`). Auto-combat now only answers your reaction prompts, countering the attack you can read or matching your last stance. It never plays your turn.
 - **The FixCore rules contract follows the owner's rulings** ([#2141](https://github.com/cehinds/AshenSpire/pull/2141), `0.7.1.1643`). The written combat rules now describe the owner's decisions on Poise, Staggered, stance costs, Perception, rest sites, pacing and automatic reactions. Play changes arrive in separate updates.
 - **One tap no longer plays a card** ([#2146](https://github.com/cehinds/AshenSpire/pull/2146), `0.7.1.1641`). A tap now selects a card and shows its targets. A second tap or a target pick plays it. Players who want one-tap play can turn on "Tap a card to play it" in Settings.
 - **Matching stances hit harder and hit chances show when you pick a card** ([#2144](https://github.com/cehinds/AshenSpire/pull/2144), `0.7.1.1639`). Matching stances now add 25% effectiveness. Enemy intent checks use the target's Intelligence and Wisdom against your Wisdom roll. Hit chances show on every target as soon as you pick a card that can hit it.
