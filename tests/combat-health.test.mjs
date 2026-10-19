@@ -61,6 +61,11 @@ test('Precision badge sits right after Evade and is hidden at zero, negative or 
   const kinds = values => combatHealthModel(values).badges.map(b => b.kind);
   assert.deepEqual(kinds({ defense: 5, evasion: 2, precision: 3, poise: 3, ward: 4 }), ['shield', 'evade', 'precision', 'poise', 'ward']);
   for (const precision of [0, -2, null, undefined, NaN]) assert.ok(!kinds({ precision }).includes('precision'));
+  const row = combatHealthRow(meter({ id: 'hp', value: '18/20', cur: 18, max: 20 }), { evasion: 2, precision: 3 }, { tooltips: false });
+  const badge = row.querySelector('.combat-health-precision');
+  assert.equal(badge.querySelector('.combat-health-badge-value').textContent, '3');
+  assert.ok(badge.querySelector('.combat-health-precision-icon svg'));
+  assert.equal(badge.getAttribute('aria-label'), 'Precision 3');
 }));
 
 test('spent Evasion stacks disappear from the PIP instead of showing a zero rating', () => {
