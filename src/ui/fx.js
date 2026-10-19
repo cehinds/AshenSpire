@@ -609,7 +609,7 @@ export function guardHitFloatParts(event, targetMaxHp = 0) {
   // Block (blue) and Health (red), each its own unsigned number.
   const barrier = Math.max(0, Number(event && event.barrierAbsorbed) || 0);
   const ward = Math.max(0, Number(event && event.wardAbsorbed) || 0);
-  const poise = Math.max(0, Number(event && event.poiseAbsorbed) || 0);
+  const poise = Math.max(0, Number(event && (event.poiseSpent ?? event.poiseAbsorbed)) || 0);
   // The Force part a Silenced target was immune to (the rest of the hit landed).
   const forceImmune = Math.max(0, Number(event && event.forceImmune) || 0);
   return {

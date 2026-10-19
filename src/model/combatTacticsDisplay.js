@@ -31,6 +31,10 @@ export function activeCombatStance(entity) {
 export function combatStanceRow(entity) {
   const stance = activeCombatStance(entity);
   if (!stance) return null;
+  if (stance.staggered) return {
+    id: 'combat-stance', kind: 'stance', maneuver: 'staggered', name: 'Staggered stance',
+    detail: 'Poise broke. Loses 1 SP next turn and is Vulnerable (+25% damage taken; repeat breaks only lengthen it). Holds until its next turn begins.',
+  };
   const sigil = ACTION_SIGILS[stance.maneuver];
   const label = sigil?.label || titleCase(stance.maneuver);
   const posture = [titleCase(stance.school || stance.camp), stance.reach && `${titleCase(stance.reach)} reach`].filter(Boolean).join(' · ');

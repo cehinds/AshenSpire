@@ -173,6 +173,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
           ...(barrier ? [`Barrier absorbed ${barrier} (${(event.barrierRemaining || 0) + barrier} → ${event.barrierRemaining || 0})`] : []),
           ...(ward ? [`Ward absorbed ${ward} (${(event.wardRemaining || 0) + ward} → ${event.wardRemaining || 0})`] : []),
           ...(blocked ? [`Block absorbed ${blocked} (${(event.blockRemaining || 0) + blocked} → ${event.blockRemaining || 0})`] : []),
+          ...(event.poiseSpent ? [`Poise lost ${event.poiseSpent} (${(event.poiseRemaining || 0) + event.poiseSpent} → ${event.poiseRemaining || 0})`] : []),
           ...(poise ? [`Poise absorbed ${poise} (${(event.poiseRemaining || 0) + poise} → ${event.poiseRemaining || 0})`] : []),
           // Silenced: the hit's Force part was negated, the rest went on.
           ...(event.forceImmune > 0 ? [`${event.forceImmune} Force IMMUNE (Silenced)`] : []),

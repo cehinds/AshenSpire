@@ -13,6 +13,8 @@ import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
 import { getMult } from '../src/engine/statuses.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
 import { validateFixCoreRules, fixCorePoiseRules, fixCoreStaggeredRules } from '../src/model/fixCoreMechanics.js';
+import { combatStanceRow } from '../src/model/combatTacticsDisplay.js';
+import { damageReceiptLines } from '../src/ui/components/damageReceipt.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -102,4 +104,12 @@ test('preview of a multihit card sees the break: later hits take Vulnerable', ()
   const { combat, target } = live(1);
   const preview = previewDamageHits(combat, combat.player, target, 20, [], carrier, 2);
   assert.equal(preview.hitDamages[1], Math.floor(preview.hitDamages[0] * 1.25));
+});
+
+test('UI: the Staggered stance row and the receipt Poise line', () => {
+  const { combat, target } = live(2);
+  hit(combat, target, 10);
+  assert.equal(combatStanceRow(target).name, 'Staggered stance');
+  const lines = damageReceiptLines({ hits: [{ incoming: 10, hpLoss: 10, poiseDamage: 2 }], totalDamage: 10 });
+  assert.ok(lines.some(line => /Poise damage −2/.test(line)));
 });
