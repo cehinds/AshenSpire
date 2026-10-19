@@ -1,5 +1,5 @@
 // Immutable per-run configuration snapshots. No mutable active-profile singleton.
-import { gameProfileCatalog, gameProfileAuthors } from '../content/generated/gameProfiles.js';
+import { gameProfileCatalog, gameProfileAuthors, gameProfileHashes } from '../content/generated/gameProfiles.js';
 import { resolveGameAuthor, validateResolvedGameProfile, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
 export { GameConfigError };
 export function resolveGameProfile(idOrAuthor = 'current') {
@@ -8,7 +8,8 @@ export function resolveGameProfile(idOrAuthor = 'current') {
       return resolveGameAuthor({formatVersion:1,core:idOrAuthor,modules:{}},gameProfileCatalog);
     }
     if (!gameProfileAuthors[idOrAuthor]) throw new GameConfigError('$/profile','unknown profile ID');
-    return resolveGameAuthor(gameProfileAuthors[idOrAuthor],gameProfileCatalog);
+    // Catalog authors carry a build-time digest that CI (game-config check) recomputes.
+    return resolveGameAuthor(gameProfileAuthors[idOrAuthor],gameProfileCatalog,{knownHash:gameProfileHashes[idOrAuthor]});
   }
   if (idOrAuthor?.hash) return validateGameProfileSnapshot(idOrAuthor);
   return resolveGameAuthor(idOrAuthor,gameProfileCatalog);
