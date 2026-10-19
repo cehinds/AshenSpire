@@ -247,3 +247,9 @@ test('fractional offense reaches final rounding without a fabricated status modi
  applyAttackDamage(combat,combat.player,target,13,[],card);
  assert.equal(before-target.hp,receipt.hpLoss);
 });
+test('the Evade card outside combat fills its {evade} token with a phrase, never a raw token',async()=>{
+ const {staticCardTokens,playingCardModel}=await import('../src/model/playingCard.js');
+ const def=reg.cards.get('core.evade');
+ assert.equal(staticCardTokens(def).evade,'1 plus DEX');
+ assert.equal(playingCardModel(reg,{cardId:'core.evade'}).tokens.evade,'1 plus DEX');
+});

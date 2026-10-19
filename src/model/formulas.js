@@ -117,8 +117,9 @@ export function describeFormula(formula) {
   // Some authored damage cards combine a fixed base with a per-status rider.
   // Their live value still belongs to combat preview, but the card face can
   // describe the authored arithmetic without guessing the target's statuses.
+  // The evaluator defaults `per` to 1, so an omitted `per` describes the same way.
   if (isFormula(formula) && formula.f === 'metric'
-      && Number.isFinite(formula.per) && formula.per > 0
+      && (formula.per === undefined || Number.isFinite(formula.per) && formula.per > 0)
       && ['min', 'max'].every(key => formula[key] === undefined || Number.isFinite(formula[key]))
       && !(formula.min !== undefined && formula.max !== undefined && formula.min > formula.max)
       && Object.keys(formula).every(key => ['f', 'metric', 'of', 'statuses', 'per', 'min', 'max'].includes(key))) {
@@ -129,15 +130,16 @@ export function describeFormula(formula) {
       damageTakenThisTurn: formula.of === 'self' ? 'HP lost this turn' : null,
       distinctTypes: formula.of === 'self' ? 'distinct card type played this turn' : null,
       sameCardPlays: formula.of === 'self' ? 'play of this card this combat' : null,
-      evadeStackGain: formula.of === 'self' ? 'Evade stack per play (1 plus DEX)' : null,
+      evadeStackGain: formula.of === 'self' ? '1 plus DEX' : null,
     }[formula.metric];
+    const per = formula.per ?? 1;
     if (metricText) {
-      const scale = formula.per === 0.5 && formula.metric === 'damageTakenThisTurn'
-        ? 'half of ' : formula.metric === 'evadeStackGain' && formula.per === 1 ? '' : `${formula.per} per `;
+      const scale = per === 0.5 && formula.metric === 'damageTakenThisTurn'
+        ? 'half of ' : formula.metric === 'evadeStackGain' && per === 1 ? '' : `${per} per `;
       let text = `${scale}${metricText}`;
       if (formula.min !== undefined) text += ` (minimum ${formula.min})`;
       if (formula.max !== undefined) text += ` (maximum ${formula.max})`;
-      if (!Number.isInteger(formula.per) || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
+      if (!Number.isInteger(per) || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
       return text;
     }
   }
