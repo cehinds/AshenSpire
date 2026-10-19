@@ -952,6 +952,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     // ride into the new layer to finish their float, each on its own timer.
     const carriedFx = snap.scene.kind === 'combat' ? [...(app.querySelector('.fx-layer')?.children || [])] : [];
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
+    // A played card leaves the hand; drop its selection so the same instance coming back
+    // later (from the discard, or in a later encounter) needs a fresh select tap.
+    if (snap.scene.kind === 'combat' && litCard() !== null
+      && !(snap.scene.players || []).some(p => (p.hand || []).some(card => card.instanceId === litCard()))) clearSelection();
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
     else { heldStances.reset(); combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
     if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle

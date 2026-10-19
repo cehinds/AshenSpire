@@ -93,3 +93,9 @@ test('one-tap in co-op needs an unambiguous play, upcast wrapper included', () =
   assert.equal((coop.match(/oneTap: \(\) => oneTapPlays\(entry\.def\)/g) || []).length, 2, 'plain and Upcast wiring both use the predicate');
   assert.doesNotMatch(coop, /oneTap: oneTapPlayOn/);
 });
+
+test('co-op render drops a selection whose card left every hand', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
+  assert.match(src, /litCard\(\) !== null\s*\n\s*&& !\(snap\.scene\.players \|\| \[\]\)\.some\(p => \(p\.hand \|\| \[\]\)\.some\(card => card\.instanceId === litCard\(\)\)\)\) clearSelection\(\);/);
+});
