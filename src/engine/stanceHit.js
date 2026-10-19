@@ -75,7 +75,8 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
     if (mode === 'normal') { if (bypass || diceHit([first], need, mode, fixCoreEnabled(ctx))) hits++; }
     else for (let second = 1; second <= 20; second++) if (bypass || diceHit([first, second], need, mode, fixCoreEnabled(ctx))) hits++;
   }
-  const hitChance = 100 * hits / outcomes;
+  // Under FixCore a shown percentage is whole, rounded down (owner, 2026-10-18); advantage and disadvantage give quarters.
+  const hitChance = fixCoreEnabled(ctx) ? Math.floor(100 * hits / outcomes) : 100 * hits / outcomes;
   const evadeActive = evadeAttempted;
   return { range, requiredRange, inRange, accuracy, evasion, need, ...(fixCoreEnabled(ctx) ? {stanceFactor} : {}), bypass, mode, advantage: mode === 'advantage', disadvantage: mode === 'disadvantage', evadeStacks, evadeActive, evadeAttempted, hitChance, chance: hitChance,
     ...(!inRange ? { missReason: 'range' } : {}) };
