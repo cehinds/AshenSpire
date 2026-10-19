@@ -9,19 +9,20 @@ import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { combatCardSummary } from '../src/model/playingCard.js';
 import { cardTagExplanation } from '../src/model/cardTagExplanation.js';
 import { cardPlainText } from '../src/ui/components/card.js';
-import { coreSmashClause, coreSmashHelp } from '../src/model/smashClause.js';
+import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
+import { coreSmashClause, coreSmashHelp, withCoreSmashBlurb } from '../src/model/smashClause.js';
 import { uiStrings } from '../src/content/generated/uiStrings.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const current = createRegistries(contentBundle);
-const CLAUSE = uiStrings.find(r => r.id === 'card.smash.coreClause').full;
 const plain = lines => lines.map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');
 const RULE = /double damage, plus a quarter of their Block; half of it breaks Poise/;
 
 test('the shared Core Smash sentence states the owner rule', () => {
-  assert.match(CLAUSE, RULE);
-  assert.match(uiStrings.find(r => r.id === 'tag.smash.coreHelp').full, RULE);
+  assert.match(coreSmashClause(core.cards.get('core.reaverSpecial'), core), RULE);
+  assert.match(coreSmashHelp(core.cards.get('core.reaverSpecial'), core), RULE);
+  for (const id of ['card.smash.coreClause', 'tag.smash.coreHelp']) assert.match(uiStrings.find(r => r.id === id).full, /\{mult\}.*\{block\}.*\{poise\}/);
 });
 
 test('every Core card tagged maneuver:smash shows the line, not only core.smash', () => {
@@ -64,4 +65,14 @@ test('enemy Smash moves (blightHound.lunge): Core help states the rule, legacy k
   const smashTag = reg => combatProfileTags({ camp: 'physical', maneuver: 'smash', range: 'melee' }, reg).find(tag => tag.id === 'maneuver:smash');
   assert.match(smashTag(core).blurb, RULE);
   assert.doesNotMatch(smashTag(current).blurb, RULE);
+});
+
+test('the text follows the active rules: a profile with a 3x multiplier, 30% Block and 40% Poise says so', () => {
+  const rules = { ...shipped, smashVsDefensive: { damageMultiplier: 3, blockFraction: 0.3, poiseFraction: 0.4 } };
+  const ctx = { gameProfile: core.gameProfile, fixCoreRules: rules };
+  const reaver = core.cards.get('core.reaverSpecial');
+  assert.equal(coreSmashClause(reaver, ctx), 'Against Defend or Prepared: 3× damage, plus 30% of their Block; 40% of it breaks Poise.');
+  assert.match(coreSmashHelp(reaver, ctx), /3× damage, plus 30% of their Block; 40% of it breaks Poise/);
+  assert.match(withCoreSmashBlurb({ id: 'maneuver:smash', blurb: 'x' }, ctx).blurb, /3× damage/);
+  assert.doesNotMatch(coreSmashClause(reaver, core), /3×/);
 });
