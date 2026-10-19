@@ -32,7 +32,7 @@ export function invalidateLayoutMetrics() { cache = null; vars.clear(); }
 function fresh() {
   watch();
   // A queued, undelivered attribute change on <html>/<body> means the cache is stale.
-  if (observer && observer.takeRecords().length) invalidateLayoutMetrics();
+  if (observer && observer.takeRecords?.().length) invalidateLayoutMetrics();
 }
 
 /**
