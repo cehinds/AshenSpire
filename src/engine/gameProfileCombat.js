@@ -121,7 +121,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     smashBlockBonus = Math.floor(smashRule.blockFraction * Math.max(0, target.block || 0));
     if (smashBlockBonus > 0) { sources.push({id:'smash-block-bonus',label:'Smash vs defensive stance: bonus from target Block',amount:smashBlockBonus,requested:amount,effective:amount+smashBlockBonus,stage:'stance',operation:'add'}); amount += smashBlockBonus; }
   }
-  let blocked = 0, poiseMitigated = 0, wardMitigated = 0;
+  let blocked = 0, poiseMitigated = 0, wardMitigated = 0, poiseDrain = 0;
   const incoming = amount;
   const profile = {...(carrier.combatProfile || {}), ...(Number.isFinite(carrier.magicShare) ? {magicShare:carrier.magicShare} : {})};
   const share = magicShareOf(profile,ctx.ratingsRules);
@@ -139,7 +139,9 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     // Smash vs a defensive stance: no 25% absorption; the pool instead loses a share of the whole hit (capped at what it holds).
     const poise = smashRule ? {amount:poiseIn,reduced:0,sources:[]} : protectionReceipt(ctx,target,'physical',poiseIn);
     const ward = protectionReceipt(ctx,target,'magical',poiseMeetsMagic ? 0 : magical-barrierMitigated);
-    poiseMitigated=smashRule && !evaded ? Math.min(Math.max(0,target?.persistentPoise?.value || 0),Math.floor(smashRule.poiseFraction*incoming)) : poise.reduced;wardMitigated=ward.reduced;
+    // Smash vs a defensive stance: the pool's loss is Poise damage, not absorption, so poiseMitigated (and the log's "absorbed") stay 0.
+    poiseDrain=smashRule && !evaded ? Math.min(Math.max(0,target?.persistentPoise?.value || 0),Math.floor(smashRule.poiseFraction*incoming)) : 0;
+    poiseMitigated=poise.reduced;wardMitigated=ward.reduced;
     sources.push(...poise.sources,...ward.sources);
     amount=poise.amount+ward.amount;
   }
@@ -156,11 +158,11 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     }
   }
   return { raw, wardMitigated, barrierMitigated,
-    damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,hpLoss:amount,sources}]),
+    damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     hitChance, uncertain: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) && roll === null,
-    hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated,
+    hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain,
     blockRemaining: Math.max(0, (target?.block || 0) - blocked), evaded, advantage,
-    ...(smashRule ? { smashVsDefensive: { blockBonus: smashBlockBonus, poiseDamage: poiseMitigated } } : {}),
+    ...(smashRule ? { smashVsDefensive: { blockBonus: smashBlockBonus, poiseDamage: poiseDrain } } : {}),
     defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,
     attackStance: attacking, defenseStance: defending,
     interrupted: advantage && stances?.staggerOnAdvantage === true

@@ -13,6 +13,8 @@ import { applyAttackDamage } from '../src/engine/actions.js';
 import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
 import { validateFixCoreRules, fixCoreSmashVsDefensiveRules } from '../src/model/fixCoreMechanics.js';
+import { combatLogEntries } from '../src/model/combatLog.js';
+import { damageReceiptLines } from '../src/ui/components/damageReceipt.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -44,6 +46,20 @@ test('worked example: Smash 12 vs a defending target with 10 Block = 24 + floor(
   assert.equal(500 - target.hp, 16, 'the 25% Poise absorption does not apply to this hit');
   assert.equal(target.block, 0);
   assert.equal(20 - target.persistentPoise.value, 13);
+  // Poise lost 13 as damage, not absorption: absorption fields stay 0 and the log/receipt say "Poise damage 13".
+  assert.equal(event.poiseAbsorbed, 0);
+  assert.equal(event.poiseMitigated, 0);
+  assert.equal(event.poiseDamage, 13);
+  assert.equal(event.damageReceipt.hits[0].poiseReduced, 0);
+  assert.equal(event.damageReceipt.hits[0].poiseDamage, 13);
+  const line = combatLogEntries([event], { registries: reg, players: [combat.player], enemies: combat.enemies }).map(row => row.text).join(' ');
+  assert.match(line, /Poise damage 13 \(20 → 7\)/);
+  assert.doesNotMatch(line, /Poise absorbed/);
+  assert.match(line, /Block absorbed 10/);
+  assert.match(line, /16 HP dealt/);
+  const receiptText = damageReceiptLines(event.damageReceipt).join('\n');
+  assert.match(receiptText, /Poise damage 13/);
+  assert.doesNotMatch(receiptText, /Poise absorbed/);
 });
 
 test('the preview matches live resolution (same function)', () => {

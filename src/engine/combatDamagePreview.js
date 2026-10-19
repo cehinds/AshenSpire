@@ -79,7 +79,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
           if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
           if (defender.persistentPoise) {
             const poiseBefore = defender.persistentPoise.value;
-            defender.persistentPoise.value = Math.max(0, poiseBefore - receipt.poiseMitigated);
+            defender.persistentPoise.value = Math.max(0, poiseBefore - receipt.poiseMitigated - (receipt.poiseDrain || 0));
             if (poiseBefore > 0 && defender.persistentPoise.value === 0) previewPoiseBreak(ctx, defender);
           }
         }
