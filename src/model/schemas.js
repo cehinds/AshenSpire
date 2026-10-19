@@ -841,6 +841,8 @@ export const SCHEMAS = Object.freeze({
     targeting: opt(str),
     traits: opt(arr(str)),
     stanceTrigger: opt(any),
+    // A Spell that plays as a basic card (owner 2026-10-18): stance, discounts and reads use this type.
+    mirrors: opt(en('attack', 'smash', 'sweep', 'defend', 'counter')),
     stanceExpiry: opt(any),
     id: str,
     name: str,

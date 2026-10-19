@@ -310,6 +310,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
+    "mirrors": "attack",
     "icon": "\u2694",
     "keywords": [],
     "effects": [
