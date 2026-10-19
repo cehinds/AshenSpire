@@ -34,7 +34,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Smith upgrades work in Core** ([#2195](https://github.com/cehinds/AshenSpire/pull/2195), `0.7.1.1703`). Smith upgrades now do what they say: weapons add AR, armor and shields add a stat point per tier, and the upgrade screen shows the real change to your cards' Damage and Block.
+- **Smith upgrades work in Core** ([#2195](https://github.com/cehinds/AshenSpire/pull/2195), `0.7.1.1707`). Smith upgrades now do what they say: weapons add AR, armor and shields add a stat point per tier, and the upgrade screen shows the real change to your cards' Damage and Block.
+- **Runtime changes no longer fail the save-hash test** ([#2206](https://github.com/cehinds/AshenSpire/pull/2206), `0.7.1.1707`). The verified-profiles test now checks that the cached runtime hash matches the committed game lock, so pull requests that change the runtime on purpose no longer fail it.
+- **Card pickers show effects at a glance** ([#2194](https://github.com/cehinds/AshenSpire/pull/2194), `0.7.1.1707`). Reaction, discard and stance pickers now show cards as a grid of equal-size tiles with each card's name and effect; numbers raised by advantage or stance show green, lowered ones red.
+- **Rewards fill missing stances** ([#2193](https://github.com/cehinds/AshenSpire/pull/2193), `0.7.1.1705`). Card rewards now always include a basic version of a stance you don't have yet, such as Evade, until you own one of each.
 - **Precision shows on the HUD badge row** ([#2188](https://github.com/cehinds/AshenSpire/pull/2188), `0.7.1.1703`). Precision now shows as a badge on the combat HUD pip next to Evade, for you and for enemies, instead of in the status tray.
 - **Faster start-up** ([#2205](https://github.com/cehinds/AshenSpire/pull/2205), `0.7.1.1701`). The game starts faster on phones: it no longer re-computes its rules checksum or re-scans the class-mastery tag table at every launch.
 - **Snappier taps in combat** ([#2204](https://github.com/cehinds/AshenSpire/pull/2204), `0.7.1.1699`). Playing a card and moving the target highlight now does far less layout work, so taps respond faster on phones.
