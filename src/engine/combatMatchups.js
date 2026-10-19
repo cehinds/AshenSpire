@@ -680,7 +680,9 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   const resistedPayload = receipt.amount > 0 ? receipt.blocked + receipt.wardResisted >= receipt.amount
     : receipt.statusResisted > 0 || mitigatedContact;
   if (!stillPrepared || blocked || receipt.avoided || receipt.counterBroken || unreflectable
-    || !target?.alive || !source?.alive || receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload
+    || !target?.alive || !source?.alive
+    // Core 2 (SPEC §17): a covered hit that lands answers, whatever got through. Legacy needs the hit fully resisted.
+    || (!counterRuleActive(ctx) && (receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload))
     || target.combatCounterReturnedCycle === (target.combatOwnerCycle || 0)) return queue;
   target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
   // Reaction rules version 2: Counterstrike scales the authored payload first; SPEC §4.8's return formulas run after.

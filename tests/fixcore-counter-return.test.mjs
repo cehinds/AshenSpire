@@ -118,3 +118,17 @@ test('the preview marks a reduced SP price so the card face can show it down; an
   const strike = combat.piles.hand.find(row => row.cardId === 'core.strike');
   assert.equal(previewCard(combat, strike.instanceId).costShift, undefined);
 });
+
+test('Core: the Counter returns even when damage gets through (no Poise: 8 into 7 Block leaves 1, return still 6)', () => {
+  const { combat, enemy } = live();
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
+  Object.assign(combat.player, { block: 5, persistentPoise: { value: 0, max: 0 } });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const events = combat.eventLog.slice(start);
+  const taken = events.find(e => e.type === 'damageDealt' && e.targetId === 'player');
+  assert.equal(taken.blocked, 7); assert.equal(taken.hpLoss, 1);
+  const returned = events.filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
+  assert.equal(returned.reduce((sum, e) => sum + e.hpLoss + e.poiseAbsorbed, 0), 6);
+});
