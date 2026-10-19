@@ -20,7 +20,13 @@ export function configuredModule(subject, id) {
   const rule = gameModule(subject, id);
   return rule?.mode === 'configured' ? rule : null;
 }
+// A Spell that mirrors a basic card (owner 2026-10-18) keeps that basic's stance; it is still a Spell.
+export function mirroredStance(carrier) {
+  const mirrors = carrier?.combatProfile?.mirrors ?? carrier?.mirrors;
+  return ['attack', 'smash', 'sweep', 'defend', 'counter'].includes(mirrors) && (carrier?.combatProfile?.camp ?? 'spell') === 'spell' ? mirrors : null;
+}
 export function configuredStance(carrier) {
+  if (mirroredStance(carrier)) return mirroredStance(carrier);
   if (cardPreparationCategory(carrier)) return 'prepared';
   const raw = carrier?.stanceTrigger?.stance || carrier?.combatProfile?.maneuver || carrier?.maneuver
     || (carrier?.cardTags || carrier?.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id).find(tag => tag.startsWith('maneuver:'))?.slice(9);
@@ -35,7 +41,8 @@ export function setProfileStance(ctx, entity, carrier) {
   const rule = configuredModule(ctx, 'stances');
   const stance = configuredStance(carrier);
   entity.combatStance = rule?.include?.includes(stance)
-    ? { maneuver: stance, camp: carrier?.combatProfile?.camp || 'physical', range: carrier?.combatProfile?.range || 'melee' }
+    ? { maneuver: stance, camp: carrier?.combatProfile?.camp || 'physical', range: carrier?.combatProfile?.range || 'melee',
+      ...(mirroredStance(carrier) ? { mirrored: true, camp: 'spell' } : {}) }
     : { maneuver: 'neutral', camp: 'physical', range: 'melee' };
   if (grants?.precision > 0) applyStatus(ctx,entity,'precision',grants.precision,entity);
   if (grants?.evade > 0 && !carrier?.appliedStatuses?.includes('evade')) applyStatus(ctx,entity,'evade',grants.evade,entity);

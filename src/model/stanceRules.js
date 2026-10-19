@@ -20,6 +20,7 @@ export function enemyCounterPoiseDamage(move, profile, ctx) {
   return authored > 0 || move.effects?.some(effect => effect.op === 'poiseDamage')
     ? authored : stanceRulesFor(ctx).fallbackPoise;
 }
+const MIRRORED_TYPES = new Set(['attack', 'smash', 'sweep', 'defend', 'counter']);
 export function stanceOf(carrier, entity = null) {
   if (!carrier) return null;
   const tags = carrier.cardTags ?? carrier.tags;
@@ -29,18 +30,20 @@ export function stanceOf(carrier, entity = null) {
   const preparation = cardPreparationCategory(carrier);
   if (!preparation && !profile.maneuver) return null;
   const camp = ['spell', 'spells', 'magic', 'magical'].includes(profile.camp) ? 'spell' : 'physical';
-  let maneuver = preparation ? 'casting' : carrier.stanceTrigger?.stance || profile.stanceTrigger?.stance || profile.maneuver;
+  // A Spell that mirrors a basic card (owner 2026-10-18) takes that basic's stance type; it stays a Spell.
+  const mirrored = camp === 'spell' && (MIRRORED_TYPES.has(profile.mirrors) || profile.mirrored === true && MIRRORED_TYPES.has(profile.maneuver));
+  let maneuver = mirrored ? (profile.mirrors || profile.maneuver) : preparation ? 'casting' : carrier.stanceTrigger?.stance || profile.stanceTrigger?.stance || profile.maneuver;
   if (maneuver === 'defense' || maneuver === 'block') maneuver = 'defend';
   if (maneuver === 'spell' || maneuver === 'cast' || maneuver === 'prepared') maneuver = 'casting';
   const evade = profile.evade && profile.evadeEligible !== false
     && (!profile.evade.whileStatus || profile.evadeEligible === true || entity?.statuses?.[profile.evade.whileStatus]?.stacks > 0);
   if (!preparation && ((evade && ['defend', 'counter'].includes(maneuver)) || maneuver === 'evade')) maneuver = 'evade';
-  if (camp === 'spell' && !['defend', 'counter', 'evade'].includes(maneuver)
+  if (camp === 'spell' && !mirrored && !['defend', 'counter', 'evade'].includes(maneuver)
     && (profile.range || (profile.projectile || maneuver === 'ranged' ? 'ranged' : 'melee')) !== 'melee') maneuver = 'casting';
   if (maneuver === 'ranged') maneuver = 'attack';
   // Evade remains the stance identity; retain authored Counter offense across snapshots.
   const counterStance = maneuver === 'evade' && (profile.maneuver === 'counter' || profile.counterStance === true);
-  return { maneuver, camp, ...(counterStance ? { counterStance: true } : {}), range: profile.range || 'melee', ...(profile.school ? { school: profile.school } : {}) };
+  return { maneuver, camp, ...(mirrored ? { mirrored: true } : {}), ...(counterStance ? { counterStance: true } : {}), range: profile.range || 'melee', ...(profile.school ? { school: profile.school } : {}) };
 }
 export function sameStance(entity, carrier) {
   const active = stanceOf(entity?.combatStance), next = stanceOf(carrier, entity);
@@ -63,7 +66,7 @@ export function stanceRatingBonus(ctx, entity, id) {
   if (!stance) return 0;
   const cfg = stanceRulesFor(ctx), offensive = stance.counterStance || ['attack', 'smash', 'sweep', 'counter', 'casting'].includes(stance.maneuver);
   const defensive = ['defend', 'counter', 'evade'].includes(stance.maneuver);
-  const offensiveId = stance.maneuver === 'casting' || ((stance.maneuver === 'counter' || stance.counterStance) && stance.camp === 'spell') ? 'pr' : 'ar';
+  const offensiveId = stance.maneuver === 'casting' || stance.mirrored || ((stance.maneuver === 'counter' || stance.counterStance) && stance.camp === 'spell') ? 'pr' : 'ar';
   return (offensive && id === offensiveId ? cfg.offensiveRating : 0)
     + (defensive && id === (stance.camp === 'spell' ? 'ward' : 'dr') ? cfg.defensiveRating : 0);
 }
@@ -82,8 +85,14 @@ export function stanceEntryBonuses(carrier, ctx = null) {
     block, barrier: amount - block };
 }
 
+// Successive Spells cut each other's Mana: a mirrored cantrip plays in its basic's stance but is still a
+// Spell, so a Spell after it (or it after a Spell) takes the same-stance Mana discount.
+export function spellChain(entity, carrier) {
+  const active = stanceOf(entity?.combatStance), next = stanceOf(carrier, entity);
+  return !!active && !!next && active.camp === 'spell' && next.camp === 'spell' && !!(active.mirrored || next.mirrored);
+}
 export function stanceManaCost(base, entity, carrier, ctx) {
-  if (!fixCoreEnabled(ctx) || !(base > 0) || !sameStance(entity, carrier)) return base;
+  if (!fixCoreEnabled(ctx) || !(base > 0) || !(sameStance(entity, carrier) || spellChain(entity, carrier))) return base;
   const cfg = fixCoreRules(ctx, entity, carrier).stance;
   return Math.max(cfg.minimumCost, base - cfg.discount);
 }
