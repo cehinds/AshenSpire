@@ -166,3 +166,24 @@ test('opening the rest runs no card simulation; the real commit adds the chosen 
   const copies = receipt.affectedCards.filter((row) => row.cardId === 'core.smash').length;
   assert.equal(copies, 2, 'affectedCards counts every changed copy');
 });
+
+test('an armor tier always raises DR, and Defend block preview equals the played block', async () => {
+  const { gameProfileRatingReceipt } = await import('../src/model/gameProfileRun.js');
+  const run = fresh(); run.loadout.sets.armor[0] = 'vigil'; visit(run);
+  const dr = gameProfileRatingReceipt(reg, run).totals.dr;
+  const defendBlock = (combat) => { const card = cardsOf(combat).find((row) => row.cardId === 'core.defend');
+    const shown = previewCard(combat, card.instanceId).values.find((e) => e.op === 'block').value;
+    combat.piles.hand = [card, ...combat.piles.hand.filter((row) => row !== card)];
+    const had = combat.player.block; dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
+    assert.equal(combat.player.block - had, shown, 'preview equals live'); return shown; };
+  const was = defendBlock(fight(run));
+  const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === 'armor/reaver/vigil');
+  assert.deepEqual(candidate.changes.filter((row) => row.label === 'DR').map((row) => row.after - row.before), [2]);
+  commitGameProfileRest(reg, run, 'smith', { itemRef: 'armor/reaver/vigil' });
+  const after = gameProfileRatingReceipt(reg, run).totals.dr;
+  assert.equal(after, dr + 2);
+  const weight = run.gameProfile.modules.defenses?.defenseRatingWeight ?? 1;
+  const now = defendBlock(fight(run));
+  assert.ok(now > was);
+  assert.equal(now - was, Math.floor((after - dr) * weight));
+});

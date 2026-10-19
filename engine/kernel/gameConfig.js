@@ -209,6 +209,9 @@ export function resolveGearItem(item, settings, { rank = item.rank ?? 1 } = {}) 
   const size = pool => settings.poolSizes[pool][item.rarity] || { min: 0, max: 0 };
   const target = pool => settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? size(pool).min : size(pool).max;
   const explicit = Object.fromEntries(GEAR_KEYS.map(k => [k, item.points?.[k] || 0]));
+  // Core Smith tiers (armor and shield): every tier's extra point is a DR point, not a weighted draw, so an
+  // upgrade always raises DR (and the Block of every card that reads it). It is taken from the same pool.
+  if ((item.kind === 'armor' || item.kind === 'shield') && settings.armorBudget) explicit.dr += (rank - 1) * (settings.armorBudget.perRank ?? 0);
   const tagCost = (item.tags || []).reduce((s, t) => s + (settings.tags[t]?.cost || 0), 0);
   const sum = keys => keys.reduce((s, k) => s + explicit[k], 0);
   const attrKeys = GEAR_ATTRIBUTES;
