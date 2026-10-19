@@ -38,6 +38,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-18
 
+- **Map fog reveals a clean circle** ([#2155](https://github.com/cehinds/AshenSpire/pull/2155), `0.7.1.1637`). The fog on the map now fades out in a clean circle around your location instead of being cut off in a straight line on one side.
+
 - **Matching-stance discounts follow what a card costs** ([#2142](https://github.com/cehinds/AshenSpire/pull/2142), `0.7.1.1635`). Matching-stance cards now get their cost discount on mana if they cost mana, otherwise on stamina.
 - **Vulnerable adds 25% damage everywhere** ([#2140](https://github.com/cehinds/AshenSpire/pull/2140), `0.7.1.1633`). Vulnerable now adds 25% damage instead of 50% in every mode, matching the Core rules, and card previews show it.
 - **Core 2 fights resume with their Perception reads intact** ([#2138](https://github.com/cehinds/AshenSpire/pull/2138), `0.7.1.1631`). Continue accepts a validated fight's local knowledge without requiring legacy progression records. Pending or hidden hover tips no longer consume Escape before card targeting can cancel; deliberate tap-to-inspect selection still survives a redraw. Tutorial checks wait for the completed hold under OneTap and verify that selection spends nothing. Save-loading failure checks run in two complete CI shards within the existing time limit.
