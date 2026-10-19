@@ -6,7 +6,9 @@
   "modules": {
     "cards": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "editorWhere": "noncombat"
+      }
     },
     "resources": {
       "version": "1.0.0",
