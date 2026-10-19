@@ -16,10 +16,7 @@
         "moduleParameters": {
           "combat.perception": {
             "baseDC": 5,
-            "levelBaseline": 1,
-            "intelligenceBaseline": 0,
-            "levelWeight": 1,
-            "intelligenceWeight": 1
+            "bonuses": []
           }
         },
         "query": "parameters"
@@ -28,10 +25,7 @@
     "then": {
       "value": {
         "baseDC": 5,
-        "levelBaseline": 1,
-        "intelligenceBaseline": 0,
-        "levelWeight": 1,
-        "intelligenceWeight": 1
+        "bonuses": []
       }
     }
   },
@@ -58,10 +52,7 @@
         "moduleParameters": {
           "combat.perception": {
             "baseDC": 5,
-            "levelBaseline": 1,
-            "intelligenceBaseline": 0,
-            "levelWeight": 1,
-            "intelligenceWeight": 1
+            "bonuses": []
           }
         },
         "query": "parameters"
@@ -96,10 +87,7 @@
         "moduleParameters": {
           "combat.perception": {
             "baseDC": 5,
-            "levelBaseline": 1,
-            "intelligenceBaseline": 0,
-            "levelWeight": 1,
-            "intelligenceWeight": 1
+            "bonuses": []
           }
         },
         "query": "parameters"

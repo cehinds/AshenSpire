@@ -24,6 +24,7 @@ import { combatBackdropHtml } from '../components/environmentArt.js';
 import { displayAppearance, onDisplayAppearanceChange } from '../displayAppearance.js';
 import { alternativeCompanionIcon } from '../alternativeArt.js';
 import { targetLayer } from '../models/TargetLayerModel.js';
+import { cardAffectsEnemies, hitBadgeTargetIds } from '../../model/hitBadge.js';
 import { cardTargetPlan, forbiddenCardDrop, upcastNextStep } from '../../model/cardTargets.js';
 import { renderEnemyTargetPicker } from '../components/enemyTargetPicker.js';
 import { touchPoint, recordFlickPoint, flickVerdict, nearestFlickTarget } from '../models/TouchFlickModel.js';
@@ -1661,23 +1662,20 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
   }
 
-  // The first Perception roll is the exact read. A clue alone reveals no odds.
+  // Perception gates intent knowledge (and what auto-play may know), not the hit-% badge.
   function hitChanceKnown(enemy) {
     const ownerId = combat.playerKey || 'player';
     return enemy.knowledgeAction?.reads?.[ownerId]?.visibility === 'exact';
   }
 
   function hitChanceBadge(enemy) {
-    if (combat.combatExpansionVersion !== 2 || !enemy.alive || !hitChanceKnown(enemy)) return null;
-    if (!selected) return null;
+    if (combat.combatExpansionVersion !== 2 || !enemy.alive || !selected) return null;
     let preview;
     try {
       const inst = selected && findInst(selected);
       const carrier = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
-      const hostile = carrier?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || carrier?.counterPayload;
-      const offensive = hostile && (carrier.effects?.some(effect => effect.op === 'damage') || carrier.counterPayload?.hp);
-      if (!offensive) return null;
-      preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected));
+      if (!hitBadgeTargetIds(carrier, [enemy]).length) return null;
+      preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected), { observerId: combat.playerKey || 'player' });
     } catch { return null; }
     if (!preview || !Number.isFinite(preview.hitChance)) return null;
     const node = document.createElement('span');
@@ -1692,7 +1690,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     combatEl.querySelectorAll('.card-hit-chances').forEach(node => node.remove());
     const inst = selected && findInst(selected);
     const definition = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
-    const hostile = definition?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || definition?.counterPayload;
+    const hostile = cardAffectsEnemies(definition);
     const selectedCard = hostile && combatEl.querySelector('.hand .card[data-instance-id="' + CSS.escape(selected) + '"]');
     const cardOdds = document.createElement('div');
     cardOdds.className = 'card-hit-chances';
@@ -2318,7 +2316,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     let gripY = 0;
     let ghostWidth = 0;
     let ghostHeight = 0;
-    let lastConfirmTap = 0;
     let flickStart = null;
     let flickPoints = [];
     const flickRules = registries.balance.ui.touchFlick;
@@ -2476,7 +2473,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (el.dataset.inspect === 'open') return;
         if (!dragging && Math.hypot(mv.clientX - startX, mv.clientY - startY) > 12) {
           dragging = true;
-          lastConfirmTap = 0;
           el.dispatchEvent(new Event('carddragstart'));
           el.classList.add('drag-source');
           hideTooltip();
@@ -2548,7 +2544,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
 
     const select = () => {
-      lastConfirmTap = 0;
       selectedFlask = null;
       // A queued card (Combat Rounds Preview) is taken back by its tap, not armed again.
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
@@ -2557,13 +2552,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
     // THE PLAY IS UNAMBIGUOUS when there is nothing for the player to choose: a
     // card that needs no target (self cards, and a sweep of every enemy), or a
-    // card that asks for ONE enemy while exactly one is alive. Owner, 2026-10-18:
-    // a tap on such a card plays it; the 2026-08-17 "same in all instances" hold
-    // ruling and SPEC §7.3's "selection stays separate from play" stand for
-    // every other case, where the tap still selects and the player picks.
+    // card that asks for ONE enemy while exactly one is alive.
+    // OWNER RULING. Owner, 2026-10-18 14:15: "make sure I don't auto play a card when I click on it once"; 14:32: "keep the switch but make it default to not be 1 tap".
+    // One-tap play is therefore OPT-IN: it is off by default (oneTapPlay must be
+    // exactly true), and only a player who turns the Settings row on gets a
+    // single tap that plays. With it off, a tap selects and the next tap on the
+    // selected card, or a target pick, plays.
+    // The 2026-08-17 "same in all instances" hold ruling and SPEC §7.3's
+    // "selection stays separate from play" still govern every other case.
     const playIsUnambiguous = () => !pv.needsTarget
       || combat.enemies.filter(enemy => enemy.alive).length === 1;
-    const oneTapOn = () => (meta.settings || {}).oneTapPlay !== false;
+    // Read live through readSettings() so toggling the row mid-fight takes effect
+    // on the next tap; meta.settings is only the fallback when no reader is wired.
+    const oneTapOn = () => (readSettings ? readSettings() : meta.settings || {}).oneTapPlay === true;
     const oneTapPlays = () => oneTapOn() && playIsUnambiguous();
     const play = () => {
       if (!pv.needsTarget) playCard(inst.instanceId, null);
@@ -2601,9 +2602,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // a target pick) plays, as before.
       if (oneTapPlays()) { play(); return; }
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
-      const now = performance.now();
-      if (lastConfirmTap && now - lastConfirmTap <= 350) { lastConfirmTap = 0; confirm(); }
-      else lastConfirmTap = now;
+      // The card is already selected: this is the NEXT tap on it, and it plays,
+      // with no timing window ("make sure I don't auto play a card when I click on it once", owner, 2026-10-18 14:15).
+      play();
     };
     const cardHoldMs = () => holdMs(meta.settings || {}, registries.balance.ui.holdConfirm)
       || Number(registries.balance.ui.holdConfirm.steps.short) || 350;
@@ -3538,7 +3539,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   animateEvents(combat.eventLog.filter((e) => e.type === 'relicTriggered'), fxCtx, () => {});
 
   // First-run guided callouts (SPEC §9 M4) — once per player, over a live board.
-  if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone(), oneTapPlay: (meta.settings || {}).oneTapPlay !== false });
+  if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone(), oneTapPlay: (readSettings ? readSettings() : meta.settings || {}).oneTapPlay === true });
   showPendingDiscard();
 }
 import { equipmentAnimationForLoadout, combatEquipmentAnimationForLoadout, animationTiming } from '../../model/equipmentAnimation.js';
