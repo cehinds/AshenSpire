@@ -79,7 +79,6 @@ import { staminaAtCombatStart } from '../src/framework/resources.js';
 import { serializeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
 import { recoveryControls } from '../src/engine/combatStatusControl.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
-import { selectCardVariant } from '../src/engine/cardBehavior.js';
 import { upcastOptions } from '../src/model/upcasting.js';
 
 // Focused browser gates may establish only the starting HP/Block named by the
@@ -790,8 +789,9 @@ export function createSession({ registries, seedString, endless = false, restore
           (charged || def.effectVariants?.length || (def.effects || []).some(effect => effect?.if) ? liveIds : plainIds).push(card.instanceId);
         }
         const ordered = [...liveIds, ...plainIds], full = ordered.slice(0, FULL_PREVIEW_CAP), cheap = {};
-        // Past the cap: the variant-resolved definition only, so the numbers are right without green or red.
-        for (const id of liveIds.slice(FULL_PREVIEW_CAP)) cheap[id] = { resolvedDefinition: selectCardVariant(ctx, defs[id], {}, null), values: [] };
+        // Past the cap: the resolved definition only, so the numbers are right without green or red. A variant card gets
+        // none: which branch applies depends on what is paid, so its tile reads the card text instead of a guess.
+        for (const id of liveIds.slice(FULL_PREVIEW_CAP)) if (!defs[id].effectVariants?.length) cheap[id] = { resolvedDefinition: defs[id], values: [] };
         previews = { ...cheap, ...(full.length ? previewCoopCards(c, playerId, full) : {}) };
       } catch { previews = {}; }
       choicePreviews.set(choice, previews);

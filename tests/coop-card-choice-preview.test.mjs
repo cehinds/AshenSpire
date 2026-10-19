@@ -78,13 +78,15 @@ test('state-dependent cards take the eight full previews first, plain cards fill
   assert.ok(plain.length <= 2 || plain.slice(2).every(row => row.combatPreview === undefined));
 });
 
-test('past eight, state-dependent overflow carries the resolved definition only', () => {
+test('past eight, a variant card gets no preview and its tile reads the card text', () => {
   const host = fixture(); withDrawChoice(host, 12);
   const rows = host.snapshot().scene.players.find(player => player.id === 'p2').pendingCardChoice.candidates;
   const variant = rows.filter(row => row.cardId === VARIANT), plain = rows.filter(row => row.cardId !== VARIANT);
-  assert.equal(variant.filter(row => row.combatPreview.values.length).length, 8, 'the first eight carry the full preview');
-  const cheap = variant.filter(row => !row.combatPreview.values.length);
-  assert.equal(cheap.length, 4);
-  assert.ok(cheap.every(row => row.combatPreview.resolvedDefinition?.id === VARIANT));
+  assert.equal(variant.filter(row => row.combatPreview?.values.length).length, 8, 'the first eight carry the full preview');
+  const overflow = variant.filter(row => !row.combatPreview?.values.length);
+  assert.equal(overflow.length, 4);
+  assert.ok(overflow.every(row => row.combatPreview === undefined), 'a variant card past the cap gets no guessed branch');
+  const tile = summarizeCardOption(registries, null, { id: overflow[0].instanceId, name: 'x' }, { defOf: () => registries.cards.get(VARIANT), previewOf: () => null });
+  assert.ok(tile.html && !tile.line.length, 'its tile reads the card text, not a branch number');
   assert.ok(plain.every(row => row.combatPreview === undefined), 'plain cards past the cap read their authored numbers');
 });
