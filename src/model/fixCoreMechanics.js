@@ -124,7 +124,7 @@ export function damageReceipt(targetId, hits) {
 
 // Read-only status projection for cards, PIPs, logs and inspectors. The base
 // registry is explicit so UI facades cannot recursively query themselves.
-export function fixCoreStatusDefinition(ctx, id, baseDefinition) {
+export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) {
   const base = baseDefinition ?? ctx?.registries?.statuses?.get(id);
   if (!fixCoreEnabled(ctx)) return base;
   const rules = fixCoreRules(ctx), overrides = rules.statuses.overrides?.[id];
@@ -133,7 +133,9 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition) {
     weak: `Attack rating ×${rules.statuses.weakARMultiplier} while active.`,
     vulnerable: `Damage taken ×${rules.statuses.vulnerabilityMultiplier} while active.`,
     staggered: `Poise broke: lose ${fixCoreStaggeredRules(rules).staminaLoss} SP next turn and gain ${fixCoreStaggeredRules(rules).vulnerableStacks} Vulnerable. Repeat breaks only extend Vulnerable.`,
-    evade: `Each stack adds ${rules.accuracy.baseAC + (Number(ctx?.player?.baseEvasionBonus) || 0)} (base ${rules.accuracy.baseAC}${ctx?.player?.baseEvasionBonus ? `, gear +${ctx.player.baseEvasionBonus}` : ''}) plus the holder's DEX to its Evasion roll.`,
+    // Per-stack Evasion is baseAC + the holder's gear Evasion + the holder's DEX; with no holder the line stays entity-neutral.
+    evade: holder ? `Each stack adds ${rules.accuracy.baseAC + (Number(holder.baseEvasionBonus) || 0)} (base ${rules.accuracy.baseAC}${holder.baseEvasionBonus ? `, gear +${holder.baseEvasionBonus}` : ''}) plus the holder's DEX to its Evasion roll.`
+      : `Each stack adds ${rules.accuracy.baseAC} plus the holder's gear Evasion and DEX to its Evasion roll.`,
     precision: `Each stack adds another multiple of your Precision score (attributes and level) to your Precision roll.`,
   };
   if (id === 'staggered') row.tooltip = row.description = facts[id];
