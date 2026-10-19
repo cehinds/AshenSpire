@@ -1,48 +1,60 @@
-// The "?" rule for an actor's remaining actions (owner, 2026-10-18): once an actor has acted this turn and
-// still has SP for more actions, an observer who did NOT pass the Perception check on that actor's intent
-// sees each remaining action as "?"; one who passed sees them normally. Headless: no DOM.
+// The "?" rule for an actor's remaining actions (owner, 2026-10-18): once an actor has played a move this turn and can
+// still act, each remaining planned move shows its icon if the observer's Perception read of THAT move succeeded, else
+// "?". Headless: no DOM, no rolls.
 //
-// Privacy: the check is the one already rolled (the observer's read of the intent). Nothing here rolls, and
-// a failed read never keeps the queue's moves: the plan holds only a count, so no move id, stance or
-// damage can reach a symbol, the DOM or a tooltip.
+// Per-move read: the engine rolls the read once per move, as the move is presented (presentIntent), and records it with
+// the move's outcome in `enemy.followTrace` ([{ read, outcome }] in play order, no move id). This model only reads that
+// trace, so it never re-rolls. The icon of a move is looked up ONLY for an entry whose own read succeeded; a failed
+// read never reaches a symbol, the DOM, a data attribute, an aria label or a tooltip.
+//
+// Only moves that can still play count: outcome 'played'. A follow-up that turned into a charge, was refused for SP or
+// by a burden, or sits after a stagger halt, is not shown (the trace never holds moves past a halt or a charge).
 import { stanceFor, moveKind } from '../../engine/combatRounds/stance.js';
 import { iconForStance } from './CombatRoundsScreenModel.js';
 
+const SKIPPED = new Set(['charging', 'blocked']);
+
 /**
- * followUpPlan({ passed, queue, def }) → { passed, total, icons } taken before the actor's phase.
- * queue: the actor's planned follow-ups ({ moveId }), in play order, the head excluded. def: its enemy
- * definition, read for icons ONLY when `passed`. `icons` is null on a failed read.
+ * followUpPlan({ queue, def }) → the actor's turn plan, taken before its phase. queue: its planned follow-ups
+ * ({ moveId }) in play order, the head excluded; def: its enemy definition, read for an icon only on a read entry.
  */
-export function followUpPlan({ passed = false, queue = [], def = null } = {}) {
-  const total = Array.isArray(queue) ? queue.length : 0;
-  if (!passed || !def) return { passed: !!passed, total, icons: passed ? new Array(total).fill('prepare') : null };
-  return { passed: true, total, icons: queue.map(entry => {
-    const move = def.moves?.[entry?.moveId];
-    return move ? iconForStance(stanceFor(moveKind(move), Array.isArray(move.tags) ? move.tags : [])) : 'prepare';
-  }) };
+export function followUpPlan({ queue = [], def = null } = {}) {
+  const ids = Array.isArray(queue) ? queue.map(entry => entry?.moveId ?? null) : [];
+  return { ids, def, total: ids.length, cursor: 0, headDone: false };
+}
+
+function iconFor(plan, index) {
+  const move = plan.def?.moves?.[plan.ids[index]];
+  return move ? iconForStance(stanceFor(moveKind(move), Array.isArray(move.tags) ? move.tags : [])) : 'prepare';
 }
 
 /**
- * remainingFollowUps(plan, queued) → the symbols for the actions still queued after the one that just started.
- * queued: how many remain (the engine's count on `enemyMoveStarted`). [] when none remain or no plan exists.
- * Returns [{ kind: 'unknown' } | { kind: 'action', icon }], in play order.
+ * remainingFollowUps(plan, trace) → the symbols for the moves still to play after the cursor, in play order:
+ * [{ kind: 'unknown' } | { kind: 'action', icon }]. [] when no trace exists (nothing is planned or it has not run).
  */
-export function remainingFollowUps(plan, queued) {
-  const left = Math.floor(Number(queued));
-  if (!plan || !(left > 0)) return [];
-  const count = Math.min(left, plan.total);
-  if (!plan.passed || !plan.icons) return Array.from({ length: count }, () => ({ kind: 'unknown' }));
-  return plan.icons.slice(plan.total - count).map(icon => ({ kind: 'action', icon }));
+export function remainingFollowUps(plan, trace) {
+  if (!plan || !Array.isArray(trace)) return [];
+  const out = [];
+  for (let i = plan.cursor; i < trace.length; i++) {
+    const entry = trace[i];
+    if (entry?.outcome !== 'played') continue;
+    out.push(entry.read === true ? { kind: 'action', icon: iconFor(plan, i) } : { kind: 'unknown' });
+  }
+  return out;
 }
 
 /**
- * advanceFollowUps(plan) → the symbols after the next action event of one actor's turn. Call it once per
- * `enemyMoveStarted` (not a reaction) or `enemyMoveUnavailable` of that actor, in order. The first call is the
- * actor's head move, which is not in the plan; each later call consumes one planned move, played or refused
- * for SP. The engine's event stays count-free (its log is a saved golden), so the UI counts.
+ * advanceFollowUps(plan, trace) → the symbols after the next action event of one actor's turn. Call it once per
+ * `enemyMoveStarted` (not a reaction) or `enemyMoveUnavailable` of that actor, in order. The first call is the head
+ * move, which is not in the trace; each later call consumes one trace entry (skipping charges and burden stops, which
+ * emit no action event). `trace` is the engine's `enemy.followTrace`.
  */
-export function advanceFollowUps(plan) {
+export function advanceFollowUps(plan, trace) {
   if (!plan) return [];
-  plan.spent = plan.spent == null ? 0 : plan.spent + 1;
-  return remainingFollowUps(plan, plan.total - plan.spent);
+  if (!plan.headDone) plan.headDone = true;
+  else {
+    while (trace?.[plan.cursor] && SKIPPED.has(trace[plan.cursor].outcome)) plan.cursor++;
+    plan.cursor++;
+  }
+  return remainingFollowUps(plan, trace);
 }

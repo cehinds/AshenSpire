@@ -1117,11 +1117,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function takeSnapshot() {
     const ents = { player: snapEnt(combat.player, true) };
     for (const e of combat.enemies) ents[e.id] = snapEnt(e, e.alive);
-    // The "?" rule (IntentFollowUpModel.js): the observer's existing read of each actor's intent decides whether its
-    // queued follow-ups are named or "?". The plan keeps a count, and icons only for a passed read.
+    // The "?" rule (IntentFollowUpModel.js): each planned move shows by its own read, which the engine records per move
+    // (enemy.followTrace). A reaction pause resumes the same turn, so its plan is kept, not rebuilt from what is left.
     const followPlans = {};
-    for (const e of combat.enemies) if (e.alive && e.plannedMoves?.length) {
-      followPlans[e.id] = followUpPlan({ passed: ents[e.id].intentPreview?.hidden !== true, queue: e.plannedMoves, def: registries.enemies.get(e.enemyId) });
+    for (const e of combat.enemies) {
+      const kept = combat.reactionCursor ? disp?.followPlans?.[e.id] : null;
+      if (kept) followPlans[e.id] = kept;
+      else if (e.alive && e.plannedMoves?.length) followPlans[e.id] = followUpPlan({ queue: e.plannedMoves, def: registries.enemies.get(e.enemyId) });
     }
     const handPreviews = new Map();
     for (const inst of combat.piles.hand) {
@@ -1158,8 +1160,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           if (e.reaction) break;
           const actor = disp.ents[e.sourceId];
           // The actor has acted and may still have SP: its remaining queue is "?" unless the read passed.
-          if (actor) actor.followUps = advanceFollowUps(disp.followPlans?.[e.sourceId]);
           const enemy = combat.enemies.find(row => row.id === e.sourceId);
+          if (actor) actor.followUps = advanceFollowUps(disp.followPlans?.[e.sourceId], enemy?.followTrace);
           const move = registries.enemies.get(e.enemyId || enemy?.enemyId)?.moves?.[e.moveId];
           if (actor && enemy && move) actor.presentationStance = enemyStanceCategory({
             kind: e.kind || move.intent,
@@ -1169,12 +1171,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         }
         case 'enemyMoveUnavailable': {
           const actor = disp.ents[e.sourceId];
-          if (actor) actor.followUps = advanceFollowUps(disp.followPlans?.[e.sourceId]);
+          if (actor) actor.followUps = advanceFollowUps(disp.followPlans?.[e.sourceId], combat.enemies.find(row => row.id === e.sourceId)?.followTrace);
           break;
         }
         case 'enemyActorTurnStarted': {
           const actor = disp.ents[e.sourceId];
           if (actor) actor.presentationStance = enemyStanceCategory(e.intent);
+          if (actor) actor.followUps = [];
           if (actor) actor.intentPreview = { ...e.intent, profile: e.intent?.combatProfile || {},
             stance: combatIntentStance(e.intent, e.intent?.combatProfile), revealed: true, hidden: false };
           break;
@@ -1183,6 +1186,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // Unused Evade charges expire as the player's turn starts.
           if (disp.ents.player) disp.ents.player.combatEvade = null;
           for (const enemy of combat.enemies) if (disp.ents[enemy.id]) {
+            disp.ents[enemy.id].followUps = [];
             disp.ents[enemy.id].intentPreview = projectCombatIntent(combat, enemy.id);
             disp.ents[enemy.id].presentationStance = enemyStanceCategory(enemy.intent);
           }
