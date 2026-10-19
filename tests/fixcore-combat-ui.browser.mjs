@@ -137,7 +137,7 @@ try {
       import('/src/engine/rng.js'),import('/src/engine/runCombat.js'),import('/src/ui/screens/combat.js'),import('/src/model/combatRounds.js'),
     ]);
     const registries = createRegistries(contentBundle);
-    const settings = { autoCombat:true, combatActionDelay:0, combatSpeed:8, animSpeed:'instant' };
+    const settings = { autoCombat:true, combatStepPause:250, combatSpeed:8, animSpeed:'instant' };
     const run = createRunState({seed:5,classId:'reaver',registries,combatExpansionVersion:1,profileMeta:{settings:{[COMBAT_ROUNDS_KEY]:true}}});
     run.stats = {damageDealt:0,damageTaken:0};
     const combat = createRunCombat({registries,rng:createRng(5),run,enemyIds:['wanderingSoldier'],settings:{}});
