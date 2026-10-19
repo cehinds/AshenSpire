@@ -1,4 +1,5 @@
 import { stanceEntryBonuses, stanceRulesFor, stanceOf } from './stanceRules.js';
+import { fixCoreEnabled } from './fixCoreMechanics.js';
 // src/model/cardFaceText.js — the text a playing card's face says, as lines.
 //
 // ONE MODEL FOR EVERY CARD FACE. It reads the same context combatCardSummary
@@ -320,7 +321,11 @@ function buildLines(def, preview, registries) {
     // gameProfile lets the face apply the same Core 2 rounding as combat (stanceEntryBonuses floors under FixCore).
     const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules, gameProfile: registries?.gameProfile };
     const entry = stanceEntryBonuses(def, ctx);
-    const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + num(amount) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
+    // Core grants 1 + the actor's stat mix of Precision: the live figure when a preview has an actor, else the formula (owner, 2026-10-19).
+    const statMixGrant = entry.precision > 0 && fixCoreEnabled(ctx);
+    const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => (id === 'precision' && statMixGrant
+      ? (Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount) + ' + stat mix')
+      : '+' + num(amount)) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
     if (grants.length) unconditional.push({ cat: 'bonus', text: 'Entry: ' + grants.join(', ') });
     if (stanceOf(def)?.maneuver === 'defend') {
       const restore = num(stanceRulesFor(ctx).defenseRestore);

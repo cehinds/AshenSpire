@@ -161,6 +161,18 @@ test('a card-scoped accuracy override changes the Evade stacks that card gains',
  assert.equal(formulaCtxFor(combat,{source:combat.player,card:{cardId:'core.evade'}}).evadeStackGain,1+dexterity);
  assert.equal(formulaCtxFor(combat,{source:combat.player,card}).evadeStackGain,3+2*dexterity);
 });
+test('card face prints the live Precision entry grant with an actor and a stat-mix phrase without one',async()=>{
+ const {cardFaceLines}=await import('../src/model/cardFaceText.js');
+ const {precisionStatMix}=await import('../src/engine/stanceHit.js');
+ const {combat,target}=live();
+ const card=combat.piles.hand.find(row=>row.cardId==='core.strike');assert.ok(card);
+ const preview=previewCard(combat,card.instanceId,target.id);
+ const def={...reg.cards.get('core.strike'),defenseRulesVersion:2}; // the flag that makes a face print its Entry clause
+ const entry=lines=>(lines||[]).map(line=>line.html.replace(/<[^>]+>/g,'')).find(text=>text.startsWith('Entry: '));
+ assert.equal(preview.entryPrecision,1+precisionStatMix(combat,combat.player));
+ assert.match(entry(cardFaceLines(def,preview,reg)),new RegExp(`^Entry: \\+${preview.entryPrecision} Precision`));
+ assert.match(entry(cardFaceLines(def,null,reg)),/^Entry: \+1 \+ stat mix Precision/);
+});
 test('enemy heal-and-block move spends exactly three SP and cannot cast with two',()=>{
  for(const pool of [3,2]) {
   const {combat,target}=live();target.hp=250;target.maxStamina=pool;target.stamina=pool;
