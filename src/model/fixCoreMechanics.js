@@ -24,13 +24,25 @@ const OLD_PERCEPTION_FIELDS = ['levelBaseline','intelligenceBaseline','levelWeig
 // Pure v1 -> current migration for persisted rules: a perception block saved
 // before bonuses[] keeps baseDC, drops the four retired fields and gets
 // bonuses: []. Current-shape rules are returned untouched (same object).
+const OLD_ACCURACY_FIELDS = ['evasionPerStack','precisionPerStack'];
 export function normalizeFixCoreRules(rules) {
+  let out = rules;
   const p = rules?.perception;
-  if (!p || typeof p !== 'object' || !OLD_PERCEPTION_FIELDS.some(key => Object.hasOwn(p, key))) return rules;
-  const perception = { ...p };
-  for (const key of OLD_PERCEPTION_FIELDS) delete perception[key];
-  if (perception.bonuses === undefined) perception.bonuses = [];
-  return { ...rules, perception };
+  if (p && typeof p === 'object' && OLD_PERCEPTION_FIELDS.some(key => Object.hasOwn(p, key))) {
+    const perception = { ...p };
+    for (const key of OLD_PERCEPTION_FIELDS) delete perception[key];
+    if (perception.bonuses === undefined) perception.bonuses = [];
+    out = { ...out, perception };
+  }
+  // Accuracy saved before the opposed-roll ruling (2026-10-19): drop the retired per-stack fields, fill the new ones from the defaults.
+  const a = rules?.accuracy;
+  if (a && typeof a === 'object' && OLD_ACCURACY_FIELDS.some(key => Object.hasOwn(a, key))) {
+    const accuracy = { ...a };
+    for (const key of OLD_ACCURACY_FIELDS) delete accuracy[key];
+    for (const [key, value] of Object.entries(defaults.accuracy)) if (accuracy[key] === undefined && !['maneuverPrecision','stanceMinimum','stanceMaximum','stanceAdvantageBonus'].includes(key)) accuracy[key] = structuredClone(value);
+    out = { ...out, accuracy };
+  }
+  return out;
 }
 const rawRules = ctx => normalizeFixCoreRules(ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules || defaults);
 export function validateFixCoreRules(rules) {

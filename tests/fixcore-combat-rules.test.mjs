@@ -101,6 +101,15 @@ test('Precision stacks are gained like Evade: 1 + stat mix; DEX 2, level 1 gives
  ctx.player.statuses.precision={stacks:grant};
  assert.equal(attackHitPreview(ctx,ctx.player,enemy,{combatProfile:{camp:'physical',maneuver:'attack',range:'melee'}}).accuracy,1+2*4);
 });
+test('a card-scoped precisionWeights override changes the stat mix, grant and Precision',()=>{
+ const {ctx,enemy}=setup();ctx.player.attributes={dexterity:2,strength:0,wisdom:0,intelligence:0};ctx.player.level=1;
+ const carrier={combatProfile:{camp:'physical',maneuver:'attack',range:'melee'},instanceId:'scoped',mechanicTags:['combat:accuracy'],
+  mechanicBindings:[{tag:'combat:accuracy',parameters:{precisionWeights:{dex:1,str:0,wis:0,int:0,level:0}}}]};
+ assert.equal(precisionStatMix(ctx,ctx.player),2);assert.equal(precisionStatMix(ctx,ctx.player,carrier),2);
+ carrier.mechanicBindings[0].parameters.precisionWeights.dex=2; // 2 x DEX 2 = 4, level ignored
+ assert.equal(precisionStatMix(ctx,ctx.player,carrier),4);assert.equal(precisionEntryGrant(ctx,ctx.player,1,carrier),5);
+ assert.equal(attackHitPreview(ctx,ctx.player,enemy,carrier).accuracy,1+4);
+});
 test('Perception DC is 5 + target INT + target WIS + bonuses; level is ignored; observer rolls d20 + own WIS (D8)',()=>{
  const {ctx}=setup();const target={level:9,attributes:{intelligence:2,wisdom:3}},observer={attributes:{wisdom:2}};
  // DC 5 + INT 2 + WIS 3 = 10; the target's level adds nothing. Roll 7 + WIS 2 = 9 fails.

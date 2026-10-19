@@ -144,6 +144,16 @@ test('a combat saved with the v1 perception shape restores onto the bonuses form
  const typo=structuredClone(snapshot);typo.fixCoreRules.perception.levelBaselne=1;
  assert.throws(()=>restoreOf(typo),/unknown parameter/);
 });
+test('a combat saved before the opposed-roll ruling restores onto the new accuracy block',async()=>{
+ const {serializeCombatSnapshot,restoreCombatSnapshot}=await import('../src/engine/combatSnapshot.js');
+ const {combat}=live();const snapshot=serializeCombatSnapshot(combat);
+ const old=structuredClone(snapshot);
+ for(const key of ['evadeStackBase','evadeStackDex','precisionBase','evasionBase','precisionWeights']) delete old.fixCoreRules.accuracy[key];
+ Object.assign(old.fixCoreRules.accuracy,{evasionPerStack:1,precisionPerStack:1});
+ const restored=restoreCombatSnapshot({registries:reg,rng:createRng(combat.rng.seed,combat.rng.getCounters()),snapshot:old,expectedGameProfile:profile});
+ assert.deepEqual(restored.fixCoreRules.accuracy,combat.fixCoreRules.accuracy);
+ assert.equal(old.fixCoreRules.accuracy.evasionPerStack,1,'caller snapshot untouched');
+});
 test('enemy heal-and-block move spends exactly three SP and cannot cast with two',()=>{
  for(const pool of [3,2]) {
   const {combat,target}=live();target.hp=250;target.maxStamina=pool;target.stamina=pool;
