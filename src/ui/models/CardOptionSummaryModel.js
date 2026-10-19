@@ -15,6 +15,7 @@ import { spellDefenseSplit } from '../../model/spellDefense.js';
 import { t } from '../strings.js';
 
 const freeze = Object.freeze;
+const MARK = '\u0000';
 const direction = (value, base) => (Number.isFinite(value) && Number.isFinite(base) ? value > base ? 'up' : value < base ? 'down' : null : null);
 
 /** The effect line of a resolved card: `[{ label, value, base, dir }]`, empty when nothing is phrased. */
@@ -65,7 +66,9 @@ export function cardEffectLine(def, preview = null, registries = null) {
   return freeze(order.filter(key => found.has(key)).map(key => {
     const row = found.get(key), ref = row.ref || row;
     // A split defense shows its own share but moves with the whole gain it came from.
-    return freeze({ label: t(row.labelId), value: row.amount, base: row.base ?? ref.base,
+    // The row places the number ("Def {amount}"); before/after carry that placement to the view.
+    const [before, after] = t(row.labelId, { amount: MARK }).split(MARK);
+    return freeze({ label: `${before}${after}`.replace(/[^\p{L}\s]/gu, '').trim(), before, after, value: row.amount, base: row.base ?? ref.base,
       dir: live ? direction(ref.amount, ref.base) : null });
   }));
 }

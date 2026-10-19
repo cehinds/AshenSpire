@@ -31,3 +31,10 @@ test('summarizeCardOption: name, line and cost chips; a missing reader gives a n
   const broken = summarizeCardOption(null, {}, option, { defOf: () => { throw new Error('no card'); } });
   assert.deepEqual(broken.line, []);
 });
+test('a gain row places its number first and keeps a plain label', () => {
+  const healDef = { id: 'testHeal', name: 'Mend', type: 'skill', effects: [{ op: 'heal', target: 'self', amount: 5 }] };
+  const [row] = cardEffectLine(healDef, { values: [{ op: 'heal', value: 5 }] }, null);
+  assert.equal(row.label, 'HP');
+  assert.equal(row.before, '+');
+  assert.equal(row.after, ' HP');
+});
