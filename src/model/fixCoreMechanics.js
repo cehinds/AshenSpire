@@ -11,7 +11,19 @@ export function fixCoreModuleParameters(rules = defaults) {
   return { ...rules.protectionParameters, ...Object.fromEntries(families.map(id => [`combat.${id}`,
     id === 'actionCosts' ? {enemyHealBlockCost:rules.enemyHealBlockCost} : rules[id]])) };
 }
-const rawRules = ctx => ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules || defaults;
+const OLD_PERCEPTION_FIELDS = ['levelBaseline','intelligenceBaseline','levelWeight','intelligenceWeight'];
+// Pure v1 -> current migration for persisted rules: a perception block saved
+// before bonuses[] keeps baseDC, drops the four retired fields and gets
+// bonuses: []. Current-shape rules are returned untouched (same object).
+export function normalizeFixCoreRules(rules) {
+  const p = rules?.perception;
+  if (!p || typeof p !== 'object' || !OLD_PERCEPTION_FIELDS.some(key => Object.hasOwn(p, key))) return rules;
+  const perception = { ...p };
+  for (const key of OLD_PERCEPTION_FIELDS) delete perception[key];
+  if (perception.bonuses === undefined) perception.bonuses = [];
+  return { ...rules, perception };
+}
+const rawRules = ctx => normalizeFixCoreRules(ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules || defaults);
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
   const known = new Set(['version','enabled','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
