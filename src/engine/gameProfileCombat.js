@@ -80,8 +80,9 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const profile = {...(carrier.combatProfile || {}), ...(Number.isFinite(carrier.magicShare) ? {magicShare:carrier.magicShare} : {})};
   const share = magicShareOf(profile,ctx.ratingsRules);
   // Owner, 2026-10-19: spell effectiveness uses PR; a spell (camp spell or magic school, whatever its Barrier split) reads PR where a physical attack reads AR.
+  // A hit with any magic share (a school-only technique included, as magicShareOf reads it) reads PR.
   // Enemies keep AR for their spells: their PR is 0 in data, so reading it would zero their spell damage.
-  const ratingId = modern && source?.kind !== 'enemy' && (profile.camp === 'spell' || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar', ratingLabel = ratingId.toUpperCase();
+  const ratingId = modern && source?.kind !== 'enemy' && (profile.camp === 'spell' || share > 0 || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar', ratingLabel = ratingId.toUpperCase();
   const ar = modern ? sourceRatingValue(ctx, source, ratingId, carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
   const ratingBonus = modern && carrier.skipRatingBonus ? 0 : ar * (effects?.attackRatingWeight || 0);
   let raw = base;

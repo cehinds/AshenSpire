@@ -211,3 +211,16 @@ test('an enemy spell-camp attack keeps reading AR (its PR is 0), exactly as befo
   const rated = profileDamageReceipt(combat, enemy, combat.player, 10, carrier).damageReceipt.hits[0].incoming;
   assert.equal(rated - noBonus, Math.floor(4 * weights(combat).ar));
 });
+test('a technique whose magic identity is only combatProfile.school reads PR, not AR', () => {
+  const { combat } = world('reaver');
+  const target = combat.enemies[0];
+  const player = { ...combat.player, ratings: { ...combat.player.ratings, ar: 0, pr: 4 } };
+  const none = { ...combat.player, ratings: { ...combat.player.ratings, ar: 0, pr: 0 } };
+  const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee', school: 'frost' } };
+  const at = source => profileDamageReceipt(combat, source, target, 10, carrier).damageReceipt.hits[0].incoming;
+  assert.equal(at(player) - at(none), Math.floor(4 * weights(combat).pr));
+  const plain = { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
+  const arOnly = { ...combat.player, ratings: { ...combat.player.ratings, ar: 4, pr: 0 } };
+  const atPlain = source => profileDamageReceipt(combat, source, target, 10, plain).damageReceipt.hits[0].incoming;
+  assert.equal(atPlain(arOnly) - atPlain(none), Math.floor(4 * weights(combat).ar), 'a plain physical attack still reads AR');
+});
