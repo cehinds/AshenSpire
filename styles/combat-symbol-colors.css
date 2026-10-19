@@ -227,6 +227,7 @@
   color: var(--combat-symbol-gold);
 }
 :root .card-sigil-band[data-mirror='defend'] .card-mirror-icon, :root .card-sigil-band[data-mirror='defend'] .card-type-name,
+:root .card-sigil-band[data-mirror='technique'] .card-mirror-icon, :root .card-sigil-band[data-mirror='technique'] .card-type-name,
 :root .card-sigil-band[data-mirror='counter'] .card-mirror-icon, :root .card-sigil-band[data-mirror='counter'] .card-type-name {
   color: var(--combat-symbol-silver);
 }

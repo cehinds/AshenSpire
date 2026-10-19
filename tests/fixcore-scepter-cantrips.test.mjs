@@ -94,3 +94,51 @@ test('footer of a smash mirror reads Smash; a spell that mirrors nothing still r
   assert.doesNotMatch(html, /data-mirror/);
   assert.deepEqual(cardSigilIdentity('Attack', { camp: 'physical', mirrors: 'smash' }), { action: 'attack', school: null }, 'only a Spell mirrors');
 });
+
+// ---- Equipment-bound profiles: a sceptre's or staff's basic cards (Current profile) ----
+import { resolveCard, profileMirrors } from '../src/model/registries.js';
+import { mirrorSigil } from '../src/content/combatSigils.js';
+const cur = createRegistries(contentBundle);
+const projected = (cardId, profileId) => resolveCard(cur, { cardId, profileId });
+
+test('every magic/arcane profile mirrors its base card, derived from the profile rows', () => {
+  const rows = cur.equipment.basicCardProfiles;
+  const magical = rows.filter(p => ['magic', 'arcane'].includes(p.damageSchool));
+  assert(magical.length >= 5, 'sceptre and staff profiles present');
+  const want = { strike: 'attack', defend: 'defend', technique: 'technique' };
+  for (const p of magical) assert.equal(profileMirrors(p), want[p.baseCardId], p.id);
+  for (const p of rows.filter(p => !['magic', 'arcane'].includes(p.damageSchool))) assert.equal(profileMirrors(p), null, p.id);
+});
+
+test('Arcane Strike, Ritual Ward and Staff Channel are Spells and Cantrips in their basic\'s stance', () => {
+  for (const [card, id, maneuver] of [['strike', 'sceptreArcaneAttack', 'attack'], ['strike', 'staffMagicAttack', 'attack'], ['defend', 'sceptreGuard', 'defend'], ['defend', 'staffGuard', 'defend'], ['technique', 'staffTechnique', 'casting']]) {
+    const d = projected(card, id);
+    for (const tag of ['camp:spell', 'source:spell', 'rank.cantrip']) assert(d.cardTags.includes(tag), id + ' ' + tag);
+    assert.equal(stanceOf(d).camp, 'spell', id);
+    assert.equal(stanceOf(d).maneuver, maneuver, id);
+  }
+  const slash = projected('strike', 'bladeAttack');
+  assert.equal(slash.mirrors, undefined);
+  assert.equal(stanceOf(slash).camp, 'physical');
+});
+
+test('footers: Arcane Strike [spell][attack] ATTACK, Ritual Ward [spell][defend] DEFEND, Staff Channel [spell][skill] TECHNIQUE', () => {
+  const foot = (card, id) => { const m = playingCardModel(cur, { cardId: card, profileId: id, instanceId: 'p-' + id, upgraded: false }); return cardSigilsHtml(m.sigils); };
+  const marks = html => [...html.matchAll(/data-sigil="(\w+)"/g)].map(m => m[1]);
+  const word = html => html.match(/card-type-name[^>]*>([^<]*)</)[1];
+  let h = foot('strike', 'sceptreArcaneAttack'); assert.deepEqual(marks(h), ['spell', 'attack']); assert.equal(word(h), 'Attack');
+  h = foot('defend', 'sceptreGuard'); assert.deepEqual(marks(h), ['spell', 'defend']); assert.equal(word(h), 'Defend');
+  h = foot('technique', 'staffTechnique'); assert.deepEqual(marks(h), ['spell', 'skill']); assert.equal(word(h), 'Technique');
+  h = foot('strike', 'bladeAttack'); assert.deepEqual(marks(h), ['attack']); assert.equal(word(h), 'Attack');
+  assert.equal(mirrorSigil('technique').mark.label, 'Technique');
+});
+
+test('a sceptre Strike chains Spell Mana with a staff guard, and a Slashing Strike breaks it', () => {
+  const combat = live();
+  const arcane = projected('strike', 'sceptreArcaneAttack'), ward = projected('defend', 'staffGuard'), slash = projected('strike', 'bladeAttack');
+  const costly = { ...ward, manaCost: 3 };
+  setProfileStance(combat, combat.player, { ...arcane, combatProfile: combatProfileFor(arcane) });
+  assert.equal(stanceManaCost(3, combat.player, costly, combat), 2, 'Arcane Strike then a spell guard');
+  setProfileStance(combat, combat.player, { ...slash, combatProfile: combatProfileFor(slash) });
+  assert.equal(stanceManaCost(3, combat.player, costly, combat), 3);
+});

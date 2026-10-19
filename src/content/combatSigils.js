@@ -29,6 +29,10 @@ export const SCHOOL_SIGILS = Object.freeze({
   decay: mark('Decay', '<path d="M26 5C9 2 3 10 7 22c12 4 20-2 19-17ZM7 25l14-14M12 20l-1-7m6 2 6 1M4 28h.01M27 25h.01"/>', 'Decay magic.'),
 });
 
+// A mirror's mark and word. Technique has no mark of its own: it wears the Skill mark under its own word.
+export function mirrorSigil(id) {
+  return id === 'technique' ? { id: 'skill', mark: Object.freeze({ ...ACTION_SIGILS.skill, label: 'Technique', help: 'A basic technique.' }) } : { id, mark: ACTION_SIGILS[id] };
+}
 export function cardSigilIdentity(primaryType, profile) {
   const action = primaryType.toLowerCase();
   if (!Object.hasOwn(ACTION_SIGILS, action)) throw new Error(`Unknown primary card type: ${primaryType}`);
@@ -36,6 +40,6 @@ export function cardSigilIdentity(primaryType, profile) {
   const school = profile.school === 'earth' ? 'alteration' : profile.school || null;
   if (school && !Object.hasOwn(SCHOOL_SIGILS, school)) throw new Error(`Unknown card school: ${school}`);
   // A Spell that mirrors a basic card (owner 2026-10-18) shows the Spell mark and its basic's mark.
-  const mirror = action === 'spell' && Object.hasOwn(ACTION_SIGILS, profile.mirrors) && profile.mirrors !== 'spell' ? profile.mirrors : null;
+  const mirror = action === 'spell' && (profile.mirrors === 'technique' || Object.hasOwn(ACTION_SIGILS, profile.mirrors) && profile.mirrors !== 'spell') ? profile.mirrors : null;
   return Object.freeze({ action, school, ...(mirror ? { mirror } : {}) });
 }
