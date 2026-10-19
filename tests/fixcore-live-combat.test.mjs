@@ -21,6 +21,9 @@ const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(c
 function live(classId='reaver') {
  const run=createRunState({registries:reg,classId,seed:511,profileMeta:{gameProfileUnlocks:{core:{completedRunIds:['a','b','c']}}}});
  const combat=createRunCombat({registries:reg,run,rng:createRng(511),enemyIds:['wanderingSoldier']});
+ // Ward is toggled off in shipped data (owner, 2026-10-18); these tests exercise the Ward path, so switch it on.
+ combat.fixCoreRules={...structuredClone(combat.fixCoreRules||combat.gameProfile.fixCoreRules),ward:{enabled:true}};
+ combat.player.persistentWard={value:20,max:20};
  const target=combat.enemies[0];Object.assign(target,{hp:500,maxHp:500,block:0,barrier:0,statuses:{},persistentWard:{value:20,max:20},persistentPoise:{value:20,max:20},attributes:{dexterity:0}});
  delete target.combatStance;delete target.combatCounter;
  return {run,combat,target};
