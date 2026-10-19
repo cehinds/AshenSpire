@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Attacks hit caster enemies again** ([#2167](https://github.com/cehinds/AshenSpire/pull/2167), `0.7.1.1667`). Attacks no longer miss caster enemies like the Grave Wisp and Wyrm Aspirant every time; melee cards now roll to hit them normally.
 - **Poise breaks leave you Staggered** ([#2164](https://github.com/cehinds/AshenSpire/pull/2164), `0.7.1.1667`). Poise now absorbs a quarter of each hit and loses what it absorbed (the hit says "Poise absorbed 2"). Breaking an enemy's (or your) Poise leaves them in a Staggered stance with 1 less SP next turn and Vulnerable, instead of a skipped turn.
 - **HUD clearance check follows the Defense-first badges** ([#2174](https://github.com/cehinds/AshenSpire/pull/2174), `0.7.1.1665`). The HUD clearance check now expects the Block (Defense) badge first, matching #2162; it had been failing on every pull request since.
 - **Rest sites heal; deck and gear lock in combat** ([#2163](https://github.com/cehinds/AshenSpire/pull/2163), `0.7.1.1663`). Rest sites now heal you and offer free Smith and Level Up with a Continue button; there are three per act with one right before the boss. The Deck button is gone from combat, equipment locks during fights, and the Armoury glows blue when you have a new item.
