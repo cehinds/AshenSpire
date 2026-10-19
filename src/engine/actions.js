@@ -1124,6 +1124,8 @@ function afterHpChange(ctx, target, death = {}) {
  */
 export function fixCoreStagger(ctx, entity, options = {}) {
   const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
+  // The hit that broke Poise still earns its Counter return: remember the spent Counter for the action's completion (SPEC §17).
+  if (entity?.combatCounter?.charges === 0) entity.combatCounterStaggered = entity.combatCounter.serial;
   Matchups.clearCombatCounter(entity, ctx);
   if (rules.stance) {
     entity.combatStance = fixCoreStaggeredStance(entity, rules);

@@ -670,7 +670,10 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   };
   completeGuardBreak(ctx, source, target, carrier, receipt);
   const counter = receipt.counter;
-  const stillPrepared = counter && target?.combatCounter?.serial === counter.serial;
+  // Core 2: a Poise break on the covered hit clears the Counter, but that hit still answers.
+  const stillPrepared = counter && (target?.combatCounter?.serial === counter.serial
+    || (counterRuleActive(ctx) && target?.combatCounterStaggered === counter.serial));
+  if (target && 'combatCounterStaggered' in target) delete target.combatCounterStaggered;
   const blocked = restrictions(ctx, target, options).counterDisabled || receipt.counterDisabledAtStart;
   const unreflectable = receipt.profiles.some(p => hasTrait(p, 'unreflectable'));
   // Mitigation may round a positive incoming contact down to zero. Coverage

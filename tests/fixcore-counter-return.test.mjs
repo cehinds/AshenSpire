@@ -179,3 +179,18 @@ test('multi-hit preview sums the hits one by one (sequential receipts) and equal
   assert.equal(returned.reduce((sum, e) => sum + e.hpLoss, 0), damage.totalDamage);
   assert.equal(single, damage.totalDamage);
 });
+
+test('a covered hit that breaks Poise still gets its return once; the break then clears the Counter', () => {
+  const { combat, enemy } = live();
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
+  Object.assign(combat.player, { block: 0, persistentPoise: { value: 1, max: 20 } });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const events = combat.eventLog.slice(start);
+  assert.ok(events.some(e => e.type === 'poiseBroken' && e.targetId === 'player'), 'the hit broke Poise');
+  const returned = events.filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
+  assert.ok(returned.length > 0, 'the return fired');
+  assert.equal(returned.length, 1, 'once');
+  assert.equal(combat.player.combatCounter, undefined, 'the break cleared the Counter');
+});
