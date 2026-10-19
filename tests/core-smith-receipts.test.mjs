@@ -105,3 +105,30 @@ test('legacy profile smithing keeps its authored card rows', () => {
   assert.ok(candidate && !candidate.core);
   assert.ok(candidate.changes.some((row) => row.kind === 'effect'));
 });
+
+test('copies of one card with different faces are previewed separately; co-op receipt counts the cards', () => {
+  const run = fresh(); visit(run);
+  const smash = run.deck.find((card) => card.cardId === 'core.smash');
+  run.deck.push({ ...smash, instanceId: 'smash-variant', upgraded: true });
+  const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === 'armament/greatsword');
+  const rows = candidate.coreCardRows.filter((row) => row.cardId === 'core.smash' && row.op === 'damage');
+  assert.equal(rows.length, 2, 'one row per distinct face');
+  assert.equal(rows.reduce((sum, row) => sum + row.copies, 0), run.deck.filter((card) => card.cardId === 'core.smash').length);
+  commitGameProfileRest(reg, run, 'smith', { itemRef: 'armament/greatsword' });
+  assert.ok(run.lastSmithingReceipt.affectedCards.length >= rows.length);
+});
+
+test('a rank-2 Core shield may spend the tier point in its authored points (validator matches the resolver)', async () => {
+  const { loadGameProfileCatalog } = await import('../tools/game-config.mjs');
+  const { resolveGameAuthor, resolveGearItem } = await import('../engine/kernel/gameConfig.js');
+  const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
+  const build = (rank) => {
+    const catalog = loadGameProfileCatalog();
+    const shield = catalog.packs['ashen.core-content@2.0.0'].content.gear.find((item) => item.kind === 'shield');
+    const max = Object.values(resolveGearItem(shield, resolveGameAuthor(author, loadGameProfileCatalog()).modules.gear).points).reduce((a, b) => a + b, 0);
+    shield.rank = rank; shield.points = { dr: max + 1 };
+    return () => resolveGameAuthor(author, catalog);
+  };
+  assert.doesNotThrow(build(2));
+  assert.throws(build(1), /exceed the pool/);
+});

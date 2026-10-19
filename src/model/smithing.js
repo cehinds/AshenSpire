@@ -524,7 +524,8 @@ export function commitItemUpgrade(registries, run, requestedItemRef, explicitRul
     purse: refinedPurse ? 'refined' : 'stones',
     ...(refinedPurse ? { refinedSpent: candidate.refinedCost, refinedBalanceBefore: beforeRefined, refinedBalanceAfter: run.smithingStonesRefined } : {}),
     changes: candidate.core ? Object.freeze([...candidate.changes, ...candidate.coreCardRows]) : candidate.changes,
-    affectedCards: candidate.affectedCards,
+    // Core: the cards whose live numbers changed (co-op announces this count).
+    affectedCards: candidate.core ? candidate.coreCardRows : candidate.affectedCards,
   });
   // The transaction's durable read-back. Solo Armoury/map and every co-op
   // snapshot project this same receipt; presentation never reconstructs what

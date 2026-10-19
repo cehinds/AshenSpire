@@ -263,7 +263,9 @@ function verifyGearContent(content, settings) {
     const cost = (item.tags || []).reduce((s, t) => s + (settings.tags[t]?.cost || 0), 0);
     const armorBudget = item.kind === 'armor' && settings.armorBudget ? armorBudgetFor(item, settings) : null;
     if (item.rank !== undefined && (!Number.isSafeInteger(item.rank) || item.rank < 1)) fail(`${at}/rank`, 'expected positive integer rank');
-    const whole = armorBudget ?? settings.poolSizes.merged?.[item.rarity]?.max ?? r.max + b.max;
+    // A shield's rank adds perRank points to its merged pool (resolveGearItem); allow what it can spend.
+    const shieldTierPoints = item.kind === 'shield' && settings.armorBudget ? ((item.rank ?? 1) - 1) * (settings.armorBudget.perRank ?? 0) : 0;
+    const whole = armorBudget ?? shieldTierPoints + (settings.poolSizes.merged?.[item.rarity]?.max ?? r.max + b.max);
     if (settings.pools === 'merged' || armorBudget !== null ? setR + setB + cost > whole : setR > r.max || setB + cost > b.max) fail(`${at}/points`, 'set points and tag costs exceed the pool');
   }
 }

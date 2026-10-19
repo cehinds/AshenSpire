@@ -91,13 +91,16 @@ function liveCardValues(registries, run, itemRef, level) {
     const combat = createRunCombat({ registries, run: staged, rng: createRng(17), enemyIds: [enemyId] });
     const rows = new Map();
     for (const pile of ['hand', 'draw', 'discard']) for (const instance of combat.piles[pile]) {
-      const row = rows.get(instance.cardId);
+      // Copies of one card can differ (mods, upgraded, rank...): each distinct face is its own row.
+      const { instanceId, ...face } = instance;
+      const key = `${instance.cardId}|${JSON.stringify(face)}`;
+      const row = rows.get(key);
       if (row) { row.copies++; continue; }
       // A card with no damage or block effect cannot change; skip its (costly) detached preview.
       const def = resolveCombatCard(combat, instance);
-      if (!(def.effects || []).some((effect) => CARD_VALUES.some(({ op }) => op === effect.op))) { rows.set(instance.cardId, { name: def.name, copies: 1, values: {} }); continue; }
+      if (!(def.effects || []).some((effect) => CARD_VALUES.some(({ op }) => op === effect.op))) { rows.set(key, { cardId: instance.cardId, name: def.name, copies: 1, values: {} }); continue; }
       const preview = previewCard(combat, instance.instanceId);
-      rows.set(instance.cardId, { name: preview.name, copies: 1,
+      rows.set(key, { cardId: instance.cardId, name: preview.name, copies: 1,
         values: Object.fromEntries(CARD_VALUES.map(({ op }) => [op, preview.values.find((value) => value.op === op)?.value])) });
     }
     return rows;
@@ -129,11 +132,11 @@ export function coreSmithingCards(registries, run, itemRef, currentLevel, nextLe
   if (!gearItemFor(run, itemRef) || !isEquipped(run, itemRef)) return [];
   const was = liveCardValues(registries, run, itemRef, currentLevel), now = liveCardValues(registries, run, itemRef, nextLevel);
   const cards = [];
-  for (const [cardId, row] of now) for (const spec of CARD_VALUES) {
-    const b = was.get(cardId)?.values[spec.op], a = row.values[spec.op];
+  for (const [key, row] of now) for (const spec of CARD_VALUES) {
+    const b = was.get(key)?.values[spec.op], a = row.values[spec.op];
     if (b === undefined || a === undefined || b === a) continue;
-    cards.push({ kind: 'card', tag: `core:card:${cardId}:${spec.op}`, label: `${row.name} ${spec.label.toLowerCase()}`,
-      cardId, name: row.name, op: spec.op, opLabel: spec.label, rating: spec.rating, copies: row.copies, before: b, after: a });
+    cards.push({ kind: 'card', tag: `core:card:${key}:${spec.op}`, label: `${row.name} ${spec.label.toLowerCase()}`,
+      cardId: row.cardId, name: row.name, op: spec.op, opLabel: spec.label, rating: spec.rating, copies: row.copies, before: b, after: a });
   }
   return cards;
 }
