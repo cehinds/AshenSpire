@@ -587,7 +587,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root .shared-hud .hud-vitals-panel { padding:0; }
 :root .shared-hud .hud-info-row { align-self:center; }
 :root .shared-hud .illustrated-hud-button { display:flex; align-items:center; justify-content:center; background:none; border:0; box-shadow:none; padding:5px; min-width:calc(44px / var(--ui-zoom,1)); min-height:calc(44px / var(--ui-zoom,1)); box-sizing:border-box; }
-:root :is(.combat, .w4-frame) .shared-hud .topbar .illustrated-hud-button.topbar-btn { width:calc(44px / var(--ui-zoom,1)); height:calc(44px / var(--ui-zoom,1)); min-width:calc(44px / var(--ui-zoom,1)); min-height:calc(44px / var(--ui-zoom,1)); }
+:root :is(.combat, .w4-frame) .shared-hud.topbar .illustrated-hud-button.topbar-btn { width:calc(44px / var(--ui-zoom,1)); height:calc(44px / var(--ui-zoom,1)); min-width:calc(44px / var(--ui-zoom,1)); min-height:calc(44px / var(--ui-zoom,1)); }
 :root .shared-hud .illustrated-hud-icon { position:relative; display:block; width:100%; height:100%; overflow:hidden; pointer-events:none; }
 /* The svg viewBox crops the sheet and 'meet' keeps the icon's natural ratio in any button box. */
 :root .shared-hud .illustrated-hud-icon svg { display:block; width:100%; height:100%; }
