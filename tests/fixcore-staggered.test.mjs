@@ -212,3 +212,8 @@ test('Ward on: Ward damage goes to Ward and leaves Poise alone', () => {
   assert.equal(target.persistentWard.value, 7);
   assert.equal(target.persistentPoise.value, 20);
 });
+
+test('floating text names why damage dropped: Poise absorbed N', async () => {
+  const { guardHitFloatParts } = await import('../src/ui/fx.js');
+  assert.equal(guardHitFloatParts({ amount: 6, blocked: 0, poiseAbsorbed: 2 }, 100).poise.text, 'Poise absorbed 2');
+});
