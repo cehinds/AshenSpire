@@ -58,7 +58,7 @@
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters .m-label { display:none!important; }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters .combat-health-badge {
   position:relative!important; inset:auto!important; transform:none!important; margin-top:calc(2px / var(--ui-zoom,1));
-  font-size:calc(9px / var(--ui-zoom,1)); height:calc(10px / var(--ui-zoom,1)); min-width:calc(13px / var(--ui-zoom,1));
+  font-size:calc(9px / var(--ui-zoom,1)); flex:0 0 calc(16px / var(--ui-zoom,1)); width:calc(16px / var(--ui-zoom,1)); height:calc(16px / var(--ui-zoom,1)); min-width:0; aspect-ratio:1;
 }
 :root .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
   filter:drop-shadow(.8px 0 0 var(--combat-matchup-color,#f07870)) drop-shadow(-.8px 0 0 var(--combat-matchup-color,#f07870)) drop-shadow(0 0 1.2px var(--combat-matchup-color,#f07870))!important;

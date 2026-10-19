@@ -30,67 +30,64 @@ function recovered(row) {
  assert.equal(row.flaskCharges.hpCurrent,row.flaskCharges.hp);
  assert.equal(row.flaskCharges.manaCurrent,row.flaskCharges.mana);
 }
+const optionIds={smith:'smith-opt',levelUp:'level-opt'};
+// D10: a committed service spends only itself, heals, and leaves the screen open; only Continue leaves.
 async function spent(page,service) {
- try { await page.waitForFunction(value=>window.__restStateForShot().live.visit?.service===value,service); } catch(error) {
-  console.log('Uncommitted service',service,await snapshot(page),await page.locator('[role=alert],#deck-editor-refusal').allTextContents());
+ try { await page.waitForFunction(value=>window.__restStateForShot().live.visit?.used?.[value]===true,service); } catch(error) {
+  console.log('Uncommitted service',service,await snapshot(page),await page.locator('[role=alert]').allTextContents());
   await page.screenshot({path:resolve(output,'failure.png')});throw error;
  }
  const state=await snapshot(page);recovered(state.live);recovered(state.saved);
  assert.deepEqual(state.saved,state.live,'committed state survives actual save/load roundtrip');
- for(const id of ['strategize-opt','smith-opt','level-opt']) assert.equal(await page.locator(`#${id}`).getAttribute('aria-disabled'),'true');
+ assert.equal(await page.locator(`#${optionIds[service]}`).getAttribute('aria-disabled'),'true',`${service} spent`);
+ assert.ok(await page.locator('.rest-door').isVisible(),'no auto-close after a service');
+ return state;
+}
+async function leaveAndReturn(page,state,used) {
  await page.locator('#shrine-leave').click();await page.locator('.mapscreen').waitFor();
  await page.locator(`.map-node[data-node="${state.live.mapNodeId}"]`).click();
  await page.locator('#map-enter').click();await page.locator('.rest-door').waitFor();
- assert.equal((await snapshot(page)).live.visit.service,service,'re-entering retains spent service');
- for(const id of ['strategize-opt','smith-opt','level-opt']) assert.equal(await page.locator(`#${id}`).getAttribute('aria-disabled'),'true');
- return state;
+ const live=(await snapshot(page)).live;
+ for(const service of used) assert.equal(live.visit.used[service],true,`re-entering retains spent ${service}`);
+ for(const service of used) assert.equal(await page.locator(`#${optionIds[service]}`).getAttribute('aria-disabled'),'true');
 }
 async function behavior() {
  const unavailable=await open('core');
  assert.equal(await unavailable.locator('#level-opt').getAttribute('aria-disabled'),'true');
  assert.ok((await unavailable.locator('#level-opt p').innerText()).trim().length>5,'unavailable Level explains its reason');
  await unavailable.close();
- for(const service of (process.env.REST_UI_SERVICE ? process.env.REST_UI_SERVICE.split(',') : ['strategize','smith','levelUp'])) {
+ // Core rest: heal on arrival, Smith and Level Up together and free, no Strategize, Continue is the only way out.
+ {
   const page=await open('core','desktop','&shotRestPoints=1');const before=await snapshot(page);
-  assert.ok(before.live.hp<before.live.maxHp);assert.equal(before.live.flaskCharges.hpCurrent,0);
-  if(service==='strategize') {
-   await page.locator('#strategize-opt').click();await page.locator('#deck-editor-done').waitFor();
-   await page.locator('.deck-editor-step[data-action="remove"][aria-disabled="false"]').first().click();
-   assert.deepEqual((await snapshot(page)).live,before.live,'deck draft does not mutate live run');
-   await page.locator('#deck-editor-cancel').click();
-   assert.deepEqual((await snapshot(page)).live,before.live,'cancelled Strategize consumes nothing');
-   await page.locator('#strategize-opt').click();
-   const remove=page.locator('.deck-editor-step[data-action="remove"][aria-disabled="false"]').first();
-   const key=await remove.getAttribute('data-key');
-   await remove.click();
-   assert.equal(await page.locator('#deck-editor-done').isDisabled(),true,'below-minimum deck cannot commit');
-   await page.locator(`.deck-editor-step[data-action="add"][data-key="${key}"]`).click();
-   await page.locator('#deck-editor-done').click();
-  } else if(service==='smith') {
-   await page.locator('#smith-opt').click();
-   await page.locator('.smith-candidate-card').first().click();
-   await page.locator('.smith-back').click();
-   assert.deepEqual((await snapshot(page)).live,before.live,'cancelled Smith consumes nothing');
-   await page.locator('#smith-opt').click();await page.locator('.smith-candidate-card').first().click();
-   await page.locator('.smith-confirm').click();await page.locator('.confirmation-confirm').click();
-  } else {
-   await page.locator('#level-opt').click();
-   await page.locator('[data-stat-action="increase"][data-stat-id="constitution"]').click();
-   assert.deepEqual((await snapshot(page)).live,before.live,'attribute draft does not mutate live run');
-   await page.locator('[data-stat-cancel]').click();
-   assert.deepEqual((await snapshot(page)).live,before.live,'cancelled Level consumes nothing');
-   await page.locator('#level-opt').click();
-   await page.locator('[data-stat-action="increase"][data-stat-id="constitution"]').click();
-   await page.locator('[data-stat-done]').click();
-  }
-  const after=await spent(page,service);
-  if(service==='strategize') {
-   assert.deepEqual(after.live.deck.map(card=>card.instanceId).sort(),before.live.deck.map(card=>card.instanceId).sort(),'owned card identities preserved');
-   assert.notDeepEqual(after.live.deck,before.live.deck,'confirmed card ordering is persisted');
-  }
-  if(service==='smith') assert.notDeepEqual(after.live.itemUpgradeLevels,before.live.itemUpgradeLevels,'confirmed equipment tier is persisted');
-  if(service==='levelUp') assert.equal(after.live.attributes.constitution,before.live.attributes.constitution+1,'confirmed attribute is persisted');
-  console.log(`Rest service passed: ${service}`);await page.close();
+  recovered(before.live);
+  assert.equal(await page.locator('#strategize-opt').count(),0,'Strategize is gone from Core rests');
+  assert.ok(await page.locator('[data-rest-healed]').isVisible(),'the screen reports the heal');
+  assert.equal(await page.locator('#smith-opt').getAttribute('aria-disabled'),'false');
+  assert.equal(await page.locator('#level-opt').getAttribute('aria-disabled'),'false');
+  await page.locator('#smith-opt').click();
+  await page.locator('.smith-candidate-card').first().click();
+  await page.locator('.smith-back').click();
+  assert.deepEqual((await snapshot(page)).live,before.live,'cancelled Smith consumes nothing');
+  await page.locator('#smith-opt').click();await page.locator('.smith-candidate-card').first().click();
+  await page.locator('.smith-confirm').click();await page.locator('.confirmation-confirm').click();
+  const afterSmith=await spent(page,'smith');
+  assert.notDeepEqual(afterSmith.live.itemUpgradeLevels,before.live.itemUpgradeLevels,'confirmed equipment tier is persisted');
+  assert.equal(await page.locator('#level-opt').getAttribute('aria-disabled'),'false','Smith leaves Level Up open');
+  await page.locator('#level-opt').click();
+  await page.locator('[data-stat-action="increase"][data-stat-id="constitution"]').click();
+  assert.deepEqual((await snapshot(page)).live,afterSmith.live,'attribute draft does not mutate live run');
+  await page.locator('[data-stat-cancel]').click();
+  await page.locator('#level-opt').click();
+  await page.locator('[data-stat-action="increase"][data-stat-id="constitution"]').click();
+  await page.locator('[data-stat-done]').click();
+  const afterLevel=await spent(page,'levelUp');
+  assert.equal(afterLevel.live.attributes.constitution,before.live.attributes.constitution+1,'confirmed attribute is persisted');
+  await leaveAndReturn(page,afterLevel,['smith','levelUp']);
+  console.log('Rest services passed: smith + levelUp, Continue leaves');await page.close();
+ }
+ {
+  const page=await open('core');const state=await snapshot(page);
+  await leaveAndReturn(page,state,[]);console.log('Continue without a service leaves');await page.close();
  }
 }
 try {

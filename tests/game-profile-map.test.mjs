@@ -13,6 +13,8 @@ import { compileGameProfiles } from '../tools/game-config.mjs';
 import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
 
 function setup(routes = {}) {
+  // Core authors three rest depths (D10); a test that moves the rest floors states its own count.
+  if (routes.restFloors && routes.restsPerAct === undefined) routes = { ...routes, restsPerAct: routes.restFloors.length };
   const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { routes } });
   const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const run = createRunState({ seed: 73, classId: 'reaver', registries: reg });
@@ -39,14 +41,14 @@ function verifyPaths(map, rests) {
   for (const start of map.startIds) { assert.equal(map.nodes[start].floor, 1); walk(start); }
   assert.equal(reached.size, Object.keys(map.nodes).length);
 }
-test('every seeded core branch visits eight levels and both rests across all three acts', () => {
+test('every seeded core branch visits eight levels and all three rests across all three acts', () => {
   const { reg, run } = setup();
   for (let seed = 1; seed <= 20; seed++) {
     const bosses = new Set();
     for (let tier = 1; tier <= 3; tier++) {
       const seat = run.seatOrder[tier - 1];
       const map = buildActMap(reg, createRng(seed), seat, tier);
-      verifyPaths(map, [3, 7]);
+      verifyPaths(map, [3, 5, 7]);
       assert.equal(map.floors, 8);
       // Floor 1 is a fight (routes.firstFloor, owner 2026-10-18): three fight lanes to choose from, drawn as fights.
       assert.deepEqual(map.startIds, ['n1_0', 'n1_1', 'n1_2']);
@@ -54,9 +56,9 @@ test('every seeded core branch visits eight levels and both rests across all thr
       assert.equal(Object.values(map.nodes).filter(node => node.floor === 1).length, 3);
       assert.equal(map.shrineId, 'n7_0');
       for (const node of Object.values(map.nodes)) if (['elite', 'boss'].includes(node.actualType)) assert.ok(node.floor >= 3);
-      assert.equal(Object.keys(map.nodes).length, 18);
+      assert.equal(Object.keys(map.nodes).length, 16);
       assert.ok(Object.values(map.nodes).some(node => node.next.length > 1));
-      assert.equal(Object.values(map.nodes).filter(node => node.type === 'shrine').length, 2);
+      assert.equal(Object.values(map.nodes).filter(node => node.type === 'shrine').length, 3);
       assert.equal(Object.values(map.nodes).filter(node => node.type === 'boss').length, 1);
       for (const node of Object.values(map.nodes).filter(node => node.next.includes(map.bossId))) assert.equal(node.type, 'shrine', 'every boss predecessor is a rest');
       assert.equal(bossEncounterForNode(reg, map, map.bossId, { seat, tier }), map.nodes.boss.encounterId);
