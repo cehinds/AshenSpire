@@ -1,5 +1,5 @@
 import { gameModule, gameContent } from '../model/gameProfile.js';
-import { validateResolvedGameProfile } from '../../engine/kernel/gameConfig.js';
+import { validateVerifiedProfile as validateResolvedGameProfile } from '../model/verifiedProfiles.js';
 import { migrateAbilityGrades } from '../model/abilityGrades.js';
 // src/engine/save.js — run persistence with schema + content versioning
 // (SPEC §3.12)

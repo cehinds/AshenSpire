@@ -1,19 +1,28 @@
 // Immutable per-run configuration snapshots. No mutable active-profile singleton.
 import { gameProfileCatalog, gameProfileAuthors } from '../content/generated/gameProfiles.js';
-import { resolveGameAuthor, validateResolvedGameProfile, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
+import { resolveGameAuthor, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
+import { markVerifiedProfile, validateVerifiedProfile } from './verifiedProfiles.js';
 export { GameConfigError };
+// Catalog profiles are deterministic, so each id is resolved and digested once per process; later
+// resolves return a fresh deep-frozen copy (callers rely on distinct snapshots) instead of re-hashing.
+const resolvedById = new Map();
+const resolveOnce = (key, make) => {
+  const first = resolvedById.get(key);
+  if (first) return markVerifiedProfile(freezeGameData(dataClone(first)));
+  const made = markVerifiedProfile(make()); resolvedById.set(key, made); return made;
+};
 export function resolveGameProfile(idOrAuthor = 'current') {
   if (typeof idOrAuthor === 'string') {
     if (Object.hasOwn(gameProfileCatalog.bundles, idOrAuthor)) {
-      return resolveGameAuthor({formatVersion:1,core:idOrAuthor,modules:{}},gameProfileCatalog);
+      return resolveOnce('bundle:'+idOrAuthor, () => resolveGameAuthor({formatVersion:1,core:idOrAuthor,modules:{}},gameProfileCatalog));
     }
     if (!gameProfileAuthors[idOrAuthor]) throw new GameConfigError('$/profile','unknown profile ID');
-    return resolveGameAuthor(gameProfileAuthors[idOrAuthor],gameProfileCatalog);
+    return resolveOnce('author:'+idOrAuthor, () => resolveGameAuthor(gameProfileAuthors[idOrAuthor],gameProfileCatalog));
   }
   if (idOrAuthor?.hash) return validateGameProfileSnapshot(idOrAuthor);
   return resolveGameAuthor(idOrAuthor,gameProfileCatalog);
 }
-export function validateGameProfileSnapshot(profile) { return validateResolvedGameProfile(profile,gameProfileCatalog.runtimeHash); }
+export function validateGameProfileSnapshot(profile) { return validateVerifiedProfile(profile,gameProfileCatalog.runtimeHash); }
 function subjectProfile(subject) { return subject?.gameProfile || (subject?.formatVersion === 1 && subject?.modules ? subject : null); }
 export function gameModule(subject,id) { return subjectProfile(subject)?.modules?.[id] || null; }
 export function gameContent(subject,key) { return subjectProfile(subject)?.content?.[key]; }
