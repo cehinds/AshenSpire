@@ -70,3 +70,11 @@ test('co-op HUD Evasion matches the host with plated armour and an active buckle
   assert.notEqual(coopCombatantEvasion(scene, registries, row), coopCombatantEvasion(scene, registries, row, noShield),
     'plated armour does not silently use the Cloth fallback');
 });
+
+test('co-op status tray skips Evade and Precision exactly when the health badge shows them', async () => {
+  const { coopBadgedStatusIds } = await import('../src/ui/models/CoopHitPreviewModel.js');
+  assert.deepEqual([...coopBadgedStatusIds({ combatExpansionVersion: 2 }, false, 's1')], ['evade', 'precision']);
+  assert.deepEqual([...coopBadgedStatusIds({ combatExpansionVersion: 2, knowledgeAction: { reads: { s1: { visibility: 'exact' } } } }, true, 's1')], ['evade', 'precision']);
+  assert.equal(coopBadgedStatusIds({ combatExpansionVersion: 2, knowledgeAction: { reads: { s1: { visibility: 'hidden' } } } }, true, 's1').size, 0, 'unknown enemy: badge hidden, tray keeps them');
+  assert.equal(coopBadgedStatusIds({ combatExpansionVersion: 1 }, false, 's1').size, 0);
+});

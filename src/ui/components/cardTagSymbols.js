@@ -14,6 +14,7 @@ const SYMBOL_TRAITS = new Set(['flux', 'impact', 'reaction', 'counterstrike']);
 // Original solid silhouettes, matching the approved B footer treatment.
 const SHAPES = Object.freeze({
   evade: '<path d="M7 2h13l-2 12 4 6 7 3 2 5-2 3H13L2 25l2-8Zm1 5-1 4 10 2 1-4ZM5 21l-1 3 10 5h14v-3H15Z"/>',
+  precision: '<path d="M14 1h4v6h-4Zm0 24h4v6h-4ZM1 14h6v4H1Zm24 0h6v4h-6Z"/><path d="M16 6a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 4a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z"/><circle cx="16" cy="16" r="2.5"/>',
   earth: '<path d="m8 5 13-2 9 11-3 14-16 3L2 20Zm1 4-4 10 7 8 1-12Zm6 6-1 12 10-2 3-10Zm1-3h9l-6-6-7 2Z"/>',
   fire: '<path d="M18 1c4 9-5 11-1 16 4-2 6-6 6-10 12 14 9 24-7 24C1 31-2 19 9 10c-1 6 1 9 4 9-4-9 3-13 5-18ZM16 21c-7 7-3 9 0 9s8-4 0-9Z"/>',
   ritual: '<path d="M16 2 31 28H1Zm0 7L7 25h18Z"/><circle cx="16" cy="19" r="4"/>',
@@ -42,6 +43,8 @@ const SHAPES = Object.freeze({
 const ALIASES = Object.freeze({ fire:'fire', burn:'fire', cold:'frost', arcane:'force', psychic:'illusion', alternation:'alteration', sacred:'divine', holy:'divine', necrotic:'decay', crimsonBlight:'decay', necroticBlight:'decay', blight:'decay', blood:'bleed', gorefire:'fire', blade:'slashing', pierce:'piercing', heavy:'blunt', starstone:'force', astral:'force', venom:'decay', oath:'divine', weak:'lightning', vulnerable:'guard', staggered:'blunt', poise:'blunt', precision:'ranged', cleave:'attack', counter:'counter', flourish:'skill', prepared:'guile', concealed:'guile', ash:'guile' });
 
 function shapeFor(tag) {
+  // The defense badge's reticle; card-rail precision tags (status:precision) keep the ranged alias below.
+  if (tag.id === 'effect:precision') return SHAPES.precision;
   const key = tag.id.split(':').at(-1);
   const id = key === 'physical' ? 'guard' : ['evade', 'evasion', 'dodge'].includes(key) ? 'evade' : key === 'slashing' || key === 'blade' ? 'attack' : ALIASES[key] || key;
   return ACTION_SIGILS[id]?.solid ? ACTION_SIGILS[id].shape : SHAPES[id] || SHAPES.skill;
