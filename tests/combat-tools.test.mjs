@@ -289,6 +289,39 @@ test('Auto switch waits for the write, blocks overlapping toggles and repaints a
   assert.equal(auto.getAttribute('aria-checked'), 'false', 'refused write: still shows the persisted value');
 });
 
+test('Auto switch toggles from the live setting after Settings changed it behind the footer', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const settings = { autoCombat: false };
+    const writes = [];
+    const tools = mountCombatTools(combatEl, { state: {}, onViewChange() {}, onToggle() {},
+      readAuto: () => settings.autoCombat,
+      onAutoToggle: enabled => { writes.push(enabled); settings.autoCombat = enabled; } });
+    const paint = () => tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }), { auto: settings.autoCombat });
+    paint();
+    const auto = combatEl.querySelector('[data-combat-tool="auto"]');
+    assert.equal(auto.getAttribute('aria-checked'), 'false');
+    settings.autoCombat = true; // Menu > Settings turned it on; the footer has not repainted yet
+    auto.click();
+    assert.deepEqual(writes, [false], 'a stale switch still toggles the live value off, not a no-op write of true');
+    paint();
+    assert.equal(auto.getAttribute('aria-checked'), 'false');
+    tools.release();
+  });
+});
+
+test('closing the overlay repaints the combat footer: closeOverlay announces it and combat listens', () => {
+  const overlay = readFileSync(new URL('../src/ui/components/overlay.js', import.meta.url), 'utf8');
+  const combat = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(overlay, /dispatchEvent\(new CustomEvent\(OVERLAY_CLOSED_EVENT\)\)/);
+  assert.match(combat, /addEventListener\(OVERLAY_CLOSED_EVENT, repaintAutoSwitch\)/);
+  assert.match(combat, /repaintAutoSwitch = \(\) => \{[^}]*renderCombatTools\(\)/);
+  assert.match(combat, /removeEventListener\(OVERLAY_CLOSED_EVENT, repaintAutoSwitch\)/);
+  assert.match(combat, /readAuto: \(\) => resolveCombatAutomation\(readSettings\(\)\)\.enabled/);
+});
+
 test('co-op mounts the tools without an Auto switch', () => {
   withToolsDom((dom) => {
     resetModalState();

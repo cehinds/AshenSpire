@@ -65,7 +65,7 @@ export function closeCombatFullLog(state) {
 // Gap between a corner tool and the combat screen's edge, in CSS px.
 const CORNER_INSET = 16;
 
-export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, onViewChange, onGridToggle }) {
+export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, readAuto, onViewChange, onGridToggle }) {
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
   const logButton = button({ label: t('combat.log.title'), attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
   const gridLabel = el('label', { class: 'combat-grid-toggle' });
@@ -176,7 +176,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, onVi
   // setting after success or rollback (the screen's handler repaints from readSettings()).
   let autoBusy = false, autoSupported = true;
   auto.addEventListener('click', async () => {
-    const enabled = auto.getAttribute('aria-checked') !== 'true';
+    // Toggle from the live setting when the screen supplies it: Settings may have changed it since this switch painted.
+    const enabled = readAuto ? !readAuto() : auto.getAttribute('aria-checked') !== 'true';
     const hadFocus = document.activeElement === auto;
     autoBusy = true; auto.disabled = true;
     try { await onAutoToggle?.(enabled); }

@@ -128,3 +128,7 @@ export function topVeil() {
 export function veilIsOpen() {
   return topVeil() !== null;
 }
+
+// Fired on window when the in-run overlay (Menu) closes. Settings may have changed behind the
+// screen; a screen that mirrors a setting (the combat footer's Auto switch) repaints from it.
+export const OVERLAY_CLOSED_EVENT = 'ashenspire:overlay-closed';
