@@ -32,7 +32,7 @@ test('merge groups: Ward and Poise damage on one target merge; other targets and
 });
 
 test('Core: a Ward damage face reads Poise damage; Current keeps Ward damage', () => {
-  assert.deepEqual(plain(cardFaceLines(WARD, null, core)), ['Inflict 8 Poise damage']);
+  assert.deepEqual(plain(cardFaceLines(WARD, null, core)), ['Inflict 8 Poise damage', 'Entry: +1 + stat mix Precision']);
   assert.deepEqual(plain(cardFaceLines(WARD, null, current)), ['Inflict 8 Ward damage']);
 });
 

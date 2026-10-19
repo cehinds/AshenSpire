@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatHealthModel } from '../src/ui/models/CombatHealthModel.js';
 import { tagSymbolSvg } from '../src/ui/components/cardTagSymbols.js';
-import { combatHealthRow } from '../src/ui/components/combatHealth.js';
+import { combatHealthRow, badgeTipHtml } from '../src/ui/components/combatHealth.js';
 import { meter } from '../src/ui/kit/index.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
@@ -73,6 +73,16 @@ test('spent Evasion stacks disappear from the PIP instead of showing a zero rati
   for (const evasion of [0,-2,null,undefined]) assert.ok(!combatHealthModel({evasion}).badges.some(badge=>badge.kind==='evade'));
   assert.equal(combatHealthModel({evasion:3}).badges.find(badge=>badge.kind==='evade').value,3);
 });
+
+test('the Evade badge tooltip shows the holder text when given and the generic line otherwise, and combatHealthRow accepts evadeHelp', () => withKitDom(() => {
+  const badge = combatHealthModel({ evasion: 2 }).badges.find(b => b.kind === 'evade');
+  const helps = { blockHelp: 'b', poiseHelp: 'p', wardHelp: 'w' };
+  assert.match(badgeTipHtml(badge, helps), /Active Evasion stacks/);
+  assert.match(badgeTipHtml(badge, { ...helps, evadeHelp: 'Each stack adds 3 (base 1, gear +2) plus the holder\'s DEX' }), /gear \+2/);
+  const hp = meter({ id: 'hp', value: '18/20', cur: 18, max: 20 });
+  for (const options of [{ tooltips: true }, { tooltips: true, evadeHelp: 'holder text' }, { tooltips: true, evadeHelp: null }])
+    assert.doesNotThrow(() => combatHealthRow(hp, { evasion: 2 }, options));
+}));
 
 test('the Precision badge glyph is the reticle, not the ranged arrow the card-rail alias gives status:precision', () => withKitDom(() => {
   const reticle = tagSymbolSvg('effect:precision').outerHTML;

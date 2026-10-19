@@ -35,13 +35,54 @@ export const fixCoreProtection = [
               "type": "number",
               "minimum": 0
             },
-            "evasionPerStack": {
+            "evadeStackBase": {
               "type": "number",
               "minimum": 0
             },
-            "precisionPerStack": {
+            "evadeStackDex": {
               "type": "number",
               "minimum": 0
+            },
+            "precisionBase": {
+              "type": "number",
+              "minimum": 0
+            },
+            "evasionBase": {
+              "type": "number",
+              "minimum": 0
+            },
+            "precisionWeights": {
+              "type": "object",
+              "properties": {
+                "dex": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "str": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "wis": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "int": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "level": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "dex",
+                "str",
+                "wis",
+                "int",
+                "level"
+              ],
+              "additionalProperties": false
             },
             "maneuverPrecision": {
               "type": "object",
@@ -76,8 +117,11 @@ export const fixCoreProtection = [
           },
           "required": [
             "baseAC",
-            "evasionPerStack",
-            "precisionPerStack",
+            "evadeStackBase",
+            "evadeStackDex",
+            "precisionBase",
+            "evasionBase",
+            "precisionWeights",
             "maneuverPrecision",
             "stanceMinimum",
             "stanceMaximum"

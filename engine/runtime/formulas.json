@@ -27,7 +27,7 @@
     "metric": {
       "fields": { "metric": "metric name, required", "of": "entity ref, default self", "statuses": "array of status ids, for the status metrics", "per": "number, optional, default 1" },
       "result": "named combat metric * per",
-      "metrics": ["weaponDamage", "negativeStatusTypes", "negativeStatusStacks", "damageTakenThisTurn", "sameCardPlays", "cardsPlayed", "distinctTypes", "manaSpent", "staminaSpent"]
+      "metrics": ["weaponDamage", "negativeStatusTypes", "negativeStatusStacks", "damageTakenThisTurn", "sameCardPlays", "cardsPlayed", "distinctTypes", "manaSpent", "staminaSpent", "evadeStackGain"]
     },
     "traitBonus": { "fields": { "base": "value, required", "pct": "number as a fraction, required" }, "result": "base + max(floor(base * pct), 1) for base > 0, else base" }
   },

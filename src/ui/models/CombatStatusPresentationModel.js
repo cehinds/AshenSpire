@@ -4,9 +4,9 @@ import { fixCoreStatusDefinition } from '../../model/fixCoreMechanics.js';
 // registry; both card inspection and PIPs read the active rules' descriptions.
 export function combatStatusPresentationRegistries(registries, combat) {
   const original = registries.statuses;
-  const project = definition => definition ? fixCoreStatusDefinition(combat, definition.id, definition) : definition;
+  const project = (definition, holder = null) => definition ? fixCoreStatusDefinition(combat, definition.id, definition, holder) : definition;
   return { ...registries, statuses: { ...original,
-    get: id => project(original.get(id)),
-    all: () => original.all().map(project),
+    get: (id, holder = null) => project(original.get(id), holder),
+    all: () => original.all().map(definition => project(definition)),
   } };
 }
