@@ -32,10 +32,11 @@ test('Core Starseer starts with 3 Arcane Spark, 2 Star Spark, 4 Ethereal and 1 R
   assert.deepEqual(run.sideboard, []);
 });
 
-test('Core Herald keeps the shared starter list (base.divine-strike and base.necrotic-heal are not in Core)', () => {
+test('Core Herald starts with 4 Resource Echo, 4 Ethereal, 1 Smash and 1 Exhaust', () => {
   const run = start('herald');
   assert.equal(run.deck.length, 10);
-  assert.equal(counts(run.deck)['core.strike'], 3);
+  assert.deepEqual(counts(run.deck), { 'base.paid-resource-variant': 4, 'base.ethereal': 4, 'core.smash': 1, 'base.exhaust': 1 });
+  assert.deepEqual(run.sideboard, []);
 });
 
 test('Core editor offers only owned cards (owner ruling 2026-10-19)', async () => {

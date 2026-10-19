@@ -94,6 +94,24 @@
         "card": "base.gain-resource",
         "copies": 1
       }
+    ],
+    "herald": [
+      {
+        "card": "base.paid-resource-variant",
+        "copies": 4
+      },
+      {
+        "card": "base.ethereal",
+        "copies": 4
+      },
+      {
+        "card": "core.smash",
+        "copies": 1
+      },
+      {
+        "card": "base.exhaust",
+        "copies": 1
+      }
     ]
   }
 }
