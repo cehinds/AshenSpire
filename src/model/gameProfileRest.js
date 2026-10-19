@@ -9,6 +9,8 @@ import { refillFlaskCharges } from './gracerefill.js';
 import { syncZones } from './state.js';
 import { commitDeckEditDraft } from './deckRules.js';
 
+// True when arriving restored anything, flasks included. Saves from before the flask fields count them as 0.
+export const restHealedAny = healed => !!healed && !!(healed.hp || healed.mana || healed.stamina || healed.flaskHp || healed.flaskMana);
 export const restServicesAll = run => gameContent(run, 'rests')?.servicesPerVisit === 'all';
 // Saves from before `used` existed carry only `service`; that one service counts as used.
 export const restServiceUsed = (visit, service) => !!(visit.used ? visit.used[service] : visit.service === service);
@@ -33,9 +35,10 @@ export function beginGameProfileRest(run, visitId = restContext(run)) {
   const visit = run.gameProfileRestVisits[visitId];
   // Core: arriving at the site heals once, so Continue without a service still rests. Reloads and remounts do not heal again.
   if (restServicesAll(run) && !visit.healed) {
-    const before = { hp: run.hp, mana: run.mana, stamina: run.stamina };
+    const before = { hp: run.hp, mana: run.mana, stamina: run.stamina, flaskHp: run.flaskCharges?.hpCurrent ?? 0, flaskMana: run.flaskCharges?.manaCurrent ?? 0 };
     healFull(run);
-    visit.healed = { hp: run.hp - before.hp, mana: run.mana - before.mana, stamina: run.stamina - before.stamina };
+    visit.healed = { hp: run.hp - before.hp, mana: run.mana - before.mana, stamina: run.stamina - before.stamina,
+      flaskHp: (run.flaskCharges?.hpCurrent ?? 0) - before.flaskHp, flaskMana: (run.flaskCharges?.manaCurrent ?? 0) - before.flaskMana };
     syncZones(run);
   }
   return visit;

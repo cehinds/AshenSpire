@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
-import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
+import { beginGameProfileRest, commitGameProfileRest, restHealedAny } from '../src/model/gameProfileRest.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { smithingPlan } from '../src/model/smithing.js';
@@ -118,4 +118,17 @@ test('the editor follows an explicit nonempty configured basic policy without le
   assert.equal(run.deck.at(-1).equipmentRole, undefined);
   assert.equal(run.equipmentAttackSlotCount, slots);
   session.cancel();
+});
+
+test('arriving with full pools but a spent flask records the flask refill (review finding)', () => {
+  const run = createRunState({ seed: 74, classId: 'reaver', registries, runId: 'rest-flask-heal' });
+  run.mapGraph = buildActMap(registries, createRng(74), run.seatOrder[0], 1);
+  run.mapNodeId = 'n3_0';
+  run.hp = run.maxHp; run.mana = run.maxMana; run.stamina = run.maxStamina;
+  run.flaskCharges.hpCurrent = 0;
+  const visit = beginGameProfileRest(run, '1:n3_0');
+  assert.equal(visit.healed.hp + visit.healed.mana + visit.healed.stamina, 0);
+  assert.ok(visit.healed.flaskHp > 0);
+  assert.equal(restHealedAny(visit.healed), true);
+  assert.equal(restHealedAny({ hp: 0, mana: 0, stamina: 0 }), false, 'older saves count missing flask fields as 0');
 });

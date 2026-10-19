@@ -1,6 +1,6 @@
 import { t } from '../strings.js';
 import { gameModule } from '../../model/gameProfile.js';
-import { restServicesAll, restServiceUsed } from '../../model/gameProfileRest.js';
+import { restHealedAny, restServicesAll, restServiceUsed } from '../../model/gameProfileRest.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { statProjection } from '../../model/statProjection.js';
 import { runHandRules } from '../../model/handRules.js';
@@ -57,7 +57,7 @@ export function mountGameProfileRest(app, { registries, run, meta, hud, visit, o
   };
   const preview = model.services.find(service => service.available)?.preview || run;
   const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') }, [
-    ...(all ? [el('p', { class: 'as-flavor rest-healed', dataset: { restHealed: 'true' }, text: visit.healed && (visit.healed.hp || visit.healed.mana || visit.healed.stamina)
+    ...(all ? [el('p', { class: 'as-flavor rest-healed', dataset: { restHealed: 'true' }, text: restHealedAny(visit.healed)
         ? t('gameProfile.rest.healed', { hp: visit.healed.hp, mp: visit.healed.mana, sp: visit.healed.stamina }) : t('gameProfile.rest.healedFull') })] : []),
     el('p', { class: 'as-flavor', text: all ? (visit.service ? t('gameProfile.rest.completeAll', { service: t(`gameProfile.rest.service.${visit.service}`) }) : t('gameProfile.rest.chooseAll'))
       : visit.service ? t('gameProfile.rest.complete', { service: t(`gameProfile.rest.service.${visit.service}`) }) : t('gameProfile.rest.chooseOne') }),
