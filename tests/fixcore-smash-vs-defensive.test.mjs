@@ -15,6 +15,7 @@ import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMec
 import { validateFixCoreRules, fixCoreSmashVsDefensiveRules } from '../src/model/fixCoreMechanics.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
 import { damageReceiptLines } from '../src/ui/components/damageReceipt.js';
+import { projectCombatIntent } from '../src/ui/models/CombatIntentProjectionModel.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -108,4 +109,22 @@ test('a bonus from zero Block is zero: Smash 12 vs defend with 0 Block = 24', ()
   assert.equal(event.amount, 24);
   assert.equal(500 - target.hp, 24);
   assert.equal(20 - target.persistentPoise.value, 12);
+});
+
+// The soldier's slash re-authored as a Smash (tags decide the maneuver), so the projection sees a Smash move.
+const smashTags = ['camp:physical', 'maneuver:smash', 'damage:bludgeoning', 'source:weapon', 'delivery:melee'];
+const smashEnemies = { get: id => { const row = reg.enemies.get(id); return id === 'wanderingSoldier' ? { ...row, moves: { ...row.moves, slash: { ...row.moves.slash, tags: smashTags } } } : row; }, has: id => reg.enemies.has(id) };
+
+test('intent projection: a multi-hit Smash stops doubling once an earlier hit breaks the defender\'s Poise (hit 1: 2 x 4 = 8, Poise 5 -> 1; hit 2: 8, Poise 1 -> 0 and Staggered; hit 3: 4 x 1.25 Vulnerable = 5; total 21, not 24)', () => {
+  const { combat } = live({ block: 0, poise: 5 });
+  combat.registries = { ...combat.registries, enemies: smashEnemies };
+  Object.assign(combat.enemies[0], { statuses: {}, attributes: { dexterity: 0 }, ratings: { ar: 0, dr: 0, pr: 0, ward: 0, poise: 20 } });
+  Object.assign(combat.player, { hp: 100, maxHp: 100, block: 0, barrier: 0, statuses: {}, persistentPoise: { value: 5, max: 20 }, combatStance: { maneuver: 'defend', camp: 'physical', range: 'melee' } });
+  delete combat.player.combatCounter;
+  const enemy = combat.enemies[0];
+  enemy.intent = { kind: 'attack', moveId: 'slash', damage: 4, hits: 3, combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee', damageType: 'bludgeoning' } };
+  enemy.intentRevealed = true; enemy.proposalIntentRevealedUntil = 99;
+  const shown = projectCombatIntent(combat, enemy.id).projectedDamage;
+  assert.equal(shown.max, 21);
+  assert.ok(shown.max < 24, 'the old projection kept doubling after the break');
 });
