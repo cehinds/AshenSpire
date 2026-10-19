@@ -2,7 +2,7 @@ import { applyStatus } from './statuses.js';
 import { attackHitPreview } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts } from '../model/combatRatings.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
 import { mirroredManeuver } from '../model/stanceRules.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { cardPreparationCategory } from '../model/cardClassification.js';
@@ -96,8 +96,12 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   if (!modern) raw=Math.max(0,Math.floor(raw));
   if(proposal && target) raw=transition('status-rules','Other status modifiers',raw,proposalHitPlan(ctx,source,target,raw,carrier,{roundDamage:!modern}).amount);
   const defense = stanceMitigation(ctx, attacking, defending);
-  const advantageMultiplier = advantage ? stances.advantageMultiplier ?? 1 : 1;
-  let amount=transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
+  // Owner, 2026-10-19: a Smash that beats the target's stance (Defend or Prepared) deals 2x its normal damage in place of the
+  // generic advantage multiplier, plus a share of the target's Block (below), and costs Poise by a share of the total instead of the 25% absorption.
+  const smashRule = modern && advantage && attacking === 'smash' ? fixCoreSmashVsDefensiveRules(fixCoreRules(ctx, target)) : null;
+  const advantageMultiplier = smashRule ? smashRule.damageMultiplier : advantage ? stances.advantageMultiplier ?? 1 : 1;
+  let amount=smashRule ? transition('smash-vs-defensive','Smash vs defensive stance',raw,raw*advantageMultiplier,'stance',advantageMultiplier)
+    : transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
   amount=transition('stance-defense','Defensive stance advantage',amount,amount*defense.multiplier,'stance',defense.multiplier);
   amount=modern ? Math.max(0,Math.floor(amount)) : transition('quantity-rounding','Damage quantity rounding',amount,Math.max(0,Math.floor(amount)),'rounding');
   const evade = stances?.include?.includes('evade') && defending === 'evade';
@@ -111,6 +115,12 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const evaded = roll !== null && roll >= hitChance;
   if (evaded) amount = 0;
   else if (evade && !modern) amount = Math.floor(amount * (stances.evadeFailureMultiplier ?? 2));
+  let smashBlockBonus = 0;
+  if (smashRule && !evaded && target) {
+    // Read from the Block held before this hit's own absorption.
+    smashBlockBonus = Math.floor(smashRule.blockFraction * Math.max(0, target.block || 0));
+    if (smashBlockBonus > 0) { sources.push({id:'smash-block-bonus',label:'Smash vs defensive stance: bonus from target Block',amount:smashBlockBonus,requested:amount,effective:amount+smashBlockBonus,stage:'stance',operation:'add'}); amount += smashBlockBonus; }
+  }
   let blocked = 0, poiseMitigated = 0, wardMitigated = 0;
   const incoming = amount;
   const profile = {...(carrier.combatProfile || {}), ...(Number.isFinite(carrier.magicShare) ? {magicShare:carrier.magicShare} : {})};
@@ -125,9 +135,11 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     transition('barrier','Barrier',magical,magical-barrierMitigated,'mitigation');
     // Ward off: the magic Barrier left meets Poise with the physical residual (matches actions.js).
     const poiseMeetsMagic = fixCoreWardDisabled(ctx);
-    const poise = protectionReceipt(ctx,target,'physical',physical-blocked+(poiseMeetsMagic ? magical-barrierMitigated : 0));
+    const poiseIn = physical-blocked+(poiseMeetsMagic ? magical-barrierMitigated : 0);
+    // Smash vs a defensive stance: no 25% absorption; the pool instead loses a share of the whole hit (capped at what it holds).
+    const poise = smashRule ? {amount:poiseIn,reduced:0,sources:[]} : protectionReceipt(ctx,target,'physical',poiseIn);
     const ward = protectionReceipt(ctx,target,'magical',poiseMeetsMagic ? 0 : magical-barrierMitigated);
-    poiseMitigated=poise.reduced;wardMitigated=ward.reduced;
+    poiseMitigated=smashRule && !evaded ? Math.min(Math.max(0,target?.persistentPoise?.value || 0),Math.floor(smashRule.poiseFraction*incoming)) : poise.reduced;wardMitigated=ward.reduced;
     sources.push(...poise.sources,...ward.sources);
     amount=poise.amount+ward.amount;
   }
@@ -148,6 +160,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     hitChance, uncertain: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) && roll === null,
     hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated,
     blockRemaining: Math.max(0, (target?.block || 0) - blocked), evaded, advantage,
+    ...(smashRule ? { smashVsDefensive: { blockBonus: smashBlockBonus, poiseDamage: poiseMitigated } } : {}),
     defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,
     attackStance: attacking, defenseStance: defending,
     interrupted: advantage && stances?.staggerOnAdvantage === true
