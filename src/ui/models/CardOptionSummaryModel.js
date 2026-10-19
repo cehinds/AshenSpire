@@ -10,7 +10,7 @@
 // co-op) and hands them in through `readers`.
 
 import { cardSummaryContext, combatCardSummary } from '../../model/playingCard.js';
-import { cardFaceLines } from '../../model/cardFaceText.js';
+import { cardFaceLines, withChargedEffects } from '../../model/cardFaceText.js';
 import { isSpellCard } from '../../model/combatCardProfile.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
 import { t } from '../strings.js';
@@ -182,6 +182,8 @@ export function summarizeCardOption(registries, combat, option, readers = {}) {
   // The preview resolved the card (its live effect variant, charges); summarize that definition so the
   // effect indexes and numbers agree with it.
   if (preview?.resolvedDefinition) def = preview.resolvedDefinition;
+  // An active charge expands the effect list the preview's values follow; the card face reads the same list.
+  if (def) def = withChargedEffects(def, preview);
   // `readers.conditionHolds(effect, option, combat)` answers true or false for the card owner right now; a throw
   // or any other answer means "unknown".
   const holds = readers.conditionHolds ? effect => { try { return readers.conditionHolds(effect, option, combat); } catch { return undefined; } } : null;

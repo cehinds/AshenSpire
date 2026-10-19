@@ -163,3 +163,14 @@ test('a tile summarizes the definition the preview resolved, so the live effect 
   const { base } = variantCard('Plain', 6);
   assert.deepEqual(summarizeCardOption(null, null, { id: 'v', name: 'Plain' }, { defOf: () => base, previewOf: () => null }).line, []);
 });
+test('a charged buildup inserted before a Block keeps the Block figure aligned and shows the status', () => {
+  const card = { id: 'testCharged', name: 'Frost Guard', type: 'skill', effects: [{ op: 'block', target: 'self', amount: 5 }] };
+  const charged = [{ op: 'buildup', target: 'enemy', status: 'frost', amount: 2 }, card.effects[0]];
+  const preview = { resolvedDefinition: card, chargedEffects: charged, values: [{ op: 'buildup', value: 2 }, { op: 'block', value: 7 }] };
+  const summary = summarizeCardOption(null, null, { id: 'c', name: 'Frost Guard' }, { defOf: () => card, previewOf: () => preview });
+  assert.match(summary.html, /7/, 'the Block reads the live 7, not the buildup value');
+  assert.match(summary.html, /frost/i, 'the charged status appears');
+  // The numeric reader aligns on the same list: Block alone, with the extra row skipped.
+  const rows = cardEffectLine({ ...card, effects: [card.effects[0]] }, { values: [{ op: 'block', value: 7 }] }, null);
+  assert.deepEqual(rows.map(row => row.value), [7]);
+});
