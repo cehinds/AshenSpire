@@ -146,6 +146,8 @@ import { formationGridHtml } from '../components/formationGrid.js';
 import { formationMovePlan, normalizeClassicPlayerFormationCell } from '../../model/formationMovement.js';
 import { discardChoicePlan } from '../../engine/handRules.js';
 import { openHandDiscard } from '../components/handDiscard.js';
+import { evalPredicate } from '../../engine/triggers.js';
+import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 import { resolveCombatCard } from '../../engine/combatExpansion.js';
 import { resolvePlayedCombatCard } from '../models/PlayedCombatCard.js';
 import { upcastOptions } from '../../model/upcasting.js';
@@ -2939,7 +2941,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!pending || reactionShell || busy || hasCardChoice(combat)) return;
     const stack = committedReactionStack(combat.reactionStack, pending.groupKey)
       .map(entry => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
-    reactionShell = openReactionChoiceModal({ pending, stack,
+    // Each tile reads the card's live numbers against the incoming attacker, as its hand face would.
+    const handCard = option => combat.piles.hand.find(card => card.instanceId === option.play.cardInstanceId);
+    const summarize = option => summarizeCardOption(registries, combat, option, {
+      defOf: o => { const inst = handCard(o); return inst ? resolveCombatCard(combat, inst, { upcastTier: o.play.upcastTier }) : null; },
+      previewOf: o => previewCard(combat, o.play.cardInstanceId, o.play.targetId ?? o.sourceId ?? pending.sourceId, o.play.upcastTier),
+      // The engine's own predicate evaluator, for the card owner against the fight as it stands now.
+      conditionHolds: (effect, o) => evalPredicate(combat, effect.if, { owner: combat.player, source: combat.player, meta: {},
+        target: combat.enemies.find(enemy => enemy.id === (o.play.targetId ?? o.sourceId ?? pending.sourceId)) }),
+    });
+    reactionShell = openReactionChoiceModal({ pending, stack, summarize,
       onClosed: () => { reactionShell = null; },
       onAnswer: intent => answerReaction(intent, true),
     });
@@ -2965,6 +2976,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     discardShell = openDiscardChoiceModal({
       ...(combat.pendingCardChoice ? {title: t('combat.cards.choose.title', {count:pending.count}), prompt:t('combat.cards.choose.prompt',{from:pending.effect.from,to:pending.effect.to}), confirmLabel:t('combat.cards.choose.confirm'), ordered:pending.effect.from===pending.effect.to} : {}),
       count: pending.count, cardName: registries.cards.get(pending.cardId).name,
+      summarize: card => {
+        const inst = Object.values(combat.piles).flat().find(c => c?.instanceId === card.instanceId);
+        return summarizeCardOption(registries, combat, { id: card.instanceId, name: card.name }, {
+          defOf: () => inst ? resolveCombatCard(combat, inst) : null,
+          previewOf: () => previewCard(combat, card.instanceId),
+        });
+      },
       cards: (combat.pendingCardChoice ? zoneCandidates(combat,pending.effect) : discardCandidates(combat)).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
       onClosed: () => { discardShell = null; },
       onChoose: cardInstanceIds => {

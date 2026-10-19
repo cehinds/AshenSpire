@@ -960,7 +960,11 @@
     },
     "reward-ranks": {
       "version": "1.0.0",
-      "settings": {}
+      "settings": {
+        "stanceCoverage": {
+          "enabled": false
+        }
+      }
     }
   },
   "packs": [

@@ -8,5 +8,16 @@
     "uncommon": 2,
     "rare": 3
   },
-  "skipOwnedBasics": true
+  "skipOwnedBasics": true,
+  "stanceCoverage": {
+    "enabled": true,
+    "reservedSlots": 1,
+    "preferTiers": [
+      "basic",
+      "cantrip"
+    ],
+    "excludePools": [
+      "special"
+    ]
+  }
 }
