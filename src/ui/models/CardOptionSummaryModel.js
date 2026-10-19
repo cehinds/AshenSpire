@@ -21,7 +21,7 @@ const direction = (value, base) => (Number.isFinite(value) && Number.isFinite(ba
 /** The effect line of a resolved card: `[{ label, value, base, dir }]`, empty when nothing is phrased. */
 export function cardEffectLine(def, preview = null, registries = null) {
   if (!def) return freeze([]);
-  const { value, defenseValue, bindings, tokens, profile } = cardSummaryContext(def, preview, registries);
+  const { value, defenseValue, bindings, tokens, profile, poiseMerge } = cardSummaryContext(def, preview, registries);
   const live = Boolean(preview);
   const counter = profile?.maneuver === 'counter';
   const baseOf = (effect, index) => {
@@ -60,8 +60,19 @@ export function cardEffectLine(def, preview = null, registries = null) {
       }
       case 'gainWard': add('ward', effect, { labelId: 'cardOption.label.ward', amount, base }); break;
       case 'poiseDamage': case 'wardDamage': {
-        const ward = effect.op === 'wardDamage', key = counter ? (ward ? 'returnWard' : 'returnPoise') : ward ? null : 'poise';
-        if (key) add(key, effect, { labelId: `cardOption.label.${key}`, amount, base });
+        const ward = effect.op === 'wardDamage', merged = poiseMerge?.get(index);
+        if (merged) {
+          // Core with Ward off: a Ward hit drains Poise, so the group's leader reads one combined Poise figure.
+          if (!merged.leader) break;
+          const figures = merged.indices.map(i => [value(def.effects[i], i), baseOf(def.effects[i], i)]);
+          if (figures.some(([live]) => typeof live !== 'number')) break;
+          const key = counter ? 'returnPoise' : 'poise';
+          add(key, effect, { labelId: `cardOption.label.${key}`, amount: figures.reduce((sum, [live]) => sum + live, 0),
+            base: figures.every(([, authored]) => typeof authored === 'number') ? figures.reduce((sum, [, authored]) => sum + authored, 0) : undefined });
+          break;
+        }
+        const key = counter ? (ward ? 'returnWard' : 'returnPoise') : ward ? 'wardDamage' : 'poise';
+        add(key, effect, { labelId: `cardOption.label.${key}`, amount, base });
         break;
       }
       case 'gainPoise': add('poise', effect, { labelId: 'cardOption.label.poise', amount, base }); break;
@@ -75,9 +86,17 @@ export function cardEffectLine(def, preview = null, registries = null) {
     const authored = def.counterPayload?.[field];
     if (found.has(key) || typeof authored !== 'number' || authored <= 0) continue;
     const liveValue = preview?.values?.find(row => row.op === op)?.value;
+    const amountOf = typeof liveValue === 'number' ? liveValue : authored;
+    if (poiseMerge && field === 'ward') {
+      // Ward off: the payload's Ward drains Poise, so it joins the Poise return.
+      const poise = found.get('returnPoise');
+      if (poise) found.set('returnPoise', { ...poise, amount: poise.amount + amountOf, base: (poise.base ?? poise.amount) + authored });
+      else found.set('returnPoise', { labelId: 'cardOption.label.returnPoise', amount: amountOf, base: authored });
+      continue;
+    }
     found.set(key, { labelId: `cardOption.label.${key}`, amount: typeof liveValue === 'number' ? liveValue : authored, base: authored });
   }
-  const order = ['def', 'barrier', 'ward', 'dmg', 'return', 'returnPoise', 'returnWard', 'poise', 'heal'];
+  const order = ['def', 'barrier', 'ward', 'dmg', 'return', 'returnPoise', 'returnWard', 'poise', 'wardDamage', 'heal'];
   return freeze(order.filter(key => found.has(key)).map(key => {
     const row = found.get(key), ref = row.ref || row;
     // A split defense shows its own share but moves with the whole gain it came from.

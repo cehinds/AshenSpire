@@ -9,6 +9,7 @@
 // between them, Enter and Space pick.
 
 import { el, optionGrid } from '../kit/index.js';
+import { t } from '../strings.js';
 
 const ARROWS = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
 
@@ -21,6 +22,11 @@ function effectLine(summary) {
     const item = el('span', { class: 'co-part', 'data-dir': part.dir || 'none' });
     if (part.before) item.append(el('span', { text: part.before }));
     item.append(el('span', { class: `val${part.dir ? ` ${part.dir}` : ''}`, text: String(part.value) }));
+    // Direction is not colour alone: a visible arrow, and the words for a screen reader.
+    if (part.dir) {
+      item.append(el('span', { class: 'co-arrow', 'aria-hidden': 'true', text: part.dir === 'up' ? '\u25b2' : '\u25bc' }));
+      item.append(el('span', { class: 'co-sr', text: ` ${t(`cardOption.dir.${part.dir}`)}` }));
+    }
     if (part.after) item.append(el('span', { text: part.after }));
     node.append(item);
   });

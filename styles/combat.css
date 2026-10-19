@@ -2075,3 +2075,7 @@ body.reduce-motion .target-hud-detail { transition: none; }
 .card-option[aria-pressed='true'] { outline: var(--focus-ring); }
 .card-option:disabled { opacity: 0.55; }
 .card-option .co-effect-text { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.card-option .co-arrow { font-size: 0.6em; margin-left: 0.15em; vertical-align: 0.15em; }
+.card-option .co-part[data-dir='up'] .co-arrow { color: var(--green); }
+.card-option .co-part[data-dir='down'] .co-arrow { color: var(--ember); }
+.card-option .co-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

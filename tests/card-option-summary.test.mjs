@@ -74,3 +74,17 @@ test('solo round reactions preview against the pending offer attacker', () => {
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   assert.match(source, /o\.play\.targetId \?\? o\.sourceId \?\? pending\.sourceId/);
 });
+import { createRegistries } from '../src/model/registries.js';
+import { contentBundle } from '../src/content/index.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+test('a non-counter Ward damage effect is shown, and reads as Poise when Ward is off', () => {
+  const ward = { id: 'testWardHit', name: 'Sunder', type: 'attack', tags: ['maneuver:attack', 'camp:physical'],
+    effects: [{ op: 'wardDamage', target: 'enemy', amount: 8 }] };
+  const live = { values: [{ op: 'wardDamage', value: 10 }] };
+  assert.deepEqual(cardEffectLine(ward, live, null).map(row => `${row.before}${row.value}${row.after}:${row.dir}`), ['Ward dmg 10:up']);
+  // Core 2 with Ward off: the card text projection folds Ward into Poise, and so does the tile.
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const merged = { ...ward, effects: [{ op: 'poiseDamage', target: 'enemy', amount: 3 }, { op: 'wardDamage', target: 'enemy', amount: 8 }] };
+  assert.deepEqual(cardEffectLine(merged, null, core).map(row => `${row.before}${row.value}${row.after}`), ['Poise 11']);
+});

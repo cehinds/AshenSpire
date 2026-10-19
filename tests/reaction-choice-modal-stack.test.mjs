@@ -268,7 +268,9 @@ test('options render as uniform tiles with the card name, effect line and direct
     const tile = opened.shell.body.querySelector('[data-reaction-option="opt-a"]');
     assert.ok(tile.classes.has('card-option'));
     assert.equal(tile.querySelector('.co-name').textContent, 'Counter');
-    assert.equal(tile.querySelector('.co-effect').textContent, 'Def 9 · Return 2 · Dmg 5');
+    assert.equal(tile.querySelector('.co-effect').textContent, 'Def 9\u25b2 raised · Return 2\u25bc lowered · Dmg 5', 'changed numbers carry an arrow and words, not colour alone');
+    assert.deepEqual(tile.querySelectorAll('.co-arrow').map(node => node.textContent), ['\u25b2', '\u25bc']);
+    assert.deepEqual(tile.querySelectorAll('.co-sr').map(node => node.textContent.trim()), ['raised', 'lowered']);
     assert.deepEqual(tile.querySelectorAll('.val.up').map(node => node.textContent), ['9'], 'a raised number is green');
     assert.deepEqual(tile.querySelectorAll('.val.down').map(node => node.textContent), ['2'], 'a lowered number is red');
     assert.equal(tile.querySelectorAll('.co-part').map(node => node.getAttribute('data-dir')).join(), 'up,down,none');
