@@ -875,6 +875,8 @@ export const SCHEMAS = Object.freeze({
     // (before the hand is discarded) — e.g. Guilt's HP loss (SPEC §5.2).
     onTurnEndInHand: opt(effects),
     textTemplate: str,
+    // Core 2 with Ward off: the rules text when this card's Ward damage reads as Poise damage; {poiseDamage} is all of its Poise (model/wardOffCardText.js).
+    wardOffTextTemplate: opt(str),
     upgrade: opt(
       obj({
         name: opt(str),

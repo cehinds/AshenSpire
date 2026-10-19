@@ -57,3 +57,16 @@ test('Core: the plain summary reads Poise too', () => {
   assert.match(combatCardSummary(MULTI, null, core), /Deal 6 Poise/);
   assert.doesNotMatch(combatCardSummary(MULTI, null, core), /Ward/);
 });
+
+// The shipped base cards read through their rules template, not the face lines.
+test('Core: Ward Break and Multiple Strikes read Poise damage; Current keeps the authored Ward text', async () => {
+  const { cardPlainText } = await import('../src/ui/components/card.js');
+  const text = (registries, id) => cardPlainText(registries, { cardId: id });
+  assert.equal(text(core, 'base.break-ward'), 'Deal 8 Poise damage.');
+  assert.equal(text(current, 'base.break-ward'), 'Deal 8 Ward damage.');
+  assert.equal(text(core, 'base.multi-hit'), 'Strike 3 times for 4 damage. Deal 6 Poise damage total.');
+  assert.match(text(current, 'base.multi-hit'), /Ward and 3 Poise damage total/);
+  // A live preview moves the combined figure (Ward 5 + Poise 3).
+  const preview = { combatExpansionVersion: 2, values: [{ op: 'damage', value: 4, hits: 3 }, { op: 'wardDamage', value: 5 }, { op: 'poiseDamage', value: 3 }], tokens: { damage: 4, hits: 3, poiseDamage: 3 } };
+  assert.match(cardPlainText(core, { cardId: 'base.multi-hit' }, { preview }), /Deal 8 Poise damage total/);
+});
