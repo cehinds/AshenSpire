@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
-import { beginGameProfileRest, commitGameProfileRest, restHealedAny, restCompletionKey } from '../src/model/gameProfileRest.js';
+import { beginGameProfileRest, commitGameProfileRest, restHealedAny, restCompletionKey, restIntroKey } from '../src/model/gameProfileRest.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { smithingPlan } from '../src/model/smithing.js';
@@ -140,4 +140,13 @@ test('the rest completion copy follows what is actually still open (review findi
   assert.equal(restCompletionKey(rows(false, true), used(['smith'])), 'completeAll');
   assert.equal(restCompletionKey(rows(false, false), used(['smith'])), 'completeDoneAll', 'no earned point left');
   assert.equal(restCompletionKey(rows(false, false), used(['smith', 'levelUp'])), 'completeDoneAll');
+});
+
+test('the all-services intro names Smith and Level Up only when those are exactly the services', () => {
+  const ids = (...list) => list.map(id => ({ id }));
+  assert.equal(restIntroKey(ids('smith', 'levelUp')), 'chooseAll');
+  assert.equal(restIntroKey(ids('levelUp', 'smith')), 'chooseAll');
+  assert.equal(restIntroKey(ids('strategize')), 'chooseAllAny');
+  assert.equal(restIntroKey(ids('strategize', 'smith', 'levelUp')), 'chooseAllAny');
+  assert.equal(restIntroKey(ids('smith')), 'chooseAllAny');
 });

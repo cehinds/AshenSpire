@@ -16,6 +16,11 @@ export function restCompletionKey(services, usedOf) {
   if (!services.some(service => usedOf(service.id))) return 'chooseAll';
   return services.some(service => !usedOf(service.id) && service.available) ? 'completeAll' : 'completeDoneAll';
 }
+/** The intro that names Smith and Level Up is only true when those are exactly the services on offer (order-insensitive). */
+export function restIntroKey(services) {
+  const ids = new Set(services.map(service => service.id));
+  return ids.size === 2 && ids.has('smith') && ids.has('levelUp') ? 'chooseAll' : 'chooseAllAny';
+}
 export const restServicesAll = run => gameContent(run, 'rests')?.servicesPerVisit === 'all';
 // Saves from before `used` existed carry only `service`; that one service counts as used.
 export const restServiceUsed = (visit, service) => !!(visit.used ? visit.used[service] : visit.service === service);
