@@ -1651,9 +1651,12 @@ function runOpcode(ctx, action, eff) {
         if (splitSmashPressure(ctx, action, t, row)) continue;
         // Ward off (ward.enabled:false): Ward damage drains Poise instead, with the multipliers the Ward path applies.
         if (fixCoreWardDisabled(ctx) && t.persistentPoise) {
-          drainFixCorePoise(ctx, action.source, t, evalNum(ctx, action, eff.amount, 0, t)
+          const drained = drainFixCorePoise(ctx, action.source, t, evalNum(ctx, action, eff.amount, 0, t)
             * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1)
             * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1));
+          // Same bookkeeping as the Ward path, recorded as the Poise pressure it now is.
+          trackOwnPressure(ctx, action, t, 'poiseDealt', drained);
+          creditKnowledgeImpact(ctx, t, drained);
           continue;
         }
         const spent = Control.spendPersistentWard(ctx, t,
