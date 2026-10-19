@@ -1,6 +1,6 @@
 import { applyStatus } from './statuses.js';
 import { attackHitPreview } from './stanceHit.js';
-import { sourceRatingValue, magicShareOf, splitContactParts } from '../model/combatRatings.js';
+import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack } from '../model/combatRatings.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
 import { mirroredManeuver } from '../model/stanceRules.js';
@@ -77,18 +77,22 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     if (before !== after) sources.push({id,label,amount:whole(after)-whole(before),requested:whole(before),effective:whole(after),stage,operation:multiplier === undefined ? 'add' : 'multiply',...(multiplier === undefined ? {} : {multiplier})});
     return after;
   };
-  const ar = modern ? sourceRatingValue(ctx, source, 'ar', carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
+  const profile = {...(carrier.combatProfile || {}), ...(Number.isFinite(carrier.magicShare) ? {magicShare:carrier.magicShare} : {})};
+  const share = magicShareOf(profile,ctx.ratingsRules);
+  // Owner, 2026-10-19: spell effectiveness uses PR; a spell (camp spell or magic school, whatever its Barrier split) reads PR where a physical attack reads AR.
+  const ratingId = modern && (profile.camp === 'spell' || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar', ratingLabel = ratingId.toUpperCase();
+  const ar = modern ? sourceRatingValue(ctx, source, ratingId, carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
   const ratingBonus = modern && carrier.skipRatingBonus ? 0 : ar * (effects?.attackRatingWeight || 0);
   let raw = base;
   const applicable = (source?.ratingSources || []).filter(row => row.kind !== 'equipment' || !carrier.sourceArmamentId && !carrier.equipmentScoped
     || row.slot === 'armor' || row.sourceId?.startsWith('armor/') || row.sourceId === carrier.sourceArmamentId || row.sourceId === `armament/${carrier.sourceArmamentId}`);
-  const sourceAR = applicable.reduce((sum,row)=>sum+(row.ar || 0),0);
+  const sourceAR = applicable.reduce((sum,row)=>sum+(row[ratingId] || 0),0);
   if (modern && sourceAR > 0 && ratingBonus > 0) {
     for (const [index,row] of applicable.entries()) {
-      const contribution = (row.ar || 0) * (effects?.attackRatingWeight || 0);
-      raw = transition(`ar:${row.sourceId || index}`,`${row.name || row.kind}: AR`,raw,raw+contribution);
+      const contribution = (row[ratingId] || 0) * (effects?.attackRatingWeight || 0);
+      raw = transition(`${ratingId}:${row.sourceId || index}`,`${row.name || row.kind}: ${ratingLabel}`,raw,raw+contribution);
     }
-    raw = transition('ar:adjustments','AR stance/status modifiers (including Weak)',raw,base+ratingBonus);
+    raw = transition('ar:adjustments',`${ratingLabel} stance/status modifiers (including Weak)`,raw,base+ratingBonus);
   } else raw = transition('ar','Attack rating',raw,raw+ratingBonus);
   const stanceMultiplier = stanceEffectiveness(ctx,source,carrier);
   raw = transition('matching-stance','Matching stance effectiveness',raw,raw*stanceMultiplier,'offense',stanceMultiplier);
@@ -113,8 +117,6 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   else if (evade && !modern) amount = Math.floor(amount * (stances.evadeFailureMultiplier ?? 2));
   let blocked = 0, poiseMitigated = 0, wardMitigated = 0;
   const incoming = amount;
-  const profile = {...(carrier.combatProfile || {}), ...(Number.isFinite(carrier.magicShare) ? {magicShare:carrier.magicShare} : {})};
-  const share = magicShareOf(profile,ctx.ratingsRules);
   const parts = splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
   let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
   let barrierMitigated = 0;
