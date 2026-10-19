@@ -14,7 +14,7 @@ const registries = createRegistries({ ...contentBundle,
 const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
 const start = screen.indexOf('  function snapEnt('), end = screen.indexOf('  function takeSnapshot(', start);
 assert.ok(start > 0 && end > start);
-const displayedCall = screen.match(/evasion: (combat\.combatExpansionVersion[^\n]*?) \},/)[1];
+const displayedCall = screen.match(/evasion: (combat\.combatExpansionVersion[^\n]*?)(?:, precision: [^\n]*?)? \},/)[1];
 
 test('paced HUD displays beat-local Evasion stacks, independent of canonical armour, attributes and enemy AC', () => {
   const slots = registries.equipment.slots;

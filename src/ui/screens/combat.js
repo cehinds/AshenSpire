@@ -1653,10 +1653,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     markUiComponent(row, UI.statusEffectTray, entity.kind);
     const armed = () => !inspection && !!(selected || selectedFlask != null || selfArm);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
-    // Evasion stacks have one home: the dedicated defense badge. Prepared
+    // Evasion and Precision stacks have one home: the dedicated defense badge. Prepared
     // reaction charges remain available in the actor's inspection details.
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
-      if (combat.combatExpansionVersion === 2 && sid === 'evade') continue;
+      if (combat.combatExpansionVersion === 2 && (sid === 'evade' || sid === 'precision')) continue;
       const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid, entity));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
@@ -1811,7 +1811,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (bar.id === 'hp') {
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const next = el.nextSibling;
-        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null }, { tooltips, blockHelp: helpText('block'),
+        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null }, { tooltips, blockHelp: helpText('block'),
           // The holder's own numbers (its gear Evasion), not the player's.
           evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
           poiseHelp: fixCoreProtectionDescription(combat, v, 'poise') || tFull('combat.protection.poise'),
