@@ -159,3 +159,11 @@ test('preview equals live when an earlier hit breaks Poise (stance replaced, one
   for (let i = 0; i < 2; i++) { const before = b.target.hp; primeAccuracyRolls(b.combat); applyAttackDamage(b.combat, b.combat.player, b.target, 10, [], smash); live2.push(before - b.target.hp); }
   assert.deepEqual(preview, live2);
 });
+
+test('the Poise description follows the depletion rule', () => {
+  const { combat, target } = live();
+  assert.match(fixCoreProtectionDescription(combat, target, 'poise'), /costs Poise 20% of its damage/);
+  assert.doesNotMatch(fixCoreProtectionDescription(combat, target, 'poise'), /prevented damage spends/);
+  combat.fixCoreRules = { ...structuredClone(combat.fixCoreRules || combat.gameProfile.fixCoreRules), poise: { damageRatio: 0.2, depletes: false } };
+  assert.match(fixCoreProtectionDescription(combat, target, 'poise'), /prevented damage spends/);
+});
