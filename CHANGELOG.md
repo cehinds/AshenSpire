@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Bigger intent damage and hit chance, unread follow-ups shown as ?** ([#2154](https://github.com/cehinds/AshenSpire/pull/2154), `0.7.1.1649`). Enemy intent damage now sits left of the stance icon at twice the size, hit chances are centered on each enemy in large outlined white text, and an enemy that has acted and can still act shows each remaining move by its own read: its icon if you read it, otherwise ?.
+- **Bigger intent damage and hit chance, unread follow-ups shown as ?** ([#2154](https://github.com/cehinds/AshenSpire/pull/2154), `0.7.1.1651`). Enemy intent damage now sits left of the stance icon at twice the size, hit chances are centered on each enemy in large outlined white text, and an enemy that has acted and can still act shows each remaining move by its own read: its icon if you read it, otherwise ?.
+- **Ward switched off in Core 2** ([#2150](https://github.com/cehinds/AshenSpire/pull/2150), `0.7.1.1651`). Ward is switched off in Core 2 for now and can be turned back on in the game data. Block cards now restore only Poise.
 - **Map fog reveals a clean circle** ([#2155](https://github.com/cehinds/AshenSpire/pull/2155), `0.7.1.1649`). The fog on the map now fades out in a clean circle around your location instead of being cut off in a straight line on one side.
 - **Combat numbers are always whole** ([#2152](https://github.com/cehinds/AshenSpire/pull/2152), `0.7.1.1647`). Combat numbers are now always whole, with no decimals in damage, Block, Poise, hit chances, Accuracy, Evasion or the damage breakdown.
 - **Auto-combat answers your reactions only** ([#2147](https://github.com/cehinds/AshenSpire/pull/2147), `0.7.1.1645`). Auto-combat now only answers your reaction prompts, countering the attack you can read or matching your last stance. It never plays your turn.
