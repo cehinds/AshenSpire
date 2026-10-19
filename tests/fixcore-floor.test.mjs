@@ -143,3 +143,13 @@ test('the card-face stance context carries the game profile, so Core 2 faces flo
   assert.equal(fixCoreEnabled(faceCtx), true);
   assert.equal(stanceEntryBonuses({ combatProfile: { camp: 'spell', maneuver: 'defend', school: 'frost', range: 'ranged' } }, faceCtx).block, 1);
 });
+
+test('logged Accuracy and Evasion are whole numbers under a stance factor', () => {
+  const f = fight({ amount: 5 });
+  const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
+  for (let dexterity = 0; dexterity <= 6; dexterity++) {
+    const target = { ...f.enemy, statuses: {}, attributes: { dexterity }, stanceAdvantageRating: 1.25, combatStance: { maneuver: 'defend', camp: 'physical', range: 'melee' } };
+    const hit = attackHitPreview(f.combat, f.combat.player, target, carrier);
+    assert.ok(Number.isInteger(hit.evasion) && Number.isInteger(hit.accuracy) && Number.isInteger(hit.need), JSON.stringify({ e: hit.evasion, a: hit.accuracy }));
+  }
+});
