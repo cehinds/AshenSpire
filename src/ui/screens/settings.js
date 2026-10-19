@@ -367,7 +367,7 @@ const ROWS = [
   { cat: 'Combat', key: 'combatSpeed', type: 'number', def: AUTOMATION_DEFAULTS.combatSpeed,
     min: AUTOMATION_DEFAULTS.speedMinimum, max: AUTOMATION_DEFAULTS.speedMaximum, step: 0.25, label: t('settings.row.combatSpeed'),
     note: tFull('settings.row.combatSpeed') },
-  { cat: 'Combat', key: 'combatPreference', type: 'choice', def: AUTOMATION_DEFAULTS.combatPreference,
+  { cat: 'Combat', key: 'combatPreference', retired: true, type: 'choice', def: AUTOMATION_DEFAULTS.combatPreference,
     choices: ['offense', 'defense'], label: t('settings.row.combatPreference'), note: tFull('settings.row.combatPreference') },
   { cat: 'Combat', key: 'combatActionDelay', type: 'number', def: ACTION_PACING.intentDelayMs,
     min: 0, max: AUTOMATION_DEFAULTS.delayMaximumMs, step: 50, label: t('settings.row.combatActionDelay'),
@@ -645,9 +645,10 @@ const ROWS = [
   { cat: 'Accessibility', key: 'touchFlickDistance', type: 'number', def: UI_DEFAULTS.touchFlick.distance.def,
     min: UI_DEFAULTS.touchFlick.distance.min, max: UI_DEFAULTS.touchFlick.distance.max, slider: true, practice: true, label: t('settings.row.touchFlickDistance'),
     note: tFull('settings.row.touchFlickDistance') },
-  // Owner, 2026-10-18: a tap on a playable card plays it when its target is
-  // unambiguous. On by default; off restores select-then-double-tap.
-  { cat: 'Accessibility', key: 'oneTapPlay', def: true, label: t('settings.row.oneTapPlay'),
+  // Owner, 2026-10-18 14:15: "make sure I don't auto play a card when I click on it once"; 14:32: "keep the switch but make it default to not be 1 tap".
+  // Off by default. On is an opt-in: a tap on a card with an unambiguous target
+  // plays it. Off is select, then the next tap on the selected card.
+  { cat: 'Accessibility', key: 'oneTapPlay', def: false, label: t('settings.row.oneTapPlay'),
     note: tFull('settings.row.oneTapPlay') },
   { cat: 'Accessibility', key: 'reducedMotion', def: false, label: t('settings.row.reducedMotion'),
     note: tFull('settings.row.reducedMotion') },
