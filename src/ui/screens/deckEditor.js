@@ -91,6 +91,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let selected = null;
   // The card a reward just handed over starts selected (once), so the player sees it first.
   let focusKeyOnce = focusCard ? `card:${deckVariantKey(focusCard)}` : null;
+  if (focusKeyOnce) focusKey = `tile:${focusKeyOnce}`; // focus follows, or the first tile's focus would steal the selection
   let inspected = null;
   let query = '';
   let mobileView = 'collection';
@@ -1169,7 +1170,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   draw();
-  const first = panel.querySelector('[data-pane="collection"] .deck-editor-main');
+  const first = (focusKey && panel.querySelector(`[data-focus-key="${cssEscape(focusKey)}"]`)) || panel.querySelector('[data-pane="collection"] .deck-editor-main');
   if (first) focusNode(first);
 
   liveEditor = { root, dispatch, close: () => { if (!session.closed) session.cancel(); close(); }, session };
