@@ -1172,9 +1172,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           });
           break;
         }
+        case 'enemyBurdenBlocked':
         case 'enemyMoveUnavailable': {
-          const actor = disp.ents[e.sourceId];
-          if (actor) actor.followUps = followMemo.setRow(e.sourceId, advanceFollowUps(disp.followPlans?.[e.sourceId], combat.followTrace?.[e.sourceId]));
+          const actorId = e.sourceId ?? e.targetId, actor = disp.ents[actorId];
+          if (actor) actor.followUps = followMemo.setRow(actorId, advanceFollowUps(disp.followPlans?.[actorId], combat.followTrace?.[actorId]));
           break;
         }
         case 'enemyStaggered': {

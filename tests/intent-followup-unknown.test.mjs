@@ -187,15 +187,35 @@ test('the row stays visible while a player reaction is pending, and the resumed 
   assert.notEqual(memo.plan(e.id, { resuming: false, build: () => followUpPlan({ queue: e.plannedMoves, def }) }), first);
 });
 
-test('a reload during a reaction window: the rebuilt plan treats the next event as a follow-up and shows only "?"', () => {
-  const def = registries.enemies.get('wanderingSoldier');
-  const memo = createFollowMemo(); // a fresh screen: nothing kept
-  const plan = memo.plan('e1', { resuming: true, build: () => followUpPlan({ queue: [{ moveId: 'slash' }, { moveId: 'guard' }], def }) });
-  assert.equal(plan.headDone, true, 'the head has already played');
-  // No trace after a reload (it is not saved): the remaining planned moves are "?", never icons from the definition.
-  const row = advanceFollowUps(plan, undefined);
-  assert.deepEqual(row.map((s) => s.kind), ['unknown'], 'the first event consumed one follow-up slot');
-  assert.doesNotMatch(JSON.stringify(row), /attack|defend|slash|guard/);
-  // A new turn builds a head-first plan again.
-  assert.equal(memo.plan('e2', { resuming: false, build: () => followUpPlan({ queue: [{ moveId: 'slash' }], def }) }).headDone, false);
+test('a reload during a reaction window: the follow-up stays "?" until its own enemyMoveStarted', () => {
+  // Core 2, seed 511, maxStamina 3: the window opens on the move BEFORE its enemyMoveStarted, with one move planned.
+  const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+  const regs = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const run = createRunState({ registries: regs, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const c = createRunCombat({ registries: regs, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const e = c.enemies[0];
+  e.maxStamina = 3;
+  dispatch(c, { type: 'endTurn' });
+  assert.ok(c.pendingReaction && !c.eventLog.some((ev) => ev.type === 'enemyMoveStarted'), 'the window opened before any move started');
+  const left = e.plannedMoves.length;
+  assert.equal(left, 1, 'one planned move is left');
+  // A reload: a fresh screen, nothing kept, the plan rebuilt from the saved queue. No trace was saved.
+  const memo = createFollowMemo();
+  const plan = memo.plan(e.id, { resuming: true, build: () => followUpPlan({ queue: e.plannedMoves, def: regs.enemies.get('wanderingSoldier') }) });
+  while (c.pendingReaction) dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: null });
+  const started = c.eventLog.filter((ev) => ev.type === 'enemyMoveStarted' && !ev.reaction);
+  assert.equal(started.length, 2, 'the paused move starts after the resume, then the follow-up');
+  const rows = started.map(() => advanceFollowUps(plan, undefined).map((s) => s.kind));
+  assert.deepEqual(rows, [['unknown'], []], 'the follow-up stays "?" until its own event; the paused move owns no slot');
+});
+
+test('a burden-blocked head sends no enemyMoveStarted: its enemyBurdenBlocked keeps the row aligned', () => {
+  const plan = followUpPlan({ queue: [{ moveId: 'slash' }, { moveId: 'guard' }], def: registries.enemies.get('wanderingSoldier') });
+  const trace = [{ read: false, outcome: 'played' }, { read: false, outcome: 'played' }];
+  // Events in play order: head blocked, follow-up 1 started, follow-up 2 started.
+  assert.deepEqual([advanceFollowUps(plan, trace), advanceFollowUps(plan, trace), advanceFollowUps(plan, trace)].map((row) => row.length), [2, 1, 0]);
+  // A blocked follow-up is one event too (enemyBurdenBlocked), so it consumes its own slot.
+  const next = followUpPlan({ queue: [{ moveId: 'slash' }, { moveId: 'guard' }], def: registries.enemies.get('wanderingSoldier') });
+  const out = [advanceFollowUps(next, trace), advanceFollowUps(next, [{ read: false, outcome: 'blocked' }, trace[1]]), advanceFollowUps(next, trace)];
+  assert.deepEqual(out.map((row) => row.length), [2, 1, 0]);
 });

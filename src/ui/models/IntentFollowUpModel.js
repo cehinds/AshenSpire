@@ -43,16 +43,15 @@ export function remainingFollowUps(plan, trace) {
 
 /**
  * advanceFollowUps(plan, trace) → the symbols after the next action event of one actor's turn. Call it once per
- * `enemyMoveStarted` (not a reaction) or `enemyMoveUnavailable` of that actor, in order. The first call is the head
- * move (already played when `plan.headDone` is set, as on a resume), which owns no slot; each later call consumes one
- * slot, skipping a burden stop, which emits no action event. A charge emits none either, so its slot stays until the
+ * `enemyMoveStarted` (not a reaction), `enemyMoveUnavailable` or `enemyBurdenBlocked` of that actor, in order. The first call is the head
+ * move, or the move whose reaction window a reload interrupted (its event comes after the resume), which owns no slot;
+ * each later call consumes one slot. A charge emits none either, so its slot stays until the
  * turn ends. `trace` is the engine's `combat.followTrace[enemyId]`, possibly partial or absent.
  */
 export function advanceFollowUps(plan, trace) {
   if (!plan) return [];
   if (!plan.headDone) plan.headDone = true;
   else {
-    while (trace?.[plan.cursor]?.outcome === 'blocked') plan.cursor++;
     plan.cursor = Math.min(plan.total, plan.cursor + 1);
   }
   return remainingFollowUps(plan, trace);
@@ -71,9 +70,6 @@ export function createFollowMemo() {
     plan(id, { resuming = false, build }) {
       const kept = resuming ? plans.get(id) : null;
       const plan = kept || build?.() || null;
-      // A resume with no kept plan (a reload during a reaction window) rebuilds from what is left of the queue, and the
-      // head has played by then: the first event after it is a follow-up, not the head.
-      if (resuming && !kept && plan) plan.headDone = true;
       if (plan) plans.set(id, plan); else plans.delete(id);
       return plan;
     },
