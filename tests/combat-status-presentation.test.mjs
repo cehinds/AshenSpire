@@ -4,7 +4,7 @@ import { combatStatusPresentationRegistries } from '../src/ui/models/CombatStatu
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 
 const weak = {id:'weak',name:'Weak',tooltip:'Legacy damage reduction.',modifiers:{damageDealtMult:.75}};
-const vulnerable = {id:'vulnerable',name:'Vulnerable',tooltip:'Legacy 50% extra damage.'};
+const vulnerable = {id:'vulnerable',name:'Vulnerable',tooltip:'Legacy 25% extra damage.'};
 const evade = {id:'evade',name:'Evasion',tooltip:'Legacy 3 Evasion per stack.'};
 const registries = {statuses:{get:id=>[weak,vulnerable,evade].find(row=>row.id===id),all:()=>[weak,vulnerable,evade]}};
 test('Core 2 PIPs and card glossary share effective status tooltips without mutating legacy definitions', () => {

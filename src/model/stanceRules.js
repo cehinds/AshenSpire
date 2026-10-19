@@ -46,10 +46,11 @@ export function sameStance(entity, carrier) {
   const active = stanceOf(entity?.combatStance), next = stanceOf(carrier, entity);
   return !!next && [...(entity?.concurrentStances || []),active].some(row=>row && row.maneuver===next.maneuver && row.camp===next.camp);
 }
-export function stanceStaminaCost(base, entity, carrier, ctx = null) {
+// Core discounts one lane (owner ruling D6): MP when the card costs MP (`mpBase` > 0), else SP.
+export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0) {
   if (ctx?.combatExpansionVersion !== 2 || !sameStance(entity, carrier)) return base;
   if (fixCoreEnabled(ctx)) {
-    if (!(base > 0) || stanceOf(carrier).camp === 'spell') return base;
+    if (!(base > 0) || mpBase > 0) return base;
     const cfg = fixCoreRules(ctx, entity, carrier).stance;
     return Math.max(cfg.minimumCost, base - cfg.discount);
   }
@@ -82,7 +83,7 @@ export function stanceEntryBonuses(carrier, ctx = null) {
 }
 
 export function stanceManaCost(base, entity, carrier, ctx) {
-  if (!fixCoreEnabled(ctx) || !(base > 0) || !sameStance(entity, carrier) || stanceOf(carrier)?.camp !== 'spell') return base;
+  if (!fixCoreEnabled(ctx) || !(base > 0) || !sameStance(entity, carrier)) return base;
   const cfg = fixCoreRules(ctx, entity, carrier).stance;
   return Math.max(cfg.minimumCost, base - cfg.discount);
 }
