@@ -51,7 +51,7 @@ import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
-import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
+import { ratingValue, isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
   canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf, isForceHit } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
@@ -902,7 +902,7 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
   if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block')
-    ? Math.max(0, Math.floor((base + (entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0)) * stanceEffectiveness(ctx, entity, card))) : 0;
+    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0)) * stanceEffectiveness(ctx, entity, card))) : 0;
   const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
