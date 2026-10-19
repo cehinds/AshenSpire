@@ -79,7 +79,7 @@ export function uiZoom() {
   // combatant per render (a third of an enemy turn on a throttled phone), so
   // the computed read is only the fallback for a page that set it in CSS.
   const root = document.documentElement;
-  const inline = parseFloat(root.style.getPropertyValue('--ui-zoom'));
+  const inline = parseFloat(root?.style?.getPropertyValue?.('--ui-zoom'));
   const zoom = Number.isFinite(inline) ? inline : parseFloat(getComputedStyle(root).getPropertyValue('--ui-zoom'));
   return zoom * viewScale() || 1;
 }
