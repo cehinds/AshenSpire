@@ -145,7 +145,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'attackHit': case 'attackMissed': {
         const outcome = event.type === 'attackHit' ? 'hit' : 'missed';
         const dice = Array.isArray(event.dice) && event.dice.length ? event.dice.join(', ') : event.d20 ?? 'automatic';
-        text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} vs Evasion ${event.evasion ?? 0} · ${event.mode || 'normal'} · stance ×${event.stanceFactor ?? 1} · ${event.hitChance ?? 100}% chance${event.missReason === 'range' ? ' (out of range)' : ''}.`;
+        if (event.evasionDie != null) text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} = ${event.attackTotal} vs d20 [${event.evasionDie}] + Evasion ${event.evasion ?? 0} = ${event.evasionTotal} · ${event.mode || 'normal'} · ${event.hitChance ?? 100}% chance.`;
+        else text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} vs Evasion ${event.evasion ?? 0} · ${event.mode || 'normal'} · stance ×${event.stanceFactor ?? 1} · ${event.hitChance ?? 100}% chance${event.missReason === 'range' ? ' (out of range)' : ''}.`;
         break;
       }
       case 'damageDealt': {

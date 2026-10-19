@@ -35,7 +35,9 @@ test('real Core 2 run forwards equipped attributes and accuracy bonuses to live 
  assert.deepEqual(combat.player.ratings,ratings.totals);assert.equal(combat.piles.hand.length,run.drawPerTurn);
  const carrier={combatProfile:{camp:'physical',maneuver:'attack',range:'melee'}};
  const hit=attackHitPreview(combat,target,combat.player,carrier);
- assert.equal(hit.evasion,1+combat.player.attributes.dexterity+gear.totals.evasion);
+ assert.equal(hit.evasion,1); // no Evade stacks: Evasion is only its flat base
+ combat.player.statuses.evade={stacks:2};
+ assert.equal(attackHitPreview(combat,target,combat.player,carrier).evasion,1+2*(1+combat.player.attributes.dexterity+gear.totals.evasion));
  const read=rollKnowledgeRead({float:()=>.2},enemyKnowledge,{attributes:combat.player.attributes},'Attack',{ctx:combat,target});
  assert.equal(read.perception.total,5+combat.player.attributes.wisdom);
 });
