@@ -16,7 +16,7 @@
       42,
       46
     ],
-    "poiseMax": 18,
+    "poiseMax": 9,
     "levelProfile": {
       "min": 6,
       "max": 9
@@ -79,7 +79,7 @@
       30,
       34
     ],
-    "poiseMax": 10,
+    "poiseMax": 5,
     "levelProfile": {
       "min": 6,
       "max": 9
@@ -148,7 +148,7 @@
       24,
       28
     ],
-    "poiseMax": 8,
+    "poiseMax": 4,
     "levelProfile": {
       "min": 6,
       "max": 8
@@ -194,7 +194,7 @@
       16,
       18
     ],
-    "poiseMax": 6,
+    "poiseMax": 3,
     "levelProfile": {
       "min": 6,
       "max": 9
@@ -239,7 +239,7 @@
       36,
       40
     ],
-    "poiseMax": 22,
+    "poiseMax": 11,
     "levelProfile": {
       "min": 7,
       "max": 10
@@ -296,7 +296,7 @@
       90,
       96
     ],
-    "poiseMax": 26,
+    "poiseMax": 13,
     "levelProfile": {
       "min": 10,
       "max": 11
@@ -367,7 +367,7 @@
       195,
       195
     ],
-    "poiseMax": 34,
+    "poiseMax": 17,
     "levelProfile": {
       "min": 11,
       "max": 12
@@ -449,7 +449,7 @@
       28,
       32
     ],
-    "poiseMax": 8,
+    "poiseMax": 4,
     "levelProfile": {
       "min": 7,
       "max": 10
@@ -499,7 +499,7 @@
       32,
       36
     ],
-    "poiseMax": 17,
+    "poiseMax": 8,
     "levelProfile": {
       "min": 7,
       "max": 10
@@ -551,7 +551,7 @@
       180,
       180
     ],
-    "poiseMax": 26,
+    "poiseMax": 13,
     "levelProfile": {
       "min": 11,
       "max": 12
@@ -627,7 +627,7 @@
       190,
       190
     ],
-    "poiseMax": 30,
+    "poiseMax": 15,
     "levelProfile": {
       "min": 11,
       "max": 12
