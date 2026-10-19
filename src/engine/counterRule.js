@@ -5,8 +5,8 @@
 // Barrier, Ward or Poise take anything: the `incoming` figure of the damage receipt (gameProfileCombat.js).
 // Pure: no state, no RNG. The fractions are data (content/source/fixCoreMechanics.json `counter`).
 import { fixCoreEnabled, fixCoreRules, fixCoreCounterRules } from '../model/fixCoreMechanics.js';
-import { configuredModule } from './gameProfileCombat.js';
-import { previewDamageHits } from './combatDamagePreview.js';
+import { configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
+import { previewDamageHits, damagePreviewState } from './combatDamagePreview.js';
 import { enemyMoveCarrier, expandedEnemyMove } from './combatCardTactics.js';
 
 /** True when the Core 2 Counter rule governs this fight. Legacy and co-op profiles keep their own return. */
@@ -62,16 +62,19 @@ export function counterPreviewAgainst(ctx, enemy, intent) {
   const carrier = enemyMoveCarrier(enemy, move, intent.moveId, ctx);
   const defender = { ...ctx.player, combatStance: { maneuver: 'counter', camp: 'physical', range: 'melee' } };
   delete defender.concurrentStances;
-  // Hit by hit, as the live exchange resolves them: Poise breaks, Vulnerable and the like carry into later hits.
+  // Hit by hit, as the live exchange resolves them: each advantaged hit grants its Counter Block before it is absorbed,
+  // and Poise breaks, Vulnerable and the like carry into later hits.
   const hits = Math.max(1, Math.floor(enemy.intent.hits ?? 1));
-  const sequence = previewDamageHits(ctx, enemy, defender, enemy.intent.damage, carrier.tags || [], carrier, hits)
-    .damageReceipt?.hits || [];
   const advantaged = counterBeats(ctx, maneuver);
+  const state = damagePreviewState(ctx, defender);
   const total = { hp: 0, poise: 0, block: 0 };
   let incoming = 0;
-  for (const hit of sequence) {
-    const row = counterReturn(ctx, hit.incoming, advantaged);
-    incoming += hit.incoming; total.hp += row.hp; total.poise += row.poise; total.block += row.block;
+  for (let hit = 0; hit < hits; hit++) {
+    const seen = profileDamageReceipt(state.previewCtx, enemy, state.defender, enemy.intent.damage, carrier).damageReceipt?.hits?.[0]?.incoming ?? 0;
+    const row = counterReturn(ctx, seen, advantaged);
+    state.defender.block = (state.defender.block || 0) + row.block;
+    previewDamageHits(ctx, enemy, defender, enemy.intent.damage, carrier.tags || [], carrier, 1, state);
+    incoming += seen; total.hp += row.hp; total.poise += row.poise; total.block += row.block;
   }
-  return { incoming, advantaged, hits: sequence.length, ...total };
+  return { incoming, advantaged, hits, ...total };
 }
