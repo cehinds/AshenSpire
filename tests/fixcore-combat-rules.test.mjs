@@ -28,13 +28,15 @@ test('equipped totals affect sourced cards and Weak scales AR only',()=>{
  assert.equal(sourceRatingValue(ctx,ctx.player,'ar','sword',true),6);
  assert.equal(getMult(ctx,ctx.player,'damageDealtMult'),1);
 });
-test('stagger adds all three stacks and owner-start decay runs once per round',()=>{
+test('stagger (D13) is a stance: -1 SP, +1 Vulnerable per break, flat x1.25, no Weak, no skipped turn',()=>{
  const {ctx,enemy}=setup();staggerEnemy(ctx,enemy);staggerEnemy(ctx,enemy);
- assert.equal(enemy.statuses.staggered.stacks,2);assert.equal(enemy.statuses.weak.stacks,2);assert.equal(enemy.statuses.vulnerable.stacks,2);
- assert.equal(getMult(ctx,enemy,'damageTakenMult'),1.25);
+ assert.equal(enemy.combatStance.maneuver,'staggered');assert.equal(enemy.pendingStaminaLoss,2);
+ assert.equal(enemy.statuses.staggered,undefined);assert.equal(enemy.statuses.weak,undefined);assert.ok(!enemy.skipNextTurn);
+ assert.equal(enemy.statuses.vulnerable.stacks,2);
+ assert.equal(getMult(ctx,enemy,'damageTakenMult'),1.25,'repeat breaks lengthen Vulnerable; the multiplier never compounds');
  decayAtTurnStart(ctx,enemy);decayAtTurnStart(ctx,enemy);
- assert.equal(enemy.statuses.staggered.stacks,1);assert.equal(enemy.skipNextTurn,true);
- ctx.turn++;decayAtTurnStart(ctx,enemy);assert.equal(enemy.statuses.staggered,undefined);
+ assert.equal(enemy.statuses.vulnerable.stacks,1);
+ ctx.turn++;decayAtTurnStart(ctx,enemy);assert.equal(enemy.statuses.vulnerable,undefined);
 });
 test('matching stance discounts only the used resource lane and preserves fractions',()=>{
  const {ctx}=setup();const physical={combatProfile:{camp:'physical',maneuver:'attack'}},magic={combatProfile:{camp:'spell',maneuver:'casting',range:'ranged'}};

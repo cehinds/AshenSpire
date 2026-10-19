@@ -2887,9 +2887,20 @@ function checkTemplate(template, effects, path, err, extraBindings = []) {
   }
 }
 
+// The Core wardOff face is a replacement text: every token must bind (or be {poiseDamage}); unlike the base face
+// it need not mention every numeric effect, so only unknown tokens are errors.
+function checkWardOffTemplate(card, path, err) {
+  if (typeof card.wardOffTextTemplate !== 'string') return;
+  const bound = new Set([...computeTokenBindings(cardTokenEffects(card)).map((bd) => bd.token), 'poiseDamage']);
+  for (const token of extractTemplateTokens(card.wardOffTextTemplate)) {
+    if (!bound.has(token)) err(`${path}.wardOffTextTemplate`, `Template token '{${token}}' does not bind to any effect value`);
+  }
+}
+
 function validateCardTemplates(card, path, err) {
   if (typeof card.textTemplate !== 'string' || !Array.isArray(card.effects)) return; // schema pass reports
   checkTemplate(card.textTemplate, cardTokenEffects(card), `${path}.textTemplate`, err);
+  checkWardOffTemplate(card, path, err);
   if (card.singleBreak) checkTemplate(card.singleBreak.textTemplate, cardTokenEffects(card.singleBreak), `${path}.singleBreak.textTemplate`, err);
   if (card.upgrade) {
     const upTemplate = card.upgrade.textTemplate != null ? card.upgrade.textTemplate : card.textTemplate;
