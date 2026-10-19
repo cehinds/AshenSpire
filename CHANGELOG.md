@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Spells use your PR** ([#2203](https://github.com/cehinds/AshenSpire/pull/2203), `0.7.1.1687`). Spells and cantrips now grow with your PR (Power Rating from INT and staves) instead of AR. The PR bonus lands on the magical part of a split hit, and enemy spells are unchanged.
+
 - **Defensive stances add Block** ([#2191](https://github.com/cehinds/AshenSpire/pull/2191), `0.7.1.1687`). Defend and other Block cards now count your stance's Defense Rating bonus, so a defensive stance really gives more Block.
 - **Co-op HUD check back to green** ([#2186](https://github.com/cehinds/AshenSpire/pull/2186), `0.7.1.1685`). The co-op browser check now turns on one-tap play for its Counter and vow shortcut steps, since one tap only selects a card by default. Nothing changes in play.
 - **Pages assemble reports real rebuild failures** ([#2185](https://github.com/cehinds/AshenSpire/pull/2185), `0.7.1.1683`). A failed rebuild in the Pages assemble now reports its real cause (for example the mobile build's size budget) instead of the boilerplate NOTE line, and the assemble selftest no longer posts warnings that looked like missing /latest/ pages.
