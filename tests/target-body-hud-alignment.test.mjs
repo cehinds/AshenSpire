@@ -24,7 +24,7 @@ test('native mini and selected intent follow true pose body heads at every form 
     const align = runInNewContext(source.slice(start, end) + '\ncenterTargetOverheads', {
       uiZoom: () => zoom, field, schedule() {}, targetBodyHudPlacement,
       uiConfig: { presentation: { combatFormationModel: { positioning: { perspectiveGrid: { miniHudGroupHeightPx: 61, miniHudSpriteGapPx: 5 } } } } },
-      currentSpriteBodyBounds: () => body,
+      currentSpriteBodyBounds: () => body, placeHitBadges() {},
     });
     for (const [pose, head, weaponTop] of [['idle', 410, 400], ['attack', 390, 240], ['smash', 360, 190], ['defend', 420, 300], ['counter', 375, 200], ['casting', 395, 160]]) {
       body = { headY: head, feetY: head + 160, top: weaponTop, left: 55, right: 145 };
