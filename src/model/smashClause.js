@@ -16,3 +16,6 @@ export const coreSmashCard = (def, ctx) => Array.isArray(def?.tags) && def.tags.
 export const coreSmashClause = (def, ctx) => coreSmashCard(def, ctx) ? row('card.smash.coreClause') : '';
 /** The Smash tag help under a Core profile, else null (the caller keeps the node's legacy blurb). */
 export const coreSmashHelp = (def, ctx) => coreSmashCard(def, ctx) ? row('tag.smash.coreHelp') : null;
+/** A resolved tag row with the Core Smash help swapped in for maneuver:smash under a Core profile; any other row is returned as is. */
+export const withCoreSmashBlurb = (tag, ctx) => tag?.id === 'maneuver:smash' && fixCoreEnabled({ combatExpansionVersion: 2, gameProfile: ctx?.gameProfile })
+  ? { ...tag, blurb: row('tag.smash.coreHelp') } : tag;

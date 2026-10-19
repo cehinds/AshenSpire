@@ -50,3 +50,18 @@ test('Smash tag help: Core states the rule, legacy keeps the node blurb', () => 
   assert.equal(cardTagExplanation(reaver, tag), 'legacy blurb');
   assert.equal(coreSmashHelp(core.cards.get('core.defend'), core), null);
 });
+
+test('enemy Smash moves (blightHound.lunge): Core help states the rule, legacy keeps the node blurb', async () => {
+  const { enemyMoveCards } = await import('../src/model/enemyMoveCards.js');
+  const { combatProfileTags } = await import('../src/model/combatCardProfile.js');
+  const detail = reg => enemyMoveCards(reg.enemies.get('blightHound'), { registries: reg }).find(card => card.moveId === 'lunge');
+  const coreCard = detail(core), legacyCard = detail(current);
+  assert.ok(coreCard.combatTags.some(tag => tag.id === 'maneuver:smash'), 'lunge is a Smash');
+  assert.match(coreCard.detail, RULE);
+  assert.doesNotMatch(legacyCard.detail, RULE);
+  assert.match(legacyCard.detail, /Smash: Heavy strike\. Deals extra damage against physical Guard/);
+  // combatantOverhead's intent tooltip reads the same rows
+  const smashTag = reg => combatProfileTags({ camp: 'physical', maneuver: 'smash', range: 'melee' }, reg).find(tag => tag.id === 'maneuver:smash');
+  assert.match(smashTag(core).blurb, RULE);
+  assert.doesNotMatch(smashTag(current).blurb, RULE);
+});
