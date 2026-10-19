@@ -130,3 +130,8 @@ test('ward on: magic is not reduced by Poise (old behaviour)', () => {
   assert.equal(target.hp, 92);
   assert.equal(target.persistentPoise.value, 20);
 });
+
+test('ward off: tooltip says Poise reduces all damage', () => {
+  const { combat, target } = fixture(false);
+  assert.match(fixCoreProtectionDescription(combat, target, 'poise'), /Poise reduces all damage by 25%/);
+});

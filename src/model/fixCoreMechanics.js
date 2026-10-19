@@ -108,6 +108,10 @@ export function fixCoreProtectionDescription(ctx,entity,kind) {
   const shadow = {...entity,persistentWard:{...entity.persistentWard,value:1},persistentPoise:{...entity.persistentPoise,value:1}};
   const receipt = protectionReceipt(ctx,shadow,damageKind,100);
   const restores = fixCoreWardDisabled(ctx) ? 'Poise' : 'both Poise and Ward';
+  if (fixCoreWardDisabled(ctx)) {
+    const poise = protectionReceipt(ctx,shadow,'physical',100);
+    return `While active, Poise reduces all damage by ${poise.reduced}%. The prevented damage spends this pool. Block cards restore Poise by their Block amount, up to its maximum.`;
+  }
   return `While active, reduces ${damageKind} damage by ${receipt.reduced}%. The prevented damage spends this pool. Block cards restore ${restores} by their Block amount, up to each maximum.`;
 }
 
