@@ -131,7 +131,7 @@ import { mountRest } from './ui/screens/rest.js';
 import { commitDeckEditDraft } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
-import { markArmourySeen, noncombatEditing } from './model/armouryRules.js';
+import { armouryHasNew, markArmourySeen, noncombatEditing } from './model/armouryRules.js';
 import { deckEditingOn } from './model/deckRules.js';
 import { mountShop, mountConfiguredShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
@@ -2068,7 +2068,8 @@ function showOfflinePlay() {
 // those rooms now carry opens the Armoury too and a close that went to the
 // map would abandon the room mid-visit.
 function showArmoury(request = '', returnTo = showMap) {
-  markArmourySeen(run);
+  // A glow cleared by looking must survive a reload even when nothing in the Armoury changes.
+  if (armouryHasNew(run)) { markArmourySeen(run); persist(); } else markArmourySeen(run);
   const initialView = typeof request === 'string' ? request : '';
   const destination = request && typeof request === 'object' ? request.destination || '' : '';
   const armouryMeta = saves.loadMeta();

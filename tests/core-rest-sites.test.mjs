@@ -41,3 +41,8 @@ test('15% of the randomly typed Core nodes are shops and fixed nodes never are (
   }
   assert.ok(Math.abs(shops / eligible - 0.15) <= 0.03, `shop share ${shops}/${eligible}`);
 });
+
+test('an all-services rest listing Strategize has a description string and does not throw (review finding)', async () => {
+  const { t } = await import('../src/ui/strings.js');
+  assert.notEqual(t('gameProfile.rest.description.strategizeAll'), 'gameProfile.rest.description.strategizeAll');
+});

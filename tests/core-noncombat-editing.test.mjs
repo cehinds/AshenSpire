@@ -36,3 +36,9 @@ test('a new Armoury item glows until the Armoury is opened (D15)', () => {
   assert.equal(armouryHasNew(make('current')), false);
   assert.doesNotThrow(() => armouryHasNew(null));
 });
+
+test('opening the Armoury persists the seen list (review finding)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(src, /if \(armouryHasNew\(run\)\) \{ markArmourySeen\(run\); persist\(\); \}/);
+});
