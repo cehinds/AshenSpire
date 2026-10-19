@@ -59,18 +59,25 @@ export function cardEffectLine(def, preview = null, registries = null) {
         break;
       }
       case 'gainWard': add('ward', effect, { labelId: 'cardOption.label.ward', amount, base }); break;
-      case 'gainPoise': case 'poiseDamage': add('poise', effect, { labelId: 'cardOption.label.poise', amount, base }); break;
+      case 'poiseDamage': case 'wardDamage': {
+        const ward = effect.op === 'wardDamage', key = counter ? (ward ? 'returnWard' : 'returnPoise') : ward ? null : 'poise';
+        if (key) add(key, effect, { labelId: `cardOption.label.${key}`, amount, base });
+        break;
+      }
+      case 'gainPoise': add('poise', effect, { labelId: 'cardOption.label.poise', amount, base }); break;
       case 'heal': add('heal', effect, { labelId: 'cardOption.label.heal', amount, base }); break;
       default: break;
     }
   });
-  // A counter whose reply is a payload (no damage effect) reads it from the live preview.
-  const payloadHp = def.counterPayload?.hp;
-  if (counter && !found.has('return') && typeof payloadHp === 'number' && payloadHp > 0) {
-    const liveHp = preview?.values?.find(row => row.op === 'damage')?.value;
-    found.set('return', { labelId: 'cardOption.label.return', amount: typeof liveHp === 'number' ? liveHp : payloadHp, base: payloadHp });
+  // A counter whose reply is a payload (no matching effect) reads it from the live preview.
+  // The payload can return HP damage, Poise and Ward: each shows as its own "Return" part.
+  if (counter) for (const [field, op, key] of [['hp', 'damage', 'return'], ['poise', 'poiseDamage', 'returnPoise'], ['ward', 'wardDamage', 'returnWard']]) {
+    const authored = def.counterPayload?.[field];
+    if (found.has(key) || typeof authored !== 'number' || authored <= 0) continue;
+    const liveValue = preview?.values?.find(row => row.op === op)?.value;
+    found.set(key, { labelId: `cardOption.label.${key}`, amount: typeof liveValue === 'number' ? liveValue : authored, base: authored });
   }
-  const order = ['def', 'barrier', 'ward', 'dmg', 'return', 'poise', 'heal'];
+  const order = ['def', 'barrier', 'ward', 'dmg', 'return', 'returnPoise', 'returnWard', 'poise', 'heal'];
   return freeze(order.filter(key => found.has(key)).map(key => {
     const row = found.get(key), ref = row.ref || row;
     // A split defense shows its own share but moves with the whole gain it came from.

@@ -2944,7 +2944,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const handCard = option => combat.piles.hand.find(card => card.instanceId === option.play.cardInstanceId);
     const summarize = option => summarizeCardOption(registries, combat, option, {
       defOf: o => { const inst = handCard(o); return inst ? resolveCombatCard(combat, inst, { upcastTier: o.play.upcastTier }) : null; },
-      previewOf: o => previewCard(combat, o.play.cardInstanceId, o.play.targetId ?? o.sourceId, o.play.upcastTier),
+      previewOf: o => previewCard(combat, o.play.cardInstanceId, o.play.targetId ?? o.sourceId ?? pending.sourceId, o.play.upcastTier),
     });
     reactionShell = openReactionChoiceModal({ pending, stack, summarize,
       onClosed: () => { reactionShell = null; },

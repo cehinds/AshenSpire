@@ -1273,7 +1273,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     // the authored base, uncoloured, rather than a possibly wrong number.
     const handCard = o => owner.hand.find(card => card.instanceId === o.play.cardInstanceId);
     const summarize = option => summarizeCardOption(registries, sc, option, {
-      defOf: o => { const inst = handCard(o); return inst ? cardDef(inst, o.play.upcastTier || undefined) : null; },
+      defOf: o => { const inst = handCard(o); return inst ? cardDef(inst, o.play.upcastTier || 0) : null; },
       previewOf: o => {
         const inst = handCard(o);
         if (!inst || o.play.targetId || o.play.upcastTier || upcastTiersByCard.get(upcastKey(inst.instanceId))) return null;

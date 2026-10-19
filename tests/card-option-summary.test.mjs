@@ -52,3 +52,25 @@ test('a multi-hit card keeps its hit count after the number', () => {
   const [single] = cardEffectLine({ ...flurry, effects: [{ op: 'damage', target: 'enemy', amount: 3 }] }, null, null);
   assert.equal(single.after, '', 'one hit shows no multiplier');
 });
+test('a counter payload returns HP, Poise and Ward as separate Return parts', () => {
+  const payload = { id: 'testPayload', name: 'Rebuke', type: 'attack', tags: ['maneuver:counter', 'camp:physical'],
+    counterPayload: { hp: 4, poise: 3, ward: 2 }, effects: [{ op: 'block', target: 'self', amount: 5 }] };
+  const rows = cardEffectLine(payload, { values: [{ op: 'block', value: 5 }, { op: 'damage', value: 6 }, { op: 'poiseDamage', value: 3 }] }, null);
+  assert.deepEqual(rows.map(row => `${row.before}${row.value}${row.after}`), ['Def 5', 'Return 6', 'Return 3 Poise', 'Return 2 Ward']);
+  assert.deepEqual(rows.map(row => row.dir), [null, 'up', null, null]);
+});
+test('a counter with Poise and Ward effects reads them as Return parts', () => {
+  const effects = { id: 'testCounterFx', name: 'Rebuke', type: 'attack', tags: ['maneuver:counter', 'camp:physical'],
+    effects: [{ op: 'poiseDamage', target: 'enemy', amount: 3 }, { op: 'wardDamage', target: 'enemy', amount: 2 }] };
+  assert.deepEqual(cardEffectLine(effects, null, null).map(row => `${row.before}${row.value}${row.after}`), ['Return 3 Poise', 'Return 2 Ward']);
+});
+// The screens cannot run here without a browser, so these pin the two call-site rules by source.
+import { readFileSync } from 'node:fs';
+test('co-op base reaction options resolve at tier 0, not the hand-selected tier', () => {
+  const source = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
+  assert.match(source, /cardDef\(inst, o\.play\.upcastTier \|\| 0\)/);
+});
+test('solo round reactions preview against the pending offer attacker', () => {
+  const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(source, /o\.play\.targetId \?\? o\.sourceId \?\? pending\.sourceId/);
+});
