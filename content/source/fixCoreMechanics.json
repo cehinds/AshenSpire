@@ -8,6 +8,16 @@
     "defense:wardProtection",
     "defense:poiseProtection"
   ],
+  "poise": {
+    "damageRatio": 0.2,
+    "depletes": true
+  },
+  "staggered": {
+    "stance": true,
+    "staminaLoss": 1,
+    "vulnerableStacks": 1,
+    "extendOnly": true
+  },
   "stance": {
     "effectivenessMultiplier": 1.25,
     "discount": 1,

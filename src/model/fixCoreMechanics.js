@@ -12,6 +12,13 @@ export function fixCoreModuleParameters(rules = defaults) {
     id === 'actionCosts' ? {enemyHealBlockCost:rules.enemyHealBlockCost} : rules[id]])) };
 }
 // Owner, 2026-10-18: Ward code stays; `ward.enabled: false` in fixCoreMechanics.json switches it off. Missing = on.
+// Owner, 2026-10-18 (D13/D4): Poise damage is floor(damageRatio x incoming damage), dealt before the hit lands;
+// a Poise break puts the owner in the Staggered stance (-staminaLoss SP, +vulnerableStacks Vulnerable that only
+// extends duration). Missing blocks (saves from before this ruling) fall back to these defaults.
+export const FIXCORE_POISE_DEFAULTS = Object.freeze({ damageRatio: 0.2, depletes: true });
+export const FIXCORE_STAGGERED_DEFAULTS = Object.freeze({ stance: true, staminaLoss: 1, vulnerableStacks: 1, extendOnly: true });
+export const fixCorePoiseRules = rules => ({ ...FIXCORE_POISE_DEFAULTS, ...(rules?.poise || {}) });
+export const fixCoreStaggeredRules = rules => ({ ...FIXCORE_STAGGERED_DEFAULTS, ...(rules?.staggered || {}) });
 export const fixCoreWardEnabled = rules => rules?.ward?.enabled !== false;
 const OLD_PERCEPTION_FIELDS = ['levelBaseline','intelligenceBaseline','levelWeight','intelligenceWeight'];
 // Pure v1 -> current migration for persisted rules: a perception block saved
@@ -28,8 +35,11 @@ export function normalizeFixCoreRules(rules) {
 const rawRules = ctx => normalizeFixCoreRules(ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules || defaults);
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','ward','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  const known = new Set(['version','enabled','ward','poise','staggered','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
   if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => key !== 'enabled'))) throw new Error('FixCore ward requires {enabled:boolean}');
+  const poise = rules.poise, stag = rules.staggered;
+  if (poise !== undefined && (typeof poise !== 'object' || poise === null || !(poise.damageRatio >= 0 && poise.damageRatio <= 1) || typeof poise.depletes !== 'boolean' || Object.keys(poise).some(key => !['damageRatio','depletes'].includes(key)))) throw new Error('FixCore poise requires {damageRatio:0..1, depletes:boolean}');
+  if (stag !== undefined && (typeof stag !== 'object' || stag === null || typeof stag.stance !== 'boolean' || typeof stag.extendOnly !== 'boolean' || !Number.isInteger(stag.staminaLoss) || stag.staminaLoss < 0 || !Number.isInteger(stag.vulnerableStacks) || stag.vulnerableStacks < 0 || Object.keys(stag).some(key => !['stance','staminaLoss','vulnerableStacks','extendOnly'].includes(key)))) throw new Error('FixCore staggered requires {stance:boolean, staminaLoss:int, vulnerableStacks:int, extendOnly:boolean}');
   for(const key of Object.keys(rules)) if(!known.has(key)) throw new Error(`FixCore unknown configuration field ${key}`);
   for (const tag of rules.defaultTags || []) if (!behaviorTags.has(tag)) throw new Error(`FixCore unknown behavior tag ${tag}`);
   compileBindings({mechanics,moduleParameters:fixCoreModuleParameters(rules),attachments:[{
