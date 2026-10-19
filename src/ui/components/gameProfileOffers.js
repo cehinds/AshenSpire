@@ -5,7 +5,7 @@ import { mountRewardDoor } from './rewardDoor.js';
 import { clearSelection } from './cardSelection.js';
 import { el, button, modalFooter } from '../kit/index.js';
 import { t } from '../strings.js';
-import { restServicesAll } from '../../model/gameProfileRest.js';
+import { noncombatEditing } from '../../model/armouryRules.js';
 
 // Presentation ownership stays outside the serializable run and offer data.
 const rewardDoorOwners = new WeakMap();
@@ -21,8 +21,8 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   }
   const strip = el('div', { class: 'reward-row reward-choice-grid', role: 'radiogroup', 'aria-label': t('reward.card.aria') });
   strip.style.setProperty('--choice-count', String(offer.options.length));
-  // Core takes its deck edits at the Armoury; the other profiles still rest at Strategize.
-  const note = el('p', { class: 'reward-note', text: t(restServicesAll(run) ? 'reward.configured.noteArmoury' : 'reward.configured.note', { count: offer.takeCount }) });
+  // The copy follows the cards module's editor policy (not the rest services): non-combat editing is the Armoury, otherwise Strategize.
+  const note = el('p', { class: 'reward-note', text: t(noncombatEditing(run) ? 'reward.configured.noteArmoury' : 'reward.configured.note', { count: offer.takeCount }) });
   const status = el('p', { class: 'reward-confirm-status', role: 'alert' });
   const confirm = button({ label: t('common.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true });
   const next = button({ label: t('common.skip'), id: 'reward-continue', className: 'danger' });
