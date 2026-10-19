@@ -34,11 +34,16 @@ function eligibleEvadeMode(entity) {
   const eligible = stacks(entity, 'evade') > 0 || eligiblePreparedEvade(entity);
   return eligible && mode && (!mode.whileStatus || stacks(entity, mode.whileStatus) > 0) ? mode : null;
 }
+/** An enemy whose definition supplies no level profile is synthesized at level 1 for scaling elsewhere; the Precision mix counts it as level 0. */
+function mixLevel(ctx, entity) {
+  const definition = entity?.kind === 'enemy' && entity.enemyId && ctx.registries?.enemies?.has?.(entity.enemyId) ? ctx.registries.enemies.get(entity.enemyId) : null;
+  return entity?.kind === 'enemy' && !definition?.levelProfile ? 0 : levelOf(ctx, entity);
+}
 /** FixCore stat mix: floor(0.5 DEX + 0.1 STR + 0.2 (WIS + INT) + level), weights from `accuracy.precisionWeights`. */
 export function precisionStatMix(ctx, entity, carrier = null) {
   const wt = fixCoreRules(ctx, entity, carrier).accuracy.precisionWeights, attrs = attributesOf(ctx, entity) || {};
   return Math.floor(wt.dex * (Number(attrs.dexterity) || 0) + wt.str * (Number(attrs.strength) || 0)
-    + wt.wis * (Number(attrs.wisdom) || 0) + wt.int * (Number(attrs.intelligence) || 0) + wt.level * levelOf(ctx, entity));
+    + wt.wis * (Number(attrs.wisdom) || 0) + wt.int * (Number(attrs.intelligence) || 0) + wt.level * mixLevel(ctx, entity));
 }
 /** Precision stacks an offensive stance entry grants under FixCore: the base grant plus the stat mix, like Evade's 1 + DEX (owner, 2026-10-19). */
 export const precisionEntryGrant = (ctx, entity, base, carrier = null) => base > 0 ? base + precisionStatMix(ctx, entity, carrier) : 0;

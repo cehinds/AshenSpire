@@ -110,6 +110,13 @@ test('a card-scoped precisionWeights override changes the stat mix, grant and Pr
  assert.equal(precisionStatMix(ctx,ctx.player,carrier),4);assert.equal(precisionEntryGrant(ctx,ctx.player,1,carrier),5);
  assert.equal(attackHitPreview(ctx,ctx.player,enemy,carrier).accuracy,1+4);
 });
+test('an enemy without a level profile counts as level 0 in the Precision mix; one with a profile uses its level',()=>{
+ const {ctx}=setup();const enemy=ctx.enemies[0];enemy.attributes={dexterity:2,strength:0,wisdom:0,intelligence:0};enemy.level=1;
+ const real=ctx.registries.enemies.get(enemy.enemyId);
+ const withProfile=profile=>{ctx.registries={...ctx.registries,enemies:{...ctx.registries.enemies,has:()=>true,get:()=>({...real,levelProfile:profile})}};};
+ withProfile(undefined);assert.equal(precisionStatMix(ctx,enemy),1); // floor(.5 x 2 + 0), no level
+ withProfile({min:1,max:4});assert.equal(precisionStatMix(ctx,enemy),2); // plus its level 1
+});
 test('Perception DC is 5 + target INT + target WIS + bonuses; level is ignored; observer rolls d20 + own WIS (D8)',()=>{
  const {ctx}=setup();const target={level:9,attributes:{intelligence:2,wisdom:3}},observer={attributes:{wisdom:2}};
  // DC 5 + INT 2 + WIS 3 = 10; the target's level adds nothing. Roll 7 + WIS 2 = 9 fails.
