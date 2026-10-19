@@ -21,6 +21,13 @@ export function enemyCounterPoiseDamage(move, profile, ctx) {
     ? authored : stanceRulesFor(ctx).fallbackPoise;
 }
 const MIRRORED_TYPES = new Set(['attack', 'smash', 'sweep', 'defend', 'counter']);
+// A Spell that mirrors a basic card (owner 2026-10-18) takes that basic's maneuver; it stays a Spell. Only Core 2 content sets `mirrors`.
+export function mirroredManeuver(carrier) {
+  const mirrors = carrier?.combatProfile?.mirrors ?? carrier?.mirrors;
+  return MIRRORED_TYPES.has(mirrors) && (carrier?.combatProfile?.camp ?? 'spell') === 'spell' ? mirrors : null;
+}
+/** The maneuver a carrier is priced and recorded as: the mirrored basic's when it mirrors one, else its combat profile's. One source for stance, hit preview, live hit and mitigation. */
+export function effectiveManeuver(carrier) { return mirroredManeuver(carrier) ?? carrier?.combatProfile?.maneuver; }
 export function stanceOf(carrier, entity = null) {
   if (!carrier) return null;
   const tags = carrier.cardTags ?? carrier.tags;

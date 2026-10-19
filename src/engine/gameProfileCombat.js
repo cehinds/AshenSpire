@@ -3,6 +3,7 @@ import { attackHitPreview } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts } from '../model/combatRatings.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
+import { mirroredManeuver } from '../model/stanceRules.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { cardPreparationCategory } from '../model/cardClassification.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
@@ -21,10 +22,7 @@ export function configuredModule(subject, id) {
   return rule?.mode === 'configured' ? rule : null;
 }
 // A Spell that mirrors a basic card (owner 2026-10-18) keeps that basic's stance; it is still a Spell.
-export function mirroredStance(carrier) {
-  const mirrors = carrier?.combatProfile?.mirrors ?? carrier?.mirrors;
-  return ['attack', 'smash', 'sweep', 'defend', 'counter'].includes(mirrors) && (carrier?.combatProfile?.camp ?? 'spell') === 'spell' ? mirrors : null;
-}
+export const mirroredStance = mirroredManeuver;
 export function configuredStance(carrier) {
   if (mirroredStance(carrier)) return mirroredStance(carrier);
   if (cardPreparationCategory(carrier)) return 'prepared';
