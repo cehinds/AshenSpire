@@ -16,9 +16,9 @@ const views = [['mobile',390,844],['desktop',1440,900],['wide',2560,1080],['tabl
 // Pressure deliberately differs from remaining Poise so the old bar cannot pass.
 const fixtures = [
   { profile:'core', fixCore:true, views, wardBlock:0, barrier:0,
-    expected:[['evade','2'],['poise','4'],['ward','5'],['shield','12']] },
+    expected:[['shield','12'],['evade','2'],['poise','4'],['ward','5']] },
   { profile:'current', fixCore:false, views:[['legacy-desktop',1440,900]], wardBlock:3, barrier:4,
-    expected:[['evade','2'],['poise','4'],['ward','12'],['shield','9']] },
+    expected:[['shield','9'],['evade','2'],['poise','4'],['ward','12']] },
 ];
 try {
   for (const fixture of fixtures) for (const [name, width, height] of fixture.views) {
@@ -96,7 +96,7 @@ try {
       assert.ok(geometry.hp.left >= geometry.panel.left && geometry.hp.right <= geometry.panel.right, name+': HP value fits panel');
       assert.ok(geometry.panel.left >= 0 && geometry.panel.right <= width && geometry.panel.top >= 0 && geometry.panel.bottom <= height, name+': panel fits viewport');
       assert.equal(geometry.badges.find(badge=>badge.kind==='ward').barrier, fixture.barrier ? '4' : null, name+': Barrier provenance stays on the legacy Ward badge only');
-      assert.deepEqual(geometry.order, ['evade','poise','ward','shield','hp'], name+': defense order');
+      assert.deepEqual(geometry.order, ['shield','evade','poise','ward','hp'], name+': defense order');
       assert.deepEqual(errors, [], name+': no browser errors');
     } catch(error) { report.failures.push(error.message); }
     await page.close();
