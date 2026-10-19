@@ -52,6 +52,11 @@ function esc(value) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+/** `def` with the effect list a live preview priced: an active charge expands it (an added buildup row), and the preview's values follow that list. */
+export function withChargedEffects(def, preview = null) {
+  return Array.isArray(preview?.chargedEffects) && preview.chargedEffects !== def.effects ? { ...def, effects: preview.chargedEffects } : def;
+}
+
 /** The card-face lines for `def`, or null when a part of it cannot be phrased. */
 export function cardFaceLines(def, preview = null, registries = null) {
   try {
@@ -64,7 +69,7 @@ export function cardFaceLines(def, preview = null, registries = null) {
 
 function buildLines(def, preview, registries) {
   // A live preview prices the effects an active charge expands (an added buildup row); its values follow that list.
-  if (Array.isArray(preview?.chargedEffects) && preview.chargedEffects !== def.effects) def = { ...def, effects: preview.chargedEffects };
+  def = withChargedEffects(def, preview);
   if (def.comboHook) return null;
   // A Power's status is its mechanic's carrier ("Gain Goreblood 1" says nothing); its authored text explains it.
   if (def.type === 'power') return null;
