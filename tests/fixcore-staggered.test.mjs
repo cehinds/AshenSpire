@@ -229,6 +229,21 @@ test('the break haptic fires on a Core enemy Poise break', async () => {
   assert.equal(enemyPoiseBroken(event), true);
 });
 
+test('the enemy break haptic is not played when the player\'s own Poise breaks (targetKind player)', async () => {
+  const { enemyPoiseBroken } = await import('../src/ui/fx.js');
+  const { combat } = live(2);
+  const player = combat.player;
+  Object.assign(player, { alive: true, hp: 500, maxHp: 500, block: 0, barrier: 0, statuses: {}, persistentPoise: { value: 2, max: 20 } });
+  drainFixCorePoise(combat, combat.enemies[0], player, 5);
+  const event = combat.eventLog.find(row => row.type === 'poiseBroken' && row.targetId === player.id);
+  assert.ok(event, 'the player break is logged');
+  assert.equal(event.targetKind, 'player');
+  assert.equal(enemyPoiseBroken(event), false);
+  const enemyEvent = { type: 'poiseBroken', targetId: 'e1', targetKind: 'enemy', poiseBreak: true };
+  assert.equal(enemyPoiseBroken(enemyEvent), true);
+  assert.equal(enemyPoiseBroken({ type: 'poiseBroken', interrupted: true }), true, 'legacy events without targetKind keep the old reading');
+});
+
 test('the Staggered row carries the profile\'s costs, hiding a zero clause', () => {
   const { combat, target } = live(2);
   combat.fixCoreRules = { ...structuredClone(combat.fixCoreRules || combat.gameProfile.fixCoreRules), staggered: { stance: true, staminaLoss: 2, vulnerableStacks: 0, extendOnly: true } };

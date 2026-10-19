@@ -331,7 +331,7 @@ function fixCorePoiseBreak(ctx, source, target) {
   // `poiseBreak` marks a Core break that staggers, for the break haptic (fx.enemyPoiseBroken) and the log; Core breaks interrupt
   // nothing. A break the target's Impact protection refuses carries `poiseBreak: false`: the pool broke, nobody was staggered.
   const staggers = !(target.kind === 'enemy' && staggerRefused(ctx, target));
-  ctx.emit('poiseBroken', { targetId: target.id, sourceId: source?.id, poiseBreak: staggers, ...seatOf(ctx, target) });
+  ctx.emit('poiseBroken', { targetId: target.id, targetKind: target.kind, sourceId: source?.id, poiseBreak: staggers, ...seatOf(ctx, target) });
   if (target.kind === 'enemy') { claimStagger(ctx, target); staggerEnemy(ctx, target, { cause: 'poiseBreak' }); }
   else fixCoreStagger(ctx, target, { cause: 'poiseBreak' });
 }

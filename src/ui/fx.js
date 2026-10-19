@@ -1557,12 +1557,12 @@ export function bigHitLanded(e, { isLocalPlayer, maxHpFor } = {}) {
 
 /**
  * enemyPoiseBroken(e, isLocalPlayer?) → did an enemy's Poise break (the
- * stagger starts)? The engine's poiseBroken receipt for an enemy carries
- * `interrupted` (legacy) or `poiseBreak` (Core, which interrupts nothing). It names no seat, so in co-op it is nobody's here, as in
+ * stagger starts)? A player's Poise break (targetKind 'player') is not an enemy's and is false.
+ * Legacy events without targetKind keep the old reading. The receipt names no seat, so in co-op it is nobody's here, as in
  * playerLostHp.
  */
 export function enemyPoiseBroken(e, isLocalPlayer) {
-  if (!e || e.type !== 'poiseBroken' || !(e.interrupted || e.poiseBreak)) return false;
+  if (!e || e.type !== 'poiseBroken' || e.targetKind === 'player' || !(e.interrupted || e.poiseBreak)) return false;
   return typeof isLocalPlayer !== 'function';
 }
 
