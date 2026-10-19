@@ -1,5 +1,5 @@
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
-import { validateResolvedGameProfile } from '../../engine/kernel/gameConfig.js';
+import { validateVerifiedProfile as validateResolvedGameProfile } from './verifiedProfiles.js';
 import { gameModule, gameContent } from './gameProfile.js';
 import { isConfiguredRun, gameProfileAttributes, gameProfileClassAvailable, gameProfileStatOptions, initializeGameProfileRun } from './gameProfileRun.js';
 import { startingAbilityRefs } from './startingAbilities.js';
