@@ -910,7 +910,7 @@
   {
    "id": "G7",
    "by": "Bjorn",
-   "read": "src/model/mapknowledge.js MAP_MODE_DEFAULT='fog' · src/ui/components/mapboard.js data-map-mode, .map-fog-ground · rungs are hidden/placed/known (mapknowledge.js)",
+   "read": "src/model/mapknowledge.js MAP_MODE_DEFAULT='path' (fog off by default, owner 2026-10-19) · src/ui/components/mapboard.js data-map-mode, .map-fog-ground · rungs are hidden/placed/known (mapknowledge.js)",
    "anchors": [
     "MAP_MODE_DEFAULT",
     "map-fog-ground"
@@ -937,8 +937,8 @@
     },
     "wrong": [
      {
-      "js": "document.querySelector('.map-scroll').dataset.mapMode !== 'fog'",
-      "why": "HE OPENS THE MAP AND THERE IS NO FOG. data-map-mode is 'path' — the whole act is drawn, exactly as before. The fog is in the bundle and switched off behind Settings › Display › Map reveal"
+      "js": "document.querySelector('.map-scroll').dataset.mapMode !== 'path'",
+      "why": "HE OPENS THE MAP AND THE FOG IS ON. Fog is off by default (owner, 2026-10-19), so data-map-mode must be 'path' — the whole act is drawn. Fog is a choice behind Settings › Display › Map reveal"
      }
     ]
    }
@@ -947,16 +947,16 @@
    "id": "G7b",
    "extra": true,
    "by": "Bjorn",
-   "read": "same row, the other edge — ?shotSettings={\"mapMode\":\"path\"} (src/main.js, the shotSettings door)",
+   "read": "same row, the other edge — ?shotSettings={\"mapMode\":\"fog\"} (src/main.js, the shotSettings door)",
    "anchors": [
     "shotSettings"
    ],
-   "screen": "the act map with Map reveal switched to PATH — the edge that proves the old mode survives",
-   "_note": "NOT a ledger row, and DECLARED as such rather than smuggled in: `extra: true` is the only exemption from the stale floor in this file. Until 08-14 this shot the FOG side while path was the default; the default flipped (G8), so the declared other edge flips with it — it exists so G7/G8 cannot be misread as 'the path view was deleted'.",
+   "screen": "the act map with Map reveal switched to FOG — the edge that proves the fog choice survives",
+   "_note": "NOT a ledger row, and DECLARED as such rather than smuggled in: `extra: true` is the only exemption from the stale floor in this file. Until 2026-10-19 this shot the PATH side while fog was the default; the default flipped back (G8), so the declared other edge flips with it — it exists so G7/G8 cannot be misread as 'the fog choice was deleted'.",
    "reach": [
     {
      "op": "goto",
-     "q": "?shot=map&shotWalk=4&shotSettings=%7B%22mapMode%22%3A%22path%22%7D",
+     "q": "?shot=map&shotWalk=4&shotSettings=%7B%22mapMode%22%3A%22fog%22%7D",
      "ms": 2000
     }
    ],
@@ -971,8 +971,8 @@
     },
     "wrong": [
      {
-      "js": "document.querySelector('.map-scroll').dataset.mapMode !== 'path'",
-      "why": "the shotSettings door did not deliver path mode — the A/B lost its B"
+      "js": "document.querySelector('.map-scroll').dataset.mapMode !== 'fog'",
+      "why": "the shotSettings door did not deliver fog mode — the A/B lost its B"
      }
     ]
    }
@@ -1434,11 +1434,11 @@
   {
    "id": "G8",
    "by": "Bjorn",
-   "read": "src/model/mapknowledge.js (MAP_MODE_DEFAULT = 'fog')",
+   "read": "src/model/mapknowledge.js (MAP_MODE_DEFAULT = 'path', owner 2026-10-19)",
    "anchors": [
     "MAP_MODE_DEFAULT"
    ],
-   "screen": "the act map, booted with no settings at all — the default he asked for",
+   "screen": "the act map, booted with no settings at all — the default the owner set (fog off), 2026-10-19",
    "why-drive": "G7 walks the same map; this row is HIS SENTENCE ABOUT THE DEFAULT, so its boot passes NO shotSettings and asserts the mode the bundle chooses on its own.",
    "reach": [
     {
@@ -1458,14 +1458,14 @@
     },
     "wrong": [
      {
-      "js": "document.querySelector('.map-scroll').dataset.mapMode !== 'fog'",
-      "why": "the default is not fog — 'the fog needs to be the default' is still a setting"
+      "js": "document.querySelector('.map-scroll').dataset.mapMode !== 'path'",
+      "why": "the default is not path — map fog is off by default (owner, 2026-10-19); fog is still a setting"
      }
     ],
     "source": [
      {
       "in": "src/model",
-      "pattern": "MAP_MODE_DEFAULT = 'fog'",
+      "pattern": "MAP_MODE_DEFAULT = 'path'",
       "min": 1,
       "why": "the default's one home"
      }
