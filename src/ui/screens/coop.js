@@ -959,9 +959,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     // starts at rc1), so another seat holding the same id must not keep this one lit.
     // Leaving combat (reward, map) drops it too: mountCoop outlives the scene change. Only the
     // transition clears; a redraw of the same noncombat scene keeps a reward card's select tap.
-    const leftCombat = lastSceneKind === 'combat' && snap.scene.kind !== 'combat';
-    lastSceneKind = snap.scene.kind;
-    if (litCard() !== null && (leftCombat || (snap.scene.kind === 'combat'
+    // The surface is what this seat sees: a catch-up reward overrides the party's combat scene.
+    const surface = myMember()?.catchupQueue?.length ? 'catchup' : snap.scene.kind;
+    const leftCombat = lastSceneKind === 'combat' && surface !== 'combat';
+    lastSceneKind = surface;
+    if (litCard() !== null && (leftCombat || (surface === 'combat'
       && !((snap.scene.players || []).find(p => p.id === me)?.hand || []).some(card => card.instanceId === litCard())))) clearSelection();
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
     else { heldStances.reset(); combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
