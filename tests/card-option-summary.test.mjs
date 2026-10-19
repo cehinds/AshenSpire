@@ -1,0 +1,33 @@
+// tests/card-option-summary.test.mjs — the picker tile line: live numbers, with their direction.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { cardEffectLine, summarizeCardOption } from '../src/ui/models/CardOptionSummaryModel.js';
+
+const counterDef = { id: 'testCounter', name: 'Counter', type: 'attack', tags: ['maneuver:counter', 'camp:physical'],
+  effects: [{ op: 'block', target: 'self', amount: 5 }, { op: 'damage', target: 'enemy', amount: 4 }] };
+const strikeDef = { id: 'testStrike', name: 'Strike', type: 'attack', effects: [{ op: 'damage', target: 'enemy', amount: 6 }] };
+const line = (def, preview) => cardEffectLine(def, preview, null).map(row => `${row.label} ${row.value}${row.dir ? `:${row.dir}` : ''}`);
+
+test('counter reads Def and Return from the live preview', () => {
+  const preview = { values: [{ op: 'block', value: 7 }, { op: 'damage', value: 4 }] };
+  assert.deepEqual(line(counterDef, preview), ['Def 7:up', 'Return 4']);
+});
+test('a lowered number is down, an unchanged one has no direction', () => {
+  assert.deepEqual(line(strikeDef, { values: [{ op: 'damage', value: 3 }] }), ['Dmg 3:down']);
+  assert.deepEqual(line(strikeDef, { values: [{ op: 'damage', value: 6 }] }), ['Dmg 6']);
+});
+test('with no preview the authored numbers show and nothing is coloured', () => {
+  assert.deepEqual(line(counterDef, null), ['Def 5', 'Return 4']);
+});
+test('summarizeCardOption: name, line and cost chips; a missing reader gives a name-only tile', () => {
+  const option = { id: 'o1', name: 'Counter', staminaCost: 2, manaCost: 1, play: { cardInstanceId: 'c1', targetId: 'e1' } };
+  const full = summarizeCardOption(null, {}, option, { defOf: () => counterDef,
+    previewOf: (opt) => { assert.equal(opt.play.targetId, 'e1'); return { values: [{ op: 'block', value: 7 }, { op: 'damage', value: 4 }] }; } });
+  assert.equal(full.name, 'Counter');
+  assert.deepEqual(full.costs, ['2 SP', '1 MP']);
+  assert.equal(full.line[0].dir, 'up');
+  const bare = summarizeCardOption(null, {}, option);
+  assert.deepEqual(bare.line, []);
+  const broken = summarizeCardOption(null, {}, option, { defOf: () => { throw new Error('no card'); } });
+  assert.deepEqual(broken.line, []);
+});
