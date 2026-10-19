@@ -38,7 +38,13 @@ export function cardEffectLine(def, preview = null, registries = null) {
     const amount = value(effect, index), base = baseOf(effect, index);
     if (typeof amount !== 'number') return;
     switch (effect.op) {
-      case 'damage': add(counter ? 'return' : 'dmg', effect, { labelId: counter ? 'cardOption.label.return' : 'cardOption.label.dmg', amount, base }); break;
+      case 'damage': {
+        // A multi-hit card keeps its hit count ("Dmg 3 ×3"), read from the live preview first.
+        const hits = preview?.values?.[index]?.hits ?? effect.hits ?? 1;
+        add(counter ? 'return' : 'dmg', effect, { labelId: counter ? 'cardOption.label.return' : 'cardOption.label.dmg', amount, base,
+          hits: typeof hits === 'number' && hits > 1 ? hits : 0 });
+        break;
+      }
       case 'block': case 'gainBarrier': {
         const split = defenseValue(effect, index) || (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2 ? spellDefenseSplit({ ...def, combatProfile: profile }, amount) : null);
         if (split) {
@@ -70,7 +76,7 @@ export function cardEffectLine(def, preview = null, registries = null) {
     // A split defense shows its own share but moves with the whole gain it came from.
     // The row places the number ("Def {amount}"); before/after carry that placement to the view.
     const [before, after] = t(row.labelId, { amount: MARK }).split(MARK);
-    return freeze({ label: `${before}${after}`.replace(/[^\p{L}\s]/gu, '').trim(), before, after, value: row.amount, base: row.base ?? ref.base,
+    return freeze({ label: `${before}${after}`.replace(/[^\p{L}\s]/gu, '').trim(), before, after: row.hits ? `${after} \u00d7${row.hits}` : after, hits: row.hits || 1, value: row.amount, base: row.base ?? ref.base,
       dir: live ? direction(ref.amount, ref.base) : null });
   }));
 }

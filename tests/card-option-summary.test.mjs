@@ -43,3 +43,12 @@ test('a non-spell Barrier gain is labelled Barrier, not Def', () => {
   const rows = cardEffectLine(barrierDef, { values: [{ op: 'gainBarrier', value: 6 }] }, null);
   assert.deepEqual(rows.map(row => [row.label, row.value, row.dir, row.before, row.after]), [['Barrier', 6, 'up', '+', ' Barrier']]);
 });
+test('a multi-hit card keeps its hit count after the number', () => {
+  const flurry = { id: 'testFlurry', name: 'Flurry', type: 'attack', effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 3 }] };
+  const [live] = cardEffectLine(flurry, { values: [{ op: 'damage', value: 4, hits: 3 }] }, null);
+  assert.deepEqual([live.value, live.hits, live.after, live.dir], [4, 3, ' ×3', 'up']);
+  const [authored] = cardEffectLine(flurry, null, null);
+  assert.equal(authored.after, ' ×3', 'the authored hit count shows with no preview');
+  const [single] = cardEffectLine({ ...flurry, effects: [{ op: 'damage', target: 'enemy', amount: 3 }] }, null, null);
+  assert.equal(single.after, '', 'one hit shows no multiplier');
+});
