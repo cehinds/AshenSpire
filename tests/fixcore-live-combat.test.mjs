@@ -154,6 +154,13 @@ test('a combat saved before the opposed-roll ruling restores onto the new accura
  assert.deepEqual(restored.fixCoreRules.accuracy,combat.fixCoreRules.accuracy);
  assert.equal(old.fixCoreRules.accuracy.evasionPerStack,1,'caller snapshot untouched');
 });
+test('a card-scoped accuracy override changes the Evade stacks that card gains',async()=>{
+ const {formulaCtxFor}=await import('../src/engine/actions.js');
+ const {combat}=live();const dexterity=combat.player.attributes.dexterity;
+ const card={cardId:'core.evade',mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{evadeStackBase:3,evadeStackDex:2}}]};
+ assert.equal(formulaCtxFor(combat,{source:combat.player,card:{cardId:'core.evade'}}).evadeStackGain,1+dexterity);
+ assert.equal(formulaCtxFor(combat,{source:combat.player,card}).evadeStackGain,3+2*dexterity);
+});
 test('enemy heal-and-block move spends exactly three SP and cannot cast with two',()=>{
  for(const pool of [3,2]) {
   const {combat,target}=live();target.hp=250;target.maxStamina=pool;target.stamina=pool;

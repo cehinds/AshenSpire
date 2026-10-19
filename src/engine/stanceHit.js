@@ -43,9 +43,9 @@ export function precisionStatMix(ctx, entity, carrier = null) {
 /** Precision stacks an offensive stance entry grants under FixCore: the base grant plus the stat mix, like Evade's 1 + DEX (owner, 2026-10-19). */
 export const precisionEntryGrant = (ctx, entity, base, carrier = null) => base > 0 ? base + precisionStatMix(ctx, entity, carrier) : 0;
 /** Evade stacks one Evade play adds under FixCore: evadeStackBase + evadeStackDex × DEX (config, owner 2026-10-19); 0 elsewhere. */
-export function evadeStackGain(ctx, entity) {
+export function evadeStackGain(ctx, entity, carrier = null) {
   if (!fixCoreEnabled(ctx) || !entity) return 0;
-  const cfg = fixCoreRules(ctx, entity).accuracy;
+  const cfg = fixCoreRules(ctx, entity, carrier).accuracy;
   return Math.floor(cfg.evadeStackBase + cfg.evadeStackDex * (Number(attributesOf(ctx, entity)?.dexterity) || 0));
 }
 export function effectiveEvasion(ctx, entity, { evadeDisabled = false, baseEntity = entity } = {}) {

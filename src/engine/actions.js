@@ -1393,7 +1393,7 @@ export function formulaCtxFor(ctx, action, primaryTarget) {
       allEnemies: livingEnemies(ctx),
     },
     weaponDamage:weaponDamageBasis(ctx,action.source),cardId: action.card?.cardId, metricsBefore:meta.abilityBefore, manaSpent:meta.manaSpent || 0, staminaSpent:meta.staminaSpent || 0,
-    evadeStackGain: evadeStackGain(ctx, action.source),
+    evadeStackGain: evadeStackGain(ctx, action.source, action.card),
     energySpent: meta.energySpent != null ? meta.energySpent : 0,
     cardsPlayedThisTurn: ctx.player ? ctx.player.counters.cardsPlayedThisTurn : 0,
   };
