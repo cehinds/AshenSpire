@@ -1,4 +1,4 @@
-import { fixCoreEnabled, fixCoreRules } from './fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreRules, fixCoreWardDisabled } from './fixCoreMechanics.js';
 import { gameProfileRatingReceipt } from './gameProfileRun.js';
 import { stanceRatingBonus } from './stanceRules.js';
 import { equippedPieces } from './loadout.js';
@@ -845,6 +845,7 @@ export function schoolResistanceMultiplier(ctx, target, school) {
 
 /** persistentWardMaximum(ctx, entity) → the Ward pool a combatant starts a fight with. */
 export function persistentWardMaximum(ctx, entity) {
+  if (fixCoreWardDisabled(ctx)) return 0; // data toggle: content/source/fixCoreMechanics.json ward.enabled
   const share = ctx?.ratingsRules?.resistance?.wardPool;
   return Math.max(0, Math.floor(ratingValue(ctx, entity, 'ward') * (Number.isFinite(share) ? share : combatRatingDefaults.resistance.wardPool)));
 }

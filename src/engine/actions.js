@@ -1,6 +1,6 @@
 import { resolveAttackHit } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreRules, protectionReceipt, fixCoreWardDisabled, damageReceipt } from '../model/fixCoreMechanics.js';
 import { weaponDamageBasis } from './cardBehavior.js';
 import { MANEUVERS, trimCombatStances } from './concurrentStances.js';
 import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPlan, proposalThreshold, proposalHealingPlan } from './proposalStatusRuntime.js';
@@ -951,7 +951,7 @@ function gainBlockAmount(ctx, entity, amount, card = null, wardProvenance = fals
   entity.block += amt;
   if (fixCoreEnabled(ctx) && amt > 0 && !card?.syntheticDefense && (card?.cardId || card?.moveId)) {
     syncWardMaximum(ctx, entity); syncPoiseMaximum(ctx, entity);
-    Control.restorePersistentWard(ctx, entity, amt, { source: 'block-card', overflow: false, modifierPercent: 0 });
+    if (!fixCoreWardDisabled(ctx)) Control.restorePersistentWard(ctx, entity, amt, { source: 'block-card', overflow: false, modifierPercent: 0 });
     Control.restorePersistentPoise(ctx, entity, amt, { source: 'block-card', overflow: false });
   }
   if (amt > 0 && card && wardProvenance) entity.wardBlock = (entity.wardBlock || 0) + amt;

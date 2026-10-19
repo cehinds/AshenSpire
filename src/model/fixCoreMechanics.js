@@ -11,10 +11,13 @@ export function fixCoreModuleParameters(rules = defaults) {
   return { ...rules.protectionParameters, ...Object.fromEntries(families.map(id => [`combat.${id}`,
     id === 'actionCosts' ? {enemyHealBlockCost:rules.enemyHealBlockCost} : rules[id]])) };
 }
+// Owner, 2026-10-18: Ward code stays; `ward.enabled: false` in fixCoreMechanics.json switches it off. Missing = on.
+export const fixCoreWardEnabled = rules => rules?.ward?.enabled !== false;
 const rawRules = ctx => ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules || defaults;
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  const known = new Set(['version','enabled','ward','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => key !== 'enabled'))) throw new Error('FixCore ward requires {enabled:boolean}');
   for(const key of Object.keys(rules)) if(!known.has(key)) throw new Error(`FixCore unknown configuration field ${key}`);
   for (const tag of rules.defaultTags || []) if (!behaviorTags.has(tag)) throw new Error(`FixCore unknown behavior tag ${tag}`);
   compileBindings({mechanics,moduleParameters:fixCoreModuleParameters(rules),attachments:[{
@@ -30,7 +33,7 @@ export function fixCoreAttachments(ctx,entity,carrier=null) {
   const table=entity.kind==='enemy' ? ctx?.registries?.enemies : null;
   const definitionId=entity.enemyId || entity.classId;
   const definition=table?.has?.(definitionId) ? table.get(definitionId) : {};
-  const rows=[{ownerId,sourceInstanceId:ownerId,kind:'entity',tags:entity.mechanicTags ?? definition.mechanicTags ?? rules.defaultTags,
+  const rows=[{ownerId,sourceInstanceId:ownerId,kind:'entity',tags:entity.mechanicTags ?? definition.mechanicTags ?? (fixCoreWardEnabled(rules) ? rules.defaultTags : (rules.defaultTags || []).filter(tag => tag !== 'defense:wardProtection')),
     mechanicBindings:entity.mechanicBindings ?? definition.mechanicBindings ?? []}];
   for(const [id,mount] of Object.entries(ctx?.propertyMounts?.[ownerId] || {})) rows.push({ownerId,sourceInstanceId:id,
     kind:({armour:'gear',armament:'gear',sigil:'gear',class:'character',feat:'character',companion:'entity'})[mount.kind] || mount.kind,
@@ -60,6 +63,8 @@ export function fixCoreRules(ctx,entity=null,carrier=null) {
   return result;
 }
 export function fixCoreEnabled(ctx) { return ctx?.combatExpansionVersion === 2 && (ctx?.fixCoreRules?.version === 1 || ctx?.gameProfile?.modules?.effects?.fixCoreVersion === 1) && rawRules(ctx).enabled; }
+/** True when FixCore is active and the data toggle has switched Ward off. */
+export function fixCoreWardDisabled(ctx) { return fixCoreEnabled(ctx) && !fixCoreWardEnabled(rawRules(ctx)); }
 export function protectionBindings(ctx, entity, carrier=null) {
   return compileBindings({ mechanics, attachments:fixCoreAttachments(ctx,entity,carrier), moduleParameters:fixCoreModuleParameters(rawRules(ctx)) });
 }
@@ -102,7 +107,8 @@ export function fixCoreProtectionDescription(ctx,entity,kind) {
   const damageKind = kind === 'ward' || kind === 'magical' ? 'magical' : 'physical';
   const shadow = {...entity,persistentWard:{...entity.persistentWard,value:1},persistentPoise:{...entity.persistentPoise,value:1}};
   const receipt = protectionReceipt(ctx,shadow,damageKind,100);
-  return `While active, reduces ${damageKind} damage by ${receipt.reduced}%. The prevented damage spends this pool. Block cards restore both Poise and Ward by their Block amount, up to each maximum.`;
+  const restores = fixCoreWardDisabled(ctx) ? 'Poise' : 'both Poise and Ward';
+  return `While active, reduces ${damageKind} damage by ${receipt.reduced}%. The prevented damage spends this pool. Block cards restore ${restores} by their Block amount, up to each maximum.`;
 }
 
 export function snapshotFixCoreRules(ctx) {
