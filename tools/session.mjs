@@ -69,7 +69,7 @@ import {
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import { cardRewardPlan } from '../src/model/rewardplan.js';
 import {
-  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, setReactions, previewCoopCard, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
+  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, setReactions, previewCoopCard, previewCoopCards, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
   recoverControl, chooseBlightFeat,
 } from '../src/engine/coopCombat.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
@@ -770,6 +770,18 @@ export function createSession({ registries, seedString, endless = false, restore
     return { ok: true, combat: session.scene };
   }
 
+  // A card-zone choice's candidate previews, computed once per choice (they ride every snapshot until it is
+  // answered) and from a single detached state. Keyed on the live choice object, so a new choice recomputes.
+  const choicePreviews = new WeakMap();
+  function candidatePreviews(c, playerId, choice) {
+    if (!choicePreviews.has(choice)) {
+      let previews = {};
+      try { previews = previewCoopCards(c, playerId, (choice.candidates || []).map(card => card.instanceId)); } catch { previews = {}; }
+      choicePreviews.set(choice, previews);
+    }
+    return choicePreviews.get(choice);
+  }
+
   function combatScene() {
     const c = live.combat;
     // Compact digest of display-worthy events since the LAST snapshot, so the
@@ -879,9 +891,8 @@ export function createSession({ registries, seedString, endless = false, restore
         // its live effect variant. Nothing here is written back to the engine state or a save.
         pendingCardChoice:c.pendingCardChoice?.playerId===P.id ? (() => {
           const choice = structuredClone(c.pendingCardChoice);
-          choice.candidates = (choice.candidates || []).map(card => {
-            try { return { ...card, combatPreview: previewCoopCard(c, P.id, card.instanceId) }; } catch { return card; }
-          });
+          const previews = candidatePreviews(c, P.id, c.pendingCardChoice);
+          choice.candidates = (choice.candidates || []).map(card => (previews[card.instanceId] ? { ...card, combatPreview: previews[card.instanceId] } : card));
           return choice;
         })() : null,
         pendingReaction: c.pendingReaction?.ownerId === P.id ? structuredClone(c.pendingReaction) : null,

@@ -658,6 +658,13 @@ export function previewCoopCard(C, playerId, instanceId, targetId, upcastTier) {
   return soloPreviewCard(clone, instanceId, targetId, upcastTier);
 }
 
+/** previewCoopCard for several of one seat's cards at once: one detached state serves them all (a clone costs far more than a preview). */
+export function previewCoopCards(C, playerId, instanceIds) {
+  const clone = F.candidateState(C, { detached: true });
+  setActive(clone, clone.players.get(playerId));
+  return Object.fromEntries(instanceIds.map(id => [id, soloPreviewCard(clone, id, undefined, undefined)]));
+}
+
 export function recoverControl(C, playerId, selections) {
   if (C.pendingReaction) throw new Error('Answer the pending reaction first');
   if (!C._foundationTransaction) return F.foundationTransaction(C, candidate => recoverControl(candidate, playerId, selections));
