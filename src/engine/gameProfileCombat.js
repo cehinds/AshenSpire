@@ -3,33 +3,22 @@ import { attackHitPreview } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack } from '../model/combatRatings.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCoreRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
-import { mirroredManeuver } from '../model/stanceRules.js';
+import { mirroredStance, configuredStance } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
-import { cardPreparationCategory } from '../model/cardClassification.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
 import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js';
 // Configured combat adapter. All rules are scoped to the saved resolved profile;
 // a missing/current profile leaves the existing interpreter untouched.
-import { gameModule, gameContent } from '../model/gameProfile.js';
+import { gameContent } from '../model/gameProfile.js';
+import { configuredModule } from '../model/profileModule.js';
 
 export function configuredCombat(subject) {
   const profile = subject?.gameProfile;
   return !!profile && (profile.foundation?.mode === 'configured'
     || Object.values(profile.modules || {}).some(rule => rule?.mode === 'configured'));
 }
-export function configuredModule(subject, id) {
-  const rule = gameModule(subject, id);
-  return rule?.mode === 'configured' ? rule : null;
-}
-// A Spell that mirrors a basic card (owner 2026-10-18) keeps that basic's stance; it is still a Spell.
-export const mirroredStance = mirroredManeuver;
-export function configuredStance(carrier) {
-  if (mirroredStance(carrier)) return mirroredStance(carrier);
-  if (cardPreparationCategory(carrier)) return 'prepared';
-  const raw = carrier?.stanceTrigger?.stance || carrier?.combatProfile?.maneuver || carrier?.maneuver
-    || (carrier?.cardTags || carrier?.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id).find(tag => tag.startsWith('maneuver:'))?.slice(9);
-  return ({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack' })[raw] || raw || 'neutral';
-}
+export { configuredModule };
+export { mirroredStance, configuredStance };
 export function setProfileStance(ctx, entity, carrier) {
   if (!configuredCombat(ctx)) return false;
   if (fixCoreEnabled(ctx) && carrier && carrier.fixCoreSameStance === undefined) carrier.fixCoreSameStance = sameStance(entity, carrier);
