@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Combat numbers are always whole** ([#2152](https://github.com/cehinds/AshenSpire/pull/2152), `0.4.0.1903`). Combat numbers are now always whole, with no decimals in damage, Block, Poise, hit chances, Accuracy, Evasion or the damage breakdown.
+- **Combat numbers are always whole** ([#2152](https://github.com/cehinds/AshenSpire/pull/2152), `0.7.1.1637`). Combat numbers are now always whole, with no decimals in damage, Block, Poise, hit chances, Accuracy, Evasion or the damage breakdown.
 - **Armor has a flat 3-point budget** ([#2145](https://github.com/cehinds/AshenSpire/pull/2145), `0.7.1.1637`). Armor now has a flat budget of 3 points whatever its rank, with a rarity bonus ready for later (0 for now).
 
 ## 2026-10-18
