@@ -4,6 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
+import { carriedIds } from '../src/model/loadout.js';
 import { noncombatEditing, editingLocked, newArmouryItems, armouryHasNew, markArmourySeen } from '../src/model/armouryRules.js';
 
 const make = id => {
@@ -51,4 +52,19 @@ test('a cards module with editorEnabled false never opens the Armoury deck door 
   run.gameProfile.modules.cards.editorEnabled = false;
   assert.equal(profileOpensDeckEditor(run), false);
   assert.equal(profileOpensDeckEditor(make('current')), false);
+});
+
+test('bought and reward armour glows, and an older save does not glow its existing armour (review finding)', () => {
+  const run = make('core');
+  markArmourySeen(run);
+  run.loadout.boughtArmour = [{ classId: 'reaver', id: 'qa-armour' }];
+  assert.deepEqual(newArmouryItems(run), ['armour:reaver/qa-armour']);
+  markArmourySeen(run);
+  assert.equal(armouryHasNew(run), false);
+  const old = make('core');
+  old.loadout.boughtArmour = [{ classId: 'reaver', id: 'old-armour' }];
+  old.armorySeen = carriedIds(old.loadout); // a save from before armour refs were tracked
+  assert.equal(armouryHasNew(old), false);
+  old.loadout.boughtArmour.push({ classId: 'reaver', id: 'new-armour' });
+  assert.equal(armouryHasNew(old), true);
 });

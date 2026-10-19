@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
-import { beginGameProfileRest, commitGameProfileRest, restHealedAny } from '../src/model/gameProfileRest.js';
+import { beginGameProfileRest, commitGameProfileRest, restHealedAny, restCompletionKey } from '../src/model/gameProfileRest.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { smithingPlan } from '../src/model/smithing.js';
@@ -131,4 +131,13 @@ test('arriving with full pools but a spent flask records the flask refill (revie
   assert.ok(visit.healed.flaskHp > 0);
   assert.equal(restHealedAny(visit.healed), true);
   assert.equal(restHealedAny({ hp: 0, mana: 0, stamina: 0 }), false, 'older saves count missing flask fields as 0');
+});
+
+test('the rest completion copy follows what is actually still open (review finding)', () => {
+  const rows = (smith, level) => [{ id: 'smith', available: smith }, { id: 'levelUp', available: level }];
+  const used = ids => id => ids.includes(id);
+  assert.equal(restCompletionKey(rows(true, true), used([])), 'chooseAll');
+  assert.equal(restCompletionKey(rows(false, true), used(['smith'])), 'completeAll');
+  assert.equal(restCompletionKey(rows(false, false), used(['smith'])), 'completeDoneAll', 'no earned point left');
+  assert.equal(restCompletionKey(rows(false, false), used(['smith', 'levelUp'])), 'completeDoneAll');
 });

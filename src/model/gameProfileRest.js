@@ -11,6 +11,11 @@ import { commitDeckEditDraft } from './deckRules.js';
 
 // True when arriving restored anything, flasks included. Saves from before the flask fields count them as 0.
 export const restHealedAny = healed => !!healed && !!(healed.hp || healed.mana || healed.stamina || healed.flaskHp || healed.flaskMana);
+// Which line the all-services rest screen shows: nothing used yet, another service still open, or nothing left but Continue.
+export function restCompletionKey(services, usedOf) {
+  if (!services.some(service => usedOf(service.id))) return 'chooseAll';
+  return services.some(service => !usedOf(service.id) && service.available) ? 'completeAll' : 'completeDoneAll';
+}
 export const restServicesAll = run => gameContent(run, 'rests')?.servicesPerVisit === 'all';
 // Saves from before `used` existed carry only `service`; that one service counts as used.
 export const restServiceUsed = (visit, service) => !!(visit.used ? visit.used[service] : visit.service === service);
