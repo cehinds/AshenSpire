@@ -252,3 +252,33 @@ test('Core break: haptic fires, the log says staggered not interrupted, the pend
   assert.match(text, /Poise broke/);
   assert.doesNotMatch(text, /interrupted/);
 });
+
+test('a Poise break that Impact protection refuses carries no stagger marker, haptic or "staggered" log line', async () => {
+  const { enemyPoiseBroken } = await import('../src/ui/fx.js');
+  const { combatLogEntries } = await import('../src/model/combatLog.js');
+  const { combat, target } = live(2);
+  combat.foundation = { rules: { impact: { protectionTurns: 1 } } };
+  const events = []; // a plain recorder: the foundation's own event rules are not under test here
+  combat.emit = (type, payload) => { events.push({ type, ...payload }); };
+  target.impactProtectedUntil = combat.turn;
+  hit(combat, target, 10);
+  assert.equal(target.persistentPoise.value, 0);
+  assert.equal(target.combatStance, undefined, 'protection refused the stagger');
+  const event = events.find(row => row.type === 'poiseBroken');
+  assert.ok(event);
+  assert.ok(!event.poiseBreak);
+  assert.equal(enemyPoiseBroken(event), false);
+  const text = JSON.stringify(combatLogEntries(events, { registries: reg, players: [], enemies: combat.enemies }));
+  assert.match(text, /Poise broke/);
+  assert.doesNotMatch(text, /staggered/);
+});
+
+test('an unprotected Core break still carries the stagger marker and the "staggered" log line', async () => {
+  const { combatLogEntries } = await import('../src/model/combatLog.js');
+  const { combat, target } = live(2);
+  hit(combat, target, 10);
+  const event = combat.eventLog.find(row => row.type === 'poiseBroken');
+  assert.equal(event.poiseBreak, true);
+  assert.equal(target.combatStance.maneuver, 'staggered');
+  assert.match(JSON.stringify(combatLogEntries(combat.eventLog, { registries: reg, players: [], enemies: combat.enemies })), /staggered/);
+});

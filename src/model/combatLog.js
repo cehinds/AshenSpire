@@ -198,7 +198,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'barrierBroken': text = `${target}'s Barrier broke${paren(causeText())}.`; break;
       case 'wardBroken': case 'poiseBroken': {
         const pool = event.type === 'wardBroken' ? 'Ward' : 'Poise';
-        const toll = event.poiseBreak ? 'staggered' : event.interrupted ? 'interrupted'
+        const toll = event.poiseBreak ? 'staggered' : event.poiseBreak === false ? null : event.interrupted ? 'interrupted'
           : Number.isFinite(event.staminaLoss) ? (event.staminaLoss ? `−${event.staminaLoss} Stamina next turn` : null)
             : pool === 'Poise' ? 'staggered' : null;
         const by = causeText();

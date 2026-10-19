@@ -328,8 +328,10 @@ function claimStagger(ctx, target) {
 
 // A Poise break (owner D13): the owner is Staggered. An enemy's break counts against the round's stagger limit.
 function fixCorePoiseBreak(ctx, source, target) {
-  // `poiseBreak` marks a Core break for the break haptic (fx.enemyPoiseBroken); Core breaks interrupt nothing.
-  ctx.emit('poiseBroken', { targetId: target.id, sourceId: source?.id, poiseBreak: true, ...seatOf(ctx, target) });
+  // `poiseBreak` marks a Core break that staggers, for the break haptic (fx.enemyPoiseBroken) and the log; Core breaks interrupt
+  // nothing. A break the target's Impact protection refuses carries `poiseBreak: false`: the pool broke, nobody was staggered.
+  const staggers = !(target.kind === 'enemy' && staggerRefused(ctx, target));
+  ctx.emit('poiseBroken', { targetId: target.id, sourceId: source?.id, poiseBreak: staggers, ...seatOf(ctx, target) });
   if (target.kind === 'enemy') { claimStagger(ctx, target); staggerEnemy(ctx, target, { cause: 'poiseBreak' }); }
   else fixCoreStagger(ctx, target, { cause: 'poiseBreak' });
 }
@@ -1126,9 +1128,12 @@ export function fixCoreStagger(ctx, entity, options = {}) {
     ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}), ...(options.cause ? { cause: options.cause } : {}) });
 }
 
+function staggerRefused(ctx, enemy) {
+  return !enemy || enemy.kind !== 'enemy' || !enemy.alive || !!(ctx.foundation && enemy.impactProtectedUntil >= ctx.turn);
+}
+
 export function staggerEnemy(ctx, enemy, options = {}) {
-  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return false;
-  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return false;
+  if (staggerRefused(ctx, enemy)) return false;
   if (fixCoreEnabled(ctx)) {
     // Owner D13: Staggered is a stance (-1 SP, +1 Vulnerable), not a skipped turn or a stacking status.
     fixCoreStagger(ctx, enemy, options);
