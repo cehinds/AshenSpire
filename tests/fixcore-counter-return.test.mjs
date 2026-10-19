@@ -372,3 +372,16 @@ test('Counters with authored coverage get profile-aware help and keep the covera
   assert.match(html, /half its incoming damage/);
   assert.doesNotMatch(html, /requires all damage and status pressure resisted|after all covered damage and status pressure is resisted/);
 });
+
+test('the face lists only what live resolution delivers: no legacy Smash, Prone or zero-Poise lines on Core Counters', () => {
+  for (const [cardId, rank] of [['progression-crimson-reprisal', 3], ['lowGuardRiposte', undefined]]) {
+    const { combat, enemy } = live();
+    combat.piles.hand.push({ instanceId: 'cf2', cardId, ...(rank ? { abilityRank: rank } : {}) });
+    enemy.intent.damage = 12;
+    const view = previewCard(combat, 'cf2', enemy.id);
+    const text = (cardFaceLines(view.resolvedDefinition, view, reg) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
+    assert.ok(text.length > 0, `${cardId}: face builds`);
+    assert.doesNotMatch(text, /against Smash|while Prone/, `${cardId}: ${text}`);
+    assert.doesNotMatch(text, /\b0 Poise/, `${cardId}: ${text}`);
+  }
+});

@@ -159,6 +159,8 @@ function buildLines(def, preview, registries) {
         return frag('damage', text + area);
       }
       case 'poiseDamage': case 'wardDamage': {
+        // Core 2: the computed return stands for every authored Poise row; a row the return zeroes is not listed.
+        if (counter && preview?.counterReturn && !(n > 0)) return [];
         // Ward off (Core 2): Ward damage drains Poise, so the face reads one combined Poise figure.
         const merged = poiseMerge?.get(index);
         if (merged) {
@@ -323,8 +325,8 @@ function buildLines(def, preview, registries) {
     // Beating the revealed hit also adds Block before it lands.
     if (preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', text: `+${num(preview.counterReturn.block)} Block against it` });
   }
-  if (counter && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
-  if (def.pronePoiseBonus) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
+  if (counter && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
+  if (def.pronePoiseBonus && !(counter && preview?.counterReturn)) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
   if (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2) {
     // gameProfile lets the face apply the same Core 2 rounding as combat (stanceEntryBonuses floors under FixCore).
     const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules, gameProfile: registries?.gameProfile };
