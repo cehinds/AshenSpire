@@ -213,11 +213,9 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const intentHeight = frame.querySelector(':scope > .target-hud-overhead-meters > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
       return { frame, placement: targetBodyHudPlacement({ body, frame: rect(frame), intentHeight, zoom }) };
     });
-    // Phase 2: the intent placement, then the reads that follow it.
-    for (const { frame, placement } of intents) {
-      frame.style.setProperty('--combat-selected-intent-top', `${placement.selectedTop}px`);
-      frame.style.setProperty('--combat-selected-intent-center', `${placement.center}px`);
-    }
+    // Phase 2: reads that follow. The intent placement itself is written last:
+    // it moves only the intent inside its own frame, and none of the boxes read
+    // here, so writing it first made every one of these reads a forced layout.
     const sprites = frames.map(frame => ({ id: frame.dataset.eid, ...rect(frame.querySelector('.sprite')) }));
     const obstacles = [...sprites, ...frames.map(frame => frame.querySelector('.combatant-leading')).filter(Boolean).map(rect),
       ...combat.querySelectorAll(':scope > .topbar, .combat-hud, .combat-tools, .combat-action-row, .turn-ribbon, .hand .card')].map(value => value?.nodeType ? rect(value) : value);
@@ -277,6 +275,10 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       info.style.top = `${infoBox.top}px`;
       info.style.width = `${infoBox.width}px`;
       info.style.height = `${infoBox.height}px`;
+    }
+    for (const { frame, placement } of intents) {
+      frame.style.setProperty('--combat-selected-intent-top', `${placement.selectedTop}px`);
+      frame.style.setProperty('--combat-selected-intent-center', `${placement.center}px`);
     }
     // Phase 5: the tint cells, rebuilt only when what they draw changed (replacing
     // them dirtied layout, so the next run's first read was a forced layout).
