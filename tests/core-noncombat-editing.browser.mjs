@@ -23,7 +23,8 @@ try {
     });
     let s = await state();
     assert.equal(s.armoury, String(locked), `${profile}: Armoury button aria-disabled during combat`);
-    if (s.deck !== null) assert.equal(s.deck, String(locked), `${profile}: deck button aria-disabled during combat`);
+    if (locked) assert.equal(s.deck, null, 'Core shows no combat Deck button (owner 2026-10-18)');
+    else if (s.deck !== null) assert.equal(s.deck, 'false', 'Current deck button unchanged');
     if (locked) {
       // A pending reaction is still combat.
       await page.evaluate(() => { window.__combat.pendingReaction = { id: 'qa', options: [] }; });
@@ -46,7 +47,7 @@ try {
       await page.evaluate(() => { window.__combat.result = 'win'; window.__renderCombatForShot(); });
       s = await state();
       assert.equal(s.armoury, 'false', 'enabled once the fight is resolved');
-      if (s.deck !== null) assert.equal(s.deck, 'false');
+      assert.equal(s.deck, null);
       await page.click('#combat-armoury');
       await page.waitForSelector('.armoury');
       assert.equal(await page.evaluate(() => window.__combatRunForShot.armorySeen.includes('qa-new-item')), true, 'opening the Armoury marks the item seen');

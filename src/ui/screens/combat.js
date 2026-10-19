@@ -12,7 +12,7 @@ import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
 import { foundationStandin } from '../components/foundationStandin.js';
 import { gameModule } from '../../model/gameProfile.js';
-import { editingLocked, markArmourySeen } from '../../model/armouryRules.js';
+import { editingLocked, markArmourySeen, noncombatEditing } from '../../model/armouryRules.js';
 import { syncArmouryNew } from '../components/runHud.js';
 import { figureAnimationsEnabled } from '../../model/gameAnimationPolicy.js';
 import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js';
@@ -3433,7 +3433,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       },
     });
   }
-  if (onEditDeck) {
+  // Owner 2026-10-18: Core has no combat Deck button (deck editing is outside combat only); the D key and quick-nav stay inert.
+  if (onEditDeck && !noncombatEditing(run)) {
     const deck = document.createElement('button'); deck.className = 'subtle combat-deck-edit'; deck.textContent = t('deckEditor.open');
     deck.setAttribute('aria-description', tFull('combat.deckEdit.deferred'));
     deck.addEventListener('click', () => {
