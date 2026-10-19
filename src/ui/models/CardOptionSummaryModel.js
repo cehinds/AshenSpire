@@ -37,7 +37,10 @@ export function analyzeCardEffects(def, preview = null, registries = null) {
   const groups = new Map();
   const add = (key, effect, row) => {
     if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push({ ...row, conditional: Boolean(effect.if) });
+    groups.get(key).push(row);
+    // A conditional effect (mutually exclusive branches, riders) cannot be shown as one number; the card's
+    // own text already resolves the live branch, so the tile uses that.
+    if (effect.if) complete = false;
   };
   (def.effects || []).forEach((effect, index) => {
     const amount = value(effect, index), base = baseOf(effect, index);
@@ -85,16 +88,14 @@ export function analyzeCardEffects(def, preview = null, registries = null) {
       default: complete = false; break;
     }
   });
-  // Repeated parts of one kind add up ("Dmg 10" for a weapon hit and a rider). A conditional part is left out
-  // when an unconditional one is shown, and the figure ends in an ellipsis to say so.
+  // Repeated parts of one kind add up ("Dmg 10" for a weapon hit and a rider).
   const found = new Map();
-  for (const [key, parts] of groups) {
-    const unconditional = parts.filter(part => !part.conditional), use = unconditional.length ? unconditional : parts.slice(0, 1);
+  for (const [key, use] of groups) {
     const sum = pick => use.reduce((total, part) => total + pick(part), 0);
     const numeric = pick => use.every(part => Number.isFinite(pick(part)));
     const ref = use.some(part => part.ref);
     found.set(key, { labelId: use[0].labelId, amount: sum(part => part.amount), base: numeric(part => part.base) ? sum(part => part.base) : undefined,
-      hits: use.length === 1 ? use[0].hits : 0, dropped: parts.length > use.length,
+      hits: use.length === 1 ? use[0].hits : 0,
       ...(ref ? { ref: { amount: sum(part => part.ref?.amount ?? part.amount),
         base: numeric(part => part.ref?.base ?? part.base) ? sum(part => part.ref?.base ?? part.base) : undefined } } : {}) });
   }
@@ -120,7 +121,7 @@ export function analyzeCardEffects(def, preview = null, registries = null) {
     // A split defense shows its own share but moves with the whole gain it came from.
     // The row places the number ("Def {amount}"); before/after carry that placement to the view.
     const [before, after] = t(row.labelId, { amount: MARK }).split(MARK);
-    return freeze({ label: `${before}${after}`.replace(/[^\p{L}\s]/gu, '').trim(), before, after: `${after}${row.hits ? ` \u00d7${row.hits}` : ''}${row.dropped ? '\u2026' : ''}`, hits: row.hits || 1, value: row.amount, base: row.base ?? ref.base,
+    return freeze({ label: `${before}${after}`.replace(/[^\p{L}\s]/gu, '').trim(), before, after: `${after}${row.hits ? ` \u00d7${row.hits}` : ''}`, hits: row.hits || 1, value: row.amount, base: row.base ?? ref.base,
       dir: live ? direction(ref.amount, ref.base) : null });
   }));
   return { line, complete: complete && line.length > 0 };
