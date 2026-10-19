@@ -172,7 +172,7 @@ function verifyContent(content) {
       if (!Array.isArray(rows)) fail(at, 'expected an array of starter rows');
       for (const [i, row] of rows.entries()) {
         if (!record(row) || !cards.has(row.card)) fail(`${at}/${i}/card`, `unknown card reference ${JSON.stringify(row?.card)} for class ${classId} row ${i}`);
-        if (!Number.isInteger(row.copies) || row.copies < 1) fail(`${at}/${i}/copies`, `expected positive integer copies for class ${classId} row ${i}, got ${JSON.stringify(row.copies)}`);
+        if (!Number.isSafeInteger(row.copies) || row.copies < 1) fail(`${at}/${i}/copies`, `expected positive integer copies for class ${classId} row ${i}, got ${JSON.stringify(row.copies)}`);
       }
     }
   }
