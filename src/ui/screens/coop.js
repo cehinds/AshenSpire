@@ -1047,6 +1047,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     }
     return row;
   }
+  // The stage of the current render; a badge added after its refit is centred by one more (badged-only, batched) refit.
+  let coopStage = null;
   function syncCoopHitChances() {
     const sc = snap?.scene;
     if (sc?.kind !== 'combat') return;
@@ -1074,7 +1076,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       badge.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
       badge.textContent = Number(preview.hitChance.toFixed(2)) + '%';
       badge.setAttribute('aria-label', 'Chance to hit ' + badge.textContent);
-      (frame.querySelector('.combatant-leading') || frame).append(badge);
+      frame.append(badge);
       if (selectedCard) {
         const odds = badge.cloneNode(true);
         odds.className = 'card-hit-chance';
@@ -1084,6 +1086,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       }
     }
     if (selectedCard && cardOdds.children.length) selectedCard.append(cardOdds);
+    coopStage?.placeHitBadges?.();
   }
   const releaseHitChanceSelection = onSelectionChange(() => syncCoopHitChances());
 
@@ -1638,7 +1641,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     // Fit only after the replacement hand/footer establish the final field size.
     app.querySelector('.field').dataset.formationPolicy = JSON.stringify(sc.formationPolicy || null);
     app.querySelector('.field').dataset.formationOccupancy = JSON.stringify(sc.formationOccupancy || []);
-    wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage), combatLayoutState);
+    coopStage = wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage), combatLayoutState);
     for (const [ownerId, plan] of pendingAnimations) playSeatPlan(ownerId, plan);
     lastSoundSeq = coopReceiptSounds(sc, lastSoundSeq, seats);
     spawnCombatFx(sc, prevCombat);

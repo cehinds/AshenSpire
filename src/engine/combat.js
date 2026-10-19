@@ -749,6 +749,7 @@ function enemyPhase(combat) {
   const preview = Boolean(combat.combatRounds);
   if (!combat.reactionCursor) {
     combat.phase = 'enemy';
+    delete combat.followTrace;
     if (!preview) {
       enemyTurnStart(combat);
       if (combat.result) return;
@@ -823,12 +824,17 @@ function enemyPhase(combat) {
       const next = enemy.plannedMoves.shift();
       const def = combat.registries.enemies.get(enemy.enemyId);
       presentIntent(combat, enemy, def, next.moveId);
+      // The UI's "?" row (SPEC §4.6a): this follow-up's own read, rolled once by presentIntent, and what became of it.
+      // No move id: a failed read must leave nothing about the move in state.
+      const traced = { read: perceptionRead(combat, enemy), outcome: 'played' };
+      ((combat.followTrace ||= {})[enemy.id] ||= []).push(traced);
       const move = expandedEnemyMove(enemy, def.moves[next.moveId], next.moveId, combat);
       if (move.delay) {
         enemy.plannedMoves = [];
+        traced.outcome = 'charging';
         startDelayedMove(combat, enemy, move, next.moveId);
       } else {
-        executeMovePayload(combat, enemy, move, next.moveId);
+        traced.outcome = executeMovePayload(combat, enemy, move, next.moveId) || 'played';
       }
       drainQueue(combat);
       if (Reactions.reactionPaused(combat)) return;
@@ -895,11 +901,11 @@ function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, r
   const spCost=Rounds.enemyMoveSp(move,{enemy,moveId,combat});
   if (fixCoreEnabled(combat)) {
     const available=enemy.fixCoreStaminaRemaining ?? enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId));
-    if(spCost>available) {combat.emit('enemyMoveUnavailable',{sourceId:enemy.id,moveId,required:spCost,available,resource:'sp'});return;}
+    if(spCost>available) {combat.emit('enemyMoveUnavailable',{sourceId:enemy.id,moveId,required:spCost,available,resource:'sp'});return 'refused';}
     enemy.fixCoreStaminaRemaining=available-spCost;
     enemy.stamina=enemy.fixCoreStaminaRemaining;
   }
-  if (!allowBurdenMove(combat,enemy,spCost,move)) return;
+  if (!allowBurdenMove(combat,enemy,spCost,move)) return 'blocked';
   move = expandedEnemyMove(enemy, move, moveId, combat);
   // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
   // cancels never happens. This is what did — the inspector's history.
@@ -2753,6 +2759,27 @@ function evalPreview(combat, action, value, target) {
   return evaluate(value, A.formulaCtxFor(combat, action, target));
 }
 
+// The observer's read of the enemy's CURRENT intent: the one gate previewIntent and the follow-up trace share, so the
+// UI never re-rolls or guesses a move's visibility. `concealed` is true when the exact move stays hidden.
+function intentReadGate(combat, enemy) {
+  const intent = enemy.intent || { kind: 'unknown', moveId: null };
+  const knowledge = knowledgeIntentProjection(combat, enemy);
+  const proposalRead = proposalIntentRevealUntil(enemy, combat.playerKey || 'player', combat.turn,
+    { legacySolo: !(combat.players instanceof Map) }) !== null;
+  if (!proposalRead && knowledge && !knowledge.exact) return { knowledge, proposalRead, concealed: true };
+  const revealed = proposalRead || enemy.actorIntentRevealed || (enemy.intentReads ? enemy.intentReads[combat.playerKey] === true : enemy.intentRevealed !== false);
+  return { knowledge, proposalRead, concealed: !knowledge && !revealed && !!intent.combatProfile?.camp && intent.kind !== 'staggered' };
+}
+
+// The observer's own Perception result for the enemy's current move, WITHOUT a Read Intent reveal: a reveal lifts only
+// the move it names, so the follow-up trace must not inherit it (SPEC §4.6a).
+function perceptionRead(combat, enemy) {
+  const intent = enemy.intent || {};
+  if (combat.enemyKnowledge) return enemy.knowledgeAction?.reads?.[combat.playerKey || 'player']?.visibility === 'exact';
+  if (!intent.combatProfile?.camp) return true;
+  return enemy.intentReads ? enemy.intentReads[combat.playerKey] === true : enemy.intentRevealed !== false;
+}
+
 /**
  * previewIntent(combat, enemyInstanceId) → live intent for the UI (SPEC §4.6):
  * { kind, moveId, damage, hits, hitDamages, totalDamage, block, delayed, pending }
@@ -2764,12 +2791,9 @@ export function previewIntent(combat, enemyInstanceId) {
   if (!enemy || enemy.kind !== 'enemy') throw new Error(`Unknown enemy instance '${enemyInstanceId}'`);
   const intent = enemy.intent || { kind: 'unknown', moveId: null };
   const profile = intent.combatProfile || {};
-  const knowledge = knowledgeIntentProjection(combat, enemy);
-  const proposalRead = proposalIntentRevealUntil(enemy, combat.playerKey || 'player', combat.turn,
-    { legacySolo: !(combat.players instanceof Map) }) !== null;
+  const { knowledge, proposalRead, concealed } = intentReadGate(combat, enemy);
   if (!proposalRead && knowledge && !knowledge.exact) return knowledge.intent;
-  const revealed = proposalRead || enemy.actorIntentRevealed || (enemy.intentReads ? enemy.intentReads[combat.playerKey] === true : enemy.intentRevealed !== false);
-  if (!knowledge && !revealed && profile.camp && intent.kind !== 'staggered') return concealIntent(intent, profile);
+  if (concealed) return concealIntent(intent, profile);
   const out = { ...intent, profile, stance: combatIntentStance(intent, profile), revealed: true, hidden: false };
   // The armed payload is public only after this observer's read gate. This is
   // base counter damage, matching the inspector's prepared reaction value.

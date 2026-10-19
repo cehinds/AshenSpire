@@ -236,16 +236,38 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (envelope?.validated) layoutState.restHandAnchor = envelope;
     return envelope;
   }
+  // The hit-% badge sits on the middle of the painted body, in the frame's own px (owner 2026-10-18). Independent of the
+  // target HUD (Classic appearance has none), and only for a combatant that shows a badge: all reads first, then the
+  // writes, and a value that did not change is not written again (this runs per animation frame while tracking).
+  function placeHitBadges() {
+    const frames = [...field.querySelectorAll('.combatant')].filter(frame => frame.querySelector(':scope > .combat-hit-chance'));
+    if (!frames.length) return;
+    const zoom = uiZoom();
+    const reads = frames.map(frame => {
+      const sprite = frame.querySelector('.sprite');
+      if (!sprite) return null;
+      const body = currentSpriteBodyBounds(sprite, schedule), box = frame.getBoundingClientRect();
+      const top = Number.isFinite(body.headY) ? body.headY : body.top, bottom = Number.isFinite(body.feetY) ? body.feetY : body.bottom;
+      if (![body.left, body.right, top, bottom].every(Number.isFinite)) return null;
+      return { frame, x: `${((body.left + body.right) / 2 - box.left) / zoom}px`, y: `${((top + bottom) / 2 - box.top) / zoom}px` };
+    });
+    for (const row of reads) {
+      if (!row) continue;
+      if (row.frame.style.getPropertyValue('--combat-body-center-x') !== row.x) row.frame.style.setProperty('--combat-body-center-x', row.x);
+      if (row.frame.style.getPropertyValue('--combat-body-center-y') !== row.y) row.frame.style.setProperty('--combat-body-center-y', row.y);
+    }
+  }
   // The detailed-target presentation owns its side panels. Only the compact
   // overhead follows the visible figure; selecting it never moves that figure.
   function centerTargetOverheads() {
     const zoom = uiZoom();
+    placeHitBadges();
     const rows = [...field.querySelectorAll('.combatant')].flatMap(frame => {
       const sprite = frame.querySelector('.sprite'), leading = frame.querySelector('.combatant-leading');
       if (!sprite || !leading) return [];
       const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
+      const body = currentSpriteBodyBounds(sprite, schedule);
       if (rack) {
-        const body = currentSpriteBodyBounds(sprite, schedule);
         const intentHeight = rack.querySelector(':scope > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
         const config = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
         const placement = targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
@@ -479,6 +501,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (reducedMotionRequested()) { trackingRequest = 0; return; }
     // Keep the settled target cores reserved, or the HUD can snap back over the player target.
     placePlayerHud(false, settledTargetCores, true);
+    if (field.closest('.combat')?.dataset.targetHud !== 'true') placeHitBadges();
     // A neighbour's intent that moves between refits re-picks the spot about
     // four times a second; the Inspect itself never follows the body's bob.
     if (++inspectTick % 15 === 0 && field.closest('.combat')?.dataset.targetHud !== 'true') placeEnemyInspect();
@@ -1271,6 +1294,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // The combat box above is unchanged by the Inspect marks.
     if (!targetHud) placeEnemyInspect();
     else centerTargetOverheads();
+    if (!targetHud) placeHitBadges();
     syncFloorShadows();
     // Fit the sky from the top of the combat screen, including the HUD.
     // Extending a field-only crop upward can expose empty space above the
@@ -1401,7 +1425,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   document.fonts?.addEventListener?.('loadingdone', fontsLoaded);
   releaseActiveStage = release;
   refresh();
-  return Object.freeze({ refresh, release });
+  return Object.freeze({ refresh, release, placeHitBadges });
 }
 
 // In the perspective grid the whole cell is the enemy's target: a press

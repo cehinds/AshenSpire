@@ -34,8 +34,12 @@
 :root .combat[data-target-hud='true'] .intent > :not(.intent-compact) { display:none!important; }
 :root .combat[data-target-hud='true'] .intent .intent-compact { display:flex!important; justify-content:center; }
 :root .combat[data-target-hud='true'] .intent-actions { display:inline-flex; justify-content:center; align-items:flex-end; gap:calc(5px / var(--ui-zoom,1)); }
-:root .combat[data-target-hud='true'] .intent-action { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:calc(1px / var(--ui-zoom,1)); }
-:root .combat[data-target-hud='true'] .intent-action-value { display:block; font:700 calc(11px / var(--ui-zoom,1))/1 Georgia,serif; color:inherit; }
+/* Owner 2026-10-18: the amount sits LEFT of its maneuver icon on one row, vertically centred
+   with it, at 2x the old size (11px to 22px = the titleM step of content/config/ui/tokens.json).
+   Solo (target HUD) and co-op share one size so neither role drifts. */
+:root .combat { --intent-value-size: calc(22px / var(--ui-zoom,1)); }
+:root .combat .intent .intent-action { display:inline-flex; flex-direction:row; align-items:center; justify-content:flex-end; gap:calc(3px / var(--ui-zoom,1)); }
+:root .combat .intent .intent-action-value { display:block; font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; white-space:nowrap; }
 :root .combat[data-target-hud='true'] .intent-action .intent-icon { width:calc(25px / var(--ui-zoom,1)); height:calc(25px / var(--ui-zoom,1)); }
 :root .combat[data-target-hud='true'] .target-hud-intent { justify-content:center; }
 :root .combat[data-target-hud='true'] .target-hud-intent-name { flex:none; }
@@ -54,7 +58,7 @@
   position:absolute; inset:calc(9px / var(--ui-zoom,1)) 0 auto auto; width:auto; height:auto;
   display:flex; justify-content:flex-end; background:transparent; pointer-events:none;
 }
-:root .combat[data-target-hud='true'] .target-hud-overhead-meters .m-value { font-size:calc(10px / var(--ui-zoom,1)); line-height:1; }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters .m-value { font-size:calc(10px / var(--ui-zoom,1));  }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters .m-label { display:none!important; }
 :root .combat[data-target-hud='true'] .target-hud-overhead-meters .combat-health-badge {
   position:relative!important; inset:auto!important; transform:none!important; margin-top:calc(2px / var(--ui-zoom,1));
@@ -92,3 +96,12 @@
 :root .combat[data-target-hud='true'] .target-hud-detail[data-crowded='true'] .target-hud-panel {
   padding:var(--target-hud-padding-block,.3em) var(--target-hud-padding-inline,.6em);
 }
+
+/* Remaining queued actions after an actor has acted: "?" per unread one (owner 2026-10-18). Same size step as
+   the amount's neighbours; the icon form (a passed read) matches the maneuver icon's row. */
+:root .combat .intent .intent-followups { display:inline-flex; align-items:center; gap:calc(3px / var(--ui-zoom,1)); margin-inline-start:calc(4px / var(--ui-zoom,1)); }
+/* The expanded copy of the row shows only where the compact row is hidden: a selected enemy in the formation layout. */
+:root .combat .intent > .intent-followups.intent-followups-expanded { display:none; }
+:root .combat[data-layout='formation'] .combatant.context-selected .intent > .intent-followups.intent-followups-expanded { display:inline-flex; }
+:root .combat .intent .intent-followup { display:inline-flex; align-items:center; justify-content:center; min-width:calc(14px / var(--ui-zoom,1)); font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; }
+:root .combat .intent .intent-followup .intent-icon { width:calc(18px / var(--ui-zoom,1)); height:calc(18px / var(--ui-zoom,1)); }
