@@ -21,6 +21,7 @@ import { cardChoice } from '../../model/cardChoices.js';
 import { cardTargetPlan, upcastNextStep } from '../../model/cardTargets.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
+import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 import { combatCardView } from '../models/CombatCardView.js';
 import { combatSnapshotCardCosts } from '../models/CombatSnapshotCardCosts.js';
 import { upcastOptions } from '../../model/upcasting.js';
@@ -1242,6 +1243,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     discardShell = openDiscardChoiceModal({
       ...(player.pendingCardChoice ? {title:t('combat.cards.choose.title',{count:pending.count}),prompt:t('combat.cards.choose.prompt',{from:pending.effect.from,to:pending.effect.to || pending.effect.from}),confirmLabel:t('combat.cards.choose.confirm'),ordered:pending.effect.from===pending.effect.to} : {}),
       count: pending.count, cardName: registries.cards.get(pending.cardId).name,
+      summarize: card => {
+        const inst = (player.pendingCardChoice ? pending.candidates : player.hand).find(c => c.instanceId === card.instanceId);
+        return summarizeCardOption(registries, sc, { id: card.instanceId, name: card.name }, {
+          defOf: () => inst ? cardDef(inst) : null, previewOf: () => inst ? cardDef(inst)?.combatPreview ?? null : null,
+        });
+      },
       cards: (player.pendingCardChoice ? pending.candidates : player.hand.filter((card) => !stackedIds.has(card.instanceId))).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
       onClosed: () => { discardShell = null; },
       onChoose: cardInstanceIds => { if (me === owner) send({ t: 'chooseDiscard', cardInstanceIds }); },
@@ -1260,7 +1267,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; clearSelection(); }
     const stack = committedReactionStack(sc.reactionStack, owner.pendingReaction.groupKey)
       .map((entry) => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
-    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack,
+    // The client reads a seat snapshot, not the engine: a tile's numbers come from the seat's card view
+    // (and the host's receipt when it sent one), compared with the authored base, as the hand faces do.
+    const summarize = option => summarizeCardOption(registries, sc, option, {
+      defOf: o => { const inst = owner.hand.find(card => card.instanceId === o.play.cardInstanceId); return inst ? cardDef(inst) : null; },
+      previewOf: o => cardDef(owner.hand.find(card => card.instanceId === o.play.cardInstanceId))?.combatPreview ?? null,
+    });
+    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack, summarize,
       onClosed: () => { reactionShell = null; reactionOfferId = null; },
       onAnswer: intent => {
         if (!disposed && me === ownerId && latestWireSnap?.scene?.reactionWaiting?.id === intent.offerId)
