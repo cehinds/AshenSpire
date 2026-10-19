@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Enemies start with less Poise** ([#2202](https://github.com/cehinds/AshenSpire/pull/2202), `0.7.1.1693`). Enemies start with half the Poise they used to, so they break sooner in fights.
 - **Core map starts in fog** ([#2197](https://github.com/cehinds/AshenSpire/pull/2197), `0.7.1.1693`). The act map is fog of war by default in the Core ruleset: the route ahead stays hidden until you reach it.
 - **Reward picks go straight to your deck** ([#2196](https://github.com/cehinds/AshenSpire/pull/2196), `0.7.1.1691`). Winning a card reward now lets you add it straight to your deck or open the deck editor with it ready; winning a weapon or armour lets you equip it right away.
 - **Faster card previews** ([#2198](https://github.com/cehinds/AshenSpire/pull/2198), `0.7.1.1689`). Card previews and rule checks no longer re-copy the whole rule set each time, so tapping and aiming cards responds faster on phones.
