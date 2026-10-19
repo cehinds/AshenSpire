@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Auto switch stays right after a failed Settings save** ([#2181](https://github.com/cehinds/AshenSpire/pull/2181), `0.7.1.1675`). If a Settings save fails after the menu has closed and the change is rolled back, the combat footer's Auto switch now repaints to the rolled-back value.
+
 - **Newer dev builds are playable on the site again** ([#2179](https://github.com/cehinds/AshenSpire/pull/2179), `0.7.1.1675`). The site keeps the 5 newest builds per branch instead of 10, so the published site fits GitHub Pages' size limit and dev builds publish again; the README says how fresh each build is.
 
 - **Bigger intent damage and hit chance, unread follow-ups shown as ?** ([#2154](https://github.com/cehinds/AshenSpire/pull/2154), `0.7.1.1675`). Enemy intent damage now sits left of the stance icon at twice the size, hit chances are centered on each enemy in large outlined white text, and an enemy that has acted and can still act shows each remaining move by its own read: its icon if you read it, otherwise ?.
