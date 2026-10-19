@@ -310,7 +310,9 @@ function buildLines(def, preview, registries) {
     let poiseReturn = 0, poiseAuthored = 0;
     for (const [key, label, op] of [['hp', 'damage', 'damage'], ['poise', 'Poise', 'poiseDamage'], ['ward', 'Ward', 'wardDamage']]) {
       if ((def.effects || []).some(effect => effect.op === op)) continue;
-      const live = preview?.values?.find(row => row.op === op)?.value;
+      // Core 2 (SPEC §17): the computed return against the revealed attack replaces the authored payload; Ward is not part of it.
+      const core = preview?.counterReturn;
+      const live = core ? (key === 'ward' ? 0 : core[key]) : preview?.values?.find(row => row.op === op)?.value;
       const amount = live ?? payload[key];
       if (typeof amount !== 'number' || !(amount > 0)) continue;
       if (poiseMerge && key !== 'hp') { poiseReturn += amount; poiseAuthored += payload[key] || 0; continue; }
@@ -318,6 +320,8 @@ function buildLines(def, preview, registries) {
       unconditional.push({ cat: 'damage', text: `${typed(num(amount, payload[key]), type)} ${label}` });
     }
     if (poiseReturn > 0) unconditional.push({ cat: 'damage', text: `${num(poiseReturn, poiseAuthored)} Poise` });
+    // Beating the revealed hit also adds Block before it lands.
+    if (preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', text: `+${num(preview.counterReturn.block)} Block against it` });
   }
   if (counter && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   if (def.pronePoiseBonus) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });

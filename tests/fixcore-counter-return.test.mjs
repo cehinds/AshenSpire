@@ -343,3 +343,32 @@ test('Counter preview grants capped Block like live: Unbreakable at 29/30 previe
   assert.equal(liveBlock, 1);
   assert.equal(damage.counterReturn.block, liveBlock, 'preview == live');
 });
+
+import { cardFaceLines } from '../src/model/cardFaceText.js';
+function faceAgainst12(cardId) {
+  const { combat, enemy } = live();
+  combat.piles.hand.push({ instanceId: 'cf1', cardId });
+  Object.assign(combat.player, { mana: 9, maxMana: 9 });
+  enemy.intent.damage = 12;
+  const view = previewCard(combat, 'cf1', enemy.id);
+  const lines = cardFaceLines(view.resolvedDefinition, view, reg) || [];
+  return { view, text: lines.map(line => line.html).join(' | ').replace(/<[^>]+>/g, '') };
+}
+
+test('the card face renders the computed return against a 12-damage Attack (core.counter, frostCounter, lowGuardRiposte)', () => {
+  for (const cardId of ['core.counter', 'frostCounter', 'lowGuardRiposte']) {
+    const { view, text } = faceAgainst12(cardId);
+    const r = view.counterReturn;
+    assert.ok(r, `${cardId}: return computed`);
+    assert.match(text, new RegExp(`\\b${r.hp}\\b`), `${cardId}: HP return ${r.hp} on the face`);
+    assert.match(text, new RegExp(`\\b${r.poise}\\b[^|]*Poise|Poise[^|]*\\b${r.poise}\\b`), `${cardId}: Poise return ${r.poise} on the face`);
+    if (r.advantaged && r.block > 0) assert.match(text, new RegExp(`\\+${r.block}\\b[^|]*Block`), `${cardId}: Block +${r.block}`);
+  }
+});
+
+test('Counters with authored coverage get profile-aware help and keep the coverage details', () => {
+  const html = cardDetailHtml(regs.wanderingSoldier, { cardId: 'frostCounter' });
+  assert.match(html, /Counter coverage:/);
+  assert.match(html, /half its incoming damage/);
+  assert.doesNotMatch(html, /requires all damage and status pressure resisted|after all covered damage and status pressure is resisted/);
+});

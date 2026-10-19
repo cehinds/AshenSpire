@@ -2760,8 +2760,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   // the conditional return is read from the revealed attack, independent of any damage opcode.
   const authoredCosts = def.resourceCosts || def.costs || {};
   const authoredSp = authoredCosts.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : undefined); // profileCardCosts' chain
+  // The one computed return (SPEC §17) for any Core Counter, with or without an authored damage opcode: the card face
+  // reads it for the HP, Poise and conditional Block rows its effects do not already carry.
   let supportCounterReturn = null;
-  if (coreCounterCard && !chargedEffects.some(effect => effect.op === 'damage')) {
+  if (coreCounterCard) {
     const read = coreCounterReturnRead();
     if (read) supportCounterReturn = { incoming: read.incoming, hp: read.hp, poise: read.poise, block: read.block, advantaged: read.advantaged };
   }
