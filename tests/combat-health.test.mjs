@@ -57,6 +57,12 @@ test('PIP badges preserve actual Evasion stacks independently of other defenses'
   assert.equal(row.querySelector('.combat-health-meter .m-value').textContent, '18/20');
 }));
 
+test('Precision badge sits right after Evade and is hidden at zero, negative or null', () => withKitDom(() => {
+  const kinds = values => combatHealthModel(values).badges.map(b => b.kind);
+  assert.deepEqual(kinds({ defense: 5, evasion: 2, precision: 3, poise: 3, ward: 4 }), ['shield', 'evade', 'precision', 'poise', 'ward']);
+  for (const precision of [0, -2, null, undefined, NaN]) assert.ok(!kinds({ precision }).includes('precision'));
+}));
+
 test('spent Evasion stacks disappear from the PIP instead of showing a zero rating', () => {
   for (const evasion of [0,-2,null,undefined]) assert.ok(!combatHealthModel({evasion}).badges.some(badge=>badge.kind==='evade'));
   assert.equal(combatHealthModel({evasion:3}).badges.find(badge=>badge.kind==='evade').value,3);
