@@ -87,7 +87,7 @@ test('log drag can traverse every size without leaving the physical viewport', (
 test('unsupported historical combat has a disabled switch and immutable public log model', () => {
   const entries = [{ id: 2, round: 1, text: 'A public action.' }];
   const model = combatToolsModel({ supported: false, enabled: true, open: true, size: 'Large', entries });
-  assert.deepEqual(childModel(model, UI.reactionToggle).properties, { enabled: false, disabled: true });
+  assert.deepEqual(childModel(model, UI.reactionToggle).properties, { enabled: false, disabled: true, supported: false });
   assert.equal(childModel(model, UI.combatLogDrawer).properties.open, true);
   entries[0].text = 'Mutated';
   assert.equal(childModel(model, UI.combatLogDrawer).properties.entries[0].text, 'A public action.');
@@ -231,4 +231,106 @@ test('live Grid checkbox waits for persistence and rolls back a refused preferen
     assert.equal(checkbox.disabled,false);
     assert.equal(checkbox.checked,!accepted,'control reflects the actually persisted root value');
   }
+});
+
+test('Auto switch mirrors the Reaction switch and follows the autoCombat setting', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const settings = { autoCombat: false };
+    const writes = [];
+    const tools = mountCombatTools(combatEl, { state: {}, onViewChange() {}, onToggle() {},
+      onAutoToggle: enabled => { writes.push(enabled); settings.autoCombat = enabled; } });
+    const paint = (supported = true) => tools.update(combatToolsModel({ supported, enabled: true, entries: logRows }), { auto: settings.autoCombat });
+    paint();
+    const auto = combatEl.querySelector('[data-combat-tool="auto"]');
+    const reaction = combatEl.querySelector('[data-combat-tool="reaction"]');
+    assert.equal(auto.getAttribute('role'), 'switch');
+    assert.equal(auto.className.includes('reaction-switch'), true, 'same component style as Reaction');
+    assert.equal(auto.nextElementSibling === reaction.nextElementSibling || reaction.nextElementSibling === auto, true, 'sits beside Reaction');
+    assert.equal(auto.getAttribute('aria-checked'), 'false');
+    assert.equal(auto.getAttribute('aria-label'), 'Auto combat disabled');
+    auto.click();
+    assert.deepEqual(writes, [true]);
+    paint();
+    assert.equal(auto.getAttribute('aria-checked'), 'true');
+    assert.equal(auto.getAttribute('aria-label'), 'Auto combat enabled');
+    settings.autoCombat = false; // the Settings screen turns it off: the next paint follows
+    paint();
+    assert.equal(auto.getAttribute('aria-checked'), 'false');
+    paint(false);
+    assert.equal(auto.disabled, true, 'unavailable where reactions are unsupported');
+    tools.release();
+  });
+});
+
+test('Auto switch waits for the write, blocks overlapping toggles and repaints after a rollback', async () => {
+  let auto, tools, settle, calls = 0;
+  const settings = { autoCombat: false };
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    tools = mountCombatTools(combatEl, { state: {}, onViewChange() {}, onToggle() {},
+      onAutoToggle: enabled => new Promise(resolve => { calls++; settle = () => { resolve({ ok: false }); }; }) });
+    tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }), { auto: settings.autoCombat });
+    auto = combatEl.querySelector('[data-combat-tool="auto"]');
+    auto.click();
+    assert.equal(auto.disabled, true, 'a pending write blocks another toggle');
+    auto.click();
+    assert.equal(calls, 1);
+    tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }), { auto: settings.autoCombat });
+    assert.equal(auto.disabled, true, 'a repaint does not re-enable a pending switch');
+    settle();
+  });
+  await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+  assert.equal(auto.disabled, false);
+  assert.equal(auto.getAttribute('aria-checked'), 'false', 'refused write: still shows the persisted value');
+});
+
+test('Auto switch toggles from the live setting after Settings changed it behind the footer', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const settings = { autoCombat: false };
+    const writes = [];
+    const tools = mountCombatTools(combatEl, { state: {}, onViewChange() {}, onToggle() {},
+      readAuto: () => settings.autoCombat,
+      onAutoToggle: enabled => { writes.push(enabled); settings.autoCombat = enabled; } });
+    const paint = () => tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }), { auto: settings.autoCombat });
+    paint();
+    const auto = combatEl.querySelector('[data-combat-tool="auto"]');
+    assert.equal(auto.getAttribute('aria-checked'), 'false');
+    settings.autoCombat = true; // Menu > Settings turned it on; the footer has not repainted yet
+    auto.click();
+    assert.deepEqual(writes, [false], 'a stale switch still toggles the live value off, not a no-op write of true');
+    paint();
+    assert.equal(auto.getAttribute('aria-checked'), 'false');
+    tools.release();
+  });
+});
+
+test('closing the overlay repaints the combat footer: closeOverlay announces it and combat listens', () => {
+  const overlay = readFileSync(new URL('../src/ui/components/overlay.js', import.meta.url), 'utf8');
+  const combat = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(overlay, /dispatchEvent\(new CustomEvent\(OVERLAY_CLOSED_EVENT\)\)/);
+  assert.match(combat, /addEventListener\(OVERLAY_CLOSED_EVENT, repaintAutoSwitch\)/);
+  assert.match(combat, /repaintAutoSwitch = \(\) => \{[^}]*renderCombatTools\(\)/);
+  assert.match(combat, /removeEventListener\(OVERLAY_CLOSED_EVENT, repaintAutoSwitch\)/);
+  assert.match(combat, /readAuto: \(\) => resolveCombatAutomation\(readSettings\(\)\)\.enabled/);
+});
+
+test('co-op mounts the tools without an Auto switch', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const tools = mountCombatTools(combatEl, { state: {}, onViewChange() {}, onToggle() {} });
+    tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows }));
+    assert.equal(combatEl.querySelector('[data-combat-tool="auto"]'), null);
+    assert.ok(combatEl.querySelector('[data-combat-tool="reaction"]'));
+    tools.release();
+  });
 });
