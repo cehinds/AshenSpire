@@ -1,9 +1,11 @@
 import { t } from '../strings.js';
 import { openModal, button, el } from '../kit/index.js';
+import { cardOptionGrid, markCardOptions } from './cardOptionGrid.js';
+import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 
 // This choice happens after a paid card's draw has resolved. Closing the
 // dialog postpones the selection; the engine keeps the action paused.
-export function openDiscardChoiceModal({ cards, count, cardName, onChoose, onClosed, title, prompt, confirmLabel, ordered = false }) {
+export function openDiscardChoiceModal({ cards, count, cardName, onChoose, onClosed, title, prompt, confirmLabel, ordered = false, summarize = null }) {
   const selected = new Set();
   let answer = null;
   const confirm = button({ label: confirmLabel || `${t('combat.discard')} ${count}`, weight: 'primary', disabled: true });
@@ -12,17 +14,18 @@ export function openDiscardChoiceModal({ cards, count, cardName, onChoose, onClo
     size: 'md', className: 'discard-choice', closeLabel: t('combat.discard.later'),
     body: host => {
       host.appendChild(el('p', { text: prompt || t('combat.discard.prompt') }));
-      for (const card of cards) {
-        const pick = button({ label: card.name, attrs: { 'data-discard-id': card.instanceId, 'aria-pressed': 'false' } });
-        pick.addEventListener('click', () => {
-          if (selected.has(card.instanceId)) selected.delete(card.instanceId);
-          else if (selected.size < count) selected.add(card.instanceId);
-          pick.setAttribute('aria-pressed', String(selected.has(card.instanceId)));
-          if (ordered) for (const node of host.querySelectorAll('[data-discard-id]')) { const position = [...selected].indexOf(node.dataset.discardId); node.textContent = `${position < 0 ? '' : `${position + 1}. `}${cards.find(c => c.instanceId === node.dataset.discardId).name}`; }
-          confirm.disabled = selected.size !== count;
-        });
-        host.appendChild(pick);
-      }
+      const summaries = cards.map(card => {
+        let summary = null;
+        try { summary = summarize?.(card) ?? null; } catch { summary = null; }
+        return summary || summarizeCardOption(null, null, { id: card.instanceId, name: card.name });
+      });
+      const grid = cardOptionGrid(summaries, { idAttr: 'data-discard-id', onSelect: id => {
+        if (selected.has(id)) selected.delete(id);
+        else if (selected.size < count) selected.add(id);
+        markCardOptions(grid, 'data-discard-id', [...selected], { ordered });
+        confirm.disabled = selected.size !== count;
+      } });
+      host.appendChild(grid);
     },
     primary: confirm,
     onClose: () => { onClosed?.(); if (answer) onChoose(answer); },

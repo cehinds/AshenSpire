@@ -69,7 +69,7 @@ import {
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import { cardRewardPlan } from '../src/model/rewardplan.js';
 import {
-  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, setReactions, previewCoopCard, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
+  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, setReactions, previewCoopCard, previewCoopCards, classifyPreviewCandidates, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
   recoverControl, chooseBlightFeat,
 } from '../src/engine/coopCombat.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
@@ -770,6 +770,28 @@ export function createSession({ registries, seedString, endless = false, restore
     return { ok: true, combat: session.scene };
   }
 
+  // A card-zone choice's candidate previews, computed once per choice (they ride every snapshot until it is
+  // answered) and from a single detached state. Keyed on the live choice object, so a new choice recomputes.
+  const choicePreviews = new WeakMap();
+  const FULL_PREVIEW_CAP = 8;
+  function candidatePreviews(c, playerId, choice) {
+    if (!choicePreviews.has(choice)) {
+      let previews = {};
+      try {
+        const seat = c.players.get(playerId);
+        const ctx = { ...c, registries: c.registriesForPlayer(playerId), player: seat.entity, combatExpansionVersion: c.combatExpansionVersion };
+        const { liveIds, plainIds } = classifyPreviewCandidates(ctx, seat.entity, choice.candidates || [], c.enemies.some(enemy => enemy.alive));
+        const full = [...liveIds, ...plainIds].slice(0, FULL_PREVIEW_CAP), cheap = {};
+        // Any candidate past the cap has no priced numbers (a state-dependent card's branch or charge is unknown, and a
+        // plain card would read numbers a stance or advantage may change): its tile reads the card text.
+        for (const id of [...liveIds, ...plainIds].slice(FULL_PREVIEW_CAP)) cheap[id] = { textOnly: true, values: [] };
+        previews = { ...cheap, ...(full.length ? previewCoopCards(c, playerId, full) : {}) };
+      } catch { previews = {}; }
+      choicePreviews.set(choice, previews);
+    }
+    return choicePreviews.get(choice);
+  }
+
   function combatScene() {
     const c = live.combat;
     // Compact digest of display-worthy events since the LAST snapshot, so the
@@ -875,7 +897,14 @@ export function createSession({ registries, seedString, endless = false, restore
         combatStance: P.entity.combatStance, persistentWard: P.entity.persistentWard, barrier: P.entity.barrier,
         statusControl: P.entity.statusControl, recoveryControls: recoveryControls({ ...c, combatExpansionVersion: P.entity.combatExpansionVersion || 1 }, P.entity),
         pendingAbilityDiscard: c.pendingAbilityDiscard?.playerId===P.id ? c.pendingAbilityDiscard : null,
-        pendingCardChoice:c.pendingCardChoice?.playerId===P.id ? structuredClone(c.pendingCardChoice) : null,
+        // Snapshot only: each candidate carries the preview a hand card gets (below), so a client prices a pile card by
+        // its live effect variant. Nothing here is written back to the engine state or a save.
+        pendingCardChoice:c.pendingCardChoice?.playerId===P.id ? (() => {
+          const choice = structuredClone(c.pendingCardChoice);
+          const previews = candidatePreviews(c, P.id, c.pendingCardChoice);
+          choice.candidates = (choice.candidates || []).map(card => (previews[card.instanceId] ? { ...card, combatPreview: previews[card.instanceId] } : card));
+          return choice;
+        })() : null,
         pendingReaction: c.pendingReaction?.ownerId === P.id ? structuredClone(c.pendingReaction) : null,
         ...(c.reactionRulesVersion >= 1 ? { reactionsEnabled: P.entity.reactionsEnabled !== false } : {}),
         abilityRiders: P.entity.abilityRiders,

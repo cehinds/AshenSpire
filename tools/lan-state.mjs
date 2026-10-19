@@ -23,7 +23,7 @@ export function projectLanSnapshot(snapshot, memberIds) {
       for (const previous of receipt?.history || []) concealPerception(previous);
     }
     concealPerception(seat.xpProgression);
-    for (const card of seat.hand || []) for (const key of ['combatPreview', 'upcastPreviews', 'values', 'tokens', 'damageSequences']) delete card[key];
+    for (const card of [...(seat.hand || []), ...(seat.pendingCardChoice?.candidates || [])]) for (const key of ['combatPreview', 'upcastPreviews', 'values', 'tokens', 'damageSequences']) delete card[key];
   }
   if (view.scene?.kind !== 'combat') return view;
   if (view.scene.enemyKnowledge) {
