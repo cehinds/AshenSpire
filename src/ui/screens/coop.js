@@ -1100,7 +1100,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     if (hp) {
       const next = hp.nextSibling;
       const known = !isEnemy || ent.knowledgeAction?.reads?.[me]?.visibility === 'exact';
-      const health = combatHealthRow(hp, { ...protectionPresentation(ent), evasion: ent.combatExpansionVersion === 2 && known ? coopCombatantEvasion(snap.scene, registries, entity, isEnemy ? undefined : snap.party.find(member => member.id === ent.id)) : null });
+      const health = combatHealthRow(hp, { ...protectionPresentation(ent), evasion: ent.combatExpansionVersion === 2 && known ? coopCombatantEvasion(snap.scene, registries, entity, isEnemy ? undefined : snap.party.find(member => member.id === ent.id)) : null, precision: ent.combatExpansionVersion === 2 && known ? (ent.statuses?.precision?.stacks || 0) : null });
       bars.insertBefore(health, next);
     }
     wrap.classList.add('as-meters', 'tight');
