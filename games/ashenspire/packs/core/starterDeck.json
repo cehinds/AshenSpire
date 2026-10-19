@@ -45,6 +45,10 @@
       {
         "card": "core.counter",
         "copies": 1
+      },
+      {
+        "card": "core.reaverSpecial",
+        "copies": 1
       }
     ],
     "rogue": [
@@ -66,6 +70,28 @@
       },
       {
         "card": "base.draw",
+        "copies": 1
+      },
+      {
+        "card": "core.rogueSpecial",
+        "copies": 1
+      }
+    ],
+    "starseer": [
+      {
+        "card": "core.cantrip",
+        "copies": 3
+      },
+      {
+        "card": "core.starseerSpecial",
+        "copies": 2
+      },
+      {
+        "card": "base.ethereal",
+        "copies": 4
+      },
+      {
+        "card": "base.gain-resource",
         "copies": 1
       }
     ]

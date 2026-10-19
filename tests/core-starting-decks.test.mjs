@@ -25,10 +25,20 @@ test('Core Rogue starts with exactly 2 Strike, 2 Defend, 2 Counter, 2 Evade, 1 D
   assert.deepEqual(run.sideboard, []);
 });
 
-test('Starseer and Herald keep the shared starter list', () => {
-  for (const id of ['starseer', 'herald']) {
-    const run = start(id);
-    assert.equal(run.deck.length, 10);
-    assert.equal(counts(run.deck)['core.strike'], 3);
-  }
+test('Core Starseer starts with 3 Arcane Spark, 2 Star Spark, 4 Ethereal and 1 Resource Gain', () => {
+  const run = start('starseer');
+  assert.equal(run.deck.length, 10);
+  assert.deepEqual(counts(run.deck), { 'core.cantrip': 3, 'core.starseerSpecial': 2, 'base.ethereal': 4, 'base.gain-resource': 1 });
+  assert.deepEqual(run.sideboard, []);
+});
+
+test('Core Herald keeps the shared starter list (base.divine-strike and base.necrotic-heal are not in Core)', () => {
+  const run = start('herald');
+  assert.equal(run.deck.length, 10);
+  assert.equal(counts(run.deck)['core.strike'], 3);
+});
+
+test('Core editor offers only owned cards (owner ruling 2026-10-19)', async () => {
+  const { unlimitedCardIds } = await import('../src/model/deckRules.js');
+  for (const id of ['reaver', 'rogue', 'starseer', 'herald']) assert.deepEqual(unlimitedCardIds(start(id)), []);
 });

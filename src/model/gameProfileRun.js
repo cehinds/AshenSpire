@@ -35,8 +35,10 @@ export function gameProfileCompletedRunMeta(subject, meta, result) {
 export function gameProfileStarterDeck(subject, classId) {
   const deck = gameContent(subject, 'starterDeck');
   if (gameModule(subject, 'cards')?.mode !== 'configured' || !deck) return null;
-  // A class may author its own base list (classDecks); otherwise the shared list applies.
-  const ids = (deck.classDecks?.[classId] || deck.shared).flatMap(row => Array(row.copies).fill(row.card));
+  // A class may author its whole opening list (classDecks, specials included); otherwise the shared list plus the class special applies.
+  const own = deck.classDecks?.[classId];
+  if (own) return own.flatMap(row => Array(row.copies).fill(row.card));
+  const ids = deck.shared.flatMap(row => Array(row.copies).fill(row.card));
   const special = deck.classSpecials[classId];
   if (!special) throw new Error(`starterDeck.classSpecials.${classId}: missing card`);
   return [...ids, ...Array(deck.classSpecificCopies).fill(special)];
