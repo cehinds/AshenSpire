@@ -43,7 +43,7 @@ import { isEngaged, focusFirst } from '../input.js';
 import { closeFlaskActionMenu } from './flask.js';
 import { quickMenuPanelModel } from '../models/MenuModels.js';
 import { renderQuickMenu } from './menuComponents.js';
-import { t } from '../strings.js';
+import { t, tFull } from '../strings.js';
 
 // The player's presentation choice, set from applyDisplaySettings (main.js) the same
 // way input.js is handed its bindings — so screens never have to thread `meta`
@@ -150,6 +150,15 @@ export function saveAction(onSave) {
  * does that thing. An act with no handler is dropped rather than drawn dead.
  * Returns the panel element, or null when there is no anchor/action to show.
  */
+/** D15: while Core's combat edit lock holds, the equipment doors (Inventory, Character) read as disabled with the lock title. */
+export function lockEquipmentRows(panel) {
+  if (!panel) return;
+  for (const act of ['inventory', 'character']) {
+    const row = panel.querySelector(`.qn-row[data-act="${act}"]`);
+    if (row) { row.disabled = true; row.setAttribute('aria-disabled', 'true'); row.title = tFull('combat.editLocked'); }
+  }
+}
+
 export function openQuickNav(anchorEl, context, { actions = {}, controls = {}, counts = {}, current = null, hasSave = true } = {}) {
   if (mode === 'off' || !anchorEl) return null;
   closeFlaskActionMenu({ cancelled: true });

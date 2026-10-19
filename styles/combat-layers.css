@@ -165,7 +165,7 @@
 
 /* The hand owns a slim tool row; no side panel steals a phone's card slots. */
 :root .combat[data-layout='formation'] .combat-tools {
-  display: grid; grid-template-columns: auto auto minmax(0,1fr); gap: calc(8px / var(--ui-zoom,1));
+  display: grid; grid-template-columns: auto auto minmax(0,1fr) auto; gap: calc(8px / var(--ui-zoom,1));
   padding: 0; border: 0;
   /* HUD layout tokens: the row's backing (transparent = off). */
   background: var(--hud-tools-bg); box-shadow: var(--hud-panel-shadow, none);
@@ -173,6 +173,7 @@
 }
 :root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='log'] { grid-column: 1; grid-row: 1; justify-self: start; text-shadow: var(--hud-text-shadow, none); }
 :root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='reaction'] { grid-column: 3; grid-row: 1; justify-self: end; }
+:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='auto'] { grid-column: 4; grid-row: 1; justify-self: end; }
 :root .combat[data-layout='formation'] .combat-tools > button {
   min-height: calc(30px / var(--ui-zoom,1)); height: calc(30px / var(--ui-zoom,1));
   padding: 0; border: 0; background: none; box-shadow: none;
@@ -183,6 +184,12 @@
 }
 :root .combat[data-layout='formation'] .combat-tools .reaction-switch-value { font-size: calc(9px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combat-tools .reaction-switch-thumb { width: calc(13px / var(--ui-zoom,1)); height: calc(13px / var(--ui-zoom,1)); }
+/* Phone width: the Reaction and Auto switches keep label, track and knob; the
+   enabled/disabled words drop out (state stays in aria-checked and aria-label). */
+@media (max-width: 480px) {
+  :root .combat[data-layout='formation'] .combat-tools .reaction-switch-value { display: none; }
+  :root .combat[data-layout='formation'] .combat-tools .reaction-switch-track { width: calc(34px / var(--ui-zoom,1)); }
+}
 /* The toolbar spans the hand with Log at its left; open the drawer beside it. */
 :root .combat[data-layout='formation'] .combat-tools .combat-log-panel { left: 0; right: auto; }
 

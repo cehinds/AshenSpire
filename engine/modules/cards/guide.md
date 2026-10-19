@@ -40,7 +40,7 @@ Settings live in `engine/modules/cards/settings.schema.json`; shipped defaults a
 - `/turnPolicy` (type enum; default `"multiCard"`; allowed "multiCard"): Allows multiple card plays then End Turn.
 - `/freeCommandLimit` (type integer; default `32`; range 0..1000000): Bound on free commands to prevent runaway loops.
 - `/editorEnabled` (type boolean; default `true`): Enables manual deck editing.
-- `/editorWhere` (type enum; default `"strategize"`; allowed "strategize"): Deck editing is limited to the Strategize rest service.
+- `/editorWhere` (type enum; default `"strategize"`; allowed "strategize", "noncombat"): "strategize" limits deck editing to the Strategize rest service; "noncombat" opens the deck editor from the run HUD/Armoury at any time outside combat and locks it during combat.
 - `/faceMaxEffects` (type integer; default `2`; range 0..1000000): Face-display budget, not an execution limit.
 - `/faceMaxLines` (type integer; default `3`; range 0..1000000): Approximate readable face-line budget.
 

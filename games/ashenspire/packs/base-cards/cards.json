@@ -7198,6 +7198,7 @@
           }
         ],
         "textTemplate": "Deal 8 Ward damage.",
+        "wardOffTextTemplate": "Deal {poiseDamage} Poise damage.",
         "icon": "\u2726",
         "flavor": "A disrupting touch of the Observatory's instrument keepers.\n\nThe keepers tested old seals before moving a lens from its housing. A precise disturbance could loosen a ward without shattering the glass beneath it. The method later found use against defenses made to protect less delicate things.\n\nThe opening is smaller than the harm it permits."
       },
@@ -8147,6 +8148,7 @@
           }
         ],
         "textTemplate": "Strike {hits} times for {damage} damage. Deal {poiseDamage} Ward and 3 Poise damage total.",
+        "wardOffTextTemplate": "Strike {hits} times for {damage} damage. Deal {poiseDamage} Poise damage total.",
         "icon": "\u2694",
         "flavor": "A repeated stroke of the weald's short-blade escorts.\n\nIn a crowded passage, there was no room to draw back for a great blow. Escorts learned to strike along the returning path, turning small openings into a succession of wounds. The enemy's guard had to answer every movement separately.\n\nA narrow space need not mean a single chance.",
         "damageSchool": "physical",

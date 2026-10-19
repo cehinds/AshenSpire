@@ -1,6 +1,6 @@
 import { resolveAttackHit } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, protectionReceipt, fixCoreWardDisabled, damageReceipt } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreRules, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
 import { weaponDamageBasis } from './cardBehavior.js';
 import { MANEUVERS, trimCombatStances } from './concurrentStances.js';
 import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPlan, proposalThreshold, proposalHealingPlan } from './proposalStatusRuntime.js';
@@ -314,6 +314,42 @@ function applyBaseAttackDamage(ctx, source, target, base, attackTags, carrier = 
   return dmg;
 }
 
+// One stagger per target per round (stances.staggerLimitPerTargetPerRound), whether a Poise break or an
+// advantage interrupt earns it. Records the stagger and returns true while the round's limit is not used up.
+// A Poise break (owner D13: repeat breaks stack Vulnerable) always staggers but still counts against the round.
+function claimStagger(ctx, target) {
+  const limit = configuredModule(ctx, 'stances')?.staggerLimitPerTargetPerRound ?? 1;
+  const ledger = ctx.gameProfileInterrupts ||= {};
+  const key = `${ctx.turn}:${target.id}`;
+  if ((ledger[key] || 0) >= limit) return false;
+  ledger[key] = (ledger[key] || 0) + 1;
+  return true;
+}
+
+// A Poise break (owner D13): the owner is Staggered. An enemy's break counts against the round's stagger limit.
+function fixCorePoiseBreak(ctx, source, target) {
+  // `poiseBreak` marks a Core break that staggers, for the break haptic (fx.enemyPoiseBroken) and the log; Core breaks interrupt
+  // nothing. A break the target's Impact protection refuses carries `poiseBreak: false`: the pool broke, nobody was staggered.
+  const staggers = !(target.kind === 'enemy' && staggerRefused(ctx, target));
+  ctx.emit('poiseBroken', { targetId: target.id, targetKind: target.kind, sourceId: source?.id, poiseBreak: staggers, ...seatOf(ctx, target) });
+  if (target.kind === 'enemy') { claimStagger(ctx, target); staggerEnemy(ctx, target, { cause: 'poiseBreak' }); }
+  else fixCoreStagger(ctx, target, { cause: 'poiseBreak' });
+}
+
+/**
+ * Extra Poise damage a card or trigger carries (Smash pressure, a Poise rider) under FixCore: whole numbers,
+ * never more than the pool holds; emptying it breaks Poise. Poise absorbed by a hit is spent in the hit itself.
+ */
+export function drainFixCorePoise(ctx, source, target, amount) {
+  const poise = target?.persistentPoise, n = Math.max(0, Math.floor(amount));
+  if (!target?.alive || !(n > 0) || !(poise?.value > 0)) return 0;
+  const spent = Math.min(poise.value, n);
+  poise.value -= spent;
+  ctx.emit('persistentPoiseChanged', { targetId: target.id, spent, value: poise.value, max: poise.max, source: 'poiseDamage', ...seatOf(ctx, target) });
+  if (poise.value === 0 && target.hp > 0) fixCorePoiseBreak(ctx, source, target);
+  return spent;
+}
+
 // One receipt evaluator drives configured live damage and detached previews.
 function applyProfileDamage(ctx, source, target, base, carrier) {
   if (fixCoreEnabled(ctx) && !carrier?.expansionContact && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
@@ -331,25 +367,30 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     if (receipt.evaded) tactical.avoided = true;
   }
   const before = target.block || 0;
+  let poiseBefore = 0;
   target.block = receipt.blockRemaining;
   if (fixCoreEnabled(ctx)) {
     target.barrier = Math.max(0, (target.barrier || 0) - receipt.barrierMitigated);
     if (target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
-    if (target.persistentPoise) target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated);
+    if (target.persistentPoise) {
+      poiseBefore = target.persistentPoise.value;
+      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated);
+    }
   }
   target.hp -= receipt.hpLoss;
   ctx.emit('damageDealt', { sourceId: source?.id || null, targetId: target.id,
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
-    poiseMitigated: receipt.poiseMitigated, wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
+    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
     advantage: receipt.advantage, blockRemaining: target.block, barrierRemaining: target.barrier,
     wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
   if (receipt.hpLoss > 0) ctx.emit('hpLost', { targetId: target.id, amount: receipt.hpLoss, cause: 'attack' });
-  if (receipt.interrupted && target.kind === 'enemy' && target.alive) {
-    const limit = configuredModule(ctx, 'stances')?.staggerLimitPerTargetPerRound ?? 1;
-    const ledger = ctx.gameProfileInterrupts ||= {};
-    const key = `${ctx.turn}:${target.id}`;
-    if ((ledger[key] || 0) < limit) { ledger[key] = (ledger[key] || 0) + 1; staggerEnemy(ctx, target); }
+  // Poise taken from above zero to zero is a break: the owner takes the Staggered stance (D13).
+  const poiseBroke = fixCoreEnabled(ctx) && poiseBefore > 0 && target.persistentPoise?.value === 0 && target.alive && target.hp > 0;
+  if (poiseBroke) fixCorePoiseBreak(ctx, source, target);
+  // One break is one stagger: a hit that already broke Poise has staggered the target.
+  if (receipt.interrupted && !poiseBroke && target.kind === 'enemy' && target.alive) {
+    if (claimStagger(ctx, target)) staggerEnemy(ctx, target);
   }
   afterHpChange(ctx, target, { sourceId: source?.id });
   return receipt.amount;
@@ -637,6 +678,13 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
  * more than the one Stamina a Poise break costs.
  */
 function breakPoise(ctx, source, target) {
+  // FixCore (owner D13): the break is the Staggered stance (-SP, +Vulnerable), applied once the break is emitted.
+  if (fixCoreEnabled(ctx)) {
+    const loss = target.kind === 'player' ? fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules).staminaLoss : 0;
+    if (target.kind === 'player') fixCoreStagger(ctx, target, { cause: 'poiseBreak' });
+    // `interrupted` only asks emitBreak to run the stagger; under Core it reports no interrupt (see prepareBreakInterrupt).
+    return ['poiseBroken', { targetId: target.id, sourceId: source?.id, staminaLoss: loss, poiseBreak: true, ...(target.kind === 'enemy' ? { interrupted: true } : {}), ...seatOf(ctx, target) }];
+  }
   const cost = Math.max(0, ctx.ratingsRules?.breaks?.poiseActionLoss ?? 1);
   // An enemy is interrupted by interruptForBreak, after the hit's log, and has no Stamina to lose; a player pays here.
   const loss = target.kind === 'player' ? cost : 0;
@@ -1059,17 +1107,44 @@ function afterHpChange(ctx, target, death = {}) {
  * false when it refused (dead, or impact-protected). Callers that mean a full
  * Stagger go through breakEnemy below.
  */
+/**
+ * The FixCore Staggered stance (owner D13), for a player or an enemy: the owner stands in a `staggered` combat
+ * stance until its next turn begins, loses staminaLoss SP next turn, and takes vulnerableStacks Vulnerable.
+ * Vulnerable's x1.25 is one flat multiplier per owner, so repeat breaks only lengthen it.
+ */
+export function fixCoreStagger(ctx, entity, options = {}) {
+  const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
+  Matchups.clearCombatCounter(entity, ctx);
+  if (rules.stance) {
+    entity.combatStance = fixCoreStaggeredStance(entity, rules);
+    ctx.emit('combatStanceChanged', { targetId: entity.id, maneuver: 'staggered' });
+  }
+  if (rules.staminaLoss > 0) {
+    if (entity.kind === 'player') entity.pendingActionLoss = (entity.pendingActionLoss || 0) + rules.staminaLoss;
+    else entity.pendingStaminaLoss = (entity.pendingStaminaLoss || 0) + rules.staminaLoss;
+  }
+  if (rules.vulnerableStacks > 0) statuses.applyStatus(ctx, entity, 'vulnerable', rules.vulnerableStacks, entity);
+  if (entity.kind === 'player') ctx.emit('playerStaggered', { targetId: entity.id, actionLoss: rules.staminaLoss, statuses: rules.vulnerableStacks > 0 ? { vulnerable: rules.vulnerableStacks } : {},
+    ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}), ...(options.cause ? { cause: options.cause } : {}) });
+}
+
+function staggerRefused(ctx, enemy) {
+  return !enemy || enemy.kind !== 'enemy' || !enemy.alive || !!(ctx.foundation && enemy.impactProtectedUntil >= ctx.turn);
+}
+
 export function staggerEnemy(ctx, enemy, options = {}) {
-  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return false;
-  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return false;
+  if (staggerRefused(ctx, enemy)) return false;
+  if (fixCoreEnabled(ctx)) {
+    // Owner D13: Staggered is a stance (-1 SP, +1 Vulnerable), not a skipped turn or a stacking status.
+    fixCoreStagger(ctx, enemy, options);
+    if (ctx.foundation) enemy.impactProtectedUntil = ctx.turn + ctx.foundation.rules.impact.protectionTurns;
+    ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: null, ...(options.cause ? { cause: options.cause } : {}) });
+    return true;
+  }
   Matchups.clearCombatCounter(enemy, ctx);
   const cancelled = enemy.pendingMove ? enemy.pendingMove.moveId : null;
   enemy.pendingMove = null;
   enemy.skipNextTurn = true;
-  if (fixCoreEnabled(ctx)) {
-    statuses.applyStatus(ctx, enemy, 'staggered', 1, enemy);
-    for (const [id, amount] of Object.entries(fixCoreRules(ctx, enemy).statuses.staggerRiders)) statuses.applyStatus(ctx, enemy, id, amount, enemy);
-  }
   if (ctx.foundation) enemy.impactProtectedUntil = ctx.turn + ctx.foundation.rules.impact.protectionTurns;
   enemy.intent = { kind: 'staggered', moveId: null };
   ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled, ...(options.cause ? { cause: options.cause } : {}) });
@@ -1145,7 +1220,10 @@ export function staggerPlayer(ctx, player) {
  */
 export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false, cause = null, source = null, cardId = null } = {}) {
   // `source` and `cardId` only name who dealt it in the receipt (an explicit amount never reads the source).
-  if (configuredCombat(ctx)) return; // Core Poise mitigation never fills a legacy break meter.
+  if (configuredCombat(ctx)) { // Core Poise never fills a legacy break meter; extra Poise damage drains the pool.
+    if (fixCoreEnabled(ctx)) drainFixCorePoise(ctx, source, entity, amount);
+    return;
+  }
   if (ctx.ratingsRules) return Ratings.applyRatingImpact(ctx, source, entity, { damageSchool: 'physical' }, amount, { knowledgeMatchup, cause, cardId });
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
   if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
@@ -1571,6 +1649,16 @@ function runOpcode(ctx, action, eff) {
         const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
         if (row?.receipt?.avoided) continue;
         if (splitSmashPressure(ctx, action, t, row)) continue;
+        // Ward off (ward.enabled:false): Ward damage drains Poise instead, with the multipliers the Ward path applies.
+        if (fixCoreWardDisabled(ctx) && t.persistentPoise) {
+          const drained = drainFixCorePoise(ctx, action.source, t, evalNum(ctx, action, eff.amount, 0, t)
+            * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1)
+            * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1));
+          // Same bookkeeping as the Ward path, recorded as the Poise pressure it now is.
+          trackOwnPressure(ctx, action, t, 'poiseDealt', drained);
+          creditKnowledgeImpact(ctx, t, drained);
+          continue;
+        }
         const spent = Control.spendPersistentWard(ctx, t,
         evalNum(ctx, action, eff.amount, 0, t) * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
         trackOwnPressure(ctx, action, t, 'wardDealt', spent.spent);

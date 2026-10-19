@@ -65,7 +65,7 @@ export function closeCombatFullLog(state) {
 // Gap between a corner tool and the combat screen's edge, in CSS px.
 const CORNER_INSET = 16;
 
-export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGridToggle }) {
+export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, readAuto, onViewChange, onGridToggle }) {
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
   const logButton = button({ label: t('combat.log.title'), attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
   const gridLabel = el('label', { class: 'combat-grid-toggle' });
@@ -91,6 +91,13 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGr
   const value = el('span', { class: 'reaction-switch-value' });
   const thumb = el('span', { class: 'reaction-switch-thumb', 'aria-hidden': 'true' });
   track.append(value, thumb); reaction.replaceChildren(label, track);
+  // The Auto switch is the Reaction switch's twin: same markup and classes, bound to the autoCombat setting.
+  const auto = button({ label: '', attrs: { 'data-combat-tool': 'auto', role: 'switch', 'aria-checked': 'false' } });
+  auto.classList.add('reaction-switch', 'auto-switch');
+  const autoValue = el('span', { class: 'reaction-switch-value' });
+  const autoTrack = el('span', { class: 'reaction-switch-track' });
+  autoTrack.append(autoValue, el('span', { class: 'reaction-switch-thumb', 'aria-hidden': 'true' }));
+  auto.replaceChildren(el('span', { text: t('combat.auto.label') }), autoTrack);
   const panel = markUiComponent(el('section', { id: 'combat-log', class: 'combat-log-panel', 'aria-label': t('combat.log.title'), hidden: true }), UI.combatLogDrawer);
   const title = el('div', { class: 'combat-log-heading', text: t('combat.log.title') });
   // Opens the full-screen log. It sits in the header, outside the scrolling list,
@@ -105,7 +112,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGr
   head.append(title, fullLog);
   const list = el('div', { class: 'combat-log-entries', 'data-combat-tool': 'entries', tabindex: '0', role: 'region', 'aria-label': t('combat.log.actions') });
   list.addEventListener('scroll', () => { state.scrollTop = list.scrollTop; state.followLatest = list.scrollTop + list.clientHeight >= list.scrollHeight - 4; });
-  panel.append(head, list); root.append(panel, logButton, reaction, gridLabel); combatEl.append(root);
+  panel.append(head, list); root.append(panel, logButton, reaction, ...(onAutoToggle ? [auto] : []), gridLabel); combatEl.append(root);
   let drag = null, suppressClick = false, released = false;
   const snapHeights = () => {
     const menuBottom = [...combatEl.querySelectorAll('.topbar button')].reduce((max, node) => Math.max(max, node.getBoundingClientRect().bottom), 0);
@@ -165,6 +172,21 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGr
     state.fullLog = openCombatLogModal({ entries: latestEntries, opener: fullLog, onClose: () => { state.fullLog = null; } });
   });
   reaction.addEventListener('click', () => onToggle(reaction.getAttribute('aria-checked') !== 'true'));
+  // Like the Grid checkbox: wait for the write, block overlapping toggles, and repaint from the persisted
+  // setting after success or rollback (the screen's handler repaints from readSettings()).
+  let autoBusy = false, autoSupported = true;
+  auto.addEventListener('click', async () => {
+    // Toggle from the live setting when the screen supplies it: Settings may have changed it since this switch painted.
+    const enabled = readAuto ? !readAuto() : auto.getAttribute('aria-checked') !== 'true';
+    const hadFocus = document.activeElement === auto;
+    autoBusy = true; auto.disabled = true;
+    try { await onAutoToggle?.(enabled); }
+    catch (error) { console.warn('[combat] auto combat preference refused:', error.message); }
+    finally {
+      autoBusy = false;
+      if (!released) { auto.disabled = !autoSupported; if (hadFocus) auto.focus({ preventScroll: true }); }
+    }
+  });
   let frame = 0, entryKey = '';
   function measure() {
     frame = 0;
@@ -237,7 +259,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGr
   formFactorObserver.observe(document.documentElement, { attributes: true, attributeOldValue: true, attributeFilter: ['data-form-factor'] });
   const gridObserver = new MutationObserver(syncGrid);
   gridObserver.observe(gridRoot, { attributes: true, attributeFilter: ['data-formation-grid'] });
-  function update(model) {
+  function update(model, { auto: autoOn = false } = {}) {
     const toggle = childModel(model, UI.reactionToggle).properties;
     const log = childModel(model, UI.combatLogDrawer).properties;
     reaction.disabled = toggle.disabled;
@@ -246,6 +268,13 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange, onGr
     reaction.setAttribute('aria-label', t('combat.reactions.state', { state: stateLabel }));
     reaction.dataset.enabled = String(toggle.enabled);
     value.textContent = stateLabel;
+    autoSupported = !!toggle.supported;
+    if (!autoBusy) auto.disabled = !autoSupported;
+    auto.setAttribute('aria-checked', String(!!autoOn));
+    auto.dataset.enabled = String(!!autoOn);
+    const autoLabel = t(autoOn ? 'combat.reactions.enabled' : 'combat.reactions.disabled');
+    auto.setAttribute('aria-label', t('combat.auto.state', { state: autoLabel }));
+    autoValue.textContent = autoLabel;
     // Expanded reading uses the same body portal, focus/back handling and layer
     // as the full log, so battlefield stacking contexts cannot cover it.
     panel.hidden = true;
