@@ -286,6 +286,3 @@ test('a screen remounted during the second follow-up\'s reaction pairs its slots
   const later = followUpPlan({ queue: [{ moveId: 'guard' }, { moveId: 'slash' }], def, offset: 1 });
   assert.deepEqual(advanceFollowUps(later, [{ read: true }, { read: false }, { read: true }]).map((s) => s.kind + (s.icon ?? '')), ['unknown', 'actionattack']);
 });
-  next.headDone = true;
-  assert.deepEqual(advanceFollowUps(followUpPlan({ queue: [{ moveId: 'guard' }, { moveId: 'slash' }], def, offset: 1 }), [{ read: true }, { read: false }, { read: true }]).map((s) => s.kind + (s.icon ?? '')), ['unknown', 'actionattack'].slice(0, 2).map((x, i) => i === 0 ? x : x));
-});
