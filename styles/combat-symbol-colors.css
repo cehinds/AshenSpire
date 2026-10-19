@@ -219,3 +219,18 @@
   -webkit-text-stroke: .75px #000;
   paint-order: stroke fill;
 }
+
+/* A mirrored Spell: the Spell mark keeps its silver, the basic's mark and word take the basic's own colour. */
+:root .card-sigil-band[data-mirror='attack'] .card-mirror-icon, :root .card-sigil-band[data-mirror='attack'] .card-type-name,
+:root .card-sigil-band[data-mirror='sweep'] .card-mirror-icon, :root .card-sigil-band[data-mirror='sweep'] .card-type-name,
+:root .card-sigil-band[data-mirror='smash'] .card-mirror-icon, :root .card-sigil-band[data-mirror='smash'] .card-type-name {
+  color: var(--combat-symbol-gold);
+}
+:root .card-sigil-band[data-mirror='defend'] .card-mirror-icon, :root .card-sigil-band[data-mirror='defend'] .card-type-name,
+:root .card-sigil-band[data-mirror='technique'] .card-mirror-icon, :root .card-sigil-band[data-mirror='technique'] .card-type-name,
+:root .card-sigil-band[data-mirror='counter'] .card-mirror-icon, :root .card-sigil-band[data-mirror='counter'] .card-type-name {
+  color: var(--combat-symbol-silver);
+}
+:root .card-sigil-band[data-mirror='attack'] .card-mirror-icon { --combat-symbol-trim: var(--combat-symbol-blue-trim); }
+:root .card-sigil-band[data-mirror='sweep'] .card-mirror-icon, :root .card-sigil-band[data-mirror='defend'] .card-mirror-icon { --combat-symbol-trim: var(--combat-symbol-black-trim); }
+:root .card-sigil-band[data-mirror='smash'] .card-mirror-icon, :root .card-sigil-band[data-mirror='counter'] .card-mirror-icon { --combat-symbol-trim: var(--combat-symbol-red-trim); }
