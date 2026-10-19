@@ -99,7 +99,7 @@ import {
   reaverAttackTiming,
 } from '../reaverAttack.js';
 import { MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
-import { openQuickNav, closeQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
+import { openQuickNav, closeQuickNav, quickNavMode, saveAction, lockEquipmentRows } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { haptic } from '../haptics.js';
 import { mountTutorial } from '../components/tutorial.js';
@@ -3313,10 +3313,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         },
       });
       // D15: the equipment rows read as disabled, and are not actionable, until the fight resolves.
-      if (panel && editLocked()) for (const act of ['inventory', 'character']) {
-        const row = panel.querySelector(`.qn-row[data-act="${act}"]`);
-        if (row) { row.disabled = true; row.setAttribute('aria-disabled', 'true'); row.title = tFull('combat.editLocked'); }
-      }
+      if (editLocked()) lockEquipmentRows(panel);
     });
   }
 

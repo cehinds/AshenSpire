@@ -131,7 +131,7 @@ import { mountRest } from './ui/screens/rest.js';
 import { commitDeckEditDraft } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
-import { armouryHasNew, markArmourySeen, profileOpensDeckEditor } from './model/armouryRules.js';
+import { armouryHasNew, editingLocked, markArmourySeen, profileOpensDeckEditor } from './model/armouryRules.js';
 import { deckEditingOn } from './model/deckRules.js';
 import { mountShop, mountConfiguredShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
@@ -2232,6 +2232,8 @@ function showOverlay(initialTab = 'settings') {
     saves,
     onSettingsChange: persistSettingsChange,
     quickControls: quickMenuControls,
+    // D15: the overlay opened from a fight shares the combat edit lock, so its equipment rows are not dead doors.
+    editLocked: () => editingLocked(run, xpCombat),
     onArmoury: (view) => {
       const combatArmoury = app.querySelector('#combat-armoury');
       closeOverlay();
