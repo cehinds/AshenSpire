@@ -179,6 +179,9 @@ export function summarizeCardOption(registries, combat, option, readers = {}) {
   let def = null, preview = null;
   try { def = readers.defOf?.(option, combat) ?? null; } catch { def = null; }
   try { preview = def ? readers.previewOf?.(option, combat) ?? null : null; } catch { preview = null; }
+  // The preview resolved the card (its live effect variant, charges); summarize that definition so the
+  // effect indexes and numbers agree with it.
+  if (preview?.resolvedDefinition) def = preview.resolvedDefinition;
   // `readers.conditionHolds(effect, option, combat)` answers true or false for the card owner right now; a throw
   // or any other answer means "unknown".
   const holds = readers.conditionHolds ? effect => { try { return readers.conditionHolds(effect, option, combat); } catch { return undefined; } } : null;

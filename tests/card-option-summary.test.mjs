@@ -147,3 +147,19 @@ test('the engine predicate evaluator decides ironResolve by stance', async () =>
   assert.deepEqual(rows('bulwark'), [9], 'in Bulwark the Bulwark branch is the figure');
   assert.deepEqual(rows(null), [5], 'outside it the other branch is');
 });
+test('a tile summarizes the definition the preview resolved, so the live effect variant shows', () => {
+  const variantCard = (id, amount) => {
+    const base = { id, name: id, type: 'skill', effects: [{ op: 'block', target: 'self', amount: 4 }, { op: 'applyStatus', target: 'self', status: 'poise', stacks: 1 }],
+      effectVariants: [{ if: { p: 'inStance', stance: 'smash' }, effects: [{ op: 'block', target: 'self', amount }] }] };
+    return { base, preview: { resolvedDefinition: { ...base, effects: [{ op: 'block', target: 'self', amount }], activeEffectVariant: 0 }, values: [{ op: 'block', value: amount }] } };
+  };
+  for (const [name, amount] of [['Stance Echo', 6], ['Resource Echo', 8]]) {
+    const { base, preview } = variantCard(name, amount);
+    const summary = summarizeCardOption(null, null, { id: 'v', name }, { defOf: () => base, previewOf: () => preview });
+    assert.deepEqual(summary.line.map(row => `${row.before}${row.value}${row.after}`), [`Def ${amount}`], `${name} shows its live variant`);
+    assert.equal(summary.html, undefined, 'the variant is fully numeric');
+  }
+  // With no resolved definition the authored card is used, as before.
+  const { base } = variantCard('Plain', 6);
+  assert.deepEqual(summarizeCardOption(null, null, { id: 'v', name: 'Plain' }, { defOf: () => base, previewOf: () => null }).line, []);
+});
