@@ -1959,16 +1959,19 @@ async function persistSettingsChange(changed) {
   if (res?.ok === false) {
     activeSettings = settingsBefore;
     activeMeta.settings = settingsBefore;
-    if (run && runRulesBefore) {
-      run.advancedConfigSnapshot = runRulesBefore;
-      rebuildRegistries(runRulesBefore, run);
-      if (xpCombat) xpCombat.registries = registries;
-      persist();
+    try {
+      if (run && runRulesBefore) {
+        run.advancedConfigSnapshot = runRulesBefore;
+        rebuildRegistries(runRulesBefore, run);
+        if (xpCombat) xpCombat.registries = registries;
+        persist();
+      }
+    } finally {
+      applyDisplaySettings(activeSettings);
+      refreshHudQuickSettings(app, activeSettings);
+      showSettingsNotice(QUARANTINE_NOTICE);
+      announceSettingsSettled();
     }
-    applyDisplaySettings(activeSettings);
-    refreshHudQuickSettings(app, activeSettings);
-    showSettingsNotice(QUARANTINE_NOTICE);
-    announceSettingsSettled();
     return res;
   }
   if (Object.hasOwn(changed, 'newGameProfile')) selectedGameProfile = readNewGameProfile(activeSettings, resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile));

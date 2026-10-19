@@ -327,8 +327,8 @@ test('a settings save that settles (saved or rolled back) announces it and comba
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   const combat = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   const persist = main.slice(main.indexOf('async function persistSettingsChange'), main.indexOf('const quickMenuControls'));
-  // Rollback path: announce comes after the rollback and before the early return.
-  assert.match(persist, /activeSettings = settingsBefore;[\s\S]*showSettingsNotice\(QUARANTINE_NOTICE\);\s*announceSettingsSettled\(\);\s*return res;/);
+  // Rollback path: announce sits in a finally after the run restore, so it runs even if the restore throws; then the early return.
+  assert.match(persist, /activeSettings = settingsBefore;[\s\S]*finally \{[\s\S]*showSettingsNotice\(QUARANTINE_NOTICE\);\s*announceSettingsSettled\(\);\s*\}\s*return res;/);
   // Success path: announce comes last.
   assert.match(persist, /announceSettingsSettled\(\);\s*return res;\s*}\s*$/);
   assert.equal((persist.match(/announceSettingsSettled\(\)/g) || []).length, 2);
