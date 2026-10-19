@@ -1,5 +1,8 @@
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
-import { counterRuleActive, counterReturnForReceipt } from './counterRule.js';
+// Namespace import: counterRule.js sits in an import cycle and the bundled build does not keep cyclic named imports live.
+import * as CounterRule from './counterRule.js';
+const counterRuleActive = ctx => CounterRule.counterRuleActive(ctx);
+const counterReturnForReceipt = (ctx, receipt) => CounterRule.counterReturnForReceipt(ctx, receipt);
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
 import { configuredCombat, configuredModule, setProfileStance } from './gameProfileCombat.js';
