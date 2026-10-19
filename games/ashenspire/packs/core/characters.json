@@ -335,7 +335,7 @@
       "size": "medium"
     },
     "enemy": {
-      "poiseMax": 10,
+      "poiseMax": 5,
       "arcaneExposure": {
         "mode": "configured",
         "threshold": 8,
@@ -413,7 +413,7 @@
       "artFaces": "left"
     },
     "enemy": {
-      "poiseMax": 6,
+      "poiseMax": 3,
       "blighted": true,
       "cardHints": {
         "blightHound.bite": {
@@ -469,7 +469,7 @@
       "size": "medium"
     },
     "enemy": {
-      "poiseMax": 16,
+      "poiseMax": 8,
       "cardHints": {
         "huskBrute.club": {
           "aiWeight": 50,
@@ -527,7 +527,7 @@
       "tint": "grace"
     },
     "enemy": {
-      "poiseMax": 4,
+      "poiseMax": 2,
       "cardHints": {
         "graveWisp.curse": {
           "aiWeight": 50,
@@ -589,7 +589,7 @@
     },
     "enemy": {
       "firstCard": "wyrmAspirant.consecrate",
-      "poiseMax": 24,
+      "poiseMax": 12,
       "cardHints": {
         "wyrmAspirant.consecrate": {
           "aiWeight": 10,
@@ -674,7 +674,7 @@
         "fellWarden.twinDaggers"
       ],
       "firstCard": "fellWarden.caneStrike",
-      "poiseMax": 30,
+      "poiseMax": 15,
       "phases": [
         {
           "on": "hpBelowPct",
@@ -773,7 +773,7 @@
       "artFaces": "left"
     },
     "enemy": {
-      "poiseMax": 5,
+      "poiseMax": 2,
       "cardHints": {
         "lanternMoth.lanternDust": {
           "aiWeight": 35,
@@ -831,7 +831,7 @@
     },
     "enemy": {
       "firstCard": "briarHermit.rootShelter",
-      "poiseMax": 9,
+      "poiseMax": 4,
       "cardHints": {
         "briarHermit.rootShelter": {
           "aiWeight": 30,
@@ -889,7 +889,7 @@
       "artFaces": "left"
     },
     "enemy": {
-      "poiseMax": 8,
+      "poiseMax": 4,
       "cardHints": {
         "chainScavenger.hookCast": {
           "aiWeight": 60,
@@ -974,7 +974,7 @@
         "bellKeeper.crackedPeal"
       ],
       "firstCard": "bellKeeper.bronzeToll",
-      "poiseMax": 25,
+      "poiseMax": 12,
       "phases": [
         {
           "on": "hpBelowPct",
@@ -1073,7 +1073,7 @@
     },
     "enemy": {
       "firstCard": "thornMatriarch.rootCrown",
-      "poiseMax": 22,
+      "poiseMax": 11,
       "phases": [
         {
           "on": "hpBelowPct",
@@ -1158,7 +1158,7 @@
       "tint": "gold"
     },
     "enemy": {
-      "poiseMax": 18,
+      "poiseMax": 9,
       "cardHints": {
         "gildedKnight.thrust": {
           "aiWeight": 50,
@@ -1222,7 +1222,7 @@
       "tint": "grace"
     },
     "enemy": {
-      "poiseMax": 10,
+      "poiseMax": 5,
       "cardHints": {
         "courtSurgeon.scalpel": {
           "aiWeight": 40,
@@ -1286,7 +1286,7 @@
       "artFaces": "left"
     },
     "enemy": {
-      "poiseMax": 8,
+      "poiseMax": 4,
       "cardHints": {
         "stitchedHound.maul": {
           "aiWeight": 60,
@@ -1342,7 +1342,7 @@
       "tint": "rot"
     },
     "enemy": {
-      "poiseMax": 6,
+      "poiseMax": 3,
       "cardHints": {
         "courtMarionette.dart": {
           "aiWeight": 50,
@@ -1399,7 +1399,7 @@
       "tint": "frost"
     },
     "enemy": {
-      "poiseMax": 22,
+      "poiseMax": 11,
       "cardHints": {
         "livingArmor.slam": {
           "aiWeight": 30,
@@ -1470,7 +1470,7 @@
     },
     "enemy": {
       "firstCard": "courtDuelist.enGarde",
-      "poiseMax": 26,
+      "poiseMax": 13,
       "cardHints": {
         "courtDuelist.enGarde": {
           "aiWeight": 10,
@@ -1561,7 +1561,7 @@
         "stitchedKing.thousandHands"
       ],
       "firstCard": "stitchedKing.courtlyDecree",
-      "poiseMax": 34,
+      "poiseMax": 17,
       "phases": [
         {
           "on": "hpBelowPct",
@@ -1648,7 +1648,7 @@
       "artFaces": "left"
     },
     "enemy": {
-      "poiseMax": 8,
+      "poiseMax": 4,
       "cardHints": {
         "mirrorScribe.silverScript": {
           "aiWeight": 30,
@@ -1712,7 +1712,7 @@
     },
     "enemy": {
       "firstCard": "stitchCrab.shellFold",
-      "poiseMax": 17,
+      "poiseMax": 8,
       "cardHints": {
         "stitchCrab.shellFold": {
           "aiWeight": 30,
@@ -1791,7 +1791,7 @@
         "glassRegent.shatteredCourt"
       ],
       "firstCard": "glassRegent.prismGuard",
-      "poiseMax": 26,
+      "poiseMax": 13,
       "phases": [
         {
           "on": "hpBelowPct",
@@ -1897,7 +1897,7 @@
     },
     "enemy": {
       "firstCard": "marrowOrganist.bonePrelude",
-      "poiseMax": 30,
+      "poiseMax": 15,
       "phases": [
         {
           "on": "hpBelowPct",
@@ -1987,7 +1987,7 @@
       "tint": "ember"
     },
     "enemy": {
-      "poiseMax": 10,
+      "poiseMax": 5,
       "cardHints": {
         "ashRevenant.cinderSlash": {
           "aiWeight": 55,
@@ -2045,7 +2045,7 @@
       "tint": "grace"
     },
     "enemy": {
-      "poiseMax": 8,
+      "poiseMax": 4,
       "cardHints": {
         "emberStarvedPilgrim.desperateClaw": {
           "aiWeight": 60,
@@ -2102,7 +2102,7 @@
       "tint": "blood"
     },
     "enemy": {
-      "poiseMax": 14,
+      "poiseMax": 7,
       "cardHints": {
         "valkyrieShade.spiralLance": {
           "aiWeight": 50,
@@ -2158,7 +2158,7 @@
       "tint": "ember"
     },
     "enemy": {
-      "poiseMax": 30,
+      "poiseMax": 15,
       "arcaneExposure": {
         "mode": "immune"
       },
@@ -2232,7 +2232,7 @@
     },
     "enemy": {
       "firstCard": "wyrmLord.consecration",
-      "poiseMax": 30,
+      "poiseMax": 15,
       "cardHints": {
         "wyrmLord.consecration": {
           "aiWeight": 10,
@@ -2317,7 +2317,7 @@
         "blightedValkyrie.scarletDance"
       ],
       "firstCard": "blightedValkyrie.spiralThrust",
-      "poiseMax": 36,
+      "poiseMax": 18,
       "blighted": true,
       "phases": [
         {
@@ -2419,7 +2419,7 @@
       "artFaces": "left"
     },
     "enemy": {
-      "poiseMax": 11,
+      "poiseMax": 5,
       "cardHints": {
         "cinderMantis.scythePair": {
           "aiWeight": 55,
@@ -2483,7 +2483,7 @@
       "artFaces": "left"
     },
     "enemy": {
-      "poiseMax": 7,
+      "poiseMax": 3,
       "cardHints": {
         "eclipseCantor.darkHymn": {
           "aiWeight": 30,
@@ -2559,7 +2559,7 @@
     },
     "enemy": {
       "firstCard": "furnaceSaint.openFurnace",
-      "poiseMax": 40,
+      "poiseMax": 20,
       "phases": [
         {
           "on": "hpBelowPct",
@@ -2659,7 +2659,7 @@
         "hollowAstronomer.fallingHeavens"
       ],
       "firstCard": "hollowAstronomer.starChart",
-      "poiseMax": 25,
+      "poiseMax": 12,
       "phases": [
         {
           "on": "hpBelowPct",
@@ -2761,7 +2761,7 @@
         "ashheartDragon.ashBreath"
       ],
       "firstCard": "ashheartDragon.obsidianClaws",
-      "poiseMax": 34,
+      "poiseMax": 17,
       "phases": [
         {
           "on": "hpBelowPct",

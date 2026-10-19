@@ -34,7 +34,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Counter reworked** ([#2200](https://github.com/cehinds/AshenSpire/pull/2200), `0.7.1.1691`). Counter now answers any attack it covers: it returns half the damage it takes, a quarter more with extra Block when it beats the attack, and reaction cards cost 1 less stamina from your hand.
+- **Counter reworked** ([#2200](https://github.com/cehinds/AshenSpire/pull/2200), `0.7.1.1695`). Counter now answers any attack it covers: it returns half the damage it takes, a quarter more with extra Block when it beats the attack, and reaction cards cost 1 less stamina from your hand.
+- **Spells use your PR** ([#2203](https://github.com/cehinds/AshenSpire/pull/2203), `0.7.1.1695`). Spells and cantrips now grow with your PR (Power Rating from INT and staves) instead of AR. The PR bonus lands on the magical part of a split hit, and enemy spells are unchanged.
+- **Enemies start with less Poise** ([#2202](https://github.com/cehinds/AshenSpire/pull/2202), `0.7.1.1695`). Enemies start with half the Poise they used to, so they break sooner in fights.
+- **Core map starts in fog** ([#2197](https://github.com/cehinds/AshenSpire/pull/2197), `0.7.1.1693`). The act map is fog of war by default in the Core ruleset: the route ahead stays hidden until you reach it.
 - **Reward picks go straight to your deck** ([#2196](https://github.com/cehinds/AshenSpire/pull/2196), `0.7.1.1691`). Winning a card reward now lets you add it straight to your deck or open the deck editor with it ready; winning a weapon or armour lets you equip it right away.
 - **Faster card previews** ([#2198](https://github.com/cehinds/AshenSpire/pull/2198), `0.7.1.1689`). Card previews and rule checks no longer re-copy the whole rule set each time, so tapping and aiming cards responds faster on phones.
 - **Defensive stances add Block** ([#2191](https://github.com/cehinds/AshenSpire/pull/2191), `0.7.1.1687`). Defend and other Block cards now count your stance's Defense Rating bonus, so a defensive stance really gives more Block.
