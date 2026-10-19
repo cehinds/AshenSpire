@@ -1387,7 +1387,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!combatEl.isConnected || combat.result) return;
       const pending = combat.pendingReaction;
       // Arm the delay when the offer's modal is open and playback is idle, so the answer
-      // waits a full combatActionDelay after the reaction words rather than the rest of an old tick.
+      // waits a full combatStepPause after the reaction words rather than the rest of an old tick.
       // Arming also needs a visible page: an offer that opened while hidden arms when the player returns.
       if (pending && reactionShell && !busy && !document.hidden && document.visibilityState !== 'hidden'
         && autoArmedReaction !== reactionShell) { autoArmedReaction = reactionShell; scheduleAutoCombat(); return; }

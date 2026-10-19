@@ -21,7 +21,7 @@ test('auto-combat never plays cards or ends turns (D12)', () => {
 test('automation settings participate in durable profile export and reset rows', () => {
   const rows = settingsRows();
   const keys = profileKeys(rows);
-  for (const key of ['autoCombat', 'combatSpeed', 'combatActionDelay']) {
+  for (const key of ['autoCombat', 'combatSpeed', 'combatStepPause']) {
     assert.ok(rows.some(row => row.key === key)); assert.ok(keys.includes(key), key);
   }
 });

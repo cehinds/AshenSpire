@@ -7348,7 +7348,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([...combatTopics.keys()].join(','), 'Animation & effects,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'askToUpcastAfterTarget,useSprites,autoCombat,combatSpeed,autoCombatSpeed,combatActionDelay,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
+      'askToUpcastAfterTarget,useSprites,autoCombat,combatSpeed,autoCombatSpeed,combatStepPause,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
       'every combat pacing, quality, shake, sprite, played-card and upcast switch is under one name');
     eq(combat.find(r => r.key === 'askToUpcastAfterTarget').def, false, 'upcast prompting defaults off');
     eq(combatTopics.get('Armaments').map((r) => r.key).join(','),

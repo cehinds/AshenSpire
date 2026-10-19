@@ -55,7 +55,7 @@ export function getBeatOrder() {
 import { ACTION_PACING, resolveCombatAutomation } from '../model/autoCombatPolicy.js';
 // The speed multiplier in force: the manual one, or the auto-combat one while
 // auto-combat is on (owner, D11, 2026-10-18). The gap between stages is the
-// player's "Pause between steps" row (combatActionDelay, ms).
+// player's "Pause between steps" row (combatStepPause, ms).
 function resolvePacing(settings = {}) {
   const base = resolveCombatAutomation(settings);
   return { ...base, speed: base.enabled ? base.autoSpeed : base.speed, gapMs: base.delayMs };

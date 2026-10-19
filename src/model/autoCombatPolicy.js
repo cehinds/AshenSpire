@@ -12,7 +12,7 @@ export function resolveCombatAutomation(settings = {}) {
     preference: settings.combatPreference === 'defense' ? 'defense' : AUTOMATION_DEFAULTS.combatPreference,
     // Owner D11 (2026-10-18): auto combat runs at its own multiplier, and the pause between steps is one setting.
     autoSpeed: bounded(settings.autoCombatSpeed, AUTOMATION_DEFAULTS.autoCombatSpeed, AUTOMATION_DEFAULTS.autoSpeedMinimum, AUTOMATION_DEFAULTS.autoSpeedMaximum),
-    delayMs: bounded(settings.combatActionDelay, ACTION_PACING.stageGapMs, AUTOMATION_DEFAULTS.stageGapMinimumMs, AUTOMATION_DEFAULTS.stageGapMaximumMs),
+    delayMs: bounded(settings.combatStepPause, ACTION_PACING.stageGapMs, AUTOMATION_DEFAULTS.stageGapMinimumMs, AUTOMATION_DEFAULTS.stageGapMaximumMs),
   };
 }
 // Auto-combat (owner ruling D12, 2026-10-18) automates the player's REACTION choices only.

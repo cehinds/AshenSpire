@@ -86,15 +86,15 @@ test('D11: the default gap is 1 s at every stage boundary and the active speed s
   assert.deepEqual(gaps(normal), [1000, 1000, 1000, 1000, 1000, 1000]);
   setCombatPacing({ combatSpeed: 2 }); assert.deepEqual(gaps(actionPacing()), Array(6).fill(500));
   setCombatPacing({ autoCombat: true }); assert.ok(Math.abs(actionPacing().gapMs - 1000 / 1.5) < 1e-9, 'auto-combat defaults to ×1.5');
-  setCombatPacing({ combatActionDelay: 250 }); assert.equal(actionPacing().gapMs, 250);
-  setCombatPacing({ combatActionDelay: 2000 }); assert.equal(actionPacing().gapMs, 2000);
-  setCombatPacing({ combatActionDelay: 60000 }); assert.equal(actionPacing().gapMs, 2000, 'capped at 2 s');
-  setCombatPacing({ combatActionDelay: 10 }); assert.equal(actionPacing().gapMs, 250, 'floored at 0.25 s');
+  setCombatPacing({ combatStepPause: 250 }); assert.equal(actionPacing().gapMs, 250);
+  setCombatPacing({ combatStepPause: 2000 }); assert.equal(actionPacing().gapMs, 2000);
+  setCombatPacing({ combatStepPause: 60000 }); assert.equal(actionPacing().gapMs, 2000, 'capped at 2 s');
+  setCombatPacing({ combatStepPause: 10 }); assert.equal(actionPacing().gapMs, 250, 'floored at 0.25 s');
   setCombatPacing();
 });
 
 test('D11: the watchdog budget follows the real gaps, so 1 s gaps and a multi-hit beat never trip it', () => {
-  setAnimSpeed('normal'); setCombatPacing({ combatActionDelay: 2000 });
+  setAnimSpeed('normal'); setCombatPacing({ combatStepPause: 2000 });
   const c = clock(), trace = [], timing = actionPacing();
   const beat = { actorId: 'player', kind: 'attack', events: [{ type: 'damageDealt' }, { type: 'damageDealt' }, { type: 'damageDealt' }] };
   runActionTimeline([beat, { ...beat, actorId: 'enemy' }], {
@@ -127,8 +127,8 @@ function enemyTurn(settings) {
 }
 test('D11: three enemies finish by themselves at every pause and speed, with no watchdog flush', () => {
   const measured = {};
-  for (const [name, settings] of [['default', {}], ['auto x1.5', { autoCombat: true }], ['gap 2000', { combatActionDelay: 2000 }],
-    ['gap 2000 auto x3', { combatActionDelay: 2000, autoCombat: true, autoCombatSpeed: 3 }], ['gap 250', { combatActionDelay: 250 }]]) {
+  for (const [name, settings] of [['default', {}], ['auto x1.5', { autoCombat: true }], ['gap 2000', { combatStepPause: 2000 }],
+    ['gap 2000 auto x3', { combatStepPause: 2000, autoCombat: true, autoCombatSpeed: 3 }], ['gap 250', { combatStepPause: 250 }]]) {
     const trace = enemyTurn(settings);
     assert.ok(!trace.includes('flush'), `${name}: the watchdog must not fire`);
     measured[name] = trace.find(row => row[0] === 'done')[1];
