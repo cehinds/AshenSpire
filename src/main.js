@@ -1154,7 +1154,7 @@ function showLobby() {
       // is a viewer, and it was opening at a literal while the same player's
       // solo map honoured their setting.
       mountCoop(app, {
-        registries, conn, myId, myIds, meta: saves.loadMeta(),
+        registries, conn, myId, myIds, meta: saves.loadMeta(), readSettings: () => saves.loadMeta().settings || {},
         bankEnemyKnowledge: saves.bankEnemyKnowledge ? value => saves.bankEnemyKnowledge(value) : null,
         onSettingsChange: persistSettingsChange,
         onLeave: () => showTitle(),
@@ -4083,7 +4083,7 @@ function coopStubMount(snapshot, myId, myIds = null) {
   window.__coopSentForShot = sent;
   const stub = { _h: null, setHandlers(h) { this._h = h; }, send(message) { sent.push(message); }, close() {}, get open() { return false; } };
   mountCoop(app, {
-    registries, conn: stub, myId, ...(myIds ? { myIds } : {}), meta: saves.loadMeta(),
+    registries, conn: stub, myId, ...(myIds ? { myIds } : {}), meta: saves.loadMeta(), readSettings: () => saves.loadMeta().settings || {},
     onSettingsChange: persistSettingsChange,
     onLeave() {},
   });

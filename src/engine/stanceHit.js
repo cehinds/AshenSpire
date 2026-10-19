@@ -5,6 +5,7 @@ import { proposalTargetPlan } from './proposalStatusRuntime.js';
 import { attackAccuracy, counterBaseEvasion, attributesOf } from './counterReturn.js';
 import * as Statuses from './statuses.js';
 import { RANGES } from '../model/combatRanges.js';
+import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
 import { stanceRulesFor, stanceOf, sameStance, stanceEntryBonuses } from '../model/stanceRules.js';
 
 function hitMode(source, target, { evadeDisabled = false } = {}) {
@@ -41,6 +42,20 @@ export function effectiveEvasion(ctx, entity, { evadeDisabled = false, baseEntit
   return counterBaseEvasion(ctx, baseEntity) + (evadeDisabled ? 0 : stanceRulesFor(ctx).evasionPerStack * stacks(entity, 'evade') + preparedBonus);
 }
 
+/** Perception gate for the hit-% preview: only an exact read of the enemy shows odds that depend on its telegraphed stance. */
+export function hitReadExact(enemy, observerId = 'player', { turn, legacySolo = false } = {}) {
+  // An active Read Intent reveal exposes the exact intent and stance, so it counts as an exact read.
+  return enemy?.knowledgeAction?.reads?.[observerId]?.visibility === 'exact'
+    || proposalIntentRevealUntil(enemy, observerId, turn, { legacySolo }) !== null;
+}
+/** The target the preview prices: itself on an exact read, else a stance-neutral shallow copy so the badge cannot leak the telegraph. Preview only; execution never calls this. */
+export function previewTargetFor(target, observerId = 'player', reveal = {}) {
+  if (!target || hitReadExact(target, observerId, reveal)) return target;
+  const blind = { ...target, combatStance: { maneuver: 'neutral', camp: 'physical', range: 'melee' }, matchingStanceCardMultiplier: 0 };
+  delete blind.stanceAdvantageRating;
+  return blind;
+}
+
 export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   if (ctx.combatExpansionVersion !== 2 || !source || !target || source === target || source.kind === target.kind) return null;
   const profile = carrier?.combatProfile || {};
@@ -58,15 +73,16 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const rules = stanceRulesFor(ctx);
   const sweep = profile.maneuver === 'sweep' ? rules.sweepPrecisionBase + rules.sweepPerAdditionalTarget * Math.max(0, options.additionalTargets ?? carrier?.additionalTargets ?? 0) : 0;
   const cfg = fixCoreRules(ctx, source, carrier).accuracy;
+  // Under FixCore, Accuracy and Evasion are whole numbers, rounded down at the end of their chains (owner, 2026-10-18).
   const accuracy = fixCoreEnabled(ctx)
-    ? precision * cfg.precisionPerStack + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[profile.maneuver] || 0) + proposal.accuracyDelta/5
+    ? Math.floor(precision * cfg.precisionPerStack + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[profile.maneuver] || 0) + proposal.accuracyDelta/5)
     : attackAccuracy(ctx, source, carrier) + precision + sweep + proposal.accuracyDelta/5;
   const evadeStacks = options.evadeDisabled ? 0 : stacks(target, 'evade');
   const advantageRating = Number.isFinite(target.stanceAdvantageRating) ? target.stanceAdvantageRating
     : 1 + (stanceMitigation(ctx, profile.maneuver, target.combatStance?.maneuver).defenseAdvantage ? cfg.stanceAdvantageBonus || 0 : 0);
   const stanceFactor = fixCoreEnabled(ctx) ? Math.min(cfg.stanceMaximum, Math.max(cfg.stanceMinimum,
     advantageRating + (Number(target.matchingStanceCardMultiplier) || 0))) : 1;
-  const evasion = effectiveEvasion(ctx, target, options) * stanceFactor;
+  const evasion = fixCoreEnabled(ctx) ? Math.floor(effectiveEvasion(ctx, target, options) * stanceFactor) : effectiveEvasion(ctx, target, options) * stanceFactor;
   const need = fixCoreEnabled(ctx) ? evasion - accuracy : Math.max(2, Math.min(20, 8 + evasion - accuracy));
   const evadeAttempted = inRange && !bypass && !options.evadeDisabled && (evadeStacks > 0 || !!eligiblePreparedEvade(target));
   const mode = hitMode(source, target, options);
@@ -75,7 +91,8 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
     if (mode === 'normal') { if (bypass || diceHit([first], need, mode, fixCoreEnabled(ctx))) hits++; }
     else for (let second = 1; second <= 20; second++) if (bypass || diceHit([first, second], need, mode, fixCoreEnabled(ctx))) hits++;
   }
-  const hitChance = 100 * hits / outcomes;
+  // Under FixCore a shown percentage is whole, rounded down (owner, 2026-10-18); advantage and disadvantage give quarters.
+  const hitChance = fixCoreEnabled(ctx) ? Math.floor(100 * hits / outcomes) : 100 * hits / outcomes;
   const evadeActive = evadeAttempted;
   return { range, requiredRange, inRange, accuracy, evasion, need, ...(fixCoreEnabled(ctx) ? {stanceFactor} : {}), bypass, mode, advantage: mode === 'advantage', disadvantage: mode === 'disadvantage', evadeStacks, evadeActive, evadeAttempted, hitChance, chance: hitChance,
     ...(!inRange ? { missReason: 'range' } : {}) };

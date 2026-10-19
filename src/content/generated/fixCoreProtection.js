@@ -204,29 +204,17 @@ export const fixCoreProtection = [
               "type": "number",
               "minimum": 0
             },
-            "levelBaseline": {
-              "type": "number",
-              "minimum": 0
-            },
-            "intelligenceBaseline": {
-              "type": "number",
-              "minimum": 0
-            },
-            "levelWeight": {
-              "type": "number",
-              "minimum": 0
-            },
-            "intelligenceWeight": {
-              "type": "number",
-              "minimum": 0
+            "bonuses": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "default": []
             }
           },
           "required": [
             "baseDC",
-            "levelBaseline",
-            "intelligenceBaseline",
-            "levelWeight",
-            "intelligenceWeight"
+            "bonuses"
           ],
           "additionalProperties": false
         },
