@@ -86,7 +86,7 @@ import { createStanceLedger, kindForCard, stanceForCard } from '../../model/alte
 import { selectedWeaponCounterOrigins, selectedWeaponSequence, selectedWeaponSequenceTiming } from '../../model/selectedWeaponSequences.js';
 import { selectedWeaponStanceFor, selectedWeaponReactionFor, selectedWeaponCounterFor } from '../../model/selectedWeaponStances.js';
 import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { ANIM_SPEEDS, COMBAT_TIMING, getAnimSpeed } from '../animationPace.js';
+import { ANIM_SPEEDS, COMBAT_TIMING, actionPacing, getAnimSpeed } from '../animationPace.js';
 import { figureSpec, equippedPieces, gripOf } from '../../model/loadout.js';
 import { resourceAura } from '../combatAura.js';
 import { CARD_ACTION_CLASSES } from '../../model/alternativeCardAnimation.js';
@@ -1384,19 +1384,23 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function scheduleAutoCombat() {
     if (autoCombatTimer !== null || !combatEl.isConnected) return;
     const policy = resolveCombatAutomation(readSettings());
+    const armedOffer = !!combat.pendingReaction && autoArmedReaction === reactionShell;
+    const AUTO_POLL_MS = 50;
     autoCombatTimer = setTimeout(() => {
       autoCombatTimer = null;
       if (!combatEl.isConnected || combat.result) return;
       const pending = combat.pendingReaction;
       // Arm the delay when the offer's modal is open and playback is idle, so the answer
-      // waits a full combatActionDelay after the reaction words rather than the rest of an old tick.
+      // waits a full combatStepPause after the reaction words rather than the rest of an old tick.
       // Arming also needs a visible page: an offer that opened while hidden arms when the player returns.
       if (pending && reactionShell && !busy && !document.hidden && document.visibilityState !== 'hidden'
         && autoArmedReaction !== reactionShell) { autoArmedReaction = reactionShell; scheduleAutoCombat(); return; }
       const option = autoReactionChoice();
       if (option !== undefined) { reactionShell.dismiss(); answerReaction(reactionAnswer(pending, option), false); }
       scheduleAutoCombat();
-    }, policy.enabled ? Math.max(100, policy.delayMs / policy.speed) : 500);
+    // One wait per answer: a fresh offer arms on a short tick, then the timeline's own gap (scaled by the
+    // animation pace, the auto speed and Reduced motion, so 0 on Instant) passes once before the answer.
+    }, !policy.enabled ? 500 : armedOffer ? Math.max(AUTO_POLL_MS, actionPacing({ reduced: reducedMotionRequested() }).gapMs) : AUTO_POLL_MS);
   }
 
   // ---------- rendering ----------
