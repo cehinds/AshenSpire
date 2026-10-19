@@ -7,7 +7,7 @@ import { mountGameProfileOffers } from '../src/ui/components/gameProfileOffers.j
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 
 // Core deck edits happen at the Armoury; the other profiles still rest at Strategize.
-function rewardNote(profileId, options, { editorWhere, servicesPerVisit } = {}) {
+function rewardNote(profileId, options, { editorWhere, servicesPerVisit, editorEnabled } = {}) {
   const profile = resolveGameProfile(profileId);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const dom = rewardDom();
@@ -18,6 +18,7 @@ function rewardNote(profileId, options, { editorWhere, servicesPerVisit } = {}) 
     // Only the run's copy is edited: the snapshot digest guards the registry profile.
     const policy = structuredClone(profile);
     if (editorWhere) policy.modules.cards.editorWhere = editorWhere;
+    if (editorEnabled !== undefined) policy.modules.cards.editorEnabled = editorEnabled;
     if (servicesPerVisit) policy.content.rests.servicesPerVisit = servicesPerVisit;
     const run = { class: 'reaver', gameProfile: policy, cinders: 0, deck: [] };
     const offer = { id: `note-${profileId}`, options: options.map(id => ({ kind: 'combatCards', id })), taken: [], claimed: null, takeCount: 1 };
@@ -47,4 +48,10 @@ test('the reward note follows editorWhere, not rest servicesPerVisit', () => {
   assert.equal(rewardNote('core', ids, { editorWhere: 'strategize', servicesPerVisit: 'all' }), strategize);
   assert.equal(rewardNote('core', ids, { editorWhere: 'noncombat', servicesPerVisit: 'all' }), armoury);
   assert.equal(rewardNote('core', ids, { editorWhere: 'strategize', servicesPerVisit: 'one' }), strategize);
+});
+
+test('a Core reward promises no editing when the deck editor is disabled', () => {
+  const ids = ['core.strike', 'core.defend'];
+  assert.equal(rewardNote('core', ids, { editorEnabled: false }), 'Choose 1. Cards join your collection.');
+  assert.equal(rewardNote('core', ids, { editorEnabled: true }), 'Choose 1. Cards join your collection; edit your deck at the Armoury.');
 });

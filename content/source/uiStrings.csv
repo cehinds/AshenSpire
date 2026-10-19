@@ -1583,6 +1583,7 @@ shop.configured.buy.message,,Spend {cost} of your {cinders} cinders ({left} left
 creation.review.starterDeck,,Starting deck,,
 reward.configured.note,,Choose {count}. Cards join your collection; edit your deck at Strategize.,,
 reward.configured.noteArmoury,,Choose {count}. Cards join your collection; edit your deck at the Armoury.,,
+reward.configured.noteNoEditor,,Choose {count}. Cards join your collection.,,
 gameProfile.settings.title,,Game rules,Game rules,
 gameProfile.settings.current,,Current game,Current game,
 gameProfile.settings.core,,Ashen core,Ashen core,
