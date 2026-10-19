@@ -101,7 +101,7 @@ function liveCardValues(registries, run, itemRef, level) {
       if (!(def.effects || []).some((effect) => CARD_VALUES.some(({ op }) => op === effect.op))) { rows.set(key, { cardId: instance.cardId, name: def.name, copies: 1, values: {} }); continue; }
       const preview = previewCard(combat, instance.instanceId);
       rows.set(key, { cardId: instance.cardId, name: preview.name, copies: 1,
-        values: Object.fromEntries(CARD_VALUES.map(({ op }) => [op, preview.values.find((value) => value.op === op)?.value])) });
+        values: Object.fromEntries(CARD_VALUES.map(({ op }) => { const entry = preview.values.find((value) => value.op === op); return [op, entry?.faceValue ?? entry?.value]; })) });
     }
     return rows;
   });

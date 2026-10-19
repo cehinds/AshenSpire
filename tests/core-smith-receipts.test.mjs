@@ -49,18 +49,22 @@ test('Core weapon tier: receipt names AR and each card it changes, and a played 
   assert.ok(cards.length, 'at least one deck card changes damage');
   assert.ok(cards.every((row) => row.after === row.before + 1), 'AR weight 1: +1 damage per card');
   assert.ok(smith);
-  // Live: the same card, before this smithing (levels reset) and after, differs by exactly the receipt.
-  const after = new Map(cards.map((row) => [row.cardId, liveDamage(run, row.cardId)]));
+  // The receipt is the printed face: a fight's card face shows exactly before/after (levels reset for before).
+  const face = (cardId) => { const combat = fight(run), card = cardsOf(combat).find((row) => row.cardId === cardId);
+    const entry = previewCard(combat, card.instanceId).values.find((e) => e.op === 'damage'); return entry.faceValue ?? entry.value; };
+  const shown = new Map(cards.map((row) => [row.cardId, face(row.cardId)]));
+  const played = new Map(cards.map((row) => [row.cardId, liveDamage(run, row.cardId)]));
   run.itemUpgradeLevels = { ...run.itemUpgradeLevels, 'armament/greatsword': 0 };
-  // Counter only deals damage when triggered, so a played copy shows 0 both times; every card that does hit must match.
-  let checked = 0;
   for (const row of cards) {
-    const b = liveDamage(run, row.cardId), a = after.get(row.cardId);
-    if (!a && !b) continue;
-    assert.equal(a - b, row.after - row.before, row.cardId);
-    checked++;
+    assert.equal(shown.get(row.cardId), row.after, row.cardId);
+    assert.equal(face(row.cardId), row.before, row.cardId);
   }
-  assert.ok(checked, 'at least one played card moved by the receipt amount');
+  // Against the dummy enemy a played hit can lose a point to its defences, but never gains more than the face.
+  for (const row of cards) {
+    const delta = played.get(row.cardId) - liveDamage(run, row.cardId);
+    assert.ok(delta >= 0 && delta <= row.after - row.before, row.cardId);
+  }
+  assert.ok(cards.some((row) => played.get(row.cardId) - liveDamage(run, row.cardId) === row.after - row.before), 'at least one played card moved by the full receipt amount');
 });
 
 test('Core armor tier: receipt shows the budget point and the block it adds to Defend', () => {
@@ -131,4 +135,13 @@ test('a rank-2 Core shield may spend the tier point in its authored points (vali
   };
   assert.doesNotThrow(build(2));
   assert.throws(build(1), /exceed the pool/);
+});
+
+test('card rows record the printed face number, not the number against the first enemy', () => {
+  const run = fresh(); visit(run);
+  const candidate = smithingPlan(reg, run).candidates.find((row) => row.itemRef === 'armament/greatsword');
+  const smash = candidate.coreCardRows.find((row) => row.cardId === 'core.smash' && row.op === 'damage');
+  const combat = fight(run), card = cardsOf(combat).find((row) => row.cardId === 'core.smash');
+  const entry = previewCard(combat, card.instanceId).values.find((e) => e.op === 'damage');
+  assert.equal(smash.before, entry.faceValue ?? entry.value);
 });
