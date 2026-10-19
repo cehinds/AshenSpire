@@ -6,12 +6,13 @@ import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 // Selection is reversible; only the modal's explicit Confirm command commits.
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 import { t } from '../strings.js';
+import { coreSmithingPreviewRows } from '../../model/smithingCore.js';
 
 const freeze = (value) => Object.freeze(value);
 
 function changeLabel(change) {
   const labels = {
-    damage: 'Attack Rating',
+    damage: 'Damage',
     block: 'Guard',
     draw: 'Draw',
     discard: 'Discard',
@@ -19,7 +20,7 @@ function changeLabel(change) {
     'cost:mana': 'Mana Cost',
     'cost:stamina': 'Stamina Cost',
   };
-  return `${labels[change.op] || change.op}: ${change.before} → ${change.after}`;
+  return `${change.label || labels[change.op] || change.op}: ${change.before} → ${change.after}`;
 }
 
 function groupedAffected(cards) {
@@ -116,9 +117,13 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       shortfall: candidate.shortfall,
       affordable: candidate.affordable,
       affectedCount: candidate.affectedCards.length,
-      affectedRows: itemKind === 'armament'
+      // Only the item under review pays for its rows: a Core candidate's card rows run real combats.
+      affectedRows: itemKind === 'armament' && !candidate.core
         ? groupedAffected(candidate.previewCards || candidate.affectedCards)
-        : genericAffected(candidate),
+        : candidate.core
+          // Only the item under review pays for its rows: a Core candidate's card rows run real combats.
+          ? (itemRef === selectedItemRef || candidate.armamentId === selectedItemRef ? groupedAffected(coreSmithingPreviewRows(candidate.itemName, candidate.changes, candidate.coreCardRows)) : freeze([]))
+          : genericAffected(candidate),
       requirements: freeze(candidate.requirements.map((row) => freeze({ ...row }))),
     });
   });

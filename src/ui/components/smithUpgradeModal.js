@@ -100,7 +100,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
   let disarmDecision = null;
 
   const CHANGE_LABELS = {
-    damage: 'AR', block: 'GUARD', draw: 'DRAW', discard: 'DISCARD', 'cost:action': 'STAMINA', 'cost:mana': 'MANA', 'cost:stamina': 'STAMINA',
+    damage: 'DAMAGE', block: 'GUARD', draw: 'DRAW', discard: 'DISCARD', 'cost:action': 'STAMINA', 'cost:mana': 'MANA', 'cost:stamina': 'STAMINA',
   };
   /** A row's changes as StatPairs with deltas: "AR 7 → 10". */
   const changeSummary = (row) => el('span', { class: 'smith-fold-values' }, row.values.map((change) => {
@@ -289,7 +289,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
         ...row.changes.map((change) => prose(change)),
         row.rating
           ? flavour(`Uses the source item’s ${row.rating.label}.`, { class: 'smith-scaling' })
-          : flavour('No source rating.', { class: 'smith-scaling' }),
+          : row.reference ? flavour('No source rating.', { class: 'smith-scaling' }) : null,
         flavour(`Source: ${selected.name}`),
       ]);
       const detail = el('div', { class: `smith-fold-detail${row.reference ? '' : ' no-card'}` }, [

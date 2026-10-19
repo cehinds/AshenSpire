@@ -1,4 +1,5 @@
 import test from 'node:test';
+import '../src/engine/runCombat.js'; // binds the combat engine Core Smith card rows run
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -48,7 +49,11 @@ test('a free Smith quote and shared review agree with the configured commit at z
   assert.deepEqual(run, before);
   const expected = model.smithPreviews.get(candidate.itemRef).preview;
   commitGameProfileRest(registries, run, 'smith', { itemRef: candidate.itemRef });
-  assert.deepEqual(run, expected);
+  // The preview skips card simulation (it runs for every candidate); the commit adds the chosen item's card rows to the receipt.
+  const { lastSmithingReceipt: committed, ...rest } = run, { lastSmithingReceipt: previewed, ...expectedRest } = expected;
+  assert.deepEqual(rest, expectedRest);
+  assert.deepEqual({ ...committed, changes: committed.changes.filter(row => row.kind !== 'card'), affectedCards: previewed.affectedCards },
+    { ...previewed, changes: previewed.changes.filter(row => row.kind !== 'card') });
   assert.equal(run.smithingStones, 0);
   // D10: Smith being used leaves Level Up usable in the same visit (not exclusive).
   const spent = gameProfileRestModel(registries, run, run.gameProfileRestVisits[visit.id]);

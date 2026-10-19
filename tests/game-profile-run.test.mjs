@@ -1,3 +1,4 @@
+import '../src/engine/runCombat.js'; // binds the combat engine Core Smith card rows run
 import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
