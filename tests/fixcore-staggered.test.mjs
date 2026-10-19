@@ -282,3 +282,10 @@ test('an unprotected Core break still carries the stagger marker and the "stagge
   assert.equal(target.combatStance.maneuver, 'staggered');
   assert.match(JSON.stringify(combatLogEntries(combat.eventLog, { registries: reg, players: [], enemies: combat.enemies })), /staggered/);
 });
+
+test('mechanics: legacy status.staggered keeps its stacking implementation; the Core stance is its own entry', async () => {
+  const { readFileSync } = await import('node:fs');
+  const read = slug => JSON.parse(readFileSync(new URL(`../engine/mechanics/${slug}/mechanic.json`, import.meta.url), 'utf8'));
+  assert.equal(read('status.staggered').legacy.symbol, 'staggerEnemy');
+  assert.equal(read('stance.staggered').legacy.symbol, 'fixCoreStagger');
+});
