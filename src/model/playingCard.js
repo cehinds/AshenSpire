@@ -35,6 +35,7 @@ import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
 import { applyCardTraits } from '../content/traitProjection.js';
 import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
+import { wardReadsAsPoise, poiseMergeGroups } from './wardOffCardText.js';
 import { balance } from '../content/balance.js';
 import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
 import { spellDefenseSplit } from './spellDefense.js';
@@ -150,12 +151,14 @@ export function cardSummaryContext(def, preview = null, registries = null) {
     if (['all', 'any'].includes(pred.p)) { const parts = pred.preds.map(condition); return parts.every(Boolean) ? parts.join(pred.p === 'all' ? ' and ' : ' or ') : ''; }
     return '';
   };
-  return { value, defenseValue, title, condition, profile: combatProfileFor(def), bindings, tokens };
+  // Ward off (Core 2): Ward damage reads as Poise damage, merged with the card's other Poise damage (wardOffCardText.js).
+  const poiseMerge = wardReadsAsPoise(registries) ? poiseMergeGroups(def.effects) : null;
+  return { value, defenseValue, title, condition, profile: combatProfileFor(def), bindings, tokens, poiseMerge };
 }
 
 /** Plain complete effect text. Numeric values come from the resolved preview. */
 export function combatCardSummary(def, preview = null, registries = null) {
-  const { value, defenseValue, title, condition, profile: p } = cardSummaryContext(def, preview, registries);
+  const { value, defenseValue, title, condition, profile: p, poiseMerge } = cardSummaryContext(def, preview, registries);
   const ratings = registries?.balance?.combatRatings ?? null, parts = [];
   for (const [index, effect] of (def.effects || []).entries()) {
     const n = value(effect, index), area = effect.target === 'allEnemies' ? ' to all enemies'
@@ -213,8 +216,13 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'gainEnergy': text = `Gain ${n} SP`; break;
       case 'restoreMana': text = `Restore ${n} Mana`; break;
       case 'restoreStamina': text = `Restore ${n} SP`; break;
-      case 'poiseDamage': text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${n} Poise${area}`; break;
-      case 'wardDamage': text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${n} Ward impact${area}`; break;
+      case 'poiseDamage': case 'wardDamage': {
+        const merged = poiseMerge?.get(index);
+        if (merged && !merged.leader) continue; // its figure is in the leader's combined Poise
+        const figure = merged ? merged.indices.map(i => value(def.effects[i], i)) : [n];
+        if (figure.some(amount => typeof amount !== 'number')) return null;
+        text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${figure.reduce((sum, amount) => sum + amount, 0)} ${merged || effect.op === 'poiseDamage' ? 'Poise' : 'Ward impact'}${area}`; break;
+      }
       case 'retain': text = `Retain ${n}`; break;
       case 'grantRollMode': text = `Next ${effect.roll}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`; break;
       case 'enterStance': text = effect.choose ? 'Choose a stance' : `Enter ${registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance}`; break;
@@ -235,13 +243,17 @@ export function combatCardSummary(def, preview = null, registries = null) {
   }
   if (p.maneuver === 'counter') {
     const payload = def.counterPayload || {}, returns = [];
+    const wardOff = Boolean(poiseMerge);
+    let poiseReturn = 0;
     for (const [key, label, op] of [['hp', 'damage', 'damage'], ['poise', 'Poise', 'poiseDamage'], ['ward', 'Ward', 'wardDamage']]) {
       if (def.effects.some(effect => effect.op === op)) continue;
       const live = preview?.values?.find(row => row.op === op)?.value;
       const amount = live ?? payload[key];
       const type = key === 'hp' ? combatCardDamageLabel(def, preview, registries) : '';
+      if (wardOff && key !== 'hp') { if (typeof amount === 'number' && amount > 0) poiseReturn += amount; continue; } // Ward drains Poise
       if (typeof amount === 'number' && amount > 0) returns.push(`${amount} ${type ? `${type} ` : ''}${label}`);
     }
+    if (poiseReturn > 0) returns.push(`${poiseReturn} Poise`);
     if (returns.length) parts.push(`Return ${returns.join(' + ')}`);
     if (def.pronePoiseBonus) parts.push(`+${def.pronePoiseBonus} Poise while Prone`);
   }

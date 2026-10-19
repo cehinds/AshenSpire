@@ -43,6 +43,7 @@ import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
+import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
@@ -108,8 +109,12 @@ export function relicText(def, registries = null) {
   return grown ? `${base} ${grown}` : base;
 }
 
-function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
+// `wardAsPoise` ({ preview }) is set when the run's profile has Ward switched off (Core 2): a card that authors
+// `wardOffTextTemplate` then reads its Ward damage as Poise damage, one combined figure (model/wardOffCardText.js).
+function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise = null) {
   let template = def.textTemplate;
+  const projected = wardAsPoise ? wardOffCardText(def, tokens, baseTokens, wardAsPoise.preview) : null;
+  if (projected) { template = projected.template; tokens = projected.tokens; baseTokens = projected.baseTokens; }
   const liveTokens = { ...tokens };
   let comparedTokens = baseTokens;
   // Complex cards retain authored clauses; their defensive amount still reads
@@ -298,6 +303,7 @@ export function renderCard(registries, ref, opts = {}) {
   // ONE TEXT FOR EVERY VIEW. The face lines are the shared model's output
   // (cardFaceText.js); a weight-priced card adds its pricing note as a detail line.
   const faceRules = gameModule(registries, 'cards');
+  const wardPoise = wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null;
   const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries);
   const faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
     ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
@@ -312,8 +318,8 @@ export function renderCard(registries, ref, opts = {}) {
       definition:def,registries});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     const authoredRules = def.weightClassPriced
-      ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
-      : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
+      ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
+      : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise);
     const visibleLines = at === 'inspect' ? allFaceLines : faceLines;
     const rulesHtml = visibleLines
       ? compactCardRules(visibleLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${extraLine(line, i) ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
@@ -590,7 +596,7 @@ export function cardPlainText(registries, ref, opts = {}) {
     ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries)) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
-  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences))
+  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences, wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null))
     .replace(/<[^>]+>/g, '')
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&')
@@ -709,7 +715,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     if (combatProfile.maneuver === 'sweep' && (def.tags || def.cardTags || []).includes('trait:reaction'))
       html += '<div class="combat-rule-hint">Reaction Sweep resolves before the incoming attack. Killing, staggering or controlling its attacker can interrupt it; otherwise the attack resumes.</div>';
   }
-  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences)}</div>`;
+  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {

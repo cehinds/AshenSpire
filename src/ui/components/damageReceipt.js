@@ -16,9 +16,9 @@ export function damageReceiptLines(receipt) {
         : `${source.amount >= 0 ? '+' : '−'}${number(Math.abs(source.amount))}`;
       lines.push(`${source.label || source.id}: ${operation}${source.stage ? ` (${source.stage})` : ''}`);
     }
-    const reductions = [['wardReduced', 'Ward'], ['poiseReduced', t('statsPreview.overview.poise')], ['blocked', 'Block']]
+    const reductions = [['wardReduced', 'Ward'], ['poiseReduced', null], ['blocked', 'Block']]
       .filter(([key]) => Number.isFinite(hit[key]) && hit[key] > 0)
-      .map(([key, label]) => `${label} −${number(hit[key])}`);
+      .map(([key, label]) => label ? `${label} −${number(hit[key])}` : t('combat.receipt.poiseAbsorbed', { n: number(hit[key]) }));
     if (reductions.length) lines.push(reductions.join('; '));
     lines.push(`Final HP damage: ${number(hit.hpLoss)}${hit.rounding ? ` (${hit.rounding})` : ''}`);
   }

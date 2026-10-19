@@ -1,8 +1,11 @@
-import { fixCoreEnabled, damageReceipt } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
 import { configuredCombat, profileDamageReceipt } from './gameProfileCombat.js';
 import { computeAttackDamage } from './actions.js';
 import { prepareMatchupHit, matchupRules, hitRiders } from './combatMatchups.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
+import { matchupPoiseMultiplier, stancePressureMultiplier } from './combatMatchups.js';
+import { ashenBlightMartialPoise } from './ashenBlight.js';
+import { fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
 
 /**
  * Detached defender state shared by every damage effect in one previewed
@@ -22,6 +25,43 @@ export function damagePreviewState(ctx, target) {
     combatRiderTargets: [] };
 }
 
+/**
+ * A Poise break staggers the owner exactly as live play does (D13): same guards, stance and Vulnerable. Detached:
+ * only the previewed defender changes, so later hits of the same card see the stance and the Vulnerable multiplier.
+ */
+function previewPoiseBreak(ctx, defender) {
+  if (ctx.foundation && defender.impactProtectedUntil >= ctx.turn) return;
+  const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
+  if (rules.stance) defender.combatStance = fixCoreStaggeredStance(defender, rules);
+  if (rules.vulnerableStacks > 0) defender.statuses = { ...defender.statuses, vulnerable: { ...defender.statuses?.vulnerable, stacks: (defender.statuses?.vulnerable?.stacks || 0) + rules.vulnerableStacks } };
+}
+
+/**
+ * Explicit Poise damage mid-card (a poiseDamage effect, or Ward damage redirected to Poise when Ward is off),
+ * mirrored from live play (actions.js poiseDamage / wardDamage -> drainFixCorePoise): whole numbers, capped at the pool,
+ * and emptying it breaks Poise before the card's later effects. Operates on the previewed target state only.
+ */
+export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
+  const { defender, previewCtx } = state;
+  const poise = defender?.persistentPoise;
+  if (!fixCoreEnabled(ctx) || !defender?.alive || !(poise?.value > 0)) return 0;
+  const pressure = previewCtx.combatExpansionVersion === 2 ? stancePressureMultiplier(previewCtx, source, defender, card, undefined) : 1;
+  let amount;
+  if (effect.op === 'poiseDamage') {
+    const bonus = previewCtx.combatExpansionVersion === 2 ? ashenBlightMartialPoise(previewCtx, source,
+      { cycleKey: String(source?.combatOwnerCycle || 0), camp: card?.combatProfile?.camp, authoredPoise: authored }) : 0;
+    amount = Math.ceil((authored + bonus) * matchupPoiseMultiplier(previewCtx, source, defender, card) * pressure);
+  } else if (effect.op === 'wardDamage' && fixCoreWardDisabled(ctx)) {
+    amount = authored * pressure
+      * (!card?.combatWardEdgeApplied && card?.combatProfile?.camp === 'spell' && card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1);
+  } else return 0;
+  const spent = Math.min(poise.value, Math.max(0, Math.floor(amount)));
+  if (!(spent > 0)) return 0;
+  poise.value -= spent;
+  if (poise.value === 0) previewPoiseBreak(ctx, defender);
+  return spent;
+}
+
 /** Pure per-hit threat before Block; only detached tactical defense is spent. */
 export function previewDamageHits(ctx, source, target, base, tags, carrier, hits = 1, state = null) {
   const local = state || damagePreviewState(ctx, target);
@@ -37,7 +77,11 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
         if (fixCoreEnabled(ctx)) {
           defender.barrier = Math.max(0, (defender.barrier || 0) - receipt.barrierMitigated);
           if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
-          if (defender.persistentPoise) defender.persistentPoise.value = Math.max(0, defender.persistentPoise.value - receipt.poiseMitigated);
+          if (defender.persistentPoise) {
+            const poiseBefore = defender.persistentPoise.value;
+            defender.persistentPoise.value = Math.max(0, poiseBefore - receipt.poiseMitigated);
+            if (poiseBefore > 0 && defender.persistentPoise.value === 0) previewPoiseBreak(ctx, defender);
+          }
         }
       }
     }
