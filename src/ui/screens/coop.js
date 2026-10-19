@@ -390,7 +390,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
   const upcastTiersByCard = new Map();
   const upcastKey = instanceId => `${me}:${instanceId}`;
   let prevCombat = null; // last combat scene, for snapshot-diff FX
-  let lastSceneKind = null; // scene kind of the previous render, to clear selection on leaving combat
+  let lastSurface = null; // what this seat saw last render (scene kind, or catch-up entry), to clear selection on a change
   // Receipt renders replace the field DOM, but keep the encounter's fitted art.
   // The stage invalidates this cache when viewport, formation or artwork changes.
   let combatLayoutState = {};
@@ -957,13 +957,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     // later (from the discard, or in a later encounter) needs a fresh select tap. Only the
     // active seat's hand counts: instance ids repeat across seats (each run's id generator
     // starts at rc1), so another seat holding the same id must not keep this one lit.
-    // Leaving combat (reward, map) drops it too: mountCoop outlives the scene change. Only the
-    // transition clears; a redraw of the same noncombat scene keeps a reward card's select tap.
-    // The surface is what this seat sees: a catch-up reward overrides the party's combat scene.
-    const surface = myMember()?.catchupQueue?.length ? 'catchup' : snap.scene.kind;
-    const leftCombat = lastSceneKind === 'combat' && surface !== 'combat';
-    lastSceneKind = surface;
-    if (litCard() !== null && (leftCombat || (surface === 'combat'
+    // Changing surface (combat to reward or map, or one catch-up entry to the next) drops it
+    // too: mountCoop outlives the scene change. A redraw of the same surface keeps a reward
+    // card's select tap. The surface is what this seat sees: a catch-up reward overrides the
+    // party's combat scene, and each catch-up entry is its own surface (keyed by queue length).
+    const catchupLeft = myMember()?.catchupQueue?.length || 0;
+    const surface = catchupLeft ? `catchup:${catchupLeft}` : snap.scene.kind;
+    const changedSurface = lastSurface !== null && surface !== lastSurface;
+    lastSurface = surface;
+    if (litCard() !== null && (changedSurface || (surface === 'combat'
       && !((snap.scene.players || []).find(p => p.id === me)?.hand || []).some(card => card.instanceId === litCard())))) clearSelection();
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
     else { heldStances.reset(); combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
