@@ -6,7 +6,8 @@ import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile,applyGameProfileToContent,bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { createRunState,serializeRun,deserializeRun } from '../src/model/state.js';
 import { gameProfileClassAvailable,gameProfileCompletedRunMeta } from '../src/model/gameProfileRun.js';
-import { beginGameProfileRest,createGameProfileRestDraft,commitGameProfileRest } from '../src/model/gameProfileRest.js';
+import { beginGameProfileRest,createGameProfileRestDraft,commitGameProfileRest,restServiceUsed } from '../src/model/gameProfileRest.js';
+import { gameProfileRestModel } from '../src/ui/models/GameProfileRestModel.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { stampDeck } from '../src/model/loadout.js';
@@ -38,11 +39,11 @@ test('terminal wins and defeats each unlock one class, durable dedupe survives h
  assert.equal(gameProfileClassAvailable(profile,{},'herald'),false);
 });
 
-test('seeded route has seven branching preboss depths, two mandatory rests on depths 3 and 7, and replay stability',()=>{
+test('seeded route has seven branching preboss depths, three mandatory rests on depths 3, 5 and 7, and replay stability',()=>{
  const run=fresh();let prior;
  for(let tier=1;tier<=3;tier++){
   const map=buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier);
-  assert.ok(Object.keys(map.nodes).length > 8);assert.equal(map.floors,8);assert.equal(map.columns,3);assert.equal(Object.values(map.nodes).filter(n=>n.type==='shrine').length,2);
+  assert.ok(Object.keys(map.nodes).length > 8);assert.equal(map.floors,8);assert.equal(map.columns,3);assert.equal(Object.values(map.nodes).filter(n=>n.type==='shrine').length,3);
   assert.equal(map.nodes.boss.floor,8);assert.notEqual(map.nodes.boss.encounterId,prior);prior=map.nodes.boss.encounterId;
   assert.deepEqual(map,buildActMap(reg,createRng(100+tier),run.seatOrder[tier-1],tier));
   // Depth 1 opens on a fight drawn as a fight (routes.firstFloor, owner 2026-10-18); every other hidden type is still '?'.
@@ -58,17 +59,34 @@ test('rest requires real current rest, commits once and fully recovers after ear
  commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
  assert.equal(run.maxHp,before+10);assert.equal(run.hp,run.maxHp);assert.equal(run.mana,run.maxMana);assert.equal(run.stamina,run.maxStamina);
  assert.equal(run.flaskCharges.hpCurrent,run.flaskCharges.hp);assert.equal(run.flaskCharges.manaCurrent,run.flaskCharges.mana);
- const after=JSON.stringify(run);assert.throws(()=>commitGameProfileRest(reg,run,'strategize'),/spent/);assert.equal(JSON.stringify(run),after);
+ const after=JSON.stringify(run);assert.throws(()=>commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'}),/spent/);assert.equal(JSON.stringify(run),after);
 });
 
-test('failed/rest forgery is atomic; empty Strategize remains available without XP or upgrades',()=>{
+test('failed/rest forgery is atomic; Strategize is no longer a rest service (D10)',()=>{
  const run=fresh();visit(run);run.hp=1;const before=JSON.stringify(run);
  assert.throws(()=>commitGameProfileRest(reg,run,'levelUp',{attributeId:'strength'}),/no attribute point/);assert.equal(JSON.stringify(run),before);
- const draft=createGameProfileRestDraft(run);draft.deck[0].cardId='unknown';
- assert.throws(()=>commitGameProfileRest(reg,run,'strategize',{draft}),/Unknown/);assert.equal(JSON.stringify(run),before);
- const forged=createGameProfileRestDraft(run);forged.deck.push({instanceId:'fake',cardId:'core.reaverSpecial',upgraded:false});
- assert.throws(()=>commitGameProfileRest(reg,run,'strategize',{draft:forged}),/invent/);assert.equal(JSON.stringify(run),before);
- commitGameProfileRest(reg,run,'strategize');assert.equal(run.hp,run.maxHp);
+ assert.throws(()=>commitGameProfileRest(reg,run,'strategize'),/Unknown rest service/);assert.equal(JSON.stringify(run),before);
+ assert.throws(()=>commitGameProfileRest(reg,run,'smith',{itemRef:'forged'}));assert.equal(JSON.stringify(run),before);
+});
+
+test('Core rest heals on arrival, and Smith and Level Up are both usable in one visit (D10)',()=>{
+ const run=fresh();run.hp=1;run.mana=0;run.stamina=0;run.flaskCharges.hpCurrent=0;run.flaskCharges.manaCurrent=0;
+ const v=visit(run);
+ assert.equal(run.hp,run.maxHp,'arrival heals');assert.equal(run.flaskCharges.hpCurrent,run.flaskCharges.hp);assert.ok(v.healed.hp>0);
+ run.hp=1;visit(run);assert.equal(run.hp,1,'a remount of the same visit does not heal again');
+ run.level.unspentPoints=1;
+ const m1=gameProfileRestModel(reg,run,v);
+ assert.ok(m1.services.every(row=>row.available),'both services open together');
+ const candidate=m1.smith.candidates.find(row=>m1.smithPreviews.get(row.itemRef).available);
+ commitGameProfileRest(reg,run,'smith',{itemRef:candidate.itemRef});
+ const m2=gameProfileRestModel(reg,run,run.gameProfileRestVisits[v.id]);
+ assert.equal(m2.services.find(row=>row.id==='smith').available,false);
+ assert.equal(m2.services.find(row=>row.id==='levelUp').available,true,'Smith does not close Level Up');
+ commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'});
+ assert.deepEqual(run.gameProfileRestVisits[v.id].used,{smith:true,levelUp:true});assert.equal(run.hp,run.maxHp);
+ assert.throws(()=>commitGameProfileRest(reg,run,'smith',{itemRef:candidate.itemRef}),/spent/);
+ assert.throws(()=>commitGameProfileRest(reg,run,'levelUp',{attributeId:'constitution'}),/spent/);
+ const old={id:'x',service:'smith'};assert.equal(restServiceUsed(old,'smith'),true);assert.equal(restServiceUsed(old,'levelUp'),false,'a save from before used[] still reads');
 });
 
 test('profile peek validates integrity and wrong registry refuses without changing stored bytes',()=>{

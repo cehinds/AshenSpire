@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Attacks hit caster enemies again** ([#2167](https://github.com/cehinds/AshenSpire/pull/2167), `0.7.1.1661`). Attacks no longer miss caster enemies like the Grave Wisp and Wyrm Aspirant every time; melee cards now roll to hit them normally.
+- **Attacks hit caster enemies again** ([#2167](https://github.com/cehinds/AshenSpire/pull/2167), `0.7.1.1663`). Attacks no longer miss caster enemies like the Grave Wisp and Wyrm Aspirant every time; melee cards now roll to hit them normally.
+- **Rest sites heal; deck and gear lock in combat** ([#2163](https://github.com/cehinds/AshenSpire/pull/2163), `0.7.1.1663`). Rest sites now heal you and offer free Smith and Level Up with a Continue button; there are three per act with one right before the boss. The Deck button is gone from combat, equipment locks during fights, and the Armoury glows blue when you have a new item.
 - **HUD icons no longer stretch** ([#2162](https://github.com/cehinds/AshenSpire/pull/2162), `0.7.1.1661`). Poise badges over combatants and the top-bar icon buttons now keep their proportions instead of looking stretched.
 - **CI: the Workbench export test waits out the build lock** ([#2165](https://github.com/cehinds/AshenSpire/pull/2165), `0.7.1.1659`). Development-process fix only, nothing in the game changes. The Workbench engine-export test now waits for the shared build lock instead of failing after 30 seconds on Windows.
 - **Combat pauses between each step** ([#2161](https://github.com/cehinds/AshenSpire/pull/2161), `0.7.1.1657`). Combat now pauses a full second between each step of an action: what a character does, its animation, the result, the reaction, the damage, then the reset. You can change the pause in Settings, and auto combat runs 1.5 times faster by default (also adjustable).
