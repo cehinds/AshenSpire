@@ -1,3 +1,4 @@
+import { coreSmashClause } from './smashClause.js';
 import { stanceEntryBonuses, stanceRulesFor, stanceOf } from './stanceRules.js';
 // src/model/cardFaceText.js — the text a playing card's face says, as lines.
 //
@@ -320,6 +321,9 @@ function buildLines(def, preview, registries) {
     if (poiseReturn > 0) unconditional.push({ cat: 'damage', text: `${num(poiseReturn, poiseAuthored)} Poise` });
   }
   if (counter && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
+  // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
+  const smashClause = coreSmashClause(def, registries);
+  if (smashClause) unconditional.push({ cat: 'bonus', text: esc(smashClause) });
   if (def.pronePoiseBonus) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
   if (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2) {
     // gameProfile lets the face apply the same Core 2 rounding as combat (stanceEntryBonuses floors under FixCore).

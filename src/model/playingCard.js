@@ -29,6 +29,7 @@ import { projectGameCard } from './gameProfile.js';
 // frozen, so a renderer cannot quietly make the model its scratch space.
 
 import { cardTagExplanation } from './cardTagExplanation.js';
+import { coreSmashClause } from './smashClause.js';
 import { cardClassification } from './cardClassification.js';
 import { resolveCard } from './registries.js';
 import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
@@ -258,6 +259,8 @@ export function combatCardSummary(def, preview = null, registries = null) {
     if (def.pronePoiseBonus) parts.push(`+${def.pronePoiseBonus} Poise while Prone`);
   }
   if (def.evade) parts.push(`${def.evade.whileStatus ? `While ${title(def.evade.whileStatus)}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}`);
+  const smashClause = coreSmashClause(def, registries);
+  if (smashClause) parts.push(smashClause.replace(/\.$/, ''));
   if (def.comboHook) return null;
   if (def.usableWhile?.length) parts.unshift(`Usable through ${def.usableWhile.map(title).join(', ')}`);
   for (const keyword of def.keywords || []) if (['exhaust', 'retain', 'ethereal', 'innate'].includes(keyword)) parts.push(keyword[0].toUpperCase() + keyword.slice(1));
@@ -421,7 +424,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
       label: tag.label,
       glyph: tag.glyph,
       color: tag.color,
-      blurb: cardTagExplanation(def, tag),
+      blurb: cardTagExplanation(def, tag, registries),
       // An array rather than a Set: a model is serializable, and a Set is not.
       inheritedFrom: freeze([...(inheritedBy.get(tag.id) || [])]),
     })));
