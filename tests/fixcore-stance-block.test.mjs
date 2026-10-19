@@ -6,6 +6,7 @@ import { resolveGameProfile,applyGameProfileToContent,bindGameProfileRegistries 
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
+import { cardFaceLines } from '../src/model/cardFaceText.js';
 import { dispatch,previewCard } from '../src/engine/combat.js';
 import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
 import { applyAttackDamage,executeRunEffects,gainBlock } from '../src/engine/actions.js';
@@ -34,4 +35,7 @@ test('Core defend stance adds its DR bonus to Block: face, preview and live gain
  const gained=out.events.find(e=>e.type==='blockGained'&&e.targetId===combat.player.id);
  assert.equal(gained.amount,afterStance.value,'preview == live');
  assert.equal(gained.amount,Math.floor((base+(dr+3)*weight)*eff));
+ const lines=cardFaceLines(reg.cards.get('core.defend'),previewCard(combat,inst.instanceId),reg);
+ assert.ok(lines,'face phrased');
+ assert.match(JSON.stringify(lines),new RegExp(`val up[^>]*>${afterStance.value}<`),'boosted Block is up-marked');
 });
