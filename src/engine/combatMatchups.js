@@ -717,12 +717,13 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   }
   const magical = isSpell(counter.carrier.combatProfile);
   const caster = hasTrait(source, 'caster');
-  if (magical && !caster && counter.payload.hpAgainstNonCaster !== true) payload.hp = 0;
+  const coreFixed = counterRuleActive(ctx); // Core 2 fixes the HP and Poise return (SPEC §17): legacy school/Impact/target edges do not rewrite them.
+  if (!coreFixed && magical && !caster && counter.payload.hpAgainstNonCaster !== true) payload.hp = 0;
   const schoolEffect = counter.schoolEffect;
   const edges = receipt.profiles.filter((profile, index) => receipt.covered[index])
     .map(profile => schoolReturnMultiplier(ctx, counter, profile));
   const schoolEdge = edges.some(edge => edge < 1) ? Math.min(...edges) : Math.max(1, ...edges);
-  if (schoolEffect && schoolEffect in payload && schoolEffect !== 'ward') payload[schoolEffect] = Math.floor(payload[schoolEffect] * schoolEdge);
+  if (!coreFixed && schoolEffect && schoolEffect in payload && schoolEffect !== 'ward') payload[schoolEffect] = Math.floor(payload[schoolEffect] * schoolEdge);
   // Ward pressure retains fractional carry. A declared school edge replaces
   // Piercing's generic Ward advantage; the same return never multiplies both.
   const pierceWard = magical && counter.carrier.combatProfile?.damageType === 'piercing';
@@ -730,7 +731,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   payload.ward *= wardEdge;
   // Impact and Flux double the final return, or give N when it has none. A Spell Counter
   // against a physical projectile keeps SPEC §4.8's no-reply-Poise exclusion.
-  if (trait.impact > 0 && !(magical && receipt.profiles.some((profile, index) => receipt.covered[index] && physicalProjectile(profile)))) {
+  if (!coreFixed && trait.impact > 0 && !(magical && receipt.profiles.some((profile, index) => receipt.covered[index] && physicalProjectile(profile)))) {
     payload.poise = payload.poise > 0 ? 2 * payload.poise : trait.impact;
   }
   if (trait.flux > 0) payload.ward = payload.ward > 0 ? 2 * payload.ward : trait.flux;
