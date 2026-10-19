@@ -59,3 +59,32 @@ test('live: the Counter adds 2 Block before the hit, then returns 6 damage and 3
   const poise = events.find(e => e.type === 'persistentPoiseChanged' && e.targetId === enemy.id && e.source === 'poiseDamage' && e.cardId === 'core.counter');
   assert.equal(poise.spent, 3);
 });
+
+import { previewCard } from '../src/engine/combat.js';
+test('the Counter card preview names the same return the live exchange deals (no attack-rating mismatch)', () => {
+  const { combat, enemy } = live();
+  const damage = previewCard(combat, 'cx1', enemy.id).values.find(row => row.op === 'damage');
+  // Preview against the revealed 8-damage Attack: 6 return damage, less the enemy's own Poise (25% of 6, floored).
+  const receipt = damage.damageReceipt.hits[0];
+  assert.equal(receipt.incoming, 6, 'the card previews floor(0.5 x 8) + floor(0.25 x 8)');
+  assert.equal(damage.totalDamage, 6 - receipt.poiseReduced - 0);
+  const { events } = exchange();
+  const live6 = events.filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
+  assert.equal(live6.reduce((sum, e) => sum + e.hpLoss, 0), damage.totalDamage);
+});
+
+test('preview equals live against an enemy whose attack carries rating bonuses', () => {
+  const { combat, enemy } = live();
+  // Restore a real attacker: 8 base plus its rating bonus, so the incoming damage is not the printed 8.
+  Object.assign(enemy, { ratings: { ar: 6, poise: 20 } });
+  const damage = previewCard(combat, 'cx1', enemy.id).values.find(row => row.op === 'damage');
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
+  combat.player.block = 999;
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const events = combat.eventLog.slice(start);
+  const returned = events.filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
+  assert.ok(returned.length, 'the Counter fired');
+  assert.equal(returned.reduce((sum, e) => sum + e.hpLoss, 0), damage.totalDamage);
+});

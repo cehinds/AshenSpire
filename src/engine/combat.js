@@ -23,6 +23,7 @@ import { enqueueExpandedAction, previewExpandedActions } from './combatExpansion
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { expandedEquipmentProjection, expandedEnemyProjection } from './combatExpansionEquipment.js';
 import { settleExpandedPools, refreshExpandedLoadout } from './combatExpansionProjection.js';
+import { counterPreviewAgainst } from './counterRule.js';
 import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade, liveCounterCovers } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits, previewPoiseDrain } from './combatDamagePreview.js';
@@ -2533,10 +2534,15 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       const bonus = Math.max(0, charges.damage + charges.damageEffect);
       counterPreviews.set(key, replies.map((reply, effectIndex) => {
         if (configuredCombat(combat)) {
-          const result = previewDamageHits(combat, p, resolvedTarget,
-            (reply?.value || 0) + (effectIndex === bonusIndex ? bonus : 0),
-            action.card.tags || [], { ...action.card, combatReaction: true, counterReturnAttack: true }, reply?.hits || 0);
-          return result;
+          // Core 2 (SPEC §17): the return is a fraction of the revealed incoming attack, priced exactly as the live
+          // return is: no attack-rating bonus, no second stance multiplier. Without a revealed attack the face
+          // states the printed amount.
+          const live = effectIndex === bonusIndex && reply && resolvedTarget?.kind === 'enemy'
+            ? counterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id)) : null;
+          return previewDamageHits(combat, p, resolvedTarget,
+            live ? live.hp : (reply?.value || 0) + (effectIndex === bonusIndex ? bonus : 0),
+            action.card.tags || [], { ...action.card, combatReaction: true, counterReturnAttack: true, ...(fixCoreEnabled(combat) ? { skipRatingBonus: true } : {}) },
+            live ? 1 : reply?.hits || 0);
         }
         const hitDamages = Array.from({ length: reply?.hits || 0 }, () => reply.value);
         if (effectIndex === bonusIndex && bonus) {
