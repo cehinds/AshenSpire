@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-19
+
+- **Armor has a flat 3-point budget** ([#2145](https://github.com/cehinds/AshenSpire/pull/2145), `0.7.1.1635`). Armor now has a flat budget of 3 points whatever its rank, with a rarity bonus ready for later (0 for now).
+
 ## 2026-10-18
 
 - **Matching-stance discounts follow what a card costs** ([#2142](https://github.com/cehinds/AshenSpire/pull/2142), `0.7.1.1635`). Matching-stance cards now get their cost discount on mana if they cost mana, otherwise on stamina.
