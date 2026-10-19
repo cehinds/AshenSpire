@@ -6,6 +6,7 @@ import { chooseReaction, reactionAnswer, resolveCombatAutomation, recordManualRe
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
 import { projectCombatIntent } from '../models/CombatIntentProjectionModel.js';
+import { advanceFollowUps, createFollowMemo, followUpPlan } from '../models/IntentFollowUpModel.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
 import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
@@ -879,6 +880,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // bars/hand render from this pre-dispatch copy, advanced beat by beat, so
   // the HUD updates one actor at a time instead of jumping to the outcome.
   let disp = null;
+  // The "?" row survives the playback record: a reaction window opens mid-turn with `disp` cleared, and the resumed
+  // dispatch snapshots again. The plan and the row on screen stay here, per enemy, until the turn ends.
+  const followMemo = createFollowMemo();
   let recentArcaneEvents = [];
   const dv = (ent) => (disp && disp.ents[ent.id]) || ent;
   const enemySpriteState = enemy => ({ ...dv(enemy), maxHp: enemy.maxHp,
@@ -1134,11 +1138,20 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function takeSnapshot() {
     const ents = { player: snapEnt(combat.player, true) };
     for (const e of combat.enemies) ents[e.id] = snapEnt(e, e.alive);
+    // The "?" rule (IntentFollowUpModel.js): each planned move shows by its own read, which the engine records per move
+    // (combat.followTrace). A reaction pause resumes the same turn, so its plan is kept, not rebuilt from what is left.
+    const followPlans = {};
+    for (const e of combat.enemies) {
+      const plan = followMemo.plan(e.id, { resuming: !!combat.reactionCursor,
+        build: () => e.alive && e.plannedMoves?.length ? followUpPlan({ queue: e.plannedMoves, def: registries.enemies.get(e.enemyId), enemyId: e.id, combat,
+          offset: combat.reactionCursor ? combat.followTrace?.[e.id]?.length || 0 : 0 }) : null });
+      if (plan) followPlans[e.id] = plan;
+    }
     const handPreviews = new Map();
     for (const inst of combat.piles.hand) {
       try { handPreviews.set(inst.instanceId, previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId))); } catch {}
     }
-    return { ents, hand: [...combat.piles.hand], handPreviews,
+    return { ents, followPlans, hand: [...combat.piles.hand], handPreviews,
       pileCounts: { draw: combat.piles.draw.length, discard: combat.piles.discard.length, exhaust: combat.piles.exhaust.length },
       arcaneEvents: [], logLength: combat.eventLog.length };
   }
@@ -1149,8 +1162,48 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     return null;
   }
+  // The "?" row follows the enemy's own events (IntentFollowUpModel.js). Each receipt is reduced once, whether its beat
+  // played or a skipped playback flushes it, so the row and the memo agree with the cursor at a pending reaction.
+  const followReduced = new WeakSet();
+  function reduceFollowRows(events) {
+    for (const e of events) {
+      if (followReduced.has(e)) continue;
+      const row = (id, symbols) => { const symbolsNow = followMemo.setRow(id, symbols); if (disp?.ents[id]) disp.ents[id].followUps = symbolsNow; };
+      switch (e.type) {
+        case 'enemyMoveStarted':
+          if (e.reaction) continue;
+          // The actor has acted and may still have SP: its remaining queue is "?" unless the read passed.
+          row(e.sourceId, advanceFollowUps(disp?.followPlans?.[e.sourceId] ?? followMemo.planFor(e.sourceId), combat.followTrace?.[e.sourceId]));
+          break;
+        case 'enemyBurdenBlocked':
+        case 'enemyMoveUnavailable': {
+          const id = e.sourceId ?? e.targetId;
+          row(id, advanceFollowUps(disp?.followPlans?.[id] ?? followMemo.planFor(id), combat.followTrace?.[id]));
+          break;
+        }
+        case 'enemyStaggered':
+          // A stagger breaks the rest of that enemy's plan: its remaining moves leave the row with the event.
+          if (followMemo.row(e.targetId, true)?.length) row(e.targetId, []);
+          break;
+        case 'enemyTurnEnd':
+        case 'playerTurnStart':
+          // The turn is over: a charge or a halt that sent no event of its own leaves the row now.
+          followMemo.clear();
+          for (const id of Object.keys(disp?.ents || {})) if (disp.ents[id].followUps?.length) disp.ents[id].followUps = [];
+          break;
+        case 'enemyActorTurnStarted':
+          followMemo.clearRow(e.sourceId);
+          if (disp?.ents[e.sourceId]) disp.ents[e.sourceId].followUps = [];
+          break;
+        default: continue;
+      }
+      followReduced.add(e);
+    }
+  }
+
   function applyBeatToDisp(beat) {
     if (!disp) return;
+    reduceFollowRows(beat.events);
     for (const e of beat.events) {
       const eventIndex = combat.eventLog.indexOf(e);
       if (eventIndex >= 0) disp.logLength = Math.max(disp.logLength, eventIndex + 1);
@@ -1721,7 +1774,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       frame.querySelector('.combat-hit-chance')?.remove();
       const badge = hitChanceBadge(enemy);
       if (badge) {
-        frame.querySelector('.combatant-leading')?.append(badge);
+        frame.append(badge);
         if (selectedCard) {
           const odds = badge.cloneNode(true);
           odds.className = 'card-hit-chance';
@@ -1732,6 +1785,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }
     }
     if (selectedCard && cardOdds.children.length) selectedCard.append(cardOdds);
+    // A badge added or removed here is centred at once, whatever the motion setting (the pose observer does not watch it).
+    battlefieldStage.placeHitBadges();
   }
 
   function meterBars(entity, { tooltips = true } = {}) {
@@ -1950,7 +2005,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's
   // `pill.lg` (uiContent.js intentBadge picks the tone and the words).
   function intentEl(enemy) {
-    return combatantIntent(disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id), () => {
+    const shown = disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id);
+    const followUps = disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, combat.phase === 'enemy' || !!combat.reactionCursor);
+    return combatantIntent(followUps?.length ? { ...shown, followUps } : shown, () => {
       const intent = combatantSubject('enemy', enemy).intent;
       return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
     }, registries, { onTarget: () => {
@@ -3045,6 +3102,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         },
         onFlush: () => {
           applyVisualEvents(events);
+          // A skipped playback never applied the remaining beats: reduce their receipts into the row memo first.
+          reduceFollowRows(events);
           disp = null;
           render();
           clearCardFeedback();

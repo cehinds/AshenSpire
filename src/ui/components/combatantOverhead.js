@@ -1,6 +1,7 @@
 import { attachTooltip, clearControlSelection, hideTooltip, esc } from './tooltip.js';
 import { combatIntentPresentation } from '../models/CombatIntentModel.js';
 import { intentIcon } from './intentIcon.js';
+import { intentFollowUps } from './intentFollowUps.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { combatProfileTags } from '../../model/combatCardProfile.js';
 
@@ -60,8 +61,11 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
   const compact = document.createElement('span');
   compact.className = 'intent-compact';
   compact.append(intentParts(badge.parts, { unknown: badge.visibility !== 'known' }));
+  const followUps = Array.isArray(intent?.followUps) ? intent.followUps : [];
+  if (followUps.length) compact.append(intentFollowUps(followUps));
   node.append(compact);
-  node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}`).join('. ')}`);
+  const followLabel = followUps.length ? ` ${followUps.length} more ${followUps.length === 1 ? 'action' : 'actions'}: ${followUps.map(symbol => symbol.kind === 'action' ? symbol.icon : 'unknown').join(', ')}.` : '';
+  node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}`).join('. ')}${followLabel}`);
   {
     const stanceNode = document.createElement('span');
     stanceNode.className = 'intent-stance';
@@ -81,6 +85,8 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
     }
     node.append(values);
   }
+  // The selected (expanded) presentation hides the compact row, so it carries the same symbols itself.
+  if (followUps.length) { const expanded = intentFollowUps(followUps); expanded.classList.add('intent-followups-expanded'); node.append(expanded); }
   markUiComponent(node, UI.intentIndicator, badge.visibility);
   const tooltip = () => {
     if (intent?.hidden) return `<div class="tt-title">Stance: ${esc(stanceLabel)}</div>Exact move, damage, and effects unread. Wisdom and Intelligence improve intent reads.`;

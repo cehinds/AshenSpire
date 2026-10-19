@@ -6465,9 +6465,15 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-poise { color: var(--gold, #ffd34d); }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-poise::before { border-radius: 35%; background: #493a12; border: 1px solid #ffd34d; }
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge-value { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
-:root .combat .combatant .combat-hit-chance { color: #fff; font-weight: 700; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
-:root .combat .combatant .combat-hit-chance[data-roll-mode='advantage'] { color: #83df99; }
-:root .combat .combatant .combat-hit-chance[data-roll-mode='disadvantage'] { color: #ff8179; }
+/* Hit-% badge (owner 2026-10-18): centred on the target's painted body, white with a black outline, 2x size.
+   --combat-body-center-x/y are set per frame by the battlefield refit (centerTargetOverheads). The outline
+   is a text-shadow ring so Chromium and WebKit draw the same; it never takes a tap. */
+:root .combat .combatant > .combat-hit-chance {
+  position: absolute; left: var(--combat-body-center-x, 50%); top: var(--combat-body-center-y, 50%);
+  translate: -50% -50%; z-index: var(--combat-layer-hud, 700); pointer-events: none; white-space: nowrap;
+  color: white; font: 700 calc(26px / var(--ui-zoom, 1))/1 var(--font-body, Georgia, serif);
+  text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black, 0 -2px 0 black, 0 2px 0 black, -2px 0 0 black, 2px 0 0 black;
+}
 
 :root .combat :is(.combatant, .target-hud-meters) .combat-health-evade-icon svg { width: .85em; height: .85em; display: block; }
 

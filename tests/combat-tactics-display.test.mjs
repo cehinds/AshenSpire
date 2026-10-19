@@ -50,8 +50,8 @@ test('playback shows the prepared Evade, not the foundation Evade, as a combat E
   const screen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   const start = screen.indexOf('  function applyBeatToDisp(beat) {');
   const end = screen.indexOf('  // ---------- rendering ----------', start);
-  const applyBeat = new Function('disp', 'combat', 'getEntity', 'reconcileWardBlock', 'applyCombatDisplayReceipt', `${screen.slice(start, end)}; return applyBeatToDisp;`)(disp, combat,
-    (c, id) => id === 'player' ? c.player : c.enemies.find(e => e.id === id), reconcileWardBlock, applyCombatDisplayReceipt);
+  const applyBeat = new Function('disp', 'combat', 'getEntity', 'reconcileWardBlock', 'applyCombatDisplayReceipt', 'reduceFollowRows', `${screen.slice(start, end)}; return applyBeatToDisp;`)(disp, combat,
+    (c, id) => id === 'player' ? c.player : c.enemies.find(e => e.id === id), reconcileWardBlock, applyCombatDisplayReceipt, () => {});
   applyBeat({ events: [{ type: 'evadeGained', sourceId: 'player', charges: 2 }] });
   assert.equal(disp.ents.player.combatEvade, undefined, 'the foundation Evade (combatRules.js) adds no prepared-Evade row');
   applyBeat({ events: [{ type: 'evadeGained', sourceId: 'player', charges: 1, combatEvade: true }] });
