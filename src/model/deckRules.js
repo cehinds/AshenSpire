@@ -1,5 +1,5 @@
 import { unusedInstanceId as unusedInstanceId_ } from './cardInstanceIdentity.js';
-import { configuredDeckCopyLimit, deckCopyLimit as deckCopyLimit_ } from './deckCopyLimit.js';
+import { deckCopyLimit as deckCopyLimit_ } from './deckCopyLimit.js';
 // src/model/deckRules.js — the deck editor's rules, without its screen (SPEC §14.1).
 //
 // Pure model: settings and a run in, answers and one-step edits out. The
@@ -88,7 +88,9 @@ export function playInDeckOrder(settings) { return !!setting(settings, 'playInDe
 export function unlimitedCardIds(run) {
   return gameModule(run, 'cards')?.mode === 'configured'
     ? (gameModule(run, 'deck-training')?.mode === 'configured'
-      ? (gameContent(run, 'cards') || []).filter(card => configuredDeckCopyLimit(run, card.id) === Infinity).map(card => card.id)
+      // Core (owner ruling 2026-10-19, SPEC §14.1): the collection shows only
+      // cards the run has collected, so no basic is offered unowned.
+      ? []
       : (gameContent(run, 'editor')?.unlimitedBasicCards || []))
     : deckRules.unlimitedCardIds;
 }
