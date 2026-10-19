@@ -68,7 +68,27 @@ export function validateParameterSchema(schema, path = '$schema') {
   if (Object.hasOwn(schema,'default')) validateParameters(schema,schema.default,`${path}.default`);
 }
 
-export function compileBindings({ mechanics, attachments = [], moduleParameters = {}, enabledMechanics } = {}) {
+// The result is deep-frozen and a pure function of its inputs, and combat asks
+// for the same few attachment sets on every render and preview (a quarter of an
+// enemy turn on a throttled phone was this function re-validating and
+// re-cloning the same rows), so a repeat call returns the one compiled copy.
+// Keyed per mechanics Map; a failing call is never stored.
+const bindingCache = new WeakMap();
+const BINDING_CACHE_MAX = 256;
+export function compileBindings(args = {}) {
+  const { mechanics, attachments = [], moduleParameters = {}, enabledMechanics } = args;
+  if (!(mechanics instanceof Map)) return compileBindingsUncached(args);
+  let key;
+  try { key = JSON.stringify([mechanics.size, attachments, moduleParameters, enabledMechanics ? [...enabledMechanics].sort() : null]); } catch { return compileBindingsUncached(args); }
+  let cache = bindingCache.get(mechanics);
+  if (!cache) bindingCache.set(mechanics, cache = new Map());
+  if (cache.has(key)) return cache.get(key);
+  const out = compileBindingsUncached(args);
+  if (cache.size >= BINDING_CACHE_MAX) cache.clear();
+  cache.set(key, out);
+  return out;
+}
+function compileBindingsUncached({ mechanics, attachments = [], moduleParameters = {}, enabledMechanics } = {}) {
   if (!(mechanics instanceof Map)) fail('$mechanics', 'expected registered mechanic Map');
   for (const [slug, mechanic] of mechanics) if (mechanic.manifest.parameters) validateParameterSchema(mechanic.manifest.parameters, `mechanics.${slug}.parameters`);
   for (const [slug, values] of Object.entries(moduleParameters)) {

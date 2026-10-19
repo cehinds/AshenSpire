@@ -101,3 +101,11 @@ test('owner-subject modifiers apply only to the explicitly queried owner',()=>{
   assert.equal(calculate(bindings).amount,20);
   assert.equal(calculate(bindings,{context:{ownerId:'someone-else',owner:{persistentWard:{value:1}},damageKind:'magical'}}).amount,15);
 });
+test('a repeated compile returns the one frozen copy; a changed input recompiles', () => {
+  const a = compileBindings({mechanics, attachments:[attachment()]});
+  assert.equal(compileBindings({mechanics, attachments:[attachment()]}), a);
+  assert.notEqual(compileBindings({mechanics, attachments:[attachment({sourceInstanceId:'armor-z'})]}), a);
+  assert.notEqual(compileBindings({mechanics, attachments:[attachment()], moduleParameters:{[ward]:{multiplier:0.5}}}), a);
+  assert.throws(()=>compileBindings({mechanics, attachments:[attachment({kind:'nonsense'})]}));
+  assert.throws(()=>compileBindings({mechanics, attachments:[attachment({kind:'nonsense'})]}), 'a failure is not cached');
+});
