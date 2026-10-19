@@ -76,7 +76,7 @@ export function moveCards(ctx, action, amount) {
   if (!count) return;
   if (effect.selection === 'choose') {
     if (!ctx.pendingAbilityPlay) throw new Error('Card selection requires a resolving card');
-    ctx.pendingCardChoice = { kind: 'moveCards', count, effect: {...structuredClone(effect),amount:count}, candidateIds: candidates.map(c => c.instanceId), candidates:candidates.map(c=>({instanceId:c.instanceId,cardId:c.cardId})), playerId: ctx.playerKey || null, cardId: ctx.pendingAbilityPlay.instance.cardId };
+    ctx.pendingCardChoice = { kind: 'moveCards', count, effect: {...structuredClone(effect),amount:count}, candidateIds: candidates.map(c => c.instanceId), candidates:candidates.map(c=>({...c})), playerId: ctx.playerKey || null, cardId: ctx.pendingAbilityPlay.instance.cardId };
     return;
   }
   const ordered = effect.selection === 'random' ? ctx.rng.shuffle('shuffle', candidates) : candidates;
