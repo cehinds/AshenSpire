@@ -99,10 +99,11 @@ test('footer of a smash mirror reads Smash; a spell that mirrors nothing still r
 import { resolveCard, profileMirrors } from '../src/model/registries.js';
 import { mirrorSigil } from '../src/content/combatSigils.js';
 const cur = createRegistries(contentBundle);
-const projected = (cardId, profileId) => resolveCard(cur, { cardId, profileId });
+const projected = (cardId, profileId) => resolveCard(reg, { cardId, profileId });
+const projectedCurrent = (cardId, profileId) => resolveCard(cur, { cardId, profileId });
 
 test('every magic/arcane profile mirrors its base card, derived from the profile rows', () => {
-  const rows = cur.equipment.basicCardProfiles;
+  const rows = reg.equipment.basicCardProfiles;
   const magical = rows.filter(p => ['magic', 'arcane'].includes(p.damageSchool));
   assert(magical.length >= 5, 'sceptre and staff profiles present');
   const want = { strike: 'attack', defend: 'defend', technique: 'technique' };
@@ -123,7 +124,7 @@ test('Arcane Strike, Ritual Ward and Staff Channel are Spells and Cantrips in th
 });
 
 test('footers: Arcane Strike [spell][attack] ATTACK, Ritual Ward [spell][defend] DEFEND, Staff Channel [spell][skill] TECHNIQUE', () => {
-  const foot = (card, id) => { const m = playingCardModel(cur, { cardId: card, profileId: id, instanceId: 'p-' + id, upgraded: false }); return cardSigilsHtml(m.sigils); };
+  const foot = (card, id) => { const m = playingCardModel(reg, { cardId: card, profileId: id, instanceId: 'p-' + id, upgraded: false }); return cardSigilsHtml(m.sigils); };
   const marks = html => [...html.matchAll(/data-sigil="(\w+)"/g)].map(m => m[1]);
   const word = html => html.match(/card-type-name[^>]*>([^<]*)</)[1];
   let h = foot('strike', 'sceptreArcaneAttack'); assert.deepEqual(marks(h), ['spell', 'attack']); assert.equal(word(h), 'Attack');
@@ -141,4 +142,79 @@ test('a sceptre Strike chains Spell Mana with a staff guard, and a Slashing Stri
   assert.equal(stanceManaCost(3, combat.player, costly, combat), 2, 'Arcane Strike then a spell guard');
   setProfileStance(combat, combat.player, { ...slash, combatProfile: combatProfileFor(slash) });
   assert.equal(stanceManaCost(3, combat.player, costly, combat), 3);
+});
+
+// ---- The real play path: dispatch the card, read the stance the engine recorded ----
+import { dispatch } from '../src/engine/combat.js';
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
+
+function play(combat, ref) {
+  const instanceId = 'play-' + (ref.profileId || ref.cardId);
+  combat.piles.hand.push({ ...ref, instanceId, upgraded: false });
+  combat.player.energy = 10; combat.player.stamina = 10; combat.player.mana = 10;
+  primeAccuracyRolls(combat);
+  dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: combat.enemies[0].id });
+}
+
+test('dispatching Arcane Spark records the Attack stance, and a Spell after it gets the Mana cut (Core 2)', () => {
+  const combat = live();
+  Object.assign(combat.enemies[0], { hp: 500, maxHp: 500 });
+  play(combat, { cardId: 'core.cantrip' });
+  assert.equal(combat.player.combatStance.maneuver, 'attack');
+  assert.equal(combat.player.combatStance.camp, 'spell');
+  assert.equal(combat.player.combatStance.mirrored, true);
+  const costly = { ...card('core.starseerSpecial'), manaCost: 3 };
+  assert.equal(profileCardCosts(combat, costly).mana, 2, 'the real stance gives the successive-Spell cut');
+  play(combat, { cardId: 'core.strike' });
+  assert.equal(combat.player.combatStance.camp, 'physical');
+  assert.equal(profileCardCosts(combat, costly).mana, 3);
+});
+
+function currentCombat() {
+  const run = createRunState({ seed: 702, classId: 'herald', registries: cur, combatExpansionVersion: 2 });
+  const combat = createRunCombat({ registries: cur, rng: createRng(702), run, enemyIds: ['wanderingSoldier'], settings: {} });
+  Object.assign(combat.enemies[0], { hp: 500, maxHp: 500 });
+  delete combat.player.combatStance;
+  return combat;
+}
+const playSelf = (combat, ref) => { const id = 'self-' + ref.profileId; combat.piles.hand.push({ ...ref, instanceId: id, upgraded: false });
+  combat.player.energy = 10; combat.player.stamina = 10; combat.player.mana = 10; dispatch(combat, { type: 'playCard', cardInstanceId: id }); };
+
+test('dispatching a sceptre Ritual Ward and Arcane Strike records Defend and Attack Spell stances (Core 2)', () => {
+  const combat = live();
+  Object.assign(combat.enemies[0], { hp: 500, maxHp: 500 });
+  playSelf(combat, { cardId: 'defend', profileId: 'sceptreGuard' });
+  assert.equal(combat.player.combatStance.maneuver, 'defend');
+  assert.equal(combat.player.combatStance.camp, 'spell');
+  assert.equal(combat.player.combatStance.mirrored, true);
+  play(combat, { cardId: 'strike', profileId: 'sceptreArcaneAttack' });
+  assert.equal(combat.player.combatStance.maneuver, 'attack');
+  assert.equal(combat.player.combatStance.mirrored, true);
+});
+
+test('Current/v2 is unchanged: a sceptre Arcane Strike and Ritual Ward still stance casting with the old footer', () => {
+  const strike = projectedCurrent('strike', 'sceptreArcaneAttack'), ward = projectedCurrent('defend', 'sceptreGuard');
+  for (const d of [strike, ward]) {
+    assert.equal(d.mirrors, undefined);
+    assert(!d.cardTags.includes('rank.cantrip'));
+    assert.equal(stanceOf(d).maneuver, 'casting');
+    assert.equal(stanceOf(d).mirrored, undefined);
+  }
+  const combat = currentCombat();
+  play(combat, { cardId: 'strike', profileId: 'sceptreArcaneAttack' });
+  assert.equal(combat.player.combatStance.maneuver, 'casting');
+  assert.equal(combat.player.combatStance.camp, 'spell');
+  assert.equal(combat.player.combatStance.mirrored, undefined);
+  const footer = cardSigilsHtml(playingCardModel(cur, { cardId: 'strike', profileId: 'sceptreArcaneAttack', instanceId: 'c', upgraded: false }).sigils);
+  assert.deepEqual([...footer.matchAll(/data-sigil="(\w+)"/g)].map(m => m[1]), ['spell']);
+  assert.match(footer, /card-type-name[^>]*>Spell</);
+});
+
+test('the Mana chain also sees a concurrent mirrored Spell stance', () => {
+  const combat = live();
+  const spark = card('core.cantrip'), costly = { ...card('core.starseerSpecial'), manaCost: 3 };
+  combat.player.combatStance = { maneuver: 'neutral', camp: 'physical', range: 'melee' };
+  combat.player.concurrentStances = [{ maneuver: 'attack', camp: 'spell', mirrored: true, range: 'melee' }];
+  assert.equal(stanceManaCost(3, combat.player, costly, combat), 2);
+  assert.equal(stanceManaCost(3, combat.player, { ...spark, manaCost: 3 }, combat), 2);
 });

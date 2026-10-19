@@ -34,9 +34,11 @@ const MIRROR_OF_BASE = Object.freeze({ strike: 'attack', smash: 'smash', sweep: 
 export function profileMirrors(profile) {
   return profile && ['magic', 'arcane'].includes(profile.damageSchool) ? MIRROR_OF_BASE[profile.baseCardId] || null : null;
 }
-function applyBasicCardProfile(def, profile) {
+// Core 2 only (FixCore): the Current/v2 profile keeps its sceptre and staff cards exactly as they were.
+const fixCoreRegistries = (registries) => registries?.gameProfile?.modules?.effects?.fixCoreVersion === 1;
+function applyBasicCardProfile(def, profile, mirrorsOn = false) {
   if (!profile) return def;
-  const mirrors = profileMirrors(profile);
+  const mirrors = mirrorsOn ? profileMirrors(profile) : null;
   const tags = [...(profile.tags || [])];
   if (mirrors) for (const tag of ['source:spell', 'camp:spell', 'rank.cantrip']) if (!tags.includes(tag)) tags.push(tag);
   const effects = (def.effects || []).map((effect) => (
@@ -651,7 +653,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   if (result !== base) result = deepFreeze(result);
   if (instanceOrRef.upgraded && !usesAbilityGrade) result = mergeUpgrade(result);
   result = derivedActionCost(result, definition, costRankOf(usesAbilityGrade, base, rank));
-  if (profileId) result = applyBasicCardProfile(result, profile);
+  if (profileId) result = applyBasicCardProfile(result, profile, fixCoreRegistries(registries));
   result = applyBaseManaPolicy(registries, result);
   if (mods && mods.length) {
     const eq = registries.equipment || {};

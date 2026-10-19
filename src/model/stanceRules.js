@@ -88,8 +88,9 @@ export function stanceEntryBonuses(carrier, ctx = null) {
 // Successive Spells cut each other's Mana: a mirrored cantrip plays in its basic's stance but is still a
 // Spell, so a Spell after it (or it after a Spell) takes the same-stance Mana discount.
 export function spellChain(entity, carrier) {
-  const active = stanceOf(entity?.combatStance), next = stanceOf(carrier, entity);
-  return !!active && !!next && active.camp === 'spell' && next.camp === 'spell' && !!(active.mirrored || next.mirrored);
+  const next = stanceOf(carrier, entity);
+  return !!next && next.camp === 'spell'
+    && [...(entity?.concurrentStances || []), stanceOf(entity?.combatStance)].some(row => row && row.camp === 'spell' && (row.mirrored || next.mirrored));
 }
 export function stanceManaCost(base, entity, carrier, ctx) {
   if (!fixCoreEnabled(ctx) || !(base > 0) || !(sameStance(entity, carrier) || spellChain(entity, carrier))) return base;
