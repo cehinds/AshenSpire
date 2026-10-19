@@ -298,6 +298,7 @@ function buildLines(def, preview, registries) {
   for (const [index, effect] of (def.effects || []).entries()) {
     const fragments = phraseEffect(effect, index);
     if (effect.oncePerTurn && fragments.length) fragments[fragments.length - 1].text += ' once per turn per family';
+    if (effect.if && !fragments.length) continue; // a condition with nothing left to say (a Core return zeroed its row) is not listed
     if (effect.if) {
       const key = JSON.stringify(effect.if);
       if (!groups.has(key)) groups.set(key, { prefix: prefixFor(effect.if), fragments: [], sleeping: JSON.stringify(effect.if).includes('"status":"sleep"') });

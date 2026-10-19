@@ -67,12 +67,13 @@ export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected
   const maneuver = intent.profile?.maneuver;
   if (!maneuver) return null;
   // Only an attack the played Counter covers is answered (the live predicate, not a copy).
-  if (card && !counterCoversAttack(ctx, card, intent.profile, 'damage')) return null;
+  // A revealed attack the Counter does not answer is `{ uncovered: true }`, which is not the same as no read at all.
+  if (card && !counterCoversAttack(ctx, card, intent.profile, 'damage')) return { uncovered: true };
   // Live play arms the Counter only when the card's configured stance is Counter (preparedCounter); a spell Counter
   // stands in the 'prepared' stance there and is never consumed, so the preview promises it no return.
   if (card && configuredModule(ctx, 'stances')) {
     const rule = configuredModule(ctx, 'stances');
-    if (!(rule.include?.includes('counter') && configuredStance(card) === 'counter')) return null;
+    if (!(rule.include?.includes('counter') && configuredStance(card) === 'counter')) return { uncovered: true };
   }
   const move = expandedEnemyMove(enemy, ctx.registries.enemies.get(enemy.enemyId).moves[intent.moveId] || {}, intent.moveId, ctx);
   const carrier = enemyMoveCarrier(enemy, move, intent.moveId, ctx);

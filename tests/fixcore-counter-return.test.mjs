@@ -401,3 +401,23 @@ test('preview follows live eligibility: a spell Counter (frostCounter) shows no 
     assert.ok(view.counterReturn?.hp > 0, `${cardId} still previews its return`);
   }
 });
+
+test('a revealed attack the Counter does not cover (wyrmLord tailSweep) shows no return at all, not the printed amount', () => {
+  const { combat, enemy } = live('wyrmLord');
+  assert.equal(enemy.intent.moveId, 'tailSweep');
+  const view = previewCard(combat, 'cx1', enemy.id);
+  assert.equal(view.counterReturn, undefined);
+  const row = view.values.find(v => v.op === 'damage');
+  assert.equal(row.totalDamage, 0, 'no printed return either');
+  assert.equal(row.counterReturn, undefined);
+});
+
+test('Crimson Reprisal rank 3 leaves no orphaned condition line once the Core return zeroes its conditional row', () => {
+  const { combat, enemy } = live();
+  combat.piles.hand.push({ instanceId: 'cf3', cardId: 'progression-crimson-reprisal', abilityRank: 3 });
+  enemy.intent.damage = 12;
+  const view = previewCard(combat, 'cf3', enemy.id);
+  const text = (cardFaceLines(view.resolvedDefinition, view, reg) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
+  assert.doesNotMatch(text, /If HP lost[^|]*:\s*(\||$)/, text);
+  assert.doesNotMatch(text, /If HP lost/, text);
+});

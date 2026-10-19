@@ -2541,6 +2541,9 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     return (coreCounterRead = enemyTarget
       ? counterPreviewAgainst(combat, enemyTarget, previewIntent(combat, enemyTarget.id), action.card, counterDefenseProjection()) : null);
   };
+  // The return the card will deal: null when the attack is hidden/unknown (the face keeps the printed amount) or uncovered (no return).
+  const coreCounterReturn = () => { const read = coreCounterReturnRead(); return read?.uncovered ? null : read; };
+  const coreCounterUncovered = () => coreCounterReturnRead()?.uncovered === true;
   let corePoiseRowUsed = false;
   const previewCounter = (resolvedTarget, index) => {
     const key = resolvedTarget?.id || null;
@@ -2560,8 +2563,11 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
           // Core 2 (SPEC §17): the return is a fraction of the revealed incoming attack, priced exactly as the live
           // return is: no attack-rating bonus, no second stance multiplier. Without a revealed attack the face
           // states the printed amount.
-          const live = effectIndex === bonusIndex && reply && resolvedTarget?.kind === 'enemy'
+          const read = effectIndex === bonusIndex && reply && resolvedTarget?.kind === 'enemy'
             ? counterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id), action.card, counterDefenseProjection()) : null;
+          // A revealed attack the Counter does not answer deals no return; a hidden one keeps the printed amount.
+          if (read?.uncovered) return { damage: 0, hitDamages: [], totalDamage: 0, hits: 0 };
+          const live = read;
           const hits = previewDamageHits(combat, p, resolvedTarget,
             live ? live.hp : (reply?.value || 0) + (effectIndex === bonusIndex ? bonus : 0),
             action.card.tags || [], { ...action.card, combatReaction: true, counterReturnAttack: true, ...(fixCoreEnabled(combat) ? { skipRatingBonus: true } : {}) },
@@ -2706,8 +2712,9 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
         entry.value = evalPreview(combat, action, eff.amount != null ? eff.amount : 1, primary);
         if (eff.op === 'poiseDamage' && coreCounterCard) {
           // The face shows the Poise the return really deals (SPEC §17), once; the authored rows and their conditions do not stack.
-          const read = coreCounterReturnRead();
+          const read = coreCounterReturn();
           if (read) { entry.value = corePoiseRowUsed ? 0 : read.poise; corePoiseRowUsed = true; }
+          else if (coreCounterUncovered()) entry.value = 0; // a revealed attack this Counter never answers: no Poise return
         }
         if (configuredCombat(combat) && (eff.op === 'poiseDamage' || eff.op === 'wardDamage')) {
           // Under Core a Poise drain can break Poise mid-card; later hits of this card see the broken target (as live).
@@ -2764,7 +2771,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   // reads it for the HP, Poise and conditional Block rows its effects do not already carry.
   let supportCounterReturn = null;
   if (coreCounterCard) {
-    const read = coreCounterReturnRead();
+    const read = coreCounterReturn();
     if (read) supportCounterReturn = { incoming: read.incoming, hp: read.hp, poise: read.poise, block: read.block, advantaged: read.advantaged };
   }
 
