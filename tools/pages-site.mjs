@@ -328,6 +328,24 @@ function purgedOrThrow(error) {
   throw error;
 }
 
+/**
+ * WHAT A FAILED REBUILD SAYS (2026-10-19). The old text was the LAST TWO lines of
+ * stderr, and bundle.mjs ends every failure with "NOTE: dist/AshenSpire.html is
+ * untouched…" after the launcher's "mobile build failed — aborting." — so the
+ * annotation named neither the real cause (bundle.mjs: ERROR — the mobile build
+ * is … over its … budget) nor the commit's step. Now: the lines that name an
+ * error come first, the boilerplate that follows every failure is dropped, and
+ * the launcher's own verdict line closes it.
+ */
+function rebuildFailureDetail(error) {
+  const text = `${error.stderr || ''}\n${error.message || ''}`;
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
+    .filter((l) => !/^NOTE: dist\/AshenSpire\.html is untouched/.test(l) && !/now holds a build-failed page/.test(l));
+  const causes = lines.filter((l) => /\bERROR\b|\bError:|failed|refus|ENOSPC|ENOENT|not found/i.test(l));
+  const picked = [...new Set(causes.length ? causes.slice(0, 4) : lines.slice(-3))];
+  return picked.join(' | ').slice(0, 900) || String(error.message || error).slice(0, 300);
+}
+
 const rebuilt = new Map();   // `${sha}:${tier}` → { dir } | { error }
 let buildTree = null;
 /** Rebuild one commit's standalone from source; returns { dir } or { error }. */
@@ -395,8 +413,7 @@ function rebuildAt(sha, fullArt) {
     console.log(`  rebuilt ${sha.slice(0, 10)} (${fullArt ? 'full' : 'light'} art requested${!fullArt && existsSync(join(dir, MOBILE_ARTIFACT)) ? '; this commit predates the light tier and built full art with its mobile twin' : ''}) in ${Math.round((Date.now() - t0) / 1000)}s`);
     result = { dir };
   } catch (error) {
-    const detail = String(error.stderr || error.message || error).trim().split('\n').slice(-2).join(' ');
-    result = { error: `rebuild failed: ${detail}` };
+    result = { error: `rebuild failed: ${rebuildFailureDetail(error)}` };
   }
   rebuilt.set(key, result);
   return result;
