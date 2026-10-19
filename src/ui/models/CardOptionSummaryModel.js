@@ -65,8 +65,11 @@ export function analyzeCardEffects(def, preview = null, registries = null, holds
       case 'block': case 'gainBarrier': {
         const split = defenseValue(effect, index) || (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2 ? spellDefenseSplit({ ...def, combatProfile: profile }, amount) : null);
         if (split) {
-          if (split.block > 0) add('def', effect, { labelId: 'cardOption.label.def', amount: split.block, base: undefined, ref: { amount, base } });
-          if (split.ward > 0) add('ward', effect, { labelId: 'cardOption.label.ward', amount: split.ward, base: undefined, ref: { amount, base } });
+          // Each share compares with the same split of the authored base, as the card face does, so only a share
+          // whose own number changed is marked.
+          const baseSplit = typeof base === 'number' ? spellDefenseSplit({ ...def, combatProfile: profile }, base) : null;
+          if (split.block > 0) add('def', effect, { labelId: 'cardOption.label.def', amount: split.block, base: baseSplit?.block });
+          if (split.ward > 0) add('ward', effect, { labelId: 'cardOption.label.ward', amount: split.ward, base: baseSplit?.ward });
         } else {
           const barrier = effect.op === 'gainBarrier';
           const ward = barrier && isSpellCard({ combatProfile: profile, tags: def.tags });
@@ -102,11 +105,8 @@ export function analyzeCardEffects(def, preview = null, registries = null, holds
   for (const [key, use] of groups) {
     const sum = pick => use.reduce((total, part) => total + pick(part), 0);
     const numeric = pick => use.every(part => Number.isFinite(pick(part)));
-    const ref = use.some(part => part.ref);
     found.set(key, { labelId: use[0].labelId, amount: sum(part => part.amount), base: numeric(part => part.base) ? sum(part => part.base) : undefined,
-      hits: use.length === 1 ? use[0].hits : 0, detail: use.length === 1 ? use[0].detail : undefined,
-      ...(ref ? { ref: { amount: sum(part => part.ref?.amount ?? part.amount),
-        base: numeric(part => part.ref?.base ?? part.base) ? sum(part => part.ref?.base ?? part.base) : undefined } } : {}) });
+      hits: use.length === 1 ? use[0].hits : 0, detail: use.length === 1 ? use[0].detail : undefined });
   }
   // A counter whose reply is a payload (no matching effect) reads it from the live preview.
   // The payload can return HP damage, Poise and Ward: each shows as its own "Return" part.
@@ -126,12 +126,11 @@ export function analyzeCardEffects(def, preview = null, registries = null, holds
   }
   const order = ['def', 'barrier', 'ward', 'dmg', 'return', 'returnPoise', 'returnWard', 'poise', 'poiseGuard', 'wardDamage', 'heal'];
   const line = freeze(order.filter(key => found.has(key)).map(key => {
-    const row = found.get(key), ref = row.ref || row;
-    // A split defense shows its own share but moves with the whole gain it came from.
+    const row = found.get(key);
     // The row places the number ("Def {amount}"); before/after carry that placement to the view.
     const [before, after] = t(row.labelId, { amount: MARK }).split(MARK);
-    return freeze({ label: `${before}${after}`.replace(/[^\p{L}\s]/gu, '').trim(), before, after: `${after}${row.hits ? ` \u00d7${row.hits}` : ''}${row.detail ? ` ${row.detail}` : ''}`, hits: row.hits || 1, value: row.amount, base: row.base ?? ref.base,
-      dir: live ? direction(ref.amount, ref.base) : null });
+    return freeze({ label: `${before}${after}`.replace(/[^\p{L}\s]/gu, '').trim(), before, after: `${after}${row.hits ? ` \u00d7${row.hits}` : ''}${row.detail ? ` ${row.detail}` : ''}`, hits: row.hits || 1, value: row.amount, base: row.base,
+      dir: live ? direction(row.amount, row.base) : null });
   }));
   return { line, complete: complete && line.length > 0 };
 }

@@ -229,3 +229,13 @@ test('unequal multi-hit damage shows the total with each hit; equal hits keep "N
   assert.equal(equal.value, 4);
   assert.match(equal.after, /×3/);
 });
+test('a split spell defense marks only the share whose own number changed', () => {
+  const frost = { id: 'testFrostCounter', name: 'Frost Counter', type: 'attack', defenseRulesVersion: 2,
+    tags: ['maneuver:counter', 'camp:spell', 'school:frost'], effects: [{ op: 'block', target: 'self', amount: 5 }] };
+  // 5 splits Def 3 / Ward 2 and 6 splits Def 3 / Ward 3: Def is unchanged, Ward is raised.
+  assert.deepEqual(line(frost, { values: [{ op: 'block', value: 6 }] }), ['Def 3', 'Ward 3:up']);
+  // 4 splits Def 2 / Ward 2: Def is lowered, Ward is unchanged.
+  assert.deepEqual(line(frost, { values: [{ op: 'block', value: 4 }] }), ['Def 2:down', 'Ward 2']);
+  assert.deepEqual(line(frost, { values: [{ op: 'block', value: 5 }] }), ['Def 3', 'Ward 2']);
+  assert.deepEqual(line(frost, null), ['Def 3', 'Ward 2']);
+});
