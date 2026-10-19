@@ -191,7 +191,7 @@ test('fractional offense reaches final rounding without a fabricated status modi
  assert.ok(sources.some(row=>row.id==='matching-stance' && row.effective===13 && Number.isInteger(row.amount)));
  assert.equal(sources.some(row=>row.id==='status-rules'),false);
  assert.equal(sources.some(row=>row.id==='quantity-rounding'),false);
- assert.equal(receipt.hpLoss,13);
+ assert.equal(receipt.damageReceipt.hits[0].incoming,13);
  const before=target.hp;primeAccuracyRolls(combat);
  applyAttackDamage(combat,combat.player,target,13,[],card);
  assert.equal(before-target.hp,receipt.hpLoss);
