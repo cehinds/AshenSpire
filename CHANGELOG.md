@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Newer dev builds are playable on the site again** ([#2179](https://github.com/cehinds/AshenSpire/pull/2179), `0.7.1.1675`). The site keeps the 5 newest builds per branch instead of 10, so the published site fits GitHub Pages' size limit and dev builds publish again; the README says how fresh each build is.
+
 - **Bigger intent damage and hit chance, unread follow-ups shown as ?** ([#2154](https://github.com/cehinds/AshenSpire/pull/2154), `0.7.1.1675`). Enemy intent damage now sits left of the stance icon at twice the size, hit chances are centered on each enemy in large outlined white text, and an enemy that has acted and can still act shows each remaining move by its own read: its icon if you read it, otherwise ?.
 - **Sceptre spells play as their basic card** ([#2170](https://github.com/cehinds/AshenSpire/pull/2170), `0.7.1.1673`). A sceptre or staff's basic Strike, Ward and Channel cards, and Arcane Spark, now count as spells and cantrips that play as the basic card they copy. Their footers show the spell mark, the basic's mark and its word, such as Attack or Defend.
 - **Auto switch in the combat footer** ([#2168](https://github.com/cehinds/AshenSpire/pull/2168), `0.7.1.1671`). Combat now has an Auto switch next to the Reaction switch. It turns auto combat on or off mid-fight and stays in step with the Settings screen, and both switches fit on phones.
