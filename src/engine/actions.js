@@ -328,8 +328,8 @@ function claimStagger(ctx, target) {
 
 // A Poise break (owner D13): the owner is Staggered. An enemy's break counts against the round's stagger limit.
 function fixCorePoiseBreak(ctx, source, target) {
-  // `interrupted` marks an enemy's break for the break haptic (fx.enemyPoiseBroken).
-  ctx.emit('poiseBroken', { targetId: target.id, sourceId: source?.id, ...(target.kind === 'enemy' ? { interrupted: true } : {}), ...seatOf(ctx, target) });
+  // `poiseBreak` marks a Core break for the break haptic (fx.enemyPoiseBroken); Core breaks interrupt nothing.
+  ctx.emit('poiseBroken', { targetId: target.id, sourceId: source?.id, poiseBreak: true, ...seatOf(ctx, target) });
   if (target.kind === 'enemy') { claimStagger(ctx, target); staggerEnemy(ctx, target, { cause: 'poiseBreak' }); }
   else fixCoreStagger(ctx, target, { cause: 'poiseBreak' });
 }
@@ -680,7 +680,8 @@ function breakPoise(ctx, source, target) {
   if (fixCoreEnabled(ctx)) {
     const loss = target.kind === 'player' ? fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules).staminaLoss : 0;
     if (target.kind === 'player') fixCoreStagger(ctx, target, { cause: 'poiseBreak' });
-    return ['poiseBroken', { targetId: target.id, sourceId: source?.id, staminaLoss: loss, ...(target.kind === 'enemy' ? { interrupted: true } : {}), ...seatOf(ctx, target) }];
+    // `interrupted` only asks emitBreak to run the stagger; under Core it reports no interrupt (see prepareBreakInterrupt).
+    return ['poiseBroken', { targetId: target.id, sourceId: source?.id, staminaLoss: loss, poiseBreak: true, ...(target.kind === 'enemy' ? { interrupted: true } : {}), ...seatOf(ctx, target) }];
   }
   const cost = Math.max(0, ctx.ratingsRules?.breaks?.poiseActionLoss ?? 1);
   // An enemy is interrupted by interruptForBreak, after the hit's log, and has no Stamina to lose; a player pays here.

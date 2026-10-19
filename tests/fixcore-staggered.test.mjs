@@ -149,12 +149,12 @@ test('one break is one stagger: a smash-advantage hit that also breaks Poise sta
   assert.equal(target.pendingStaminaLoss, 1);
 });
 
-test('under Core an interrupt reports no cancelled move (staggering cancels nothing)', () => {
+test('under Core a break is not an interrupt: no enemyInterrupted, the pending move survives', () => {
   const { combat, target } = live();
   target.pendingMove = { moveId: 'strike', resolveOnTurn: combat.turn + 1 };
-  const event = prepareBreakInterrupt(combat, target, 'poiseBreak');
-  assert.equal(event[1].cancelledMove, null);
+  assert.equal(prepareBreakInterrupt(combat, target, 'poiseBreak'), null);
   assert.equal(target.pendingMove.moveId, 'strike');
+  assert.equal(target.combatStance.maneuver, 'staggered');
 });
 
 test('preview skips the break Vulnerable when impact protection would refuse the stagger', () => {
@@ -235,4 +235,20 @@ test('the Staggered row carries the profile\'s costs, hiding a zero clause', () 
   assert.match(row.detail, /Loses 2 SP next turn/);
   assert.doesNotMatch(row.detail, /Vulnerable/);
   assert.equal(target.pendingStaminaLoss, 2);
+});
+
+test('Core break: haptic fires, the log says staggered not interrupted, the pending move survives', async () => {
+  const { enemyPoiseBroken } = await import('../src/ui/fx.js');
+  const { combatLogEntries } = await import('../src/model/combatLog.js');
+  const { combat, target } = live(2);
+  target.pendingMove = { moveId: 'strike', resolveOnTurn: combat.turn + 1 };
+  hit(combat, target, 10);
+  const event = combat.eventLog.find(row => row.type === 'poiseBroken');
+  assert.equal(enemyPoiseBroken(event), true);
+  assert.ok(!event.interrupted);
+  assert.ok(!combat.eventLog.some(row => row.type === 'enemyInterrupted'));
+  assert.equal(target.pendingMove.moveId, 'strike');
+  const text = JSON.stringify(combatLogEntries(combat.eventLog, { registries: reg, players: [], enemies: combat.enemies }));
+  assert.match(text, /Poise broke/);
+  assert.doesNotMatch(text, /interrupted/);
 });
