@@ -90,6 +90,12 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'current'
       return true;
     });
   }
+  if(Array.isArray(bundle.enemies)) {
+    // The runtime enemy registry compiles the shared act enemy lists; each profile's
+    // own pack pins the starting poiseMax it plays with (Core 2 halved, Core 1 kept).
+    const pinned=new Map((gameContent(profile,'enemies')||[]).filter(row=>Number.isInteger(row.poiseMax)).map(row=>[row.id,row.poiseMax]));
+    bundle.enemies=bundle.enemies.map(def=>pinned.has(def.id)&&Number.isInteger(def.poiseMax)?{...def,poiseMax:pinned.get(def.id)}:def);
+  }
   return bundle;
 }
 export function bindGameProfileRegistries(registries,profile) { return Object.freeze({...registries,gameProfile:resolveGameProfile(profile)}); }
