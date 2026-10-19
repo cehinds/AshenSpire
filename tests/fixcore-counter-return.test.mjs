@@ -71,10 +71,11 @@ test('the Counter card preview names the same return the live exchange deals (no
   // Preview against the revealed 8-damage Attack: 6 return damage, less the enemy's own Poise (25% of 6, floored).
   const receipt = damage.damageReceipt.hits[0];
   assert.equal(receipt.incoming, 6, 'the card previews floor(0.5 x 8) + floor(0.25 x 8)');
-  assert.equal(damage.totalDamage, 6 - receipt.poiseReduced - 0);
+  const protectedLoss = damage.damageReceipt.hits.reduce((sum, hit) => sum + (hit.hpLoss ?? hit.hp ?? 0), 0);
+  assert.equal(damage.totalDamage, 6, 'the face token reads the return');
   const { events } = exchange();
   const live6 = events.filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
-  assert.equal(live6.reduce((sum, e) => sum + e.hpLoss, 0), damage.totalDamage);
+  assert.equal(live6.reduce((sum, e) => sum + e.hpLoss, 0), protectedLoss);
 });
 
 test('preview equals live against an enemy whose attack carries rating bonuses', () => {
@@ -90,7 +91,7 @@ test('preview equals live against an enemy whose attack carries rating bonuses',
   const events = combat.eventLog.slice(start);
   const returned = events.filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
   assert.ok(returned.length, 'the Counter fired');
-  assert.equal(returned.reduce((sum, e) => sum + e.hpLoss, 0), damage.totalDamage);
+  assert.equal(returned.reduce((sum, e) => sum + e.hpLoss, 0), damage.damageReceipt.hits.reduce((sum, hit) => sum + (hit.hpLoss ?? hit.hp ?? 0), 0));
 });
 
 import { profileCardCosts } from '../src/engine/gameProfileCombat.js';
@@ -177,7 +178,7 @@ test('multi-hit preview sums the hits one by one (sequential receipts) and equal
   assert.equal(taken.length, 2, 'two hits land');
   const returned = events.filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter');
   assert.ok(returned.length);
-  assert.equal(returned.reduce((sum, e) => sum + e.hpLoss, 0), damage.totalDamage);
+  assert.equal(returned.reduce((sum, e) => sum + e.hpLoss, 0), damage.damageReceipt.hits.reduce((sum, hit) => sum + (hit.hpLoss ?? hit.hp ?? 0), 0));
   assert.equal(single, damage.totalDamage);
 });
 
@@ -228,4 +229,23 @@ test('the Counter preview carries the return\'s Poise damage and the Block it ad
   assert.equal(damage.counterReturn.poise, 3);
   assert.equal(damage.counterReturn.block, 2);
   assert.equal(damage.counterReturn.hp, 6);
+});
+
+import { cardDetailHtml } from '../src/ui/components/card.js';
+import { t } from '../src/ui/strings.js';
+test('the Counter help is profile-aware: Core 2 says half the incoming hit, legacy keeps Guard or Ward absorption', () => {
+  const core = cardDetailHtml(reg, { cardId: 'core.counter' });
+  assert.ok(core.includes(t('card.counter.help.core')) || /Counter coverage/.test(core), 'Core reads its own wording or coverage');
+  assert.doesNotMatch(core, /after full Guard or Ward absorption/);
+  assert.match(t('card.counter.help.core'), /half its incoming damage/);
+  assert.match(t('card.counter.help.legacy'), /after full Guard or Ward absorption/);
+  const legacyReg = createRegistries(contentBundle);
+  const legacyCounter = contentBundle.cards.find(c => c.combatProfile?.maneuver === 'counter' && !c.counterCoverage);
+  if (legacyCounter) assert.match(cardDetailHtml(legacyReg, { cardId: legacyCounter.id }), /after full Guard or Ward absorption/);
+});
+
+test('the Counter face token reads the return (6), not the post-protection HP loss', () => {
+  const { combat, enemy } = live();
+  const row = previewCard(combat, 'cx1', enemy.id).values.find(v => v.op === 'damage');
+  assert.equal(row.value, 6); assert.equal(row.totalDamage, 6); assert.deepEqual(row.hitDamages, [6]);
 });

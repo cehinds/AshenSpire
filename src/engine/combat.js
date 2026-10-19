@@ -2544,7 +2544,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
             action.card.tags || [], { ...action.card, combatReaction: true, counterReturnAttack: true, ...(fixCoreEnabled(combat) ? { skipRatingBonus: true } : {}) },
             live ? 1 : reply?.hits || 0);
           // The return's own Poise damage and the Block the Counter adds ride with its HP damage (SPEC §17).
-          return live ? { ...hits, counterReturn: { incoming: live.incoming, hp: live.hp, poise: live.poise, block: live.block, advantaged: live.advantaged } } : hits;
+          return live ? { ...hits, damage: live.hp, hitDamages: [live.hp], totalDamage: live.hp, counterReturn: { incoming: live.incoming, hp: live.hp, poise: live.poise, block: live.block, advantaged: live.advantaged } } : hits;
         }
         const hitDamages = Array.from({ length: reply?.hits || 0 }, () => reply.value);
         if (effectIndex === bonusIndex && bonus) {
