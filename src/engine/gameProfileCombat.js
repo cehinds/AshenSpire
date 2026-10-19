@@ -69,6 +69,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const advantage = !!stances?.include?.includes(attacking)
     && !!stances?.matchups?.[attacking]?.includes(defending);
   const modern = fixCoreEnabled(ctx);
+  const flatReturn = modern && carrier.counterReturnAttack;
   const sources = [{id:'base',label:'Card damage (including enhancements)',amount:base,stage:'offense',operation:'set'}];
   // The chain keeps full precision and is floored once where it is applied (the quantity-rounding step);
   // receipt lines show the running floor so every shown number is whole (owner, 2026-10-18 16:05).
@@ -91,12 +92,11 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     raw = transition('ar:adjustments','AR stance/status modifiers (including Weak)',raw,base+ratingBonus);
   } else raw = transition('ar','Attack rating',raw,raw+ratingBonus);
   // A Core 2 Counter return is final pre-protection damage (SPEC §17): no matching-stance or defensive-stance stage.
-  const flatReturn = modern && carrier.counterReturnAttack;
   const stanceMultiplier = flatReturn ? 1 : stanceEffectiveness(ctx,source,carrier);
   raw = transition('matching-stance','Matching stance effectiveness',raw,raw*stanceMultiplier,'offense',stanceMultiplier);
-  if (modern && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
+  if (modern && !flatReturn && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
   if (!modern) raw=Math.max(0,Math.floor(raw));
-  if(proposal && target) raw=transition('status-rules','Other status modifiers',raw,proposalHitPlan(ctx,source,target,raw,carrier,{roundDamage:!modern}).amount);
+  if(proposal && target && !flatReturn) raw=transition('status-rules','Other status modifiers',raw,proposalHitPlan(ctx,source,target,raw,carrier,{roundDamage:!modern}).amount);
   const defense = stanceMitigation(ctx, attacking, defending);
   // Core 2 Counter returns carry their advantage in the return itself (SPEC §17), so the chain does not multiply it again.
   const advantageMultiplier = advantage && !(modern && carrier.counterReturnAttack) ? stances.advantageMultiplier ?? 1 : 1;

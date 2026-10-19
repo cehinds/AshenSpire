@@ -194,3 +194,15 @@ test('a covered hit that breaks Poise still gets its return once; the break then
   assert.equal(returned.length, 1, 'once');
   assert.equal(combat.player.combatCounter, undefined, 'the break cleared the Counter');
 });
+
+test('a Core Counter return ignores the target\'s Vulnerable: 8 incoming returns exactly 6 before protection', () => {
+  const { combat, enemy } = live();
+  Object.assign(combat.player, { ratings: {}, ratingSources: [], statuses: {} });
+  enemy.statuses = { vulnerable: { stacks: 2 } };
+  enemy.persistentPoise = { value: 0, max: 0 };
+  const carrier = { skipRatingBonus: true, counterReturnAttack: true, combatReaction: true,
+    combatProfile: { camp: 'physical', maneuver: 'counter', damageType: 'slashing', range: 'melee', targeting: 'single' } };
+  const receipt = profileDamageReceipt(combat, combat.player, enemy, counterReturn(combat, 8, true).hp, carrier);
+  assert.equal(receipt.damageReceipt.hits[0].incoming, 6);
+  assert.equal(receipt.hpLoss, 6);
+});
