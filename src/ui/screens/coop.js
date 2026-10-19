@@ -1246,7 +1246,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       summarize: card => {
         const inst = (player.pendingCardChoice ? pending.candidates : player.hand).find(c => c.instanceId === card.instanceId);
         return summarizeCardOption(registries, sc, { id: card.instanceId, name: card.name }, {
-          defOf: () => inst ? cardDef(inst) : null, previewOf: () => inst ? cardDef(inst)?.combatPreview ?? null : null,
+          // A pile choice is not a play: tier 0, never the upcast tier a cancelled target chooser left on the card.
+          defOf: () => inst ? cardDef(inst, 0) : null, previewOf: () => inst ? cardDef(inst, 0)?.combatPreview ?? null : null,
         });
       },
       cards: (player.pendingCardChoice ? pending.candidates : player.hand.filter((card) => !stackedIds.has(card.instanceId))).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
