@@ -53,6 +53,22 @@ test('a non-Core profile with deck-training keeps its unlimited-copy collection 
   assert.ok(unlimitedCardIds(other).includes('core.strike'));
 });
 
+// Codex P2 (PR #2199): owned-only Core must still classify owned basics as basics.
+test('Core owned basics are sourced basic and the Basic filter is non-empty, with no unowned basics offered', async () => {
+  const { deckEditorModel } = await import('../src/ui/models/DeckEditorModel.js');
+  const { unlimitedCardIds, basicCardIds, isBasicCard } = await import('../src/model/deckRules.js');
+  const run = start('reaver');
+  assert.deepEqual(unlimitedCardIds(run), [], 'policy: nothing minted unowned');
+  for (const id of ['core.strike', 'core.defend', 'core.counter']) assert.ok(basicCardIds(run).includes(id), `${id} classified basic`);
+  for (const c of run.deck.filter((x) => ['core.strike', 'core.defend', 'core.counter'].includes(x.cardId))) assert.ok(isBasicCard(c, run), c.cardId);
+  const model = deckEditorModel({ registries: reg, run });
+  const owned = (rows) => rows.filter((r) => ['core.strike', 'core.defend', 'core.counter'].includes(r.card?.cardId ?? r.cardId));
+  const basics = [...model.deck, ...model.collection].filter((r) => r.source === 'basic');
+  assert.ok(basics.length > 0, 'Basic filter has rows');
+  assert.ok(model.collection.every((r) => !r.unlimited), 'no unowned unlimited basic tile');
+  assert.ok(owned(model.deck).every((r) => r.source === 'basic'), 'owned Strike/Defend/Counter in the deck are basic');
+});
+
 // Codex P2 (PR #2199): starterDeck.classDecks is validated at profile construction, not at class start.
 test('classDecks validation fails at profile construction with a message naming the class and row', async () => {
   const { compileGameProfiles } = await import('../tools/game-config.mjs');
@@ -64,6 +80,7 @@ test('classDecks validation fails at profile construction with a message naming 
   assert.throws(build(sd => { sd.classDecks.reaver[0].copies = '4'; }), /classDecks\/reaver\/0\/copies.*positive integer copies for class reaver row 0/);
   assert.throws(build(sd => { sd.classDecks.reaver[1].copies = -1; }), /classDecks\/reaver\/1\/copies.*positive integer copies for class reaver row 1/);
   assert.throws(build(sd => { sd.classDecks.reaver[0].copies = 1.5; }), /positive integer copies/);
+  assert.throws(build(sd => { sd.classDecks.reaver[0].copies = 2 ** 60; }), /positive integer copies/);
   assert.throws(build(sd => { sd.classDecks.nobody = [{ card: 'core.strike', copies: 1 }]; }), /classDecks\/nobody.*unknown class/);
   assert.throws(build(sd => { sd.classDecks.rogue[2].card = 'core.missing'; }), /classDecks\/rogue\/2\/card.*unknown card reference "core.missing" for class rogue row 2/);
   assert.throws(build(sd => { sd.classDecks = []; }), /classDecks.*expected class-id map/);
