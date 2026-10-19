@@ -2532,6 +2532,16 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     drainQueue(sim);
     return (counterProjection = sim.player);
   };
+  // Core 2: the whole HP/Poise return is one computed figure; the authored poiseDamage rows of a Counter never resolve live.
+  const coreCounterCard = configuredCombat(combat) && fixCoreEnabled(combat) && action.card.combatProfile?.maneuver === 'counter';
+  let coreCounterRead;
+  const coreCounterReturnRead = () => {
+    if (coreCounterRead !== undefined) return coreCounterRead;
+    const enemyTarget = action.target?.kind === 'enemy' ? action.target : living[0];
+    return (coreCounterRead = enemyTarget
+      ? counterPreviewAgainst(combat, enemyTarget, previewIntent(combat, enemyTarget.id), action.card, counterDefenseProjection()) : null);
+  };
+  let corePoiseRowUsed = false;
   const previewCounter = (resolvedTarget, index) => {
     const key = resolvedTarget?.id || null;
     if (!counterPreviews.has(key)) {
@@ -2694,6 +2704,11 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       case 'poiseDamage':
       case 'addCinders': {
         entry.value = evalPreview(combat, action, eff.amount != null ? eff.amount : 1, primary);
+        if (eff.op === 'poiseDamage' && coreCounterCard) {
+          // The face shows the Poise the return really deals (SPEC §17), once; the authored rows and their conditions do not stack.
+          const read = coreCounterReturnRead();
+          if (read) { entry.value = corePoiseRowUsed ? 0 : read.poise; corePoiseRowUsed = true; }
+        }
         if (configuredCombat(combat) && (eff.op === 'poiseDamage' || eff.op === 'wardDamage')) {
           // Under Core a Poise drain can break Poise mid-card; later hits of this card see the broken target (as live).
           const hit = eff.target === 'allEnemies' ? living : eff.target === 'enemy' || eff.target == null ? [primary] : [];
@@ -2746,10 +2761,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   const authoredCosts = def.resourceCosts || def.costs || {};
   const authoredSp = authoredCosts.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : undefined); // profileCardCosts' chain
   let supportCounterReturn = null;
-  if (configuredCombat(combat) && fixCoreEnabled(combat) && action.card.combatProfile?.maneuver === 'counter'
-    && !chargedEffects.some(effect => effect.op === 'damage')) {
-    const enemyTarget = action.target?.kind === 'enemy' ? action.target : living[0];
-    const read = enemyTarget ? counterPreviewAgainst(combat, enemyTarget, previewIntent(combat, enemyTarget.id), action.card, counterDefenseProjection()) : null;
+  if (coreCounterCard && !chargedEffects.some(effect => effect.op === 'damage')) {
+    const read = coreCounterReturnRead();
     if (read) supportCounterReturn = { incoming: read.incoming, hp: read.hp, poise: read.poise, block: read.block, advantaged: read.advantaged };
   }
 

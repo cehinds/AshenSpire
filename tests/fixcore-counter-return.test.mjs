@@ -307,3 +307,12 @@ test('Core 2 fixed return is not rewritten by the legacy Impact edge (lowGuardRi
   assert.equal(triggered.amount, 6);
   assert.equal(triggered.poiseDamage, 3);
 });
+
+test('a zero-HP Counter grade (Crimson Reprisal rank 3) shows the computed Poise return, not its authored Poise rows', () => {
+  const { combat, enemy } = live();
+  combat.piles.hand.push({ instanceId: 'cr1', cardId: 'progression-crimson-reprisal', abilityRank: 3 });
+  const view = previewCard(combat, 'cr1', enemy.id);
+  const rows = view.values.filter(row => row.op === 'poiseDamage');
+  assert.ok(rows.length > 0, 'the grade authors Poise rows');
+  assert.equal(rows.reduce((sum, row) => sum + row.value, 0), 3, 'one computed Poise return (8 incoming -> 3)');
+});
