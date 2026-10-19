@@ -46,11 +46,11 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     const value = document.createElement('span');
     value.className = 'combat-health-badge-value';
     value.textContent = String(badge.value);
-    if (badge.kind === 'evade') {
+    if (badge.kind === 'evade' || badge.kind === 'precision') {
       const icon = document.createElement('span');
-      icon.className = 'combat-health-evade-icon';
+      icon.className = `combat-health-${badge.kind}-icon`;
       icon.setAttribute('aria-hidden', 'true');
-      const mark = tagSymbolSvg('effect:evade');
+      const mark = tagSymbolSvg(`effect:${badge.kind}`);
       if (mark) icon.append(mark);
       node.append(icon);
     }
@@ -58,7 +58,7 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     markUiComponent(node, UI.blockBadge, badge.kind);
     if (tooltips) {
       node.tabIndex = 0;
-      attachTooltip(node, () => `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : badge.kind === 'evade' ? 'Active Evasion stacks. Each stack contributes to the attack roll defense.' : badge.kind === 'poise' ? poiseHelp : wardHelp)}${badge.barrier > 0 ? `<br>${esc(tFull('combat.protection.barrier'))}` : ''}${badge.wardBlock > 0 ? `<br>${esc(t('combat.protection.wardBlock'))} ${badge.wardBlock}: ${esc(tFull('combat.protection.wardBlock'))}` : ''}`);
+      attachTooltip(node, () => `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : badge.kind === 'evade' ? 'Active Evasion stacks. Each stack contributes to the attack roll defense.' : badge.kind === 'precision' ? tFull('card.tags.precision') : badge.kind === 'poise' ? poiseHelp : wardHelp)}${badge.barrier > 0 ? `<br>${esc(tFull('combat.protection.barrier'))}` : ''}${badge.wardBlock > 0 ? `<br>${esc(t('combat.protection.wardBlock'))} ${badge.wardBlock}: ${esc(tFull('combat.protection.wardBlock'))}` : ''}`);
     }
     row.append(node);
   }

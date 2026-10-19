@@ -467,7 +467,11 @@ let fitFrame = 0;
 export function setHandFaceBudget(el, selected) {
   const rules = el?.querySelector?.('.ic-text[data-face-lines="true"]');
   if (!rules) return;
-  rules.dataset.maxLines = selected ? '5' : '3';
+  const lines = selected ? '5' : '3';
+  // The hand calls this for every card on every render; a budget that did not
+  // change leaves the fit it has (a new face is fitted by its own render).
+  if (rules.dataset.maxLines === lines) return;
+  rules.dataset.maxLines = lines;
   scheduleCardFits([el]);
 }
 
@@ -691,7 +695,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       const bonuses = ['ar', 'pr', 'dr', 'ward'].map(id => [id, stanceRatingBonus(ctx, rated, id)]);
       const offense = bonuses.some(([id, amount]) => ['ar', 'pr'].includes(id) && amount > 0);
       const active = bonuses.filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + (id === 'ward' ? 'Ward rating' : id.toUpperCase()));
-      const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
+      const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + ({ precision: t('card.tags.precision'), evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
       html += '<div class="combat-rule-hint"><strong>Stance:</strong> ' + esc(active.join(', ')) + ' while active; does not stack.'
         + (grants.length ? ' On changing stance: ' + esc(grants.join(', ')) + '.' : '')
         + ' Repeating the same stance grants no entry bonuses and costs ' + esc(rules.sameStanceDiscount) + ' less SP.'
