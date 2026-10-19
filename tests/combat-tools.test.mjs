@@ -87,7 +87,7 @@ test('log drag can traverse every size without leaving the physical viewport', (
 test('unsupported historical combat has a disabled switch and immutable public log model', () => {
   const entries = [{ id: 2, round: 1, text: 'A public action.' }];
   const model = combatToolsModel({ supported: false, enabled: true, open: true, size: 'Large', entries });
-  assert.deepEqual(childModel(model, UI.reactionToggle).properties, { enabled: false, disabled: true });
+  assert.deepEqual(childModel(model, UI.reactionToggle).properties, { enabled: false, disabled: true, supported: false });
   assert.equal(childModel(model, UI.combatLogDrawer).properties.open, true);
   entries[0].text = 'Mutated';
   assert.equal(childModel(model, UI.combatLogDrawer).properties.entries[0].text, 'A public action.');
@@ -231,4 +231,36 @@ test('live Grid checkbox waits for persistence and rolls back a refused preferen
     assert.equal(checkbox.disabled,false);
     assert.equal(checkbox.checked,!accepted,'control reflects the actually persisted root value');
   }
+});
+
+test('Auto switch mirrors the Reaction switch and follows the autoCombat setting', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const settings = { autoCombat: false };
+    const writes = [];
+    const tools = mountCombatTools(combatEl, { state: {}, onViewChange() {}, onToggle() {},
+      onAutoToggle: enabled => { writes.push(enabled); settings.autoCombat = enabled; } });
+    const paint = (supported = true) => tools.update(combatToolsModel({ supported, enabled: true, entries: logRows }), { auto: settings.autoCombat });
+    paint();
+    const auto = combatEl.querySelector('[data-combat-tool="auto"]');
+    const reaction = combatEl.querySelector('[data-combat-tool="reaction"]');
+    assert.equal(auto.getAttribute('role'), 'switch');
+    assert.equal(auto.className.includes('reaction-switch'), true, 'same component style as Reaction');
+    assert.equal(auto.nextElementSibling === reaction.nextElementSibling || reaction.nextElementSibling === auto, true, 'sits beside Reaction');
+    assert.equal(auto.getAttribute('aria-checked'), 'false');
+    assert.equal(auto.getAttribute('aria-label'), 'Auto combat disabled');
+    auto.click();
+    assert.deepEqual(writes, [true]);
+    paint();
+    assert.equal(auto.getAttribute('aria-checked'), 'true');
+    assert.equal(auto.getAttribute('aria-label'), 'Auto combat enabled');
+    settings.autoCombat = false; // the Settings screen turns it off: the next paint follows
+    paint();
+    assert.equal(auto.getAttribute('aria-checked'), 'false');
+    paint(false);
+    assert.equal(auto.disabled, true, 'unavailable where reactions are unsupported');
+    tools.release();
+  });
 });

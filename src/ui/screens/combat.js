@@ -274,6 +274,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const combatToolsState = { open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true };
   const combatTools = mountCombatTools(combatEl, { state: combatToolsState,
     onGridToggle: enabled => onSettingsChange?.({ 'gameConfig.presentation.showFormationGrid': enabled }),
+    onAutoToggle: enabled => {
+      // Same write the Settings row makes, so both stay in sync.
+      try { onSettingsChange?.({ autoCombat: enabled }); }
+      catch (error) { console.warn('[combat] auto combat preference refused:', error.message); }
+      renderCombatTools();
+    },
     onViewChange: () => renderCombatTools(),
     onToggle: enabled => {
       try { dispatch(combat, { type: 'setReactions', enabled }); }
@@ -1451,7 +1457,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       enabled: combat.player.reactionsEnabled !== false,
       disabled: busy || combat.phase !== 'player' || hasCardChoice(combat) || !!combat.pendingReaction,
       ...combatToolsState, entries: combatLogEntries(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length),
-        { registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies }) }));
+        { registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies }) }), { auto: resolveCombatAutomation(readSettings()).enabled });
     renderReactionNote();
   }
 
