@@ -67,6 +67,25 @@ try {
     assert.equal(hit, false, 'elementFromPoint skips the badge');
     await page.close();
   }
+  // Classic appearance with Reduced motion: the first selection's badge is centred on the body, not the frame.
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true, reducedMotion: 'reduce' });
+    page.on('pageerror', (error) => errors.push(error.message));
+    const classic = encodeURIComponent(JSON.stringify({ oneTapPlay: false, classicAppearance: true }));
+    await page.goto(`${base}index.html?shot=combat&gameProfile=core&shotSettings=${classic}`, { waitUntil: 'networkidle' });
+    await page.waitForFunction(() => !!window.__combat);
+    await page.waitForTimeout(800);
+    const lane = await page.locator('.hand .card', { hasText: 'Strike' }).first().locator('.hand-hit-lane').boundingBox();
+    await page.mouse.click(lane.x + lane.width / 2, lane.y + lane.height * 0.42);
+    await page.waitForSelector('.combatant.enemy .combat-hit-chance');
+    await page.waitForTimeout(300);
+    const off = await page.locator('.combatant.enemy').evaluateAll((frames) => frames.map((frame) => {
+      const badge = frame.querySelector(':scope > .combat-hit-chance');
+      return badge ? { set: frame.style.getPropertyValue('--combat-body-center-y') !== '' } : null;
+    }).filter(Boolean));
+    assert.ok(off.length >= 1 && off.every((row) => row.set), 'classic + reduced motion: badge has its body centre at once');
+    await page.close();
+  }
   assert.deepEqual(errors, [], 'no page errors');
   console.log('intent + badge: ok');
 } finally { await browser.close(); server?.close?.(); }

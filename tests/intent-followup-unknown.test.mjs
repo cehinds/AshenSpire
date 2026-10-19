@@ -232,3 +232,13 @@ test('a selected (expanded) intent carries the same follow-up row as the compact
     assert.equal(combatantIntent({ kind: 'attack', moveId: 'x', damage: 5, hits: 1, profile: {}, stance: 'attacking', revealed: true, hidden: false }).querySelector('.intent-followups-expanded'), null);
   });
 });
+
+test('a read counter follow-up shows the counter icon, as the current intent does (real Gilded Knight parry)', () => {
+  const run = createRunState({ seed: 5, classId: 'reaver', registries, profileMeta: { settings: {} } });
+  const c = createRunCombat({ registries, rng: createRng(5), run, enemyIds: ['gildedKnight'], settings: {} });
+  const e = c.enemies[0], def = registries.enemies.get('gildedKnight');
+  assert.equal(def.moves.parry.intent, 'block', 'authored as a block with a counter');
+  const plan = followUpPlan({ queue: [{ moveId: 'parry' }, { moveId: 'thrust' }], def, enemyId: e.id, combat: c });
+  const row = advanceFollowUps(plan, [{ read: true, outcome: 'played' }, { read: false, outcome: 'played' }]);
+  assert.deepEqual(row.map((s) => (s.kind === 'unknown' ? '?' : s.icon)), ['counter', '?']);
+});

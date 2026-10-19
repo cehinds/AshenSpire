@@ -13,19 +13,33 @@
 // drop an entry early. A move whose read is not recorded yet (a reaction window paused the phase before it) is "?".
 import { stanceFor, moveKind } from '../../engine/combatRounds/stance.js';
 import { iconForStance } from './CombatRoundsScreenModel.js';
+import { enemyMoveCarrier } from '../../engine/combatCardTactics.js';
+import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 
 /**
  * followUpPlan({ queue, def }) → the actor's turn plan, taken before its phase. queue: its planned follow-ups
  * ({ moveId }) in play order, the head excluded; def: its enemy definition, read for an icon only on a read entry.
  */
-export function followUpPlan({ queue = [], def = null } = {}) {
+export function followUpPlan({ queue = [], def = null, enemyId = null, combat = null } = {}) {
   const ids = Array.isArray(queue) ? queue.map(entry => entry?.moveId ?? null) : [];
-  return { ids, def, total: ids.length, cursor: 0, headDone: false };
+  return { ids, def, enemyId, combat, total: ids.length, cursor: 0, headDone: false };
 }
 
+const CATEGORY_ICON = Object.freeze({ attack: 'attack', sweep: 'attack', smash: 'smash', counter: 'counter', defend: 'defend' });
+
+// The same symbol the current-intent presentation draws: the move's combat profile (maneuver) decides, so a counter
+// authored as intent:'block' shows the counter icon, not the defend one. Called only for a slot whose read passed.
 function iconFor(plan, index) {
   const move = plan.def?.moves?.[plan.ids[index]];
-  return move ? iconForStance(stanceFor(moveKind(move), Array.isArray(move.tags) ? move.tags : [])) : 'prepare';
+  if (!move) return 'prepare';
+  const enemy = plan.combat?.enemies?.find(row => row.id === plan.enemyId);
+  if (enemy) {
+    try {
+      const category = enemyStanceCategory({ kind: move.intent, combatProfile: enemyMoveCarrier(enemy, move, plan.ids[index], plan.combat).combatProfile });
+      return CATEGORY_ICON[category] ?? 'prepare';
+    } catch { /* fall through to the tags */ }
+  }
+  return iconForStance(stanceFor(moveKind(move), Array.isArray(move.tags) ? move.tags : []));
 }
 
 /**
