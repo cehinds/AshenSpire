@@ -100,3 +100,9 @@ test('co-op render drops a selection whose card left every hand', async () => {
   // Only the active seat's hand keeps a selection alive (instance ids repeat across seats).
   assert.match(src, /litCard\(\) !== null\s*\n\s*&& !\(\(snap\.scene\.players \|\| \[\]\)\.find\(p => p\.id === me\)\?\.hand \|\| \[\]\)\.some\(card => card\.instanceId === litCard\(\)\)\) clearSelection\(\);/);
 });
+
+test('an automatic seat switch for a reaction clears the previous seat\'s selection', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
+  assert.match(src, /if \(me !== ownerId\) \{ seatIdx = seats\.indexOf\(ownerId\); me = ownerId; clearSelection\(\); \}/);
+});

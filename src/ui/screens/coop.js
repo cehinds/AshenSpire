@@ -1239,7 +1239,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     if (!owner || reactionShell || busy() || sc.players.some(player => player.pendingAbilityDiscard || player.pendingCardChoice)) return;
     const ownerId = owner.id;
     reactionOfferId = owner.pendingReaction.id;
-    if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; }
+    // An automatic seat switch drops the old seat's selection, as setSeat does (ids repeat across seats).
+    if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; clearSelection(); }
     const stack = committedReactionStack(sc.reactionStack, owner.pendingReaction.groupKey)
       .map((entry) => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
     reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack,
