@@ -124,6 +124,8 @@ test('a scripted Core 2 fight logs no decimal damage, block or protection value'
   combat.player.persistentPoise = { value: 30, max: 30 };
   const problems = [];
   for (const card of combat.piles.hand) decimals(previewCard(combat, card.instanceId, target.id), `preview.${card.cardId}`, problems);
+  // Untargeted card faces (no enemy picked) are whole numbers too, matching stance included.
+  for (const card of combat.piles.hand) decimals(previewCard(combat, card.instanceId, null), `face.${card.cardId}`, problems);
   const card = combat.piles.hand.find(row => previewCard(combat, row.instanceId, target.id).values.some(v => v.op === 'damage'));
   primeAccuracyRolls(combat);
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: target.id });
