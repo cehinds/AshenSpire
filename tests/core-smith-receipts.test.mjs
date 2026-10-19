@@ -215,3 +215,16 @@ test('Core run: a Sleeping Smith card-upgrade reward upgrades a Core item and it
   assert.ok(smithed[1].changes.some((row) => row.kind === 'card'), 'at least one live card number changed');
   assert.ok(smithed[1].affectedCards.length > 0);
 });
+
+test('a Core Smith plan keeps its card rows through JSON (co-op snapshot), and the client model shows them', () => {
+  const run = fresh(); visit(run);
+  const plan = smithingPlan(reg, run);
+  const live = plan.candidates.find((row) => row.itemRef === 'armament/greatsword');
+  assert.ok(live.coreCardRows.length, 'the host has card rows for the greatsword');
+  const wire = JSON.parse(JSON.stringify(plan));
+  const sent = wire.candidates.find((row) => row.itemRef === 'armament/greatsword');
+  assert.deepEqual(sent.coreCardRows, JSON.parse(JSON.stringify(live.coreCardRows)));
+  const shown = (source) => smithSelectionModel(reg, source, 'armament/greatsword').properties.selected.affectedRows;
+  assert.ok(shown(wire).some((row) => row.role === 'card' || row.cardId), 'the client lists card rows');
+  assert.deepEqual(JSON.parse(JSON.stringify(shown(wire))), JSON.parse(JSON.stringify(shown(plan))), 'the client shows what the host shows');
+});

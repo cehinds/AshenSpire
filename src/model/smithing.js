@@ -466,13 +466,16 @@ export function smithingPlan(registries, run, explicitRules = undefined, { free 
       ...(core ? { core: true } : {}),
     };
     // Card rows run real combats: computed on first read, for the item under review only, and kept off
-    // spreads and JSON (non-enumerable) so a snapshot never pays for every candidate.
+    // spreads (non-enumerable) so a rest preview never pays for every candidate; toJSON adds them for the wire.
     if (core) {
       let cardRows = null;
       Object.defineProperty(candidate, 'coreCardRows', { enumerable: false, get() {
         cardRows ||= Object.freeze(coreSmithingCards(registries, run, itemRef, currentLevel, nextLevel).map((row) => Object.freeze(row)));
         return cardRows;
       } });
+      // A snapshot that crosses the wire (co-op LAN) is JSON: it pays for the rows once, at serialization, so the
+      // client's Smith modal still shows each card's Damage/Block change. Spreads and plain reads stay cheap.
+      Object.defineProperty(candidate, 'toJSON', { enumerable: false, value() { return { ...candidate, coreCardRows: candidate.coreCardRows }; } });
     }
     candidates.push(Object.freeze(candidate));
   }
