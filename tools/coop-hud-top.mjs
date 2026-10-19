@@ -568,11 +568,16 @@ async function intentPrivacyProbe(cdp, sessionId, base, shotDir = null) {
   return bad;
 }
 
+// The Counter and vow probes check what a card's shortcut does once it plays (a
+// pure reaction prepared untargeted, a vow opening its stance chooser). Since
+// #2146 one-tap play is opt-in (a first press only selects), so they opt in.
+const ONE_TAP = encodeURIComponent(JSON.stringify({ oneTapPlay: true }));
+
 async function counterPreparationProbe(cdp, sessionId, base, shotDir = null) {
   const ev = async expression => (await cdp.send('Runtime.evaluate', {
     expression, awaitPromise: true, returnByValue: true,
   }, sessionId)).result?.value;
-  await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSeats=2` }, sessionId);
+  await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSeats=2&shotSettings=${ONE_TAP}` }, sessionId);
   for (let t = 0; t < 90 && !(await ev('!!window.__receiveCoopSnapshotForShot')); t++) await wait(500);
   if (!await ev('!!window.__receiveCoopSnapshotForShot')) return ['Counter preparation: co-op fixture did not mount'];
   await ev(`(() => {
@@ -655,7 +660,7 @@ async function vowChoiceProbe(cdp, sessionId, base) {
     await wait(300);
   };
   const fresh = async () => {
-    await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSeats=2` }, sessionId);
+    await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSeats=2&shotSettings=${ONE_TAP}` }, sessionId);
     for (let t = 0; t < 90 && !(await ev(`!!document.querySelector('.combat.coop .combat-potions')`)); t++) await wait(500);
     await wait(800);
     await ev(VOW_STEP.ready);
