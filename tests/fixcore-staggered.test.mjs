@@ -102,7 +102,7 @@ test('repeat breaks add Vulnerable duration only: the multiplier stays x1.25', (
   assert.equal(target.pendingStaminaLoss, 2);
 });
 
-test('no passive Poise regeneration; a Block card adds its Block to Poise, capped at max, and grants Block', () => {
+test('no passive Poise regeneration across full rounds', () => {
   const { combat, target } = live(10);
   assert.equal(target.persistentPoise.value, 10);
   for (let round = 0; round < 2; round++) {
@@ -111,13 +111,16 @@ test('no passive Poise regeneration; a Block card adds its Block to Poise, cappe
   }
   assert.ok(combat.turn >= 3, 'two full rounds passed');
   assert.equal(target.persistentPoise.value, 10, 'no passive regeneration across rounds');
-  target.block = 0;
+});
+
+test('a Block card adds its Block to Poise, capped at max, and grants exactly that Block', () => {
+  const { combat, target } = live(10);
   gainBlock(combat, target, 6, { cardId: 'defend' });
-  const gained = target.block;
-  assert.ok(gained >= 6);
-  assert.equal(target.persistentPoise.value, 10 + gained);
+  assert.equal(target.persistentPoise.value, 16);
+  assert.equal(target.block, 6);
   gainBlock(combat, target, 9, { cardId: 'defend' });
   assert.equal(target.persistentPoise.value, 20, 'capped at max Poise, not min(block, max)');
+  assert.equal(target.block, 15);
 });
 
 test('the player is staggered the same way: next turn -1 SP, stance, +1 Vulnerable', () => {
@@ -184,7 +187,7 @@ test('UI: the Staggered stance row and the receipt line say what Poise absorbed'
 test('the Poise tooltip and the Core Staggered definition describe the stance rules', () => {
   const { combat, target } = live();
   const text = fixCoreProtectionDescription(combat, target, 'poise');
-  assert.match(text, /absorbs 25% of each hit/);
+  assert.match(text, /takes 25% off each hit \(you take the rest, rounded down\) and loses what it absorbed/);
   assert.match(text, /Staggered/);
   const def = fixCoreStatusDefinition(combat, 'staggered', { id: 'staggered', name: 'Staggered' });
   assert.match(def.tooltip, /1 SP next turn.*1 Vulnerable.*only extend/);

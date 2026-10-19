@@ -140,7 +140,7 @@ export function fixCoreProtectionDescription(ctx,entity,kind) {
   const spends = 'The damage it absorbs is taken off the pool, and when the pool is empty the owner is Staggered.';
   if (fixCoreWardDisabled(ctx)) {
     const poise = protectionReceipt(ctx,shadow,'physical',100);
-    return `While active, Poise absorbs ${poise.reduced}% of each hit (a quarter, rounded down). ${spends} Block cards restore Poise by their Block amount, up to its maximum.`;
+    return `While active, Poise takes ${poise.reduced}% off each hit (you take the rest, rounded down) and loses what it absorbed. ${spends} Block cards restore Poise by their Block amount, up to its maximum.`;
   }
   return `While active, absorbs ${receipt.reduced}% of ${damageKind} damage. ${spends} Block cards restore ${restores} by their Block amount, up to each maximum.`;
 }
