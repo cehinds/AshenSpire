@@ -99,3 +99,12 @@ test('the stance list is read from the active smash matchup table', () => {
   assert.match(coreSmashHelp(reaver, withMatchup(['counter', 'evade', 'sweep'])), /Against Counter, Evade or Sweep:/);
   assert.equal(coreSmashClause(reaver, withMatchup([])), '', 'a Smash that beats nothing says nothing');
 });
+
+test('a Core Smash tag with an empty smash matchup keeps its blurb (no double-damage text)', () => {
+  const stances = { ...core.gameProfile.modules.stances, matchups: { ...core.gameProfile.modules.stances.matchups, smash: [] } };
+  const empty = { ...core, gameProfile: { ...core.gameProfile, modules: { ...core.gameProfile.modules, stances } } };
+  const tag = { id: 'maneuver:smash', blurb: 'X' };
+  const out = withCoreSmashBlurb(tag, empty);
+  assert.equal(out, tag);
+  assert.equal(out.blurb, 'X');
+});

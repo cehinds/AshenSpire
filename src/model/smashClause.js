@@ -37,5 +37,5 @@ export const coreSmashClause = (def, ctx) => coreSmashCard(def, ctx) ? fill('car
 /** The Smash tag help under a Core profile, else null (the caller keeps the node's legacy blurb). */
 export const coreSmashHelp = (def, ctx) => coreSmashCard(def, ctx) ? fill('tag.smash.coreHelp', ctx) : null;
 /** A resolved tag row with the Core Smash help swapped in for maneuver:smash under a Core profile; any other row is returned as is. */
-export const withCoreSmashBlurb = (tag, ctx) => tag?.id === 'maneuver:smash' && fixCoreEnabled(ruleCtx(ctx))
+export const withCoreSmashBlurb = (tag, ctx) => tag?.id === 'maneuver:smash' && fixCoreEnabled(ruleCtx(ctx)) && smashBeatsStances(ctx).length > 0
   ? { ...tag, blurb: fill('tag.smash.coreHelp', ctx) } : tag;
