@@ -83,8 +83,10 @@ test('Weak attack rating x0.75 is a whole number', () => {
 });
 test('a spell stance entry floors its Block share and keeps the rest as Barrier', () => {
   const f = fight({ amount: 5 });
-  const bonus = stanceEntryBonuses({ combatProfile: { camp: 'spell', maneuver: 'casting', range: 'ranged' } }, f.combat);
-  assert.ok(Number.isInteger(bonus.block) && Number.isInteger(bonus.barrier));
+  // Frost defend: entryProtection 3 x share 0.5 = 1.5 -> 1 (Math.round gave 2).
+  const bonus = stanceEntryBonuses({ combatProfile: { camp: 'spell', maneuver: 'defend', school: 'frost', range: 'ranged' } }, f.combat);
+  assert.equal(bonus.block, 1);
+  assert.ok(Number.isInteger(bonus.barrier));
 });
 test('advantage and disadvantage hit chances are whole percentages', () => {
   const f = fight({ amount: 5 });
@@ -130,4 +132,14 @@ test('a scripted Core 2 fight logs no decimal damage, block or protection value'
   assert.ok(events.some(event => event.type === 'damageDealt'), 'the scripted fight deals damage');
   decimals(events, 'log', problems);
   assert.deepEqual(problems.filter(line => !/hitChance=0\.\d+$/.test(line)), []); // a 0..1 probability is not a quantity
+});
+
+test('the card-face stance context carries the game profile, so Core 2 faces floor like combat', async () => {
+  const { fixCoreEnabled } = await import('../src/model/fixCoreMechanics.js');
+  const gameProfile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, gameProfile)), gameProfile);
+  // Mirrors src/model/cardFaceText.js's stance-entry ctx.
+  const faceCtx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules, gameProfile: registries?.gameProfile };
+  assert.equal(fixCoreEnabled(faceCtx), true);
+  assert.equal(stanceEntryBonuses({ combatProfile: { camp: 'spell', maneuver: 'defend', school: 'frost', range: 'ranged' } }, faceCtx).block, 1);
 });

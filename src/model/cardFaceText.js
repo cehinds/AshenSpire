@@ -304,7 +304,8 @@ function buildLines(def, preview, registries) {
   if (counter && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   if (def.pronePoiseBonus) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
   if (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2) {
-    const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules };
+    // gameProfile lets the face apply the same Core 2 rounding as combat (stanceEntryBonuses floors under FixCore).
+    const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules, gameProfile: registries?.gameProfile };
     const entry = stanceEntryBonuses(def, ctx);
     const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + num(amount) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
     if (grants.length) unconditional.push({ cat: 'bonus', text: 'Entry: ' + grants.join(', ') });
