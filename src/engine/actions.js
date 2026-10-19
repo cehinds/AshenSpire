@@ -1641,8 +1641,14 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
         if (row?.receipt?.avoided) continue;
-        if (fixCoreEnabled(ctx) && t.persistentPoise) { drainFixCorePoise(ctx, action.source, t, evalNum(ctx, action, eff.amount, 0, t)); continue; }
         if (splitSmashPressure(ctx, action, t, row)) continue;
+        // Ward off (ward.enabled:false): Ward damage drains Poise instead, with the multipliers the Ward path applies.
+        if (fixCoreWardDisabled(ctx) && t.persistentPoise) {
+          drainFixCorePoise(ctx, action.source, t, evalNum(ctx, action, eff.amount, 0, t)
+            * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1)
+            * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1));
+          continue;
+        }
         const spent = Control.spendPersistentWard(ctx, t,
         evalNum(ctx, action, eff.amount, 0, t) * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
         trackOwnPressure(ctx, action, t, 'wardDealt', spent.spent);

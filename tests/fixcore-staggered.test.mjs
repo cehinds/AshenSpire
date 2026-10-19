@@ -10,7 +10,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { prepareBreakInterrupt } from '../src/engine/combatStatusControl.js';
-import { applyAttackDamage, gainBlock, drainFixCorePoise } from '../src/engine/actions.js';
+import { applyAttackDamage, gainBlock, drainFixCorePoise, executeAction } from '../src/engine/actions.js';
 import { previewDamageHits } from '../src/engine/combatDamagePreview.js';
 import { getMult } from '../src/engine/statuses.js';
 import { fixCoreMechanics as shipped } from '../src/content/generated/fixCoreMechanics.js';
@@ -189,4 +189,23 @@ test('the Poise tooltip and the Core Staggered definition describe the stance ru
   const def = fixCoreStatusDefinition(combat, 'staggered', { id: 'staggered', name: 'Staggered' });
   assert.match(def.tooltip, /1 SP next turn.*1 Vulnerable.*only extend/);
   assert.doesNotMatch(def.tooltip, /Weak|Interrupt|stacks/i);
+});
+
+const wardHit = (combat, target, amount, card = {}) => executeAction(combat, { effect: { op: 'wardDamage', target: 'enemy', amount }, source: combat.player, owner: combat.player, target, card, meta: {} });
+
+test('Ward off: Ward damage drains Poise with the piercing x1.25, floored', () => {
+  const { combat, target } = live();
+  wardHit(combat, target, 3);
+  assert.equal(target.persistentPoise.value, 17);
+  wardHit(combat, target, 4, { combatProfile: { camp: 'spell', damageType: 'piercing' } });
+  assert.equal(target.persistentPoise.value, 12, 'floor(4 x 1.25) = 5');
+});
+
+test('Ward on: Ward damage goes to Ward and leaves Poise alone', () => {
+  const { combat, target } = live();
+  combat.fixCoreRules = { ...structuredClone(combat.fixCoreRules || combat.gameProfile.fixCoreRules), ward: { enabled: true } };
+  target.persistentWard = { value: 10, max: 10 };
+  wardHit(combat, target, 3);
+  assert.equal(target.persistentWard.value, 7);
+  assert.equal(target.persistentPoise.value, 20);
 });
