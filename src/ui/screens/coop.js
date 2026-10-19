@@ -1,4 +1,4 @@
-import { coopCardHitPreview, coopCombatantEvasion } from '../models/CoopHitPreviewModel.js';
+import { coopCardHitPreview, coopCombatantEvasion, coopBadgedStatusIds } from '../models/CoopHitPreviewModel.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
@@ -1028,10 +1028,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
   // ---- shared board helpers (snapshot-fed twins of combat.js) ---------------
   // The shared icon tray, as on the solo card (components/iconTray.js): the
   // same Pip, row and tooltip. A tap is a play while a card or flask is armed.
-  function statusRow(statuses) {
+  function statusRow(statuses, badged = new Set()) {
     const row = iconTray({ label: t('iconTray.status'), attrs: { class: 'statuses' } });
     for (const [sid, inst] of Object.entries(statuses || {})) {
-      if (!registries.statuses.has(sid)) continue;
+      if (!registries.statuses.has(sid) || badged.has(sid)) continue;
       const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const presentation = statusInstancePresentation(def, inst);
       const semanticAttrs = statusInstanceSemanticAttrs(presentation);
@@ -1100,7 +1100,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     if (hp) {
       const next = hp.nextSibling;
       const known = !isEnemy || ent.knowledgeAction?.reads?.[me]?.visibility === 'exact';
-      const health = combatHealthRow(hp, { ...protectionPresentation(ent), evasion: ent.combatExpansionVersion === 2 && known ? coopCombatantEvasion(snap.scene, registries, entity, isEnemy ? undefined : snap.party.find(member => member.id === ent.id)) : null });
+      const health = combatHealthRow(hp, { ...protectionPresentation(ent), evasion: ent.combatExpansionVersion === 2 && known ? coopCombatantEvasion(snap.scene, registries, entity, isEnemy ? undefined : snap.party.find(member => member.id === ent.id)) : null, precision: ent.combatExpansionVersion === 2 && known ? (ent.statuses?.precision?.stacks || 0) : null });
       bars.insertBefore(health, next);
     }
     wrap.classList.add('as-meters', 'tight');
@@ -1408,7 +1408,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       // Your own seat glows in YOUR accent, not a fixed gold.
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
       box.appendChild(meterBars(p, false));
-      box.appendChild(statusRow(p.statuses));
+      box.appendChild(statusRow(p.statuses, coopBadgedStatusIds(p, false, me)));
       if (friendly) {
         decorateFriendlyTarget(box, { relationship: friendly.relationship, label: m.name || p.id });
         const playOnSeat = () => {
@@ -1457,7 +1457,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       box.appendChild(meterBars(e, true, (sc.events || []).filter((event) => (
         event.targetId === e.id && (event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak' || event.type === 'arcaneExposureChanged')
       ))));
-      box.appendChild(statusRow(e.statuses));
+      box.appendChild(statusRow(e.statuses, coopBadgedStatusIds(e, true, me)));
       if (!dead) {
         wireCombatantContext(box, def.name);
         box.addEventListener('click', () => {
