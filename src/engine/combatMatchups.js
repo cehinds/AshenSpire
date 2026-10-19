@@ -1,4 +1,5 @@
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
+import { counterRuleActive, counterReturnForReceipt } from './counterRule.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
 import { configuredCombat, configuredModule, setProfileStance } from './gameProfileCombat.js';
@@ -703,6 +704,11 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   }
   if (target.statuses?.prone?.stacks > 0 && receipt.profiles.some((profile, index) => receipt.covered[index] && profile.range === 'melee')) {
     payload.poise += number(counter.carrier.combatProfile?.pronePoiseBonus);
+  }
+  // Core 2 (SPEC §17): the return is a fraction of the damage that hit, not the card's printed numbers.
+  if (counterRuleActive(ctx)) {
+    const core = counterReturnForReceipt(ctx, receipt);
+    payload.hp = core.hp; payload.poise = core.poise;
   }
   const magical = isSpell(counter.carrier.combatProfile);
   const caster = hasTrait(source, 'caster');

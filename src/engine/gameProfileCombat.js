@@ -96,7 +96,8 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   if (!modern) raw=Math.max(0,Math.floor(raw));
   if(proposal && target) raw=transition('status-rules','Other status modifiers',raw,proposalHitPlan(ctx,source,target,raw,carrier,{roundDamage:!modern}).amount);
   const defense = stanceMitigation(ctx, attacking, defending);
-  const advantageMultiplier = advantage ? stances.advantageMultiplier ?? 1 : 1;
+  // Core 2 Counter returns carry their advantage in the return itself (SPEC §17), so the chain does not multiply it again.
+  const advantageMultiplier = advantage && !(modern && carrier.counterReturnAttack) ? stances.advantageMultiplier ?? 1 : 1;
   let amount=transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
   amount=transition('stance-defense','Defensive stance advantage',amount,amount*defense.multiplier,'stance',defense.multiplier);
   amount=modern ? Math.max(0,Math.floor(amount)) : transition('quantity-rounding','Damage quantity rounding',amount,Math.max(0,Math.floor(amount)),'rounding');
