@@ -305,14 +305,20 @@ export function renderCard(registries, ref, opts = {}) {
     floor, lit: litCard() === identity,
   });
   let drawn = levelNow();
-  // ONE TEXT FOR EVERY VIEW. The face lines are the shared model's output
-  // (cardFaceText.js); a weight-priced card adds its pricing note as a detail line.
+  // The hand omits automatic Entry explanations on compact attack faces.
+  // Authored effects and the full inspection still use the complete shared text.
   const faceRules = gameModule(registries, 'cards');
   const wardPoise = wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null;
   const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null);
-  const faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
-    ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
-  if (faceLines && def.weightClassPriced) faceLines.push({ kind: 'detail', html: 'Cost reflects your current weight' });
+  const compactLines = allFaceLines && opts.surface === 'combat' && def.type === 'attack'
+    ? cardFaceLines(def, opts.preview || null, registries, opts.rules || null, { stanceEntry: false }) : allFaceLines;
+  const faceLines = compactLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
+    ? compactLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : compactLines;
+  if (faceLines && def.weightClassPriced) {
+    const pricingNote = { kind: 'detail', html: 'Cost reflects your current weight' };
+    faceLines.push(pricingNote);
+    if (allFaceLines !== faceLines) allFaceLines?.push(pricingNote);
+  }
   // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
   const faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
   // In the hand, detail lines (a partial chance, usable-through, pricing) wait for selection: hidden at rest, shown when selected.

@@ -110,6 +110,10 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
         weaponArtManaCost: piece.weaponArtManaCost ?? null,
         uniqueSkillStaminaCost: piece.uniqueSkillStaminaCost ?? null,
       }),
+      // Authoritative item-tier receipts, including armor/shield and non-AR changes.
+      // These are cheap item values; do not force the lazy live-card previews.
+      intrinsicChanges: freeze((candidate.changes || []).filter((change) => change.before !== change.after)
+        .map((change) => freeze({ ...change }))),
       currentLevel: candidate.currentLevel,
       nextLevel: candidate.nextLevel,
       cost: candidate.cost,
