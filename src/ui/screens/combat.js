@@ -1762,11 +1762,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!hitBadgeTargetIds(carrier, [enemy]).length) return null;
       preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected), { observerId: combat.playerKey || 'player', rangeRoute: rangeRoutesByCard.get(selected) ?? 'advance' });
     } catch { return null; }
-    if (!preview || !Number.isFinite(preview.hitChance)) return null;
+    const label = rangeHitLabel(preview, { targetId: enemy.id });
+    if (!label) return null;
     const node = document.createElement('span');
     node.className = 'combat-hit-chance';
     node.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
-    node.textContent = rangeHitLabel(preview, { targetId: enemy.id });
+    node.textContent = label;
     node.setAttribute('aria-label', 'Chance to hit ' + node.textContent);
     return node;
   }

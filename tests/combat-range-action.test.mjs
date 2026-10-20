@@ -23,7 +23,7 @@ test('disabled mechanics have no attachment and a refused Throw is never reprice
   const q = quote(); q.range.selectedRoute = 'throw'; q.range.routes[1].available = false; q.range.routes[1].reason = 'range';
   const plan = combatRangeActionPlan(q);
   assert.equal(plan.selectedRoute, 'throw'); assert.equal(plan.routes[1].available, false);
-  assert.equal(plan.routes[1].reason, 'range'); assert.equal(plan.routes[1].total, 'Total 2 SP');
+  assert.equal(plan.routes[1].reason, 'Unavailable at this distance'); assert.equal(plan.routes[1].total, 'Total 2 SP');
 });
 test('multi-target approach prints every engine-quoted target and chance', () => {
   const q = quote(); q.range.routes[0].targets.push({ ...target, targetId: 'e2', band: 2, hitChance: 41.1 });
@@ -125,4 +125,21 @@ test('window capture preserves native route Enter and route Tab cannot switch a 
       if (previousStyle === undefined) delete globalThis.getComputedStyle; else globalThis.getComputedStyle = previousStyle;
     }
   });
+});
+
+test('mixed weapon coverage never prints a false single chance or whole-attack zero', () => {
+  const q = quote();
+  const mixed = { ...target, currentInRange: false, currentHitChance: null, currentHitChances: [0, 82.5], hitChance: null, hitChances: [68, 82.5],
+    contacts: [{ currentInRange: false, inRange: true }, { currentInRange: true, inRange: true }] };
+  q.range.targets = [mixed]; q.range.routes[0].targets = [mixed];
+  assert.equal(rangeHitLabel(q), '0–82.5% (varies by hit)');
+  assert.equal(rangeHitLabel(q, { current: false }), '68–82.5% (varies by hit)');
+  assert.match(combatRangeActionPlan(q).routes[0].odds[0].text, /After Advance 68–82.5% \(varies by hit\)/);
+});
+
+test('configured free Advance still appears for a partially uncovered mixed action', () => {
+  const q = quote();
+  const mixed = { ...target, currentInRange: true, allCurrentInRange: false, currentHitChance: null, currentHitChances: [0, 80], contacts: [{ currentInRange: false, inRange: true }, { currentInRange: true, inRange: true }] };
+  q.range.targets = [mixed]; q.range.routes[0].targets = [mixed]; q.range.routes[0].advanceSp = 0;
+  assert.equal(combatRangeActionPlan(q).routes[0].label, 'Advance · +0 SP');
 });
