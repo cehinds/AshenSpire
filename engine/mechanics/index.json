@@ -1905,6 +1905,13 @@
       "modules": []
     },
     {
+      "id": "trait_persistent",
+      "tag": "trait:persistent",
+      "family": "trait",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
       "id": "trait_projectile",
       "tag": "trait:projectile",
       "family": "trait",
