@@ -17,6 +17,11 @@
     "vulnerableStacks": 1,
     "extendOnly": true
   },
+  "smashVsDefensive": {
+    "damageMultiplier": 2,
+    "blockFraction": 0.25,
+    "poiseFraction": 0.5
+  },
   "stance": {
     "effectivenessMultiplier": 1.25,
     "discount": 1,

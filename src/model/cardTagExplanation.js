@@ -1,5 +1,7 @@
+import { coreSmashHelp } from './smashClause.js';
 // Per-card explanations for version-two identities; saved legacy vocabulary is unchanged.
-export function cardTagExplanation(def, tag) {
+export function cardTagExplanation(def, tag, ctx = null) {
+  if (tag.id === 'maneuver:smash') { const core = coreSmashHelp(def, ctx); if (core) return core; }
   if (def.defenseRulesVersion !== 2) return tag.blurb;
   const evade = def.evade != null;
   if (tag.id === 'maneuver:defend') return evade

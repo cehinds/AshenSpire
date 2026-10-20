@@ -1,5 +1,6 @@
 import { objectTagIds, resolve } from '../content/tags.js';
 import { tagService } from './tagService.js';
+import { withCoreSmashBlurb } from './smashBlurb.js';
 import { RANGES, normalizeRange } from './combatRanges.js';
 import { dominantDamageType } from './attackTags.js';
 
@@ -144,5 +145,5 @@ export function combatProfileTags(carrier = {}, registries = null) {
   // Runtime surfaces must describe the active bundle, including intentionally
   // absent metadata. Static authoring callers can still use shipped labels.
   const rows = registries ? tagService(registries).resolve(ids) : resolve(ids);
-  return rows.map(row => numberedTraitRow(row, profile.traitValues));
+  return rows.map(row => withCoreSmashBlurb(numberedTraitRow(row, profile.traitValues), registries));
 }

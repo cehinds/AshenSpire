@@ -30,6 +30,8 @@ const visit = (run) => { run.mapGraph = buildActMap(reg, createRng(73), run.seat
 const fight = (run) => {
   const combat = createRunCombat({ registries: reg, run, rng: createRng(17), enemyIds: ['wanderingSoldier'] });
   combat.enemies[0].hp = combat.enemies[0].maxHp = 1000;
+  // The dummy opens in a defend stance; Core Smash doubles against that (a situational matchup, not part of AR), so measure against a target whose stance no matchup favours (neutral).
+  combat.enemies[0].combatStance = { maneuver: 'neutral', camp: 'physical', range: 'melee' };
   return combat;
 };
 const cardsOf = (combat) => [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard];

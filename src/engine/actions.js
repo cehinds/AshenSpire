@@ -377,13 +377,13 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     if (target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
     if (target.persistentPoise) {
       poiseBefore = target.persistentPoise.value;
-      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated);
+      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated - (receipt.poiseDrain || 0));
     }
   }
   target.hp -= receipt.hpLoss;
   ctx.emit('damageDealt', { sourceId: source?.id || null, targetId: target.id,
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
-    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
+    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
     advantage: receipt.advantage, blockRemaining: target.block, barrierRemaining: target.barrier,
     wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });

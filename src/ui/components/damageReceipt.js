@@ -19,6 +19,7 @@ export function damageReceiptLines(receipt) {
     const reductions = [['wardReduced', 'Ward'], ['poiseReduced', null], ['blocked', 'Block']]
       .filter(([key]) => Number.isFinite(hit[key]) && hit[key] > 0)
       .map(([key, label]) => label ? `${label} −${number(hit[key])}` : t('combat.receipt.poiseAbsorbed', { n: number(hit[key]) }));
+    if (hit.poiseDamage > 0) reductions.push(t('combat.receipt.poiseDamage', { n: number(hit.poiseDamage) }));
     if (reductions.length) lines.push(reductions.join('; '));
     lines.push(`Final HP damage: ${number(hit.hpLoss)}${hit.rounding ? ` (${hit.rounding})` : ''}`);
   }

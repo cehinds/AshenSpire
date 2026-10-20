@@ -62,6 +62,22 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
   return spent;
 }
 
+/**
+ * Carries one resolved hit's effect on the previewed target to its next hit: Block, Barrier, Ward, Poise (absorbed plus a Smash's
+ * Poise damage) and, when that empties Poise, the Staggered stance and Vulnerable. Shared by the card preview and the intent projection.
+ */
+export function applyReceiptToPreviewTarget(ctx, defender, receipt) {
+  defender.block = receipt.blockRemaining;
+  if (!fixCoreEnabled(ctx)) return;
+  defender.barrier = Math.max(0, (defender.barrier || 0) - receipt.barrierMitigated);
+  if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
+  if (defender.persistentPoise) {
+    const poiseBefore = defender.persistentPoise.value;
+    defender.persistentPoise.value = Math.max(0, poiseBefore - receipt.poiseMitigated - (receipt.poiseDrain || 0));
+    if (poiseBefore > 0 && defender.persistentPoise.value === 0) previewPoiseBreak(ctx, defender);
+  }
+}
+
 /** Pure per-hit threat before Block; only detached tactical defense is spent. */
 export function previewDamageHits(ctx, source, target, base, tags, carrier, hits = 1, state = null) {
   const local = state || damagePreviewState(ctx, target);
@@ -72,18 +88,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
     for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
       const receipt = profileDamageReceipt(previewCtx, source, defender, base, carrier);
       receipts.push(receipt);
-      if (defender) {
-        defender.block = receipt.blockRemaining;
-        if (fixCoreEnabled(ctx)) {
-          defender.barrier = Math.max(0, (defender.barrier || 0) - receipt.barrierMitigated);
-          if (defender.persistentWard) defender.persistentWard.value = Math.max(0, defender.persistentWard.value - receipt.wardMitigated);
-          if (defender.persistentPoise) {
-            const poiseBefore = defender.persistentPoise.value;
-            defender.persistentPoise.value = Math.max(0, poiseBefore - receipt.poiseMitigated);
-            if (poiseBefore > 0 && defender.persistentPoise.value === 0) previewPoiseBreak(ctx, defender);
-          }
-        }
-      }
+      if (defender) applyReceiptToPreviewTarget(ctx, defender, receipt);
     }
     return { damageReceipt: damageReceipt(target?.id, receipts.flatMap(row => row.damageReceipt?.hits || [])),
       damage: (fixCoreEnabled(ctx) ? receipts[0]?.hpLoss : receipts[0]?.amount) || 0, hits: receipts.length,
