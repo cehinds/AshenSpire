@@ -2138,17 +2138,27 @@ function configuredGearGrantSubject(registries, run) {
 function configuredGearGrantInstances(registries, run) {
   const subject = configuredGearGrantSubject(registries, run);
   if (!subject || !run.loadout) return [];
-  const rows = new Map(gameContent(subject, 'gear').filter((row) => Array.isArray(row.grantedCards) && row.grantedCards.length).map((row) => [row.id, row]));
-  const source = grantSourceFor(startingDeckSettings(registries), 'weapon');
+  const rows = gameContent(subject, 'gear').filter((row) => Array.isArray(row.grantedCards) && row.grantedCards.length);
+  const copies = new Map();
   const out = [];
   for (const piece of equippedPieces(registries, run.loadout, run.class)) {
-    const row = rows.get(piece.id);
+    const armor = piece.kind === 'armor';
+    const row = rows.find((candidate) => (candidate.source?.id || candidate.id) === piece.id
+      && (candidate.kind === 'armor') === armor
+      && (!candidate.classes || candidate.classes.includes(run.class)));
     if (!row) continue;
+    const owner = armor ? pieceItemRef(piece) : piece.id;
+    const source = grantSourceFor(startingDeckSettings(registries), armor ? 'armor' : 'weapon');
     for (const grant of row.grantedCards) {
-      for (let i = 0; i < grant.copies; i++) {
+      const key = `${owner}:${grant.card}`;
+      // Continue across repeated rows and both worn copies of an item. The
+      // first copy retains its historical id, and every authored copy survives.
+      const start = copies.get(key) || 0;
+      copies.set(key, start + grant.copies);
+      for (let i = start; i < start + grant.copies; i++) {
         out.push({
-          instanceId: mountKey.granted(piece.id, grant.card, i),
-          cardId: grant.card, upgraded: false, equipmentRole: 'granted', grantedBy: piece.id,
+          instanceId: mountKey.granted(owner, grant.card, i),
+          cardId: grant.card, upgraded: false, equipmentRole: 'granted', grantedBy: owner,
           grantSource: source,
         });
       }
@@ -2166,7 +2176,7 @@ function reconcileConfiguredGearGrants(registries, run) {
   if (Array.isArray(run.sideboard)) {
     run.sideboard = run.sideboard.filter((card) => {
       if (!isItemOwned(card)) return true;
-      if (!wanted.has(card.instanceId)) return false;
+      if (!wanted.has(card.instanceId) || present.has(card.instanceId)) return false;
       present.add(card.instanceId);
       return true;
     });
@@ -2451,6 +2461,7 @@ export function itemMountInstances(registries, run, piece, { authored = false } 
  * Deterministic instance ids keep the sweep idempotent and combat-save-stable.
  */
 export function reconcileGrantedCardsInCombat(registries, run, piles) {
+  const configured = !!configuredGearGrantSubject(registries, run);
   // A dealt deck's fight is held to the same rule (model/cardRemoval.js,
   // playerInstalledGrants): only cards the player installed in the worn
   // equipment's mounts ride; any other lent card (one an older build's
@@ -2470,7 +2481,7 @@ export function reconcileGrantedCardsInCombat(registries, run, piles) {
     for (const inst of pile) {
       if (!isItemOwned(inst)) { kept.push(inst); continue; }
       const want = wanted.get(currentInstanceId(inst));
-      if (!want) continue;
+      if (!want || (configured && present.has(inst.instanceId))) continue;
       present.add(inst.instanceId);
       kept.push(adoptWanted(inst, want));
     }
