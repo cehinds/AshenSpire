@@ -4,6 +4,7 @@ import { cardArtElement } from '../cardArtComposition.js';
 import { t, tFull } from '../strings.js';
 import { esc } from './tooltip.js';
 import { cardBonusTags } from '../../model/cardBonusTags.js';
+import { coreSmashHelp } from '../../model/smashClause.js';
 
 const FORCE_SHAPE = '<path d="M16 2 30 16 16 30 2 16Zm0 6-8 8 8 8 8-8Z"/><circle cx="16" cy="16" r="4"/>';
 const SHAPES_BLUNT = '<path d="M5 2h22v12H5Zm8 14h6v15h-6Z"/>';
@@ -115,6 +116,8 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
   // Quantified benefits must remain visible when their duplicate body line is
   // removed. Their conditions/formulas live on the same tag on every surface.
   const benefits = cardBonusTags(def, preview, registries, rules);
+  const smashHelp = coreSmashHelp(def, { ...registries, ...rules });
+  if (smashHelp) benefits.push({ id: 'maneuver:smash', label: 'Smash', blurb: smashHelp, representedRules: ['smash'] });
   for (const benefit of benefits) {
     const existing = selected.findIndex(tag => tag.id === 'effect:evade' && benefit.id === 'status:evade');
     if (existing >= 0) selected.splice(existing, 1);

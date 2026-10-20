@@ -311,8 +311,9 @@ export function renderCard(registries, ref, opts = {}) {
   const wardPoise = wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null;
   const representedEffects = model.sideTags.flatMap(tag => tag.representedEffects || []);
   const representedEntry = model.sideTags.flatMap(tag => tag.representedEntry || []);
+  const representedRules = model.sideTags.flatMap(tag => tag.representedRules || []);
   const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null,
-    { stanceEntry: false, representedEffects, representedEntry });
+    { stanceEntry: false, representedEffects, representedEntry, representedRules });
   const faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
     ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
   if (faceLines && def.weightClassPriced) {

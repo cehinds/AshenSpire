@@ -62,16 +62,16 @@ export function withChargedEffects(def, preview = null) {
 
 /** The card-face lines for `def`, or null when a part of it cannot be phrased. */
 export function cardFaceLines(def, preview = null, registries = null, rules = null,
-  { stanceEntry = true, representedEffects = [], representedEntry = [], entryLabel = 'Entry' } = {}) {
+  { stanceEntry = true, representedEffects = [], representedEntry = [], representedRules = [], entryLabel = 'Entry' } = {}) {
   try {
-    return buildLines(def, preview, registries, rules, { stanceEntry, representedEffects, representedEntry, entryLabel });
+    return buildLines(def, preview, registries, rules, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel });
   } catch (error) {
     if (error === UNPHRASEABLE) return null;
     throw error;
   }
 }
 
-function buildLines(def, preview, registries, rules = null, { stanceEntry, representedEffects, representedEntry, entryLabel }) {
+function buildLines(def, preview, registries, rules = null, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel }) {
   // A live preview prices the effects an active charge expands (an added buildup row); its values follow that list.
   def = withChargedEffects(def, preview);
   if (def.comboHook) return null;
@@ -361,7 +361,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
   const smashClause = coreSmashClause(def, registries);
-  if (smashClause) unconditional.push({ cat: 'bonus', text: esc(smashClause) });
+  if (smashClause && !representedRules.includes('smash')) unconditional.push({ cat: 'bonus', text: esc(smashClause) });
   if (def.pronePoiseBonus && !(counter && preview?.counterReturn)) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
   // Live Precision grant when a preview has an actor, else the 1 + stat mix formula.
   const entryPrecisionText = (amount, preview) => Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount) + ' + stat mix';
