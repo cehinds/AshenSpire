@@ -7,7 +7,7 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot, commitCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { createCoopCombat } from '../src/engine/coopCombat.js';
+import { createCoopCombat, endTurn as endCoopTurn, chooseReaction as chooseCoopReaction } from '../src/engine/coopCombat.js';
 import { serializeCoopCombatSnapshot, decodeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { createRangeState, rangeActionPlan, rangePairKey, RANGE_POLICY_DEFAULTS } from '../src/model/combatEngagement.js';
@@ -25,6 +25,17 @@ function stamp(combat, startingRange = 'ranged') {
   combat.rangeState = createRangeState(RANGE_POLICY_DEFAULTS, actors.map(([, key]) => ({ key, startingRange })));
   return combat;
 }
+
+// Synthetic receipt cases below replace the engine's planned envelope. Their
+// active contacts must receive matching fixture identities rather than the
+// original live action's IDs; live continuation tests retain the real IDs.
+function clearRangeContactIds(group) {
+  const targets = [group.targets, ...(group.contactSequence?.contacts || []).map(contact => contact.targets)];
+  for (const rows of targets) for (const row of Object.values(rows || {})) {
+    for (const contact of row.contacts || []) delete contact.rangeContactId;
+  }
+}
+
 const restore = (combat, snapshot) => restoreCombatSnapshot({ registries, rng: createRng(combat.rng.seed, combat.rng.getCounters()), snapshot });
 
 test('new Core runs pin explicit settings while historical profiles keep their shape', () => {
@@ -102,6 +113,7 @@ test('a paused reaction preserves a paid mixed-source quote after persistent mov
   dispatch(combat, { type: 'endTurn' });
   assert.ok(combat.pendingReaction);
   const group = combat.queue.find(action => action.meta?.expansionGroup)?.meta.expansionGroup;
+  clearRangeContactIds(group);
   const sourceKey = combat.enemies[0].rangeActorKey, targetKey = combat.player.rangeActorKey;
   const plan = rangeActionPlan(combat.rangeState, sourceKey, [
     { contactId: 'bow', targetKey, coverage: 'ranged', weapon: true, sourceWeaponId: 'fixture-bow' },
@@ -131,6 +143,7 @@ test('a paid Counter reservation is bound to one incoming contact and cannot rel
   combat.piles.hand = [{ instanceId: 'counter', cardId: 'core.counter', upgraded: false }];
   dispatch(combat, { type: 'endTurn' });
   const group = combat.queue[0].meta.expansionGroup;
+  clearRangeContactIds(group);
   const sourceKey = combat.enemies[0].rangeActorKey, targetKey = combat.player.rangeActorKey;
   const paid = (source, target, rootId) => ({ ...rangeActionPlan(combat.rangeState, source,
     [{ contactId: 'contact-0', targetKey: target, coverage: 'melee' }]), rootId, paid: { energy: 0, stamina: 2, mana: 0 } });
@@ -154,6 +167,7 @@ test('serialized copies cannot disagree about one accepted root receipt', () => 
   combat.piles.hand = [{ instanceId: 'counter', cardId: 'core.counter', upgraded: false }];
   dispatch(combat, { type: 'endTurn' });
   const group = combat.queue[0].meta.expansionGroup;
+  clearRangeContactIds(group);
   group.carrier.rangePlan = { ...rangeActionPlan(combat.rangeState, combat.enemies[0].rangeActorKey,
     [{ targetKey: combat.player.rangeActorKey, coverage: 'melee' }]), rootId: group.key,
     paid: { energy: 0, stamina: 2, mana: 0 } };
@@ -168,17 +182,23 @@ test('queued source snapshots retain committed weapon coverage and reject source
   combat.piles.hand = [{ instanceId: 'counter', cardId: 'core.counter', upgraded: false }];
   dispatch(combat, { type: 'endTurn' });
   const action = combat.queue[0], group = action.meta.expansionGroup;
+  clearRangeContactIds(group);
   const plan = { ...rangeActionPlan(combat.rangeState, combat.enemies[0].rangeActorKey,
     [{ targetKey: combat.player.rangeActorKey, coverage: 'reach', weapon: true, sourceWeaponId: 'committed-spear', throwCapable: true }]),
     rootId: group.key, paid: { energy: 0, stamina: 1, mana: 0 } };
+  plan.targets.push({ ...plan.targets[0], contactId: 'other-contact', sourceWeaponId: 'other-spear' });
+  Object.values(group.targets)[0].contacts[0].rangeContactId = plan.targets[0].contactId;
   group.carrier.rangePlan = plan;
   action.card = { ...action.card, rangePlan: plan,
     resolvedRangeSource: { sourceType: 'weapon', itemId: 'committed-spear', range: 'reach', propertyTags: ['throw'] } };
+  for (const queued of combat.queue) if (queued.meta?.expansionGroup === group && queued.meta.contactIndex === action.meta.contactIndex) {
+    queued.card = { ...queued.card, rangePlan: plan, resolvedRangeSource: action.card.resolvedRangeSource };
+  }
   const saved = json(serializeCombatSnapshot(combat));
   const loaded = restore(combat, saved);
   assert.deepEqual(loaded.queue[0].card.resolvedRangeSource, action.card.resolvedRangeSource);
   for (const change of [s => { s.sourceType = 'teleport'; }, s => { s.itemId = null; }, s => { s.range = 'ranged'; },
-    s => { s.propertyTags = ['throw', 'throw']; }, s => { s.propertyTags = ['rangeBypass']; }, s => { s.hidden = true; }]) {
+    s => { s.itemId = 'other-spear'; }, s => { s.propertyTags = ['throw', 'throw']; }, s => { s.propertyTags = ['rangeBypass']; }, s => { s.hidden = true; }]) {
     const broken = structuredClone(saved);
     change(broken.abilityQueue[0].card.resolvedRangeSource);
     assert.throws(() => restore(combat, broken), /range source/i);
@@ -228,4 +248,41 @@ test('a real paid three-hit approach resumes through SaveManager without repeat 
   assert.equal(restored.hits.length, 3);
   assert.equal(restored.enemySp, 0, 'resuming later hits cannot charge another approach');
   assert.equal(restored.pair, 2, 'temporary Advance never moves the persistent pair');
+});
+
+test('a real co-op fan-out pays the greatest approach once and restores both seat contacts', () => {
+  const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', combatExpansionVersion: 2,
+    maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 3, stamina: 3, energyMax: 3, drawPerTurn: 1,
+    deck: [{ cardId: 'core.counter', instanceId: 'shared-card-id', upgraded: false }] }));
+  const combat = createCoopCombat({ registries, rng: createRng(511), players, enemyIds: ['wanderingSoldier'],
+    gameProfile: profile, combatExpansionVersion: 2, reactionRulesVersion: 2 });
+  for (const seat of combat.players.values()) seat.entity.block = 100;
+  const enemy = combat.enemies[0]; Object.assign(enemy, { maxStamina: 3, stamina: 3 });
+  for (const key of Object.keys(combat.rangeState.engagements)) combat.rangeState.engagements[key] = 2;
+  endCoopTurn(combat, 'a'); endCoopTurn(combat, 'b');
+  assert.ok(combat.pendingReaction);
+  assert.equal(enemy.stamina, 0, 'the enemy pays base 1 + max approach 2 for the whole fan-out');
+  const plan = combat.queue[0].meta.expansionGroup.carrier.rangePlan;
+  assert.equal(plan.advanceSp, 2);
+  assert.equal(plan.paid.stamina, 3);
+  assert.deepEqual(new Set(plan.targets.map(row => row.targetKey)), new Set(['player:a', 'player:b']));
+  const saved = json(serializeCoopCombatSnapshot(combat));
+  const resumed = createCoopCombat({ registries, rng: createRng(511, combat.rng.getCounters()), players,
+    enemyIds: [], snapshot: saved });
+  assert.deepEqual(resumed.rangeState, combat.rangeState);
+  assert.deepEqual(resumed.queue[0].meta.expansionGroup.carrier.rangePlan, plan);
+  assert.deepEqual(resumed.rng.getCounters(), combat.rng.getCounters());
+  assert.equal(resumed.queue[0].source, resumed.enemies[0]);
+  assert.ok([...resumed.players.values()].some(seat => resumed.queue[0].target === seat.entity));
+  const finish = state => {
+    let answers = 0;
+    while (state.pendingReaction) {
+      assert.ok(++answers <= 6);
+      chooseCoopReaction(state, state.pendingReaction.ownerId, { offerId: state.pendingReaction.id, optionId: null });
+    }
+    return { answers, turn: state.turn, phase: state.phase, enemySp: state.enemies[0].stamina,
+      players: [...state.players].map(([id, seat]) => ({ id, hp: seat.entity.hp, block: seat.entity.block, energy: seat.entity.energy })),
+      range: state.rangeState, log: state.eventLog, rng: state.rng.getCounters() };
+  };
+  assert.deepEqual(json(finish(resumed)), json(finish(combat)));
 });
