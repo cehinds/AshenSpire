@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // tests/seats.test.mjs — SPEC §13 Seats: the falsifying commands, as a suite.
 //   node --test tests/seats.test.mjs
 import assert from 'node:assert/strict';
@@ -232,7 +233,7 @@ test('13.2 the act title names the tier and the seat; without a seat the authore
   assert.equal(actTitle(1), 'ACT I — THE FALLOW MARCHES');
 });
 
-test('13.4 a co-op session draws, carries and restores the party\'s order', () => {
+test('13.4 a co-op session draws, carries and restores the party\'s order', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const host = createSession({ registries: REG, seedString: 'CAUSEWAY' });
   host.addMember({ id: 'p1', name: 'One', classId: 'reaver' });
   host.start();

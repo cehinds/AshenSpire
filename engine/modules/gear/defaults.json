@@ -651,6 +651,15 @@
         "ratings": {},
         "bonus": {}
       }
+    },
+    "throw": {
+      "group": "effect",
+      "cost": 0,
+      "priority": 0,
+      "weights": {
+        "ratings": {},
+        "bonus": {}
+      }
     }
   },
   "weights": {

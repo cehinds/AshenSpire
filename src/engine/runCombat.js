@@ -138,6 +138,7 @@ export function createRunCombat({
     ...(knowledgeRun ? { knowledge: { rules: run.enemyKnowledgeRules, encounter: knowledgeRun.enemyKnowledgeState.currentEncounter,
       bankable: knowledgeRun.enemyKnowledgeState.bankable, profiles: { player: mergeEnemyKnowledge(knowledgeRun.enemyKnowledgeState.pending, enemyKnowledgeProfile) } } } : {}),
     gameProfile: run.gameProfile || null,
+    rangePolicy: run.rangePolicy || null,
     combatExpansionVersion: run.combatExpansionVersion || 1,
     reactionRulesVersion: run.reactionRulesVersion || null,
     reactionRules: run.reactionRules,
@@ -184,6 +185,7 @@ export function createRunCombat({
     // has no equipment code, only statuses applied at combat start.
     playerStatuses: [...playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
+  if (combat.rangeState && !run.rangePolicy) run.rangePolicy = structuredClone(combat.rangeState.policy);
   if (knowledgeRun) run.enemyKnowledgeState = knowledgeRun.enemyKnowledgeState;
   return combat;
 }

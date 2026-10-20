@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -52,7 +53,7 @@ function verifySweep(profileId,cardId,options={}) {
 test('core Sweep hits every living foe without aiming and pays its single SP once',()=>verifySweep('core','core.sweep'));
 for(const expanded of [false,true])for(const cardId of ['hewingArc','whirlingGuard','cleavingBlow','sweepingBlow','progression-ashen-cleaver'])test(`current ${cardId} is automatic area damage (${expanded ? 'expanded' : 'foundation'})`,()=>verifySweep('current',cardId,{expanded}));
 for(const abilityRank of [0,1,2,3,4,5])test(`Crimson Cleave grade ${abilityRank} keeps Sweep area targeting`,()=>verifySweep('current','crimsonCleave',{abilityRank,expanded:true}));
-test('co-op Sweep uses the same untargeted area plan and pays once',()=>verifySweep('current','whirlingGuard',{coop:true,expanded:true}));
+test('co-op Sweep uses the same untargeted area plan and pays once', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>verifySweep('current','whirlingGuard',{coop:true,expanded:true}));
 test('corrected Sweep definitions preserve their previous resolved prices and leave utility/single-target cards alone',()=>{
  const r=createRegistries(contentBundle);
  for(const [id,upgraded,cost] of [['hewingArc',false,2],['hewingArc',true,3],['whirlingGuard',false,2],['whirlingGuard',true,2]])assert.equal(resolveCard(r,{cardId:id,upgraded}).cost,cost);

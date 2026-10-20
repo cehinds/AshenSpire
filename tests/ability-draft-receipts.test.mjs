@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import {contentBundle} from '../src/content/index.js';
 import {createRegistries} from '../src/model/registries.js';
@@ -82,7 +83,7 @@ test('pre-ledger saves recover exact taken checkpoint identities and keep legacy
   const legacy=fixture().run;delete legacy.progressionRulesVersion;
   assert.equal(spendSkillDraft(legacy,skillId),true);assert.equal(legacy.skills[skillId].pendingDrafts,2);assert.equal(legacy.abilityDraftClaims,undefined);
 });
-test('co-op host claims exact offers once across reload and its reconnect catch-up queue',()=>{
+test('co-op host claims exact offers once across reload and its reconnect catch-up queue', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON },()=>{
   const {run,reg,rng}=fixture(),rows=rollPendingAbilityOffers(reg,rng,run,{skillId});
   const S=createSession({registries:root,seedString:'CLAIMS'});for(const id of ['a','b'])S.addMember({id,name:id,classId:'reaver',classMastery:{}});S.start();
   const a=S.session.members.get('a'),b=structuredClone(S.session.members.get('b').run);Object.assign(a.run,run);

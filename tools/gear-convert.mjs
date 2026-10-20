@@ -7,9 +7,11 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveGearItem } from '../engine/kernel/gameConfig.js';
+import { projectGearRangeMetadata } from './lib/gear-range-metadata.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DRY = process.argv.includes('--dry');
+const METADATA_ONLY = process.argv.includes('--range-metadata');
 const settings = JSON.parse(readFileSync(resolve(ROOT, 'engine/modules/gear/defaults.json'), 'utf8'));
 function csv(path) {
   const lines = readFileSync(resolve(ROOT, path), 'utf8').split(/\r?\n/).filter(l => l.trim() && !l.startsWith('#'));
@@ -71,8 +73,10 @@ function fit(item) {
 
 // Owner 2026-10-17: most commons give only AR/DR/Poise; a few carry one attribute.
 const COMMON_ATTRIBUTE = { ashStaff: { intelligence: 1 }, shortbow: { dexterity: 1 }, lantern: { wisdom: 1 }, 'armor.wayfarerPlate': { constitution: 1 }, 'armor.nightweave': { wisdom: 1 } };
-const gear = [];
-for (const w of csv('content/source/weapons.csv')) {
+const existingGear = JSON.parse(readFileSync(resolve(ROOT, 'games/ashenspire/packs/core/gear.json'), 'utf8'));
+const authoredWeapons = csv('content/source/weapons.csv');
+let gear = [];
+for (const w of authoredWeapons) {
   const { tags, points } = fromMods(w.mods);
   gear.push(fit({ id: w.id, name: nameOf(w.name), slot: w.kind === 'shield' ? 'leftHand' : 'rightHand', kind: w.kind,
     rarity: w.rarity, tags: [WEAPON_TYPE[w.id] || 'sword', ...tags], points, source: { file: 'content/source/weapons.csv', id: w.id } }));
@@ -94,6 +98,15 @@ for (const item of gear) if (item.rarity === 'common') {
   for (const a of ATTRIBUTES) delete item.points[a];
   Object.assign(item.points, COMMON_ATTRIBUTE[item.id] || {});
 }
+// Preserve the authored equipment grants when the original converter is rerun.
+// The metadata-only path preserves every field, including manually authored
+// point allocations, and is the normal range/Throw refresh.
+if (METADATA_ONLY) gear = existingGear;
+else for (const item of gear) {
+  const previous = existingGear.find(row => row.id === item.id);
+  if (previous?.grantedCards) item.grantedCards = structuredClone(previous.grantedCards);
+}
+gear = projectGearRangeMetadata(gear, authoredWeapons, csv('content/source/tagging.csv'), csv('content/source/nodes.csv'), settings);
 for (const mode of ['merged']) {
   console.log(`\n== ${mode} ==`);
   for (const item of gear) {

@@ -29,6 +29,13 @@ import { targetBodyHudPlacement } from '../models/TargetHudModel.js';
 import { reducedMotionRequested } from '../motion.js';
 import { layoutMetrics, rootStyle } from '../layoutMetrics.js';
 
+// Long range labels may cross the viewport edge when their actor stands at a
+// flank. Clamp only the label; fitted figures and their anchors stay unchanged.
+export function hitBadgeCenter({ bodyCenter, badgeWidth, left, right }) {
+  if (badgeWidth >= right - left) return (left + right) / 2;
+  return Math.max(left + badgeWidth / 2, Math.min(right - badgeWidth / 2, bodyCenter));
+}
+
 // Formation positions and adjustment deltas already use field-local physical
 // coordinates. A centred view preset must not subtract its viewport inset again.
 const FORMATION_LOCAL_ORIGIN = Object.freeze({ left: 0, top: 0 });
@@ -252,7 +259,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const body = currentSpriteBodyBounds(sprite, schedule), box = frame.getBoundingClientRect();
       const top = Number.isFinite(body.headY) ? body.headY : body.top, bottom = Number.isFinite(body.feetY) ? body.feetY : body.bottom;
       if (![body.left, body.right, top, bottom].every(Number.isFinite)) return null;
-      return { frame, x: `${((body.left + body.right) / 2 - box.left) / zoom}px`, y: `${((top + bottom) / 2 - box.top) / zoom}px` };
+      const badge = frame.querySelector(':scope > .combat-hit-chance');
+      const center = (body.left + body.right) / 2;
+      const x = badge.dataset.rangeDetail === 'true' ? hitBadgeCenter({ bodyCenter: center, badgeWidth: badge.getBoundingClientRect().width, left: 8, right: globalThis.innerWidth - 8 }) : center;
+      return { frame, x: `${(x - box.left) / zoom}px`, y: `${((top + bottom) / 2 - box.top) / zoom}px` };
     });
     return () => {
       for (const row of reads) {

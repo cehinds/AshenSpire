@@ -9,14 +9,17 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { previewCardHit } from '../src/engine/combat.js';
 import { previewTargetFor, hitReadExact } from '../src/engine/stanceHit.js';
 import { coopCardHitPreview } from '../src/ui/models/CoopHitPreviewModel.js';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 
 // Owner ruling D8: the hit-% badge has no Perception gate, but it must not leak the
 // telegraphed stance. A failed read prices the target stance-neutral; an exact read does not.
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function live() {
+function live({ historical = false } = {}) {
   const run = createRunState({ registries: reg, classId: 'starseer', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  // Historical saved fights have no pairwise range state and keep stance-held distance.
+  if (historical) delete combat.rangeState;
   const target = combat.enemies[0];
   Object.assign(target, { hp: 500, maxHp: 500, block: 0, barrier: 0, statuses: {}, attributes: { dexterity: 0 } });
   delete target.combatCounter;
@@ -36,24 +39,40 @@ function odds(combat, target, cardId, stance, visibility, observer = 'player') {
 }
 const cards = ['core.strike', 'core.cantrip']; // a melee attack and a spell
 
-test('failed read: melee and ranged telegraphs give the same badge for a melee and a spell card', () => {
+for (const historical of [false, true]) test(`${historical ? 'historical' : 'Core range'} failed read: melee and ranged telegraphs give the same badge for a melee and a spell card`, () => {
   assert.equal(cards.length, 2, 'a melee and a spell card are exercised');
-  const { combat, target } = live();
+  const { combat, target } = live({ historical });
   for (const cardId of cards) for (const visibility of ['hidden', 'unknown', undefined])
     assert.equal(odds(combat, target, cardId, stances.melee, visibility), odds(combat, target, cardId, stances.ranged, visibility), cardId + ' ' + visibility);
 });
-test('exact read: the telegraphed range and stance still change the badge', () => {
-  const { combat, target } = live();
+test('historical exact read: telegraphed stance-held range still changes the badge', () => {
+  const { combat, target } = live({ historical: true });
   assert.notEqual(odds(combat, target, 'core.strike', stances.melee, 'exact'), odds(combat, target, 'core.strike', stances.ranged, 'exact'));
 });
-test('the preview never edits the live target, and no observer means the unchanged engine preview', () => {
+test('Core range: exact and unobserved telegraphs never move the public pair distance', () => {
   const { combat, target } = live();
+  const before = structuredClone(combat.rangeState);
+  for (const visibility of ['hidden', 'exact']) for (const observer of ['player', null]) {
+    assert.equal(odds(combat, target, 'core.strike', stances.melee, visibility, observer),
+      odds(combat, target, 'core.strike', stances.ranged, visibility, observer));
+  }
+  assert.deepEqual(combat.rangeState, before, 'preview/observer projection cannot move public distance');
+  assert.deepEqual(target.combatStance, stances.ranged, 'preview never rewrites the live telegraph');
+  const near = odds(combat, target, 'core.strike', stances.ranged, 'hidden');
+  const key = Object.keys(combat.rangeState.engagements)[0];
+  combat.rangeState.engagements[key] = 2;
+  const far = odds(combat, target, 'core.strike', stances.ranged, 'hidden');
+  assert.ok(near > far, 'actual public distance still affects the badge even when its telegraph is hidden');
+  assert.equal(far, 0, 'the Strike cannot reach beyond its actual weapon coverage');
+});
+test('the preview never edits the live target, and no observer means the unchanged engine preview', () => {
+  const { combat, target } = live({ historical: true });
   odds(combat, target, 'core.strike', stances.ranged, 'hidden');
   assert.deepEqual(target.combatStance, stances.ranged);
   assert.equal(target.matchingStanceCardMultiplier, 0.25);
   assert.notEqual(odds(combat, target, 'core.strike', stances.melee, 'hidden', null), odds(combat, target, 'core.strike', stances.ranged, 'hidden', null));
 });
-test('co-op helper: each seat prices by its own read of the enemy', () => {
+test('co-op helper: each seat prices by its own read of the enemy', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const { combat, target } = live();
   const actor = { ...combat.player, id: 'seatA' }, carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' }, effects: [{ op: 'damage', target: 'enemy', amount: 6 }] };
   const scene = { ...combat, enemies: [target], combatExpansionVersion: 2 };

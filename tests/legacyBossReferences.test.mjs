@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {contentBundle} from '../src/content/index.js';
@@ -21,11 +22,11 @@ for(const act of [1,2,3]){
    const saves=createSaveManager(createMemoryStorage());saves.saveRun(run);assert.equal(saves.loadRun(changed),null);
    const receipt=saves.runStatus();assert.equal(receipt.state,'archived');assert(receipt.reason.includes("invalid encounter '"+LEGACY_ACT_BOSSES[act]+"'"));
    assert.equal(JSON.stringify(JSON.parse(saves.getArchive(receipt.archiveId).save).mapGraph),before);
-   const saved=lan(act),bytes=JSON.stringify(saved);assert.throws(()=>restoreSession(changed,saved),/Saved boss destination.*invalid encounter/);assert.equal(JSON.stringify(saved),bytes);
+   if(COOP_TESTS_ENABLED){const saved=lan(act),bytes=JSON.stringify(saved);assert.throws(()=>restoreSession(changed,saved),/Saved boss destination.*invalid encounter/);assert.equal(JSON.stringify(saved),bytes);}
   });
  }
  test('act '+act+' valid legacy topology and RNG survive solo and LAN loading',()=>{
   const run=solo(act),mapBefore=topology(run.mapGraph),counters=structuredClone(run.streamCounters);const saves=createSaveManager(createMemoryStorage());saves.saveRun(run);const loaded=saves.loadRun(reg);assert(loaded);assert.deepEqual(topology(loaded.mapGraph),mapBefore);assert.deepEqual(loaded.streamCounters,counters);assert.equal(loaded.mapGraph.bossIds,undefined);assert.equal(loaded.mapGraph.nodes[loaded.mapGraph.bossId].encounterId,undefined);
-  const saved=lan(act),before={map:topology(saved.mapGraph),rng:structuredClone(saved.rng)};const restored=restoreSession(reg,saved).serialize();assert.deepEqual(topology(restored.mapGraph),before.map);assert.deepEqual(restored.rng,before.rng);assert.equal(restored.mapGraph.bossIds,undefined);
+  if(COOP_TESTS_ENABLED){const saved=lan(act),before={map:topology(saved.mapGraph),rng:structuredClone(saved.rng)};const restored=restoreSession(reg,saved).serialize();assert.deepEqual(topology(restored.mapGraph),before.map);assert.deepEqual(restored.rng,before.rng);assert.equal(restored.mapGraph.bossIds,undefined);}
  });
 }

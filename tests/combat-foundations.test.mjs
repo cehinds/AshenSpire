@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { combatRules } from '../src/content/combatRules.js';
 import { createPrototypeCombat, prototypeInput, prototypeBundle } from '../src/content/prototypes/combatBuilds.js';
@@ -262,7 +263,7 @@ test('strongest stacking restores a weaker independent source after expiry', () 
   const rows = resolveStackApplications([{ sourceId: 'a', value: 4, expires: 1 }], { sourceId: 'b', value: 8, expires: 3 }, { mode: 'refresh', cap: 9 });
   assert.equal(stackMagnitude(rows, 'refresh', 9), 4);
 });
-test('co-op commits seat-local Evade and resource costs without corrupting another seat', () => {
+test('co-op commits seat-local Evade and resource costs without corrupting another seat', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const input = prototypeInput('heavy', 'basic', 1);
   const c = createCoopCombat({ ...input, players: [{ ...input.player, id: 'p1' }, { ...input.player, id: 'p2' }], combatProfiles: { p1: input.combatProfiles.player, p2: { ...input.combatProfiles.player, weightClass: 'light' }, e1: input.combatProfiles.e1 } });
   const p1 = c.players.get('p1');
@@ -360,7 +361,7 @@ test('a relic carries as many property tags as it is given, and every one confer
   assert.ok(c.enemies[0].poiseMeter.value - poiseBefore >= 3,
     `and the second tag conferred its Poise on the same event (${poiseBefore} → ${c.enemies[0].poiseMeter.value})`);
 });
-test('co-op hooks keep event ownership distinct between seats', () => {
+test('co-op hooks keep event ownership distinct between seats', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const input = prototypeInput('heavy', 'boss', 1);
   const bundle = withRelicProperties(prototypeBundle(), 'prototypeOwnedHit', [
     { tag: 'prototypeOwnedHit', triggers: [{ on: 'damageDealt', if: { p: 'eventSourceIsOwner' }, do: [{ op: 'block', target: 'self', amount: 2 }] }] },

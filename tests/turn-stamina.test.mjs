@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
@@ -96,7 +97,7 @@ test('legacy combat snapshots retain the saved action maximum and refill it next
   assert.equal(restored.player.stamina, 3);
 });
 
-test('co-op spends only the acting seat stamina and refills both seats next round', () => {
+test('co-op spends only the acting seat stamina and refills both seats next round', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const c = createCoopCombat({ registries, rng: createRng(5), players: [player('p1'), player('p2')], enemyIds: ['wanderingSoldier'] });
   const one = c.players.get('p1'), two = c.players.get('p2');
   playCard(c, 'p1', one.piles.hand[0].instanceId, 'e1');

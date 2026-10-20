@@ -3,6 +3,8 @@ import { constantFormulaValue } from '../../model/formulas.js';
 import { cardArtElement } from '../cardArtComposition.js';
 import { t, tFull } from '../strings.js';
 import { esc } from './tooltip.js';
+import { cardBonusTags } from '../../model/cardBonusTags.js';
+import { coreSmashHelp } from '../../model/smashClause.js';
 
 const FORCE_SHAPE = '<path d="M16 2 30 16 16 30 2 16Zm0 6-8 8 8 8 8-8Z"/><circle cx="16" cy="16" r="4"/>';
 const SHAPES_BLUNT = '<path d="M5 2h22v12H5Zm8 14h6v15h-6Z"/>';
@@ -45,6 +47,8 @@ const ALIASES = Object.freeze({ fire:'fire', burn:'fire', cold:'frost', arcane:'
 function shapeFor(tag) {
   // The defense badge's reticle; card-rail precision tags (status:precision) keep the ranged alias below.
   if (tag.id === 'effect:precision') return SHAPES.precision;
+  if (tag.id === 'effect:block') return SHAPES.guard;
+  if (tag.id === 'effect:barrier') return FORCE_SHAPE;
   const key = tag.id.split(':').at(-1);
   const id = key === 'physical' ? 'guard' : ['evade', 'evasion', 'dodge'].includes(key) ? 'evade' : key === 'slashing' || key === 'blade' ? 'attack' : ALIASES[key] || key;
   return ACTION_SIGILS[id]?.solid ? ACTION_SIGILS[id].shape : SHAPES[id] || SHAPES.skill;
@@ -69,7 +73,7 @@ function carriesHealthDamage(def) {
 }
 
 // Category, damage/effect identity, then authored statuses. No filler tags.
-export function cardSideTags(model, def = {}, registries = null, preview = null) {
+export function cardSideTags(model, def = {}, registries = null, preview = null, rules = null) {
   const tags = Array.isArray(model?.tags) ? model.tags : [];
   const selected = [];
   const camp = tags.find(tag => ['camp:physical', 'camp:spell'].includes(tag.id));
@@ -109,6 +113,20 @@ export function cardSideTags(model, def = {}, registries = null, preview = null)
   }
   for (const [index, effect] of (def.effects || []).entries()) walk(effect, index);
   for (const key of ['counterPayload', 'upcast', 'schoolEffect']) walk(def[key]);
+  // Quantified benefits must remain visible when their duplicate body line is
+  // removed. Their conditions/formulas live on the same tag on every surface.
+  const benefits = cardBonusTags(def, preview, registries, rules);
+  const smashHelp = coreSmashHelp(def, { ...registries, ...rules });
+  if (smashHelp) benefits.push({ id: 'maneuver:smash', label: t('stance.name.smash'), blurb: smashHelp, representedRules: ['smash'] });
+  for (const benefit of benefits) {
+    const existing = selected.findIndex(tag => tag.id === 'effect:evade' && benefit.id === 'status:evade');
+    if (existing >= 0) selected.splice(existing, 1);
+    statuses.delete(benefit.id.slice(7));
+  }
+  // Reserve room before secondary identity symbols: automatic benefits never
+  // return as body prose merely because a multi-type card filled its rail.
+  selected.splice(Math.max(0, 5 - benefits.length));
+  selected.push(...benefits);
   // Traits with a symbol rank after the effect and camp tags, before statuses:
   // when the five-symbol cap is full, statuses drop first. A numbered trait
   // (Flux 1, Impact 2) takes its value from the card's traitValues.
@@ -155,7 +173,7 @@ export function cardCategorySigilHtml(camp) {
 // The tooltip a symbol shows when selected: its name and blurb, from uiStrings.
 // A numbered trait's N in the blurb takes the card's value ("On hit: 1 Ward damage").
 function symbolTip(tag) {
-  const traitName = tag.id.startsWith('trait:') && Number.isInteger(tag.count) ? `${tag.label} ${tag.count}` : tag.label;
+  const traitName = Number.isInteger(tag.count) && tag.count >= 0 ? `${tag.label} ${tag.count}${tag.countFormula ? ' + ' + tag.countFormula : ''}` : tag.label;
   const blurb = (tag.blurb || tag.label).replace(/\bN\b/g, tag.count ?? 'N');
   return tFull('card.tag.tooltip', { name: traitName, blurb });
 }
@@ -171,7 +189,7 @@ export function cardTagRailHtml(tags, range = null) {
   if(!tags?.length && !range)return '';
   return '<div class="card-tag-rail" aria-label="Primary card tags">' + (tags || []).slice(0,5).map(tag => {
     const count = Number.isInteger(tag.count) && tag.count >= 0 ? tag.count : null;
-    const name = tag.label + (count === null ? '' : ' ' + count);
-    return '<span class="card-tag-symbol" role="img" tabindex="0" data-tip="' + esc(symbolTip(tag)) + '" data-tag-id="' + esc(tag.id) + '" aria-label="' + esc(name) + '" aria-description="' + esc(tag.blurb || tag.label) + '"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">' + shapeFor(tag) + '</svg>' + (count === null ? '' : '<span class="card-tag-count" aria-hidden="true">' + count + '</span>') + '</span>';
+    const name = tag.label + (count === null ? '' : ' ' + count + (tag.countFormula ? ' + ' + tag.countFormula : ''));
+    return '<span class="card-tag-symbol" role="img" tabindex="0" data-tip="' + esc(symbolTip(tag)) + '" data-tag-id="' + esc(tag.id) + '" aria-label="' + esc(name) + '" aria-description="' + esc(tag.blurb || tag.label) + '"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">' + shapeFor(tag) + '</svg>' + (count === null ? '' : '<span class="card-tag-count" aria-hidden="true">' + count + (tag.countFormula ? '+' : '') + '</span>') + '</span>';
   }).join('') + cardRangeChipHtml(range) + '</div>';
 }

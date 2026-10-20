@@ -243,7 +243,7 @@ export function attachLan(server, { port, root }) {
       case 'resync': broadcastState(); return;
       case 'chooseMasteryNode': g.chooseMasteryNode(id, msg.nodeId); break;
       case 'chooseNode': progressionIntent(() => g.chooseNode(id, msg.nodeId)); break;
-      case 'playCard': progressionIntent(() => g.combatPlay(id, msg.cardInstanceId, msg.targetId, msg.choice, msg.upcastTier ?? msg.upcastRanks ?? 0, msg.selectedBuildup)); break;
+      case 'playCard': progressionIntent(() => g.combatPlay(id, msg.cardInstanceId, msg.targetId, msg.choice, msg.upcastTier ?? msg.upcastRanks ?? 0, msg.selectedBuildup, msg.rangeRoute)); break;
       case 'predictIntent': progressionIntent(() => g.combatPredict(id, msg.enemyInstanceId, msg.actionSerial, msg.maneuver)); break;
       case 'knowledgeBanked': {
         const result = g.acknowledgeEnemyLearning(id, msg.receipts);

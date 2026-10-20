@@ -1,3 +1,5 @@
+import { mountCombatRangeAction } from '../components/combatRangeAction.js';
+import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
 import { combatActionIdentity } from '../models/CombatActionIdentityModel.js';
@@ -192,7 +194,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const profileEnemySprite = (definition, entity) => profileArt(
     () => enemySprite(definition, entity), { enemy: true, width: registries.balance.ui.spriteTiers[definition.size || 'medium'].w, height: registries.balance.ui.spriteTiers[definition.size || 'medium'].h });
   const previewMemo = createPreviewMemo({ combat, preview: enginePreviewCard, dispatch: engineDispatch });
-  const { dispatch, previewCard } = previewMemo;
+  const { dispatch, previewCard: memoPreviewCard } = previewMemo;
+  function previewCard(target, instanceId, targetId, ranks, options) {
+    return memoPreviewCard(target, instanceId, targetId, ranks, options ?? { rangeRoute: rangeRoutesByCard.get(instanceId) ?? 'advance' });
+  }
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
   // whose `i` had been read kept its first beat for the life of the page, and
@@ -525,6 +530,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   let selected = null; // card instanceId in click-targeting mode
   const upcastRanksByCard = new Map();
+  const rangeRoutesByCard = new Map();
+  let releaseRangeAction = () => {};
   let upcastPreviewRefresh = false;
   let expansionChoiceShell = null;
   let selectedFlask = null; // flask slot index awaiting a target
@@ -1753,18 +1760,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const inst = selected && findInst(selected);
       const carrier = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
       if (!hitBadgeTargetIds(carrier, [enemy]).length) return null;
-      preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected), { observerId: combat.playerKey || 'player' });
+      preview = previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected), { observerId: combat.playerKey || 'player', rangeRoute: rangeRoutesByCard.get(selected) ?? 'advance' });
     } catch { return null; }
-    if (!preview || !Number.isFinite(preview.hitChance)) return null;
+    const label = rangeHitLabel(preview, { targetId: enemy.id });
+    if (!label) return null;
     const node = document.createElement('span');
     node.className = 'combat-hit-chance';
+    if (label.length > 6) node.dataset.rangeDetail = 'true';
     node.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
-    node.textContent = Number(preview.hitChance.toFixed(2)) + '%';
+    node.textContent = label;
     node.setAttribute('aria-label', 'Chance to hit ' + node.textContent);
     return node;
   }
 
   function syncHitChances() {
+    releaseRangeAction();
+    releaseRangeAction = () => {};
     combatEl.querySelectorAll('.card-hit-chances').forEach(node => node.remove());
     const inst = selected && findInst(selected);
     const definition = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
@@ -1790,6 +1801,24 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }
     }
     if (selectedCard && cardOdds.children.length) selectedCard.append(cardOdds);
+    if (selectedCard && !busy && !enemyPlayback && !combat.pendingReaction) {
+      const targetId = lastTargetId ?? cardTargets(selected).legalIds.find(id => getEntity(combat, id)?.kind === 'enemy');
+      try {
+        const quote = previewCard(combat, selected, targetId, upcastRanksByCard.get(selected));
+        releaseRangeAction = mountCombatRangeAction(selectedCard, quote, {
+          targetName: id => registries.enemies.get(getEntity(combat, id)?.enemyId)?.name || id,
+          onCancel: () => { selected = null; selfArm = null; clearSelection(); syncCardSelection(); selectedCard.focus({ preventScroll: true }); },
+          onChoose: route => {
+            const instanceId = selected;
+            rangeRoutesByCard.set(instanceId, route);
+            upcastPreviewRefresh = true;
+            try { handRenderKey = null; renderHand(); } finally { upcastPreviewRefresh = false; }
+            syncCardSelection();
+            combatEl.querySelector(`.combat-range-action [data-range-route="${route}"]`)?.focus({ preventScroll: true });
+          },
+        });
+      } catch { /* A stale resolving hand never quotes another action. */ }
+    }
     // A badge added or removed here is centred at once, whatever the motion setting (the pose observer does not watch it).
     battlefieldStage.placeHitBadges();
   }
@@ -2140,7 +2169,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.
     const stackedIds = stackedCardIds(combat.reactionStack);
     const key = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
-      combat.turn, combat.phase, combat.result, selected, selfArm, lastTargetId, [...stackedIds], readSettings()]);
+      combat.turn, combat.phase, combat.result, selected, selfArm, lastTargetId, combat.rangeState, [...rangeRoutesByCard], [...stackedIds], readSettings()]);
     if (handRenderKey === key) { syncHandPager(handList); return; }
     handStrip.render({
       cards: handList.map((inst) => {
@@ -2153,7 +2182,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         try {
           if (disp?.handPreviews.has(inst.instanceId)) pv = disp.handPreviews.get(inst.instanceId);
           else if (!heldTurnHand) {
-            const targetId = selected === inst.instanceId && lastTargetId && cardTargets(inst.instanceId).legalIds.includes(lastTargetId) ? lastTargetId : undefined;
+            const targetId = selected === inst.instanceId ? (lastTargetId && cardTargets(inst.instanceId).legalIds.includes(lastTargetId) ? lastTargetId : cardTargets(inst.instanceId).legalIds.find(id => getEntity(combat, id)?.kind === 'enemy')) : undefined;
             pv = previewCard(combat, inst.instanceId, targetId, upcastRanksByCard.get(inst.instanceId));
             if (targetId) pv = { ...pv, targetName: registries.enemies.get(getEntity(combat, targetId)?.enemyId)?.name || targetId };
           }
@@ -2392,6 +2421,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // ---------- input: click-to-target + drag (SPEC §7.3, both modes) ----------
   function wireCardInput(el, inst, pv, affordable) {
+    const rangeSelectable = canChooseRangeRoute(pv) && !isUnplayable(inst);
     let dragGhost = null;
     let dragging = false;
     let startX = 0;
@@ -2662,7 +2692,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
     const confirm = () => {
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-      if (busy || !affordable || dragging) return;
+      if (busy || dragging) return;
+      if (!affordable) { if (rangeSelectable) select(); return; }
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
       play();
     };
@@ -2671,6 +2702,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
       if (busy || dragging) return;
       if (!affordable) {
+        if (rangeSelectable) { select(); return; }
         const reasons = [];
         const reason = unplayableReason(inst);
         if (reason) reasons.push(reason);
@@ -2701,7 +2733,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // follow the confirm dial to zero (owner, 2026-10-18): with holdConfirm
       // `off` a long press must still select/inspect rather than read as a tap
       // and play. It takes the dial's own `short` step as its fixed duration.
-      ms: () => affordable ? cardHoldMs() : 0,
+      ms: () => affordable || rangeSelectable ? cardHoldMs() : 0,
       // A card hold is an alternate input for the same selection flow as a tap,
       // not a delayed second route that silently commits before the player has
       // chosen a target. Paint from pointer-down; crossing the shared movement
@@ -2710,7 +2742,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       onTap: tap, tapOnEarlyRelease: true, tapOnPointerRelease: true,
       onConfirm: () => {
         if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-        if (busy || !affordable || dragging) return;
+        if (busy || (!affordable && !rangeSelectable) || dragging) return;
         // THE COMPLETED HOLD SELECTS AND NEVER PLAYS, whatever oneTapPlay says
         // (owner, 2026-10-18; SPEC 7.3): selecting is what reveals the
         // information and Upcast controls and, for a card that asks for one
@@ -2865,7 +2897,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const pv = previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId));
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
       const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
-      if (!affordable) return;
+      if (!affordable && (!canChooseRangeRoute(pv) || isUnplayable(inst))) return;
       const hostile = cardTargets(inst.instanceId).mode === 'enemy';
       if (hostile) { selected = inst.instanceId; selfArm = null; selectedFlask = null; syncCardSelection(); }
       else armSelf(inst.instanceId);
@@ -2949,7 +2981,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const handCard = option => combat.piles.hand.find(card => card.instanceId === option.play.cardInstanceId);
     const summarize = option => summarizeCardOption(registries, combat, option, {
       defOf: o => { const inst = handCard(o); return inst ? resolveCombatCard(combat, inst, { upcastTier: o.play.upcastTier }) : null; },
-      previewOf: o => previewCard(combat, o.play.cardInstanceId, o.play.targetId ?? o.sourceId ?? pending.sourceId, o.play.upcastTier),
+      previewOf: o => previewCard(combat, o.play.cardInstanceId, o.play.targetId ?? o.sourceId ?? pending.sourceId, o.play.upcastTier, { rangeRoute: o.play.rangeRoute ?? 'advance' }),
       // The engine's own predicate evaluator, for the card owner against the fight as it stands now.
       conditionHolds: (effect, o) => evalPredicate(combat, effect.if, { owner: combat.player, source: combat.player, meta: {},
         target: combat.enemies.find(enemy => enemy.id === (o.play.targetId ?? o.sourceId ?? pending.sourceId)) }),
@@ -3080,6 +3112,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           closeQuickNav();
           if (menuBtn) { menuBtn.disabled = true; menuBtn.setAttribute('aria-disabled', 'true'); }
           removeEventListener('keydown', keyHandler);
+          releaseRangeAction();
           handStrip.teardown();
           setTimeout(() => onEnd(combat.result, combat), COMBAT_TIMING.fightEndDelayMs);
         } else {
@@ -3268,7 +3301,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     disp = takeSnapshot();
     let out;
     try {
-      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined, upcastTier: rank, ...(choice != null ? { choice } : {}) });
+      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined, upcastTier: rank, rangeRoute: rangeRoutesByCard.get(instanceId) ?? 'advance', ...(choice != null ? { choice } : {}) });
     } catch (err) {
       console.warn("[combat] dispatch rejected:", err && err.message);
       dlog('rejected', `playCard ${instanceId}`, err && err.message);
@@ -3276,7 +3309,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       render(); // illegal input: show nothing, just resync (ENGINE-API §12)
       return;
     }
-    selected = null; selectedFlask = null; selfArm = null; clearAim(); upcastRanksByCard.delete(instanceId);
+    selected = null; selectedFlask = null; selfArm = null; clearAim(); upcastRanksByCard.delete(instanceId); rangeRoutesByCard.delete(instanceId);
     dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
     flyCard(instanceId, targetId, out.events);
     sfx.play('cardPlay');
@@ -3565,6 +3598,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         document.removeEventListener('keydown', pauseAutoCombat, true);
         timelinePlayback?.cancel?.(); timelinePlayback = null;
         reactionShell?.dismiss();
+        releaseRangeAction();
         handStrip.teardown();
         stageFor(combatEl.querySelector('.player-zone'))?.dispose?.();
         for (const record of enemyFrames.values()) stageFor(record.box)?.dispose?.();

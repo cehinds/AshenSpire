@@ -81,3 +81,17 @@ test('the combat screen reads previews and dispatches through the memo', () => {
   assert.doesNotMatch(source, /import \{[^}]*(?:^|[{,]\s*)(?:previewCard|dispatch)\s*[,}][^}]*\} from '\.\.\/\.\.\/engine\/combat\.js'/, 'the engine functions are imported only under their own names');
   assert.doesNotMatch(source, /[^.\w]engineDispatch\(/, 'every dispatch goes through the memo');
 });
+
+test('route and pair distance changes never reuse another approach quote', () => {
+  const combat = { rangeState: { version: 1, engagements: { pair: 1 } } };
+  const calls = [];
+  const memo = createPreviewMemo({ combat, dispatch() {}, preview: (...args) => { calls.push(args); return { n: calls.length }; } });
+  const ranks = { fire: 1 };
+  const before = memo.previewCard(combat, 'c1', 'e1', ranks, { rangeRoute: 'advance' });
+  assert.equal(memo.previewCard(combat, 'c1', 'e1', ranks), before);
+  const thrown = memo.previewCard(combat, 'c1', 'e1', ranks, { rangeRoute: 'throw' });
+  assert.notEqual(thrown, before); assert.deepEqual(calls[1].slice(3), [ranks, { rangeRoute: 'throw' }]);
+  combat.rangeState.engagements.pair = 0;
+  assert.notEqual(memo.previewCard(combat, 'c1', 'e1', ranks, { rangeRoute: 'advance' }), before);
+  assert.equal(calls.length, 3);
+});

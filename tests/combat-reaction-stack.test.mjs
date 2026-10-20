@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -228,7 +229,7 @@ test('a saved stack with a depth 1 offer resumes to the same state as an unsaved
   assert.deepEqual(restored.rng.getCounters(), combat.rng.getCounters());
 });
 
-test('co-op seats answer in order and the whole stack resolves last pushed first across seats', () => {
+test('co-op seats answer in order and the whole stack resolves last pushed first across seats', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,
@@ -252,7 +253,7 @@ test('co-op seats answer in order and the whole stack resolves last pushed first
   assert.equal(C.pendingReaction, undefined);
 });
 
-test('co-op instance ids are per seat: seat A stacking rc1 does not hide seat B its own rc1', () => {
+test('co-op instance ids are per seat: seat A stacking rc1 does not hide seat B its own rc1', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1, combatExpansionVersion: 2,
@@ -270,7 +271,7 @@ test('co-op instance ids are per seat: seat A stacking rc1 does not hide seat B 
   assert.ok(C.pendingReaction.options.some(row => row.play.cardInstanceId === 'rc1'), 'seat B rc1 is offered');
 });
 
-test('a co-op seat that disconnects after committing fizzles its entries and pays nothing', () => {
+test('a co-op seat that disconnects after committing fizzles its entries and pays nothing', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,
@@ -317,7 +318,7 @@ for(const zoneChoice of [false,true]) test(`a stacked play that pauses for ${zon
   assert.equal(combat.turn, 2);
 });
 
-test('a co-op stack saved at a depth 1 offer resumes to the same state as an unsaved run', () => {
+test('a co-op stack saved at a depth 1 offer resumes to the same state as an unsaved run', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,

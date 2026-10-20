@@ -595,7 +595,7 @@
       }
     ],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "wanderingSoldier.slash",
@@ -610,6 +610,11 @@
         {
           "id": "wanderingSoldier.warcry",
           "name": "Warcry",
+          "copies": 1
+        },
+        {
+          "id": "wanderingSoldier.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -711,7 +716,7 @@
       }
     ],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "blightHound.bite",
@@ -721,6 +726,11 @@
         {
           "id": "blightHound.lunge",
           "name": "Lunge",
+          "copies": 1
+        },
+        {
+          "id": "blightHound.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -822,7 +832,7 @@
       }
     ],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "huskBrute.club",
@@ -837,6 +847,11 @@
         {
           "id": "huskBrute.brace",
           "name": "Brace",
+          "copies": 1
+        },
+        {
+          "id": "huskBrute.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -918,7 +933,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "graveWisp.curse",
@@ -928,6 +943,11 @@
         {
           "id": "graveWisp.drain",
           "name": "Drain",
+          "copies": 1
+        },
+        {
+          "id": "graveWisp.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -1021,7 +1041,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 5,
+      "size": 6,
       "cards": [
         {
           "id": "wyrmAspirant.consecrate",
@@ -1041,6 +1061,11 @@
         {
           "id": "wyrmAspirant.goldenGuard",
           "name": "Golden_Guard",
+          "copies": 1
+        },
+        {
+          "id": "wyrmAspirant.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -1157,7 +1182,7 @@
       }
     ],
     "deck": {
-      "size": 7,
+      "size": 8,
       "cards": [
         {
           "id": "fellWarden.caneStrike",
@@ -1173,6 +1198,11 @@
           "id": "fellWarden.heldBlade",
           "name": "Held_Blade",
           "copies": 2
+        },
+        {
+          "id": "fellWarden.advance",
+          "name": "Advance",
+          "copies": 1
         }
       ]
     }
@@ -1253,7 +1283,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "lanternMoth.lanternDust",
@@ -1264,6 +1294,11 @@
           "id": "lanternMoth.wingSparks",
           "name": "Wing_Sparks",
           "copies": 2
+        },
+        {
+          "id": "lanternMoth.advance",
+          "name": "Advance",
+          "copies": 1
         }
       ]
     }
@@ -1364,7 +1399,7 @@
       }
     ],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "briarHermit.rootShelter",
@@ -1379,6 +1414,11 @@
         {
           "id": "briarHermit.sapMend",
           "name": "Sap_Mend",
+          "copies": 1
+        },
+        {
+          "id": "briarHermit.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -1453,7 +1493,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "chainScavenger.hookCast",
@@ -1468,6 +1508,11 @@
         {
           "id": "chainScavenger.draggingBlow",
           "name": "Dragging_Blow",
+          "copies": 1
+        },
+        {
+          "id": "chainScavenger.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -1598,7 +1643,7 @@
       }
     ],
     "deck": {
-      "size": 7,
+      "size": 8,
       "cards": [
         {
           "id": "bellKeeper.bronzeToll",
@@ -1614,6 +1659,11 @@
           "id": "bellKeeper.muffledPrayer",
           "name": "Muffled_Prayer",
           "copies": 2
+        },
+        {
+          "id": "bellKeeper.advance",
+          "name": "Advance",
+          "copies": 1
         }
       ]
     }
@@ -1743,7 +1793,7 @@
       }
     ],
     "deck": {
-      "size": 7,
+      "size": 8,
       "cards": [
         {
           "id": "thornMatriarch.rootCrown",
@@ -1759,6 +1809,11 @@
           "id": "thornMatriarch.entwiningRoots",
           "name": "Entwining_Roots",
           "copies": 2
+        },
+        {
+          "id": "thornMatriarch.advance",
+          "name": "Advance",
+          "copies": 1
         }
       ]
     }
@@ -1832,7 +1887,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 4,
+      "size": 5,
       "cards": [
         {
           "id": "gildedKnight.thrust",
@@ -1852,6 +1907,11 @@
         {
           "id": "gildedKnight.gildedGuard",
           "name": "Gilded_Guard",
+          "copies": 1
+        },
+        {
+          "id": "gildedKnight.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -1933,7 +1993,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "courtSurgeon.scalpel",
@@ -1948,6 +2008,11 @@
         {
           "id": "courtSurgeon.stitch",
           "name": "Stitch",
+          "copies": 1
+        },
+        {
+          "id": "courtSurgeon.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -2049,7 +2114,7 @@
       }
     ],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "stitchedHound.maul",
@@ -2059,6 +2124,11 @@
         {
           "id": "stitchedHound.rend",
           "name": "Rend",
+          "copies": 1
+        },
+        {
+          "id": "stitchedHound.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -2160,7 +2230,7 @@
       }
     ],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "courtMarionette.dart",
@@ -2170,6 +2240,11 @@
         {
           "id": "courtMarionette.blowdart",
           "name": "Blowdart",
+          "copies": 1
+        },
+        {
+          "id": "courtMarionette.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -2271,7 +2346,7 @@
       }
     ],
     "deck": {
-      "size": 4,
+      "size": 5,
       "cards": [
         {
           "id": "livingArmor.slam",
@@ -2291,6 +2366,11 @@
         {
           "id": "livingArmor.rimeCrush",
           "name": "Rime_Crush",
+          "copies": 1
+        },
+        {
+          "id": "livingArmor.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -2384,7 +2464,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 5,
+      "size": 6,
       "cards": [
         {
           "id": "courtDuelist.enGarde",
@@ -2409,6 +2489,11 @@
         {
           "id": "courtDuelist.bindingRiposte",
           "name": "Binding_Riposte",
+          "copies": 1
+        },
+        {
+          "id": "courtDuelist.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -2544,7 +2629,7 @@
       }
     ],
     "deck": {
-      "size": 7,
+      "size": 8,
       "cards": [
         {
           "id": "stitchedKing.scepterBlow",
@@ -2560,6 +2645,11 @@
           "id": "stitchedKing.courtlyDecree",
           "name": "Courtly_Decree",
           "copies": 2
+        },
+        {
+          "id": "stitchedKing.advance",
+          "name": "Advance",
+          "copies": 1
         }
       ]
     }
@@ -2640,7 +2730,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "mirrorScribe.silverScript",
@@ -2655,6 +2745,11 @@
         {
           "id": "mirrorScribe.polishedWard",
           "name": "Polished_Ward",
+          "copies": 1
+        },
+        {
+          "id": "mirrorScribe.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -2756,7 +2851,7 @@
       }
     ],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "stitchCrab.shellFold",
@@ -2771,6 +2866,11 @@
         {
           "id": "stitchCrab.scuttleRush",
           "name": "Scuttle_Rush",
+          "copies": 1
+        },
+        {
+          "id": "stitchCrab.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -2901,7 +3001,7 @@
       }
     ],
     "deck": {
-      "size": 7,
+      "size": 8,
       "cards": [
         {
           "id": "glassRegent.prismGuard",
@@ -2917,6 +3017,11 @@
           "id": "glassRegent.splinterRain",
           "name": "Splinter_Rain",
           "copies": 2
+        },
+        {
+          "id": "glassRegent.advance",
+          "name": "Advance",
+          "copies": 1
         }
       ]
     }
@@ -3046,7 +3151,7 @@
       }
     ],
     "deck": {
-      "size": 7,
+      "size": 8,
       "cards": [
         {
           "id": "marrowOrganist.bonePrelude",
@@ -3066,6 +3171,11 @@
         {
           "id": "marrowOrganist.quietRefrain",
           "name": "Quiet_Refrain",
+          "copies": 1
+        },
+        {
+          "id": "marrowOrganist.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -3167,7 +3277,7 @@
       }
     ],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "ashRevenant.cinderSlash",
@@ -3177,6 +3287,11 @@
         {
           "id": "ashRevenant.reform",
           "name": "Reform",
+          "copies": 1
+        },
+        {
+          "id": "ashRevenant.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -3278,7 +3393,7 @@
       }
     ],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "emberStarvedPilgrim.desperateClaw",
@@ -3288,6 +3403,11 @@
         {
           "id": "emberStarvedPilgrim.wail",
           "name": "Wail",
+          "copies": 1
+        },
+        {
+          "id": "emberStarvedPilgrim.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -3389,7 +3509,7 @@
       }
     ],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "valkyrieShade.spiralLance",
@@ -3399,6 +3519,11 @@
         {
           "id": "valkyrieShade.bloodFeather",
           "name": "Blood_Feather",
+          "copies": 1
+        },
+        {
+          "id": "valkyrieShade.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -3500,7 +3625,7 @@
       }
     ],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "charredColossus.smash",
@@ -3515,6 +3640,11 @@
         {
           "id": "charredColossus.harden",
           "name": "Harden",
+          "copies": 1
+        },
+        {
+          "id": "charredColossus.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -3639,7 +3769,7 @@
       }
     ],
     "deck": {
-      "size": 5,
+      "size": 6,
       "cards": [
         {
           "id": "wyrmLord.consecration",
@@ -3659,6 +3789,11 @@
         {
           "id": "wyrmLord.goldenBulwark",
           "name": "Golden_Bulwark",
+          "copies": 1
+        },
+        {
+          "id": "wyrmLord.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -3795,7 +3930,7 @@
       }
     ],
     "deck": {
-      "size": 7,
+      "size": 8,
       "cards": [
         {
           "id": "blightedValkyrie.spiralThrust",
@@ -3811,6 +3946,11 @@
           "id": "blightedValkyrie.rotWings",
           "name": "Rot_Wings",
           "copies": 2
+        },
+        {
+          "id": "blightedValkyrie.advance",
+          "name": "Advance",
+          "copies": 1
         }
       ]
     }
@@ -3884,7 +4024,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "cinderMantis.scythePair",
@@ -3899,6 +4039,11 @@
         {
           "id": "cinderMantis.foldedBlades",
           "name": "Folded_Blades",
+          "copies": 1
+        },
+        {
+          "id": "cinderMantis.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -3980,7 +4125,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 3,
+      "size": 4,
       "cards": [
         {
           "id": "eclipseCantor.darkHymn",
@@ -3995,6 +4140,11 @@
         {
           "id": "eclipseCantor.fadingEcho",
           "name": "Fading_Echo",
+          "copies": 1
+        },
+        {
+          "id": "eclipseCantor.advance",
+          "name": "Advance",
           "copies": 1
         }
       ]
@@ -4129,7 +4279,7 @@
       }
     ],
     "deck": {
-      "size": 7,
+      "size": 8,
       "cards": [
         {
           "id": "furnaceSaint.openFurnace",
@@ -4145,6 +4295,11 @@
           "id": "furnaceSaint.coolingAsh",
           "name": "Cooling_Ash",
           "copies": 2
+        },
+        {
+          "id": "furnaceSaint.advance",
+          "name": "Advance",
+          "copies": 1
         }
       ]
     }
@@ -4280,7 +4435,7 @@
       }
     ],
     "deck": {
-      "size": 7,
+      "size": 8,
       "cards": [
         {
           "id": "hollowAstronomer.starChart",
@@ -4296,6 +4451,11 @@
           "id": "hollowAstronomer.totalEclipse",
           "name": "Total_Eclipse",
           "copies": 2
+        },
+        {
+          "id": "hollowAstronomer.advance",
+          "name": "Advance",
+          "copies": 1
         }
       ]
     }
@@ -4431,7 +4591,7 @@
       }
     ],
     "deck": {
-      "size": 7,
+      "size": 8,
       "cards": [
         {
           "id": "ashheartDragon.obsidianClaws",
@@ -4447,6 +4607,11 @@
           "id": "ashheartDragon.heartRumble",
           "name": "Heart_Rumble",
           "copies": 2
+        },
+        {
+          "id": "ashheartDragon.advance",
+          "name": "Advance",
+          "copies": 1
         }
       ]
     }

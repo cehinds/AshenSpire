@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 // Replay the original route fixtures; modern character setup has separate tests.
 import { legacyContentBundle as contentBundle } from './helpers/legacy-progression-content.mjs';
@@ -19,7 +20,11 @@ const template = singleBundle.encounters.find((row) => row.id === LEGACY_ACT_BOS
 const additions = Array.from({ length: 8 }, (_, i) => ({ ...template, id: `branchBoss${i}`, enemies: [i % 2 ? 'blightHound' : 'graveWisp'] }));
 const expanded = createRegistries({ ...singleBundle, encounters: [...singleBundle.encounters, ...additions] });
 let passed = 0;
-function test(name, fn) { fn(); passed++; console.log(`ok ${name}`); }
+function test(name, options, fn) {
+  if (typeof options === 'function') fn = options;
+  else if (options?.skip) { console.log(`skip ${name}: ${options.skip}`); return; }
+  fn(); passed++; console.log(`ok ${name}`);
+}
 const topology = (graph) => Object.values(graph.nodes).map(({ id, floor, col, type, next }) => ({ id, floor, col, type, next }));
 
 test('a single-boss pool preserves generated geometry and map RNG', () => {
@@ -101,7 +106,7 @@ test('invalid new destination identities fail instead of silently rerolling', ()
   assert.throws(() => bossEncounterForNode(expanded, graph, graph.startIds[0], { seat: 'weald', tier: 1 }), /not a boss/);
 });
 
-test('live LAN host enters the selected terminal encounter and transports all choices', () => {
+test('live LAN host enters the selected terminal encounter and transports all choices', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const session = createSession({ registries: expanded, seedString: 'GOLDBOUGH', firstSeat: 'weald' });
   session.addMember({ id: 'p1', name: 'Route tester', classId: 'reaver' });
   session.start();
@@ -152,7 +157,7 @@ test('solo load archives invalid persisted boss IDs even without a content-versi
   }
 });
 
-test('LAN restore refuses dangling, wrong-pool, wrong-act and missing new boss IDs without altering saved data', () => {
+test('LAN restore refuses dangling, wrong-pool, wrong-act and missing new boss IDs without altering saved data', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const host = createSession({ registries: expanded, seedString: 'GOLDBOUGH', firstSeat: 'weald' });
   host.addMember({ id: 'p1', name: 'Route tester', classId: 'reaver' }); host.start();
   for (const invalid of ['removedBoss', 'loneSoldier', LEGACY_ACT_BOSSES[2], undefined]) {

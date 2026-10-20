@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {contentBundle} from '../src/content/index.js';
@@ -45,7 +47,7 @@ function assertPureEqual(combat){
 }
 
 test('no-listener pricing retains live charge discounts and passive costs with exact clone parity',()=>{
-  for(const coop of [false,true]){
+  for(const coop of COOP_MODES){
     const combat=withoutClassMounts(fixture(coop)),key=coop?combat.playerKey:'player';
     combat.propertyMounts[key] ||= {};
     combat.propertyMounts[key].probe={...mount([]),rules:[{tag:'probe',passives:{powerCostReduction:1}}]};
@@ -66,9 +68,11 @@ test('preparing properties, status hooks, stances, enemy phases and inactive co-
   for(const setup of cases){const combat=fixture();setup(combat);assert.equal(hasEventTriggers(combat,'cardPreparing'),true);assertPureEqual(combat);}
   const discount=fixture();discount.propertyMounts.player ||= {};discount.propertyMounts.player.probe=mount([{on:'cardPreparing',do:[charge]}]);
   assert.equal(assertPureEqual(discount).mana,2,'an enqueued preparing discount affects the exact cost');
-  const coop=fixture(true),inactive=[...coop.players.keys()].find(id=>id!==coop.playerKey);
-  coop.propertyMounts[inactive] ||= {};coop.propertyMounts[inactive].probe=mount([{on:'cardPreparing',do:[charge]}]);
-  assert.equal(hasEventTriggers(coop,'cardPreparing'),true,'inactive seat listeners conservatively retain the full bus');assertPureEqual(coop);
+  if (COOP_TESTS_ENABLED) {
+    const coop=fixture(true),inactive=[...coop.players.keys()].find(id=>id!==coop.playerKey);
+    coop.propertyMounts[inactive] ||= {};coop.propertyMounts[inactive].probe=mount([{on:'cardPreparing',do:[charge]}]);
+    assert.equal(hasEventTriggers(coop,'cardPreparing'),true,'inactive seat listeners conservatively retain the full bus');assertPureEqual(coop);
+  }
 });
 
 test('queued work, paused discard and unknown buses keep clone semantics without mutating live state',()=>{

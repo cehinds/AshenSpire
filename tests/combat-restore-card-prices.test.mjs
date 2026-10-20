@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -64,7 +65,7 @@ test('Combat Rounds restore badges respect discounts held by other queued cards'
 
 for (const coop of [false, true]) for (const version of [1, 2]) {
   for (const cardId of ['attune', 'emberCommunion']) for (const discount of [0, 1, 3]) {
-    test(`${coop ? 'co-op' : 'solo'} v${version} ${cardId} shows the full price with discount ${discount}, requires its discounted upfront Mana`, () => {
+    test(`${coop ? 'co-op' : 'solo'} v${version} ${cardId} shows the full price with discount ${discount}, requires its discounted upfront Mana`, { skip: coop && !COOP_TESTS_ENABLED ? COOP_TEST_SKIP_REASON : false }, () => {
       const f = fixture(cardId, { coop, version, discount });
       const before = JSON.stringify({ owner: f.owner, piles: f.combat.piles,
         events: f.combat.eventLog, rng: f.combat.rng.getCounters() });
@@ -95,7 +96,7 @@ for (const coop of [false, true]) for (const version of [1, 2]) {
       if (coop) assert.deepEqual(f.combat.players.get('b'), other, 'other seat is unchanged');
     });
   }
-  test(`${coop ? 'co-op' : 'solo'} v${version} Stamina restores show full SP and pay only the unfunded part`, () => {
+  test(`${coop ? 'co-op' : 'solo'} v${version} Stamina restores show full SP and pay only the unfunded part`, { skip: coop && !COOP_TESTS_ENABLED ? COOP_TEST_SKIP_REASON : false }, () => {
     const f = fixture(staminaRestore.id, { coop, version });
     const receipt = f.preview();
     const model = playingCardModel(registries, f.ref, { preview: receipt });

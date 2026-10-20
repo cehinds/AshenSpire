@@ -144,6 +144,15 @@ the job-level `if:` (`ci.yml` gates each job on its `stage` input for dispatch).
 
 Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 
+Dedicated co-op tests (32 files) and `coop-hud.yml` run only when
+`content/config/ui/screens/title.json` has `behavior.coopEnabled: true`.
+While false, discovery prints the skip reason before sharding; mixed suites
+keep their solo cases and `tests/coop-parked.test.mjs` remains active. Tests are
+retained. Re-enable the authored switch and run `node tools/config-build.mjs` to restore
+the co-op lanes automatically (`tests/feature-scopes.js` also works in the
+browser test harness).
+
+
 | Check (workflow → job) | Worker push | PR into `dev` / push to `dev` | test | release |
 |---|---|---|---|---|
 | `worker-check.yml` → sanity: receipts self-test (`tools/receipts.mjs --selftest`) | yes | — | — | — |
@@ -595,6 +604,11 @@ all files in `test-discovered`; Windows uses `--no-slow` there and runs each
 `SLOW_DISCOVERED` file once in the `test-discovered-slow-windows` matrix. The
 isolated native `node --test` jobs retain every seed and assertion under the
 same 20-minute job limit, without sharing a runner with other test files.
+The historical combat-v1 `docs/BALANCE.md` drift test runs only when the
+default author in `games/ashenspire/game.json` uses the Current preset's core.
+The configured Core build reports an explicit skip before spawning its
+300-seed report. Manual `node tools/balance.mjs` remains available; shared
+runsim checks, report/parser contracts and simulation unit tests stay active.
 `.github/workflows/tests.yml` runs the core suite and the
 four discovered shards as Linux jobs on a pull request into `dev` and on a push
 to `dev`; the slow files, the tools' self-tests and the bundler's parse-gate
@@ -1022,6 +1036,29 @@ contracts, foundation, kernel or modules rebuilds the profiles, and a change und
 `content/hud-layout/` rebuilds the HUD layout. The Build & Checks jobs
 **Game profiles**, **Check game profiles** and **HUD layout** run the same commands.
 The engine export (`docs/ENGINE-EXPORT.md`) reads these tables too.
+
+### Edit Core range and movement
+
+The range contract is [Optional engagement, Advance and Throw](docs/design/RangeAdvance.md).
+Use these source locations when changing it in Visual Studio:
+
+| Change | Source |
+|---|---|
+| Default toggle, Advance price, Reach bonus or Throw penalty | `content/source/fixCoreMechanics.json`, `range` |
+| Weapon coverage and Throw property | `games/ashenspire/packs/core/gear.json` |
+| Player movement cards | `games/ashenspire/packs/core/cards.json` |
+| Enemy starting range and paid closing move | `games/ashenspire/packs/core/characters.json` and `enemyCards.json`; conversion helper `tools/lib/core-range-content.mjs` |
+| Pair distance, route quote and receipt validation | `src/model/combatEngagement.js` |
+| Runtime payment, committed source and reaction context | `src/engine/combatEngagement.js` |
+| Conditional follow-up targets and shared action payment | `src/engine/combatRangeLineage.js` |
+| Saved action and trigger validation | `src/model/combatReactionState.js`, `src/model/combatRangeLineageState.js` |
+| Selected-card route controls | `src/ui/models/CombatRangeActionModel.js`, `src/ui/components/combatRangeAction.js`, `styles/combat-range-action.css` |
+| Quantified Precision/Evade tags and concise face copy | `src/model/cardBonusTags.js`, `src/model/cardFaceText.js` |
+
+After editing authored data, run `node tools/content-build.mjs` followed by
+`node tools/game-config.mjs build`. Range settings apply to new runs; an active
+fight uses its saved policy and accepted action receipts. Keep price formulas
+in the shared planner so solo play, co-op and displayed choices agree.
 
 ## Reword the interface (one file: `content/source/uiStrings.csv`)
 

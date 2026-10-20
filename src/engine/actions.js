@@ -1,3 +1,5 @@
+import * as RangeLineage from './combatRangeLineage.js';
+import * as Engagement from './combatEngagement.js';
 import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
@@ -1350,6 +1352,8 @@ function livingEnemies(ctx) {
  * target, then its source.
  */
 export function resolveTargets(ctx, action, targetSpec) {
+  const committedRangeTargets=RangeLineage.rangeTargetsFor(ctx,action);
+  if(committedRangeTargets)return committedRangeTargets;
   const group = action.meta?.expansionGroup;
   const generic = !['damage', 'applyStatus', 'buildup'].includes(action.effect?.op);
   const refs = group?.begun && generic ? action.meta?.expansionTargets?.[action.meta?.expansionExecutionRepeat || 0] : null;
@@ -1486,6 +1490,10 @@ function trackOwnPressure(ctx, action, target, meter, amount) {
 }
 
 export function executeAction(ctx, action) {
+  if (ctx.rangeState && ctx._abilityAction !== action) {
+    const previous=ctx._abilityAction;ctx._abilityAction=action;
+    try{return executeAction(ctx,action);}finally{if(previous)ctx._abilityAction=previous;else delete ctx._abilityAction;}
+  }
   if (action.effect?.op === 'completeCombatAction') { Expanded.completeExpandedAction(ctx, action); return; }
   if (ctx.result) return; // combat already decided; remaining actions fizzle
   const sequence = action.meta?.expansionGroup?.contactSequence;
@@ -1587,6 +1595,7 @@ function runOpcode(ctx, action, eff) {
       const combatRiderTargets = action.card?.combatRiderTargets || action.meta?.combatRiderTargets || [];
       if (action.meta) action.meta.combatRiderTargets = combatRiderTargets;
       for (let h = 0; h < hits; h++) {
+        if(ctx.rangeState) action.meta.rangeHitIndex=h;
         // Re-resolve per hit so randomEnemy splits across enemies and per-hit
         // triggers (e.g. stance-applied build-up) see live state.
         const plannedContacts = action.meta?.expansionContacts?.[action.meta.expansionCursor || 0];
@@ -1603,6 +1612,7 @@ function runOpcode(ctx, action, eff) {
             combatProfile: Expanded.effectCarrier(action.card, eff).combatProfile,
             combatRiderTargets,proposalTargetDecisions:action.meta ? (action.meta.proposalTargetDecisions ||= {}) : {},
             energySpent: action.meta?.energySpent || 0 };
+          if (action.card?.rangeLineage) carrier.rangeContactId=RangeLineage.inheritedContactId(ctx,action,t);
           if (plannedContacts) {
             const contact = plannedContacts.find(row => Expanded.expansionEntity(ctx, row) === t);
             carrier.expansionGroup = action.meta.expansionGroup;
@@ -1739,6 +1749,7 @@ function runOpcode(ctx, action, eff) {
       }
       break;
     }
+    case 'moveEngagement': { Engagement.executeEngagementMovement(ctx, action); break; }
     case 'dodgeRoll': {
       if (configuredCombat(ctx)) {
         if (configuredModule(ctx, 'stances')?.include?.includes('evade')) action.source.combatStance = { maneuver: 'evade', camp: 'physical' };

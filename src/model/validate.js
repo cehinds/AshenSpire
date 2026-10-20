@@ -2117,6 +2117,8 @@ function collectContentProblems(bundle, errors = []) {
     // An enemy's own tags are checked with every other carrier's, by
     // tagContentProblems above — one rule, one message, for all of them.
     const moveIds = new Set(Object.keys(enemy.moves || {}));
+    if (enemy.rangeClosingMove !== undefined && (!moveIds.has(enemy.rangeClosingMove) || !enemy.moves[enemy.rangeClosingMove].effects?.some(effect => effect.op === 'moveEngagement'))) err(`${path}.rangeClosingMove`, 'must name an owned movement move');
+    for (const id of Object.keys(enemy.moveSources || {})) if (!moveIds.has(id)) err(`${path}.moveSources.${id}`, 'must name an owned move');
     if (enemy.firstMove != null && !moveIds.has(enemy.firstMove)) {
       err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is not one of this enemy's moves`);
     } else if (enemy.firstMove != null && enemy.moves[enemy.firstMove].reaction !== undefined) {
@@ -2499,9 +2501,10 @@ export function validateEffects(effects, path, vctx) {
     for (const req of spec.required) {
       if (eff[req] === undefined) err(p, `Opcode '${eff.op}' missing required field '${req}'`);
     }
-    if (eff.target !== undefined && !TARGETS.includes(eff.target)) {
+    if (eff.target !== undefined && !TARGETS.includes(eff.target) && !(eff.op === 'moveEngagement' && eff.target === 'pendingAttacker')) {
       err(`${p}.target`, `Unknown target '${eff.target}' (closed set: ${TARGETS.join(', ')})`);
     }
+    if (eff.op === 'moveEngagement' && (!['enemy', 'pendingAttacker'].includes(eff.target) || ![-1, 1].includes(eff.bands))) err(p, 'moveEngagement requires enemy or pendingAttacker and bands -1 or 1');
     // swapClass is `{ classId } | { random: true }` — one selector, never
     // neither (the door would swap to nothing) nor both (one would be ignored).
     if (eff.op === 'swapClass') {

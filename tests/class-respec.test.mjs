@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {contentBundle} from '../src/content/index.js';
@@ -147,7 +148,7 @@ test('original earned card grades and INT offers cannot reroll or raise after IN
   assert.deepEqual(run.classMilestoneOffers[slotId],stored);
 });
 
-test('host-owned respec persists a single seat atomically without changing another seat or shared RNG',()=>{
+test('host-owned respec persists a single seat atomically without changing another seat or shared RNG', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
   const S=createSession({registries:root,seedString:'RESPEC'});
   for(const id of ['a','b'])S.addMember({id,name:id,classId:'reaver',classMastery:{}});
   S.start();

@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // tests/haptics.test.mjs — haptics on card play, damage taken and turn start,
 // and the setting that turns them off (docs/FINISH.md, wave 13 "Haptics").
 //
@@ -152,7 +153,7 @@ test('every HP loss buzzes once per beat: direct hpLost too, and an attack pair 
   assert.deepEqual(felt(() => playBeatCues([{ type: 'playerTurnStart', turn: 2 }])), ['turnStart']);
 });
 
-test('co-op: a card play buzzes from its cardPlayed receipt, for this screen\'s seats only', async () => {
+test('co-op: a card play buzzes from its cardPlayed receipt, for this screen\'s seats only', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   // Preserve this historical host's cards and post-setup combat entry.
   const { legacyContentBundle: contentBundle } = await import('./helpers/legacy-progression-content.mjs');
   const { createRegistries } = await import('../src/model/registries.js');
@@ -193,13 +194,13 @@ test('co-op: a card play buzzes from its cardPlayed receipt, for this screen\'s 
   assert.deepEqual(stub.calls[0], joinPatterns(ids.map((id) => HAPTIC_PATTERNS[id])), 'every cue of the batch, in one pattern');
 });
 
-test('a direct HP loss in a co-op receipt batch buzzes the hurt seat', () => {
+test('a direct HP loss in a co-op receipt batch buzzes the hurt seat', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const events = [{ type: 'hpLost', targetId: 'player', playerId: 'p2', amount: 2, cause: 'effect' }];
   assert.deepEqual(felt(() => playReceiptSounds(events, { isLocalPlayer: (id) => id === 'p2' })), ['damageTaken']);
   assert.deepEqual(felt(() => playReceiptSounds(events, { isLocalPlayer: (id) => id === 'p1' })), []);
 });
 
-test('co-op: a teammate\'s direct HP loss buzzes their device, not mine (#1517 review)', async () => {
+test('co-op: a teammate\'s direct HP loss buzzes their device, not mine (#1517 review)', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   // Every player entity is id 'player', so an hpLost receipt that names no
   // seat cannot be told from my own; the engine stamps the seat it cost, and
   // a receipt with no seat is nobody's here, not everyone's.
@@ -244,7 +245,7 @@ function heardSfx(fn) {
   return ids;
 }
 
-test('co-op: the card that wins the fight still buzzes, though combat is gone (#1517 review)', async () => {
+test('co-op: the card that wins the fight still buzzes, though combat is gone (#1517 review)', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   // settleCombat replaces the combat scene with the reward at once, so the
   // final card's receipts never reach a combat scene; they ride the reward.
   // Preserve this historical host's cards and post-setup combat entry.
@@ -276,7 +277,7 @@ test('co-op: the card that wins the fight still buzzes, though combat is gone (#
   assert.deepEqual(heardSfx(() => coopReceiptSounds(scene, heard, ['p2'])), [], 'the final receipts make no new sound');
 });
 
-test('co-op: a setup HP loss (Warden Horn) buzzes the hurt seat in the opening (#1517 review)', async () => {
+test('co-op: a setup HP loss (Warden Horn) buzzes the hurt seat in the opening (#1517 review)', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   // Preserve this historical host's cards and post-setup combat entry.
   const { legacyContentBundle: contentBundle } = await import('./helpers/legacy-progression-content.mjs');
   const { createRegistries } = await import('../src/model/registries.js');
@@ -337,7 +338,7 @@ test('a skipped timeline still buzzes the hit and the turn start it jumped past,
   assert.deepEqual(sounds, [], 'and the skip replays no sound');
 });
 
-test('co-op: a downed seat spectating does not buzz on a teammate\'s turn; the stinger is shared (#1517 review)', async () => {
+test('co-op: a downed seat spectating does not buzz on a teammate\'s turn; the stinger is shared (#1517 review)', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   // Preserve this historical host's cards and post-setup combat entry.
   const { legacyContentBundle: contentBundle } = await import('./helpers/legacy-progression-content.mjs');
   const { createRegistries } = await import('../src/model/registries.js');
@@ -367,7 +368,7 @@ test('co-op: a downed seat spectating does not buzz on a teammate\'s turn; the s
   assert.deepEqual(felt(() => coopReceiptSounds(scene, heard, ['p1'])).filter((id) => id === 'turnStart'), ['turnStart'], 'the living seat buzzes');
 });
 
-test('co-op: an enemy turn held back by pacing while the fight ends still buzzes, without sound (#1517 audit)', async () => {
+test('co-op: an enemy turn held back by pacing while the fight ends still buzzes, without sound (#1517 audit)', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   // paceEnemyTurn holds frames; when the last is the reward or completion
   // scene, only that scene is rendered, so the held combat frames are heard
   // here, haptics only (pacing is DOM-bound: the wiring is read from source).
@@ -450,8 +451,10 @@ test('a paced co-op timeline buzzes only for its own seats; solo unchanged', asy
   try {
     for (const [speed, skip] of [['instant', false], ['normal', true], ['normal', false]]) {
       const label = `${speed}${skip ? ' (skipped)' : ''}`;
-      assert.deepEqual(await run(speed, coopLocalSeat(['p1']), skip), [], `${label}: a teammate's wound and turn do not buzz`);
-      assert.deepEqual(await run(speed, coopLocalSeat(['p2']), skip), ['damageTaken', 'turnStart'], `${label}: the local seat's do`);
+      if (COOP_TESTS_ENABLED) {
+        assert.deepEqual(await run(speed, coopLocalSeat(['p1']), skip), [], `${label}: a teammate's wound and turn do not buzz`);
+        assert.deepEqual(await run(speed, coopLocalSeat(['p2']), skip), ['damageTaken', 'turnStart'], `${label}: the local seat's do`);
+      }
       assert.deepEqual(await run(speed, undefined, skip), ['damageTaken', 'turnStart'], `${label}: solo (no predicate) is unchanged`);
     }
   } finally {
