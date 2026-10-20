@@ -93,6 +93,13 @@ export function rangeActionPlan(state, sourceKey, contacts, { route = 'advance',
       missingBands, effectiveBand: !policy.enabled || bypass ? Math.min(distance, coverage) : route === 'advance' ? Math.min(distance, coverage) : distance,
       precisionDelta: policy.enabled ? (weapon && coverage === 1 && actualBand === 0 ? policy.reachPrecisionBonus : 0) - (extended ? policy.throwPrecisionPenalty : 0) : 0 };
   });
+  // Approach changes one temporary pair distance, shared by every source in
+  // this root. A bow and dagger cannot put the same opponent in two places.
+  const approachByPair = new Map();
+  if (policy.enabled && route === 'advance') for (const row of targets) {
+    approachByPair.set(row.targetKey, Math.max(approachByPair.get(row.targetKey) || 0, row.missingBands));
+  }
+  for (const row of targets) row.effectiveBand = policy.enabled ? Math.max(0, row.band - (approachByPair.get(row.targetKey) || 0)) : row.band;
   const advanceSp = policy.enabled && route === 'advance' ? maxMissing * policy.advanceSpPerBand : 0;
   if (!count(advanceSp)) throw Error('Range payment exceeds the safe integer limit');
   return { version: 1, sourceKey, route, available, advanceSp, targets };
