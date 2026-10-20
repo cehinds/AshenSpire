@@ -15,7 +15,7 @@ export function mountGameProfileLevelUp(app, { rows, onContinue }) {
   return mountRewardDoor(app, {
     owner: rows,
     eyebrow: t('reward.level.eyebrow'),
-    title: 'Level up',
+    title: t('reward.level.button'),
     attrs: { dataset: { size: 'md', rewardLevel: 'skills' } },
     body: el('div', { class: 'reward-level-claim' }, rows.map(row =>
       el('p', { class: 'reward-level-summary', dataset: { skill: row.skillId },

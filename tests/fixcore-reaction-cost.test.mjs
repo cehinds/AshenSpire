@@ -12,11 +12,15 @@ import { live, registries, baseRegistries, profile } from './helpers/fixcore-com
 
 test('enemy 5 × 3 deals three hits of 5, with 15 total HP loss', () => {
   const ctx = live(), enemy = ctx.enemies[0];
-  primeAccuracyRolls(ctx, { count: 3 });
+  primeAccuracyRolls(ctx, { count: 3, drawsPerAttack: 2 });
+  const accuracyStart = ctx.rng.getCounters().combatAvoidance;
   dispatch(ctx, { type: 'setReactions', enabled: false });
   const start = ctx.eventLog.length;
   dispatch(ctx, { type: 'endTurn' });
   const damage = ctx.eventLog.slice(start).filter(row => row.type === 'damageDealt' && row.sourceId === enemy.id && row.targetId === ctx.player.id);
+  const hits = ctx.eventLog.slice(start).filter(row => row.type === 'attackHit' && row.sourceId === enemy.id && row.targetId === ctx.player.id);
+  assert.deepEqual(hits.map(row => row.d20), [20, 20, 20]);
+  assert.equal(ctx.rng.getCounters().combatAvoidance - accuracyStart, 6, 'each contact owns an attacker and opposed defender roll');
   assert.deepEqual(damage.map(row => row.amount), [5, 5, 5]);
   assert.deepEqual(damage.map(row => row.hpLoss), [5, 5, 5]);
   assert.equal(ctx.player.hp, 85);

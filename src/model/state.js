@@ -978,6 +978,13 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     try { validateResolvedGameProfile(run.gameProfile); } catch (error) { problems.push(`gameProfile: ${error.message}`); }
     if (typeof run.runId !== 'string' || !run.runId) problems.push('Configured run requires a durable runId');
   } else if (run.runId || run.gameProfileRestVisits) problems.push('Profile-owned fields require a pinned gameProfile');
+  // Defeat summaries may acknowledge earned XP, but never open spoils or
+  // resume combat. The acknowledgement itself is persisted before finishing.
+  if (run.gameProfilePendingReward?.after === 'defeat') {
+    const pending = run.gameProfilePendingReward;
+    if (!isConfiguredRun(run) || pending.noticeOnly !== true || pending.source !== 'combat' || pending.levelOffers !== 0) problems.push('Defeat progression requires a configured combat notice without reward offers');
+    if (run.hp !== 0 || run.combatPendingOutcome || run.combatEntered) problems.push('Defeat progression requires a settled defeated run');
+  }
 
   if (run.combatExpansionVersion !== undefined && ![1, 2].includes(run.combatExpansionVersion)) problems.push('combatExpansionVersion must be 1 or 2 when present');
   if (run.reactionRulesVersion !== undefined && (![1, 2].includes(run.reactionRulesVersion) || run.combatExpansionVersion !== 2)) problems.push('Reaction rules require an expanded run');

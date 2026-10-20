@@ -22,6 +22,14 @@ const variant = ({ budget = {}, tags = {} } = {}) => ({ ...COST_CONFIG, budget: 
 const SWORD_STRIKE = Object.freeze({ id: 'swordStrike', type: 'attack', cost: 1, effects: [{ op: 'damage', target: 'enemy', amount: 3 }],
   tags: ['blade', 'camp:physical', 'damage:slashing'] });
 
+test('Persistent registers its lifetime metadata without changing the Precision grant budget', () => {
+  assert.deepEqual(COST_TAGS['trait:persistent'], { weight: 0, side: 'sp' });
+  const grant = { id: 'precisionGrant', type: 'skill', effects: [{ op: 'applyStatus', target: 'self', status: 'precision', stacks: 3 }], tags: [] };
+  const plain = cardCostBudget(grant);
+  const persistent = cardCostBudget({ ...grant, tags: ['trait:persistent'] });
+  for (const field of ['sSp', 'sMp', 'sp', 'mp']) assert.equal(persistent[field], plain[field], field);
+});
+
 test('the Sword Strike fixture: the owner\'s example prices to S_sp 6, and 1 SP at D = 20 and at the shipped tunables', () => {
   const owner = variant({ budget: { spDivisor: 20, damageWeight: 1, damageSteps: [] },
     tags: { blade: { weight: 1, side: 'sp' }, 'camp:physical': { weight: 1, side: 'sp' }, 'damage:slashing': { weight: 1, side: 'sp' } } });

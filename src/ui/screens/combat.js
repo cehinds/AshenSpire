@@ -984,7 +984,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           return { accepted: true, prediction: maneuver };
         } } : {}),
       name: def.name,
-      subtitle: (def.tags || []).map(words).join(' · ') || 'Enemy',
+      subtitle: (def.tags || []).map(words).join(' · ') || t('combat.log.role.enemy'),
       resources: inspectorResources([
         { label: 'HP', value: v.hp, max: entity.maxHp },
         { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },

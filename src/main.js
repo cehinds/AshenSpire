@@ -3309,6 +3309,10 @@ async function onCombatEnd(result, combat, enc) {
     sfx.play('youDied');
     run.hp = 0;
     sendLanStatus({ dead: true });
+    if (skillProgression) {
+      run.combatEntered = null;
+      return beginGameProfileReward({ after: 'defeat', progression, noticeOnly: true });
+    }
     return showFinishedRun(false);
   }
   // Settings → Advanced → Recovery: a won fight restores its after-combat
@@ -3891,7 +3895,7 @@ function showRest(openPanel = null, locationId = null) {
 
 function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false } = {}) {
   noticeOnly ||= !gameModule(run, 'rewards');
-  if (noticeOnly && !progression.length) { persist(); return after === 'victory' ? showFinishedRun(true) : after === 'advanceAct' ? advanceAct() : showMap(); }
+  if (noticeOnly && !progression.length) { persist(); return after === 'victory' ? showFinishedRun(true) : after === 'defeat' ? showFinishedRun(false) : after === 'advanceAct' ? advanceAct() : showMap(); }
   const offerId = `${run.actNumber}:${run.mapNodeId}:${source}`;
   if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source });
   run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}) };
@@ -3908,7 +3912,7 @@ function showGameProfileReward() {
   if (pending.noticeOnly) {
     delete run.gameProfilePendingReward;
     persist();
-    return pending.after === 'victory' ? showFinishedRun(true) : pending.after === 'advanceAct' ? advanceAct() : showMap();
+    return pending.after === 'victory' ? showFinishedRun(true) : pending.after === 'defeat' ? showFinishedRun(false) : pending.after === 'advanceAct' ? advanceAct() : showMap();
   }
   const offer = run.gameProfileRewardOffers[pending.offerId];
   const persistRewardChange = change => transactReward(run, pending.offerId, change, persist);

@@ -21,6 +21,6 @@
   "portability": "legacy",
   "legacy": {
     "file": "src/engine/combatMatchups.js",
-    "symbol": "setCombatStance"
+    "symbol": "tagRidersFor"
   }
 }
