@@ -57,6 +57,10 @@ test('metadata projection preserves stats, prices, upgrades and equipment grants
   assert.equal(updated.price, 17); assert.equal(updated.rank, 3);
   for (const field of ['points', 'values', 'modifiers', 'tagCost', 'budget']) assert.deepEqual(resolveGearItem(updated, settings)[field], resolveGearItem(old, settings)[field], field);
   assert.deepEqual(projectGearRangeMetadata(gear, weapons, tagging, nodes, settings), gear, 'refresh is idempotent');
+  const [removed] = projectGearRangeMetadata([updated], weapons, tagging.filter(row => !(row.family === 'armament' && row.objectId === 'dagger' && row.tagId === 'throw')), nodes, settings);
+  assert.equal(removed.tags.includes('throw'), false, 'removed canonical properties cannot survive a metadata refresh');
+  assert.deepEqual(removed.tags, old.tags, 'non-property tags remain exactly authored; no legacy heavy tag is imported');
+  for (const field of ['points', 'values', 'modifiers', 'tagCost', 'budget']) assert.deepEqual(resolveGearItem(removed, settings)[field], resolveGearItem(updated, settings)[field], `property removal/${field}`);
   assert.throws(() => projectGearRangeMetadata([{ ...old, source: { id: 'unknown' } }], weapons, tagging, nodes, settings), /no authored weapon/);
 });
 

@@ -22,6 +22,6 @@ export function projectGearRangeMetadata(gear, weapons, tagging, nodes, settings
     if (!source) throw new Error(`gear metadata: ${item.id} has no authored weapon '${sourceId}'`);
     if (!['melee', 'reach', 'ranged'].includes(source.range)) throw new Error(`gear metadata: ${item.id} has invalid range '${source.range}'`);
     return { ...item, range: source.range,
-      tags: [...new Set([...(item.tags || []), ...(propertyTags.get(sourceId) || [])])] };
+      tags: [...new Set([...(item.tags || []).filter(id => !property(id)), ...(propertyTags.get(sourceId) || [])])] };
   });
 }
