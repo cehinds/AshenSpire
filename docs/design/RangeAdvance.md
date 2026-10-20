@@ -21,8 +21,9 @@ Unknown versions and malformed policy, engagement or action data are rejected.
 
 Persist an unordered band for every opposing actor pair: 0 Melee, 1 Reach,
 2 Ranged. Initialize it to the greater of the actors' starting weapon bands.
-The designated primary active weapon determines the starting band; missing or
-unarmed coverage defaults to Melee. Enemy starting bands are authored explicitly.
+The canonical primary/right active weapon determines the starting band, falling
+back to an active left weapon and then unarmed Melee. Enemy starting bands are
+authored explicitly.
 Pairs are unique and symmetric with known opposing actor IDs; retain inert
 pairs after death until fight end and initialize summons without reusing IDs.
 This is abstract engagement, not world coordinates or formation-grid movement.
@@ -31,6 +32,8 @@ Stance changes and weapon swaps never move a pair.
 The committed source determines attack coverage: swords/daggers Melee,
 halberds/chained weapons Reach, bows Ranged, from authored data, not name tests.
 Use the existing source-weapon snapshot/identity, not another held weapon.
+For mixed-source actions, retain each planned contact's own source and coverage;
+do not collapse a bow/dagger or weapon/spell combination to the first source.
 An independent card or spell delivery keeps its authored coverage. Only explicit
 supported range-bypass traits, such as adequate reach/range override, waive
 approach. Precision, animation, camp and the spell Target tag do not imply it.
@@ -58,8 +61,13 @@ surcharge. Within ordinary coverage, use the ordinary attack without penalty.
 Beyond that one-band extension Throw is unavailable; ordinary Advance remains
 available for the full gap. Never silently combine Throw and Advance or sacrifice
 Precision. Advance is the ordinary out-of-range route; a player explicitly selects
-Throw and sees its chance and full cost before commitment. AI follows a deterministic
-authored route policy. Throw neither consumes equipment/ammunition nor adds hits.
+Throw and sees its chance and full cost before commitment. A mixed-source action
+offers Throw only if every planned contact is reachable without Advance; each
+extended contact needs its own Throw-capable source and only those contacts take
+the penalty. Paid hand Counter choices may explicitly offer the same Throw route
+before payment. Unchosen automatic returns never silently Throw. AI follows a
+deterministic authored route policy. Throw neither consumes equipment/ammunition
+nor adds hits.
 
 ## Transactions and reactions
 
@@ -70,15 +78,29 @@ Random targets are sampled once using transactional RNG; an unaffordable action
 discards that fork. Freeze source, targets, selected route, approach, effective
 distance, Precision adjustment and paid cost in the accepted action receipt.
 Reuse it across hits and serialized reaction pauses; do not reprice after a swap,
-death or later movement.
+death or later movement. The receipt covers the finite target envelope of the
+root card/move/Counter and its inherited damage/status riders, including possible
+conditional riders, as exposed by its quote. A condition failing later does not
+refund approach. Descendants reuse that receipt without extra charges; a separate
+accepted offensive action gets a new receipt. An unplanned hostile target cannot
+receive free inherited reach or cause a late charge: it must belong to a separately
+validated action. Preserve per-contact source/coverage within that root plan and
+aggregate the greatest required approach once.
 
 A separate offensive Counter return has its own plan using the incoming action's
 temporary engagement. A paid hand reaction quotes/reserves its known return
-approach with the card payment, never charging it again. A previously armed or
+approach with the card payment, never charging it again. This is a nonrefundable
+payment for the attempted return, not an escrow: an incoming miss, uncovered hit,
+death or other reason no return occurs does not refund it. Bind it to exactly one
+incoming contact, attacker, defender and return; consume or discard it at that
+contact's completion. A lingering prepared charge cannot reuse it for a later hit.
+A previously armed or
 automatic Counter without a reservation pays only its approach surcharge when
 the return is accepted. If unaffordable, skip the offensive return before RNG or
-consuming its return charge, keep defense already resolved, and continue the
-incoming sequence. Failed returns must neither loop nor repeat incoming hits.
+consuming its offensive once-per-cycle/return-serial budget, keep defense already
+resolved, and continue the incoming sequence. A defensive Counter charge already
+consumed for interception stays consumed; never restore it on return refusal.
+Failed returns must neither loop nor repeat incoming hits.
 
 ## Authored movement
 
@@ -91,7 +113,11 @@ Movement does not reprice or invalidate an already committed multi-hit action;
 its Evade/defense payload provides immediate protection. Other pairs change only
 when explicitly targeted. Extend existing card identities where appropriate
 without silently changing historical profiles. Movement uses ordinary authored
-prices and does not inherit attack-only stance/damage triggers.
+prices and does not inherit attack-only stance/damage triggers. With range disabled,
+range-only cards are ineligible for offers/deck inclusion and any preexisting
+instance refuses play without spending; combined Evade/movement cards retain their
+ordinary defense while the movement effect is inactive. Do not sell a paid blank
+movement card under the disabled policy.
 
 Enemy move sets need an authored closing option and deterministic affordable
 selection, so low-SP melee enemies can approach ranged opponents over successive
@@ -104,7 +130,8 @@ shows the remedy and resulting chance: green `Advance · +N SP`, or an explicitl
 selected `Throw · -N Precision`. The cost display/confirmation includes the full
 payable total; insufficient SP is visible. Distinguish unmodified 0% from the
 chosen route's chance. Show distance relative to the selected opponent, rather
-than one misleading global range per actor.
+than one misleading global range per actor. Route chances retain the existing
+observer-knowledge projection; do not leak hidden enemy information.
 
 Standard effects use truthful amount tags, such as `Evade 1` or `Precision 1`.
 Do not duplicate their explanation or automatic Entry bonuses in card prose.

@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-20
 
+- **Range and movement rules specified** ([#2222](https://github.com/cehinds/AshenSpire/pull/2222), `0.7.1.1742`). The Core contract now defines optional engagement distance, stamina-paid Advance, weapon Throw and concise effect tags. Gameplay implementation follows separately.
+
 - **More responsive combat controls** ([#2220](https://github.com/cehinds/AshenSpire/pull/2220), `0.7.1.1742`). Combat card taps spend less time updating unrelated HUD content. Potion trays retain their keyboard, hover and touch interactions.
 
 - **Clearer combat and faster startup** ([#2218](https://github.com/cehinds/AshenSpire/pull/2218), `0.7.1.1740`). Each incoming hit and its Counter finish before the next reaction choice. Actions identify the card and weapon used, range misses say Out of range, and combat indications default to half-second pauses. Player and enemy log colors are customizable. Precision affects accuracy only and expires unless Persistent; matching-stance discounts apply to enemy-turn reactions. Class and used weapon-group level-ups are shown, rewards have consistent sizes, and folded upgrades show actual stat changes. Repeated startup validation is reused without sharing mutable game registries.
