@@ -183,10 +183,11 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
     }
     if (Object.hasOwn(value, 'rangePlan')) {
       const plan = value.rangePlan;
-      plans.push(plan);
       if (!hasRange) problems.push('Range action plan requires engagement state');
       else {
-        problems.push(...rangePlanProblems(plan, state.rangeState, actorKeys));
+        const planProblems = rangePlanProblems(plan, state.rangeState, actorKeys);
+        problems.push(...planProblems);
+        if (!planProblems.length) plans.push(plan);
         if (!quoted && (!record(plan) || !text(plan.rootId) || !record(plan.paid) || plan.available !== true)) problems.push('Accepted range action requires its paid available receipt');
       }
     }
@@ -194,6 +195,17 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
   };
   for (const root of roots) inspect(root);
   inspect(state.pendingReaction, true);
+  // JSON duplicates shared carrier references. Every copy of one accepted root
+  // must still describe the same frozen payment and contact envelope.
+  const stable = value => Array.isArray(value) ? value.map(stable) : record(value)
+    ? Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])])) : value;
+  const rootsById = new Map();
+  for (const plan of plans) {
+    if (!text(plan?.rootId)) continue;
+    const receipt = JSON.stringify(stable(plan));
+    if (rootsById.has(plan.rootId) && rootsById.get(plan.rootId) !== receipt) problems.push('Conflicting range receipts for one root action');
+    rootsById.set(plan.rootId, receipt);
+  }
   for (const reservation of reservations) {
     if (!record(reservation)) continue;
     const incoming = plans.find(plan => plan?.rootId === reservation.incomingRootId

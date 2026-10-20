@@ -142,3 +142,17 @@ test('a paid Counter reservation is bound to one incoming contact and cannot rel
     assert.throws(() => restore(combat, broken), /range/i);
   }
 });
+
+test('serialized copies cannot disagree about one accepted root receipt', () => {
+  const combat = stamp(live());
+  combat.piles.hand = [{ instanceId: 'counter', cardId: 'core.counter', upgraded: false }];
+  dispatch(combat, { type: 'endTurn' });
+  const group = combat.queue[0].meta.expansionGroup;
+  group.carrier.rangePlan = { ...rangeActionPlan(combat.rangeState, combat.enemies[0].rangeActorKey,
+    [{ targetKey: combat.player.rangeActorKey, coverage: 'melee' }]), rootId: group.key,
+    paid: { energy: 0, stamina: 2, mana: 0 } };
+  const saved = json(serializeCombatSnapshot(combat));
+  assert.ok(saved.abilityQueue.length > 1);
+  saved.abilityQueue[1].meta.expansionGroup.carrier.rangePlan.paid.stamina = 3;
+  assert.throws(() => restore(combat, saved), /Conflicting range receipts/);
+});
