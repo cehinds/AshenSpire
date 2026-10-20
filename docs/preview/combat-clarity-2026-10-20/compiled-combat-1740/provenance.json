@@ -1,0 +1,44 @@
+{
+  "captured": "2026-10-20",
+  "kind": "compiled pack-shaped game, normal pacing, unthrottled",
+  "sourceCommit": "c39712261ffe301639b5b88f20f30f995e1a7428",
+  "artifact": "dist/AshenSpire.html",
+  "artifactSha256": "f9344c840a6a7572db90e758e8f168393d5e77c49ed7cbd37a77acf34fb5dedb",
+  "version": "0.7.1.1740",
+  "buildDigest": "6754f90018",
+  "browser": "Chromium154/Linux headless",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 1,
+    "hasTouch": true
+  },
+  "input": "Native touch card taps; native touch End Turn hold and reaction option/Play taps",
+  "assets": "Pinned v23 light/common; compiled light pack",
+  "fixtures": {
+    "range": "Memory-only shot=combat. Registered Core Strike in hand, target posed in a valid physical Ranged stance with reach. The shipped hit preview and real card target input determine/commit the range miss; no dispatch or render implementation is replaced.",
+    "sequence": "Memory-only shot=combat with canonical Cinder Mantis Scythe Pair, two contacts and three registered Core Counter cards. No dispatch, damage, animation, or target handler replaced. Seeded Accuracy helper only advances the real combatAvoidance stream to a repeatable outcome."
+  },
+  "helperProvenance": "Memory-only fixtures use existing shot=combat hooks and matching production source helper modules. Actual action commands, defensive choices, committed costs, damage and animation run through the compiled game. No production implementation/global handlers are replaced. Browser context is disposable.",
+  "capture": "Current rendered frame via Chromium Page.captureScreenshot; no animation pauses, speed changes or pixel edits. Range text/rect awaited together before immediate capture.",
+  "assertions": [
+    "Compact Core Strike visibly omits Precision/Entry wording.",
+    "Real range miss emits exactly one card play, records range miss, and leaves target HP unchanged.",
+    "Incoming action sprite is shown before its reaction choice; no incoming damage commits before that choice.",
+    "One incoming contact and one paid Counter return finish before the second reaction choice.",
+    "Two choices pay/play two cards; two returns resolve; original enemy move starts once.",
+    "No per-hit alreadyAnswered refusal and no page errors."
+  ],
+  "limitations": [
+    "This is posed browser evidence, not an unmodified campaign walkthrough.",
+    "390px Chromium emulation is not physical-phone or Safari validation.",
+    "The artifact predates later Smith-only polish; its combat UI includes the compact-card and sequencing fixes.",
+    "Rejected performance prototypes31045d94a/ad6b11964 are not in this artifact. Combat-latency improvement is not claimed."
+  ],
+  "files": {
+    "phone-out-of-range.png": "a4e0a8f996f5dcb6e7cc21406096c03386af55f9d7b8df848d22aa167f02b60d",
+    "phone-incoming-action.png": "2730cf2a55d6f577a3277838df68e6b8bc2537bbd7b86748ef2137ebce424fd0",
+    "phone-hit-1-counter.png": "f781851c6d770283f5607109f8acbf1a017b1c2e6d443e125c35904bc44ad533",
+    "phone-hit-2-choice.png": "09081cf79e995aa14831d8b19686fada46f2d8aa617815d5dc5dec59bd4914bc"
+  }
+}
