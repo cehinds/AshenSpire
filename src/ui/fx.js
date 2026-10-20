@@ -860,14 +860,20 @@ export function groupBeats(events) {
       case 'flaskUsed':
         startActor('player', 'act', e);
         break;
-      case 'enemyMoveStarted':
+      case 'enemyMoveStarted': case 'combatHitStarted':
         startActor(e.sourceId, e.kind === 'attack' ? 'attack' : 'act', e);
+        cur.prepared = e.contactPrepared === true;
+        break;
+      case 'combatContactPrepared':
+        startActor(e.sourceId, 'attack', e);
+        cur.telegraph = true;
         break;
       case 'enemyActorTurnStarted':
         startActor(e.sourceId, 'reveal', e);
         break;
       case 'combatCounterTriggered':
         startActor(e.sourcePlayerId || e.sourceId, 'counter', e);
+        cur.prepared = e.contactPrepared === true;
         break;
       case 'enemyTurnStart':
         push();
@@ -996,7 +1002,8 @@ export function playTimeline(events, ctx, done) {
       ctx.onIntent?.(beat);
     },
     onAction: beat => {
-      const event = beat.events.find(e => ['cardPlayed', 'enemyMoveStarted', 'combatCounterTriggered', 'flaskUsed'].includes(e.type));
+      if (beat.prepared) return;
+      const event = beat.events.find(e => ['cardPlayed', 'enemyMoveStarted', 'combatHitStarted', 'combatContactPrepared', 'combatCounterTriggered', 'flaskUsed'].includes(e.type));
       const maneuver = event?.combatProfile?.maneuver || event?.maneuver;
       const name = ctx.actionWordForBeat?.(beat) || event?.name || event?.cardName || event?.moveName
         || (maneuver ? maneuver[0].toUpperCase() + maneuver.slice(1) : null)
@@ -1005,7 +1012,7 @@ export function playTimeline(events, ctx, done) {
     },
     maxSpriteMs: speed => typeof ctx.maxActorAnimationMs === 'function' ? ctx.maxActorAnimationMs(speed) : Number(ctx.maxActorAnimationMs) || speed.lungeMs,
     onSprite: (beat, speed) => {
-      if (timing.scale === 0) return null;
+      if (timing.scale === 0 || beat.prepared) return null;
       const actorEl = ctx.anchorFor(beat.actorId);
       if (!actorEl) return null;
       const animation = ctx.animateActor?.(beat, actorEl, speed);

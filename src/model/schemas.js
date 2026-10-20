@@ -134,6 +134,8 @@ export const EVENTS = Object.freeze([
   'enemyTurnStart',
   'enemyTurnEnd',
   'enemyMoveStarted',
+  'combatHitStarted',
+  'combatContactPrepared',
   'enemyActorTurnStarted', 'combatReactionOffered', 'combatReactionChosen',
   // SPEC §4.10: why no reaction was offered; a Smash broke physical Guard.
   'combatReactionUnavailable', 'combatGuardBroken',

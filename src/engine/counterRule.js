@@ -77,7 +77,7 @@ export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected
   // with coverage (owner 2026-10-19), which arms while standing in the prepared stance it enters.
   if (card && configuredModule(ctx, 'stances') && !armsAsCoreCounter(ctx, card)) return { uncovered: true };
   // The owner already returned a Counter this cycle (two Counters, two enemies, one enemy phase): live returns nothing.
-  if (counterReturnSpent(ctx.player)) return { uncovered: true, spent: true };
+  if (counterReturnSpent(ctx.player) && !(ctx.reactionRules?.contactPolicy === 'perHit' && ctx.phase === 'enemy' && card)) return { uncovered: true, spent: true };
   const move = expandedEnemyMove(enemy, ctx.registries.enemies.get(enemy.enemyId).moves[intent.moveId] || {}, intent.moveId, ctx);
   const carrier = enemyMoveCarrier(enemy, move, intent.moveId, ctx);
   // `projected` is the player after the card's immediate defensive effects (its Block, the stance-entry grants),
@@ -93,7 +93,7 @@ export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected
   if (projected) ctx = { ...ctx, player: projected };
   // Hit by hit, as the live exchange resolves them: each advantaged hit grants its Counter Block before it is absorbed,
   // and Poise breaks, Vulnerable and the like carry into later hits.
-  const hits = Math.max(1, Math.floor(enemy.intent.hits ?? 1));
+  const hits = ctx.reactionRules?.contactPolicy === 'perHit' ? 1 : Math.max(1, Math.floor(enemy.intent.hits ?? 1));
   const advantaged = counterBeats(ctx, maneuver);
   const state = damagePreviewState(ctx, defender);
   const total = { hp: 0, poise: 0, block: 0 };

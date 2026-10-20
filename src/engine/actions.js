@@ -1483,13 +1483,16 @@ function trackOwnPressure(ctx, action, target, meter, amount) {
 export function executeAction(ctx, action) {
   if (action.effect?.op === 'completeCombatAction') { Expanded.completeExpandedAction(ctx, action); return; }
   if (ctx.result) return; // combat already decided; remaining actions fizzle
+  const sequence = action.meta?.expansionGroup?.contactSequence;
+  if (sequence && action.meta.contactEffectFirst === false && sequence.gates[action.meta.contactEffectIndex] !== true) return;
   if (action.meta?.expansionGroup?.cancelled) return;
   if (ctx.players && action.source?.kind === 'enemy' && action.target?.kind === 'player'
     && !Expanded.expansionTargetPresent(ctx, action.target)) return;
   if (ctx.combatExpansionVersion === 2) Expanded.beginExpandedAction(ctx, action.meta?.expansionGroup, action.source);
   if (action.meta?.combatCounterReaction && (!action.source?.alive || action.meta.combatCounterInterrupted)) return;
   if (ctx.foundation) ctx._foundationAncestry = action.meta?.foundationAncestry || [];
-  const eff = action.effect;
+  const eff = sequence && action.meta.contactEffectFirst === false
+    ? { ...action.effect, if: undefined, oncePerTurn: undefined } : action.effect;
 
   // Budgeted escape hatch (SPEC §3.1(6)): { script: 'name', ...args }.
   if (typeof eff.script === 'string') {
@@ -1512,6 +1515,7 @@ export function executeAction(ctx, action) {
     if (!Triggers.evalPredicate(ctx, eff.if, pctx)) return;
   }
   if (eff.oncePerTurn && !allowAbilityOnce(action.owner || action.source || ctx.player, eff.oncePerTurn, action.card, action.meta?.abilityEffectIndex ?? eff.op)) return;
+  if (sequence && action.meta.contactEffectFirst === true) sequence.gates[action.meta.contactEffectIndex] = true;
 
   const repeat = evalNum(ctx, action, eff.repeat, 1);
   const previous = ctx._abilityAction;
