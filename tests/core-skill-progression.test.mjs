@@ -13,6 +13,7 @@ import { awardSkillXp, xpToNext } from '../src/model/skills.js';
 import { configuredSkillProgression, skillLevelNotices, acknowledgeSkillLevelNotices } from '../src/model/gameProfileProgression.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { mountGameProfileLevelUp } from '../src/ui/components/gameProfileLevelUp.js';
+import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
 import { withModalDom } from './helpers/modal-dom.mjs';
 
@@ -51,6 +52,7 @@ test('live Core implicit Strike pays its used weapon group; previews and unused 
   play(combat, 'core.strike');
   const hit = combat.eventLog.find(event => event.type === 'damageDealt' && event.sourceId === 'player');
   assert.equal(hit.usedArmamentId, 'greatsword');
+  assert.deepEqual(combat.skillXp.player.usedArmaments, ['greatsword']);
   const committed = combat.eventLog.find(event => event.type === 'cardPlayed').cardInstance;
   assert.equal(committed.usedArmamentId, 'greatsword');
   assert.equal(committed.sourceArmamentId, undefined, 'receipt identity cannot alter rating scope');
@@ -107,12 +109,16 @@ test('used groups survive a real checkpoint and late receipts keep the committed
   play(combat, 'core.strike');
   const before = skillXpReceipt(combat)['item:blade'];
   commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
+  const invalid = structuredClone(run.combatEntered.snapshot);
+  invalid.skillXp.player.usedArmaments = ['greatsword', 'greatsword'];
+  assert.ok(combatSnapshotProblems(invalid).some(problem => problem.includes('usedArmaments')));
   const saves = createSaveManager(createMemoryStorage());
   saves.saveRun(run, combat.rng);
   const loaded = saves.loadRun(reg);
   assert.ok(loaded, JSON.stringify(saves.runStatus()));
   const resumed = restoreCombatSnapshot({ registries: reg, rng: createRng(run.seed), expectedGameProfile: loaded.gameProfile, snapshot: loaded.combatEntered.snapshot });
   resumed.loadout.sets.rightHand[0] = 'boneSceptre';
+  assert.deepEqual(resumed.skillXp.player.usedArmaments, ['greatsword']);
   assert.equal(resumed.eventLog.find(event => event.type === 'cardPlayed').cardInstance.usedArmamentId, 'greatsword', 'the committed identity survives resume and a later swap');
   resumed.emit('damageDealt', { sourceId: 'player', targetId: resumed.enemies[0].id, amount: 1, usedArmamentId: 'greatsword', sourceHand: 'right' });
   resumed.emit('combatEnd', { victory: true });
@@ -132,8 +138,9 @@ test('actual crossings use authored curves without legacy queues or extra config
   assert.equal(run.skills['item:blade'].level, 1);
   assert.equal(run.skills['class:reaver'].level, 1);
   assert.equal(run.skills['item:shield'], undefined);
-  const progression = skillLevelNotices(reg, [awards.classAward, ...awards.trackAwards]);
+  const progression = skillLevelNotices(reg, [awards.classAward, ...awards.trackAwards], { usedArmaments: combat.skillXp.player.usedArmaments });
   assert.deepEqual(progression.map(row => row.skillId), ['class:reaver', 'item:blade']);
+  assert.deepEqual(progression[1].weapons, ['Greatsword']);
   assert.equal(run.skills['item:blade'].pendingDrafts, 0);
   assert.equal(run.skills['class:reaver'].pendingDrafts, 0);
   assert.equal(run.gameProfileRewardOffers, undefined);
@@ -147,11 +154,14 @@ test('actual crossings use authored curves without legacy queues or extra config
   const rewardRng = createRng(811), controlRng = createRng(811);
   assert.deepEqual(gameProfileRewardOffers(reg, run, rewardRng, { offerId: 'same' }), gameProfileRewardOffers(reg, control, controlRng, { offerId: 'same' }));
   assert.deepEqual(rewardRng.getCounters(), controlRng.getCounters());
+  const saves = createSaveManager(createMemoryStorage());
+  saves.saveRun(run, combat.rng);
+  assert.deepEqual(saves.loadRun(reg)?.skills, run.skills, 'crossed levels and empty unsupported queues survive the real save door');
 });
 
 test('the summary survives save/load, acknowledges once, and cannot reopen after acknowledgement', () => {
   const { run } = live();
-  const rows = skillLevelNotices(reg, [{ skillId: 'class:reaver', before: 0, after: 1, levelUps: 1 }, { skillId: 'item:blade', before: 0, after: 2, levelUps: 2 }]);
+  const rows = skillLevelNotices(reg, [{ skillId: 'class:reaver', before: 0, after: 1, levelUps: 1 }, { skillId: 'item:blade', before: 0, after: 2, levelUps: 2 }], { usedArmaments: ['greatsword'] });
   assert.deepEqual(skillLevelNotices(reg, [{ skillId: 'item:blade', levelUps: 0 }]), []);
   run.gameProfilePendingReward = { offerId: 'notice', source: 'combat', after: 'map', levelOffers: 0, progression: rows };
   const saves = createSaveManager(createMemoryStorage());
@@ -167,6 +177,8 @@ test('the summary survives save/load, acknowledges once, and cannot reopen after
     } });
     assert.match(app.querySelector('[data-skill="class:reaver"]').textContent, /Level 0 → 1/);
     assert.match(app.querySelector('[data-skill="item:blade"]').textContent, /Level 0 → 2/);
+    assert.match(app.querySelector('[data-skill="item:blade"]').textContent, /Greatsword \(Blade group\)/);
+    assert.equal(app.querySelector('.reward-door').dataset.size, 'md', 'keep the shared modal width when adding receipt attributes');
     const done = app.querySelector('#reward-level-continue');
     done.click(); done.click();
     assert.equal(continued, 1);

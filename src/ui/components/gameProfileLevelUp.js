@@ -16,10 +16,10 @@ export function mountGameProfileLevelUp(app, { rows, onContinue }) {
     owner: rows,
     eyebrow: t('reward.level.eyebrow'),
     title: 'Level up',
-    attrs: { dataset: { rewardLevel: 'skills' } },
+    attrs: { dataset: { size: 'md', rewardLevel: 'skills' } },
     body: el('div', { class: 'reward-level-claim' }, rows.map(row =>
       el('p', { class: 'reward-level-summary', dataset: { skill: row.skillId },
-        text: `${row.label} · Level ${row.before} → ${row.after}` }))),
+        text: `${row.weapons?.length ? `${row.weapons.join(', ')} (${row.label} group)` : row.label} · Level ${row.before} → ${row.after}` }))),
     foot: modalFooter({ primary: done, className: 'reward-foot', size: 'medium' }),
   });
 }

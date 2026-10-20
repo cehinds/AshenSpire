@@ -118,6 +118,18 @@ function groupOfCard(combat, event) {
   return null;
 }
 
+// Display-only item identities accompany the existing group XP receipt. They
+// never own XP or levels, and a later equipment swap cannot rewrite them.
+function rememberUsedArmament(combat, event, receipt) {
+  const ref = ownerItemRef({ grantedBy: event.grantedBy });
+  const id = Object.hasOwn(event, 'usedArmamentId') ? event.usedArmamentId
+    : ref?.startsWith('armament/') ? ref.slice('armament/'.length)
+    : ['right', 'left'].includes(event.sourceHand) ? pieceInHand(combat, event.sourceHand)?.id : null;
+  if (!id) return;
+  const used = receipt.usedArmaments ||= [];
+  if (!used.includes(id)) used.push(id);
+}
+
 /** The groups a pair of hands holds, deduplicated. */
 function heldGroups(combat, loadout = combat.loadout, classId = combat.player && combat.player.classId) {
   const groups = [];
@@ -161,7 +173,11 @@ export function recordSkillXp(combat, event) {
         const group = groupOfCard(combat, event);
         // A zero entry records actual use even when an authored XP rate is
         // zero. The existing receipt survives snapshots without a second ledger.
-        if (group) receiptFor(combat, owner).xp[group] ??= 0;
+        if (group) {
+          const receipt = receiptFor(combat, owner);
+          receipt.xp[group] ??= 0;
+          rememberUsedArmament(combat, event, receipt);
+        }
         return;
       }
       const progression = progressionFor(combat, owner);
@@ -183,7 +199,7 @@ export function recordSkillXp(combat, event) {
       const group = groupOfCard(combat, event);
       if (!group) return;
       const receipt = receiptFor(combat, owner);
-      if (core) receipt.xp[group] ??= 0;
+      if (core) { receipt.xp[group] ??= 0; rememberUsedArmament(combat, event, receipt); }
       if (core || !(progressionFor(combat, owner) && group === FOCUS_ITEM_TYPE)) pay(receipt, group, rows.perHit, favoredMult(combat, owner, group));
       if (!core && isDual(combat)) pay(receipt, DUAL_WIELD_SKILL, rows.perHit, favoredMult(combat, owner, DUAL_WIELD_SKILL));
       // damageDealt fires after HP is taken and before afterHpChange marks
@@ -200,7 +216,7 @@ export function recordSkillXp(combat, event) {
       const group = groupOfCard(combat, event);
       if (!group) return;
       const receipt = receiptFor(combat, owner);
-      if (core) receipt.xp[group] ??= 0;
+      if (core) { receipt.xp[group] ??= 0; rememberUsedArmament(combat, event, receipt); }
       if (core || !(progressionFor(combat, owner) && group === FOCUS_ITEM_TYPE)) pay(receipt, group, rows.perHit, favoredMult(combat, owner, group));
       if (!core && isDual(combat)) pay(receipt, DUAL_WIELD_SKILL, rows.perHit, favoredMult(combat, owner, DUAL_WIELD_SKILL));
       return;

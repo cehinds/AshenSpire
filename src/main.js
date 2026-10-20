@@ -3266,7 +3266,9 @@ async function onCombatEnd(result, combat, enc) {
   // The class track (plan phase 5b) is paid by the run's owner, who knows
   // the door's pool: a won fight, more for a boss; a lost one nothing.
   const classAward = configuredAwards?.classAward || (configuredProgression ? null : awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, bank: manualLevelUp, multiplier: featMultiplier(run, 'classXp') }));
-  const progression = skillProgression ? skillLevelNotices(registries, [classAward, ...trackAwards]) : [];
+  const progression = skillProgression ? skillLevelNotices(registries, [classAward, ...trackAwards], {
+    usedArmaments: combat.skillXp?.[combat.playerKey || 'player']?.usedArmaments || [],
+  }) : [];
   // Character XP is paid now; the level and its stat points wait for the blue
   // Level Up button. Excess XP remains on the ledger after each claim.
   const xpReceipt = combatXpReceipt(registries, {
