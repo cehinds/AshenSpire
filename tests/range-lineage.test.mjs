@@ -156,3 +156,24 @@ test('an independently accepted retaliation retains causal facts without foreign
   assert.equal(action.meta.event.rangeOrigin,undefined);
   assert.equal(ctx.player.stamina,0);
 });
+test('an empty rounded automatic Counter reserves no conditional random slot or offensive cycle',async()=>{
+  const {completeTacticalAction}=await import('../src/engine/combatMatchups.js');
+  const {rangeActionPlan}=await import('../src/model/combatEngagement.js');
+  const ctx=live();ctx.rangeState.engagements[rangePairKey('player:player','enemy:e1')]=2;
+  ctx.piles.hand=[{instanceId:'empty-counter',cardId:'core.counter'}];
+  dispatch(ctx,{type:'playCard',cardInstanceId:'empty-counter'});
+  const counter=ctx.player.combatCounter;counter.charges=0;
+  mount(ctx,[{on:'damageDealt',once:true,if:{p:'eventSourceIsOwner'},do:[{op:'damage',target:'randomEnemy',amount:1}]}]);
+  const profile={camp:'physical',maneuver:'ranged',range:'ranged'};
+  const plan=rangeActionPlan(ctx.rangeState,'enemy:e1',[{contactId:'incoming',targetKey:'player:player',coverage:'ranged'}]);
+  plan.rootId='empty-incoming';plan.paid={energy:1,stamina:1,mana:0};
+  const before=structuredClone(ctx.rng.getCounters()),stamina=ctx.player.stamina,block=ctx.player.block;
+  const returned=completeTacticalAction(ctx,ctx.enemies[0],ctx.player,{rangePlan:plan,rangeContactId:'incoming'},
+    {counter,profile,profiles:[profile],covered:[true],incomings:[1],amounts:[1],amount:1,connected:true,avoided:false});
+  assert.deepEqual(ctx.rng.getCounters(),before,'zero HP/Poise/Ward cannot reserve an unused rider selector');
+  assert.equal(returned.length,0);assert.equal(ctx.queue.length,0);
+  assert.equal(ctx.player.stamina,stamina);assert.equal(ctx.player.block,block);
+  assert.equal(counter.charges,0,'resolved defensive interception stays consumed');
+  assert.equal(ctx.player.combatCounterReturnedCycle,undefined);
+  assert.ok(ctx.eventLog.some(event=>event.type==='combatCounterTriggered'&&event.amount===0&&event.poiseDamage===0&&event.wardDamage===0));
+});
