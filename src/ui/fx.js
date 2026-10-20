@@ -421,7 +421,7 @@ export const CALLOUT_KINDS = {
   hit: { string: 'combat.callout.hit', tone: 'white' },
   evadeFailed: { string: 'combat.callout.evadeFailed', tone: 'white' },
   missed: { string: 'combat.callout.missed', tone: 'white' },
-  outOfRange: { word: 'Out of range', tone: 'white' },
+  outOfRange: { string: 'combat.callout.outOfRange', tone: 'white' },
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
   disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
   countered: { string: 'combat.callout.countered', tone: 'red' },

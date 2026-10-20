@@ -2,19 +2,19 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { orderedImpactSample } from '../tools/click-impact-stages.mjs';
 
-const fixture = () => ({ up: 0, contact: 1210, number: 4460,
-  timing: { intentMs: 0, wordMs: 1000, afterSpriteMs: 1000, resultMs: 1000, reactionMs: 1000, damageMs: 1000, resetMs: 1000, scale: 1, playbackRate: 0.5, spriteSpeed: { lungeMs: 390 }, fixCore: true },
+const fixture = () => ({ up: 0, contact: 710, number: 2460,
+  timing: { intentMs: 0, wordMs: 500, afterSpriteMs: 500, resultMs: 500, reactionMs: 500, damageMs: 500, resetMs: 500, scale: 1, playbackRate: 0.5, spriteSpeed: { lungeMs: 390 }, fixCore: true },
   clip: { impactMs: 195, totalMs: 390, activeMs: 390 }, holdMs: 60,
-  stages: ['intent', 'action', 'sprite', 'contact', 'result', 'reaction', 'damage', 'hud', 'resolution'].map((name, i) => [[10, 10, 1010, 1205, 2460, 3460, 4460, 4460, 5460][i], name, 'player']),
+  stages: ['intent', 'action', 'sprite', 'contact', 'result', 'reaction', 'damage', 'hud', 'resolution'].map((name, i) => [[10, 10, 510, 705, 1460, 1960, 2460, 2460, 2960][i], name, 'player']),
 });
 
 test('raw latency retains the authored waits, half-rate clip and receipt hold; only overhead is gated', () => {
-  assert.deepEqual(orderedImpactSample(fixture()), { contact: 1210, number: 4460,
-    expectedContact: 1195, expectedNumber: 4450, contactOverhead: 15, numberOverhead: 10 });
+  assert.deepEqual(orderedImpactSample(fixture()), { contact: 710, number: 2460,
+    expectedContact: 695, expectedNumber: 2450, contactOverhead: 15, numberOverhead: 10 });
 });
 
 test('default settings cannot silently shorten the declared waits or speed the sprite', () => {
-  for (const [key, value] of [['intentMs', 500], ['wordMs', 499], ['afterSpriteMs', 0], ['resultMs', 0], ['reactionMs', 180], ['damageMs', 500], ['resetMs', 0], ['playbackRate', 1], ['scale', 0.5]]) {
+  for (const [key, value] of [['intentMs', 500], ['wordMs', 499], ['afterSpriteMs', 0], ['resultMs', 0], ['reactionMs', 180], ['damageMs', 499], ['resetMs', 0], ['playbackRate', 1], ['scale', 0.5]]) {
     const sample = fixture(); sample.timing[key] = value;
     assert.throws(() => orderedImpactSample(sample), /default Normal|must remain/);
   }

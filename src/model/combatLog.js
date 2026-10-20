@@ -64,11 +64,13 @@ function originName(registries, origin) {
 export function combatLogEntries(events, { registries, players = [], enemies = [] } = {}) {
   const plainName = nameLookup({ registries, players, enemies });
   const playerIds = new Set(['player', ...players.map(player => player.id)]);
+  const enemyIds = new Set(enemies.map(enemy => enemy.id));
   const references = [];
   // Carry identity through sentence construction. Matching names afterwards
   // would color card names or misidentify two fighters with the same name.
   const name = id => {
-    const index = references.push({ id, text: plainName(id), side: playerIds.has(id) ? 'player' : 'enemy' }) - 1;
+    const side = playerIds.has(id) ? 'player' : enemyIds.has(id) ? 'enemy' : null;
+    const index = references.push({ id, text: plainName(id), ...(side ? { side } : {}) }) - 1;
     return `\u0001${index}\u0002`;
   };
   const enemyIdOf = new Map(enemies.map(enemy => [enemy.id, enemy.enemyId]));

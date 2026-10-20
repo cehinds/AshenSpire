@@ -16,8 +16,8 @@ import { playTimeline, setAnimSpeed, setBeatOrder, getBeatOrder, ANIM_SPEEDS } f
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
-// D11 (2026-10-18): a 1000 ms gap at every stage boundary. AFTER spans animation → result → reaction.
-const IMPACT = 100, TOTAL = 300, LEAD = 1000, AFTER = 2000, REACTION = 1000, GAP = 1000;
+// D11 (2026-10-18): a 500 ms gap at every stage boundary. AFTER spans animation → result → reaction.
+const IMPACT = 100, TOTAL = 300, LEAD = 500, AFTER = 1000, REACTION = 500, GAP = 500;
 
 function drive(t, fn) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
@@ -285,7 +285,7 @@ test('a short ordered swing finishes its total duration plus hit-stop before the
 test('a delayed ordered contact retains the full hit-stop and remaining authored frames from delivery', t => {
   drive(t, ({ trace, run, finish, tick }) => {
     run(accuracyHit(7), { animateActor: shortActor(trace), maxHpFor: () => 54 });
-    tick(500); tick(500); // Let both required pre-sprite waits finish on time.
+    tick(LEAD); // Let the required pre-sprite wait finish on time.
     tick(350); // Deliver the sprite's 100 ms contact callback 250 ms late.
     finish();
     const delivered = LEAD + 350;

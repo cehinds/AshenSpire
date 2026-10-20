@@ -33,6 +33,11 @@ test('same-named players and enemies keep their own identity roles in co-op', ()
   });
   assert.deepEqual(entries[0].segments.filter(part => part.side).map(part => [part.id, part.side]), [['seat-a', 'player'], ['e1', 'enemy']]);
 });
+
+test('unknown and environmental sources have no enemy identity role', () => {
+  const entries = combatLogEntries([{ type: 'healed', sourceId: 'environment', targetId: 'player', amount: 2 }], { registries, enemies });
+  assert.ok(entries[0].segments.every(part => part.id !== 'environment' || part.side === undefined));
+});
 // Moves carry no authored name: the log words the move id ('goldenBulwark' → 'Golden Bulwark').
 const move = (enemyId, moveId) => registries.enemies.get(enemyId).moves[moveId].name
   || moveId.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
