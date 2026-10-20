@@ -1810,8 +1810,9 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   if (combat.gameProfile?.foundation?.mode === 'configured' && (sourceSnapshots?.size || def.effects.some(effect => effect.op === 'damage') || cardRef.combatProfile?.maneuver === 'counter')) {
     // Reuse the damage-type resolver's chosen piece. This receipt field must
     // never become sourceArmamentId, which also scopes combat rating bonuses.
-    const resolvedSource = sourceSnapshots?.values().next().value?.resolvedSource;
-    const used = resolvedSource
+    const capturedSource = sourceSnapshots?.values().next().value;
+    const resolvedSource = capturedSource?.resolvedSource;
+    const used = capturedSource && Object.hasOwn(capturedSource,'usedArmamentId') ? capturedSource.usedArmamentId : resolvedSource
       ? resolvedSource.sourceType === 'unarmed' ? null : resolvedSource.itemId
       : wieldedArmament(combat, cardRef, p, cardRef.attack?.source || (cardRef.combatProfile?.camp === 'spell' ? 'spell' : 'weapon'))?.id || null;
     if (used !== undefined) {
