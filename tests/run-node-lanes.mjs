@@ -66,6 +66,17 @@ export const SLOW_DISCOVERED = new Map([
   ['tests/simrun-loop.test.mjs', 'runs tools/measure-classes.mjs --check against runsim'],
 ]);
 
+// Dedicated co-op files follow these names; mixed suites stay active and gate
+// their own co-op cases. The parked-feature contract must always run.
+export function isCoopTestFile(file) {
+  return file !== 'tests/coop-parked.test.mjs' &&
+    /^tests\/(?:coop-.+|.+-coop|core-coop-constructor)\.test\.mjs$/.test(file);
+}
+
+export function discoveryFeatureFiles(files, { coopEnabled }) {
+  return coopEnabled ? files.slice() : files.filter(file => !isCoopTestFile(file));
+}
+
 export function discoverySpeedFiles(files, slow) {
   if (slow === 'include') return files.slice();
   if (slow === 'exclude') return files.filter(file => !SLOW_DISCOVERED.has(file));
