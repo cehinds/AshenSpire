@@ -229,6 +229,24 @@
         "symbol": "runOpcode case restorePoise"
       }
     },
+    "moveEngagement": {
+      "params": {
+        "target": {
+          "type": "entityRef",
+          "required": true
+        },
+        "bands": {
+          "type": "number",
+          "required": true
+        }
+      },
+      "description": "Moves the selected opposing engagement pair one band (-1 closing, +1 retreat), clamped to Melee..Ranged; inactive when range mechanics are disabled.",
+      "reference": "legacy",
+      "legacy": {
+        "file": "src/engine/actions.js",
+        "symbol": "runOpcode case moveEngagement"
+      }
+    },
     "dodgeRoll": {
       "params": {
         "target": {
