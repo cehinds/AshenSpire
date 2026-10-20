@@ -108,3 +108,13 @@ test('a Core Smash tag with an empty smash matchup keeps its blurb (no double-da
   assert.equal(out, tag);
   assert.equal(out.blurb, 'X');
 });
+
+test('Reframe turning a non-damaging card (core.defend) into Smash gets no Smash clause or help; a damaging Attack still does', () => {
+  const defend = core.cards.get('core.defend');
+  assert.ok(defend && !defend.effects.some(effect => effect.op === 'damage'), 'core.defend deals no damage');
+  const asSmash = def => ({ ...def, combatProfile: { ...def.combatProfile, maneuver: 'smash' } });
+  assert.equal(coreSmashClause(asSmash(defend), core), '');
+  assert.equal(coreSmashHelp(asSmash(defend), core), null);
+  const attack = core.cards.all().find(def => def.tags?.includes('maneuver:attack') && def.effects?.some(effect => effect.op === 'damage'));
+  assert.match(coreSmashClause(asSmash(attack), core), RULE);
+});
