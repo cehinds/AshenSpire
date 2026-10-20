@@ -1089,6 +1089,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       if (!label) continue;
       const badge = document.createElement('span');
       badge.className = 'combat-hit-chance';
+      if (label.length > 6) badge.dataset.rangeDetail = 'true';
       badge.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
       badge.textContent = label;
       badge.setAttribute('aria-label', 'Chance to hit ' + badge.textContent);

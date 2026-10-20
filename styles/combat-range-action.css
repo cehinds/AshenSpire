@@ -27,3 +27,12 @@
 .combat-range-choices button[aria-pressed='true'] { border-color: var(--green); background: color-mix(in srgb, var(--green) 20%, var(--bg)); }
 .combat-range-choices button:focus-visible { outline: 2px solid var(--parchment); outline-offset: 2px; }
 .combat-range-odds { margin-top: calc(4px / var(--ui-zoom, 1)); }
+
+/* A sentence retains the hit badge's type size, wrapping above its actor. */
+:root .combat .combatant > .combat-hit-chance[data-range-detail='true'] {
+  width: calc(208px / var(--ui-zoom, 1));
+  max-width: calc((100vw - 16px) / var(--ui-zoom, 1));
+  white-space: normal;
+  text-align: center;
+  overflow-wrap: normal;
+}
