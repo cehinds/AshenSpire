@@ -1,0 +1,1394 @@
+[
+  {
+    "width": 1440,
+    "height": 900,
+    "count": 3,
+    "index": -1,
+    "rows": [
+      {
+        "face": {
+          "width": 182.390625,
+          "height": 273.578125
+        },
+        "button": {
+          "width": 192,
+          "height": 180.234375
+        },
+        "checked": "false",
+        "text": "Inflict 5 Slashing damage to all enemies · Entry: +1 + stat mix Precision",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 182.390625,
+          "height": 273.578125
+        },
+        "button": {
+          "width": 192,
+          "height": 180.234375
+        },
+        "checked": "false",
+        "text": "Return 12 Poise damage, +2 Poise against Smash · Gain 5 Block · Entry: +1 + stat mix Precision, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 182.390625,
+          "height": 273.578125
+        },
+        "button": {
+          "width": 192,
+          "height": 180.234375
+        },
+        "checked": "false",
+        "text": "Return 3 damage · Gain 9 Block · Draw 1, Entry: +1 + stat mix Precision, +1 Evade, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "count": 3,
+    "index": 0,
+    "rows": [
+      {
+        "face": {
+          "width": 182.390625,
+          "height": 273.5781555175781
+        },
+        "button": {
+          "width": 192,
+          "height": 180.234375
+        },
+        "checked": "true",
+        "text": "Inflict 5 Slashing damage to all enemies · Entry: +1 + stat mix Precision",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 182.390625,
+          "height": 273.578125
+        },
+        "button": {
+          "width": 192,
+          "height": 180.234375
+        },
+        "checked": "false",
+        "text": "Return 12 Poise damage, +2 Poise against Smash · Gain 5 Block · Entry: +1 + stat mix Precision, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 182.390625,
+          "height": 273.578125
+        },
+        "button": {
+          "width": 192,
+          "height": 180.234375
+        },
+        "checked": "false",
+        "text": "Return 3 damage · Gain 9 Block · Draw 1, Entry: +1 + stat mix Precision, +1 Evade, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "count": 3,
+    "index": 2,
+    "rows": [
+      {
+        "face": {
+          "width": 182.390625,
+          "height": 273.578125
+        },
+        "button": {
+          "width": 192,
+          "height": 180.234375
+        },
+        "checked": "false",
+        "text": "Inflict 5 Slashing damage to all enemies · Entry: +1 + stat mix Precision",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 182.390625,
+          "height": 273.578125
+        },
+        "button": {
+          "width": 192,
+          "height": 180.234375
+        },
+        "checked": "false",
+        "text": "Return 12 Poise damage, +2 Poise against Smash · Gain 5 Block · Entry: +1 + stat mix Precision, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 182.390625,
+          "height": 273.5781555175781
+        },
+        "button": {
+          "width": 192,
+          "height": 180.234375
+        },
+        "checked": "true",
+        "text": "Return 3 damage · Gain 9 Block · Draw 1, Entry: +1 + stat mix Precision, +1 Evade, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "count": 4,
+    "index": -1,
+    "rows": [
+      {
+        "face": {
+          "width": 148.796875,
+          "height": 223.1875
+        },
+        "button": {
+          "width": 148.796875,
+          "height": 316.265625
+        },
+        "checked": "false",
+        "text": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 148.8125,
+          "height": 223.21875
+        },
+        "button": {
+          "width": 148.8125,
+          "height": 316.234375
+        },
+        "checked": "false",
+        "text": "Deal 6 damage to the selected enemy.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 148.8125,
+          "height": 223.21875
+        },
+        "button": {
+          "width": 148.8125,
+          "height": 316.234375
+        },
+        "checked": "false",
+        "text": "Draw 2 card(s).",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 148.8125,
+          "height": 223.21875
+        },
+        "button": {
+          "width": 148.8125,
+          "height": 316.234375
+        },
+        "checked": "false",
+        "text": "Deal 6 damage.",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "count": 4,
+    "index": 0,
+    "rows": [
+      {
+        "face": {
+          "width": 148.796875,
+          "height": 223.1875
+        },
+        "button": {
+          "width": 148.796875,
+          "height": 316.265625
+        },
+        "checked": "true",
+        "text": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 148.8125,
+          "height": 223.21875
+        },
+        "button": {
+          "width": 148.8125,
+          "height": 316.234375
+        },
+        "checked": "false",
+        "text": "Deal 6 damage to the selected enemy.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 148.8125,
+          "height": 223.21875
+        },
+        "button": {
+          "width": 148.8125,
+          "height": 316.234375
+        },
+        "checked": "false",
+        "text": "Draw 2 card(s).",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 148.8125,
+          "height": 223.21875
+        },
+        "button": {
+          "width": 148.8125,
+          "height": 316.234375
+        },
+        "checked": "false",
+        "text": "Deal 6 damage.",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "height": 900,
+    "count": 4,
+    "index": 3,
+    "rows": [
+      {
+        "face": {
+          "width": 148.796875,
+          "height": 223.1875
+        },
+        "button": {
+          "width": 148.796875,
+          "height": 316.265625
+        },
+        "checked": "false",
+        "text": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 148.8125,
+          "height": 223.21875
+        },
+        "button": {
+          "width": 148.8125,
+          "height": 316.234375
+        },
+        "checked": "false",
+        "text": "Deal 6 damage to the selected enemy.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 148.8125,
+          "height": 223.21875
+        },
+        "button": {
+          "width": 148.8125,
+          "height": 316.234375
+        },
+        "checked": "false",
+        "text": "Draw 2 card(s).",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 148.8125,
+          "height": 223.21875
+        },
+        "button": {
+          "width": 148.8125,
+          "height": 316.234375
+        },
+        "checked": "true",
+        "text": "Deal 6 damage.",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "count": 3,
+    "index": -1,
+    "rows": [
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 93.46875
+        },
+        "checked": "false",
+        "text": "Inflict 5 Slashing damage to all enemies · Entry: +1 + stat mix Precision",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 93.46875
+        },
+        "checked": "false",
+        "text": "Return 12 Poise damage, +2 Poise against Smash · Gain 5 Block · Entry: +1 + stat mix Precision, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 93.46875
+        },
+        "checked": "false",
+        "text": "Return 3 damage · Gain 9 Block · Draw 1, Entry: +1 + stat mix Precision, +1 Evade, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "count": 3,
+    "index": 0,
+    "rows": [
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.18748474121094
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 93.46875
+        },
+        "checked": "true",
+        "text": "Inflict 5 Slashing damage to all enemies · Entry: +1 + stat mix Precision",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 93.46875
+        },
+        "checked": "false",
+        "text": "Return 12 Poise damage, +2 Poise against Smash · Gain 5 Block · Entry: +1 + stat mix Precision, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 93.46875
+        },
+        "checked": "false",
+        "text": "Return 3 damage · Gain 9 Block · Draw 1, Entry: +1 + stat mix Precision, +1 Evade, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "count": 3,
+    "index": 2,
+    "rows": [
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 93.46875
+        },
+        "checked": "false",
+        "text": "Inflict 5 Slashing damage to all enemies · Entry: +1 + stat mix Precision",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 93.46875
+        },
+        "checked": "false",
+        "text": "Return 12 Poise damage, +2 Poise against Smash · Gain 5 Block · Entry: +1 + stat mix Precision, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 93.46875
+        },
+        "checked": "true",
+        "text": "Return 3 damage · Gain 9 Block · Draw 1, Entry: +1 + stat mix Precision, +1 Evade, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "count": 4,
+    "index": -1,
+    "rows": [
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 160.65625
+        },
+        "checked": "false",
+        "text": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 160.65625
+        },
+        "checked": "false",
+        "text": "Deal 6 damage to the selected enemy.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 160.65625
+        },
+        "checked": "false",
+        "text": "Draw 2 card(s).",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 160.65625
+        },
+        "checked": "false",
+        "text": "Deal 6 damage.",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "count": 4,
+    "index": 0,
+    "rows": [
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.18748474121094
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 160.65625
+        },
+        "checked": "true",
+        "text": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 160.65625
+        },
+        "checked": "false",
+        "text": "Deal 6 damage to the selected enemy.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 160.65625
+        },
+        "checked": "false",
+        "text": "Draw 2 card(s).",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 160.65625
+        },
+        "checked": "false",
+        "text": "Deal 6 damage.",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "count": 4,
+    "index": 3,
+    "rows": [
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 160.65625
+        },
+        "checked": "false",
+        "text": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 160.65625
+        },
+        "checked": "false",
+        "text": "Deal 6 damage to the selected enemy.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 160.65625
+        },
+        "checked": "false",
+        "text": "Draw 2 card(s).",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 136.796875,
+          "height": 205.1875
+        },
+        "button": {
+          "width": 169.21875,
+          "height": 160.65625
+        },
+        "checked": "true",
+        "text": "Deal 6 damage.",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 375,
+    "height": 667,
+    "count": 3,
+    "index": -1,
+    "rows": [
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.796875,
+          "height": 92.890625
+        },
+        "checked": "false",
+        "text": "Inflict 5 Slashing damage to all enemies · Entry: +1 + stat mix Precision",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.8125,
+          "height": 92.890625
+        },
+        "checked": "false",
+        "text": "Return 12 Poise damage, +2 Poise against Smash · Gain 5 Block · Entry: +1 + stat mix Precision, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.796875,
+          "height": 92.890625
+        },
+        "checked": "false",
+        "text": "Return 3 damage · Gain 9 Block · Draw 1, Entry: +1 + stat mix Precision, +1 Evade, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 375,
+    "height": 667,
+    "count": 3,
+    "index": 0,
+    "rows": [
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78126525878906
+        },
+        "button": {
+          "width": 162.796875,
+          "height": 92.890625
+        },
+        "checked": "true",
+        "text": "Inflict 5 Slashing damage to all enemies · Entry: +1 + stat mix Precision",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.8125,
+          "height": 92.890625
+        },
+        "checked": "false",
+        "text": "Return 12 Poise damage, +2 Poise against Smash · Gain 5 Block · Entry: +1 + stat mix Precision, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.796875,
+          "height": 92.890625
+        },
+        "checked": "false",
+        "text": "Return 3 damage · Gain 9 Block · Draw 1, Entry: +1 + stat mix Precision, +1 Evade, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 375,
+    "height": 667,
+    "count": 3,
+    "index": 2,
+    "rows": [
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.796875,
+          "height": 92.890625
+        },
+        "checked": "false",
+        "text": "Inflict 5 Slashing damage to all enemies · Entry: +1 + stat mix Precision",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.8125,
+          "height": 92.890625
+        },
+        "checked": "false",
+        "text": "Return 12 Poise damage, +2 Poise against Smash · Gain 5 Block · Entry: +1 + stat mix Precision, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.796875,
+          "height": 92.890625
+        },
+        "checked": "true",
+        "text": "Return 3 damage · Gain 9 Block · Draw 1, Entry: +1 + stat mix Precision, +1 Evade, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 375,
+    "height": 667,
+    "count": 4,
+    "index": -1,
+    "rows": [
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.796875,
+          "height": 176.875
+        },
+        "checked": "false",
+        "text": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.8125,
+          "height": 176.875
+        },
+        "checked": "false",
+        "text": "Deal 6 damage to the selected enemy.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.796875,
+          "height": 176.875
+        },
+        "checked": "false",
+        "text": "Draw 2 card(s).",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.8125,
+          "height": 176.875
+        },
+        "checked": "false",
+        "text": "Deal 6 damage.",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 375,
+    "height": 667,
+    "count": 4,
+    "index": 0,
+    "rows": [
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78126525878906
+        },
+        "button": {
+          "width": 162.796875,
+          "height": 176.875
+        },
+        "checked": "true",
+        "text": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.8125,
+          "height": 176.875
+        },
+        "checked": "false",
+        "text": "Deal 6 damage to the selected enemy.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.796875,
+          "height": 176.875
+        },
+        "checked": "false",
+        "text": "Draw 2 card(s).",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.8125,
+          "height": 176.875
+        },
+        "checked": "false",
+        "text": "Deal 6 damage.",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 375,
+    "height": 667,
+    "count": 4,
+    "index": 3,
+    "rows": [
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.796875,
+          "height": 176.875
+        },
+        "checked": "false",
+        "text": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.8125,
+          "height": 176.875
+        },
+        "checked": "false",
+        "text": "Deal 6 damage to the selected enemy.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78125
+        },
+        "button": {
+          "width": 162.796875,
+          "height": 176.875
+        },
+        "checked": "false",
+        "text": "Draw 2 card(s).",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 129.1875,
+          "height": 193.78126525878906
+        },
+        "button": {
+          "width": 162.8125,
+          "height": 176.875
+        },
+        "checked": "true",
+        "text": "Deal 6 damage.",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 320,
+    "height": 568,
+    "count": 3,
+    "index": -1,
+    "rows": [
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 108.28125
+        },
+        "checked": "false",
+        "text": "Inflict 5 Slashing damage to all enemies · Entry: +1 + stat mix Precision",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 108.28125
+        },
+        "checked": "false",
+        "text": "Return 12 Poise damage, +2 Poise against Smash · Gain 5 Block · Entry: +1 + stat mix Precision, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 108.28125
+        },
+        "checked": "false",
+        "text": "Return 3 damage · Gain 9 Block · Draw 1, Entry: +1 + stat mix Precision, +1 Evade, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 320,
+    "height": 568,
+    "count": 3,
+    "index": 0,
+    "rows": [
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 108.28125
+        },
+        "checked": "true",
+        "text": "Inflict 5 Slashing damage to all enemies · Entry: +1 + stat mix Precision",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 108.28125
+        },
+        "checked": "false",
+        "text": "Return 12 Poise damage, +2 Poise against Smash · Gain 5 Block · Entry: +1 + stat mix Precision, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 108.28125
+        },
+        "checked": "false",
+        "text": "Return 3 damage · Gain 9 Block · Draw 1, Entry: +1 + stat mix Precision, +1 Evade, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 320,
+    "height": 568,
+    "count": 3,
+    "index": 2,
+    "rows": [
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 108.28125
+        },
+        "checked": "false",
+        "text": "Inflict 5 Slashing damage to all enemies · Entry: +1 + stat mix Precision",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 108.28125
+        },
+        "checked": "false",
+        "text": "Return 12 Poise damage, +2 Poise against Smash · Gain 5 Block · Entry: +1 + stat mix Precision, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15623474121094
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 108.28125
+        },
+        "checked": "true",
+        "text": "Return 3 damage · Gain 9 Block · Draw 1, Entry: +1 + stat mix Precision, +1 Evade, +3 Block",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 320,
+    "height": 568,
+    "count": 4,
+    "index": -1,
+    "rows": [
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 175.46875
+        },
+        "checked": "false",
+        "text": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 175.46875
+        },
+        "checked": "false",
+        "text": "Deal 6 damage to the selected enemy.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 175.46875
+        },
+        "checked": "false",
+        "text": "Draw 2 card(s).",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 175.46875
+        },
+        "checked": "false",
+        "text": "Deal 6 damage.",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 320,
+    "height": 568,
+    "count": 4,
+    "index": 0,
+    "rows": [
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 175.46875
+        },
+        "checked": "true",
+        "text": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 175.46875
+        },
+        "checked": "false",
+        "text": "Deal 6 damage to the selected enemy.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 175.46875
+        },
+        "checked": "false",
+        "text": "Draw 2 card(s).",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 175.46875
+        },
+        "checked": "false",
+        "text": "Deal 6 damage.",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  },
+  {
+    "width": 320,
+    "height": 568,
+    "count": 4,
+    "index": 3,
+    "rows": [
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 175.46875
+        },
+        "checked": "false",
+        "text": "Deal 4 damage to the selected enemy. Apply 4 frost to the selected enemy. If you have starstoneCharge: Apply 3 frost to the selected enemy. Apply 1 starstoneCharge to yourself.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 175.46875
+        },
+        "checked": "false",
+        "text": "Deal 6 damage to the selected enemy.",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15625
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 175.46875
+        },
+        "checked": "false",
+        "text": "Draw 2 card(s).",
+        "overflow": 0,
+        "textClipped": 0
+      },
+      {
+        "face": {
+          "width": 109.4375,
+          "height": 164.15623474121094
+        },
+        "button": {
+          "width": 138.1875,
+          "height": 175.46875
+        },
+        "checked": "true",
+        "text": "Deal 6 damage.",
+        "overflow": 0,
+        "textClipped": 0
+      }
+    ],
+    "errors": []
+  }
+]
