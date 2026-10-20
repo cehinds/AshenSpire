@@ -67,7 +67,8 @@ test('random target quotes fork the same seeded selection without drawing live R
   assert.deepEqual(ctx.rng.getCounters(),before);
   const accepted=quoteRangeActions(ctx,source,[action()]);
   assert.deepEqual(accepted,quoted);
-  assert.equal(accepted.targets.length,1);
+  assert.equal(accepted.targets.filter(row=>!row.contactId.startsWith('rider:')).length,1);
+  assert.ok(accepted.targets.filter(row=>row.contactId.startsWith('rider:')).every(row=>row.targetKey===accepted.targets[0].targetKey),'the authored Medallion rider keeps its sampled parent target');
 });
 
 function distantUnclosingIncoming(ctx) {
@@ -131,12 +132,16 @@ test('a paid Counter return reuses the accepted quote after movement and source 
   const paid=paidCounterRange(ctx,source,carrier,{energy:0,stamina:0,mana:0});
   assert.equal(paid.reservation.rangePlan.advanceSp,2);
   const before=structuredClone(paid.reservation.rangePlan);
+  const graph=structuredClone(paid.reservation.rangeLineagePlan);
+  assert.ok(graph?.edges.length,'the real mounted Medallion rider is part of the paid return envelope');
   ctx.rangeState.engagements[rangePairKey('player:player','enemy:e1')]=0;
   ctx.loadout.sets.rightHand[0]='halberd';
   carrier.resolvedRangeSource={sourceType:'weapon',itemId:'halberd',range:'reach',propertyTags:[]};
   carrier.rangeCounterReservation=paid.reservation;
   const authorized=authorizeCounterRange(ctx,source,attacker,carrier,{rangePlan:incoming,rangeContactId:'incoming:0'});
   assert.deepEqual(authorized.rangeReturnAuthorization.plan,before);
+  assert.deepEqual(authorized.rangeReturnAuthorization.lineage,graph);
+  assert.equal(authorized.resolvedRangeSource.itemId,before.targets[0].sourceWeaponId);
   assert.equal(authorized.rangeCounterReservation,undefined);
 });
 test('a missed incoming contact neither refunds nor preserves its paid Counter reservation', async () => {

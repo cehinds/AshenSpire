@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -44,7 +45,7 @@ function assertReceipts(seat, run, scoped = registries) {
   }
 }
 
-test('co-op Survivor claim projects only its owner and preserves paid Counter, pools, piles and RNG', () => {
+test('co-op Survivor claim projects only its owner and preserves paid Counter, pools, piles and RNG', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const a = createRunState({ registries, seed: 11, classId: 'reaver' });
   const b = createRunState({ registries, seed: 12, classId: 'herald' });
   const scopedA = registriesForClassMastery(registries, a), scopedB = registriesForClassMastery(registries, b);
@@ -76,7 +77,7 @@ test('co-op Survivor claim projects only its owner and preserves paid Counter, p
   assert.deepEqual(serializeCoopCombatSnapshot(combat), snapshot, 'reprojection is idempotent, including paid payloads');
 });
 
-test('production co-op member projection carries equipment rules and reloads the exact Survivor state', () => {
+test('production co-op member projection carries equipment rules and reloads the exact Survivor state', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   let saved;
   const session = createSession({ registries, seedString: 'GOLDBOUGH', saveSession: data => { saved = structuredClone(data); return true; } });
   session.addMember({ id: 'a', name: 'Ash', classId: 'reaver', playInDeckOrder: true });
@@ -132,7 +133,7 @@ for (const phase of ['player', 'enemy']) for (const alive of [true, false]) {
   });
 }
 
-test('older co-op seat restores missing equipment context from its saved member, preserving retired slots and host rules', () => {
+test('older co-op seat restores missing equipment context from its saved member, preserving retired slots and host rules', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const run = createRunState({ registries, seed: 11, classId: 'reaver' });
   run.equipmentProfileRuleSnapshot.profiles.bladeAttack.baseValue += 7;
   run.removedAttackSlotIds = ['attack:0'];
@@ -161,7 +162,7 @@ test('older co-op seat restores missing equipment context from its saved member,
   assert.deepEqual(restored.rng.getCounters(), counters);
 });
 
-test('co-op snapshot serializes and decodes an entity in the Staggered stance', () => {
+test('co-op snapshot serializes and decodes an entity in the Staggered stance', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const a = createRunState({ registries, seed: 21, classId: 'reaver' });
   const combat = createCoopCombat({ registries, rng: createRng(21), ratingsRules: null, combatExpansionVersion: 2,
     players: [{ ...input(a, 'a'), registries: registriesForClassMastery(registries, a) }], enemyIds: ['wanderingSoldier'] });

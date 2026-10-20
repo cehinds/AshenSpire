@@ -3,6 +3,7 @@
 // target, instead of arming a single-enemy picker and asking for the rank again.
 // Single-target cards keep #1728's re-target-after-rank beat.
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
@@ -55,7 +56,7 @@ test('solo single-target upcast still re-targets after the rank when no legal ta
   assert.equal(soloStep(combat, 'spark-1', rank, combat.enemies[0].id).step, 'play');
 });
 
-test('co-op upcast area card sends one untargeted intent at the chosen rank; single-target still picks', () => {
+test('co-op upcast area card sends one untargeted intent at the chosen rank; single-target still picks', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const area = { instanceId: 'contagion-1', cardId: 'contagion' };
   const single = { instanceId: 'spark-1', cardId: 'starSpark' };
   const coop = createCoopCombat({ registries, rng: createRng(5), combatExpansionVersion: 2, enemyIds,

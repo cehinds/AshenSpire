@@ -36,7 +36,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
     carrier = { ...carrier, combatProfile: { ...carrier.combatProfile, maneuver: 'attack' } };
     for (const action of actions) action.card = carrier;
   }
-  Matchups.assertSingleActionCamp(carrier, actions.filter(action => ['damage', 'buildup', 'applyStatus'].includes(action.effect.op))
+  if (!ctx.rangeState) Matchups.assertSingleActionCamp(carrier, actions.filter(action => ['damage', 'buildup', 'applyStatus'].includes(action.effect.op))
     .map(action => effectCarrier({ ...carrier, ...action.card }, action.effect).combatProfile));
   mountCombatCombo(ctx, source, carrier);
   const group = { key: `${ctx.combatKey || 'combat'}:${++ctx.expansionActionSerial || (ctx.expansionActionSerial = 1)}`,
@@ -94,7 +94,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
         const split = eff.op === 'damage' ? { splitBase: Math.max(0, Math.floor(base)),
           ratingBonus: Actions.cardRatingDamage(prefix, shadow.source, contactCarrier, attackBase), ratingPart: Actions.ratingBonusPart(prefix, contactCarrier) } : {};
         const index = row.contacts.length;
-        row.contacts.push({ ...profile, ...(carrier.rangePlan ? { rangeContactId: `${rangeEffectIndex}:${r}:${h}:${source.kind === 'enemy' ? `player:${ctx.playerIdForEntity?.(entity) || 'player'}` : `enemy:${entity.id}`}` } : {}), amount, ...split, ...(Number.isFinite(contactCarrier.magicShare) ? { magicShare: contactCarrier.magicShare } : {}), ...(contactCarrier.physicalDamageType ? { physicalDamageType: contactCarrier.physicalDamageType } : {}), ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
+        row.contacts.push({ ...profile, ...(carrier.rangePlan ? { rangeContactId: `${action.meta.rangeEffectIndex ?? rangeEffectIndex}:${r}:${h}:${source.kind === 'enemy' ? `player:${ctx.playerIdForEntity?.(entity) || 'player'}` : `enemy:${entity.id}`}` } : {}), amount, ...split, ...(Number.isFinite(contactCarrier.magicShare) ? { magicShare: contactCarrier.magicShare } : {}), ...(contactCarrier.physicalDamageType ? { physicalDamageType: contactCarrier.physicalDamageType } : {}), ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
         contacts.push({ key, index, id: entity.id, playerId: ctx.playerIdForEntity?.(entity), ...(crit ? { crit } : {}) });
       }
       action.meta.expansionContacts.push(contacts);
@@ -138,6 +138,7 @@ function contactActions(ctx, group, actions) {
       const unit = { ...action, effect: { ...action.effect, hits: 1, repeat: 1 }, meta: { ...action.meta,
         contactIndex, contactEffectIndex: effectIndex, contactEffectFirst: index === 0,
         expansionContacts: [refs], expansionTargets: [action.meta.expansionTargets[index]],
+        ...(action.meta.rangeSiteBatches ? {rangeSiteBatches:[action.meta.rangeSiteBatches[index] || []]} : {}),
         ...(index > 0 ? { abilityChargeDamage: 0, abilityChargeBreak: 0 } : {}) } };
       queued.push(unit, { ...unit, effect: { op: 'completeCombatAction' }, meta: { ...unit.meta, contactCompletion: true } });
     }
@@ -243,7 +244,7 @@ export function beginExpandedAction(ctx, group, source) {
     if (!expansionTargetPresent(ctx, target)) continue;
     const profile = row.contacts[0] || group.carrier?.combatProfile || {};
     const serial = group.manualCounterSerials?.[row.playerId || 'player'];
-    const carrier = { ...group.carrier, ...(profile.rangeContactId ? { rangeContactId: profile.rangeContactId } : {}), additionalTargets: Math.max(0, Object.keys(group.targets).length - 1), ...(serial ? { manualCounterSerial: serial } : {}) };
+    const carrier = { ...group.carrier, ...(ctx.rangeState ? {combatProfile:{...group.carrier.combatProfile,...profile}} : {}), ...(profile.rangeContactId ? { rangeContactId: profile.rangeContactId } : {}), additionalTargets: Math.max(0, Object.keys(group.targets).length - 1), ...(serial ? { manualCounterSerial: serial } : {}) };
     row.receipt = (ctx._expansionPreview ? Matchups.previewTacticalAction : Matchups.beginTacticalAction)(ctx, source, target, carrier, row.contacts,
       { ...Control.statusIncomingModifier(ctx, target, profile), contactModifiers: row.contacts.map(contact => Control.statusIncomingModifier(ctx, target, contact)), restrictions: Control.controlRestrictions(ctx, target) });
     row.interactions = { ...profile,

@@ -4,6 +4,7 @@
 // entered a stance earlier this fight; entering one sets the fight-long
 // `stanceShifted` marker. The entering card itself still counts as kept.
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -51,7 +52,7 @@ test('an Oath card grants 2 Block until a stance is entered, then none for the r
   assert.ok(combat.player.statuses.stanceShifted, 'the marker lasts the whole fight, not the turn');
 });
 
-test('co-op: one seat entering a stance does not break the other seat\'s Oath', () => {
+test('co-op: one seat entering a stance does not break the other seat\'s Oath', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const C = createCoopCombat({ registries, rng: createRng(3), players: [{ ...player, id: 'a' }, { ...player, id: 'b' }], enemyIds: ['wanderingSoldier'] });
   for (const enemy of C.enemies) { enemy.hp = enemy.maxHp = 500; }
   const seat = id => C.players.get(id);

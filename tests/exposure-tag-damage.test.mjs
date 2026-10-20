@@ -6,6 +6,7 @@
 // solo and co-op, so a break anywhere along card tag -> hit tags -> resolver
 // shows here.
 import test from 'node:test';
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -69,8 +70,10 @@ for (const [label, registries, cardId, tag, status] of cases) {
     assert.ok(exposed.hits[0] > clean.hits[0], `${status} raises ${tag} damage (${clean.hits[0]} -> ${exposed.hits[0]})`);
     assert.equal(exposed.preview, exposed.hits[0], 'preview states the boosted hit');
     assert.equal(clean.preview, clean.hits[0], 'preview states the clean hit');
-    assert.deepEqual(coop(registries, cardId, null).hits, clean.hits, 'co-op parity, clean');
-    assert.deepEqual(coop(registries, cardId, status).hits, exposed.hits, 'co-op parity, exposed');
+    if (COOP_TESTS_ENABLED) {
+      assert.deepEqual(coop(registries, cardId, null).hits, clean.hits, 'co-op parity, clean');
+      assert.deepEqual(coop(registries, cardId, status).hits, exposed.hits, 'co-op parity, exposed');
+    }
   });
 }
 
@@ -81,7 +84,7 @@ test('untagged Strike deals the same to Frost-Exposed, Unraveled and clean targe
   assert.ok(clean[0] > 0);
   assert.deepEqual(solo(shipped, 'strike', 'frostExposed').hits, clean);
   assert.deepEqual(solo(shipped, 'strike', 'insanityExposed').hits, clean);
-  assert.deepEqual(coop(shipped, 'strike', 'frostExposed').hits, clean);
+  if (COOP_TESTS_ENABLED) assert.deepEqual(coop(shipped, 'strike', 'frostExposed').hits, clean);
 });
 
 test('each exposure answers only its own tags', () => {
@@ -108,7 +111,7 @@ for (const [cardId, tag, status, authoredBase, multiplier] of lowBase) {
     assert.equal(clean.hits[0], authoredBase);
     assert.equal(exposed.hits[0], authoredBase + Math.ceil(authoredBase * (multiplier - 1)), `tagged bonus rounds up (${clean.hits[0]} -> ${exposed.hits[0]})`);
     assert.equal(exposed.preview, exposed.hits[0], 'preview states the rounded-up hit');
-    assert.deepEqual(coop(shipped, cardId, status).hits, exposed.hits, 'co-op parity');
+    if (COOP_TESTS_ENABLED) assert.deepEqual(coop(shipped, cardId, status).hits, exposed.hits, 'co-op parity');
   });
 }
 

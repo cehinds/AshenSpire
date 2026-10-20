@@ -144,6 +144,15 @@ the job-level `if:` (`ci.yml` gates each job on its `stage` input for dispatch).
 
 Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 
+Dedicated co-op tests and `coop-hud.yml` run only when
+`content/config/ui/screens/title.json` has `behavior.coopEnabled: true`.
+While false, discovery prints the skip reason before sharding; mixed suites
+keep their solo cases and `tests/coop-parked.test.mjs` remains active. Tests are
+retained. Re-enable the authored switch and run `node tools/config-build.mjs` to restore
+the co-op lanes automatically (`tests/feature-scopes.js` also works in the
+browser test harness).
+
+
 | Check (workflow → job) | Worker push | PR into `dev` / push to `dev` | test | release |
 |---|---|---|---|---|
 | `worker-check.yml` → sanity: receipts self-test (`tools/receipts.mjs --selftest`) | yes | — | — | — |
@@ -1041,6 +1050,8 @@ Use these source locations when changing it in Visual Studio:
 | Enemy starting range and paid closing move | `games/ashenspire/packs/core/characters.json` and `enemyCards.json`; conversion helper `tools/lib/core-range-content.mjs` |
 | Pair distance, route quote and receipt validation | `src/model/combatEngagement.js` |
 | Runtime payment, committed source and reaction context | `src/engine/combatEngagement.js` |
+| Conditional follow-up targets and shared action payment | `src/engine/combatRangeLineage.js` |
+| Saved action and trigger validation | `src/model/combatReactionState.js`, `src/model/combatRangeLineageState.js` |
 | Selected-card route controls | `src/ui/models/CombatRangeActionModel.js`, `src/ui/components/combatRangeAction.js`, `styles/combat-range-action.css` |
 | Quantified Precision/Evade tags and concise face copy | `src/model/cardBonusTags.js`, `src/model/cardFaceText.js` |
 

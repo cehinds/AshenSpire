@@ -13,7 +13,7 @@ import { syncWardMaximum } from './combatPools.js';
 // Tactical profiles share the ordinary action queue. No card IDs or UI state.
 import { combatMatchups, combatExpansionMatchups } from '../content/combatMatchups.js';
 import * as Avoidance from './combatAvoidance.js';
-import { attackHitPreview, resolveAttackHit } from './stanceHit.js';
+import * as Hit from './stanceHit.js';
 import { RANGES } from '../model/combatRanges.js';
 import { creditKnowledgeBenefit } from './enemyKnowledge.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
@@ -457,7 +457,7 @@ function preparedCounter(ctx, target, carrier, options) {
 /** One matchup matrix for HP, Poise and Ward; callers apply it only to landed contacts. */
 export function stancePressureMultiplier(ctx, source, target, carrier, hitReceipt = null) {
   if (!combatExpansionEnabled(ctx)) return 1;
-  const hit = hitReceipt || attackHitPreview(ctx, source, target, carrier, { evadeDisabled: restrictions(ctx, target, {}).evadeDisabled });
+  const hit = hitReceipt || Hit.attackHitPreview(ctx, source, target, carrier, { evadeDisabled: restrictions(ctx, target, {}).evadeDisabled });
   return stanceMultiplier(ctx, target, normalizedProfile(carrier), hit);
 }
 function stanceMultiplier(ctx, target, profile, hit) {
@@ -493,7 +493,7 @@ export function assertSingleActionCamp(carrier, contacts = []) {
 }
 
 export function previewTacticalAction(ctx, source, target, carrier, contacts = [], options = {}) {
-  assertSingleActionCamp(carrier, contacts);
+  if (!ctx.rangeState) assertSingleActionCamp(carrier, contacts);
   const cfg = expansionMatchupRules(ctx);
   const control = restrictions(ctx, target, options);
   const counter = preparedCounter(ctx, target, carrier, options);
@@ -512,7 +512,7 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
       hpLoss: 0, blocked: 0, wardResisted: 0, statusAccepted: 0, statusResisted: 0,
       avoided: false, connected: true, completed: false };
   }
-  const counterAttack = attackHitPreview(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled });
+  const counterAttack = Hit.attackHitPreview(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled });
   const multiplier = profiles.map(profile => stanceMultiplier(ctx, target, profile, counterAttack));
   const weighted = contacts.map((contact, index) => contact.effect === 'status' ? 0 : number(contact.amount) * multiplier[index]);
   const rawTotal = weighted.reduce((n, amount) => n + amount, 0);
@@ -556,7 +556,7 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
   receipt.begun = true;
   if (configuredCombat(ctx)) {
     if (fixCoreEnabled(ctx)) {
-      const hit = resolveAttackHit(ctx, source, target, carrier);
+      const hit = Hit.resolveAttackHit(ctx, source, target, carrier);
       receipt.counterAttack = hit;
       receipt.avoided = hit ? !hit.hit : false;
       receipt.connected = !receipt.avoided;
@@ -569,7 +569,7 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
     return receipt;
   }
   const control = restrictions(ctx, target, options);
-  const counterAttack = resolveAttackHit(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled, suppressOutcomeEvent: true });
+  const counterAttack = Hit.resolveAttackHit(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled, suppressOutcomeEvent: true });
   if (counterAttack) receipt.counterAttack = counterAttack;
   receipt.avoidance = counterAttack && !counterAttack.hit
     ? { resolved: true, avoided: true, distance: null, evade: null, reason: counterAttack.missReason,
@@ -699,9 +699,12 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     // Core 2 (SPEC §17): a covered hit that lands answers, whatever got through. Legacy needs the hit fully resisted.
     || (!counterRuleActive(ctx) && (receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload))
     || (CounterRule.counterReturnSpent(target) && !CounterRule.paidCounterContact(ctx, carrier, counter))) return queue;
-  returnCarrier = Engagement.authorizeCounterRange(ctx,target,source,counter.carrier,carrier);
-  if (!returnCarrier) return queue;
-  target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
+  const deferredRangeReturn = ctx.rangeState?.policy.enabled === true;
+  if (!deferredRangeReturn) {
+    returnCarrier = Engagement.authorizeCounterRange(ctx,target,source,counter.carrier,carrier);
+    if (!returnCarrier) return queue;
+    target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
+  }
   // Reaction rules version 2: Counterstrike scales the authored payload first; SPEC §4.8's return formulas run after.
   const trait = ctx.reactionRulesVersion === 2 ? counter.carrier?.traitValues || {} : {};
   const strike = trait.counterstrike ? counterstrikePct(ctx, 'counter', stanceManeuverOf(source, receipt.profile?.maneuver)) : null;
@@ -753,6 +756,14 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   if (!(coreFixed && isSpellCounter(counter.carrier)) && trait.flux > 0) payload.ward = payload.ward > 0 ? 2 * payload.ward : trait.flux;
   const event = { ...eventCarrier(target, counter.carrier), ...seats(ctx, target, source),
     sourceId: target.id, targetId: source.id, amount: payload.hp, poiseDamage: payload.poise, wardDamage: payload.ward, wardOnly: magical && payload.hp === 0 };
+  if (deferredRangeReturn) {
+    // No offensive action exists after rounding: do not reserve hypothetical
+    // rider targets or spend its cycle. The interception is already resolved.
+    if (!(payload.hp > 0 || payload.poise > 0 || payload.ward > 0)) { ctx.emit?.('combatCounterTriggered', event); return queue; }
+    returnCarrier = Engagement.authorizeCounterRange(ctx,target,source,counter.carrier,carrier);
+    if (!returnCarrier) return queue;
+    target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
+  }
   if (payload.hp > 0) enqueue({ op: 'damage', amount: payload.hp });
   if (payload.poise > 0) enqueue({ op: 'poiseDamage', amount: payload.poise });
   if (payload.ward > 0) enqueue({ op: 'wardDamage', amount: payload.ward });

@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -89,7 +91,7 @@ test('explicit wrong-hand spells fail atomically instead of borrowing the sword'
 });
 
 test('solo and co-op capture the focus before a resource-spent event changes it', () => {
-  for (const coop of [false, true]) {
+  for (const coop of COOP_MODES) {
     const input = mixedInput();
     const c = coop ? createCoopCombat({ ...input, players: [{ ...input.player, id: 'p1' }], combatProfiles: {
       p1: input.combatProfiles.player, e1: input.combatProfiles.e1,
@@ -171,7 +173,7 @@ test('save restoration preserves source ownership and exact-preview behavior', (
   assert.deepEqual(dispatch(copy, intent), expected);
 });
 
-test('co-op spells inherit from their own focus rather than another seat or their sword', () => {
+test('co-op spells inherit from their own focus rather than another seat or their sword', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const input = mixedInput();
   const c = createCoopCombat({ ...input, players: [{ ...input.player, id: 'p1' }, { ...input.player, id: 'p2' }], combatProfiles: {
     p1: input.combatProfiles.player,

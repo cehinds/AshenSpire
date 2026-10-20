@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { createRunState, serializeRun, deserializeRun, validateRunShape } from '../src/model/state.js';
 import { createRunCombat, runCombatPlayer } from '../src/engine/runCombat.js';
@@ -91,7 +92,7 @@ test('malformed pairs, actors and range policy are refused at the solo load door
   }
 });
 
-test('co-op duplicate player entity ids retain distinct seat-owned pairs', () => {
+test('co-op duplicate player entity ids retain distinct seat-owned pairs', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const player = id => ({ ...runCombatPlayer(createRunState({ registries, classId: 'reaver', seed: 4 })), id, combatExpansionVersion: 2, deck: [{ cardId: 'core.counter', instanceId: 'same-card-id', upgraded: false }] });
   const combat = stamp(createCoopCombat({ registries, rng: createRng(4), gameProfile: profile, combatExpansionVersion: 2, players: [player('a'), player('b')], enemyIds: ['wanderingSoldier'] }));
   assert.equal(combat.players.get('a').entity.id, combat.players.get('b').entity.id);
@@ -252,7 +253,7 @@ test('a real paid three-hit approach resumes through SaveManager without repeat 
   assert.equal(restored.pair, 2, 'temporary Advance never moves the persistent pair');
 });
 
-test('a real co-op fan-out pays the greatest approach once and restores both seat contacts', () => {
+test('a real co-op fan-out pays the greatest approach once and restores both seat contacts', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const players = ['a', 'b'].map(id => ({ ...runCombatPlayer(createRunState({ registries, seed: 511, classId: 'reaver' })), id, combatExpansionVersion: 2,
     deck: [{ cardId: 'core.counter', instanceId: 'shared-card-id', upgraded: false }] }));
   const combat = createCoopCombat({ registries, rng: createRng(511), players, enemyIds: ['wanderingSoldier'],

@@ -122,7 +122,7 @@ export const TARGETS = Object.freeze([
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
   'ashenBlightPaid', 'barrierGained', 'barrierBroken', 'wardBroken', 'poiseBroken', 'blockBroken', 'enemyInterrupted', 'controlRecovered', 'controlResolveScheduled', 'persistentWardChanged', 'persistentPoiseChanged', 'statusGaugeFilled', 'statusPoiseBreak', 'statusPressure', 'statusRecoveryRolled',
-  'combatAvoidanceResolved', 'combatEngagementMoved', 'combatRangeReturnUnavailable',
+  'combatAvoidanceResolved', 'combatEngagementMoved', 'combatRangeReturnUnavailable', 'combatRangeActionUnavailable',
   'combatCounterArmed', 'combatCounterConsumed', 'combatCounterTriggered',
   'combatWardStripped', 'combatMatchupApplied', 'combatDamageRider',
   'evadeGained', 'attackEvaded', 'impactDealt', 'manaRecovered',

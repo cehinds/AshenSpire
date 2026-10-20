@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
 import { contentBundle } from '../src/content/index.js';
@@ -60,7 +61,7 @@ test('preserves older valid addresses and classic dimensions exclude extra cells
   const classic=formationDimensions({perspectiveGrid:false,formationPolicy:combat.formationPolicy},7);
   assert.equal(classic.extraCells,undefined);assert(!isFormationCell('A5',classic,'enemy'));
 });
-test('co-op uses the same extra occupancy and persists it through the graph snapshot',()=>{
+test('co-op uses the same extra occupancy and persists it through the graph snapshot', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
   const {combat,options}=fixture('current',{},true);
   assert.equal(combat.enemies[6].formationCell,'A5');
   const restored=createCoopCombat({...options,rng:createRng(311),players:[player()],snapshot:serializeCoopCombatSnapshot(combat)});
@@ -73,7 +74,7 @@ test('Classic player column addresses remain saveable with a profile policy',()=
   assert.equal(restored.player.formationCell,'B2');
 });
 
-test('a co-op late join receives an unoccupied stable player cell',()=>{
+test('a co-op late join receives an unoccupied stable player cell', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
   const {combat}=fixture('current',{},true);const before=formationOccupancy(combat);
   const newcomer={...player(),id:'two'};joinCombat(combat,newcomer);
   const after=formationOccupancy(combat);assert.deepEqual(after.filter(row=>row.id!=='two'),before);

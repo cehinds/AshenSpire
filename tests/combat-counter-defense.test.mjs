@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -32,7 +34,7 @@ function finishTurn(combat, coop = false) {
 }
 const blockEvents = combat => combat.eventLog.filter(event => event.type === 'blockGained' && event.targetId === combat.enemies[0].id);
 
-for (const coop of [false, true]) {
+for (const coop of COOP_MODES) {
   const mode = coop ? 'co-op' : 'solo';
   test(`${mode} Counter defense prepares once and leaves no phantom Block on fresh Attack`, () => {
     const combat = fight(registry(), coop), enemy = combat.enemies[0];
@@ -91,7 +93,7 @@ test('older unprimed Counter intent still resolves its ordinary Block payload', 
 
 test('solo and co-op capture conditional Counter values after payment, before their own support', () => {
   const registries = createRegistries(legacyContentBundle);
-  for (const coop of [false, true]) for (const cardId of ['guardCounter', 'riposte']) for (const block of [0, 2]) {
+  for (const coop of COOP_MODES) for (const cardId of ['guardCounter', 'riposte']) for (const block of [0, 2]) {
     const actor = { ...player(), deck: [{ instanceId: 'counter', cardId }] };
     const options = { registries, rng: createRng(340), enemyIds: ['wanderingSoldier'] };
     const combat = coop ? createCoopCombat({ ...options, players: [{ id: 'seat', ...actor }], ratingsRules: null })
