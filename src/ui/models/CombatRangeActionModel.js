@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 // Display only: every price, distance and chance comes from the engine quote.
 const percent = value => Number.isFinite(value) ? `${Number(value.toFixed(2))}%` : null;
 function chanceLabel(target, current) {
@@ -6,21 +7,21 @@ function chanceLabel(target, current) {
   if (Number.isFinite(scalar)) return percent(scalar);
   if (!values.length) return null;
   const low = Math.min(...values), high = Math.max(...values);
-  return low === high ? percent(low) : `${Number(low.toFixed(2))}–${Number(high.toFixed(2))}% (varies by hit)`;
+  return low === high ? percent(low) : t('combat.range.chanceSpan', { low: Number(low.toFixed(2)), high: Number(high.toFixed(2)) });
 }
 function targetChanceLabel(target, current) {
   const covered = current ? target?.currentInRange : target?.inRange;
   const contacts = target?.contacts;
   const allUnreachable = contacts?.length ? contacts.every(contact => (current ? contact.currentInRange : contact.inRange) === false)
     : covered === false && !(current ? target?.currentHitChances : target?.hitChances)?.some(value => value > 0);
-  return allUnreachable ? 'Out of range · 0%' : chanceLabel(target, current);
+  return allUnreachable ? t('combat.range.outOfRange') : chanceLabel(target, current);
 }
 export function rangeHitLabel(preview, { current = true, targetId } = {}) {
   const targets = preview?.range?.targets;
   const target = targetId ? targets?.find(row => row.targetId === targetId) : targets?.[0];
   const row = target ?? { inRange: preview?.inRange, currentInRange: preview?.inRange, hitChance: preview?.hitChance, currentHitChance: preview?.hitChance };
   const label = targetChanceLabel(row, current);
-  return label && target?.precisionDelta > 0 ? `${label} · +${target.precisionDelta} Precision` : label;
+  return label && target?.precisionDelta > 0 ? t('combat.range.precisionBonus', { chance: label, amount: target.precisionDelta }) : label;
 }
 const needsApproach = target => target.allCurrentInRange === false || target.currentInRange === false || target.contacts?.some(contact => contact.currentInRange === false);
 export function combatRangeActionPlan(preview, { targetName = id => id, targetId } = {}) {
@@ -30,15 +31,15 @@ export function combatRangeActionPlan(preview, { targetName = id => id, targetId
   const routes = range.routes.filter(route => route.id !== 'throw' || range.selectedRoute === 'throw' || route.targets.some(target => needsApproach(target) && target.inRange)).map(route => {
     const targets = targetId ? route.targets.filter(target => target.targetId === targetId) : route.targets;
     const label = route.id === 'throw'
-      ? `Throw${route.precisionDelta < 0 ? ` · ${route.precisionDelta} Precision` : ''}`
-      : route.targets.some(needsApproach) ? `Advance · +${route.advanceSp} SP` : 'Attack';
+      ? route.precisionDelta < 0 ? t('combat.range.throwPenalty', { delta: route.precisionDelta }) : t('combat.range.throw')
+      : route.targets.some(needsApproach) ? t('combat.range.advance', { amount: route.advanceSp }) : t('stance.name.attack');
     const cost = route.costs;
-    const total = cost ? `Total ${cost.energy} SP${cost.mana ? ` · ${cost.mana} MP` : ''}` : null;
+    const total = cost ? cost.mana ? t('combat.range.totalSpMp', { sp: cost.energy, mp: cost.mana }) : t('combat.range.totalSp', { amount: cost.energy }) : null;
     return { id: route.id, label, total, selected: range.selectedRoute === route.id,
       available: route.available, affordable: route.affordable,
-      reason: !route.available ? 'Unavailable at this distance' : route.affordable === false ? 'Not enough resources' : null,
+      reason: !route.available ? t('combat.range.unavailable') : route.affordable === false ? t('combat.range.insufficient') : null,
       odds: targets.map(target => ({ targetId: target.targetId,
-        text: `${targetName(target.targetId)} · ${['Melee', 'Reach', 'Ranged'][target.band]} · ${targetChanceLabel(target, true) ?? 'Chance unavailable'} → ${route.id === 'throw' ? 'Throw' : route.targets.some(needsApproach) ? 'After Advance' : 'Attack'} ${targetChanceLabel(target, false) ?? 'chance unavailable'}${target.precisionDelta > 0 ? ` · +${target.precisionDelta} Precision` : ''}` })),
+        text: t('combat.range.targetOdds', { target: targetName(target.targetId), band: t(`combat.range.band.${['melee', 'reach', 'ranged'][target.band]}`), current: targetChanceLabel(target, true) ?? t('combat.range.chanceUnavailable'), route: route.id === 'throw' ? t('combat.range.throw') : route.targets.some(needsApproach) ? t('combat.range.afterAdvance') : t('stance.name.attack'), after: targetChanceLabel(target, false) ?? t('combat.range.chanceUnavailable'), bonus: target.precisionDelta > 0 ? t('combat.range.precisionSuffix', { amount: target.precisionDelta }) : '' }) })),
     };
   });
   return { selectedRoute: range.selectedRoute, routes };
