@@ -274,6 +274,15 @@ function verifyGearContent(content, settings) {
     ids.add(item.id);
     if (!settings.rarities.includes(item.rarity)) fail(`${at}/rarity`, `unknown rarity '${item.rarity}'`);
     for (const t of item.tags || []) if (!settings.tags[t]) fail(`${at}/tags`, `unknown tag '${t}'`);
+    // Cards the item lends its wearer while equipped (owner 2026-10-19): known card ids, positive integer copies.
+    if (item.grantedCards !== undefined) {
+      if (!Array.isArray(item.grantedCards)) fail(`${at}/grantedCards`, `expected an array of {card, copies} rows for item '${item.id}'`);
+      const cardIds = new Set((content.cards || []).map(card => card.id));
+      for (const [i, row] of item.grantedCards.entries()) {
+        if (!record(row) || !cardIds.has(row.card)) fail(`${at}/grantedCards/${i}/card`, `unknown card reference ${JSON.stringify(row?.card)} for item ${item.id} row ${i}`);
+        if (!Number.isSafeInteger(row.copies) || row.copies < 1) fail(`${at}/grantedCards/${i}/copies`, `expected positive integer copies for item ${item.id} row ${i}, got ${JSON.stringify(row.copies)}`);
+      }
+    }
     for (const k of Object.keys(item.points || {})) if (!GEAR_KEYS.includes(k) || !Number.isSafeInteger(item.points[k]) || item.points[k] < 0) fail(`${at}/points/${k}`, 'expected known key and nonnegative integer');
     for (const [pool, weights] of Object.entries(item.weights || {})) {
       if (!['ratings','bonus'].includes(pool)) fail(`${at}/weights/${pool}`, 'unknown weight pool');

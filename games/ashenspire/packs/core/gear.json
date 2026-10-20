@@ -321,6 +321,12 @@
     "points": {
       "intelligence": 1
     },
+    "grantedCards": [
+      {
+        "card": "core.manaSurge",
+        "copies": 1
+      }
+    ],
     "source": {
       "file": "content/source/weapons.csv",
       "id": "boneSceptre"
