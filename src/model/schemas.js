@@ -643,6 +643,7 @@ const modifiersSchema = obj(Object.fromEntries(
 ));
 
 const enemyMoveSchema = obj({
+  range: opt(en('melee', 'reach', 'ranged')),
   // The move's SP price (SPEC §4.6a): replaces the stance table's. A boss move's price is authored here.
   sp: opt(int),
   counterDamage: opt(int),
@@ -1062,6 +1063,10 @@ export const SCHEMAS = Object.freeze({
     blighted: opt(bool), // blight shifts its attributes (content/actionCosts.js ENEMY_BLIGHT_SHIFT)
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
+    startingRange: opt(en('melee', 'reach', 'ranged')),
+    rangeClosingMove: opt(str),
+    rangeRoutePolicy: opt(en('advance')),
+    moveSources: opt(mapOf(obj({ cardId: str }))),
     phases: opt(arr(enemyPhaseSchema)),
     art: opt(str),
     size: opt(en('small', 'medium', 'large')), // sprite size tier (display)
