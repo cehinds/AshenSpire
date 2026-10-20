@@ -6525,3 +6525,13 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
   grid-template-columns: minmax(0, 16rem);
   justify-content: center;
 }
+
+/* Combat-log actor roles are named in the legend as well as separated by hue. */
+.combat-log-actor { font-weight:600; }
+.combat-log-actor[data-combat-log-side='player'] { color:var(--combat-log-player-color); }
+.combat-log-actor[data-combat-log-side='enemy'] { color:var(--combat-log-enemy-color); }
+.combat-log-role-legend { display:flex; flex-wrap:wrap; align-items:center; gap:1rem; padding:0 0 0.45rem; color:var(--parchment); font-size:0.9em; }
+.combat-log-role { display:inline-flex; align-items:center; gap:0.4rem; }
+.combat-log-role-swatch { width:0.75em; height:0.75em; border:1px solid currentColor; border-radius:50%; }
+.combat-log-role--player .combat-log-role-swatch { background:var(--combat-log-player-color); }
+.combat-log-role--enemy .combat-log-role-swatch { background:var(--combat-log-enemy-color); }

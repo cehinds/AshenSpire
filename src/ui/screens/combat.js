@@ -279,6 +279,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const combatEl = $('.combat');
   const combatToolsState = { open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true };
   const combatTools = mountCombatTools(combatEl, { state: combatToolsState,
+    readSettings,
     onGridToggle: enabled => onSettingsChange?.({ 'gameConfig.presentation.showFormationGrid': enabled }),
     readAuto: () => resolveCombatAutomation(readSettings()).enabled,
     onAutoToggle: async enabled => {
