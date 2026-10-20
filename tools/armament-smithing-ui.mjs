@@ -222,7 +222,9 @@ async function main() {
       const openSelected = async (stones, itemRef = 'armament/straightSword', itemName = 'Straight Sword') => {
         errors.set(sessionId, []);
         await cdp.send('Page.navigate', {
-          url: `http://127.0.0.1:${served.port}/?shot=rest&shotSmithingStones=${stones}`,
+          // These receipts exercise the historical armament kit (straightSword,
+          // AR/Guard, armor thresholds), independently of the new-game default.
+          url: `http://127.0.0.1:${served.port}/?gameProfile=current&shot=rest&shotSmithingStones=${stones}`,
         }, sessionId);
         await until(`!!document.querySelector('#smith-opt') && document.querySelector('#smith-opt').getClientRects().length>0`, 'Shrine Smith option');
         await evaluate('document.fonts && document.fonts.ready');
@@ -632,7 +634,7 @@ async function main() {
       if (!shape.mobile) {
         errors.set(sessionId, []);
         await cdp.send('Page.navigate', {
-          url: `http://127.0.0.1:${served.port}/?shot=coopshrine`,
+          url: `http://127.0.0.1:${served.port}/?gameProfile=current&shot=coopshrine`,
         }, sessionId);
         await until(`!!document.querySelector('#coop-smith')`, 'co-op Shrine Smith option');
         const coopDoor = await evaluate(`(() => {
@@ -654,7 +656,7 @@ async function main() {
           'SMITH-UI-COOP-SHOT-MODAL', `co-op Shrine shot opens the shared real-delta review (${JSON.stringify(coopModal)})`);
 
         await cdp.send('Page.navigate', {
-          url: `http://127.0.0.1:${served.port}/?shot=reward`,
+          url: `http://127.0.0.1:${served.port}/?gameProfile=current&shot=reward`,
         }, sessionId);
         await until(`!!document.querySelector('.reward-kind[data-kind="smithingStone"]')`, 'Smithing Stone reward row');
         const reward = await evaluate(`(() => {
@@ -666,7 +668,7 @@ async function main() {
           'SMITH-UI-REWARD-SHOT-FAUCET', `non-empty reward shot displays the real claimed elite faucet (${JSON.stringify(reward)})`);
 
         await cdp.send('Page.navigate', {
-          url: `http://127.0.0.1:${served.port}/?shot=reward&shotReward=pending`,
+          url: `http://127.0.0.1:${served.port}/?gameProfile=current&shot=reward&shotReward=pending`,
         }, sessionId);
         await until(`!!document.querySelector('.reward-kind[data-kind="smithingStone"]')`, 'restored pending Smithing Stone reward row');
         const pending = await evaluate(`(() => {
@@ -697,7 +699,7 @@ async function main() {
           'SMITH-UI-REWARD-PARTIAL-CHECKPOINT', `a partially collected row persists its Taken state with the run mutation (${JSON.stringify(partial)})`);
 
         await cdp.send('Page.navigate', {
-          url: `http://127.0.0.1:${served.port}/?shot=reward&shotReward=empty`,
+          url: `http://127.0.0.1:${served.port}/?gameProfile=current&shot=reward&shotReward=empty`,
         }, sessionId);
         await until(`!!document.querySelector('#reward-continue')`, 'empty reward pose');
         check(await evaluate(`!document.querySelector('.reward-kind[data-kind="smithingStone"]') && document.querySelectorAll('.reward-kind').length===0`),
