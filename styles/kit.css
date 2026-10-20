@@ -2209,7 +2209,11 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   margin-top: 0.9rem; padding: 0.8rem 0 1.28rem; border-top: 1px solid var(--line); background: var(--panel);
 }
 .smith-cost-strip > .as-blocker.pinned { margin: 0; }
-.smith-selected-head > .sr-name { font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); }
+.smith-selected-head > .sr-name,
+.smith-upgrade-modal .smith-upgrade-fold > summary .sr-name {
+  font-family: var(--font-body); font-size: max(1.4rem, calc(15px / var(--ui-zoom, 1)));
+  font-weight: 600; line-height: 1.2; color: var(--parchment);
+}
 .smith-preview-economy { display: flex; align-items: baseline; }
 .smith-economy-values { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.45rem; font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); }
 .smith-economy-values > b { white-space: nowrap; font-weight: 600; }
@@ -2222,7 +2226,7 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-preview-card .sr-vals { flex-direction: column; align-items: flex-end; gap: 0.3rem; }
 /* A fact row that runs out of room stacks its values under its name. */
 .smith-preview-card > .as-statrow.flat { flex-wrap: wrap; }
-.smith-preview-card > .as-statrow.flat > .sr-id { flex: 1 1 12rem; }
+.smith-preview-card > .as-statrow.flat > .sr-id { flex: 1 1 12rem; width: auto; max-width: 100%; }
 .smith-preview-card > .as-statrow.flat > .sr-vals { flex: 1 1 14rem; }
 .smith-stat-costs > i { font-style: normal; }
 .smith-requirement small { display: block; color: var(--muted); font-size: 1.05rem; text-align: right; }
