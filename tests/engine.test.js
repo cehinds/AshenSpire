@@ -117,10 +117,10 @@ import {
   selectStartingHand, resolveCreationHands,
 } from '../src/model/characterCreation.js';
 // The shrine lane and the level: both of Constantine's 2026-08-16 shrine asks
-// that a headless suite can reach. `mapknowledge.js` is pure by design (its own
+// that a headless suite can reach. `map/mapknowledge.js` is pure by design (its own
 // header says so) and `levelup.js` touches no DOM, so the "no DOM access" rule
 // at the top of this file still holds.
-import { nearestShrine, shrineLane, litNodes } from '../src/model/mapknowledge.js';
+import { nearestShrine, shrineLane, litNodes } from '../src/model/map/mapknowledge.js';
 import { levelUpPlan, applyLevelUp, awardLevelXp, xpToNext as xpToNextLevel, combatLevelXp, questLevelXp, characterLevel } from '../src/model/levelup.js';
 import { levelProblems } from '../src/model/state.js';
 import { playerLevel } from '../src/model/levels.js';
@@ -7348,8 +7348,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([...combatTopics.keys()].join(','), 'Animation & effects,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'askToUpcastAfterTarget,useSprites,autoCombat,combatSpeed,autoCombatSpeed,combatStepPause,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
-      'every combat pacing, quality, shake, sprite, played-card and upcast switch is under one name');
+      'askToUpcastAfterTarget,combatLogPlayerColor,combatLogEnemyColor,useSprites,autoCombat,combatSpeed,autoCombatSpeed,combatStepPause,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
+      'every combat pacing, log identity color, quality, shake, sprite, played-card and upcast switch is under one name');
     eq(combat.find(r => r.key === 'askToUpcastAfterTarget').def, false, 'upcast prompting defaults off');
     eq(combatTopics.get('Armaments').map((r) => r.key).join(','),
       'armamentsPresentation,armamentsPhonePlacement',

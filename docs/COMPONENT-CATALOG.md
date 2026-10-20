@@ -1,5 +1,15 @@
 # AshenSpire component catalog
 
+Combat feedback uses `CombatActionIdentityModel` to name the committed card,
+enemy move and actual armament receipt (including explicit Unarmed). Solo and
+co-op share the FX timeline: identity, action animation, Hit/Miss, target
+reaction, then damage/defense outcome. Range misses say **Out of range** directly
+above the target. The default gap between indications is 500ms; saved custom
+pauses and sprite clip durations retain their own values. In new Core fights,
+each incoming hit is shown before its reaction choice, and its paid Counter
+finishes before the next hit. Historical saves retain their saved reaction
+policy. The visual catalog's `damage-feedback` miniature shows this sequence.
+
 The map's `act-route-strip` uses `ActRouteModel` and `actRouteStripHtml` to show
 the act title, Entrance, a fixed evenly spaced circle for each non-boss floor,
 and Boss on one desktop row. Committed visits fill circles with the shared map
@@ -55,7 +65,7 @@ packs and their objects into one zip, checking each file as it is written. See
 [offline play](offline-play.md).
 
 All run maps share the vector face in `mapNodeInk.js`: opaque dark discs, readable
-glyphs, a pale current-node marker and reachable halos. `mapview.js` owns the
+glyphs, a pale current-node marker and reachable halos. `map/mapview.js` owns the
 node radii; `AtlasCameraModel.js` frames a journey junction using that same close-up
 scale. World map fog compositing is bounded to the visible viewport.
 
@@ -407,6 +417,7 @@ The interactive reference catalog's detail drawer links to the same specimens.
 | `settings-level-pace` | `LevelPacePreviewModel.levelPacePreview` → `levelup.levelPace` | `settings.levelPacePreviewHtml` | Settings / Advanced / Progression / Experience and Level-up |
 | `victory-progress` | `rewardProgress`, `rewardXpPresentation` and saved XP receipts | `reward.mountRewards`, `coopXpProgression.mountCoopXpProgression`, `coopProgressionDoor.mountCoopProgressionDoor` | Solo Victory and co-op progression doors show only paid tracks in Class → Character → current skill level order. Bars fill sequentially at one normalized velocity; full bars turn blue immediately, but all Level up controls appear together only when every fill ends and Continue becomes green and enabled. A manual claim opens its funded chooser before residual and newly paid class-to-skill XP refill on return; other settled bars remain stable. Pending choices and co-op XP history survive reload. Capped tracks stay noninteractive; deferred banked levels remain claimable without a new XP receipt. |
 | `victory-xp-receipt` | `combatXpReceipt` + `victoryXpPresentation` over the saved fight reward | `reward.mountRewards` compact Victory | Combat-power and enemy XP count in order; the total grows alongside a compact calculation, with `+…` revealing the full formula. A fixed-height list scrolls as rows arrive, then Continue turns green after its configured pause. |
+| `configured-level-summary` | `gameProfileProgression.skillLevelNotices` over existing XP awards | `gameProfileLevelUp.mountGameProfileLevelUp` + `rewardDoor.mountRewardDoor` | Configured victory shows actual automatic class and used weapon-group level crossings before existing rewards, naming the committed weapon beside its group level. The saved receipt resumes until Continue acknowledges it. This is informational: no additional drops or unsupported legacy reward queues. Equipment procedural rank remains driven by Smithing tiers. |
 | `mode-choice` | creation mode + selected state | `creationCards.modeChoiceButton` | Standard/Assign Points + catalog |
 | `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog; Animated is the default when no explicit style is stored. |
 | `tint-choice` | tint row + selected state | `creationCards.tintChoiceButton` | Appearance + catalog |
@@ -440,7 +451,7 @@ primary-stat-card
 | `shrine-option-card` | `balance.ui.shrinePresentation` + option plan | `rest.mountRest` | Rest / Smith / Flask Allocation / Level Up / Deck editor (Rest sites only) |
 | `smith-upgrade-modal` | `SmithSelectionModel` | `smithUpgradeModal.mountSmithUpgradeModal` | Dedicated Smith choose/review transaction |
 | `smith-candidate-card` | `SmithSelectionModel.properties.candidates[]` | shared `card.renderCard` plus armament-tier banner inside Smith modal | One distinct owned armament below the run tier cap |
-| `smith-upgrade-preview` | `SmithSelectionModel.properties.selected` | grouped delta renderer inside Smith modal | Tier, cost, purse, shortfall, and every sourced basic-card delta |
+| `smith-upgrade-preview` | `SmithSelectionModel.properties.selected` | grouped delta renderer inside Smith modal | Tier, cost, purse, shortfall, and every sourced basic-card delta; narrow summaries stack full labels and ownership above numeric benefits, and refusal notes preserve preview space |
 | `deck-editor` | `DeckEditorModel.deckEditorModel` + `openDeckEdit` session (`beginDeckEdit`/`cancelDeckEdit`) + `deckEditorDoors` + `gameAnimationPolicy.figureAnimationsEnabled` | `deckEditor.mountDeckEditor` + `deckCardAnimationPreview` | Armoury Edit Deck tab (Free); Rest card of a `deckEdit` place — shrine, inn, chapel (Rest sites only). Two panes (collection / deck), live "N / min–max" counter with the refusal as visible text beside a disabled Done, cost curve, filter and sort chips; tap, ＋/－, drag, keyboard and pad for every move; targets ≥ 48 px on a coarse pointer. Desktop preview follows the run-pinned animation module; disabling it retains the resting figure and disables playback without changing stage geometry. |
 | `blacksmith` | `model/blacksmith.js` plans (refine, sigil slots and setting, upgrade from either purse, extract/install/upgrade art, stack copy) + `serviceCandidates` | `blacksmith.mountBlacksmith` (shop W1d workspace, `wireShopLayout`; `smithUpgradeModal` and the mount-service modals for upgrade, extract and install) | Atlas smith point; a merchant whose kind rolls `blacksmith` (SPEC §14.4). One rail item per offering the visit laid out; a service with nothing to act on stays on the rail, shown unavailable with its reason, and becomes usable on the same visit; the header carries stones, refined stones and cinders. |
 | `master` | `model/master.js` plans (training, respec, redistribute, lesson, appraisal) + `masterServiceCandidates`; `engine/shopKinds.js rollMasterLesson` | `master.mountMaster` (the blacksmith's shop W1d workspace, `wireShopLayout`) | Atlas `master` point (none placed yet); a merchant whose kind rolls `master` (SPEC §14.5). One rail item per offering the visit laid out, then Sell (the market's consumable sale, under `shopSell`); a service with nothing to act on stays on the rail, shown unavailable with its reason, and becomes usable on the same visit; a lesson's cards are rolled when asked and kept with the stock; the header carries cinders, the training pool and the sessions left. |

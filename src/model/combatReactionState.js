@@ -34,6 +34,28 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
   if (state.reactionHandCleanup !== undefined && !record(state.reactionHandCleanup)) problems.push('Invalid pending hand cleanup');
   const paused = state.pendingReaction || state.reactionResume;
   const incoming = [...queue, ...(Array.isArray(state.reactionResume?.queue) ? state.reactionResume.queue : [])];
+  const groups = new Set(incoming.filter(action => action.meta?.expansionGroup)
+    .map(action => action.meta.expansionGroup));
+  for (const group of groups) {
+    const sequence = group.contactSequence;
+    if (sequence === undefined) continue;
+    const targets = value => record(value) && Object.values(value).every(row => record(row) && text(row.id)
+      && Array.isArray(row.contacts) && row.contacts.length > 0 && row.contacts.every(record));
+    if (state.reactionRules?.contactPolicy !== 'perHit' || !record(sequence) || !text(sequence.rootKey)
+      || !Array.isArray(sequence.contacts) || !sequence.contacts.length
+      || sequence.contacts.some(contact => !record(contact) || !targets(contact.targets))
+      || !Number.isSafeInteger(sequence.index) || sequence.index < 0 || sequence.index >= sequence.contacts.length
+      || group.key !== `${sequence.rootKey}:hit:${sequence.index}` || !targets(sequence.rootTargets)
+      || !record(sequence.gates) || Object.values(sequence.gates).some(value => typeof value !== 'boolean')) {
+      problems.push('Invalid combat contact sequence'); continue;
+    }
+    for (const action of incoming.filter(action => action.meta?.expansionGroup?.key === group.key)) {
+      const index = action.meta.contactIndex;
+      if (index !== undefined && (!Number.isSafeInteger(index) || index < sequence.index || index >= sequence.contacts.length
+        || !Number.isSafeInteger(action.meta.contactEffectIndex) || action.meta.contactEffectIndex < 0
+        || typeof action.meta.contactEffectFirst !== 'boolean')) problems.push('Invalid queued combat contact');
+    }
+  }
   const enemyPayload = incoming.some(action => action.meta?.expansionGroup?.enemyMoveStart);
   if (paused && (state.phase === 'enemy' || enemyPayload) && !state.reactionCursor) problems.push('Enemy reaction requires its turn cursor');
   if (state.reactionCursor && !['enemy', 'suspended'].includes(state.phase)) problems.push('Enemy reaction cursor is outside its phase');
@@ -57,7 +79,7 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
     const stackCap = () => {
       const group = incoming.find(action => action.meta?.expansionGroup?.key === stack.groupKey).meta.expansionGroup;
       const caps = state.reactionRules?.stack || {};
-      return group.counterReturn ? caps.counterReturnMaxDepth : caps.maxDepth;
+      return state.reactionRules?.contactPolicy === 'perHit' ? 1 : group.counterReturn ? caps.counterReturnMaxDepth : caps.maxDepth;
     };
     if (state.reactionRulesVersion !== 2) problems.push('Reaction stack requires reaction rules version 2');
     else if (!record(stack) || !text(stack.groupKey) || typeof stack.resolving !== 'boolean' || !Array.isArray(stack.entries)

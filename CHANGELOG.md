@@ -34,6 +34,12 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-20
 
+- **Clearer combat and faster startup** ([#2218](https://github.com/cehinds/AshenSpire/pull/2218), `0.7.1.1740`). Each incoming hit and its Counter finish before the next reaction choice. Actions identify the card and weapon used, range misses say Out of range, and combat indications default to half-second pauses. Player and enemy log colors are customizable. Precision affects accuracy only and expires unless Persistent; matching-stance discounts apply to enemy-turn reactions. Class and used weapon-group level-ups are shown, rewards have consistent sizes, and folded upgrades show actual stat changes. Repeated startup validation is reused without sharing mutable game registries.
+
+- **Visual Studio setup and clearer folders** ([#2217](https://github.com/cehinds/AshenSpire/pull/2217), `0.7.1.1738`). Open the repository folder in Visual Studio to run shared play, build and test tasks. The developer guide maps the codebase, and local map models now live together with their imports updated.
+
+- **Reliable Load checks** ([#2216](https://github.com/cehinds/AshenSpire/pull/2216), `0.7.1.1736`). Browser checks wait for the turn confirmation to release input before opening Load, while retaining the real clicks and exact restored-save checks.
+
 - **Complete Windows validation** ([#2214](https://github.com/cehinds/AshenSpire/pull/2214), `0.7.1.1734`). Slow simulations now run separately on Windows so the complete test set can finish without competing inside one timed batch.
 
 - **Reliable tutorial checks** ([#2213](https://github.com/cehinds/AshenSpire/pull/2213), `0.7.1.1732`). Tutorial checks now provide their own authored Counter so changes to starting decks cannot skip the real targeting and cancellation checks.

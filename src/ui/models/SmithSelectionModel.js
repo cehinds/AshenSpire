@@ -102,7 +102,9 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       kindLabel: itemKind === 'armor' ? 'Armor' : itemKind === 'relic' ? 'Relic' : 'Armament',
       itemTypes: freeze(itemTypes),
       tags: freeze([...(piece.tags || [])]),
-      intrinsicStats: freeze({
+      // Core item ratings come from the tier receipt below, not the legacy
+      // equipment definition's unrelated base AR/DEF values.
+      intrinsicStats: candidate.core ? null : freeze({
         attackRating: piece.attackRating ?? null,
         defenseRating: piece.defenseRating ?? null,
         // The load weight (itemWeightScale applied), as the Armoury shows it.
@@ -110,6 +112,10 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
         weaponArtManaCost: piece.weaponArtManaCost ?? null,
         uniqueSkillStaminaCost: piece.uniqueSkillStaminaCost ?? null,
       }),
+      // Authoritative item-tier receipts, including armor/shield and non-AR changes.
+      // These are cheap item values; do not force the lazy live-card previews.
+      intrinsicChanges: freeze((candidate.changes || []).filter((change) => change.before !== change.after)
+        .map((change) => freeze({ ...change }))),
       currentLevel: candidate.currentLevel,
       nextLevel: candidate.nextLevel,
       cost: candidate.cost,

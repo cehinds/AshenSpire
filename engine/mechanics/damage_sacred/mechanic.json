@@ -22,6 +22,6 @@
   "portability": "legacy",
   "legacy": {
     "file": "src/engine/combatExpansionActions.js",
-    "symbol": "beginExpandedAction"
+    "symbol": "completedRootTargets"
   }
 }

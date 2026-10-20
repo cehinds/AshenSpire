@@ -31,7 +31,7 @@ import { resolveFloorPlan } from './floorplan.js';
 import { speakerPortraitAsset } from '../content/speakerArt.js';
 import { validateAttack } from './combatRules.js';
 import { assertTableSane } from './secondbeat.js';
-import { viewRefusals, geometryRefusals } from './mapview.js';
+import { viewRefusals, geometryRefusals } from './map/mapview.js';
 import { graceRefillRefusals } from './gracerefill.js';
 import { flaskGrowthRefusals } from './flaskgrowth.js';
 import {
@@ -1890,14 +1890,14 @@ function collectContentProblems(bundle, errors = []) {
 
   // THE MAP'S VERTICAL MARGIN, and it belongs here because it has exactly one
   // data input. `balance.ui.tapSize.def` is what the map node's radius is SOLVED
-  // FROM (model/mapview.js), so raising it grows the target and eats the space
+  // FROM (model/map/mapview.js), so raising it grows the target and eats the space
   // BETWEEN two adjacent targets in the same stroke — at 08e184a, 44.09 px of
   // node against a 47.0 px row pitch at 390x844, under 3 px of air between taps
   // both start a fight nobody can undo (Sunna, 2026-08-08). Nothing was watching
   // that number; a refusal that prints a verdict and not a margin cannot be.
   // THE MAP'S COLLISION MARGIN, and it belongs here because it has exactly one
   // data input. `balance.ui.tapSize.def` is what EVERY map circle's radius is
-  // SOLVED FROM (model/mapview.js), so raising it grows every circle while the
+  // SOLVED FROM (model/map/mapview.js), so raising it grows every circle while the
   // pitches they are measured against do not move — targets grow, the space
   // between them does not. Sunna's sentence, written about the event screen's
   // choice bars weeks ago and true here too: nothing in this game read a gap.
@@ -2550,9 +2550,9 @@ export function validateEffects(effects, path, vctx) {
         err(`${p}.${field}`, `Dangling reference: unknown ${reg} id '${v}'`);
       }
     }
-    if (eff.op === 'damage' && eff.tags !== undefined) {
+    if (['damage', 'applyStatus'].includes(eff.op) && eff.tags !== undefined) {
       if (!Array.isArray(eff.tags) || !eff.tags.length) {
-        err(`${p}.tags`, 'damage tags must be a non-empty array of effect-tag ids');
+        err(`${p}.tags`, `${eff.op} tags must be a non-empty array of effect-tag ids`);
       } else {
         for (const tag of eff.tags) {
           if (!vctx.tagIds.has(tag)) {

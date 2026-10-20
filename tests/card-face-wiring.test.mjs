@@ -43,6 +43,24 @@ test('a card without a preview renders face lines starting with Inflict', () => 
   assert.match(textOf(lines[0]), /^Inflict /);
 }));
 
+test('compact hand attacks omit automatic Entry text but retain authored Precision and full inspection', () => withKitDom(dom => {
+  const markup = trackInnerHtml(dom);
+  const definition = { ...previewOf('bashingBlow').resolvedDefinition,
+    effects: [...previewOf('bashingBlow').resolvedDefinition.effects,
+      { op: 'applyStatus', status: 'precision', target: 'self', stacks: 2 }] };
+  const face = (surface, level) => faceLinesOf(markup.get(renderCard(reg, { cardId: 'bashingBlow' },
+    { definition, surface, level, inspection: false }))).map(textOf).join(' | ');
+  const hand = face('combat', 'glance');
+  assert.doesNotMatch(hand, /Entry:/);
+  assert.match(hand, /Precision 2/, 'an authored Precision effect remains on the hand face');
+  assert.match(hand, /Inflict/, 'the attack still explains its damage');
+  assert.match(face('combat', 'inspect'), /Entry:/, 'full hand inspection includes Entry');
+  assert.match(face('reward', 'glance'), /Entry:/, 'other compact surfaces retain Entry');
+  const defense = markup.get(renderCard(reg, { cardId: 'crystalBarrier' },
+    { definition: previewOf('crystalBarrier').resolvedDefinition, surface: 'combat', level: 'glance', inspection: false }));
+  assert.match(defense, /Entry:/, 'defensive hand cards retain their Entry explanation');
+}));
+
 test('the same card with a preview gives the same line text when the numbers are equal', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
   const plain = faceLinesOf(markup.get(renderCard(reg, { cardId: 'bashingBlow' },
