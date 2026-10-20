@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-20
 
-- **Complete Windows validation** ([#2214](https://github.com/cehinds/AshenSpire/pull/2214), `0.7.1.1732`). Slow simulations now run separately on Windows so the complete test set can finish without competing inside one timed batch.
+- **Complete Windows validation** ([#2214](https://github.com/cehinds/AshenSpire/pull/2214), `0.7.1.1734`). Slow simulations now run separately on Windows so the complete test set can finish without competing inside one timed batch.
 
 - **Reliable tutorial checks** ([#2213](https://github.com/cehinds/AshenSpire/pull/2213), `0.7.1.1732`). Tutorial checks now provide their own authored Counter so changes to starting decks cannot skip the real targeting and cancellation checks.
 
