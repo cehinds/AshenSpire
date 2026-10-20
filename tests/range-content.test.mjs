@@ -12,10 +12,18 @@ import { projectGearRangeMetadata } from '../tools/lib/gear-range-metadata.mjs';
 import { authorEnemyRange } from '../tools/lib/core-range-content.mjs';
 import { equipmentCardModel } from '../src/model/equipmentCard.js';
 import { entryDetail } from '../src/ui/models/CompendiumModel.js';
+import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
+import { loadGameProfileCatalog } from '../tools/game-config.mjs';
 
 const json = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'));
 const dir = 'games/ashenspire/packs/core/';
 const gear = json(dir + 'gear.json'), settings = json('engine/modules/gear/defaults.json');
+
+test('authored Core range content passes the actual profile schema', () => {
+  const profile = resolveGameAuthor(json('games/ashenspire/presets/core.json'), loadGameProfileCatalog());
+  assert.ok(profile.content.cards.some(card => card.id === 'core.advance'));
+  assert.ok(profile.content.enemyCards.some(card => card.id === 'wanderingSoldier.advance'));
+});
 
 test('authored range/property metadata survives framework import without changing weapon contracts', () => {
   const imported = importLegacyContent(contentBundle);

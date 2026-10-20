@@ -373,7 +373,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
-    "icon": "\u25c7",
+    "icon": "move",
     "keywords": [],
     "effects": [
       {
@@ -398,7 +398,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
-    "icon": "\u25c7",
+    "icon": "evade",
     "keywords": [],
     "effects": [
       {
@@ -438,7 +438,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
-    "icon": "\u25c7",
+    "icon": "evade",
     "keywords": [],
     "effects": [
       {
