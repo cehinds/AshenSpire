@@ -2530,7 +2530,7 @@ function showDraft() {
  * NAMED KEYS, NOT "any settings change": a blanket re-mount would redraw the act
  * on every volume nudge, and `mountMap` re-runs the framing camera. The list is
  * the map's own reads — grep `meta.settings` in ui/screens/map.js and
- * model/mapknowledge.js and mapboard.js, and they are the keys below.
+ * model/map/mapknowledge.js and mapboard.js, and they are the keys below.
  *
  * AND "Use flasks outside combat", which the map's Potions control
  * (components/runPotions.js) and the run HUD's flask icons read at mount. A

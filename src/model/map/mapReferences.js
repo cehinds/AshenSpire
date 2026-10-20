@@ -2,8 +2,8 @@
 // without encounter IDs keep their explicit legacy boss mapping (by TIER: such
 // a graph only exists in a pre-§13 save, which the load door gives the default
 // seat order, so tier n is the seat act n always was).
-import { LEGACY_ACT_BOSSES } from '../content/mapconfig.js';
-import { encounterFitsSeat, finalTier } from './seats.js';
+import { LEGACY_ACT_BOSSES } from '../../content/mapconfig.js';
+import { encounterFitsSeat, finalTier } from '../seats.js';
 
 export function assertSavedBossReferences(registries, graph, { seat, tier } = {}) {
   if (!graph) return;

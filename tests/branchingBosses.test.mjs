@@ -6,7 +6,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { generateActMap } from '../src/engine/mapgen.js';
 import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
-import { litNodes } from '../src/model/mapknowledge.js';
+import { litNodes } from '../src/model/map/mapknowledge.js';
 import { createSession, restoreSession } from '../tools/session.mjs';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { createRunState } from '../src/model/state.js';

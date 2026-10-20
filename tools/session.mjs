@@ -54,7 +54,7 @@ import {
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
 import { defaultSeatOrder, seatOrderProblems, seatAtTier, seatTierHpMult, bossTierScale } from '../src/model/seats.js';
-import { assertSavedBossReferences } from '../src/model/mapReferences.js';
+import { assertSavedBossReferences } from '../src/model/map/mapReferences.js';
 import { refreshBossDestinationLabels } from '../src/model/bossDestinationLabels.js';
 import { availableEventChoices, recordEventChoice, questsCompletedBy } from '../src/model/quests.js';
 import { enemyLevelsForFight } from '../src/engine/runCombat.js';

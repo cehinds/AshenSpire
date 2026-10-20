@@ -70,7 +70,7 @@ import {
   pairAir, maxTapDefault, NODE_AIR_MIN_PX, BOOT_GATED_PAIRS, COL_X, ROW_H, NODE_R, REF_ZOOM,
   ZOOM_STEPS, MAP_ZOOM_DEFAULT, mapZoomDefaultIsLegal,
   PHONE_UI_ZOOM, PHONE_UI_ZOOM_MIN, TAP_TARGET_DEFAULT,
-} from '../src/model/mapview.js';
+} from '../src/model/map/mapview.js';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { validateContent } from '../src/model/validate.js';
@@ -438,7 +438,7 @@ const FLOOR_MUST_ACCEPT = [
 // THE SECOND CORPUS, AND IT DID NOT EXIST — Vira, #107. Every row above
 // exercises `resolveFloorPlan`; `viewRefusals` had 215 lines, two knobs and a
 // derived refusal edge, and NOTHING ANYWHERE FALSIFIED IT. The suite has no
-// reference to model/mapview.js, and validate.js points at this corpus for its
+// reference to model/map/mapview.js, and validate.js points at this corpus for its
 // known-bad while the row it needed was not in it. A refusal nobody has watched
 // go red is `unknown`, not green, whatever it prints (the instrument rule).
 //
@@ -622,7 +622,7 @@ const PROPERTIES = [
     // A SOURCE CHECK, and it says so: the runtime cannot flip a module const, so
     // the only way to prove the geometry never learns the word is to read the
     // file. Her fixture asked for the flip; this is the half that survives it.
-    const src = readFileSync(fileURLToPath(new URL('../src/model/mapview.js', import.meta.url)), 'utf8');
+    const src = readFileSync(fileURLToPath(new URL('../src/model/map/mapview.js', import.meta.url)), 'utf8');
     const reads = /Number\s*\(\s*MAP_ZOOM_DEFAULT\s*\)/.test(src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, ''));
     return !reads && Number.isFinite(NODE_R) && Number.isFinite(REF_ZOOM) && pairAir().pairs.every((p) => Number.isFinite(p.gap));
   }],
@@ -789,7 +789,7 @@ function selftest() {
 
 // ------------------------------------------------------------------- driver
 // ------------------------------------------------------------------- spans
-// THE MEASUREMENT model/mapview.js's `maxFanoutSpan` IS, and the reason it is a
+// THE MEASUREMENT model/map/mapview.js's `maxFanoutSpan` IS, and the reason it is a
 // function there rather than a number. It sweeps acts, reports the widest
 // framing the generator can ask the camera to draw, and checks the formula
 // against what it just measured. An observed maximum is a FLOOR under the true

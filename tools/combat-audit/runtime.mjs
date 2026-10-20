@@ -35,7 +35,7 @@ const moduleIds = [
   'src/engine/actions.js', 'src/engine/statuses.js', 'src/engine/triggers.js', 'src/engine/properties.js',
   'src/model/loadout.js', 'src/model/skills.js',
   'src/engine/encounters.js', 'src/engine/locations.js', 'src/model/locations.js',
-  'src/model/mapknowledge.js', 'src/model/statProjection.js',
+  'src/model/map/mapknowledge.js', 'src/model/statProjection.js',
   'src/model/advancedConfig.js',
 ];
 export async function loadAuditRuntime(mode = 'native', { configuration = 'raw-authored' } = {}) {
