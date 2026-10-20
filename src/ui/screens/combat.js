@@ -3100,7 +3100,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           applyVisualEvents(beat.events);
           applyBeatToDisp(beat);
           renderTopbar();
-          renderCombatantStage();
+          renderCombatantStage({ fit: false });
           for (const event of beat.events) {
             const reaction = bloodRiteReaction(dv(combat.player), event, 'player');
             if (reaction) stageFor($('.combatant.player'))?.react?.(reaction);
@@ -3113,6 +3113,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           renderControls();
           renderCombatTools();
           showPileFeedback(beat.events);
+          // Like a full render, settle the incoming hand/footer and every
+          // beat write before measuring. An earlier fit measured the outgoing
+          // hand, then handlayoutchange queued another full board fit.
+          combatTools.flushGeometry();
+          battlefieldStage.refresh();
+          formationMovement?.refresh();
         },
         onFlush: () => {
           applyVisualEvents(events);

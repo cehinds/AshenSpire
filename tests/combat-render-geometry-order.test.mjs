@@ -9,8 +9,12 @@ const begin = source.indexOf('  function renderCombatantStage(');
 const end = source.indexOf("  if (typeof window !== 'undefined'", begin);
 assert.ok(begin >= 0 && end > begin);
 const rendering = source.slice(begin, end);
+const beatBegin = source.indexOf('        onBeatApplied: (beat) => {', source.indexOf('timelinePlayback = playTimeline('));
+const beatEnd = source.indexOf('        onFlush: () => {', beatBegin);
+assert.ok(beatBegin >= 0 && beatEnd > beatBegin);
+const beatRendering = source.slice(beatBegin + '        onBeatApplied: '.length, beatEnd).trim().replace(/,$/, '');
 
-function fixture(code = rendering) {
+function fixture(code = rendering, beatCode = beatRendering) {
   const events = [], fits = [], field = { dataset: {} };
   // A requested tools raise must inspect the incoming card rectangles before
   // the one board fit. The dock itself belongs to the current footer row.
@@ -40,9 +44,15 @@ function fixture(code = rendering) {
     decorateRoundsScreen: () => {}, decorateCombatRoundsScreen: () => {}, targetedEnemyId: () => null, lastTargetId: null, combatEl: null,
     setHintMode: () => events.push('hint'),
     scheduleAutoCombat: () => events.push('automation'),
+    applyVisualEvents: () => events.push('visual-events'), applyBeatToDisp: () => events.push('display-receipt'),
+    HAND_BEAT_EVENTS: new Set(['cardPlayed']), dv: entity => entity, bloodRiteReaction: () => null,
+    showPileFeedback: () => events.push('pile-feedback'),
   };
-  const api = runInNewContext(code + '\n({render, renderCombatantStage})', context);
-  return { api, events, fits, field };
+  const api = runInNewContext(code + '\nconst onBeatApplied = ' + beatCode + ';\n({render, renderCombatantStage, onBeatApplied})', context);
+  return { api, events, fits, field, resetForBeat(handChanges) {
+    events.length = 0; fits.length = 0; toolsTop = undefined; controlsReady = false; toolsReady = false;
+    if (handChanges) handReceipt = undefined;
+  } };
 }
 
 test('the actual full combat render fits once after hand layout and measured incoming footer tools', () => {
@@ -57,6 +67,41 @@ test('action-only combatant updates still fit their replacement frames synchrono
   const probe = fixture(); probe.api.renderCombatantStage();
   assert.equal(probe.fits.length, 1);
   assert.deepEqual(probe.events, ['hide','player','enemies','fit','formation']);
+});
+
+const settledBeatFit = probe => assert.deepEqual(probe.fits,
+  [{handWidth:390,handReceipt:390,toolsTop:744,controlsReady:true,toolsReady:true}],
+  'one synchronous fit sees the final hand, controls and measured tools');
+
+test('the actual card beat writes the incoming hand and feedback before its single geometry fit', () => {
+  const probe = fixture(); probe.api.render(); probe.resetForBeat(true);
+  probe.api.onBeatApplied({ events: [{ type: 'cardPlayed' }] });
+  settledBeatFit(probe);
+  assert.deepEqual(probe.events, ['visual-events','display-receipt','topbar','hide','player','enemies','hand','controls','tools','pile-feedback','measure-tools','fit','formation']);
+});
+
+test('a non-hand beat keeps the existing hand while fitting its updated HUD synchronously', () => {
+  const probe = fixture(); probe.api.render(); probe.resetForBeat(false);
+  probe.api.onBeatApplied({ events: [{ type: 'damageDealt' }] });
+  settledBeatFit(probe);
+  assert.equal(probe.events.includes('hand'), false, 'unchanged hand cards are not rebuilt');
+  assert.ok(probe.events.indexOf('pile-feedback') < probe.events.indexOf('fit'));
+});
+
+test('early, missing and duplicate beat geometry work is rejected by the real callback fixture', () => {
+  const mutations = [
+    code => code.replace('renderCombatantStage({ fit: false });', 'renderCombatantStage();'),
+    code => code.replace('combatTools.flushGeometry();', ''),
+    code => code.replace('battlefieldStage.refresh();', ''),
+    code => code.replace('battlefieldStage.refresh();', 'battlefieldStage.refresh(); battlefieldStage.refresh();'),
+  ];
+  for (const mutate of mutations) {
+    const changed = mutate(beatRendering); assert.notEqual(changed, beatRendering);
+    assert.throws(() => {
+      const probe = fixture(rendering, changed); probe.api.render(); probe.resetForBeat(true);
+      probe.api.onBeatApplied({ events: [{ type: 'cardPlayed' }] }); settledBeatFit(probe);
+    }, /one synchronous fit/);
+  }
 });
 
 test('the former actual render order is rejected by the first-fit receipt condition', () => {
