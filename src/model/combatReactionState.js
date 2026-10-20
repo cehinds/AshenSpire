@@ -180,6 +180,26 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
         row?.sourceWeaponId === source.itemId && row.coverage === rangeBand(source.range)
         && row.weapon === (source.sourceType === 'weapon') && row.throwCapable === source.propertyTags.includes('throw'))) problems.push('Frozen range source does not match its contact receipt');
     }
+    if (record(value.effect) && value.card?.rangePlan) {
+      const ref = value.sourceRef;
+      const id = ref?.id || value.sourceId;
+      const sourceKey = value.source?.rangeActorKey || (ref?.playerId ? `player:${ref.playerId}`
+        : id === state.player?.id && !(state.players instanceof Map) ? 'player:player'
+          : id && actorKeys.includes(`enemy:${id}`) ? `enemy:${id}` : null);
+      if (sourceKey && value.card.rangePlan.sourceKey !== sourceKey) problems.push('Queued range receipt belongs to another actor');
+    }
+    if (record(value.effect) && value.card?.resolvedRangeSource && value.meta?.expansionGroup) {
+      const group = value.meta.expansionGroup;
+      const targets = group.contactSequence?.contacts?.[value.meta.contactIndex]?.targets || group.targets;
+      const plan = group.carrier?.rangePlan;
+      for (const batch of Array.isArray(value.meta.expansionContacts) ? value.meta.expansionContacts : []) for (const ref of Array.isArray(batch) ? batch : []) {
+        const contact = targets?.[ref?.key]?.contacts?.[ref?.index];
+        if (!contact?.rangeContactId || !Array.isArray(plan?.targets)) continue;
+        const planned = plan.targets.find(row => row?.contactId === contact.rangeContactId), source = value.card.resolvedRangeSource;
+        if (!planned || planned.sourceWeaponId !== source.itemId || planned.coverage !== rangeBand(source.range)
+          || planned.weapon !== (source.sourceType === 'weapon') || planned.throwCapable !== (Array.isArray(source.propertyTags) && source.propertyTags.includes('throw'))) problems.push('Queued range source does not match its exact contact');
+      }
+    }
     if (Object.hasOwn(value, 'rangeQuote')) {
       if (!hasRange) problems.push('Range quote requires engagement state');
       else problems.push(...rangePlanProblems(value.rangeQuote, state.rangeState, actorKeys));
