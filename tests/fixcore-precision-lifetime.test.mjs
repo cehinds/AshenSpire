@@ -10,6 +10,7 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { validateEffects } from '../src/model/validate.js';
 import { persistentPoiseMaximum, persistentWardMaximum } from '../src/model/combatRatings.js';
+import { previewTacticalAction } from '../src/engine/combatMatchups.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { live, registries } from './helpers/fixcore-combat-rules.mjs';
 
@@ -68,6 +69,10 @@ test('effect and carrier Persistent tags retain only their Precision through sav
   assert.deepEqual(ctx.player.statuses.precision, { stacks: 5, persistentStacks: 5 });
   ctx.turn++; decayAtTurnStart(ctx, ctx.player);
   assert.deepEqual(ctx.player.statuses.precision, { stacks: 5, persistentStacks: 5 });
+  const eventStart = ctx.eventLog.length;
+  decayAtTurnEnd(ctx, ctx.player);
+  assert.ok(!ctx.eventLog.slice(eventStart).some(event => event.status === 'precision'
+    && ['statusRemoved', 'statusExpired'].includes(event.type)), 'persistent-only Precision emits no decay receipt');
   assert.equal(ctx.player.statuses.weak.stacks, 1, 'Persistent does not silently change other statuses');
   removeStatus(ctx, ctx.player, 'precision', { amount: 3 });
   assert.deepEqual(ctx.player.statuses.precision, { stacks: 2, persistentStacks: 2 });
@@ -99,5 +104,35 @@ test('Precision affects hit chance but never per-hit damage or live damage on a 
   assert.equal(after.raw, before.raw); assert.equal(after.amount, before.amount);
   primeAccuracyRolls(ctx); applyAttackDamage(ctx, ctx.player, target, 5, [], card);
   assert.equal(100 - target.hp, 5);
+});
+
+test('Core Precision stacks and the Precision technique tag bypass neither Block nor Poise', () => {
+  const attack = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee', damageType: 'slashing' } };
+  const resolve = (stacks, tagged) => {
+    const ctx = live(), target = ctx.enemies[0];
+    Object.assign(target, { block: 6, persistentPoise: { value: 8, max: 8 } });
+    target.ratings.poise = 8;
+    if (stacks) applyStatus(ctx, ctx.player, 'precision', stacks, ctx.player);
+    const card = { ...attack, ...(tagged ? { tags: ['precision'], authoredTags: ['precision'] } : {}) };
+    const tactical = previewTacticalAction(ctx, ctx.player, target, card, [{ amount: 12 }]);
+    assert.equal(tactical.guardBypass || 0, 0);
+    primeAccuracyRolls(ctx); applyAttackDamage(ctx, ctx.player, target, 12, card.tags || [], card);
+    const receipt = ctx.eventLog.filter(event => event.type === 'damageDealt').at(-1);
+    return { blocked: receipt.blocked, hpLoss: receipt.hpLoss, poiseAbsorbed: receipt.poiseAbsorbed,
+      block: target.block, poise: target.persistentPoise.value };
+  };
+  const ordinary = resolve(0, false);
+  assert.equal(ordinary.blocked, 6); assert.ok(ordinary.poiseAbsorbed > 0);
+  assert.deepEqual(resolve(10, false), ordinary);
+  assert.deepEqual(resolve(0, true), ordinary);
+  assert.deepEqual(resolve(10, true), ordinary);
+  // The historical technique rider remains explicit outside configured Core.
+  const legacy = live(); delete legacy.gameProfile;
+  legacy.enemies[0].block = 6;
+  assert.equal(previewTacticalAction(legacy, legacy.player, legacy.enemies[0],
+    { ...attack, tags: ['precision'] }, [{ amount: 12 }]).guardBypass, 0, 'a Core rules snapshot without the configured adapter also has no Precision bypass');
+  delete legacy.fixCoreRules;
+  assert.equal(previewTacticalAction(legacy, legacy.player, legacy.enemies[0],
+    { ...attack, tags: ['precision'] }, [{ amount: 12 }]).guardBypass, 4);
 });
 

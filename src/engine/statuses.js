@@ -269,9 +269,10 @@ function removeStatusRaw(ctx, target, statusId, opts = {}) {
 export function decayAtTurnEnd(ctx, entity) {
   if (fixCoreEnabled(ctx)) {
     const precision = entity.statuses?.precision;
+    const temporary = precision ? Math.max(0, precision.stacks - (precision.persistentStacks || 0)) : 0;
     // Precision only changes Accuracy; its expiry cannot resize/refill defenses.
-    if (precision) removeStatusRaw(ctx, entity, 'precision', {
-      amount: Math.max(0, precision.stacks - (precision.persistentStacks || 0)), reason: 'ownerTurnEnd'
+    if (temporary > 0) removeStatusRaw(ctx, entity, 'precision', {
+      amount: temporary, reason: 'ownerTurnEnd'
     });
     return;
   }
