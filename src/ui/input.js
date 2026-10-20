@@ -417,6 +417,7 @@ function keyOf(el) {
   if (d.classId) return `c:${d.classId}`;
   if (d.mod) return `m:${d.mod}`;
   if (d.deck) return `d:${d.deck}`;
+  if (d.flaskKind) return `f:${d.flaskKind}`;
   if (d.tab) return `t:${d.tab}`;
   if (d.slot) return `s:${el.className}:${d.slot}`;
   if (el.id) return `#${el.id}`;
