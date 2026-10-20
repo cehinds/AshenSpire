@@ -1,3 +1,5 @@
+import { initializeCombatRange, assertRangeCardEnabled } from './combatEngagement.js';
+import { fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy, formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
 import * as Rounds from './combatRoundsAdapter.js';
@@ -101,8 +103,9 @@ export function coopHpMult(headcount, factor = 0.6) {
  * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom);
  * enemy move damage × enemyDamageMult (balance.bossTiers, SPEC §13.3).
  */
-export function createCoopCombat({ registries, rng, players, enemyIds, enemyLevels = [], extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null, breakMeterVersion = null, combatExpansionVersion = players.some(p => p.combatExpansionVersion === 2) ? 2 : 1, combatExpansionRules = null, combatStatusRules = null, combatKey = 'combat', snapshot = null, knowledge = null, reactionRulesVersion = null, reactionRules = null }) {
+export function createCoopCombat({ registries, rng, players, enemyIds, enemyLevels = [], extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null, breakMeterVersion = null, combatExpansionVersion = players.some(p => p.combatExpansionVersion === 2) ? 2 : 1, combatExpansionRules = null, combatStatusRules = null, combatKey = 'combat', snapshot = null, knowledge = null, reactionRulesVersion = null, reactionRules = null, gameProfile = null, rangePolicy = null }) {
   const C = {
+    ...(gameProfile ? { gameProfile: structuredClone(gameProfile) } : {}),
     combatExpansionVersion, sharedExpansionVersion: combatExpansionVersion,
     combatExpansionRules: structuredClone(combatExpansionRules || { matchups: combatExpansionMatchups, statuses: defaultStatusRules, ashenBlight: ASHEN_BLIGHT_RULES, equipment: combatExpansionEquipment }),
     combatStatusRules: structuredClone(combatStatusRules || combatExpansionRules?.statuses || defaultStatusRules), combatKey,
@@ -228,6 +231,8 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
   // Players — each an entity + own shuffled piles (Innate on top).
   for (const p of players) addPlayerState(C, p, { initial: true });
   initializeFormationOccupancy(C);
+  if (fixCoreEnabled(C)) { C.fixCoreRules = snapshotFixCoreRules(C); if (C.reactionRulesVersion === 2) C.reactionRules.contactPolicy = 'perHit'; }
+  initializeCombatRange(C, rangePolicy);
   if (knowledge) initializeCombatKnowledge(C, knowledge);
   if (C.sharedExpansionVersion === 2 && !livingPlayers(C).length) { finish(C, 'defeat'); return C; }
 
@@ -652,10 +657,10 @@ export function cardChoicePlan(C, playerId, cardInstanceId) {
   return cardChoice(registries, resolveCombatCard(context, inst), P.entity.classId, P.entity.stanceId);
 }
 
-export function previewCoopCard(C, playerId, instanceId, targetId, upcastTier) {
+export function previewCoopCard(C, playerId, instanceId, targetId, upcastTier, rangeOptions) {
   const clone = F.candidateState(C, { detached: true });
   setActive(clone, clone.players.get(playerId));
-  return soloPreviewCard(clone, instanceId, targetId, upcastTier);
+  return soloPreviewCard(clone, instanceId, targetId, upcastTier, rangeOptions);
 }
 
 /**
@@ -753,12 +758,13 @@ function effectiveCost(C, def) {
   })).action;
 }
 
-function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedBuildup, preflightOnly = false }) {
+function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, rangeRoute, selectedBuildup, preflightOnly = false }) {
   const p = C.player;
   const idx = C.piles.hand.findIndex((c) => c.instanceId === cardInstanceId);
   if (idx < 0) throw new Error(`Card '${cardInstanceId}' is not in hand`);
   const inst = C.piles.hand[idx];
   let def = resolveCombatCard(C, inst, { upcastTier });
+  assertRangeCardEnabled(C, def);
   if (!controlGate(C, p, def).allowed) throw F.playRefusal('Recover from active control before playing this card', 'controlled');
   if (!preflightOnly && C.combatExpansionVersion === 2 && p.ashenBlight?.milestones.some(row => row.path === null)) throw new Error('Choose the pending Ashen Blight feat first');
   const statusPlan=proposalCardPlan(C,p,def);if(!statusPlan.allowed)throw F.playRefusal(statusPlan.refusal,'controlled');
@@ -908,7 +914,10 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
     action.meta = { ...action.meta, abilityEffectIndex: index };
     R.attachAbilityCharges(action, charges, charged);
   }
-  enqueueExpandedAction(C, actions, { source: p, target, carrier: cardRef });
+  cardRef.rangeRoute = rangeRoute || 'advance';
+  cardRef.rangeBaseCosts = { energy: cost, stamina: staminaCost, mana: manaCost };
+  const acceptedGroup = enqueueExpandedAction(C, actions, { source: p, target, carrier: cardRef });
+  if (acceptedGroup?.carrier.rangePlan) { const extra = acceptedGroup.carrier.rangePlan.advanceSp; cost += extra; staminaCost += extra; }
   applyProposalPlan(C,statusPlan,p,target,cardRef);
   enqueueCounterWard(C, p, cardRef, meta);
   C.emit('cardPlayed', {

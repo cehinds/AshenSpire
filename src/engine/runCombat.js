@@ -138,6 +138,7 @@ export function createRunCombat({
     ...(knowledgeRun ? { knowledge: { rules: run.enemyKnowledgeRules, encounter: knowledgeRun.enemyKnowledgeState.currentEncounter,
       bankable: knowledgeRun.enemyKnowledgeState.bankable, profiles: { player: mergeEnemyKnowledge(knowledgeRun.enemyKnowledgeState.pending, enemyKnowledgeProfile) } } } : {}),
     gameProfile: run.gameProfile || null,
+    rangePolicy: run.rangePolicy || null,
     combatExpansionVersion: run.combatExpansionVersion || 1,
     reactionRulesVersion: run.reactionRulesVersion || null,
     reactionRules: run.reactionRules,
