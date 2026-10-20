@@ -87,6 +87,20 @@ test('a physical Strike that resolves unarmed does not credit the held focus for
   }
 });
 
+test('an unarmed Counter keeps explicit null on its Block event and never credits the held focus', () => {
+  const { combat } = live('herald');
+  combat.piles.hand.push({ instanceId: 'earned-counter', cardId: 'core.counter', upgraded: false });
+  play(combat, 'core.counter', { sourceHand: 'right' });
+  const block = combat.eventLog.find(event => event.type === 'blockGained');
+  assert.ok(block, 'the real Counter resolves its authored Block');
+  assert.equal(Object.hasOwn(block, 'usedArmamentId'), true);
+  assert.equal(block.usedArmamentId, null);
+  assert.equal(combat.eventLog.find(event => event.type === 'cardResolved').usedArmamentId, null);
+  recordSkillXp(combat, { type: 'combatEnd', victory: true });
+  assert.equal(skillXpReceipt(combat)['item:magic-focus'], undefined);
+  assert.equal(combat.skillXp.player?.usedArmaments, undefined);
+});
+
 test('source receipt metadata leaves actual Strike damage identical with progression disabled', () => {
   const disabledProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { progression: false } });
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, disabledProfile)), disabledProfile);

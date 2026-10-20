@@ -1037,7 +1037,7 @@ function gainBlockAmount(ctx, entity, amount, card = null, wardProvenance = fals
     // group), and in co-op the seat that played it — a guard cast on an ally
     // is the caster's shield work, not the ally's.
     ...(card && card.instanceId ? { cardInstanceId: card.instanceId, sourceHand: card.sourceHand, grantedBy: card.grantedBy,
-      ...(card.usedArmamentId ? { usedArmamentId: card.usedArmamentId } : {}),
+      ...(Object.hasOwn(card, 'usedArmamentId') ? { usedArmamentId: card.usedArmamentId } : {}),
       ...(ctx.playerIdForEntity && ctx.playerKey ? { sourcePlayerId: ctx.playerKey } : {}) } : {}),
   });
   return amt;
