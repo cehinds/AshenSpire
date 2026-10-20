@@ -1,0 +1,29 @@
+/* Temporary route quote above the selected face; never scaled into its prose. */
+:root .combat .hand-overlay > .combat-range-action {
+  position: absolute;
+  z-index: calc(var(--combat-layer-cards) + 2);
+  transform: translate(-50%, calc(-100% - 4px / var(--ui-zoom, 1)));
+  pointer-events: auto;
+  box-sizing: border-box;
+  padding: calc(6px / var(--ui-zoom, 1));
+  border: 1px solid var(--green);
+  border-radius: calc(6px / var(--ui-zoom, 1));
+  background: var(--bg-raise);
+  color: var(--parchment);
+  font-size: calc(15px / var(--ui-zoom, 1));
+  line-height: 1.3;
+}
+.combat-range-choices { display: flex; gap: calc(4px / var(--ui-zoom, 1)); }
+.combat-range-choices button {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: calc(44px / var(--ui-zoom, 1));
+  padding: calc(4px / var(--ui-zoom, 1));
+  white-space: normal;
+  overflow-wrap: normal;
+  font: inherit;
+  color: inherit;
+}
+.combat-range-choices button[aria-pressed='true'] { border-color: var(--green); background: color-mix(in srgb, var(--green) 20%, var(--bg)); }
+.combat-range-choices button:focus-visible { outline: 2px solid var(--parchment); outline-offset: 2px; }
+.combat-range-odds { margin-top: calc(4px / var(--ui-zoom, 1)); }

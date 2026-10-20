@@ -21,6 +21,13 @@ const PREVENTION_WORDS = { invulnerability: 'Invulnerability', decoy: 'Decoy' };
 const row = (registry, id) => (id != null && registry?.has?.(id) ? registry.get(id) : null);
 
 // Why an in-hand Counter or defensive Sweep was not offered (SPEC §4.10).
+function rangeReturnUnavailableText(event) {
+  const reason = event.reason === 'stamina'
+    ? `not enough SP to Advance (need ${event.required}, have ${event.available})`
+    : 'out of range';
+  return `Counter return skipped: ${reason}. Defense kept.`;
+}
+
 function reactionUnavailableText(event, { registries, source, owner }) {
   const card = row(registries?.cards, event.cardId ?? event.cardIds?.[0]);
   const tags = card?.cardTags || card?.tags || [];
@@ -48,6 +55,7 @@ function nameLookup({ registries, players = [], enemies = [] }) {
 
 /** The log's own words for one combatReactionUnavailable, without the co-op seat prefix. */
 export function reactionUnavailableNote(event, { registries, players = [], enemies = [] } = {}) {
+  if (event.type === 'combatRangeReturnUnavailable') return rangeReturnUnavailableText(event);
   const name = nameLookup({ registries, players, enemies });
   return reactionUnavailableText(event, { registries, source: name(event.sourceId), owner: name(event.ownerId) });
 }
@@ -272,6 +280,11 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       }
       case 'playerDowned': text = `${name(event.playerId || 'player')} was downed${event.reason ? ` (${word(event.reason)})` : ''}.`; break;
       case 'combatReactionChosen': if (!event.cardInstanceId) text = `${name(event.ownerId)} skipped the reaction.`; break;
+      case 'combatRangeReturnUnavailable': {
+        const why = rangeReturnUnavailableText(event);
+        text = players.length > 1 ? `${name(event.ownerId)}: ${why}` : why;
+        break;
+      }
       case 'combatReactionUnavailable': {
         const why = reactionUnavailableText(event, { registries, source: name(event.sourceId), owner: name(event.ownerId) });
         text = players.length > 1 ? `${name(event.ownerId)}: ${why}` : why;

@@ -141,7 +141,7 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   assert.equal(PROGRESSION_FEATS.length, 50);
   assert.equal(PROGRESSION_RELICS.length, 10);
   const NAMED = [...PHASE_5A_PROPERTIES, ...PHASE_5B_PROPERTIES, ...PHASE_7_PROPERTIES, ...PHASE_8_PROPERTIES, ...PHASE_10B_PROPERTIES, ...SPEC_14_PROPERTIES, ...SPEC_15_PROPERTIES, ...PROGRESSION_FEATS, ...PROGRESSION_RELICS,
-    'oathKept']; // the Oath rule every class card carries (owner decision 11, 2026-10-12)
+    'oathKept', 'throw']; // Oath (2026-10-12) and authored Throw property (SPEC RangeAdvance, 2026-10-20).
   const ABILITY_TAGS = ('searing-edge guarded-strike bloodstep hammerfall forgewake crimson-reprisal last-stand war-tempo wide-cleave ember-crown dreadweight oathscar wound-harvest cinder-orbit lunar-guard comet-mark rime-mirror constellation mana-weave gravity-snare nightglass eclipse-window warded-casting celestial-echo cold-memory astral-convergence ash-opener discard-weave crooked-guard exposed-flank sleight-hand tether-cut smoke-edge carrion-finish paired-strikes trapdoor clean-escape razor-debt mercy-ash blood-censer blight-seed funeral-guard ember-tithe bone-chorus requiem-brand pilgrim-shelter scarred-rite dawn-rite burden-bearer sepulchral-pact').split(' ').map(id => `ability:${id}`);
   assert.equal(ABILITY_TAGS.length, 50);
   const TACTICAL_TAGS = {

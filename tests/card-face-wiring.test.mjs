@@ -43,22 +43,28 @@ test('a card without a preview renders face lines starting with Inflict', () => 
   assert.match(textOf(lines[0]), /^Inflict /);
 }));
 
-test('compact hand attacks omit automatic Entry text but retain authored Precision and full inspection', () => withKitDom(dom => {
+test('every printed surface moves automatic bonuses to tags and retains distinct authored Precision', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
   const definition = { ...previewOf('bashingBlow').resolvedDefinition,
     effects: [...previewOf('bashingBlow').resolvedDefinition.effects,
       { op: 'applyStatus', status: 'precision', target: 'self', stacks: 2 }] };
-  const face = (surface, level) => faceLinesOf(markup.get(renderCard(reg, { cardId: 'bashingBlow' },
-    { definition, surface, level, inspection: false }))).map(textOf).join(' | ');
+  const printed = (surface, level) => markup.get(renderCard(reg, { cardId: 'bashingBlow' },
+    { definition, surface, level, inspection: false }));
+  const face = (surface, level) => faceLinesOf(printed(surface, level)).map(textOf).join(' | ');
   const hand = face('combat', 'glance');
   assert.doesNotMatch(hand, /Entry:/);
   assert.match(hand, /Precision 2/, 'an authored Precision effect remains on the hand face');
   assert.match(hand, /Inflict/, 'the attack still explains its damage');
-  assert.match(face('combat', 'inspect'), /Entry:/, 'full hand inspection includes Entry');
-  assert.match(face('reward', 'glance'), /Entry:/, 'other compact surfaces retain Entry');
+  for (const [surface, level] of [['combat', 'inspect'], ['reward', 'glance']]) {
+    assert.doesNotMatch(face(surface, level), /Entry:/);
+    assert.match(face(surface, level), /Precision 2/, 'a distinct authored grant remains explicit');
+    assert.match(printed(surface, level), /On changing stance, gain 1 Precision/);
+    assert.match(printed(surface, level), /Gain 2 Precision when this effect resolves/);
+  }
   const defense = markup.get(renderCard(reg, { cardId: 'crystalBarrier' },
     { definition: previewOf('crystalBarrier').resolvedDefinition, surface: 'combat', level: 'glance', inspection: false }));
-  assert.match(defense, /Entry:/, 'defensive hand cards retain their Entry explanation');
+  assert.doesNotMatch(defense, /Entry:/);
+  assert.match(defense, /data-tag-id="status:precision"[^>]*aria-label="Precision 1"/);
 }));
 
 test('the same card with a preview gives the same line text when the numbers are equal', () => withKitDom(dom => {
