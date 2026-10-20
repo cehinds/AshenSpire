@@ -22,7 +22,7 @@ import * as Blight from './ashenBlight.js';
 import { enqueueExpandedAction, previewExpandedActions } from './combatExpansionActions.js';
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { expandedEquipmentProjection, expandedEnemyProjection } from './combatExpansionEquipment.js';
-import { settleExpandedPools, refreshExpandedLoadout } from './combatExpansionProjection.js';
+import { settleExpandedPools, refreshExpandedLoadout, combatEquipmentPoolProjection } from './combatExpansionProjection.js';
 import { counterPreviewAgainst } from './counterRule.js';
 import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade, liveCounterCovers } from './combatMatchups.js';
@@ -1263,7 +1263,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // charged — but it is no longer the only thing enforcing the seal: the
   // mutation asks the same function. Two questions, one home, no second copy.
   const activeBefore = combat.loadout.active[slotId];
-  const poolBefore = runMods(combat.registries, combat.loadout, p.classId);
+  const poolBefore = combatEquipmentPoolProjection(combat);
   if (!cycleSet(combat.registries, combat.loadout, slotId, setIndex, {
     meta: {},
     inCombat: true,
@@ -1272,7 +1272,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   })) {
     throw new Error(`No set ${setIndex} on '${slotId}'`);
   }
-  const poolAfter = runMods(combat.registries, combat.loadout, p.classId);
+  const poolAfter = combatEquipmentPoolProjection(combat);
   if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
   else p.stamina -= price.cost;
   // The hand now holds a different set: its old piece's properties leave with
@@ -1344,7 +1344,12 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   if (combat.combatExpansionVersion === 2) {
     Object.assign(p, expandedEquipmentProjection(combat.registries, combat.loadout, p.classId, combat.combatExpansionRules.equipment));
     for (const field of EQUIPMENT_POOL_FIELDS) p.baseResourceMaxima[field] += (poolAfter[field] || 0) - (poolBefore[field] || 0);
-    settleExpandedPools(combat, p);
+    if (poolAfter.drawPerTurn !== undefined) {
+      // Core's equipment attributes already priced the delta above. The legacy
+      // Blight adapter would discard those attributes and reset Draw and pools.
+      p.energyMax = p.maxStamina;
+      p.drawPerTurn = poolAfter.drawPerTurn;
+    } else settleExpandedPools(combat, p);
   }
   combat.emit('armamentSwapped', { slotId, setIndex, cost: price.cost, rule: price.ruleId });
   if (cfg.swapEndsTurn) doEndTurn(combat);
@@ -1399,7 +1404,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     throw new Error(`Changing equipment costs ${price.cost} Stamina`);
   }
 
-  const poolBefore = runMods(combat.registries, combat.loadout, p.classId);
+  const poolBefore = combatEquipmentPoolProjection(combat);
   let changeEvent = null;
   if (!equipPiece(combat.registries, combat.loadout, slotId, setIndex, pieceId, owned, {
     ...equipContext,
@@ -1410,7 +1415,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
   // Unmount the outgoing piece's properties and mount the incoming piece's,
   // now that equipPiece has committed (engine/properties.js).
   syncLoadoutProperties(combat);
-  const poolAfter = runMods(combat.registries, combat.loadout, p.classId);
+  const poolAfter = combatEquipmentPoolProjection(combat);
   if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
   else p.stamina -= price.cost;
   combat.equipmentChanged = true;
@@ -1460,7 +1465,12 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
   if (combat.combatExpansionVersion === 2) {
     Object.assign(p, expandedEquipmentProjection(combat.registries, combat.loadout, p.classId, combat.combatExpansionRules.equipment));
     for (const field of EQUIPMENT_POOL_FIELDS) p.baseResourceMaxima[field] += (poolAfter[field] || 0) - (poolBefore[field] || 0);
-    settleExpandedPools(combat, p);
+    if (poolAfter.drawPerTurn !== undefined) {
+      // Core's equipment attributes already priced the delta above. The legacy
+      // Blight adapter would discard those attributes and reset Draw and pools.
+      p.energyMax = p.maxStamina;
+      p.drawPerTurn = poolAfter.drawPerTurn;
+    } else settleExpandedPools(combat, p);
   }
   if (changeEvent) combat.emit('equipmentChanged', changeEvent);
   combat.emit('equipmentRearmed', {

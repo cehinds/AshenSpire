@@ -2,7 +2,7 @@ import { validateFixCoreRules, normalizeFixCoreRules } from '../model/fixCoreMec
 import { formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { enemyBurdenProblems } from './enemyBurdens.js';
 import { hasCardChoice } from './cardZones.js';
-import { validateGameProfileSnapshot } from '../model/gameProfile.js';
+import { validateGameProfileSnapshot, gameModule } from '../model/gameProfile.js';
 import { freezeProfile, configuredCombat } from './gameProfileCombat.js';
 // src/engine/combatSnapshot.js — CombatSnapshotService.
 //
@@ -21,6 +21,7 @@ import { refreshCombatRatings } from './combatRatings.js';
 import { controlRestrictions, backfillPersistentPoise } from './combatStatusControl.js';
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
+import { reconcileGrantedCards } from '../framework/deckComposition.js';
 import { bringRangesForward } from '../model/combatRanges.js';
 
 /**
@@ -349,6 +350,11 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
     run.drawPerTurn = combat.player.drawPerTurn;
   }
   run.loadout = structuredClone(combat.loadout);
+  // Piles keep their combat lifecycle; the saved run deck only follows what
+  // the current Core equipment lends, including removals and cards held aside.
+  if (run.gameProfile?.foundation?.mode === 'configured' && gameModule(run, 'cards')?.mode === 'configured') {
+    reconcileGrantedCards(combat.registries, run);
+  }
   run.flasks = structuredClone(combat.player.flasks);
   run.flaskCharges = structuredClone(combat.player.flaskCharges);
   run.equipmentPoolDeficits = structuredClone(combat.equipmentPoolDeficits);

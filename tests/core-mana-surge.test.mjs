@@ -29,8 +29,10 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { equipPiece, stampDeck, reconcileGrantedCards, isItemOwned } from '../src/model/loadout.js';
 import { createRng } from '../src/engine/rng.js';
-import { createRunCombat } from '../src/engine/runCombat.js';
+import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
+import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -173,3 +175,100 @@ test('a legacy profile is untouched: a Bone Sceptre there grants no Core card', 
   stampDeck(legacy, run);
   assert.equal(run.deck.filter((c) => c.cardId === 'core.manaSurge').length, 0);
 });
+
+// The shipped setting locks combat equipment; exercise the supported intent
+// with that setting enabled, as older/configured saves can do.
+function equipmentFight(classId) {
+  const registries = { ...reg, balance: structuredClone(reg.balance) };
+  registries.balance.equipment.allowChangesInCombat = true;
+  registries.balance.equipment.swapEndsTurn = false;
+  const run = createRunState({ registries, classId, seed: 511, profileMeta: meta });
+  if (classId === 'reaver') run.loadout.storage.push('boneSceptre');
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  combat.player.stamina = 99;
+  combat.swapsLeft = 99;
+  return { registries, run, combat };
+}
+const pileSurges = (combat) => Object.values(combat.piles).flat().filter(card => card.cardId === 'core.manaSurge');
+
+for (const [classId, pieceId, expected] of [['reaver', 'boneSceptre', 1], ['herald', null, 0]]) {
+  test(`a Core ${classId} combat equipment change persists Mana Surge ownership through save and the next fight`, () => {
+    const { registries, run, combat } = equipmentFight(classId);
+    // A removed run-owned card must never be rebuilt from the combat piles.
+    const removedId = run.deck.find(card => !isItemOwned(card)).instanceId;
+    run.deck = run.deck.filter(card => card.instanceId !== removedId);
+    dispatch(combat, { type: 'changeEquipment', slotId: 'rightHand', setIndex: 0, pieceId });
+    assert.equal(pileSurges(combat).length, expected);
+    const piles = structuredClone(combat.piles);
+    commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
+    assert.equal(surges(run).length, expected, 'persisted deck agrees with the live loadout');
+    assert.ok(!run.deck.some(card => card.instanceId === removedId), 'run-owned removals stay removed');
+    assert.deepEqual(combat.piles, piles, 'checkpoint does not reset or move live cards');
+    const saves = createSaveManager(createMemoryStorage());
+    saves.saveRun(run, combat.rng);
+    const loaded = saves.loadRun(registries);
+    assert.ok(loaded, JSON.stringify(saves.runStatus()));
+    assert.equal(surges(loaded).length, expected);
+    const resumed = restoreCombatSnapshot({ registries, rng: createRng(511), expectedGameProfile: loaded.gameProfile, snapshot: loaded.combatEntered.snapshot });
+    assert.equal(pileSurges(resumed).length, expected);
+    runCombatEnd(loaded, resumed);
+    const next = createRunCombat({ registries, run: loaded, rng: createRng(512), enemyIds: ['wanderingSoldier'] });
+    assert.equal(pileSurges(next).length, expected, 'the next fight keeps the new ownership');
+  });
+  test(`ending a Core ${classId} fight reconciles Mana Surge without a checkpoint`, () => {
+    const { registries, run, combat } = equipmentFight(classId);
+    dispatch(combat, { type: 'changeEquipment', slotId: 'rightHand', setIndex: 0, pieceId });
+    runCombatEnd(run, combat);
+    assert.equal(run.loadout.sets.rightHand[0], pieceId);
+    assert.equal(surges(run).length, expected);
+    const saves = createSaveManager(createMemoryStorage());
+    saves.saveRun(run, combat.rng);
+    assert.ok(saves.loadRun(registries), JSON.stringify(saves.runStatus()));
+  });
+}
+
+test('Core combat checkpoints preserve a set-aside Mana Surge', async () => {
+  const { moveToSideboard } = await import('../src/model/deckRules.js');
+  const { registries, run } = equipmentFight('herald');
+  assert.equal(moveToSideboard(registries, run, surges(run)[0].instanceId), true);
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
+  assert.equal(surges(run).length, 0);
+  assert.equal(run.sideboard.filter(card => card.cardId === 'core.manaSurge').length, 1);
+  assert.equal(pileSurges(combat).length, 0);
+});
+
+for (const intent of ['changeEquipment', 'swapArmament']) {
+  test(`Core ${intent} preserves missing pools across repeated sceptre swaps and saves valid stats`, () => {
+    const { registries, run, combat } = equipmentFight('reaver');
+    registries.balance.equipment.swapCostKind = 'allowance';
+    if (intent === 'swapArmament') {
+      combat.loadout.sets.rightHand[1] = 'boneSceptre';
+      combat.loadout.storage = combat.loadout.storage.filter(id => id !== 'boneSceptre');
+    }
+    const p = combat.player;
+    const before = { maxHp: p.maxHp, maxMana: p.maxMana, maxStamina: p.maxStamina, draw: run.drawPerTurn };
+    p.hp = 1; p.mana = 0; p.stamina = 0;
+    const missing = { hp: p.maxHp - 1, mana: p.maxMana, stamina: p.maxStamina };
+    for (let cycle = 0; cycle < 3; cycle++) {
+      for (const sceptre of [true, false]) {
+        dispatch(combat, intent === 'swapArmament'
+          ? { type: intent, slotId: 'rightHand', setIndex: sceptre ? 1 : 0 }
+          : { type: intent, slotId: 'rightHand', setIndex: 0, pieceId: sceptre ? 'boneSceptre' : 'greatsword' });
+        assert.equal(p.maxMana, before.maxMana + (sceptre ? 1 : 0), 'the sceptre intelligence raises the saved Mana formula');
+        assert.equal(p.drawPerTurn, before.draw + (sceptre ? 2 : 0), 'the sceptre intelligence raises Draw');
+        for (const field of ['hp', 'mana', 'stamina']) {
+          const max = p[`max${field[0].toUpperCase()}${field.slice(1)}`];
+          assert.equal(p[field], Math.max(0, max - missing[field]), `${field} never refills a spent deficit`);
+          assert.ok(p[field] <= max, `${field} stays inside its pool`);
+          if (!sceptre) assert.equal(max, before[`max${field[0].toUpperCase()}${field.slice(1)}`], `${field} returns to its starting maximum`);
+        }
+        assert.equal(p.energyMax, p.maxStamina);
+        commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
+        const saves = createSaveManager(createMemoryStorage());
+        saves.saveRun(run, combat.rng);
+        assert.ok(saves.loadRun(registries), JSON.stringify(saves.runStatus()));
+      }
+    }
+  });
+}

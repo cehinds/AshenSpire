@@ -1,3 +1,5 @@
+import { gameProfileEffectiveAttributes } from '../model/gameProfileGear.js';
+import { gameModule } from '../model/gameProfile.js';
 import { effectiveAshenBlightAttributes, ashenBlightBonuses } from '../model/ashenBlight.js';
 import { deriveStat, restoreDerivedStatRuleSnapshot } from '../model/derivedStats.js';
 import * as DeckComposition from '../framework/deckComposition.js';
@@ -66,4 +68,26 @@ export function refreshExpandedLoadout(ctx, entity, { refreshPoise = true } = {}
     derivedStatRuleSnapshot: ctx.derivedStatRuleSnapshot || null,
     ...(Number.isInteger(ctx.characterLevel) ? { level: { level: ctx.characterLevel } } : {}),
   }).value);
+}
+
+/** Equipment pool deltas include the saved Core attribute formulas. */
+export function combatEquipmentPoolProjection(ctx) {
+  const classId = ctx.player.classId;
+  if (ctx.gameProfile?.foundation?.mode !== 'configured' || gameModule(ctx, 'stats')?.mode !== 'configured') {
+    return Loadout.runMods(ctx.registries, ctx.loadout, classId);
+  }
+  const allocated = ctx.allocatedAttributes || ctx.attributes;
+  const subject = { gameProfile: ctx.gameProfile, class: classId, loadout: ctx.loadout,
+    itemUpgradeLevels: ctx.itemUpgradeLevels, attributes: allocated };
+  const attributes = gameProfileEffectiveAttributes(ctx.registries, subject);
+  const rules = ctx.derivedStatRuleSnapshot.rules;
+  const classDef = ctx.registries.classes.get(classId);
+  const level = ctx.characterLevel || 1;
+  const value = (stat, attrs) => deriveStat(rules, stat, { attributes: attrs, classDef, level }).value;
+  const result = { ...Loadout.runMods(ctx.registries, ctx.loadout, classId, subject) };
+  for (const [field, stat] of Object.entries({ maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' })) {
+    result[field] += value(stat, attributes) - value(stat, allocated);
+  }
+  result.drawPerTurn = value('draw', attributes);
+  return result;
 }
