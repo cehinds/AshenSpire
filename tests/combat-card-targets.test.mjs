@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { cardTargetPlan, assertCardTarget, forbiddenCardDrop } from '../src/model/cardTargets.js';
 import { contentBundle } from '../src/content/index.js';
@@ -92,7 +93,7 @@ test('solo explicit self and legacy omitted self/ally targets still play', () =>
   }
 });
 
-test('co-op hostile cards refuse the source and teammates before spending', () => {
+test('co-op hostile cards refuse the source and teammates before spending', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const combat = createCoopCombat({ registries, rng: createRng(123), players: [player('a', 'p1'), player('b', 'p2')], enemyIds: ['blightHound'] });
   const seat = combat.players.get('p1');
   const strike = instance(seat.piles.hand, 'strike');

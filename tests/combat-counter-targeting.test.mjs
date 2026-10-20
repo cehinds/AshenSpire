@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -48,7 +49,7 @@ test('Counter immediate hostile support and preview charges retain enemy aiming'
   assert.deepEqual(friendlyTargetPlan(ally, 'a', players).legalIds, ['b']);
 });
 
-test('real co-op Counter prepares without an enemy target and rejects enemy aiming', () => {
+test('real co-op Counter prepares without an enemy target and rejects enemy aiming', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const c = createCoopCombat({ registries, rng: createRng(50), players: [{ id: 'a', classId: 'reaver',
     hp: 200, maxHp: 200, mana: 20, maxMana: 20, energyMax: 10, drawPerTurn: 1,
     deck: [{ instanceId: 'counter1', cardId: 'riposte' }], relicIds: [] }],

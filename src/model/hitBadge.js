@@ -12,6 +12,8 @@ export function cardAffectsEnemies(definition) {
 }
 /** Ids of the living enemies that show a badge for the selected card definition. */
 export function hitBadgeTargetIds(definition, enemies) {
-  if (!cardAffectsEnemies(definition)) return [];
+  // Authored movement changes the pair directly; it never makes an Accuracy
+  // roll. Combined defensive/movement cards keep the same targeting door.
+  if (!immediateCardEffects(definition).some(effect => ENEMY_TARGETS.includes(effect.target) && effect.op !== 'moveEngagement')) return [];
   return (enemies || []).filter(enemy => enemy && (enemy.alive ?? enemy.hp > 0)).map(enemy => enemy.id);
 }

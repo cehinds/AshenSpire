@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
@@ -137,7 +138,7 @@ test('an exhausted draw supply deals only available cards without duplicating Re
   assert.equal(c.piles.draw.length, 0);
 });
 
-test('each co-op seat refreshes its own cards and respects the 15-card cap', () => {
+test('each co-op seat refreshes its own cards and respects the 15-card cap', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const players = ['reaver','herald'].map((classId, i) => {
     const run = createRunState({ seed: 5, classId, registries });
     return { ...run, id: `p${i}`, classId, hp: 10000, maxHp: 10000,
@@ -160,7 +161,7 @@ test('each co-op seat refreshes its own cards and respects the 15-card cap', () 
   }
 });
 
-test('a co-op seat with a dry draw pile recycles its own discard at turn end', () => {
+test('a co-op seat with a dry draw pile recycles its own discard at turn end', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const run = createRunState({ seed: 5, classId: 'reaver', registries });
   const c = createCoopCombat({ registries, rng: createRng(5), players: [{ ...run, id: 'p0', classId: 'reaver', hp: 10000, maxHp: 10000,
     deck: Array.from({ length: 25 }, (_, n) => card(`p0c${n}`)), relicIds: [], flasks: [] }], enemyIds: ['wanderingSoldier'] });

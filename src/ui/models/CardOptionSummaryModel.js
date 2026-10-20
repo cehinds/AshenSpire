@@ -183,7 +183,7 @@ function costsOf(option, preview, registries, combat) {
     if (route.reason) chips.push(route.reason);
     return freeze(chips.filter(Boolean));
   }
-  if (option.play?.rangeRoute === 'throw') chips.push('Throw');
+  if (option.play?.rangeRoute === 'throw') chips.push(t('combat.range.throw'));
   if (Number.isFinite(option.staminaCost)) chips.push(t('combat.reaction.sp', { amount: option.staminaCost }));
   if (option.manaCost) chips.push(t('combat.reaction.mp', { amount: option.manaCost }));
   return freeze(chips);

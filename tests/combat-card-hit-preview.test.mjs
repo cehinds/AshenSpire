@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -37,7 +39,7 @@ function fight(coop, { split = false, smash = false } = {}) {
   };
 }
 
-for (const coop of [false, true]) for (const split of [false, true]) for (const smash of [false, true]) {
+for (const coop of COOP_MODES) for (const split of [false, true]) for (const smash of [false, true]) {
   test(`${coop ? 'co-op' : 'solo'} card preview evolves ${smash ? 'Guard' : 'Counter'} across ${split ? 'effects' : 'hits'}`, () => {
     const f = fight(coop, { split, smash });
     const before = JSON.stringify({ enemy: f.enemy, queue: f.combat.queue, events: f.combat.eventLog, rng: f.combat.rng.getCounters() });

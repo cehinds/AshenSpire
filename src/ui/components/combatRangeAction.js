@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 import { uiZoom } from '../fx.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { combatRangeActionPlan } from '../models/CombatRangeActionModel.js';
@@ -10,7 +11,7 @@ export function combatRangeAction(preview, { onChoose, onCancel, disabled = fals
   root.className = 'combat-range-action';
   markUiComponent(root, UI.combatRangeAction);
   root.setAttribute('role', 'group');
-  root.setAttribute('aria-label', 'Attack approach');
+  root.setAttribute('aria-label', t('combat.range.approach'));
   // Native controls own their keyboard, including co-op's seat-switch Tab key.
   for (const type of ['pointerdown', 'pointerup', 'click', 'keydown']) root.addEventListener(type, event => event.stopPropagation());
   root.addEventListener('keydown', event => { if (event.key === 'Escape' && onCancel) { event.preventDefault(); onCancel(); } });

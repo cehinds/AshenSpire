@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -84,37 +85,40 @@ test('selected upcast tier changes the same target plan committed by the engine'
   assert.equal(combat.player.energy, before - 3);
   assert.equal(combat.player.mana, mana - 3);
   assert.equal(combat.player.block, 5);
-  const coop = createCoopCombat({ registries: local, rng: createRng(14), combatExpansionVersion: 2,
-    players: [{ id: 'a', classId: 'reaver', combatExpansionVersion: 2, hp: 80, maxHp: 80,
-      maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
-      deck: [instance], orderedDraw: true }], enemyIds: ['wanderingSoldier'] });
-  const coopPreview = previewCoopCard(coop, 'a', id);
-  assert.equal(coopPreview.resolvedDefinition.upcast.baseTier, 2, 'co-op omitted tier uses authored base');
-  const beforeCoop = unchanged(coop);
-  assert.throws(() => previewCoopCard(coop, 'a', id, undefined, 0), /Upcast ranks/);
-  assert.throws(() => playCard(coop, 'a', id, 'a', undefined, 0), /Upcast ranks/);
-  assert.equal(unchanged(coop), beforeCoop, 'explicit invalid tier 0 is refused atomically');
-  assert.doesNotThrow(() => playCard(coop, 'a', id, 'a'), 'omitted tier plays its base rather than an invalid 0');
-  assert.equal(coop.players.get('a').entity.block, 2);
-  const host = createSession({ registries: local, seedString: 'TIERBASE2' });
-  const member = host.addMember({ id: 'a', name: 'A', classId: 'reaver' });
-  member.run.deck.unshift(instance);
-  host.start();
-  while (member.run.classMasteryState.initialTreeTiers.length) host.chooseMasteryNode('a',
-    initialClassTreeChoices(registriesForClassMastery(local, member.run), member.run)[0]);
-  assert.equal(host.chooseNode('a', host.session.reachableIds[0]).ok, true);
-  const owner = host.live.combat.players.get('a');
-  for (const pile of ['hand', 'draw', 'discard', 'exhaust']) owner.piles[pile] = owner.piles[pile].filter(card => card.instanceId !== id);
-  owner.piles.hand.unshift(instance);
-  const refused = host.combatPlay('a', id, 'a', undefined, 0);
-  assert.equal(refused.ok, false);
-  assert.match(refused.error, /Upcast ranks/);
-  const accepted = host.combatPlay('a', id, 'a');
-  assert.equal(accepted.ok, true, accepted.error);
-  assert.ok(host.live.combat.players.get('a').entity.block >= 2, 'network omission reaches the authored base unchanged');
+  // Preserve the solo assertions above while omitting only the embedded co-op leg.
+  if (COOP_TESTS_ENABLED) {
+    const coop = createCoopCombat({ registries: local, rng: createRng(14), combatExpansionVersion: 2,
+      players: [{ id: 'a', classId: 'reaver', combatExpansionVersion: 2, hp: 80, maxHp: 80,
+        maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
+        deck: [instance], orderedDraw: true }], enemyIds: ['wanderingSoldier'] });
+    const coopPreview = previewCoopCard(coop, 'a', id);
+    assert.equal(coopPreview.resolvedDefinition.upcast.baseTier, 2, 'co-op omitted tier uses authored base');
+    const beforeCoop = unchanged(coop);
+    assert.throws(() => previewCoopCard(coop, 'a', id, undefined, 0), /Upcast ranks/);
+    assert.throws(() => playCard(coop, 'a', id, 'a', undefined, 0), /Upcast ranks/);
+    assert.equal(unchanged(coop), beforeCoop, 'explicit invalid tier 0 is refused atomically');
+    assert.doesNotThrow(() => playCard(coop, 'a', id, 'a'), 'omitted tier plays its base rather than an invalid 0');
+    assert.equal(coop.players.get('a').entity.block, 2);
+    const host = createSession({ registries: local, seedString: 'TIERBASE2' });
+    const member = host.addMember({ id: 'a', name: 'A', classId: 'reaver' });
+    member.run.deck.unshift(instance);
+    host.start();
+    while (member.run.classMasteryState.initialTreeTiers.length) host.chooseMasteryNode('a',
+      initialClassTreeChoices(registriesForClassMastery(local, member.run), member.run)[0]);
+    assert.equal(host.chooseNode('a', host.session.reachableIds[0]).ok, true);
+    const owner = host.live.combat.players.get('a');
+    for (const pile of ['hand', 'draw', 'discard', 'exhaust']) owner.piles[pile] = owner.piles[pile].filter(card => card.instanceId !== id);
+    owner.piles.hand.unshift(instance);
+    const refused = host.combatPlay('a', id, 'a', undefined, 0);
+    assert.equal(refused.ok, false);
+    assert.match(refused.error, /Upcast ranks/);
+    const accepted = host.combatPlay('a', id, 'a');
+    assert.equal(accepted.ok, true, accepted.error);
+    assert.ok(host.live.combat.players.get('a').entity.block >= 2, 'network omission reaches the authored base unchanged');
+  }
 });
 
-test('co-op equipment art targeting follows its owner version rather than the previously active seat', () => {
+test('co-op equipment art targeting follows its owner version rather than the previously active seat', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const rows = [1, 2].map((version, index) => {
     const { run, card } = equippedRun(version);
     return { id: index ? 'expanded' : 'legacy', run, card };

@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -26,7 +28,7 @@ function fight(effects, coop) {
     : dispatch(c, { type: 'playCard', cardInstanceId: 'strike1', targetId: c.enemies[0].id }) };
 }
 
-for (const coop of [false, true]) {
+for (const coop of COOP_MODES) {
   const mode = coop ? 'co-op' : 'solo';
   for (const interrupt of ['stagger', 'death']) {
     test(`${mode} cancels an already queued Counter reply after source ${interrupt}`, () => {

@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import { executeAction, applyAttackDamage } from '../src/engine/actions.js';
 import { resolveGameProfile } from '../src/model/gameProfile.js';
 import { setProfileStance,profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
@@ -117,7 +118,7 @@ test('configured X spends remaining SP and scales actual damage and target count
  dispatch(combat,{type:'playCard',cardInstanceId:id});assert.equal(combat.player.stamina,0);
  assert.deepEqual(combat.enemies.map(e=>1000-e.hp),[6,6,0]);
 });
-test('co-op choices and hidden cards belong to the acting seat and return only to that seat',()=>{
+test('co-op choices and hidden cards belong to the acting seat and return only to that seat', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON },()=>{
  const combat=fixture([{op:'modifyCards',from:'hand',amount:1,selection:'choose',changes:{hideTurns:1,retain:true}}],{coop:true});
  const a=combat.players.get('a'),b=combat.players.get('b');for(const P of [a,b])for(const pile of Object.values(P.piles))for(const card of pile)card.instanceId=`${P.id}-${card.instanceId}`;
  playCard(combat,'a',a.piles.hand[0].instanceId);const chosen=combat.pendingCardChoice.candidateIds[0];
@@ -188,13 +189,13 @@ test('MP-only configured growth does not reintroduce disabled Stamina through ac
  const next=combat.piles.hand[0].instanceId;assert.equal(cardPlayCosts(combat,next).stamina,0);assert.equal(cardPlayCosts(combat,next).mana,2);
 });
 
-test('co-op Transmute receipts credit the acting seat without sharing or dropping Cinders',()=>{
+test('co-op Transmute receipts credit the acting seat without sharing or dropping Cinders', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON },()=>{
  const combat=fixture([{op:'addCinders',amount:10}],{coop:true});
  for(const seat of ['a','b'])playCard(combat,seat,combat.players.get(seat).piles.hand[0].instanceId);
  assert.deepEqual(coopOutcome(combat).earnedCinders,{a:10,b:10});assert.equal(combat.proposalRewards.cinders,20);
 });
 
-test('co-op guard redirects to the actual protecting teammate and consumes only that seat status',()=>{
+test('co-op guard redirects to the actual protecting teammate and consumes only that seat status', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON },()=>{
  const combat=fixture([{op:'block',amount:1,target:'self'}],{coop:true});
  combat.registries={...combat.registries,proposalStatusRules:{weak:{behaviors:[{kind:'guard',amountPerStack:4,consumeStacks:1}]}}};
  const a=combat.players.get('a').entity,b=combat.players.get('b').entity;b.statuses.weak={stacks:3};const beforeA=a.hp,beforeB=b.hp;

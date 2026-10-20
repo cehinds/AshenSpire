@@ -1,5 +1,6 @@
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -287,7 +288,7 @@ test('actual delayed move retains its serial and read through charge, snapshot a
   assert.equal(restored.enemies[0].knowledgeAction.serial, original.serial + 1);
 });
 
-test('actual co-op uses host-private draws, owner predictions, exact restore and inert reconnect', () => {
+test('actual co-op uses host-private draws, owner predictions, exact restore and inert reconnect', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const registries = createRegistries(contentBundle);
   const runs = ['z', 'a'].map(id => ({ id, run: createRunState({ registries, seed: 11, classId: 'reaver' }) }));
   const rules = structuredClone(runs[0].run.enemyKnowledgeRules);

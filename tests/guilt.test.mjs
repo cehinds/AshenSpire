@@ -5,6 +5,7 @@
 // costs HP, anywhere else costs nothing, copies stack, and a malformed hook is
 // refused by the validator naming the row.
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -112,7 +113,7 @@ test('the engine stays free of the DOM', async () => {
 
 // Co-op: the production session route ends a seat's turn through
 // coopCombat.endTurn, which must fire the same in-hand hook on that seat only.
-test('co-op: Guilt in a seat\'s hand costs that seat 1 HP at its turn end', async () => {
+test('co-op: Guilt in a seat\'s hand costs that seat 1 HP at its turn end', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   const { createCoopCombat, endTurn } = await import('../src/engine/coopCombat.js');
   const seat = (id) => ({
     id, classId: 'reaver', maxHp: 78, hp: 78, mana: 2, maxMana: 2, stamina: 0, maxStamina: 0, energyMax: 3, drawPerTurn: 5,

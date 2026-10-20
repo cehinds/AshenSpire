@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -65,7 +67,7 @@ function convert(fixture) {
   for (const threshold of [25, 50, 75]) chooseAshenBlightFeat(fixture.combat, owner, { threshold, path: 'martial' });
 }
 
-for (const coop of [false, true]) for (const converted of [false, true]) {
+for (const coop of COOP_MODES) for (const converted of [false, true]) {
   test(`${coop ? 'co-op' : 'solo'} base 2 to tier 5 ${converted ? 'converted Blight' : 'normal'} preview, badge and payment agree`, () => {
     const f = fixture({ coop });
     if (converted) convert(f);
@@ -83,7 +85,7 @@ for (const coop of [false, true]) for (const converted of [false, true]) {
     if (coop) assert.deepEqual(f.combat.players.get('b'), other, 'other seat resources, charges and cards are untouched');
   });
 }
-for (const coop of [false, true]) test(`${coop ? 'co-op' : 'solo'} insufficient selected-tier SP refuses atomically while base is affordable`, () => {
+for (const coop of COOP_MODES) test(`${coop ? 'co-op' : 'solo'} insufficient selected-tier SP refuses atomically while base is affordable`, () => {
   const f = fixture({ coop, cost: 0, stamina: 2 });
   actor(f).energy = actor(f).stamina = 2;
   const base = preview(f, 2), selected = preview(f, 5);
@@ -95,7 +97,7 @@ for (const coop of [false, true]) test(`${coop ? 'co-op' : 'solo'} insufficient 
   assert.throws(() => play(f), /Not enough (energy|stamina|Actions)/i);
   assert.equal(state(f.combat), before, 'no card, resources, statuses, RNG or queued work committed');
 });
-for (const coop of [false, true]) for (const preparing of [false, true]) {
+for (const coop of COOP_MODES) for (const preparing of [false, true]) {
   test(`${coop ? 'co-op' : 'solo'} ${preparing ? 'preparing' : 'live'} over-base Mana discount clamps the complete tier price`, () => {
     const f = fixture({ coop, cost: 0, mana: 0 });
     const effect = { op: 'grantCardCharge', target: 'self', key: 'paid-price-discount', manaDiscount: 5 };
@@ -117,7 +119,7 @@ for (const coop of [false, true]) for (const preparing of [false, true]) {
   });
 }
 
-test('co-op selected-tier host receipt is exact; missing receipt gives a marked conservative price once', () => {
+test('co-op selected-tier host receipt is exact; missing receipt gives a marked conservative price once', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const f = fixture({ coop: true });
   grantAbilityCharge(actor(f), { key: 'hidden-discount', manaDiscount: 5 });
   const owner = actor(f), base = preview(f, 2), selected = preview(f, 5);
@@ -158,7 +160,7 @@ for (const version of [1, 2]) test(`version ${version} fixed and X card prices p
   assert.equal(variable.combat.player.energy, 0);
 });
 
-for (const coop of [false, true]) test(`${coop ? 'co-op' : 'solo'} authored Shield Bash tier 2 badge is its SP plus two, matching payment`, () => {
+for (const coop of COOP_MODES) test(`${coop ? 'co-op' : 'solo'} authored Shield Bash tier 2 badge is its SP plus two, matching payment`, () => {
   const registries = createRegistries(contentBundle);
   const shield = { instanceId: 'shield-price-probe', cardId: 'shieldBash' };
   const input = { id: 'a', classId: 'reaver', combatExpansionVersion: 2, hp: 80, maxHp: 80,
@@ -184,7 +186,7 @@ for (const coop of [false, true]) test(`${coop ? 'co-op' : 'solo'} authored Shie
   assert.equal(paid.combatCounter.charges, 1);
 });
 
-for (const coop of [false, true]) test(`${coop ? 'co-op' : 'solo'} upcast X keeps its badge and cannot spend more than the whole SP pool`, () => {
+for (const coop of COOP_MODES) test(`${coop ? 'co-op' : 'solo'} upcast X keeps its badge and cannot spend more than the whole SP pool`, () => {
   const f = fixture({ coop, cost: 'X', manaCost: 0 });
   const receipt = preview(f, 3);
   assert.equal(receipt.costIsX, true);
