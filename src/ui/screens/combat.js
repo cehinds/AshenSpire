@@ -1,5 +1,6 @@
 import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
+import { combatActionIdentity } from '../models/CombatActionIdentityModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { chooseReaction, reactionAnswer, resolveCombatAutomation, recordManualReaction, manualReactionPicks } from '../../model/autoCombatPolicy.js';
@@ -3093,16 +3094,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           const events = beat.events.filter(event => event.type === 'enemyActorTurnStarted');
           if (events.length) { applyBeatToDisp({ ...beat, events }); renderCombatantStage(); }
         },
-        actionWordForBeat: beat => {
-          const played = beat.events.find(event => event.type === 'cardPlayed');
-          if (played) return registries.cards.get(played.cardId)?.name;
-          const move = beat.events.find(event => event.type === 'enemyMoveStarted');
-          if (move) {
-            const enemy = combat.enemies.find(row => row.id === move.sourceId);
-            return registries.enemies.get(move.enemyId || enemy?.enemyId)?.moves?.[move.moveId]?.name;
-          }
-          return undefined;
-        },
+        actionWordForBeat: beat => combatActionIdentity(beat, registries, id => combat.enemies.find(row => row.id === id)),
         onBeatApplied: (beat) => {
           applyVisualEvents(beat.events);
           applyBeatToDisp(beat);

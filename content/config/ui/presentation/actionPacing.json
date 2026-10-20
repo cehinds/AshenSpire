@@ -1,7 +1,7 @@
 {
   "motion": {
     "spritePlaybackRate": 0.5,
-    "stageGapMs": 1000
+    "stageGapMs": 500
   },
   "behavior": {
     "autoCombat": false,
