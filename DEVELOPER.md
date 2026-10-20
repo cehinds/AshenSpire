@@ -119,7 +119,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `quick-start.yml` → Quick start input budget; ordered Core2 stages retain four 500 ms waits and half-rate sprites. `tools/click-impact-probe.mjs` reports raw latency and gates median contact/first-number overhead at 400/750 ms after declared waits, the active authored clip and receipt-derived hit-stop. Requires a real hostile contact and at least three numeric readouts; optional reactions use the real Back control. | — | yes | yes | only when release differs from test |
 | `ci.yml` → stage decision (`stage`): a push to `test` is the functional stage; a push to `release` is polish, and also functional when its tree differs from `test` | — | — | yes | yes |
 | `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | yes, if the tree differs from `test` |
-| `ci.yml` → discovered tests, 3 OS, all shards (no `--no-slow`, so the slow files run too) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → discovered tests, 3 OS, all shards; Windows uses `--no-slow` and runs each of the four `SLOW_DISCOVERED` files in its own Windows job | — | — | yes | yes, if the tree differs from `test` |
 | `ci.yml` → tool self-tests (3 OS, two groups) | — | — | yes | yes, if the tree differs from `test` |
 | `ci.yml` → bundler parse gate (`tools/bundle.test.mjs`) | — | — | yes | yes, if the tree differs from `test` |
 | `ci.yml` → the checks that need a real browser (`browser-guard`) | — | — | yes | yes, if the tree differs from `test` |
@@ -553,8 +553,12 @@ registration. A file that must not be spawned there goes in its `NOT_SPAWNED`
 map with the reason. A file that spawns full simulation runs goes in
 `SLOW_DISCOVERED` (`tests/run-node-lanes.mjs`), also with its reason: the
 discovered shards on a pull request into `dev` pass `--no-slow`, and
-`ci.yml`'s `test-discovered` shards run those files, with no `--no-slow`, on
-every push to `test`. `.github/workflows/tests.yml` runs the core suite and the
+`ci.yml` runs the complete corpus on every push to `test`: Linux/macOS keep
+all files in `test-discovered`; Windows uses `--no-slow` there and runs each
+`SLOW_DISCOVERED` file once in the `test-discovered-slow-windows` matrix. The
+isolated native `node --test` jobs retain every seed and assertion under the
+same 20-minute job limit, without sharing a runner with other test files.
+`.github/workflows/tests.yml` runs the core suite and the
 four discovered shards as Linux jobs on a pull request into `dev` and on a push
 to `dev`; the slow files, the tools' self-tests and the bundler's parse-gate
 fixtures (`node tools/bundle.test.mjs`, several minutes) run in `ci.yml` on a

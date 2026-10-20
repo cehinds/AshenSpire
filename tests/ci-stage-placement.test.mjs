@@ -87,7 +87,7 @@ test('the boundary claims print per stage, and only for a stage that ran', () =>
 
 test('every functional job depends on the stage decision and is gated on its functional output', () => {
   const all = jobs(readFileSync(CI, 'utf8').replace(/\r\n/g, '\n'));
-  const functional = ['test', 'test-discovered', 'test-selftests', 'parse-gate', 'browser-guard', 'browser-slot-load-plants', 'browser-full-run', 'browser-flask-menu', 'browser-flask-menu-plants', 'browser-guard-changelog', 'browser-startup-plants'];
+  const functional = ['test', 'test-discovered', 'test-discovered-slow-windows', 'test-selftests', 'parse-gate', 'browser-guard', 'browser-slot-load-plants', 'browser-full-run', 'browser-flask-menu', 'browser-flask-menu-plants', 'browser-guard-changelog', 'browser-startup-plants'];
   for (const name of functional) {
     const job = all.get(name);
     assert.ok(job, `ci.yml has no ${name} job`);
@@ -142,4 +142,13 @@ test('slot-load plants have a dedicated source-only functional job and remain re
   assert.match(boundary, /needs: \[[^\]\n]*browser-slot-load-plants/);
   assert.match(boundary, /TEST_JOBS="[^"]*browser-slot-load-plants/);
   assert.ok(boundary.includes("browser-slot-load-plants=${{ needs['browser-slot-load-plants'].result }}"));
+});
+
+
+test('isolated Windows simulations remain required by the functional boundary', () => {
+  const all = jobs(readFileSync(CI, 'utf8').replace(/\r\n/g, '\n'));
+  const boundary = all.get('boundary');
+  assert.match(boundary, /needs: \[[^\]\n]*test-discovered-slow-windows/);
+  assert.match(boundary, /TEST_JOBS="[^"]*test-discovered-slow-windows/);
+  assert.ok(boundary.includes("test-discovered-slow-windows=${{ needs['test-discovered-slow-windows'].result }}"));
 });

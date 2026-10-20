@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync, mkdirSync, mkdtempSync, writeFileSync, copyFileSync, rmSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { readFileSync, readdirSync, existsSync, mkdirSync, mkdtempSync, writeFileSync, copyFileSync, rmSync } from 'node:fs';
+import { join, resolve, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
@@ -194,13 +194,15 @@ test('both workflow matrices execute all discovery shards and both selftest grou
     const discovery = job(workflow, discovered);
     assert.match(discovery, /timeout-minutes: 20/);
     assert.match(discovery, /fail-fast: false/);
-    // ci.yml runs every discovered file, slow ones included, at test (stage split,
-    // 2026-10-11). tests.yml's shards leave the slow ones out and run on dev only;
+    // CI keeps the complete corpus: Windows moves the four slow files to
+    // dedicated runners; Linux/macOS retain full shards. Dev excludes slow files;
     // its discovered-slow, selftests and parse-gate jobs moved to ci.yml's test
     // stage, so they must not come back here.
     if (file === 'ci.yml') {
       assert.match(discovery, /--discovered-only --shard \$\{\{ matrix\.shard \}\}/);
-      assert.doesNotMatch(discovery, /--no-slow|--slow-only/);
+      assert.match(discovery, /if: runner\.os != 'Windows'\n        run: node tools\/verdict\.mjs -- node tests\/run-node\.mjs --discovered-only --shard/);
+      assert.match(discovery, /if: runner\.os == 'Windows'\n        run: node tools\/verdict\.mjs -- node tests\/run-node\.mjs --discovered-only --no-slow --shard/);
+      assert.doesNotMatch(discovery, /--slow-only/);
     } else {
       assert.match(discovery, /--discovered-only --no-slow --shard \$\{\{ matrix\.shard \}\}/);
       for (const gone of ['discovered-slow', 'selftests', 'parse-gate']) {
@@ -222,6 +224,42 @@ test('both workflow matrices execute all discovery shards and both selftest grou
     assert.match(job(workflow, core), /--no-selftests --no-discovered/);
     if (file === 'ci.yml') assert.match(job(workflow, 'boundary'), /needs: \[[^\]]*test-discovered[^\]]*test-selftests/);
   }
+});
+
+
+test('Windows fast shards and isolated slow jobs cover the real discovered corpus exactly once', () => {
+  const workflow = readFileSync(join(ROOT, '.github/workflows/ci.yml'), 'utf8');
+  const isolated = job(workflow, 'test-discovered-slow-windows');
+  assert.match(isolated, /runs-on: windows-latest/);
+  assert.match(isolated, /timeout-minutes: 20/);
+  assert.match(isolated, /fail-fast: false/);
+  assert.match(isolated, /run: node --test --test-reporter=spec "\$\{\{ matrix\.file \}\}"/);
+  assert.doesNotMatch(isolated, /run-node\.mjs|--test-(?:skip|name)-pattern|continue-on-error/);
+  assert.match(isolated, /actions\/checkout@/);
+  assert.match(isolated, /\.\/\.github\/actions\/setup-node/);
+  // These headless simulations read only repository source/data and Markdown.
+  assert.doesNotMatch(isolated, /fetch-art|Pillow/);
+  const slow = [...isolated.matchAll(/'(tests\/[^'\n]+\.test\.mjs)'/g)].map(match => match[1]);
+  assert.deepEqual(slow.slice().sort(), [...SLOW_DISCOVERED.keys()].sort(), 'matrix is the existing closed slow set, without duplicates');
+  const skipped = new Set(['node_modules', 'dist', 'build', 'scratch']);
+  const elsewhere = new Set([...RUNNER.slice(RUNNER.indexOf('const NOT_SPAWNED ='), RUNNER.indexOf('const found =')).matchAll(/\['([^']+\.test\.mjs)'/g)].map(match => match[1]));
+  assert.equal(elsewhere.size, 4, 'the census retains every runner exclusion');
+  const files = [];
+  const walk = dir => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (!skipped.has(entry.name) && (!entry.name.startsWith('.') || entry.name === '.github')) walk(join(dir, entry.name));
+      } else if (entry.name.endsWith('.test.mjs')) {
+        const file = relative(ROOT, join(dir, entry.name)).split(sep).join('/');
+        if (!elsewhere.has(file)) files.push(file);
+      }
+    }
+  };
+  walk(ROOT); files.sort();
+  const fast = discoverySpeedFiles(files, 'exclude');
+  const windows = [...Array.from({ length: 4 }, (_, index) => discoveryShardFiles(fast, { index, count: 4 })).flat(), ...slow];
+  assert.deepEqual(windows.slice().sort(), files, 'Windows runs the complete original corpus');
+  assert.equal(new Set(windows).size, windows.length, 'no file runs twice');
 });
 
 test('browser layout and startup matrices retain every shard with an independent twenty-minute bound', () => {

@@ -55,9 +55,9 @@ export function parseRunNodeOptions(argv) {
 // gated by fast checks only, about five minutes (owner, 2026-09-26). These
 // four spawn full simulation runs and were over half of all discovered-test
 // time; balance-doc alone set one shard to 8m19s (run 38028766946). They are
-// not removed: `--slow-only` runs them on every push to `test` and `release`
-// (tests.yml, discovered-slow), and ci.yml's discovered shards, which pass
-// neither flag, still run every file. An entry whose file has gone fails
+// not removed: ci.yml runs them at the functional stage. Linux/macOS retain
+// full discovered shards; Windows runs each slow file in its own job, with
+// --no-slow shards exhaustive for the rest. An entry whose file has gone fails
 // tests/run-node-lanes.test.mjs, so the list cannot rot.
 export const SLOW_DISCOVERED = new Map([
   ['tests/balance-doc.test.mjs', 'regenerates the full 300-seed tools/balance.mjs report'],
