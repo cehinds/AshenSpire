@@ -1,3 +1,4 @@
+import { uiStrings } from '../content/generated/uiStrings.js';
 import { coreSmashClause } from './smashClause.js';
 import { stanceEntryBonuses, stanceRulesFor, stanceOf } from './stanceRules.js';
 import { fixCoreEnabled } from './fixCoreMechanics.js';
@@ -313,7 +314,11 @@ function buildLines(def, preview, registries, rules = null) {
   // Counter: what the payload returns, for each part the effects do not already deal.
   // An uncovered revealed attack (the Counter will not arm): no return lines, not even the authored payload.
   const counterUncovered = counter && preview?.counterReturn?.uncovered === true;
-  if (counter && !counterUncovered) {
+  // Core: with no revealed attack a spell Counter's authored Poise/Ward row is not what it returns; it reads the rule.
+  const coreSpellFace = counter && !counterUncovered && !preview?.counterReturn && !!def.counterCoverage && p.camp === 'spell'
+    && fixCoreEnabled({ gameProfile: rules?.gameProfile ?? registries?.gameProfile, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules });
+  if (coreSpellFace) unconditional.push({ cat: 'damage', text: esc(uiStrings.find(row => row.id === 'card.counter.face.core').short) });
+  if (counter && !counterUncovered && !coreSpellFace) {
     const payload = def.counterPayload || {};
     // Ward off (Core 2): the payload's Ward drains Poise too, so it joins the Poise figure.
     let poiseReturn = 0, poiseAuthored = 0;

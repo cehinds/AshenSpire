@@ -640,3 +640,13 @@ test('an armed spell Counter survives save: snapshot validates, restores armed, 
   old.player.combatCounter.armedAtCardCount = -1;
   assert.ok(combatSnapshotProblems(old).some(p => p.includes('armedAtCardCount')));
 });
+
+test('Core: a spell Counter face with no revealed attack reads the half-incoming rule, not the authored 1 Poise / 2 Ward', () => {
+  const { combat } = live();
+  combat.piles.hand.push({ instanceId: 'cq1', cardId: 'frostCounter' });
+  combat.enemies[0].intent.damage = null;
+  const view = previewCard(combat, 'cq1');
+  const text = (cardFaceLines(view.resolvedDefinition, view, reg) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
+  assert.match(text, /Return half incoming damage and Poise/);
+  assert.doesNotMatch(text, /\d Poise(?! and)|\d Ward damage/, text);
+});
