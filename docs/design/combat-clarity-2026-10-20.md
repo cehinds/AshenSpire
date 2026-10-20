@@ -1,6 +1,7 @@
 # Combat clarity corrections — 20 October 2026
 
-Status: owner-approved requirements; implementation in progress.
+Status: owner-approved requirements; implemented changes are undergoing combined
+browser, build and integration verification in PR #2218.
 
 These corrections describe the current Core game. Keep historical profile behavior
 explicit where saves snapshot different rules; do not accidentally apply a Core
@@ -28,6 +29,9 @@ the same UI is used.
   can rearm for its hit. An automatic armed Counter remains a single charge,
   and a Counter return cannot trigger an endless reaction chain. The root
   multi-hit action pays its own cost once.
+  Contact policy belongs to the fight. Saved Core fights still match every
+  run-owned reaction tuning field, while the known optional policy can differ
+  from the run's historical snapshot. Unknown policy values remain invalid.
 - SP reduction applies only during the enemy turn when a card is played as a
   reaction and the actor was already in the matching stance. Entering the stance
   with that card does not qualify it for its own discount. Ordinary player-turn
