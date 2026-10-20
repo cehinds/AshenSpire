@@ -67,7 +67,8 @@ test('random target quotes fork the same seeded selection without drawing live R
   assert.deepEqual(ctx.rng.getCounters(),before);
   const accepted=quoteRangeActions(ctx,source,[action()]);
   assert.deepEqual(accepted,quoted);
-  assert.equal(accepted.targets.length,1);
+  assert.equal(accepted.targets.filter(row=>!row.contactId.startsWith('rider:')).length,1);
+  assert.ok(accepted.targets.filter(row=>row.contactId.startsWith('rider:')).every(row=>row.targetKey===accepted.targets[0].targetKey),'the authored Medallion rider keeps its sampled parent target');
 });
 
 function distantUnclosingIncoming(ctx) {

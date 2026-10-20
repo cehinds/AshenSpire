@@ -1,3 +1,5 @@
+import * as Lineage from './combatRangeLineage.js';
+import { createRng } from './rng.js';
 // Runtime adapter around the pure engagement planner. No pricing or distance is
 // inferred from a stance, screen coordinates, or another held weapon.
 import { pureEngagementMovement } from '../model/rangeCardAvailability.js';
@@ -35,6 +37,8 @@ export function initializeCombatRange(ctx, policy = null) {
 }
 export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {}, contactId = '0') {
   const tagged = effect.tags ? Object.fromEntries(Object.entries(combatProfileFor({ ...carrier,tags:effect.tags,attack:effect.attack || carrier.attack })).filter(([,value])=>value!==null)) : {};
+  const seatId=ctx.playerIdForEntity?.(source);
+  if (seatId && ctx.players?.get(seatId)) { const seat=ctx.players.get(seatId); ctx={...ctx,player:source,loadout:seat.loadout,registries:ctx.registriesForPlayer?.(seatId) || ctx.registries}; }
   const profile = { ...combatProfileFor(carrier), ...carrier?.combatProfile, ...tagged, ...effect.combatProfile };
   let resolved = carrier?.resolvedRangeSource || carrier?.resolvedSource || (ctx.foundation ? Foundation.foundationSource(ctx, source, { ...carrier, attack: effect.attack || carrier.attack }) : null);
   if (!resolved && source.kind !== 'enemy') {
@@ -50,17 +54,18 @@ export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {
   }
   const weapon = resolved?.sourceType === 'weapon';
   const piece = weapon && (ctx.registries.equipment?.armaments || []).find(row => row.id === resolved.itemId);
-  const coverage = weapon ? resolved.range ?? piece?.range ?? 'melee' : resolved?.sourceType === 'unarmed' ? 'melee' : profile.range || 'melee';
+  const coverage = weapon ? resolved.range ?? piece?.range ?? 'melee' : resolved?.sourceType === 'unarmed' ? 'melee' : resolved?.range || profile.range || 'melee';
   return { contactId, targetKey: actorRangeKey(ctx, target), coverage, weapon,
     sourceWeaponId: weapon ? resolved.itemId || resolved.id : null,
     throwCapable: weapon && (resolved.propertyTags || piece?.propertyTags || []).includes('throw'),
     bypass: profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach') || false };
 }
-const hostileOps = new Set(['damage','applyStatus','buildup','poiseDamage','wardDamage','loseHp','stagger']);
+const hostileOps = new Set(['damage','applyStatus','buildup','poiseDamage','wardDamage','loseHp','stagger','arcaneBuildup']);
 export function quoteRangeActions(ctx, source, actions, { route = 'advance', context = ctx._rangeContext, preview = false } = {}) {
   if (!ctx.rangeState) return null;
   const contacts = [];
-  const planningCtx = preview && actions.some(action => action.effect.target === 'randomEnemy') ? { ...ctx, rng: Foundation.candidateState(ctx, { detached: true }).rng } : ctx;
+  if (preview) actions = actions.map(action => ({...action,meta:{...action.meta}}));
+  const planningCtx = preview ? { ...ctx, rng: createRng(ctx.rng.seed,ctx.rng.getCounters()) } : ctx;
   for (const [index, action] of actions.entries()) {
     if (!hostileOps.has(action.effect.op)) continue;
     const eff = action.effect;
@@ -78,9 +83,12 @@ export function quoteRangeActions(ctx, source, actions, { route = 'advance', con
         if (!preview && !action.card.resolvedSource) action.card = { ...action.card, resolvedRangeSource: { sourceType: contact.weapon ? 'weapon' : contact.coverage === 'melee' ? 'unarmed' : 'spell', itemId: contact.sourceWeaponId, range: contact.coverage, propertyTags: contact.throwCapable ? ['throw'] : [] } };
       }
     }
-    if (!preview) action.meta = { ...action.meta, rangeTargetBatches: batches };
+    action.meta = { ...action.meta, rangeTargetBatches: batches };
   }
-  return rangeActionPlan(ctx.rangeState, actorRangeKey(ctx, source), contacts, { route, context });
+  const lineage = Lineage.extendRangeEnvelope(planningCtx,source,actions,contacts,{preview,carrier:actions[0]?.card || {}});
+  const plan = rangeActionPlan(ctx.rangeState, actorRangeKey(ctx, source), contacts, { route, context });
+  Object.defineProperty(plan,'lineage',{value:lineage});
+  return plan;
 }
 export function addRangeCosts(costs, plan) {
   const extra = plan?.advanceSp || 0;
@@ -108,13 +116,14 @@ export function executeEngagementMovement(ctx, action) {
   ctx.emit?.('combatEngagementMoved', { sourceId: action.source.id, targetId: target.id, bands: action.effect.bands });
 }
 export function assertRangeCardEnabled(ctx, def) {
+  Lineage.assertPreparingRangeSupported(ctx,ctx.player,def);
   if (ctx.rangeState && !ctx.rangeState.policy.enabled && pureEngagementMovement(def)) throw Foundation.playRefusal('Range mechanics are disabled', 'range-disabled');
 }
 
 export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   if (!ctx.rangeState) return null;
   const authorization = carrier.rangeReturnAuthorization;
-  let plan = carrier.rangePlan || carrier.rangeQuotedPlan || quoteRangeActions(ctx, source, actions, { route: carrier.rangeRoute || 'advance' });
+  let plan = carrier.rangePlan || quoteRangeActions(ctx, source, actions, { route: carrier.rangeRoute || 'advance' });
   if (authorization) {
     const frozen = authorization.plan.targets[0];
     plan = { ...authorization.plan, targets: plan.targets.map(row => ({...frozen,contactId:row.contactId,targetKey:row.targetKey})) };
@@ -134,9 +143,10 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   }
   const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || authorization?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };
   carrier.rangePlan = accepted;
+  if (plan.lineage) carrier.rangeLineagePlan={...plan.lineage,rootId};
   delete carrier.rangeBaseCosts; delete carrier.rangeRoute; delete carrier.rangeQuotedPlan; delete carrier.rangeReturnAuthorization; delete carrier.rangeCounterReservation;
   for (const action of actions) {
-    action.card = { ...action.card, rangePlan: accepted };
+    action.card = { ...action.card, rangePlan: accepted, ...(carrier.rangeLineagePlan ? {rangeLineagePlan:carrier.rangeLineagePlan} : {}) };
     delete action.card.rangeReturnAuthorization; delete action.card.rangeCounterReservation;
     action.meta = { ...action.meta, energySpent: (action.meta?.energySpent || 0) + extra, staminaSpent: (action.meta?.staminaSpent || 0) + extra };
   }
@@ -154,19 +164,20 @@ export function previewRangeRoutes(ctx, source, actions, baseCosts, { rangeRoute
     const targets = [];
     for (const row of plan.targets) {
       const index = Number(row.contactId.split(':')[0]);
-      const projected = actions[index]?.target;
+      const projected = actions[index]?.target || actions.find(action=>actorRangeKey(ctx,action.target)===row.targetKey)?.target;
       const target = projected && actorRangeKey(ctx, projected) === row.targetKey ? projected : opponents.find(entity => actorRangeKey(ctx, entity) === row.targetKey);
       const carrier = actions[index]?.card || {};
       const current = hitPreview?.(ctx, source, target, carrier);
       const after = hitPreview?.(ctx, source, target, { ...carrier, rangePlan: plan });
-      targets.push({ contactId: row.contactId, targetKey: row.targetKey, targetId: target?.id, band: row.actualBand, coverage: row.coverage,
+      targets.push({ conditional:row.contactId.startsWith('rider:'), contactId: row.contactId, targetKey: row.targetKey, targetId: target?.id, band: row.actualBand, coverage: row.coverage,
         effectiveBand: row.effectiveBand, precisionDelta: row.precisionDelta, inRange: !!after?.inRange,
         hitChance: after?.hitChance ?? null, currentInRange: !!current?.inRange, currentHitChance: current?.hitChance ?? null });
     }
     const grouped = [...new Set(targets.map(row => row.targetKey))].map(key => {
-      const contacts = targets.filter(row => row.targetKey === key), first = contacts[0];
+      const all = targets.filter(row => row.targetKey === key), conditionalContacts=all.filter(row=>row.conditional);
+      const contacts=all.filter(row=>!row.conditional), first=contacts[0] || conditionalContacts[0];
       const hitChances = contacts.map(row => row.hitChance), currentHitChances = contacts.map(row => row.currentHitChance);
-      return { ...first, contacts, hitChances, currentHitChances, inRange: contacts.every(row => row.inRange), currentInRange: contacts.some(row => row.currentInRange), allCurrentInRange: contacts.every(row => row.currentInRange), hitChance: hitChances.every(n => n === hitChances[0]) ? hitChances[0] : null, currentHitChance: currentHitChances.every(n => n === currentHitChances[0]) ? currentHitChances[0] : null };
+      return { ...first, contacts, conditionalContacts, conditionalOnly:!contacts.length, hitChances, currentHitChances, inRange: contacts.every(row => row.inRange), currentInRange: contacts.some(row => row.currentInRange), allCurrentInRange: contacts.every(row => row.currentInRange), hitChance: hitChances.length && hitChances.every(n => n === hitChances[0]) ? hitChances[0] : null, currentHitChance: currentHitChances.length && currentHitChances.every(n => n === currentHitChances[0]) ? currentHitChances[0] : null };
     });
     const affordable = (source.energy ?? source.stamina ?? 0) >= costs.energy && (source.mana || 0) >= costs.mana;
     return { id: plan.route, available: plan.available, reason: !plan.available ? 'range' : !affordable ? 'stamina' : null,

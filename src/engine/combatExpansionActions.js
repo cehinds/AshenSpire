@@ -138,6 +138,7 @@ function contactActions(ctx, group, actions) {
       const unit = { ...action, effect: { ...action.effect, hits: 1, repeat: 1 }, meta: { ...action.meta,
         contactIndex, contactEffectIndex: effectIndex, contactEffectFirst: index === 0,
         expansionContacts: [refs], expansionTargets: [action.meta.expansionTargets[index]],
+        ...(action.meta.rangeSiteBatches ? {rangeSiteBatches:[action.meta.rangeSiteBatches[index] || []]} : {}),
         ...(index > 0 ? { abilityChargeDamage: 0, abilityChargeBreak: 0 } : {}) } };
       queued.push(unit, { ...unit, effect: { op: 'completeCombatAction' }, meta: { ...unit.meta, contactCompletion: true } });
     }

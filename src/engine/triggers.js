@@ -1,3 +1,4 @@
+import * as RangeLineage from './combatRangeLineage.js';
 import { activeCombatStances, statusStacksWithStance } from './concurrentStances.js';
 // src/engine/triggers.js — event bus + declarative trigger wiring + predicates
 // (SPEC §3.6, §3.9, §3.10)
@@ -29,7 +30,10 @@ const PLAYER_TARGET_EVENTS = new Set(['damageDealt', 'hpLost', 'healed', 'status
  * event object. Every event carries { type, ...payload }.
  */
 export function emitEvent(ctx, type, payload = {}) {
-  const action = ctx._abilityAction;
+  const lifecycle = ['cardPlayed','cardResolved'].includes(type) && ctx.pendingAbilityPlay?.ref?.rangeLineagePlan ? {card:ctx.pendingAbilityPlay.ref,source:ctx.player,target:ctx.enemies?.find(enemy=>enemy.id===payload.targetId),meta:{}} : null;
+  const action = ctx._abilityAction || lifecycle;
+  const rangeOrigin = RangeLineage.eventRangeOrigin(ctx,type,payload,action);
+  if (rangeOrigin) payload={...payload,rangeOrigin};
   if (action?.card) payload = {
     cardId: action.card.cardId, cardInstanceId: action.card.instanceId, cardType: action.card.type,
     cardTags: action.card.authoredTags || action.card.tags || [], abilityKind: action.card.abilityKind,
@@ -140,6 +144,24 @@ export function hasEventTriggers(ctx, type, { cardTags } = {}) {
   } catch {
     return true;
   }
+}
+
+// The range quote reads the same owned hook sources as the live bus. It does
+// not fire predicates or consume gates while reserving possible descendants.
+export function rangeHookSources(ctx, owner, additionalStatuses = []) {
+  const rows=[], key=ownerKeyFor(ctx,owner);
+  if (owner?.kind === 'player') {
+    if (owner.stanceId) (ctx.registries.stances.get(owner.stanceId).hooks || []).forEach((trigger,i)=>rows.push({key:`stance:${key}:${owner.stanceId}:${i}`,trigger}));
+    for (const sourceKey of Object.keys(ctx.propertyMounts?.[key] || {}).sort()) {
+      let index=0;
+      for (const rule of ctx.propertyMounts[key][sourceKey].rules || []) for (const trigger of rule.triggers || []) rows.push({key:`property:${key}:${sourceKey}:${index++}`,trigger});
+    }
+  }
+  for (const id of new Set([...Object.keys(owner?.statuses || {}),...additionalStatuses])) {
+    const def=ctx.registries.statuses.has?.(id) ? ctx.registries.statuses.get(id) : null;
+    (def?.hooks || []).forEach((trigger,i)=>rows.push({key:`status:${key}:${id}:${i}`,trigger}));
+  }
+  return rows;
 }
 
 function scanTriggers(ctx, event) {
@@ -291,9 +313,12 @@ function maybeFire(ctx, key, trigger, owner, event, origin = null) {
   st.turnFires += 1;
   const ratingCard = ctx.ratingsRules && key.startsWith('status:')
     ? Object.entries(owner.statuses || {}).find(([id]) => key.includes(`:${id}:`))?.[1]?.ratingCard : null;
-  for (const eff of trigger.do || []) {
-    ctx.enqueue({ effect: eff, source: owner, owner, target, ...(ratingCard ? { card: ratingCard } : {}), meta: { event, ...(origin ? { triggeredBy: { ...origin, ownerId: owner?.id ?? null } } : {}), ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
+  const actions=[];
+  for (const [effectIndex,eff] of (trigger.do || []).entries()) {
+    const inherited=RangeLineage.inheritedRangeAction(ctx,key,owner,event,eff,effectIndex,ratingCard);
+    actions.push({ effect: eff, source: owner, owner, target, ...(inherited ? {card:inherited.carrier} : ratingCard ? { card: ratingCard } : {}), meta: { event, ...(inherited ? {rangeSiteBatches:inherited.batches} : {}), ...(origin ? { triggeredBy: { ...origin, ownerId: owner?.id ?? null } } : {}), ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
   }
+  for(const action of RangeLineage.acceptIndependentTrigger(ctx,owner,actions,key))ctx.enqueue(action);
   return true;
 }
 
