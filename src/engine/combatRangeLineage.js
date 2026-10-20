@@ -154,10 +154,10 @@ export function eventRangeOrigin(ctx,type,payload,action) {
   const site=refs.map(ref=>graph.sites.find(site=>site.id===ref.siteId)).find(site=>site.targetKey===targetKey && site.events.some(event=>event.type===type && (!event.status || event.status===payload.status)));
   return site?{version:1,rootId:graph.rootId,siteId:site.id,sourceKey:graph.sourceKey}:null;
 }
-export function inheritedRangeAction(ctx,key,owner,event,effect,effectIndex,baseCarrier=null) {
+export function inheritedRangeAction(ctx,key,owner,event,effect,effectIndex,baseCarrier=null,parentCarrier=null) {
   const origin=event.rangeOrigin;if(!origin)return null;
   if(keyOf(ctx,owner)!==origin.sourceKey)return null;
-  const parent=ctx._abilityAction?.card || ctx.pendingAbilityPlay?.ref;
+  const parent=parentCarrier || ctx._abilityAction?.card || ctx.pendingAbilityPlay?.ref;
   const graph=parent?.rangeLineagePlan,plan=parent?.rangePlan;
   if(!graph || !plan || graph.rootId!==origin.rootId)throw Rules.playRefusal('The committed trigger envelope is missing','range-lineage');
   const edge=graph.edges.find(edge=>edge.parentId===origin.siteId && edge.event===event.type && edge.status===(event.type==='statusApplied'?event.status || undefined:undefined) && edge.triggerKey===key && edge.effectIndex===effectIndex);
@@ -214,4 +214,20 @@ export function acceptIndependentTrigger(ctx,source,actions,key) {
   try{Engagement.acceptRangeActions(ctx,source,actions,carrier,rootId);}
   finally{if(prior!==undefined)ctx._rangeContext=prior;}
   return actions;
+}
+
+/** Counter reservations use a conservative HP+Poise return envelope. Materialize
+ * its original root sites on the eventual nonzero payload without resampling. */
+export function bindReservedRootSites(ctx,actions,graph) {
+  if(!graph)return;
+  const available=graph.sites.filter(site=>site.parentId===null && !site.id.startsWith('lifecycle:'));
+  const used=new Set();
+  for(const action of actions) {
+    const signature=JSON.stringify(eventsFor(ctx,action.effect,action.target));
+    const site=available.find(site=>!used.has(site.id) && site.targetKey===keyOf(ctx,action.target) && JSON.stringify(site.events)===signature);
+    if(!site)throw Rules.playRefusal('The reserved Counter payload is outside its accepted envelope','range-lineage');
+    used.add(site.id);
+    const ref={id:action.target.id,...(ctx.playerIdForEntity?.(action.target)?{playerId:ctx.playerIdForEntity(action.target)}:{})};
+    action.meta={...action.meta,rangeSiteBatches:[[{...ref,siteId:site.id}]],rangeTargetBatches:[[ref]]};
+  }
 }
