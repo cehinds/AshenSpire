@@ -2847,7 +2847,7 @@ export function validateFormula(value, path, vctx) {
     else value.args.forEach((a, i) => validateFormula(a, `${path}.args[${i}]`, vctx));
   }
   if (value.f === 'metric' && value.statuses !== undefined && (!Array.isArray(value.statuses) || value.statuses.some(id=>!vctx.ids.statuses.has(id)))) err(`${path}.statuses`,'Unknown metric status reference');
-  if (value.f === 'metric' && !['weaponDamage','negativeStatusTypes','negativeStatusStacks','damageTakenThisTurn','sameCardPlays','cardsPlayed','distinctTypes','manaSpent','staminaSpent'].includes(value.metric)) err(`${path}.metric`, 'Unknown combat metric');
+  if (value.f === 'metric' && !['weaponDamage','negativeStatusTypes','negativeStatusStacks','damageTakenThisTurn','sameCardPlays','cardsPlayed','distinctTypes','manaSpent','staminaSpent','evadeStackGain'].includes(value.metric)) err(`${path}.metric`, 'Unknown combat metric');
   if (value.f === 'stacks') {
     if (typeof value.status !== 'string' || !vctx.ids.statuses.has(value.status)) {
       err(`${path}.status`, `Dangling reference: unknown status id '${value.status}'`);

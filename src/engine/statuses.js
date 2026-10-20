@@ -385,8 +385,8 @@ export function anyCombatantFlag(ctx, key) {
   return false;
 }
 
-export function statusDefinition(ctx, id) {
-  return fixCoreStatusDefinition(ctx, id, ctx.registries.statuses.get(id));
+export function statusDefinition(ctx, id, holder = null) {
+  return fixCoreStatusDefinition(ctx, id, ctx.registries.statuses.get(id), holder);
 }
 export function decayAtTurnStart(ctx, entity) {
   if (!fixCoreEnabled(ctx) || entity.fixCoreDecayRound === ctx.turn) return;
