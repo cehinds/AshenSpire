@@ -1,3 +1,4 @@
+import { acceptRangeActions } from './combatEngagement.js';
 // A committed card/move owns one receipt per defender across all its contacts.
 import { evaluate } from '../model/formulas.js';
 import * as Triggers from './triggers.js';
@@ -40,6 +41,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
   mountCombatCombo(ctx, source, carrier);
   const group = { key: `${ctx.combatKey || 'combat'}:${++ctx.expansionActionSerial || (ctx.expansionActionSerial = 1)}`,
     sourceId: source?.id, sourcePlayerId: ctx.playerIdForEntity?.(source), carrier, targets: {}, begun: false };
+  acceptRangeActions(ctx, source, actions, carrier, group.key);
   // Prefix evaluation uses detached entities so a live predicate sees earlier
   // grants/removals while beforePlay keeps its original immutable snapshot.
   // Prefix chance streams are detached; execution pays those same draws once.
@@ -71,7 +73,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
     for (let r = 0; r < repeat; r++) for (let h = 0; h < hits; h++) {
       const contacts = [];
       const targetRefs = [];
-      for (const entity of Actions.resolveTargets(ctx, action, eff.target)) {
+      for (const entity of (action.meta.rangeTargetBatches?.[r * hits + h]?.map(ref => expansionEntity(ctx, ref)) || Actions.resolveTargets(ctx, action, eff.target))) {
         const projected = prefixEntity(entity);
         if (!entity?.alive || (eff.if && !Triggers.evalPredicate(prefix, eff.if, { ...shadow, target: projected }))) continue;
         targetRefs.push({ id: entity.id, playerId: ctx.playerIdForEntity?.(entity) });

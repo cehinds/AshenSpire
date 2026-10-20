@@ -56,6 +56,7 @@ export const COMBAT_OPCODES = Object.freeze([
   'grantRollMode',
   'retain',
   'dodgeRoll',
+  'moveEngagement',
   'applyStatus',
   'removeStatus',
   'grantCardCharge',
@@ -121,7 +122,7 @@ export const TARGETS = Object.freeze([
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
   'ashenBlightPaid', 'barrierGained', 'barrierBroken', 'wardBroken', 'poiseBroken', 'blockBroken', 'enemyInterrupted', 'controlRecovered', 'controlResolveScheduled', 'persistentWardChanged', 'persistentPoiseChanged', 'statusGaugeFilled', 'statusPoiseBreak', 'statusPressure', 'statusRecoveryRolled',
-  'combatAvoidanceResolved',
+  'combatAvoidanceResolved', 'combatEngagementMoved', 'combatRangeReturnUnavailable',
   'combatCounterArmed', 'combatCounterConsumed', 'combatCounterTriggered',
   'combatWardStripped', 'combatMatchupApplied', 'combatDamageRider',
   'evadeGained', 'attackEvaded', 'impactDealt', 'manaRecovered',
@@ -552,6 +553,7 @@ export const EFFECT_SPECS = Object.freeze({
   // target and nothing else — the check, the die and the guard are the
   // framework's, and the price is the Weight Class's.
   dodgeRoll: { allowed: [], required: [], refs: {} },
+  moveEngagement: { allowed: ['bands'], required: ['target', 'bands'], refs: {} },
   applyStatus: { allowed: ['status', 'stacks', 'tags'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status', 'amount'], required: ['status'], refs: { status: 'statuses' } },
   grantCardCharge: { allowed: ['key', 'cardType', 'cardTag', 'abilityKind', 'damage', 'damageScope', 'manaDiscount', 'block', 'heal', 'break', 'buildup', 'buildupStatus'], required: ['key'], refs: { buildupStatus: 'statuses' } },
