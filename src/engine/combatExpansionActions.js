@@ -36,7 +36,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
     carrier = { ...carrier, combatProfile: { ...carrier.combatProfile, maneuver: 'attack' } };
     for (const action of actions) action.card = carrier;
   }
-  Matchups.assertSingleActionCamp(carrier, actions.filter(action => ['damage', 'buildup', 'applyStatus'].includes(action.effect.op))
+  if (!ctx.rangeState) Matchups.assertSingleActionCamp(carrier, actions.filter(action => ['damage', 'buildup', 'applyStatus'].includes(action.effect.op))
     .map(action => effectCarrier({ ...carrier, ...action.card }, action.effect).combatProfile));
   mountCombatCombo(ctx, source, carrier);
   const group = { key: `${ctx.combatKey || 'combat'}:${++ctx.expansionActionSerial || (ctx.expansionActionSerial = 1)}`,
@@ -243,7 +243,7 @@ export function beginExpandedAction(ctx, group, source) {
     if (!expansionTargetPresent(ctx, target)) continue;
     const profile = row.contacts[0] || group.carrier?.combatProfile || {};
     const serial = group.manualCounterSerials?.[row.playerId || 'player'];
-    const carrier = { ...group.carrier, ...(profile.rangeContactId ? { rangeContactId: profile.rangeContactId } : {}), additionalTargets: Math.max(0, Object.keys(group.targets).length - 1), ...(serial ? { manualCounterSerial: serial } : {}) };
+    const carrier = { ...group.carrier, ...(ctx.rangeState ? {combatProfile:{...group.carrier.combatProfile,...profile}} : {}), ...(profile.rangeContactId ? { rangeContactId: profile.rangeContactId } : {}), additionalTargets: Math.max(0, Object.keys(group.targets).length - 1), ...(serial ? { manualCounterSerial: serial } : {}) };
     row.receipt = (ctx._expansionPreview ? Matchups.previewTacticalAction : Matchups.beginTacticalAction)(ctx, source, target, carrier, row.contacts,
       { ...Control.statusIncomingModifier(ctx, target, profile), contactModifiers: row.contacts.map(contact => Control.statusIncomingModifier(ctx, target, contact)), restrictions: Control.controlRestrictions(ctx, target) });
     row.interactions = { ...profile,
