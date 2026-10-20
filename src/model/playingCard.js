@@ -391,6 +391,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     mana: preview ? (preview.displayCosts?.mana ?? preview.manaCost) : profile.mana,
     stamina: preview ? (preview.displayCosts?.stamina ?? preview.staminaCost ?? 0) : (profile.stamina || 0),
     ...(preview?.costIsEstimate ? { estimated: true } : {}),
+    ...(preview?.costShift ? { shift: preview.costShift } : {}),
   });
 
   // TAGS, resolved against the ACTIVE registries in all three branches.

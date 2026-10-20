@@ -8,6 +8,7 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
+import { counterBlockBonus, counterBlockGrant, counterReturnSpent } from './counterRule.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
 // A queued ACTION is { effect, source, owner?, target?, card?, meta? }:
@@ -357,6 +358,16 @@ export function drainFixCorePoise(ctx, source, target, amount) {
 function applyProfileDamage(ctx, source, target, base, carrier) {
   if (fixCoreEnabled(ctx) && !carrier?.expansionContact && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
   const chance = profileDamageReceipt(ctx, source, target, base, carrier);
+  // A Counter with advantage over this hit adds Block before the hit is absorbed (SPEC §17).
+  // Once the owner's return is spent this cycle, a later-armed Counter grants nothing (the preview shows the same).
+  const counterBlock = fixCoreEnabled(ctx) && carrier?.expansionContact && !counterReturnSpent(target)
+    ? counterBlockBonus(ctx, carrier.expansionContact.receipt, carrier.expansionContact.index, chance.damageReceipt?.hits?.[0]?.incoming) : 0;
+  if (counterBlock > 0) {
+    // The same blockCap (Unbreakable) clamp gainBlock applies.
+    const gained = counterBlockGrant(ctx, target, counterBlock);
+    target.block = (target.block || 0) + gained;
+    if (gained > 0) ctx.emit('blockGained', { targetId: target.id, amount: gained, total: target.block, source: 'counter', ...seatOf(ctx, target) });
+  }
   const receipt = profileDamageReceipt(ctx, source, target, base, carrier,
     { roll: !fixCoreEnabled(ctx) && chance.hitChance < 1 ? ctx.rng.float(configuredModule(ctx, 'stances')?.accuracyStream || 'combatAvoidance') : null });
   const tactical = carrier?.expansionContact?.receipt;
@@ -366,6 +377,8 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     const index = carrier.expansionContact.index;
     tactical.amount += receipt.amount - (tactical.amounts[index] || 0);
     tactical.amounts[index] = receipt.amount;
+    // The Counter return reads the damage before Block and Poise took anything (SPEC §17).
+    (tactical.incomings ||= [])[index] = receipt.damageReceipt?.hits?.[0]?.incoming ?? receipt.amount;
     Matchups.recordTacticalContact(tactical, { hpLoss: receipt.hpLoss, blocked: receipt.blocked });
     if (receipt.evaded) tactical.avoided = true;
   }
@@ -1117,6 +1130,8 @@ function afterHpChange(ctx, target, death = {}) {
  */
 export function fixCoreStagger(ctx, entity, options = {}) {
   const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
+  // The hit that broke Poise still earns its Counter return: remember the spent Counter for the action's completion (SPEC §17).
+  if (entity?.combatCounter?.charges === 0) entity.combatCounterStaggered = entity.combatCounter.serial;
   Matchups.clearCombatCounter(entity, ctx);
   if (rules.stance) {
     entity.combatStance = fixCoreStaggeredStance(entity, rules);
@@ -1955,7 +1970,9 @@ function runOpcode(ctx, action, eff) {
         const authored = evalNum(ctx, action, eff.amount, 0, t);
         const bonus = ctx.combatExpansionVersion === 2 ? Blight.ashenBlightMartialPoise(ctx, action.source,
           { cycleKey: String(action.source?.combatOwnerCycle || 0), camp: action.card?.combatProfile?.camp, authoredPoise: authored }) : 0;
-        const amount = Math.ceil((authored + bonus) * multiplier * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1));
+        // A Core 2 Counter return carries its advantage in the return itself (SPEC §17): its Poise is delivered as computed.
+        const amount = fixCoreEnabled(ctx) && action.card?.counterReturnAttack ? Math.max(0, Math.floor(authored))
+          : Math.ceil((authored + bonus) * multiplier * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1));
         // Impact doubles only the Poise that passed the target's Poise guard.
         const guardBefore = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         if (ctx.ratingsRules && action.meta?.combatCounterReaction) {

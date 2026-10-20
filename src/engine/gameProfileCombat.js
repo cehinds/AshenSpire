@@ -2,8 +2,8 @@ import { applyStatus } from './statuses.js';
 import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack } from '../model/combatRatings.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
-import { mirroredStance, configuredStance } from '../model/profileStance.js';
+import { fixCoreEnabled, fixCoreRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, fixCoreReactionHandCost } from '../model/fixCoreMechanics.js';
+import { mirroredStance, configuredStance, armsAsCoreCounter } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
 import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js';
@@ -18,7 +18,8 @@ export function configuredCombat(subject) {
     || Object.values(profile.modules || {}).some(rule => rule?.mode === 'configured'));
 }
 export { configuredModule };
-export { mirroredStance, configuredStance };
+// configuredStance / mirroredStance / armsAsCoreCounter live in the model layer (profileStance.js) so the card inspector shares them.
+export { mirroredStance, configuredStance, armsAsCoreCounter };
 export function setProfileStance(ctx, entity, carrier) {
   if (!configuredCombat(ctx)) return false;
   if (fixCoreEnabled(ctx) && carrier && carrier.fixCoreSameStance === undefined) carrier.fixCoreSameStance = sameStance(entity, carrier);
@@ -58,6 +59,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const advantage = !!stances?.include?.includes(attacking)
     && !!stances?.matchups?.[attacking]?.includes(defending);
   const modern = fixCoreEnabled(ctx);
+  const flatReturn = modern && carrier.counterReturnAttack;
   const sources = [{id:'base',label:'Card damage (including enhancements)',amount:base,stage:'offense',operation:'set'}];
   // The chain keeps full precision and is floored once where it is applied (the quantity-rounding step);
   // receipt lines show the running floor so every shown number is whole (owner, 2026-10-18 16:05).
@@ -85,19 +87,21 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     }
     raw = transition('ar:adjustments',`${ratingLabel} stance/status modifiers (including Weak)`,raw,base+ratingBonus);
   } else raw = transition('ar','Attack rating',raw,raw+ratingBonus);
-  const stanceMultiplier = stanceEffectiveness(ctx,source,carrier);
+  // A Core 2 Counter return is final pre-protection damage (SPEC §17): no matching-stance or defensive-stance stage.
+  const stanceMultiplier = flatReturn ? 1 : stanceEffectiveness(ctx,source,carrier);
   raw = transition('matching-stance','Matching stance effectiveness',raw,raw*stanceMultiplier,'offense',stanceMultiplier);
-  if (modern && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
+  if (modern && !flatReturn && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
   if (!modern) raw=Math.max(0,Math.floor(raw));
-  if(proposal && target) raw=transition('status-rules','Other status modifiers',raw,proposalHitPlan(ctx,source,target,raw,carrier,{roundDamage:!modern}).amount);
+  if(proposal && target && !flatReturn) raw=transition('status-rules','Other status modifiers',raw,proposalHitPlan(ctx,source,target,raw,carrier,{roundDamage:!modern}).amount);
   const defense = stanceMitigation(ctx, attacking, defending);
   // Owner, 2026-10-19: a Smash that beats the target's stance (Defend or Prepared) deals 2x its normal damage in place of the
   // generic advantage multiplier, plus a share of the target's Block (below), and costs Poise by a share of the total instead of the 25% absorption.
   const smashRule = modern && advantage && attacking === 'smash' ? fixCoreSmashVsDefensiveRules(fixCoreRules(ctx, target)) : null;
-  const advantageMultiplier = smashRule ? smashRule.damageMultiplier : advantage ? stances.advantageMultiplier ?? 1 : 1;
+  // Core 2 Counter returns carry their advantage in the return itself (SPEC §17), so the chain does not multiply it again.
+  const advantageMultiplier = smashRule ? smashRule.damageMultiplier : advantage && !flatReturn ? stances.advantageMultiplier ?? 1 : 1;
   let amount=smashRule ? transition('smash-vs-defensive','Smash vs defensive stance',raw,raw*advantageMultiplier,'stance',advantageMultiplier)
     : transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
-  amount=transition('stance-defense','Defensive stance advantage',amount,amount*defense.multiplier,'stance',defense.multiplier);
+  amount=transition('stance-defense','Defensive stance advantage',amount,amount*(flatReturn?1:defense.multiplier),'stance',flatReturn?1:defense.multiplier);
   amount=modern ? Math.max(0,Math.floor(amount)) : transition('quantity-rounding','Damage quantity rounding',amount,Math.max(0,Math.floor(amount)),'rounding');
   const evade = stances?.include?.includes('evade') && defending === 'evade';
   const targeting=proposalTargetPlan(ctx,source,target,carrier);
@@ -167,7 +171,7 @@ export function profileCardCosts(ctx, def) {
   const authored = def.resourceCosts || def.costs || {};
   const baseSp = def.cost==='X' && include.includes('sp') ? Math.max(0,ctx.player?.stamina ?? ctx.player?.energy ?? 0) : authored.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : 0);
   const baseMp = authored.mp ?? def.manaCost ?? 0;
-  const sp = fixCoreEnabled(ctx) ? stanceStaminaCost(baseSp, ctx.player, def, ctx, baseMp) : baseSp;
+  const sp = fixCoreEnabled(ctx) ? fixCoreReactionHandCost(ctx, def, stanceStaminaCost(baseSp, ctx.player, def, ctx, baseMp)) : baseSp;
   const mp = stanceManaCost(baseMp, ctx.player, def, ctx);
   if ((!include.includes('sp') && sp > 0) || (!include.includes('mp') && mp > 0)) {
     throw new Error(`Card ${def.id || 'unknown'} requires an authored disabled-resource variant`);

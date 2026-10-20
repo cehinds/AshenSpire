@@ -17,6 +17,19 @@ export function fixCoreModuleParameters(rules = defaults) {
 // extends duration). Missing blocks (saves from before this ruling) fall back to these defaults.
 export const FIXCORE_POISE_DEFAULTS = Object.freeze({ drain: 'prevented' });
 export const FIXCORE_STAGGERED_DEFAULTS = Object.freeze({ stance: true, staminaLoss: 1, vulnerableStacks: 1, extendOnly: true });
+// Owner, 2026-10-19: Counter return = floor(returnFraction x incoming damage), Poise = floor(poiseFraction x return); with advantage
+// the return gains floor(advantageIncomingFraction x incoming), Poise uses advantagePoiseFraction and the owner gains
+// floor(advantageBlockFraction x incoming) Block. A trait:reaction card played from hand costs handCostDiscount less SP (floor 0).
+export const FIXCORE_COUNTER_DEFAULTS = Object.freeze({ returnFraction: 0.5, poiseFraction: 0.2, advantageIncomingFraction: 0.25, advantagePoiseFraction: 0.5, advantageBlockFraction: 0.25 });
+export const FIXCORE_REACTION_DEFAULTS = Object.freeze({ handCostDiscount: 1 });
+export const fixCoreCounterRules = rules => ({ ...FIXCORE_COUNTER_DEFAULTS, ...(rules?.counter || {}) });
+export const fixCoreReactionRules = rules => ({ ...FIXCORE_REACTION_DEFAULTS, ...(rules?.reaction || {}) });
+/** The SP a Core 2 `trait:reaction` card costs from hand: max(SP - handCostDiscount, 0) (owner, 2026-10-19; SPEC §17). */
+export function fixCoreReactionHandCost(ctx, def, sp) {
+  if (!fixCoreEnabled(ctx) || !(sp > 0) || def?.cost === 'X') return sp;
+  if (!(def?.cardTags || def?.tags || []).includes('trait:reaction')) return sp;
+  return Math.max(0, sp - fixCoreReactionRules(fixCoreRules(ctx)).handCostDiscount);
+}
 export const fixCorePoiseRules = rules => ({ ...FIXCORE_POISE_DEFAULTS, ...(rules?.poise || {}) });
 export const fixCoreStaggeredRules = rules => ({ ...FIXCORE_STAGGERED_DEFAULTS, ...(rules?.staggered || {}) });
 // Owner, 2026-10-19: a Smash against a defensive stance deals damageMultiplier x its normal damage plus blockFraction of the target's Block,
@@ -51,11 +64,14 @@ export function normalizeFixCoreRules(rules) {
 const rawRules = ctx => normalizeFixCoreRules(ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules || defaults);
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','ward','poise','staggered','smashVsDefensive','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  const known = new Set(['version','enabled','ward','poise','staggered','smashVsDefensive','counter','reaction','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
   if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => key !== 'enabled'))) throw new Error('FixCore ward requires {enabled:boolean}');
   const poise = rules.poise, stag = rules.staggered;
   if (poise !== undefined && (typeof poise !== 'object' || poise === null || poise.drain !== 'prevented' || Object.keys(poise).some(key => key !== 'drain'))) throw new Error('FixCore poise requires {drain:"prevented"}');
   if (stag !== undefined && (typeof stag !== 'object' || stag === null || typeof stag.stance !== 'boolean' || typeof stag.extendOnly !== 'boolean' || !Number.isInteger(stag.staminaLoss) || stag.staminaLoss < 0 || !Number.isInteger(stag.vulnerableStacks) || stag.vulnerableStacks < 0 || Object.keys(stag).some(key => !['stance','staminaLoss','vulnerableStacks','extendOnly'].includes(key)))) throw new Error('FixCore staggered requires {stance:boolean, staminaLoss:int, vulnerableStacks:int, extendOnly:boolean}');
+  const fractions = (name, row, keys) => { if (row !== undefined && (typeof row !== 'object' || row === null || Object.keys(row).some(key => !keys.includes(key) || !Number.isFinite(row[key]) || row[key] < 0))) throw new Error(`FixCore ${name} requires non-negative numbers for ${keys.join(', ')}`); };
+  fractions('counter', rules.counter, Object.keys(FIXCORE_COUNTER_DEFAULTS));
+  if (rules.reaction !== undefined && (typeof rules.reaction !== 'object' || rules.reaction === null || Object.keys(rules.reaction).some(key => key !== 'handCostDiscount') || !Number.isInteger(rules.reaction.handCostDiscount) || rules.reaction.handCostDiscount < 0)) throw new Error('FixCore reaction requires {handCostDiscount:int >= 0}');
   const smash = rules.smashVsDefensive;
   if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','blockFraction','poiseFraction'].includes(key))
     || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0)) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');

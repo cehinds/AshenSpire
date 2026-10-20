@@ -1,6 +1,7 @@
 // Leaf: the stance a carrier plays under a configured profile. smashClause.js and engine/gameProfileCombat.js both read it
 // from here, so model text never imports the engine adapter (and its stanceRules -> combatCardProfile -> smashClause cycle).
 import { cardPreparationCategory } from './cardClassification.js';
+import { configuredModule } from './profileModule.js';
 
 export const MIRRORED_TYPES = new Set(['attack', 'smash', 'sweep', 'defend', 'counter']);
 // A Spell that mirrors a basic card (owner 2026-10-18) takes that basic's maneuver; it stays a Spell. Only Core 2 content sets `mirrors`.
@@ -16,4 +17,11 @@ export function configuredStance(carrier) {
   const raw = carrier?.stanceTrigger?.stance || carrier?.combatProfile?.maneuver || carrier?.maneuver
     || (carrier?.cardTags || carrier?.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id).find(tag => tag.startsWith('maneuver:'))?.slice(9);
   return ({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack' })[raw] || raw || 'neutral';
+}
+// The ONE predicate for "this card arms as a Core Counter" (live preparedCounter, the preview and the inspector help):
+// the run's stances module includes Counter and the card's configured stance is Counter. A spell Counter stands in
+// the 'prepared' stance and never arms.
+export function armsAsCoreCounter(subject, card) {
+  const rule = configuredModule(subject, 'stances');
+  return !!rule && !!rule.include?.includes('counter') && configuredStance(card) === 'counter';
 }

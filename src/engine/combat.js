@@ -23,6 +23,7 @@ import { enqueueExpandedAction, previewExpandedActions } from './combatExpansion
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { expandedEquipmentProjection, expandedEnemyProjection } from './combatExpansionEquipment.js';
 import { settleExpandedPools, refreshExpandedLoadout } from './combatExpansionProjection.js';
+import { counterPreviewAgainst } from './counterRule.js';
 import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade, liveCounterCovers } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits, previewPoiseDrain } from './combatDamagePreview.js';
@@ -2518,6 +2519,32 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   // Preparation adds the charge once to the whole Counter. Its display belongs
   // to the first eligible contact, even if an earlier opcode has no contacts.
   const counterPreviews = new Map();
+  // The player once the Counter's immediate defensive effects (its Block, the stance-entry grants) have resolved, on a
+  // detached copy through the same queue the live play drains; the return is simulated against this defender.
+  let counterProjection;
+  const counterDefenseProjection = () => {
+    if (counterProjection !== undefined) return counterProjection;
+    const sim = F.candidateState(combat, { detached: true });
+    for (const effect of chargedEffects) {
+      if (effect.op === 'damage' || effect.target !== 'self') continue;
+      sim.queue.push({ effect, source: sim.player, owner: sim.player, target: sim.player, card: action.card, meta: { energySpent: shownCost } });
+    }
+    drainQueue(sim);
+    return (counterProjection = sim.player);
+  };
+  // Core 2: the whole HP/Poise return is one computed figure; the authored poiseDamage rows of a Counter never resolve live.
+  const coreCounterCard = configuredCombat(combat) && fixCoreEnabled(combat) && action.card.combatProfile?.maneuver === 'counter';
+  let coreCounterRead;
+  const coreCounterReturnRead = () => {
+    if (coreCounterRead !== undefined) return coreCounterRead;
+    const enemyTarget = action.target?.kind === 'enemy' ? action.target : living[0];
+    return (coreCounterRead = enemyTarget
+      ? counterPreviewAgainst(combat, enemyTarget, previewIntent(combat, enemyTarget.id), action.card, counterDefenseProjection()) : null);
+  };
+  // The return the card will deal: null when the attack is hidden/unknown (the face keeps the printed amount) or uncovered (no return).
+  const coreCounterReturn = () => { const read = coreCounterReturnRead(); return read?.uncovered ? null : read; };
+  const coreCounterUncovered = () => coreCounterReturnRead()?.uncovered === true;
+  let corePoiseRowUsed = false;
   const previewCounter = (resolvedTarget, index) => {
     const key = resolvedTarget?.id || null;
     if (!counterPreviews.has(key)) {
@@ -2531,12 +2558,27 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       let bonusIndex = eligible.findIndex(reply => reply?.hits > 0);
       if (bonusIndex < 0) bonusIndex = chargedEffects.findIndex(effect => effect.op === 'damage');
       const bonus = Math.max(0, charges.damage + charges.damageEffect);
+      let coreRead;
       counterPreviews.set(key, replies.map((reply, effectIndex) => {
         if (configuredCombat(combat)) {
-          const result = previewDamageHits(combat, p, resolvedTarget,
-            (reply?.value || 0) + (effectIndex === bonusIndex ? bonus : 0),
-            action.card.tags || [], { ...action.card, combatReaction: true, counterReturnAttack: true }, reply?.hits || 0);
-          return result;
+          // Core 2 (SPEC §17): the return is a fraction of the revealed incoming attack, priced exactly as the live
+          // return is: no attack-rating bonus, no second stance multiplier. Without a revealed attack the face
+          // states the printed amount.
+          coreRead ??= reply && resolvedTarget?.kind === 'enemy'
+            ? counterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id), action.card, counterDefenseProjection()) : null;
+          const read = effectIndex === bonusIndex ? coreRead : null;
+          // Live replaces the card's whole HP payload with the one computed return (SPEC §17), so every other damage row of a
+          // Counter with a known read deals nothing here: the return sits in exactly one row.
+          if (effectIndex !== bonusIndex && reply && coreRead) return { damage: 0, hitDamages: [], totalDamage: 0, hits: 0 };
+          // A revealed attack the Counter does not answer deals no return; a hidden one keeps the printed amount.
+          if (read?.uncovered) return { damage: 0, hitDamages: [], totalDamage: 0, hits: 0 };
+          const live = read;
+          const hits = previewDamageHits(combat, p, resolvedTarget,
+            live ? live.hp : (reply?.value || 0) + (effectIndex === bonusIndex ? bonus : 0),
+            action.card.tags || [], { ...action.card, combatReaction: true, counterReturnAttack: true, ...(fixCoreEnabled(combat) ? { skipRatingBonus: true } : {}) },
+            live ? 1 : reply?.hits || 0);
+          // The return's own Poise damage and the Block the Counter adds ride with its HP damage (SPEC §17).
+          return live ? { ...hits, damage: live.hp, hitDamages: [live.hp], totalDamage: live.hp, counterReturn: { incoming: live.incoming, hp: live.hp, poise: live.poise, block: live.block, advantaged: live.advantaged } } : hits;
         }
         const hitDamages = Array.from({ length: reply?.hits || 0 }, () => reply.value);
         if (effectIndex === bonusIndex && bonus) {
@@ -2588,6 +2630,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
               attackTags, carrier, entry.hits, damagePreviewStates.get(e.id));
           entry.perTarget[e.id] = result.damage;
           entry.perTargetHitDamages[e.id] = result.hitDamages;
+          if (primary?.id === e.id && result.counterReturn) entry.counterReturn = result.counterReturn;
           if (primary?.id === e.id) Object.assign(entry, { value: result.damage,
             hitDamages: result.hitDamages, totalDamage: result.totalDamage, damageReceipt: result.damageReceipt,
             ...(configuredCombat(combat) ? { hitChance: result.hitChance, uncertain: result.uncertain, hpLossBounds: result.hpLossBounds } : {}) });
@@ -2672,6 +2715,12 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       case 'poiseDamage':
       case 'addCinders': {
         entry.value = evalPreview(combat, action, eff.amount != null ? eff.amount : 1, primary);
+        if (eff.op === 'poiseDamage' && coreCounterCard) {
+          // The face shows the Poise the return really deals (SPEC §17), once; the authored rows and their conditions do not stack.
+          const read = coreCounterReturn();
+          if (read) { entry.value = corePoiseRowUsed ? 0 : read.poise; corePoiseRowUsed = true; }
+          else if (coreCounterUncovered()) entry.value = 0; // a revealed attack this Counter never answers: no Poise return
+        }
         if (configuredCombat(combat) && (eff.op === 'poiseDamage' || eff.op === 'wardDamage')) {
           // Under Core a Poise drain can break Poise mid-card; later hits of this card see the broken target (as live).
           const hit = eff.target === 'allEnemies' ? living : eff.target === 'enemy' || eff.target == null ? [primary] : [];
@@ -2719,6 +2768,20 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     }
     values.push(entry);
   });
+  // A Counter with no authored damage effect (a support-only Counter) still returns half the incoming hit under Core 2:
+  // the conditional return is read from the revealed attack, independent of any damage opcode.
+  const authoredCosts = def.resourceCosts || def.costs || {};
+  const authoredSp = authoredCosts.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : undefined); // profileCardCosts' chain
+  // The one computed return (SPEC §17) for any Core Counter, with or without an authored damage opcode: the card face
+  // reads it for the HP, Poise and conditional Block rows its effects do not already carry.
+  let supportCounterReturn = null;
+  if (coreCounterCard) {
+    const read = coreCounterReturn();
+    if (read) supportCounterReturn = { incoming: read.incoming, hp: read.hp, poise: read.poise, block: read.block, advantaged: read.advantaged };
+    // A Counter against a revealed attack it does not cover (or whose return is spent) will not arm: the face must not fall
+    // back to the authored payload as if the intent were merely hidden.
+    else if (coreCounterUncovered()) supportCounterReturn = { uncovered: true };
+  }
 
   return {
     // The effects the play will run, a charge's added rows included; `values` follow this list (the card face reads it).
@@ -2731,10 +2794,14 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     costIsX: isX,
     manaCost: paidCosts.mana,
     ...(priceReceipt.selfFunded ? { displayCosts } : {}),
+    // Core 2: whether a rule moved the SP price off the printed one (-1 cheaper, 1 dearer), so the face can mark it.
+    ...(configuredCombat(combat) && !isX && Number.isFinite(authoredSp) && paidCosts.stamina !== authoredSp
+      ? { costShift: Math.sign(paidCosts.stamina - authoredSp) } : {}),
     // Affordability keeps the net payment requirement, including restore funding.
     staminaCost: combat.combatExpansionVersion === 2 ? paidCosts.stamina : shownCost,
     needsTarget: needsEnemyTarget({ ...def, effects: chargedEffects }),
     values,
+    ...(supportCounterReturn ? { counterReturn: supportCounterReturn } : {}),
     tokens,
     damageSequences,
     // Core: the live Precision an entry into this card's stance grants (base + the actor's stat mix); the face prints it.

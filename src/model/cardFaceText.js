@@ -140,6 +140,8 @@ function buildLines(def, preview, registries, rules = null) {
       case 'damage': {
         const live = preview?.values?.[index], hits = live?.hits ?? effect.hits ?? 1;
         if (typeof hits !== 'number') fail();
+        // Core 2: one row carries the computed return; every other damage row of the Counter is zeroed and not listed.
+        if (counter && preview?.counterReturn && live && hits === 0 && live.totalDamage === 0) return [];
         const sequence = live?.hitDamages;
         const unequal = sequence?.length > 1 && sequence.some(amount => amount !== sequence[0]);
         // The face names the hit's leading type only ("Lightning", not "Lightning · Piercing"); inspection keeps the full label.
@@ -161,6 +163,8 @@ function buildLines(def, preview, registries, rules = null) {
         return frag('damage', text + area);
       }
       case 'poiseDamage': case 'wardDamage': {
+        // Core 2: the computed return stands for every authored Poise row; a row the return zeroes is not listed.
+        if (counter && preview?.counterReturn && !(n > 0)) return [];
         // Ward off (Core 2): Ward damage drains Poise, so the face reads one combined Poise figure.
         const merged = poiseMerge?.get(index);
         if (merged) {
@@ -298,6 +302,7 @@ function buildLines(def, preview, registries, rules = null) {
   for (const [index, effect] of (def.effects || []).entries()) {
     const fragments = phraseEffect(effect, index);
     if (effect.oncePerTurn && fragments.length) fragments[fragments.length - 1].text += ' once per turn per family';
+    if (effect.if && !fragments.length) continue; // a condition with nothing left to say (a Core return zeroed its row) is not listed
     if (effect.if) {
       const key = JSON.stringify(effect.if);
       if (!groups.has(key)) groups.set(key, { prefix: prefixFor(effect.if), fragments: [], sleeping: JSON.stringify(effect.if).includes('"status":"sleep"') });
@@ -306,13 +311,17 @@ function buildLines(def, preview, registries, rules = null) {
   }
 
   // Counter: what the payload returns, for each part the effects do not already deal.
-  if (counter) {
+  // An uncovered revealed attack (the Counter will not arm): no return lines, not even the authored payload.
+  const counterUncovered = counter && preview?.counterReturn?.uncovered === true;
+  if (counter && !counterUncovered) {
     const payload = def.counterPayload || {};
     // Ward off (Core 2): the payload's Ward drains Poise too, so it joins the Poise figure.
     let poiseReturn = 0, poiseAuthored = 0;
     for (const [key, label, op] of [['hp', 'damage', 'damage'], ['poise', 'Poise', 'poiseDamage'], ['ward', 'Ward', 'wardDamage']]) {
       if ((def.effects || []).some(effect => effect.op === op)) continue;
-      const live = preview?.values?.find(row => row.op === op)?.value;
+      // Core 2 (SPEC §17): the computed return against the revealed attack replaces the authored payload; Ward is not part of it.
+      const core = preview?.counterReturn;
+      const live = core ? (key === 'ward' ? 0 : core[key]) : preview?.values?.find(row => row.op === op)?.value;
       const amount = live ?? payload[key];
       if (typeof amount !== 'number' || !(amount > 0)) continue;
       if (poiseMerge && key !== 'hp') { poiseReturn += amount; poiseAuthored += payload[key] || 0; continue; }
@@ -320,12 +329,14 @@ function buildLines(def, preview, registries, rules = null) {
       unconditional.push({ cat: 'damage', text: `${typed(num(amount, payload[key]), type)} ${label}` });
     }
     if (poiseReturn > 0) unconditional.push({ cat: 'damage', text: `${num(poiseReturn, poiseAuthored)} Poise` });
+    // Beating the revealed hit also adds Block before it lands.
+    if (preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', text: `+${num(preview.counterReturn.block)} Block against it` });
   }
-  if (counter && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
+  if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
   const smashClause = coreSmashClause(def, registries);
   if (smashClause) unconditional.push({ cat: 'bonus', text: esc(smashClause) });
-  if (def.pronePoiseBonus) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
+  if (def.pronePoiseBonus && !(counter && preview?.counterReturn)) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
   // Live Precision grant when a preview has an actor, else the 1 + stat mix formula.
   const entryPrecisionText = (amount, preview) => Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount) + ' + stat mix';
   // gameProfile lets the face apply the same Core 2 rounding as combat (stanceEntryBonuses floors under FixCore).
