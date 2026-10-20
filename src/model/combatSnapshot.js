@@ -254,6 +254,10 @@ export function combatSnapshotProblems(snapshot) {
         if (!finite(amount) || amount < 0) problems.push(`skillXp.${owner}.xp.${skillId} must be a non-negative number`);
       }
       if (receipt.killGroup !== null && !nonEmptyString(receipt.killGroup)) problems.push(`skillXp.${owner}.killGroup must be null or a skill track id`);
+      if (receipt.usedArmaments !== undefined && (!Array.isArray(receipt.usedArmaments)
+        || receipt.usedArmaments.some(id => !nonEmptyString(id)) || new Set(receipt.usedArmaments).size !== receipt.usedArmaments.length)) {
+        problems.push(`skillXp.${owner}.usedArmaments must be distinct non-empty item ids`);
+      }
     }
   }
   if (snapshot.armamentLevels !== undefined) {
