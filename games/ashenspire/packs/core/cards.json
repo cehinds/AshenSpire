@@ -335,5 +335,32 @@
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.manaSurge",
+    "name": "Mana Surge",
+    "class": "colorless",
+    "rarity": "starter",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "\u2726",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "restoreMana",
+        "target": "self",
+        "amount": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "maneuver:casting",
+      "classification.skill"
+    ],
+    "textTemplate": "Gain {restoreMana} Mana.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
   }
 ]
