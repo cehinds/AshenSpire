@@ -24,10 +24,10 @@ const registries = Object.freeze({ ...baseRegistries, enemies: {
     return id === 'wanderingSoldier' ? { ...row, firstMove: 'slash', moves: { ...row.moves, slash: { ...row.moves.slash, damage: 5, hits: 3 } } } : row;
   }
 } });
-function live(damage = 5) {
-  const selected = damage === 5 ? registries : { ...registries, enemies: { ...registries.enemies, get(id) {
+function live(damage = 5, effects = undefined) {
+  const selected = damage === 5 && effects === undefined ? registries : { ...registries, enemies: { ...registries.enemies, get(id) {
     const row = registries.enemies.get(id);
-    return id === 'wanderingSoldier' ? { ...row, moves: { ...row.moves, slash: { ...row.moves.slash, damage } } } : row;
+    return id === 'wanderingSoldier' ? { ...row, moves: { ...row.moves, slash: { ...row.moves.slash, damage, ...(effects ? { effects } : {}) } } } : row;
   } } };
   const run = createRunState({ registries: selected, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: selected, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
@@ -195,6 +195,19 @@ test('a lethal incoming hit emits no later swing or preparation at the fallen pl
   assert.equal(ctx.eventLog.filter(row => row.type === 'combatContactPrepared').length, 1);
   assert.equal(ctx.eventLog.filter(row => row.type === 'combatHitStarted').length, 0);
   assert.equal(ctx.eventLog.filter(row => row.type === 'enemyMoveStarted').length, 1);
+});
+
+test('a final-hit lethal Counter cancels the defeated actor\'s trailing effects', () => {
+  const ctx = live(5, [{ op: 'applyStatus', target: 'player', status: 'vulnerable', stacks: 2 }]);
+  counters(ctx); ctx.enemies[0].hp = 1; primeAccuracyRolls(ctx, { count: 3 });
+  dispatch(ctx, { type: 'endTurn' }); answer(ctx); answer(ctx);
+  primeAccuracyRolls(ctx, { count: 3 });
+  answer(ctx, ctx.pendingReaction.options.find(row => row.play.cardInstanceId === 'counter-0').id);
+  assert.equal(ctx.result, 'victory'); assert.equal(ctx.pendingReaction, undefined);
+  assert.equal(ctx.player.statuses.vulnerable, undefined);
+  assert.equal(ctx.eventLog.filter(row => row.type === 'statusApplied' && row.status === 'vulnerable').length, 0);
+  assert.equal(ctx.pendingExpansionActions, 0); assert.equal(ctx.queue.length, 0);
+  assert.deepEqual(combatSnapshotProblems(serializeCombatSnapshot(ctx)), []);
 });
 
 test('an absent contact target does not cancel a later original living target', () => {

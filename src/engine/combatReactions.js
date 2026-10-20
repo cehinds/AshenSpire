@@ -609,7 +609,11 @@ export function revealActor(ctx, enemy) {
 
 export function startQueuedEnemy(ctx, action) {
   const group = action.meta?.expansionGroup;
-  if (!group || group.payloadStarted || (!group.enemyMoveStart && !group.counterReturn)) return;
+  if (!group || (!group.enemyMoveStart && !group.counterReturn)) return;
+  // A per-hit Counter may end its actor after the last damage contact but
+  // before the move's trailing effects. Those effects belong to the same root.
+  if (group.contactSequence && (!action.source?.alive || haltReason(ctx, action.source))) group.cancelled = true;
+  if (group.cancelled || group.payloadStarted) return;
   group.payloadStarted = true;
   const enemy = action.source;
   group.cancelled = !enemy?.alive || enemy.skipNextTurn || controlRestrictions(ctx, enemy).locked;
