@@ -130,7 +130,7 @@ function equippedFoundationSource(ctx, entity, carrier) {
       const family = state.rules.equipmentSources?.itemFamilies?.[piece.id] || state.rules.equipmentSources?.profileFamilies?.[piece.attackProfile];
       if (!family || !identity.damageType) throw new Error(`Missing attack source mapping for '${piece.id}'`);
       return { id: `armament/${piece.id}/${hand}`, itemId: piece.id, name: piece.name, hand, sourceType: kind,
-        weight: piece.weight, grip: 'oneHand', family, damageType: identity.damageType, tags: [...piece.tags], buildup: [] };
+        range: piece.range || 'melee', propertyTags: [...(piece.propertyTags || [])], weight: piece.weight, grip: 'oneHand', family, damageType: identity.damageType, tags: [...piece.tags], buildup: [] };
     }
     if (kind === 'spell') throw new Error(`No spell source for ${foundationActorId(ctx, entity)}`);
     if (explicitHand) return { ...state.rules.fallbackSource, sourceType: 'unarmed', hand: explicitHand };

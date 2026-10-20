@@ -1,3 +1,4 @@
+import { rangeHitContact } from './combatEngagement.js';
 import { fixCoreEnabled, fixCoreRules } from '../model/fixCoreMechanics.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { proposalTargetPlan } from './proposalStatusRuntime.js';
@@ -95,7 +96,8 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const requiredRange = carrier?.counterRequiredRange || (delivery ? 'melee' : stance?.range) || 'melee';
   const override = profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach');
   // Target bypasses Evasion only; its spell still needs sufficient reach.
-  const inRange = override || (RANGES.includes(range) && RANGES.includes(requiredRange) && RANGES.indexOf(range) >= RANGES.indexOf(requiredRange));
+  const rangeContact = rangeHitContact(ctx, source, target, carrier);
+  const inRange = rangeContact ? rangeContact.inRange : override || (RANGES.includes(range) && RANGES.includes(requiredRange) && RANGES.indexOf(range) >= RANGES.indexOf(requiredRange));
   const maneuver = effectiveManeuver({ combatProfile: profile, mirrors: carrier?.mirrors });
   const precision = stacks(source, 'precision');
   const rules = stanceRulesFor(ctx);
@@ -104,7 +106,7 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   // Under FixCore, Precision and Evasion are whole numbers, rounded down (owner, 2026-10-18); the roll is opposed (owner, 2026-10-19).
   const precisionMultiplier = fixCoreEnabled(ctx) ? precisionStatMix(ctx, source, carrier) * (precision + 1) : 0;
   const accuracy = fixCoreEnabled(ctx)
-    ? Math.floor(cfg.precisionBase + precisionMultiplier + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[maneuver] || 0) + proposal.accuracyDelta/5)
+    ? Math.floor(cfg.precisionBase + precisionMultiplier + (Number(source.basePrecisionBonus) || 0) + (cfg.maneuverPrecision[maneuver] || 0) + proposal.accuracyDelta/5 + (rangeContact?.precisionDelta || 0))
     : attackAccuracy(ctx, source, carrier) + precision + sweep + proposal.accuracyDelta/5;
   const evadeStacks = options.evadeDisabled ? 0 : stacks(target, 'evade');
   const evasion = fixCoreEnabled(ctx) ? Math.floor(effectiveEvasion(ctx, target, options)) : effectiveEvasion(ctx, target, options);
