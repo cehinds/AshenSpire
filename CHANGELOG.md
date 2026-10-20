@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Counter reworked** ([#2200](https://github.com/cehinds/AshenSpire/pull/2200), `0.7.1.1715`). Counter now answers any attack it covers: it returns half the damage it takes, a quarter more with extra Block when it beats the attack, and reaction cards cost 1 less stamina from your hand.
+- **Counter reworked** ([#2200](https://github.com/cehinds/AshenSpire/pull/2200), `0.7.1.1717`). Counter now answers any attack it covers: it returns half the damage it takes, a quarter more with extra Block when it beats the attack, and reaction cards cost 1 less stamina from your hand.
+- **New starting decks** ([#2199](https://github.com/cehinds/AshenSpire/pull/2199), `0.7.1.1717`). Each class now starts with its own 10-card deck, and the deck editor lists only cards you own.
 - **Core hit rolls are Precision against Evasion** ([#2192](https://github.com/cehinds/AshenSpire/pull/2192), `0.7.1.1715`). In Core, an attack now rolls Precision against Evasion: Evade grants stacks that decay each turn, Precision stances grant stacks, the combat log shows the roll, and Evade text follows the game's settings.
 - **Smith upgrades work in Core** ([#2195](https://github.com/cehinds/AshenSpire/pull/2195), `0.7.1.1713`). Smith upgrades now do what they say: weapons add AR, armor and shields add a stat point per tier, and the upgrade screen shows the real change to your cards' Damage and Block.
 - **Reaction picker marks only the changed Def or Ward number** ([#2207](https://github.com/cehinds/AshenSpire/pull/2207), `0.7.1.1711`). When a spell-defense total changes, the reaction picker now marks only the Def or Ward number that actually changed, instead of both.

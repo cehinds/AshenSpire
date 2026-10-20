@@ -93,6 +93,9 @@
         }
       },
       "additionalProperties": false
+    },
+    "ownedOnlyCollection": {
+      "type": "boolean"
     }
   },
   "required": [

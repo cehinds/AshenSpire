@@ -43,7 +43,7 @@ test('real Core 2 run forwards equipped attributes and accuracy bonuses to live 
 });
 test('actual card dispatch matches selected target receipt and card face after equipped AR, Block and Poise',()=>{
  const {combat,target}=live();target.block=3;
- const card=combat.piles.hand.find(row=>previewCard(combat,row.instanceId,target.id).values.some(v=>v.op==='damage'));
+ const card=combat.piles.hand.find(row=>row.cardId==='core.strike'&&previewCard(combat,row.instanceId,target.id).values.some(v=>v.op==='damage'));
  assert.ok(card);primeAccuracyRolls(combat);
  const before=JSON.stringify({target,rng:combat.rng.getCounters()});
  const preview=previewCard(combat,card.instanceId,target.id).values.find(v=>v.op==='damage');
