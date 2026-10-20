@@ -9,8 +9,8 @@ import { selectCardVariant } from './cardBehavior.js';
 import { chooseZoneCards, hasCardChoice, returnHiddenCards } from './cardZones.js';
 import { configuredCombat, configuredModule, setProfileStance, profileCardCosts, profileHandSize, profileFallbackDamage, freezeProfile } from './gameProfileCombat.js';
 import { decayStanceRoundStart } from './combatMatchups.js';
-import { previewCardAttackHit, previewTargetFor } from './stanceHit.js';
-import { stanceOf, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
+import { previewCardAttackHit, previewTargetFor, precisionEntryGrant } from './stanceHit.js';
+import { stanceOf, stanceStaminaCost, stanceManaCost, stanceEffectiveness, stanceEntryBonuses } from '../model/stanceRules.js';
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
 import { ASHEN_BLIGHT_RULES } from '../content/ashenBlight.js';
@@ -2799,6 +2799,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     ...(supportCounterReturn ? { counterReturn: supportCounterReturn } : {}),
     tokens,
     damageSequences,
+    // Core: the live Precision an entry into this card's stance grants (base + the actor's stat mix); the face prints it.
+    ...(fixCoreEnabled(combat) && stanceEntryBonuses(def, combat).precision > 0 ? { entryPrecision: precisionEntryGrant(combat, p, stanceEntryBonuses(def, combat).precision, action.card) } : {}),
   };
 }
 

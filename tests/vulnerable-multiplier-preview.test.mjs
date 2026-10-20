@@ -8,13 +8,15 @@ import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { applyStatus, getMult } from '../src/engine/statuses.js';
 import { fixCoreRules } from '../src/model/fixCoreMechanics.js';
 
+// Seed 51: the opposed Precision vs Evasion roll hits on the first swing in both profiles (seed 50 now misses),
+// so the damage compared is real. Pick another seed that hits if the rng stream layout changes.
 function fight(core) {
   const registries = createRegistries({ ...contentBundle,
     cards: contentBundle.cards.map(card => card.id === 'twinbladeFlurry'
       ? { ...card, effects: [{ op: 'damage', target: 'enemy', amount: 8, hits: 1 }], textTemplate: 'Deal {damage} damage.' } : card) });
   const actor = { classId: 'reaver', hp: 500, maxHp: 500, mana: 10, maxMana: 10, energyMax: 3, drawPerTurn: 1,
     deck: [{ instanceId: 'flurry', cardId: 'twinbladeFlurry' }], relicIds: [] };
-  const combat = createCombat({ registries, rng: createRng(50), enemyIds: ['wanderingSoldier'], ratingsRules: null,
+  const combat = createCombat({ registries, rng: createRng(51), enemyIds: ['wanderingSoldier'], ratingsRules: null,
     ...(core ? { combatExpansionVersion: 2 } : {}), player: actor });
   if (core) combat.fixCoreRules = structuredClone(fixCoreRules(combat));
   const enemy = combat.enemies[0];

@@ -34,8 +34,17 @@
   },
   "accuracy": {
     "baseAC": 1,
-    "evasionPerStack": 1,
-    "precisionPerStack": 1,
+    "evadeStackBase": 1,
+    "evadeStackDex": 1,
+    "precisionBase": 1,
+    "evasionBase": 1,
+    "precisionWeights": {
+      "dex": 0.5,
+      "str": 0.1,
+      "wis": 0.2,
+      "int": 0.2,
+      "level": 1
+    },
     "maneuverPrecision": {
       "smash": 1,
       "sweep": 1

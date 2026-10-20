@@ -1,4 +1,5 @@
 import { projectGameCard } from './gameProfile.js';
+import { evadeStackGainPhrase } from './fixCoreMechanics.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
 // how it looks.
 //
@@ -110,8 +111,8 @@ export function combatCardType(def) {
  * predicate phrase (`condition`), the combat profile, the token bindings and the
  * static tokens. Every card-face text model reads through this one context.
  */
-export function cardSummaryContext(def, preview = null, registries = null) {
-  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def);
+export function cardSummaryContext(def, preview = null, registries = null, rules = null) {
+  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def, registries, rules);
   const value = (effect, index, field = 'amount') => {
     const token = bindings.find(row => row.index === index && row.field === field)?.token;
     const live = preview?.values?.[index];
@@ -273,7 +274,8 @@ export function combatCardSummary(def, preview = null, registries = null) {
  * `card.js` keeps exporting `staticTokens` as a re-export of this, because
  * five files import that name and a rename would be churn that proves nothing.
  */
-export function staticCardTokens(def) {
+// `rules` is the run's snapshotted rules (run.gameProfile) for faces outside combat; it wins over the current registries' profile.
+export function staticCardTokens(def, registries = null, rules = null) {
   const tokens = {};
   const effects = cardTokenEffects(def);
   // Rank composition wraps constant stacks in add formulas. Resolve only
@@ -290,7 +292,10 @@ export function staticCardTokens(def) {
     const value = constant(raw);
     if (typeof value === 'number') tokens[binding.token] = value;
     else {
-      const authored = constantFormulaValue(raw) ?? describeFormula(raw);
+      // Evade's gain is configured (accuracy.evadeStackBase/Dex, card overrides included), so its phrase reads the rules, not a literal.
+      const configured = raw?.f === 'metric' && raw.metric === 'evadeStackGain' && raw.of === 'self' && raw.per === undefined
+        ? evadeStackGainPhrase({ combatExpansionVersion: 2, gameProfile: rules?.gameProfile ?? registries?.gameProfile }, def) : undefined;
+      const authored = configured ?? constantFormulaValue(raw) ?? describeFormula(raw);
       if (authored !== undefined) tokens[binding.token] = authored;
       // Weapon-scaled attacks have a static authored multiplier even though
       // their resolved damage depends on the equipped weapon. Keep that
@@ -357,7 +362,7 @@ export function playingCardDefinition(registries, ref, { preview = null, definit
 
 export function playingCardModel(registries, ref, { preview = null, definition = null, rules = null } = {}) {
   const def = playingCardDefinition(registries, ref, { preview, definition, rules });
-  const base = staticCardTokens(def);
+  const base = staticCardTokens(def, registries, rules);
 
   // Type presentation is authored data (balance.ui.cardTypes): corner radii
   // carry the type (attack squarest → power roundest) and each type owns its
