@@ -1332,13 +1332,15 @@ test('DOM: an ordered deck on a phone shows one Draw order chip, and it toggles 
   });
 });
 
-test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical cards and Basic for the rest', async () => {
+test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical cards, Basic for basics and the source label for the rest', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   const stances = new Set(['attack', 'defense', 'evade', 'counter', 'smash', 'sweep', 'skill', 'power', 'consumable', 'spell', 'prepare', 'status']);
   for (const classId of ['rogue', 'starseer', 'reaver']) {
     withDom(() => {
       const run = createRunState({ seed: 0x5eed, classId, registries: REG, combatExpansionVersion: 1 });
       const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+      const modelRows = deckEditorModel({ registries: REG, run }).deck;
+      const sourceLabel = { basic: 'Basic', art: 'Weapon art', technique: 'Technique', reward: 'Reward', item: 'Item-owned' };
       for (const item of editor.root.querySelectorAll('.deck-editor-item')) {
         const stance = item.querySelector('.deck-editor-stance');
         assert.ok(stance && stances.has(stance.dataset.stance), `${classId}: every row names a known stance`);
@@ -1349,7 +1351,9 @@ test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical
         if (!rank) continue;
         const n = Number(rank.dataset.rank);
         const magical = item.querySelector('.deck-editor-camp')?.dataset.camp === 'magical';
-        const expected = n > 0 ? `Rank ${n}` : magical ? 'Cantrip' : 'Basic';
+        // The badge agrees with the Basic filter: only a basic-sourced row reads Basic.
+        const source = item.dataset.source ?? modelRows.find(r => r.instanceId === item.querySelector('[data-instance-id]')?.dataset.instanceId)?.source;
+        const expected = n > 0 ? `Rank ${n}` : magical ? 'Cantrip' : sourceLabel[source];
         assert.equal(rank.textContent, expected, `${classId}: rank ${n} on a ${stance.dataset.stance} row`);
       }
       editor.close();
