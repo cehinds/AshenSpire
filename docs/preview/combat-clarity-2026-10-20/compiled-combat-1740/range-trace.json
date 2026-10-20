@@ -1,0 +1,142 @@
+{
+  "source": "c39712261ffe301639b5b88f20f30f995e1a7428",
+  "url": "http://127.0.0.1:8767/dist/AshenSpire.html",
+  "fixture": "Memory-only shot=combat. Registered Core Strike in hand, target posed in a valid physical Ranged stance with reach. The shipped hit preview and real card target input determine/commit the range miss; no dispatch or render implementation is replaced.",
+  "cases": [
+    {
+      "device": "phone",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "input": "native touch taps",
+      "before": {
+        "eventCount": 9,
+        "hp": 36,
+        "preview": {
+          "range": "melee",
+          "requiredRange": "reach",
+          "inRange": false,
+          "accuracy": 9,
+          "evasion": 1,
+          "need": -8,
+          "bypass": false,
+          "opposed": true,
+          "mode": "normal",
+          "advantage": false,
+          "disadvantage": false,
+          "evadeStacks": 0,
+          "evadeActive": false,
+          "evadeAttempted": false,
+          "hitChance": 0,
+          "chance": 0,
+          "missReason": "range"
+        },
+        "enemyId": "e1"
+      },
+      "after": {
+        "events": [
+          {
+            "type": "cardPreparing",
+            "sourceId": "player",
+            "targetId": "e1",
+            "cardId": "core.strike"
+          },
+          {
+            "type": "energySpent"
+          },
+          {
+            "type": "staminaSpent"
+          },
+          {
+            "type": "statusApplied",
+            "sourceId": "player",
+            "targetId": "player"
+          },
+          {
+            "type": "combatStanceChanged",
+            "targetId": "player"
+          },
+          {
+            "type": "combatStanceChanged",
+            "targetId": "player"
+          },
+          {
+            "type": "cardPlayed",
+            "sourceId": "player",
+            "targetId": "e1",
+            "cardId": "core.strike"
+          },
+          {
+            "type": "attackMissed",
+            "missReason": "range",
+            "sourceId": "player",
+            "targetId": "e1",
+            "cardId": "core.strike"
+          },
+          {
+            "type": "cardResolved",
+            "sourceId": "player",
+            "targetId": "e1",
+            "cardId": "core.strike"
+          }
+        ],
+        "hp": 36,
+        "trace": [
+          [
+            8041.299999998882,
+            "intent",
+            "player"
+          ],
+          [
+            8041.5999999996275,
+            "action",
+            "player"
+          ],
+          [
+            8297.299999998882,
+            "sprite",
+            "player"
+          ],
+          [
+            8517.89999999851,
+            "contact",
+            "player"
+          ],
+          [
+            8799.199999999255,
+            "result",
+            "player"
+          ],
+          [
+            9063,
+            "reaction",
+            "player"
+          ],
+          [
+            9289.599999999627,
+            "damage",
+            "player"
+          ],
+          [
+            9297.39999999851,
+            "hud",
+            "player"
+          ],
+          [
+            9647.299999998882,
+            "resolution",
+            "player"
+          ]
+        ]
+      },
+      "bounds": {
+        "x": 223.390625,
+        "y": 197.0625,
+        "width": 161.3125,
+        "height": 28
+      }
+    }
+  ],
+  "errors": []
+}

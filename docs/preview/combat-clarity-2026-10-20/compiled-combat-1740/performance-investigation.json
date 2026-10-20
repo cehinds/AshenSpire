@@ -1,0 +1,101 @@
+{
+  "method": "Same native second-tap Core Defend action, compiled artifacts,390\u00d7844,DPR3,CDP CPU4,1ms CPU sampling. Coordinates resolved before profiling; no hit-test grid in profile. One actual commit/no page errors in every run. Settled pair waits for fonts/all58 sprite-card images and1300ms after selection; read-only mutation observation is identical on both sides.",
+  "decision": "Both prototypes rejected/unmerged; repeated evidence does not establish action-latency improvement. Earlier elementFromPoint-grid-contaminated profiles are excluded.",
+  "runs": {
+    "baseline": {
+      "artifactSha256": "f9344c840a6a7572db90e758e8f168393d5e77c49ed7cbd37a77acf34fb5dedb",
+      "source": "c39712261ffe301639b5b88f20f30f995e1a7428",
+      "longTaskCountAfterInput": 24,
+      "longTaskTotalMsAfterInput": 6517,
+      "maxLongTaskMsAfterInput": 1836,
+      "appTotalsMs": {
+        "getBoundingClientRect": 2080.346,
+        "onBeatApplied": 1824.469,
+        "renderCombatantStage": 980.549,
+        "centerTargetOverheads": 753.232,
+        "refresh": 699.238
+      }
+    },
+    "batched-fit-rejected": {
+      "artifactSha256": "c97a6c3f3638c7d7d6282428f97513c6f15ee1ab17716b5bfec82e3185fd6ed7",
+      "source": "31045d94a",
+      "longTaskCountAfterInput": 21,
+      "longTaskTotalMsAfterInput": 8156,
+      "maxLongTaskMsAfterInput": 3210,
+      "appTotalsMs": {
+        "onBeatApplied": 3179.496,
+        "getBoundingClientRect": 2027.8,
+        "renderCombatantStage": 1332.531,
+        "refresh": 1127.855,
+        "centerTargetOverheads": 883.017
+      }
+    },
+    "observer-first": {
+      "artifactSha256": "8b1cb4fb167230225775d09fa6ace620604ebe6e376759000ee5a3ba0e7874f8",
+      "source": "ad6b11964",
+      "longTaskCountAfterInput": 16,
+      "longTaskTotalMsAfterInput": 5925,
+      "maxLongTaskMsAfterInput": 1364,
+      "appTotalsMs": {
+        "getBoundingClientRect": 2311.382,
+        "onBeatApplied": 1360.144,
+        "renderCombatantStage": 1120.064,
+        "refresh": 1032.118,
+        "centerTargetOverheads": 582.789
+      }
+    },
+    "baseline-settled": {
+      "artifactSha256": "f9344c840a6a7572db90e758e8f168393d5e77c49ed7cbd37a77acf34fb5dedb",
+      "source": "c39712261ffe301639b5b88f20f30f995e1a7428",
+      "readiness": {
+        "fontStatus": "loaded",
+        "images": 58,
+        "complete": 58
+      },
+      "poseMutationCounts": {
+        "batches": 9,
+        "relevantRecords": 24,
+        "noOpRecords": 16,
+        "genuineRecords": 8,
+        "oldTrackingWindows": 9,
+        "changedTrackingWindows": 6
+      },
+      "longTaskCountAfterInput": 17,
+      "longTaskTotalMsAfterInput": 5291,
+      "maxLongTaskMsAfterInput": 1465,
+      "appTotalsMs": {
+        "getBoundingClientRect": 1585.922,
+        "onBeatApplied": 1454.382,
+        "renderCombatantStage": 766.707,
+        "refresh": 704.795,
+        "centerTargetOverheads": 699.641
+      }
+    },
+    "observer-settled-rejected": {
+      "artifactSha256": "8b1cb4fb167230225775d09fa6ace620604ebe6e376759000ee5a3ba0e7874f8",
+      "source": "ad6b11964",
+      "readiness": {
+        "fontStatus": "loaded",
+        "images": 58,
+        "complete": 58
+      },
+      "poseMutationCounts": {
+        "batches": 9,
+        "relevantRecords": 33,
+        "noOpRecords": 27,
+        "genuineRecords": 6,
+        "oldTrackingWindows": 9,
+        "changedTrackingWindows": 4
+      },
+      "longTaskCountAfterInput": 11,
+      "longTaskTotalMsAfterInput": 8192,
+      "maxLongTaskMsAfterInput": 2919,
+      "appTotalsMs": {
+        "getBoundingClientRect": 2927.125,
+        "onBeatApplied": 2906.356,
+        "renderCombatantStage": 912.257,
+        "refresh": 733.66
+      }
+    }
+  }
+}
