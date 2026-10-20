@@ -15,6 +15,15 @@ import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { mountGameProfileLevelUp } from '../src/ui/components/gameProfileLevelUp.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { gameProfileRewardOffers } from '../src/model/gameProfileRewards.js';
+import { readFileSync } from 'node:fs';
+import { runCombatEnd } from '../src/engine/runCombat.js';
+import { isConfiguredRun } from '../src/model/gameProfileRun.js';
+import { gameModule } from '../src/model/gameProfile.js';
+import { skillKindOf } from '../src/model/skills.js';
+import { featMultiplier } from '../src/model/feats.js';
+import { awardLevelXp, pendingLevelCount, combatXpReceipt } from '../src/model/levelup.js';
+import { combatXpGains } from '../src/model/rewardprogress.js';
+import { validateRunShape } from '../src/model/state.js';
 import { withModalDom } from './helpers/modal-dom.mjs';
 
 const profile = resolveGameProfile('core');
@@ -210,4 +219,65 @@ test('Legacy/Current keep existing XP reward queues; disabled configured progres
   const disabled = { ...combat, gameProfile: { ...combat.gameProfile, modules: { ...combat.gameProfile.modules, progression: undefined } }, skillXp: {} };
   recordSkillXp(disabled, { type: 'damageDealt', sourceId: 'player', targetId: disabled.enemies[0].id, amount: 10, usedArmamentId: 'greatsword' });
   assert.deepEqual(disabled.skillXp, {});
+});
+
+test('actual main defeat settlement persists earned weapon notice, resumes once, then finishes the loss', async () => {
+  const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const body = (start, end) => source.slice(source.indexOf(start), source.indexOf(end, source.indexOf(start)));
+  const { run, combat } = live();
+  run.skills['item:blade'] = { level: 0, xp: xpToNext(reg, 'weapon', 0) - 1, pendingDrafts: 0 };
+  play(combat, 'core.strike');
+  combat.player.hp = 0;
+  run.combatPendingOutcome = { result: 'defeat' };
+  const saves = createSaveManager(createMemoryStorage());
+  const screens = [], notices = [], deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression,
+    skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
+    pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices };
+  const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'screens', 'notices', `
+    const { ${Object.keys(deps).join(', ')} } = deps;
+    const activeSlot = 1, rng = combat.rng, app = {}; let xpCombat = combat;
+    const persist = () => saves.saveRun(run, rng);
+    const audio = { stopMusic() {} }, sfx = { play() {} }, sendLanStatus = () => {};
+    const rollLevelChoices = () => [], showFinishedRun = victory => screens.push(victory);
+    const showMap = () => { throw Error('Defeat cannot return to map'); };
+    const advanceAct = () => { throw Error('Defeat cannot advance act'); };
+    const gameProfileRewardOffers = () => { throw Error('Defeat cannot roll rewards'); };
+    const mountGameProfileLevelUp = (_app, model) => notices.push(model);
+    ${body('async function onCombatEnd(', '\n/**\n * The spoils')}
+    ${body('function beginGameProfileReward(', '\nfunction showShop(')}
+    return { settle: () => onCombatEnd('defeat', combat, { pool: 'normal' }), resume: showGameProfileReward,
+      emptyDefeat: () => beginGameProfileReward({ after: 'defeat', noticeOnly: true }) };
+  `)(deps, run, combat, reg, saves, screens, notices);
+  const main = make(run);
+  await main.settle();
+  assert.equal(run.skills['item:blade'].level, 1);
+  assert.equal(run.skills['class:reaver']?.level || 0, 0, 'loss does not invent class XP');
+  assert.deepEqual(screens, [], 'the earned notice precedes the finished loss');
+  assert.equal(notices.length, 1);
+  assert.equal(run.gameProfilePendingReward.after, 'defeat');
+  assert.equal(run.gameProfilePendingReward.noticeOnly, true);
+  const loaded = saves.loadRun(reg);
+  assert.ok(loaded, saves.runStatus().reason);
+  assert.equal(loaded.hp, 0);
+  assert.equal(loaded.combatPendingOutcome, undefined);
+  assert.equal(loaded.combatEntered, null);
+  const ledger = structuredClone(loaded.skills);
+  await main.settle();
+  assert.equal(notices.length, 1, 'duplicate terminal callback cannot redisplay or pay');
+  const resumed = make(loaded);
+  resumed.resume();
+  assert.equal(notices.length, 2);
+  assert.match(notices[1].rows[0].weapons.join(', '), /Greatsword/);
+  notices[1].onContinue();
+  assert.deepEqual(screens, [false]);
+  assert.equal(saves.loadRun(reg).gameProfilePendingReward, undefined);
+  assert.deepEqual(saves.loadRun(reg).skills, ledger, 'resume and acknowledgement cannot repay XP');
+  assert.equal(loaded.gameProfileRewardOffers, undefined);
+  for (const change of [{ noticeOnly: false }, { source: 'level' }, { levelOffers: 1 }]) {
+    const invalid = { ...run, gameProfilePendingReward: { ...run.gameProfilePendingReward, ...change } };
+    assert.ok(validateRunShape(invalid).some(problem => /Defeat progression/.test(problem)));
+  }
+  resumed.emptyDefeat();
+  assert.deepEqual(screens, [false, false], 'a loss without crossings finishes without a notice or map visit');
+  assert.equal(loaded.gameProfilePendingReward, undefined);
 });
