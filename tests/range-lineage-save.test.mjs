@@ -123,17 +123,17 @@ test('independent weapon and spell contacts keep their own frozen source through
   assert.deepEqual(restored.spending, []);
 });
 
-function pausedLineage() {
-  const profile = resolveGameProfile('core');
+const randomRider = { op: 'damage', target: 'randomEnemy', amount: 2, attack: { source: 'spell', hand: 'offHand' }, tags: ['camp:spell', 'range:reach', 'maneuver:casting'] };
+function lineageRegistries(profile, effects, statusId = 'precision') {
   const authored = applyGameProfileToContent(contentBundle, profile);
-  // A real owned status hook pauses before its already quoted random rider.
-  const bundle = { ...authored, statuses: authored.statuses.map(status => status.id !== 'precision' ? status : {
-    ...status, hooks: [{ on: 'damageDealt', once: true, if: { p: 'eventSourceIsOwner' }, do: [
-      { op: 'discard', target: 'self', choose: true, amount: 1 },
-      { op: 'damage', target: 'randomEnemy', amount: 2, attack: { source: 'spell', hand: 'offHand' }, tags: ['camp:spell', 'range:reach', 'maneuver:casting'] },
-    ] }],
+  const bundle = { ...authored, statuses: authored.statuses.map(status => status.id !== statusId ? status : {
+    ...status, hooks: [{ on: 'damageDealt', once: true, if: { p: 'eventSourceIsOwner' }, do: effects }],
   }) };
-  const registries = bindGameProfileRegistries(createRegistries(bundle), profile);
+  return bindGameProfileRegistries(createRegistries(bundle), profile);
+}
+function pausedLineage() {
+  // A real owned status hook pauses before its already quoted random rider.
+  const registries = lineageRegistries(resolveGameProfile('core'), [{ op: 'discard', target: 'self', choose: true, amount: 1 }, randomRider]);
   const run = createRunState({ registries, classId: 'reaver', seed: 511 });
   const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier', 'wanderingSoldier'] });
   combat.player.statuses.precision = { stacks: 1 };
@@ -172,6 +172,7 @@ test('a paid random trigger rider resumes from a real nested SaveManager pause w
     action => { action.card.rangeLineagePlan.sites[0].events.push({ type: 'healed' }); },
     action => { action.meta.rangeSiteBatches[0][0].id = 'player'; },
     action => { action.meta.event.rangeOrigin.siteId = 'unknown'; },
+    action => { action.meta.rangeEffectIndex = 99; },
     action => { delete action.card.rangeLineage; },
     action => { delete action.card.rangeLineagePlan; },
   ]) {
@@ -207,4 +208,78 @@ test('a paid random trigger rider resumes from a real nested SaveManager pause w
   assert.equal(`enemy:${restored.hits[0].targetId}`, targetKeys[0]);
   assert.deepEqual(restored.spending, []);
   assert.equal(restored.rng.misc, randomSelections, 'the rider never samples its selector again');
+});
+
+test('a paid Counter saves its whole reserved trigger graph before the incoming contact and reuses it on return', () => {
+  const profile = structuredClone(resolveGameProfile('core'));
+  profile.content.cards.find(card => card.id === 'core.counter').effects.unshift({ op: 'discard', target: 'self', choose: true, amount: 1 });
+  delete profile.hash; profile.hash = gameDigest(profile);
+  const base = lineageRegistries(profile, [randomRider], 'rallyingStandard');
+  const registries = { ...base, enemies: { ...base.enemies, get(id) {
+    const enemy = base.enemies.get(id), slash = enemy.moves.slash;
+    if (id !== 'wanderingSoldier') return enemy;
+    return { ...enemy, firstMove: 'slash', moves: { ...enemy.moves, slash: { ...slash, damage: 2, hits: 1, range: 'melee', traits: ['adequateReach'],
+      tags: [...(slash.tags || []).filter(tag => !tag.startsWith('range:')), 'range:melee'] } } };
+  } } };
+  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+  const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier', 'wanderingSoldier'] });
+  combat.player.statuses.rallyingStandard = { stacks: 1 };
+  combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
+  combat.player.stamina = 2; combat.player.block = 100;
+  combat.piles.hand = [
+    { cardId: 'core.counter', instanceId: 'paid-counter', upgraded: false },
+    { cardId: 'core.defend', instanceId: 'discard-filler', upgraded: false },
+  ];
+  for (const [index, enemy] of combat.enemies.entries()) {
+    enemy.hp = enemy.maxHp = 1000;
+    enemy.persistentPoise = { value: 0, max: 0 };
+    enemy.maxStamina = enemy.stamina = index === 0 ? 1 : 0;
+    combat.rangeState.engagements[rangePairKey(combat.player.rangeActorKey, enemy.rangeActorKey)] = 2;
+  }
+  primeAccuracyRolls(combat, { count: 3, drawsPerAttack: 2 });
+  dispatch(combat, { type: 'endTurn' });
+  const option = combat.pendingReaction?.options.find(option => option.cardId === 'core.counter' && option.play.rangeRoute === 'advance');
+  assert.ok(option);
+  assert.equal(option.staminaCost, 2);
+  dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: option.id });
+  assert.ok(combat.pendingAbilityDiscard);
+  const reserved = json(combat.player.combatCounter.carrier.rangeCounterReservation);
+  assert.ok(reserved.rangeLineagePlan);
+  assert.equal(reserved.rangePlan.paid.stamina, 2);
+  const riders = reserved.rangeLineagePlan.edges.filter(edge => edge.triggerKey === 'status:player:rallyingStandard:0').flatMap(edge => edge.targets);
+  assert.ok(riders.length);
+  const randomSelections = combat.rng.getCounters().misc;
+  for (const pair of Object.keys(combat.rangeState.engagements)) combat.rangeState.engagements[pair] = 0;
+  commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
+  const broken = json(run);
+  broken.combatEntered.snapshot.player.combatCounter.carrier.rangeCounterReservation.rangeLineagePlan.edges[0].parentId = 'unknown';
+  const rejected = createSaveManager(createMemoryStorage()); rejected.saveRun(broken, combat.rng);
+  assert.equal(rejected.loadRun(registries) === null, true);
+  assert.equal(rejected.runStatus().state, 'archived');
+  assert.match(rejected.runStatus().reason, /range/i);
+  const saves = createSaveManager(createMemoryStorage()); saves.saveRun(run, combat.rng);
+  const loaded = saves.loadRun(registries);
+  assert.ok(loaded, saves.runStatus().reason);
+  const resumed = restoreCombatSnapshot({ registries, rng: createRng(loaded.seed, loaded.streamCounters),
+    snapshot: loaded.combatEntered.snapshot, expectedGameProfile: loaded.gameProfile });
+  assert.deepEqual(resumed.player.combatCounter.carrier.rangeCounterReservation, reserved);
+  assert.deepEqual(resumed.rng.getCounters(), combat.rng.getCounters());
+  const finish = state => {
+    const start = state.eventLog.length;
+    dispatch(state, { type: 'chooseDiscard', cardInstanceIds: ['discard-filler'] });
+    assert.equal(Boolean(state.pendingReaction || state.pendingAbilityDiscard), false);
+    return { hp: state.enemies.map(enemy => enemy.hp), stamina: state.player.stamina, range: state.rangeState,
+      hits: state.eventLog.slice(start).filter(event => event.type === 'attackHit').map(event => ({ sourceId: event.sourceId, targetId: event.targetId, d20: event.d20 })),
+      returns: state.eventLog.slice(start).filter(event => event.type === 'combatCounterTriggered').length,
+      outcomes: state.eventLog.slice(start).filter(event => ['damageDealt', 'attackMissed', 'attackOutOfRange', 'combatPlayRefused', 'triggerFired'].includes(event.type)).map(event => ({ type: event.type, sourceId: event.sourceId, targetId: event.targetId, reason: event.reason, amount: event.amount, origin: event.rangeOrigin })),
+      spending: state.eventLog.filter(event => event.type === 'staminaSpent').map(event => event.amount), rng: state.rng.getCounters() };
+  };
+  const uninterrupted = finish(combat), restored = finish(resumed);
+  assert.deepEqual(json(restored), json(uninterrupted));
+  assert.equal(restored.returns, 1);
+  const playerHits = restored.hits.filter(event => event.sourceId === 'player');
+  assert.equal(playerHits.length, 2);
+  assert.equal(`enemy:${playerHits[1].targetId}`, riders[0].targetKey);
+  assert.equal(restored.rng.misc, randomSelections, 'a bound return never re-quotes its random rider');
+  assert.equal(restored.spending.reduce((sum, amount) => sum + amount, 0), 2);
 });
