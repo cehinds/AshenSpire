@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // THE "NO REACTION: WHY" NOTE (owner, 2026-10-11; ui/components/reactionNote.js).
 // When a Counter or Sweep in hand could not be offered, a toast above the
 // Reaction switch says why, in the combat log's own words, for the local seat
@@ -69,7 +70,7 @@ test('the toast never takes a click', () => {
   assert.match(css, /\.reaction-note \{[^}]*pointer-events:none/s);
 });
 
-test('co-op clears the reaction note when its fight ends, with the full log', () => {
+test('co-op clears the reaction note when its fight ends, with the full log', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const source = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
   const branch = source.slice(source.indexOf("if (snap.scene.kind !== 'combat') {\n      combatLayoutState = {};"));
   assert.match(branch.slice(0, 600), /closeCombatFullLog\(combatToolsState\);\s*reactionNote\.clear\(\);/);
