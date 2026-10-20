@@ -73,6 +73,8 @@ export function combatCounterProblems(counter, path, version = 1) {
 const CAMPS = ['physical', 'spell'];
 const TARGETING = ['single', 'area'];
 const MANEUVERS = ['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting', 'evade'];
+// A saved combatStance may also be the Poise-break Staggered stance; counter coverage (MANEUVERS) must not accept it.
+const STANCE_MANEUVERS = [...MANEUVERS, 'staggered'];
 const SCHOOLS = ['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth'];
 
 function stringsProblems(value, path, allowed = null, required = false) {
@@ -97,13 +99,15 @@ export function counterCoverageProblems(coverage, path = 'counterCoverage') {
 export function expansionCounterProblems(counter, path = 'combatCounter') {
   if (!record(counter)) return [`${path} must be an object`];
   const problems = [];
-  const fields = ['version', 'charges', 'serial', 'mode', 'expiresOnOwnerCycle', 'coverage', 'payload', 'schoolEffect', 'carrier'];
+  const fields = ['version', 'charges', 'serial', 'mode', 'expiresOnOwnerCycle', 'armedAtCardCount', 'coverage', 'payload', 'schoolEffect', 'carrier'];
   for (const key of Object.keys(counter)) if (!fields.includes(key)) problems.push(`${path}.${key} is unknown`);
   if (counter.version !== undefined && counter.version !== 2) problems.push(`${path}.version must be 2`);
   if (![0, 1].includes(counter.charges)) problems.push(`${path}.charges must be 0 or 1`);
   if (!whole(counter.serial) || counter.serial === 0) problems.push(`${path}.serial must be a positive whole number`);
   if (!['melee', 'ranged', 'spell'].includes(counter.mode)) problems.push(`${path}.mode is unsupported`);
   if (!whole(counter.expiresOnOwnerCycle) || counter.expiresOnOwnerCycle === 0) problems.push(`${path}.expiresOnOwnerCycle must be a positive whole number`);
+  // Optional: saves from before the spell Counter disarm rule have no card count.
+  if (counter.armedAtCardCount !== undefined && !(Number.isSafeInteger(counter.armedAtCardCount) && counter.armedAtCardCount >= 0)) problems.push(`${path}.armedAtCardCount must be a non-negative whole number`);
   problems.push(...counterCoverageProblems(counter.coverage, `${path}.coverage`));
   if (!record(counter.payload)) problems.push(`${path}.payload must be an object`);
   else {
@@ -155,7 +159,7 @@ export function combatExpansionEntityProblems(entity, path = 'entity') {
   if (stance !== undefined) {
     if (!record(stance)) problems.push(`${path}.combatStance must be an object`);
     else {
-      for (const [key, allowed] of [['maneuver', MANEUVERS], ['camp', CAMPS], ['range', RANGES]]) {
+      for (const [key, allowed] of [['maneuver', STANCE_MANEUVERS], ['camp', CAMPS], ['range', RANGES]]) {
         if (!allowed.includes(stance[key])) problems.push(`${path}.combatStance.${key} is unsupported`);
       }
       if (stance.counterStance !== undefined && (stance.counterStance !== true || stance.maneuver !== 'evade')) problems.push(`${path}.combatStance.counterStance requires true in Evade stance`);

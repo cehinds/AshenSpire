@@ -1,0 +1,26 @@
+{
+  "id": "status.insanityExposed",
+  "tag": "status.insanityExposed",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Unraveled",
+  "description": "Takes {tv.pct}% more damage from ritual and blight attacks. Stacks with Vulnerable. {decay.duration} turns.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.insanityExposed"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

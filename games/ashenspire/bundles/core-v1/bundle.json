@@ -1,0 +1,1041 @@
+{
+  "id": "ashen.core",
+  "version": "1.0.0",
+  "profileId": "core",
+  "foundationMode": "configured",
+  "modules": {
+    "cards": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "resources": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "stats": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "defenses": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "stances": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "effects": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "statuses": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "equipment": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "gear": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "configured",
+        "pools": "merged",
+        "rarities": [
+          "common",
+          "uncommon",
+          "rare",
+          "epic"
+        ],
+        "poolSizes": {
+          "ratings": {
+            "common": {
+              "min": 3,
+              "max": 3
+            },
+            "uncommon": {
+              "min": 4,
+              "max": 4
+            },
+            "rare": {
+              "min": 5,
+              "max": 5
+            },
+            "epic": {
+              "min": 6,
+              "max": 6
+            }
+          },
+          "bonus": {
+            "common": {
+              "min": 2,
+              "max": 3
+            },
+            "uncommon": {
+              "min": 2,
+              "max": 4
+            },
+            "rare": {
+              "min": 2,
+              "max": 5
+            },
+            "epic": {
+              "min": 2,
+              "max": 6
+            }
+          },
+          "merged": {
+            "common": {
+              "min": 4,
+              "max": 4
+            },
+            "uncommon": {
+              "min": 5,
+              "max": 5
+            },
+            "rare": {
+              "min": 6,
+              "max": 6
+            },
+            "epic": {
+              "min": 7,
+              "max": 7
+            }
+          }
+        },
+        "mergedShare": {
+          "default": {
+            "ratings": 0.5,
+            "bonus": 0.5
+          },
+          "common": {
+            "ratings": 1,
+            "bonus": 0
+          }
+        },
+        "fillTo": "max",
+        "maxAttributes": 3,
+        "pointValues": {
+          "ar": 1,
+          "dr": 2,
+          "poise": 3,
+          "strength": 1,
+          "dexterity": 1,
+          "constitution": 1,
+          "wisdom": 1,
+          "intelligence": 1
+        },
+        "tags": {
+          "sword": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 2,
+                "dr": 1,
+                "poise": 1
+              },
+              "bonus": {
+                "strength": 1,
+                "dexterity": 1
+              }
+            }
+          },
+          "greatsword": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 3,
+                "poise": 3
+              },
+              "bonus": {
+                "strength": 3,
+                "constitution": 1
+              }
+            }
+          },
+          "dagger": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 2,
+                "dr": 1
+              },
+              "bonus": {
+                "dexterity": 3
+              }
+            }
+          },
+          "bow": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 3
+              },
+              "bonus": {
+                "dexterity": 3
+              }
+            }
+          },
+          "katana": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 3,
+                "dr": 1
+              },
+              "bonus": {
+                "dexterity": 2,
+                "strength": 1
+              }
+            }
+          },
+          "polearm": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 3,
+                "poise": 2
+              },
+              "bonus": {
+                "strength": 2,
+                "dexterity": 1
+              }
+            }
+          },
+          "hammer": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 1,
+                "poise": 3
+              },
+              "bonus": {
+                "strength": 2,
+                "constitution": 1
+              }
+            }
+          },
+          "twinblade": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 3,
+                "dr": 1
+              },
+              "bonus": {
+                "dexterity": 3
+              }
+            }
+          },
+          "axe": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 3,
+                "poise": 1
+              },
+              "bonus": {
+                "strength": 3
+              }
+            }
+          },
+          "spear": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 2,
+                "poise": 1
+              },
+              "bonus": {
+                "strength": 1,
+                "dexterity": 1
+              }
+            }
+          },
+          "buckler": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2,
+                "ar": 1
+              },
+              "bonus": {
+                "dexterity": 2,
+                "constitution": 1
+              }
+            }
+          },
+          "kiteShield": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2,
+                "poise": 2
+              },
+              "bonus": {
+                "constitution": 2,
+                "dexterity": 1
+              }
+            }
+          },
+          "towerShield": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 3,
+                "poise": 3
+              },
+              "bonus": {
+                "constitution": 3,
+                "strength": 1
+              }
+            }
+          },
+          "roundShield": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2,
+                "poise": 1
+              },
+              "bonus": {
+                "constitution": 1,
+                "dexterity": 1
+              }
+            }
+          },
+          "spikedShield": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2,
+                "ar": 1,
+                "poise": 1
+              },
+              "bonus": {
+                "constitution": 1,
+                "strength": 1
+              }
+            }
+          },
+          "lantern": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2
+              },
+              "bonus": {
+                "wisdom": 2
+              }
+            }
+          },
+          "torch": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 1,
+                "ar": 1
+              },
+              "bonus": {
+                "wisdom": 1,
+                "intelligence": 1
+              }
+            }
+          },
+          "parryingDagger": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2,
+                "poise": 1
+              },
+              "bonus": {
+                "dexterity": 3
+              }
+            }
+          },
+          "staff": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 1,
+                "dr": 1
+              },
+              "bonus": {
+                "intelligence": 2,
+                "wisdom": 1
+              }
+            }
+          },
+          "sceptre": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 2
+              },
+              "bonus": {
+                "intelligence": 2,
+                "wisdom": 1
+              }
+            }
+          },
+          "rod": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 2
+              },
+              "bonus": {
+                "wisdom": 2,
+                "intelligence": 1
+              }
+            }
+          },
+          "chime": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "ar": 1,
+                "dr": 1
+              },
+              "bonus": {
+                "wisdom": 2,
+                "intelligence": 1
+              }
+            }
+          },
+          "plate": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2,
+                "poise": 2
+              },
+              "bonus": {
+                "constitution": 2,
+                "strength": 1
+              }
+            }
+          },
+          "mail": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 3,
+                "poise": 1
+              },
+              "bonus": {
+                "constitution": 2,
+                "dexterity": 1
+              }
+            }
+          },
+          "robes": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 1,
+                "poise": 1
+              },
+              "bonus": {
+                "wisdom": 2,
+                "intelligence": 2
+              }
+            }
+          },
+          "leathers": {
+            "group": "type",
+            "cost": 0,
+            "priority": 50,
+            "weights": {
+              "ratings": {
+                "dr": 2,
+                "poise": 1
+              },
+              "bonus": {
+                "dexterity": 2,
+                "strength": 1
+              }
+            }
+          },
+          "heavy": {
+            "group": "penalty",
+            "cost": -1,
+            "modifier": "strike.cost",
+            "amount": 1,
+            "priority": 80,
+            "weights": {
+              "ratings": {
+                "ar": 2,
+                "poise": 3
+              },
+              "bonus": {
+                "strength": 3,
+                "constitution": 1
+              }
+            }
+          },
+          "flurry": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "strike.hits",
+            "amount": 1,
+            "priority": 70,
+            "weights": {
+              "ratings": {
+                "ar": 3,
+                "dr": 1
+              },
+              "bonus": {
+                "dexterity": 3
+              }
+            }
+          },
+          "stagger": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "strike.poise",
+            "amount": 3,
+            "priority": 60,
+            "weights": {
+              "ratings": {
+                "poise": 3,
+                "ar": 1
+              },
+              "bonus": {
+                "strength": 2
+              }
+            }
+          },
+          "encumbered": {
+            "group": "penalty",
+            "cost": -1,
+            "modifier": "self.maxStamina",
+            "amount": -1,
+            "priority": 60,
+            "weights": {
+              "ratings": {
+                "dr": 3,
+                "poise": 2
+              },
+              "bonus": {
+                "constitution": 3
+              }
+            }
+          },
+          "light": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "self.maxStamina",
+            "amount": 1,
+            "priority": 40,
+            "weights": {
+              "ratings": {},
+              "bonus": {
+                "dexterity": 1
+              }
+            }
+          },
+          "bleed": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "strike.bleed",
+            "amount": 2,
+            "priority": 30,
+            "weights": {
+              "ratings": {},
+              "bonus": {
+                "dexterity": 1
+              }
+            }
+          },
+          "burn": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "strike.burn",
+            "amount": 2,
+            "priority": 30,
+            "weights": {
+              "ratings": {},
+              "bonus": {
+                "intelligence": 1
+              }
+            }
+          },
+          "frost": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "strike.frost",
+            "amount": 2,
+            "priority": 30,
+            "weights": {
+              "ratings": {},
+              "bonus": {
+                "intelligence": 1
+              }
+            }
+          },
+          "blight": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "strike.blight",
+            "amount": 2,
+            "priority": 30,
+            "weights": {
+              "ratings": {},
+              "bonus": {
+                "wisdom": 1
+              }
+            }
+          },
+          "insanity": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "strike.insanity",
+            "amount": 2,
+            "priority": 30,
+            "weights": {
+              "ratings": {},
+              "bonus": {
+                "intelligence": 1
+              }
+            }
+          },
+          "regen": {
+            "group": "effect",
+            "cost": 1,
+            "modifier": "self.regen",
+            "amount": 1,
+            "priority": 20,
+            "weights": {
+              "ratings": {},
+              "bonus": {
+                "wisdom": 1
+              }
+            }
+          },
+          "unwieldy": {
+            "group": "penalty",
+            "cost": -1,
+            "modifier": "strike.damage",
+            "amount": -1,
+            "priority": 10,
+            "weights": {
+              "ratings": {},
+              "bonus": {}
+            }
+          },
+          "thin": {
+            "group": "penalty",
+            "cost": -1,
+            "modifier": "defend.block",
+            "amount": -1,
+            "priority": 10,
+            "weights": {
+              "ratings": {},
+              "bonus": {}
+            }
+          }
+        },
+        "weights": {
+          "kinds": {
+            "weapon": {
+              "ratings": {
+                "ar": 3,
+                "poise": 1
+              },
+              "bonus": {
+                "strength": 2,
+                "dexterity": 1
+              }
+            },
+            "shield": {
+              "ratings": {
+                "dr": 3,
+                "poise": 2
+              },
+              "bonus": {
+                "constitution": 2,
+                "dexterity": 1
+              }
+            },
+            "staff": {
+              "ratings": {
+                "ar": 2,
+                "dr": 1
+              },
+              "bonus": {
+                "intelligence": 2,
+                "wisdom": 1
+              }
+            },
+            "armor": {
+              "ratings": {
+                "dr": 2,
+                "poise": 2
+              },
+              "bonus": {
+                "constitution": 2,
+                "dexterity": 1
+              }
+            },
+            "head": {
+              "ratings": {
+                "dr": 1,
+                "poise": 1
+              },
+              "bonus": {
+                "wisdom": 1,
+                "intelligence": 1
+              }
+            },
+            "hands": {
+              "ratings": {
+                "ar": 1,
+                "dr": 1
+              },
+              "bonus": {
+                "strength": 1,
+                "dexterity": 1
+              }
+            },
+            "feet": {
+              "ratings": {
+                "dr": 1,
+                "poise": 1
+              },
+              "bonus": {
+                "dexterity": 2,
+                "constitution": 1
+              }
+            },
+            "talisman": {
+              "ratings": {
+                "dr": 1
+              },
+              "bonus": {
+                "wisdom": 1,
+                "intelligence": 1,
+                "constitution": 1
+              }
+            }
+          },
+          "slots": {
+            "rightHand": {
+              "ratings": {
+                "ar": 3,
+                "poise": 1
+              },
+              "bonus": {
+                "strength": 2,
+                "dexterity": 1
+              }
+            },
+            "leftHand": {
+              "ratings": {
+                "dr": 3,
+                "poise": 1
+              },
+              "bonus": {
+                "constitution": 2,
+                "dexterity": 1
+              }
+            },
+            "armor": {
+              "ratings": {
+                "dr": 2,
+                "poise": 2
+              },
+              "bonus": {
+                "constitution": 2,
+                "dexterity": 1
+              }
+            }
+          },
+          "global": {
+            "ratings": {
+              "ar": 1,
+              "dr": 1,
+              "poise": 1
+            },
+            "bonus": {
+              "strength": 1,
+              "dexterity": 1,
+              "constitution": 1
+            }
+          }
+        }
+      }
+    },
+    "class-selection": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "progression": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "routes": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "rest": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "shops": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "rewards": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "art": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "animation": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "intent": {
+      "version": "1.0.0",
+      "settings": {
+        "reads": "exact"
+      }
+    },
+    "reactions": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "characters": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "enemies": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "formation": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "configured",
+        "extraRow": {
+          "enabled": false,
+          "sides": [
+            "enemy"
+          ],
+          "capacityPerLane": 1
+        }
+      }
+    },
+    "heal-rules": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "stagger": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "enemy-visibility": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "enemy-relics": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "attribute-variance": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "deck-training": {
+      "version": "1.0.0",
+      "settings": {
+        "mode": "configured",
+        "default": "owned",
+        "unlimited": [
+          {
+            "id": "basicTraining",
+            "requiresTag": "training.basic",
+            "pools": [
+              "strike",
+              "defend",
+              "counter",
+              "smash",
+              "sweep",
+              "evade"
+            ],
+            "cards": {
+              "rarity": [
+                "starter"
+              ],
+              "tagsAny": [
+                "maneuver:attack",
+                "maneuver:defend",
+                "maneuver:counter",
+                "maneuver:smash",
+                "maneuver:sweep"
+              ]
+            }
+          },
+          {
+            "id": "graduate",
+            "requiresTag": "training.graduate",
+            "pools": [],
+            "cards": {
+              "rarity": [
+                "starter"
+              ],
+              "tagsAll": [
+                "camp:spell"
+              ]
+            }
+          }
+        ],
+        "owned": {
+          "pools": [
+            "special"
+          ],
+          "tags": [
+            "classification.weaponArt"
+          ]
+        }
+      }
+    },
+    "card-pools": {
+      "version": "1.0.0",
+      "settings": {}
+    },
+    "reward-ranks": {
+      "version": "1.0.0",
+      "settings": {
+        "stanceCoverage": {
+          "enabled": false
+        }
+      }
+    }
+  },
+  "packs": [
+    {
+      "id": "ashen.core-content",
+      "version": "1.0.0",
+      "path": "../../packs/core-v1/pack.json"
+    },
+    {
+      "id": "ashen.base-cards",
+      "version": "1.0.0",
+      "path": "../../packs/base-cards/pack.json"
+    }
+  ],
+  "policyBindings": [
+    {
+      "content": "routes",
+      "module": "routes",
+      "settings": {
+        "acts": "acts",
+        "prebossNodes": "prebossNodes",
+        "restsPerAct": "restsPerAct",
+        "restFloors": "restFloors",
+        "branchColumns": "branchColumns",
+        "minimumThreatFloor": "minimumThreatFloor",
+        "mapMode": "mapMode",
+        "firstFloor": "firstFloor"
+      }
+    },
+    {
+      "content": "rests",
+      "module": "rest",
+      "settings": {
+        "servicesPerVisit": "servicesPerVisit",
+        "services": "services",
+        "allowEmptyStrategize": "allowEmptyStrategize",
+        "recovery": "recovery",
+        "smith": "smith"
+      }
+    },
+    {
+      "content": "rewards",
+      "module": "rewards",
+      "settings": {
+        "offerCount": "offerCount",
+        "takeCount": "takeCount"
+      }
+    },
+    {
+      "content": "shops",
+      "module": "shops",
+      "settings": {
+        "offerCount": "options",
+        "price": "price"
+      }
+    },
+    {
+      "content": "stats",
+      "module": "cards",
+      "settings": {
+        "handBase": "handBase",
+        "handAttribute": "handAttribute"
+      }
+    },
+    {
+      "content": "stats",
+      "module": "stats",
+      "settings": {
+        "attributePointTotal": "attributePointTotal",
+        "secondaryPolicy": "secondaryPolicy"
+      }
+    }
+  ]
+}

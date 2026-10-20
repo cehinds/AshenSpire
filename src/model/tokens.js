@@ -9,5 +9,5 @@
 // A factory rather than a shared instance on purpose: a `g` regex carries
 // `lastIndex`, so one exported object shared across modules is a cross-module
 // mutable. Each caller gets its own.
-export const TOKEN_PATTERN = '\\{([A-Za-z][\\w.]*)\\}';
+export const TOKEN_PATTERN = '\\{([A-Za-z][\\w.-]*)\\}';
 export const tokenRe = () => new RegExp(TOKEN_PATTERN, 'g');

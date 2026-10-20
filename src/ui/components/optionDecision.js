@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 // One interaction contract for state-changing options:
 //   short click/press -> review the exact consequence and optional cost
 //   deliberate hold  -> commit the same validated action without the modal
@@ -16,7 +17,7 @@ export function armOptionDecision(control, {
   consequence = '',
   detailsHtml = '',
   confirmLabel = 'Confirm',
-  cancelLabel = 'Back',
+  cancelLabel = t('common.back'),
   tone = 'normal',
   onCommit,
   canCommit = () => true,

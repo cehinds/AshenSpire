@@ -1,0 +1,22 @@
+{
+  "id": "utility.conduit",
+  "tag": "utility.conduit",
+  "version": "1.0.0",
+  "family": "utility",
+  "label": "Conduit",
+  "description": "Tag utility.conduit in the utility family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "utility.conduit"
+  },
+  "portability": "data"
+}

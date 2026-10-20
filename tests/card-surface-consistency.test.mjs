@@ -13,11 +13,13 @@ test('compact and inspection use the same projected Counter definition and canon
   const compact = cardPlainText(registries, ref, { rules });
   const detail = cardDetailHtml(registries, ref, { rules });
   assert.match(compact, /2 Block.*3 Ward/);
-  assert.match(detail, /STANCE.*Counter/);
+  assert.match(detail, /SPELL · Prepare/);
+  assert.match(detail, /Counter coverage:.*Spell/);
   assert.match(detail, /Defense range:.*Ranged/);
-  assert.match(detail, /Return range:.*Reach/);
-  assert.match(detail, /Accuracy.*base Evasion/);
-  assert.match(detail, /Stance group:.*Offense.*Defensive/);
+  assert.equal(combatCardRange(playingCardDefinition(registries, ref, { rules })), 'reach');
+  assert.match(detail.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '), /Spell counter Reach/);
+  assert.match(detail, /Prepare a fire Counter: 2 Ward return/);
+  assert.match(detail, /Return once after all covered damage and status pressure is resisted/);
 });
 test('inspection keeps exact live Block/Ward token parts instead of re-splitting total', () => {
   const ref = { cardId: 'fireCounter' };

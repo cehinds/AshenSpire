@@ -1,0 +1,26 @@
+{
+  "id": "status.stanceShifted",
+  "tag": "status.stanceShifted",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Stance Shifted",
+  "description": "You have entered a stance this fight: Oath cards no longer grant Block.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.stanceShifted"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

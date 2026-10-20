@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.evade",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

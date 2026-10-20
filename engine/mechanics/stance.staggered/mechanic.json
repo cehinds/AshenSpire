@@ -1,0 +1,27 @@
+{
+  "id": "stance.staggered",
+  "tag": "stance.staggered",
+  "version": "1.0.0",
+  "family": "stance",
+  "label": "Staggered stance",
+  "description": "Core: a Poise break puts the target in the Staggered stance for its next turn; Core has no stacking Staggered status.",
+  "attaches": [
+    "entity"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "stance.staggered"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "fixCoreStagger"
+  },
+  "authored": true
+}

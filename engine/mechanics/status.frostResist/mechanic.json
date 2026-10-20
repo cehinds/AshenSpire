@@ -1,0 +1,26 @@
+{
+  "id": "status.frostResist",
+  "tag": "status.frostResist",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Weathered",
+  "description": "Just burst - hardened against Frost: incoming build-up reduced {resists.percent}% for {decay.duration} turns.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.frostResist"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

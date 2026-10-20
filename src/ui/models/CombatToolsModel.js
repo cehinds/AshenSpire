@@ -31,7 +31,7 @@ export function combatToolsModel({ supported, enabled, disabled = false, open = 
       behaviorModel('toggleLog', { event: 'activate', policy: 'Read-only public receipts, grouped by round' }),
       behaviorModel('resizeLog', { event: 'activate', policy: 'Small, Medium, Large; bounded below actual menu buttons' }),
     ] }),
-    componentModel(UI.reactionToggle, { properties: { enabled: !!supported && enabled, disabled: !supported || disabled }, behaviors: [
+    componentModel(UI.reactionToggle, { properties: { enabled: !!supported && enabled, disabled: !supported || disabled, supported: !!supported }, behaviors: [
       behaviorModel('setReactions', { event: 'activate', policy: 'Owned optional prompts only; armed Counters remain active' }),
     ] }),
   ] });

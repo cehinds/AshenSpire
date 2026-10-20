@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>212 object candidates · Ashen Spire</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0c1015;color:#e2e5e9;font:14px/1.4 system-ui}main{max-width:1700px;margin:auto;padding:28px}h1{font:32px Georgia;margin:4px 0 12px}h2{font:20px Georgia;margin:24px 0 8px}p{color:#a7b5c4}a{color:#d6c39d;text-decoration:none}.grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:10px}figure{margin:0;min-width:0}img{display:block;width:100%;aspect-ratio:1;object-fit:contain;background:repeating-conic-gradient(#171f29 0 25%,#202b36 0 50%) 0/16px 16px}figcaption{overflow-wrap:anywhere;font:12px/1.45 system-ui;text-align:center;padding:6px}small{font:11px system-ui;color:#91a1b2}header{border-bottom:1px solid #35404d;padding-bottom:16px}@media(max-width:700px){main{padding:16px}.grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}h1{font-size:26px}}
+</style><main><header><h1>Reusable objects from the art library.</h1><p>212 standalone object PNGs, including 80 new options in Q–X. The first digit selects the object. Effects are hidden here; effect 0 remains a real option.</p><a href="cutouts.html">Open layer composer, effects and backgrounds →</a> · <a href="card-art-cutouts-v7.zip" download>Download all PNGs + JSON</a></header><div id="families"></div><p>Cleansed fire is additional, in section H of the composer. Click any object to open its individual PNG.</p></main><script src="cutouts-data.js"></script><script>
+const root=document.getElementById('families'),data=window.CARD_CUTOUT_DATA;
+const newest=new URLSearchParams(location.search).has('new');
+if(newest){document.querySelector('h1').textContent='80 new objects. Broken variants, scythes and scepters.';document.querySelector('header p').textContent='Q–T and W–X: broken versions of existing designs. U: Sweep scythes. V: magic scepters. Ten standalone PNGs per family. Y and Z magic overlays are in the composer.';}
+for(const c of [...data.categories].filter(c=>!['H','N','Y','Z'].includes(c.letter)&&(!newest||c.revision===Math.max(...data.categories.filter(c=>!['H','N','Y','Z'].includes(c.letter)).map(c=>c.revision||3)))).sort((a,b)=>(b.revision||3)-(a.revision||3))){
+ const section=document.createElement('section'),title=document.createElement('h2'),grid=document.createElement('div');title.textContent=c.letter+' · '+c.label;grid.className='grid';section.append(title,grid);
+ for(const id of c.objectIds){const a=data.assets[id],figure=document.createElement('figure'),link=document.createElement('a'),img=document.createElement('img'),caption=document.createElement('figcaption');link.href=a.src;link.target='_blank';img.src=a.src;img.alt=a.name;caption.textContent=a.displayLabel;link.append(img);figure.append(link,caption);grid.append(figure);}root.append(section);
+}
+</script></html>

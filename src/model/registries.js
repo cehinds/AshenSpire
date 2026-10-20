@@ -1,3 +1,4 @@
+import { applyBaseManaPolicy } from './cardManaPolicy.js';
 import { applyAbilityGrade } from './abilityGrades.js';
 // src/model/registries.js — typed id → definition registries, deep-frozen (SPEC §3.3)
 //
@@ -27,9 +28,19 @@ import { sharedFrameworkBridge } from '../framework/bridge.js';
 import { createEntityTermOverlay } from '../framework/termOverlay.js';
 import { resolveEnemyMoveSources } from './enemyMoveSources.js';
 
-function applyBasicCardProfile(def, profile) {
+// Owner ruling 2026-10-18: a magic/arcane profile (a sceptre's or staff's basic card) is a Spell and
+// a Cantrip that plays as the basic it is projected onto. Derived from the profile, never a list of ids.
+const MIRROR_OF_BASE = Object.freeze({ strike: 'attack', smash: 'smash', sweep: 'sweep', defend: 'defend', counter: 'counter', technique: 'technique' });
+export function profileMirrors(profile) {
+  return profile && ['magic', 'arcane'].includes(profile.damageSchool) ? MIRROR_OF_BASE[profile.baseCardId] || null : null;
+}
+// Core 2 only (FixCore): the Current/v2 profile keeps its sceptre and staff cards exactly as they were.
+const fixCoreRegistries = (registries) => registries?.gameProfile?.modules?.effects?.fixCoreVersion === 1;
+function applyBasicCardProfile(def, profile, mirrorsOn = false) {
   if (!profile) return def;
+  const mirrors = mirrorsOn ? profileMirrors(profile) : null;
   const tags = [...(profile.tags || [])];
+  if (mirrors) for (const tag of ['source:spell', 'camp:spell', 'rank.cantrip']) if (!tags.includes(tag)) tags.push(tag);
   const effects = (def.effects || []).map((effect) => (
     effect.op === 'damage' ? { ...effect, tags } : { ...effect }
   ));
@@ -42,6 +53,7 @@ function applyBasicCardProfile(def, profile) {
     exposureBuildupPerHit: profile.exposureBuildupPerHit,
     ...(Number.isFinite(profile.magicShare) ? { magicShare: profile.magicShare } : {}),
     cardTags: tags,
+    ...(mirrors ? { mirrors } : {}),
     effects,
     equipmentProfileId: profile.id,
     equipmentRole: profile.role,
@@ -206,6 +218,7 @@ function stampTags(bundle) {
 export function createRegistries(contentBundle) {
   const bundle = projectAttackCardDamageBundle(resolveEnemyMoveSources(contentBundle || {}));
   const registries = {};
+  registries.proposalStatusRules = deepFreeze(bundle.proposalStatusRules || {});
 
   // The tag join, resolved once for every collection tagFamilies.csv names.
   // Everything below reads a stamped collection where one exists, so `.tags` is
@@ -614,7 +627,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   const rank = cardRank(instanceOrRef);
   const skillBonus = cardSkillBonus(instanceOrRef);
   const passiveBlock = cardPassiveBlock(instanceOrRef);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank));
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return applyBaseManaPolicy(registries, derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank)));
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -640,7 +653,8 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   if (result !== base) result = deepFreeze(result);
   if (instanceOrRef.upgraded && !usesAbilityGrade) result = mergeUpgrade(result);
   result = derivedActionCost(result, definition, costRankOf(usesAbilityGrade, base, rank));
-  if (profileId) result = applyBasicCardProfile(result, profile);
+  if (profileId) result = applyBasicCardProfile(result, profile, fixCoreRegistries(registries));
+  result = applyBaseManaPolicy(registries, result);
   if (mods && mods.length) {
     const eq = registries.equipment || {};
     result = deepFreeze(

@@ -59,11 +59,14 @@ export function reviewCaptureParams(input) {
   return { device, screens: SCREENS.map((s) => s.id).filter((id) => wanted.has(id)) };
 }
 
+const GAME_CONFIG_MISSING = 'tools/game-config.mjs is not in this checkout yet. Pull the branch that adds the game-profile compiler, then run this again.';
+const HUD_LAYOUT_MISSING = 'tools/hud-layout-css.mjs is not in this checkout yet. Pull the branch that adds the HUD layout compiler, then run this again.';
+
 /** id → { label, description, lock?, steps(root, { params?, stateDir? }) → [{ args, optional?, missing? }] } */
 export const JOBS = {
   'content-build': {
     lock: GENERATED, label: 'Content build', description: 'Compile content/source and content/framework into the generated modules under src/.',
-    steps: () => [{ args: ['tools/framework-data-build.mjs'], optional: true }, { args: ['tools/content-build.mjs'] }],
+    steps: () => [{ args: ['tools/framework-data-build.mjs'], optional: true }, { args: ['tools/content-build.mjs'] }, { args: ['tools/game-config.mjs', 'build'], optional: true }],
   },
   'config-build': {
     lock: GENERATED, label: 'Config build', description: 'Compile content/config (UI tokens, scenes, screens) into src/config/generated/ui.js.',
@@ -76,6 +79,20 @@ export const JOBS = {
   'engine-export': {
     lock: GENERATED, label: 'Engine export', description: 'Export the game data as JSON tables and schemas for Unity / Unreal into build/engine-export.',
     steps: () => [{ args: ['tools/engine-export.mjs', '--out', 'build/engine-export'], missing: 'tools/engine-export.mjs is not in this checkout yet. Pull the branch that adds the engine exporter, then run this again.' }],
+  },
+  // The game profiles: games/ashenspire and engine/ modules compile into gameProfiles.js and game.lock.json.
+  'game-config': {
+    lock: GENERATED, label: 'Game profiles', description: 'Compile games/ashenspire and engine/ modules into src/content/generated/gameProfiles.js and game.lock.json.',
+    steps: () => [{ args: ['tools/game-config.mjs', 'build'], missing: GAME_CONFIG_MISSING }],
+  },
+  'game-config-check': {
+    lock: GENERATED, label: 'Check game profiles', description: 'Check that the generated game profiles and game.lock.json match their source JSON, without rewriting them.',
+    steps: () => [{ args: ['tools/game-config.mjs', 'check'], missing: GAME_CONFIG_MISSING }],
+  },
+  // The HUD layout: content/hud-layout/*.json compiles into styles/hud-layout.generated.css.
+  'hud-layout': {
+    lock: GENERATED, label: 'HUD layout', description: 'Compile content/hud-layout/*.json into styles/hud-layout.generated.css and docs/hud-layout-tokens.md.',
+    steps: () => [{ args: ['tools/hud-layout-css.mjs', '--write'], missing: HUD_LAYOUT_MISSING }],
   },
   // The tag model proposal (docs/tag-model, from feature/TagRefactor). It is not a game build input:
   // these jobs only regenerate and check its own tables. Both share one lock group so they never overlap.

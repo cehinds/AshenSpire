@@ -28,12 +28,18 @@ test('tracking pass reserves the same settled target cores as the main placement
 
 test('reduced motion never starts or continues the frame-by-frame HUD tracker', () => {
   assert.match(stage, /function trackPlayerHud\(\) \{[\s\S]*?if \(reducedMotionRequested\(\)\) \{ trackingRequest = 0; return; \}/);
-  assert.match(stage, /const poseObserver = new MutationObserver\(\(\) => \{\n\s*if \(!reducedMotionRequested\(\) && !trackingRequest\) trackingRequest = requestAnimationFrame\(trackPlayerHud\);/);
+  assert.match(stage, /const poseObserver = new MutationObserver\(mutations => \{[\s\S]*?if \(reducedMotionRequested\(\)\) \{[\s\S]*?centerTargetOverheads\(\);[\s\S]*?return;[\s\S]*?if \(!trackingRequest\) trackingRequest = requestAnimationFrame\(trackPlayerHud\);/);
   assert.match(stage, /reducedMedia\?\.addEventListener\('change', reconcileReducedMotion\);/);
   assert.match(stage, /reducedSettingObserver\.observe\(document\.body, \{ attributes: true, attributeFilter: \['class'\] \}\);/);
   assert.match(stage, /cancelAnimationFrame\(trackingRequest\);\n\s*trackingRequest = 0;\n\s*schedule\(\);\n\s*if \(!next\) trackingRequest = requestAnimationFrame\(trackPlayerHud\);/);
   assert.match(stage, /reducedMedia\?\.removeEventListener\('change', reconcileReducedMotion\);/);
   assert.match(stage, /reducedSettingObserver\.disconnect\(\);/);
+});
+
+test('HUD tracker stops after a bounded pose window instead of running every frame', () => {
+  assert.match(stage, /const TRACK_WINDOW_MS = \d+;/);
+  assert.match(stage, /function trackPlayerHud\(\) \{[\s\S]*?performance\.now\(\) < trackUntil[\s\S]*?\? requestAnimationFrame\(trackPlayerHud\) : 0;/);
+  assert.match(stage, /extendTracking\(\);\s*if \(!trackingRequest\) trackingRequest = requestAnimationFrame\(trackPlayerHud\);/);
 });
 
 test('combat-layer QA probe validates the sprite pseudo-element shadows, not the removed layer', () => {
@@ -61,7 +67,6 @@ test('co-op enemy frames mark a readied hostile card\'s hover target, as solo do
   assert.match(coop, /box\.addEventListener\('pointerleave', \(\) => box\.classList\.remove\('hover-target'\)\);/);
 });
 
-test('a front-rank enemy readout hangs below its feet, never beside it', () => {
-  assert.match(stage, /const hudBelow = actor => !classicAppearance\(\) && actor\.side === 'enemy' && actor\.slot\.rank === 1;/);
-  assert.match(stage, /if \(hudBelow\(actor\)\) \{[\s\S]*?const overheadX = anchor\?\.x \?\? x;[\s\S]*?leadingHost\.style\.left = `\$\{overheadLocal\.left\}px`;[\s\S]*?ground \+ overheadGap - above \+ \(anchor\?\.offsetY \?\? 0\)/);
+test('responsive formation keeps every rank readout above its body', () => {
+  assert.match(stage, /const hudBelow = \(\) => false;/);
 });

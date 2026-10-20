@@ -46,7 +46,8 @@ function sandbox({ pack = false } = {}) {
   // Branch-owned artwork is authored under the selected checkout, outside
   // the shared packs (artPath resolves non-pack paths against that root).
   // Portable variant builds read these bytes and validate their catalog hashes.
-  for (const d of ['src', 'styles', 'tools', 'content', 'assets-display', ...(pack ? ['asset-data'] : [])]) {
+  // Root engine modules are runtime dependencies of the game profile and UI.
+  for (const d of ['src', 'engine', 'styles', 'tools', 'content', 'assets-display', ...(pack ? ['asset-data'] : [])]) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
   copyPackTrees(dir, ['assets-mobile', 'assets/fonts', ...(pack ? ['music', 'map-detail'] : [])]);
@@ -127,7 +128,7 @@ function forceTreeEol(dir, eol) {
       else if (textExts.has(entry.name.slice(entry.name.lastIndexOf('.')).toLowerCase())) paths.push(child);
     }
   };
-  for (const rel of ['src', 'styles', 'assets', 'assets-mobile']) walk(rel);
+  for (const rel of ['src', 'engine', 'styles', 'assets', 'assets-mobile']) walk(rel);
   paths.push('index.html');
   forceEol(dir, paths, eol);
 }
@@ -420,14 +421,36 @@ if (process.argv.includes('--model-runtime-only')) {
 // ---- 2. Bjorn's defect: a dropped brace in a content file -------------------
 // Planted in two different files, because the original report was reproduced in
 // both statuses.js and balance.js and the gate must not be keyed to one.
-for (const target of ['src/content/statuses.js', 'src/content/balance.js']) {
+// The authored statuses are content/source/statuses.json now (content-build
+// compiles them to src/content/generated/statuses.js, a single-line literal), so
+// that leg plants in the generated module — the file the bundler inlines and the
+// big literal a real dropped brace would land in — and drops the first `},{`
+// between two rows instead of a `\n  },` line. src/content/statuses.js is a
+// five-line shim with no row literal left to break.
+//
+// dropBrace(src) -> { broken, expectLine }: the fault's file text and the line
+// the gate must name for it. A multi-line literal drops its first `\n  },` line
+// (the fault is the replacement line, so one past the text before it); a
+// single-line literal drops the closing brace of its first row, and the fault is
+// on the line that holds it.
+function dropBrace(src) {
+  const at = src.indexOf('\n  },');
+  if (at >= 0) {
+    const broken = src.slice(0, at) + '\n  ,' + src.slice(at + 5);
+    return { broken, expectLine: broken.slice(0, at).split('\n').length + 1 };
+  }
+  const row = src.indexOf('},{');
+  if (row < 0) return null;
+  const broken = src.slice(0, row) + src.slice(row + 1);
+  return { broken, expectLine: broken.slice(0, row).split('\n').length };
+}
+for (const target of ['src/content/generated/statuses.js', 'src/content/balance.js']) {
   const dir = sandbox();
   const p = resolve(dir, target);
   const src = readFileSync(p, 'utf8');
-  const at = src.indexOf('\n  },');
-  if (at < 0) { check(`${target}: fixture could plant a brace`, false, 'no "  }," to remove'); rmSync(dir, { recursive: true, force: true }); continue; }
-  const broken = src.slice(0, at) + '\n  ,' + src.slice(at + 5);
-  const expectLine = broken.slice(0, at).split('\n').length + 1;
+  const plant = dropBrace(src);
+  if (!plant) { check(`${target}: fixture could plant a brace`, false, 'no row boundary to remove'); rmSync(dir, { recursive: true, force: true }); continue; }
+  const { broken, expectLine } = plant;
   writeFileSync(p, broken, 'utf8');
 
   const r = build(dir);
@@ -515,11 +538,12 @@ for (const [label, find, replace, expectMsg] of STRICT_ONLY) {
 // merely unpleasant — otherwise it becomes a style opinion nobody asked for.
 (() => {
   const dir = sandbox();
-  const p = resolve(dir, 'src/content/statuses.js');
+  // The generated statuses module is the big literal now (statuses.js is a shim).
+  const p = resolve(dir, 'src/content/generated/statuses.js');
   const src = readFileSync(p, 'utf8');
   // Legal, hideous, and semantically identical: no blank lines, doubled
   // semicolons, an unused binding, deep nesting in a dead branch.
-  const ugly = "import * as __uglyBalance from './balance.js'; ; ;\nimport './balance.js';;\n" + src
+  const ugly = "import * as __uglyBalance from '../balance.js'; ; ;\nimport '../balance.js';;\n" + src
     .replace(/\n\n+/g, '\n')
     .replace(/;\n/g, ';;\n')
     + '\nconst __unused = ((((1))));\nif (false) { if (false) { if (false) { /* nothing */ } } }\n';
@@ -536,12 +560,10 @@ for (const [label, find, replace, expectMsg] of STRICT_ONLY) {
 // A check that names the WRONG line is worse than one that names none.
 (() => {
   const dir = sandbox();
-  const p = resolve(dir, 'src/content/statuses.js');
+  const p = resolve(dir, 'src/content/generated/statuses.js');
   let src = readFileSync(p, 'utf8');
-  src = `import {\n  balance,\n} from './balance.js';\n` + src;
-  const at = src.indexOf('\n  },');
-  const broken = src.slice(0, at) + '\n  ,' + src.slice(at + 5);
-  const expectLine = broken.slice(0, at).split('\n').length + 1;
+  src = `import {\n  balance,\n} from '../balance.js';\n` + src;
+  const { broken, expectLine } = dropBrace(src);
   writeFileSync(p, broken, 'utf8');
   const r = build(dir);
   check('a 3-line import above the fault does not shift the reported line',

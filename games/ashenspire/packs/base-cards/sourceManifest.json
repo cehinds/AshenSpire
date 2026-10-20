@@ -1,0 +1,317 @@
+{
+  "sourceBranch": "Feature/updateCharacterCreation",
+  "sourceCommit": "fbee6162589ec2374664c19c4c78ee2795691d7e",
+  "sourceFilename": "docs/design/card-tag-design/proposed-design.json",
+  "normalization": {
+    "combatCards": 67,
+    "statusCards": 3,
+    "excludedEntityKinds": [
+      "service",
+      "ruleTemplate"
+    ]
+  },
+  "sourceEntries": [
+    {
+      "id": "proposed:card:persistent-protection",
+      "sha256": "1e35d65d3962adaeb43e57757e8ca9965c7c69aa053a99ea74eb63627b7ce15c"
+    },
+    {
+      "id": "proposed:card:greased",
+      "sha256": "5cee695572b3cb545e3990cc81e40d299477441327861f5f0ec3b494f66f1732"
+    },
+    {
+      "id": "proposed:card:divine-strike",
+      "sha256": "691663ebfd98834d7def1d87f3958a447e00f0e44e37dbf6fa8c3dfed6c65a8f"
+    },
+    {
+      "id": "proposed:card:poison",
+      "sha256": "1bce1628803f8c804bac99d07ebebefef8093ec1e779b84c506d17b5a49d8959"
+    },
+    {
+      "id": "proposed:card:blight",
+      "sha256": "f23b56155a2c0a89d2fe2cb08f620f801e77307ffaebb54057f349562ac6f791"
+    },
+    {
+      "id": "proposed:card:weak",
+      "sha256": "5bb7c907458e87f15365f8c0b47948e6112724bfae56bd3b72f4e3a505c69719"
+    },
+    {
+      "id": "proposed:card:charm",
+      "sha256": "48adfd1d510efd85a9950d56c0c372f9048467db4391de3ff1683244bd8bf299"
+    },
+    {
+      "id": "proposed:card:bind",
+      "sha256": "e8a121f423883818e8ade8c4c5ec0a4096e753c4161df16234768a2199b74a2b"
+    },
+    {
+      "id": "proposed:card:restrained",
+      "sha256": "9b06c725b9a183898d4a73b6aa90ac6b01fc1b48bba6239f80beecc5ef5b9257"
+    },
+    {
+      "id": "proposed:card:foresight",
+      "sha256": "965873f481538b0a2af6c3d00e671ff425a4817c7348232d811b82607f392a3e"
+    },
+    {
+      "id": "proposed:card:evade",
+      "sha256": "ffc82dd0520b4ed102f433d31d6eed83ed50f11160a72219107c8297754922cb"
+    },
+    {
+      "id": "proposed:card:intangible",
+      "sha256": "f25cc43731be584f2a8a06647dd33a0804631d5f58e7342c1da497e9092b2957"
+    },
+    {
+      "id": "proposed:card:mirrors",
+      "sha256": "426f2770f3a614a2d34591ffde791a1fcc462b963f20693fda48934334a87899"
+    },
+    {
+      "id": "proposed:card:elemental-weapon",
+      "sha256": "86dc01d158bbe8bd6a7c464a9ccf7d23f58ae8e87299ec1515afa8873c4f0c9e"
+    },
+    {
+      "id": "proposed:card:fire-cleanse",
+      "sha256": "fc0294f944fc8d331c448c2f404ecb25dabf66c1c95d30feee081c4dd28cbe11"
+    },
+    {
+      "id": "proposed:card:divine-cleanse",
+      "sha256": "e0490322563d1c164a61727f46b38519f26f135e7ebcbedb9ec55013d4b50de1"
+    },
+    {
+      "id": "proposed:card:necrotic-heal",
+      "sha256": "bd432d1848451b2cbdffac82d64782f8c446e4247589a56e6364a1b37e658e55"
+    },
+    {
+      "id": "proposed:card:divine-harm",
+      "sha256": "0f3f5cab02e2e018c9ec4e49741fe0247606ac406bc18a8be0ee41764edd7f22"
+    },
+    {
+      "id": "proposed:card:shuffle-hand",
+      "sha256": "3460a1d10d1385ef37284fe2cb387576d25deac85aa473903434258381eeaa4d"
+    },
+    {
+      "id": "proposed:card:shuffle-deck",
+      "sha256": "ef118dda9bc0c06005a7a52b43d48f58d159334e2c072e836da100584a5b78ca"
+    },
+    {
+      "id": "proposed:card:draw",
+      "sha256": "61b6694107227948855ba70daafadddcee8a361f33dac8ca49fb7388a7878d98"
+    },
+    {
+      "id": "proposed:card:retain",
+      "sha256": "03ee33fdd3ac8ce25c0252eec656ac68fe60c5f568f9b780e6fdedf5d8b124ec"
+    },
+    {
+      "id": "proposed:card:scout",
+      "sha256": "6e0d34740fa4c9ce233c9fed0e54bd9ead728cc50e09243f60120a825edd2c7c"
+    },
+    {
+      "id": "proposed:card:reveal-opponent-hand",
+      "sha256": "887591a3dcaa8a9ea6056693783f66806641be64df0a551cbb2eef3d9b4ef19d"
+    },
+    {
+      "id": "proposed:card:recall-choose",
+      "sha256": "a64082004adbea4d01c64baf137d012d7a60295399025e0aaa8ee5d3e6e9a6d8"
+    },
+    {
+      "id": "proposed:card:recover-exile",
+      "sha256": "562d708aa0951b3dee267c0e8679f489988e184729643e0ffeb0f0cf17e6f2ac"
+    },
+    {
+      "id": "proposed:card:exhaust-choose",
+      "sha256": "6f6d8c4648e105f35559b69c55325c1a47ca4e166d8df411a57548297b6ea313"
+    },
+    {
+      "id": "proposed:card:transform",
+      "sha256": "55ff5b21b80ae3e5088ea5ee6d8773759cb41bbc95454c35742d41874b8f9bed"
+    },
+    {
+      "id": "proposed:card:status-card-stagger",
+      "sha256": "1511bae7d6ed887e5ecb909378d05432de9c2ed0d3cc86eead576b5bf3d8acbe"
+    },
+    {
+      "id": "proposed:card:status-card-paralyze",
+      "sha256": "d6c18643f7becb7d652151a758b59c464e5ba0116098520f124e80a7ca6bdde3"
+    },
+    {
+      "id": "proposed:card:exhaust",
+      "sha256": "656afbcd0fafbf22559e7def6e3d3cc3083bac3c543deeaaddb02481182d04b9"
+    },
+    {
+      "id": "proposed:card:ethereal",
+      "sha256": "e2e91040f3069260c8318aab22ac4fb422de828e97bd40665abe5856a9c2b2d1"
+    },
+    {
+      "id": "proposed:card:stat-buff",
+      "sha256": "9051ac5939a72ba379ab0e10cbd4d3a4ca1b8def896938d1db506862a32cd5d1"
+    },
+    {
+      "id": "proposed:card:drain-allies",
+      "sha256": "5fc6c3b6dbb417c44c279fcad9782b60ecb33d4671050962a06bf4cd24b20c8e"
+    },
+    {
+      "id": "proposed:card:scale-negative-status",
+      "sha256": "aa708b921ac3582069ed7fbd3401861a7b63c4af7a6e850407d98049a696a6e1"
+    },
+    {
+      "id": "proposed:card:scale-damage-taken",
+      "sha256": "20bcd4743e403e3ec275fa634c7a33ce2c1861e809a763694d3731bf979b01db"
+    },
+    {
+      "id": "proposed:card:growth-per-type",
+      "sha256": "6a2990adf86d34ca5a3f28854669d5d38b38f473dd8d0a176a0b5664968007ce"
+    },
+    {
+      "id": "proposed:card:cost-per-use",
+      "sha256": "083c5eafaa31bf2abeac1c4ee0c18c5c5de2dfbefa48d4ab227d84c319a798b7"
+    },
+    {
+      "id": "proposed:card:damage-per-use",
+      "sha256": "b5d555f69856133795ed488c6acccf34f12c4e341d986a6de6e59133752ccd91"
+    },
+    {
+      "id": "proposed:card:pay-x-effect",
+      "sha256": "41113af8112459bd2dcd2f9d1fd798c9c077d86e1c122e60ec852279fafb2306"
+    },
+    {
+      "id": "proposed:card:pay-x-targets",
+      "sha256": "c7734b2a6aa2aa8787b2fdeb8817311d9e85d7c4db45006d4489288be57d5157"
+    },
+    {
+      "id": "proposed:card:hide-cards",
+      "sha256": "365a19eb68a6cd3e661f16b6f6e127f48a3dae33e193e2a78736c9cfa55ba6a4"
+    },
+    {
+      "id": "proposed:card:force-stance",
+      "sha256": "f9eacdac450aae5148c6df6b63f42d55a63ae41a71970e1cdb9bc8cdbb7a6895"
+    },
+    {
+      "id": "proposed:card:multi-stance",
+      "sha256": "f6d37e79ec1f703d4f0e19451d3b922e0c1dec431b2e8108605e4fbf196ddcb3"
+    },
+    {
+      "id": "proposed:card:current-stance-variant",
+      "sha256": "892c030b9cd38ffa8ba8d3cabdaa03a3f946e7e6c09c641357f74839a190eec9"
+    },
+    {
+      "id": "proposed:card:paid-resource-variant",
+      "sha256": "cbe4a095c40b152cf0196547348c1eb5a00b61f738b4149c2190558b3e5bd124"
+    },
+    {
+      "id": "proposed:card:attack-then-defend",
+      "sha256": "2437a08d5faab3d2c6482c84c3f803d42569a9a7ca19b5341e76b1cf1bb4168d"
+    },
+    {
+      "id": "proposed:card:modify-card-stance",
+      "sha256": "b0d3dbd107969b2846ba75ceea8c043cacdb66f861e91fc2a6aefa0bbd6f89d3"
+    },
+    {
+      "id": "proposed:card:modify-card-range",
+      "sha256": "d14b5c25ddd511fcb5229b0012db9ec5a037f0d15d1df35e432c19a7b015852d"
+    },
+    {
+      "id": "proposed:card:extra-weapon",
+      "sha256": "faabf32a4e567596fc833836b63cdce9d8ee10855bf1f9612dfd126b515f5475"
+    },
+    {
+      "id": "proposed:card:extra-shield",
+      "sha256": "6ad1b12cf9ae67eaa82637c42992dbd7b45c745cb4ddb4b6bedebeb22d8d9a90"
+    },
+    {
+      "id": "proposed:card:auto-counter",
+      "sha256": "ec8695c31f39a2590ab8bed59153cb7bfd17a63482a8d04f704189e01cc4c694"
+    },
+    {
+      "id": "proposed:card:auto-sweep",
+      "sha256": "c8813f4f7cbccebc53449c4af6f3430680c02d136cb752707f696af422dbf14b"
+    },
+    {
+      "id": "proposed:card:reflect",
+      "sha256": "103c625a8d907bc45f4c4098f021f51e659f26d760e5b7e4cde3f15aafd18ca4"
+    },
+    {
+      "id": "proposed:card:guard-allies",
+      "sha256": "5aee8d23a719b65b1dc90320ed99924068d39d542ba14942d7ac80568353aacd"
+    },
+    {
+      "id": "proposed:card:transmute",
+      "sha256": "4fd148cc1a7b31e4039b74e376c4562dfc354c7ab4a2c9455462e50f5562a6ca"
+    },
+    {
+      "id": "proposed:card:one-use-scroll",
+      "sha256": "499615f9c098802a4ed4465e577ce1c8e7119d103627e782f3398b331e4eac91"
+    },
+    {
+      "id": "proposed:card:gain-resource",
+      "sha256": "165f0bfe3e80740b5a8536ca90e5b5f6447dcf854b37e4f67d8185e175a5ebe3"
+    },
+    {
+      "id": "proposed:card:buff-ally",
+      "sha256": "0c64a4a7705784c6ae4298974f800c87d6f81847a469bb7429b94a512d64cdfb"
+    },
+    {
+      "id": "proposed:card:break-ward",
+      "sha256": "d2875140dceb6322bc6a218e3f8ec46b02b9b49d2f013cb34ba1d2f60187e971"
+    },
+    {
+      "id": "proposed:card:break-poise",
+      "sha256": "ef6ec99379514c5d25c401486d5363a2577f846eed0fafbadef1e77f5a62599e"
+    },
+    {
+      "id": "proposed:card:generate-smash",
+      "sha256": "7f91400e9faef5312cf46ff3b6895462ec453ef74253927830b7358d548f1a65"
+    },
+    {
+      "id": "proposed:card:conditional-damage-bonus",
+      "sha256": "aa5b887a2c0a14d87c5927beb6a18b61471c594752464e7ef29c79dee43026c9"
+    },
+    {
+      "id": "proposed:card:perception-untargetable",
+      "sha256": "02bac4b937049ef6057901e5ef5a34585c52e45423e50f83785e0bbee273a0d8"
+    },
+    {
+      "id": "proposed:card:retain-block",
+      "sha256": "e9cf7a1c30cc6b850ba200197dcb6dd1fd239781d6e0783183d077662e33b17a"
+    },
+    {
+      "id": "proposed:card:immediate-stance-transition",
+      "sha256": "9ac556aa6193cab43adaa64521d8fee5e2b11f5e9cb7145c549af963367ee972"
+    },
+    {
+      "id": "proposed:card:stagger-status-card",
+      "sha256": "11a3989884fbf33e0413042d011a6c844c02a0060705503c152ff8a6deb2a0d0"
+    },
+    {
+      "id": "proposed:card:multi-hit",
+      "sha256": "eedda14122b1530bf4a614ca25d2f8498b1e93d8dcb2bc6b6777ad740d13e0e8"
+    },
+    {
+      "id": "proposed:card:paralysis-status-card",
+      "sha256": "6f93a3a513baf1882e103a7e8c37440568631a04e2b5f969338a5c12a4a729d8"
+    },
+    {
+      "id": "proposed:card:restrained-status-card",
+      "sha256": "1f2e48b618f8e98baffa19c6a4364b0e9016b250d7e9f5a8df4d3a97225ae289"
+    }
+  ],
+  "excludedEntries": [
+    {
+      "id": "proposed:card:creature-vulnerability",
+      "entityKind": "ruleTemplate",
+      "reason": "Non-combat service or rule template; retained as design context, not a playable card."
+    },
+    {
+      "id": "proposed:card:armor-resistance",
+      "entityKind": "ruleTemplate",
+      "reason": "Non-combat service or rule template; retained as design context, not a playable card."
+    },
+    {
+      "id": "proposed:card:learn-spell",
+      "entityKind": "service",
+      "reason": "Non-combat service or rule template; retained as design context, not a playable card."
+    },
+    {
+      "id": "proposed:card:extract-ranked-copy",
+      "entityKind": "service",
+      "reason": "Non-combat service or rule template; retained as design context, not a playable card."
+    }
+  ]
+}

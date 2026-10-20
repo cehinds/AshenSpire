@@ -294,7 +294,13 @@ function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
 }
 
 test('with the preview off, a scripted fight event log is byte-identical to the recorded golden', () => {
-  const all = [1, 2, 3].map((s) => scriptedLog(s)).join('\n');
+  const logs = [1, 2, 3].map((s) => scriptedLog(s));
+  const all = logs.join('\n');
+  assert.deepEqual(logs.map(log => JSON.parse(log).at(-1)), [
+    ['state', null, 45, [['e1', 31, true]], 5],
+    ['state', null, 49, [['e1', 6, true]], 5],
+    ['state', null, 24, [['e1', 27, true]], 5],
+  ], 'accepted metadata and Mana-floor changes preserve the three ordinary fight outcomes');
   assert.equal([1, 2, 3].map((s) => scriptedLog(s)).join('\n'), all,
     'fresh fights reproduce the complete seeded event log byte for byte');
   // Re-recorded for the retuned Wandering Soldier (2 SP, HP 31-36, Slash 8; owner 2026-10-13: harder tier-1 normals).
@@ -311,8 +317,13 @@ test('with the preview off, a scripted fight event log is byte-identical to the 
   // The independent fresh-fight repeat assertion above passed before accepting this new receipt.
   // Re-recorded from 4f690ecc CI after explicit Evade-attempt receipts were added.
   // The fresh three-seed replay assertion above passed before the generated hash was recorded.
+  // Compared independently with origin/dev 37c414acd: play/contact order and
+  // all fight outcomes are unchanged. Differences are the accepted Gorefire
+  // Weapon Art MP floor (payment and snapshots) and card-use/type bookkeeping.
+  // Re-recorded for #2192 (Core hit rolls): hit events carry `opposed: false` under the default profile. A key-by-key
+  // comparison with origin/dev bbfb89959 shows that is the only difference; fight outcomes and every other field match.
   assert.deepEqual({ sha256: createHash('sha256').update(all).digest('hex'), length: all.length },
-    { sha256: 'b2084a441168bc6b11cbb73a7e6d203fc290501e18a4e77b40673b534f5aa67c', length: 400878 });
+    { sha256: '92b4c6bfaedbf896ec467255a35b34d19c7f0559793d2c956a0135e1fb8fccca', length: 414758 });
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

@@ -1,0 +1,26 @@
+{
+  "id": "status.bloodUnction",
+  "tag": "status.bloodUnction",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Blood Unction",
+  "description": "Your attacks apply 2 extra Bleed per hit this turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.bloodUnction"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

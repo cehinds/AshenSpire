@@ -1,0 +1,27 @@
+{
+  "mechanic": "defense.wardProtection",
+  "handlers": [],
+  "modifiers": [
+    {
+      "id": "active-ward-mitigation",
+      "phase": "damage.mitigation",
+      "subject": "target",
+      "when": {
+        "cmp": [
+          ">",
+          "$owner.persistentWard.value",
+          0
+        ]
+      },
+      "select": {
+        "damageKind": "magical"
+      },
+      "operation": "multiply",
+      "value": "$config.multiplier",
+      "stacking": {
+        "group": "ward-protection",
+        "mode": "strongest"
+      }
+    }
+  ]
+}

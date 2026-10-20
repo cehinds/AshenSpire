@@ -1,0 +1,26 @@
+{
+  "id": "status.venom",
+  "tag": "status.venom",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Venom",
+  "description": "At turn start, lose HP equal to Venom. 1 stack expires each turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.venom"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

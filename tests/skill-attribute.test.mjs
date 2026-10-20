@@ -82,6 +82,9 @@ test('the reward door raises the chosen attribute', async () => {
     assert.ok(tile, 'the linked attribute is offered');
     tile.click();
     app.querySelector('#reward-card-confirm').click();
+    assert.equal(run.attributes.dexterity, dex, 'Confirm reviews without raising the attribute');
+    assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Continue');
+    app.querySelector('#reward-card-confirm').click();
     assert.equal(run.attributes.dexterity, dex + 1);
     assert.equal(app.querySelector('.reward-kind[data-kind="skillAttribute"]').dataset.state, 'taken');
   } finally { Object.assign(globalThis, saved); }
@@ -109,6 +112,8 @@ test('a refused save rolls the pick back and keeps the run\'s pending reward as 
     app.querySelector('.reward-kind[data-kind="skillAttribute"]').click();
     [...app.querySelectorAll('.reward-row .reward-pick')].find((n) => n.dataset.pickId === 'attribute:strength').click();
     refuse = true;
+    app.querySelector('#reward-card-confirm').click();
+    assert.equal(run.attributes.strength, str, 'Confirm alone grants nothing');
     app.querySelector('#reward-card-confirm').click();
     assert.equal(run.attributes.strength, str, 'the refused pick is rolled back');
     assert.equal(run.skills[BLADE].pendingAttributePicks, 1, 'and the pick is still queued');

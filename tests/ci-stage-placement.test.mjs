@@ -87,7 +87,7 @@ test('the boundary claims print per stage, and only for a stage that ran', () =>
 
 test('every functional job depends on the stage decision and is gated on its functional output', () => {
   const all = jobs(readFileSync(CI, 'utf8').replace(/\r\n/g, '\n'));
-  const functional = ['test', 'test-discovered', 'test-selftests', 'parse-gate', 'browser-guard', 'browser-full-run', 'browser-flask-menu', 'browser-flask-menu-plants', 'browser-guard-changelog', 'browser-startup-plants'];
+  const functional = ['test', 'test-discovered', 'test-selftests', 'parse-gate', 'browser-guard', 'browser-slot-load-plants', 'browser-full-run', 'browser-flask-menu', 'browser-flask-menu-plants', 'browser-guard-changelog', 'browser-startup-plants'];
   for (const name of functional) {
     const job = all.get(name);
     assert.ok(job, `ci.yml has no ${name} job`);
@@ -123,4 +123,23 @@ test('tutorial-reach, map-camera, coop-hud and quick-start gate their job on the
     assert.equal(gated.length, 1, `${file} gates ${gated.length} jobs on the stage, expected one`);
     assert.match(gated[0][1], /\n    if: needs\.stage\.outputs\.run == 'true'\n/, `${file} job ${gated[0][0]} is not gated on needs.stage.outputs.run`);
   }
+});
+
+
+test('slot-load plants have a dedicated source-only functional job and remain required by the boundary', () => {
+  const all = jobs(readFileSync(CI, 'utf8').replace(/\r\n/g, '\n'));
+  const guard = all.get('browser-guard');
+  assert.match(guard, /run: node tools\/verdict\.mjs -- node tools\/slot-load-door\.mjs\n/);
+  assert.doesNotMatch(guard, /slot-load-door\.mjs --selftest/);
+  const plantJobs = [...all].filter(([, body]) => /run: .*slot-load-door\.mjs --selftest/.test(body)).map(([name]) => name);
+  assert.deepEqual(plantJobs, ['browser-slot-load-plants']);
+  const job = all.get('browser-slot-load-plants');
+  assert.match(job, /timeout-minutes: 20\n/);
+  assert.match(job, /fail-fast: false\n/);
+  for (const action of ['actions/checkout@', './.github/actions/setup-node', './.github/actions/fetch-art', './.github/actions/which-browser']) assert.ok(job.includes(action), `missing ${action}`);
+  assert.doesNotMatch(job, /tools\/(?:launch|bundle)\.mjs|--build-only/, 'the plants consume source, so no standalone build is needed');
+  const boundary = all.get('boundary');
+  assert.match(boundary, /needs: \[[^\]\n]*browser-slot-load-plants/);
+  assert.match(boundary, /TEST_JOBS="[^"]*browser-slot-load-plants/);
+  assert.ok(boundary.includes("browser-slot-load-plants=${{ needs['browser-slot-load-plants'].result }}"));
 });

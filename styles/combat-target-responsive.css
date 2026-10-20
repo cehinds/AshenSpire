@@ -1,0 +1,107 @@
+/* Native responsive target HUD. Artwork/grid geometry remains battlefield-owned. */
+:root .combat[data-target-hud='true'] .target-hud-panel {
+  border-color: var(--combat-matchup-color,#f07870);
+  box-shadow: 0 0 5px color-mix(in srgb,var(--combat-matchup-color,#f07870) 60%,transparent),0 .2em .8em #0008;
+}
+:root .combat[data-target-hud='true'] .target-hud-detail[data-role='player'] { --combat-matchup-color:#87caff; }
+:root .combat[data-target-hud='true'] .target-hud-inspect-info {
+  position:absolute; z-index:800; min-width:0; min-height:0; padding:0;
+  border:1px solid #b9b9d0; border-radius:50%; background:#262e41; color:#dedff1;
+  font:italic 15px Georgia,serif; pointer-events:auto; transform:none; translate:none;
+  visibility:visible!important; opacity:1!important; right:auto!important; bottom:auto!important;
+}
+:root .combat[data-target-hud='true'] .target-hud-inspect-info:focus-visible { outline:2px solid #87caff; outline-offset:3px; }
+:root .combat[data-target-hud='true'] .combatant > .target-hud-overhead-meters {
+  position:absolute; left:var(--combat-mini-hud-left,0px); top:var(--combat-mini-hud-top,-63px);
+  width:var(--combat-mini-hud-width,100%); display:flex!important; flex-direction:column; align-items:center;
+  gap:calc(5px / var(--ui-zoom,1)); pointer-events:none; padding:0; margin:0; transform:none; translate:none;
+}
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > .meters { pointer-events:auto; }
+:root .combat[data-target-hud='true'] .combatant.target-hud-selected > .target-hud-overhead-meters {
+  display:flex!important; top:var(--combat-selected-intent-top,calc(var(--combat-mini-hud-top,-63px) + 22px / var(--ui-zoom,1)));
+  left:calc(var(--combat-selected-intent-center,50%) - var(--combat-mini-hud-width,100%) / 2);
+}
+:root .combat[data-target-hud='true'] .combatant.target-hud-selected > .target-hud-overhead-meters > .meters { display:none!important; }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) {
+  position:static!important; inset:auto!important; transform:none!important; translate:none!important; zoom:1!important;
+  /* Only the centered action row owns intent input. The full-width host
+     aligns the health bar; its empty sides must pass through to other UI. */
+  display:flex!important; justify-content:center; align-items:flex-end;
+  min-width:min(100%, calc(44px / var(--ui-zoom,1)))!important; width:max-content!important; pointer-events:auto;
+  height:calc(37px / var(--ui-zoom,1))!important; min-height:calc(37px / var(--ui-zoom,1))!important; max-height:calc(37px / var(--ui-zoom,1))!important; flex:0 0 calc(37px / var(--ui-zoom,1)); margin:0!important; padding:0!important;
+  background:transparent!important; border:0!important; box-shadow:none!important; color:#ffe7ab;
+}
+:root .combat[data-target-hud='true'] .intent > :not(.intent-compact) { display:none!important; }
+:root .combat[data-target-hud='true'] .intent .intent-compact { display:flex!important; justify-content:center; }
+:root .combat[data-target-hud='true'] .intent-actions { display:inline-flex; justify-content:center; align-items:flex-end; gap:calc(5px / var(--ui-zoom,1)); }
+/* Owner 2026-10-18: the amount sits LEFT of its maneuver icon on one row, vertically centred
+   with it, at 2x the old size (11px to 22px = the titleM step of content/config/ui/tokens.json).
+   Solo (target HUD) and co-op share one size so neither role drifts. */
+:root .combat { --intent-value-size: calc(22px / var(--ui-zoom,1)); }
+:root .combat .intent .intent-action { display:inline-flex; flex-direction:row; align-items:center; justify-content:flex-end; gap:calc(3px / var(--ui-zoom,1)); }
+:root .combat .intent .intent-action-value { display:block; font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; white-space:nowrap; }
+:root .combat[data-target-hud='true'] .intent-action .intent-icon { width:calc(25px / var(--ui-zoom,1)); height:calc(25px / var(--ui-zoom,1)); }
+:root .combat[data-target-hud='true'] .target-hud-intent { justify-content:center; }
+:root .combat[data-target-hud='true'] .target-hud-intent-name { flex:none; }
+:root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .meters {
+  width:100%!important; min-width:0!important; margin:0!important; gap:0!important;
+}
+:root .combat[data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row {
+  position:relative; display:flex; flex-wrap:wrap; width:100%!important; min-width:0; gap:0;
+  padding:0!important; margin:0!important; --health-row-h:calc(7px / var(--ui-zoom,1));
+}
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters .combat-health-meter {
+  order:-1; flex:0 0 100%; width:100%!important; margin:0!important;
+}
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters :is(.m-track,.as-meter) { width:100%!important; min-width:0!important; }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters .m-plate {
+  position:absolute; inset:calc(9px / var(--ui-zoom,1)) 0 auto auto; width:auto; height:auto;
+  display:flex; justify-content:flex-end; background:transparent; pointer-events:none;
+}
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters .m-value { font-size:calc(10px / var(--ui-zoom,1));  }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters .m-label { display:none!important; }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters .combat-health-badge {
+  position:relative!important; inset:auto!important; transform:none!important; margin-top:calc(2px / var(--ui-zoom,1));
+  font-size:calc(9px / var(--ui-zoom,1)); flex:0 0 calc(16px / var(--ui-zoom,1)); width:calc(16px / var(--ui-zoom,1)); height:calc(16px / var(--ui-zoom,1)); min-width:0; aspect-ratio:1;
+}
+:root .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
+  filter:drop-shadow(.8px 0 0 var(--combat-matchup-color,#f07870)) drop-shadow(-.8px 0 0 var(--combat-matchup-color,#f07870)) drop-shadow(0 0 1.2px var(--combat-matchup-color,#f07870))!important;
+}
+:root .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] :is(.intent,.combat-health-meter .m-track) {
+  filter:drop-shadow(0 0 3px var(--combat-matchup-color,#f07870));
+}
+:root .combat[data-target-hud='true'] .target-hud-detail .combat-health-meter .m-track {
+  box-shadow:0 0 0 1px var(--combat-matchup-color,#f07870),0 0 4px var(--combat-matchup-color,#f07870);
+}
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > .meters { position:relative; z-index:700!important; }
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) { position:relative!important; z-index:800; }
+:root .combat[data-target-hud='true'] .intent-action[data-value-kind='count'] .intent-action-value { color:#eee2c8; }
+:root .combat[data-target-hud='true'] .intent-action[data-value-kind='damage'] .intent-action-value { color:#f07870; }
+:root .combat[data-target-hud='true'] [data-damage-tone='green'] .intent-action[data-value-kind='damage'] .intent-action-value { color:#8ad498; }
+:root .combat[data-target-hud='true'] [data-intent-visibility]:not([data-intent-visibility='known']) .intent-action-value { color:#e8d59b; }
+/* Native player intents have no stage-placed marker after moving into this host. */
+:root .combat[data-target-hud='true'] .target-hud-overhead-meters > :is(.intent,.player-action-intent) { visibility:visible!important; }
+:root .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-row { height:calc(19px / var(--ui-zoom,1))!important; min-height:calc(19px / var(--ui-zoom,1))!important; align-content:flex-start; }
+:root .combat[data-layout='formation'][data-target-hud='true'] .combatant .target-hud-overhead-meters .combat-health-meter > .m-plate {
+  inset:calc(9px / var(--ui-zoom,1)) 0 auto auto!important; width:auto!important; height:auto!important;
+  justify-content:flex-end!important; align-items:flex-start!important;
+}
+
+/* Matchup feedback exists only while an eligible selected card owns it. */
+:root .combat[data-target-hud='true'] .target-hud-layer { z-index:700!important; }
+:root .combat[data-target-hud='true'] .combatant.enemy:not([data-matchup-active='true']) .sprite { filter:none!important; }
+:root .combat[data-target-hud='true'] .combatant.enemy:not([data-matchup-active='true']):is(.target-hud-selected,.target-hud-focused) .sprite { filter:drop-shadow(0 0 2px #f07870) drop-shadow(0 0 2px #f07870)!important; }
+:root .combat[data-target-hud='true'] .target-hud-detail[data-role='enemy'][data-matchup-active='false'] { --combat-matchup-color:#f07870!important; }
+
+:root .combat[data-target-hud='true'] .target-hud-detail[data-crowded='true'] .target-hud-panel {
+  padding:var(--target-hud-padding-block,.3em) var(--target-hud-padding-inline,.6em);
+}
+
+/* Remaining queued actions after an actor has acted: "?" per unread one (owner 2026-10-18). Same size step as
+   the amount's neighbours; the icon form (a passed read) matches the maneuver icon's row. */
+:root .combat .intent .intent-followups { display:inline-flex; align-items:center; gap:calc(3px / var(--ui-zoom,1)); margin-inline-start:calc(4px / var(--ui-zoom,1)); }
+/* The expanded copy of the row shows only where the compact row is hidden: a selected enemy in the formation layout. */
+:root .combat .intent > .intent-followups.intent-followups-expanded { display:none; }
+:root .combat[data-layout='formation'] .combatant.context-selected .intent > .intent-followups.intent-followups-expanded { display:inline-flex; }
+:root .combat .intent .intent-followup { display:inline-flex; align-items:center; justify-content:center; min-width:calc(14px / var(--ui-zoom,1)); font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; }
+:root .combat .intent .intent-followup .intent-icon { width:calc(18px / var(--ui-zoom,1)); height:calc(18px / var(--ui-zoom,1)); }

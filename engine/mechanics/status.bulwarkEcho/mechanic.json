@@ -1,0 +1,26 @@
+{
+  "id": "status.bulwarkEcho",
+  "tag": "status.bulwarkEcho",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Shieldwall Echo",
+  "description": "At the start of your next turn: gain 4 Block per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.bulwarkEcho"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/cardFaceText.js",
+    "symbol": "fail"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "id": "rest",
+  "description": "Rest site. Mounted by src/ui/screens/rest.js (mountRest).",
+  "route": "rest",
+  "viewModel": {
+    "props": {
+      "run": "runRef",
+      "rested": "boolean"
+    }
+  },
+  "regions": [
+    {
+      "slot": "header",
+      "component": "hud"
+    },
+    {
+      "slot": "body",
+      "component": "choiceBody",
+      "props": {
+        "title": "rest.title",
+        "choices": "$services"
+      }
+    },
+    {
+      "slot": "deck",
+      "component": "deckList",
+      "props": {
+        "run": "$run"
+      }
+    },
+    {
+      "slot": "footer",
+      "component": "buttons",
+      "props": {
+        "items": [
+          "rest",
+          "leave"
+        ]
+      }
+    }
+  ],
+  "events": {
+    "rest": "rest.heal",
+    "levelUp": "progression.levelUp",
+    "reallocate": "progression.reallocate",
+    "openDeck": "deck.open",
+    "done": "rest.done"
+  },
+  "assets": [
+    "scene.rest"
+  ]
+}

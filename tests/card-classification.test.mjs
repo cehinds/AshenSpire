@@ -21,8 +21,9 @@ test('canonical category and stance subtype preserve authored execution kind', (
     assert.equal(def.type, 'skill');
   }
   assert.equal(cardClassification(card('counter', 1, { evade: { charges: 1 } })).stanceType, 'evade');
-  for (const type of ['power', 'consumable', 'status', 'curse'])
+  for (const type of ['consumable', 'status', 'curse'])
     assert.deepEqual(cardClassification(card('casting', 1, { type })), { cardCategory: type, stanceType: null, stanceGroups: [] });
+  assert.deepEqual(cardClassification(card('casting', 1, { type: 'power' })), { cardCategory: 'power', stanceType: 'prepare', stanceGroups: [] });
   for (const kind of ['skillBook', 'revive', 'CONSUMABLE'])
     assert.equal(cardClassification({ kind }).cardCategory, 'consumable');
   assert.equal(cardClassification(card('casting')).cardCategory, 'skill');
@@ -45,13 +46,13 @@ test('Sweep Reaction uses actual rank two, while Defense uses rank one', () => {
 
 test('shared card model exposes canonical identity and separate ability labels with legacy CSS hooks', () => {
   const registries = createRegistries(contentBundle);
-  for (const [id, subtype] of [['frostCounter', 'Counter'], ['crystalBarrier', 'Defense'], ['dodgeRoll', 'Evade']]) {
+  for (const [id, category, subtype] of [['frostCounter', 'spell', 'Prepare'], ['crystalBarrier', 'spell', 'Prepare'], ['dodgeRoll', 'stance', 'Evade']]) {
     const def = applyCardTraits(applyCombatExpansionCard(registries.cards.get(id)));
     const model = playingCardModel(registries, { cardId: id }, { definition: def });
-    assert.equal(model.type.id, 'stance');
-    assert.equal(model.type.label, 'STANCE');
+    assert.equal(model.type.id, category);
+    assert.equal(model.type.label, category.toUpperCase());
     assert.equal(model.type.subtype, subtype);
-    assert.ok(playingCardClasses(model).includes('type-stance'));
+    assert.ok(playingCardClasses(model).includes('type-' + category));
     assert.ok(playingCardClasses(model).includes('type-' + def.type));
     assert.equal(model.stanceType, subtype.toLowerCase());
   }

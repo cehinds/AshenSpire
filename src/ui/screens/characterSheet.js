@@ -249,6 +249,8 @@ function skillsPane(registries, run, sheet, state) {
  * player's settings switch on (CharacterSheetModel DEFAULT_LEVEL_OFFERS).
  */
 export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFFERS, tab = 'character', track = '', opener, onClose = null, settings = {}, onChange = null, onRewards = null, onRespec = null } = {}) {
+  const configured = run.gameProfile?.foundation?.mode === 'configured';
+  if (configured) { tab = 'character'; onRewards = null; onRespec = null; offers = { ...offers, feats: false, classTree: false }; }
   registries = characterSheetRegistries(registries, run);
   let bodyHost = null;
   const state = { tab, track, show: null, settings, onChange, onRewards, close: null };
@@ -268,8 +270,10 @@ export function openCharacterSheet({ registries, run, offers = DEFAULT_LEVEL_OFF
     eyebrow: t('progression.title'), secondary: [back],
     tabs: [
       { id: 'character', label: t('progression.tab.character'), selected: tab === 'character' },
-      { id: 'skills', label: t('progression.tab.skills'), selected: tab === 'skills' },
-      { id: 'class', label: t('progression.tab.class'), selected: tab === 'class' },
+      ...(configured ? [] : [
+        { id: 'skills', label: t('progression.tab.skills'), selected: tab === 'skills' },
+        { id: 'class', label: t('progression.tab.class'), selected: tab === 'class' },
+      ]),
     ],
     onTab: (id) => state.show(id),
     showMenuButton: false, // a read-only page has no menu to offer

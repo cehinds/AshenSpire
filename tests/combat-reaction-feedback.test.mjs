@@ -386,7 +386,7 @@ test('v1: a Smash into an armed Counter breaks Guard through the synchronous doo
       effects: [{ op: 'damage', target: 'enemy', amount: 4, combatProfile: profile }] } : card),
     enemies: legacyContentBundle.enemies.map(enemy => enemy.id === 'gildedKnight' ? { ...enemy, firstMove: 'parry' } : enemy) });
   const c = createCombat({ registries, rng: createRng(50), enemyIds: ['gildedKnight', 'wanderingSoldier'], ratingsRules: null,
-    player: { classId: 'reaver', hp: 200, maxHp: 200, energyMax: 10, drawPerTurn: 1,
+    player: { classId: 'reaver', hp: 200, maxHp: 200, mana: 20, maxMana: 20, energyMax: 10, drawPerTurn: 1,
       deck: [{ instanceId: 'smash1', cardId: 'kilnCleave' }], relicIds: [] } });
   const enemy = c.enemies[0];
   enemy.block = 3; enemy.wardBlock = 0; enemy.poiseGuard = 0; enemy.poiseMeter = { value: 0, max: 100 };

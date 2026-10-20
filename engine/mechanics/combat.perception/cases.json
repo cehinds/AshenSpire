@@ -1,0 +1,100 @@
+[
+  {
+    "name": "module-defaults",
+    "when": {
+      "bindingQuery": {
+        "attachments": [
+          {
+            "ownerId": "actor",
+            "sourceInstanceId": "actor",
+            "kind": "entity",
+            "tags": [
+              "combat:perception"
+            ]
+          }
+        ],
+        "moduleParameters": {
+          "combat.perception": {
+            "baseDC": 5,
+            "bonuses": []
+          }
+        },
+        "query": "parameters"
+      }
+    },
+    "then": {
+      "value": {
+        "baseDC": 5,
+        "bonuses": []
+      }
+    }
+  },
+  {
+    "name": "source-disable",
+    "when": {
+      "bindingQuery": {
+        "attachments": [
+          {
+            "ownerId": "actor",
+            "sourceInstanceId": "actor",
+            "kind": "entity",
+            "tags": [
+              "combat:perception"
+            ],
+            "mechanicBindings": [
+              {
+                "tag": "combat:perception",
+                "enabled": false
+              }
+            ]
+          }
+        ],
+        "moduleParameters": {
+          "combat.perception": {
+            "baseDC": 5,
+            "bonuses": []
+          }
+        },
+        "query": "parameters"
+      }
+    },
+    "then": {
+      "error": "one active binding"
+    }
+  },
+  {
+    "name": "invalid-param",
+    "when": {
+      "bindingQuery": {
+        "attachments": [
+          {
+            "ownerId": "actor",
+            "sourceInstanceId": "actor",
+            "kind": "entity",
+            "tags": [
+              "combat:perception"
+            ],
+            "mechanicBindings": [
+              {
+                "tag": "combat:perception",
+                "parameters": {
+                  "unknown": 1
+                }
+              }
+            ]
+          }
+        ],
+        "moduleParameters": {
+          "combat.perception": {
+            "baseDC": 5,
+            "bonuses": []
+          }
+        },
+        "query": "parameters"
+      }
+    },
+    "then": {
+      "error": "unknown parameter"
+    }
+  }
+]

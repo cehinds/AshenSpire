@@ -1,3 +1,5 @@
+import { formationOccupancy } from '../src/model/formationOccupancy.js';
+import { projectEnemyBurdenHand } from '../src/ui/models/EnemyBurdenModel.js';
 import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
 import { enemyStanceCategory } from '../src/model/enemyStancePose.js';
 import {abilityDraftChoice} from '../src/model/abilityDraftReceipts.js';
@@ -67,7 +69,7 @@ import {
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import { cardRewardPlan } from '../src/model/rewardplan.js';
 import {
-  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, setReactions, previewCoopCard, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
+  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, setReactions, previewCoopCard, previewCoopCards, classifyPreviewCandidates, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
   recoverControl, chooseBlightFeat,
 } from '../src/engine/coopCombat.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
@@ -768,6 +770,28 @@ export function createSession({ registries, seedString, endless = false, restore
     return { ok: true, combat: session.scene };
   }
 
+  // A card-zone choice's candidate previews, computed once per choice (they ride every snapshot until it is
+  // answered) and from a single detached state. Keyed on the live choice object, so a new choice recomputes.
+  const choicePreviews = new WeakMap();
+  const FULL_PREVIEW_CAP = 8;
+  function candidatePreviews(c, playerId, choice) {
+    if (!choicePreviews.has(choice)) {
+      let previews = {};
+      try {
+        const seat = c.players.get(playerId);
+        const ctx = { ...c, registries: c.registriesForPlayer(playerId), player: seat.entity, combatExpansionVersion: c.combatExpansionVersion };
+        const { liveIds, plainIds } = classifyPreviewCandidates(ctx, seat.entity, choice.candidates || [], c.enemies.some(enemy => enemy.alive));
+        const full = [...liveIds, ...plainIds].slice(0, FULL_PREVIEW_CAP), cheap = {};
+        // Any candidate past the cap has no priced numbers (a state-dependent card's branch or charge is unknown, and a
+        // plain card would read numbers a stance or advantage may change): its tile reads the card text.
+        for (const id of [...liveIds, ...plainIds].slice(FULL_PREVIEW_CAP)) cheap[id] = { textOnly: true, values: [] };
+        previews = { ...cheap, ...(full.length ? previewCoopCards(c, playerId, full) : {}) };
+      } catch { previews = {}; }
+      choicePreviews.set(choice, previews);
+    }
+    return choicePreviews.get(choice);
+  }
+
   function combatScene() {
     const c = live.combat;
     // Compact digest of display-worthy events since the LAST snapshot, so the
@@ -826,6 +850,8 @@ export function createSession({ registries, seedString, endless = false, restore
       ...(c.stanceRules ? { stanceRules: structuredClone(c.stanceRules) } : {}),
       ...(c.enemyKnowledge ? { enemyKnowledge: { version: 1, rules: structuredClone(c.enemyKnowledge.rules),
         owners: structuredClone(c.enemyKnowledge.owners) } } : {}),
+      formationPolicy: c.formationPolicy || null,
+      formationOccupancy: formationOccupancy(c),
       receiptSeq: ++combatReceiptSeq,
       opening,
       events,
@@ -837,6 +863,7 @@ export function createSession({ registries, seedString, endless = false, restore
       result: c.result,
       headcount: connectedMembers().length,
       enemies: c.enemies.map((e) => ({
+        burdenRead: projectEnemyBurdenHand(e, { turn: c.turn, registries: c.registries }),
         presentationStance: enemyStanceCategory(e.intent),
         combatExpansionVersion: e.combatExpansionVersion || 1, combatStance: e.combatStance,
         persistentWard: e.persistentWard, barrier: e.barrier, statusControl: e.statusControl,
@@ -869,7 +896,15 @@ export function createSession({ registries, seedString, endless = false, restore
         ashenBlight: P.entity.ashenBlight ? structuredClone(P.entity.ashenBlight) : undefined,
         combatStance: P.entity.combatStance, persistentWard: P.entity.persistentWard, barrier: P.entity.barrier,
         statusControl: P.entity.statusControl, recoveryControls: recoveryControls({ ...c, combatExpansionVersion: P.entity.combatExpansionVersion || 1 }, P.entity),
-        pendingAbilityDiscard: c.pendingAbilityDiscard || null,
+        pendingAbilityDiscard: c.pendingAbilityDiscard?.playerId===P.id ? c.pendingAbilityDiscard : null,
+        // Snapshot only: each candidate carries the preview a hand card gets (below), so a client prices a pile card by
+        // its live effect variant. Nothing here is written back to the engine state or a save.
+        pendingCardChoice:c.pendingCardChoice?.playerId===P.id ? (() => {
+          const choice = structuredClone(c.pendingCardChoice);
+          const previews = candidatePreviews(c, P.id, c.pendingCardChoice);
+          choice.candidates = (choice.candidates || []).map(card => (previews[card.instanceId] ? { ...card, combatPreview: previews[card.instanceId] } : card));
+          return choice;
+        })() : null,
         pendingReaction: c.pendingReaction?.ownerId === P.id ? structuredClone(c.pendingReaction) : null,
         ...(c.reactionRulesVersion >= 1 ? { reactionsEnabled: P.entity.reactionsEnabled !== false } : {}),
         abilityRiders: P.entity.abilityRiders,
@@ -995,6 +1030,7 @@ export function createSession({ registries, seedString, endless = false, restore
       if (c.enemyKnowledge?.owners[m.id]) reconcileCombatKnowledge(m.run, c, m.id);
       const s = outcome.survivors[m.id];
       if (!s) continue;
+      m.run.cinders=(m.run.cinders || 0)+(outcome.earnedCinders?.[m.id] || 0);
       m.run.hp = s.downed ? 0 : Math.max(0, s.hp);
       if (s.ashenBlight) m.run.ashenBlight = structuredClone(s.ashenBlight);
       if (s.blightTerminal) { m.alive = false; m.catchup.length = 0; }

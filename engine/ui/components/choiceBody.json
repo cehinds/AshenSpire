@@ -1,0 +1,36 @@
+{
+  "id": "choiceBody",
+  "description": "Framed body for choice screens (reward, event, shop picks). Reads src/ui/components/choiceBody.js and src/ui/models/ChoiceBodyModel.js.",
+  "layout": {
+    "ref": "content/config/ui/components/choiceBody.json"
+  },
+  "viewModel": {
+    "props": {
+      "title": "string",
+      "choices": "array"
+    },
+    "bindings": {
+      "title": "$title",
+      "choices": "$choices"
+    }
+  },
+  "states": [
+    "idle",
+    "chosen"
+  ],
+  "events": {
+    "tap": "choice.pick"
+  },
+  "children": [
+    {
+      "component": "buttons",
+      "slot": "footer"
+    }
+  ],
+  "assets": [],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

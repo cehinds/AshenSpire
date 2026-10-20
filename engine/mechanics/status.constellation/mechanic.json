@@ -1,0 +1,26 @@
+{
+  "id": "status.constellation",
+  "tag": "status.constellation",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Constellation",
+  "description": "Whenever you gain Starstone Charge, deal 4 damage per stack to a random enemy.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.constellation"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

@@ -5,10 +5,10 @@
   {
    "id": "P1",
    "by": "Bjorn",
-   "read": "src/ui/screens/combat.js (procbar) · src/content/statuses.js (bleed.proc.threshold = 7)",
+   "read": "src/ui/screens/combat.js (procbar) · content/source/statuses.json (bleed.proc.threshold = 7)",
    "anchors": [
     "bar procbar",
-    "threshold: 7"
+    "\"threshold\": 7"
    ],
    "screen": "combat › the enemy's build-up meter",
    "why-drive": "No ?shot= state poses a status, so the game is PLAYED: the Reaver's own starter card Gorefire Slash applies 3 Bleed. A drive is the only honest way to photograph a mechanic.",
@@ -39,7 +39,7 @@
   {
    "id": "P2",
    "by": "Bjorn",
-   "read": "src/content/statuses.js (bleed proc: threshold 7, burst 15% min 8, applies bleedResist) · (bleedResist 'Clotted', icon 🩹) · src/content/cards/reaver.js (gorefireSlash 1 energy + 1 MANA) · src/content/classes.js (startingFlaskAllocation mana — the third cast's honest source)",
+   "read": "content/source/statuses.json (bleed proc: threshold 7, burst 15% min 8, applies bleedResist) · (bleedResist 'Clotted', icon 🩹) · content/source/cards/reaverCards.json (gorefireSlash 1 energy + 1 MANA) · content/source/classes.json (startingFlaskAllocation mana — the third cast's honest source)",
    "anchors": [
     "startingFlaskAllocation",
     "gorefireSlash",
@@ -80,9 +80,9 @@
   {
    "id": "P3",
    "by": "Bjorn",
-   "read": "src/content/statuses.js (frost, threshold proc) · appliers now exist: src/content/cards/starseer.js (6x applyStatus status:'frost'), src/content/enemies/act2.js (1x)",
+   "read": "content/source/statuses.json (frost, threshold proc) · appliers now exist: content/source/cards/starseerCards.json (6x applyStatus status:'frost'), content/source/act2Enemies.json (1x)",
    "anchors": [
-    "status: 'frost'"
+    "\"status\": \"frost\""
    ],
    "screen": "combat › frost is now reachable content (the 08-08 red: zero appliers)",
    "reach": [
@@ -110,7 +110,7 @@
   {
    "id": "P4",
    "by": "Bjorn",
-   "read": "src/ui/screens/combat.js (meterBars → resourceBars surface 'model') · src/ui/components/resbars.js (data-res='poise', data-cur) · src/content/statuses.js (proc.poiseDamage 3) · #165 replaced the old .poisebar — the vessel is the bar now",
+   "read": "src/ui/screens/combat.js (meterBars → resourceBars surface 'model') · src/ui/components/resbars.js (data-res='poise', data-cur) · content/source/statuses.json (proc.poiseDamage 3) · #165 replaced the old .poisebar — the vessel is the bar now",
    "anchors": [
     "resourceBars",
     "poiseDamage"
@@ -149,9 +149,9 @@
   {
    "id": "P5",
    "by": "Bjorn",
-   "read": "src/content/statuses.js (insanity, threshold proc) · appliers now exist: src/content/cards/herald.js (2x), src/content/enemies/act3.js (applyStatus status:'insanity' on player)",
+   "read": "content/source/statuses.json (insanity, threshold proc) · appliers now exist: content/source/cards/heraldCards.json (2x), content/source/act3Enemies.json (applyStatus status:'insanity' on player)",
    "anchors": [
-    "status: 'insanity'"
+    "\"status\": \"insanity\""
    ],
    "screen": "combat › insanity is now reachable content (the 08-08 red: zero occurrences)",
    "reach": [
@@ -362,28 +362,24 @@
   },
   {
    "id": "A3",
-   "by": "Bjorn",
-   "read": "src/ui/screens/compendium.js (.cp-cell, state-teased) · src/ui/screens/title.js (#armaments)",
+   "by": "Codex",
+   "read": "src/ui/screens/compendium.js (.cp-cell, state-teased) · src/main.js (shotState compendium reach state)",
    "anchors": [
-    "#armaments",
-    "cp-cell"
+    "cp-cell",
+    "shotState === 'compendium'"
    ],
-   "screen": "ARMAMENTS (the Compendium), from the main menu",
+   "screen": "Compendium content; former title entry retired by the owner five-entry menu requirement",
    "reach": [
     {
      "op": "goto",
-     "q": ""
-    },
-    {
-     "op": "click",
-     "sel": "#armaments",
+     "q": "?shot=compendium&gameProfile=current",
      "ms": 900
     }
    ],
    "focus": ".cp-cell",
    "expect": {
     "present": {
-     "its own menu entry, and the shape of what you don't have": ".cp-cell"
+     "the collection and the shape of what is not owned": ".cp-cell"
     },
     "count": [
      {
@@ -960,7 +956,7 @@
    "reach": [
     {
      "op": "goto",
-     "q": "?shot=map&shotWalk=4&shotSettings=%7B%22mapMode%22%3A%22path%22%7D",
+     "q": "?shot=map&shotWalk=4&gameProfile=current&shotSettings=%7B%22mapMode%22%3A%22path%22%7D",
      "ms": 2000
     }
    ],

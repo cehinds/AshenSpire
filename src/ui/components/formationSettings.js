@@ -61,7 +61,6 @@ export function formationSettingsHtml(settings, rows) {
           ${field('groundTilt')}${field('groundSkew')}
           <p class="formation-help">Tilt flattens the tiles toward the ground; skew slants their edges. Characters remain upright.</p>
         </div>
-        <label class="formation-visibility"><input type="checkbox" data-formation-visible${values.showFormationGrid ? ' checked' : ''}> Show grid in battle</label>
         <details class="formation-adjustments"><summary><span>Character adjustments<small>Row size, offsets and draw order</small></span></summary>
           <div class="formation-adjustment-fields">${adjustments.map(row => fieldHtml(row, values[row.presentationKey], false)).join('')}</div>
         </details>
@@ -77,7 +76,7 @@ export function mountFormationSettings(container, settings, onChange, rows) {
   if (!host || host.dataset.mounted) return;
   host.dataset.mounted = 'true';
   const draft = presentationConfig(settings);
-  const editable = new Set([...rows.map(row => row.presentationKey), 'gridShape', 'showFormationGrid', 'formationGroups']);
+  const editable = new Set([...rows.map(row => row.presentationKey), 'gridShape', 'formationGroups']);
   const fields = new Map(rows.map(row => [row.presentationKey, row]));
   const preview = host.querySelector('.formation-preview');
   const status = host.querySelector('[data-formation-status]');
@@ -138,7 +137,6 @@ export function mountFormationSettings(container, settings, onChange, rows) {
     }
   });
   host.querySelector('[data-formation-outline]').addEventListener('change', event => { draft.gridShape = event.target.value; update(); });
-  host.querySelector('[data-formation-visible]').addEventListener('change', event => { draft.showFormationGrid = event.target.checked; update(); });
   const apply = () => {
     const changes = Object.fromEntries([...editable].map(key => [`${prefix}${key}`, draft[key]]));
     if (onChange(changes)?.ok === false) {

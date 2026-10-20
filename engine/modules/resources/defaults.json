@@ -1,0 +1,10 @@
+{
+  "mode": "configured",
+  "include": [
+    "hp",
+    "sp",
+    "mp"
+  ],
+  "costPolicy": "authoredVariants",
+  "recovery": "turnStart"
+}

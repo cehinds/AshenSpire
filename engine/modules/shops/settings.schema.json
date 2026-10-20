@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "options": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "price": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "itemsPerCategory": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000,
+      "description": "Distinct eligible items on each merchandise shelf; depleted catalogs offer fewer."
+    }
+  },
+  "required": [
+    "mode",
+    "options",
+    "price"
+  ],
+  "additionalProperties": false
+}

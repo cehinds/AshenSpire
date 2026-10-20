@@ -1,0 +1,26 @@
+{
+  "id": "status.silenced",
+  "tag": "status.silenced",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Silenced",
+  "description": "Spells cost 1 more Stamina per stack. Immune to Force: each Force hit or effect is stopped and removes 1 stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.silenced"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "spendSilencedStack"
+  }
+}

@@ -22,6 +22,32 @@ otherwise.
 
 ## Run & test
 
+`package.json` (no dependencies, no `"type"` field) gives the common commands
+short names: `npm start` (launch), `npm run build:standalone` (`launch.mjs --build-only`; not named `build`, so a hosting platform that auto-runs a `build` script does nothing here),
+`npm run serve`, `npm test` (the fast core lane) and `npm run test:all` (the full `tests/run-node.mjs` merge gate), the checks
+`npm run validate:ui|validate:maps|validate:config|build:game|plantsites|receipts`,
+and `npm run art:fetch`. Each is the `node tools/...` command it names. Every
+tool, what it does and who calls it: [tools/README.md](tools/README.md).
+
+**`styles/tokens.generated.css` is generated** from the design tokens in
+`content/config/ui/tokens.json` (`type`, `layer`, `motion`, `touch`, beside `vars`).
+Edit the JSON, then `npm run tokens:css` (`node tools/tokens-css.mjs --write`; `--check`
+exits 1 on drift and runs in `tests/run-node.mjs`). A token whose custom property
+`styles/base.css` already declares (`--t-1`, `--t-2`, `--t-4`, `--tap-floor`,
+`--iconbtn-size`) is marked `home` and is not declared again: one home per fact.
+`launch.mjs` writes the file before it bundles, `serve.mjs --watch` rebuilds it after
+`config-build`, and `index.html` links it straight after `base.css`.
+
+**`npm run lint:style` (`node tools/style-lint.mjs --check`) is a ratchet.** It counts,
+per file in `styles/*.css`, the `font-size` px literals below `type.minimum.textPx`, the
+bare `z-index` of 100 or more that is not `var(--layer-*)`, and the bare hex colours outside
+the token homes (`base.css` `:root` blocks, `combat-symbol-colors.css`,
+`tokens.generated.css`), and fails when a count rises above
+`tools/style-lint-baseline.json`. To lower it, replace raw values with tokens, run
+`node tools/style-lint.mjs --write-baseline` in the same change, and commit the new
+baseline; a count that fell without a baseline write still passes, but the gain is not
+locked in. Never raise the baseline to go green.
+
 **The built standalone HTML is not committed on `dev`** (since 2026-09-26).
 Every rebuild used to upload ~284 MB of new Git LFS objects (the 255 MB full file
 and the 29 MB mobile one) and the repository's LFS budget ran out. Now the root
@@ -90,7 +116,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `pr-restamp.yml` → re-stamp: after a successful `build-stamp` on `dev`, merge `dev` into each conflicting open PR into `dev` with `tools/pr-restamp.mjs`, push that merge, dispatch its checks; or comment once when a person must merge | — | yes (after a stamp on `dev`; also dispatch) | — | — |
 | `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
 | `tests.yml` → discovered tests, four shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
-| `quick-start.yml` → Quick start to the first card play within 6 inputs; click to contact ≤ 400 ms and click to first number ≤ 750 ms (medians) at Normal pacing (`tools/click-impact-probe.mjs`: contact is the effects layer's `data-contact` counter, which `src/ui/fx.js` bumps at each impact frame; the number is the first `.float-num` damage or guard float, which under the default `sequential` beat order follows the defender's reaction) | — | yes | yes | only when release differs from test |
+| `quick-start.yml` → Quick start input budget; ordered Core2 stages retain four 500 ms waits and half-rate sprites. `tools/click-impact-probe.mjs` reports raw latency and gates median contact/first-number overhead at 400/750 ms after declared waits, the active authored clip and receipt-derived hit-stop. Requires a real hostile contact and at least three numeric readouts; optional reactions use the real Back control. | — | yes | yes | only when release differs from test |
 | `ci.yml` → stage decision (`stage`): a push to `test` is the functional stage; a push to `release` is polish, and also functional when its tree differs from `test` | — | — | yes | yes |
 | `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | yes, if the tree differs from `test` |
 | `ci.yml` → discovered tests, 3 OS, all shards (no `--no-slow`, so the slow files run too) | — | — | yes | yes, if the tree differs from `test` |
@@ -508,6 +534,18 @@ node tests/run-node.mjs --selftests-only  # the slow half: each tool's --selftes
 # or open tests/index.html in a browser — same suite, green/red list
 ```
 
+**What is JSON-authored now.** Relics, stances, flasks and the authored statuses
+are authored in `content/source/relics.json`, `stances.json`, `flasks.json` and
+`statuses.json`; `node tools/content-build.mjs` compiles each to
+`src/content/generated/<kind>.js` (`launch.mjs` runs it before every build,
+`--check` is the drift gate), and `src/content/relics.js`, `stances.js`,
+`flasks.js` and `statuses.js` import the generated module so every importer is
+unchanged (`statuses.js` also joins the derived `expansionStatuses` from
+`combatStatusRules.js`, which stay JS). Base cards come through
+`tools/base-cards.mjs`; the interface strings (`uiStrings.csv`) and the node
+tables are CSV/JSON in `content/source/` too. Events and the class card files are
+still hand-written JS and follow the same way in later changes.
+
 Every `*.test.mjs` in the repository runs: `tests/run-node.mjs` finds them
 (skipping `node_modules`, `dist`, `build`, `scratch` and dot-directories other
 than `.github`) and hands them to one `node --test`. A new test file needs no
@@ -916,6 +954,34 @@ are CSS lengths under the page's `--ui-zoom` (they are not divided by it).
 `<html data-form-factor>` is written by `applyUiScale` in `src/main.js` from
 `balance.ui.uiScale.formFactor`.
 
+## Game profiles (`games/ashenspire/`, `engine/modules/<id>/`)
+
+The Core game profile is JSON, not code. `games/ashenspire/game.json` is the
+default profile's author; `presets/` (`core.json`, `current.json`), `bundles/` and
+`packs/` (the base-card pack is `packs/base-cards/`) hold the rest. Each engine
+module is one folder, `engine/modules/<id>/`, with its `module.json`,
+`defaults.json`, `settings.schema.json` and `guide.md`. The profiles are resolved
+against the modules and the pack, and the result is locked in
+`games/ashenspire/game.lock.json`: a hash per profile. The lock and the
+generated modules are output. Edit the JSON, never them.
+
+```
+node tools/game-config.mjs validate   # resolve games/ashenspire/game.json; exit 1 on an error (the default command)
+node tools/game-config.mjs build      # write src/content/generated/gameProfiles.js, game.lock.json and baseCards.js
+node tools/game-config.mjs check      # exit 1 when gameProfiles.js or game.lock.json is stale
+node tools/base-cards.mjs [--check]   # the base-card pack alone: packs/base-cards → src/content/generated/baseCards.js
+node tools/hud-layout-css.mjs --write # content/hud-layout/*.json → styles/hud-layout.generated.css (see above)
+```
+
+`node tools/launch.mjs --build-only` already runs `game-config build` and the
+HUD layout step before it bundles, so a build from a clean checkout is current.
+Use `game-config check` to see whether the generated files are stale without
+rewriting them. The Workbench does the same work on save: a change under `games/ashenspire/` or in an engine module's
+contracts, foundation, kernel or modules rebuilds the profiles, and a change under
+`content/hud-layout/` rebuilds the HUD layout. The Build & Checks jobs
+**Game profiles**, **Check game profiles** and **HUD layout** run the same commands.
+The engine export (`docs/ENGINE-EXPORT.md`) reads these tables too.
+
 ## Reword the interface (one file: `content/source/uiStrings.csv`)
 
 Every sentence a screen says is a row in `content/source/uiStrings.csv`, and a
@@ -956,25 +1022,37 @@ drift. Before that nothing ran it, and from 2026-09-17 to 2026-10-02 about 230
 sentences landed in code across 24 files without anyone seeing the red. Never
 regenerate the baseline to cover a file that GREW: move the sentence to a row.
 
-## Add a card (one file: `src/content/cards/<class>.js`)
+## Add a card (one file: `content/source/cards/<class>Cards.json`)
 
-```js
+The Herald, Reaver and Starseer pools, the armament cards, the colorless cards and the
+corrupted cards are plain JSON (an array of rows, two-space indent), named for the export
+they compile to: `heraldCards.json`, `reaverCards.json`, `starseerCards.json`,
+`armamentCards.json`, `colorlessCards.json`, `corruptedCards.json`.
+`src/content/cards/<class>.js` is only a shim over the compiled
+`src/content/generated/cards/<name>.js`; do not author there. Add the row, then compile
+(`node tools/launch.mjs` does it for you; by hand: `node tools/content-build.mjs`) and commit
+the regenerated file. Design notes that used to be comments in the JS live in
+`content/source/CONTENT-NOTES.md` under "Cards", keyed by card id. JSON has no comments, no
+shared constants and no functions, so write a repeated value out in full. The two builder
+pools, `rogue.js` and `coop.js`, hold functions and stay JS: author those in the JS file.
+
+```json
 {
-  id: 'moonSlash', name: 'Moon Slash', class: 'reaver', rarity: 'common',
-  cost: 1, type: 'attack', keywords: [], icon: '🌙',
-  effects: [
-    { op: 'damage', target: 'enemy', amount: 6 },
-    { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 },
+  "id": "moonSlash", "name": "Moon Slash", "class": "reaver", "rarity": "common",
+  "cost": 1, "type": "attack", "keywords": [], "icon": "🌙",
+  "effects": [
+    { "op": "damage", "target": "enemy", "amount": 6 },
+    { "op": "applyStatus", "target": "enemy", "status": "weak", "stacks": 1 }
   ],
-  textTemplate: 'Deal {damage} damage. Apply {weak} Weak.',
-  upgrade: { effects: [
-    { op: 'damage', target: 'enemy', amount: 9 },
-    { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 },
-  ] },
+  "textTemplate": "Deal {damage} damage. Apply {weak} Weak.",
+  "upgrade": { "effects": [
+    { "op": "damage", "target": "enemy", "amount": 9 },
+    { "op": "applyStatus", "target": "enemy", "status": "weak", "stacks": 2 }
+  ] }
 }
 ```
 
-Then add its id to the class `cardPool` in `src/content/classes.js` if it
+Then add its id to the class `cardPool` in `content/source/classes.json` if it
 should appear in rewards. Notes:
 
 - `{damage}` tokens bind to effects **in order**; repeats are `{damage.2}`.
@@ -982,7 +1060,7 @@ should appear in rewards. Notes:
   player-visible op without a token is a validation error.
 - Powers whose stack count is invisible ("gain the power", not "gain N")
   use formula-valued stacks to opt out of the token rule:
-  `stacks: { f: 'add', args: [1] }` — see Rallying Standard.
+  `"stacks": { "f": "add", "args": [1] }` — see Rallying Standard.
 - `upgrade` is a partial override: present fields replace base ones;
   `keywords` replaces the whole list (that's how Kick Off+ drops Exhaust).
 - `onTurnEndInHand` (optional effect list) fires at the player's turn end for
@@ -991,14 +1069,22 @@ should appear in rewards. Notes:
   combat. Its numbers bind to the card's text template after `effects`
   (Guilt's text says `{loseHp}`).
 
-## Add a status (one file: `src/content/statuses.js`)
+## Add a status (one file: `content/source/statuses.json`)
 
-```js
+Statuses are plain JSON (an array of rows, two-space indent).
+`src/content/statuses.js` is only a shim over the compiled
+`src/content/generated/statuses.js` (plus the derived rows in
+`combatStatusRules.js`); do not author there. Add the row, then compile
+(`node tools/launch.mjs` does it for you; by hand: `node tools/content-build.mjs`)
+and commit the regenerated file. Design notes that used to be comments in the JS
+live in `content/source/CONTENT-NOTES.md`, keyed by id.
+
+```json
 {
-  id: 'frostbite', name: 'Frostbite', icon: '❄',
-  stackMode: 'unique', decay: 'onConsume',
-  modifiers: { damageTakenMult: 1.3 },
-  tooltip: 'Takes 30% more attack damage until consumed.',
+  "id": "frostbite", "name": "Frostbite", "icon": "❄",
+  "stackMode": "unique", "decay": "onConsume",
+  "modifiers": { "damageTakenMult": 1.3 },
+  "tooltip": "Takes 30% more attack damage until consumed."
 }
 ```
 
@@ -1008,38 +1094,62 @@ The engine interprets `stackMode` (add/refresh/unique), `decay`
 Bleed, Crimson Blight, and Staggered are all plain data here — test 17 proves a
 brand-new status needs zero engine changes.
 
-## Add a relic (one file: `src/content/relics.js`)
+## Add a relic (`content/source/relics.json`, plus one node for its combat trigger)
 
-```js
+Relics are plain JSON (an array of rows, two-space indent). `src/content/relics.js`
+is only a re-export of the compiled `src/content/generated/relics.js`; do not
+author there. A relic row holds its identity, rarity, run-system `passives` and
+the one `textTemplate` that describes the whole relic. Add the row, then compile
+(`node tools/launch.mjs` does it for you; by hand: `node tools/content-build.mjs`)
+and commit the regenerated file.
+
+```json
 {
-  id: 'whetstoneFragment', name: 'Whetstone Fragment', rarity: 'common', icon: '🪨',
-  triggers: [{
-    on: 'damageDealt', once: true,
-    if: { p: 'all', preds: [{ p: 'eventIsAttack' }, { p: 'eventSourceIsOwner' }] },
-    do: [{ op: 'damage', amount: 4 }],
-  }],
-  textTemplate: 'Your first attack each combat deals {damage} extra damage.',
+  "id": "whetstoneFragment", "name": "Whetstone Fragment", "rarity": "common", "icon": "🪨",
+  "passives": { "poiseThresholdAdd": 1 },
+  "textTemplate": "Your first attack each combat deals {damage} extra damage. Poise threshold +1.",
+  "flavor": "Worn smooth by a thousand blades."
 }
 ```
 
-## Add an enemy (one file: `src/content/enemies/act<N>.js`)
+A relic's COMBAT behaviour is not in the row: since plan phase 2 `validate.js`
+refuses `triggers` on a relic. They are a property rule that shares the relic's
+id — a `property` node row in `content/source/nodes.csv`, its triggers under that
+id in `content/source/nodeEffects.json`, and a `relic,,<id>,<id>` line in
+`content/source/tagging.csv` (see `forsakenMedallion` in all three). The relic's
+`textTemplate` is checked against both halves. Design notes that used to be
+comments in the JS live in `content/source/CONTENT-NOTES.md`, keyed by id.
 
-```js
+A flask is added the same way in `content/source/flasks.json`, and a stance in
+`content/source/stances.json`.
+
+## Add an enemy (one file: `content/source/act<N>Enemies.json`)
+
+```json
 {
-  id: 'gildedKnight', name: 'Gilded Knight', hp: [40, 44], poiseMax: 18, art: '♞',
-  moves: {
-    thrust: { intent: 'attack', damage: 10, weight: 55, maxConsecutive: 2 },
-    parry:  { intent: 'block', block: 9, weight: 45, maxConsecutive: 1 },
-  },
+  "id": "gildedKnight", "name": "Gilded Knight", "hp": [40, 44], "poiseMax": 18, "art": "♞",
+  "moves": {
+    "thrust": { "intent": "attack", "damage": 10, "weight": 55, "maxConsecutive": 2 },
+    "parry": { "intent": "block", "block": 9, "weight": 45, "maxConsecutive": 1 }
+  }
 }
 ```
+
+Then `node tools/content-build.mjs` (launch does it). `src/content/enemies/act<N>.js` is a
+re-export, not a place to author; the design notes that were comments in it are in
+`content/source/CONTENT-NOTES.md`. The pack rows are converted from these files by
+`tools/enemy-decks-convert.mjs`.
 
 Add it to an encounter in `src/content/encounters/act<N>.js` so it can appear.
 Special moves: `delay: { turns, whileCharging }` makes a telegraphed
 delayed attack (Held Blade pattern — Stagger cancels it); `locked: true` +
 `phases[].unlockMoves` gates moves behind HP-threshold phase changes.
 
-## Add an event (one file: `src/content/events.js`)
+## Add an event (`content/source/events.json`, plus its choice ids)
+
+Add one object to the array in `content/source/events.json` (JSON, so quoted keys; then
+`node tools/content-build.mjs`, which launch does). `src/content/events.js` is a shim, not a
+place to author.
 
 ```js
 {
@@ -1060,11 +1170,19 @@ but run-level (SPEC §3.4): `addCinders`, `addRelic {random?|id}`,
 `startCombat {encounterId}`, plus `heal`/`damage`/`addCardToDeck`. `requires?`
 (e.g. `{ cinders: 50 }`) gates a choice; a `startCombat` effect hands control to
 the combat orchestrator after `resultText` shows. Nothing to register — every
-shipped event is reachable via Unknown nodes.
+shipped event is reachable via Unknown nodes — except its **choice ids**: add
+`"testShrine": ["pray", "leave"]` to `content/source/eventChoiceIds.json`, one
+durable id per choice in order. `eventChoicesWithHistory` needs
+`eventChoiceIds[event.id]` to be the same length as `choices`; if it is not, the
+event offers no choices at all. A choice that needs an earlier choice in the run
+goes in `eventChoiceHistoryRequirements.json` (one slot per choice, `null` for
+none); an event that should wait for one goes in `eventHistoryRequirements.json`.
+Design notes that used to be comments live in `content/source/CONTENT-NOTES.md`
+under "Events".
 
-A **quest chain** is a sidecar beside the events in the same file: list its
-steps and completing choices in `questChains`, and name each step's speaker in
-`eventSpeakers`. A speaker is a row in `content/source/speakers.csv`
+A **quest chain** is a sidecar beside the events: list its steps and completing
+choices in `content/source/questChains.json`, and name each step's speaker in
+`content/source/eventSpeakers.json`. A speaker is a row in `content/source/speakers.csv`
 (`id,name,portraitKey`; the key names existing art, and a blank key shows the
 name plate). A chain's steps open in the dialogue screen, one beat per
 blank-line paragraph of the event's `text`. Both event screens commit a choice

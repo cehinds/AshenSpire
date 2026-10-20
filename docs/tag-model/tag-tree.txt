@@ -327,7 +327,7 @@ Meta
           Insanity
         Weakened
           Weak {−25% attack damage}
-          Vulnerable {+50% attack damage taken}
+          Vulnerable {+25% attack damage taken}
           Frail {−25% Block}
           Magic Vulnerable
           Frost-Exposed {+ vs Starstone}

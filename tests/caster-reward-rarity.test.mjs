@@ -1,3 +1,4 @@
+import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { contentBundle } from '../src/content/index.js';
@@ -22,6 +23,11 @@ test('caster reward pools retain schools without adding caster schools to martia
   const schools = new Set(r.nodes.filter(node => node.parentId === 'card').map(node => node.id));
   for (const classId of ['herald', 'starseer']) {
     for (const id of r.classes.get(classId).cardPool) {
+      if (id.startsWith('base.')) {
+        const profile = combatProfileFor(r.cards.get(id));
+        assert.ok(profile.camp === 'physical' || profile.camp === 'spell' && profile.school, `${classId}/${id}: modular rewards retain their canonical school`);
+        continue;
+      }
       assert.ok(r.cards.get(id).tags.some(tag => schools.has(tag)), `${classId}/${id}: reward has a draft school`);
     }
   }

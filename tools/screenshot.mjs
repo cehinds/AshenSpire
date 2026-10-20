@@ -122,6 +122,21 @@ const args = process.argv.slice(2);
 const oi = args.indexOf('--out');
 const outDir = resolve(ROOT, oi >= 0 && args[oi + 1] ? args[oi + 1] : 'docs/preview');
 
+// --game-profile core|current — capture the same reach states against either
+// authored runtime profile. The parameter is added to every shot URL, including
+// shots whose path already contains a query string.
+const gpi = args.indexOf('--game-profile');
+const GAME_PROFILE = gpi >= 0 ? args[gpi + 1] : null;
+if (GAME_PROFILE && !['core', 'current'].includes(GAME_PROFILE)) {
+  console.error(`screenshot: --game-profile expects core or current, got "${GAME_PROFILE}"`);
+  process.exit(1);
+}
+function shotUrl(shot) {
+  const url = new URL(shot.query, `http://localhost:${port}/`);
+  if (GAME_PROFILE) url.searchParams.set('gameProfile', GAME_PROFILE);
+  return url.toString();
+}
+
 // --prefix STR — put STR in front of every output filename.
 //
 // WITHOUT THIS, TWO VIEWPORTS INTO ONE FOLDER IS DATA LOSS. Every capture is
@@ -249,7 +264,7 @@ async function capture(shot) {
     // frame). A capture that is sometimes a half-faded frame is not evidence,
     // and the flake is invisible unless you measure the brightness.
     args: [`--window-size=${VIEWPORT}`, '--virtual-time-budget=20000', `--screenshot=${tmp}`],
-    urlArg: `http://localhost:${port}/${shot.query}`,
+    urlArg: shotUrl(shot),
   });
   return new Promise((done) => {
     let output = '';
@@ -322,7 +337,7 @@ async function captureReady(shot) {
     try {
       await send('Page.enable');
       await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
-      const nav = await send('Page.navigate', { url: `http://localhost:${port}/${shot.query}` });
+      const nav = await send('Page.navigate', { url: shotUrl(shot) });
       if (nav.errorText) throw new Error(`navigation failed: ${nav.errorText}`);
       let state = null;
       while (Date.now() < deadline) {

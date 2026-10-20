@@ -1,0 +1,108 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "default": {
+      "enum": [
+        "owned",
+        "unlimited"
+      ]
+    },
+    "unlimited": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requiresTag": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pools": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "cards": {
+            "type": "object",
+            "properties": {
+              "rarity": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "tagsAny": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "tagsAll": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "requiresTag"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "owned": {
+      "type": "object",
+      "properties": {
+        "pools": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ownedOnlyCollection": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "mode",
+    "default",
+    "unlimited",
+    "owned"
+  ],
+  "additionalProperties": false
+}

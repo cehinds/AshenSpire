@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.glassCannon",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

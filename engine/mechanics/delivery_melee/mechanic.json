@@ -1,0 +1,27 @@
+{
+  "id": "delivery_melee",
+  "tag": "delivery:melee",
+  "version": "1.0.0",
+  "family": "delivery",
+  "label": "Melee",
+  "description": "Categorized Melee identity; effects are authored separately.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "delivery_melee",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/attackTags.js",
+    "symbol": "resolvedAttackTags"
+  }
+}

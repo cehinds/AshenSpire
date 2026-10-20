@@ -94,19 +94,19 @@ test('each exposure answers only its own tags', () => {
 // base-3 card gained nothing (3 × 1.25 = 3.75 -> 3); rounded up it gains 1.
 // Regular Vulnerable keeps its floor.
 const lowBase = [
-  ['starbladePhalanx', 'starstone', 'frostExposed'],
-  ['ashenMote', 'ritual', 'insanityExposed'],
-  ['blightTouch', 'ritual', 'insanityExposed'],
+  ['starbladePhalanx', 'starstone', 'frostExposed', 3, 1.25],
+  ['ashenMote', 'ritual', 'insanityExposed', 8, 1.3],
+  ['blightTouch', 'ritual', 'insanityExposed', 8, 1.3],
 ];
-for (const [cardId, tag, status] of lowBase) {
-  test(`exposure bonus rounds up: base-3 ${cardId} (${tag}) gains damage vs ${status}, preview == hit, solo == co-op`, () => {
+for (const [cardId, tag, status, authoredBase, multiplier] of lowBase) {
+  test(`exposure bonus rounds up: base-${authoredBase} ${cardId} (${tag}) gains damage vs ${status}, preview == hit, solo == co-op`, () => {
     assert.ok(cardTags(shipped, cardId).includes(tag), `${cardId} carries '${tag}'`);
     const base = shipped.cards.get(cardId).effects.find((e) => e.op === 'damage').amount;
-    assert.equal(base, 3, `${cardId} is a base-3 hit`);
+    assert.equal(base, authoredBase, `${cardId} retains its authored damage`);
     const clean = solo(shipped, cardId, null);
     const exposed = solo(shipped, cardId, status);
-    assert.equal(clean.hits[0], 3);
-    assert.equal(exposed.hits[0], 4, `ceil(3 × 0.25) = 1 bonus (${clean.hits[0]} -> ${exposed.hits[0]})`);
+    assert.equal(clean.hits[0], authoredBase);
+    assert.equal(exposed.hits[0], authoredBase + Math.ceil(authoredBase * (multiplier - 1)), `tagged bonus rounds up (${clean.hits[0]} -> ${exposed.hits[0]})`);
     assert.equal(exposed.preview, exposed.hits[0], 'preview states the rounded-up hit');
     assert.deepEqual(coop(shipped, cardId, status).hits, exposed.hits, 'co-op parity');
   });
@@ -165,6 +165,6 @@ test('a two-component tagged card hit: preview == hit, bonus rounded once', () =
   assert.deepEqual(exposed, { preview: 13, amount: 13 });
 });
 
-test('regular Vulnerable still floors: base-3 starbladePhalanx vs Vulnerable deals 4 (3 × 1.5 = 4.5)', () => {
-  assert.deepEqual(solo(shipped, 'starbladePhalanx', 'vulnerable').hits, [4]);
+test('regular Vulnerable still floors: base-3 starbladePhalanx vs Vulnerable deals 3 (3 × 1.25 = 3.75)', () => {
+  assert.deepEqual(solo(shipped, 'starbladePhalanx', 'vulnerable').hits, [3]);
 });

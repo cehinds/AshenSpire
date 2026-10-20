@@ -277,7 +277,7 @@ meta.combat.status-effect.debuff.build-up.frost,build-up.frost,Frost,meta.combat
 meta.combat.status-effect.debuff.build-up.insanity,insanity,Insanity,meta.combat.status-effect.debuff.build-up,StatusEffect,spellcraft.psychic,,,,,,,game-concept,,,
 meta.combat.status-effect.debuff.weakened,weakened,Weakened,meta.combat.status-effect.debuff,StatusEffect,,,,,,,,game-concept,,,
 meta.combat.status-effect.debuff.weakened.weak,weak,Weak,meta.combat.status-effect.debuff.weakened,StatusEffect,,−25% attack damage,Deal ×[weak.mult] attack damage,weak.mult,−1 stack per turn,duration,,game-concept,,,
-meta.combat.status-effect.debuff.weakened.vulnerable,vulnerable,Vulnerable,meta.combat.status-effect.debuff.weakened,StatusEffect,,+50% attack damage taken,Take ×[vulnerable.mult] attack damage,vulnerable.mult,−1 stack per turn,duration,,game-concept,,,
+meta.combat.status-effect.debuff.weakened.vulnerable,vulnerable,Vulnerable,meta.combat.status-effect.debuff.weakened,StatusEffect,,+25% attack damage taken,Take ×[vulnerable.mult] attack damage,vulnerable.mult,−1 stack per turn,duration,,game-concept,,,
 meta.combat.status-effect.debuff.weakened.frail,frail,Frail,meta.combat.status-effect.debuff.weakened,StatusEffect,,−25% Block,Gain ×0.75 Block from cards,,−1 stack per turn,duration,,game-concept,,,
 meta.combat.status-effect.debuff.weakened.magic-vulnerable,magic-vulnerable,Magic Vulnerable,meta.combat.status-effect.debuff.weakened,StatusEffect,,,,,,,,game-concept,,,
 meta.combat.status-effect.debuff.weakened.frost-exposed,frost-exposed,Frost-Exposed,meta.combat.status-effect.debuff.weakened,StatusEffect,spellcraft.frost,+ vs Starstone,,,2 turns,duration,,game-concept,,,

@@ -1,0 +1,26 @@
+{
+  "id": "school_divine",
+  "tag": "school:divine",
+  "version": "1.0.0",
+  "family": "school",
+  "label": "Divine",
+  "description": "Restoration and cleansing: heal, protect and remove hostile effects.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "school_divine",
+    "color": "F0D99A"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatCardProfile.js"
+  }
+}

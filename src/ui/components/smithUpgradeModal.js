@@ -100,7 +100,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
   let disarmDecision = null;
 
   const CHANGE_LABELS = {
-    damage: 'AR', block: 'GUARD', draw: 'DRAW', discard: 'DISCARD', 'cost:action': 'STAMINA', 'cost:mana': 'MANA', 'cost:stamina': 'STAMINA',
+    damage: 'DAMAGE', block: 'GUARD', draw: 'DRAW', discard: 'DISCARD', 'cost:action': 'STAMINA', 'cost:mana': 'MANA', 'cost:stamina': 'STAMINA',
   };
   /** A row's changes as StatPairs with deltas: "AR 7 → 10". */
   const changeSummary = (row) => el('span', { class: 'smith-fold-values' }, row.values.map((change) => {
@@ -161,6 +161,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
   /** The decision door's details: the same cost and deltas, as kit rows. */
   const confirmationDetails = (selected) => html([
     el('div', { class: `confirmation-cost as-statrow flat ${selected.affordable ? 'affordable' : 'unaffordable'}` }, economyNode(selected)),
+    ...(currentModel.properties.servicePreviewHtml ? [el('div', { html: currentModel.properties.servicePreviewHtml })] : []),
     el('div', { class: 'confirmation-change-list' }, [
       ...selected.affectedRows.map((row) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: row.name }), values: changeSummary(row) })),
       statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: 'Requirements' }), values: el('span', { class: 'smith-fold-values' }, requirementNodes(selected)) }),
@@ -288,7 +289,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
         ...row.changes.map((change) => prose(change)),
         row.rating
           ? flavour(`Uses the source item’s ${row.rating.label}.`, { class: 'smith-scaling' })
-          : flavour('No source rating.', { class: 'smith-scaling' }),
+          : row.reference ? flavour('No source rating.', { class: 'smith-scaling' }) : null,
         flavour(`Source: ${selected.name}`),
       ]);
       const detail = el('div', { class: `smith-fold-detail${row.reference ? '' : ' no-card'}` }, [
@@ -302,7 +303,8 @@ export function mountSmithUpgradeModal(host, initialModel, {
       el('div', { class: `smith-summary-cell smith-preview-economy ${selected.affordable ? 'affordable' : 'unaffordable'}` }, economyNode(selected)),
       selected.affordable ? null : blocker(`Short ${selected.shortfall} Smithing Stone${selected.shortfall === 1 ? '' : 's'}.`, { placement: 'pinned', attrs: { class: 'smith-preview-shortfall' } }),
     ]);
-    const slot = { selected: [head], changes: [intrinsicStatsNode(selected), requirementsRow(selected), folds], cost: [cost] };
+    const servicePreview = currentModel.properties.servicePreviewHtml ? el('div', { html: currentModel.properties.servicePreviewHtml }) : null;
+    const slot = { selected: [head], changes: [intrinsicStatsNode(selected), requirementsRow(selected), folds], cost: [servicePreview, cost].filter(Boolean) };
     return detailCard({
       attrs: { class: 'smith-preview-card', dataset: { uiComponent: UI.smithUpgradePreview } },
       children: slots.flatMap((name) => slot[name] || []),

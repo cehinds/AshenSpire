@@ -1,0 +1,36 @@
+{
+  "$comment": "One row of packs/<pack>/gear.json. Required: id, name, slot, kind, rarity. points is optional and partial; unset points are filled by tag weights x priority, then kind, slot, global. One pool by default (poolSizes.merged).",
+  "id": "emberGreatsword",
+  "name": "Ember_Greatsword",
+  "slot": "rightHand",
+  "kind": "weapon",
+  "rarity": "uncommon",
+  "tags": [
+    "greatsword",
+    "heavy",
+    "burn"
+  ],
+  "points": {
+    "strength": 2
+  },
+  "weights": {
+    "ratings": {
+      "ar": 3,
+      "poise": 2
+    },
+    "bonus": {
+      "strength": 3,
+      "constitution": 1
+    }
+  },
+  "classes": [
+    "reaver",
+    "starseer",
+    "rogue",
+    "herald"
+  ],
+  "source": {
+    "file": "content/source/weapons.csv",
+    "id": "emberGreatsword"
+  }
+}

@@ -1,3 +1,4 @@
+import { configuredModule } from './gameProfileCombat.js';
 // SPEC 4.10: choices pause a committed contact plan before defense begins.
 // Callbacks are supplied by the solo/co-op command door, never saved in state.
 import { candidateState } from './combatRules.js';
@@ -334,7 +335,8 @@ function beforePlayerRoot(ctx, group, hooks) {
 function offerSeats(ctx, group, ids, hooks, open) {
   const stack = stackOf(ctx, group);
   const playerRoot = !!playerRootSeat(ctx, group);
-  const cap = group.counterReturn ? ctx.reactionRules.stack.counterReturnMaxDepth : ctx.reactionRules.stack.maxDepth;
+  const cap = group.counterReturn ? ctx.reactionRules.stack.counterReturnMaxDepth
+    : configuredModule(ctx, 'reactions')?.chainLimit ?? ctx.reactionRules.stack.maxDepth;
   group.reactionAnswered ||= [];
   for (const id of ids) {
     const row = playerRoot ? null : rowFor(ctx, group, id);
@@ -574,7 +576,7 @@ function restoreRootPlay(ctx) {
 }
 
 export function restoreReactionQueue(ctx) {
-  if (!ctx.reactionResume || ctx.pendingAbilityDiscard || ctx.pendingAbilityPlay) return;
+  if (!ctx.reactionResume || (ctx.pendingAbilityDiscard || ctx.pendingCardChoice) || ctx.pendingAbilityPlay) return;
   const saved = ctx.reactionResume;
   ctx.queue.push(...saved.queue);
   if (ctx.foundation && saved.foundation) Object.assign(ctx.foundation, saved.foundation);

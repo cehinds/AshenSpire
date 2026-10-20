@@ -5,6 +5,10 @@ import {runInNewContext} from 'node:vm';
 import {combatFrameTarget} from '../src/ui/components/battlefieldStage.js';
 import {COMBAT_TARGET_HIT_PX,combatTargetAnchors} from '../src/ui/models/CombatOverheadModel.js';
 
+// Synthetic painted bounds retain each actor's owner and physical footprint.
+const spriteFor = box => ({ left:box.hostRect.left, right:box.hostRect.left+box.hostRect.width,
+  top:box.hostRect.bottom-100, bottom:box.hostRect.bottom });
+
 const clear = (target, rect) => target.x + target.width / 2 + 2 <= rect.left
   || target.x - target.width / 2 >= rect.right + 2 || target.y + 22 + 2 <= rect.top || target.y - 22 >= rect.bottom + 2;
 
@@ -65,13 +69,14 @@ test('the actual stage pack and HUD retry use the same player proxy receipt and 
     {hostRect:{left:484.54684,width:100,bottom:779.2808},footerWidth:0,frameRect:{},controls:[]},
     {hostRect:{left:550,width:100,bottom:400},footerWidth:104,frameRect:{},controls:[]},
   ];
-  const placed=boxes.map((_box,index)=>({frame:{dataset:{eid:index?'enemy':'player'},
+  const placed=boxes.map((_box,index)=>({sprite:spriteFor(boxes[index]),frame:{dataset:{eid:index?'enemy':'player'},
     classList:{contains:role=>role===(index?'enemy':'player') || index > 0 && role === 'context-selected'}}}));
   let packInput,retryInput;
-  runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,ribbon:null,
+  runInNewContext(source.slice(begin,end),{currentSpriteArtBounds: sprite => sprite, refresh: () => {}, fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,ribbon:null,
     combat:{getBoundingClientRect:()=>({bottom:900})},readFooterObstacles:()=>[],
     combatTargetAnchors:input=>{packInput=input;return input.targets;},placePlayerHud:()=>{},
     packCombatTargetsWithHud:input=>{retryInput=input;return input.pack();}});
+  assert.deepEqual(Array.from(packInput.obstacles,box=>box.ownerId), ['player','enemy'], 'painted actors remain obstacles with their owner IDs');
   const player=packInput.targets.find(target=>target.id==='player'),enemy=packInput.targets.find(target=>target.id==='enemy');
   assert.equal(player.y,fieldRect.height-22);assert.equal(player.minY,22);
   assert.equal(enemy.y,400-90+22);assert.equal(enemy.minY,enemy.y);
@@ -87,9 +92,9 @@ test('a fallen enemy frame is neither packed nor reserved as a retry core',()=>{
   const begin=source.indexOf('    const packTargets = () => '),end=source.indexOf('    settledTargetCores = targetCores;',begin);
   const fieldRect={left:0,top:0,width:600,height:400},ids=['player','alive','dead'];
   const boxes=ids.map((_id,i)=>({hostRect:{left:100+i*150,width:100,bottom:300},footerWidth:104,frameRect:{},controls:[]}));
-  const placed=ids.map(id=>({frame:{dataset:{eid:id},classList:{contains:role=>role===(id==='player'?'player':'enemy')||(id==='dead'&&role==='dead')||(id==='alive'&&role==='context-selected')}}}));
+  const placed=ids.map((id,index)=>({sprite:spriteFor(boxes[index]),frame:{dataset:{eid:id},classList:{contains:role=>role===(id==='player'?'player':'enemy')||(id==='dead'&&role==='dead')||(id==='alive'&&role==='context-selected')}}}));
   let packInput,retryInput;
-  runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
+  runInNewContext(source.slice(begin,end),{currentSpriteArtBounds: sprite => sprite, refresh: () => {}, fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
     combat:{getBoundingClientRect:()=>({bottom:400})},readFooterObstacles:()=>[],
     combatTargetAnchors:input=>{packInput=input;return input.targets;},placePlayerHud:()=>{},
     packCombatTargetsWithHud:input=>{retryInput=input;return input.pack();}});
@@ -102,10 +107,10 @@ test('waist-overlap players retain packed cores while idle enemies reserve no hi
   const begin=source.indexOf('    const packTargets = () => '),end=source.indexOf('    settledTargetCores = targetCores;',begin);
   const ids=['player','idle','selected','dead-player'];
   const boxes=ids.map((_id,i)=>({hostRect:{left:30+i*90,width:80,bottom:225},footerWidth:88,frameRect:{},controls:[]}));
-  const placed=ids.map(id=>({frame:{dataset:{eid:id},classList:{contains:role=>role===(id.includes('player')?'player':'enemy')
+  const placed=ids.map((id,index)=>({sprite:spriteFor(boxes[index]),frame:{dataset:{eid:id},classList:{contains:role=>role===(id.includes('player')?'player':'enemy')
     ||(id==='selected'||id==='player')&&role==='context-selected'||id==='dead-player'&&role==='dead'}}}));
   let packed,reserved;
-  runInNewContext(source.slice(begin,end),{fieldRect:{left:0,top:76,width:288,height:183},boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
+  runInNewContext(source.slice(begin,end),{currentSpriteArtBounds: sprite => sprite, refresh: () => {}, fieldRect:{left:0,top:76,width:288,height:183},boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
     combat:{dataset:{waistOverlap:'true'},getBoundingClientRect:()=>({bottom:513})},readFooterObstacles:()=>[],
     combatTargetAnchors:input=>{packed=input.targets;return input.targets;},placePlayerHud:()=>{},
     packCombatTargetsWithHud:input=>{reserved=input.targetCores;return input.pack();}});
@@ -130,14 +135,14 @@ test('captured1515 waist-overlap player packs above HP without moving artwork or
   const obstacles=[{left:hp.left-8,right:hp.right+8,top:hp.top-8,bottom:hp.bottom+8},
     {left:0,right:390,top:356.53125,bottom:650}];
   const boxes=[{hostRect,footerWidth:0,frameRect:{},controls:[]}];
-  const placed=[{frame:{dataset:{eid:'player'},classList:{contains:role=>role==='player'}}}];
+  const placed=[{sprite:spriteFor(boxes[0]),frame:{dataset:{eid:'player'},classList:{contains:role=>role==='player'}}}];
   const before=structuredClone({fieldRect,hostRect,hp,obstacles});
   const fallback=combatFrameTarget({id:'player',hostRect,fieldRect,footerSize:44,footerWidth:0,player:true});
   assert.equal(fallback.y+fieldRect.top,334.53125);
   assert.ok(!clear(fallback,{...obstacles[0],top:obstacles[0].top-fieldRect.top,bottom:obstacles[0].bottom-fieldRect.top}),
     'unpacked fallback reproduces the own-HP collision');
   let targets;
-  runInNewContext(source.slice(begin,end),{fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
+  runInNewContext(source.slice(begin,end),{currentSpriteArtBounds: sprite => sprite, refresh: () => {},fieldRect,boxes,placed,footerSize:44,COMBAT_TARGET_HIT_PX,combatFrameTarget,
     combat:{dataset:{waistOverlap:'true'},getBoundingClientRect:()=>({bottom:650})},
     readFooterObstacles:()=>obstacles,combatTargetAnchors,placePlayerHud:()=>{},
     packCombatTargetsWithHud:input=>{assert.equal(input.targetCores.length,1);targets=input.pack();return targets;}});

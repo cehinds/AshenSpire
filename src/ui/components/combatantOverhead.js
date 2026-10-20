@@ -1,6 +1,7 @@
 import { attachTooltip, clearControlSelection, hideTooltip, esc } from './tooltip.js';
 import { combatIntentPresentation } from '../models/CombatIntentModel.js';
 import { intentIcon } from './intentIcon.js';
+import { intentFollowUps } from './intentFollowUps.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { combatProfileTags } from '../../model/combatCardProfile.js';
 
@@ -54,14 +55,17 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
   node.dataset.focusable = 'true';
   node.dataset.intentVisibility = badge.visibility;
   node.dataset.stance = badge.stance;
+  if (badge.projectedDamage?.tone) node.dataset.damageTone = badge.projectedDamage.tone;
   node.dataset.intentHidden = String(!!intent?.hidden);
   if (badge.damageClass) node.dataset.damageClass = badge.damageClass;
   const compact = document.createElement('span');
   compact.className = 'intent-compact';
-  if (badge.parts[0]) compact.append(intentIcon(badge.parts[0].icon));
-  if (badge.visibility !== 'known') compact.append(document.createTextNode(' ?'));
+  compact.append(intentParts(badge.parts, { unknown: badge.visibility !== 'known' }));
+  const followUps = Array.isArray(intent?.followUps) ? intent.followUps : [];
+  if (followUps.length) compact.append(intentFollowUps(followUps));
   node.append(compact);
-  node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}`).join('. ')}`);
+  const followLabel = followUps.length ? ` ${followUps.length} more ${followUps.length === 1 ? 'action' : 'actions'}: ${followUps.map(symbol => symbol.kind === 'action' ? symbol.icon : 'unknown').join(', ')}.` : '';
+  node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}`).join('. ')}${followLabel}`);
   {
     const stanceNode = document.createElement('span');
     stanceNode.className = 'intent-stance';
@@ -81,6 +85,8 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
     }
     node.append(values);
   }
+  // The selected (expanded) presentation hides the compact row, so it carries the same symbols itself.
+  if (followUps.length) { const expanded = intentFollowUps(followUps); expanded.classList.add('intent-followups-expanded'); node.append(expanded); }
   markUiComponent(node, UI.intentIndicator, badge.visibility);
   const tooltip = () => {
     if (intent?.hidden) return `<div class="tt-title">Stance: ${esc(stanceLabel)}</div>Exact move, damage, and effects unread. Wisdom and Intelligence improve intent reads.`;
@@ -113,7 +119,24 @@ export function playerActionIntent(profile, onTarget) {
   const node = document.createElement('button');
   node.type = 'button'; node.className = 'player-action-intent overhead-control';
   node.setAttribute('aria-label', `Selected action: ${profile.maneuver || 'prepare'}`);
-  node.append(intentIcon(icon));
+  node.append(intentParts([{ icon, value: null }]));
   node.addEventListener('click', event => { event.stopPropagation(); onTarget(); });
   return node;
+}
+
+// One centered action row for both combatant roles and their detailed HUD.
+// Values originate only from the observer-projected presentation.
+export function intentParts(parts = [], { unknown = false } = {}) {
+  const row = document.createElement('span'); row.className = 'intent-actions';
+  const visible = parts.length ? parts : [{ icon: 'prepare', value: null }];
+  for (const part of visible) {
+    const group = document.createElement('span'); group.className = 'intent-action'; group.dataset.action = part.icon;
+    group.dataset.valueKind = part.valueKind || (['defend', 'counter', 'evade', 'buff', 'prepare'].includes(part.icon) ? 'count' : 'damage');
+    if (part.value != null || unknown) {
+      const value = document.createElement('strong'); value.className = 'intent-action-value';
+      value.textContent = unknown ? '?' : String(part.value); group.append(value);
+    }
+    group.append(intentIcon(part.icon)); row.append(group);
+  }
+  return row;
 }

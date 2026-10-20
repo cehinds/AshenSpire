@@ -1,0 +1,42 @@
+{
+  "lanternCaravan": {
+    "any": [
+      {
+        "eventId": "lastLantern",
+        "choiceId": "buyOil"
+      },
+      {
+        "eventId": "lastLantern",
+        "choiceId": "haulBeacon"
+      }
+    ]
+  },
+  "namelessKeeper": {
+    "any": [
+      {
+        "eventId": "graveOfTheNameless",
+        "choiceId": "digForCinders"
+      },
+      {
+        "eventId": "graveOfTheNameless",
+        "choiceId": "payRespects"
+      }
+    ]
+  },
+  "namelessRest": {
+    "any": [
+      {
+        "eventId": "namelessKeeper",
+        "choiceId": "returnCinders"
+      },
+      {
+        "eventId": "namelessKeeper",
+        "choiceId": "faceKeeper"
+      },
+      {
+        "eventId": "namelessKeeper",
+        "choiceId": "acceptThanks"
+      }
+    ]
+  }
+}

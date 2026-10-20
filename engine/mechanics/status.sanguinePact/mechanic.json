@@ -1,0 +1,26 @@
+{
+  "id": "status.sanguinePact",
+  "tag": "status.sanguinePact",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Sanguine Pact",
+  "description": "Whenever Bleed bursts on an enemy, gain 2 Strength per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.sanguinePact"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

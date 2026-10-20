@@ -73,6 +73,7 @@ export const COST_TAGS = Object.freeze({
   'targeting.ally': { weight: 0, side: 'sp' },
   'targeting.randomEnemy': { weight: 1, side: 'sp' },
   'targeting.allEnemies': { weight: 2, side: 'sp' },
+  'targeting.allAllies': { weight: 2, side: 'sp' },
   // Magic schools
   'school:fire': { weight: 1, side: 'mp' },
   'school:frost': { weight: 1, side: 'mp' },
@@ -102,6 +103,7 @@ export const COST_TAGS = Object.freeze({
   oath: { weight: 0, side: 'sp' },
   ash: { weight: 0, side: 'sp' },
   basic: { weight: 0, side: 'sp' },
+  'rank.cantrip': { weight: 0, side: 'sp' }, // training classification; numerical rank owns the cost
   extractable: { weight: 0, side: 'sp' },
   starstone: { weight: 0, side: 'sp' },
   ritual: { weight: 0, side: 'sp' },

@@ -159,7 +159,7 @@ assert.throws(
 checks += 1;
 
 const combatSrc = code('src/ui/screens/combat.js');
-ok(/fightOver\s*=\s*true\s*;\s*closeQuickNav\(\s*\)\s*;/.test(combatSrc),
+ok(/fightOver\s*=\s*true\s*;\s*targetHud\.release\(\)\s*;\s*closeQuickNav\(\s*\)\s*;/.test(combatSrc),
   'combat.js closes the menu the moment the fight resolves');
 ok(/menuBtn\.disabled\s*=\s*true/.test(combatSrc),
   'and disables the button, so the victory beat is not a window into Save/Quit');

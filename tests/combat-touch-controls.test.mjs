@@ -1,11 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { COMBAT_TOOLS_HEIGHT_PX } from '../src/ui/models/HandLayout.js';
+import { handLayout, responsiveHandLayout } from '../src/ui/models/HandLayout.js';
 
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const css = read('../styles/combat-layers.css');
-const battlefield = read('../src/ui/components/battlefieldStage.js');
 const hand = read('../src/ui/components/hand.js');
 const tools = read('../src/ui/components/combatTools.js');
 const combat = read('../src/ui/screens/combat.js');
@@ -29,17 +28,19 @@ test('expanded combat panels and selected details stay in the correct layer', ()
   assert.doesNotMatch(restHide, /data-meter-row='stance'|\.statuses/, 'the stance chip and statuses are not hidden at rest');
 });
 
-test('compact geometry reserves the measured controls and overhead gaps', () => {
-  assert.match(battlefield, /setProperty\('--overhead-top', `\$\{-overheadGap \/ zoom\}px`\)/);
-  const reserve = COMBAT_TOOLS_HEIGHT_PX;
-  assert.match(hand, /const toolsHeight = toolsPhysical \/ zoom;/);
-  assert.match(hand, /!desktop \? COMBAT_TOOLS_HEIGHT_PX/, 'only the desktop form factor measures its tool row');
-  const dockOffset = Number(tools.match(/top: \(handBox\?\.top \|\| 0\) \+ (\d+)/)?.[1] ?? (tools.includes('top: handBox?.top || 0') || tools.includes('const dockTop = handBox?.top || 0;') ? 0 : NaN));
-  const toolHeight = Number(css.match(/\.combat-tools > button\s*\{[^}]*height:\s*calc\((\d+)px \/ var\(--ui-zoom,1\)\)/s)?.[1]);
-  assert([reserve, dockOffset, toolHeight].every(Number.isFinite), 'all toolbar dimensions must be accounted for');
-  assert.equal(toolHeight, 30, 'approved compact toolbar height');
-  assert.equal(reserve, 34, 'the compact fan reserves the toolbar and its clearance');
-  assert(reserve >= dockOffset + toolHeight + 4, 'card reservation must include toolbar offset, height and clearance');
+test('compact hand leaves the footer tool and Grid rows below its resting cards', () => {
+  assert.match(hand, /const toolsHeight = 0;/, 'the toolbar is outside the fan, so no row is reserved above it');
+  assert.match(tools, /const footerControls = combatEl.querySelector\('\.combat-action-row'\)/, 'tools dock against the footer rather than the hand top');
+  for (const zoom of [.74, 1, 1.2]) for (const count of [3, 5, 7]) {
+    const input = { width: 390 / zoom, height: 250 / zoom, count, zoom, compact: true, formFactor: 'mobile' };
+    const plan = responsiveHandLayout(input, handLayout(input));
+    const bottom = Math.max(...plan.cards.map(card => {
+      const radians = card.angle * Math.PI / 180;
+      return plan.top + card.y + plan.cardHeight / 2
+        + (Math.abs(Math.sin(radians)) * plan.cardWidth + Math.abs(Math.cos(radians)) * plan.cardHeight) / 2;
+    }));
+    assert.ok((input.height - bottom) * zoom >= 62, `${count} cards at zoom ${zoom} clear the 30px tools and 28px Grid rows plus their gap`);
+  }
 });
 
 test('unarmed intent taps preserve the selection-first tooltip path', () => {
@@ -59,5 +60,28 @@ test('the log drawer opens beside the left-aligned Log button', () => {
   assert.ok(panels.length, 'the drawer has a formation anchor');
   const last = panels.at(-1);
   assert.match(last, /left:\s*0/); assert.match(last, /right:\s*auto/);
-  assert.match(top, /\.combat-tools > \[data-combat-tool='log'\]\s*\{\s*justify-self:\s*start/);
+  const logRules = [...top.matchAll(/\.combat-tools > \[data-combat-tool='log'\]\s*\{([^}]*)\}/g)];
+  assert.ok(logRules.length, 'the Log button has a formation anchor');
+  const declarations = logRules.at(-1)[1];
+  assert.match(declarations, /(?:^|;)\s*justify-self:\s*start\s*(?:;|$)/);
+  assert.match(declarations, /(?:^|;)\s*grid-column:\s*1\s*(?:;|$)/, 'Log occupies the leftmost tools column');
+});
+
+test('a tap on a playable card plays it only when its target is unambiguous (owner, 2026-10-18)', () => {
+  const wire = combat.match(/function wireCardInput\(el, inst, pv, affordable\) \{([\s\S]*?)\n  \}\n\n  combatEl\.addEventListener\('click'/)?.[1] || '';
+  assert.match(wire, /const oneTapOn = \(\) => \(readSettings \? readSettings\(\) : meta\.settings \|\| \{\}\)\.oneTapPlay === true;\s*const oneTapPlays = \(\) => oneTapOn\(\) && playIsUnambiguous\(\);/, 'the setting is opt-in (exactly true) and gates the one-tap play (owner ruling 2026-10-18 14:15)');
+  assert.match(wire, /const tap = \(\) => \{[\s\S]*?if \(!affordable\) \{[\s\S]*?return;\s*\}\s*(?:\/\/[^\n]*\n\s*)*if \(oneTapPlays\(\)\) \{ play\(\); return; \}\s*if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}/, 'after the unaffordable branch, a tap plays when unambiguous (selected by a hold or not) or selects');
+  assert.doesNotMatch(wire, /lastConfirmTap|performance\.now\(\)/, 'no timing window: the tap after the selecting tap carries no timestamp');
+  assert.match(wire, /if \(selected !== inst\.instanceId && selfArm !== inst\.instanceId\) \{ select\(\); return; \}\s*(?:\/\/[^\n]*\n\s*)*play\(\);\s*\};/, 'with one-tap off the first tap selects and the NEXT tap on the selected card plays, however long after (owner 14:15)');
+  assert.match(wire, /const tap = \(\) => \{\s*\/\/[^\n]*\n\s*if \(isRoundQueued\(inst\.instanceId\)\) \{ unqueueCard\(inst\.instanceId\); return; \}/, 'a queued card still unqueues first');
+  assert.match(read('../src/ui/screens/settings.js'), /key: 'oneTapPlay', def: false/, 'the setting is offered, default off');
+});
+
+test('One-tap play reads the setting live, so a mid-combat toggle changes the next tap', () => {
+  assert.doesNotMatch(combat, /\(meta\.settings \|\| \{\}\)\.oneTapPlay/, 'no read of oneTapPlay is frozen to the settings captured at mount');
+  const wire = combat.match(/function wireCardInput\(el, inst, pv, affordable\) \{([\s\S]*?)\n  \}\n\n  combatEl\.addEventListener\('click'/)?.[1] || '';
+  // oneTapOn is a function called on every tap (not a const evaluated once), and it asks readSettings().
+  assert.match(wire, /const oneTapOn = \(\) => \(readSettings \?/);
+  assert.match(wire, /if \(oneTapPlays\(\)\) \{ play\(\); return; \}/, 'each tap re-evaluates the setting');
+  assert.match(combat, /readSettings = \(\) => meta\.settings \|\| \{\}/, 'mountCombat falls back to meta when no reader is passed');
 });

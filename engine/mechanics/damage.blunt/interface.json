@@ -1,0 +1,8 @@
+{
+  "mechanic": "damage.blunt",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

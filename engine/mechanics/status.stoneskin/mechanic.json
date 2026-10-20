@@ -1,0 +1,26 @@
+{
+  "id": "status.stoneskin",
+  "tag": "status.stoneskin",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Stoneskin",
+  "description": "Your Block is not removed at the start of your next turn.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.stoneskin"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/cardFaceText.js",
+    "symbol": "fail"
+  }
+}

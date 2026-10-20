@@ -1,0 +1,88 @@
+{
+  "lanternCaravan": [
+    {
+      "all": [
+        {
+          "eventId": "lastLantern",
+          "choiceId": "buyOil"
+        }
+      ]
+    },
+    {
+      "all": [
+        {
+          "eventId": "lastLantern",
+          "choiceId": "haulBeacon"
+        }
+      ]
+    },
+    null,
+    null
+  ],
+  "merchantsGhost": [
+    {
+      "none": [
+        {
+          "eventId": "abandonedCart",
+          "choiceId": "lootStrongbox"
+        }
+      ]
+    },
+    null,
+    null
+  ],
+  "namelessKeeper": [
+    {
+      "all": [
+        {
+          "eventId": "graveOfTheNameless",
+          "choiceId": "digForCinders"
+        }
+      ]
+    },
+    {
+      "all": [
+        {
+          "eventId": "graveOfTheNameless",
+          "choiceId": "digForCinders"
+        }
+      ]
+    },
+    {
+      "all": [
+        {
+          "eventId": "graveOfTheNameless",
+          "choiceId": "payRespects"
+        }
+      ]
+    },
+    null
+  ],
+  "namelessRest": [
+    {
+      "all": [
+        {
+          "eventId": "namelessKeeper",
+          "choiceId": "acceptThanks"
+        }
+      ]
+    },
+    {
+      "all": [
+        {
+          "eventId": "namelessKeeper",
+          "choiceId": "returnCinders"
+        }
+      ]
+    },
+    {
+      "all": [
+        {
+          "eventId": "namelessKeeper",
+          "choiceId": "faceKeeper"
+        }
+      ]
+    },
+    null
+  ]
+}

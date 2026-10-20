@@ -86,7 +86,7 @@ jobs:
   workbench:
     name: Workbench, studios and engine export
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
         with:
@@ -160,4 +160,41 @@ jobs:
 
       - name: Workbench, editor, UI Studio, engine-export and build-lock tests
         shell: bash
-        run: node --test --test-timeout=180000 workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/engine-export.test.mjs tests/build-lock.test.mjs tests/build-steps.test.mjs tests/write-atomic.test.mjs tests/shot-match.test.mjs
+        run: |
+          LOG="${RUNNER_TEMP:-/tmp}/workbench-tap.log"
+          # --test-reporter=tap pins the format the reader below parses, so it is the
+          # same on windows-latest and macos-latest whatever the runner's default is.
+          # --test-timeout (8 min) must exceed the engine-export job test's wait for the repo
+          # .build-lock: CLI_WAIT_MS (5 min) + 60 s in workbench/tests/server.test.mjs.
+          set +e; node --test --test-reporter=tap --test-timeout=480000 workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/engine-export.test.mjs tests/build-lock.test.mjs tests/build-steps.test.mjs tests/write-atomic.test.mjs tests/shot-match.test.mjs 2>&1 | tee "$LOG"; rc=${PIPESTATUS[0]}; set -e
+          # The TAP failures (first 10 not-ok lines, each with its preceding subtest
+          # name and the 10 lines after it) and the pass/fail totals become annotations.
+          # The summary notice is unconditional: with no "# pass" line it says so. The
+          # reader has no "|| true", so a reader that breaks fails the step visibly.
+          # The exit code of node --test is re-raised below.
+          node - "$LOG" "$rc" <<'NODE'
+          const fs = require('fs');
+          const esc = (s) => s.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+          const raw = fs.existsSync(process.argv[2]) ? fs.readFileSync(process.argv[2], 'utf8') : null;
+          const lines = (raw || '').split('\n').map((l) => l.replace(/\r$/, ''));
+          const grab = (name) => lines.map((l) => l.match(new RegExp('^# ' + name + ' (\\d+)'))).filter(Boolean).pop();
+          const pass = grab('pass');
+          const fail = grab('fail');
+          const summary = pass
+            ? `# pass ${pass[1]}, # fail ${fail ? fail[1] : '(no fail line)'}; node --test exit code ${process.argv[3]}`
+            : `no "# pass" line found in ${raw === null ? 'a missing log' : lines.length + ' log lines'}; node --test exit code ${process.argv[3]}`;
+          console.log(`::notice title=workbench-summary::${esc(summary)}`);
+          if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, 'workbench-summary: ' + summary + '\n');
+          let subtest = '';
+          let shown = 0;
+          for (let i = 0; i < lines.length && shown < 10; i++) {
+            const l = lines[i];
+            if (/^\s*# Subtest/.test(l)) { subtest = l.trim(); continue; }
+            if (/^\s*not ok\b/.test(l)) {
+              const block = lines.slice(i, i + 11).map((x) => x.trimEnd()).join('\n');
+              console.log(`::error title=workbench-fail::${esc((subtest ? subtest + '\n' : '') + block)}`);
+              shown++;
+            }
+          }
+          NODE
+          exit $rc

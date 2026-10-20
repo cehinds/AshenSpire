@@ -1,3 +1,4 @@
+import { logicalViewport } from '../viewViewport.js';
 // src/ui/components/dialogueStage.js — W4c's stage adapter (WGQ0–WGQ8).
 //
 // Measures the W4 frame once per frame and writes what CSS places by: the four
@@ -16,6 +17,7 @@ import { closeUpPlacement } from '../models/PortraitCropModel.js';
 import { visibleArtBox } from './combatSpriteGeometry.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { fitAlternativeBackdrop } from '../alternativeArt.js';
+import { wireLayeredEnvironment } from './layeredEnvironment.js';
 
 let releaseActive = null;
 
@@ -37,6 +39,7 @@ const awaitingArt = new WeakSet();
 export function wireDialogueStage(root, { layout, parent, scene }) {
   if (releaseActive) releaseActive();
   const sceneConfig = dialogueSceneConfig(layout, parent, scene);
+  const releasePlates = [...root.querySelectorAll(':scope > .dialogue-plate-layer')].map(wireLayeredEnvironment);
   let frame = 0;
   let observer = null;
   let artObserver = null;
@@ -200,7 +203,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     const rem = Math.max(16 / zoom, parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
     const width = root.clientWidth, height = root.clientHeight;
     if (!(width > 0) || !(height > 0)) return;
-    const compactHud = dialogueHudCompact({ width: window.innerWidth, height: window.innerHeight }, layout, parent);
+    const compactHud = dialogueHudCompact({ width: logicalViewport().width, height: logicalViewport().height }, layout, parent);
     const bands = dialogueBands({ width, height, zoom, rem }, layout, parent, compactHud);
     root.style.setProperty('--w4-vw', `${width / 100}px`);
     root.style.setProperty('--w4-vh', `${height / 100}px`);
@@ -209,7 +212,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     root.style.setProperty('--w4-band-context', `${bands.context}px`);
     root.style.setProperty('--w4-band-footer', `${bands.footer}px`);
     root.dataset.w4Geometry = bands.supported ? 'supported' : 'unsupported';
-    root.dataset.dialogueCompact = String(dialogueCompactHost(window.innerWidth, parent));
+    root.dataset.dialogueCompact = String(dialogueCompactHost(logicalViewport().width, parent));
     // A short host draws the HUD's one-row compact form. The band itself never
     // gives way: it is always drawn (owner, 2026-09-15).
     root.dataset.hudCompact = String(compactHud);
@@ -233,7 +236,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     for (const wrap of root.querySelectorAll(':scope > .dialogue-plate-layer')) {
       if (wrap.querySelector('.alternative-backdrop')) fitAlternativeBackdrop(wrap, {
         width, height: sceneHeight, fieldTop: sceneTop, ground: floorLine - sceneTop,
-        narrow: dialogueCompactHost(window.innerWidth, parent),
+        narrow: dialogueCompactHost(logicalViewport().width, parent),
       });
     }
     root.style.setProperty('--dialogue-floor-line', `${floorLine}px`);
@@ -243,7 +246,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     // the whole figure instead; a wide-but-short window still can, and keeps
     // the close-up it had (844x390, where the whole-figure rule made both
     // speakers small and distant).
-    placeFigures(rect, zoom, revealLine, dialogueLanes(width, layout), width, dialogueCompactHost(window.innerWidth, parent), height);
+    placeFigures(rect, zoom, revealLine, dialogueLanes(width, layout), width, dialogueCompactHost(logicalViewport().width, parent), height);
     fitResponses(rem);
   }
 
@@ -258,6 +261,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     artObserver = null;
     sceneChoiceObserver?.disconnect();
     sceneChoiceObserver = null;
+    for (const releasePlate of releasePlates) releasePlate();
     window.removeEventListener('resize', schedule);
     if (releaseActive === release) releaseActive = null;
   }

@@ -422,7 +422,9 @@ test('an attack override names one card', async () => {
   assert.equal(labelOf('guardianBulwark'), 'Enter: Bulwark (All classes) — impact override');
   assert.equal(labelOf('hamstringRogue'), 'Hamstring (Rogue) — impact override');
   assert.equal(labelOf('hamstring'), 'Hamstring (All classes) — impact override');
-  assert.equal(labelOf('strike'), 'Strike — impact override', 'a name no other card uses stays plain');
+  assert.equal(labelOf('strike'), 'Strike (All classes, Strike) — impact override');
+  assert.equal(labelOf('base.strike'), 'Strike (All classes, Base strike) — impact override');
+  assert.equal(labelOf('rend'), 'Rend — impact override', 'a name no other card uses stays plain');
 
   assert.equal(new Set(rows.map(row => row.label)).size, rows.length, 'every override row names one card');
   assert.equal(rows.length, contentBundle.cards.length, 'one row per card, none dropped');

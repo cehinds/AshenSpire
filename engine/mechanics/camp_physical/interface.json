@@ -1,0 +1,8 @@
+{
+  "mechanic": "camp_physical",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

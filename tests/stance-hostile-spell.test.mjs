@@ -40,7 +40,7 @@ for (const cardId of ['hex', 'gravityWell']) test(`${cardId} resolves and plays 
   assert.equal(entries.length, 1, 'the real card play applies exactly one entry grant');
 });
 
-test('hostile inference preserves explicit defensive roles and support opt-outs', () => {
+test('hostile inference preserves authored roles while public Skills use Prepare unless explicitly opted out', () => {
   const hostile = { id: 'testSpell', type: 'skill', range: 'reach', tags: ['camp:spell'],
     effects: [{ op: 'removeStatus', target: 'enemy', status: 'strength', amount: 1 }] };
   assert.equal(combatProfileFor(applyCombatExpansionCard(hostile)).maneuver, 'casting');
@@ -48,5 +48,6 @@ test('hostile inference preserves explicit defensive roles and support opt-outs'
     assert.equal(combatProfileFor(applyCombatExpansionCard({ ...hostile, tags: [...hostile.tags, `maneuver:${maneuver}`] })).maneuver, maneuver);
   }
   assert.equal(stanceOf(applyCombatExpansionCard({ ...hostile, stanceTrigger: false })), null);
-  assert.equal(stanceOf(applyCombatExpansionCard({ ...hostile, effects: [{ op: 'gainWard', target: 'self', amount: 1 }] })), null);
+  // Public Skills now Prepare even for support effects; only the explicit opt-out suppresses stance entry.
+  assert.equal(stanceOf(applyCombatExpansionCard({ ...hostile, effects: [{ op: 'gainWard', target: 'self', amount: 1 }] })).maneuver, 'casting');
 });

@@ -37,8 +37,13 @@ test('melee, ranged, magic, guard and counter semantics survive equipment-indepe
     for(const maneuver of ['attack','casting','ranged']){
       const c={...card(maneuver),cardTags:['maneuver:'+maneuver,'camp:spell','source:spell','blade']};
       const plan=resolveCombatAnimation(c,equipment,{classId});
-      assert.equal(plan.technique,maneuver==='ranged'?'rangedMagic':'spell');
-      assert.equal(plan.family,maneuver==='ranged'?'projectile':'spell');
+      assert.equal(plan.technique,'spell','classified spell cards retain their Prepare cast routing');
+      assert.equal(plan.family,'spell');
+    }
+    for(const camp of ['physical','spell']){
+      const plan=resolveCombatAnimation({cardTags:['camp:'+camp,'maneuver:ranged']},equipment,{classId});
+      assert.equal(plan.technique,camp==='spell'?'rangedMagic':'ranged','untyped enemy ranged descriptors retain their projectile routing');
+      assert.equal(plan.family,'projectile');
     }
     const classic=resolveCombatAnimation({...card('attack'),cardTags:['blade','bow','ranged']},equipment,{classId,appearance:'classic',animation:{references:{bowAttack:'bow',bladeAttack:'blade'}}});
     assert.equal(classic.technique,'attack');assert.equal(classic.family,'projectile');

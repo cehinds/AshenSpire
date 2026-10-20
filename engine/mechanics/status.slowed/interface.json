@@ -1,0 +1,8 @@
+{
+  "mechanic": "status.slowed",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

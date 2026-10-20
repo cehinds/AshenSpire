@@ -187,6 +187,7 @@ player's piles).
 | `targeting.ally` | 0 | SP | Not carried by a card today; the base. |
 | `targeting.randomEnemy` | 1 | SP | Not carried by a card today; between single and area. |
 | `targeting.allEnemies` | 2 | SP | Not carried by a card today; as targeting:area. |
+| `targeting.allAllies` | 2 | SP | Every ally at once; as targeting:area. |
 
 ### Magic schools
 
@@ -221,6 +222,7 @@ player's piles).
 | `oath` | 0 | SP | An archetype chip. |
 | `ash` | 0 | SP | An archetype chip. |
 | `basic` | 0 | SP | An archetype chip. |
+| `rank.cantrip` | 0 | SP | Training classification only; the numerical rank and authored effects own the cost. |
 | `extractable` | 0 | SP | A loot marker. |
 | `target` | 0 | MP | Spell identity; its authored effects and range own the price. |
 | `hex` | 0 | MP | Spell identity; its authored effects and range own the price. |

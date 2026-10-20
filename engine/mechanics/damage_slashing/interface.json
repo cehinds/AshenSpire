@@ -1,0 +1,8 @@
+{
+  "mechanic": "damage_slashing",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

@@ -1,23 +1,53 @@
 import {resetCardLayout,applyCardLayouts} from './cardLayout.js';
+import {layoutMetrics} from '../layoutMetrics.js';
 const ruleGeometry = new WeakMap();
+// A face's fit is a pure function of its width, its text, its line budgets, the
+// page scale and the loaded fonts, and a full fit is a search of many forced
+// layouts. The inputs the last fit used are kept per face, and a face asked to
+// fit again with the same inputs keeps the result it has (the hand refits every
+// card on each render, and almost none of them changed).
+const fitSignatures = new WeakMap();
+let fontEpoch = 0, fontsWatched = false;
+function watchFonts() {
+  if (fontsWatched || typeof document === 'undefined' || !document.fonts?.addEventListener) return;
+  fontsWatched = true;
+  document.fonts.addEventListener('loadingdone', () => { fontEpoch++; });
+}
+function fitSignature(face, width) {
+  const { fontSize, zoom } = layoutMetrics();
+  const texts = [...face.querySelectorAll('.ic-text[data-auto-fit="true"]')]
+    .map(text => `${text.dataset.maxLines}|${text.dataset.minFont}|${text.dataset.maxFont}|${text.dataset.cardBinding}`);
+  return [width, fontEpoch, fontSize, zoom, face.className, face.parentElement?.className, face.dataset.designWidth,
+    face.dataset.fullRules, face.dataset.cardLayoutId, face.querySelector('[data-face-overflow="true"]') ? 1 : 0,
+    face.textContent, texts.join(',')].join('\u0001');
+}
 
 // Search every text in one batch. Complete effects use the authored readable
 // floor, then borrow artwork height; names and costs keep their line budgets.
 export function fitIllustratedCards(cards) {
   const faces=[];
   for(const card of cards){const face=card?.querySelector('.illustrated-card-face');if(face)faces.push(face);}
+  watchFonts();
   const widths=faces.map(face=>face.clientWidth);
-  const texts=[];
+  const signatures=faces.map((face,i)=>widths[i]?fitSignature(face,widths[i]):null);
+  const texts=[],skipped=new Set();
   faces.forEach((face,i)=>{
     if(!widths[i])return;
+    if(fitSignatures.get(face)===signatures[i]){skipped.add(face);return;}
     resetCardLayout(face);
     const scale=widths[i]/Number(face.dataset.designWidth);
     for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
       const rules=text.dataset.cardBinding==='rules';
       const layer=text.parentElement;
-      // Face lines fit inside their data-max-lines budget (5, or 3 at hand rest).
-      const faceLines=text.dataset.faceLines==='true';
-      const row={face,text,layer,scale,rules,lines:rules?(faceLines?Number(text.dataset.maxLines)||5:Infinity):Number(text.dataset.maxLines)||1};
+      // Compact faces fit within the authored three-line rule budget. The
+      // inspection face keeps every line; it and selected hand faces may
+      // borrow artwork height so readable rules stay inside their parchment.
+      const fullRules=face.dataset.fullRules==='true';
+      const expandedHandRules=rules&&Number(text.dataset.maxLines)>3;
+      const row={face,text,layer,scale,rules,fullRules,compact:rules&&!fullRules&&!expandedHandRules,
+        lines:rules?(fullRules?Infinity:Number(text.dataset.maxLines)||3):Number(text.dataset.maxLines)||1,
+        hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
+        hasHiddenRules:face.dataset.rulesOverflow==='true'};
       if(rules){
         row.rankInset=0;
         row.panel=face.querySelector('[data-component="panel"]');
@@ -67,7 +97,14 @@ export function fitIllustratedCards(cards) {
     search.forEach((row,i)=>{const size=mid(row);if(fits[i])row.lo=size;else row.hi=size;});
   }
   for(const row of search)row.result=row.lo;
-  for(const row of texts){row.text.style.fontSize=row.result+'px';row.text.style.webkitLineClamp=row.rules?'unset':String(row.lines);row.text.dataset.fittedFont=String(row.result/row.scale);}
+  for(const row of texts){
+    row.text.style.fontSize=row.result+'px';
+    row.overflow=row.compact&&(row.hasHiddenRules||row.hasHiddenLines||row.text.scrollHeight>Math.min(row.boxHeight,row.result*1.25*row.lines)+1);
+    row.text.style.webkitLineClamp=row.compact?String(row.lines):row.rules?'unset':String(row.lines);
+    row.text.style.display=row.compact?'-webkit-box':'block';
+    row.text.dataset.fittedFont=String(row.result/row.scale);
+    if(row.compact)row.face.dataset.rulesOverflow=String(row.overflow);
+  }
   // Measure the whole batch before expanding any panel. No per-card search or
   // layout loop, and a resize starts from authored geometry rather than drift.
   const rules=texts.filter(row=>row.rules),narrow=[];
@@ -76,6 +113,7 @@ export function fitIllustratedCards(cards) {
   for(const row of rules)row.dense=row.text.scrollHeight>row.boxHeight*1.5;
   for(const row of rules)row.face.dataset.rulesDense=String(row.dense);
   for(const row of rules){
+    if(row.compact)continue;
     row.height=row.face.clientHeight;row.top=row.layer.offsetTop;row.panelTop=row.panel?.offsetTop;row.panelHeight=row.panel?.clientHeight;row.artTop=row.art?.offsetTop;
     const title=row.face.querySelector('[data-card-binding="name"]');
     // Offsets stay in layout pixels, including the native UI zoom and rotated
@@ -108,8 +146,12 @@ export function fitIllustratedCards(cards) {
     narrow.forEach((row,i)=>{const size=mid(row);if(fits[i])row.lo=size;else row.hi=size;});
   }
   for(const row of narrow){row.result=row.lo;row.text.style.fontSize=row.result+'px';row.text.dataset.fittedFont=String(row.result/row.scale);}
-  for(const row of rules){row.boxHeight=row.authoredHeight;row.extra=Math.min(row.growthLimit,Math.max(0,(row.text.scrollHeight-row.boxHeight)/row.interiorScale));row.face.dataset.rulesNarrowFit=String(narrow.includes(row));}
   for(const row of rules){
+    if(row.compact){row.face.dataset.rulesExpanded='false';row.face.dataset.rulesNarrowFit='false';row.text.dataset.rulesComplete='false';continue;}
+    row.boxHeight=row.authoredHeight;row.extra=Math.min(row.growthLimit,Math.max(0,(row.text.scrollHeight-row.boxHeight)/row.interiorScale));row.face.dataset.rulesNarrowFit=String(narrow.includes(row));
+  }
+  for(const row of rules){
+    if(row.compact)continue;
     const {extra,height}=row;
     if(extra>1){
       row.layer.style.top=(row.top-extra*(1-row.topInset))/height*100+'%';row.layer.style.height=(row.boxHeight+extra*row.interiorScale)/height*100+'%';
@@ -120,5 +162,6 @@ export function fitIllustratedCards(cards) {
     if(row.rank)row.rank.style.top=(parseFloat(row.panel.style.top)+Number(row.rank.dataset.panelInset))+'%';
     row.face.dataset.rulesExpanded=String(extra>1);row.text.dataset.rulesComplete='true';
   }
-  applyCardLayouts(faces);
+  applyCardLayouts(faces.filter(face=>!skipped.has(face)));
+  faces.forEach((face,i)=>{if(signatures[i]&&!skipped.has(face))fitSignatures.set(face,signatures[i]);});
 }

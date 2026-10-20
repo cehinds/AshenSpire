@@ -1,3 +1,4 @@
+import { matchViewMedia } from '../viewViewport.js';
 // Production creation surfaces. The catalogue and the live flow share these
 // DOM parts; text, trim, material and icon geometry remain independent.
 import { el, railItem, categoryNav } from '../kit/index.js';
@@ -185,7 +186,7 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
     if (notify) {
       node.dataset.detailOpen = 'true';
       onInspect?.(row.id, row);
-      if (globalThis.matchMedia?.('(max-width: 960px)').matches) requestAnimationFrame(() => {
+      if (matchViewMedia('(max-width: 960px)').matches) requestAnimationFrame(() => {
         detail.focus({ preventScroll: true });
         detail.scrollIntoView({ block: 'nearest', behavior: globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
       });

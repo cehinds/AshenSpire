@@ -1,0 +1,93 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "acts": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3
+    },
+    "prebossNodes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "description": "Number of pre-boss depths visited on a path; branching alternatives do not add levels."
+    },
+    "restsPerAct": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Number of mandatory rest depths; each rest depth has one visible node shared by every path."
+    },
+    "hideUnknownNodes": {
+      "type": "boolean"
+    },
+    "restFloors": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1000
+      }
+    },
+    "branchColumns": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 5,
+      "description": "Number of lanes at non-rest depths. Rest and boss nodes merge the lanes."
+    },
+    "minimumThreatFloor": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 101,
+      "description": "Earliest depth that may contain an elite or the final boss."
+    },
+    "mapMode": {
+      "enum": [
+        "fog",
+        "path"
+      ],
+      "description": "Map visibility policy for configured routes; fog reveals the trail and next choices."
+    },
+    "firstFloor": {
+      "enum": [
+        "fight",
+        "event",
+        "treasure",
+        "shop",
+        "elite",
+        null
+      ],
+      "description": "Node type every lane on depth 1 is forced to; null leaves depth 1 to the ordinary draw. It must be one of the route's alternatives, and depth 1 cannot also be a rest depth."
+    },
+    "shopShare": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Share of randomly typed nodes (not rest, elite, boss or the forced first floor) that are shops; the rest keep the even event/fight/treasure split. Absent keeps the even draw over every alternative."
+    },
+    "requirePrebossRest": {
+      "type": "boolean",
+      "description": "Require the last preboss depth to be a mandatory rest on every route."
+    }
+  },
+  "required": [
+    "mode",
+    "acts",
+    "prebossNodes",
+    "restsPerAct",
+    "hideUnknownNodes",
+    "restFloors",
+    "branchColumns",
+    "minimumThreatFloor",
+    "mapMode",
+    "firstFloor"
+  ],
+  "additionalProperties": false
+}

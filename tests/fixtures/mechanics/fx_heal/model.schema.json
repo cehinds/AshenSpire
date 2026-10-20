@@ -1,0 +1,1 @@
+{ "type": "object", "properties": { "healed": { "type": "integer", "minimum": 0 } }, "additionalProperties": false, "x-attach": "none" }

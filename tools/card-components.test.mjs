@@ -16,6 +16,34 @@ test('compact runtime module preserves every resolved card without repeating the
  const cards=Object.values(runtime.cards);assert.notEqual(cards[0],cards[1]);assert.notEqual(cards[0].layers,cards[1].layers);
  cards[0].layers[0].x+=10;assert.notEqual(cards[0].layers[0].x,cards[1].layers[0].x,'card layers remain independent');
 });
+test('layer diffs resolve to the template layer with only the changed key different',async()=>{
+ const tl=layout.layers.find(l=>l.id==='flag'),other=layout.layers.find(l=>l.id==='title');
+ const withoutKey=Object.fromEntries(Object.entries(other).filter(([k])=>k!=='bind'));
+ const data={schemaVersion:1,template:layout,cards:{
+  diff:{...layout,id:'diff',layers:layout.layers.map(l=>l.id==='flag'?{...l,x:tl.x+7}:structuredClone(l))},
+  full:{...layout,id:'full',layers:layout.layers.map(l=>l.id==='title'?withoutKey:structuredClone(l))},
+  plain:{...layout,id:'plain',layers:layout.layers.map(l=>structuredClone(l))}}};
+ const {CARD_COMPONENTS:runtime}=await import('data:text/javascript,'+encodeURIComponent(cardComponentsModule(data)));
+ assert.deepEqual(runtime.cards.diff,data.cards.diff);
+ const flag=runtime.cards.diff.layers.find(l=>l.id==='flag');
+ assert.equal(flag.x,tl.x+7);assert.deepEqual({...flag,x:tl.x},tl);
+ const title=runtime.cards.full.layers.find(l=>l.id==='title');
+ assert.ok(!('bind' in title),'a card layer lacking a template key resolves without it');assert.ok(!('$full' in title));
+ assert.deepEqual(title,withoutKey);
+ assert.notEqual(runtime.cards.plain.layers[0],runtime.cards.diff.layers[0]);
+ assert.notEqual(runtime.cards.plain.layers[0],layout.layers[0]);
+});
+test('the generated module for the real layout stays small',()=>{
+ const source=readFileSync(new URL('../src/content/cardComponents.generated.js',import.meta.url),'utf8');
+ assert.ok(Buffer.byteLength(source)<400*1024,'cardComponents.generated.js is '+Buffer.byteLength(source)+' bytes');
+ assert.equal(source,cardComponentsModule(compileCardComponents(layout,contentBundle.cards)),'generated module is current');
+});
+test('a layer id must be a non-empty string: the compact module encodes unchanged layers by id',()=>{
+ const numeric=structuredClone(layout);numeric.layers[0].id=7;
+ assert.throws(()=>compileCardComponents(numeric,contentBundle.cards),/Invalid or duplicate card layer/);
+ const empty=structuredClone(layout);empty.layers[0].id='';
+ assert.throws(()=>compileCardComponents(empty,contentBundle.cards),/Invalid or duplicate card layer/);
+});
 test('every card has an independent resolved object with approved left-side costs',()=>{
  const data=compileCardComponents(layout,contentBundle.cards);
  assert.equal(Object.keys(data.cards).length,contentBundle.cards.length);
@@ -35,7 +63,13 @@ test('live mana cost selects the exact supplied banner and never displays action
  assert.match(combined,/Changed &lt;title&gt;/);assert.match(combined,/>2<\/div>/);assert.match(combined,/>7<\/div>/);
  assert.match(combined,/data-cost-layout="staminaMana"/);assert.match(combined,/data-component="mana-icon"/);
  assert.doesNotMatch(combined,/data-component="energy-(icon|value)"/);
- assert.ok(combined.includes(layout.artworkByCard.gorefireSlash));assert.match(combined,/-webkit-line-clamp:2/);
+ assert.ok(combined.includes(layout.artworkByCard.gorefireSlash));
+ const rulesLayer=compileCardComponents(layout,contentBundle.cards).cards[model.id].layers.find(layer=>layer.bind==='rules');
+ const rulesElement=combined.match(/<div class="ic-text" data-card-binding="rules"[^>]*>/)?.[0];
+ assert.ok(rulesElement,'the per-card rules layer is rendered');
+ assert.ok(Number.isInteger(rulesLayer.maxLines)&&rulesLayer.maxLines>0,'authored rules have a finite positive line limit');
+ assert.match(rulesElement,new RegExp(`data-max-lines="${rulesLayer.maxLines}"`));
+ assert.match(rulesElement,new RegExp(`-webkit-line-clamp:${rulesLayer.maxLines};`));
  const short=illustratedCardHtml({...model,costs:{...model.costs,mana:0,stamina:0}},options);
  assert.match(short,/data-cost-layout="staminaOnly"/);assert.doesNotMatch(short,/data-component="mana-(icon|value)"/);
  assert.doesNotMatch(short,/data-component="energy-(icon|value)"/);assert.match(short,/>0<\/div>/);

@@ -386,14 +386,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   const eq = (a, b, msg) => assert(a === b, `${msg} — expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`);
 
   // ---- 1. Damage order (SPEC §4.2) ----------------------------------------
-  test('1. damage order: (6+2 Str) ×0.75 Weak ×1.5 Vuln = 9, floor once, min 0', () => {
+  test('1. damage order: (6+2 Str) ×0.75 Weak ×1.25 Vuln = 7, floor once, min 0', () => {
     const c = makeCombat({ deck: ['strike', 'strike', 'strike', 'strike', 'strike'] });
     S.applyStatus(c, c.player, 'strength', 2);
     S.applyStatus(c, c.player, 'weak', 1);
     S.applyStatus(c, getEntity(c, 'e1'), 'vulnerable', 1);
     playFromHand(c, 'strike');
     const hit = logOf(c, 'damageDealt').pop();
-    eq(hit.amount, 9, 'final damage');
+    eq(hit.amount, 7, 'final damage'); // (6+2)×0.75×1.25 = 7.5 → 7 (Vulnerable ×1.25, owner D16 2026-10-18)
     eq(computeAttackDamage(c, c.player, getEntity(c, 'e1'), -20), 0, 'negative damage clamps to 0');
     eq(computeAttackDamage(c, c.player, null, 7), Math.floor((7 + 2) * 0.75), 'attacker-only math (single floor)');
   });
@@ -629,12 +629,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
     eq(last.amount, 13, 'starstone hit ×1.25 (multiplicative row), bonus rounded up: 10 + ceil(2.5)');
-    // Composes with regular Vulnerable multiplicatively: 10 × 1.5 = 15, + ceil(15 × 0.25) = 19
+    // Composes with regular Vulnerable multiplicatively: 10 × 1.25 = 12.5, + ceil(12.5 × 0.25) = 16 after the single floor (Vulnerable ×1.25, owner D16 2026-10-18)
     // (the exposure bonus rounds up — owner, 2026-10-12).
     S.applyStatus(c, e1, 'vulnerable', 1);
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(last.amount, 19, 'stacks WITH Vulnerable: 15 + ceil(3.75)');
+    eq(last.amount, 16, 'stacks WITH Vulnerable: 12.5 + ceil(3.125), floored');
     // THE CEILING (known-bad probe answered): every vulnerability lane is
     // flat-per-status and stack-count-invariant, so max compose is the
     // closed-form product of DISTINCT table mults — stacks cannot raise it.
@@ -643,7 +643,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     if (c.player.energy === 0) dispatch(c, { type: 'endTurn' });
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(last.amount, 19, '99 stacks of both: SAME 19 — the ceiling is the table, not the stacks');
+    eq(last.amount, 16, '99 stacks of both: SAME 16 — the ceiling is the table, not the stacks');
     // Additive lane: declared 'additive' pools (mult−1). tAddVuln 1.5-additive
     // + frostExposed 1.25-mult on the same tagged hit:
     // 10 + ceil(10 × (1.25 × 1.5 − 1)) = 10 + ceil(8.75) = 19.
@@ -1554,7 +1554,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Intent numbers recompute live through the same math (SPEC §4.6).
     const i = makeCombat({ deck: Array(5).fill('defend'), enemies: ['tHitter'] });
     S.applyStatus(i, i.player, 'vulnerable', 1);
-    eq(previewIntent(i, 'e1').damage, 15, 'intent shows 10×1.5=15 with player Vulnerable');
+    eq(previewIntent(i, 'e1').damage, 12, 'intent shows 10×1.25=12 with player Vulnerable');
   });
 
   // ---- 17. Status-model generality (zero engine changes) ----------------------------------
@@ -3756,13 +3756,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     'each intrinsic receipt exposes five explicit non-negative integer facts');
     assert(LEGACY_REG.equipment.armaments.every((piece) => piece.weight === piece.poiseThreshold),
       'presentation weight is the already-authored Poise threshold and adds no balance behavior');
-    assert(LEGACY_REG.equipment.armaments.every((piece) => piece.weaponArtManaCost === (
-      piece.itemTypeTags.includes('item:magic-focus') && piece.techniqueProfile === 'staffTechnique' ? 1 : 0
-    )), 'only magic-focus staff-technique armaments author one Weapon Art Mana');
+    // Intrinsic costs belong to the shipped kit, not the fixture that strips packages.
+    assert(REG.equipment.armaments.every((piece) => piece.weaponArtManaCost === (
+      piece.weaponCardPackage.weaponArtDefaults.length || piece.itemTypeTags.includes('item:magic-focus') && piece.techniqueProfile === 'staffTechnique' ? 1 : 0
+    )), 'armaments with authored weapon arts expose at least one Weapon Art Mana');
     assert(LEGACY_REG.equipment.armaments.every((piece) => piece.uniqueSkillStaminaCost === 0),
       'Unique Skill Stamina remains explicit zero until a priority or unique-skill consumer exists');
     eq(JSON.stringify(armamentIntrinsicReceipt(LEGACY_REG.equipment.armaments.find((piece) => piece.id === 'greatsword'))),
-      JSON.stringify({ itemId: 'greatsword', attackRating: 4, defenseRating: 2, weight: 8, weaponArtManaCost: 0, uniqueSkillStaminaCost: 0 }),
+      JSON.stringify({ itemId: 'greatsword', attackRating: 4, defenseRating: 2, weight: 8, weaponArtManaCost: 1, uniqueSkillStaminaCost: 0 }),
       'the Greatsword receipt is intrinsic and does not include generated-card or Smithing deltas');
 
     const missingIntrinsicBundle = {
@@ -3776,11 +3777,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(validateContent(missingIntrinsicBundle).errors.some((error) => error.path.endsWith('.attackRating')),
       'boot validation fails closed when an intrinsic armament field is absent');
     const mismatchedIntrinsicRegistries = {
-      ...LEGACY_REG,
+      ...REG,
       equipment: {
-        ...LEGACY_REG.equipment,
-        armaments: LEGACY_REG.equipment.armaments.map((piece) => (
-          piece.id === 'straightSword' ? { ...piece, weaponArtManaCost: 1 } : piece
+        ...REG.equipment,
+        armaments: REG.equipment.armaments.map((piece) => (
+          piece.id === 'straightSword' ? { ...piece, weaponArtManaCost: 0 } : piece
         )),
       },
     };
@@ -7341,13 +7342,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // ---- THE COMBAT GROUP IS THE ANSWER TO "no good section to customize
     // combat, combat animation, etc", so what it HOLDS is asserted, not
     // described. A row that drifts back out of it takes the report with it.
-    eq(GENERAL_GROUPS.join(','), 'Display,Combat,Audio',
-      'the General tab offers three groups, and Combat sits between them');
+    eq(GENERAL_GROUPS.join(','), 'Display,Combat,Audio,Game rules',
+      'General offers Display, Combat, Audio and the custom Game rules section');
     const combatTopics = generalGroups('Combat');
     eq([...combatTopics.keys()].join(','), 'Animation & effects,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'askToUpcastAfterTarget,useSprites,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
+      'askToUpcastAfterTarget,useSprites,autoCombat,combatSpeed,autoCombatSpeed,combatStepPause,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
       'every combat pacing, quality, shake, sprite, played-card and upcast switch is under one name');
     eq(combat.find(r => r.key === 'askToUpcastAfterTarget').def, false, 'upcast prompting defaults off');
     eq(combatTopics.get('Armaments').map((r) => r.key).join(','),
@@ -9152,20 +9153,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(S.getStacks(c2.enemies[0], 'bleed'), REG.balance.powers.whetstonePouch.bleed, 'the prepared strike bleeds');
     eq(logOf(c2, 'relicTriggered').filter((e) => e.relicId === 'whetstonePouch').length, 1);
     // Waxen Seal: the first heal each combat heals more, once.
-    const c3 = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['waxenSeal'], hp: 40 });
+    const c3 = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['waxenSeal'], hp: 40, mana: 2, maxMana: 2 });
     c3.player.maxStamina = 3; c3.player.stamina = 3; c3.player.energyMax = 3; c3.player.energy = 3; // warmLitany: 1 SP + 1 MP (SPEC §4.3a)
     playFromHand(c3, 'warmLitany');
-    eq(c3.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal, 'Litany heals, and the seal heals more');
+    eq(c3.player.hp, 40 + 5 + REG.balance.powers.waxenSeal.heal, 'Litany heals, and the seal heals more');
     playFromHand(c3, 'warmLitany');
-    eq(c3.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal + 3, 'the second heal is its own');
+    eq(c3.player.hp, 40 + 5 + REG.balance.powers.waxenSeal.heal + 5, 'the second heal is its own');
     // A heal at full HP heals nothing and spends nothing (healPositive):
     // Golden Sprout's opening heal on a healthy Herald leaves the seal for the
     // first real heal.
-    const c3b = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['goldenSprout', 'waxenSeal'], hp: 78 });
+    const c3b = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['goldenSprout', 'waxenSeal'], hp: 78, mana: 1, maxMana: 1 });
     eq(logOf(c3b, 'relicTriggered').filter((e) => e.relicId === 'waxenSeal').length, 0, 'a zero heal does not spend the seal');
     c3b.player.maxStamina = 3; c3b.player.stamina = 3; c3b.player.energyMax = 3; c3b.player.energy = 3; c3b.player.hp = 40;
     playFromHand(c3b, 'warmLitany');
-    eq(c3b.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal, 'the first real heal does');
+    eq(c3b.player.hp, 40 + 5 + REG.balance.powers.waxenSeal.heal, 'the first real heal does');
     // Co-op: a heal is the HEALED seat's — an ally healed by A fires the ally's
     // seal on the ally, and A's seal stays whole.
     const hA = createRunState({ seed: 0x5a5c, classId: 'herald', registries: REG });
@@ -9187,13 +9188,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Lodestar Shard: extra Mana at combat start.
     const c4 = makeCombat({ deck: ['strike'], relicIds: ['lodestarShard'], mana: 1, maxMana: 1 + REG.balance.powers.lodestarShard.restoreMana });
     eq(c4.player.mana, 1 + REG.balance.powers.lodestarShard.restoreMana, 'the shard restores Mana as the fight opens');
-    // Attune breaks even and exhausts; upgraded it stays.
-    // It costs the 1 Mana it restores and its restore pays it (SPEC §4.3a, owner 2026-10-13), so it casts from 0 Mana
-    // and leaves Mana where it was.
+    // Attune pays 1 Mana up front and restores 2; its upgrade stays in the deck.
     const c5 = makeCombat({ deck: ['attune', { id: 'attune', up: true }, 'strike', 'strike', 'strike'], mana: 0, maxMana: 3 });
     c5.player.maxStamina = 5; c5.player.stamina = 5; c5.player.energyMax = 5; c5.player.energy = 5;
-    playFromHand(c5, 'attune'); eq(c5.player.mana, 0, 'Attune casts from 0 Mana and nets 0'); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune exhausts');
-    playFromHand(c5, 'attune'); eq(c5.player.mana, 0, 'Attune+ nets 0 too'); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune+ does not');
+    let attuneRefused = false;
+    try { playFromHand(c5, 'attune'); } catch (error) { attuneRefused = /Not enough mana/.test(error.message); }
+    assert(attuneRefused, 'Attune cannot fund its upfront cost with its later restore');
+    eq(c5.player.mana, 0, 'a refused Attune does not restore Mana');
+    eq(c5.piles.exhaust.length, 0, 'a refused Attune does not exhaust');
+    c5.player.mana = 1;
+    playFromHand(c5, 'attune'); eq(c5.player.mana, 2, 'Attune pays 1 and restores 2'); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune exhausts');
+    playFromHand(c5, 'attune'); eq(c5.player.mana, 3, 'Attune+ gains the same net Mana'); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune+ does not exhaust');
     // VALIDATION, by name.
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
     const noGroup = validateContent({ ...testBundle(), tagging: testBundle().tagging.filter((r) => !(r.family === 'class' && r.objectId === 'reaver' && r.tagId === 'item:blade')) });

@@ -144,6 +144,32 @@ function indexNodes(nodes) {
   return nodes;
 }
 
+// Journey pairs, not visited nodes: revisiting a junction must retain every
+// actually traversed edge without exposing its untraveled branches.
+export function mapTravelEdgesHtml({ nodes, path = [], isDrawn = () => true, authoredMap = null, laneEdge = new Set(), px, py }) {
+  const byId = Object.fromEntries(nodes.map(node => [node.id, node]));
+  const pairs = new Set();
+  const key = (a, b) => JSON.stringify([a, b]);
+  for (let i = 1; i < path.length; i++) pairs.add(key(path[i - 1], path[i]));
+  let html = '';
+  for (const node of nodes) {
+    if (!isDrawn(node.id)) continue;
+    for (const toId of node.next || []) {
+      const to = byId[toId];
+      if (!to || !isDrawn(toId)) continue;
+      if (!pairs.has(key(node.id, toId)) && !(authoredMap && pairs.has(key(toId, node.id)))) continue;
+      const route = authoredMap?.routes.find(row => row.a === node.id && row.b === toId || row.b === node.id && row.a === toId);
+      if (route && route.a !== node.id) continue;
+      const isLane = laneEdge.has(`${node.id}>${toId}`) || (authoredMap && laneEdge.has(`${toId}>${node.id}`));
+      const tag = route ? 'polyline' : 'line';
+      const coords = route ? `points="${route.points.map(point => point.join(',')).join(' ')}"` : `x1="${px(node)}" y1="${py(node)}" x2="${px(to)}" y2="${py(to)}"`;
+      html += `<${tag} class="map-route-outline" vector-effect="non-scaling-stroke" ${coords}/>`;
+      html += `<${tag} vector-effect="non-scaling-stroke" class="map-edge traveled${isLane ? ' shrine-lane' : ''}" ${coords}/>`;
+    }
+  }
+  return html;
+}
+
 /**
  * watchViewport(el, { read, onChange, delayMs, RO, setTimer, clearTimer })
  * — the camera's STANDING re-fit (#1142). The first-settle observer in
@@ -333,27 +359,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // AN EDGE NEEDS BOTH ITS ENDS. Under fog the nodes one step past the split are
   // hidden, so their edges are not drawn either — the line stops where the light
   // does. In `path` mode nothing is hidden and this filter is the identity.
-  let edgeSvg = '';
-  const path = viewer.path || [];
-  for (const n of nodes) {
-    if (!isDrawn(n.id)) continue;
-    for (const toId of n.next || []) {
-      if (!isDrawn(toId)) continue;
-      const to = byId[toId];
-      if (!to) continue;
-      const ia = path.indexOf(n.id);
-      const reverseIndex = act.authoredMap ? path.indexOf(toId) : -1;
-      const isTraveled = (ia >= 0 && path[ia + 1] === toId) || (reverseIndex >= 0 && path[reverseIndex + 1] === n.id);
-      const isLane = laneEdge.has(`${n.id}>${toId}`) || (act.authoredMap && laneEdge.has(`${toId}>${n.id}`));
-      const route = act.authoredMap?.routes.find(r => r.a === n.id && r.b === toId || r.b === n.id && r.a === toId);
-      if (route && route.a !== n.id) continue; // undirected authored roads draw once
-      const tag = route ? 'polyline' : 'line';
-      const coords = route ? `points="${route.points.map(p=>p.join(',')).join(' ')}"` : `x1="${px(n)}" y1="${py(n)}" x2="${px(to)}" y2="${py(to)}"`;
-      edgeSvg += `<${tag} class="map-route-outline" vector-effect="non-scaling-stroke" ${coords}/>`;
-      edgeSvg += `<${tag} vector-effect="non-scaling-stroke" class="map-edge${isTraveled ? ' traveled' : ''}${isLane ? ' shrine-lane' : ''}" ${coords}/>`;
-
-    }
-  }
+  const edgeSvg = mapTravelEdgesHtml({ nodes, path: viewer.path || [], isDrawn, authoredMap: act.authoredMap, laneEdge, px, py });
 
   // Terrain uses the same discovered nodes as the navigation layer. The saved
   // path makes the reveal persistent, including previously visible branches.
@@ -717,8 +723,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // plate were sized `0 0 width height`; grown content would have ended the
     // parchment in the middle of the screen with the scrollport's background
     // carrying on in the same tone — invisible today, and a seam the day Freja's
-    // plates land. One `<rect>` is the home; the plate copies it (attachParchment).
-    for (const el of svgEl.querySelectorAll('.map-fog-ground > rect, .map-fog-ground > image')) {
+    // plates land. The terrain shares this viewport-wide ground too: fitting
+    // the painting to a one-column route graph leaves a narrow strip of art.
+    // Its SVG image uses a uniform cover fit, so architecture never stretches.
+    for (const el of svgEl.querySelectorAll('.map-fog-ground > rect, .map-fog-ground > image, .map-terrain .terrain-detail')) {
       el.setAttribute('x', String(x0));
       el.setAttribute('y', String(y0));
       el.setAttribute('width', String(w));
@@ -1330,6 +1338,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     panning = true;
     sx = ev.clientX;
     sy = ev.clientY;
+    const dragScale = scroll.getBoundingClientRect().width / scroll.offsetWidth || 1;
     sl = scroll.scrollLeft;
     st = scroll.scrollTop;
     scroll.classList.add('grabbing');
@@ -1342,8 +1351,8 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     trackGesture(ev, {
       onMove: (mv) => {
         if (!panning || mv.pointerId !== activePointerId) return;
-        scroll.scrollLeft = sl - (mv.clientX - sx);
-        scroll.scrollTop = st - (mv.clientY - sy);
+        scroll.scrollLeft = sl - (mv.clientX - sx) / dragScale;
+        scroll.scrollTop = st - (mv.clientY - sy) / dragScale;
       },
       onEnd: (end) => {
         if (end.pointerId !== activePointerId) return;

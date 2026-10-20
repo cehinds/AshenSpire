@@ -10,3 +10,9 @@ export function formationTileGeometry(cell, plan, presentation) {
   return { width, height: compact ? width : height,
     transform: `skewX(${-skew}deg) scaleY(${Math.cos(tilt * Math.PI / 180)})` };
 }
+
+// Top and left edges own shared seams. Only the final lane/band closes the
+// outside boundary, keeping translucent strokes from being painted twice.
+export function perspectiveCellOutlinePath(cell, lanes) {
+  return `M0,100V0H100${cell.lane === lanes - 1 ? 'V100' : ''}${cell.visualBand === 'D' ? 'M100,100H0' : ''}`;
+}

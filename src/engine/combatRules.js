@@ -58,7 +58,7 @@ export function cardSourceSnapshots(ctx, def, source, card) {
 export function cardActions(ctx, def, source, target, card, meta, sourceSnapshots = null) {
   if (!ctx.foundation) return (def.effects || []).map((effect) => ({ effect, source, owner: source, target, card, meta }));
   if (card.attack) validateAttack(card.attack, ctx.foundation.rules);
-  const formulaContext = { entities: { self: source, owner: source, player: ctx.player, target, enemy: target, allEnemies: ctx.enemies.filter((e) => e.alive) }, energySpent: meta.energySpent, cardsPlayedThisTurn: meta.ordinalThisTurn };
+  const formulaContext = { entities: { self: source, owner: source, player: ctx.player, target, enemy: target, allEnemies: ctx.enemies.filter((e) => e.alive) }, cardId:card.cardId,manaSpent:meta.manaSpent || 0,staminaSpent:meta.staminaSpent || 0, energySpent: meta.energySpent, cardsPlayedThisTurn: meta.ordinalThisTurn };
   const rows = [];
   for (const effect of def.effects || []) {
     if (effect.attack) validateAttack(effect.attack, ctx.foundation.rules);
@@ -263,10 +263,17 @@ export function consumeFoundationEvade(ctx, source, target, carrier) {
  */
 export function candidateState(ctx, { detached = false } = {}) {
   const data = {};
+  // Immutable data is shared by reference, never cloned: the game profile is
+  // deep-frozen at combat start (freezeProfile), so a candidate that tries to
+  // mutate it throws instead of corrupting the fight. Cloning it cost ~150 ms
+  // per preview on a phone.
+  const shared = {};
   for (const [key, value] of Object.entries(ctx)) {
-    if (typeof value !== 'function' && key !== 'registries' && key !== 'rng' && !(detached && key === 'eventLog')) data[key] = value;
+    if (typeof value === 'function' || key === 'registries' || key === 'rng' || (detached && key === 'eventLog')) continue;
+    if (key === 'gameProfile' && value && typeof value === 'object' && Object.isFrozen(value)) shared[key] = value;
+    else data[key] = value;
   }
-  const candidate = { ...structuredClone(data), ...(detached ? { eventLog: [] } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
+  const candidate = { ...structuredClone(data), ...shared, ...(detached ? { eventLog: [] } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
   // Catalogue accessors are immutable context, never serializable combat data.
   if (ctx.registriesForPlayer) candidate.registriesForPlayer = ctx.registriesForPlayer;
   if (ctx.registerPlayerRegistries) candidate.registerPlayerRegistries = ctx.registerPlayerRegistries;

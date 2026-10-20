@@ -1,0 +1,127 @@
+{
+  "id": "combat.accuracy",
+  "tag": "combat:accuracy",
+  "version": "1.0.0",
+  "family": "combat",
+  "label": "Accuracy rules",
+  "description": "Validated parameters queried by the existing live combat primitives.",
+  "attaches": [
+    "run",
+    "entity",
+    "character",
+    "gear",
+    "relic",
+    "status",
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "portability": "portable",
+  "authored": true,
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "baseAC": {
+        "type": "number",
+        "minimum": 0
+      },
+      "evadeStackBase": {
+        "type": "number",
+        "minimum": 0
+      },
+      "evadeStackDex": {
+        "type": "number",
+        "minimum": 0
+      },
+      "precisionBase": {
+        "type": "number",
+        "minimum": 0
+      },
+      "evasionBase": {
+        "type": "number",
+        "minimum": 0
+      },
+      "precisionWeights": {
+        "type": "object",
+        "properties": {
+          "dex": {
+            "type": "number",
+            "minimum": 0
+          },
+          "str": {
+            "type": "number",
+            "minimum": 0
+          },
+          "wis": {
+            "type": "number",
+            "minimum": 0
+          },
+          "int": {
+            "type": "number",
+            "minimum": 0
+          },
+          "level": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "dex",
+          "str",
+          "wis",
+          "int",
+          "level"
+        ],
+        "additionalProperties": false
+      },
+      "maneuverPrecision": {
+        "type": "object",
+        "properties": {
+          "smash": {
+            "type": "number",
+            "minimum": 0
+          },
+          "sweep": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "smash",
+          "sweep"
+        ],
+        "additionalProperties": false
+      },
+      "stanceMinimum": {
+        "type": "number",
+        "minimum": 0
+      },
+      "stanceMaximum": {
+        "type": "number",
+        "minimum": 0
+      },
+      "stanceAdvantageBonus": {
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "required": [
+      "baseAC",
+      "evadeStackBase",
+      "evadeStackDex",
+      "precisionBase",
+      "evasionBase",
+      "precisionWeights",
+      "maneuverPrecision",
+      "stanceMinimum",
+      "stanceMaximum"
+    ],
+    "additionalProperties": false
+  },
+  "stateScope": "instance"
+}

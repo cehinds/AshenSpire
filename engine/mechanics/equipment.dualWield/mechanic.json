@@ -1,0 +1,26 @@
+{
+  "id": "equipment.dualWield",
+  "tag": "equipment.dualWield",
+  "version": "1.0.0",
+  "family": "equipment",
+  "label": "DualWield",
+  "description": "Tag equipment.dualWield in the equipment family.",
+  "attaches": [
+    "gear"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "equipment.dualWield"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/loadout.js",
+    "symbol": "gripOf"
+  }
+}

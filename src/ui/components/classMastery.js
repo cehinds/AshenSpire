@@ -34,7 +34,7 @@ export function mountInitialClassMastery(app, { registries, run, onPersist, onDo
     return choice;
   });
   app.querySelector('.class-mastery-veil')?.remove();
-  const modal = el('section', { class: 'modal', dataset: { size: 'md' }, tabindex: '-1', role: 'dialog', 'aria-modal': 'true', 'aria-label': `Choose ${cls.name} class tree node` }, [head,
+  const modal = el('section', { class: 'modal', dataset: { size: 'md' }, tabindex: '-1', role: 'dialog', 'aria-modal': 'true', 'aria-label': t('mastery.treeAria', { name: cls.name }) }, [head,
     el('div', { class: 'modal-body' }, [el('p', { text: t('mastery.treeIntro') }), el('div', { class: 'class-row' }, choices)])]);
   if (!app.firstElementChild) app.appendChild(el('div', { class: 'screen' }));
   const veil = el('div', { class: 'modal-veil class-mastery-veil' }, modal);

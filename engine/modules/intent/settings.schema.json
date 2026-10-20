@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "visible": {
+      "type": "boolean"
+    },
+    "reads": {
+      "enum": [
+        "rolled",
+        "exact"
+      ]
+    }
+  },
+  "required": [
+    "mode",
+    "visible",
+    "reads"
+  ],
+  "additionalProperties": false
+}

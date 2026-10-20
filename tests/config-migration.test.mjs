@@ -78,6 +78,10 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 //     phone piles. Only CombatLayout.js's entry is refreshed; every prior probe
 //     value is unchanged apart from the key order the new field shifts.
 
+//   · Responsive Core combat (2026-10-17): only five allocateCombatBands
+//     probe values change for the approved 27% hand / 14% footer. The
+//     historical export shapes, freezing and all other migration probes stay pinned.
+
 /** Every path at which `want` and `got` differ, as readable lines. */
 function differences(want, got, path = '') {
   if (JSON.stringify(want) === JSON.stringify(got)) return [];

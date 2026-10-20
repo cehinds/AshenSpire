@@ -1,0 +1,20 @@
+{
+  "motion": {
+    "spritePlaybackRate": 0.5,
+    "stageGapMs": 1000
+  },
+  "behavior": {
+    "autoCombat": false,
+    "combatSpeed": 1,
+    "combatPreference": "offense",
+    "speedMinimum": 0.25,
+    "speedMaximum": 8,
+    "delayMaximumMs": 5000,
+    "maxActionsPerTurn": 64,
+    "autoCombatSpeed": 1.5,
+    "autoSpeedMinimum": 1,
+    "autoSpeedMaximum": 3,
+    "stageGapMinimumMs": 250,
+    "stageGapMaximumMs": 2000
+  }
+}

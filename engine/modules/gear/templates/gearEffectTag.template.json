@@ -1,0 +1,36 @@
+{
+  "$comment": "Effect and penalty tags in settings.tags. cost spends pool points (negative refunds); modifier + amount map to the equipment vocabulary (content/source/equipMods.csv).",
+  "stagger": {
+    "group": "effect",
+    "cost": 1,
+    "modifier": "strike.poise",
+    "amount": 3,
+    "priority": 60,
+    "weights": {
+      "ratings": {
+        "poise": 3,
+        "ar": 1
+      },
+      "bonus": {
+        "strength": 2
+      }
+    }
+  },
+  "heavy": {
+    "group": "penalty",
+    "cost": -1,
+    "modifier": "strike.cost",
+    "amount": 1,
+    "priority": 80,
+    "weights": {
+      "ratings": {
+        "ar": 2,
+        "poise": 3
+      },
+      "bonus": {
+        "strength": 3,
+        "constitution": 1
+      }
+    }
+  }
+}

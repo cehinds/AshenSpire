@@ -1,0 +1,11 @@
+{
+  "id": "fx_heal",
+  "tag": "fx:heal",
+  "version": "1.0.0",
+  "family": "fx",
+  "label": "Heal",
+  "description": "Restores HP.",
+  "attaches": ["card", "character"],
+  "files": { "model": "model.schema.json", "interface": "interface.json", "service": "service.json", "cases": "cases.json" },
+  "portability": "portable"
+}

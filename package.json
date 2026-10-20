@@ -1,0 +1,26 @@
+{
+  "name": "ashenspire",
+  "private": true,
+  "version": "0.0.0",
+  "engines": {
+    "node": ">=22.14"
+  },
+  "scripts": {
+    "start": "node tools/launch.mjs",
+    "build:standalone": "node tools/launch.mjs --build-only",
+    "serve": "node tools/serve.mjs --no-open",
+    "test": "node tests/run-node.mjs --no-selftests --no-discovered",
+    "test:all": "node tests/run-node.mjs",
+    "test:fixcore": "node --test tests/fixcore-*.test.mjs",
+    "test:fixcore:ui": "node tests/fixcore-combat-ui.browser.mjs",
+    "validate:ui": "node tools/ui-validate.mjs --check",
+    "validate:maps": "node tools/maps-validate.mjs --check",
+    "validate:config": "node tools/config-build.mjs --check",
+    "build:game": "node tools/build-game.mjs --check",
+    "plantsites": "node tools/plantsites.mjs --check",
+    "tokens:css": "node tools/tokens-css.mjs --write",
+    "lint:style": "node tools/style-lint.mjs --check",
+    "art:fetch": "node tools/fetch-art.mjs --pack light,common",
+    "receipts": "node tools/receipts.mjs --check"
+  }
+}
