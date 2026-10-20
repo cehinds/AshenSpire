@@ -14,6 +14,8 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { playTimeline, setAnimSpeed } from '../src/ui/fx.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { startQueuedEnemy } from '../src/engine/combatReactions.js';
+import { prepareTacticalCard, tacticalCarrier } from '../src/engine/combatCardTactics.js';
+import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const baseRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // Moves are compiled from shared authored sources by createRegistries; alter the
@@ -206,6 +208,28 @@ test('a final-hit lethal Counter cancels the defeated actor\'s trailing effects'
   assert.equal(ctx.result, 'victory'); assert.equal(ctx.pendingReaction, undefined);
   assert.equal(ctx.player.statuses.vulnerable, undefined);
   assert.equal(ctx.eventLog.filter(row => row.type === 'statusApplied' && row.status === 'vulnerable').length, 0);
+  assert.equal(ctx.pendingExpansionActions, 0); assert.equal(ctx.queue.length, 0);
+  assert.deepEqual(combatSnapshotProblems(serializeCombatSnapshot(ctx)), []);
+});
+
+test('an enemy Counter stops a defeated player\'s later hits and trailing effects', () => {
+  const base = contentBundle.cards.find(card => card.id === 'strike');
+  const bundle = { ...contentBundle, cards: [...contentBundle.cards, { ...base, id: 'multiSwing', cost: 0, costRule: 'fixed', manaCost: 0,
+    gradeProfiles: undefined, legacyFace: undefined, effects: [{ op: 'damage', target: 'enemy', amount: 5, hits: 3 },
+      { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 2 }] }],
+  tagging: [...contentBundle.tagging, ...contentBundle.tagging.filter(row => row.family === 'card' && row.objectId === 'strike').map(row => ({ ...row, objectId: 'multiSwing' }))] };
+  const ctx = live();
+  ctx.registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(bundle, profile)), profile);
+  ctx.player.hp = 1; ctx.enemies[0].block = 100;
+  const counter = resolveCombatCard(ctx, { cardId: 'core.counter' });
+  prepareTacticalCard(ctx, ctx.enemies[0], ctx.player, tacticalCarrier(counter, { instanceId: 'enemy-counter' }, ctx, ctx.enemies[0]), counter.effects, {});
+  ctx.piles.hand = [{ instanceId: 'swing', cardId: 'multiSwing', upgraded: false }]; primeAccuracyRolls(ctx, { count: 3 });
+  dispatch(ctx, { type: 'playCard', cardInstanceId: 'swing', targetId: ctx.enemies[0].id });
+  assert.equal(ctx.result, 'defeat'); assert.equal(ctx.player.alive, false);
+  assert.equal(ctx.eventLog.filter(row => row.type === 'damageDealt' && row.sourceId === ctx.player.id).length, 1);
+  assert.equal(ctx.enemies[0].statuses.vulnerable, undefined);
+  assert.equal(ctx.eventLog.filter(row => row.type === 'cardPlayed' && row.cardInstanceId === 'swing').length, 1);
+  assert.equal(ctx.piles.discard.filter(row => row.instanceId === 'swing').length, 1);
   assert.equal(ctx.pendingExpansionActions, 0); assert.equal(ctx.queue.length, 0);
   assert.deepEqual(combatSnapshotProblems(serializeCombatSnapshot(ctx)), []);
 });
