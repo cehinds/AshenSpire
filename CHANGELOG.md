@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
+- **Bone Sceptre grants Mana Surge** ([#2210](https://github.com/cehinds/AshenSpire/pull/2210), `0.7.1.1721`). The Bone Sceptre now grants Mana Surge (1 SP, gain 2 Mana) to whoever holds it in Core, replacing Starseer's Resource Gain.
+
 - **Counter reworked** ([#2200](https://github.com/cehinds/AshenSpire/pull/2200), `0.7.1.1721`). Counter now answers any attack it covers: it returns half the damage it takes, a quarter more with extra Block when it beats the attack, and reaction cards cost 1 less stamina from your hand.
 - **Defend hits harder, Smash breaks guards** ([#2190](https://github.com/cehinds/AshenSpire/pull/2190), `0.7.1.1719`). Defend now gives 10 Block. Smash against a defending target deals double damage plus a quarter of its Block, and half of that hits Poise.
 - **New starting decks** ([#2199](https://github.com/cehinds/AshenSpire/pull/2199), `0.7.1.1717`). Each class now starts with its own 10-card deck, and the deck editor lists only cards you own.
