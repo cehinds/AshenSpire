@@ -20,6 +20,7 @@ test('movement keeps conditions and refuses to misdescribe an unsupported moveme
   for (const effect of [
     { op: 'moveEngagement', target: 'allEnemies', bands: -1 },
     { op: 'moveEngagement', target: 'enemy', bands: 2 },
+    { op: 'moveEngagement', target: 'enemy', bands: -1, chance: 50 },
   ]) assert.equal(combatCardSummary(card([effect])), null);
 });
 

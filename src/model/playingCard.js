@@ -229,7 +229,8 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'grantRollMode': text = `Next ${effect.roll}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`; break;
       case 'enterStance': text = effect.choose ? 'Choose a stance' : `Enter ${registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance}`; break;
       case 'moveEngagement': {
-        if (![-1, 1].includes(effect.bands) || !['enemy', 'pendingAttacker'].includes(effect.target)) return null;
+        if (![-1, 1].includes(effect.bands) || !['enemy', 'pendingAttacker'].includes(effect.target)
+          || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) return null;
         const target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
         text = effect.bands < 0 ? `Close 1 band toward ${target}` : `Retreat 1 band from ${target}`;
         break;
