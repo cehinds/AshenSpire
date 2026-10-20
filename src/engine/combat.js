@@ -2558,13 +2558,18 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       let bonusIndex = eligible.findIndex(reply => reply?.hits > 0);
       if (bonusIndex < 0) bonusIndex = chargedEffects.findIndex(effect => effect.op === 'damage');
       const bonus = Math.max(0, charges.damage + charges.damageEffect);
+      let coreRead;
       counterPreviews.set(key, replies.map((reply, effectIndex) => {
         if (configuredCombat(combat)) {
           // Core 2 (SPEC §17): the return is a fraction of the revealed incoming attack, priced exactly as the live
           // return is: no attack-rating bonus, no second stance multiplier. Without a revealed attack the face
           // states the printed amount.
-          const read = effectIndex === bonusIndex && reply && resolvedTarget?.kind === 'enemy'
+          coreRead ??= reply && resolvedTarget?.kind === 'enemy'
             ? counterPreviewAgainst(combat, resolvedTarget, previewIntent(combat, resolvedTarget.id), action.card, counterDefenseProjection()) : null;
+          const read = effectIndex === bonusIndex ? coreRead : null;
+          // Live replaces the card's whole HP payload with the one computed return (SPEC §17), so every other damage row of a
+          // Counter with a known read deals nothing here: the return sits in exactly one row.
+          if (effectIndex !== bonusIndex && reply && coreRead && !coreRead.uncovered) return { damage: 0, hitDamages: [], totalDamage: 0, hits: 0 };
           // A revealed attack the Counter does not answer deals no return; a hidden one keeps the printed amount.
           if (read?.uncovered) return { damage: 0, hitDamages: [], totalDamage: 0, hits: 0 };
           const live = read;

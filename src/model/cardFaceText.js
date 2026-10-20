@@ -139,6 +139,8 @@ function buildLines(def, preview, registries, rules = null) {
       case 'damage': {
         const live = preview?.values?.[index], hits = live?.hits ?? effect.hits ?? 1;
         if (typeof hits !== 'number') fail();
+        // Core 2: one row carries the computed return; every other damage row of the Counter is zeroed and not listed.
+        if (counter && preview?.counterReturn && live && hits === 0 && live.totalDamage === 0) return [];
         const sequence = live?.hitDamages;
         const unequal = sequence?.length > 1 && sequence.some(amount => amount !== sequence[0]);
         // The face names the hit's leading type only ("Lightning", not "Lightning · Piercing"); inspection keeps the full label.

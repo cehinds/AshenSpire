@@ -469,3 +469,24 @@ test('a Counter already returned this owner cycle previews no return, and live a
   const fresh = live();
   assert.equal(previewCard(fresh.combat, 'cx1', fresh.enemy.id).values.find(r => r.op === 'damage').counterReturn.hp, 6, 'control: an unspent Counter previews 6');
 });
+
+test('a Counter with several damage rows (rank-3 Guard Counter) previews the one computed return in one row, as live deals it', () => {
+  const { combat, enemy } = live();
+  combat.piles.hand.push({ instanceId: 'g1', cardId: 'guardCounter', abilityRank: 3, upgraded: false });
+  combat.player.block = 5;
+  const view = previewCard(combat, 'g1', enemy.id);
+  const rows = view.values.filter(row => row.op === 'damage');
+  assert.equal(rows.length, 2, 'the rank-3 card authors a base row and a conditional row');
+  assert.equal(rows.reduce((sum, row) => sum + row.totalDamage, 0), 6, 'exactly one return of floor(0.5 x 8) + floor(0.25 x 8)');
+  assert.equal(rows.filter(row => row.counterReturn).length, 1, 'the computed return sits in exactly one row');
+  const text = (cardFaceLines(view.resolvedDefinition, view, reg) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
+  assert.match(text, /Return 6 damage/, text);
+  assert.doesNotMatch(text, /Return 8|Return 0|If you have Block/, text);
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'g1' });
+  Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const returned = combat.eventLog.slice(start).filter(e => e.type === 'damageDealt' && e.targetId === enemy.id);
+  assert.equal(returned.reduce((sum, e) => sum + e.hpLoss + (e.poiseAbsorbed || 0), 0), 6, 'live deals the same single return');
+});
