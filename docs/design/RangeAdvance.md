@@ -108,7 +108,10 @@ Author Advance, Closing Dodge and Backstep through an explicit validated effect.
 Do not generate movement cards after draw. Advance/Closing Dodge reduce the
 selected opposing pair by one band; Backstep increases it by one, clamped 0..2.
 Reaction movement may explicitly target the pending attacker. Changes persist
-until further movement/fight end and affect subsequently accepted actions.
+until further movement/fight end and affect subsequent independent root actions.
+The active root's frozen engagement context, including its nested reactions and
+Counter returns, remains authoritative until that root completes; then the
+changed persistent pair supplies future action plans.
 Movement does not reprice or invalidate an already committed multi-hit action;
 its Evade/defense payload provides immediate protection. Other pairs change only
 when explicitly targeted. Extend existing card identities where appropriate
