@@ -22,3 +22,154 @@ test('gear.grantedCards is validated at profile construction, naming the item an
   assert.throws(build(g => { g.grantedCards[0].copies = 2 ** 60; }), /positive integer copies/);
   assert.throws(build(g => { g.grantedCards = 'x'; }), /grantedCards.*expected an array/);
 });
+
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { createRunState } from '../src/model/state.js';
+import { equipPiece, stampDeck, reconcileGrantedCards, isItemOwned } from '../src/model/loadout.js';
+import { createRng } from '../src/engine/rng.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { dispatch } from '../src/engine/combat.js';
+
+const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
+const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+const meta = { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } };
+const start = (classId, seed = 511) => createRunState({ registries: reg, classId, seed, profileMeta: meta });
+const surges = (run) => run.deck.filter((c) => c.cardId === 'core.manaSurge');
+const owns = { has: () => true };
+const equip = (run, id) => assert.ok(equipPiece(reg, run.loadout, 'rightHand', 0, id, owns, { inCombat: false, attributes: run.attributes }));
+
+test('the card is Mana Surge: 1 SP, no Mana cost, gains 2 Mana, reads "Gain 2 Mana."', async () => {
+  const def = reg.cards.get('core.manaSurge');
+  assert.equal(def.name, 'Mana Surge');
+  assert.equal(def.type, 'skill');
+  assert.equal(def.staminaCost, 1);
+  assert.equal(def.manaCost, 0);
+  assert.deepEqual(def.effects, [{ op: 'restoreMana', target: 'self', amount: 2 }]);
+  assert.ok(def.tags.includes('camp:spell') && def.kindIds.includes('classification.skill'));
+  assert.ok(!def.tags.includes('maneuver:attack'));
+  const { cardFaceText } = await import('../src/model/cardFaceText.js').catch(() => ({}));
+  if (cardFaceText) assert.match(JSON.stringify(cardFaceText(def)), /Gain 2 Mana/);
+});
+
+test('fresh Core Starseer and Herald each hold exactly one granted Mana Surge; Reaver and Rogue none', () => {
+  for (const id of ['starseer', 'herald']) {
+    const run = start(id);
+    const found = surges(run);
+    assert.equal(found.length, 1, id);
+    assert.equal(found[0].equipmentRole, 'granted');
+    assert.equal(found[0].grantedBy, 'boneSceptre');
+    assert.equal(found[0].instanceId, 'granted:boneSceptre:core.manaSurge:0');
+  }
+  for (const id of ['reaver', 'rogue']) assert.equal(surges(start(id)).length, 0, id);
+});
+
+test('Starseer no longer holds the Resource Gain stand-in (9 authored + granted Mana Surge = 10)', () => {
+  const run = start('starseer');
+  assert.equal(run.deck.filter((c) => c.cardId === 'base.gain-resource').length, 0);
+  assert.equal(run.deck.length, 10);
+  assert.equal(run.deck.filter((c) => !isItemOwned(c)).length, 9);
+  assert.equal(start('herald').deck.length, 11, 'Herald keeps its ten authored cards and gains Mana Surge');
+});
+
+test('a Reaver gains Mana Surge on equipping a Bone Sceptre, loses it on unequip, never duplicates', () => {
+  const run = start('reaver');
+  const authored = run.deck.length;
+  equip(run, 'boneSceptre');
+  stampDeck(reg, run);
+  assert.equal(surges(run).length, 1);
+  stampDeck(reg, run); reconcileGrantedCards(reg, run); stampDeck(reg, run);
+  assert.equal(surges(run).length, 1, 're-reconcile does not duplicate');
+  assert.equal(run.deck.length, authored + 1);
+  assert.ok(equipPiece(reg, run.loadout, 'rightHand', 0, null, owns, { inCombat: false, attributes: run.attributes }));
+  stampDeck(reg, run);
+  assert.equal(surges(run).length, 0);
+  equip(run, 'boneSceptre');
+  stampDeck(reg, run);
+  assert.equal(surges(run).length, 1, 're-equip grants once');
+  equip(run, 'greatsword');
+  stampDeck(reg, run);
+  assert.equal(surges(run).length, 0, 'swapping to another weapon removes it');
+  assert.equal(run.deck.length, authored);
+});
+
+test('Core runs still do not mint legacy weapon cards on equip (no arts, kits, Dodge Roll)', () => {
+  const run = start('reaver');
+  const before = run.deck.map((c) => c.cardId).sort();
+  equip(run, 'boneSceptre');
+  stampDeck(reg, run);
+  const after = run.deck.filter((c) => c.cardId !== 'core.manaSurge').map((c) => c.cardId).sort();
+  assert.deepEqual(after, before);
+  assert.ok(run.deck.every((c) => !isItemOwned(c) || c.cardId === 'core.manaSurge'));
+});
+
+test('an older Core save without the card gets it on the next reconcile', () => {
+  const run = start('herald');
+  run.deck = run.deck.filter((c) => c.cardId !== 'core.manaSurge');
+  run.sideboard = [];
+  assert.equal(surges(run).length, 0);
+  stampDeck(reg, run);
+  assert.equal(surges(run).length, 1);
+  assert.equal(JSON.parse(JSON.stringify(run)).deck.length, run.deck.length, 'JSON round trip keeps it');
+});
+
+test('playing Mana Surge in a Core fight costs 1 SP and adds 2 Mana', () => {
+  const run = start('herald');
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const card = [...combat.piles.hand, ...combat.piles.draw, ...combat.piles.discard].find((c) => c.cardId === 'core.manaSurge');
+  assert.ok(card, 'Mana Surge reaches the fight piles');
+  combat.piles.draw = combat.piles.draw.filter((c) => c !== card);
+  combat.piles.discard = combat.piles.discard.filter((c) => c !== card);
+  if (!combat.piles.hand.includes(card)) combat.piles.hand.push(card);
+  combat.player.mana = 0;
+  combat.player.stamina = Math.max(combat.player.stamina, 3);
+  const sp = combat.player.stamina;
+  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId });
+  assert.equal(combat.player.stamina, sp - 1, 'costs 1 SP');
+  assert.equal(combat.player.mana, 2, 'gains 2 Mana');
+});
+
+test('a mid-fight swap to a sceptre lends the card to the pile, and away again', async () => {
+  const { reconcileGrantedCardsInCombat } = await import('../src/model/loadout.js');
+  const run = start('reaver');
+  const piles = { hand: [], draw: [], discard: [], exhaust: [] };
+  const synthetic = (loadout) => ({ class: 'reaver', loadout, deck: [] });
+  equip(run, 'boneSceptre');
+  reconcileGrantedCardsInCombat(reg, synthetic(run.loadout), piles);
+  assert.equal(piles.discard.filter((c) => c.cardId === 'core.manaSurge').length, 1);
+  reconcileGrantedCardsInCombat(reg, synthetic(run.loadout), piles);
+  assert.equal(piles.discard.filter((c) => c.cardId === 'core.manaSurge').length, 1, 'idempotent');
+  equip(run, 'greatsword');
+  reconcileGrantedCardsInCombat(reg, synthetic(run.loadout), piles);
+  assert.equal(piles.discard.length, 0);
+});
+
+test('deck editor shows the granted card with the existing equipment presentation and mints nothing unowned', async () => {
+  const { deckEditorModel } = await import('../src/ui/models/DeckEditorModel.js');
+  const { unlimitedCardIds, moveToSideboard } = await import('../src/model/deckRules.js');
+  const run = start('herald');
+  assert.deepEqual(unlimitedCardIds(run), []);
+  const model = deckEditorModel({ registries: reg, run });
+  const rows = model.deck.filter((r) => r.cardId === 'core.manaSurge');
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].source, 'item', 'sourced from the equipped item, like any granted card');
+  assert.ok(model.collection.every((r) => !r.unlimited), 'no unowned unlimited tile');
+  // Set aside (the existing granted-card door), then reconcile: held aside, not re-minted.
+  assert.equal(moveToSideboard(reg, run, rows[0].instanceId), true);
+  stampDeck(reg, run);
+  assert.equal(surges(run).length, 0);
+  assert.equal(run.sideboard.filter((c) => c.cardId === 'core.manaSurge').length, 1);
+  // Unequipping while set aside sweeps it from the sideboard too.
+  assert.ok(equipPiece(reg, run.loadout, 'rightHand', 0, null, owns, { inCombat: false, attributes: run.attributes }));
+  stampDeck(reg, run);
+  assert.equal(run.sideboard.filter((c) => c.cardId === 'core.manaSurge').length, 0);
+});
+
+test('a legacy profile is untouched: a Bone Sceptre there grants no Core card', () => {
+  const legacy = createRegistries(contentBundle);
+  const run = createRunState({ seed: 17, classId: 'starseer', registries: legacy });
+  assert.equal(run.deck.filter((c) => c.cardId === 'core.manaSurge').length, 0);
+  stampDeck(legacy, run);
+  assert.equal(run.deck.filter((c) => c.cardId === 'core.manaSurge').length, 0);
+});

@@ -25,17 +25,17 @@ test('Core Rogue starts with exactly 2 Strike, 2 Defend, 2 Counter, 2 Evade, 1 D
   assert.deepEqual(run.sideboard, []);
 });
 
-test('Core Starseer starts with 3 Arcane Spark, 2 Star Spark, 4 Ethereal and 1 Resource Gain', () => {
+test('Core Starseer starts with 3 Arcane Spark, 2 Star Spark, 4 Ethereal and a Bone Sceptre-granted Mana Surge', () => {
   const run = start('starseer');
   assert.equal(run.deck.length, 10);
-  assert.deepEqual(counts(run.deck), { 'core.cantrip': 3, 'core.starseerSpecial': 2, 'base.ethereal': 4, 'base.gain-resource': 1 });
+  assert.deepEqual(counts(run.deck), { 'core.cantrip': 3, 'core.starseerSpecial': 2, 'base.ethereal': 4, 'core.manaSurge': 1 });
   assert.deepEqual(run.sideboard, []);
 });
 
-test('Core Herald starts with 4 Resource Echo, 4 Ethereal, 1 Smash and 1 Exhaust', () => {
+test('Core Herald starts with 4 Resource Echo, 4 Ethereal, 1 Smash, 1 Exhaust and a Bone Sceptre-granted Mana Surge', () => {
   const run = start('herald');
-  assert.equal(run.deck.length, 10);
-  assert.deepEqual(counts(run.deck), { 'base.paid-resource-variant': 4, 'base.ethereal': 4, 'core.smash': 1, 'base.exhaust': 1 });
+  assert.equal(run.deck.length, 11);
+  assert.deepEqual(counts(run.deck), { 'base.paid-resource-variant': 4, 'base.ethereal': 4, 'core.smash': 1, 'base.exhaust': 1, 'core.manaSurge': 1 });
   assert.deepEqual(run.sideboard, []);
 });
 

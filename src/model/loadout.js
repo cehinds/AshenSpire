@@ -2120,8 +2120,78 @@ function playerInstalledGrants(run, desired) {
   });
 }
 
+/**
+ * CORE'S EQUIPMENT-GRANT PATH (owner 2026-10-19). A configured-cards profile
+ * ignores the legacy grant mechanisms; the one thing worn gear may still lend
+ * is the card list its Core gear row authors (`gear[].grantedCards`, validated
+ * by engine/kernel/gameConfig.js). Returns the profile subject (the run, or
+ * the registries when combat hands in a synthetic run) or null.
+ */
+function configuredGearGrantSubject(registries, run) {
+  const subject = run?.gameProfile ? run : registries;
+  if (subject?.gameProfile?.foundation?.mode !== 'configured') return null;
+  if (gameModule(subject, 'cards')?.mode !== 'configured') return null;
+  return Array.isArray(gameContent(subject, 'gear')) ? subject : null;
+}
+
+/** Item-owned instances the worn Core gear lends: same ids and shape as a weapon package grant. */
+function configuredGearGrantInstances(registries, run) {
+  const subject = configuredGearGrantSubject(registries, run);
+  if (!subject || !run.loadout) return [];
+  const rows = new Map(gameContent(subject, 'gear').filter((row) => Array.isArray(row.grantedCards) && row.grantedCards.length).map((row) => [row.id, row]));
+  const source = grantSourceFor(startingDeckSettings(registries), 'weapon');
+  const out = [];
+  for (const piece of equippedPieces(registries, run.loadout, run.class)) {
+    const row = rows.get(piece.id);
+    if (!row) continue;
+    for (const grant of row.grantedCards) {
+      for (let i = 0; i < grant.copies; i++) {
+        out.push({
+          instanceId: mountKey.granted(piece.id, grant.card, i),
+          cardId: grant.card, upgraded: false, equipmentRole: 'granted', grantedBy: piece.id,
+          grantSource: source,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/** Sweep stale item-owned cards from the deck and sideboard, append the missing ones. In place. */
+function reconcileConfiguredGearGrants(registries, run) {
+  if (!run.deck) run.deck = [];
+  const desired = configuredGearGrantInstances(registries, run);
+  const wanted = new Map(desired.map((d) => [d.instanceId, d]));
+  const present = new Set();
+  if (Array.isArray(run.sideboard)) {
+    run.sideboard = run.sideboard.filter((card) => {
+      if (!isItemOwned(card)) return true;
+      if (!wanted.has(card.instanceId)) return false;
+      present.add(card.instanceId);
+      return true;
+    });
+  }
+  const kept = [];
+  for (const inst of run.deck) {
+    if (!isItemOwned(inst)) { kept.push(inst); continue; }
+    const want = wanted.get(inst.instanceId);
+    if (!want || present.has(inst.instanceId)) continue;
+    present.add(inst.instanceId);
+    kept.push(adoptWanted(inst, want));
+  }
+  run.deck.length = 0;
+  run.deck.push(...kept);
+  for (const d of desired) if (!present.has(d.instanceId)) run.deck.push(d);
+  return run.deck;
+}
+
 export function reconcileGrantedCards(registries, run) {
-  if (run.gameProfile?.foundation?.mode !== 'legacy' && run.gameProfile && (!gameModule(run, 'cards') || gameModule(run, 'cards')?.mode === 'configured')) return;
+  if (run.gameProfile?.foundation?.mode !== 'legacy' && run.gameProfile && (!gameModule(run, 'cards') || gameModule(run, 'cards')?.mode === 'configured')) {
+    // A Core (configured-cards) deck is its authored list, except for the cards
+    // the worn gear's data-driven grantedCards lend it (owner 2026-10-19).
+    // Legacy weapon packages, arts, kits and the Dodge Roll stay off.
+    return configuredGearGrantSubject(registries, run) ? reconcileConfiguredGearGrants(registries, run) : undefined;
+  }
   if (!run.deck) run.deck = [];
   // A dealt deck (Sealed, Draft) keeps only the cards the player installed in
   // the worn equipment's mounts; every other lent card is swept (an older
@@ -2189,6 +2259,7 @@ export function isCurrentEquipmentGrant(registries, run, card) {
  * so an art both weapons author installs once, attributed to the winning hand.
  */
 function desiredGrantInstances(registries, run) {
+  if (configuredGearGrantSubject(registries, run)) return configuredGearGrantInstances(registries, run);
   // Stamped from the authored binding, not typed here — see grantSourceFor.
   const settings = startingDeckSettings(registries);
   const weaponSource = grantSourceFor(settings, 'weapon');
@@ -3010,7 +3081,11 @@ export function stampDeck(registries, run, cards, {
   // Configured cards own their explicit deck and shared rating receipt. They
   // have no legacy weapon-card slots to stamp or grants to reconcile; projecting
   // those slots would also reject the explicitly authored two-dagger Rogue kit.
-  if (run.gameProfile?.foundation?.mode === 'configured' && gameModule(run, 'cards')?.mode !== 'legacy') return 0;
+  if (run.gameProfile?.foundation?.mode === 'configured' && gameModule(run, 'cards')?.mode !== 'legacy') {
+    // Only the full-deck call reconciles Core's gear-granted cards (a pile subset must never mint or drop them).
+    if (cards == null) reconcileGrantedCards(registries, run);
+    return 0;
+  }
   const list = cards || run.deck || [];
   if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
   // THE QUOTA IS THE RUN'S, NOT THE LOADOUT'S. A composed deck's attack count

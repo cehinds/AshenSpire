@@ -89,10 +89,6 @@
       {
         "card": "base.ethereal",
         "copies": 4
-      },
-      {
-        "card": "base.gain-resource",
-        "copies": 1
       }
     ],
     "herald": [
