@@ -5,7 +5,7 @@
 // Barrier, Ward or Poise take anything: the `incoming` figure of the damage receipt (gameProfileCombat.js).
 // Pure: no state, no RNG. The fractions are data (content/source/fixCoreMechanics.json `counter`).
 import { fixCoreEnabled, fixCoreRules, fixCoreCounterRules } from '../model/fixCoreMechanics.js';
-import { configuredModule, configuredStance, profileDamageReceipt } from './gameProfileCombat.js';
+import { configuredModule, armsAsCoreCounter, profileDamageReceipt } from './gameProfileCombat.js';
 import { previewDamageHits, damagePreviewState } from './combatDamagePreview.js';
 import { enemyMoveCarrier, expandedEnemyMove } from './combatCardTactics.js';
 import { counterCoversAttack } from './combatReactions.js';
@@ -74,10 +74,7 @@ export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected
   if (card && !counterCoversAttack(ctx, card, intent.profile, 'damage')) return { uncovered: true };
   // Live play arms the Counter only when the card's configured stance is Counter (preparedCounter); a spell Counter
   // stands in the 'prepared' stance there and is never consumed, so the preview promises it no return.
-  if (card && configuredModule(ctx, 'stances')) {
-    const rule = configuredModule(ctx, 'stances');
-    if (!(rule.include?.includes('counter') && configuredStance(card) === 'counter')) return { uncovered: true };
-  }
+  if (card && configuredModule(ctx, 'stances') && !armsAsCoreCounter(ctx, card)) return { uncovered: true };
   // The owner already returned a Counter this cycle (two Counters, two enemies, one enemy phase): live returns nothing.
   if (counterReturnSpent(ctx.player)) return { uncovered: true, spent: true };
   const move = expandedEnemyMove(enemy, ctx.registries.enemies.get(enemy.enemyId).moves[intent.moveId] || {}, intent.moveId, ctx);

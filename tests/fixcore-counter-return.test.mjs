@@ -370,10 +370,12 @@ test('the card face renders the computed return against a 12-damage Attack (core
   }
 });
 
-test('Counters with authored coverage get profile-aware help and keep the coverage details', () => {
+test('Counters with authored coverage get eligibility-aware help and keep the coverage details', () => {
   const html = cardDetailHtml(regs.wanderingSoldier, { cardId: 'frostCounter' });
   assert.match(html, /Counter coverage:/);
-  assert.match(html, /half its incoming damage/);
+  // frostCounter is a spell Counter: live never arms it (configured stance 'prepared'), so the help promises no return.
+  assert.doesNotMatch(html, /half its incoming damage|returns half/i);
+  assert.match(cardDetailHtml(regs.wanderingSoldier, { cardId: 'core.counter' }), /half its incoming damage/);
   assert.doesNotMatch(html, /requires all damage and status pressure resisted|after all covered damage and status pressure is resisted/);
 });
 
