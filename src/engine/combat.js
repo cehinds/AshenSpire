@@ -907,14 +907,22 @@ function startDelayedMove(combat, enemy, move, moveId) {
 // §4.11), so its group is marked roundSettled and the live reaction window does not open for it again.
 function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, roundPoiseMultiplier = combat.roundPoiseMultiplier } = {}) {
   const spCost=Rounds.enemyMoveSp(move,{enemy,moveId,combat});
+  move = expandedEnemyMove(enemy, move, moveId, combat);
+  const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
+  const actions = enemyMoveActions(combat, enemy, move, moveId, carrier);
+  const rangeQuote = quoteRangeActions(combat, enemy, actions, { route: 'advance', preview: true });
+  const totalSp = spCost + (rangeQuote?.advanceSp || 0);
   if (fixCoreEnabled(combat)) {
     const available=enemy.fixCoreStaminaRemaining ?? enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId));
-    if(spCost>available) {combat.emit('enemyMoveUnavailable',{sourceId:enemy.id,moveId,required:spCost,available,resource:'sp'});return 'refused';}
+    if(totalSp>available && rangeQuote?.advanceSp > 0) {
+      const def = combat.registries.enemies.get(enemy.enemyId), closingId = def.rangeClosingMove, closing = def.moves[closingId];
+      if (closing && closingId !== moveId && closing.effects?.some(effect => effect.op === 'moveEngagement') && Rounds.enemyMoveSp(closing,{enemy,moveId:closingId,combat}) <= available) return executeMovePayload(combat, enemy, closing, closingId, { roundEntry, roundPoiseMultiplier });
+    }
+    if(totalSp>available) {combat.emit('enemyMoveUnavailable',{sourceId:enemy.id,moveId,required:totalSp,available,resource:'sp'});return 'refused';}
     enemy.fixCoreStaminaRemaining=available-spCost;
     enemy.stamina=enemy.fixCoreStaminaRemaining;
   }
   if (!allowBurdenMove(combat,enemy,spCost,move)) return 'blocked';
-  move = expandedEnemyMove(enemy, move, moveId, combat);
   // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
   // cancels never happens. This is what did — the inspector's history.
   const start = { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent };
@@ -922,8 +930,8 @@ function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, r
     (enemy.performedMoves ||= []).push(moveId);
     combat.emit('enemyMoveStarted', start);
   }
-  const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
-  const actions = enemyMoveActions(combat, enemy, move, moveId, carrier);
+  carrier.rangeQuotedPlan = rangeQuote;
+  carrier.rangeBaseCosts = { energy: spCost, stamina: spCost, mana: 0 };
   // Stamp only this move's own actions. The reaction stack may run other attacks before
   // them, and those attacks must not inherit the delayed entry's Momentum overflow.
   if (roundPoiseMultiplier) for (const action of actions) {
@@ -2831,7 +2839,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks, { ran
     upgraded: inst.upgraded,
     name: def.name,
     type: def.type,
-    cost: rangeCosts.energy,
+    cost: shownCost + (range?.routes.find(row => row.id === rangeRoute)?.advanceSp || 0),
     costIsX: isX,
     manaCost: paidCosts.mana,
     ...(priceReceipt.selfFunded ? { displayCosts } : {}),

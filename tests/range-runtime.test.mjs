@@ -44,3 +44,28 @@ test('actual foundation source supplies range and canonical Throw property, neve
   const bare = rangeSourceContact(ctx, ctx.player, ctx.enemies[0], unarmed);
   assert.equal(bare.weapon, false); assert.equal(bare.sourceWeaponId, null); assert.equal(bare.throwCapable, false);
 });
+
+test('public route previews use the supplied observer target and preserve per-contact odds', async () => {
+  const { previewRangeRoutes } = await import('../src/engine/combatEngagement.js');
+  const ctx = live(), source = ctx.player, raw = ctx.enemies[0];
+  const projected = { ...raw, visibleOdds: 37 };
+  const actions = [{ source, target: projected, card: { combatProfile: { range:'melee' } }, effect:{ op:'damage',target:'enemy',amount:1 } }];
+  const quote = previewRangeRoutes(ctx, source, actions, { energy:1,stamina:1,mana:0 }, { hitPreview: (_ctx,_source,target) => ({inRange:true,hitChance:target.visibleOdds || 99}) });
+  assert.equal(quote.targets[0].currentHitChance,37);
+  assert.equal(quote.targets[0].hitChance,37);
+  assert.equal(quote.targets[0].contacts[0].hitChance,37);
+});
+test('random target quotes fork the same seeded selection without drawing live RNG', async () => {
+  const { quoteRangeActions } = await import('../src/engine/combatEngagement.js');
+  const ctx=live(), source=ctx.player, original=ctx.enemies[0];
+  ctx.enemies.push({...structuredClone(original),id:'e2',rangeActorKey:'enemy:e2'});
+  ctx.rangeState.engagements[rangePairKey('player:player','enemy:e2')]=2;
+  ctx.rangeState.engagements[rangePairKey('player:player','enemy:e1')]=0;
+  const action=()=>({source,owner:source,card:{combatProfile:{range:'melee'}},effect:{op:'damage',target:'randomEnemy',amount:1}});
+  const before=structuredClone(ctx.rng.getCounters());
+  const quoted=quoteRangeActions(ctx,source,[action()],{preview:true});
+  assert.deepEqual(ctx.rng.getCounters(),before);
+  const accepted=quoteRangeActions(ctx,source,[action()]);
+  assert.deepEqual(accepted,quoted);
+  assert.equal(accepted.targets.length,1);
+});

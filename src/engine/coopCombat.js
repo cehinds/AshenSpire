@@ -1,4 +1,4 @@
-import { initializeCombatRange, assertRangeCardEnabled } from './combatEngagement.js';
+import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions } from './combatEngagement.js';
 import { fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy, formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
@@ -727,10 +727,10 @@ export function cardNeedsEnemyTargetForPlayer(C, playerId, instanceId) {
   return cardNeedsEnemyTargetNow(candidate, instanceId);
 }
 
-export function playCard(C, playerId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup = undefined) {
+export function playCard(C, playerId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup = undefined, rangeRoute = undefined) {
   if (C.pendingReaction) throw new Error('Answer the pending reaction first');
   R.assertNoAbilityChoice(C);
-  if (!C._foundationTransaction) return F.foundationTransaction(C, (candidate) => playCard(candidate, playerId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup));
+  if (!C._foundationTransaction) return F.foundationTransaction(C, (candidate) => playCard(candidate, playerId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup, rangeRoute));
   if (C.result) throw new Error('Combat is over');
   if (C.phase !== 'player') throw new Error('Not the player phase');
   const P = C.players.get(playerId);
@@ -739,7 +739,7 @@ export function playCard(C, playerId, cardInstanceId, targetId, choice, upcastTi
   setActive(C, P);
   C._buffer = [];
   try {
-    doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedBuildup });
+    doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedBuildup, rangeRoute });
     return { events: C._buffer };
   } finally {
     C._buffer = null;
@@ -1198,6 +1198,7 @@ function enemyPhase(C) {
     beginEnemyBurdens(C,enemy,Rounds.enemyPool(C.registries.enemies.get(enemy.enemyId)));
     Reactions.revealActor(C, enemy);
     setActive(C, firstLiving(C));
+    if (C.rangeState) { enemy.fixCoreStaminaRemaining = Math.max(0, (enemy.maxStamina ?? Rounds.enemyPool(C.registries.enemies.get(enemy.enemyId))) - (enemy.pendingStaminaLoss || 0)); enemy.stamina = enemy.fixCoreStaminaRemaining; delete enemy.pendingStaminaLoss; }
     let tacticalProtection = { block: 0, barrier: 0 };
     if (C.sharedExpansionVersion === 2) { C.combatExpansionVersion = 2; enemy.barrier = 0; tacticalProtection = startTacticalTurn(C, enemy); }
     proposalTurn(C,enemy,'start');
@@ -1264,7 +1265,7 @@ function enemyPhase(C) {
 function executeMove(C, enemy, move, moveId) {
   if (C.result || !enemy.alive) return;
   const start = { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent };
-  if (!Reactions.usesReactions(C)) {
+  if (!Reactions.usesReactions(C) && !C.rangeState) {
     (enemy.performedMoves ||= []).push(moveId);
     C.emit('enemyMoveStarted', start);
   }
@@ -1302,9 +1303,17 @@ function executeMove(C, enemy, move, moveId) {
 // the row names no target (Dazed injectors; docs/FINISH.md, Owner decisions).
 const SEAT_PILE_OPS = new Set(['addCard', 'draw', 'discard', 'exhaust', 'shuffleDiscardIntoDraw']);
 
+function rangeClosingTarget(C,enemy) {
+  return livingPlayers(C).map(row=>row.entity).sort((a,b)=> {
+    const distances = C.rangeState?.engagements || {};
+    const get = entity => distances[JSON.stringify([enemy.rangeActorKey,entity.rangeActorKey].sort())] ?? 0;
+    return get(b)-get(a);
+  })[0];
+}
+
 function executeExpandedEnemyPayload(C, enemy, move, moveId, carrier, start = null, extraMeta = null) {
   if(!allowBurdenMove(C,enemy,Rounds.enemyMoveSp(move,{enemy,moveId,combat:C}),move)) return;
-  if (Reactions.usesReactions(C)) {
+  if (Reactions.usesReactions(C) || C.rangeState) {
     const actions = [];
     for (const P of livingPlayers(C)) {
       setActive(C, P);
@@ -1317,7 +1326,23 @@ function executeExpandedEnemyPayload(C, enemy, move, moveId, carrier, start = nu
     const self = (move.effects || []).filter(effect => effect.target !== 'player' && !SEAT_PILE_OPS.has(effect.op));
     if (move.block != null && !(carrier.combatProfile.maneuver === 'counter' && enemyCounterDefensePrimed(enemy, moveId))) self.unshift({ op: 'block', target: 'self', amount: move.block });
     if (move.barrier != null && !(carrier.combatProfile.maneuver === 'counter' && enemyCounterDefensePrimed(enemy, moveId))) self.unshift({ op: 'gainBarrier', target: 'self', amount: move.barrier });
-    actions.unshift(...self.map(effect => ({ effect, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, ...extraMeta } })));
+    actions.unshift(...self.map(effect => ({ effect, source: enemy, owner: enemy, target: effect.op === 'moveEngagement' ? rangeClosingTarget(C,enemy) : enemy, card: carrier, meta: { moveId, ...extraMeta } })));
+    if (C.rangeState) {
+      const baseSp = Rounds.enemyMoveSp(move,{enemy,moveId,combat:C});
+      const quote = quoteRangeActions(C,enemy,actions,{route:'advance',preview:true});
+      const available = enemy.fixCoreStaminaRemaining ?? enemy.maxStamina ?? Rounds.enemyPool(C.registries.enemies.get(enemy.enemyId));
+      if (baseSp + quote.advanceSp > available) {
+        const def = C.registries.enemies.get(enemy.enemyId), closingId = def.rangeClosingMove, closing = def.moves[closingId];
+        if (quote.advanceSp > 0 && closing && closingId !== moveId && Rounds.enemyMoveSp(closing,{enemy,moveId:closingId,combat:C}) <= available) {
+          const next = expandedEnemyMove(enemy,closing,closingId,C), nextCarrier = enemyMoveCarrier(enemy,next,closingId,C);
+          return executeExpandedEnemyPayload(C,enemy,next,closingId,nextCarrier,{sourceId:enemy.id,enemyId:enemy.enemyId,moveId:closingId,kind:next.intent});
+        }
+        C.emit('enemyMoveUnavailable',{sourceId:enemy.id,moveId,required:baseSp+quote.advanceSp,available,resource:'sp'}); return;
+      }
+      enemy.fixCoreStaminaRemaining = available - baseSp; enemy.stamina = enemy.fixCoreStaminaRemaining;
+      carrier.rangeQuotedPlan = quote; carrier.rangeBaseCosts = {energy:baseSp,stamina:baseSp,mana:0};
+      if (!Reactions.usesReactions(C) && start) { (enemy.performedMoves ||= []).push(moveId); C.emit('enemyMoveStarted',start); }
+    }
     const group = enqueueExpandedAction(C, actions, { source: enemy, target: firstLiving(C)?.entity, carrier });
     if (start && group) group.enemyMoveStart = start;
     drainQueue(C);
