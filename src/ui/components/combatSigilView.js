@@ -31,6 +31,8 @@ export function sigilExplanationHtml(identity) {
 // charge expiry/stacking and HP-payment floors intact.
 export function compactCardRules(html) {
   return html.replace(/\s+/g, ' ').replace(/(^|\. |: )Deal /g, '$1')
+    .replace(/, plus (\d+) for each ((?:<span class="st-bleed">)?[A-Za-z][A-Za-z ]*?(?:<\/span>)?) on the target(?=[.;]|$)/g, ', +$1 per target $2')
+    .replace(/At the start of your turn, gain (\d+) ([A-Za-z][A-Za-z ]*?) and take (\d+) damage(?=[.;]|$)/g, 'Your turn start: +$1 $2; take $3 damage')
     .replace(/to the selected enemy/g, 'to target')
     .replace(/to every living enemy/g, 'to all enemies')
     .replace(/card\(s\)/g, 'cards')
