@@ -683,16 +683,19 @@ async function main() {
     await until(`!!document.querySelector('.combat .hand .card')`, 'combat board');
     await wait(700); // auto-zoom re-flexes on a 150ms debounce, plus a boot re-apply
     return evalIn(`(async () => {
-      // The expanded Reaver opener may legitimately draw only Counters and
-      // friendly actions. This cell verifies Escape while a CARD target is
-      // armed, not the shuffle, so give the shot fixture one authored,
-      // affordable hostile card instead of mistaking Shield Bash's deferred
-      // reply for an immediate attack.
+      // Starting decks and their opening draws need not include an attack or
+      // Counter. Seed authored cards for both Escape paths; their real target
+      // plans, selection holds and no-spend receipts stay under test.
+      const { projectGameCard } = await import('/src/model/gameProfile.js');
       const combat = window.__combat;
-      if (!combat.piles.hand.some(card => card.instanceId === 'tutorial-reach-attack')) {
-        combat.piles.hand.unshift({ instanceId: 'tutorial-reach-attack', cardId: 'strike', upgraded: false });
-        window.__renderCombatForShot();
+      const fixtureCards = [
+        { instanceId: 'tutorial-reach-attack', cardId: 'strike', upgraded: false },
+        { instanceId: 'tutorial-reach-counter', cardId: projectGameCard(combat, 'core.counter') ? 'core.counter' : 'shieldBash', upgraded: false },
+      ];
+      for (const card of fixtureCards) {
+        if (!combat.piles.hand.some(inst => inst.instanceId === card.instanceId)) combat.piles.hand.push(card);
       }
+      window.__renderCombatForShot();
       const m = await import('/src/ui/components/tutorial.js');
       window.__tutDone = 0;
       m.mountTutorial(document.getElementById('app'), { onDone: () => { window.__tutDone++; } });
@@ -1001,10 +1004,12 @@ async function main() {
       if (!raw) return false;
       const saved = JSON.parse(raw);
       saved.flasks = [{ flaskId: 'blightCoating' }];
+      // The class starter deck may have no Counter. Add an owned authored
+      // instance before CONTINUE, then let the real loader and draw find it.
       const selfCounter = saved.deck.find(card => {
         const def = projectGameCard(saved, card);
         return def ? combatProfileFor(def).maneuver === 'counter' : card.cardId === 'shieldBash';
-      });
+      }) || { instanceId: 'tutorial-reach-counter', cardId: projectGameCard(saved, 'core.counter') ? 'core.counter' : 'shieldBash', upgraded: false };
       const attack = saved.deck.find(card => {
         const def = projectGameCard(saved, card);
         return def ? combatProfileFor(def).maneuver !== 'counter' && hasImmediateHostileDamage(def, { targeted: true }) : card.cardId === 'strike';
@@ -1022,7 +1027,7 @@ async function main() {
         && reread.deck?.[0]?.instanceId === attack.instanceId
         && reread.deck?.[1]?.instanceId === selfCounter.instanceId;
     })()`);
-    ok(seededFlask, 'first-run: valid attack and Blight Coating rows entered through the durable save');
+    ok(seededFlask, 'first-run: valid attack, self Counter and Blight Coating rows entered through the durable save');
     await cdp.send('Page.navigate', { url: base }, S);
     await passStartupGate();
     await until(`!!document.querySelector('.slot-continue:not([disabled])')`, 'the title screen with the flask-seeded run');
