@@ -9,6 +9,7 @@ export function settingsRowAvailable(row, profile) {
   if (!profile) return true;
   const configured = profile.foundation?.mode === 'configured';
   const modules = profile.modules || {};
+  if (row.coreOnly) return configured && modules.effects?.fixCoreVersion === 1;
   // Ordered draw is consumed by createRunCombat in both foundations.
   if (row.key === 'playInDeckOrder') return !!modules.cards;
   if (configured && row.cat === 'Advanced' && (LEGACY_MECHANICS_GROUPS.has(row.advancedGroup)

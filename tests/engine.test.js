@@ -7345,11 +7345,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(GENERAL_GROUPS.join(','), 'Display,Combat,Audio,Game rules',
       'General offers Display, Combat, Audio and the custom Game rules section');
     const combatTopics = generalGroups('Combat');
-    eq([...combatTopics.keys()].join(','), 'Animation & effects,Armaments',
+    eq([...combatTopics.keys()].join(','), 'Animation & effects,Range,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
       'askToUpcastAfterTarget,combatLogPlayerColor,combatLogEnemyColor,useSprites,autoCombat,combatSpeed,autoCombatSpeed,combatStepPause,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
       'every combat pacing, log identity color, quality, shake, sprite, played-card and upcast switch is under one name');
+    eq(combatTopics.get('Range').map(r => r.key).join(','),
+      'rangeMechanics,rangeAdvanceSpPerBand,rangeReachPrecisionBonus,rangeThrowPrecisionPenalty',
+      'new-run range rules have their own Combat topic');
     eq(combat.find(r => r.key === 'askToUpcastAfterTarget').def, false, 'upcast prompting defaults off');
     eq(combatTopics.get('Armaments').map((r) => r.key).join(','),
       'armamentsPresentation,armamentsPhonePlacement',

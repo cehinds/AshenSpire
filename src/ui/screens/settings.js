@@ -13,6 +13,7 @@ import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 import { ACTION_PACING, AUTOMATION_DEFAULTS } from '../../model/autoCombatPolicy.js';
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
 import { COMBAT_LOG_PALETTE_DEFAULTS } from '../models/CombatLogPaletteModel.js';
+import { rangeSettingsRows } from '../models/RangeSettingsModel.js';
 import { advancedSubgroups, statsSection, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
 import { statsTopicPreview, statsExampleClasses, STATS_EXAMPLE_CLASS_KEY } from '../models/StatsPreviewModel.js';
 import { levelPacePreview } from '../models/LevelPacePreviewModel.js';
@@ -334,6 +335,7 @@ const ROWS = [
     label: t('settings.row.combatLogPlayerColor'), note: tFull('settings.row.combatLogPlayerColor') },
   { cat: 'Combat', key: 'combatLogEnemyColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.enemy,
     label: t('settings.row.combatLogEnemyColor'), note: tFull('settings.row.combatLogEnemyColor') },
+  ...rangeSettingsRows(),
   ...tooltipSettingsRows(),
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),
     note: tFull('settings.row.fullscreen') },
@@ -1623,7 +1625,7 @@ export function rowModified(settings, row, promoted = buildPromotion()) {
     const base = Object.hasOwn(promoted, row.key) ? promoted[row.key] : undefined;
     return row.resolve(settings) !== row.resolve({ ...settings, [row.key]: base });
   }
-  const def = rowDefault(row, promoted);
+  const def = rowDefault(row.defaultFor ? { ...row, def: row.defaultFor(settings) } : row, promoted);
   if (row.type === 'number' && typeof stored === 'number' && typeof def === 'number') return Math.abs(stored - def) > 1e-9;
   // A choice row reads an older build's stored word through `legacyChoices`
   // before drawing (renderRow), so it is compared the same way: a profile
@@ -2059,13 +2061,14 @@ export function resolveNumberRow(settings, row) {
     const path = row.key.slice('gameConfig.'.length).split('.');
     return path.reduce((value, key) => value[key], configuredContentBundle(contentBundle, settings));
   }
+  const fallback = row.defaultFor ? row.defaultFor(settings) : row.def;
   const raw = (settings || {})[row.key];
   // The rule itself lives in CardSizeModel so the card-size model and this row
   // cannot disagree about what a stored number means — they did, by a floor
   // against a round.
-  if (row.integer !== false) return normalizeTunedNumber(raw, { min: row.min, max: row.max, def: Number(row.def) });
-  const numeric = raw === '' || raw === null || raw === undefined ? Number(row.def) : Number(raw);
-  if (!Number.isFinite(numeric)) return Number(row.def);
+  if (row.integer !== false) return normalizeTunedNumber(raw, { min: row.min, max: row.max, def: Number(fallback) });
+  const numeric = raw === '' || raw === null || raw === undefined ? Number(fallback) : Number(raw);
+  if (!Number.isFinite(numeric)) return Number(fallback);
   const clamped = Math.min(row.max, Math.max(row.min, numeric));
   const step = Number(row.step) || 0.01;
   const precision = Math.max(0, String(step).split('.')[1]?.length || 0);
@@ -2471,7 +2474,7 @@ export function generalGroups(category, profile = null) {
       // `cat: 'Combat'` now, so what is left here is the title entrance — and
       // the topic is named for the one thing it holds.
       : /titleCity/.test(key) ? 'Title screen' : 'Interface'
-      : category === 'Combat' ? /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
+      : category === 'Combat' ? row.rangeSetting ? 'Range' : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
       : category === 'Accessibility' ? /tooltip/i.test(key) ? 'Tooltips' : /Flick/.test(key) ? 'Touch gestures'
       : /Motion|Flashes|colorblind/.test(key) ? 'Motion & colour' : 'Readability' : 'Audio';
     if (!groups.has(label)) groups.set(label, []);
