@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // SPEC §15.3 — armament, equipment and crafting drops.
 //
 // Every number is a balance leaf with a generated Settings row, and the shipped
@@ -275,7 +276,7 @@ test('the spoils row copy names a refined stone', async () => {
   assert.match(t('reward.stone.refinedBody', { total: 3 }), /3 refined/);
 });
 
-test('co-op treasure pays the same stone door as solo, and the catch-up names it', async () => {
+test('co-op treasure pays the same stone door as solo, and the catch-up names it', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   const { createSession } = await import('../tools/session.mjs');
   const { smithingStoneNote } = await import('../src/model/rewardplan.js');
   const { t } = await import('../src/ui/strings.js');

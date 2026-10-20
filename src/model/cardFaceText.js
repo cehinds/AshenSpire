@@ -61,16 +61,17 @@ export function withChargedEffects(def, preview = null) {
 }
 
 /** The card-face lines for `def`, or null when a part of it cannot be phrased. */
-export function cardFaceLines(def, preview = null, registries = null, rules = null, { stanceEntry = true } = {}) {
+export function cardFaceLines(def, preview = null, registries = null, rules = null,
+  { stanceEntry = true, representedEffects = [], representedEntry = [], representedRules = [], entryLabel = 'Entry' } = {}) {
   try {
-    return buildLines(def, preview, registries, rules, stanceEntry);
+    return buildLines(def, preview, registries, rules, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel });
   } catch (error) {
     if (error === UNPHRASEABLE) return null;
     throw error;
   }
 }
 
-function buildLines(def, preview, registries, rules = null, stanceEntry = true) {
+function buildLines(def, preview, registries, rules = null, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel }) {
   // A live preview prices the effects an active charge expands (an added buildup row); its values follow that list.
   def = withChargedEffects(def, preview);
   if (def.comboHook) return null;
@@ -215,8 +216,15 @@ function buildLines(def, preview, registries, rules = null, stanceEntry = true) 
         return frag('status', `${esc(title(effect.status))} ${num(n, base)}${area}`);
       }
       case 'applyStatus': {
+        // Unmodelled per-application tags (for example Persistent) may carry
+        // authored rules. Preserve that prose rather than silently dropping it.
+        if (effect.tags?.length) fail();
         if (STATUS_NEVER_PHRASED.includes(effect.status)
           && !(counter && def.defenseRulesVersion === 2 && effect.status === 'grounded')) fail();
+        if (effect.chance !== undefined) {
+          if (typeof effect.chance !== 'number') fail();
+          if (effect.chance < 100) chances.push({ name: title(effect.status), chance: effect.chance });
+        }
         const stacks = value(effect, index, 'stacks'), stacksBase = baseOf(effect, index, 'stacks');
         const name = `${esc(title(effect.status))} ${num(stacks, stacksBase)}`, duration = durationOf(effect);
         const out = [];
@@ -236,6 +244,12 @@ function buildLines(def, preview, registries, rules = null, stanceEntry = true) 
         const suffix = effect.target === 'enemy' ? ' from target' : effect.target === 'ally' ? ' from an ally' : area;
         const cat = effect.target === 'self' && dependentStatuses.has(effect.status) ? 'consume' : 'remove';
         return frag(cat, `${amount} ${esc(title(effect.status))}${suffix}`);
+      }
+      case 'moveEngagement': {
+        if (!['enemy', 'pendingAttacker'].includes(effect.target) || ![-1, 1].includes(effect.bands)
+          || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) fail();
+        const close = effect.bands < 0, target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
+        return frag('bonus', `${close ? 'Close' : 'Retreat'} ${num(Math.abs(effect.bands))} band ${close ? 'toward' : 'away from'} ${target}`);
       }
       case 'draw': return frag('bonus', `Draw ${num(n, base)}`);
       case 'discard': return frag('bonus', `${effect.choose ? 'Choose and discard' : 'Discard'} ${num(n, base)}${effect.random ? ' at random' : ''}`);
@@ -305,6 +319,7 @@ function buildLines(def, preview, registries, rules = null, stanceEntry = true) 
 
   const unconditional = [], groups = new Map();
   for (const [index, effect] of (def.effects || []).entries()) {
+    if (representedEffects.includes(index)) continue;
     const fragments = phraseEffect(effect, index);
     if (effect.oncePerTurn && fragments.length) fragments[fragments.length - 1].text += ' once per turn per family';
     if (effect.if && !fragments.length) continue; // a condition with nothing left to say (a Core return zeroed its row) is not listed
@@ -346,7 +361,7 @@ function buildLines(def, preview, registries, rules = null, stanceEntry = true) 
   if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
   const smashClause = coreSmashClause(def, registries);
-  if (smashClause) unconditional.push({ cat: 'bonus', text: esc(smashClause) });
+  if (smashClause && !representedRules.includes('smash')) unconditional.push({ cat: 'bonus', text: esc(smashClause) });
   if (def.pronePoiseBonus && !(counter && preview?.counterReturn)) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
   // Live Precision grant when a preview has an actor, else the 1 + stat mix formula.
   const entryPrecisionText = (amount, preview) => Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount) + ' + stat mix';
@@ -357,17 +372,17 @@ function buildLines(def, preview, registries, rules = null, stanceEntry = true) 
   const versioned = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2;
   if (stanceEntry && !versioned && coreProfile) {
     const precision = stanceEntryBonuses(def, entryCtx).precision;
-    if (precision > 0) unconditional.push({ cat: 'bonus', text: 'Entry: ' + entryPrecisionText(precision, preview) + ' Precision' });
+    if (precision > 0 && !representedEntry.includes('precision')) unconditional.push({ cat: 'bonus', text: esc(entryLabel) + ': ' + entryPrecisionText(precision, preview) + ' Precision' });
   }
   if (versioned) {
     const ctx = entryCtx;
     const entry = stanceEntryBonuses(def, ctx);
     // Core grants 1 + the actor's stat mix of Precision: the live figure when a preview has an actor, else the formula (owner, 2026-10-19).
     const statMixGrant = entry.precision > 0 && coreProfile;
-    const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => (id === 'precision' && statMixGrant
+    const grants = Object.entries(entry).filter(([id, amount]) => amount > 0 && !representedEntry.includes(id)).map(([id, amount]) => (id === 'precision' && statMixGrant
       ? entryPrecisionText(amount, preview)
       : '+' + num(amount)) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
-    if (stanceEntry && grants.length) unconditional.push({ cat: 'bonus', text: 'Entry: ' + grants.join(', ') });
+    if (stanceEntry && grants.length) unconditional.push({ cat: 'bonus', text: esc(entryLabel) + ': ' + grants.join(', ') });
     if (stanceOf(def)?.maneuver === 'defend') {
       const restore = num(stanceRulesFor(ctx).defenseRestore);
       unconditional.push({ cat: 'defenseRestore', text: 'Restore ' + restore + ' Poise/Ward' });
@@ -402,5 +417,5 @@ function buildLines(def, preview, registries, rules = null, stanceEntry = true) 
   const lines = [];
   for (const kind of LINE_ORDER) for (const html of byKind[kind]) if (html) lines.push({ kind, html });
   // Nothing phrased (a status or curse with no effects) keeps the authored text, as combatCardSummary does.
-  return lines.length ? lines : null;
+  return lines.length || representedEffects.length ? lines : null;
 }

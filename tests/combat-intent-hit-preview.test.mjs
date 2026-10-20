@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -43,7 +45,7 @@ const amounts = ({ combat, enemy }, target = 'p1') => combat.eventLog
   .filter(event => event.type === 'damageDealt' && event.sourceId === enemy.id && (!combat.players || event.targetPlayerId === target))
   .map(event => event.amount);
 
-for (const coop of [false,true]) test(`${coop ? 'co-op' : 'solo'} exact Counter reads expose prepared HP and Poise separately`, () => {
+for (const coop of COOP_MODES) test(`${coop ? 'co-op' : 'solo'} exact Counter reads expose prepared HP and Poise separately`, () => {
   const f=fight({coop,maneuver:'counter',counter:false});
   f.enemy.combatCounter={version:2,payload:{hp:0,poise:4,ward:0}};
   const shown=f.preview();
@@ -57,7 +59,7 @@ for (const coop of [false,true]) test(`${coop ? 'co-op' : 'solo'} exact Counter 
   assert.equal(hidden.counterPoiseDamage,undefined);
 });
 
-for (const coop of [false, true]) for (const block of [1, 6]) {
+for (const coop of COOP_MODES) for (const block of [1, 6]) {
   test(`${coop ? 'co-op' : 'solo'} multi-hit Counter preview spends only one charge with Block${block}`, () => {
     const f = fight({ coop, block });
     const before = JSON.stringify({ player: f.player, enemy: f.enemy, queue: f.combat.queue,
@@ -104,7 +106,7 @@ test('saved tactical rules price every preview hit after reload despite changed 
   assert.deepEqual(amounts({ combat: loaded, enemy: loaded.enemies[0] }), shown.hitDamages);
 });
 
-test('per-seat foundation defenses remain mapped to the original target identity during pure preview', () => {
+test('per-seat foundation defenses remain mapped to the original target identity during pure preview', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const f = fight({ coop: true, foundation: true });
   assert.ok(f.combat.foundation);
   const shown = f.preview(), other = previewCoopIntent(f.combat, 'p2', f.enemy.id);
@@ -115,7 +117,7 @@ test('per-seat foundation defenses remain mapped to the original target identity
   assert.notDeepEqual(other.hitDamages, shown.hitDamages, 'the second seat uses its own authored armor');
 });
 
-test('hidden per-seat reads omit all per-hit and total damage fields without rolling again', () => {
+test('hidden per-seat reads omit all per-hit and total damage fields without rolling again', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const f = fight({ coop: true });
   f.enemy.intentReads.p1 = false;
   const rng = f.combat.rng.getCounters();

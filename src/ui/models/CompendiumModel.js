@@ -59,11 +59,12 @@ export function compendiumView(drawn = [], { current = null, selectedId = null, 
  * player reads them; they and the tags are dropped unless the piece is held,
  * whatever the caller passes.
  */
-export function entryDetail(piece, reveal, { modLines = [], tags = [], lockCopy = {} } = {}) {
+export function entryDetail(piece, reveal, { modLines = [], tags = [], lockCopy = {}, showProperties = false } = {}) {
   const state = reveal.state;
   const held = state === 'held';
   const named = held || state === 'listed';
-  const tagRows = held ? (piece.tags || []).map((id) => {
+  const tagIds = [...new Set([...(piece.tags || []), ...(showProperties ? piece.propertyTags || [] : [])])];
+  const tagRows = held ? tagIds.map((id) => {
     const row = tags.find((tag) => tag.id === id);
     return Object.freeze({ id, label: row?.label || id, blurb: row?.blurb || id });
   }) : [];

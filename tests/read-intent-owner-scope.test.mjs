@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -10,7 +11,7 @@ const registries = createRegistries(contentBundle);
 const seat = id => ({ id, classId: 'reaver', maxHp: 80, hp: 80, energyMax: 20, maxStamina: 20,
   stamina: 20, maxMana: 5, mana: 5, drawPerTurn: 1, relicIds: [], deck: [] });
 
-test('targeted Read Intent reveals only its selected enemy to its owner and expires for intent and hand', () => {
+test('targeted Read Intent reveals only its selected enemy to its owner and expires for intent and hand', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const combat = createCoopCombat({ registries, rng: createRng(421), players: [seat('p1'), seat('p2')],
     enemyIds: ['wanderingSoldier', 'wanderingSoldier'] });
   const [selected, other] = combat.enemies;

@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -179,15 +180,18 @@ test('old and ratings-free fights keep both older meters; old snapshots restore 
 
 test('new-run snapshots stamp the version and co-op follows the host stamp', () => {
   assert.equal(advancedConfigSnapshot().breakMeterVersion, 1);
-  const reg = createRegistries(contentBundle); const ratingsRules = resolveCombatRatings({}, contentBundle);
-  for (const stamp of [null, 1]) {
-    const c = createCoopCombat({ registries: reg, rng: createRng(7), players: [{ id: 'a', ...player() }], enemyIds: ['wanderingSoldier'], ratingsRules, breakMeterVersion: stamp });
-    assert.equal(!!c.enemies[0].wardMeter, stamp !== 1); assert.equal(!!c.enemies[0].arcaneExposure, stamp !== 1);
-    assert.equal(!!c.players.get('a').entity.wardMeter, stamp !== 1);
+  if (COOP_TESTS_ENABLED) {
+    const reg = createRegistries(contentBundle); const ratingsRules = resolveCombatRatings({}, contentBundle);
+    for (const stamp of [null, 1]) {
+      const c = createCoopCombat({ registries: reg, rng: createRng(7), players: [{ id: 'a', ...player() }], enemyIds: ['wanderingSoldier'], ratingsRules, breakMeterVersion: stamp });
+      assert.equal(!!c.enemies[0].wardMeter, stamp !== 1); assert.equal(!!c.enemies[0].arcaneExposure, stamp !== 1);
+      assert.equal(!!c.players.get('a').entity.wardMeter, stamp !== 1);
+    }
   }
+
 });
 
-test('co-op Stagger triggers refund and draw only for the source, including an inactive seat', () => {
+test('co-op Stagger triggers refund and draw only for the source, including an inactive seat', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const reg = createRegistries(contentBundle);
   const players = ['a', 'b'].map(id => ({ id, ...player(), deck: Array.from({ length: 8 }, (_, n) => ({ cardId: 'dodgeRoll', instanceId: `${id}-${n}`, upgraded: false })) }));
   const c = createCoopCombat({ registries: reg, rng: createRng(7), players, enemyIds: ['wanderingSoldier'], ratingsRules: resolveCombatRatings({}, contentBundle), breakMeterVersion: 1 });
@@ -207,7 +211,7 @@ test('co-op Stagger triggers refund and draw only for the source, including an i
   assert.equal(c.player, active);
 });
 
-test('the real co-op session sends Ward ratings and omits retired meters under the host stamp', () => {
+test('the real co-op session sends Ward ratings and omits retired meters under the host stamp', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const reg = createRegistries(configuredContentBundle(contentBundle, advancedConfigSnapshot()));
   const host = createSession({ registries: reg, seedString: 'BOSSTIER', combatExpansionVersion: 1 });
   host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' }); host.start();

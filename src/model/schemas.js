@@ -56,6 +56,7 @@ export const COMBAT_OPCODES = Object.freeze([
   'grantRollMode',
   'retain',
   'dodgeRoll',
+  'moveEngagement',
   'applyStatus',
   'removeStatus',
   'grantCardCharge',
@@ -121,7 +122,7 @@ export const TARGETS = Object.freeze([
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
   'ashenBlightPaid', 'barrierGained', 'barrierBroken', 'wardBroken', 'poiseBroken', 'blockBroken', 'enemyInterrupted', 'controlRecovered', 'controlResolveScheduled', 'persistentWardChanged', 'persistentPoiseChanged', 'statusGaugeFilled', 'statusPoiseBreak', 'statusPressure', 'statusRecoveryRolled',
-  'combatAvoidanceResolved',
+  'combatAvoidanceResolved', 'combatEngagementMoved', 'combatRangeReturnUnavailable', 'combatRangeActionUnavailable',
   'combatCounterArmed', 'combatCounterConsumed', 'combatCounterTriggered',
   'combatWardStripped', 'combatMatchupApplied', 'combatDamageRider',
   'evadeGained', 'attackEvaded', 'impactDealt', 'manaRecovered',
@@ -552,6 +553,7 @@ export const EFFECT_SPECS = Object.freeze({
   // target and nothing else — the check, the die and the guard are the
   // framework's, and the price is the Weight Class's.
   dodgeRoll: { allowed: [], required: [], refs: {} },
+  moveEngagement: { allowed: ['bands'], required: ['target', 'bands'], refs: {} },
   applyStatus: { allowed: ['status', 'stacks', 'tags'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status', 'amount'], required: ['status'], refs: { status: 'statuses' } },
   grantCardCharge: { allowed: ['key', 'cardType', 'cardTag', 'abilityKind', 'damage', 'damageScope', 'manaDiscount', 'block', 'heal', 'break', 'buildup', 'buildupStatus'], required: ['key'], refs: { buildupStatus: 'statuses' } },
@@ -641,6 +643,7 @@ const modifiersSchema = obj(Object.fromEntries(
 ));
 
 const enemyMoveSchema = obj({
+  range: opt(en('melee', 'reach', 'ranged')),
   // The move's SP price (SPEC §4.6a): replaces the stance table's. A boss move's price is authored here.
   sp: opt(int),
   counterDamage: opt(int),
@@ -1060,6 +1063,10 @@ export const SCHEMAS = Object.freeze({
     blighted: opt(bool), // blight shifts its attributes (content/actionCosts.js ENEMY_BLIGHT_SHIFT)
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
+    startingRange: opt(en('melee', 'reach', 'ranged')),
+    rangeClosingMove: opt(str),
+    rangeRoutePolicy: opt(en('advance')),
+    moveSources: opt(mapOf(obj({ cardId: str }))),
     phases: opt(arr(enemyPhaseSchema)),
     art: opt(str),
     size: opt(en('small', 'medium', 'large')), // sprite size tier (display)

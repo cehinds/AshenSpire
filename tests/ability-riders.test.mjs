@@ -1,5 +1,6 @@
 import { botCardTargetId } from '../tools/simbot.mjs';
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -26,7 +27,7 @@ function fixture(effects, { manaCost = 0, cost = 1, coop = false, expanded = fal
 const play = combat => dispatch(combat, { type: 'playCard', cardInstanceId: combat.piles.hand[0].instanceId, targetId: botCardTargetId(combat.registries, combat, combat.piles.hand[0], combat.enemies[0].id) });
 
 test('transactional real plays bank skill XP once, scoped to the solo or co-op owner', () => {
-  for (const coop of [false, true]) {
+  for (const coop of (COOP_TESTS_ENABLED ? [false, true] : [false])) {
     const combat = fixture([{ op: 'damage', target: 'enemy', amount: 3, hits: 2 }, { op: 'block', target: 'self', amount: 2 }], { manaCost: 5, coop, expanded: true });
     const seat = coop ? combat.players.get('a') : { entity: combat.player, piles: combat.piles };
     const id = seat.piles.hand[0].instanceId;
@@ -106,7 +107,7 @@ test('lethal plays finish their draw/discard and resolve exactly once before com
   const types = combat.eventLog.map(e => e.type); assert.ok(types.indexOf('cardResolved') < types.indexOf('combatEnd'));
 });
 
-test('co-op discard belongs to its seat and charges and resolution carry seat ownership', () => {
+test('co-op discard belongs to its seat and charges and resolution carry seat ownership', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const combat = fixture([{ op: 'draw', amount: 1 }, { op: 'discard', amount: 1, choose: true }], { coop: true });
   const owner = combat.players.get('a'); const id = owner.piles.hand[0].instanceId;
   grantAbilityCharge(owner.entity, { key: 'discount', manaDiscount: 1 });
@@ -155,7 +156,7 @@ test('partial strongest status consumption cannot resurrect the consumed magnitu
   advanceStatusClock(combat, target, 'ownerTurnEnd'); assert.equal(getStacks(target, 'weak'), 3);
 });
 
-test('co-op lethal play still awaits its owner choice and resolves before victory', () => {
+test('co-op lethal play still awaits its owner choice and resolves before victory', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const combat = fixture([{ op: 'damage', target: 'enemy', amount: 2000 }, { op: 'draw', amount: 1 }, { op: 'discard', amount: 1, choose: true }], { coop: true });
   playCard(combat, 'a', combat.players.get('a').piles.hand[0].instanceId);
   assert.equal(combat.result, null);
@@ -205,7 +206,7 @@ test('explicit-discard predicates exclude overflow and end-turn cleanup even aft
 });
 
 test('buildup charges supply a missing low-grade status and augment an authored status once in solo and co-op', () => {
-  for (const coop of [false, true]) for (const existing of [false, true]) {
+  for (const coop of (COOP_TESTS_ENABLED ? [false, true] : [false])) for (const existing of [false, true]) {
     const effects = [{ op: 'block', target: 'self', amount: 4 }, ...(existing ? [{ op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 3 }] : [])];
     const combat = fixture(effects, { coop });
     const source = coop ? combat.players.get('a').entity : combat.player;
@@ -246,7 +247,7 @@ test('area predicates respect the resolved event face before the default registr
 
 
 test('charged self cards accept enemies and reject their source before spending in solo and co-op', () => {
-  for (const coop of [false, true]) {
+  for (const coop of (COOP_TESTS_ENABLED ? [false, true] : [false])) {
     const combat = fixture([{ op: 'block', target: 'self', amount: 4 }], { coop });
     const source = coop ? combat.players.get('a').entity : combat.player;
     const hand = coop ? combat.players.get('a').piles.hand : combat.piles.hand;

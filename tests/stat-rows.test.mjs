@@ -1,6 +1,7 @@
 // tests/stat-rows.test.mjs — derived-stat ruleset 7: one row format, one table,
 // one formula for every stat (owner, 2026-09-24).
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -234,7 +235,7 @@ test('legacy settings keys convert on import and on load: ratings, multiplier, h
   assert.equal(imported['gameConfig.derivedStatRules.rules.pr.intelligence'], 1);
 });
 
-test('co-op reads the same rows: each seat counts cards and ratings by its own run', () => {
+test('co-op reads the same rows: each seat counts cards and ratings by its own run', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const registries = createRegistries(configuredContentBundle(contentBundle, {}));
   const seats = ['starseer', 'reaver'].map((classId, index) => {
     const run = createRunState({ seed: 20 + index, classId, registries });

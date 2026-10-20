@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -36,7 +38,7 @@ function fight(cardId, coop) {
     end: () => coop ? endTurn(c, actorId) : dispatch(c, { type: 'endTurn' }) };
 }
 
-for (const coop of [false, true]) for (const cardId of ['rondelParry', 'nockAndWait']) {
+for (const coop of COOP_MODES) for (const cardId of ['rondelParry', 'nockAndWait']) {
   for (const eventType of ['cardPreparing', 'energySpent']) {
     test(`${coop ? 'co-op' : 'solo'} ${cardId} captures default reply source before ${eventType} changes it`, () => {
       const { c, actorId, actor, play, end } = fight(cardId, coop);

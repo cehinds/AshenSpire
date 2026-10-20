@@ -383,7 +383,7 @@ test('ops.json op names equal the case names inside actions.js runOpcode', () =>
   assert.ok(from > 0 && to > from);
   const cases = new Set([...text.slice(from, to).matchAll(/case '([A-Za-z]+)':/g)].map(m => m[1]));
   assert.deepEqual([...Object.keys(ops.ops)].sort(), [...cases].sort());
-  assert.equal(Object.keys(ops.ops).length, 44);
+  assert.equal(Object.keys(ops.ops).length, 45);
   assert.equal(ops.format, 'ashen.ops@1');
   for (const def of Object.values(ops.ops)) {
     assert.ok(['portable', 'legacy'].includes(def.reference));

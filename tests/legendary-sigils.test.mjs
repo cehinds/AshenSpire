@@ -12,6 +12,7 @@
 // as noted Settings rows, the `sigils` stream appended last and silent at the
 // defaults, the snapshot and co-op carriage, and the load door's refusals.
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
@@ -252,7 +253,7 @@ test('the snapshot carries attunedSigils: a restore mounts them, an older snapsh
   assert.ok(combatSnapshotReferenceProblems({ ...snap, attunedSigils: [COMMON] }, REG).some((p) => p.includes(COMMON) && /legendary/.test(p)));
 });
 
-test('co-op: each seat mounts its own attuned sigils under its own key', () => {
+test('co-op: each seat mounts its own attuned sigils under its own key', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const run = lowHp(freshRun());
   run.sigils = [VIGIL];
   attuneSigil(REG, run, VIGIL);
@@ -598,7 +599,7 @@ test('rarity at every door: no never-legendary position may hold a legendary, at
   assert.deepEqual(sigilRarityProblems(REG, either), []);
 });
 
-test('rarity at every door: the co-op member restore refuses a member that breaks it, by name, and keeps the record', async () => {
+test('rarity at every door: the co-op member restore refuses a member that breaks it, by name, and keeps the record', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   const { createSession, restoreSession } = await import('../tools/session.mjs');
   const host = createSession({ registries: REG, seedString: 'VIGIL' });
   host.addMember({ id: 'p1', name: 'One', classId: 'reaver' });

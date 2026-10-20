@@ -140,6 +140,7 @@ import { pieceReveal } from '../../model/unlocks.js';
 import { ownership, modEffectLine } from '../../model/loadout.js';
 import { LOCK_COPY, armamentKindLabel } from '../uiContent.js';
 import { t } from '../strings.js';
+import { gameModule } from '../../model/gameProfile.js';
 import { compendiumView, entryDetail } from '../models/CompendiumModel.js';
 import { workspaceFrame, markCurrent, land } from '../components/w1Workspace.js';
 import {
@@ -162,9 +163,10 @@ function modSummary(modFields, piece) {
 // with it. A heading over nothing is the defect one level up from the fourth
 // cell, and this is how it cannot happen.
 
-function cell(piece, { state, hint, gate }, modFields, tags = []) {
+function cell(piece, { state, hint, gate }, modFields, tags = [], showProperties = false) {
   const held = state === 'held';
   const named = held || state === 'listed';
+  const tagIds = [...new Set([...(piece.tags || []), ...(showProperties ? piece.propertyTags || [] : [])])];
   // A held piece is announced by name; a withheld one is announced as what it
   // is, which is a shape you do not have. Screen readers get the same deal the
   // eye does — the alternative is an accessible label that leaks every name the
@@ -189,7 +191,7 @@ function cell(piece, { state, hint, gate }, modFields, tags = []) {
       const mods = modSummary(modFields, piece);
       return `<b>${esc(piece.name)}</b><br>${esc(piece.rarity)} · ${esc(piece.hand)} hand`
         + (mods.length ? `<p>${mods.map(esc).join(' · ')}</p>` : '')
-        + ((piece.tags || []).length ? `<div class="inspection-tags">${piece.tags.map(id => {
+        + (tagIds.length ? `<div class="inspection-tags">${tagIds.map(id => {
           const tag = tags.find(row => row.id === id);
           return `<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag?.blurb || id)}">${esc(tag?.label || id)}</span>`;
         }).join('')}</div>` : '');
@@ -287,6 +289,7 @@ export function mountCompendium(app, { registries, meta = {}, onBack }) {
     const facts = entryDetail(piece, reveal, {
       modLines: reveal.state === 'held' ? modSummary(eq.modFields, piece) : [],
       tags: registries.tags || [],
+      showProperties: gameModule(registries, 'effects')?.fixCoreVersion === 1,
       lockCopy: LOCK_COPY,
     });
     const art = artWell({ src: assetUrl(armamentIconAsset(piece)), alt: '' });
@@ -316,7 +319,7 @@ export function mountCompendium(app, { registries, meta = {}, onBack }) {
     panel.setAttribute('aria-labelledby', `cp-kind-${current}`);
     grid.setAttribute('aria-label', cat ? cat.label : '');
     grid.replaceChildren(...view.entries.map(({ piece, reveal }) => {
-      const node = cell(piece, reveal, eq.modFields, registries.tags);
+      const node = cell(piece, reveal, eq.modFields, registries.tags, gameModule(registries, 'effects')?.fixCoreVersion === 1);
       node.addEventListener('click', () => {
         selectedId = piece.id;
         view = compendiumView(drawnEntries, { current, selectedId, labelOf });

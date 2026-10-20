@@ -24,6 +24,7 @@ import { resolveCard } from '../../model/registries.js';
 import { cardClassification } from '../../model/cardClassification.js';
 import { deckRules } from '../../content/deckRules.js';
 import { has, t } from '../strings.js';
+import { rangeCardAvailable } from '../../model/rangeCardAvailability.js';
 
 /** The cost buckets the curve and the cost filter share. */
 export const DECK_COST_BUCKETS = Object.freeze(['0', '1', '2', '3', '4', '5+', 'X']);
@@ -303,7 +304,8 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
     const limit = deckCopyLimit(registries, entry.card.cardId, settings, run);
     const equipmentEligible = deckCardEquipmentEligible(registries, run, entry.card);
     let tileRefusal = '';
-    if (!equipmentEligible) tileRefusal = t('deckEditor.refuse.equipment');
+    if (!rangeCardAvailable(run, resolveCard(registries, entry.card))) tileRefusal = 'Range mechanics are disabled';
+    else if (!equipmentEligible) tileRefusal = t('deckEditor.refuse.equipment');
     else if (!entry.loose) tileRefusal = t('deckEditor.refuse.allInDeck', { name: row.name });
     else if ((inDeckById.get(entry.card.cardId) || 0) >= limit) tileRefusal = t('deckEditor.refuse.copyLimit', { name: row.name, limit });
     const removeInstanceId = lastInstanceId(deck, (c) => deckVariantKey(c) === variant);
@@ -418,6 +420,7 @@ export function openDeckEdit(registries, run, settings = {}) {
         const any = (run.deck || []).find((c) => c && matches(c));
         return { ok: false, refusal: t('deckEditor.refuse.allInDeck', { name: any ? nameOf(any) : cardId }) };
       }
+      if (!rangeCardAvailable(run, resolveCard(registries, loose))) return { ok: false, refusal: 'Range mechanics are disabled' };
       if (!deckCardEquipmentEligible(registries, run, loose)) return { ok: false, refusal: t('deckEditor.refuse.equipment') };
       if (moveFromSideboard(registries, run, loose.instanceId, settings)) return remember(before, { ok: true, refusal: '' });
       const limit = deckCopyLimit(registries, cardId, settings, run);

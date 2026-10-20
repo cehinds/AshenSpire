@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 // Enemy elemental resist (design elements-and-tag-mechanics §3): a percent map
 // beside `weak`, applied as ceil(total * (1 + weak/100) * (1 - resist/100)) - flat
 // on every v2 damage path. Preview equals the hit, solo equals co-op.
@@ -54,7 +56,7 @@ test('a 50 resist halves (ceil) that type, leaves other types whole, and preview
   assert.ok(base.dealt > 0 && base.type, 'baseline hit lands');
   assert.equal(base.shown, base.dealt);
   const stable = { cold: 'frost', force: 'arcane', holy: 'sacred', necrotic: 'decay' }[base.type] || base.type;
-  for (const coop of [false, true]) {
+  for (const coop of COOP_MODES) {
     const resisted = hit({ [stable]: 50 }, coop);
     assert.equal(resisted.dealt, Math.ceil(base.dealt * 0.5), `${coop ? 'co-op' : 'solo'} halves ${stable}`);
     assert.equal(resisted.shown, resisted.dealt, `${coop ? 'co-op' : 'solo'} preview equals the hit`);

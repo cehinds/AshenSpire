@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // tests/card-reward-schedule.test.mjs — SPEC §15.1, the card reward schedule.
 //
 // One test per Falsify line of §15.1, plus the doors the schedule passes
@@ -217,7 +218,7 @@ function coopFirstSpoils(reg, seedString) {
   return host;
 }
 
-test('co-op reads the schedule through cardRewardPlan: a pool turned off offers no card, and a level card is offered and taken', () => {
+test('co-op reads the schedule through cardRewardPlan: a pool turned off offers no card, and a level card is offered and taken', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const off = coopFirstSpoils(withSchedule({ afterCombat: { normal: false }, onLevelUp: true }), 'SCHEDULE');
   assert.equal(off.scene.kind, 'reward');
   const offer = off.scene.offers.p1;
@@ -455,7 +456,7 @@ test('a Taken levelCard row with no chosenDraftCardIds map at all is refused by 
   assert.ok(validateRunShape({ ...run, pendingReward }).some((m) => /levelCard:0 Taken state requires its chosen card/.test(m)));
 });
 
-test('a co-op seat that was away claims its level card through the catch-up', () => {
+test('a co-op seat that was away claims its level card through the catch-up', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const reg = withSchedule({ onLevelUp: true });
   const host = createSession({ registries: legacySessionRegistry(reg), seedString: 'AWAY', combatExpansionVersion: 1 });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
@@ -477,7 +478,7 @@ test('a co-op seat that was away claims its level card through the catch-up', ()
   assert.equal(p2.run.deck.at(-1).cardId, picked);
 });
 
-test('co-op: a level-card pick survives a redraw, and a row left unpicked is picked for the seat on close', () => {
+test('co-op: a level-card pick survives a redraw, and a row left unpicked is picked for the seat on close', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
   Object.assign(globalThis, dom);
@@ -563,7 +564,7 @@ test('run schema 12: a schema-11 save (the captured corpus bytes) loads unchange
   assert.deepEqual(back.pendingReward.rewards.levelCards, run.pendingReward.rewards.levelCards);
 });
 
-test('co-op couch seats: a level-card pick on seat A survives switching to seat B and back, and ends with its door', () => {
+test('co-op couch seats: a level-card pick on seat A survives switching to seat B and back, and ends with its door', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
   Object.assign(globalThis, dom);
@@ -598,7 +599,7 @@ test('co-op couch seats: a level-card pick on seat A survives switching to seat 
   }
 });
 
-test('co-op: a repeat choice while another seat still chooses grants nothing twice', () => {
+test('co-op: a repeat choice while another seat still chooses grants nothing twice', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const host = createSession({ registries: legacySessionRegistry(withSchedule({ onLevelUp: true })), seedString: 'SCHEDULE', combatExpansionVersion: 1 });
   host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
   host.addMember({ id: 'p2', name: 'p2', classId: 'rogue' });

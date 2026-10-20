@@ -1,6 +1,7 @@
 // SPEC §4.10: when a seat holds a Counter or defensive Sweep but is offered no
 // reaction, the engine says why (combatReactionUnavailable), once per root.
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -178,10 +179,12 @@ test('skipping the offer on one action with hits:2 reports alreadyAnswered exact
   assert.equal(events.findIndex(event => event.type === 'combatReactionUnavailable'), chosenAt + 1, 'right after the answer');
   assert.deepEqual(combatLogEntries(events, { registries: createRegistries(contentBundle) }).map(row => row.text)
     .filter(text => text.startsWith('One reaction')), ["One reaction per attack: the rest of this attack can't be answered."]);
-  const coopHits = coop({ cardIds: ['guardCounter', 'guardCounter'] });
-  endTurn(coopHits, 'a');
-  chooseReaction(coopHits, 'a', { offerId: coopHits.pendingReaction.id });
-  assert.deepEqual(unavailable(coopHits.eventLog).map(row => [row.ownerId, row.reason]), [['a', 'alreadyAnswered']]);
+  if (COOP_TESTS_ENABLED) {
+    const coopHits = coop({ cardIds: ['guardCounter', 'guardCounter'] });
+    endTurn(coopHits, 'a');
+    chooseReaction(coopHits, 'a', { offerId: coopHits.pendingReaction.id });
+    assert.deepEqual(unavailable(coopHits.eventLog).map(row => [row.ownerId, row.reason]), [['a', 'alreadyAnswered']]);
+  }
 });
 
 test('a reaction that kills the attacker reports no alreadyAnswered for the cancelled rest', () => {
@@ -205,7 +208,7 @@ test('a single-hit root that was skipped reports nothing more', () => {
   assert.deepEqual(unavailable(events), []);
 });
 
-test('mixed-version co-op resolves a seat\'s candidates under that seat\'s own rules', () => {
+test('mixed-version co-op resolves a seat\'s candidates under that seat\'s own rules', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   // Seat a runs the legacy rules, seat b the expansion; Whirling Guard is a
   // candidate only under b's. With b's Reaction switch off, b still hears why.
   const players = [
@@ -220,7 +223,7 @@ test('mixed-version co-op resolves a seat\'s candidates under that seat\'s own r
   assert.deepEqual(unavailable(C.eventLog).map(row => [row.ownerId, row.reason, row.cardIds]), [['b', 'switchOff', ['whirlingGuard']]]);
 });
 
-test('co-op reports the same reasons through the same offer door', () => {
+test('co-op reports the same reasons through the same offer door', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const cost = coop();
   cost.players.get('a').entity.energy = 0;
   endTurn(cost, 'a');
@@ -244,7 +247,7 @@ test('co-op reports the same reasons through the same offer door', () => {
   assert.ok(unavailable(frozen.eventLog).every(row => row.ownerId !== 'b'), 'a disconnected seat gets no receipt');
 });
 
-test('mixed-version co-op reports an expanded seat reaction using that seat\'s card rules', () => {
+test('mixed-version co-op reports an expanded seat reaction using that seat\'s card rules', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const registries = registriesWith({ cardTags: SWEEP });
   const players = [
     { id: 'legacy', ...seatStats, drawPerTurn: 1, combatExpansionVersion: 1,

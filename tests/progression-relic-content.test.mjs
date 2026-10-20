@@ -1,6 +1,7 @@
 import { botCardTargetId } from '../tools/simbot.mjs';
 import { cardNeedsEnemyTarget } from '../src/model/friendlyTargets.js';
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, relicPropertyRules, resolveCard } from '../src/model/registries.js';
@@ -134,7 +135,7 @@ test('Ember Alms Bowl pays a nonlethal offering before granting Block and reject
   assert.equal(JSON.stringify(serializeCombatSnapshot(combat)), before);
 });
 
-test('Ossuary Prayer Wheel restores the credited co-op owner Mana once using predeath Blight', () => {
+test('Ossuary Prayer Wheel restores the credited co-op owner Mana once using predeath Blight', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const combat = fixture('ossuary-prayer-wheel', { kill: { effects: [{ op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: 1 }, { ...hit[0], amount: 2000 }] } }, true);
   const a = combat.players.get('a').entity; const b = combat.players.get('b').entity;
   const mana = a.mana; const otherMana = b.mana;
