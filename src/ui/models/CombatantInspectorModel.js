@@ -1,6 +1,7 @@
 import { componentModel } from './ComponentModel.js';
 import { trayModel } from './TrayModels.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
+import { t } from '../strings.js';
 
 export function combatantInspectorModel({
   role,
@@ -14,7 +15,7 @@ export function combatantInspectorModel({
   const tray = trayModel({
     id: `combatant-inspector-${role}`,
     name: subject.name,
-    summary: expanded ? (subject.subtitle || (role === 'player' ? 'Player' : 'Enemy')) : '',
+    summary: expanded ? (subject.subtitle || t(role === 'player' ? 'combat.log.role.player' : 'combat.log.role.enemy')) : '',
     edge,
     expanded,
     resizable: false,

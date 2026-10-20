@@ -1545,7 +1545,7 @@ export function mountRewards(app, {
     };
     const addRow = (row) => {
       const label = row.kind === 'power' ? 'Combat-power victory bonus'
-        : row.kind === 'enemy' ? `${row.name || 'Enemy'} · Level ${row.level || 1}`
+        : row.kind === 'enemy' ? `${row.name || t('combat.log.role.enemy')} · Level ${row.level || 1}`
           : row.kind === 'bonus' ? 'Character XP bonus' : 'Battle XP';
       const amount = el('strong', { class: 'reward-compact-row-value', text: '+0' });
       const item = el('li', { class: 'reward-compact-row' }, [
