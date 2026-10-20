@@ -141,7 +141,7 @@ import {
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { clearSelection, litCard, onSelectionChange } from '../components/cardSelection.js';
 import { smithingStoneNote } from '../../model/rewardplan.js';
-import { cardAffectsEnemies } from '../../model/hitBadge.js';
+import { hitBadgeTargetIds } from '../../model/hitBadge.js';
 
 // LEVEL CARDS (SPEC §15.1) in the co-op spoils and the away-seat catch-up.
 // A tap only SELECTS: the pick is written into `picks` (ordinal → card id)
@@ -1071,7 +1071,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     if (!actor || actor.combatExpansionVersion !== 2) return;
     const selected = actor.hand?.find(card => card.instanceId === litCard());
     const definition = selected && cardDef(selected);
-    const hostile = cardAffectsEnemies(definition);
+    const hostile = hitBadgeTargetIds(definition, sc.enemies).length > 0;
     const carrier = hostile ? { ...definition, combatProfile: combatProfileFor(definition) } : null;
     app.querySelectorAll('.card-hit-chances').forEach(node => node.remove());
     app.querySelectorAll('.combat-hit-chance').forEach(node => node.remove());

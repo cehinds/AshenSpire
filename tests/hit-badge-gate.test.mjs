@@ -22,3 +22,11 @@ test('a counter with only self effects and a deferred payload shows no badge', (
   assert.deepEqual(hitBadgeTargetIds(frostCounter, enemies), []);
   assert.deepEqual(hitBadgeTargetIds({ ...frostCounter, effects: [...frostCounter.effects, { op: 'damage', target: 'enemy', amount: 2 }] }, enemies), ['a', 'b']);
 });
+
+test('persistent movement keeps an enemy destination without pretending to roll Accuracy', () => {
+  const movement = { effects: [{ op: 'moveEngagement', target: 'enemy', bands: -1 }] };
+  assert.equal(cardAffectsEnemies(movement), true, 'movement still has an opposing destination');
+  assert.deepEqual(hitBadgeTargetIds(movement, enemies), []);
+  assert.deepEqual(hitBadgeTargetIds({ effects: [{ op: 'applyStatus', target: 'self', status: 'evade' }, ...movement.effects] }, enemies), []);
+  assert.deepEqual(hitBadgeTargetIds({ effects: [...movement.effects, { op: 'damage', target: 'enemy', amount: 2 }] }, enemies), ['a', 'b']);
+});

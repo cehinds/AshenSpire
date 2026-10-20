@@ -1,4 +1,4 @@
-import { cardAffectsEnemies } from '../src/model/hitBadge.js';
+import { hitBadgeTargetIds } from '../src/model/hitBadge.js';
 import { formationOccupancy } from '../src/model/formationOccupancy.js';
 import { projectEnemyBurdenHand } from '../src/ui/models/EnemyBurdenModel.js';
 import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
@@ -801,9 +801,9 @@ export function createSession({ registries, seedString, endless = false, restore
       const definition = resolveCombatCard({ ...c, registries: c.registriesForPlayer(ownerId), player: owner.entity,
         attributes: owner.attributes, loadout: owner.loadout }, instance, { upcastRanks: ranks });
       const living = c.enemies.filter(enemy => enemy.alive);
-      const firstTarget = c.rangeState?.policy.enabled && cardAffectsEnemies(definition) ? living[0]?.id : undefined;
+      const firstTarget = c.rangeState?.policy.enabled && hitBadgeTargetIds(definition, living).length ? living[0]?.id : undefined;
       const preview = previewCoopCard(c, ownerId, instanceId, firstTarget, ranks);
-      if (!preview.range?.enabled || (!cardAffectsEnemies(preview.resolvedDefinition) && !preview.range.targets?.length)) return preview;
+      if (!preview.range?.enabled || (!hitBadgeTargetIds(preview.resolvedDefinition, living).length && !preview.range.targets?.length)) return preview;
       // Keep only the small canonical quote; reuse the initial targeted read.
       // The host applies this owner's knowledge before computing either chance.
       const rangeByTarget = Object.fromEntries(living.map(enemy => [enemy.id, firstTarget === enemy.id ? preview.range
