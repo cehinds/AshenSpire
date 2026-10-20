@@ -117,7 +117,7 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
   // removed. Their conditions/formulas live on the same tag on every surface.
   const benefits = cardBonusTags(def, preview, registries, rules);
   const smashHelp = coreSmashHelp(def, { ...registries, ...rules });
-  if (smashHelp) benefits.push({ id: 'maneuver:smash', label: 'Smash', blurb: smashHelp, representedRules: ['smash'] });
+  if (smashHelp) benefits.push({ id: 'maneuver:smash', label: t('stance.name.smash'), blurb: smashHelp, representedRules: ['smash'] });
   for (const benefit of benefits) {
     const existing = selected.findIndex(tag => tag.id === 'effect:evade' && benefit.id === 'status:evade');
     if (existing >= 0) selected.splice(existing, 1);
