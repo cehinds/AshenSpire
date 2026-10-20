@@ -1,3 +1,4 @@
+import { pinGameProfileCopy } from '../model/ownedGameProfile.js';
 import { validateFixCoreRules, normalizeFixCoreRules } from '../model/fixCoreMechanics.js';
 import { formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { enemyBurdenProblems } from './enemyBurdens.js';
@@ -181,7 +182,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   for(const enemy of saved.enemies) {const errors=enemyBurdenProblems(enemy,registries);if(errors.length)throw new Error(`Malformed enemy burden: ${errors.join('; ')}`);}
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
-    ...(saved.fixCoreRules ? {fixCoreRules:validateFixCoreRules(saved.fixCoreRules)} : {}),    ...(saved.gameProfile ? { gameProfile: freezeProfile(saved.gameProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
+    ...(saved.fixCoreRules ? {fixCoreRules:validateFixCoreRules(saved.fixCoreRules)} : {}),    ...(saved.gameProfile ? { gameProfile: pinGameProfileCopy(saved.gameProfile, freezeProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
     registries,
     rng,
     ...(saved.formationPolicy ? { formationPolicy: saved.formationPolicy } : {}),

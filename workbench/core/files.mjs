@@ -246,7 +246,7 @@ export function createFileService({ root, stateDir, keepBackups = () => 50, onSa
       try {
         // The profile compatibility pin reads canonical mechanic JSON as well
         // as compiled modules, so candidates need the authored source tree.
-        for (const rel of ['src', 'engine', 'content/source', 'games/ashenspire', 'tools/game-config.mjs', 'tools/base-cards.mjs']) {
+        for (const rel of ['src', 'engine', 'content/source', 'games/ashenspire', 'tools/game-config.mjs', 'tools/base-cards.mjs', 'tools/catalog-json.mjs']) {
           await fs.mkdir(path.dirname(path.join(tmp, rel)), { recursive: true });
           await fs.cp(path.join(root, rel), path.join(tmp, rel), { recursive: true });
         }

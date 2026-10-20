@@ -16,7 +16,7 @@ function control(key,{hidden=false,inert=false,chrome=false,flask=false}={}){
 function fixture(controls,{modal=null,tooltip=[]}={}){
  const app={id:'app',querySelectorAll:()=>controls,classList:{contains:()=>false}};
  const document={getElementById:()=>app,body:app,querySelectorAll:()=>tooltip};
- return runInNewContext(functions+'\n({findByKey,focusables})',{
+ return runInNewContext(functions+'\n({keyOf,findByKey,focusables})',{
   document,topVeil:()=>modal,FOCUS_SELECTOR:'controls',CHROME:'chrome',
   getComputedStyle:el=>({visibility:el.hidden?'hidden':'visible',display:'block'}),
  });
@@ -53,4 +53,19 @@ test('restoration stays in the top veil and retains tooltip-dialog eligibility o
  const tooltipControl=control('tooltip');
  assert.equal(fixture([appControl],{tooltip:[tooltipControl]}).findByKey('i:tooltip'),tooltipControl);
  assert.equal(appControl.reads,0);
+});
+
+
+test('a remounted flask keeps focus by kind when its charge count changes',()=>{
+ const before=control('',{chrome:true,flask:true});
+ before.dataset.flaskKind='hp'; before.textContent='3';
+ const key=fixture([before]).keyOf(before);
+ const other=control('',{chrome:true,flask:true});
+ other.dataset.flaskKind='mp'; other.textContent='3';
+ const after=control('',{chrome:true,flask:true});
+ after.dataset.flaskKind='hp'; after.textContent='2';
+ assert.equal(fixture([other,after]).findByKey(key),after);
+ assert.equal(other.reads,0,'the old count never selects or measures another flask');
+ after.textContent='0';
+ assert.equal(fixture([other,after]).keyOf(after),key,'identity is independent of charges');
 });
