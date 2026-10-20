@@ -149,6 +149,7 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
   actors.push(...(Array.isArray(state.enemies) ? state.enemies : []).map(entity => [entity, `enemy:${entity?.id}`]));
   const actorKeys = actors.map(([, key]) => key);
   const hasRange = state.rangeState !== undefined;
+  if (state._rangeContext !== undefined || state._rangeIncoming !== undefined) problems.push('Transient range context cannot cross a save boundary');
   if (hasRange) {
     problems.push(...rangeStateProblems(state.rangeState, actorKeys));
     if ((state.sharedExpansionVersion || state.combatExpansionVersion) !== 2 || state.fixCoreRules?.enabled === false
@@ -176,7 +177,9 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
         && Array.isArray(source.propertyTags) && source.propertyTags.length <= 1
         && source.propertyTags.every(tag => tag === 'throw' && source.sourceType === 'weapon');
       if (!valid) problems.push('Invalid frozen range source');
-      else if (Array.isArray(value.rangePlan?.targets) && !value.rangePlan.targets.some(row =>
+      else if (Array.isArray((value.rangeCounterReservation?.rangePlan || value.rangePlan)?.targets)
+        && (value.rangeCounterReservation?.rangePlan || value.rangePlan).targets.length
+        && !(value.rangeCounterReservation?.rangePlan || value.rangePlan).targets.some(row =>
         row?.sourceWeaponId === source.itemId && row.coverage === rangeBand(source.range)
         && row.weapon === (source.sourceType === 'weapon') && row.throwCapable === source.propertyTags.includes('throw'))) problems.push('Frozen range source does not match its contact receipt');
     }
