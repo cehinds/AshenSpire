@@ -208,6 +208,11 @@ export function abilityResolved(ctx) {
   const play = ctx.pendingAbilityPlay;
   if (!play || hasCardChoice(ctx)) return null;
   delete ctx.pendingAbilityPlay;
-  ctx.emit('cardResolved', { ...play.before, cardInstanceId: play.instance.instanceId, cardId: play.instance.cardId, cardType: play.kind, cardTags: play.ref.authoredTags || play.ref.tags || [], abilityKind: play.ref.abilityKind, printedManaCost: play.printedManaCost, targetId: play.targetId, sourceId: ctx.player.id, ...(ctx.playerKey ? { sourcePlayerId: ctx.playerKey, playerId: ctx.playerKey } : {}), magicalResolved: play.ref.abilityKind === 'spell' });
+  ctx.emit('cardResolved', { ...play.before, cardInstanceId: play.instance.instanceId, cardId: play.instance.cardId, cardType: play.kind, cardTags: play.ref.authoredTags || play.ref.tags || [], abilityKind: play.ref.abilityKind, printedManaCost: play.printedManaCost, targetId: play.targetId, sourceId: ctx.player.id, ...(ctx.playerKey ? { sourcePlayerId: ctx.playerKey, playerId: ctx.playerKey } : {}), magicalResolved: play.ref.abilityKind === 'spell',
+    ...(ctx.gameProfile?.foundation?.mode === 'configured' ? {
+      ...(Object.hasOwn(play.ref, 'usedArmamentId') ? { usedArmamentId: play.ref.usedArmamentId } : {}),
+      ...(play.ref.grantedBy ? { grantedBy: play.ref.grantedBy } : {}),
+      ...(play.ref.sourceHand ? { sourceHand: play.ref.sourceHand } : {}),
+    } : {}) });
   return play;
 }

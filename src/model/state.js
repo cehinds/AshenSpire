@@ -978,6 +978,13 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     try { validateResolvedGameProfile(run.gameProfile); } catch (error) { problems.push(`gameProfile: ${error.message}`); }
     if (typeof run.runId !== 'string' || !run.runId) problems.push('Configured run requires a durable runId');
   } else if (run.runId || run.gameProfileRestVisits) problems.push('Profile-owned fields require a pinned gameProfile');
+  // Defeat summaries may acknowledge earned XP, but never open spoils or
+  // resume combat. The acknowledgement itself is persisted before finishing.
+  if (run.gameProfilePendingReward?.after === 'defeat') {
+    const pending = run.gameProfilePendingReward;
+    if (!isConfiguredRun(run) || pending.noticeOnly !== true || pending.source !== 'combat' || pending.levelOffers !== 0) problems.push('Defeat progression requires a configured combat notice without reward offers');
+    if (run.hp !== 0 || run.combatPendingOutcome || run.combatEntered) problems.push('Defeat progression requires a settled defeated run');
+  }
 
   if (run.combatExpansionVersion !== undefined && ![1, 2].includes(run.combatExpansionVersion)) problems.push('combatExpansionVersion must be 1 or 2 when present');
   if (run.reactionRulesVersion !== undefined && (![1, 2].includes(run.reactionRulesVersion) || run.combatExpansionVersion !== 2)) problems.push('Reaction rules require an expanded run');
@@ -998,7 +1005,21 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (run.combatExpansionVersion !== 2 || !typeOk(snapshot, 'object')) return;
     if (snapshot.combatExpansionVersion !== 2) problems.push(`${path}.combatExpansionVersion must match the run`);
     if (snapshot.reactionRulesVersion !== run.reactionRulesVersion) problems.push(`${path}.reactionRulesVersion must match the run`);
-    else if (run.reactionRulesVersion === 2 && JSON.stringify(snapshot.reactionRules) !== JSON.stringify(run.reactionRules)) problems.push(`${path}.reactionRules must match the run`);
+    else if (run.reactionRulesVersion === 2) {
+      // Core contact policy belongs to the fight: historical active fights keep
+      // their whole-root plan, while newly created fights use per-hit contacts.
+      // The run still owns every tuning field; snapshot validation separately
+      // restricts contactPolicy to the known optional value.
+      const localContactPolicy = isConfiguredRun(run) && gameModule(run, 'effects')?.fixCoreVersion === 1
+        && snapshot.gameProfile?.hash === run.gameProfile.hash
+        && snapshot.fixCoreRules?.version === 1 && snapshot.fixCoreRules.enabled === true;
+      const tuning = rules => {
+        if (!localContactPolicy) return rules;
+        const { contactPolicy, ...rest } = rules || {};
+        return rest;
+      };
+      if (JSON.stringify(tuning(snapshot.reactionRules)) !== JSON.stringify(tuning(run.reactionRules))) problems.push(`${path}.reactionRules must match the run`);
+    }
     problems.push(...ashenBlightProblems(snapshot.player?.ashenBlight, `${path}.player.ashenBlight`));
     const saved = snapshot.player?.ashenBlight, prior = run.ashenBlight;
     if (saved && prior && ['payments', 'entries'].some(field => Array.isArray(prior[field]) && Array.isArray(saved[field])

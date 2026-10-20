@@ -1,4 +1,5 @@
 import { coopCardHitPreview, coopCombatantEvasion, coopBadgedStatusIds } from '../models/CoopHitPreviewModel.js';
+import { combatActionIdentity } from '../models/CombatActionIdentityModel.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
@@ -226,7 +227,7 @@ export function coopCallouts(events = []) {
  * numbers → bars, as solo does (SPEC §7.4, beatOrder 'sequential'). A snapshot
  * with both goes through the enemy timeline once.
  */
-const ENEMY_TIMELINE_EVENTS = ['enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered'];
+const ENEMY_TIMELINE_EVENTS = ['enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered', 'combatContactPrepared', 'combatHitStarted'];
 export function coopTimelineRoute(events = [], seatIds = []) {
   const list = (events || []).filter(Boolean);
   if (list.some(event => ENEMY_TIMELINE_EVENTS.includes(event.type))) return 'enemy';
@@ -1508,6 +1509,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         || !meP?.connected || !meP?.alive || !!(meP?.pendingAbilityDiscard || meP?.pendingCardChoice),
       ...combatToolsState, entries: sc.combatLog || [] }));
     combatTools = mountCombatTools(app.querySelector('.combat'), { state: combatToolsState,
+      readSettings: () => readSettings ? readSettings() : meta.settings || {},
       onGridToggle: enabled => onSettingsChange?.({ 'gameConfig.presentation.showFormationGrid': enabled }),
       onViewChange: updateTools, onToggle: enabled => send({ t: 'setReactions', enabled }) });
     updateTools();
@@ -2355,6 +2357,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     // marks lastSoundSeq), so it plays here, once, as the receipts land.
     if ((Number(next.scene.receiptSeq) || 0) > lastSoundSeq) coopCardPlayBuzz(next.scene.events, seats);
     playTimeline(events, {
+      actionWordForBeat: beat => combatActionIdentity(beat, registries, entityFor),
       // Haptics are personal, as in coopReceiptSounds: a teammate's hit or turn
       // start sounds here but does not buzz this device.
       isLocalPlayer: coopLocalSeat(seats),
@@ -2370,7 +2373,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       animateActor(beat, sprite, speed) {
         const returned = beat.events.find(event => event.type === 'combatCounterTriggered');
         const played = returned?.sourceKind === 'player' ? returned : beat.events.find(event => event.type === 'cardPlayed');
-        const moved = returned?.sourceKind === 'enemy' ? { ...returned, kind: 'attack' } : beat.events.find(event => event.type === 'enemyMoveStarted');
+        const moved = returned?.sourceKind === 'enemy' ? { ...returned, kind: 'attack' } : beat.events.find(event => ['enemyMoveStarted', 'combatHitStarted', 'combatContactPrepared'].includes(event.type));
         if (!played && !moved) return null;
         const stage = stageFor(sprite);
         let pose = 'attack';

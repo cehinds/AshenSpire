@@ -12,6 +12,7 @@ import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 
 import { ACTION_PACING, AUTOMATION_DEFAULTS } from '../../model/autoCombatPolicy.js';
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
+import { COMBAT_LOG_PALETTE_DEFAULTS } from '../models/CombatLogPaletteModel.js';
 import { advancedSubgroups, statsSection, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
 import { statsTopicPreview, statsExampleClasses, STATS_EXAMPLE_CLASS_KEY } from '../models/StatsPreviewModel.js';
 import { levelPacePreview } from '../models/LevelPacePreviewModel.js';
@@ -119,7 +120,8 @@ const LEVEL_DEFAULTS = balance.levelUp || {};
 // near-identical "starting stat pool" rows for one reachable pool; this is the
 // line that stops that. parseAdvancedConfigFile reads advancedConfigRows()
 // directly, so import is unaffected.
-const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired)
+const authoredAdvancedRows = advancedConfigRows(contentBundle);
+const ADVANCED_CONFIG_ROWS = authoredAdvancedRows.filter((row) => !row.retired)
   // An override switch shows its EFFECTIVE state: stored, else on when the
   // class ships its own value or a profile already pinned one.
   .map((row) => (row.own ? { ...row, resolve: (settings) => ownOn(settings, row.own) } : row))
@@ -128,7 +130,7 @@ const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !
   .map((row) => (row.shopLabel ? { ...row, label: shopRowLabel(row.shopLabel), shopTopic: t(`settings.shops.topic.${row.shopTopic}`) } : row))
   // A row whose words are a uiStrings row (SPEC §4.11 Combat rounds preview) wears them: short label, full note.
   .map((row) => (row.uiTextId ? { ...row, label: t(row.uiTextId), note: tFull(row.uiTextId) } : row));
-const INERT_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => row.inert);
+const INERT_CONFIG_ROWS = authoredAdvancedRows.filter((row) => row.inert);
 
 /**
  * A Shops row's label: the kind and the offering by their uiStrings names
@@ -328,6 +330,10 @@ function recoverySettingRows() {
 
 const ROWS = [
   { cat: 'Combat', key: 'askToUpcastAfterTarget', type: 'toggle', def: false, label: 'Ask to upcast after choosing a target', note: 'Off: use the Upcast button under an eligible selected card. On: choose a temporary rank before committing the play; Cancel spends nothing.' },
+  { cat: 'Combat', key: 'combatLogPlayerColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.player,
+    label: t('settings.row.combatLogPlayerColor'), note: tFull('settings.row.combatLogPlayerColor') },
+  { cat: 'Combat', key: 'combatLogEnemyColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.enemy,
+    label: t('settings.row.combatLogEnemyColor'), note: tFull('settings.row.combatLogEnemyColor') },
   ...tooltipSettingsRows(),
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),
     note: tFull('settings.row.fullscreen') },

@@ -129,13 +129,16 @@ export function mountSmithUpgradeModal(host, initialModel, {
 
   const intrinsicStatsNode = (selected) => {
     const stats = selected.intrinsicStats || {};
+    const changes = selected.intrinsicChanges || [];
     const hasStats = ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']
       .every((key) => stats[key] !== null && stats[key] !== undefined);
-    if (!hasStats) return null;
+    if (!hasStats && !changes.length) return null;
     const rowNode = statRow({
       flat: true,
       nameNode: el('span', { class: 'smith-data-heading' }, [el('b', { class: 'sr-name', text: 'Equipment Stats' }), el('small', { class: 'sr-hint', text: selected.kindLabel })]),
       values: [
+        changes.length ? changeSummary({ values: changes }) : null,
+        ...(hasStats ? [
         el('span', { class: 'smith-fold-values smith-primary-stats' }, [
           pairSpaced('AR', el('b', { class: 'sp-v', text: String(stats.attackRating) })),
           pairSpaced('DEF', el('b', { class: 'sp-v', text: String(stats.defenseRating) })),
@@ -145,6 +148,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
           el('span', {}, ['Weapon Art ', el('strong', { text: `Mana ${stats.weaponArtManaCost}` })]), el('i', { text: ' · ' }),
           el('span', {}, ['Unique Skill ', el('strong', { text: `${t('combat.actions')} ${stats.uniqueSkillStaminaCost}` })]),
         ]),
+        ] : []),
       ],
       className: 'smith-data-row smith-intrinsic-stats',
     });
@@ -277,7 +281,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
       ]),
     ]);
     const folds = el('div', { class: 'smith-upgrade-folds' }, selected.affectedRows.map((row, index) => {
-      const fold = el('details', { open: true, class: `smith-upgrade-fold smith-upgrade-row${row.used === false ? ' is-unused' : ''}` });
+      const fold = el('details', { class: `smith-upgrade-fold smith-upgrade-row${row.used === false ? ' is-unused' : ''}` });
       const summary = el('summary', {}, statRow({
         tag: 'span',
         nameNode: el('b', { class: 'sr-name', text: row.name }),

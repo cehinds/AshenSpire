@@ -18,6 +18,7 @@ import { syncConfiguredEnemyProperties, syncLoadoutProperties, syncRelicProperti
 import { stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
+import { configuredSkillProgression } from '../model/gameProfileProgression.js';
 import { refreshCombatRatings } from './combatRatings.js';
 import { controlRestrictions, backfillPersistentPoise } from './combatStatusControl.js';
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
@@ -275,7 +276,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   combat._emitEvent = emitEvent;
   // The one listener createCombat hooks on the bus, hooked again here: the
   // raw emitter alone would record no XP for the rest of the restored fight.
-  if (!configuredCombat(combat)) attachSkillXp(combat);
+  if (!configuredCombat(combat) || configuredSkillProgression(combat)) attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
   for (const key of ['reactionRulesVersion', 'reactionRules', 'reactionStack', 'foundationNextSerial', 'reactionCursor', 'reactionHandCleanup', 'pendingReaction', 'reactionResume', 'enemyReactionRolls', 'reactionRootPlay']) {
     if (saved[key] !== undefined) combat[key] = saved[key];

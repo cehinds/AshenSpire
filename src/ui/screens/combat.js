@@ -1,5 +1,6 @@
 import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
+import { combatActionIdentity } from '../models/CombatActionIdentityModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { chooseReaction, reactionAnswer, resolveCombatAutomation, recordManualReaction, manualReactionPicks } from '../../model/autoCombatPolicy.js';
@@ -278,6 +279,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const combatEl = $('.combat');
   const combatToolsState = { open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true };
   const combatTools = mountCombatTools(combatEl, { state: combatToolsState,
+    readSettings,
     onGridToggle: enabled => onSettingsChange?.({ 'gameConfig.presentation.showFormationGrid': enabled }),
     readAuto: () => resolveCombatAutomation(readSettings()).enabled,
     onAutoToggle: async enabled => {
@@ -416,7 +418,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     animateActor: (beat, actorEl, speed) => {
       const returned = beat.events.find(event => event.type === 'combatCounterTriggered');
       const played = returned?.sourceKind === 'player' ? { ...returned, cardType: 'attack' } : beat.events.find(event => event.type === 'cardPlayed');
-      const moved = returned?.sourceKind === 'enemy' ? { ...returned, kind: 'attack' } : beat.events.find(event => event.type === 'enemyMoveStarted');
+      const moved = returned?.sourceKind === 'enemy' ? { ...returned, kind: 'attack' } : beat.events.find(event => ['enemyMoveStarted', 'combatHitStarted', 'combatContactPrepared'].includes(event.type));
       if (!played && !moved) return null;
       // The pre-dispatch hand snapshot retains Powers removed from every pile,
       // and the full instance carries equipment profile tags and upgrades.
@@ -982,7 +984,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           return { accepted: true, prediction: maneuver };
         } } : {}),
       name: def.name,
-      subtitle: (def.tags || []).map(words).join(' · ') || 'Enemy',
+      subtitle: (def.tags || []).map(words).join(' · ') || t('combat.log.role.enemy'),
       resources: inspectorResources([
         { label: 'HP', value: v.hp, max: entity.maxHp },
         { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
@@ -3093,16 +3095,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           const events = beat.events.filter(event => event.type === 'enemyActorTurnStarted');
           if (events.length) { applyBeatToDisp({ ...beat, events }); renderCombatantStage(); }
         },
-        actionWordForBeat: beat => {
-          const played = beat.events.find(event => event.type === 'cardPlayed');
-          if (played) return registries.cards.get(played.cardId)?.name;
-          const move = beat.events.find(event => event.type === 'enemyMoveStarted');
-          if (move) {
-            const enemy = combat.enemies.find(row => row.id === move.sourceId);
-            return registries.enemies.get(move.enemyId || enemy?.enemyId)?.moves?.[move.moveId]?.name;
-          }
-          return undefined;
-        },
+        actionWordForBeat: beat => combatActionIdentity(beat, registries, id => combat.enemies.find(row => row.id === id)),
         onBeatApplied: (beat) => {
           applyVisualEvents(beat.events);
           applyBeatToDisp(beat);

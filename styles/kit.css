@@ -1730,26 +1730,28 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* The column count follows the offer (--choice-count, set from JS): one to four
    options, each column capped at 16rem and the row centred, so a lone option
    sits in the middle rather than stretching across the door. */
-.reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(var(--choice-count, 3), minmax(0, 16rem)); gap: 12px; align-items: stretch; justify-content: center; width: 100%; max-width: 60rem; padding: .6rem 0; }
+.reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(var(--choice-count, 3), minmax(0, 16rem)); grid-auto-rows: 1fr; gap: 12px; align-items: stretch; justify-content: center; width: 100%; max-width: 60rem; padding: .6rem 0; }
 .reward-door .reward-choice-option { display: flex; flex-direction: column; gap: .6rem; min-width: 0; width: 100%; }
-.reward-door .reward-choice-option > .equipment-poker-card { width: 100%; max-width: 220px; margin-inline: auto; flex: 0 0 auto; }
-.reward-door .reward-choice-option > .card { align-self: center; zoom: 1; }
-.reward-door .reward-choice-option > .reward-pick { flex: 1 1 auto; min-width: 0; box-sizing: border-box; padding: .7rem .8rem; gap: .3rem; }
+/* Every face uses the shared glance width, independent of its card family or
+   selection. Equal grid rows and flexible buttons let the longest rules set
+   their common height, including when phone choices wrap onto a second row. */
+.reward-door .reward-choice-option > :is(.equipment-poker-card, .card) { width: 100%; max-width: var(--card-w-glance, 152px); margin-inline: auto; flex: 0 0 auto; zoom: 1; }
+.reward-door .reward-choice-option > .reward-pick { flex: 1 1 auto; width: 100%; min-width: 0; min-height: var(--tap-floor); box-sizing: border-box; padding: .7rem .8rem; gap: .3rem; }
 .reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(1.2rem, calc(1.5 * var(--view-vw, 1vw)), 1.6rem); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
 .reward-door .reward-choice-option > .reward-pick p { font-size: clamp(1.1rem, calc(1.25 * var(--view-vw, 1vw)), 1.35rem); overflow-wrap: anywhere; }
 @container game-viewport (max-width: 520px) {
-  /* Four options still share one row on a 390px phone: the faces zoom down by
-     count (1.68 / count, so three options keep the .56 they had). */
-  .reward-door .reward-row.reward-choice-grid { gap: 8px; grid-template-columns: repeat(min(var(--choice-count, 3), 4), minmax(0, 1fr)); }
+  /* Equal tracks keep all offered faces and buttons comparable on phones.
+     Text wraps in the shared button row rather than shrinking the hit area. */
+  .reward-door .reward-row.reward-choice-grid { gap: 8px; grid-template-columns: repeat(min(var(--choice-count, 3), 2), minmax(0, 1fr)); }
   .reward-door .reward-choice-option { gap: .4rem; }
-  .reward-door .reward-choice-option > .card { zoom: min(1, calc(1.68 / var(--choice-count, 3))); }
   .reward-door .reward-choice-option > .reward-pick { padding: .45rem .4rem; }
-  .reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(11px, calc(3.2 * var(--view-vw, 1vw)), 14px); }
-  .reward-door .reward-choice-option > .reward-pick p { font-size: clamp(10px, calc(2.9 * var(--view-vw, 1vw)), 12.5px); }
+  .reward-door .reward-choice-option > .reward-pick h3 { font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); }
+  .reward-door .reward-choice-option > .reward-pick p { font-size: max(calc(12px / var(--ui-zoom, 1)), .85rem); }
 }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 /* The ring itself is the shared one above; the door adds only the lift. */
-.reward-door .reward-row .card.reward-selected { transform: translateY(-8px) scale(1.06); }
+.reward-door .reward-choice-option > .card:hover,
+.reward-door .reward-row .card.reward-selected { transform: translateY(-8px); }
 .reward-door .reward-confirm:not(:disabled) {
   background: color-mix(in srgb, var(--green) 22%, var(--panel));
   border-color: var(--green);
@@ -2190,6 +2192,8 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-preview-host { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .smith-upgrade-modal .smith-preview-host { flex: 1 1 0; overflow: hidden; }
 .smith-consequence { flex: 0 0 auto; margin: 0; }
+/* Refusal notes are rows, not a full-height flex basis in this column. */
+.smith-preview-region > .as-reasonnote { flex: 0 0 auto; }
 .mount-service-outcome { display: flex; gap: 1.2rem; align-items: flex-start; margin: 0.4rem 0 0.8rem; }
 /* The pane's card scrolls its facts; its padding-bottom is the cost strip's,
    so the pinned strip sits flush on the card's foot. */
@@ -2207,21 +2211,42 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   margin-top: 0.9rem; padding: 0.8rem 0 1.28rem; border-top: 1px solid var(--line); background: var(--panel);
 }
 .smith-cost-strip > .as-blocker.pinned { margin: 0; }
-.smith-selected-head > .sr-name { font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); }
+.smith-selected-head > .sr-name,
+.smith-upgrade-modal .smith-upgrade-fold > summary .sr-name,
+.smith-upgrade-modal .smith-economy-values {
+  font-family: var(--font-body); font-size: max(1.4rem, calc(15px / var(--ui-zoom, 1)));
+  font-weight: 600; line-height: 1.2; color: var(--parchment);
+}
 .smith-preview-economy { display: flex; align-items: baseline; }
-.smith-economy-values { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.45rem; font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); }
+.smith-economy-values { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.45rem; color: var(--parchment); }
 .smith-economy-values > b { white-space: nowrap; font-weight: 600; }
 .smith-cost-pair > .sp-k { font-size: 1rem; letter-spacing: 0.18em; }
 .smith-cost-pair > .sp-k > i, .smith-cost-pair > .sp-v > i { font-style: normal; color: var(--muted); padding-inline: 0.1em; }
 .smith-preview-economy.affordable .smith-cost-available, .confirmation-cost.affordable .smith-cost-available { color: var(--green); }
 .smith-preview-economy.unaffordable .smith-cost-available, .confirmation-cost.unaffordable .smith-cost-available { color: var(--danger, var(--ember)); }
+/* Leave room for italic glyph overhang inside clipped delta flex boxes. */
+.smith-preview-card .as-delta { padding-inline-end: 0.2em; }
 .smith-preview-card .smith-fold-values { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.3rem 1rem; }
 .smith-preview-card .smith-data-heading { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
 .smith-preview-card .sr-vals { flex-direction: column; align-items: flex-end; gap: 0.3rem; }
 /* A fact row that runs out of room stacks its values under its name. */
 .smith-preview-card > .as-statrow.flat { flex-wrap: wrap; }
-.smith-preview-card > .as-statrow.flat > .sr-id { flex: 1 1 12rem; }
+.smith-preview-card > .as-statrow.flat > .sr-id { flex: 1 1 12rem; width: auto; max-width: 100%; }
 .smith-preview-card > .as-statrow.flat > .sr-vals { flex: 1 1 14rem; }
+@media (max-width: 440px) {
+  .smith-preview-card > .as-statrow.flat { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }
+  .smith-preview-card > .as-statrow.flat > .sr-id,
+  .smith-preview-card > .as-statrow.flat > .sr-vals { width: 100%; max-width: 100%; min-width: 0; }
+  .smith-preview-card > .as-statrow.flat > .sr-vals { margin-left: 0; align-items: flex-start; text-align: left; }
+  .smith-preview-card .smith-fold-values { justify-content: flex-start; }
+  .smith-preview-card .smith-requirement small { text-align: left; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary > .as-statrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-id,
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-vals { width: 100%; max-width: 100%; min-width: 0; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-name { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: normal; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-hint { overflow-wrap: normal; word-break: normal; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-vals { margin-left: 0; justify-content: space-between; }
+}
 .smith-stat-costs > i { font-style: normal; }
 .smith-requirement small { display: block; color: var(--muted); font-size: 1.05rem; text-align: right; }
 .smith-preview-card > .as-blocker.pinned { margin-top: 1.2rem; }
@@ -6525,3 +6550,13 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
   grid-template-columns: minmax(0, 16rem);
   justify-content: center;
 }
+
+/* Combat-log actor roles are named in the legend as well as separated by hue. */
+.combat-log-actor { font-weight:600; }
+.combat-log-actor[data-combat-log-side='player'] { color:var(--combat-log-player-color); }
+.combat-log-actor[data-combat-log-side='enemy'] { color:var(--combat-log-enemy-color); }
+.combat-log-role-legend { display:flex; flex-wrap:wrap; align-items:center; gap:1rem; padding:0 0 0.45rem; color:var(--parchment); font-size:0.9em; }
+.combat-log-role { display:inline-flex; align-items:center; gap:0.4rem; }
+.combat-log-role-swatch { width:0.75em; height:0.75em; border:1px solid currentColor; border-radius:50%; }
+.combat-log-role--player .combat-log-role-swatch { background:var(--combat-log-player-color); }
+.combat-log-role--enemy .combat-log-role-swatch { background:var(--combat-log-enemy-color); }

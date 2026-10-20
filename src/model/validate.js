@@ -2550,9 +2550,9 @@ export function validateEffects(effects, path, vctx) {
         err(`${p}.${field}`, `Dangling reference: unknown ${reg} id '${v}'`);
       }
     }
-    if (eff.op === 'damage' && eff.tags !== undefined) {
+    if (['damage', 'applyStatus'].includes(eff.op) && eff.tags !== undefined) {
       if (!Array.isArray(eff.tags) || !eff.tags.length) {
-        err(`${p}.tags`, 'damage tags must be a non-empty array of effect-tag ids');
+        err(`${p}.tags`, `${eff.op} tags must be a non-empty array of effect-tag ids`);
       } else {
         for (const tag of eff.tags) {
           if (!vctx.tagIds.has(tag)) {

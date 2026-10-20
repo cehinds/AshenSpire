@@ -8,7 +8,7 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
-import { counterBlockBonus, counterBlockGrant, counterReturnSpent } from './counterRule.js';
+import { counterBlockBonus, counterBlockGrant, counterReturnSpent, paidCounterContact } from './counterRule.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
 // A queued ACTION is { effect, source, owner?, target?, card?, meta? }:
@@ -359,8 +359,10 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   if (fixCoreEnabled(ctx) && !carrier?.expansionContact && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
   const chance = profileDamageReceipt(ctx, source, target, base, carrier);
   // A Counter with advantage over this hit adds Block before the hit is absorbed (SPEC §17).
-  // Once the owner's return is spent this cycle, a later-armed Counter grants nothing (the preview shows the same).
-  const counterBlock = fixCoreEnabled(ctx) && carrier?.expansionContact && !counterReturnSpent(target)
+  // Automatic returns share the owner-cycle limit. A newly paid per-contact
+  // response carries its exact preparation serial and earns its own Block.
+  const counterBlock = fixCoreEnabled(ctx) && carrier?.expansionContact
+    && (!counterReturnSpent(target) || paidCounterContact(ctx, carrier, carrier.expansionContact.receipt?.counter))
     ? counterBlockBonus(ctx, carrier.expansionContact.receipt, carrier.expansionContact.index, chance.damageReceipt?.hits?.[0]?.incoming) : 0;
   if (counterBlock > 0) {
     // The same blockCap (Unbreakable) clamp gainBlock applies.
@@ -395,6 +397,8 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   }
   target.hp -= receipt.hpLoss;
   ctx.emit('damageDealt', { sourceId: source?.id || null, targetId: target.id,
+    ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy,
+      ...(Object.hasOwn(carrier, 'usedArmamentId') ? { usedArmamentId: carrier.usedArmamentId } : {}) } : {}),
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
     poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
     advantage: receipt.advantage, blockRemaining: target.block, barrierRemaining: target.barrier,
@@ -1035,6 +1039,7 @@ function gainBlockAmount(ctx, entity, amount, card = null, wardProvenance = fals
     // group), and in co-op the seat that played it — a guard cast on an ally
     // is the caster's shield work, not the ally's.
     ...(card && card.instanceId ? { cardInstanceId: card.instanceId, sourceHand: card.sourceHand, grantedBy: card.grantedBy,
+      ...(Object.hasOwn(card, 'usedArmamentId') ? { usedArmamentId: card.usedArmamentId } : {}),
       ...(ctx.playerIdForEntity && ctx.playerKey ? { sourcePlayerId: ctx.playerKey } : {}) } : {}),
   });
   return amt;
@@ -1483,13 +1488,16 @@ function trackOwnPressure(ctx, action, target, meter, amount) {
 export function executeAction(ctx, action) {
   if (action.effect?.op === 'completeCombatAction') { Expanded.completeExpandedAction(ctx, action); return; }
   if (ctx.result) return; // combat already decided; remaining actions fizzle
+  const sequence = action.meta?.expansionGroup?.contactSequence;
+  if (sequence && action.meta.contactEffectFirst === false && sequence.gates[action.meta.contactEffectIndex] !== true) return;
   if (action.meta?.expansionGroup?.cancelled) return;
   if (ctx.players && action.source?.kind === 'enemy' && action.target?.kind === 'player'
     && !Expanded.expansionTargetPresent(ctx, action.target)) return;
   if (ctx.combatExpansionVersion === 2) Expanded.beginExpandedAction(ctx, action.meta?.expansionGroup, action.source);
   if (action.meta?.combatCounterReaction && (!action.source?.alive || action.meta.combatCounterInterrupted)) return;
   if (ctx.foundation) ctx._foundationAncestry = action.meta?.foundationAncestry || [];
-  const eff = action.effect;
+  const eff = sequence && action.meta.contactEffectFirst === false
+    ? { ...action.effect, if: undefined, oncePerTurn: undefined } : action.effect;
 
   // Budgeted escape hatch (SPEC §3.1(6)): { script: 'name', ...args }.
   if (typeof eff.script === 'string') {
@@ -1512,6 +1520,7 @@ export function executeAction(ctx, action) {
     if (!Triggers.evalPredicate(ctx, eff.if, pctx)) return;
   }
   if (eff.oncePerTurn && !allowAbilityOnce(action.owner || action.source || ctx.player, eff.oncePerTurn, action.card, action.meta?.abilityEffectIndex ?? eff.op)) return;
+  if (sequence && action.meta.contactEffectFirst === true) sequence.gates[action.meta.contactEffectIndex] = true;
 
   const repeat = evalNum(ctx, action, eff.repeat, 1);
   const previous = ctx._abilityAction;
@@ -1598,6 +1607,8 @@ function runOpcode(ctx, action, eff) {
             const contact = plannedContacts.find(row => Expanded.expansionEntity(ctx, row) === t);
             carrier.expansionGroup = action.meta.expansionGroup;
             carrier.expansionContact = { index: contact.index, receipt: action.meta.expansionGroup.targets[contact.key].receipt };
+            const serial = action.meta.expansionGroup.manualCounterSerials?.[ctx.playerIdForEntity?.(t) || 'player'];
+            if (serial) carrier.manualCounterSerial = serial;
             if (contact.crit) carrier.critMultiplier = contact.crit;
           }
           if (Array.isArray(carrier.appliedStatusEffects)) {
@@ -1763,7 +1774,9 @@ function runOpcode(ctx, action, eff) {
       for (const t of plannedStatusTargets(ctx, action, eff)) {
         const authored = evalNum(ctx, action, eff.stacks, 1, t);
         const stacks = authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0);
-        statuses.applyStatus(ctx, t, eff.status, stacks, action.source);
+        statuses.applyStatus(ctx, t, eff.status, stacks, action.source, {
+          tags: [...(eff.tags || []), ...(action.card?.cardTags || action.card?.tags || [])]
+        });
         proposalThreshold(ctx,t);
         if (ctx.combatExpansionVersion === 2) {
           const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];

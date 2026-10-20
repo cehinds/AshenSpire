@@ -421,6 +421,8 @@ export const CALLOUT_KINDS = {
   hit: { string: 'combat.callout.hit', tone: 'white' },
   evadeFailed: { string: 'combat.callout.evadeFailed', tone: 'white' },
   missed: { string: 'combat.callout.missed', tone: 'white' },
+  outOfRange: { string: 'combat.callout.outOfRange', tone: 'white' },
+  dodged: { string: 'combat.callout.dodged', tone: 'white' },
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
   disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
   countered: { string: 'combat.callout.countered', tone: 'red' },
@@ -859,14 +861,20 @@ export function groupBeats(events) {
       case 'flaskUsed':
         startActor('player', 'act', e);
         break;
-      case 'enemyMoveStarted':
+      case 'enemyMoveStarted': case 'combatHitStarted':
         startActor(e.sourceId, e.kind === 'attack' ? 'attack' : 'act', e);
+        cur.prepared = e.contactPrepared === true;
+        break;
+      case 'combatContactPrepared':
+        startActor(e.sourceId, 'attack', e);
+        cur.telegraph = true;
         break;
       case 'enemyActorTurnStarted':
         startActor(e.sourceId, 'reveal', e);
         break;
       case 'combatCounterTriggered':
         startActor(e.sourcePlayerId || e.sourceId, 'counter', e);
+        cur.prepared = e.contactPrepared === true;
         break;
       case 'enemyTurnStart':
         push();
@@ -995,7 +1003,8 @@ export function playTimeline(events, ctx, done) {
       ctx.onIntent?.(beat);
     },
     onAction: beat => {
-      const event = beat.events.find(e => ['cardPlayed', 'enemyMoveStarted', 'combatCounterTriggered', 'flaskUsed'].includes(e.type));
+      if (beat.prepared) return;
+      const event = beat.events.find(e => ['cardPlayed', 'enemyMoveStarted', 'combatHitStarted', 'combatContactPrepared', 'combatCounterTriggered', 'flaskUsed'].includes(e.type));
       const maneuver = event?.combatProfile?.maneuver || event?.maneuver;
       const name = ctx.actionWordForBeat?.(beat) || event?.name || event?.cardName || event?.moveName
         || (maneuver ? maneuver[0].toUpperCase() + maneuver.slice(1) : null)
@@ -1004,7 +1013,7 @@ export function playTimeline(events, ctx, done) {
     },
     maxSpriteMs: speed => typeof ctx.maxActorAnimationMs === 'function' ? ctx.maxActorAnimationMs(speed) : Number(ctx.maxActorAnimationMs) || speed.lungeMs,
     onSprite: (beat, speed) => {
-      if (timing.scale === 0) return null;
+      if (timing.scale === 0 || beat.prepared) return null;
       const actorEl = ctx.anchorFor(beat.actorId);
       if (!actorEl) return null;
       const animation = ctx.animateActor?.(beat, actorEl, speed);
@@ -1035,22 +1044,24 @@ export function playTimeline(events, ctx, done) {
       if (group.length) groups.push({ ...beat, events: group });
       return groups;
     },
-    // The result word (Hit, Miss, Block, Countered) is its own stage, one gap
-    // before the sprite reaction (owner, D11, 2026-10-18).
+    // Accuracy is known before the target reacts; the defense/effect outcome
+    // belongs after that animation, with the numeric result.
     onResult: beat => {
-      // Accuracy receipts cannot say Hit before a miss, full Block or break
-      // receipt that follows them. More specific outcomes take precedence.
-      const outcomeTargets = new Set(beat.events.filter(event => event.type !== 'attackHit' && calloutForEvent(event)).map(event => event.targetId));
-      const saidTargets = new Set(beat.events.filter(event => calloutForEvent(event)).map(event => event.targetId));
+      const saidTargets = new Set();
       for (const event of beat.events) {
-        if (terminal(event) || (event.type === 'attackHit' && outcomeTargets.has(event.targetId))) continue;
-        visualSafe(() => parts.get(event)?.callout?.(ctx));
-        // Historical and authored unavoidable hits may carry damage without an
-        // accuracy receipt. The committed HP residual still proves a Hit.
-        if (event.type === 'damageDealt' && guardHitFloatParts(event).residual > 0 && !saidTargets.has(event.targetId)) {
-          visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'hit'));
-          saidTargets.add(event.targetId);
-        }
+        const kind = event.type === 'attackHit' ? 'hit' : event.type === 'attackMissed' || event.type === 'attackEvaded'
+          || event.type === 'combatAvoidanceResolved' && event.avoided ? 'missed' : null;
+        if (!kind || saidTargets.has(event.targetId)) continue;
+        visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, kind));
+        saidTargets.add(event.targetId);
+        if (kind === 'missed' && (event.missReason === 'range' || event.reason === 'range'))
+          visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'outOfRange'));
+      }
+      // Historical unavoidable contacts may have no accuracy receipt. Absorbed
+      // contacts still hit; Block and Ward are their subsequent result.
+      for (const event of beat.events) if (event.type === 'damageDealt' && !saidTargets.has(event.targetId)) {
+        visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'hit'));
+        saidTargets.add(event.targetId);
       }
     },
     onReaction: beat => {
@@ -1060,6 +1071,15 @@ export function playTimeline(events, ctx, done) {
     onNumbers: beat => {
       if (beat.banner) visualSafe(() => banner(ctx.layer, beat.banner, 'turn', timing.bannerMs));
       if (!beat.actorId || beat.kind === 'reveal') { runParts(beat, 'contact'); runParts(beat, 'reaction'); runParts(beat, 'callout'); }
+      else for (const event of beat.events) {
+        if (event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
+          || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive) {
+          visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
+          continue;
+        }
+        if (terminal(event) || event.type === 'attackMissed' || event.type === 'attackHit' && !(event.evadeActive && !event.bypass)) continue;
+        visualSafe(() => parts.get(event)?.callout?.(ctx));
+      }
       runParts(beat, 'numbers');
       cue(beat);
     },

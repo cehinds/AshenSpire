@@ -148,7 +148,8 @@ test('actual core run hands the same pin and derived AR/DR to the live combat fa
   const card = combat.piles.hand[0], targetId = combat.enemies[0].id;
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId });
   assert.equal(combat.player.counters.cardsPlayedThisTurn, 1);
-  assert.deepEqual(combat.skillXp, {}, 'configured core does not gain legacy skill XP');
+  assert.ok(combat.skillXp.player.xp['item:blade'] > 0, 'configured Core records the actually used weapon group');
+  assert.deepEqual(Object.keys(combat.skillXp.player.xp), ['item:blade'], 'no unused or legacy tracks are paid');
 });
 
 test('current profile uses right-first placement while legacy combat keeps absent occupancy and identical combat traces', async () => {

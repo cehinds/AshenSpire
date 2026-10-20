@@ -1,4 +1,4 @@
-import { fixCoreEnabled, fixCoreRules } from './fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreRules, fixCoreReactionRules } from './fixCoreMechanics.js';
 import { stanceRules } from '../content/stanceRules.js';
 import { cardPreparationCategory } from './cardClassification.js';
 import { combatProfileFor } from './combatCardProfile.js';
@@ -52,13 +52,21 @@ export function sameStance(entity, carrier) {
   const active = stanceOf(entity?.combatStance), next = stanceOf(carrier, entity);
   return !!next && [...(entity?.concurrentStances || []),active].some(row=>row && row.maneuver===next.maneuver && row.camp===next.camp);
 }
-// Core discounts one lane (owner ruling D6): MP when the card costs MP (`mpBase` > 0), else SP.
+// Core SP reduction is reserved for an enemy-turn reaction in the current stance.
 export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0) {
   if (ctx?.combatExpansionVersion !== 2 || !sameStance(entity, carrier)) return base;
   if (fixCoreEnabled(ctx)) {
-    if (!(base > 0) || mpBase > 0) return base;
-    const cfg = fixCoreRules(ctx, entity, carrier).stance;
-    return Math.max(cfg.minimumCost, base - cfg.discount);
+    // Authored enemy plans budget moves through their existing one-lane rule.
+    // The player's hand-card reaction restriction must not reprice that plan.
+    if (entity?.kind === 'enemy') {
+      if (!(base > 0) || mpBase > 0) return base;
+      const cfg = fixCoreRules(ctx, entity, carrier).stance;
+      return Math.max(cfg.minimumCost, base - cfg.discount);
+    }
+    const tags = carrier?.cardTags || carrier?.tags || [];
+    if (!(base > 0) || carrier?.cost === 'X' || ctx.phase !== 'enemy'
+      || !tags.some(tag => (typeof tag === 'string' ? tag : tag?.id) === 'trait:reaction')) return base;
+    return Math.max(0, base - fixCoreReactionRules(fixCoreRules(ctx, entity, carrier)).handCostDiscount);
   }
   const cfg = stanceRulesFor(ctx), magical = stanceOf(carrier).camp === 'spell';
   return Math.max(magical ? cfg.magicalMinimumSp : cfg.physicalMinimumSp, base - cfg.sameStanceDiscount);

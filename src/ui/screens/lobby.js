@@ -342,7 +342,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
     const renderLocals = () => {
       localsBox.innerHTML = '';
       state.locals.forEach((lp, i) => {
-        const nameField = textInput({ class: 'll-name', maxlength: '14', value: lp.name, 'aria-label': `Player ${i + 2} name` });
+        const nameField = textInput({ class: 'll-name', maxlength: '14', value: lp.name, 'aria-label': `${t('combat.log.role.player')} ${i + 2} name` });
         const classBtn = button({ label: `${classGlyph(lp.classId)} ${classList.find((c) => c.id === lp.classId).name}`, className: 'll-class' });
         const kitBtn = button({ label: (kitsFor(lp.classId).find((kit) => kit.id === lp.startingKitId) || kitsFor(lp.classId)[0]).label, className: 'll-kit' });
         const tintBtn = swatch({ color: tintCss(lp.tint), label: 'Next accent', className: 'll-tint' });
@@ -353,7 +353,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
           trail: [nameField, classBtn, kitBtn, tintBtn, del],
           className: 'lobby-local',
         });
-        nameField.addEventListener('input', (e) => { lp.name = e.target.value.trim() || `Player ${i + 2}`; sendLocals(); });
+        nameField.addEventListener('input', (e) => { lp.name = e.target.value.trim() || `${t('combat.log.role.player')} ${i + 2}`; sendLocals(); });
         classBtn.addEventListener('click', () => {
           const ci = classList.findIndex((c) => c.id === lp.classId);
           lp.classId = classList[(ci + 1) % classList.length].id;
@@ -381,7 +381,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       if (state.players.length >= 4 || state.locals.length >= 3) return;
       const n = state.locals.length + 2;
       const classId = classList[(n - 1) % classList.length].id;
-      state.locals.push({ name: `Player ${n}`, classId, startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: DEFAULT_SPRITE_STYLE });
+      state.locals.push({ name: `${t('combat.log.role.player')} ${n}`, classId, startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: DEFAULT_SPRITE_STYLE });
       renderLocals(); sendLocals();
     });
     leaveBtn.addEventListener('click', () => back());

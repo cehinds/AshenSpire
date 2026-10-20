@@ -101,6 +101,31 @@ these are local Edge measurements, not a physical-phone benchmark or proof that
 the reported mobile crash is fixed. Physical iPhone/Safari testing and a longer
 session memory trace are still needed.
 
+### Compiled startup profile, 2026-10-20
+
+Two local standalone builds were measured in Chromium 154 at 390×844, DPR 3,
+with touch enabled and CPU throttling off. Build **0.7.1.1735** at
+`47f9d36ab9c29ff873d56ab6d16251e787cbb98b` took 4.714 s to DOMContentLoaded,
+5.296 s to show the startup gate, and 9.382 s from navigation to the title;
+its longest main-thread task was 4.034 s. Build **0.7.1.1739** at
+`37ee041ee715c179a6895a1fcb00dc9b4bcdede8` (artifact digest
+`68381ee86d`) took 3.035 s to DOMContentLoaded, 3.272 s to show the gate,
+and 7.166 s from navigation to the title; its longest task was 2.480 s.
+The new build reduced navigation-to-title time by 2.216 s in this run. The
+gate-to-title interval still includes the authored 3.440 s intro (560 ms
+light-up, 2,000 ms hold, 880 ms fade); the remainder was about 0.454 s.
+
+Samples from the remaining startup task include legacy profile cloning,
+content validation/digest work, audio setup and freezing the profile. This is a
+local Chromium comparison between the listed builds, not a measurement on a
+Galaxy A32, iPhone, or Safari. A deterministic real-touch `core.defend` play
+also committed exactly once and removed its card at 390×844 and 320×568 under
+4× CDP CPU throttling. Its post-input window contained 0.719–0.908 s long tasks
+and missed frames, but the probe's requestAnimationFrame timestamps were stale
+in places, so no touch-to-action latency is reported from that run. A dedicated
+interaction CPU profile is still needed before attributing those stalls or
+choosing an optimization.
+
 The older card-drag-targeting harness currently reads `.pile.discard .n`, which
 predates the combined Discard/Exhaust control; its full run stops at that stale
 selector. The focused touch and gameplay checks above cover the current flow.

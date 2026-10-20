@@ -85,6 +85,11 @@ function entityProblems(entity, path, { player = false } = {}) {
   }
   problems.push(...enemyBurdenProblems(entity));
   if (!record(entity.statuses)) problems.push(`${path}.statuses must be an object`);
+  const precision = entity.statuses?.precision;
+  if (precision?.persistentStacks !== undefined && (!Number.isInteger(precision.persistentStacks)
+    || precision.persistentStacks < 0 || !Number.isInteger(precision.stacks) || precision.persistentStacks > precision.stacks)) {
+    problems.push(`${path}.statuses.precision.persistentStacks must be a whole number between 0 and stacks`);
+  }
   if (entity.ratings !== undefined && (!record(entity.ratings) || ['ar', 'dr', 'pr', 'poise', 'ward'].some(id => !Number.isFinite(entity.ratings[id]) || entity.ratings[id] < 0))) problems.push(`${path}.ratings must contain finite non-negative ratings`);
   if (entity.wardMeter !== undefined && (!record(entity.wardMeter) || !Number.isInteger(entity.wardMeter.max) || entity.wardMeter.max <= 0 || !Number.isFinite(entity.wardMeter.value) || entity.wardMeter.value < 0 || entity.wardMeter.value >= entity.wardMeter.max)) problems.push(`${path}.wardMeter is invalid`);
   if (typeof entity.alive !== 'boolean') problems.push(`${path}.alive must be boolean`);
@@ -249,6 +254,10 @@ export function combatSnapshotProblems(snapshot) {
         if (!finite(amount) || amount < 0) problems.push(`skillXp.${owner}.xp.${skillId} must be a non-negative number`);
       }
       if (receipt.killGroup !== null && !nonEmptyString(receipt.killGroup)) problems.push(`skillXp.${owner}.killGroup must be null or a skill track id`);
+      if (receipt.usedArmaments !== undefined && (!Array.isArray(receipt.usedArmaments)
+        || receipt.usedArmaments.some(id => !nonEmptyString(id)) || new Set(receipt.usedArmaments).size !== receipt.usedArmaments.length)) {
+        problems.push(`skillXp.${owner}.usedArmaments must be distinct non-empty item ids`);
+      }
     }
   }
   if (snapshot.armamentLevels !== undefined) {

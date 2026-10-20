@@ -12,6 +12,8 @@ import { gameProfileEquipmentReceipt } from '../src/model/gameProfileRun.js';
 import { smithingPlan } from '../src/model/smithing.js';
 import { coreCardSimulationCount } from '../src/model/smithingCore.js';
 import { smithSelectionModel } from '../src/ui/models/SmithSelectionModel.js';
+import { mountSmithUpgradeModal } from '../src/ui/components/smithUpgradeModal.js';
+import { withKitDom } from './helpers/kit-dom.mjs';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
@@ -92,6 +94,47 @@ test('Core armor tier: receipt shows the budget point and the block it adds to D
   run.itemUpgradeLevels = {};
   assert.equal(defend(fight(run)), block.before);
 });
+
+test('Smith item summaries expose actual tier deltas for weapons, shields and armor without simulating other cards', () => {
+  const run = fresh(); run.loadout.sets.leftHand[0] = 'kiteShield'; run.loadout.sets.armor[0] = 'vigil'; visit(run);
+  const plan = smithingPlan(reg, run);
+  const before = coreCardSimulationCount();
+  const model = smithSelectionModel(reg, plan);
+  assert.equal(coreCardSimulationCount(), before, 'item summaries do not evaluate live card previews');
+  for (const ref of ['armament/greatsword', 'armament/kiteShield', 'armor/reaver/vigil']) {
+    const candidate = plan.candidates.find(row => row.itemRef === ref);
+    const item = model.properties.candidates.find(row => row.itemRef === ref);
+    assert.ok(item.intrinsicChanges.length, `${ref} has a visible benefit`);
+    assert.equal(item.intrinsicStats, null, 'Core summaries do not mix legacy base ratings into the tier receipt');
+    assert.deepEqual(item.intrinsicChanges, candidate.changes.filter(row => row.before !== row.after), ref);
+    assert.ok(Object.isFrozen(item.intrinsicChanges));
+  }
+  assert.ok(model.properties.candidates.find(row => row.itemRef === 'armor/reaver/vigil').intrinsicChanges.some(row => row.label === 'DR'));
+});
+
+test('Smith renders calculated item and card deltas outside the closed details', () => withKitDom(dom => {
+  const run = fresh(); visit(run);
+  const model = smithSelectionModel(reg, smithingPlan(reg, run), 'armament/greatsword');
+  const host = dom.document.createElement('main'); dom.document.body.append(host);
+  const door = mountSmithUpgradeModal(host, model, { registries: reg, meta: {}, onSelect() {}, onBack() {}, onConfirm() {} });
+  const stats = host.querySelector('.smith-intrinsic-stats');
+  const deltas = node => node.querySelectorAll('.as-statpair').map(pair => [
+    pair.querySelector('em')?.textContent, pair.querySelector('b')?.textContent, pair.querySelector('strong')?.textContent,
+  ]);
+  for (const change of model.properties.selected.intrinsicChanges) {
+    assert.ok(deltas(stats).some(row => JSON.stringify(row) === JSON.stringify([change.label, String(change.before), String(change.after)])));
+  }
+  const folds = host.querySelectorAll('.smith-upgrade-fold');
+  assert.equal(folds.length, model.properties.selected.affectedRows.length);
+  folds.forEach((fold, index) => {
+    assert.equal(fold.hasAttribute('open'), false, 'the preview starts folded');
+    const summary = fold.querySelector('summary');
+    for (const change of model.properties.selected.affectedRows[index].values) {
+      assert.ok(deltas(summary).some(row => JSON.stringify(row) === JSON.stringify([change.label, String(change.before), String(change.after)])));
+    }
+  });
+  door.close();
+}));
 
 test('Core shield tier adds a stat point; receipts never carry legacy +3 card rows', () => {
   const run = fresh(); run.loadout.sets.leftHand[0] = 'kiteShield'; run.loadout.sets.armor[0] = 'vigil';
