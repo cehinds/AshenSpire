@@ -4,6 +4,7 @@
 // Executioner's Staggered damage. The direct path still bypasses the bar: the
 // poise max does not grow (SPEC §4.4). Shipped registry, solo and co-op.
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -60,7 +61,7 @@ test('an Insanity break applies Staggered, so Executioner deals its Staggered da
   assert.ok(broken.hit > clean.hit * 2, `Staggered rider fired (${clean.hit} -> ${broken.hit})`);
 });
 
-test('co-op matches solo after an Insanity break', () => {
+test('co-op matches solo after an Insanity break', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const s = solo(true);
   const c = coop(true);
   assert.equal(c.staggered, s.staggered);

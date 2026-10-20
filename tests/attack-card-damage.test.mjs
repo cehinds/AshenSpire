@@ -1,5 +1,6 @@
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { configuredContentBundle, advancedConfigRows } from '../src/model/advancedConfig.js';
@@ -358,7 +359,7 @@ test('a malformed status or bonus container is reported by name', () => {
 
 // CO-OP CARRIES THE RESOLVED FACE TOO (#1247 review): its action carrier is
 // built separately from solo's, so it needs the same Ward value.
-test('a staff Strike played in co-op lands its configured Ward impact', async () => {
+test('a staff Strike played in co-op lands its configured Ward impact', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   const { createCoopCombat, playCard } = await import('../src/engine/coopCombat.js');
   const { createRng } = await import('../src/engine/rng.js');
   const { resolveCombatRatings } = await import('../src/model/combatRatings.js');

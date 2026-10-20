@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -317,7 +318,7 @@ test('an equipment card uses only its source item rating', () => {
     'an unarmed equipment-profile card excludes every equipped item but keeps attribute and relic AR');
 });
 
-test('co-op initializes source equipment ratings for every seat', async () => {
+test('co-op initializes source equipment ratings for every seat', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   const { createRunState } = await import('../src/model/state.js');
   const configured = configuredContentBundle(contentBundle, advancedConfigSnapshot({}));
   const currentRegistries = createRegistries(configured);

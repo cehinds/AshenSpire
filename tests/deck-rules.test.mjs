@@ -6,6 +6,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import { contentBundle } from '../src/content/index.js';
 import { deckRules as DECK_RULES } from '../src/content/deckRules.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -286,7 +287,7 @@ test('a saved fight keeps the rule it started with; a snapshot without it resume
   assert.equal(restoreCombatSnapshot({ registries: REG, rng: createRng(9), snapshot: older }).orderedDraw, null);
 });
 
-test('each co-op seat draws in its own owner\'s order', () => {
+test('each co-op seat draws in its own owner\'s order', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const run = freshRun();
   const C = createCoopCombat({ registries: REG, rng: createRng(11), enemyIds: [ENEMY],
     players: [{ ...run, id: 'p1', classId: run.class, relicIds: run.relics, orderedDraw: true }] });

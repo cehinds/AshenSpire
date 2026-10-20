@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
@@ -84,7 +85,7 @@ test('an actual enemy-turn matching Counter remains affordable and pays the disc
   assert.ok(!result.events.some(row => row.type === 'staminaSpent' && row.amount > 0));
 });
 
-test('co-op pays authored own-turn SP and expires only the acting owner Precision', () => {
+test('co-op pays authored own-turn SP and expires only the acting owner Precision', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const player = id => ({ id, classId: 'reaver', maxHp: 100, hp: 100, maxMana: 10, mana: 10,
     maxStamina: 3, stamina: 3, energyMax: 3, drawPerTurn: 1,
     deck: [{ cardId: 'core.counter', instanceId: `${id}-counter` }] });

@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -39,7 +40,7 @@ test('solo paid Power copies each exhaust while their installed buff persists th
   assert.equal(combat.piles.exhaust.length, 2);
 });
 
-test('co-op uses the same per-instance Power exhaustion and combat-long buff', () => {
+test('co-op uses the same per-instance Power exhaustion and combat-long buff', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const combat = createCoopCombat({ registries, rng: createRng(128), combatExpansionVersion: 2,
     players: [player('a')], enemyIds: ['wanderingSoldier'] });
   for (const id of ['first', 'replica']) playCard(combat, 'a', id);
