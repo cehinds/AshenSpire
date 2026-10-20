@@ -650,3 +650,38 @@ test('Core: a spell Counter face with no revealed attack reads the half-incoming
   assert.match(text, /Return half incoming damage and Poise/);
   assert.doesNotMatch(text, /\d Poise(?! and)|\d Ward damage/, text);
 });
+
+// A Core profile may override the stances module (engine/modules/stances/guide.md): omit prepared or counter.
+function overrideLive(include) {
+  const custom = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { stances: { include } } });
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, custom)), custom);
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const enemy = combat.enemies[0];
+  combat.player.basePrecisionBonus = 1000;
+  Object.assign(enemy, { hp: 500, maxHp: 500, statuses: {}, ratings: { poise: 20 }, ratingSources: [], attributes: { dexterity: 0 }, basePrecisionBonus: 1000 });
+  combat.piles.hand.push({ instanceId: 'co1', cardId: 'frostCounter' });
+  Object.assign(combat.player, { mana: 9, maxMana: 9 });
+  return { combat, enemy, registries };
+}
+for (const [name, include] of [['prepared', ['attack', 'smash', 'defend', 'counter', 'sweep', 'evade']], ['counter', ['attack', 'smash', 'defend', 'sweep', 'prepared', 'evade']]]) {
+  test(`a Core profile whose stances omit ${name}: a spell Counter shows no return, no face text, and live never returns`, () => {
+    const { combat, enemy, registries } = overrideLive(include);
+    const view = previewCard(combat, 'co1', enemy.id);
+    assert.ok(view.counterReturn?.uncovered === true || !view.counterReturn, 'no computed return promised');
+    assert.ok(!(view.counterReturn?.hp > 0), 'preview promises no return');
+    const text = (cardFaceLines(view.resolvedDefinition, view, registries) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
+    assert.doesNotMatch(text, /Return half incoming damage and Poise/);
+    enemy.intent.damage = null;
+    const bare = previewCard(combat, 'co1');
+    assert.doesNotMatch((cardFaceLines(bare.resolvedDefinition, bare, registries) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, ''), /Return half incoming damage and Poise/);
+    enemy.intent.damage = 8;
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'co1' });
+    Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });
+    dispatch(combat, { type: 'setReactions', enabled: false });
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'endTurn' });
+    const events = combat.eventLog.slice(start);
+    assert.ok(!events.some(e => e.type === 'combatCounterTriggered' && e.cardId === 'frostCounter'), 'live deals no return');
+  });
+}
