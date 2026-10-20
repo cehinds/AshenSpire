@@ -619,3 +619,23 @@ test('live: a spell Counter returns once per owner cycle against two covered hit
   assert.ok(events.filter(e => e.type === 'damageDealt' && e.targetId === 'player').length >= 2, 'two hits landed');
   assert.equal(events.filter(e => e.type === 'combatCounterTriggered' && e.cardId === 'frostCounter').length, 1);
 });
+
+import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
+test('an armed spell Counter survives save: snapshot validates, restores armed, old saves without the card count still load', () => {
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  Object.assign(combat.player, { mana: 9, maxMana: 9 });
+  combat.piles.hand.push({ instanceId: 'cs1', cardId: 'frostCounter', upgraded: false });
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cs1' });
+  assert.ok(Number.isInteger(combat.player.combatCounter.armedAtCardCount));
+  const snapshot = serializeCombatSnapshot(combat);
+  assert.deepEqual(combatSnapshotProblems(snapshot), []);
+  const loaded = restoreCombatSnapshot({ registries: reg, rng: createRng(511, combat.rng.getCounters()), snapshot });
+  assert.deepEqual(loaded.player.combatCounter, combat.player.combatCounter);
+  const old = structuredClone(snapshot);
+  delete old.player.combatCounter.armedAtCardCount;
+  assert.deepEqual(combatSnapshotProblems(old), [], 'optional for old saves');
+  old.player.combatCounter.armedAtCardCount = -1;
+  assert.ok(combatSnapshotProblems(old).some(p => p.includes('armedAtCardCount')));
+});
