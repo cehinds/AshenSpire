@@ -1,0 +1,61 @@
+{
+  "version": "0.2.1",
+  "tasks": [
+    {
+      "taskLabel": "AshenSpire: Play",
+      "appliesTo": "package.json",
+      "type": "launch",
+      "command": "npm",
+      "args": ["start"]
+    },
+    {
+      "taskLabel": "AshenSpire: Serve without opening a browser",
+      "appliesTo": "package.json",
+      "type": "launch",
+      "command": "npm",
+      "args": ["run", "serve"]
+    },
+    {
+      "taskLabel": "AshenSpire: Fast core tests",
+      "appliesTo": "package.json",
+      "type": "launch",
+      "command": "npm",
+      "args": ["test"]
+    },
+    {
+      "taskLabel": "AshenSpire: Full Node test suite",
+      "appliesTo": "package.json",
+      "type": "launch",
+      "command": "npm",
+      "args": ["run", "test:all"]
+    },
+    {
+      "taskLabel": "AshenSpire: Compile authored content",
+      "appliesTo": "package.json",
+      "type": "launch",
+      "command": "node",
+      "args": ["tools/content-build.mjs"]
+    },
+    {
+      "taskLabel": "AshenSpire: Build standalone",
+      "appliesTo": "package.json",
+      "type": "launch",
+      "command": "npm",
+      "args": ["run", "build:standalone"]
+    },
+    {
+      "taskLabel": "AshenSpire: Start Workbench",
+      "appliesTo": "package.json",
+      "type": "launch",
+      "command": "node",
+      "args": ["workbench/server.mjs"]
+    },
+    {
+      "taskLabel": "AshenSpire: Editor tests",
+      "appliesTo": "package.json",
+      "type": "launch",
+      "command": "npm",
+      "args": ["--prefix", "editor", "test"]
+    }
+  ]
+}

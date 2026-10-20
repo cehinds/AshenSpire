@@ -7,6 +7,42 @@ How to run, test, and add content. The architecture contract lives in
 For how work is branched, reviewed, and merged, see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Open and navigate in Visual Studio
+
+Open the repository root with **File → Open → Folder**. Install Visual Studio's
+**Node.js development** workload and Node.js 22.14 or newer; this project has no
+root npm dependencies and does not need a generated solution or project file.
+The shared [`tasks.vs.json`](tasks.vs.json) adds Play, Serve, Fast core tests,
+Full Node test suite, Compile authored content, Build standalone, Start
+Workbench and Editor tests to the right-click menu for `package.json` in
+Solution Explorer. Play, Serve and Workbench are long-running server tasks.
+See Microsoft's guides for [Open Folder](https://learn.microsoft.com/en-us/visualstudio/ide/develop-code-in-visual-studio-without-projects-or-solutions)
+and [custom tasks](https://learn.microsoft.com/en-us/visualstudio/ide/customize-build-and-debug-tasks-in-visual-studio?view=vs-2022)
+if Visual Studio's folder view or task menu is unfamiliar.
+
+Use these folders as the first stops when finding code:
+
+| Folder | What belongs here |
+|---|---|
+| `src/main.js` | Application wiring and the composition root. |
+| `src/model/` | Pure game state, formulas, validation and projections. |
+| `src/engine/` | Headless game rules, simulation, orchestration and persistence. |
+| `src/ui/` | Browser presentation: screens, view models, component models and renderers. |
+| `content/source/` | Authoritative authored card, class, enemy, relic, status and related tables. |
+| `content/config/`, `content/framework/` | Authored UI configuration and framework definitions. |
+| `src/content/generated/` | Compiler output. Change its source data and rebuild; do not author here. |
+| `styles/` | Game stylesheets and generated design-token CSS. |
+| `tests/` | Game behavior tests, fixtures and the shared Node test runner. |
+| `tools/` | Build, validation, QA and repository commands; [`tools/README.md`](tools/README.md) indexes them. |
+| `workbench/`, `editor/`, `ui-studio/`, `pose-studio/` | Separate local browser-based authoring tools. The Workbench combines them; they are not Visual Studio projects. |
+| `docs/` | Guides, architecture contracts, design notes and review evidence. |
+
+For the dependency boundaries and root-folder rules, see the
+[architecture map](docs/ARCHITECTURE-MAP.md). For gameplay authoring, use the
+quick reference in [CONTRIBUTING.md](CONTRIBUTING.md) and its linked sections
+in this guide. The detailed layout is a contract: keep browser import paths and
+generated outputs where the architecture map places them.
+
 ## Workbench — every authoring tool in one window
 
 `node workbench/server.mjs` (or **workbench/Start Workbench.cmd** on Windows,
