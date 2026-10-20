@@ -1,3 +1,5 @@
+import { attackHitPreview } from './stanceHit.js';
+import * as Engagement from './combatEngagement.js';
 import { configuredModule } from './gameProfileCombat.js';
 // SPEC 4.10: choices pause a committed contact plan before defense begins.
 // Callbacks are supplied by the solo/co-op command door, never saved in state.
@@ -133,7 +135,7 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
     const choices = cardChoice(ctx.registries, base, ctx.player.classId)?.options || [null];
     const aimed = cardTargetPlan(base, seat, ctx.enemies, players, { solo: !ctx.players }).mode === 'enemy';
     const aims = aimed ? [...new Set(answered.map(threat => threat.enemyId))] : [answered[0].enemyId];
-    for (const aim of aims) for (const tier of [0, ...upcastOptions(base).map(option => option.ranks)]) for (const choice of choices) {
+    for (const rangeRoute of (ctx.rangeState && (base.cardTags || base.tags || []).includes('maneuver:counter') ? ['advance','throw'] : [undefined])) for (const aim of aims) for (const tier of [0, ...upcastOptions(base).map(option => option.ranks)]) for (const choice of choices) {
       const candidate = candidateState(ctx, { detached: true });
       candidate.queue = []; delete candidate.pendingReaction; delete candidate.reactionResume;
       candidate._reactionPlaying = true; candidate._buffer = null;
@@ -142,15 +144,28 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
       if (candidate.foundation) { candidate.foundation.eventCount = 0; candidate.foundation.rolls = {}; candidate.foundation.counts = {}; }
       hooks.setOwner?.(candidate, seat);
       const play = { cardInstanceId: inst.instanceId, ...(aimed ? { targetId: aim } : {}),
-        ...(choice ? { choice: choice.id } : {}), ...(tier ? { upcastTier: tier } : {}) };
+        ...(choice ? { choice: choice.id } : {}), ...(tier ? { upcastTier: tier } : {}), ...(rangeRoute ? {rangeRoute} : {}) };
       try {
         const paymentStart = candidate.eventLog.length;
         if (captureIncoming) candidate._groupSink = [];
-        hooks.play(candidate, play);
+        const restoreRange = Engagement.incomingRangeScope(candidate,group,candidate.player);
+        try { hooks.play(candidate, play); } finally { restoreRange(); }
         const planned = candidate._groupSink?.find(row => row.carrier?.instanceId === inst.instanceId);
         delete candidate._groupSink;
         const paid = candidate.eventLog.slice(paymentStart).find(event => event.type === 'cardPlayed');
         if (!paid || !candidate.player.alive) { note('other'); continue; }
+        const preparedCounter = candidate.player.combatCounter?.carrier;
+        const reservation = preparedCounter?.rangeCounterReservation;
+        if (rangeRoute === 'throw' && !reservation?.rangePlan.targets.some(row => row.missingBands > 0)) continue;
+        let range;
+        if (reservation) {
+          const restoreQuote = Engagement.incomingRangeScope(candidate,group,candidate.player);
+          const attacker = candidate.enemies.find(enemy=>enemy.id===aim);
+          const previewActor = {...candidate.player,energy:candidate.player.energy+(paid.staminaSpent || 0),stamina:candidate.player.stamina+(paid.staminaSpent || 0),mana:candidate.player.mana+(paid.manaSpent || 0)};
+          const baseSp = (paid.staminaSpent || 0)-reservation.rangePlan.advanceSp;
+          try { range = Engagement.previewRangeRoutes(candidate,previewActor,[{source:previewActor,target:attacker,card:preparedCounter,effect:{op:'damage',target:'enemy',amount:0}}],{energy:baseSp,stamina:baseSp,mana:paid.manaSpent || 0},{rangeRoute,hitPreview:attackHitPreview}); }
+          finally { restoreQuote(); }
+        }
         // The stacked entries resolve after this option, last pushed first; all must play.
         // An enemy entry runs its committed plan; one that fizzles is a valid outcome.
         for (const entry of [...entries].reverse()) {
@@ -167,10 +182,10 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
           const amount = incomingAgainst(planned, enemy.id);
           if (amount > 0) incoming[enemy.id] = amount;
         }
-        options.push({ id: `${inst.instanceId}:${tier}:${choice?.id || 'default'}${aimed && enemyEntries ? `:${aim}` : ''}`, name: base.name,
+        options.push({ id: `${inst.instanceId}:${tier}:${choice?.id || 'default'}${rangeRoute === 'throw' ? ':throw' : ''}${aimed && enemyEntries ? `:${aim}` : ''}`, name: base.name,
           cardId: inst.cardId, play, staminaCost: paid.staminaSpent ?? paid.energySpent ?? 0,
           manaCost: paid.manaSpent || 0, choiceName: choice?.label || choice?.name || null,
-          ...(captureIncoming ? { incoming } : {}), ...(enemyEntries ? { sourceId: aim } : {}) });
+          ...(range ? {range} : {}), ...(captureIncoming ? { incoming } : {}), ...(enemyEntries ? { sourceId: aim } : {}) });
       } catch (error) {
         // Ineligible under the normal card/payment/control rules; the refusal names why.
         const { reason, ...extra } = error?.playRefusal || {};
@@ -476,9 +491,10 @@ function playStackEntry(ctx, group, entry, hooks) {
   ctx._reactionPlaying = true;
   ctx._reactionSourceId = entry.sourceId || group.sourceId;
   let refusal = null;
+  const restoreRange = Engagement.incomingRangeScope(ctx,group,ctx.player);
   try { hooks.play(ctx, { ...play }); }
   catch (error) { if (!error?.playRefusal) throw error; refusal = error.playRefusal; }
-  finally { delete ctx._reactionPlaying; delete ctx._reactionSourceId; }
+  finally { restoreRange(); delete ctx._reactionPlaying; delete ctx._reactionSourceId; }
   if (refusal) {
     restoreReactionQueue(ctx);
     ctx.emit('combatReactionFizzled', { ownerId, cardInstanceId: play.cardInstanceId, reason: refusal.reason || 'other' });
@@ -551,8 +567,9 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
   }
   ctx._reactionPlaying = true;
   ctx._reactionSourceId = group.sourceId;
+  const restoreRange = Engagement.incomingRangeScope(ctx,group,ctx.player);
   try { hooks.play(ctx, option.play); }
-  finally { delete ctx._reactionPlaying; delete ctx._reactionSourceId; }
+  finally { restoreRange(); delete ctx._reactionPlaying; delete ctx._reactionSourceId; }
   if (ctx.player.combatCounter && option.play.cardInstanceId === ctx.player.combatCounter.carrier?.instanceId) {
     (group.manualCounterSerials ||= {})[ownerId] = ctx.player.combatCounter.serial;
   }

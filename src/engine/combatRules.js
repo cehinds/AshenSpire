@@ -57,7 +57,7 @@ export function cardSourceSnapshots(ctx, def, source, card) {
 }
 
 export function cardActions(ctx, def, source, target, card, meta, sourceSnapshots = null) {
-  if (!ctx.foundation) return (def.effects || []).map((effect) => ({ effect, source, owner: source, target, card, meta }));
+  if (!ctx.foundation) return (def.effects || []).map((effect) => ({ effect, source, owner: source, target, card: sourceSnapshots?.get(effect) || card, meta }));
   if (card.attack) validateAttack(card.attack, ctx.foundation.rules);
   const formulaContext = { entities: { self: source, owner: source, player: ctx.player, target, enemy: target, allEnemies: ctx.enemies.filter((e) => e.alive) }, cardId:card.cardId,manaSpent:meta.manaSpent || 0,staminaSpent:meta.staminaSpent || 0, energySpent: meta.energySpent, cardsPlayedThisTurn: meta.ordinalThisTurn };
   const rows = [];

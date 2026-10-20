@@ -1,4 +1,4 @@
-import { executeEngagementMovement } from './combatEngagement.js';
+import * as Engagement from './combatEngagement.js';
 import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
@@ -1740,7 +1740,7 @@ function runOpcode(ctx, action, eff) {
       }
       break;
     }
-    case 'moveEngagement': { executeEngagementMovement(ctx, action); break; }
+    case 'moveEngagement': { Engagement.executeEngagementMovement(ctx, action); break; }
     case 'dodgeRoll': {
       if (configuredCombat(ctx)) {
         if (configuredModule(ctx, 'stances')?.include?.includes('evade')) action.source.combatStance = { maneuver: 'evade', camp: 'physical' };

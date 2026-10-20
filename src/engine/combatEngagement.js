@@ -7,7 +7,7 @@ import { attackDescriptor } from '../model/attackTags.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
 import * as Foundation from './combatRules.js';
 import * as Actions from './actions.js';
-import { wieldedArmament } from './combatCardTactics.js';
+import * as CardTactics from './combatCardTactics.js';
 import { evaluate } from '../model/formulas.js';
 
 export function initializeCombatRange(ctx, policy = null) {
@@ -38,7 +38,7 @@ export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {
   if (!resolved && source.kind !== 'enemy') {
     const attack = attackDescriptor({ ...carrier, attack: effect.attack || carrier.attack });
     const kind = attack.source || (profile.camp === 'spell' ? 'spell' : 'weapon');
-    const piece = kind === 'unarmed' ? null : wieldedArmament(ctx, { ...carrier, sourceHand: attack.hand || carrier.sourceHand }, source, kind);
+    const piece = kind === 'unarmed' ? null : CardTactics.wieldedArmament(ctx, { ...carrier, sourceHand: attack.hand || carrier.sourceHand }, source, kind);
     resolved = piece ? { sourceType: kind, itemId: piece.id, range: piece.range || 'melee', propertyTags: [...(piece.propertyTags || [])] }
       : { sourceType: kind === 'weapon' ? 'unarmed' : kind };
   }
@@ -107,12 +107,18 @@ export function assertRangeCardEnabled(ctx, def) {
 
 export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   if (!ctx.rangeState) return null;
-  const plan = carrier.rangePlan || carrier.rangeQuotedPlan || quoteRangeActions(ctx, source, actions, { route: carrier.rangeRoute || 'advance' });
+  const authorization = carrier.rangeReturnAuthorization;
+  let plan = carrier.rangePlan || carrier.rangeQuotedPlan || quoteRangeActions(ctx, source, actions, { route: carrier.rangeRoute || 'advance' });
+  if (authorization) {
+    const frozen = authorization.plan.targets[0];
+    plan = { ...authorization.plan, targets: plan.targets.map(row => ({...frozen,contactId:row.contactId,targetKey:row.targetKey})) };
+  }
+  const prepaidReturn = !!authorization?.paid;
   if (!plan.available) throw Foundation.playRefusal('The selected range route cannot reach every target', 'range');
   const extra = plan.advanceSp;
   const available = source.kind === 'enemy' ? source.fixCoreStaminaRemaining ?? source.stamina ?? source.maxStamina ?? 0 : source.energy;
-  if (!carrier.rangePlan && available < extra) throw Foundation.playRefusal('Not enough Stamina to Advance', 'cost', { resource: 'stamina', need: extra, have: available });
-  if (!carrier.rangePlan && extra > 0) {
+  if (!carrier.rangePlan && !prepaidReturn && available < extra) throw Foundation.playRefusal('Not enough Stamina to Advance', 'cost', { resource: 'stamina', need: extra, have: available });
+  if (!carrier.rangePlan && !prepaidReturn && extra > 0) {
     if (source.kind === 'enemy') { source.fixCoreStaminaRemaining = available - extra; source.stamina = source.fixCoreStaminaRemaining; }
     else {
       source.energy -= extra;
@@ -120,11 +126,12 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
       ctx.emit?.('energySpent', { amount: extra }); ctx.emit?.('staminaSpent', { amount: extra });
     }
   }
-  const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };
+  const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || authorization?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };
   carrier.rangePlan = accepted;
-  delete carrier.rangeBaseCosts; delete carrier.rangeRoute; delete carrier.rangeQuotedPlan;
+  delete carrier.rangeBaseCosts; delete carrier.rangeRoute; delete carrier.rangeQuotedPlan; delete carrier.rangeReturnAuthorization; delete carrier.rangeCounterReservation;
   for (const action of actions) {
     action.card = { ...action.card, rangePlan: accepted };
+    delete action.card.rangeReturnAuthorization; delete action.card.rangeCounterReservation;
     action.meta = { ...action.meta, energySpent: (action.meta?.energySpent || 0) + extra, staminaSpent: (action.meta?.staminaSpent || 0) + extra };
   }
   return accepted;
@@ -163,4 +170,80 @@ export function previewRangeRoutes(ctx, source, actions, baseCosts, { rangeRoute
   if (!selected) throw Error('Unknown range route');
   return { version: 1, enabled: ctx.rangeState.policy.enabled, selectedRoute: rangeRoute,
     choiceRequired: false, targets: selected.targets, routes: routeRows };
+}
+
+export function incomingRangeScope(ctx, group, defender) {
+  if (!ctx.rangeState || !group?.carrier?.rangePlan) return () => {};
+  const prior = { context: ctx._rangeContext, incoming: ctx._rangeIncoming };
+  const key = actorRangeKey(ctx, defender);
+  const id = group.targets?.[ctx.playerIdForEntity?.(defender) || defender.id]?.contacts?.[0]?.rangeContactId;
+  const root = group.carrier.rangePlan;
+  const contact = root.targets.find(row => row.contactId === id) || root.targets.find(row => row.targetKey === key);
+  if (contact) {
+    ctx._rangeContext = { sourceKey: root.sourceKey, targets: [contact] };
+    ctx._rangeIncoming = { rootId: root.rootId, contactId: contact.contactId, sourceKey: root.sourceKey, targetKey: key };
+  }
+  return () => {
+    if (prior.context === undefined) delete ctx._rangeContext; else ctx._rangeContext = prior.context;
+    if (prior.incoming === undefined) delete ctx._rangeIncoming; else ctx._rangeIncoming = prior.incoming;
+  };
+}
+export function paidCounterRange(ctx, source, carrier, baseCosts, route = 'advance') {
+  if (!ctx.rangeState || !ctx._rangeIncoming || !ctx._reactionPlaying || carrier.combatProfile?.maneuver !== 'counter') return null;
+  const incoming = ctx._rangeIncoming;
+  const target = [...(ctx.enemies || []), ...(ctx.players ? [...ctx.players.values()].map(row => row.entity) : [ctx.player])].find(entity => actorRangeKey(ctx,entity) === incoming.sourceKey);
+  if (!target) throw Foundation.playRefusal('The incoming attacker is unavailable', 'range');
+  const contact = rangeSourceContact(ctx,source,target,carrier,{},`0:0:0:${incoming.sourceKey}`);
+  const plan = rangeActionPlan(ctx.rangeState,actorRangeKey(ctx,source),[contact],{route,context:ctx._rangeContext});
+  if (!plan.available) throw Foundation.playRefusal('The selected Counter return cannot reach its attacker', 'range');
+  const costs = addRangeCosts(baseCosts,plan);
+  const rootId = `${incoming.rootId}:return:${incoming.contactId}:${carrier.instanceId || carrier.cardId}`;
+  return { costs, reservation:{version:1,sourceKey:plan.sourceKey,targetKey:incoming.sourceKey,
+    incomingRootId:incoming.rootId,contactId:incoming.contactId,rangePlan:{...plan,rootId,paid:costs},consumed:false} };
+}
+/** Price an automatic return before any offensive budget or seeded hit work.
+ * Its defensive interception has already happened and is never restored. */
+export function authorizeCounterRange(ctx, defender, attacker, counterCarrier, incomingCarrier) {
+  if (!ctx.rangeState) return counterCarrier;
+  const incomingPlan = incomingCarrier.rangePlan;
+  const contact = incomingPlan?.targets.find(row => row.contactId === incomingCarrier.rangeContactId)
+    || incomingPlan?.targets.find(row => row.targetKey === actorRangeKey(ctx,defender));
+  const context = contact ? {sourceKey:incomingPlan.sourceKey,targets:[contact]} : null;
+  const reservation = counterCarrier.rangeCounterReservation;
+  const bound = reservation && !reservation.consumed && reservation.incomingRootId === incomingPlan?.rootId
+    && reservation.contactId === contact?.contactId && reservation.sourceKey === actorRangeKey(ctx,defender) && reservation.targetKey === actorRangeKey(ctx,attacker);
+  const route = bound ? reservation.rangePlan.route : 'advance';
+  const plan = rangeActionPlan(ctx.rangeState,actorRangeKey(ctx,defender),[rangeSourceContact(ctx,defender,attacker,counterCarrier,{},`0:0:0:${actorRangeKey(ctx,attacker)}`)],{route,context});
+  const available = defender.kind === 'enemy' ? defender.fixCoreStaminaRemaining ?? defender.stamina ?? defender.maxStamina ?? 0 : defender.energy;
+  if (!bound && available < plan.advanceSp) {
+    ctx.emit?.('combatRangeReturnUnavailable',{sourceId:defender.id,targetId:attacker.id,ownerId:ctx.playerIdForEntity?.(defender) || 'player',required:plan.advanceSp,available,advanceSp:plan.advanceSp,reason:'stamina',defenseKept:true});
+    return null;
+  }
+  if (bound) {
+    delete counterCarrier.rangeCounterReservation;
+    return {...counterCarrier,rangeReturnAuthorization:{plan,paid:reservation.rangePlan.paid}};
+  }
+  return {...counterCarrier,rangeReturnAuthorization:{plan}};
+}
+
+export function rangeCardSourceSnapshots(ctx, def, source, carrier) {
+  if (!ctx.rangeState) return null;
+  const capture = effect => {
+    const row = rangeSourceContact(ctx,source,null,carrier,effect || {});
+    return {...carrier,resolvedRangeSource:{sourceType:row.weapon?'weapon':row.coverage==='melee' && carrier.combatProfile?.camp!=='spell'?'unarmed':'spell',itemId:row.sourceWeaponId,range:row.coverage,propertyTags:row.throwCapable?['throw']:[]}};
+  };
+  const snapshots = new Map((def.effects || []).filter(effect=>effect.op==='damage').map(effect=>[effect,capture(effect)]));
+  if (!snapshots.size && carrier.combatProfile?.maneuver === 'counter') snapshots.set(null,capture(null));
+  return snapshots;
+}
+
+export { rangePolicyForNewCombat } from '../model/rangeCombatPolicy.js';
+
+export function discardCounterRangeReservation(group, target, row) {
+  const rootId = group.carrier?.rangePlan?.rootId;
+  const contactIds = new Set((row.contacts || []).map(contact=>contact.rangeContactId));
+  for (const carrier of [target?.combatCounter?.carrier,row.receipt?.counter?.carrier]) {
+    const reservation=carrier?.rangeCounterReservation;
+    if (reservation?.incomingRootId===rootId && contactIds.has(reservation.contactId)) delete carrier.rangeCounterReservation;
+  }
 }

@@ -1,4 +1,4 @@
-import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions } from './combatEngagement.js';
+import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy, formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
@@ -840,7 +840,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, rangeRout
   if (C._reactionPlaying) cardRef.reactionDepth = 1;
   cardRef.committedInstance = structuredClone(inst);
   if (Number.isInteger(def.upcastTier)) cardRef.upcastTier = def.upcastTier;
-  const sourceSnapshots = F.cardSourceSnapshots(C, def, p, cardRef);
+  const sourceSnapshots = F.cardSourceSnapshots(C, def, p, cardRef) || rangeCardSourceSnapshots(C,def,p,cardRef);
   if (cardRef.combatProfile?.maneuver === 'counter' && sourceSnapshots?.size) {
     Object.assign(cardRef, sourceSnapshots.values().next().value);
   }
@@ -877,6 +877,8 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, rangeRout
     staminaCost = cost;
     manaCost = Math.max(0, pools.mana + (def.upcastSurcharge || 0) - funds.mana - charges.manaDiscount);
   }
+  const counterRange = paidCounterRange(C,p,cardRef,{energy:cost,stamina:staminaCost,mana:manaCost},rangeRoute || 'advance');
+  if (counterRange) { ({energy:cost,stamina:staminaCost,mana:manaCost}=counterRange.costs); cardRef.rangeCounterReservation=counterRange.reservation; }
   if (p.energy < cost) throw F.playRefusal('Not enough Actions (Stamina) to play this card', 'cost', { resource: 'stamina', need: cost, have: p.energy });
   if (p.mana < manaCost) throw F.playRefusal('Not enough mana to play this card', 'cost', { resource: 'mana', need: manaCost, have: p.mana });
   if (preflightOnly) return { energy: cost, mana: manaCost };
