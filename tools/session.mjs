@@ -1,3 +1,4 @@
+import { partyRangeContext } from '../src/model/partyRangeContext.js';
 import { hitBadgeTargetIds } from '../src/model/hitBadge.js';
 import { formationOccupancy } from '../src/model/formationOccupancy.js';
 import { projectEnemyBurdenHand } from '../src/ui/models/EnemyBurdenModel.js';
@@ -685,7 +686,9 @@ export function createSession({ registries, seedString, endless = false, restore
     // Dead seats are excluded: they can never rejoin, so they must not hold the living party back.
     const partyRuns = livingMembers().map(member => member.run);
     const partyReactionRulesVersion = !partyRuns.length ? null : partyRuns.every(run => run.reactionRulesVersion >= 1) ? Math.min(...partyRuns.map(run => run.reactionRulesVersion)) : null;
+    const sharedRange = partyRangeContext(partyRuns);
     const combat = createCoopCombat({
+      ...sharedRange,
       combatKey: `${session.seed}:${session.actNumber}:${session.cursorId}:${encounterId}`,
       combatExpansionVersion: connectedMembers().some(member => member.run.combatExpansionVersion === 2) ? 2 : 1,
       reactionRulesVersion: partyReactionRulesVersion,
@@ -701,6 +704,9 @@ export function createSession({ registries, seedString, endless = false, restore
       enemyDamageMult: boss ? boss.damage : 1,
       enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: registries.balance.endless.strPerLoop * loop }] : [],
     });
+    // Adopt an absent historical run policy only after the new fight exists.
+    // Resume/join paths keep the active snapshot and never take this branch.
+    if (combat.rangeState) for (const run of partyRuns) if (!run.rangePolicy) run.rangePolicy = structuredClone(combat.rangeState.policy);
     if (combatStartStateForTools) {
       const member = connectedMembers().find((entry) => entry.name === combatStartStateForTools.name);
       const player = member ? combat.players.get(member.id) : null;
