@@ -649,7 +649,7 @@ async function main() {
       await armouryView('cards');
       await until(`!!document.querySelector('.armoury-card-gallery .card')`, 'actual Armoury card gallery');
       const cards = await evaluate(`([...document.querySelectorAll('.armoury-card-gallery .card[data-instance-id]')].map(row=>({
-        instanceId:row.dataset.instanceId,cardId:row.dataset.cardId,name:row.querySelector('.cname')?.textContent.trim()||'',
+        instanceId:row.dataset.instanceId,cardId:row.dataset.cardId,name:row.querySelector('[data-card-binding="name"]')?.textContent.trim()||'',
         values:[...row.querySelectorAll('.face-line')].map(line=>({kind:line.dataset.faceKind,values:[...line.querySelectorAll('.val')].map(value=>value.textContent.trim())})),
       })))`);
       check(matchesCommittedCards(cards, expected.cards),
@@ -676,9 +676,9 @@ async function main() {
         await until(`!!document.querySelector('#coop-smith')`, 'co-op Shrine Smith option');
         const coopDoor = await evaluate(`(() => {
           const button=document.querySelector('#coop-smith');
-          return {text:button?.textContent?.trim()||'',disabled:!!button?.disabled};
+          return {name:button?.querySelector('.on')?.textContent.trim()||'',description:button?.querySelector('.od')?.textContent.trim()||'',disabled:!!button?.disabled};
         })()`);
-        check(coopDoor.text === 'Upgrade an item · 1 Stone' && coopDoor.disabled === false,
+        check(coopDoor.name === 'Upgrade an item' && coopDoor.description === '1 Stone' && coopDoor.disabled === false,
           'SMITH-UI-COOP-SHOT-DOOR', `co-op Shrine shot exposes the real one-Stone host plan (${JSON.stringify(coopDoor)})`);
         await click('#coop-smith');
         await until(`!!document.querySelector('.smith-upgrade-modal')`, 'co-op Smith modal');
@@ -706,6 +706,8 @@ async function main() {
         await cdp.send('Page.navigate', {
           url: `http://127.0.0.1:${served.port}/?gameProfile=current&shot=reward&shotReward=pending`,
         }, sessionId);
+        await until(`!!document.querySelector('#reward-expand') && !document.querySelector('#reward-expand').disabled`, 'ready reloaded XP receipt Continue');
+        await click('#reward-expand');
         await until(`!!document.querySelector('.reward-kind[data-kind="smithingStone"]')`, 'restored pending Smithing Stone reward row');
         const pending = await evaluate(`(() => {
           const row=document.querySelector('.reward-kind[data-kind="smithingStone"]');
@@ -722,13 +724,17 @@ async function main() {
             && pending.livePending?.states?.smithingStone === 'taken'
             && pending.savedPending?.states?.smithingStone === 'taken',
           'SMITH-UI-REWARD-PENDING-RESTORE', `interruption/load resumes the saved offer with its Stone and claim (${JSON.stringify(pending)})`);
-        await click('.reward-kind[data-kind="cinders"]');
+        await until(`!!document.querySelector('.reward-kind[data-kind="flask"]') && !document.querySelector('.reward-menu').inert`, 'ready pending potion offer');
+        await click('.reward-kind[data-kind="flask"]');
+        await until(`!!document.querySelector('#reward-detail-take')`, 'potion inspection before collection');
+        await click('#reward-detail-take');
+        await until(`document.querySelector('.reward-kind[data-kind="flask"]')?.dataset.state === 'taken'`, 'collected potion row');
         const partial = await evaluate(`(() => {
           const state=window.__spoils();
           return {
-            rowState:document.querySelector('.reward-kind[data-kind="cinders"]')?.dataset.state||'',
-            live:state.pendingReward?.states?.cinders||'',
-            saved:state.savedPendingReward?.states?.cinders||'',
+            rowState:document.querySelector('.reward-kind[data-kind="flask"]')?.dataset.state||'',
+            live:state.pendingReward?.states?.flask||'',
+            saved:state.savedPendingReward?.states?.flask||'',
           };
         })()`);
         check(partial.rowState === 'taken' && partial.live === 'taken' && partial.saved === 'taken',
