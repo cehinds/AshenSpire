@@ -5,10 +5,11 @@
 // Barrier, Ward or Poise take anything: the `incoming` figure of the damage receipt (gameProfileCombat.js).
 // Pure: no state, no RNG. The fractions are data (content/source/fixCoreMechanics.json `counter`).
 import { fixCoreEnabled, fixCoreRules, fixCoreCounterRules } from '../model/fixCoreMechanics.js';
-import { configuredModule, armsAsCoreCounter, profileDamageReceipt } from './gameProfileCombat.js';
+import { configuredModule, armsAsCoreCounter, isSpellCounter, configuredStance, profileDamageReceipt } from './gameProfileCombat.js';
 import { previewDamageHits, damagePreviewState } from './combatDamagePreview.js';
 import { enemyMoveCarrier, expandedEnemyMove } from './combatCardTactics.js';
 import { counterCoversAttack } from './combatReactions.js';
+import { rememberCombatStance } from './concurrentStances.js';
 import * as statuses from '../framework/statusSemantics.js';
 
 /** True when the Core 2 Counter rule governs this fight. Legacy and co-op profiles keep their own return. */
@@ -72,8 +73,8 @@ export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected
   // Only an attack the played Counter covers is answered (the live predicate, not a copy).
   // A revealed attack the Counter does not answer is `{ uncovered: true }`, which is not the same as no read at all.
   if (card && !counterCoversAttack(ctx, card, intent.profile, 'damage')) return { uncovered: true };
-  // Live play arms the Counter only when the card's configured stance is Counter (preparedCounter); a spell Counter
-  // stands in the 'prepared' stance there and is never consumed, so the preview promises it no return.
+  // Live play arms the Counter only when armsAsCoreCounter says so (preparedCounter): a Counter stance, or a spell Counter
+  // with coverage (owner 2026-10-19), which arms while standing in the prepared stance it enters.
   if (card && configuredModule(ctx, 'stances') && !armsAsCoreCounter(ctx, card)) return { uncovered: true };
   // The owner already returned a Counter this cycle (two Counters, two enemies, one enemy phase): live returns nothing.
   if (counterReturnSpent(ctx.player)) return { uncovered: true, spent: true };
@@ -82,8 +83,13 @@ export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected
   // `projected` is the player after the card's immediate defensive effects (its Block, the stance-entry grants),
   // run by the preview pipeline on a detached copy, so a Poise break lands exactly when live play lands it.
   const base = projected || ctx.player;
-  const defender = { ...base, combatStance: { maneuver: 'counter', camp: 'physical', range: 'melee' } };
-  delete defender.concurrentStances;
+  // A spell Counter stands in the stance it enters (prepared), so the attack is priced against that stance, as live prices it.
+  const spell = card && isSpellCounter(card);
+  const defender = { ...base, combatStance: spell
+    ? { maneuver: configuredStance(card), camp: 'spell', range: card.combatProfile?.range || 'reach' }
+    : { maneuver: 'counter', camp: 'physical', range: 'melee' } };
+  // Many Forms: live remembers the stance it leaves, so the preview adds the entered one to the retained set rather than replacing it.
+  rememberCombatStance(ctx, defender, base.combatStance);
   if (projected) ctx = { ...ctx, player: projected };
   // Hit by hit, as the live exchange resolves them: each advantaged hit grants its Counter Block before it is absorbed,
   // and Poise breaks, Vulnerable and the like carry into later hits.
