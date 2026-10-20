@@ -15,7 +15,8 @@ root npm dependencies and does not need a generated solution or project file.
 The shared [`tasks.vs.json`](tasks.vs.json) adds Play, Serve, Fast core tests,
 Full Node test suite, Compile authored content, Build standalone, Start
 Workbench and Editor tests to the right-click menu for `package.json` in
-Solution Explorer. Play, Serve and Workbench are long-running server tasks.
+Solution Explorer. Tasks apply only to the root package file and run from the
+workspace root. Play, Serve and Workbench are long-running server tasks.
 See Microsoft's guides for [Open Folder](https://learn.microsoft.com/en-us/visualstudio/ide/develop-code-in-visual-studio-without-projects-or-solutions)
 and [custom tasks](https://learn.microsoft.com/en-us/visualstudio/ide/customize-build-and-debug-tasks-in-visual-studio?view=vs-2022)
 if Visual Studio's folder view or task menu is unfamiliar.

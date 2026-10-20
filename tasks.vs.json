@@ -3,59 +3,67 @@
   "tasks": [
     {
       "taskLabel": "AshenSpire: Play",
-      "appliesTo": "package.json",
+      "appliesTo": "/package.json",
       "type": "launch",
-      "command": "npm",
-      "args": ["start"]
+      "command": "${env.COMSPEC}",
+      "args": ["npm start"],
+      "workingDirectory": "${workspaceRoot}"
     },
     {
       "taskLabel": "AshenSpire: Serve without opening a browser",
-      "appliesTo": "package.json",
+      "appliesTo": "/package.json",
       "type": "launch",
-      "command": "npm",
-      "args": ["run", "serve"]
+      "command": "${env.COMSPEC}",
+      "args": ["npm run serve"],
+      "workingDirectory": "${workspaceRoot}"
     },
     {
       "taskLabel": "AshenSpire: Fast core tests",
-      "appliesTo": "package.json",
+      "appliesTo": "/package.json",
       "type": "launch",
-      "command": "npm",
-      "args": ["test"]
+      "command": "${env.COMSPEC}",
+      "args": ["npm test"],
+      "workingDirectory": "${workspaceRoot}"
     },
     {
       "taskLabel": "AshenSpire: Full Node test suite",
-      "appliesTo": "package.json",
+      "appliesTo": "/package.json",
       "type": "launch",
-      "command": "npm",
-      "args": ["run", "test:all"]
+      "command": "${env.COMSPEC}",
+      "args": ["npm run test:all"],
+      "workingDirectory": "${workspaceRoot}"
     },
     {
       "taskLabel": "AshenSpire: Compile authored content",
-      "appliesTo": "package.json",
+      "appliesTo": "/package.json",
       "type": "launch",
-      "command": "node",
-      "args": ["tools/content-build.mjs"]
+      "command": "${env.COMSPEC}",
+      "args": ["node tools/content-build.mjs"],
+      "workingDirectory": "${workspaceRoot}"
     },
     {
       "taskLabel": "AshenSpire: Build standalone",
-      "appliesTo": "package.json",
+      "appliesTo": "/package.json",
       "type": "launch",
-      "command": "npm",
-      "args": ["run", "build:standalone"]
+      "command": "${env.COMSPEC}",
+      "args": ["npm run build:standalone"],
+      "workingDirectory": "${workspaceRoot}"
     },
     {
       "taskLabel": "AshenSpire: Start Workbench",
-      "appliesTo": "package.json",
+      "appliesTo": "/package.json",
       "type": "launch",
-      "command": "node",
-      "args": ["workbench/server.mjs"]
+      "command": "${env.COMSPEC}",
+      "args": ["node workbench/server.mjs"],
+      "workingDirectory": "${workspaceRoot}"
     },
     {
       "taskLabel": "AshenSpire: Editor tests",
-      "appliesTo": "package.json",
+      "appliesTo": "/package.json",
       "type": "launch",
-      "command": "npm",
-      "args": ["--prefix", "editor", "test"]
+      "command": "${env.COMSPEC}",
+      "args": ["npm --prefix editor test"],
+      "workingDirectory": "${workspaceRoot}"
     }
   ]
 }
