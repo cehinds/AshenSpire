@@ -5,7 +5,8 @@ import { configuredModule } from './gameProfileCombat.js';
 // Callbacks are supplied by the solo/co-op command door, never saved in state.
 import { candidateState } from './combatRules.js';
 import { resolveCombatCard } from './combatExpansion.js';
-import { counterCoverageMatches } from './combatMatchups.js';
+// Matchups imports the reaction path too; defer access until the bundled cycle initializes.
+import * as Matchups from './combatMatchups.js';
 import { cardChoice } from '../model/cardChoices.js';
 import { upcastOptions } from '../model/upcasting.js';
 import { controlRestrictions } from './combatStatusControl.js';
@@ -34,7 +35,7 @@ export function counterCoversAttack(ctx, def, profile, effect = 'damage') {
   if (!tags.includes('maneuver:counter')) return false;
   const coverage = def.counterCoverage || ctx.combatExpansionRules.matchups.counter.defaultCoverage[
     tags.includes('counter:spell') ? 'spell' : tags.includes('counter:ranged') ? 'ranged' : 'melee'];
-  return counterCoverageMatches(coverage, profile, effect);
+  return Matchups.counterCoverageMatches(coverage, profile, effect);
 }
 
 const counterCovered = (ctx, def, row) => row.contacts.some(contact =>
