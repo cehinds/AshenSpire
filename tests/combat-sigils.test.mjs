@@ -202,6 +202,8 @@ test('a press on a tag symbol through the hand lane explains it and never reache
 test('dense authored fallback idioms retain quantity, target stacks and own-turn timing', () => {
   assert.equal(compactCardRules('Deal <span class="val">6</span> damage, plus 1 for each Bleed on the target.'),
     '<span class="val">6</span> damage, +1 per target Bleed.');
+  assert.equal(compactCardRules('Deal <span class="val">6</span> damage, plus 1 for each <span class="st-bleed">Bleed</span> on the target.'),
+    '<span class="val">6</span> damage, +1 per target <span class="st-bleed">Bleed</span>.');
   assert.equal(compactCardRules('At the start of your turn, gain 1 Strength and take 1 damage.'),
     'Your turn start: +1 Strength; take 1 damage.');
   assert.equal(compactCardRules('At the end of your turn, gain 1 Strength and take 1 damage.'),
