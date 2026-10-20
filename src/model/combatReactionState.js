@@ -186,6 +186,10 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
     }
     let actionSourceKey = null;
     if (record(value.effect)) {
+      const index = value.meta?.rangeEffectIndex;
+      if (index !== undefined && (!hasRange || !Number.isInteger(index) || index < 0 || index > 2
+        || value.card?.combatReaction !== true
+        || ![['damage', 'poiseDamage', 'wardDamage'][index], 'completeCombatAction'].includes(value.effect.op))) problems.push('Invalid reserved Counter range effect index');
       const ref = value.sourceRef;
       const id = ref?.id || value.sourceId;
       actionSourceKey = value.source?.rangeActorKey || (ref?.playerId ? `player:${ref.playerId}`
