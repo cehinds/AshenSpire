@@ -10,6 +10,8 @@ import { classMasteryRunProblems } from './classMasteryRun.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { advancedConfigSnapshot } from './advancedConfig.js';
 import { reactionRulesSnapshot, reactionRulesProblems } from '../content/combatCardTraits.js';
+import { snapshotRangePolicy, rangePolicyProblems, RANGE_POLICY_DEFAULTS } from './combatEngagement.js';
+import { fixCoreMechanics } from '../content/generated/fixCoreMechanics.js';
 // src/model/state.js — run/combat state factories + (de)serialization (SPEC §3.3, §3.12)
 //
 // State stores INSTANCE data referencing definitions by id only:
@@ -217,6 +219,8 @@ export function createRunState({
   const run = {
     ...(gameProfile ? { gameProfile: structuredClone(gameProfile), runId: runId || globalThis.crypto.randomUUID() } : {}),
     combatExpansionVersion,
+    ...(combatExpansionVersion === 2 && gameModule(profileSubject, 'effects')?.fixCoreVersion === 1
+      ? { rangePolicy: snapshotRangePolicy(gameProfile.fixCoreRules?.range ?? fixCoreMechanics.range, profileMeta.settings || {}) } : {}),
     ...([1, 2].includes(reactionRulesVersion) ? { reactionRulesVersion, ...(reactionRulesVersion === 2 ? { reactionRules: reactionRulesSnapshot() } : {}) } : {}),
     ...(combatExpansionVersion === 2 ? { ashenBlight: createAshenBlightState(), combatExpansionRules: createCombatExpansionRuleSnapshot() } : {}),
     advancedConfigSnapshot: { ...advancedConfigSnapshot(profileMeta.settings || {}), breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 },
@@ -692,6 +696,7 @@ export function initializeRunDerivedStats(run, registries, {
  */
 export const RUN_SHAPE = [
   { key: 'gameProfile', type: 'object', optional: true },
+  { key: 'rangePolicy', type: 'object', optional: true },
   { key: 'runId', type: 'string', optional: true },
   { key: 'gameProfileRestVisits', type: 'object', optional: true },
   { key: 'contentVersion', type: 'string' },
@@ -987,6 +992,10 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   }
 
   if (run.combatExpansionVersion !== undefined && ![1, 2].includes(run.combatExpansionVersion)) problems.push('combatExpansionVersion must be 1 or 2 when present');
+  if (run.rangePolicy !== undefined) {
+    problems.push(...rangePolicyProblems(run.rangePolicy));
+    if (run.combatExpansionVersion !== 2 || gameModule(run, 'effects')?.fixCoreVersion !== 1) problems.push('rangePolicy requires Core combat');
+  }
   if (run.reactionRulesVersion !== undefined && (![1, 2].includes(run.reactionRulesVersion) || run.combatExpansionVersion !== 2)) problems.push('Reaction rules require an expanded run');
   if (run.reactionRulesVersion === 2) problems.push(...reactionRulesProblems(run.reactionRules).map(problem => `reactionRules: ${problem}`));
   else if (run.reactionRules !== undefined) problems.push('reactionRules require reaction rules version 2');
@@ -1003,6 +1012,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   }
   const validateExpandedSnapshot = (snapshot, path, terminal = false) => {
     if (run.combatExpansionVersion !== 2 || !typeOk(snapshot, 'object')) return;
+    // An absent rangeState is an old active fight; never adopt the run policy here.
+    if (snapshot.rangeState !== undefined && run.rangePolicy !== undefined
+      && Object.keys(RANGE_POLICY_DEFAULTS).some(key => snapshot.rangeState?.policy?.[key] !== run.rangePolicy?.[key])) problems.push(`${path}.rangeState.policy must match the run`);
     if (snapshot.combatExpansionVersion !== 2) problems.push(`${path}.combatExpansionVersion must match the run`);
     if (snapshot.reactionRulesVersion !== run.reactionRulesVersion) problems.push(`${path}.reactionRulesVersion must match the run`);
     else if (run.reactionRulesVersion === 2) {

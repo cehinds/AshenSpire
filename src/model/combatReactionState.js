@@ -3,6 +3,7 @@ const text = value => typeof value === 'string' && value.length > 0;
 const queued = value => Array.isArray(value) && value.every(action => record(action) && record(action.effect) && text(action.effect.op));
 
 import { reactionRulesProblems } from '../content/combatCardTraits.js';
+import { rangeStateProblems, rangePlanProblems, opposingRangeKeys, rangeBand } from './combatEngagement.js';
 
 const playerEntry = (entry, ownerIds) => ownerIds.has(entry.ownerId) && text(entry.cardId) && record(entry.play) && text(entry.play.cardInstanceId)
   && (entry.maneuver === null || entry.maneuver === undefined || typeof entry.maneuver === 'string')
@@ -133,4 +134,109 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
     }
   }
   return problems;
+}
+
+
+/** Validate the range transaction graph at either solo or co-op save boundaries.
+ * Identity comes from the seat map, never from the shared player entity id.
+ * Dead actors remain in this list because their engagement pairs remain inert.
+ */
+export function combatRangeProblems(state, { queue = state.abilityQueue || state.queue || [] } = {}) {
+  const problems = [];
+  const actors = state.players instanceof Map
+    ? [...state.players].map(([id, seat]) => [seat?.entity, `player:${id}`])
+    : [[state.player, 'player:player']];
+  actors.push(...(Array.isArray(state.enemies) ? state.enemies : []).map(entity => [entity, `enemy:${entity?.id}`]));
+  const actorKeys = actors.map(([, key]) => key);
+  const hasRange = state.rangeState !== undefined;
+  if (hasRange) {
+    problems.push(...rangeStateProblems(state.rangeState, actorKeys));
+    if ((state.sharedExpansionVersion || state.combatExpansionVersion) !== 2 || state.fixCoreRules?.enabled === false
+      || !(state.fixCoreRules?.version === 1 || state.gameProfile?.modules?.effects?.fixCoreVersion === 1)) problems.push('Engagement state requires Core combat');
+    for (const [entity, expected] of actors) if (entity?.rangeActorKey !== expected) problems.push(`Invalid range actor identity: expected ${expected}`);
+  } else if (actors.some(([entity]) => entity?.rangeActorKey !== undefined)) problems.push('Range actor identities require engagement state');
+
+  // Only transaction-bearing runtime records are traversed. Logs, registries,
+  // catalogues and RNG state do not carry authority to execute an action.
+  const roots = [queue, state.reactionResume, state.reactionStack, state.pendingAbilityPlay,
+    state.reactionRootPlay, state.combatRounds, ...actors.map(([entity]) => entity?.combatCounter)];
+  const seen = new Set(), plans = [], reservations = [], groups = [];
+  const inspect = (value, quoted = false) => {
+    if (!value || typeof value !== 'object' || seen.has(value)) return;
+    seen.add(value);
+    if (text(value.key) && record(value.targets) && value.carrier?.rangePlan) groups.push(value);
+    if (Object.hasOwn(value, 'rangeContactId') && (!hasRange || !text(value.rangeContactId))) problems.push('Invalid frozen range contact identity');
+    if (Object.hasOwn(value, 'resolvedRangeSource')) {
+      const source = value.resolvedRangeSource;
+      const keys = ['sourceType', 'itemId', 'range', 'propertyTags'];
+      const valid = hasRange && record(source) && Object.keys(source).every(key => keys.includes(key))
+        && ['weapon', 'unarmed', 'spell'].includes(source.sourceType)
+        && ['melee', 'reach', 'ranged'].includes(source.range)
+        && (source.sourceType === 'weapon' ? text(source.itemId) : source.itemId === null)
+        && Array.isArray(source.propertyTags) && source.propertyTags.length <= 1
+        && source.propertyTags.every(tag => tag === 'throw' && source.sourceType === 'weapon');
+      if (!valid) problems.push('Invalid frozen range source');
+      else if (Array.isArray(value.rangePlan?.targets) && !value.rangePlan.targets.some(row =>
+        row?.sourceWeaponId === source.itemId && row.coverage === rangeBand(source.range)
+        && row.weapon === (source.sourceType === 'weapon') && row.throwCapable === source.propertyTags.includes('throw'))) problems.push('Frozen range source does not match its contact receipt');
+    }
+    if (Object.hasOwn(value, 'rangeQuote')) {
+      if (!hasRange) problems.push('Range quote requires engagement state');
+      else problems.push(...rangePlanProblems(value.rangeQuote, state.rangeState, actorKeys));
+    }
+    if (Object.hasOwn(value, 'rangeCounterReservation')) {
+      const reservation = value.rangeCounterReservation;
+      reservations.push(reservation);
+      const allowed = ['version', 'sourceKey', 'targetKey', 'incomingRootId', 'contactId', 'rangePlan', 'consumed'];
+      if (!hasRange || !record(reservation) || Object.keys(reservation).some(key => !allowed.includes(key))
+        || reservation.version !== 1 || reservation.consumed !== false
+        || !actorKeys.includes(reservation.sourceKey) || !actorKeys.includes(reservation.targetKey)
+        || !opposingRangeKeys(reservation.sourceKey, reservation.targetKey)
+        || !text(reservation.incomingRootId) || !text(reservation.contactId)
+        || reservation.rangePlan?.sourceKey !== reservation.sourceKey
+        || !Array.isArray(reservation.rangePlan?.targets) || !reservation.rangePlan.targets.length
+        || reservation.rangePlan.targets.some(row => row?.targetKey !== reservation.targetKey)) problems.push('Invalid range Counter reservation');
+    }
+    if (Object.hasOwn(value, 'rangePlan')) {
+      const plan = value.rangePlan;
+      if (!hasRange) problems.push('Range action plan requires engagement state');
+      else {
+        const planProblems = rangePlanProblems(plan, state.rangeState, actorKeys);
+        problems.push(...planProblems);
+        if (!planProblems.length) plans.push(plan);
+        if (!quoted && (!record(plan) || !text(plan.rootId) || !record(plan.paid) || plan.available !== true)) problems.push('Accepted range action requires its paid available receipt');
+      }
+    }
+    for (const [key, child] of Object.entries(value)) if (!['rangePlan', 'rangeQuote'].includes(key)) inspect(child, quoted);
+  };
+  for (const root of roots) inspect(root);
+  inspect(state.pendingReaction, true);
+  // JSON duplicates shared carrier references. Every copy of one accepted root
+  // must still describe the same frozen payment and contact envelope.
+  const stable = value => Array.isArray(value) ? value.map(stable) : record(value)
+    ? Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])])) : value;
+  const rootsById = new Map();
+  for (const plan of plans) {
+    if (!text(plan?.rootId)) continue;
+    const receipt = JSON.stringify(stable(plan));
+    if (rootsById.has(plan.rootId) && rootsById.get(plan.rootId) !== receipt) problems.push('Conflicting range receipts for one root action');
+    rootsById.set(plan.rootId, receipt);
+  }
+  const targetKey = row => row?.playerId ? `player:${row.playerId}`
+    : row?.id === 'player' && !(state.players instanceof Map) ? 'player:player' : `enemy:${row?.id}`;
+  for (const group of groups) for (const row of Object.values(group.targets)) {
+    if (!Array.isArray(row?.contacts)) continue;
+    for (const contact of row.contacts) if (contact?.rangeContactId !== undefined
+      && (!Array.isArray(group.carrier.rangePlan.targets) || !group.carrier.rangePlan.targets.some(planned =>
+        planned?.contactId === contact.rangeContactId && planned.targetKey === targetKey(row)))) problems.push('Frozen range contact is outside its root receipt');
+  }
+  for (const reservation of reservations) {
+    if (!record(reservation)) continue;
+    const incoming = groups.find(group => group.carrier.rangePlan?.rootId === reservation.incomingRootId
+      && group.carrier.rangePlan.sourceKey === reservation.targetKey && Object.values(group.targets).some(row =>
+        targetKey(row) === reservation.sourceKey && Array.isArray(row?.contacts)
+        && row.contacts.some(contact => contact?.rangeContactId === reservation.contactId)));
+    if (!incoming) problems.push('Range Counter reservation requires its exact incoming contact');
+  }
+  return [...new Set(problems)];
 }
