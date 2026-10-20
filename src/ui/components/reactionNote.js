@@ -37,7 +37,7 @@ export function avoidRects(box, rects = [], gap = 6) {
 export function latestReactionNote(events = [], { after = -1, isLocal = () => true, registries, players, enemies } = {}) {
   for (let i = events.length - 1; i > after; i--) {
     const event = events[i];
-    if (!['combatReactionUnavailable', 'combatRangeReturnUnavailable'].includes(event?.type) || !isLocal(event.ownerId)) continue;
+    if (!['combatReactionUnavailable', 'combatRangeReturnUnavailable', 'combatRangeActionUnavailable'].includes(event?.type) || !isLocal(event.ownerId)) continue;
     return { index: i, text: reactionUnavailableNote(event, { registries, players, enemies }) };
   }
   return null;

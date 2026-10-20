@@ -5,6 +5,8 @@
 // itself (cardId, moveId, triggeredBy, source); when an older or thinner event
 // carries none, the card or move being resolved at that point in the stream
 // stands in, but only for an event by that same actor.
+import { t } from '../ui/strings.js';
+
 const word = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
 const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 'a spell', area: 'an area attack',
   statusOnly: 'a status effect', attack: 'this attack' };
@@ -26,6 +28,12 @@ function rangeReturnUnavailableText(event) {
     ? `not enough SP to Advance (need ${event.required}, have ${event.available})`
     : 'out of range';
   return `Counter return skipped: ${reason}. Defense kept.`;
+}
+
+function rangeActionUnavailableText(event) {
+  return event.reason === 'stamina'
+    ? t('combat.range.actionSkippedSp', { required: event.required, available: event.available })
+    : t('combat.range.actionSkippedRange');
 }
 
 function reactionUnavailableText(event, { registries, source, owner }) {
@@ -56,6 +64,7 @@ function nameLookup({ registries, players = [], enemies = [] }) {
 /** The log's own words for one combatReactionUnavailable, without the co-op seat prefix. */
 export function reactionUnavailableNote(event, { registries, players = [], enemies = [] } = {}) {
   if (event.type === 'combatRangeReturnUnavailable') return rangeReturnUnavailableText(event);
+  if (event.type === 'combatRangeActionUnavailable') return rangeActionUnavailableText(event);
   const name = nameLookup({ registries, players, enemies });
   return reactionUnavailableText(event, { registries, source: name(event.sourceId), owner: name(event.ownerId) });
 }
@@ -282,6 +291,11 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'combatReactionChosen': if (!event.cardInstanceId) text = `${name(event.ownerId)} skipped the reaction.`; break;
       case 'combatRangeReturnUnavailable': {
         const why = rangeReturnUnavailableText(event);
+        text = players.length > 1 ? `${name(event.ownerId)}: ${why}` : why;
+        break;
+      }
+      case 'combatRangeActionUnavailable': {
+        const why = rangeActionUnavailableText(event);
         text = players.length > 1 ? `${name(event.ownerId)}: ${why}` : why;
         break;
       }
