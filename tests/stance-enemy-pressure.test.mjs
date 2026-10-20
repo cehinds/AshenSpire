@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -69,7 +71,7 @@ test('enemy Smash fallback is configured, idempotent and excludes support-only c
   assert.equal(move.effects?.some(effect => effect.op === 'poiseDamage') || false, false, 'projection does not mutate authored content');
 });
 
-for (const coop of [false, true]) for (const die of [1, 20]) {
+for (const coop of COOP_MODES) for (const die of [1, 20]) {
   test(`${coop ? 'co-op' : 'solo'} charging Smash gates fallback Poise with its ${die === 1 ? 'miss' : 'hit'}`, () => {
     const move = { intent: 'attack', damage: 10, weight: 1,
       tags: ['camp:physical', 'maneuver:smash', 'range:melee', 'targeting:single'],

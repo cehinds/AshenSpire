@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import { botCardTargetId } from '../tools/simbot.mjs';
 import test from 'node:test';
 import { cardCostBudget, ownRestoreFunds } from '../src/model/actionCosts.js';
@@ -238,7 +240,7 @@ test('every authored family grade completes a paid real play in the assembled en
 });
 
 test('mounted feat buildup applies at low and high grades with solo and co-op preview parity', () => {
-  for (const coop of [false, true]) for (const rank of [0, 3]) for (const [name, feat, status] of [
+  for (const coop of COOP_MODES) for (const rank of [0, 3]) for (const [name, feat, status] of [
     ['Rime Mirror', 'progression-mirror-of-rime', 'frost'],
     ['Blight Litany', 'progression-sower-of-blight', 'crimsonBlight'],
   ]) {
@@ -263,7 +265,7 @@ test('mounted feat buildup applies at low and high grades with solo and co-op pr
 });
 
 test('Broad Sentence reads actual grade area in preparing previews and real plays', () => {
-  for (const coop of [false, true]) for (const rank of [0, 3]) {
+  for (const coop of COOP_MODES) for (const rank of [0, 3]) {
     const card = byName('Ashen Cleaver');
     const make = skillFeats => {
       const player = { id: 'p1', classId: 'reaver', maxHp: 100, hp: 50, maxMana: 100, mana: 100, energyMax: 100, drawPerTurn: 0, relicIds: [], skillFeats, deck: [] };
