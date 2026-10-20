@@ -13,6 +13,7 @@ import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { playTimeline, setAnimSpeed } from '../src/ui/fx.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { startQueuedEnemy } from '../src/engine/combatReactions.js';
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const baseRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 // Moves are compiled from shared authored sources by createRegistries; alter the
@@ -182,6 +183,31 @@ test('a lethal Counter cancels the rest of the multi-hit root without another pr
   assert.equal(ctx.eventLog.filter(row => row.type === 'combatCounterTriggered').length, 1);
   assert.equal(ctx.eventLog.filter(row => row.type === 'combatContactPrepared').length, 1);
   assert.deepEqual(combatSnapshotProblems(serializeCombatSnapshot(ctx)), []);
+});
+
+test('a lethal incoming hit emits no later swing or preparation at the fallen player', () => {
+  const ctx = live(); ctx.player.hp = 1;
+  dispatch(ctx, { type: 'setReactions', enabled: false });
+  primeAccuracyRolls(ctx, { count: 3 });
+  dispatch(ctx, { type: 'endTurn' });
+  assert.equal(ctx.result, 'defeat');
+  assert.equal(ctx.eventLog.filter(row => row.type === 'damageDealt' && row.targetId === ctx.player.id).length, 1);
+  assert.equal(ctx.eventLog.filter(row => row.type === 'combatContactPrepared').length, 1);
+  assert.equal(ctx.eventLog.filter(row => row.type === 'combatHitStarted').length, 0);
+  assert.equal(ctx.eventLog.filter(row => row.type === 'enemyMoveStarted').length, 1);
+});
+
+test('an absent contact target does not cancel a later original living target', () => {
+  const events = [], source = { id: 'attacker', alive: true, statuses: {} };
+  const ctx = { player: { id: 'player', alive: false }, enemies: [source, { id: 'other', alive: true }], emit: (type, event) => events.push({ type, ...event }) };
+  const row = id => ({ id, contacts: [{ amount: 5 }] });
+  const group = { targets: { player: row('player') }, enemyMoveStart: { sourceId: 'attacker', moveId: 'slash' }, contactSequence: { index: 1, contacts: [{}, {}, {}] } };
+  const action = { source, meta: { expansionGroup: group } };
+  startQueuedEnemy(ctx, action);
+  assert.deepEqual(events, []); assert.equal(group.cancelled, false);
+  group.targets = { other: row('other') }; group.contactSequence.index = 2; group.payloadStarted = false;
+  startQueuedEnemy(ctx, action);
+  assert.deepEqual(events.map(row => [row.type, row.contactIndex]), [['combatHitStarted', 2]]);
 });
 
 test('an already armed automatic Counter remains one charge when optional prompts are disabled', () => {

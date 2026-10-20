@@ -1,6 +1,8 @@
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { t } from '../strings.js';
 
+const moveLabel = id => typeof id === 'string' ? id.replace(/([a-z\d])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').replace(/^./, letter => letter.toUpperCase()) : null;
+
 // Read only the action's committed receipt. A Counter must never borrow its
 // owner's next planned move or the weapon currently selected in the Armoury.
 export function combatActionIdentity(beat, registries, enemyFor = () => null) {
@@ -13,7 +15,7 @@ export function combatActionIdentity(beat, registries, enemyFor = () => null) {
   const maneuver = beat.kind === 'counter' ? 'counter' : event.combatProfile?.maneuver || (carrier && combatProfileFor(carrier).maneuver);
   const type = ['attack', 'smash', 'defend', 'counter', 'sweep', 'evade'].includes(maneuver)
     ? t(`stance.name.${maneuver}`) : maneuver ? maneuver[0].toUpperCase() + maneuver.slice(1) : null;
-  const name = carrier?.name || event.cardName || event.moveName || event.name;
+  const name = carrier?.name || event.cardName || event.moveName || event.name || moveLabel(event.moveId);
   const instance = event.cardInstance;
   const committed = instance && Object.hasOwn(instance, 'usedArmamentId');
   const weaponId = committed ? instance.usedArmamentId : instance?.sourceArmamentId || instance?.weaponId || instance?.grantedBy;

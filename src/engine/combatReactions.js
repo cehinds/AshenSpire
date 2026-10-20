@@ -10,7 +10,7 @@ import { controlRestrictions } from './combatStatusControl.js';
 import { cardTargetPlan } from '../model/cardTargets.js';
 import { fightReacts, incomingAgainst, openEnemyWindow, playerRootSeat, runEnemyPlan, seatGone } from './enemyReactions.js';
 import { reactionPaused } from './reactionState.js';
-import { activateCombatContact } from './combatExpansionActions.js';
+import { activateCombatContact, expansionEntity, expansionTargetPresent } from './combatExpansionActions.js';
 
 // Reaction rules: 1 = one reaction per root; 2 = card traits plus the reaction stack.
 export const usesReactions = ctx => ctx.reactionRulesVersion >= 1;
@@ -225,6 +225,11 @@ function seatPresent(ctx, id) {
   return !!(seat?.entity || ctx.player)?.alive && (!seat || seat.connected === true);
 }
 
+// A later seeded contact keeps its original target. A fallen/disconnected body
+// cannot receive a swing cue, but does not cancel contacts on other targets.
+const contactTargetPresent = (ctx, group) => Object.values(group.targets).some(row =>
+  row.contacts.some(positive) && expansionTargetPresent(ctx, expansionEntity(ctx, row)));
+
 // Fallback for a later action of an already answered root (reportRestOfRoot usually fires first).
 function reportAlreadyAnswered(ctx, action, group, hooks) {
   const contacts = (action.meta?.expansionContacts || []).flat();
@@ -249,7 +254,7 @@ export function beforeReactionAction(ctx, action, hooks) {
   if (group.begun) { reportAlreadyAnswered(ctx, action, group, hooks); return false; }
   if (ctx.reactionRules?.contactPolicy === 'perHit' && !group.contactTelegraphed
     && action.source.alive && !haltReason(ctx, action.source)
-    && Object.values(group.targets).some(row => row.contacts.some(positive))) {
+    && contactTargetPresent(ctx, group)) {
     group.contactTelegraphed = true;
     ctx.emit('combatContactPrepared', { ...(group.enemyMoveStart || group.counterReturn),
       sourceId: action.source.id, contactKey: group.key, kind: 'attack',
@@ -609,6 +614,7 @@ export function startQueuedEnemy(ctx, action) {
   const enemy = action.source;
   group.cancelled = !enemy?.alive || enemy.skipNextTurn || controlRestrictions(ctx, enemy).locked;
   if (group.cancelled) return;
+  if (group.contactSequence && !contactTargetPresent(ctx, group)) return;
   const prepared = group.contactTelegraphed ? { contactPrepared: true, contactKey: group.key } : {};
   if (group.counterReturn) { ctx.emit('combatCounterTriggered', { ...group.counterReturn, ...prepared }); return; }
   if (group.contactSequence?.index > 0) {

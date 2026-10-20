@@ -26,3 +26,7 @@ test('enemy executed moves resolve on the receipt owner without leaking future i
   assert.equal(identity({ type: 'enemyActorTurnStarted', intent: { moveId: 'slash' } }), null);
   assert.equal(identity({ type: 'cardPlayed', cardId: 'missing', cardName: '<Unknown>' }), '<Unknown>');
 });
+test('an unnamed executed enemy move retains its specific committed identity', () => {
+  assert.equal(identity({ type: 'combatContactPrepared', sourceId: 'enemy', moveId: 'scythePair', combatProfile: { maneuver: 'attack' } }), 'Attack · Scythe Pair');
+  assert.equal(identity({ type: 'combatHitStarted', sourceId: 'enemy', moveId: 'tail-sweep', combatProfile: { maneuver: 'sweep' } }), 'Sweep · Tail sweep');
+});
