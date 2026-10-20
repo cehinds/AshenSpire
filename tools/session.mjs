@@ -71,7 +71,7 @@ import {
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import { cardRewardPlan } from '../src/model/rewardplan.js';
 import {
-  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, setReactions, previewCoopCard, previewCoopCards, classifyPreviewCandidates, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
+  createCoopCombat, coopOutcome, playCard, chooseDiscard, chooseReaction, setReactions, createCoopCardPreviewReader, previewCoopCards, classifyPreviewCandidates, previewCoopIntent, endTurn, useFlask, joinCombat, leaveCombat,
   recoverControl, chooseBlightFeat,
 } from '../src/engine/coopCombat.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
@@ -801,19 +801,22 @@ export function createSession({ registries, seedString, endless = false, restore
 
   function combatScene() {
     const c = live.combat;
+    const previewReaders = new Map();
     const handPreview = (ownerId, instanceId, ranks) => {
+      if (!previewReaders.has(ownerId)) previewReaders.set(ownerId, createCoopCardPreviewReader(c, ownerId));
+      const read = previewReaders.get(ownerId);
       const owner = c.players.get(ownerId);
       const instance = owner.piles.hand.find(card => card.instanceId === instanceId);
       const definition = resolveCombatCard({ ...c, registries: c.registriesForPlayer(ownerId), player: owner.entity,
         attributes: owner.attributes, loadout: owner.loadout }, instance, { upcastRanks: ranks });
       const living = c.enemies.filter(enemy => enemy.alive);
       const firstTarget = c.rangeState?.policy.enabled && hitBadgeTargetIds(definition, living).length ? living[0]?.id : undefined;
-      const preview = previewCoopCard(c, ownerId, instanceId, firstTarget, ranks);
+      const preview = read(instanceId, firstTarget, ranks);
       if (!preview.range?.enabled || (!hitBadgeTargetIds(preview.resolvedDefinition, living).length && !preview.range.targets?.length)) return preview;
       // Keep only the small canonical quote; reuse the initial targeted read.
       // The host applies this owner's knowledge before computing either chance.
       const rangeByTarget = Object.fromEntries(living.map(enemy => [enemy.id, firstTarget === enemy.id ? preview.range
-        : previewCoopCard(c, ownerId, instanceId, enemy.id, ranks, { rangeRoute: 'advance' }).range]));
+        : read(instanceId, enemy.id, ranks, { rangeRoute: 'advance' }).range]));
       return { ...preview, rangeByTarget };
     };
     // Compact digest of display-worthy events since the LAST snapshot, so the

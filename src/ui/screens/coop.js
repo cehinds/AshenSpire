@@ -1618,8 +1618,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
           // The spelled-out reason is this viewer's data: a co-op client reads
           // a snapshot, not the engine, so the card itself says why it is grey.
           const reason = affordable ? null
-            : def.combatPreview?.rangeQuoteUnavailable ? 'Waiting for route quote'
-              : def.combatPreview?.range?.routes?.find(route => route.id === def.combatPreview.range.selectedRoute)?.available === false ? 'Selected approach cannot reach'
+            : def.combatPreview?.rangeQuoteUnavailable ? t('combat.range.waitingQuote')
+              : def.combatPreview?.range?.routes?.find(route => route.id === def.combatPreview.range.selectedRoute)?.available === false ? t('combat.range.cannotReach')
             : !manaAffordable ? `Need ${costs.mana} Mana; have ${meP.mana}`
               : !staminaAffordable ? `Need ${costs.stamina} Stamina; have ${meP.stamina || 0}`
                 : !energyAffordable ? 'Not enough Stamina' : 'Turn already ended';
