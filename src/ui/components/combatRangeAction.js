@@ -3,7 +3,7 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { combatRangeActionPlan } from '../models/CombatRangeActionModel.js';
 
 // A temporary action attachment, never an authored card or a second price rule.
-export function combatRangeAction(preview, { onChoose, disabled = false, ...options } = {}) {
+export function combatRangeAction(preview, { onChoose, onCancel, disabled = false, ...options } = {}) {
   const plan = combatRangeActionPlan(preview, options);
   if (!plan) return null;
   const root = document.createElement('div');
@@ -13,6 +13,7 @@ export function combatRangeAction(preview, { onChoose, disabled = false, ...opti
   root.setAttribute('aria-label', 'Attack approach');
   // Native controls own their keyboard, including co-op's seat-switch Tab key.
   for (const type of ['pointerdown', 'pointerup', 'click', 'keydown']) root.addEventListener(type, event => event.stopPropagation());
+  root.addEventListener('keydown', event => { if (event.key === 'Escape' && onCancel) { event.preventDefault(); onCancel(); } });
   const choices = document.createElement('div'); choices.className = 'combat-range-choices';
   for (const route of plan.routes) {
     const button = document.createElement('button'); button.type = 'button';

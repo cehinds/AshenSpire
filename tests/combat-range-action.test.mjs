@@ -90,3 +90,39 @@ test('paid Counter variants show their own canonical route total and return odds
   assert.doesNotMatch(summary.costs.join(' '), /99/);
   assert.equal(summary.id, 'counter-throw', 'the modal still returns the engine option identity');
 });
+
+test('window capture preserves native route Enter and route Tab cannot switch a co-op seat', async () => {
+  const { initInput, focusElement, clearFocus } = await import('../src/ui/input.js');
+  const { combatRangeAction } = await import('../src/ui/components/combatRangeAction.js');
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  withKitDom(({ document, Event }, _window, listeners) => {
+    const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    const previousStyle = globalThis.getComputedStyle;
+    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { getGamepads: () => [] } });
+    globalThis.getComputedStyle = () => ({ visibility: 'visible', display: 'block' });
+    try {
+      const app = document.createElement('main'); app.id = 'app'; document.body.append(app);
+      const staleCard = document.createElement('button'); staleCard.className = 'card'; app.append(staleCard);
+      focusElement(staleCard);
+      initInput();
+      let seatsChanged = 0, cancelled = 0;
+      const root = combatRangeAction(quote(), { onCancel: () => { cancelled += 1; } });
+      app.append(root);
+      const button = root.querySelector('button'); button.focus();
+      const enter = new Event('keydown', { key: 'Enter', target: button, bubbles: true });
+      // Exercise the installed production window capture before component bubbling.
+      for (const handler of listeners.get('keydown').slice(0, 2)) handler(enter);
+      assert.equal(enter.defaultPrevented, false, 'global confirm cannot activate its stale card cursor');
+      const tab = new Event('keydown', { key: 'Tab', target: button, bubbles: true });
+      root.dispatchEvent(tab);
+      if (!tab.propagationStopped) seatsChanged += 1;
+      assert.equal(seatsChanged, 0); assert.equal(tab.defaultPrevented, false);
+      root.dispatchEvent(new Event('keydown', { key: 'Escape', target: button, bubbles: true }));
+      assert.equal(cancelled, 1);
+      clearFocus();
+    } finally {
+      if (descriptor) Object.defineProperty(globalThis, 'navigator', descriptor); else delete globalThis.navigator;
+      if (previousStyle === undefined) delete globalThis.getComputedStyle; else globalThis.getComputedStyle = previousStyle;
+    }
+  });
+});

@@ -1805,6 +1805,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         const quote = previewCard(combat, selected, targetId, upcastRanksByCard.get(selected));
         releaseRangeAction = mountCombatRangeAction(selectedCard, quote, {
           targetName: id => registries.enemies.get(getEntity(combat, id)?.enemyId)?.name || id,
+          onCancel: () => { selected = null; selfArm = null; clearSelection(); syncCardSelection(); selectedCard.focus({ preventScroll: true }); },
           onChoose: route => {
             const instanceId = selected;
             rangeRoutesByCard.set(instanceId, route);
