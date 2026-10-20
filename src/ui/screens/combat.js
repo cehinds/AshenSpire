@@ -1,5 +1,5 @@
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
-import { rangeHitLabel } from '../models/CombatRangeActionModel.js';
+import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
 import { combatActionIdentity } from '../models/CombatActionIdentityModel.js';
@@ -2418,6 +2418,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // ---------- input: click-to-target + drag (SPEC §7.3, both modes) ----------
   function wireCardInput(el, inst, pv, affordable) {
+    const rangeSelectable = canChooseRangeRoute(pv) && !isUnplayable(inst);
     let dragGhost = null;
     let dragging = false;
     let startX = 0;
@@ -2688,7 +2689,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
     const confirm = () => {
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-      if (busy || !affordable || dragging) return;
+      if (busy || dragging) return;
+      if (!affordable) { if (rangeSelectable) select(); return; }
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
       play();
     };
@@ -2697,6 +2699,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
       if (busy || dragging) return;
       if (!affordable) {
+        if (rangeSelectable) { select(); return; }
         const reasons = [];
         const reason = unplayableReason(inst);
         if (reason) reasons.push(reason);
@@ -2727,7 +2730,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // follow the confirm dial to zero (owner, 2026-10-18): with holdConfirm
       // `off` a long press must still select/inspect rather than read as a tap
       // and play. It takes the dial's own `short` step as its fixed duration.
-      ms: () => affordable ? cardHoldMs() : 0,
+      ms: () => affordable || rangeSelectable ? cardHoldMs() : 0,
       // A card hold is an alternate input for the same selection flow as a tap,
       // not a delayed second route that silently commits before the player has
       // chosen a target. Paint from pointer-down; crossing the shared movement
@@ -2736,7 +2739,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       onTap: tap, tapOnEarlyRelease: true, tapOnPointerRelease: true,
       onConfirm: () => {
         if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-        if (busy || !affordable || dragging) return;
+        if (busy || (!affordable && !rangeSelectable) || dragging) return;
         // THE COMPLETED HOLD SELECTS AND NEVER PLAYS, whatever oneTapPlay says
         // (owner, 2026-10-18; SPEC 7.3): selecting is what reveals the
         // information and Upcast controls and, for a card that asks for one
@@ -2891,7 +2894,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const pv = previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId));
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
       const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
-      if (!affordable) return;
+      if (!affordable && (!canChooseRangeRoute(pv) || isUnplayable(inst))) return;
       const hostile = cardTargets(inst.instanceId).mode === 'enemy';
       if (hostile) { selected = inst.instanceId; selfArm = null; selectedFlask = null; syncCardSelection(); }
       else armSelf(inst.instanceId);

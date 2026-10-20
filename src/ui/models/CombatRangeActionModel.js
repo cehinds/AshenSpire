@@ -26,3 +26,7 @@ export function combatRangeActionPlan(preview, { targetName = id => id, targetId
   });
   return { selectedRoute: range.selectedRoute, routes };
 }
+
+// Choosing an affordable alternative must remain possible when the default is
+// too expensive. This permits selection only; the canonical commit still pays.
+export const canChooseRangeRoute = preview => !!(preview?.range?.enabled && preview.range.targets?.length && preview.range.routes?.some(route => route.available));

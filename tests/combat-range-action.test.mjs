@@ -51,3 +51,14 @@ test('route controls keep native keyboard ownership and send only the chosen id'
     assert.equal(tab.defaultPrevented, false, 'native Tab still moves focus within controls');
   });
 });
+
+test('unaffordable default remains selectable without changing its route or price', async () => {
+  const { canChooseRangeRoute } = await import('../src/ui/models/CombatRangeActionModel.js');
+  const q = quote();
+  assert.equal(canChooseRangeRoute(q), true);
+  assert.equal(q.range.selectedRoute, 'advance');
+  assert.equal(q.range.routes[0].affordable, false);
+  assert.equal(q.range.routes[0].costs.energy, 3);
+  q.range.enabled = false;
+  assert.equal(canChooseRangeRoute(q), false);
+});

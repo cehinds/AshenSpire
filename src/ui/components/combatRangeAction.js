@@ -20,7 +20,7 @@ export function combatRangeAction(preview, { onChoose, disabled = false, ...opti
     button.setAttribute('aria-pressed', String(route.selected));
     button.disabled = disabled || !route.available;
     button.textContent = [route.label, route.total, route.reason].filter(Boolean).join(' · ');
-    button.addEventListener('click', () => onChoose?.(route.id));
+    button.addEventListener('click', () => { if (!button.disabled) onChoose?.(route.id); });
     choices.append(button);
   }
   root.append(choices);
