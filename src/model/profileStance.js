@@ -32,5 +32,8 @@ export function isSpellCounter(card) {
 // with coverage. A spell Counter arms but stands in the prepared stance it enters today (owner 2026-10-19).
 export function armsAsCoreCounter(subject, card) {
   const rule = configuredModule(subject, 'stances');
-  return !!rule && !!rule.include?.includes('counter') && (configuredStance(card) === 'counter' || isSpellCounter(card));
+  if (!rule?.include?.includes('counter')) return false;
+  if (configuredStance(card) === 'counter') return true;
+  // The spell branch also needs the stance it stands in (prepared) available: setProfileStance turns an unavailable one into Neutral, which cannot hold the charge.
+  return isSpellCounter(card) && rule.include.includes(configuredStance(card));
 }
