@@ -235,12 +235,15 @@ async function main() {
 
     const played = () => evalIn(`window.__combat?.player?.counters?.cardsPlayedThisCombat || 0`);
     const idle = `!!window.__combat && window.__combat.result == null && window.__combat.phase === 'player' && !!document.querySelector('.hand .card') && !document.querySelector('.combat .end-turn')?.disabled`;
+    // A spent hand (every card played, no sample yet missing a number) has no `.hand .card` to wait for; it still ends the
+    // turn through the no-pick branch below. The hand is read from combat state, so a hand still being drawn does not count.
+    const spent = `!!window.__combat && window.__combat.result == null && window.__combat.phase === 'player' && window.__combat.piles.hand.length === 0 && !document.querySelector('.combat .end-turn')?.disabled`;
     const samples = [];
     const numbers = [];
     let hostileProofs = 0;
     for (let guard = 0; (samples.length < PLAYS || numbers.length < PLAYS || !hostileProofs) && guard < PLAYS * 6; guard += 1) {
       if (await evalIn(`!window.__combat || window.__combat.result != null`)) break;
-      await until(idle, 'an idle hand', 15000);
+      await until(`(${idle}) || (${spent})`, 'an idle hand', 15000);
       await wait(400);
       const picked = await evalIn(`(async () => {
         const { resolveCombatCard } = await import('/src/engine/combatExpansion.js');
