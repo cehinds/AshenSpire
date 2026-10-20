@@ -151,7 +151,7 @@ const withDirections = html => html.replace(/<span class="val (up|down)">(.*?)<\
 export function cardEffectHtml(def, preview = null, registries = null) {
   if (!def) return '';
   let lines = null;
-  try { lines = cardFaceLines(def, preview, registries); } catch { lines = null; }
+  try { lines = cardFaceLines(def, preview, registries, null, { stanceEntry: false }); } catch { lines = null; }
   if (lines?.length) return withDirections(lines.map(row => row.html).join(' \u00b7 '));
   let summary = null;
   try { summary = combatCardSummary(def, preview, registries); } catch { summary = null; }

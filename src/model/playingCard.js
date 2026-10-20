@@ -228,6 +228,12 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'retain': text = `Retain ${n}`; break;
       case 'grantRollMode': text = `Next ${effect.roll}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`; break;
       case 'enterStance': text = effect.choose ? 'Choose a stance' : `Enter ${registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance}`; break;
+      case 'moveEngagement': {
+        if (![-1, 1].includes(effect.bands) || !['enemy', 'pendingAttacker'].includes(effect.target)) return null;
+        const target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
+        text = effect.bands < 0 ? `Close 1 band toward ${target}` : `Retreat 1 band from ${target}`;
+        break;
+      }
       case 'addCard': text = `Add ${effect.count || 1} ${registries?.cards?.has(effect.card) ? registries.cards.get(effect.card).name : effect.card} to ${effect.pile || 'hand'}`; break;
       case 'grantCardCharge': {
         const bonuses = Object.entries({ damage: 'damage', block: 'Block', heal: 'healing', break: 'Poise', buildup: `${effect.buildupStatus || ''} buildup`, manaDiscount: 'Mana discount' })
