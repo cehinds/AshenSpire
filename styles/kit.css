@@ -2209,7 +2209,11 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   margin-top: 0.9rem; padding: 0.8rem 0 1.28rem; border-top: 1px solid var(--line); background: var(--panel);
 }
 .smith-cost-strip > .as-blocker.pinned { margin: 0; }
-.smith-selected-head > .sr-name { font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); }
+.smith-selected-head > .sr-name,
+.smith-upgrade-modal .smith-upgrade-fold > summary .sr-name {
+  font-family: var(--font-body); font-size: max(1.4rem, calc(15px / var(--ui-zoom, 1)));
+  font-weight: 600; line-height: 1.2; color: var(--parchment);
+}
 .smith-preview-economy { display: flex; align-items: baseline; }
 .smith-economy-values { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.45rem; font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); }
 .smith-economy-values > b { white-space: nowrap; font-weight: 600; }
@@ -2222,8 +2226,16 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-preview-card .sr-vals { flex-direction: column; align-items: flex-end; gap: 0.3rem; }
 /* A fact row that runs out of room stacks its values under its name. */
 .smith-preview-card > .as-statrow.flat { flex-wrap: wrap; }
-.smith-preview-card > .as-statrow.flat > .sr-id { flex: 1 1 12rem; }
+.smith-preview-card > .as-statrow.flat > .sr-id { flex: 1 1 12rem; width: auto; max-width: 100%; }
 .smith-preview-card > .as-statrow.flat > .sr-vals { flex: 1 1 14rem; }
+@media (max-width: 440px) {
+  .smith-preview-card > .as-statrow.flat { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }
+  .smith-preview-card > .as-statrow.flat > .sr-id,
+  .smith-preview-card > .as-statrow.flat > .sr-vals { width: 100%; max-width: 100%; min-width: 0; }
+  .smith-preview-card > .as-statrow.flat > .sr-vals { margin-left: 0; align-items: flex-start; text-align: left; }
+  .smith-preview-card .smith-fold-values { justify-content: flex-start; }
+  .smith-preview-card .smith-requirement small { text-align: left; }
+}
 .smith-stat-costs > i { font-style: normal; }
 .smith-requirement small { display: block; color: var(--muted); font-size: 1.05rem; text-align: right; }
 .smith-preview-card > .as-blocker.pinned { margin-top: 1.2rem; }
@@ -6527,3 +6539,13 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
   grid-template-columns: minmax(0, 16rem);
   justify-content: center;
 }
+
+/* Combat-log actor roles are named in the legend as well as separated by hue. */
+.combat-log-actor { font-weight:600; }
+.combat-log-actor[data-combat-log-side='player'] { color:var(--combat-log-player-color); }
+.combat-log-actor[data-combat-log-side='enemy'] { color:var(--combat-log-enemy-color); }
+.combat-log-role-legend { display:flex; flex-wrap:wrap; align-items:center; gap:1rem; padding:0 0 0.45rem; color:var(--parchment); font-size:0.9em; }
+.combat-log-role { display:inline-flex; align-items:center; gap:0.4rem; }
+.combat-log-role-swatch { width:0.75em; height:0.75em; border:1px solid currentColor; border-radius:50%; }
+.combat-log-role--player .combat-log-role-swatch { background:var(--combat-log-player-color); }
+.combat-log-role--enemy .combat-log-role-swatch { background:var(--combat-log-enemy-color); }

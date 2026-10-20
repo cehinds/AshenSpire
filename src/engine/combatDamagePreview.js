@@ -114,7 +114,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
     const type = rules.damageAliases?.[receipt.profile?.damageType] || receipt.profile?.damageType;
     // Mirrors matchupRiderEffects: damage-type and technique riders share
     // one once-per-target budget, spent when any of them applies.
-    const riders = hitRiders(rules, type, attack).filter(row => !row.requiresHpLoss || receipt.amount > blocked);
+    const riders = hitRiders(rules, type, attack, ctx).filter(row => !row.requiresHpLoss || receipt.amount > blocked);
     if (!attack.combatReaction && receipt.profile && receipt.amount > 0 && riders.length
       && !local.combatRiderTargets.includes(targetKey)) {
       local.combatRiderTargets.push(targetKey);

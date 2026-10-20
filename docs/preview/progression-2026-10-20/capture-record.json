@@ -1,0 +1,119 @@
+{
+  "sourceCommit": "995fa1776",
+  "date": "2026-10-20",
+  "kind": "shared component mounted with the production index styles; headless award/save tests cover settlement and acknowledgement",
+  "results": [
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844,
+      "door": {
+        "x": 8,
+        "y": 329.15625,
+        "width": 374,
+        "height": 185.671875,
+        "right": 382,
+        "bottom": 514.828125
+      },
+      "button": {
+        "x": 16.360000610351562,
+        "y": 467.4471740722656,
+        "width": 357.280029296875,
+        "height": 34.636871337890625,
+        "right": 373.64002990722656,
+        "bottom": 502.08404541015625
+      },
+      "overflow": false,
+      "rows": [
+        "Reaver · Level 0 → 1",
+        "Greatsword (Blade group) · Level 0 → 2"
+      ],
+      "consoleErrors": 0,
+      "continueClicked": true
+    },
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "door": {
+        "x": 435,
+        "y": 344.921875,
+        "width": 570,
+        "height": 210.15625,
+        "right": 1005,
+        "bottom": 555.078125
+      },
+      "button": {
+        "x": 445.95001220703125,
+        "y": 507.0502624511719,
+        "width": 548.0999755859375,
+        "height": 31.258819580078125,
+        "right": 994.0499877929688,
+        "bottom": 538.30908203125
+      },
+      "overflow": false,
+      "rows": [
+        "Reaver · Level 0 → 1",
+        "Greatsword (Blade group) · Level 0 → 2"
+      ],
+      "consoleErrors": 0,
+      "continueClicked": true
+    },
+    {
+      "name": "wide",
+      "width": 1920,
+      "height": 1080,
+      "door": {
+        "x": 675,
+        "y": 434.921875,
+        "width": 570,
+        "height": 210.15625,
+        "right": 1245,
+        "bottom": 645.078125
+      },
+      "button": {
+        "x": 685.9500122070312,
+        "y": 597.05029296875,
+        "width": 548.1000366210938,
+        "height": 31.2587890625,
+        "right": 1234.050048828125,
+        "bottom": 628.30908203125
+      },
+      "overflow": false,
+      "rows": [
+        "Reaver · Level 0 → 1",
+        "Greatsword (Blade group) · Level 0 → 2"
+      ],
+      "consoleErrors": 0,
+      "continueClicked": true
+    },
+    {
+      "name": "tablet",
+      "width": 768,
+      "height": 1024,
+      "door": {
+        "x": 99,
+        "y": 406.921875,
+        "width": 570,
+        "height": 210.15625,
+        "right": 669,
+        "bottom": 617.078125
+      },
+      "button": {
+        "x": 109.95001220703125,
+        "y": 569.05029296875,
+        "width": 548.0999755859375,
+        "height": 31.2587890625,
+        "right": 658.0499877929688,
+        "bottom": 600.30908203125
+      },
+      "overflow": false,
+      "rows": [
+        "Reaver · Level 0 → 1",
+        "Greatsword (Blade group) · Level 0 → 2"
+      ],
+      "consoleErrors": 0,
+      "continueClicked": true
+    }
+  ]
+}

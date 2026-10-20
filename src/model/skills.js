@@ -140,7 +140,7 @@ export function skillLevel(run, skillId) {
  * A level no longer upgrades cards: the `upgradeAt` standing rule is retired
  * for card ranks (SPEC §13.4o), which a level's rank-up raises one at a time.
  */
-export function awardSkillXp(registries, run, skillId, amount) {
+export function awardSkillXp(registries, run, skillId, amount, { queueRewards = true } = {}) {
   if (skillId === PERCEPTION_SKILL) throw new Error('Perception XP requires an accepted enemy knowledge success');
   const kind = skillKindOf(registries, skillId);
   if (!kind) throw new Error(`awardSkillXp: '${skillId}' is not a skill track`);
@@ -156,15 +156,19 @@ export function awardSkillXp(registries, run, skillId, amount) {
     if (kind === 'class' && hasClassMastery(run)) run.classMasteryState.spentXp[skillId.slice(6)] += cost;
     row.xp -= cost;
     row.level += 1;
-    row.pendingDrafts += 1;
-    if (!(expandedProgression(run) && isAbilitySkill(skillId))) queueRankUp(kind, row);
-    if (!(expandedProgression(run) && kind === 'class')) { queueAttributePick(registries, skillId, row); queueSkillFeat(registries, skillId, row); }
+    // Configured Core uses its own reward policy. Its informational class /
+    // weapon levels must not strand unsupported legacy draft/rank/feat picks.
+    if (queueRewards) {
+      row.pendingDrafts += 1;
+      if (!(expandedProgression(run) && isAbilitySkill(skillId))) queueRankUp(kind, row);
+      if (!(expandedProgression(run) && kind === 'class')) { queueAttributePick(registries, skillId, row); queueSkillFeat(registries, skillId, row); }
+    }
     cost = xpToNext(registries, kind, row.level);
   }
   const skillAwards = [];
   if (kind === 'class' && row.level > before) {
     claimRunClassMastery(registries, run);
-    for (let level = before + 1; level <= row.level; level++) skillAwards.push(...payClassMilestone(registries, run, skillId.slice(6), level));
+    if (queueRewards) for (let level = before + 1; level <= row.level; level++) skillAwards.push(...payClassMilestone(registries, run, skillId.slice(6), level));
   }
   return { skillId, before, after: row.level, levelUps: row.level - before, gained: gain, skillAwards };
 }

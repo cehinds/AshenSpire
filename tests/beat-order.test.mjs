@@ -16,13 +16,13 @@ import { playTimeline, setAnimSpeed, setBeatOrder, getBeatOrder, ANIM_SPEEDS } f
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
-// D11 (2026-10-18): a 1000 ms gap at every stage boundary. AFTER spans animation → result → reaction.
-const IMPACT = 100, TOTAL = 300, LEAD = 1000, AFTER = 2000, REACTION = 1000, GAP = 1000;
+// D11 (2026-10-18): a 500 ms gap at every stage boundary. AFTER spans animation → result → reaction.
+const IMPACT = 100, TOTAL = 300, LEAD = 500, AFTER = 1000, REACTION = 500, GAP = 500;
 
 function drive(t, fn) {
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
   withKitDom((dom) => {
-    const trace = [];
+    const trace = [], words = [];
     const at = (what) => trace.push({ what, at: Date.now() });
     const el = (id) => { const e = dom.document.createElement('div'); e.className = 'sprite'; e.id = id; return e; };
     const anchors = { player: el('player'), e1: el('e1') };
@@ -39,6 +39,7 @@ function drive(t, fn) {
       const cls = String(node.className || '');
       if (/\bfx-(slash|spark)\b/.test(cls)) at('contact');
       if (/\bfloat-num\b/.test(cls)) at(`float:${node.textContent}`);
+      if (/\bfx-callout\b/.test(cls)) words.push({ kind: node.dataset.calloutKind, at: Date.now() });
       return append(node);
     };
     const ctx = {
@@ -51,7 +52,7 @@ function drive(t, fn) {
     let completed = 0;
     const run = (events, extra = {}) => playTimeline(events, { ...ctx, ...extra }, () => completed++);
     const finish = () => { for (let i = 0; i < 20000 && !completed; i++) t.mock.timers.tick(1); assert.equal(completed, 1, 'the timeline completes'); };
-    try { fn({ dom, anchors, layer, trace, run, finish, tick: (ms) => t.mock.timers.tick(ms) }); }
+    try { fn({ dom, anchors, layer, trace, words, run, finish, tick: (ms) => t.mock.timers.tick(ms) }); }
     finally { setAnimSpeed('normal'); setBeatOrder('sequential'); dom.document.body.classList.remove('reduced-motion'); }
   });
 }
@@ -62,6 +63,65 @@ const playerHit = (...amounts) => [
   { type: 'cardPlayed', cardType: 'attack', cardId: 'strike', cardInstanceId: 'c1', targetId: 'e1' },
   ...amounts.map((amount) => ({ type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount, blocked: 0 })),
 ];
+
+test('accuracy precedes the target animation and the final Block outcome follows it', t => {
+  drive(t, ({ trace, words, run, finish }) => {
+    run([playerHit()[0], { type: 'attackHit', sourceId: 'player', targetId: 'e1' },
+      { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 4, blocked: 4 }], {
+      reactionForReceipt: event => event.type === 'damageDealt' ? () => trace.push({ what: 'guard-reaction', at: Date.now() }) : null,
+    });
+    finish();
+    const hit = words.find(row => row.kind === 'hit'), block = words.find(row => row.kind === 'blocked');
+    assert.ok(hit.at < timeOf(trace, 'guard-reaction'));
+    assert.ok(block.at > timeOf(trace, 'guard-reaction'));
+    assert.equal(words.filter(row => row.kind === 'hit').length, 1);
+  });
+});
+
+test('a committed range failure explains Out of range directly in primary feedback', t => {
+  drive(t, ({ words, run, finish }) => {
+    run([playerHit()[0], { type: 'attackMissed', sourceId: 'player', targetId: 'e1', missReason: 'range' }]);
+    finish();
+    assert.deepEqual(words.map(row => row.kind), ['action:Attack', 'missed', 'outOfRange']);
+    assert.equal(words.filter(row => row.kind === 'missed').length, 1);
+  });
+});
+
+test('miss and Evaded are separate accuracy and post-animation outcomes', t => {
+  drive(t, ({ trace, words, run, finish }) => {
+    run([playerHit()[0], { type: 'attackMissed', sourceId: 'player', targetId: 'e1' },
+      { type: 'attackEvaded', sourceId: 'player', targetId: 'e1' }], {
+      reactionForReceipt: event => event.type === 'attackEvaded' ? () => trace.push({ what: 'evade-reaction', at: Date.now() }) : null,
+    });
+    finish();
+    assert.ok(words.find(row => row.kind === 'missed').at < timeOf(trace, 'evade-reaction'));
+    assert.ok(words.find(row => row.kind === 'dodged').at > timeOf(trace, 'evade-reaction'));
+  });
+});
+
+test('an incoming contact animates before its choice and its resumed receipt never repeats the swing', t => {
+  drive(t, ({ trace, run, finish }) => {
+    run([
+      { type: 'combatContactPrepared', sourceId: 'e1', moveId: 'slash', kind: 'attack', contactKey: 'root:0' },
+      { type: 'combatReactionOffered', ownerId: 'player' },
+      { type: 'enemyMoveStarted', sourceId: 'e1', moveId: 'slash', kind: 'attack', contactPrepared: true, contactKey: 'root:0' },
+      { type: 'attackHit', sourceId: 'e1', targetId: 'player' },
+      { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 5 },
+      { type: 'combatCounterTriggered', sourceId: 'player', targetId: 'e1' },
+      { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 3 },
+      { type: 'combatContactPrepared', sourceId: 'e1', moveId: 'slash', kind: 'attack', contactKey: 'root:1' },
+    ], { animateActor: beat => {
+      trace.push({ what: `swing:${beat.actorId}:${beat.telegraph ? 'incoming' : 'return'}`, at: Date.now() });
+      return { impactMs: IMPACT, totalMs: TOTAL, cancel() {} };
+    } });
+    finish();
+    assert.deepEqual(trace.filter(row => row.what.startsWith('swing:')).map(row => row.what), ['swing:e1:incoming', 'swing:player:return', 'swing:e1:incoming']);
+    assert.ok(timeOf(trace, 'swing:e1:incoming') < timeOf(trace, 'float:-5'));
+    assert.ok(timeOf(trace, 'float:-5') < timeOf(trace, 'swing:player:return'));
+    const next = trace.filter(row => row.what === 'swing:e1:incoming')[1];
+    assert.ok(timeOf(trace, 'float:-3') < next.at, 'the next incoming swing waits for the Counter result');
+  });
+});
 
 test('the default beat order is sequential', () => {
   assert.equal(getBeatOrder(), 'sequential');
@@ -249,7 +309,7 @@ test('a short ordered swing finishes its total duration plus hit-stop before the
 test('a delayed ordered contact retains the full hit-stop and remaining authored frames from delivery', t => {
   drive(t, ({ trace, run, finish, tick }) => {
     run(accuracyHit(7), { animateActor: shortActor(trace), maxHpFor: () => 54 });
-    tick(500); tick(500); // Let both required pre-sprite waits finish on time.
+    tick(LEAD); // Let the required pre-sprite wait finish on time.
     tick(350); // Deliver the sprite's 100 ms contact callback 250 ms late.
     finish();
     const delivered = LEAD + 350;

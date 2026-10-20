@@ -1,6 +1,7 @@
 # Combat clarity corrections — 20 October 2026
 
-Status: owner-approved requirements; implementation in progress.
+Status: owner-approved requirements; implemented changes are undergoing combined
+browser, build and integration verification in PR #2218.
 
 These corrections describe the current Core game. Keep historical profile behavior
 explicit where saves snapshot different rules; do not accidentally apply a Core
@@ -28,10 +29,15 @@ the same UI is used.
   can rearm for its hit. An automatic armed Counter remains a single charge,
   and a Counter return cannot trigger an endless reaction chain. The root
   multi-hit action pays its own cost once.
+  Contact policy belongs to the fight. Saved Core fights still match every
+  run-owned reaction tuning field, while the known optional policy can differ
+  from the run's historical snapshot. Unknown policy values remain invalid.
 - SP reduction applies only during the enemy turn when a card is played as a
   reaction and the actor was already in the matching stance. Entering the stance
   with that card does not qualify it for its own discount. Ordinary player-turn
   plays receive no such reduction. The displayed cost and execution agree.
+  This restriction applies to player hand cards; authored enemy move budgets
+  retain their existing rules.
 
 ## Action feedback and hand cards
 
@@ -60,6 +66,10 @@ the same UI is used.
 - Equipment should already level procedurally. Find and restore the existing
   intended progression path; this request does not authorize inventing a second
   equipment XP ledger or unrelated replacement growth system.
+  The existing equipment path derives rank from Smith tiers. Preserve that
+  calculation. Class and used weapon-group XP follow their existing curves;
+  restored Core level notices are informational and add no separate payouts or
+  unsupported historical reward queues.
 - Reward tiles and their corresponding buttons have consistent sizing while
   remaining readable and usable at phone widths.
 - A folded item-upgrade row summarizes the actual stat changes, for example

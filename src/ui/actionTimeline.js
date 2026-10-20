@@ -44,6 +44,11 @@ export function runActionTimeline(beats, hooks, timingIn, { setTimer = setTimeou
           const remaining = Math.max(total - impact + (Number(contactHold) || 0), Number(safe(() => actor?.remainingMs?.())) || 0);
           schedule(() => {
             cancelActor();
+            if (beat.telegraph) {
+              stage('resolution', beat, () => hooks.onResolution?.(beat));
+              schedule(next, Math.max(timing.resetMs, timing.stepMs));
+              return;
+            }
             schedule(() => {
               const groups = safe(() => hooks.reactionGroups?.(beat)) || [beat];
               let groupIndex = 0;
@@ -73,7 +78,7 @@ export function runActionTimeline(beats, hooks, timingIn, { setTimer = setTimeou
             }, timing.afterSpriteMs);
           }, remaining);
         }, impact);
-      }, timing.wordMs);
+      }, beat.prepared ? 0 : timing.wordMs);
     });
   };
   // Budget derives from every added wait and the caller's real authored clip

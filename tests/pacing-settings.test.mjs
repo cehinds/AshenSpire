@@ -8,9 +8,9 @@ import { actionPacing, setAnimSpeed, setCombatPacing } from '../src/ui/animation
 
 const row = key => settingsRows().find(r => r.key === key);
 
-test('Pause between steps defaults to 1 s and ranges 0.25 to 2 s', () => {
+test('Pause between steps defaults to 0.5 s and ranges 0.25 to 2 s', () => {
   const gap = row('combatStepPause');
-  assert.deepEqual([gap.def, gap.min, gap.max, gap.type], [1000, 250, 2000, 'number']);
+  assert.deepEqual([gap.def, gap.min, gap.max, gap.type], [500, 250, 2000, 'number']);
   assert.match(gap.label, /Pause between steps/);
 });
 
@@ -31,9 +31,9 @@ test('saved values reach the pacing, and a cleared value falls back to the defau
   setCombatPacing({ combatStepPause: 500, autoCombatSpeed: 2, autoCombat: true });
   assert.equal(actionPacing().gapMs, 250, '500 ms at ×2');
   setCombatPacing({ autoCombat: true, autoCombatSpeed: undefined, combatStepPause: undefined });
-  assert.ok(Math.abs(actionPacing().gapMs - 1000 / 1.5) < 1e-9);
+  assert.ok(Math.abs(actionPacing().gapMs - 500 / 1.5) < 1e-9);
   setCombatPacing({});
-  assert.equal(actionPacing().gapMs, 1000);
+  assert.equal(actionPacing().gapMs, 500);
   setCombatPacing();
 });
 
@@ -45,10 +45,20 @@ test('reduced motion and the Instant pace still drop every pause', () => {
   setAnimSpeed('normal'); setCombatPacing();
 });
 
+test('the shorter default preserves an explicitly saved pause and authored sprite duration', () => {
+  setAnimSpeed('normal'); setCombatPacing();
+  const defaultClip = actionPacing().spriteSpeed.lungeMs;
+  setCombatPacing({ combatStepPause: 1000 });
+  assert.equal(actionPacing().gapMs, 1000);
+  assert.equal(actionPacing().spriteSpeed.lungeMs, defaultClip);
+  assert.equal(defaultClip, 390);
+  setCombatPacing();
+});
+
 test('a saved pre-D11 combatActionDelay (old Action delay) does not carry into the new pause', () => {
   setAnimSpeed('normal'); setCombatPacing({ combatActionDelay: 0 });
-  assert.equal(actionPacing().gapMs, 1000);
+  assert.equal(actionPacing().gapMs, 500);
   setCombatPacing({ combatActionDelay: 5000 });
-  assert.equal(actionPacing().gapMs, 1000);
+  assert.equal(actionPacing().gapMs, 500);
   setCombatPacing();
 });

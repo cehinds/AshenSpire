@@ -101,30 +101,30 @@ test('preview equals live against an enemy whose attack carries rating bonuses',
 
 import { profileCardCosts } from '../src/engine/gameProfileCombat.js';
 import { cardPlayCosts } from '../src/engine/combat.js';
-test('a reaction card played from hand costs max(SP - 1, 0); other cards are untouched', () => {
+test('hand reactions use authored SP outside an enemy-turn matching stance', () => {
   const { combat } = live();
   const reaction = base => ({ id: 'x.reaction', staminaCost: base, manaCost: 0, tags: ['trait:reaction', 'maneuver:attack'] });
   const plain = base => ({ id: 'x.plain', staminaCost: base, manaCost: 0, tags: ['maneuver:attack'] });
   delete combat.player.combatStance;
-  assert.deepEqual([0, 1, 2, 3].map(sp => profileCardCosts(combat, reaction(sp)).stamina), [0, 0, 1, 2]);
+  assert.deepEqual([0, 1, 2, 3].map(sp => profileCardCosts(combat, reaction(sp)).stamina), [0, 1, 2, 3]);
   assert.deepEqual([0, 1, 2, 3].map(sp => profileCardCosts(combat, plain(sp)).stamina), [0, 1, 2, 3]);
 });
 
-test('the real Counter card is free to play from hand; the playability check and card face read the same price', () => {
+test('the real Counter pays authored SP on its own turn and arms after paying', () => {
   const { combat } = live();
-  assert.equal(cardPlayCosts(combat, 'cx1').stamina, 0);
-  combat.player.stamina = 0;
+  assert.equal(cardPlayCosts(combat, 'cx1').stamina, 1);
+  combat.player.stamina = 1;
   const before = combat.player.stamina;
   dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
-  assert.equal(combat.player.stamina, before);
-  assert.ok(combat.player.combatCounter, 'the zero-cost Counter still arms');
+  assert.equal(combat.player.stamina, before - 1);
+  assert.ok(combat.player.combatCounter, 'the paid Counter still arms');
 });
 
-test('the preview marks a reduced SP price so the card face can show it down; an untouched card has no mark', () => {
+test('own-turn reaction and ordinary card previews preserve authored SP without a discount mark', () => {
   const { combat } = live();
   delete combat.player.combatStance;
-  assert.equal(previewCard(combat, 'cx1').costShift, -1);
-  assert.equal(previewCard(combat, 'cx1').cost, 0);
+  assert.equal(previewCard(combat, 'cx1').costShift, undefined);
+  assert.equal(previewCard(combat, 'cx1').cost, 1);
   const strike = combat.piles.hand.find(row => row.cardId === 'core.strike');
   assert.equal(previewCard(combat, strike.instanceId).costShift, undefined);
 });
@@ -216,16 +216,21 @@ test('a Core Counter return ignores the target\'s Vulnerable: 8 incoming returns
 
 import { counterPreviewAgainst } from '../src/engine/counterRule.js';
 import { previewIntent } from '../src/engine/combat.js';
-test('multi-hit preview grants each hit its Counter Block and carries Vulnerable only after the break (Cinder Mantis, 0 Block, 2 Poise)', () => {
+test('a per-hit Counter preview covers the current contact, while saved whole-root policy covers both', () => {
   const { combat, enemy } = live('cinderMantis');
   Object.assign(enemy, { ratings: {}, ratingSources: [], statuses: {} });
   combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
   Object.assign(combat.player, { block: 0, statuses: {}, ratings: {}, ratingSources: [], persistentPoise: { value: 2, max: 20 } });
   assert.equal(enemy.intent.moveId, 'scythePair');
   const row = counterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
-  assert.equal(row.hits, 2);
-  assert.equal(row.incoming, 10, 'Vulnerable from the Poise break lands only after hit 2 completes');
-  assert.equal(row.hp, 6); assert.equal(row.poise, 2); assert.equal(row.block, 2);
+  assert.equal(row.hits, 1);
+  assert.equal(row.incoming, 5);
+  assert.equal(row.hp, 3); assert.equal(row.poise, 1); assert.equal(row.block, 1);
+  delete combat.reactionRules.contactPolicy;
+  const historical = counterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
+  assert.equal(historical.hits, 2);
+  assert.equal(historical.incoming, 10, 'Vulnerable from the Poise break lands only after hit 2 completes');
+  assert.equal(historical.hp, 6); assert.equal(historical.poise, 2); assert.equal(historical.block, 2);
 });
 
 test('the Counter preview carries the return\'s Poise damage and the Block it adds (8-damage attack: Poise 3, Block +2)', () => {
@@ -293,11 +298,11 @@ function liveWith(cardId) {
   return { combat, enemy };
 }
 
-test('a spell Counter (frostCounter) arms in Core: it previews the computed return and still marks its SP shift', () => {
+test('a spell Counter (frostCounter) previews its computed return with authored own-turn SP', () => {
   const { combat, enemy } = liveWith('frostCounter');
   const view = previewCard(combat, 'cy1', enemy.id);
   assert.ok(view.counterReturn?.hp > 0 && !view.counterReturn.uncovered, 'owner 2026-10-19: a spell Counter with coverage returns');
-  assert.equal(view.costShift, -1, 'the reaction-from-hand discount reads from the authored cost (1 -> 0)');
+  assert.equal(view.costShift, undefined, 'own-turn reactions use their authored SP cost');
 });
 
 function playSpellCounter(enemyId = 'wanderingSoldier') {

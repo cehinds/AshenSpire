@@ -91,7 +91,7 @@ export function pickInitialClassTreeNode(registries, run, nodeId) {
  * combat does not. A lost fight pays nothing; a boss pays `bossKill` on top
  * of `perWin`.
  */
-export function awardClassXp(registries, run, { victory = false, pool = 'normal', bank = false, multiplier = 1 } = {}) {
+export function awardClassXp(registries, run, { victory = false, pool = 'normal', bank = false, multiplier = 1, queueRewards = true } = {}) {
   if (!victory || !run || !run.class || run.classUnequipped) return null;
   const xp = ((((registries || {}).balance || {}).skill || {}).class || {}).xp || {};
   const pay = registries.balance.classMastery?.pay || {};
@@ -99,7 +99,7 @@ export function awardClassXp(registries, run, { victory = false, pool = 'normal'
   const amount = Math.floor(base * multiplier);
   recordClassMasteryXp(run, run.class, amount);
   if (!(amount > 0)) return null;
-  return (bank ? bankSkillXp : awardSkillXp)(registries, run, classSkillId(run.class), amount);
+  return (bank ? bankSkillXp : awardSkillXp)(registries, run, classSkillId(run.class), amount, { queueRewards });
 }
 
 /**

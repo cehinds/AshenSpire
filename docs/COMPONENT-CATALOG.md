@@ -1,5 +1,15 @@
 # AshenSpire component catalog
 
+Combat feedback uses `CombatActionIdentityModel` to name the committed card,
+enemy move and actual armament receipt (including explicit Unarmed). Solo and
+co-op share the FX timeline: identity, action animation, Hit/Miss, target
+reaction, then damage/defense outcome. Range misses say **Out of range** directly
+above the target. The default gap between indications is 500ms; saved custom
+pauses and sprite clip durations retain their own values. In new Core fights,
+each incoming hit is shown before its reaction choice, and its paid Counter
+finishes before the next hit. Historical saves retain their saved reaction
+policy. The visual catalog's `damage-feedback` miniature shows this sequence.
+
 The map's `act-route-strip` uses `ActRouteModel` and `actRouteStripHtml` to show
 the act title, Entrance, a fixed evenly spaced circle for each non-boss floor,
 and Boss on one desktop row. Committed visits fill circles with the shared map
@@ -55,7 +65,7 @@ packs and their objects into one zip, checking each file as it is written. See
 [offline play](offline-play.md).
 
 All run maps share the vector face in `mapNodeInk.js`: opaque dark discs, readable
-glyphs, a pale current-node marker and reachable halos. `mapview.js` owns the
+glyphs, a pale current-node marker and reachable halos. `map/mapview.js` owns the
 node radii; `AtlasCameraModel.js` frames a journey junction using that same close-up
 scale. World map fog compositing is bounded to the visible viewport.
 
@@ -407,6 +417,7 @@ The interactive reference catalog's detail drawer links to the same specimens.
 | `settings-level-pace` | `LevelPacePreviewModel.levelPacePreview` → `levelup.levelPace` | `settings.levelPacePreviewHtml` | Settings / Advanced / Progression / Experience and Level-up |
 | `victory-progress` | `rewardProgress`, `rewardXpPresentation` and saved XP receipts | `reward.mountRewards`, `coopXpProgression.mountCoopXpProgression`, `coopProgressionDoor.mountCoopProgressionDoor` | Solo Victory and co-op progression doors show only paid tracks in Class → Character → current skill level order. Bars fill sequentially at one normalized velocity; full bars turn blue immediately, but all Level up controls appear together only when every fill ends and Continue becomes green and enabled. A manual claim opens its funded chooser before residual and newly paid class-to-skill XP refill on return; other settled bars remain stable. Pending choices and co-op XP history survive reload. Capped tracks stay noninteractive; deferred banked levels remain claimable without a new XP receipt. |
 | `victory-xp-receipt` | `combatXpReceipt` + `victoryXpPresentation` over the saved fight reward | `reward.mountRewards` compact Victory | Combat-power and enemy XP count in order; the total grows alongside a compact calculation, with `+…` revealing the full formula. A fixed-height list scrolls as rows arrive, then Continue turns green after its configured pause. |
+| `configured-level-summary` | `gameProfileProgression.skillLevelNotices` over existing XP awards | `gameProfileLevelUp.mountGameProfileLevelUp` + `rewardDoor.mountRewardDoor` | Configured victory shows actual automatic class and used weapon-group level crossings before existing rewards, naming the committed weapon beside its group level. The saved receipt resumes until Continue acknowledges it. This is informational: no additional drops or unsupported legacy reward queues. Equipment procedural rank remains driven by Smithing tiers. |
 | `mode-choice` | creation mode + selected state | `creationCards.modeChoiceButton` | Standard/Assign Points + catalog |
 | `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog; Animated is the default when no explicit style is stored. |
 | `tint-choice` | tint row + selected state | `creationCards.tintChoiceButton` | Appearance + catalog |

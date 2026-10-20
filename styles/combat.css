@@ -477,6 +477,10 @@
   background: linear-gradient(90deg, transparent, #fff, transparent); animation: fx-miss-swish 380ms ease-out forwards; }
 @keyframes fx-miss-swish { from { opacity: 0; transform: translateX(-30px) scaleX(0.4); } 40% { opacity: 1; } to { opacity: 0; transform: translateX(30px) scaleX(1.2); } }
 .fx-callout.white { color: #fff; }
+.fx-callout[data-callout-kind^='action:'] {
+  white-space: normal; max-width: min(28rem, calc(100% - 12px));
+  font-size: 1.3rem; line-height: 1.15; letter-spacing: 0.02em; text-align: center;
+}
 .float-num { z-index: 1; }
 .reduce-flashes .fx-callout { animation: callout-rise var(--fx-callout-ms, 900ms) ease-out forwards; }
 .reduced-motion .fx-callout { animation: callout-fade var(--fx-callout-ms, 900ms) ease-out forwards; }

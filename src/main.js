@@ -4,6 +4,8 @@ import { screenshotRoutePath } from './ui/models/ScreenshotFixtureModel.js';
 import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
+import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
+import { configuredSkillProgression, skillLevelNotices, acknowledgeSkillLevelNotices } from './model/gameProfileProgression.js';
 import { announceSettingsSettled } from './ui/components/veil.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
 import { readNewGameProfile } from './ui/components/gameProfileSelector.js';
@@ -75,7 +77,7 @@ import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_S
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
 import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
-import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
+import { skillXpReceipt, applySkillXp, settleConfiguredSkillProgression } from './engine/skillXp.js';
 import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, rollDraftRank, levelQueuesRankUp as skillLevelQueuesRankUp, levelQueuesAttributePick as skillLevelQueuesAttributePick, linkedAttributes as skillLinkedAttributes, levelQueuesSkillFeat as skillLevelQueuesSkillFeat, skillFeatOptions, stampSkillBonuses, xpToNext as skillXpToNext } from './model/skills.js';
 import { featMultiplier, featStacks, rollFeatOptions } from './model/feats.js';
 import { runSourceRewardOffer, rollGuaranteedSkillDraftIds } from './engine/sourceRewardBonuses.js';
@@ -193,6 +195,7 @@ import { dlog, failureBanner } from './ui/debuglog.js';
 // The command log's chrome, on the kit (debuglog.js is a leaf; see debugChrome.js).
 import { DEBUG_CHROME_READY } from './ui/components/debugChrome.js';
 import { applyLoreType } from './ui/models/LoreTypeModel.js';
+import { createContentValidationCache } from './model/contentValidationCache.js';
 void DEBUG_CHROME_READY;
 
 const app = document.getElementById('app');
@@ -251,12 +254,17 @@ let xpCombat = null;
 configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
+const cachedContentValidation = createContentValidationCache((gameProfile, configuration, configured) => {
+  const result = validateContent(configured);
+  const structuralProblems = isConfiguredRun(gameProfile) ? [] : advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
+  return { result, structuralProblems };
+});
+
 function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = registryGameProfile) {
   registryGameProfile = gameProfile;
   const authored = applyGameProfileToContent(contentBundle, gameProfile);
   const configured = isConfiguredRun(gameProfile) ? authored : configuredContentBundle(authored, configuration);
-  const result = validateContent(configured);
-  const structuralProblems = isConfiguredRun(gameProfile) ? [] : advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
+  const { result, structuralProblems } = cachedContentValidation(gameProfile, configuration, configured);
   if (!result.ok || structuralProblems.length) {
     const first = structuralProblems[0] || `${result.errors[0].path}: ${result.errors[0].msg}`;
     const message = `Game configuration unchanged: ${first} Authored defaults remain active until the values form a valid configuration.`;
@@ -2530,7 +2538,7 @@ function showDraft() {
  * NAMED KEYS, NOT "any settings change": a blanket re-mount would redraw the act
  * on every volume nudge, and `mountMap` re-runs the framing camera. The list is
  * the map's own reads — grep `meta.settings` in ui/screens/map.js and
- * model/mapknowledge.js and mapboard.js, and they are the keys below.
+ * model/map/mapknowledge.js and mapboard.js, and they are the keys below.
  *
  * AND "Use flasks outside combat", which the map's Potions control
  * (components/runPotions.js) and the run HUD's flask icons read at mount. A
@@ -3228,6 +3236,12 @@ async function onCombatEnd(result, combat, enc) {
   // are then installed synchronously before the next durable checkpoint.
   if (result === 'victory') await victoryBeat(app.querySelector('.combat'), { title: victoryTitle(enc), ms: registries.balance.ui.victoryBeat.ms });
   if (!owned()) return;
+  // A repeated callback for the same terminal combat cannot pay progression
+  // twice. Reloads resume the persisted reward receipt after this settlement.
+  if (configuredSkillProgression(run)) {
+    if (combat.configuredProgressionSettled) return;
+    combat.configuredProgressionSettled = true;
+  }
   delete run.combatPendingOutcome;
   if (xpCombat === combat) xpCombat = null;
   runCombatEnd(run, combat); // pools, flasks and deficits, as every simulator settles them
@@ -3243,16 +3257,24 @@ async function onCombatEnd(result, combat, enc) {
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
   const configuredProgression = isConfiguredRun(run);
-  const trackReceipt = configuredProgression ? {} : skillXpReceipt(combat);
+  const skillProgression = configuredSkillProgression(run);
+  const trackReceipt = configuredProgression && !skillProgression ? {} : skillXpReceipt(combat);
   for (const [skillId, amount] of Object.entries(trackReceipt)) {
     const kind = skillKindOf(registries, skillId);
     const bonus = kind === 'armour' ? 'armourXp' : 'weaponXp';
     trackReceipt[skillId] = Math.floor(amount * featMultiplier(run, bonus));
   }
-  if (!configuredProgression) applySkillXp(registries, run, trackReceipt, { bank: manualLevelUp });
+  const configuredAwards = skillProgression ? settleConfiguredSkillProgression(registries, run, combat, {
+    receipt: trackReceipt, victory: result === 'victory', pool: enc.pool, classMultiplier: featMultiplier(run, 'classXp'),
+  }) : null;
+  const trackAwards = configuredAwards?.trackAwards || (!configuredProgression
+    ? applySkillXp(registries, run, trackReceipt, { bank: manualLevelUp }) : []);
   // The class track (plan phase 5b) is paid by the run's owner, who knows
   // the door's pool: a won fight, more for a boss; a lost one nothing.
-  const classAward = configuredProgression ? null : awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, bank: manualLevelUp, multiplier: featMultiplier(run, 'classXp') });
+  const classAward = configuredAwards?.classAward || (configuredProgression ? null : awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, bank: manualLevelUp, multiplier: featMultiplier(run, 'classXp') }));
+  const progression = skillProgression ? skillLevelNotices(registries, [classAward, ...trackAwards], {
+    usedArmaments: combat.skillXp?.[combat.playerKey || 'player']?.usedArmaments || [],
+  }) : [];
   // Character XP is paid now; the level and its stat points wait for the blue
   // Level Up button. Excess XP remains on the ledger after each claim.
   const xpReceipt = combatXpReceipt(registries, {
@@ -3313,8 +3335,8 @@ async function onCombatEnd(result, combat, enc) {
     run.cinders += Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics));
     const boss = enc.pool === 'boss';
     if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
-    if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return showFinishedRun(true);
-    return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned });
+    if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return beginGameProfileReward({ after: 'victory', progression, noticeOnly: true });
+    return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression });
   }
 
   if (enc.pool === 'boss') {
@@ -3867,16 +3889,27 @@ function showRest(openPanel = null, locationId = null) {
   });
 }
 
-function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0 } = {}) {
-  if (!gameModule(run, 'rewards')) { persist(); return after === 'advanceAct' ? advanceAct() : showMap(); }
+function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false } = {}) {
+  noticeOnly ||= !gameModule(run, 'rewards');
+  if (noticeOnly && !progression.length) { persist(); return after === 'victory' ? showFinishedRun(true) : after === 'advanceAct' ? advanceAct() : showMap(); }
   const offerId = `${run.actNumber}:${run.mapNodeId}:${source}`;
-  gameProfileRewardOffers(registries, run, rng, { offerId, source });
-  run.gameProfilePendingReward = { offerId, source, after, levelOffers };
+  if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source });
+  run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}) };
   persist(); return showGameProfileReward();
 }
 
 function showGameProfileReward() {
   const pending = run.gameProfilePendingReward;
+  if (pending.progression?.length) return mountGameProfileLevelUp(app, { rows: pending.progression, onContinue: () => {
+    acknowledgeSkillLevelNotices(pending);
+    persist();
+    showGameProfileReward();
+  } });
+  if (pending.noticeOnly) {
+    delete run.gameProfilePendingReward;
+    persist();
+    return pending.after === 'victory' ? showFinishedRun(true) : pending.after === 'advanceAct' ? advanceAct() : showMap();
+  }
   const offer = run.gameProfileRewardOffers[pending.offerId];
   const persistRewardChange = change => transactReward(run, pending.offerId, change, persist);
   mountGameProfileOffers(app, { registries, run, settings: saves.loadMeta().settings || {}, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { settingsRows, generalGroups, visibleAdvancedGroups, categoryHtml, settingsSearchHits } from '../src/ui/screens/settings.js';
 import { settingsRowAvailable, activeSettingsProfile } from '../src/ui/models/SettingsCapabilitiesModel.js';
 import { resolveGameProfile } from '../src/model/gameProfile.js';
-import { resolveMapMode, mapKnowledge } from '../src/model/mapknowledge.js';
+import { resolveMapMode, mapKnowledge } from '../src/model/map/mapknowledge.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';

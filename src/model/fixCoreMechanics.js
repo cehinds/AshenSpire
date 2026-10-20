@@ -19,17 +19,11 @@ export const FIXCORE_POISE_DEFAULTS = Object.freeze({ drain: 'prevented' });
 export const FIXCORE_STAGGERED_DEFAULTS = Object.freeze({ stance: true, staminaLoss: 1, vulnerableStacks: 1, extendOnly: true });
 // Owner, 2026-10-19: Counter return = floor(returnFraction x incoming damage), Poise = floor(poiseFraction x return); with advantage
 // the return gains floor(advantageIncomingFraction x incoming), Poise uses advantagePoiseFraction and the owner gains
-// floor(advantageBlockFraction x incoming) Block. A trait:reaction card played from hand costs handCostDiscount less SP (floor 0).
+// floor(advantageBlockFraction x incoming) Block. Enemy-turn reactions in an already matching stance cost handCostDiscount less SP (floor 0).
 export const FIXCORE_COUNTER_DEFAULTS = Object.freeze({ returnFraction: 0.5, poiseFraction: 0.2, advantageIncomingFraction: 0.25, advantagePoiseFraction: 0.5, advantageBlockFraction: 0.25 });
 export const FIXCORE_REACTION_DEFAULTS = Object.freeze({ handCostDiscount: 1 });
 export const fixCoreCounterRules = rules => ({ ...FIXCORE_COUNTER_DEFAULTS, ...(rules?.counter || {}) });
 export const fixCoreReactionRules = rules => ({ ...FIXCORE_REACTION_DEFAULTS, ...(rules?.reaction || {}) });
-/** The SP a Core 2 `trait:reaction` card costs from hand: max(SP - handCostDiscount, 0) (owner, 2026-10-19; SPEC §17). */
-export function fixCoreReactionHandCost(ctx, def, sp) {
-  if (!fixCoreEnabled(ctx) || !(sp > 0) || def?.cost === 'X') return sp;
-  if (!(def?.cardTags || def?.tags || []).includes('trait:reaction')) return sp;
-  return Math.max(0, sp - fixCoreReactionRules(fixCoreRules(ctx)).handCostDiscount);
-}
 export const fixCorePoiseRules = rules => ({ ...FIXCORE_POISE_DEFAULTS, ...(rules?.poise || {}) });
 export const fixCoreStaggeredRules = rules => ({ ...FIXCORE_STAGGERED_DEFAULTS, ...(rules?.staggered || {}) });
 // Owner, 2026-10-19: a Smash against a defensive stance deals damageMultiplier x its normal damage plus blockFraction of the target's Block,
@@ -166,7 +160,8 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) 
       : `Each stack adds ${rules.accuracy.baseAC} plus the holder's gear Evasion and DEX to its Evasion roll.`,
     precision: `Each stack adds another multiple of your Precision score (attributes and level) to your Precision roll.`,
   };
-  if (id === 'staggered') row.tooltip = row.description = facts[id];
+  if (id === 'precision') row.tooltip = row.description = `${facts[id]} Applications add stacks. Expires at the end of the owner's turn unless the granting effect is Persistent. Does not increase damage.`;
+  else if (id === 'staggered') row.tooltip = row.description = facts[id];
   else if (facts[id]) row.tooltip = row.description = `${facts[id]} Applications add stacks. Lose ${rules.statuses.decayAmount} stack at the start of the owner's turn each round.`;
   return row;
 }
