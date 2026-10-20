@@ -5,12 +5,15 @@ export function rangeHitLabel(preview, { current = true, targetId } = {}) {
   const target = targetId ? targets?.find(row => row.targetId === targetId) : targets?.[0];
   const inRange = current ? target?.currentInRange ?? preview?.inRange : target?.inRange ?? preview?.inRange;
   const chance = current ? target?.currentHitChance ?? preview?.hitChance : target?.hitChance ?? preview?.hitChance;
-  return inRange === false ? 'Out of range · 0%' : percent(chance);
+  if (inRange === false) return 'Out of range · 0%';
+  const label = percent(chance);
+  return label && target?.precisionDelta > 0 ? `${label} · +${target.precisionDelta} Precision` : label;
 }
 export function combatRangeActionPlan(preview, { targetName = id => id, targetId } = {}) {
   const range = preview?.range;
   if (!range?.enabled || !range.targets?.length) return null;
-  const routes = range.routes.map(route => {
+  if (!range.targets.some(target => target.currentInRange === false) && !range.routes.some(route => route.advanceSp > 0)) return null;
+  const routes = range.routes.filter(route => route.id !== 'throw' || range.selectedRoute === 'throw' || route.targets.some(target => target.currentInRange === false && target.inRange)).map(route => {
     const targets = targetId ? route.targets.filter(target => target.targetId === targetId) : route.targets;
     const label = route.id === 'throw'
       ? `Throw${route.precisionDelta < 0 ? ` · ${route.precisionDelta} Precision` : ''}`

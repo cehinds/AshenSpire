@@ -62,3 +62,19 @@ test('unaffordable default remains selectable without changing its route or pric
   q.range.enabled = false;
   assert.equal(canChooseRangeRoute(q), false);
 });
+
+test('fully covered attacks keep the face clear while target odds retain Reach benefit', () => {
+  const q = quote();
+  q.range.targets = [{ ...target, band: 0, currentInRange: true, currentHitChance: 80, hitChance: 80, precisionDelta: 1 }];
+  q.range.routes.forEach(route => { route.advanceSp = 0; route.targets = q.range.targets; });
+  assert.equal(combatRangeActionPlan(q), null);
+  assert.equal(rangeHitLabel(q), '80% · +1 Precision');
+});
+test('Throw beyond its extension is omitted unless explicitly selected, then stays refused', () => {
+  const q = quote(); q.range.routes[1].available = false;
+  q.range.routes[1].targets = [{ ...target, band: 2, inRange: false, hitChance: 0 }];
+  assert.deepEqual(combatRangeActionPlan(q).routes.map(route => route.id), ['advance']);
+  q.range.selectedRoute = 'throw';
+  const refused = combatRangeActionPlan(q).routes.find(route => route.id === 'throw');
+  assert.equal(refused.available, false); assert.equal(refused.selected, true);
+});

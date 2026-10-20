@@ -3110,7 +3110,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           if (menuBtn) { menuBtn.disabled = true; menuBtn.setAttribute('aria-disabled', 'true'); }
           removeEventListener('keydown', keyHandler);
           releaseRangeAction();
-        handStrip.teardown();
+          handStrip.teardown();
           setTimeout(() => onEnd(combat.result, combat), COMBAT_TIMING.fightEndDelayMs);
         } else {
           focusHandDefault(); // land on the leftmost playable card for kb/pad
