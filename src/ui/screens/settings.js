@@ -1,5 +1,5 @@
 import { settingsRowAvailable, activeSettingsProfile } from '../models/SettingsCapabilitiesModel.js';
-import { mountGameProfileSettings } from '../components/gameProfileSelector.js';
+import { mountGameProfileSettings, readNewGameProfile } from '../components/gameProfileSelector.js';
 import { previewPrologue } from './prologue.js';
 import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 // src/ui/screens/settings.js — settings controls (SPEC §7)
@@ -13,6 +13,7 @@ import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 import { ACTION_PACING, AUTOMATION_DEFAULTS } from '../../model/autoCombatPolicy.js';
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
 import { COMBAT_LOG_PALETTE_DEFAULTS } from '../models/CombatLogPaletteModel.js';
+import { rangeSettingsRows } from '../models/RangeSettingsModel.js';
 import { advancedSubgroups, statsSection, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
 import { statsTopicPreview, statsExampleClasses, STATS_EXAMPLE_CLASS_KEY } from '../models/StatsPreviewModel.js';
 import { levelPacePreview } from '../models/LevelPacePreviewModel.js';
@@ -334,6 +335,7 @@ const ROWS = [
     label: t('settings.row.combatLogPlayerColor'), note: tFull('settings.row.combatLogPlayerColor') },
   { cat: 'Combat', key: 'combatLogEnemyColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.enemy,
     label: t('settings.row.combatLogEnemyColor'), note: tFull('settings.row.combatLogEnemyColor') },
+  ...rangeSettingsRows(),
   ...tooltipSettingsRows(),
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),
     note: tFull('settings.row.fullscreen') },
@@ -1623,7 +1625,7 @@ export function rowModified(settings, row, promoted = buildPromotion()) {
     const base = Object.hasOwn(promoted, row.key) ? promoted[row.key] : undefined;
     return row.resolve(settings) !== row.resolve({ ...settings, [row.key]: base });
   }
-  const def = rowDefault(row, promoted);
+  const def = rowDefault(row.defaultFor ? { ...row, def: row.defaultFor(settings) } : row, promoted);
   if (row.type === 'number' && typeof stored === 'number' && typeof def === 'number') return Math.abs(stored - def) > 1e-9;
   // A choice row reads an older build's stored word through `legacyChoices`
   // before drawing (renderRow), so it is compared the same way: a profile
@@ -2059,13 +2061,14 @@ export function resolveNumberRow(settings, row) {
     const path = row.key.slice('gameConfig.'.length).split('.');
     return path.reduce((value, key) => value[key], configuredContentBundle(contentBundle, settings));
   }
+  const fallback = row.defaultFor ? row.defaultFor(settings) : row.def;
   const raw = (settings || {})[row.key];
   // The rule itself lives in CardSizeModel so the card-size model and this row
   // cannot disagree about what a stored number means — they did, by a floor
   // against a round.
-  if (row.integer !== false) return normalizeTunedNumber(raw, { min: row.min, max: row.max, def: Number(row.def) });
-  const numeric = raw === '' || raw === null || raw === undefined ? Number(row.def) : Number(raw);
-  if (!Number.isFinite(numeric)) return Number(row.def);
+  if (row.integer !== false) return normalizeTunedNumber(raw, { min: row.min, max: row.max, def: Number(fallback) });
+  const numeric = raw === '' || raw === null || raw === undefined ? Number(fallback) : Number(raw);
+  if (!Number.isFinite(numeric)) return Number(fallback);
   const clamped = Math.min(row.max, Math.max(row.min, numeric));
   const step = Number(row.step) || 0.01;
   const precision = Math.max(0, String(step).split('.')[1]?.length || 0);
@@ -2459,10 +2462,10 @@ function shownCategories(saves) {
  * report that created it ("no good section to customize combat, combat
  * animation") is a claim about which NAME holds which ROW, and that claim is
  * only worth anything if something reads it back. */
-export function generalGroups(category, profile = null) {
+export function generalGroups(category, profile = null, nextProfile = null) {
   if (Object.hasOwn(CUSTOM_GENERAL_GROUPS, category)) return new Map([[categoryLabel(category), CUSTOM_GENERAL_GROUPS[category].map(key => ({ key }))]]);
   const groups = new Map();
-  for (const row of categoryHandler(category).rows.filter(row => settingsRowAvailable(row, profile))) {
+  for (const row of categoryHandler(category).rows.filter(row => settingsRowAvailable(row, profile, nextProfile))) {
     const key = row.key;
     const label = category === 'Display' ? /^hud/.test(key) ? 'HUD' : /map|shrine/.test(key) ? 'Map'
       // "Effects & pacing" USED TO CATCH THE COMBAT ROWS TOO, and that is the
@@ -2471,7 +2474,7 @@ export function generalGroups(category, profile = null) {
       // `cat: 'Combat'` now, so what is left here is the title entrance — and
       // the topic is named for the one thing it holds.
       : /titleCity/.test(key) ? 'Title screen' : 'Interface'
-      : category === 'Combat' ? /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
+      : category === 'Combat' ? row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
       : category === 'Accessibility' ? /tooltip/i.test(key) ? 'Tooltips' : /Flick/.test(key) ? 'Touch gestures'
       : /Motion|Flashes|colorblind/.test(key) ? 'Motion & colour' : 'Readability' : 'Audio';
     if (!groups.has(label)) groups.set(label, []);
@@ -2616,7 +2619,8 @@ function cachedSubgroups(rows, groupId, profile = null) {
  * fixed-draw rows while drawing to a hand size) is not a hit: it would be
  * counted, and reset, without being on screen.
  */
-export function settingsSearchHits(query, debug = pageDebug(), settings = null, { changedOnly = false, profile = null } = {}) {
+export function settingsSearchHits(query, debug = pageDebug(), settings = null, { changedOnly = false, profile = null, nextProfile = null } = {}) {
+  nextProfile ||= readNewGameProfile(settings || {}, profile || undefined);
   const q = String(query || '').trim().toLocaleLowerCase();
   if (!q && !changedOnly) return [];
   const words = q ? q.split(/\s+/) : [];
@@ -2625,7 +2629,7 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
     for (const row of [...handRulesRows(), ...FIXED_DRAW_ROWS]) if (row.fixedOnly) hiddenByRules.add(row.key);
   }
   const hit = (row) => {
-    if (hiddenByRules.has(row.key) || !settingsRowAvailable(row, profile)) return false;
+    if (hiddenByRules.has(row.key) || !settingsRowAvailable(row, profile, nextProfile)) return false;
     if (changedOnly && !rowModified(settings, row)) return false;
     const hay = `${row.label || ''} ${typeof row.note === 'string' ? row.note : ''} ${row.key || ''}`.toLocaleLowerCase();
     return words.every((word) => hay.includes(word));
@@ -2645,8 +2649,8 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
   return hits;
 }
 
-function searchResultsHtml(settings, query, changedOnly = false, profile = null) {
-  const hits = settingsSearchHits(query, pageDebug(), settings, { changedOnly, profile });
+function searchResultsHtml(settings, query, changedOnly = false, profile = null, nextProfile = null) {
+  const hits = settingsSearchHits(query, pageDebug(), settings, { changedOnly, profile, nextProfile });
   if (!hits.length) {
     return `<p class="set-note set-search-empty" data-search-results="0">${changedOnly
       ? (query ? `No changed setting matches “${esc(query)}”.` : 'Nothing is changed: every setting is at its default.')
@@ -2667,12 +2671,13 @@ function searchResultsHtml(settings, query, changedOnly = false, profile = null)
 }
 
 /** categoryHtml(cat, settings, …) → one pane's markup (exported for tests). */
-export function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, previewClassId = null, query = '', changedOnly = false, profile = null) {
-  if (query || changedOnly) return searchResultsHtml(settings, query, changedOnly, profile);
+export function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, previewClassId = null, query = '', changedOnly = false, profile = null, nextProfile = null) {
+  nextProfile ||= readNewGameProfile(settings, profile || undefined);
+  if (query || changedOnly) return searchResultsHtml(settings, query, changedOnly, profile, nextProfile);
   if (cat === 'General' || cat === 'Accessibility') {
     const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
     const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : groups[0];
-    const topics = generalGroups(selected, profile);
+    const topics = generalGroups(selected, profile, nextProfile);
     const storedTopic = settings[`settingsGeneralTopic.${selected}`];
     const topic = topics.has(storedTopic) ? storedTopic : topics.keys().next().value;
     const rows = topics.get(topic);
@@ -2749,7 +2754,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
       + groups;
   }
   if (h.mount) return `<div class="${h.mount}"></div>`;
-  return `<div class="set-card-list">${h.rows.filter(row => settingsRowAvailable(row, profile)).map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
+  return `<div class="set-card-list">${h.rows.filter(row => settingsRowAvailable(row, profile, nextProfile)).map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
 }
 
 // ---- keeping the player's place across a rebuild --------------------------
@@ -2843,6 +2848,7 @@ export function restoreView(root, view) {
 const MARKS_MODIFIED = Symbol('marks modified rows');
 export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null, previewClassId = null, gameProfile = null }) {
   const activeProfile = () => activeSettingsProfile(gameProfile);
+  const nextProfile = () => gameProfile?.read?.() || readNewGameProfile(settings, activeProfile() || undefined);
   panelSettings = settings;
   if (!onChange[MARKS_MODIFIED]) {
     const report = onChange;
@@ -2908,10 +2914,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + `<div class="as-rail set-tabs" id="set-tabs" role="tablist" aria-label="${esc(t('settings.nav.sections'))}"`
         + ` aria-orientation="vertical" data-surface="settingsCategory">${tabs}</div>`
         + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
-        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly(), activeProfile())}</div></div>`;
+        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly(), activeProfile(), nextProfile())}</div></div>`;
     }
   } else {
-    html = ROWS.filter((r) => !r.retired && settingsRowAvailable(r, activeProfile())).map((r) => settingsRowHtml(settings, r)).join('');
+    html = ROWS.filter((r) => !r.retired && settingsRowAvailable(r, activeProfile(), nextProfile())).map((r) => settingsRowHtml(settings, r)).join('');
   }
   const view = captureView(container);
   container.innerHTML = html;
@@ -2985,7 +2991,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // carries the scroll offsets over; focus is kept either way.
     const view = captureView(container, { scroll: keepScroll });
     container.querySelector('.set-tabs > .set-advanced-head')?.remove();
-    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly(), activeProfile());
+    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly(), activeProfile(), nextProfile());
     panel.setAttribute('aria-labelledby', `set-tab-${current}`);
     panel.dataset.searching = String(filtering());
     const groupReset = headerTools.querySelector('[data-reset-config="group"]');
@@ -3058,7 +3064,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     if (toggle) {
       // The rows Changed can show: on a release build, hidden tuning is
       // counted by Clear hidden tuning instead.
-      const count = settingsSearchHits('', pageDebug(), settings, { changedOnly: true, profile: activeProfile() }).length;
+      const count = settingsSearchHits('', pageDebug(), settings, { changedOnly: true, profile: activeProfile(), nextProfile: nextProfile() }).length;
       toggle.textContent = count ? `Changed · ${count}` : 'Changed';
       toggle.setAttribute('aria-pressed', String(changedOnly()));
       toggle.classList.toggle('on', changedOnly());
@@ -3340,10 +3346,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // and never the section that was open behind the search.
       const query = searchQuery();
       const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]
-        : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly(), profile: activeProfile() }).map((hit) => hit.row)
+        : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly(), profile: activeProfile(), nextProfile: nextProfile() }).map((hit) => hit.row)
         : current === 'General' || current === 'Accessibility' ? (() => {
           const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
-          const topics = generalGroups(section, activeProfile());
+          const topics = generalGroups(section, activeProfile(), nextProfile());
           return topics.get(settings[`settingsGeneralTopic.${section}`]) || topics.values().next().value;
         })()
         : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
