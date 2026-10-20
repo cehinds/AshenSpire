@@ -3,7 +3,7 @@ const text = value => typeof value === 'string' && value.length > 0;
 const queued = value => Array.isArray(value) && value.every(action => record(action) && record(action.effect) && text(action.effect.op));
 
 import { reactionRulesProblems } from '../content/combatCardTraits.js';
-import { rangeStateProblems, rangePlanProblems, opposingRangeKeys } from './combatEngagement.js';
+import { rangeStateProblems, rangePlanProblems, opposingRangeKeys, rangeBand } from './combatEngagement.js';
 
 const playerEntry = (entry, ownerIds) => ownerIds.has(entry.ownerId) && text(entry.cardId) && record(entry.play) && text(entry.play.cardInstanceId)
   && (entry.maneuver === null || entry.maneuver === undefined || typeof entry.maneuver === 'string')
@@ -164,6 +164,20 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
   const inspect = (value, quoted = false) => {
     if (!value || typeof value !== 'object' || seen.has(value)) return;
     seen.add(value);
+    if (Object.hasOwn(value, 'resolvedRangeSource')) {
+      const source = value.resolvedRangeSource;
+      const keys = ['sourceType', 'itemId', 'range', 'propertyTags'];
+      const valid = hasRange && record(source) && Object.keys(source).every(key => keys.includes(key))
+        && ['weapon', 'unarmed', 'spell'].includes(source.sourceType)
+        && ['melee', 'reach', 'ranged'].includes(source.range)
+        && (source.sourceType === 'weapon' ? text(source.itemId) : source.itemId === null)
+        && Array.isArray(source.propertyTags) && source.propertyTags.length <= 1
+        && source.propertyTags.every(tag => tag === 'throw' && source.sourceType === 'weapon');
+      if (!valid) problems.push('Invalid frozen range source');
+      else if (Array.isArray(value.rangePlan?.targets) && !value.rangePlan.targets.some(row =>
+        row?.sourceWeaponId === source.itemId && row.coverage === rangeBand(source.range)
+        && row.weapon === (source.sourceType === 'weapon') && row.throwCapable === source.propertyTags.includes('throw'))) problems.push('Frozen range source does not match its contact receipt');
+    }
     if (Object.hasOwn(value, 'rangeQuote')) {
       if (!hasRange) problems.push('Range quote requires engagement state');
       else problems.push(...rangePlanProblems(value.rangeQuote, state.rangeState, actorKeys));

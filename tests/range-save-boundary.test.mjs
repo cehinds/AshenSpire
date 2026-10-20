@@ -156,3 +156,25 @@ test('serialized copies cannot disagree about one accepted root receipt', () => 
   saved.abilityQueue[1].meta.expansionGroup.carrier.rangePlan.paid.stamina = 3;
   assert.throws(() => restore(combat, saved), /Conflicting range receipts/);
 });
+
+test('queued source snapshots retain committed weapon coverage and reject source tampering', () => {
+  const combat = stamp(live());
+  combat.piles.hand = [{ instanceId: 'counter', cardId: 'core.counter', upgraded: false }];
+  dispatch(combat, { type: 'endTurn' });
+  const action = combat.queue[0], group = action.meta.expansionGroup;
+  const plan = { ...rangeActionPlan(combat.rangeState, combat.enemies[0].rangeActorKey,
+    [{ targetKey: combat.player.rangeActorKey, coverage: 'reach', weapon: true, sourceWeaponId: 'committed-spear', throwCapable: true }]),
+    rootId: group.key, paid: { energy: 0, stamina: 1, mana: 0 } };
+  group.carrier.rangePlan = plan;
+  action.card = { ...action.card, rangePlan: plan,
+    resolvedRangeSource: { sourceType: 'weapon', itemId: 'committed-spear', range: 'reach', propertyTags: ['throw'] } };
+  const saved = json(serializeCombatSnapshot(combat));
+  const loaded = restore(combat, saved);
+  assert.deepEqual(loaded.queue[0].card.resolvedRangeSource, action.card.resolvedRangeSource);
+  for (const change of [s => { s.sourceType = 'teleport'; }, s => { s.itemId = null; }, s => { s.range = 'ranged'; },
+    s => { s.propertyTags = ['throw', 'throw']; }, s => { s.propertyTags = ['rangeBypass']; }, s => { s.hidden = true; }]) {
+    const broken = structuredClone(saved);
+    change(broken.abilityQueue[0].card.resolvedRangeSource);
+    assert.throws(() => restore(combat, broken), /range source/i);
+  }
+});
