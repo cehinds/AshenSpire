@@ -32,6 +32,8 @@ the same UI is used.
   reaction and the actor was already in the matching stance. Entering the stance
   with that card does not qualify it for its own discount. Ordinary player-turn
   plays receive no such reduction. The displayed cost and execution agree.
+  This restriction applies to player hand cards; authored enemy move budgets
+  retain their existing rules.
 
 ## Action feedback and hand cards
 
@@ -60,6 +62,10 @@ the same UI is used.
 - Equipment should already level procedurally. Find and restore the existing
   intended progression path; this request does not authorize inventing a second
   equipment XP ledger or unrelated replacement growth system.
+  The existing equipment path derives rank from Smith tiers. Preserve that
+  calculation. Class and used weapon-group XP follow their existing curves;
+  restored Core level notices are informational and add no separate payouts or
+  unsupported historical reward queues.
 - Reward tiles and their corresponding buttons have consistent sizing while
   remaining readable and usable at phone widths.
 - A folded item-upgrade row summarizes the actual stat changes, for example
