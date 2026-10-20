@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRunState, serializeRun, deserializeRun, validateRunShape } from '../src/model/state.js';
-import { createRunCombat } from '../src/engine/runCombat.js';
+import { createRunCombat, runCombatPlayer } from '../src/engine/runCombat.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { createRng } from '../src/engine/rng.js';
@@ -83,6 +83,7 @@ test('malformed pairs, actors and range policy are refused at the solo load door
     s => { s.rangeState.engagements[JSON.stringify(JSON.parse(pair).reverse())] = 2; },
     s => { s.player.rangeActorKey = s.enemies[0].rangeActorKey; },
     s => { delete s.rangeState; },
+    s => { s._rangeContext = { sourceKey: 'player:player', targets: [] }; },
   ];
   for (const change of changes) {
     const broken = structuredClone(saved); change(broken);
@@ -91,7 +92,7 @@ test('malformed pairs, actors and range policy are refused at the solo load door
 });
 
 test('co-op duplicate player entity ids retain distinct seat-owned pairs', () => {
-  const player = id => ({ id, classId: 'reaver', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 3, stamina: 3, energyMax: 3, drawPerTurn: 1, deck: [{ cardId: 'core.counter', instanceId: 'same-card-id' }] });
+  const player = id => ({ ...runCombatPlayer(createRunState({ registries, classId: 'reaver', seed: 4 })), id, combatExpansionVersion: 2, deck: [{ cardId: 'core.counter', instanceId: 'same-card-id', upgraded: false }] });
   const combat = stamp(createCoopCombat({ registries, rng: createRng(4), gameProfile: profile, combatExpansionVersion: 2, players: [player('a'), player('b')], enemyIds: ['wanderingSoldier'] }));
   assert.equal(combat.players.get('a').entity.id, combat.players.get('b').entity.id);
   const enemyKey = combat.enemies[0].rangeActorKey;
@@ -219,6 +220,7 @@ test('a real paid three-hit approach resumes through SaveManager without repeat 
   assert.equal(combat.enemies[0].stamina, 0, 'base 1 SP and two-band Advance have already been paid');
   const plan = combat.queue[0].meta.expansionGroup.carrier.rangePlan;
   assert.equal(plan.advanceSp, 2);
+  assert.equal(plan.paid.stamina, 3);
   assert.equal(plan.targets.length, 3);
   commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
   const saves = createSaveManager(createMemoryStorage());
@@ -251,8 +253,7 @@ test('a real paid three-hit approach resumes through SaveManager without repeat 
 });
 
 test('a real co-op fan-out pays the greatest approach once and restores both seat contacts', () => {
-  const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', combatExpansionVersion: 2,
-    maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 3, stamina: 3, energyMax: 3, drawPerTurn: 1,
+  const players = ['a', 'b'].map(id => ({ ...runCombatPlayer(createRunState({ registries, seed: 511, classId: 'reaver' })), id, combatExpansionVersion: 2,
     deck: [{ cardId: 'core.counter', instanceId: 'shared-card-id', upgraded: false }] }));
   const combat = createCoopCombat({ registries, rng: createRng(511), players, enemyIds: ['wanderingSoldier'],
     gameProfile: profile, combatExpansionVersion: 2, reactionRulesVersion: 2 });
