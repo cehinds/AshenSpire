@@ -699,9 +699,12 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     // Core 2 (SPEC §17): a covered hit that lands answers, whatever got through. Legacy needs the hit fully resisted.
     || (!counterRuleActive(ctx) && (receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload))
     || (CounterRule.counterReturnSpent(target) && !CounterRule.paidCounterContact(ctx, carrier, counter))) return queue;
-  returnCarrier = Engagement.authorizeCounterRange(ctx,target,source,counter.carrier,carrier);
-  if (!returnCarrier) return queue;
-  target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
+  const deferredRangeReturn = ctx.rangeState?.policy.enabled === true;
+  if (!deferredRangeReturn) {
+    returnCarrier = Engagement.authorizeCounterRange(ctx,target,source,counter.carrier,carrier);
+    if (!returnCarrier) return queue;
+    target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
+  }
   // Reaction rules version 2: Counterstrike scales the authored payload first; SPEC §4.8's return formulas run after.
   const trait = ctx.reactionRulesVersion === 2 ? counter.carrier?.traitValues || {} : {};
   const strike = trait.counterstrike ? counterstrikePct(ctx, 'counter', stanceManeuverOf(source, receipt.profile?.maneuver)) : null;
@@ -753,6 +756,14 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   if (!(coreFixed && isSpellCounter(counter.carrier)) && trait.flux > 0) payload.ward = payload.ward > 0 ? 2 * payload.ward : trait.flux;
   const event = { ...eventCarrier(target, counter.carrier), ...seats(ctx, target, source),
     sourceId: target.id, targetId: source.id, amount: payload.hp, poiseDamage: payload.poise, wardDamage: payload.ward, wardOnly: magical && payload.hp === 0 };
+  if (deferredRangeReturn) {
+    // No offensive action exists after rounding: do not reserve hypothetical
+    // rider targets or spend its cycle. The interception is already resolved.
+    if (!(payload.hp > 0 || payload.poise > 0 || payload.ward > 0)) { ctx.emit?.('combatCounterTriggered', event); return queue; }
+    returnCarrier = Engagement.authorizeCounterRange(ctx,target,source,counter.carrier,carrier);
+    if (!returnCarrier) return queue;
+    target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
+  }
   if (payload.hp > 0) enqueue({ op: 'damage', amount: payload.hp });
   if (payload.poise > 0) enqueue({ op: 'poiseDamage', amount: payload.poise });
   if (payload.ward > 0) enqueue({ op: 'wardDamage', amount: payload.ward });
