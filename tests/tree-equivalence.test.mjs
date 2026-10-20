@@ -81,6 +81,7 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     'source:spell': { glyph: '✧' },
     'camp:spell': { glyph: '✧' },
     'maneuver:casting': { glyph: '✧' },
+    'trait:persistent': { domain: 'trait', label: 'Persistent', color: '9FC3E8', glyph: '◇', blurb: "Granted Precision survives the end of its owner's turn." },
     'damage:slashing': { blurb: 'Applies 1 Bleed on a Health hit unless the card already prints a Bleed effect.' },
     'damage:piercing': { blurb: 'Bypasses up to 2 Guard; bypasses melee Counter.' },
     'damage:blunt': { blurb: 'Adds 2 Poise damage once per action against each target.' },
@@ -149,7 +150,7 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     school: ['school:frost', 'school:fire', 'school:lightning', 'school:force', 'school:alteration', 'school:illusion', 'school:divine', 'school:decay', 'school:earth'], // Earth: owner decision 5, 2026-10-12
     counterMode: ['counter:melee', 'counter:ranged', 'counter:spell'],
     range: ['range:melee', 'range:reach', 'range:ranged'],
-    trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:counterstrike', 'trait:flux', 'trait:grounded', 'trait:impact', 'trait:insulated', 'trait:mental', 'trait:projectile', 'trait:reaction', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
+    trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:counterstrike', 'trait:flux', 'trait:grounded', 'trait:impact', 'trait:insulated', 'trait:mental', 'trait:persistent', 'trait:projectile', 'trait:reaction', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
   };
   for (const [domain, ids] of Object.entries(TACTICAL_TAGS)) {
     assert.deepEqual(TAGS.filter(tag => tag.domain === domain).map(tag => tag.id).sort(), [...ids].sort(), `${domain} holds exactly its approved tactical identities`);

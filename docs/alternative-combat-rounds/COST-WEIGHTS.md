@@ -250,6 +250,7 @@ player's piles).
 | `trait:grounded` | 1 | SP | Holds its ground: 1. |
 | `trait:insulated` | 0 | SP | A matchup trait, not power. |
 | `trait:mental` | 0 | SP | A matchup trait, not power. |
+| `trait:persistent` | 0 | SP | Precision lifetime marker; the status grant prices its magnitude. Preserves the existing grant cost. |
 | `trait:projectile` | 0 | SP | Priced by range. |
 | `trait:reveal` | 0 | SP | Information, not power. |
 | `trait:shattering` | 1 | SP | Breaks guards: 1. |

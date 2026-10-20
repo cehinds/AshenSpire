@@ -121,6 +121,8 @@ export const COST_TAGS = Object.freeze({
   'trait:grounded': { weight: 1, side: 'sp' },
   'trait:insulated': { weight: 0, side: 'sp' },
   'trait:mental': { weight: 0, side: 'sp' },
+  // Precision lifetime is a marker; its status grant already prices magnitude.
+  'trait:persistent': { weight: 0, side: 'sp' },
   'trait:projectile': { weight: 0, side: 'sp' },
   'trait:reveal': { weight: 0, side: 'sp' },
   'trait:shattering': { weight: 1, side: 'sp' },
