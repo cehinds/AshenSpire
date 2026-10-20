@@ -66,6 +66,16 @@ function sourceOf(card, def, run) {
   return 'reward';
 }
 
+/**
+ * The ui-string id of a rank 0 card's badge. A spell's is Cantrip. A rank 0 card whose source is 'basic' reads Basic;
+ * every other source reads its own source label (Weapon art, Technique, Reward, Item-owned), so the badge agrees with
+ * the Basic filter: a card that filter hides is never badged Basic (owner ruling 2026-10-19).
+ */
+export function rankZeroLabelId(source, isSpell) {
+  if (isSpell) return 'deckEditor.rank.cantrip';
+  return source === 'basic' || !DECK_SOURCES.includes(source) ? 'deckEditor.rank.basic' : `deckEditor.source.${source}`;
+}
+
 function typeLabel(type) {
   const id = `deckEditor.type.${type}`;
   // Every card type has a row (tests/deck-editor.test.mjs holds it); a type
