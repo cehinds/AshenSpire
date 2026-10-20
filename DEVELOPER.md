@@ -144,6 +144,15 @@ the job-level `if:` (`ci.yml` gates each job on its `stage` input for dispatch).
 
 Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 
+Dedicated co-op tests and `coop-hud.yml` run only when
+`content/config/ui/screens/title.json` has `behavior.coopEnabled: true`.
+While false, discovery prints the skip reason before sharding; mixed suites
+keep their solo cases and `tests/coop-parked.test.mjs` remains active. Tests are
+retained. Re-enable the authored switch and regenerate content to restore
+the co-op lanes automatically (`tests/feature-scopes.js` also works in the
+browser test harness).
+
+
 | Check (workflow → job) | Worker push | PR into `dev` / push to `dev` | test | release |
 |---|---|---|---|---|
 | `worker-check.yml` → sanity: receipts self-test (`tools/receipts.mjs --selftest`) | yes | — | — | — |
