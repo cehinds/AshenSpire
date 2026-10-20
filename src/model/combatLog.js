@@ -62,7 +62,15 @@ function originName(registries, origin) {
 }
 
 export function combatLogEntries(events, { registries, players = [], enemies = [] } = {}) {
-  const name = nameLookup({ registries, players, enemies });
+  const plainName = nameLookup({ registries, players, enemies });
+  const playerIds = new Set(['player', ...players.map(player => player.id)]);
+  const references = [];
+  // Carry identity through sentence construction. Matching names afterwards
+  // would color card names or misidentify two fighters with the same name.
+  const name = id => {
+    const index = references.push({ id, text: plainName(id), side: playerIds.has(id) ? 'player' : 'enemy' }) - 1;
+    return `\u0001${index}\u0002`;
+  };
   const enemyIdOf = new Map(enemies.map(enemy => [enemy.id, enemy.enemyId]));
   const moveName = (actorId, moveId, enemyId) => {
     const def = row(registries?.enemies, enemyIdOf.get(actorId)) || row(registries?.enemies, enemyId);
@@ -278,7 +286,18 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         break;
       default: break;
     }
-    for (const line of [].concat(text || [])) rows.push({ id, round, text: line, ...(event.damageReceipt ? { damageReceipt: event.damageReceipt } : {}) });
+    for (const line of [].concat(text || [])) {
+      const segments = [];
+      let cursor = 0;
+      for (const match of line.matchAll(/\u0001(\d+)\u0002/g)) {
+        if (match.index > cursor) segments.push({ text: line.slice(cursor, match.index) });
+        segments.push({ ...references[Number(match[1])] });
+        cursor = match.index + match[0].length;
+      }
+      if (cursor < line.length) segments.push({ text: line.slice(cursor) });
+      rows.push({ id, round, text: segments.map(segment => segment.text).join(''), segments,
+        ...(event.damageReceipt ? { damageReceipt: event.damageReceipt } : {}) });
+    }
   });
   return rows;
 }

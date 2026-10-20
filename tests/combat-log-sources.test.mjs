@@ -13,6 +13,26 @@ import { combatLogEntries } from '../src/model/combatLog.js';
 const registries = createRegistries(contentBundle);
 const enemies = [{ id: 'e1', enemyId: 'wyrmLord' }, { id: 'e2', enemyId: 'wanderingSoldier' }];
 const log = events => combatLogEntries(events, { registries, enemies }).map(row => row.text);
+
+test('public log carries semantic identity spans without matching names in card text', () => {
+  const entries = combatLogEntries([{ type: 'cardPlayed', sourceId: 'player', targetId: 'e1', cardId: 'strike' }], {
+    registries, players: [{ id: 'player', name: 'Strike' }], enemies,
+  });
+  const row = entries[0];
+  assert.equal(row.segments.map(part => part.text).join(''), row.text);
+  assert.deepEqual(row.segments.filter(part => part.side).map(({ id, side, text }) => ({ id, side, text })), [
+    { id: 'player', side: 'player', text: 'Strike' }, { id: 'e1', side: 'enemy', text: 'Wyrm Lord' },
+  ]);
+  assert.ok(!row.text.includes('\u0001'));
+  assert.ok(row.segments.some(part => !part.side && part.text.includes('Strike')));
+});
+
+test('same-named players and enemies keep their own identity roles in co-op', () => {
+  const entries = combatLogEntries([{ type: 'damageDealt', sourceId: 'player', sourcePlayerId: 'seat-a', targetId: 'e1', amount: 2 }], {
+    registries, players: [{ id: 'seat-a', name: 'Wyrm Lord' }], enemies,
+  });
+  assert.deepEqual(entries[0].segments.filter(part => part.side).map(part => [part.id, part.side]), [['seat-a', 'player'], ['e1', 'enemy']]);
+});
 // Moves carry no authored name: the log words the move id ('goldenBulwark' → 'Golden Bulwark').
 const move = (enemyId, moveId) => registries.enemies.get(enemyId).moves[moveId].name
   || moveId.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());

@@ -1,4 +1,5 @@
 import { coopCardHitPreview, coopCombatantEvasion, coopBadgedStatusIds } from '../models/CoopHitPreviewModel.js';
+import { combatActionIdentity } from '../models/CombatActionIdentityModel.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
@@ -2355,6 +2356,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     // marks lastSoundSeq), so it plays here, once, as the receipts land.
     if ((Number(next.scene.receiptSeq) || 0) > lastSoundSeq) coopCardPlayBuzz(next.scene.events, seats);
     playTimeline(events, {
+      actionWordForBeat: beat => combatActionIdentity(beat, registries, entityFor),
       // Haptics are personal, as in coopReceiptSounds: a teammate's hit or turn
       // start sounds here but does not buzz this device.
       isLocalPlayer: coopLocalSeat(seats),
