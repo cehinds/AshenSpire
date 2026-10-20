@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-20
 
-- **Bone Sceptre grants Mana Surge** ([#2210](https://github.com/cehinds/AshenSpire/pull/2210), `0.7.1.1728`). The Bone Sceptre now grants Mana Surge (1 SP, gain 2 Mana) to whoever holds it in Core, replacing Starseer's Resource Gain. Both sceptre classes start with ten cards, and equipment changes keep the saved deck and displayed costs in step.
+- **Bone Sceptre grants Mana Surge** ([#2210](https://github.com/cehinds/AshenSpire/pull/2210), `0.7.1.1730`). The Bone Sceptre now grants Mana Surge (1 SP, gain 2 Mana) to whoever holds it in Core, replacing Starseer's Resource Gain. Both sceptre classes start with ten cards, and equipment changes keep the saved deck and displayed costs in step.
 - **Clear combat targets and fade** ([#1978](https://github.com/cehinds/AshenSpire/pull/1978), `0.7.1.1728`). The player's selection target stays clear of its Health panel in the waist-overlap layout, and the combat fade covers fighters while controls remain readable.
 
 - **Leaner combat previews and reliable flask navigation** ([#2080](https://github.com/cehinds/AshenSpire/pull/2080), `0.7.1.1725`). Combat previews safely share immutable rules, generated data stays compact, and keyboard or controller focus stays on the selected map flask after a redraw.
