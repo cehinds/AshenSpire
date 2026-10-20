@@ -144,7 +144,7 @@ the job-level `if:` (`ci.yml` gates each job on its `stage` input for dispatch).
 
 Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 
-Dedicated co-op tests and `coop-hud.yml` run only when
+Dedicated co-op tests (32 files) and `coop-hud.yml` run only when
 `content/config/ui/screens/title.json` has `behavior.coopEnabled: true`.
 While false, discovery prints the skip reason before sharding; mixed suites
 keep their solo cases and `tests/coop-parked.test.mjs` remains active. Tests are

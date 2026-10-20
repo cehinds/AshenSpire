@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // HIT SOUND TIERS (docs/FINISH.md §5 "Hit sound tiers").
 //
 // Every fx event that has a sound of its own must reach a recipe row that is
@@ -66,8 +67,8 @@ test('a hit sounds its tier by the HP it actually took, not the guard it hit', (
 
 test('the player being hurt has its own sound, solo and co-op', () => {
   assert.deepEqual(played(() => playHitSound(hit(5, { sourceId: 'e1', targetId: 'player' }))), ['playerHurt']);
-  assert.deepEqual(played(() => playHitSound(hit(5, { sourceId: 'e1', targetId: 'seat2', targetPlayerId: 'p2', sourcePlayerId: null }))), ['playerHurt']);
-  assert.deepEqual(played(() => playHitSound(hit(5, { targetPlayerId: null }))), [`hit_${hitTierFor(5)}`], 'an enemy target in co-op is a hit');
+  if (COOP_TESTS_ENABLED) assert.deepEqual(played(() => playHitSound(hit(5, { sourceId: 'e1', targetId: 'seat2', targetPlayerId: 'p2', sourcePlayerId: null }))), ['playerHurt']);
+  if (COOP_TESTS_ENABLED) assert.deepEqual(played(() => playHitSound(hit(5, { targetPlayerId: null }))), [`hit_${hitTierFor(5)}`], 'an enemy target in co-op is a hit');
 });
 
 test('turn start, draw, shuffle and discard each cue once per beat', () => {
@@ -142,18 +143,20 @@ test('a fresh fight sounds its opening draw and turn stinger; a restored one rep
   assert.match(combatSrc, /opening = false \}\) \{/, 'a caller that says nothing (a restore, a preview) replays no history');
   assert.match(src('src/main.js'), /opening: !savedSnapshot && !bossIntro,/, 'enterCombat marks only a newly created fight as an opening (a boss splash defers it)');
   // What that call hears for a real fresh solo fight's setup log.
-  const reg = createRegistries(legacyContentBundle);
-  const host = createSession({ registries: reg, seedString: 'SOUND1' });
-  host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
-  host.start(); host.chooseNode('p1', host.session.mapGraph.startIds[0]);
-  const setup = host.live.combat.eventLog;
-  const cues = played(() => playEventCues(setup));
-  assert.ok(cues.includes('cardDraw'), `the opening draw sounds (${cues})`);
-  assert.ok(cues.includes('turnStinger'), `the first turn stings (${cues})`);
-  assert.equal(cues.filter((id) => id === 'turnStinger').length, 1, 'once');
+  if (COOP_TESTS_ENABLED) {
+    const reg = createRegistries(legacyContentBundle);
+    const host = createSession({ registries: reg, seedString: 'SOUND1' });
+    host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
+    host.start(); host.chooseNode('p1', host.session.mapGraph.startIds[0]);
+    const setup = host.live.combat.eventLog;
+    const cues = played(() => playEventCues(setup));
+    assert.ok(cues.includes('cardDraw'), `the opening draw sounds (${cues})`);
+    assert.ok(cues.includes('turnStinger'), `the first turn stings (${cues})`);
+    assert.equal(cues.filter((id) => id === 'turnStinger').length, 1, 'once');
+  }
 });
 
-test('co-op: the session digest, through coop.js, plays the opening, hits, hurt and pile cues once', () => {
+test('co-op: the session digest, through coop.js, plays the opening, hits, hurt and pile cues once', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   assert.match(src('src/ui/screens/coop.js'), /lastSoundSeq = coopReceiptSounds\(sc, lastSoundSeq(?:, seats)?\);\n\s*spawnCombatFx\(sc, prevCombat\);/,
     'renderCombat hears each scene through coopReceiptSounds');
   const reg = createRegistries(legacyContentBundle);
@@ -222,7 +225,7 @@ test('instant playback keeps cue order: the enemy hit lands before "your turn" s
 
 // ---- follow-ups to #1472's last review (Codex P2 threads) ------------------
 
-test('co-op: only the setup-bearing first scene is an opening; a turn-1 join after an action is silent', () => {
+test('co-op: only the setup-bearing first scene is an opening; a turn-1 join after an action is silent', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const reg = createRegistries(legacyContentBundle);
   const host = createSession({ registries: reg, seedString: 'GUARD2' });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
@@ -242,7 +245,7 @@ test('co-op: only the setup-bearing first scene is an opening; a turn-1 join aft
   assert.ok(cues.includes('cardDraw') && cues.includes('turnStinger'), `the opening sounds (${cues})`);
 });
 
-test('co-op: the turn stinger plays once per shared turn, however many seats start it', () => {
+test('co-op: the turn stinger plays once per shared turn, however many seats start it', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const reg = createRegistries(legacyContentBundle);
   const host = createSession({ registries: reg, seedString: 'GUARD2' });
   for (const id of ['p1', 'p2', 'p3']) host.addMember({ id, name: id, classId: 'reaver' });

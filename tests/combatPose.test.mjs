@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { resolveCombatPose, readinessAfterEvent, bloodRiteReaction } from '../src/model/combatPose.js';
@@ -67,7 +68,7 @@ test('Herald red payment and gold healing respect receipt ownership and actual a
     assert.equal(bloodRiteReaction(p,{...e,amount:0},'p1'),null);
   }
 });
-test('real co-op status receipts and snapshots select per-seat poses and consume Prepared',()=>{
+test('real co-op status receipts and snapshots select per-seat poses and consume Prepared', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
   const reg=createRegistries(contentBundle),host=createSession({registries:reg,seedString:'READINESS'});
   host.addMember({id:'p1',name:'Rogue',classId:'rogue'});host.addMember({id:'p2',name:'Herald',classId:'herald'});
   host.start();for(const id of ['p1','p2'])host.chooseNode(id,host.session.mapGraph.startIds[0]);

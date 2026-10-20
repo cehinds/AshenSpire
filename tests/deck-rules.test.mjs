@@ -377,7 +377,7 @@ test('review fixes: a merchant-retired slot is reused, a malformed ordered snaps
   assert.equal(createSaveManager(storage).loadRun(REG), null, 'a dangling sideboard card archives the save');
 });
 
-test('a LAN seat carries its owner\'s Play in deck order into the fight', async () => {
+test('a LAN seat carries its owner\'s Play in deck order into the fight', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   const { createSession } = await import('../tools/session.mjs');
   const game = createSession({ registries: REG, seedString: 'ORDER' });
   const m = game.addMember({ id: 'p1', name: 'Wren', classId: 'reaver', playInDeckOrder: true });

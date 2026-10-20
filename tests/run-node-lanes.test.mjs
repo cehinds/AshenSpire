@@ -306,9 +306,11 @@ test('co-op scope excludes only dedicated files and always retains the parked co
     'tests/enemy-pile-ops-coop.test.mjs', 'tests/enemy-card-injections-coop.test.mjs',
     'tests/core-coop-constructor.test.mjs', 'tests/session-card-receipt.test.mjs',
     'tests/session-reaction-rules-party.test.mjs', 'tests/session-range-preview.test.mjs',
-    'tests/party-range-context.test.mjs', 'tests/lan-intent-privacy.test.mjs', 'tests/lobby-storage-guard.test.mjs'];
+    'tests/party-range-context.test.mjs', 'tests/lan-intent-privacy.test.mjs', 'tests/lobby-storage-guard.test.mjs',
+    'tests/enemy-knowledge-lan.test.mjs'];
   const retained = ['tests/coop-parked.test.mjs', 'tests/combat-reactions.test.mjs',
-    'tests/range-preview.test.mjs', 'tests/run-node-lanes.test.mjs', 'tests/wireframe-possession-variants.test.mjs'];
+    'tests/range-preview.test.mjs', 'tests/run-node-lanes.test.mjs', 'tests/wireframe-possession-variants.test.mjs',
+    'tests/seats.test.mjs'];
   const files = [...dedicated, ...retained].sort();
   assert.deepEqual(discoveryFeatureFiles(files, { coopEnabled: false }), retained.sort());
   assert.deepEqual(discoveryFeatureFiles(files, { coopEnabled: true }), files);
@@ -399,7 +401,7 @@ test('the actual lightweight HUD gate skips disabled co-op and restores enabled 
 test('the source test census loses exactly the reviewed dedicated co-op scope while disabled', () => {
   const files = readdirSync(join(ROOT, 'tests')).filter(file => file.endsWith('.test.mjs')).map(file => `tests/${file}`).sort();
   const parked = files.filter(isCoopTestFile);
-  assert.equal(parked.length, 31, 'review any newly dedicated co-op suite and update this census');
+  assert.equal(parked.length, 32, 'review any newly dedicated co-op suite and update this census');
   const enabled = discoveryFeatureFiles(files, { coopEnabled: true });
   const disabled = discoveryFeatureFiles(files, { coopEnabled: false });
   assert.deepEqual([...disabled, ...parked].sort(), enabled);

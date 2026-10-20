@@ -73,6 +73,7 @@ const NAMED_COOP_TESTS = new Set([
   'tests/party-range-context.test.mjs',
   'tests/lan-intent-privacy.test.mjs',
   'tests/lobby-storage-guard.test.mjs',
+  'tests/enemy-knowledge-lan.test.mjs',
 ]);
 export function isCoopTestFile(file) {
   return file !== 'tests/coop-parked.test.mjs' &&

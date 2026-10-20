@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {contentBundle} from '../src/content/index.js';
@@ -39,7 +40,7 @@ test('cost variants retain auras, defensive identities and actual X spending',()
  assert.equal(combatEffectPlan(x,{energySpent:1}).activation,'mundaneLow');
  assert.equal(combatEffectPlan(x,{energySpent:3}).activation,'mundaneHigh');
 });
-test('real co-op receipts retain the casting seat and a different friendly recipient',()=>{
+test('real co-op receipts retain the casting seat and a different friendly recipient', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
  // This receipt fixture replays historical cards after character setup.
  const host=createSession({registries:createRegistries(legacyContentBundle),seedString:'GUARD2'});
  for(const id of ['p1','p2'])host.addMember({id,name:id,classId:'reaver'});

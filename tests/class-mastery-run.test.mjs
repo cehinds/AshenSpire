@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { contentBundle as expandedBundle } from '../src/content/index.js';
@@ -159,7 +160,7 @@ test('quest pay is once per completion and terminal result retries are atomic', 
   }
 });
 
-test('co-op seats keep their own entitlements, initial tree and nonbanking state through restore', () => {
+test('co-op seats keep their own entitlements, initial tree and nonbanking state through restore', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const S = createSession({ registries: source, seedString: 'GOLDBOUGH' });
   const fresh = freshMeta();
   const veteran = freshMeta();

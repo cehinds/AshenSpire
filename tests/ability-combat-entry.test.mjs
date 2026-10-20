@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {contentBundle} from '../src/content/index.js';
@@ -92,7 +93,7 @@ function enterFirstCombat(session){
   assert.equal(session.scene.kind,'combat');durableEnemies(session.live.combat);
 }
 
-for(const abilityRank of [0,5])test(`actual co-op session save/entry preserves grade ${abilityRank}, printed cost and its owner's XP`,()=>{
+for(const abilityRank of [0,5])test(`actual co-op session save/entry preserves grade ${abilityRank}, printed cost and its owner's XP`, { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
   const inst=graded('starShower',abilityRank,`coop-grade-${abilityRank}`),session=sessionFor([{id:'a',card:inst}]);
   const wire=session.snapshot().party.find(member=>member.id==='a').deck.find(card=>card.instanceId===inst.instanceId);
   assert.equal(wire.abilityRank,abilityRank,'the client inspection reference must retain the earned grade');
@@ -109,7 +110,7 @@ for(const abilityRank of [0,5])test(`actual co-op session save/entry preserves g
   assert.equal(skillXpReceipt(combat,'a')['item:magic-focus'],spellXp(mana));
 });
 
-test('an actual mixed legacy/new co-op session keeps each face and ability-XP mode with its owner',()=>{
+test('an actual mixed legacy/new co-op session keeps each face and ability-XP mode with its owner', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
   const fresh=graded('starShower',5,'mixed-new');
   const old={...createCardInstance('desperateRite'),instanceId:'mixed-old',legacyAbility:true};
   const session=sessionFor([{id:'new',card:fresh},{id:'old',card:old,legacy:true,classId:'herald'}]);
@@ -132,7 +133,7 @@ test('an actual mixed legacy/new co-op session keeps each face and ability-XP mo
   assert.equal(combat.eventLog.filter(event=>event.type==='cardResolved').length,2);
 });
 
-test('actual co-op settlement banks printed spell XP on the saved linear curve for a manual claim',()=>{
+test('actual co-op settlement banks printed spell XP on the saved linear curve for a manual claim', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
   const inst=graded('starShower',5,'settlement-grade5'),session=sessionFor([{id:'a',card:inst}]);
   const member=session.session.members.get('a'),reg=registriesForClassMastery(root,member.run);
   const payout=spellXp(printedMana('starShower',5));
@@ -168,7 +169,7 @@ test('actual co-op settlement banks printed spell XP on the saved linear curve f
   assert.deepEqual(reloaded.session.members.get('a').run.abilityOffers,claimed.abilityOffers,'the saved manual claim contains the exact owner offer');
 });
 
-test('owned class feat rules mount through the real co-op member transport after reload',()=>{
+test('owned class feat rules mount through the real co-op member transport after reload', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
   const inst=graded('progression-rime-mirror',0,'transport-rime'),session=sessionFor([{id:'a',card:inst,skillFeats:['progression-mirror-of-rime'],combatExpansionVersion:1}]);
   enterFirstCombat(session);
   const combat=session.live.combat,seat=combat.players.get('a'),card=liveCard(seat.piles,inst.instanceId),enemy=combat.enemies[0];
