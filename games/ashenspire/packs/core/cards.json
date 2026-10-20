@@ -362,5 +362,110 @@
     ],
     "textTemplate": "Gain {restoreMana} Mana.",
     "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.advance",
+    "name": "Advance",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "\u25c7",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": -1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Close one band."
+  },
+  {
+    "id": "core.closingDodge",
+    "name": "Closing Dodge",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 4,
+    "staminaCost": 4,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "\u25c7",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
+      },
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": -1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill",
+      "trait:reaction"
+    ],
+    "stanceTrigger": {
+      "stance": "evade"
+    },
+    "textTemplate": "Gain {evade} Evade.\nClose one band."
+  },
+  {
+    "id": "core.backstep",
+    "name": "Backstep",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 4,
+    "staminaCost": 4,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "\u25c7",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
+      },
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill",
+      "trait:reaction"
+    ],
+    "stanceTrigger": {
+      "stance": "evade"
+    },
+    "textTemplate": "Gain {evade} Evade.\nRetreat one band."
   }
 ]
