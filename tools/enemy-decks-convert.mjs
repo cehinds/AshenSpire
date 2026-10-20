@@ -10,6 +10,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { enemyPools, enemyItemBonuses, resolveGearItem, mergeGameSettings, resolveEnemyAttributes, enemyAttributeOutcomes, characterRule, characterSettings } from '../engine/kernel/gameConfig.js';
+import { authorEnemyRange, enemyAdvanceCard } from './lib/core-range-content.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PACK = 'games/ashenspire/packs/core';
@@ -24,6 +25,8 @@ const settings = characterSettings(bundleModules());
 const bundle = json('games/ashenspire/bundles/core/bundle.json');
 const gearSettings = mergeGameSettings(json('engine/modules/gear/defaults.json'), bundle.modules.gear?.settings || {});
 const gear = json(`${PACK}/gear.json`);
+const authoredEnemies = new Map(json(`${PACK}/characters.json`).filter(row => row.tags.includes('character.enemy')).map(row => [row.id, row.enemy || {}]));
+const authoredCards = new Map(json(`${PACK}/enemyCards.json`).map(row => [row.id, row]));
 
 const { act1Enemies } = await import(pathToFileURL(resolve(ROOT, 'src/content/enemies/act1.js')));
 const { act2Enemies } = await import(pathToFileURL(resolve(ROOT, 'src/content/enemies/act2.js')));
@@ -223,6 +226,10 @@ for (const enemy of roster) {
     const affordable = r => { const b = enemyItemBonuses(r, content, gearSettings); return enemyAttributeOutcomes(r, settings).every(a => { const p = enemyPools({ ...r, resolvedAttributes: a }, settings, undefined, b); return owned.every(c => c.staminaCost <= p.sp && c.manaCost <= p.mp); }); };
     if (row.defaultRelics.some(r => r.id === 'enemy.relic.ashenBlightCore') && !affordable(row)) row.defaultRelics = row.defaultRelics.filter(r => r.id !== 'enemy.relic.ashenBlightCore');
   }
+  const startingRange = authoredEnemies.get(row.id)?.startingRange;
+  Object.assign(row, authorEnemyRange({ ...row, ...(startingRange ? { startingRange } : {}) }, gear));
+  enemyCards.push(enemyAdvanceCard(enemy.id));
+  for (const card of enemyCards) if (authoredCards.get(card.id)?.range) card.range = authoredCards.get(card.id).range;
   enemies.push(row);
   {
     const maxHp = enemyPools(row, settings, undefined, enemyItemBonuses(row, content, gearSettings)).hp;

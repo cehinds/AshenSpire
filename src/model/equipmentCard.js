@@ -8,7 +8,7 @@ import { breakPropertyText } from './breakMeter.js';
 /** Authored facts only; live comparison and smithing receipts stay beside this card. */
 export function equipmentCardModel(registries, piece) {
   const armor = piece.kind === 'armor';
-  const tags = piece.tags || [];
+  const tags = [...new Set([...(piece.tags || []), ...(gameModule(registries, 'effects')?.fixCoreVersion === 1 ? piece.propertyTags || [] : [])])];
   const tag = id => (registries.tags || []).find(row => row.id === id);
   const className = armor ? (piece.sharedSet ? 'All classes' : registries.classes.get(piece.classId)?.name || piece.classId) : '';
   const types = (piece.itemTypes || []).map(t => t.label).join(' / ');

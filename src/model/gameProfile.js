@@ -2,6 +2,7 @@
 import { gameProfileCatalog, gameProfileAuthors } from '../content/generated/gameProfiles.js';
 import { resolveGameAuthor, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
 import { markVerifiedProfile, validateVerifiedProfile } from './verifiedProfiles.js';
+import { deriveEnemyMoves, resolveEnemyMoveSources } from './enemyMoveSources.js';
 export { GameConfigError };
 // Catalog profiles are deterministic, so each id is resolved and digested once per process; later
 // resolves return a fresh deep-frozen copy (callers rely on distinct snapshots) instead of re-hashing.
@@ -54,6 +55,41 @@ function cloneLegacy(value,seen = new Map()) {
   else for(const [key,item]of Object.entries(value))out[key]=cloneLegacy(item,seen);
   return out;
 }
+// The range adapter adds only the authored mobility capability. Existing
+// offense payloads/prices remain the shared enemy definitions' authority.
+function projectEnemyRangeContent(bundle, profile, baseBundle) {
+  if (gameModule(profile, 'effects')?.fixCoreVersion !== 1 || !Array.isArray(bundle.enemies)) return;
+  const authored = new Map((gameContent(profile, 'enemies') || []).map(row => [row.id, row]));
+  if (![...authored.values()].some(row => row.rangeClosingMove !== undefined)) return;
+  const cards = new Map((gameContent(profile, 'enemyCards') || []).map(row => [row.id, row]));
+  const flat = new Map((resolveEnemyMoveSources(baseBundle).enemyMoves || []).map(({ id, enemyId, ...move }) => [JSON.stringify([enemyId, id]), cloneLegacy(move)]));
+  const rangeOverrides = new Map(), closingKeys = new Set(), additions = [];
+  bundle.enemies = bundle.enemies.map(def => {
+    const row = authored.get(def.id);
+    if (row?.rangeClosingMove === undefined) return def;
+    const moves = Object.fromEntries(Object.entries(def.moves || {}).map(([id, move]) => [id, flat.get(JSON.stringify([def.id, id])) || move]));
+    const owned = new Set(row.defaultDeck || []);
+    const entry = Object.entries(row.cardHints || {}).find(([id, hint]) => owned.has(id) && hint.legacyMove === row.rangeClosingMove);
+    const card = entry && cards.get(entry[0]), hint = entry?.[1];
+    if (!card || !Number.isSafeInteger(card.staminaCost) || card.staminaCost < 0 || card.manaCost !== 0
+      || card.effects?.length !== 1 || card.effects[0].op !== 'moveEngagement' || card.effects[0].target !== 'enemy' || card.effects[0].bands !== -1) {
+      throw new GameConfigError(`$/content/enemies/${def.id}/rangeClosingMove`, 'requires an owned, explicitly priced one-band closing card');
+    }
+    moves[row.rangeClosingMove] = { intent: 'buff', sp: card.staminaCost, weight: hint.aiWeight ?? 0, effects: dataClone(card.effects) };
+    closingKeys.add(JSON.stringify([def.id, row.rangeClosingMove]));
+    additions.push(...[...(card.tags || []).filter(tagId => !tagId.startsWith('classification.')), 'classification.enemyMove'].map(tagId => ({ family: 'enemyMove', scope: def.id, objectId: row.rangeClosingMove, tagId })));
+    for (const [id, metadata] of Object.entries(row.cardHints || {})) {
+      const source = cards.get(id);
+      if ((owned.has(id) || (row.unlockCards || []).includes(id)) && moves[metadata.legacyMove] && source?.range !== undefined) {
+        rangeOverrides.set(JSON.stringify([def.id, metadata.legacyMove]), source.range);
+      }
+    }
+    return { ...def, moves, startingRange: row.startingRange, rangeClosingMove: row.rangeClosingMove, rangeRoutePolicy: row.rangeRoutePolicy };
+  });
+  bundle.enemyMoves = deriveEnemyMoves(bundle.enemies);
+  bundle.tagging = [...(bundle.tagging || []).filter(row => !(row.family === 'enemyMove' && (closingKeys.has(JSON.stringify([row.scope, row.objectId])) || rangeOverrides.has(JSON.stringify([row.scope, row.objectId])) && /^(range|reach):/.test(row.tagId)))),
+    ...additions, ...[...rangeOverrides].map(([key, range]) => { const [scope, objectId] = JSON.parse(key); return { family: 'enemyMove', scope, objectId, tagId: `range:${range}` }; })];
+}
 export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'current') {
   const profile = resolveGameProfile(profileOrAuthor), bundle=cloneLegacy(baseBundle);
   if(profile.foundation.mode === 'legacy') return bundle;
@@ -96,6 +132,7 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'current'
     const pinned=new Map((gameContent(profile,'enemies')||[]).filter(row=>Number.isInteger(row.poiseMax)).map(row=>[row.id,row.poiseMax]));
     bundle.enemies=bundle.enemies.map(def=>pinned.has(def.id)&&Number.isInteger(def.poiseMax)?{...def,poiseMax:pinned.get(def.id)}:def);
   }
+  projectEnemyRangeContent(bundle, profile, baseBundle);
   return bundle;
 }
 export function bindGameProfileRegistries(registries,profile) { return Object.freeze({...registries,gameProfile:resolveGameProfile(profile)}); }

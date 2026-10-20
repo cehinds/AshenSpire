@@ -19,11 +19,11 @@ export function createPreviewMemo({ combat, preview, dispatch }) {
       invalidate();
       try { return dispatch(target, intent); } finally { invalidate(); }
     },
-    previewCard(target, instanceId, targetId, upcastRanks) {
-      if (target !== combat) return preview(target, instanceId, targetId, upcastRanks);
-      const key = `${instanceId}|${targetId ?? ''}|${upcastRanks === undefined ? '' : JSON.stringify(upcastRanks)}`;
+    previewCard(target, instanceId, targetId, upcastRanks, options) {
+      if (target !== combat) return preview(target, instanceId, targetId, upcastRanks, options);
+      const key = JSON.stringify([instanceId, targetId, upcastRanks, options?.rangeRoute ?? 'advance', target.rangeState]);
       if (kept.has(key)) return kept.get(key);
-      const shown = preview(target, instanceId, targetId, upcastRanks);
+      const shown = preview(target, instanceId, targetId, upcastRanks, options);
       kept.set(key, shown);
       return shown;
     },

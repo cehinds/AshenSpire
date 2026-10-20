@@ -189,7 +189,7 @@ export function renderCard(registries, ref, opts = {}) {
     || def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2;
   const model = { ...rawModel, ...(expanded ? { faceType: combatCardType(def) } : {}),
     tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
-  model.sideTags = cardSideTags(model, def, registries, opts.preview || null);
+  model.sideTags = cardSideTags(model, def, registries, opts.preview || null, opts.rules || null);
   // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
   model.range = opts.range ? combatCardRange(def) : null;
   // When the shared face model refuses a card, the authored clauses (family
@@ -202,7 +202,7 @@ export function renderCard(registries, ref, opts = {}) {
   const accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label, model.sigils.mirror && mirrorSigil(model.sigils.mirror).mark.label,
     model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
     damageWords.length && `Damage: ${damageWords.join(', ')}`,
-    ...model.sideTags.map(tag => tag.label),
+    ...model.sideTags.map(tag => tag.label + (Number.isInteger(tag.count) ? ` ${tag.count}${tag.countFormula ? ' + ' + tag.countFormula : ''}` : '')),
     rawModel.type.label,
     rawModel.type.subtype,
     rawModel.type.abilityLabel,
@@ -305,14 +305,15 @@ export function renderCard(registries, ref, opts = {}) {
     floor, lit: litCard() === identity,
   });
   let drawn = levelNow();
-  // The hand omits automatic Entry explanations on compact attack faces.
-  // Authored effects and the full inspection still use the complete shared text.
+  // Every printed surface uses the same compact benefits. A visible tag keeps
+  // the exact amount and condition available without repeating it in the body.
   const faceRules = gameModule(registries, 'cards');
   const wardPoise = wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null;
-  // The reading door renders a separate card with level:'inspect', so the hand
-  // need not build the expensive complete model until that door is opened.
-  const stanceEntry = !(opts.surface === 'combat' && def.type === 'attack' && floor !== 'inspect');
-  const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null, { stanceEntry });
+  const representedEffects = model.sideTags.flatMap(tag => tag.representedEffects || []);
+  const representedEntry = model.sideTags.flatMap(tag => tag.representedEntry || []);
+  const representedRules = model.sideTags.flatMap(tag => tag.representedRules || []);
+  const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null,
+    { stanceEntry: false, representedEffects, representedEntry, representedRules });
   const faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
     ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
   if (faceLines && def.weightClassPriced) {

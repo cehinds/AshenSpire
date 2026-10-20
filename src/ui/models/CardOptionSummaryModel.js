@@ -14,6 +14,7 @@ import { cardFaceLines, withChargedEffects } from '../../model/cardFaceText.js';
 import { isSpellCard } from '../../model/combatCardProfile.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
 import { t } from '../strings.js';
+import { combatRangeActionPlan } from './CombatRangeActionModel.js';
 
 const freeze = Object.freeze;
 const MARK = '\u0000';
@@ -151,7 +152,7 @@ const withDirections = html => html.replace(/<span class="val (up|down)">(.*?)<\
 export function cardEffectHtml(def, preview = null, registries = null) {
   if (!def) return '';
   let lines = null;
-  try { lines = cardFaceLines(def, preview, registries); } catch { lines = null; }
+  try { lines = cardFaceLines(def, preview, registries, null, { stanceEntry: false }); } catch { lines = null; }
   if (lines?.length) return withDirections(lines.map(row => row.html).join(' \u00b7 '));
   let summary = null;
   try { summary = combatCardSummary(def, preview, registries); } catch { summary = null; }
@@ -166,10 +167,23 @@ export function cardEffectHtml(def, preview = null, registries = null) {
 }
 
 /** The cost chips of a reaction option: SP, MP, upcast tier and the choice it names. */
-function costsOf(option) {
+function costsOf(option, preview, registries, combat) {
   const chips = [];
   if (option.play?.upcastTier) chips.push(t('combat.reaction.upcast', { tier: option.play.upcastTier }));
   if (option.choiceName) chips.push(String(option.choiceName));
+  const plan = combatRangeActionPlan({ range: option.range ?? preview?.range }, {
+    targetName: id => {
+      const enemy = combat?.enemies?.find(entry => entry.id === id);
+      return enemy ? registries?.enemies?.get(enemy.enemyId)?.name || id : id;
+    },
+  });
+  const route = plan?.routes.find(entry => entry.id === (option.play?.rangeRoute ?? plan.selectedRoute));
+  if (route) {
+    chips.push(route.label, route.total, ...route.odds.map(target => target.text));
+    if (route.reason) chips.push(route.reason);
+    return freeze(chips.filter(Boolean));
+  }
+  if (option.play?.rangeRoute === 'throw') chips.push('Throw');
   if (Number.isFinite(option.staminaCost)) chips.push(t('combat.reaction.sp', { amount: option.staminaCost }));
   if (option.manaCost) chips.push(t('combat.reaction.mp', { amount: option.manaCost }));
   return freeze(chips);
@@ -206,6 +220,6 @@ export function summarizeCardOption(registries, combat, option, readers = {}) {
     // Numbers when every effect has one; otherwise the card's own compact text, so no tile has an empty effect row.
     line: complete ? line : freeze([]),
     ...(!complete && def ? { html: cardEffectHtml(def, preview, registries) } : {}),
-    costs: option.play ? costsOf(option) : freeze([]),
+    costs: option.play ? costsOf(option, preview, registries, combat) : freeze([]),
   });
 }
