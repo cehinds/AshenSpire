@@ -582,17 +582,22 @@ test('guardCounter rank 3: a spent or uncovered read leaves no Return line on th
 function armedThen(...cardIds) {
   const { combat, enemy } = live();
   Object.assign(combat.player, { mana: 99, maxMana: 99, energy: 99 });
+  const intent = structuredClone(enemy.intent);
   combat.piles.hand.push({ instanceId: 'ca0', cardId: 'frostCounter' });
   dispatch(combat, { type: 'playCard', cardInstanceId: 'ca0' });
   cardIds.forEach((cardId, i) => {
     combat.piles.hand.push({ instanceId: `ca${i + 1}`, cardId });
     dispatch(combat, { type: 'playCard', cardInstanceId: `ca${i + 1}`, targetId: enemy.id });
   });
+  // The extra cards' damage can re-roll the enemy's move; keep the 8-damage Attack the Counter covers.
+  enemy.intent = intent; enemy.pendingStaminaLoss = 0;
   Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });
   dispatch(combat, { type: 'setReactions', enabled: false });
   const start = combat.eventLog.length;
   dispatch(combat, { type: 'endTurn' });
-  return combat.eventLog.slice(start).filter(e => e.type === 'combatCounterTriggered' && e.cardId === 'frostCounter');
+  const events = combat.eventLog.slice(start);
+  assert.ok(events.some(e => e.type === 'damageDealt' && e.targetId === 'player'), 'the enemy Attack landed ');
+  return events.filter(e => e.type === 'combatCounterTriggered' && e.cardId === 'frostCounter');
 }
 
 test('a spell Counter followed by a spell or maneuver does not return (any later card disarms it)', () => {
