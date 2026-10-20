@@ -1,4 +1,4 @@
-import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions } from './combatEngagement.js';
+import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { fixCoreEnabled, snapshotFixCoreRules } from '../model/fixCoreMechanics.js';
 import { initializeFormationOccupancy, formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { proposalCardPlan, applyProposalPlan, proposalTurn, proposalRetained } from './proposalStatusRuntime.js';
@@ -28,6 +28,9 @@ import { bindTurnStamina } from '../model/turnStamina.js';
 import { settleExpandedPools, refreshExpandedLoadout } from './combatExpansionProjection.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { passiveMax } from '../model/registries.js';
+import { configuredCombat, configuredModule, profileHandSize } from './gameProfileCombat.js';
+import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
+import { gameProfileRatingReceipt, gameProfileEffectiveAttributes } from '../model/gameProfileRun.js';
 // src/engine/coopCombat.js — shared N-player combat runner (Forsaken Together S3).
 //
 // A SEPARATE co-op fight engine that reuses the solo engine's generic opcode /
@@ -60,7 +63,7 @@ import { passiveMax } from '../model/registries.js';
 
 import { chargeFlaskId } from '../model/gracerefill.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
-import { syncRelicProperties, syncClassProperties, syncFeatProperties, syncLoadoutProperties, syncSigilProperties, propertyMountsOf } from './properties.js';
+import { syncConfiguredEnemyProperties, syncRelicProperties, syncClassProperties, syncFeatProperties, syncLoadoutProperties, syncSigilProperties, propertyMountsOf } from './properties.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 import { cardTargetPlan, assertCardTarget, immediateCardEffects } from '../model/cardTargets.js';
 import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
@@ -214,7 +217,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
       damageResistanceBySchool: def.damageResistanceBySchool,
       damageMult: enemyDamageMult,
     }));
-    if (C.sharedExpansionVersion === 2) {
+    if (C.sharedExpansionVersion === 2 && !configuredCombat(C)) {
       C.enemies.at(-1).combatExpansionVersion = 2;
       Object.assign(C.enemies.at(-1), expandedEnemyProjection(enemyId, C.combatExpansionRules.equipment));
     }
@@ -226,10 +229,23 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
       for (const id of C.breakMeterVersion === 1 ? ['poise'] : ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
     }
   }
-  if (C.sharedExpansionVersion === 2) for (const enemy of C.enemies) { initializePersistentWard(enemy, persistentWardMaximum(C, enemy)); initializePersistentPoise(enemy, persistentPoiseMaximum(C, enemy)); }
+  if (configuredCombat(C) && fixCoreEnabled(C)) for (const enemy of C.enemies) {
+    const definition = registries.enemies.get(enemy.enemyId);
+    enemy.attributes = { ...(definition.attributes || {}) };
+    enemy.baseEvasionBonus = definition.baseEvasionBonus || definition.evasionBonus || 0;
+    enemy.basePrecisionBonus = definition.basePrecisionBonus || definition.precisionBonus || 0;
+    enemy.ratings ||= { ar: definition.ar || 0, dr: definition.dr || 0, pr: 0,
+      ward: definition.ward || definition.poiseMax || 0, poise: definition.poise || definition.poiseMax || 0 };
+    Object.assign(enemy, gameProfileEnemyRatings(C, enemy) || {});
+  }
+  if (C.sharedExpansionVersion === 2) for (const enemy of C.enemies) {
+    initializePersistentWard(enemy, configuredCombat(C) && !fixCoreEnabled(C) ? 0 : persistentWardMaximum(C, enemy));
+    initializePersistentPoise(enemy, configuredCombat(C) && !fixCoreEnabled(C) ? 0 : persistentPoiseMaximum(C, enemy));
+  }
 
   // Players — each an entity + own shuffled piles (Innate on top).
   for (const p of players) addPlayerState(C, p, { initial: true });
+  syncConfiguredEnemyProperties(C);
   initializeFormationOccupancy(C);
   if (fixCoreEnabled(C)) { C.fixCoreRules = snapshotFixCoreRules(C); if (C.reactionRulesVersion === 2) C.reactionRules.contactPolicy = 'perHit'; }
   initializeCombatRange(C, rangePolicy);
@@ -252,7 +268,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     syncClassProperties(C, P.entity);
     syncFeatProperties(C, P.entity, P.skillFeats);
     syncSigilProperties(C, P.entity, P.attunedSigils); // SPEC §15.4: the seat's own attuned legendaries
-    if (C.ratingsRules) refreshCombatRatings(C);
+    if (C.ratingsRules && !configuredCombat(C)) refreshCombatRatings(C);
     if (P.entity.combatExpansionVersion === 2) { initializePersistentWard(P.entity, persistentWardMaximum(C, P.entity)); initializePersistentPoise(P.entity, persistentPoiseMaximum(C, P.entity)); }
     C.emit('combatStart', {});
   }
@@ -293,10 +309,10 @@ function addPlayerState(C, p, { initial = false } = {}) {
   if (entity.combatExpansionVersion === 2) {
     entity.ashenBlight = structuredClone(p.ashenBlight || createAshenBlightState());
     entity.attributes = { ...(p.attributes || {}) };
-    const entry = rollAshenBlightEncounter({ ...C, combatExpansionVersion: 2 }, entity, C.combatKey);
+    const entry = configuredCombat(C) ? {} : rollAshenBlightEncounter({ ...C, combatExpansionVersion: 2 }, entity, C.combatKey);
     if (entry.terminal) { entity.hp = 0; entity.alive = false; entity.blightTerminal = true; }
   }
-  const deck = (p.deck || []).map((c) => ({
+  const deck = (configuredCombat(C) && !configuredModule(C, 'cards') ? [] : p.deck || []).map((c) => ({
     ...([1, 2].includes(C.breakMeterVersion) ? { breakMeterVersion: C.breakMeterVersion } : {}),
     instanceId: c.instanceId,
     cardId: c.cardId,
@@ -331,7 +347,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
   // seat draws its deck as arranged and rolls nothing for it.
   const orderedDraw = p.orderedDraw ? { order: deck.map((card) => card.instanceId) } : null;
   const drawPile = orderedDrawPile(orderedDraw ? deck : C.rng.shuffle('shuffle', deck),
-    (card) => registries.framework.isInnate(resolveCard(registries, card)));
+    (card) => configuredCombat(C) ? (resolveCombatCard({ ...C, registries }, card).keywords || []).includes('innate')
+      : registries.framework.isInnate(resolveCard(registries, card)));
   // THE SAME ROWS A SOLO FIGHT READS (ruleset 7): the seat's hand rules are
   // the shipped behaviour options plus its own opening-hand, draw and
   // hand-size rows, and its ratings its own rating rows. A seat born before
@@ -351,7 +368,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     name: p.name || p.id,
     classId: p.classId,
     attributeMode: p.attributeMode,
-    allocatedAttributes: p.attributes ? { ...p.attributes } : undefined,
+    allocatedAttributes: p.allocatedAttributes || p.attributes ? { ...(p.allocatedAttributes || p.attributes) } : undefined,
     attributes: p.attributes ? effectiveAshenBlightAttributes(entity, p.attributes) : undefined,
     // The seat's loadout, so the framework Weight Class (dodge pricing and the
     // dodge check) is decided from THIS player's equipment, not a Light default.
@@ -376,7 +393,25 @@ function addPlayerState(C, p, { initial = false } = {}) {
     ended: false,
   };
   C.players.set(p.id, P);
-  if (entity.combatExpansionVersion === 2) {
+  if (!initial && C.rangeState) {
+    const prior = C.rangeState;
+    initializeCombatRange(C, prior.policy);
+    Object.assign(C.rangeState.engagements, prior.engagements);
+  }
+  if (configuredCombat(C)) {
+    const subject = { ...p, gameProfile: C.gameProfile, class: p.classId, attributes: P.allocatedAttributes,
+      allocatedAttributes: P.allocatedAttributes, level: { level }, loadout: P.loadout };
+    const receipt = gameProfileRatingReceipt(registries, subject);
+    P.attributes = gameProfileEffectiveAttributes(registries, subject);
+    entity.attributes = { ...P.attributes };
+    entity.ratings = { ar: 0, dr: 0, pr: 0, ward: 0, poise: p.poiseMax || 0, ...(receipt?.totals || p.ratings || {}) };
+    entity.ratingSources = structuredClone(receipt?.sources || p.ratingSources || []);
+    entity.baseEvasionBonus = receipt?.baseEvasionBonus ?? p.baseEvasionBonus ?? 0;
+    entity.basePrecisionBonus = receipt?.basePrecisionBonus ?? p.basePrecisionBonus ?? 0;
+    P.handMax = profileHandSize({ ...C, attributes: P.attributes });
+    if (!configuredModule(C, 'stances')) entity.combatStance = { maneuver: 'neutral' };
+  }
+  if (entity.combatExpansionVersion === 2 && !configuredCombat(C)) {
     Object.assign(entity, expandedEquipmentProjection(C.registriesForPlayer(p.id), P.loadout, entity.classId, C.combatExpansionRules.equipment));
     setActive(C, P);
     settleExpandedPools(C, entity, { allocatedAttributes: P.allocatedAttributes });
@@ -398,7 +433,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     syncClassProperties(C, P.entity);
     syncFeatProperties(C, P.entity, P.skillFeats);
     syncSigilProperties(C, P.entity, P.attunedSigils); // SPEC §15.4: the seat's own attuned legendaries
-    if (C.ratingsRules) refreshCombatRatings(C);
+    if (C.ratingsRules && !configuredCombat(C)) refreshCombatRatings(C);
     // The joiner's Ward rating exists only after the refresh: fill the pool now.
     if (P.entity.combatExpansionVersion === 2) { initializePersistentWard(P.entity, persistentWardMaximum(C, P.entity)); initializePersistentPoise(P.entity, persistentPoiseMaximum(C, P.entity)); }
     setActive(C, wasActive || null);
@@ -406,7 +441,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     if (C.phase === 'player') {
       setActive(C, P);
       P.entity.energy = P.entity.energyMax;
-      A.drawCards(C, P.handRules ? turnDrawCount(C, true) : P.entity.drawPerTurn);
+      A.drawCards(C, configuredCombat(C) || P.handRules ? turnDrawCount(C, true) : P.entity.drawPerTurn);
       P.opened = true;
     }
     rescaleEnemies(C);
@@ -422,7 +457,7 @@ function setActive(C, P) {
   // The shared action context is combat-shaped: the dodge opcode and the
   // class-priced cost read `attributes` / `loadout` off it, so the active
   // seat's own are exposed here — the same fields the solo engine carries.
-  if (P?.entity.combatExpansionVersion === 2) {
+  if (P?.entity.combatExpansionVersion === 2 && !configuredCombat(C)) {
     P.attributes = effectiveAshenBlightAttributes(P.entity, P.allocatedAttributes || P.attributes);
     if (P.handRules) P.handMax = scaledCards(handRow(P.handRules, 'handSize'), P.attributes || {}, P.level);
   }
@@ -615,6 +650,12 @@ function startPlayerPhase(C) {
     if (C.combatExpansionVersion !== 2) clearCombatCounter(e);
     // Less what a Stagger took (plan phase 8): owed to this next turn only.
     e.energy = Math.max(0, e.energyMax - (e.pendingActionLoss || 0));
+    if (configuredCombat(C)) {
+      C.gameProfileCommands = 0;
+      const resources = configuredModule(C, 'resources');
+      if (!resources?.include?.includes('sp')) e.energy = 0;
+      if (resources?.manaPerTurn) e.mana = Math.min(e.maxMana, e.mana + resources.manaPerTurn);
+    }
     e.pendingActionLoss = 0;
     if (C.combatExpansionVersion === 2) {
       fireOwnerHooks(C, e, 'ownerTurnStart'); drainQueue(C);
@@ -629,7 +670,7 @@ function startPlayerPhase(C) {
     // A seat's FIRST hand is its opening hand, whichever turn it arrives on (a
     // seat that joins during the enemy phase opens on the next player turn).
     if (!controlRestrictions(C, e).locked) {
-      const count = P.handRules ? turnDrawCount(C, !P.opened) : e.drawPerTurn;
+      const count = configuredCombat(C) || P.handRules ? turnDrawCount(C, !P.opened) : e.drawPerTurn;
       A.drawCards(C, !P.opened ? Math.max(1, count - (C.combatExpansionVersion === 2 ? ashenBlightBonuses(e).openingHandPenalty : 0)) : count);
     }
     P.opened = true;
@@ -856,7 +897,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, rangeRout
   if (C._reactionPlaying) cardRef.reactionDepth = 1;
   cardRef.committedInstance = structuredClone(inst);
   if (Number.isInteger(def.upcastTier)) cardRef.upcastTier = def.upcastTier;
-  const sourceSnapshots = F.cardSourceSnapshots(C, def, p, cardRef);
+  const sourceSnapshots = F.cardSourceSnapshots(C, def, p, cardRef) || rangeCardSourceSnapshots(C,def,p,cardRef);
   if (cardRef.combatProfile?.maneuver === 'counter' && sourceSnapshots?.size) {
     Object.assign(cardRef, sourceSnapshots.values().next().value);
   }
@@ -893,6 +934,8 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, rangeRout
     staminaCost = cost;
     manaCost = Math.max(0, pools.mana + (def.upcastSurcharge || 0) - funds.mana - charges.manaDiscount);
   }
+  const counterRange = paidCounterRange(C,p,cardRef,{energy:cost,stamina:staminaCost,mana:manaCost},rangeRoute || 'advance');
+  if (counterRange) { ({energy:cost,stamina:staminaCost,mana:manaCost}=counterRange.costs); cardRef.rangeCounterReservation=counterRange.reservation; }
   if (p.energy < cost) throw F.playRefusal('Not enough Actions (Stamina) to play this card', 'cost', { resource: 'stamina', need: cost, have: p.energy });
   if (p.mana < manaCost) throw F.playRefusal('Not enough mana to play this card', 'cost', { resource: 'mana', need: manaCost, have: p.mana });
   if (preflightOnly) return { energy: cost, mana: manaCost };

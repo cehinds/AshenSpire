@@ -1023,6 +1023,27 @@ contracts, foundation, kernel or modules rebuilds the profiles, and a change und
 **Game profiles**, **Check game profiles** and **HUD layout** run the same commands.
 The engine export (`docs/ENGINE-EXPORT.md`) reads these tables too.
 
+### Edit Core range and movement
+
+The range contract is [Optional engagement, Advance and Throw](docs/design/RangeAdvance.md).
+Use these source locations when changing it in Visual Studio:
+
+| Change | Source |
+|---|---|
+| Default toggle, Advance price, Reach bonus or Throw penalty | `content/source/fixCoreMechanics.json`, `range` |
+| Weapon coverage and Throw property | `games/ashenspire/packs/core/gear.json` |
+| Player movement cards | `games/ashenspire/packs/core/cards.json` |
+| Enemy starting range and paid closing move | `games/ashenspire/packs/core/characters.json` and `enemyCards.json`; conversion helper `tools/lib/core-range-content.mjs` |
+| Pair distance, route quote and receipt validation | `src/model/combatEngagement.js` |
+| Runtime payment, committed source and reaction context | `src/engine/combatEngagement.js` |
+| Selected-card route controls | `src/ui/models/CombatRangeActionModel.js`, `src/ui/components/combatRangeAction.js`, `styles/combat-range-action.css` |
+| Quantified Precision/Evade tags and concise face copy | `src/model/cardBonusTags.js`, `src/model/cardFaceText.js` |
+
+After editing authored data, run `node tools/content-build.mjs` followed by
+`node tools/game-config.mjs build`. Range settings apply to new runs; an active
+fight uses its saved policy and accepted action receipts. Keep price formulas
+in the shared planner so solo play, co-op and displayed choices agree.
+
 ## Reword the interface (one file: `content/source/uiStrings.csv`)
 
 Every sentence a screen says is a row in `content/source/uiStrings.csv`, and a

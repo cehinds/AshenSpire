@@ -82,7 +82,8 @@ export function rangeActionPlan(state, sourceKey, contacts, { route = 'advance',
     const { targetKey, weapon = false, throwCapable = false, bypass = false, sourceWeaponId = null } = contact;
     const coverage = rangeBand(contact.coverage ?? 'melee');
     if (!opposingRangeKeys(sourceKey, targetKey) || !band(coverage)) throw Error('Invalid range contact');
-    const actualBand = engagementBand(state, sourceKey, targetKey);
+    const inherited = context?.targets?.find(row => rangePairKey(context.sourceKey,row.targetKey) === rangePairKey(sourceKey,targetKey));
+    const actualBand = inherited?.actualBand ?? engagementBand(state, sourceKey, targetKey);
     const distance = contextBand(context, sourceKey, targetKey, actualBand);
     const missingBands = policy.enabled && !bypass ? Math.max(0, distance - coverage) : 0;
     const extended = route === 'throw' && missingBands > 0;

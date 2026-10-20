@@ -1,3 +1,4 @@
+import * as Engagement from './combatEngagement.js';
 import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 // Namespace import: counterRule.js sits in an import cycle and the bundled build does not keep cyclic named imports live.
 import * as CounterRule from './counterRule.js';
@@ -666,9 +667,10 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   receipt.completed = true;
   completeTraitGuard(ctx, source, target, receipt);
   const queue = [];
+  let returnCarrier = receipt.counter?.carrier;
   const enqueue = effect => {
     const action = { effect, source: target, owner: target, target: source,
-      card: { ...receipt.counter.carrier, combatReaction: true, skipRatingBonus: true,
+      card: { ...returnCarrier, combatReaction: true, skipRatingBonus: true,
         counterReturnAttack: true,
         counterRequiredRange: receipt.profiles.filter((profile, index) => receipt.covered[index])
           .reduce((range, profile) => RANGES.indexOf(profile.range) > RANGES.indexOf(range) ? profile.range : range,
@@ -697,6 +699,8 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     // Core 2 (SPEC §17): a covered hit that lands answers, whatever got through. Legacy needs the hit fully resisted.
     || (!counterRuleActive(ctx) && (receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload))
     || (CounterRule.counterReturnSpent(target) && !CounterRule.paidCounterContact(ctx, carrier, counter))) return queue;
+  returnCarrier = Engagement.authorizeCounterRange(ctx,target,source,counter.carrier,carrier);
+  if (!returnCarrier) return queue;
   target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
   // Reaction rules version 2: Counterstrike scales the authored payload first; SPEC §4.8's return formulas run after.
   const trait = ctx.reactionRulesVersion === 2 ? counter.carrier?.traitValues || {} : {};
