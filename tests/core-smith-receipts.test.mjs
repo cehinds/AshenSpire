@@ -105,6 +105,7 @@ test('Smith item summaries expose actual tier deltas for weapons, shields and ar
     const candidate = plan.candidates.find(row => row.itemRef === ref);
     const item = model.properties.candidates.find(row => row.itemRef === ref);
     assert.ok(item.intrinsicChanges.length, `${ref} has a visible benefit`);
+    assert.equal(item.intrinsicStats, null, 'Core summaries do not mix legacy base ratings into the tier receipt');
     assert.deepEqual(item.intrinsicChanges, candidate.changes.filter(row => row.before !== row.after), ref);
     assert.ok(Object.isFrozen(item.intrinsicChanges));
   }

@@ -102,7 +102,9 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       kindLabel: itemKind === 'armor' ? 'Armor' : itemKind === 'relic' ? 'Relic' : 'Armament',
       itemTypes: freeze(itemTypes),
       tags: freeze([...(piece.tags || [])]),
-      intrinsicStats: freeze({
+      // Core item ratings come from the tier receipt below, not the legacy
+      // equipment definition's unrelated base AR/DEF values.
+      intrinsicStats: candidate.core ? null : freeze({
         attackRating: piece.attackRating ?? null,
         defenseRating: piece.defenseRating ?? null,
         // The load weight (itemWeightScale applied), as the Armoury shows it.
