@@ -168,11 +168,11 @@ test('deck editor shows the granted card with the existing equipment presentatio
   assert.equal(run.sideboard.filter((c) => c.cardId === 'core.manaSurge').length, 0);
 });
 
-test('a legacy profile is untouched: a Bone Sceptre there grants no Core card', () => {
-  const legacy = createRegistries(contentBundle);
-  const run = createRunState({ seed: 17, classId: 'starseer', registries: legacy });
+test('an unprofiled run with a Bone Sceptre grants no Core card', () => {
+  const unprofiled = createRegistries(contentBundle);
+  const run = createRunState({ seed: 17, classId: 'starseer', registries: unprofiled });
   assert.equal(run.deck.filter((c) => c.cardId === 'core.manaSurge').length, 0);
-  stampDeck(legacy, run);
+  stampDeck(unprofiled, run);
   assert.equal(run.deck.filter((c) => c.cardId === 'core.manaSurge').length, 0);
 });
 
