@@ -258,20 +258,23 @@ function buildLines(def, preview, registries, rules = null) {
     }
   };
 
+  // Comma-join phrases; one that already ends a sentence drops its period first (no ".,"), as playingCard does.
+  const joinList = parts => parts.map((part, i) => i < parts.length - 1 ? part.replace(/\.$/, '') : part).join(', ');
+
   // The line a set of fragments reads as, one segment per kind, in fixed order.
   const segmentsOf = (fragments, extraBonus = []) => {
     const of = cat => fragments.filter(f => f.cat === cat).map(f => f.text);
     const out = [];
     const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
-    if (cost.length) out.push({ kind: 'cost', text: cost.join(', ') });
-    if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${damage.join(', ')}` });
+    if (cost.length) out.push({ kind: 'cost', text: joinList(cost) });
+    if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${joinList(damage)}` });
     else if (counter && fragments === unconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
-    if (status.length) out.push({ kind: 'status', text: `Inflict ${status.join(', ')}` });
-    if (remove.length) out.push({ kind: 'status', text: `Remove ${remove.join(', ')}` });
-    if (consume.length) out.push({ kind: 'consume', text: `Remove ${consume.join(', ')}` });
-    if (gain.length) out.push({ kind: 'gain', text: `Gain ${gain.join(', ')}` });
-    if (bonus.length) out.push({ kind: 'bonus', text: defenseRestore.length ? defenseRestore.join(', ') + '. ' + bonus.join(', ') : bonus.join(', ') });
-    else if (defenseRestore.length) out.push({ kind: 'bonus', text: defenseRestore.join(', ') });
+    if (status.length) out.push({ kind: 'status', text: `Inflict ${joinList(status)}` });
+    if (remove.length) out.push({ kind: 'status', text: `Remove ${joinList(remove)}` });
+    if (consume.length) out.push({ kind: 'consume', text: `Remove ${joinList(consume)}` });
+    if (gain.length) out.push({ kind: 'gain', text: `Gain ${joinList(gain)}` });
+    if (bonus.length) out.push({ kind: 'bonus', text: defenseRestore.length ? joinList(defenseRestore) + '. ' + joinList(bonus) : joinList(bonus) });
+    else if (defenseRestore.length) out.push({ kind: 'bonus', text: joinList(defenseRestore) });
     return out;
   };
 
