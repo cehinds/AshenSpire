@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 
 const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
 const coop = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
@@ -40,6 +41,49 @@ test('HUD tracker stops after a bounded pose window instead of running every fra
   assert.match(stage, /const TRACK_WINDOW_MS = \d+;/);
   assert.match(stage, /function trackPlayerHud\(\) \{[\s\S]*?performance\.now\(\) < trackUntil[\s\S]*?\? requestAnimationFrame\(trackPlayerHud\) : 0;/);
   assert.match(stage, /extendTracking\(\);\s*if \(!trackingRequest\) trackingRequest = requestAnimationFrame\(trackPlayerHud\);/);
+});
+
+function poseProbe(reduced = false) {
+  const calls = { tracked: 0, scheduled: 0, centered: 0 };
+  const begin = stage.indexOf('  const poseObserver = new MutationObserver(');
+  const end = stage.indexOf('  // Both accessibility inputs', begin);
+  assert.ok(begin >= 0 && end > begin);
+  const api = runInNewContext('let trackingRequest = 0;\n' + stage.slice(begin, end) + '\nposeObserver', {
+    MutationObserver: class {
+      constructor(callback) { this.deliver = callback; }
+      observe(_field, options) { this.options = options; }
+    },
+    field: { closest: () => ({ dataset: { targetHud: 'true' } }) },
+    reducedMotionRequested: () => reduced,
+    centerTargetOverheads: () => calls.centered++,
+    extendTracking: () => calls.tracked++, trackPlayerHud() {},
+    requestAnimationFrame: () => { calls.scheduled++; return 1; },
+  });
+  return { calls, api };
+}
+const mutation = (attributeName, oldValue, current, body = true) => ({ attributeName, oldValue,
+  target: { getAttribute: () => current, matches: () => body } });
+
+for (const reduced of [false, true]) test(`pose tracking ignores no-op and nested HUD mutations (reduced=${reduced})`, () => {
+  const probe = poseProbe(reduced);
+  assert.equal(probe.api.options.attributeOldValue, true);
+  probe.api.deliver([
+    mutation('class', 'combatant player', 'combatant player'),
+    mutation('src', 'idle.webp', 'idle.webp'),
+    mutation('data-pose', 'guard', 'guard'),
+    mutation('class', 'badge', 'badge active', false),
+  ]);
+  assert.deepEqual(probe.calls, { tracked: 0, scheduled: 0, centered: 0 });
+  probe.api.deliver([mutation('data-pose', 'idle', 'guard', false)]);
+  assert.deepEqual(probe.calls, reduced ? { tracked: 0, scheduled: 0, centered: 1 }
+    : { tracked: 1, scheduled: 1, centered: 0 }, 'a real pose still updates its overheads');
+});
+
+test('batched A→B→A body mutations retain the genuine last change and one pending tracker', () => {
+  const probe = poseProbe();
+  probe.api.deliver([mutation('class', 'sprite', 'sprite'), mutation('class', 'sprite hit', 'sprite')]);
+  probe.api.deliver([mutation('src', 'idle.webp', 'guard.webp')]);
+  assert.deepEqual(probe.calls, { tracked: 2, scheduled: 1, centered: 0 });
 });
 
 test('combat-layer QA probe validates the sprite pseudo-element shadows, not the removed layer', () => {

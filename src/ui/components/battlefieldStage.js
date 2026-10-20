@@ -1378,18 +1378,21 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   });
   window.addEventListener('resize', schedule);
   const poseObserver = new MutationObserver(mutations => {
+    // Retained combatants reapply owned classes during receipt renders. A
+    // same-value class/src/pose assignment is no body motion and must not
+    // reopen the 900ms tracking window (or refit Reduced-motion overheads).
+    // Check each mutation against its old value: A→B→A still includes B→A.
+    if (!mutations.some(m => m.oldValue !== m.target.getAttribute(m.attributeName)
+      && (m.attributeName !== 'class' || m.target.matches?.('.combatant, .sprite')))) return;
     // A deliberate stance still settles its readout when idle motion is off.
     if (reducedMotionRequested()) {
       if (field.closest('.combat')?.dataset.targetHud === 'true') centerTargetOverheads();
       return;
     }
-    // Class churn inside the HUD (highlights, hover) is not body motion; only
-    // pose attributes or a combatant/sprite class change open a tracking window.
-    if (!mutations.some(m => m.attributeName !== 'class' || m.target.matches?.('.combatant, .sprite'))) return;
     extendTracking();
     if (!trackingRequest) trackingRequest = requestAnimationFrame(trackPlayerHud);
   });
-  poseObserver.observe(field, { subtree: true, attributes: true,
+  poseObserver.observe(field, { subtree: true, attributes: true, attributeOldValue: true,
     attributeFilter: ['src', 'data-pose', 'data-rest', 'data-stance', 'data-animating', 'class'] });
   // Both accessibility inputs can change while a fight is on screen. Settle
   // once after motion is disabled, and resume frame tracking only after it is
