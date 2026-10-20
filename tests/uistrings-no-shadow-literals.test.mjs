@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 'common-controls', 'core-profile'].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 'common-controls', 'core-profile'].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -56,6 +56,9 @@ const ALLOWED = [
   ['src/ui/screens/settings.js', 'Auto', 'persisted uiScale/textSize option ids and defaults; both displayed choices explicitly read settings.viewPreset.auto'],
   ['src/ui/screens/settings.js', 'Game rules', 'category key and selected-category comparison; CATEGORY_LABELS renders gameProfile.settings.title'],
 
+  ['src/ui/components/card.js', 'Evade', 'the Evade stat granted on a stance change; not the Evade stance name row'],
+  ['src/ui/components/damageReceipt.js', 'Against', 'leading word of the per-target damage receipt scope line; not the Core Smash stance-matchup sentence'],
+  ['src/ui/previews/itemCards.js', 'Prepared', 'item-card preview pose option label; not the Prepared stance name row'],
   ['src/ui/components/card.js', 'Spell', 'the card face camp subtype and range-name table; not the deck editor stance label'],
   ['src/ui/components/collectibleCard.js', 'Consumable', 'a potion usage line on the collectible card; not the deck editor stance label'],
   ['src/ui/screens/equipment.js', 'Consumable', 'an inventory category id compared against row data; not copy'],

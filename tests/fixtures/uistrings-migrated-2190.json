@@ -1,0 +1,4 @@
+{
+  "reason": "Core Smash vs defensive stance rows introduced by PR #2190; retain them after origin/dev advances.",
+  "ids": ["card.smash.coreClause", "stance.name.evade", "stance.name.prepared"]
+}
