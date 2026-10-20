@@ -1509,6 +1509,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         || !meP?.connected || !meP?.alive || !!(meP?.pendingAbilityDiscard || meP?.pendingCardChoice),
       ...combatToolsState, entries: sc.combatLog || [] }));
     combatTools = mountCombatTools(app.querySelector('.combat'), { state: combatToolsState,
+      readSettings: () => readSettings ? readSettings() : meta.settings || {},
       onGridToggle: enabled => onSettingsChange?.({ 'gameConfig.presentation.showFormationGrid': enabled }),
       onViewChange: updateTools, onToggle: enabled => send({ t: 'setReactions', enabled }) });
     updateTools();

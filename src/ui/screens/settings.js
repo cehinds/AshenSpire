@@ -12,6 +12,7 @@ import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 
 import { ACTION_PACING, AUTOMATION_DEFAULTS } from '../../model/autoCombatPolicy.js';
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
+import { COMBAT_LOG_PALETTE_DEFAULTS } from '../models/CombatLogPaletteModel.js';
 import { advancedSubgroups, statsSection, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
 import { statsTopicPreview, statsExampleClasses, STATS_EXAMPLE_CLASS_KEY } from '../models/StatsPreviewModel.js';
 import { levelPacePreview } from '../models/LevelPacePreviewModel.js';
@@ -328,6 +329,10 @@ function recoverySettingRows() {
 
 const ROWS = [
   { cat: 'Combat', key: 'askToUpcastAfterTarget', type: 'toggle', def: false, label: 'Ask to upcast after choosing a target', note: 'Off: use the Upcast button under an eligible selected card. On: choose a temporary rank before committing the play; Cancel spends nothing.' },
+  { cat: 'Combat', key: 'combatLogPlayerColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.player,
+    label: t('settings.row.combatLogPlayerColor'), note: tFull('settings.row.combatLogPlayerColor') },
+  { cat: 'Combat', key: 'combatLogEnemyColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.enemy,
+    label: t('settings.row.combatLogEnemyColor'), note: tFull('settings.row.combatLogEnemyColor') },
   ...tooltipSettingsRows(),
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),
     note: tFull('settings.row.fullscreen') },

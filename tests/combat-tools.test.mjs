@@ -373,3 +373,24 @@ test('co-op mounts the tools without an Auto switch', () => {
     tools.release();
   });
 });
+
+test('the log palette follows saved settings and refreshes while the modal is open', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    let settings = { combatLogPlayerColor: '#73bdff', combatLogEnemyColor: '#ffaaa0' };
+    const state = {};
+    const tools = mountCombatTools(combatEl, { state, readSettings: () => settings, onViewChange() {}, onToggle() {} });
+    const model = combatToolsModel({ supported: true, enabled: true, entries: logRows });
+    tools.update(model);
+    fullLogButton(combatEl).click();
+    const list = state.fullLog.panel.querySelector('.combat-log-modal-entries');
+    assert.equal(list.getAttribute('style'), '--combat-log-player-color:#73bdff;--combat-log-enemy-color:#ffaaa0');
+    settings = { combatLogPlayerColor: '#84caff', combatLogEnemyColor: '#ff9f96' };
+    tools.update(model);
+    assert.equal(list.getAttribute('style'), '--combat-log-player-color:#84caff;--combat-log-enemy-color:#ff9f96');
+    closeCombatFullLog(state);
+    tools.release();
+  });
+});
