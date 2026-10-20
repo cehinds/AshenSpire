@@ -2192,6 +2192,8 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-preview-host { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .smith-upgrade-modal .smith-preview-host { flex: 1 1 0; overflow: hidden; }
 .smith-consequence { flex: 0 0 auto; margin: 0; }
+/* Refusal notes are rows, not a full-height flex basis in this column. */
+.smith-preview-region > .as-reasonnote { flex: 0 0 auto; }
 .mount-service-outcome { display: flex; gap: 1.2rem; align-items: flex-start; margin: 0.4rem 0 0.8rem; }
 /* The pane's card scrolls its facts; its padding-bottom is the cost strip's,
    so the pinned strip sits flush on the card's foot. */
@@ -2210,17 +2212,20 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 }
 .smith-cost-strip > .as-blocker.pinned { margin: 0; }
 .smith-selected-head > .sr-name,
-.smith-upgrade-modal .smith-upgrade-fold > summary .sr-name {
+.smith-upgrade-modal .smith-upgrade-fold > summary .sr-name,
+.smith-upgrade-modal .smith-economy-values {
   font-family: var(--font-body); font-size: max(1.4rem, calc(15px / var(--ui-zoom, 1)));
   font-weight: 600; line-height: 1.2; color: var(--parchment);
 }
 .smith-preview-economy { display: flex; align-items: baseline; }
-.smith-economy-values { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.45rem; font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); }
+.smith-economy-values { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.45rem; color: var(--parchment); }
 .smith-economy-values > b { white-space: nowrap; font-weight: 600; }
 .smith-cost-pair > .sp-k { font-size: 1rem; letter-spacing: 0.18em; }
 .smith-cost-pair > .sp-k > i, .smith-cost-pair > .sp-v > i { font-style: normal; color: var(--muted); padding-inline: 0.1em; }
 .smith-preview-economy.affordable .smith-cost-available, .confirmation-cost.affordable .smith-cost-available { color: var(--green); }
 .smith-preview-economy.unaffordable .smith-cost-available, .confirmation-cost.unaffordable .smith-cost-available { color: var(--danger, var(--ember)); }
+/* Leave room for italic glyph overhang inside clipped delta flex boxes. */
+.smith-preview-card .as-delta { padding-inline-end: 0.2em; }
 .smith-preview-card .smith-fold-values { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.3rem 1rem; }
 .smith-preview-card .smith-data-heading { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
 .smith-preview-card .sr-vals { flex-direction: column; align-items: flex-end; gap: 0.3rem; }

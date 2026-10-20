@@ -54,3 +54,32 @@ export function matchesCommittedCards(rows, expected) {
         line.kind === (value.op === 'block' ? 'gain' : value.op) && line.values.includes(String(value.value))));
   });
 }
+
+export function matchesSmithCommit(state, expected, baseline) {
+  const {live, saved} = state;
+  if (![live,saved].every(row => row?.smithingStones === expected.receipt.stoneBalanceAfter
+    && row?.itemUpgradeLevels?.[expected.receipt.itemRef] === expected.receipt.afterLevel)) return false;
+  const identities = deck => deck.map(({instanceId,cardId}) => [instanceId,cardId]);
+  if (JSON.stringify(identities(live.deck)) !== JSON.stringify(identities(saved.deck))) return false;
+  // Use defaults actually added by the production loader BEFORE the action,
+  // not a second model of card normalization. Compare all post-action gameplay
+  // data, including unchanged shot cards, after only those observed defaults.
+  const comparable = live.deck.map(card => {
+    const priorLive = baseline.live.deck.find(row => row.instanceId === card.instanceId);
+    const priorSaved = baseline.saved.deck.find(row => row.instanceId === card.instanceId);
+    const normalized = {...card};
+    for (const [key,value] of Object.entries(priorSaved || {})) {
+      if (!(key in normalized) && priorLive && !(key in priorLive)) normalized[key] = value;
+    }
+    return normalized;
+  });
+  const canonical = value => JSON.stringify(value, (key,row) => row && !Array.isArray(row) && typeof row === 'object'
+    ? Object.fromEntries(Object.entries(row).sort(([a],[b])=>a.localeCompare(b))) : row);
+  if (canonical(comparable) !== canonical(saved.deck)) return false;
+  return expected.cards.every(want => {
+    const before = live.deck.find(row => row.instanceId === want.instanceId);
+    const after = saved.deck.find(row => row.instanceId === want.instanceId);
+    return before && after && before.smithingLevel === expected.receipt.afterLevel
+      && before.cardId === want.cardId && JSON.stringify(before) === JSON.stringify(after);
+  });
+}
