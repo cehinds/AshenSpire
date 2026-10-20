@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Spell Counters work in Core** ([#2209](https://github.com/cehinds/AshenSpire/pull/2209), `0.7.1.1721`). Spell Counters such as Frost Counter now work as Counters in Core: they return half the incoming damage as a magical attack that rolls to hit, with Poise, once per turn cycle.
+- **Spell Counters work in Core** ([#2209](https://github.com/cehinds/AshenSpire/pull/2209), `0.7.1.1723`). Spell Counters such as Frost Counter now work as Counters in Core: they return half the incoming damage as a magical attack that rolls to hit, with Poise, once per turn cycle.
 
 - **Counter reworked** ([#2200](https://github.com/cehinds/AshenSpire/pull/2200), `0.7.1.1721`). Counter now answers any attack it covers: it returns half the damage it takes, a quarter more with extra Block when it beats the attack, and reaction cards cost 1 less stamina from your hand.
 - **Defend hits harder, Smash breaks guards** ([#2190](https://github.com/cehinds/AshenSpire/pull/2190), `0.7.1.1719`). Defend now gives 10 Block. Smash against a defending target deals double damage plus a quarter of its Block, and half of that hits Poise.
