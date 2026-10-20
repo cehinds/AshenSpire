@@ -2117,6 +2117,8 @@ function collectContentProblems(bundle, errors = []) {
     // An enemy's own tags are checked with every other carrier's, by
     // tagContentProblems above — one rule, one message, for all of them.
     const moveIds = new Set(Object.keys(enemy.moves || {}));
+    if (enemy.rangeClosingMove !== undefined && (!moveIds.has(enemy.rangeClosingMove) || !enemy.moves[enemy.rangeClosingMove].effects?.some(effect => effect.op === 'moveEngagement'))) err(`${path}.rangeClosingMove`, 'must name an owned movement move');
+    for (const id of Object.keys(enemy.moveSources || {})) if (!moveIds.has(id)) err(`${path}.moveSources.${id}`, 'must name an owned move');
     if (enemy.firstMove != null && !moveIds.has(enemy.firstMove)) {
       err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is not one of this enemy's moves`);
     } else if (enemy.firstMove != null && enemy.moves[enemy.firstMove].reaction !== undefined) {

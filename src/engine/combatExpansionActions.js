@@ -50,7 +50,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
   prefix.emit = () => {}; prefix.enqueue = () => {};
   const prefixEntity = entity => entity && expansionEntity(prefix, { id: entity.id, playerId: ctx.playerIdForEntity?.(entity) });
   // Planning is committed seeded work. Paused effects retain this plan in snapshots.
-  for (const action of actions) {
+  for (const [rangeEffectIndex, action] of actions.entries()) {
     action.meta = { ...action.meta, expansionGroup: group };
     const eff = action.effect;
     const shadow = { ...action, source: prefixEntity(action.source), owner: prefixEntity(action.owner), target: prefixEntity(action.target), meta: { ...action.meta, expansionGroup: undefined, expansionAuthoredAction: true } };
@@ -94,7 +94,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
         const split = eff.op === 'damage' ? { splitBase: Math.max(0, Math.floor(base)),
           ratingBonus: Actions.cardRatingDamage(prefix, shadow.source, contactCarrier, attackBase), ratingPart: Actions.ratingBonusPart(prefix, contactCarrier) } : {};
         const index = row.contacts.length;
-        row.contacts.push({ ...profile, amount, ...split, ...(Number.isFinite(contactCarrier.magicShare) ? { magicShare: contactCarrier.magicShare } : {}), ...(contactCarrier.physicalDamageType ? { physicalDamageType: contactCarrier.physicalDamageType } : {}), ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
+        row.contacts.push({ ...profile, ...(carrier.rangePlan ? { rangeContactId: `${rangeEffectIndex}:${r}:${h}:${source.kind === 'enemy' ? `player:${ctx.playerIdForEntity?.(entity) || 'player'}` : `enemy:${entity.id}`}` } : {}), amount, ...split, ...(Number.isFinite(contactCarrier.magicShare) ? { magicShare: contactCarrier.magicShare } : {}), ...(contactCarrier.physicalDamageType ? { physicalDamageType: contactCarrier.physicalDamageType } : {}), ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
         contacts.push({ key, index, id: entity.id, playerId: ctx.playerIdForEntity?.(entity), ...(crit ? { crit } : {}) });
       }
       action.meta.expansionContacts.push(contacts);
@@ -242,7 +242,7 @@ export function beginExpandedAction(ctx, group, source) {
     if (!expansionTargetPresent(ctx, target)) continue;
     const profile = row.contacts[0] || group.carrier?.combatProfile || {};
     const serial = group.manualCounterSerials?.[row.playerId || 'player'];
-    const carrier = { ...group.carrier, additionalTargets: Math.max(0, Object.keys(group.targets).length - 1), ...(serial ? { manualCounterSerial: serial } : {}) };
+    const carrier = { ...group.carrier, ...(profile.rangeContactId ? { rangeContactId: profile.rangeContactId } : {}), additionalTargets: Math.max(0, Object.keys(group.targets).length - 1), ...(serial ? { manualCounterSerial: serial } : {}) };
     row.receipt = (ctx._expansionPreview ? Matchups.previewTacticalAction : Matchups.beginTacticalAction)(ctx, source, target, carrier, row.contacts,
       { ...Control.statusIncomingModifier(ctx, target, profile), contactModifiers: row.contacts.map(contact => Control.statusIncomingModifier(ctx, target, contact)), restrictions: Control.controlRestrictions(ctx, target) });
     row.interactions = { ...profile,

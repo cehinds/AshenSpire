@@ -185,6 +185,7 @@ export function createRunCombat({
     // has no equipment code, only statuses applied at combat start.
     playerStatuses: [...playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
+  if (combat.rangeState && !run.rangePolicy) run.rangePolicy = structuredClone(combat.rangeState.policy);
   if (knowledgeRun) run.enemyKnowledgeState = knowledgeRun.enemyKnowledgeState;
   return combat;
 }

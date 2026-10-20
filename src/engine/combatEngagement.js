@@ -54,6 +54,7 @@ const hostileOps = new Set(['damage','applyStatus','buildup','poiseDamage','ward
 export function quoteRangeActions(ctx, source, actions, { route = 'advance', context = ctx._rangeContext, preview = false } = {}) {
   if (!ctx.rangeState) return null;
   const contacts = [];
+  const planningCtx = preview && actions.some(action => action.effect.target === 'randomEnemy') ? { ...ctx, rng: Foundation.candidateState(ctx, { detached: true }).rng } : ctx;
   for (const [index, action] of actions.entries()) {
     if (!hostileOps.has(action.effect.op)) continue;
     const eff = action.effect;
@@ -63,7 +64,7 @@ export function quoteRangeActions(ctx, source, actions, { route = 'advance', con
     for (let r = 0; r < repeats; r++) for (let h = 0; h < hits; h++) {
       // A UI quote exposes the finite public envelope of a random selector;
       // acceptance samples its transactional stream once and retains the refs.
-      const targets = Actions.resolveTargets(ctx, action, preview && eff.target === 'randomEnemy' ? 'allEnemies' : eff.target);
+      const targets = Actions.resolveTargets(planningCtx, action, eff.target);
       batches.push(targets.map(target => ({ id: target.id, playerId: ctx.playerIdForEntity?.(target) })));
       for (const target of targets) if (target.alive && source.kind !== target.kind) {
         const contact = rangeSourceContact(ctx, source, target, action.card, eff, `${index}:${r}:${h}:${actorRangeKey(ctx, target)}`);
@@ -84,7 +85,8 @@ export function rangeHitContact(ctx, source, target, carrier) {
   const targetKey = actorRangeKey(ctx, target), plan = carrier?.rangePlan;
   if (plan) {
     const committed = rangeSourceContact(ctx, source, target, carrier);
-    const row = plan.targets.find(row => row.targetKey === targetKey && row.sourceWeaponId === committed.sourceWeaponId && row.coverage === rangeBand(committed.coverage));
+    const row = carrier.rangeContactId ? plan.targets.find(row => row.contactId === carrier.rangeContactId && row.targetKey === targetKey)
+      : plan.targets.find(row => row.targetKey === targetKey && row.sourceWeaponId === committed.sourceWeaponId && row.coverage === rangeBand(committed.coverage) && row.bypass === committed.bypass);
     if (!row) return { inRange: false, precisionDelta: 0, reason: 'unplanned' };
     return { ...row, inRange: !ctx.rangeState.policy.enabled || row.bypass || row.effectiveBand <= Math.min(2, row.coverage + (plan.route === 'throw' && row.throwCapable ? 1 : 0)) };
   }
@@ -105,7 +107,7 @@ export function assertRangeCardEnabled(ctx, def) {
 
 export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   if (!ctx.rangeState) return null;
-  const plan = carrier.rangePlan || quoteRangeActions(ctx, source, actions, { route: carrier.rangeRoute || 'advance' });
+  const plan = carrier.rangePlan || carrier.rangeQuotedPlan || quoteRangeActions(ctx, source, actions, { route: carrier.rangeRoute || 'advance' });
   if (!plan.available) throw Foundation.playRefusal('The selected range route cannot reach every target', 'range');
   const extra = plan.advanceSp;
   const available = source.kind === 'enemy' ? source.fixCoreStaminaRemaining ?? source.stamina ?? source.maxStamina ?? 0 : source.energy;
@@ -120,7 +122,7 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   }
   const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };
   carrier.rangePlan = accepted;
-  delete carrier.rangeBaseCosts; delete carrier.rangeRoute;
+  delete carrier.rangeBaseCosts; delete carrier.rangeRoute; delete carrier.rangeQuotedPlan;
   for (const action of actions) {
     action.card = { ...action.card, rangePlan: accepted };
     action.meta = { ...action.meta, energySpent: (action.meta?.energySpent || 0) + extra, staminaSpent: (action.meta?.staminaSpent || 0) + extra };
@@ -138,18 +140,24 @@ export function previewRangeRoutes(ctx, source, actions, baseCosts, { rangeRoute
     const costs = addRangeCosts(baseCosts, plan);
     const targets = [];
     for (const row of plan.targets) {
-      if (targets.some(existing => existing.targetKey === row.targetKey)) continue;
-      const target = opponents.find(entity => actorRangeKey(ctx, entity) === row.targetKey);
-      const index = Number(row.contactId.split(':')[0]), carrier = actions[index]?.card || {};
+      const index = Number(row.contactId.split(':')[0]);
+      const projected = actions[index]?.target;
+      const target = projected && actorRangeKey(ctx, projected) === row.targetKey ? projected : opponents.find(entity => actorRangeKey(ctx, entity) === row.targetKey);
+      const carrier = actions[index]?.card || {};
       const current = hitPreview?.(ctx, source, target, carrier);
       const after = hitPreview?.(ctx, source, target, { ...carrier, rangePlan: plan });
-      targets.push({ targetKey: row.targetKey, targetId: target?.id, band: row.actualBand, coverage: row.coverage,
+      targets.push({ contactId: row.contactId, targetKey: row.targetKey, targetId: target?.id, band: row.actualBand, coverage: row.coverage,
         effectiveBand: row.effectiveBand, precisionDelta: row.precisionDelta, inRange: !!after?.inRange,
         hitChance: after?.hitChance ?? null, currentInRange: !!current?.inRange, currentHitChance: current?.hitChance ?? null });
     }
+    const grouped = [...new Set(targets.map(row => row.targetKey))].map(key => {
+      const contacts = targets.filter(row => row.targetKey === key), first = contacts[0];
+      const hitChances = contacts.map(row => row.hitChance), currentHitChances = contacts.map(row => row.currentHitChance);
+      return { ...first, contacts, hitChances, currentHitChances, inRange: contacts.every(row => row.inRange), currentInRange: contacts.some(row => row.currentInRange), allCurrentInRange: contacts.every(row => row.currentInRange), hitChance: hitChances.every(n => n === hitChances[0]) ? hitChances[0] : null, currentHitChance: currentHitChances.every(n => n === currentHitChances[0]) ? currentHitChances[0] : null };
+    });
     const affordable = (source.energy ?? source.stamina ?? 0) >= costs.energy && (source.mana || 0) >= costs.mana;
     return { id: plan.route, available: plan.available, reason: !plan.available ? 'range' : !affordable ? 'stamina' : null,
-      advanceSp: plan.advanceSp, precisionDelta: Math.min(0, ...plan.targets.map(row => row.precisionDelta)), costs, affordable, targets };
+      advanceSp: plan.advanceSp, precisionDelta: Math.min(0, ...plan.targets.map(row => row.precisionDelta)), costs, affordable, targets: grouped };
   });
   const selected = routeRows.find(row => row.id === rangeRoute);
   if (!selected) throw Error('Unknown range route');
