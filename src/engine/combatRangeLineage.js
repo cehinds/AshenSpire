@@ -57,7 +57,7 @@ function sampledTargets(ctx,source,target,effect,carrier) {
   return Actions.resolveTargets(ctx,{source,owner:source,target,card:carrier,effect,meta:{}},effect.target);
 }
 export function assertPreparingRangeSupported(ctx,source,def) {
-  if(!ctx.rangeState) return;
+  if(!ctx.rangeState?.policy.enabled) return;
   const carrier={authoredTags:def.cardTags || def.tags || []};
   const hooks=Triggers.rangeHookSources(ctx,source,sourceStatuses(ctx,source,[]));
   const visited=new Set();
@@ -75,6 +75,7 @@ export function assertPreparingRangeSupported(ctx,source,def) {
   walk({type:'cardPreparing'},keyOf(ctx,source),0);
 }
 export function extendRangeEnvelope(ctx,source,actions,contacts,{preview=false,carrier={}}={}) {
+  if(!ctx.rangeState?.policy.enabled)return null;
   const sourceKey=keyOf(ctx,source),sites=[],edges=[];
   const hooks=Triggers.rangeHookSources(ctx,source,sourceStatuses(ctx,source,actions));
   if (!hooks.some(({trigger})=>(trigger.do || []).some(effect=>hostile.has(effect.op) && !['self','owner','player','ally','allAllies'].includes(effect.target)))) return null;
@@ -192,7 +193,7 @@ export function inheritedContactId(ctx,action,target) {
  * Quote on a detached RNG first so an unaffordable automatic effect spends no
  * resources or samples, while its already-resolved defensive cause remains. */
 export function acceptIndependentTrigger(ctx,source,actions,key) {
-  if(!ctx.rangeState || !actions.some(action=>hostile.has(action.effect.op))) return actions;
+  if(!ctx.rangeState?.policy.enabled || !actions.some(action=>hostile.has(action.effect.op))) return actions;
   for(const action of actions) {
     const inherited=action.card?.rangeLineage;
     if(inherited)return actions;
@@ -208,6 +209,7 @@ export function acceptIndependentTrigger(ctx,source,actions,key) {
     ctx.emit?.('combatRangeActionUnavailable',{sourceId:source.id,ownerId:ctx.playerIdForEntity?.(source) || 'player',required:quoted.advanceSp,available,advanceSp:quoted.advanceSp,reason:'stamina',triggerKey:key});
     return actions.filter(action=>!hostile.has(action.effect.op));
   }
+  for(const action of actions)if(action.meta?.event?.rangeOrigin){action.meta={...action.meta,event:{...action.meta.event}};delete action.meta.event.rangeOrigin;}
   const carrier=actions[0].card;
   const rootId=`${ctx.combatKey || 'combat'}:trigger:${++ctx.expansionActionSerial}`;
   const prior=ctx._rangeContext;delete ctx._rangeContext;
@@ -227,7 +229,8 @@ export function bindReservedRootSites(ctx,actions,graph) {
     const site=available.find(site=>!used.has(site.id) && site.targetKey===keyOf(ctx,action.target) && JSON.stringify(site.events)===signature);
     if(!site)throw Rules.playRefusal('The reserved Counter payload is outside its accepted envelope','range-lineage');
     used.add(site.id);
+    const rangeEffectIndex=['damage','poiseDamage','wardDamage'].indexOf(action.effect.op);
     const ref={id:action.target.id,...(ctx.playerIdForEntity?.(action.target)?{playerId:ctx.playerIdForEntity(action.target)}:{})};
-    action.meta={...action.meta,rangeSiteBatches:[[{...ref,siteId:site.id}]],rangeTargetBatches:[[ref]]};
+    action.meta={...action.meta,rangeEffectIndex,rangeSiteBatches:[[{...ref,siteId:site.id}]],rangeTargetBatches:[[ref]]};
   }
 }

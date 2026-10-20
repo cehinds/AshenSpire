@@ -46,11 +46,12 @@ test('one live root retains the bow and dagger source of each contact in either 
   }
 });
 test('a weapon plus independent spell keeps each delivery range through a real save',()=>{
-  const effects=[weapon('mainHand'),{op:'damage',target:'enemy',amount:2,attack:{source:'spell',hand:'offHand'},tags:['camp:spell','range:reach','maneuver:casting']}];
+  for(const range of ['reach','ranged']){
+  const effects=[weapon('mainHand'),{op:'damage',target:'enemy',amount:2,attack:{source:'spell',hand:'offHand'},tags:['camp:spell',`range:${range}`,'maneuver:casting']}];
   const {ctx,card,registries}=fixture(effects,'boneSceptre');
   const read=previewCard(ctx,card.instanceId,'e1');
-  assert.deepEqual(read.range.targets[0].contacts.map(row=>row.coverage),[2,1]);
-  assert.equal(read.range.routes[0].advanceSp,1);
+  assert.deepEqual(read.range.targets[0].contacts.map(row=>row.coverage),[2,range==='reach'?1:2]);
+  assert.equal(read.range.routes[0].advanceSp,range==='reach'?1:0);
   ctx.player.stamina=read.staminaCost;
   primeAccuracyRolls(ctx,{count:2,drawsPerAttack:2});
   dispatch(ctx,{type:'playCard',cardInstanceId:card.instanceId,targetId:'e1'});
@@ -59,4 +60,5 @@ test('a weapon plus independent spell keeps each delivery range through a real s
   const saved=JSON.parse(JSON.stringify(serializeCombatSnapshot(ctx)));
   const restored=restoreCombatSnapshot({registries,rng:createRng(ctx.rng.seed,ctx.rng.getCounters()),snapshot:saved});
   assert.deepEqual(restored.rangeState,ctx.rangeState);
+  }
 });

@@ -54,7 +54,7 @@ export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {
   }
   const weapon = resolved?.sourceType === 'weapon';
   const piece = weapon && (ctx.registries.equipment?.armaments || []).find(row => row.id === resolved.itemId);
-  const coverage = weapon ? resolved.range ?? piece?.range ?? 'melee' : resolved?.sourceType === 'unarmed' ? 'melee' : resolved?.range || profile.range || 'melee';
+  const coverage = weapon ? resolved.range ?? piece?.range ?? 'melee' : resolved?.sourceType === 'unarmed' ? 'melee' : profile.range || resolved?.range || 'melee';
   return { contactId, targetKey: actorRangeKey(ctx, target), coverage, weapon,
     sourceWeaponId: weapon ? resolved.itemId || resolved.id : null,
     throwCapable: weapon && (resolved.propertyTags || piece?.propertyTags || []).includes('throw'),
@@ -207,7 +207,8 @@ export function incomingRangeScope(ctx, group, defender) {
 function quoteCounterReturn(ctx,source,target,carrier,options) {
   const card={...carrier,counterReturnAttack:true};
   delete card.rangePlan;delete card.rangeLineagePlan;delete card.rangeCounterReservation;delete card.rangeReturnAuthorization;
-  const actions=['damage','poiseDamage'].map(op=>({source,owner:source,target,card,effect:{op,amount:1},meta:{}}));
+  const ward = carrier.combatProfile?.camp !== 'spell' && (carrier.traitValues?.flux > 0 || source.combatCounter?.payload?.ward > 0 || carrier.combatProfile?.counterPayload?.ward);
+  const actions=['damage','poiseDamage',...(ward?['wardDamage']:[])].map(op=>({source,owner:source,target,card,effect:{op,amount:1},meta:{}}));
   return quoteRangeActions(ctx,source,actions,options);
 }
 function authorizedReturnCarrier(carrier,authorization) {

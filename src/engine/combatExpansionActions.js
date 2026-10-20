@@ -94,7 +94,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
         const split = eff.op === 'damage' ? { splitBase: Math.max(0, Math.floor(base)),
           ratingBonus: Actions.cardRatingDamage(prefix, shadow.source, contactCarrier, attackBase), ratingPart: Actions.ratingBonusPart(prefix, contactCarrier) } : {};
         const index = row.contacts.length;
-        row.contacts.push({ ...profile, ...(carrier.rangePlan ? { rangeContactId: `${rangeEffectIndex}:${r}:${h}:${source.kind === 'enemy' ? `player:${ctx.playerIdForEntity?.(entity) || 'player'}` : `enemy:${entity.id}`}` } : {}), amount, ...split, ...(Number.isFinite(contactCarrier.magicShare) ? { magicShare: contactCarrier.magicShare } : {}), ...(contactCarrier.physicalDamageType ? { physicalDamageType: contactCarrier.physicalDamageType } : {}), ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
+        row.contacts.push({ ...profile, ...(carrier.rangePlan ? { rangeContactId: `${action.meta.rangeEffectIndex ?? rangeEffectIndex}:${r}:${h}:${source.kind === 'enemy' ? `player:${ctx.playerIdForEntity?.(entity) || 'player'}` : `enemy:${entity.id}`}` } : {}), amount, ...split, ...(Number.isFinite(contactCarrier.magicShare) ? { magicShare: contactCarrier.magicShare } : {}), ...(contactCarrier.physicalDamageType ? { physicalDamageType: contactCarrier.physicalDamageType } : {}), ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
         contacts.push({ key, index, id: entity.id, playerId: ctx.playerIdForEntity?.(entity), ...(crit ? { crit } : {}) });
       }
       action.meta.expansionContacts.push(contacts);
