@@ -101,19 +101,19 @@ export function clearCombatCounter(entity, ctx = null) {
  * Technique riders keyed by the carrier's authored card tags (the list
  * `cardTagIs` reads). A frozen table without `tagRiders` simply has none.
  */
-export function tagRidersFor(cfg, carrier) {
+export function tagRidersFor(cfg, carrier, ctx = null) {
   const table = cfg?.tagRiders;
   if (!table) return [];
   const tags = carrier?.authoredTags || carrier?.tags || [];
-  return Object.keys(table).filter(tag => tags.includes(tag)).map(tag => table[tag]);
+  return Object.keys(table).filter(tag => tags.includes(tag) && !(fixCoreEnabled(ctx) && tag === 'precision')).map(tag => table[tag]);
 }
 
 /** Damage-type and technique riders of one hit, in resolution order. */
-export function hitRiders(cfg, damageType, carrier) {
+export function hitRiders(cfg, damageType, carrier, ctx = null) {
   // A mixed-damage hit carries the rider of every type it deals (owner #23/#24).
   const parts = (carrier?.combatProfile?.damageComponents || []).map(c => cfg?.damageAliases?.[c.type] || c.type);
   return [...new Set([damageType, ...parts])].map(type => cfg?.damageRiders?.[type])
-    .concat(tagRidersFor(cfg, carrier)).filter(Boolean);
+    .concat(tagRidersFor(cfg, carrier, ctx)).filter(Boolean);
 }
 
 /** The larger guard bypass of the hit's riders; never their sum. */
@@ -140,7 +140,7 @@ export function prepareMatchupHit(ctx, source, target, carrier, computedDamage) 
   const damageType = cfg.damageAliases?.[profile?.damageType] || profile?.damageType;
   const targetKey = ctx.playerIdForEntity?.(target) || target?.id;
   const riderSpent = carrier?.combatRiderTargets?.includes(targetKey);
-  const bypass = profile && !carrier?.combatReaction && !riderSpent ? riderGuardBypass(hitRiders(cfg, damageType, carrier)) : 0;
+  const bypass = profile && !carrier?.combatReaction && !riderSpent ? riderGuardBypass(hitRiders(cfg, damageType, carrier, ctx)) : 0;
   const amount = Math.max(0, Math.floor(raw * (smash ? cfg.smash.guardedMultiplier : 1) * (counter ? cfg.counter.incomingMultiplier : 1)));
   return { amount, profile, guardBefore, smash, counterEligible: counter,
     counter: counter ? structuredClone(target.combatCounter) : null,
@@ -245,7 +245,7 @@ export function matchupRiderEffects(ctx, source, target, carrier, { amount = 0, 
   const cfg = combatExpansionEnabled(ctx) ? expansionMatchupRules(ctx) : matchupRules(ctx);
   const type = cfg.damageAliases?.[profile.damageType] || profile.damageType;
   // The damage-type rider and any technique (tag) riders share one budget.
-  const riders = hitRiders(cfg, type, carrier).filter(rider => !(rider.requiresHpLoss && hpLoss <= 0)
+  const riders = hitRiders(cfg, type, carrier, ctx).filter(rider => !(rider.requiresHpLoss && hpLoss <= 0)
     && (target.alive || (rider.cleanse && source?.alive)));
   if (!riders.length) return [];
   if (seen) seen.push(key);
@@ -537,7 +537,7 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   // Technique riders (Precision) join Piercing's bypass: the larger, never the sum.
   const physicalHit = profiles.some((p, i) => p.camp === 'physical' && amounts[i] > 0);
   const bypass = riderGuardBypass([...(pierce && cfg.damageRiders.piercing ? [cfg.damageRiders.piercing] : []),
-    ...(physicalHit ? tagRidersFor(cfg, carrier) : [])]);
+    ...(physicalHit ? tagRidersFor(cfg, carrier, ctx) : [])]);
   return { version: 2, targetKey: targetKey(ctx, target), profile, profiles, amount, amounts, knowledgeBonus,
     guardBefore, guardBypass: !carrier?.combatReaction ? Math.min(amount, guardBefore, bypass) : 0,
     smash: profiles.some(p => p.maneuver === 'smash') && target?.combatStance?.maneuver === 'defend',
@@ -696,7 +696,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     || !target?.alive || !source?.alive
     // Core 2 (SPEC §17): a covered hit that lands answers, whatever got through. Legacy needs the hit fully resisted.
     || (!counterRuleActive(ctx) && (receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload))
-    || CounterRule.counterReturnSpent(target)) return queue;
+    || (CounterRule.counterReturnSpent(target) && !CounterRule.paidCounterContact(ctx, carrier, counter))) return queue;
   target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
   // Reaction rules version 2: Counterstrike scales the authored payload first; SPEC §4.8's return formulas run after.
   const trait = ctx.reactionRulesVersion === 2 ? counter.carrier?.traitValues || {} : {};

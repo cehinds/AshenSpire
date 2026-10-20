@@ -1,5 +1,15 @@
 # AshenSpire component catalog
 
+Combat feedback uses `CombatActionIdentityModel` to name the committed card,
+enemy move and actual armament receipt (including explicit Unarmed). Solo and
+co-op share the FX timeline: identity, action animation, Hit/Miss, target
+reaction, then damage/defense outcome. Range misses say **Out of range** directly
+above the target. The default gap between indications is 500ms; saved custom
+pauses and sprite clip durations retain their own values. In new Core fights,
+each incoming hit is shown before its reaction choice, and its paid Counter
+finishes before the next hit. Historical saves retain their saved reaction
+policy. The visual catalog's `damage-feedback` miniature shows this sequence.
+
 The map's `act-route-strip` uses `ActRouteModel` and `actRouteStripHtml` to show
 the act title, Entrance, a fixed evenly spaced circle for each non-boss floor,
 and Boss on one desktop row. Committed visits fill circles with the shared map
@@ -55,7 +65,7 @@ packs and their objects into one zip, checking each file as it is written. See
 [offline play](offline-play.md).
 
 All run maps share the vector face in `mapNodeInk.js`: opaque dark discs, readable
-glyphs, a pale current-node marker and reachable halos. `mapview.js` owns the
+glyphs, a pale current-node marker and reachable halos. `map/mapview.js` owns the
 node radii; `AtlasCameraModel.js` frames a journey junction using that same close-up
 scale. World map fog compositing is bounded to the visible viewport.
 

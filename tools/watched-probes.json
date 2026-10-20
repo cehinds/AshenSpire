@@ -808,7 +808,7 @@
   {
    "id": "G4",
    "by": "Bjorn",
-   "read": "src/model/mapview.js (the computed framing; .map-scroll[data-framing]) · src/ui/screens/map.js (mountMap)",
+   "read": "src/model/map/mapview.js (the computed framing; .map-scroll[data-framing]) · src/ui/screens/map.js (mountMap)",
    "anchors": [
     "framingBox",
     "data-framing"
@@ -910,7 +910,7 @@
   {
    "id": "G7",
    "by": "Bjorn",
-   "read": "src/model/mapknowledge.js MAP_MODE_DEFAULT='fog' · src/ui/components/mapboard.js data-map-mode, .map-fog-ground · rungs are hidden/placed/known (mapknowledge.js)",
+   "read": "src/model/map/mapknowledge.js MAP_MODE_DEFAULT='fog' · src/ui/components/mapboard.js data-map-mode, .map-fog-ground · rungs are hidden/placed/known (map/mapknowledge.js)",
    "anchors": [
     "MAP_MODE_DEFAULT",
     "map-fog-ground"
@@ -1434,7 +1434,7 @@
   {
    "id": "G8",
    "by": "Bjorn",
-   "read": "src/model/mapknowledge.js (MAP_MODE_DEFAULT = 'fog')",
+   "read": "src/model/map/mapknowledge.js (MAP_MODE_DEFAULT = 'fog')",
    "anchors": [
     "MAP_MODE_DEFAULT"
    ],
@@ -1475,7 +1475,7 @@
   {
    "id": "G9",
    "by": "Bjorn",
-   "read": "src/model/mapknowledge.js (litNodes: run.path only grows, every element shone — monotone BY CONSTRUCTION) · src/ui/components/mapboard.js (visited class)",
+   "read": "src/model/map/mapknowledge.js (litNodes: run.path only grows, every element shone — monotone BY CONSTRUCTION) · src/ui/components/mapboard.js (visited class)",
    "anchors": [
     "litNodes"
    ],
@@ -1702,7 +1702,7 @@
   {
    "id": "K5",
    "by": "Bjorn",
-   "read": "src/model/mapview.js (MAP_ZOOM_DEFAULT = 'Fit') · src/main.js (data-walked-fade, def 'half') · styles/map.css (half = opacity .6, saturate .5) · #164: map H travel 0 by construction",
+   "read": "src/model/map/mapview.js (MAP_ZOOM_DEFAULT = 'Fit') · src/main.js (data-walked-fade, def 'half') · styles/map.css (half = opacity .6, saturate .5) · #164: map H travel 0 by construction",
    "anchors": [
     "MAP_ZOOM_DEFAULT",
     "data-walked-fade"

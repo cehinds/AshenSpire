@@ -24,7 +24,7 @@
 // entry test, and the exit test for the pairs listed OUT below):
 //
 //   zoom  Map zoom (all legal stored values: Fit + the ladder read from
-//         src/model/mapview.js, never retyped here) × the map framing gate:
+//         src/model/map/mapview.js, never retyped here) × the map framing gate:
 //         fit-or-confess. At every value: the camera owns X (horizontal
 //         travel 0, Law 5 clause 1 per container), and a reachable choice
 //         wholly off screen sideways ⇒ .map-clipnote visible, naming a side
@@ -134,14 +134,14 @@ if (ONLY && !['zoom', 'text', 'fade'].includes(ONLY)) {
 const SHAPE = { w: 390, h: 844 };
 
 // ---- legal values, READ FROM THE TREE, never retyped ------------------------
-// The zoom ladder's one home is src/model/mapview.js; the text ladder's is
+// The zoom ladder's one home is src/model/map/mapview.js; the text ladder's is
 // balance.ui.textSize. A copy of either here would agree today and be
 // synchronised by nothing — the exact defect the founding case rode in on
 // (a settings row that once carried four of the ladder's six steps).
 function zoomValuesFromTree() {
-  const src = readFileSync(resolve(TREE, 'src/model/mapview.js'), 'utf8');
+  const src = readFileSync(resolve(TREE, 'src/model/map/mapview.js'), 'utf8');
   const m = /ZOOM_STEPS\s*=\s*Object\.freeze\(\[([^\]]+)\]\)/.exec(src);
-  if (!m) throw new Error('ZOOM_STEPS not found in src/model/mapview.js — nothing to sweep');
+  if (!m) throw new Error('ZOOM_STEPS not found in src/model/map/mapview.js — nothing to sweep');
   const steps = m[1].split(',').map((s) => Number(s.trim())).filter((n) => Number.isFinite(n));
   if (steps.length < 2) throw new Error(`ZOOM_STEPS parsed to ${steps.length} entries — refusing a ladder of one`);
   return ['Fit', ...steps.map((z) => String(Math.round(z * 100)))];

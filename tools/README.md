@@ -184,12 +184,12 @@ prefix; its callers are the union.
 | `map-detail-build.mjs` | Native-resolution pyramid, deliberately outside assets/ (which is inlined). | tools environment-art-build; docs CREDITS.md, docs/EXTERNAL-ASSETS-PLAN.md, docs/design/improve-map-battlefield-art/README.md +3; other src/content/mapArt.generated.js |
 | `map-tap-latency.mjs` | map-tap-latency — how long does a phone tap on a map node take to | tests map-tap-main-thread; other docs/qa/map-tap-latency/result.json |
 | `map-two-axis-pan.mjs` | Issue #1168: the opt-in/default two-axis map camera moves horizontally and | wf dev-preview; tests map-two-axis-pan-scale |
-| `mapfit.mjs` | mapfit — when the game frames the act map for the player, is the | tools actends; other src/content/mapconfig.js, src/model/mapview.js +2 |
-| `mapfog.mjs` | mapfog — does the fog cover the right things, and does the screen | tests engine.test.js; tools actends, browser, pairsweep; docs engine/modules/routes/guide.md; other src/model/mapknowledge.js |
+| `mapfit.mjs` | mapfit — when the game frames the act map for the player, is the | tools actends; other src/content/mapconfig.js, src/model/map/mapview.js +2 |
+| `mapfog.mjs` | mapfog — does the fog cover the right things, and does the screen | tests engine.test.js; tools actends, browser, pairsweep; docs engine/modules/routes/guide.md; other src/model/map/mapknowledge.js |
 | `mapplan.mjs` | mapplan — the data-driven tooling for map config (SPEC §6). | tests engine.test.js; docs SPEC.md, docs/framework-migration-checklist.md; other src/content/mapconfig.js, src/engine/mapgen.js +5 |
 | `mapreach.mjs` | mapreach — can a player REACH every map node, and what can they see | tools actends, mapfit; docs SPEC.md; other docs/architecture-handoff/wireframe-gallery.html, docs/design/battlefield-options-2026-10-16/visual-preview.html +3 |
 | `maps-validate.mjs` | maps-validate - validates the JSON map layer. | tests build-game, maps-json; tools build-game; other package.json |
-| `mapspacing.mjs` | mapspacing — measure adjacent map-floor pitch on the rendered map. | tools actends; other src/model/mapview.js |
+| `mapspacing.mjs` | mapspacing — measure adjacent map-floor pitch on the rendered map. | tools actends; other src/model/map/mapview.js |
 | `markhome.mjs` | markhome — card text marks may not be keyed to one of their two | tests run-node |
 | `measure-classes.mjs` | measure-classes — instrumented per-class win-rate measurement | tests run-node-lanes, sim-parity, simbot-decisions +1; tools results/starseerkit-decision.md, results/sweep-bleed-threshold.md; docs docs/FINISH.md, docs/RELEASE-CHECKLIST.md; other src/engine/runCombat.js |
 | `mechanics-generate.mjs` | mechanics-generate — one mechanic folder per behaviour tag and per status. | tests mechanics; docs engine/mechanics/README.md; other engine/contracts/mechanic.schema.json |

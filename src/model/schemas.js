@@ -134,6 +134,8 @@ export const EVENTS = Object.freeze([
   'enemyTurnStart',
   'enemyTurnEnd',
   'enemyMoveStarted',
+  'combatHitStarted',
+  'combatContactPrepared',
   'enemyActorTurnStarted', 'combatReactionOffered', 'combatReactionChosen',
   // SPEC §4.10: why no reaction was offered; a Smash broke physical Guard.
   'combatReactionUnavailable', 'combatGuardBroken',
@@ -550,7 +552,7 @@ export const EFFECT_SPECS = Object.freeze({
   // target and nothing else — the check, the die and the guard are the
   // framework's, and the price is the Weight Class's.
   dodgeRoll: { allowed: [], required: [], refs: {} },
-  applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
+  applyStatus: { allowed: ['status', 'stacks', 'tags'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status', 'amount'], required: ['status'], refs: { status: 'statuses' } },
   grantCardCharge: { allowed: ['key', 'cardType', 'cardTag', 'abilityKind', 'damage', 'damageScope', 'manaDiscount', 'block', 'heal', 'break', 'buildup', 'buildupStatus'], required: ['key'], refs: { buildupStatus: 'statuses' } },
   modifyCards: { allowed: ['from','selection','look','changes'], required: ['from','amount','changes'], refs: {} },
@@ -1179,7 +1181,7 @@ export const SCHEMAS = Object.freeze({
     // How many DISTINCT columns the act may be entered from. Absent = today's
     // rule (see engine/mapgen.js). Whether the number is reachable at all —
     // more doors than walkers, more doors than columns — needs two fields to
-    // ask, so it is model/mapview.js's `viewRefusals`, not the schema's.
+    // ask, so it is model/map/mapview.js's `viewRefusals`, not the schema's.
     entries: opt(int),
     typeWeights: mapOf(num),
     // What a `?` node resolves to — beside the geometry, per act. Moved out of

@@ -11,6 +11,12 @@ import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 import { createRng } from '../src/engine/rng.js';
 import { createSession } from '../tools/session.mjs';
 import { coopTimelineRoute, coopPacedRoute, coopReceiptOverlays, coopCardPlayBuzz, coopReceiptSounds, coopFinalFrame } from '../src/ui/screens/coop.js';
+
+test('per-contact telegraphs and resumed hits keep the shared enemy presentation route', () => {
+  assert.equal(coopTimelineRoute([{ type: 'combatContactPrepared', sourceId: 'e1', contactKey: 'root:1' }]), 'enemy');
+  assert.equal(coopTimelineRoute([{ type: 'combatHitStarted', sourceId: 'e1', contactPrepared: true },
+    { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 5, isAttack: true }]), 'enemy');
+});
 import { haptic } from '../src/ui/haptics.js';
 import { decorateCombatEffects, combatEffectReceipt } from '../src/model/combatEffectEvents.js';
 import { resolveCoopPlayedCombatCard } from '../src/ui/models/PlayedCombatCard.js';

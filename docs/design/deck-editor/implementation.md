@@ -52,7 +52,7 @@ passed 14 tests. The full bundle and 198 external-pack checks pass. Browser chec
 cover the actual game door, add/save/reopen, asset-object loading, Undo, search,
 view switching, folded groups and mobile action reachability.
 
-See `/design-qa.md` for captures, intentional visual differences and scope.
+See `/docs/design/deck-editor/design-qa.md` for captures, intentional visual differences and scope.
 Current refinement checks: 39 deck DOM tests; 100 combined model/removal, save/pool
 and smith extraction/install regressions; five animation lifecycle/routing tests; 35 cost/config tests; three
 row-editor geometry/import tests. Browser checks verified exact-frame pause,

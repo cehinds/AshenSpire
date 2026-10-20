@@ -289,7 +289,7 @@ g.map-node:focus:not(:focus-visible) { outline: none; }
 /* ---- the shrine lane (Settings → Display · Shrine path glow) ---------------
    "as new paths open, the path to the nearest shrine should have a glowing
    effect" — Constantine, 2026-08-16. WHICH nodes is decided in
-   model/mapknowledge.js and clipped to what the fog already draws
+   model/map/mapknowledge.js and clipped to what the fog already draws
    (ui/components/mapboard.js); this block is only what that set looks like.
 
    IT MUST NOT READ AS `reachable`, which is the one thing this could break. The

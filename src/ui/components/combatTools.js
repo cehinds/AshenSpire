@@ -9,6 +9,7 @@ import { trackGesture } from '../gesture.js';
 import { hudGeometry, toolsRowTop } from '../models/HudLayoutOffsetModel.js';
 import { visibleCombatPanelRect } from './battlefieldStage.js';
 import { renderCombatLogEntries, openCombatLogModal } from './combatLogModal.js';
+import { combatLogPalette } from '../models/CombatLogPaletteModel.js';
 
 // The narrowest a hand-spanning row may be, in CSS px: Combat log and the
 // Reaction switch side by side with their gap. A two-card hand is narrower.
@@ -65,7 +66,7 @@ export function closeCombatFullLog(state) {
 // Gap between a corner tool and the combat screen's edge, in CSS px.
 const CORNER_INSET = 16;
 
-export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, readAuto, onViewChange, onGridToggle }) {
+export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, readAuto, readSettings = () => ({}), onViewChange, onGridToggle }) {
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
   const logButton = button({ label: t('combat.log.title'), attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
   const gridLabel = el('label', { class: 'combat-grid-toggle' });
@@ -167,9 +168,13 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
   // sits on the screen's `state`, so a remount keeps the same door open; only
   // the screen's teardown (closeCombatFullLog) or the reader's Close ends it.
   let latestEntries = [];
+  const readPalette = () => {
+    const settings = readSettings() || {};
+    return combatLogPalette(settings);
+  };
   fullLog.addEventListener('click', () => {
     if (state.fullLog) return;
-    state.fullLog = openCombatLogModal({ entries: latestEntries, opener: fullLog, onClose: () => { state.fullLog = null; } });
+    state.fullLog = openCombatLogModal({ entries: latestEntries, palette: readPalette(), opener: fullLog, onClose: () => { state.fullLog = null; } });
   });
   reaction.addEventListener('click', () => onToggle(reaction.getAttribute('aria-checked') !== 'true'));
   // Like the Grid checkbox: wait for the write, block overlapping toggles, and repaint from the persisted
@@ -279,16 +284,17 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     // as the full log, so battlefield stacking contexts cannot cover it.
     panel.hidden = true;
     if (log.open && !state.drawerLog) state.drawerLog = openCombatLogModal({
-      entries: log.entries, opener: logButton, detailed: false,
+      entries: log.entries, palette: readPalette(), opener: logButton, detailed: false,
       onClose: () => { state.drawerLog = null; state.open = false; onViewChange(); },
     });
     if (!log.open && state.drawerLog) { const drawer = state.drawerLog; state.drawerLog = null; drawer.close(); }
     logButton.setAttribute('aria-expanded', String(log.open));
     logButton.setAttribute('aria-description', `${log.size}. Tap to open or close; drag up or down to resize. Arrow keys change size.`);
     latestEntries = log.entries;
-    const key = JSON.stringify(log.entries);
+    const palette = readPalette();
+    const key = JSON.stringify([log.entries, palette]);
     if (key !== entryKey) {
-      entryKey = key; renderCombatLogEntries(list, log.entries); state.fullLog?.setEntries(log.entries); state.drawerLog?.setEntries(log.entries);
+      entryKey = key; renderCombatLogEntries(list, log.entries, { palette }); state.fullLog?.setEntries(log.entries, palette); state.drawerLog?.setEntries(log.entries, palette);
       // The panel is never shown (the log reads in a modal), so its list has no
       // box to scroll: this assignment did nothing, and reading scrollHeight made
       // the update a forced layout of the screen on every log change.

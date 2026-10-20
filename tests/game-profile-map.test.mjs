@@ -8,7 +8,7 @@ import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { refreshBossDestinationLabels } from '../src/model/bossDestinationLabels.js';
 import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
-import { mapKnowledge, resolveMapMode, HIDDEN, KNOWN } from '../src/model/mapknowledge.js';
+import { mapKnowledge, resolveMapMode, HIDDEN, KNOWN } from '../src/model/map/mapknowledge.js';
 import { compileGameProfiles } from '../tools/game-config.mjs';
 import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
 
