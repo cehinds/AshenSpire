@@ -30,7 +30,7 @@ test('Core defend stance adds its DR bonus to Block: face, preview and live gain
  combat.player.combatStance={maneuver:'defend',camp:'physical',range:'melee'};
  const afterStance=previewCard(combat,inst.instanceId).values.find(v=>v.op==='block');
  assert.ok(afterStance.value>=shown.value);
- const base=5,dr=combat.player.ratings.dr||0,eff=combat.player.combatStance?1.25:1;
+ const base=10,dr=combat.player.ratings.dr||0,eff=combat.player.combatStance?1.25:1;
  const out=dispatch(combat,{type:'playCard',cardInstanceId:inst.instanceId});
  const gained=out.events.find(e=>e.type==='blockGained'&&e.targetId===combat.player.id);
  assert.equal(gained.amount,afterStance.value,'preview == live');

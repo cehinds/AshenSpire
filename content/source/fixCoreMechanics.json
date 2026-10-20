@@ -27,6 +27,11 @@
   "reaction": {
     "handCostDiscount": 1
   },
+  "smashVsDefensive": {
+    "damageMultiplier": 2,
+    "blockFraction": 0.25,
+    "poiseFraction": 0.5
+  },
   "stance": {
     "effectivenessMultiplier": 1.25,
     "discount": 1,

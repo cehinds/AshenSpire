@@ -2,25 +2,23 @@ import { applyStatus } from './statuses.js';
 import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack } from '../model/combatRatings.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, fixCoreReactionHandCost } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, fixCoreReactionHandCost } from '../model/fixCoreMechanics.js';
+import { mirroredStance, configuredStance, armsAsCoreCounter } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
 import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js';
 // Configured combat adapter. All rules are scoped to the saved resolved profile;
 // a missing/current profile leaves the existing interpreter untouched.
-import { gameModule, gameContent } from '../model/gameProfile.js';
+import { gameContent } from '../model/gameProfile.js';
+import { configuredModule } from '../model/profileModule.js';
 
 export function configuredCombat(subject) {
   const profile = subject?.gameProfile;
   return !!profile && (profile.foundation?.mode === 'configured'
     || Object.values(profile.modules || {}).some(rule => rule?.mode === 'configured'));
 }
-export function configuredModule(subject, id) {
-  const rule = gameModule(subject, id);
-  return rule?.mode === 'configured' ? rule : null;
-}
-// configuredStance / mirroredStance / armsAsCoreCounter live in the model layer so the card inspector shares them.
-import { mirroredStance, configuredStance, armsAsCoreCounter } from '../model/configuredStance.js';
+export { configuredModule };
+// configuredStance / mirroredStance / armsAsCoreCounter live in the model layer (profileStance.js) so the card inspector shares them.
 export { mirroredStance, configuredStance, armsAsCoreCounter };
 export function setProfileStance(ctx, entity, carrier) {
   if (!configuredCombat(ctx)) return false;
@@ -96,9 +94,13 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   if (!modern) raw=Math.max(0,Math.floor(raw));
   if(proposal && target && !flatReturn) raw=transition('status-rules','Other status modifiers',raw,proposalHitPlan(ctx,source,target,raw,carrier,{roundDamage:!modern}).amount);
   const defense = stanceMitigation(ctx, attacking, defending);
+  // Owner, 2026-10-19: a Smash that beats the target's stance (Defend or Prepared) deals 2x its normal damage in place of the
+  // generic advantage multiplier, plus a share of the target's Block (below), and costs Poise by a share of the total instead of the 25% absorption.
+  const smashRule = modern && advantage && attacking === 'smash' ? fixCoreSmashVsDefensiveRules(fixCoreRules(ctx, target)) : null;
   // Core 2 Counter returns carry their advantage in the return itself (SPEC §17), so the chain does not multiply it again.
-  const advantageMultiplier = advantage && !(modern && carrier.counterReturnAttack) ? stances.advantageMultiplier ?? 1 : 1;
-  let amount=transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
+  const advantageMultiplier = smashRule ? smashRule.damageMultiplier : advantage && !flatReturn ? stances.advantageMultiplier ?? 1 : 1;
+  let amount=smashRule ? transition('smash-vs-defensive','Smash vs defensive stance',raw,raw*advantageMultiplier,'stance',advantageMultiplier)
+    : transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
   amount=transition('stance-defense','Defensive stance advantage',amount,amount*(flatReturn?1:defense.multiplier),'stance',flatReturn?1:defense.multiplier);
   amount=modern ? Math.max(0,Math.floor(amount)) : transition('quantity-rounding','Damage quantity rounding',amount,Math.max(0,Math.floor(amount)),'rounding');
   const evade = stances?.include?.includes('evade') && defending === 'evade';
@@ -112,7 +114,13 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const evaded = roll !== null && roll >= hitChance;
   if (evaded) amount = 0;
   else if (evade && !modern) amount = Math.floor(amount * (stances.evadeFailureMultiplier ?? 2));
-  let blocked = 0, poiseMitigated = 0, wardMitigated = 0;
+  let smashBlockBonus = 0;
+  if (smashRule && !evaded && target) {
+    // Read from the Block held before this hit's own absorption.
+    smashBlockBonus = Math.floor(smashRule.blockFraction * Math.max(0, target.block || 0));
+    if (smashBlockBonus > 0) { sources.push({id:'smash-block-bonus',label:'Smash vs defensive stance: bonus from target Block',amount:smashBlockBonus,requested:amount,effective:amount+smashBlockBonus,stage:'stance',operation:'add'}); amount += smashBlockBonus; }
+  }
+  let blocked = 0, poiseMitigated = 0, wardMitigated = 0, poiseDrain = 0;
   const incoming = amount;
   const parts = splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
   let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
@@ -124,8 +132,12 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     transition('barrier','Barrier',magical,magical-barrierMitigated,'mitigation');
     // Ward off: the magic Barrier left meets Poise with the physical residual (matches actions.js).
     const poiseMeetsMagic = fixCoreWardDisabled(ctx);
-    const poise = protectionReceipt(ctx,target,'physical',physical-blocked+(poiseMeetsMagic ? magical-barrierMitigated : 0));
+    const poiseIn = physical-blocked+(poiseMeetsMagic ? magical-barrierMitigated : 0);
+    // Smash vs a defensive stance: no 25% absorption; the pool instead loses a share of the whole hit (capped at what it holds).
+    const poise = smashRule ? {amount:poiseIn,reduced:0,sources:[]} : protectionReceipt(ctx,target,'physical',poiseIn);
     const ward = protectionReceipt(ctx,target,'magical',poiseMeetsMagic ? 0 : magical-barrierMitigated);
+    // Smash vs a defensive stance: the pool's loss is Poise damage, not absorption, so poiseMitigated (and the log's "absorbed") stay 0.
+    poiseDrain=smashRule && !evaded ? Math.min(Math.max(0,target?.persistentPoise?.value || 0),Math.floor(smashRule.poiseFraction*incoming)) : 0;
     poiseMitigated=poise.reduced;wardMitigated=ward.reduced;
     sources.push(...poise.sources,...ward.sources);
     amount=poise.amount+ward.amount;
@@ -143,10 +155,11 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     }
   }
   return { raw, wardMitigated, barrierMitigated,
-    damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,hpLoss:amount,sources}]),
+    damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     hitChance, uncertain: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) && roll === null,
-    hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated,
+    hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain,
     blockRemaining: Math.max(0, (target?.block || 0) - blocked), evaded, advantage,
+    ...(smashRule ? { smashVsDefensive: { blockBonus: smashBlockBonus, poiseDamage: poiseDrain } } : {}),
     defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,
     attackStance: attacking, defenseStance: defending,
     interrupted: advantage && stances?.staggerOnAdvantage === true

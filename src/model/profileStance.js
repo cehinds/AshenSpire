@@ -1,10 +1,16 @@
-import { mirroredManeuver } from './stanceRules.js';
+// Leaf: the stance a carrier plays under a configured profile. smashClause.js and engine/gameProfileCombat.js both read it
+// from here, so model text never imports the engine adapter (and its stanceRules -> combatCardProfile -> smashClause cycle).
 import { cardPreparationCategory } from './cardClassification.js';
-import { gameModule } from './gameProfile.js';
+import { configuredModule } from './profileModule.js';
 
+export const MIRRORED_TYPES = new Set(['attack', 'smash', 'sweep', 'defend', 'counter']);
+// A Spell that mirrors a basic card (owner 2026-10-18) takes that basic's maneuver; it stays a Spell. Only Core 2 content sets `mirrors`.
+export function mirroredManeuver(carrier) {
+  const mirrors = carrier?.combatProfile?.mirrors ?? carrier?.mirrors;
+  return MIRRORED_TYPES.has(mirrors) && (carrier?.combatProfile?.camp ?? 'spell') === 'spell' ? mirrors : null;
+}
 // A Spell that mirrors a basic card (owner 2026-10-18) keeps that basic's stance; it is still a Spell.
 export const mirroredStance = mirroredManeuver;
-const configuredModule = (subject, id) => { const rule = gameModule(subject, id); return rule?.mode === 'configured' ? rule : null; };
 export function configuredStance(carrier) {
   if (mirroredStance(carrier)) return mirroredStance(carrier);
   if (cardPreparationCategory(carrier)) return 'prepared';

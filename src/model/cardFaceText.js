@@ -1,3 +1,4 @@
+import { coreSmashClause } from './smashClause.js';
 import { stanceEntryBonuses, stanceRulesFor, stanceOf } from './stanceRules.js';
 import { fixCoreEnabled } from './fixCoreMechanics.js';
 // src/model/cardFaceText.js — the text a playing card's face says, as lines.
@@ -332,6 +333,9 @@ function buildLines(def, preview, registries, rules = null) {
     if (preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', text: `+${num(preview.counterReturn.block)} Block against it` });
   }
   if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
+  // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
+  const smashClause = coreSmashClause(def, registries);
+  if (smashClause) unconditional.push({ cat: 'bonus', text: esc(smashClause) });
   if (def.pronePoiseBonus && !(counter && preview?.counterReturn)) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
   // Live Precision grant when a preview has an actor, else the 1 + stat mix formula.
   const entryPrecisionText = (amount, preview) => Number.isFinite(preview?.entryPrecision) ? '+' + num(preview.entryPrecision) : '+' + num(amount) + ' + stat mix';

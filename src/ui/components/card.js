@@ -27,6 +27,7 @@ import { statusTooltipText } from '../uiContent.js';
 import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
 import { cardTagExplanation } from '../../model/cardTagExplanation.js';
+import { coreSmashClause } from '../../model/smashClause.js';
 import { tagService } from '../../model/tagService.js';
 import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
 import { cardArtFallbacks } from '../cardArtwork.js';
@@ -42,7 +43,7 @@ import { combatCardRange, combatProfileFor, combatProfileTags, numberedTraitRow 
 import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity, mirrorSigil } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
-import { armsAsCoreCounter } from '../../model/configuredStance.js';
+import { armsAsCoreCounter } from '../../model/profileStance.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
 import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
@@ -112,8 +113,11 @@ export function relicText(def, registries = null) {
 
 // `wardAsPoise` ({ preview }) is set when the run's profile has Ward switched off (Core 2): a card that authors
 // `wardOffTextTemplate` then reads its Ward damage as Poise damage, one combined figure (model/wardOffCardText.js).
-function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise = null) {
+function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise = null, registries = null) {
   let template = def.textTemplate;
+  // A Core Smash adds the shared rule sentence once (model/smashClause.js); an authored template that has it is left alone.
+  const smashClause = coreSmashClause(def, registries);
+  if (smashClause && !template.includes(smashClause)) template = `${template.trim()} ${smashClause}`;
   const projected = wardAsPoise ? wardOffCardText(def, tokens, baseTokens, wardAsPoise.preview) : null;
   if (projected) { template = projected.template; tokens = projected.tokens; baseTokens = projected.baseTokens; }
   const liveTokens = { ...tokens };
@@ -319,8 +323,8 @@ export function renderCard(registries, ref, opts = {}) {
       definition:def,registries});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     const authoredRules = def.weightClassPriced
-      ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
-      : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise);
+      ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
+      : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries);
     const visibleLines = at === 'inspect' ? allFaceLines : faceLines;
     const rulesHtml = visibleLines
       ? compactCardRules(visibleLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${extraLine(line, i) ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
@@ -601,7 +605,7 @@ export function cardPlainText(registries, ref, opts = {}) {
     ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null)) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
-  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences, wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null))
+  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences, wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null, registries))
     .replace(/<[^>]+>/g, '')
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&')
@@ -724,7 +728,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     if (combatProfile.maneuver === 'sweep' && (def.tags || def.cardTags || []).includes('trait:reaction'))
       html += '<div class="combat-rule-hint">Reaction Sweep resolves before the incoming attack. Killing, staggering or controlling its attacker can interrupt it; otherwise the attack resumes.</div>';
   }
-  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null)}</div>`;
+  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {
@@ -768,8 +772,8 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   const service = tagService(registries);
   const tags = def.cardTags != null ? service.resolve(def.cardTags)
     : def.traitValues && Array.isArray(def.tags) ? service.resolve(def.tags) : service.tagsOf('card', def);
-  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, row))}">${esc(row.label)}</span>`); }
-  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, tag))}">${esc(tag.label)}</span>`);
+  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, row, registries))}">${esc(row.label)}</span>`); }
+  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, tag, registries))}">${esc(tag.label)}</span>`);
   if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
   return html;
 }
