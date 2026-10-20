@@ -1,7 +1,8 @@
 // Display only: every price, distance and chance comes from the engine quote.
 const percent = value => Number.isFinite(value) ? `${Number(value.toFixed(2))}%` : null;
-export function rangeHitLabel(preview, { current = true } = {}) {
-  const target = preview?.range?.targets?.[0];
+export function rangeHitLabel(preview, { current = true, targetId } = {}) {
+  const targets = preview?.range?.targets;
+  const target = targetId ? targets?.find(row => row.targetId === targetId) : targets?.[0];
   const inRange = current ? target?.currentInRange ?? preview?.inRange : target?.inRange ?? preview?.inRange;
   const chance = current ? target?.currentHitChance ?? preview?.hitChance : target?.hitChance ?? preview?.hitChance;
   return inRange === false ? 'Out of range · 0%' : percent(chance);

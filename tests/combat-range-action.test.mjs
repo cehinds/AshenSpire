@@ -30,3 +30,24 @@ test('multi-target approach prints every engine-quoted target and chance', () =>
   const plan = combatRangeActionPlan(q);
   assert.equal(plan.routes[0].odds.length, 2); assert.match(plan.routes[0].odds[1].text, /e2 · Ranged.*41.1%/);
 });
+
+test('route controls keep native keyboard ownership and send only the chosen id', async () => {
+  const { combatRangeAction } = await import('../src/ui/components/combatRangeAction.js');
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  withKitDom(({ document, Event }) => {
+    const chosen = [];
+    const node = combatRangeAction(quote(), { onChoose: id => chosen.push(id) });
+    document.body.append(node);
+    assert.equal(node.dataset.uiComponent, 'combat-range-action');
+    const buttons = node.querySelectorAll('button');
+    assert.equal(buttons.length, 2);
+    assert.equal(buttons[0].getAttribute('aria-pressed'), 'true');
+    assert.equal(buttons[0].disabled, false, 'an unaffordable route remains readable/selectable');
+    buttons[1].dispatchEvent(new Event('click', { bubbles: true }));
+    assert.deepEqual(chosen, ['throw']);
+    const tab = new Event('keydown', { key: 'Tab', bubbles: true });
+    node.dispatchEvent(tab);
+    assert.equal(tab.propagationStopped, true);
+    assert.equal(tab.defaultPrevented, false, 'native Tab still moves focus within controls');
+  });
+});
