@@ -402,7 +402,7 @@ export function graceRefillPlan(registries, run, { counts = {} } = {}) {
  * graceRefillRefusals(bundle) → [{ key, msg }]
  *
  * LAW 1 CLAUSE 5, at boot, naming the entry. Shaped exactly like
- * `geometryRefusals` in model/mapview.js and consumed the same way from
+ * `geometryRefusals` in model/map/mapview.js and consumed the same way from
  * model/validate.js, because one refusal shape in one place is cheaper than two
  * that agree today.
  *

@@ -1,5 +1,5 @@
 import { authoredMapTerrainHtml } from './authoredMapArt.js';
-import { mapPoint } from '../../model/mapview.js';
+import { mapPoint } from '../../model/map/mapview.js';
 import { MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
 import { mountMapDetail } from './mapDetail.js';
 import { builtInFor } from '../highResArt.js';
@@ -70,12 +70,12 @@ import { trackGesture } from '../gesture.js';
 import {
   mapKnowledge, nodeReading, resolveMapMode, resolveShrineGlow, shrineLane,
   HIDDEN, KNOWN, MAP_MODE_DEFAULT,
-} from '../../model/mapknowledge.js';
+} from '../../model/map/mapknowledge.js';
 import {
   ZOOM_STEPS, ZOOM_MIN, MAP_ZOOM_DEFAULT,
   clampZoom, framingBox, fitZoom, nodeRadius, svgWidth, svgHeight,
   NODE_R, TAP_TARGET_DEFAULT, deliveredNodePx, resolveMapFreePan,
-} from '../../model/mapview.js';
+} from '../../model/map/mapview.js';
 
 const HALO_PAD = 6;
 
@@ -485,7 +485,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       title.textContent = n.destinationLabel;
       el.appendChild(title);
     }
-    // THE RADIUS IS SOLVED FROM THE TAP FLOOR (model/mapview.js), and it is the
+    // THE RADIUS IS SOLVED FROM THE TAP FLOOR (model/map/mapview.js), and it is the
     // node's own in every mode and on every screen: fog changes WHICH nodes are
     // drawn and never HOW BIG one is, and neither does having a partner.
     const r = nodeRadius(n.type);
@@ -785,7 +785,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // is standing on, because there isn't one yet.
   //
   //   "when the act starts it show the start node and the end node"
-  //                                        — Constantine, quoted in mapknowledge.js
+  //                                        — Constantine, quoted in map/mapknowledge.js
   //
   // THE FOG ALREADY OBEYED THAT SENTENCE AND THE CAMERA THEN UNDID IT. The boss
   // is lit from the first frame — `mapfog --selftest` holds that property and
@@ -1119,7 +1119,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // WHAT A MAP NODE ACTUALLY DELIVERS TO A THUMB, at this zoom on this screen.
   //
   // The radius is now solved from the tap floor rather than drawn and hoped for
-  // (model/mapview.js), and it is solved at ONE reference — 44 px at the default
+  // (model/map/mapview.js), and it is solved at ONE reference — 44 px at the default
   // map zoom on a 390x844 phone. It cannot be a promise at every shape, and the
   // honest thing is not a comment claiming otherwise: it is the screen saying
   // the number where the player is, and saying NOTHING when the floor is met.

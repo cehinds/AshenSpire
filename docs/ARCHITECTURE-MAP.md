@@ -88,6 +88,7 @@ architecture reason. The intended categories are:
 | Root entry | Purpose |
 |---|---|
 | `.claude/`, `.github/`, `.gitignore`, `.gitattributes` | Repository automation and contributor guidance |
+| `tasks.vs.json` | Shareable Visual Studio Open Folder commands for the existing Node scripts; local Visual Studio state stays in ignored `.vs/` |
 | `README.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `DEVELOPER.md`, `SPEC.md`, `CHANGELOG.md`, `CREDITS.md`, `LICENSE` | Human entry points, contracts, receipts, and licensing |
 | `index.html`, `run.bat`, `run.sh` | Obvious player/developer entry points |
 | `src/`, `content/` | Runtime source and authoritative source data |

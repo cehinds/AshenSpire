@@ -402,7 +402,7 @@ export function minViableFloors(config) {
  * one: a knob that quietly became a different knob is worse than a knob that
  * says no (Law 1 clause 5).
  *
- * ON `viewRefusals` (model/mapview.js), which is NOT called here and it is a
+ * ON `viewRefusals` (model/map/mapview.js), which is NOT called here and it is a
  * deliberate omission with a reason, not an oversight. That function refuses a
  * `columns` value too WIDE to frame on a phone. This resolver can only ever
  * SHRINK columns — the cap is `min(authored, cap)` — and both `maxFanoutSpan`
