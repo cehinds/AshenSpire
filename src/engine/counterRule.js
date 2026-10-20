@@ -43,6 +43,9 @@ export function counterReturnForReceipt(ctx, receipt) {
   return total;
 }
 
+/** Live play lets a Counter owner return once per owner cycle (completeCounterReturn); the preview reads the same flag. */
+export const counterReturnSpent = entity => entity?.combatCounterReturnedCycle === (entity?.combatOwnerCycle || 0);
+
 /** The part of `amount` Block `entity` can take under its blockCap (Unbreakable): one rule for the live gain and the preview. */
 export function counterBlockGrant(ctx, entity, amount) {
   const cap = statuses.getCap(ctx, entity, 'blockCap');
@@ -75,6 +78,8 @@ export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected
     const rule = configuredModule(ctx, 'stances');
     if (!(rule.include?.includes('counter') && configuredStance(card) === 'counter')) return { uncovered: true };
   }
+  // The owner already returned a Counter this cycle (two Counters, two enemies, one enemy phase): live returns nothing.
+  if (counterReturnSpent(ctx.player)) return { uncovered: true, spent: true };
   const move = expandedEnemyMove(enemy, ctx.registries.enemies.get(enemy.enemyId).moves[intent.moveId] || {}, intent.moveId, ctx);
   const carrier = enemyMoveCarrier(enemy, move, intent.moveId, ctx);
   // `projected` is the player after the card's immediate defensive effects (its Block, the stance-entry grants),

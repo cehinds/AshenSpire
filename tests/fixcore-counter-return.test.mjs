@@ -450,3 +450,22 @@ test('a support-only Core Counter vs a hidden intent keeps the authored payload;
   assert.ok(covered.view.counterReturn?.poise > 0 && !covered.view.counterReturn.uncovered);
   assert.match(covered.text, /Poise/, covered.text);
 });
+
+test('a Counter already returned this owner cycle previews no return, and live agrees (once per cycle)', () => {
+  const { combat, enemy } = live();
+  combat.player.combatCounterReturnedCycle = combat.player.combatOwnerCycle || 0;
+  const view = previewCard(combat, 'cx1', enemy.id);
+  const row = view.values.find(r => r.op === 'damage');
+  assert.equal(row.counterReturn, undefined, 'no computed return on the damage row');
+  assert.equal(row.totalDamage, 0, 'the face token reads no return, like an uncovered hit');
+  const text = (cardFaceLines(view.resolvedDefinition, view, reg) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
+  assert.doesNotMatch(text, /Return \d|Return damage/, text);
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
+  Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  assert.equal(combat.eventLog.slice(start).filter(e => e.type === 'damageDealt' && e.cardId === 'core.counter').length, 0, 'live returns nothing');
+  const fresh = live();
+  assert.equal(previewCard(fresh.combat, 'cx1', fresh.enemy.id).values.find(r => r.op === 'damage').counterReturn.hp, 6, 'control: an unspent Counter previews 6');
+});
