@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-19
 
-- **Defend hits harder, Smash breaks guards** ([#2190](https://github.com/cehinds/AshenSpire/pull/2190), `0.7.1.1717`). Defend now gives 10 Block. Smash against a defending target deals double damage plus a quarter of its Block, and half of that hits Poise.
+- **Defend hits harder, Smash breaks guards** ([#2190](https://github.com/cehinds/AshenSpire/pull/2190), `0.7.1.1719`). Defend now gives 10 Block. Smash against a defending target deals double damage plus a quarter of its Block, and half of that hits Poise.
 - **New starting decks** ([#2199](https://github.com/cehinds/AshenSpire/pull/2199), `0.7.1.1717`). Each class now starts with its own 10-card deck, and the deck editor lists only cards you own.
 - **Core hit rolls are Precision against Evasion** ([#2192](https://github.com/cehinds/AshenSpire/pull/2192), `0.7.1.1715`). In Core, an attack now rolls Precision against Evasion: Evade grants stacks that decay each turn, Precision stances grant stacks, the combat log shows the roll, and Evade text follows the game's settings.
 - **Smith upgrades work in Core** ([#2195](https://github.com/cehinds/AshenSpire/pull/2195), `0.7.1.1713`). Smith upgrades now do what they say: weapons add AR, armor and shields add a stat point per tier, and the upgrade screen shows the real change to your cards' Damage and Block.
