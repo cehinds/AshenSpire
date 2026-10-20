@@ -587,7 +587,7 @@ function armedThen(...cardIds) {
   dispatch(combat, { type: 'playCard', cardInstanceId: 'ca0' });
   cardIds.forEach((cardId, i) => {
     combat.piles.hand.push({ instanceId: `ca${i + 1}`, cardId });
-    dispatch(combat, { type: 'playCard', cardInstanceId: `ca${i + 1}`, targetId: enemy.id });
+    dispatch(combat, { type: 'playCard', cardInstanceId: `ca${i + 1}`, ...(cardId === 'core.evade' ? {} : { targetId: enemy.id }) });
   });
   // The extra cards' damage can re-roll the enemy's move; keep the 8-damage Attack the Counter covers.
   enemy.intent = intent; enemy.pendingStaminaLoss = 0;
@@ -604,6 +604,7 @@ test('a spell Counter followed by a spell or maneuver does not return (any later
   assert.equal(armedThen().length, 1, 'control: the armed spell Counter returns');
   assert.equal(armedThen('emberDart').length, 0, 'frostCounter then emberDart: disarmed');
   assert.equal(armedThen('core.strike', 'emberDart').length, 0, 'frostCounter, strike, spell: not re-armed');
+  assert.equal(armedThen('core.evade').length, 0, 'frostCounter, Evade, enemy Attack: the Evade fallback does not keep it armed');
 });
 
 test('live: a spell Counter returns once per owner cycle against two covered hits', () => {

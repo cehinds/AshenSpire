@@ -444,9 +444,10 @@ function preparedCounter(ctx, target, carrier, options) {
   const stance = activeCombatStances(ctx,target).some(row=>row.maneuver==='counter') ? 'counter' : target.combatStance?.maneuver;
   const authoredCounter = counter.carrier?.combatProfile?.maneuver === 'counter';
   // Core: a spell Counter (owner 2026-10-19) arms while its owner still stands in the stance the card entered (prepared).
-  const spellCounter = fixCoreEnabled(ctx) && armsAsCoreCounter(ctx, counter.carrier) && stance === configuredStance(counter.carrier)
-    // Any card accepted after the Counter was armed (Spell, Skill, Strike) disarms it: those also enter the prepared stance.
-    && (counter.armedAtCardCount ?? 0) === (target.counters?.cardsPlayedThisCombat ?? 0);
+  const coreSpell = fixCoreEnabled(ctx) && isSpellCounter(counter.carrier) && armsAsCoreCounter(ctx, counter.carrier);
+  // Any card accepted after a spell Counter was armed (Spell, Skill, Strike, Evade) disarms it, whatever stance that card leaves.
+  if (coreSpell && (counter.armedAtCardCount ?? 0) !== (target.counters?.cardsPlayedThisCombat ?? 0)) return null;
+  const spellCounter = coreSpell && stance === configuredStance(counter.carrier);
   if (!(configuredCombat(ctx) && !configuredModule(ctx, 'stances')) && stance !== 'counter' && !(stance === 'evade' && authoredCounter) && !spellCounter) return null;
   if ((target.combatOwnerCycle || 0) >= counter.expiresOnOwnerCycle) return null;
   return counter;
