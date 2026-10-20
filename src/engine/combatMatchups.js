@@ -13,7 +13,7 @@ import { syncWardMaximum } from './combatPools.js';
 // Tactical profiles share the ordinary action queue. No card IDs or UI state.
 import { combatMatchups, combatExpansionMatchups } from '../content/combatMatchups.js';
 import * as Avoidance from './combatAvoidance.js';
-import { attackHitPreview, resolveAttackHit } from './stanceHit.js';
+import * as Hit from './stanceHit.js';
 import { RANGES } from '../model/combatRanges.js';
 import { creditKnowledgeBenefit } from './enemyKnowledge.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
@@ -457,7 +457,7 @@ function preparedCounter(ctx, target, carrier, options) {
 /** One matchup matrix for HP, Poise and Ward; callers apply it only to landed contacts. */
 export function stancePressureMultiplier(ctx, source, target, carrier, hitReceipt = null) {
   if (!combatExpansionEnabled(ctx)) return 1;
-  const hit = hitReceipt || attackHitPreview(ctx, source, target, carrier, { evadeDisabled: restrictions(ctx, target, {}).evadeDisabled });
+  const hit = hitReceipt || Hit.attackHitPreview(ctx, source, target, carrier, { evadeDisabled: restrictions(ctx, target, {}).evadeDisabled });
   return stanceMultiplier(ctx, target, normalizedProfile(carrier), hit);
 }
 function stanceMultiplier(ctx, target, profile, hit) {
@@ -512,7 +512,7 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
       hpLoss: 0, blocked: 0, wardResisted: 0, statusAccepted: 0, statusResisted: 0,
       avoided: false, connected: true, completed: false };
   }
-  const counterAttack = attackHitPreview(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled });
+  const counterAttack = Hit.attackHitPreview(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled });
   const multiplier = profiles.map(profile => stanceMultiplier(ctx, target, profile, counterAttack));
   const weighted = contacts.map((contact, index) => contact.effect === 'status' ? 0 : number(contact.amount) * multiplier[index]);
   const rawTotal = weighted.reduce((n, amount) => n + amount, 0);
@@ -556,7 +556,7 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
   receipt.begun = true;
   if (configuredCombat(ctx)) {
     if (fixCoreEnabled(ctx)) {
-      const hit = resolveAttackHit(ctx, source, target, carrier);
+      const hit = Hit.resolveAttackHit(ctx, source, target, carrier);
       receipt.counterAttack = hit;
       receipt.avoided = hit ? !hit.hit : false;
       receipt.connected = !receipt.avoided;
@@ -569,7 +569,7 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
     return receipt;
   }
   const control = restrictions(ctx, target, options);
-  const counterAttack = resolveAttackHit(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled, suppressOutcomeEvent: true });
+  const counterAttack = Hit.resolveAttackHit(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled, suppressOutcomeEvent: true });
   if (counterAttack) receipt.counterAttack = counterAttack;
   receipt.avoidance = counterAttack && !counterAttack.hit
     ? { resolved: true, avoided: true, distance: null, evade: null, reason: counterAttack.missReason,

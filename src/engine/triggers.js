@@ -30,7 +30,9 @@ const PLAYER_TARGET_EVENTS = new Set(['damageDealt', 'hpLost', 'healed', 'status
  * event object. Every event carries { type, ...payload }.
  */
 export function emitEvent(ctx, type, payload = {}) {
-  const lifecycle = ['cardPlayed','cardResolved'].includes(type) && ctx.pendingAbilityPlay?.ref?.rangeLineagePlan ? {card:ctx.pendingAbilityPlay.ref,source:ctx.player,target:ctx.enemies?.find(enemy=>enemy.id===payload.targetId),meta:{}} : null;
+  const lifecycleCarrier=payload.rangeLifecycleCarrier || ctx.pendingAbilityPlay?.ref;
+  if(payload.rangeLifecycleCarrier){payload={...payload};delete payload.rangeLifecycleCarrier;}
+  const lifecycle = ['cardPlayed','cardResolved'].includes(type) && lifecycleCarrier?.rangeLineagePlan ? {card:lifecycleCarrier,source:ctx.player,target:ctx.enemies?.find(enemy=>enemy.id===payload.targetId),meta:{}} : null;
   const action = ctx._abilityAction || lifecycle;
   const rangeOrigin = RangeLineage.eventRangeOrigin(ctx,type,payload,action);
   if (rangeOrigin) payload={...payload,rangeOrigin};
@@ -70,7 +72,7 @@ export function emitEvent(ctx, type, payload = {}) {
   }
   try {
     dispatchCombatCombos(ctx, event);
-    scanTriggers(ctx, event);
+    scanTriggers(ctx, event, action?.card);
   } finally {
     ctx._emitDepth -= 1;
   }
@@ -164,14 +166,14 @@ export function rangeHookSources(ctx, owner, additionalStatuses = []) {
   return rows;
 }
 
-function scanTriggers(ctx, event) {
+function scanTriggers(ctx, event, rangeCarrier = null) {
   const player = ctx.player;
   if (!player) return; // run-level contexts have no combat trigger sources
   const pKey = ownerKeyFor(ctx, player);
   const pending = [];
   const schedule = (key, trigger, owner, after, origin) => {
     if (ctx.foundation) pending.push({ key, trigger, owner, after, origin });
-    else { const fired = maybeFire(ctx, key, trigger, owner, event, origin); if (fired) after?.(); }
+    else { const fired = maybeFire(ctx, key, trigger, owner, event, origin, rangeCarrier); if (fired) after?.(); }
   };
 
   // A heal names its seat (targetPlayerId), so every seat's mounts hear it
@@ -239,7 +241,7 @@ function scanTriggers(ctx, event) {
   }
 
   pending.sort((a, b) => (a.trigger.priority || 0) - (b.trigger.priority || 0) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
-  for (const row of pending) if (maybeFire(ctx, row.key, row.trigger, row.owner, event, row.origin)) row.after?.();
+  for (const row of pending) if (maybeFire(ctx, row.key, row.trigger, row.owner, event, row.origin, rangeCarrier)) row.after?.();
 
   // Enemy phases hooked on bus events (hpBelowPct phases run via checkPhases).
   for (const enemy of ctx.enemies || []) {
@@ -292,7 +294,7 @@ export function fireOwnerHooks(ctx, entity, hookName) {
 
 // Gate a trigger through once / limitPerTurn / if, then enqueue its effects.
 // Returns true if it fired.
-function maybeFire(ctx, key, trigger, owner, event, origin = null) {
+function maybeFire(ctx, key, trigger, owner, event, origin = null, rangeCarrier = null) {
   let st = ctx.triggerState.get(key);
   if (!st) {
     st = { fires: 0, turn: -1, turnFires: 0 };
@@ -315,7 +317,7 @@ function maybeFire(ctx, key, trigger, owner, event, origin = null) {
     ? Object.entries(owner.statuses || {}).find(([id]) => key.includes(`:${id}:`))?.[1]?.ratingCard : null;
   const actions=[];
   for (const [effectIndex,eff] of (trigger.do || []).entries()) {
-    const inherited=RangeLineage.inheritedRangeAction(ctx,key,owner,event,eff,effectIndex,ratingCard);
+    const inherited=RangeLineage.inheritedRangeAction(ctx,key,owner,event,eff,effectIndex,ratingCard,rangeCarrier);
     actions.push({ effect: eff, source: owner, owner, target, ...(inherited ? {card:inherited.carrier} : ratingCard ? { card: ratingCard } : {}), meta: { event, ...(inherited ? {rangeSiteBatches:inherited.batches} : {}), ...(origin ? { triggeredBy: { ...origin, ownerId: owner?.id ?? null } } : {}), ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
   }
   for(const action of RangeLineage.acceptIndependentTrigger(ctx,owner,actions,key))ctx.enqueue(action);
