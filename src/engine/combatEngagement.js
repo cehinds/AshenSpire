@@ -123,11 +123,9 @@ export function assertRangeCardEnabled(ctx, def) {
 export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   if (!ctx.rangeState) return null;
   const authorization = carrier.rangeReturnAuthorization;
-  let plan = carrier.rangePlan || quoteRangeActions(ctx, source, actions, { route: carrier.rangeRoute || 'advance' });
-  if (authorization) {
-    const frozen = authorization.plan.targets[0];
-    plan = { ...authorization.plan, targets: plan.targets.map(row => ({...frozen,contactId:row.contactId,targetKey:row.targetKey})) };
-  }
+  const plan = authorization?.plan || carrier.rangePlan || quoteRangeActions(ctx, source, actions, { route: carrier.rangeRoute || 'advance' });
+  const lineage = authorization?.lineage || plan.lineage;
+  if (authorization) Lineage.bindReservedRootSites(ctx,actions,lineage);
   const prepaidReturn = !!authorization?.paid;
   if (!plan.available) throw Foundation.playRefusal('The selected range route cannot reach every target', 'range');
   const extra = plan.advanceSp;
@@ -143,7 +141,7 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
   }
   const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || authorization?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };
   carrier.rangePlan = accepted;
-  if (plan.lineage) carrier.rangeLineagePlan={...plan.lineage,rootId};
+  if (lineage) carrier.rangeLineagePlan={...lineage,rootId};
   delete carrier.rangeBaseCosts; delete carrier.rangeRoute; delete carrier.rangeQuotedPlan; delete carrier.rangeReturnAuthorization; delete carrier.rangeCounterReservation;
   for (const action of actions) {
     action.card = { ...action.card, rangePlan: accepted, ...(carrier.rangeLineagePlan ? {rangeLineagePlan:carrier.rangeLineagePlan} : {}) };
@@ -205,18 +203,32 @@ export function incomingRangeScope(ctx, group, defender) {
     if (prior.incoming === undefined) delete ctx._rangeIncoming; else ctx._rangeIncoming = prior.incoming;
   };
 }
+
+function quoteCounterReturn(ctx,source,target,carrier,options) {
+  const card={...carrier,counterReturnAttack:true};
+  delete card.rangePlan;delete card.rangeLineagePlan;delete card.rangeCounterReservation;delete card.rangeReturnAuthorization;
+  const actions=['damage','poiseDamage'].map(op=>({source,owner:source,target,card,effect:{op,amount:1},meta:{}}));
+  return quoteRangeActions(ctx,source,actions,options);
+}
+function authorizedReturnCarrier(carrier,authorization) {
+  const next={...carrier,rangeReturnAuthorization:authorization};
+  delete next.rangePlan;delete next.rangeLineagePlan;delete next.rangeLineage;delete next.rangeCounterReservation;
+  const frozen=authorization.plan.targets[0];
+  if(frozen)next.resolvedRangeSource={sourceType:frozen.weapon?'weapon':carrier.combatProfile?.camp==='spell'?'spell':'unarmed',itemId:frozen.sourceWeaponId,range:['melee','reach','ranged'][frozen.coverage],propertyTags:frozen.throwCapable?['throw']:[]};
+  return next;
+}
+
 export function paidCounterRange(ctx, source, carrier, baseCosts, route = 'advance') {
   if (!ctx.rangeState || !ctx._rangeIncoming || !ctx._reactionPlaying || carrier.combatProfile?.maneuver !== 'counter') return null;
   const incoming = ctx._rangeIncoming;
   const target = [...(ctx.enemies || []), ...(ctx.players ? [...ctx.players.values()].map(row => row.entity) : [ctx.player])].find(entity => actorRangeKey(ctx,entity) === incoming.sourceKey);
   if (!target) throw Foundation.playRefusal('The incoming attacker is unavailable', 'range');
-  const contact = rangeSourceContact(ctx,source,target,carrier,{},`0:0:0:${incoming.sourceKey}`);
-  const plan = rangeActionPlan(ctx.rangeState,actorRangeKey(ctx,source),[contact],{route,context:ctx._rangeContext});
+  const plan = quoteCounterReturn(ctx,source,target,carrier,{route,context:ctx._rangeContext});
   if (!plan.available) throw Foundation.playRefusal('The selected Counter return cannot reach its attacker', 'range');
   const costs = addRangeCosts(baseCosts,plan);
   const rootId = `${incoming.rootId}:return:${incoming.contactId}:${carrier.instanceId || carrier.cardId}`;
   return { costs, reservation:{version:1,sourceKey:plan.sourceKey,targetKey:incoming.sourceKey,
-    incomingRootId:incoming.rootId,contactId:incoming.contactId,rangePlan:{...plan,rootId,paid:costs},consumed:false} };
+    incomingRootId:incoming.rootId,contactId:incoming.contactId,rangePlan:{...plan,rootId,paid:costs},...(plan.lineage?{rangeLineagePlan:{...plan.lineage,rootId}}:{}),consumed:false} };
 }
 /** Price an automatic return before any offensive budget or seeded hit work.
  * Its defensive interception has already happened and is never restored. */
@@ -232,16 +244,17 @@ export function authorizeCounterRange(ctx, defender, attacker, counterCarrier, i
   if (bound) {
     const accepted = structuredClone(reservation.rangePlan);
     delete counterCarrier.rangeCounterReservation;
-    return {...counterCarrier,rangeReturnAuthorization:{plan:accepted,paid:accepted.paid}};
+    return authorizedReturnCarrier(counterCarrier,{plan:accepted,paid:accepted.paid,lineage:reservation.rangeLineagePlan && structuredClone(reservation.rangeLineagePlan)});
   }
   const route = 'advance';
-  const plan = rangeActionPlan(ctx.rangeState,actorRangeKey(ctx,defender),[rangeSourceContact(ctx,defender,attacker,counterCarrier,{},`0:0:0:${actorRangeKey(ctx,attacker)}`)],{route,context});
+  let plan = quoteCounterReturn(ctx,defender,attacker,counterCarrier,{route,context,preview:true});
   const available = defender.kind === 'enemy' ? defender.fixCoreStaminaRemaining ?? defender.stamina ?? defender.maxStamina ?? 0 : defender.energy;
   if (!bound && available < plan.advanceSp) {
     ctx.emit?.('combatRangeReturnUnavailable',{sourceId:defender.id,targetId:attacker.id,ownerId:ctx.playerIdForEntity?.(defender) || 'player',required:plan.advanceSp,available,advanceSp:plan.advanceSp,reason:'stamina',defenseKept:true});
     return null;
   }
-  return {...counterCarrier,rangeReturnAuthorization:{plan}};
+  plan=quoteCounterReturn(ctx,defender,attacker,counterCarrier,{route,context});
+  return authorizedReturnCarrier(counterCarrier,{plan,lineage:plan.lineage});
 }
 
 export function rangeCardSourceSnapshots(ctx, def, source, carrier) {
