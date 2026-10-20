@@ -160,10 +160,12 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
   // catalogues and RNG state do not carry authority to execute an action.
   const roots = [queue, state.reactionResume, state.reactionStack, state.pendingAbilityPlay,
     state.reactionRootPlay, state.combatRounds, ...actors.map(([entity]) => entity?.combatCounter)];
-  const seen = new Set(), plans = [], reservations = [];
+  const seen = new Set(), plans = [], reservations = [], groups = [];
   const inspect = (value, quoted = false) => {
     if (!value || typeof value !== 'object' || seen.has(value)) return;
     seen.add(value);
+    if (text(value.key) && record(value.targets) && value.carrier?.rangePlan) groups.push(value);
+    if (Object.hasOwn(value, 'rangeContactId') && (!hasRange || !text(value.rangeContactId))) problems.push('Invalid frozen range contact identity');
     if (Object.hasOwn(value, 'resolvedRangeSource')) {
       const source = value.resolvedRangeSource;
       const keys = ['sourceType', 'itemId', 'range', 'propertyTags'];
@@ -220,11 +222,20 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
     if (rootsById.has(plan.rootId) && rootsById.get(plan.rootId) !== receipt) problems.push('Conflicting range receipts for one root action');
     rootsById.set(plan.rootId, receipt);
   }
+  const targetKey = row => row?.playerId ? `player:${row.playerId}`
+    : row?.id === 'player' && !(state.players instanceof Map) ? 'player:player' : `enemy:${row?.id}`;
+  for (const group of groups) for (const row of Object.values(group.targets)) {
+    if (!Array.isArray(row?.contacts)) continue;
+    for (const contact of row.contacts) if (contact?.rangeContactId !== undefined
+      && (!Array.isArray(group.carrier.rangePlan.targets) || !group.carrier.rangePlan.targets.some(planned =>
+        planned?.contactId === contact.rangeContactId && planned.targetKey === targetKey(row)))) problems.push('Frozen range contact is outside its root receipt');
+  }
   for (const reservation of reservations) {
     if (!record(reservation)) continue;
-    const incoming = plans.find(plan => plan?.rootId === reservation.incomingRootId
-      && plan.sourceKey === reservation.targetKey && Array.isArray(plan.targets) && plan.targets.some(contact =>
-        contact?.contactId === reservation.contactId && contact.targetKey === reservation.sourceKey));
+    const incoming = groups.find(group => group.carrier.rangePlan?.rootId === reservation.incomingRootId
+      && group.carrier.rangePlan.sourceKey === reservation.targetKey && Object.values(group.targets).some(row =>
+        targetKey(row) === reservation.sourceKey && Array.isArray(row?.contacts)
+        && row.contacts.some(contact => contact?.rangeContactId === reservation.contactId)));
     if (!incoming) problems.push('Range Counter reservation requires its exact incoming contact');
   }
   return [...new Set(problems)];
