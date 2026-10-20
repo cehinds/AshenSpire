@@ -6,6 +6,7 @@ import {resolveGameProfile,applyGameProfileToContent,bindGameProfileRegistries} 
 import {createRunState} from '../src/model/state.js';
 import {createRng} from '../src/engine/rng.js';
 import {gameProfileRewardOffers,claimGameProfileReward,gameProfileShopStock,purchaseGameProfileShopOffer} from '../src/model/gameProfileRewards.js';
+import { missingBasicStances } from '../src/model/stanceCoverage.js';
 const p=resolveGameProfile('core'),reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,p)),p);
 const fresh=()=>createRunState({seed:1,classId:'reaver',registries:reg});
 test('mixed reward is stable across reload, choose one once, card acquisition does not edit deck',()=>{
@@ -45,7 +46,9 @@ test('owned basic cards are never offered; most card offers are rank 1+ (owner 2
  for(let seed=0;seed<120;seed++){
   const run=fresh(),owned=new Set(run.deck.map(c=>c.cardId));
   const o=gameProfileRewardOffers(reg,run,createRng(seed),{offerId:`level${seed}`,source:'level'});
-  for(const row of o.options){
+  // The reserved missing-stance slot(s) are deliberately basic/cantrip (owner 2026-10-19; stanceCoverage tests own that); the 0.25 cap measures the ordinary draws.
+  const reserved=missingBasicStances(run,reg).length?Math.min(rules.stanceCoverage?.reservedSlots??0,o.options.length):0;
+  for(const row of o.options.slice(reserved)){
    total++;
    if(rankOf(row.id)<rules.minRank){low++;assert.ok(!owned.has(row.id),`seed ${seed}: owned basic ${row.id} offered`);}
   }

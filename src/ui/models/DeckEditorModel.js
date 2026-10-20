@@ -17,7 +17,7 @@
 
 import {
   addBasicCard, beginDeckEdit, cancelDeckEdit, deckCardEquipmentEligible, deckCopyLimit, deckEditBounds, deckEditRefusal,
-  deckEditingOn, deckEditingWhere, isEquippedRun, isSetAsideBasic, isUnlimitedBasic, moveFromSideboard, moveToSideboard, playInDeckOrder, unlimitedCardIds,
+  deckEditingOn, deckEditingWhere, isBasicCard, isEquippedRun, isSetAsideBasic, isUnlimitedBasic, moveFromSideboard, moveToSideboard, playInDeckOrder, unlimitedCardIds,
 } from '../../model/deckRules.js';
 import { isItemOwned } from '../../model/loadout.js';
 import { resolveCard } from '../../model/registries.js';
@@ -58,7 +58,7 @@ function isEquipmentCard(card) { return !!(card && (card.grantedBy || isItemOwne
 
 function sourceOf(card, def, run) {
   if (isEquipmentCard(card)) return 'item';
-  if (isUnlimitedBasic(card, run)) return 'basic';
+  if (isBasicCard(card, run)) return 'basic';
   const tags = def.tags || [];
   if (tags.includes(ART_TAG)) return 'art';
   // A technique (a skill-draft card, SPEC §13.4e) carries a `technique:*` tag.

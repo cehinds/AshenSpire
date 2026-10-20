@@ -59,8 +59,8 @@ test('the ten-card core starter retains owned counts and exposes trained basics'
   assert.equal(run.deck.length, 10);
   assert.deepEqual(rows().filter(row => row.inDeck > 0).map(row => row.cardId).sort(), [...new Set(run.deck.map(card => card.cardId))].sort());
   assert.equal(rows().reduce((sum, row) => sum + row.inDeck, 0), 10);
-  assert.equal(rows().find(row => row.cardId === 'core.strike').owned, Infinity);
-  assert.equal(rows().find(row => row.cardId === 'core.evade').inDeck, 0);
-  assert.equal(rows().find(row => row.cardId === 'core.evade').owned, Infinity);
-  assert.equal(rows().find(row => row.cardId === 'base.draw').owned, 1);
+  // Owner ruling 2026-10-19: only owned cards are listed; the Reaver owns no Evade or Draw.
+  assert.equal(rows().find(row => row.cardId === 'core.strike').owned, 4);
+  assert.equal(rows().some(row => row.cardId === 'core.evade'), false);
+  assert.equal(rows().some(row => row.cardId === 'base.draw'), false);
 });
