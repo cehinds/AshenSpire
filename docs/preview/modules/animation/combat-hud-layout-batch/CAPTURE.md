@@ -1,0 +1,22 @@
+# Historical combat HUD layout batching capture
+
+This gallery retains the historical 026 source captures and Q identity proof. New merged-source captures are in [merged-dev-1559/CAPTURE.md](merged-dev-1559/CAPTURE.md).
+
+Captured locally on 2026-10-17 from source `026f2839e0ea86308a88acf32418b55c34628191`, canonical cache build **0.7.1.1556**, digest `4f155934c2`, served at `dist/AshenSpire.html?shot=combat`. This is a posed solo combat fixture. It documents rendering after batching geometry reads before HUD writes; screenshots do not measure latency or demonstrate a completed playthrough or hosted execution. No capture-only layout CSS was applied. Fonts loaded and zero failed image elements were recorded at all four viewports. All images were inspected.
+
+The public feature route was verified read-only; the proof and current artifact identity are recorded below. Local build metadata is not an artifact/public identity claim.
+
+| Phone · 390 × 844 | Desktop · 1440 × 900 | Wide · 1280 × 720 | Tablet · 768 × 1024 |
+| --- | --- | --- | --- |
+| ![Solo combat on phone](mobile.png) | ![Solo combat on desktop](desktop.png) | ![Solo combat in wide layout](wide.png) | ![Solo combat on tablet](tablet.png) |
+
+Source validation separately recorded the unmodified native quick-start probe at 232/666 ms and 30 focused Node tests passing. The rendered HUD check passed six 1440px candidate geometry checks before a later hover interception prevented full completion; it is not claimed green. See `capture-record.json` for exact viewport checks. Component reference: [catalog](../../../../COMPONENT-CATALOG.md), [HTML combatant-frame entry](../../../../component-catalog.html?q=combatant-frame#grid).
+
+
+The current reviewed runtime source is `df68bd95bfbd883553c0667d634be2297b11bb02`. Its verified [CI artifact 12118593676](https://github.com/cehinds/AshenSpire/actions/runs/39080771198/artifacts/12118593676) is **0.7.1.1558**, digest `d795417750`, archive SHA-256 `d188a92baeaaa99f74a25abd689ecdf10914ee8898e0f34869b8367bc8dd5f5a` ([run 39080771198](https://github.com/cehinds/AshenSpire/actions/runs/39080771198), job 117537068833). The public [Combat HUD Layout Batch preview](https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/) was verified read-only at 2026-10-18T00:23:17.911Z by [workflow 39082551610](https://github.com/cehinds/AshenSpire/actions/runs/39082551610), attempt 1, job 117542345031. Normal and cache-busted index requests returned HTTP 200 and identified exact source `df68bd95bfbd883553c0667d634be2297b11bb02`; both build requests returned HTTP 200 as `text/plain`, digest `d795417750`, ordinal 1558, release `0.7.1`. Trusted checker b1b passed publication/payload checks (80,780,257 characters). This proves publication and payload identity, not hosted gameplay execution or a live co-op connection. Original local screenshots remain rendering-only evidence; the 749 ms quick-start result has only 1 ms margin, and historical T timing traces are nominal observations only. Screenshots retain original `026f2839e0ea86308a88acf32418b55c34628191` / local build 1556 / `4f155934c2` provenance and show rendering only, not the current artifact/public route.
+
+All current-source fast CI passed; quick-start recorded 253/749 ms against unchanged 400/750 ms limits, leaving only 1 ms first-number margin. This does not establish robust latency improvement. Fresh canonical current-source browser checks passed 984/984. The follow-up includes actual optional Map flask `data-focusable` and a scoped Current Map fixture with `roomRail=true`/`outsideUse=true`; the clean case passed and named fault was caught, with census 438 sites/20 drift.
+
+Limited historical timing evidence: corrected recorder 39080448998 / helper 7a550 pinned T499 and measured native 238/698 ms; separate observational traces measured 673/596/648 ms ([summary 39080984565](https://github.com/cehinds/AshenSpire/actions/runs/39080984565), job 117537687725). Recurring canvas `drawImage` hotspots and long tasks were observed. These traces do not attribute prior CI failures or justify another runtime change.
+
+Historical validation: source `1c3f9839d6fba3d178b84dab4d44defa88bf72c2` produced artifact 12116684498, build 0.7.1.1556 / `f0a19c2c3b`. A fresh local canonical build of that source passed the existing about/changelog browser checks (983 assertions, source and selected standalone Settings). That artifact is superseded by the current source and identity above; its complete identity remains in `capture-record.json`.

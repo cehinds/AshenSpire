@@ -370,6 +370,8 @@ export function createRunState({
   orderStartingDeck(registries, run);
   if (!configured) ensureExpandedStarterCoverage(registries, run);
   initializeGameProfileRun(registries, run, { profileMeta });
+  // Core: the authored deck exists now; add what the worn gear's grantedCards lend (owner 2026-10-19).
+  if (configured) reconcileGrantedCards(registries, run);
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);

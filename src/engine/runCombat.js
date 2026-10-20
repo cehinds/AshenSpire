@@ -1,3 +1,5 @@
+import { reconcileGrantedCards } from '../framework/deckComposition.js';
+import { gameModule } from '../model/gameProfile.js';
 import { gameProfileRatingReceipt, gameProfileEffectiveAttributes } from '../model/gameProfileRun.js';
 import { configuredCombat, configuredModule } from './gameProfileCombat.js';
 // engine/runCombat.js — the one door a run's fight is built through.
@@ -190,6 +192,14 @@ export function createRunCombat({
 export function runCombatEnd(run, combat) {
   if(combat.proposalRewards && !combat.proposalRewards.settled) {run.cinders=(run.cinders || 0)+Math.max(0,combat.proposalRewards.cinders || 0);combat.proposalRewards.settled=true;}
   reconcileCombatKnowledge(run, combat);
+  // Headless callers can finish without taking a combat checkpoint. Persist
+  // Core's current equipment grants here too, without copying live piles.
+  if (run.gameProfile?.foundation?.mode === 'configured' && gameModule(run, 'cards')?.mode === 'configured') {
+    run.loadout = structuredClone(combat.loadout);
+    run.drawPerTurn = combat.player.drawPerTurn;
+    run.energyMax = combat.player.energyMax;
+    reconcileGrantedCards(combat.registries, run);
+  }
   if (combat.combatExpansionVersion === 2) {
     run.ashenBlight = structuredClone(combat.player.ashenBlight);
     run.ashenBlightBasePools = structuredClone(combat.player.baseResourceMaxima);

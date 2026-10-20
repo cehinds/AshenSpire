@@ -1,6 +1,8 @@
+import { uiStrings } from '../content/generated/uiStrings.js';
 import { coreSmashClause } from './smashClause.js';
 import { stanceEntryBonuses, stanceRulesFor, stanceOf } from './stanceRules.js';
 import { fixCoreEnabled } from './fixCoreMechanics.js';
+import { armsAsCoreCounter } from './profileStance.js';
 // src/model/cardFaceText.js — the text a playing card's face says, as lines.
 //
 // ONE MODEL FOR EVERY CARD FACE. It reads the same context combatCardSummary
@@ -256,20 +258,23 @@ function buildLines(def, preview, registries, rules = null) {
     }
   };
 
+  // Comma-join phrases; one that already ends a sentence drops its period first (no ".,"), as playingCard does.
+  const joinList = parts => parts.map((part, i) => i < parts.length - 1 ? part.replace(/\.$/, '') : part).join(', ');
+
   // The line a set of fragments reads as, one segment per kind, in fixed order.
   const segmentsOf = (fragments, extraBonus = []) => {
     const of = cat => fragments.filter(f => f.cat === cat).map(f => f.text);
     const out = [];
     const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
-    if (cost.length) out.push({ kind: 'cost', text: cost.join(', ') });
-    if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${damage.join(', ')}` });
+    if (cost.length) out.push({ kind: 'cost', text: joinList(cost) });
+    if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${joinList(damage)}` });
     else if (counter && fragments === unconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
-    if (status.length) out.push({ kind: 'status', text: `Inflict ${status.join(', ')}` });
-    if (remove.length) out.push({ kind: 'status', text: `Remove ${remove.join(', ')}` });
-    if (consume.length) out.push({ kind: 'consume', text: `Remove ${consume.join(', ')}` });
-    if (gain.length) out.push({ kind: 'gain', text: `Gain ${gain.join(', ')}` });
-    if (bonus.length) out.push({ kind: 'bonus', text: defenseRestore.length ? defenseRestore.join(', ') + '. ' + bonus.join(', ') : bonus.join(', ') });
-    else if (defenseRestore.length) out.push({ kind: 'bonus', text: defenseRestore.join(', ') });
+    if (status.length) out.push({ kind: 'status', text: `Inflict ${joinList(status)}` });
+    if (remove.length) out.push({ kind: 'status', text: `Remove ${joinList(remove)}` });
+    if (consume.length) out.push({ kind: 'consume', text: `Remove ${joinList(consume)}` });
+    if (gain.length) out.push({ kind: 'gain', text: `Gain ${joinList(gain)}` });
+    if (bonus.length) out.push({ kind: 'bonus', text: defenseRestore.length ? joinList(defenseRestore) + '. ' + joinList(bonus) : joinList(bonus) });
+    else if (defenseRestore.length) out.push({ kind: 'bonus', text: joinList(defenseRestore) });
     return out;
   };
 
@@ -313,7 +318,13 @@ function buildLines(def, preview, registries, rules = null) {
   // Counter: what the payload returns, for each part the effects do not already deal.
   // An uncovered revealed attack (the Counter will not arm): no return lines, not even the authored payload.
   const counterUncovered = counter && preview?.counterReturn?.uncovered === true;
-  if (counter && !counterUncovered) {
+  // Core: with no revealed attack a spell Counter's authored Poise/Ward row is not what it returns; it reads the rule.
+  const coreSpellFace = counter && !counterUncovered && !preview?.counterReturn && !!def.counterCoverage && p.camp === 'spell'
+    && fixCoreEnabled({ gameProfile: rules?.gameProfile ?? registries?.gameProfile, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules })
+    // Only where live arms it: a profile whose stances omit counter (or prepared) never returns, so the face must not promise it.
+    && armsAsCoreCounter({ gameProfile: rules?.gameProfile ?? registries?.gameProfile }, { ...def, combatProfile: p });
+  if (coreSpellFace) unconditional.push({ cat: 'damage', text: esc(uiStrings.find(row => row.id === 'card.counter.face.core').short) });
+  if (counter && !counterUncovered && !coreSpellFace) {
     const payload = def.counterPayload || {};
     // Ward off (Core 2): the payload's Ward drains Poise too, so it joins the Poise figure.
     let poiseReturn = 0, poiseAuthored = 0;

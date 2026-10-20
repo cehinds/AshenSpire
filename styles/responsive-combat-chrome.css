@@ -4,7 +4,7 @@
   --combat-layer-shadows: 100;
   --combat-layer-enemy: 200;
   --combat-layer-player: 200;
-  --combat-layer-fade: 150;
+  --combat-layer-fade: 375;
   --combat-layer-selection: 800;
   --combat-layer-cards: 900;
   --combat-layer-hud: 700;
@@ -44,7 +44,7 @@
   display: block; position: absolute; inset: auto 0 0;
   height: calc(var(--w4-band-footer) + 60px / var(--ui-zoom,1));
   background: linear-gradient(to bottom, transparent, #211d16 calc(60px / var(--ui-zoom,1)), #211d16);
-  mask-image: none; -webkit-mask-image: none; z-index: 150; pointer-events: none;
+  mask-image: none; -webkit-mask-image: none; z-index: var(--combat-layer-fade); pointer-events: none;
 }
 :root[data-display-appearance='alternative'] .combat[data-layout='formation']:is([data-desktop-footer='true'],[data-desktop-footer='false']) > .hand-area::before { display: none; }
 /* All compact faces and their labels share the same bounded footer band. */

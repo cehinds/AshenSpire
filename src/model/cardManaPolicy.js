@@ -1,3 +1,4 @@
+import { projectGameCard } from './gameProfile.js';
 import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
 import { combatProfileFor } from './combatCardProfile.js';
 
@@ -12,6 +13,15 @@ export function validateCardManaPolicy(policy = cardManaPolicy) {
 }
 validateCardManaPolicy();
 const artIds = new WeakMap();
+const configuredCosts = new WeakMap();
+function hasConfiguredResourceCosts(registries, def) {
+  if (registries.gameProfile?.foundation?.mode !== 'configured'
+    || registries.gameProfile.modules.cards?.mode !== 'configured') return false;
+  let costs = configuredCosts.get(registries);
+  if (!costs) { costs = new Map(); configuredCosts.set(registries, costs); }
+  if (!costs.has(def.id)) costs.set(def.id, !!projectGameCard(registries, def.id)?.resourceCosts);
+  return costs.get(def.id);
+}
 function weaponArtIds(registries) {
   if (!artIds.has(registries)) artIds.set(registries, new Set((registries.equipment?.armaments || [])
     .flatMap(piece => piece.weaponCardPackage?.weaponArtDefaults || [])));
@@ -34,5 +44,8 @@ export function applyBaseManaPolicy(registries, def, policy = cardManaPolicy) {
   if (policy.respectDisabledMana && registries.gameProfile?.foundation?.mode === 'configured'
     && !registries.gameProfile.modules.resources?.include?.includes('mp')) return def;
   if (!cardManaCategory(registries, def, policy) || (def.manaCost || 0) >= policy.minimumMana) return def;
+  // Configured cards own explicit resource costs, including zero. The legacy
+  // spell minimum must not make their printed face disagree with live payment.
+  if (hasConfiguredResourceCosts(registries, def)) return def;
   return Object.freeze({ ...def, manaCost: policy.minimumMana });
 }

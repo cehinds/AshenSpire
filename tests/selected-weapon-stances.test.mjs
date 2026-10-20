@@ -363,3 +363,59 @@ test('selected holds preserve existing returns and finite reactions restore the 
     for(const [key,value]of Object.entries(before))value===undefined?delete globalThis[key]:globalThis[key]=value;
   }
 });
+
+test('fixed pilot phases reuse aura work while preserving contact holds and readbacks', async () => {
+  const dom = rewardDom(), raf = new Map();
+  let time = 1000, serial = 0, glowDraws = 0, reads = 0;
+  const create = dom.document.createElement.bind(dom.document);
+  dom.document.createElement = tag => {
+    const element = create(tag);
+    if (tag === 'canvas') {
+      const stack = [], context = { shadowOffsetX: 0, filter: 'none',
+        clearRect() {}, fillRect() {},
+        save() { stack.push({ shadowOffsetX: this.shadowOffsetX, filter: this.filter }); },
+        restore() { Object.assign(this, stack.pop()); },
+        drawImage() { if (this.shadowOffsetX) glowDraws++; },
+        getImageData() { reads++; return { data: new Uint8ClampedArray(4) }; },
+      };
+      element.getContext = () => context;
+    }
+    return element;
+  };
+  const globals = { ...dom, performance: { now: () => time }, Image: class {
+    set src(value) { this.url = value; queueMicrotask(() => this.onload?.()); }
+  }, matchMedia: () => ({ matches: false }), requestAnimationFrame: fn => { raf.set(++serial, fn); return serial; }, cancelAnimationFrame: id => raf.delete(id) };
+  const before = Object.fromEntries(Object.keys(globals).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, globals);
+  let stage;
+  const advance = ms => { time += ms; const pending = [...raf.values()]; raf.clear(); for (const fn of pending) fn(time); };
+  try {
+    applyDisplayAppearance({}); setAnimSpeed('normal');
+    stage = createAlternativeCardStage('reaver', { weaponProfile: pilot }); await stage.ready;
+    stage.setStance('counter');
+    const held = glowDraws;
+    stage.setRestPose('idle');
+    assert.equal(glowDraws, held, 'setStance then setRestPose preserves lifecycle but reuses identical static Image aura');
+    stage.play('attack', 195, ['stamina']);
+    const first = glowDraws, firstReads = reads;
+    advance(1);
+    assert.equal(glowDraws, first, 'same pilot bitmap/filter/registration avoids source-alpha glow generation');
+    advance(40);
+    assert.ok(glowDraws > first, 'new phase generates its own aura');
+    const beforeHold = glowDraws;
+    stage.hold(60);
+    assert.equal(stage.pose, 'pilot-attack-4');
+    assert.ok(glowDraws > beforeHold, 'timer contact still paints the actual contact bitmap');
+    const contact = glowDraws, elapsed = stage.presentation.elapsed;
+    advance(30);
+    assert.equal(glowDraws, contact, 'held contact reuses its exact composed phase');
+    assert.equal(stage.presentation.elapsed, elapsed, 'authored hit-stop clock stays frozen');
+    assert.equal(reads, firstReads, 'no extra readbacks were introduced on RAFs');
+    stage.settle(); stage.play('smash', 195, ['stamina']);
+    const cue = stage.contactCue(), beforeContactRead = reads;
+    cue.contact();
+    assert.equal(reads, beforeContactRead + 1, 'contact still materializes visible pixels');
+  } finally {
+    stage?.dispose(); Object.assign(globalThis, before);
+  }
+});

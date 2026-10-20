@@ -300,10 +300,33 @@
         }
       ],
       "copiesWithBasicTraining": "owned"
+    },
+    {
+      "id": "core.manaSurge",
+      "name": "Mana Surge",
+      "rarity": "starter",
+      "rank": 0,
+      "type": "skill",
+      "sp": 1,
+      "mp": 0,
+      "tags": [
+        "camp:spell",
+        "maneuver:casting",
+        "classification.skill"
+      ],
+      "effects": [
+        {
+          "op": "restoreMana",
+          "target": "self",
+          "amount": 2
+        }
+      ],
+      "copiesWithBasicTraining": "owned"
     }
   ],
   "cantrips": [
     "core.starseerSpecial",
-    "core.cantrip"
+    "core.cantrip",
+    "core.manaSurge"
   ]
 }

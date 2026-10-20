@@ -3,7 +3,7 @@ import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack } from '../model/combatRatings.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCoreRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, fixCoreReactionHandCost } from '../model/fixCoreMechanics.js';
-import { mirroredStance, configuredStance, armsAsCoreCounter } from '../model/profileStance.js';
+import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
 import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js';
@@ -19,7 +19,7 @@ export function configuredCombat(subject) {
 }
 export { configuredModule };
 // configuredStance / mirroredStance / armsAsCoreCounter live in the model layer (profileStance.js) so the card inspector shares them.
-export { mirroredStance, configuredStance, armsAsCoreCounter };
+export { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter };
 export function setProfileStance(ctx, entity, carrier) {
   if (!configuredCombat(ctx)) return false;
   if (fixCoreEnabled(ctx) && carrier && carrier.fixCoreSameStance === undefined) carrier.fixCoreSameStance = sameStance(entity, carrier);
