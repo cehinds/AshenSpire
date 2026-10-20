@@ -109,3 +109,82 @@ test('Core Reaver: the class special is not badged Basic in the editor, the basi
   assert.ok(!ids.includes('core.reaverSpecial') && ids.includes('core.strike'), 'filter agrees with the badge');
   assert.equal(rankZeroLabelId('basic', true), 'deckEditor.rank.cantrip');
 });
+
+// Owner rule (2026-10-19): the rank-0 badge agrees with the Basic filter. A card the Basic filter hides is never badged Basic.
+test('Core Herald: Smash (source reward) is hidden by the Basic filter and is not badged Basic', async () => {
+  const { deckEditorModel, rankZeroLabelId } = await import('../src/ui/models/DeckEditorModel.js');
+  const run = start('herald');
+  const rows = [...deckEditorModel({ registries: reg, run }).deck].filter((r) => r.cardId === 'core.smash');
+  assert.ok(rows.length > 0, 'core.smash row found');
+  for (const r of rows) {
+    assert.notEqual(r.source, 'basic');
+    assert.equal(rankZeroLabelId(r.source, false), `deckEditor.source.${r.source}`);
+    assert.notEqual(rankZeroLabelId(r.source, false), 'deckEditor.rank.basic');
+  }
+  const filtered = deckEditorModel({ registries: reg, run, view: { filters: { source: ['basic'] } } });
+  assert.ok(![...filtered.deck, ...filtered.collection].some((r) => r.cardId === 'core.smash'), 'Basic filter hides Smash');
+});
+
+test('the rank-0 badge label per source: basic reads Basic, every other source its own chip label', async () => {
+  const { rankZeroLabelId, DECK_SOURCES } = await import('../src/ui/models/DeckEditorModel.js');
+  const { has } = await import('../src/ui/strings.js');
+  for (const source of DECK_SOURCES) {
+    const id = rankZeroLabelId(source, false);
+    assert.equal(id, source === 'basic' ? 'deckEditor.rank.basic' : `deckEditor.source.${source}`);
+    assert.ok(has(id), `${id} has a ui string`);
+  }
+});
+
+// Mount the production screen (the rankNode call site) and read the badges it renders.
+async function renderedBadges(registries, run) {
+  const { withModalDom } = await import('./helpers/modal-dom.mjs');
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const { deckEditorModel } = await import('../src/ui/models/DeckEditorModel.js');
+  const { deckEditorCollectionRows } = await import('../src/ui/models/deckEditorCollectionRows.js');
+  const build = (view) => { const m = deckEditorModel({ registries, run, view }); return { ...m, collection: deckEditorCollectionRows({ registries, run, collection: m.collection }) }; };
+  const model = build();
+  const idOf = (r) => r.instanceId ?? r.key;
+  const filtered = build({ filters: { source: ['basic'] } });
+  const basicIds = new Set([...filtered.deck, ...filtered.collection].map(idOf));
+  const all = [...model.deck, ...model.collection];
+  const out = [];
+  out.rows = 0;
+  withModalDom(() => {
+    const nativeElement = globalThis.HTMLElement;
+    globalThis.HTMLElement = document.body.constructor;
+    try {
+      const editor = mountDeckEditor(document.body, { registries, run, settings: {} });
+      for (const main of editor.root.querySelectorAll('.deck-editor-main')) {
+        const row = all.find((r) => idOf(r) === (main.dataset.instanceId ?? main.dataset.key));
+        const rank = main.querySelector('.deck-editor-rank');
+        if (row) out.rows += 1;
+        if (row && rank) out.push({ row, rank: Number(rank.dataset.rank), text: rank.textContent, shown: basicIds.has(idOf(row)), magical: main.querySelector('.deck-editor-camp')?.dataset.camp === 'magical' });
+      }
+      editor.close();
+    } finally { if (nativeElement === undefined) delete globalThis.HTMLElement; else globalThis.HTMLElement = nativeElement; }
+  });
+  return out;
+}
+
+test('DOM: Core Herald Smash renders its source label, not Basic (reverting the rankNode call site fails this)', async () => {
+  const badges = await renderedBadges(reg, start('herald'));
+  const smash = badges.filter((b) => b.row.cardId === 'core.smash');
+  assert.ok(smash.length > 0, 'a rendered Smash row with a rank badge');
+  for (const b of smash) { assert.equal(b.rank, 0); assert.equal(b.text, 'Reward'); assert.equal(b.shown, false); }
+});
+
+test('sweep: every Core class deck row and a legacy deck badge Basic iff the Basic filter shows it', async () => {
+  const { contentBundle: legacyBundle } = await import('../src/content/index.js');
+  const legacyReg = createRegistries(legacyBundle);
+  const decks = ['reaver', 'rogue', 'starseer', 'herald'].map((id) => [`core ${id}`, reg, start(id)]);
+  decks.push(['legacy reaver', legacyReg, createRunState({ seed: 0x5eed, classId: 'reaver', registries: legacyReg, combatExpansionVersion: 1 })]);
+  for (const [name, registries, run] of decks) {
+    const badges = await renderedBadges(registries, run);
+    assert.ok(badges.rows > 0, `${name}: rows rendered`);
+    // A card the face prints no rank for (a Starseer spell) has no badge to disagree.
+    if (badges.length === 0) continue;
+    const zero = badges.filter((b) => b.rank === 0 && !b.magical);
+    assert.ok(zero.length > 0, `${name}: has rank-0 rows`);
+    for (const b of zero) assert.equal(b.text === 'Basic', b.shown, `${name}: ${b.row.cardId} (${b.row.source}) badge "${b.text}" vs Basic filter ${b.shown}`);
+  }
+});
