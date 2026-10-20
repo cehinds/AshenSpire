@@ -4,6 +4,7 @@ const queued = value => Array.isArray(value) && value.every(action => record(act
 
 import { reactionRulesProblems } from '../content/combatCardTraits.js';
 import { rangeStateProblems, rangePlanProblems, opposingRangeKeys, rangeBand } from './combatEngagement.js';
+import { rangeLineagePlanProblems, rangeLineageProblems, rangeSiteBatchesProblems, rangeOriginProblems } from './combatRangeLineageState.js';
 
 const playerEntry = (entry, ownerIds) => ownerIds.has(entry.ownerId) && text(entry.cardId) && record(entry.play) && text(entry.play.cardInstanceId)
   && (entry.maneuver === null || entry.maneuver === undefined || typeof entry.maneuver === 'string')
@@ -161,7 +162,7 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
   // catalogues and RNG state do not carry authority to execute an action.
   const roots = [queue, state.reactionResume, state.reactionStack, state.pendingAbilityPlay,
     state.reactionRootPlay, state.combatRounds, ...actors.map(([entity]) => entity?.combatCounter)];
-  const seen = new Set(), plans = [], reservations = [], groups = [];
+  const seen = new Set(), plans = [], reservations = [], groups = [], lineagePlans = [], rangeCarriers = [];
   const inspect = (value, quoted = false) => {
     if (!value || typeof value !== 'object' || seen.has(value)) return;
     seen.add(value);
@@ -183,13 +184,14 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
         row?.sourceWeaponId === source.itemId && row.coverage === rangeBand(source.range)
         && row.weapon === (source.sourceType === 'weapon') && row.throwCapable === source.propertyTags.includes('throw'))) problems.push('Frozen range source does not match its contact receipt');
     }
-    if (record(value.effect) && value.card?.rangePlan) {
+    let actionSourceKey = null;
+    if (record(value.effect)) {
       const ref = value.sourceRef;
       const id = ref?.id || value.sourceId;
-      const sourceKey = value.source?.rangeActorKey || (ref?.playerId ? `player:${ref.playerId}`
+      actionSourceKey = value.source?.rangeActorKey || (ref?.playerId ? `player:${ref.playerId}`
         : id === state.player?.id && !(state.players instanceof Map) ? 'player:player'
           : id && actorKeys.includes(`enemy:${id}`) ? `enemy:${id}` : null);
-      if (sourceKey && value.card.rangePlan.sourceKey !== sourceKey) problems.push('Queued range receipt belongs to another actor');
+      if (value.card?.rangePlan && actionSourceKey && value.card.rangePlan.sourceKey !== actionSourceKey) problems.push('Queued range receipt belongs to another actor');
     }
     if (record(value.effect) && value.card?.resolvedRangeSource && value.meta?.expansionGroup) {
       const group = value.meta.expansionGroup;
@@ -203,6 +205,39 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
           || planned.weapon !== (source.sourceType === 'weapon') || planned.throwCapable !== (Array.isArray(source.propertyTags) && source.propertyTags.includes('throw'))) problems.push('Queued range source does not match its exact contact');
       }
     }
+    if (Object.hasOwn(value, 'rangeLineagePlan')) {
+      const errors = hasRange ? rangeLineagePlanProblems(value.rangeLineagePlan, value.rangePlan, actorKeys)
+        : ['Range lineage plan requires engagement state'];
+      problems.push(...errors);
+      if (!errors.length) lineagePlans.push(value.rangeLineagePlan);
+    }
+    if (Object.hasOwn(value, 'rangeLineage')) problems.push(...rangeLineageProblems(value.rangeLineage, value.rangeLineagePlan));
+    if (record(value.effect) && value.card?.rangeLineage
+      && (!Array.isArray(value.meta?.rangeSiteBatches) || !record(value.meta?.event?.rangeOrigin))) problems.push('Inherited range action requires its frozen event and target sites');
+    if (record(value.effect) && value.meta?.rangeSiteBatches !== undefined) {
+      const graph = value.card?.rangeLineagePlan || value.meta?.expansionGroup?.carrier?.rangeLineagePlan;
+      problems.push(...rangeSiteBatchesProblems(value.meta.rangeSiteBatches, graph, { edgeId: value.card?.rangeLineage?.edgeId ?? null }));
+      const source = value.card?.resolvedRangeSource;
+      for (const [index, batch] of (Array.isArray(value.meta.rangeSiteBatches) ? value.meta.rangeSiteBatches : []).entries()) {
+        for (const ref of Array.isArray(batch) ? batch : []) {
+          const site = Array.isArray(graph?.sites) && graph.sites.find(site => site?.id === ref?.siteId);
+          if (source && site?.delivery && (site.delivery.coverage !== rangeBand(source.range)
+            || site.delivery.sourceWeaponId !== source.itemId || site.delivery.weapon !== (source.sourceType === 'weapon')
+            || site.delivery.throwCapable !== (Array.isArray(source.propertyTags) && source.propertyTags.includes('throw')))) problems.push('Queued range source does not match its exact lineage site');
+        }
+        const targets = value.meta.expansionTargets?.[index];
+        if (Array.isArray(batch) && Array.isArray(targets) && (batch.length !== targets.length
+          || batch.some(ref => !targets.some(target => target?.id === ref?.id && (target.playerId ?? null) === (ref?.playerId ?? null))))) problems.push('Queued range target does not match its exact lineage site');
+      }
+    }
+    if (record(value.effect) && value.meta?.event?.rangeOrigin !== undefined) {
+      const graph = value.card?.rangeLineagePlan || value.meta?.expansionGroup?.carrier?.rangeLineagePlan;
+      if ((actionSourceKey === value.meta.event.rangeOrigin?.sourceKey
+        || value.card?.rangePlan?.rootId === value.meta.event.rangeOrigin?.rootId) && !value.card?.rangeLineage) problems.push('Same-actor range trigger requires its inherited envelope');
+      // Another actor can receive the event but cannot inherit its paid root.
+      // Such an independent action does not carry range authority from it.
+      if (graph) problems.push(...rangeOriginProblems(value.meta.event.rangeOrigin, value.meta.event, graph, value.card?.rangeLineage));
+    }
     if (Object.hasOwn(value, 'rangeQuote')) {
       if (!hasRange) problems.push('Range quote requires engagement state');
       else problems.push(...rangePlanProblems(value.rangeQuote, state.rangeState, actorKeys));
@@ -210,7 +245,7 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
     if (Object.hasOwn(value, 'rangeCounterReservation')) {
       const reservation = value.rangeCounterReservation;
       reservations.push(reservation);
-      const allowed = ['version', 'sourceKey', 'targetKey', 'incomingRootId', 'contactId', 'rangePlan', 'consumed'];
+      const allowed = ['version', 'sourceKey', 'targetKey', 'incomingRootId', 'contactId', 'rangePlan', 'rangeLineagePlan', 'consumed'];
       if (!hasRange || !record(reservation) || Object.keys(reservation).some(key => !allowed.includes(key))
         || reservation.version !== 1 || reservation.consumed !== false
         || !actorKeys.includes(reservation.sourceKey) || !actorKeys.includes(reservation.targetKey)
@@ -218,9 +253,13 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
         || !text(reservation.incomingRootId) || !text(reservation.contactId)
         || reservation.rangePlan?.sourceKey !== reservation.sourceKey
         || !Array.isArray(reservation.rangePlan?.targets) || !reservation.rangePlan.targets.length
-        || reservation.rangePlan.targets.some(row => row?.targetKey !== reservation.targetKey)) problems.push('Invalid range Counter reservation');
+        || !reservation.rangePlan.targets.some(row => row?.targetKey === reservation.targetKey)
+        || reservation.rangePlan.targets.some(row => row?.targetKey !== reservation.targetKey
+          && !(Array.isArray(reservation.rangeLineagePlan?.edges) && reservation.rangeLineagePlan.edges.some(edge => Array.isArray(edge?.targets)
+            && edge.targets.some(target => target?.contactId === row?.contactId && target.targetKey === row?.targetKey))))) problems.push('Invalid range Counter reservation');
     }
     if (Object.hasOwn(value, 'rangePlan')) {
+      rangeCarriers.push(value);
       const plan = value.rangePlan;
       if (!hasRange) problems.push('Range action plan requires engagement state');
       else {
@@ -230,7 +269,7 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
         if (!quoted && (!record(plan) || !text(plan.rootId) || !record(plan.paid) || plan.available !== true)) problems.push('Accepted range action requires its paid available receipt');
       }
     }
-    for (const [key, child] of Object.entries(value)) if (!['rangePlan', 'rangeQuote'].includes(key)) inspect(child, quoted);
+    for (const [key, child] of Object.entries(value)) if (!['rangePlan', 'rangeQuote', 'rangeLineagePlan'].includes(key)) inspect(child, quoted);
   };
   for (const root of roots) inspect(root);
   inspect(state.pendingReaction, true);
@@ -245,6 +284,14 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
     if (rootsById.has(plan.rootId) && rootsById.get(plan.rootId) !== receipt) problems.push('Conflicting range receipts for one root action');
     rootsById.set(plan.rootId, receipt);
   }
+  const lineagesById = new Map();
+  for (const graph of lineagePlans) {
+    const signature = JSON.stringify(stable(graph));
+    if (lineagesById.has(graph.rootId) && lineagesById.get(graph.rootId) !== signature) problems.push('Conflicting range lineages for one root action');
+    lineagesById.set(graph.rootId, signature);
+  }
+  for (const carrier of rangeCarriers) if (lineagesById.has(carrier.rangePlan?.rootId)
+    && !Object.hasOwn(carrier, 'rangeLineagePlan')) problems.push('Frozen range lineage is missing from an executable root copy');
   const targetKey = row => row?.playerId ? `player:${row.playerId}`
     : row?.id === 'player' && !(state.players instanceof Map) ? 'player:player' : `enemy:${row?.id}`;
   for (const group of groups) for (const row of Object.values(group.targets)) {
