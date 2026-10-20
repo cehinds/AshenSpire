@@ -510,6 +510,21 @@ async function main() {
           && /\b8\b/.test(armor.affected[0].text),
         `SMITH-UI-${upper}-TYPED-ARMOR`, `equipped armor shows its exact tier delta in Equipment Stats and a closed summary without armament-only stats (${JSON.stringify({ selectedType: armor.selectedType, intrinsic: armor.intrinsic, affected: armor.affected })})`);
       await pick('armament/straightSword');
+      const foldSummary='.smith-upgrade-row:first-child > summary';
+      await click(foldSummary);
+      await until(`document.querySelector('.smith-upgrade-row')?.open && !!document.querySelector('.smith-upgrade-row .card')`, 'opened affected-card fold');
+      const openFold = await evaluate(`(() => {
+        const fold=document.querySelector('.smith-upgrade-row'), card=fold.querySelector('.card');
+        const summary=fold.querySelector('summary').getBoundingClientRect(), box=card.getBoundingClientRect(), pane=document.querySelector('.smith-preview-card').getBoundingClientRect();
+        return {open:fold.open,summaryWidth:summary.width,summaryHeight:summary.height,cardWidth:box.width,cardHeight:box.height,cardLeft:box.left,cardRight:box.right,paneLeft:pane.left,paneRight:pane.right};
+      })()`);
+      check(openFold.open && openFold.summaryWidth >= 44 && openFold.summaryHeight >= 44
+          && openFold.cardWidth > 0 && openFold.cardHeight > 0 && openFold.cardLeft >= openFold.paneLeft - 1 && openFold.cardRight <= openFold.paneRight + 1,
+        `SMITH-UI-${upper}-FOLD-OPEN`, `a real pointer opens the affected card within its scrolling preview (${JSON.stringify(openFold)})`);
+      await click(foldSummary);
+      await until(`document.querySelector('.smith-upgrade-row')?.open === false`, 'closed affected-card fold');
+      check(matchesSmithRows((await reading()).affected, expected.selected.affectedRows),
+        `SMITH-UI-${upper}-FOLD-CLOSE`, 'a real pointer closes the fold and every numeric benefit remains in the closed summaries');
       await capture('zero');
       if (shape.mobile) {
         await evaluate('document.querySelector(".smith-preview-card").scrollTop=document.querySelector(".smith-preview-card").scrollHeight');
