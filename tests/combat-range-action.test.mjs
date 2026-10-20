@@ -143,3 +143,45 @@ test('configured free Advance still appears for a partially uncovered mixed acti
   q.range.targets = [mixed]; q.range.routes[0].targets = [mixed]; q.range.routes[0].advanceSp = 0;
   assert.equal(combatRangeActionPlan(q).routes[0].label, 'Advance · +0 SP');
 });
+
+test('range attachment cleanup removes resize/transition listeners, observers and pending layout', async () => {
+  const { mountCombatRangeAction } = await import('../src/ui/components/combatRangeAction.js');
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  withKitDom(({ document, window, Event }) => {
+    const listeners = new Map(), observers = [], frames = new Set(), cancelled = [];
+    let nextFrame = 0;
+    window.addEventListener = (type, callback) => listeners.set(type, [...(listeners.get(type) || []), callback]);
+    window.removeEventListener = (type, callback) => listeners.set(type, (listeners.get(type) || []).filter(fn => fn !== callback));
+    globalThis.requestAnimationFrame = () => { const id = ++nextFrame; frames.add(id); return id; };
+    globalThis.cancelAnimationFrame = id => { frames.delete(id); cancelled.push(id); };
+    class Observer {
+      constructor() { this.disconnected = false; observers.push(this); }
+      observe() {}
+      disconnect() { this.disconnected = true; }
+    }
+    const priorResize = globalThis.ResizeObserver;
+    globalThis.ResizeObserver = globalThis.MutationObserver = Observer;
+    try {
+      const host = document.createElement('div'); host.className = 'hand-overlay';
+      const card = document.createElement('div'); card.className = 'card';
+      document.body.append(host); host.append(card);
+      const cleanup = mountCombatRangeAction(card, quote(), {});
+      assert.equal(listeners.get('resize').length, 1);
+      assert.equal(observers.length, 2);
+      assert.equal(frames.size, 1);
+      assert.equal(host.querySelectorAll('.combat-range-action').length, 1);
+      cleanup();
+      assert.equal(listeners.get('resize').length, 0);
+      assert.equal(frames.size, 0);
+      assert.deepEqual(cancelled, [1]);
+      assert.ok(observers.every(observer => observer.disconnected));
+      assert.equal(host.querySelectorAll('.combat-range-action').length, 0);
+      card.dispatchEvent(new Event('transitionend'));
+      for (const callback of listeners.get('resize')) callback();
+      assert.equal(frames.size, 0, 'a detached attachment schedules no later layout');
+    } finally {
+      if (priorResize === undefined) delete globalThis.ResizeObserver;
+      else globalThis.ResizeObserver = priorResize;
+    }
+  });
+});
