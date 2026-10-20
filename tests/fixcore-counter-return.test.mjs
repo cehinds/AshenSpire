@@ -490,3 +490,26 @@ test('a Counter with several damage rows (rank-3 Guard Counter) previews the one
   const returned = combat.eventLog.slice(start).filter(e => e.type === 'damageDealt' && e.targetId === enemy.id);
   assert.equal(returned.reduce((sum, e) => sum + e.hpLoss + (e.poiseAbsorbed || 0), 0), 6, 'live deals the same single return');
 });
+
+test('a Counter armed after this cycle\'s return was spent gains no live Block and previews no Block (control: unset gains 2)', () => {
+  const run = spent => {
+    const { combat, enemy } = live();
+    dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
+    Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });
+    if (spent) combat.player.combatCounterReturnedCycle = combat.player.combatOwnerCycle || 0;
+    dispatch(combat, { type: 'setReactions', enabled: false });
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'endTurn' });
+    return combat.eventLog.slice(start).filter(e => e.type === 'blockGained' && e.source === 'counter');
+  };
+  assert.equal(run(false)[0]?.amount, 2);
+  assert.equal(run(true).length, 0);
+  const { combat, enemy } = live();
+  combat.piles.hand.push({ instanceId: 'cf9', cardId: 'core.counter' });
+  Object.assign(combat.player, { mana: 9, maxMana: 9 });
+  combat.player.combatCounterReturnedCycle = combat.player.combatOwnerCycle || 0;
+  const view = previewCard(combat, 'cf9', enemy.id);
+  const lines = cardFaceLines(view.resolvedDefinition, view, reg) || [];
+  const text = lines.map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
+  assert.doesNotMatch(text, /Block against it/);
+});

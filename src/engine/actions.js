@@ -8,7 +8,7 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
-import { counterBlockBonus, counterBlockGrant } from './counterRule.js';
+import { counterBlockBonus, counterBlockGrant, counterReturnSpent } from './counterRule.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
 // A queued ACTION is { effect, source, owner?, target?, card?, meta? }:
@@ -359,7 +359,8 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   if (fixCoreEnabled(ctx) && !carrier?.expansionContact && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
   const chance = profileDamageReceipt(ctx, source, target, base, carrier);
   // A Counter with advantage over this hit adds Block before the hit is absorbed (SPEC §17).
-  const counterBlock = fixCoreEnabled(ctx) && carrier?.expansionContact
+  // Once the owner's return is spent this cycle, a later-armed Counter grants nothing (the preview shows the same).
+  const counterBlock = fixCoreEnabled(ctx) && carrier?.expansionContact && !counterReturnSpent(target)
     ? counterBlockBonus(ctx, carrier.expansionContact.receipt, carrier.expansionContact.index, chance.damageReceipt?.hits?.[0]?.incoming) : 0;
   if (counterBlock > 0) {
     // The same blockCap (Unbreakable) clamp gainBlock applies.
