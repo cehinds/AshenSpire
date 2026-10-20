@@ -24,8 +24,8 @@ test('gear.grantedCards is validated at profile construction, naming the item an
 });
 
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
-import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, projectGameCard } from '../src/model/gameProfile.js';
 import { createRunState } from '../src/model/state.js';
 import { equipPiece, stampDeck, reconcileGrantedCards, isItemOwned } from '../src/model/loadout.js';
 import { createRng } from '../src/engine/rng.js';
@@ -274,3 +274,42 @@ for (const intent of ['changeEquipment', 'swapArmament']) {
     }
   });
 }
+
+test('the rendered Mana Surge deck row shows the same zero Mana cost as live play', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const { deckEditorModel } = await import('../src/ui/models/DeckEditorModel.js');
+  const { withModalDom } = await import('./helpers/modal-dom.mjs');
+  const run = start('herald');
+  const card = surges(run)[0];
+  const model = deckEditorModel({ registries: reg, run });
+  const row = model.deck.find(row => row.instanceId === card.instanceId);
+  assert.equal(resolveCard(reg, row.ref).manaCost, 0, 'configured resourceCosts remain authoritative');
+  withModalDom(({ document }) => {
+    const previousElement = globalThis.HTMLElement;
+    globalThis.HTMLElement = document.body.constructor;
+    let editor;
+    try {
+      editor = mountDeckEditor(document.body, { registries: reg, run });
+      const rendered = editor.root.querySelector(`[data-instance-id="${card.instanceId}"].deck-editor-row`);
+      assert.ok(rendered);
+      const value = resource => rendered.querySelector(`.resource-${resource} .deck-editor-resource-value`).textContent;
+      assert.equal(value('mana'), '0');
+      assert.equal(value('stamina'), '1');
+    } finally {
+      editor?.close();
+      if (previousElement === undefined) delete globalThis.HTMLElement;
+      else globalThis.HTMLElement = previousElement;
+    }
+  });
+});
+
+test('all configured cards retain their explicit authored Mana cost when resolved for presentation', () => {
+  let checked = 0;
+  for (const definition of profile.content.cards) {
+    const card = projectGameCard(reg, definition.id);
+    assert.ok(card.resourceCosts, definition.id);
+    checked++;
+    assert.equal(resolveCard(reg, { cardId: card.id }).manaCost || 0, card.resourceCosts.mp, card.id);
+  }
+  assert.ok(checked > 0, 'the configured registry schema strips resourceCosts; project from the profile');
+});
