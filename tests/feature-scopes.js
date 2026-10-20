@@ -1,6 +1,6 @@
 // Browser and Node share the authored feature state through generated UI config.
 // Re-enable behavior.coopEnabled in content/config/ui/screens/title.json and
-// regenerate content to restore the dedicated co-op test lanes automatically.
+// run node tools/config-build.mjs to restore dedicated co-op lanes automatically.
 import { uiConfig } from '../src/config/generated/ui.js';
 
 export const COOP_TESTS_ENABLED = uiConfig.screens.title.behavior.coopEnabled === true;

@@ -304,9 +304,11 @@ test('the discovered summary line uses the shard counts helper, so a time stop n
 test('co-op scope excludes only dedicated files and always retains the parked contract', () => {
   const dedicated = ['tests/coop-hit-preview.test.mjs', 'tests/coop-range-preview.test.mjs',
     'tests/enemy-pile-ops-coop.test.mjs', 'tests/enemy-card-injections-coop.test.mjs',
-    'tests/core-coop-constructor.test.mjs'];
+    'tests/core-coop-constructor.test.mjs', 'tests/session-card-receipt.test.mjs',
+    'tests/session-reaction-rules-party.test.mjs', 'tests/session-range-preview.test.mjs',
+    'tests/party-range-context.test.mjs', 'tests/lan-intent-privacy.test.mjs', 'tests/lobby-storage-guard.test.mjs'];
   const retained = ['tests/coop-parked.test.mjs', 'tests/combat-reactions.test.mjs',
-    'tests/range-preview.test.mjs', 'tests/run-node-lanes.test.mjs'];
+    'tests/range-preview.test.mjs', 'tests/run-node-lanes.test.mjs', 'tests/wireframe-possession-variants.test.mjs'];
   const files = [...dedicated, ...retained].sort();
   assert.deepEqual(discoveryFeatureFiles(files, { coopEnabled: false }), retained.sort());
   assert.deepEqual(discoveryFeatureFiles(files, { coopEnabled: true }), files);
@@ -324,19 +326,24 @@ test('actual discovery parks co-op with a reason and enabling configuration rest
   probe('coop-hit-preview', 'coop');
   probe('enemy-pile-ops-coop', 'enemyCoop');
   probe('core-coop-constructor', 'coreCoop');
+  probe('session-range-preview', 'session');
+  probe('party-range-context', 'party');
+  probe('lan-intent-privacy', 'lan');
+  probe('lobby-storage-guard', 'lobby');
+  probe('wireframe-possession-variants', 'soloPossession');
   probe('coop-parked', 'parked');
   probe('solo-probe', 'solo');
   const receipt = join(dir, 'visited.txt');
   let result = invoke(dir, ['--discovered-only']);
   assert.equal(result.status, 0, result.output);
-  assert.match(result.output, /SKIP 3 dedicated co-op files:.*coopEnabled=false/);
-  assert.deepEqual(readFileSync(receipt, 'utf8').trim().split('\n').sort(), ['parked', 'solo']);
+  assert.match(result.output, /SKIP 7 dedicated co-op files:.*coopEnabled=false/);
+  assert.deepEqual(readFileSync(receipt, 'utf8').trim().split('\n').sort(), ['parked', 'solo', 'soloPossession']);
   writeFileSync(receipt, '');
   writeFileSync(join(dir, 'src/config/generated/ui.js'), 'export const uiConfig = {screens:{title:{behavior:{coopEnabled:true}}}};');
   result = invoke(dir, ['--discovered-only']);
   assert.equal(result.status, 0, result.output);
   assert.doesNotMatch(result.output, /SKIP.*co-op/);
-  assert.deepEqual(readFileSync(receipt, 'utf8').trim().split('\n').sort(), ['coop', 'coreCoop', 'enemyCoop', 'parked', 'solo']);
+  assert.deepEqual(readFileSync(receipt, 'utf8').trim().split('\n').sort(), ['coop', 'coreCoop', 'enemyCoop', 'lan', 'lobby', 'parked', 'party', 'session', 'solo', 'soloPossession']);
 }));
 
 test('direct co-op workflows read the feature switch without disabling non-co-op checks', () => {
@@ -387,3 +394,35 @@ test('the actual lightweight HUD gate skips disabled co-op and restores enabled 
   assert.match(result.stderr, /coopEnabled must be boolean/);
   assert.equal(readFileSync(output, 'utf8'), '');
 }));
+
+
+test('the source test census loses exactly the reviewed dedicated co-op scope while disabled', () => {
+  const files = readdirSync(join(ROOT, 'tests')).filter(file => file.endsWith('.test.mjs')).map(file => `tests/${file}`).sort();
+  const parked = files.filter(isCoopTestFile);
+  assert.equal(parked.length, 31, 'review any newly dedicated co-op suite and update this census');
+  const enabled = discoveryFeatureFiles(files, { coopEnabled: true });
+  const disabled = discoveryFeatureFiles(files, { coopEnabled: false });
+  assert.deepEqual([...disabled, ...parked].sort(), enabled);
+  assert.equal(new Set([...disabled, ...parked]).size, enabled.length);
+  assert.ok(disabled.includes('tests/coop-parked.test.mjs'));
+  assert.ok(disabled.includes('tests/wireframe-possession-variants.test.mjs'));
+});
+
+test('the actual Ward verdict refuses failed or absent scope reads even when co-op is skipped', () => {
+  if (process.platform === 'win32') return; // Actions job runs on ubuntu-latest
+  const ward = readFileSync(join(ROOT, '.github/workflows/ward-to-block-cards.yml'), 'utf8');
+  const verdict = ward.split('- name: Require tests and all requested captures')[1];
+  assert.match(verdict, /COOP_SCOPE_RESULT: \$\{\{ steps\.coop\.outcome \}\}/);
+  const body = verdict.split('        run: ')[1].trim();
+  const run = (scope, coop, source = body) => spawnSync('bash', ['-c', source], { encoding: 'utf8', env: {
+    ...process.env, TEST_RESULT: 'success', TEXT_RESULT: 'success', CAPTURE_RESULT: 'success',
+    STANCE_RESULT: 'success', COOP_SCOPE_RESULT: scope, COOP_TEST_RESULT: coop,
+  } }).status;
+  assert.equal(run('success', 'skipped'), 0);
+  assert.equal(run('success', 'success'), 0);
+  for (const scope of ['failure', 'cancelled', 'skipped', '']) assert.notEqual(run(scope, 'skipped'), 0, scope);
+  assert.notEqual(run('success', 'failure'), 0);
+  const mutant = body.replace('test "$COOP_SCOPE_RESULT" = success && ', '');
+  assert.notEqual(mutant, body, 'negative plant removes the scope guard');
+  assert.equal(run('failure', 'skipped', mutant), 0, 'the old verdict incorrectly accepts this failed scope read');
+});

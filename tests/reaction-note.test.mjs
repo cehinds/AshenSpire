@@ -104,3 +104,15 @@ test('unaffordable automatic range return explains kept defense only to its owni
   const [coop] = combatLogEntries([event], { registries, players: [{ id: 'seatA', name: 'Ash' }, { id: 'seatB', name: 'Briar' }], enemies });
   assert.equal(coop.text, `Ash: ${note.text}`);
 });
+
+test('an unaffordable automatic hostile action uses distinct catalog wording in the local note and log', () => {
+  const event = { type: 'combatRangeActionUnavailable', sourceId: 'player', ownerId: 'player', targetId: 'e1', required: 2, available: 1, advanceSp: 2, reason: 'stamina', triggerKey: 'relic:starterMedallion' };
+  const note = latestReactionNote([event], { registries, enemies });
+  assert.equal(note.text, 'Automatic action skipped: not enough SP to Advance (need 2, have 1).');
+  assert.doesNotMatch(note.text, /Counter|Defense kept/);
+  assert.equal(latestReactionNote([event], { isLocal: () => false, registries, enemies }), null);
+  const [row] = combatLogEntries([event], { registries, enemies });
+  assert.equal(row.text, note.text);
+  const [unreachable] = combatLogEntries([{ ...event, reason: 'range' }], { registries, enemies });
+  assert.equal(unreachable.text, 'Automatic action skipped: out of range.');
+});

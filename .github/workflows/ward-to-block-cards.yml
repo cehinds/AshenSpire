@@ -116,8 +116,9 @@ jobs:
         if: always()
         env:
           TEST_RESULT: ${{ steps.tests.outcome }}
+          COOP_SCOPE_RESULT: ${{ steps.coop.outcome }}
           COOP_TEST_RESULT: ${{ steps.coopTests.outcome }}
           TEXT_RESULT: ${{ steps.text.outcome }}
           CAPTURE_RESULT: ${{ steps.capture.outcome }}
           STANCE_RESULT: ${{ steps.stance.outcome }}
-        run: test "$TEST_RESULT" = success && { test "$COOP_TEST_RESULT" = skipped || test "$COOP_TEST_RESULT" = success; } && test "$TEXT_RESULT" = success && test "$CAPTURE_RESULT" = success && test "$STANCE_RESULT" = success
+        run: test "$TEST_RESULT" = success && test "$COOP_SCOPE_RESULT" = success && { test "$COOP_TEST_RESULT" = skipped || test "$COOP_TEST_RESULT" = success; } && test "$TEXT_RESULT" = success && test "$CAPTURE_RESULT" = success && test "$STANCE_RESULT" = success
