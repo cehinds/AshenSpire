@@ -679,6 +679,22 @@ export function classifyPreviewCandidates(ctx, entity, cards, enemyAvailable = t
 }
 
 /** previewCoopCard for several of one seat's cards at once: one detached state serves them all (a clone costs far more than a preview). */
+// One immutable host projection revision can quote many targets/ranks for one
+// owner. Each read still takes the canonical observer/preparation preview path.
+// Discard the reader when combat changes; no live state or RNG is retained.
+export function createCoopCardPreviewReader(C, playerId) {
+  const clone = F.candidateState(C, { detached: true });
+  setActive(clone, clone.players.get(playerId));
+  const kept = new Map();
+  return (instanceId, targetId, upcastTier, options) => {
+    const key = JSON.stringify([instanceId, targetId, upcastTier, options?.rangeRoute ?? 'advance']);
+    if (kept.has(key)) return kept.get(key);
+    const preview = soloPreviewCard(clone, instanceId, targetId, upcastTier, options);
+    kept.set(key, preview);
+    return preview;
+  };
+}
+
 export function previewCoopCards(C, playerId, instanceIds) {
   const clone = F.candidateState(C, { detached: true });
   setActive(clone, clone.players.get(playerId));
