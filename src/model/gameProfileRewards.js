@@ -5,6 +5,7 @@ import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rew
 import { acquireFlask } from './gracerefill.js';
 import { reserveStanceCards } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard } from './deckRules.js';
+import { rangeCardAvailable } from './rangeCardAvailability.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -34,7 +35,7 @@ function pools(registries, run) {
   // Owner 2026-10-17: a basic (below minRank) card the character already owns is never offered again.
   const cardRule = rules?.eligibility?.combatCards;
   const ownedIds = new Set([...(run.deck || []), ...(run.sideboard || [])].map(card => card?.cardId ?? card?.id ?? card));
-  const cards = definitions.filter(card => (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
+  const cards = definitions.filter(card => rangeCardAvailable(run, card) && (card.class === 'colorless' || card.class === run.class) && !['special', 'status'].includes(card.rarity) && card.type !== 'status'
     && !(cardRule?.skipOwnedBasics && cardRank(card, rules) < (cardRule.minRank ?? 0) && ownedIds.has(card.id)));
   const equipment = !!gameModule(run,'equipment'), hasCards=!!gameModule(run,'cards');
   const weapons = equipment ? equipmentGroupMembers(registries,rules,'weapons','armament') : new Set();
@@ -49,7 +50,7 @@ function pools(registries, run) {
     combatCards: hasCards ? cards.map(row=>row.id) : [],
     // Rank split for combat-card offers (rewards.json eligibility.combatCards): a card's own rank, else its rarity's.
     combatCardsLow: hasCards ? cards.filter(row=>cardRank(row,rules)<(rules.eligibility?.combatCards?.minRank??0)).map(row=>row.id) : [],
-    weaponArts: hasCards && equipment ? [...new Set(authoredArts)] : [],
+    weaponArts: hasCards && equipment ? [...new Set(authoredArts)].filter(id => rangeCardAvailable(run, registries.cards.get(id))) : [],
     potions: registries.flasks.all().filter(row=>gameModule(run,'resources')?.include?.includes('mp') || !row.effects.some(effect=>effect.op==='restoreMana')).map(row=>row.id),
     armor: equipment ? (registries.equipment.armour||[]).filter(row=>armor.has(`${row.classId}:${row.id}`)&&row.classId===run.class && !(run.loadout.boughtArmour||[]).some(owned=>owned.id===row.id) && !Object.values(run.loadout.sets).flat().includes(row.id)).map(row=>row.id) : [],
   };

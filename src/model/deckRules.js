@@ -19,6 +19,7 @@ import { retiredAttackSlots } from './cardRemoval.js';
 import { equippedPieces, isCurrentEquipmentGrant, isItemOwned, stampDeck } from './loadout.js';
 import { resolveCard } from './registries.js';
 import { tagService } from './tagService.js';
+import { rangeCardAvailable } from './rangeCardAvailability.js';
 
 const D = deckRules.defaults;
 
@@ -128,12 +129,14 @@ export function isUnlimitedBasic(card, run = null) {
 /** The editor's equipment gate, shared by its projection and mutation door. */
 export function deckCardEquipmentEligible(registries, run, card) {
   if (!card) return false;
+  const definition = resolveCard(registries, card);
+  if (!rangeCardAvailable(run, definition)) return false;
   const pieces = equippedPieces(registries, run.loadout, run.class);
   // A lent card remains an instance of its source item's mount. Restoring it
   // while that mount is absent would make the next restamp discard it.
   if (card.grantedBy || isItemOwned(card)) return isCurrentEquipmentGrant(registries, run, card);
   if (isUnlimitedBasic(card, run) || unlimitedCardIds(run).includes(card.cardId)) return true;
-  const tags = resolveCard(registries, card).tags || [];
+  const tags = definition.tags || [];
   const rules = deckRules.equipmentEligibility;
   if (tags.some((tag) => rules.universalTags.includes(tag))) return true;
   const schools = new Set(tagService(registries).inDomain('card').map((tag) => tag.id));
@@ -358,6 +361,8 @@ export function commitDeckEditDraft(registries, run, edited, settings = {}) {
   if (after.some(card => !card.instanceId)) throw new Error('Invalid edited card identity');
   for (const card of after) if (!registries.cards.has(card.cardId)) throw new Error(`Unknown edited card '${card.cardId}'`);
   if (new Set(after.map(card => card.instanceId)).size !== after.length) throw new Error('Duplicate edited card identity');
+  if ((edited.deck || []).some(card => !(run.deck || []).some(held => held.instanceId === card.instanceId)
+    && !rangeCardAvailable(run, resolveCard(registries, card)))) throw new Error('Range mechanics are disabled');
   for (const card of after) {
     const owned = before.get(card.instanceId);
     if (owned && JSON.stringify(owned) !== JSON.stringify(card)) throw new Error('Deck editing cannot modify an owned card');
