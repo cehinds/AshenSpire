@@ -1,9 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRunState, serializeRun, deserializeRun, validateRunShape } from '../src/model/state.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch } from '../src/engine/combat.js';
-import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { serializeCombatSnapshot, restoreCombatSnapshot, commitCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createCoopCombat } from '../src/engine/coopCombat.js';
 import { serializeCoopCombatSnapshot, decodeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
@@ -15,7 +18,10 @@ const json = value => JSON.parse(JSON.stringify(value));
 function stamp(combat, startingRange = 'ranged') {
   const players = combat.players instanceof Map ? [...combat.players].map(([id, seat]) => [seat.entity, `player:${id}`]) : [[combat.player, 'player:player']];
   const actors = [...players, ...combat.enemies.map(enemy => [enemy, `enemy:${enemy.id}`])];
-  for (const [entity, key] of actors) entity.rangeActorKey = key;
+  for (const [entity, key] of actors) {
+    entity.rangeActorKey = key;
+    if (entity.kind === 'enemy') Object.assign(entity, { maxStamina: 3, stamina: 3 });
+  }
   combat.rangeState = createRangeState(RANGE_POLICY_DEFAULTS, actors.map(([, key]) => ({ key, startingRange })));
   return combat;
 }
@@ -76,7 +82,6 @@ test('malformed pairs, actors and range policy are refused at the solo load door
 test('co-op duplicate player entity ids retain distinct seat-owned pairs', () => {
   const player = id => ({ id, classId: 'reaver', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 3, stamina: 3, energyMax: 3, drawPerTurn: 1, deck: [{ cardId: 'core.counter', instanceId: 'same-card-id' }] });
   const combat = stamp(createCoopCombat({ registries, rng: createRng(4), gameProfile: profile, combatExpansionVersion: 2, players: [player('a'), player('b')], enemyIds: ['wanderingSoldier'] }));
-  combat.gameProfile = profile; // The historical co-op adapter ignores this constructor option.
   assert.equal(combat.players.get('a').entity.id, combat.players.get('b').entity.id);
   const enemyKey = combat.enemies[0].rangeActorKey;
   combat.rangeState.engagements[rangePairKey('player:a', enemyKey)] = 0;
@@ -130,6 +135,7 @@ test('a paid Counter reservation is bound to one incoming contact and cannot rel
   const paid = (source, target, rootId) => ({ ...rangeActionPlan(combat.rangeState, source,
     [{ contactId: 'contact-0', targetKey: target, coverage: 'melee' }]), rootId, paid: { energy: 0, stamina: 2, mana: 0 } });
   group.carrier.rangePlan = paid(sourceKey, targetKey, group.key);
+  Object.values(group.targets)[0].contacts[0].rangeContactId = 'contact-0';
   group.carrier.rangeCounterReservation = { version: 1, sourceKey: targetKey, targetKey: sourceKey,
     incomingRootId: group.key, contactId: 'contact-0', rangePlan: paid(targetKey, sourceKey, 'counter-return-0'), consumed: false };
   const saved = json(serializeCombatSnapshot(combat));
@@ -177,4 +183,49 @@ test('queued source snapshots retain committed weapon coverage and reject source
     change(broken.abilityQueue[0].card.resolvedRangeSource);
     assert.throws(() => restore(combat, broken), /range source/i);
   }
+});
+
+test('a real paid three-hit approach resumes through SaveManager without repeat charge or RNG draws', () => {
+  const run = createRunState({ registries, seed: 511, classId: 'reaver' });
+  const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
+  combat.player.block = 100;
+  combat.piles.hand.push({ instanceId: 'resume-counter', cardId: 'core.counter', upgraded: false });
+  Object.assign(combat.enemies[0], { maxStamina: 3, stamina: 3 });
+  const pair = rangePairKey(combat.player.rangeActorKey, combat.enemies[0].rangeActorKey);
+  combat.rangeState.engagements[pair] = 2;
+  primeAccuracyRolls(combat, { count: 3, drawsPerAttack: 2 });
+  dispatch(combat, { type: 'endTurn' });
+  assert.ok(combat.pendingReaction);
+  assert.equal(combat.enemies[0].stamina, 0, 'base 1 SP and two-band Advance have already been paid');
+  const plan = combat.queue[0].meta.expansionGroup.carrier.rangePlan;
+  assert.equal(plan.advanceSp, 2);
+  assert.equal(plan.targets.length, 3);
+  commitCombatSnapshot({ run, combat, nodeId: 'n1_4', encounterId: 'patrol' });
+  const saves = createSaveManager(createMemoryStorage());
+  saves.saveRun(run, combat.rng);
+  const loaded = saves.loadRun(registries);
+  assert.ok(loaded, saves.runStatus().reason);
+  const resumed = restoreCombatSnapshot({ registries, rng: createRng(loaded.seed, loaded.streamCounters),
+    snapshot: loaded.combatEntered.snapshot, expectedGameProfile: loaded.gameProfile });
+  assert.deepEqual(resumed.rangeState, combat.rangeState);
+  assert.deepEqual(resumed.queue[0].meta.expansionGroup.carrier.rangePlan, plan);
+  assert.deepEqual(resumed.rng.getCounters(), combat.rng.getCounters());
+  const played = state => {
+    let pauses = 0;
+    while (state.pendingReaction) {
+      assert.ok(++pauses <= 3, 'each incoming hit completes once');
+      dispatch(state, { type: 'chooseReaction', offerId: state.pendingReaction.id, optionId: null });
+    }
+    return { pauses, phase: state.phase, turn: state.turn, hp: state.player.hp, block: state.player.block,
+      enemySp: state.enemies[0].stamina, pair: state.rangeState.engagements[pair],
+      hits: state.eventLog.filter(event => event.type === 'attackHit').map(event => ({ sourceId: event.sourceId, targetId: event.targetId, d20: event.d20 })),
+      spent: state.eventLog.filter(event => ['staminaSpent', 'enemyMoveStarted'].includes(event.type)),
+      counters: state.rng.getCounters() };
+  };
+  const uninterrupted = played(combat), restored = played(resumed);
+  assert.deepEqual(restored, uninterrupted);
+  assert.equal(restored.pauses, 3);
+  assert.equal(restored.hits.length, 3);
+  assert.equal(restored.enemySp, 0, 'resuming later hits cannot charge another approach');
+  assert.equal(restored.pair, 2, 'temporary Advance never moves the persistent pair');
 });
