@@ -114,6 +114,9 @@ import { playEventCues, animateEvents } from '../src/ui/fx.js';
 // Replay the historical host loadouts; this retains current combat/sound rules.
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import { createRegistries } from '../src/model/registries.js';
+import { createRunState } from '../src/model/state.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { createRng } from '../src/engine/rng.js';
 import { createSession } from '../tools/session.mjs';
 import { coopReceiptSounds } from '../src/ui/screens/coop.js';
 
@@ -143,17 +146,13 @@ test('a fresh fight sounds its opening draw and turn stinger; a restored one rep
   assert.match(combatSrc, /opening = false \}\) \{/, 'a caller that says nothing (a restore, a preview) replays no history');
   assert.match(src('src/main.js'), /opening: !savedSnapshot && !bossIntro,/, 'enterCombat marks only a newly created fight as an opening (a boss splash defers it)');
   // What that call hears for a real fresh solo fight's setup log.
-  if (COOP_TESTS_ENABLED) {
-    const reg = createRegistries(legacyContentBundle);
-    const host = createSession({ registries: reg, seedString: 'SOUND1' });
-    host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
-    host.start(); host.chooseNode('p1', host.session.mapGraph.startIds[0]);
-    const setup = host.live.combat.eventLog;
-    const cues = played(() => playEventCues(setup));
-    assert.ok(cues.includes('cardDraw'), `the opening draw sounds (${cues})`);
-    assert.ok(cues.includes('turnStinger'), `the first turn stings (${cues})`);
-    assert.equal(cues.filter((id) => id === 'turnStinger').length, 1, 'once');
-  }
+  const reg = createRegistries(legacyContentBundle);
+  const run = createRunState({ registries: reg, seed: 1, classId: 'reaver' });
+  const combat = createRunCombat({ registries: reg, rng: createRng(1), run, enemyIds: ['wanderingSoldier'] });
+  const cues = played(() => playEventCues(combat.eventLog));
+  assert.ok(cues.includes('cardDraw'), `the opening draw sounds (${cues})`);
+  assert.ok(cues.includes('turnStinger'), `the first turn stings (${cues})`);
+  assert.equal(cues.filter((id) => id === 'turnStinger').length, 1, 'once');
 });
 
 test('co-op: the session digest, through coop.js, plays the opening, hits, hurt and pile cues once', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
