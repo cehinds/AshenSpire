@@ -3,7 +3,7 @@
 20 October 2026, source UI at `c8277c4428896828a31e859ef80aaf62926ebd99`.
 Runtime UI matches `47f9d36ab9c29ff873d56ab6d16251e787cbb98b`, which built as
 **0.7.1.1735**, digest **44abeebe16**, with v23 light/common art. These are source
-captures in Chromium154/Linux, not compiled-build screenshots or physical
+captures in Chromium 154/Linux, not compiled-build screenshots or physical
 Galaxy A32/iPhone/Safari evidence. Phone contexts support touch; states are posed.
 
 | Viewport | Core hand | Closed Core upgrades | Selected reward |
@@ -20,10 +20,10 @@ Four-choice rewards use authored offers through the production component:
 [375](reward-four-375-last-selected.png), [320](reward-four-320-last-selected.png).
 The phone images show the lower row after a real tap on the last choice.
 
-All24 reward states passed equal face/button dimensions, unclipped text,
+All 24 reward states passed equal face/button dimensions, unclipped text,
 44px button floors and selection assertions. Core hand/Smith checks passed all
-four viewports. Source tests passed69/69, then25/25 changed tests; UI validation,
-standalone build and439-site plant check passed. The legacy Smith gate remains
+four viewports. Source tests passed 69/69, then 25/25 changed tests; UI validation,
+standalone build and 439-site plant check passed. The legacy Smith gate remains
 red: the same explicit-profile gate on clean baseline `2bcd337f5` reproduces
 all seven common failures and its unchanged post-hold navigation timeout.
 No legacy Smith/progression acceptance or physical-device performance is claimed.
