@@ -232,6 +232,9 @@ const contactTargetPresent = (ctx, group) => Object.values(group.targets).some(r
 
 // Fallback for a later action of an already answered root (reportRestOfRoot usually fires first).
 function reportAlreadyAnswered(ctx, action, group, hooks) {
+  // Per-hit choices have already settled this contact, not the later hits.
+  // Those contacts get their own offer after the current return finishes.
+  if (group.contactSequence) return;
   const contacts = (action.meta?.expansionContacts || []).flat();
   for (const id of group.reactionAnswered || []) {
     const row = rowFor(ctx, group, id);
@@ -562,6 +565,7 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
 // A reaction that killed, staggered or locked the attacker cancels the rest, so
 // there is nothing left to explain (Codex on #1849).
 function reportRestOfRoot(ctx, group, ownerId, hooks) {
+  if (group.contactSequence) return;
   if (playerRootSeat(ctx, group)) return;
   const row = rowFor(ctx, group, ownerId);
   if (!row || row.contacts.filter(positive).length < 2 || !seatPresent(ctx, ownerId)) return;

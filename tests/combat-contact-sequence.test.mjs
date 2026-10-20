@@ -76,6 +76,8 @@ test('Core offers one Counter per hit and resolves its return before the next co
   assert.equal(ctx.pendingReaction, undefined);
   assert.equal(ctx.eventLog.filter(row => row.type === 'cardPlayed' && row.cardId === 'core.counter').length, 3);
   assert.equal(ctx.eventLog.filter(row => row.type === 'enemyMoveStarted').length, 1, 'the root move is executed and paid once');
+  assert.equal(ctx.eventLog.filter(row => row.type === 'combatReactionUnavailable' && row.reason === 'alreadyAnswered').length, 0,
+    'settling one contact never says the later hits cannot be answered');
 });
 
 test('skipping a per-hit response advances only that hit and reload preserves every pause', () => {
@@ -95,6 +97,17 @@ test('skipping a per-hit response advances only that hit and reload preserves ev
   assert.equal(ctx.pendingReaction, undefined);
   assert.equal(initial - ctx.player.hp, 15);
   assert.deepEqual(ctx.eventLog.filter(row => row.type === 'damageDealt' && row.targetId === ctx.player.id).map(row => row.amount), [5, 5, 5]);
+});
+
+test('ancillary contacts never turn a per-hit answer into a whole-root refusal notice', () => {
+  const ctx = live(5, [{ op: 'applyStatus', target: 'player', status: 'vulnerable', stacks: 2 }]);
+  counters(ctx); primeAccuracyRolls(ctx, { count: 3 }); dispatch(ctx, { type: 'endTurn' });
+  for (let hit = 0; hit < 3; hit++) {
+    assert.ok(ctx.pendingReaction, `hit${hit} still has its own response`);
+    primeAccuracyRolls(ctx, { count: 3 });
+    answer(ctx, ctx.pendingReaction.options.find(row => row.play.cardInstanceId === `counter-${hit}`).id);
+  }
+  assert.equal(ctx.eventLog.filter(row => row.type === 'combatReactionUnavailable' && row.reason === 'alreadyAnswered').length, 0);
 });
 
 test('three live 5-damage contacts lose 15 HP and paint three -5 readouts', t => {
