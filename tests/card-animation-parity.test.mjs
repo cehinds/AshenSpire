@@ -68,7 +68,7 @@ test('core and current keep class-default sprites when the mechanical loadout ch
     const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
     for (const classId of classes) {
       const run = createRunState({ seed: 21, classId, registries, profileMeta: { gameProfileUnlocks: { [profile.id]: { completedRunIds: ['one', 'two', 'three'] } } } });
-      const ref = run.deck.find(card => card.cardId === 'core.strike' || card.cardId === 'strike');
+      const ref = run.deck.find(card => card.cardId === 'core.strike' || card.cardId === 'strike') || run.deck[0]; // Core Starseer opens without a Strike
       assert.ok(ref);
       const first = deckCardAnimationPlan(registries, run, ref);
       run.loadout.sets.rightHand[run.loadout.active.rightHand] = 'shortbow';

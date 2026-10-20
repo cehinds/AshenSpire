@@ -2834,6 +2834,8 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 
 **The collection is what the run owns plus the unlimited basics.**
 
+**Core (owner ruling, 2026-10-19):** in the Core profile the collection shows only cards the run has collected (deck ∪ sideboard); no basic is offered unowned, so `unlimitedCardIds` is empty there and a Strike taken out of the deck goes to the sideboard like any owned card. A new Core run's collection is its opening deck, composed per class by `starterDeck.classDecks`. The Legacy and Current profiles keep the unlimited basics below.
+
 - **Unlimited basics are matched by role, not by `cardId`.** On an equipped run a starting Strike is an attack-slot instance (`equipmentRole: 'attack'`, `equipmentAttackSlotId`) whose `cardId` is the weapon's face, and a Defend is a guard instance (`equipmentRole: 'guard'`); `stampDeck` re-derives both from the slot plan (§3.8 "no re-minting of base cards mid-run", §13.4b). The editor keeps that model instead of minting bare cards:
   - **Removing a basic retires its slot**, through the same retirement `removeDeckCard` uses (`removedAttackSlotIds`), and the instance is kept in `run.sideboard`.
   - **Adding a basic first un-retires** a retired slot (its sideboarded instance returns). When none is retired, it **grows the allocation**: `equipmentAttackSlotCount` rises by one and the next `stampDeck` stamps slot `attack:<count>` with the weapon's current face and modifiers, exactly as it stamps a born slot. So a basic is unlimited, but never a bare card outside the plan.

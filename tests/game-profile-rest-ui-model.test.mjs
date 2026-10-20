@@ -83,7 +83,7 @@ test('normal Smithing quotes keep their authored cost and affordability', () => 
   assert.ok(free.candidates.every(row => row.cost === 0 && row.affordable));
 });
 
-test('the deck editor exposes only authored basics and rejects the legacy attack mint before mutation', async () => {
+test('the Core deck editor offers no unowned basics (owner ruling 2026-10-19) and rejects the legacy attack mint before mutation', async () => {
   const { deckEditorModel, openDeckEdit, deckVariantKey } = await import('../src/ui/models/DeckEditorModel.js');
   const { createGameProfileRestDraft } = await import('../src/model/gameProfileRest.js');
   const { run } = fixture();
@@ -91,13 +91,14 @@ test('the deck editor exposes only authored basics and rejects the legacy attack
   const session = openDeckEdit(registries, draft);
   const before = structuredClone(draft);
   const editor = deckEditorModel({ registries, run: draft });
-  const allowed = ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.evade'];
-  const mints = editor.collection.filter(tile => tile.unlimited);
-  assert.deepEqual(mints.map(tile => tile.cardId).sort(), [...allowed].sort());
+  // Collection = cards the run owns; no unowned basic is offered.
+  assert.deepEqual(editor.collection.filter(tile => tile.unlimited), []);
+  assert.equal(editor.collection.some(tile => String(tile.key).startsWith('basic:')), false);
+  assert.throws(() => session.add('basic:core.evade'), /not an unlimited card id/);
   assert.equal(editor.collection.some(tile => tile.key === 'basic:attack' || tile.key === 'basic:guard'), false);
   assert.throws(() => session.add('basic:attack'), /not an unlimited card id/);
   assert.deepEqual(draft, before, 'the formerly enabled legacy tile cannot alter a configured draft');
-  const removed = draft.deck.find(card => card.cardId === 'base.draw');
+  const removed = draft.deck.find(card => card.cardId === 'core.counter');
   assert.equal(session.remove(removed.instanceId).ok, true);
   assert.equal(draft.deck.length, run.deck.length - 1);
   assert.equal(draft.sideboard.some(card => card.instanceId === removed.instanceId), true);

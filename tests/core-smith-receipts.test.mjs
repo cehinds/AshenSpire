@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } from '../src/model/gameProfile.js';
-import { createRunState } from '../src/model/state.js';
+import { createRunState, createCardInstance } from '../src/model/state.js';
 import { beginGameProfileRest, commitGameProfileRest } from '../src/model/gameProfileRest.js';
 import { gameProfileEquipmentReceipt } from '../src/model/gameProfileRun.js';
 import { smithingPlan } from '../src/model/smithing.js';
@@ -19,7 +19,13 @@ import { previewCard, dispatch } from '../src/engine/combat.js';
 
 const profile = resolveGameProfile(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))));
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-const fresh = () => createRunState({ seed: 73, classId: 'reaver', registries: reg, runId: 'unique-run' });
+// The Core Reaver starting deck (#2199) holds its Smash as the weapon art, not core.smash; these tests measure a plain
+// Smash card's smithed face, so the fixture adds one copy as a reward pick would.
+const fresh = () => {
+  const run = createRunState({ seed: 73, classId: 'reaver', registries: reg, runId: 'unique-run' });
+  if (!run.deck.some((card) => card.cardId === 'core.smash')) run.deck.push(createCardInstance('core.smash', false, () => 'smash-fixture'));
+  return run;
+};
 const visit = (run) => { run.mapGraph = buildActMap(reg, createRng(73), run.seatOrder[0], 1); run.mapNodeId = 'n3_0'; return beginGameProfileRest(run, '1:n3_0'); };
 const fight = (run) => {
   const combat = createRunCombat({ registries: reg, run, rng: createRng(17), enemyIds: ['wanderingSoldier'] });

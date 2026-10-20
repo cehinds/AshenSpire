@@ -163,6 +163,19 @@ function verifyContent(content) {
   if (cards.size !== content.cards.length) fail('$/content/cards', 'duplicate card ID');
   for (const row of content.classes) if (!cards.has(row.specialCardId)) fail(`$/content/classes/${row.id}/specialCardId`, 'unresolved card reference');
   for (const row of content.starterDeck.shared) if (!cards.has(row.card) || !Number.isSafeInteger(row.copies) || row.copies < 1) fail('$/content/starterDeck/shared', 'invalid starter card reference/count');
+  const classDecks = content.starterDeck.classDecks;
+  if (classDecks !== undefined) {
+    if (!record(classDecks)) fail('$/content/starterDeck/classDecks', 'expected class-id map of starter rows');
+    for (const [classId, rows] of Object.entries(classDecks)) {
+      const at = `$/content/starterDeck/classDecks/${classId}`;
+      if (!classIDs.has(classId)) fail(at, 'unknown class');
+      if (!Array.isArray(rows)) fail(at, 'expected an array of starter rows');
+      for (const [i, row] of rows.entries()) {
+        if (!record(row) || !cards.has(row.card)) fail(`${at}/${i}/card`, `unknown card reference ${JSON.stringify(row?.card)} for class ${classId} row ${i}`);
+        if (!Number.isSafeInteger(row.copies) || row.copies < 1) fail(`${at}/${i}/copies`, `expected positive integer copies for class ${classId} row ${i}, got ${JSON.stringify(row.copies)}`);
+      }
+    }
+  }
 }
 // Names (owner 2026-10-17): no spaces. "_" stands for a space and is turned back into one for
 // display; "-" is a real hyphen and is kept. "Ember-Starved_Pilgrim" shows as "Ember-Starved Pilgrim".

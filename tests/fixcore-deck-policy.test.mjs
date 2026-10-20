@@ -9,19 +9,13 @@ import { applyGameProfileToContent } from '../src/model/gameProfile.js';
 import { unlimitedCardIds, addBasicCard, moveToSideboard, moveFromSideboard, deckCopyLimit } from '../src/model/deckRules.js';
 const profile = resolveGameAuthor(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url))), loadGameProfileCatalog());
 const reg = createRegistries(applyGameProfileToContent(contentBundle, profile));
-for (const classId of ['reaver','rogue','starseer','herald']) test(`${classId} editor uses the kernel trait policy and keeps owned cards`, () => {
+for (const classId of ['reaver','rogue','starseer','herald']) test(`${classId} editor offers no unowned basics and keeps owned cards`, () => {
   const run = { gameProfile: profile, class: classId, deck: [], sideboard: [] };
-  const ids = unlimitedCardIds(run);
-  assert.ok(ids.length > 0);
-  for (const id of ids) {
-    const def = run.gameProfile.content.cards.find(c => c.id === id);
-    if (['starseer','herald'].includes(classId)) assert.ok(def.tags.includes('camp:spell'));
-    else assert.ok(!def.tags.includes('camp:spell'));
-  }
-  const id = ids[0];
-  for (let i=0;i<9;i++) addBasicCard(reg,run,id,{plain:true});
-  assert.equal(run.deck.length,9);
-  assert.equal(deckCopyLimit(reg,id,{},run),Infinity);
+  // Owner ruling 2026-10-19 (SPEC §14.1): Core's collection is only what the run owns.
+  assert.deepEqual(unlimitedCardIds(run), []);
+  assert.throws(() => addBasicCard(reg, run, 'core.strike', { plain: true }), /not an unlimited card id/);
+  assert.equal(run.deck.length, 0);
+  if (!['starseer','herald'].includes(classId)) assert.equal(deckCopyLimit(reg, 'core.strike', {}, run), Infinity);
   const special = profile.content.classes.find(c=>c.id===classId).specialCardId;
   run.sideboard.push({instanceId:'owned',cardId:special,rank:2});
   assert.equal(moveFromSideboard(reg,run,'owned'),true);

@@ -13,12 +13,21 @@ const bind = profile => bindGameProfileRegistries(createRegistries(applyGameProf
 const core = resolveGameProfile('core'), reg = bind(core);
 const off = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: { 'reward-ranks': { stanceCoverage: { enabled: false } } } }), regOff = bind(off);
 const templates = new Map();
-const fresh = (r = reg) => { if (!templates.has(r)) templates.set(r, createRunState({ seed: 1, classId: 'reaver', registries: r })); return structuredClone(templates.get(r)); };
+// The Core Reaver now opens on strike/defend/counter + its smash art and lacks sweep, casting and evade. These tests
+// model the older premise (only evade missing), so `fresh` first adds the Sweep and Draw cards the old shared deck held.
+const bare = (r = reg) => createRunState({ seed: 1, classId: 'reaver', registries: r });
+const fresh = (r = reg) => {
+  if (!templates.has(r)) { const run = bare(r); for (const cardId of ['core.sweep', 'base.draw']) run.deck.push({ instanceId: `t:${cardId}`, cardId, upgraded: false }); templates.set(r, run); }
+  return structuredClone(templates.get(r));
+};
 const own = (run, cardId) => run.sideboard.push({ instanceId: `t:${cardId}`, cardId, upgraded: false });
 const offer = (r, run, seed, source = 'combat') => gameProfileRewardOffers(r, run, createRng(seed), { offerId: `o${seed}`, source });
 const stanceOfId = id => stanceOf(reg.cards.get(id)).maneuver;
 const SEEDS = Array.from({ length: 12 }, (_, i) => i);
 
+test('the Core Reaver opening deck lacks the sweep, casting and evade stances', () => {
+  assert.deepEqual(missingBasicStances(bare(), reg), ['sweep', 'casting', 'evade']);
+});
 test('missingBasicStances lists only stances with no owned card', () => {
   const run = fresh();
   assert.deepEqual(missingBasicStances(run, reg), ['evade']);
