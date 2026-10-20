@@ -1,4 +1,5 @@
 import test from 'node:test';
+import '../src/engine/runCombat.js'; // binds the combat engine Core Smith card rows run
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -48,7 +49,11 @@ test('a free Smith quote and shared review agree with the configured commit at z
   assert.deepEqual(run, before);
   const expected = model.smithPreviews.get(candidate.itemRef).preview;
   commitGameProfileRest(registries, run, 'smith', { itemRef: candidate.itemRef });
-  assert.deepEqual(run, expected);
+  // The preview skips card simulation (it runs for every candidate); the commit adds the chosen item's card rows to the receipt.
+  const { lastSmithingReceipt: committed, ...rest } = run, { lastSmithingReceipt: previewed, ...expectedRest } = expected;
+  assert.deepEqual(rest, expectedRest);
+  assert.deepEqual({ ...committed, changes: committed.changes.filter(row => row.kind !== 'card'), affectedCards: previewed.affectedCards },
+    { ...previewed, changes: previewed.changes.filter(row => row.kind !== 'card') });
   assert.equal(run.smithingStones, 0);
   // D10: Smith being used leaves Level Up usable in the same visit (not exclusive).
   const spent = gameProfileRestModel(registries, run, run.gameProfileRestVisits[visit.id]);
@@ -78,7 +83,7 @@ test('normal Smithing quotes keep their authored cost and affordability', () => 
   assert.ok(free.candidates.every(row => row.cost === 0 && row.affordable));
 });
 
-test('the deck editor exposes only authored basics and rejects the legacy attack mint before mutation', async () => {
+test('the Core deck editor offers no unowned basics (owner ruling 2026-10-19) and rejects the legacy attack mint before mutation', async () => {
   const { deckEditorModel, openDeckEdit, deckVariantKey } = await import('../src/ui/models/DeckEditorModel.js');
   const { createGameProfileRestDraft } = await import('../src/model/gameProfileRest.js');
   const { run } = fixture();
@@ -86,13 +91,14 @@ test('the deck editor exposes only authored basics and rejects the legacy attack
   const session = openDeckEdit(registries, draft);
   const before = structuredClone(draft);
   const editor = deckEditorModel({ registries, run: draft });
-  const allowed = ['core.strike', 'core.defend', 'core.counter', 'core.smash', 'core.sweep', 'core.evade'];
-  const mints = editor.collection.filter(tile => tile.unlimited);
-  assert.deepEqual(mints.map(tile => tile.cardId).sort(), [...allowed].sort());
+  // Collection = cards the run owns; no unowned basic is offered.
+  assert.deepEqual(editor.collection.filter(tile => tile.unlimited), []);
+  assert.equal(editor.collection.some(tile => String(tile.key).startsWith('basic:')), false);
+  assert.throws(() => session.add('basic:core.evade'), /not an unlimited card id/);
   assert.equal(editor.collection.some(tile => tile.key === 'basic:attack' || tile.key === 'basic:guard'), false);
   assert.throws(() => session.add('basic:attack'), /not an unlimited card id/);
   assert.deepEqual(draft, before, 'the formerly enabled legacy tile cannot alter a configured draft');
-  const removed = draft.deck.find(card => card.cardId === 'base.draw');
+  const removed = draft.deck.find(card => card.cardId === 'core.counter');
   assert.equal(session.remove(removed.instanceId).ok, true);
   assert.equal(draft.deck.length, run.deck.length - 1);
   assert.equal(draft.sideboard.some(card => card.instanceId === removed.instanceId), true);

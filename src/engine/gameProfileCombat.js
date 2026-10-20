@@ -1,35 +1,25 @@
 import { applyStatus } from './statuses.js';
-import { attackHitPreview } from './stanceHit.js';
-import { sourceRatingValue, magicShareOf, splitContactParts } from '../model/combatRatings.js';
+import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
+import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack } from '../model/combatRatings.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
-import { mirroredManeuver } from '../model/stanceRules.js';
+import { fixCoreEnabled, fixCoreRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, fixCoreReactionHandCost } from '../model/fixCoreMechanics.js';
+import { mirroredStance, configuredStance, armsAsCoreCounter } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
-import { cardPreparationCategory } from '../model/cardClassification.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
 import { proposalHitPlan, proposalTargetPlan } from './proposalStatusRuntime.js';
 // Configured combat adapter. All rules are scoped to the saved resolved profile;
 // a missing/current profile leaves the existing interpreter untouched.
-import { gameModule, gameContent } from '../model/gameProfile.js';
+import { gameContent } from '../model/gameProfile.js';
+import { configuredModule } from '../model/profileModule.js';
 
 export function configuredCombat(subject) {
   const profile = subject?.gameProfile;
   return !!profile && (profile.foundation?.mode === 'configured'
     || Object.values(profile.modules || {}).some(rule => rule?.mode === 'configured'));
 }
-export function configuredModule(subject, id) {
-  const rule = gameModule(subject, id);
-  return rule?.mode === 'configured' ? rule : null;
-}
-// A Spell that mirrors a basic card (owner 2026-10-18) keeps that basic's stance; it is still a Spell.
-export const mirroredStance = mirroredManeuver;
-export function configuredStance(carrier) {
-  if (mirroredStance(carrier)) return mirroredStance(carrier);
-  if (cardPreparationCategory(carrier)) return 'prepared';
-  const raw = carrier?.stanceTrigger?.stance || carrier?.combatProfile?.maneuver || carrier?.maneuver
-    || (carrier?.cardTags || carrier?.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id).find(tag => tag.startsWith('maneuver:'))?.slice(9);
-  return ({ casting: 'prepared', cast: 'prepared', spell: 'prepared', ranged: 'attack' })[raw] || raw || 'neutral';
-}
+export { configuredModule };
+// configuredStance / mirroredStance / armsAsCoreCounter live in the model layer (profileStance.js) so the card inspector shares them.
+export { mirroredStance, configuredStance, armsAsCoreCounter };
 export function setProfileStance(ctx, entity, carrier) {
   if (!configuredCombat(ctx)) return false;
   if (fixCoreEnabled(ctx) && carrier && carrier.fixCoreSameStance === undefined) carrier.fixCoreSameStance = sameStance(entity, carrier);
@@ -42,7 +32,7 @@ export function setProfileStance(ctx, entity, carrier) {
     ? { maneuver: stance, camp: carrier?.combatProfile?.camp || 'physical', range: carrier?.combatProfile?.range || 'melee',
       ...(mirroredStance(carrier) ? { mirrored: true, camp: 'spell' } : {}) }
     : { maneuver: 'neutral', camp: 'physical', range: 'melee' };
-  if (grants?.precision > 0) applyStatus(ctx,entity,'precision',grants.precision,entity);
+  if (grants?.precision > 0) applyStatus(ctx,entity,'precision',precisionEntryGrant(ctx,entity,grants.precision,carrier),entity);
   if (grants?.evade > 0 && !carrier?.appliedStatuses?.includes('evade')) applyStatus(ctx,entity,'evade',grants.evade,entity);
   rememberCombatStance(ctx,entity,previous);
   ctx.emit?.('combatStanceChanged', { targetId: entity.id, maneuver: entity.combatStance.maneuver });
@@ -69,6 +59,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const advantage = !!stances?.include?.includes(attacking)
     && !!stances?.matchups?.[attacking]?.includes(defending);
   const modern = fixCoreEnabled(ctx);
+  const flatReturn = modern && carrier.counterReturnAttack;
   const sources = [{id:'base',label:'Card damage (including enhancements)',amount:base,stage:'offense',operation:'set'}];
   // The chain keeps full precision and is floored once where it is applied (the quantity-rounding step);
   // receipt lines show the running floor so every shown number is whole (owner, 2026-10-18 16:05).
@@ -77,28 +68,40 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     if (before !== after) sources.push({id,label,amount:whole(after)-whole(before),requested:whole(before),effective:whole(after),stage,operation:multiplier === undefined ? 'add' : 'multiply',...(multiplier === undefined ? {} : {multiplier})});
     return after;
   };
-  const ar = modern ? sourceRatingValue(ctx, source, 'ar', carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
+  const profile = {...(carrier.combatProfile || {}), ...(Number.isFinite(carrier.magicShare) ? {magicShare:carrier.magicShare} : {})};
+  const share = magicShareOf(profile,ctx.ratingsRules);
+  // Owner, 2026-10-19: spell effectiveness uses PR; a spell (camp spell or magic school, whatever its Barrier split) reads PR where a physical attack reads AR.
+  // A hit with any magic share (a school-only technique included, as magicShareOf reads it) reads PR.
+  // Enemies keep AR for their spells: their PR is 0 in data, so reading it would zero their spell damage.
+  const ratingId = modern && source?.kind !== 'enemy' && (profile.camp === 'spell' || share > 0 || isMagicalAttack(ctx, carrier)) ? 'pr' : 'ar', ratingLabel = ratingId.toUpperCase();
+  const ar = modern ? sourceRatingValue(ctx, source, ratingId, carrier.sourceArmamentId, carrier.equipmentScoped) : rating(source,'ar');
   const ratingBonus = modern && carrier.skipRatingBonus ? 0 : ar * (effects?.attackRatingWeight || 0);
   let raw = base;
   const applicable = (source?.ratingSources || []).filter(row => row.kind !== 'equipment' || !carrier.sourceArmamentId && !carrier.equipmentScoped
     || row.slot === 'armor' || row.sourceId?.startsWith('armor/') || row.sourceId === carrier.sourceArmamentId || row.sourceId === `armament/${carrier.sourceArmamentId}`);
-  const sourceAR = applicable.reduce((sum,row)=>sum+(row.ar || 0),0);
+  const sourceAR = applicable.reduce((sum,row)=>sum+(row[ratingId] || 0),0);
   if (modern && sourceAR > 0 && ratingBonus > 0) {
     for (const [index,row] of applicable.entries()) {
-      const contribution = (row.ar || 0) * (effects?.attackRatingWeight || 0);
-      raw = transition(`ar:${row.sourceId || index}`,`${row.name || row.kind}: AR`,raw,raw+contribution);
+      const contribution = (row[ratingId] || 0) * (effects?.attackRatingWeight || 0);
+      raw = transition(`${ratingId}:${row.sourceId || index}`,`${row.name || row.kind}: ${ratingLabel}`,raw,raw+contribution);
     }
-    raw = transition('ar:adjustments','AR stance/status modifiers (including Weak)',raw,base+ratingBonus);
+    raw = transition('ar:adjustments',`${ratingLabel} stance/status modifiers (including Weak)`,raw,base+ratingBonus);
   } else raw = transition('ar','Attack rating',raw,raw+ratingBonus);
-  const stanceMultiplier = stanceEffectiveness(ctx,source,carrier);
+  // A Core 2 Counter return is final pre-protection damage (SPEC §17): no matching-stance or defensive-stance stage.
+  const stanceMultiplier = flatReturn ? 1 : stanceEffectiveness(ctx,source,carrier);
   raw = transition('matching-stance','Matching stance effectiveness',raw,raw*stanceMultiplier,'offense',stanceMultiplier);
-  if (modern && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
+  if (modern && !flatReturn && target?.statuses?.vulnerable?.stacks > 0) raw=transition('vulnerable','Vulnerable',raw,raw*fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier,'offense',fixCoreRules(ctx, target).statuses.vulnerabilityMultiplier);
   if (!modern) raw=Math.max(0,Math.floor(raw));
-  if(proposal && target) raw=transition('status-rules','Other status modifiers',raw,proposalHitPlan(ctx,source,target,raw,carrier,{roundDamage:!modern}).amount);
+  if(proposal && target && !flatReturn) raw=transition('status-rules','Other status modifiers',raw,proposalHitPlan(ctx,source,target,raw,carrier,{roundDamage:!modern}).amount);
   const defense = stanceMitigation(ctx, attacking, defending);
-  const advantageMultiplier = advantage ? stances.advantageMultiplier ?? 1 : 1;
-  let amount=transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
-  amount=transition('stance-defense','Defensive stance advantage',amount,amount*defense.multiplier,'stance',defense.multiplier);
+  // Owner, 2026-10-19: a Smash that beats the target's stance (Defend or Prepared) deals 2x its normal damage in place of the
+  // generic advantage multiplier, plus a share of the target's Block (below), and costs Poise by a share of the total instead of the 25% absorption.
+  const smashRule = modern && advantage && attacking === 'smash' ? fixCoreSmashVsDefensiveRules(fixCoreRules(ctx, target)) : null;
+  // Core 2 Counter returns carry their advantage in the return itself (SPEC §17), so the chain does not multiply it again.
+  const advantageMultiplier = smashRule ? smashRule.damageMultiplier : advantage && !flatReturn ? stances.advantageMultiplier ?? 1 : 1;
+  let amount=smashRule ? transition('smash-vs-defensive','Smash vs defensive stance',raw,raw*advantageMultiplier,'stance',advantageMultiplier)
+    : transition('stance-advantage','Offensive stance advantage',raw,raw*advantageMultiplier,'stance',advantageMultiplier);
+  amount=transition('stance-defense','Defensive stance advantage',amount,amount*(flatReturn?1:defense.multiplier),'stance',flatReturn?1:defense.multiplier);
   amount=modern ? Math.max(0,Math.floor(amount)) : transition('quantity-rounding','Damage quantity rounding',amount,Math.max(0,Math.floor(amount)),'rounding');
   const evade = stances?.include?.includes('evade') && defending === 'evade';
   const targeting=proposalTargetPlan(ctx,source,target,carrier);
@@ -111,11 +114,15 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   const evaded = roll !== null && roll >= hitChance;
   if (evaded) amount = 0;
   else if (evade && !modern) amount = Math.floor(amount * (stances.evadeFailureMultiplier ?? 2));
-  let blocked = 0, poiseMitigated = 0, wardMitigated = 0;
+  let smashBlockBonus = 0;
+  if (smashRule && !evaded && target) {
+    // Read from the Block held before this hit's own absorption.
+    smashBlockBonus = Math.floor(smashRule.blockFraction * Math.max(0, target.block || 0));
+    if (smashBlockBonus > 0) { sources.push({id:'smash-block-bonus',label:'Smash vs defensive stance: bonus from target Block',amount:smashBlockBonus,requested:amount,effective:amount+smashBlockBonus,stage:'stance',operation:'add'}); amount += smashBlockBonus; }
+  }
+  let blocked = 0, poiseMitigated = 0, wardMitigated = 0, poiseDrain = 0;
   const incoming = amount;
-  const profile = {...(carrier.combatProfile || {}), ...(Number.isFinite(carrier.magicShare) ? {magicShare:carrier.magicShare} : {})};
-  const share = magicShareOf(profile,ctx.ratingsRules);
-  const parts = splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
+  const parts = splitContactParts({amount:incoming,base,ratingBonus,share,ratingPart:ratingId === 'pr' || share >= 1 ? 'magic' : 'physical',primary:share >= 1 ? 'magic' : 'physical'});
   let physical = modern ? parts.physical : incoming, magical = modern ? parts.magic : 0;
   let barrierMitigated = 0;
   if (modern) {
@@ -125,8 +132,12 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     transition('barrier','Barrier',magical,magical-barrierMitigated,'mitigation');
     // Ward off: the magic Barrier left meets Poise with the physical residual (matches actions.js).
     const poiseMeetsMagic = fixCoreWardDisabled(ctx);
-    const poise = protectionReceipt(ctx,target,'physical',physical-blocked+(poiseMeetsMagic ? magical-barrierMitigated : 0));
+    const poiseIn = physical-blocked+(poiseMeetsMagic ? magical-barrierMitigated : 0);
+    // Smash vs a defensive stance: no 25% absorption; the pool instead loses a share of the whole hit (capped at what it holds).
+    const poise = smashRule ? {amount:poiseIn,reduced:0,sources:[]} : protectionReceipt(ctx,target,'physical',poiseIn);
     const ward = protectionReceipt(ctx,target,'magical',poiseMeetsMagic ? 0 : magical-barrierMitigated);
+    // Smash vs a defensive stance: the pool's loss is Poise damage, not absorption, so poiseMitigated (and the log's "absorbed") stay 0.
+    poiseDrain=smashRule && !evaded ? Math.min(Math.max(0,target?.persistentPoise?.value || 0),Math.floor(smashRule.poiseFraction*incoming)) : 0;
     poiseMitigated=poise.reduced;wardMitigated=ward.reduced;
     sources.push(...poise.sources,...ward.sources);
     amount=poise.amount+ward.amount;
@@ -144,10 +155,11 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
     }
   }
   return { raw, wardMitigated, barrierMitigated,
-    damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,hpLoss:amount,sources}]),
+    damageReceipt: damageReceipt(target?.id, [{incoming,physical,magical,blocked,barrierReduced:barrierMitigated,wardReduced:wardMitigated,poiseReduced:poiseMitigated,...(poiseDrain ? {poiseDamage:poiseDrain} : {}),hpLoss:amount,sources}]),
     hitChance, uncertain: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) && roll === null,
-    hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated,
+    hpLossBounds: (fixCoreEnabled(ctx) ? hitChance < 1 : evade) ? [0, amount] : [amount, amount], amount: amount + blocked, hpLoss: amount, blocked, poiseMitigated, poiseDrain,
     blockRemaining: Math.max(0, (target?.block || 0) - blocked), evaded, advantage,
+    ...(smashRule ? { smashVsDefensive: { blockBonus: smashBlockBonus, poiseDamage: poiseDrain } } : {}),
     defenseAdvantage: defense.defenseAdvantage, stanceMitigation: defense.mitigation,
     attackStance: attacking, defenseStance: defending,
     interrupted: advantage && stances?.staggerOnAdvantage === true
@@ -159,7 +171,7 @@ export function profileCardCosts(ctx, def) {
   const authored = def.resourceCosts || def.costs || {};
   const baseSp = def.cost==='X' && include.includes('sp') ? Math.max(0,ctx.player?.stamina ?? ctx.player?.energy ?? 0) : authored.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : 0);
   const baseMp = authored.mp ?? def.manaCost ?? 0;
-  const sp = fixCoreEnabled(ctx) ? stanceStaminaCost(baseSp, ctx.player, def, ctx, baseMp) : baseSp;
+  const sp = fixCoreEnabled(ctx) ? fixCoreReactionHandCost(ctx, def, stanceStaminaCost(baseSp, ctx.player, def, ctx, baseMp)) : baseSp;
   const mp = stanceManaCost(baseMp, ctx.player, def, ctx);
   if ((!include.includes('sp') && sp > 0) || (!include.includes('mp') && mp > 0)) {
     throw new Error(`Card ${def.id || 'unknown'} requires an authored disabled-resource variant`);

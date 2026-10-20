@@ -17,29 +17,64 @@ export function fixCoreModuleParameters(rules = defaults) {
 // extends duration). Missing blocks (saves from before this ruling) fall back to these defaults.
 export const FIXCORE_POISE_DEFAULTS = Object.freeze({ drain: 'prevented' });
 export const FIXCORE_STAGGERED_DEFAULTS = Object.freeze({ stance: true, staminaLoss: 1, vulnerableStacks: 1, extendOnly: true });
+// Owner, 2026-10-19: Counter return = floor(returnFraction x incoming damage), Poise = floor(poiseFraction x return); with advantage
+// the return gains floor(advantageIncomingFraction x incoming), Poise uses advantagePoiseFraction and the owner gains
+// floor(advantageBlockFraction x incoming) Block. A trait:reaction card played from hand costs handCostDiscount less SP (floor 0).
+export const FIXCORE_COUNTER_DEFAULTS = Object.freeze({ returnFraction: 0.5, poiseFraction: 0.2, advantageIncomingFraction: 0.25, advantagePoiseFraction: 0.5, advantageBlockFraction: 0.25 });
+export const FIXCORE_REACTION_DEFAULTS = Object.freeze({ handCostDiscount: 1 });
+export const fixCoreCounterRules = rules => ({ ...FIXCORE_COUNTER_DEFAULTS, ...(rules?.counter || {}) });
+export const fixCoreReactionRules = rules => ({ ...FIXCORE_REACTION_DEFAULTS, ...(rules?.reaction || {}) });
+/** The SP a Core 2 `trait:reaction` card costs from hand: max(SP - handCostDiscount, 0) (owner, 2026-10-19; SPEC §17). */
+export function fixCoreReactionHandCost(ctx, def, sp) {
+  if (!fixCoreEnabled(ctx) || !(sp > 0) || def?.cost === 'X') return sp;
+  if (!(def?.cardTags || def?.tags || []).includes('trait:reaction')) return sp;
+  return Math.max(0, sp - fixCoreReactionRules(fixCoreRules(ctx)).handCostDiscount);
+}
 export const fixCorePoiseRules = rules => ({ ...FIXCORE_POISE_DEFAULTS, ...(rules?.poise || {}) });
 export const fixCoreStaggeredRules = rules => ({ ...FIXCORE_STAGGERED_DEFAULTS, ...(rules?.staggered || {}) });
+// Owner, 2026-10-19: a Smash against a defensive stance deals damageMultiplier x its normal damage plus blockFraction of the target's Block,
+// and costs the target's Poise poiseFraction of that total (instead of the 25% Poise absorption). Missing blocks keep these defaults.
+export const FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS = Object.freeze({ damageMultiplier: 2, blockFraction: 0.25, poiseFraction: 0.5 });
+export const fixCoreSmashVsDefensiveRules = rules => ({ ...FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS, ...(rules?.smashVsDefensive || {}) });
 export const fixCoreWardEnabled = rules => rules?.ward?.enabled !== false;
 const OLD_PERCEPTION_FIELDS = ['levelBaseline','intelligenceBaseline','levelWeight','intelligenceWeight'];
 // Pure v1 -> current migration for persisted rules: a perception block saved
 // before bonuses[] keeps baseDC, drops the four retired fields and gets
 // bonuses: []. Current-shape rules are returned untouched (same object).
+const OLD_ACCURACY_FIELDS = ['evasionPerStack','precisionPerStack'];
 export function normalizeFixCoreRules(rules) {
+  let out = rules;
   const p = rules?.perception;
-  if (!p || typeof p !== 'object' || !OLD_PERCEPTION_FIELDS.some(key => Object.hasOwn(p, key))) return rules;
-  const perception = { ...p };
-  for (const key of OLD_PERCEPTION_FIELDS) delete perception[key];
-  if (perception.bonuses === undefined) perception.bonuses = [];
-  return { ...rules, perception };
+  if (p && typeof p === 'object' && OLD_PERCEPTION_FIELDS.some(key => Object.hasOwn(p, key))) {
+    const perception = { ...p };
+    for (const key of OLD_PERCEPTION_FIELDS) delete perception[key];
+    if (perception.bonuses === undefined) perception.bonuses = [];
+    out = { ...out, perception };
+  }
+  // Accuracy saved before the opposed-roll ruling (2026-10-19): drop the retired per-stack fields, fill the new ones from the defaults.
+  const a = rules?.accuracy;
+  if (a && typeof a === 'object' && OLD_ACCURACY_FIELDS.some(key => Object.hasOwn(a, key))) {
+    const accuracy = { ...a };
+    for (const key of OLD_ACCURACY_FIELDS) delete accuracy[key];
+    for (const [key, value] of Object.entries(defaults.accuracy)) if (accuracy[key] === undefined && !['maneuverPrecision','stanceMinimum','stanceMaximum','stanceAdvantageBonus'].includes(key)) accuracy[key] = structuredClone(value);
+    out = { ...out, accuracy };
+  }
+  return out;
 }
 const rawRules = ctx => normalizeFixCoreRules(ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules || defaults);
 export function validateFixCoreRules(rules) {
   if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
-  const known = new Set(['version','enabled','ward','poise','staggered','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  const known = new Set(['version','enabled','ward','poise','staggered','smashVsDefensive','counter','reaction','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
   if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => key !== 'enabled'))) throw new Error('FixCore ward requires {enabled:boolean}');
   const poise = rules.poise, stag = rules.staggered;
   if (poise !== undefined && (typeof poise !== 'object' || poise === null || poise.drain !== 'prevented' || Object.keys(poise).some(key => key !== 'drain'))) throw new Error('FixCore poise requires {drain:"prevented"}');
   if (stag !== undefined && (typeof stag !== 'object' || stag === null || typeof stag.stance !== 'boolean' || typeof stag.extendOnly !== 'boolean' || !Number.isInteger(stag.staminaLoss) || stag.staminaLoss < 0 || !Number.isInteger(stag.vulnerableStacks) || stag.vulnerableStacks < 0 || Object.keys(stag).some(key => !['stance','staminaLoss','vulnerableStacks','extendOnly'].includes(key)))) throw new Error('FixCore staggered requires {stance:boolean, staminaLoss:int, vulnerableStacks:int, extendOnly:boolean}');
+  const fractions = (name, row, keys) => { if (row !== undefined && (typeof row !== 'object' || row === null || Object.keys(row).some(key => !keys.includes(key) || !Number.isFinite(row[key]) || row[key] < 0))) throw new Error(`FixCore ${name} requires non-negative numbers for ${keys.join(', ')}`); };
+  fractions('counter', rules.counter, Object.keys(FIXCORE_COUNTER_DEFAULTS));
+  if (rules.reaction !== undefined && (typeof rules.reaction !== 'object' || rules.reaction === null || Object.keys(rules.reaction).some(key => key !== 'handCostDiscount') || !Number.isInteger(rules.reaction.handCostDiscount) || rules.reaction.handCostDiscount < 0)) throw new Error('FixCore reaction requires {handCostDiscount:int >= 0}');
+  const smash = rules.smashVsDefensive;
+  if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','blockFraction','poiseFraction'].includes(key))
+    || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0)) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');
   for(const key of Object.keys(rules)) if(!known.has(key)) throw new Error(`FixCore unknown configuration field ${key}`);
   for (const tag of rules.defaultTags || []) if (!behaviorTags.has(tag)) throw new Error(`FixCore unknown behavior tag ${tag}`);
   compileBindings({mechanics,moduleParameters:fixCoreModuleParameters(rules),attachments:[{
@@ -112,17 +147,24 @@ export function damageReceipt(targetId, hits) {
 
 // Read-only status projection for cards, PIPs, logs and inspectors. The base
 // registry is explicit so UI facades cannot recursively query themselves.
-export function fixCoreStatusDefinition(ctx, id, baseDefinition) {
+/** The off-combat phrase for Evade's gain, from the configured (and card-scoped) accuracy block: "1 plus DEX", "3 plus 2× DEX". */
+export function evadeStackGainPhrase(ctx, carrier = null) {
+  const { evadeStackBase: base, evadeStackDex: dex } = fixCoreRules(ctx, { id: 'card-face' }, carrier).accuracy;
+  return dex === 0 ? String(base) : `${base} plus ${dex === 1 ? '' : dex + '× '}DEX`;
+}
+export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) {
   const base = baseDefinition ?? ctx?.registries?.statuses?.get(id);
   if (!fixCoreEnabled(ctx)) return base;
-  const rules = fixCoreRules(ctx), overrides = rules.statuses.overrides?.[id];
+  const rules = fixCoreRules(ctx, holder), overrides = rules.statuses.overrides?.[id];
   const row = overrides ? {...base,...overrides} : {...base};
   const facts = {
     weak: `Attack rating ×${rules.statuses.weakARMultiplier} while active.`,
     vulnerable: `Damage taken ×${rules.statuses.vulnerabilityMultiplier} while active.`,
     staggered: `Poise broke: lose ${fixCoreStaggeredRules(rules).staminaLoss} SP next turn and gain ${fixCoreStaggeredRules(rules).vulnerableStacks} Vulnerable. Repeat breaks only extend Vulnerable.`,
-    evade: `Evasion +${rules.accuracy.evasionPerStack} per stack.`,
-    precision: `Precision +${rules.accuracy.precisionPerStack} per stack.`,
+    // Per-stack Evasion is baseAC + the holder's gear Evasion + the holder's DEX; with no holder the line stays entity-neutral.
+    evade: holder ? `Each stack adds ${rules.accuracy.baseAC + (Number(holder.baseEvasionBonus) || 0)} (base ${rules.accuracy.baseAC}${holder.baseEvasionBonus ? `, gear +${holder.baseEvasionBonus}` : ''}) plus the holder's DEX to its Evasion roll.`
+      : `Each stack adds ${rules.accuracy.baseAC} plus the holder's gear Evasion and DEX to its Evasion roll.`,
+    precision: `Each stack adds another multiple of your Precision score (attributes and level) to your Precision roll.`,
   };
   if (id === 'staggered') row.tooltip = row.description = facts[id];
   else if (facts[id]) row.tooltip = row.description = `${facts[id]} Applications add stacks. Lose ${rules.statuses.decayAmount} stack at the start of the owner's turn each round.`;

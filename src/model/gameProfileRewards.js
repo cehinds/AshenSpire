@@ -3,6 +3,8 @@ import { gameModule, gameContent } from './gameProfile.js';
 import { syncZones } from './state.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
 import { acquireFlask } from './gracerefill.js';
+import { reserveStanceCards } from './stanceCoverage.js';
+import { deckEditBounds, moveFromSideboard } from './deckRules.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -66,6 +68,10 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
     if(problems.length)throw new Error(problems.join('; '));
   }
   const shelfCounts=new Map();
+  // Owner 2026-10-19: reserve slot(s) for a basic/cantrip card of a stance the character lacks (never in a shop).
+  if(source!=='shop'&&categories.includes('combatCards')&&(!groups.length||groups.some(group=>group.weight>0&&group.categories.includes('combatCards'))))for(const id of reserveStanceCards(registries,run,rng,stream,available.combatCards,count-options.length)) {
+    options.push({kind:'combatCards',id});available.combatCards=available.combatCards.filter(value=>value!==id);
+  }
   // Ordinary combat draws weighted groups. Shops independently fill each shelf.
   while(options.length<count) {
     const kinds=categories.filter(kind=>(available[kind]||[]).length && (itemsPerCategory===null || (shelfCounts.get(kind)||0)<itemsPerCategory));
@@ -127,6 +133,34 @@ export function claimGameProfileReward(registries,run,offerId,index) {
   const pending=draft.gameProfileRewardOffers[offerId];pending.taken.push(index);
   if(pending.taken.length>=Math.min(pending.takeCount,pending.options.length))pending.claimed=index;
   syncZones(draft);Object.assign(run,draft);return option;
+}
+// Owner 2026-10-18: a won card may go straight into the deck. The claim is the ordinary one (the card lands in the
+// sideboard as `reward:<offer>:<index>`); the move into the deck then obeys the deck rules (size cap, copy limits,
+// equipment eligibility). Both steps run on a draft, so a refusal leaves the run and the offer untouched.
+export const rewardInstanceId = (offerId, index) => `reward:${offerId}:${index}`;
+const deckAddProblem = (code, text, extra = {}) => Object.assign(new Error(text), { code, ...extra });
+function addRewardToDeckDraft(registries, draft, offerId, index, settings) {
+  const offer = draft.gameProfileRewardOffers?.[offerId], option = offer?.options?.[index];
+  if (!option || !['combatCards', 'weaponArts'].includes(option.kind)) throw deckAddProblem('notCard', 'Only a card can be added to the deck');
+  const instanceId = rewardInstanceId(offerId, index);
+  if (draft.deck.some(card => card?.instanceId === instanceId)) return { option, instanceId, changed: false };
+  if (!offer.taken.includes(index)) claimGameProfileReward(registries, draft, offerId, index);
+  const { max } = deckEditBounds(settings);
+  if (draft.deck.length + 1 > max) throw deckAddProblem('full', `Your deck is full (${max} cards)`, { max });
+  if (!moveFromSideboard(registries, draft, instanceId, settings)) throw deckAddProblem('limit', 'This card cannot join the deck right now');
+  syncZones(draft);
+  return { option, instanceId, changed: true };
+}
+/** rewardDeckAddRefusal(...) → '' when "Add to deck" is legal for the offered card, else a code: 'notCard' | 'full' | 'limit'. */
+export function rewardDeckAddRefusal(registries, run, offerId, index, settings = {}) {
+  try { addRewardToDeckDraft(registries, structuredClone(run), offerId, index, settings); return ''; }
+  catch (error) { if (error.code) return error.code; throw error; }
+}
+/** claimGameProfileRewardToDeck(...) → the option. Claims (when not yet claimed) and adds the card to the deck; repeat calls change nothing. */
+export function claimGameProfileRewardToDeck(registries, run, offerId, index, settings = {}) {
+  const draft = structuredClone(run);
+  const { option } = addRewardToDeckDraft(registries, draft, offerId, index, settings);
+  Object.assign(run, draft); return option;
 }
 export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   const module=gameModule(run,'shops');

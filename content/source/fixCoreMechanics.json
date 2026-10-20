@@ -17,6 +17,21 @@
     "vulnerableStacks": 1,
     "extendOnly": true
   },
+  "counter": {
+    "returnFraction": 0.5,
+    "poiseFraction": 0.2,
+    "advantageIncomingFraction": 0.25,
+    "advantagePoiseFraction": 0.5,
+    "advantageBlockFraction": 0.25
+  },
+  "reaction": {
+    "handCostDiscount": 1
+  },
+  "smashVsDefensive": {
+    "damageMultiplier": 2,
+    "blockFraction": 0.25,
+    "poiseFraction": 0.5
+  },
   "stance": {
     "effectivenessMultiplier": 1.25,
     "discount": 1,
@@ -24,8 +39,17 @@
   },
   "accuracy": {
     "baseAC": 1,
-    "evasionPerStack": 1,
-    "precisionPerStack": 1,
+    "evadeStackBase": 1,
+    "evadeStackDex": 1,
+    "precisionBase": 1,
+    "evasionBase": 1,
+    "precisionWeights": {
+      "dex": 0.5,
+      "str": 0.1,
+      "wis": 0.2,
+      "int": 0.2,
+      "level": 1
+    },
     "maneuverPrecision": {
       "smash": 1,
       "sweep": 1

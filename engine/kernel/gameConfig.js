@@ -163,6 +163,19 @@ function verifyContent(content) {
   if (cards.size !== content.cards.length) fail('$/content/cards', 'duplicate card ID');
   for (const row of content.classes) if (!cards.has(row.specialCardId)) fail(`$/content/classes/${row.id}/specialCardId`, 'unresolved card reference');
   for (const row of content.starterDeck.shared) if (!cards.has(row.card) || !Number.isSafeInteger(row.copies) || row.copies < 1) fail('$/content/starterDeck/shared', 'invalid starter card reference/count');
+  const classDecks = content.starterDeck.classDecks;
+  if (classDecks !== undefined) {
+    if (!record(classDecks)) fail('$/content/starterDeck/classDecks', 'expected class-id map of starter rows');
+    for (const [classId, rows] of Object.entries(classDecks)) {
+      const at = `$/content/starterDeck/classDecks/${classId}`;
+      if (!classIDs.has(classId)) fail(at, 'unknown class');
+      if (!Array.isArray(rows)) fail(at, 'expected an array of starter rows');
+      for (const [i, row] of rows.entries()) {
+        if (!record(row) || !cards.has(row.card)) fail(`${at}/${i}/card`, `unknown card reference ${JSON.stringify(row?.card)} for class ${classId} row ${i}`);
+        if (!Number.isSafeInteger(row.copies) || row.copies < 1) fail(`${at}/${i}/copies`, `expected positive integer copies for class ${classId} row ${i}, got ${JSON.stringify(row.copies)}`);
+      }
+    }
+  }
 }
 // Names (owner 2026-10-17): no spaces. "_" stands for a space and is turned back into one for
 // display; "-" is a real hyphen and is kept. "Ember-Starved_Pilgrim" shows as "Ember-Starved Pilgrim".
@@ -209,8 +222,18 @@ export function resolveGearItem(item, settings, { rank = item.rank ?? 1 } = {}) 
   const size = pool => settings.poolSizes[pool][item.rarity] || { min: 0, max: 0 };
   const target = pool => settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? size(pool).min : size(pool).max;
   const explicit = Object.fromEntries(GEAR_KEYS.map(k => [k, item.points?.[k] || 0]));
+  // Core Smith tiers (armor and shield): every tier's extra point is a DR point, not a weighted draw, so an
+  // upgrade always raises DR (and the Block of every card that reads it). It is taken from the same pool.
   const tagCost = (item.tags || []).reduce((s, t) => s + (settings.tags[t]?.cost || 0), 0);
   const sum = keys => keys.reduce((s, k) => s + explicit[k], 0);
+  // Core policy (armorBudget.perRankStat: 'dr'): the tier DR point is taken only from budget the item has not already spent: authored points that use the
+  // allowance (rank 2, 4-point budget, 4 authored DR) are not topped up a second time.
+  const tierPoints = (rank - 1) * (settings.armorBudget?.perRank ?? 0);
+  if ((item.kind === 'armor' || item.kind === 'shield') && settings.armorBudget?.perRankStat === 'dr' && tierPoints > 0) {
+    const merged0 = settings.poolSizes.merged?.[item.rarity];
+    const whole0 = armorBudget ?? tierPoints + (merged0 ? (settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? merged0.min : merged0.max) : target('ratings') + target('bonus'));
+    explicit.dr += Math.max(0, Math.min(tierPoints, (settings.fillTo === 'none' ? 0 : whole0) - sum(GEAR_KEYS) - tagCost));
+  }
   const attrKeys = GEAR_ATTRIBUTES;
   // At most maxAttributes attributes: those the item set, then the heaviest-weighted.
   const limitAttributes = weights => {
@@ -223,7 +246,9 @@ export function resolveGearItem(item, settings, { rank = item.rank ?? 1 } = {}) 
   if (settings.pools === 'merged' || armorBudget !== null) {
     const norm = (w, share) => { const s = Object.values(w).reduce((a, b) => a + b, 0) || 1; return Object.fromEntries(Object.entries(w).map(([k, v]) => [k, v / s * share])); };
     const merged = settings.poolSizes.merged?.[item.rarity];
-    const whole = armorBudget ?? (merged ? (settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? merged.min : merged.max) : target('ratings') + target('bonus'));
+    // A shield has no armor budget, but each tier adds `perRank` points to its merged pool (parity with armor).
+    const shieldTierPoints = item.kind === 'shield' && settings.armorBudget ? (rank - 1) * (settings.armorBudget.perRank ?? 0) : 0;
+    const whole = armorBudget ?? shieldTierPoints + (merged ? (settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? merged.min : merged.max) : target('ratings') + target('bonus'));
     const remaining = (settings.fillTo === 'none' ? 0 : whole) - sum(GEAR_KEYS) - tagCost;
     // Share of the single pool by rarity (owner: most commons give AR/DR/Poise only).
     const share = settings.mergedShare[item.rarity] || settings.mergedShare.default;
@@ -261,7 +286,9 @@ function verifyGearContent(content, settings) {
     const cost = (item.tags || []).reduce((s, t) => s + (settings.tags[t]?.cost || 0), 0);
     const armorBudget = item.kind === 'armor' && settings.armorBudget ? armorBudgetFor(item, settings) : null;
     if (item.rank !== undefined && (!Number.isSafeInteger(item.rank) || item.rank < 1)) fail(`${at}/rank`, 'expected positive integer rank');
-    const whole = armorBudget ?? settings.poolSizes.merged?.[item.rarity]?.max ?? r.max + b.max;
+    // A shield's rank adds perRank points to its merged pool (resolveGearItem); allow what it can spend.
+    const shieldTierPoints = item.kind === 'shield' && settings.armorBudget ? ((item.rank ?? 1) - 1) * (settings.armorBudget.perRank ?? 0) : 0;
+    const whole = armorBudget ?? shieldTierPoints + (settings.poolSizes.merged?.[item.rarity]?.max ?? r.max + b.max);
     if (settings.pools === 'merged' || armorBudget !== null ? setR + setB + cost > whole : setR > r.max || setB + cost > b.max) fail(`${at}/points`, 'set points and tag costs exceed the pool');
   }
 }

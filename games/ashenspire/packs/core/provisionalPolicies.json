@@ -14,6 +14,6 @@
     "Stance advantage multiplier1.25 and one Smash advantage stagger per target/round are provisional.",
     "Smith upgrades exactly one equipment tier for free as the one rest service; the foregone Strategize/Level Up is its visit budget. Free Smith is provisional until an explicit upgrade economy is authored.",
     "Equipment attribute requirementsPolicy defaults to none for six-total core attributes; ownership, slot fit and timing remain enforced. Explicit legacy restores old minima. This is provisional until core item requirements are balanced.",
-    "Core2 configured equipped gear contributes resolved authored stat values once, with a flat Core armor budget of 3 points plus a per-rarity bonus (default 0); perRank remains optional for other profiles. Item tiers affect resolution; the archived Core1 highest-active-tier AR/DR adapter remains a separate versioned policy."
+    "Core2 configured equipped gear contributes resolved authored stat values once, with a Core armor budget of 3 points plus 1 point per Smith tier (perRank 1, mirroring weaponARPerTier) and a per-rarity bonus (default 0). Item tiers affect resolution; the archived Core1 highest-active-tier AR/DR adapter remains a separate versioned policy."
   ]
 }

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "profiles": {
     "default": {
-      "hash": "sha256:dac208e7649583ead49d50a0164a229405aa2f361eebd57904481b2cab4a2216",
+      "hash": "sha256:152a9a0370db37219df4d486e8afc0001c40daee1a6b149bb007a27c97bcd469",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -22,7 +22,7 @@
           "path": "engine/kernel/gameConfig.js",
           "id": "ashen.runtime",
           "version": "1.0.0",
-          "hash": "sha256:ecc7f3803adeb39f6d32c6cfcd0e76695118f6a6055558118b37523037c0660f"
+          "hash": "sha256:dc18cacedad8bed11fabfbc6939dba552266fe3d2c11b8ed3cde19ae72d9bf04"
         },
         {
           "path": "engine/kernel/kernel.json",
@@ -34,7 +34,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + src/model/{mechanicsKernel,formulas,fixCoreMechanics}.js",
-          "hash": "sha256:5aeee92f0310edcda2f917870fa3e40cac876cc5849f24c2d8860981b050fc73"
+          "hash": "sha256:8fd5411d0add856c9c1a5aa63da0c952a884fbe864961b72347937f152414dd6"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -178,7 +178,7 @@
           "path": "engine/modules/deck-training/settings.schema.json",
           "id": "deck-training",
           "version": "1.0.0",
-          "hash": "sha256:516f735ebeca22c8aa3d4c98a0c0e4118d6ba8f443e8985c9f5d0607de0e703c"
+          "hash": "sha256:5c17fb79c81b61d6614d3d923074e78b93ddd0e8a94cf0d6cedbaebb981be06c"
         },
         {
           "path": "engine/modules/defenses/defaults.json",
@@ -322,7 +322,7 @@
           "path": "engine/modules/gear/settings.schema.json",
           "id": "gear",
           "version": "1.0.0",
-          "hash": "sha256:0e912048c01b2a4338070b2e529b6ac4fb7c5c6bb5a924a01fa58d9542ebd5b2"
+          "hash": "sha256:45ae31b6829bd40476966c0ea66caf7d9aea76df0e605b8f5290f00e6f74fbfe"
         },
         {
           "path": "engine/modules/heal-rules/defaults.json",
@@ -436,7 +436,7 @@
           "path": "engine/modules/reward-ranks/defaults.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:c99153c3ca8f3bedb632f3be2d83a000b133383324f854c7368f8e324dca6c19"
+          "hash": "sha256:05a5c2a6edf4251b9a750c561d063d92c7b442e59e19c4f1fcdf976fee00fe62"
         },
         {
           "path": "engine/modules/reward-ranks/module.json",
@@ -448,7 +448,7 @@
           "path": "engine/modules/reward-ranks/settings.schema.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:97d419a7cf2cdbf16a04b0270804349e31cc450d2e887052fbccf3e0f42187c7"
+          "hash": "sha256:9af719763a067a7bc0af7372e123e99fcdcb82cd3fdfe08f4f6663e37a376d5a"
         },
         {
           "path": "engine/modules/rewards/defaults.json",
@@ -580,13 +580,13 @@
           "id": "ashen.kernel-runtime",
           "version": "1.0.0",
           "path": "engine/{kernel,runtime}/** (no *.md) + engine/contracts/game-profile.json",
-          "hash": "sha256:95238ff5c5086e0afca792c70413d789475f7a59915938b8fae5211dc3aedf61"
+          "hash": "sha256:53676540729576913c030bc8992c2b5dd15a16caa0f77164bca853db9ce11a15"
         },
         {
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "2.0.0",
-          "hash": "sha256:1891ee609e98874bc9d9d368f3a05efc0460c5b4bced971ea319587d2f0df185"
+          "hash": "sha256:6bcf93124396c144e9c00d0e5d0533ea9120f7c89c7557c7f5aea4b4ff8f7cc2"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",
@@ -634,13 +634,13 @@
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:81eb9dba6a1a29d9e37219ae178eec694d53855899c1ab8649871ea2f31c79f6"
+          "hash": "sha256:ed5fd417f885b298ce167f5531e4e54bb0449d80918a97399f6c4b362d5bb1fa"
         },
         {
           "path": "games/ashenspire/packs/core/characters.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:f4d7b5bc8cdebc12edb0a2d55d6cb6ef01c2c7bc65fbafc5d55a16a0bc6aba9e"
+          "hash": "sha256:836ecd06865001cd8f626bd43edbfb06a1c6685987dba408c525edb5689e5c02"
         },
         {
           "path": "games/ashenspire/packs/core/classUnlocks.json",
@@ -676,13 +676,13 @@
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:d145ef29849e85fa32b56b1d3a1a11798002e02b5be89ef8d7bdcc424a1ef075"
+          "hash": "sha256:e9f852c8757b832942930976f79b7e01ef7c38417247729cb94dc31bb236a25b"
         },
         {
           "path": "games/ashenspire/packs/core/resourceVariants.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:1b4b00ca4ee681b8f2c2affd69cb282151f2cfd76a70302a389185ee7b04d354"
+          "hash": "sha256:a0ff7bf45d4a0a9830ccc3032514fe748f9eb3e97788fda159573863809c7aa3"
         },
         {
           "path": "games/ashenspire/packs/core/rests.json",
@@ -700,7 +700,7 @@
           "path": "games/ashenspire/packs/core/routes.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:91bbce846c95e6646a9679981cb60aeb00ffc6fcfec433233ebc7661eb59e36b"
+          "hash": "sha256:8406c5281bfa695211c599e8941d803006b5232b7186c1946b365e3048cf40e8"
         },
         {
           "path": "games/ashenspire/packs/core/shops.json",
@@ -712,7 +712,7 @@
           "path": "games/ashenspire/packs/core/starterDeck.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:96259c469a1b7c391db46d502fd1018c21ea3ca8adcf3e1e34c99e99b9cdaf79"
+          "hash": "sha256:ec62e285e482ff5232d78f1e8a3e37b41bcc550f970ba6a681eb2012b70c3c2a"
         },
         {
           "path": "games/ashenspire/packs/core/stats.json",
@@ -723,10 +723,10 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:bc16da82a437cc04ce66860d0b3a026593e9b929444ab78a12725d0a43c3317f"
+      "runtimeHash": "sha256:60b10410660ed61b66213a547be1a9368eb19a0b7c5a693efdda9d7594992309"
     },
     "core": {
-      "hash": "sha256:dac208e7649583ead49d50a0164a229405aa2f361eebd57904481b2cab4a2216",
+      "hash": "sha256:152a9a0370db37219df4d486e8afc0001c40daee1a6b149bb007a27c97bcd469",
       "formatVersion": 1,
       "core": "ashen.core@2.0.0",
       "artifacts": [
@@ -746,7 +746,7 @@
           "path": "engine/kernel/gameConfig.js",
           "id": "ashen.runtime",
           "version": "1.0.0",
-          "hash": "sha256:ecc7f3803adeb39f6d32c6cfcd0e76695118f6a6055558118b37523037c0660f"
+          "hash": "sha256:dc18cacedad8bed11fabfbc6939dba552266fe3d2c11b8ed3cde19ae72d9bf04"
         },
         {
           "path": "engine/kernel/kernel.json",
@@ -758,7 +758,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + src/model/{mechanicsKernel,formulas,fixCoreMechanics}.js",
-          "hash": "sha256:5aeee92f0310edcda2f917870fa3e40cac876cc5849f24c2d8860981b050fc73"
+          "hash": "sha256:8fd5411d0add856c9c1a5aa63da0c952a884fbe864961b72347937f152414dd6"
         },
         {
           "path": "engine/modules/animation/defaults.json",
@@ -902,7 +902,7 @@
           "path": "engine/modules/deck-training/settings.schema.json",
           "id": "deck-training",
           "version": "1.0.0",
-          "hash": "sha256:516f735ebeca22c8aa3d4c98a0c0e4118d6ba8f443e8985c9f5d0607de0e703c"
+          "hash": "sha256:5c17fb79c81b61d6614d3d923074e78b93ddd0e8a94cf0d6cedbaebb981be06c"
         },
         {
           "path": "engine/modules/defenses/defaults.json",
@@ -1046,7 +1046,7 @@
           "path": "engine/modules/gear/settings.schema.json",
           "id": "gear",
           "version": "1.0.0",
-          "hash": "sha256:0e912048c01b2a4338070b2e529b6ac4fb7c5c6bb5a924a01fa58d9542ebd5b2"
+          "hash": "sha256:45ae31b6829bd40476966c0ea66caf7d9aea76df0e605b8f5290f00e6f74fbfe"
         },
         {
           "path": "engine/modules/heal-rules/defaults.json",
@@ -1160,7 +1160,7 @@
           "path": "engine/modules/reward-ranks/defaults.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:c99153c3ca8f3bedb632f3be2d83a000b133383324f854c7368f8e324dca6c19"
+          "hash": "sha256:05a5c2a6edf4251b9a750c561d063d92c7b442e59e19c4f1fcdf976fee00fe62"
         },
         {
           "path": "engine/modules/reward-ranks/module.json",
@@ -1172,7 +1172,7 @@
           "path": "engine/modules/reward-ranks/settings.schema.json",
           "id": "reward-ranks",
           "version": "1.0.0",
-          "hash": "sha256:97d419a7cf2cdbf16a04b0270804349e31cc450d2e887052fbccf3e0f42187c7"
+          "hash": "sha256:9af719763a067a7bc0af7372e123e99fcdcb82cd3fdfe08f4f6663e37a376d5a"
         },
         {
           "path": "engine/modules/rewards/defaults.json",
@@ -1304,13 +1304,13 @@
           "id": "ashen.kernel-runtime",
           "version": "1.0.0",
           "path": "engine/{kernel,runtime}/** (no *.md) + engine/contracts/game-profile.json",
-          "hash": "sha256:95238ff5c5086e0afca792c70413d789475f7a59915938b8fae5211dc3aedf61"
+          "hash": "sha256:53676540729576913c030bc8992c2b5dd15a16caa0f77164bca853db9ce11a15"
         },
         {
           "path": "games/ashenspire/bundles/core/bundle.json",
           "id": "ashen.core",
           "version": "2.0.0",
-          "hash": "sha256:1891ee609e98874bc9d9d368f3a05efc0460c5b4bced971ea319587d2f0df185"
+          "hash": "sha256:6bcf93124396c144e9c00d0e5d0533ea9120f7c89c7557c7f5aea4b4ff8f7cc2"
         },
         {
           "path": "games/ashenspire/packs/base-cards/cards.json",
@@ -1358,13 +1358,13 @@
           "path": "games/ashenspire/packs/core/cards.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:81eb9dba6a1a29d9e37219ae178eec694d53855899c1ab8649871ea2f31c79f6"
+          "hash": "sha256:ed5fd417f885b298ce167f5531e4e54bb0449d80918a97399f6c4b362d5bb1fa"
         },
         {
           "path": "games/ashenspire/packs/core/characters.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:f4d7b5bc8cdebc12edb0a2d55d6cb6ef01c2c7bc65fbafc5d55a16a0bc6aba9e"
+          "hash": "sha256:836ecd06865001cd8f626bd43edbfb06a1c6685987dba408c525edb5689e5c02"
         },
         {
           "path": "games/ashenspire/packs/core/classUnlocks.json",
@@ -1400,13 +1400,13 @@
           "path": "games/ashenspire/packs/core/provisionalPolicies.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:d145ef29849e85fa32b56b1d3a1a11798002e02b5be89ef8d7bdcc424a1ef075"
+          "hash": "sha256:e9f852c8757b832942930976f79b7e01ef7c38417247729cb94dc31bb236a25b"
         },
         {
           "path": "games/ashenspire/packs/core/resourceVariants.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:1b4b00ca4ee681b8f2c2affd69cb282151f2cfd76a70302a389185ee7b04d354"
+          "hash": "sha256:a0ff7bf45d4a0a9830ccc3032514fe748f9eb3e97788fda159573863809c7aa3"
         },
         {
           "path": "games/ashenspire/packs/core/rests.json",
@@ -1424,7 +1424,7 @@
           "path": "games/ashenspire/packs/core/routes.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:91bbce846c95e6646a9679981cb60aeb00ffc6fcfec433233ebc7661eb59e36b"
+          "hash": "sha256:8406c5281bfa695211c599e8941d803006b5232b7186c1946b365e3048cf40e8"
         },
         {
           "path": "games/ashenspire/packs/core/shops.json",
@@ -1436,7 +1436,7 @@
           "path": "games/ashenspire/packs/core/starterDeck.json",
           "id": "ashen.core-content",
           "version": "2.0.0",
-          "hash": "sha256:96259c469a1b7c391db46d502fd1018c21ea3ca8adcf3e1e34c99e99b9cdaf79"
+          "hash": "sha256:ec62e285e482ff5232d78f1e8a3e37b41bcc550f970ba6a681eb2012b70c3c2a"
         },
         {
           "path": "games/ashenspire/packs/core/stats.json",
@@ -1447,10 +1447,10 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:bc16da82a437cc04ce66860d0b3a026593e9b929444ab78a12725d0a43c3317f"
+      "runtimeHash": "sha256:60b10410660ed61b66213a547be1a9368eb19a0b7c5a693efdda9d7594992309"
     },
     "current": {
-      "hash": "sha256:7349334d65457cea5d50ad76d7b583498bed117e1c109319076fa04901e5f7c5",
+      "hash": "sha256:eb558898074c2965c69b9a2a283352e16cb3bab6044dd8b8a325a66429d2102b",
       "formatVersion": 1,
       "core": "ashen.current@1.0.0",
       "artifacts": [
@@ -1470,7 +1470,7 @@
           "path": "engine/kernel/gameConfig.js",
           "id": "ashen.runtime",
           "version": "1.0.0",
-          "hash": "sha256:ecc7f3803adeb39f6d32c6cfcd0e76695118f6a6055558118b37523037c0660f"
+          "hash": "sha256:dc18cacedad8bed11fabfbc6939dba552266fe3d2c11b8ed3cde19ae72d9bf04"
         },
         {
           "path": "engine/kernel/kernel.json",
@@ -1482,7 +1482,7 @@
           "id": "ashen.mechanics-runtime",
           "version": "1.0.0",
           "path": "engine/mechanics/index.json + registered mechanic manifest/model/interface/service JSON + content/source/fixCoreMechanics.json + src/model/{mechanicsKernel,formulas,fixCoreMechanics}.js",
-          "hash": "sha256:5aeee92f0310edcda2f917870fa3e40cac876cc5849f24c2d8860981b050fc73"
+          "hash": "sha256:8fd5411d0add856c9c1a5aa63da0c952a884fbe864961b72347937f152414dd6"
         },
         {
           "path": "engine/modules/advanced-ui/defaults.json",
@@ -1992,7 +1992,7 @@
           "id": "ashen.kernel-runtime",
           "version": "1.0.0",
           "path": "engine/{kernel,runtime}/** (no *.md) + engine/contracts/game-profile.json",
-          "hash": "sha256:95238ff5c5086e0afca792c70413d789475f7a59915938b8fae5211dc3aedf61"
+          "hash": "sha256:53676540729576913c030bc8992c2b5dd15a16caa0f77164bca853db9ce11a15"
         },
         {
           "path": "games/ashenspire/bundles/current/bundle.json",
@@ -2039,7 +2039,7 @@
       ],
       "runtimeABI": "ashen.runtime@1",
       "numericPolicy": "ashen.adapter-numbers@1",
-      "runtimeHash": "sha256:bc16da82a437cc04ce66860d0b3a026593e9b929444ab78a12725d0a43c3317f"
+      "runtimeHash": "sha256:60b10410660ed61b66213a547be1a9368eb19a0b7c5a693efdda9d7594992309"
     }
   }
 }

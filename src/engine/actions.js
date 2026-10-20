@@ -1,4 +1,5 @@
 import { resolveAttackHit } from './stanceHit.js';
+import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCoreRules, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
 import { weaponDamageBasis } from './cardBehavior.js';
@@ -7,6 +8,7 @@ import { proposalHitPlan, proposalAfterHit, proposalTargetPlan, applyProposalPla
 import { addEnemyBurden } from './enemyBurdens.js';
 import { moveCards, hasCardChoice } from './cardZones.js';
 import { configuredCombat, configuredModule, profileDamageReceipt } from './gameProfileCombat.js';
+import { counterBlockBonus, counterBlockGrant, counterReturnSpent } from './counterRule.js';
 // src/engine/actions.js — effect-DSL opcode implementations (SPEC §3.4)
 //
 // A queued ACTION is { effect, source, owner?, target?, card?, meta? }:
@@ -48,9 +50,11 @@ import { acquireFlask, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
+import { coreAffectedCards } from '../model/smithingCore.js';
+import { gameProfileServiceActive, withGameProfileService } from '../model/gameProfileRun.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
-import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
+import { ratingValue, isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
   canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf, isForceHit } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
@@ -354,6 +358,16 @@ export function drainFixCorePoise(ctx, source, target, amount) {
 function applyProfileDamage(ctx, source, target, base, carrier) {
   if (fixCoreEnabled(ctx) && !carrier?.expansionContact && resolveAttackHit(ctx, source, target, carrier)?.hit === false) return 0;
   const chance = profileDamageReceipt(ctx, source, target, base, carrier);
+  // A Counter with advantage over this hit adds Block before the hit is absorbed (SPEC §17).
+  // Once the owner's return is spent this cycle, a later-armed Counter grants nothing (the preview shows the same).
+  const counterBlock = fixCoreEnabled(ctx) && carrier?.expansionContact && !counterReturnSpent(target)
+    ? counterBlockBonus(ctx, carrier.expansionContact.receipt, carrier.expansionContact.index, chance.damageReceipt?.hits?.[0]?.incoming) : 0;
+  if (counterBlock > 0) {
+    // The same blockCap (Unbreakable) clamp gainBlock applies.
+    const gained = counterBlockGrant(ctx, target, counterBlock);
+    target.block = (target.block || 0) + gained;
+    if (gained > 0) ctx.emit('blockGained', { targetId: target.id, amount: gained, total: target.block, source: 'counter', ...seatOf(ctx, target) });
+  }
   const receipt = profileDamageReceipt(ctx, source, target, base, carrier,
     { roll: !fixCoreEnabled(ctx) && chance.hitChance < 1 ? ctx.rng.float(configuredModule(ctx, 'stances')?.accuracyStream || 'combatAvoidance') : null });
   const tactical = carrier?.expansionContact?.receipt;
@@ -363,6 +377,8 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     const index = carrier.expansionContact.index;
     tactical.amount += receipt.amount - (tactical.amounts[index] || 0);
     tactical.amounts[index] = receipt.amount;
+    // The Counter return reads the damage before Block and Poise took anything (SPEC §17).
+    (tactical.incomings ||= [])[index] = receipt.damageReceipt?.hits?.[0]?.incoming ?? receipt.amount;
     Matchups.recordTacticalContact(tactical, { hpLoss: receipt.hpLoss, blocked: receipt.blocked });
     if (receipt.evaded) tactical.avoided = true;
   }
@@ -374,13 +390,13 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
     if (target.persistentWard) target.persistentWard.value = Math.max(0, target.persistentWard.value - receipt.wardMitigated);
     if (target.persistentPoise) {
       poiseBefore = target.persistentPoise.value;
-      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated);
+      target.persistentPoise.value = Math.max(0, target.persistentPoise.value - receipt.poiseMitigated - (receipt.poiseDrain || 0));
     }
   }
   target.hp -= receipt.hpLoss;
   ctx.emit('damageDealt', { sourceId: source?.id || null, targetId: target.id,
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
-    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
+    poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
     advantage: receipt.advantage, blockRemaining: target.block, barrierRemaining: target.barrier,
     wardRemaining: target.persistentWard?.value, poiseRemaining: target.persistentPoise?.value, isAttack: true });
   if (before > 0 && target.block === 0) ctx.emit('blockBroken', { sourceId: source?.id, targetId: target.id });
@@ -892,7 +908,7 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
   if (configuredCombat(ctx)) return configuredModule(ctx, 'defenses')?.include?.includes('block')
-    ? Math.max(0, Math.floor((base + (entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0)) * stanceEffectiveness(ctx, entity, card))) : 0;
+    ? Math.max(0, Math.floor((base + (fixCoreEnabled(ctx) ? ratingValue(ctx, entity, 'dr') : entity?.ratings?.dr || 0) * (configuredModule(ctx, 'effects')?.defenseRatingWeight || 0)) * stanceEffectiveness(ctx, entity, card))) : 0;
   const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
@@ -1114,6 +1130,8 @@ function afterHpChange(ctx, target, death = {}) {
  */
 export function fixCoreStagger(ctx, entity, options = {}) {
   const rules = fixCoreStaggeredRules(ctx.fixCoreRules || ctx.gameProfile?.fixCoreRules);
+  // The hit that broke Poise still earns its Counter return: remember the spent Counter for the action's completion (SPEC §17).
+  if (entity?.combatCounter?.charges === 0) entity.combatCounterStaggered = entity.combatCounter.serial;
   Matchups.clearCombatCounter(entity, ctx);
   if (rules.stance) {
     entity.combatStance = fixCoreStaggeredStance(entity, rules);
@@ -1392,6 +1410,7 @@ export function formulaCtxFor(ctx, action, primaryTarget) {
       allEnemies: livingEnemies(ctx),
     },
     weaponDamage:weaponDamageBasis(ctx,action.source),cardId: action.card?.cardId, metricsBefore:meta.abilityBefore, manaSpent:meta.manaSpent || 0, staminaSpent:meta.staminaSpent || 0,
+    evadeStackGain: evadeStackGain(ctx, action.source, action.card),
     energySpent: meta.energySpent != null ? meta.energySpent : 0,
     cardsPlayedThisTurn: ctx.player ? ctx.player.counters.cardsPlayedThisTurn : 0,
   };
@@ -1951,7 +1970,9 @@ function runOpcode(ctx, action, eff) {
         const authored = evalNum(ctx, action, eff.amount, 0, t);
         const bonus = ctx.combatExpansionVersion === 2 ? Blight.ashenBlightMartialPoise(ctx, action.source,
           { cycleKey: String(action.source?.combatOwnerCycle || 0), camp: action.card?.combatProfile?.camp, authoredPoise: authored }) : 0;
-        const amount = Math.ceil((authored + bonus) * multiplier * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1));
+        // A Core 2 Counter return carries its advantage in the return itself (SPEC §17): its Poise is delivered as computed.
+        const amount = fixCoreEnabled(ctx) && action.card?.counterReturnAttack ? Math.max(0, Math.floor(authored))
+          : Math.ceil((authored + bonus) * multiplier * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1));
         // Impact doubles only the Poise that passed the target's Poise guard.
         const guardBefore = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         if (ctx.ratingsRules && action.meta?.combatCounterReaction) {
@@ -2064,11 +2085,14 @@ function runRunOpcode(ctx, action, eff) {
       // through its authored roles), but a "random card" upgrade that landed
       // on it would set a tier and upgrade zero cards the player holds — the
       // choice promised a card (Codex, #535).
+      // Core runs rewrite no cards, so a candidate's affectedCards is empty there; the cards a Core upgrade
+      // changes are its simulated live-number rows (coreCardRows), and armor counts as well as weapons.
       const armaments = plan.candidates
-        .filter((candidate) => candidate.itemKind === 'armament')
-        .filter((candidate) => candidate.affectedCards.length > 0)
-        .filter((candidate) => !eff.card || candidate.affectedCards.some((card) => card.cardId === eff.card))
-        .map((candidate) => ({ kind: 'armament', id: candidate.armamentId }));
+        .filter((candidate) => candidate.core ? candidate.itemKind !== 'relic' : candidate.itemKind === 'armament')
+        .map((candidate) => ({ candidate, cards: candidate.core ? coreAffectedCards(candidate.coreCardRows) : candidate.affectedCards }))
+        .filter(({ cards }) => cards.length > 0)
+        .filter(({ cards }) => !eff.card || cards.some((card) => card.cardId === eff.card))
+        .map(({ candidate }) => ({ kind: 'armament', id: candidate.core ? candidate.itemRef : candidate.armamentId }));
       const ordinary = run.deck
         // Equipment-composed instances are excluded like sourceArmamentId
         // ones: a granted/weaponArt instance (grantedBy) is rebuilt from its
@@ -2086,7 +2110,9 @@ function runRunOpcode(ctx, action, eff) {
       if (candidates.length === 0) break;
       const chosen = eff.random ? ctx.rng.pick('misc', candidates) : candidates[0];
       if (chosen.kind === 'armament') {
-        const receipt = commitSmithing(ctx.registries, run, chosen.id, undefined, { free: true });
+        // A configured (Core) run only commits equipment upgrades inside a Smith service; this reward is one.
+        const commit = () => commitSmithing(ctx.registries, run, chosen.id, undefined, { free: true });
+        const receipt = gameProfileServiceActive(run, 'smith') ? commit() : withGameProfileService(run, 'smith', commit);
         ctx.emit('armamentSmithed', receipt);
       } else {
         chosen.card.upgraded = true;

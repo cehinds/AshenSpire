@@ -35,13 +35,15 @@ test('real Core 2 run forwards equipped attributes and accuracy bonuses to live 
  assert.deepEqual(combat.player.ratings,ratings.totals);assert.equal(combat.piles.hand.length,run.drawPerTurn);
  const carrier={combatProfile:{camp:'physical',maneuver:'attack',range:'melee'}};
  const hit=attackHitPreview(combat,target,combat.player,carrier);
- assert.equal(hit.evasion,1+combat.player.attributes.dexterity+gear.totals.evasion);
+ assert.equal(hit.evasion,1); // no Evade stacks: Evasion is only its flat base
+ combat.player.statuses.evade={stacks:2};
+ assert.equal(attackHitPreview(combat,target,combat.player,carrier).evasion,1+2*(1+combat.player.attributes.dexterity+gear.totals.evasion));
  const read=rollKnowledgeRead({float:()=>.2},enemyKnowledge,{attributes:combat.player.attributes},'Attack',{ctx:combat,target});
  assert.equal(read.perception.total,5+combat.player.attributes.wisdom);
 });
 test('actual card dispatch matches selected target receipt and card face after equipped AR, Block and Poise',()=>{
  const {combat,target}=live();target.block=3;
- const card=combat.piles.hand.find(row=>previewCard(combat,row.instanceId,target.id).values.some(v=>v.op==='damage'));
+ const card=combat.piles.hand.find(row=>row.cardId==='core.strike'&&previewCard(combat,row.instanceId,target.id).values.some(v=>v.op==='damage'));
  assert.ok(card);primeAccuracyRolls(combat);
  const before=JSON.stringify({target,rng:combat.rng.getCounters()});
  const preview=previewCard(combat,card.instanceId,target.id).values.find(v=>v.op==='damage');
@@ -97,10 +99,10 @@ test('selected card hit odds match configured stance entry and Evade grants actu
  combat.player.energy=10;combat.player.stamina=10;
  combat.piles.hand.push({cardId:'core.evade',instanceId:'actual-evade',upgraded:false});
  dispatch(combat,{type:'playCard',cardInstanceId:'actual-evade'});
- assert.equal(combat.player.statuses.evade?.stacks,1);
+ const dexterity=combat.player.attributes.dexterity;assert.equal(combat.player.statuses.evade?.stacks,1+dexterity);
  combat.piles.hand.push({cardId:'core.evade',instanceId:'actual-evade-second',upgraded:false});
  dispatch(combat,{type:'playCard',cardInstanceId:'actual-evade-second'});
- assert.equal(combat.player.statuses.evade.stacks,2);
+ assert.equal(combat.player.statuses.evade.stacks,2*(1+dexterity));
 });
 test('registered owner and active card parameters affect live shared math and reject typos',async()=>{
  const {fixCoreRules,validateFixCoreRules}=await import('../src/model/fixCoreMechanics.js');
@@ -141,6 +143,44 @@ test('a combat saved with the v1 perception shape restores onto the bonuses form
  assert.equal(old.fixCoreRules.perception.levelWeight,1,'caller snapshot untouched');
  const typo=structuredClone(snapshot);typo.fixCoreRules.perception.levelBaselne=1;
  assert.throws(()=>restoreOf(typo),/unknown parameter/);
+});
+test('a combat saved before the opposed-roll ruling restores onto the new accuracy block',async()=>{
+ const {serializeCombatSnapshot,restoreCombatSnapshot}=await import('../src/engine/combatSnapshot.js');
+ const {combat}=live();const snapshot=serializeCombatSnapshot(combat);
+ const old=structuredClone(snapshot);
+ for(const key of ['evadeStackBase','evadeStackDex','precisionBase','evasionBase','precisionWeights']) delete old.fixCoreRules.accuracy[key];
+ Object.assign(old.fixCoreRules.accuracy,{evasionPerStack:1,precisionPerStack:1});
+ const restored=restoreCombatSnapshot({registries:reg,rng:createRng(combat.rng.seed,combat.rng.getCounters()),snapshot:old,expectedGameProfile:profile});
+ assert.deepEqual(restored.fixCoreRules.accuracy,combat.fixCoreRules.accuracy);
+ assert.equal(old.fixCoreRules.accuracy.evasionPerStack,1,'caller snapshot untouched');
+});
+test('a card-scoped accuracy override changes the Evade stacks that card gains',async()=>{
+ const {formulaCtxFor}=await import('../src/engine/actions.js');
+ const {combat}=live();const dexterity=combat.player.attributes.dexterity;
+ const card={cardId:'core.evade',mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{evadeStackBase:3,evadeStackDex:2}}]};
+ assert.equal(formulaCtxFor(combat,{source:combat.player,card:{cardId:'core.evade'}}).evadeStackGain,1+dexterity);
+ assert.equal(formulaCtxFor(combat,{source:combat.player,card}).evadeStackGain,3+2*dexterity);
+});
+test('card face prints the live Precision entry grant on the shipped Core strike and sweep, and nothing under a legacy profile',async()=>{
+ const {cardFaceLines}=await import('../src/model/cardFaceText.js');
+ const {precisionStatMix}=await import('../src/engine/stanceHit.js');
+ const {combat,target}=live();
+ const entry=lines=>(lines||[]).map(line=>line.html.replace(/<[^>]+>/g,'')).find(text=>text.startsWith('Entry: '));
+ for(const id of ['core.strike','core.sweep']) {
+  const def=reg.cards.get(id);assert.ok(def,id);
+  assert.ok(!def.defenseRulesVersion&&!def.minCombatExpansionVersion,id+' is the shipped definition, no per-card version field');
+  assert.match(entry(cardFaceLines(def,null,reg)),/^Entry: \+1 \+ stat mix Precision/,id);
+ }
+ const card=combat.piles.hand.find(row=>row.cardId==='core.strike');assert.ok(card);
+ const preview=previewCard(combat,card.instanceId,target.id);
+ assert.equal(preview.entryPrecision,1+precisionStatMix(combat,combat.player));
+ assert.match(entry(cardFaceLines(reg.cards.get('core.strike'),preview,reg)),new RegExp(`^Entry: \\+${preview.entryPrecision} Precision`));
+ const legacy=resolveGameProfile('current');
+ const legacyReg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,legacy)),legacy);
+ for(const id of ['core.strike','core.sweep']) {
+  // The legacy profile has no Core cards, so show the shipped Core definition against the legacy registries.
+  assert.equal(entry(cardFaceLines(reg.cards.get(id),null,legacyReg)),undefined,id+' under a legacy profile shows no Entry line');
+ }
 });
 test('enemy heal-and-block move spends exactly three SP and cannot cast with two',()=>{
  for(const pool of [3,2]) {
@@ -215,4 +255,18 @@ test('fractional offense reaches final rounding without a fabricated status modi
  const before=target.hp;primeAccuracyRolls(combat);
  applyAttackDamage(combat,combat.player,target,13,[],card);
  assert.equal(before-target.hp,receipt.hpLoss);
+});
+test('the Evade card outside combat fills its {evade} token with a phrase, never a raw token',async()=>{
+ const {staticCardTokens,playingCardModel}=await import('../src/model/playingCard.js');
+ const def=reg.cards.get('core.evade');
+ assert.equal(staticCardTokens(def).evade,'1 plus DEX');
+ assert.equal(playingCardModel(reg,{cardId:'core.evade'}).tokens.evade,'1 plus DEX');
+});
+test('the off-combat Evade phrase follows the configured gain, card overrides included',async()=>{
+ const {staticCardTokens}=await import('../src/model/playingCard.js');
+ const def=reg.cards.get('core.evade');
+ const scoped=(base,dex)=>({...def,mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{evadeStackBase:base,evadeStackDex:dex}}]});
+ assert.equal(staticCardTokens(scoped(1,1),reg).evade,'1 plus DEX');
+ assert.equal(staticCardTokens(scoped(3,2),reg).evade,'3 plus 2× DEX');
+ assert.equal(staticCardTokens(scoped(2,0),reg).evade,'2');
 });

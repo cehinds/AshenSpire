@@ -1,4 +1,5 @@
 import { projectGameCard } from './gameProfile.js';
+import { evadeStackGainPhrase } from './fixCoreMechanics.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
 // how it looks.
 //
@@ -29,6 +30,7 @@ import { projectGameCard } from './gameProfile.js';
 // frozen, so a renderer cannot quietly make the model its scratch space.
 
 import { cardTagExplanation } from './cardTagExplanation.js';
+import { coreSmashClause } from './smashClause.js';
 import { cardClassification } from './cardClassification.js';
 import { resolveCard } from './registries.js';
 import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
@@ -110,8 +112,8 @@ export function combatCardType(def) {
  * predicate phrase (`condition`), the combat profile, the token bindings and the
  * static tokens. Every card-face text model reads through this one context.
  */
-export function cardSummaryContext(def, preview = null, registries = null) {
-  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def);
+export function cardSummaryContext(def, preview = null, registries = null, rules = null) {
+  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def, registries, rules);
   const value = (effect, index, field = 'amount') => {
     const token = bindings.find(row => row.index === index && row.field === field)?.token;
     const live = preview?.values?.[index];
@@ -258,6 +260,8 @@ export function combatCardSummary(def, preview = null, registries = null) {
     if (def.pronePoiseBonus) parts.push(`+${def.pronePoiseBonus} Poise while Prone`);
   }
   if (def.evade) parts.push(`${def.evade.whileStatus ? `While ${title(def.evade.whileStatus)}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}`);
+  const smashClause = coreSmashClause(def, registries);
+  if (smashClause) parts.push(smashClause.replace(/\.$/, ''));
   if (def.comboHook) return null;
   if (def.usableWhile?.length) parts.unshift(`Usable through ${def.usableWhile.map(title).join(', ')}`);
   for (const keyword of def.keywords || []) if (['exhaust', 'retain', 'ethereal', 'innate'].includes(keyword)) parts.push(keyword[0].toUpperCase() + keyword.slice(1));
@@ -273,7 +277,8 @@ export function combatCardSummary(def, preview = null, registries = null) {
  * `card.js` keeps exporting `staticTokens` as a re-export of this, because
  * five files import that name and a rename would be churn that proves nothing.
  */
-export function staticCardTokens(def) {
+// `rules` is the run's snapshotted rules (run.gameProfile) for faces outside combat; it wins over the current registries' profile.
+export function staticCardTokens(def, registries = null, rules = null) {
   const tokens = {};
   const effects = cardTokenEffects(def);
   // Rank composition wraps constant stacks in add formulas. Resolve only
@@ -290,7 +295,10 @@ export function staticCardTokens(def) {
     const value = constant(raw);
     if (typeof value === 'number') tokens[binding.token] = value;
     else {
-      const authored = constantFormulaValue(raw) ?? describeFormula(raw);
+      // Evade's gain is configured (accuracy.evadeStackBase/Dex, card overrides included), so its phrase reads the rules, not a literal.
+      const configured = raw?.f === 'metric' && raw.metric === 'evadeStackGain' && raw.of === 'self' && raw.per === undefined
+        ? evadeStackGainPhrase({ combatExpansionVersion: 2, gameProfile: rules?.gameProfile ?? registries?.gameProfile }, def) : undefined;
+      const authored = configured ?? constantFormulaValue(raw) ?? describeFormula(raw);
       if (authored !== undefined) tokens[binding.token] = authored;
       // Weapon-scaled attacks have a static authored multiplier even though
       // their resolved damage depends on the equipped weapon. Keep that
@@ -357,7 +365,7 @@ export function playingCardDefinition(registries, ref, { preview = null, definit
 
 export function playingCardModel(registries, ref, { preview = null, definition = null, rules = null } = {}) {
   const def = playingCardDefinition(registries, ref, { preview, definition, rules });
-  const base = staticCardTokens(def);
+  const base = staticCardTokens(def, registries, rules);
 
   // Type presentation is authored data (balance.ui.cardTypes): corner radii
   // carry the type (attack squarest → power roundest) and each type owns its
@@ -383,6 +391,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     mana: preview ? (preview.displayCosts?.mana ?? preview.manaCost) : profile.mana,
     stamina: preview ? (preview.displayCosts?.stamina ?? preview.staminaCost ?? 0) : (profile.stamina || 0),
     ...(preview?.costIsEstimate ? { estimated: true } : {}),
+    ...(preview?.costShift ? { shift: preview.costShift } : {}),
   });
 
   // TAGS, resolved against the ACTIVE registries in all three branches.
@@ -421,7 +430,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
       label: tag.label,
       glyph: tag.glyph,
       color: tag.color,
-      blurb: cardTagExplanation(def, tag),
+      blurb: cardTagExplanation(def, tag, registries),
       // An array rather than a Set: a model is serializable, and a Set is not.
       inheritedFrom: freeze([...(inheritedBy.get(tag.id) || [])]),
     })));

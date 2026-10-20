@@ -1,3 +1,4 @@
+import '../src/engine/runCombat.js'; // binds the combat engine Core Smith card rows run
 import { gameProfileEffectiveAttributes } from '../src/model/gameProfileGear.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -21,7 +22,7 @@ test('fixed classes, ten starters, persistent pin and restamping do not mint equ
  const run=fresh(); assert.equal(Object.values(run.attributes).reduce((a,b)=>a+b),6);
  assert.equal(run.attributes.strength,2);assert.equal(run.drawPerTurn,5);assert.equal(run.deck.length,10);
  assert.equal(run.loadout.sets.rightHand[0],'greatsword');assert.equal(run.loadout.sets.leftHand[0],null);
- stampDeck(reg,run);assert.equal(run.deck.length,10);assert.equal(run.deck.filter(c=>c.cardId==='core.strike').length,3);
+ stampDeck(reg,run);assert.equal(run.deck.length,10);assert.equal(run.deck.filter(c=>c.cardId==='core.strike').length,4);
  assert.throws(()=>createRunState({seed:1,classId:'starseer',registries:reg}),/locked/);
  const meta={gameProfileUnlocks:{[profile.id]:{completedRunIds:['one']}}};
  const star=createRunState({seed:1,classId:'starseer',registries:reg,profileMeta:meta});assert.equal(star.drawPerTurn,4+gameProfileEffectiveAttributes(reg,star).intelligence);

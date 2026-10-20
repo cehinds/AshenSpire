@@ -1,4 +1,4 @@
-import { coopCardHitPreview, coopCombatantEvasion } from '../models/CoopHitPreviewModel.js';
+import { coopCardHitPreview, coopCombatantEvasion, coopBadgedStatusIds } from '../models/CoopHitPreviewModel.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
@@ -21,6 +21,7 @@ import { cardChoice } from '../../model/cardChoices.js';
 import { cardTargetPlan, upcastNextStep } from '../../model/cardTargets.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
+import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 import { combatCardView } from '../models/CombatCardView.js';
 import { combatSnapshotCardCosts } from '../models/CombatSnapshotCardCosts.js';
 import { upcastOptions } from '../../model/upcasting.js';
@@ -902,12 +903,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
   const memberRegistries=()=>{const member=myMember();return member?registriesForClassMastery(registries,{...member,class:member.classId}):registries;};
-  const cardDef = (c) => {
+  const cardDef = (c, tier = upcastTiersByCard.get(upcastKey(c.instanceId))) => {
     const seat = snap?.scene?.players?.find(entry => entry.id === me);
     return combatCardView({ registries: memberRegistries(), player: seat,
       combatExpansionVersion: seat?.combatExpansionVersion || 1,
       breakMeterVersion: snap?.scene?.breakMeterVersion ?? c.breakMeterVersion ?? 0 },
-    c, upcastTiersByCard.get(upcastKey(c.instanceId)));
+    c, tier);
   };
   guardCoopTool = typeof window !== 'undefined' && new URLSearchParams(location.search).has('guardTool') ? {
     resync: () => send({ t: 'resync' }),
@@ -1028,10 +1029,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
   // ---- shared board helpers (snapshot-fed twins of combat.js) ---------------
   // The shared icon tray, as on the solo card (components/iconTray.js): the
   // same Pip, row and tooltip. A tap is a play while a card or flask is armed.
-  function statusRow(statuses) {
+  function statusRow(statuses, badged = new Set()) {
     const row = iconTray({ label: t('iconTray.status'), attrs: { class: 'statuses' } });
     for (const [sid, inst] of Object.entries(statuses || {})) {
-      if (!registries.statuses.has(sid)) continue;
+      if (!registries.statuses.has(sid) || badged.has(sid)) continue;
       const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const presentation = statusInstancePresentation(def, inst);
       const semanticAttrs = statusInstanceSemanticAttrs(presentation);
@@ -1100,7 +1101,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     if (hp) {
       const next = hp.nextSibling;
       const known = !isEnemy || ent.knowledgeAction?.reads?.[me]?.visibility === 'exact';
-      const health = combatHealthRow(hp, { ...protectionPresentation(ent), evasion: ent.combatExpansionVersion === 2 && known ? coopCombatantEvasion(snap.scene, registries, entity, isEnemy ? undefined : snap.party.find(member => member.id === ent.id)) : null });
+      const health = combatHealthRow(hp, { ...protectionPresentation(ent), evasion: ent.combatExpansionVersion === 2 && known ? coopCombatantEvasion(snap.scene, registries, entity, isEnemy ? undefined : snap.party.find(member => member.id === ent.id)) : null, precision: ent.combatExpansionVersion === 2 && known ? (ent.statuses?.precision?.stacks || 0) : null });
       bars.insertBefore(health, next);
     }
     wrap.classList.add('as-meters', 'tight');
@@ -1242,6 +1243,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     discardShell = openDiscardChoiceModal({
       ...(player.pendingCardChoice ? {title:t('combat.cards.choose.title',{count:pending.count}),prompt:t('combat.cards.choose.prompt',{from:pending.effect.from,to:pending.effect.to || pending.effect.from}),confirmLabel:t('combat.cards.choose.confirm'),ordered:pending.effect.from===pending.effect.to} : {}),
       count: pending.count, cardName: registries.cards.get(pending.cardId).name,
+      summarize: card => {
+        const inst = (player.pendingCardChoice ? pending.candidates : player.hand).find(c => c.instanceId === card.instanceId);
+        return summarizeCardOption(registries, sc, { id: card.instanceId, name: card.name }, {
+          // A pile choice is not a play: tier 0, never the upcast tier a cancelled target chooser left on the card.
+          defOf: () => inst ? cardDef(inst, 0) : null, previewOf: () => inst ? cardDef(inst, 0)?.combatPreview ?? null : null,
+        });
+      },
       cards: (player.pendingCardChoice ? pending.candidates : player.hand.filter((card) => !stackedIds.has(card.instanceId))).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
       onClosed: () => { discardShell = null; },
       onChoose: cardInstanceIds => { if (me === owner) send({ t: 'chooseDiscard', cardInstanceIds }); },
@@ -1260,7 +1268,20 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; clearSelection(); }
     const stack = committedReactionStack(sc.reactionStack, owner.pendingReaction.groupKey)
       .map((entry) => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
-    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack,
+    // The client reads a seat snapshot, not the engine. A tile shows the card at the option's own upcast tier.
+    // The host's hand receipt (combatPreview) prices the hand tier against no target, so it is used only when
+    // the option has neither a target nor an upcast tier and the hand tier is unchanged; otherwise the tile shows
+    // the authored base, uncoloured, rather than a possibly wrong number.
+    const handCard = o => owner.hand.find(card => card.instanceId === o.play.cardInstanceId);
+    const summarize = option => summarizeCardOption(registries, sc, option, {
+      defOf: o => { const inst = handCard(o); return inst ? cardDef(inst, o.play.upcastTier || 0) : null; },
+      previewOf: o => {
+        const inst = handCard(o);
+        if (!inst || o.play.targetId || o.play.upcastTier || upcastTiersByCard.get(upcastKey(inst.instanceId))) return null;
+        return cardDef(inst)?.combatPreview ?? null;
+      },
+    });
+    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack, summarize,
       onClosed: () => { reactionShell = null; reactionOfferId = null; },
       onAnswer: intent => {
         if (!disposed && me === ownerId && latestWireSnap?.scene?.reactionWaiting?.id === intent.offerId)
@@ -1408,7 +1429,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       // Your own seat glows in YOUR accent, not a fixed gold.
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
       box.appendChild(meterBars(p, false));
-      box.appendChild(statusRow(p.statuses));
+      box.appendChild(statusRow(p.statuses, coopBadgedStatusIds(p, false, me)));
       if (friendly) {
         decorateFriendlyTarget(box, { relationship: friendly.relationship, label: m.name || p.id });
         const playOnSeat = () => {
@@ -1457,7 +1478,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       box.appendChild(meterBars(e, true, (sc.events || []).filter((event) => (
         event.targetId === e.id && (event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak' || event.type === 'arcaneExposureChanged')
       ))));
-      box.appendChild(statusRow(e.statuses));
+      box.appendChild(statusRow(e.statuses, coopBadgedStatusIds(e, true, me)));
       if (!dead) {
         wireCombatantContext(box, def.name);
         box.addEventListener('click', () => {

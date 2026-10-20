@@ -44,7 +44,7 @@
       {
         "op": "block",
         "target": "self",
-        "amount": 5
+        "amount": 10
       }
     ],
     "tags": [
@@ -274,8 +274,8 @@
     "name": "Evade",
     "class": "colorless",
     "rarity": "common",
-    "cost": 1,
-    "staminaCost": 1,
+    "cost": 3,
+    "staminaCost": 3,
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
@@ -286,7 +286,11 @@
         "op": "applyStatus",
         "target": "self",
         "status": "evade",
-        "stacks": 1
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
       }
     ],
     "tags": [
@@ -297,7 +301,7 @@
     "stanceTrigger": {
       "stance": "evade"
     },
-    "textTemplate": "Gain {evade} Evasion.",
+    "textTemplate": "Gain {evade} Evade stacks.",
     "flavor": "Core adapter fixture. Evade is available in rewards, never starter."
   },
   {

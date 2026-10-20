@@ -51,7 +51,7 @@ costs above the pool.
 Data, settings, the fill algorithm (`resolveGearItem` in `engine/kernel/gameConfig.js`) and the
 validator. Profiles carrying `armorBudget` aggregate converted equipped values through
 `gameProfileEquipmentReceipt`; matched items replace legacy self-stat modifiers.
-Armor budget, Core: 3 points flat; `rarityBonus` per rarity (default 0); `perRank` optional for other profiles.
+Armor budget, Core: 3 points at rank 1 plus `perRank` 1 point per Smith tier (a shield gains the same per tier in its pool); `perRankStat: "dr"` (Core only) makes each tier's point a DR point, taken from unspent budget; without it tiers just grow the pool; `rarityBonus` per rarity (default 0).
 One upgrade tier adds one rank. Weapons retain their rarity pools.
 
 Additional point conversions: HP 10, MP 1, SP 1, Ward 3, Evasion 1 and

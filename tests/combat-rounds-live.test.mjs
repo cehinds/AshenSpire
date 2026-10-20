@@ -320,8 +320,10 @@ test('with the preview off, a scripted fight event log is byte-identical to the 
   // Compared independently with origin/dev 37c414acd: play/contact order and
   // all fight outcomes are unchanged. Differences are the accepted Gorefire
   // Weapon Art MP floor (payment and snapshots) and card-use/type bookkeeping.
+  // Re-recorded for #2192 (Core hit rolls): hit events carry `opposed: false` under the default profile. A key-by-key
+  // comparison with origin/dev bbfb89959 shows that is the only difference; fight outcomes and every other field match.
   assert.deepEqual({ sha256: createHash('sha256').update(all).digest('hex'), length: all.length },
-    { sha256: '8847368e18755b429ef5271ff470fad268989d650e73201bc8f15493a8b2f575', length: 414406 });
+    { sha256: '92b4c6bfaedbf896ec467255a35b34d19c7f0559793d2c956a0135e1fb8fccca', length: 414758 });
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

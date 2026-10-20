@@ -30,7 +30,7 @@ test('compact selected and idle panels reserve all seats actual22px Info and24px
     const combat={dataset:{targetHud:'false'},getBoundingClientRect:()=>viewport,querySelector:()=>null};
     const field={closest:()=>combat,getBoundingClientRect:()=>({left:0,top:80}),querySelectorAll:s=>s==='.combatant.player'?players:[]};
     const begin=source.indexOf('  function placePlayerHud('),end=source.indexOf('  function trackPlayerHud()',begin);
-    const sync=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,classicAppearance:()=>true,getComputedStyle:()=>({}),
+    const sync=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,classicAppearance:()=>true,getComputedStyle:()=>({}),rootStyle:{getPropertyValue:()=>''},
       field,uiZoom:()=>zoom,visibleCombatPanelRect:()=>null,settledTargets:[],settledFooterSize:44,playerInfoRects:[],
       readRestingHand:()=>({clearanceTop:340}),currentSpriteArtBounds:s=>({left:40+s.index*160,right:100+s.index*160,top:190,bottom:300}),
       combatPlayerInfoRect,combatPlayerActionRect,placePlayerIntentGlyph:()=>null,combatTargetHudFootprints,

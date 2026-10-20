@@ -370,7 +370,9 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   // number reaches CSS and JS alike; a card rendered without tokens still gets
   // the documented default rather than an instant flash.
   const revealDelayMs = () => {
-    const raw = getComputedStyle(card).getPropertyValue('--card-info-delay').trim();
+    // Only equipmentCard.js sets this property, inline on the card (no stylesheet
+    // declares it), so the inline read is the computed one without the style flush.
+    const raw = card.style.getPropertyValue('--card-info-delay').trim();
     const ms = raw.endsWith('ms') ? parseFloat(raw) : raw.endsWith('s') ? parseFloat(raw) * 1000 : parseFloat(raw);
     return Number.isFinite(ms) && ms >= 0 ? ms : selectionRevealDelayMs();
   };

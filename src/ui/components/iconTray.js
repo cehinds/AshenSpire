@@ -25,6 +25,7 @@ import { planIconTray } from '../models/IconTrayModel.js';
 import { attachTooltip, hideTooltip, showTooltipFor } from './tooltip.js';
 import { pip, pips } from '../kit/index.js';
 import { t, tFull } from '../strings.js';
+import { layoutMetrics } from '../layoutMetrics.js';
 
 const trays = new WeakMap();
 const overflowActions = new WeakMap();
@@ -137,16 +138,11 @@ export function unobserveIconTray(row) {
 // Reuse each icon and its listeners when space changes; only what shows moves.
 // Body zoom and the root font size are computed-style reads, and every tray
 // fit is followed by style writes, so each read after the first tray's write
-// flushed style again (a render fits a tray per combatant). Neither changes
-// within a task, so the pair is read once and dropped at the end of the task.
-let metrics = null;
+// flushed style again (a render fits a tray per combatant). They come from the
+// shared layout-constants cache, which is dropped when the page's scale writes.
 function trayMetrics() {
-  if (metrics) return metrics;
-  const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
-  const rem = Math.max(16 / zoom, parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
-  metrics = { zoom, rem };
-  queueMicrotask(() => { metrics = null; });
-  return metrics;
+  const { zoom, rem } = layoutMetrics();
+  return { zoom, rem };
 }
 
 export function fitIconTray(row, width) {

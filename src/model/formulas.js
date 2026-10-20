@@ -117,8 +117,9 @@ export function describeFormula(formula) {
   // Some authored damage cards combine a fixed base with a per-status rider.
   // Their live value still belongs to combat preview, but the card face can
   // describe the authored arithmetic without guessing the target's statuses.
+  // The evaluator defaults `per` to 1, so an omitted `per` describes the same way.
   if (isFormula(formula) && formula.f === 'metric'
-      && Number.isFinite(formula.per) && formula.per > 0
+      && (formula.per === undefined || Number.isFinite(formula.per) && formula.per > 0)
       && ['min', 'max'].every(key => formula[key] === undefined || Number.isFinite(formula[key]))
       && !(formula.min !== undefined && formula.max !== undefined && formula.min > formula.max)
       && Object.keys(formula).every(key => ['f', 'metric', 'of', 'statuses', 'per', 'min', 'max'].includes(key))) {
@@ -129,14 +130,16 @@ export function describeFormula(formula) {
       damageTakenThisTurn: formula.of === 'self' ? 'HP lost this turn' : null,
       distinctTypes: formula.of === 'self' ? 'distinct card type played this turn' : null,
       sameCardPlays: formula.of === 'self' ? 'play of this card this combat' : null,
+      evadeStackGain: formula.of === 'self' ? '1 plus DEX' : null,
     }[formula.metric];
+    const per = formula.per ?? 1;
     if (metricText) {
-      const scale = formula.per === 0.5 && formula.metric === 'damageTakenThisTurn'
-        ? 'half of ' : `${formula.per} per `;
+      const scale = per === 0.5 && formula.metric === 'damageTakenThisTurn'
+        ? 'half of ' : formula.metric === 'evadeStackGain' && per === 1 ? '' : `${per} per `;
       let text = `${scale}${metricText}`;
       if (formula.min !== undefined) text += ` (minimum ${formula.min})`;
       if (formula.max !== undefined) text += ` (maximum ${formula.max})`;
-      if (!Number.isInteger(formula.per) || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
+      if (!Number.isInteger(per) || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
       return text;
     }
   }
@@ -223,7 +226,7 @@ function evalNode(node, ctx) {
     case 'metric': {
       const ent = resolveOne(ctx, node.of || 'self', node.f), state=(node.of===undefined || node.of==='self' || node.of==='owner') && ctx.metricsBefore ? ctx.metricsBefore : ent.abilityRiders || {};
       const active=Object.entries(ent.statuses || {}).filter(([id,row])=>(row.stacks || row.meter?.value || 0)>0 && (node.statuses || []).includes(id)).map(([,row])=>row);
-      const values={weaponDamage:ctx.weaponDamage || 0,negativeStatusTypes:active.length,negativeStatusStacks:active.reduce((n,row)=>n+(row.stacks || row.meter?.value || 0),0),damageTakenThisTurn:state.hpLostSinceTurnStart || 0,sameCardPlays:state.cardUsesCombat?.[ctx.cardId] || 0,cardsPlayed:state.cardsPlayed || 0,distinctTypes:Object.keys(state.typePlays || {}).length,manaSpent:ctx.manaSpent || 0,staminaSpent:ctx.staminaSpent || 0};
+      const values={weaponDamage:ctx.weaponDamage || 0,negativeStatusTypes:active.length,negativeStatusStacks:active.reduce((n,row)=>n+(row.stacks || row.meter?.value || 0),0),damageTakenThisTurn:state.hpLostSinceTurnStart || 0,sameCardPlays:state.cardUsesCombat?.[ctx.cardId] || 0,cardsPlayed:state.cardsPlayed || 0,distinctTypes:Object.keys(state.typePlays || {}).length,manaSpent:ctx.manaSpent || 0,staminaSpent:ctx.staminaSpent || 0,evadeStackGain:Number(ctx.evadeStackGain) || 0};
       if (!(node.metric in values)) throw new Error('Unknown combat metric');
       v=values[node.metric]*(node.per ?? 1);break;
     }

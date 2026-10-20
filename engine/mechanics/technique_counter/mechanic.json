@@ -22,6 +22,6 @@
   "portability": "legacy",
   "legacy": {
     "file": "src/engine/actions.js",
-    "symbol": "spellAuthoredStatusBonus"
+    "symbol": "applyProfileDamage"
   }
 }

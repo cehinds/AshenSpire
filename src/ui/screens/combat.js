@@ -1,4 +1,4 @@
-import { fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
 import { applyCombatDisplayReceipt } from '../models/CombatDisplayReceiptModel.js';
 import { combatStatusPresentationRegistries } from '../models/CombatStatusPresentationModel.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
@@ -146,6 +146,8 @@ import { formationGridHtml } from '../components/formationGrid.js';
 import { formationMovePlan, normalizeClassicPlayerFormationCell } from '../../model/formationMovement.js';
 import { discardChoicePlan } from '../../engine/handRules.js';
 import { openHandDiscard } from '../components/handDiscard.js';
+import { evalPredicate } from '../../engine/triggers.js';
+import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 import { resolveCombatCard } from '../../engine/combatExpansion.js';
 import { resolvePlayedCombatCard } from '../models/PlayedCombatCard.js';
 import { upcastOptions } from '../../model/upcasting.js';
@@ -900,7 +902,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!instance) return [];
       const amount = instance.meter ? instance.meter.value : instance.stacks;
       if (!(amount > 0)) return [];
-      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(statusId));
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(statusId, entity));
       if (!def) return [];
       const presentation = statusInstancePresentation(def, instance);
       return [{ name: def.name, detail: presentation.tooltip }];
@@ -1653,11 +1655,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     markUiComponent(row, UI.statusEffectTray, entity.kind);
     const armed = () => !inspection && !!(selected || selectedFlask != null || selfArm);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
-    // Evasion stacks have one home: the dedicated defense badge. Prepared
+    // Evasion and Precision stacks have one home: the dedicated defense badge. Prepared
     // reaction charges remain available in the actor's inspection details.
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
-      if (combat.combatExpansionVersion === 2 && sid === 'evade') continue;
-      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
+      if (combat.combatExpansionVersion === 2 && (sid === 'evade' || sid === 'precision')) continue;
+      const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid, entity));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
       // M1's "absent at zero", applied to pips too: a spent proc row (💧0
@@ -1811,7 +1813,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (bar.id === 'hp') {
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const next = el.nextSibling;
-        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null }, { tooltips, blockHelp: helpText('block'),
+        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 ? (v.statuses?.evade?.stacks || 0) : null, precision: combat.combatExpansionVersion === 2 ? (v.statuses?.precision?.stacks || 0) : null }, { tooltips, blockHelp: helpText('block'),
+          // The holder's own numbers (its gear Evasion), not the player's.
+          evadeHelp: fixCoreEnabled(combat) ? registries.statuses.get('evade', entity)?.tooltip : undefined,
           poiseHelp: fixCoreProtectionDescription(combat, v, 'poise') || tFull('combat.protection.poise'),
           wardHelp: fixCoreProtectionDescription(combat, v, 'ward') || tFull('combat.protection.ward') });
         bars.insertBefore(row, next);
@@ -2939,7 +2943,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!pending || reactionShell || busy || hasCardChoice(combat)) return;
     const stack = committedReactionStack(combat.reactionStack, pending.groupKey)
       .map(entry => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
-    reactionShell = openReactionChoiceModal({ pending, stack,
+    // Each tile reads the card's live numbers against the incoming attacker, as its hand face would.
+    const handCard = option => combat.piles.hand.find(card => card.instanceId === option.play.cardInstanceId);
+    const summarize = option => summarizeCardOption(registries, combat, option, {
+      defOf: o => { const inst = handCard(o); return inst ? resolveCombatCard(combat, inst, { upcastTier: o.play.upcastTier }) : null; },
+      previewOf: o => previewCard(combat, o.play.cardInstanceId, o.play.targetId ?? o.sourceId ?? pending.sourceId, o.play.upcastTier),
+      // The engine's own predicate evaluator, for the card owner against the fight as it stands now.
+      conditionHolds: (effect, o) => evalPredicate(combat, effect.if, { owner: combat.player, source: combat.player, meta: {},
+        target: combat.enemies.find(enemy => enemy.id === (o.play.targetId ?? o.sourceId ?? pending.sourceId)) }),
+    });
+    reactionShell = openReactionChoiceModal({ pending, stack, summarize,
       onClosed: () => { reactionShell = null; },
       onAnswer: intent => answerReaction(intent, true),
     });
@@ -2965,6 +2978,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     discardShell = openDiscardChoiceModal({
       ...(combat.pendingCardChoice ? {title: t('combat.cards.choose.title', {count:pending.count}), prompt:t('combat.cards.choose.prompt',{from:pending.effect.from,to:pending.effect.to}), confirmLabel:t('combat.cards.choose.confirm'), ordered:pending.effect.from===pending.effect.to} : {}),
       count: pending.count, cardName: registries.cards.get(pending.cardId).name,
+      summarize: card => {
+        const inst = Object.values(combat.piles).flat().find(c => c?.instanceId === card.instanceId);
+        return summarizeCardOption(registries, combat, { id: card.instanceId, name: card.name }, {
+          defOf: () => inst ? resolveCombatCard(combat, inst) : null,
+          previewOf: () => previewCard(combat, card.instanceId),
+        });
+      },
       cards: (combat.pendingCardChoice ? zoneCandidates(combat,pending.effect) : discardCandidates(combat)).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
       onClosed: () => { discardShell = null; },
       onChoose: cardInstanceIds => {

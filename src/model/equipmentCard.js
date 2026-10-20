@@ -31,10 +31,16 @@ export function equipmentCardModel(registries, piece) {
   if (item) {
     const receipt = resolveGearItem(item,configuredGear,{rank:(item.rank ?? 1)+(piece.upgradeLevel || 0)});
     const labels = {hp:'HP',mp:'MP',sp:'SP',ar:'AR',dr:'DR',poise:'Poise',ward:'Ward',evasion:'Evasion',precision:'Precision'};
-    facts = Object.entries(receipt.values).filter(([,value])=>value !== 0).map(([id,value])=>field(labels[id] || id,value,
-      `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} = ${value} equipped ${labels[id] || id}.`));
-    bonuses = armor ? [field(`Rank ${receipt.rank} · ${receipt.budget} points`,receipt.budget,
-      `Armor budget: ${receipt.budget} points (${configuredGear.armorBudget.baseline} baseline + ${receipt.budget-configuredGear.armorBudget.baseline} rarity/rank bonus).`)] : [];
+    // A weapon's tier adds weaponARPerTier AR on top of its pool (the rating receipt's rule).
+    const tierAR = !armor && piece.kind !== 'shield' ? (piece.upgradeLevel || 0) * (gameModule(registries,'equipment')?.upgradeBonuses?.weaponARPerTier || 0) : 0;
+    facts = Object.entries(receipt.values).map(([id,value])=>[id,id === 'ar' ? value + tierAR : value]).filter(([,value])=>value !== 0).map(([id,value])=>field(labels[id] || id,value,
+      id === 'ar' && tierAR ? `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} + ${tierAR} from Smith tier ${piece.upgradeLevel} = ${value} equipped AR.`
+        : `${receipt.points[id]} stat-budget point(s) × ${configuredGear.pointValues[id]} = ${value} equipped ${labels[id] || id}.`));
+    const points = receipt.budget ?? Object.values(receipt.points).reduce((sum,n)=>sum+n,0) + receipt.tagCost;
+    const perRank = configuredGear.armorBudget.perRank ?? 0;
+    bonuses = armor || piece.kind === 'shield' ? [field(`Rank ${receipt.rank} · ${points} points`,points,
+      armor ? `Armor budget: ${receipt.budget} points (${configuredGear.armorBudget.baseline} baseline + ${receipt.budget-configuredGear.armorBudget.baseline} rarity/rank bonus).`
+        : `Stat points: ${points} (${perRank} more per Smith tier).`)] : [];
   }
   const requirements = Object.entries(piece.requirements?.attributes || {}).map(([id, value]) => `${registries.attributes.get(id)?.shortLabel || id} ${value}`).join(' · ');
   return { id: piece.id, name: piece.name, armor, type, facts, bonuses,

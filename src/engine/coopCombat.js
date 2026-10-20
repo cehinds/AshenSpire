@@ -658,6 +658,28 @@ export function previewCoopCard(C, playerId, instanceId, targetId, upcastTier) {
   return soloPreviewCard(clone, instanceId, targetId, upcastTier);
 }
 
+/**
+ * Splits a seat's candidate cards into those whose numbers depend on live state (an effect variant, a condition, or
+ * a held ability charge that matches the card, by the predicate card execution uses) and plain ones.
+ * Returns the instance ids of each, in order, and the resolved definitions by instance id.
+ */
+export function classifyPreviewCandidates(ctx, entity, cards, enemyAvailable = true) {
+  const liveIds = [], plainIds = [], defs = {};
+  for (const card of cards) {
+    const def = defs[card.instanceId] = resolveCombatCard(ctx, card);
+    const charged = R.matchingAbilityCharges(entity, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }, { enemyAvailable }).keys.length > 0;
+    (charged || def.effectVariants?.length || (def.effects || []).some(effect => effect?.if) ? liveIds : plainIds).push(card.instanceId);
+  }
+  return { liveIds, plainIds, defs };
+}
+
+/** previewCoopCard for several of one seat's cards at once: one detached state serves them all (a clone costs far more than a preview). */
+export function previewCoopCards(C, playerId, instanceIds) {
+  const clone = F.candidateState(C, { detached: true });
+  setActive(clone, clone.players.get(playerId));
+  return Object.fromEntries(instanceIds.map(id => [id, soloPreviewCard(clone, id, undefined, undefined)]));
+}
+
 export function recoverControl(C, playerId, selections) {
   if (C.pendingReaction) throw new Error('Answer the pending reaction first');
   if (!C._foundationTransaction) return F.foundationTransaction(C, candidate => recoverControl(candidate, playerId, selections));
