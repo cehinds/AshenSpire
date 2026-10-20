@@ -1348,7 +1348,7 @@
 :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:focus-visible, > .combat-potion-tray :focus-visible) > .combat-potion-tray {
   visibility: visible; transition-delay: var(--potion-focus-delay, 500ms);
 }
-:root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:focus-visible, > .combat-potion-tray :focus-visible) > .combat-potion-tray > * {
+:root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:focus-visible, > .combat-potion-tray :focus-visible) > .combat-potion-tray > :where(.potion-mini, .status-overflow) {
   opacity: 1; transform: none;
   transition-delay: calc(var(--potion-focus-delay, 500ms) + var(--potion-stagger, 0ms));
 }
@@ -1360,7 +1360,7 @@
   :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:hover, > .combat-potion-tray:hover) > .combat-potion-tray {
     visibility: visible; transition-delay: var(--potion-reveal-delay, 500ms);
   }
-  :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:hover, > .combat-potion-tray:hover) > .combat-potion-tray > * {
+  :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:hover, > .combat-potion-tray:hover) > .combat-potion-tray > :where(.potion-mini, .status-overflow) {
     opacity: 1; transform: none;
     transition-delay: calc(var(--potion-reveal-delay, 500ms) + var(--potion-stagger, 0ms));
   }

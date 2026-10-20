@@ -200,12 +200,12 @@
   opacity: 0; transform: translateY(0.7rem);
   transition: opacity var(--potion-reveal-fade, 160ms) ease, transform var(--potion-reveal-fade, 160ms) ease;
 }
-.map-potions:has(:focus-visible) .run-potion-minis > * { opacity: 1; transform: none; }
+.map-potions:has(:focus-visible) .run-potion-minis > :where(.potion-mini, .status-overflow) { opacity: 1; transform: none; }
 /* One after another, nearest the button first — the tray holds four at most. */
-.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(1) { transition-delay: var(--potion-focus-delay, 500ms); }
-.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(2) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 40ms); }
-.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(3) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 80ms); }
-.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(4) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 120ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > :where(.potion-mini, .status-overflow):nth-last-child(1) { transition-delay: var(--potion-focus-delay, 500ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > :where(.potion-mini, .status-overflow):nth-last-child(2) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 40ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > :where(.potion-mini, .status-overflow):nth-last-child(3) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 80ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > :where(.potion-mini, .status-overflow):nth-last-child(4) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 120ms); }
 /* Touch browsers may keep :hover latched after a tap. Only a device with an
    actual fine hover pointer gets the hover reveal; touch keeps the large
    Potions button as its direct, one-tap route to the full list. */
