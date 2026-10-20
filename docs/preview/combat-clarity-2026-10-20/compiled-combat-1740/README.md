@@ -22,12 +22,11 @@ run through the compiled game. Production handlers are not replaced. Pacing is
 normal and unthrottled; capture does not pause animations or extend callouts.
 The range case also asserts that compact attack text omits Precision.
 
-[Range receipts](range-trace.json) verify one card play, a range-caused miss and
-unchanged target HP. [Sequence receipts and stage trace](sequence-trace.json)
-verify an incoming sprite before its choice, no damage committed before that
+The range check verifies one card play, a range-caused miss and unchanged target
+HP. The sequence check verifies an incoming sprite before its choice, no damage committed before that
 choice, one incoming hit and paid return before the next choice, two total
 paid returns, one original move execution, no false whole-attack refusal and no
-page errors. The screenshots and trace together show the order; a still image
+page errors. The event and stage assertions establish the order; a still image
 alone cannot prove timing. The artifact predates subsequent Smith-only polish.
 
 ## Performance investigation
@@ -38,9 +37,18 @@ sampling. Coordinates are resolved before profiling. Each run commits exactly
 once without page errors. The paired repeat waits for fonts and all 58
 sprite/card images, then lets selection settle before recording.
 
-[Measured results](performance-investigation.json) retain both rejected
-prototypes. Batching the final combat fit did not improve the measured cost.
-Ignoring unchanged pose attributes reduced tracking invalidations, but its
-paired repeat did not establish a latency benefit. Neither prototype is merged
-or present in these images. **Combat-latency improvement is not claimed.**
-Profiles contaminated by the earlier harness's hit-test grid are excluded.
+| Compiled probe | Long tasks after input: count / total ms / max ms | onBeatApplied total ms |
+| --- | --- | --- |
+| Initial baseline 1740 | 24 / 6517 / 1836 | 1824 |
+| Batched fit, rejected `31045d94a` | 21 / 8156 / 3210 | 3179 |
+| Observer filter, initial `ad6b11964` | 16 / 5925 / 1364 | 1360 |
+| Settled baseline 1740 | 17 / 5291 / 1465 | 1454 |
+| Settled observer filter, rejected `ad6b11964` | 11 / 8192 / 2919 | 2906 |
+
+Each probe ends 3.5 seconds after observing the commit; blocked browser work can
+extend that wall-clock span. These are individual runs, not averaged benchmarks.
+The settled pair observes 16/24 unchanged relevant attributes on baseline and
+27/33 on the observer candidate: avoidable invalidations are real, but the
+repeat does not establish a latency benefit. Both prototypes remain unmerged
+and are absent from these images. **Combat-latency improvement is not claimed.**
+Earlier profiles contaminated by the harness's hit-test grid are excluded.
