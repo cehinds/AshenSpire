@@ -11,6 +11,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
+import { combatProfileFor } from '../src/model/combatCardProfile.js';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -82,4 +83,39 @@ test('the imported dagger Throw property exposes and commits only its one-band e
   assert.ok(combat.eventLog.some(row => row.type === 'attackHit' || row.type === 'attackMissed'));
   assert.equal(combat.eventLog.some(row => row.missReason === 'range'), false);
   assert.equal(combat.rangeState.engagements[pair(enemy)], 1);
+});
+
+test('Core projects only owned paid mobility and range metadata without repricing existing enemy offense', () => {
+  const before = JSON.stringify(contentBundle.enemies);
+  const bundle = applyGameProfileToContent(contentBundle, profile);
+  for (const original of contentBundle.enemies) {
+    const source = profile.content.enemies.find(row => row.id === original.id);
+    const projected = bundle.enemies.find(row => row.id === original.id);
+    for (const [id, move] of Object.entries(original.moves)) assert.deepEqual(projected.moves[id], move, `${original.id}.${id}: offense unchanged`);
+    for (const field of ['startingRange', 'rangeClosingMove', 'rangeRoutePolicy']) assert.equal(projected[field], source[field], `${original.id}/${field}`);
+    const cardId = source.defaultDeck.find(id => source.cardHints?.[id]?.legacyMove === source.rangeClosingMove);
+    const card = profile.content.enemyCards.find(row => row.id === cardId);
+    assert.ok(card, `${original.id}: closing card is truly owned`);
+    const move = registries.enemies.get(original.id).moves[source.rangeClosingMove];
+    assert.equal(move.sp, card.staminaCost);
+    assert.equal(move.weight, 0, 'mobility is selected explicitly, never added to the random attack pool');
+    assert.deepEqual(move.effects, card.effects);
+    assert.equal(combatProfileFor(move).maneuver, null, 'Advance cannot award an attack stance');
+  }
+  for (const id of ['hookCast', 'chainSnare', 'draggingBlow']) assert.equal(combatProfileFor(registries.enemies.get('chainScavenger').moves[id]).range, 'reach');
+  const { combat, enemy } = live('straightSword', 'chainScavenger');
+  assert.equal(combat.rangeState.engagements[pair(enemy)], 1, 'authored chain starting range reaches the real fight');
+  assert.equal(JSON.stringify(contentBundle.enemies), before, 'projection does not mutate shared Legacy/Current enemy content');
+  const current = applyGameProfileToContent(contentBundle, 'current');
+  assert.deepEqual(current.enemies, contentBundle.enemies);
+});
+
+test('Core mobility projection preserves nested and explicit flat offense override authority', () => {
+  const enemies = contentBundle.enemies.map(row => row.id === 'wanderingSoldier'
+    ? { ...row, moves: { ...row.moves, slash: { ...row.moves.slash, damage: 99 } } } : row);
+  const nested = applyGameProfileToContent({ ...contentBundle, enemies }, profile);
+  assert.equal(nested.enemies.find(row => row.id === 'wanderingSoldier').moves.slash.damage, 99);
+  const enemyMoves = contentBundle.enemyMoves.map(row => row.enemyId === 'wanderingSoldier' && row.id === 'slash' ? { ...row, damage: 77 } : row);
+  const explicit = applyGameProfileToContent({ ...contentBundle, enemies, enemyMoves }, profile);
+  assert.equal(explicit.enemies.find(row => row.id === 'wanderingSoldier').moves.slash.damage, 77);
 });
