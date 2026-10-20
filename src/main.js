@@ -193,6 +193,7 @@ import { dlog, failureBanner } from './ui/debuglog.js';
 // The command log's chrome, on the kit (debuglog.js is a leaf; see debugChrome.js).
 import { DEBUG_CHROME_READY } from './ui/components/debugChrome.js';
 import { applyLoreType } from './ui/models/LoreTypeModel.js';
+import { createContentValidationCache } from './model/contentValidationCache.js';
 void DEBUG_CHROME_READY;
 
 const app = document.getElementById('app');
@@ -251,12 +252,17 @@ let xpCombat = null;
 configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
+const cachedContentValidation = createContentValidationCache((gameProfile, configuration, configured) => {
+  const result = validateContent(configured);
+  const structuralProblems = isConfiguredRun(gameProfile) ? [] : advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
+  return { result, structuralProblems };
+});
+
 function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = registryGameProfile) {
   registryGameProfile = gameProfile;
   const authored = applyGameProfileToContent(contentBundle, gameProfile);
   const configured = isConfiguredRun(gameProfile) ? authored : configuredContentBundle(authored, configuration);
-  const result = validateContent(configured);
-  const structuralProblems = isConfiguredRun(gameProfile) ? [] : advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
+  const { result, structuralProblems } = cachedContentValidation(gameProfile, configuration, configured);
   if (!result.ok || structuralProblems.length) {
     const first = structuralProblems[0] || `${result.errors[0].path}: ${result.errors[0].msg}`;
     const message = `Game configuration unchanged: ${first} Authored defaults remain active until the values form a valid configuration.`;
