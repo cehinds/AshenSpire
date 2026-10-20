@@ -1,3 +1,4 @@
+import { cardAffectsEnemies } from '../src/model/hitBadge.js';
 import { formationOccupancy } from '../src/model/formationOccupancy.js';
 import { projectEnemyBurdenHand } from '../src/ui/models/EnemyBurdenModel.js';
 import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
@@ -794,12 +795,27 @@ export function createSession({ registries, seedString, endless = false, restore
 
   function combatScene() {
     const c = live.combat;
+    const handPreview = (ownerId, instanceId, ranks) => {
+      const owner = c.players.get(ownerId);
+      const instance = owner.piles.hand.find(card => card.instanceId === instanceId);
+      const definition = resolveCombatCard({ ...c, registries: c.registriesForPlayer(ownerId), player: owner.entity,
+        attributes: owner.attributes, loadout: owner.loadout }, instance, { upcastRanks: ranks });
+      const living = c.enemies.filter(enemy => enemy.alive);
+      const firstTarget = c.rangeState?.policy.enabled && cardAffectsEnemies(definition) ? living[0]?.id : undefined;
+      const preview = previewCoopCard(c, ownerId, instanceId, firstTarget, ranks);
+      if (!preview.range?.enabled || (!cardAffectsEnemies(preview.resolvedDefinition) && !preview.range.targets?.length)) return preview;
+      // Keep only the small canonical quote; reuse the initial targeted read.
+      // The host applies this owner's knowledge before computing either chance.
+      const rangeByTarget = Object.fromEntries(living.map(enemy => [enemy.id, firstTarget === enemy.id ? preview.range
+        : previewCoopCard(c, ownerId, instanceId, enemy.id, ranks, { rangeRoute: 'advance' }).range]));
+      return { ...preview, rangeByTarget };
+    };
     // Compact digest of display-worthy events since the LAST snapshot, so the
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = [...(live.opening || []), ...c.eventLog.slice(live.evCursor || 0)]
       .filter((e) => ['cardDrawn', 'deckShuffled', 'cardDiscarded', 'blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered', 'impactDealt', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak',
-        'combatReactionUnavailable', 'attackHit', 'attackMissed', 'critHit', 'combatGuardBroken', 'attackEvaded', 'combatAvoidanceResolved', 'playerStaggered', 'ratingImpact'].includes(e.type)
+        'combatReactionUnavailable', 'combatRangeReturnUnavailable', 'attackHit', 'attackMissed', 'critHit', 'combatGuardBroken', 'attackEvaded', 'combatAvoidanceResolved', 'playerStaggered', 'ratingImpact'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
         eventIndex: c.eventLog.indexOf(e),
@@ -821,6 +837,7 @@ export function createSession({ registries, seedString, endless = false, restore
         threshold: e.threshold, status: e.status, stacks: e.stacks, total: e.total, duration: e.duration,
         turn: e.turn,
         // Reaction notes (model/combatLog.js) and callouts (fx.js calloutForEvent).
+        ...(e.type === 'combatRangeReturnUnavailable' ? { required: e.required, available: e.available, advanceSp: e.advanceSp, defenseKept: e.defenseKept } : {}),
         ownerId: e.ownerId, attackKind: e.attackKind, need: e.need, have: e.have, resource: e.resource,
         ...(Array.isArray(e.cardIds) ? { cardIds: [...e.cardIds] } : {}),
         avoided: e.avoided, ...(e.hitCheck === true ? { hitCheck: true } : {}),
@@ -838,6 +855,7 @@ export function createSession({ registries, seedString, endless = false, restore
     live.opening = null;
     return {
       kind: 'combat',
+      ...(c.rangeState ? { rangeState: structuredClone(c.rangeState) } : {}),
       combatExpansionVersion: c.sharedExpansionVersion || 1,
       reactionRulesVersion: c.reactionRulesVersion,
       ...(c.reactionRules ? { reactionRules: structuredClone(c.reactionRules) } : {}),
@@ -908,6 +926,7 @@ export function createSession({ registries, seedString, endless = false, restore
         pendingReaction: c.pendingReaction?.ownerId === P.id ? structuredClone(c.pendingReaction) : null,
         ...(c.reactionRulesVersion >= 1 ? { reactionsEnabled: P.entity.reactionsEnabled !== false } : {}),
         abilityRiders: P.entity.abilityRiders,
+        ...(P.entity.rangeActorKey ? { rangeActorKey: P.entity.rangeActorKey } : {}),
         id: P.id, classId: P.entity.classId, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
         ...(P.entity.wardBlock !== undefined ? { wardBlock: P.entity.wardBlock } : {}),
         mana: P.entity.mana, maxMana: P.entity.maxMana,
@@ -925,10 +944,10 @@ export function createSession({ registries, seedString, endless = false, restore
         ...(P.entity.wardMeter ? { wardMeter: P.entity.wardMeter } : {}),
         ratings: P.entity.ratings,
         hand: P.piles.hand.map((c2) => {
-          const preview = previewCoopCard(c, P.id, c2.instanceId);
+          const preview = handPreview(P.id, c2.instanceId);
           const options = P.entity.combatExpansionVersion === 2 ? upcastOptions(preview.resolvedDefinition || resolveCombatCard({ ...c, registries: c.registriesForPlayer(P.id), player: P.entity, combatExpansionVersion: 2 }, c2)) : [];
           return { ...c2, combatPreview: preview,
-            ...(options.length ? { upcastPreviews: Object.fromEntries(options.map(option => [option.ranks, previewCoopCard(c, P.id, c2.instanceId, undefined, option.ranks)])) } : {}),
+            ...(options.length ? { upcastPreviews: Object.fromEntries(options.map(option => [option.ranks, handPreview(P.id, c2.instanceId, option.ranks)])) } : {}),
             breakMeterVersion: [1, 2].includes(c.breakMeterVersion) ? c.breakMeterVersion : 0 };
         }),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length, exhaustCount: P.piles.exhaust.length,
@@ -948,9 +967,9 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // Route a member's combat intents to the live shared fight.
-  function combatPlay(memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup = undefined) {
+  function combatPlay(memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup = undefined, rangeRoute = undefined) {
     if (!live) return { ok: false, error: 'no combat' };
-    try { playCard(live.combat, memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup); }
+    try { playCard(live.combat, memberId, cardInstanceId, targetId, choice, upcastTier, selectedBuildup, rangeRoute); }
     catch (e) { return { ok: false, error: e.message }; }
     return settleCombat();
   }

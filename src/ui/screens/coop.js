@@ -1,3 +1,6 @@
+import { coopRangePreview } from '../models/CoopRangePreviewModel.js';
+import { mountCombatRangeAction } from '../components/combatRangeAction.js';
+import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { coopCardHitPreview, coopCombatantEvasion, coopBadgedStatusIds } from '../models/CoopHitPreviewModel.js';
 import { combatActionIdentity } from '../models/CombatActionIdentityModel.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
@@ -390,6 +393,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
   let armedFlask = null; // non-offensive flask slot awaiting a throw seat
   let armedFriendlyCard = null; // friendly-targeted card instanceId awaiting a legal seat
   const upcastTiersByCard = new Map();
+  const rangeRoutesByCard = new Map();
+  let releaseRangeAction = () => {};
   const upcastKey = instanceId => `${me}:${instanceId}`;
   let prevCombat = null; // last combat scene, for snapshot-diff FX
   let lastSurface = null; // what this seat saw last render (scene kind, or catch-up entry), to clear selection on a change
@@ -547,6 +552,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
   }
   const send = (obj,{progressionPopup=false}={}) => {
     if (latestWireSnap?.scene?.reactionWaiting && ['playCard', 'endTurn', 'flaskIntent', 'recoverControl', 'chooseBlightFeat', 'predictIntent'].includes(obj.t)) { showPendingReaction(); return; }
+    if (obj.t === 'playCard' && obj.rangeRoute == null) obj = { ...obj, rangeRoute: rangeRoutesByCard.get(upcastKey(obj.cardInstanceId)) ?? 'advance' };
     if (obj.t === 'playCard' && obj.upcastTier == null && upcastTiersByCard.has(upcastKey(obj.cardInstanceId))) obj = { ...obj, upcastTier: upcastTiersByCard.get(upcastKey(obj.cardInstanceId)) };
     if (obj.t !== 'chooseDiscard' && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t) && latestWireSnap?.scene?.players?.some(p => p.pendingAbilityDiscard || p.pendingCardChoice)) { showPendingDiscard(); return; }
     if(progressionDoor&&!progressionDoor.ready&&!progressionPopup&&['chooseReward','catchupChoice','chooseClassMilestone','chooseLevelCard','chooseAbilityDraft'].includes(obj.t))return false;
@@ -715,6 +721,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     return combatSnapshotCardCosts(memberRegistries(), def, player);
   }
   function cardAffordableFromSnapshot(def, player) {
+    if (def?.combatPreview?.rangeQuoteUnavailable || def?.combatPreview?.range?.routes?.find(route => route.id === def.combatPreview.range.selectedRoute)?.available === false) return false;
     if (!def || !player || (player.pendingAbilityDiscard || player.pendingCardChoice) || player.ended || !player.alive || !player.connected) return false;
     if (player.ashenBlight?.milestones.some(row => row.path === null) || !controlGate({ combatExpansionVersion: player.combatExpansionVersion || 1, combatStatusRules: snap?.scene?.combatStatusRules }, player, def).allowed) return false;
     const costs = snapshotCosts(def, player);
@@ -828,7 +835,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     if (idx >= 0 && meP.hand[idx]) {
       const c = meP.hand[idx];
       const def = cardDef(c);
-      if (!cardAffordableFromSnapshot(def, meP)) return;
+      if (!cardAffordableFromSnapshot(def, meP) && !canChooseRangeRoute(def.combatPreview)) return;
       if (upcastOptions(def).length && meP.combatExpansionVersion === 2) {
         // Use the same selecting/playing door as pointer and focused activation.
         app.querySelector(`.hand .card[data-instance-id="${c.instanceId}"]`)?.click();
@@ -875,6 +882,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     releaseAppearance();
     disposed = true;
     releaseHitChanceSelection();
+    releaseRangeAction();
     reactionShell?.dismiss();
     snap = null;
     closeCombatantDoor();
@@ -906,10 +914,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
   const memberRegistries=()=>{const member=myMember();return member?registriesForClassMastery(registries,{...member,class:member.classId}):registries;};
   const cardDef = (c, tier = upcastTiersByCard.get(upcastKey(c.instanceId))) => {
     const seat = snap?.scene?.players?.find(entry => entry.id === me);
-    return combatCardView({ registries: memberRegistries(), player: seat,
+    const view = combatCardView({ registries: memberRegistries(), player: seat,
       combatExpansionVersion: seat?.combatExpansionVersion || 1,
       breakMeterVersion: snap?.scene?.breakMeterVersion ?? c.breakMeterVersion ?? 0 },
     c, tier);
+    return { ...view, combatPreview: coopRangePreview(view.combatPreview, { targetId: selectedEnemy, rangeRoute: rangeRoutesByCard.get(upcastKey(c.instanceId)) ?? 'advance' }) };
   };
   guardCoopTool = typeof window !== 'undefined' && new URLSearchParams(location.search).has('guardTool') ? {
     resync: () => send({ t: 'resync' }),
@@ -993,6 +1002,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     // would sit over the reward or map and send a stale playCard on a pick
     // (#1449 review, Codex P2; tools/coop-hud-top.mjs vowChoiceProbe).
     if (snap.scene.kind !== 'combat') {
+      releaseRangeAction();
+      rangeRoutesByCard.clear();
       combatLayoutState = {};
       // The fight is over for this seat: its full log and reaction note end with it.
       closeCombatFullLog(combatToolsState);
@@ -1052,6 +1063,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
   // The stage of the current render; a badge added after its refit is centred by one more (badged-only, batched) refit.
   let coopStage = null;
   function syncCoopHitChances() {
+    releaseRangeAction();
+    releaseRangeAction = () => {};
     const sc = snap?.scene;
     if (sc?.kind !== 'combat') return;
     const actor = sc.players.find(player => player.id === me);
@@ -1071,12 +1084,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       const frame = app.querySelector('.combatant.enemy[data-eid="' + CSS.escape(enemy.id) + '"]');
       frame?.querySelector('.combat-hit-chance')?.remove();
       if (!frame || enemy.hp <= 0) continue;
-      const preview = coopCardHitPreview(sc, registries, actor, enemy, carrier, { selected: !!hostile, member: snap.party.find(member => member.id === actor.id), observerId: actor.id });
-      if (!Number.isFinite(preview?.hitChance)) continue;
+      const preview = coopCardHitPreview(sc, registries, actor, enemy, carrier, { selected: !!hostile, member: snap.party.find(member => member.id === actor.id), observerId: actor.id, rangeRoute: rangeRoutesByCard.get(upcastKey(selected.instanceId)) ?? 'advance' });
+      const label = rangeHitLabel(preview, { targetId: enemy.id });
+      if (!label) continue;
       const badge = document.createElement('span');
       badge.className = 'combat-hit-chance';
       badge.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
-      badge.textContent = Number(preview.hitChance.toFixed(2)) + '%';
+      badge.textContent = label;
       badge.setAttribute('aria-label', 'Chance to hit ' + badge.textContent);
       frame.append(badge);
       if (selectedCard) {
@@ -1088,6 +1102,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       }
     }
     if (selectedCard && cardOdds.children.length) selectedCard.append(cardOdds);
+    if (selectedCard && !busy() && !actor.ended && !sc.reactionWaiting) {
+      releaseRangeAction = mountCombatRangeAction(selectedCard, definition.combatPreview, {
+        targetName: id => registries.enemies.get(sc.enemies.find(enemy => enemy.id === id)?.enemyId)?.name || id,
+        onCancel: () => { clearSelection(); selectedCard.focus({ preventScroll: true }); },
+        onChoose: route => {
+          rangeRoutesByCard.set(upcastKey(selected.instanceId), route);
+          render();
+          app.querySelector(`.combat-range-action [data-range-route="${route}"]`)?.focus({ preventScroll: true });
+        },
+      });
+    }
     coopStage?.placeHitBadges?.();
   }
   const releaseHitChanceSelection = onSelectionChange(() => syncCoopHitChances());
@@ -1302,6 +1327,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     if (armedFlask != null || armedFriendlyCard) selectedCombatantId = null;
     if (selectedEnemy == null || !living.find((e) => e.id === selectedEnemy)) selectedEnemy = living[0] ? living[0].id : null;
     const meP = sc.players.find((p) => p.id === me);
+    // Clear only after authoritative consumption. A refused Throw keeps its
+    // explicit route instead of silently reverting to Advance on the resync.
+    const seatPrefix = `${me}:`;
+    for (const key of rangeRoutesByCard.keys()) if (key.startsWith(seatPrefix) && !meP?.hand.some(card => key === upcastKey(card.instanceId))) rangeRoutesByCard.delete(key);
     // Intent controls and perspective-grid cells are two hit surfaces for the
     // same enemy target. Keep their action in one door so a selected attack
     // card plays whether the press lands on the intent or elsewhere in the
@@ -1589,6 +1618,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
           // The spelled-out reason is this viewer's data: a co-op client reads
           // a snapshot, not the engine, so the card itself says why it is grey.
           const reason = affordable ? null
+            : def.combatPreview?.rangeQuoteUnavailable ? 'Waiting for route quote'
+              : def.combatPreview?.range?.routes?.find(route => route.id === def.combatPreview.range.selectedRoute)?.available === false ? 'Selected approach cannot reach'
             : !manaAffordable ? `Need ${costs.mana} Mana; have ${meP.mana}`
               : !staminaAffordable ? `Need ${costs.stamina} Stamina; have ${meP.stamina || 0}`
                 : !energyAffordable ? 'Not enough Stamina' : 'Turn already ended';

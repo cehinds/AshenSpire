@@ -93,3 +93,14 @@ test('place() avoids the hero\'s mini HUD', () => {
   assert.match(source, /AVOID_SELECTOR = '\.combatant\.player \.combatant-mini-hud'/);
   assert.match(source, /avoidRects\(\{ left: right - width, top: bottom - height, width, height \}, avoid, 6\)/);
 });
+
+test('unaffordable automatic range return explains kept defense only to its owning seat', () => {
+  const event = { type: 'combatRangeReturnUnavailable', sourceId: 'seatA', ownerId: 'seatA', targetId: 'e1', required: 2, available: 1, advanceSp: 2, reason: 'stamina', defenseKept: true };
+  const note = latestReactionNote([event], { isLocal: id => id === 'seatA', registries, enemies });
+  assert.equal(note.text, 'Counter return skipped: not enough SP to Advance (need 2, have 1). Defense kept.');
+  assert.equal(latestReactionNote([event], { isLocal: id => id === 'seatB', registries, enemies }), null);
+  const [row] = combatLogEntries([event], { registries, players: [{ id: 'seatA', name: 'Ash' }], enemies });
+  assert.equal(row.text, note.text, 'toast and durable log agree');
+  const [coop] = combatLogEntries([event], { registries, players: [{ id: 'seatA', name: 'Ash' }, { id: 'seatB', name: 'Briar' }], enemies });
+  assert.equal(coop.text, `Ash: ${note.text}`);
+});
