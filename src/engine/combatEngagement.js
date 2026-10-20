@@ -239,8 +239,6 @@ export function rangeCardSourceSnapshots(ctx, def, source, carrier) {
   return snapshots;
 }
 
-export { rangePolicyForNewCombat } from '../model/rangeCombatPolicy.js';
-
 export function discardCounterRangeReservation(group, target, row) {
   const rootId = group.carrier?.rangePlan?.rootId;
   const contactIds = new Set((row.contacts || []).map(contact=>contact.rangeContactId));
