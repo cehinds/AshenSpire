@@ -65,5 +65,6 @@ test('Smith browser gate preserves real pointer/hold deadlines and uses producti
   assert.match(source, /await click\('#shrine-leave'\)/);
   assert.match(source, /window\.__restStateForShot\(\)/);
   assert.match(source, /smithTextFits\(zero\.textGeometry\)/);
+  for (const width of [1200,390,375,320]) assert.match(source, new RegExp(`width: ${width},`));
   assert.doesNotMatch(source, /details\.armoury-card-row/);
 });
