@@ -1,5 +1,6 @@
 // Runtime adapter around the pure engagement planner. No pricing or distance is
 // inferred from a stance, screen coordinates, or another held weapon.
+import { pureEngagementMovement } from '../model/rangeCardAvailability.js';
 import { actorRangeKey, createRangeState, snapshotRangePolicy, rangeActionPlan, rangeBand, movedEngagementState } from '../model/combatEngagement.js';
 import { fixCoreEnabled, fixCoreRules } from '../model/fixCoreMechanics.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
@@ -96,13 +97,13 @@ export function rangeHitContact(ctx, source, target, carrier) {
 export function executeEngagementMovement(ctx, action) {
   if (!ctx.rangeState?.policy.enabled) return;
   let target = action.target;
-  if (action.effect.target === 'pendingAttacker') target = ctx.enemies.find(row => row.id === ctx._reactionSourceId) || ctx._reactionSource;
+  if (action.effect.target === 'pendingAttacker' && (!target || target.kind === action.source.kind)) target = ctx.enemies.find(row => row.id === ctx._reactionSourceId) || ctx._reactionSource;
   if (!target || target.kind === action.source.kind) throw Error('Engagement movement requires an opposing target');
   ctx.rangeState = movedEngagementState(ctx.rangeState, actorRangeKey(ctx, action.source), actorRangeKey(ctx, target), action.effect.bands);
   ctx.emit?.('combatEngagementMoved', { sourceId: action.source.id, targetId: target.id, bands: action.effect.bands });
 }
 export function assertRangeCardEnabled(ctx, def) {
-  if (ctx.rangeState && !ctx.rangeState.policy.enabled && def.effects?.length && def.effects.every(effect => effect.op === 'moveEngagement')) throw Foundation.playRefusal('Range mechanics are disabled', 'range-disabled');
+  if (ctx.rangeState && !ctx.rangeState.policy.enabled && pureEngagementMovement(def)) throw Foundation.playRefusal('Range mechanics are disabled', 'range-disabled');
 }
 
 export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
@@ -212,16 +213,17 @@ export function authorizeCounterRange(ctx, defender, attacker, counterCarrier, i
   const reservation = counterCarrier.rangeCounterReservation;
   const bound = reservation && !reservation.consumed && reservation.incomingRootId === incomingPlan?.rootId
     && reservation.contactId === contact?.contactId && reservation.sourceKey === actorRangeKey(ctx,defender) && reservation.targetKey === actorRangeKey(ctx,attacker);
-  const route = bound ? reservation.rangePlan.route : 'advance';
+  if (bound) {
+    const accepted = structuredClone(reservation.rangePlan);
+    delete counterCarrier.rangeCounterReservation;
+    return {...counterCarrier,rangeReturnAuthorization:{plan:accepted,paid:accepted.paid}};
+  }
+  const route = 'advance';
   const plan = rangeActionPlan(ctx.rangeState,actorRangeKey(ctx,defender),[rangeSourceContact(ctx,defender,attacker,counterCarrier,{},`0:0:0:${actorRangeKey(ctx,attacker)}`)],{route,context});
   const available = defender.kind === 'enemy' ? defender.fixCoreStaminaRemaining ?? defender.stamina ?? defender.maxStamina ?? 0 : defender.energy;
   if (!bound && available < plan.advanceSp) {
     ctx.emit?.('combatRangeReturnUnavailable',{sourceId:defender.id,targetId:attacker.id,ownerId:ctx.playerIdForEntity?.(defender) || 'player',required:plan.advanceSp,available,advanceSp:plan.advanceSp,reason:'stamina',defenseKept:true});
     return null;
-  }
-  if (bound) {
-    delete counterCarrier.rangeCounterReservation;
-    return {...counterCarrier,rangeReturnAuthorization:{plan,paid:reservation.rangePlan.paid}};
   }
   return {...counterCarrier,rangeReturnAuthorization:{plan}};
 }
@@ -244,6 +246,6 @@ export function discardCounterRangeReservation(group, target, row) {
   const contactIds = new Set((row.contacts || []).map(contact=>contact.rangeContactId));
   for (const carrier of [target?.combatCounter?.carrier,row.receipt?.counter?.carrier]) {
     const reservation=carrier?.rangeCounterReservation;
-    if (reservation?.incomingRootId===rootId && contactIds.has(reservation.contactId)) delete carrier.rangeCounterReservation;
+    if (reservation && reservation.incomingRootId===rootId && contactIds.has(reservation.contactId)) delete carrier.rangeCounterReservation;
   }
 }
