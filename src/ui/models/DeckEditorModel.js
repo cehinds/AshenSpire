@@ -67,13 +67,13 @@ function sourceOf(card, def, run) {
 }
 
 /**
- * The ui-string id of a rank 0 card's badge. A spell's is Cantrip. A rank 0 combat maneuver reads Basic, except a class
- * special / weapon art (source 'art', which the Basic filter excludes), which reads its own source label, so the badge
- * and the filter agree (owner ruling 2026-10-19: Sundering Art is not a Basic card).
+ * The ui-string id of a rank 0 card's badge. A spell's is Cantrip. A rank 0 card whose source is 'basic' reads Basic;
+ * every other source reads its own source label (Weapon art, Technique, Reward, Item-owned), so the badge agrees with
+ * the Basic filter: a card that filter hides is never badged Basic (owner ruling 2026-10-19).
  */
 export function rankZeroLabelId(source, isSpell) {
   if (isSpell) return 'deckEditor.rank.cantrip';
-  return source === 'art' ? 'deckEditor.source.art' : 'deckEditor.rank.basic';
+  return source === 'basic' || !DECK_SOURCES.includes(source) ? 'deckEditor.rank.basic' : `deckEditor.source.${source}`;
 }
 
 function typeLabel(type) {
