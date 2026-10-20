@@ -5,7 +5,8 @@ export function activeSettingsProfile(context) {
 // Legacy tuning rows are not inputs to the configured JSON providers. Keeping
 // them editable would promise mechanics the active run never consumes.
 const LEGACY_MECHANICS_GROUPS = new Set(['Opening', 'Progression', 'Combat', 'Stats', 'Recovery', 'Rewards', 'Shops', 'Deck', 'Equipment', 'World']);
-export function settingsRowAvailable(row, profile) {
+export function settingsRowAvailable(row, profile, nextProfile = null) {
+  if (row.nextRunOnly) profile = nextProfile || profile;
   if (!profile) return true;
   const configured = profile.foundation?.mode === 'configured';
   const modules = profile.modules || {};

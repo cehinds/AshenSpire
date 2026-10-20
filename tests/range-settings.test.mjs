@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rangeSettingsRows } from '../src/ui/models/RangeSettingsModel.js';
-import { settingsRows, generalGroups, settingsRowHtml, resolveNumberRow, resetKeys, rowModified } from '../src/ui/screens/settings.js';
+import { settingsRows, generalGroups, settingsRowHtml, resolveNumberRow, resetKeys, rowModified, categoryHtml, settingsSearchHits } from '../src/ui/screens/settings.js';
 import { settingsRowAvailable } from '../src/ui/models/SettingsCapabilitiesModel.js';
 import { RANGE_SETTING_KEYS, snapshotRangePolicy } from '../src/model/combatEngagement.js';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
@@ -102,4 +102,22 @@ test('an imported Core author supplies unset controls and the next real run snap
   assert.deepEqual(run.rangePolicy, authored, 'an active run keeps its snapshot');
   delete settings.newGameProfile;
   assert.deepEqual(rows.slice(1).map(row => row.defaultFor(settings)), [1, 1, 1], 'changing author invalidates the panel default cache');
+});
+
+
+test('future-run Range controls follow the selected author while other capabilities follow the active run', () => {
+  const core = resolveGameProfile('core'), legacy = resolveGameProfile('current');
+  const settings = { newGameProfile: 'core', settingsGeneralCategory: 'Combat', 'settingsGeneralTopic.Combat': 'Range' };
+  assert.ok(rows.every(row => settingsRowAvailable(row, legacy, core)));
+  assert.ok(rows.every(row => !settingsRowAvailable(row, core, legacy)));
+  const ordinary = settingsRows().find(row => row.key === 'askToUpcastAfterTarget');
+  assert.equal(settingsRowAvailable(ordinary, legacy, core), true);
+  assert.equal(settingsRowAvailable(ordinary, core, legacy), false);
+  assert.deepEqual(generalGroups('Combat', legacy, core).get('Range').map(row => row.key), keys);
+  const html = categoryHtml('General', settings, null, null, null, null, '', false, legacy, core);
+  assert.ok(keys.every(key => html.includes(`data-key="${key}"`)));
+  assert.ok(settingsSearchHits('Range mechanics', true, settings, { profile: legacy, nextProfile: core }).some(hit => hit.row.key === 'rangeMechanics'));
+  settings.newGameProfile = 'current';
+  assert.ok(!settingsSearchHits('Range mechanics', true, settings, { profile: core, nextProfile: legacy }).some(hit => hit.row.key === 'rangeMechanics'));
+  assert.doesNotMatch(categoryHtml('General', settings, null, null, null, null, '', false, core, legacy), /data-key="rangeMechanics"/);
 });

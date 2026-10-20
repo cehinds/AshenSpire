@@ -6,7 +6,7 @@ import { fixCoreMechanics } from '../../content/generated/fixCoreMechanics.js';
 // Read the same authored policy and fallback as the engine; zero is a value.
 export function rangeSettingsRows(authored = fixCoreMechanics.range) {
   const policy = snapshotRangePolicy(authored);
-  const common = { cat: 'Combat', coreOnly: true, rangeSetting: true };
+  const common = { cat: 'Combat', coreOnly: true, rangeSetting: true, nextRunOnly: true };
   // A panel reads four fields from one immutable selected author. Retain only
   // the latest author, not a history of imported profiles.
   let cachedAuthor, cachedPolicy;
