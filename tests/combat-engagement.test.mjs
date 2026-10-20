@@ -92,3 +92,17 @@ test('range quotes reject arithmetic overflow rather than freezing an imprecise 
   const huge = state('ranged', { ...RANGE_POLICY_DEFAULTS, advanceSpPerBand: Number.MAX_SAFE_INTEGER });
   assert.throws(() => rangeActionPlan(huge, player, [contact()]), /safe integer/);
 });
+
+test('mixed sources share one temporary pair distance in either authored order', () => {
+  const s = state();
+  const sources = [contact(enemy, 0), contact(enemy, 1, { sourceWeaponId: 'halberd' }), contact(enemy, 2, { weapon: false, sourceWeaponId: null })];
+  for (const rows of [sources, [...sources].reverse()]) {
+    const root = rangeActionPlan(s, player, rows);
+    assert.deepEqual(root.targets.map(row => row.effectiveBand), [0, 0, 0]);
+    assert.deepEqual(root.targets.map(row => row.coverage), rows.map(row => row.coverage));
+    assert.deepEqual(rangePlanProblems(root, s), []);
+    const counter = rangeActionPlan(s, enemy, [contact(player)], { context: root });
+    assert.equal(counter.advanceSp, 0);
+    assert.equal(counter.targets[0].band, 0);
+  }
+});
