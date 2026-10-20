@@ -6,7 +6,7 @@
       "appliesTo": "/package.json",
       "type": "launch",
       "command": "${env.COMSPEC}",
-      "args": ["npm start"],
+      "args": ["/d", "/c", "npm start"],
       "workingDirectory": "${workspaceRoot}"
     },
     {
@@ -14,7 +14,7 @@
       "appliesTo": "/package.json",
       "type": "launch",
       "command": "${env.COMSPEC}",
-      "args": ["npm run serve"],
+      "args": ["/d", "/c", "npm run serve"],
       "workingDirectory": "${workspaceRoot}"
     },
     {
@@ -22,7 +22,7 @@
       "appliesTo": "/package.json",
       "type": "launch",
       "command": "${env.COMSPEC}",
-      "args": ["npm test"],
+      "args": ["/d", "/c", "npm test"],
       "workingDirectory": "${workspaceRoot}"
     },
     {
@@ -30,7 +30,7 @@
       "appliesTo": "/package.json",
       "type": "launch",
       "command": "${env.COMSPEC}",
-      "args": ["npm run test:all"],
+      "args": ["/d", "/c", "npm run test:all"],
       "workingDirectory": "${workspaceRoot}"
     },
     {
@@ -38,7 +38,7 @@
       "appliesTo": "/package.json",
       "type": "launch",
       "command": "${env.COMSPEC}",
-      "args": ["node tools/content-build.mjs"],
+      "args": ["/d", "/c", "node tools/content-build.mjs"],
       "workingDirectory": "${workspaceRoot}"
     },
     {
@@ -46,7 +46,7 @@
       "appliesTo": "/package.json",
       "type": "launch",
       "command": "${env.COMSPEC}",
-      "args": ["npm run build:standalone"],
+      "args": ["/d", "/c", "npm run build:standalone"],
       "workingDirectory": "${workspaceRoot}"
     },
     {
@@ -54,7 +54,7 @@
       "appliesTo": "/package.json",
       "type": "launch",
       "command": "${env.COMSPEC}",
-      "args": ["node workbench/server.mjs"],
+      "args": ["/d", "/c", "node workbench/server.mjs"],
       "workingDirectory": "${workspaceRoot}"
     },
     {
@@ -62,7 +62,7 @@
       "appliesTo": "/package.json",
       "type": "launch",
       "command": "${env.COMSPEC}",
-      "args": ["npm --prefix editor test"],
+      "args": ["/d", "/c", "npm --prefix editor test"],
       "workingDirectory": "${workspaceRoot}"
     }
   ]
