@@ -50,7 +50,8 @@ test('reduced motion settles a deliberate pose once without starting an idle tra
     field: { closest: () => ({ dataset: { targetHud: 'true' } }) }, centerTargetOverheads: () => settled++,
     trackingRequest: 0, requestAnimationFrame: () => requested++, trackPlayerHud() {} };
   runInNewContext(source.slice(begin, finish), context);
-  callback();
+  callback([{ attributeName: 'data-pose', oldValue: 'idle',
+    target: { getAttribute: () => 'guard' } }]);
   assert.equal(settled, 1);
   assert.equal(requested, 0);
 });
