@@ -685,3 +685,24 @@ for (const [name, include] of [['prepared', ['attack', 'smash', 'defend', 'count
     assert.ok(!events.some(e => e.type === 'combatCounterTriggered' && e.cardId === 'frostCounter'), 'live deals no return');
   });
 }
+
+import { setProfileStance } from '../src/engine/gameProfileCombat.js';
+test('Many Forms: a retained Defend before Frost Counter previews the same return live deals (best of both stances)', () => {
+  const { combat, enemy } = live();
+  combat.registries = { ...combat.registries, proposalStatusRules: { weak: { behaviors: [{ kind: 'stanceCapacity', additionalPerStack: 1, maxStances: 2, defensePriority: ['counter', 'defend', 'evade', 'casting', 'attack', 'smash', 'sweep'] }] } } };
+  combat.player.statuses.weak = { stacks: 1 };
+  setProfileStance(combat, combat.player, { combatProfile: { maneuver: 'defend', camp: 'physical', range: 'melee' } });
+  combat.piles.hand.push({ instanceId: 'mf1', cardId: 'frostCounter' });
+  Object.assign(combat.player, { mana: 9, maxMana: 9 });
+  const view = previewCard(combat, 'mf1', enemy.id);
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'mf1' });
+  assert.equal(combat.player.concurrentStances?.length, 2, 'both stances retained');
+  Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const triggered = combat.eventLog.slice(start).find(e => e.type === 'combatCounterTriggered' && e.cardId === 'frostCounter');
+  assert.ok(triggered, 'live returns');
+  assert.equal(view.counterReturn.hp, triggered.amount, 'preview == live HP return');
+  assert.equal(view.counterReturn.poise, triggered.poiseDamage, 'preview == live Poise return');
+});

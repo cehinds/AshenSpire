@@ -9,6 +9,7 @@ import { configuredModule, armsAsCoreCounter, isSpellCounter, configuredStance, 
 import { previewDamageHits, damagePreviewState } from './combatDamagePreview.js';
 import { enemyMoveCarrier, expandedEnemyMove } from './combatCardTactics.js';
 import { counterCoversAttack } from './combatReactions.js';
+import { rememberCombatStance } from './concurrentStances.js';
 import * as statuses from '../framework/statusSemantics.js';
 
 /** True when the Core 2 Counter rule governs this fight. Legacy and co-op profiles keep their own return. */
@@ -87,7 +88,8 @@ export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected
   const defender = { ...base, combatStance: spell
     ? { maneuver: configuredStance(card), camp: 'spell', range: card.combatProfile?.range || 'reach' }
     : { maneuver: 'counter', camp: 'physical', range: 'melee' } };
-  delete defender.concurrentStances;
+  // Many Forms: live remembers the stance it leaves, so the preview adds the entered one to the retained set rather than replacing it.
+  rememberCombatStance(ctx, defender, base.combatStance);
   if (projected) ctx = { ...ctx, player: projected };
   // Hit by hit, as the live exchange resolves them: each advantaged hit grants its Counter Block before it is absorbed,
   // and Poise breaks, Vulnerable and the like carry into later hits.
