@@ -303,6 +303,9 @@ try {
       if (await ev(`!!document.querySelector(${JSON.stringify(decline)})`)) await click(decline);
     });
     await until(`!window.__fx || window.__fx.open === window.__fx.finished`, 'combat timeline settlement');
+    // A fast turn can finish before the confirmation service's navigation
+    // shield releases. The next real pointer action must wait for that door.
+    await until(`!document.querySelector('.confirmation-input-shield')`, 'combat confirmation input shield to close');
   };
 
   await cdp.send('Page.navigate', { url: `${sourceUrl}shot=combat&shotCombatVersion=1&shotNewerSlot=2&shotRefusedSlot=3` }, sessionId);
