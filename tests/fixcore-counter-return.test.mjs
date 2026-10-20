@@ -22,8 +22,12 @@ function live(enemyId = 'wanderingSoldier') {
   const run = createRunState({ registries: regs[enemyId], classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: regs[enemyId], run, rng: createRng(511), enemyIds: [enemyId] });
   const enemy = combat.enemies[0];
+  // The Counter's return is an attack with its own opposed roll, so the player needs the same flat Precision (below).
+  combat.player.basePrecisionBonus = 1000;
   // A plain 8-damage Attack: no rating, status or Poise noise on either side of the exchange.
-  Object.assign(enemy, { hp: 500, maxHp: 500, statuses: {}, ratings: { poise: 20 }, ratingSources: [], attributes: { dexterity: 0 } });
+  Object.assign(enemy, { hp: 500, maxHp: 500, statuses: {}, ratings: { poise: 20 }, ratingSources: [], attributes: { dexterity: 0 },
+    // FixCore hit rolls are opposed d20s (owner, 2026-10-19): a large flat Precision leaves only a natural 1 able to miss, so the exchange's hit lands.
+    basePrecisionBonus: 1000 });
   combat.piles.hand.push({ instanceId: 'cx1', cardId: 'core.counter' });
   return { combat, enemy };
 }
@@ -267,7 +271,8 @@ test('multi-hit preview starts from the player after the Counter\'s own Block, s
   const run = createRunState({ registries: heavyReg, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
   const combat = createRunCombat({ registries: heavyReg, run, rng: createRng(511), enemyIds: ['blightHound'] });
   const enemy = combat.enemies[0];
-  Object.assign(enemy, { hp: 500, maxHp: 500, statuses: {}, ratings: {}, ratingSources: [], persistentPoise: { value: 0, max: 0 } });
+  Object.assign(enemy, { hp: 500, maxHp: 500, statuses: {}, ratings: {}, ratingSources: [], persistentPoise: { value: 0, max: 0 }, basePrecisionBonus: 1000 });
+  combat.player.basePrecisionBonus = 1000; // opposed hit rolls (#2192): both the enemy's attack and the Counter's return must land
   combat.piles.hand.push({ instanceId: 'cx1', cardId: 'core.counter' });
   const poise = { value: 6, max: 20 };
   Object.assign(combat.player, { block: 0, statuses: {}, ratings: {}, ratingSources: [], persistentPoise: { ...poise } });
