@@ -1099,13 +1099,13 @@ async function mutate() {
     console.log(`  ${caught ? 'CAUGHT' : 'MISSED'}  ${id} ${what}\n          → ${detail}`);
     if (!caught) bad += 1;
   };
-  // Content imports shared model helpers and authored/generated configuration.
-  // Copy those real sibling trees too; the clean import below proves closure.
+  // Content imports model, engine and generated configuration helpers. Keep
+  // the real directory shape, including root engine/kernel imports from src/.
+  // The clean import below proves closure before any defect is planted.
   const copyContent = (name, edits) => {
-    const d = join(tmp, name);
-    cpSync(join(ROOT, 'src', 'content'), join(d, 'content'), { recursive: true });
-    cpSync(join(ROOT, 'src', 'model'), join(d, 'model'), { recursive: true });
-    cpSync(join(ROOT, 'src', 'config'), join(d, 'config'), { recursive: true });
+    const fixture = join(tmp, name), d = join(fixture, 'src');
+    cpSync(join(ROOT, 'src'), d, { recursive: true });
+    cpSync(join(ROOT, 'engine'), join(fixture, 'engine'), { recursive: true });
     for (const [file, from, to] of edits) {
       const p = join(d, 'content', file);
       const text = readFileSync(p, 'utf8');
