@@ -34,12 +34,17 @@ export function initializeCombatRange(ctx, policy = null) {
   ctx.rangeState = createRangeState(policy || snapshotRangePolicy(fixCoreRules(ctx).range), actors);
 }
 export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {}, contactId = '0') {
-  const profile = { ...combatProfileFor(carrier), ...carrier?.combatProfile, ...effect.combatProfile };
+  const tagged = effect.tags ? Object.fromEntries(Object.entries(combatProfileFor({ ...carrier,tags:effect.tags,attack:effect.attack || carrier.attack })).filter(([,value])=>value!==null)) : {};
+  const profile = { ...combatProfileFor(carrier), ...carrier?.combatProfile, ...tagged, ...effect.combatProfile };
   let resolved = carrier?.resolvedRangeSource || carrier?.resolvedSource || (ctx.foundation ? Foundation.foundationSource(ctx, source, { ...carrier, attack: effect.attack || carrier.attack }) : null);
   if (!resolved && source.kind !== 'enemy') {
     const attack = attackDescriptor({ ...carrier, attack: effect.attack || carrier.attack });
     const kind = attack.source || (profile.camp === 'spell' ? 'spell' : 'weapon');
-    const piece = kind === 'unarmed' ? null : CardTactics.wieldedArmament(ctx, { ...carrier, sourceHand: attack.hand || carrier.sourceHand }, source, kind);
+    const explicit = { ...carrier, sourceHand: attack.hand || carrier.sourceHand };
+    if (attack.hand) delete explicit.sourceArmamentId;
+    let piece = kind === 'unarmed' ? null : CardTactics.wieldedArmament(ctx, explicit, source, kind);
+    if (piece && attackDescriptor(piece).source !== kind) piece = CardTactics.wieldedArmament(ctx,{...explicit,sourceArmamentId:undefined},source,kind);
+    if (piece && attackDescriptor(piece).source !== kind) piece = null;
     resolved = piece ? { sourceType: kind, itemId: piece.id, range: piece.range || 'melee', propertyTags: [...(piece.propertyTags || [])] }
       : { sourceType: kind === 'weapon' ? 'unarmed' : kind };
   }
@@ -85,7 +90,7 @@ export function rangeHitContact(ctx, source, target, carrier) {
   if (!ctx.rangeState) return null;
   const targetKey = actorRangeKey(ctx, target), plan = carrier?.rangePlan;
   if (plan) {
-    const committed = rangeSourceContact(ctx, source, target, carrier);
+    const committed = carrier.rangeContactId ? null : rangeSourceContact(ctx, source, target, carrier);
     const row = carrier.rangeContactId ? plan.targets.find(row => row.contactId === carrier.rangeContactId && row.targetKey === targetKey)
       : plan.targets.find(row => row.targetKey === targetKey && row.sourceWeaponId === committed.sourceWeaponId && row.coverage === rangeBand(committed.coverage) && row.bypass === committed.bypass);
     if (!row) return { inRange: false, precisionDelta: 0, reason: 'unplanned' };
