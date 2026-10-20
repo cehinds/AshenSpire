@@ -5,7 +5,7 @@ import { statusControlProblems } from '../model/combatStatusState.js';
 import { combatExpansionEntityProblems } from '../model/combatTacticsRules.js';
 import { combatExpansionRulesProblems } from '../model/combatExpansionRules.js';
 import { combatEnemyKnowledgeProblems } from '../model/enemyKnowledgeCombat.js';
-import { combatReactionProblems } from '../model/combatReactionState.js';
+import { combatReactionProblems, combatRangeProblems } from '../model/combatReactionState.js';
 import { perceptionProblems } from '../model/perception.js';
 import { bringRangesForward } from '../model/combatRanges.js';
 
@@ -124,7 +124,7 @@ export function decodeCoopCombatSnapshot(snapshot) {
     if (Object.hasOwn(combat.enemyKnowledge.owners, id)) knowledgeProblems.push(...perceptionProblems(seat.skills?.perception, combat.enemyKnowledge.rules.perception));
   }
   if (knowledgeProblems.length) throw new Error(knowledgeProblems.join('; '));
-  const reactionProblems = combatReactionProblems(combat, { ownerIds: new Set(combat.players.keys()) });
+  const reactionProblems = [...combatReactionProblems(combat, { ownerIds: new Set(combat.players.keys()) }), ...combatRangeProblems(combat)];
   if (reactionProblems.length) throw new Error(reactionProblems.join('; '));
   return combat;
 }

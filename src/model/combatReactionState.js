@@ -3,6 +3,7 @@ const text = value => typeof value === 'string' && value.length > 0;
 const queued = value => Array.isArray(value) && value.every(action => record(action) && record(action.effect) && text(action.effect.op));
 
 import { reactionRulesProblems } from '../content/combatCardTraits.js';
+import { rangeStateProblems, rangePlanProblems, opposingRangeKeys } from './combatEngagement.js';
 
 const playerEntry = (entry, ownerIds) => ownerIds.has(entry.ownerId) && text(entry.cardId) && record(entry.play) && text(entry.play.cardInstanceId)
   && (entry.maneuver === null || entry.maneuver === undefined || typeof entry.maneuver === 'string')
@@ -133,4 +134,72 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
     }
   }
   return problems;
+}
+
+
+/** Validate the range transaction graph at either solo or co-op save boundaries.
+ * Identity comes from the seat map, never from the shared player entity id.
+ * Dead actors remain in this list because their engagement pairs remain inert.
+ */
+export function combatRangeProblems(state, { queue = state.abilityQueue || state.queue || [] } = {}) {
+  const problems = [];
+  const actors = state.players instanceof Map
+    ? [...state.players].map(([id, seat]) => [seat?.entity, `player:${id}`])
+    : [[state.player, 'player:player']];
+  actors.push(...(Array.isArray(state.enemies) ? state.enemies : []).map(entity => [entity, `enemy:${entity?.id}`]));
+  const actorKeys = actors.map(([, key]) => key);
+  const hasRange = state.rangeState !== undefined;
+  if (hasRange) {
+    problems.push(...rangeStateProblems(state.rangeState, actorKeys));
+    if ((state.sharedExpansionVersion || state.combatExpansionVersion) !== 2 || state.fixCoreRules?.enabled === false
+      || !(state.fixCoreRules?.version === 1 || state.gameProfile?.modules?.effects?.fixCoreVersion === 1)) problems.push('Engagement state requires Core combat');
+    for (const [entity, expected] of actors) if (entity?.rangeActorKey !== expected) problems.push(`Invalid range actor identity: expected ${expected}`);
+  } else if (actors.some(([entity]) => entity?.rangeActorKey !== undefined)) problems.push('Range actor identities require engagement state');
+
+  // Only transaction-bearing runtime records are traversed. Logs, registries,
+  // catalogues and RNG state do not carry authority to execute an action.
+  const roots = [queue, state.reactionResume, state.reactionStack, state.pendingAbilityPlay,
+    state.reactionRootPlay, state.combatRounds, ...actors.map(([entity]) => entity?.combatCounter)];
+  const seen = new Set(), plans = [], reservations = [];
+  const inspect = (value, quoted = false) => {
+    if (!value || typeof value !== 'object' || seen.has(value)) return;
+    seen.add(value);
+    if (Object.hasOwn(value, 'rangeQuote')) {
+      if (!hasRange) problems.push('Range quote requires engagement state');
+      else problems.push(...rangePlanProblems(value.rangeQuote, state.rangeState, actorKeys));
+    }
+    if (Object.hasOwn(value, 'rangeCounterReservation')) {
+      const reservation = value.rangeCounterReservation;
+      reservations.push(reservation);
+      const allowed = ['version', 'sourceKey', 'targetKey', 'incomingRootId', 'contactId', 'rangePlan', 'consumed'];
+      if (!hasRange || !record(reservation) || Object.keys(reservation).some(key => !allowed.includes(key))
+        || reservation.version !== 1 || reservation.consumed !== false
+        || !actorKeys.includes(reservation.sourceKey) || !actorKeys.includes(reservation.targetKey)
+        || !opposingRangeKeys(reservation.sourceKey, reservation.targetKey)
+        || !text(reservation.incomingRootId) || !text(reservation.contactId)
+        || reservation.rangePlan?.sourceKey !== reservation.sourceKey
+        || !Array.isArray(reservation.rangePlan?.targets) || !reservation.rangePlan.targets.length
+        || reservation.rangePlan.targets.some(row => row?.targetKey !== reservation.targetKey)) problems.push('Invalid range Counter reservation');
+    }
+    if (Object.hasOwn(value, 'rangePlan')) {
+      const plan = value.rangePlan;
+      plans.push(plan);
+      if (!hasRange) problems.push('Range action plan requires engagement state');
+      else {
+        problems.push(...rangePlanProblems(plan, state.rangeState, actorKeys));
+        if (!quoted && (!record(plan) || !text(plan.rootId) || !record(plan.paid) || plan.available !== true)) problems.push('Accepted range action requires its paid available receipt');
+      }
+    }
+    for (const [key, child] of Object.entries(value)) if (!['rangePlan', 'rangeQuote'].includes(key)) inspect(child, quoted);
+  };
+  for (const root of roots) inspect(root);
+  inspect(state.pendingReaction, true);
+  for (const reservation of reservations) {
+    if (!record(reservation)) continue;
+    const incoming = plans.find(plan => plan?.rootId === reservation.incomingRootId
+      && plan.sourceKey === reservation.targetKey && Array.isArray(plan.targets) && plan.targets.some(contact =>
+        contact?.contactId === reservation.contactId && contact.targetKey === reservation.sourceKey));
+    if (!incoming) problems.push('Range Counter reservation requires its exact incoming contact');
+  }
+  return [...new Set(problems)];
 }
