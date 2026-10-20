@@ -2,7 +2,7 @@
 
 Separate [compiled combat phone evidence](compiled-combat-1740/README.md) shows
 primary range feedback, named actions and sequential per-hit Counter choices
-from build 0.7.1.1740, with exact artifact provenance and event traces.
+from build 0.7.1.1740, with exact artifact provenance and verified event order.
 
 20 October 2026, source UI at `c8277c4428896828a31e859ef80aaf62926ebd99`.
 Runtime UI matches `47f9d36ab9c29ff873d56ab6d16251e787cbb98b`, which built as

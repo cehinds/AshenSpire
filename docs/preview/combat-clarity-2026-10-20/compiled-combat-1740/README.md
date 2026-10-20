@@ -23,7 +23,8 @@ normal and unthrottled; capture does not pause animations or extend callouts.
 The range case also asserts that compact attack text omits Precision.
 
 The range check verifies one card play, a range-caused miss and unchanged target
-HP. The sequence check verifies an incoming sprite before its choice, no damage committed before that
+HP. The sequence check verifies an incoming sprite before its choice, no damage
+committed before that
 choice, one incoming hit and paid return before the next choice, two total
 paid returns, one original move execution, no false whole-attack refusal and no
 page errors. The event and stage assertions establish the order; a still image
