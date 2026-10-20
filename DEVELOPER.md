@@ -148,7 +148,7 @@ Dedicated co-op tests and `coop-hud.yml` run only when
 `content/config/ui/screens/title.json` has `behavior.coopEnabled: true`.
 While false, discovery prints the skip reason before sharding; mixed suites
 keep their solo cases and `tests/coop-parked.test.mjs` remains active. Tests are
-retained. Re-enable the authored switch and regenerate content to restore
+retained. Re-enable the authored switch and run `node tools/config-build.mjs` to restore
 the co-op lanes automatically (`tests/feature-scopes.js` also works in the
 browser test harness).
 
