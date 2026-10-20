@@ -61,16 +61,16 @@ export function withChargedEffects(def, preview = null) {
 }
 
 /** The card-face lines for `def`, or null when a part of it cannot be phrased. */
-export function cardFaceLines(def, preview = null, registries = null, rules = null) {
+export function cardFaceLines(def, preview = null, registries = null, rules = null, { stanceEntry = true } = {}) {
   try {
-    return buildLines(def, preview, registries, rules);
+    return buildLines(def, preview, registries, rules, stanceEntry);
   } catch (error) {
     if (error === UNPHRASEABLE) return null;
     throw error;
   }
 }
 
-function buildLines(def, preview, registries, rules = null) {
+function buildLines(def, preview, registries, rules = null, stanceEntry = true) {
   // A live preview prices the effects an active charge expands (an added buildup row); its values follow that list.
   def = withChargedEffects(def, preview);
   if (def.comboHook) return null;
@@ -355,7 +355,7 @@ function buildLines(def, preview, registries, rules = null) {
   // The Entry Precision line follows the active Core profile, the predicate the live grant uses, not a per-card version field.
   const coreProfile = fixCoreEnabled(entryCtx);
   const versioned = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2;
-  if (!versioned && coreProfile) {
+  if (stanceEntry && !versioned && coreProfile) {
     const precision = stanceEntryBonuses(def, entryCtx).precision;
     if (precision > 0) unconditional.push({ cat: 'bonus', text: 'Entry: ' + entryPrecisionText(precision, preview) + ' Precision' });
   }
@@ -367,7 +367,7 @@ function buildLines(def, preview, registries, rules = null) {
     const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => (id === 'precision' && statMixGrant
       ? entryPrecisionText(amount, preview)
       : '+' + num(amount)) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
-    if (grants.length) unconditional.push({ cat: 'bonus', text: 'Entry: ' + grants.join(', ') });
+    if (stanceEntry && grants.length) unconditional.push({ cat: 'bonus', text: 'Entry: ' + grants.join(', ') });
     if (stanceOf(def)?.maneuver === 'defend') {
       const restore = num(stanceRulesFor(ctx).defenseRestore);
       unconditional.push({ cat: 'defenseRestore', text: 'Restore ' + restore + ' Poise/Ward' });

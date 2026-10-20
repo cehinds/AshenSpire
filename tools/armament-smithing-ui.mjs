@@ -314,12 +314,18 @@ async function main() {
           intrinsic:document.querySelector('.smith-intrinsic-stats')?{
             title:document.querySelector('.smith-intrinsic-stats .smith-data-heading b')?.textContent.trim()||'',
             text:(document.querySelector('.smith-intrinsic-stats')?.textContent||'').replace(/\\s+/g,' ').trim(),
+            deltas:[...document.querySelectorAll('.smith-intrinsic-stats .as-statpair')].filter(node=>node.querySelector('.d-from')).map(node=>({
+              label:node.querySelector('em')?.textContent.trim()||'',
+              before:node.querySelector('.d-from')?.textContent.trim()||'',
+              after:node.querySelector('.d-to')?.textContent.trim()||'',
+            })),
             overflow:document.querySelector('.smith-intrinsic-stats').scrollWidth-document.querySelector('.smith-intrinsic-stats').clientWidth,
             borderLeft:getComputedStyle(document.querySelector('.smith-intrinsic-stats')).borderLeftWidth,
             borderRight:getComputedStyle(document.querySelector('.smith-intrinsic-stats')).borderRightWidth,
             radius:getComputedStyle(document.querySelector('.smith-intrinsic-stats')).borderRadius,
           }:null,
           affected:[...document.querySelectorAll('.smith-upgrade-folds .smith-upgrade-row')].map((node)=>({
+            open:node.open,
             title:node.querySelector('summary .sr-name')?.textContent.trim()||'',
             role:node.querySelector('summary .sr-hint')?.textContent.trim()||'',
             unused:node.classList.contains('is-unused'),
@@ -472,12 +478,15 @@ async function main() {
       }
       await pick('armor/reaver/default');
       const armor = await reading();
-      check(armor.text.includes('Wayfarer Plate') && armor.selectedType === 'Armor' && !armor.intrinsic
+      check(armor.text.includes('Wayfarer Plate') && armor.selectedType === 'Armor'
+          && armor.intrinsic?.deltas.some(value=>value.label === 'Poise threshold' && value.before === '8' && value.after === '9')
+          && !/Weapon Art|Unique Skill|WEIGHT/.test(armor.intrinsic.text)
           && armor.affected.length === 1 && armor.affected[0].role.startsWith('armor')
+          && !armor.affected[0].open
           && armor.affected[0].title === 'Poise threshold'
           && armor.affected[0].values.some((value)=>value.label === 'Poise threshold' && value.after === '9')
           && /\b8\b/.test(armor.affected[0].text),
-        `SMITH-UI-${upper}-TYPED-ARMOR`, `equipped armor selects by namespaced ref and renders its typed authored row without armament-only intrinsic stats (${JSON.stringify({ selectedType: armor.selectedType, intrinsic: armor.intrinsic, affected: armor.affected })})`);
+        `SMITH-UI-${upper}-TYPED-ARMOR`, `equipped armor shows its exact tier delta in Equipment Stats and a closed summary without armament-only stats (${JSON.stringify({ selectedType: armor.selectedType, intrinsic: armor.intrinsic, affected: armor.affected })})`);
       await pick('armament/straightSword');
       await capture('zero');
       if (shape.mobile) {

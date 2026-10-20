@@ -1730,26 +1730,28 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* The column count follows the offer (--choice-count, set from JS): one to four
    options, each column capped at 16rem and the row centred, so a lone option
    sits in the middle rather than stretching across the door. */
-.reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(var(--choice-count, 3), minmax(0, 16rem)); gap: 12px; align-items: stretch; justify-content: center; width: 100%; max-width: 60rem; padding: .6rem 0; }
+.reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(var(--choice-count, 3), minmax(0, 16rem)); grid-auto-rows: 1fr; gap: 12px; align-items: stretch; justify-content: center; width: 100%; max-width: 60rem; padding: .6rem 0; }
 .reward-door .reward-choice-option { display: flex; flex-direction: column; gap: .6rem; min-width: 0; width: 100%; }
-.reward-door .reward-choice-option > .equipment-poker-card { width: 100%; max-width: 220px; margin-inline: auto; flex: 0 0 auto; }
-.reward-door .reward-choice-option > .card { align-self: center; zoom: 1; }
-.reward-door .reward-choice-option > .reward-pick { flex: 1 1 auto; min-width: 0; box-sizing: border-box; padding: .7rem .8rem; gap: .3rem; }
+/* Every face uses the shared glance width, independent of its card family or
+   selection. Equal grid rows and flexible buttons let the longest rules set
+   their common height, including when phone choices wrap onto a second row. */
+.reward-door .reward-choice-option > :is(.equipment-poker-card, .card) { width: 100%; max-width: var(--card-w-glance, 152px); margin-inline: auto; flex: 0 0 auto; zoom: 1; }
+.reward-door .reward-choice-option > .reward-pick { flex: 1 1 auto; width: 100%; min-width: 0; min-height: var(--tap-floor); box-sizing: border-box; padding: .7rem .8rem; gap: .3rem; }
 .reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(1.2rem, calc(1.5 * var(--view-vw, 1vw)), 1.6rem); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
 .reward-door .reward-choice-option > .reward-pick p { font-size: clamp(1.1rem, calc(1.25 * var(--view-vw, 1vw)), 1.35rem); overflow-wrap: anywhere; }
 @container game-viewport (max-width: 520px) {
-  /* Four options still share one row on a 390px phone: the faces zoom down by
-     count (1.68 / count, so three options keep the .56 they had). */
-  .reward-door .reward-row.reward-choice-grid { gap: 8px; grid-template-columns: repeat(min(var(--choice-count, 3), 4), minmax(0, 1fr)); }
+  /* Equal tracks keep all offered faces and buttons comparable on phones.
+     Text wraps in the shared button row rather than shrinking the hit area. */
+  .reward-door .reward-row.reward-choice-grid { gap: 8px; grid-template-columns: repeat(min(var(--choice-count, 3), 2), minmax(0, 1fr)); }
   .reward-door .reward-choice-option { gap: .4rem; }
-  .reward-door .reward-choice-option > .card { zoom: min(1, calc(1.68 / var(--choice-count, 3))); }
   .reward-door .reward-choice-option > .reward-pick { padding: .45rem .4rem; }
-  .reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(11px, calc(3.2 * var(--view-vw, 1vw)), 14px); }
-  .reward-door .reward-choice-option > .reward-pick p { font-size: clamp(10px, calc(2.9 * var(--view-vw, 1vw)), 12.5px); }
+  .reward-door .reward-choice-option > .reward-pick h3 { font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); }
+  .reward-door .reward-choice-option > .reward-pick p { font-size: max(calc(12px / var(--ui-zoom, 1)), .85rem); }
 }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 /* The ring itself is the shared one above; the door adds only the lift. */
-.reward-door .reward-row .card.reward-selected { transform: translateY(-8px) scale(1.06); }
+.reward-door .reward-choice-option > .card:hover,
+.reward-door .reward-row .card.reward-selected { transform: translateY(-8px); }
 .reward-door .reward-confirm:not(:disabled) {
   background: color-mix(in srgb, var(--green) 22%, var(--panel));
   border-color: var(--green);
