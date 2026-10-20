@@ -2240,6 +2240,12 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   .smith-preview-card > .as-statrow.flat > .sr-vals { margin-left: 0; align-items: flex-start; text-align: left; }
   .smith-preview-card .smith-fold-values { justify-content: flex-start; }
   .smith-preview-card .smith-requirement small { text-align: left; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary > .as-statrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.35rem; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-id,
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-vals { width: 100%; max-width: 100%; min-width: 0; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-name { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: normal; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-hint { overflow-wrap: normal; word-break: normal; }
+  .smith-upgrade-modal .smith-upgrade-fold > summary .sr-vals { margin-left: 0; justify-content: space-between; }
 }
 .smith-stat-costs > i { font-style: normal; }
 .smith-requirement small { display: block; color: var(--muted); font-size: 1.05rem; text-align: right; }

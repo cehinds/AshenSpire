@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { inflateSync } from 'node:zlib';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
-import { smithUiFixture, matchesSmithRows, smithTextFits, matchesCommittedCards, matchesSmithCommit } from './lib/smith-ui-fixture.mjs';
+import { smithUiFixture, matchesSmithRows, smithTextFits, matchesCommittedCards, matchesSmithCommit, smithWordsFit } from './lib/smith-ui-fixture.mjs';
 
 const expected = smithUiFixture();
 const requirement = expected.selected.requirements[0];
@@ -253,15 +253,27 @@ async function main() {
         const rect=(node)=>{const r=node.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};
         const modal=document.querySelector('.smith-upgrade-modal');
         const preview=document.querySelector('.smith-preview-card');
-        const textGeometry=[...preview.querySelectorAll('.smith-intrinsic-stats .sp-k,.smith-intrinsic-stats .d-from,.smith-intrinsic-stats .d-to,.smith-requirements .sp-k,.smith-requirements .d-from,.smith-requirements .d-to,.smith-upgrade-row summary .sp-k,.smith-upgrade-row summary .d-from,.smith-upgrade-row summary .d-to')].map(node=>{
-          const range=document.createRange();range.selectNodeContents(node);const r=range.getBoundingClientRect();
+        const horizontalBounds=node=>{
           let clipLeft=0,clipRight=innerWidth;
-          for(let ancestor=node.parentElement;ancestor;ancestor=ancestor.parentElement){
+          for(let ancestor=node;ancestor;ancestor=ancestor.parentElement){
             if(/hidden|clip|auto|scroll/.test(getComputedStyle(ancestor).overflowX)){
               const box=ancestor.getBoundingClientRect();clipLeft=Math.max(clipLeft,box.left);clipRight=Math.min(clipRight,box.right);
             }
           }
-          return {text:node.textContent.trim(),left:r.left,right:r.right,width:r.width,height:r.height,clipLeft,clipRight};
+          return {clipLeft,clipRight};
+        };
+        const textGeometry=[...preview.querySelectorAll('.smith-intrinsic-stats .sp-k,.smith-intrinsic-stats .d-from,.smith-intrinsic-stats .d-to,.smith-requirements .sp-k,.smith-requirements .d-from,.smith-requirements .d-to,.smith-upgrade-row summary .sp-k,.smith-upgrade-row summary .d-from,.smith-upgrade-row summary .d-to')].map(node=>{
+          const range=document.createRange();range.selectNodeContents(node);const r=range.getBoundingClientRect();
+          return {text:node.textContent.trim(),left:r.left,right:r.right,width:r.width,height:r.height,...horizontalBounds(node)};
+        });
+        const wordGeometry=[...preview.querySelectorAll('.sr-name,.sr-hint,.sp-k')].flatMap(node=>{
+          const walker=document.createTreeWalker(node,NodeFilter.SHOW_TEXT), words=[];
+          for(let text=walker.nextNode();text;text=walker.nextNode())for(const match of text.textContent.matchAll(/\\S+/gu)){
+            const range=document.createRange();range.setStart(text,match.index);range.setEnd(text,match.index+match[0].length);
+            const r=range.getBoundingClientRect();
+            words.push({text:match[0],lineCount:range.getClientRects().length,left:r.left,right:r.right,width:r.width,height:r.height,...horizontalBounds(text.parentElement)});
+          }
+          return words;
         });
         const confirm=document.querySelector('.smith-confirm');
         const targets=[...document.querySelectorAll('.smith-candidate-card,.smith-upgrade-modal .as-catnav-toggle,.smith-back,.smith-confirm')].filter(visible).map((node)=>{
@@ -270,7 +282,7 @@ async function main() {
         });
         const horizontal=[modal,document.querySelector('.smith-upgrade-modal .modal-head'),document.querySelector('.smith-modal-body'),document.querySelector('.smith-candidate-region'),document.querySelector('.smith-preview-region'),document.querySelector('.smith-modal-footer')].filter(Boolean).map((node)=>({name:node.className,scrollWidth:node.scrollWidth,clientWidth:node.clientWidth}));
         return {
-          textGeometry,
+          textGeometry,wordGeometry,
           text:(preview?.textContent||'').replace(/\\s+/g,' ').trim(),
           count:(document.querySelector('.smith-header-stones')?.textContent||'').replace(/\\s+/g,' ').trim(),
           title:document.querySelector('.smith-upgrade-modal h2')?.textContent.trim()||'',
@@ -471,6 +483,8 @@ async function main() {
         `SMITH-UI-${upper}-ROLE-USAGE`, `all closed card rows show authored before/after values and actual active ownership (${JSON.stringify(zero.affected)})`);
       check(smithTextFits(zero.textGeometry),
         `SMITH-UI-${upper}-VALUE-TEXT-FIT`, `every summary label and before/after text range fits its horizontal clipping ancestors (${JSON.stringify(zero.textGeometry)})`);
+      check(smithWordsFit(zero.wordGeometry),
+        `SMITH-UI-${upper}-LABEL-WORD-FIT`, `each actual label/ownership word fits one line without ellipsis clipping (${JSON.stringify(zero.wordGeometry)})`);
       check(!zero.confirm.disabled && zero.confirm.aria === 'true' && zero.confirm.state === 'blocked'
           && zero.confirm.hold === 'blocked' && zero.confirm.text === 'Upgrade (1)',
         `SMITH-UI-${upper}-ZERO-CONFIRM`, 'zero-purse Upgrade (1) remains clickable, is ARIA-blocked, and cannot arm a hold commit');
@@ -504,6 +518,7 @@ async function main() {
       check(armor.text.includes('Wayfarer Plate') && armor.selectedType === 'Armor'
           && armor.intrinsic?.deltas.some(value=>value.label === 'Poise threshold' && value.before === '8' && value.after === '9')
           && !/Weapon Art|Unique Skill|WEIGHT/.test(armor.intrinsic.text)
+          && smithWordsFit(armor.wordGeometry)
           && armor.affected.length === 1 && armor.affected[0].role.startsWith('armor')
           && !armor.affected[0].open
           && armor.affected[0].title === 'Poise threshold'
@@ -563,7 +578,7 @@ async function main() {
       check(!one.confirm.disabled && one.confirm.aria === 'false'
           && one.confirm.text.includes('Upgrade (1)') && one.confirm.state === 'actionable' && one.confirm.hold === 'commit',
         `SMITH-UI-${upper}-ONE-CONFIRM`, 'affordable Upgrade (1) is actionable and advertises the hold shortcut');
-      check(smithTextFits(one.textGeometry) && one.documentOverflowX <= 0 && framed(one)
+      check(smithWordsFit(one.wordGeometry) && smithTextFits(one.textGeometry) && one.documentOverflowX <= 0 && framed(one)
           && one.horizontal.every((row) => row.scrollWidth <= row.clientWidth + 1),
         `SMITH-UI-${upper}-ONE-FIT`, 'affordable review stands in the centred W1 frame with no horizontal overflow');
       check(one.targets.length === (one.compact ? 3 : 5)

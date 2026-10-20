@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
-import { smithUiFixture, matchesSmithRows, matchesCommittedCards, smithTextFits, matchesSmithCommit } from '../tools/lib/smith-ui-fixture.mjs';
+import { smithUiFixture, matchesSmithRows, matchesCommittedCards, smithTextFits, matchesSmithCommit, smithWordsFit } from '../tools/lib/smith-ui-fixture.mjs';
 
 const fixture = smithUiFixture();
 const rows = () => fixture.selected.affectedRows.map(row => ({
@@ -83,4 +83,13 @@ test('hold proof rejects wrong payment, tier, missing copies and altered saved u
     value=>value.saved.deck[0].sourceArmamentId='wrong',value=>value.saved.deck.at(-1).damageSchool='fire']) {
     const bad=state();mutate(bad);assert.equal(matchesSmithCommit(bad,fixture,state()),false);
   }
+});
+
+
+test('Smith label geometry rejects mid-word wrapping and ellipsis clipping', () => {
+  const word={text:'TECHNIQUE',lineCount:1,left:20,right:120,width:100,height:16,clipLeft:20,clipRight:240};
+  assert.ok(smithWordsFit([word]));
+  assert.equal(smithWordsFit([{...word,lineCount:2,height:32}]),false,'splitting a word over two visible lines is not a fit');
+  assert.equal(smithWordsFit([{...word,clipRight:70}]),false,'an ellipsized name does not pass because its parent box fits');
+  assert.equal(smithWordsFit([]),false);
 });

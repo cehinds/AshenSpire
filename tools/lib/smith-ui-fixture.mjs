@@ -83,3 +83,7 @@ export function matchesSmithCommit(state, expected, baseline) {
       && before.cardId === want.cardId && JSON.stringify(before) === JSON.stringify(after);
   });
 }
+
+export function smithWordsFit(samples) {
+  return smithTextFits(samples) && samples.every(row => row.lineCount === 1);
+}
