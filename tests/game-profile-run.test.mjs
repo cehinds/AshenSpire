@@ -225,8 +225,8 @@ test('all four unlocked core classes instantiate exact kits and decks, construct
  const {createRunCombat}=await import('../src/engine/runCombat.js');
  const meta={gameProfileUnlocks:{[profile.id]:{completedRunIds:['one','two','three']}}};
  const hands={reaver:['greatsword',null],starseer:['boneSceptre',null],rogue:['dagger','dagger'],herald:['boneSceptre',null]};
- // The Bone Sceptre lends Mana Surge to any class holding it (owner 2026-10-19): Herald's ten authored cards + 1.
- const sizes={reaver:10,starseer:10,rogue:10,herald:11};
+ // Sceptre classes author nine cards plus granted Mana Surge: every class starts with ten.
+ const sizes={reaver:10,starseer:10,rogue:10,herald:10};
  for(const [classId,expected] of Object.entries(hands)){
   const run=createRunState({seed:17,classId,registries:reg,profileMeta:meta});assert.equal(run.deck.length,sizes[classId],classId);
   assert.deepEqual([run.loadout.sets.rightHand[0],run.loadout.sets.leftHand[0]],expected,classId);

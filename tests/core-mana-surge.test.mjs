@@ -67,12 +67,14 @@ test('fresh Core Starseer and Herald each hold exactly one granted Mana Surge; R
   for (const id of ['reaver', 'rogue']) assert.equal(surges(start(id)).length, 0, id);
 });
 
-test('Starseer no longer holds the Resource Gain stand-in (9 authored + granted Mana Surge = 10)', () => {
+test('Starseer replaces Resource Gain and both sceptre classes start with ten cards', () => {
   const run = start('starseer');
   assert.equal(run.deck.filter((c) => c.cardId === 'base.gain-resource').length, 0);
   assert.equal(run.deck.length, 10);
   assert.equal(run.deck.filter((c) => !isItemOwned(c)).length, 9);
-  assert.equal(start('herald').deck.length, 11, 'Herald keeps its ten authored cards and gains Mana Surge');
+  const herald = start('herald');
+  assert.equal(herald.deck.length, 10, 'Herald trades one Ethereal for granted Mana Surge');
+  assert.equal(herald.deck.filter(c => c.cardId === 'base.ethereal').length, 3);
 });
 
 test('a Reaver gains Mana Surge on equipping a Bone Sceptre, loses it on unequip, never duplicates', () => {
