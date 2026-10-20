@@ -1745,12 +1745,13 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
   .reward-door .reward-row.reward-choice-grid { gap: 8px; grid-template-columns: repeat(min(var(--choice-count, 3), 4), minmax(0, 1fr)); }
   .reward-door .reward-choice-option { gap: .4rem; }
   .reward-door .reward-choice-option > .reward-pick { padding: .45rem .4rem; }
-  .reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(11px, calc(3.2 * var(--view-vw, 1vw)), 14px); }
-  .reward-door .reward-choice-option > .reward-pick p { font-size: max(12px, .85rem); }
+  .reward-door .reward-choice-option > .reward-pick h3 { font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); }
+  .reward-door .reward-choice-option > .reward-pick p { font-size: max(calc(12px / var(--ui-zoom, 1)), .85rem); }
 }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 /* The ring itself is the shared one above; the door adds only the lift. */
-.reward-door .reward-row .card.reward-selected { transform: translateY(-8px) scale(1.06); }
+.reward-door .reward-choice-option > .card:hover,
+.reward-door .reward-row .card.reward-selected { transform: translateY(-8px); }
 .reward-door .reward-confirm:not(:disabled) {
   background: color-mix(in srgb, var(--green) 22%, var(--panel));
   border-color: var(--green);

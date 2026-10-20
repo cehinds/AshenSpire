@@ -309,11 +309,12 @@ export function renderCard(registries, ref, opts = {}) {
   // Authored effects and the full inspection still use the complete shared text.
   const faceRules = gameModule(registries, 'cards');
   const wardPoise = wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null;
-  const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null);
-  const compactLines = allFaceLines && opts.surface === 'combat' && def.type === 'attack'
-    ? cardFaceLines(def, opts.preview || null, registries, opts.rules || null, { stanceEntry: false }) : allFaceLines;
-  const faceLines = compactLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
-    ? compactLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : compactLines;
+  // The reading door renders a separate card with level:'inspect', so the hand
+  // need not build the expensive complete model until that door is opened.
+  const stanceEntry = !(opts.surface === 'combat' && def.type === 'attack' && floor !== 'inspect');
+  const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null, { stanceEntry });
+  const faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
+    ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
   if (faceLines && def.weightClassPriced) {
     const pricingNote = { kind: 'detail', html: 'Cost reflects your current weight' };
     faceLines.push(pricingNote);
