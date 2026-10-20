@@ -64,8 +64,8 @@ const browserPath = [
 ].find((candidate) => candidate && existsSync(candidate));
 
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
-  const code = await doorSelftest({
+  const { doorSelftest, resolveShard, selectShard } = await import('./doorplant.mjs');
+  const SELFTEST = {
     tool: 'slot-load-door.mjs',
     timeoutMs: 120000,
     plants: [
@@ -138,8 +138,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /RED SLOT-LOAD-KNOWLEDGE-SNAPSHOT/,
       },
     ],
-  });
-  if (code === 0) console.log('slot-load-door --selftest: OK — 8/8 known-bads observed red');
+  };
+  const shard = resolveShard();
+  const ran = selectShard(SELFTEST.plants, shard).length;
+  const code = await doorSelftest({ ...SELFTEST, shard });
+  if (code === 0 && shard) console.log(`slot-load-door --selftest: shard ${shard.index}/${shard.count} of a ${SELFTEST.plants.length}-plant corpus`);
+  if (code === 0) console.log(`slot-load-door --selftest: OK — ${ran}/${ran} known-bads observed red`);
   process.exit(code);
 }
 
@@ -222,6 +226,9 @@ try {
   await cdp.send('Runtime.enable', {}, sessionId);
   await cdp.send('Network.enable', {}, sessionId);
   await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1200, height: 730, deviceScaleFactor: 1, mobile: false }, sessionId);
+  // This door checks save/load, not pacing: reduced motion zeroes the D11 stage gaps
+  // (#2161), which otherwise push the clean run past the selftest's 120 s budget.
+  await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] }, sessionId);
   await cdp.send('Page.bringToFront', {}, sessionId);
 
   const ev = async (expression) => {

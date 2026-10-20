@@ -1,3 +1,4 @@
+import { fixCoreEnabled, fixCoreRules } from './fixCoreMechanics.js';
 import { stanceStaminaCost } from './stanceRules.js';
 // src/model/actionCosts.js — the action-cost rules (owner decisions, 2026-10-12; SPEC §4.3a, §4.6a, §4.11).
 //
@@ -315,6 +316,9 @@ export const enemySpOf = enemyPoolOf;
  * (model/combatCardProfile.js spellCardCostSurcharge, one SP per stack); `enemyId` and `moveId` find its authored tags.
  */
 export function enemyMoveSpOf(move, kind, fallback, { entity = null, enemyId, moveId, ctx = null } = {}) {
+  const effects = move?.effects || [];
+  if (fixCoreEnabled(ctx) && (move?.heal > 0 || effects.some(effect => effect.op === 'heal'))
+    && (move?.block > 0 || effects.some(effect => effect.op === 'block'))) return fixCoreRules(ctx, entity, move).enemyHealBlockCost;
   const own = Number.isFinite(Number(move?.sp)) && move?.sp !== null && move?.sp !== undefined;
   const base = own ? Math.max(0, Number(move.sp)) : stanceCost(actionStance({ kind, tags: move?.tags })) ?? fallback;
   const carrier = { ...move, enemyId, moveId };

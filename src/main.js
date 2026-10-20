@@ -2,8 +2,9 @@ import { persistRewardChange as transactReward } from './model/rewardTransaction
 import { applyViewViewport, resolveViewViewport } from './ui/viewViewport.js';
 import { screenshotRoutePath } from './ui/models/ScreenshotFixtureModel.js';
 import { t } from './ui/strings.js';
-import { gameProfileRewardOffers, claimGameProfileReward, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
+import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
+import { announceSettingsSettled } from './ui/components/veil.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
 import { readNewGameProfile } from './ui/components/gameProfileSelector.js';
 import { beginGameProfileRest, createGameProfileRestDraft, commitGameProfileRest } from './model/gameProfileRest.js';
@@ -128,8 +129,10 @@ import { mountCombat } from './ui/screens/combat.js';
 import { mountCombatTest } from './ui/screens/combatTest.js';
 import { mountRewards } from './ui/screens/reward.js';
 import { mountRest } from './ui/screens/rest.js';
+import { commitDeckEditDraft, deckEditBounds } from './model/deckRules.js';
 import { mountDeckEditor } from './ui/screens/deckEditor.js';
 import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
+import { armouryHasNew, armouryOpensDeckEditor, editingLocked, markArmourySeen } from './model/armouryRules.js';
 import { mountShop, mountConfiguredShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
@@ -170,6 +173,7 @@ import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
 import { mountQuitScreen } from './ui/quitGame.js';
 import { lanInfo } from './net/lan.js';
+import { setCombatPacing } from './ui/animationPace.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
@@ -976,6 +980,7 @@ function applyDisplaySettings(settings) {
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
   setAnimSpeed(resolveCombatPacing(settings, quality));
+  setCombatPacing(settings);
   // A cleared key (a Reset, a profile that leaves it out) means the default:
   // setVolumes ignores a missing field, so say the default out loud.
   audio.setVolumes({
@@ -1151,7 +1156,7 @@ function showLobby() {
       // is a viewer, and it was opening at a literal while the same player's
       // solo map honoured their setting.
       mountCoop(app, {
-        registries, conn, myId, myIds, meta: saves.loadMeta(),
+        registries, conn, myId, myIds, meta: saves.loadMeta(), readSettings: () => saves.loadMeta().settings || {},
         bankEnemyKnowledge: saves.bankEnemyKnowledge ? value => saves.bankEnemyKnowledge(value) : null,
         onSettingsChange: persistSettingsChange,
         onLeave: () => showTitle(),
@@ -1265,6 +1270,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   // the old Exposure states; the pose must also carry their older rules.
   if (legacyArcaneShot) delete configSnapshot.breakMeterVersion;
   rebuildRegistries(configSnapshot, null, gameProfile);
+  xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = createRunState({
     seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
     gameProfile, profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
@@ -1485,6 +1491,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   onLoaded?.();
   resetArmouryTraySession();
   activeSlot = slot;
+  xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = loaded;
   if (!isConfiguredRun(run)) refreshRunClassMastery(run, saves.loadMeta(), registries);
   if (!isConfiguredRun(run)) registries = registriesForClassMastery(registries, run);
@@ -1643,6 +1650,7 @@ function quitWithoutSaving({ returnFocusElement } = {}) {
     onConfirm: () => {
       closeOverlay();
       audio.stopMusic();
+      xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
       run = null;
       showCollapsedTitle();
     },
@@ -1800,6 +1808,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
   if (showProfileNoticeIfNeeded()) return;
   audio.music('title');
   resetArmouryTraySession();
+  xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
   if (startupGatePending && !skipStartup) {
@@ -1950,15 +1959,19 @@ async function persistSettingsChange(changed) {
   if (res?.ok === false) {
     activeSettings = settingsBefore;
     activeMeta.settings = settingsBefore;
-    if (run && runRulesBefore) {
-      run.advancedConfigSnapshot = runRulesBefore;
-      rebuildRegistries(runRulesBefore, run);
-      if (xpCombat) xpCombat.registries = registries;
-      persist();
+    try {
+      if (run && runRulesBefore) {
+        run.advancedConfigSnapshot = runRulesBefore;
+        rebuildRegistries(runRulesBefore, run);
+        if (xpCombat) xpCombat.registries = registries;
+        persist();
+      }
+    } finally {
+      applyDisplaySettings(activeSettings);
+      refreshHudQuickSettings(app, activeSettings);
+      showSettingsNotice(QUARANTINE_NOTICE);
+      announceSettingsSettled();
     }
-    applyDisplaySettings(activeSettings);
-    refreshHudQuickSettings(app, activeSettings);
-    showSettingsNotice(QUARANTINE_NOTICE);
     return res;
   }
   if (Object.hasOwn(changed, 'newGameProfile')) selectedGameProfile = readNewGameProfile(activeSettings, resolveGameProfile(askedGameProfile.trim().startsWith('{') ? JSON.parse(askedGameProfile) : askedGameProfile));
@@ -1968,6 +1981,7 @@ async function persistSettingsChange(changed) {
   if (changed.bindings) setBindings(changed.bindings);
   if (changed.keyBindings) setKeyBindings(changed.keyBindings);
   if (res && res.ok === false) showSettingsNotice(QUARANTINE_NOTICE);
+  announceSettingsSettled();
   return res;
 }
 
@@ -2063,6 +2077,8 @@ function showOfflinePlay() {
 // those rooms now carry opens the Armoury too and a close that went to the
 // map would abandon the room mid-visit.
 function showArmoury(request = '', returnTo = showMap) {
+  // A glow cleared by looking must survive a reload even when nothing in the Armoury changes.
+  if (armouryHasNew(run)) { markArmourySeen(run); persist(); } else markArmourySeen(run);
   const initialView = typeof request === 'string' ? request : '';
   const destination = request && typeof request === 'object' ? request.destination || '' : '';
   const armouryMeta = saves.loadMeta();
@@ -2120,17 +2136,21 @@ function showCharacterSheet(opener, options = {}) {
 // Which doors open it is the settings' answer (DeckEditorModel.deckEditorDoors):
 // under `free` the Armoury, under `restOnly` the
 // Rest screen of a place carrying `deckEdit`, and none with deck editing off.
-// Every door here is out of combat; the fight's Armoury gets none.
+// These navigation doors use the ordinary location policy; combat uses the
+// separate draft door below at a safe action boundary.
 function deckDoors(services = null) {
-  if (isConfiguredRun(run)) return { armoury: false, rest: false };
-  return deckEditorDoors({ settings: saves.loadMeta().settings || {}, inCombat: false, services });
+  const settings = saves.loadMeta().settings || {};
+  const doors = deckEditorDoors({ settings, inCombat: false, services });
+  // D10/D15: Core edits the deck at will outside combat, from the Armoury, whatever the Current-profile location setting says.
+  return armouryOpensDeckEditor(run, settings) ? Object.freeze({ ...doors, armoury: true }) : doors;
 }
 
-function showDeckEditor(returnTo = showMap, hub = true) {
+function showDeckEditor(returnTo = showMap, hub = true, focusCard = null) {
   if (!run) return;
   mountDeckEditor(document.body, {
     registries,
     run,
+    focusCard,
     settings: saves.loadMeta().settings || {},
     onNavigate: hub ? destination => {
       persist(); showArmoury(destination === 'character' ? 'grid' : 'rack', returnTo);
@@ -2140,6 +2160,34 @@ function showDeckEditor(returnTo = showMap, hub = true) {
     // exactly (cancelDeckEdit), so there is nothing to write.
     onDone: () => { persist(); returnTo(); },
     onCancel: () => returnTo(),
+  });
+}
+
+// The combat screen opens this door only at an idle action boundary. The
+// editor owns a draft; committing it changes the next encounter's deck while
+// the active hand/draw/discard/exhaust piles retain their instance identities.
+function showCombatDeckEditor(combat, nodeId, encounterId) {
+  if (!run || combat.result || combat.pendingReaction) return;
+  const owner = run;
+  const draft = structuredClone(owner);
+  const settings = saves.loadMeta().settings || {};
+  mountDeckEditor(document.body, {
+    registries, run: draft, settings,
+    onDone: () => {
+      if (run !== owner || combat.result) return;
+      const before = structuredClone(owner);
+      try {
+        commitDeckEditDraft(registries, owner, draft, settings);
+        commitCombatSnapshot({ run: owner, combat, nodeId, encounterId });
+        persist();
+        showSettingsNotice('Deck saved. Changes apply next encounter; current combat piles stay unchanged.');
+      } catch (error) {
+        for (const key of Object.keys(owner)) delete owner[key];
+        Object.assign(owner, before);
+        showSettingsNotice(error.message || 'Deck changes could not be saved.');
+      }
+    },
+    onCancel: () => {},
   });
 }
 
@@ -2170,6 +2218,7 @@ function quitGame() {
   closeOverlay();
   dropLanLink();
   audio.stopMusic();
+  xpCombat = null; // a fight belongs to the run that started it; the edit lock must not outlive that run
   run = null;
   mountQuitScreen(app, { savedRun, onBack: showCollapsedTitle });
 }
@@ -2194,6 +2243,8 @@ function showOverlay(initialTab = 'settings') {
     saves,
     onSettingsChange: persistSettingsChange,
     quickControls: quickMenuControls,
+    // D15: the overlay opened from a fight shares the combat edit lock, so its equipment rows are not dead doors.
+    editLocked: () => editingLocked(run, xpCombat),
     onArmoury: (view) => {
       const combatArmoury = app.querySelector('#combat-armoury');
       closeOverlay();
@@ -3120,6 +3171,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
+    onEditDeck: () => showCombatDeckEditor(combat, nodeId, encounterId),
     onMenu: showOverlay,
     onLoad: loadActiveSlot,
     onQuitWithoutSave: quitWithoutSaving,
@@ -3827,8 +3879,17 @@ function showGameProfileReward() {
   const pending = run.gameProfilePendingReward;
   const offer = run.gameProfileRewardOffers[pending.offerId];
   const persistRewardChange = change => transactReward(run, pending.offerId, change, persist);
-  mountGameProfileOffers(app, { registries, run, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
+  mountGameProfileOffers(app, { registries, run, settings: saves.loadMeta().settings || {}, offer, title: pending.source === 'level' ? 'Level reward' : 'Victory rewards',
     onTake: index => persistRewardChange(() => claimGameProfileReward(registries, run, pending.offerId, index)),
+    // Owner 2026-10-18: a won card may go straight into the deck, or open the editor with it ready; a won item opens the Armoury.
+    // Both doors return into the same exit as Continue, and the claim is already persisted, so a reload mid-editor lands back here.
+    onAddToDeck: index => persistRewardChange(() => claimGameProfileRewardToDeck(registries, run, pending.offerId, index, saves.loadMeta().settings || {})),
+    addRefusal: index => rewardDeckAddRefusal(registries, run, pending.offerId, index, saves.loadMeta().settings || {}),
+    deckMax: deckEditBounds(saves.loadMeta().settings || {}).max,
+    canEditDeck: !!deckDoors().armoury,
+    onEditDeck: (index, back) => showDeckEditor(back, false, run.sideboard.find(card => card.instanceId === rewardInstanceId(pending.offerId, index)) || null),
+    canEditEquipment: !!gameModule(run, 'equipment'),
+    onEditEquipment: (index, back) => showArmoury('', back),
     onContinue: () => {
       persistRewardChange(() => {
         delete run.gameProfilePendingReward;
@@ -4051,7 +4112,7 @@ function coopStubMount(snapshot, myId, myIds = null) {
   window.__coopSentForShot = sent;
   const stub = { _h: null, setHandlers(h) { this._h = h; }, send(message) { sent.push(message); }, close() {}, get open() { return false; } };
   mountCoop(app, {
-    registries, conn: stub, myId, ...(myIds ? { myIds } : {}), meta: saves.loadMeta(),
+    registries, conn: stub, myId, ...(myIds ? { myIds } : {}), meta: saves.loadMeta(), readSettings: () => saves.loadMeta().settings || {},
     onSettingsChange: persistSettingsChange,
     onLeave() {},
   });
@@ -4893,6 +4954,11 @@ if (shotState === 'combat-test') {
     const isFight = node => ['monster', 'fight', 'elite'].includes(node.type) || node.resolved?.kind === 'fight';
     const node = g.startIds.map(id => g.nodes[id]).find(isFight)
       || Object.values(g.nodes).find(isFight) || g.nodes[g.startIds[0]];
+    // Presentation-only QA overrides stay inside the existing memory-only shot gate.
+    // They exercise the production selector and renderer, without altering saves.
+    if (shotParams.has('shotLayeredScene')) node.layeredSceneId = shotParams.get('shotLayeredScene');
+    if (shotParams.has('shotTime')) run.presentationTimeId = shotParams.get('shotTime');
+    if (shotParams.has('shotWeather')) run.presentationWeatherId = shotParams.get('shotWeather');
     run.mapNodeId = node.id; run.floor = node.floor;
     run.path = screenshotRoutePath(g, node.id);
     if (shotParams.get('shotArcane') === 'matrix') enterCombat(node.id, 'packHunt');

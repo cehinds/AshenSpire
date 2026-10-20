@@ -1,6 +1,10 @@
 // Persisted mixed offers: claiming never edits/equips the active deck.
 import { gameModule, gameContent } from './gameProfile.js';
 import { syncZones } from './state.js';
+import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
+import { acquireFlask } from './gracerefill.js';
+import { reserveStanceCards } from './stanceCoverage.js';
+import { deckEditBounds, moveFromSideboard } from './deckRules.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -54,30 +58,42 @@ function cardRank(card,rules) {
   const rule=rules?.eligibility?.combatCards;
   return Number.isSafeInteger(card.rank) ? card.rank : rule?.rankOfRarity?.[card.rarity] ?? 1;
 }
-function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories}) {
+function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
   if(run.gameProfileRewardOffers?.[offerId])return run.gameProfileRewardOffers[offerId];
   const available=pools(registries,run), options=[];
-  run.gameProfileRewardOffers ||= {};
-  // Pick categories uniformly, then an eligible distinct item within that category.
+  const stream=source==='shop'&&itemsPerCategory!==null?'shop':'cardRewards';
+  if(groups.length) {
+    const problems=rewardGroupProblems(groups,categories);
+    if(problems.length)throw new Error(problems.join('; '));
+  }
+  const shelfCounts=new Map();
+  // Owner 2026-10-19: reserve slot(s) for a basic/cantrip card of a stance the character lacks (never in a shop).
+  if(source!=='shop'&&categories.includes('combatCards')&&(!groups.length||groups.some(group=>group.weight>0&&group.categories.includes('combatCards'))))for(const id of reserveStanceCards(registries,run,rng,stream,available.combatCards,count-options.length)) {
+    options.push({kind:'combatCards',id});available.combatCards=available.combatCards.filter(value=>value!==id);
+  }
+  // Ordinary combat draws weighted groups. Shops independently fill each shelf.
   while(options.length<count) {
-    const kinds=categories.filter(kind=>(available[kind]||[]).length);
+    const kinds=categories.filter(kind=>(available[kind]||[]).length && (itemsPerCategory===null || (shelfCounts.get(kind)||0)<itemsPerCategory));
     if(!kinds.length)break;
-    const kind=rng.pick('cardRewards',kinds);
+    const kind=itemsPerCategory===null?pickRewardCategory(rng,stream,kinds,groups):kinds[0];
+    if(!kind)break;
     let ids=available[kind];
     // Most card rewards are rank 1+; a small authored chance lets a lower-rank card through.
     const rule=gameContent(run,'rewards')?.eligibility?.combatCards;
     if(kind==='combatCards'&&rule){
       const low=new Set(available.combatCardsLow||[]),high=ids.filter(id=>!low.has(id)),lowIds=ids.filter(id=>low.has(id));
       // The chance is honored even when no rank 1+ card is left: a failed (or zero) roll drops the category.
-      const allowLow=lowIds.length>0&&rng.pick('cardRewards',Array.from({length:100},(_,i)=>i))<Math.round((rule.lowerRankChance??0)*100);
+      const allowLow=lowIds.length>0&&rng.pick(stream,Array.from({length:100},(_,i)=>i))<Math.round((rule.lowerRankChance??0)*100);
       if(!allowLow&&!high.length){available[kind]=[];continue;}
       ids=allowLow?lowIds:high;
     }
-    const id=rng.pick('cardRewards',ids);available[kind]=available[kind].filter(value=>value!==id);
+    const id=rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
     options.push({kind,id});
+    shelfCounts.set(kind,(shelfCounts.get(kind)||0)+1);
   }
   const offer={id:offerId,source,options,takeCount,taken:[],claimed:null};
+  run.gameProfileRewardOffers ||= {};
   run.gameProfileRewardOffers[offerId]=offer;
   return offer;
 }
@@ -85,7 +101,8 @@ export function gameProfileRewardOffers(registries, run, rng, { offerId, source 
   const module=gameModule(run,'rewards');
   if(module?.mode!=='configured')throw new Error('Configured rewards unavailable');
   const rules=gameContent(run,'rewards');
-  return makeOffer(registries,run,rng,{offerId,source,count:module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories});
+  return makeOffer(registries,run,rng,{offerId,source,count:module.offerCount??rules.offerCount,takeCount:module.takeCount??rules.takeCount,categories:source==='level'?['combatCards']:rules.categories,
+    groups:source==='combat'?(module.rewardGroups??rules.rewardGroups??[]):[]});
 }
 export function claimGameProfileReward(registries,run,offerId,index) {
   const offer=run.gameProfileRewardOffers?.[offerId];
@@ -106,9 +123,8 @@ export function claimGameProfileReward(registries,run,offerId,index) {
     if(draft.relics.includes(option.id))throw new Error('Reward relic already owned');
     draft.relics.push(option.id);
   } else if(option.kind==='potions') {
-    registries.flasks.get(option.id);
-    if(draft.flasks.length>=registries.balance.flaskSlots)throw new Error('Potion slots are full');
-    draft.flasks.push({flaskId:option.id});
+    const acquisition=acquireFlask(registries,draft,option.id);
+    if(!acquisition.ok)throw new Error(acquisition.reason);
   } else if(option.kind==='armor') {
     if(!(registries.equipment.armour||[]).some(row=>row.id===option.id&&row.classId===run.class))throw new Error('Unknown reward armor');
     draft.loadout.boughtArmour ||= [];
@@ -118,12 +134,43 @@ export function claimGameProfileReward(registries,run,offerId,index) {
   if(pending.taken.length>=Math.min(pending.takeCount,pending.options.length))pending.claimed=index;
   syncZones(draft);Object.assign(run,draft);return option;
 }
+// Owner 2026-10-18: a won card may go straight into the deck. The claim is the ordinary one (the card lands in the
+// sideboard as `reward:<offer>:<index>`); the move into the deck then obeys the deck rules (size cap, copy limits,
+// equipment eligibility). Both steps run on a draft, so a refusal leaves the run and the offer untouched.
+export const rewardInstanceId = (offerId, index) => `reward:${offerId}:${index}`;
+const deckAddProblem = (code, text, extra = {}) => Object.assign(new Error(text), { code, ...extra });
+function addRewardToDeckDraft(registries, draft, offerId, index, settings) {
+  const offer = draft.gameProfileRewardOffers?.[offerId], option = offer?.options?.[index];
+  if (!option || !['combatCards', 'weaponArts'].includes(option.kind)) throw deckAddProblem('notCard', 'Only a card can be added to the deck');
+  const instanceId = rewardInstanceId(offerId, index);
+  if (draft.deck.some(card => card?.instanceId === instanceId)) return { option, instanceId, changed: false };
+  if (!offer.taken.includes(index)) claimGameProfileReward(registries, draft, offerId, index);
+  const { max } = deckEditBounds(settings);
+  if (draft.deck.length + 1 > max) throw deckAddProblem('full', `Your deck is full (${max} cards)`, { max });
+  if (!moveFromSideboard(registries, draft, instanceId, settings)) throw deckAddProblem('limit', 'This card cannot join the deck right now');
+  syncZones(draft);
+  return { option, instanceId, changed: true };
+}
+/** rewardDeckAddRefusal(...) → '' when "Add to deck" is legal for the offered card, else a code: 'notCard' | 'full' | 'limit'. */
+export function rewardDeckAddRefusal(registries, run, offerId, index, settings = {}) {
+  try { addRewardToDeckDraft(registries, structuredClone(run), offerId, index, settings); return ''; }
+  catch (error) { if (error.code) return error.code; throw error; }
+}
+/** claimGameProfileRewardToDeck(...) → the option. Claims (when not yet claimed) and adds the card to the deck; repeat calls change nothing. */
+export function claimGameProfileRewardToDeck(registries, run, offerId, index, settings = {}) {
+  const draft = structuredClone(run);
+  const { option } = addRewardToDeckDraft(registries, draft, offerId, index, settings);
+  Object.assign(run, draft); return option;
+}
 export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   const module=gameModule(run,'shops');
   if(module?.mode!=='configured')throw new Error('Configured shop unavailable');
   const rules=gameContent(run,'shops');
-  const stock=makeOffer(registries,run,rng,{offerId:`shop:${shopId}`,source:'shop',count:module.options??rules.offerCount,takeCount:module.options??rules.offerCount,categories:gameContent(run,'rewards').categories});
-  if(stock.price===undefined)stock.price=rules.price;
+  const categories=gameContent(run,'rewards').categories;
+  const itemsPerCategory=module.itemsPerCategory??rules.itemsPerCategory??null;
+  const count=itemsPerCategory===null?(module.options??rules.offerCount):itemsPerCategory*categories.length;
+  const stock=makeOffer(registries,run,rng,{offerId:`shop:${shopId}`,source:'shop',count,takeCount:count,categories,itemsPerCategory});
+  if(stock.price===undefined)stock.price=module.price??rules.price;
   return stock;
 }
 export function purchaseGameProfileShopOffer(registries,run,shopId,index) {

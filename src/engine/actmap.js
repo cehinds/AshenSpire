@@ -142,7 +142,10 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
   const restFloors = rules.restFloors;
   if (!Array.isArray(restFloors)) throw new Error('Configured route requires authored restFloors');
   if (restFloors.length !== rules.restsPerAct || new Set(restFloors).size !== rules.restsPerAct || restFloors.some(n => !Number.isInteger(n) || n < 1 || n > count)) throw new Error('Invalid configured rest floors');
+  if (rules.requirePrebossRest && !restFloors.includes(count)) throw new Error('Configured route requires a rest immediately before the boss');
   const firstFloor = rules.firstFloor ?? null;
+  const shopShare = rules.shopShare ?? null;
+  if (shopShare !== null && !(shopShare >= 0 && shopShare <= 1)) throw new Error('Invalid configured shopShare');
   const displayTypes = { fight: 'monster', event: 'event', elite: 'elite', treasure: 'treasure', shop: 'merchant', rest: 'shrine', boss: 'boss' };
   const hidden = new Set(rules.hiddenTypes);
   const alternatives = [...new Set([...(rules.hiddenTypes || []), ...(rules.visibleTypes || [])])].filter(type => !['rest', 'boss'].includes(type));
@@ -162,7 +165,13 @@ export function buildGameProfileActMap(registries, rng, seat, tier, { history = 
       const id = `n${floor}_${lane}`;
       const forced = !rest && floor === 1 && firstFloor !== null;
       // A forced opening node is drawn as what it is even when hidden types show as '?': the player must see the opening fight.
-      const actual = rest ? 'rest' : forced ? firstFloor : rng.pick('map', choices);
+      let actual = rest ? 'rest' : forced ? firstFloor : rng.pick('map', choices);
+      // shopShare (owner ruling D9): of the randomly typed nodes (elites stay as drawn), 15% are shops and the rest keep the even
+      // event/fight/treasure split. Absent shopShare keeps the old even draw, so older profiles roll the same maps.
+      if (!rest && !forced && shopShare != null && alternatives.includes('shop') && actual !== 'elite') {
+        const plain = alternatives.filter(type => type !== 'elite' && type !== 'shop');
+        actual = rng.chance('map', shopShare * 100) || !plain.length ? 'shop' : rng.pick('map', plain);
+      }
       const type = hideUnknown && hidden.has(actual) && !forced ? 'event' : displayTypes[actual];
       const node = { id, floor, col: rest ? (columns - 1) / 2 : lane, type, actualType: actual, next: [] };
       if (type === 'event') {

@@ -40,9 +40,20 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { mountRelicRail } from './relicRail.js';
 import { observeIconTray, setIconTrayItems, trayIcon } from './iconTray.js';
 import { t, tFull } from '../strings.js';
+import { armouryHasNew, markArmourySeen } from '../../model/armouryRules.js';
 
 export const RUN_HUD_ARMOURY_ID = 'open-armoury';
 export const RUN_HUD_MENU_ID = 'open-menu';
+
+/** D15: the Armoury button's outline glows blue while the Armoury holds an item the player has not looked at yet. */
+export function syncArmouryNew(button, run) {
+  if (!button) return;
+  const fresh = armouryHasNew(run);
+  if (fresh) button.dataset.armouryNew = 'true'; else delete button.dataset.armouryNew;
+  button.classList.toggle('armoury-new', fresh);
+  const base = button.dataset.baseLabel ?? (button.dataset.baseLabel = button.getAttribute('aria-label') || '');
+  if (base) button.setAttribute('aria-label', fresh ? `${base} (${t('armoury.hud.newItem')})` : base);
+}
 
 /**
  * runHudHtml({ registries, run, meta, place, headerClass }) → markup string.
@@ -235,7 +246,7 @@ export function wireRunHud(app, {
   hud.dataset.hasUtilityPotions = potionHost && run.flasks.length ? 'true' : 'false';
 
   const armouryBtn = hud.querySelector(`#${RUN_HUD_ARMOURY_ID}`);
-  if (armouryBtn && onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
+  if (armouryBtn && onArmoury) { armouryBtn.addEventListener('click', () => { markArmourySeen(run); syncArmouryNew(armouryBtn, run); onArmoury(); }); syncArmouryNew(armouryBtn, run); }
   else armouryBtn?.remove();
 
   // ☰ — today it opens the overlay at Settings; under the quick-nav experiment

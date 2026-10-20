@@ -65,6 +65,16 @@
         null
       ],
       "description": "Node type every lane on depth 1 is forced to; null leaves depth 1 to the ordinary draw. It must be one of the route's alternatives, and depth 1 cannot also be a rest depth."
+    },
+    "shopShare": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Share of randomly typed nodes (not rest, elite, boss or the forced first floor) that are shops; the rest keep the even event/fight/treasure split. Absent keeps the even draw over every alternative."
+    },
+    "requirePrebossRest": {
+      "type": "boolean",
+      "description": "Require the last preboss depth to be a mandatory rest on every route."
     }
   },
   "required": [

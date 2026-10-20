@@ -1,3 +1,4 @@
+import { bindDamageReceipt, cardDamageReceipt, damageReceiptHtml } from './damageReceipt.js';
 import { bindCardComponentFailures } from '../cardArtLayers.js';
 import { baseCardPresentation } from '../../content/generated/baseCards.js';
 import { gameModule } from '../../model/gameProfile.js';
@@ -26,6 +27,7 @@ import { statusTooltipText } from '../uiContent.js';
 import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
 import { cardTagExplanation } from '../../model/cardTagExplanation.js';
+import { coreSmashClause } from '../../model/smashClause.js';
 import { tagService } from '../../model/tagService.js';
 import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
 import { cardArtFallbacks } from '../cardArtwork.js';
@@ -39,9 +41,11 @@ import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
 import { combatCardRange, combatProfileFor, combatProfileTags, numberedTraitRow } from '../../model/combatCardProfile.js';
 import { ashenBlightCardLabel } from './ashenBlight.js';
-import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
+import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity, mirrorSigil } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
+import { armsAsCoreCounter } from '../../model/profileStance.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
+import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
@@ -61,7 +65,7 @@ function metadataBand(rarity, owned) {
  * this stays as the name five files already import, so the extraction costs
  * no call site a rename that would prove nothing.
  */
-export function staticTokens(def) { return staticCardTokens(def); }
+export function staticTokens(def, registries = null, rules = null) { return staticCardTokens(def, registries, rules); }
 
 /**
  * relicText(def) → plain text with every {token} replaced by the number the
@@ -107,8 +111,15 @@ export function relicText(def, registries = null) {
   return grown ? `${base} ${grown}` : base;
 }
 
-function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
+// `wardAsPoise` ({ preview }) is set when the run's profile has Ward switched off (Core 2): a card that authors
+// `wardOffTextTemplate` then reads its Ward damage as Poise damage, one combined figure (model/wardOffCardText.js).
+function fillTemplate(def, tokens, baseTokens, damageSequences = [], wardAsPoise = null, registries = null) {
   let template = def.textTemplate;
+  // A Core Smash adds the shared rule sentence once (model/smashClause.js); an authored template that has it is left alone.
+  const smashClause = coreSmashClause(def, registries);
+  if (smashClause && !template.includes(smashClause)) template = `${template.trim()} ${smashClause}`;
+  const projected = wardAsPoise ? wardOffCardText(def, tokens, baseTokens, wardAsPoise.preview) : null;
+  if (projected) { template = projected.template; tokens = projected.tokens; baseTokens = projected.baseTokens; }
   const liveTokens = { ...tokens };
   let comparedTokens = baseTokens;
   // Complex cards retain authored clauses; their defensive amount still reads
@@ -188,7 +199,7 @@ export function renderCard(registries, ref, opts = {}) {
     && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
     ? combatCardDamageLabel(def, opts.preview, registries) : '';
   const damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
-  const accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label,
+  const accessibleLabel = [model.name, ACTION_SIGILS[model.sigils.action].label, model.sigils.mirror && mirrorSigil(model.sigils.mirror).mark.label,
     model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
     damageWords.length && `Damage: ${damageWords.join(', ')}`,
     ...model.sideTags.map(tag => tag.label),
@@ -297,7 +308,8 @@ export function renderCard(registries, ref, opts = {}) {
   // ONE TEXT FOR EVERY VIEW. The face lines are the shared model's output
   // (cardFaceText.js); a weight-priced card adds its pricing note as a detail line.
   const faceRules = gameModule(registries, 'cards');
-  const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries);
+  const wardPoise = wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null;
+  const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null);
   const faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
     ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
   if (faceLines && def.weightClassPriced) faceLines.push({ kind: 'detail', html: 'Cost reflects your current weight' });
@@ -311,8 +323,8 @@ export function renderCard(registries, ref, opts = {}) {
       definition:def,registries});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     const authoredRules = def.weightClassPriced
-      ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
-      : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
+      ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
+      : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences,wardPoise,registries);
     const visibleLines = at === 'inspect' ? allFaceLines : faceLines;
     const rulesHtml = visibleLines
       ? compactCardRules(visibleLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${extraLine(line, i) ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
@@ -332,6 +344,7 @@ export function renderCard(registries, ref, opts = {}) {
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
     applyCardAppearance(el.querySelector('.illustrated-card-face'));
+    bindDamageReceipt(el, opts.preview);
     if (def.corrupted) el.insertAdjacentHTML('beforeend', ashenBlightCardLabel(def));
     // The illustrated face owns the rank label and keeps it above its fitted panel.
     if(el.children)for(const node of el.children)if(node.dataset)node.dataset.cardPainted = '1';
@@ -387,6 +400,8 @@ export function renderCard(registries, ref, opts = {}) {
       const details = document.createElement('div');
       const liveCosts = model.hasPreview ? model.costs : null;
       details.innerHTML = opts.tooltipFn ? sigilExplanationHtml(model.sigils) + opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences);
+      const receipt = cardDamageReceipt(opts.preview);
+      if (receipt) details.insertAdjacentHTML('beforeend', damageReceiptHtml(receipt, { targetName: opts.preview.targetName }));
       decorateKeywords(details);
       // AUTHORED FLAVOUR REACHES THE PLAYER, at the level that promises
       // everything. The note above the regions used to say a playing card
@@ -457,7 +472,11 @@ let fitFrame = 0;
 export function setHandFaceBudget(el, selected) {
   const rules = el?.querySelector?.('.ic-text[data-face-lines="true"]');
   if (!rules) return;
-  rules.dataset.maxLines = selected ? '5' : '3';
+  const lines = selected ? '5' : '3';
+  // The hand calls this for every card on every render; a budget that did not
+  // change leaves the fit it has (a new face is fitted by its own render).
+  if (rules.dataset.maxLines === lines) return;
+  rules.dataset.maxLines = lines;
   scheduleCardFits([el]);
 }
 
@@ -581,12 +600,12 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 export function cardPlainText(registries, ref, opts = {}) {
   const def = playingCardDefinition(registries, ref, opts);
   const model = opts.preview ? playingCardModel(registries, ref, { ...opts, definition: def })
-    : { tokens: staticTokens(def), damageSequences: [] };
+    : { tokens: staticTokens(def, registries, opts.rules || null), damageSequences: [] };
   const lines = opts.rules?.combatExpansionVersion === 2 || opts.preview?.combatExpansionVersion === 2
-    ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries)) : null;
+    ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null)) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
-  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences))
+  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences, wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null, registries))
     .replace(/<[^>]+>/g, '')
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&')
@@ -681,7 +700,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       const bonuses = ['ar', 'pr', 'dr', 'ward'].map(id => [id, stanceRatingBonus(ctx, rated, id)]);
       const offense = bonuses.some(([id, amount]) => ['ar', 'pr'].includes(id) && amount > 0);
       const active = bonuses.filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + (id === 'ward' ? 'Ward rating' : id.toUpperCase()));
-      const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
+      const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + ({ precision: t('card.tags.precision'), evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
       html += '<div class="combat-rule-hint"><strong>Stance:</strong> ' + esc(active.join(', ')) + ' while active; does not stack.'
         + (grants.length ? ' On changing stance: ' + esc(grants.join(', ')) + '.' : '')
         + ' Repeating the same stance grants no entry bonuses and costs ' + esc(rules.sameStanceDiscount) + ' less SP.'
@@ -690,12 +709,16 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     }
   }
   if (combatProfile.maneuver === 'counter') {
+    // Core return help only where live arms the card (armsAsCoreCounter): Counter stances and spell Counters with coverage.
+    const inCore = registries.gameProfile?.modules?.effects?.fixCoreVersion === 1;
+    const coreCounter = inCore && armsAsCoreCounter(registries, def);
+    const coreIneligible = inCore && !coreCounter;
     if (def.counterCoverage) {
       const c = def.counterCoverage;
       const names = { physical: 'Martial', spell: 'Spell', melee: t('deckEditor.range.melee'), reach: t('deckEditor.range.reach'), ranged: t('deckEditor.range.ranged'), single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
       const coverage = [c.camps, c.ranges, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
-      html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.</div>`;
-    } else html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
+      html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. ${coreCounter ? esc(t('card.counter.help.core')) : coreIneligible ? 'The prepared stance remains until another maneuver replaces it.' : 'Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.'}</div>`;
+    } else html += `<div class="combat-rule-hint">${esc(t(coreCounter ? 'card.counter.help.core' : 'card.counter.help.legacy'))}</div>`;
   }
   if (def.defenseRange) html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(def.defenseRange[0].toUpperCase() + def.defenseRange.slice(1))} · Covers ${esc(['melee', 'reach', 'ranged'].slice(0, ['melee', 'reach', 'ranged'].indexOf(def.defenseRange) + 1).map(range => t('deckEditor.range.' + range)).join(' + '))}.</div>`;
   if (identity.cardCategory === 'stance') {
@@ -705,7 +728,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     if (combatProfile.maneuver === 'sweep' && (def.tags || def.cardTags || []).includes('trait:reaction'))
       html += '<div class="combat-rule-hint">Reaction Sweep resolves before the incoming attack. Killing, staggering or controlling its attacker can interrupt it; otherwise the attack resumes.</div>';
   }
-  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences)}</div>`;
+  html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences, wardReadsAsPoise(registries) ? { preview: null } : null, registries)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {
@@ -749,8 +772,8 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   const service = tagService(registries);
   const tags = def.cardTags != null ? service.resolve(def.cardTags)
     : def.traitValues && Array.isArray(def.tags) ? service.resolve(def.tags) : service.tagsOf('card', def);
-  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, row))}">${esc(row.label)}</span>`); }
-  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, tag))}">${esc(tag.label)}</span>`);
+  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, row, registries))}">${esc(row.label)}</span>`); }
+  for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(cardTagExplanation(def, tag, registries))}">${esc(tag.label)}</span>`);
   if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
   return html;
 }

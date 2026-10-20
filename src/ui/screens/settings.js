@@ -10,6 +10,7 @@ import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 // Settings tab. Each row declares its default so stored settings stay sparse.
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
+import { ACTION_PACING, AUTOMATION_DEFAULTS } from '../../model/autoCombatPolicy.js';
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
 import { advancedSubgroups, statsSection, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
 import { statsTopicPreview, statsExampleClasses, STATS_EXAMPLE_CLASS_KEY } from '../models/StatsPreviewModel.js';
@@ -361,6 +362,19 @@ const ROWS = [
   // combat stops being a dead end.
   { cat: 'Combat', key: 'useSprites', def: true, label: t('settings.row.useSprites'),
     note: tFull('settings.row.useSprites') },
+  { cat: 'Combat', key: 'autoCombat', def: AUTOMATION_DEFAULTS.autoCombat, label: t('settings.row.autoCombat'),
+    note: tFull('settings.row.autoCombat') },
+  { cat: 'Combat', key: 'combatSpeed', type: 'number', def: AUTOMATION_DEFAULTS.combatSpeed,
+    min: AUTOMATION_DEFAULTS.speedMinimum, max: AUTOMATION_DEFAULTS.speedMaximum, step: 0.25, label: t('settings.row.combatSpeed'),
+    note: tFull('settings.row.combatSpeed') },
+  { cat: 'Combat', key: 'combatPreference', retired: true, type: 'choice', def: AUTOMATION_DEFAULTS.combatPreference,
+    choices: ['offense', 'defense'], label: t('settings.row.combatPreference'), note: tFull('settings.row.combatPreference') },
+  { cat: 'Combat', key: 'autoCombatSpeed', type: 'number', def: AUTOMATION_DEFAULTS.autoCombatSpeed,
+    min: AUTOMATION_DEFAULTS.autoSpeedMinimum, max: AUTOMATION_DEFAULTS.autoSpeedMaximum, step: 0.25, label: t('settings.row.autoCombatSpeed'),
+    note: tFull('settings.row.autoCombatSpeed') },
+  { cat: 'Combat', key: 'combatStepPause', type: 'number', def: ACTION_PACING.stageGapMs,
+    min: AUTOMATION_DEFAULTS.stageGapMinimumMs, max: AUTOMATION_DEFAULTS.stageGapMaximumMs, step: 250, label: t('settings.row.combatStepPause'),
+    note: tFull('settings.row.combatStepPause') },
   { cat: 'Combat', key: 'animSpeed', type: 'choice', def: 'auto',
     choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: t('settings.row.animSpeed'),
     note: tFull('settings.row.animSpeed') },
@@ -634,9 +648,10 @@ const ROWS = [
   { cat: 'Accessibility', key: 'touchFlickDistance', type: 'number', def: UI_DEFAULTS.touchFlick.distance.def,
     min: UI_DEFAULTS.touchFlick.distance.min, max: UI_DEFAULTS.touchFlick.distance.max, slider: true, practice: true, label: t('settings.row.touchFlickDistance'),
     note: tFull('settings.row.touchFlickDistance') },
-  // Owner, 2026-10-18: a tap on a playable card plays it when its target is
-  // unambiguous. On by default; off restores select-then-double-tap.
-  { cat: 'Accessibility', key: 'oneTapPlay', def: true, label: t('settings.row.oneTapPlay'),
+  // Owner, 2026-10-18 14:15: "make sure I don't auto play a card when I click on it once"; 14:32: "keep the switch but make it default to not be 1 tap".
+  // Off by default. On is an opt-in: a tap on a card with an unambiguous target
+  // plays it. Off is select, then the next tap on the selected card.
+  { cat: 'Accessibility', key: 'oneTapPlay', def: false, label: t('settings.row.oneTapPlay'),
     note: tFull('settings.row.oneTapPlay') },
   { cat: 'Accessibility', key: 'reducedMotion', def: false, label: t('settings.row.reducedMotion'),
     note: tFull('settings.row.reducedMotion') },

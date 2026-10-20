@@ -1,6 +1,11 @@
+import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
+// Namespace import: counterRule.js sits in an import cycle and the bundled build does not keep cyclic named imports live.
+import * as CounterRule from './counterRule.js';
+const counterRuleActive = ctx => CounterRule.counterRuleActive(ctx);
+const counterReturnForReceipt = (ctx, receipt) => CounterRule.counterReturnForReceipt(ctx, receipt);
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
-import { configuredCombat, configuredModule, setProfileStance } from './gameProfileCombat.js';
+import { configuredCombat, configuredModule, setProfileStance, armsAsCoreCounter, isSpellCounter, configuredStance } from './gameProfileCombat.js';
 import { removeStatus } from './statuses.js';
 import { stanceOf, sameStance, stanceEntryBonuses, stanceRulesFor } from '../model/stanceRules.js';
 import { syncWardMaximum } from './combatPools.js';
@@ -298,10 +303,11 @@ function restrictions(ctx, entity, options = {}) {
 
 /** Called only for an accepted play/telegraph; support preserves posture. */
 export function setCombatStance(ctx, entity, carrier) {
+  if (fixCoreEnabled(ctx) && carrier && carrier.fixCoreSameStance === undefined) carrier.fixCoreSameStance = sameStance(entity, carrier);
   if (configuredCombat(ctx)) { setProfileStance(ctx, entity, carrier); return entity?.combatStance; }
   if (!combatExpansionEnabled(ctx) || !entity) return null;
   const profile = normalizedProfile(carrier);
-  if (!profile.maneuver || profile.stanceTrigger === false) return entity.combatStance || null;
+  if ((!profile.maneuver && !profile.mirrors) || profile.stanceTrigger === false) return entity.combatStance || null;
   if (profile.evade?.whileStatus) profile.evadeEligible = entity.statuses?.[profile.evade.whileStatus]?.stacks > 0;
   const next = stanceOf({ combatProfile: profile }, entity);
   if (!next) return entity.combatStance || null;
@@ -404,6 +410,8 @@ function armExpansionCounter(ctx, entity, carrier, options) {
       ...(authored.poiseBase !== undefined ? { poiseBase: Math.floor(number(authored.poiseBase)) } : {}) } : { hp: number(options.damage) + number(options.bonus),
       poise: number(options.poiseDamage), ward: number(options.wardDamage) },
     expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + 1,
+    // The card count at arming: a spell Counter in Core stays armed only while no later card is accepted.
+    armedAtCardCount: entity.counters?.cardsPlayedThisCombat ?? 0,
     ...(profile.schoolEffect ? { schoolEffect: profile.schoolEffect } : {}),
     carrier: structuredClone(carrier),
   };
@@ -435,7 +443,12 @@ function preparedCounter(ctx, target, carrier, options) {
   if (!counter?.charges || (carrier?.combatReaction && carrier.manualCounterSerial !== counter.serial) || restrictions(ctx, target, options).counterDisabled) return null;
   const stance = activeCombatStances(ctx,target).some(row=>row.maneuver==='counter') ? 'counter' : target.combatStance?.maneuver;
   const authoredCounter = counter.carrier?.combatProfile?.maneuver === 'counter';
-  if (!(configuredCombat(ctx) && !configuredModule(ctx, 'stances')) && stance !== 'counter' && !(stance === 'evade' && authoredCounter)) return null;
+  // Core: a spell Counter (owner 2026-10-19) arms while its owner still stands in the stance the card entered (prepared).
+  const coreSpell = fixCoreEnabled(ctx) && isSpellCounter(counter.carrier) && armsAsCoreCounter(ctx, counter.carrier);
+  // Any card accepted after a spell Counter was armed (Spell, Skill, Strike, Evade) disarms it, whatever stance that card leaves.
+  if (coreSpell && (counter.armedAtCardCount ?? 0) !== (target.counters?.cardsPlayedThisCombat ?? 0)) return null;
+  const spellCounter = coreSpell && stance === configuredStance(counter.carrier);
+  if (!(configuredCombat(ctx) && !configuredModule(ctx, 'stances')) && stance !== 'counter' && !(stance === 'evade' && authoredCounter) && !spellCounter) return null;
   if ((target.combatOwnerCycle || 0) >= counter.expiresOnOwnerCycle) return null;
   return counter;
 }
@@ -541,7 +554,13 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
   const receipt = previewTacticalAction(ctx, source, target, carrier, contacts, options);
   receipt.begun = true;
   if (configuredCombat(ctx)) {
-    if (receipt.counterEligible) {
+    if (fixCoreEnabled(ctx)) {
+      const hit = resolveAttackHit(ctx, source, target, carrier);
+      receipt.counterAttack = hit;
+      receipt.avoided = hit ? !hit.hit : false;
+      receipt.connected = !receipt.avoided;
+    }
+    if (receipt.counterEligible && !receipt.avoided) {
       target.combatCounter.charges = 0;
       ctx.emit?.('combatCounterConsumed', { ...eventCarrier(target, receipt.counter.carrier),
         sourceId: target.id, targetId: source?.id, serial: receipt.counter.serial });
@@ -661,7 +680,10 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   };
   completeGuardBreak(ctx, source, target, carrier, receipt);
   const counter = receipt.counter;
-  const stillPrepared = counter && target?.combatCounter?.serial === counter.serial;
+  // Core 2: a Poise break on the covered hit clears the Counter, but that hit still answers.
+  const stillPrepared = counter && (target?.combatCounter?.serial === counter.serial
+    || (counterRuleActive(ctx) && target?.combatCounterStaggered === counter.serial));
+  if (target && 'combatCounterStaggered' in target) delete target.combatCounterStaggered;
   const blocked = restrictions(ctx, target, options).counterDisabled || receipt.counterDisabledAtStart;
   const unreflectable = receipt.profiles.some(p => hasTrait(p, 'unreflectable'));
   // Mitigation may round a positive incoming contact down to zero. Coverage
@@ -671,8 +693,10 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   const resistedPayload = receipt.amount > 0 ? receipt.blocked + receipt.wardResisted >= receipt.amount
     : receipt.statusResisted > 0 || mitigatedContact;
   if (!stillPrepared || blocked || receipt.avoided || receipt.counterBroken || unreflectable
-    || !target?.alive || !source?.alive || receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload
-    || target.combatCounterReturnedCycle === (target.combatOwnerCycle || 0)) return queue;
+    || !target?.alive || !source?.alive
+    // Core 2 (SPEC §17): a covered hit that lands answers, whatever got through. Legacy needs the hit fully resisted.
+    || (!counterRuleActive(ctx) && (receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload))
+    || CounterRule.counterReturnSpent(target)) return queue;
   target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
   // Reaction rules version 2: Counterstrike scales the authored payload first; SPEC §4.8's return formulas run after.
   const trait = ctx.reactionRulesVersion === 2 ? counter.carrier?.traitValues || {} : {};
@@ -696,14 +720,22 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   if (target.statuses?.prone?.stacks > 0 && receipt.profiles.some((profile, index) => receipt.covered[index] && profile.range === 'melee')) {
     payload.poise += number(counter.carrier.combatProfile?.pronePoiseBonus);
   }
+  // Core 2 (SPEC §17): the return is a fraction of the damage that hit, not the card's printed numbers.
+  if (counterRuleActive(ctx)) {
+    const core = counterReturnForReceipt(ctx, receipt);
+    // The authored Ward return and Flux are not part of the Core rule (owner 2026-10-19): a spell Counter returns HP and Poise only.
+    payload.hp = core.hp; payload.poise = core.poise;
+    if (isSpellCounter(counter.carrier)) payload.ward = 0;
+  }
   const magical = isSpell(counter.carrier.combatProfile);
   const caster = hasTrait(source, 'caster');
-  if (magical && !caster && counter.payload.hpAgainstNonCaster !== true) payload.hp = 0;
+  const coreFixed = counterRuleActive(ctx); // Core 2 fixes the HP and Poise return (SPEC §17): legacy school/Impact/target edges do not rewrite them.
+  if (!coreFixed && magical && !caster && counter.payload.hpAgainstNonCaster !== true) payload.hp = 0;
   const schoolEffect = counter.schoolEffect;
   const edges = receipt.profiles.filter((profile, index) => receipt.covered[index])
     .map(profile => schoolReturnMultiplier(ctx, counter, profile));
   const schoolEdge = edges.some(edge => edge < 1) ? Math.min(...edges) : Math.max(1, ...edges);
-  if (schoolEffect && schoolEffect in payload && schoolEffect !== 'ward') payload[schoolEffect] = Math.floor(payload[schoolEffect] * schoolEdge);
+  if (!coreFixed && schoolEffect && schoolEffect in payload && schoolEffect !== 'ward') payload[schoolEffect] = Math.floor(payload[schoolEffect] * schoolEdge);
   // Ward pressure retains fractional carry. A declared school edge replaces
   // Piercing's generic Ward advantage; the same return never multiplies both.
   const pierceWard = magical && counter.carrier.combatProfile?.damageType === 'piercing';
@@ -711,10 +743,10 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   payload.ward *= wardEdge;
   // Impact and Flux double the final return, or give N when it has none. A Spell Counter
   // against a physical projectile keeps SPEC §4.8's no-reply-Poise exclusion.
-  if (trait.impact > 0 && !(magical && receipt.profiles.some((profile, index) => receipt.covered[index] && physicalProjectile(profile)))) {
+  if (!coreFixed && trait.impact > 0 && !(magical && receipt.profiles.some((profile, index) => receipt.covered[index] && physicalProjectile(profile)))) {
     payload.poise = payload.poise > 0 ? 2 * payload.poise : trait.impact;
   }
-  if (trait.flux > 0) payload.ward = payload.ward > 0 ? 2 * payload.ward : trait.flux;
+  if (!(coreFixed && isSpellCounter(counter.carrier)) && trait.flux > 0) payload.ward = payload.ward > 0 ? 2 * payload.ward : trait.flux;
   const event = { ...eventCarrier(target, counter.carrier), ...seats(ctx, target, source),
     sourceId: target.id, targetId: source.id, amount: payload.hp, poiseDamage: payload.poise, wardDamage: payload.ward, wardOnly: magical && payload.hp === 0 };
   if (payload.hp > 0) enqueue({ op: 'damage', amount: payload.hp });

@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { rewardDom } from './helpers/reward-dom.mjs';
-import { registerModal, resetModalState, openModals, modalOpen } from '../src/ui/modalManager.js';
+import { registerModal, registerPageChrome, resetModalState, openModals, modalOpen } from '../src/ui/modalManager.js';
 
 // A page: <html> > <body> > #app > [screen, hud], with a veil per modal in body.
 function withPage(fn) {
@@ -445,4 +445,120 @@ test('an entry registered with dismiss gets reason "escape"; repeats are ignored
     resetModalState();
     if (had) globalThis.document = saved; else delete globalThis.document;
   }
+});
+
+// ---- page chrome: body-level elements (the co-op seat strip) that are not modals ----
+
+const chromeIn = (document) => {
+  const strip = document.createElement('nav');
+  document.body.appendChild(strip);
+  return strip;
+};
+
+test('page chrome goes inert under a lock and wakes when it pops', () => {
+  withPage(({ document }) => {
+    const strip = chromeIn(document);
+    const releaseChrome = registerPageChrome(strip);
+    assert.equal(modalOpen(), false, 'chrome alone is not an open modal');
+    assert.equal(document.documentElement.dataset.modalDepth, '0');
+    assert.equal(openModals().length, 0);
+    assert.equal(strip.hasAttribute('inert'), false);
+    const releaseDoor = registerModal('door', modalIn(document), { dismiss() {} });
+    assert.equal(strip.hasAttribute('inert'), true, 'the door covers the strip');
+    assert.equal(openModals().length, 1, 'the strip does not appear on the stack');
+    assert.equal(document.documentElement.dataset.modalDepth, '1');
+    releaseDoor();
+    assert.equal(strip.hasAttribute('inert'), false);
+    releaseChrome();
+    releaseChrome(); // idempotent
+    assert.equal(strip.hasAttribute('inert'), false);
+  });
+});
+
+test('page chrome stacking order: it stays inert while any lock stands and wakes with the last one', () => {
+  withPage(({ document }) => {
+    const strip = chromeIn(document);
+    registerPageChrome(strip);
+    const overlay = modalIn(document);
+    const releaseOverlay = registerModal('overlay', overlay, { inert: false });
+    assert.equal(strip.hasAttribute('inert'), false, 'an overlay that asked for no lock leaves the strip live');
+    const shell = modalIn(document);
+    const releaseShell = registerModal('offline-play', shell, { dismiss() {} });
+    assert.equal(strip.hasAttribute('inert'), true);
+    assert.equal(overlay.hasAttribute('inert'), true);
+    assert.equal(shell.hasAttribute('inert'), false);
+    const confirm = modalIn(document);
+    const releaseConfirm = registerModal('confirmation', confirm); // bespoke, above the shell
+    assert.equal(strip.hasAttribute('inert'), true, 'the strip stays covered under the confirmation');
+    assert.equal(confirm.hasAttribute('inert'), false);
+    assert.equal(shell.hasAttribute('inert'), false);
+    releaseConfirm();
+    assert.equal(strip.hasAttribute('inert'), true);
+    assert.equal(overlay.hasAttribute('inert'), true);
+    assert.equal(shell.hasAttribute('inert'), false);
+    releaseShell();
+    assert.equal(strip.hasAttribute('inert'), false);
+    assert.equal(overlay.hasAttribute('inert'), false);
+    releaseOverlay();
+    assert.equal(strip.hasAttribute('inert'), false);
+  });
+});
+
+test('chrome registered while the lock stands goes inert at once; releasing the old registration frees it', () => {
+  withPage(({ document }) => {
+    const releaseDoor = registerModal('door', modalIn(document), { dismiss() {} });
+    const a = chromeIn(document);
+    const releaseA = registerPageChrome(a);
+    assert.equal(a.hasAttribute('inert'), true);
+    const b = chromeIn(document);
+    const releaseB = registerPageChrome(b);
+    releaseA();
+    assert.equal(b.hasAttribute('inert'), true);
+    assert.equal(a.hasAttribute('inert'), false, 'the released strip is freed');
+    // A strip removed from the page without its release running is dropped silently.
+    b.remove();
+    const c = chromeIn(document);
+    registerPageChrome(c);
+    assert.equal(c.hasAttribute('inert'), true);
+    releaseB();
+    assert.equal(c.hasAttribute('inert'), true, 'a stale release touches only its own element');
+    releaseDoor();
+    assert.equal(c.hasAttribute('inert'), false);
+  });
+});
+
+test('a background/resume cycle changes nothing about the chrome lock and adds no lifecycle listener', () => {
+  withPage(({ document }) => {
+    const seen = [];
+    const wrap = (target, label) => {
+      const original = target.addEventListener?.bind(target);
+      target.addEventListener = (type, ...rest) => { seen.push(`${label} ${type}`); return original?.(type, ...rest); };
+    };
+    const hadWindow = 'window' in globalThis;
+    const savedWindow = globalThis.window;
+    const win = globalThis.window ?? {};
+    if (!hadWindow) globalThis.window = win;
+    wrap(document, 'document');
+    wrap(win, 'window');
+    try {
+      const strip = chromeIn(document);
+      registerPageChrome(strip);
+      const screenState = () => ({ inert: strip.hasAttribute('inert'), depth: document.documentElement.dataset.modalDepth, open: openModals().length });
+      const releaseDoor = registerModal('door', modalIn(document), { dismiss() {} });
+      const before = screenState();
+      assert.deepEqual(before, { inert: true, depth: '1', open: 1 });
+      const cycle = [
+        ['window', 'blur'], ['document', 'visibilitychange'], ['window', 'pagehide'], ['document', 'freeze'],
+        ['document', 'resume'], ['window', 'pageshow'], ['document', 'visibilitychange'], ['window', 'focus'],
+      ];
+      for (const [where, type] of cycle) (where === 'document' ? document : win).dispatchEvent?.({ type });
+      assert.deepEqual(screenState(), before);
+      assert.deepEqual(seen.filter((entry) => !/ keydown$/.test(entry)), [], 'the manager adds only keydown, never a lifecycle listener');
+      releaseDoor();
+      assert.equal(strip.hasAttribute('inert'), false);
+    } finally {
+      delete document.addEventListener;
+      if (!hadWindow) delete globalThis.window; else globalThis.window = savedWindow;
+    }
+  });
 });

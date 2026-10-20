@@ -1,5 +1,5 @@
 import { unusedInstanceId as unusedInstanceId_ } from './cardInstanceIdentity.js';
-import { deckCopyLimit as deckCopyLimit_ } from './deckCopyLimit.js';
+import { configuredDeckCopyLimit, deckCopyLimit as deckCopyLimit_ } from './deckCopyLimit.js';
 // src/model/deckRules.js — the deck editor's rules, without its screen (SPEC §14.1).
 //
 // Pure model: settings and a run in, answers and one-step edits out. The
@@ -84,11 +84,37 @@ export function deckEditingWhere(settings) {
 
 export function playInDeckOrder(settings) { return !!setting(settings, 'playInDeckOrder'); }
 
-/** Configured decks name plain basics; legacy equipment decks mint by role. */
-export function unlimitedCardIds(run) {
+/**
+ * The card ids this run classifies as basics, whether or not the collection
+ * may offer unowned copies of them. Configured decks name plain basics; legacy
+ * equipment decks mint by role.
+ */
+export function basicCardIds(run) {
   return gameModule(run, 'cards')?.mode === 'configured'
-    ? (gameContent(run, 'editor')?.unlimitedBasicCards || [])
+    ? (gameModule(run, 'deck-training')?.mode === 'configured'
+      ? (gameContent(run, 'cards') || []).filter(card => configuredDeckCopyLimit(run, card.id) === Infinity).map(card => card.id)
+      : (gameContent(run, 'editor')?.unlimitedBasicCards || []))
     : deckRules.unlimitedCardIds;
+}
+
+/**
+ * The basics the editor may mint unowned, without limit. Core (owner ruling
+ * 2026-10-19, SPEC §14.1) sets deck-training ownedOnlyCollection: the
+ * collection shows only cards the run has collected, so none is offered
+ * unowned. Classification ("is this a basic?") is basicCardIds / isBasicCard.
+ */
+export function unlimitedCardIds(run) {
+  if (gameModule(run, 'cards')?.mode === 'configured'
+    && gameModule(run, 'deck-training')?.mode === 'configured'
+    && gameModule(run, 'deck-training').ownedOnlyCollection === true) return [];
+  return basicCardIds(run);
+}
+
+/** True for an owned plain basic, whether or not unowned copies are offered. */
+export function isBasicCard(card, run = null) {
+  if (!card || card.grantedBy || isItemOwned(card)) return false;
+  if (gameModule(run, 'cards')?.mode !== 'configured' && (card.equipmentRole === 'attack' || card.equipmentRole === 'guard')) return true;
+  return !card.equipmentRole && basicCardIds(run).includes(card.cardId);
 }
 
 /** True for a card the editor adds without limit under this run's policy. */
@@ -203,7 +229,7 @@ export function moveFromSideboard(registries, run, instanceId, settings = {}) {
   if (index < 0) return false;
   if (!deckCardEquipmentEligible(registries, run, pile[index])) return false;
   const inDeck = run.deck.filter((c) => c && c.cardId === pile[index].cardId).length;
-  if (inDeck >= deckCopyLimit(registries, pile[index].cardId, settings, run.class)) return false;
+  if (inDeck >= deckCopyLimit(registries, pile[index].cardId, settings, run)) return false;
   const [card] = pile.splice(index, 1);
   if (card.equipmentAttackSlotId) {
     run.removedAttackSlotIds = (run.removedAttackSlotIds || []).filter((id) => id !== card.equipmentAttackSlotId);
@@ -321,4 +347,27 @@ export function cancelDeckEdit(run, snapshot) {
     if (snapshot[key] === undefined) delete run[key];
     else run[key] = structuredClone(snapshot[key]);
   }
+}
+
+/** Commit a validated editor draft without touching current combat piles. */
+export function commitDeckEditDraft(registries, run, edited, settings = {}) {
+  const refusal = deckEditRefusal(edited.deck?.length || 0, settings);
+  if (refusal) throw new Error(refusal);
+  const before = new Map([...(run.deck || []), ...(run.sideboard || [])].map(card => [card.instanceId, card]));
+  const after = [...(edited.deck || []), ...(edited.sideboard || [])];
+  if (after.some(card => !card.instanceId)) throw new Error('Invalid edited card identity');
+  for (const card of after) if (!registries.cards.has(card.cardId)) throw new Error(`Unknown edited card '${card.cardId}'`);
+  if (new Set(after.map(card => card.instanceId)).size !== after.length) throw new Error('Duplicate edited card identity');
+  for (const card of after) {
+    const owned = before.get(card.instanceId);
+    if (owned && JSON.stringify(owned) !== JSON.stringify(card)) throw new Error('Deck editing cannot modify an owned card');
+    if (!owned && (!isUnlimitedBasic(card, run) || card.upgraded || card.rank > 1 || card.mods?.length || Object.keys(card).some(key => !['instanceId','cardId','upgraded'].includes(key)))) throw new Error('Deck editing cannot invent a limited or enhanced card');
+  }
+  for (const [id, card] of before) if ((!isUnlimitedBasic(card, run) || card.upgraded || card.rank > 1 || card.mods?.length) && !after.some(row => row.instanceId === id)) throw new Error('Deck editing cannot delete an owned limited card');
+  for (const id of new Set(edited.deck.map(card => card.cardId))) if (edited.deck.filter(card => card.cardId === id).length > deckCopyLimit(registries, id, settings, run)) throw new Error('Deck editing exceeds the card copy limit');
+  for (const key of EDIT_STATE_KEYS) {
+    if (edited[key] === undefined) delete run[key];
+    else run[key] = structuredClone(edited[key]);
+  }
+  return { count: run.deck.length };
 }

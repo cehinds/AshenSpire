@@ -1,5 +1,6 @@
 import { previewIntent } from '../../engine/combat.js';
 import { configuredCombat, profileDamageReceipt } from '../../engine/gameProfileCombat.js';
+import { applyReceiptToPreviewTarget } from '../../engine/combatDamagePreview.js';
 import { computeAttackDamage, prepareExpandedDefense, cardRatingDamage, ratingBonusPart } from '../../engine/actions.js';
 import { previewTacticalAction } from '../../engine/combatMatchups.js';
 import { enemyMoveCarrier, expandedEnemyMove } from '../../engine/combatCardTactics.js';
@@ -38,21 +39,25 @@ function damageBounds(combat, enemy, move, base, hits, neutral) {
     * (1 - (proposal.evadeChance || 0) / 100);
   let max, chance;
   if (configuredCombat(ctx)) {
-    // A miss preserves Block for the next hit. Enumerate/merge the reachable
-    // pool states rather than multiply all-landed damage by hit probability.
-    let states = [{ block: player.block || 0, loss: 0, probability: 1 }];
+    // A miss preserves the target's defenses for the next hit. Enumerate/merge the reachable
+    // target states (Block, pools, stance, statuses) rather than multiply all-landed damage by hit probability.
+    // A landed hit carries into the next one exactly as previewDamageHits does, so a Poise break ends a Smash's doubling.
+    const targetKey = row => JSON.stringify([row.block, row.barrier, row.persistentWard, row.persistentPoise, row.combatStance, row.statuses]);
+    let states = [{ target: player, key: targetKey(player), loss: 0, probability: 1 }];
     for (let hit = 0; hit < hits; hit++) {
       const next = new Map();
       const add = row => {
         if (!(row.probability > 0)) return;
-        const key = `${row.block}:${row.loss}`;
+        const key = `${row.key}:${row.loss}`;
         const previous = next.get(key);
         if (previous) previous.probability += row.probability;
         else next.set(key, row);
       };
       for (const state of states) {
-        const receipt = profileDamageReceipt(ctx, source, { ...player, block: state.block }, base, carrier);
-        add({ block: receipt.blockRemaining, loss: state.loss + receipt.hpLoss, probability: state.probability * receipt.hitChance });
+        const receipt = profileDamageReceipt(ctx, source, state.target, base, carrier);
+        const landed = structuredClone(state.target);
+        applyReceiptToPreviewTarget(ctx, landed, receipt);
+        add({ target: landed, key: targetKey(landed), loss: state.loss + receipt.hpLoss, probability: state.probability * receipt.hitChance });
         add({ ...state, probability: state.probability * (1 - receipt.hitChance) });
       }
       states = [...next.values()];

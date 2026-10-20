@@ -1,4 +1,4 @@
-import { attackHitPreview, previewCardAttackHit, effectiveEvasion } from '../../engine/stanceHit.js';
+import { attackHitPreview, previewCardAttackHit, effectiveEvasion, previewTargetFor } from '../../engine/stanceHit.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 
 // Public combat rows carry current statuses/attributes; party rows carry equipment.
@@ -14,9 +14,9 @@ export function coopCombatantEvasion(scene, registries, entity, member) {
 }
 
 // Rebuild the observing seat's Accuracy context from its public combat row.
-export function coopCardHitPreview(scene, registries, actor, enemy, carrier, { selected = true, member = actor } = {}) {
+export function coopCardHitPreview(scene, registries, actor, enemy, carrier, { selected = true, member = actor, observerId } = {}) {
   const source = { ...actor, kind: 'player' };
-  const target = { ...enemy, kind: 'enemy' };
+  const target = observerId ? previewTargetFor({ ...enemy, kind: 'enemy' }, observerId, { turn: scene?.turn }) : { ...enemy, kind: 'enemy' };
   const context = coopCombatantContext(scene, registries, source, member);
   const definition = { ...carrier, combatProfile: combatProfileFor(carrier) };
   const preview = selected ? previewCardAttackHit : attackHitPreview;
@@ -24,4 +24,12 @@ export function coopCardHitPreview(scene, registries, actor, enemy, carrier, { s
     additionalTargets: definition.effects?.some(effect => effect.target === 'allEnemies')
       ? Math.max(0, scene.enemies.filter(entry => entry.hp > 0).length - 1) : 0,
   });
+}
+
+// Statuses the combat health row already shows as a badge (Evade, Precision):
+// one home, so the co-op status tray skips them under the same condition the
+// badge is drawn (expansion v2, and the seat may read the enemy exactly).
+export function coopBadgedStatusIds(entity, isEnemy, seat) {
+  const known = !isEnemy || entity?.knowledgeAction?.reads?.[seat]?.visibility === 'exact';
+  return entity?.combatExpansionVersion === 2 && known ? new Set(['evade', 'precision']) : new Set();
 }

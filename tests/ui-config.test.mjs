@@ -164,8 +164,9 @@ test('tokens are exported resolved, and a file-local variable wins over a token'
 });
 
 test('the published token groups are exported as written, beside the variables', () => {
-  assert.deepEqual(Object.keys(uiConfig.tokens.layer), ['base', 'scene', 'hud', 'screenChrome', 'sheet', 'popover', 'toast', 'tooltip', 'blocking']);
+  assert.deepEqual(Object.keys(uiConfig.tokens.layer), ['base', 'scene', 'hud', 'screenChrome', 'environmentEffects', 'sheet', 'popover', 'toast', 'tooltip', 'blocking']);
   assert.equal(uiConfig.tokens.layer.blocking, 2000);
+  assert.equal(uiConfig.tokens.layer.environmentEffects, 450);
   assert.equal(uiConfig.tokens.motion.fast, 100);
   assert.equal(uiConfig.tokens.type.scale.body.px, 14);
   assert.deepEqual(uiConfig.tokens.type.minimum, { bodyPx: 14, captionPx: 12, textPx: 11 });

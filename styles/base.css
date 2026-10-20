@@ -3,6 +3,7 @@
 :root {
   --bg: #0d0b08;
   --bg-raise: #171310;
+  --environment-backdrop: #17130f;
   --panel: #241d15;
   --line: #3a3226;
   --line-soft: #4a4034;

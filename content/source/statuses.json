@@ -58,9 +58,9 @@
     "stackMode": "add",
     "decay": "perTurnEnd",
     "modifiers": {
-      "damageTakenMult": 1.5
+      "damageTakenMult": 1.25
     },
-    "tooltip": "Takes 50% more attack damage. 1 stack expires each turn."
+    "tooltip": "Takes 25% more attack damage. 1 stack expires each turn."
   },
   {
     "id": "frail",

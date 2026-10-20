@@ -2412,6 +2412,9 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   background: var(--bg-raise); border: 1px solid var(--line-soft); border-radius: var(--r-3);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
 }
+/* Asleep under a door (modalManager page chrome): drop beneath the veil (z 500)
+   instead of floating above a dialog it cannot answer. */
+.as-dock[inert] { z-index: calc(var(--layer-sheet) - 50); } /* under the modal veil (--layer-sheet) */
 .as-dock > .as-tabs { flex: 1 1 auto; min-width: 0; overflow-x: auto; }
 .as-dock .as-tab { display: inline-flex; align-items: center; gap: 0.5rem; }
 
@@ -5949,22 +5952,22 @@ button[data-button-size] {
   box-shadow: 0 0 calc(7px / var(--ui-zoom, 1)) #b38ae966;
 }
 :root .combat .combatant .combat-health-meter .m-value { color: #fff1d6; letter-spacing: 0; text-shadow: var(--hud-text-shadow, 0 1px 2px #000); }
-:root .combat .combatant .combat-health-badge {
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge {
   position: relative; flex: 0 0 max(14.285%, calc(26px / var(--ui-zoom, 1))); min-width: 0; aspect-ratio: 1; display: grid; place-items: center;
   color: #fff1d6; font: 500 var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)))/1 var(--font-body);
   font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000; isolation: isolate;
 }
-:root .combat .combatant .combat-health-badge::before { content: ''; position: absolute; inset: 0; z-index: -1; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge::before { content: ''; position: absolute; inset: 0; z-index: -1; }
 /* Block badge: a dark plate with a silver rim, so its silver figure reads with a black outline. */
-:root .combat .combatant .combat-health-shield::before { background: linear-gradient(135deg, #3b434d, #1d2228 60%, #0f1216); clip-path: polygon(8% 5%,50% 0,92% 5%,87% 70%,50% 100%,13% 70%); }
-:root .combat .combatant .combat-health-shield { aspect-ratio: 40/44; filter: drop-shadow(0 0 1px var(--block-silver)) drop-shadow(0 0 3px #d8dde355); }
-:root .combat .combatant .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); color: var(--block-silver); text-shadow: none; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
-:root .combat .combatant .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
-:root .combat .combatant .combat-health-ward { filter: drop-shadow(0 0 4px #b38ae966); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-shield::before { background: linear-gradient(135deg, #3b434d, #1d2228 60%, #0f1216); clip-path: polygon(8% 5%,50% 0,92% 5%,87% 70%,50% 100%,13% 70%); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-shield { aspect-ratio: 40/44; filter: drop-shadow(0 0 1px var(--block-silver)) drop-shadow(0 0 3px #d8dde355); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); color: var(--block-silver); text-shadow: none; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-ward { filter: drop-shadow(0 0 4px #b38ae966); }
 /* Barrier: Ward charged past full until the owner's next turn — a blue rim. */
-:root .combat .combatant .combat-health-ward-barrier::before { box-shadow: 0 0 0 max(2px, calc(3px / var(--ui-zoom, 1))) #5fa8ff, 0 0 8px 2px #5fa8ffaa; }
-:root .combat .combatant .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-:root .combat .combatant .combat-health-badge { min-width: max-content; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-ward-barrier::before { box-shadow: 0 0 0 max(2px, calc(3px / var(--ui-zoom, 1))) #5fa8ff, 0 0 8px 2px #5fa8ffaa; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge { min-width: max-content; }
 :root body.cb-safe .combat .combatant .combat-health-row { --health-red: var(--res-hp); }
 @container combat-health (max-width: 4em) {
   :root .combat .combatant .combat-health-meter .m-value { font-size: 0 !important; }
@@ -5974,7 +5977,7 @@ button[data-button-size] {
 }
 @container game-viewport (max-width: 600px) {
   :root .combat .combatant .combat-health-row { min-width: calc(70px / var(--ui-zoom, 1)); gap: calc(2px / var(--ui-zoom, 1)); }
-  :root .combat .combatant .combat-health-badge { flex-basis: calc(16px / var(--ui-zoom, 1)); }
+  :root .combat :is(.combatant, .target-hud-meters) .combat-health-badge { flex-basis: calc(16px / var(--ui-zoom, 1)); }
 }
 
 .character-level-action { min-height: 44px; width: 100%; margin-top: .65rem; }
@@ -6456,29 +6459,35 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .customize .cc-equip-group[data-equipment-section="startingAbilities"] > :not(.cc-card-selectors) { flex:none; }
 
 /* Defense order is shared by player, enemy and co-op health rows. */
-:root .combat .combatant .combat-health-evade { color: #fff; gap: .08em; }
-:root .combat .combatant .combat-health-evade::before { border-radius: 50%; background: #20242a; }
-:root .combat .combatant .combat-health-evade-icon { font-size: .8em; }
-:root .combat .combatant .combat-health-poise { color: var(--gold, #ffd34d); }
-:root .combat .combatant .combat-health-poise::before { border-radius: 35%; background: #493a12; border: 1px solid #ffd34d; }
-:root .combat .combatant .combat-health-badge-value { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
-:root .combat .combatant .combat-hit-chance { color: #fff; font-weight: 700; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
-:root .combat .combatant .combat-hit-chance[data-roll-mode='advantage'] { color: #83df99; }
-:root .combat .combatant .combat-hit-chance[data-roll-mode='disadvantage'] { color: #ff8179; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision) { color: #fff; gap: .08em; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision)::before { border-radius: 50%; background: #20242a; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon) { font-size: .8em; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-poise { color: var(--gold, #ffd34d); }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-poise::before { border-radius: 35%; background: #493a12; border: 1px solid #ffd34d; }
+:root .combat :is(.combatant, .target-hud-meters) .combat-health-badge-value { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+/* Hit-% badge (owner 2026-10-18): centred on the target's painted body, white with a black outline, 2x size.
+   --combat-body-center-x/y are set per frame by the battlefield refit (centerTargetOverheads). The outline
+   is a text-shadow ring so Chromium and WebKit draw the same; it never takes a tap. */
+:root .combat .combatant > .combat-hit-chance {
+  position: absolute; left: var(--combat-body-center-x, 50%); top: var(--combat-body-center-y, 50%);
+  translate: -50% -50%; z-index: var(--combat-layer-hud, 700); pointer-events: none; white-space: nowrap;
+  color: white; font: 700 calc(26px / var(--ui-zoom, 1))/1 var(--font-body, Georgia, serif);
+  text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black, 0 -2px 0 black, 0 2px 0 black, -2px 0 0 black, 2px 0 0 black;
+}
 
-:root .combat .combatant .combat-health-evade-icon svg { width: .85em; height: .85em; display: block; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon) svg { width: .85em; height: .85em; display: block; }
 
 :root .combat .combatant .combat-health-meter .m-value,
 :root .combat .combatant .combat-health-meter .m-value::after { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
 
 /* Keep the Evade icon inside the same compact badge geometry as defenses. */
-:root .combat .combatant .combat-health-evade {
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade, .combat-health-precision) {
   flex: 0 0 calc(22px / var(--ui-zoom, 1)); width: calc(22px / var(--ui-zoom, 1));
   min-width: 0; max-width: calc(22px / var(--ui-zoom, 1)); height: calc(22px / var(--ui-zoom, 1));
   aspect-ratio: 1; grid-template-columns: .8em 1fr; padding: 0 .15em; overflow: hidden;
 }
-:root .combat .combatant .combat-health-evade-icon { min-width: 0; width: .8em; height: .8em; }
-:root .combat .combatant .combat-health-evade-icon svg { width: 100%; height: 100%; max-width: 100%; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon) { min-width: 0; width: .8em; height: .8em; }
+:root .combat :is(.combatant, .target-hud-meters) :is(.combat-health-evade-icon, .combat-health-precision-icon) svg { width: 100%; height: 100%; max-width: 100%; }
 
 /* Selected-card odds share the engine preview and observer gate with the HUD. */
 .combat .hand .card .card-hit-chances { position: absolute; z-index: 8; inset-inline: 0; bottom: calc(100% + .35rem); display: flex; flex-wrap: wrap; justify-content: center; gap: .2rem .5rem; padding: .35rem; background: #15120fed; border: 1px solid #a58a4f; border-radius: .3rem; font: 700 1.1rem/1.2 var(--font-body); pointer-events: none; }

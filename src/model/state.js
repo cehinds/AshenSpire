@@ -1,4 +1,5 @@
-import { validateResolvedGameProfile } from '../../engine/kernel/gameConfig.js';
+import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
+import { validateVerifiedProfile as validateResolvedGameProfile } from './verifiedProfiles.js';
 import { gameModule, gameContent } from './gameProfile.js';
 import { isConfiguredRun, gameProfileAttributes, gameProfileClassAvailable, gameProfileStatOptions, initializeGameProfileRun } from './gameProfileRun.js';
 import { startingAbilityRefs } from './startingAbilities.js';
@@ -415,7 +416,7 @@ export function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const modeProfiles = run.attributeModeSnapshot && run.attributeModeSnapshot.equipmentProfiles;
-  const effectiveAttributes = effectiveAshenBlightAttributes(run);
+  const effectiveAttributes = gameProfileEffectiveAttributes(registries,run,effectiveAshenBlightAttributes(run));
   const blightStaminaPenalty = run.combatExpansionVersion === 2 ? ashenBlightBonuses(run).maxStaminaPenalty : 0;
   // THE CREATION SCALE NO LONGER TOUCHES A DERIVED ROW (owner, 2026-09-21).
   // A smaller starting pool used to multiply every `pointsPerTier` by the
@@ -432,7 +433,7 @@ export function initializeRunDerivedStats(run, registries, {
   const effectiveDerivedStatOptions = { ...derivedStatOptions, modeModifiers };
   const existing = snapshot || run.derivedStatRuleSnapshot;
   const classDef = registries.classes.get(run.class);
-  const liveEquipmentMods = run.loadout ? runMods(registries, run.loadout, run.class) : null;
+  const liveEquipmentMods = run.loadout ? runMods(registries, run.loadout, run.class, run) : null;
   run.equipmentProfileRuleSnapshot = run.equipmentProfileRuleSnapshot
     ? restoreEquipmentProfileRuleSnapshot(run.equipmentProfileRuleSnapshot, registries)
     : createEquipmentProfileRuleSnapshot(registries, effectiveDerivedStatOptions);
@@ -1006,6 +1007,16 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (!typeOk(snapshot, 'object')) return;
     const knowledge = snapshot.enemyKnowledge;
     if (!run.enemyKnowledgeRules) {
+      // Configured FixCore fights own their cached reads locally. They do not
+      // open the legacy run learning/Perception ledger or bank any knowledge.
+      // The caller still validates the complete combat snapshot above.
+      const battleLocal = isConfiguredRun(run) && run.combatExpansionVersion === 2
+        && gameModule(run, 'effects')?.fixCoreVersion === 1
+        && snapshot.combatExpansionVersion === 2 && snapshot.gameProfile?.hash === run.gameProfile.hash
+        && snapshot.fixCoreRules?.version === 1 && snapshot.fixCoreRules.enabled === true
+        && run.enemyKnowledgeRules === undefined && run.enemyKnowledgeState === undefined
+        && knowledge?.bankable === false && knowledge.encounter === null;
+      if (battleLocal) return;
       if (knowledge !== undefined) problems.push(`${path}.enemyKnowledge requires the run's knowledge rules`);
       return;
     }

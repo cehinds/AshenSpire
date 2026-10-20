@@ -204,6 +204,28 @@
       "manaCost": 0
     },
     "sp": {
+      "cost": 3,
+      "staminaCost": 3,
+      "manaCost": 0
+    },
+    "mp": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp,mp": {
+      "cost": 3,
+      "staminaCost": 3,
+      "manaCost": 0
+    }
+  },
+  "core.cantrip": {
+    "none": {
+      "cost": 0,
+      "staminaCost": 0,
+      "manaCost": 0
+    },
+    "sp": {
       "cost": 1,
       "staminaCost": 1,
       "manaCost": 0

@@ -1,4 +1,5 @@
 import { pinGameProfileCopy } from '../model/ownedGameProfile.js';
+import { validateFixCoreRules, normalizeFixCoreRules } from '../model/fixCoreMechanics.js';
 import { formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { enemyBurdenProblems } from './enemyBurdens.js';
 import { hasCardChoice } from './cardZones.js';
@@ -13,7 +14,7 @@ import { freezeProfile, configuredCombat } from './gameProfileCombat.js';
 import { bindTurnStamina } from '../model/turnStamina.js';
 import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
-import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncFeatProperties, syncCompanionProperties, syncSigilProperties } from './properties.js';
+import { syncConfiguredEnemyProperties, syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncFeatProperties, syncCompanionProperties, syncSigilProperties } from './properties.js';
 import { stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
@@ -56,6 +57,7 @@ export function serializeCombatSnapshot(combat) {
   if (formationErrors.length) throw new Error(formationErrors.join('; '));
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
+    ...(combat.fixCoreRules ? {fixCoreRules:validateFixCoreRules(combat.fixCoreRules)} : {}),
     ...(combat.formationPolicy ? { formationPolicy: combat.formationPolicy } : {}),
     ...(combat.gameProfile ? { gameProfile: combat.gameProfile, gameProfileCommands: combat.gameProfileCommands || 0, gameProfileInterrupts: combat.gameProfileInterrupts || {} } : {}),
     ...(combat.combatExpansionVersion === 2 ? { combatExpansionVersion: 2, combatExpansionRules: combat.combatExpansionRules, combatKey: combat.combatKey,
@@ -171,6 +173,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // the caller's object is left as saved.
   const saved = structuredClone(snapshot);
   bringRangesForward(saved);
+  if (saved.fixCoreRules) saved.fixCoreRules = normalizeFixCoreRules(saved.fixCoreRules);
   assertCombatSnapshot(saved);
   if (saved.gameProfile) validateGameProfileSnapshot(saved.gameProfile);
   if (expectedGameProfile && saved.gameProfile?.hash !== expectedGameProfile.hash) throw new Error('Combat game profile does not match the run configuration');
@@ -178,7 +181,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   for(const enemy of saved.enemies) {const errors=enemyBurdenProblems(enemy,registries);if(errors.length)throw new Error(`Malformed enemy burden: ${errors.join('; ')}`);}
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
-    ...(saved.gameProfile ? { gameProfile: pinGameProfileCopy(saved.gameProfile, freezeProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
+    ...(saved.fixCoreRules ? {fixCoreRules:validateFixCoreRules(saved.fixCoreRules)} : {}),    ...(saved.gameProfile ? { gameProfile: pinGameProfileCopy(saved.gameProfile, freezeProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
     registries,
     rng,
     ...(saved.formationPolicy ? { formationPolicy: saved.formationPolicy } : {}),
@@ -302,6 +305,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   syncFeatProperties(combat);
   syncCompanionProperties(combat);
   syncSigilProperties(combat);
+  syncConfiguredEnemyProperties(combat);
   // The player's poise max is RE-DERIVED, never trusted from the save (plan
   // phase 8): a fight saved before the formula changed keeps its accumulated
   // value and takes the receipt's max — Constitution, body armour, relics —

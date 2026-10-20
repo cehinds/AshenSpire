@@ -13,9 +13,7 @@
       "tag": "camp:spell",
       "family": "camp",
       "portability": "legacy",
-      "modules": [
-        "deck-training"
-      ]
+      "modules": []
     },
     {
       "id": "classification.armament",
@@ -193,6 +191,41 @@
       "modules": [
         "deck-training"
       ]
+    },
+    {
+      "id": "combat.accuracy",
+      "tag": "combat:accuracy",
+      "family": "combat",
+      "portability": "portable",
+      "modules": []
+    },
+    {
+      "id": "combat.actionCosts",
+      "tag": "combat:actionCosts",
+      "family": "combat",
+      "portability": "portable",
+      "modules": []
+    },
+    {
+      "id": "combat.perception",
+      "tag": "combat:perception",
+      "family": "combat",
+      "portability": "portable",
+      "modules": []
+    },
+    {
+      "id": "combat.stance",
+      "tag": "combat:stance",
+      "family": "combat",
+      "portability": "portable",
+      "modules": []
+    },
+    {
+      "id": "combat.statuses",
+      "tag": "combat:statuses",
+      "family": "combat",
+      "portability": "portable",
+      "modules": []
     },
     {
       "id": "cost.action",
@@ -381,6 +414,20 @@
       "tag": "damage:slashing",
       "family": "damage",
       "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "defense.poiseProtection",
+      "tag": "defense:poiseProtection",
+      "family": "defense",
+      "portability": "portable",
+      "modules": []
+    },
+    {
+      "id": "defense.wardProtection",
+      "tag": "defense:wardProtection",
+      "family": "defense",
+      "portability": "portable",
       "modules": []
     },
     {
@@ -704,7 +751,7 @@
       "id": "internal.upgraded",
       "tag": "internal.upgraded",
       "family": "internal",
-      "portability": "data",
+      "portability": "legacy",
       "modules": []
     },
     {
@@ -1005,6 +1052,13 @@
       "id": "source_weapon",
       "tag": "source:weapon",
       "family": "source",
+      "portability": "legacy",
+      "modules": []
+    },
+    {
+      "id": "stance.staggered",
+      "tag": "stance.staggered",
+      "family": "stance",
       "portability": "legacy",
       "modules": []
     },
@@ -1436,6 +1490,7 @@
       "family": "status",
       "portability": "legacy",
       "modules": [
+        "gear",
         "statuses"
       ]
     },

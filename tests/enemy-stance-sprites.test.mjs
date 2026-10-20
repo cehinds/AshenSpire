@@ -18,7 +18,7 @@ import { enemyMoveCarrier } from '../src/engine/combatCardTactics.js';
 // Execute the actual paced reducer case without mounting the screen's DOM.
 const combatSource = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
 const moveCase = combatSource.match(/case 'enemyMoveStarted': \{([\s\S]*?)\n        case 'enemyActorTurnStarted':/);
-const applyMoveBeat = new Function('e', 'disp', 'combat', 'registries', 'enemyStanceCategory', 'enemyMoveCarrier',
+const applyMoveBeat = new Function('e', 'disp', 'combat', 'registries', 'enemyStanceCategory', 'enemyMoveCarrier', 'advanceFollowUps', 'followMemo',
   `switch (e.type) { case 'enemyMoveStarted': { ${moveCase?.[1] || 'break; }'} }`);
 
 test('paced pooled follow-ups use the performed move, not the final live intent', () => {
@@ -30,7 +30,7 @@ test('paced pooled follow-ups use the performed move, not the final live intent'
   const combat = { enemies: [enemy] }, disp = { ents: { e1: { presentationStance: 'defend', intentPreview: { hidden: true } } } };
   const registries = { enemies: new Map([['probe', { moves }]]) };
   for (const [moveId, expected] of [...Object.keys(moves).map(id => [id, id === 'spell' ? 'preparing' : id])]) {
-    applyMoveBeat({ type: 'enemyMoveStarted', sourceId: 'e1', enemyId: 'probe', moveId }, disp, combat, registries, enemyStanceCategory, enemyMoveCarrier);
+    applyMoveBeat({ type: 'enemyMoveStarted', sourceId: 'e1', enemyId: 'probe', moveId }, disp, combat, registries, enemyStanceCategory, enemyMoveCarrier, () => [], { setRow: (id, row) => row });
     assert.equal(disp.ents.e1.presentationStance, expected);
     assert.deepEqual(disp.ents.e1.intentPreview, { hidden: true }, 'body pose does not reveal private intent');
   }
@@ -41,7 +41,7 @@ test('reaction and unknown move receipts preserve the current planned hold', () 
   const disp = { ents: { e1: { presentationStance: 'smash' } } };
   const registries = { enemies: new Map([['probe', { moves: { defend: { intent: 'block' } } }]]) };
   for (const event of [{ moveId: 'defend', reaction: true }, { moveId: 'missing' }, { sourceId: 'missing', moveId: 'defend' }]) {
-    applyMoveBeat({ type: 'enemyMoveStarted', sourceId: 'e1', ...event }, disp, combat, registries, enemyStanceCategory, enemyMoveCarrier);
+    applyMoveBeat({ type: 'enemyMoveStarted', sourceId: 'e1', ...event }, disp, combat, registries, enemyStanceCategory, enemyMoveCarrier, () => [], { setRow: (id, row) => row });
     assert.equal(disp.ents.e1.presentationStance, 'smash');
   }
 });

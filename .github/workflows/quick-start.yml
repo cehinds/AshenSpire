@@ -106,20 +106,14 @@ jobs:
           tail -n 12 /tmp/quick-start.log | while IFS= read -r l; do echo "::notice title=quick-start::${l//::/:}"; done
           exit $rc
 
-      # docs/FINISH.md §5: click to contact ≤ 400 ms at Normal pacing, and (owner,
-      # 2026-10-11, sequential beat order) click to the first number ≤ 750 ms.
+      # Ordered Core2: prove four 500 ms stages and half-rate authored sprites.
+      # Report raw latency; gate contact/first-number overhead at 400/750 ms.
       # The same browser, art and source server; the probe takes Quick start on
       # a pinned seed and times real clicks to the attacker's contact (the
       # effects layer's data-contact) and to the first damage or guard number
-      # (about a minute).
-      - name: Click to contact within 400 ms and first number within 750 ms at Normal pacing
-        id: click_impact
+      # (including immediate protection and a hostile action stage proof).
+      - name: Ordered action stages and contact/number overhead within 400/750 ms
         run: |
           set +e; node tools/verdict.mjs -- node tools/click-impact-probe.mjs 2>&1 | tee /tmp/probe.log; rc=${PIPESTATUS[0]}; set -e
           tail -n 12 /tmp/probe.log | while IFS= read -r l; do echo "::notice title=click-impact::${l//::/:}"; done
           exit $rc
-
-      - name: Diagnose failed click timing without replacing acceptance
-        # Instrumentation is failure evidence, never a replacement acceptance run.
-        if: ${{ failure() && steps.click_impact.outcome == 'failure' }}
-        run: node tools/verdict.mjs -- node tools/click-impact-probe.mjs --diagnostics

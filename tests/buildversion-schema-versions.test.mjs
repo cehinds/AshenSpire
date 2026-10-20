@@ -4,6 +4,7 @@ import { mkdtempSync, cpSync, readFileSync, writeFileSync, rmSync } from 'node:f
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { check, release, REPO_ROOT, BUILD_IDENTITY_FILES, catalogSchemaVersionSpans, catalogVersionScanText } from '../tools/buildversion.mjs';
+import { fixCoreProtection } from '../src/content/generated/fixCoreProtection.js';
 import { gameProfileCatalog } from '../src/content/generated/gameProfiles.js';
 
 import { catalogJSONExpression } from '../tools/catalog-json.mjs';
@@ -80,7 +81,7 @@ test('unrecognized generated fields and other files never receive a catalog-wide
     const text = catalogVersionScanText(file, moduleText(catalog, format));
     const exempt = catalogSchemaVersionSpans(file, text);
     assert.ok(exempt.length > 200, name); // 252 sites since the src/** hashes left the catalog (was >1000 with them)
-    for (const span of exempt) assert.equal(JSON.parse(text.slice(span.start, span.end)), '1.0.0');
+    for (const span of exempt) assert.match(JSON.parse(text.slice(span.start, span.end)), /^\d+\.\d+\.\d+$/);
     for (const match of text.matchAll(/"latest"/g)) {
       assert.equal(exempt.some(span => span.start <= match.index && match.index < span.end), false, name);
     }
@@ -121,5 +122,22 @@ test('tagging transport exposes decoded data and surrounding JavaScript without 
   }
   for (const expression of invalidEncodedExpressions) {
     assert.throws(() => catalogVersionScanText(taggingFile, 'export const tagging = ' + expression + ';'));
+  }
+});
+
+test('generated mechanic versions exempt only registered manifest protocol fields', () => {
+  const file = 'src/content/generated/fixCoreProtection.js';
+  for (const [name, format] of formats.filter(([name]) => name !== 'dictionary')) {
+    const definitions = structuredClone(fixCoreProtection);
+    definitions[0][1].manifest.version = release(REPO_ROOT);
+    definitions[0][1].service.display = {version:'latest'};
+    const text = 'export const fixCoreProtection = '+format(definitions)+';\nexport const SHOWN_VERSION = "latest";\n';
+    const spans = catalogSchemaVersionSpans(file,text);
+    assert.equal(spans.length,definitions.length,name);
+    for (const span of spans) assert.match(JSON.parse(text.slice(span.start,span.end)),/^\d+\.\d+\.\d+$/);
+    for (const match of text.matchAll(/"latest"/g)) assert.equal(spans.some(span=>span.start<=match.index && match.index<span.end),false,name);
+    assert.deepEqual(catalogSchemaVersionSpans('src/content/generated/unregisteredMechanics.js',text),[]);
+    assert.deepEqual(catalogSchemaVersionSpans(file,text.replace('"manifest"','"manifest":BROKEN,"other"')),[]);
+    assert.deepEqual(catalogSchemaVersionSpans(file,text.replace(';\nexport',' + unsafe;\nexport')),[]);
   }
 });

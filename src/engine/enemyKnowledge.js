@@ -79,7 +79,7 @@ export function addKnowledgeObserver(combat, ownerId, profile = emptyEnemyKnowle
   const selected = combat.enemies.filter(enemy => enemy.alive && enemy.knowledgeAction && !enemy.knowledgeAction.executed && !enemy.knowledgeAction.cancelled)
     .sort((a, b) => a.knowledgeAction.serial - b.knowledgeAction.serial);
   for (const enemy of selected) if (!Object.hasOwn(enemy.knowledgeAction.reads, ownerId)) {
-    enemy.knowledgeAction.reads[ownerId] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: perceptionLevel(owner.skills) }, enemy.knowledgeAction.category);
+    enemy.knowledgeAction.reads[ownerId] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: perceptionLevel(owner.skills) }, enemy.knowledgeAction.category, { ctx: combat, target: enemy });
   }
   storeReadCounters(state, rng);
   return state.owners[ownerId];
@@ -104,7 +104,7 @@ export function rollEnemyKnowledge(combat, enemy, { charging = false } = {}) {
   const action = { serial: ++state.nextSerial, category, executed: false, reads: {} };
   for (const owner of observers(combat).filter(row => row.entity?.alive && row.connected)) {
     if (!Object.hasOwn(state.owners, owner.id)) state.owners[owner.id] = newKnowledgeOwner(state);
-    action.reads[owner.id] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: perceptionLevel(owner.skills) }, category);
+    action.reads[owner.id] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: perceptionLevel(owner.skills) }, category, { ctx: combat, target: enemy });
   }
   storeReadCounters(state, rng);
   enemy.knowledgeAction = action;

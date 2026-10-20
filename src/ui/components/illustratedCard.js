@@ -36,10 +36,12 @@ function componentPlane(l,position,body,clip,layer,id=l.id,cut=null){
 // These braces belong to the base frame, leaving its original stone and metal
 // visible beneath the action. The text layer adds no separate plaque.
 const actionBaseFrame = `<svg class="card-base-action-frame" viewBox="0 0 360 540" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M16 460H344M16 458V483L48 525H312L344 483V458" fill="none" stroke="#17110b" stroke-width="5"/><path d="M17 460H343M17 458V483L49 525H311L343 483V458" fill="none" stroke="#a37b43" stroke-width="2.4"/><path d="M19 460H341M19 462V482L50 523H310L341 482V462" fill="none" stroke="#e0bc7c" stroke-width=".7"/><path d="M20 467 39 482 20 501M340 467 321 482 340 501" fill="none" stroke="#21180e" stroke-width="4"/><path d="M20 467 39 482 20 501M340 467 321 482 340 501" fill="none" stroke="#a98247" stroke-width="1.4"/></svg>`;
+// A rule moved the printed SP price (a Core 2 reaction played from hand costs 1 less): the number reads up or down.
+const shiftMark=(costs,text)=>costs.shift?`<span class="cost-shift" data-shift="${costs.shift<0?'down':'up'}">${text}</span>`:text;
 export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false,artworkKind='illustrated',artworkPosition=null,artworkComposition=null,glyph,completeRules=false,rulesOverflow=false}){
   const doc=CARD_COMPONENTS.cards[model.id]||CARD_COMPONENTS.template;
   const clip=doc.clipPolygon?'polygon('+doc.clipPolygon.map(([x,y])=>`${x*100}% ${y*100}%`).join(',')+')':polygon;
-  const values={name:esc(model.name),rules,tags:esc([model.type?.label, model.type?.subtype, model.type?.abilityLabel, model.type?.weaponArt].filter(Boolean).join(' · ')),action:esc(model.costs.variable?'X':model.costs.action),mana:esc(model.costs.mana??0),stamina:esc(model.costs.variable?'X':model.costs.stamina??0)};
+  const values={name:esc(model.name),rules,tags:esc([model.type?.label, model.type?.subtype, model.type?.abilityLabel, model.type?.weaponArt].filter(Boolean).join(' · ')),action:esc(model.costs.variable?'X':model.costs.action),mana:esc(model.costs.mana??0),stamina:shiftMark(model.costs,esc(model.costs.variable?'X':model.costs.stamina??0))};
   const costLayout=Number(model.costs.mana)>0?'staminaMana':'staminaOnly';
   const costLayers=doc.costLayouts?.[costLayout]?.layers||{};
   const portraitArt=artworkComposition?.fit==='cover'||painting?.startsWith('assets/cards/extended/');

@@ -182,6 +182,36 @@
           "type": "number",
           "minimum": 0,
           "maximum": 100
+        },
+        "hp": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "mp": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "sp": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "ward": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "evasion": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "precision": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
         }
       },
       "required": [
@@ -244,6 +274,36 @@
                     "maximum": 100
                   },
                   "poise": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "hp": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "mp": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "sp": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "ward": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "evasion": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "precision": {
                     "type": "number",
                     "minimum": 0,
                     "maximum": 100
@@ -321,6 +381,36 @@
                     "type": "number",
                     "minimum": 0,
                     "maximum": 100
+                  },
+                  "hp": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "mp": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "sp": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "ward": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "evasion": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "precision": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
                   }
                 },
                 "additionalProperties": false
@@ -380,6 +470,36 @@
                     "maximum": 100
                   },
                   "poise": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "hp": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "mp": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "sp": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "ward": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "evasion": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "precision": {
                     "type": "number",
                     "minimum": 0,
                     "maximum": 100
@@ -443,6 +563,36 @@
                   "type": "number",
                   "minimum": 0,
                   "maximum": 100
+                },
+                "hp": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "mp": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "sp": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "ward": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "evasion": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "precision": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
                 }
               },
               "additionalProperties": false
@@ -487,6 +637,39 @@
         "kinds",
         "slots",
         "global"
+      ],
+      "additionalProperties": false
+    },
+    "armorBudget": {
+      "type": "object",
+      "properties": {
+        "baseline": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "perRank": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99
+        },
+        "perRankStat": {
+          "type": "string",
+          "enum": [
+            "dr"
+          ]
+        },
+        "rarityBonus": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99
+          }
+        }
+      },
+      "required": [
+        "baseline"
       ],
       "additionalProperties": false
     }

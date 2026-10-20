@@ -97,3 +97,9 @@
 /* One face text in every view; the hand hides lines past three until its card is selected. */
 :root .illustrated-card .face-line {display:block;}
 :root .hand .illustrated-card:not(.selected) [data-face-extra] {display:none;}
+
+/* A rule moved the printed SP price: lower reads green with a down mark, higher red with an up mark. */
+:root .illustrated-card-face .cost-shift { color:var(--green); text-shadow:0 1px rgba(0,0,0,.6); }
+:root .illustrated-card-face .cost-shift[data-shift='up'] { color:var(--danger); }
+:root .illustrated-card-face .cost-shift::after { content:'\25BE'; font-size:.5em; vertical-align:top; margin-left:.1em; }
+:root .illustrated-card-face .cost-shift[data-shift='up']::after { content:'\25B4'; }

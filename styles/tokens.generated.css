@@ -12,6 +12,7 @@
   --layer-scene: 10;
   --layer-hud: 80;
   --layer-screen-chrome: 100;
+  --layer-environment-effects: 450;
   --layer-sheet: 500;
   --layer-popover: 600;
   --layer-toast: 700;

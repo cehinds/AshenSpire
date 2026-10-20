@@ -1,0 +1,8 @@
+{
+  "mechanic": "defense.poiseProtection",
+  "commands": {},
+  "queries": {},
+  "events": {},
+  "requires": [],
+  "listens": []
+}

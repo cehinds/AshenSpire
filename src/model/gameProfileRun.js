@@ -1,3 +1,5 @@
+import { gameProfileEquipmentReceipt, gameProfileEffectiveAttributes } from './gameProfileGear.js';
+export { gameProfileEquipmentReceipt, gameProfileEffectiveAttributes };
 import { deriveStat } from './derivedStats.js';
 // Profile-selected run policies. Legacy profiles never enter these branches.
 import { gameModule, gameContent } from './gameProfile.js';
@@ -33,6 +35,9 @@ export function gameProfileCompletedRunMeta(subject, meta, result) {
 export function gameProfileStarterDeck(subject, classId) {
   const deck = gameContent(subject, 'starterDeck');
   if (gameModule(subject, 'cards')?.mode !== 'configured' || !deck) return null;
+  // A class may author its whole opening list (classDecks, specials included); otherwise the shared list plus the class special applies.
+  const own = deck.classDecks?.[classId];
+  if (own) return own.flatMap(row => Array(row.copies).fill(row.card));
   const ids = deck.shared.flatMap(row => Array(row.copies).fill(row.card));
   const special = deck.classSpecials[classId];
   if (!special) throw new Error(`starterDeck.classSpecials.${classId}: missing card`);
@@ -101,13 +106,20 @@ export function gameProfileRatingReceipt(registries, run) {
   const ids = ['ar','dr','pr','ward','poise'];
   const totals = Object.fromEntries(ids.map(id => [id,0]));
   const attributeReceipts = {};
+  const gear = gameProfileEquipmentReceipt(registries,run);
+  const attributes = gameProfileEffectiveAttributes(registries,run);
   const stats = gameModule(run,'stats')?.mode === 'configured';
   if (stats) for (const id of ids) {
     const table = run.derivedStatRuleSnapshot?.rules || registries.derivedStatRules;
-    const receipt = deriveStat(table,id,{attributes:run.attributes,classDef:registries.classes.get(run.class),level:run.level?.level || 1});
+    const receipt = deriveStat(table,id,{attributes,classDef:registries.classes.get(run.class),level:run.level?.level || 1});
     attributeReceipts[id] = receipt; totals[id] = receipt.value;
   }
   const sources = [{name:'Attributes',kind:'attribute',...totals}];
+  for (const source of gear.sources) {
+    const ratingSource = {...source,pr:0};
+    for (const id of ids) { ratingSource[id] = source[id] || 0; totals[id] += ratingSource[id]; }
+    sources.push(ratingSource);
+  }
   const policy = gameModule(run,'equipment')?.upgradeBonuses;
   if (stats && policy && run.loadout) {
     let weaponTier = 0, armorTier = 0;
@@ -120,12 +132,20 @@ export function gameProfileRatingReceipt(registries, run) {
         const piece = registries.equipment.armaments.find(row => row.id === id);
         if (!piece) continue;
         if (piece.kind === 'shield') armorTier = Math.max(armorTier,tier(`armament/${id}`));
-        else weaponTier = Math.max(weaponTier,tier(`armament/${id}`));
+        else {
+          const itemTier = tier(`armament/${id}`);
+          weaponTier = Math.max(weaponTier,itemTier);
+          if (gameModule(run,'gear')?.armorBudget && itemTier) {
+            const ar = itemTier * policy.weaponARPerTier;
+            totals.ar += ar;
+            sources.push({name:piece.name || id,kind:'equipment',sourceId:`armament/${id}`,itemId:id,slot,ar,dr:0,pr:0,ward:0,poise:0,weaponTier:itemTier});
+          }
+        }
       }
     }
-    const ar = weaponTier * policy.weaponARPerTier, dr = armorTier * policy.armorDRPerTier;
+    const ar = gameModule(run,'gear')?.armorBudget ? 0 : weaponTier * policy.weaponARPerTier, dr = gameModule(run,'gear')?.armorBudget ? 0 : armorTier * policy.armorDRPerTier;
     totals.ar += ar; totals.dr += dr;
-    sources.push({name:'Equipped upgrade tiers',kind:'equipment',sourceId:'configured-upgrades',ar,dr,pr:0,ward:0,poise:0,weaponTier,armorTier});
+    if (ar || dr) sources.push({name:'Equipped upgrade tiers',kind:'equipment',sourceId:'configured-upgrades',ar,dr,pr:0,ward:0,poise:0,weaponTier,armorTier});
   }
-  return {totals,sources,attributeReceipts};
+  return {totals,sources,attributeReceipts,baseEvasionBonus:gear.totals.evasion,basePrecisionBonus:gear.totals.precision};
 }

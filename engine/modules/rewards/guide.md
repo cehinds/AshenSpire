@@ -2,7 +2,7 @@
 
 Offer a bounded selection of eligible post-encounter rewards.
 
-**Status:** Listed in `ashen.core@1.0.0`.
+**Status:** Listed in `ashen.core@2.0.0`.
 Runtime scope: Configured reward offer count/type selection and one-of-three choice flow.
 
 ## Authoring example
@@ -12,7 +12,7 @@ Add one override to `games/ashenspire/game.json`; leave other bundled modules in
 ```json
 {
   "formatVersion": 1,
-  "core": "ashen.core@1.0.0",
+  "core": "ashen.core@2.0.0",
   "modules": {
     "rewards": false
   }
@@ -58,3 +58,19 @@ node tools/game-config.mjs check
 ```
 
 For runtime changes, use the focused tests in `tests/game-profile-run.test.mjs` and the matching module tests. A passing resolver check proves schema/resolution only, not that every host behavior is covered by browser acceptance.
+
+## Weighted ordinary combat rewards
+
+`rewardGroups` partitions the enabled categories. Each group has a unique `id`, a
+nonnegative `weight`, and a nonempty `categories` list. Ordinary combat draws a
+group by weight, then a category uniformly inside that group, then an eligible
+distinct item. The core pack uses cards 60, combined relic/equipment 10, and
+consumables 30. Weapon arts count as cards. This is an offer-slot distribution,
+not the percentage of player choices. Level rewards and special sources retain
+their explicit policies.
+
+Empty categories are removed and positive weights renormalize; a group with no
+available category is skipped. Zero-weight groups remain disabled. If all
+enabled pools run out, the offer contains fewer options. Saved offers retain
+their items and do not draw again on reopening. An absent/empty group policy
+preserves older profiles' uniform category selection.

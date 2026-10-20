@@ -1,60 +1,56 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { runInNewContext } from 'node:vm';
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
 
-const source = readFileSync(new URL('../src/ui/input.js', import.meta.url), 'utf8');
-const functions = source.slice(source.indexOf('function visible(el)'), source.indexOf('\nfunction setFocus('));
-function control(id, { hidden = false, inert = false, chrome = false, flask = false } = {}) {
-  return { id, dataset: {}, isConnected: true, measures: 0,
-    getBoundingClientRect() { this.measures++; return { width: hidden ? 0 : 44, height: 44 }; },
-    closest: selector => selector === '[inert]' ? inert : chrome,
-    matches: selector => selector === '.flask-slot' && flask,
-  };
+const source=readFileSync(new URL('../src/ui/input.js',import.meta.url),'utf8');
+// Run the production restoration/eligibility functions with counted layout
+// reads; stale focus keys must not measure unrelated combat controls.
+const functions=source.slice(source.indexOf('function visible(el) {'),source.indexOf('\nfunction setFocus('));
+function control(key,{hidden=false,inert=false,chrome=false,flask=false}={}){
+ return {dataset:{instanceId:key},isConnected:true,reads:0,
+  getBoundingClientRect(){this.reads++;return{width:20,height:20};},
+  closest(selector){return selector==='[inert]'?inert:chrome;},
+  matches(){return flask;},hidden};
 }
-function fixture(controls, { modal = null, tooltip = [] } = {}) {
-  const app = { id: 'app', classList: { contains: () => false }, querySelectorAll: () => controls };
-  return runInNewContext(functions + '\n({ findByKey, focusables })', {
-    topVeil: () => modal,
-    document: { getElementById: () => app, querySelectorAll: () => tooltip },
-    getComputedStyle: () => ({ visibility: 'visible', display: 'block' }),
-    FOCUS_SELECTOR: 'controls', CHROME: 'chrome',
-  });
+function fixture(controls,{modal=null,tooltip=[]}={}){
+ const app={id:'app',querySelectorAll:()=>controls,classList:{contains:()=>false}};
+ const document={getElementById:()=>app,body:app,querySelectorAll:()=>tooltip};
+ return runInNewContext(functions+'\n({findByKey,focusables})',{
+  document,topVeil:()=>modal,FOCUS_SELECTOR:'controls',CHROME:'chrome',
+  getComputedStyle:el=>({visibility:el.hidden?'hidden':'visible',display:'block'}),
+ });
 }
 
-test('focus memory restores a logical key without measuring unrelated controls', () => {
-  const unrelated = Array.from({ length: 40 }, (_, n) => control(`other-${n}`));
-  const target = control('remembered');
-  const { findByKey } = fixture([...unrelated, target]);
-  assert.equal(findByKey('#remembered'), target);
-  assert.equal(target.measures, 1);
-  assert.ok(unrelated.every(node => node.measures === 0));
-  assert.equal(findByKey('#missing'), null);
-  assert.ok(unrelated.every(node => node.measures === 0));
+test('stale focus memory never forces layout for unrelated controls',()=>{
+ const controls=Array.from({length:100},(_,i)=>control(`card-${i}`));
+ const f=fixture(controls);
+ assert.equal(f.findByKey('i:removed-card'),null);
+ assert.ok(controls.every(el=>el.reads===0));
+ assert.equal(f.findByKey('i:card-53'),controls[53]);
+ assert.equal(controls[53].reads,1);
+ assert.ok(controls.every((el,i)=>i===53||el.reads===0));
+ assert.equal(f.focusables().length,100,'ordinary navigation still checks every eligible control');
 });
 
-test('matching duplicates retain order while hidden, inert and chrome exclusions still apply', () => {
-  const hidden = control('same', { hidden: true }), inert = control('same', { inert: true });
-  const chrome = control('same', { chrome: true }), first = control('same'), second = control('same');
-  const { findByKey } = fixture([hidden, inert, chrome, first, second]);
-  assert.equal(findByKey('#same'), first);
-  assert.equal(inert.measures, 0);
-  const flask = control('same', { chrome: true, flask: true });
-  assert.equal(fixture([flask, first]).findByKey('#same'), flask);
+test('matching keys retain visibility, inert, chrome exclusions and first eligible order',()=>{
+ const hidden=control('same',{hidden:true}),inert=control('same',{inert:true}),chrome=control('same',{chrome:true});
+ const first=control('same'),second=control('same'),unrelated=control('other');
+ const f=fixture([hidden,inert,chrome,first,second,unrelated]);
+ assert.equal(f.findByKey('i:same'),first);
+ assert.equal(inert.reads,0,'inert controls stay excluded before layout');
+ assert.equal(unrelated.reads,0);
+ assert.equal(f.findByKey(''),null);
+ const flask=control('flask',{chrome:true,flask:true});
+ assert.equal(fixture([flask]).findByKey('i:flask'),flask,'the existing flask chrome exception survives');
 });
 
-test('restoration respects the active modal scope and app tooltip candidates', () => {
-  const outside = control('same'), inside = control('same', { chrome: true });
-  const modal = { classList: { contains: name => name === 'modal-veil' }, querySelectorAll: () => [inside] };
-  assert.equal(fixture([outside], { modal }).findByKey('#same'), inside);
-  assert.equal(outside.measures, 0);
-  const tooltip = control('tooltip');
-  assert.equal(fixture([outside], { tooltip: [tooltip] }).findByKey('#tooltip'), tooltip);
-});
-
-test('normal navigation still measures and returns the complete eligible list', () => {
-  const first = control('one'), second = control('two'), hidden = control('hidden', { hidden: true });
-  const { focusables } = fixture([first, second, hidden]);
-  assert.deepEqual(Array.from(focusables()), [first, second]);
-  assert.equal(first.measures, 1); assert.equal(second.measures, 1); assert.equal(hidden.measures, 1);
+test('restoration stays in the top veil and retains tooltip-dialog eligibility on the app',()=>{
+ const appControl=control('same'),modalControl=control('same',{chrome:true});
+ const modal={id:'veil',querySelectorAll:()=>[modalControl],classList:{contains:()=>true}};
+ assert.equal(fixture([appControl],{modal}).findByKey('i:same'),modalControl);
+ assert.equal(appControl.reads,0,'an open veil never measures or restores app controls');
+ const tooltipControl=control('tooltip');
+ assert.equal(fixture([appControl],{tooltip:[tooltipControl]}).findByKey('i:tooltip'),tooltipControl);
+ assert.equal(appControl.reads,0);
 });

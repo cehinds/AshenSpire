@@ -8,6 +8,8 @@ import { characterSettings, resolveGameAuthor, enemyPools, resolveEnemyAttribute
 
 const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url)));
 const catalog = loadGameProfileCatalog();
+const selectedPack = catalog.bundles[author.core].manifest.packs.find(pack => pack.id === 'ashen.core-content');
+const selectedPackKey = `${selectedPack.id}@${selectedPack.version}`;
 const profile = resolveGameAuthor(author, catalog);
 const settings = characterSettings(profile.modules);
 const { enemyCards } = profile.content;
@@ -17,7 +19,7 @@ const enemies = profile.content.enemies.map(e => ({ ...e, attributes: resolveEne
 // Resolve again with one pack-content edit applied to a cloned catalog.
 function resolveWith(edit, authorEdit = a => a) {
   const copy = structuredClone(catalog);
-  const pack = copy.packs['ashen.core-content@1.0.0'].content;
+  const pack = copy.packs[selectedPackKey].content;
   // Enemy rows are characters tagged character.enemy; expose them as pack.enemies for edits.
   const view = { ...pack, enemies: pack.characters.filter(c => c.tags.includes('character.enemy')) };
   edit(view);
@@ -247,7 +249,7 @@ test('default decks are pool keys resolved by class and weapon type, from the sh
   for (const e of profile.content.enemies) for (const id of e.defaultDeck) assert.ok(pool.has(id), `${e.id} -> ${id}`);
   // A weapon-type override changes what the strike pool deals the Reaver (greatsword) but not the Rogue (dagger).
   const copy = structuredClone(catalog);
-  copy.packs['ashen.core-content@1.0.0'].content.cardPools.strike.byTag.greatsword = 'core.smash';
+  copy.packs[selectedPackKey].content.cardPools.strike.byTag.greatsword = 'core.smash';
   const changed = resolveGameAuthor(structuredClone(author), copy).content.classes;
   assert.equal(changed.find(c => c.id === 'reaver').defaultDeck.filter(id => id === 'core.smash').length, 4);
   assert.equal(changed.find(c => c.id === 'rogue').defaultDeck.filter(id => id === 'core.smash').length, 1);

@@ -386,14 +386,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   const eq = (a, b, msg) => assert(a === b, `${msg} — expected ${JSON.stringify(b)}, got ${JSON.stringify(a)}`);
 
   // ---- 1. Damage order (SPEC §4.2) ----------------------------------------
-  test('1. damage order: (6+2 Str) ×0.75 Weak ×1.5 Vuln = 9, floor once, min 0', () => {
+  test('1. damage order: (6+2 Str) ×0.75 Weak ×1.25 Vuln = 7, floor once, min 0', () => {
     const c = makeCombat({ deck: ['strike', 'strike', 'strike', 'strike', 'strike'] });
     S.applyStatus(c, c.player, 'strength', 2);
     S.applyStatus(c, c.player, 'weak', 1);
     S.applyStatus(c, getEntity(c, 'e1'), 'vulnerable', 1);
     playFromHand(c, 'strike');
     const hit = logOf(c, 'damageDealt').pop();
-    eq(hit.amount, 9, 'final damage');
+    eq(hit.amount, 7, 'final damage'); // (6+2)×0.75×1.25 = 7.5 → 7 (Vulnerable ×1.25, owner D16 2026-10-18)
     eq(computeAttackDamage(c, c.player, getEntity(c, 'e1'), -20), 0, 'negative damage clamps to 0');
     eq(computeAttackDamage(c, c.player, null, 7), Math.floor((7 + 2) * 0.75), 'attacker-only math (single floor)');
   });
@@ -629,12 +629,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
     eq(last.amount, 13, 'starstone hit ×1.25 (multiplicative row), bonus rounded up: 10 + ceil(2.5)');
-    // Composes with regular Vulnerable multiplicatively: 10 × 1.5 = 15, + ceil(15 × 0.25) = 19
+    // Composes with regular Vulnerable multiplicatively: 10 × 1.25 = 12.5, + ceil(12.5 × 0.25) = 16 after the single floor (Vulnerable ×1.25, owner D16 2026-10-18)
     // (the exposure bonus rounds up — owner, 2026-10-12).
     S.applyStatus(c, e1, 'vulnerable', 1);
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(last.amount, 19, 'stacks WITH Vulnerable: 15 + ceil(3.75)');
+    eq(last.amount, 16, 'stacks WITH Vulnerable: 12.5 + ceil(3.125), floored');
     // THE CEILING (known-bad probe answered): every vulnerability lane is
     // flat-per-status and stack-count-invariant, so max compose is the
     // closed-form product of DISTINCT table mults — stacks cannot raise it.
@@ -643,7 +643,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     if (c.player.energy === 0) dispatch(c, { type: 'endTurn' });
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(last.amount, 19, '99 stacks of both: SAME 19 — the ceiling is the table, not the stacks');
+    eq(last.amount, 16, '99 stacks of both: SAME 16 — the ceiling is the table, not the stacks');
     // Additive lane: declared 'additive' pools (mult−1). tAddVuln 1.5-additive
     // + frostExposed 1.25-mult on the same tagged hit:
     // 10 + ceil(10 × (1.25 × 1.5 − 1)) = 10 + ceil(8.75) = 19.
@@ -1554,7 +1554,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Intent numbers recompute live through the same math (SPEC §4.6).
     const i = makeCombat({ deck: Array(5).fill('defend'), enemies: ['tHitter'] });
     S.applyStatus(i, i.player, 'vulnerable', 1);
-    eq(previewIntent(i, 'e1').damage, 15, 'intent shows 10×1.5=15 with player Vulnerable');
+    eq(previewIntent(i, 'e1').damage, 12, 'intent shows 10×1.25=12 with player Vulnerable');
   });
 
   // ---- 17. Status-model generality (zero engine changes) ----------------------------------
@@ -7348,7 +7348,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([...combatTopics.keys()].join(','), 'Animation & effects,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'askToUpcastAfterTarget,useSprites,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
+      'askToUpcastAfterTarget,useSprites,autoCombat,combatSpeed,autoCombatSpeed,combatStepPause,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
       'every combat pacing, quality, shake, sprite, played-card and upcast switch is under one name');
     eq(combat.find(r => r.key === 'askToUpcastAfterTarget').def, false, 'upcast prompting defaults off');
     eq(combatTopics.get('Armaments').map((r) => r.key).join(','),

@@ -2,7 +2,7 @@
   "acts": 3,
   "prebossNodes": 7,
   "bosses": 3,
-  "restsPerAct": 2,
+  "restsPerAct": 3,
   "hiddenTypes": [
     "event",
     "fight",
@@ -16,10 +16,13 @@
   ],
   "restFloors": [
     3,
-    6
+    5,
+    7
   ],
   "branchColumns": 3,
   "minimumThreatFloor": 3,
-  "mapMode": "path",
-  "firstFloor": "fight"
+  "mapMode": "fog",
+  "firstFloor": "fight",
+  "shopShare": 0.15,
+  "requirePrebossRest": true
 }

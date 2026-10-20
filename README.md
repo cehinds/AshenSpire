@@ -1,16 +1,6 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — Combat HUD Layout Batch
 
-[Play this verified feature build](https://cehinds.github.io/AshenSpire/branches/fix/CombatHudLayoutBatch/latest/) · [Capture details](docs/preview/features/combat-hud-layout-batch/README.md).
-
-Fresh local captures document the Dev 1563 combined source; the first Play link identifies the independently verified current c979 feature build. Local capture provenance is recorded separately.
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Merged combat on mobile](docs/preview/features/combat-hud-layout-batch/mobile.png) | ![Merged combat on desktop](docs/preview/features/combat-hud-layout-batch/desktop.png) | ![Merged combat in wide layout](docs/preview/features/combat-hud-layout-batch/wide.png) | ![Merged combat on tablet](docs/preview/features/combat-hud-layout-batch/tablet.png) |
-<!-- feature-preview:end -->
 
 
 
@@ -46,7 +36,12 @@ The chooser identifies the selected game build; its installer can be newer than 
 **Feature branches:** every `feature/*`, `fix/*` or `chore/*` branch with an open pull request into `dev`, named with ASCII letters, digits, `.`, `_`, `-` and `/` only, has a build at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/`, which plays in a sandbox and does not keep progress (open ones are listed on [All builds](https://cehinds.github.io/AshenSpire/)); the pull request links it.
 
 [All builds](https://cehinds.github.io/AshenSpire/) · [Workbench](https://cehinds.github.io/AshenSpire/workbench/) · [ZIP artifacts](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) · [Changelog](CHANGELOG.md).
-Publication can lag source changes. For ZIPs, open a successful run and download its named build artifact.
+**How fresh:** the site is rebuilt from git history and republished after each `dev` build stamp
+(about every 10 to 40 minutes while work lands) and after each push to `release`. A push to `test` or
+`main` does not publish by itself; its newest build appears at the next publication, and the
+owner can publish on demand. Each channel's `latest/` page shows the stamp it serves; if it
+is behind, check the [pages-builds runs](https://github.com/cehinds/AshenSpire/actions/workflows/pages-builds.yml)
+for a red `deploy` job. Publication can lag source changes. For ZIPs, open a successful run and download its named build artifact.
 
 ## Screenshots
 
@@ -84,6 +79,8 @@ Checked items are implemented; build channels and older saves can differ.
 
 [Getting started and project links](docs/PROJECT-GUIDE.md) · [Contributing](CONTRIBUTING.md)
 · [Game rules](SPEC.md) · [Development](DEVELOPER.md) · [Credits](CREDITS.md).
+
+Draft environment art: [251 sources across eleven batches](https://github.com/cehinds/AshenSpire-art/blob/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts/README.md), including [28 close-location scenes](https://github.com/cehinds/AshenSpire-art/blob/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts/batch-10-location-streets/modules/index.json) and [12 Crownfall intro-map art candidates](https://github.com/cehinds/AshenSpire-art/blob/54a0a2374d138af7b51da985b6e1055d0d87bacb/art/map-battlefield-drafts/batch-10-location-streets/modules/intro-map.json).
 
 ## Legal and credits
 

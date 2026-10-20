@@ -17,7 +17,7 @@
 
 import {
   addBasicCard, beginDeckEdit, cancelDeckEdit, deckCardEquipmentEligible, deckCopyLimit, deckEditBounds, deckEditRefusal,
-  deckEditingOn, deckEditingWhere, isEquippedRun, isSetAsideBasic, isUnlimitedBasic, moveFromSideboard, moveToSideboard, playInDeckOrder, unlimitedCardIds,
+  deckEditingOn, deckEditingWhere, isBasicCard, isEquippedRun, isSetAsideBasic, isUnlimitedBasic, moveFromSideboard, moveToSideboard, playInDeckOrder, unlimitedCardIds,
 } from '../../model/deckRules.js';
 import { isItemOwned } from '../../model/loadout.js';
 import { resolveCard } from '../../model/registries.js';
@@ -58,12 +58,22 @@ function isEquipmentCard(card) { return !!(card && (card.grantedBy || isItemOwne
 
 function sourceOf(card, def, run) {
   if (isEquipmentCard(card)) return 'item';
-  if (isUnlimitedBasic(card, run)) return 'basic';
+  if (isBasicCard(card, run)) return 'basic';
   const tags = def.tags || [];
   if (tags.includes(ART_TAG)) return 'art';
   // A technique (a skill-draft card, SPEC §13.4e) carries a `technique:*` tag.
   if (tags.some((tag) => String(tag).startsWith(TECHNIQUE_TAG_PREFIX))) return 'technique';
   return 'reward';
+}
+
+/**
+ * The ui-string id of a rank 0 card's badge. A spell's is Cantrip. A rank 0 card whose source is 'basic' reads Basic;
+ * every other source reads its own source label (Weapon art, Technique, Reward, Item-owned), so the badge agrees with
+ * the Basic filter: a card that filter hides is never badged Basic (owner ruling 2026-10-19).
+ */
+export function rankZeroLabelId(source, isSpell) {
+  if (isSpell) return 'deckEditor.rank.cantrip';
+  return source === 'basic' || !DECK_SOURCES.includes(source) ? 'deckEditor.rank.basic' : `deckEditor.source.${source}`;
 }
 
 function typeLabel(type) {
@@ -290,7 +300,7 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   }
   for (const [variant, entry] of limited) {
     const row = describe(registries, entry.card, run);
-    const limit = deckCopyLimit(registries, entry.card.cardId, settings, run.class);
+    const limit = deckCopyLimit(registries, entry.card.cardId, settings, run);
     const equipmentEligible = deckCardEquipmentEligible(registries, run, entry.card);
     let tileRefusal = '';
     if (!equipmentEligible) tileRefusal = t('deckEditor.refuse.equipment');
@@ -383,7 +393,8 @@ export function openDeckEdit(registries, run, settings = {}) {
     add(key) {
       live();
       const before = beginDeckEdit(run);
-      const [kind, id] = String(key || '').split(':');
+      const colon = String(key || '').indexOf(':');
+      const kind = String(key || '').slice(0, colon), id = String(key || '').slice(colon + 1);
       if (kind === 'basic') {
         // The mint tile: a fresh copy back, or a new one, never a set-aside
         // (upgraded) copy, which has its own tile.
@@ -409,7 +420,7 @@ export function openDeckEdit(registries, run, settings = {}) {
       }
       if (!deckCardEquipmentEligible(registries, run, loose)) return { ok: false, refusal: t('deckEditor.refuse.equipment') };
       if (moveFromSideboard(registries, run, loose.instanceId, settings)) return remember(before, { ok: true, refusal: '' });
-      const limit = deckCopyLimit(registries, cardId, settings, run.class);
+      const limit = deckCopyLimit(registries, cardId, settings, run);
       return { ok: false, refusal: t('deckEditor.refuse.copyLimit', { name: nameOf(loose), limit }) };
     },
     remove(instanceId) {

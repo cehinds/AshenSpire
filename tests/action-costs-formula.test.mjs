@@ -285,3 +285,11 @@ test('a sweep pays for its area: its damage is unscaled at 2 SP, its other rider
     if (ref.rank === undefined || ref.rank === 1) assert.deepEqual(dmg(def), dmg(authored), `${card.id} ${JSON.stringify(ref)}`);
   }
 });
+
+test('cantrip training classification adds no resource budget or cost', () => {
+  for (const card of [SWORD_STRIKE, {...SWORD_STRIKE, tags:['camp:spell','source:spell','damage:arcane']}]) {
+    const before=cardCostBudget(card,{rank:0});
+    const after=cardCostBudget({...card,tags:[...card.tags,'rank.cantrip']},{rank:0});
+    assert.deepEqual([after.sSp,after.sMp,after.sp,after.mp],[before.sSp,before.sMp,before.sp,before.mp]);
+  }
+});

@@ -24,8 +24,7 @@ export function alternativeAuraLayers(filter) {
 }
 
 export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=544, createCanvas = () => document.createElement('canvas') } = {}) {
-  let surface = null, work = null, disposed = false;
-  let lastWork = null;
+  let surface = null, work = null, disposed = false, current = null;
   const parsed = new Map();
   const rendered = []; // Opt-in fixed-travel actions retain at most four phase surfaces.
   function layers(filter) {
@@ -48,20 +47,12 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
           // than silently discarding effects. Authored filters use the fast path.
           context.filter = filter; context.drawImage(image, x, y, width, height);
         } else {
-          if (surface && (surface.width !== canvasWidth || surface.height !== canvasHeight)) {
-            lastWork = null;
-            surface.width = canvasWidth; surface.height = canvasHeight;
-          }
-          const sameWork = immutable && lastWork && lastWork.image === image && lastWork.filter === filter
-            && lastWork.x === x && lastWork.y === y && lastWork.width === width && lastWork.height === height;
-          if (sameWork) {
-            context.filter = plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`;
-            context.drawImage(surface, 0, 0);
-            if (materialize) context.getImageData(0, 0, 1, 1);
-            return true;
-          }
-          const cached = reuse && rendered.find(entry => entry.image === image && entry.filter === filter
-            && entry.x === x && entry.y === y && entry.width === width && entry.height === height);
+          // Hit-stop and contact holds can request the same immutable bitmap at
+          // the same placement on successive frames. The work surface already
+          // contains those pixels; do not rasterize its shadows again.
+          const matches = entry => entry && entry.image === image && entry.filter === filter
+            && entry.x === x && entry.y === y && entry.width === width && entry.height === height;
+          const cached = (reuse && rendered.find(matches)) || (immutable && matches(current) && current);
           if (cached) {
             context.filter = plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`;
             context.drawImage(cached.surface, 0, 0);
@@ -73,10 +64,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
             work = surface.getContext('2d');
             if (!work) throw new Error('Character aura requires a canvas context');
           }
-          // Only this private work surface is memoized. Every mutation first
-          // invalidates its exact key; a miss does the original raster work,
-          // without allocating or copying an additional cached surface.
-          lastWork = null;
+          current = null;
           work.clearRect(0, 0, canvasWidth, canvasHeight);
           // Move the source wholly beyond the work surface while compensating
           // each shadow offset. Only the source-alpha shadow enters the stage.
@@ -87,7 +75,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
             work.drawImage(image, x + outside, y, width, height); work.restore();
           }
           work.save(); work.filter = 'none'; work.drawImage(image, x, y, width, height); work.restore();
-          if (immutable) lastWork = { image, filter, x, y, width, height };
+          current = immutable ? {image,filter,x,y,width,height,surface} : null;
           if (reuse) {
             const copy = createCanvas(); copy.width = canvasWidth; copy.height = canvasHeight;
             const copyContext = copy.getContext('2d');
@@ -104,10 +92,10 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
       return true;
     },
     dispose() {
-      disposed = true; parsed.clear(); lastWork = null;
+      disposed = true; parsed.clear();
       if (surface) { surface.width = 0; surface.height = 0; }
       for (const entry of rendered) entry.surface.width = entry.surface.height = 0;
-      rendered.length = 0;surface = null; work = null;
+      rendered.length = 0;surface = null; work = null; current = null;
     },
   });
 }

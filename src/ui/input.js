@@ -394,9 +394,11 @@ function focusables(key = null) {
   const inModal = root.classList && root.classList.contains('modal-veil');
   const controls = Array.from(root.querySelectorAll(FOCUS_SELECTOR));
   if (root.id === 'app') controls.push(...document.querySelectorAll('#tooltip[data-open="true"][role="dialog"] button:not([disabled])'));
-  return controls.filter(
-    (el) => (key === null || keyOf(el) === key) && !el.closest?.('[inert]') && visible(el)
-      && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
+  // Focus restoration usually holds a key from a previous screen. Reject
+  // unrelated controls before measuring layout on every child-list mutation.
+  const candidates = key === null ? controls : controls.filter(el => keyOf(el) === key);
+  return candidates.filter(
+    (el) => !el.closest?.('[inert]') && visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
   );
 }
 
@@ -422,9 +424,6 @@ function keyOf(el) {
 }
 function findByKey(k) {
   if (!k) return null;
-  // Restoring one logical target must not measure every unrelated control.
-  // Filter the cheap stable key before visibility can force pending layout;
-  // matching duplicates retain their order and all existing eligibility rules.
   return focusables(k)[0] || null;
 }
 

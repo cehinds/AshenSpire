@@ -16,6 +16,7 @@ import { Tool, toolDefs } from '../core/tools.mjs';
 import { buildsFor, isBuildOutput } from '../core/watch.mjs';
 import { resolveExternal } from '../core/settings.mjs';
 import { serve } from '../../tools/serve.mjs';
+import { CLI_WAIT_MS } from '../../tools/lib/build-lock.mjs';
 import { manifestTables, manifestSummary, EXPORT_FORMAT } from '../ui/logic.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -179,7 +180,8 @@ process.exit(r.status ?? 1);\n`);
   assert.equal(defs.find((d) => d.id === 'engine-export').available, true);
   const started = await (await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'engine-export' }) })).json();
   let compilerLock, projectLock;
-  for (let i = 0; i < 600 && app.jobs.active.size; i++) {
+  const deadline = Date.now() + CLI_WAIT_MS + 60 * 1000;
+  while (app.jobs.active.size && Date.now() < deadline) {
     compilerLock ||= await fs.readFile(path.join(compilerRoot, '.build-lock'), 'utf8').then(JSON.parse).catch(() => null);
     projectLock ||= await fs.readFile(path.join(root, '.build-lock'), 'utf8').then(JSON.parse).catch(() => null);
     await new Promise((r) => setTimeout(r, 50));

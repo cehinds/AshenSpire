@@ -1,3 +1,6 @@
+import { fixCoreModuleParameters } from './fixCoreMechanics.js';
+import { compileBindings } from './mechanicsKernel.js';
+import { fixCoreProtection } from '../content/generated/fixCoreProtection.js';
 import { validateZoneEffect } from '../engine/cardZones.js';
 import { cardManaPolicy } from '../content/generated/cardManaPolicy.js';
 // src/model/validate.js — content validation (SPEC §3.14)
@@ -1008,6 +1011,23 @@ function collectContentProblems(bundle, errors = []) {
       || a.hp + a.mana !== flaskCapacity) {
       err(`classes.${cls && cls.id || '?'}.startingFlaskAllocation`, `must satisfy hp + mana = flaskCapacity ${flaskCapacity}`);
     }
+  }
+
+  // JSON mechanic attachments are validated by the same compiler that live
+  // mounts use. Ordinary normalized classification tags keep their own door.
+  const behaviorMechanics = new Map(fixCoreProtection);
+  const mechanicCarriers = [
+    ['cards', b.cards, 'card'], ['relics', b.relics, 'relic'], ['statuses', b.statuses, 'status'],
+    ['classes', b.classes, 'character'], ['enemies', b.enemies, 'entity'],
+    ['equipment.armaments', b.equipment?.armaments, 'gear'], ['equipment.armour', b.equipment?.armour, 'gear'],
+  ];
+  for (const [table, rows, kind] of mechanicCarriers) for (const row of Array.isArray(rows) ? rows : []) {
+    if (!row?.mechanicTags && !row?.mechanicBindings) continue;
+    try {
+      compileBindings({mechanics:behaviorMechanics,moduleParameters:fixCoreModuleParameters(),attachments:[{
+        ownerId:row.id,sourceInstanceId:row.id,kind,tags:row.mechanicTags || [],mechanicBindings:row.mechanicBindings || [],
+      }]});
+    } catch(error) { err(`${table}.${row.id}.mechanicBindings`,error.message); }
   }
 
   // The whole tag system in one pass: the registry, who may carry which
@@ -2827,7 +2847,7 @@ export function validateFormula(value, path, vctx) {
     else value.args.forEach((a, i) => validateFormula(a, `${path}.args[${i}]`, vctx));
   }
   if (value.f === 'metric' && value.statuses !== undefined && (!Array.isArray(value.statuses) || value.statuses.some(id=>!vctx.ids.statuses.has(id)))) err(`${path}.statuses`,'Unknown metric status reference');
-  if (value.f === 'metric' && !['weaponDamage','negativeStatusTypes','negativeStatusStacks','damageTakenThisTurn','sameCardPlays','cardsPlayed','distinctTypes','manaSpent','staminaSpent'].includes(value.metric)) err(`${path}.metric`, 'Unknown combat metric');
+  if (value.f === 'metric' && !['weaponDamage','negativeStatusTypes','negativeStatusStacks','damageTakenThisTurn','sameCardPlays','cardsPlayed','distinctTypes','manaSpent','staminaSpent','evadeStackGain'].includes(value.metric)) err(`${path}.metric`, 'Unknown combat metric');
   if (value.f === 'stacks') {
     if (typeof value.status !== 'string' || !vctx.ids.statuses.has(value.status)) {
       err(`${path}.status`, `Dangling reference: unknown status id '${value.status}'`);
@@ -2867,9 +2887,20 @@ function checkTemplate(template, effects, path, err, extraBindings = []) {
   }
 }
 
+// The Core wardOff face is a replacement text: every token must bind (or be {poiseDamage}); unlike the base face
+// it need not mention every numeric effect, so only unknown tokens are errors.
+function checkWardOffTemplate(card, path, err) {
+  if (typeof card.wardOffTextTemplate !== 'string') return;
+  const bound = new Set([...computeTokenBindings(cardTokenEffects(card)).map((bd) => bd.token), 'poiseDamage']);
+  for (const token of extractTemplateTokens(card.wardOffTextTemplate)) {
+    if (!bound.has(token)) err(`${path}.wardOffTextTemplate`, `Template token '{${token}}' does not bind to any effect value`);
+  }
+}
+
 function validateCardTemplates(card, path, err) {
   if (typeof card.textTemplate !== 'string' || !Array.isArray(card.effects)) return; // schema pass reports
   checkTemplate(card.textTemplate, cardTokenEffects(card), `${path}.textTemplate`, err);
+  checkWardOffTemplate(card, path, err);
   if (card.singleBreak) checkTemplate(card.singleBreak.textTemplate, cardTokenEffects(card.singleBreak), `${path}.singleBreak.textTemplate`, err);
   if (card.upgrade) {
     const upTemplate = card.upgrade.textTemplate != null ? card.upgrade.textTemplate : card.textTemplate;

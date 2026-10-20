@@ -1,4 +1,4 @@
-import { coopCardHitPreview, coopCombatantEvasion } from '../models/CoopHitPreviewModel.js';
+import { coopCardHitPreview, coopCombatantEvasion, coopBadgedStatusIds } from '../models/CoopHitPreviewModel.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
@@ -16,15 +16,18 @@ import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { coopEnemyIntent, publicCounterIntent } from '../models/CoopIntentModel.js';
 import { createStanceLedger } from '../../model/alternativeStance.js';
 import { openModal } from '../kit/index.js';
+import { registerPageChrome } from '../modalState.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { cardTargetPlan, upcastNextStep } from '../../model/cardTargets.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
+import { summarizeCardOption } from '../models/CardOptionSummaryModel.js';
 import { combatCardView } from '../models/CombatCardView.js';
 import { combatSnapshotCardCosts } from '../models/CombatSnapshotCardCosts.js';
 import { upcastOptions } from '../../model/upcasting.js';
 import { openUpcastChoice } from '../components/upcastChoice.js';
 import { wireCoopUpcastControl } from '../components/coopUpcastControl.js';
+import { wireCoopTapPlay } from '../components/coopTapPlay.js';
 import { controlGate } from '../../engine/combatStatusControl.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
 import { openReactionChoiceModal, committedReactionStack, reactionStackEntryName, stackedCardIds } from '../components/reactionChoiceModal.js';
@@ -134,6 +137,7 @@ import {
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { clearSelection, litCard, onSelectionChange } from '../components/cardSelection.js';
 import { smithingStoneNote } from '../../model/rewardplan.js';
+import { cardAffectsEnemies } from '../../model/hitBadge.js';
 
 // LEVEL CARDS (SPEC §15.1) in the co-op spoils and the away-seat catch-up.
 // A tap only SELECTS: the pick is written into `picks` (ordinal → card id)
@@ -296,7 +300,7 @@ export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapti
   return seq;
 }
 
-export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave, bankEnemyKnowledge = null }) {
+export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettings = null, onSettingsChange, onLeave, bankEnemyKnowledge = null }) {
   clearSelection();
   let disposed = false;
   const releaseAppearance = onDisplayAppearanceChange(app, () => { if (!disposed && snap && !busy()) render(); });
@@ -345,6 +349,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     combatantDoor = null;
   }
   let selectedEnemy = null;
+  // Read live, so a Settings toggle mid-fight changes the next click or key.
+  // One click plays only when nothing is left to choose: a card that needs no
+  // enemy (self or all-enemy) or exactly one living enemy. Several living
+  // enemies means the click selects, whatever the setting says.
+  const oneTapPlays = (def) => oneTapPlayOn()
+    && (!cardNeedsEnemyTarget(def) || (snap?.scene?.enemies || []).filter((e) => e.hp > 0).length === 1);
+  const oneTapPlayOn = () => (readSettings ? readSettings() : meta.settings || {}).oneTapPlay === true;
   let selectedCombatantId = null;
   function selectCombatant(id) {
     if (id && armedFriendlyCard && snap?.scene.kind === 'combat') {
@@ -380,6 +391,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const upcastTiersByCard = new Map();
   const upcastKey = instanceId => `${me}:${instanceId}`;
   let prevCombat = null; // last combat scene, for snapshot-diff FX
+  let lastSurface = null; // what this seat saw last render (scene kind, or catch-up entry), to clear selection on a change
   // Receipt renders replace the field DOM, but keep the encounter's fitted art.
   // The stage invalidates this cache when viewport, formation or artwork changes.
   let combatLayoutState = {};
@@ -732,6 +744,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     return false;
   }
 
+  // The strip is page chrome, not a modal: a door above it puts it to sleep
+  // (inert) but it never counts as an open modal. One registration per strip.
+  let releaseSeatChrome = null;
   function renderSeatTabs() {
     if (seats.length < 2) return;
     // The tab bar lives on document.body (a fixed overlay), so look it up there
@@ -750,10 +765,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     });
     const strip = dock(tabs, { trail: [keycap('Tab', { class: 'seat-hint' })], attrs: { class: 'coop-seat-tabs', 'aria-label': 'Seats on this screen' } });
     const previous = document.querySelector('.coop-seat-tabs');
+    releaseSeatChrome?.();
     if (previous) previous.replaceWith(strip); else document.body.appendChild(strip);
+    // Registered once it is in the page: the manager drops a disconnected element.
+    releaseSeatChrome = registerPageChrome(strip);
   }
 
   function removeSeatTabs() {
+    releaseSeatChrome?.();
+    releaseSeatChrome = null;
     const d = document.querySelector('.coop-seat-tabs');
     if (d) d.remove();
   }
@@ -814,6 +834,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         return;
       }
       if (friendlyTargetPlan(def, me, sc.players).active) { armFriendlyTargeting(c.instanceId); return; }
+      // The key is the click on that card (owner, 2026-10-18 14:15): the first
+      // press selects, the next press on the same card plays, and the one-tap
+      // opt-in plays at once. One door, so keys and clicks cannot disagree.
+      const cardEl = app.querySelector(`.hand .card[data-instance-id="${c.instanceId}"]`);
+      if (cardEl) { cardEl.click(); return; }
       const needs = cardNeedsEnemyTarget(def);
       send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
     }
@@ -878,12 +903,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
   const memberRegistries=()=>{const member=myMember();return member?registriesForClassMastery(registries,{...member,class:member.classId}):registries;};
-  const cardDef = (c) => {
+  const cardDef = (c, tier = upcastTiersByCard.get(upcastKey(c.instanceId))) => {
     const seat = snap?.scene?.players?.find(entry => entry.id === me);
     return combatCardView({ registries: memberRegistries(), player: seat,
       combatExpansionVersion: seat?.combatExpansionVersion || 1,
       breakMeterVersion: snap?.scene?.breakMeterVersion ?? c.breakMeterVersion ?? 0 },
-    c, upcastTiersByCard.get(upcastKey(c.instanceId)));
+    c, tier);
   };
   guardCoopTool = typeof window !== 'undefined' && new URLSearchParams(location.search).has('guardTool') ? {
     resync: () => send({ t: 'resync' }),
@@ -929,6 +954,24 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // ride into the new layer to finish their float, each on its own timer.
     const carriedFx = snap.scene.kind === 'combat' ? [...(app.querySelector('.fx-layer')?.children || [])] : [];
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
+    // A played card leaves the hand; drop its selection so the same instance coming back
+    // later (from the discard, or in a later encounter) needs a fresh select tap. Only the
+    // active seat's hand counts: instance ids repeat across seats (each run's id generator
+    // starts at rc1), so another seat holding the same id must not keep this one lit.
+    // Changing surface (combat to reward or map, or one catch-up entry to the next) drops it
+    // too: mountCoop outlives the scene change. A redraw of the same surface keeps a reward
+    // card's select tap. The surface is what this seat sees: a catch-up reward overrides the
+    // party's combat scene, and each catch-up entry is its own surface (keyed by queue length).
+    // Pending progression rows count too: claiming one row while another offers the same
+    // card id must not hand that row the spent selection.
+    const mine = myMember();
+    const catchupLeft = mine?.catchupQueue?.length || 0;
+    const progressionLeft = Object.values(mine?.pendingProgression || {}).reduce((n, rows) => n + (Array.isArray(rows) ? rows.length : 0), 0);
+    const surface = `${catchupLeft ? `catchup:${catchupLeft}` : snap.scene.kind}|progression:${progressionLeft}`;
+    const changedSurface = lastSurface !== null && surface !== lastSurface;
+    lastSurface = surface;
+    if (litCard() !== null && (changedSurface || (snap.scene.kind === 'combat' && !catchupLeft
+      && !((snap.scene.players || []).find(p => p.id === me)?.hand || []).some(card => card.instanceId === litCard())))) clearSelection();
     if (snap.scene.kind === 'combat') prepareCombatAnimations(snap.scene);
     else { heldStances.reset(); combatRests.clear(); readinessOrders.clear(); poseReactions.clear(); animationReceiptSeq = 0; pendingAnimations.clear(); barrierVisuals.clear(); effectEvents=[]; lastReceiptSeq=0; }
     if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
@@ -986,10 +1029,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // ---- shared board helpers (snapshot-fed twins of combat.js) ---------------
   // The shared icon tray, as on the solo card (components/iconTray.js): the
   // same Pip, row and tooltip. A tap is a play while a card or flask is armed.
-  function statusRow(statuses) {
+  function statusRow(statuses, badged = new Set()) {
     const row = iconTray({ label: t('iconTray.status'), attrs: { class: 'statuses' } });
     for (const [sid, inst] of Object.entries(statuses || {})) {
-      if (!registries.statuses.has(sid)) continue;
+      if (!registries.statuses.has(sid) || badged.has(sid)) continue;
       const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const presentation = statusInstancePresentation(def, inst);
       const semanticAttrs = statusInstanceSemanticAttrs(presentation);
@@ -1005,6 +1048,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     return row;
   }
+  // The stage of the current render; a badge added after its refit is centred by one more (badged-only, batched) refit.
+  let coopStage = null;
   function syncCoopHitChances() {
     const sc = snap?.scene;
     if (sc?.kind !== 'combat') return;
@@ -1012,9 +1057,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (!actor || actor.combatExpansionVersion !== 2) return;
     const selected = actor.hand?.find(card => card.instanceId === litCard());
     const definition = selected && cardDef(selected);
-    const hostile = definition?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || definition?.counterPayload;
-    const carrier = hostile ? { ...definition, combatProfile: combatProfileFor(definition) } : { combatProfile: { maneuver: 'attack', camp: 'physical', range: 'melee' }, effects: [{ op: 'damage', target: 'enemy', amount: 0 }] };
+    const hostile = cardAffectsEnemies(definition);
+    const carrier = hostile ? { ...definition, combatProfile: combatProfileFor(definition) } : null;
     app.querySelectorAll('.card-hit-chances').forEach(node => node.remove());
+    app.querySelectorAll('.combat-hit-chance').forEach(node => node.remove());
+    if (!carrier) return;
     const selectedCard = hostile && app.querySelector('.hand .card[data-instance-id="' + CSS.escape(selected.instanceId) + '"]');
     const cardOdds = document.createElement('div');
     cardOdds.className = 'card-hit-chances';
@@ -1022,15 +1069,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     for (const enemy of sc.enemies) {
       const frame = app.querySelector('.combatant.enemy[data-eid="' + CSS.escape(enemy.id) + '"]');
       frame?.querySelector('.combat-hit-chance')?.remove();
-      if (!frame || enemy.hp <= 0 || enemy.knowledgeAction?.reads?.[me]?.visibility !== 'exact') continue;
-      const preview = coopCardHitPreview(sc, registries, actor, enemy, carrier, { selected: !!hostile, member: snap.party.find(member => member.id === actor.id) });
+      if (!frame || enemy.hp <= 0) continue;
+      const preview = coopCardHitPreview(sc, registries, actor, enemy, carrier, { selected: !!hostile, member: snap.party.find(member => member.id === actor.id), observerId: actor.id });
       if (!Number.isFinite(preview?.hitChance)) continue;
       const badge = document.createElement('span');
       badge.className = 'combat-hit-chance';
       badge.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
       badge.textContent = Number(preview.hitChance.toFixed(2)) + '%';
       badge.setAttribute('aria-label', 'Chance to hit ' + badge.textContent);
-      (frame.querySelector('.combatant-leading') || frame).append(badge);
+      frame.append(badge);
       if (selectedCard) {
         const odds = badge.cloneNode(true);
         odds.className = 'card-hit-chance';
@@ -1040,6 +1087,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       }
     }
     if (selectedCard && cardOdds.children.length) selectedCard.append(cardOdds);
+    coopStage?.placeHitBadges?.();
   }
   const releaseHitChanceSelection = onSelectionChange(() => syncCoopHitChances());
 
@@ -1053,7 +1101,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (hp) {
       const next = hp.nextSibling;
       const known = !isEnemy || ent.knowledgeAction?.reads?.[me]?.visibility === 'exact';
-      const health = combatHealthRow(hp, { ...protectionPresentation(ent), evasion: ent.combatExpansionVersion === 2 && known ? coopCombatantEvasion(snap.scene, registries, entity, isEnemy ? undefined : snap.party.find(member => member.id === ent.id)) : null });
+      const health = combatHealthRow(hp, { ...protectionPresentation(ent), evasion: ent.combatExpansionVersion === 2 && known ? coopCombatantEvasion(snap.scene, registries, entity, isEnemy ? undefined : snap.party.find(member => member.id === ent.id)) : null, precision: ent.combatExpansionVersion === 2 && known ? (ent.statuses?.precision?.stacks || 0) : null });
       bars.insertBefore(health, next);
     }
     wrap.classList.add('as-meters', 'tight');
@@ -1067,7 +1115,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (ent.combatExpansionVersion === 2) {
       const protection = document.createElement('div'); protection.className = 'combat-expansion-protection';
       const stance = ent.combatStance?.maneuver;
-      protection.textContent = [`Ward ${ent.persistentWard?.value || 0}/${ent.persistentWard?.max || 0}`,
+      // A switched-off Ward (Core 2 `ward.enabled: false`) leaves a 0-max pool: show nothing for it.
+      protection.textContent = [(ent.persistentWard?.max || 0) > 0 ? `Ward ${ent.persistentWard?.value || 0}/${ent.persistentWard.max}` : '',
         `${t('combat.protection.barrier')} ${ent.barrier || 0}`, stance ? stance[0].toUpperCase() + stance.slice(1) : ''].filter(Boolean).join(' · ');
       wrap.appendChild(protection);
     }
@@ -1094,8 +1143,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         { label: 'HP', value: entity.hp, max: entity.maxHp },
         { label: 'MP', value: entity.mana, max: entity.maxMana },
           { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
-          { label: entity.combatExpansionVersion === 2 ? 'Ward rating' : t('combat.rating.ward'), value: entity.ratings?.ward },
-          ...(entity.combatExpansionVersion === 2 ? [{ label: 'Ward pool', value: entity.persistentWard?.value || 0, max: entity.persistentWard?.max || 0 }, { label: t('combat.protection.barrier'), value: entity.barrier || 0 }] : []),
+          ...(entity.combatExpansionVersion === 2 && !((entity.persistentWard?.max || 0) > 0) ? [] : [{ label: entity.combatExpansionVersion === 2 ? 'Ward rating' : t('combat.rating.ward'), value: entity.ratings?.ward }]),
+          ...(entity.combatExpansionVersion === 2 ? [...((entity.persistentWard?.max || 0) > 0 ? [{ label: 'Ward pool', value: entity.persistentWard.value || 0, max: entity.persistentWard.max }] : []), { label: t('combat.protection.barrier'), value: entity.barrier || 0 }] : []),
         { label: t('combat.protection.block'), value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
@@ -1194,6 +1243,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     discardShell = openDiscardChoiceModal({
       ...(player.pendingCardChoice ? {title:t('combat.cards.choose.title',{count:pending.count}),prompt:t('combat.cards.choose.prompt',{from:pending.effect.from,to:pending.effect.to || pending.effect.from}),confirmLabel:t('combat.cards.choose.confirm'),ordered:pending.effect.from===pending.effect.to} : {}),
       count: pending.count, cardName: registries.cards.get(pending.cardId).name,
+      summarize: card => {
+        const inst = (player.pendingCardChoice ? pending.candidates : player.hand).find(c => c.instanceId === card.instanceId);
+        return summarizeCardOption(registries, sc, { id: card.instanceId, name: card.name }, {
+          // A pile choice is not a play: tier 0, never the upcast tier a cancelled target chooser left on the card.
+          defOf: () => inst ? cardDef(inst, 0) : null, previewOf: () => inst ? cardDef(inst, 0)?.combatPreview ?? null : null,
+        });
+      },
       cards: (player.pendingCardChoice ? pending.candidates : player.hand.filter((card) => !stackedIds.has(card.instanceId))).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
       onClosed: () => { discardShell = null; },
       onChoose: cardInstanceIds => { if (me === owner) send({ t: 'chooseDiscard', cardInstanceIds }); },
@@ -1208,10 +1264,24 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (!owner || reactionShell || busy() || sc.players.some(player => player.pendingAbilityDiscard || player.pendingCardChoice)) return;
     const ownerId = owner.id;
     reactionOfferId = owner.pendingReaction.id;
-    if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; }
+    // An automatic seat switch drops the old seat's selection, as setSeat does (ids repeat across seats).
+    if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; clearSelection(); }
     const stack = committedReactionStack(sc.reactionStack, owner.pendingReaction.groupKey)
       .map((entry) => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
-    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack,
+    // The client reads a seat snapshot, not the engine. A tile shows the card at the option's own upcast tier.
+    // The host's hand receipt (combatPreview) prices the hand tier against no target, so it is used only when
+    // the option has neither a target nor an upcast tier and the hand tier is unchanged; otherwise the tile shows
+    // the authored base, uncoloured, rather than a possibly wrong number.
+    const handCard = o => owner.hand.find(card => card.instanceId === o.play.cardInstanceId);
+    const summarize = option => summarizeCardOption(registries, sc, option, {
+      defOf: o => { const inst = handCard(o); return inst ? cardDef(inst, o.play.upcastTier || 0) : null; },
+      previewOf: o => {
+        const inst = handCard(o);
+        if (!inst || o.play.targetId || o.play.upcastTier || upcastTiersByCard.get(upcastKey(inst.instanceId))) return null;
+        return cardDef(inst)?.combatPreview ?? null;
+      },
+    });
+    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack, summarize,
       onClosed: () => { reactionShell = null; reactionOfferId = null; },
       onAnswer: intent => {
         if (!disposed && me === ownerId && latestWireSnap?.scene?.reactionWaiting?.id === intent.offerId)
@@ -1359,7 +1429,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       // Your own seat glows in YOUR accent, not a fixed gold.
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
       box.appendChild(meterBars(p, false));
-      box.appendChild(statusRow(p.statuses));
+      box.appendChild(statusRow(p.statuses, coopBadgedStatusIds(p, false, me)));
       if (friendly) {
         decorateFriendlyTarget(box, { relationship: friendly.relationship, label: m.name || p.id });
         const playOnSeat = () => {
@@ -1408,7 +1478,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.appendChild(meterBars(e, true, (sc.events || []).filter((event) => (
         event.targetId === e.id && (event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak' || event.type === 'arcaneExposureChanged')
       ))));
-      box.appendChild(statusRow(e.statuses));
+      box.appendChild(statusRow(e.statuses, coopBadgedStatusIds(e, true, me)));
       if (!dead) {
         wireCombatantContext(box, def.name);
         box.addEventListener('click', () => {
@@ -1479,6 +1549,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             label: surcharge ? `Upcast +${surcharge}` : 'Upcast',
             disabled: busy() || meP.ended || !meP.alive,
             selectBeforePlay: !friendlyTargetPlan(entry.def, me, sc.players).active,
+            oneTap: () => oneTapPlays(entry.def),
             onPlay: play,
             onOpen: upcast => {
               closeCardChoice(); const seatAtOpen = me;
@@ -1496,7 +1567,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
               }); cardChoiceShell = shell;
             },
           });
-        } else el.addEventListener('click', play);
+        } else wireCoopTapPlay(el, {
+          selectBeforePlay: !friendlyTargetPlan(entry.def, me, sc.players).active,
+          oneTap: () => oneTapPlays(entry.def), onPlay: play,
+        });
       },
     });
     // Only this viewer's own stacked cards are hidden; another seat's rc1 is still playable here.
@@ -1588,7 +1662,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // Fit only after the replacement hand/footer establish the final field size.
     app.querySelector('.field').dataset.formationPolicy = JSON.stringify(sc.formationPolicy || null);
     app.querySelector('.field').dataset.formationOccupancy = JSON.stringify(sc.formationOccupancy || []);
-    wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage), combatLayoutState);
+    coopStage = wireBattlefieldStage(app.querySelector('.field'), battlefieldStageModel(registries.balance.ui.combatantStage), combatLayoutState);
     for (const [ownerId, plan] of pendingAnimations) playSeatPlan(ownerId, plan);
     lastSoundSeq = coopReceiptSounds(sc, lastSoundSeq, seats);
     spawnCombatFx(sc, prevCombat);

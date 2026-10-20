@@ -1,3 +1,4 @@
+import { fixCoreEnabled, fixCoreRules } from '../model/fixCoreMechanics.js';
 import * as Actions from './actions.js';
 import * as Statuses from './statuses.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
@@ -101,6 +102,8 @@ export function prepareBreakInterrupt(ctx, entity, cause) {
   if (entity?.kind !== 'enemy' || !entity.alive || !(entity.hp > 0)) return null;
   const cancelledMove = entity.pendingMove ? entity.pendingMove.moveId : null;
   if (!Actions.staggerEnemy(ctx, entity, { cause })) return null;
+  // Under FixCore a stagger is a stance: it cancels nothing and is not an interrupt, so no enemyInterrupted event.
+  if (fixCoreEnabled(ctx)) return null;
   return ['enemyInterrupted', { targetId: entity.id, cancelledMove, cause }];
 }
 
@@ -414,6 +417,7 @@ export function recoverStatusesAtOwnerStart(ctx, entity, options = {}) {
   s.completedActions = {};
   const cfg = rules(ctx), result = [];
   for (const [id, row] of Object.entries(cfg.statuses)) {
+    if (fixCoreEnabled(ctx) && fixCoreRules(ctx).statuses.overrides?.[row.activeStatus]) continue;
     const gauge = s.gauges[id];
     if (!row.chanceRecovery || (!stacks(entity, row.activeStatus) && !(gauge?.value > 0))) continue;
     const traits = entity.combatTraits || {};

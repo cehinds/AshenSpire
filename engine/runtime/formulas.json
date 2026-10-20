@@ -3,6 +3,7 @@
   "reference": { "file": "src/model/formulas.js", "symbol": "evaluate" },
   "description": "Closed set of formula objects. A value is a number or { f: <op>, ... }. No strings are parsed.",
   "flooring": {
+    "scalar": "Modifier calculations and formulas declaring numeric: scalar preserve fractions using evaluateRaw; default quantity formulas retain final flooring.",
     "rule": "The final result of every evaluation is floored once toward negative infinity (Math.floor).",
     "clamps": "Any node may carry min and max. They apply to that node's raw value before the final floor.",
     "exception": "stacks with per floors the division at once (whole groups of per).",
@@ -26,7 +27,7 @@
     "metric": {
       "fields": { "metric": "metric name, required", "of": "entity ref, default self", "statuses": "array of status ids, for the status metrics", "per": "number, optional, default 1" },
       "result": "named combat metric * per",
-      "metrics": ["weaponDamage", "negativeStatusTypes", "negativeStatusStacks", "damageTakenThisTurn", "sameCardPlays", "cardsPlayed", "distinctTypes", "manaSpent", "staminaSpent"]
+      "metrics": ["weaponDamage", "negativeStatusTypes", "negativeStatusStacks", "damageTakenThisTurn", "sameCardPlays", "cardsPlayed", "distinctTypes", "manaSpent", "staminaSpent", "evadeStackGain"]
     },
     "traitBonus": { "fields": { "base": "value, required", "pct": "number as a fraction, required" }, "result": "base + max(floor(base * pct), 1) for base > 0, else base" }
   },

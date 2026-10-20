@@ -240,7 +240,7 @@ function compileDir(srcDir, outDir, { write } = {}) {
       // This exact output belongs to tools/game-config.mjs; its separate check
       // validates source JSON, runtime pins and freshness before the HTML bundler.
       // Do not exempt the filename in arbitrary output trees or other JS files.
-      && !(resolve(outDir) === OUT && ['gameProfiles.js', 'baseCards.js'].includes(f)))
+      && !(resolve(outDir) === OUT && ['gameProfiles.js', 'baseCards.js', 'fixCoreProtection.js'].includes(f)))
     : [];
   if (existsSync(cardsOut)) {
     for (const f of readdirSortedSync(cardsOut)) {
@@ -1208,6 +1208,8 @@ if (SELFTEST) {
   const basePath = join(ROOT, BASE_CARD_OUTPUT);
   if (CHECK && (!existsSync(basePath) || readFileSync(basePath, 'utf8') !== baseCards)) fail('Stale base card pack; run node tools/base-cards.mjs');
   if (!CHECK) writeFileSync(basePath, baseCards);
+  const { compileBrowserMechanics } = await import('./mechanics-browser.mjs');
+  compileBrowserMechanics({check: CHECK});
   let r;
   try {
     r = compileDir(SRC, OUT, { write: !CHECK });

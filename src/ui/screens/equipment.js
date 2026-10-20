@@ -2389,7 +2389,7 @@ export function mountEquipment(host, {
       ...facts,
       smithingReceipt ? el('div', { class: 'as-statrow flat armoury-smithing-receipt' }, [
         el('span', { class: 'sr-id' }, el('b', { class: 'sr-name', text: 'Last Smithing' })),
-        el('span', { class: 'sr-vals' }, el('span', { class: 'sp-v', text: `Tier ${smithingReceipt.beforeLevel} → ${smithingReceipt.afterLevel} · ${smithingReceipt.cost} Stone · ${smithingReceipt.affectedCards.length} basic cards improved` })),
+        el('span', { class: 'sr-vals' }, el('span', { class: 'sp-v', text: `Tier ${smithingReceipt.beforeLevel} → ${smithingReceipt.afterLevel} · ${smithingReceipt.cost} Stone · ${(smithingReceipt.changes || []).some((change) => ['stat', 'budget', 'card'].includes(change.kind)) ? smithingReceipt.changes.map((change) => `${change.label} ${change.before} → ${change.after}`).join(', ') : `${smithingReceipt.affectedCards.length} basic cards improved`}` })),
       ]) : null,
       tagLine,
     ]);

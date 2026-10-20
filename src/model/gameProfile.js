@@ -1,17 +1,28 @@
 // Immutable per-run configuration snapshots. No mutable active-profile singleton.
 import { gameProfileCatalog, gameProfileAuthors } from '../content/generated/gameProfiles.js';
-import { resolveGameAuthor, validateResolvedGameProfile, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
+import { resolveGameAuthor, freezeGameData, dataClone, GameConfigError } from '../../engine/kernel/gameConfig.js';
+import { markVerifiedProfile, validateVerifiedProfile } from './verifiedProfiles.js';
 export { GameConfigError };
+// Catalog profiles are deterministic, so each id is resolved and digested once per process; later
+// resolves return a fresh deep-frozen copy (callers rely on distinct snapshots) instead of re-hashing.
+const resolvedById = new Map();
+const resolveOnce = (key, make) => {
+  const first = resolvedById.get(key);
+  if (first) return markVerifiedProfile(freezeGameData(dataClone(first)));
+  const made = markVerifiedProfile(make()); resolvedById.set(key, made); return made;
+};
 export function resolveGameProfile(idOrAuthor = 'current') {
   if (typeof idOrAuthor === 'string') {
-    const alias = {'ashen.core@1.0.0':'core','ashen.current@1.0.0':'current'}[idOrAuthor] || idOrAuthor;
-    if (!gameProfileAuthors[alias]) throw new GameConfigError('$/profile','unknown profile ID');
-    return resolveGameAuthor(gameProfileAuthors[alias],gameProfileCatalog);
+    if (Object.hasOwn(gameProfileCatalog.bundles, idOrAuthor)) {
+      return resolveOnce('bundle:'+idOrAuthor, () => resolveGameAuthor({formatVersion:1,core:idOrAuthor,modules:{}},gameProfileCatalog));
+    }
+    if (!gameProfileAuthors[idOrAuthor]) throw new GameConfigError('$/profile','unknown profile ID');
+    return resolveOnce('author:'+idOrAuthor, () => resolveGameAuthor(gameProfileAuthors[idOrAuthor],gameProfileCatalog));
   }
   if (idOrAuthor?.hash) return validateGameProfileSnapshot(idOrAuthor);
   return resolveGameAuthor(idOrAuthor,gameProfileCatalog);
 }
-export function validateGameProfileSnapshot(profile) { return validateResolvedGameProfile(profile,gameProfileCatalog.runtimeHash); }
+export function validateGameProfileSnapshot(profile) { return validateVerifiedProfile(profile,gameProfileCatalog.runtimeHash); }
 function subjectProfile(subject) { return subject?.gameProfile || (subject?.formatVersion === 1 && subject?.modules ? subject : null); }
 export function gameModule(subject,id) { return subjectProfile(subject)?.modules?.[id] || null; }
 export function gameContent(subject,key) { return subjectProfile(subject)?.content?.[key]; }
@@ -78,6 +89,12 @@ export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'current'
       if(['poise','ward','block','barrier'].includes(id))return defenses.includes(id);
       return true;
     });
+  }
+  if(Array.isArray(bundle.enemies)) {
+    // The runtime enemy registry compiles the shared act enemy lists; each profile's
+    // own pack pins the starting poiseMax it plays with (Core 2 halved, Core 1 kept).
+    const pinned=new Map((gameContent(profile,'enemies')||[]).filter(row=>Number.isInteger(row.poiseMax)).map(row=>[row.id,row.poiseMax]));
+    bundle.enemies=bundle.enemies.map(def=>pinned.has(def.id)&&Number.isInteger(def.poiseMax)?{...def,poiseMax:pinned.get(def.id)}:def);
   }
   return bundle;
 }

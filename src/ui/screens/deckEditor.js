@@ -33,7 +33,7 @@ import { bindModalDismiss, modalFooter, modalHead } from '../components/modalShe
 import { openConfirmationModal, closeConfirmationModal } from '../components/confirmationModal.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
-import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit } from '../models/DeckEditorModel.js';
+import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit, rankZeroLabelId } from '../models/DeckEditorModel.js';
 import { t, tFull } from '../strings.js';
 import { renderCard, cardPlainText, cardDetailHtml } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
@@ -78,7 +78,7 @@ let liveEditor = null;
 // Text search is off for now (owner, 2026-10-11): the search inputs are not
 // rendered unless a mount passes `search: true`. The filter code stays so the
 // search comes back by flipping that one option.
-export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, onNavigate = null, dragHoldMs = DRAG_HOLD_MS, search: searchEnabled = false }) {
+export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, onNavigate = null, focusCard = null, dragHoldMs = DRAG_HOLD_MS, search: searchEnabled = false }) {
   if (liveEditor && liveEditor.root.isConnected && !liveEditor.session.closed) return liveEditor;
   const session = openDeckEdit(registries, run, settings);
   let view = deckEditorView({});
@@ -89,6 +89,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let model = null;
   let releaseGate = null;
   let selected = null;
+  // The card a reward just handed over starts selected (once), so the player sees it first.
+  let focusKeyOnce = focusCard ? `card:${deckVariantKey(focusCard)}` : null;
+  if (focusKeyOnce) focusKey = `tile:${focusKeyOnce}`; // focus follows, or the first tile's focus would steal the selection
   let inspected = null;
   let query = '';
   let mobileView = 'collection';
@@ -446,7 +449,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const stanceNode = row => el('span', { class: 'deck-editor-stance',
     dataset: { stance: stanceKey(row) }, text: stanceName(row) });
   // The rank the card face prints (its ability rank, else its rank badge). Rank 0
-  // has a name: a spell's is Cantrip, a combat maneuver's is Basic.
+  // has a name: a spell's is Cantrip, a maneuver's is Basic, except a class special's, which is Weapon art.
   const rankNode = (row) => {
     const def = combatDef(row);
     const card = playingCardModel(registries, row.ref, { definition: def });
@@ -456,7 +459,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       : (MANEUVER_STANCES.includes(stanceKey(row)) || stanceKey(row) === 'spell' ? 0 : null);
     if (!Number.isInteger(rank)) return null;
     const text = rank > 0 ? t('deckEditor.rank', { rank })
-      : t(combatProfileFor(def).camp === 'spell' ? 'deckEditor.rank.cantrip' : 'deckEditor.rank.basic');
+      : t(rankZeroLabelId(row.source, combatProfileFor(def).camp === 'spell'));
     return el('span', { class: 'deck-editor-rank', dataset: { rank }, text });
   };
   // Range: the shared rule (combatCardRange in model/combatCardProfile.js) decides
@@ -833,7 +836,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const current = selected && rows.find(row => selectionKey(row, selected.source) === selected.key);
     if (current) selected = { ...selected, row: current };
     else {
-      const row = model.collection[0] || model.deck[0];
+      const row = (focusKeyOnce && model.collection.find(r => r.key === focusKeyOnce)) || model.collection[0] || model.deck[0];
+      focusKeyOnce = null;
       const source = model.collection.length ? 'collection' : 'deck';
       selected = row ? { row, source, key: selectionKey(row, source) } : null;
     }
@@ -1166,7 +1170,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   draw();
-  const first = panel.querySelector('[data-pane="collection"] .deck-editor-main');
+  const first = (focusKey && panel.querySelector(`[data-focus-key="${cssEscape(focusKey)}"]`)) || panel.querySelector('[data-pane="collection"] .deck-editor-main');
   if (first) focusNode(first);
 
   liveEditor = { root, dispatch, close: () => { if (!session.closed) session.cancel(); close(); }, session };

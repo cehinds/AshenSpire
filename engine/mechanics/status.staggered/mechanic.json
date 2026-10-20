@@ -22,5 +22,6 @@
   "legacy": {
     "file": "src/engine/actions.js",
     "symbol": "staggerEnemy"
-  }
+  },
+  "authored": true
 }

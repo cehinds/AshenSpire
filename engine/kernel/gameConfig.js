@@ -1,3 +1,4 @@
+import { rewardGroupProblems } from './rewardPolicy.js';
 // Pure, host-neutral configuration resolution. No runtime code is evaluated.
 export class GameConfigError extends Error {
   constructor(path, message) { super(`${path}: ${message}`); this.name = 'GameConfigError'; this.path = path; }
@@ -162,6 +163,19 @@ function verifyContent(content) {
   if (cards.size !== content.cards.length) fail('$/content/cards', 'duplicate card ID');
   for (const row of content.classes) if (!cards.has(row.specialCardId)) fail(`$/content/classes/${row.id}/specialCardId`, 'unresolved card reference');
   for (const row of content.starterDeck.shared) if (!cards.has(row.card) || !Number.isSafeInteger(row.copies) || row.copies < 1) fail('$/content/starterDeck/shared', 'invalid starter card reference/count');
+  const classDecks = content.starterDeck.classDecks;
+  if (classDecks !== undefined) {
+    if (!record(classDecks)) fail('$/content/starterDeck/classDecks', 'expected class-id map of starter rows');
+    for (const [classId, rows] of Object.entries(classDecks)) {
+      const at = `$/content/starterDeck/classDecks/${classId}`;
+      if (!classIDs.has(classId)) fail(at, 'unknown class');
+      if (!Array.isArray(rows)) fail(at, 'expected an array of starter rows');
+      for (const [i, row] of rows.entries()) {
+        if (!record(row) || !cards.has(row.card)) fail(`${at}/${i}/card`, `unknown card reference ${JSON.stringify(row?.card)} for class ${classId} row ${i}`);
+        if (!Number.isSafeInteger(row.copies) || row.copies < 1) fail(`${at}/${i}/copies`, `expected positive integer copies for class ${classId} row ${i}, got ${JSON.stringify(row.copies)}`);
+      }
+    }
+  }
 }
 // Names (owner 2026-10-17): no spaces. "_" stands for a space and is turned back into one for
 // display; "-" is a real hyphen and is kept. "Ember-Starved_Pilgrim" shows as "Ember-Starved Pilgrim".
@@ -173,8 +187,9 @@ const verifyNames = (rows, base) => { for (const row of rows || []) if (row.name
 // joins them. Points an item sets are kept; the rest are filled by weights: the item's own,
 // else the sum of its tags' weights scaled by tag priority (gear-type tags such as
 // `greatsword` lead), else kind, then slot, then global. Largest remainder, deterministic.
-const GEAR_RATINGS = ['ar', 'dr', 'poise'];
-const GEAR_KEYS = [...GEAR_RATINGS, ...['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']];
+const GEAR_RATINGS = ['ar', 'dr', 'poise', 'hp', 'mp', 'sp', 'ward', 'evasion', 'precision'];
+const GEAR_ATTRIBUTES = ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'];
+const GEAR_KEYS = [...GEAR_RATINGS, ...GEAR_ATTRIBUTES];
 function gearSplit(total, weights) {
   const keys = Object.keys(weights).filter(k => weights[k] > 0), out = Object.fromEntries(keys.map(k => [k, 0]));
   const sum = keys.reduce((s, k) => s + weights[k], 0);
@@ -195,13 +210,31 @@ function gearWeights(item, settings, pool) {
   if (Object.keys(summed).length) return summed;
   return { ...(settings.weights.kinds[item.kind]?.[pool] || settings.weights.slots[item.slot]?.[pool] || settings.weights.global[pool] || {}) };
 }
-export function resolveGearItem(item, settings) {
+// Armor budget: baseline + optional per-rank growth (absent in Core) + rarity bonus (missing rarity = 0).
+export function armorBudgetFor(item, settings, rank = item.rank ?? 1) {
+  const b = settings.armorBudget;
+  return b.baseline + (rank - 1) * (b.perRank ?? 0) + (b.rarityBonus && Object.hasOwn(b.rarityBonus, item.rarity) ? b.rarityBonus[item.rarity] : 0);
+}
+export function resolveGearItem(item, settings, { rank = item.rank ?? 1 } = {}) {
+  if (!Number.isSafeInteger(rank) || rank < 1) throw new Error('Gear rank must be a positive integer');
+  const armorBudget = item.kind === 'armor' && settings.armorBudget
+    ? armorBudgetFor(item, settings, rank) : null;
   const size = pool => settings.poolSizes[pool][item.rarity] || { min: 0, max: 0 };
   const target = pool => settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? size(pool).min : size(pool).max;
   const explicit = Object.fromEntries(GEAR_KEYS.map(k => [k, item.points?.[k] || 0]));
+  // Core Smith tiers (armor and shield): every tier's extra point is a DR point, not a weighted draw, so an
+  // upgrade always raises DR (and the Block of every card that reads it). It is taken from the same pool.
   const tagCost = (item.tags || []).reduce((s, t) => s + (settings.tags[t]?.cost || 0), 0);
   const sum = keys => keys.reduce((s, k) => s + explicit[k], 0);
-  const attrKeys = GEAR_KEYS.slice(3);
+  // Core policy (armorBudget.perRankStat: 'dr'): the tier DR point is taken only from budget the item has not already spent: authored points that use the
+  // allowance (rank 2, 4-point budget, 4 authored DR) are not topped up a second time.
+  const tierPoints = (rank - 1) * (settings.armorBudget?.perRank ?? 0);
+  if ((item.kind === 'armor' || item.kind === 'shield') && settings.armorBudget?.perRankStat === 'dr' && tierPoints > 0) {
+    const merged0 = settings.poolSizes.merged?.[item.rarity];
+    const whole0 = armorBudget ?? tierPoints + (merged0 ? (settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? merged0.min : merged0.max) : target('ratings') + target('bonus'));
+    explicit.dr += Math.max(0, Math.min(tierPoints, (settings.fillTo === 'none' ? 0 : whole0) - sum(GEAR_KEYS) - tagCost));
+  }
+  const attrKeys = GEAR_ATTRIBUTES;
   // At most maxAttributes attributes: those the item set, then the heaviest-weighted.
   const limitAttributes = weights => {
     const chosen = attrKeys.filter(k => explicit[k] > 0);
@@ -210,11 +243,13 @@ export function resolveGearItem(item, settings) {
   };
   const ratingsW = gearWeights(item, settings, 'ratings'), bonusW = limitAttributes(gearWeights(item, settings, 'bonus'));
   let fill;
-  if (settings.pools === 'merged') {
+  if (settings.pools === 'merged' || armorBudget !== null) {
     const norm = (w, share) => { const s = Object.values(w).reduce((a, b) => a + b, 0) || 1; return Object.fromEntries(Object.entries(w).map(([k, v]) => [k, v / s * share])); };
     const merged = settings.poolSizes.merged?.[item.rarity];
-    const whole = merged ? (settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? merged.min : merged.max) : target('ratings') + target('bonus');
-    const remaining = whole - sum(GEAR_KEYS) - tagCost;
+    // A shield has no armor budget, but each tier adds `perRank` points to its merged pool (parity with armor).
+    const shieldTierPoints = item.kind === 'shield' && settings.armorBudget ? (rank - 1) * (settings.armorBudget.perRank ?? 0) : 0;
+    const whole = armorBudget ?? shieldTierPoints + (merged ? (settings.fillTo === 'none' ? 0 : settings.fillTo === 'min' ? merged.min : merged.max) : target('ratings') + target('bonus'));
+    const remaining = (settings.fillTo === 'none' ? 0 : whole) - sum(GEAR_KEYS) - tagCost;
     // Share of the single pool by rarity (owner: most commons give AR/DR/Poise only).
     const share = settings.mergedShare[item.rarity] || settings.mergedShare.default;
     fill = gearSplit(remaining, { ...norm(ratingsW, share.ratings), ...norm(bonusW, share.bonus) });
@@ -222,9 +257,9 @@ export function resolveGearItem(item, settings) {
     fill = { ...gearSplit(target('ratings') - sum(GEAR_RATINGS), ratingsW), ...gearSplit(target('bonus') - sum(attrKeys) - tagCost, bonusW) };
   }
   const points = Object.fromEntries(GEAR_KEYS.map(k => [k, explicit[k] + (fill[k] || 0)]));
-  const values = Object.fromEntries(GEAR_KEYS.map(k => [k, points[k] * settings.pointValues[k]]));
+  const values = Object.fromEntries(GEAR_KEYS.map(k => [k, points[k] * (settings.pointValues[k] ?? 0)]));
   const modifiers = (item.tags || []).map(t => settings.tags[t]).filter(r => r?.modifier).map(r => `${r.modifier}=${r.amount >= 0 ? '+' : ''}${r.amount}`);
-  return { id: item.id, points, values, tags: [...(item.tags || [])], modifiers, tagCost, pools: { ratings: size('ratings'), bonus: size('bonus'), merged: settings.poolSizes.merged?.[item.rarity] || null, mode: settings.pools } };
+  return { id: item.id, rank, budget: armorBudget, points, values, tags: [...(item.tags || [])], modifiers, tagCost, pools: { ratings: size('ratings'), bonus: size('bonus'), merged: settings.poolSizes.merged?.[item.rarity] || null, mode: settings.pools } };
 }
 function verifyGearContent(content, settings) {
   if (!settings) return;
@@ -240,13 +275,21 @@ function verifyGearContent(content, settings) {
     if (!settings.rarities.includes(item.rarity)) fail(`${at}/rarity`, `unknown rarity '${item.rarity}'`);
     for (const t of item.tags || []) if (!settings.tags[t]) fail(`${at}/tags`, `unknown tag '${t}'`);
     for (const k of Object.keys(item.points || {})) if (!GEAR_KEYS.includes(k) || !Number.isSafeInteger(item.points[k]) || item.points[k] < 0) fail(`${at}/points/${k}`, 'expected known key and nonnegative integer');
-    const attrs = GEAR_KEYS.slice(3).filter(k => item.points?.[k] > 0);
+    for (const [pool, weights] of Object.entries(item.weights || {})) {
+      if (!['ratings','bonus'].includes(pool)) fail(`${at}/weights/${pool}`, 'unknown weight pool');
+      for (const [key, weight] of Object.entries(weights)) if (!(pool === 'ratings' ? GEAR_RATINGS : GEAR_ATTRIBUTES).includes(key) || !Number.isFinite(weight) || weight < 0) fail(`${at}/weights/${pool}/${key}`, 'expected a supported stat and nonnegative weight');
+    }
+    const attrs = GEAR_ATTRIBUTES.filter(k => item.points?.[k] > 0);
     if (attrs.length > settings.maxAttributes) fail(`${at}/points`, `more than ${settings.maxAttributes} attributes`);
     const r = settings.poolSizes.ratings[item.rarity], b = settings.poolSizes.bonus[item.rarity];
     const setR = GEAR_RATINGS.reduce((s, k) => s + (item.points?.[k] || 0), 0), setB = attrs.reduce((s, k) => s + item.points[k], 0);
     const cost = (item.tags || []).reduce((s, t) => s + (settings.tags[t]?.cost || 0), 0);
-    const whole = settings.poolSizes.merged?.[item.rarity]?.max ?? r.max + b.max;
-    if (settings.pools === 'merged' ? setR + setB + cost > whole : setR > r.max || setB + cost > b.max) fail(`${at}/points`, 'set points and tag costs exceed the pool');
+    const armorBudget = item.kind === 'armor' && settings.armorBudget ? armorBudgetFor(item, settings) : null;
+    if (item.rank !== undefined && (!Number.isSafeInteger(item.rank) || item.rank < 1)) fail(`${at}/rank`, 'expected positive integer rank');
+    // A shield's rank adds perRank points to its merged pool (resolveGearItem); allow what it can spend.
+    const shieldTierPoints = item.kind === 'shield' && settings.armorBudget ? ((item.rank ?? 1) - 1) * (settings.armorBudget.perRank ?? 0) : 0;
+    const whole = armorBudget ?? shieldTierPoints + (settings.poolSizes.merged?.[item.rarity]?.max ?? r.max + b.max);
+    if (settings.pools === 'merged' || armorBudget !== null ? setR + setB + cost > whole : setR > r.max || setB + cost > b.max) fail(`${at}/points`, 'set points and tag costs exceed the pool');
   }
 }
 // Enemies module (docs/plans/enemy-decks.md): enemies are characters with decks. Refuses unknown
@@ -345,11 +388,11 @@ export const enemyDeck = row => row.defaultDeck || [];
 export const enemyGearIds = row => (row.defaultGear || []).map(entry => entry.id);
 export const enemyRelicIds = row => (row.defaultRelics || []).map(entry => entry.id);
 export function enemyItemBonuses(row, content = {}, gearSettings = null) {
-  const bonus = Object.fromEntries([...ENEMY_ATTRIBUTES, ...ENEMY_POOL_MODS].map(id => [id, 0]));
+  const bonus = Object.fromEntries([...new Set([...ENEMY_ATTRIBUTES, ...ENEMY_POOL_MODS, ...GEAR_KEYS])].map(id => [id, 0]));
   const gear = new Map((content.gear || []).map(item => [item.id, item]));
   for (const id of enemyGearIds(row)) {
     const item = gear.get(id);
-    if (item && gearSettings) { const resolved = resolveGearItem(item, gearSettings); for (const a of ENEMY_ATTRIBUTES) bonus[a] += resolved.points[a]; }
+    if (item && gearSettings) { const resolved = resolveGearItem(item, gearSettings); for (const a of (gearSettings.armorBudget ? GEAR_KEYS : ENEMY_ATTRIBUTES)) bonus[a] += gearSettings.armorBudget ? resolved.values[a] : resolved.points[a]; }
   }
   const relics = new Map((content.enemyRelics || []).map(item => [item.id, item]));
   for (const id of enemyRelicIds(row)) for (const modifier of relics.get(id)?.modifiers || []) {
@@ -574,8 +617,10 @@ function verifySettings(modules, instances = {}) {
     const {restFloors,restsPerAct,prebossNodes,minimumThreatFloor} = modules.routes;
     if (prebossNodes + 1 < minimumThreatFloor) fail('$/modules/routes/prebossNodes', 'boss depth must reach minimumThreatFloor');
     if (restFloors.length !== restsPerAct || restFloors.some(n=>n>prebossNodes)) fail('$/modules/routes/restFloors', 'must provide one valid preboss position per rest');
+    if (modules.routes.requirePrebossRest && !restFloors.includes(prebossNodes)) fail('$/modules/routes/restFloors', 'requirePrebossRest requires the final preboss depth to be a rest');
   }
-  if (modules.rest?.mode === 'configured' && !modules.rest.services.includes('strategize')) fail('$/modules/rest/services', 'Strategize recovery fallback is required by this adapter');
+  // A one-service visit needs a deck-free fallback so a visit can always be spent; "all" visits heal on arrival, so any list will do.
+  if (modules.rest?.mode === 'configured' && modules.rest.servicesPerVisit === 1 && !modules.rest.services.includes('strategize')) fail('$/modules/rest/services', 'Strategize recovery fallback is required by this adapter');
   if (modules.rewards && modules.rewards.takeCount > modules.rewards.offerCount) fail('$/modules/rewards/takeCount', 'cannot exceed offerCount');
   if (modules.stances && modules.stances.minimumHitChance > modules.stances.maximumHitChance) fail('$/modules/stances/minimumHitChance','must not exceed maximumHitChance');
 }
@@ -588,6 +633,10 @@ function verifyRouteFirstFloor(modules, content) {
   if (firstFloor === null) return;
   const alternatives = [...new Set([...(content.routes.hiddenTypes || []), ...(content.routes.visibleTypes || [])])].filter(type => !['rest', 'boss'].includes(type));
   if (!alternatives.includes(firstFloor) || restFloors.includes(1) || (firstFloor === 'elite' && minimumThreatFloor > 1)) fail('$/modules/routes/firstFloor', 'must be a non-rest, non-boss route node type, depth 1 cannot be a rest floor, and an elite needs minimumThreatFloor of 1');
+}
+function verifyRewardGroups(modules, content) {
+  if (modules.rewards?.mode !== 'configured' || !content.rewards) return;
+  for (const message of rewardGroupProblems(modules.rewards.rewardGroups || [], content.rewards.categories || [])) fail('$/modules/rewards/rewardGroups', message);
 }
 export function resolveGameAuthor(author, catalog) {
   const source = dataClone(author);
@@ -646,6 +695,7 @@ export function resolveGameAuthor(author, catalog) {
   }
   verifySettings(modules, instances);
   verifyRouteFirstFloor(modules, content);
+  verifyRewardGroups(modules, content);
   verifyContent(content); verifyGearContent(content, modules.gear); verifyEnemyContent(content, modules.enemies ? characterSettings(modules) : null, modules.gear);
   if (content.classes) {
     content.classAttributes = Object.fromEntries(content.classes.map(row => [row.id, row.attributes]));
@@ -671,6 +721,6 @@ export function validateResolvedGameProfile(snapshot, supportedRuntimeHash) {
     if (!value.schemas[id]) fail(`$/modules/${id}`, 'missing pinned settings schema');
     validateGameSchema(settings,value.schemas[id],`$/modules/${id}`);
   }
-  verifySettings(value.modules, value.instances); verifyRouteFirstFloor(value.modules, value.content); verifyContent(value.content); verifyGearContent(value.content, value.modules.gear); verifyEnemyContent(value.content, value.modules.enemies ? characterSettings(value.modules) : null, value.modules.gear);
+  verifySettings(value.modules, value.instances); verifyRouteFirstFloor(value.modules, value.content); verifyRewardGroups(value.modules, value.content); verifyContent(value.content); verifyGearContent(value.content, value.modules.gear); verifyEnemyContent(value.content, value.modules.enemies ? characterSettings(value.modules) : null, value.modules.gear);
   return freezeGameData({...value,hash});
 }
