@@ -1348,7 +1348,7 @@
 :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:focus-visible, > .combat-potion-tray :focus-visible) > .combat-potion-tray {
   visibility: visible; transition-delay: var(--potion-focus-delay, 500ms);
 }
-:root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:focus-visible, > .combat-potion-tray :focus-visible) > .combat-potion-tray > * {
+:root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:focus-visible, > .combat-potion-tray :focus-visible) > .combat-potion-tray > :where(.potion-mini, .status-overflow) {
   opacity: 1; transform: none;
   transition-delay: calc(var(--potion-focus-delay, 500ms) + var(--potion-stagger, 0ms));
 }
@@ -1360,7 +1360,7 @@
   :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:hover, > .combat-potion-tray:hover) > .combat-potion-tray {
     visibility: visible; transition-delay: var(--potion-reveal-delay, 500ms);
   }
-  :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:hover, > .combat-potion-tray:hover) > .combat-potion-tray > * {
+  :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:hover, > .combat-potion-tray:hover) > .combat-potion-tray > :where(.potion-mini, .status-overflow) {
     opacity: 1; transform: none;
     transition-delay: calc(var(--potion-reveal-delay, 500ms) + var(--potion-stagger, 0ms));
   }
@@ -1716,8 +1716,8 @@
   }
   /* The expanded relic tray can extend beyond its HUD row. Only its actual
      controls should intercept a press on the battlefield below. */
-  :root:has(.combat) .hud-relics { pointer-events: none; }
-  :root:has(.combat) .hud-relics > * { pointer-events: auto; }
+  :root .combat .hud-relics { pointer-events: none; }
+  :root .combat .hud-relics > * { pointer-events: auto; }
 }
 /* WCO1 headroom: on every host the relic row's box spans the band's width
    under the HUD row, over the enemies' intent and Inspect controls. Only the
