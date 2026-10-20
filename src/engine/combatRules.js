@@ -59,7 +59,17 @@ export function cardSourceSnapshots(ctx, def, source, card) {
 export function cardActions(ctx, def, source, target, card, meta, sourceSnapshots = null) {
   const actionTarget = effect => effect.op === 'moveEngagement' && effect.target === 'pendingAttacker'
     ? ctx.enemies.find(enemy => enemy.id === ctx._reactionSourceId) || target : target;
-  if (!ctx.foundation) return (def.effects || []).map((effect) => ({ effect, source, owner: source, target: actionTarget(effect), card: sourceSnapshots?.get(effect) || card, meta }));
+  if (!ctx.foundation) {
+    const damageSources=sourceSnapshots ? [...sourceSnapshots.entries()].filter(([effect])=>effect?.op==='damage').map(([,snapshot])=>snapshot) : [];
+    let damageIndex=0;
+    return (def.effects || []).map(effect=>{
+      // Preparation/charges may copy an authored effect. Keep its ordinal's
+      // frozen source without replacing the accepted root's stance/metadata.
+      const ordinal=effect.op==='damage'?damageIndex++:null;
+      const snapshot=sourceSnapshots?.get(effect) || (ctx.rangeState && ordinal!==null ? damageSources[ordinal] : null);
+      return {effect,source,owner:source,target:actionTarget(effect),card:snapshot?{...card,...snapshot}:card,meta};
+    });
+  }
   if (card.attack) validateAttack(card.attack, ctx.foundation.rules);
   const formulaContext = { entities: { self: source, owner: source, player: ctx.player, target, enemy: target, allEnemies: ctx.enemies.filter((e) => e.alive) }, cardId:card.cardId,manaSpent:meta.manaSpent || 0,staminaSpent:meta.staminaSpent || 0, energySpent: meta.energySpent, cardsPlayedThisTurn: meta.ordinalThisTurn };
   const rows = [];

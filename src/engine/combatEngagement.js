@@ -35,12 +35,20 @@ export function initializeCombatRange(ctx, policy = null) {
   }
   ctx.rangeState = createRangeState(policy || snapshotRangePolicy(fixCoreRules(ctx).range), actors);
 }
-export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {}, contactId = '0') {
-  const tagged = effect.tags ? Object.fromEntries(Object.entries(combatProfileFor({ ...carrier,tags:effect.tags,attack:effect.attack || carrier.attack })).filter(([,value])=>value!==null)) : {};
+function rangeSourceContext(ctx,source) {
   const seatId=ctx.playerIdForEntity?.(source);
-  if (seatId && ctx.players?.get(seatId)) { const seat=ctx.players.get(seatId); ctx={...ctx,player:source,loadout:seat.loadout,registries:ctx.registriesForPlayer?.(seatId) || ctx.registries}; }
-  const profile = { ...combatProfileFor(carrier), ...carrier?.combatProfile, ...tagged, ...effect.combatProfile };
-  let resolved = carrier?.resolvedRangeSource || carrier?.resolvedSource || (ctx.foundation ? Foundation.foundationSource(ctx, source, { ...carrier, attack: effect.attack || carrier.attack }) : null);
+  if (!seatId || !ctx.players?.get(seatId)) return ctx;
+  const seat=ctx.players.get(seatId);
+  return {...ctx,player:source,loadout:seat.loadout,registries:ctx.registriesForPlayer?.(seatId) || ctx.registries};
+}
+function rangeSourceProfile(carrier,effect) {
+  const tagged = effect.tags ? Object.fromEntries(Object.entries(combatProfileFor({ ...carrier,tags:effect.tags,attack:effect.attack || carrier.attack })).filter(([,value])=>value!==null)) : {};
+  return { ...combatProfileFor(carrier), ...carrier?.combatProfile, ...tagged, ...effect.combatProfile };
+}
+function committedRangeSource(ctx,source,carrier,effect,profile) {
+  // Impact-only callers can supply a protection rule fragment without a legacy
+  // foundation source table. Core still resolves its real configured armament.
+  let resolved = carrier?.resolvedRangeSource || carrier?.resolvedSource || (ctx.foundation?.profiles ? Foundation.foundationSource(ctx, source, { ...carrier, attack: effect.attack || carrier.attack }) : null);
   if (!resolved && source.kind !== 'enemy') {
     const attack = attackDescriptor({ ...carrier, attack: effect.attack || carrier.attack });
     const kind = attack.source || (profile.camp === 'spell' ? 'spell' : 'weapon');
@@ -52,6 +60,12 @@ export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {
     resolved = piece ? { sourceType: kind, itemId: piece.id, range: piece.range || 'melee', propertyTags: [...(piece.propertyTags || [])] }
       : { sourceType: kind === 'weapon' ? 'unarmed' : kind };
   }
+  return resolved;
+}
+export function rangeSourceContact(ctx, source, target, carrier = {}, effect = {}, contactId = '0') {
+  ctx=rangeSourceContext(ctx,source);
+  const profile=rangeSourceProfile(carrier,effect);
+  const resolved=committedRangeSource(ctx,source,carrier,effect,profile);
   const weapon = resolved?.sourceType === 'weapon';
   const piece = weapon && (ctx.registries.equipment?.armaments || []).find(row => row.id === resolved.itemId);
   const coverage = weapon ? resolved.range ?? piece?.range ?? 'melee' : resolved?.sourceType === 'unarmed' ? 'melee' : profile.range || resolved?.range || 'melee';
@@ -262,7 +276,12 @@ export function rangeCardSourceSnapshots(ctx, def, source, carrier) {
   if (!ctx.rangeState) return null;
   const capture = effect => {
     const row = rangeSourceContact(ctx,source,null,carrier,effect || {});
-    return {...carrier,resolvedRangeSource:{sourceType:row.weapon?'weapon':row.coverage==='melee' && carrier.combatProfile?.camp!=='spell'?'unarmed':'spell',itemId:row.sourceWeaponId,range:row.coverage,propertyTags:row.throwCapable?['throw']:[]}};
+    const scoped=rangeSourceContext(ctx,source),profile=rangeSourceProfile(carrier,effect || {});
+    const resolved=committedRangeSource(scoped,source,carrier,effect || {},profile);
+    // Freeze source identity only. Stance acceptance and other root metadata
+    // are established after this pre-hook boundary and must stay current.
+    return {usedArmamentId:resolved?.sourceType==='unarmed'?null:resolved?.itemId || null,
+      resolvedRangeSource:{sourceType:row.weapon?'weapon':resolved?.sourceType==='unarmed'?'unarmed':'spell',itemId:row.sourceWeaponId,range:row.coverage,propertyTags:row.throwCapable?['throw']:[]}};
   };
   const snapshots = new Map((def.effects || []).filter(effect=>effect.op==='damage').map(effect=>[effect,capture(effect)]));
   if (!snapshots.size && carrier.combatProfile?.maneuver === 'counter') snapshots.set(null,capture(null));
