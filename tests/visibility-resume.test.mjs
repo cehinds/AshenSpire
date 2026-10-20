@@ -394,6 +394,7 @@ const KNOWN = {
   'src/ui/components/combatTargetHud.js': ["'resize'"],
   'src/ui/viewViewport.js': [['type', 'MediaQueryList change-listener method accepts only change; resize observation updates geometry without run/combat mutation']],
   'src/ui/components/combatTools.js': ["'resize'"],
+  'src/ui/components/combatRangeAction.js': [["'resize'", 'Schedules only attachment geometry; mount cleanup removes this same listener, disconnects observers and cancels its pending frame without run/combat mutation']],
   'src/ui/components/confirmationModal.js': [['type', "one of keyEvents = ['keydown', 'keyup']: swallows keys while the confirmation shield stands"], "'keydown'"],
   'src/ui/components/creationInfoLayer.js': ["'resize'"],
   'src/ui/components/dialogueStage.js': ["'resize'"],

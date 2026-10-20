@@ -226,7 +226,9 @@ test('a completed hold on a queued card takes it back before the affordable and 
   const confirm = hold.slice(hold.indexOf('onConfirm: () => {'));
   const queued = confirm.indexOf('isRoundQueued(inst.instanceId)');
   assert.ok(queued >= 0, 'the hold-confirm path checks for a queued card');
-  assert.ok(queued < confirm.indexOf('if (busy || !affordable || dragging)'), 'before the affordable and dragging guard');
+  const guard = confirm.indexOf('if (busy || (!affordable && !rangeSelectable) || dragging)');
+  assert.ok(guard >= 0, 'the hold retains the busy, route affordability and dragging guard');
+  assert.ok(queued < guard, 'before the affordable and dragging guard');
   assert.match(confirm.slice(queued, queued + 120), /unqueueCard\(inst\.instanceId\)/);
 });
 
@@ -234,7 +236,9 @@ test('the hotkey on a queued card takes it back before the affordable guard', ()
   const hotkey = sliceBetween(combatScreenSource, 'const visibleId = handCards', 'const hostile = cardTargets(');
   const queued = hotkey.indexOf('isRoundQueued(inst.instanceId)');
   assert.ok(queued >= 0, 'the hotkey path checks for a queued card');
-  assert.ok(queued < hotkey.indexOf('if (!affordable) return;'), 'before the affordable guard');
+  const guard = hotkey.indexOf('if (!affordable && (!canChooseRangeRoute(pv) || isUnplayable(inst))) return;');
+  assert.ok(guard >= 0, 'the hotkey retains route affordability and the unplayable-card guard');
+  assert.ok(queued < guard, 'before the affordable guard');
   assert.match(hotkey.slice(queued, queued + 120), /unqueueCard\(inst\.instanceId\)/);
 });
 
