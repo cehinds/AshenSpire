@@ -2569,7 +2569,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
           const read = effectIndex === bonusIndex ? coreRead : null;
           // Live replaces the card's whole HP payload with the one computed return (SPEC §17), so every other damage row of a
           // Counter with a known read deals nothing here: the return sits in exactly one row.
-          if (effectIndex !== bonusIndex && reply && coreRead && !coreRead.uncovered) return { damage: 0, hitDamages: [], totalDamage: 0, hits: 0 };
+          if (effectIndex !== bonusIndex && reply && coreRead) return { damage: 0, hitDamages: [], totalDamage: 0, hits: 0 };
           // A revealed attack the Counter does not answer deals no return; a hidden one keeps the printed amount.
           if (read?.uncovered) return { damage: 0, hitDamages: [], totalDamage: 0, hits: 0 };
           const live = read;
@@ -2778,9 +2778,9 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   if (coreCounterCard) {
     const read = coreCounterReturn();
     if (read) supportCounterReturn = { incoming: read.incoming, hp: read.hp, poise: read.poise, block: read.block, advantaged: read.advantaged };
-    // A support-only Counter (no damage effect) against a revealed attack it does not cover will not arm: the face must not fall
-    // back to the authored payload as if the intent were merely hidden. A damage-opcode Counter carries this on its damage row.
-    else if (coreCounterUncovered() && !(preparedEffects || []).some(effect => effect.op === 'damage')) supportCounterReturn = { uncovered: true };
+    // A Counter against a revealed attack it does not cover (or whose return is spent) will not arm: the face must not fall
+    // back to the authored payload as if the intent were merely hidden.
+    else if (coreCounterUncovered()) supportCounterReturn = { uncovered: true };
   }
 
   return {

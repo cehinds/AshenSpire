@@ -411,7 +411,7 @@ test('a revealed attack the Counter does not cover (wyrmLord tailSweep) shows no
   const { combat, enemy } = live('wyrmLord');
   assert.equal(enemy.intent.moveId, 'tailSweep');
   const view = previewCard(combat, 'cx1', enemy.id);
-  assert.equal(view.counterReturn, undefined);
+  assert.deepEqual(view.counterReturn, { uncovered: true }, "the view marks the read uncovered (no computed return)");
   const row = view.values.find(v => v.op === 'damage');
   assert.equal(row.totalDamage, 0, 'no printed return either');
   assert.equal(row.counterReturn, undefined);
@@ -512,4 +512,21 @@ test('a Counter armed after this cycle\'s return was spent gains no live Block a
   const lines = cardFaceLines(view.resolvedDefinition, view, reg) || [];
   const text = lines.map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
   assert.doesNotMatch(text, /Block against it/);
+});
+
+test('guardCounter rank 3: a spent or uncovered read leaves no Return line on the face; covered shows only the computed Return', () => {
+  const face = (soldier, spent) => {
+    const { combat, enemy } = live(soldier ? 'wanderingSoldier' : 'wyrmLord');
+    combat.piles.hand.push({ instanceId: 'gc3', cardId: 'guardCounter', abilityRank: 3 });
+    Object.assign(combat.player, { mana: 9, maxMana: 9, block: 5 });
+    if (spent) combat.player.combatCounterReturnedCycle = combat.player.combatOwnerCycle || 0;
+    const view = previewCard(combat, 'gc3', enemy.id);
+    const lines = cardFaceLines(view.resolvedDefinition, view, reg) || [];
+    return lines.map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
+  };
+  assert.doesNotMatch(face(true, true), /Return/, 'spent');
+  assert.doesNotMatch(face(false, false), /Return/, 'uncovered area Sweep');
+  const covered = face(true, false);
+  assert.match(covered, /Return 6 damage/);
+  assert.doesNotMatch(covered, /Return \d+ damage[^|]*\|[^|]*Return/, 'covered: one Return row only');
 });
