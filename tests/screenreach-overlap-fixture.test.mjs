@@ -56,20 +56,28 @@ test('overlap fixture keeps a visible player frame fitted and leaves artwork-onl
 
 
 test('overlap fixture selects distinct paint-ordered enemies at tied and unequal depths', () => {
-  const start = tool.indexOf('  const frames = [...document.querySelectorAll');
-  const end = tool.indexOf('  const intent = low?.querySelector', start);
+  const start = tool.indexOf('  const visible = node => {', tool.indexOf('const INTENT_OVERLAP ='));
+  const end = tool.indexOf('  const a = intent.getBoundingClientRect()', start);
+  assert.ok(start >= 0 && end > start, 'execute only the canonical enemy-pair selection');
   const selection = tool.slice(start, end);
   for (const depths of [[200, 200, 200], [203, 201, 202], [200]]) {
-    const frames = depths.map((z, index) => ({ index, querySelector: () => ({ zIndex: String(z) }) }));
-    const { low, high } = runInNewContext(selection + '\n({ low, high })', {
+    const parent = {};
+    const frames = depths.map((z, index) => ({ index, parentElement: parent,
+      classList: { contains: () => false }, querySelector: () => ({ zIndex: String(z),
+        display: 'block', visibility: 'visible', getBoundingClientRect: () => ({ width:44, height:80 }) }) }));
+    const run = () => runInNewContext(selection + '\n({ low, high })', {
       document: { querySelectorAll: () => frames }, getComputedStyle: sprite => sprite,
     });
-    if (depths.length === 1) assert.equal(high, null, 'a single enemy cannot form a pair');
+    if (depths.length === 1) assert.throws(run, /missing its two enemies/, 'a single enemy cannot form a pair');
     else {
-      const ordered = frames.toSorted((a, b) => depths[a.index] - depths[b.index]);
-      assert.equal(low, ordered[0]);
-      assert.equal(high, ordered.at(-1));
+      const { low, high } = run();
+      assert.equal(low, frames[depths.indexOf(Math.min(...depths))]);
+      assert.ok(depths[high.index] >= depths[low.index]);
       assert.notEqual(high, low);
+      if (depths[high.index] === depths[low.index]) {
+        assert.equal(high.parentElement, low.parentElement);
+        assert.ok(high.index > low.index, 'later sibling paints over the earlier intent');
+      }
     }
   }
 });
