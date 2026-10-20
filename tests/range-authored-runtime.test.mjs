@@ -12,17 +12,18 @@ import { createRng } from '../src/engine/rng.js';
 import { dispatch, previewCard } from '../src/engine/combat.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
+import { validateContent } from '../src/model/validate.js';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const imported = importLegacyContent(contentBundle);
 const importedWeapon = id => imported.entities.find(row => row.kind === 'EQUIPMENT' && row.explicitOverrides.legacyId === id).explicitOverrides;
 const bandOf = range => ['melee', 'reach', 'ranged'].indexOf(range);
-function live(weaponId, enemyId = 'wanderingSoldier') {
-  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+function live(weaponId, enemyId = 'wanderingSoldier', seed = 511) {
+  const run = createRunState({ registries, classId: 'reaver', seed });
   run.loadout.sets.rightHand[0] = weaponId;
   run.loadout.sets.leftHand[0] = null;
-  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: [enemyId] });
+  const combat = createRunCombat({ registries, run, rng: createRng(seed), enemyIds: [enemyId] });
   return { run, combat, enemy: combat.enemies[0] };
 }
 function handStrike(combat) {
@@ -88,6 +89,9 @@ test('the imported dagger Throw property exposes and commits only its one-band e
 test('Core projects only owned paid mobility and range metadata without repricing existing enemy offense', () => {
   const before = JSON.stringify(contentBundle.enemies);
   const bundle = applyGameProfileToContent(contentBundle, profile);
+  const validation = validateContent(bundle);
+  assert.equal(validation.ok, true, JSON.stringify(validation.errors));
+  assert.deepEqual(applyGameProfileToContent(bundle, profile), bundle, 'range projection is idempotent');
   for (const original of contentBundle.enemies) {
     const source = profile.content.enemies.find(row => row.id === original.id);
     const projected = bundle.enemies.find(row => row.id === original.id);
@@ -118,4 +122,36 @@ test('Core mobility projection preserves nested and explicit flat offense overri
   const enemyMoves = contentBundle.enemyMoves.map(row => row.enemyId === 'wanderingSoldier' && row.id === 'slash' ? { ...row, damage: 77 } : row);
   const explicit = applyGameProfileToContent({ ...contentBundle, enemies, enemyMoves }, profile);
   assert.equal(explicit.enemies.find(row => row.id === 'wanderingSoldier').moves.slash.damage, 77);
+});
+
+test('a real authored 1 SP enemy closes Ranged to Reach to Melee, then attacks on successive turns', () => {
+  // Seed 2 naturally schedules the shipped soldier's Slash for these turns;
+  // no move, intent, SP pool, enemy stat, or engagement state is injected.
+  const { combat, enemy } = live('shortbow', 'wanderingSoldier', 2);
+  assert.equal(enemy.maxStamina, 1, 'the actual configured enemy has only 1 SP');
+  assert.equal(combat.rangeState.engagements[pair(enemy)], 2, 'the equipped bow establishes Ranged');
+  const source = profile.content.enemies.find(row => row.id === enemy.enemyId);
+  assert.ok(source.defaultDeck.includes('wanderingSoldier.advance'));
+  assert.equal(registries.enemies.get(enemy.enemyId).moves.advance.sp, 1);
+  for (const [index, band] of [1, 0, 0].entries()) {
+    const start = combat.eventLog.length;
+    dispatch(combat, { type: 'endTurn' });
+    let attempts = 0;
+    while (combat.pendingReaction && attempts++ < 20) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+    assert.equal(!!combat.pendingReaction, false, 'the normal reaction continuation finishes');
+    assert.equal(combat.rangeState.engagements[pair(enemy)], band, `turn ${index + 1} distance`);
+    assert.equal(enemy.maxStamina, 1, 'movement cannot inflate the authored pool');
+    assert.equal(enemy.stamina, 0, 'one normally priced action spends the complete 1 SP');
+    const events = combat.eventLog.slice(start);
+    const expectedMove = index < 2 ? 'advance' : 'slash';
+    assert.deepEqual(events.filter(row => row.type === 'enemyMoveStarted').map(row => row.moveId), [expectedMove]);
+    assert.deepEqual(enemy.performedMoves, ['advance', 'advance', 'slash'].slice(0, index + 1));
+    if (index < 2) {
+      assert.equal(events.filter(row => row.type === 'combatEngagementMoved').length, 1);
+      assert.equal(events.some(row => row.type === 'damageDealt' && row.sourceId === enemy.id), false, 'closing is a paid movement action, not an attack');
+    } else {
+      assert.ok(events.some(row => ['attackHit', 'attackMissed'].includes(row.type) && row.sourceId === enemy.id), 'the third turn resolves a genuine attack');
+      assert.equal(events.some(row => row.missReason === 'range'), false);
+    }
+  }
 });

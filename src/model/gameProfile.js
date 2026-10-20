@@ -63,7 +63,7 @@ function projectEnemyRangeContent(bundle, profile, baseBundle) {
   if (![...authored.values()].some(row => row.rangeClosingMove !== undefined)) return;
   const cards = new Map((gameContent(profile, 'enemyCards') || []).map(row => [row.id, row]));
   const flat = new Map((resolveEnemyMoveSources(baseBundle).enemyMoves || []).map(({ id, enemyId, ...move }) => [JSON.stringify([enemyId, id]), cloneLegacy(move)]));
-  const rangeOverrides = new Map(), additions = [];
+  const rangeOverrides = new Map(), closingKeys = new Set(), additions = [];
   bundle.enemies = bundle.enemies.map(def => {
     const row = authored.get(def.id);
     if (row?.rangeClosingMove === undefined) return def;
@@ -76,7 +76,8 @@ function projectEnemyRangeContent(bundle, profile, baseBundle) {
       throw new GameConfigError(`$/content/enemies/${def.id}/rangeClosingMove`, 'requires an owned, explicitly priced one-band closing card');
     }
     moves[row.rangeClosingMove] = { intent: 'buff', sp: card.staminaCost, weight: hint.aiWeight ?? 0, effects: dataClone(card.effects) };
-    additions.push(...(card.tags || []).filter(tagId => !tagId.startsWith('classification.')).map(tagId => ({ family: 'enemyMove', scope: def.id, objectId: row.rangeClosingMove, tagId })));
+    closingKeys.add(JSON.stringify([def.id, row.rangeClosingMove]));
+    additions.push(...[...(card.tags || []).filter(tagId => !tagId.startsWith('classification.')), 'classification.enemyMove'].map(tagId => ({ family: 'enemyMove', scope: def.id, objectId: row.rangeClosingMove, tagId })));
     for (const [id, metadata] of Object.entries(row.cardHints || {})) {
       const source = cards.get(id);
       if ((owned.has(id) || (row.unlockCards || []).includes(id)) && moves[metadata.legacyMove] && source?.range !== undefined) {
@@ -86,7 +87,7 @@ function projectEnemyRangeContent(bundle, profile, baseBundle) {
     return { ...def, moves, startingRange: row.startingRange, rangeClosingMove: row.rangeClosingMove, rangeRoutePolicy: row.rangeRoutePolicy };
   });
   bundle.enemyMoves = deriveEnemyMoves(bundle.enemies);
-  bundle.tagging = [...(bundle.tagging || []).filter(row => !(row.family === 'enemyMove' && rangeOverrides.has(JSON.stringify([row.scope, row.objectId])) && /^(range|reach):/.test(row.tagId))),
+  bundle.tagging = [...(bundle.tagging || []).filter(row => !(row.family === 'enemyMove' && (closingKeys.has(JSON.stringify([row.scope, row.objectId])) || rangeOverrides.has(JSON.stringify([row.scope, row.objectId])) && /^(range|reach):/.test(row.tagId)))),
     ...additions, ...[...rangeOverrides].map(([key, range]) => { const [scope, objectId] = JSON.parse(key); return { family: 'enemyMove', scope, objectId, tagId: `range:${range}` }; })];
 }
 export function applyGameProfileToContent(baseBundle,profileOrAuthor = 'current') {
