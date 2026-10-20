@@ -6,7 +6,8 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { dispatch } from '../src/engine/combat.js';
+import { createCombat, dispatch } from '../src/engine/combat.js';
+import { reactionRulesSnapshot } from '../src/content/combatCardTraits.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
@@ -22,9 +23,13 @@ const registries = Object.freeze({ ...baseRegistries, enemies: {
     return id === 'wanderingSoldier' ? { ...row, firstMove: 'slash', moves: { ...row.moves, slash: { ...row.moves.slash, damage: 5, hits: 3 } } } : row;
   }
 } });
-function live() {
-  const run = createRunState({ registries, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
-  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+function live(damage = 5) {
+  const selected = damage === 5 ? registries : { ...registries, enemies: { ...registries.enemies, get(id) {
+    const row = registries.enemies.get(id);
+    return id === 'wanderingSoldier' ? { ...row, moves: { ...row.moves, slash: { ...row.moves.slash, damage } } } : row;
+  } } };
+  const run = createRunState({ registries: selected, classId: 'reaver', seed: 511, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a', 'b', 'c'] } } } });
+  const combat = createRunCombat({ registries: selected, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   for (const entity of [combat.player, ...combat.enemies]) {
     Object.assign(entity, { hp: 100, maxHp: 100, block: 0, barrier: 0, statuses: {}, ratings: { ar: 0, pr: 0, dr: 0, poise: 0, ward: 0 }, ratingSources: [], basePrecisionBonus: 1000, persistentPoise: { value: 0, max: 0 } });
     delete entity.combatStance; delete entity.combatCounter;
@@ -41,7 +46,7 @@ function counters(ctx) {
   ctx.player.energy = 10;
 }
 test('Core offers one Counter per hit and resolves its return before the next contact', () => {
-  const ctx = live(); counters(ctx); primeAccuracyRolls(ctx, { count: 3 });
+  const ctx = live(8); counters(ctx); primeAccuracyRolls(ctx, { count: 3 });
   dispatch(ctx, { type: 'endTurn' });
   assert.equal(ctx.reactionRules.contactPolicy, 'perHit');
   assert.equal(ctx.eventLog.filter(row => row.type === 'damageDealt' && row.targetId === ctx.player.id).length, 0);
@@ -57,6 +62,7 @@ test('Core offers one Counter per hit and resolves its return before the next co
     assert.equal(events.filter(row => row.type === 'cardPlayed').length, 1, 'choice pays and plays one card immediately');
     assert.equal(events.filter(row => row.type === 'damageDealt' && row.targetId === ctx.player.id).length, 1, `hit${hit} only one incoming contact commits: ${events.map(row => row.type).join(',')}`);
     assert.equal(events.filter(row => row.type === 'combatCounterTriggered').length, 1, 'newly paid Counter may answer its own hit');
+    assert.equal(events.filter(row => row.type === 'blockGained' && row.source === 'counter').length, 1, `hit${hit}: each paid advantaged Counter earns its hit Block`);
     const incoming = events.findIndex(row => row.type === 'damageDealt' && row.targetId === ctx.player.id);
     const returned = events.findIndex(row => row.type === 'combatCounterTriggered');
     assert.ok(incoming < returned);
@@ -133,4 +139,57 @@ test('missing contact policy in a saved Core fight preserves its historical whol
   assert.equal(restored.queue[0].meta.expansionGroup.contactSequence, undefined);
   assert.equal(Object.values(restored.queue[0].meta.expansionGroup.targets)[0].contacts.length, 3);
   assert.equal(live().reactionRules.contactPolicy, 'perHit', 'the next newly created fight gets the new policy');
+});
+
+test('a paid Counter with a nested discard resumes its one contact exactly after JSON reload', () => {
+  const base = contentBundle.cards.find(card => card.id === 'guardCounter');
+  const localBase = createRegistries({ ...contentBundle,
+    cards: [...contentBundle.cards, { ...base, id: 'chooseCounter', name: 'Choose Counter', gradeProfiles: undefined, legacyFace: undefined,
+      effects: [{ op: 'discard', choose: true, amount: 1 }, ...base.effects] }],
+    tagging: [...contentBundle.tagging,
+      ...contentBundle.tagging.filter(row => row.family === 'card' && row.objectId === 'guardCounter').map(row => ({ ...row, objectId: 'chooseCounter' })),
+      { family: 'card', scope: '', objectId: 'chooseCounter', tagId: 'trait:reaction' }] });
+  const local = { ...localBase, enemies: { ...localBase.enemies, get(id) {
+    const row = localBase.enemies.get(id);
+    return id === 'wanderingSoldier' ? { ...row, firstMove: 'slash', moves: { ...row.moves, slash: { ...row.moves.slash, hits: 3 } } } : row;
+  } } };
+  const ctx = createCombat({ registries: local, rng: createRng(511), combatExpansionVersion: 2, reactionRulesVersion: 2,
+    reactionRules: { ...reactionRulesSnapshot(), contactPolicy: 'perHit' }, enemyIds: ['wanderingSoldier'],
+    player: { classId: 'reaver', hp: 100, maxHp: 100, energyMax: 20, stamina: 20, maxStamina: 20, mana: 20, maxMana: 20, drawPerTurn: 4,
+      deck: [{ cardId: 'chooseCounter', instanceId: 'nested-counter', upgraded: false },
+        ...['filler-a', 'filler-b', 'filler-c'].map(instanceId => ({ cardId: 'strike', instanceId, upgraded: false }))] } });
+  ctx.player.block = 999; ctx.player.basePrecisionBonus = 1000;
+  ctx.enemies[0].basePrecisionBonus = 1000;
+  ctx.enemies[0].hp = ctx.enemies[0].maxHp = 1000;
+  ctx.enemies[0].persistentPoise = { value: 1000, max: 1000 };
+  dispatch(ctx, { type: 'endTurn' });
+  const option = ctx.pendingReaction.options.find(row => row.play.cardInstanceId === 'nested-counter');
+  assert.ok(option); answer(ctx, option.id);
+  assert.ok(ctx.pendingAbilityDiscard, JSON.stringify(ctx.eventLog.slice(-15))); assert.ok(ctx.reactionResume);
+  const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(ctx)));
+  const restored = restoreCombatSnapshot({ registries: local, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), snapshot: saved });
+  for (const combat of [ctx, restored]) dispatch(combat, { type: 'chooseDiscard', cardInstanceIds: ['filler-a'] });
+  assert.deepEqual(JSON.parse(JSON.stringify(serializeCombatSnapshot(restored))), JSON.parse(JSON.stringify(serializeCombatSnapshot(ctx))));
+  assert.deepEqual(restored.rng.getCounters(), ctx.rng.getCounters());
+  assert.equal(ctx.eventLog.filter(row => row.type === 'cardPlayed' && row.cardInstanceId === 'nested-counter').length, 1);
+});
+
+test('a lethal Counter cancels the rest of the multi-hit root without another prompt', () => {
+  const ctx = live(); counters(ctx); ctx.enemies[0].hp = 1;
+  dispatch(ctx, { type: 'endTurn' }); primeAccuracyRolls(ctx, { count: 3 });
+  answer(ctx, ctx.pendingReaction.options.find(row => row.play.cardInstanceId === 'counter-0').id);
+  assert.equal(ctx.result, 'victory'); assert.equal(ctx.pendingReaction, undefined); assert.equal(ctx.queue.length, 0);
+  assert.equal(ctx.eventLog.filter(row => row.type === 'combatCounterTriggered').length, 1);
+  assert.equal(ctx.eventLog.filter(row => row.type === 'combatContactPrepared').length, 1);
+  assert.deepEqual(combatSnapshotProblems(serializeCombatSnapshot(ctx)), []);
+});
+
+test('an already armed automatic Counter remains one charge when optional prompts are disabled', () => {
+  const ctx = live(); counters(ctx); primeAccuracyRolls(ctx, { count: 3 });
+  dispatch(ctx, { type: 'playCard', cardInstanceId: 'counter-0' });
+  dispatch(ctx, { type: 'setReactions', enabled: false });
+  dispatch(ctx, { type: 'endTurn' });
+  assert.equal(ctx.pendingReaction, undefined);
+  assert.equal(ctx.eventLog.filter(row => row.type === 'combatCounterTriggered').length, 1);
+  assert.equal(ctx.eventLog.filter(row => row.type === 'combatCounterConsumed').length, 1);
 });

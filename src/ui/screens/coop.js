@@ -227,7 +227,7 @@ export function coopCallouts(events = []) {
  * numbers → bars, as solo does (SPEC §7.4, beatOrder 'sequential'). A snapshot
  * with both goes through the enemy timeline once.
  */
-const ENEMY_TIMELINE_EVENTS = ['enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered'];
+const ENEMY_TIMELINE_EVENTS = ['enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered', 'combatContactPrepared', 'combatHitStarted'];
 export function coopTimelineRoute(events = [], seatIds = []) {
   const list = (events || []).filter(Boolean);
   if (list.some(event => ENEMY_TIMELINE_EVENTS.includes(event.type))) return 'enemy';

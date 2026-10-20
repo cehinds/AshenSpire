@@ -44,8 +44,10 @@ export function counterReturnForReceipt(ctx, receipt) {
   return total;
 }
 
-/** Live play lets a Counter owner return once per owner cycle (completeCounterReturn); the preview reads the same flag. */
+/** Automatic returns share the owner-cycle budget; a paid contact has its own serial below. */
 export const counterReturnSpent = entity => entity?.combatCounterReturnedCycle === (entity?.combatOwnerCycle || 0);
+export const paidCounterContact = (ctx, carrier, counter) => ctx.reactionRules?.contactPolicy === 'perHit'
+  && Number.isSafeInteger(carrier?.manualCounterSerial) && carrier.manualCounterSerial === counter?.serial;
 
 /** The part of `amount` Block `entity` can take under its blockCap (Unbreakable): one rule for the live gain and the preview. */
 export function counterBlockGrant(ctx, entity, amount) {

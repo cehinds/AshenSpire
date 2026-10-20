@@ -422,6 +422,7 @@ export const CALLOUT_KINDS = {
   evadeFailed: { string: 'combat.callout.evadeFailed', tone: 'white' },
   missed: { string: 'combat.callout.missed', tone: 'white' },
   outOfRange: { string: 'combat.callout.outOfRange', tone: 'white' },
+  dodged: { string: 'combat.callout.dodged', tone: 'white' },
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
   disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
   countered: { string: 'combat.callout.countered', tone: 'red' },
@@ -1071,6 +1072,11 @@ export function playTimeline(events, ctx, done) {
       if (beat.banner) visualSafe(() => banner(ctx.layer, beat.banner, 'turn', timing.bannerMs));
       if (!beat.actorId || beat.kind === 'reveal') { runParts(beat, 'contact'); runParts(beat, 'reaction'); runParts(beat, 'callout'); }
       else for (const event of beat.events) {
+        if (event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
+          || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive) {
+          visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
+          continue;
+        }
         if (terminal(event) || event.type === 'attackMissed' || event.type === 'attackHit' && !(event.evadeActive && !event.bypass)) continue;
         visualSafe(() => parts.get(event)?.callout?.(ctx));
       }

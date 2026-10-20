@@ -95,7 +95,7 @@ test('miss and Evaded are separate accuracy and post-animation outcomes', t => {
     });
     finish();
     assert.ok(words.find(row => row.kind === 'missed').at < timeOf(trace, 'evade-reaction'));
-    assert.ok(words.find(row => row.kind === 'evaded').at > timeOf(trace, 'evade-reaction'));
+    assert.ok(words.find(row => row.kind === 'dodged').at > timeOf(trace, 'evade-reaction'));
   });
 });
 
