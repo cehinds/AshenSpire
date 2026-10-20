@@ -5,7 +5,7 @@ const counterRuleActive = ctx => CounterRule.counterRuleActive(ctx);
 const counterReturnForReceipt = (ctx, receipt) => CounterRule.counterReturnForReceipt(ctx, receipt);
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance, activeCombatStances, stanceCapacity } from './concurrentStances.js';
-import { configuredCombat, configuredModule, setProfileStance, armsAsCoreCounter, configuredStance } from './gameProfileCombat.js';
+import { configuredCombat, configuredModule, setProfileStance, armsAsCoreCounter, isSpellCounter, configuredStance } from './gameProfileCombat.js';
 import { removeStatus } from './statuses.js';
 import { stanceOf, sameStance, stanceEntryBonuses, stanceRulesFor } from '../model/stanceRules.js';
 import { syncWardMaximum } from './combatPools.js';
@@ -723,7 +723,8 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   if (counterRuleActive(ctx)) {
     const core = counterReturnForReceipt(ctx, receipt);
     // The authored Ward return and Flux are not part of the Core rule (owner 2026-10-19): a spell Counter returns HP and Poise only.
-    payload.hp = core.hp; payload.poise = core.poise; payload.ward = 0;
+    payload.hp = core.hp; payload.poise = core.poise;
+    if (isSpellCounter(counter.carrier)) payload.ward = 0;
   }
   const magical = isSpell(counter.carrier.combatProfile);
   const caster = hasTrait(source, 'caster');
@@ -744,7 +745,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   if (!coreFixed && trait.impact > 0 && !(magical && receipt.profiles.some((profile, index) => receipt.covered[index] && physicalProjectile(profile)))) {
     payload.poise = payload.poise > 0 ? 2 * payload.poise : trait.impact;
   }
-  if (!coreFixed && trait.flux > 0) payload.ward = payload.ward > 0 ? 2 * payload.ward : trait.flux;
+  if (!(coreFixed && isSpellCounter(counter.carrier)) && trait.flux > 0) payload.ward = payload.ward > 0 ? 2 * payload.ward : trait.flux;
   const event = { ...eventCarrier(target, counter.carrier), ...seats(ctx, target, source),
     sourceId: target.id, targetId: source.id, amount: payload.hp, poiseDamage: payload.poise, wardDamage: payload.ward, wardOnly: magical && payload.hp === 0 };
   if (payload.hp > 0) enqueue({ op: 'damage', amount: payload.hp });
