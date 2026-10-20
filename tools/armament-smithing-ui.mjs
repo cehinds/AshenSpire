@@ -592,7 +592,7 @@ async function main() {
       await click('#open-armoury');
       await until(`!!document.querySelector('.armoury-overlay')`, 'Armoury overlay');
       const armouryView = async member => {
-        const toggle='.armoury-overlay [data-surface="armouryView"] .as-catnav-toggle';
+        const toggle='#armoury-view-select';
         if(await evaluate(`!!document.querySelector(${JSON.stringify(toggle)})?.getClientRects().length && document.querySelector(${JSON.stringify(toggle)}).getAttribute('aria-expanded') !== 'true'`)) await click(toggle);
         await click(`.armoury-overlay [data-surface="armouryView"] [data-member="${member}"]`);
       };
