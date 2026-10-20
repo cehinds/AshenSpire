@@ -242,7 +242,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // also reads (centerTargetOverheads) can read everything, then write everything: readHitBadges() does the reads and
   // returns the writes (null when there is no badge), and a value that did not change is not written again (this runs per
   // animation frame while tracking).
-  function readHitBadges() {
+  function readHitBadges(geometry = null) {
     const frames = [...field.querySelectorAll('.combatant')].filter(frame => frame.querySelector(':scope > .combat-hit-chance'));
     if (!frames.length) return null;
     const zoom = uiZoom();
@@ -250,6 +250,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const sprite = frame.querySelector('.sprite');
       if (!sprite) return null;
       const body = currentSpriteBodyBounds(sprite, schedule), box = frame.getBoundingClientRect();
+      geometry?.set(frame, { body, box });
       const top = Number.isFinite(body.headY) ? body.headY : body.top, bottom = Number.isFinite(body.feetY) ? body.feetY : body.bottom;
       if (![body.left, body.right, top, bottom].every(Number.isFinite)) return null;
       return { frame, x: `${((body.left + body.right) / 2 - box.left) / zoom}px`, y: `${((top + bottom) / 2 - box.top) / zoom}px` };
@@ -272,7 +273,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // combatant per tracked frame.
   function centerTargetOverheads() {
     const zoom = uiZoom();
-    const commitBadges = readHitBadges();
+    // Both consumers read the same actor before any layout writes. Share only
+    // this pass's readings; a later pose/frame must always be measured anew.
+    const geometry = new Map();
+    const commitBadges = readHitBadges(geometry);
     const config = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
     const racked = [], plain = [];
     for (const frame of field.querySelectorAll('.combatant')) {
@@ -280,13 +284,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (!sprite || !leading) continue;
       const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
       if (rack) {
-        const body = currentSpriteBodyBounds(sprite, schedule);
+        const { body, box } = geometry.get(frame) || { body: currentSpriteBodyBounds(sprite, schedule), box: frame.getBoundingClientRect() };
         const intentHeight = rack.querySelector(':scope > :is(.intent,.player-action-intent)')?.getBoundingClientRect().height || 37;
-        racked.push({ frame, body, placement: targetBodyHudPlacement({ body, frame: frame.getBoundingClientRect(),
+        racked.push({ frame, body, placement: targetBodyHudPlacement({ body, frame: box,
           groupHeight: config.miniHudGroupHeightPx, intentHeight, gap: config.miniHudSpriteGapPx, zoom }) });
       } else plain.push({ frame, sprite, leading });
     }
     const headerBottom = plain.length ? field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom : undefined;
+    geometry.clear();
     commitBadges?.();
     for (const { frame, body, placement } of racked) {
       frame.style.setProperty('--combat-mini-hud-top', `${placement.miniTop}px`);
