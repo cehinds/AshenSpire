@@ -449,7 +449,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const stanceNode = row => el('span', { class: 'deck-editor-stance',
     dataset: { stance: stanceKey(row) }, text: stanceName(row) });
   // The rank the card face prints (its ability rank, else its rank badge). Rank 0
-  // has a name: a spell's is Cantrip, a basic maneuver's is Basic, any other card's its source (Weapon art, Reward...).
+  // has a name: a spell's is Cantrip, a maneuver's is Basic, except a class special's, which is Weapon art.
   const rankNode = (row) => {
     const def = combatDef(row);
     const card = playingCardModel(registries, row.ref, { definition: def });
