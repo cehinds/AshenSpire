@@ -35,10 +35,10 @@ import { balance } from '../../content/balance.js';
 import { VICTORY_XP_DEFAULTS } from '../../model/victoryXpPresentation.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
 import { TITLE_ENTRANCE_TIMING } from '../models/StartupGateModels.js';
-import { ZOOM_STEPS, MAP_ZOOM_DEFAULT, MAP_FREE_PAN_DEFAULT } from '../../model/mapview.js';
+import { ZOOM_STEPS, MAP_ZOOM_DEFAULT, MAP_FREE_PAN_DEFAULT } from '../../model/map/mapview.js';
 import {
   MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE, SHRINE_GLOW_DEFAULT,
-} from '../../model/mapknowledge.js';
+} from '../../model/map/mapknowledge.js';
 import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
 import { openModal, button } from '../kit/index.js';
@@ -426,7 +426,7 @@ const ROWS = [
   // same act, two readings — and Custom Climb grows nothing new.
   //
   // DEFAULT IS `fog` since 2026-08-08 — his word, and the one token is in
-  // model/mapknowledge.js so this row cannot disagree with the resolver.
+  // model/map/mapknowledge.js so this row cannot disagree with the resolver.
   //
   // AND THE TRAIL SENTENCE IS NOT TYPED HERE ANY MORE. It read "Fog never closes
   // behind you — somewhere you have seen stays seen" — the WIDE reading, written
@@ -448,7 +448,7 @@ const ROWS = [
   // nearest shrine should have a glowing effect. (make this toggleable in the
   // settings)". He scoped the switch himself in the same sentence that asked
   // for the effect, so the row exists whatever anyone thinks the glow needs.
-  // `def` is the resolver's own const (model/mapknowledge.js) rather than a
+  // `def` is the resolver's own const (model/map/mapknowledge.js) rather than a
   // second `true` typed here — the row three above learned that lesson with the
   // zoom ladder.
   // E13 (#258), his words: "a toggle for multi-use rest stops". OFF is the

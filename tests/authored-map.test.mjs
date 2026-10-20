@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { framingBox, mapPoint, nodeX, nodeY, nodeRadius } from '../src/model/mapview.js';
+import { framingBox, mapPoint, nodeX, nodeY, nodeRadius } from '../src/model/map/mapview.js';
 import { LEGACY_DUNGEONS } from '../src/model/legacyDungeon.js';
 
 const regular = { col: 3, floor: 5, type: 'monster' };

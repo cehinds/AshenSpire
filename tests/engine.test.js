@@ -117,10 +117,10 @@ import {
   selectStartingHand, resolveCreationHands,
 } from '../src/model/characterCreation.js';
 // The shrine lane and the level: both of Constantine's 2026-08-16 shrine asks
-// that a headless suite can reach. `mapknowledge.js` is pure by design (its own
+// that a headless suite can reach. `map/mapknowledge.js` is pure by design (its own
 // header says so) and `levelup.js` touches no DOM, so the "no DOM access" rule
 // at the top of this file still holds.
-import { nearestShrine, shrineLane, litNodes } from '../src/model/mapknowledge.js';
+import { nearestShrine, shrineLane, litNodes } from '../src/model/map/mapknowledge.js';
 import { levelUpPlan, applyLevelUp, awardLevelXp, xpToNext as xpToNextLevel, combatLevelXp, questLevelXp, characterLevel } from '../src/model/levelup.js';
 import { levelProblems } from '../src/model/state.js';
 import { playerLevel } from '../src/model/levels.js';

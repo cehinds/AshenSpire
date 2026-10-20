@@ -1753,7 +1753,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         // shipped. One field, read.
         current: snap.cursorId || null,
         // FOG IS OFF HERE, AND IT IS A SNAPSHOT GAP, NOT A CHOICE. The ladder
-        // (model/mapknowledge.js) lights the trail behind you from `run.path`,
+        // (model/map/mapknowledge.js) lights the trail behind you from `run.path`,
         // and `snapshot()` sends no path — so asking for fog would hide ground
         // the party has already walked. Until the host sends `path`, a co-op
         // client is honestly in `path` mode while a solo player now defaults to

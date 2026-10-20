@@ -55,7 +55,7 @@ packs and their objects into one zip, checking each file as it is written. See
 [offline play](offline-play.md).
 
 All run maps share the vector face in `mapNodeInk.js`: opaque dark discs, readable
-glyphs, a pale current-node marker and reachable halos. `mapview.js` owns the
+glyphs, a pale current-node marker and reachable halos. `map/mapview.js` owns the
 node radii; `AtlasCameraModel.js` frames a journey junction using that same close-up
 scale. World map fog compositing is bounded to the visible viewport.
 

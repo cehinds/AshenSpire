@@ -1,4 +1,4 @@
-// src/model/mapview.js — the act map's VIEW GEOMETRY, and the one place that
+// src/model/map/mapview.js — the act map's VIEW GEOMETRY, and the one place that
 // turns it into an answer about whether a knob is satisfiable.
 //
 // WHY THIS FILE EXISTS. Constantine asked the map to open "zoomed in close
@@ -31,7 +31,7 @@
 // (`.map-scroll[data-framing="clipped"]`), so the optimistic half is watched by
 // the pessimistic half.
 
-import { balance } from '../content/balance.js';
+import { balance } from '../../content/balance.js';
 
 /** Column pitch of the SVG, in SVG units. Floor pitch is derived below.
  *
@@ -670,7 +670,7 @@ export function geometryRefusals(balance) {
   if (!spec || typeof spec !== 'object' || Array.isArray(spec) || spec.def == null) {
     out.push({
       key: 'balance.ui.tapSize.def',
-      msg: `missing — every map circle's radius is SOLVED from it (model/mapview.js NODE_R) with no fallback, `
+      msg: `missing — every map circle's radius is SOLVED from it (model/map/mapview.js NODE_R) with no fallback, `
         + `so its absence is not a default: every node, the boss circle and every margin resolve to NaN. `
         + `A bundle with a 'balance' must carry it.`,
     });
@@ -681,7 +681,7 @@ export function geometryRefusals(balance) {
   if (air.why === 'no-reference-zoom') {
     out.push({
       key: 'balance.ui.tapSize.def',
-      msg: `no radius can be solved from this entry: model/mapview.js REF_ZOOM is ${air.refZoom}, which is not a zoom, `
+      msg: `no radius can be solved from this entry: model/map/mapview.js REF_ZOOM is ${air.refZoom}, which is not a zoom, `
         + `so every node circle, the boss circle and every margin are NaN. `
         + `REF_ZOOM is the geometry's own reference and must be one rung of the ladder — it is deliberately NOT the map-zoom default, which may legally say 'Fit'.`,
     });
