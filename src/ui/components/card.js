@@ -709,7 +709,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     }
   }
   if (combatProfile.maneuver === 'counter') {
-    // Core return help only where live arms the card (armsAsCoreCounter); a spell Counter never returns.
+    // Core return help only where live arms the card (armsAsCoreCounter): Counter stances and spell Counters with coverage.
     const inCore = registries.gameProfile?.modules?.effects?.fixCoreVersion === 1;
     const coreCounter = inCore && armsAsCoreCounter(registries, def);
     const coreIneligible = inCore && !coreCounter;

@@ -293,11 +293,67 @@ function liveWith(cardId) {
   return { combat, enemy };
 }
 
-test('a spell Counter (frostCounter) previews no return but still marks its SP shift', () => {
+test('a spell Counter (frostCounter) arms in Core: it previews the computed return and still marks its SP shift', () => {
   const { combat, enemy } = liveWith('frostCounter');
   const view = previewCard(combat, 'cy1', enemy.id);
-  assert.deepEqual(view.counterReturn, { uncovered: true }, 'a spell Counter live play never arms promises no return (only the uncovered marker)');
+  assert.ok(view.counterReturn?.hp > 0 && !view.counterReturn.uncovered, 'owner 2026-10-19: a spell Counter with coverage returns');
   assert.equal(view.costShift, -1, 'the reaction-from-hand discount reads from the authored cost (1 -> 0)');
+});
+
+function playSpellCounter(enemyId = 'wanderingSoldier') {
+  const { combat, enemy } = live(enemyId);
+  combat.piles.hand.push({ instanceId: 'cz1', cardId: 'frostCounter' });
+  Object.assign(combat.player, { mana: 9, maxMana: 9 });
+  const view = previewCard(combat, 'cz1', enemy.id);
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cz1' });
+  Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  return { combat, enemy, view, events: combat.eventLog.slice(start) };
+}
+
+test('live: a spell Counter keeps the prepared stance, arms, is consumed, and its magical return equals the preview', () => {
+  const { combat, view, events } = playSpellCounter();
+  const triggered = events.find(e => e.type === 'combatCounterTriggered' && e.cardId === 'frostCounter');
+  assert.ok(triggered, 'a covered attack triggers the spell Counter');
+  assert.ok(events.some(e => e.type === 'combatCounterConsumed' && e.cardId === 'frostCounter'), 'consumed');
+  assert.equal(combat.player.combatCounter?.charges ?? 0, 0, 'no charge left');
+  const dealt = events.find(e => e.type === 'damageDealt' && e.cardId === 'frostCounter');
+  assert.ok(events.some(e => e.type === 'attackHit' && e.cardId === 'frostCounter' && e.opposed), 'the return rolls to hit');
+  assert.equal(triggered.amount, dealt.damageReceipt.hits[0].incoming, 'the receipt carries the Counter amount');
+  assert.ok(dealt.damageReceipt.hits[0].magical > 0 && dealt.damageReceipt.hits[0].physical === 0, 'the return is a magical attack (PR, not AR)');
+  assert.equal(triggered.wardDamage, 0, 'Core fixes the return to HP and Poise (authored Ward/Flux do not add)');
+  assert.equal(triggered.amount, view.counterReturn.hp, 'preview == live HP return');
+  assert.equal(triggered.poiseDamage, view.counterReturn.poise, 'preview == live Poise return');
+});
+
+test('a spell Counter plays into the prepared stance (not Counter stance), as before', () => {
+  const { combat } = live();
+  combat.piles.hand.push({ instanceId: 'cz2', cardId: 'frostCounter' });
+  Object.assign(combat.player, { mana: 9, maxMana: 9 });
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cz2' });
+  assert.equal(combat.player.combatStance.maneuver, 'prepared');
+  assert.ok(combat.player.combatCounter, 'armed');
+});
+
+test('a spell Counter returns once per owner cycle (counterReturnSpent) and not against an uncovered attack', () => {
+  const spent = live();
+  spent.combat.piles.hand.push({ instanceId: 'cz3', cardId: 'frostCounter' });
+  Object.assign(spent.combat.player, { mana: 9, maxMana: 9 });
+  spent.combat.player.combatCounterReturnedCycle = spent.combat.player.combatOwnerCycle || 0;
+  assert.equal(previewCard(spent.combat, 'cz3', spent.enemy.id).counterReturn?.uncovered, true, 'already returned this cycle: no second return');
+  assert.equal(previewCard(spent.combat, 'cz3', spent.enemy.id).counterReturn?.hp, undefined);
+  const wide = live('wyrmLord');
+  wide.combat.piles.hand.push({ instanceId: 'cz4', cardId: 'frostCounter' });
+  Object.assign(wide.combat.player, { mana: 9, maxMana: 9 });
+  assert.equal(wide.enemy.intent.moveId, 'tailSweep');
+  assert.deepEqual(previewCard(wide.combat, 'cz4', wide.enemy.id).counterReturn, { uncovered: true }, 'tailSweep is Area: not covered');
+  dispatch(wide.combat, { type: 'playCard', cardInstanceId: 'cz4' });
+  dispatch(wide.combat, { type: 'setReactions', enabled: false });
+  const start = wide.combat.eventLog.length;
+  dispatch(wide.combat, { type: 'endTurn' });
+  assert.equal(wide.combat.eventLog.slice(start).some(e => e.type === 'combatCounterTriggered'), false, 'uncovered: no return');
 });
 
 test('Core 2 fixed return is not rewritten by the legacy Impact edge (lowGuardRiposte poise stays 3, not 6)', () => {
@@ -373,8 +429,8 @@ test('the card face renders the computed return against a 12-damage Attack (core
 test('Counters with authored coverage get eligibility-aware help and keep the coverage details', () => {
   const html = cardDetailHtml(regs.wanderingSoldier, { cardId: 'frostCounter' });
   assert.match(html, /Counter coverage:/);
-  // frostCounter is a spell Counter: live never arms it (configured stance 'prepared'), so the help promises no return.
-  assert.doesNotMatch(html, /half its incoming damage|returns half/i);
+  // frostCounter is a spell Counter that arms in Core (owner 2026-10-19), so the help promises the Core return.
+  assert.match(html, /half its incoming damage/);
   assert.match(cardDetailHtml(regs.wanderingSoldier, { cardId: 'core.counter' }), /half its incoming damage/);
   assert.doesNotMatch(html, /requires all damage and status pressure resisted|after all covered damage and status pressure is resisted/);
 });
@@ -392,20 +448,10 @@ test('the face lists only what live resolution delivers: no legacy Smash, Prone 
   }
 });
 
-test('preview follows live eligibility: a spell Counter (frostCounter) shows no return and is not consumed; Counters that arm still show and apply theirs', () => {
-  const frost = faceAgainst12('frostCounter');
-  assert.deepEqual(frost.view.counterReturn, { uncovered: true }, 'no return promised for a Counter live play never arms (only the uncovered marker)');
-  const { combat } = live();
-  combat.piles.hand.push({ instanceId: 'cz1', cardId: 'frostCounter' });
-  Object.assign(combat.player, { mana: 9, maxMana: 9 });
-  dispatch(combat, { type: 'playCard', cardInstanceId: 'cz1' });
-  dispatch(combat, { type: 'setReactions', enabled: false });
-  const start = combat.eventLog.length;
-  dispatch(combat, { type: 'endTurn' });
-  assert.equal(combat.eventLog.slice(start).some(e => e.type === 'combatCounterTriggered'), false, 'live: not triggered either');
-  for (const cardId of ['core.counter', 'lowGuardRiposte']) {
+test('preview follows live eligibility: every Counter that arms (spell Counters included) shows its return', () => {
+  for (const cardId of ['frostCounter', 'core.counter', 'lowGuardRiposte']) {
     const { view } = faceAgainst12(cardId);
-    assert.ok(view.counterReturn?.hp > 0, `${cardId} still previews its return`);
+    assert.ok(view.counterReturn?.hp > 0, `${cardId} previews its return`);
   }
 });
 
