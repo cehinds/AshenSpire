@@ -78,3 +78,15 @@ test('Throw beyond its extension is omitted unless explicitly selected, then sta
   const refused = combatRangeActionPlan(q).routes.find(route => route.id === 'throw');
   assert.equal(refused.available, false); assert.equal(refused.selected, true);
 });
+
+test('paid Counter variants show their own canonical route total and return odds', async () => {
+  const { summarizeCardOption } = await import('../src/ui/models/CardOptionSummaryModel.js');
+  const q = quote();
+  const option = { id: 'counter-throw', name: 'Counter', play: { cardInstanceId: 'c1', rangeRoute: 'throw' }, staminaCost: 99, range: q.range };
+  const summary = summarizeCardOption({ enemies: new Map([['soldier', { name: 'Soldier' }]]) }, { enemies: [{ id: 'e1', enemyId: 'soldier' }] }, option);
+  assert.ok(summary.costs.includes('Throw · -1 Precision'));
+  assert.ok(summary.costs.includes('Total 2 SP'));
+  assert.match(summary.costs.join(' '), /Soldier.*Throw 66.5%/);
+  assert.doesNotMatch(summary.costs.join(' '), /99/);
+  assert.equal(summary.id, 'counter-throw', 'the modal still returns the engine option identity');
+});
