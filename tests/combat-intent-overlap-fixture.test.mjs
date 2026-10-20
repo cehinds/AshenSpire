@@ -9,13 +9,13 @@ const end = source.indexOf('  const a = intent.getBoundingClientRect()', begin);
 assert.ok(begin > 0 && end > begin);
 const selection = source.slice(begin, end);
 
-function fixture(depths, { hidden = [], dead = [], separate = false } = {}, code = selection) {
+function fixture(depths, { hidden = [], dead = [], separate = false, firstAlone = false } = {}, code = selection) {
   const parent = {};
   const frames = depths.map((z, index) => {
     const node = kind => ({ kind, index, zIndex: String(z), display: hidden.includes(index) ? 'none' : 'block',
       visibility: 'visible', getBoundingClientRect: () => ({ width: 44, height: 80 }) });
     const sprite = node('sprite'), intent = node('intent');
-    return { parentElement: separate ? {} : parent, sprite, intent,
+    return { parentElement: separate || firstAlone && index === 0 ? {} : parent, sprite, intent,
       classList: { contains: name => name === 'dead' && dead.includes(index) },
       querySelector: selector => selector === '.intent' ? intent : sprite };
   });
@@ -60,4 +60,10 @@ test('captured equal-depth setup rejects the original strict-depth-only assumpti
     const sprite = high?.querySelector('.combatant-card > .sprite');
     if (!intent || !sprite) throw new Error('screenreach: intent overlap fixture is missing its two enemies');`;
   assert.throws(() => fixture([200, 200, 200], {}, original), /missing its two enemies/);
+});
+
+test('equal-depth selection finds a sibling pair after a standalone row', () => {
+  const result = fixture([200, 200, 200], { firstAlone: true });
+  assert.equal(result.intent.index, 1);
+  assert.equal(result.sprite.index, 2);
 });

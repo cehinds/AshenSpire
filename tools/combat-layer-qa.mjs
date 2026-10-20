@@ -88,6 +88,7 @@ try {
         return bad;
       });
       return {
+        cardsAboveHud: Number(getComputedStyle(combat).getPropertyValue('--combat-layer-cards')) > Number(getComputedStyle(combat).getPropertyValue('--combat-layer-hud')),
         scenery: z('.backdrop'), sprites, selectionSurfaces, hudSurfaces, selectionCategories,
         enemies: [...document.querySelectorAll('.enemy .sprite')].map(el => Number(getComputedStyle(el).zIndex)),
         player: z('.player .sprite'), fade: document.querySelector('.alternative-card-fade') ? z('.alternative-card-fade') : z('.combat', '::before'),

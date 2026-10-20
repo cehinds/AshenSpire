@@ -354,9 +354,11 @@ const INTENT_OVERLAP = `(async () => {
   // Same-row enemies legitimately share a depth. Their later sibling paints
   // above the earlier one; use that real order without changing authored layers.
   if (!high) {
-    low = frames[0];
-    high = frames.find(frame => frame !== low && frame.parentElement === low.parentElement);
-    if (!high || depth(high) !== depth(low))
+    const pair = frames.flatMap((frame, index) => frames.slice(index + 1)
+      .filter(other => other.parentElement === frame.parentElement && depth(other) === depth(frame))
+      .map(other => [frame, other]))[0];
+    if (pair) [low, high] = pair;
+    if (!high)
       throw new Error('screenreach: intent overlap fixture requires two ordered same-depth siblings');
   }
   const intent = low.querySelector('.intent');

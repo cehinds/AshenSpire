@@ -5,7 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { assertCombatLayerOrder } from '../tools/combat-layer-contract.mjs';
 
 const css = readFileSync(new URL('../styles/combat-layers.css', import.meta.url), 'utf8');
-function declaredLayers(source) {
+function declaredLayers(source, cardsAboveHud = false) {
   source = source.replace(/\/\*[\s\S]*?\*\//g, '');
   const variables = Object.fromEntries([...source.matchAll(/(--combat-layer-[\w-]+):\s*(\d+)/g)]
     .map(([, name, value]) => [name, Number(value)]));
@@ -21,7 +21,7 @@ function declaredLayers(source) {
       return numeric.split('+').reduce((sum, term) => sum + Number(term), 0);
     });
   });
-  return { scenery: variables['--combat-layer-scenery'], sprites, fade: variables['--combat-layer-fade'],
+  return { cardsAboveHud, scenery: variables['--combat-layer-scenery'], sprites, fade: variables['--combat-layer-fade'],
     selectionSurfaces: [variables['--combat-layer-selection'], variables['--combat-layer-selection'] + 1,
       variables['--combat-layer-selection'] + 3, variables['--combat-layer-selection'] + 4],
     hudSurfaces: [variables['--combat-layer-hud']], selectionCategories: ['enemy-leading', 'enemy-reading', 'target-proxy'],
@@ -81,4 +81,16 @@ test('selected enemies may rise above idle players but never through the fade', 
     /fade must paint above every fighter/);
   assert.throws(() => assertCombatLayerOrder({ ...layers, selectionSurfaces: [layers.fade] }),
     /fade must stay below every selection surface/);
+});
+
+const responsiveCss = readFileSync(new URL('../styles/responsive-combat-chrome.css', import.meta.url), 'utf8');
+test('responsive cascade keeps its fade above fighters and below HUD, selection and cards', () => {
+  const layers = declaredLayers(css + responsiveCss, true);
+  assertCombatLayerOrder(layers);
+  assert.match(responsiveCss, /mask-image: none; z-index: var\(--combat-layer-fade\);/,
+    'the painted footer fade consumes the shared token');
+  for (const change of [{fade:150}, {fade:700}, {hudSurfaces:[375]}, {cards:375}]) {
+    assert.throws(() => assertCombatLayerOrder({...layers,...change}), /fade must|selection surface must|responsive HUD/);
+  }
+  assert.throws(() => assertCombatLayerOrder({...layers,hudSurfaces:[900]}), /responsive HUD and footer must stay below cards/);
 });
