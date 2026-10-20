@@ -20,9 +20,10 @@ export function rangeSettingsRows(authored = fixCoreMechanics.range) {
     return cachedPolicy;
   };
   const defaultFor = field => settings => policyFor(settings)[field];
+  const defaultEnabledFor = settings => policyFor(settings).enabled;
   return [
     { ...common, key: RANGE_SETTING_KEYS.enabled, type: 'toggle', def: policy.enabled,
-      defaultFor: defaultFor('enabled'), resolve: (settings = {}) => typeof settings[RANGE_SETTING_KEYS.enabled] === 'boolean' ? settings[RANGE_SETTING_KEYS.enabled] : defaultFor('enabled')(settings),
+      defaultFor: defaultEnabledFor, resolve: (settings = {}) => typeof settings[RANGE_SETTING_KEYS.enabled] === 'boolean' ? settings[RANGE_SETTING_KEYS.enabled] : defaultEnabledFor(settings),
       label: t('settings.range.enabled'), note: tFull('settings.range.enabled') },
     ...['advanceSpPerBand', 'reachPrecisionBonus', 'throwPrecisionPenalty'].map(field => ({
       ...common, key: RANGE_SETTING_KEYS[field], type: 'number', def: policy[field], defaultFor: defaultFor(field),

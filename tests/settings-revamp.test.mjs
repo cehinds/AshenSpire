@@ -332,7 +332,7 @@ test('a resolved row shows its dot and Reset when clearing its key would change 
 test('while searching, the scoped reset resets every matching result and says so', async () => {
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /filtering\(\) \? settingsSearchHits\(query, pageDebug\(\), settings, \{ changedOnly: changedOnly\(\), profile: activeProfile\(\) \}\)\.map\(\(hit\) => hit\.row\)/);
+  assert.match(screen, /filtering\(\) \? settingsSearchHits\(query, pageDebug\(\), settings, \{ changedOnly: changedOnly\(\), profile: activeProfile\(\), nextProfile: nextProfile\(\) \}\)\.map\(\(hit\) => hit\.row\)/);
   assert.ok(screen.includes("'Reset these results'"));
 });
 
@@ -507,7 +507,7 @@ test('widening the device-key scope forgets the loaded version (narrowing keeps 
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
   assert.match(panel, /write\(SYNC_STORAGE\.includeDevice[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(next\) write\(SYNC_STORAGE\.lastSha, null\);/, 'widening re-reads the loaded version; narrowing keeps it');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /const count = settingsSearchHits\('', pageDebug\(\), settings, \{ changedOnly: true, profile: activeProfile\(\) \}\)\.length;/);
+  assert.match(screen, /const count = settingsSearchHits\('', pageDebug\(\), settings, \{ changedOnly: true, profile: activeProfile\(\), nextProfile: nextProfile\(\) \}\)\.length;/);
   const hidden = settingsSearchHits('', false, { 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 }, { changedOnly: true });
   assert.deepEqual(hidden, [], 'release: hidden tuning is not in Changed');
 });
@@ -703,7 +703,7 @@ test('a Reset that cannot be saved is not left applied, and results reset covers
   assert.deepEqual(calls[1], { screenShake: false, reducedMotion: true }, 'and back through onChange, so live state follows');
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /filtering\(\) \? settingsSearchHits\(query, pageDebug\(\), settings, \{ changedOnly: changedOnly\(\), profile: activeProfile\(\) \}\)\.map\(\(hit\) => hit\.row\)/);
+  assert.match(screen, /filtering\(\) \? settingsSearchHits\(query, pageDebug\(\), settings, \{ changedOnly: changedOnly\(\), profile: activeProfile\(\), nextProfile: nextProfile\(\) \}\)\.map\(\(hit\) => hit\.row\)/);
 });
 
 test('Save drops an older preview, and Undo gives promotion ownership back', async () => {
