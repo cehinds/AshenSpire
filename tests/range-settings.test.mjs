@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import { rangeSettingsRows } from '../src/ui/models/RangeSettingsModel.js';
 import { settingsRows, generalGroups, settingsRowHtml, resolveNumberRow, resetKeys, rowModified, categoryHtml, settingsSearchHits } from '../src/ui/screens/settings.js';
-import { settingsRowAvailable } from '../src/ui/models/SettingsCapabilitiesModel.js';
+import { settingsRowAvailable, activeSettingsProfile } from '../src/ui/models/SettingsCapabilitiesModel.js';
 import { RANGE_SETTING_KEYS, snapshotRangePolicy } from '../src/model/combatEngagement.js';
 import { fixCoreMechanics } from '../src/content/generated/fixCoreMechanics.js';
 import { gameDigest } from '../engine/kernel/gameConfig.js';
@@ -120,4 +122,36 @@ test('future-run Range controls follow the selected author while other capabilit
   settings.newGameProfile = 'current';
   assert.ok(!settingsSearchHits('Range mechanics', true, settings, { profile: core, nextProfile: legacy }).some(hit => hit.row.key === 'rangeMechanics'));
   assert.doesNotMatch(categoryHtml('General', settings, null, null, null, null, '', false, core, legacy), /data-key="rangeMechanics"/);
+});
+
+
+test('settings subsection and search repaints retain a split controller selection before it is persisted', () => {
+  const source = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  const start = source.indexOf('  function repaintPanel('), end = source.indexOf('  // ---- the Undo bar', start);
+  assert.ok(start >= 0 && end > start);
+  const core = resolveGameProfile('core'), legacy = resolveGameProfile('current');
+  const controller = { active: () => legacy, read: () => core };
+  const run = (code, query = '') => {
+    const settings = { settingsGeneralCategory: 'Combat', 'settingsGeneralTopic.Combat': 'Range' };
+    assert.equal(settings.newGameProfile, undefined, 'the controller selection is not yet a stored preference');
+    const panel = { innerHTML: '', scrollTop: 0, parentElement: { scrollTop: 0 }, dataset: {}, setAttribute() {} };
+    const context = {
+      applyPendingFormationSettings: () => true,
+      container: { querySelector: selector => selector === '.set-panel' ? panel : null },
+      current: 'General', settings, saves: null, previewAttributes: null, previewLevel: null, previewClassId: null,
+      searchQuery: () => query, changedOnly: () => false,
+      activeProfile: () => activeSettingsProfile(controller), nextProfile: () => controller.read(), categoryHtml,
+      captureView: () => ({}), restoreView() {}, filtering: () => Boolean(query),
+      headerTools: { querySelector: () => null }, paintUndo() {}, wire() {},
+    };
+    runInNewContext(code + '\nrepaintPanel;', context)();
+    return panel.innerHTML;
+  };
+  const body = source.slice(start, end);
+  assert.ok(keys.every(key => run(body).includes(`data-key="${key}"`)), 'subsection repaint keeps all Range controls');
+  assert.match(run(body, 'Range mechanics'), /data-key="rangeMechanics"/, 'search repaint keeps Range');
+  assert.match(run(body, 'upcast'), /data-key="askToUpcastAfterTarget"/, 'unrelated options still use the active legacy run');
+  const historical = body.replace('activeProfile(), nextProfile()', 'activeProfile()');
+  assert.notEqual(historical, body);
+  assert.doesNotMatch(run(historical), /data-key="rangeMechanics"/, 'the missing-forwarding mutation recreates the reported defect');
 });
