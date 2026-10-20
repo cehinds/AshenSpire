@@ -489,6 +489,7 @@ trait:impact,trait,Impact,9FC3E8,◇,,,,,"On hit: N Poise damage, or double the 
 trait:insulated,trait,Insulated,9FC3E8,◇,,,,,Insulated combat interaction.
 trait:mental,trait,Mental,9FC3E8,◇,,,,,Mental combat interaction.
 trait:projectile,trait,Projectile,9FC3E8,◇,,,,,Projectile combat interaction.
+trait:persistent,trait,Persistent,9FC3E8,◇,,,,,Granted Precision survives the end of its owner's turn.
 trait:reaction,trait,Reaction,9FC3E8,◇,,,,,"Playable from hand during the opponent's turn, before the pending action resolves."
 trait:reveal,trait,Reveal,9FC3E8,◇,,,,,Reveal combat interaction.
 trait:shattering,trait,Shattering,9FC3E8,◇,,,,,Shattering combat interaction.
