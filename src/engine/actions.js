@@ -1763,7 +1763,9 @@ function runOpcode(ctx, action, eff) {
       for (const t of plannedStatusTargets(ctx, action, eff)) {
         const authored = evalNum(ctx, action, eff.stacks, 1, t);
         const stacks = authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0);
-        statuses.applyStatus(ctx, t, eff.status, stacks, action.source);
+        statuses.applyStatus(ctx, t, eff.status, stacks, action.source, {
+          tags: [...(eff.tags || []), ...(action.card?.cardTags || action.card?.tags || [])]
+        });
         proposalThreshold(ctx,t);
         if (ctx.combatExpansionVersion === 2) {
           const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];

@@ -166,7 +166,8 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) 
       : `Each stack adds ${rules.accuracy.baseAC} plus the holder's gear Evasion and DEX to its Evasion roll.`,
     precision: `Each stack adds another multiple of your Precision score (attributes and level) to your Precision roll.`,
   };
-  if (id === 'staggered') row.tooltip = row.description = facts[id];
+  if (id === 'precision') row.tooltip = row.description = `${facts[id]} Applications add stacks. Expires at the end of the owner's turn unless the granting effect is Persistent. Does not increase damage.`;
+  else if (id === 'staggered') row.tooltip = row.description = facts[id];
   else if (facts[id]) row.tooltip = row.description = `${facts[id]} Applications add stacks. Lose ${rules.statuses.decayAmount} stack at the start of the owner's turn each round.`;
   return row;
 }

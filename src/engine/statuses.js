@@ -50,8 +50,17 @@ function syncPoolsAfterStatus(ctx, target) {
  * body. Interprets stackMode; feeds meters; refreshes durations; fires
  * meter onFill (SPEC §3.7). Emits statusApplied (and meterFilled on fill).
  */
-export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
+export function applyStatus(ctx, target, statusId, stacks = 1, source = null, options = {}) {
+  const before = getStacks(target, statusId);
   const result = applyStatusRaw(ctx, target, statusId, stacks, source);
+  // Persistence belongs to the granting effect, not every later application.
+  if (fixCoreEnabled(ctx) && statusId === 'precision') {
+    const inst = target?.statuses?.[statusId];
+    const tags = options.tags || [];
+    if (inst && tags.some(tag => (typeof tag === 'string' ? tag : tag?.id) === 'trait:persistent')) {
+      inst.persistentStacks = Math.min(inst.stacks, (inst.persistentStacks || 0) + Math.max(0, inst.stacks - before));
+    }
+  }
   syncPoolsAfterStatus(ctx, target);
   return result;
 }
@@ -228,6 +237,7 @@ function removeStatusRaw(ctx, target, statusId, opts = {}) {
     const field = instance.meter ? 'value' : 'stacks';
     const holder = instance.meter || instance;
     holder[field] = Math.max(0, holder[field] - opts.amount);
+    if (instance.persistentStacks !== undefined) instance.persistentStacks = Math.min(instance.persistentStacks, holder[field]);
     if (instance.applications) {
       const rule = ctx.registries.statuses.get(statusId).stacking;
       let remaining = holder[field];
@@ -239,7 +249,7 @@ function removeStatusRaw(ctx, target, statusId, opts = {}) {
       instance.stacks = stackMagnitude(instance.applications, rule.mode, rule.cap);
     }
     if (holder[field] > 0) {
-      if (opts.reason === 'consumed' || opts.reason === 'ownerTurnStart') ctx.emit('statusRemoved', { targetId: target.id, status: statusId, amount: before - getStacks(target, statusId), reason: opts.reason });
+      if (['consumed', 'ownerTurnStart', 'ownerTurnEnd'].includes(opts.reason)) ctx.emit('statusRemoved', { targetId: target.id, status: statusId, amount: before - getStacks(target, statusId), reason: opts.reason });
       return;
     }
   }
@@ -257,7 +267,14 @@ function removeStatusRaw(ctx, target, statusId, opts = {}) {
  *   'none' / 'onConsume' → untouched
  */
 export function decayAtTurnEnd(ctx, entity) {
-  if (fixCoreEnabled(ctx)) return;
+  if (fixCoreEnabled(ctx)) {
+    const precision = entity.statuses?.precision;
+    // Precision only changes Accuracy; its expiry cannot resize/refill defenses.
+    if (precision) removeStatusRaw(ctx, entity, 'precision', {
+      amount: Math.max(0, precision.stacks - (precision.persistentStacks || 0)), reason: 'ownerTurnEnd'
+    });
+    return;
+  }
   for (const statusId of Object.keys(entity.statuses)) {
     const inst = entity.statuses[statusId];
     const def = statusDefinition(ctx, statusId);
@@ -394,7 +411,7 @@ export function decayAtTurnStart(ctx, entity) {
   const amount = fixCoreRules(ctx, entity).statuses.decayAmount;
   for (const id of Object.keys(entity.statuses || {})) {
     const inst = entity.statuses[id], def = statusDefinition(ctx, id);
-    if (def.decay === 'perTurnEnd' || id === 'evade' || id === 'precision') {
+    if (id !== 'precision' && (def.decay === 'perTurnEnd' || id === 'evade')) {
       removeStatus(ctx, entity, id, { amount, reason: 'ownerTurnStart' });
     } else if (isDurationDecay(def.decay)) {
       inst.duration -= 1;
