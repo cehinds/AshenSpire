@@ -1,5 +1,23 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — Range Advance
+
+[Feature test build — delivery verification pending](https://cehinds.github.io/AshenSpire/branches/feature/RangeAdvance/latest/)
+
+Out-of-range attacks show their current 0% separately from Advance and explicit
+Throw choices, with the full SP price above the selected card. These captures
+come from the actual **0.7.1.1745** standalone; [capture record and native attack/Counter proof](docs/preview/features/range-advance/packaged-1745/README.md) describe the data poses.
+
+| Mobile 320 × 844 | Desktop 1280 × 800 | Wide 1920 × 1080 | Tablet 768 × 1024 |
+| --- | --- | --- | --- |
+| ![Mobile range choices](docs/preview/features/range-advance/packaged-1745/mobile.png) | ![Desktop range choices](docs/preview/features/range-advance/packaged-1745/desktop.png) | ![Wide range choices](docs/preview/features/range-advance/packaged-1745/wide.png) | ![Tablet range choices](docs/preview/features/range-advance/packaged-1745/tablet.png) |
+
+| SE-sized 375 × 667 | A32-sized 360 × 800 |
+| --- | --- |
+| ![Short phone range choices](docs/preview/features/range-advance/packaged-1745/phone-se.png) | ![Android-sized range choices](docs/preview/features/range-advance/packaged-1745/phone-a32.png) |
+<!-- feature-preview:end -->
+
 
 
 
