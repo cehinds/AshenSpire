@@ -410,6 +410,8 @@ function armExpansionCounter(ctx, entity, carrier, options) {
       ...(authored.poiseBase !== undefined ? { poiseBase: Math.floor(number(authored.poiseBase)) } : {}) } : { hp: number(options.damage) + number(options.bonus),
       poise: number(options.poiseDamage), ward: number(options.wardDamage) },
     expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + 1,
+    // The card count at arming: a spell Counter in Core stays armed only while no later card is accepted.
+    armedAtCardCount: entity.counters?.cardsPlayedThisCombat ?? 0,
     ...(profile.schoolEffect ? { schoolEffect: profile.schoolEffect } : {}),
     carrier: structuredClone(carrier),
   };
@@ -442,7 +444,9 @@ function preparedCounter(ctx, target, carrier, options) {
   const stance = activeCombatStances(ctx,target).some(row=>row.maneuver==='counter') ? 'counter' : target.combatStance?.maneuver;
   const authoredCounter = counter.carrier?.combatProfile?.maneuver === 'counter';
   // Core: a spell Counter (owner 2026-10-19) arms while its owner still stands in the stance the card entered (prepared).
-  const spellCounter = fixCoreEnabled(ctx) && armsAsCoreCounter(ctx, counter.carrier) && stance === configuredStance(counter.carrier);
+  const spellCounter = fixCoreEnabled(ctx) && armsAsCoreCounter(ctx, counter.carrier) && stance === configuredStance(counter.carrier)
+    // Any card accepted after the Counter was armed (Spell, Skill, Strike) disarms it: those also enter the prepared stance.
+    && (counter.armedAtCardCount ?? 0) === (target.counters?.cardsPlayedThisCombat ?? 0);
   if (!(configuredCombat(ctx) && !configuredModule(ctx, 'stances')) && stance !== 'counter' && !(stance === 'evade' && authoredCounter) && !spellCounter) return null;
   if ((target.combatOwnerCycle || 0) >= counter.expiresOnOwnerCycle) return null;
   return counter;

@@ -578,3 +578,39 @@ test('guardCounter rank 3: a spent or uncovered read leaves no Return line on th
   assert.match(covered, /Return 6 damage/);
   assert.doesNotMatch(covered, /Return \d+ damage[^|]*\|[^|]*Return/, 'covered: one Return row only');
 });
+
+function armedThen(...cardIds) {
+  const { combat, enemy } = live();
+  Object.assign(combat.player, { mana: 99, maxMana: 99, energy: 99 });
+  combat.piles.hand.push({ instanceId: 'ca0', cardId: 'frostCounter' });
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'ca0' });
+  cardIds.forEach((cardId, i) => {
+    combat.piles.hand.push({ instanceId: `ca${i + 1}`, cardId });
+    dispatch(combat, { type: 'playCard', cardInstanceId: `ca${i + 1}`, targetId: enemy.id });
+  });
+  Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  return combat.eventLog.slice(start).filter(e => e.type === 'combatCounterTriggered' && e.cardId === 'frostCounter');
+}
+
+test('a spell Counter followed by a spell or maneuver does not return (any later card disarms it)', () => {
+  assert.equal(armedThen().length, 1, 'control: the armed spell Counter returns');
+  assert.equal(armedThen('emberDart').length, 0, 'frostCounter then emberDart: disarmed');
+  assert.equal(armedThen('core.strike', 'emberDart').length, 0, 'frostCounter, strike, spell: not re-armed');
+});
+
+test('live: a spell Counter returns once per owner cycle against two covered hits', () => {
+  const { combat } = live('cinderMantis');
+  Object.assign(combat.player, { mana: 99, maxMana: 99 });
+  combat.piles.hand.push({ instanceId: 'cm1', cardId: 'frostCounter' });
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'cm1' });
+  Object.assign(combat.player, { block: 50, persistentPoise: { value: 20, max: 20 } });
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const events = combat.eventLog.slice(start);
+  assert.ok(events.filter(e => e.type === 'damageDealt' && e.targetId === 'player').length >= 2, 'two hits landed');
+  assert.equal(events.filter(e => e.type === 'combatCounterTriggered' && e.cardId === 'frostCounter').length, 1);
+});
