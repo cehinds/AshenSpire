@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { inflateSync } from 'node:zlib';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
-import { smithUiFixture, matchesSmithRows, smithTextFits, matchesCommittedCards } from './lib/smith-ui-fixture.mjs';
+import { smithUiFixture, matchesSmithRows, smithTextFits, matchesCommittedCards, matchesSmithCommit } from './lib/smith-ui-fixture.mjs';
 
 const expected = smithUiFixture();
 const requirement = expected.selected.requirements[0];
@@ -431,9 +431,10 @@ async function main() {
       check(zero.text.includes('REQ/AVAIL') && zero.text.includes('Smithing Stone Cost REQ/AVAIL 1/0') && hasPreviewFacts(zero.text)
           && zero.text.includes('Slashing Strike')
           && zero.text.includes('Weapon Guard') && zero.text.includes('not in active deck')
-          && zero.text.includes('Scales with STR') && zero.text.includes('Weapon Technique')
+          && expected.selected.affectedRows.every(row => zero.affected.some(actual => actual.title === row.name && actual.text.includes(`Uses the source item’s ${row.rating.label}.`)))
+          && zero.text.includes('Weapon Technique')
           && zero.text.includes('Short 1 Smithing Stone'),
-        `SMITH-UI-${upper}-ZERO-DELTAS`, `selected zero-purse preview names cost, requirement reduction, active Strike/Guard, grey unused Technique, scaling, and shortfall (${JSON.stringify(zero.text)})`);
+        `SMITH-UI-${upper}-ZERO-DELTAS`, `selected zero-purse preview names cost, requirement reduction, active Strike/Guard, grey unused Technique, authored source rating, and shortfall (${JSON.stringify(zero.text)})`);
       // 2026-09-04 (the sweep): the summary is the kit's DetailCard — the item's
       // name and tier, then the stone cost as ONE inline StatPair ("REQ/AVAIL
       // 1/0") under it. The old 3:1 two-cell row, the stacked pair whose two
@@ -510,6 +511,21 @@ async function main() {
           && /\b8\b/.test(armor.affected[0].text),
         `SMITH-UI-${upper}-TYPED-ARMOR`, `equipped armor shows its exact tier delta in Equipment Stats and a closed summary without armament-only stats (${JSON.stringify({ selectedType: armor.selectedType, intrinsic: armor.intrinsic, affected: armor.affected })})`);
       await pick('armament/straightSword');
+      const foldSummary='.smith-upgrade-row:first-child > summary';
+      await click(foldSummary);
+      await until(`document.querySelector('.smith-upgrade-row')?.open && !!document.querySelector('.smith-upgrade-row .card')`, 'opened affected-card fold');
+      const openFold = await evaluate(`(() => {
+        const fold=document.querySelector('.smith-upgrade-row'), card=fold.querySelector('.card');
+        const summary=fold.querySelector('summary').getBoundingClientRect(), box=card.getBoundingClientRect(), pane=document.querySelector('.smith-preview-card').getBoundingClientRect();
+        return {open:fold.open,summaryWidth:summary.width,summaryHeight:summary.height,cardWidth:box.width,cardHeight:box.height,cardLeft:box.left,cardRight:box.right,paneLeft:pane.left,paneRight:pane.right};
+      })()`);
+      check(openFold.open && openFold.summaryWidth >= 44 && openFold.summaryHeight >= 44
+          && openFold.cardWidth > 0 && openFold.cardHeight > 0 && openFold.cardLeft >= openFold.paneLeft - 1 && openFold.cardRight <= openFold.paneRight + 1,
+        `SMITH-UI-${upper}-FOLD-OPEN`, `a real pointer opens the affected card within its scrolling preview (${JSON.stringify(openFold)})`);
+      await click(foldSummary);
+      await until(`document.querySelector('.smith-upgrade-row')?.open === false`, 'closed affected-card fold');
+      check(matchesSmithRows((await reading()).affected, expected.selected.affectedRows),
+        `SMITH-UI-${upper}-FOLD-CLOSE`, 'a real pointer closes the fold and every numeric benefit remains in the closed summaries');
       await capture('zero');
       if (shape.mobile) {
         await evaluate('document.querySelector(".smith-preview-card").scrollTop=document.querySelector(".smith-preview-card").scrollHeight');
@@ -582,9 +598,7 @@ async function main() {
       await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: holdPoint.x, y: holdPoint.y, button: 'left', clickCount: 1 }, sessionId);
       const committed = await evaluate('window.__restStateForShot()');
       check(await evaluate(`!document.querySelector('.confirmation-modal') && !document.querySelector('.smith-upgrade-modal') && !!document.querySelector('#shrine-leave')`)
-          && ['live','saved'].every(key => committed[key]?.smithingStones === expected.receipt.stoneBalanceAfter
-            && committed[key]?.itemUpgradeLevels?.[expected.receipt.itemRef] === expected.receipt.afterLevel)
-          && JSON.stringify(committed.live.deck) === JSON.stringify(committed.saved.deck),
+          && matchesSmithCommit(committed, expected, beforeCommit),
         `SMITH-UI-${upper}-HOLD-DIRECT`, 'completed hold commits one durable tier/payment and returns to the default multi-service Shrine without a confirmation modal');
       await click('#shrine-leave');
       await until(`!!document.querySelector('.mapscreen')`, 'explicit Leave returns to map');
@@ -599,6 +613,9 @@ async function main() {
         await click(`.armoury-overlay [data-surface="armouryView"] [data-member="${member}"]`);
       };
       await armouryView('rack');
+      if (await evaluate(`document.querySelector('.armoury-equipment')?.dataset.armamentView === 'list'`)) await click('.armoury-armament-view-toggle');
+      await until(`!!document.querySelector('.armoury-position-grid-card[data-slot-position="rightHand:0"]')`, 'equipment grid');
+      await click('.armoury-position-grid-card[data-slot-position="rightHand:0"]');
       await until(`!!document.querySelector('.armoury-smithing-receipt')`, 'Armoury Smithing receipt');
       const armoury = await evaluate(`(() => {
         const receipt=document.querySelector('.armoury-smithing-receipt');

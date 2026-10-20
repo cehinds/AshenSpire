@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
-import { smithUiFixture, matchesSmithRows, matchesCommittedCards, smithTextFits } from '../tools/lib/smith-ui-fixture.mjs';
+import { smithUiFixture, matchesSmithRows, matchesCommittedCards, smithTextFits, matchesSmithCommit } from '../tools/lib/smith-ui-fixture.mjs';
 
 const fixture = smithUiFixture();
 const rows = () => fixture.selected.affectedRows.map(row => ({
@@ -67,4 +67,20 @@ test('Smith browser gate preserves real pointer/hold deadlines and uses producti
   assert.match(source, /smithTextFits\(zero\.textGeometry\)/);
   for (const width of [1200,390,375,320]) assert.match(source, new RegExp(`width: ${width},`));
   assert.doesNotMatch(source, /details\.armoury-card-row/);
+});
+
+
+test('hold proof rejects wrong payment, tier, missing copies and altered saved upgraded instances', () => {
+  const state = () => {
+    const live={smithingStones:0,itemUpgradeLevels:{'armament/straightSword':1},deck:fixture.cards.map(row=>({instanceId:row.instanceId,cardId:row.cardId,smithingLevel:1}))};
+    live.deck.push({instanceId:'shot1',cardId:'bashingBlow'});
+    const saved=structuredClone(live);Object.assign(saved.deck.at(-1),{damageSchool:'physical',exposureBuildupPerHit:0});
+    return {live,saved};
+  };
+  assert.ok(matchesSmithCommit(state(),fixture,state()),'unrelated shot-card schema defaults do not hide the committed equipment');
+  for(const mutate of [value=>value.saved.smithingStones=1,value=>value.saved.itemUpgradeLevels['armament/straightSword']=0,
+    value=>value.saved.deck[0].smithingLevel=0,value=>value.saved.deck[1].cardId='strike',value=>value.saved.deck.splice(2,1),
+    value=>value.saved.deck[0].sourceArmamentId='wrong',value=>value.saved.deck.at(-1).damageSchool='fire']) {
+    const bad=state();mutate(bad);assert.equal(matchesSmithCommit(bad,fixture,state()),false);
+  }
 });
