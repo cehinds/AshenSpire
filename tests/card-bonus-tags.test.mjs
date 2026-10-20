@@ -132,3 +132,19 @@ test('hand, reward and complete printed faces share tags without Entry or duplic
     }
   });
 });
+
+
+test('movement faces state direction, band count and selected target without inventing attack effects', () => {
+  for (const target of ['enemy', 'pendingAttacker']) for (const bands of [-1, 1]) {
+    const def = { type: 'skill', effects: [{ op: 'moveEngagement', target, bands }] };
+    const copy = text(cardFaceLines(def, null, legacy, null, { stanceEntry: false }));
+    assert.equal(copy, `${bands < 0 ? 'Close' : 'Retreat'} 1 band ${bands < 0 ? 'toward' : 'away from'} ${target === 'enemy' ? 'target' : 'attacker'}`);
+    assert.doesNotMatch(copy, /damage|Precision|Evade/);
+  }
+  const conditional = { type: 'skill', effects: [{ op: 'moveEngagement', target: 'pendingAttacker', bands: 1,
+    if: { p: 'hasStatus', of: 'self', status: 'prepared' } }] };
+  assert.match(text(cardFaceLines(conditional, null, legacy)), /Prepared: Retreat 1 band away from attacker/);
+  for (const extra of [{ target: 'allEnemies' }, { bands: -2 }, { duration: 2 }]) {
+    assert.equal(cardFaceLines({ type: 'skill', effects: [{ op: 'moveEngagement', target: 'enemy', bands: -1, ...extra }] }, null, legacy), null);
+  }
+});

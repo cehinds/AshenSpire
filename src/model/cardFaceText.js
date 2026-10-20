@@ -245,6 +245,12 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         const cat = effect.target === 'self' && dependentStatuses.has(effect.status) ? 'consume' : 'remove';
         return frag(cat, `${amount} ${esc(title(effect.status))}${suffix}`);
       }
+      case 'moveEngagement': {
+        if (!['enemy', 'pendingAttacker'].includes(effect.target) || ![-1, 1].includes(effect.bands)
+          || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) fail();
+        const close = effect.bands < 0, target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
+        return frag('bonus', `${close ? 'Close' : 'Retreat'} ${num(Math.abs(effect.bands))} band ${close ? 'toward' : 'away from'} ${target}`);
+      }
       case 'draw': return frag('bonus', `Draw ${num(n, base)}`);
       case 'discard': return frag('bonus', `${effect.choose ? 'Choose and discard' : 'Discard'} ${num(n, base)}${effect.random ? ' at random' : ''}`);
       case 'loseHp': return frag(index === 0 && !effect.if ? 'cost' : 'bonus', `${effect.offering ? 'Offer' : 'Pay'} ${num(n, base)} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`);
