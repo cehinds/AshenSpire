@@ -1,3 +1,4 @@
+import { shareableGameProfile } from '../model/ownedGameProfile.js';
 import { bindTurnStamina } from '../model/turnStamina.js';
 // Revision adapter for the existing solo/co-op action interpreters. No second
 // simulator: the same opcodes, damage entry point, piles, triggers and RNG run.
@@ -263,17 +264,14 @@ export function consumeFoundationEvade(ctx, source, target, carrier) {
  */
 export function candidateState(ctx, { detached = false } = {}) {
   const data = {};
-  // Immutable data is shared by reference, never cloned: the game profile is
-  // deep-frozen at combat start (freezeProfile), so a candidate that tries to
-  // mutate it throws instead of corrupting the fight. Cloning it cost ~150 ms
-  // per preview on a phone.
-  const shared = {};
   for (const [key, value] of Object.entries(ctx)) {
-    if (typeof value === 'function' || key === 'registries' || key === 'rng' || (detached && key === 'eventLog')) continue;
-    if (key === 'gameProfile' && value && typeof value === 'object' && Object.isFrozen(value)) shared[key] = value;
-    else data[key] = value;
+    if (typeof value !== 'function' && key !== 'registries' && key !== 'rng' && !(detached && key === 'eventLog')) data[key] = value;
   }
-  const candidate = { ...structuredClone(data), ...shared, ...(detached ? { eventLog: [] } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
+  // Only a privately owned immutable profile may bypass the clone. The guard
+  // falls back if another data field aliases it (or one of its descendants).
+  const sharedProfile = shareableGameProfile(data);
+  if (sharedProfile) delete data.gameProfile;
+  const candidate = { ...structuredClone(data), ...(sharedProfile ? { gameProfile: sharedProfile } : {}), ...(detached ? { eventLog: [] } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
   // Catalogue accessors are immutable context, never serializable combat data.
   if (ctx.registriesForPlayer) candidate.registriesForPlayer = ctx.registriesForPlayer;
   if (ctx.registerPlayerRegistries) candidate.registerPlayerRegistries = ctx.registerPlayerRegistries;
