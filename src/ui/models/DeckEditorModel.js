@@ -66,6 +66,16 @@ function sourceOf(card, def, run) {
   return 'reward';
 }
 
+/**
+ * The ui-string id of a rank 0 card's badge. A spell's is Cantrip. A combat maneuver reads Basic only when the row's
+ * source IS basic (the classification the Basic filter uses); a class special or other card reads its own source label,
+ * so the badge and the filter agree (owner ruling 2026-10-19: Sundering Art is not a Basic card).
+ */
+export function rankZeroLabelId(source, isSpell) {
+  if (isSpell) return 'deckEditor.rank.cantrip';
+  return source === 'basic' ? 'deckEditor.rank.basic' : `deckEditor.source.${source}`;
+}
+
 function typeLabel(type) {
   const id = `deckEditor.type.${type}`;
   // Every card type has a row (tests/deck-editor.test.mjs holds it); a type

@@ -33,7 +33,7 @@ import { bindModalDismiss, modalFooter, modalHead } from '../components/modalShe
 import { openConfirmationModal, closeConfirmationModal } from '../components/confirmationModal.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
-import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit } from '../models/DeckEditorModel.js';
+import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit, rankZeroLabelId } from '../models/DeckEditorModel.js';
 import { t, tFull } from '../strings.js';
 import { renderCard, cardPlainText, cardDetailHtml } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
@@ -449,7 +449,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const stanceNode = row => el('span', { class: 'deck-editor-stance',
     dataset: { stance: stanceKey(row) }, text: stanceName(row) });
   // The rank the card face prints (its ability rank, else its rank badge). Rank 0
-  // has a name: a spell's is Cantrip, a combat maneuver's is Basic.
+  // has a name: a spell's is Cantrip, a basic maneuver's is Basic, any other card's its source (Weapon art, Reward...).
   const rankNode = (row) => {
     const def = combatDef(row);
     const card = playingCardModel(registries, row.ref, { definition: def });
@@ -459,7 +459,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       : (MANEUVER_STANCES.includes(stanceKey(row)) || stanceKey(row) === 'spell' ? 0 : null);
     if (!Number.isInteger(rank)) return null;
     const text = rank > 0 ? t('deckEditor.rank', { rank })
-      : t(combatProfileFor(def).camp === 'spell' ? 'deckEditor.rank.cantrip' : 'deckEditor.rank.basic');
+      : t(rankZeroLabelId(row.source, combatProfileFor(def).camp === 'spell'));
     return el('span', { class: 'deck-editor-rank', dataset: { rank }, text });
   };
   // Range: the shared rule (combatCardRange in model/combatCardProfile.js) decides

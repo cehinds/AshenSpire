@@ -86,3 +86,26 @@ test('classDecks validation fails at profile construction with a message naming 
   assert.throws(build(sd => { sd.classDecks = []; }), /classDecks.*expected class-id map/);
   assert.throws(build(sd => { sd.classDecks.rogue = 'x'; }), /classDecks\/rogue.*expected an array/);
 });
+
+// Owner ruling 2026-10-19: Sundering Art (core.reaverSpecial) is a class special, not a Basic card. The rank-0 badge
+// ("Basic") and the Basic source filter agree: only Strike/Defend/Counter read Basic.
+test('Core Reaver: the class special is not badged Basic in the editor, the basics are', async () => {
+  const { deckEditorModel, rankZeroLabelId } = await import('../src/ui/models/DeckEditorModel.js');
+  const run = start('reaver');
+  const model = deckEditorModel({ registries: reg, run });
+  const rows = [...model.deck, ...model.collection];
+  const badge = (r) => rankZeroLabelId(r.source, false) === 'deckEditor.rank.basic' ? 'basic' : r.source;
+  for (const id of ['core.reaverSpecial']) for (const r of rows.filter((x) => x.cardId === id)) {
+    assert.notEqual(r.source, 'basic', `${id} row source`);
+    assert.notEqual(badge(r), 'basic', `${id} badge`);
+    assert.equal(rankZeroLabelId(r.source, false), 'deckEditor.source.art');
+  }
+  for (const id of ['core.strike', 'core.defend', 'core.counter']) for (const r of rows.filter((x) => x.cardId === id)) {
+    assert.equal(r.source, 'basic', `${id} row source`);
+    assert.equal(rankZeroLabelId(r.source, false), 'deckEditor.rank.basic', `${id} badge`);
+  }
+  const filtered = deckEditorModel({ registries: reg, run, view: { filters: { source: ['basic'] } } });
+  const ids = [...filtered.deck, ...filtered.collection].map((r) => r.cardId);
+  assert.ok(!ids.includes('core.reaverSpecial') && ids.includes('core.strike'), 'filter agrees with the badge');
+  assert.equal(rankZeroLabelId('basic', true), 'deckEditor.rank.cantrip');
+});
