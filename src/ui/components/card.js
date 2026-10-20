@@ -312,7 +312,7 @@ export function renderCard(registries, ref, opts = {}) {
   const representedEffects = model.sideTags.flatMap(tag => tag.representedEffects || []);
   const representedEntry = model.sideTags.flatMap(tag => tag.representedEntry || []);
   const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null,
-    { representedEffects, representedEntry, entryLabel: 'On stance change' });
+    { stanceEntry: false, representedEffects, representedEntry });
   const faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
     ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
   if (faceLines && def.weightClassPriced) {

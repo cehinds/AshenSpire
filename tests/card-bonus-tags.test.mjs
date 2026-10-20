@@ -93,12 +93,27 @@ test('uncertain effects and active Power prose still use the full authored fallb
   assert.equal(faceWith(persistent, [], null, legacy), null, 'unmodelled authored grant qualifiers are not discarded');
 });
 
-test('only selected benefit tags may suppress body text when the rail is full', () => {
+test('automatic benefit tags displace secondary identities when the rail is full', () => {
   const def = definition('core.strike');
   const tags = cardSideTags({ tags: ['physical', 'fire', 'cold', 'arcane', 'holy'].map(id => ({ id: id === 'physical' ? 'camp:physical' : 'damage:' + id, label: id })) }, def, core);
   assert.equal(tags.length, 5);
-  assert.ok(!tags.some(tag => tag.id === 'status:precision'));
-  assert.match(text(faceWith(def, tags)), /On stance change: .*Precision/);
+  assert.equal(tags[0].id, 'camp:physical');
+  assert.ok(tags.some(tag => tag.id === 'status:precision'));
+  assert.doesNotMatch(text(faceWith(def, tags)), /On stance change|Precision|Entry/);
+});
+
+
+test('generic v2 protection uses amount tags while configured Core does not promise those grants', () => {
+  const generic = { type: 'skill', defenseRulesVersion: 2, cardTags: ['camp:physical', 'maneuver:defend', 'range:melee'],
+    effects: [{ op: 'block', amount: 10 }] };
+  const tags = cardBonusTags(generic, null, legacy);
+  assert.deepEqual(tags.map(tag => [tag.id, tag.count]), [['effect:block', 3]]);
+  for (const tag of tags) assert.match(tag.blurb, /On changing stance, gain .*Repeating the same stance grants none/);
+  assert.match(text(faceWith(generic, tags, null, legacy)), /10 Block/);
+  assert.doesNotMatch(text(faceWith(generic, tags, null, legacy)), /On stance change|Entry/);
+  const magicalMove = { ...generic, type: undefined, cardTags: ['camp:spell', 'maneuver:defend', 'school:frost', 'range:melee'] };
+  assert.deepEqual(cardBonusTags(magicalMove, null, legacy).map(tag => [tag.id, tag.count]), [['effect:block', 2], ['effect:barrier', 1]]);
+  assert.deepEqual(cardBonusTags(generic, null, core), [], 'configured Core has no automatic Block/Barrier grant');
 });
 
 test('hand, reward and complete printed faces share tags without Entry or duplicate Evade prose', () => {

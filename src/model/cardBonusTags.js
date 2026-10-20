@@ -12,8 +12,10 @@ export function cardBonusTags(def, preview = null, registries = null, rules = nu
   const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules,
     gameProfile: rules?.gameProfile ?? registries?.gameProfile };
   const core = fixCoreEnabled(ctx), facts = new Map();
+  const protection = { block: { name: 'Block' }, barrier: { name: 'Barrier' } };
+  const definition = status => registries.statuses.has(status) ? registries.statuses.get(status) : protection[status];
   const add = (status, fact) => {
-    if (!registries?.statuses?.has(status)) return;
+    if (!definition(status)) return;
     if (!facts.has(status)) facts.set(status, []);
     facts.get(status).push(fact);
   };
@@ -44,7 +46,7 @@ export function cardBonusTags(def, preview = null, registries = null, rules = nu
   }
   if (def.type !== 'power' && (core || def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2)) {
     const entry = stanceEntryBonuses(def, ctx);
-    for (const status of ['precision', 'evade']) {
+    for (const status of core ? ['precision', 'evade'] : ['precision', 'evade', 'block', 'barrier']) {
       const base = entry[status];
       if (!(base > 0)) continue;
       // Configured Core suppresses the automatic Evade grant if this card
@@ -58,16 +60,16 @@ export function cardBonusTags(def, preview = null, registries = null, rules = nu
       }
       const live = status === 'precision' && core && Number.isInteger(preview?.entryPrecision) ? preview.entryPrecision : null;
       const formula = status === 'precision' && core && live === null ? 'stat mix' : null;
-      const count = live ?? base, name = registries?.statuses?.get(status)?.name || status;
+      const count = live ?? base, name = definition(status)?.name || status;
       add(status, { count, formula, entry: status,
         text: `On changing stance, gain ${count}${formula ? ' + ' + formula : ''} ${name}. Repeating the same stance grants none.` });
     }
   }
   return [...facts].map(([status, grants]) => {
-    const base = registries.statuses.get(status), definition = fixCoreStatusDefinition(ctx, status, base);
+    const base = definition(status), resolved = fixCoreStatusDefinition(ctx, status, base);
     const single = grants.length === 1 ? grants[0] : null;
-    return { id: `status:${status}`, label: definition.name,
-      blurb: [...grants.map(grant => grant.text), definition.tooltip || definition.name].join(' '),
+    return { id: `${protection[status] ? 'effect' : 'status'}:${status}`, label: resolved.name,
+      blurb: [...grants.map(grant => grant.text), resolved.tooltip || resolved.name].join(' '),
       ...(single ? { count: single.count, ...(single.formula ? { countFormula: single.formula } : {}) } : {}),
       // Only a visible, unambiguous amount badge can replace an authored effect.
       representedEffects: single && single.index !== undefined ? [single.index] : [],

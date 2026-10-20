@@ -46,6 +46,8 @@ const ALIASES = Object.freeze({ fire:'fire', burn:'fire', cold:'frost', arcane:'
 function shapeFor(tag) {
   // The defense badge's reticle; card-rail precision tags (status:precision) keep the ranged alias below.
   if (tag.id === 'effect:precision') return SHAPES.precision;
+  if (tag.id === 'effect:block') return SHAPES.guard;
+  if (tag.id === 'effect:barrier') return FORCE_SHAPE;
   const key = tag.id.split(':').at(-1);
   const id = key === 'physical' ? 'guard' : ['evade', 'evasion', 'dodge'].includes(key) ? 'evade' : key === 'slashing' || key === 'blade' ? 'attack' : ALIASES[key] || key;
   return ACTION_SIGILS[id]?.solid ? ACTION_SIGILS[id].shape : SHAPES[id] || SHAPES.skill;
@@ -112,13 +114,16 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
   for (const key of ['counterPayload', 'upcast', 'schoolEffect']) walk(def[key]);
   // Quantified benefits must remain visible when their duplicate body line is
   // removed. Their conditions/formulas live on the same tag on every surface.
-  for (const benefit of cardBonusTags(def, preview, registries, rules)) {
-    if (selected.length >= 5) break;
+  const benefits = cardBonusTags(def, preview, registries, rules);
+  for (const benefit of benefits) {
     const existing = selected.findIndex(tag => tag.id === 'effect:evade' && benefit.id === 'status:evade');
     if (existing >= 0) selected.splice(existing, 1);
-    selected.push(benefit);
     statuses.delete(benefit.id.slice(7));
   }
+  // Reserve room before secondary identity symbols: automatic benefits never
+  // return as body prose merely because a multi-type card filled its rail.
+  selected.splice(Math.max(0, 5 - benefits.length));
+  selected.push(...benefits);
   // Traits with a symbol rank after the effect and camp tags, before statuses:
   // when the five-symbol cap is full, statuses drop first. A numbered trait
   // (Flux 1, Impact 2) takes its value from the card's traitValues.
