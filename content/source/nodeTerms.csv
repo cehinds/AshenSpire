@@ -179,3 +179,4 @@ progression-whisperglass-die,,,"If your first card in combat is a Blade attack, 
 progression-purse-of-borrowed-shadows,,,"After your first explicit discard each turn, gain {block} Block."
 progression-ember-alms-bowl,,,Your first nonlethal HP offering each turn grants {block} Block after its payment.
 progression-ossuary-prayer-wheel,,,Your first credited kill of an enemy with Crimson or Necrotic Blight buildup each combat restores {restoreMana} Mana.
+throw,,,"Choose Throw to attack one extra band with the configured Precision penalty; retain the weapon."

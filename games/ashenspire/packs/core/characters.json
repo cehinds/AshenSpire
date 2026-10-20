@@ -316,7 +316,8 @@
     "defaultDeck": [
       "wanderingSoldier.slash",
       "wanderingSoldier.guard",
-      "wanderingSoldier.warcry"
+      "wanderingSoldier.warcry",
+      "wanderingSoldier.advance"
     ],
     "defaultGear": [
       {
@@ -367,8 +368,16 @@
           "maxConsecutive": 1,
           "costSource": "stance",
           "legacyMove": "warcry"
+        },
+        "wanderingSoldier.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -392,7 +401,8 @@
     "defaultDeck": [
       "blightHound.bite",
       "blightHound.bite",
-      "blightHound.lunge"
+      "blightHound.lunge",
+      "blightHound.advance"
     ],
     "defaultGear": [
       {
@@ -425,8 +435,16 @@
           "aiWeight": 40,
           "costSource": "stance",
           "legacyMove": "lunge"
+        },
+        "blightHound.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -450,7 +468,8 @@
     "defaultDeck": [
       "huskBrute.club",
       "huskBrute.bellow",
-      "huskBrute.brace"
+      "huskBrute.brace",
+      "huskBrute.advance"
     ],
     "defaultGear": [
       {
@@ -487,8 +506,16 @@
           "maxConsecutive": 1,
           "costSource": "stance",
           "legacyMove": "brace"
+        },
+        "huskBrute.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -512,7 +539,8 @@
     "defaultDeck": [
       "graveWisp.curse",
       "graveWisp.curse",
-      "graveWisp.drain"
+      "graveWisp.drain",
+      "graveWisp.advance"
     ],
     "defaultGear": [
       {
@@ -539,8 +567,16 @@
           "aiWeight": 50,
           "costSource": "healRules",
           "legacyMove": "drain"
+        },
+        "graveWisp.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -569,7 +605,8 @@
       "wyrmAspirant.halberdSweep",
       "wyrmAspirant.halberdSweep",
       "wyrmAspirant.tailSlam",
-      "wyrmAspirant.goldenGuard"
+      "wyrmAspirant.goldenGuard",
+      "wyrmAspirant.advance"
     ],
     "defaultGear": [
       {
@@ -613,8 +650,16 @@
           "maxConsecutive": 1,
           "costSource": "healRules",
           "legacyMove": "goldenGuard"
+        },
+        "wyrmAspirant.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -642,7 +687,8 @@
       "fellWarden.hammerToss",
       "fellWarden.hammerToss",
       "fellWarden.heldBlade",
-      "fellWarden.heldBlade"
+      "fellWarden.heldBlade",
+      "fellWarden.advance"
     ],
     "defaultGear": [
       {
@@ -733,8 +779,16 @@
           "aiWeight": 35,
           "costSource": "authored",
           "legacyMove": "twinDaggers"
+        },
+        "fellWarden.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -758,7 +812,8 @@
     "defaultDeck": [
       "lanternMoth.lanternDust",
       "lanternMoth.wingSparks",
-      "lanternMoth.wingSparks"
+      "lanternMoth.wingSparks",
+      "lanternMoth.advance"
     ],
     "defaultGear": [
       {
@@ -785,8 +840,16 @@
           "aiWeight": 65,
           "costSource": "authored",
           "legacyMove": "wingSparks"
+        },
+        "lanternMoth.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -810,7 +873,8 @@
     "defaultDeck": [
       "briarHermit.rootShelter",
       "briarHermit.briarCast",
-      "briarHermit.sapMend"
+      "briarHermit.sapMend",
+      "briarHermit.advance"
     ],
     "defaultGear": [
       {
@@ -849,8 +913,16 @@
           "maxConsecutive": 1,
           "costSource": "healRules",
           "legacyMove": "sapMend"
+        },
+        "briarHermit.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -874,7 +946,8 @@
     "defaultDeck": [
       "chainScavenger.hookCast",
       "chainScavenger.chainSnare",
-      "chainScavenger.draggingBlow"
+      "chainScavenger.draggingBlow",
+      "chainScavenger.advance"
     ],
     "defaultGear": [
       {
@@ -913,8 +986,16 @@
           },
           "costSource": "stance",
           "legacyMove": "draggingBlow"
+        },
+        "chainScavenger.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -942,7 +1023,8 @@
       "bellKeeper.clapperSwing",
       "bellKeeper.clapperSwing",
       "bellKeeper.muffledPrayer",
-      "bellKeeper.muffledPrayer"
+      "bellKeeper.muffledPrayer",
+      "bellKeeper.advance"
     ],
     "defaultGear": [
       {
@@ -1015,8 +1097,16 @@
           "maxConsecutive": 1,
           "costSource": "authored",
           "legacyMove": "crackedPeal"
+        },
+        "bellKeeper.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -1044,7 +1134,8 @@
       "thornMatriarch.thornNeedles",
       "thornMatriarch.thornNeedles",
       "thornMatriarch.entwiningRoots",
-      "thornMatriarch.entwiningRoots"
+      "thornMatriarch.entwiningRoots",
+      "thornMatriarch.advance"
     ],
     "defaultGear": [
       {
@@ -1117,8 +1208,16 @@
           },
           "costSource": "authored",
           "legacyMove": "entwiningRoots"
+        },
+        "thornMatriarch.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -1143,7 +1242,8 @@
       "gildedKnight.thrust",
       "gildedKnight.parry",
       "gildedKnight.rally",
-      "gildedKnight.gildedGuard"
+      "gildedKnight.gildedGuard",
+      "gildedKnight.advance"
     ],
     "defaultGear": [
       {
@@ -1182,8 +1282,16 @@
           "aiWeight": 1,
           "costSource": "stance",
           "legacyMove": "gildedGuard"
+        },
+        "gildedKnight.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -1207,7 +1315,8 @@
     "defaultDeck": [
       "courtSurgeon.scalpel",
       "courtSurgeon.sedate",
-      "courtSurgeon.stitch"
+      "courtSurgeon.stitch",
+      "courtSurgeon.advance"
     ],
     "defaultGear": [
       {
@@ -1240,8 +1349,16 @@
           "maxConsecutive": 1,
           "costSource": "healRules",
           "legacyMove": "stitch"
+        },
+        "courtSurgeon.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -1265,7 +1382,8 @@
     "defaultDeck": [
       "stitchedHound.maul",
       "stitchedHound.maul",
-      "stitchedHound.rend"
+      "stitchedHound.rend",
+      "stitchedHound.advance"
     ],
     "defaultGear": [
       {
@@ -1297,8 +1415,16 @@
           "aiWeight": 40,
           "costSource": "stance",
           "legacyMove": "rend"
+        },
+        "stitchedHound.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -1322,7 +1448,8 @@
     "defaultDeck": [
       "courtMarionette.dart",
       "courtMarionette.dart",
-      "courtMarionette.blowdart"
+      "courtMarionette.blowdart",
+      "courtMarionette.advance"
     ],
     "defaultGear": [
       {
@@ -1353,8 +1480,16 @@
           "aiWeight": 50,
           "costSource": "stance",
           "legacyMove": "blowdart"
+        },
+        "courtMarionette.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -1379,7 +1514,8 @@
       "livingArmor.slam",
       "livingArmor.fortify",
       "livingArmor.crush",
-      "livingArmor.rimeCrush"
+      "livingArmor.rimeCrush",
+      "livingArmor.advance"
     ],
     "defaultGear": [
       {
@@ -1423,8 +1559,16 @@
           "maxConsecutive": 1,
           "costSource": "stance",
           "legacyMove": "rimeCrush"
+        },
+        "livingArmor.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -1450,7 +1594,8 @@
       "courtDuelist.flurry",
       "courtDuelist.lunge",
       "courtDuelist.riposte",
-      "courtDuelist.bindingRiposte"
+      "courtDuelist.bindingRiposte",
+      "courtDuelist.advance"
     ],
     "defaultGear": [
       {
@@ -1500,8 +1645,16 @@
           "aiWeight": 1,
           "costSource": "stance",
           "legacyMove": "bindingRiposte"
+        },
+        "courtDuelist.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -1529,7 +1682,8 @@
       "stitchedKing.graspingHands",
       "stitchedKing.graspingHands",
       "stitchedKing.courtlyDecree",
-      "stitchedKing.courtlyDecree"
+      "stitchedKing.courtlyDecree",
+      "stitchedKing.advance"
     ],
     "defaultGear": [
       {
@@ -1608,8 +1762,16 @@
           "aiWeight": 40,
           "costSource": "stance",
           "legacyMove": "thousandHands"
+        },
+        "stitchedKing.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -1633,7 +1795,8 @@
     "defaultDeck": [
       "mirrorScribe.silverScript",
       "mirrorScribe.shardVolley",
-      "mirrorScribe.polishedWard"
+      "mirrorScribe.polishedWard",
+      "mirrorScribe.advance"
     ],
     "defaultGear": [
       {
@@ -1666,8 +1829,16 @@
           "maxConsecutive": 1,
           "costSource": "stance",
           "legacyMove": "polishedWard"
+        },
+        "mirrorScribe.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -1691,7 +1862,8 @@
     "defaultDeck": [
       "stitchCrab.shellFold",
       "stitchCrab.seamShears",
-      "stitchCrab.scuttleRush"
+      "stitchCrab.scuttleRush",
+      "stitchCrab.advance"
     ],
     "defaultGear": [
       {
@@ -1730,8 +1902,16 @@
           "maxConsecutive": 1,
           "costSource": "stance",
           "legacyMove": "scuttleRush"
+        },
+        "stitchCrab.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -1759,7 +1939,8 @@
       "glassRegent.crystalRapier",
       "glassRegent.crystalRapier",
       "glassRegent.splinterRain",
-      "glassRegent.splinterRain"
+      "glassRegent.splinterRain",
+      "glassRegent.advance"
     ],
     "defaultGear": [
       {
@@ -1839,8 +2020,16 @@
           },
           "costSource": "stance",
           "legacyMove": "shatteredCourt"
+        },
+        "glassRegent.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -1868,7 +2057,8 @@
       "marrowOrganist.ivoryKeys",
       "marrowOrganist.funeralChord",
       "marrowOrganist.funeralChord",
-      "marrowOrganist.quietRefrain"
+      "marrowOrganist.quietRefrain",
+      "marrowOrganist.advance"
     ],
     "defaultGear": [
       {
@@ -1942,8 +2132,16 @@
           "maxConsecutive": 1,
           "costSource": "healRules",
           "legacyMove": "quietRefrain"
+        },
+        "marrowOrganist.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -1967,7 +2165,8 @@
     "defaultDeck": [
       "ashRevenant.cinderSlash",
       "ashRevenant.cinderSlash",
-      "ashRevenant.reform"
+      "ashRevenant.reform",
+      "ashRevenant.advance"
     ],
     "defaultGear": [
       {
@@ -2000,8 +2199,16 @@
           "maxConsecutive": 1,
           "costSource": "healRules",
           "legacyMove": "reform"
+        },
+        "ashRevenant.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -2025,7 +2232,8 @@
     "defaultDeck": [
       "emberStarvedPilgrim.desperateClaw",
       "emberStarvedPilgrim.desperateClaw",
-      "emberStarvedPilgrim.wail"
+      "emberStarvedPilgrim.wail",
+      "emberStarvedPilgrim.advance"
     ],
     "defaultGear": [
       {
@@ -2057,8 +2265,16 @@
           "maxConsecutive": 1,
           "costSource": "stance",
           "legacyMove": "wail"
+        },
+        "emberStarvedPilgrim.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -2082,7 +2298,8 @@
     "defaultDeck": [
       "valkyrieShade.spiralLance",
       "valkyrieShade.spiralLance",
-      "valkyrieShade.bloodFeather"
+      "valkyrieShade.bloodFeather",
+      "valkyrieShade.advance"
     ],
     "defaultGear": [
       {
@@ -2113,8 +2330,16 @@
           "aiWeight": 50,
           "costSource": "stance",
           "legacyMove": "bloodFeather"
+        },
+        "valkyrieShade.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -2138,7 +2363,8 @@
     "defaultDeck": [
       "charredColossus.smash",
       "charredColossus.ashCloud",
-      "charredColossus.harden"
+      "charredColossus.harden",
+      "charredColossus.advance"
     ],
     "defaultGear": [
       {
@@ -2180,8 +2406,16 @@
           "maxConsecutive": 1,
           "costSource": "stance",
           "legacyMove": "harden"
+        },
+        "charredColossus.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -2207,7 +2441,8 @@
       "wyrmLord.halberdReign",
       "wyrmLord.halberdReign",
       "wyrmLord.tailSweep",
-      "wyrmLord.goldenBulwark"
+      "wyrmLord.goldenBulwark",
+      "wyrmLord.advance"
     ],
     "defaultGear": [
       {
@@ -2256,8 +2491,16 @@
           "maxConsecutive": 1,
           "costSource": "healRules",
           "legacyMove": "goldenBulwark"
+        },
+        "wyrmLord.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -2285,7 +2528,8 @@
       "blightedValkyrie.whirlwind",
       "blightedValkyrie.whirlwind",
       "blightedValkyrie.rotWings",
-      "blightedValkyrie.rotWings"
+      "blightedValkyrie.rotWings",
+      "blightedValkyrie.advance"
     ],
     "defaultGear": [
       {
@@ -2379,8 +2623,16 @@
           "aiWeight": 35,
           "costSource": "stance",
           "legacyMove": "scarletDance"
+        },
+        "blightedValkyrie.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -2404,7 +2656,8 @@
     "defaultDeck": [
       "cinderMantis.scythePair",
       "cinderMantis.emberPounce",
-      "cinderMantis.foldedBlades"
+      "cinderMantis.foldedBlades",
+      "cinderMantis.advance"
     ],
     "defaultGear": [
       {
@@ -2443,8 +2696,16 @@
           "maxConsecutive": 1,
           "costSource": "stance",
           "legacyMove": "foldedBlades"
+        },
+        "cinderMantis.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -2468,7 +2729,8 @@
     "defaultDeck": [
       "eclipseCantor.darkHymn",
       "eclipseCantor.lunarRay",
-      "eclipseCantor.fadingEcho"
+      "eclipseCantor.fadingEcho",
+      "eclipseCantor.advance"
     ],
     "defaultGear": [
       {
@@ -2501,8 +2763,16 @@
           "maxConsecutive": 1,
           "costSource": "stance",
           "legacyMove": "fadingEcho"
+        },
+        "eclipseCantor.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -2530,7 +2800,8 @@
       "furnaceSaint.censerSweep",
       "furnaceSaint.censerSweep",
       "furnaceSaint.coolingAsh",
-      "furnaceSaint.coolingAsh"
+      "furnaceSaint.coolingAsh",
+      "furnaceSaint.advance"
     ],
     "defaultGear": [
       {
@@ -2598,8 +2869,16 @@
           "maxConsecutive": 1,
           "costSource": "stance",
           "legacyMove": "coolingAsh"
+        },
+        "furnaceSaint.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -2627,7 +2906,8 @@
       "hollowAstronomer.orbitalShards",
       "hollowAstronomer.orbitalShards",
       "hollowAstronomer.totalEclipse",
-      "hollowAstronomer.totalEclipse"
+      "hollowAstronomer.totalEclipse",
+      "hollowAstronomer.advance"
     ],
     "defaultGear": [
       {
@@ -2700,8 +2980,16 @@
           "maxConsecutive": 1,
           "costSource": "stance",
           "legacyMove": "fallingHeavens"
+        },
+        "hollowAstronomer.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "melee",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   },
   {
@@ -2729,7 +3017,8 @@
       "ashheartDragon.tailBastion",
       "ashheartDragon.tailBastion",
       "ashheartDragon.heartRumble",
-      "ashheartDragon.heartRumble"
+      "ashheartDragon.heartRumble",
+      "ashheartDragon.advance"
     ],
     "defaultGear": [
       {
@@ -2815,8 +3104,16 @@
           },
           "costSource": "stance",
           "legacyMove": "ashBreath"
+        },
+        "ashheartDragon.advance": {
+          "aiWeight": 0,
+          "costSource": "authored",
+          "legacyMove": "advance"
         }
-      }
+      },
+      "startingRange": "reach",
+      "rangeClosingMove": "advance",
+      "rangeRoutePolicy": "advance"
     }
   }
 ]

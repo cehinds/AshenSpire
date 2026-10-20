@@ -88,5 +88,12 @@
     }
   },
   "enemyHealBlockCost": 3,
-  "protectionParameters": {}
+  "protectionParameters": {},
+  "range": {
+    "version": 1,
+    "enabled": true,
+    "advanceSpPerBand": 1,
+    "reachPrecisionBonus": 1,
+    "throwPrecisionPenalty": 1
+  }
 }

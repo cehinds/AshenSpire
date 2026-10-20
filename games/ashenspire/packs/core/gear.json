@@ -12,7 +12,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "straightSword"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "greatsword",
@@ -29,7 +30,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "greatsword"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "dagger",
@@ -39,13 +41,15 @@
     "rarity": "common",
     "tags": [
       "dagger",
-      "flurry"
+      "flurry",
+      "throw"
     ],
     "points": {},
     "source": {
       "file": "content/source/weapons.csv",
       "id": "dagger"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "shortbow",
@@ -62,7 +66,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "shortbow"
-    }
+    },
+    "range": "ranged"
   },
   {
     "id": "katana",
@@ -78,7 +83,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "katana"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "halberd",
@@ -95,7 +101,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "halberd"
-    }
+    },
+    "range": "reach"
   },
   {
     "id": "warhammer",
@@ -111,7 +118,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "warhammer"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "twinblade",
@@ -128,7 +136,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "twinblade"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "battleaxe",
@@ -144,7 +153,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "battleaxe"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "buckler",
@@ -159,7 +169,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "buckler"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "kiteShield",
@@ -174,7 +185,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "kiteShield"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "towerShield",
@@ -191,7 +203,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "towerShield"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "roundShield",
@@ -206,7 +219,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "roundShield"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "spikedShield",
@@ -221,7 +235,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "spikedShield"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "lantern",
@@ -239,7 +254,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "lantern"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "torch",
@@ -255,7 +271,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "torch"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "parryDagger",
@@ -271,7 +288,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "parryDagger"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "ashStaff",
@@ -288,7 +306,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "ashStaff"
-    }
+    },
+    "range": "reach"
   },
   {
     "id": "starstoneStaff",
@@ -306,7 +325,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "starstoneStaff"
-    }
+    },
+    "range": "reach"
   },
   {
     "id": "boneSceptre",
@@ -330,7 +350,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "boneSceptre"
-    }
+    },
+    "range": "reach"
   },
   {
     "id": "emberlightSceptre",
@@ -347,7 +368,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "emberlightSceptre"
-    }
+    },
+    "range": "reach"
   },
   {
     "id": "goldboughBranch",
@@ -365,7 +387,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "goldboughBranch"
-    }
+    },
+    "range": "reach"
   },
   {
     "id": "blightRod",
@@ -383,7 +406,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "blightRod"
-    }
+    },
+    "range": "reach"
   },
   {
     "id": "gorefireBrand",
@@ -400,7 +424,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "gorefireBrand"
-    }
+    },
+    "range": "reach"
   },
   {
     "id": "wyrmhornStaff",
@@ -419,7 +444,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "wyrmhornStaff"
-    }
+    },
+    "range": "reach"
   },
   {
     "id": "frostSpear",
@@ -435,7 +461,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "frostSpear"
-    }
+    },
+    "range": "reach"
   },
   {
     "id": "cinderAxe",
@@ -452,7 +479,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "cinderAxe"
-    }
+    },
+    "range": "melee"
   },
   {
     "id": "duskChime",
@@ -470,7 +498,8 @@
     "source": {
       "file": "content/source/weapons.csv",
       "id": "duskChime"
-    }
+    },
+    "range": "reach"
   },
   {
     "id": "armor.wayfarerPlate",
