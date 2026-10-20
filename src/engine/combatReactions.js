@@ -1,4 +1,4 @@
-import { attackHitPreview, previewTargetFor } from './stanceHit.js';
+import * as Hit from './stanceHit.js';
 import * as Engagement from './combatEngagement.js';
 import { configuredModule } from './gameProfileCombat.js';
 // SPEC 4.10: choices pause a committed contact plan before defense begins.
@@ -161,10 +161,10 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
         if (reservation) {
           const restoreQuote = Engagement.incomingRangeScope(candidate,group,candidate.player);
           const rawAttacker = candidate.enemies.find(enemy=>enemy.id===aim);
-          const attacker = previewTargetFor(rawAttacker,seat,{turn:candidate.turn,legacySolo:!candidate.players});
+          const attacker = Hit.previewTargetFor(rawAttacker,seat,{turn:candidate.turn,legacySolo:!candidate.players});
           const previewActor = {...candidate.player,energy:candidate.player.energy+(paid.staminaSpent || 0),stamina:candidate.player.stamina+(paid.staminaSpent || 0),mana:candidate.player.mana+(paid.manaSpent || 0)};
           const baseSp = (paid.staminaSpent || 0)-reservation.rangePlan.advanceSp;
-          try { range = Engagement.previewRangeRoutes(candidate,previewActor,[{source:previewActor,target:attacker,card:preparedCounter,effect:{op:'damage',target:'enemy',amount:0}}],{energy:baseSp,stamina:baseSp,mana:paid.manaSpent || 0},{rangeRoute,hitPreview:attackHitPreview}); }
+          try { range = Engagement.previewRangeRoutes(candidate,previewActor,[{source:previewActor,target:attacker,card:preparedCounter,effect:{op:'damage',target:'enemy',amount:0}}],{energy:baseSp,stamina:baseSp,mana:paid.manaSpent || 0},{rangeRoute,hitPreview:Hit.attackHitPreview}); }
           finally { restoreQuote(); }
         }
         // The stacked entries resolve after this option, last pushed first; all must play.

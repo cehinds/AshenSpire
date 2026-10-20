@@ -493,7 +493,7 @@ export function assertSingleActionCamp(carrier, contacts = []) {
 }
 
 export function previewTacticalAction(ctx, source, target, carrier, contacts = [], options = {}) {
-  assertSingleActionCamp(carrier, contacts);
+  if (!ctx.rangeState) assertSingleActionCamp(carrier, contacts);
   const cfg = expansionMatchupRules(ctx);
   const control = restrictions(ctx, target, options);
   const counter = preparedCounter(ctx, target, carrier, options);
