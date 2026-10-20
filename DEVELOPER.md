@@ -595,6 +595,11 @@ all files in `test-discovered`; Windows uses `--no-slow` there and runs each
 `SLOW_DISCOVERED` file once in the `test-discovered-slow-windows` matrix. The
 isolated native `node --test` jobs retain every seed and assertion under the
 same 20-minute job limit, without sharing a runner with other test files.
+The historical combat-v1 `docs/BALANCE.md` drift test runs only when the
+default author in `games/ashenspire/game.json` uses the Current preset's core.
+The configured Core build reports an explicit skip before spawning its
+300-seed report. Manual `node tools/balance.mjs` remains available; shared
+runsim checks, report/parser contracts and simulation unit tests stay active.
 `.github/workflows/tests.yml` runs the core suite and the
 four discovered shards as Linux jobs on a pull request into `dev` and on a push
 to `dev`; the slow files, the tools' self-tests and the bundler's parse-gate

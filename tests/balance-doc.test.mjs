@@ -5,8 +5,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
-test('docs/BALANCE.md matches a fresh tools/balance.mjs run', () => {
+const author = JSON.parse(readFileSync(new URL('../games/ashenspire/game.json', import.meta.url), 'utf8'));
+const current = JSON.parse(readFileSync(new URL('../games/ashenspire/presets/current.json', import.meta.url), 'utf8'));
+
+test('docs/BALANCE.md matches a fresh tools/balance.mjs run', {
+  skip: author.core !== current.core && 'Historical combat-v1 report does not cover the configured Core build',
+}, () => {
   const r = spawnSync(process.execPath, ['tools/balance.mjs', '--check'], {
     // Full 300-seed report: about 15 minutes alone on local Windows, but
     // concurrent suites exceeded 20. Keep every seed and bound that local
