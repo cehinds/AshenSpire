@@ -395,6 +395,8 @@ function applyProfileDamage(ctx, source, target, base, carrier) {
   }
   target.hp -= receipt.hpLoss;
   ctx.emit('damageDealt', { sourceId: source?.id || null, targetId: target.id,
+    ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy,
+      ...(Object.hasOwn(carrier, 'usedArmamentId') ? { usedArmamentId: carrier.usedArmamentId } : {}) } : {}),
     amount: receipt.amount, blocked: receipt.blocked, hpLoss: receipt.hpLoss,
     poiseMitigated: receipt.poiseMitigated, poiseAbsorbed: receipt.poiseMitigated, ...(receipt.poiseDrain ? { poiseDamage: receipt.poiseDrain } : {}), wardMitigated: receipt.wardMitigated, damageReceipt: receipt.damageReceipt, evaded: receipt.evaded,
     advantage: receipt.advantage, blockRemaining: target.block, barrierRemaining: target.barrier,
@@ -1035,6 +1037,7 @@ function gainBlockAmount(ctx, entity, amount, card = null, wardProvenance = fals
     // group), and in co-op the seat that played it — a guard cast on an ally
     // is the caster's shield work, not the ally's.
     ...(card && card.instanceId ? { cardInstanceId: card.instanceId, sourceHand: card.sourceHand, grantedBy: card.grantedBy,
+      ...(card.usedArmamentId ? { usedArmamentId: card.usedArmamentId } : {}),
       ...(ctx.playerIdForEntity && ctx.playerKey ? { sourcePlayerId: ctx.playerKey } : {}) } : {}),
   });
   return amt;

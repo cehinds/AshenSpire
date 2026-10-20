@@ -67,7 +67,7 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
 }
 
 // The armament a card is dealt with: its lending piece, else the first piece of that kind in its hand.
-function wieldedArmament(ctx, carrier, source, kind) {
+export function wieldedArmament(ctx, carrier, source, kind) {
   const pieces = ctx.registries.equipment?.armaments || [];
   let piece = carrier.sourceArmamentId && pieces.find(row => row.id === carrier.sourceArmamentId);
   if (!piece && ctx.loadout) {

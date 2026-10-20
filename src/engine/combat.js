@@ -25,7 +25,7 @@ import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js
 import { expandedEquipmentProjection, expandedEnemyProjection } from './combatExpansionEquipment.js';
 import { settleExpandedPools, refreshExpandedLoadout, combatEquipmentPoolProjection } from './combatExpansionProjection.js';
 import { counterPreviewAgainst } from './counterRule.js';
-import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
+import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, previewTacticalEffects, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed, wieldedArmament } from './combatCardTactics.js';
 import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade, liveCounterCovers } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits, previewPoiseDrain } from './combatDamagePreview.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
@@ -65,6 +65,7 @@ import { decayNormalMomentum, settleNormalMomentum, multiActionOn, withCardExcha
 import { clearEnemyReactionRolls } from './enemyReactions.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
+import { configuredSkillProgression } from '../model/gameProfileProgression.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { ownRestoreFunds } from '../model/actionCosts.js';
@@ -333,7 +334,7 @@ export function createCombat({
   combat._emitEvent = emitEvent;
   // The skill tracks listen to the same bus (plan phase 4a); the receipt they
   // write lives on the combat and reaches the run only through applySkillXp.
-  if (!configuredCombat(combat)) attachSkillXp(combat);
+  if (!configuredCombat(combat) || configuredSkillProgression(combat)) attachSkillXp(combat);
   else combat.skillXp = {};
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
@@ -1102,7 +1103,10 @@ function buildIntent(move, moveId, enemy = null, combat = null) {
  */
 export function dispatch(combat, intent) {
   if (combat.gameProfile) freezeProfile(combat.gameProfile);
-  if (configuredCombat(combat)) combat.emit = (type, payload) => combat._emitEvent(combat, type, payload);
+  if (configuredCombat(combat)) {
+    combat.emit = (type, payload) => combat._emitEvent(combat, type, payload);
+    if (configuredSkillProgression(combat)) attachSkillXp(combat);
+  }
   if (!combat._foundationTransaction && (configuredCombat(combat) || combat.combatExpansionVersion === 2 || combat.foundation || ['playCard', 'unqueueCard', 'chooseDiscard', 'chooseCards'].includes(intent.type))) return F.foundationTransaction(combat, (candidate) => dispatch(candidate, intent), { advanceAction: ['chooseDiscard','chooseCards'].includes(intent.type) ? !combat.reactionResume : !['predictIntent', 'chooseReaction', 'setReactions'].includes(intent.type) });
   if (combat.result) throw new Error('Combat is over');
   combat._buffer = [];
@@ -1789,6 +1793,18 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   cardRef.committedInstance = structuredClone(inst);
   if (Number.isInteger(def.upcastTier)) cardRef.upcastTier = def.upcastTier;
   const sourceSnapshots = F.cardSourceSnapshots(combat, def, p, cardRef);
+  if (combat.gameProfile?.foundation?.mode === 'configured' && (sourceSnapshots?.size || def.effects.some(effect => effect.op === 'damage') || cardRef.combatProfile?.maneuver === 'counter')) {
+    // Reuse the damage-type resolver's chosen piece. This receipt field must
+    // never become sourceArmamentId, which also scopes combat rating bonuses.
+    const resolvedSource = sourceSnapshots?.values().next().value?.resolvedSource;
+    const used = resolvedSource
+      ? resolvedSource.sourceType === 'unarmed' ? null : resolvedSource.itemId
+      : wieldedArmament(combat, cardRef, p, cardRef.attack?.source || (cardRef.combatProfile?.camp === 'spell' ? 'spell' : 'weapon'))?.id || null;
+    if (used !== undefined) {
+      cardRef.usedArmamentId = used;
+      cardRef.committedInstance.usedArmamentId = used;
+    }
+  }
   if (cardRef.combatProfile?.maneuver === 'counter' && sourceSnapshots?.size) {
     Object.assign(cardRef, sourceSnapshots.values().next().value);
   }
@@ -1876,7 +1892,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   if (!configuredCombat(combat)) enqueueCounterWard(combat, p, cardRef, meta);
   combat.emit('cardPlayed', {
     ...before, abilityKind: cardRef.abilityKind, printedManaCost: def.manaCost || 0, sourceId: p.id,
-    ...(combat.combatExpansionVersion === 2 ? { cardInstance: structuredClone(inst),
+    ...(combat.combatExpansionVersion === 2 ? { cardInstance: structuredClone(combat.gameProfile?.foundation?.mode === 'configured' ? cardRef.committedInstance : inst),
       ...(def.upcast ? { upcastTier: def.upcastTier ?? def.upcast.baseTier } : {}) } : {}),
     cardInstanceId: inst.instanceId,
     cardId: inst.cardId,
