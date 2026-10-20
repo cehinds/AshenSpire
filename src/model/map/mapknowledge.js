@@ -1,5 +1,5 @@
-import { gameModule } from './gameProfile.js';
-// src/model/mapknowledge.js — HOW MUCH THE PLAYER KNOWS ABOUT A MAP NODE,
+import { gameModule } from '../gameProfile.js';
+// src/model/map/mapknowledge.js — HOW MUCH THE PLAYER KNOWS ABOUT A MAP NODE,
 // derived, on one ladder, for every map mode.
 //
 // WHY THIS FILE EXISTS, and it is Viki's collapse rather than my feature.

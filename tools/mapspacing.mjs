@@ -27,7 +27,7 @@ import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
-import { NODE_PITCH_MIN_PX } from '../src/model/mapview.js';
+import { NODE_PITCH_MIN_PX } from '../src/model/map/mapview.js';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);

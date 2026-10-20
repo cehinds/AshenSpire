@@ -20,7 +20,7 @@ import { assetUrl } from "../assetmap.js";
 import { imageHintAttrs } from "../imageHints.js";
 import { nodeIcon } from '../uiContent.js';
 import { mapNodeInk } from '../components/mapNodeInk.js';
-import { nodeRadius } from '../../model/mapview.js';
+import { nodeRadius } from '../../model/map/mapview.js';
 import { MAP_TERRAIN_REVEAL_RADIUS } from '../../content/environments.js';
 import { atlasFocusCamera } from '../models/AtlasCameraModel.js';
 import { atlasEnterKind, pickAtlasNode, projectAtlasContext } from '../models/AtlasSelectionModel.js';

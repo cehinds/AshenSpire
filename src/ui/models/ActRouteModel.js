@@ -1,6 +1,6 @@
 // Fixed route positions come from the graph, never from the number of visits.
 // Only committed visits disclose encounter kinds; previewing a node is not travel.
-import { nodeReading } from '../../model/mapknowledge.js';
+import { nodeReading } from '../../model/map/mapknowledge.js';
 
 export function actRouteModel({ graph, path = [], current = null } = {}) {
   const nodes = graph?.nodes || {};
