@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Issue #211 — real-Chromium Shrine Smith UI proof at the two acceptance
+// Issue #211 — real-Chromium Shrine Smith UI proof at desktop and narrow-phone
 // viewports. This serves source and writes only armament-smithing-*.png proof
 // captures under docs/preview.
 
@@ -25,6 +25,8 @@ const OUT = resolve(ROOT, 'docs', 'preview');
 const SHAPES = Object.freeze([
   Object.freeze({ width: 1200, height: 730, mobile: false, label: 'desktop' }),
   Object.freeze({ width: 390, height: 844, mobile: true, label: 'mobile' }),
+  Object.freeze({ width: 375, height: 667, mobile: true, label: 'small-phone' }),
+  Object.freeze({ width: 320, height: 568, mobile: true, label: 'narrow-phone' }),
 ]);
 const browserPath = [
   process.env.CHROME,
@@ -731,7 +733,7 @@ async function main() {
     for (const receipt of receipts) {
       console.log(`    ${receipt.path} | ${receipt.width}x${receipt.height} | ${receipt.bytes} bytes | SHA256 ${receipt.sha256}`);
     }
-    console.log('  Boundary: source Shrine and post-Smith Armoury DOM at 1200x730 and 390x844, plus desktop co-op Shrine and reward shot reach doors; no built bundle, persistent browser storage, networked co-op host, or human aesthetic approval was checked.');
+    console.log('  Boundary: source Shrine and post-Smith Armoury DOM at 1200x730, 390x844, 375x667 and 320x568, plus desktop co-op Shrine and reward shot reach doors; no built bundle, persistent browser storage, networked co-op host, or human aesthetic approval was checked.');
     if (failures) console.log(`armament-smithing-ui: ${checks - failures} passed, ${failures} failed`);
     else console.log(`armament-smithing-ui: OK — ${checks} checks passed`);
     return failures ? 1 : 0;
