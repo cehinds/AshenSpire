@@ -696,7 +696,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     || !target?.alive || !source?.alive
     // Core 2 (SPEC §17): a covered hit that lands answers, whatever got through. Legacy needs the hit fully resisted.
     || (!counterRuleActive(ctx) && (receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload))
-    || CounterRule.counterReturnSpent(target)) return queue;
+    || (CounterRule.counterReturnSpent(target) && !CounterRule.paidCounterContact(ctx, carrier, counter))) return queue;
   target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
   // Reaction rules version 2: Counterstrike scales the authored payload first; SPEC §4.8's return formulas run after.
   const trait = ctx.reactionRulesVersion === 2 ? counter.carrier?.traitValues || {} : {};

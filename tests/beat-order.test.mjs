@@ -95,7 +95,31 @@ test('miss and Evaded are separate accuracy and post-animation outcomes', t => {
     });
     finish();
     assert.ok(words.find(row => row.kind === 'missed').at < timeOf(trace, 'evade-reaction'));
-    assert.ok(words.find(row => row.kind === 'evaded').at > timeOf(trace, 'evade-reaction'));
+    assert.ok(words.find(row => row.kind === 'dodged').at > timeOf(trace, 'evade-reaction'));
+  });
+});
+
+test('an incoming contact animates before its choice and its resumed receipt never repeats the swing', t => {
+  drive(t, ({ trace, run, finish }) => {
+    run([
+      { type: 'combatContactPrepared', sourceId: 'e1', moveId: 'slash', kind: 'attack', contactKey: 'root:0' },
+      { type: 'combatReactionOffered', ownerId: 'player' },
+      { type: 'enemyMoveStarted', sourceId: 'e1', moveId: 'slash', kind: 'attack', contactPrepared: true, contactKey: 'root:0' },
+      { type: 'attackHit', sourceId: 'e1', targetId: 'player' },
+      { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 5 },
+      { type: 'combatCounterTriggered', sourceId: 'player', targetId: 'e1' },
+      { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 3 },
+      { type: 'combatContactPrepared', sourceId: 'e1', moveId: 'slash', kind: 'attack', contactKey: 'root:1' },
+    ], { animateActor: beat => {
+      trace.push({ what: `swing:${beat.actorId}:${beat.telegraph ? 'incoming' : 'return'}`, at: Date.now() });
+      return { impactMs: IMPACT, totalMs: TOTAL, cancel() {} };
+    } });
+    finish();
+    assert.deepEqual(trace.filter(row => row.what.startsWith('swing:')).map(row => row.what), ['swing:e1:incoming', 'swing:player:return', 'swing:e1:incoming']);
+    assert.ok(timeOf(trace, 'swing:e1:incoming') < timeOf(trace, 'float:-5'));
+    assert.ok(timeOf(trace, 'float:-5') < timeOf(trace, 'swing:player:return'));
+    const next = trace.filter(row => row.what === 'swing:e1:incoming')[1];
+    assert.ok(timeOf(trace, 'float:-3') < next.at, 'the next incoming swing waits for the Counter result');
   });
 });
 

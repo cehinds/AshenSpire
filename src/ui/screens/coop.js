@@ -227,7 +227,7 @@ export function coopCallouts(events = []) {
  * numbers → bars, as solo does (SPEC §7.4, beatOrder 'sequential'). A snapshot
  * with both goes through the enemy timeline once.
  */
-const ENEMY_TIMELINE_EVENTS = ['enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered'];
+const ENEMY_TIMELINE_EVENTS = ['enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered', 'combatContactPrepared', 'combatHitStarted'];
 export function coopTimelineRoute(events = [], seatIds = []) {
   const list = (events || []).filter(Boolean);
   if (list.some(event => ENEMY_TIMELINE_EVENTS.includes(event.type))) return 'enemy';
@@ -2373,7 +2373,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       animateActor(beat, sprite, speed) {
         const returned = beat.events.find(event => event.type === 'combatCounterTriggered');
         const played = returned?.sourceKind === 'player' ? returned : beat.events.find(event => event.type === 'cardPlayed');
-        const moved = returned?.sourceKind === 'enemy' ? { ...returned, kind: 'attack' } : beat.events.find(event => event.type === 'enemyMoveStarted');
+        const moved = returned?.sourceKind === 'enemy' ? { ...returned, kind: 'attack' } : beat.events.find(event => ['enemyMoveStarted', 'combatHitStarted', 'combatContactPrepared'].includes(event.type));
         if (!played && !moved) return null;
         const stage = stageFor(sprite);
         let pose = 'attack';

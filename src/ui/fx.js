@@ -422,6 +422,7 @@ export const CALLOUT_KINDS = {
   evadeFailed: { string: 'combat.callout.evadeFailed', tone: 'white' },
   missed: { string: 'combat.callout.missed', tone: 'white' },
   outOfRange: { string: 'combat.callout.outOfRange', tone: 'white' },
+  dodged: { string: 'combat.callout.dodged', tone: 'white' },
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
   disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
   countered: { string: 'combat.callout.countered', tone: 'red' },
@@ -860,14 +861,20 @@ export function groupBeats(events) {
       case 'flaskUsed':
         startActor('player', 'act', e);
         break;
-      case 'enemyMoveStarted':
+      case 'enemyMoveStarted': case 'combatHitStarted':
         startActor(e.sourceId, e.kind === 'attack' ? 'attack' : 'act', e);
+        cur.prepared = e.contactPrepared === true;
+        break;
+      case 'combatContactPrepared':
+        startActor(e.sourceId, 'attack', e);
+        cur.telegraph = true;
         break;
       case 'enemyActorTurnStarted':
         startActor(e.sourceId, 'reveal', e);
         break;
       case 'combatCounterTriggered':
         startActor(e.sourcePlayerId || e.sourceId, 'counter', e);
+        cur.prepared = e.contactPrepared === true;
         break;
       case 'enemyTurnStart':
         push();
@@ -996,7 +1003,8 @@ export function playTimeline(events, ctx, done) {
       ctx.onIntent?.(beat);
     },
     onAction: beat => {
-      const event = beat.events.find(e => ['cardPlayed', 'enemyMoveStarted', 'combatCounterTriggered', 'flaskUsed'].includes(e.type));
+      if (beat.prepared) return;
+      const event = beat.events.find(e => ['cardPlayed', 'enemyMoveStarted', 'combatHitStarted', 'combatContactPrepared', 'combatCounterTriggered', 'flaskUsed'].includes(e.type));
       const maneuver = event?.combatProfile?.maneuver || event?.maneuver;
       const name = ctx.actionWordForBeat?.(beat) || event?.name || event?.cardName || event?.moveName
         || (maneuver ? maneuver[0].toUpperCase() + maneuver.slice(1) : null)
@@ -1005,7 +1013,7 @@ export function playTimeline(events, ctx, done) {
     },
     maxSpriteMs: speed => typeof ctx.maxActorAnimationMs === 'function' ? ctx.maxActorAnimationMs(speed) : Number(ctx.maxActorAnimationMs) || speed.lungeMs,
     onSprite: (beat, speed) => {
-      if (timing.scale === 0) return null;
+      if (timing.scale === 0 || beat.prepared) return null;
       const actorEl = ctx.anchorFor(beat.actorId);
       if (!actorEl) return null;
       const animation = ctx.animateActor?.(beat, actorEl, speed);
@@ -1064,6 +1072,11 @@ export function playTimeline(events, ctx, done) {
       if (beat.banner) visualSafe(() => banner(ctx.layer, beat.banner, 'turn', timing.bannerMs));
       if (!beat.actorId || beat.kind === 'reveal') { runParts(beat, 'contact'); runParts(beat, 'reaction'); runParts(beat, 'callout'); }
       else for (const event of beat.events) {
+        if (event.type === 'attackEvaded' || event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success
+          || event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeActive) {
+          visualSafe(() => callout(ctx.layer, ctx.anchorFor(event.targetId), event.targetId, 'dodged'));
+          continue;
+        }
         if (terminal(event) || event.type === 'attackMissed' || event.type === 'attackHit' && !(event.evadeActive && !event.bypass)) continue;
         visualSafe(() => parts.get(event)?.callout?.(ctx));
       }

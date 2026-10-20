@@ -418,7 +418,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     animateActor: (beat, actorEl, speed) => {
       const returned = beat.events.find(event => event.type === 'combatCounterTriggered');
       const played = returned?.sourceKind === 'player' ? { ...returned, cardType: 'attack' } : beat.events.find(event => event.type === 'cardPlayed');
-      const moved = returned?.sourceKind === 'enemy' ? { ...returned, kind: 'attack' } : beat.events.find(event => event.type === 'enemyMoveStarted');
+      const moved = returned?.sourceKind === 'enemy' ? { ...returned, kind: 'attack' } : beat.events.find(event => ['enemyMoveStarted', 'combatHitStarted', 'combatContactPrepared'].includes(event.type));
       if (!played && !moved) return null;
       // The pre-dispatch hand snapshot retains Powers removed from every pile,
       // and the full instance carries equipment profile tags and upgrades.

@@ -216,16 +216,21 @@ test('a Core Counter return ignores the target\'s Vulnerable: 8 incoming returns
 
 import { counterPreviewAgainst } from '../src/engine/counterRule.js';
 import { previewIntent } from '../src/engine/combat.js';
-test('multi-hit preview grants each hit its Counter Block and carries Vulnerable only after the break (Cinder Mantis, 0 Block, 2 Poise)', () => {
+test('a per-hit Counter preview covers the current contact, while saved whole-root policy covers both', () => {
   const { combat, enemy } = live('cinderMantis');
   Object.assign(enemy, { ratings: {}, ratingSources: [], statuses: {} });
   combat.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
   Object.assign(combat.player, { block: 0, statuses: {}, ratings: {}, ratingSources: [], persistentPoise: { value: 2, max: 20 } });
   assert.equal(enemy.intent.moveId, 'scythePair');
   const row = counterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
-  assert.equal(row.hits, 2);
-  assert.equal(row.incoming, 10, 'Vulnerable from the Poise break lands only after hit 2 completes');
-  assert.equal(row.hp, 6); assert.equal(row.poise, 2); assert.equal(row.block, 2);
+  assert.equal(row.hits, 1);
+  assert.equal(row.incoming, 5);
+  assert.equal(row.hp, 3); assert.equal(row.poise, 1); assert.equal(row.block, 1);
+  delete combat.reactionRules.contactPolicy;
+  const historical = counterPreviewAgainst(combat, enemy, previewIntent(combat, enemy.id));
+  assert.equal(historical.hits, 2);
+  assert.equal(historical.incoming, 10, 'Vulnerable from the Poise break lands only after hit 2 completes');
+  assert.equal(historical.hp, 6); assert.equal(historical.poise, 2); assert.equal(historical.block, 2);
 });
 
 test('the Counter preview carries the return\'s Poise damage and the Block it adds (8-damage attack: Poise 3, Block +2)', () => {

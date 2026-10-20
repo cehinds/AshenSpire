@@ -329,7 +329,10 @@ export function createCombat({
     _idCounter: 0,
     _emitDepth: 0,
   };
-  if (fixCoreEnabled(combat)) combat.fixCoreRules = snapshotFixCoreRules(combat);
+  if (fixCoreEnabled(combat)) {
+    combat.fixCoreRules = snapshotFixCoreRules(combat);
+    if (combat.reactionRulesVersion === 2) combat.reactionRules.contactPolicy = 'perHit';
+  }
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
   combat._emitEvent = emitEvent;
   // The skill tracks listen to the same bus (plan phase 4a); the receipt they
