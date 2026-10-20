@@ -17,6 +17,16 @@ test('explicit committed unarmed source overrides generic or stale equipment met
   assert.equal(identity({ type: 'cardPlayed', cardId: 'strike', cardInstance: { usedArmamentId: 'shield', sourceArmamentId: 'sword' } }), 'Attack · Sword Strike · Round Shield');
   assert.equal(identity({ type: 'cardPlayed', cardId: 'strike' }), 'Attack · Sword Strike');
 });
+test('historical armament grants normalize namespaced and bare item identities', () => {
+  for (const grantedBy of ['sword', 'armament/sword']) {
+    assert.equal(identity({ type: 'cardPlayed', cardId: 'strike', cardInstance: { grantedBy } }), 'Attack · Sword Strike · Iron Sword');
+    assert.equal(identity({ type: 'cardPlayed', cardId: 'strike', cardInstance: { usedArmamentId: null, grantedBy } }), 'Attack · Sword Strike · Unarmed');
+    assert.equal(identity({ type: 'cardPlayed', cardId: 'strike', cardInstance: { usedArmamentId: 'shield', grantedBy } }), 'Attack · Sword Strike · Round Shield');
+  }
+  for (const grantedBy of ['armor/reaver/sword', 'unarmed:rightHand']) {
+    assert.equal(identity({ type: 'cardPlayed', cardId: 'strike', cardInstance: { grantedBy } }), 'Attack · Sword Strike');
+  }
+});
 test('a Counter return uses its own committed card or move, including outside the hand', () => {
   assert.equal(identity({ type: 'combatCounterTriggered', cardId: 'guardCounter', cardInstance: { sourceArmamentId: 'shield' } }, 'counter'), 'Counter · Guard Counter · Round Shield');
   assert.equal(identity({ type: 'combatCounterTriggered', sourceId: 'enemy', moveId: 'riposte' }, 'counter'), 'Counter · Shield Riposte');
