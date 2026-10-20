@@ -16,13 +16,13 @@ import { applyLevelUp } from '../src/model/levelup.js';
 const profile = resolveGameAuthor(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json',import.meta.url))),loadGameProfileCatalog());
 const reg = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
 const fresh = () => createRunState({registries:reg,classId:'reaver',seed:429});
-test('Core armor budget is 3 for every rank and rarity (D14); rarity bonus defaults to 0', () => {
+test('Core armor budget is 3 at rank 1 plus 1 point per tier, any rarity (D14); rarity bonus defaults to 0', () => {
   const armor = profile.content.gear.find(item=>item.kind==='armor');
   const sum = receipt=>Object.values(receipt.points).reduce((a,b)=>a+b,0)+receipt.tagCost;
   assert.equal(sum(resolveGearItem(armor,profile.modules.gear)),3);
   assert.equal(sum(resolveGearItem({...armor,rarity:'epic'},profile.modules.gear)),3);
-  assert.equal(sum(resolveGearItem(armor,profile.modules.gear,{rank:4})),3);
-  assert.equal(profile.modules.gear.armorBudget.perRank,undefined);
+  assert.equal(sum(resolveGearItem(armor,profile.modules.gear,{rank:4})),6);
+  assert.equal(profile.modules.gear.armorBudget.perRank,1);
   assert.deepEqual(profile.modules.gear.armorBudget.rarityBonus,{});
   const bonus={...profile.modules.gear,armorBudget:{...profile.modules.gear.armorBudget,rarityBonus:{epic:2}}};
   assert.equal(resolveGearItem({...armor,rarity:'epic'},bonus).budget,5);
@@ -94,7 +94,7 @@ test('equipment inspection exposes converted values and armor budget', async () 
   const armor=reg.equipment.armour.find(piece=>piece.classId==='reaver' && piece.id==='wayfarerPlate');
   assert.ok(armor);
   const model=equipmentCardModel(reg,resolveUpgradedEquipment(reg,`armor/reaver/${armor.id}`,1));
-  assert.ok(model.bonuses.some(row=>row.label==='Rank 2 · 3 points'));
+  assert.ok(model.bonuses.some(row=>row.label==='Rank 2 · 4 points'));
   assert.ok(model.facts.every(row=>row.explanation.includes('stat-budget point(s)')));
 });
 test('resolved gear suppresses duplicate legacy pool stats and retains independent effects', async () => {
@@ -127,4 +127,27 @@ test('armor rarity bonus ignores inherited keys such as constructor', () => {
   assert.equal(armorBudgetFor({ rarity: 'constructor' }, settings, 1), 3);
   assert.equal(armorBudgetFor({ rarity: 'toString' }, settings, 4), 3);
   assert.equal(armorBudgetFor({ rarity: 'epic' }, settings, 1), 5);
+});
+test('tier DR point comes only from unspent budget: authored DR that spends the allowance is not topped up', () => {
+  const armor = profile.content.gear.find(item=>item.kind==='armor'), s = profile.modules.gear;
+  const authored = {...armor,tags:[],points:{dr:4}};
+  const r2 = resolveGearItem(authored,s,{rank:2});
+  assert.equal(r2.budget,4);
+  assert.equal(r2.points.dr,4);
+  assert.equal(Object.values(r2.points).reduce((a,b)=>a+b,0),4);
+  // Nothing authored: the tier point is a DR point and the budget is still exactly spent.
+  const bare = {...armor,tags:[],points:{}};
+  assert.ok(resolveGearItem(bare,s,{rank:2}).points.dr >= resolveGearItem(bare,s,{rank:1}).points.dr + 1);
+  assert.equal(Object.values(resolveGearItem(bare,s,{rank:2}).points).reduce((a,b)=>a+b,0),4);
+});
+test('tier DR point is a Core policy flag: Core raises DR, a perRank profile without perRankStat keeps the weighted split', () => {
+  const armor = profile.content.gear.find(item=>item.kind==='armor'), s = profile.modules.gear;
+  assert.equal(s.armorBudget.perRankStat,'dr');
+  const bare = {...armor,tags:[],points:{}, weights:{ratings:{poise:1}}};
+  const dr = (settings,rank)=>resolveGearItem(bare,settings,{rank}).points.dr;
+  assert.equal(dr(s,2),dr(s,1)+1);
+  const generic = {...s,armorBudget:{...s.armorBudget,perRankStat:undefined}};
+  assert.equal(dr(generic,2),dr(generic,1));
+  const p1 = resolveGearItem(bare,generic,{rank:1}).points, p2 = resolveGearItem(bare,generic,{rank:2}).points;
+  assert.equal(p2.poise,p1.poise+1);
 });

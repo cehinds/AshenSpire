@@ -9,7 +9,7 @@ import { staggerEnemy } from '../src/engine/actions.js';
 import { fixCoreRules } from '../src/model/fixCoreMechanics.js';
 import { sourceRatingValue } from '../src/model/combatRatings.js';
 import { stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../src/model/stanceRules.js';
-import { attackHitPreview, resolveAttackHit } from '../src/engine/stanceHit.js';
+import { attackHitPreview, resolveAttackHit, effectiveEvasion, precisionStatMix, precisionEntryGrant } from '../src/engine/stanceHit.js';
 import { rollKnowledgeRead } from '../src/model/enemyIntentKnowledge.js';
 import { enemyKnowledge } from '../src/content/enemyKnowledge.js';
 
@@ -62,16 +62,60 @@ test('D6: matching-stance discount lands on MP when the card costs MP, else on S
  // minimum-cost clamp on both lanes
  assert.equal(stanceManaCost(1,ctx.player,magic,ctx),1);assert.equal(stanceStaminaCost(1,ctx.player,magic,ctx,0),1);
 });
-test('d20 odds exactly match resolution, including natural limits and stance clamp',()=>{
+test('opposed d20 odds exactly match resolution, including natural limits (owner, 2026-10-19)',()=>{
  const {ctx,enemy}=setup();const carrier={combatProfile:{camp:'physical',maneuver:'smash',range:'melee'}};
- enemy.statuses.evade={stacks:3};enemy.stanceAdvantageRating=3;ctx.player.statuses.precision={stacks:2};
+ // Precision = 1 + floor(.5 DEX + .1 STR + .2 (WIS + INT) + level) x (stacks + 1) + Smash 1 = 1 + floor(1 + 0 + 0 + 2) x 3 + 1 = 11.
+ ctx.player.attributes={dexterity:2,strength:0,wisdom:0,intelligence:0};ctx.player.level=2;ctx.player.statuses.precision={stacks:2};
+ // Evasion = 1 + stacks x (baseAC 1 + DEX 4) = 16 with three Evade stacks.
+ enemy.statuses.evade={stacks:3};
  const preview=attackHitPreview(ctx,ctx.player,enemy,carrier);
- assert.equal(preview.evasion,12);assert.equal(preview.accuracy,3);assert.equal(preview.stanceFactor,1.5);
- let hit=0;
- for(let roll=1;roll<=20;roll++) {ctx.rng={int:()=>roll};if(resolveAttackHit(ctx,ctx.player,{...enemy,statuses:structuredClone(enemy.statuses)},carrier).hit)hit++;}
- assert.equal(preview.hitChance,hit*5);
- ctx.rng={int:()=>1};assert.equal(resolveAttackHit(ctx,ctx.player,enemy,carrier).hit,false);
- enemy.attributes.dexterity=1000;ctx.rng={int:()=>20};assert.equal(resolveAttackHit(ctx,ctx.player,enemy,carrier).hit,true);
+ assert.equal(preview.accuracy,11);assert.equal(preview.evasion,16);assert.equal(preview.stanceFactor,undefined);
+ let expected=0,hit=0;
+ for(let attack=1;attack<=20;attack++) for(let defence=1;defence<=20;defence++) {
+  const want=attack===20||attack!==1&&attack+11>=defence+16;if(want)expected++;
+  const queue=[attack,defence];ctx.rng={int:()=>queue.shift()};
+  const result=resolveAttackHit(ctx,ctx.player,{...enemy,statuses:structuredClone(enemy.statuses)},carrier);
+  assert.equal(result.hit,want,`attack ${attack} vs ${defence}`);
+  assert.equal(result.attackTotal,attack+11);assert.equal(result.evasionTotal,defence+16);
+  if(result.hit)hit++;
+ }
+ assert.equal(hit,expected);assert.equal(preview.hitChance,Math.floor(100*expected/400));
+ // Advantage takes the better of two attacker dice: exact over 20 x 20 x 20 outcomes, floored.
+ const advantaged=attackHitPreview(ctx,{...ctx.player,accuracyAdvantage:true},enemy,carrier);
+ let wins=0;for(let a=1;a<=20;a++)for(let b=1;b<=20;b++)for(let d=1;d<=20;d++){const die=Math.max(a,b);if(die===20||die!==1&&die+11>=d+16)wins++;}
+ assert.equal(advantaged.hitChance,Math.floor(100*wins/8000));
+ enemy.attributes.dexterity=1000;const rolls=[20,1];ctx.rng={int:()=>rolls.shift()};assert.equal(resolveAttackHit(ctx,ctx.player,enemy,carrier).hit,true);
+ const lowRolls=[1,20];ctx.rng={int:()=>lowRolls.shift()};assert.equal(resolveAttackHit(ctx,ctx.player,enemy,carrier).hit,false);
+});
+test('Evasion follows 1 + stacks x (baseAC + DEX): the owner worked example at DEX 2 is +10, +7, +4',()=>{
+ const {ctx}=setup();const defender={...ctx.enemies[0],attributes:{dexterity:2},statuses:{}};
+ const evasion=stacks=>{defender.statuses={evade:{stacks}};return effectiveEvasion(ctx,defender);};
+ assert.equal(evasion(3),10);assert.equal(evasion(2),7);assert.equal(evasion(1),4);assert.equal(evasion(0),1);
+ defender.baseEvasionBonus=2; // gear Evasion adds to the per-stack base
+ assert.equal(evasion(3),1+3*(1+2+2));
+});
+test('Precision stacks are gained like Evade: 1 + stat mix; DEX 2, level 1 gives 3 stacks and Precision 9 (owner, 2026-10-19)',()=>{
+ const {ctx,enemy}=setup();ctx.player.attributes={dexterity:2,strength:0,wisdom:0,intelligence:0};ctx.player.level=1;
+ assert.equal(precisionStatMix(ctx,ctx.player),2);
+ const grant=precisionEntryGrant(ctx,ctx.player,1);assert.equal(grant,3);assert.equal(precisionEntryGrant(ctx,ctx.player,0),0);
+ ctx.player.statuses.precision={stacks:grant};
+ assert.equal(attackHitPreview(ctx,ctx.player,enemy,{combatProfile:{camp:'physical',maneuver:'attack',range:'melee'}}).accuracy,1+2*4);
+});
+test('a card-scoped precisionWeights override changes the stat mix, grant and Precision',()=>{
+ const {ctx,enemy}=setup();ctx.player.attributes={dexterity:2,strength:0,wisdom:0,intelligence:0};ctx.player.level=1;
+ const carrier={combatProfile:{camp:'physical',maneuver:'attack',range:'melee'},instanceId:'scoped',mechanicTags:['combat:accuracy'],
+  mechanicBindings:[{tag:'combat:accuracy',parameters:{precisionWeights:{dex:1,str:0,wis:0,int:0,level:0}}}]};
+ assert.equal(precisionStatMix(ctx,ctx.player),2);assert.equal(precisionStatMix(ctx,ctx.player,carrier),2);
+ carrier.mechanicBindings[0].parameters.precisionWeights.dex=2; // 2 x DEX 2 = 4, level ignored
+ assert.equal(precisionStatMix(ctx,ctx.player,carrier),4);assert.equal(precisionEntryGrant(ctx,ctx.player,1,carrier),5);
+ assert.equal(attackHitPreview(ctx,ctx.player,enemy,carrier).accuracy,1+4);
+});
+test('an enemy without a level profile counts as level 0 in the Precision mix; one with a profile uses its level',()=>{
+ const {ctx}=setup();const enemy=ctx.enemies[0];enemy.attributes={dexterity:2,strength:0,wisdom:0,intelligence:0};enemy.level=1;
+ const real=ctx.registries.enemies.get(enemy.enemyId);
+ const withProfile=profile=>{ctx.registries={...ctx.registries,enemies:{...ctx.registries.enemies,has:()=>true,get:()=>({...real,levelProfile:profile})}};};
+ withProfile(undefined);assert.equal(precisionStatMix(ctx,enemy),1); // floor(.5 x 2 + 0), no level
+ withProfile({min:1,max:4});assert.equal(precisionStatMix(ctx,enemy),2); // plus its level 1
 });
 test('Perception DC is 5 + target INT + target WIS + bonuses; level is ignored; observer rolls d20 + own WIS (D8)',()=>{
  const {ctx}=setup();const target={level:9,attributes:{intelligence:2,wisdom:3}},observer={attributes:{wisdom:2}};

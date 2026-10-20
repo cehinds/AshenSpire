@@ -1,4 +1,5 @@
 import { resolveAttackHit } from './stanceHit.js';
+import { evadeStackGain } from './stanceHit.js';
 import { stanceEffectiveness } from '../model/stanceRules.js';
 import { fixCoreEnabled, fixCoreRules, protectionReceipt, fixCoreWardDisabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
 import { weaponDamageBasis } from './cardBehavior.js';
@@ -48,6 +49,8 @@ import { acquireFlask, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
+import { coreAffectedCards } from '../model/smithingCore.js';
+import { gameProfileServiceActive, withGameProfileService } from '../model/gameProfileRun.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
 import { ratingValue, isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
@@ -1392,6 +1395,7 @@ export function formulaCtxFor(ctx, action, primaryTarget) {
       allEnemies: livingEnemies(ctx),
     },
     weaponDamage:weaponDamageBasis(ctx,action.source),cardId: action.card?.cardId, metricsBefore:meta.abilityBefore, manaSpent:meta.manaSpent || 0, staminaSpent:meta.staminaSpent || 0,
+    evadeStackGain: evadeStackGain(ctx, action.source, action.card),
     energySpent: meta.energySpent != null ? meta.energySpent : 0,
     cardsPlayedThisTurn: ctx.player ? ctx.player.counters.cardsPlayedThisTurn : 0,
   };
@@ -2064,11 +2068,14 @@ function runRunOpcode(ctx, action, eff) {
       // through its authored roles), but a "random card" upgrade that landed
       // on it would set a tier and upgrade zero cards the player holds — the
       // choice promised a card (Codex, #535).
+      // Core runs rewrite no cards, so a candidate's affectedCards is empty there; the cards a Core upgrade
+      // changes are its simulated live-number rows (coreCardRows), and armor counts as well as weapons.
       const armaments = plan.candidates
-        .filter((candidate) => candidate.itemKind === 'armament')
-        .filter((candidate) => candidate.affectedCards.length > 0)
-        .filter((candidate) => !eff.card || candidate.affectedCards.some((card) => card.cardId === eff.card))
-        .map((candidate) => ({ kind: 'armament', id: candidate.armamentId }));
+        .filter((candidate) => candidate.core ? candidate.itemKind !== 'relic' : candidate.itemKind === 'armament')
+        .map((candidate) => ({ candidate, cards: candidate.core ? coreAffectedCards(candidate.coreCardRows) : candidate.affectedCards }))
+        .filter(({ cards }) => cards.length > 0)
+        .filter(({ cards }) => !eff.card || cards.some((card) => card.cardId === eff.card))
+        .map(({ candidate }) => ({ kind: 'armament', id: candidate.core ? candidate.itemRef : candidate.armamentId }));
       const ordinary = run.deck
         // Equipment-composed instances are excluded like sourceArmamentId
         // ones: a granted/weaponArt instance (grantedBy) is rebuilt from its
@@ -2086,7 +2093,9 @@ function runRunOpcode(ctx, action, eff) {
       if (candidates.length === 0) break;
       const chosen = eff.random ? ctx.rng.pick('misc', candidates) : candidates[0];
       if (chosen.kind === 'armament') {
-        const receipt = commitSmithing(ctx.registries, run, chosen.id, undefined, { free: true });
+        // A configured (Core) run only commits equipment upgrades inside a Smith service; this reward is one.
+        const commit = () => commitSmithing(ctx.registries, run, chosen.id, undefined, { free: true });
+        const receipt = gameProfileServiceActive(run, 'smith') ? commit() : withGameProfileService(run, 'smith', commit);
         ctx.emit('armamentSmithed', receipt);
       } else {
         chosen.card.upgraded = true;

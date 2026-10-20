@@ -33,6 +33,7 @@ function fight({ amount, vulnerable = false, stance = false, poise = false }) {
   if (poise) enemy.persistentPoise = { value: 500, max: 500 };
   if (stance) combat.player.combatStance = { camp: 'physical', maneuver: 'attack' };
   if (vulnerable) applyStatus(combat, enemy, 'vulnerable', 1, combat.player);
+  primeAccuracyRolls(combat); // a natural 20 always connects, whatever the defender rolls
   return { combat, enemy };
 }
 // Previewed hit and applied HP loss from one fresh fight each, so they cannot influence each other.

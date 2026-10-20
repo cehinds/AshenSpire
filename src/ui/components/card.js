@@ -63,7 +63,7 @@ function metadataBand(rarity, owned) {
  * this stays as the name five files already import, so the extraction costs
  * no call site a rename that would prove nothing.
  */
-export function staticTokens(def) { return staticCardTokens(def); }
+export function staticTokens(def, registries = null, rules = null) { return staticCardTokens(def, registries, rules); }
 
 /**
  * relicText(def) → plain text with every {token} replaced by the number the
@@ -304,7 +304,7 @@ export function renderCard(registries, ref, opts = {}) {
   // (cardFaceText.js); a weight-priced card adds its pricing note as a detail line.
   const faceRules = gameModule(registries, 'cards');
   const wardPoise = wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null;
-  const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries);
+  const allFaceLines = baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null);
   const faceLines = allFaceLines && registries.gameProfile?.foundation?.mode === 'configured' && opts.level !== 'inspect'
     ? allFaceLines.slice(0, Math.min(faceRules?.faceMaxEffects ?? Infinity, faceRules?.faceMaxLines ?? Infinity)) : allFaceLines;
   if (faceLines && def.weightClassPriced) faceLines.push({ kind: 'detail', html: 'Cost reflects your current weight' });
@@ -595,9 +595,9 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 export function cardPlainText(registries, ref, opts = {}) {
   const def = playingCardDefinition(registries, ref, opts);
   const model = opts.preview ? playingCardModel(registries, ref, { ...opts, definition: def })
-    : { tokens: staticTokens(def), damageSequences: [] };
+    : { tokens: staticTokens(def, registries, opts.rules || null), damageSequences: [] };
   const lines = opts.rules?.combatExpansionVersion === 2 || opts.preview?.combatExpansionVersion === 2
-    ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries)) : null;
+    ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null)) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
   return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences, wardReadsAsPoise(registries) ? { preview: opts.preview || null } : null))

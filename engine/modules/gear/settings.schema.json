@@ -653,6 +653,12 @@
           "minimum": 0,
           "maximum": 99
         },
+        "perRankStat": {
+          "type": "string",
+          "enum": [
+            "dr"
+          ]
+        },
         "rarityBonus": {
           "type": "object",
           "additionalProperties": {
