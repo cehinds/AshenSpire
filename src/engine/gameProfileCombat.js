@@ -2,7 +2,7 @@ import { applyStatus } from './statuses.js';
 import { attackHitPreview, precisionEntryGrant } from './stanceHit.js';
 import { sourceRatingValue, magicShareOf, splitContactParts, isMagicalAttack } from '../model/combatRatings.js';
 import { sameStance, stanceEntryBonuses, stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../model/stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled, fixCoreReactionHandCost } from '../model/fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreRules, fixCoreSmashVsDefensiveRules, protectionReceipt, damageReceipt, fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
 import { mirroredStance, configuredStance, armsAsCoreCounter, isSpellCounter } from '../model/profileStance.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { rememberCombatStance, defensiveCombatStance } from './concurrentStances.js';
@@ -172,7 +172,7 @@ export function profileCardCosts(ctx, def) {
   const authored = def.resourceCosts || def.costs || {};
   const baseSp = def.cost==='X' && include.includes('sp') ? Math.max(0,ctx.player?.stamina ?? ctx.player?.energy ?? 0) : authored.sp ?? def.staminaCost ?? (typeof def.cost === 'number' ? def.cost : 0);
   const baseMp = authored.mp ?? def.manaCost ?? 0;
-  const sp = fixCoreEnabled(ctx) ? fixCoreReactionHandCost(ctx, def, stanceStaminaCost(baseSp, ctx.player, def, ctx, baseMp)) : baseSp;
+  const sp = fixCoreEnabled(ctx) ? stanceStaminaCost(baseSp, ctx.player, def, ctx, baseMp) : baseSp;
   const mp = stanceManaCost(baseMp, ctx.player, def, ctx);
   if ((!include.includes('sp') && sp > 0) || (!include.includes('mp') && mp > 0)) {
     throw new Error(`Card ${def.id || 'unknown'} requires an authored disabled-resource variant`);
