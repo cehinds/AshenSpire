@@ -111,3 +111,48 @@ test('cardResolved uses its explicit completed root receipt after pending play i
   assert.equal(ctx.eventLog.some(event=>event.type==='combatRangeActionUnavailable'),false);
   assert.equal(ctx.eventLog.some(event=>event.rangeLifecycleCarrier),false,'full carrier is scoped to emission, never stored in bus receipts');
 });
+test('range-off keeps ordinary hostile preparation and does not reserve unused conditional random slots',()=>{
+  const ctx=live(),card=strike(ctx);second(ctx);ctx.rangeState.policy.enabled=false;
+  mount(ctx,[{on:'cardPreparing',once:true,do:[{op:'damage',target:'randomEnemy',amount:1}]},{on:'damageDealt',once:true,if:{p:'hpBelowPct',of:'owner',pct:1},do:[{op:'damage',target:'randomEnemy',amount:1,repeat:2}]}]);
+  const before=ctx.rng.getCounters().misc;
+  primeAccuracyRolls(ctx,{count:2,drawsPerAttack:2});
+  played(ctx,card);
+  assert.equal(ctx.rng.getCounters().misc,before+1,'only the actual preparation selector draws; unused range envelope reserves nothing');
+  assert.equal(ctx.eventLog.some(event=>event.rangeOrigin),false);
+  assert.ok(ctx.eventLog.some(event=>event.type==='damageDealt'));
+});
+test('physical Flux Counter keeps its Ward lane identity when the Core Poise return rounds to zero',async()=>{
+  const {completeTacticalAction}=await import('../src/engine/combatMatchups.js');
+  const {rangeActionPlan}=await import('../src/model/combatEngagement.js');
+  const ctx=live();second(ctx);ctx.rangeState.engagements[rangePairKey('player:player','enemy:e1')]=0;
+  ctx.piles.hand=[{instanceId:'flux-counter',cardId:'core.counter'}];
+  dispatch(ctx,{type:'playCard',cardInstanceId:'flux-counter'});
+  const counter=ctx.player.combatCounter;
+  counter.carrier.traitValues={...counter.carrier.traitValues,flux:1};
+  mount(ctx,[{on:'wardBroken',once:true,do:[{op:'applyStatus',target:'allEnemies',status:'weak',stacks:1}]}]);
+  ctx.player.stamina=2;
+  const profile={camp:'physical',maneuver:'ranged',range:'melee'};
+  const plan=rangeActionPlan(ctx.rangeState,'enemy:e1',[{contactId:'incoming',targetKey:'player:player',coverage:'melee'}]);
+  plan.rootId='flux-incoming';plan.paid={energy:1,stamina:1,mana:0};
+  const returned=completeTacticalAction(ctx,ctx.enemies[0],ctx.player,{rangePlan:plan,rangeContactId:'incoming'},
+    {counter,profile,profiles:[profile],covered:[true],incomings:[2],amounts:[2],amount:2,connected:true,avoided:false});
+  assert.deepEqual(returned.map(action=>action.effect.op),['damage','wardDamage']);
+  const ward=returned[1];
+  assert.equal(ward.meta.rangeEffectIndex,2);
+  assert.ok(ward.card.rangePlan.targets.some(row=>row.contactId==='2:0:0:enemy:e1'));
+  assert.equal(ward.meta.expansionGroup.targets.e1.contacts[1].rangeContactId,'2:0:0:enemy:e1');
+  assert.ok(ward.card.rangeLineagePlan.sites.some(site=>site.events.some(event=>event.type==='wardBroken')));
+  assert.equal(ctx.player.stamina,0,'the automatic return reserves its entire possible Ward-rider approach once');
+});
+test('an independently accepted retaliation retains causal facts without foreign range authority',()=>{
+  const ctx=live();ctx.propertyMounts={};ctx.player.statuses={zealotry:{stacks:1},envenom:{stacks:1}};
+  ctx.rangeState.engagements[rangePairKey('player:player','enemy:e1')]=2;ctx.player.stamina=2;
+  ctx.emit('hpLost',{sourceId:'e1',targetId:'player',amount:1,cause:'attack',rangeOrigin:{version:1,rootId:'enemy-root',siteId:'incoming-hit',sourceKey:'enemy:e1'}});
+  const action=ctx.queue.find(action=>action.effect.op==='damage');
+  assert.equal(action.source,ctx.player);
+  assert.equal(action.card.rangePlan.sourceKey,'player:player');
+  assert.ok(action.card.rangeLineagePlan.edges.some(edge=>edge.triggerKey.includes('envenom')));
+  assert.equal(action.meta.event.sourceId,'e1');
+  assert.equal(action.meta.event.rangeOrigin,undefined);
+  assert.equal(ctx.player.stamina,0);
+});
