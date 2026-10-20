@@ -69,3 +69,50 @@ test('random target quotes fork the same seeded selection without drawing live R
   assert.deepEqual(accepted,quoted);
   assert.equal(accepted.targets.length,1);
 });
+
+function distantUnclosingIncoming(ctx) {
+  far(ctx);
+  const table=ctx.registries.enemies;
+  ctx.registries={...ctx.registries,enemies:{...table,get:id=>{
+    const def=table.get(id), move=def.moves.slash;
+    if(!move)return def;
+    return {...def,moves:{...def.moves,slash:{...move,range:'melee',traits:['adequateReach'],tags:[...(move.tags||[]).filter(tag=>!tag.startsWith('range:')),'range:melee']}}};
+  }}};
+  ctx.enemies[0].intent={...ctx.enemies[0].intent,moveId:'slash'};
+  ctx.enemies[0].plannedMoves=[];
+}
+test('paid hand Counter reserves its return approach after stance discount and never pays twice', async () => {
+  const { primeAccuracyRolls }=await import('./accuracyFixture.mjs');
+  const ctx=live(); distantUnclosingIncoming(ctx);
+  ctx.piles.hand=[{instanceId:'counter-range',cardId:'core.counter'}];
+  ctx.player.combatStance={maneuver:'counter',camp:'physical',range:'melee'};
+  ctx.player.stamina=2;
+  primeAccuracyRolls(ctx,{count:2,drawsPerAttack:2});
+  dispatch(ctx,{type:'endTurn'});
+  const option=ctx.pendingReaction?.options.find(row=>row.cardId==='core.counter' && row.play.rangeRoute==='advance');
+  assert.ok(option);
+  assert.equal(option.staminaCost,2,'zero discounted base plus two approach SP');
+  const start=ctx.eventLog.length;
+  dispatch(ctx,{type:'chooseReaction',offerId:ctx.pendingReaction.id,optionId:option.id});
+  const events=ctx.eventLog.slice(start);
+  assert.equal(events.filter(row=>row.type==='staminaSpent').reduce((sum,row)=>sum+row.amount,0),2);
+  assert.ok(events.some(row=>row.type==='combatCounterTriggered'));
+  assert.ok(!events.some(row=>row.type==='combatRangeReturnUnavailable'));
+});
+test('unaffordable automatic Counter preserves interception but spends no offensive cycle or hit RNG', async () => {
+  const { primeAccuracyRolls }=await import('./accuracyFixture.mjs');
+  const ctx=live(); distantUnclosingIncoming(ctx);
+  ctx.piles.hand=[{instanceId:'counter-range',cardId:'core.counter'}];
+  ctx.player.stamina=1;
+  dispatch(ctx,{type:'playCard',cardInstanceId:'counter-range'});
+  primeAccuracyRolls(ctx,{count:3,drawsPerAttack:2});
+  dispatch(ctx,{type:'setReactions',enabled:false});
+  const start=ctx.eventLog.length;
+  dispatch(ctx,{type:'endTurn'});
+  const events=ctx.eventLog.slice(start);
+  assert.ok(events.some(row=>row.type==='combatCounterConsumed'));
+  assert.ok(events.some(row=>row.type==='combatRangeReturnUnavailable' && row.advanceSp===2 && row.defenseKept));
+  assert.ok(!events.some(row=>row.type==='combatCounterTriggered'));
+  assert.equal(ctx.player.combatCounterReturnedCycle,undefined);
+  assert.equal(events.filter(row=>row.type==='attackHit' && row.sourceId==='player').length,0);
+});

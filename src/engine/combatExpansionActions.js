@@ -1,4 +1,4 @@
-import { acceptRangeActions } from './combatEngagement.js';
+import * as Engagement from './combatEngagement.js';
 // A committed card/move owns one receipt per defender across all its contacts.
 import { evaluate } from '../model/formulas.js';
 import * as Triggers from './triggers.js';
@@ -41,7 +41,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
   mountCombatCombo(ctx, source, carrier);
   const group = { key: `${ctx.combatKey || 'combat'}:${++ctx.expansionActionSerial || (ctx.expansionActionSerial = 1)}`,
     sourceId: source?.id, sourcePlayerId: ctx.playerIdForEntity?.(source), carrier, targets: {}, begun: false };
-  acceptRangeActions(ctx, source, actions, carrier, group.key);
+  Engagement.acceptRangeActions(ctx, source, actions, carrier, group.key);
   // Prefix evaluation uses detached entities so a live predicate sees earlier
   // grants/removals while beforePlay keeps its original immutable snapshot.
   // Prefix chance streams are detached; execution pays those same draws once.
@@ -184,10 +184,11 @@ function completeContact(ctx, action, group) {
   const start = ctx.queue.length;
   for (const [key, row] of Object.entries(group.targets)) {
     const target = expansionEntity(ctx, row), receipt = row.receipt;
-    if (!target || !receipt || !expansionTargetPresent(ctx, target)) continue;
+    if (!target || !receipt || !expansionTargetPresent(ctx, target)) { Engagement.discardCounterRangeReservation(group,target,row); continue; }
     const serial = group.manualCounterSerials?.[row.playerId || 'player'];
-    Matchups.completeTacticalAction(ctx, action.source, target, { ...group.carrier, ...(serial ? { manualCounterSerial: serial } : {}) }, receipt,
+    Matchups.completeTacticalAction(ctx, action.source, target, { ...group.carrier, ...(row.contacts?.[0]?.rangeContactId ? { rangeContactId: row.contacts[0].rangeContactId } : {}), ...(serial ? { manualCounterSerial: serial } : {}) }, receipt,
       { restrictions: Control.controlRestrictions(ctx, target) });
+    Engagement.discardCounterRangeReservation(group,target,row);
     const root = group.contactSequence.rootTargets[key];
     const combined = root.receipt ||= { connected: false, statusAccepted: 0, amount: 0 };
     combined.connected ||= receipt.connected;
@@ -305,6 +306,7 @@ export function completeExpandedAction(ctx, action) {
       Control.completeStatusAction(ctx, target, row.interactions || receipt.profile, { connected: receipt.connected,
         actionKey: group.key, damaging: receipt.amount > 0 });
     }
+    for (const row of Object.values(group.targets)) Engagement.discardCounterRangeReservation(group,expansionEntity(ctx,row),row);
     applyTraitImpact(ctx, action, group);
     ctx.pendingExpansionActions = Math.max(0, (ctx.pendingExpansionActions || 0) - 1);
   } finally {

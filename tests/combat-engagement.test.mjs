@@ -106,3 +106,15 @@ test('mixed sources share one temporary pair distance in either authored order',
     assert.equal(counter.targets[0].band, 0);
   }
 });
+
+test('movement during a root cannot manufacture a nested Reach bonus, but later roots see it', () => {
+  const before = state('reach');
+  const incoming = rangeActionPlan(before,player,[contact(enemy,1)]);
+  const moved = movedEngagementState(before,player,enemy,-1);
+  const nested = rangeActionPlan(moved,enemy,[contact(player,1)],{context:incoming});
+  assert.equal(nested.targets[0].actualBand,1);
+  assert.equal(nested.targets[0].precisionDelta,0);
+  const next = rangeActionPlan(moved,enemy,[contact(player,1)]);
+  assert.equal(next.targets[0].actualBand,0);
+  assert.equal(next.targets[0].precisionDelta,1);
+});

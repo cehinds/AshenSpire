@@ -1,4 +1,4 @@
-import { rangeHitContact } from './combatEngagement.js';
+import * as Engagement from './combatEngagement.js';
 import { fixCoreEnabled, fixCoreRules } from '../model/fixCoreMechanics.js';
 import { stanceMitigation } from './stanceMitigation.js';
 import { proposalTargetPlan } from './proposalStatusRuntime.js';
@@ -96,7 +96,7 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const requiredRange = carrier?.counterRequiredRange || (delivery ? 'melee' : stance?.range) || 'melee';
   const override = profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach');
   // Target bypasses Evasion only; its spell still needs sufficient reach.
-  const rangeContact = rangeHitContact(ctx, source, target, carrier);
+  const rangeContact = Engagement.rangeHitContact(ctx, source, target, carrier);
   const inRange = rangeContact ? rangeContact.inRange : override || (RANGES.includes(range) && RANGES.includes(requiredRange) && RANGES.indexOf(range) >= RANGES.indexOf(requiredRange));
   const maneuver = effectiveManeuver({ combatProfile: profile, mirrors: carrier?.mirrors });
   const precision = stacks(source, 'precision');
