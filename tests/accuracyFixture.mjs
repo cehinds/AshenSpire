@@ -8,8 +8,8 @@ export function primeAccuracyRolls(combat, { die = 20, count = 1, drawsPerAttack
   for (let attempts = 0; attempts < 1000000; attempts++) {
     const before = search.getCounters().combatAvoidance;
     const attacker = search.int('combatAvoidance', 1, 20);
-    // Normal Core Accuracy draws attacker then defender. Pin only the attack
-    // die; opposed defender rolls remain real seeded outcomes.
+    // Pin the selected attacker die; callers can reserve additional draws
+    // for advantage or disadvantage. Normal Core attacks draw only once.
     for (let draw = 1; draw < drawsPerAttack; draw++) search.int('combatAvoidance', 1, 20);
     if (attacker === die) {
       if (!streak) start = before;

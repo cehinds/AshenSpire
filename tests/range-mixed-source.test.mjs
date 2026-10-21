@@ -36,7 +36,7 @@ test('one live root retains the bow and dagger source of each contact in either 
     assert.deepEqual(route.targets[0].contacts.map(row=>row.coverage),hands.map(hand=>hand==='mainHand'?2:0));
     assert.equal(route.advanceSp,2);
     ctx.player.stamina=route.costs.stamina;
-    primeAccuracyRolls(ctx,{count:2,drawsPerAttack:2});
+    primeAccuracyRolls(ctx,{count:2});
     const start=ctx.eventLog.length;
     dispatch(ctx,{type:'playCard',cardInstanceId:card.instanceId,targetId:'e1'});
     assert.equal(ctx.player.stamina,0);
@@ -53,7 +53,7 @@ test('a weapon plus independent spell keeps each delivery range through a real s
   assert.deepEqual(read.range.targets[0].contacts.map(row=>row.coverage),[2,range==='reach'?1:2]);
   assert.equal(read.range.routes[0].advanceSp,range==='reach'?1:0);
   ctx.player.stamina=read.staminaCost;
-  primeAccuracyRolls(ctx,{count:2,drawsPerAttack:2});
+  primeAccuracyRolls(ctx,{count:2});
   dispatch(ctx,{type:'playCard',cardInstanceId:card.instanceId,targetId:'e1'});
   assert.equal(ctx.player.stamina,0);
   assert.equal(ctx.eventLog.filter(row=>row.type==='attackHit'&&row.sourceId==='player').length,2);
