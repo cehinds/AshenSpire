@@ -229,9 +229,9 @@ test('Core automatic outcomes (Evasion bypassed, out of range) log without the r
   for (const line of lines) assert.doesNotMatch(line, /stance/);
 });
 
-test('Core hit log shows one attacker roll against fixed Evasion', () => {
+test('Core hit log shows one attacker roll against Evasion', () => {
   const [line] = log([{ type: 'attackHit', sourceId: 'player', targetId: 'e1', fixedDefense: true,
     dice: [8, 13], d20: 8, attackTotal: 17, accuracy: 4, evasion: 9, evasionTotal: 9, hitChance: 96, mode: 'advantage' }]);
-  assert.match(line, /d20 \[8, 13\] \+ Precision 4 = 17 vs fixed Evasion 9 · advantage · 96% chance\.$/);
+  assert.match(line, /d20 \[8, 13\] \+ Precision 4 = 17 vs Evasion 9 · advantage · 96% chance\.$/);
   assert.doesNotMatch(line, /vs d20|stance/);
 });

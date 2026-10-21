@@ -148,7 +148,7 @@ test('enemy hits knock back 22px held through the peak and tint from impact', ()
 test('the CSS pauses a held figure and scales the shake by --shake-px', () => {
   const css = src('styles/combat.css');
   assert.match(css, /^\.hit-stop \{ animation-play-state: paused !important; \}$/m);
-  assert.doesNotMatch(css, /\.hit-stop \*/, 'descendants (the idle bob) keep their clock');
+  assert.doesNotMatch(css, /\.hit-stop \*/, 'descendant action clips retain their independent clocks');
   assert.match(css, /@keyframes shake \{.*var\(--shake-px, 4px\)/);
 });
 

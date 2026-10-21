@@ -62,3 +62,19 @@ test('compatibility rejects digest damage, unknown runtimes, other cores and fut
   assert.throws(()=>validateGameProfileSnapshot(other),/unsupported runtime artifact/);
   assert.equal(coreEvasionCompatibleRuntime(priorRuntimeEnvelope(),'sha256:future-runtime'),'sha256:future-runtime');
 });
+
+
+test('current shipped Core runtime and combat saves survive presentation-only changes', () => {
+  const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} }));
+  assert.equal(profile.lock.runtimeHash, 'sha256:fd3088b4bbca6111a7095f8eb823ae3a30abd5badcb82b91dd32112b0f2e80e8');
+  const originalHash = profile.hash;
+  const validated = validateGameProfileSnapshot(profile);
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
+  const run = createRunState({ registries, classId: 'rogue', seed: 512, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a','b','c'] } } } });
+  const restoredRun = deserializeRun(serializeRun(run));
+  assert.equal(restoredRun.gameProfile.hash, originalHash);
+  const combat = createRunCombat({ registries, run: restoredRun, rng: createRng(512), enemyIds: ['wanderingSoldier'] });
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(512), snapshot: serializeCombatSnapshot(combat), expectedGameProfile: restoredRun.gameProfile });
+  assert.equal(restored.gameProfile.hash, originalHash);
+  assert.equal(restored.gameProfile.lock.runtimeHash, profile.lock.runtimeHash);
+});
