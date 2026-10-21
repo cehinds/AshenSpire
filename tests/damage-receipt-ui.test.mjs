@@ -56,12 +56,35 @@ test('identical rows are shared across hits while repeated contributions within 
   const details = topics(damageReceiptHtml(twice));
   assert.equal(details[0].text, 'Hits 1, 2: 20 incoming → 12 HP damage');
   assert.equal(details[1].text.match(/Ash Ring/g).length, 1);
-  assert.match(details[1].text, /Hits 1, 2: Ash Ring: \+4/);
+  assert.equal(details[1].text, 'Hits 1, 2: Ember base: +16; Ash Ring: +4; Active Ward: ×0.75');
   assert.match(details[2].text, /Hits 1, 2: Ward −5/);
   const repeatedSource = { ...first, sources: [first.sources[1], first.sources[1]] };
   const repeated = topics(damageReceiptHtml({ hits: [repeatedSource, repeatedSource], totalDamage: 24 }));
-  assert.equal(repeated[1].text.match(/Hits 1, 2: Ash Ring: \+4/g).length, 2);
+  assert.equal(repeated[1].text, 'Hits 1, 2: Ash Ring: +4; Ash Ring: +4');
   assert.equal(damageReceiptLines(twice).filter(line => line === 'Ash Ring: +4').length, 2, 'full log keeps its original per-hit rows');
+});
+
+test('source details retain interleaved duplicate operations within one hit', () => {
+  const sources = [
+    { label: 'Base', operation: 'set', amount: 10 },
+    { label: 'Bonus', amount: 2 },
+    { label: 'Scale', operation: 'multiply', amount: 2 },
+    { label: 'Bonus', amount: 2 },
+  ];
+  const html = damageReceiptHtml({ hits: [{ incoming: 26, hpLoss: 26, sources }], totalDamage: 26 });
+  assert.equal(topics(html).find(row => row.label === 'Sources').text,
+    'Hit 1: Base: =10; Bonus: +2; Scale: ×2; Bonus: +2');
+});
+
+test('only complete identical source sequences share hit attribution', () => {
+  const base = { label: 'Base', operation: 'set', amount: 10 };
+  const bonus = { label: 'Bonus', amount: 2 };
+  const scale = { label: 'Scale', operation: 'multiply', amount: 2 };
+  const first = { incoming: 24, hpLoss: 24, sources: [base, bonus, scale] };
+  const second = { incoming: 22, hpLoss: 22, sources: [base, scale, bonus] };
+  const html = damageReceiptHtml({ hits: [first, second, structuredClone(first)], totalDamage: 70 });
+  assert.equal(topics(html).find(row => row.label === 'Sources').text,
+    'Hits 1, 3: Base: =10; Bonus: +2; Scale: ×2; Hit 2: Base: =10; Scale: ×2; Bonus: +2');
 });
 
 test('unequal mixed hits keep exact receipt numbers, reductions, operations and rounding in details', () => {

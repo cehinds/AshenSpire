@@ -55,13 +55,18 @@ function damageDetailTopics(hits) {
     const rounding = hit.rounding != null && hit.rounding !== '' ? `; rounding: ${hit.rounding}` : '';
     return [`${detailNumber(hit.incoming)} incoming${components} → ${detailNumber(hit.hpLoss)} HP damage${rounding}`];
   });
-  const sources = groupedHitDetails(hits, hit => (hit.sources || []).map(source => {
-    const operation = source.operation === 'multiply' || Number.isFinite(source.multiplier)
-      ? `×${detailNumber(source.multiplier ?? source.amount)}`
-      : source.operation === 'set' ? `=${detailNumber(source.amount)}`
-        : Number.isFinite(source.amount) ? `${source.amount >= 0 ? '+' : '−'}${detailNumber(Math.abs(source.amount))}` : '?';
-    return `${source.label || source.id || 'Source'}: ${operation}`;
-  }));
+  const sources = groupedHitDetails(hits, hit => {
+    const rows = (hit.sources || []).map(source => {
+      const operation = source.operation === 'multiply' || Number.isFinite(source.multiplier)
+        ? `×${detailNumber(source.multiplier ?? source.amount)}`
+        : source.operation === 'set' ? `=${detailNumber(source.amount)}`
+          : Number.isFinite(source.amount) ? `${source.amount >= 0 ? '+' : '−'}${detailNumber(Math.abs(source.amount))}` : '?';
+      return `${source.label || source.id || 'Source'}: ${operation}`;
+    });
+    // Sources are an ordered operation sequence. Share only complete matching
+    // sequences, so repeated bonuses never move across intervening multipliers.
+    return rows.length ? [rows.join('; ')] : [];
+  });
   const defenses = groupedHitDetails(hits, hit => {
     const rows = [['wardReduced', 'Ward'], ['poiseReduced', null], ['blocked', 'Block']]
       .filter(([key]) => Number.isFinite(hit[key]) && hit[key] > 0)
