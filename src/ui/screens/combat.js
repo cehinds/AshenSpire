@@ -861,14 +861,20 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function syncPlayerActionIntent(player, inst, held = null) {
     const leading = player?.querySelector('.combatant-leading');
     if (!leading) return;
-    player.querySelector('.player-action-intent')?.remove();
     const def = inst ? resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) }) : null;
     const armed = def ? kindForCard(def) : null;
-    const action = playerActionIntent(armed ?? held ?? RESTING_PLAYER_ACTION, () => {
+    const profile = armed ?? held ?? RESTING_PLAYER_ACTION;
+    const maneuver = profile.maneuver || 'prepare';
+    const previous = player.querySelector('.player-action-intent');
+    // The glyph depends only on maneuver; its callback reads current selection.
+    // Keeping it also keeps focus and avoids a redundant full-board refit.
+    if (previous?.dataset.maneuver === maneuver) return;
+    previous?.remove();
+    const action = playerActionIntent(profile, () => {
       if (selfArm) playCard(selfArm, null);
       else selectCombatant('player');
     });
-    if (action) leading.append(action);
+    if (action) { action.dataset.maneuver = maneuver; leading.append(action); }
     combatEl.dispatchEvent(new CustomEvent('combatantselectionchange'));
   }
 
