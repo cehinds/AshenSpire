@@ -47,13 +47,33 @@ export function productionBundle({ additionalModules = [] } = {}) {
     return `${JSON.stringify(id)}: ${MODULE_FN}\n${guardScript(body)}\n}`;
   }).join(',\n');
   const context = {
-    console, structuredClone, Map, Set,
+    console, structuredClone, Map, Set, TextEncoder,
     // UI modules imported by main register custom elements or defer work.
     // Their deferred rendering is irrelevant to the engine initialization.
     HTMLElement: class HTMLElement {},
     customElements: { define() {}, get() {} },
     queueMicrotask() {}, setTimeout() {}, clearTimeout() {},
   };
+  // Browsers clone into their own realm. Node's injected native clone returns
+  // host objects, which fail the game's intentional plain-JSON prototype check.
+  vm.runInNewContext(`{
+    const nativeClone = structuredClone;
+    structuredClone = value => {
+      const seen = new Set();
+      const adopt = item => {
+        if (!item || typeof item !== 'object' || seen.has(item)) return item;
+        seen.add(item);
+        if (item instanceof Map) { for (const [key, value] of item) { adopt(key); adopt(value); } }
+        else if (item instanceof Set) { for (const value of item) adopt(value); }
+        else if (Array.isArray(item) || Object.prototype.toString.call(item) === '[object Object]') {
+          Object.setPrototypeOf(item, Array.isArray(item) ? Array.prototype : Object.prototype);
+          for (const value of Object.values(item)) adopt(value);
+        }
+        return item;
+      };
+      return adopt(nativeClone(value));
+    };
+  }`, context);
   vm.runInNewContext(assembleRuntime(entries, entryId), context, {
     filename: 'production-bundle.js', timeout: 10000,
   });
