@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-21
 
+- **Readable build badges** ([#2228](https://github.com/cehinds/AshenSpire/pull/2228), `0.7.1.1748`). README build buttons have larger text and taller click targets. Stacked channel links keep the badges readable on phones.
+
 - **Shorter damage tooltips** ([#2225](https://github.com/cehinds/AshenSpire/pull/2225), `0.7.1.1748`). Damage numbers now show a short result and hit count. Open Hits, Sources or Defenses for focused details; Information and the full combat log keep the complete calculation.
 
 ## 2026-10-20

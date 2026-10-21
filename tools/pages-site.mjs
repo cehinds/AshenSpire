@@ -1345,7 +1345,7 @@ function assemble(outDir, keep) {
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'index.html'), join(latest, 'index.html'));
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'build.json'), join(latest, 'build.json'));
       const stamp = esc(builds[0].version ? `${builds[0].version}.${builds[0].ordinal}` : builds[0].ordinal);
-      writeFileSync(join(latest, 'build.svg'), `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="24" role="img" aria-label="Published build ${stamp}"><rect width="220" height="24" rx="4" fill="#243344"/><text x="110" y="16" text-anchor="middle" fill="white" font-family="sans-serif" font-size="13">Build ${stamp}</text></svg>`);
+      writeFileSync(join(latest, 'build.svg'), `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="44" viewBox="0 0 220 44" role="img" aria-label="Published build ${stamp}"><rect width="220" height="44" rx="6" fill="#243344"/><text x="110" y="28" text-anchor="middle" fill="white" font-family="sans-serif" font-size="18" font-weight="600">Build ${stamp}</text></svg>`);
       // A pack-shaped build's base (same depth, so the same text) and its download.
       for (const extra of [ASSET_BASE_FILE, 'download']) {
         const from = join(outDir, branch, String(builds[0].ordinal), extra);
