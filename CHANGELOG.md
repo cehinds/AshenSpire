@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-21
 
+- **Smoother card selection and cleaner rules** ([#2244](https://github.com/cehinds/AshenSpire/pull/2244), `0.7.1.1768`). Selecting cards reuses their artwork and tags. Rules stay inside their parchment; repeated status explanations open from their tags, and overflowing cards point to their full details.
+
 - **Lighter card taps and combat tools** ([#2242](https://github.com/cehinds/AshenSpire/pull/2242), `0.7.1.1768`). Card taps avoid a redundant target refresh, and combat tools avoid temporary layout changes. Drag cancellation, targeting and log controls retain their behavior.
 
 - **Smoother stance selection** ([#2241](https://github.com/cehinds/AshenSpire/pull/2241), `0.7.1.1766`). Selecting a card updates hit chances once after the stance changes, avoiding duplicate preview work. Target, range and upcast previews remain current, with the same combat rules and animation pacing.
