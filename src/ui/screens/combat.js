@@ -582,11 +582,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const handOverlay = $('.hand-overlay');
   const handPages = [$('.hand-prev'), $('.hand-next')];
 
-  function selectCombatant(id) {
+  function selectCombatant(id, { updateHud = true } = {}) {
     if (id && !getEntity(combat, id)?.alive) return;
     selectedCombatantId = id;
     selectCombatantInfo(combatEl, id);
-    updateTargetHud();
+    if (updateHud) updateTargetHud();
   }
 
   // A blank press dismisses only the floating explanation. The edge inspector
@@ -823,7 +823,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function syncCardSelection() {
     if (!busy && !enemyPlayback && !combatEl.classList.contains('drag-targeting') && !combatEl.querySelector('.hand [data-hold="holding"]')) renderHand();
     const active = selected || selfArm;
-    if (active) selectCombatant(null);
+    // applyTargetLayer below updates the HUD once with the final legal targets.
+    if (active) selectCombatant(null, { updateHud: false });
     if (!active) combatEl.querySelectorAll('.hand .inspection-selected').forEach(card => { card.classList.remove('inspection-selected', 'inspection-info-visible'); card.removeAttribute('aria-current'); });
     combatEl.querySelectorAll('.hand .card').forEach(card => {
       const on = card.dataset.instanceId === active;
@@ -875,7 +876,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       else selectCombatant('player');
     });
     if (action) { action.dataset.maneuver = maneuver; leading.append(action); }
-    combatEl.dispatchEvent(new CustomEvent('combatantselectionchange'));
+    combatEl.dispatchEvent(new CustomEvent('combatantselectionchange', { detail: { geometry: 'overhead' } }));
   }
 
   function armSelf(instanceId) {
