@@ -1,0 +1,886 @@
+{
+  "rows": [
+    {
+      "probeVersion": 2,
+      "source": "bdd484f31b9c394093e9e5e66ed2973c0b0ff6e8",
+      "instrumentation": "passive rAF timestamps and long-task observer; no per-frame style/geometry reads; CDP Performance counters",
+      "label": "baseline1761-bdd",
+      "file": "/workspace/scratch/mobile-performance/stalls1761-gesture-fixed.html",
+      "sha256": "ac9c74462644d468574679c1458accbe1da60be15455372a700298ee1a507a92",
+      "version": "0.7.1.1761",
+      "digest": "b623462ee1",
+      "viewport": {
+        "width": 375,
+        "height": 667,
+        "dpr": 3
+      },
+      "cpuRate": 4,
+      "pacing": "fresh shipped defaults; no settings override",
+      "actions": [
+        {
+          "cardId": "core.defend",
+          "armedIdle": {
+            "seconds": 1.5229679999902146,
+            "taskSeconds": 0.025380999999999876,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 7905.9000000059605,
+          "inputAt": 23883.79999999702,
+          "upAt": 23883.90000000596,
+          "played": [
+            {
+              "cardId": "core.defend",
+              "cardInstanceId": "gp6",
+              "targetId": null,
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "blockGained",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 4,
+          "maxFrameMs": 2783.2000000000007,
+          "longTaskTotalMs": 6509,
+          "renderMetrics": {
+            "TaskDuration": 7.592078000000001,
+            "ScriptDuration": 4.499086999999999,
+            "LayoutDuration": 0.27387300000000003,
+            "RecalcStyleDuration": 1.5882270000000003,
+            "LayoutCount": 56,
+            "RecalcStyleCount": 121
+          }
+        },
+        {
+          "cardId": "core.strike",
+          "armedIdle": {
+            "seconds": 1.5117199999949662,
+            "taskSeconds": 0.027238999999998015,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 7963.100000008941,
+          "inputAt": 40939.79999999702,
+          "upAt": 40940.10000000894,
+          "played": [
+            {
+              "cardId": "core.strike",
+              "cardInstanceId": "gp1",
+              "targetId": "e1",
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "statusApplied",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "attackHit",
+            "damageDealt",
+            "relicTriggered",
+            "hpLost",
+            "persistentPoiseChanged",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 5,
+          "maxFrameMs": 2683.199999999997,
+          "longTaskTotalMs": 7185,
+          "renderMetrics": {
+            "TaskDuration": 7.743303999999998,
+            "ScriptDuration": 4.008072,
+            "LayoutDuration": 0.33953600000000006,
+            "RecalcStyleDuration": 2.322032,
+            "LayoutCount": 81,
+            "RecalcStyleCount": 158
+          }
+        }
+      ],
+      "errors": [],
+      "idle": {
+        "seconds": 2.614545000004,
+        "taskSeconds": 0.157356,
+        "scriptSeconds": 0.067714,
+        "layoutSeconds": 0,
+        "styleSeconds": 0,
+        "layouts": 0,
+        "styles": 0,
+        "animations": []
+      },
+      "memoryBefore": {
+        "connectedElements": 993,
+        "Nodes": 2895,
+        "Documents": 8,
+        "JSEventListeners": 1187,
+        "JSHeapUsedSize": 217122076,
+        "JSHeapTotalSize": 277618688
+      },
+      "memoryAfter": {
+        "connectedElements": 869,
+        "Nodes": 5533,
+        "Documents": 2,
+        "JSEventListeners": 2928,
+        "JSHeapUsedSize": 157138736,
+        "JSHeapTotalSize": 259842048
+      }
+    },
+    {
+      "probeVersion": 2,
+      "source": "87aaa153841e24393fbd346a327831cb88a9bd0a",
+      "instrumentation": "passive rAF timestamps and long-task observer; no per-frame style/geometry reads; CDP Performance counters",
+      "label": "candidate1763-projection",
+      "file": "/workspace/scratch/mobile-performance/stalls1763-projection-final.html",
+      "sha256": "8073c3f38c33cc11d362be54655f826795c07557abd2029412deb5491e30e0d3",
+      "version": "0.7.1.1763",
+      "digest": "e2c80900a6",
+      "viewport": {
+        "width": 375,
+        "height": 667,
+        "dpr": 3
+      },
+      "cpuRate": 4,
+      "pacing": "fresh shipped defaults; no settings override",
+      "actions": [
+        {
+          "cardId": "core.defend",
+          "armedIdle": {
+            "seconds": 1.5175250000029337,
+            "taskSeconds": 0.012793000000000276,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 9287.59999999404,
+          "inputAt": 21419.29999999702,
+          "upAt": 21419.59999999404,
+          "played": [
+            {
+              "cardId": "core.defend",
+              "cardInstanceId": "gp6",
+              "targetId": null,
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "blockGained",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 4,
+          "maxFrameMs": 3200,
+          "longTaskTotalMs": 8031,
+          "renderMetrics": {
+            "TaskDuration": 8.668612,
+            "ScriptDuration": 4.129466,
+            "LayoutDuration": 0.287735,
+            "RecalcStyleDuration": 3.462624,
+            "LayoutCount": 55,
+            "RecalcStyleCount": 120
+          }
+        },
+        {
+          "cardId": "core.strike",
+          "armedIdle": {
+            "seconds": 1.5803180000075372,
+            "taskSeconds": 0.38536399999999915,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 7188.399999991059,
+          "inputAt": 38813.5,
+          "upAt": 38818.59999999404,
+          "played": [
+            {
+              "cardId": "core.strike",
+              "cardInstanceId": "gp1",
+              "targetId": "e1",
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "statusApplied",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "attackHit",
+            "damageDealt",
+            "relicTriggered",
+            "hpLost",
+            "persistentPoiseChanged",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 4,
+          "maxFrameMs": 2316.600000000006,
+          "longTaskTotalMs": 6046,
+          "renderMetrics": {
+            "TaskDuration": 6.983067999999999,
+            "ScriptDuration": 3.840261,
+            "LayoutDuration": 0.19145100000000004,
+            "RecalcStyleDuration": 1.537541,
+            "LayoutCount": 75,
+            "RecalcStyleCount": 167
+          }
+        }
+      ],
+      "errors": [],
+      "idle": {
+        "seconds": 2.5142780000023777,
+        "taskSeconds": 0.123835,
+        "scriptSeconds": 0.04049,
+        "layoutSeconds": 0,
+        "styleSeconds": 0,
+        "layouts": 0,
+        "styles": 0,
+        "animations": []
+      },
+      "memoryBefore": {
+        "connectedElements": 993,
+        "Nodes": 2917,
+        "Documents": 8,
+        "JSEventListeners": 1187,
+        "JSHeapUsedSize": 202053620,
+        "JSHeapTotalSize": 265854976
+      },
+      "memoryAfter": {
+        "connectedElements": 869,
+        "Nodes": 6791,
+        "Documents": 8,
+        "JSEventListeners": 3135,
+        "JSHeapUsedSize": 218054896,
+        "JSHeapTotalSize": 284467200
+      }
+    },
+    {
+      "probeVersion": 2,
+      "source": "87aaa153841e24393fbd346a327831cb88a9bd0a",
+      "instrumentation": "passive rAF timestamps and long-task observer; no per-frame style/geometry reads; CDP Performance counters",
+      "label": "candidate1763-projection",
+      "file": "/workspace/scratch/mobile-performance/stalls1763-projection-final.html",
+      "sha256": "8073c3f38c33cc11d362be54655f826795c07557abd2029412deb5491e30e0d3",
+      "version": "0.7.1.1763",
+      "digest": "e2c80900a6",
+      "viewport": {
+        "width": 375,
+        "height": 667,
+        "dpr": 3
+      },
+      "cpuRate": 4,
+      "pacing": "fresh shipped defaults; no settings override",
+      "actions": [
+        {
+          "cardId": "core.defend",
+          "armedIdle": {
+            "seconds": 1.6556380000110948,
+            "taskSeconds": 0.8190359999999997,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 13423.09999999404,
+          "inputAt": 25172,
+          "upAt": 25172.89999999106,
+          "played": [
+            {
+              "cardId": "core.defend",
+              "cardInstanceId": "gp6",
+              "targetId": null,
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "blockGained",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 5,
+          "maxFrameMs": 2883.2000000000007,
+          "longTaskTotalMs": 12260,
+          "renderMetrics": {
+            "TaskDuration": 13.104329,
+            "ScriptDuration": 6.546767000000001,
+            "LayoutDuration": 0.518158,
+            "RecalcStyleDuration": 3.413475,
+            "LayoutCount": 63,
+            "RecalcStyleCount": 127
+          }
+        },
+        {
+          "cardId": "core.strike",
+          "armedIdle": {
+            "seconds": 1.6618359999993118,
+            "taskSeconds": 0.47063900000000203,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 11253,
+          "inputAt": 52317.79999999702,
+          "upAt": 52318,
+          "played": [
+            {
+              "cardId": "core.strike",
+              "cardInstanceId": "gp1",
+              "targetId": "e1",
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "statusApplied",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "attackHit",
+            "damageDealt",
+            "relicTriggered",
+            "hpLost",
+            "persistentPoiseChanged",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 4,
+          "maxFrameMs": 2883.199999999997,
+          "longTaskTotalMs": 10104,
+          "renderMetrics": {
+            "TaskDuration": 11.158792000000002,
+            "ScriptDuration": 5.601060999999998,
+            "LayoutDuration": 0.37374299999999994,
+            "RecalcStyleDuration": 3.0388270000000004,
+            "LayoutCount": 75,
+            "RecalcStyleCount": 146
+          }
+        }
+      ],
+      "errors": [],
+      "idle": {
+        "seconds": 2.5830780000105733,
+        "taskSeconds": 0.087336,
+        "scriptSeconds": 0.029852,
+        "layoutSeconds": 0,
+        "styleSeconds": 0,
+        "layouts": 0,
+        "styles": 0,
+        "animations": []
+      },
+      "memoryBefore": {
+        "connectedElements": 993,
+        "Nodes": 2881,
+        "Documents": 8,
+        "JSEventListeners": 1187,
+        "JSHeapUsedSize": 208928528,
+        "JSHeapTotalSize": 272773120
+      },
+      "memoryAfter": {
+        "connectedElements": 869,
+        "Nodes": 4893,
+        "Documents": 2,
+        "JSEventListeners": 1967,
+        "JSHeapUsedSize": 156926852,
+        "JSHeapTotalSize": 194236416
+      }
+    },
+    {
+      "probeVersion": 2,
+      "source": "bdd484f31b9c394093e9e5e66ed2973c0b0ff6e8",
+      "instrumentation": "passive rAF timestamps and long-task observer; no per-frame style/geometry reads; CDP Performance counters",
+      "label": "baseline1761-bdd",
+      "file": "/workspace/scratch/mobile-performance/stalls1761-gesture-fixed.html",
+      "sha256": "ac9c74462644d468574679c1458accbe1da60be15455372a700298ee1a507a92",
+      "version": "0.7.1.1761",
+      "digest": "b623462ee1",
+      "viewport": {
+        "width": 375,
+        "height": 667,
+        "dpr": 3
+      },
+      "cpuRate": 4,
+      "pacing": "fresh shipped defaults; no settings override",
+      "actions": [
+        {
+          "cardId": "core.defend",
+          "armedIdle": {
+            "seconds": 1.5272009999898728,
+            "taskSeconds": 0.04105000000000025,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 9174.70000000298,
+          "inputAt": 21559.89999999106,
+          "upAt": 21560.29999999702,
+          "played": [
+            {
+              "cardId": "core.defend",
+              "cardInstanceId": "gp6",
+              "targetId": null,
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "blockGained",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 4,
+          "maxFrameMs": 3399.899999999998,
+          "longTaskTotalMs": 8022,
+          "renderMetrics": {
+            "TaskDuration": 8.749763000000002,
+            "ScriptDuration": 5.400037,
+            "LayoutDuration": 0.292543,
+            "RecalcStyleDuration": 1.9446359999999998,
+            "LayoutCount": 58,
+            "RecalcStyleCount": 120
+          }
+        },
+        {
+          "cardId": "core.strike",
+          "armedIdle": {
+            "seconds": 1.5134859999961918,
+            "taskSeconds": 0.03513300000000186,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 7328.0999999940395,
+          "inputAt": 40026,
+          "upAt": 40026.89999999106,
+          "played": [
+            {
+              "cardId": "core.strike",
+              "cardInstanceId": "gp1",
+              "targetId": "e1",
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "statusApplied",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "attackHit",
+            "damageDealt",
+            "relicTriggered",
+            "hpLost",
+            "persistentPoiseChanged",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 4,
+          "maxFrameMs": 1766.699999999997,
+          "longTaskTotalMs": 6364,
+          "renderMetrics": {
+            "TaskDuration": 7.137596000000002,
+            "ScriptDuration": 3.874481000000001,
+            "LayoutDuration": 0.200264,
+            "RecalcStyleDuration": 1.7604220000000002,
+            "LayoutCount": 72,
+            "RecalcStyleCount": 160
+          }
+        }
+      ],
+      "errors": [],
+      "idle": {
+        "seconds": 2.5155309999972815,
+        "taskSeconds": 0.124397,
+        "scriptSeconds": 0.064691,
+        "layoutSeconds": 0,
+        "styleSeconds": 0,
+        "layouts": 0,
+        "styles": 0,
+        "animations": []
+      },
+      "memoryBefore": {
+        "connectedElements": 993,
+        "Nodes": 2897,
+        "Documents": 8,
+        "JSEventListeners": 1187,
+        "JSHeapUsedSize": 214486624,
+        "JSHeapTotalSize": 276549632
+      },
+      "memoryAfter": {
+        "connectedElements": 869,
+        "Nodes": 6087,
+        "Documents": 2,
+        "JSEventListeners": 1853,
+        "JSHeapUsedSize": 160548432,
+        "JSHeapTotalSize": 272302080
+      }
+    },
+    {
+      "probeVersion": 2,
+      "source": "bdd484f31b9c394093e9e5e66ed2973c0b0ff6e8",
+      "instrumentation": "passive rAF timestamps and long-task observer; no per-frame style/geometry reads; CDP Performance counters",
+      "label": "baseline1761-bdd",
+      "file": "/workspace/scratch/mobile-performance/stalls1761-gesture-fixed.html",
+      "sha256": "ac9c74462644d468574679c1458accbe1da60be15455372a700298ee1a507a92",
+      "version": "0.7.1.1761",
+      "digest": "b623462ee1",
+      "viewport": {
+        "width": 375,
+        "height": 667,
+        "dpr": 3
+      },
+      "cpuRate": 4,
+      "pacing": "fresh shipped defaults; no settings override",
+      "actions": [
+        {
+          "cardId": "core.defend",
+          "armedIdle": {
+            "seconds": 1.5079609999957029,
+            "taskSeconds": 0.016150999999999804,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 5641.899999991059,
+          "inputAt": 21357.70000000298,
+          "upAt": 21360.29999999702,
+          "played": [
+            {
+              "cardId": "core.defend",
+              "cardInstanceId": "gp6",
+              "targetId": null,
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "blockGained",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 4,
+          "maxFrameMs": 1366.5999999999985,
+          "longTaskTotalMs": 4513,
+          "renderMetrics": {
+            "TaskDuration": 5.366938000000001,
+            "ScriptDuration": 3.092379,
+            "LayoutDuration": 0.15220699999999998,
+            "RecalcStyleDuration": 1.214988,
+            "LayoutCount": 54,
+            "RecalcStyleCount": 118
+          }
+        },
+        {
+          "cardId": "core.strike",
+          "armedIdle": {
+            "seconds": 1.5056780000013532,
+            "taskSeconds": 0.0215550000000011,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 5041.70000000298,
+          "inputAt": 32738.09999999404,
+          "upAt": 32738.29999999702,
+          "played": [
+            {
+              "cardId": "core.strike",
+              "cardInstanceId": "gp1",
+              "targetId": "e1",
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "statusApplied",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "attackHit",
+            "damageDealt",
+            "relicTriggered",
+            "hpLost",
+            "persistentPoiseChanged",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 4,
+          "maxFrameMs": 983.3000000000029,
+          "longTaskTotalMs": 3823,
+          "renderMetrics": {
+            "TaskDuration": 4.75426,
+            "ScriptDuration": 2.2043589999999993,
+            "LayoutDuration": 0.15664899999999998,
+            "RecalcStyleDuration": 1.5238420000000001,
+            "LayoutCount": 77,
+            "RecalcStyleCount": 183
+          }
+        }
+      ],
+      "errors": [],
+      "idle": {
+        "seconds": 2.5627629999944475,
+        "taskSeconds": 0.093886,
+        "scriptSeconds": 0.042752,
+        "layoutSeconds": 0,
+        "styleSeconds": 0,
+        "layouts": 0,
+        "styles": 0,
+        "animations": []
+      },
+      "memoryBefore": {
+        "connectedElements": 993,
+        "Nodes": 2911,
+        "Documents": 8,
+        "JSEventListeners": 1187,
+        "JSHeapUsedSize": 219902800,
+        "JSHeapTotalSize": 277880832
+      },
+      "memoryAfter": {
+        "connectedElements": 869,
+        "Nodes": 5512,
+        "Documents": 2,
+        "JSEventListeners": 2928,
+        "JSHeapUsedSize": 157033888,
+        "JSHeapTotalSize": 261677056
+      }
+    },
+    {
+      "probeVersion": 2,
+      "source": "87aaa153841e24393fbd346a327831cb88a9bd0a",
+      "instrumentation": "passive rAF timestamps and long-task observer; no per-frame style/geometry reads; CDP Performance counters",
+      "label": "candidate1763-projection",
+      "file": "/workspace/scratch/mobile-performance/stalls1763-projection-final.html",
+      "sha256": "8073c3f38c33cc11d362be54655f826795c07557abd2029412deb5491e30e0d3",
+      "version": "0.7.1.1763",
+      "digest": "e2c80900a6",
+      "viewport": {
+        "width": 375,
+        "height": 667,
+        "dpr": 3
+      },
+      "cpuRate": 4,
+      "pacing": "fresh shipped defaults; no settings override",
+      "actions": [
+        {
+          "cardId": "core.defend",
+          "armedIdle": {
+            "seconds": 1.5062529999995604,
+            "taskSeconds": 0.0135320000000001,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 8045.29999999702,
+          "inputAt": 17073,
+          "upAt": 17073,
+          "played": [
+            {
+              "cardId": "core.defend",
+              "cardInstanceId": "gp6",
+              "targetId": null,
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "blockGained",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 5,
+          "maxFrameMs": 3000,
+          "longTaskTotalMs": 6872,
+          "renderMetrics": {
+            "TaskDuration": 7.619688,
+            "ScriptDuration": 4.450758,
+            "LayoutDuration": 0.300807,
+            "RecalcStyleDuration": 2.161238,
+            "LayoutCount": 62,
+            "RecalcStyleCount": 129
+          }
+        },
+        {
+          "cardId": "core.strike",
+          "armedIdle": {
+            "seconds": 1.6964090000110446,
+            "taskSeconds": 0.07769000000000048,
+            "styleSeconds": 0,
+            "layoutSeconds": 0,
+            "layouts": 0,
+            "styles": 0
+          },
+          "readyMs": 7461.70000000298,
+          "inputAt": 38928.70000000298,
+          "upAt": 38929.29999999702,
+          "played": [
+            {
+              "cardId": "core.strike",
+              "cardInstanceId": "gp1",
+              "targetId": "e1",
+              "energySpent": 1,
+              "manaSpent": 0,
+              "staminaSpent": 1
+            }
+          ],
+          "resolved": 1,
+          "events": [
+            "cardPreparing",
+            "energySpent",
+            "staminaSpent",
+            "statusApplied",
+            "combatStanceChanged",
+            "combatStanceChanged",
+            "cardPlayed",
+            "attackHit",
+            "damageDealt",
+            "relicTriggered",
+            "hpLost",
+            "persistentPoiseChanged",
+            "cardResolved"
+          ],
+          "handInert": false,
+          "endTurnDisabled": false,
+          "fits": 4,
+          "maxFrameMs": 2416.5,
+          "longTaskTotalMs": 6156,
+          "renderMetrics": {
+            "TaskDuration": 7.357189999999999,
+            "ScriptDuration": 3.152056,
+            "LayoutDuration": 0.25207599999999997,
+            "RecalcStyleDuration": 2.1000699999999997,
+            "LayoutCount": 73,
+            "RecalcStyleCount": 162
+          }
+        }
+      ],
+      "errors": [],
+      "idle": {
+        "seconds": 2.502414000002318,
+        "taskSeconds": 0.027227,
+        "scriptSeconds": 0.014307,
+        "layoutSeconds": 0,
+        "styleSeconds": 0,
+        "layouts": 0,
+        "styles": 0,
+        "animations": []
+      },
+      "memoryBefore": {
+        "connectedElements": 993,
+        "Nodes": 2918,
+        "Documents": 8,
+        "JSEventListeners": 1187,
+        "JSHeapUsedSize": 202291772,
+        "JSHeapTotalSize": 269475840
+      },
+      "memoryAfter": {
+        "connectedElements": 869,
+        "Nodes": 4636,
+        "Documents": 2,
+        "JSEventListeners": 1967,
+        "JSHeapUsedSize": 157686752,
+        "JSHeapTotalSize": 164040704
+      }
+    }
+  ]
+}

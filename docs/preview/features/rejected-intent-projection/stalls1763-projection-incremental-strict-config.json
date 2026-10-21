@@ -1,0 +1,41 @@
+{
+  "output": "/workspace/scratch/mobile-performance/stalls1763-projection-incremental-strict.json",
+  "runs": [
+    {
+      "label": "baseline1761-bdd",
+      "source": "bdd484f31b9c394093e9e5e66ed2973c0b0ff6e8",
+      "file": "/workspace/scratch/mobile-performance/stalls1761-gesture-fixed.html",
+      "sha256": "ac9c74462644d468574679c1458accbe1da60be15455372a700298ee1a507a92"
+    },
+    {
+      "label": "candidate1763-projection",
+      "source": "87aaa153841e24393fbd346a327831cb88a9bd0a",
+      "file": "/workspace/scratch/mobile-performance/stalls1763-projection-final.html",
+      "sha256": "8073c3f38c33cc11d362be54655f826795c07557abd2029412deb5491e30e0d3"
+    },
+    {
+      "label": "candidate1763-projection",
+      "source": "87aaa153841e24393fbd346a327831cb88a9bd0a",
+      "file": "/workspace/scratch/mobile-performance/stalls1763-projection-final.html",
+      "sha256": "8073c3f38c33cc11d362be54655f826795c07557abd2029412deb5491e30e0d3"
+    },
+    {
+      "label": "baseline1761-bdd",
+      "source": "bdd484f31b9c394093e9e5e66ed2973c0b0ff6e8",
+      "file": "/workspace/scratch/mobile-performance/stalls1761-gesture-fixed.html",
+      "sha256": "ac9c74462644d468574679c1458accbe1da60be15455372a700298ee1a507a92"
+    },
+    {
+      "label": "baseline1761-bdd",
+      "source": "bdd484f31b9c394093e9e5e66ed2973c0b0ff6e8",
+      "file": "/workspace/scratch/mobile-performance/stalls1761-gesture-fixed.html",
+      "sha256": "ac9c74462644d468574679c1458accbe1da60be15455372a700298ee1a507a92"
+    },
+    {
+      "label": "candidate1763-projection",
+      "source": "87aaa153841e24393fbd346a327831cb88a9bd0a",
+      "file": "/workspace/scratch/mobile-performance/stalls1763-projection-final.html",
+      "sha256": "8073c3f38c33cc11d362be54655f826795c07557abd2029412deb5491e30e0d3"
+    }
+  ]
+}
