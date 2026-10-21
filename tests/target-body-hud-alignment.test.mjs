@@ -18,7 +18,7 @@ test('native mini and selected intent follow true pose body heads at every form 
     const sprite = {};
     const frameRect = { left: 12, top: 75 };
     const rack = { querySelector: () => ({ getBoundingClientRect: () => ({ height: 37 }) }) };
-    const frame = { dataset: {}, style: { setProperty: (name, value) => values.set(name, value) },
+    const frame = { dataset: {}, style: { getPropertyValue: name => values.get(name), setProperty: (name, value) => values.set(name, value) },
       getBoundingClientRect: () => frameRect,
       querySelector: selector => selector === '.sprite' ? sprite : selector === '.combatant-leading' ? leading : rack };
     const combat = { querySelector: () => null };
@@ -50,9 +50,34 @@ test('reduced motion settles a deliberate pose once without starting an idle tra
     field: { closest: () => ({ dataset: { targetHud: 'true' } }) }, centerTargetOverheads: () => settled++,
     trackingRequest: 0, requestAnimationFrame: () => requested++, trackPlayerHud() {} };
   runInNewContext(source.slice(begin, finish), context);
-  callback();
+  const target = { matches: () => true, getAttribute: () => 'idle' };
+  callback([{ target, attributeName: 'data-pose', oldValue: 'attack' }]);
   assert.equal(settled, 1);
+  callback([{ target, attributeName: 'data-pose', oldValue: 'idle' }]);
+  callback([{ target: { matches: () => false, getAttribute: () => 'selected' }, attributeName: 'class', oldValue: '' }]);
+  assert.equal(settled, 1, 'unchanged pose and HUD classes do not force layout');
   assert.equal(requested, 0);
+});
+
+
+test('pose tracking ignores render no-ops but follows real sprite and combatant changes', () => {
+  const begin = source.indexOf('  const poseObserver = new MutationObserver(');
+  const finish = source.indexOf('\n  poseObserver.observe(', begin);
+  let callback, windows = 0, requested = 0;
+  runInNewContext(source.slice(begin, finish), {
+    MutationObserver: class { constructor(fn) { callback = fn; } }, reducedMotionRequested: () => false,
+    extendTracking: () => windows++, trackingRequest: 0,
+    requestAnimationFrame: () => ++requested, trackPlayerHud() {},
+  });
+  const mutation = (name, before, after, actor = true) => ({ attributeName: name, oldValue: before,
+    target: { matches: () => actor, getAttribute: () => after } });
+  callback([mutation('class', 'sprite', 'sprite'), mutation('data-pose', 'idle', 'idle')]);
+  callback([mutation('class', 'meter', 'meter full', false)]);
+  assert.equal(windows, 0, 'render and HUD mutations leave settled tracking stopped');
+  callback([mutation('data-pose', 'idle', 'attack')]);
+  callback([mutation('class', 'combatant', 'combatant attack')]);
+  assert.equal(windows, 2, 'real pose and actor class changes each open a window');
+  assert.equal(requested, 1, 'subsequent changes share the pending frame');
 });
 
 
@@ -60,7 +85,7 @@ test('every target body is measured before inherited HUD coordinates are written
   const operations = [];
   const frames = [1, 2, 3].map(id => ({
     dataset: {},
-    style: { setProperty: () => operations.push(`write:${id}`) },
+    style: { getPropertyValue: () => '', setProperty: () => operations.push(`write:${id}`) },
     getBoundingClientRect: () => { operations.push(`read:${id}`); return { left: 0, top: 0 }; },
     querySelector: selector => selector === '.sprite' ? { id } : selector === '.combatant-leading' ? {} : {
       querySelector: () => ({ getBoundingClientRect: () => ({ height: 37 }) }),
@@ -96,4 +121,20 @@ test('body geometry snapshots an authored getter once and retains unregistered f
   assert.equal(fallback.feetY, 120);
   assert.equal(fallback.bodyHeight, 100);
   assert.equal(fallback.source, 'unregistered');
+});
+
+
+test('detailed HUD selection coalesces its board fit without losing legacy synchronous placement', () => {
+  const begin = source.indexOf('  const selectionChanged = () => {');
+  const finish = source.indexOf('\n  combatHost.addEventListener', begin);
+  for (const detailed of [true, false]) {
+    let fits = 0, queued = 0;
+    const change = runInNewContext(source.slice(begin, finish) + '\nselectionChanged', {
+      combatHost: { dataset: { targetHud: String(detailed) } },
+      refresh: () => fits++, schedule: () => queued++,
+    });
+    change();
+    assert.equal(fits, detailed ? 0 : 1, 'legacy Info controls keep their synchronous first placement');
+    assert.equal(queued, 1, 'both presentations refit before their next paint');
+  }
 });
