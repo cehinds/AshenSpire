@@ -50,8 +50,8 @@ function panelFor(entry) {
   return shell;
 }
 
-/** Scoped presentation owner. It never selects, targets, plays, or mutates combat. */
-export function mountCombatTargetHud(combat, { field = combat.querySelector('.field'), config = targetHudConfig() } = {}) {
+/** Scoped presentation owner. Target activation delegates to the combat owner. */
+export function mountCombatTargetHud(combat, { field = combat.querySelector('.field'), config = targetHudConfig(), onActivate } = {}) {
   const layer = node('div', 'target-hud-layer'), cells = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   layer.setAttribute('aria-label', t('combat.targetHud.details'));
   cells.classList.add('target-hud-cells'); cells.setAttribute('aria-hidden', 'true');
@@ -60,12 +60,37 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   const panels = new Map(), infoButtons = new Map();
   let drawnCells = null;
   const gestures = new AbortController();
-  let holdTimer = null, held = null, lastTap = null, suppressClickUntil = 0;
+  let holdTimer = null, held = null, lastTap = null, suppressClickUntil = 0, lastActivation = null;
   const cancelHold = () => { clearTimeout(holdTimer); held = null; };
   const inspect = (id, opener) => { cancelHold(); hideTooltip(); entries.get(id)?.inspect?.(opener); };
+  const syncActivation = (shell, id) => {
+    const active = !!onActivate && eligible.includes(id);
+    shell.dataset.targeting = String(active);
+    const name = shell.querySelector('.target-hud-name');
+    if (active) { name.setAttribute('role', 'button'); name.tabIndex = 0; }
+    else { name.removeAttribute('role'); name.removeAttribute('tabindex'); }
+  };
   function wireInspect(shell, id) {
+    // The visible name/HP replaces the frame footer in this layout. While
+    // armed it is the same target door, including resource descendants whose
+    // tooltip listeners otherwise swallow the click before it reaches us.
+    shell.addEventListener('click', event => {
+      if (!onActivate || !eligible.includes(id) || performance.now() < suppressClickUntil) return;
+      event.preventDefault(); event.stopImmediatePropagation();
+      lastActivation = { id, time: performance.now() };
+      lastTap = null; cancelHold(); hideTooltip(); onActivate(id);
+    }, true);
+    shell.addEventListener('keydown', event => {
+      if (!onActivate || !eligible.includes(id) || !event.target.closest('.target-hud-name')
+          || !['Enter', ' '].includes(event.key)) return;
+      event.preventDefault(); event.stopPropagation(); event.target.click();
+    });
     shell.addEventListener('click', event => { if (performance.now() < suppressClickUntil) { event.preventDefault(); event.stopImmediatePropagation(); } }, true);
-    shell.addEventListener('dblclick', event => { if (performance.now() < suppressClickUntil) return; event.preventDefault(); event.stopPropagation(); inspect(id, shell); });
+    shell.addEventListener('dblclick', event => {
+      event.preventDefault(); event.stopPropagation();
+      if (performance.now() < suppressClickUntil || (lastActivation?.id === id && performance.now() - lastActivation.time < 500)) return;
+      inspect(id, shell);
+    });
     shell.addEventListener('pointerdown', event => {
       cancelHold(); if (!event.isPrimary || event.button !== 0) return;
       held = { id, opener: shell, pointerId: event.pointerId, x: event.clientX, y: event.clientY };
@@ -82,6 +107,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   listen(document, 'pointerup', event => {
     if (!held || held.pointerId !== event.pointerId) return;
     const current = held; cancelHold(); if (event.pointerType !== 'touch') return;
+    // Two quick target confirmations must never become the inspection gesture.
+    if (onActivate && eligible.includes(current.id)) { lastTap = null; return; }
     const time = performance.now();
     if (lastTap?.id === current.id && time - lastTap.time < 350 && Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) < 24) { lastTap = null; suppressClickUntil = time + 700; inspect(current.id, current.opener); }
     else lastTap = { id: current.id, time, x: event.clientX, y: event.clientY };
@@ -129,11 +156,13 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const entry = entries.get(id), old = panels.get(id);
       if (old && old.key === entry.key) {
         old.node.dataset.matchupActive = String(!!entry.matchupActive && eligible.includes(id));
+        syncActivation(old.node, id);
         continue;
       }
       const shell = panelFor(entry);
       shell.dataset.matchup = entry.matchup || 'neutral';
       shell.dataset.matchupActive = String(!!entry.matchupActive && eligible.includes(id));
+      syncActivation(shell, id);
       shell.style.setProperty('--combat-matchup-color', entry.auraColor || '#e4cd59');
       infoButtons.get(id)?.remove();
       const info = combatantInfo(entry.name, opener => inspect(id, opener));
