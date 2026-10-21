@@ -16,7 +16,7 @@ export function activeCombatAbilities(registries, entity, foundation = false) {
   rows.push(...combatTacticsRows(entity));
   for (const [id, instance] of Object.entries(entity.statuses || {})) {
     if (!instance || !((instance.meter?.value ?? instance.stacks) > 0)) continue;
-    const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(id));
+    const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(id, entity));
     if (!def) continue;
     const presentation = statusInstancePresentation(def, instance);
     rows.push({ id, kind: 'status', name: presentation.label, detail: presentation.tooltip || def.name });
