@@ -1,5 +1,17 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — Combat smoothing
+
+[Download the verified feature build](https://github.com/cehinds/AshenSpire/actions/runs/39645374121/artifacts/12367356543)
+
+Card selection avoids unchanged canvas-filter writes and duplicate hit-chance updates. Stances and action pacing remain intact. [Capture record](docs/preview/features/combat-smoothness/README.md).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile selected stance](docs/preview/features/combat-smoothness/mobile.png) | ![Desktop selected stance](docs/preview/features/combat-smoothness/desktop.png) | ![Wide selected stance](docs/preview/features/combat-smoothness/wide.png) | ![Tablet selected stance](docs/preview/features/combat-smoothness/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 
