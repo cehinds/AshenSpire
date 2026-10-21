@@ -51,7 +51,11 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.match(stage.currentArt.image.url,/reaver/);
     assert.equal(stage.currentArt.left,128);
     stage.setStance('offensive');assert.equal(stage.pose,'stance-offensive');
+    let unchangedPaints=paints.length;
+    stage.setStance('offensive');assert.equal(paints.length,unchangedPaints,'same held stance retains its painted canvas');
     stage.play('attack',260);step(115);
+    unchangedPaints=paints.length;
+    stage.setStance('offensive');assert.equal(paints.length,unchangedPaints,'same stance neither repaints nor interrupts an active swing');
     stage.setStance('casting');assert.equal(stage.pose,'attack-contact','receipt selection must not interrupt the action');
     step(145);assert.equal(stage.pose,'stance-casting');
     assert.match(paints.at(-1).args[0].url,/stances\/reaver\/casting\.webp$/);
@@ -117,6 +121,8 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     // Knock-back: the painted hurt body moves left mid-reaction from its registered origin and rests afterwards.
     const hurtX=128+playerHurtFrames.reaver.dx;
     stage.play('hit',220);step(66);
+    const reactionBody={...stage.currentArt};stage.setStance(null);
+    assert.equal(stage.currentArt.left,reactionBody.left,'same stance preserves the in-progress reaction position');
     assert.match(stage.currentArt.image.url,/greatsword-outfits\/reaver\/HURT\.webp$/,'the clip paints the registered hurt pose');
     assert.ok(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1]<hurtX-10,'the body is knocked left at the 30% peak');
     assert.ok(stage.currentArt.left<hurtX-10,'HUD ink source follows the knock-back');
@@ -181,6 +187,7 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     stage.play('attack',0);assert.equal(raf.size,0);
     setAnimSpeed('normal');stage.play('attack');assert.equal(raf.size,1);
     stage.dispose();assert.equal(raf.size,0);assert.equal(stage.play('attack'),false);
+    assert.equal(stage.setStance('defensive'),false,'disposed canvas rejects stance work');
     failArt=true;stage=createAlternativeCardStage('herald');
     assert.equal(await stage.ready,false);
     assert.ok(stage.el.hasAttribute('data-art-placeholder'));
@@ -189,7 +196,11 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.equal(stage.el.hasAttribute('data-art-placeholder'),false);
     assert.equal(stage.el.querySelector('span').hidden,true,'Retry restores the class art');
     assert.equal(stage.pose,'ready');
-    stage.dispose();deferArt=true;stage=createAlternativeCardStage('rogue');
+    stage.dispose();deferArt=true;stage=createAlternativeCardStage('starseer');
+    stage.setStance('offensive');stage.setStance('offensive');
+    pendingArt.splice(0).forEach(finish=>finish());await stage.ready;
+    assert.equal(stage.pose,'stance-offensive');assert.ok(stage.currentArt,'pending load still paints the requested stance');
+    stage.dispose();stage=createAlternativeCardStage('rogue');
     stage.dispose();const beforeLate=paints.length;
     pendingArt.splice(0).forEach(finish=>finish());
     assert.equal(await stage.ready,false,'a disposed stage ignores late artwork');

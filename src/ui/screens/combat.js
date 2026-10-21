@@ -582,11 +582,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const handOverlay = $('.hand-overlay');
   const handPages = [$('.hand-prev'), $('.hand-next')];
 
-  function selectCombatant(id) {
+  function selectCombatant(id, { updateHud = true } = {}) {
     if (id && !getEntity(combat, id)?.alive) return;
     selectedCombatantId = id;
     selectCombatantInfo(combatEl, id);
-    updateTargetHud();
+    if (updateHud) updateTargetHud();
   }
 
   // A blank press dismisses only the floating explanation. The edge inspector
@@ -823,7 +823,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function syncCardSelection() {
     if (!busy && !enemyPlayback && !combatEl.classList.contains('drag-targeting') && !combatEl.querySelector('.hand [data-hold="holding"]')) renderHand();
     const active = selected || selfArm;
-    if (active) selectCombatant(null);
+    // applyTargetLayer below updates the HUD once with the final legal targets.
+    if (active) selectCombatant(null, { updateHud: false });
     if (!active) combatEl.querySelectorAll('.hand .inspection-selected').forEach(card => { card.classList.remove('inspection-selected', 'inspection-info-visible'); card.removeAttribute('aria-current'); });
     combatEl.querySelectorAll('.hand .card').forEach(card => {
       const on = card.dataset.instanceId === active;
@@ -861,15 +862,27 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function syncPlayerActionIntent(player, inst, held = null) {
     const leading = player?.querySelector('.combatant-leading');
     if (!leading) return;
-    player.querySelector('.player-action-intent')?.remove();
     const def = inst ? resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) }) : null;
     const armed = def ? kindForCard(def) : null;
-    const action = playerActionIntent(armed ?? held ?? RESTING_PLAYER_ACTION, () => {
+    const profile = armed ?? held ?? RESTING_PLAYER_ACTION;
+    const maneuver = profile.maneuver || 'prepare';
+    const previous = player.querySelector('.player-action-intent');
+    // The glyph depends only on maneuver; its callback reads current selection.
+    // Keeping it also keeps focus and avoids a redundant full-board refit.
+    if (previous?.dataset.maneuver === maneuver) return;
+    previous?.remove();
+    const action = playerActionIntent(profile, () => {
       if (selfArm) playCard(selfArm, null);
       else selectCombatant('player');
     });
-    if (action) leading.append(action);
-    combatEl.dispatchEvent(new CustomEvent('combatantselectionchange'));
+    if (action) {
+      action.dataset.maneuver = maneuver;
+      // Selection can change after the HUD's gate has already run. Keep a
+      // replacement inside its existing rack without relying on another fit.
+      const rack = player.querySelector('.target-hud-overhead-meters');
+      if (rack) rack.prepend(action); else leading.append(action);
+    }
+    combatEl.dispatchEvent(new CustomEvent('combatantselectionchange', { detail: { geometry: 'overhead' } }));
   }
 
   function armSelf(instanceId) {
