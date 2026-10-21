@@ -3,7 +3,7 @@ import { button, el } from '../kit/index.js';
 import { childModel } from '../models/ComponentModel.js';
 import { combatLogHeight, combatLogSnapSize, combatLogDragScale, COMBAT_LOG_SIZES } from '../models/CombatToolsModel.js';
 import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
-import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { anchorLocalBox } from '../fx.js';
 import { t } from '../strings.js';
 import { trackGesture } from '../gesture.js';
 import { hudGeometry, toolsRowTop } from '../models/HudLayoutOffsetModel.js';
@@ -206,17 +206,22 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     // Tools belong to the screen edges, never the current fan or hand width.
     const width = Math.max(0, combatBox.width - 2 * CORNER_INSET * zoom);
     const left = combatBox.left + CORNER_INSET * zoom;
-    const localWidth = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width, height: 0 }, { zoom });
-    root.style.width = `${localWidth.width}px`;
+    const split = combatEl.dataset.desktopFooter === 'true';
+    const inset = split ? parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-corner-inset')) : CORNER_INSET;
+    // Measure the row in its final corner geometry, including the first pass
+    // after a resize. A temporary explicit width dirtied the whole toolbar
+    // before its height read, only to be replaced by these same edge anchors.
+    root.style.left = `${inset}px`;
+    root.style.right = `${inset}px`;
+    root.style.width = 'auto';
+    root.dataset.toolsPlacement = 'corners';
     // A compact toolbar occupies the top of the card band. It never consumes
     // hand width: doing that collapsed every card onto one slot on phones.
     combatEl.style.setProperty('--combat-tools-reserve', '0px');
     // Negative offsets may raise the dock, but cannot cover artwork, cards,
     // or controls. Compact docking needs the measured row height; the desktop
     // footer already supplies its top and only measures a requested raise.
-    const corners = true;
     const dockTop = combatEl.querySelector('.hand-area')?.getBoundingClientRect().top ?? handBox?.top ?? combatBox.bottom;
-    const split = combatEl.dataset.desktopFooter === 'true';
     const footerControls = combatEl.querySelector('.combat-action-row');
     const footerTop = split
       ? combatBox.top + parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-tools-top')) * zoom
@@ -226,21 +231,11 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     const top = dy < 0 ? toolsRowTop({ dockTop: defaultTop, dy: dy * zoom,
       row: { left, width, height: rowHeight }, screenTop: combatBox.top,
       obstacles: toolsObstacles(combatEl, zoom) }) : defaultTop;
-    root.dataset.toolsPlacement = 'corners';
     const localDock = anchorLocalBox(combatEl, { left,
       top, width: 0, height: 0 }, { zoom });
     root.style.top = `${localDock.top}px`;
-    root.style.left = `${localDock.left}px`;
-    root.style.right = 'auto';
-    if (corners) {
-      // The corners hug the combat screen's own edges, in its local px.
-      root.style.left = `${split ? parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-corner-inset')) : CORNER_INSET}px`;
-      root.style.right = `${split ? parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-corner-inset')) : CORNER_INSET}px`;
-      root.style.width = 'auto';
-    }
-    const height = drag?.active ? drag.height : snapHeights()[state.size];
-    const localPanel = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width: 0, height }, { zoom });
-    panel.style.height = `${localPanel.height}px`;
+    // The legacy panel is always hidden; both readers are body modals. Only a
+    // real Log press needs snapHeights(), to preserve drag/snap/cancel behavior.
     root.dataset.logSize = state.size;
   }
   const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };

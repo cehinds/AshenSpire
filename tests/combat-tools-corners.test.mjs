@@ -9,7 +9,6 @@ const tools = readFileSync(new URL('../src/ui/components/combatTools.js', import
 const hand = readFileSync(new URL('../src/ui/components/hand.js', import.meta.url), 'utf8');
 
 test('combat tools use screen-edge corners and independently measured footer geometry on every form factor', () => {
-  assert.match(tools, /const corners = true;/);
   assert.match(tools, /const split = combatEl.dataset.desktopFooter === 'true';/);
   assert.match(tools, /getPropertyValue\('--desktop-tools-top'\)/);
   assert.match(tools, /footerControls\?\.getBoundingClientRect\(\)\.top \?\? dockTop/);

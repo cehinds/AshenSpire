@@ -285,6 +285,55 @@ test('corner tools dock above the footer and a requested raise cannot cover cont
   assert.equal(run({ split: true, dy: -10 }).top, 690);
 });
 
+test('tools measure their final wrapping width on mount, resize and zoomed desktop raises', () => {
+  const tools = read('src/ui/components/combatTools.js');
+  const begin = tools.indexOf('  let frame = 0, entryKey'), end = tools.indexOf('  const observer =', begin);
+  const zoom = 1.25, origin = { left: 60, top: 30 }, measurements = [];
+  let width = 390, dy = 0;
+  const root = { isConnected: true, dataset: {}, style: { right: '12px', setProperty() {} },
+    getBoundingClientRect() {
+      const localWidth = root.style.width === 'auto'
+        ? width - parseFloat(root.style.left || 0) - parseFloat(root.style.right || 0)
+        : parseFloat(root.style.width) || 200;
+      // A narrow row wraps its controls, just as the real grid does on phones.
+      const box = { width: localWidth * zoom, height: (localWidth < 360 ? 60 : 40) * zoom };
+      measurements.push(box); return box;
+    } };
+  const combatEl = { dataset: { desktopFooter: 'false' }, style: { setProperty() {} },
+    get clientWidth() { return width; },
+    getBoundingClientRect: () => ({ ...origin, width: width * zoom, bottom: origin.top + 800 * zoom }),
+    querySelector: selector => selector === '.combat-action-row'
+      ? { getBoundingClientRect: () => ({ top: origin.top + 700 * zoom }) } : null };
+  let obstacles = [];
+  const api = runInNewContext(`${tools.slice(begin, end)}\n({ flushGeometry })`, {
+    combatToolsTokens: () => ({ span: 'field', dy }), CORNER_INSET: 16, toolsRowTop,
+    toolsObstacles: () => obstacles,
+    getComputedStyle: () => ({ getPropertyValue: key => key === '--desktop-tools-top' ? '700' : '24' }),
+    root, combatEl, logButton: { getBoundingClientRect: () => ({ width: 100 }) }, state: { size: 'Medium' },
+    // Geometry for a hidden, unused reader must not enter the visible layout.
+    snapHeights: () => { throw new Error('hidden legacy panel measured'); },
+    anchorLocalBox: (host, rect, { zoom }) => ({ top: (rect.top - host.getBoundingClientRect().top) / zoom }),
+    requestAnimationFrame: () => 1, cancelAnimationFrame() {},
+  });
+  api.flushGeometry();
+  assert.equal(measurements[0].width, 358 * zoom, 'first mount measures the final corner width');
+  assert.ok(Math.abs(parseFloat(root.style.top) - (640 - 4 / zoom ** 2)) < 1e-8, 'wrapped row clears the footer at non-unit zoom and origin');
+  width = 520; api.flushGeometry();
+  assert.equal(measurements.at(-1).width, 488 * zoom, 'resize measures the incoming wider row');
+  assert.ok(Math.abs(parseFloat(root.style.top) - (660 - 4 / zoom ** 2)) < 1e-8, 'unwrapped row docks using its new height');
+  width = 390; combatEl.dataset.desktopFooter = 'true'; dy = -10; api.flushGeometry();
+  assert.equal(measurements.at(-1).width, 342 * zoom, 'desktop raise measures the authored desktop corner inset');
+  assert.equal(root.style.top, '690px');
+  const before = measurements.length; dy = 0; api.flushGeometry();
+  assert.equal(root.style.top, '700px');
+  assert.equal(measurements.length, before, 'settled desktop footer needs no row-height read');
+  dy = -20; obstacles = [{ left: 150, right: 200, top: 885, bottom: 895 }]; api.flushGeometry();
+  assert.equal(root.style.top, '700px', 'a raise onto a control is refused in screen coordinates');
+  dy = -1000; obstacles = []; api.flushGeometry();
+  assert.equal(root.style.top, '0px', 'large negative offset is clamped to the nonzero combat origin');
+  assert.equal(root.dataset.logSize, 'Medium', 'size semantics remain published without measuring the hidden panel');
+});
+
 // ---- --merge: studio exports into content/hud-layout (temp roots only) ----
 
 /** A temp root with content/hud-layout copied from the real files and an empty styles/ folder. */
