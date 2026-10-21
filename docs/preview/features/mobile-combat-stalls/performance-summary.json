@@ -1,0 +1,455 @@
+{
+  "source": "/workspace/scratch/mobile-performance/stalls1761-gesture-fixed-strict.json",
+  "n": 3,
+  "pairs": [
+    {
+      "baseline": {
+        "source": "fd15cbc1b594f950da89286e32ee060d7a83a262",
+        "sha256": "aec11d36fdfe7f6c5814d15c257fa1b9da961fbd876932a5654827d89e654ca8",
+        "version": "0.7.1.1758",
+        "digest": "1536df5e54"
+      },
+      "candidate": {
+        "source": "bdd484f31b9c394093e9e5e66ed2973c0b0ff6e8",
+        "sha256": "ac9c74462644d468574679c1458accbe1da60be15455372a700298ee1a507a92",
+        "version": "0.7.1.1761",
+        "digest": "b623462ee1"
+      }
+    },
+    {
+      "baseline": {
+        "source": "fd15cbc1b594f950da89286e32ee060d7a83a262",
+        "sha256": "aec11d36fdfe7f6c5814d15c257fa1b9da961fbd876932a5654827d89e654ca8",
+        "version": "0.7.1.1758",
+        "digest": "1536df5e54"
+      },
+      "candidate": {
+        "source": "bdd484f31b9c394093e9e5e66ed2973c0b0ff6e8",
+        "sha256": "ac9c74462644d468574679c1458accbe1da60be15455372a700298ee1a507a92",
+        "version": "0.7.1.1761",
+        "digest": "b623462ee1"
+      }
+    },
+    {
+      "baseline": {
+        "source": "fd15cbc1b594f950da89286e32ee060d7a83a262",
+        "sha256": "aec11d36fdfe7f6c5814d15c257fa1b9da961fbd876932a5654827d89e654ca8",
+        "version": "0.7.1.1758",
+        "digest": "1536df5e54"
+      },
+      "candidate": {
+        "source": "bdd484f31b9c394093e9e5e66ed2973c0b0ff6e8",
+        "sha256": "ac9c74462644d468574679c1458accbe1da60be15455372a700298ee1a507a92",
+        "version": "0.7.1.1761",
+        "digest": "b623462ee1"
+      }
+    }
+  ],
+  "actions": {
+    "core.defend": {
+      "readyMs": {
+        "baseline": [
+          9536.1,
+          7299.5,
+          58773.3
+        ],
+        "candidate": [
+          4721.5,
+          6650.2,
+          8997.1
+        ],
+        "baselineMedian": 9536.1,
+        "candidateMedian": 6650.2,
+        "medianReductionPercent": 30.3,
+        "pairedReductionPercent": [
+          50.5,
+          8.9,
+          84.7
+        ]
+      },
+      "maxFrameMs": {
+        "baseline": [
+          3116.6,
+          1583.3,
+          50264.6
+        ],
+        "candidate": [
+          1449.9,
+          1899.9,
+          2483.3
+        ],
+        "baselineMedian": 3116.6,
+        "candidateMedian": 1899.9,
+        "medianReductionPercent": 39.0,
+        "pairedReductionPercent": [
+          53.5,
+          -20.0,
+          95.1
+        ]
+      },
+      "longTasksMs": {
+        "baseline": [
+          8159,
+          6322,
+          57624
+        ],
+        "candidate": [
+          3629,
+          5344,
+          7722
+        ],
+        "baselineMedian": 8159,
+        "candidateMedian": 5344,
+        "medianReductionPercent": 34.5,
+        "pairedReductionPercent": [
+          55.5,
+          15.5,
+          86.6
+        ]
+      },
+      "styleMs": {
+        "baseline": [
+          3007.63,
+          2262.61,
+          12595.4
+        ],
+        "candidate": [
+          1229.22,
+          1436.95,
+          2028.44
+        ],
+        "baselineMedian": 3007.63,
+        "candidateMedian": 1436.95,
+        "medianReductionPercent": 52.2,
+        "pairedReductionPercent": [
+          59.1,
+          36.5,
+          83.9
+        ]
+      },
+      "layoutMs": {
+        "baseline": [
+          221.67,
+          172.88,
+          3115.73
+        ],
+        "candidate": [
+          158.75,
+          184.12,
+          247.0
+        ],
+        "baselineMedian": 221.67,
+        "candidateMedian": 184.12,
+        "medianReductionPercent": 16.9,
+        "pairedReductionPercent": [
+          28.4,
+          -6.5,
+          92.1
+        ]
+      },
+      "scriptMs": {
+        "baseline": [
+          4334.15,
+          3600.94,
+          36656.45
+        ],
+        "candidate": [
+          2285.15,
+          3585.59,
+          5089.26
+        ],
+        "baselineMedian": 4334.15,
+        "candidateMedian": 3585.59,
+        "medianReductionPercent": 17.3,
+        "pairedReductionPercent": [
+          47.3,
+          0.4,
+          86.1
+        ]
+      },
+      "taskMs": {
+        "baseline": [
+          9033.97,
+          7256.48,
+          58381.45
+        ],
+        "candidate": [
+          4392.87,
+          6481.54,
+          8473.7
+        ],
+        "baselineMedian": 9033.97,
+        "candidateMedian": 6481.54,
+        "medianReductionPercent": 28.3,
+        "pairedReductionPercent": [
+          51.4,
+          10.7,
+          85.5
+        ]
+      },
+      "layouts": {
+        "baseline": [
+          66,
+          63,
+          65
+        ],
+        "candidate": [
+          55,
+          55,
+          56
+        ],
+        "baselineMedian": 65,
+        "candidateMedian": 55,
+        "medianReductionPercent": 15.4,
+        "pairedReductionPercent": [
+          16.7,
+          12.7,
+          13.8
+        ]
+      },
+      "styles": {
+        "baseline": [
+          163,
+          158,
+          156
+        ],
+        "candidate": [
+          123,
+          119,
+          119
+        ],
+        "baselineMedian": 158,
+        "candidateMedian": 119,
+        "medianReductionPercent": 24.7,
+        "pairedReductionPercent": [
+          24.5,
+          24.7,
+          23.7
+        ]
+      },
+      "fits": {
+        "baseline": [
+          5,
+          4,
+          5
+        ],
+        "candidate": [
+          4,
+          4,
+          4
+        ],
+        "baselineMedian": 5,
+        "candidateMedian": 4,
+        "medianReductionPercent": 20.0,
+        "pairedReductionPercent": [
+          20.0,
+          0.0,
+          20.0
+        ]
+      }
+    },
+    "core.strike": {
+      "readyMs": {
+        "baseline": [
+          6830.9,
+          7610.5,
+          8582.4
+        ],
+        "candidate": [
+          17265.2,
+          7847.9,
+          7282.1
+        ],
+        "baselineMedian": 7610.5,
+        "candidateMedian": 7847.9,
+        "medianReductionPercent": -3.1,
+        "pairedReductionPercent": [
+          -152.8,
+          -3.1,
+          15.2
+        ]
+      },
+      "maxFrameMs": {
+        "baseline": [
+          1549.9,
+          1616.7,
+          1766.6
+        ],
+        "candidate": [
+          5949.7,
+          1766.6,
+          2116.6
+        ],
+        "baselineMedian": 1616.7,
+        "candidateMedian": 2116.6,
+        "medianReductionPercent": -30.9,
+        "pairedReductionPercent": [
+          -283.9,
+          -9.3,
+          -19.8
+        ]
+      },
+      "longTasksMs": {
+        "baseline": [
+          6281,
+          6877,
+          7952
+        ],
+        "candidate": [
+          15680,
+          6808,
+          6132
+        ],
+        "baselineMedian": 6877,
+        "candidateMedian": 6808,
+        "medianReductionPercent": 1.0,
+        "pairedReductionPercent": [
+          -149.6,
+          1.0,
+          22.9
+        ]
+      },
+      "styleMs": {
+        "baseline": [
+          3164.02,
+          3005.03,
+          3474.71
+        ],
+        "candidate": [
+          4464.57,
+          1854.8,
+          2168.9
+        ],
+        "baselineMedian": 3164.02,
+        "candidateMedian": 2168.9,
+        "medianReductionPercent": 31.5,
+        "pairedReductionPercent": [
+          -41.1,
+          38.3,
+          37.6
+        ]
+      },
+      "layoutMs": {
+        "baseline": [
+          263.39,
+          299.38,
+          312.16
+        ],
+        "candidate": [
+          1049.51,
+          276.15,
+          283.96
+        ],
+        "baselineMedian": 299.38,
+        "candidateMedian": 283.96,
+        "medianReductionPercent": 5.2,
+        "pairedReductionPercent": [
+          -298.5,
+          7.8,
+          9.0
+        ]
+      },
+      "scriptMs": {
+        "baseline": [
+          2460.57,
+          3354.28,
+          3584.5
+        ],
+        "candidate": [
+          7349.61,
+          4384.66,
+          3372.05
+        ],
+        "baselineMedian": 3354.28,
+        "candidateMedian": 4384.66,
+        "medianReductionPercent": -30.7,
+        "pairedReductionPercent": [
+          -198.7,
+          -30.7,
+          5.9
+        ]
+      },
+      "taskMs": {
+        "baseline": [
+          6793.84,
+          7538.31,
+          8497.06
+        ],
+        "candidate": [
+          17059.8,
+          7616.06,
+          7138.08
+        ],
+        "baselineMedian": 7538.31,
+        "candidateMedian": 7616.06,
+        "medianReductionPercent": -1.0,
+        "pairedReductionPercent": [
+          -151.1,
+          -1.0,
+          16.0
+        ]
+      },
+      "layouts": {
+        "baseline": [
+          88,
+          98,
+          86
+        ],
+        "candidate": [
+          59,
+          73,
+          75
+        ],
+        "baselineMedian": 88,
+        "candidateMedian": 73,
+        "medianReductionPercent": 17.0,
+        "pairedReductionPercent": [
+          33.0,
+          25.5,
+          12.8
+        ]
+      },
+      "styles": {
+        "baseline": [
+          172,
+          186,
+          166
+        ],
+        "candidate": [
+          117,
+          161,
+          165
+        ],
+        "baselineMedian": 172,
+        "candidateMedian": 161,
+        "medianReductionPercent": 6.4,
+        "pairedReductionPercent": [
+          32.0,
+          13.4,
+          0.6
+        ]
+      },
+      "fits": {
+        "baseline": [
+          4,
+          5,
+          4
+        ],
+        "candidate": [
+          2,
+          4,
+          4
+        ],
+        "baselineMedian": 4,
+        "candidateMedian": 4,
+        "medianReductionPercent": 0.0,
+        "pairedReductionPercent": [
+          50.0,
+          20.0,
+          0.0
+        ]
+      }
+    }
+  },
+  "gameplayEquivalent": true
+}
