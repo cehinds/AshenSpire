@@ -29,6 +29,22 @@ import { targetBodyHudPlacement } from '../models/TargetHudModel.js';
 import { reducedMotionRequested } from '../motion.js';
 import { layoutMetrics, rootStyle } from '../layoutMetrics.js';
 
+// These classes change controls, tint or outlines, not the figure's pose.
+// Unknown classes remain conservative: action/reaction transforms still track.
+const PRESENTATION_CLASSES = new Set(['target-hud-selected', 'target-hud-focused', 'target-hud-candidate',
+  'armed', 'skill-selected', 'targetable', 'hover-target', 'gp-focus']);
+export function combatantBodyMutation(mutation, detailedHud = false) {
+  const { target, attributeName, oldValue } = mutation;
+  const value = target.getAttribute(attributeName);
+  if (oldValue === value) return false;
+  if (attributeName !== 'class') return true;
+  if (!target.matches?.('.combatant, .sprite')) return false;
+  const bodyClasses = classes => (classes || '').split(/\s+/).filter(name => name && !PRESENTATION_CLASSES.has(name)
+    // Legacy inspection enlarges the sprite; the detailed HUD explicitly does not.
+    && !(detailedHud && name === 'context-selected')).sort().join(' ');
+  return bodyClasses(oldValue) !== bodyClasses(value);
+}
+
 // Long range labels may cross the viewport edge when their actor stands at a
 // flank. Clamp only the label; fitted figures and their anchors stay unchanged.
 export function hitBadgeCenter({ bodyCenter, badgeWidth, left, right }) {
@@ -552,7 +568,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       releaseLayeredEnvironment = wireLayeredEnvironment(combat);
       wiredAppearance = displayAppearance();
     }
-    combat.dataset.layout = 'formation';
+    if (combat.dataset.layout !== 'formation') combat.dataset.layout = 'formation';
     const targetHud = combat.dataset.targetHud === 'true';
     // No combatants yet (the wiring's own call, before the first render): there
     // is nothing to fit, so do not force a layout of the half-built screen.
@@ -1397,17 +1413,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   });
   window.addEventListener('resize', schedule);
   const poseObserver = new MutationObserver(mutations => {
-    // Rendering also writes unchanged classes and pose words. Only genuine
-    // body motion needs a tracking window; HUD class churn never does.
-    if (!mutations.some(m => (m.attributeName !== 'class' || m.target.matches?.('.combatant, .sprite'))
-      && m.oldValue !== m.target.getAttribute(m.attributeName))) return;
+    // Selection tint and control visibility need the HUD's one-shot geometry,
+    // not a new 900ms body-motion window. Pose/source and action changes keep it.
+    if (!mutations.some(m => combatantBodyMutation(m, combatHost.dataset.targetHud === 'true'))) return;
     // A deliberate stance still settles its readout when idle motion is off.
     if (reducedMotionRequested()) {
       if (field.closest('.combat')?.dataset.targetHud === 'true') centerTargetOverheads();
       return;
     }
-    // Class churn inside the HUD (highlights, hover) is not body motion; only
-    // pose attributes or a combatant/sprite class change open a tracking window.
+    // Genuine body motion still follows the complete stance/action transition.
     extendTracking();
     if (!trackingRequest) trackingRequest = requestAnimationFrame(trackPlayerHud);
   });
