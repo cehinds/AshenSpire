@@ -87,6 +87,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     shell.addEventListener('keydown', event => {
       if (!onActivate || !eligible.includes(id) || !event.target.closest('.target-hud-name')
           || !['Enter', ' '].includes(event.key)) return;
+      // This explicit activation is a new gesture, not the held pointer's click.
+      suppressClickUntil = 0;
       event.preventDefault(); event.stopPropagation(); event.target.click();
     });
     shell.addEventListener('click', event => { if (performance.now() < suppressClickUntil) { event.preventDefault(); event.stopImmediatePropagation(); } }, true);
@@ -97,6 +99,9 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     });
     shell.addEventListener('pointerdown', event => {
       cancelHold(); if (!event.isPrimary || event.button !== 0) return;
+      // Keep suppressing the inspection press's trailing click, but let a new
+      // primary press confirm immediately, including on a different target.
+      suppressClickUntil = 0;
       held = { id, opener: shell, pointerId: event.pointerId, x: event.clientX, y: event.clientY };
       holdTimer = setTimeout(() => { if (!shell.isConnected) return; suppressClickUntil = performance.now() + 700; lastTap = null; inspect(id, shell); }, 500);
     });
