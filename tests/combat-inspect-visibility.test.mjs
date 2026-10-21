@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import { selectCombatantInfo } from '../src/ui/components/combatantOverhead.js';
 
 // Owner decisions (2026-10-11), overriding PR #1818's "always show Inspect":
@@ -35,8 +36,20 @@ test('A: the player Info door and every displayed enemy door are marked placed',
   assert.match(battlefield, /info\.dataset\.placed = 'true';/);
 });
 
-test('A: a selection change refits synchronously, before the newly shown door paints', () => {
-  assert.match(battlefield, /const selectionChanged = \(\) => \{ refresh\(\); schedule\(\); \};/);
+test('A: legacy Info places synchronously while detailed HUD queues its own placement', () => {
+  const callback = battlefield.match(/const selectionChanged = \(\) => \{[\s\S]*?\n  \};/)?.[0];
+  assert.ok(callback, 'the production selection callback must remain identifiable');
+  for (const targetHud of [undefined, 'false', 'true']) {
+    const calls = [];
+    const changed = runInNewContext(callback + '\nselectionChanged', {
+      combatHost: { dataset: { targetHud } },
+      refresh: () => calls.push('place now'),
+      schedule: () => calls.push('queue fit'),
+    });
+    changed();
+    assert.deepEqual(calls, targetHud === 'true' ? ['queue fit'] : ['place now', 'queue fit'],
+      `targetHud=${targetHud}: legacy doors must be placed before paint; detailed controls coalesce their own placement`);
+  }
   assert.match(battlefield, /combatHost\.addEventListener\('combatantselectionchange', selectionChanged\);/);
   assert.match(battlefield, /combatHost\.removeEventListener\('combatantselectionchange', selectionChanged\);/);
 });
