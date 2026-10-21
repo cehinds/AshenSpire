@@ -299,10 +299,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const headerBottom = plain.length ? field.closest('.combat')?.querySelector(':scope > .topbar')?.getBoundingClientRect().bottom : undefined;
     commitBadges?.();
     for (const { frame, body, placement } of racked) {
-      frame.style.setProperty('--combat-mini-hud-top', `${placement.miniTop}px`);
-      frame.style.setProperty('--combat-selected-intent-top', `${placement.selectedTop}px`);
-      frame.style.setProperty('--combat-selected-intent-center', `${placement.center}px`);
-      frame.dataset.miniHudHeadY = String(body.headY ?? body.top);
+      for (const [name, value] of [
+        ['--combat-mini-hud-top', `${placement.miniTop}px`],
+        ['--combat-selected-intent-top', `${placement.selectedTop}px`],
+        ['--combat-selected-intent-center', `${placement.center}px`],
+      ]) if (frame.style.getPropertyValue(name) !== value) frame.style.setProperty(name, value);
+      const head = String(body.headY ?? body.top);
+      if (frame.dataset.miniHudHeadY !== head) frame.dataset.miniHudHeadY = head;
     }
     for (const { frame, leading } of plain) {
       leading.style.left = '0px';
@@ -1364,9 +1367,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   let wiredAppearance = displayAppearance();
   let releaseBackdrop = wireAlternativeBackdrop(combatHost);
   let releaseLayeredEnvironment = wireLayeredEnvironment(combatHost);
-  // A selection change places the newly shown Info door in the same task that
-  // shows it, so the first paint already has its spot; the frame refit follows.
-  const selectionChanged = () => { refresh(); schedule(); };
+  // Legacy Info doors need immediate placement. Detailed HUD controls own
+  // their placement pass and coalesce the board refit before the next paint.
+  const selectionChanged = () => {
+    // Detailed HUD controls place themselves in their own geometry pass. A
+    // synchronous full-board refit here duplicated the caller's render fit
+    // (and the queued fit), blocking each action before it could paint.
+    if (combatHost.dataset.targetHud !== 'true') refresh();
+    schedule();
+  };
   combatHost.addEventListener('combatantselectionchange', selectionChanged);
   combatHost.addEventListener('handlayoutchange', schedule);
   const resizeObserver = new ResizeObserver(schedule);
@@ -1388,6 +1397,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   });
   window.addEventListener('resize', schedule);
   const poseObserver = new MutationObserver(mutations => {
+    // Rendering also writes unchanged classes and pose words. Only genuine
+    // body motion needs a tracking window; HUD class churn never does.
+    if (!mutations.some(m => (m.attributeName !== 'class' || m.target.matches?.('.combatant, .sprite'))
+      && m.oldValue !== m.target.getAttribute(m.attributeName))) return;
     // A deliberate stance still settles its readout when idle motion is off.
     if (reducedMotionRequested()) {
       if (field.closest('.combat')?.dataset.targetHud === 'true') centerTargetOverheads();
@@ -1395,11 +1408,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     }
     // Class churn inside the HUD (highlights, hover) is not body motion; only
     // pose attributes or a combatant/sprite class change open a tracking window.
-    if (!mutations.some(m => m.attributeName !== 'class' || m.target.matches?.('.combatant, .sprite'))) return;
     extendTracking();
     if (!trackingRequest) trackingRequest = requestAnimationFrame(trackPlayerHud);
   });
-  poseObserver.observe(field, { subtree: true, attributes: true,
+  poseObserver.observe(field, { subtree: true, attributes: true, attributeOldValue: true,
     attributeFilter: ['src', 'data-pose', 'data-rest', 'data-stance', 'data-animating', 'class'] });
   // Both accessibility inputs can change while a fight is on screen. Settle
   // once after motion is disabled, and resume frame tracking only after it is
