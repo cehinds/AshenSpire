@@ -47,4 +47,4 @@ try {
     await page.close();
   }
   console.log('Body-head HUD alignment passes real stance changes at mobile, tablet, and desktop sizes.');
-} finally { await browser.close(); await server?.close(); }
+} finally { await browser.close(); await server?.server.close(); }
