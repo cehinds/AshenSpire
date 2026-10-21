@@ -14,7 +14,7 @@ test('real authored Envenom retains its contact and requires no second approach 
   ctx.rangeState.engagements[rangePairKey('player:player','enemy:e1')]=2;
   const read=previewCard(ctx,card.instanceId,'e1');
   assert.equal(read.range.routes[0].advanceSp,2);
-  ctx.player.stamina=read.staminaCost;primeAccuracyRolls(ctx,{count:1,drawsPerAttack:2});
+  ctx.player.stamina=read.staminaCost;primeAccuracyRolls(ctx,{count:1});
   played(ctx,card);
   assert.equal(ctx.player.stamina,0);
   assert.ok(ctx.enemies[0].statuses.venom || ctx.enemies[0].statusGauges?.venom,'authored Venom applied through original contact');
@@ -28,7 +28,7 @@ test('finite conditional rider includes far targets before payment and refuses a
   const snapshot=JSON.stringify({player:ctx.player,piles:ctx.piles,enemies:ctx.enemies,rng:ctx.rng.getCounters(),queue:ctx.queue});
   assert.throws(()=>played(ctx,card),/Stamina/);
   assert.equal(JSON.stringify({player:ctx.player,piles:ctx.piles,enemies:ctx.enemies,rng:ctx.rng.getCounters(),queue:ctx.queue}),snapshot);
-  ctx.player.stamina=read.staminaCost;primeAccuracyRolls(ctx,{count:3,drawsPerAttack:2});played(ctx,card);
+  ctx.player.stamina=read.staminaCost;primeAccuracyRolls(ctx,{count:3});played(ctx,card);
   assert.equal(ctx.player.stamina,0);
   assert.ok(ctx.eventLog.some(event=>event.type==='damageDealt'&&event.targetId==='e2'));
 });
@@ -63,7 +63,7 @@ test('authored cross-owner Zealotry prices its own return without borrowing inco
     ctx.rangeState.engagements[rangePairKey('player:player','enemy:e1')]=2;
     ctx.player.stamina=available;
     const before=ctx.rng.getCounters().misc;
-    primeAccuracyRolls(ctx,{count:1,drawsPerAttack:2});
+    primeAccuracyRolls(ctx,{count:1});
     ctx.emit('hpLost',{targetId:'player',sourceId:'e1',amount:1,cause:'attack'});
     while(ctx.queue.length)executeAction(ctx,ctx.queue.shift());
     if(available===0){
@@ -84,7 +84,7 @@ test('paid Counter reserves its far inherited rider and reuses that graph on the
   ctx.piles.hand=[{instanceId:'counter-rider',cardId:'core.counter'}];
   ctx.player.combatStance={maneuver:'counter',camp:'physical',range:'melee'};
   ctx.player.stamina=2;
-  primeAccuracyRolls(ctx,{count:2,drawsPerAttack:2});
+  primeAccuracyRolls(ctx,{count:2});
   dispatch(ctx,{type:'endTurn'});
   const option=ctx.pendingReaction.options.find(row=>row.play.rangeRoute==='advance');
   assert.ok(option);assert.equal(option.staminaCost,2,'far rider is included in the accepted return price');
@@ -115,7 +115,7 @@ test('range-off keeps ordinary hostile preparation and does not reserve unused c
   const ctx=live(),card=strike(ctx);second(ctx);ctx.rangeState.policy.enabled=false;
   mount(ctx,[{on:'cardPreparing',once:true,do:[{op:'damage',target:'randomEnemy',amount:1}]},{on:'damageDealt',once:true,if:{p:'hpBelowPct',of:'owner',pct:1},do:[{op:'damage',target:'randomEnemy',amount:1,repeat:2}]}]);
   const before=ctx.rng.getCounters().misc;
-  primeAccuracyRolls(ctx,{count:2,drawsPerAttack:2});
+  primeAccuracyRolls(ctx,{count:2});
   played(ctx,card);
   assert.equal(ctx.rng.getCounters().misc,before+1,'only the actual preparation selector draws; unused range envelope reserves nothing');
   assert.equal(ctx.eventLog.some(event=>event.rangeOrigin),false);
