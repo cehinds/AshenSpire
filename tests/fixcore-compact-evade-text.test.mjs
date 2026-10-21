@@ -11,6 +11,10 @@ import { cardPlainText } from '../src/ui/components/card.js';
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const bind = p => bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, p)), p);
 
+test('shipped compact Evade wording is exactly Gain 1 Evade', () => {
+  assert.equal(cardPlainText(bind(profile), { cardId: 'core.evade' }), 'Gain 1 Evade.');
+});
+
 test('compact Evade text follows a profile evadeStackBase/evadeStackDex override', () => {
   const reg = bind(profile);
   const base = cardPlainText(reg, { cardId: 'core.evade' });

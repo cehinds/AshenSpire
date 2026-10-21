@@ -94,6 +94,7 @@ test('save validation refuses persistent Precision outside its total stack count
 
 test('Precision affects hit chance but never per-hit damage or live damage on a landed hit', () => {
   const ctx = live(), target = ctx.enemies[0];
+  target.attributes = { ...target.attributes, dexterity: 10 }; // avoid the natural-1 hit ceiling before Precision
   ctx.player.attributes = { dexterity: 2, strength: 0, wisdom: 0, intelligence: 0 };
   const card = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
   const before = profileDamageReceipt(ctx, ctx.player, target, 5, card);

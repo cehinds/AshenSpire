@@ -325,7 +325,7 @@ test('live: a spell Counter keeps the prepared stance, arms, is consumed, and it
   assert.ok(events.some(e => e.type === 'combatCounterConsumed' && e.cardId === 'frostCounter'), 'consumed');
   assert.equal(combat.player.combatCounter?.charges ?? 0, 0, 'no charge left');
   const dealt = events.find(e => e.type === 'damageDealt' && e.cardId === 'frostCounter');
-  assert.ok(events.some(e => e.type === 'attackHit' && e.cardId === 'frostCounter' && e.opposed), 'the return rolls to hit');
+  assert.ok(events.some(e => e.type === 'attackHit' && e.cardId === 'frostCounter' && e.fixedDefense), 'the return rolls to hit');
   assert.equal(triggered.amount, dealt.damageReceipt.hits[0].incoming, 'the receipt carries the Counter amount');
   assert.ok(dealt.damageReceipt.hits[0].magical > 0 && dealt.damageReceipt.hits[0].physical === 0, 'the return is a magical attack (PR, not AR)');
   assert.equal(triggered.wardDamage, 0, 'Core fixes the return to HP and Poise (authored Ward/Flux do not add)');

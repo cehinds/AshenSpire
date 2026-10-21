@@ -1,7 +1,7 @@
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { coreSmashClause } from './smashClause.js';
 import { stanceEntryBonuses, stanceRulesFor, stanceOf } from './stanceRules.js';
-import { fixCoreEnabled } from './fixCoreMechanics.js';
+import { fixCoreEnabled, evadeGrantOnlyCard } from './fixCoreMechanics.js';
 import { armsAsCoreCounter } from './profileStance.js';
 // src/model/cardFaceText.js — the text a playing card's face says, as lines.
 //
@@ -119,6 +119,9 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     }
     return `<span class="${cls}">${esc(amount)}</span>`;
   };
+  // Saved profiles may still carry the old verbose template. Phrase this
+  // complete grant from the shared configured/live value on every face.
+  if (evadeGrantOnlyCard(def)) return [{ kind: 'gain', html: `Gain ${num(value(def.effects[0], 0, 'stacks'))} Evade.` }];
 
   const typeWord = id => {
     const service = registries && tagService(registries);
