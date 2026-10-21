@@ -1,16 +1,6 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — Mobile card input and toolbar layout
 
-[Play this feature build — publication pending](https://cehinds.github.io/AshenSpire/branches/fix/MobileActionLayout/latest/) · [Successful CI build download](https://github.com/cehinds/AshenSpire/actions/runs/39646219049/artifacts/12368361121)
-
-Ordinary taps avoid drag-only target repainting, and the toolbar measures its final position without temporary layout writes. Native input checks passed. The public deployment timed out; the playable link is not yet verified. See the [capture record](docs/preview/features/mobile-action-layout/CAPTURE-RECORD.md) and [bounded performance results](docs/preview/features/mobile-action-layout/PERFORMANCE.md).
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Mobile targeting; inherited short-screen artwork overlap remains](docs/preview/features/mobile-action-layout/mobile.png) | ![Desktop card selection and combat tools](docs/preview/features/mobile-action-layout/desktop.png) | ![Wide combat view and corner controls](docs/preview/features/mobile-action-layout/wide.png) | ![Tablet card selection and combat tools](docs/preview/features/mobile-action-layout/tablet.png) |
-<!-- feature-preview:end -->
 
 
 
