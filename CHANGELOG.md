@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-21
 
-- **Reuse stance artwork** ([#2236](https://github.com/cehinds/AshenSpire/pull/2236), `0.7.1.1758`). Selecting another card in the same stance keeps its loaded artwork and action symbol. Stationary target highlights no longer start repeated body-position tracking; stance changes, attacks, reactions and responsive positioning remain available.
+- **Reuse stance artwork** ([#2236](https://github.com/cehinds/AshenSpire/pull/2236), `0.7.1.1758`). Combat reuses unchanged stance artwork and action symbols instead of resetting them. Stationary target highlights no longer start repeated body-position tracking; stance changes, attacks, reactions and responsive positioning remain available.
 
 - **Reliable mobile target taps** ([#2233](https://github.com/cehinds/AshenSpire/pull/2233), `0.7.1.1758`). Tapping an enemy's name or health while aiming now plays the selected card on that enemy. Crowded aiming panels stay compact and reachable; holding for information never plays the card on release. Selecting a card also avoids repeated battlefield layout work, reducing the measured selection delay in a slower-CPU phone simulation.
 
