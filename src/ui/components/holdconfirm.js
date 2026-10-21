@@ -554,6 +554,11 @@ export function armHold(btn, {
       return;
     }
     if (!heldThisPress) {
+      // Composite cards finish pointer taps on release. A rebuilt binding can
+      // receive the old press's trailing click without owning that press.
+      if (tapOnPointerRelease && ev.detail > 0) {
+        ev.preventDefault(); ev.stopPropagation(); return;
+      }
       if (pointerOnly && onTap) onTap(ev);
       else onConfirm(ev);
       return;
