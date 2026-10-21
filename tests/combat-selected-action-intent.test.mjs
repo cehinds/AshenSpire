@@ -11,14 +11,15 @@ const begin=source.indexOf('  function syncPlayerActionIntent('),end=source.inde
 test('the actual selected action resolves effective equipment tags and the chosen upcast ranks',()=>{
   const inst={instanceId:'shield-instance',cardId:'shieldBash'},ranks=[0,2];
   const calls=[],actions=[],events=[];
-  const leading={querySelector:()=>({remove:()=>calls.push('remove')}),append:action=>actions.push(action)};
-  const player={querySelector:selector=>selector==='.combatant-leading'?leading:{remove:()=>calls.push('remove')}};
+  const leading={append:action=>actions.push(action)};
+  const previous={dataset:{maneuver:'smash'},remove:()=>calls.push('remove')};
+  const player={querySelector:selector=>({'.combatant-leading':leading,'.player-action-intent':previous}[selector] || null)};
   const context={combat:{},upcastRanksByCard:new Map([[inst.instanceId,ranks]]),combatProfileFor,kindForCard,
     resolveCombatCard:(combat,instance,options)=>{
       assert.equal(combat,context.combat);assert.equal(instance,inst);assert.equal(options.upcastRanks,ranks);
       calls.push('resolve');
       return {id:'shieldBash',tags:['camp:physical','maneuver:smash'],cardTags:['camp:physical','maneuver:counter']};
-    },playerActionIntent:(profile,onTarget)=>({profile,onTarget}),selfArm:inst.instanceId,
+    },playerActionIntent:(profile,onTarget)=>({profile,onTarget,dataset:{}}),selfArm:inst.instanceId,
     playCard:(...args)=>calls.push(args),selectCombatant:id=>calls.push(id),
     combatEl:{dispatchEvent:event=>events.push(event.type)},CustomEvent:class{constructor(type){this.type=type;}}};
   const sync=runInNewContext(source.slice(begin,end)+'\nsyncPlayerActionIntent',context);
@@ -33,7 +34,9 @@ test('both real selection/render callers pass the instance and clear removes the
   assert.match(source,/syncPlayerActionIntent\(player, inst, heldKinds\.get\(\)\);/);
   assert.match(source,/syncPlayerActionIntent\(box, activeCard, heldKinds\.get\(\)\);/);
   const calls=[];
-  const player={querySelector:selector=>selector==='.combatant-leading'?{append:()=>assert.fail('no selected action')}:{remove:()=>calls.push('removed')}};
+  const leading={append:()=>assert.fail('no selected action')};
+  const previous={dataset:{maneuver:'attack'},remove:()=>calls.push('removed')};
+  const player={querySelector:selector=>({'.combatant-leading':leading,'.player-action-intent':previous}[selector] || null)};
   const shown=[];
   const context={upcastRanksByCard:new Map(),resolveCombatCard:()=>assert.fail('no carrier to resolve'),
     combatProfileFor,kindForCard,RESTING_PLAYER_ACTION:{maneuver:'ready'},
