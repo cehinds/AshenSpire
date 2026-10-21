@@ -1,4 +1,17 @@
 # AshenSpire
+<!-- feature-preview:start -->
+## Feature preview — Fixed Evasion
+
+[Download the verified feature build](https://github.com/cehinds/AshenSpire/actions/runs/39549809484/artifacts/12322144527) · [Browser preview — publication pending](https://cehinds.github.io/AshenSpire/branches/fix/StaticEvasion/latest/)
+
+Evade grants one stack and says **Gain 1 Evade.** Only the attacker rolls; fixed Evasion is `1 + DEX + stacks × (1 + DEX)`, plus equipped Evasion once. Older compatible Core saves resume with the corrected default.
+
+These are local source captures of a posed live combat fixture, with native card selection and play. The successful CI build contains the same gameplay changes. [Capture record](docs/preview/features/static-evasion/capture.txt).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Phone Evade card](docs/preview/features/static-evasion/mobile.png) | ![Desktop Evade card](docs/preview/features/static-evasion/desktop.png) | ![Wide Evade card](docs/preview/features/static-evasion/wide.png) | ![Tablet Evade card](docs/preview/features/static-evasion/tablet.png) |
+<!-- feature-preview:end -->
 
 
 

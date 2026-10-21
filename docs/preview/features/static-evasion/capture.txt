@@ -1,0 +1,9 @@
+Static Evasion
+Source: 9fd1c628f9135d870362a246240a17873f1d3438
+Local source preview with committed build stamp 0.7.1.1752 / fbb1122acf. This is not a newly stamped standalone build.
+Captured: 2026-10-21T05:28:17.481Z
+Viewports:390x844,768x1024,1440x900,1920x1080
+Fixture: posed live Core engine with DEX2, no gear Evasion, one Evade/Strike card and enemy2 stacks; native selection/play. Not a completed playthrough.
+Checks: each viewport passed Gain 1 Evade card copy, native selection/play granting one stack, defense3→6 at DEX2, no RNG for the grant, one attacker RNG draw vs fixed Evasion9, preview95% equal to live event, and full log without defender d20. Native player inspector shows fixed Evasion and neutral Evade stance wording. Zero browser page errors.
+Input: touch selection/play on phone/tablet; pointer selection/play on desktop/wide. Evade keyword was opened with native keyboard Enter at every viewport; direct mobile keyword-touch behavior is not asserted by this capture.
+Inspection: screenshots visually reviewed for card readability, complete fixed-defense log text, corrected status/stance description, missing artwork and viewport fit.
