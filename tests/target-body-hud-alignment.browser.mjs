@@ -12,6 +12,39 @@ try {
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${process.env.BASE_URL || server.url}${process.env.HUD_ENTRY || 'index.html'}?shot=combat&gameProfile=core&shotSeed=3&shotEnemyCount=3`, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => document.querySelector('.combatant.player .pose-stage')?.__poseStage?.currentArt?.body);
+    const stableFit = await page.evaluate(async () => {
+      await document.fonts.ready;
+      const field = document.querySelector('.field'), combat = field.closest('.combat');
+      const sprites = [...field.querySelectorAll('.combatant-card > .sprite')];
+      const snapshot = () => sprites.map(sprite => {
+        const box = sprite.getBoundingClientRect();
+        return { zoom: sprite.style.zoom, width: sprite.offsetWidth, height: sprite.offsetHeight,
+          box: [box.left, box.top, box.width, box.height] };
+      });
+      // A real refit must keep unscaled measurements and rendered positions
+      // stable, without zoom=1 excursions that invalidate all descendants.
+      const before = snapshot(), mutations = [];
+      const observer = new MutationObserver(records => mutations.push(...records));
+      for (const sprite of sprites) observer.observe(sprite, { attributes: true, attributeFilter: ['style'], attributeOldValue: true });
+      for (let i = 0; i < 2; i++) {
+        await new Promise(resolve => {
+          field.addEventListener('battlefieldgeometrychange', resolve, { once: true });
+          combat.dispatchEvent(new Event('handlayoutchange'));
+        });
+      }
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      observer.disconnect();
+      return { before, after: snapshot(), oldZooms: mutations.map(record => ({
+        index: sprites.indexOf(record.target), zoom: record.oldValue?.match(/(?:^|;)\s*zoom:\s*([^;]+)/)?.[1]?.trim() || '' })) };
+    });
+    stableFit.before.forEach((before, i) => {
+      const after = stableFit.after[i];
+      assert.equal(after.zoom, before.zoom, `${width}: repeated fit keeps scale`);
+      assert.equal(after.width, before.width, 'local width is independent of fitted zoom');
+      assert.equal(after.height, before.height, 'local height is independent of fitted zoom');
+      after.box.forEach((value, j) => assert.ok(Math.abs(value - before.box[j]) < 1, `${width}: repeated fit keeps body box`));
+    });
+    for (const { index, zoom } of stableFit.oldZooms) assert.equal(zoom, stableFit.before[index].zoom, 'refit does not temporarily reset sprite zoom');
     const poses = new Set();
     for (const stance of ['offensive', 'defensive', 'casting', 'counter', 'smash']) {
       const receipt = await page.evaluate(async stance => {

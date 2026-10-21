@@ -599,7 +599,7 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((calc(
 .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { align-self:start; padding:16px 12px; flex-direction:column; }
 .atlas-dialog:has(.atlas-local-port) .atlas-local-help { order:2; }
 .atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { display:flex; flex-wrap:wrap; gap:10px; padding:12px; }
-.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot > span { display:none; }
+.atlas-dialog[data-local-map='true'] .atlas-dialog-foot > span { display:none; }
 .atlas-dialog:has(.atlas-local-port) .atlas-detail-actions { margin-left:auto; padding:0; display:flex; flex-wrap:wrap; gap:8px; }
 .atlas-dialog:has(.atlas-local-port) .atlas-detail-actions .as-btn { margin:0; white-space:normal; }
 @container game-viewport (max-width:700px) {
