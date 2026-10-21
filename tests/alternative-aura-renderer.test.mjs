@@ -171,3 +171,67 @@ test('opt-in fixed phase reuse preserves pixels, filter and materialization with
   assert.ok(draws.length>brightBefore+2,'a changed placement cannot use stale cached geometry');
   renderer.dispose();assert.ok(surfaces.every(surface=>surface.width===0&&surface.height===0));
 });
+
+// Native save/restore changes the stored canvas state without calling the JS
+// filter setter. Count that setter separately from actual draw/readback work.
+function countedFilterFixture(initialFilter = 'none') {
+  const writes = [], draws = [], reads = [], saved = [];
+  let filter = initialFilter;
+  const target = {
+    get filter() { return filter; },
+    set filter(value) { writes.push(value); filter = value; },
+    save() { saved.push(filter); }, restore() { filter = saved.pop(); },
+    drawImage(...args) { draws.push({ filter, args }); },
+    getImageData() { reads.push(filter); },
+  };
+  const renderer = createAlternativeAuraRenderer({ createCanvas() {
+    return { width: 0, height: 0, getContext: () => ({
+      save() {}, restore() {}, clearRect() {}, drawImage() {},
+    }) };
+  } });
+  return { target, renderer, writes, draws, reads };
+}
+
+test('direct aura draws skip equal filters while restoring a nondefault caller filter', () => {
+  for (const initial of ['none', 'blur(3px)']) {
+    const f = countedFilterFixture(initial), image = {};
+    f.renderer.draw(f.target, image, 'none', 128, 16, 512, 512, { materialize: true });
+    assert.deepEqual(f.writes, initial === 'none' ? [] : ['none']);
+    assert.equal(f.target.filter, initial);
+    assert.equal(f.draws[0].filter, 'none');
+    assert.equal(f.reads.length, 1, 'skipping the setter never skips materialization');
+    assert.deepEqual(f.draws[0].args, [image, 128, 16, 512, 512]);
+  }
+});
+
+test('fresh and cached aura composites avoid equal setters without dropping brightness', () => {
+  for (const reuse of [false, true]) for (const brightness of [1, 1.2]) {
+    const desired = brightness === 1 ? 'none' : `brightness(${brightness})`;
+    for (const initial of [desired, 'contrast(1.1)']) {
+      const f = countedFilterFixture(initial), image = {};
+      const aura = `drop-shadow(0 0 7px #aabbcc) brightness(${brightness})`;
+      for (let i = 0; i < 2; i++) {
+        f.renderer.draw(f.target, image, aura, 128, 16, 512, 512,
+          { immutable: true, reuse, materialize: true });
+      }
+      assert.deepEqual(f.writes, initial === desired ? [] : [desired, desired],
+        `first and cached composite preserve ${initial} -> ${desired}`);
+      assert.equal(f.target.filter, initial);
+      assert.deepEqual(f.draws.map(row => row.filter), [desired, desired]);
+      assert.equal(f.reads.length, 2);
+    }
+  }
+});
+
+test('unknown filter grammar still renders and only assigns when caller state differs', () => {
+  const future = 'blur(7px) contrast(1.2)';
+  for (const initial of [future, 'brightness(0.5)']) {
+    const f = countedFilterFixture(initial), image = {};
+    f.renderer.draw(f.target, image, future, 3, 4, 20, 30, { materialize: true });
+    assert.deepEqual(f.writes, initial === future ? [] : [future]);
+    assert.equal(f.draws[0].filter, future);
+    assert.deepEqual(f.draws[0].args, [image, 3, 4, 20, 30]);
+    assert.equal(f.target.filter, initial);
+    assert.equal(f.reads.length, 1);
+  }
+});
