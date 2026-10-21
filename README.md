@@ -1,15 +1,5 @@
 # AshenSpire
-<!-- feature-preview:start -->
-## Feature preview — reliable Counter previews
 
-[Feature preview endpoint](https://cehinds.github.io/AshenSpire/branches/fix/BundledCounterPreview/latest/)
-
-The standalone build now previews revealed attacks without crashing. CI built the preview successfully; public publication is pending. These local standalone captures show the repaired Core preview. [Build identity and disclosed screenshot setup](docs/preview/features/bundled-counter-preview/README.md).
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Mobile Counter preview](docs/preview/features/bundled-counter-preview/mobile.png) | ![Desktop Counter preview](docs/preview/features/bundled-counter-preview/desktop.png) | ![Wide Counter preview](docs/preview/features/bundled-counter-preview/wide.png) | ![Tablet Counter preview](docs/preview/features/bundled-counter-preview/tablet.png) |
-<!-- feature-preview:end -->
 
 
 
