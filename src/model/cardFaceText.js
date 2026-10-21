@@ -235,7 +235,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         else if (ENEMY_TARGETS.includes(effect.target)) out.push({ cat: 'status', text: `${name}${duration}${area}` });
         else if (effect.target === 'ally') out.push({ cat: 'bonus', text: `Apply ${name} to an ally${duration}` });
         else out.push({ cat: 'bonus', text: `Apply ${name}${duration}${area}` });
-        if (MECHANIC_STATUSES.includes(effect.status)) {
+        if (MECHANIC_STATUSES.includes(effect.status) && !representedRules.includes(`status:${effect.status}`)) {
           const explanation = registries?.statuses?.has(effect.status) && registries.statuses.get(effect.status).tooltip;
           if (!explanation) fail();
           out.push({ cat: 'bonus', text: esc(explanation.replace(/\.$/, '')) });
