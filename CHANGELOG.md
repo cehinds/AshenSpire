@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-21
+
+- **Shorter damage tooltips** ([#2225](https://github.com/cehinds/AshenSpire/pull/2225), `0.7.1.1746`). Damage numbers now show a short result and hit count. Open Hits, Sources or Defenses for focused details; Information and the full combat log keep the complete calculation.
+
 ## 2026-10-20
 
 - **Range choices and shorter card text** ([#2223](https://github.com/cehinds/AshenSpire/pull/2223), `0.7.1.1746`). Core fights use equipment-based engagement distance. Out-of-range attacks show their Advance stamina cost; Throw weapons can extend one band with reduced Precision. Movement cards change distance, range settings apply to new fights, and concise tags explain card bonuses. Saved actions retain their paid targets and costs. Automated checks pause disabled co-op features and the historical combat-v1 balance report while retaining solo and save compatibility coverage.
