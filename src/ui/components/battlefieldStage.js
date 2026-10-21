@@ -678,14 +678,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       wireGridTargeting(field);
       field.dispatchEvent(new Event('formationlayoutchange'));
     }
-    // Writes first, then reads: resetting each sprite's zoom immediately before
-    // measuring it forced one synchronous layout per combatant. One batch of
-    // writes and one layout serve every measurement below.
+    // Geometry uses local offset dimensions, which already exclude CSS zoom.
+    // Keep the fitted zoom while reading; resetting it would invalidate every
+    // sprite descendant before the unchanged final zoom is written below.
     const slotFrames = plan.slots.map(slot => {
       const frame = frames.find(f => f.dataset.eid === slot.id);
       const sprite = frame.querySelector('.combatant-card > .sprite');
       resizeObserver.observe(sprite);
-      sprite.style.zoom = '1';
       return { slot, frame, sprite };
     });
     const actors = slotFrames.map(({ slot, frame, sprite }) => {
