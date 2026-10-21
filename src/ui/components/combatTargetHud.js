@@ -200,9 +200,11 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     for (const frame of field.querySelectorAll('.combatant')) {
       const id = frame.dataset.eid;
       const entry = entries.get(id);
-      frame.dataset.matchup = entry?.matchup || 'neutral';
-      frame.dataset.matchupActive = String(!!entry?.matchupActive && eligible.includes(id));
-      frame.style.setProperty('--combat-matchup-color', entry?.auraColor || '#e4cd59');
+      const matchup = entry?.matchup || 'neutral', active = String(!!entry?.matchupActive && eligible.includes(id));
+      const color = entry?.auraColor || '#e4cd59';
+      if (frame.dataset.matchup !== matchup) frame.dataset.matchup = matchup;
+      if (frame.dataset.matchupActive !== active) frame.dataset.matchupActive = active;
+      if (frame.style.getPropertyValue('--combat-matchup-color') !== color) frame.style.setProperty('--combat-matchup-color', color);
       frame.classList.toggle('target-hud-selected', next.has(id));
       frame.classList.toggle('target-hud-focused', id === focused || id === hover);
       frame.classList.toggle('target-hud-candidate', eligible.includes(id));
@@ -393,9 +395,11 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   field.addEventListener('battlefieldgeometrychange', scheduleGeometry);
   const resized = () => { gate(); paint(); scheduleGeometry(); };
   window.addEventListener('resize', resized);
-  const observer = new MutationObserver(resized);
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-form-factor', 'data-display-appearance', 'data-view-preset'] });
-  observer.observe(combat, { attributes: true, attributeFilter: ['data-layout'] });
+  const observer = new MutationObserver(mutations => {
+    if (mutations.some(m => m.oldValue !== m.target.getAttribute(m.attributeName))) resized();
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeOldValue: true, attributeFilter: ['data-form-factor', 'data-display-appearance', 'data-view-preset'] });
+  observer.observe(combat, { attributes: true, attributeOldValue: true, attributeFilter: ['data-layout'] });
   const resize = new ResizeObserver(scheduleGeometry); resize.observe(field);
   for (const [name, value] of Object.entries({ fade: config.motion.fadeMs, 'enemy-tint': config.behavior.enemyTint, 'player-tint': config.behavior.playerTint })) layer.style.setProperty(`--target-hud-${name}`, name === 'fade' ? `${value}ms` : value);
   gate();
