@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-21
 
-- **Reliable mobile target taps** ([#2233](https://github.com/cehinds/AshenSpire/pull/2233), `0.7.1.1756`). Tapping an enemy's name or health while aiming now plays the selected card on that enemy. Crowded aiming panels stay compact and reachable; holding for information never plays the card on release.
+- **Reliable mobile target taps** ([#2233](https://github.com/cehinds/AshenSpire/pull/2233), `0.7.1.1756`). Tapping an enemy's name or health while aiming now plays the selected card on that enemy. Crowded aiming panels stay compact and reachable; holding for information never plays the card on release. Selecting a card also avoids repeated battlefield layout work, reducing the measured selection delay in a slower-CPU phone simulation.
 
 - **Fixed Evasion and simpler Evade cards** ([#2231](https://github.com/cehinds/AshenSpire/pull/2231), `0.7.1.1756`). Only attackers roll to hit. Evasion uses Dexterity and Evade stacks as a fixed defense, equipment adds its bonus once, and Evade grants one stack with short card text. Hit previews and combat logs use the same calculation.
 
