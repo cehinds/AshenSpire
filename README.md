@@ -1,17 +1,5 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — Cleaner cards and smoother selection
-
-[Download this tested feature build](https://github.com/cehinds/AshenSpire/actions/runs/39660228354/artifacts/12373686735)
-
-Card selection retains its artwork and tags. Rules stay inside the parchment, with repeated definitions in keyword tags. Build **0.7.1.1769**; [capture details and verification limits](docs/preview/features/card-clarity-smoothness/README.md).
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Mobile card rules bounded inside parchment, with Stoneskin tooltip](docs/preview/features/card-clarity-smoothness/mobile.png) | ![Desktop cards with shorter rules and keyword explanation](docs/preview/features/card-clarity-smoothness/desktop.png) | ![Wide card shelf with bounded rules and inspection cues](docs/preview/features/card-clarity-smoothness/wide.png) | ![Tablet cards with one-tap keyword explanation](docs/preview/features/card-clarity-smoothness/tablet.png) |
-<!-- feature-preview:end -->
-
 
 
 
