@@ -35,11 +35,44 @@ async function expectPlay(page, before, target) {
   assert.equal(plays.length, before + 1, 'a target gesture commits exactly one card');
   assert.equal(plays.at(-1).targetId, target, 'the visible target owns the committed engine action');
 }
+async function holdAndDismiss(page, id, before) {
+  const at = await point(page, id, '.target-hud-name');
+  const cdp = await page.context().newCDPSession(page);
+  try {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: at.x, y: at.y }] });
+    await page.locator('.combatant-inspector-body').waitFor({ state: 'visible' });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    assert.equal(await count(page), before, 'holding to inspect and releasing never commits a card');
+    const close = await page.locator('.combatant-door .modal-close').boundingBox();
+    assert.ok(close);
+    await page.touchscreen.tap(close.x + close.width / 2, close.y + close.height / 2);
+    await page.locator('.combatant-inspector-body').waitFor({ state: 'detached' });
+  } finally { await cdp.detach(); }
+}
 try {
   for (const [width, height] of [[375, 667], [390, 844], [412, 915]]) {
     const page = await browser.newPage({ viewport: { width, height }, isMobile: true, hasTouch: true });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
+    await page.addInitScript(() => {
+      // Observe the authored hold callback without changing its behavior. The
+      // <700ms assertion guards against restoring the former global cooldown;
+      // suppression itself now belongs to the originating pointer.
+      window.__targetHoldProbe = { fired: null, activations: [] };
+      const timeout = window.setTimeout;
+      window.setTimeout = function (callback, delay, ...args) {
+        if (typeof callback === 'function' && Number(delay) === 500 && callback.toString().includes('inspectionPointer')) {
+          const original = callback;
+          callback = function (...params) { window.__targetHoldProbe.fired = performance.now(); return original.apply(this, params); };
+        }
+        return timeout.call(this, callback, delay, ...args);
+      };
+      for (const type of ['click', 'keydown']) document.addEventListener(type, event => {
+        const target = event.target.closest?.('.target-hud-detail');
+        if (target) window.__targetHoldProbe.activations.push({ type, id: target.dataset.eid,
+          time: performance.now(), trusted: event.isTrusted, key: event.key });
+      }, true);
+    });
     const url = new URL(file ? basename(file) : 'index.html', server.url);
     url.search = new URLSearchParams({ shot: 'combat', gameProfile: 'core', shotSeed: '3', shotEnemyCount: '3', shotHand: '5', shotSettings: JSON.stringify(settings) });
     await page.goto(url.href, { waitUntil: 'domcontentloaded', timeout: 120000 });
@@ -56,23 +89,30 @@ try {
       assert.ok(a.height >= 43.9, 'compact target remains at least 44 physical pixels high');
       for (const b of layout) if (a !== b) assert.ok(a.right <= b.left + 1 || b.right <= a.left + 1 || a.bottom <= b.top + 1 || b.bottom <= a.top + 1, 'compact target panels do not overlap');
     }
-    const before = await count(page), name = await point(page, 'e2', '.target-hud-name');
+    const before = await count(page);
     if (captures) await page.screenshot({ path: resolve(captures, `targeting-${width}.png`) });
-    if (width === 375) {
-      // A deliberate read still owns its press and its trailing touch click.
-      const cdp = await page.context().newCDPSession(page);
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: name.x, y: name.y }] });
-      await page.locator('.combatant-inspector-body').waitFor({ state: 'visible' });
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-      assert.equal(await count(page), before, 'holding to inspect never commits a card');
-      await page.keyboard.press('Escape');
-      await page.locator('.combatant-inspector-body').waitFor({ state: 'detached' });
-      await page.waitForTimeout(750); // the documented trailing-click suppression window
-      await cdp.detach();
+    await holdAndDismiss(page, 'e2', before);
+    const target = width === 390 ? 'e1' : 'e2';
+    const name = await point(page, target, '.target-hud-name');
+    assert.equal(name.owner, target, 'the fresh gesture reaches the intended target');
+    const activationStart = await page.evaluate(() => performance.now());
+    if (width === 412) {
+      await page.locator(`.target-hud-detail[data-eid="${target}"].visible:not(.leaving) .target-hud-name`).focus();
+      await page.keyboard.press('Enter');
+    } else {
+      await page.touchscreen.tap(name.x, name.y);
     }
-    await page.touchscreen.tap(name.x, name.y);
+    const timing = await page.evaluate(({ target, keyboard, since }) => {
+      const probe = window.__targetHoldProbe;
+      const activation = probe.activations.find(event => event.time >= since && event.id === target
+        && event.type === (keyboard ? 'keydown' : 'click') && event.trusted);
+      return { fired: probe.fired, activation, elapsed: activation ? activation.time - probe.fired : null };
+    }, { target, keyboard: width === 412, since: activationStart });
+    assert.notEqual(timing.fired, null, 'the actual inspection hold callback was observed');
+    assert.ok(timing.activation && timing.elapsed >= 0 && timing.elapsed < 700,
+      `fresh activation must stay inside the former cooldown interval, observed ${JSON.stringify(timing)}`);
     if (width === 375) await page.touchscreen.tap(name.x, name.y);
-    await expectPlay(page, before, 'e2');
+    await expectPlay(page, before, target);
     // After actual playback settles, the remaining Strike and its live target
     // layer must still work; HP has tooltip listeners and formerly ate this tap.
     await selectStrike(page);
@@ -100,7 +140,9 @@ try {
       await cdp.detach();
       assert.deepEqual(errors, []);
     }
-    results.push({ width, height, checks: ['native name hit ownership', '44px nonoverlapping compact panels', 'name commits correct enemy', 'post-playback HP commits correct enemy'], errors });
+    results.push({ width, height, freshActivation: { target, keyboard: width === 412, elapsed: timing.elapsed },
+      checks: ['native name hit ownership', '44px nonoverlapping compact panels', 'hold release never plays',
+        'fresh activation within 700ms', 'name commits correct enemy', 'post-playback HP commits correct enemy'], errors });
     await page.close();
   }
   console.log(JSON.stringify({ file: file || 'source index.html', results }, null, 2));
