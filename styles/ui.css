@@ -1215,7 +1215,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-stepper > .set-step { flex: 0 0 auto; min-width: var(--tap-floor); min-height: var(--tap-floor); padding: 0; font-size: 1.35rem; line-height: 1; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 .set-stepper > .set-step:disabled { opacity: .4; }
 /* A gated or rule-locked field locks its buttons and slider with it. */
-.set-stepper:has(> input[type='number']:disabled) > :is(.set-step, input[type='range']) { opacity: .4; pointer-events: none; }
+.set-stepper[data-number-disabled='true'] > :is(.set-step, input[type='range']) { opacity: .4; pointer-events: none; }
 .set-unit { color: var(--muted); margin-left: -.25rem; }
 .set-mod-dot { display: none; width: .5rem; height: .5rem; margin-right: .45rem; border-radius: 50%; background: var(--accent, #c9a45c); vertical-align: middle; }
 .set-row[data-modified='true'] .set-mod-dot { display: inline-block; }
