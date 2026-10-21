@@ -76,6 +76,10 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     // tooltip listeners otherwise swallow the click before it reaches us.
     shell.addEventListener('click', event => {
       if (!onActivate || !eligible.includes(id) || performance.now() < suppressClickUntil) return;
+      // The status tray and detailed intent keep their authored reading doors.
+      // Only the footer replacement (name, HP, and its panel padding) confirms.
+      if (!event.target.closest('.target-hud-name, .target-hud-meters')
+          && !event.target.matches('.target-hud-panel')) return;
       event.preventDefault(); event.stopImmediatePropagation();
       lastActivation = { id, time: performance.now() };
       lastTap = null; cancelHold(); hideTooltip(); onActivate(id);
