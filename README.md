@@ -1,5 +1,17 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — reliable mobile targeting
+
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/MobileTargetInput/latest/)
+
+Name and HP taps select the intended legal target; status explanations remain readable while aiming. Card selection avoids repeated battlefield layout work. This sandbox preview does not retain progress. [Capture details and verification](docs/preview/features/mobile-target-input/README.md).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile: three separate legal name and HP targets](docs/preview/features/mobile-target-input/mobile.png) | ![Desktop: an armed Strike and reachable target panels](docs/preview/features/mobile-target-input/desktop.png) | ![Wide: the selected attack and three legal targets](docs/preview/features/mobile-target-input/wide.png) | ![Tablet: separate readable target panels](docs/preview/features/mobile-target-input/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 
