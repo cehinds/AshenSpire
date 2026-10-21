@@ -1,5 +1,17 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — stationary fighters and reliable targeting
+
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/MobileCombatStalls/latest/)
+
+Idle fighters hold still, the displayed label is “Evasion,” and target taps remain usable after inspection and playback. These native-input captures show build **0.7.1.1761**, digest `b623462ee1`; [capture details and verification](docs/preview/features/mobile-combat-stalls/README.md). Mobile performance work continues; this sandbox does not save progress.
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile target HUD and armed card](docs/preview/features/mobile-combat-stalls/mobile.png) | ![Desktop target HUD and armed card](docs/preview/features/mobile-combat-stalls/desktop.png) | ![Wide target HUD and armed card](docs/preview/features/mobile-combat-stalls/wide.png) | ![Tablet target HUD and armed card](docs/preview/features/mobile-combat-stalls/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 
