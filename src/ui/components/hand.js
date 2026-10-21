@@ -117,6 +117,12 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   let lastRender = null;
   const upcastMeasurements = new WeakMap();
   const handLayoutWord = () => document.documentElement.dataset.handLayout;
+  let publishedGeometry = null;
+  const publishGeometry = key => {
+    if (publishedGeometry === key) return;
+    publishedGeometry = key;
+    handEl.dispatchEvent(new Event('handlayoutchange', { bubbles: true }));
+  };
 
   // A layout pass repeats the same numbers on most renders; a style a card
   // already holds is not written again (each write dirties style, and the next
@@ -125,7 +131,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   function applyHandLayout() {
     if (fitFan) {
       const cards = handEls.filter(el => el.parentNode === handEl);
-      if (!cards.length || !handEl.isConnected) return;
+      if (!handEl.isConnected) return;
+      if (!cards.length) { publishGeometry('empty'); return; }
       // Scoped physical touch targets must apply on the very first measure.
       if (handEl.dataset.wireframeHand !== 'true') handEl.dataset.wireframeHand = 'true';
       const rect = handEl.getBoundingClientRect();
@@ -187,7 +194,10 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         const turn = 'rotate(' + slot.angle + 'deg)';
         if (el.style.transform !== turn) el.style.transform = turn;
       });
-      handEl.dispatchEvent(new Event('handlayoutchange', { bubbles: true }));
+      // A preview can replace a face without moving the fan. Keep its new
+      // styles and hit lane, but do not refit the battlefield for the same plan.
+      publishGeometry(JSON.stringify([input, plan, fontSize,
+        rect.left, rect.top, rect.width, rect.height, cards.map(card => card.dataset.instanceId)]));
       return;
     }
     if (handLayoutWord() !== 'overlap') return;
@@ -233,6 +243,17 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   // replaced (co-op re-mounts per snapshot; solo replaces the screen wholesale).
   let ro = null;
   let mo = null;
+  const observedCards = new Set();
+  const observeCards = () => {
+    if (!ro) return;
+    const current = new Set(handEls);
+    for (const card of observedCards) if (!current.has(card)) {
+      ro.unobserve(card); observedCards.delete(card);
+    }
+    for (const card of current) if (!observedCards.has(card)) {
+      ro.observe(card); observedCards.add(card);
+    }
+  };
   let layoutFrame = 0;
   const scheduleHandLayout = () => {
     if (layoutFrame) return;
@@ -270,7 +291,12 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     handFan = [];
     // An empty hand fans nothing, so it reserves nothing — stated rather than
     // left at the last render's value.
-    if (emptyHtml != null) { handEl.style.setProperty(FAN_LIFT_PROP, '0px'); handEl.innerHTML = emptyHtml; return; }
+    if (emptyHtml != null) {
+      handEl.style.setProperty(FAN_LIFT_PROP, '0px'); handEl.innerHTML = emptyHtml;
+      observeCards();
+      if (fitFan) applyHandLayout();
+      return;
+    }
     const n = cards.length;
     // The legacy transform fan publishes its lift for CSS to reserve. The
     // fitted wireframe hand instead gives every card an absolute top position
@@ -387,11 +413,9 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // in 'paging' the loop above was the whole render, unchanged.
     handEls = [...handEl.children];
     handFan = handEls.map((el) => el.style.transform);
-    if (ro && (fitFan || handLayoutWord() === 'overlap')) {
-      ro.disconnect();
-      ro.observe(handEl);
-      handEls.forEach((el) => ro.observe(el));
-    }
+    // Re-observing an unchanged card requests a fresh initial size delivery,
+    // which used to schedule another fan and battlefield fit after every render.
+    observeCards();
     applyHandLayout();
   }
 
@@ -402,6 +426,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     cancelAnimationFrame(layoutFrame);
     layoutFrame = 0;
     if (ro) ro.disconnect();
+    observedCards.clear();
     if (mo) mo.disconnect();
   }
 
