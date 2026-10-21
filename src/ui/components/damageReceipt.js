@@ -27,11 +27,61 @@ export function damageReceiptLines(receipt) {
   return lines;
 }
 
-export function damageReceiptHtml(receipt, { targetName = null } = {}) {
-  const lines = damageReceiptLines(receipt);
-  if (!lines.length) return '';
+const detailNumber = value => Number.isFinite(value) ? String(value) : '?';
+
+// Repeat a row once across matching hits, keeping its exact hit attribution.
+// Repeated contributions within a single hit retain their separate rows.
+function groupedHitDetails(hits, describe) {
+  const groups = new Map();
+  for (const [index, hit] of hits.entries()) {
+    const occurrences = new Map();
+    for (const text of describe(hit)) {
+      const occurrence = occurrences.get(text) || 0;
+      occurrences.set(text, occurrence + 1);
+      if (!groups.has(text)) groups.set(text, []);
+      const rows = groups.get(text);
+      rows[occurrence] ||= [];
+      rows[occurrence].push(index + 1);
+    }
+  }
+  return [...groups].flatMap(([text, rows]) => rows.map(indices =>
+    `${indices.length === 1 ? 'Hit' : 'Hits'} ${indices.join(', ')}: ${text}`)).join('; ');
+}
+
+function damageDetailTopics(hits) {
+  const hitDetails = groupedHitDetails(hits, hit => {
+    const components = Number.isFinite(hit.physical) || Number.isFinite(hit.magical)
+      ? ` (${detailNumber(hit.physical)} physical + ${detailNumber(hit.magical)} magical)` : '';
+    const rounding = hit.rounding != null && hit.rounding !== '' ? `; rounding: ${hit.rounding}` : '';
+    return [`${detailNumber(hit.incoming)} incoming${components} → ${detailNumber(hit.hpLoss)} HP damage${rounding}`];
+  });
+  const sources = groupedHitDetails(hits, hit => (hit.sources || []).map(source => {
+    const operation = source.operation === 'multiply' || Number.isFinite(source.multiplier)
+      ? `×${detailNumber(source.multiplier ?? source.amount)}`
+      : source.operation === 'set' ? `=${detailNumber(source.amount)}`
+        : Number.isFinite(source.amount) ? `${source.amount >= 0 ? '+' : '−'}${detailNumber(Math.abs(source.amount))}` : '?';
+    return `${source.label || source.id || 'Source'}: ${operation}`;
+  }));
+  const defenses = groupedHitDetails(hits, hit => {
+    const rows = [['wardReduced', 'Ward'], ['poiseReduced', null], ['blocked', 'Block']]
+      .filter(([key]) => Number.isFinite(hit[key]) && hit[key] > 0)
+      .map(([key, label]) => label ? `${label} −${detailNumber(hit[key])}` : t('combat.receipt.poiseAbsorbed', { n: detailNumber(hit[key]) }));
+    if (hit.poiseDamage > 0) rows.push(t('combat.receipt.poiseDamage', { n: detailNumber(hit.poiseDamage) }));
+    return rows;
+  });
+  return [['Hits', hitDetails, 'Inspect per-hit damage'], ['Sources', sources, 'Inspect damage sources'], ['Defenses', defenses, 'Inspect defense details']]
+    .filter(([, text]) => text);
+}
+
+export function damageReceiptHtml(receipt, { targetName = null, expanded = false } = {}) {
+  if (!Array.isArray(receipt?.hits) || !receipt.hits.length) return '';
   const scope = receipt.targetId ? `Against ${targetName || receipt.targetId}; on successful hits` : 'Before target defenses; on successful hits';
-  return `<div class="damage-receipt"><div class="tt-title">Damage calculation</div><p>${esc(scope)}</p>${lines.map(line => `<div>${esc(line)}</div>`).join('')}</div>`;
+  const title = '<div class="tt-title">Damage calculation</div>';
+  if (expanded) return `<div class="damage-receipt">${title}<p>${esc(scope)}</p>${damageReceiptLines(receipt).map(line => `<div>${esc(line)}</div>`).join('')}</div>`;
+  const summary = `${detailNumber(receipt.totalDamage)} HP damage · ${receipt.hits.length} hit${receipt.hits.length === 1 ? '' : 's'}`;
+  const topics = damageDetailTopics(receipt.hits).map(([label, text, ariaLabel]) =>
+    `<span class="tooltip-keyword" tabindex="0" role="button" aria-label="${esc(ariaLabel)}" data-tip="${esc(text)}">${label}</span>`).join(' · ');
+  return `<div class="damage-receipt">${title}<p>${esc(summary)}</p><p>${esc(scope)}</p><div>${topics}</div></div>`;
 }
 
 export function cardDamageReceipt(preview) {

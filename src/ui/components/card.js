@@ -409,7 +409,7 @@ export function renderCard(registries, ref, opts = {}) {
       const liveCosts = model.hasPreview ? model.costs : null;
       details.innerHTML = opts.tooltipFn ? sigilExplanationHtml(model.sigils) + opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts, model.damageSequences);
       const receipt = cardDamageReceipt(opts.preview);
-      if (receipt) details.insertAdjacentHTML('beforeend', damageReceiptHtml(receipt, { targetName: opts.preview.targetName }));
+      if (receipt) details.insertAdjacentHTML('beforeend', damageReceiptHtml(receipt, { targetName: opts.preview.targetName, expanded: true }));
       decorateKeywords(details);
       // AUTHORED FLAVOUR REACHES THE PLAYER, at the level that promises
       // everything. The note above the regions used to say a playing card
