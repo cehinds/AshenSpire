@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-21
 
-- **Fixed Evasion rules specified** ([#2230](https://github.com/cehinds/AshenSpire/pull/2230), `0.7.1.1752`). Evasion is a fixed defense based on Dexterity and Evade stacks; only the attacker rolls. Evade grants one stack. Gameplay implementation follows separately.
+- **Fixed Evasion rules specified** ([#2230](https://github.com/cehinds/AshenSpire/pull/2230), `0.7.1.1754`). Evasion is a fixed defense based on Dexterity and Evade stacks; only the attacker rolls. Evade grants one stack. Gameplay implementation follows separately.
 
 - **Reliable Counter previews** ([#2227](https://github.com/cehinds/AshenSpire/pull/2227), `0.7.1.1752`). Revealed enemy attacks and reaction choices now show Counter previews without crashing the packaged game.
 
