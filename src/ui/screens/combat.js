@@ -3199,8 +3199,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     pile.dataset.cardOutcome = exhausted ? 'exhaust' : 'discard';
     pile.setAttribute('aria-description', [discarded && (discarded + ' discarded'), exhausted && (exhausted + ' exhausted')].filter(Boolean).join('; '));
     if (animate && !reducedMotionRequested()) {
-      pile.classList.remove('pile-received');
-      void pile.offsetWidth;
+      // Only an active receipt animation needs the removal committed before
+      // re-adding its class. A cold start needs no synchronous layout read.
+      if (pile.classList.contains('pile-received')) {
+        pile.classList.remove('pile-received');
+        void pile.offsetWidth;
+      }
       pile.classList.add('pile-received');
     }
   }
