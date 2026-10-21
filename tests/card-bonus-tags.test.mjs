@@ -44,7 +44,7 @@ test('Core Evade retains its short body and one unquantified keyword tag', () =>
   assert.equal(tag.count, undefined);assert.equal(tag.countFormula, undefined);
   assert.match(tag.blurb, /Gain 1 Evade/);assert.doesNotMatch(tag.blurb, /On changing stance/);
   assert.deepEqual(tag.representedEffects, []);
-  assert.equal(faceWith(def, [tag]), null, 'the short authored sentence supplies the whole body');
+  assert.equal(text(faceWith(def, [tag])), 'Gain 1 Evade.', 'the shared face supplies the whole compact body');
   const preview = { values: [{ op: 'applyStatus', status: 'evade', value: 7 }] };
   assert.match(cardBonusTags(def, preview, core)[0].blurb, /Gain 7 Evade/);
 });
