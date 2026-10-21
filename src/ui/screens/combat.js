@@ -323,7 +323,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // player surface, plus every enemy for the under-model one) rather than typed.
   // Once per mount: it is a fact about the content, not about the frame.
   const resDomains = resourceDomains(registries);
-  const targetHud = mountCombatTargetHud(combatEl, { onActivate: activateTargetHud });
+  const targetHud = mountCombatTargetHud(combatEl, { onActivate: activateTargetHud,
+    canInspect: () => !busy && !enemyPlayback && !combat.result && !combat.pendingReaction && !veilIsOpen(),
+  });
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
   const combatLayout = wireCombatLayout(combatEl);
   let playerRest = 'idle';
