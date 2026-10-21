@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { rewardDom } from './helpers/reward-dom.mjs';
 import { damageReceiptLines, damageReceiptHtml, cardDamageReceipt } from '../src/ui/components/damageReceipt.js';
 
 const first = { incoming: 20, hpLoss: 12, wardReduced: 5, blocked: 3,
@@ -160,4 +161,56 @@ test('hand hit lanes route the displayed damage number at pointer/touch coordina
   assert.equal(damageNumberUnderLane({target,clientX:20,clientY:60,pointerType:'touch'}),number);
   assert.equal(damageNumberUnderLane({target,clientX:31,clientY:60}),null);
   assert.equal(damageNumberUnderLane({target:{closest:()=>null},clientX:20,clientY:60}),null);
+});
+
+test('routed damage hover leaves preserve the actual tooltip or outside destination', async () => {
+  const { bindDamageReceipt } = await import('../src/ui/components/damageReceipt.js');
+  const { hideTooltip } = await import('../src/ui/components/tooltip.js');
+  const dom = rewardDom();
+  Object.defineProperty(Object.getPrototypeOf(dom.document.body), 'parentElement', { get() { return this.parentNode; } });
+  const listeners = new Map();
+  dom.document.addEventListener = (type, fn) => {
+    if (!listeners.has(type)) listeners.set(type, []);
+    listeners.get(type).push(fn);
+  };
+  dom.document.documentElement = dom.document.body;
+  dom.document.elementFromPoint = () => null;
+  const globals = { document: dom.document, PointerEvent: dom.Event,
+    MutationObserver: class { observe() {} disconnect() {} },
+    setTimeout: () => 1, clearTimeout() {},
+  };
+  const previous = Object.fromEntries(Object.keys(globals).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, globals);
+  try {
+    const card = document.createElement('div'); document.body.appendChild(card);
+    const face = document.createElement('span'); face.dataset.faceKind = 'damage'; card.appendChild(face);
+    const number = document.createElement('span'); number.className = 'val'; number.textContent = '12';
+    number.box = { left: 10, right: 30, top: 50, bottom: 70 }; face.appendChild(number);
+    const lane = document.createElement('div'); lane.className = 'hand-hit-lane'; card.appendChild(lane);
+    const panel = document.createElement('div'); panel.id = 'tooltip'; document.body.appendChild(panel);
+    const keyword = document.createElement('span'); keyword.className = 'tooltip-keyword'; panel.appendChild(keyword);
+    const outside = document.createElement('div'); document.body.appendChild(outside);
+    bindDamageReceipt(card, { values: [{ op: 'damage', damageReceipt: { hits: [first], totalDamage: 12 } }] });
+    assert.equal(number.dataset.damageReceipt, 'true', 'the production binding registered the inspected number');
+    const leaves = [];
+    number.addEventListener('pointerleave', event => leaves.push(event));
+    const move = (target, clientX, clientY) => {
+      const event = new PointerEvent('pointermove', { target, clientX, clientY, pointerType: 'mouse' });
+      for (const listener of listeners.get('pointermove') || []) listener(event);
+    };
+    move(lane, 20, 60);
+    move(keyword, 100, 100);
+    assert.equal(leaves.length, 1);
+    assert.equal(leaves[0].relatedTarget, keyword, 'the tooltip region can retain its owner while entering a keyword');
+    assert.equal(leaves[0].pointerType, 'mouse');
+    move(lane, 20, 60);
+    move(outside, 200, 200);
+    assert.equal(leaves.length, 2);
+    assert.equal(leaves[1].relatedTarget, outside, 'leaving to unrelated content still names the actual outside target');
+  } finally {
+    hideTooltip();
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete globalThis[key]; else globalThis[key] = value;
+    }
+  }
 });

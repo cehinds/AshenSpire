@@ -113,7 +113,7 @@ function routeHandDamageInspection() {
   document.addEventListener('pointermove', event => {
     const next = event.pointerType === 'touch' ? null : damageNumberUnderLane(event);
     if (next === hovered) return;
-    hovered?.dispatchEvent(new PointerEvent('pointerleave', { pointerType: event.pointerType || 'mouse' }));
+    hovered?.dispatchEvent(new PointerEvent('pointerleave', { pointerType: event.pointerType || 'mouse', relatedTarget: event.target }));
     hovered = next;
     hovered?.dispatchEvent(new PointerEvent('pointerenter', { pointerType: event.pointerType || 'mouse', clientX: event.clientX, clientY: event.clientY }));
   }, true);
