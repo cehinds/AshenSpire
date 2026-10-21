@@ -10,6 +10,14 @@ During targeting, both retain their existing card/flask commit behavior. Name
 events stop propagation, so one gesture never also invokes the frame handler.
 Overhead Information controls retain priority over the core.
 
+The detailed target HUD replaces those hidden footers on phones. While a card
+or targeted flask is armed, its visible name/HP panel delegates to the combat
+owner's current legal-target checks, including for a card dropped onto it.
+Crowded aiming panels keep a minimum 44px height and leave intent overhead so
+neighboring targets remain reachable. Information and deliberate inspection
+holds still inspect; a completed hold never plays the card on release. Without
+an armed action, the panel retains its full details and inspection gestures.
+
 This revises the earlier centered-core implementation recorded in the combat
 session continuation. That implementation intercepted the name button's center.
 Moving only the transparent enemy core restores the name's native inspection
