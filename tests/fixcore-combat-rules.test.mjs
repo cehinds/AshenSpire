@@ -9,7 +9,7 @@ import { staggerEnemy } from '../src/engine/actions.js';
 import { fixCoreRules } from '../src/model/fixCoreMechanics.js';
 import { sourceRatingValue } from '../src/model/combatRatings.js';
 import { stanceStaminaCost, stanceManaCost, stanceEffectiveness } from '../src/model/stanceRules.js';
-import { attackHitPreview, resolveAttackHit, effectiveEvasion, precisionStatMix, precisionEntryGrant } from '../src/engine/stanceHit.js';
+import { attackHitPreview, resolveAttackHit, effectiveEvasion, evadeStackGain, precisionStatMix, precisionEntryGrant } from '../src/engine/stanceHit.js';
 import { rollKnowledgeRead } from '../src/model/enemyIntentKnowledge.js';
 import { enemyKnowledge } from '../src/content/enemyKnowledge.js';
 
@@ -60,39 +60,55 @@ test('enemy-turn same-stance reaction discounts SP once regardless of the MP lan
  assert.equal(stanceStaminaCost(3,ctx.player,{...reaction,cardTags:[]},ctx),3);
  ctx.player.combatStance.maneuver='attack';assert.equal(stanceStaminaCost(3,ctx.player,reaction,ctx),3);
 });
-test('opposed d20 odds exactly match resolution, including natural limits (owner, 2026-10-19)',()=>{
+test('fixed Evasion preview matches every attacker outcome and uses no defender RNG',()=>{
  const {ctx,enemy}=setup();const carrier={combatProfile:{camp:'physical',maneuver:'smash',range:'melee'}};
- // Precision = 1 + floor(.5 DEX + .1 STR + .2 (WIS + INT) + level) x (stacks + 1) + Smash 1 = 1 + floor(1 + 0 + 0 + 2) x 3 + 1 = 11.
  ctx.player.attributes={dexterity:2,strength:0,wisdom:0,intelligence:0};ctx.player.level=2;ctx.player.statuses.precision={stacks:2};
- // Evasion = 1 + stacks x (baseAC 1 + DEX 4) = 16 with three Evade stacks.
  enemy.statuses.evade={stacks:3};
- const preview=attackHitPreview(ctx,ctx.player,enemy,carrier);
- assert.equal(preview.accuracy,11);assert.equal(preview.evasion,16);assert.equal(preview.stanceFactor,undefined);
- let expected=0,hit=0;
- for(let attack=1;attack<=20;attack++) for(let defence=1;defence<=20;defence++) {
-  const want=attack===20||attack!==1&&attack+11>=defence+16;if(want)expected++;
-  const queue=[attack,defence];ctx.rng={int:()=>queue.shift()};
-  const result=resolveAttackHit(ctx,ctx.player,{...enemy,statuses:structuredClone(enemy.statuses)},carrier);
-  assert.equal(result.hit,want,`attack ${attack} vs ${defence}`);
-  assert.equal(result.attackTotal,attack+11);assert.equal(result.evasionTotal,defence+16);
-  if(result.hit)hit++;
+ for (const mode of ['normal','advantage','disadvantage']) {
+  const source={...ctx.player,accuracyAdvantage:mode==='advantage',accuracyDisadvantage:mode==='disadvantage'};
+  const before=JSON.stringify({enemy,source});
+  ctx.rng={int:()=>{throw new Error('preview consumed RNG');}};
+  const preview=attackHitPreview(ctx,source,enemy,carrier);
+  assert.equal(JSON.stringify({enemy,source}),before);
+  assert.equal(preview.accuracy,11);assert.equal(preview.evasion,20);assert.equal(preview.opposed,false);assert.equal(preview.fixedDefense,true);
+  let hits=0,outcomes=0;
+  for(let a=1;a<=20;a++) for(let b=1;b<=(mode==='normal'?1:20);b++) {
+   const die=mode==='normal'?a:mode==='advantage'?Math.max(a,b):Math.min(a,b);
+   const want=die===20||die!==1&&die+11>=20;
+   const queue=mode==='normal'?[a]:[a,b];let draws=0;
+   ctx.rng={int:(stream,min,max)=>{assert.equal(stream,'combatAvoidance');assert.equal(min,1);assert.equal(max,20);draws++;assert.ok(queue.length,'extra RNG draw');return queue.shift();}};
+   const result=resolveAttackHit(ctx,source,{...enemy,statuses:structuredClone(enemy.statuses)},carrier);
+   assert.equal(result.hit,want,`${mode}: ${a},${b}`);assert.equal(draws,mode==='normal'?1:2);
+   assert.equal(result.attackTotal,die+11);assert.equal(result.evasionTotal,20);assert.equal(result.evasionDie,undefined);
+   if(result.hit)hits++;outcomes++;
+  }
+  assert.equal(preview.hitChance,Math.floor(100*hits/outcomes));
  }
- assert.equal(hit,expected);assert.equal(preview.hitChance,Math.floor(100*expected/400));
- // Advantage takes the better of two attacker dice: exact over 20 x 20 x 20 outcomes, floored.
- const advantaged=attackHitPreview(ctx,{...ctx.player,accuracyAdvantage:true},enemy,carrier);
- let wins=0;for(let a=1;a<=20;a++)for(let b=1;b<=20;b++)for(let d=1;d<=20;d++){const die=Math.max(a,b);if(die===20||die!==1&&die+11>=d+16)wins++;}
- assert.equal(advantaged.hitChance,Math.floor(100*wins/8000));
- enemy.attributes.dexterity=1000;const rolls=[20,1];ctx.rng={int:()=>rolls.shift()};assert.equal(resolveAttackHit(ctx,ctx.player,enemy,carrier).hit,true);
- const lowRolls=[1,20];ctx.rng={int:()=>lowRolls.shift()};assert.equal(resolveAttackHit(ctx,ctx.player,enemy,carrier).hit,false);
+ // Natural limits still apply when the threshold is otherwise impossible or trivial.
+ enemy.attributes.dexterity=1000;ctx.rng={int:()=>20};assert.equal(resolveAttackHit(ctx,ctx.player,enemy,carrier).hit,true);
+ enemy.attributes.dexterity=0;ctx.rng={int:()=>1};assert.equal(resolveAttackHit(ctx,ctx.player,enemy,carrier).hit,false);
+ const disadvantaged={...ctx.player,accuracyDisadvantage:true};const queue=[20,1];ctx.rng={int:()=>queue.shift()};
+ assert.equal(resolveAttackHit(ctx,disadvantaged,enemy,carrier).hit,false,'disadvantage uses the selected die, including naturals');
 });
-test('Evasion follows 1 + stacks x (baseAC + DEX): the owner worked example at DEX 2 is +10, +7, +4',()=>{
+test('fixed Evasion retains DEX at zero stacks and applies gear once',()=>{
  const {ctx}=setup();const defender={...ctx.enemies[0],attributes:{dexterity:2},statuses:{}};
  const evasion=stacks=>{defender.statuses={evade:{stacks}};return effectiveEvasion(ctx,defender);};
- assert.equal(evasion(3),10);assert.equal(evasion(2),7);assert.equal(evasion(1),4);assert.equal(evasion(0),1);
- defender.baseEvasionBonus=2; // gear Evasion adds to the per-stack base
- assert.equal(evasion(3),1+3*(1+2+2));
+ assert.equal(evasion(0),3);assert.equal(evasion(1),6);assert.equal(evasion(2),9);
+ defender.baseEvasionBonus=2;
+ assert.equal(evasion(0),5);assert.equal(evasion(1),8);assert.equal(evasion(2),11);
+ defender.combatEvade={charges:1,bonus:4};assert.equal(evasion(2),15);
+ assert.equal(effectiveEvasion(ctx,defender,{evadeDisabled:true}),5,'only stacks and prepared bonus are suppressed');
+ defender.combatEvade.charges=0;assert.equal(evasion(2),11,'spent preparation contributes no bonus');
+ ctx.fixCoreRules.accuracy.baseAC=2;ctx.fixCoreRules.accuracy.evasionBase=4;
+ assert.equal(evasion(2),16,'configured base and per-stack base stay data driven');
 });
-test('Precision stacks are gained like Evade: 1 + stat mix; DEX 2, level 1 gives 3 stacks and Precision 9 (owner, 2026-10-19)',()=>{
+test('shipped Evade grants exactly one stack for every DEX value',()=>{
+ const {ctx}=setup();
+ for(const dexterity of [0,2,17,100]) {
+  ctx.player.attributes={dexterity};assert.equal(evadeStackGain(ctx,ctx.player),1);
+ }
+});
+test('Precision entry remains 1 + stat mix; DEX 2, level 1 gives 3 stacks and Precision 9 (owner, 2026-10-19)',()=>{
  const {ctx,enemy}=setup();ctx.player.attributes={dexterity:2,strength:0,wisdom:0,intelligence:0};ctx.player.level=1;
  assert.equal(precisionStatMix(ctx,ctx.player),2);
  const grant=precisionEntryGrant(ctx,ctx.player,1);assert.equal(grant,3);assert.equal(precisionEntryGrant(ctx,ctx.player,0),0);

@@ -45,6 +45,7 @@ import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity, mirrorSigil } from '..
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { armsAsCoreCounter } from '../../model/profileStance.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
+import { evadeGrantOnlyCard } from '../../model/fixCoreMechanics.js';
 import { wardReadsAsPoise, wardOffCardText } from '../../model/wardOffCardText.js';
 import { spellDefenseSplit } from '../../model/spellDefense.js';
 
@@ -609,7 +610,7 @@ export function cardPlainText(registries, ref, opts = {}) {
   const def = playingCardDefinition(registries, ref, opts);
   const model = opts.preview ? playingCardModel(registries, ref, { ...opts, definition: def })
     : { tokens: staticTokens(def, registries, opts.rules || null), damageSequences: [] };
-  const lines = opts.rules?.combatExpansionVersion === 2 || opts.preview?.combatExpansionVersion === 2
+  const lines = opts.rules?.combatExpansionVersion === 2 || opts.preview?.combatExpansionVersion === 2 || evadeGrantOnlyCard(def)
     ? (baseCardPresentation[def.id] ? null : cardFaceLines(def, opts.preview || null, registries, opts.rules || null)) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.

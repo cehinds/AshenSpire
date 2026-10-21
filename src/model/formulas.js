@@ -130,7 +130,7 @@ export function describeFormula(formula) {
       damageTakenThisTurn: formula.of === 'self' ? 'HP lost this turn' : null,
       distinctTypes: formula.of === 'self' ? 'distinct card type played this turn' : null,
       sameCardPlays: formula.of === 'self' ? 'play of this card this combat' : null,
-      evadeStackGain: formula.of === 'self' ? '1 plus DEX' : null,
+      evadeStackGain: formula.of === 'self' ? '1' : null,
     }[formula.metric];
     const per = formula.per ?? 1;
     if (metricText) {

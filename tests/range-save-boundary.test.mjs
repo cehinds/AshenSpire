@@ -215,7 +215,7 @@ test('a real paid three-hit approach resumes through SaveManager without repeat 
   Object.assign(combat.enemies[0], { maxStamina: 3, stamina: 3 });
   const pair = rangePairKey(combat.player.rangeActorKey, combat.enemies[0].rangeActorKey);
   combat.rangeState.engagements[pair] = 2;
-  primeAccuracyRolls(combat, { count: 3, drawsPerAttack: 2 });
+  primeAccuracyRolls(combat, { count: 3 });
   dispatch(combat, { type: 'endTurn' });
   assert.ok(combat.pendingReaction);
   assert.equal(combat.enemies[0].stamina, 0, 'base 1 SP and two-band Advance have already been paid');

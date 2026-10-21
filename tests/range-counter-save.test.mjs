@@ -44,7 +44,7 @@ function fixture({ die = 20, count = 4 } = {}) {
   combat.player.stamina = 2; combat.player.block = 100;
   Object.assign(combat.enemies[0], { maxStamina: 1, stamina: 1 });
   combat.rangeState.engagements[rangePairKey(combat.player.rangeActorKey, combat.enemies[0].rangeActorKey)] = 2;
-  primeAccuracyRolls(combat, { die, count, drawsPerAttack: 2 });
+  primeAccuracyRolls(combat, { die, count });
   dispatch(combat, { type: 'endTurn' });
   return { registries, run, combat, alternate };
 }

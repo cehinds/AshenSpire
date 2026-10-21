@@ -88,7 +88,7 @@ test('paid hand Counter reserves its return approach after stance discount and n
   ctx.piles.hand=[{instanceId:'counter-range',cardId:'core.counter'}];
   ctx.player.combatStance={maneuver:'counter',camp:'physical',range:'melee'};
   ctx.player.stamina=2;
-  primeAccuracyRolls(ctx,{count:2,drawsPerAttack:2});
+  primeAccuracyRolls(ctx,{count:2});
   dispatch(ctx,{type:'endTurn'});
   const option=ctx.pendingReaction?.options.find(row=>row.cardId==='core.counter' && row.play.rangeRoute==='advance');
   assert.ok(option);
@@ -106,7 +106,7 @@ test('unaffordable automatic Counter preserves interception but spends no offens
   ctx.piles.hand=[{instanceId:'counter-range',cardId:'core.counter'}];
   ctx.player.stamina=1;
   dispatch(ctx,{type:'playCard',cardInstanceId:'counter-range'});
-  primeAccuracyRolls(ctx,{count:3,drawsPerAttack:2});
+  primeAccuracyRolls(ctx,{count:3});
   dispatch(ctx,{type:'setReactions',enabled:false});
   const start=ctx.eventLog.length;
   dispatch(ctx,{type:'endTurn'});
@@ -150,7 +150,7 @@ test('a missed incoming contact neither refunds nor preserves its paid Counter r
   ctx.piles.hand=[{instanceId:'counter-range',cardId:'core.counter'}];
   ctx.player.combatStance={maneuver:'counter',camp:'physical',range:'melee'};
   ctx.player.stamina=2;
-  primeAccuracyRolls(ctx,{die:1,count:3,drawsPerAttack:2});
+  primeAccuracyRolls(ctx,{die:1,count:3});
   dispatch(ctx,{type:'endTurn'});
   const option=ctx.pendingReaction.options.find(row=>row.play.rangeRoute==='advance');
   assert.equal(option.staminaCost,2);

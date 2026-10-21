@@ -38,9 +38,10 @@
     "minimumCost": 1
   },
   "accuracy": {
+    "evasionVersion": 2,
     "baseAC": 1,
     "evadeStackBase": 1,
-    "evadeStackDex": 1,
+    "evadeStackDex": 0,
     "precisionBase": 1,
     "evasionBase": 1,
     "precisionWeights": {

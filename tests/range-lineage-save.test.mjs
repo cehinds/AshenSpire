@@ -94,7 +94,7 @@ test('independent weapon and spell contacts keep their own frozen source through
   const quote = previewCard(combat, 'mixed-strike', 'e1');
   assert.deepEqual(quote.range.targets[0].contacts.map(contact => contact.coverage), [0, 1]);
   combat.player.stamina = quote.staminaCost;
-  primeAccuracyRolls(combat, { count: 2, drawsPerAttack: 2 });
+  primeAccuracyRolls(combat, { count: 2 });
   dispatch(combat, { type: 'playCard', cardInstanceId: 'mixed-strike', targetId: 'e1' });
   assert.ok(combat.pendingAbilityDiscard);
   const sources = combat.queue.filter(action => action.effect.op === 'damage').map(action => json(action.card.resolvedRangeSource));
@@ -148,7 +148,7 @@ function pausedLineage() {
   }
   const quote = previewCard(combat, 'root-strike', 'e1');
   combat.player.stamina = quote.staminaCost;
-  primeAccuracyRolls(combat, { count: 2, drawsPerAttack: 2 });
+  primeAccuracyRolls(combat, { count: 2 });
   dispatch(combat, { type: 'playCard', cardInstanceId: 'root-strike', targetId: 'e1' });
   assert.ok(combat.pendingAbilityDiscard, 'the owned hook pauses before its inherited rider');
   const rider = combat.queue.find(action => action.card?.rangeLineage && action.effect.op === 'damage');
@@ -236,7 +236,7 @@ test('a paid Counter saves its whole reserved trigger graph before the incoming 
     enemy.maxStamina = enemy.stamina = index === 0 ? 1 : 0;
     combat.rangeState.engagements[rangePairKey(combat.player.rangeActorKey, enemy.rangeActorKey)] = 2;
   }
-  primeAccuracyRolls(combat, { count: 3, drawsPerAttack: 2 });
+  primeAccuracyRolls(combat, { count: 3 });
   dispatch(combat, { type: 'endTurn' });
   const option = combat.pendingReaction?.options.find(option => option.cardId === 'core.counter' && option.play.rangeRoute === 'advance');
   assert.ok(option);
