@@ -45,8 +45,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
         if (!plan || !plan.shadows.length) {
           // Unknown future filter grammar preserves its original rendering rather
           // than silently discarding effects. Authored filters use the fast path.
-          if (context.filter !== filter) context.filter = filter;
-          context.drawImage(image, x, y, width, height);
+          context.filter = filter; context.drawImage(image, x, y, width, height);
         } else {
           // Hit-stop and contact holds can request the same immutable bitmap at
           // the same placement on successive frames. The work surface already
@@ -55,8 +54,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
             && entry.x === x && entry.y === y && entry.width === width && entry.height === height;
           const cached = (reuse && rendered.find(matches)) || (immutable && matches(current) && current);
           if (cached) {
-            const compositeFilter = plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`;
-            if (context.filter !== compositeFilter) context.filter = compositeFilter;
+            context.filter = plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`;
             context.drawImage(cached.surface, 0, 0);
             if (materialize) context.getImageData(0, 0, 1, 1);
             return true;
@@ -86,8 +84,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
             rendered.push({image,filter,x,y,width,height,surface:copy});
             if (rendered.length > 4) { const oldest = rendered.shift().surface; oldest.width = oldest.height = 0; }
           }
-          const compositeFilter = plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`;
-          if (context.filter !== compositeFilter) context.filter = compositeFilter;
+          context.filter = plan.brightness === 1 ? 'none' : `brightness(${plan.brightness})`;
           context.drawImage(surface, 0, 0);
         }
         if (materialize) context.getImageData(0, 0, 1, 1);
