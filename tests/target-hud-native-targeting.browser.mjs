@@ -55,12 +55,13 @@ try {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.addInitScript(() => {
-      // Observe the authored hold callback without changing its deadline or
-      // behavior. Slow setup must not silently turn this into a >700ms test.
+      // Observe the authored hold callback without changing its behavior. The
+      // <700ms assertion guards against restoring the former global cooldown;
+      // suppression itself now belongs to the originating pointer.
       window.__targetHoldProbe = { fired: null, activations: [] };
       const timeout = window.setTimeout;
       window.setTimeout = function (callback, delay, ...args) {
-        if (typeof callback === 'function' && Number(delay) === 500 && callback.toString().includes('suppressClickUntil')) {
+        if (typeof callback === 'function' && Number(delay) === 500 && callback.toString().includes('inspectionPointer')) {
           const original = callback;
           callback = function (...params) { window.__targetHoldProbe.fired = performance.now(); return original.apply(this, params); };
         }
@@ -109,7 +110,7 @@ try {
     }, { target, keyboard: width === 412, since: activationStart });
     assert.notEqual(timing.fired, null, 'the actual inspection hold callback was observed');
     assert.ok(timing.activation && timing.elapsed >= 0 && timing.elapsed < 700,
-      `fresh activation must exercise the suppression interval, observed ${JSON.stringify(timing)}`);
+      `fresh activation must stay inside the former cooldown interval, observed ${JSON.stringify(timing)}`);
     if (width === 375) await page.touchscreen.tap(name.x, name.y);
     await expectPlay(page, before, target);
     // After actual playback settles, the remaining Strike and its live target

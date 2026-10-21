@@ -173,7 +173,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         const outcome = event.type === 'attackHit' ? 'hit' : 'missed';
         const dice = Array.isArray(event.dice) && event.dice.length ? event.dice.join(', ') : event.d20 ?? 'automatic';
         if (event.evasionDie != null) text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} = ${event.attackTotal} vs d20 [${event.evasionDie}] + Evasion ${event.evasion ?? 0} = ${event.evasionTotal} · ${event.mode || 'normal'} · ${event.hitChance ?? 100}% chance.`;
-        else if (event.fixedDefense && event.dice?.length) text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} = ${event.attackTotal} vs fixed Evasion ${event.evasion ?? 0} · ${event.mode || 'normal'} · ${event.hitChance ?? 100}% chance.`;
+        else if (event.fixedDefense && event.dice?.length) text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} = ${event.attackTotal} vs Evasion ${event.evasion ?? 0} · ${event.mode || 'normal'} · ${event.hitChance ?? 100}% chance.`;
         else if (event.opposed || event.fixedDefense) {
           // Core automatic outcome: no dice were rolled, so say why instead of showing a die.
           const why = event.missReason === 'range' ? 'out of range' : event.bypass ? 'Evasion bypassed' : 'automatic';

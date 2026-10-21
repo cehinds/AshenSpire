@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// tools/motion-probe.mjs — idle life and reduced motion, measured in a real
-// browser (docs/FINISH.md §5 "The idle animation plays", §9 "Reduced motion is
+// tools/motion-probe.mjs — stationary rest and reduced motion, measured in a real
+// browser (docs/FINISH.md §5 "Resting fighters stay still", §9 "Reduced motion is
 // proven in a browser").
 //
 //   node tools/motion-probe.mjs              the checks below; exit 0 green, 1 red
@@ -17,22 +17,10 @@
 //                 loaded figure image (an <img> with pixels, or the
 //                 Classic style's drawn <svg>). Default rear canvases keep a
 //                 painted, fixed anchor/scale/rest pose over twenty frames;
-//                 other figures are moved by an
-//                 idle animation: on the image or on the layer inside .sprite
-//                 that carries it (.facing, a painted .pose-layer; D42),
-//                 `getComputedStyle(el).animationName !== 'none'` AND a running,
-//                 infinite CSSAnimation of that name (a script cancel leaves
-//                 the name and stops the motion), and it must be sprite-idle
-//                 with keyframes that change a displacing property
-//                 (translate, transform, position, margin), not a fade. IDLE-AFTER repeats it once
-//                 the motion-on turn has settled, when enemies may rest in a
-//                 guard, wounded or afflicted pose. IDLE-rendered and
-//                 IDLE-classic redraw the player in those sprite styles and
-//                 repeat it (the Glyph style is a sigil panel, not a figure,
-//                 and is not checked). No figure may be moved by two idle
-//                 carriers at once (it would bob twice as far). The real Classic
-//                 display appearance exercises both Rendered and Classic styles,
-//                 while Default keeps its authored rear canvas and action playback.
+//                 every other rendering style also holds its visible loaded
+//                 image/SVG/canvas still. Twenty RAF samples reject displaced
+//                 bounds, active translation/scale/rotation and changed canvas
+//                 pixels. Status/aura opacity feedback remains independent.
 //   CONTROL       with motion on, the same sampler over the same turn sees a
 //                 finite CSS animation, a CSS transition and an Element.animate()
 //                 call over the limit, so a green REDUCED line is not a blind
@@ -103,11 +91,8 @@ const VIEWPORT = { width: 1440, height: 900 };
 // opt-in changes only boot readiness, never action deadlines or motion limits.
 const BOOT_TIMEOUT_MS = Math.max(20000, Math.min(120000, Number(process.env.MOTION_BOOT_TIMEOUT_MS) || 20000));
 const ALTERNATIVE = existsSync(new URL('../src/ui/alternativeArt.js', import.meta.url));
-// Compatibility policy for anchored-canvas probes. Production Default uses
-// the stronger fixedRest geometry/pixel gate; Classic retains its clocked bob.
-const CANVAS_IDLE = 'anchored';
 const argv = process.argv.slice(2);
-const CLASSIC = argv.includes('--classic'); // original idle-bob plants use the actual Classic appearance
+const CLASSIC = argv.includes('--classic'); // style-specific negatives boot the actual Classic appearance
 const SEED = argv.includes('--seed') ? argv[argv.indexOf('--seed') + 1] : 'MOTION1';
 const DUMP = argv.includes('--dump'); // print every animation and scripted change seen
 
@@ -139,115 +124,92 @@ if (argv.includes('--selftest')) {
       'assets/combat-effects', 'assets/animations/player-counter-sweep', ...(ALTERNATIVE ? ['assets-display'] : [])],
     plants: [
       {
-        name: 'the idle bob goes back to the dead `.sprite > img` selector',
+        name: "a resting facing layer bobs",
+        args: ['--classic'],
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle',
-        replace: '.combatant .sprite > img { animation: sprite-idle',
-        expectRed: /RED IDLE player#\d+ — .*no idle animation/,
+        find: "/* Fighters hold their authored resting pose in every rendering style. */",
+        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:0 -4px; } }\n.combatant .sprite .facing { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
+        expectRed: /RED IDLE(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
       },
       {
-        // #1475 review: the carrier list before the Rendered style's still
-        // painting was in it, so that figure never bobbed.
-        name: 'the idle bob leaves out the Rendered style\'s painting',
+        name: "the Rendered figure bobs",
+        args: ['--classic'],
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle',
-        replace: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer) { animation: sprite-idle',
-        expectRed: ALTERNATIVE ? /RED IDLE-rendered player#\d+ — .*no idle animation/
-          : /RED IDLE-rendered player#\d+ — .*img\.painted-presentation: no idle animation/,
+        find: "/* Fighters hold their authored resting pose in every rendering style. */",
+        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:0 -4px; } }\n.combatant .sprite .rendered-stage { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
+        expectRed: /RED IDLE-rendered(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
       },
       {
-        // #1475 review: the Rendered carriers before they were the common
-        // stage, so the hidden nested stage started its own timeline.
-        name: 'the Rendered style bobs its painting and its nested stage separately',
+        name: "the hidden Rendered rest layer bobs",
+        args: ['--classic'],
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle',
-        replace: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: sprite-idle',
-        expectRed: /RED IDLE-rendered-ONE-TIMELINE — a second idle timeline/,
+        find: "/* Fighters hold their authored resting pose in every rendering style. */",
+        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:0 -4px; } }\n.rendered-stage .painted-stage { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
+        expectRed: /RED IDLE-rendered-STATIC-NESTED(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
       },
       {
-        // #1475 review: a named, running, infinite bob that never moves.
-        name: 'the idle keyframes are flattened to one position',
+        name: "a figure image bobs inside a stationary stage",
+        args: ['--classic'],
         file: 'styles/combat.css',
-        find: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }',
-        replace: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 0; } }',
-        expectRed: /RED IDLE \w+#\d+ — .*keyframes never move it/,
+        find: "/* Fighters hold their authored resting pose in every rendering style. */",
+        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:0 -4px; } }\n.combatant .sprite :is(img,svg,canvas) { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
+        expectRed: /RED IDLE(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
       },
       {
-        // #1475 review: a bob turned into a fade still "changes" keyframes.
-        name: 'the idle keyframes fade instead of moving',
+        name: "a resting figure scales",
+        args: ['--classic'],
         file: 'styles/combat.css',
-        find: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }',
-        replace: '@keyframes sprite-idle { 0%, 100% { opacity: 1; } 50% { opacity: 0.85; } }',
-        expectRed: /RED IDLE \w+#\d+ — .*keyframes never move it/,
+        find: "/* Fighters hold their authored resting pose in every rendering style. */",
+        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { scale:1.1; } }\n.combatant .sprite .facing { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
+        expectRed: /RED IDLE(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
       },
       {
-        // #1475 review: a figure laid out but transparent draws nothing, so
-        // it is not a visible figure the bob could be credited for.
-        name: 'the idle carriers are made transparent',
+        name: "the idle carriers are made transparent",
+        args: ['--classic'],
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite;',
-        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { opacity: 0; animation: sprite-idle 3.1s ease-in-out infinite;',
-        expectRed: /RED IDLE \w+#\d+ — .*no visible figure image to animate/,
+        find: "/* Fighters hold their authored resting pose in every rendering style. */",
+        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n.combatant .sprite :is(.facing,.pose-layer,.rendered-stage,.alternative-silhouette,.enemy-expansion-bob) { opacity:0 !important; }",
+        expectRed: /RED IDLE \w+#\d+ — .*no visible figure image/,
       },
       {
-        // #1475 review: a whole combatant made transparent hides its figure
-        // too, though every layer inside it is opaque.
-        name: 'the combatants are made transparent',
+        name: "the combatants are made transparent",
+        args: ['--classic'],
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite;',
-        replace: '.combatant { opacity: 0 !important; }\n.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite;',
-        expectRed: /RED IDLE \w+#\d+ — .*no visible figure image to animate/,
+        find: "/* Fighters hold their authored resting pose in every rendering style. */",
+        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n.combatant { opacity:0 !important; }",
+        expectRed: /RED IDLE \w+#\d+ — .*no visible figure image/,
       },
       {
-        // #1475 review: the co-op board rebuilds its combatants on every
-        // render, and each rebuilt carrier restarted the bob at its start.
-        name: 'the idle bob starts with its carrier instead of keeping the clock',
-        file: 'src/ui/assets.js',
-        find: "  if (run && run.startTime !== 0) run.startTime = 0;",
-        replace: "  if (run && run.startTime !== 0) void run;",
-        expectRed: /RED IDLE \w+#\d+ — .*off the document clock/,
-      },
-      {
-        // #1475 review: a moving companion animation on the carrier must not
-        // vouch for a flattened bob beside it.
-        name: 'the idle keyframes are flattened while a shake runs beside them',
-        edits: [
-          { file: 'styles/combat.css',
-            find: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }',
-            replace: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 0; } }' },
-          { file: 'styles/combat.css',
-            find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite;',
-            replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite, shake 3.1s infinite;' },
-        ],
-        expectRed: /RED IDLE \w+#\d+ — .*keyframes never move it/,
-      },
-      {
-        // #1475 review: another infinite animation must not stand in for the
-        // bob. The carriers run the gold pulse instead of sprite-idle.
-        name: 'the idle carriers run another infinite animation, not the bob',
+        name: "a resting actor wrapper translates",
+        args: ['--classic'],
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite;',
-        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .alternative-card-stage) { animation: pulse-gold 3.1s ease-in-out infinite;',
-        expectRed: /RED IDLE \w+#\d+ — .*no idle animation on it or its layers/,
+        find: "/* Fighters hold their authored resting pose in every rendering style. */",
+        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { translate:4px 0; } }\n.combatant .sprite { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
+        expectRed: /RED IDLE(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
       },
       {
-        // This PR's first shape: the bob on the idle images themselves. A
-        // figure is more than its idle image, so the bob does not follow it:
-        // after the strike the enemy settles into a rest pose drawn by its
-        // state image (img.enemy-pose-state), which stands still, and the
-        // painted player's outgoing cross-fade frame runs a second idle
-        // timeline beside the incoming one in the Rendered style.
-        // (Until #1641 the pose swap also cancelled every animation on its
-        // frames via getAnimations(), and this plant was named by "named on
-        // ... but not running". The swap now cancels only its own cross-fade
-        // by handle, so that symptom is gone; the defect is not.)
-        name: 'the idle bob sits on the figure images instead of their layer',
+        name: "a resting figure rotates",
+        args: ['--classic'],
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle',
-        replace: '.combatant .sprite :is(img.pose-frame, img.enemy-pose-idle) { animation: sprite-idle',
-        // #1795's painted enemies use img.pose-frame, so this plant now bobs
-        // them on the image; the defect still shows on the player's layers.
-        expectRed: /RED IDLE-rendered-ONE-TIMELINE — a second idle timeline inside \.rendered-stage: img\.pose-frame[\s\S]*RED IDLE-classic player#\d+ — .*svg: no idle animation on it or its layers/,
+        find: "/* Fighters hold their authored resting pose in every rendering style. */",
+        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; scale:1; rotate:0deg; } to { rotate:5deg; } }\n.combatant .sprite .facing { animation: sprite-idle 3.1s ease-in-out infinite alternate; }",
+        expectRed: /RED IDLE(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
+      },
+      {
+        name: "a companion shake moves resting art",
+        args: ['--classic'],
+        file: 'styles/combat.css',
+        find: "/* Fighters hold their authored resting pose in every rendering style. */",
+        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n.combatant .sprite .facing { animation: shake 3.1s infinite; }",
+        expectRed: /RED IDLE(?: \w+#\d+)? — .*(?:moves while resting|idle animation)/,
+      },
+      {
+        name: "the resting figure artwork is hidden",
+        args: ['--classic'],
+        file: 'styles/combat.css',
+        find: "/* Fighters hold their authored resting pose in every rendering style. */",
+        replace: "/* Fighters hold their authored resting pose in every rendering style. */\n.combatant .sprite :is(img,svg,canvas) { display:none !important; }",
+        expectRed: /RED IDLE \w+#\d+ — .*no visible figure image/,
       },
       ...(ALTERNATIVE ? [{
         name: 'the class canvas paints no character pixels',
@@ -267,14 +229,14 @@ if (argv.includes('--selftest')) {
       }, {
         name: 'the fixed rear stage gains an idle translation',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }',
-        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }\n.combatant .sprite > .alternative-card-stage { animation: sprite-idle 3.1s ease-in-out infinite; }',
+        find: '/* Fighters hold their authored resting pose in every rendering style. */',
+        replace: '/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes sprite-idle { from { translate:0 0; } to { translate:0 -4px; } }\n.combatant .sprite > .alternative-card-stage { animation: sprite-idle 3.1s ease-in-out infinite; }',
         expectRed: /RED IDLE player#\d+ — .*fixed rest/,
       }, {
         name: 'the fixed rear stage changes scale while resting',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }',
-        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage, .alternative-silhouette, .enemy-expansion-bob) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }\n@keyframes broken-rear-scale { from { transform: scale(1); } to { transform: scale(1.1); } }\n.combatant .sprite > .alternative-card-stage { animation: broken-rear-scale 1s linear infinite alternate; }',
+        find: '/* Fighters hold their authored resting pose in every rendering style. */',
+        replace: '/* Fighters hold their authored resting pose in every rendering style. */\n@keyframes broken-rear-scale { from { transform: scale(1); } to { transform: scale(1.1); } }\n.combatant .sprite > .alternative-card-stage { animation: broken-rear-scale 1s linear infinite alternate; }',
         expectRed: /RED IDLE player#\d+ — .*fixed rest/,
       }] : []),
       {
@@ -329,8 +291,7 @@ if (argv.includes('--selftest')) {
         expectRed: ALTERNATIVE ? /RED REDUCED-SCRIPT setting\+os — .*painted-combat-effect/
           : /RED REDUCED-SCRIPT setting\+os — .*combatant-effect-layer/,
       },
-    ].map(plant => /idle bob|idle keyframes|idle carriers|combatants are made transparent|Rendered style bobs/.test(plant.name)
-      ? { ...plant, args: [...(plant.args || []), '--classic'] } : plant),
+    ],
   });
   // The one counted verdict line (tools/verdict.mjs reads it bare).
   console.info(`${passed} passed, ${failed} failed`);
@@ -693,107 +654,69 @@ async function fixedRest({ evaluate }, label, baseline = []) {
   return first;
 }
 
-// Every living combatant's visible figure images, each with the element that
-// moves it: the image itself or a layer up to .sprite (D42 puts the bob on
-// .facing / .pose-layer). A carrier needs a computed animationName AND a
-// running infinite CSSAnimation of that name on that element.
+// Every living combatant retains loaded, visible, stationary figure art at rest.
+// Sample actual image/canvas bounds and canvas pixels, independently of the
+// wrapper's geometry; a static outer box cannot vouch for moving inner art.
 async function idle({ evaluate }, label, policy = {}) {
-  // Preserve both the string canvas policy and the stronger Default gate's
-  // options API. Only fixedRest validates production Default rest geometry.
-  const { excludeCanvases = false, canvasIdle = 'bob' } = typeof policy === 'string' ? { canvasIdle: policy } : policy;
-  // Two frames first: an animation the probe's own style reads create is
-  // started, and its animationstart (which pins the bob's phase to the
-  // clock) dispatched, only at a frame. A painted frame never shows it
-  // unpinned: events go out before that frame paints.
-  const figures = await evaluate(`(async () => { await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-  return [...document.querySelectorAll('.combatant')].map((c, i) => {
-    const who = (c.classList.contains('player') ? 'player' : c.classList.contains('enemy') ? 'enemy' : 'combatant') + '#' + i;
-    const dead = c.classList.contains('dead') || c.classList.contains('down');
-    const name = c.querySelector('.nm')?.textContent?.trim() || '';
-    const fixedCanvas = ${excludeCanvases} && !!c.querySelector('.sprite .alternative-card-stage canvas');
-    const imgs = [...c.querySelectorAll('.sprite img, .sprite svg, .sprite .alternative-card-stage canvas')].filter((img) => {
-      if (${excludeCanvases} && img.closest('.alternative-card-stage')) return false;
-      // An <svg> is a figure only when it is drawn art (the Classic style),
-      // not a nested part of one or a decorative layer (the pose aura).
-      if (img.tagName.toLowerCase() === 'svg' && (img.parentElement.closest('svg') || img.closest('[aria-hidden="true"]'))) return false;
-      const cs = getComputedStyle(img);
-      // Drawn means a box with area and an effective opacity above zero:
-      // the image's and every ancestor's, the combatant and the board above
-      // it included, up to the document root.
-      const box = img.getBoundingClientRect();
-      let alpha = 1;
-      for (let el = img; el; el = el.parentElement) alpha *= Number(getComputedStyle(el).opacity);
-      return cs.visibility === 'visible' && cs.display !== 'none' && !img.classList.contains('defeated-frame')
-        && !img.classList.contains('pose-previous') && box.width > 0 && box.height > 0 && alpha > 0;
-    });
-    // An <img> that did not load draws nothing, whatever moves it.
-    const loaded = (img) => {
-      if (img.tagName === 'IMG') return img.complete && img.naturalWidth > 0;
-      if (img.tagName !== 'CANVAS') return true;
-      try {
-        const pixels = img.getContext('2d').getImageData(0, 0, img.width, img.height).data;
-        for (let i = 3; i < pixels.length; i += 4) if (pixels[i] > 0) return true;
-      } catch {}
-      return false;
-    };
-    const tag = (el) => el.tagName.toLowerCase() + [...el.classList].slice(0, 2).map((k) => '.' + k).join('');
-    return { who, dead, name, fixedCanvas, imgs: imgs.map((img) => {
-      const named = [];
-      for (let el = img; el && el !== c; el = el.parentElement) {
-        const anim = getComputedStyle(el).animationName;
-        if (anim !== 'none') {
-          // Only sprite-idle's own effect is judged: a companion animation
-          // on the same layer that moves must not vouch for a stopped or
-          // flattened bob.
-          const live = el.getAnimations().filter((a) => a.animationName === 'sprite-idle' && anim.split(/,\\s*/).includes('sprite-idle')
-            && a.playState === 'running' && a.effect.getComputedTiming().activeDuration === Infinity);
-          // Running is not moving: keyframes flattened to one value run
-          // forever and never shift the figure.
-          // Only properties that displace the figure count: an opacity or
-          // colour pulse is not a bob.
-          const MOVE = ['translate', 'transform', 'top', 'bottom', 'left', 'right', 'inset', 'marginTop', 'marginBottom',
-            'marginLeft', 'marginRight', 'offsetDistance'];
-          const moves = live.some((a) => new Set(a.effect.getKeyframes().map((k) => JSON.stringify(MOVE.map((p) => k[p] ?? null)))).size > 1);
-          // The phase follows the document clock (assets.js holdIdlePhase):
-          // the iteration progress is what the timeline's time says, so a
-          // rebuilt or re-inserted carrier does not snap back to the start.
-          const clock = live.every((a) => {
-            const t = a.effect.getComputedTiming(), now = document.timeline.currentTime;
-            const want = ((((now - t.delay) % t.duration) + t.duration) % t.duration) / t.duration;
-            const off = Math.abs(want - t.progress);
-            return Math.min(off, 1 - off) < 0.02;
-          });
-          named.push({ on: tag(el), anim, expected: img.closest('.alternative-card-stage') ? el.classList.contains('alternative-card-stage') : !img.closest('.alternative-figure') || el.classList.contains('alternative-silhouette'), running: live.length > 0 && moves && clock, flat: live.length > 0 && !moves,
-            offClock: live.length > 0 && moves && !clock });
+  const { excludeCanvases = false } = typeof policy === 'string' ? {} : policy;
+  const samples = await evaluate(`(async () => {
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const MOVE = ['translate','transform','scale','rotate','top','bottom','left','right','inset','marginTop','marginBottom','marginLeft','marginRight','offsetDistance'];
+    const tag = el => el.tagName.toLowerCase() + [...el.classList].slice(0,2).map(k => '.'+k).join('');
+    const measure = (pixels = false) => [...document.querySelectorAll('.combatant')].map((c,i) => {
+      const fixedCanvas = ${excludeCanvases} && !!c.querySelector('.sprite .alternative-card-stage canvas');
+      const imgs = [...c.querySelectorAll('.sprite img, .sprite svg, .sprite canvas')].filter(img => {
+        if (${excludeCanvases} && img.closest('.alternative-card-stage')) return false;
+        if (img.tagName.toLowerCase() === 'svg' && (img.parentElement.closest('svg') || img.closest('[aria-hidden="true"]'))) return false;
+        const box=img.getBoundingClientRect();
+        let visible=true,alpha=1;
+        for(let el=img;el;el=el.parentElement) {
+          const cs=getComputedStyle(el);alpha*=Number(cs.opacity);
+          visible &&= cs.visibility==='visible' && cs.display!=='none';
         }
-        if (el.classList.contains('sprite')) break;
-      }
-      const carriers = named.filter((n) => n.running && n.anim.split(/,\\s*/).includes('sprite-idle'));
-      // The carrier is a running, moving sprite-idle; another infinite
-      // animation on the figure or a layer (a pulse, a glow) is not one.
-      const idles = named.filter((n) => n.anim.split(/,\\s*/).includes('sprite-idle'));
-      const anchored = ${canvasIdle === 'anchored'} && img.tagName === 'CANVAS' && !!img.closest('.alternative-card-stage');
-      return { img: tag(img), anchoredMotion: anchored && idles.length > 0,
-        src: img.tagName === 'IMG' ? (img.getAttribute('src') || '').slice(0, 120) : '', loaded: loaded(img),
-        carrier: anchored && !idles.length ? {expected:true,anim:'held stance',on:'anchored canvas'} : idles.find((n) => n.running) || null,
-        stopped: idles.find((n) => !n.running) || null, twice: carriers.length > 1 ? carriers.map((n) => n.on) : null };
-    }) };
-  }); })()`);
-  for (const f of figures) {
-    if (label !== 'IDLE' && f.dead) continue;
-    if (f.fixedCanvas) continue; // fixedRest separately checks pixels and every stage/canvas bound
-    const bare = f.imgs.filter((i) => !i.carrier || !i.carrier.expected || !i.loaded || i.twice || i.anchoredMotion);
-    const why = (i) => !i.loaded ? (i.img === 'canvas' ? 'the canvas has no painted pixels' : `the image did not load, it draws nothing (src ${i.src || 'empty'})`)
-      : i.twice ? `bobbed twice, by sprite-idle on ${i.twice.join(' and ')}`
-        : i.anchoredMotion ? 'anchored canvas has an external idle animation'
-        : i.carrier && !i.carrier.expected ? 'idle animation runs outside the alternative silhouette carrier'
-        : !i.carrier && i.stopped?.flat ? `${i.stopped.anim} runs on ${i.stopped.on} but its keyframes never move it`
-          : !i.carrier && i.stopped?.offClock ? `${i.stopped.anim} runs on ${i.stopped.on} off the document clock, so a rebuild snaps its phase`
-          : !i.carrier && i.stopped ? `${i.stopped.anim} is named on ${i.stopped.on} but not running (cancelled from script?)` : 'no idle animation on it or its layers';
-    check(f.imgs.length > 0 && bare.length === 0, `${label} ${f.who}`,
-      f.imgs.length === 0 ? `${f.name}: no visible figure image to animate`
-        : bare.length ? `${f.name}: ${bare.map((i) => `${i.img}: ${why(i)}`).join('; ')}`
-          : `${f.name}: ${f.imgs.map((i) => `${i.img} moved by ${i.carrier.anim} on ${i.carrier.on}`).join('; ')}`);
+        return visible && alpha>0 && box.width>0 && box.height>0
+          && !img.classList.contains('defeated-frame') && !img.classList.contains('pose-previous');
+      });
+      return {who:(c.classList.contains('player')?'player':c.classList.contains('enemy')?'enemy':'combatant')+'#'+i,
+        dead:c.classList.contains('dead')||c.classList.contains('down'),fixedCanvas,name:c.querySelector('.nm')?.textContent?.trim()||'',
+        imgs:imgs.map(img => {
+          const box=img.getBoundingClientRect();let moving=false,painted=null,fingerprint=null;
+          for(let el=img;el;el=el.parentElement) moving ||= el.getAnimations().some(a => a.playState==='running' && a.effect
+            && new Set(a.effect.getKeyframes().map(k=>JSON.stringify(MOVE.map(p=>k[p]??null)))).size>1);
+          if(pixels && img.tagName==='CANVAS') {
+            try {const data=img.getContext('2d').getImageData(0,0,img.width,img.height).data;
+              painted=data.some((v,i)=>i%4===3&&v>0);fingerprint=2166136261;
+              for(const value of data)fingerprint=Math.imul(fingerprint^value,16777619)>>>0;
+            } catch {painted=false;}
+          }
+          return {img:tag(img),src:img.tagName==='IMG'?(img.getAttribute('src')||''):'',moving,painted,fingerprint,
+            loaded:img.tagName!=='IMG'||img.complete&&img.naturalWidth>0,
+            bounds:[box.left,box.top,box.width,box.height]};
+        })};
+    });
+    const out=[measure(true)];
+    for(let i=0;i<20;i++){await new Promise(r=>requestAnimationFrame(r));out.push(measure(i===19));}
+    return out;
+  })()`);
+  const figures=samples[0],last=samples.at(-1);
+  for(const [index,f] of figures.entries()) {
+    if(label!=='IDLE'&&f.dead || f.fixedCanvas)continue;
+    const faults=[];
+    for(const [imageIndex,image] of f.imgs.entries()) {
+      const final=last[index]?.imgs[imageIndex];
+      const stable=samples.every(frame=>{
+        const current=frame[index]?.imgs[imageIndex];
+        return current && current.loaded && !current.moving && current.src===image.src
+          && current.bounds.every((v,i)=>Number.isFinite(v)&&Math.abs(v-image.bounds[i])<=.05);
+      });
+      if(!image.loaded || !final?.loaded)faults.push(`${image.img}: image did not load`);
+      else if(image.painted===false || final?.painted===false)faults.push(`${image.img}: canvas has no painted pixels`);
+      else if(!stable)faults.push(`${image.img}: figure moves while resting`);
+      else if(image.fingerprint!==final?.fingerprint)faults.push(`${image.img}: canvas pixels changed while resting`);
+    }
+    if(samples.some(frame=>frame[index]?.imgs.length!==f.imgs.length))faults.push('visible figure art changed while resting');
+    check(f.imgs.length>0 && faults.length===0,`${label} ${f.who}`,!f.imgs.length?`${f.name}: no visible figure image`
+      :faults.length?`${f.name}: ${faults.join('; ')}`:`${f.name}: visible loaded figure holds still with stable painted content`);
   }
   return figures;
 }
@@ -805,11 +728,11 @@ let s;
 try {
   s = await session(browser);
 
-  // ---- §5: Default rear rest and legacy idle animation, motion on ----------
+  // ---- §5: stationary visible rest in every style, motion on ----------------
   await boot(s, base, { setting: false, os: false });
   const fixedDefault = ALTERNATIVE && !CLASSIC;
   const resting = fixedDefault ? await fixedRest(s, 'IDLE') : [];
-  const first = await idle(s, 'IDLE', { excludeCanvases: fixedDefault, canvasIdle: fixedDefault ? CANVAS_IDLE : 'bob' });
+  const first = await idle(s, 'IDLE', { excludeCanvases: fixedDefault });
   const alternativeStageId = await s.evaluate(`document.querySelector('.combatant.player .sprite .alternative-card-stage')?.dataset.animationSet || null`);
   const expectedStageId = await s.evaluate('"class-cards-" + window.__combatRunForShot.class');
   if (fixedDefault) check(alternativeStageId === expectedStageId, 'IDLE-ALTERNATIVE-IDENTITY', 'the approved Default player art matches the current class');
@@ -828,15 +751,14 @@ try {
   check(missing.length === 0, 'CONTROL', `motion on: ${control.log.length} animation(s) seen, ${seen.length} over ${MAX_ACTIVE_MS} ms; `
     + (missing.length ? `never saw a ${missing.join(' or ')} over the limit — the sampler may be blind to it` : Object.entries(kinds).map(([k, a]) => `${k}: ${show(a)}`).join('; ')));
   if (fixedDefault) await fixedRest(s, 'IDLE-AFTER', resting);
-  await idle(s, 'IDLE-AFTER', { excludeCanvases: fixedDefault, canvasIdle: fixedDefault ? CANVAS_IDLE : 'bob' });
-  // Idle-bob coverage uses the actual Classic appearance, not a sprite-style
-  // setting that Default deliberately ignores. All original CSS plants remain
-  // meaningful, including after-turn guard/state-image carrier changes.
+  await idle(s, 'IDLE-AFTER', { excludeCanvases: fixedDefault });
+  // Rest coverage includes the actual Classic appearance, independently of
+  // Default's canvas. Guard/state changes must also settle without a bob.
   if (fixedDefault) {
     await boot(s, base, { setting: false, os: false, classic: true });
     await idle(s, 'IDLE');
     const classicTurn = await playTurn(s);
-    check(classicTurn.landed && classicTurn.turn >= 2, 'TURN classic-idle', `${classicTurn.attack} landed${passedNote(classicTurn)}, turn ${classicTurn.turn}`);
+    check(classicTurn.landed && classicTurn.turn >= 2, 'TURN classic-rest', `${classicTurn.attack} landed${passedNote(classicTurn)}, turn ${classicTurn.turn}`);
     await idle(s, 'IDLE-AFTER');
   }
   // The other figure styles a player can choose (customize.js SPRITE_STYLES):
@@ -853,18 +775,15 @@ try {
     const drawn = await idle(s, `IDLE-${style}`);
     check(drawn.some((f) => f.who.startsWith('player')), `IDLE-${style}-BOARD`, `the player is on the board in the ${style} style`);
     if (style === 'rendered') {
-      // The Rendered stage swaps its still painting for a nested painted
-      // stage (hidden until then) on a guard, wounded, afflicted or defeated
-      // rest pose. One timeline on the stage keeps the phase across that
-      // swap; a second idle carrier inside it restarts at 0 when unhidden.
-      // Computed style answers even for the hidden nested stage.
+      // A hidden nested Rendered stage must not retain a bob that starts
+      // when the next guard/wounded/rest pose reveals it.
       const carrier = '.rendered-stage';
       const inner = await s.evaluate(`[...document.querySelectorAll(${JSON.stringify(`.combatant .sprite ${carrier} *`)})]
         .filter((el) => getComputedStyle(el).animationName.split(/,\\s*/).includes('sprite-idle'))
         .map((el) => el.tagName.toLowerCase() + '.' + [...el.classList].join('.'))`);
-      check(inner.length === 0, 'IDLE-rendered-ONE-TIMELINE', inner.length
-        ? `a second idle timeline inside ${carrier}: ${inner.join(', ')}`
-        : `${carrier} is the only idle carrier; nothing inside it bobs on its own`);
+      check(inner.length === 0, 'IDLE-rendered-STATIC-NESTED', inner.length
+        ? `an idle animation inside ${carrier}: ${inner.join(', ')}`
+        : `${carrier} and its nested rest art have no idle bob`);
     }
   }
   check(control.canvasErrors.length === 0, 'CANVAS-SAMPLER', control.canvasErrors.join('; ') || 'painted canvas frames were sampled without read errors');

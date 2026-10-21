@@ -1,4 +1,4 @@
-import { fixCoreStatusDefinition } from '../../model/fixCoreMechanics.js';
+import { statusPresentationDefinition } from '../../model/statusPresentation.js';
 
 // A combat-local read view. The engine and other screens retain their original
 // registry; both card inspection and PIPs read the active rules' descriptions.
@@ -7,7 +7,7 @@ export function combatStatusPresentationRegistries(registries, combat) {
   const holders = new WeakMap();
   const project = (definition, holder = null) => {
     if (!definition) return definition;
-    const projected = fixCoreStatusDefinition(combat, definition.id, definition, holder);
+    const projected = statusPresentationDefinition(combat, definition.id, definition, holder);
     holders.set(projected, holder);
     return projected;
   };

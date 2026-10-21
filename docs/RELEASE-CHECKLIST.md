@@ -124,7 +124,7 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §4 | The Mana-aware A/B balance run | G17 |
 | §4 | Seat-tier tolerance is stated | G19 |
 | §5 | Ordered Core2 action responsiveness | G20 |
-| §5 | The idle animation plays | G20 |
+| §5 | Resting fighters stay still in every rendering style | G20 |
 | §5 | Hit sound tiers | G20 |
 | §5 | Every HP hit shakes the screen, scaled by damage, and big hits stop | G20 |
 | §5 | Haptics | G20 |

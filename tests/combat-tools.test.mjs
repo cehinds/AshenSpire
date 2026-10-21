@@ -394,3 +394,50 @@ test('the log palette follows saved settings and refreshes while the modal is op
     tools.release();
   });
 });
+
+test('hidden legacy log stays empty while current receipts and palette reach both readers', () => {
+  withToolsDom((dom) => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section');
+    dom.document.body.appendChild(combatEl);
+    const state = { open: false, size: 'Medium', followLatest: true };
+    let settings = { combatLogPlayerColor: '#73bdff', combatLogEnemyColor: '#ffaaa0' };
+    const tools = mountCombatTools(combatEl, { state, readSettings: () => settings, onViewChange() {}, onToggle() {} });
+    const update = (entries, open = false) => tools.update(combatToolsModel({ supported: true, enabled: true, entries, open }));
+    const legacy = combatEl.querySelector('[data-combat-tool="entries"]');
+    update(logRows);
+    update(logRowsMore);
+    assert.equal(combatEl.querySelector('#combat-log').hidden, true);
+    assert.equal(legacy.children.length, 0, 'closed readers do not build a second hidden copy of every receipt');
+
+    fullLogButton(combatEl).click();
+    const full = state.fullLog;
+    assert.deepEqual([...full.panel.querySelectorAll('li')].map(row => row.textContent), logRowsMore.map(row => row.text), 'opening reads the latest receipts, including changes made while closed');
+    state.open = true;
+    update(logRowsMore, true);
+    const drawer = state.drawerLog;
+    assert.ok(drawer);
+    for (const reader of [full, drawer]) {
+      assert.equal(reader.panel.getAttribute('aria-modal'), 'true');
+      assert.equal(reader.panel.querySelector('.combat-log-modal-entries').getAttribute('role'), 'region');
+    }
+
+    settings = { combatLogPlayerColor: '#84caff', combatLogEnemyColor: '#ff9f96' };
+    const newest = [...logRowsMore, { id: 3, round: 2, text: 'Reaver dealt 9 damage.' }];
+    update(newest, true);
+    for (const reader of [full, drawer]) {
+      assert.deepEqual([...reader.panel.querySelectorAll('li')].map(row => row.textContent), newest.map(row => row.text));
+      assert.equal(reader.panel.querySelector('.combat-log-modal-entries').getAttribute('style'), '--combat-log-player-color:#84caff;--combat-log-enemy-color:#ff9f96');
+    }
+    assert.equal(legacy.children.length, 0, 'live readers do not repopulate the unused legacy region');
+
+    update([], true);
+    for (const reader of [full, drawer]) assert.equal(reader.panel.querySelectorAll('li').length, 0, 'clearing receipts refreshes every open reader');
+    closeCombatFullLog(state);
+    fullLogButton(combatEl).click();
+    assert.equal(state.fullLog.panel.querySelectorAll('li').length, 0, 'reopening after clear cannot revive stale receipts');
+    assert.equal(logRowsMore.length, 2, 'reading and clearing do not mutate the supplied receipt history');
+    closeCombatFullLog(state);
+    tools.release();
+  });
+});

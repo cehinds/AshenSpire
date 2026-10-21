@@ -8,7 +8,7 @@ import { t } from '../strings.js';
 import { trackGesture } from '../gesture.js';
 import { hudGeometry, toolsRowTop } from '../models/HudLayoutOffsetModel.js';
 import { visibleCombatPanelRect } from './battlefieldStage.js';
-import { renderCombatLogEntries, openCombatLogModal } from './combatLogModal.js';
+import { openCombatLogModal } from './combatLogModal.js';
 import { combatLogPalette } from '../models/CombatLogPaletteModel.js';
 
 // The narrowest a hand-spanning row may be, in CSS px: Combat log and the
@@ -294,11 +294,12 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     const palette = readPalette();
     const key = JSON.stringify([log.entries, palette]);
     if (key !== entryKey) {
-      entryKey = key; renderCombatLogEntries(list, log.entries, { palette }); state.fullLog?.setEntries(log.entries, palette); state.drawerLog?.setEntries(log.entries, palette);
-      // The panel is never shown (the log reads in a modal), so its list has no
-      // box to scroll: this assignment did nothing, and reading scrollHeight made
-      // the update a forced layout of the screen on every log change.
-      if (!panel.hidden) list.scrollTop = state.followLatest !== false ? list.scrollHeight : state.scrollTop || 0;
+      entryKey = key;
+      // The legacy panel stays hidden; only the actual modal readers need DOM.
+      // latestEntries above keeps a closed reader current without building a
+      // second, inaccessible copy of the receipt history on every combat beat.
+      state.fullLog?.setEntries(log.entries, palette);
+      state.drawerLog?.setEntries(log.entries, palette);
     }
     schedule();
   }

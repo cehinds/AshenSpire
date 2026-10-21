@@ -1230,6 +1230,35 @@ export function closedGate(settings, row) {
   return (row.gates || []).find((gate) => !gateOpen(settings, gate, rowByKey)) || null;
 }
 
+// The number field remains the stepper's lock. Mirror only that field on its
+// wrapper so CSS does not search every input mutation with a relational rule.
+export function setSettingsControlDisabled(control, disabled) {
+  control.disabled = !!disabled;
+  control.setAttribute('aria-disabled', String(!!disabled));
+  if (control.tagName !== 'INPUT' || control.type !== 'number') return;
+  const stepper = control.closest('[data-stepper]');
+  if (!stepper) return;
+  const value = String(!!control.disabled);
+  if (stepper.dataset.numberDisabled !== value) stepper.dataset.numberDisabled = value;
+}
+
+export function refreshHandRuleControls(section, rules) {
+  if (!section) return;
+  for (const row of [...handRulesRows(), ...FIXED_DRAW_ROWS]) {
+    const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
+    const read = path => path.split('.').reduce((v, k) => v[k], rules);
+    const disabled = (row.requires && read(row.requires[0]) !== row.requires[1])
+      || (row.fixedOnly && rules.drawMode !== 'fixed')
+      || (['discardLimit', 'replaceDiscards'].includes(row.key.slice(HAND_RULES_PREFIX.length)) && !rules.retain);
+    controls.forEach(control => setSettingsControlDisabled(control, disabled));
+    controls.forEach(control => {
+      const wrapper = control.closest('.set-row');
+      wrapper.dataset.handHidden = String(!!row.fixedOnly && rules.drawMode !== 'fixed');
+      if (row.fixedOnly) wrapper.hidden = rules.drawMode !== 'fixed';
+    });
+  }
+}
+
 export function refreshGates(container, settings) {
   const controls = new Map();
   for (const el of container.querySelectorAll('[data-key]')) {
@@ -1242,8 +1271,7 @@ export function refreshGates(container, settings) {
     const closed = closedGate(settings, row);
     const inherited = closed?.own ? inheritedValue(closed, settings) : undefined;
     for (const el of els) {
-      el.disabled = !!closed;
-      el.setAttribute('aria-disabled', String(!!closed));
+      setSettingsControlDisabled(el, closed);
       if (el.tagName !== 'INPUT' || el.type === 'checkbox' || el.type === 'color') continue;
       if (closed && inherited !== undefined) {
         el.value = String(inherited);
@@ -1690,7 +1718,7 @@ export function buttonStep(row, value = row.def) {
 function stepperHtml({ key, label, value, min, max, step, span, fieldClass, sliderClass, unit = '', inputMode = 'numeric', keyOnSlider = false, bStep, sliderStep = step }) {
   const name = esc(stripTags(label));
   const sliderValue = Math.min(Math.max(Number(value), span[0]), span[1]);
-  return `<span class="set-stepper" data-stepper>`
+  return `<span class="set-stepper" data-stepper data-number-disabled="false">`
     + `<button type="button" class="as-btn set-step" data-step="-1" data-step-by="${bStep}" aria-label="Decrease ${name}"${value <= min ? ' disabled' : ''}>−</button>`
     + `<input type="range" class="${sliderClass}"${keyOnSlider ? ` data-key="${esc(key)}"` : ''} min="${span[0]}" max="${span[1]}" step="${sliderStep}" value="${sliderValue}" aria-label="${name} slider">`
     + `<input type="number" class="${fieldClass}" data-key="${esc(key)}" value="${value}" min="${min}" max="${max}" step="${step}" inputmode="${inputMode}" aria-label="${name}">`
@@ -3184,22 +3212,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // The Stats → Draw & hand worked example states the hand these rules deal
     // (`refreshStatsPreviews`); what is left here is which rows apply.
     // The whole pane, not just Stats: a search result lists these rows too.
-    const section = container;
-    if (section) {
-      for (const row of [...handRulesRows(), ...FIXED_DRAW_ROWS]) {
-        const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
-        const read = path => path.split('.').reduce((v, k) => v[k], rules);
-        const disabled = (row.requires && read(row.requires[0]) !== row.requires[1])
-          || (row.fixedOnly && rules.drawMode !== 'fixed')
-          || (['discardLimit', 'replaceDiscards'].includes(row.key.slice(HAND_RULES_PREFIX.length)) && !rules.retain);
-        controls.forEach(control => { control.disabled = !!disabled; control.setAttribute('aria-disabled', String(!!disabled)); });
-        controls.forEach(control => {
-          const wrapper = control.closest('.set-row');
-          wrapper.dataset.handHidden = String(!!row.fixedOnly && rules.drawMode !== 'fixed');
-          if (row.fixedOnly) wrapper.hidden = rules.drawMode !== 'fixed';
-        });
-      }
-    }
+    refreshHandRuleControls(container, rules);
     refreshStatsPreviews();
     syncSubsectionHeadings();
     // ---- THE REFUSAL IS PRINTED ON THE ROW THAT CAUSED IT ------------------

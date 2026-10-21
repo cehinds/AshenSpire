@@ -309,9 +309,8 @@ const SETTLED_MS = 700;
 const SETTLED_FRAMES = 30;
 const SETTLED_TIMEOUT_MS = 15000;
 const SETTLED = `new Promise((resolve) => {
-  // The overhead intent follows the sprite's intentional 4px idle bob. Its
-  // frame is the resting layout anchor; actual intent coverage is checked
-  // separately below, with the animation still running.
+  // The enemy frame is the stable layout anchor. Check actual overhead
+  // intent coverage separately below after the board settles.
   const sels = ['.energy-orb', '.enemy-row .enemy', '.hand .card', '.end-turn'];
   const rect = (el) => { if (!el) return '-'; const r = el.getBoundingClientRect(); return [r.left, r.top, r.width, r.height].map(Math.round).join(','); };
   const key = () => [innerWidth, innerHeight, getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom'),
