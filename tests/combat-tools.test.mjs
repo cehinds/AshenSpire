@@ -128,6 +128,56 @@ const logRowsMore = [...logRows, { id: 2, round: 1, text: 'Soldier used Slash.' 
 const fullLogButton = (combatEl) => combatEl.querySelector('[data-combat-tool="full-log"]');
 const closeDoor = (door) => [...door.panel.querySelectorAll('button')].find(node => node.textContent === 'Close').click();
 
+test('tools layout leaves hidden log geometry alone while real drag, cancel and keyboard readers work', () => {
+  withToolsDom((dom) => {
+    resetModalState(); window.innerHeight = 800;
+    const combatEl = dom.document.createElement('section');
+    combatEl.box = { left: 0, top: 0, width: 390, height: 800, bottom: 800 };
+    combatEl.clientWidth = 390; dom.document.body.appendChild(combatEl);
+    const menu = dom.document.createElement('div'); menu.className = 'topbar';
+    const menuButton = dom.document.createElement('button'); let menuReads = 0;
+    menuButton.getBoundingClientRect = () => { menuReads++; return { bottom: 60 }; };
+    menu.append(menuButton); combatEl.append(menu);
+    const state = { open: false, size: 'Small', followLatest: true };
+    let tools;
+    const paint = () => tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows, ...state }));
+    tools = mountCombatTools(combatEl, { state, onViewChange: paint, onToggle() {} });
+    const root = combatEl.querySelector('.combat-tools'), log = combatEl.querySelector('[data-combat-tool="log"]');
+    root.box = { left: 16, top: 500, right: 374, bottom: 540, width: 358, height: 40 };
+    log.box = { left: 16, top: 500, right: 96, bottom: 540, width: 80, height: 40 };
+    paint(); tools.flushGeometry(); tools.flushGeometry();
+    assert.equal(menuReads, 0, 'ordinary layouts do not measure menu clearance for an invisible panel');
+    log.click();
+    assert.ok(state.drawerLog?.panel.isConnected, 'ordinary tap opens the actual compact modal');
+    assert.equal(combatEl.querySelector('#combat-log').hidden, true);
+    closeDoor(state.drawerLog);
+    assert.equal(state.open, false);
+    const gesture = (endType, toY) => {
+      log.dispatchEvent(new dom.Event('pointerdown', { pointerId: 1, pointerType: 'touch', button: 0, clientY: 520 }));
+      window.dispatchEvent(new dom.Event('pointermove', { pointerId: 1, clientY: toY, cancelable: true }));
+      window.dispatchEvent(new dom.Event(endType, { pointerId: 1, clientY: toY }));
+    };
+    gesture('pointerup', 370);
+    assert.deepEqual([state.open, state.size], [true, 'Large'], 'upward drag opens and snaps to Large');
+    assert.ok(state.drawerLog?.panel.isConnected);
+    log.click(); assert.equal(state.open, true, 'the drag release owns its trailing click');
+    gesture('pointercancel', 720);
+    assert.deepEqual([state.open, state.size], [true, 'Large'], 'cancel restores the prior reader state');
+    gesture('pointerup', 720);
+    assert.deepEqual([state.open, state.size], [true, 'Small'], 'a completed downward drag reaches Small');
+    log.click(); assert.equal(state.open, true);
+    assert.equal(menuReads, 3, 'each real press obtains fresh drag stops');
+    for (const [key, size] of [['Home', 'Small'], ['ArrowUp', 'Medium'], ['End', 'Large'], ['ArrowDown', 'Medium']]) {
+      log.dispatchEvent(new dom.Event('keydown', { key, cancelable: true }));
+      tools.flushGeometry();
+      assert.equal(state.size, size); assert.equal(root.dataset.logSize, size);
+      assert.ok(state.drawerLog?.panel.isConnected);
+    }
+    assert.equal(menuReads, 3, 'keyboard/modal updates do not repeat unused panel measurement');
+    closeCombatFullLog(state); tools.release();
+  });
+});
+
 test('a remount keeps the open full log, refreshes its entries and Close returns focus to the new button', () => {
   withToolsDom((dom) => {
     resetModalState();
