@@ -13,6 +13,8 @@ Overhead Information controls retain priority over the core.
 The detailed target HUD replaces those hidden footers on phones. While a card
 or targeted flask is armed, its visible name/HP panel delegates to the combat
 owner's current legal-target checks, including for a card dropped onto it.
+The detailed HUD's separate status tray and intent row retain their explanatory
+tooltips while aiming; tapping them does not spend the armed action.
 Crowded aiming panels keep a minimum 44px height and leave intent overhead so
 neighboring targets remain reachable. Information and deliberate inspection
 holds still inspect; a completed hold never plays the card on release. Without
