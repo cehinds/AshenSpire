@@ -60,8 +60,12 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
   const panels = new Map(), infoButtons = new Map();
   let drawnCells = null;
   const gestures = new AbortController();
-  let holdTimer = null, held = null, lastTap = null, suppressClickUntil = 0, lastActivation = null;
+  let holdTimer = null, held = null, lastTap = null, inspectionPointer = null, lastActivation = null;
   const cancelHold = () => { clearTimeout(holdTimer); held = null; };
+  // A read owns its originating pointer's trailing click, however long the
+  // finger stays down. A new press after release is a separate gesture.
+  const inspectionClick = event => !!inspectionPointer && event.detail !== 0
+    && (event.pointerId == null || event.pointerId < 0 || event.pointerId === inspectionPointer.id);
   const inspect = (id, opener) => { cancelHold(); hideTooltip(); entries.get(id)?.inspect?.(opener); };
   const syncActivation = (shell, id) => {
     const active = !!onActivate && eligible.includes(id);
@@ -75,7 +79,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     // armed it is the same target door, including resource descendants whose
     // tooltip listeners otherwise swallow the click before it reaches us.
     shell.addEventListener('click', event => {
-      if (!onActivate || !eligible.includes(id) || performance.now() < suppressClickUntil) return;
+      if (inspectionClick(event)) { event.preventDefault(); event.stopImmediatePropagation(); return; }
+      if (!onActivate || !eligible.includes(id)) return;
       // The status tray and detailed intent keep their authored reading doors.
       // Only the footer replacement (name, HP, and its panel padding) confirms.
       if (!event.target.closest('.target-hud-name, .target-hud-meters')
@@ -89,36 +94,43 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
           || !['Enter', ' '].includes(event.key)) return;
       event.preventDefault(); event.stopPropagation(); event.target.click();
     });
-    shell.addEventListener('click', event => { if (performance.now() < suppressClickUntil) { event.preventDefault(); event.stopImmediatePropagation(); } }, true);
     shell.addEventListener('dblclick', event => {
       event.preventDefault(); event.stopPropagation();
-      if (performance.now() < suppressClickUntil || (lastActivation?.id === id && performance.now() - lastActivation.time < 500)) return;
+      if (inspectionClick(event) || (lastActivation?.id === id && performance.now() - lastActivation.time < 500)) return;
       inspect(id, shell);
     });
+    // Resource tooltip descendants stop pointerdown while bubbling. Ownership
+    // must still reset for their fresh presses without starting a HUD hold.
+    shell.addEventListener('pointerdown', event => {
+      if (event.isPrimary && event.button === 0 && inspectionPointer?.released) inspectionPointer = null;
+    }, true);
     shell.addEventListener('pointerdown', event => {
       cancelHold(); if (!event.isPrimary || event.button !== 0) return;
       held = { id, opener: shell, pointerId: event.pointerId, x: event.clientX, y: event.clientY };
-      holdTimer = setTimeout(() => { if (!shell.isConnected) return; suppressClickUntil = performance.now() + 700; lastTap = null; inspect(id, shell); }, 500);
+      holdTimer = setTimeout(() => { if (!shell.isConnected) return; inspectionPointer = { id: event.pointerId, released: false }; lastTap = null; inspect(id, shell); }, 500);
     });
     shell.addEventListener('click', event => {
-      event.stopPropagation(); if (performance.now() < suppressClickUntil) { event.preventDefault(); return; }
+      event.stopPropagation();
       // Reuse each resource/status component's authored shared tooltip content.
       event.target.closest('[data-tip-attached]')?.dispatchEvent(new Event('gpfocus'));
     });
   }
-  const listen = (target, type, handler) => target.addEventListener(type, handler, { signal: gestures.signal });
+  const listen = (target, type, handler, capture = false) => target.addEventListener(type, handler, { signal: gestures.signal, capture });
   listen(document, 'pointermove', event => { if (held && held.pointerId === event.pointerId && Math.hypot(event.clientX - held.x, event.clientY - held.y) > 8) { cancelHold(); lastTap = null; } });
+  listen(document, 'pointerup', event => {
+    if (inspectionPointer?.id === event.pointerId) inspectionPointer.released = true;
+  }, true);
   listen(document, 'pointerup', event => {
     if (!held || held.pointerId !== event.pointerId) return;
     const current = held; cancelHold(); if (event.pointerType !== 'touch') return;
     // Two quick target confirmations must never become the inspection gesture.
     if (onActivate && eligible.includes(current.id)) { lastTap = null; return; }
     const time = performance.now();
-    if (lastTap?.id === current.id && time - lastTap.time < 350 && Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) < 24) { lastTap = null; suppressClickUntil = time + 700; inspect(current.id, current.opener); }
+    if (lastTap?.id === current.id && time - lastTap.time < 350 && Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) < 24) { lastTap = null; inspectionPointer = { id: event.pointerId, released: true }; inspect(current.id, current.opener); }
     else lastTap = { id: current.id, time, x: event.clientX, y: event.clientY };
   });
-  listen(document, 'pointercancel', () => { cancelHold(); lastTap = null; });
-  listen(window, 'blur', () => { cancelHold(); lastTap = null; });
+  listen(document, 'pointercancel', () => { cancelHold(); lastTap = null; inspectionPointer = null; });
+  listen(window, 'blur', () => { cancelHold(); lastTap = null; inspectionPointer = null; });
   const dwell = createTargetHudDwell({ delay: config.motion.dwellMs, onChange: ids => { shown = ids; paint(); } });
   const desired = () => [...new Set([...eligible, focused, hover, focusWithin].filter(id => entries.has(id)))];
   const refreshDesired = () => dwell.request(enabled ? desired() : []);
@@ -394,7 +406,7 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       gate(); refreshDesired(); paint();
     },
     release() {
-      if (disposed) return; disposed = true; cancelHold(); gestures.abort(); dwell.dispose(); if (raf !== null) cancelAnimationFrame(raf);
+      if (disposed) return; disposed = true; cancelHold(); inspectionPointer = null; gestures.abort(); dwell.dispose(); if (raf !== null) cancelAnimationFrame(raf);
       for (const node of layer.querySelectorAll('.target-hud-detail')) clearTimeout(node.ashenRemove);
       combat.removeEventListener('pointermove', pointer); combat.removeEventListener('pointerleave', pointer);
       field.removeEventListener('focusin', focus); field.removeEventListener('focusout', focusOut);
