@@ -1,5 +1,17 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — Stance rendering
+
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/StanceRendering/latest/)
+
+Reuses unchanged stance artwork and action symbols, and avoids tracking stationary highlights. Stance changes and animations remain. [Capture and measurement details](docs/preview/features/stance-rendering/README.md).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile stance preview](docs/preview/features/stance-rendering/mobile.png) | ![Desktop stance preview](docs/preview/features/stance-rendering/desktop.png) | ![Wide stance preview](docs/preview/features/stance-rendering/wide.png) | ![Tablet stance preview](docs/preview/features/stance-rendering/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 
