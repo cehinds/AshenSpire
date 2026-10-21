@@ -74,9 +74,6 @@ export function cardFaceLines(def, preview = null, registries = null, rules = nu
 function buildLines(def, preview, registries, rules = null, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel }) {
   // A live preview prices the effects an active charge expands (an added buildup row); its values follow that list.
   def = withChargedEffects(def, preview);
-  // Its authored sentence is already the complete compact rule, with the
-  // configured grant filled by the same token binder as other card surfaces.
-  if (evadeGrantOnlyCard(def)) return null;
   if (def.comboHook) return null;
   // A Power's status is its mechanic's carrier ("Gain Goreblood 1" says nothing); its authored text explains it.
   if (def.type === 'power') return null;
@@ -122,6 +119,9 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     }
     return `<span class="${cls}">${esc(amount)}</span>`;
   };
+  // Saved profiles may still carry the old verbose template. Phrase this
+  // complete grant from the shared configured/live value on every face.
+  if (evadeGrantOnlyCard(def)) return [{ kind: 'gain', html: `Gain ${num(value(def.effects[0], 0, 'stacks'))} Evade.` }];
 
   const typeWord = id => {
     const service = registries && tagService(registries);
