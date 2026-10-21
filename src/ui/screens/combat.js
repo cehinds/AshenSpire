@@ -823,7 +823,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // Selection changes presentation only; every input waits for confirmation.
   function syncCardSelection() {
-    if (!busy && !enemyPlayback && !combatEl.classList.contains('drag-targeting') && !combatEl.querySelector('.hand [data-hold="holding"]')) renderHand();
+    // Place odds once below, after the final card classes and stance are applied.
+    if (!busy && !enemyPlayback && !combatEl.classList.contains('drag-targeting') && !combatEl.querySelector('.hand [data-hold="holding"]')) renderHand({ refreshHitChances: false });
     const active = selected || selfArm;
     // applyTargetLayer below updates the HUD once with the final legal targets.
     if (active) selectCombatant(null, { updateHud: false });
@@ -1838,7 +1839,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             const instanceId = selected;
             rangeRoutesByCard.set(instanceId, route);
             upcastPreviewRefresh = true;
-            try { handRenderKey = null; renderHand(); } finally { upcastPreviewRefresh = false; }
+            try { handRenderKey = null; renderHand({ refreshHitChances: false }); } finally { upcastPreviewRefresh = false; }
             syncCardSelection();
             combatEl.querySelector(`.combat-range-action [data-range-route="${route}"]`)?.focus({ preventScroll: true });
           },
@@ -2186,7 +2187,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     applyTargetLayer();
   }
 
-  function renderHand() {
+  function renderHand({ refreshHitChances = true } = {}) {
     const handList = heldTurnHand || (disp ? disp.hand : combat.piles.hand);
     combatEl.dataset.turn = enemyPlayback || combat.phase === 'enemy' ? 'enemy' : 'player';
     $('.turn-ribbon').textContent = enemyPlayback || combat.phase === 'enemy' ? 'Enemy Turn' : 'Player Turn';
@@ -2227,7 +2228,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
     syncHandPager(handList);
     handRenderKey = key;
-    syncHitChances();
+    if (refreshHitChances) syncHitChances();
   }
 
   /**
@@ -2438,7 +2439,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // Repainting the rank releases the prior inspection node. This is still
       // the same selected play, so its targeting must survive that release.
       upcastPreviewRefresh = true;
-      try { handRenderKey = null; renderHand(); }
+      try { handRenderKey = null; renderHand({ refreshHitChances: false }); }
       finally { upcastPreviewRefresh = false; }
       syncCardSelection();
     });
@@ -2665,7 +2666,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           const releaseHit = dragging && !info.cancelled ? document.elementFromPoint(up.clientX, up.clientY) : null;
           return finishCardDrag(up, info, {
           teardown: () => {
-            clearDragTargeting();
+            // A tap/inspection never entered drag targeting. Its release is
+            // owned by armHold; do not repaint the target layer before it.
+            if (dragging) clearDragTargeting();
             el.classList.remove('drag-source');
             if (dragGhost) { dragGhost.remove(); dragGhost = null; }
             const wasDragging = dragging;
