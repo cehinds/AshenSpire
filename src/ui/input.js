@@ -961,9 +961,9 @@ function onKeydown(ev) {
     return;
   }
   if (!enabled) return;
-  // Information and route buttons own native Enter/Space activation. The
+  // Inspection and route controls own native Enter/Space activation. The
   // game cursor may still point at their card, whose action must stay inert.
-  if (ev.target?.closest?.('.card-info-button, .combat-range-action')) return;
+  if (ev.target?.closest?.('.card-info-button, .combat-range-action, [data-damage-receipt], .tooltip-keyword[data-tip]')) return;
   // The focused log handle uses these keys for its three drawer heights.
   // Let the component resize without also moving the game cursor away.
   if (ev.target?.closest?.('[data-combat-tool="log"]')
