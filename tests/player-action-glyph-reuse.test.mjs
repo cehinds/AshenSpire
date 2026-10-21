@@ -23,6 +23,7 @@ test('same-maneuver preview keeps the mounted glyph and its current-selection ca
   const attack = { instanceId: 'a', maneuver: 'attack' };
   sync(player, attack); const glyph = player.querySelector('.player-action-intent');
   const rack = dom.document.createElement('div'); rack.className = 'target-hud-overhead-meters'; player.append(rack); rack.append(glyph);
+  rack.prepend = node => { rack.append(node); rack.children.unshift(rack.children.pop()); };
   sync(player, { ...attack, instanceId: 'b' });
   assert.equal(player.querySelector('.player-action-intent'), glyph, 'HUD-reparented glyph remains mounted');
   assert.equal(glyph.parentNode, rack); assert.equal(made, 1); assert.equal(changes, 1);
@@ -30,6 +31,8 @@ test('same-maneuver preview keeps the mounted glyph and its current-selection ca
   scope.selfArm = null; glyph.click(); assert.deepEqual(inspections, ['player']);
   sync(player, { instanceId: 'c', maneuver: 'defend' });
   assert.notEqual(player.querySelector('.player-action-intent'), glyph); assert.equal(changes, 2);
+  assert.equal(player.querySelector('.player-action-intent').parentNode, rack, 'a changed maneuver stays inside the detailed HUD rack');
+  assert.equal(rack.firstElementChild, player.querySelector('.player-action-intent'));
   sync(player, null, { maneuver: 'defend' }); assert.equal(changes, 2, 'confirmed held glyph stays when disarmed');
   sync(player, null); assert.equal(changes, 3, 'neutral glyph replaces a different held action');
   player.querySelector('.player-action-intent').remove(); sync(player, null);

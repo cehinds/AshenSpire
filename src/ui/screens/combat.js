@@ -875,7 +875,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (selfArm) playCard(selfArm, null);
       else selectCombatant('player');
     });
-    if (action) { action.dataset.maneuver = maneuver; leading.append(action); }
+    if (action) {
+      action.dataset.maneuver = maneuver;
+      // Selection can change after the HUD's gate has already run. Keep a
+      // replacement inside its existing rack without relying on another fit.
+      const rack = player.querySelector('.target-hud-overhead-meters');
+      if (rack) rack.prepend(action); else leading.append(action);
+    }
     combatEl.dispatchEvent(new CustomEvent('combatantselectionchange', { detail: { geometry: 'overhead' } }));
   }
 
