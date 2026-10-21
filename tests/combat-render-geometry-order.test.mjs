@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { formationOccupancy } from '../src/model/formationOccupancy.js';
 import { runInNewContext } from 'node:vm';
+import { createRenderIntentProjection } from '../src/ui/models/RenderIntentProjectionModel.js';
 
 const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
 const begin = source.indexOf('  function renderCombatantStage(');
@@ -17,6 +18,7 @@ function fixture(code = rendering) {
   const handWidth = 390, footerTop = 744;
   let handReceipt, toolsTop, controlsReady = false, toolsReady = false;
   const context = {
+    intentProjection: createRenderIntentProjection({ combat: null, project() { throw new Error("fixture has no intent consumers"); } }),
     formationOccupancy, combat: { player: { id: 'player', formationCell: 'A1' }, enemies: [] }, selected: null, selfArm: false,
     selectedFlask: null, selectedCombatantId: null,
     paintedAppearance: 'alternative', displayAppearance: () => 'alternative',

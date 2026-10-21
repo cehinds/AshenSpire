@@ -9,6 +9,7 @@ import { chooseReaction, reactionAnswer, resolveCombatAutomation, recordManualRe
 import { targetHudMatchup, TARGET_HUD_AURA } from '../models/TargetHudModel.js';
 import { mountCombatTargetHud } from '../components/combatTargetHud.js';
 import { projectCombatIntent } from '../models/CombatIntentProjectionModel.js';
+import { createRenderIntentProjection } from '../models/RenderIntentProjectionModel.js';
 import { advanceFollowUps, createFollowMemo, followUpPlan } from '../models/IntentFollowUpModel.js';
 import { stackedEnemyReactionIntent } from '../models/ReactionIncomingModel.js';
 import { formationOccupancy } from '../../model/formationOccupancy.js';
@@ -194,7 +195,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const profileEnemySprite = (definition, entity) => profileArt(
     () => enemySprite(definition, entity), { enemy: true, width: registries.balance.ui.spriteTiers[definition.size || 'medium'].w, height: registries.balance.ui.spriteTiers[definition.size || 'medium'].h });
   const previewMemo = createPreviewMemo({ combat, preview: enginePreviewCard, dispatch: engineDispatch });
-  const { dispatch, previewCard: memoPreviewCard } = previewMemo;
+  const intentProjection = createRenderIntentProjection({ combat, project: projectCombatIntent });
+  const { dispatch: memoDispatch, previewCard: memoPreviewCard } = previewMemo;
+  const dispatch = (target, intent) => intentProjection.mutate(() => memoDispatch(target, intent));
   function previewCard(target, instanceId, targetId, ranks, options) {
     return memoPreviewCard(target, instanceId, targetId, ranks, options ?? { rangeRoute: rangeRoutesByCard.get(instanceId) ?? 'advance' });
   }
@@ -564,12 +567,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   };
   // The appearance may already be Classic before this screen mounts, so the
   // change notification below is not guaranteed to fire for this combat.
-  normalizeClassicPlayerFormationCell(combat, readSettings());
+  intentProjection.mutate(() => normalizeClassicPlayerFormationCell(combat, readSettings()));
   previewMemo.invalidate();
   onDisplayAppearanceChange(combatEl, () => {
     // Classic must not merely paint an invalid perspective lane at its spawn:
     // keep the combat state aligned with the cell that movement and saves use.
-    normalizeClassicPlayerFormationCell(combat, readSettings());
+    intentProjection.mutate(() => normalizeClassicPlayerFormationCell(combat, readSettings()));
     previewMemo.invalidate();
     if (!busy) render();
   });
@@ -983,7 +986,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
 
     const def = registries.enemies.get(entity.enemyId);
-    const intent = configuredArt && !gameModule(run, 'intent') ? { hidden: true, label: t('gameProfile.combat.unreadIntent') } : disp?.ents[entity.id]?.intentPreview || projectCombatIntent(combat, entity.id);
+    const intent = configuredArt && !gameModule(run, 'intent') ? { hidden: true, label: t('gameProfile.combat.unreadIntent') } : disp?.ents[entity.id]?.intentPreview || intentProjection.project(combat, entity.id);
     const moveCardOptions = { registries, combatMatchupRules: combat.combatMatchupRules,
       combatExpansionVersion: combat.combatExpansionVersion, stanceRules: combat.stanceRules };
     const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { ...moveCardOptions, ratingsRules: combat.ratingsRules }) : null;
@@ -1142,7 +1145,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       mechanicTags: e.mechanicTags ? [...e.mechanicTags] : undefined,
       mechanicBindings: e.mechanicBindings ? structuredClone(e.mechanicBindings) : undefined,
       ratingSources: e.ratingSources ? structuredClone(e.ratingSources) : undefined,
-      ...(e.kind === 'enemy' ? { intentPreview: projectCombatIntent(combat, e.id), presentationStance: enemyStanceCategory(e.intent) } : {}),
+      ...(e.kind === 'enemy' ? { intentPreview: intentProjection.project(combat, e.id), presentationStance: enemyStanceCategory(e.intent) } : {}),
       hp: e.hp,
       energy: e.energy, energyMax: e.energyMax, stamina: e.stamina, maxStamina: e.maxStamina, maxMana: e.maxMana,
       mana: e.mana,
@@ -1267,7 +1270,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // Unused Evade charges expire as the player's turn starts.
           if (disp.ents.player) disp.ents.player.combatEvade = null;
           for (const enemy of combat.enemies) if (disp.ents[enemy.id]) {
-            disp.ents[enemy.id].intentPreview = projectCombatIntent(combat, enemy.id);
+            disp.ents[enemy.id].intentPreview = intentProjection.project(combat, enemy.id);
             disp.ents[enemy.id].presentationStance = enemyStanceCategory(enemy.intent);
           }
           break;
@@ -1434,7 +1437,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const role = entity.kind === 'enemy' ? 'enemy' : 'player';
       const intent = role === 'enemy' ? configuredArt && !gameModule(run, 'intent')
         ? { hidden: true, label: t('gameProfile.combat.unreadIntent') }
-        : disp?.ents[entity.id]?.intentPreview || projectCombatIntent(combat, entity.id) : null;
+        : disp?.ents[entity.id]?.intentPreview || intentProjection.project(combat, entity.id) : null;
       const matchupActive = role === 'enemy' && !!activeDef;
       const matchup = matchupActive ? targetHudMatchup(action, intent, gameModule(run, 'stances')) : 'neutral';
       const auraColor = role === 'player' ? '#87caff' : TARGET_HUD_AURA[matchup];
@@ -1475,7 +1478,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // not the enemy's separate normal intent.
     try {
       intent = stackedEnemyReactionIntent(combat, pending, seat);
-      if (!intent && enemy?.alive && intentShown) intent = projectCombatIntent(combat, enemy.id);
+      if (!intent && enemy?.alive && intentShown) intent = intentProjection.project(combat, enemy.id);
     } catch { intent = null; }
     const options = pending.options.map(option => ({ id: option.id, kind: reactionKind(option) }));
     const picked = chooseReaction({ matchups: gameModule(run, 'stances')?.matchups,
@@ -1522,6 +1525,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function render() {
+    return intentProjection.render(renderBoard);
+  }
+
+  function renderBoard() {
     if (paintedAppearance !== displayAppearance()) {
       combatEl.querySelectorAll(':scope > .backdrop, :scope > .alternative-card-fade, :scope > .layered-environment-effects').forEach(node => node.remove());
       combatEl.insertAdjacentHTML('afterbegin', combatBackdropHtml(run, previewSceneId));
@@ -2067,7 +2074,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's
   // `pill.lg` (uiContent.js intentBadge picks the tone and the words).
   function intentEl(enemy) {
-    const shown = disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id);
+    const shown = disp?.ents[enemy.id]?.intentPreview || intentProjection.project(combat, enemy.id);
     const followUps = disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, combat.phase === 'enemy' || !!combat.reactionCursor);
     return combatantIntent(followUps?.length ? { ...shown, followUps } : shown, () => {
       const intent = combatantSubject('enemy', enemy).intent;
