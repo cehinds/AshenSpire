@@ -34,9 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-21
 
-- **Lighter card taps and combat tools** ([#2242](https://github.com/cehinds/AshenSpire/pull/2242), `0.7.1.1764`). Card taps avoid a redundant target refresh, and combat tools avoid temporary layout changes. Drag cancellation, targeting and log controls retain their behavior.
+- **Lighter card taps and combat tools** ([#2242](https://github.com/cehinds/AshenSpire/pull/2242), `0.7.1.1766`). Card taps avoid a redundant target refresh, and combat tools avoid temporary layout changes. Drag cancellation, targeting and log controls retain their behavior.
 
-- **Smoother stance selection** ([#2241](https://github.com/cehinds/AshenSpire/pull/2241), `0.7.1.1764`). Selecting a card updates hit chances once after the stance changes, avoiding duplicate preview work. Target, range and upcast previews remain current, with the same combat rules and animation pacing.
+- **Smoother stance selection** ([#2241](https://github.com/cehinds/AshenSpire/pull/2241), `0.7.1.1766`). Selecting a card updates hit chances once after the stance changes, avoiding duplicate preview work. Target, range and upcast previews remain current, with the same combat rules and animation pacing.
 
 - **More responsive combat selection** ([#2238](https://github.com/cehinds/AshenSpire/pull/2238), `0.7.1.1764`). Selecting cards avoids repeated battlefield fits when the hand has not moved. Replacing a card preview no longer treats the trailing tap click as another confirmation. Fresh target taps and keyboard confirmation remain available after held inspection.
 
