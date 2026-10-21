@@ -35,9 +35,9 @@ test('real Core 2 run forwards equipped attributes and accuracy bonuses to live 
  assert.deepEqual(combat.player.ratings,ratings.totals);assert.equal(combat.piles.hand.length,run.drawPerTurn);
  const carrier={combatProfile:{camp:'physical',maneuver:'attack',range:'melee'}};
  const hit=attackHitPreview(combat,target,combat.player,carrier);
- assert.equal(hit.evasion,1); // no Evade stacks: Evasion is only its flat base
+ assert.equal(hit.evasion,1+combat.player.attributes.dexterity+gear.totals.evasion); // DEX and gear remain at zero stacks
  combat.player.statuses.evade={stacks:2};
- assert.equal(attackHitPreview(combat,target,combat.player,carrier).evasion,1+2*(1+combat.player.attributes.dexterity+gear.totals.evasion));
+ assert.equal(attackHitPreview(combat,target,combat.player,carrier).evasion,1+combat.player.attributes.dexterity+gear.totals.evasion+2*(1+combat.player.attributes.dexterity));
  const read=rollKnowledgeRead({float:()=>.2},enemyKnowledge,{attributes:combat.player.attributes},'Attack',{ctx:combat,target});
  assert.equal(read.perception.total,5+combat.player.attributes.wisdom);
 });
@@ -99,10 +99,10 @@ test('selected card hit odds match configured stance entry and Evade grants actu
  combat.player.energy=10;combat.player.stamina=10;
  combat.piles.hand.push({cardId:'core.evade',instanceId:'actual-evade',upgraded:false});
  dispatch(combat,{type:'playCard',cardInstanceId:'actual-evade'});
- const dexterity=combat.player.attributes.dexterity;assert.equal(combat.player.statuses.evade?.stacks,1+dexterity);
+ assert.equal(combat.player.statuses.evade?.stacks,1);
  combat.piles.hand.push({cardId:'core.evade',instanceId:'actual-evade-second',upgraded:false});
  dispatch(combat,{type:'playCard',cardInstanceId:'actual-evade-second'});
- assert.equal(combat.player.statuses.evade.stacks,2*(1+dexterity));
+ assert.equal(combat.player.statuses.evade.stacks,2);
 });
 test('registered owner and active card parameters affect live shared math and reject typos',async()=>{
  const {fixCoreRules,validateFixCoreRules}=await import('../src/model/fixCoreMechanics.js');
@@ -158,8 +158,28 @@ test('a card-scoped accuracy override changes the Evade stacks that card gains',
  const {formulaCtxFor}=await import('../src/engine/actions.js');
  const {combat}=live();const dexterity=combat.player.attributes.dexterity;
  const card={cardId:'core.evade',mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{evadeStackBase:3,evadeStackDex:2}}]};
- assert.equal(formulaCtxFor(combat,{source:combat.player,card:{cardId:'core.evade'}}).evadeStackGain,1+dexterity);
+ assert.equal(formulaCtxFor(combat,{source:combat.player,card:{cardId:'core.evade'}}).evadeStackGain,1);
  assert.equal(formulaCtxFor(combat,{source:combat.player,card}).evadeStackGain,3+2*dexterity);
+});
+test('unversioned shipped Evade gains migrate purely on restore; custom and versioned gains survive',async()=>{
+ const {serializeCombatSnapshot,restoreCombatSnapshot}=await import('../src/engine/combatSnapshot.js');
+ const {normalizeFixCoreRules}=await import('../src/model/fixCoreMechanics.js');
+ const {evadeStackGain}=await import('../src/engine/stanceHit.js');
+ const {combat}=live();const snapshot=serializeCombatSnapshot(combat);
+ for (const [base,dex,version,expectedDex] of [[1,1,undefined,0],[3,2,undefined,2],[1,1,2,1]]) {
+  const old=structuredClone(snapshot);Object.assign(old.fixCoreRules.accuracy,{evadeStackBase:base,evadeStackDex:dex});
+  if(version===undefined)delete old.fixCoreRules.accuracy.evasionVersion;
+  const before=JSON.stringify(old);
+  const restored=restoreCombatSnapshot({registries:reg,rng:createRng(combat.rng.seed,combat.rng.getCounters()),snapshot:old,expectedGameProfile:profile});
+  assert.equal(JSON.stringify(old),before,'caller snapshot untouched');
+  assert.equal(restored.fixCoreRules.accuracy.evasionVersion,2);assert.equal(restored.fixCoreRules.accuracy.evadeStackDex,expectedDex);
+  assert.equal(evadeStackGain(restored,restored.player),base+expectedDex*restored.player.attributes.dexterity);
+  assert.equal(normalizeFixCoreRules(restored.fixCoreRules),restored.fixCoreRules,'idempotent');
+  const roundtrip=restoreCombatSnapshot({registries:reg,rng:createRng(combat.rng.seed,combat.rng.getCounters()),snapshot:serializeCombatSnapshot(restored),expectedGameProfile:profile});
+  assert.deepEqual(roundtrip.fixCoreRules.accuracy,restored.fixCoreRules.accuracy);
+ }
+ const intentional={cardId:'core.evade',mechanicTags:['combat:accuracy'],mechanicBindings:[{tag:'combat:accuracy',parameters:{evadeStackBase:1,evadeStackDex:1}}]};
+ assert.equal(evadeStackGain(combat,combat.player,intentional),1+combat.player.attributes.dexterity,'card override stays intentional');
 });
 test('card face prints the live Precision entry grant on the shipped Core strike and sweep, and nothing under a legacy profile',async()=>{
  const {cardFaceLines}=await import('../src/model/cardFaceText.js');
@@ -259,8 +279,8 @@ test('fractional offense reaches final rounding without a fabricated status modi
 test('the Evade card outside combat fills its {evade} token with a phrase, never a raw token',async()=>{
  const {staticCardTokens,playingCardModel}=await import('../src/model/playingCard.js');
  const def=reg.cards.get('core.evade');
- assert.equal(staticCardTokens(def).evade,'1 plus DEX');
- assert.equal(playingCardModel(reg,{cardId:'core.evade'}).tokens.evade,'1 plus DEX');
+ assert.equal(staticCardTokens(def).evade,'1');
+ assert.equal(playingCardModel(reg,{cardId:'core.evade'}).tokens.evade,'1');
 });
 test('the off-combat Evade phrase follows the configured gain, card overrides included',async()=>{
  const {staticCardTokens}=await import('../src/model/playingCard.js');

@@ -1,7 +1,7 @@
 import { cardSummaryContext } from './playingCard.js';
 import { withChargedEffects } from './cardFaceText.js';
 import { stanceEntryBonuses } from './stanceRules.js';
-import { fixCoreEnabled, fixCoreRules, fixCoreStatusDefinition } from './fixCoreMechanics.js';
+import { fixCoreEnabled, fixCoreRules, fixCoreStatusDefinition, evadeGrantOnlyCard } from './fixCoreMechanics.js';
 
 // Quantified self benefits belong to the shared tag rail. Keep separate grants
 // separate in their explanation: a stance-change grant is not added to an
@@ -67,7 +67,10 @@ export function cardBonusTags(def, preview = null, registries = null, rules = nu
   }
   return [...facts].map(([status, grants]) => {
     const base = definition(status), resolved = fixCoreStatusDefinition(ctx, status, base);
-    const single = grants.length === 1 ? grants[0] : null;
+    // A pure Evade card prints its short grant in the body; its keyword tag
+    // keeps the explanation without repeating the quantity.
+    const bodyGrant = core && evadeGrantOnlyCard(def);
+    const single = !bodyGrant && grants.length === 1 ? grants[0] : null;
     return { id: `${protection[status] ? 'effect' : 'status'}:${status}`, label: resolved.name,
       blurb: [...grants.map(grant => grant.text), resolved.tooltip || resolved.name].join(' '),
       ...(single ? { count: single.count, ...(single.formula ? { countFormula: single.formula } : {}) } : {}),

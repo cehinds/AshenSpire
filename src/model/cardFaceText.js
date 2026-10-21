@@ -1,7 +1,7 @@
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { coreSmashClause } from './smashClause.js';
 import { stanceEntryBonuses, stanceRulesFor, stanceOf } from './stanceRules.js';
-import { fixCoreEnabled } from './fixCoreMechanics.js';
+import { fixCoreEnabled, evadeGrantOnlyCard } from './fixCoreMechanics.js';
 import { armsAsCoreCounter } from './profileStance.js';
 // src/model/cardFaceText.js — the text a playing card's face says, as lines.
 //
@@ -74,6 +74,9 @@ export function cardFaceLines(def, preview = null, registries = null, rules = nu
 function buildLines(def, preview, registries, rules = null, { stanceEntry, representedEffects, representedEntry, representedRules, entryLabel }) {
   // A live preview prices the effects an active charge expands (an added buildup row); its values follow that list.
   def = withChargedEffects(def, preview);
+  // Its authored sentence is already the complete compact rule, with the
+  // configured grant filled by the same token binder as other card surfaces.
+  if (evadeGrantOnlyCard(def)) return null;
   if (def.comboHook) return null;
   // A Power's status is its mechanic's carrier ("Gain Goreblood 1" says nothing); its authored text explains it.
   if (def.type === 'power') return null;

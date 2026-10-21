@@ -38,18 +38,15 @@ test('automatic Precision has an honest static formula, exact live count and com
   assert.doesNotMatch(text(faceWith(def, [live], { entryPrecision: 8 })), /Precision|Entry/);
 });
 
-test('Core Evade uses one badge for its authored formula and no second automatic grant', () => {
+test('Core Evade retains its short body and one unquantified keyword tag', () => {
   const def = definition('core.evade');
   const [tag] = cardBonusTags(def, null, core);
-  assert.equal(tag.count, 1);
-  assert.equal(tag.countFormula, 'DEX');
-  assert.match(tag.blurb, /Gain 1 \+ DEX Evade/);
-  assert.doesNotMatch(tag.blurb, /On changing stance/);
-  assert.deepEqual(faceWith(def, [tag]), [], 'a tag-only card does not fall back to duplicate authored prose');
+  assert.equal(tag.count, undefined);assert.equal(tag.countFormula, undefined);
+  assert.match(tag.blurb, /Gain 1 Evade/);assert.doesNotMatch(tag.blurb, /On changing stance/);
+  assert.deepEqual(tag.representedEffects, []);
+  assert.equal(faceWith(def, [tag]), null, 'the short authored sentence supplies the whole body');
   const preview = { values: [{ op: 'applyStatus', status: 'evade', value: 7 }] };
-  assert.equal(cardBonusTags(def, preview, core)[0].count, 7);
-  assert.equal(cardBonusTags(def, preview, core)[0].countFormula, undefined);
-  assert.equal(cardBonusTags(def, { values: [{ op: 'applyStatus', status: 'weak', value: 99 }] }, core)[0].count, 1);
+  assert.match(cardBonusTags(def, preview, core)[0].blurb, /Gain 7 Evade/);
 });
 
 test('conditional, timed and targeted applications keep their body semantics', () => {
@@ -117,7 +114,7 @@ test('generic v2 protection uses amount tags while configured Core does not prom
   assert.deepEqual(cardBonusTags(generic, null, core), [], 'configured Core has no automatic Block/Barrier grant');
 });
 
-test('hand, reward and complete printed faces share tags without Entry or duplicate Evade prose', () => {
+test('hand, reward and complete printed faces show the short Evade grant with a keyword tag', () => {
   withKitDom(({ document }) => {
     const proto = Object.getPrototypeOf(document.body), original = Object.getOwnPropertyDescriptor(proto, 'innerHTML');
     const markup = new WeakMap();
@@ -128,7 +125,8 @@ test('hand, reward and complete printed faces share tags without Entry or duplic
         const card = renderCard(core, { cardId: id }, opts), html = markup.get(card);
         const body = html.replace(/(?:aria-label|aria-description|data-tip)="[^"]*"/g, '');
         assert.doesNotMatch(body, /Entry:|stat mix|Gain Evade/);
-        assert.match(html, id === 'core.strike' ? /aria-label="Precision 1 \+ stat mix"/ : /aria-label="Evade 1 \+ DEX"/);
+        assert.match(html, id === 'core.strike' ? /aria-label="Precision 1 \+ stat mix"/ : /aria-label="Evade"/);
+        if (id === 'core.evade') assert.match(body.replace(/<[^>]*>/g, ''), /Gain 1 Evade\./);
       }
     }
   });

@@ -46,12 +46,19 @@ export function normalizeFixCoreRules(rules) {
     if (perception.bonuses === undefined) perception.bonuses = [];
     out = { ...out, perception };
   }
-  // Accuracy saved before the opposed-roll ruling (2026-10-19): drop the retired per-stack fields, fill the new ones from the defaults.
+  // Retired fields and the shipped unversioned 1 + DEX grant are normalized
+  // without changing caller snapshots or intentional version-2 overrides.
   const a = rules?.accuracy;
-  if (a && typeof a === 'object' && OLD_ACCURACY_FIELDS.some(key => Object.hasOwn(a, key))) {
+  if (a && typeof a === 'object' && (a.evasionVersion === undefined || OLD_ACCURACY_FIELDS.some(key => Object.hasOwn(a, key)))) {
     const accuracy = { ...a };
-    for (const key of OLD_ACCURACY_FIELDS) delete accuracy[key];
-    for (const [key, value] of Object.entries(defaults.accuracy)) if (accuracy[key] === undefined && !['maneuverPrecision','stanceMinimum','stanceMaximum','stanceAdvantageBonus'].includes(key)) accuracy[key] = structuredClone(value);
+    if (OLD_ACCURACY_FIELDS.some(key => Object.hasOwn(a, key))) {
+      for (const key of OLD_ACCURACY_FIELDS) delete accuracy[key];
+      for (const [key, value] of Object.entries(defaults.accuracy)) if (accuracy[key] === undefined && !['maneuverPrecision','stanceMinimum','stanceMaximum','stanceAdvantageBonus'].includes(key)) accuracy[key] = structuredClone(value);
+    }
+    if (a.evasionVersion === undefined) {
+      if (a.evadeStackBase === 1 && a.evadeStackDex === 1) accuracy.evadeStackDex = 0;
+      accuracy.evasionVersion = 2;
+    }
     out = { ...out, accuracy };
   }
   return out;
@@ -143,11 +150,18 @@ export function damageReceipt(targetId, hits) {
 
 // Read-only status projection for cards, PIPs, logs and inspectors. The base
 // registry is explicit so UI facades cannot recursively query themselves.
-/** The off-combat phrase for Evade's gain, from the configured (and card-scoped) accuracy block: "1 plus DEX", "3 plus 2× DEX". */
+/** The off-combat phrase for Evade's configured (and card-scoped) stack grant. */
 export function evadeStackGainPhrase(ctx, carrier = null) {
   const { evadeStackBase: base, evadeStackDex: dex } = fixCoreRules(ctx, { id: 'card-face' }, carrier).accuracy;
   return dex === 0 ? String(base) : `${base} plus ${dex === 1 ? '' : dex + '× '}DEX`;
 }
+/** A card whose whole authored rule is its configured self Evade grant. */
+export const evadeGrantOnlyCard = def => def.effects?.length === 1 && def.effects[0].op === 'applyStatus'
+  && def.effects[0].status === 'evade' && def.effects[0].target === 'self'
+  && Object.keys(def.effects[0]).every(key => ['op', 'target', 'status', 'stacks'].includes(key))
+  && def.effects[0].stacks?.f === 'metric' && def.effects[0].stacks.metric === 'evadeStackGain'
+  && def.effects[0].stacks.of === 'self'
+  && Object.keys(def.effects[0].stacks).every(key => ['f', 'metric', 'of'].includes(key));
 export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) {
   const base = baseDefinition ?? ctx?.registries?.statuses?.get(id);
   if (!fixCoreEnabled(ctx)) return base;
@@ -157,9 +171,7 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) 
     weak: `Attack rating ×${rules.statuses.weakARMultiplier} while active.`,
     vulnerable: `Damage taken ×${rules.statuses.vulnerabilityMultiplier} while active.`,
     staggered: `Poise broke: lose ${fixCoreStaggeredRules(rules).staminaLoss} SP next turn and gain ${fixCoreStaggeredRules(rules).vulnerableStacks} Vulnerable. Repeat breaks only extend Vulnerable.`,
-    // Per-stack Evasion is baseAC + the holder's gear Evasion + the holder's DEX; with no holder the line stays entity-neutral.
-    evade: holder ? `Each stack adds ${rules.accuracy.baseAC + (Number(holder.baseEvasionBonus) || 0)} (base ${rules.accuracy.baseAC}${holder.baseEvasionBonus ? `, gear +${holder.baseEvasionBonus}` : ''}) plus the holder's DEX to its Evasion roll.`
-      : `Each stack adds ${rules.accuracy.baseAC} plus the holder's gear Evasion and DEX to its Evasion roll.`,
+    evade: `Each stack adds ${rules.accuracy.baseAC} + DEX to fixed Evasion. Only attacks roll.`,
     precision: `Each stack adds another multiple of your Precision score (attributes and level) to your Precision roll.`,
   };
   if (id === 'precision') row.tooltip = row.description = `${facts[id]} Applications add stacks. Expires at the end of the owner's turn unless the granting effect is Persistent. Does not increase damage.`;

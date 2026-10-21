@@ -301,7 +301,7 @@
     "stanceTrigger": {
       "stance": "evade"
     },
-    "textTemplate": "Gain {evade} Evade stacks.",
+    "textTemplate": "Gain {evade} Evade.",
     "flavor": "Core adapter fixture. Evade is available in rewards, never starter."
   },
   {

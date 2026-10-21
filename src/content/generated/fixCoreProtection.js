@@ -31,6 +31,11 @@ export const fixCoreProtection = [
         "parameters": {
           "type": "object",
           "properties": {
+            "evasionVersion": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 2
+            },
             "baseAC": {
               "type": "number",
               "minimum": 0
