@@ -226,7 +226,12 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     },
     get presentation(){return {rest,pose,stance,action:playing?.action,elapsed,duration:playing?.duration,resources,savedAt:Date.now()};},
     setStance(next){
-      stance=Object.hasOwn(heldFrames,next)?next:null;
+      if(disposed)return false;
+      const normalized=Object.hasOwn(heldFrames,next)?next:null;
+      // Re-selecting an already held stance cannot change its pixels. Loading
+      // artwork has its own paint callback; action/reaction clocks stay owned.
+      if(normalized===stance && el.dataset.stance!==undefined && (playing || pose===restPose()))return !!stance;
+      stance=normalized;
       el.dataset.stance=stance||'neutral';
       if(!playing){pose=restPose();paint();}
       return !!stance;

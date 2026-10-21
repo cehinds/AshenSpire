@@ -36,7 +36,7 @@ test('an unarmed player shows the last confirmed kind, an armed card its own', (
   const leading = { querySelector: () => null, append: action => actions.push(action) };
   const context = {
     combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, kindForCard, selfArm: null,
-    playerActionIntent: profile => ({ profile }), playCard() {}, selectCombatant() {},
+    playerActionIntent: profile => ({ profile, dataset: {} }), playCard() {}, selectCombatant() {},
     combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
   };
   const sync = runInNewContext(`${source.slice(begin, end)}\nsyncPlayerActionIntent`, context);
@@ -56,7 +56,7 @@ test('with nothing confirmed or armed, the figure shows the neutral resting mark
   const context = {
     combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, kindForCard, selfArm: null,
     RESTING_PLAYER_ACTION: { maneuver: 'ready' },
-    playerActionIntent: profile => ({ profile }), playCard() {}, selectCombatant() {},
+    playerActionIntent: profile => ({ profile, dataset: {} }), playCard() {}, selectCombatant() {},
     combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
   };
   const sync = runInNewContext(`${source.slice(begin, end)}\nsyncPlayerActionIntent`, context);
@@ -116,7 +116,7 @@ test('a spell-only profile shows the prepare glyph, and an untyped one too', () 
 });
 
 test('an armed spell-only card wins over the held kind', () => {
-  const { actions, sync } = loadSyncPlayerActionIntent(profile => ({ profile }), { id: 'scholarsInsight' });
+  const { actions, sync } = loadSyncPlayerActionIntent(profile => ({ profile, dataset: {} }), { id: 'scholarsInsight' });
   sync({ instanceId: 'x', cardId: 'scholarsInsight' }, kindForCard({ id: 'defend' }));
   assert.equal(actions.at(-1).profile.camp, 'spell', 'the armed spell-only profile is not replaced by the held kind');
   assert.equal(actions.at(-1).profile.maneuver, null);
