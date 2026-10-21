@@ -323,7 +323,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // player surface, plus every enemy for the under-model one) rather than typed.
   // Once per mount: it is a fact about the content, not about the frame.
   const resDomains = resourceDomains(registries);
-  const targetHud = mountCombatTargetHud(combatEl);
+  const targetHud = mountCombatTargetHud(combatEl, { onActivate: activateTargetHud });
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
   const combatLayout = wireCombatLayout(combatEl);
   let playerRest = 'idle';
@@ -1400,6 +1400,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // Detail presentation consumes the exact paced values used by the overhead
   // HUD. Eligibility comes from the real card plan, not a living-enemy shortcut.
+  function activateTargetHud(id) {
+    // Read live state: a paced panel can outlive the selection that showed it.
+    if (busy || enemyPlayback || combat.result || combat.phase !== 'player'
+        || combat.pendingReaction || hasCardChoice(combat) || veilIsOpen()
+        || !(selected || selfArm || selectedFlask != null)
+        || !pendingTargetPlan().legalIds.includes(id)) return;
+    if (selected) playCard(selected, id);
+    else if (selfArm) playCard(selfArm, null);
+    else if (selectedFlask != null) useFlask(selectedFlask, id);
+  }
+
   function updateTargetHud(eligibleIds = null) {
     const active = findInst(selected || selfArm);
     const activeDef = active && resolveCombatCard(combat, active, { upcastRanks: upcastRanksByCard.get(active.instanceId) });
@@ -2520,11 +2531,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const flick = !!verdict?.distanceMet && (!release || verdict.qualifies);
       const targetPlan = cardTargets(inst.instanceId);
       const under = releaseHit || document.elementFromPoint(point.x, point.y);
-      const pickerTarget = under?.closest?.('.enemy-target-button')?.dataset.eid;
+      const pickerTarget = under?.closest?.('.enemy-target-button, .target-hud-detail')?.dataset.eid;
       const directEnemy = pickerTarget
         ? combatEl.querySelector(`.combatant.enemy[data-eid="${CSS.escape(pickerTarget)}"]`)
         : under?.closest?.('.enemy:not(.dead)');
-      const directPlayer = under?.closest?.('.combatant.player');
+      const directPlayer = pickerTarget === combat.player.id
+        ? combatEl.querySelector('.combatant.player') : under?.closest?.('.combatant.player');
       const directLegal = !!((directEnemy && targetPlan.legalIds.includes(directEnemy.dataset.eid))
         || (directPlayer && targetPlan.legalIds.includes(combat.player.id)));
       const forbidden = forbiddenCardDrop(targetPlan, point, [...combatEl.querySelectorAll('.combatant')].map(frame => ({
@@ -2533,7 +2545,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         bounds: frame.querySelector('.sprite')?.getBoundingClientRect(),
       })));
       if (forbidden && !directLegal) return { legal: false, enemies: [], flick };
-      const wrongSide = dragTargetMode === 'none' ? !!directEnemy || !!pickerTarget : !!under?.closest?.('.combatant.player');
+      const wrongSide = dragTargetMode === 'none' ? !!directEnemy : !!directPlayer;
       if (wrongSide) return { legal: false, enemies: [], flick };
       if (dragTargetMode === 'single') {
         const enemy = directLegal ? directEnemy : flick ? nearestEnemy(point.x, point.y) : null;
@@ -2543,7 +2555,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         const enemies = flick || directEnemy ? livingEnemyEls() : [];
         return { legal: enemies.length > 0, enemies, flick };
       }
-      return { legal: flick || !!under?.closest?.('.combatant.player'), enemies: [], flick };
+      return { legal: flick || !!directPlayer, enemies: [], flick };
     };
     const updateDropTarget = event => {
       if (!dragGhost) return;
