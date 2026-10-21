@@ -62,10 +62,14 @@ function damageDetailTopics(hits) {
         : Number.isFinite(source.amount) ? `${source.amount >= 0 ? '+' : '−'}${detailNumber(Math.abs(source.amount))}` : '?';
     return `${source.label || source.id || 'Source'}: ${operation}`;
   }));
-  const defenses = groupedHitDetails(hits, hit => [['wardReduced', 'Ward'], ['poiseReduced', t('statsPreview.overview.poise')], ['blocked', 'Block']]
-    .filter(([key]) => Number.isFinite(hit[key]) && hit[key] > 0)
-    .map(([key, label]) => `${label} −${detailNumber(hit[key])}`));
-  return [['Hits', hitDetails, 'Inspect per-hit damage'], ['Sources', sources, 'Inspect damage sources'], ['Defenses', defenses, 'Inspect damage reductions']]
+  const defenses = groupedHitDetails(hits, hit => {
+    const rows = [['wardReduced', 'Ward'], ['poiseReduced', null], ['blocked', 'Block']]
+      .filter(([key]) => Number.isFinite(hit[key]) && hit[key] > 0)
+      .map(([key, label]) => label ? `${label} −${detailNumber(hit[key])}` : t('combat.receipt.poiseAbsorbed', { n: detailNumber(hit[key]) }));
+    if (hit.poiseDamage > 0) rows.push(t('combat.receipt.poiseDamage', { n: detailNumber(hit.poiseDamage) }));
+    return rows;
+  });
+  return [['Hits', hitDetails, 'Inspect per-hit damage'], ['Sources', sources, 'Inspect damage sources'], ['Defenses', defenses, 'Inspect defense details']]
     .filter(([, text]) => text);
 }
 

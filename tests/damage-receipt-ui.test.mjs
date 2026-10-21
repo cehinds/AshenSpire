@@ -82,7 +82,7 @@ test('unequal mixed hits keep exact receipt numbers, reductions, operations and 
   assert.doesNotMatch(details[1].text, /\(offense\)|\(rounding\)/);
   assert.match(details[2].text, /Hit 1: Ward −5/);
   assert.match(details[2].text, /Hit 2: Ward −2/);
-  assert.match(details[2].text, /Hit 2: Poise −7/);
+  assert.match(details[2].text, /Hit 2: Poise absorbed 7/);
   assert.match(details[2].text, /Hit 2: Block −12/);
 });
 
@@ -91,6 +91,17 @@ test('empty topics are omitted and missing receipt values stay unknown', () => {
   assert.match(visibleText(html), /\? HP damage · 1 hit/);
   assert.deepEqual(topics(html).map(row => row.label), ['Hits']);
   assert.equal(topics(html)[0].text, 'Hit 1: ? incoming (8 physical + ? magical) → 8 HP damage');
+});
+
+test('Poise pressure remains inspectable when the hit absorbed no HP damage', () => {
+  const hit = { incoming: 12, hpLoss: 12, blocked: 0, wardReduced: 0, poiseReduced: 0, poiseDamage: 3.125, sources: [] };
+  const receipt = { hits: [hit], totalDamage: 12 };
+  const html = damageReceiptHtml(receipt);
+  assert.match(visibleText(html), /12 HP damage · 1 hit/);
+  assert.deepEqual(topics(html).map(row => row.label), ['Hits', 'Defenses']);
+  assert.equal(topics(html)[1].text, 'Hit 1: Poise damage 3.125');
+  assert.doesNotMatch(topics(html)[1].text, /absorbed|−/);
+  assert.ok(damageReceiptLines(receipt).includes('Poise damage 3.125'));
 });
 
 test('nested detail text is escaped once for its attribute and never becomes markup', () => {
