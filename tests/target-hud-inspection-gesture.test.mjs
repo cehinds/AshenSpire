@@ -24,7 +24,7 @@ function target() {
 }
 function fixture({ armed = true } = {}) {
   const document = target(), window = target(), shell = target(), timers = new Map(), plays = [], reads = [];
-  let time = 0, serial = 0;
+  let time = 0, serial = 0, ready = true;
   const name = {
     closest(selector) { return selector.includes('.target-hud-name') ? this : null; },
     matches() { return false; },
@@ -32,7 +32,7 @@ function fixture({ armed = true } = {}) {
   };
   const scope = {
     document, window, entries: new Map([['e1', { inspect: () => reads.push(time) }]]), eligible: armed ? ['e1'] : [],
-    onActivate: id => plays.push(id), hideTooltip() {}, performance: { now: () => time },
+    canInspect: () => ready, onActivate: id => plays.push(id), hideTooltip() {}, performance: { now: () => time },
     setTimeout(fn) { const id = ++serial; timers.set(id, fn); return id; }, clearTimeout(id) { timers.delete(id); },
     gestures: new AbortController(), disposed: false, dwell: { dispose() {} }, raf: null, cancelAnimationFrame() {},
     layer: { querySelectorAll: () => [], remove() {} }, cells: { remove() {} },
@@ -50,6 +50,7 @@ function fixture({ armed = true } = {}) {
     down(id = 1) { shell.fire('pointerdown', event(id)); }, up(id = 1) { document.fire('pointerup', event(id)); }, click,
     dblclick(id = null) { const ev = event(id, { detail: 2 }); shell.fire('dblclick', ev); return ev; },
     hold() { for (const [id, fn] of [...timers]) { timers.delete(id); fn(); } },
+    ready(value) { ready = value; }, disarm() { scope.eligible = []; },
     advance(ms) { time += ms; }, arm() { scope.eligible = ['e1']; },
     cancel(id = 1) { document.fire('pointercancel', event(id)); }, blur() { window.fire('blur', {}); },
     move(id = 1) { document.fire('pointermove', event(id, { clientX: 40 })); },
@@ -104,4 +105,42 @@ test('resource descendants that stop pointer bubbling still reset released inspe
   f.resourceDown(); f.capturedUp(); f.click(null);
   assert.deepEqual(f.plays, ['e1']);
   assert.equal(f.reads.length, 1);
+});
+
+
+test('a target press begun during playback cannot inspect or activate after unlock', () => {
+  const f = fixture(); f.down(); f.up(); f.click(1); f.disarm();
+  f.ready(false); f.resourceDown(2); f.advance(900); f.ready(true); f.capturedUp(2); f.click(null); f.dblclick();
+  assert.equal(f.reads.length, 0); assert.deepEqual(f.plays, ['e1']);
+  f.arm(); f.down(3); f.up(3); f.click(3); assert.deepEqual(f.plays, ['e1', 'e1']);
+});
+
+test('busy-start hold and double-tap stay rejected while a fresh ready inspection works', () => {
+  const f = fixture({ armed: false }); f.down(); f.up(); f.click(1);
+  f.ready(false); f.down(2); f.advance(900); f.ready(true); f.hold(); f.up(2); f.click(2); f.dblclick();
+  assert.equal(f.reads.length, 0);
+  f.down(3); f.hold(); assert.equal(f.reads.length, 1);
+});
+
+test('an accepted activation owns its trailing dblclick without a timeout', () => {
+  const f = fixture(); f.down(); f.up(); f.click(1); f.advance(1500); f.disarm(); f.dblclick();
+  assert.equal(f.reads.length, 0);
+  f.arm(); f.keyboard(); assert.deepEqual(f.plays, ['e1', 'e1']);
+});
+
+
+test('a full native double-click series stays owned by its first accepted activation', () => {
+  const f = fixture(); f.down(1); f.up(1); f.click(1, 1); f.disarm();
+  f.advance(100); f.down(2); f.up(2); f.click(2, 2); f.dblclick();
+  assert.equal(f.reads.length, 0); assert.deepEqual(f.plays, ['e1']);
+  f.advance(400); f.down(3); f.up(3); f.click(3, 1);
+  f.advance(100); f.down(4); f.up(4); f.click(4, 2); f.dblclick();
+  assert.equal(f.reads.length, 1, 'a fresh unarmed reading series remains available');
+});
+
+
+test('an independently eligible target keeps precedence within an accepted click series', () => {
+  const f = fixture(); f.down(1); f.up(1); f.click(1, 1);
+  f.down(2); f.up(2); f.click(2, 2); f.dblclick();
+  assert.deepEqual(f.plays, ['e1', 'e1']); assert.equal(f.reads.length, 0);
 });
