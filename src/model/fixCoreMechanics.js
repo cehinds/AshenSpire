@@ -171,7 +171,7 @@ export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) 
     weak: `Attack rating ×${rules.statuses.weakARMultiplier} while active.`,
     vulnerable: `Damage taken ×${rules.statuses.vulnerabilityMultiplier} while active.`,
     staggered: `Poise broke: lose ${fixCoreStaggeredRules(rules).staminaLoss} SP next turn and gain ${fixCoreStaggeredRules(rules).vulnerableStacks} Vulnerable. Repeat breaks only extend Vulnerable.`,
-    evade: `Each stack adds ${rules.accuracy.baseAC} + DEX to fixed Evasion. Only attacks roll.`,
+    evade: `Each stack adds ${rules.accuracy.baseAC} + DEX to Evasion. Only attacks roll.`,
     precision: `Each stack adds another multiple of your Precision score (attributes and level) to your Precision roll.`,
   };
   if (id === 'precision') row.tooltip = row.description = `${facts[id]} Applications add stacks. Expires at the end of the owner's turn unless the granting effect is Persistent. Does not increase damage.`;
