@@ -453,11 +453,12 @@ moves, phases, seeded encounter reachability and ten named boss locations.
 `node tools/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
 using trusted desktop and phone inputs, including OS and in-game Reduced motion.
 `node tools/motion-probe.mjs` boots `?shot=combat&shotSeed=MOTION1` in Chromium
-and checks that every combatant's visible, loaded figure image is moved by
-exactly one running idle bob (on the image or its `.pose-layer` / `.facing`
-layer, or the Rendered style's `.rendered-stage`), whose keyframes really displace
-it (an opacity pulse or another infinite animation does not count), at boot, after a turn, and with the player redrawn in the Rendered and
-Classic sprite styles. It then plays one full turn under the Reduced motion setting with
+and checks that every combatant has visible, loaded artwork that holds still at
+rest, at boot, after a turn, and with the player redrawn in Rendered and Classic
+styles. Twenty RAF samples check actual art bounds, active displacement on its
+ancestors, and nonblank stable canvas pixels; Default retains its authored
+fixed-rest anchor, scale and pose check. Resting fighters have no continuous bob;
+bounded attack/reaction clips and visible status/aura feedback remain enabled. It then plays one full turn under the Reduced motion setting with
 the OS preference emulated, the setting alone and the OS alone: no animation
 `document.getAnimations()` or `Element.animate()` reports may run longer than
 0.01 s (a CSS animation or transition that ends between two frames is caught
