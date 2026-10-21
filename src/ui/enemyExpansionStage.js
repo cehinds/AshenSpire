@@ -30,7 +30,7 @@ export function enemyExpansionSprite(definition, entity = {}) {
   image.draggable = false;
   image.style.cssText = `position:absolute;max-width:none;width:${512 * scale}px;height:${512 * scale}px;left:calc(50% - ${256 * scale}px);bottom:${-32 * scale}px`;
   // The root is the sprite's first child, which the hit recoil animates.
-  // The idle bob lives on this inner layer so a recoil never resets its clock.
+  // The art container holds still; bounded recoil stays on the outer root.
   // Like the older pose stages, nothing inside takes a hit: taps land on the stage.
   const bob = document.createElement('div');
   bob.className = 'enemy-expansion-bob';
