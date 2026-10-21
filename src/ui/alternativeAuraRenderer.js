@@ -1,6 +1,6 @@
 // Independent source-alpha glows retain the authored palette and offsets without
 // recursively casting shadows of earlier shadows. The intentionally thinner aura
-// uses one reusable work surface and bounded immutable soft-layer caches.
+// uses one reusable work surface; the stage owns the other visible surface.
 const number = '-?(?:\\d+(?:\\.\\d+)?|\\.\\d+)';
 const shadow = new RegExp(`^drop-shadow\\((${number})(?:px)? (${number})(?:px)? (${number})(?:px)? (rgba\\([^)]*\\)|#[\\da-fA-F]{6,8})\\)`);
 const brightness = new RegExp(`^brightness\\((${number})\\)`);
@@ -26,8 +26,6 @@ export function alternativeAuraLayers(filter) {
 export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=544, createCanvas = () => document.createElement('canvas') } = {}) {
   let surface = null, work = null, disposed = false, current = null;
   const parsed = new Map();
-  const glows = []; // Immutable source-alpha masks, independent of stage travel.
-  let glowPixels = 0, travelUnavailable = false;
   const rendered = []; // Opt-in fixed-travel actions retain at most four phase surfaces.
   function layers(filter) {
     if (!parsed.has(filter)) {
@@ -39,7 +37,7 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
     return parsed.get(filter);
   }
   return Object.freeze({
-    draw(context, image, filter, x, y, width = 512, height = 512, { materialize = false, reuse = false, immutable = false, travel = false } = {}) {
+    draw(context, image, filter, x, y, width = 512, height = 512, { materialize = false, reuse = false, immutable = false } = {}) {
       if (disposed || !image) return false;
       const plan = layers(filter);
       context.save();
@@ -68,49 +66,13 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
           }
           current = null;
           work.clearRect(0, 0, canvasWidth, canvasHeight);
-          // Cache only soft layers. Zero-blur authored silhouette offsets must
-          // draw directly at the fractional position to avoid interpolating a
-          // sharp edge twice. Preserve source-over order across both kinds.
-          for (const [index, row] of plan.shadows.entries()) {
-            let glow = immutable && travel && row.blur > 0 && glows.find(entry => entry.image === image
-              && entry.filter === filter && entry.index === index && entry.width === width && entry.height === height);
-            const pad = Math.ceil(Math.max(Math.abs(row.x), Math.abs(row.y)) + 3 * row.blur + 2);
-            const localWidth = Math.ceil(width + 2 * pad), localHeight = Math.ceil(height + 2 * pad);
-            const pixels = localWidth * localHeight;
-            if (!glow && immutable && travel && !travelUnavailable && row.blur > 0 && width > 0 && height > 0
-                && localWidth <= 2048 && localHeight <= 2048 && pixels <= 4 * 1024 * 1024) {
-              while (glows.length && (glows.length >= 4 || glowPixels + pixels > 4 * 1024 * 1024)) {
-                const oldest = glows.shift(); glowPixels -= oldest.pixels;
-                oldest.surface.width = oldest.surface.height = 0;
-              }
-              let local, localContext;
-              try {
-                local = createCanvas(); local.width = localWidth; local.height = localHeight;
-                localContext = local.getContext('2d');
-              } catch { /* An optional cache must not prevent the original renderer. */ }
-              if (!localContext) {
-                travelUnavailable = true;
-                if (local) local.width = local.height = 0;
-              } else {
-                const outside = localWidth + width + pad;
-                localContext.save(); localContext.filter = 'none';
-                localContext.shadowColor = row.color; localContext.shadowBlur = row.blur;
-                localContext.shadowOffsetX = row.x - outside; localContext.shadowOffsetY = row.y;
-                localContext.drawImage(image, pad + outside, pad, width, height); localContext.restore();
-                glow = {image,filter,index,width,height,pad,surface:local,pixels};
-                glows.push(glow); glowPixels += pixels;
-              }
-            }
-            if (glow) {
-              work.drawImage(glow.surface, x - glow.pad, y - glow.pad);
-            } else {
-              // Move the source wholly beyond the work surface while compensating
-              // the shadow offset. Only the source-alpha shadow enters the stage.
-              const outside = canvasWidth + width + Math.abs(x);
-              work.save(); work.filter = 'none'; work.shadowColor = row.color; work.shadowBlur = row.blur;
-              work.shadowOffsetX = row.x - outside; work.shadowOffsetY = row.y;
-              work.drawImage(image, x + outside, y, width, height); work.restore();
-            }
+          // Move the source wholly beyond the work surface while compensating
+          // each shadow offset. Only the source-alpha shadow enters the stage.
+          const outside = canvasWidth + width + Math.abs(x);
+          for (const glow of plan.shadows) {
+            work.save(); work.filter = 'none'; work.shadowColor = glow.color; work.shadowBlur = glow.blur;
+            work.shadowOffsetX = glow.x - outside; work.shadowOffsetY = glow.y;
+            work.drawImage(image, x + outside, y, width, height); work.restore();
           }
           work.save(); work.filter = 'none'; work.drawImage(image, x, y, width, height); work.restore();
           current = immutable ? {image,filter,x,y,width,height,surface} : null;
@@ -132,8 +94,6 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
     dispose() {
       disposed = true; parsed.clear();
       if (surface) { surface.width = 0; surface.height = 0; }
-      for (const entry of glows) entry.surface.width = entry.surface.height = 0;
-      glows.length = 0; glowPixels = 0;
       for (const entry of rendered) entry.surface.width = entry.surface.height = 0;
       rendered.length = 0;surface = null; work = null; current = null;
     },
