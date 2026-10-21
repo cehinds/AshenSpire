@@ -1383,9 +1383,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   let wiredAppearance = displayAppearance();
   let releaseBackdrop = wireAlternativeBackdrop(combatHost);
   let releaseLayeredEnvironment = wireLayeredEnvironment(combatHost);
-  // Legacy Info doors need immediate placement. Detailed HUD controls own
-  // their placement pass and coalesce the board refit before the next paint.
-  const selectionChanged = () => {
+  let overheadRequest = 0;
+  // Glyph replacement cannot change formation or tiny-target obstruction.
+  // General inspection still refits those controls in both presentations.
+  const selectionChanged = event => {
+    if (combatHost.dataset.targetHud === 'true' && event.detail?.geometry === 'overhead') {
+      cancelAnimationFrame(overheadRequest);
+      overheadRequest = requestAnimationFrame(() => {
+        overheadRequest = 0;
+        if (field.isConnected) centerTargetOverheads();
+      });
+      return;
+    }
     // Detailed HUD controls place themselves in their own geometry pass. A
     // synchronous full-board refit here duplicated the caller's render fit
     // (and the queued fit), blocking each action before it could paint.
@@ -1454,6 +1463,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     combatHost.removeEventListener('handlayoutchange', schedule);
     cancelAnimationFrame(frameRequest);
     cancelAnimationFrame(trackingRequest);
+    cancelAnimationFrame(overheadRequest);
     resizeObserver.disconnect();
     layoutObserver.disconnect();
     poseObserver.disconnect();

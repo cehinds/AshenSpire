@@ -9,7 +9,7 @@ test('same-maneuver preview keeps the mounted glyph and its current-selection ca
   const start = source.indexOf('  function syncPlayerActionIntent('), end = source.indexOf('\n  function armSelf(', start);
   const dom = rewardDom(), board = dom.document.createElement('div');
   let changes = 0, made = 0;
-  board.addEventListener('combatantselectionchange', () => changes++);
+  board.addEventListener('combatantselectionchange', event => { changes++; assert.equal(event.detail.geometry, 'overhead'); });
   const plays = [], inspections = [];
   const scope = { combat: {}, combatEl: board, CustomEvent: dom.CustomEvent,
     upcastRanksByCard: new Map(), resolveCombatCard: (_, inst) => inst, kindForCard: def => ({ maneuver: def.maneuver }),
@@ -34,4 +34,27 @@ test('same-maneuver preview keeps the mounted glyph and its current-selection ca
   sync(player, null); assert.equal(changes, 3, 'neutral glyph replaces a different held action');
   player.querySelector('.player-action-intent').remove(); sync(player, null);
   assert.equal(changes, 4, 'rebuilt DOM restores the glyph even when maneuver is unchanged');
+});
+
+test('selection sync sends one final HUD update for self, enemy and cleared selections', () => {
+  const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  const functionText = (name, next) => source.slice(source.indexOf(`  function ${name}(`), source.indexOf(`\n  ${next}`, source.indexOf(`  function ${name}(`)));
+  const nodes = { classList: { contains: () => false, toggle() {} }, querySelector: () => null,
+    querySelectorAll: () => [], setAttribute() {} };
+  let hud = 0, info = 0;
+  const scope = { selected: null, selfArm: null, selectedCombatantId: null, busy: false, enemyPlayback: false,
+    combat: {}, combatEl: nodes, $: () => nodes, renderHand() {}, selectCombatantInfo() { info++; },
+    updateTargetHud() { hud++; }, getEntity: () => ({ alive: true }),
+    decorateRoundsScreen() {}, findInst: () => ({}), resolveCombatCard: () => ({}), upcastRanksByCard: new Map(), cardKind: () => 'skill',
+    syncPlayerPreview() {}, syncHitChances() {}, applyTargetLayer() { hud++; }, setHintMode() {}, hideTooltip() {}, refreshAim() {},
+  };
+  const selectSource = functionText('selectCombatant', '// A blank press');
+  const syncSource = functionText('syncCardSelection', '// The figure\'s glyph');
+  const api = runInNewContext(selectSource + syncSource + '\n({syncCardSelection, selectCombatant})', scope);
+  for (const [selected, selfArm] of [['enemy-card', null], [null, 'self-card'], [null, null]]) {
+    scope.selected = selected; scope.selfArm = selfArm; hud = 0;
+    api.syncCardSelection(); assert.equal(hud, 1, 'the final target layer always updates once');
+  }
+  assert.equal(info, 2, 'both armed routes still clear reading selection');
+  hud = 0; api.selectCombatant('player'); assert.equal(hud, 1, 'ordinary inspection retains its immediate HUD update');
 });
