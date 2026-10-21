@@ -171,3 +171,81 @@ test('opt-in fixed phase reuse preserves pixels, filter and materialization with
   assert.ok(draws.length>brightBefore+2,'a changed placement cannot use stale cached geometry');
   renderer.dispose();assert.ok(surfaces.every(surface=>surface.width===0&&surface.height===0));
 });
+
+test('immutable travel reuses padded glow pixels but retains exact body placement and bounded invalidation', () => {
+  const surfaces = [], draws = [], reads = [];
+  const context = owner => ({save(){},restore(){},clearRect(){},drawImage(...args){
+    draws.push({owner,args,blur:this.shadowBlur||0,filter:this.filter});
+  },getImageData(){reads.push(owner);}});
+  const visible = context('visible');
+  const renderer = createAlternativeAuraRenderer({createCanvas(){
+    const canvas = {width:0,height:0,getContext:()=>context(surfaces.length)};
+    surfaces.push(canvas); return canvas;
+  }});
+  const image = {}, filter = 'drop-shadow(-9px 4px 7px #aabbcc) brightness(1.2)';
+  const draw = (source=image,text=filter,width=512,opts={}) => renderer.draw(visible,source,text,
+    -80.375+draws.length/10,-110.125,width,512,{immutable:true,travel:true,materialize:true,...opts});
+  draw();
+  assert.equal(surfaces.length,2);
+  const glow=surfaces[1], pad=32;
+  assert.deepEqual([glow.width,glow.height],[576,576],'padding retains offstage source and all shadow margins');
+  const blurCount=()=>draws.filter(row=>row.blur===7).length;
+  assert.equal(blurCount(),1);
+  for(let n=0;n<10;n++)draw();
+  assert.equal(blurCount(),1,'fractional travel does not rasterize another shadow');
+  assert.equal(surfaces.length,2);
+  assert.equal(reads.length,11,'every requested materialization is preserved');
+  const body=draws.filter(row=>row.owner===1 && row.args[0]===image).at(-1);
+  const local=draws.filter(row=>row.owner===1 && row.args[0]===glow).at(-1);
+  assert.equal(body.args[1],local.args[1]+pad);
+  assert.equal(body.args[2],local.args[2]+pad,'body does not pass through translated cache interpolation');
+  assert.equal(draws.at(-1).filter,'brightness(1.2)');
+  draw(image,filter,511); assert.equal(surfaces.length,3,'scale invalidates shadow pixels');
+  draw(image,'drop-shadow(0 0 8px #abcdef)'); assert.equal(surfaces.length,4,'effect invalidates shadow pixels');
+  draw({}); draw({});
+  assert.equal(glow.width,0,'fifth configuration releases the oldest surface');
+  const before=surfaces.length;
+  draw(image,filter,512,{immutable:false}); draw(image,filter,512,{immutable:false});
+  assert.equal(surfaces.length,before,'mutable images are never stored');
+  for(const width of [0,-2,3000])draw(image,filter,width);
+  assert.equal(surfaces.length,before,'oversized source uses the original bounded work surface');
+  renderer.dispose(); assert.ok(surfaces.every(surface=>!surface.width&&!surface.height));
+});
+
+test('optional travel allocation failure falls back once without hiding required rendering failures', () => {
+  for (const failure of ['null','throw']) {
+    let allocations=0,shadows=0,bodies=0;
+    const context={save(){},restore(){},clearRect(){},drawImage(image,x){
+      if(image===source){if(x>768)shadows++;else bodies++;}
+    }};
+    const source={}, renderer=createAlternativeAuraRenderer({createCanvas(){
+      allocations++;
+      if(allocations===2&&failure==='throw')throw Error('optional allocation unavailable');
+      return {width:0,height:0,getContext:()=>allocations===2?null:context};
+    }});
+    for(let x=0;x<3;x++)renderer.draw({save(){},restore(){},drawImage(){}},source,
+      'drop-shadow(0 0 7px #aabbcc)',x,16,512,512,{immutable:true,travel:true});
+    assert.equal(allocations,2,'failed optional allocation is not retried each moving frame');
+    assert.equal(shadows,3,'each frame retains the original source-alpha shadow fallback');
+    renderer.dispose();
+  }
+  const renderer=createAlternativeAuraRenderer({createCanvas(){return {getContext:()=>null};}});
+  assert.throws(()=>renderer.draw({save(){},restore(){}},{},'drop-shadow(0 0 7px #aabbcc)',0,0),/requires a canvas context/);
+});
+
+test('travel retains authored sharp-soft-sharp compositing order without caching sharp edges', () => {
+  const draws=[],surfaces=[];
+  const ctx=owner=>{const stack=[];return {shadowBlur:0,save(){stack.push(this.shadowBlur);},restore(){this.shadowBlur=stack.pop();},
+    clearRect(){},drawImage(...args){draws.push({owner,args,blur:this.shadowBlur});}};};
+  const target=ctx('visible');
+  const renderer=createAlternativeAuraRenderer({createCanvas(){const canvas={width:0,height:0,getContext:()=>ctx(surfaces.length)};surfaces.push(canvas);return canvas;}});
+  const image={},filter='drop-shadow(2.6px 0 0 #aabbcc) drop-shadow(0 3px 8px #abcdef) drop-shadow(-3.9px 0 0 #112233)';
+  const draw=x=>renderer.draw(target,image,filter,x,16.125,512,512,{immutable:true,travel:true});
+  draw(128.375);const before=draws.length;draw(129.625);
+  const work=draws.slice(before).filter(row=>row.owner===1);
+  assert.deepEqual(work.map(row=>row.args[0]),[image,surfaces[1],image,image],
+    'direct sharp shadow, cached soft shadow, direct sharp shadow, then source body');
+  assert.deepEqual(work.map(row=>row.blur),[0,0,0,0]);
+  assert.equal(surfaces.length,2,'only the positive-blur layer receives a cache surface');
+  renderer.dispose();
+});
