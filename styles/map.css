@@ -601,7 +601,7 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((calc(
 .atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { display:flex; flex-wrap:wrap; gap:10px; padding:12px; }
 .atlas-dialog[data-local-map='true'] .atlas-dialog-foot > span { display:none; }
 .atlas-dialog:has(.atlas-local-port) .atlas-detail-actions { margin-left:auto; padding:0; display:flex; flex-wrap:wrap; gap:8px; }
-.atlas-dialog:has(.atlas-local-port) .atlas-detail-actions .as-btn { margin:0; white-space:normal; }
+.atlas-dialog[data-local-map='true'] .atlas-detail-actions .as-btn { margin:0; white-space:normal; }
 @container game-viewport (max-width:700px) {
  .atlas-dialog:has(.atlas-local-port) .atlas-location-body { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(300px,1.5fr) auto minmax(160px,1fr); }
  .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { grid-column:1; min-height:300px; }
@@ -615,7 +615,7 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((calc(
  .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { grid-column:2; grid-row:2; padding:6px; flex-direction:row; }
 }
 
-.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot .as-btn { width:auto; min-width:120px; max-width:100%; }
+.atlas-dialog[data-local-map='true'] .atlas-dialog-foot .as-btn { width:auto; min-width:120px; max-width:100%; }
 .atlas-detail-scroll { scrollbar-gutter:stable; scrollbar-color:#947548 #211b14; }
 
 /* A spatial direction pad followed by one minus / Fit / plus row. */

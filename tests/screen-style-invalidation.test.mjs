@@ -30,5 +30,8 @@ test('local-map footer visibility uses the renderer state from the same conditio
   assert.match(source,/dialog\.dataset\.localMap = String\(!!local\)/);
   assert.match(source,/\$\{local \? localMapHtml\(local\)/);
   assert.match(read('../styles/map.css'),/\.atlas-dialog\[data-local-map='true'\] \.atlas-dialog-foot > span \{ display:none; \}/);
-  assert.doesNotMatch(read('../styles/map.css'),/\.atlas-dialog:has\(\.atlas-local-port\) \.atlas-dialog-foot > span/,'combat spans must not participate in the unrelated map footer relational selector');
+  for (const suffix of ['.atlas-dialog-foot > span', '.atlas-dialog-foot .as-btn', '.atlas-detail-actions .as-btn']) {
+    assert.ok(read('../styles/map.css').includes(".atlas-dialog[data-local-map='true'] " + suffix));
+    assert.ok(!read('../styles/map.css').includes('.atlas-dialog:has(.atlas-local-port) ' + suffix), 'combat spans/buttons must not participate in unrelated Atlas relational selectors');
+  }
 });
