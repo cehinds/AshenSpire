@@ -5,6 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { targetBodyHudPlacement } from '../src/ui/models/TargetHudModel.js';
 import { currentSpriteBodyBounds } from '../src/ui/components/combatSpriteGeometry.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
+import { combatantBodyMutation } from '../src/ui/components/battlefieldStage.js';
 
 const source = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
 const start = source.indexOf('  function centerTargetOverheads()');
@@ -47,6 +48,7 @@ test('reduced motion settles a deliberate pose once without starting an idle tra
   const finish = source.indexOf('\n  poseObserver.observe(', begin);
   let callback, settled = 0, requested = 0;
   const context = { MutationObserver: class { constructor(fn) { callback = fn; } }, reducedMotionRequested: () => true,
+    combatantBodyMutation, combatHost: { dataset: { targetHud: 'true' } },
     field: { closest: () => ({ dataset: { targetHud: 'true' } }) }, centerTargetOverheads: () => settled++,
     trackingRequest: 0, requestAnimationFrame: () => requested++, trackPlayerHud() {} };
   runInNewContext(source.slice(begin, finish), context);
@@ -66,6 +68,7 @@ test('pose tracking ignores render no-ops but follows real sprite and combatant 
   let callback, windows = 0, requested = 0;
   runInNewContext(source.slice(begin, finish), {
     MutationObserver: class { constructor(fn) { callback = fn; } }, reducedMotionRequested: () => false,
+    combatantBodyMutation, combatHost: { dataset: { targetHud: 'true' } },
     extendTracking: () => windows++, trackingRequest: 0,
     requestAnimationFrame: () => ++requested, trackPlayerHud() {},
   });
@@ -125,7 +128,7 @@ test('body geometry snapshots an authored getter once and retains unregistered f
 
 
 test('detailed HUD selection coalesces its board fit without losing legacy synchronous placement', () => {
-  const begin = source.indexOf('  const selectionChanged = () => {');
+  const begin = source.indexOf('  const selectionChanged = event => {');
   const finish = source.indexOf('\n  combatHost.addEventListener', begin);
   for (const detailed of [true, false]) {
     let fits = 0, queued = 0;
@@ -133,7 +136,7 @@ test('detailed HUD selection coalesces its board fit without losing legacy synch
       combatHost: { dataset: { targetHud: String(detailed) } },
       refresh: () => fits++, schedule: () => queued++,
     });
-    change();
+    change({});
     assert.equal(fits, detailed ? 0 : 1, 'legacy Info controls keep their synchronous first placement');
     assert.equal(queued, 1, 'both presentations refit before their next paint');
   }

@@ -37,7 +37,7 @@ test('A: the player Info door and every displayed enemy door are marked placed',
 });
 
 test('A: legacy Info places synchronously while detailed HUD queues its own placement', () => {
-  const callback = battlefield.match(/const selectionChanged = \(\) => \{[\s\S]*?\n  \};/)?.[0];
+  const callback = battlefield.match(/const selectionChanged = event => \{[\s\S]*?\n  \};/)?.[0];
   assert.ok(callback, 'the production selection callback must remain identifiable');
   for (const targetHud of [undefined, 'false', 'true']) {
     const calls = [];
@@ -46,7 +46,7 @@ test('A: legacy Info places synchronously while detailed HUD queues its own plac
       refresh: () => calls.push('place now'),
       schedule: () => calls.push('queue fit'),
     });
-    changed();
+    changed({});
     assert.deepEqual(calls, targetHud === 'true' ? ['queue fit'] : ['place now', 'queue fit'],
       `targetHud=${targetHud}: legacy doors must be placed before paint; detailed controls coalesce their own placement`);
   }
