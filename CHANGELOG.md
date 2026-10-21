@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-21
 
-- **Still fighters and lighter combat updates** ([#2235](https://github.com/cehinds/AshenSpire/pull/2235), `0.7.1.1760`). Fighters hold still while idle in every rendering style, while attacks and reactions keep their animations. Evasion labels use plain wording without changing combat rules or saved games. Combat updates avoid rebuilding an invisible log, temporarily rescaling fighters, and unnecessary style work. A fresh target tap works immediately after closing inspection; the inspection gesture itself never plays a card. Repeated target taps no longer open an inspector over the next card selection when playback finishes between press and release.
+- **Still fighters and lighter combat updates** ([#2235](https://github.com/cehinds/AshenSpire/pull/2235), `0.7.1.1762`). Fighters hold still while idle in every rendering style, while attacks and reactions keep their animations. Evasion labels use plain wording without changing combat rules or saved games. Combat updates avoid rebuilding an invisible log, temporarily rescaling fighters, and unnecessary style work. A fresh target tap works immediately after closing inspection; the inspection gesture itself never plays a card. Repeated target taps no longer open an inspector over the next card selection when playback finishes between press and release.
 
 - **Reuse stance artwork** ([#2236](https://github.com/cehinds/AshenSpire/pull/2236), `0.7.1.1760`). Combat reuses unchanged stance artwork and action symbols instead of resetting them. Stationary target highlights no longer start repeated body-position tracking; stance changes, attacks, reactions and responsive positioning remain available.
 
