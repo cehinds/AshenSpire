@@ -445,7 +445,7 @@ export function renderCard(registries, ref, opts = {}) {
   el.setAttribute?.('aria-label',accessibleLabel);
   // EXACTLY THE TWO CARDS WHOSE LEVEL CHANGED. A selection lights one card and
   // douses one card, and cardInspection.js fires both events on the card they
-  // concern, so each face repaints itself. Nothing sweeps the document —
+  // concern, so each face updates its level. Nothing sweeps the document —
   // `document.querySelectorAll` is what dev deliberately deleted when the
   // selection store was extracted (see the header of cardSelection.js), and a
   // sweep is also how a card removed from the DOM kept being reconciled.
@@ -457,8 +457,16 @@ export function renderCard(registries, ref, opts = {}) {
     const restate = () => {
       const next = levelNow();
       if (next === drawn) return;
+      const changesFace = (next === 'inspect') !== (drawn === 'inspect');
       drawn = next;
-      paint(drawn);
+      if (changesFace) paint(drawn);
+      else {
+        // Glance and focus share artwork and rules. Keep their nodes and input
+        // ownership; only inspection changes the printed face. The new level
+        // can still change its CSS size or line budget, so retain the fit pass.
+        el.dataset.level = drawn;
+        scheduleCardFits([el]);
+      }
     };
     el.addEventListener('cardinspectionselect', restate);
     el.addEventListener('cardinspectiondouse', restate);
