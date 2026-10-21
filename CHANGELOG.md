@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-21
 
-- **Fixed Evasion and simpler Evade cards** ([#2231](https://github.com/cehinds/AshenSpire/pull/2231), `0.7.1.1754`). Only attackers roll to hit. Evasion uses Dexterity and Evade stacks as a fixed defense, equipment adds its bonus once, and Evade grants one stack with short card text. Hit previews and combat logs use the same calculation.
+- **Fixed Evasion and simpler Evade cards** ([#2231](https://github.com/cehinds/AshenSpire/pull/2231), `0.7.1.1756`). Only attackers roll to hit. Evasion uses Dexterity and Evade stacks as a fixed defense, equipment adds its bonus once, and Evade grants one stack with short card text. Hit previews and combat logs use the same calculation.
 
 - **Fixed Evasion rules specified** ([#2230](https://github.com/cehinds/AshenSpire/pull/2230), `0.7.1.1754`). Evasion is a fixed defense based on Dexterity and Evade stacks; only the attacker rolls. Evade grants one stack. Gameplay implementation follows separately.
 
