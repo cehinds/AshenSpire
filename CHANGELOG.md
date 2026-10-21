@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-21
 
+- **Reliable Counter previews** ([#2227](https://github.com/cehinds/AshenSpire/pull/2227), `0.7.1.1748`). Revealed enemy attacks and reaction choices now show Counter previews without crashing the packaged game.
+
 - **Shorter damage tooltips** ([#2225](https://github.com/cehinds/AshenSpire/pull/2225), `0.7.1.1748`). Damage numbers now show a short result and hit count. Open Hits, Sources or Defenses for focused details; Information and the full combat log keep the complete calculation.
 
 ## 2026-10-20
