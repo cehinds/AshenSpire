@@ -1,5 +1,17 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — combat responsiveness
+
+[Download the tested feature build](https://github.com/cehinds/AshenSpire/actions/runs/39634103203/artifacts/12359599258)
+
+Card selection avoids duplicate confirmation and repeated battlefield fits. Stance changes remain available. The Pages host is blocked in this execution environment; the successful CI artifact is the verified preview. [Capture and validation record](docs/preview/features/combat-responsiveness/README.md).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile selected Strike and stance](docs/preview/features/combat-responsiveness/mobile.png) | ![Desktop selected Strike and targets](docs/preview/features/combat-responsiveness/desktop.png) | ![Wide selected Strike and targets](docs/preview/features/combat-responsiveness/wide.png) | ![Tablet selected Strike and targets](docs/preview/features/combat-responsiveness/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 
