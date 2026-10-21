@@ -7,7 +7,9 @@
 import { fixCoreEnabled, fixCoreRules, fixCoreCounterRules } from '../model/fixCoreMechanics.js';
 import { configuredModule, armsAsCoreCounter, isSpellCounter, configuredStance, profileDamageReceipt } from './gameProfileCombat.js';
 import { previewDamageHits, damagePreviewState } from './combatDamagePreview.js';
-import { enemyMoveCarrier, expandedEnemyMove } from './combatCardTactics.js';
+// Tactics reaches Counter through Matchups; bundled named imports snapshot
+// incomplete exports during that cycle. Read them when the preview runs.
+import * as Tactics from './combatCardTactics.js';
 import { counterCoversAttack } from './combatReactions.js';
 import { rememberCombatStance } from './concurrentStances.js';
 import * as statuses from '../framework/statusSemantics.js';
@@ -80,8 +82,8 @@ export function counterPreviewAgainst(ctx, enemy, intent, card = null, projected
   if (card && configuredModule(ctx, 'stances') && !armsAsCoreCounter(ctx, card)) return { uncovered: true };
   // The owner already returned a Counter this cycle (two Counters, two enemies, one enemy phase): live returns nothing.
   if (counterReturnSpent(ctx.player) && !(ctx.reactionRules?.contactPolicy === 'perHit' && ctx.phase === 'enemy' && card)) return { uncovered: true, spent: true };
-  const move = expandedEnemyMove(enemy, ctx.registries.enemies.get(enemy.enemyId).moves[intent.moveId] || {}, intent.moveId, ctx);
-  const carrier = enemyMoveCarrier(enemy, move, intent.moveId, ctx);
+  const move = Tactics.expandedEnemyMove(enemy, ctx.registries.enemies.get(enemy.enemyId).moves[intent.moveId] || {}, intent.moveId, ctx);
+  const carrier = Tactics.enemyMoveCarrier(enemy, move, intent.moveId, ctx);
   // `projected` is the player after the card's immediate defensive effects (its Block, the stance-entry grants),
   // run by the preview pipeline on a detached copy, so a Poise break lands exactly when live play lands it.
   const base = projected || ctx.player;
