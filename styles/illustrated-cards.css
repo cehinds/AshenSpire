@@ -10,11 +10,11 @@
 :root .illustrated-card-face .ic-text .val,:root .illustrated-card-face .ic-text .kw { font:inherit; color:inherit; }
 :root .illustrated-card-face:not([data-full-rules='true']) [data-face-overflow='true'] { display:none !important; }
 :root .illustrated-card-face .card-rules-inspect-cue {
-  display:none;position:absolute;top:100%;left:0;width:100%;padding-top:.4cqw;
+  display:block;visibility:hidden;position:absolute;bottom:0;left:0;width:100%;max-height:100%;overflow:hidden;
   color:#654923;font:600 clamp(8px,4.3cqw,12px)/1.1 Georgia,serif;text-align:center;
   letter-spacing:.02em;text-shadow:0 1px #f0dfba;pointer-events:none;
 }
-:root .illustrated-card-face[data-rules-overflow='true'] .card-rules-inspect-cue { display:block; }
+:root .illustrated-card-face[data-rules-overflow='true'] .card-rules-inspect-cue { visibility:visible; }
 :root .illustrated-card-face .card-title-fade {
   position:absolute;z-index:3;left:6%;right:6%;top:3.5%;height:22%;pointer-events:none;
   border-radius:3cqw 3cqw 0 0;
@@ -54,7 +54,7 @@
 :root .illustrated-card-face .card-base-action-frame {position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
 :root .combat-sigil { display:inline-flex;align-items:center;justify-content:center;flex:none; }
 :root .combat-sigil svg { display:block;width:100%;height:100%;pointer-events:none; }
-:root .illustrated-card-face [data-rules-complete='true'] { overflow:visible; }
+:root .illustrated-card-face [data-card-binding='rules'] { max-height:100%;overflow:hidden; }
 :root .inspection-sigils { margin-block:12px;display:grid;gap:10px; }
 :root .inspection-sigil-row { display:flex;align-items:center;gap:12px;line-height:1.5; }
 :root .inspection-sigils .combat-sigil { width:32px;height:32px;color:var(--gold,#d6bd85); }
