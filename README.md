@@ -1,17 +1,5 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — smoother combat selection
-
-[Download the verified feature build](https://github.com/cehinds/AshenSpire/actions/runs/39649466135/artifacts/12369016137)
-
-Card selection refreshes hit chances once after its stance update. [Capture record](docs/preview/features/combat-smoothness-final/README.md).
-
-| Mobile | Desktop | Wide | Tablet |
-| --- | --- | --- | --- |
-| ![Mobile Strike selection](docs/preview/features/combat-smoothness-final/mobile.png) | ![Desktop Strike selection](docs/preview/features/combat-smoothness-final/desktop.png) | ![Wide Strike selection](docs/preview/features/combat-smoothness-final/wide.png) | ![Tablet Strike selection](docs/preview/features/combat-smoothness-final/tablet.png) |
-<!-- feature-preview:end -->
-
 
 
 
