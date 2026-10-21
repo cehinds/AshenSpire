@@ -2665,7 +2665,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           const releaseHit = dragging && !info.cancelled ? document.elementFromPoint(up.clientX, up.clientY) : null;
           return finishCardDrag(up, info, {
           teardown: () => {
-            clearDragTargeting();
+            // A tap/inspection never entered drag targeting. Its release is
+            // owned by armHold; do not repaint the target layer before it.
+            if (dragging) clearDragTargeting();
             el.classList.remove('drag-source');
             if (dragGhost) { dragGhost.remove(); dragGhost = null; }
             const wasDragging = dragging;
