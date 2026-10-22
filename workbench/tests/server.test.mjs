@@ -356,11 +356,13 @@ async function collectEvents(app, name, done, { onEvent, onOpen, timeoutMs = 800
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   const deadline = Date.now() + timeoutMs;
-  const events = []; let buffer = ''; let pending = null; let opened = false;
+  const events = []; const observed = [];
+  let buffer = ''; let pending = null; let opening = null;
+  let openFailed = new Promise(() => {});
   try {
     while (Date.now() < deadline) {
       pending ||= reader.read();
-      const result = await Promise.race([pending, new Promise((r) => setTimeout(() => r(null), 100))]);
+      const result = await Promise.race([pending, openFailed, new Promise((r) => setTimeout(() => r(null), 100))]);
       if (result) pending = null;
       if (result && result.done) break;
       if (result && result.value) buffer += decoder.decode(result.value, { stream: true });
@@ -369,14 +371,46 @@ async function collectEvents(app, name, done, { onEvent, onOpen, timeoutMs = 800
         const ev = frame.match(/^event: (.+)$/m); const data = frame.match(/^data: (.+)$/m);
         if (!ev || !data) continue;
         const parsed = JSON.parse(data[1]);
+        observed.push({ name: ev[1], data: parsed });
         if (onEvent) await onEvent(ev[1], parsed);
         if (ev[1] === name) { events.push(parsed); if (done(events)) return events; }
       }
-      if (!opened && onOpen) { opened = true; await onOpen(); }
+      if (!opening && onOpen) {
+        // Keep consuming SSE while the stimulus runs. Awaiting onOpen here can leave an
+        // already-emitted reload unread until the deadline, reporting a false empty stream.
+        opening = Promise.resolve().then(onOpen);
+        openFailed = opening.then(() => new Promise(() => {}));
+      }
     }
-    throw Error(`${name} events so far: ${JSON.stringify(events)}`);
-  } finally { reader.cancel().catch(() => {}); }
+    throw Error(`${name} events so far: ${JSON.stringify(events)}; all events: ${JSON.stringify(observed)}; reload count: ${app.reloads}`);
+  } finally {
+    reader.cancel().catch(() => {});
+    // The stimulus's assertions and writes must finish before the test or its cleanup does.
+    await opening;
+  }
 }
+
+test('the SSE collector consumes events while its opening stimulus is still running', async (t) => {
+  const root = await project(t);
+  const { app } = await boot(t, root);
+  let acknowledge;
+  const eventSeen = new Promise((resolve) => { acknowledge = resolve; });
+  let finished = false; let timer;
+  try {
+    const events = await collectEvents(app, 'collector-test', () => true, {
+      onOpen: async () => {
+        app.hub.send('collector-test', { arrived: true });
+        await Promise.race([eventSeen, new Promise((_, reject) => {
+          timer = setTimeout(() => reject(Error('the opening stimulus blocked SSE consumption')), 10000);
+        })]);
+        finished = true;
+      },
+      onEvent: (name) => { if (name === 'collector-test') acknowledge(); },
+    });
+    assert.deepEqual(events, [{ arrived: true }]);
+    assert.equal(finished, true, 'the collector also waits for the opening stimulus to finish');
+  } finally { clearTimeout(timer); }
+});
 
 test('the Workbench watches engine/ as well as the content, source and game trees', async (t) => {
   const root = await project(t);
