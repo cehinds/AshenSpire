@@ -84,12 +84,13 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
   status.textContent = t('gameProfile.settings.future', { profile: names[chosen] });
   let pending = false;
   const apply = async value => {
-    if (pending) return;
+    if (pending) return false;
     pending = true; select.disabled = true; upload.disabled = true; importButton.disabled = true;
-    try { await onSelect(value); }
+    try { await onSelect(value); return true; }
     catch (error) {
       status.textContent = t('gameProfile.settings.invalid', { error: error.message });
       select.value = chosen;
+      return false;
     } finally { pending = false; select.disabled = false; upload.disabled = false; importButton.disabled = false; }
   };
   select.addEventListener('change', () => apply(select.value));
@@ -123,7 +124,7 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
         author.modules ||= {};
         const previous = author.modules.progression;
         author.modules.progression = { ...(previous && typeof previous === 'object' ? previous : {}), [key]: number };
-        await apply(author);
+        if (!await apply(author)) input.value = String(profile.modules.progression?.[key] ?? 1);
       });
       label.append(input); panel.append(label);
     }
