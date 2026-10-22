@@ -50,6 +50,10 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.equal(stage.pose,'ready');assert.equal(raf.size,0);
     assert.match(stage.currentArt.image.url,/reaver/);
     assert.equal(stage.currentArt.left,128);
+    stage.setRestPose('idle');
+    const idlePaints=paints.length;
+    stage.setRestPose('idle');stage.setRestPose('idle',{immediate:true});
+    assert.equal(paints.length,idlePaints,'repeated settled HUD receipts retain the painted rest pixels');
     stage.setStance('offensive');assert.equal(stage.pose,'stance-offensive');
     let unchangedPaints=paints.length;
     stage.setStance('offensive');assert.equal(paints.length,unchangedPaints,'same held stance retains its painted canvas');
@@ -59,6 +63,9 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     stage.setStance('casting');assert.equal(stage.pose,'attack-contact','receipt selection must not interrupt the action');
     step(145);assert.equal(stage.pose,'stance-casting');
     assert.match(paints.at(-1).args[0].url,/stances\/reaver\/casting\.webp$/);
+    const finishedActionPaints=paints.length;
+    stage.setRestPose('idle');
+    assert.equal(paints.length,finishedActionPaints,'finished action already painted its held rest');
     assert.equal(stage.currentArt.image,paints.at(-1).args[0],'HUD ink source follows the held pose');
     stage.setRestPose('defeated');assert.equal(stage.pose,'defeated','death overrides selected art');
     stage.setRestPose('idle');assert.equal(stage.pose,'stance-casting');
@@ -197,6 +204,8 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.equal(stage.el.querySelector('span').hidden,true,'Retry restores the class art');
     assert.equal(stage.pose,'ready');
     stage.dispose();deferArt=true;stage=createAlternativeCardStage('starseer');
+    stage.setRestPose('idle');stage.setRestPose('idle');
+    assert.equal(stage.currentArt,null,'pending art cannot be mistaken for a painted rest');
     stage.setStance('offensive');stage.setStance('offensive');
     pendingArt.splice(0).forEach(finish=>finish());await stage.ready;
     assert.equal(stage.pose,'stance-offensive');assert.ok(stage.currentArt,'pending load still paints the requested stance');

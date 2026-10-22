@@ -244,6 +244,11 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     },
     setRestPose(next='idle',{resume,immediate=false}={}){
       if(next===rest&&playing&&!resume)return;
+      // A settled canvas already owns these exact rest pixels. A HUD receipt
+      // must not rasterize it again; initial/failed loads have no currentArt,
+      // and action, reaction and asset-load paths still paint themselves.
+      if(next===rest&&!resume&&!playing&&flashAt===null&&!bodyReaction
+        &&currentArt&&el.dataset.rest===next&&pose===restPose())return;
       rest=next;el.dataset.rest=next;if(next==='defeated'){bodyReaction=null;flashAt=null;}
       if(resume?.action&&resume.rest===next&&!immediate&&!still&&!reducedMotionRequested()){
         const sequence=family.sequences[resume.action];
