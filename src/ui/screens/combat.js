@@ -955,6 +955,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     return pieces.join(' · ') || words(source.kind || move?.intent || 'Unknown action');
   }
 
+  // Context labels need only identity; inspection projects the full model on demand.
+  function combatantName(role, entity) {
+    return role === 'player'
+      ? (run.customization?.name || runClassIdentity(registries, run).name).toUpperCase()
+      : registries.enemies.get(entity.enemyId).name;
+  }
+
   function combatantSubject(role, entity) {
     const v = dv(entity);
     if (role === 'player') {
@@ -1083,15 +1090,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // Attributes a render can change; a reused frame gets these again without
   // a second set of listeners.
-  function refreshCombatantContext(box, subject) {
+  function refreshCombatantContext(box, name) {
     box.tabIndex = -1;
     box.dataset.focusable = '';
     box.setAttribute('role', 'button');
-    box.setAttribute('aria-label', `Select ${subject.name}`);
+    box.setAttribute('aria-label', `Select ${name}`);
     box.setAttribute('aria-pressed', String(selectedCombatantId === box.dataset.eid));
   }
-  function wireCombatantContext(box, subject) {
-    refreshCombatantContext(box, subject);
+  function wireCombatantContext(box, name) {
+    refreshCombatantContext(box, name);
     box.addEventListener('focus', () => { if (box.matches(':focus-visible')) selectCombatant(box.dataset.eid); });
     box.addEventListener('gpfocus', event => { if (event.target === box) selectCombatant(box.dataset.eid); });
     if (configuredArt) {
@@ -2023,7 +2030,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const slots = {
       role: 'player',
       entityId: 'player',
-      leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
+      leading: [combatantInfo(combatantName('player', p), opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
       sprite: existing ? null : profilePlayerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile(), classSmashProfile: smashProfile() }),
       name: markMeterRow(labelStack({ label: `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`, attrs: { class: 'nm' } }), 'name'),
@@ -2032,8 +2039,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
     const box = existing ? updateCombatantFrame(existing, slots) : combatantFrame(slots);
     // A reused frame keeps its listeners; only the per-render attributes move.
-    if (existing) refreshCombatantContext(box, combatantSubject('player', p));
-    else wireCombatantContext(box, combatantSubject('player', p));
+    if (existing) refreshCombatantContext(box, combatantName('player', p));
+    else wireCombatantContext(box, combatantName('player', p));
     // When a self/buff card is armed, the player is a confirmable target.
     // Publish that temporary target through the same unified focus door as an
     // enemy target. Without this, armSelf() asks focusFirst() for the player,
@@ -2043,7 +2050,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (selfArm) {
       const armedInst = findInst(selfArm);
       const armedDef = armedInst ? resolveCard(registries, armedInst) : null;
-      const playerName = combatantSubject('player', p).name;
+      const playerName = combatantName('player', p);
       box.dataset.focusable = '';
       box.tabIndex = -1;
       box.setAttribute('role', 'button');
@@ -2157,7 +2164,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       stageFor(box)?.setState?.(enemySpriteState(enemy));
       box.dataset.stature = statureFor(registries, def.id);
       if (!record) {
-        wireCombatantContext(box, combatantSubject('enemy', enemy));
+        wireCombatantContext(box, def.name);
         box.addEventListener('click', (event) => {
           event.stopPropagation();
           if (!getEntity(combat, enemy.id)?.alive) return;
@@ -2183,7 +2190,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         box.classList.remove('hover-target', 'gp-focus', 'aiming', 'aim-enemy');
         box.querySelectorAll('.aim-silho').forEach(node => node.remove());
       } else {
-        refreshCombatantContext(box, combatantSubject('enemy', enemy));
+        refreshCombatantContext(box, def.name);
         box.removeAttribute('aria-disabled');
       }
       if (!record) row.appendChild(box);
