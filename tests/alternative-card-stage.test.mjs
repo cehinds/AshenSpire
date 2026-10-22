@@ -66,6 +66,8 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     const finishedActionPaints=paints.length;
     stage.setRestPose('idle');
     assert.equal(paints.length,finishedActionPaints,'finished action already painted its held rest');
+    assert.equal(stage.presentation.elapsed,0,'settled receipt still normalizes the completed action clock');
+    assert.deepEqual(stage.presentation.resources,[]);
     assert.equal(stage.currentArt.image,paints.at(-1).args[0],'HUD ink source follows the held pose');
     stage.setRestPose('defeated');assert.equal(stage.pose,'defeated','death overrides selected art');
     stage.setRestPose('idle');assert.equal(stage.pose,'stance-casting');
