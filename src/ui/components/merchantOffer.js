@@ -1,3 +1,5 @@
+import { engravedIcon } from './engravedIcon.js';
+import { uiIconText } from '../../content/uiIcons.js';
 import { button, el, statusText } from '../kit/index.js';
 import { t } from '../strings.js';
 import { openModal } from './modalShell.js';
@@ -25,7 +27,7 @@ export function arrangeMerchantOffer(offer, { fallback = 'dexterity' } = {}) {
   const { tile, name, desc, price, avail } = offer;
   const visual = offer.visual || tile.querySelector('.shop-inspect-card')
     || tile.querySelector('.card') || tile.querySelector('.equipment-poker-card')
-    || tile.querySelector('.glyph') || el('span', { class: 'merchant-offer-glyph', text: fallback, 'aria-hidden': 'true' });
+    || tile.querySelector('.glyph') || el('span', { class: 'merchant-offer-glyph', 'aria-hidden': 'true' }, engravedIcon(fallback) || uiIconText(fallback));
   const details = el('div', { class: 'cp-body merchant-offer-details' }, [
     el('h3', { text: name }),
     desc ? el('p', { text: desc }) : null,

@@ -1,3 +1,4 @@
+import { engravedIcon } from '../components/engravedIcon.js';
 import { enemyIntentRead } from '../models/EnemyIntentReadModel.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
@@ -1926,7 +1927,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // tooltip.
         const resisted = hasResistAgainst(entity, sid);
         const meterEl = meter({
-          id: sid, value: def.icon || '?',
+          id: sid, valueNode: engravedIcon(def.icon || 'unknown') || document.createTextNode('?'),
           cur: inst.meter.value, max: inst.meter.max,
           pct: Math.min(100, (inst.meter.value / inst.meter.max) * 100),
           ariaLabel: `${def.name} ${inst.meter.value} of ${inst.meter.max}`,

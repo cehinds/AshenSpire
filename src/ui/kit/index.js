@@ -310,8 +310,8 @@ export function face({ name = '', nameNode = null, badge = null, description = '
 export const statPair = ({ key, value, attrs = {} } = {}) => el('span', { ...attrs, class: cls('as-statpair', attrs.class) }, [
   el('span', { class: 'sp-k', text: key }), el('span', { class: 'sp-v', text: value }),
 ]);
-export const chip = ({ key, value, tip = '', attrs = {} } = {}) => el('span', { ...attrs, class: cls('as-chip', attrs.class), title: tip || null }, [
-  el('span', { class: 'ck', text: key }), el('span', { class: 'cv', text: value }),
+export const chip = ({ key, keyNode = null, value, tip = '', attrs = {} } = {}) => el('span', { ...attrs, class: cls('as-chip', attrs.class), title: tip || null }, [
+  el('span', keyNode ? { class: 'ck' } : { class: 'ck', text: key }, keyNode), el('span', { class: 'cv', text: value }),
 ]);
 export const statStrip = (chips, attrs = {}) => el('span', { ...attrs, class: cls('as-statstrip', attrs.class) }, chips);
 export const kitLine = (items, attrs = {}) => el('span', { ...attrs, class: cls('as-kitline', attrs.class) }, items);
@@ -374,7 +374,7 @@ export function tray({ edge = 'bottom', collapsed = false, sized = false, head =
  * both; the atom draws them. The track carries the machine-readable facts
  * (data-cur / data-max, role=img) so an instrument never reads the label.
  */
-export function meter({ label = '', value = '', cur = null, max = null, pct = 100, lengthPct = 100, tone = '', skinny = false, inset = false, stack = false, pulse = false, id = '', attrs = {}, trackAttrs = {}, ariaLabel = '' } = {}) {
+export function meter({ label = '', value = '', valueNode = null, cur = null, max = null, pct = 100, lengthPct = 100, tone = '', skinny = false, inset = false, stack = false, pulse = false, id = '', attrs = {}, trackAttrs = {}, ariaLabel = '' } = {}) {
   const track = el('span', {
     ...trackAttrs, class: cls('m-track', trackAttrs.class), role: 'img',
     'aria-label': ariaLabel || (label ? `${label} ${cur ?? value} of ${max ?? ''}`.trim() : null),
@@ -385,9 +385,9 @@ export function meter({ label = '', value = '', cur = null, max = null, pct = 10
     ...attrs, class: cls('as-meter', skinny ? 'skinny' : '', inset ? 'inset' : '', stack ? 'stack' : '', pulse ? 'pulse' : '', attrs.class),
     dataset: { ...(attrs.dataset || {}), ...(tone ? { tone } : {}), ...(id ? { res: id } : {}) },
   }, [
-    (label || (value !== '' && value != null)) ? el('span', { class: 'm-plate' }, [
+    (label || valueNode || (value !== '' && value != null)) ? el('span', { class: 'm-plate' }, [
       label ? el('span', { class: 'm-label', text: label }) : null,
-      value !== '' && value != null ? el('span', { class: 'm-value', text: value }) : null,
+      valueNode ? el('span', { class: 'm-value' }, valueNode) : value !== '' && value != null ? el('span', { class: 'm-value', text: value }) : null,
     ]) : null,
     el('span', { class: 'm-well' }, track),
   ]);
