@@ -73,7 +73,8 @@ test('existing HUD purse follows current value and layer visibility', () => {
     for (const amount of [37, 49]) {
       const rendered = runHeaderStripHtml(header(amount));
       assert.match(rendered, new RegExp(`aria-label="${amount} cinders"`));
-      assert.match(rendered, new RegExp(`<span class="cv">${amount} Cinders</span>`));
+      assert.match(rendered, /<span class="ck">Cinders<\/span>/);
+      assert.match(rendered, new RegExp(`<span class="cv">${amount}</span>`));
     }
     assert.equal(runHeaderStripHtml(runHeaderModel({}, { cinders: false })), '');
   });
