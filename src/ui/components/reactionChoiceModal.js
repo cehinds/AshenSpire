@@ -1,3 +1,4 @@
+import { intentDamageRead } from '../models/CombatIntentModel.js';
 import { openModal, button, el } from '../kit/index.js';
 import { t, tFull } from '../strings.js';
 import { cardOptionGrid, markCardOptions } from './cardOptionGrid.js';
@@ -44,6 +45,8 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
     title: t('combat.reaction.title'), eyebrow: t('combat.reaction.eyebrow'), size: 'md',
     className: 'reaction-choice', closeLabel: t('common.back'), secondary: [decline], primary: play,
     body(host) {
+      const incoming = intentDamageRead(pending.intentPreview);
+      if (incoming) host.append(el('p', { class: 'reaction-incoming-damage', text: `${incoming.label} · ${incoming.summary}` }));
       host.append(el('p', { text: tFull(stacked ? 'combat.reaction.helpStack' : 'combat.reaction.help') }));
       if (stacked) {
         host.append(el('p', { className: 'reaction-stack-label', text: t('combat.reaction.stack') }));

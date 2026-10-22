@@ -7,7 +7,7 @@
 // (LORE.md §7). Card and equipment inspection both use this, so the two card
 // kinds read the same way at the same level.
 //
-// The modal wears the shared chrome (modalShell.js): Escape, the ✕ and a scrim
+// The modal wears the shared chrome (modalShell.js): Escape, the close and a scrim
 // press close only this modal, because the shell answers only for the top
 // dialog, and focus returns to the line that opened it.
 //

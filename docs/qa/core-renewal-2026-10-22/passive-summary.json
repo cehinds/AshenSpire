@@ -1,0 +1,446 @@
+{
+  "core.defend": {
+    "pairs": [
+      {
+        "readyMs": {
+          "baseline": 4141.5999999996275,
+          "candidate": 3856.7000000001863,
+          "reductionPercent": 6.878983967535901
+        },
+        "longTasksMs": {
+          "baseline": 2849,
+          "candidate": 2531,
+          "reductionPercent": 11.161811161811164
+        },
+        "scriptMs": {
+          "baseline": 1804.026,
+          "candidate": 1247.374,
+          "reductionPercent": 30.856096309033244
+        },
+        "styleMs": {
+          "baseline": 922.4999999999999,
+          "candidate": 1209.5430000000001,
+          "reductionPercent": -31.115772357723603
+        },
+        "layoutMs": {
+          "baseline": 143.19,
+          "candidate": 145.625,
+          "reductionPercent": -1.7005377470493688
+        },
+        "taskMs": {
+          "baseline": 3300.8129999999996,
+          "candidate": 3098.707,
+          "reductionPercent": 6.122915778627869
+        },
+        "maxFrameMs": {
+          "baseline": 1033.2000000000007,
+          "candidate": 1050,
+          "reductionPercent": -1.6260162601625217
+        },
+        "layouts": {
+          "baseline": 44,
+          "candidate": 52,
+          "reductionPercent": -18.181818181818187
+        },
+        "styles": {
+          "baseline": 109,
+          "candidate": 128,
+          "reductionPercent": -17.431192660550465
+        },
+        "fits": {
+          "baseline": 3,
+          "candidate": 3,
+          "reductionPercent": 0.0
+        }
+      },
+      {
+        "readyMs": {
+          "baseline": 3688.7999999998137,
+          "candidate": 3963.4000000003725,
+          "reductionPercent": -7.444155280865661
+        },
+        "longTasksMs": {
+          "baseline": 2356,
+          "candidate": 2653,
+          "reductionPercent": -12.606112054329376
+        },
+        "scriptMs": {
+          "baseline": 1515.9669999999999,
+          "candidate": 1194.3410000000001,
+          "reductionPercent": 21.215897179819866
+        },
+        "styleMs": {
+          "baseline": 842.5999999999999,
+          "candidate": 1399.5599999999997,
+          "reductionPercent": -66.10016615238546
+        },
+        "layoutMs": {
+          "baseline": 122.38300000000001,
+          "candidate": 151.269,
+          "reductionPercent": -23.60295139030748
+        },
+        "taskMs": {
+          "baseline": 2836.9859999999994,
+          "candidate": 3175.4099999999994,
+          "reductionPercent": -11.92899788719437
+        },
+        "maxFrameMs": {
+          "baseline": 849.8999999999996,
+          "candidate": 949.9000000000015,
+          "reductionPercent": -11.766090128250607
+        },
+        "layouts": {
+          "baseline": 46,
+          "candidate": 54,
+          "reductionPercent": -17.391304347826097
+        },
+        "styles": {
+          "baseline": 111,
+          "candidate": 132,
+          "reductionPercent": -18.918918918918926
+        },
+        "fits": {
+          "baseline": 3,
+          "candidate": 3,
+          "reductionPercent": 0.0
+        }
+      },
+      {
+        "readyMs": {
+          "baseline": 4278,
+          "candidate": 3638.0999999996275,
+          "reductionPercent": 14.95792426368332
+        },
+        "longTasksMs": {
+          "baseline": 2996,
+          "candidate": 2280,
+          "reductionPercent": 23.898531375166886
+        },
+        "scriptMs": {
+          "baseline": 1921.7419999999997,
+          "candidate": 1236.508,
+          "reductionPercent": 35.656919607314606
+        },
+        "styleMs": {
+          "baseline": 945.821,
+          "candidate": 1032.3819999999998,
+          "reductionPercent": -9.151943126659257
+        },
+        "layoutMs": {
+          "baseline": 149.95,
+          "candidate": 140.31,
+          "reductionPercent": 6.428809603201058
+        },
+        "taskMs": {
+          "baseline": 3511.1009999999997,
+          "candidate": 2808.278,
+          "reductionPercent": 20.017168403871032
+        },
+        "maxFrameMs": {
+          "baseline": 883.2999999999993,
+          "candidate": 983.2999999999993,
+          "reductionPercent": -11.321181931393642
+        },
+        "layouts": {
+          "baseline": 48,
+          "candidate": 51,
+          "reductionPercent": -6.25
+        },
+        "styles": {
+          "baseline": 113,
+          "candidate": 128,
+          "reductionPercent": -13.27433628318584
+        },
+        "fits": {
+          "baseline": 3,
+          "candidate": 3,
+          "reductionPercent": 0.0
+        }
+      }
+    ],
+    "medians": {
+      "readyMs": {
+        "baseline": 4141.5999999996275,
+        "candidate": 3856.7000000001863,
+        "reductionPercent": 6.878983967535901,
+        "speedup": 1.0738714444990347
+      },
+      "longTasksMs": {
+        "baseline": 2849,
+        "candidate": 2531,
+        "reductionPercent": 11.161811161811164,
+        "speedup": 1.1256420387198736
+      },
+      "scriptMs": {
+        "baseline": 1804.026,
+        "candidate": 1236.508,
+        "reductionPercent": 31.458415787799066,
+        "speedup": 1.4589683204637576
+      },
+      "styleMs": {
+        "baseline": 922.4999999999999,
+        "candidate": 1209.5430000000001,
+        "reductionPercent": -31.115772357723603,
+        "speedup": 0.7626847495293675
+      },
+      "layoutMs": {
+        "baseline": 143.19,
+        "candidate": 145.625,
+        "reductionPercent": -1.7005377470493688,
+        "speedup": 0.9832789699570815
+      },
+      "taskMs": {
+        "baseline": 3300.8129999999996,
+        "candidate": 3098.707,
+        "reductionPercent": 6.122915778627869,
+        "speedup": 1.065222688043755
+      },
+      "maxFrameMs": {
+        "baseline": 883.2999999999993,
+        "candidate": 983.2999999999993,
+        "reductionPercent": -11.321181931393642,
+        "speedup": 0.8983016373436387
+      },
+      "layouts": {
+        "baseline": 46,
+        "candidate": 52,
+        "reductionPercent": -13.043478260869556,
+        "speedup": 0.8846153846153846
+      },
+      "styles": {
+        "baseline": 111,
+        "candidate": 128,
+        "reductionPercent": -15.315315315315313,
+        "speedup": 0.8671875
+      },
+      "fits": {
+        "baseline": 3,
+        "candidate": 3,
+        "reductionPercent": 0.0,
+        "speedup": 1.0
+      }
+    }
+  },
+  "core.strike": {
+    "pairs": [
+      {
+        "readyMs": {
+          "baseline": 4604.399999999441,
+          "candidate": 4604,
+          "reductionPercent": 0.00868734252977843
+        },
+        "longTasksMs": {
+          "baseline": 3432,
+          "candidate": 3289,
+          "reductionPercent": 4.1666666666666625
+        },
+        "scriptMs": {
+          "baseline": 1950.6390000000001,
+          "candidate": 1680.2259999999999,
+          "reductionPercent": 13.862790603489428
+        },
+        "styleMs": {
+          "baseline": 1394.92,
+          "candidate": 1442.6040000000003,
+          "reductionPercent": -3.418403922805613
+        },
+        "layoutMs": {
+          "baseline": 159.99799999999996,
+          "candidate": 184.18200000000002,
+          "reductionPercent": -15.11518893986179
+        },
+        "taskMs": {
+          "baseline": 4318.165,
+          "candidate": 4161.581999999999,
+          "reductionPercent": 3.6261467544663195
+        },
+        "maxFrameMs": {
+          "baseline": 949.8999999999978,
+          "candidate": 1066.6000000000022,
+          "reductionPercent": -12.285503737235981
+        },
+        "layouts": {
+          "baseline": 76,
+          "candidate": 69,
+          "reductionPercent": 9.210526315789469
+        },
+        "styles": {
+          "baseline": 186,
+          "candidate": 175,
+          "reductionPercent": 5.913978494623651
+        },
+        "fits": {
+          "baseline": 4,
+          "candidate": 3,
+          "reductionPercent": 25.0
+        }
+      },
+      {
+        "readyMs": {
+          "baseline": 4183.4000000003725,
+          "candidate": 4045.2999999998137,
+          "reductionPercent": 3.3011426112861897
+        },
+        "longTasksMs": {
+          "baseline": 2962,
+          "candidate": 2875,
+          "reductionPercent": 2.9372045914922373
+        },
+        "scriptMs": {
+          "baseline": 1627.7189999999998,
+          "candidate": 1224.224,
+          "reductionPercent": 24.788983847949186
+        },
+        "styleMs": {
+          "baseline": 1234.9289999999999,
+          "candidate": 1465.036,
+          "reductionPercent": -18.63321697036835
+        },
+        "layoutMs": {
+          "baseline": 164.149,
+          "candidate": 141.693,
+          "reductionPercent": 13.680253915649798
+        },
+        "taskMs": {
+          "baseline": 3787.743,
+          "candidate": 3660.9029999999993,
+          "reductionPercent": 3.348696044055799
+        },
+        "maxFrameMs": {
+          "baseline": 750,
+          "candidate": 866.5999999999985,
+          "reductionPercent": -15.546666666666464
+        },
+        "layouts": {
+          "baseline": 76,
+          "candidate": 80,
+          "reductionPercent": -5.263157894736836
+        },
+        "styles": {
+          "baseline": 193,
+          "candidate": 189,
+          "reductionPercent": 2.072538860103623
+        },
+        "fits": {
+          "baseline": 4,
+          "candidate": 4,
+          "reductionPercent": 0.0
+        }
+      },
+      {
+        "readyMs": {
+          "baseline": 4477.800000000745,
+          "candidate": 3917.0999999996275,
+          "reductionPercent": 12.521774085511284
+        },
+        "longTasksMs": {
+          "baseline": 3435,
+          "candidate": 2610,
+          "reductionPercent": 24.017467248908297
+        },
+        "scriptMs": {
+          "baseline": 1839.0579999999995,
+          "candidate": 1268.7810000000002,
+          "reductionPercent": 31.009190574739865
+        },
+        "styleMs": {
+          "baseline": 1342.454,
+          "candidate": 1342.6959999999997,
+          "reductionPercent": -0.018026688437711158
+        },
+        "layoutMs": {
+          "baseline": 175.624,
+          "candidate": 159.80900000000003,
+          "reductionPercent": 9.005033480617664
+        },
+        "taskMs": {
+          "baseline": 4197.586,
+          "candidate": 3619.459999999999,
+          "reductionPercent": 13.772820854653157
+        },
+        "maxFrameMs": {
+          "baseline": 750,
+          "candidate": 716.5999999999985,
+          "reductionPercent": 4.453333333333531
+        },
+        "layouts": {
+          "baseline": 73,
+          "candidate": 82,
+          "reductionPercent": -12.328767123287676
+        },
+        "styles": {
+          "baseline": 179,
+          "candidate": 204,
+          "reductionPercent": -13.966480446927365
+        },
+        "fits": {
+          "baseline": 4,
+          "candidate": 4,
+          "reductionPercent": 0.0
+        }
+      }
+    ],
+    "medians": {
+      "readyMs": {
+        "baseline": 4477.800000000745,
+        "candidate": 4045.2999999998137,
+        "reductionPercent": 9.658760998723913,
+        "speedup": 1.106914196722357
+      },
+      "longTasksMs": {
+        "baseline": 3432,
+        "candidate": 2875,
+        "reductionPercent": 16.229603729603724,
+        "speedup": 1.1937391304347826
+      },
+      "scriptMs": {
+        "baseline": 1839.0579999999995,
+        "candidate": 1268.7810000000002,
+        "reductionPercent": 31.009190574739865,
+        "speedup": 1.4494684267812958
+      },
+      "styleMs": {
+        "baseline": 1342.454,
+        "candidate": 1442.6040000000003,
+        "reductionPercent": -7.460218376197636,
+        "speedup": 0.9305769289423845
+      },
+      "layoutMs": {
+        "baseline": 164.149,
+        "candidate": 159.80900000000003,
+        "reductionPercent": 2.6439393477876605,
+        "speedup": 1.027157419169133
+      },
+      "taskMs": {
+        "baseline": 4197.586,
+        "candidate": 3660.9029999999993,
+        "reductionPercent": 12.785515293790306,
+        "speedup": 1.1465985304718538
+      },
+      "maxFrameMs": {
+        "baseline": 750,
+        "candidate": 866.5999999999985,
+        "reductionPercent": -15.546666666666464,
+        "speedup": 0.8654511885529671
+      },
+      "layouts": {
+        "baseline": 76,
+        "candidate": 80,
+        "reductionPercent": -5.263157894736836,
+        "speedup": 0.95
+      },
+      "styles": {
+        "baseline": 186,
+        "candidate": 189,
+        "reductionPercent": -1.6129032258064502,
+        "speedup": 0.9841269841269841
+      },
+      "fits": {
+        "baseline": 4,
+        "candidate": 4,
+        "reductionPercent": 0.0,
+        "speedup": 1.0
+      }
+    }
+  }
+}

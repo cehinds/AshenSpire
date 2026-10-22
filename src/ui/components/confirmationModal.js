@@ -218,16 +218,16 @@ export function openConfirmationModal({
   // then dispatches that same touch's trailing click at the point of release
   // — which is now the scrim (the finger never moved; the veil did). Cancelling
   // on it closed the review in the same gesture that opened it, so an
-  // off-dial tap on the title's ✕ opened nothing a player could see. Measured
+  // off-dial tap on the title's close opened nothing a player could see. Measured
   // with real touch events (tools/holdconfirm.mjs, the title's dial-off leg):
-  // pointerdown on the ✕, MODAL-ADDED, pointerup, click on the veil, REMOVED.
+  // pointerdown on the close, MODAL-ADDED, pointerup, click on the veil, REMOVED.
   // A press that begins on the scrim is the player's; a click that arrives
   // without one is the opening gesture's echo.
   //
   // THE SAME ECHO, AIMED AT AN ANSWER (2026-09-11, the same leg of the same
   // tool): the head's close box stands at the top-right of the review, which
-  // is where the title's ✕ stood under the finger — so the echo landed on it
-  // (pointerdown on the ✕, MODAL-ADDED, pointerup, click on .confirmation-close,
+  // is where the title's close stood under the finger — so the echo landed on it
+  // (pointerdown on the close, MODAL-ADDED, pointerup, click on .confirmation-close,
   // REMOVED) and the review was gone before it was seen. An answer — the
   // close box, Back, or CONFIRM (a review committed by its own opening echo
   // would be the worst of the three) — takes a pointer click only from a

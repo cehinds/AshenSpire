@@ -23,7 +23,7 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     const node=create(tag);
     if(tag==='canvas')node.getContext=(kind,options)=>{contexts.push({node,kind,options});return {
       clearRect(){},save(){},restore(){},
-      drawImage(...args){paints.push({args,alpha:this.globalAlpha,filter:this.filter});},
+      drawImage(...args){paints.push({args,canvas:node,alpha:this.globalAlpha,filter:this.filter});},
       fillRect(){paints.push({fill:this.fillStyle,mode:this.globalCompositeOperation});},
       getImageData(){readbacks.push(node);time+=materializeMs;wallTime+=materializeMs;return {data:new Uint8ClampedArray(4)};},
     };};
@@ -50,6 +50,34 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.equal(stage.pose,'ready');assert.equal(raf.size,0);
     assert.match(stage.currentArt.image.url,/reaver/);
     assert.equal(stage.currentArt.left,128);
+    stage.setRestPose('idle');
+    const idlePaints=paints.length;
+    stage.setRestPose('idle');stage.setRestPose('idle',{immediate:true});
+    assert.equal(paints.length,idlePaints,'repeated settled HUD receipts retain the painted rest pixels');
+    // Lite's existing image-filter policy also applies to the canvas body.
+    // Switching quality must invalidate the settled-pixel optimization.
+    dom.document.documentElement ||= create('html');
+    const quality=dom.document.documentElement.dataset;
+    stage.setRestPose('defend');
+    const fullRest=paints.filter(p=>p.canvas===visible&&p.args).at(-1);
+    assert.equal(fullRest.args[0].tagName,'CANVAS','Standard retains its authored aura work surface');
+    quality.performance='lite';
+    stage.setRestPose('defend');
+    const liteRest=paints.filter(p=>p.canvas===visible&&p.args).at(-1);
+    assert.match(liteRest.args[0].url,/reaver/,'Lite draws the original sharp body without a decorative shadow surface');
+    const beforeLite=paints.length, beforeLiteReads=readbacks.length;
+    stage.play('attack',260,['stamina','mana']);
+    assert.equal(stage.presentation.action,'attack');assert.equal(stage.presentation.duration,260,'quality never changes action timing');
+    assert.ok(paints.slice(beforeLite).filter(p=>p.args).every(p=>p.args[0].url),'Lite action allocates no decorative canvas composite');
+    assert.equal(readbacks.length,beforeLiteReads+1,'Lite still materializes the first action before its clock');
+    stage.settle({reaction:true});step(16);
+    stage.play('hit',220);const beforeLiteHit=paints.length;step(66);
+    assert.ok(paints.slice(beforeLiteHit).some(p=>p.fill==='#ff2424'),'Lite preserves the readable hit mask');
+    assert.match(stage.currentArt.image.url,/HURT/,'Lite preserves the authored reaction body');
+    step(300);stage.setRestPose('defend');
+    quality.performance='full';stage.setRestPose('defend');
+    assert.equal(paints.filter(p=>p.canvas===visible&&p.args).at(-1).args[0].tagName,'CANVAS','switching back restores Standard aura at the same rest pose');
+    delete quality.performance;stage.setRestPose('idle');paints.length=0;
     stage.setStance('offensive');assert.equal(stage.pose,'stance-offensive');
     let unchangedPaints=paints.length;
     stage.setStance('offensive');assert.equal(paints.length,unchangedPaints,'same held stance retains its painted canvas');
@@ -59,6 +87,11 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     stage.setStance('casting');assert.equal(stage.pose,'attack-contact','receipt selection must not interrupt the action');
     step(145);assert.equal(stage.pose,'stance-casting');
     assert.match(paints.at(-1).args[0].url,/stances\/reaver\/casting\.webp$/);
+    const finishedActionPaints=paints.length;
+    stage.setRestPose('idle');
+    assert.equal(paints.length,finishedActionPaints,'finished action already painted its held rest');
+    assert.equal(stage.presentation.elapsed,0,'settled receipt still normalizes the completed action clock');
+    assert.deepEqual(stage.presentation.resources,[]);
     assert.equal(stage.currentArt.image,paints.at(-1).args[0],'HUD ink source follows the held pose');
     stage.setRestPose('defeated');assert.equal(stage.pose,'defeated','death overrides selected art');
     stage.setRestPose('idle');assert.equal(stage.pose,'stance-casting');
@@ -197,6 +230,8 @@ test('class stage owns travel, hit flashing, interruption, pause and disposal', 
     assert.equal(stage.el.querySelector('span').hidden,true,'Retry restores the class art');
     assert.equal(stage.pose,'ready');
     stage.dispose();deferArt=true;stage=createAlternativeCardStage('starseer');
+    stage.setRestPose('idle');stage.setRestPose('idle');
+    assert.equal(stage.currentArt,null,'pending art cannot be mistaken for a painted rest');
     stage.setStance('offensive');stage.setStance('offensive');
     pendingArt.splice(0).forEach(finish=>finish());await stage.ready;
     assert.equal(stage.pose,'stance-offensive');assert.ok(stage.currentArt,'pending load still paints the requested stance');

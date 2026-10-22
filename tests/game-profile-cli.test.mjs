@@ -31,7 +31,7 @@ test('kernel/runtime edits change the behavior pin without mutating the shared r
  t.after(()=>rmSync(fixtureRoot,{recursive:true,force:true}));
  // The loader derives ROOT from its module location. Importing a copied loader
  // exercises the real compiler without adding writable roots to production APIs.
- for(const file of ['src','engine','games/ashenspire','content/source','tools/game-config.mjs','tools/base-cards.mjs','tools/catalog-json.mjs']) {
+ for(const file of ['src','engine','games/ashenspire','content/source','tools/game-config.mjs','tools/base-cards.mjs','tools/catalog-json.mjs','tools/lib']) {
   const destination=resolve(fixtureRoot,file);mkdirSync(dirname(destination),{recursive:true});
   cpSync(resolve(root,file),destination,{recursive:true});
  }

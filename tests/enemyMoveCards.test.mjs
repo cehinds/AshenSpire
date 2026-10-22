@@ -22,7 +22,7 @@ const preview = { moveId: 'heldBlade', damage: 19, hits: 1, pending: true };
 const before = JSON.stringify({ warden, enemy, preview });
 const cards = enemyMoveCards(warden, { enemy, preview });
 assert.equal(cards.filter((c) => c.active).length, 1);
-assert.match(cards.find((c) => c.moveId === 'heldBlade').detail, /19 preview damage before Block.*Delayed 1 turn.*8 base Block while charging/);
+assert.match(cards.find((c) => c.moveId === 'heldBlade').detail, /19 projected damage.*Delayed 1 turn.*8 base Block while charging/);
 assert.match(cards.find((c) => c.moveId === 'heldBlade').meta, /Charging/);
 assert.match(cards.find((c) => c.moveId === 'twinDaggers').meta, /Locked.*50% HP/);
 assert.equal(enemyMoveCards(warden, { enemy: { unlockedMoves: ['twinDaggers'] } }).find((c) => c.moveId === 'twinDaggers').locked, false);

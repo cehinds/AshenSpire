@@ -14,7 +14,7 @@ import { cardOptionGrid } from './cardOptionGrid.js';
  * or Escape runs nothing and the card stays in hand. `onClosed()` runs on
  * every close, before `onChoose`, so a screen can tell the dialog is gone.
  */
-export function openCardChoiceModal({ plan, cardName = 'Card', opener = document.activeElement, onChoose, onClosed = null }) {
+export function openCardChoiceModal({ plan, cardName = t('card.artPlaceholder'), opener = document.activeElement, onChoose, onClosed = null }) {
   let chosen = null;
   const cancel = button({ label: t('common.cancel'), role: 'exit', attrs: { 'data-focusable': 'true' } });
   const shell = openModal({
@@ -28,7 +28,7 @@ export function openCardChoiceModal({ plan, cardName = 'Card', opener = document
     body: (host) => {
       // Uniform tiles like the other card pickers; a stance has no numbers, so its tooltip is the effect line.
       const summaries = plan.options.map(option => ({ id: option.id, className: 'card-choice-option',
-        name: `${option.icon ? option.icon + ' ' : ''}${option.name}${option.active ? ' (active)' : ''}`,
+        name: `${option.name}${option.active ? ' (active)' : ''}`,
         text: option.tooltip || '', line: [], costs: [], disabled: !!option.active,
         attrs: option.active ? { 'data-active': 'true' } : {} }));
       host.appendChild(cardOptionGrid(summaries, { idAttr: 'data-choice', onSelect: id => { chosen = id; shell.close(); } }));

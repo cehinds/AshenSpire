@@ -12,7 +12,7 @@
         }
       ]
     },
-    "icon": "🏅",
+    "icon": "relic",
     "textTemplate": "Max HP +{hpFlat}. Your first attack each combat also deals {poiseDamage} Poise damage.",
     "flavor": "Its face is worn smooth, but it still remembers being gold."
   },
@@ -39,7 +39,7 @@
         }
       ]
     },
-    "icon": "💠",
+    "icon": "relic",
     "textTemplate": "Max HP +{hpFlat}. Mana +{manaFlat}. Magic damage +{magicDamageFlat}. Begin each combat with Starstone Charge and restore {restoreMana} Mana.",
     "flavor": "A chip of someone else’s genius. It still hums."
   },
@@ -50,7 +50,7 @@
     "passives": {
       "modifiers": []
     },
-    "icon": "🪙",
+    "icon": "relic",
     "textTemplate": "Begin each combat Prepared. Your first attack each combat applies {venom} Venom.",
     "flavor": "One face buys silence. The other buys speed."
   },
@@ -61,7 +61,7 @@
     "passives": {
       "modifiers": []
     },
-    "icon": "🗿",
+    "icon": "relic",
     "textTemplate": "Whenever you heal, gain {block} Block (even at full HP).",
     "flavor": "It is very small and very heavy and it loves you."
   },
@@ -69,7 +69,7 @@
     "id": "goldenSprout",
     "name": "Golden Sprout",
     "rarity": "common",
-    "icon": "🌰",
+    "icon": "regen",
     "textTemplate": "At the start of each combat, heal {heal} HP.",
     "flavor": "A sapling waits inside, patient as grief."
   },
@@ -77,21 +77,21 @@
     "id": "whetstoneFragment",
     "name": "Whetstone Fragment",
     "rarity": "common",
-    "icon": "🪨",
+    "icon": "weight",
     "textTemplate": "Your first attack each combat deals {damage} extra damage."
   },
   {
     "id": "kindlingCharm",
     "name": "Kindling Charm",
     "rarity": "common",
-    "icon": "🕯",
+    "icon": "burn",
     "textTemplate": "At the start of each combat, draw {draw} extra card."
   },
   {
     "id": "cinderPouch",
     "name": "Cinder Pouch",
     "rarity": "common",
-    "icon": "👝",
+    "icon": "relic",
     "passives": {
       "runeGainMult": 1.25
     },
@@ -101,7 +101,7 @@
     "id": "feralEye",
     "name": "Feral Eye",
     "rarity": "common",
-    "icon": "👁",
+    "icon": "target",
     "passives": {
       "eliteExtraCardReward": true
     },
@@ -111,7 +111,7 @@
     "id": "goldleafCharm",
     "name": "Goldleaf Charm",
     "rarity": "common",
-    "icon": "🍂",
+    "icon": "relic",
     "textTemplate": "At the start of your first turn, gain {block} Block.",
     "flavor": "A single leaf, pressed flat, still gold. It keeps the wind off you."
   },
@@ -119,7 +119,7 @@
     "id": "crackedLantern",
     "name": "Cracked Lantern",
     "rarity": "common",
-    "icon": "🏮",
+    "icon": "relic",
     "textTemplate": "On your first turn each combat, gain {gainEnergy} Stamina.",
     "flavor": "The glass is broken but the flame refuses to notice."
   },
@@ -127,7 +127,7 @@
     "id": "sacrificialKnife",
     "name": "Sacrificial Knife",
     "rarity": "common",
-    "icon": "🔪",
+    "icon": "sword",
     "textTemplate": "Your first attack each combat applies {bleed} Bleed.",
     "flavor": "It was made to open things that were meant to stay closed."
   },
@@ -135,7 +135,7 @@
     "id": "curedHide",
     "name": "Cured Hide",
     "rarity": "common",
-    "icon": "🛡",
+    "icon": "shield",
     "passives": {
       "poiseThresholdAdd": 2
     },
@@ -146,7 +146,7 @@
     "id": "ivoryComb",
     "name": "Ivory Comb",
     "rarity": "common",
-    "icon": "🪮",
+    "icon": "relic",
     "textTemplate": "Every 8th card you play each combat: draw {draw} card.",
     "flavor": "Someone kept themselves tidy right up until the end."
   },
@@ -154,7 +154,7 @@
     "id": "crackedTear",
     "name": "Cracked Tear",
     "rarity": "uncommon",
-    "icon": "💧",
+    "icon": "mana",
     "passives": {
       "flaskPowerMult": 1.5
     },
@@ -164,7 +164,7 @@
     "id": "sealstoneKey",
     "name": "Sealstone Key",
     "rarity": "uncommon",
-    "icon": "🗝",
+    "icon": "relic",
     "passives": {
       "revealUnknown": true
     },
@@ -174,21 +174,21 @@
     "id": "fellWardenBrand",
     "name": "Fell Warden Brand",
     "rarity": "uncommon",
-    "icon": "🔱",
+    "icon": "relic",
     "textTemplate": "Whenever an enemy Staggers, draw {draw} cards."
   },
   {
     "id": "bloodiedTalisman",
     "name": "Bloodied Talisman",
     "rarity": "uncommon",
-    "icon": "🩸",
+    "icon": "bleed",
     "textTemplate": "Whenever Bleed bursts, the victim loses {loseHp} additional HP."
   },
   {
     "id": "emberFragment",
     "name": "Ember Fragment",
     "rarity": "uncommon",
-    "icon": "✨",
+    "icon": "relic",
     "passives": {
       "restHealMult": 1.15
     },
@@ -198,14 +198,14 @@
     "id": "twinnedArmor",
     "name": "Twinned Armor",
     "rarity": "uncommon",
-    "icon": "👥",
+    "icon": "armour",
     "textTemplate": "Every 10th card you play each combat: gain {block} Block."
   },
   {
     "id": "blightTouchedIdol",
     "name": "Blight-Touched Idol",
     "rarity": "uncommon",
-    "icon": "☣",
+    "icon": "blight",
     "textTemplate": "Your first attack each combat applies {crimsonBlight} Crimson Blight.",
     "flavor": "The carving was of a saint. The blight made it a saint of something else."
   },
@@ -213,7 +213,7 @@
     "id": "warhorn",
     "name": "Warhorn",
     "rarity": "uncommon",
-    "icon": "📣",
+    "icon": "audio",
     "textTemplate": "At the start of each combat, gain {strength} Strength.",
     "flavor": "One long note, and the old anger answers."
   },
@@ -221,7 +221,7 @@
     "id": "vowOfVengeance",
     "name": "Vow of Vengeance",
     "rarity": "uncommon",
-    "icon": "⚔",
+    "icon": "attack",
     "textTemplate": "Whenever an enemy dies, gain {strength} Strength.",
     "flavor": "Every name you take is a name you carry."
   },
@@ -229,7 +229,7 @@
     "id": "pearlOfSagacity",
     "name": "Pearl of Sagacity",
     "rarity": "uncommon",
-    "icon": "🔮",
+    "icon": "relic",
     "textTemplate": "Every 6th card you play each combat: gain {gainEnergy} Stamina.",
     "flavor": "It clouds when you are foolish. It has been cloudy for some time."
   },
@@ -237,7 +237,7 @@
     "id": "blessedDew",
     "name": "Blessed Dew",
     "rarity": "uncommon",
-    "icon": "💧",
+    "icon": "mana",
     "textTemplate": "At the start of each turn, heal {heal} HP.",
     "flavor": "It gathers on the vial overnight, from nowhere, for no one."
   },
@@ -245,7 +245,7 @@
     "id": "azureSigil",
     "name": "Azure Sigil",
     "rarity": "uncommon",
-    "icon": "🔵",
+    "icon": "mana",
     "textTemplate": "The first Skill you play each combat: gain {gainEnergy} Stamina.",
     "flavor": "Painted in a hand that trembled, by someone who steadied at the last stroke."
   },
@@ -253,7 +253,7 @@
     "id": "bloodstainedChalice",
     "name": "Bloodstained Chalice",
     "rarity": "uncommon",
-    "icon": "🍷",
+    "icon": "bleed",
     "textTemplate": "Whenever Bleed bursts on an enemy, gain {block} Block.",
     "flavor": "It fills a little more each time. You have stopped asking with what."
   },
@@ -261,14 +261,14 @@
     "id": "goldboughSapling",
     "name": "Goldbough Sapling",
     "rarity": "rare",
-    "icon": "🌱",
+    "icon": "regen",
     "textTemplate": "At the start of your turn, if you have no Block: gain {block} Block."
   },
   {
     "id": "wyrmHeart",
     "name": "Wyrm Heart",
     "rarity": "rare",
-    "icon": "🫀",
+    "icon": "health",
     "passives": {
       "restDenied": [
         "restHpPartial"
@@ -281,7 +281,7 @@
     "id": "ancestralHorn",
     "name": "Ancestral Horn",
     "rarity": "rare",
-    "icon": "📯",
+    "icon": "audio",
     "passives": {
       "powerCostReduction": 1
     },
@@ -291,7 +291,7 @@
     "id": "titansCinder",
     "name": "Titan's Cinder",
     "rarity": "rare",
-    "icon": "🌟",
+    "icon": "relic",
     "textTemplate": "At the start of each turn, gain {strength} Strength.",
     "flavor": "A giant died to make this. It is still furious about it."
   },
@@ -299,7 +299,7 @@
     "id": "radiantAegis",
     "name": "Radiant Aegis",
     "rarity": "rare",
-    "icon": "🛡",
+    "icon": "shield",
     "textTemplate": "At the start of each turn, if you have Block: gain {block} Block.",
     "flavor": "It rewards the guarded. It has nothing to say to the reckless."
   },
@@ -307,7 +307,7 @@
     "id": "flayersCenser",
     "name": "Flayer's Censer",
     "rarity": "rare",
-    "icon": "🔥",
+    "icon": "burn",
     "textTemplate": "At the start of each turn, apply {crimsonBlight} Crimson Blight to ALL enemies.",
     "flavor": "The smoke seeks out lungs. It is not particular about whose."
   },
@@ -315,7 +315,7 @@
     "id": "vigilantHalo",
     "name": "Vigilant Halo",
     "rarity": "rare",
-    "icon": "🌸",
+    "icon": "skill",
     "textTemplate": "Whenever an enemy Staggers, heal {heal} HP.",
     "flavor": "It hovers a hand above your head, waiting for you to earn it."
   },
@@ -323,7 +323,7 @@
     "id": "carrionTalon",
     "name": "Carrion Talon",
     "rarity": "rare",
-    "icon": "🦅",
+    "icon": "attack",
     "textTemplate": "Whenever an enemy dies, deal {damage} damage to a random enemy.",
     "flavor": "The flock does not mourn. The flock moves to the next warm thing."
   },
@@ -331,7 +331,7 @@
     "id": "emberIdol",
     "name": "Ember Idol",
     "rarity": "rare",
-    "icon": "🌋",
+    "icon": "burn",
     "textTemplate": "At the start of each turn, deal {damage} damage to ALL enemies.",
     "flavor": "It has been warm to the touch for a thousand years. It is patient about it."
   },
@@ -339,7 +339,7 @@
     "id": "crownOfStitches",
     "name": "Crown of Stitches",
     "rarity": "boss",
-    "icon": "👑",
+    "icon": "relic",
     "textTemplate": "Begin each combat with {strength} Strength — and {frail} Frail. New limbs are heavy.",
     "flavor": "It fits. That is the worst part."
   },
@@ -347,7 +347,7 @@
     "id": "wardenHorn",
     "name": "Warden Horn",
     "rarity": "boss",
-    "icon": "📯",
+    "icon": "audio",
     "textTemplate": "Draw {draw} extra card each turn. At the start of each combat, lose {loseHp} HP.",
     "flavor": "It sounds without being blown. Something is answering."
   },
@@ -355,7 +355,7 @@
     "id": "ashOfRemembrance",
     "name": "Ash of Remembrance",
     "rarity": "boss",
-    "icon": "⚱",
+    "icon": "relic",
     "textTemplate": "Gain {gainEnergy} extra Stamina each turn. At the start of each combat, gain {madness} Madness.",
     "flavor": "The dead lend strength. They are not gentle about it."
   },
@@ -363,7 +363,7 @@
     "id": "cinderOfTheFallen",
     "name": "Cinder of the Fallen",
     "rarity": "boss",
-    "icon": "☠",
+    "icon": "madness",
     "textTemplate": "Whenever an enemy dies, gain {gainEnergy} Stamina. At the start of each combat, gain {madness} Madness.",
     "flavor": "It pays out in the coin of endings. It expects you to make more of them."
   },
@@ -371,7 +371,7 @@
     "id": "crimsonCovenant",
     "name": "Crimson Covenant",
     "rarity": "boss",
-    "icon": "🩸",
+    "icon": "bleed",
     "textTemplate": "Your attacks apply {bleed} Bleed. At the start of each combat, lose {loseHp} HP.",
     "flavor": "The pact is simple: your blood answers for theirs. It is not a fair trade, but it is fast."
   },
@@ -379,7 +379,7 @@
     "id": "travelersWhetstone",
     "name": "Traveler's Whetstone",
     "rarity": "common",
-    "icon": "🔪",
+    "icon": "sword",
     "textTemplate": "At the start of each combat, gain {strength} Strength.",
     "flavor": "It was sharpened by hands that are no longer here to use it."
   },
@@ -387,7 +387,7 @@
     "id": "moonlitVial",
     "name": "Moonlit Vial",
     "rarity": "common",
-    "icon": "🧪",
+    "icon": "flask-health",
     "textTemplate": "At the start of each combat, gain {block} Block.",
     "flavor": "It never empties. It never fills, either."
   },
@@ -395,7 +395,7 @@
     "id": "wardensLantern",
     "name": "Warden's Lantern",
     "rarity": "common",
-    "icon": "🏮",
+    "icon": "relic",
     "textTemplate": "The first time you lose HP each combat, draw {draw} card.",
     "flavor": "The flame gutters when you are hurt, then burns a little brighter."
   },
@@ -403,7 +403,7 @@
     "id": "saltedRelic",
     "name": "Salted Relic",
     "rarity": "uncommon",
-    "icon": "🧂",
+    "icon": "relic",
     "passives": {
       "runeGainMult": 1.2
     },
@@ -414,7 +414,7 @@
     "id": "hollowedHorn",
     "name": "Hollowed Horn",
     "rarity": "uncommon",
-    "icon": "📯",
+    "icon": "audio",
     "textTemplate": "Whenever an enemy Staggers, apply {vulnerable} Vulnerable to ALL enemies.",
     "flavor": "It sounds only once. Everything still standing flinches."
   },
@@ -422,7 +422,7 @@
     "id": "gildedTear",
     "name": "Gilded Tear",
     "rarity": "uncommon",
-    "icon": "💛",
+    "icon": "health",
     "textTemplate": "On your first turn each combat, heal {heal} HP.",
     "flavor": "A single drop, hardened gold, wept for someone who never asked for it."
   },
@@ -430,7 +430,7 @@
     "id": "watchmansBadge",
     "name": "Watchman's Badge",
     "rarity": "rare",
-    "icon": "🎖",
+    "icon": "relic",
     "textTemplate": "At the start of each turn, if you are not Weak: gain {strength} Strength.",
     "flavor": "It is pinned to a coat that has seen more watches than the man wearing it."
   },
@@ -438,7 +438,7 @@
     "id": "howlingStandard",
     "name": "Howling Standard",
     "rarity": "rare",
-    "icon": "🚩",
+    "icon": "combat",
     "textTemplate": "Whenever an enemy Staggers, gain {strength} Strength.",
     "flavor": "It has not fallen in a hundred routs. It does not intend to start with yours."
   },
@@ -446,7 +446,7 @@
     "id": "emberwickCharm",
     "name": "Emberwick Charm",
     "rarity": "common",
-    "icon": "🕯",
+    "icon": "burn",
     "textTemplate": "The first time you lose HP each combat, gain {gainEnergy} Stamina.",
     "flavor": "It burns brightest at the moment you can least afford to slow down."
   },
@@ -454,7 +454,7 @@
     "id": "carrionMorsel",
     "name": "Carrion Morsel",
     "rarity": "common",
-    "icon": "🍖",
+    "icon": "regen",
     "textTemplate": "Whenever an enemy dies, heal {heal} HP.",
     "flavor": "The spire feeds those who feed it. It is not fussy about the manners of the exchange."
   },
@@ -463,7 +463,7 @@
     "name": "Gravetender's Bell",
     "rarity": "uncommon",
     "pool": "quest",
-    "icon": "🔔",
+    "icon": "audio",
     "textTemplate": "Whenever an enemy dies, draw {draw} card.",
     "flavor": "One toll for each name laid down. The tending is in the counting."
   },
@@ -471,7 +471,7 @@
     "id": "sentinelsOath",
     "name": "Sentinel's Oath",
     "rarity": "uncommon",
-    "icon": "🛡",
+    "icon": "shield",
     "textTemplate": "Every 12th card you play each combat: gain {strength} Strength.",
     "flavor": "The oath is long and the watch is longer. Endurance is its own kind of edge."
   },
@@ -479,7 +479,7 @@
     "id": "forsakenWarflag",
     "name": "Forsaken Warflag",
     "rarity": "rare",
-    "icon": "🏴",
+    "icon": "combat",
     "textTemplate": "At the start of each turn, apply {weak} Weak to ALL enemies.",
     "flavor": "The colors are all but rotted away. What it musters now answers to no banner but yours."
   },
@@ -487,7 +487,7 @@
     "id": "wrathCoil",
     "name": "Wrath Coil",
     "rarity": "rare",
-    "icon": "⚡",
+    "icon": "poise",
     "textTemplate": "Whenever you lose HP, deal {damage} damage to a random enemy.",
     "flavor": "It winds tighter with every wound and lets go all at once, at someone else."
   },
@@ -495,7 +495,7 @@
     "id": "ashenGrip",
     "name": "Ashen Grip",
     "rarity": "starter",
-    "icon": "🤚",
+    "icon": "actions",
     "textTemplate": "The first stance you enter each turn refunds {restoreStamina} Stamina.",
     "flavor": "The leather remembers every hand that held it, and gives a little back."
   },
@@ -503,7 +503,7 @@
     "id": "lodestarShard",
     "name": "Lodestar Shard",
     "rarity": "starter",
-    "icon": "🌟",
+    "icon": "relic",
     "textTemplate": "Begin each combat with {restoreMana} extra Mana.",
     "flavor": "It points nowhere on any map. It points at the next cast."
   },
@@ -511,7 +511,7 @@
     "id": "waxenSeal",
     "name": "Waxen Seal",
     "rarity": "starter",
-    "icon": "🕯",
+    "icon": "burn",
     "textTemplate": "The first time you heal each combat, heal {heal} more.",
     "flavor": "Pressed once, it holds. Pressed twice, it is only wax."
   },
@@ -519,7 +519,7 @@
     "id": "whetstonePouch",
     "name": "Whetstone Pouch",
     "rarity": "starter",
-    "icon": "👝",
+    "icon": "relic",
     "textTemplate": "Your first attack while Prepared each combat applies {bleed} Bleed.",
     "flavor": "A thumb along the edge before the first cut. Habit, and then not."
   },
@@ -527,7 +527,7 @@
     "id": "wayfarersKnot",
     "name": "Wayfarer's Knot",
     "rarity": "common",
-    "icon": "🪢",
+    "icon": "relic",
     "passives": {
       "runeGainMult": 1.1,
       "restHealMult": 1.1
@@ -539,7 +539,7 @@
     "id": "prismaticThorn",
     "name": "Prismatic Thorn",
     "rarity": "uncommon",
-    "icon": "🔷",
+    "icon": "skill",
     "passives": {
       "exposureBuildupMult": 1.25,
       "flaskPowerMult": 0.75
@@ -551,7 +551,7 @@
     "id": "restlessClasp",
     "name": "Restless Clasp",
     "rarity": "rare",
-    "icon": "🧷",
+    "icon": "relic",
     "passives": {
       "flaskPowerMult": 2,
       "restHealMult": 0.5
@@ -563,7 +563,7 @@
     "id": "paupersDiadem",
     "name": "Pauper's Diadem",
     "rarity": "boss",
-    "icon": "👑",
+    "icon": "relic",
     "passives": {
       "powerCostReduction": 1,
       "runeGainMult": 0.65

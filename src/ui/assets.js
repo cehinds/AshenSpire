@@ -1,3 +1,5 @@
+import { engravedIcon, engravedIconUrl } from './components/engravedIcon.js';
+import { uiIconText } from '../content/uiIcons.js';
 import { alternativeSprite, alternativePlayerId } from './alternativeArt.js';
 import { enemyExpansionSprite } from './enemyExpansionStage.js';
 import { createAlternativeCardStage } from './alternativeCardStage.js';
@@ -48,7 +50,7 @@ export function relicIcon(relic) {
   img.alt = '';
   img.style.cssText = 'width:100%;height:100%;object-fit:contain;';
   img.addEventListener('error', () => {
-    icon.textContent = relic.icon || '◆';
+    icon.replaceChildren(engravedIcon(relic.icon || 'relic') || uiIconText(relic.icon || 'relic'));
     // The art comes back with the built-in art (a Retry): the icon is drawn again.
     markArtPlaceholder(icon, () => { const again = relicIcon(relic); if (again) icon.replaceWith(again); });
   }, { once: true });
@@ -157,7 +159,7 @@ export function enemySprite(enemyDef, entity = {}) {
       `background:var(--panel);border:2px solid ${tint};display:flex;align-items:center;` +
       `justify-content:center;font-size:${px(tier.font)};position:relative;` +
       `box-shadow:0 ${Math.round(tier.h * 0.08)}px 10px rgba(0,0,0,.5);`;
-    el.textContent = enemyDef.art || '☠';
+    el.textContent = enemyDef.name || 'Enemy';
     // The art comes back with the built-in art (a Retry): the sprite is built again.
     markArtPlaceholder(el, () => el.replaceWith(enemySprite(enemyDef, entity)));
   };
@@ -251,7 +253,7 @@ export function enemySprite(enemyDef, entity = {}) {
 }
 
 // Character customization options (cosmetic — stored on run.customization).
-export const PORTRAIT_GLYPHS = ['⚔', '🛡', '🔥', '🌙', '☀', '🐺'];
+export const PORTRAIT_GLYPHS = ['attack', 'shield', 'burn', 'progression', 'madness', 'strength'];
 export const PORTRAIT_TINTS = [
   { id: 'gold', css: 'var(--gold)', name: 'Goldbough gold' },
   { id: 'ember', css: 'var(--ember)', name: 'Gorefire ember' },
@@ -277,7 +279,9 @@ export function spritesAreEnabled() {
 // viewBox 110×140, figure standing on a soft shadow.
 function sigilMedallion(cx, cy, t, sigil, plainR) {
   if (!sigil) return `<circle cx="${cx}" cy="${cy}" r="${plainR}" fill="${t}"/>`;
-  const safe = String(sigil).replace(/[<>&"]/g, '');
+  const safe = uiIconText(sigil).slice(0, 2).toUpperCase().replace(/[<>&"]/g, '');
+  const iconUrl = engravedIconUrl(sigil);
+  const href = iconUrl?.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   return (
     `<circle cx="${cx}" cy="${cy}" r="8" fill="#14100c" stroke="${t}" stroke-width="1.5"/>` +
     // The whole figure is mirrored (styles/ui.css, "the figure faces the viewer").
@@ -294,7 +298,7 @@ function sigilMedallion(cx, cy, t, sigil, plainR) {
     // giving four hand-authored viewBoxes a chest anchor apiece. Only the
     // `classic` sprite style and the file:// fallback reach this path.
     `<g transform="translate(${cx * 2},0) scale(-1,1)">` +
-    `<text x="${cx}" y="${cy + 0.5}" font-size="11" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>` +
+    (href ? `<image href="${href}" x="${cx - 6}" y="${cy - 6}" width="12" height="12"/>` : `<text x="${cx}" y="${cy + 0.5}" font-size="8" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>`) +
     `</g>`
   );
 }
@@ -766,7 +770,7 @@ export function playerSprite(customization = {}, classId, armourId = 'default', 
     `width:150px;height:190px;flex:0 0 auto;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
     'display:flex;align-items:center;justify-content:center;font-size:70px;position:relative;' +
     `box-shadow:0 10px 12px rgba(0,0,0,.5), inset 0 0 24px rgba(0,0,0,.4);`;
-  el.textContent = customization.glyph || '🛡';
+  el.replaceChildren(engravedIcon(customization.glyph || 'shield') || uiIconText(customization.glyph || 'shield'));
   return el;
 }
 
@@ -784,7 +788,7 @@ export function setClassGlyphs(classes) {
   for (const c of classes || []) if (c.glyph) classGlyphs[c.id] = c.glyph;
 }
 export function classGlyph(classId) {
-  return classGlyphs[classId] || '❖';
+  return classGlyphs[classId] || 'profile';
 }
 
 /* Inventory artwork uses item identity or its explicit icon alias, independently of rig artKey. */

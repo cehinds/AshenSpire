@@ -186,13 +186,13 @@ async function main() {
       const next = await evalIn(`(() => {
         const visible = n => { if (!n || n.hidden || n.disabled || n.getAttribute('aria-disabled') === 'true') return false; const r=n.getBoundingClientRect(); return r.width>0 && r.height>0 && n.contains(document.elementFromPoint(r.left+r.width/2,r.top+r.height/2)); };
         const pick = selector => [...document.querySelectorAll(selector)].find(visible);
-        const direct = pick('#shrine-leave, #leave-shop, .prologue-screen .prologue-controls button, .confirmation-modal .confirmation-confirm, .map-tray [data-map-action="enter"], .map-enter');
+        const direct = pick('#shrine-leave, #leave-shop, .prologue-screen [data-prologue-action="continue"], .confirmation-modal .confirmation-confirm, .map-tray [data-map-action="enter"], .map-enter');
         const node = direct || pick('.map-node.monster.reachable:not(.current)') || [...document.querySelectorAll('.map-node.reachable:not(.current):not(.visited)')].filter(visible).sort((a,b)=>a.getBoundingClientRect().left-b.getBoundingClientRect().left)[0];
         const dialogue = node || [...document.querySelectorAll('.dialogue-screen button, .event-screen button, .class-mastery-node')].find(visible);
         if (!dialogue) return null;
         document.querySelectorAll('[data-input-probe-next]').forEach(n => delete n.dataset.inputProbeNext);
         dialogue.dataset.inputProbeNext = 'true';
-        return (dialogue.textContent || dialogue.getAttribute('aria-label') || dialogue.className).trim().slice(0,100);
+        return (dialogue.textContent || dialogue.getAttribute('aria-label') || dialogue.getAttribute('class') || dialogue.tagName).trim().slice(0,100);
       })()`);
       if (next) await click('[data-input-probe-next="true"]', next);
       else {

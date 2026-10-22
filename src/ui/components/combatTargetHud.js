@@ -18,7 +18,7 @@ function corridor(a, b, x, y, radius) {
 }
 function node(tag, className, text) { const n = document.createElement(tag); n.className = className; if (text != null) n.textContent = text; return n; }
 
-function intentRow(entry) {
+export function combatTargetIntentRow(entry) {
   const row = node('div', 'target-hud-intent');
   const badge = entry.intent ? combatIntentPresentation(entry.intent) : null;
   const action = entry.action?.maneuver || 'ready';
@@ -42,7 +42,7 @@ function panelFor(entry) {
   const meters = entry.createMeters();
   meters.classList.add('target-hud-meters');
   for (const child of [...meters.children]) if (child.dataset.meterRow !== 'hp') child.remove();
-  panel.append(meters, intentRow(entry));
+  panel.append(meters, combatTargetIntentRow(entry));
   const statuses = entry.createStatuses();
   statuses.classList.add('target-hud-statuses');
   statuses.hidden = !statuses.querySelector('.status-icon');

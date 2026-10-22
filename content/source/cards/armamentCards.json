@@ -10,7 +10,7 @@
     "keywords": [
       "exhaust"
     ],
-    "icon": "🛡",
+    "icon": "shield",
     "effects": [
       {
         "op": "block",
@@ -52,7 +52,7 @@
     "keywords": [
       "exhaust"
     ],
-    "icon": "🛡",
+    "icon": "shield",
     "effects": [
       {
         "op": "enterStance",
@@ -86,7 +86,7 @@
     "keywords": [
       "exhaust"
     ],
-    "icon": "🛡",
+    "icon": "shield",
     "effects": [
       {
         "op": "block",
@@ -126,7 +126,7 @@
     "type": "attack",
     "flavor": "Shield with nails driven through the boss.\n\nThe nails are from the Bastion's own gates. It is said a sellsword made it on the night of the Burning, from the gate he was hired to hold. His name is not known.\n\nNo bearer since has drawn the nails.",
     "keywords": [],
-    "icon": "🛡",
+    "icon": "shield",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0,
     "effects": [
@@ -178,7 +178,7 @@
     "cost": 1,
     "type": "attack",
     "keywords": [],
-    "icon": "❄",
+    "icon": "frost",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0,
     "effects": [
@@ -220,7 +220,7 @@
     "cost": 2,
     "type": "attack",
     "keywords": [],
-    "icon": "🔥",
+    "icon": "burn",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0,
     "effects": [
@@ -274,7 +274,7 @@
     "keywords": [
       "exhaust"
     ],
-    "icon": "◈",
+    "icon": "skill",
     "effects": [
       {
         "op": "block",

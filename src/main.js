@@ -5,7 +5,7 @@ import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
-import { configuredSkillProgression, skillLevelNotices, acknowledgeSkillLevelNotices } from './model/gameProfileProgression.js';
+import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices } from './model/gameProfileProgression.js';
 import { announceSettingsSettled } from './ui/components/veil.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
 import { readNewGameProfile } from './ui/components/gameProfileSelector.js';
@@ -154,7 +154,7 @@ import { applyClassRespec, classRespecAvailability, resetClassTree } from './mod
 import { openCharacterSheet } from './ui/screens/characterSheet.js';
 import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, settingsRow, resetKeys, allResettableKeys, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
-import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
+import { shouldPlayPrologue, runSupportsPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
 import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
@@ -1291,7 +1291,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   // is already run.gameProfile. A run saved before this field has no Run again.
   run.beginChoices = structuredClone({ classId, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile });
   if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile, ATLAS, { townsPerActMax: registries.balance.atlas.townsPerActMax });
-  run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
+  run.customization = customization || { name: 'Forsaken', glyph: 'sword', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   if (quickStart) run.quickStart = true;
   if (!shotState && !isConfiguredRun(run)) {
@@ -1350,7 +1350,7 @@ function startClimb({ skipOpening = false } = {}) {
   if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
   run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   if (run.journey) syncWorldPosition();
-  if (!isConfiguredRun(run) && !skipOpening && (!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
+  if (runSupportsPrologue(run) && !skipOpening && (!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
     run.prologue = { version: PROLOGUE_STATE_VERSION, status: 'pending', scene: 0 };
   }
   persist();
@@ -3281,7 +3281,7 @@ async function onCombatEnd(result, combat, enc) {
     victory: result === 'victory', pool: enc.pool, enemies: combat.enemies,
     characterMultiplier: featMultiplier(run, 'characterXp'),
   });
-  const levelXp = isConfiguredRun(run) && gameModule(run, 'progression')?.characterLevels !== true ? 0 : xpReceipt.total;
+  const levelXp = isConfiguredRun(run) && !configuredCharacterLevels(run) ? 0 : xpReceipt.total;
   const levelAward = manualLevelUp
     ? bankLevelXp(registries, run, levelXp)
     : awardLevelXp(registries, run, levelXp, {
@@ -4123,9 +4123,9 @@ function poseFxShowcase() {
   const e1 = enemies[1] || enemies[0];
   put('fx-slash', '', e0, 120);
   put('float-num crit', '-26', e0, 200, { dy: -34 });
-  put('fx-spark', '✦', e1, 140);
+  put('fx-spark', '*', e1, 140);
   put('float-num blk small', 'BLOCKED', e1, 220, { dy: -30 });
-  put('fx-glyph', '✦', player, 170);
+  put('fx-glyph', '*', player, 170);
   // Victim recoil held mid-knockback; the second enemy teeters (stagger).
   e0.classList.add('hitflash', 'hit-heavy');
   if (e0.firstElementChild) {

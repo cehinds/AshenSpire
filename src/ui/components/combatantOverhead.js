@@ -65,7 +65,7 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
   if (followUps.length) compact.append(intentFollowUps(followUps));
   node.append(compact);
   const followLabel = followUps.length ? ` ${followUps.length} more ${followUps.length === 1 ? 'action' : 'actions'}: ${followUps.map(symbol => symbol.kind === 'action' ? symbol.icon : 'unknown').join(', ')}.` : '';
-  node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}`).join('. ')}${followLabel}`);
+  node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}${part.summary ? `. ${part.summary}` : ''}`).join('. ')}${followLabel}`);
   {
     const stanceNode = document.createElement('span');
     stanceNode.className = 'intent-stance';
@@ -80,6 +80,7 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
       group.append(intentIcon(part.icon));
       if (part.value != null) {
         const value = document.createElement('span'); value.textContent = part.value; group.append(value);
+        if (part.summary) { const scope = document.createElement('small'); scope.className = 'intent-damage-scope'; scope.textContent = part.summary; group.append(scope); }
       }
       values.append(group);
     }
@@ -134,7 +135,11 @@ export function intentParts(parts = [], { unknown = false } = {}) {
     group.dataset.valueKind = part.valueKind || (['defend', 'counter', 'evade', 'buff', 'prepare'].includes(part.icon) ? 'count' : 'damage');
     if (part.value != null || unknown) {
       const value = document.createElement('strong'); value.className = 'intent-action-value';
-      value.textContent = unknown ? '?' : String(part.value); group.append(value);
+      value.textContent = unknown ? '?' : String(part.value);
+      if (part.summary && !unknown) {
+        const stack = document.createElement('span'); stack.className = 'intent-damage-read'; stack.append(value);
+        const scope = document.createElement('small'); scope.className = 'intent-damage-scope'; scope.textContent = part.summary; stack.append(scope); group.append(stack);
+      } else group.append(value);
     }
     group.append(intentIcon(part.icon)); row.append(group);
   }

@@ -45,7 +45,7 @@ export function mountHistory(app, { meta, onBack }) {
     ];
     return row({
       tag: 'div', setting: true,
-      glyph: r.victory ? '♛' : '☠',
+      glyph: r.victory ? 'reward' : 'madness',
       label: r.className || r.class || '—',
       status: `${reached}${fights}`,
       trail,

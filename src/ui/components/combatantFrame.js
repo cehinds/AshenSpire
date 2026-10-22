@@ -20,6 +20,11 @@ export function updateCombatantFrame(frame, { classNames = [], leading = [], blo
   for (const value of ownedClasses.get(frame) || []) if (!classNames.includes(value)) frame.classList.remove(value);
   for (const value of classNames.filter(Boolean)) frame.classList.add(value);
   ownedClasses.set(frame, classNames.filter(Boolean));
+  // The action glyph owns a live selection callback and is reconciled by
+  // syncPlayerActionIntent. Rebuilding HUD slots must not defeat that
+  // maneuver guard and schedule another geometry pass for the same glyph.
+  const action = frame.classList.contains('player') ? frame.querySelector('.player-action-intent') : null;
+  const actionFocused = action && document.activeElement === action;
   frame.querySelector(':scope > .target-hud-overhead-meters')?.remove();
   const leadingHost = frame.querySelector('.combatant-leading');
   leadingHost.replaceChildren(...leading.filter(Boolean));
@@ -37,6 +42,8 @@ export function updateCombatantFrame(frame, { classNames = [], leading = [], blo
   appendAll(frame.classList.contains('enemy') && !classicAppearance() ? leadingHost : widget,
     trailing.filter(n => n?.classList.contains('statuses')));
   appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
+  if (action) leadingHost.appendChild(action);
+  if (actionFocused) action.focus({ preventScroll: true });
   return frame;
 }
 

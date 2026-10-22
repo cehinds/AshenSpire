@@ -2,7 +2,7 @@
   {
     "id": "precision",
     "name": "Precision",
-    "icon": "◎",
+    "icon": "target",
     "stackMode": "add",
     "decay": "none",
     "tooltip": "Each stack adds 1 Accuracy."
@@ -10,7 +10,7 @@
   {
     "id": "evade",
     "name": "Evade",
-    "icon": "↝",
+    "icon": "next",
     "stackMode": "add",
     "decay": "none",
     "tooltip": "Each stack adds 3 Evasion. Lose 1 stack at the start of each round."
@@ -19,7 +19,7 @@
     "id": "strength",
     "tint": "var(--gold)",
     "name": "Strength",
-    "icon": "↑",
+    "icon": "strength",
     "stackMode": "add",
     "decay": "none",
     "modifiers": {
@@ -30,7 +30,7 @@
   {
     "id": "dexterity",
     "name": "Dexterity",
-    "icon": "◇",
+    "icon": "dexterity",
     "stackMode": "add",
     "decay": "none",
     "modifiers": {
@@ -42,7 +42,7 @@
     "id": "weak",
     "tint": "var(--muted)",
     "name": "Weak",
-    "icon": "↓",
+    "icon": "weak",
     "stackMode": "add",
     "decay": "perTurnEnd",
     "modifiers": {
@@ -54,7 +54,7 @@
     "id": "vulnerable",
     "tint": "var(--grace)",
     "name": "Vulnerable",
-    "icon": "V",
+    "icon": "vulnerable",
     "stackMode": "add",
     "decay": "perTurnEnd",
     "modifiers": {
@@ -66,7 +66,7 @@
     "id": "frail",
     "tint": "var(--muted)",
     "name": "Frail",
-    "icon": "✂",
+    "icon": "frail",
     "stackMode": "add",
     "decay": "perTurnEnd",
     "modifiers": {
@@ -78,7 +78,7 @@
     "id": "bleed",
     "tint": "var(--ember)",
     "name": "Bleed",
-    "icon": "💧",
+    "icon": "mana",
     "stackMode": "add",
     "decay": "none",
     "proc": {
@@ -101,7 +101,7 @@
     "id": "frost",
     "tint": "#7fa8c9",
     "name": "Frost",
-    "icon": "❄",
+    "icon": "frost",
     "stackMode": "add",
     "decay": "none",
     "proc": {
@@ -137,7 +137,7 @@
     "id": "insanity",
     "tint": "#a06bd0",
     "name": "Insanity",
-    "icon": "🌀",
+    "icon": "madness",
     "stackMode": "add",
     "decay": "none",
     "proc": {
@@ -169,7 +169,7 @@
     "id": "bleedResist",
     "tint": "var(--muted)",
     "name": "Clotted",
-    "icon": "🩹",
+    "icon": "health",
     "stackMode": "refresh",
     "decay": {
       "duration": 2
@@ -184,7 +184,7 @@
     "id": "frostResist",
     "tint": "var(--muted)",
     "name": "Weathered",
-    "icon": "🧣",
+    "icon": "armour",
     "stackMode": "refresh",
     "decay": {
       "duration": 2
@@ -199,7 +199,7 @@
     "id": "insanityResist",
     "tint": "var(--muted)",
     "name": "Resolute",
-    "icon": "🛡",
+    "icon": "shield",
     "stackMode": "refresh",
     "decay": {
       "duration": 2
@@ -214,7 +214,7 @@
     "id": "frostExposed",
     "tint": "#7fa8c9",
     "name": "Frost-Exposed",
-    "icon": "🫧",
+    "icon": "vulnerable",
     "stackMode": "refresh",
     "decay": {
       "duration": 2
@@ -232,7 +232,7 @@
     "id": "insanityExposed",
     "tint": "#a06bd0",
     "name": "Unraveled",
-    "icon": "🕳",
+    "icon": "skill",
     "stackMode": "refresh",
     "decay": {
       "duration": 2
@@ -252,7 +252,7 @@
     "fluxPerTurn": 1,
     "tint": "var(--rot)",
     "name": "Crimson Blight",
-    "icon": "❀",
+    "icon": "blight",
     "stackMode": "add",
     "decay": {
       "duration": 3
@@ -279,7 +279,7 @@
     "id": "necroticBlight",
     "tint": "var(--rot)",
     "name": "Necrotic Blight",
-    "icon": "❀",
+    "icon": "blight",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -305,7 +305,7 @@
     "fluxPerTurn": 1,
     "tint": "var(--ember)",
     "name": "Burn",
-    "icon": "🔥",
+    "icon": "burn",
     "stackMode": "add",
     "decay": "perTurnEnd",
     "hooks": [
@@ -330,7 +330,7 @@
     "id": "regen",
     "tint": "var(--grace)",
     "name": "Regen",
-    "icon": "🌿",
+    "icon": "regen",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -354,7 +354,7 @@
   {
     "id": "madness",
     "name": "Madness",
-    "icon": "☀",
+    "icon": "madness",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -398,7 +398,7 @@
     "id": "staggered",
     "tint": "var(--gold)",
     "name": "Staggered",
-    "icon": "✦",
+    "icon": "staggered",
     "stackMode": "refresh",
     "decay": "perTurnEnd",
     "modifiers": {
@@ -409,7 +409,7 @@
   {
     "id": "rallyingStandard",
     "name": "Rallying Standard",
-    "icon": "⚑",
+    "icon": "combat",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -443,7 +443,7 @@
   {
     "id": "rallyingStandardUp",
     "name": "Rallying Standard+",
-    "icon": "⚑",
+    "icon": "combat",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -468,7 +468,7 @@
   {
     "id": "unbreakable",
     "name": "Unbreakable",
-    "icon": "⬟",
+    "icon": "armour",
     "stackMode": "unique",
     "decay": "none",
     "modifiers": {
@@ -480,7 +480,7 @@
   {
     "id": "unbreakableUp",
     "name": "Unbreakable+",
-    "icon": "⬟",
+    "icon": "armour",
     "stackMode": "unique",
     "decay": "none",
     "modifiers": {
@@ -492,7 +492,7 @@
   {
     "id": "goreblood",
     "name": "Goreblood",
-    "icon": "♛",
+    "icon": "reward",
     "stackMode": "unique",
     "decay": "none",
     "modifiers": {
@@ -503,7 +503,7 @@
   {
     "id": "sanguinePact",
     "name": "Sanguine Pact",
-    "icon": "🩸",
+    "icon": "bleed",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -538,7 +538,7 @@
   {
     "id": "starstoneCharge",
     "name": "Starstone Charge",
-    "icon": "✦",
+    "icon": "staggered",
     "stackMode": "unique",
     "decay": "perTurnEnd",
     "tooltip": "A spell was cast this turn: your next Starstone bonus is live. Fades at end of turn."
@@ -546,7 +546,7 @@
   {
     "id": "stargazer",
     "name": "Stargazer",
-    "icon": "🔭",
+    "icon": "progression",
     "stackMode": "unique",
     "decay": "none",
     "hooks": [
@@ -567,7 +567,7 @@
   {
     "id": "astralArmor",
     "name": "Astral Armor",
-    "icon": "🌌",
+    "icon": "progression",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -597,7 +597,7 @@
   {
     "id": "constellation",
     "name": "Constellation",
-    "icon": "💫",
+    "icon": "progression",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -639,7 +639,7 @@
   {
     "id": "azureCoil",
     "name": "Azure Coil",
-    "icon": "🌀",
+    "icon": "madness",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -673,7 +673,7 @@
   {
     "id": "waxingMoon",
     "name": "Waxing Moon",
-    "icon": "🌕",
+    "icon": "progression",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -704,7 +704,7 @@
   {
     "id": "moonlitShield",
     "name": "Moonlit Shield",
-    "icon": "🔷",
+    "icon": "skill",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -746,7 +746,7 @@
   {
     "id": "astromancer",
     "name": "Astromancer",
-    "icon": "📚",
+    "icon": "quest",
     "stackMode": "unique",
     "decay": "none",
     "hooks": [
@@ -772,7 +772,7 @@
   {
     "id": "thornHalo",
     "name": "Thorn Halo",
-    "icon": "🌿",
+    "icon": "regen",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -797,7 +797,7 @@
   {
     "id": "communion",
     "name": "Communion",
-    "icon": "🕊",
+    "icon": "rest",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -827,7 +827,7 @@
   {
     "id": "lifeTithe",
     "name": "Life Tithe",
-    "icon": "⚰",
+    "icon": "history",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -857,7 +857,7 @@
   {
     "id": "stigmata",
     "name": "Stigmata",
-    "icon": "🩹",
+    "icon": "health",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -890,7 +890,7 @@
   {
     "id": "zealotry",
     "name": "Zealotry",
-    "icon": "⚡",
+    "icon": "poise",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -923,7 +923,7 @@
   {
     "id": "emberTide",
     "name": "Ember Tide",
-    "icon": "🌊",
+    "icon": "mana",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -951,7 +951,7 @@
   {
     "id": "harbingerOfBlight",
     "name": "Harbinger of Blight",
-    "icon": "❀",
+    "icon": "blight",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -996,7 +996,7 @@
   {
     "id": "bloodUnction",
     "name": "Blood Unction",
-    "icon": "🫗",
+    "icon": "mana",
     "stackMode": "refresh",
     "decay": "perTurnEnd",
     "hooks": [
@@ -1027,7 +1027,7 @@
   {
     "id": "ironVow",
     "name": "Iron Vow",
-    "icon": "⛓",
+    "icon": "block",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -1060,7 +1060,7 @@
   {
     "id": "bulwarkEcho",
     "name": "Shieldwall Echo",
-    "icon": "⛨",
+    "icon": "shield",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -1095,7 +1095,7 @@
   {
     "id": "prepared",
     "name": "Prepared",
-    "icon": "◈",
+    "icon": "skill",
     "stackMode": "unique",
     "decay": "perTurnEnd",
     "tooltip": "Your next setup payoff is empowered. Expires at turn end."
@@ -1103,7 +1103,7 @@
   {
     "id": "venom",
     "name": "Venom",
-    "icon": "☠",
+    "icon": "madness",
     "stackMode": "add",
     "decay": "perTurnEnd",
     "hooks": [
@@ -1127,7 +1127,7 @@
   {
     "id": "afterimage",
     "name": "Afterimage",
-    "icon": "〽",
+    "icon": "motion",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -1161,7 +1161,7 @@
   {
     "id": "deadlyTempo",
     "name": "Deadly Tempo",
-    "icon": "♬",
+    "icon": "audio",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -1195,7 +1195,7 @@
   {
     "id": "opportunist",
     "name": "Opportunist",
-    "icon": "⌁",
+    "icon": "stamina",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -1229,7 +1229,7 @@
   {
     "id": "envenom",
     "name": "Envenom",
-    "icon": "♜",
+    "icon": "reward",
     "stackMode": "add",
     "decay": "none",
     "hooks": [
@@ -1264,7 +1264,7 @@
   {
     "id": "glassCannon",
     "name": "Glass Cannon",
-    "icon": "💥",
+    "icon": "attack",
     "stackMode": "unique",
     "decay": "none",
     "modifiers": {
@@ -1276,7 +1276,7 @@
   {
     "id": "magicVulnerable",
     "name": "Magic Vulnerable",
-    "icon": "✧",
+    "icon": "vulnerable",
     "tint": "#8b7cd6",
     "stackMode": "refresh",
     "decay": {
@@ -1294,7 +1294,7 @@
   {
     "id": "stanceShifted",
     "name": "Stance Shifted",
-    "icon": "⇄",
+    "icon": "reset",
     "stackMode": "unique",
     "decay": "none",
     "tooltip": "You have entered a stance this fight: Oath cards no longer grant Block."
@@ -1302,7 +1302,7 @@
   {
     "id": "silenced",
     "name": "Silenced",
-    "icon": "◌",
+    "icon": "unknown",
     "tint": "#8b7cd6",
     "stackMode": "refresh",
     "decay": {
@@ -1316,7 +1316,7 @@
   {
     "id": "stoneskin",
     "name": "Stoneskin",
-    "icon": "◆",
+    "icon": "skill",
     "tint": "#8a7b5c",
     "stackMode": "unique",
     "decay": {

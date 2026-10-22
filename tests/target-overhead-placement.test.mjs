@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { targetOverheadPlacement } from '../src/ui/components/battlefieldStage.js';
+import { withKitDom } from './helpers/kit-dom.mjs';
+import { combatHeaderKeepoutBottom, targetOverheadPlacement } from '../src/ui/components/battlefieldStage.js';
 
 test('compact overhead stays centred and visible below header without touching artwork geometry', () => {
   const art={left:100,right:250,top:140,bottom:300};
@@ -15,3 +16,20 @@ test('compact overhead stays centred and visible below header without touching a
   const noHeader=targetOverheadPlacement({art,box});
   assert.equal(noHeader.dy,0,'missing header never forces a lower placement');
 });
+
+
+test('formation header keepout includes the captured absolute Cinders row without changing its layout', () => withKitDom(({ document }) => {
+  const header = document.createElement('header');
+  header.getBoundingClientRect = () => ({ top: 0, bottom: 72, width: 375, height: 72 });
+  const caption = document.createElement('div'); caption.className = 'hud-info-row hud-cinders-strip';
+  caption.getBoundingClientRect = () => ({ left: 242.78125, top: 72, bottom: 89.09375, width: 116.21875, height: 17.09375 });
+  header.append(caption);
+  assert.equal(combatHeaderKeepoutBottom(header), 89.09375, 'reserve the actually painted row instead of the 72px border box');
+  assert.equal(header.style.height, undefined, 'the keepout does not resize the header or steal hand space');
+  caption.hidden = true;
+  assert.equal(combatHeaderKeepoutBottom(header), 72, 'a disabled purse leaves no invisible reservation');
+  caption.hidden = false;
+  caption.getBoundingClientRect = () => ({ top: 72, bottom: 89, width: 0, height: 0 });
+  assert.equal(combatHeaderKeepoutBottom(header), 72, 'display:none rows do not consume formation headroom');
+  assert.equal(combatHeaderKeepoutBottom(null), null);
+}));

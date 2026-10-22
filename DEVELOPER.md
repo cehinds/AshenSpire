@@ -1,5 +1,8 @@
 # DEVELOPER.md — extending AshenSpire
 
+For a practical Visual Studio editing map, common recipes, named icons and
+compiler tasks, see [Manual editing](docs/MANUAL-EDITING.md).
+
 How to run, test, and add content. The architecture contract lives in
 [SPEC.md §3](SPEC.md); exact engine signatures in
 [docs/ENGINE-API.md](docs/ENGINE-API.md). This file is the practical guide.

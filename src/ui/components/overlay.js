@@ -1,8 +1,9 @@
+import { engravedIcon } from './engravedIcon.js';
 // src/ui/components/overlay.js — the in-run tabbed overlay menu (SPEC §7.2).
 //
 // The in-run overlay is intentionally narrow: Settings and Controls only.
 // Deck, Stats, equipment, relics, and flasks live in Armoury. Opened from a button or hotkey on the map and
-// in combat; combat is turn-based, so it needs no real "pause". Esc / the ✕ /
+// in combat; combat is turn-based, so it needs no real "pause". Esc / the close /
 // clicking the veil closes it.
 
 import { blocker } from '../kit/index.js';
@@ -290,7 +291,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
       quickButton.className = 'subtle';
       quickButton.id = 'ov-quicknav';
       quickButton.title = 'Go to…';
-      quickButton.textContent = '☰';
+      quickButton.replaceChildren(engravedIcon('menu') || 'Menu');
       actions?.prepend(quickButton);
     } else if (quickNavMode() !== 'mirror') {
       quickButton?.remove();

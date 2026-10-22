@@ -84,12 +84,13 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
   status.textContent = t('gameProfile.settings.future', { profile: names[chosen] });
   let pending = false;
   const apply = async value => {
-    if (pending) return;
+    if (pending) return false;
     pending = true; select.disabled = true; upload.disabled = true; importButton.disabled = true;
-    try { await onSelect(value); }
+    try { await onSelect(value); return true; }
     catch (error) {
       status.textContent = t('gameProfile.settings.invalid', { error: error.message });
       select.value = chosen;
+      return false;
     } finally { pending = false; select.disabled = false; upload.disabled = false; importButton.disabled = false; }
   };
   select.addEventListener('change', () => apply(select.value));
@@ -102,6 +103,32 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
     } catch (error) { status.textContent = t('gameProfile.settings.invalid', { error: error.message }); }
     finally { upload.value = ''; }
   });
-  panel.append(label, importButton, upload, status); host.append(panel);
+  panel.append(label, importButton, upload, status);
+  if (profile.author?.core === 'ashen.core@2.0.0') {
+    const note = document.createElement('p');
+    note.textContent = t('gameProfile.settings.xpPolicy');
+    panel.append(note);
+    for (const [key, name] of [['classXpMultiplier', t('gameProfile.settings.classXpMultiplier')], ['weaponXpMultiplier', t('gameProfile.settings.weaponXpMultiplier')]]) {
+      const label = document.createElement('label'); label.textContent = name;
+      const input = document.createElement('input'); input.type = 'number';
+      input.min = '0'; input.max = '10'; input.step = '0.1';
+      input.value = String(profile.modules.progression?.[key] ?? 1);
+      input.setAttribute('aria-label', name);
+      input.addEventListener('change', async () => {
+        const number = Number(input.value);
+        if (!Number.isFinite(number) || input.value === '' || number < 0 || number > 10) {
+          input.value = String(profile.modules.progression?.[key] ?? 1);
+          status.textContent = t('gameProfile.settings.xpBounds'); return;
+        }
+        const author = structuredClone(profile.author);
+        author.modules ||= {};
+        const previous = author.modules.progression;
+        author.modules.progression = { ...(previous && typeof previous === 'object' ? previous : {}), [key]: number };
+        if (!await apply(author)) input.value = String(profile.modules.progression?.[key] ?? 1);
+      });
+      label.append(input); panel.append(label);
+    }
+  }
+  host.append(panel);
   return panel;
 }

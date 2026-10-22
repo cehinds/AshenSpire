@@ -8,6 +8,17 @@ import { overlayGeometry, OVERLAY_ROLES } from '../models/CombatOverlayModel.js'
 import { fitFooterCompactLabels } from './footerArt.js';
 import { layoutMetrics } from '../layoutMetrics.js';
 
+// Absolute caption rows are part of the header's occupied layout band. Move
+// the field/grid with that band rather than squeezing figures at fixed feet.
+export function combatHudBandHeight(header, allocated, zoom = 1) {
+  if (!header) return allocated;
+  const top = header.getBoundingClientRect().top;
+  const rows = [...header.querySelectorAll('.hud-info-row')].filter(row => !row.hidden
+    && row.getBoundingClientRect().height > 0 && !['hidden', 'collapse'].includes(getComputedStyle(row).visibility));
+  const bottom = Math.max(top, ...rows.map(row => row.getBoundingClientRect().bottom));
+  return Math.max(allocated, (bottom - top + (rows.length ? 4 : 0)) / zoom);
+}
+
 // Horizontal padding of a band host, in its local px. kit.css pads the hand
 // band by the device's safe-area insets (zero on hosts without a notch).
 function inlinePadding(el) {
@@ -102,7 +113,7 @@ export function wireCombatLayout(combatEl) {
     // The W4 parent's bands (kit.css, shared with the quest dialogue): the
     // battlefield is the scene band, the grid's flexible row; the hand is the
     // context band.
-    combatEl.style.setProperty('--w4-band-hud', bands.hud + 'px');
+    combatEl.style.setProperty('--w4-band-hud', combatHudBandHeight(combatEl.querySelector(':scope > .topbar'), bands.hud, zoom) + 'px');
     combatEl.style.setProperty('--w4-band-context', bands.hand + 'px');
     combatEl.style.setProperty('--w4-band-footer', bands.footer + 'px');
     combatEl.dataset.combatGeometry = bands.supported ? 'supported' : 'unsupported';

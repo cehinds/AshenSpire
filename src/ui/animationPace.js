@@ -66,7 +66,8 @@ export function actionPacing({ reduced = false } = {}) {
   const pace = ANIM_SPEEDS[getAnimSpeed()];
   const scale = !pace || reduced ? 0 : (pace.beatMs / ANIM_SPEEDS.normal.beatMs) / combatPacing.speed;
   const scaled = value => Math.max(0, Number(value) || 0) * scale;
-  const spriteScale = scale / ACTION_PACING.spritePlaybackRate;
+  const spriteScale = scale / ACTION_PACING.spritePlaybackRate
+    * combatPacing.animationMs / ACTION_PACING.animationStepDurationMs;
   const gapMs = scaled(combatPacing.gapMs);
   // D11: the actor's action, its animation, the result word, the sprite
   // reaction, the damage, the reset, then the next item, with one gap at each

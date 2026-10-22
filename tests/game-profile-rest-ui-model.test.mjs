@@ -22,13 +22,11 @@ function fixture() {
   return { run, visit };
 }
 
-test('configured Rest uses exact non-mutating previews and preserves the two service identities (D10: Strategize is gone)', () => {
+test('configured Rest uses exact non-mutating previews and hides unearned character leveling', () => {
   const { run, visit } = fixture();
   const before = structuredClone(run);
   const model = gameProfileRestModel(registries, run, visit);
-  assert.deepEqual(model.services.map(row => row.id), ['smith', 'levelUp']);
-  assert.equal(model.services.find(row => row.id === 'levelUp').available, false);
-  assert.ok(model.services.find(row => row.id === 'levelUp').reason);
+  assert.deepEqual(model.services.map(row => row.id), ['smith']);
   const preview = model.services.find(row => row.id === 'smith').preview;
   assert.equal(preview.hp, preview.maxHp);
   assert.equal(preview.flaskCharges.hpCurrent, preview.flaskCharges.hp);
@@ -160,6 +158,7 @@ test('the all-services intro names Smith and Level Up only when those are exactl
 
 test('free-Smith copy is gated on rests.smith.free, the flag the commit reads', () => {
   const free = fixture();
+  free.run.level.unspentPoints = 1; // Grandfather an already earned character claim.
   const freeModel = gameProfileRestModel(registries, free.run, free.visit);
   assert.equal(freeModel.smithFree, true);
   assert.match(freeModel.services.find(row => row.id === 'smith').description, /for free/);

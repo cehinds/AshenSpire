@@ -121,3 +121,66 @@ test('inline upcast change keeps selection and publishes the new paid tier once'
   assert.ok(latest.manaCost > oldQuote.manaCost, 'rank change reaches the live engine quote');
   assert.equal(f.hand.querySelectorAll('.card-hit-chances').length, 1);
 }));
+
+
+// Exercise the shipped full-render ordering with real hand faces, live engine
+// quotes and badge DOM. Art/field hosts are effect spies; their own default
+// refresh contract is checked separately below.
+test('full board render publishes one fresh quote after hand costs and HP change', () => withKitDom(({ document }) => {
+  const f = fixture(document), c = f.context;
+  const field = document.createElement('div'); field.className = 'field'; c.combatEl.append(field);
+  Object.assign(c, {
+    paintedAppearance: 'test', displayAppearance: () => 'test', selectedCombatantId: null,
+    formationOccupancy: () => [], renderPlayer() {},
+    renderEnemies: options => { assert.equal(options.refreshTargets, false); f.calls.push('enemies'); },
+    syncEditLock() {}, renderPotionTray() {}, renderTopbar() {}, renderControls() {}, renderCombatTools() {},
+    combatTools: { flushGeometry: () => f.calls.push('tools-fit') }, formationMovement: null,
+    scheduleAutoCombat() {}, applyTargetLayer: () => f.calls.push('targets'),
+  });
+  c.battlefieldStage.refresh = () => f.calls.push('field-fit');
+  const renderSource = ['renderCombatantStage', 'render'].map(name => {
+    const start = source.indexOf(`  function ${name}(`), end = source.indexOf('\n  }', start);
+    return source.slice(start, end + 4);
+  }).join('\n');
+  runInNewContext(renderSource + '\nglobalThis.renderFull = render;', c);
+  for (const [mana, block, hp] of [[30, 0, 50], [0, 8, 5]]) {
+    c.combat.player.mana = mana; c.combat.enemies[0].block = block; c.combat.enemies[0].hp = hp;
+    const before = f.oddsCount(), targetBefore = f.calls.filter(call => call === 'targets').length;
+    c.renderFull();
+    assert.equal(f.oddsCount(), before + 1, 'one badge/quote publication per complete render');
+    assert.equal(f.calls.filter(call => call === 'targets').length, targetBefore + 1, 'one final target layer publication');
+    const face = f.rendered.at(-1)[0].preview, expected = previewCard(c.combat, 'spark-1', c.lastTargetId);
+    assert.deepEqual(face.values, expected.values);
+    assert.equal(face.manaCost, expected.manaCost);
+    assert.equal(face.staminaCost, expected.staminaCost);
+    assert.deepEqual(f.quotes.at(-1).quote, previewCard(c.combat, 'spark-1', c.lastTargetId));
+    assert.equal(f.rendered.at(-1)[0].affordable, mana >= f.rendered.at(-1)[0].preview.manaCost);
+    assert.equal(f.hand.querySelectorAll('.card-hit-chances').length, 1);
+    for (const enemy of c.combat.enemies) {
+      const hit = previewCardHit(c.combat, c.selected, enemy.id, undefined, { observerId: 'player', rangeRoute: 'advance' });
+      assert.equal(f.enemyFrames.get(enemy.id).box.querySelector('.combat-hit-chance')?.textContent, rangeHitLabel(hit, { targetId: enemy.id }));
+    }
+    assert.ok(f.calls.lastIndexOf('odds') < f.calls.lastIndexOf('field-fit'), 'final badge DOM exists before field fitting');
+    assert.ok(f.calls.lastIndexOf('field-fit') < f.calls.lastIndexOf('targets'));
+  }
+  c.combat.enemies[0].hp = 0; c.combat.enemies[0].alive = false;
+  const before = f.oddsCount(); c.renderFull();
+  assert.equal(f.oddsCount(), before + 1);
+  assert.equal(f.enemyFrames.get(c.combat.enemies[0].id).box.querySelector('.combat-hit-chance'), null, 'the final pass removes the defeated target odds');
+  assert.equal(f.hand.querySelectorAll('.card-hit-chance').length, 1);
+  c.renderEnemies = options => assert.equal(options.refreshTargets, true, 'an isolated stage keeps immediate target refresh by default');
+  c.renderCombatantStage();
+}));
+
+test('standalone enemy render refreshes immediately unless its caller owns the final update', () => {
+  const start = source.indexOf('  function renderEnemies('), end = source.indexOf('\n  }', start);
+  const calls = [], context = {
+    combat: { enemies: [] }, enemyFrames: new Map(), selected: null, selectedFlask: null,
+    $: () => ({}), targetLayer: () => ({ eligibleIds: [] }),
+    syncHitChances: () => calls.push('odds'), applyTargetLayer: () => calls.push('targets'),
+  };
+  runInNewContext(source.slice(start, end + 4) + '\nglobalThis.renderEnemies = renderEnemies;', context);
+  context.renderEnemies(); assert.deepEqual(calls, ['odds', 'targets']);
+  context.renderEnemies({ refreshTargets: false }); assert.deepEqual(calls, ['odds', 'targets']);
+  context.renderEnemies(); assert.deepEqual(calls, ['odds', 'targets', 'odds', 'targets']);
+});

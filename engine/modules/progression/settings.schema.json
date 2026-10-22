@@ -22,6 +22,16 @@
       "enum": [
         "authored"
       ]
+    },
+    "classXpMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "weaponXpMultiplier": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10
     }
   },
   "required": [

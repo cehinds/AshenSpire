@@ -866,3 +866,16 @@ test('the words sit centred in the fixed band, and a short landscape screen give
   assert.match(screen, /if \(currentStage\?\.captionFixedHeight !== true\) return;/, 'a rotation into the panel lets go of the fitted size');
   assert.match(screen, /if \(key !== seen\) \{ seen = key; refit\(\); \}/, 'an unmeasured panel is not re-staged on every callback');
 });
+
+test('Core 2 new runs support the opening while other configured modes retain their own entry', async () => {
+  const { runSupportsPrologue, shouldPlayPrologue } = await import('../src/model/prologue.js');
+  const { resolveGameProfile } = await import('../src/model/gameProfile.js');
+  assert.equal(runSupportsPrologue({ gameProfile: resolveGameProfile('core') }), true);
+  assert.equal(runSupportsPrologue({}), true);
+  assert.equal(runSupportsPrologue({ gameProfile: { foundation: { mode: 'configured' }, author: { core: 'future.mode@1' } } }), false);
+  assert.equal(shouldPlayPrologue({ 'gameConfig.prologue.presentation.playback': 'every' }, true), true);
+  assert.equal(shouldPlayPrologue({ 'gameConfig.prologue.presentation.playback': 'once' }, true), false);
+  const { readFileSync } = await import('node:fs');
+  const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(source, /if \(runSupportsPrologue\(run\) && !skipOpening/);
+});

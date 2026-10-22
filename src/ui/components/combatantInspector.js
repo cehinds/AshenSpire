@@ -65,6 +65,25 @@ function revealedHandSection(read) {
   return node;
 }
 
+function enemyDeckSection(read) {
+  if (!read) return null;
+  const node = el('section', { class: 'combatant-inspector-section', dataset: { section: 'enemy-deck' } }, [
+    eyebrow('Enemy deck & played cards'), hairline(),
+    statusText('Action SP includes combat modifiers. Card base shows authored SP/MP; effects use combat move rules.'),
+  ]);
+  const action = (label, card, empty) => el('details', { class: 'combatant-played-card', open: true }, [
+    el('summary', { text: `${label}: ${card?.name || empty}` }),
+    ...(card ? [renderEnemyMoveCards([card])] : []),
+  ]);
+  node.append(action('Current action', read.current, read.currentHidden ? t('gameProfile.combat.unreadIntent') : 'None'),
+    action('Last played', read.last, 'None yet'));
+  node.append(el('details', { class: 'combatant-deck-cards', open: true }, [
+    el('summary', { text: `Authored deck (${read.cards.reduce((count, card) => count + (card.copies || 1), 0)})` }),
+    renderEnemyMoveCards(read.cards),
+  ]));
+  return node;
+}
+
 function abilitySection(abilities) {
   const list = el('details', { class: 'combatant-inspector-section combatant-abilities', open: true }, [
     el('summary', { class: 'as-eyebrow', text: `${helpText('activeListTitle')} (${abilities.length})` }), hairline(),
@@ -127,6 +146,7 @@ export function combatantDetailBody(subject, { heading = true } = {}) {
     subject.learning ? renderEnemyKnowledge(subject.learning, { perception: subject.perception }) : null,
     subject.prediction ? renderIntentPrediction(subject.prediction, subject.onPredict) : null,
     projectedSection(byId.history),
+    enemyDeckSection(subject.deckInspection),
     subject.learning ? null : abilities,
     projectedSection(byId.traits),
     projectedSection(byId.lore),

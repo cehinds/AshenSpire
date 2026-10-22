@@ -1,3 +1,4 @@
+import { uiIconText } from '../content/uiIcons.js';
 import { viewScale, viewViewportBox } from './viewViewport.js';
 import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
 import { combatEffectForEvent } from '../model/combatEffectEvents.js';
@@ -1360,7 +1361,7 @@ function playLegacyTimeline(events, ctx, done) {
     // Cast flourish: non-attack actors (skills, powers, buff moves) flare a
     // glyph as their wind-up — attacks get the slash arc on impact instead.
     if (actorEl && beat.kind !== 'attack' && beat.events.length) {
-      safe(() => spawnFx(ctx.layer, actorEl, 'fx-glyph', COMBAT_TIMING.castGlyphMs, '✦'));
+      safe(() => spawnFx(ctx.layer, actorEl, 'fx-glyph', COMBAT_TIMING.castGlyphMs, 'Cast'));
     }
     const windup = actorAnimation
       ? actorAnimation.impactMs
@@ -1884,7 +1885,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           const anchor = ctx.anchorFor(e.targetId);
           // A BLOCKED hit's sound comes with its word (withCallout); other outcome words have no hit sound.
           if (!sequential && !outcome) hitSounds();
-          if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
+          if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, 'Guard');
           if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
           // Attack impacts slash at the contact.
           if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
@@ -1957,7 +1958,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
         numbers: proc
           ? (ctx) => {
               const info = ctx.statusInfo && ctx.statusInfo(e.cause.slice(5));
-              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} -${e.amount}`, 'burst', info && info.tint);
+              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${uiIconText(info?.icon)} -${e.amount}`, 'burst', info && info.tint);
             }
           : (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `-${e.amount}`, 'burst'),
       };
@@ -2008,7 +2009,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
       return {
         numbers: (ctx) => {
           const info = ctx.statusInfo && ctx.statusInfo(e.status);
-          floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} ${e.blocked} RESISTED`, 'blk small');
+          floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${uiIconText(info?.icon)} ${e.blocked} RESISTED`, 'blk small');
         },
       };
     case 'meterFilled':
@@ -2053,7 +2054,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // The STAGGERED word is the on-character callout now, not a banner.
           const anchor = ctx.anchorFor(e.targetId);
           flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters
-          spawnFx(ctx.layer, anchor, 'fx-glyph', 450, '✦');
+          spawnFx(ctx.layer, anchor, 'fx-glyph', 450, 'Stun');
           shake(ctx.combatEl);
         },
       };
@@ -2063,7 +2064,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
         numbers: (ctx) => {
           sfx.play('enemyDeath');
           const anchor = ctx.anchorFor(e.targetId);
-          floatNum(ctx.layer, anchor, '✝', 'dmg heavy');
+          floatNum(ctx.layer, anchor, 'Defeated', 'dmg heavy');
           if (anchor) { anchor.classList.remove('hitflash', 'hit-heavy'); playPoseOn(anchor, 'defeated'); }
         },
       };

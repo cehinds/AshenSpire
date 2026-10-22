@@ -52,9 +52,9 @@ Auto, Full and Lite. Auto uses
 Lite for a coarse primary pointer and Full otherwise. An explicit choice wins.
 Lite removes expensive sprite filters and cloned target silhouettes, replacing
 the latter with the same relationship color on a ground ring. It disables ambient
-effects and shake and skips optional pose preloads. Pose animation, enemy state
-art and the idle bob still play in Lite (owner, 2026-10-04): a phone used to
-get frozen figures. Without preloads, a pose's first play on a phone may hold
+effects and shake and skips optional pose preloads. Pose animation and enemy
+state art still play in Lite. Fighters remain still while idle in every
+rendering style; attacks and reactions retain their animation. Without preloads, a pose's first play on a phone may hold
 its previous frame until the new one loads. The Reaver's 3.36-second sequence
 stays off in Lite (below). State badges, inspection, target previews and hit feedback
 remain.
@@ -100,6 +100,17 @@ identities and records 120 added/removed nodes. Wall time is machine-dependent;
 these are local Edge measurements, not a physical-phone benchmark or proof that
 the reported mobile crash is fixed. Physical iPhone/Safari testing and a longer
 session memory trace are still needed.
+
+### Core interaction comparison, 2026-10-22
+
+The strict six-run comparison of 1770 and runtime `25aed259` at 375×667,
+DPR3 and 4× CPU found complete-action median reductions of 6.9% for Defend
+and 9.7% for Strike. Script work fell about 31%, but style work and median
+maximum frame gaps increased. The requested 2×/4× goals remain unmet and
+visible stalls persist. These are warmed local Chromium results under shipped
+defaults, with every sample retained; the Mobile fast preset was not selected.
+See the [full protocol, samples and correctness limits](qa/core-renewal-2026-10-22/README.md).
+Actual Galaxy A32/iPhone SE/Safari verification remains outstanding.
 
 ### Compiled startup profile, 2026-10-20
 

@@ -1,3 +1,4 @@
+import { engravedIconHtml } from '../components/engravedIcon.js';
 import { layeredCombatScene } from '../../model/layeredEnvironments.js';
 import { layeredEnvironmentHtml, fitLayeredEnvironment, wireLayeredEnvironment } from '../components/layeredEnvironment.js';
 import { surveyQuestPresentation } from '../models/SurveyQuestModel.js';
@@ -93,7 +94,7 @@ export function mountWorldAtlas(
    )
    .join(
      "",
-   )}</g></svg><span class="atlas-compass" aria-hidden="true">N<br>✥</span>
+   )}</g></svg><span class="atlas-compass" aria-hidden="true">N<br>Map</span>
  ${j.activeNodeIds
    .filter((id) => known.has(id))
    .map((id) => {
@@ -429,7 +430,7 @@ function localMapHtml(local) {
   <div class="atlas-local-port" tabindex="0" role="group" aria-label="${esc(map.displayName)} interactive map"><div class="atlas-local-map"><svg viewBox="0 0 1000 1000" aria-hidden="true"><g class="map-detail-surface"><image href="${esc(uri(map.artAssetId))}" width="1000" height="1000" preserveAspectRatio="none"/></g></svg>${points
     .map((p) => {
       const n = ATLAS.nodes[p.nodeId];
-      return `<button type="button" data-local-point="${esc(p.nodeId)}" aria-label="Inspect ${esc(n.displayName)}" aria-pressed="false" class="atlas-local-point" style="left:${pct(p.x)};top:${pct(p.y)}"><span>${nodeIcon(traditionalType(n.nodeTypeId))}</span><small>${esc(n.displayName)}</small></button>`;
+      return `<button type="button" data-local-point="${esc(p.nodeId)}" aria-label="Inspect ${esc(n.displayName)}" aria-pressed="false" class="atlas-local-point" style="left:${pct(p.x)};top:${pct(p.y)}"><span>${engravedIconHtml(nodeIcon(traditionalType(n.nodeTypeId)))}</span><small>${esc(n.displayName)}</small></button>`;
     })
     .join("")}</div></div><label class="atlas-local-picker-label">Locations <select data-local-picker><option value="">Choose a place…</option>${points.map(p=>`<option value="${esc(p.nodeId)}">${esc(ATLAS.nodes[p.nodeId].displayName)}</option>`).join('')}</select></label>`;
 }
