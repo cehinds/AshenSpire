@@ -10,6 +10,25 @@ each incoming hit is shown before its reaction choice, and its paid Counter
 finishes before the next hit. Historical saves retain their saved reaction
 policy. The visual catalog's `damage-feedback` miniature shows this sequence.
 
+Core enemy inspection joins authored enemy cards to runtime moves through
+`EnemyDeckInspectionModel`; it shows SP, the authored deck, the public current
+action, and the last committed action's SP receipt. `enemyActionPreview` supplies
+read-only expanded effects and resolved formula values. Hidden choices remain
+unread. Base card costs and the enemy AI's actual SP action cost are labelled
+separately.
+
+`fitIllustratedCards` treats compact effects as semantic rows that may wrap,
+borrows available artwork height, and keeps an 11 physical pixel rules floor.
+Complete rules remain accessible when the panel cannot contain them. Editable
+source names icons through `src/content/uiIcons.js`; the shared engraved renderer
+resolves those names to existing assets and centralized legacy aliases.
+
+Core restores the opening and existing class/used-weapon level notices. Its
+progression policy preserves earned character rewards while stopping future
+character-level growth. Settings exposes independent combat-step and animation
+durations, with a visible mobile-fast preset; the profile selector exposes
+separate class and weapon XP multipliers for future runs.
+
 The map's `act-route-strip` uses `ActRouteModel` and `actRouteStripHtml` to show
 the act title, Entrance, a fixed evenly spaced circle for each non-boss floor,
 and Boss on one desktop row. Committed visits fill circles with the shared map
