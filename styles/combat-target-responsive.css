@@ -112,6 +112,9 @@
 :root .combat .intent .intent-followup { display:inline-flex; align-items:center; justify-content:center; min-width:calc(14px / var(--ui-zoom,1)); font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; }
 :root .combat .intent .intent-followup .intent-icon { width:calc(18px / var(--ui-zoom,1)); height:calc(18px / var(--ui-zoom,1)); }
 
-/* Individual hit values and explicitly scoped totals share one compact stack. */
-:root .combat .intent-damage-read { display:inline-flex; flex-direction:column; align-items:center; gap:2px; }
-:root .combat .intent-damage-scope { display:block; max-width:150px; font:600 calc(11px / var(--ui-zoom,1))/1.15 system-ui,sans-serif; white-space:normal; text-align:center; }
+/* The same scoped total remains visible in compact overheads and target HUDs.
+   Narrow hosts wrap action groups and the title instead of clipping the total. */
+:root .combat .intent-actions { min-width:0; max-width:100%; flex-wrap:wrap; row-gap:calc(3px / var(--ui-zoom,1)); }
+:root .combat .target-hud-intent { flex-wrap:wrap; }
+:root .combat .intent-damage-read { min-width:0; max-width:100%; display:inline-flex; flex-direction:column; align-items:center; gap:2px; }
+:root .combat .intent-damage-scope { display:block; max-width:150px; font:600 calc(11px / var(--ui-zoom,1))/1.15 system-ui,sans-serif; white-space:normal; overflow-wrap:anywhere; text-align:center; }
