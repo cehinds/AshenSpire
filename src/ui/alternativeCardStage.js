@@ -1,3 +1,4 @@
+import { t } from './strings.js';
 import { COMBAT_BODY_LANDMARKS } from '../content/combatBodyLandmarks.js';
 import { bodyPlacement } from './models/CombatBodyModel.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../model/selectedWeaponSequences.js';
@@ -72,7 +73,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   const maskCtx = mask.getContext('2d');
   const images = new Map();
   const auraRenderer = createAlternativeAuraRenderer({canvasWidth:canvas.width,canvasHeight:canvas.height});
-  const placeholder=document.createElement('span');placeholder.textContent='Card';placeholder.hidden=true;
+  const placeholder=document.createElement('span');placeholder.textContent=t('card.artPlaceholder');placeholder.hidden=true;
   placeholder.setAttribute('role','img');placeholder.setAttribute('aria-label',classId+' character');
   placeholder.style.cssText='position:absolute;inset:0;text-align:center;font-size:64px;';el.append(placeholder);
   async function preload(){

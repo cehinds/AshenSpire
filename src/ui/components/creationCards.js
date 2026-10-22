@@ -289,7 +289,7 @@ export function classResourceGrid(rows, { onInspect = null } = {}) {
     item.dataset.stat = entry.id;
     if (onInspect) item.addEventListener('click', () => onInspect(entry, item));
     return item;
-  }), { class: 'cc-class-resource-grid', 'aria-label': 'Starting resources' });
+  }), { class: 'cc-class-resource-grid', 'aria-label': t('creation.startingResources') });
   return markUiComponent(strip, UI.classResourceGrid);
 }
 

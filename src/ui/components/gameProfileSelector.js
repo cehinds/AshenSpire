@@ -105,9 +105,9 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
   panel.append(label, importButton, upload, status);
   if (profile.author?.core === 'ashen.core@2.0.0') {
     const note = document.createElement('p');
-    note.textContent = 'Class and used weapon XP only. Rates apply to new runs; saved runs keep their rates and earned progress.';
+    note.textContent = t('gameProfile.settings.xpPolicy');
     panel.append(note);
-    for (const [key, name] of [['classXpMultiplier', 'Class XP multiplier'], ['weaponXpMultiplier', 'Used weapon XP multiplier']]) {
+    for (const [key, name] of [['classXpMultiplier', t('gameProfile.settings.classXpMultiplier')], ['weaponXpMultiplier', t('gameProfile.settings.weaponXpMultiplier')]]) {
       const label = document.createElement('label'); label.textContent = name;
       const input = document.createElement('input'); input.type = 'number';
       input.min = '0'; input.max = '10'; input.step = '0.1';
@@ -117,7 +117,7 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
         const number = Number(input.value);
         if (!Number.isFinite(number) || input.value === '' || number < 0 || number > 10) {
           input.value = String(profile.modules.progression?.[key] ?? 1);
-          status.textContent = 'XP multiplier must be between 0 and 10.'; return;
+          status.textContent = t('gameProfile.settings.xpBounds'); return;
         }
         const author = structuredClone(profile.author);
         author.modules ||= {};

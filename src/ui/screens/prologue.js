@@ -81,6 +81,9 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   const next = button({label:config.labels.continue,weight:'primary'});
   const pause = button({label:config.labels.pause});
   const skip = button({label:preview ? config.labels.close : config.labels.skip});
+  next.dataset.prologueAction = 'continue';
+  pause.dataset.prologueAction = 'pause';
+  skip.dataset.prologueAction = 'skip';
   const controls = el('div',{class:'prologue-controls'},[pause,skip,next]);
   const caption = el('div',{class:'prologue-caption'},[title,speaker,dialogue,location]);
   // THE BUTTONS BELONG TO THE FRAME. They used to live inside the caption, so a
