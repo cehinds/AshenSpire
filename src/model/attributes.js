@@ -49,7 +49,7 @@ function tables(source) {
  * level-up that only incremented `run.attributes` would look perfect on screen
  * and destroy the player's run at the next load.
  *
- * ⚠ THE HAZARD THIS FUNCTION SHIPPED WITH IS GONE, AND THE FIX WAS NOT A BETTER
+ * WARNING: THE HAZARD THIS FUNCTION SHIPPED WITH IS GONE, AND THE FIX WAS NOT A BETTER
  * ERROR MESSAGE. At `e05be89` it multiplied `run.levelUps` by a LIVE read of
  * `balance.levelUp.pointsPerLevel`. Constantine then asked for that number to be
  * a dial he turns between test runs — which would have made every in-flight save

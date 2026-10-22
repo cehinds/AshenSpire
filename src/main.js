@@ -1291,7 +1291,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   // is already run.gameProfile. A run saved before this field has no Run again.
   run.beginChoices = structuredClone({ classId, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile });
   if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile, ATLAS, { townsPerActMax: registries.balance.atlas.townsPerActMax });
-  run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
+  run.customization = customization || { name: 'Forsaken', glyph: 'sword', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   if (quickStart) run.quickStart = true;
   if (!shotState && !isConfiguredRun(run)) {
@@ -4123,9 +4123,9 @@ function poseFxShowcase() {
   const e1 = enemies[1] || enemies[0];
   put('fx-slash', '', e0, 120);
   put('float-num crit', '-26', e0, 200, { dy: -34 });
-  put('fx-spark', '✦', e1, 140);
+  put('fx-spark', '*', e1, 140);
   put('float-num blk small', 'BLOCKED', e1, 220, { dy: -30 });
-  put('fx-glyph', '✦', player, 170);
+  put('fx-glyph', '*', player, 170);
   // Victim recoil held mid-knockback; the second enemy teeters (stagger).
   e0.classList.add('hitflash', 'hit-heavy');
   if (e0.firstElementChild) {
