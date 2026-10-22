@@ -469,20 +469,22 @@ export function railInFlow(css) {
 // and zero-width-reserve toolbar have their final geometry. This is a bounded
 // source-shape check, not JavaScript execution or a substitute for native QA.
 export function stableCombatStageRendering(source) {
-  const stage = [...source.matchAll(/^  function renderCombatantStage\(\{\s*fit\s*=\s*true\s*\}\s*=\s*\{\}\)\s*\{([\s\S]*?)^  \}/gm)];
+  const stage = [...source.matchAll(/^  function renderCombatantStage\(([^\n]*)\)\s*\{([\s\S]*?)^  \}/gm)];
   const full = [...source.matchAll(/^  function render\(\)\s*\{([\s\S]*?)^  \}/gm)];
   if (stage.length !== 1 || full.length !== 1) return false;
   // Calls mentioned only in comments or quoted strings cannot satisfy C8.
   const code = text => text.replace(/"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'|`(?:\\[\s\S]|[^`\\])*`|\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$)/g,
     match => match.replace(/[^\n]/g, ' '));
-  const action = code(stage[0][1]), render = code(full[0][1]);
+  const defaults = stage[0][1];
+  if (!/\bfit\s*=\s*true\b/.test(defaults) || !/\brefreshTargets\s*=\s*true\b/.test(defaults)) return false;
+  const action = code(stage[0][2]), render = code(full[0][1]);
   const once = (text, pattern) => [...text.matchAll(pattern)].length === 1;
   const fit = /battlefieldStage\.refresh\(\);/g, movement = /formationMovement\?\.refresh\(\);/g;
-  if (!once(action, /\brenderPlayer\(\);/g) || !once(action, /\brenderEnemies\(\);/g)
+  if (!once(action, /\brenderPlayer\(\);/g) || !once(action, /\brenderEnemies\([^;]*\);/g)
       || !once(action, fit) || !once(action, movement)
-      || !/renderPlayer\(\);\s*renderEnemies\(\);\s*if\s*\(fit\)\s*\{\s*battlefieldStage\.refresh\(\);\s*formationMovement\?\.refresh\(\);\s*\}/.test(action)) return false;
-  if (!once(render, /\brenderCombatantStage\(/g) || !once(render, fit) || !once(render, movement)
-      || !/renderCombatantStage\(\{\s*fit:\s*false\s*\}\);\s*renderControls\(\);\s*renderCombatTools\(\);\s*renderHand\(\);\s*combatTools\.flushGeometry\(\);\s*battlefieldStage\.refresh\(\);\s*formationMovement\?\.refresh\(\);\s*applyTargetLayer\(\);/.test(render)) return false;
+      || !/renderPlayer\(\);\s*renderEnemies\(\{\s*refreshTargets\s*\}\);\s*if\s*\(fit\)\s*\{\s*battlefieldStage\.refresh\(\);\s*formationMovement\?\.refresh\(\);\s*\}/.test(action)) return false;
+  if (!once(render, /\brenderCombatantStage\(/g) || !once(render, fit) || !once(render, movement) || !once(render, /\bsyncHitChances\(\);/g)
+      || !/renderCombatantStage\(\{(?=[^}]*\bfit:\s*false)(?=[^}]*\brefreshTargets:\s*false)[^}]*\}\);\s*renderControls\(\);\s*renderCombatTools\(\);\s*renderHand\(\{\s*refreshHitChances:\s*false\s*\}\);\s*syncHitChances\(\);\s*combatTools\.flushGeometry\(\);\s*battlefieldStage\.refresh\(\);\s*formationMovement\?\.refresh\(\);\s*applyTargetLayer\(\);/.test(render)) return false;
   // Keep the original requirement for actual action-only call sites; neither
   // the declaration nor the deferred full-render call is counted here.
   const callers = code(source.replace(stage[0][0], '').replace(full[0][0], ''));
@@ -1040,9 +1042,9 @@ function selftest() {
     // instead of its total is the defect the photograph caught.
     ['the phone trail drops each fact value instead of its tail', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .as-chip > .cv > * { display: none; }', '.as-statstrip.trail > .as-chip > :nth-child(n+2) { display: none; }') })],
     ['remove Hand reference', 'C8 ', (r) => ({ ...r, combat: r.combat.replace('UI.playerHandTray', "'anonymous-hand'") })],
-    ['remove rendered player frames', 'C8 ', (r) => ({ ...r, combat: r.combat.replace('    renderPlayer();\n    renderEnemies();', '    renderEnemies();') })],
+    ['remove rendered player frames', 'C8 ', (r) => ({ ...r, combat: r.combat.replace(/    renderPlayer\(\);(?=\s*renderEnemies\()/, '') })],
     ['duplicate the deferred full-board fit', 'C8 ', (r) => ({ ...r, combat: r.combat.replace('    combatTools.flushGeometry();\n    battlefieldStage.refresh();', '    combatTools.flushGeometry();\n    battlefieldStage.refresh();\n    battlefieldStage.refresh();') })],
-    ['measure full-board tools before the authored hand', 'C8 ', (r) => ({ ...r, combat: r.combat.replace(/    renderHand\(\);(\s*\/\/[^\n]*\n\s*\/\/[^\n]*\n\s*)combatTools\.flushGeometry\(\);/, '    combatTools.flushGeometry();\n    renderHand();') })],
+    ['measure full-board tools before the authored hand', 'C8 ', (r) => ({ ...r, combat: r.combat.replace(/(    renderHand\([^;]*\);)([\s\S]*?)    combatTools\.flushGeometry\(\);/, (_all, hand, between) => '    combatTools.flushGeometry();\n' + hand + between) })],
     ['bottom-align enemies', 'C9 ', (r) => ({ ...r, css: r.css.replace('align-items: center; justify-content: space-evenly;', 'align-items: flex-end; justify-content: space-evenly;') })],
     ['remove public id from spec', 'C10 ', (r) => ({ ...r, spec: r.spec.replace('`potion-tray`', 'Potion tray') })],
     ['change transparent default', 'C11 ', (r) => ({ ...r, balance: r.balance.replace('componentBackgroundOpacityPct: 0', 'componentBackgroundOpacityPct: 25') })],

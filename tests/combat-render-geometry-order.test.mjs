@@ -15,7 +15,7 @@ function fixture(code = rendering) {
   // A requested tools raise must inspect the incoming card rectangles before
   // the one board fit. The dock itself belongs to the current footer row.
   const handWidth = 390, footerTop = 744;
-  let handReceipt, toolsTop, controlsReady = false, toolsReady = false;
+  let handReceipt, toolsTop, controlsReady = false, toolsReady = false, badgesReady = false;
   const context = {
     formationOccupancy, combat: { player: { id: 'player', formationCell: 'A1' }, enemies: [] }, selected: null, selfArm: false,
     selectedFlask: null, selectedCombatantId: null,
@@ -32,7 +32,8 @@ function fixture(code = rendering) {
       toolsTop=footerTop; events.push('measure-tools');
     } },
     renderHand: () => { handReceipt = handWidth; events.push('hand'); },
-    battlefieldStage: { refresh() { fits.push({ handWidth, handReceipt, toolsTop, controlsReady, toolsReady }); events.push('fit'); } },
+    syncHitChances: () => { assert.equal(handReceipt, handWidth, 'badges require the current hand'); badgesReady = true; events.push('badges'); },
+    battlefieldStage: { refresh() { fits.push({ handWidth, handReceipt, toolsTop, controlsReady, toolsReady, badgesReady }); events.push('fit'); } },
     formationMovement: { refresh: () => events.push('formation') },
     applyTargetLayer: () => events.push('targets'), refreshAim: () => events.push('aim'),
     // The Combat Rounds Preview's screen layer (SPEC 4.11). It only adds marks and changes no layout, so it is a
@@ -47,8 +48,8 @@ function fixture(code = rendering) {
 
 test('the actual full combat render fits once after hand layout and measured incoming footer tools', () => {
   const probe = fixture(); probe.api.render();
-  assert.deepEqual(probe.fits, [{handWidth:390,handReceipt:390,toolsTop:744,controlsReady:true,toolsReady:true}]);
-  assert.deepEqual(probe.events, ['topbar','potions','hide','player','enemies','controls','tools','hand','measure-tools','fit','formation','targets','aim','hint','automation']);
+  assert.deepEqual(probe.fits, [{handWidth:390,handReceipt:390,toolsTop:744,controlsReady:true,toolsReady:true,badgesReady:true}]);
+  assert.deepEqual(probe.events, ['topbar','potions','hide','player','enemies','controls','tools','hand','badges','measure-tools','fit','formation','targets','aim','hint','automation']);
   assert.equal(probe.field.dataset.playerCell, 'A1');
   assert.deepEqual(JSON.parse(probe.field.dataset.formationOccupancy),[{id:'player',cell:'A1',side:'player'}]);
 });
@@ -64,7 +65,7 @@ test('the former actual render order is rejected by the first-fit receipt condit
   const end=rendering.indexOf('    applyTargetLayer();',begin);
   assert.ok(begin>=0&&end>begin);
   const former = (rendering.slice(0,begin)+'    renderHand();\n    renderControls();\n    renderCombatTools();\n'
-    +rendering.slice(end)).replace('renderCombatantStage({ fit: false });','renderCombatantStage();');
+    +rendering.slice(end)).replace(/renderCombatantStage\(\{[^;]*\);/,'renderCombatantStage();');
   assert.notEqual(former, rendering);
   const probe = fixture(former); probe.api.render();
   assert.equal(probe.fits.length, 1);
@@ -104,8 +105,8 @@ test('the actual tools geometry flush cancels its queued measure and publishes z
 });
 
 test('tools-first ordering cannot inspect the incoming card obstacle receipt',()=>{
-  const wrong=rendering.replace(/    renderHand\(\);([\s\S]*?)    combatTools.flushGeometry\(\);/,
-    (_all,between)=>between+'    combatTools.flushGeometry();\n    renderHand();');
+  const wrong=rendering.replace(/(    renderHand\([^;]*\);)([\s\S]*?)    combatTools.flushGeometry\(\);/,
+    (_all,hand,between)=>'    combatTools.flushGeometry();\n'+hand+between);
   assert.notEqual(wrong,rendering);
   assert.throws(()=>fixture(wrong).api.render(),/raised toolbar collision checks must measure current card geometry/);
 });

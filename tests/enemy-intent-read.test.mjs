@@ -52,7 +52,10 @@ test('full inspection can reuse its already resolved current row without another
 
 test('the intent tooltip projects a fresh current read without opening full combatant inspection', () => {
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-  const tooltip = source.slice(source.indexOf('  function intentEl(enemy)'), source.indexOf('  function renderEnemies()'));
+  const begin = source.indexOf('  function intentEl(');
+  const end = source.indexOf('\n  function ', begin + 1);
+  assert.ok(begin >= 0 && end > begin, 'the tooltip owns one bounded function body regardless of the next function parameters');
+  const tooltip = source.slice(begin, end);
   assert.match(tooltip, /enemyIntentRead\(combat, enemy/);
   assert.match(tooltip, /projectCombatIntent\(combat, enemy.id\)/);
   assert.match(tooltip, /busy \|\| enemyPlayback \|\| combat.pendingReaction/);
