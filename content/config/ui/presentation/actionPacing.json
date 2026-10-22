@@ -15,7 +15,7 @@
     "autoCombatSpeed": 1.5,
     "autoSpeedMinimum": 1,
     "autoSpeedMaximum": 3,
-    "stageGapMinimumMs": 250,
+    "stageGapMinimumMs": 0,
     "stageGapMaximumMs": 2000,
     "animationStepMinimumMs": 50,
     "animationStepMaximumMs": 3000,

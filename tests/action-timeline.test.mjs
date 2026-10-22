@@ -89,7 +89,7 @@ test('D11: the default gap is 0.5 s at every stage boundary and the active speed
   setCombatPacing({ combatStepPause: 250 }); assert.equal(actionPacing().gapMs, 250);
   setCombatPacing({ combatStepPause: 2000 }); assert.equal(actionPacing().gapMs, 2000);
   setCombatPacing({ combatStepPause: 60000 }); assert.equal(actionPacing().gapMs, 2000, 'capped at 2 s');
-  setCombatPacing({ combatStepPause: 10 }); assert.equal(actionPacing().gapMs, 250, 'floored at 0.25 s');
+  setCombatPacing({ combatStepPause: 10 }); assert.equal(actionPacing().gapMs, 10, 'short pauses remain configurable');
   setCombatPacing();
 });
 
@@ -136,4 +136,26 @@ test('D11: three enemies finish by themselves at every pause and speed, with no 
   assert.equal(measured.default, 3 * 3390, 'three actors at 3390 ms each (six 500 ms gaps plus the 390 ms clip), the last reset included');
   assert.ok(Math.abs(measured['auto x1.5'] * 1.5 - measured.default) < 1, 'auto combat divides every gap and clip by x1.5');
   assert.ok(measured['gap 2000'] > measured.default && measured['gap 250'] < measured.default, 'the pause setting moves the whole turn');
+});
+
+
+test('zero pauses preserve complete ordered actions and counters without watchdog cleanup', () => {
+  setAnimSpeed('normal'); setCombatPacing({ combatStepPause: 0 });
+  const c = clock(), trace = [], timing = actionPacing();
+  const handle = runActionTimeline([{ actorId: 'player', kind: 'attack' }, { actorId: 'enemy', kind: 'counter' }], {
+    onStage: (stage, beat) => trace.push([stage, beat.actorId, c.now]),
+    onSprite: (_beat, speed) => ({ impactMs: speed.lungeMs / 2, totalMs: speed.lungeMs, cancel() {} }),
+    maxSpriteMs: speed => speed.lungeMs,
+    onFlush: () => trace.push(['flush', '', c.now]), onDone: () => trace.push(['done', '', c.now]),
+  }, timing, c);
+  c.advance(2000);
+  const stages = ['intent', 'action', 'sprite', 'contact', 'result', 'reaction', 'damage', 'hud', 'resolution'];
+  assert.deepEqual(trace.slice(0, 9).map(row => row[0]), stages);
+  assert.deepEqual(trace.slice(9, 18).map(row => row[0]), stages);
+  assert.equal(trace[3][2], 195, 'contact retains the sprite impact duration');
+  assert.equal(trace[9][2], 390 + timing.stepMs, 'the counter waits for the completed sprite and existing queue interval');
+  assert.equal(trace.at(-1)[0], 'done');
+  assert.equal(trace.some(row => row[0] === 'flush'), false);
+  assert.equal(handle.finished, true); assert.equal(c.pending, 0);
+  setCombatPacing();
 });

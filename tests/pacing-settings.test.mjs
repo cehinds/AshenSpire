@@ -2,15 +2,15 @@
 // player settings, persisted with the other profile rows, and presentation-only.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { settingsRows } from '../src/ui/screens/settings.js';
+import { settingsRows, resetKeys, commitNumberRow } from '../src/ui/screens/settings.js';
 import { profileKeys } from '../src/model/settingsSync.js';
 import { actionPacing, setAnimSpeed, setCombatPacing } from '../src/ui/animationPace.js';
 
 const row = key => settingsRows().find(r => r.key === key);
 
-test('Pause between steps defaults to 0.5 s and ranges 0.25 to 2 s', () => {
+test('Pause between steps defaults to 0.5 s and ranges 0 to 2 s', () => {
   const gap = row('combatStepPause');
-  assert.deepEqual([gap.def, gap.min, gap.max, gap.type], [500, 250, 2000, 'number']);
+  assert.deepEqual([gap.def, gap.min, gap.max, gap.type], [500, 0, 2000, 'number']);
   assert.match(gap.label, /Pause between steps/);
 });
 
@@ -98,4 +98,36 @@ test('mobile fast preset writes visible persisted controls, manual edits return 
   const keys = profileKeys(settingsRows());
   for (const key of ['animationStepDuration', 'combatPacingPreset']) assert.ok(keys.includes(key));
   assert.deepEqual([row('animationStepDuration').def, row('animationStepDuration').min, row('animationStepDuration').max], [390, 50, 3000]);
+});
+
+
+test('zero pause is a valid committed value and preserves normal sprite duration', () => {
+  const committed = commitNumberRow({}, row('combatStepPause'), '0');
+  assert.deepEqual(committed, { value: 0, refusal: null });
+  setAnimSpeed('normal'); setCombatPacing({ combatStepPause: committed.value });
+  const timing = actionPacing();
+  for (const key of ['gapMs', 'wordMs', 'afterSpriteMs', 'resultMs', 'reactionMs', 'damageMs', 'resetMs']) assert.equal(timing[key], 0, key);
+  assert.equal(timing.spriteSpeed.lungeMs, 390, 'turning pauses off retains normal animation');
+  setCombatPacing();
+});
+
+test('resetting either timing row updates the saved preset in the same transaction', async () => {
+  for (const key of ['combatStepPause', 'animationStepDuration']) {
+    const settings = { combatPacingPreset: 'mobile-fast', combatStepPause: 250, animationStepDuration: 195 };
+    const writes = [];
+    const snapshot = await resetKeys(settings, changes => { writes.push(changes); return { ok: true }; }, [key], 'Timing reset', { promoted: {} });
+    assert.equal(settings.combatPacingPreset, 'custom');
+    assert.equal(writes[0].combatPacingPreset, 'custom');
+    assert.equal(snapshot.combatPacingPreset, 'mobile-fast', 'undo retains the original preset');
+    assert.equal(settings[key], undefined);
+    const untouched = key === 'combatStepPause' ? 'animationStepDuration' : 'combatStepPause';
+    assert.equal(settings[untouched], untouched === 'animationStepDuration' ? 195 : 250);
+  }
+});
+
+test('a failed timing reset restores both the preset and control value', async () => {
+  const settings = { combatPacingPreset: 'mobile-fast', combatStepPause: 250, animationStepDuration: 195 };
+  let calls = 0;
+  await resetKeys(settings, () => ({ ok: ++calls !== 1 }), ['combatStepPause'], 'Timing reset', { promoted: {} });
+  assert.deepEqual(settings, { combatPacingPreset: 'mobile-fast', combatStepPause: 250, animationStepDuration: 195 });
 });

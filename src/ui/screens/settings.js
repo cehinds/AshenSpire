@@ -1585,6 +1585,14 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
     if (Object.hasOwn(promoted, key)) { settings[key] = promoted[key]; changed[key] = promoted[key]; }
     else { delete settings[key]; changed[key] = undefined; }
   }
+  // Resetting one pacing control is a manual customization too. Keep it in
+  // the same transaction and undo snapshot; full/group resets own the preset
+  // explicitly and retain their normal defaults behavior.
+  if (!keys.includes('combatPacingPreset') && keys.some(key => ['combatStepPause', 'animationStepDuration'].includes(key))) {
+    snapshot.combatPacingPreset = settings.combatPacingPreset;
+    settings.combatPacingPreset = 'custom';
+    changed.combatPacingPreset = 'custom';
+  }
   const moved = Object.keys(snapshot).filter((key) => snapshot[key] !== changed[key]);
   // A key reset to its promoted value is the promotion's again: say so in the
   // seed record, so a later promotion may move it along.
