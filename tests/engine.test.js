@@ -1,3 +1,4 @@
+import { engravedIconHtml } from '../src/ui/components/engravedIcon.js';
 // tests/engine.test.js — headless engine/model/content tests (SPEC §8)
 //
 // Runs identically in Node (tests/run-node.mjs) and the browser
@@ -7411,10 +7412,24 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // (`--hud-quick-card-size` and friends) no longer reach the DOM.
     assert((html.match(/class="as-iconbtn modal-iconbtn hud-quick-setting/g) || []).length === 2,
       'Fullscreen and Music are two kit IconButtons');
-    assert(/data-hud-quick-action="fullscreen"[^>]*>⛶</.test(html),
-      'Fullscreen renders the kit fullscreen glyph');
-    assert(/data-hud-quick-action="music"[^>]*>♫</.test(html),
-      'Music renders the kit music glyph');
+    const quickControl = (markup, action) => {
+      const match = markup.match(new RegExp(`<button\\b[^>]*data-hud-quick-action="${action}"[^>]*>([\\s\\S]*?)</button>`));
+      assert(match, `${action} keeps its own quick-setting button`);
+      return { button: match[0], icon: match[1] };
+    };
+    const fullscreenControl = quickControl(html, 'fullscreen');
+    const musicControl = quickControl(html, 'music');
+    eq(fullscreenControl.icon, engravedIconHtml('display'), 'Fullscreen renders the canonical display engraving');
+    eq(musicControl.icon, engravedIconHtml('audio'), 'Music renders the canonical audio engraving');
+    assert(/aria-pressed="false"/.test(fullscreenControl.button), 'Fullscreen starts inactive');
+    assert(/aria-pressed="true"/.test(musicControl.button) && /class="[^"]*\bon\b/.test(musicControl.button),
+      'enabled Music retains both its pressed state and visible active class');
+    const offHtml = hudQuickSettingsHtml(hudQuickSettingsModel({ place: 'combat', presentation, settings: { musicEnabled: false } }));
+    const offControl = quickControl(offHtml, 'music');
+    eq(offControl.icon, engravedIconHtml('audio'), 'disabled Music retains the canonical audio engraving');
+    assert(/aria-label="Turn music on"/.test(offControl.button) && /aria-pressed="false"/.test(offControl.button),
+      'disabled Music names the available action and exposes its inactive state');
+    assert(!/class="[^"]*\bon\b/.test(offControl.button), 'disabled Music drops the visible active class');
 
     const audibleMusic = musicQuickSettingsPlan({});
     eq(audibleMusic.active, true, 'Music is enabled by default');
