@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { UI_ICON_IDS, UI_ICON_LABELS, LEGACY_UI_ICON_IDS, uiIconId, uiIconText } from '../src/content/uiIcons.js';
 import { engravedGlyphId, engravedIconUrl } from '../src/ui/components/engravedIcon.js';
 
@@ -72,8 +73,8 @@ test('the active Core bundle authors readable icon IDs in every installed source
   };
   for (const pack of bundle.packs) {
     const manifestUrl = new URL(pack.path, new URL('../games/ashenspire/bundles/core/bundle.json', import.meta.url));
-    const manifest = JSON.parse(readFileSync(manifestUrl, 'utf8'));
-    for (const path of Object.values(manifest.content)) visit(JSON.parse(readFileSync(new URL(path, manifestUrl), 'utf8')), path);
+    const manifest = JSON.parse(readFileSync(fileURLToPath(manifestUrl), 'utf8'));
+    for (const path of Object.values(manifest.content)) visit(JSON.parse(readFileSync(fileURLToPath(new URL(path, manifestUrl)), 'utf8')), path);
   }
   assert.ok(checked > 100, 'the guard traverses installed source content, including reward cards');
   assert.equal(engravedGlyphId('\u2694'), 'attack', 'saved legacy attack glyph remains compatible');
