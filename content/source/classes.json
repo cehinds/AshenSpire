@@ -2,7 +2,7 @@
   {
     "id": "reaver",
     "cardTint": "#a8724a",
-    "glyph": "⚔",
+    "glyph": "attack",
     "name": "Reaver",
     "maxHp": 84,
     "startingFlaskAllocation": {
@@ -67,7 +67,7 @@
   {
     "id": "starseer",
     "cardTint": "#8f86d8",
-    "glyph": "☄",
+    "glyph": "progression",
     "name": "Starseer",
     "maxHp": 72,
     "startingFlaskAllocation": {
@@ -138,7 +138,7 @@
   {
     "id": "rogue",
     "cardTint": "#647b73",
-    "glyph": "🗡",
+    "glyph": "sword",
     "name": "Rogue",
     "maxHp": 74,
     "startingFlaskAllocation": {
@@ -207,7 +207,7 @@
   {
     "id": "herald",
     "cardTint": "#c98a6a",
-    "glyph": "☀",
+    "glyph": "madness",
     "name": "Herald",
     "maxHp": 78,
     "startingFlaskAllocation": {

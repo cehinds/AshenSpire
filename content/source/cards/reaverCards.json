@@ -8,7 +8,7 @@
     "type": "attack",
     "flavor": "First cut of the hamlets.\n\nMade with whatever edge the hamlet owns. Marl's Hollow sends one climber each winter, chosen at the well, and the chosen spends the last evening at the whetting post learning this and nothing more.\n\nThe marked learned a thousand cuts. It did them no good.",
     "keywords": [],
-    "icon": "⚔",
+    "icon": "attack",
     "effects": [
       {
         "op": "damage",
@@ -36,7 +36,7 @@
     "type": "skill",
     "flavor": "First guard of the road.\n\nTwo crossed lines upon a cairn stone: hold. Cut by climbers for climbers, before the Burning, when the ring was closed to the unmarked.\n\nThe mark does not say what to hold against, nor for how long.",
     "keywords": [],
-    "icon": "🛡",
+    "icon": "shield",
     "effects": [
       {
         "op": "block",
@@ -64,7 +64,7 @@
     "type": "skill",
     "flavor": "Steps cut into the road.\n\nToo even to be natural, too worn to be recent. The Forsaken credit them to the climbers before. They run past the farthest point any Forsaken is known to have reached, and some lead onto the viaducts, older than the kingdom.\n\nClimbers before you cut steps. Use them.",
     "keywords": [],
-    "icon": "✧",
+    "icon": "vulnerable",
     "effects": [
       {
         "op": "block",
@@ -100,7 +100,7 @@
     "type": "skill",
     "flavor": "Sidestep of the Pale Marches ice-fishers.\n\nThe lakes have not thawed since the Burning. The ice cracks all the year round, and gives only beneath a second pair of feet; the fishers learned to trust the sound.\n\nWidow Arne of Sallow Lake says the sound changed last winter. She fishes no longer.",
     "keywords": [],
-    "icon": "🌀",
+    "icon": "madness",
     "effects": [
       {
         "op": "block",
@@ -136,7 +136,7 @@
     "type": "skill",
     "flavor": "Tumble of the ship-breakers.\n\nLearned upon hulls that shift with every tide at the Grave of Ships. The hulls were already rotting at anchor when the trade stopped, and on the night of the Burning, every hold went warm at once.\n\nGull-Bet's gang opened the holds the following spring. She has not said what was inside.",
     "keywords": [],
-    "icon": "💨",
+    "icon": "motion",
     "weightClassPriced": true,
     "effects": [
       {
@@ -182,7 +182,7 @@
     "type": "attack",
     "flavor": "Art of the sellswords of the Bastion.\n\nThe hired blades who held the Fell Courtyard wetted their steel with their own blood before each watch, for the Gorefire takes more readily to a blade already red.\n\nThe Wardens called it discipline. The sellswords knew it as a price, paid in advance.",
     "keywords": [],
-    "icon": "🗡",
+    "icon": "sword",
     "effects": [
       {
         "op": "damage",
@@ -234,7 +234,7 @@
     "type": "attack",
     "flavor": "Wide cut of the Fell Courtyard watch.\n\nTaught for a gate choked with bodies. On the night the Bastion burned, the dead came up the Muster Stair in numbers the watch had no word for, and this was the only answer it had.\n\nThe gate log names the watch whole at the bell. Its hand changes halfway down the page.",
     "keywords": [],
-    "icon": "🪓",
+    "icon": "attack",
     "effects": [
       {
         "op": "damage",
@@ -274,7 +274,7 @@
     "type": "attack",
     "flavor": "Rim-strike of the Wardens' shield line.\n\nDrilled in the years of the Spring Wars, when envoys of the Northern Holds came to the Bastion gate to haggle the price of a spring. The Wardens struck with the rim, for the face bore the gilded crest.\n\nTwice the Holds were struck. Twice they paid.",
     "keywords": [],
-    "icon": "🛡",
+    "icon": "shield",
     "effects": [
       {
         "op": "damage",
@@ -312,7 +312,7 @@
     "type": "skill",
     "flavor": "Footwork of the Bastion's hired blades.\n\nAfter the Burning the weald's spring would not turn, and green came up between the courtyard flags. The sellswords learned short, flat steps upon the moss. The Wardens, who never stood where the footing was worst, did not.\n\nThe steps are counted to a dawn peal that brings no dawn.",
     "keywords": [],
-    "icon": "👣",
+    "icon": "motion",
     "effects": [
       {
         "op": "block",
@@ -348,7 +348,7 @@
     "type": "attack",
     "flavor": "Riposte of the sworn Wardens.\n\nThe enemy commits; the Bastion answers, and its answer is always the greater. So the Wardens taught the drill, and so they told of the Spring Wars, in which they claimed never to have struck first.\n\nThe Northern Holds remember it otherwise.",
     "keywords": [],
-    "icon": "↩",
+    "icon": "reset",
     "effects": [
       {
         "op": "damage",
@@ -408,7 +408,7 @@
     "type": "skill",
     "flavor": "Standing order of the Bastion.\n\nRead at the muster peal: a Warden holds until relieved, and relief comes by the bell. The bell-roll kept the names of all who held.\n\nAfter the Burning, the roll runs on for many pages, in a hand no scribe knew, bearing names no Warden ever enlisted.",
     "keywords": [],
-    "icon": "⛨",
+    "icon": "shield",
     "effects": [
       {
         "op": "block",
@@ -468,7 +468,7 @@
     "type": "attack",
     "flavor": "Saw-backed blade from the forges beneath the Bastion ridge.\n\nWeald smiths filed its teeth for clearing briar, and the Wardens took it up when the Blight came out of the woods. The smiths were never paid for the change of use.\n\nHow the briar learned to bleed, the smiths will not speak of.",
     "keywords": [],
-    "icon": "🪚",
+    "icon": "smith",
     "effects": [
       {
         "op": "damage",
@@ -518,7 +518,7 @@
     "type": "skill",
     "flavor": "The breaking stance, first of the Wardens' two.\n\nThe drill is to hold the flame in the blade, not the hand. Sergeants warned that the stance takes the hand if held too long. Sellswords held it longest of all, which the Wardens took for greed.\n\nHold the flame in the blade; it still takes the hand.",
     "keywords": [],
-    "icon": "🔥",
+    "icon": "burn",
     "effects": [
       {
         "op": "enterStance",
@@ -543,7 +543,7 @@
     "type": "skill",
     "flavor": "The holding stance, second of the Wardens' two.\n\nLow and square, shield set to the hinge side. The Wardens called the gate a wall a man could carry, and held that no gate kept in this stance had ever fallen.\n\nThat teaching was set down before the Burning, and was never amended.",
     "keywords": [],
-    "icon": "🛡",
+    "icon": "shield",
     "effects": [
       {
         "op": "enterStance",
@@ -575,7 +575,7 @@
     "type": "attack",
     "flavor": "Return off the guard, as the Citadel fencing-masters taught it.\n\nThe Court held it too fine for field-born hands. Its manual shows a bout upon the bridges in the first year of the Mark Trade, a Knight against an unnamed Warden, and declares the Knight victorious.\n\nIn the illustration, the Knight lies upon his back.",
     "keywords": [],
-    "icon": "⚔",
+    "icon": "attack",
     "effects": [
       {
         "op": "damage",
@@ -621,7 +621,7 @@
     "type": "attack",
     "flavor": "Tearing cut for the rot of the weald.\n\nWritten into the field-book after the Burning, by whoever keeps it now. It bids the reader cut the rot from hound and hamlet folk alike, for the rot came up the river road with the Court's traders.\n\nThe ink is fresh. The hand shakes.",
     "keywords": [],
-    "icon": "🩸",
+    "icon": "bleed",
     "effects": [
       {
         "op": "damage",
@@ -681,7 +681,7 @@
     "type": "attack",
     "flavor": "Heavy sweep of the weald hamlets.\n\nLearned by watching the Wardens from beyond the walls, for no Warden would teach the unmarked. It is swung in the winters when blight-hounds come down out of the lanternwood in packs.\n\nThe Wardens called the weald their charge. The hamlets paid for that charge in spring grain.",
     "keywords": [],
-    "icon": "🪓",
+    "icon": "attack",
     "effects": [
       {
         "op": "damage",
@@ -719,7 +719,7 @@
     "type": "attack",
     "flavor": "Heel-strike of the Fell Courtyard.\n\nThe Wardens named it unworthy and used it all the same, for in the courtyard the fallen seldom stayed down. Sellswords held that the Wardens objected only to being seen at it.\n\nMany an old Bastion helm bears the dent of a heel.",
     "keywords": [],
-    "icon": "🦶",
+    "icon": "motion",
     "effects": [
       {
         "op": "damage",
@@ -757,7 +757,7 @@
     "type": "power",
     "flavor": "Banner of the Bastion muster.\n\nRaised when the bell rang the line into place. The drill ends thus: raise the standard, sound the bell, log that the line held.\n\nThe final muster is logged as held, at dawn. The Bastion has seen no dawn since the Burning.",
     "keywords": [],
-    "icon": "⚑",
+    "icon": "combat",
     "effects": [
       {
         "op": "applyStatus",
@@ -800,7 +800,7 @@
     "keywords": [
       "exhaust"
     ],
-    "icon": "⚕",
+    "icon": "health",
     "effects": [
       {
         "op": "heal",
@@ -853,7 +853,7 @@
     "keywords": [
       "exhaust"
     ],
-    "icon": "🩸",
+    "icon": "bleed",
     "effects": [
       {
         "op": "applyStatus",
@@ -881,7 +881,7 @@
     "type": "attack",
     "flavor": "Two short blades, worked in turn, as the weald's sellswords used them.\n\nToo poor for a shield and too proud to carry a Warden's, they were hired for the Bastion's narrow gates. It is said part of their wage was paid in marks rather than coin: a right to the city's warmth.\n\nThose who refused the mark are the ones who tell of it.",
     "keywords": [],
-    "icon": "⚔",
+    "icon": "attack",
     "effects": [
       {
         "op": "damage",
@@ -911,7 +911,7 @@
     "type": "skill",
     "flavor": "Formation of the Bastion's shield line.\n\nRim locked to rim across the Fell Courtyard. The Wardens credited it with holding the gate through three hungry winters of the Spring Wars, when Hold petitioners camped below the walls.\n\nThe field-book enters the price of spring in the same column as the petitioners turned away.",
     "keywords": [],
-    "icon": "🧱",
+    "icon": "shield",
     "effects": [
       {
         "op": "block",
@@ -971,7 +971,7 @@
     "keywords": [
       "exhaust"
     ],
-    "icon": "🥾",
+    "icon": "motion",
     "effects": [
       {
         "op": "damage",
@@ -1011,7 +1011,7 @@
     "type": "skill",
     "flavor": "Guarded advance into the breaking stance.\n\nTaught as the moment to cease holding and begin taking ground. The Warden was to know that moment by the bell. When the Bellfoundry bell cracked, a new line was added beneath.\n\nKnow it by the smell of the courtyard.",
     "keywords": [],
-    "icon": "🛡",
+    "icon": "shield",
     "effects": [
       {
         "op": "block",
@@ -1047,7 +1047,7 @@
     "type": "attack",
     "flavor": "Pinning thrust of the weald hamlets.\n\nLearned in the first winter of the Blight, against what rose from the drowned hamlet and would not stay down. A pinned thing stops, the hamlets say. The Wardens would once have burned such things.\n\nBut the fire went into the Wardens that winter.",
     "keywords": [],
-    "icon": "🗡",
+    "icon": "sword",
     "effects": [
       {
         "op": "damage",
@@ -1099,7 +1099,7 @@
     "keywords": [
       "exhaust"
     ],
-    "icon": "📣",
+    "icon": "audio",
     "effects": [
       {
         "op": "applyStatus",
@@ -1127,7 +1127,7 @@
     "type": "attack",
     "flavor": "Finishing blow of the Fell Warden.\n\nTaught before his leg went the way of the weald and his blade was ground into a cane. The field-book holds that he never struck a man already kneeling.\n\nThe last page in his hand, dated the night of the Burning, is a list of kneeling men.",
     "keywords": [],
-    "icon": "⚰",
+    "icon": "history",
     "effects": [
       {
         "op": "damage",
@@ -1191,7 +1191,7 @@
     "type": "power",
     "flavor": "The Wardens' name for blood-madness.\n\nThe state in which a fighter has spilled enough of their own blood that fear no longer holds. In sworn men the Wardens called it virtue; in sellswords, vice. The two are described in the same words.\n\nIts only instruction: keep standing.",
     "keywords": [],
-    "icon": "♛",
+    "icon": "reward",
     "effects": [
       {
         "op": "applyStatus",
@@ -1219,7 +1219,7 @@
     "type": "power",
     "flavor": "Order to hold the Fell Courtyard gate.\n\nDated, signed and never countermanded. The gate log continues past the Burning in a second hand, one entry each night, at the same hour. The gate still stands; the wall on either side does not.\n\nNo relief is recorded.",
     "keywords": [],
-    "icon": "⬟",
+    "icon": "armour",
     "effects": [
       {
         "op": "applyStatus",
@@ -1260,7 +1260,7 @@
     "type": "attack",
     "flavor": "Swordwork of the Court's stitched knights.\n\nAfter the Court Flame died, the surgeons sewed the knights to their swords, that no oath might be set down. The Citadel's record names it an honour: a knight's word made flesh.\n\nThe record was written by the surgeons.",
     "keywords": [],
-    "icon": "🦾",
+    "icon": "armour",
     "effects": [
       {
         "op": "damage",
@@ -1297,7 +1297,7 @@
     "keywords": [
       "ethereal"
     ],
-    "icon": "🕯",
+    "icon": "burn",
     "effects": [
       {
         "op": "block",
@@ -1338,7 +1338,7 @@
       "innate",
       "exhaust"
     ],
-    "icon": "📜",
+    "icon": "quest",
     "effects": [
       {
         "op": "enterStance",
@@ -1381,7 +1381,7 @@
     },
     "flavor": "Whole-body blow of the Wardens.\n\nReserved for a gate where all else has failed, and called a Warden's last argument. What becomes of the Warden who makes it, the drill does not say.\n\nThe pages that follow are stained through.",
     "keywords": [],
-    "icon": "🔨",
+    "icon": "smith",
     "effects": [
       {
         "op": "damage",
@@ -1419,7 +1419,7 @@
     "type": "attack",
     "flavor": "Strike of the Bastion kennels.\n\nTaught by the kennelmaster before the hounds turned. The kennel book names them the finest in the three cities, trained upon the scent of blood alone, and never loosed on the weald's own people.\n\nAfter the Burning, the hamlets' dogs were found in those same kennels.",
     "keywords": [],
-    "icon": "🩸",
+    "icon": "bleed",
     "effects": [
       {
         "op": "damage",
@@ -1466,7 +1466,7 @@
     "type": "power",
     "flavor": "Soldier's bargain of the Bastion's lesser shrine.\n\nBlood spilled from an enemy is sworn to the one who spilled it. The Wardens thought it a harmless field-born custom, like the harvest tithe. The Chapel called it a mockery of the Writing, and fined the shrine.\n\nThe fine was paid. The shrine was in use the night of the Burning.",
     "keywords": [],
-    "icon": "🩸",
+    "icon": "bleed",
     "effects": [
       {
         "op": "applyStatus",
@@ -1494,7 +1494,7 @@
     "type": "attack",
     "flavor": "Short cut of the Bastion's hired blades.\n\nThe sellswords had no patience for the Wardens' long forms. A long cut belongs in songs, they said, and the songs of the Bastion were paid for by the Wardens.\n\nThe sellswords kept a verse of their own. Only its tune survives.",
     "keywords": [],
-    "icon": "🩸",
+    "icon": "bleed",
     "effects": [
       {
         "op": "damage",
@@ -1534,7 +1534,7 @@
     "type": "skill",
     "flavor": "First stance of the Bastion recruit.\n\nFeet planted, shield braced against the Bastion's own wall, before either true stance was taught. Drillmaster Hask taught it thirty winters.\n\nHer last entry is a roll of recruits, every name struck through but one, and that one scraped away.",
     "keywords": [],
-    "icon": "🛡",
+    "icon": "shield",
     "effects": [
       {
         "op": "block",
@@ -1580,7 +1580,7 @@
     "type": "attack",
     "flavor": "Lanternwood oil, set alight upon the edge.\n\nA late practice of the Wardens, adopted when plain steel no longer frightened what came out of the weald. The Chapel frowned upon Wardens bearing fire they had not been given.\n\nMind the sleeve; the oil takes it before the enemy.",
     "keywords": [],
-    "icon": "🔥",
+    "icon": "burn",
     "effects": [
       {
         "op": "damage",
@@ -1634,7 +1634,7 @@
     "type": "power",
     "flavor": "Oath of the Wardens, sworn with the sword hand upon the gate.\n\nSworn Wardens bore the flame-mark from birth, and the oath was laid over it as a second promise. Sellswords swore it with no first promise beneath, and so the Wardens held them less bound.\n\nWhat that meant on the night of the Burning, no oath foretold.",
     "keywords": [],
-    "icon": "⛓",
+    "icon": "block",
     "effects": [
       {
         "op": "applyStatus",
@@ -1685,7 +1685,7 @@
     },
     "flavor": "Harvest tithe of the weald, paid in blood.\n\nGiven at the Bastion's field-shrine in years the grain failed. The Wardens called it voluntary, and kept no names, as a courtesy to the givers.\n\nThe tithe-roll lengthens with each year of the Mark Trade, and the villages it lists grow fewer.",
     "keywords": [],
-    "icon": "🗡",
+    "icon": "sword",
     "effects": [
       {
         "op": "damage",
@@ -1755,7 +1755,7 @@
     "type": "attack",
     "flavor": "Knee-strike of Drillmaster Hask.\n\nHer answer to anything larger than a Warden: a knight and a kennel hound, she wrote, bend at the same place. She drew them both.\n\nBeside them, in later ink, a third figure grown of briar, under a name found nowhere else in the book.",
     "keywords": [],
-    "icon": "🔨",
+    "icon": "smith",
     "effects": [
       {
         "op": "damage",
@@ -1813,7 +1813,7 @@
     "type": "skill",
     "flavor": "Parry upon the guard of a rondel dagger.\n\nFavoured by the Bastion's older sellswords, who kept the short blade long after the Wardens ceased to issue it. The rondels came from the Northern Holds as tribute, and were worth more than a season's wage.\n\nThey bear a crest no herald of the ring recorded.",
     "keywords": [],
-    "icon": "🗡",
+    "icon": "sword",
     "effects": [
       {
         "op": "block",
@@ -1851,7 +1851,7 @@
     "type": "attack",
     "flavor": "Joint-splitting blow of the Wardens.\n\nDevised in the years of the Mark Trade with the Court's knights in mind, lest the Court forget which flame kept it fed. No occasion of its use is recorded.\n\nBeside the drill, a knight's gorget, its crest scratched out.",
     "keywords": [],
-    "icon": "⚒",
+    "icon": "smith",
     "effects": [
       {
         "op": "damage",
@@ -1911,7 +1911,7 @@
     "type": "skill",
     "flavor": "The crouch before either stance.\n\nKnees bent, weight low, the body made ready to be struck. The field-book gives it the first page, and calls it the one lesson all Wardens learned alike, sworn or hired, marked or not.\n\nA later hand has corrected it.",
     "keywords": [],
-    "icon": "🦶",
+    "icon": "motion",
     "effects": [
       {
         "op": "enterStance",
@@ -1945,7 +1945,7 @@
     "type": "attack",
     "flavor": "A wide cut that opens old wounds.\n\nTaught in the Vanguard's yard to recruits who had never held a blade. The sergeants said the arc forgives a poor grip, and the Gorefire does the rest.\n\nThe yard is ash now. The recruits still swing it wide, as they were shown.",
     "keywords": [],
-    "icon": "⌒",
+    "icon": "stamina",
     "effects": [
       {
         "op": "damage",
@@ -1994,7 +1994,7 @@
     "type": "attack",
     "flavor": "Downward blow meant to split a shield.\n\nThe Vanguard's smiths measured their work by it. A shield that survived three chops was sent to the wall; one that did not was sent back to the forge with the smith's name chalked upon it.\n\nFew names were chalked twice.",
     "keywords": [],
-    "icon": "🪓",
+    "icon": "attack",
     "effects": [
       {
         "op": "damage",
@@ -2040,7 +2040,7 @@
     "type": "skill",
     "flavor": "The rim planted, the shoulder behind it.\n\nOld Vanguard drill: the shield is set before the enemy is seen, and the man behind it waits. The drill was called cowardice by the Court's duellists, until the night the Court's gate fell.\n\nThe duellists did not drill again.",
     "keywords": [],
-    "icon": "🛡",
+    "icon": "shield",
     "effects": [
       {
         "op": "block",
@@ -2076,7 +2076,7 @@
     "type": "skill",
     "flavor": "A shield held into the fire until it glows.\n\nThe last captain of the Vanguard held the causeway so through the whole of the Burning. His shield was found welded to the stones, and his arm was not found at all.\n\nThe stones there are warm still, and soldiers kneel on them.",
     "keywords": [],
-    "icon": "🔰",
+    "icon": "shield",
     "effects": [
       {
         "op": "block",
@@ -2124,7 +2124,7 @@
     "type": "attack",
     "flavor": "The whole weight of the wall, thrown forward.\n\nA Vanguard shieldman who has held long enough may drive his shield into the line before him. The chronicles of the siege praise it; the surgeons who reset the shieldmen's shoulders afterward do not.\n\nBoth kept their records honestly.",
     "keywords": [],
-    "icon": "💥",
+    "icon": "attack",
     "effects": [
       {
         "op": "block",

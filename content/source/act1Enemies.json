@@ -33,7 +33,7 @@
         "duration": 2
       }
     },
-    "art": "⚔",
+    "art": "enemy",
     "moves": {
       "slash": {
         "intent": "attack",
@@ -84,7 +84,7 @@
       "min": 1,
       "max": 3
     },
-    "art": "🐕",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "bite": {
@@ -120,7 +120,7 @@
       "min": 2,
       "max": 5
     },
-    "art": "🪨",
+    "art": "enemy",
     "moves": {
       "club": {
         "intent": "attack",
@@ -175,7 +175,7 @@
       "min": 1,
       "max": 4
     },
-    "art": "👻",
+    "art": "enemy",
     "moves": {
       "curse": {
         "intent": "debuff",
@@ -226,7 +226,7 @@
       "min": 4,
       "max": 6
     },
-    "art": "🐲",
+    "art": "enemy",
     "firstMove": "consecrate",
     "moves": {
       "consecrate": {
@@ -298,7 +298,7 @@
       "min": 5,
       "max": 7
     },
-    "art": "👁",
+    "art": "enemy",
     "firstMove": "caneStrike",
     "moves": {
       "caneStrike": {
@@ -388,7 +388,7 @@
       "min": 2,
       "max": 5
     },
-    "art": "◆",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "lanternDust": {
@@ -433,7 +433,7 @@
       "min": 2,
       "max": 5
     },
-    "art": "◆",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "rootShelter": {
@@ -491,7 +491,7 @@
       "min": 2,
       "max": 5
     },
-    "art": "◆",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "hookCast": {
@@ -547,7 +547,7 @@
       "min": 5,
       "max": 7
     },
-    "art": "◆",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "bronzeToll": {
@@ -619,7 +619,7 @@
       "min": 5,
       "max": 7
     },
-    "art": "◆",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "rootCrown": {

@@ -21,7 +21,7 @@
       "min": 6,
       "max": 9
     },
-    "art": "♞",
+    "art": "enemy",
     "moves": {
       "thrust": {
         "intent": "attack",
@@ -84,7 +84,7 @@
       "min": 6,
       "max": 9
     },
-    "art": "⚕",
+    "art": "enemy",
     "moves": {
       "scalpel": {
         "intent": "attack",
@@ -153,7 +153,7 @@
       "min": 6,
       "max": 8
     },
-    "art": "🐩",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "maul": {
@@ -199,7 +199,7 @@
       "min": 6,
       "max": 9
     },
-    "art": "🪆",
+    "art": "enemy",
     "moves": {
       "dart": {
         "intent": "attack",
@@ -244,7 +244,7 @@
       "min": 7,
       "max": 10
     },
-    "art": "🛡",
+    "art": "enemy",
     "moves": {
       "slam": {
         "intent": "attack",
@@ -301,7 +301,7 @@
       "min": 10,
       "max": 11
     },
-    "art": "🤺",
+    "art": "enemy",
     "firstMove": "enGarde",
     "moves": {
       "enGarde": {
@@ -372,7 +372,7 @@
       "min": 11,
       "max": 12
     },
-    "art": "👑",
+    "art": "enemy",
     "firstMove": "courtlyDecree",
     "moves": {
       "scepterBlow": {
@@ -454,7 +454,7 @@
       "min": 7,
       "max": 10
     },
-    "art": "◆",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "silverScript": {
@@ -504,7 +504,7 @@
       "min": 7,
       "max": 10
     },
-    "art": "◆",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "shellFold": {
@@ -556,7 +556,7 @@
       "min": 11,
       "max": 12
     },
-    "art": "◆",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "prismGuard": {
@@ -632,7 +632,7 @@
       "min": 11,
       "max": 12
     },
-    "art": "◆",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "bonePrelude": {

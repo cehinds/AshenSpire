@@ -9,3 +9,7 @@ The [content authoring quick reference](../../CONTRIBUTING.md#adding-content-qui
 lists the file for each kind of content. The longer walkthroughs and compiler
 checks are in [DEVELOPER.md](../../DEVELOPER.md), and the directory's table
 conventions are summarized in [`CONTENT-NOTES.md`](CONTENT-NOTES.md).
+
+For Visual Studio tasks and one-file-at-a-time recipes, see the
+[manual editing map](../../docs/MANUAL-EDITING.md). Use readable named icon IDs
+from `src/content/uiIcons.js` in authored `icon` and `glyph` fields.

@@ -69,7 +69,7 @@ export const resources = [
   {
     id: 'mana',
     name: 'MP',
-    glyph: '◆',
+    glyph: 'mana',
     tint: '#315c9b',
     weight: 'normal',
     order: 20,
@@ -80,7 +80,7 @@ export const resources = [
   {
     id: 'hp',
     name: 'HP',
-    glyph: '❤',
+    glyph: 'health',
     tint: 'var(--res-hp)',
     weight: 'normal',
     order: 10,
@@ -89,12 +89,12 @@ export const resources = [
     domainMax: HUD_REFERENCE_MAX.hp,
   },
   {
-    id: 'ward', name: 'WARD', glyph: '✧', tint: '#779fe0', weight: 'skinny', order: 91, surfaces: ['model'], source: 'ward',
+    id: 'ward', name: 'WARD', glyph: 'shield', tint: '#779fe0', weight: 'skinny', order: 91, surfaces: ['model'], source: 'ward',
   },
   {
     id: 'poise',
     name: 'POISE',
-    glyph: '◈',
+    glyph: 'poise',
     tint: 'var(--gold)',
     weight: 'skinny',
     // Combat-only dynamic meter on the player character card; never top HUD.

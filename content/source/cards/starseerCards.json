@@ -8,7 +8,7 @@
     "type": "attack",
     "flavor": "Chip of catalogued starstone.\n\nSuch stones were weighed and numbered by the Observatory's apprentices in their first winter. The Astronomer held them inert once cooled, and wrote as much throughout his catalogue.\n\nYet frost formed upon their labels by night. Never upon the stones.",
     "keywords": [],
-    "icon": "💎",
+    "icon": "relic",
     "effects": [
       {
         "op": "damage",
@@ -78,7 +78,7 @@
     "type": "attack",
     "flavor": "Sorcery of the Starwatch, the first permitted beyond the lens gallery.\n\nFragments came up the Basalt Stair in miners' sacks, sold by weight, and the Astronomer catalogued every one. Chart 41 records a fall. Chart 42 records a hearth.\n\nOf what lay between, the catalogue is silent.",
     "keywords": [],
-    "icon": "☄",
+    "icon": "progression",
     "effects": [
       {
         "op": "damage",
@@ -128,7 +128,7 @@
     "type": "attack",
     "flavor": "Blades ground from a single stone.\n\nThe apprentices found that blades from one stone answered one another in sequence, the second truer than the first. The Chapel's censor struck \"answered\" from the record and wrote \"rang\".\n\nThe apprentices kept the first word.",
     "keywords": [],
-    "icon": "🗡",
+    "icon": "sword",
     "effects": [
       {
         "op": "damage",
@@ -200,7 +200,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "🔷",
+    "icon": "skill",
     "effects": [
       {
         "op": "block",
@@ -270,7 +270,7 @@
     "type": "attack",
     "flavor": "Sorcery of the Starwatch, called in sequence.\n\nThe log of one autumn vigil counts forty small falls in a single night, none of which reached the ground warm. An apprentice asked in the margin whence forty falls could come.\n\nThe answer, in the Astronomer's hand, was cut from the page.",
     "keywords": [],
-    "icon": "🌠",
+    "icon": "progression",
     "effects": [
       {
         "op": "damage",
@@ -342,7 +342,7 @@
     "type": "skill",
     "flavor": "Discipline of the double copy.\n\nApprentices copied each chart twice, for the second copy is the true one. The two copies of chart 9 differ in a single figure: the distance from the three hearths to a point upon the coast.\n\nBoth copies left the Observatory with the apprentice who took the charts.",
     "keywords": [],
-    "icon": "📖",
+    "icon": "quest",
     "effects": [
       {
         "op": "draw",
@@ -392,7 +392,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "🌫",
+    "icon": "skill",
     "effects": [
       {
         "op": "block",
@@ -454,7 +454,7 @@
     "type": "attack",
     "flavor": "Starstone, split along its grain.\n\nThe stone parts cleanly along lines the lens-grinders could see and the miners could not. The grinders held that it had been worked before it fell. The Astronomer called this sentimental.\n\nHe kept a split fragment upon his desk, its grain turned to the window.",
     "keywords": [],
-    "icon": "🌠",
+    "icon": "progression",
     "effects": [
       {
         "op": "damage",
@@ -528,7 +528,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "🔰",
+    "icon": "shield",
     "effects": [
       {
         "op": "block",
@@ -600,7 +600,7 @@
     "type": "attack",
     "flavor": "Light forced through a starstone lens.\n\nDiscovered when the great lens scorched a line across the chart-room table. The Astronomer had the table kept as it was, and recorded that the line ran true to the south-west.\n\nThe line has lengthened since.",
     "keywords": [],
-    "icon": "🏹",
+    "icon": "attack",
     "effects": [
       {
         "op": "damage",
@@ -687,7 +687,7 @@
     "type": "skill",
     "flavor": "Light drawn from a varying star.\n\nThe Astronomer recorded its variation nightly for many years, and drew no conclusion, as was his rule. In the last spring before the Burning, he spent three nights upon it alone.\n\nThe charts of those nights are not in the series.",
     "keywords": [],
-    "icon": "✨",
+    "icon": "relic",
     "effects": [
       {
         "op": "draw",
@@ -753,7 +753,7 @@
     "type": "attack",
     "flavor": "Ring of cold, after the frozen ash of the caldera.\n\nMiners found such rings about fresh falls upon the caldera floor. Coll, a foreman, told the apprentices the ash froze before the stone landed. The Astronomer named miners unreliable witnesses.\n\nHe bought Coll's next fragment at double the price.",
     "keywords": [],
-    "icon": "❄",
+    "icon": "frost",
     "effects": [
       {
         "op": "damage",
@@ -838,7 +838,7 @@
     "type": "attack",
     "flavor": "Arc of force, used to measure the stone's reach.\n\nMeasured three times, the stone was found to have moved between readings. The Starwatch recorded an error of the apparatus, and replaced it.\n\nThe same error is recorded each month, until the eclipse.",
     "keywords": [],
-    "icon": "⚡",
+    "icon": "poise",
     "effects": [
       {
         "op": "damage",
@@ -910,7 +910,7 @@
     "type": "skill",
     "flavor": "Clarity for the work.\n\nPractised on the one clear night in forty the reach allowed. The Astronomer worked such nights without sleep, and bade his apprentices do the same.\n\nThey believed he saw more than the charts show, and wrote it elsewhere.",
     "keywords": [],
-    "icon": "🌙",
+    "icon": "progression",
     "effects": [
       {
         "op": "gainEnergy",
@@ -969,7 +969,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "🔭",
+    "icon": "progression",
     "effects": [
       {
         "op": "applyStatus",
@@ -998,7 +998,7 @@
     "type": "power",
     "flavor": "Mantle of cold light, after Starwatch Terrace.\n\nThe terrace upon the Drowned Coast was paved in starstone, that the apprentices might measure the new tower's draw. The paving never warmed, and the salt spray never dried upon it.\n\nA Saint was sent to bless the stones. She asked to be posted elsewhere.",
     "keywords": [],
-    "icon": "🌌",
+    "icon": "progression",
     "effects": [
       {
         "op": "applyStatus",
@@ -1040,7 +1040,7 @@
     "type": "attack",
     "flavor": "Crescent stroke of the Observatory's night-porters.\n\nThe porters walked the Basalt Stair with lanterns and curved blades, and claimed the moon's passage over the caldera showed them where to cut. The Starwatch called it folklore, and employed them regardless.\n\nTheir blades are found in the lower galleries, in hands no longer quite their own.",
     "keywords": [],
-    "icon": "🌒",
+    "icon": "progression",
     "effects": [
       {
         "op": "damage",
@@ -1103,7 +1103,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "🪨",
+    "icon": "weight",
     "effects": [
       {
         "op": "damage",
@@ -1192,7 +1192,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "☄",
+    "icon": "progression",
     "effects": [
       {
         "op": "damage",
@@ -1264,7 +1264,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "🕳",
+    "icon": "skill",
     "effects": [
       {
         "op": "applyStatus",
@@ -1339,7 +1339,7 @@
     "type": "power",
     "flavor": "Blue light that gathers about the working.\n\nFirst seen around apprentices reciting the star tables aloud in rhythm. The Chapel's censor ruled the tables were written in an old script, and forbade their recitation.\n\nThe coil returned the following night.",
     "keywords": [],
-    "icon": "🌀",
+    "icon": "madness",
     "effects": [
       {
         "op": "applyStatus",
@@ -1368,7 +1368,7 @@
     "type": "attack",
     "flavor": "Cut of cold force.\n\nFirst seen when a falling fragment passed through the lens gallery and sheared the telescope in two before cooling upon the floor. The Astronomer recorded a fall. Maud Vell, at the eyepiece, called it a throw.\n\nShe was dismissed at the season's end.",
     "keywords": [],
-    "icon": "⚔",
+    "icon": "attack",
     "effects": [
       {
         "op": "damage",
@@ -1448,7 +1448,7 @@
     "type": "attack",
     "flavor": "Flare cast wide.\n\nIn the years the Spire was built, a flare lit every terrace of the Observatory at once, and the apprentices on watch lost their sight for days. The log gives no source.\n\nWhen their sight returned, they were asked not to speak of it.",
     "keywords": [],
-    "icon": "🎇",
+    "icon": "progression",
     "effects": [
       {
         "op": "damage",
@@ -1533,7 +1533,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "💥",
+    "icon": "attack",
     "effects": [
       {
         "op": "damage",
@@ -1594,7 +1594,7 @@
       "exhaust",
       "retain"
     ],
-    "icon": "⏳",
+    "icon": "history",
     "effects": [
       {
         "op": "gainEnergy",
@@ -1634,7 +1634,7 @@
     "type": "attack",
     "flavor": "Wavy dagger of starstone.\n\nCarried by apprentices for rough work in the lower galleries. Its first owner wrapped it in cloth and found the cloth frosted by morning. The kris keeps its cold whether carried or not.\n\nIt was coldest, the apprentice noted, in the Astronomer's presence.",
     "keywords": [],
-    "icon": "🔪",
+    "icon": "sword",
     "effects": [
       {
         "op": "damage",
@@ -1723,7 +1723,7 @@
     "type": "power",
     "flavor": "Sorcery of three stars, after the Goldbough crest.\n\nThree flames upon three twigs. The Chapel taught that the crest came first, and the stars were named for it.\n\nThe Starwatch's oldest plate, cut before the kingdom, shows the same three stars, and a faint fourth. The Chapel's copy omits it.",
     "keywords": [],
-    "icon": "💫",
+    "icon": "progression",
     "effects": [
       {
         "op": "applyStatus",
@@ -1754,7 +1754,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "🔆",
+    "icon": "progression",
     "effects": [
       {
         "op": "damage",
@@ -1841,7 +1841,7 @@
     "type": "attack",
     "flavor": "Many falls, called in rhythm.\n\nThe apprentices chanted the star tables while practising it in the lens gallery, and on the night it was first attempted, eleven falls were recorded. The Astronomer entered chant and falls upon the same line.\n\nHe drew no connection between them. He drew none between anything.",
     "keywords": [],
-    "icon": "⭐",
+    "icon": "skill",
     "effects": [
       {
         "op": "damage",
@@ -1921,7 +1921,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "🌑",
+    "icon": "progression",
     "effects": [
       {
         "op": "block",
@@ -2008,7 +2008,7 @@
     "type": "power",
     "flavor": "Sorcery of the Starwatch, drawn from the moon-table.\n\nIn the last years before the Burning, the Astronomer observed that as the moon waxed, the coal in the Crown dimmed in equal measure. He named it coincidence, and kept the moon-table no longer.\n\nWhat he would not record, his apprentices remembered.",
     "keywords": [],
-    "icon": "🌕",
+    "icon": "progression",
     "effects": [
       {
         "op": "applyStatus",
@@ -2037,7 +2037,7 @@
     "type": "attack",
     "flavor": "Small fall, too faint for the charts.\n\nThe Starwatch left such falls unrecorded, a star too faint to mark the lens being unworthy of ink. The reach miners kept their own tally, scratched upon the walls of the lower galleries.\n\nTheir count runs far higher.",
     "keywords": [],
-    "icon": "💫",
+    "icon": "progression",
     "effects": [
       {
         "op": "damage",
@@ -2107,7 +2107,7 @@
     "type": "skill",
     "flavor": "Guarding light, after the Fixed Lamp.\n\nA star above the coast that did not move with the others. The Starwatch took it for a flaw of the lens and reground the lens twice. The star remained.\n\nAfter the Spire was finished, the log names it only \"the error\".",
     "keywords": [],
-    "icon": "⭐",
+    "icon": "skill",
     "effects": [
       {
         "op": "block",
@@ -2175,7 +2175,7 @@
     "type": "skill",
     "flavor": "Step along a line of light.\n\nThe fourth viaduct spur appears upon the Starwatch's charts years before the Court commissioned it, drawn in the Astronomer's hand from the ring to the coast. The Court later claimed the Spire as its own design.\n\nWho showed the Astronomer where to draw, the charts do not tell.",
     "keywords": [],
-    "icon": "🌌",
+    "icon": "progression",
     "effects": [
       {
         "op": "draw",
@@ -2242,7 +2242,7 @@
     "type": "power",
     "flavor": "Frost raised by moonlight upon starstone.\n\nIt rises along the rails of Starwatch Terrace on clear nights, where the apprentices once judged the cold by it. From the Tidebound Chapel across the water, the salt-priests have watched it form the shape of a word.\n\nThey have not written it down.",
     "keywords": [],
-    "icon": "🔷",
+    "icon": "skill",
     "effects": [
       {
         "op": "applyStatus",
@@ -2271,7 +2271,7 @@
     "type": "attack",
     "flavor": "Spear of light, horizon to zenith.\n\nChart 58 records such a line, lasting a single breath, sourced to a star upon no other chart. The Astronomer entered it as a fault of optics, then spent a week grinding a new lens he was never seen to use.\n\nChart 58 is the last he signed.",
     "keywords": [],
-    "icon": "🔱",
+    "icon": "relic",
     "effects": [
       {
         "op": "damage",
@@ -2358,7 +2358,7 @@
     "type": "power",
     "flavor": "The Starwatch's discipline, carried away.\n\nAn apprentice took the charts and left the Observatory before the eclipse. The Starwatch recorded it as theft. The apprentice's line in the roll has been scraped away.\n\nNot so thoroughly that the name cannot be guessed.",
     "keywords": [],
-    "icon": "📚",
+    "icon": "quest",
     "effects": [
       {
         "op": "applyStatus",
@@ -2386,7 +2386,7 @@
     "type": "attack",
     "flavor": "Spark struck from a starstone flint.\n\nThe chart room kept such a flint for its lamps, for the Astronomer would not suffer the Chapel's flame in that room. Its sparks died before they landed.\n\nMaud Vell said the stone was being careful.",
     "keywords": [],
-    "icon": "✨",
+    "icon": "relic",
     "effects": [
       {
         "op": "damage",
@@ -2459,7 +2459,7 @@
     "type": "skill",
     "flavor": "Clear sight into the charts.\n\nThe apprentices believed the Starwatch's ledgers were meant to end where the charts of the fourth hearth began. There the Astronomer once underlined a line, and later struck through his own mark.\n\nThe charts of the fourth hearth were not among those carried away.",
     "keywords": [],
-    "icon": "🌠",
+    "icon": "progression",
     "effects": [
       {
         "op": "block",
@@ -2540,7 +2540,7 @@
       "exhaust",
       "retain"
     ],
-    "icon": "✴",
+    "icon": "skill",
     "effects": [
       {
         "op": "restoreMana",
@@ -2573,7 +2573,7 @@
     "type": "attack",
     "flavor": "A star traced in hot ash.\n\nThe Observatory's apprentices drew them on the terrace to fix a sighting, and swept them away at dawn. After the eclipse the sigils would not sweep; they had burned into the stone.\n\nThe terrace is covered in them now, none drawn by hand.",
     "keywords": [],
-    "icon": "✴",
+    "icon": "skill",
     "effects": [
       {
         "op": "damage",
@@ -2645,7 +2645,7 @@
     "type": "attack",
     "flavor": "A fleck of burnt chart, flung like a star.\n\nWhen the Observatory's archive burned, the apprentice Hollis gathered its ash in jars, believing the charts might be read again. Some of it could be.\n\nIt reads the same sky, though not the one above the Observatory.",
     "keywords": [],
-    "icon": "•",
+    "icon": "unknown",
     "effects": [
       {
         "op": "damage",
@@ -2715,7 +2715,7 @@
     "type": "skill",
     "flavor": "A coal kept through the cloudy night.\n\nOn nights the reach would not clear, the Astronomer bade one apprentice keep an ember lit beneath the great lens, lest the lens forget warmth. None knew what he meant.\n\nThe lens was cold the morning after the eclipse. The apprentice was gone.",
     "keywords": [],
-    "icon": "🕯",
+    "icon": "burn",
     "effects": [
       {
         "op": "block",
@@ -2783,7 +2783,7 @@
     "type": "skill",
     "flavor": "Divination by what the fire left behind.\n\nA practice the Astronomer forbade as superstition, and the apprentices kept in secret beneath the terrace stair. They burned a copy of each night's chart and read the ash against it.\n\nThe two agreed more often than the Astronomer would have liked.",
     "keywords": [],
-    "icon": "👁",
+    "icon": "target",
     "effects": [
       {
         "op": "draw",
@@ -2832,7 +2832,7 @@
     "type": "attack",
     "flavor": "The catalogue given to the flame at once.\n\nWhen the Starwatch came for the Observatory's records, the apprentices burned them in the courtyard rather than surrender them. The fire rose higher than the tower.\n\nThe Starwatch recorded the fire as a new star, and catalogued it.",
     "keywords": [],
-    "icon": "🔥",
+    "icon": "burn",
     "effects": [
       {
         "op": "damage",
@@ -2907,7 +2907,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "⭕",
+    "icon": "unknown",
     "effects": [
       {
         "op": "block",
@@ -2982,7 +2982,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "✨",
+    "icon": "relic",
     "effects": [
       {
         "op": "applyStatus",
@@ -3064,7 +3064,7 @@
     "type": "attack",
     "flavor": "A shaft of burning ash, cold at its point.\n\nThe Astronomer's first experiment with the ash of starstone, logged as a failure: the ash burned without heat. His apprentices kept the log.\n\nWhere the lance struck the Observatory's wall, frost still forms each night.",
     "keywords": [],
-    "icon": "➳",
+    "icon": "attack",
     "effects": [
       {
         "op": "damage",
@@ -3137,7 +3137,7 @@
     "type": "attack",
     "flavor": "The sky asked to rain ash, and answering.\n\nThe rite is recorded once, in Hollis's hand, on the night after the eclipse. It names no author. It names the Observatory as the altar, and the reach as the congregation.\n\nThe reach has been grey since, and is said to be listening.",
     "keywords": [],
-    "icon": "🌋",
+    "icon": "burn",
     "effects": [
       {
         "op": "damage",
@@ -3215,7 +3215,7 @@
       "exhaust",
       "retain"
     ],
-    "icon": "🐦",
+    "icon": "rest",
     "effects": [
       {
         "op": "heal",
@@ -3278,7 +3278,7 @@
     "keywords": [
       "exhaust"
     ],
-    "icon": "☀",
+    "icon": "madness",
     "effects": [
       {
         "op": "damage",
@@ -3352,7 +3352,7 @@
       "exhaust",
       "retain"
     ],
-    "icon": "♨",
+    "icon": "burn",
     "effects": [
       {
         "op": "gainEnergy",

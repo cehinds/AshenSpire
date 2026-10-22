@@ -10,7 +10,7 @@
 export const coopCards = [
   {
     id: 'rallyingBanner', name: 'Rallying Banner', class: 'colorless', rarity: 'special', cost: 1, type: 'skill',
-    keywords: [], icon: '🚩',
+    keywords: [], icon: 'combat',
     effects: [{ op: 'block', target: 'ally', amount: 10 }],
     textTemplate: 'An ally gains {block} Block.',
     upgrade: { effects: [{ op: 'block', target: 'ally', amount: 14 }] },
@@ -18,7 +18,7 @@ export const coopCards = [
   },
   {
     id: 'sharedFlame', name: 'Shared Flame', class: 'colorless', rarity: 'special', cost: 1, type: 'skill',
-    keywords: ['exhaust'], icon: '✚',
+    keywords: ['exhaust'], icon: 'health',
     effects: [{ op: 'heal', target: 'ally', amount: 7 }],
     textTemplate: 'An ally heals {heal} HP. Exhaust.',
     upgrade: { effects: [{ op: 'heal', target: 'ally', amount: 11 }] },
@@ -26,7 +26,7 @@ export const coopCards = [
   },
   {
     id: 'ashOath', name: "Oath of Ash", class: 'colorless', rarity: 'special', cost: 2, type: 'skill',
-    keywords: ['exhaust'], icon: '🤝',
+    keywords: ['exhaust'], icon: 'coop',
     effects: [
       { op: 'applyStatus', target: 'ally', status: 'strength', stacks: 2 },
       { op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 },

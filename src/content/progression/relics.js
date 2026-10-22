@@ -4,7 +4,7 @@ export const progressionRelics = [
     "id": "progression-emberjaw-token",
     "name": "Emberjaw Token",
     "rarity": "uncommon",
-    "icon": "🦷",
+    "icon": "attack",
     "passives": {
       "modifiers": []
     },
@@ -15,7 +15,7 @@ export const progressionRelics = [
     "id": "progression-cracked-war-anvil",
     "name": "Cracked War Anvil",
     "rarity": "rare",
-    "icon": "⚒️",
+    "icon": "smith",
     "passives": {
       "modifiers": []
     },
@@ -26,7 +26,7 @@ export const progressionRelics = [
     "id": "progression-cinderbound-crown",
     "name": "Cinderbound Crown",
     "rarity": "rare",
-    "icon": "👑",
+    "icon": "relic",
     "passives": {
       "modifiers": []
     },
@@ -37,7 +37,7 @@ export const progressionRelics = [
     "id": "progression-moonwell-lens",
     "name": "Moonwell Lens",
     "rarity": "uncommon",
-    "icon": "🔮",
+    "icon": "relic",
     "passives": {
       "modifiers": []
     },
@@ -48,7 +48,7 @@ export const progressionRelics = [
     "id": "progression-nightglass-rosary",
     "name": "Nightglass Rosary",
     "rarity": "rare",
-    "icon": "📿",
+    "icon": "relic",
     "passives": {
       "modifiers": []
     },
@@ -59,7 +59,7 @@ export const progressionRelics = [
     "id": "progression-fragment-of-the-third-sky",
     "name": "Fragment of the Third Sky",
     "rarity": "rare",
-    "icon": "🌌",
+    "icon": "progression",
     "passives": {
       "modifiers": []
     },
@@ -70,7 +70,7 @@ export const progressionRelics = [
     "id": "progression-whisperglass-die",
     "name": "Whisperglass Die",
     "rarity": "uncommon",
-    "icon": "🎲",
+    "icon": "seed",
     "passives": {
       "modifiers": []
     },
@@ -81,7 +81,7 @@ export const progressionRelics = [
     "id": "progression-purse-of-borrowed-shadows",
     "name": "Purse of Borrowed Shadows",
     "rarity": "rare",
-    "icon": "👝",
+    "icon": "relic",
     "passives": {
       "modifiers": []
     },
@@ -92,7 +92,7 @@ export const progressionRelics = [
     "id": "progression-ember-alms-bowl",
     "name": "Ember Alms Bowl",
     "rarity": "uncommon",
-    "icon": "🥣",
+    "icon": "regen",
     "passives": {
       "modifiers": []
     },
@@ -103,7 +103,7 @@ export const progressionRelics = [
     "id": "progression-ossuary-prayer-wheel",
     "name": "Ossuary Prayer Wheel",
     "rarity": "rare",
-    "icon": "🛞",
+    "icon": "motion",
     "passives": {
       "modifiers": []
     },

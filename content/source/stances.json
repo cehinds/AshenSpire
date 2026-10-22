@@ -3,7 +3,7 @@
     "id": "gorefire",
     "class": "reaver",
     "name": "Gorefire Stance",
-    "icon": "🔥",
+    "icon": "burn",
     "onEnter": [
       {
         "op": "loseHp",
@@ -40,7 +40,7 @@
     "id": "bulwark",
     "class": "reaver",
     "name": "Bulwark Stance",
-    "icon": "🛡",
+    "icon": "shield",
     "onEnter": [
       {
         "op": "block",
@@ -70,7 +70,7 @@
     "id": "brace",
     "class": "reaver",
     "name": "Brace",
-    "icon": "🦶",
+    "icon": "motion",
     "onEnter": [
       {
         "op": "block",
