@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-22
 
-- **Clearer Core combat and editing** ([#2246](https://github.com/cehinds/AshenSpire/pull/2246), `0.7.1.1772`). Enemy previews retain adjusted per-hit values and clearly marked totals during playback and reactions. Restores the opening and class/used-weapon progression, keeps card effects readable, and adds enemy SP, deck and played-card inspection. Combat pauses and animation duration have separate controls. Named icon references, Visual Studio tasks and a manual guide make edits easier.
+- **Clearer Core combat and editing** ([#2246](https://github.com/cehinds/AshenSpire/pull/2246), `0.7.1.1774`). Enemy previews retain adjusted per-hit values and clearly marked totals during playback and reactions. Restores the opening and class/used-weapon progression, keeps card effects readable, and adds enemy SP, deck and played-card inspection. Combat pauses and animation duration have separate controls. Named icon references, Visual Studio tasks and a manual guide make edits easier.
 
 - **Core update contract** ([#2245](https://github.com/cehinds/AshenSpire/pull/2245), `0.7.1.1772`). Defines the approved combat previews, readable cards, class and weapon progression, pacing controls and manual editing boundaries before their implementation.
 
