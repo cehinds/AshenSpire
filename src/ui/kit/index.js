@@ -107,7 +107,7 @@ export const statusText = (text, attrs = {}) => el('span', { ...attrs, class: cl
 export const flavour = (text, attrs = {}) => el('span', { ...attrs, class: cls('as-flavor', attrs.class), text });
 export const prose = (text, attrs = {}) => el('p', { ...attrs, class: cls('as-prose', attrs.class), text });
 export const hairline = (attrs = {}) => el('hr', { ...attrs, class: cls('as-hairline', attrs.class) });
-export const ornament = (attrs = {}) => el('div', { ...attrs, class: cls('as-ornament', attrs.class), 'aria-hidden': 'true' }, el('span', { text: 'skill' }));
+export const ornament = (attrs = {}) => el('div', { ...attrs, class: cls('as-ornament', attrs.class), 'aria-hidden': 'true' }, el('span', {}, engravedIcon('skill')));
 
 // ---- control atoms ----------------------------------------------------------
 /** iconButton({ glyph, label, id, className, attrs }) → the one square box. */

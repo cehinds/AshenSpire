@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { uiIconId, uiIconText } from '../src/content/uiIcons.js';
 import { sigilChoiceButton, characterSigilPreview } from '../src/ui/components/creationCards.js';
-import { kitItem, optionCard } from '../src/ui/kit/index.js';
+import { kitItem, optionCard, ornament } from '../src/ui/kit/index.js';
 import { mountGameOver } from '../src/ui/screens/gameover.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { mountShop } from '../src/ui/screens/shop.js';
@@ -119,4 +119,16 @@ test('the mounted skill rank-up offer uses the named progression icon', () => wi
     rewards: { skillRankUps: [{ skillId: 'item:blade', level: 1 }] },
     onDone() {}, onPersist: () => true, saves });
   expectArt(app.querySelector('[data-kind="skillRankUp"] .glyph'), 'progression');
+}));
+
+
+test('shared ornamental span paints skill artwork without adding glyph sizing or visible IDs', () => withKitDom(({document}) => {
+  const node=ornament({class:'test-rule'});document.body.append(node);
+  assert.equal(node.getAttribute('aria-hidden'),'true');
+  assert.ok(node.classList.contains('test-rule'));
+  const span=node.firstElementChild;
+  assert.equal(span.tagName,'SPAN');assert.equal(span.className,'');
+  assert.equal(span.querySelector('[data-engraved-icon]')?.dataset.engravedIcon,'skill');
+  assert.doesNotMatch(node.outerHTML,/>skill</);
+  assert.equal(node.querySelector('.as-glyph'),null,'ornament keeps its own sizing span');
 }));
