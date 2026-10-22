@@ -1521,7 +1521,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   // ---------- rendering ----------
-  function renderCombatantStage({ fit = true } = {}) {
+  function renderCombatantStage({ fit = true, refreshTargets = true } = {}) {
     $('.field').dataset.playerCell = combat.player.formationCell || '';
     $('.field').dataset.formationPolicy = JSON.stringify(combat.formationPolicy || null);
     $('.field').dataset.formationOccupancy = JSON.stringify(formationOccupancy(combat));
@@ -1529,7 +1529,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (selected || selfArm || selectedFlask != null) selectedCombatantId = null;
     if (selectedCombatantId && selectedCombatantId !== 'player' && !combat.enemies.some((enemy) => enemy.id === selectedCombatantId && enemy.alive)) selectedCombatantId = null;
     renderPlayer();
-    renderEnemies();
+    renderEnemies({ refreshTargets });
     if (fit) {
       battlefieldStage.refresh();
       formationMovement?.refresh();
@@ -1545,10 +1545,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     renderTopbar();
     syncEditLock();
     renderPotionTray();
-    renderCombatantStage({ fit: false });
+    renderCombatantStage({ fit: false, refreshTargets: false });
     renderControls();
     renderCombatTools();
-    renderHand();
+    renderHand({ refreshHitChances: false });
+    // The full render owns one final quote/badge update after the new hand
+    // faces and costs exist. Individual stage/hand renders retain immediate
+    // refreshes; no state or geometry is cached across playback beats.
+    syncHitChances();
     // The tools occupy the incoming hand's top band without consuming width.
     // Measure that authored hand before the single full-board HUD/target fit.
     combatTools.flushGeometry();
@@ -2100,7 +2104,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     } });
   }
 
-  function renderEnemies() {
+  function renderEnemies({ refreshTargets = true } = {}) {
     const row = $('.enemy-row');
     const present = new Set(combat.enemies.map(enemy => enemy.id));
     for (const [id, record] of enemyFrames) if (!present.has(id)) {
@@ -2200,8 +2204,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!record) row.appendChild(box);
       enemyFrames.set(enemy.id, { key: artKey, renderKey, box });
     }
-    syncHitChances();
-    applyTargetLayer();
+    if (refreshTargets) {
+      syncHitChances();
+      applyTargetLayer();
+    }
   }
 
   function renderHand({ refreshHitChances = true } = {}) {
