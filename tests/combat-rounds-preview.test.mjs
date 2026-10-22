@@ -112,8 +112,28 @@ test('a preview-off save is byte-identical to the save before the preview saved 
   // Base abilities add three empty per-combat bookkeeping maps. Independently
   // compared with origin/dev 37c414acd: these are the only twelve differences
   // across the four snapshots; removing exactly those fields preserves its SHA.
-  const legacyText = out.map(text => {
+  // Compared independently with actual Dev eb6: the only changes are ten
+  // public intent/action receipt keys on six actor/move events. Normalize only
+  // those approved event fields to retain both historical snapshot goldens.
+  let receiptKeys = 0;
+  const compatible = out.map(text => {
     const snapshot = JSON.parse(text);
+    for (const event of snapshot.eventLog) {
+      if (event.type === 'enemyActorTurnStarted') {
+        assert.equal(typeof event.intentPreview?.moveId, 'string');
+        delete event.intentPreview; receiptKeys++;
+      } else if (event.type === 'enemyMoveStarted') {
+        assert.equal(event.intentPreview?.moveId, event.moveId);
+        assert.equal(event.actionPreview?.moveId, event.moveId);
+        delete event.intentPreview; delete event.actionPreview; receiptKeys += 2;
+      }
+    }
+    return snapshot;
+  });
+  assert.equal(receiptKeys, 10, 'two actor and four move events carry the approved metadata');
+  const compatibleText = compatible.map(snapshot => JSON.stringify(snapshot)).join('\n');
+  assert.equal(createHash('sha256').update(compatibleText).digest('hex'), 'dda5335e3fdf198f3a00ed7d040e1597a028e75a845941623ab2f215d917ce99');
+  const legacyText = compatible.map(snapshot => {
     for (const key of ['typePlays', 'instanceUsesCombat', 'cardUsesCombat']) {
       assert.deepEqual(snapshot.player.abilityRiders[key], {});
       delete snapshot.player.abilityRiders[key];
@@ -121,7 +141,7 @@ test('a preview-off save is byte-identical to the save before the preview saved 
     return JSON.stringify(snapshot);
   }).join('\n');
   assert.equal(createHash('sha256').update(legacyText).digest('hex'), '3838c6297bf49a523a78e4c35b805bf0b9a3e199e316a47243b8c268cef8a57a');
-  assert.equal(createHash('sha256').update(all).digest('hex'), 'dda5335e3fdf198f3a00ed7d040e1597a028e75a845941623ab2f215d917ce99');
+  assert.equal(createHash('sha256').update(all).digest('hex'), '85aa5931f4ec09a49f7ebf62ab172d024a1828d8d2ed2c6e886dc567d7829778');
 });
 
 test('a preview fight with queued cards saves and restores: queues and paid SP intact, End Turn works after restore', () => {

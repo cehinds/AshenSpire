@@ -61,7 +61,7 @@ test('the default Title offers New Game while preserving the internal quick-star
   const main = readFileSync(`${ROOT}src/main.js`, 'utf8');
   assert.match(main, /onQuickStart: \(\) => \{[\s\S]{0,400}startRunInSlot\(\{ \.\.\.quickStartRunConfig\(registries\), seedString: randomSeedString\(\) \}/);
   assert.match(main, /startClimb\(\{ skipOpening \}\)/);
-  assert.match(main, /if \(!isConfiguredRun\(run\) && !skipOpening && \(!shotState/);
+  assert.match(main, /if \(runSupportsPrologue\(run\) && !skipOpening && \(!shotState/);
 });
 
 test('the Title focus priority reaches New Game when legacy Quick Start is absent', () => {

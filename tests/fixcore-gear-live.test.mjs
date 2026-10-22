@@ -10,7 +10,6 @@ import { applyGameProfileToContent, bindGameProfileRegistries } from '../src/mod
 import { createRunState, initializeRunDerivedStats } from '../src/model/state.js';
 import { gameProfileEquipmentReceipt, gameProfileRatingReceipt } from '../src/model/gameProfileRun.js';
 import { reconcileRunLoadoutHp } from '../src/model/loadout.js';
-import { awardLevelXp, xpToNext } from '../src/model/levelup.js';
 import { withGameProfileService } from '../src/model/gameProfileRun.js';
 import { applyLevelUp } from '../src/model/levelup.js';
 const profile = resolveGameAuthor(JSON.parse(readFileSync(new URL('../games/ashenspire/game.json',import.meta.url))),loadGameProfileCatalog());
@@ -45,10 +44,12 @@ test('equipped resolved values reach live pools/ratings once and survive restore
   assert.equal(restored.maxHp,run.maxHp);
   assert.deepEqual(gameProfileRatingReceipt(reg,restored).totals,ratings.totals);
 });
-test('configured earned attribute entitlement ignores legacy reward toggles and changes live AR', () => {
+test('previously earned Core attribute entitlement remains claimable and changes live AR', () => {
   const run=fresh(), old=gameProfileRatingReceipt(reg,run).totals.ar;
-  const earned=awardLevelXp(reg,run,xpToNext(reg,1),{pointsPerLevel:99,grantStats:false});
-  assert.equal(earned.points,profile.modules.progression.attributePointsPerLevel);
+  assert.equal(profile.modules.progression.characterLevels,false, 'fresh Core no longer queues character attributes');
+  // Grandfather a point earned before skill-only Core progression. New XP
+  // policy must not erase an already earned entitlement or its stat gain.
+  run.level.level=2; run.level.unspentPoints=1;
   withGameProfileService(run,'levelUp',()=>applyLevelUp(reg,run,'strength'));
   assert.equal(gameProfileRatingReceipt(reg,run).totals.ar,old+1);
   assert.equal(run.level.unspentPoints,0);
