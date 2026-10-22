@@ -29,7 +29,7 @@ import { startingKitViews } from '../../model/startingKits.js';
 import { createRunState } from '../../model/state.js';
 import {
   el, pane, row, labelStack, button, buttonRow, optionCard, options, pill, flavour, blocker, eyebrow,
-  segmented, swatch, swatches, iconButton, hairline,
+  segmented, swatch, swatches, iconButton, hairline, glyph,
 } from '../kit/index.js';
 
 const NAME_KEY = 'sote_lan_name';
@@ -343,7 +343,8 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       localsBox.innerHTML = '';
       state.locals.forEach((lp, i) => {
         const nameField = textInput({ class: 'll-name', maxlength: '14', value: lp.name, 'aria-label': `${t('combat.log.role.player')} ${i + 2} name` });
-        const classBtn = button({ label: `${classGlyph(lp.classId)} ${classList.find((c) => c.id === lp.classId).name}`, className: 'll-class' });
+        const classBtn = button({ label: classList.find((c) => c.id === lp.classId).name, className: 'll-class' });
+        classBtn.prepend(glyph(classGlyph(lp.classId)));
         const kitBtn = button({ label: (kitsFor(lp.classId).find((kit) => kit.id === lp.startingKitId) || kitsFor(lp.classId)[0]).label, className: 'll-kit' });
         const tintBtn = swatch({ color: tintCss(lp.tint), label: 'Next accent', className: 'll-tint' });
         const del = iconButton({ glyph: 'close', label: 'Remove this player', className: 'll-del' });

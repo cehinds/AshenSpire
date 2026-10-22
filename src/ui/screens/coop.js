@@ -77,6 +77,7 @@ import { playCombatEffect, playCombatEffectPlan, clearCombatEffects } from '../c
 // the co-op map is the SAME MAP with a second player on it, so the only thing
 // this screen supplies is the VIEWER — who `me` is, and what `me` voted for.
 
+import { engravedIconUrl } from '../components/engravedIcon.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { playPoseOn, stageFor } from '../services/PoseAnimator.js';
 import { resourceAura } from '../combatAura.js';
@@ -766,7 +767,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     const tabs = seats.map((id, i) => {
       const p = snap.party.find((x) => x.id === id) || {};
       const t = tab({ label: p.name || id, selected: i === seatIdx, className: 'seat-tab', attrs: { dataset: { seatI: String(i) } } });
-      t.insertBefore(el('span', { class: 'as-glyph', 'aria-hidden': 'true', style: { color: tintCss(p.tint) }, text: classGlyph(p.classId) }), t.firstChild);
+      t.insertBefore(kitGlyph(classGlyph(p.classId), { style: { color: tintCss(p.tint) } }), t.firstChild);
       if (seatPending(id)) t.appendChild(pill({ label: '●', round: true, on: true, attrs: { class: 'pip', 'aria-label': 'has something to do' } }));
       t.addEventListener('click', () => setSeat(i));
       return t;
@@ -1447,7 +1448,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       const nm = statStrip([
         el('span', { class: 'coop-seat-player', style: { color: tintCss(m.tint) }, text: m.name || p.id }),
         p.id === me ? pill({ label: 'you', round: true, on: true }) : null,
-        chip({ key: 'skill', value: `${p.energy}/${p.energyMax}`, attrs: { class: 'stamina-budget', 'aria-label': `${t('combat.actions')} ${p.energy} of ${p.energyMax}` } }),
+        chip({ keyNode: kitGlyph('skill'), value: `${p.energy}/${p.energyMax}`, attrs: { class: 'stamina-budget', 'aria-label': `${t('combat.actions')} ${p.energy} of ${p.energyMax}` } }),
         pill({ ...seatState, attrs: { class: 'coop-turnflag' } }),
       ], { class: 'centered coop-seat-name' });
       const name = document.createElement('div');
@@ -1799,8 +1800,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         mark: (n, geom) => {
           const voters = votesByNode[n.id] || [];
           if (!voters.length) return '';
-          const glyphs = voters.map((pid) => classGlyph((snap.party.find((p) => p.id === pid) || {}).classId)).join('');
-          return `<text class="vote-pips" x="${geom.x}" y="${geom.y - geom.r - 8}" text-anchor="middle" font-size="12" fill="var(--gold)">${glyphs}</text>`;
+          const labels = voters.map(pid => snap.party.find(p => p.id === pid)?.name || pid);
+          const marks = voters.map((pid, index) => {
+            const player = snap.party.find(p => p.id === pid);
+            const icon = engravedIconUrl(classGlyph(player?.classId));
+            const x = geom.x + (index - (voters.length - 1) / 2) * 14;
+            // SVG images share mapNodeInk's asset URL path; each mark stays at
+            // its voter's centred slot. Unknown art falls back to a seat number.
+            return icon ? `<image href="${esc(icon)}" x="${x - 6}" y="${geom.y - geom.r - 20}" width="12" height="12" aria-hidden="true"/>`
+              : `<text x="${x}" y="${geom.y - geom.r - 8}" text-anchor="middle" font-size="12" fill="var(--gold)" aria-hidden="true">${snap.party.findIndex(p => p.id === pid) + 1}</text>`;
+          }).join('');
+          return `<g class="vote-pips" role="img" aria-label="${esc(`Votes: ${labels.join(', ')}`)}">${marks}</g>`;
         },
         tooltip: (n, { shownType, reachable }) =>
           `<div class="tt-title">${esc(nodeName(shownType))}</div>${nodeBlurb(shownType)}`
