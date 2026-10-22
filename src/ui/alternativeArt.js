@@ -58,7 +58,7 @@ export function alternativeSprite(id, side = 'enemy') {
     // Keep the frame and authored crop in place while the failed image is
     // absent. Retry restores this same responsive picture at its newly resolved URLs.
     const placeholder = document.createElement('span');
-    placeholder.textContent = side === 'player' ? '⚔' : '☠';
+    placeholder.textContent = side === 'player' ? 'Player' : 'Enemy';
     placeholder.setAttribute('role', 'img');
     placeholder.setAttribute('aria-label', art.name);
     placeholder.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;'

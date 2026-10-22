@@ -70,8 +70,12 @@ test('existing HUD purse follows current value and layer visibility', () => {
   withKitDom(() => {
     // This uses the existing model/renderer, including its layer switch.
     const header = amount => runHeaderModel({ cinders: amount }, { cinders: true });
-    assert.match(runHeaderStripHtml(header(37)), /⛁ 37/);
-    assert.match(runHeaderStripHtml(header(49)), /⛁ 49/);
+    for (const amount of [37, 49]) {
+      const rendered = runHeaderStripHtml(header(amount));
+      assert.match(rendered, new RegExp(`aria-label="${amount} cinders"`));
+      assert.match(rendered, /<span class="ck">Cinders<\/span>/);
+      assert.match(rendered, new RegExp(`<span class="cv">${amount}</span>`));
+    }
     assert.equal(runHeaderStripHtml(runHeaderModel({}, { cinders: false })), '');
   });
 });

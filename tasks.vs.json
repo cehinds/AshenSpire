@@ -64,6 +64,62 @@
       "command": "${env.COMSPEC}",
       "args": ["/d", "/c", "npm --prefix editor test"],
       "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Check authored content",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/content-build.mjs --check"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Compile presentation configuration",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/config-build.mjs"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Check presentation configuration",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "npm run validate:config"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Check named icon vocabulary",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node --test tests/ui-icons.test.mjs"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Compile Core game profiles",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/game-config.mjs build"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Check Core game profiles",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/game-config.mjs check"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Build game artifact",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/build-game.mjs"],
+      "workingDirectory": "${workspaceRoot}"
     }
   ]
 }

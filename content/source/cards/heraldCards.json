@@ -12,7 +12,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "✚",
+    "icon": "health",
     "effects": [
       {
         "op": "heal",
@@ -44,7 +44,7 @@
     "keywords": [
       "exhaust"
     ],
-    "icon": "✚",
+    "icon": "health",
     "effects": [
       {
         "op": "restoreMana",
@@ -73,7 +73,7 @@
     "type": "skill",
     "flavor": "Second office of the birth-rite.\n\nThe flame-mark was pressed into the newborn's wrist, and the parents answered in the child's stead. The Chapel called it a promise and a privilege.\n\nIn the birth-roll of the crown-born wards, beside the Herald's name, one word is struck through.",
     "keywords": [],
-    "icon": "🩸",
+    "icon": "bleed",
     "effects": [
       {
         "op": "loseHp",
@@ -117,7 +117,7 @@
     "type": "attack",
     "flavor": "Blessing of the Feral Ember.\n\nTaken from the Chapel's blessing of the sick and turned to what the Feral Ember holds its truer purpose: to give warmth and keep no account. The Saints name it heresy.\n\nThe converts say the touch is warm. None have said otherwise.",
     "keywords": [],
-    "icon": "🦠",
+    "icon": "blight",
     "effects": [
       {
         "op": "damage",
@@ -157,7 +157,7 @@
     "type": "attack",
     "flavor": "Penance of the Chapel's novices.\n\nPerformed with a knotted cord upon the bare back. The Saints taught that pain offered freely spares the fire the trouble of taking it. Novice Wen kept the penance daily for three years.\n\nShe wrote that she could not say whom it had spared.",
     "keywords": [],
-    "icon": "⛓",
+    "icon": "block",
     "effects": [
       {
         "op": "loseHp",
@@ -197,7 +197,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "🙏",
+    "icon": "rest",
     "effects": [
       {
         "op": "block",
@@ -235,7 +235,7 @@
     "type": "skill",
     "flavor": "Closing prayer of the funeral rite.\n\nSpoken over the ledger once a name was entered, and said to return a share of warmth to the mourners. Novices learned it before they could read. The last novice says it each night.\n\nThe ledger was lost in the Burning. There is no name to close.",
     "keywords": [],
-    "icon": "📿",
+    "icon": "relic",
     "effects": [
       {
         "op": "applyStatus",
@@ -278,7 +278,7 @@
     "type": "attack",
     "flavor": "Offering at the graves of the crown-born.\n\nUpon the anniversary of their writing, mourners opened the grave and set a coal beside what remained. The Chapel ended the rite in the years of the Marking, saying the dead no longer needed company.\n\nBy then, the mourners had found the graves colder than they ought to be.",
     "keywords": [],
-    "icon": "🪦",
+    "icon": "history",
     "effects": [
       {
         "op": "loseHp",
@@ -317,7 +317,7 @@
     "type": "skill",
     "flavor": "Bleeding before the blessing of bread.\n\nThe Saints bled into the bowl first, that nothing be taken from the congregation the Saint had not first given. The Chapel taught it as humility.\n\nOn the days of the rite, the bread ran short, and the Saints ate first.",
     "keywords": [],
-    "icon": "🩸",
+    "icon": "bleed",
     "effects": [
       {
         "op": "loseHp",
@@ -358,7 +358,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "☣",
+    "icon": "blight",
     "effects": [
       {
         "op": "applyStatus",
@@ -388,7 +388,7 @@
     "type": "attack",
     "flavor": "Rite of gathering the failing.\n\nPerformed in the sick-wards of the crown-born, that the dying need not linger. The Wandering Physician, who served in those wards, kept his own list of those gathered. The ward rolls name none of them.\n\nMany he had expected to recover.",
     "keywords": [],
-    "icon": "🗡",
+    "icon": "sword",
     "effects": [
       {
         "op": "damage",
@@ -460,7 +460,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "➕",
+    "icon": "health",
     "effects": [
       {
         "op": "heal",
@@ -490,7 +490,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "🛡",
+    "icon": "shield",
     "effects": [
       {
         "op": "block",
@@ -540,7 +540,7 @@
     "keywords": [
       "exhaust"
     ],
-    "icon": "🥀",
+    "icon": "unknown",
     "effects": [
       {
         "op": "loseHp",
@@ -588,7 +588,7 @@
       "exhaust",
       "retain"
     ],
-    "icon": "🌺",
+    "icon": "skill",
     "effects": [
       {
         "op": "applyStatus",
@@ -661,7 +661,7 @@
     "type": "attack",
     "flavor": "Harvest rite of the Chapel.\n\nA gilded sickle, blessed and carried through the fields of the crown-born. The Chapel found the harvest beautiful, and built a chapel to it. The rubric lists what the sickle is to cut, in the fields and after.\n\nThe second half of the list is written in the old script.",
     "keywords": [],
-    "icon": "🌾",
+    "icon": "regen",
     "effects": [
       {
         "op": "damage",
@@ -700,7 +700,7 @@
     "type": "power",
     "flavor": "Crown of briar, worn at the feast of the Founding.\n\nIn memory of the first Saint, who by Chapel tradition wore thorns in the caldera; each thorn stood for a name carried. In the Long Winter, the Thorn Matriarch grew a crown of her own.\n\nThe remnant counts her a Saint. She was a Warden, and never swore to them.",
     "keywords": [],
-    "icon": "🌿",
+    "icon": "regen",
     "effects": [
       {
         "op": "applyStatus",
@@ -731,7 +731,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "🕊",
+    "icon": "rest",
     "effects": [
       {
         "op": "applyStatus",
@@ -761,7 +761,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "🌞",
+    "icon": "progression",
     "effects": [
       {
         "op": "applyStatus",
@@ -804,7 +804,7 @@
     "type": "attack",
     "flavor": "Office of the censer-bearer.\n\nThe Saints taught that the censer's smoke opened doors to the fire's blessing. When the Chapel set the office down, the Feral Ember took it up, and bears the censers lit through the weald.\n\nThe doors open for them more readily than ever they did for the Saints.",
     "keywords": [],
-    "icon": "🐀",
+    "icon": "unknown",
     "effects": [
       {
         "op": "damage",
@@ -852,7 +852,7 @@
     "type": "attack",
     "flavor": "Giving of blood, until the giver is light enough to rise.\n\nPerformed by the Saints in the last extremity, when a hearth faltered and no other offering remained. The Chapel's record names those who performed it and rose.\n\nThe graves assigned to them were found empty.",
     "keywords": [],
-    "icon": "🔻",
+    "icon": "weak",
     "effects": [
       {
         "op": "loseHp",
@@ -891,7 +891,7 @@
     "type": "power",
     "flavor": "Marks of the Saints.\n\nWorn openly upon hands and brow, and held by the Chapel to be a favour of the fire. Novices learned they appeared more reliably upon Saints with a knife at hand.\n\nNovice Wen wrote so plainly, then begged forgiveness for it, twice.",
     "keywords": [],
-    "icon": "🩹",
+    "icon": "health",
     "effects": [
       {
         "op": "applyStatus",
@@ -919,7 +919,7 @@
     "type": "attack",
     "flavor": "Penitent's walk down the nave.\n\nScourge in hand, while the congregation answered each blow. The number of blows was set by the number of names written that season. In the last seasons before the Burning, the rite lasted the night.\n\nWe walk the nave with the scourge, and the pews answer.",
     "keywords": [],
-    "icon": "🌊",
+    "icon": "mana",
     "effects": [
       {
         "op": "damage",
@@ -962,7 +962,7 @@
       "exhaust",
       "retain"
     ],
-    "icon": "🍂",
+    "icon": "relic",
     "effects": [
       {
         "op": "heal",
@@ -1033,7 +1033,7 @@
       "exhaust",
       "retain"
     ],
-    "icon": "🌸",
+    "icon": "skill",
     "effects": [
       {
         "op": "heal",
@@ -1065,7 +1065,7 @@
     "type": "skill",
     "flavor": "Red moths of the Furnace Chapel's ossuary.\n\nThey dwelt among the bones for as long as the Chapel kept records, and were called the ossuary's keepers. After the Burning, they left the ossuary for the reach.\n\nWe loose the red moths from the ossuary; they know the way.",
     "keywords": [],
-    "icon": "🦋",
+    "icon": "motion",
     "effects": [
       {
         "op": "loseHp",
@@ -1106,7 +1106,7 @@
     "type": "power",
     "flavor": "Tithe of life, owed by each crown-born family.\n\nOne day in seven, given to the Chapel's work, as the dead had given all their days. In the years of the Marking, the tithe was extended to newborns, who could not work.\n\nWe bring the cradle where the bier once stood.",
     "keywords": [],
-    "icon": "⚰",
+    "icon": "history",
     "effects": [
       {
         "op": "applyStatus",
@@ -1137,7 +1137,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "🔺",
+    "icon": "strength",
     "effects": [
       {
         "op": "damage",
@@ -1191,7 +1191,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "💥",
+    "icon": "attack",
     "effects": [
       {
         "op": "damage",
@@ -1264,7 +1264,7 @@
       "exhaust",
       "retain"
     ],
-    "icon": "🕯",
+    "icon": "burn",
     "effects": [
       {
         "op": "heal",
@@ -1298,7 +1298,7 @@
     "type": "power",
     "flavor": "Creed of the Feral Ember.\n\nEach wound is a door the fire walks through. Its priests bless wounds rather than bind them, and hold that the Chapel knew as much, and hid it behind a ledger.\n\nIts converts do not live long. More come each week.",
     "keywords": [],
-    "icon": "⚡",
+    "icon": "poise",
     "effects": [
       {
         "op": "applyStatus",
@@ -1327,7 +1327,7 @@
     "type": "attack",
     "flavor": "Reaping of the field of the marked.\n\nSo the liturgy names the gathering of names at the close of a plague year. The Saints went out with sickles and ledgers, and the rite is spoken throughout as thanksgiving.\n\nWe reap the field of the marked, and give thanks.",
     "keywords": [],
-    "icon": "🌾",
+    "icon": "regen",
     "effects": [
       {
         "op": "damage",
@@ -1379,7 +1379,7 @@
     "type": "attack",
     "flavor": "Small pain, offered in advance.\n\nTaught to crown-born children as good citizenship; the children called it paying early. The habit outlived the Chapel among the Forsaken hamlets, learned from refugees after the Burning.\n\nThey keep it without knowing whom they pay.",
     "keywords": [],
-    "icon": "🩸",
+    "icon": "bleed",
     "effects": [
       {
         "op": "loseHp",
@@ -1418,7 +1418,7 @@
     "type": "attack",
     "flavor": "Touch that withers growth.\n\nPermitted by the rubric upon the weeds of the weald's field-shrines, and nothing else. In the years the Field Flame dimmed, a clause was added forbidding its use upon crops.\n\nThe clause is dated after three harvests had failed, and signed by a Saint absent from the roll of Saints.",
     "keywords": [],
-    "icon": "🦠",
+    "icon": "blight",
     "effects": [
       {
         "op": "damage",
@@ -1458,7 +1458,7 @@
     "type": "attack",
     "flavor": "Rite for when the bier is already made.\n\nThe rubric bids the officiant pray louder, and nothing more. The Saints held that the fire heeds the strength of a voice; the novices, that the rubric was written for the family.\n\nThe Herald has performed it upon themselves.",
     "keywords": [],
-    "icon": "🔺",
+    "icon": "strength",
     "effects": [
       {
         "op": "damage",
@@ -1522,7 +1522,7 @@
     "type": "power",
     "flavor": "The Chapel's name for the night of the Burning.\n\nThe night the fire read the names of the crown-born all at once. The novices say the censers swung untouched through it, as the congregation burned around them. The censers of the Furnace Chapel have not stopped since.\n\nWe kept the censer swinging when the hearth went dark.",
     "keywords": [],
-    "icon": "🌊",
+    "icon": "mana",
     "effects": [
       {
         "op": "applyStatus",
@@ -1551,7 +1551,7 @@
     "type": "attack",
     "flavor": "Bowl filled with the officiant's own blood.\n\nFrom the Chapel's first years, when the Saints were few; revived by the Furnace Saint after the Burning, when they were fewer. He performs it daily, and grows thin.\n\nThe bowl is always full.",
     "keywords": [],
-    "icon": "⚰",
+    "icon": "history",
     "effects": [
       {
         "op": "loseHp",
@@ -1590,7 +1590,7 @@
     "type": "power",
     "flavor": "Title of the Feral Ember's preachers.\n\nThe Chapel gave the same name to the novice who walked before a bier with a bell. The Feral Ember holds that the word was never the Chapel's to give, but the fire's.\n\nWe go before the fire, and it follows us gladly.",
     "keywords": [],
-    "icon": "❀",
+    "icon": "blight",
     "effects": [
       {
         "op": "applyStatus",
@@ -1618,7 +1618,7 @@
     "type": "attack",
     "flavor": "Scourge turned upon one's own rot.\n\nA discipline the Herald took up after the Burning: to cut the Blight from their own flesh and turn it outward. The Chapel remnant condemns it as heresy against the fire's gift.\n\nTwice the remnant has sent a novice to ask how it is done.",
     "keywords": [],
-    "icon": "🦠",
+    "icon": "blight",
     "effects": [
       {
         "op": "damage",
@@ -1670,7 +1670,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "🙏",
+    "icon": "rest",
     "effects": [
       {
         "op": "heal",
@@ -1712,7 +1712,7 @@
     "keywords": [
       "retain"
     ],
-    "icon": "📿",
+    "icon": "relic",
     "effects": [
       {
         "op": "heal",

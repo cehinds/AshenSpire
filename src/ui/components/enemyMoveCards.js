@@ -6,6 +6,6 @@ export function renderEnemyMoveCards(cards) {
     name: card.name, description: card.detail, meta: card.meta,
     selected: card.active, arrow: false, tag: 'article',
     className: 'enemy-move-card',
-    attrs: { 'data-move-id': card.moveId, 'aria-label': `${card.name}. ${card.meta}. ${card.detail}` },
+    attrs: { 'data-move-id': card.moveId, ...(card.cardId ? { 'data-enemy-card-id': card.cardId } : {}), 'aria-label': `${card.name}. ${card.meta}. ${card.detail}` },
   })), { class: 'enemy-move-cards', 'aria-label': 'Enemy move set' });
 }

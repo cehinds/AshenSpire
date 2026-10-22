@@ -27,7 +27,7 @@ import { equippedIn, slotHand, gripOf } from '../model/loadout.js';
 import { ownerItemRef } from '../model/cardMounts.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 import { awardSkillXp, bankSkillXp, armourSkillId, DUAL_WIELD_SKILL } from '../model/skills.js';
-import { configuredSkillProgression } from '../model/gameProfileProgression.js';
+import { configuredSkillProgression, configuredSkillXpMultiplier } from '../model/gameProfileProgression.js';
 import { awardClassXp } from '../model/classTree.js';
 
 const FOCUS_ITEM_TYPE = 'item:magic-focus';
@@ -306,8 +306,10 @@ const settledConfiguredCombats = new WeakSet();
 export function settleConfiguredSkillProgression(registries, run, combat, { victory = false, pool = 'normal', receipt = skillXpReceipt(combat), classMultiplier = 1 } = {}) {
   if (!configuredSkillProgression(run) || settledConfiguredCombats.has(combat)) return { trackAwards: [], classAward: null };
   settledConfiguredCombats.add(combat);
+  const multiplier = configuredSkillXpMultiplier(run);
+  const scaledReceipt = Object.fromEntries(Object.entries(receipt).map(([id, amount]) => [id, Math.floor(amount * multiplier)]));
   return {
-    trackAwards: applySkillXp(registries, run, receipt, { queueRewards: false }),
-    classAward: awardClassXp(registries, run, { victory, pool, multiplier: classMultiplier, queueRewards: false }),
+    trackAwards: applySkillXp(registries, run, scaledReceipt, { queueRewards: false }),
+    classAward: awardClassXp(registries, run, { victory, pool, multiplier: classMultiplier * configuredSkillXpMultiplier(run, 'class'), queueRewards: false }),
   };
 }

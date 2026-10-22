@@ -111,21 +111,34 @@ test('C8 accepts the actual deferred full fit and synchronous action-only frame 
   assert.deepEqual(combatC8(renderingReceipt.combat), []);
 });
 
+test('C8 accepts equivalent named option ordering while preserving refresh ownership', () => {
+  const reordered = renderingReceipt.combat
+    .replace('fit = true, refreshTargets = true', 'refreshTargets = true, fit = true')
+    .replace('fit: false, refreshTargets: false', 'refreshTargets: false, fit: false');
+  assert.notEqual(reordered, renderingReceipt.combat);
+  assert.deepEqual(combatC8(reordered), []);
+});
+
 for (const [label, name, mutate] of [
   ['missing player frames', 'renderCombatantStage', body => body.replace('renderPlayer();', '')],
-  ['missing enemy frames', 'renderCombatantStage', body => body.replace('renderEnemies();', '')],
+  ['missing enemy frames', 'renderCombatantStage', body => body.replace(/renderEnemies\([^;]*\);/, '')],
   ['disabled action-only default fit', 'renderCombatantStage', body => body.replace('fit = true', 'fit = false')],
   ['missing action-only stage refresh', 'renderCombatantStage', body => body.replace('battlefieldStage.refresh();', '')],
   ['missing action-only formation refresh', 'renderCombatantStage', body => body.replace('formationMovement?.refresh();', '')],
   ['duplicate action-only fit', 'renderCombatantStage', body => body.replace('battlefieldStage.refresh();', 'battlefieldStage.refresh(); battlefieldStage.refresh();')],
   ['unguarded action-only fit', 'renderCombatantStage', body => body.replace('if (fit)', 'if (true)')],
-  ['eager full-render frame fit', 'render', body => body.replace('renderCombatantStage({ fit: false });', 'renderCombatantStage();')],
-  ['missing full-render frame creation', 'render', body => body.replace('renderCombatantStage({ fit: false });', '')],
+  ['eager full-render frame fit', 'render', body => body.replace(/renderCombatantStage\(\{[^;]*\);/, 'renderCombatantStage();')],
+  ['missing full-render frame creation', 'render', body => body.replace(/renderCombatantStage\(\{[^;]*\);/, '')],
   ['missing final full fit', 'render', body => body.replace('battlefieldStage.refresh();', '')],
   ['duplicate final full fit', 'render', body => body.replace('battlefieldStage.refresh();', 'battlefieldStage.refresh(); battlefieldStage.refresh();')],
   ['missing final formation fit', 'render', body => body.replace('formationMovement?.refresh();', '')],
-  ['tools measured before the hand', 'render', body => body.replace('    renderHand();', '').replace('    combatTools.flushGeometry();', '    combatTools.flushGeometry();\n    renderHand();')],
+  ['tools measured before the hand', 'render', body => body.replace(/(    renderHand\([^;]*\);)([\s\S]*?)    combatTools\.flushGeometry\(\);/, (_all, hand, between) => '    combatTools.flushGeometry();\n' + hand + between)],
   ['missing tools measurement', 'render', body => body.replace('combatTools.flushGeometry();', '')],
+  ['missing final odds', 'render', body => body.replace('syncHitChances();', '')],
+  ['duplicate final odds', 'render', body => body.replace('syncHitChances();', 'syncHitChances(); syncHitChances();')],
+  ['odds after field fit', 'render', body => body.replace('    syncHitChances();', '').replace('    battlefieldStage.refresh();', '    battlefieldStage.refresh();\n    syncHitChances();')],
+  ['eager hand odds during full render', 'render', body => body.replace('refreshHitChances: false', 'refreshHitChances: true')],
+  ['disabled action-only target refresh', 'renderCombatantStage', body => body.replace('refreshTargets = true', 'refreshTargets = false')],
   ['comment-only player frames', 'renderCombatantStage', body => body.replace('renderPlayer();', '/* renderPlayer(); */')],
   ['string-only final fit', 'render', body => body.replace('battlefieldStage.refresh();', '"battlefieldStage.refresh();";')],
 ]) test(`C8 rejects ${label} in the actual render source`, () => {

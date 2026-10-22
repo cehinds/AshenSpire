@@ -1,3 +1,5 @@
+import { engravedIcon } from '../components/engravedIcon.js';
+import { uiIconText } from '../../content/uiIcons.js';
 import { logicalViewport, viewViewportBox } from '../viewViewport.js';
 import { characterSheetModel } from '../models/CharacterSheetModel.js';
 import { skillTrackButton } from './characterSheet.js';
@@ -469,10 +471,10 @@ function modSummary(registries, piece) {
 //
 /** A piece's thumbnail in an ArtWell; the art dies quietly if the file is
  *  missing — the single-file dist and file:// play both depend on this. */
-function pieceArt(piece, fallback = '⚔') {
+function pieceArt(piece, fallback = 'attack') {
   const well = artWell({ src: thumbSrc(piece), alt: '', small: true });
   const image = well.querySelector('img');
-  swapOnError(image, () => Object.assign(document.createElement('span'), { textContent: piece.icon || fallback }));
+  swapOnError(image, () => engravedIcon(piece.icon || fallback) || Object.assign(document.createElement('span'), { textContent: uiIconText(piece.icon || fallback) }));
   return well;
 }
 
@@ -579,7 +581,7 @@ function inventoryReveal(registries, row, {
   } else if (item.artAsset) {
     art = { kind: 'image', value: assetUrl(item.artAsset) };
   } else {
-    art = { kind: 'icon', value: item.icon || '◆' };
+    art = { kind: 'icon', value: item.icon || 'skill' };
   }
   const description = row.category === 'Relic'
     ? relicText(item, registries)
@@ -895,7 +897,7 @@ export function mountEquipment(host, {
   // The 2026-08-23 disclosure correction removed the hold grips and their
   // window listeners; Escape still has to leave through every close road.
   // THE DECK'S FLOOR GATES EVERY ROAD THE PLAYER TAKES OUT (plan phase 3b,
-  // proposal §5): Back, the ✕, Escape and the tap outside all go through
+  // proposal §5): Back, the close, Escape and the tap outside all go through
   // `leave`, which asks the model (loadoutLeaveRefusal) and shows its sentence
   // in place instead of closing. `close` itself stays unconditional — it is
   // also the teardown a host calls when a fight starts, and a door that can
@@ -925,7 +927,7 @@ export function mountEquipment(host, {
   // I nearly ruled the other way, and the measurement is why I did not.
   // Against it: on a phone there is barely any backdrop to tap — 7.8 px of
   // veil down each side and a 33.77 px band top and bottom at 390x844, all
-  // four under the tap floor, so this is NOT the phone's exit. The ✕ is, and
+  // four under the tap floor, so this is NOT the phone's exit. The close is, and
   // it is pinned and floored. For it: the same measurement says the accident
   // it risks is just as small, on desktop the strips are 24-60 px and a mouse
   // hits them on purpose, and — the part that decided it — ESCAPE ALREADY
@@ -1291,8 +1293,8 @@ export function mountEquipment(host, {
     const selected = armamentGridSelection
       && armamentGridSelection.slotId === slot.id
       && armamentGridSelection.index === position.index;
-    const art = position.state === 'locked' ? artWell({ glyph: '🔒', small: true })
-      : position.summary.item ? pieceArt(position.summary.item, position.summary.item.icon || '◆')
+    const art = position.state === 'locked' ? artWell({ glyph: 'lock', small: true })
+      : position.summary.item ? pieceArt(position.summary.item, position.summary.item.icon || 'skill')
         : artWell({ glyph: '＋', small: true });
     const card = optionCard({
       art, name: position.state === 'locked' ? 'Locked' : position.summary.name, badge: positionBadge(position),
@@ -1361,7 +1363,7 @@ export function mountEquipment(host, {
         compared.unchanged
           ? statusText(t('armoury.compare.unchanged'), { class: 'armoury-compare-roles' })
           : kitLine(compared.roles.map((r) => kitItem({
-            glyph: '◆', name: t('armoury.compare.role', { label: r.label, before: r.before, after: r.after }),
+            glyph: 'skill', name: t('armoury.compare.role', { label: r.label, before: r.before, after: r.after }),
           })), { class: 'armoury-compare-roles' }),
       );
     }
@@ -1958,7 +1960,7 @@ export function mountEquipment(host, {
       group('Resources', [[t('combat.actions'), derived('energy')], ['Hand', derived('draw')], ['Resistance', '—']]),
       group('Run', [['Fights won', runStats.fightsWon || 0], ['Damage dealt', runStats.damageDealt || 0], ['Damage taken', runStats.damageTaken || 0]]),
       detailCard({ eyebrow: 'Relics', muted: true, attrs: { class: 'armoury-stats-group' }, children: relicNames.length
-        ? kitLine(relicNames.map((name) => kitItem({ glyph: '◆', name })))
+        ? kitLine(relicNames.map((name) => kitItem({ glyph: 'skill', name })))
         : flavour('0 equipped') }),
       equipmentReceiptPanel(surface),
     ]);
@@ -2379,11 +2381,11 @@ export function mountEquipment(host, {
     ];
     const tagLine = kitLine(tagRows.length
       ? tagRows.map((tag) => {
-        const item = kitItem({ glyph: '◆', name: tag.label });
+        const item = kitItem({ glyph: 'skill', name: tag.label });
         attachTooltip(item, () => `<div class="tt-title">${esc(tag.label)}</div><p>${esc(tag.description)}</p>`);
         return item;
       })
-      : [kitItem({ glyph: '◆', name: 'No tags authored.' })], { class: 'armoury-armament-tag-details' });
+      : [kitItem({ glyph: 'skill', name: 'No tags authored.' })], { class: 'armoury-armament-tag-details' });
     const detail = el('section', { class: 'armoury-armament-details', dataset: { component: 'armoury.armamentDetailPane' } }, [
       flavour(item.blurb || 'No lore text authored.', { class: 'armoury-armament-lore' }),
       ...facts,
@@ -2492,7 +2494,7 @@ export function mountEquipment(host, {
         sortable: region.id === 'cards',
       })),
     });
-    // W1e footer: Back bottom-left (leaves, like the ✕ and Escape); the
+    // W1e footer: Back bottom-left (leaves, like the close and Escape); the
     // selected item's action bottom-right when there is one.
     const back = button({ label: t(picking ? 'armoury.destination.back' : 'common.back'), role: 'exit', className: 'armoury-back', attrs: { dataset: { focusable: 'true' } } });
     back.addEventListener('click', () => { if (picking) { clearInventorySelection(); draw(); } else leave(); });

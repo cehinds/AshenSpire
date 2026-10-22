@@ -284,12 +284,12 @@ export const ACTIONS = Object.freeze({
     lives: 'src/ui/screens/title.js',
     surface: 'title',
     // THE GAME'S OLDEST SECOND BEAT, COLLAPSED (2026-08-14). It shipped as a
-    // THIRD form — title.js's own two-click, self-resetting arm ("✕" →
+    // THIRD form — title.js's own two-click, self-resetting arm ("Close" →
     // "Delete?") with a hard-coded 2500 ms — deaf to `balance.ui.holdConfirm`
     // in every position: `off` still demanded two clicks, `long` lengthened
     // nothing. The exemption's honest content was only ever "nothing could
     // watch a rewrite run"; `?shot=title` (main.js) ended that, and the
-    // derivation's own ruling took over. The mistake at the ✕ is POINTING —
+    // derivation's own ruling took over. The mistake at the Close button is POINTING —
     // it shares `.slot-actions` with CONTINUE, one thumb-width away, and the
     // slot card beside it already states everything a chooser would need to
     // see — so the hold is the right form, and the two-click's second look
@@ -306,7 +306,7 @@ export const ACTIONS = Object.freeze({
     // left standing: this file is a table an instrument reads back against the
     // page, and a row carrying a stale parenthetical is the second copy of a
     // rule, disagreeing with the first.
-    note: 'the ✕ sits beside CONTINUE in the same .slot-actions column; the beat is the same on '
+    note: 'the Close button sits beside CONTINUE in the same .slot-actions column; the beat is the same on '
       + 'pointer, keyboard and pad — the dial is the only switch (S7, 2026-08-17)',
   },
 

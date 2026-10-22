@@ -13,14 +13,14 @@ export function quickAccessPanelModel(controls, layers = { armoury: true, menu: 
     ...(layers.armoury ? [actionControlModel(UI.armouryControl, {
       id: controls.armouryId,
       label: 'Armoury',
-      glyph: '⚒',
+      glyph: 'smith',
       hint: 'Armoury',
       command: 'open-armoury',
     })] : []),
     ...(layers.menu ? [actionControlModel(UI.quickMenuControl, {
       id: controls.menuId,
       label: t('settings.row.quickNav'),
-      glyph: '☰',
+      glyph: 'menu',
       hint: controls.menuHint,
       command: 'open-quick-menu',
     })] : []),

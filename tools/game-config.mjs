@@ -3,6 +3,7 @@
 import { readFileSync, writeFileSync, mkdirSync, renameSync, unlinkSync, existsSync, realpathSync, readdirSync } from 'node:fs';
 import { resolve, dirname, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { holdForCli } from './lib/build-lock.mjs';
 import { catalogJSONExpression } from './catalog-json.mjs';
 import { compileBaseCards, BASE_CARD_OUTPUT } from './base-cards.mjs';
 import { resolveGameAuthor, canonicalGameJSON, gameDigest, dataClone } from '../engine/kernel/gameConfig.js';
@@ -100,14 +101,19 @@ export function compileGameProfiles() {
   return {catalog,authors,profiles,outputs:{[GENERATED]:generated,[LOCK]:lock}};
 }
 function atomicWrite(path, text) {
-  const full=resolve(ROOT,path);mkdirSync(dirname(full),{recursive:true});const temporary=`${full}.${process.pid}.tmp`;
+  const full=resolve(ROOT,path);
+  if(existsSync(full)&&readFileSync(full,'utf8')===text)return;
+  mkdirSync(dirname(full),{recursive:true});const temporary=`${full}.${process.pid}.tmp`;
   try {writeFileSync(temporary,text,{flag:'wx'});renameSync(temporary,full);} finally {if(existsSync(temporary))unlinkSync(temporary);}
 }
-function main(args) {
+async function main(args) {
   const command=args.shift()||'validate',options={};
   while(args.length) { const arg=args.shift();if(arg==='--portable')options.portable=true;else if(['--input','--out'].includes(arg)){if(!args.length||args[0].startsWith('--'))throw new Error(`${arg} requires a path`);options[arg.slice(2)]=args.shift();}else throw new Error(`Unknown argument ${arg}`); }
   if(!['validate','build','check','export','apply'].includes(command))throw new Error('Usage: game-config.mjs validate|build|check|export|apply [--input PATH] [--out PATH] [--portable]');
-  if (command === 'build') atomicWrite(BASE_CARD_OUTPUT, compileBaseCards());
+  if (command === 'build') {
+    await holdForCli(ROOT, 'game-config');
+    atomicWrite(BASE_CARD_OUTPUT, compileBaseCards());
+  }
   const inputText=options.input?readFileSync(resolve(options.input),'utf8'):null;
   const author=inputText !== null ? JSON.parse(inputText) : json('games/ashenspire/game.json');
   const catalog=loadGameProfileCatalog();
@@ -124,4 +130,4 @@ function main(args) {
   if(command==='export')atomicWrite(options.out||'build/game-config/ashenspire/resolved.json',JSON.stringify(profile,null,2)+'\n');
   return {valid:true,command,id:profile.id,hash:profile.hash,modules:Object.keys(profile.modules).filter(id=>profile.modules[id]),portability:profile.portability};
 }
-if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){try{process.stdout.write(JSON.stringify(main(process.argv.slice(2)),null,2)+'\n');}catch(error){process.stderr.write(`${error.message}\n`);process.exitCode=1;}}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){try{process.stdout.write(JSON.stringify(await main(process.argv.slice(2)),null,2)+'\n');}catch(error){process.stderr.write(`${error.message}\n`);process.exitCode=1;}}

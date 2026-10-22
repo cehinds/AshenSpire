@@ -263,12 +263,12 @@ export function renderCard(registries, ref, opts = {}) {
   // A ZERO ACTION COST IS A REAL, READABLE COST — it is the whole point of a
   // free card, and the fan's left edge is where a player counts what a turn can
   // afford. Dropping the row at 0 rendered rogueShiv (cost: 0) and its kin with
-  // no ◆ at all, which reads as "no action cost printed" — i.e. unknown — not
+  // no skill at all, which reads as "no action cost printed" — i.e. unknown — not
   // as "free". Only the SECONDARY pools elide at zero: a card that spends no
   // stamina and no mana should not print two empty rails.
   const costRows = [
-    ['stamina', 'cost stamina-cost', '◆', cost, true],
-    ['mana', 'mana-cost', '♦', manaCost, false],
+    ['stamina', 'cost stamina-cost', 'skill', cost, true],
+    ['mana', 'mana-cost', 'MP', manaCost, false],
   ].filter(([, , , value, keepZero]) => value != null && (keepZero || value !== 0));
   el.dataset.wireframe = 'WC1';
   // THE SAME THREE LEVELS THE EQUIPMENT FACE USES, and deliberately the same
@@ -445,7 +445,7 @@ export function renderCard(registries, ref, opts = {}) {
   el.setAttribute?.('aria-label',accessibleLabel);
   // EXACTLY THE TWO CARDS WHOSE LEVEL CHANGED. A selection lights one card and
   // douses one card, and cardInspection.js fires both events on the card they
-  // concern, so each face repaints itself. Nothing sweeps the document —
+  // concern, so each face updates its level. Nothing sweeps the document —
   // `document.querySelectorAll` is what dev deliberately deleted when the
   // selection store was extracted (see the header of cardSelection.js), and a
   // sweep is also how a card removed from the DOM kept being reconciled.
@@ -457,8 +457,16 @@ export function renderCard(registries, ref, opts = {}) {
     const restate = () => {
       const next = levelNow();
       if (next === drawn) return;
+      const changesFace = (next === 'inspect') !== (drawn === 'inspect');
       drawn = next;
-      paint(drawn);
+      if (changesFace) paint(drawn);
+      else {
+        // Glance and focus share artwork and rules. Keep their nodes and input
+        // ownership; only inspection changes the printed face. The new level
+        // can still change its CSS size or line budget, so retain the fit pass.
+        el.dataset.level = drawn;
+        scheduleCardFits([el]);
+      }
     };
     el.addEventListener('cardinspectionselect', restate);
     el.addEventListener('cardinspectiondouse', restate);

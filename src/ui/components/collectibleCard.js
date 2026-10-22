@@ -20,7 +20,7 @@ function presentation(registries, item, kind, { charges = null } = {}) {
   return {
     id: item.id, name: item.name, cardKind: kind.toLowerCase(), type: usage ? `${kind} · ${usage}` : kind,
     art: (!potion && relicArtUrl(item)) || (item.artAsset ? assetUrl(item.artAsset) : null),
-    glyph: potion ? '⚗︎' : '◆',
+    glyph: potion ? 'flask-health' : 'skill',
     accent: item.tint || (potion ? '#87b5d0' : '#d0ac5d'),
     typeExplanation: potion ? 'A carried potion. Use it through the potion action menu.'
       : `A relic whose authored effects apply while owned.${variant.usage ? ` ${variant.usage}.` : ''}`,

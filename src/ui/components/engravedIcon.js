@@ -1,18 +1,14 @@
 // Original icon geometry from the reviewed player-polish kit. Masks inherit
 // the caller's semantic colour; canonical item/character paintings stay intact.
+import { uiIconId } from '../../content/uiIcons.js';
 import { assetUrl } from '../assetmap.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 
-const ICONS = new Set('accessibility actions armour attack audio back bleed blight block boss burn check cinders close collapse combat compare compendium connected contrast controls coop deck dexterity dialogue discard disconnected display draw equipment expand flask-health flask-mana frail frost health history info insanity inventory journey link location lock madness mana map menu merchant motion next poise profile progression quest regen relic reset rest reward save search seed settings shield skill smith staggered stamina strength sword target touch unknown vulnerable warning weak weight world'.split(' '));
-const ALIASES = Object.freeze({ hp: 'health', action: 'actions', energy: 'actions', crimsonBlight: 'blight', necroticBlight: 'blight', confused: 'madness', slowed: 'weak', entombed: 'staggered' });
-const GLYPHS = Object.freeze({ '☰': 'menu', '×': 'close', '✕': 'close', '✖': 'close', '←': 'back', '‹': 'back', '›': 'next', '⚙': 'settings', '⚔': 'attack', '⚒': 'smith', '♥': 'health', '❤': 'health', '🛡': 'shield', '🔒': 'lock', '✓': 'check', '✔': 'check', '⚠': 'warning', '🔍': 'search', '🔥': 'burn', '💧': 'mana', '📜': 'quest', '🎲': 'seed', '↻': 'reset', 'ℹ': 'info' });
 
 export function engravedIconId(id) {
-  const resolved = ALIASES[id] || id;
-  return ICONS.has(resolved) ? resolved : null;
+  return uiIconId(id);
 }
-const CARD_GLYPHS = Object.freeze({ '🗡': 'sword', '💨': 'motion', '🩸': 'bleed', '💀': 'madness', '🕯': 'burn', '📣': 'audio', '🩹': 'health', '🤚': 'actions', '❄': 'frost' });
-export function engravedGlyphId(char) { return GLYPHS[char] || CARD_GLYPHS[char] || null; }
+export function engravedGlyphId(char) { return uiIconId(char); }
 export function engravedIconUrl(id) {
   const resolved = engravedIconId(id);
   return resolved ? assetUrl(`assets/player-polish/ui/icons/${resolved}.svg`) : null;

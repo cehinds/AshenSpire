@@ -21,7 +21,7 @@
       "min": 13,
       "max": 16
     },
-    "art": "🌋",
+    "art": "enemy",
     "moves": {
       "cinderSlash": {
         "intent": "attack",
@@ -69,7 +69,7 @@
       "min": 13,
       "max": 15
     },
-    "art": "🧎",
+    "art": "enemy",
     "moves": {
       "desperateClaw": {
         "intent": "attack",
@@ -125,7 +125,7 @@
       "min": 14,
       "max": 17
     },
-    "art": "🪶",
+    "art": "enemy",
     "moves": {
       "spiralLance": {
         "intent": "attack",
@@ -175,7 +175,7 @@
     "damageResistanceBySchool": {
       "magic": 10
     },
-    "art": "🗿",
+    "art": "enemy",
     "moves": {
       "smash": {
         "intent": "attack",
@@ -226,7 +226,7 @@
       "min": 18,
       "max": 19
     },
-    "art": "🐉",
+    "art": "enemy",
     "firstMove": "consecration",
     "moves": {
       "consecration": {
@@ -299,7 +299,7 @@
       "min": 19,
       "max": 20
     },
-    "art": "🦋",
+    "art": "enemy",
     "firstMove": "spiralThrust",
     "moves": {
       "spiralThrust": {
@@ -411,7 +411,7 @@
       "min": 14,
       "max": 17
     },
-    "art": "◆",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "scythePair": {
@@ -461,7 +461,7 @@
       "min": 14,
       "max": 17
     },
-    "art": "◆",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "darkHymn": {
@@ -517,7 +517,7 @@
       "min": 19,
       "max": 20
     },
-    "art": "◆",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "openFurnace": {
@@ -581,7 +581,7 @@
       "min": 19,
       "max": 20
     },
-    "art": "◆",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "starChart": {
@@ -664,7 +664,7 @@
       "min": 19,
       "max": 20
     },
-    "art": "◆",
+    "art": "enemy",
     "artFaces": "left",
     "moves": {
       "obsidianClaws": {

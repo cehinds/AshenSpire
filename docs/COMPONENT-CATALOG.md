@@ -10,6 +10,28 @@ each incoming hit is shown before its reaction choice, and its paid Counter
 finishes before the next hit. Historical saves retain their saved reaction
 policy. The visual catalog's `damage-feedback` miniature shows this sequence.
 
+Core enemy inspection joins authored enemy cards to runtime moves through
+`EnemyDeckInspectionModel`; it shows SP, the authored deck, the public current
+action, and the last committed action's SP receipt. `enemyActionPreview` supplies
+read-only expanded effects and resolved formula values. Hidden choices remain
+unread. Base card costs and the enemy AI's actual SP action cost are labelled
+separately. Enemy action/contact events capture adjusted public values through
+`enemyIntentReceipt` before the queue advances. `CombatIntentModel` keeps the
+per-hit count or sequence prominent and labels total HP separately; a reaction
+refreshes the next-contact quote from its current defenses.
+
+`fitIllustratedCards` treats compact effects as semantic rows that may wrap,
+borrows available artwork height, and keeps an 11 physical pixel rules floor.
+Complete rules remain accessible when the panel cannot contain them. Editable
+source names icons through `src/content/uiIcons.js`; the shared engraved renderer
+resolves those names to existing assets and centralized legacy aliases.
+
+Core restores the opening and existing class/used-weapon level notices. Its
+progression policy preserves earned character rewards while stopping future
+character-level growth. Settings exposes independent combat-step and animation
+durations, with a visible mobile-fast preset; the profile selector exposes
+separate class and weapon XP multipliers for future runs.
+
 The map's `act-route-strip` uses `ActRouteModel` and `actRouteStripHtml` to show
 the act title, Entrance, a fixed evenly spaced circle for each non-boss floor,
 and Boss on one desktop row. Committed visits fill circles with the shared map
@@ -166,8 +188,8 @@ gameplay definitions and card rules are unchanged.
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
 | `player.scenePainting` | `PlayerArtworkModel` | `scenePainting`, `servicePortrait` | Title, rest and services | Painted scenery with independent foreground layers. |
-| `player.engravedIcon` | `engravedGlyphId` | `engravedIcon`, `engravedIconHtml` | Shared controls | Current-color engraved icons with tier-aware masks. |
-| `illustrated-card` | `card-layout.json`, generated card objects, `extendedCardArtwork.js`, `combatSigils.js`, `combatCardDamageLabel` | `illustratedCardHtml`, `fitIllustratedCards` | All ability cards | Existing frame, live centered rules and stamina/mana banners. Nine explicit paint levels separate card background, art, heading/footer backdrops, footer trim, banner/panel fills, card/panel trims, icons, text and rank. Positive ranks appear as Rank X centered above the adaptive effect panel; Rank 0 stays hidden. The base frame contains a taller action bay with original stone texture, connected gold braces, and a larger centered inline action symbol and name. The parchment ends directly above it. A dark backdrop covers each full card name and fades into the artwork. Card names have a dark outline and shadow, and side symbols have thick black halos. The right rail shows category first (outlined diamond for Magic, shield for Physical), then damage or effect type, then up to three status effects, with five icons maximum and no filler tags. Known unambiguous stack quantities have small badges. Slashing uses crossed swords, Blunt a hammer, Evasion a boot, Frost a snowflake, Fire a flame, Earth a stone and Piercing a pointed blade. Smash remains a fist and Counter a shield with a diagonal sword. The bottom keeps the primary action sigil and name. Version-2 damage rules show actual written types, including mixed contacts and Counter HP returns; complex rules retain authored text with a short damage-type prefix. School and secondary tags stay in Information. Complete adaptive effects borrow artwork space when needed. Canonical card/profile portraits cover the artwork region with lower-action framing; upgrades reuse base artwork. |
+| `player.engravedIcon` | `engravedGlyphId` | `engravedIcon`, `engravedIconHtml` | Shared controls | Current-color engraved icons with tier-aware masks. Explicit `meter.valueNode` and `chip.keyNode` slots mount icon nodes while ordinary numeric/string values remain text. |
+| `illustrated-card` | `card-layout.json`, generated card objects, `extendedCardArtwork.js`, `combatSigils.js`, `combatCardDamageLabel` | `illustratedCardHtml`, `fitIllustratedCards` | All ability cards | Existing frame, live centered rules and stamina/mana banners. Nine explicit paint levels separate card background, art, heading/footer backdrops, footer trim, banner/panel fills, card/panel trims, icons, text and rank. Positive ranks appear as Rank X centered above the adaptive effect panel; Rank 0 stays hidden. The base frame contains a taller action bay with original stone texture, connected gold braces, and a larger centered inline action symbol and name. The parchment ends directly above it. A dark backdrop covers each full card name and fades into the artwork. Card names have a dark outline and shadow, and side symbols have thick black halos. The right rail shows category first (outlined diamond for Magic, shield for Physical), then damage or effect type, then up to three status effects, with five icons maximum and no filler tags. Known unambiguous stack quantities have small badges. Slashing uses crossed swords, Blunt a hammer, Evasion a boot, Frost a snowflake, Fire a flame, Earth a stone and Piercing a pointed blade. Smash remains a fist and Counter a shield with a diagonal sword. The bottom keeps the primary action sigil and name. Version-2 damage rules show actual written types, including mixed contacts and Counter HP returns; complex rules retain authored text with a short damage-type prefix. School and secondary tags stay in Information. Adaptive effects borrow artwork space when needed, then remain bounded inside the parchment with an internal inspection cue. Repeated status definitions move into visible tooltip tags; effect amounts, conditions and durations remain on the face. Glance/focus selection retains existing artwork and tag nodes. Canonical card/profile portraits cover the artwork region with lower-action framing; upgrades reuse base artwork. |
 | `combat-coop-upcast-control` | Card selection | `coopUpcastControl.wireCoopUpcastControl` | Co-op combat | Reuses the solo selected-card control wrapper and mobile touch targets. Hostile upcastable cards select before submitting; the isolated button opens the shared rank chooser without playing the card. |
 | `combat-upcast-choice` | `upcastOptions` | Selected-card controls + `upcastChoice.openUpcastChoice` | Solo and co-op combat | Temporary rank choice before payment. With the default-off setting, the under-card Upcast button reveals the native inline picker in solo or the shared chooser in co-op; enabling the setting prompts with the shared modal after target choice. The shared hand reveals pager-focused faces before selection and selected controls afterward. An overflow-visible fan shifts only the active owner, keeping the chooser beneath it and the page and combat HUD still; focus alone leaves the chooser hidden. Cancel retains card, rank and target without spending resources. |
 | `combat-status-recovery` | `recoveryControls`, `controlGate` | `combat`, `coop` | Solo and co-op combat | Synthetic status recovery and Stand up controls show per-stack SP cost and affordability only when needed. The standalone Block, Barrier and Ward summary box is removed. |

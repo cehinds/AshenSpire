@@ -9,7 +9,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
-    "icon": "\u2694",
+    "icon": "attack",
     "keywords": [],
     "effects": [
       {
@@ -38,7 +38,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
-    "icon": "\ud83d\udee1",
+    "icon": "shield",
     "keywords": [],
     "effects": [
       {
@@ -66,7 +66,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
-    "icon": "\u2694",
+    "icon": "attack",
     "keywords": [],
     "effects": [
       {
@@ -101,7 +101,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
-    "icon": "\u2694",
+    "icon": "attack",
     "keywords": [],
     "effects": [
       {
@@ -130,7 +130,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "attack",
-    "icon": "\u2694",
+    "icon": "attack",
     "keywords": [],
     "effects": [
       {
@@ -160,7 +160,7 @@
     "manaCost": 1,
     "costRule": "fixed",
     "type": "attack",
-    "icon": "\u2694",
+    "icon": "attack",
     "keywords": [],
     "effects": [
       {
@@ -190,7 +190,7 @@
     "manaCost": 1,
     "costRule": "fixed",
     "type": "attack",
-    "icon": "\u2726",
+    "icon": "skill",
     "keywords": [],
     "effects": [
       {
@@ -225,7 +225,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
-    "icon": "\ud83d\udee1",
+    "icon": "shield",
     "keywords": [],
     "effects": [
       {
@@ -252,7 +252,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "power",
-    "icon": "\ud83d\udee1",
+    "icon": "shield",
     "keywords": [],
     "effects": [
       {
@@ -279,7 +279,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
-    "icon": "\u219d",
+    "icon": "next",
     "keywords": [],
     "effects": [
       {
@@ -315,7 +315,7 @@
     "costRule": "fixed",
     "type": "attack",
     "mirrors": "attack",
-    "icon": "\u2694",
+    "icon": "attack",
     "keywords": [],
     "effects": [
       {
@@ -346,7 +346,7 @@
     "manaCost": 0,
     "costRule": "fixed",
     "type": "skill",
-    "icon": "\u2726",
+    "icon": "skill",
     "keywords": [],
     "effects": [
       {

@@ -339,7 +339,7 @@ test('a --check run only reads and takes no lock', async (t) => {
 
 test('every writer CLI takes the lock, and every server wrapper passes its token on', () => {
   const read = (p) => fs.readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
-  for (const p of ['tools/content-build.mjs', 'tools/config-build.mjs', 'tools/framework-data-build.mjs', 'tools/engine-export.mjs', 'tools/launch.mjs']) assert.match(read(p), /await holdForCli\(/, p);
+  for (const p of ['tools/base-cards.mjs', 'tools/game-config.mjs', 'tools/content-build.mjs', 'tools/config-build.mjs', 'tools/framework-data-build.mjs', 'tools/engine-export.mjs', 'tools/launch.mjs']) assert.match(read(p), /await holdForCli\(/, p);
   for (const p of ['workbench/core/jobs.mjs', 'workbench/server.mjs', 'editor/server.mjs', 'ui-studio/server.mjs']) assert.match(read(p), /lockEnv\(/, p);
 });
 
@@ -347,10 +347,10 @@ test('the workbench workflow runs this suite and triggers on the lock and its te
   const yml = fs.readFileSync(new URL('../.github/workflows/workbench.yml', import.meta.url), 'utf8');
   const run = yml.split('\n').find((l) => /run: node --test workbench\/tests/.test(l)) || '';
   assert.match(run, /tests\/build-lock\.test\.mjs/, 'the test step runs tests/build-lock.test.mjs');
-  for (const suite of ['tests/build-steps.test.mjs', 'tests/write-atomic.test.mjs', 'tests/shot-match.test.mjs']) {
+  for (const suite of ['tests/generated-writer-locks.test.mjs', 'tests/build-steps.test.mjs', 'tests/write-atomic.test.mjs', 'tests/shot-match.test.mjs']) {
     assert.match(run, new RegExp(suite.replace(/[./]/g, (c) => `\\${c}`)), `the test step runs ${suite}`);
   }
-  const shared = ['tools/lib/build-lock.mjs', 'tests/build-lock.test.mjs', 'tools/lib/process-tree.mjs', 'tools/lib/build-steps.mjs', 'tools/lib/write-atomic.mjs', 'tools/lib/shot-match.mjs', 'tools/launch.mjs', 'tests/build-steps.test.mjs', 'tests/write-atomic.test.mjs', 'tests/shot-match.test.mjs'];
+  const shared = ['tools/base-cards.mjs', 'tools/game-config.mjs', 'tests/generated-writer-locks.test.mjs', 'tools/lib/build-lock.mjs', 'tests/build-lock.test.mjs', 'tools/lib/process-tree.mjs', 'tools/lib/build-steps.mjs', 'tools/lib/write-atomic.mjs', 'tools/lib/shot-match.mjs', 'tools/launch.mjs', 'tests/build-steps.test.mjs', 'tests/write-atomic.test.mjs', 'tests/shot-match.test.mjs'];
   for (const file of shared) {
     assert.equal(yml.split(`- '${file}'`).length - 1, 2, `${file} is in both the push and pull_request paths filters`);
   }

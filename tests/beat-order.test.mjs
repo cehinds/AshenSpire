@@ -173,7 +173,7 @@ test('a lethal hit: reaction, number, health update, then death resolution', (t)
   drive(t, ({ trace, run, finish }) => {
     run([...playerHit(5), { type: 'hpLost', targetId: 'e1', amount: 5, cause: 'attack' }, { type: 'enemyDied', targetId: 'e1' }]);
     finish();
-    assert.deepEqual(order(trace), ['contact', 'settle', 'reaction:e1', 'float:-5', 'bars', 'float:✝', 'defeated:e1']);
+    assert.deepEqual(order(trace), ['contact', 'settle', 'reaction:e1', 'float:-5', 'bars', 'float:Defeated', 'defeated:e1']);
   });
 });
 

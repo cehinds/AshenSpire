@@ -17,9 +17,9 @@ const scratch = mkdtempSync(join(tmpdir(), 'engine-export-test-'));
 process.on('exit', () => rmSync(scratch, { recursive: true, force: true }));
 
 const run = (...args) => spawnSync(process.execPath, [tool, ...args], { cwd: root, encoding: 'utf8' });
-const exportTo = (name) => {
+const exportTo = (name, { build = false } = {}) => {
   const out = join(scratch, name);
-  const r = run('--out', out);
+  const r = run(...(build ? [] : ['--no-build']), '--out', out);
   assert.equal(r.status, 0, `export failed:\n${r.stdout}${r.stderr}`);
   return { out, stdout: r.stdout };
 };
@@ -29,7 +29,9 @@ const listFiles = (dir) => readdirSync(dir, { recursive: true, withFileTypes: tr
   .map((e) => relative(dir, join(e.parentPath ?? e.path, e.name)).split(sep).join('/'))
   .sort();
 
-const first = exportTo('a');
+// Keep one real default-build export; repeated determinism runs only check
+// generated inputs so parallel read-only suites never rewrite shared modules.
+const first = exportTo('a', { build: true });
 const manifest = readJson(first.out, 'manifest.json');
 
 // A deliberately small JSON Schema validator: the keywords the exporter emits

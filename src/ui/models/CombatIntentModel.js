@@ -37,7 +37,8 @@ export function combatIntentPresentation(intent = {}) {
   const family = intent.kind === 'buff' ? 'buffing' : ['ranged', 'sweeping'].includes(stance) ? 'attacking'
     : stance === 'preparing' ? (intent.kind === 'buff' ? 'buffing' : 'casting') : stance;
   const projectedDamage = intent.projectedDamage || null;
-  const damage = projectedDamage ? projectedDamage.label : intent.damage != null ? intentBadge(intent).label : null;
+  const damageRead = intentDamageRead(intent);
+  const damage = damageRead?.label ?? (intent.damage != null ? intentBadge(intent).label : null);
   const part = (icon, value = null) => ({ icon, value: value == null ? null : String(value) });
   const counterParts = [part('counter', intent.block)];
   if (!(intent.counterPoiseDamage > 0) || intent.counterDamage > 0) counterParts.push(part('attack', intent.counterDamage));
@@ -48,6 +49,7 @@ export function combatIntentPresentation(intent = {}) {
     : family === 'smashing' ? [part('smash', damage)]
     : family === 'attacking' ? [part('attack', damage)]
     : [part(family === 'buffing' ? 'buff' : 'cast', family === 'buffing' ? null : damage)];
+  if (damageRead) for (const part of parts) if (part.value === damage) part.summary = damageRead.summary;
   return { visibility: 'known', title: capitalize(family), stance: family, parts, damageClass: damageClassOf(intent, family), ...(projectedDamage ? { projectedDamage } : {}) };
 }
 
@@ -60,4 +62,20 @@ const SPELL_CAMPS = Object.freeze(['spell', 'spells', 'magic']);
 function damageClassOf(intent, family) {
   if (SPELL_CAMPS.includes(intent.profile?.camp)) return 'magic';
   return ['attacking', 'smashing'].includes(family) ? 'physical' : null;
+}
+
+
+// The prominent number always names individual hits. Totals have their own
+// explicit scope, so 5 x 3 cannot silently become an unlabeled 15 per hit.
+export function intentDamageRead(intent) {
+  if (!intent || intent.hidden || intent.revealed === false || intent.damage == null) return null;
+  const hits = Array.isArray(intent.hitDamages) && intent.hitDamages.length ? intent.hitDamages : Array.from({ length: Math.max(1, intent.hits || 1) }, () => intent.damage);
+  const same = hits.every(n => n === hits[0]);
+  const label = hits.length === 1 && intent.projectedDamage ? intent.projectedDamage.label : same ? `${hits[0]}${hits.length > 1 ? `×${hits.length}` : ''}`
+    : hits.length <= 3 ? hits.join('+') : `${Math.min(...hits)}–${Math.max(...hits)}×${hits.length}`;
+  const bounds = intent.projectedDamage?.label || (intent.hpLossBounds ? intent.hpLossBounds[0] === intent.hpLossBounds[1] ? String(intent.hpLossBounds[1]) : intent.hpLossBounds.join('–') : String(intent.totalDamage ?? hits.reduce((a, b) => a + b, 0)));
+  const basis = intent.projectedDamage?.basis === 'hp' || intent.damageBasis === 'hp' || intent.hpLossBounds ? t('combat.intent.damageHp') : t('combat.intent.damageBeforeBlock');
+  return { label, summary: intent.damageScope === 'contact'
+    ? t('combat.intent.damageContact', { index: (intent.contactIndex || 0) + 1, count: intent.contactCount || 1, amount: bounds, basis })
+    : t('combat.intent.damageTotal', { amount: bounds, basis }) };
 }

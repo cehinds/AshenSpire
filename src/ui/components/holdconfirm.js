@@ -871,7 +871,7 @@ let activeConfirm = null;
 /**
  * reveal(panel, actions) — bring a freshly-opened confirm panel ON SCREEN.
  *
- * ⚠ WHY THIS EXISTS, AND THE MEASUREMENT IS THE WHOLE ARGUMENT. The panel is
+ * warning WHY THIS EXISTS, AND THE MEASUREMENT IS THE WHOLE ARGUMENT. The panel is
  * inserted `afterend` of the control it asks about, so where it LANDS is decided
  * by however tall the screen above it happens to be. At `db09846`, tapping a
  * Smith candidate put both answers at

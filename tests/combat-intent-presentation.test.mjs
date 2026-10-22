@@ -12,7 +12,7 @@ test('varying hit previews render their sequence and total in overhead, tooltip 
   assert.doesNotMatch(intentTooltip(intent), /2 × 3/);
   const [card] = enemyMoveCards(definition, { preview: intent });
   assert.equal(card.active, true);
-  assert.match(card.detail, /2 \+ 5 \+ 5 \(12 total\) preview damage before Block/);
+  assert.match(card.detail, /2 \+ 5 \+ 5 \(12 total\) projected damage/);
   assert.doesNotMatch(card.detail, /2 × 3/);
   assert.match(intentTooltip({ ...intent, pending: true }), /Committed:/);
 });
@@ -21,7 +21,7 @@ test('uniform hits retain the existing multiplication display', () => {
   const uniform = { ...intent, damage: 5, hitDamages: [5, 5, 5], totalDamage: 15 };
   assert.equal(intentBadge(uniform).label, '5×3');
   assert.match(intentTooltip(uniform), /5 × 3 \(15 total\)/);
-  assert.match(enemyMoveCards(definition, { preview: uniform })[0].detail, /5 × 3 preview damage before Block/);
+  assert.match(enemyMoveCards(definition, { preview: uniform })[0].detail, /5 × 3 projected damage/);
 });
 
 test('hidden intents reject even malformed unsanitized per-hit preview fields', () => {

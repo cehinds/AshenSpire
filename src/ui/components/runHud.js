@@ -249,7 +249,7 @@ export function wireRunHud(app, {
   if (armouryBtn && onArmoury) { armouryBtn.addEventListener('click', () => { markArmourySeen(run); syncArmouryNew(armouryBtn, run); onArmoury(); }); syncArmouryNew(armouryBtn, run); }
   else armouryBtn?.remove();
 
-  // ☰ — today it opens the overlay at Settings; under the quick-nav experiment
+  // menu — today it opens the overlay at Settings; under the quick-nav experiment
   // it opens the list of everywhere this screen can go. Every row below calls
   // a handler that already exists, so nothing here decides navigation state.
   const menuBtn = hud.querySelector(`#${RUN_HUD_MENU_ID}`);

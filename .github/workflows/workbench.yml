@@ -32,6 +32,9 @@ on:
       - 'tests/engine-export.test.mjs'
       - 'tools/lib/build-lock.mjs'
       - 'tests/build-lock.test.mjs'
+      - 'tests/generated-writer-locks.test.mjs'
+      - 'tools/base-cards.mjs'
+      - 'tools/game-config.mjs'
       - 'tools/lib/process-tree.mjs'
       - 'tools/lib/build-steps.mjs'
       - 'tools/lib/write-atomic.mjs'
@@ -56,6 +59,9 @@ on:
       - 'tests/engine-export.test.mjs'
       - 'tools/lib/build-lock.mjs'
       - 'tests/build-lock.test.mjs'
+      - 'tests/generated-writer-locks.test.mjs'
+      - 'tools/base-cards.mjs'
+      - 'tools/game-config.mjs'
       - 'tools/lib/process-tree.mjs'
       - 'tools/lib/build-steps.mjs'
       - 'tools/lib/write-atomic.mjs'
@@ -98,7 +104,7 @@ jobs:
           packs: ${{ env.ART_PACKS }}
 
       - name: Workbench, editor, UI Studio, engine-export and build-lock tests
-        run: node --test workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/engine-export.test.mjs tests/build-lock.test.mjs tests/build-steps.test.mjs tests/write-atomic.test.mjs tests/shot-match.test.mjs
+        run: node --test workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/engine-export.test.mjs tests/build-lock.test.mjs tests/generated-writer-locks.test.mjs tests/build-steps.test.mjs tests/write-atomic.test.mjs tests/shot-match.test.mjs
 
       - name: Engine export
         run: node tools/engine-export.mjs --out build/engine-export
@@ -166,7 +172,7 @@ jobs:
           # same on windows-latest and macos-latest whatever the runner's default is.
           # --test-timeout (8 min) must exceed the engine-export job test's wait for the repo
           # .build-lock: CLI_WAIT_MS (5 min) + 60 s in workbench/tests/server.test.mjs.
-          set +e; node --test --test-reporter=tap --test-timeout=480000 workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/engine-export.test.mjs tests/build-lock.test.mjs tests/build-steps.test.mjs tests/write-atomic.test.mjs tests/shot-match.test.mjs 2>&1 | tee "$LOG"; rc=${PIPESTATUS[0]}; set -e
+          set +e; node --test --test-reporter=tap --test-timeout=480000 workbench/tests/*.test.mjs editor/tests/*.test.mjs ui-studio/tests/*.test.mjs tests/engine-export.test.mjs tests/build-lock.test.mjs tests/generated-writer-locks.test.mjs tests/build-steps.test.mjs tests/write-atomic.test.mjs tests/shot-match.test.mjs 2>&1 | tee "$LOG"; rc=${PIPESTATUS[0]}; set -e
           # The TAP failures (first 10 not-ok lines, each with its preceding subtest
           # name and the 10 lines after it) and the pass/fail totals become annotations.
           # The summary notice is unconditional: with no "# pass" line it says so. The

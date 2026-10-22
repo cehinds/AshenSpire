@@ -12,6 +12,7 @@ export function resolveCombatAutomation(settings = {}) {
     preference: settings.combatPreference === 'defense' ? 'defense' : AUTOMATION_DEFAULTS.combatPreference,
     // Owner D11 (2026-10-18): auto combat runs at its own multiplier, and the pause between steps is one setting.
     autoSpeed: bounded(settings.autoCombatSpeed, AUTOMATION_DEFAULTS.autoCombatSpeed, AUTOMATION_DEFAULTS.autoSpeedMinimum, AUTOMATION_DEFAULTS.autoSpeedMaximum),
+    animationMs: bounded(settings.animationStepDuration, ACTION_PACING.animationStepDurationMs, AUTOMATION_DEFAULTS.animationStepMinimumMs, AUTOMATION_DEFAULTS.animationStepMaximumMs),
     delayMs: bounded(settings.combatStepPause, ACTION_PACING.stageGapMs, AUTOMATION_DEFAULTS.stageGapMinimumMs, AUTOMATION_DEFAULTS.stageGapMaximumMs),
   };
 }
@@ -85,3 +86,12 @@ export function manualReactionPicks(run, seat) {
 // The answer to submit for a chooseReaction result: a null choice is a deliberate decline
 // (optionId null), never "do nothing", so the prompt always resolves.
 export const reactionAnswer = (pending, picked) => ({ offerId: pending.id, optionId: picked?.id ?? null });
+
+// Presets commit ordinary visible values; manual edits return to Custom.
+export function combatPacingChanges(key, value) {
+  if (key === 'combatPacingPreset') return value === 'mobile-fast'
+    ? { combatPacingPreset: value, ...AUTOMATION_DEFAULTS.mobileFastPreset }
+    : { combatPacingPreset: 'custom' };
+  return ['combatStepPause', 'animationStepDuration'].includes(key)
+    ? { [key]: value, combatPacingPreset: 'custom' } : { [key]: value };
+}

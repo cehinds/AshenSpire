@@ -15,6 +15,7 @@
 import { attachTooltip, esc } from './tooltip.js';
 import { t } from '../strings.js';
 import { relicIcon } from '../assets.js';
+import { uiIconText } from '../../content/uiIcons.js';
 import { engravedIcon } from './engravedIcon.js';
 import { keepsakeArtAsset } from '../../content/keepsakeArt.js';
 import { assetUrl } from '../assetmap.js';
@@ -163,7 +164,7 @@ export function viewModeToggle(value, onChoose, label = 'View choices') {
 
 /**
  * viewModeSwitch(value, onChoose, label) → ONE small button that flips the
- * view: it shows the arrangement a press would give (▦ from a list, ☰ from a
+ * view: it shows the arrangement a press would give (▦ from a list, menu from a
  * grid) so the pane's width goes to the choices, not to a labelled pair
  * (owner, 2026-09-19). `data-view-mode` is the mode a press selects.
  */
@@ -223,7 +224,7 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
   art.removeAttribute('aria-hidden');
   if (sprite) art.appendChild(sprite);
   const relicCard = relic ? optionCard({
-    glyph: relic.icon || '◆', art: relicIcon(relic), name: relic.name, description: relicDescription,
+    glyph: relic.icon || 'skill', art: relicIcon(relic), name: relic.name, description: relicDescription,
     arrow: false, tag: onRelicInspect ? 'button' : 'div', className: 'cc-class-relic',
     attrs: onRelicInspect ? { 'aria-haspopup': 'dialog', 'aria-label': t('creation.preview.inspectRelic', { name: relic.name }) } : {},
   }) : null;
@@ -236,7 +237,7 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
     el('div', { class: 'as-stack' }, [
       art,
       el('div', { class: 'as-stack tight' }, [
-        eyebrow('Starting resources'),
+        eyebrow(t('creation.startingResources')),
         resources,
       ]),
       el('div', { class: 'as-stack tight' }, relicCard),
@@ -259,7 +260,7 @@ export function classUnfold({ cls, sprite = null, resources = null, relic = null
   const relicFace = relic ? el(onRelicInspect ? 'button' : 'span', {
     class: `cc-unfold-relic${onRelicInspect ? ' cc-preview-detail-trigger' : ''}`,
     ...(onRelicInspect ? { type: 'button', 'aria-haspopup': 'dialog', 'aria-label': t('creation.preview.inspectRelic', { name: relic.name }) } : {}),
-  }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true', text: relic.icon || '◆' }), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null;
+  }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true' }, engravedIcon(relic.icon || 'relic') || 'Relic'), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null;
   if (relicFace && onRelicInspect) relicFace.addEventListener('click', () => onRelicInspect(relic, relicFace));
   const node = el('span', { class: 'cc-class-unfold', id: `cc-unfold-${cls.id}`, dataset: { class: cls.id } }, [
     el('span', { class: 'cc-unfold-portrait' }, [
@@ -289,7 +290,7 @@ export function classResourceGrid(rows, { onInspect = null } = {}) {
     item.dataset.stat = entry.id;
     if (onInspect) item.addEventListener('click', () => onInspect(entry, item));
     return item;
-  }), { class: 'cc-class-resource-grid', 'aria-label': 'Starting resources' });
+  }), { class: 'cc-class-resource-grid', 'aria-label': t('creation.startingResources') });
   return markUiComponent(strip, UI.classResourceGrid);
 }
 
@@ -336,9 +337,14 @@ export function tintChoiceButton(tint, selected, onChoose) {
   return markUiComponent(pressable(button, selected, onChoose), UI.tintChoice);
 }
 
+/** The glyph-only character preview uses the same saved sigil as its choices. */
+export function characterSigilPreview(glyph) {
+  return el('span', { class: 'cc-character-sigil', role: 'img', 'aria-label': `Sigil ${uiIconText(glyph)}` }, engravedIcon(glyph) || uiIconText(glyph));
+}
+
 /** A sigil: a Swatch showing its glyph. */
 export function sigilChoiceButton(glyph, selected, onChoose) {
-  const button = el('button', { type: 'button', class: 'as-swatch sigil cz-opt', 'aria-label': `Sigil ${glyph}`, dataset: { sigil: glyph }, text: glyph });
+  const button = el('button', { type: 'button', class: 'as-swatch sigil cz-opt', 'aria-label': `Sigil ${uiIconText(glyph)}`, dataset: { sigil: glyph } }, engravedIcon(glyph) || uiIconText(glyph));
   return markUiComponent(pressable(button, selected, onChoose), UI.sigilChoice);
 }
 
@@ -346,7 +352,7 @@ export function sigilChoiceButton(glyph, selected, onChoose) {
 export function keepsakeChoiceButton(keepsake, selected, onChoose) {
   const artPath = keepsakeArtAsset(keepsake);
   const img = artPath ? el('img', { src: assetUrl(artPath), alt: '', width: '48', height: '48' }) : null;
-  if (img) swapOnError(img, () => el('span', { text: keepsake.icon }));
+  if (img) swapOnError(img, () => engravedIcon(keepsake.icon || 'relic') || el('span', { text: 'Relic' }));
   const art = img ? el('span', { class: 'og relic-art', 'aria-hidden': 'true' }, img) : null;
   const button = optionCard({
     glyph: keepsake.icon, art, name: keepsake.name, description: keepsake.desc, selected, arrow: false,
@@ -360,7 +366,7 @@ export function keepsakeChoiceButton(keepsake, selected, onChoose) {
 /** A starting relic: an OptionCard. */
 export function relicChoiceButton(relic, description, selected, onChoose) {
   const button = optionCard({
-    glyph: relic.icon || '◆', art: relicIcon(relic), name: relic.name, description, selected, arrow: false,
+    glyph: relic.icon || 'skill', art: relicIcon(relic), name: relic.name, description, selected, arrow: false,
     className: `cc-relic-card${selected ? ' chosen' : ''}`,
     attrs: { dataset: { relicId: relic.id }, 'aria-label': `${relic.name}. ${description}` },
   });

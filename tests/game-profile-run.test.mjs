@@ -65,7 +65,7 @@ test('rest requires real current rest, commits once and fully recovers after ear
 
 test('failed/rest forgery is atomic; Strategize is no longer a rest service (D10)',()=>{
  const run=fresh();visit(run);run.hp=1;const before=JSON.stringify(run);
- assert.throws(()=>commitGameProfileRest(reg,run,'levelUp',{attributeId:'strength'}),/no attribute point/);assert.equal(JSON.stringify(run),before);
+ assert.throws(()=>commitGameProfileRest(reg,run,'levelUp',{attributeId:'strength'}),/leveling is disabled/);assert.equal(JSON.stringify(run),before);
  assert.throws(()=>commitGameProfileRest(reg,run,'strategize'),/Unknown rest service/);assert.equal(JSON.stringify(run),before);
  assert.throws(()=>commitGameProfileRest(reg,run,'smith',{itemRef:'forged'}));assert.equal(JSON.stringify(run),before);
 });

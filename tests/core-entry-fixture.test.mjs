@@ -1,3 +1,4 @@
+import { PROLOGUE_DEFAULTS, prologueSequence } from '../src/model/prologue.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CORE_ENTRY_SEED, CORE_INPUT_BUDGET, CORE_INPUT_ALLOWANCE } from '../tools/core-entry-fixture.mjs';
@@ -11,5 +12,5 @@ test('the real-input Core fixture starts on a fight at depth 1, with no entry sh
  const profile=resolveGameProfile('core');const reg=bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle,profile)),profile);
  const rng=createRng(seedFromString(CORE_ENTRY_SEED));const seats=drawSeatOrder(reg,rng,{});const map=buildActMap(reg,rng,seats[0],1);
  const start=map.nodes[map.startIds[0]];assert.equal(start.floor,1);assert.equal(start.actualType,'fight');assert.equal(start.type,'monster');
- assert.equal(CORE_INPUT_ALLOWANCE.entryRest,0);assert.equal(CORE_INPUT_BUDGET,15);assert.equal(CORE_INPUT_ALLOWANCE.seedEntry,2+CORE_ENTRY_SEED.length);
+ assert.equal(CORE_INPUT_ALLOWANCE.entryRest,0);assert.equal(CORE_INPUT_ALLOWANCE.opening,prologueSequence(PROLOGUE_DEFAULTS).length);assert.equal(CORE_INPUT_BUDGET,15+CORE_INPUT_ALLOWANCE.opening);assert.equal(CORE_INPUT_ALLOWANCE.seedEntry,2+CORE_ENTRY_SEED.length);
 });

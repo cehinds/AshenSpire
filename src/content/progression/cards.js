@@ -107,7 +107,7 @@ export const progressionCards = cardFamilies.map(family => {
     id: family.id, name: family.name, class: family.classId, rarity: family.rarity,
     cost: base.actionCost, manaCost: base.manaCost,
     type: family.primary === 'damage' ? 'attack' : 'skill',
-    keywords: [], icon: family.primary === 'damage' ? '✦' : '◇',
+    keywords: [], icon: family.primary === 'damage' ? 'attack' : 'skill',
     flavor: progressionCardLore[family.id.replace(/^progression-/, '')].join('\n\n'),
     abilityKind: ['starseer', 'herald'].includes(family.classId) ? 'spell' : 'maneuver',
     abilityRank: family.abilityRank, abilityFamily: family.id,

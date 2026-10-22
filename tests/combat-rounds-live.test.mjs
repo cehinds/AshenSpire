@@ -293,7 +293,7 @@ function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
   return JSON.stringify(log);
 }
 
-test('with the preview off, a scripted fight event log is byte-identical to the recorded golden', () => {
+test('with round preview off, seeded fight receipts preserve the golden apart from public enemy forecasts', () => {
   const logs = [1, 2, 3].map((s) => scriptedLog(s));
   const all = logs.join('\n');
   assert.deepEqual(logs.map(log => JSON.parse(log).at(-1)), [
@@ -322,7 +322,25 @@ test('with the preview off, a scripted fight event log is byte-identical to the 
   // Weapon Art MP floor (payment and snapshots) and card-use/type bookkeeping.
   // Re-recorded for #2192 (Core hit rolls): hit events carry `opposed: false` under the default profile. A key-by-key
   // comparison with origin/dev bbfb89959 shows that is the only difference; fight outcomes and every other field match.
-  assert.deepEqual({ sha256: createHash('sha256').update(all).digest('hex'), length: all.length },
+  // Compared independently against dev eb6dae53d: exactly 56 additions are
+  // public forecasts on the actor-start/move-start events. Remove only those
+  // two new fields at those event boundaries; every old field and ordering
+  // must still match the existing golden. The full new log repeats above.
+  const legacy = logs.map(text => {
+    const log = JSON.parse(text);
+    for (const entry of log) {
+      const events = entry[0] === 'play' ? entry[2] : entry[0] === 'end' ? entry[1] : [];
+      for (const event of events) {
+        if (event.type === 'enemyActorTurnStarted') delete event.intentPreview;
+        if (event.type === 'enemyMoveStarted') {
+          delete event.intentPreview;
+          delete event.actionPreview;
+        }
+      }
+    }
+    return JSON.stringify(log);
+  }).join('\n');
+  assert.deepEqual({ sha256: createHash('sha256').update(legacy).digest('hex'), length: legacy.length },
     { sha256: '92b4c6bfaedbf896ec467255a35b34d19c7f0559793d2c956a0135e1fb8fccca', length: 414758 });
 });
 

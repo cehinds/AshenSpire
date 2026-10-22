@@ -82,6 +82,11 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 //     probe values change for the approved 27% hand / 14% footer. The
 //     historical export shapes, freezing and all other migration probes stay pinned.
 
+// Core renewal (2026-10-22): the uiContent baseline updates exactly 85
+// icon/delay string leaves for approved named vector IDs and the readable
+// delayed suffix. Export shapes, key order, freezing and all other probe
+// values remain unchanged; this does not recapture unrelated module drift.
+
 /** Every path at which `want` and `got` differ, as readable lines. */
 function differences(want, got, path = '') {
   if (JSON.stringify(want) === JSON.stringify(got)) return [];

@@ -1,3 +1,4 @@
+import { uiIconText } from '../../content/uiIcons.js';
 import { groupCardVariants } from '../../model/cardGroups.js';
 import { uiZoom } from '../fx.js';
 import { masteryClassSummary } from '../components/classMastery.js';
@@ -54,7 +55,7 @@ import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents
 import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import {
   primaryStatCard, primaryStatCards, resourceStrip, modeChoiceButton, spriteChoiceButton,
-  tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle,
+  tintChoiceButton, sigilChoiceButton, characterSigilPreview, keepsakeChoiceButton, viewModeToggle,
   booleanSettingToggle, classChoiceCard, classPreviewPane, classUnfold, classResourceGrid, relicChoiceButton,
   selectionSectionFace,
 } from '../components/creationCards.js';
@@ -340,7 +341,7 @@ export function mountCustomize(app, {
     // 1200x730 with real CDP input, mouse and touch alike — open, open, open,
     // open; the menu could be summoned and never put away. `popovertarget`
     // hands the toggle to the browser, which knows an invoker from a stray
-    // click. (quicknav's ☰ toggles correctly at the same door — true, false,
+    // click. (quicknav's menu toggles correctly at the same door — true, false,
     // true — so this was this call site's bug, not the platform's.)
     headTools.id = 'cz-menu-popover';
     menu.setAttribute('popovertarget', headTools.id);
@@ -665,7 +666,7 @@ export function mountCustomize(app, {
         // inside the silhouette, so it keeps going through classSprite().
         : paintedFigure(state.classId, tintCss(state.tint), state.glyph, state.startingArmourId, 'stand'))
       : null;
-    portrait.replaceChildren(sprite || state.glyph);
+    portrait.replaceChildren(sprite || characterSigilPreview(state.glyph));
 
     const run = previewRun();
     renderFeats(run);
@@ -1587,7 +1588,7 @@ export function mountCustomize(app, {
 
   const selectedRow = (id, rows) => rows.find((row) => row.id === id);
   const spriteRows = [
-    { key: 'sigil', label: 'SIGIL', node: $('#cz-sigil-group'), value: () => state.glyph },
+    { key: 'sigil', label: 'SIGIL', node: $('#cz-sigil-group'), value: () => uiIconText(state.glyph) },
     { key: 'tint', label: 'TINT', node: $('#cz-tint-group'), value: () => (
       selectedRow(state.tint, PORTRAIT_TINTS)?.name || state.tint
     ) },

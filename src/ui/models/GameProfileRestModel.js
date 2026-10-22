@@ -1,3 +1,4 @@
+import { configuredCharacterLevels } from '../../model/gameProfileProgression.js';
 import { gameContent } from '../../model/gameProfile.js';
 import { previewGameProfileRest, restServiceSpent, restServicesAll, restSmithFree } from '../../model/gameProfileRest.js';
 import { smithingPlan } from '../../model/smithing.js';
@@ -19,7 +20,7 @@ export function gameProfileRestModel(registries, run, visit) {
     const def = registries.attributes.get(id);
     return { id, label: def.label || def.name || id, shortLabel: def.shortLabel || id, value: run.attributes[id], ...attempt('levelUp', { attributeId: id }) };
   });
-  const services = rules.services.map(id => {
+  const services = rules.services.filter(id => id !== 'levelUp' || configuredCharacterLevels(run) || run.level?.unspentPoints > 0).map(id => {
     const result = id === 'smith' ? [...smithPreviews.values()].find(row => row.available) || [...smithPreviews.values()][0] || { available: false, reason: t('gameProfile.rest.noSmith') }
       : id === 'levelUp' ? attributes.find(row => row.available) || attributes[0] || { available: false, reason: t('gameProfile.rest.noLevel') }
       : attempt(id);

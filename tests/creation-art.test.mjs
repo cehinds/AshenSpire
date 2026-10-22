@@ -11,7 +11,7 @@ test('keepsake art survives a failed load and repeated Retry restoration', () =>
     this.parentNode.insertBefore(node, this);
     this.remove();
   };
-  const keepsake = { id: 'oldCinder', icon: '*', name: 'Old Cinder', desc: 'A keepsake.' };
+  const keepsake = { id: 'oldCinder', icon: 'relic', name: 'Old Cinder', desc: 'A keepsake.' };
   let chosen = 0;
   const button = keepsakeChoiceButton(keepsake, true, () => { chosen += 1; });
   document.body.appendChild(button);
@@ -22,7 +22,7 @@ test('keepsake art survives a failed load and repeated Retry restoration', () =>
     image.dispatchEvent(new Event('error'));
     assert.equal(button.querySelector('img'), null, 'the broken image is replaced');
     const placeholder = button.querySelector('[data-art-placeholder]');
-    assert.equal(placeholder?.textContent, keepsake.icon, 'the marked glyph stands in');
+    assert.equal(placeholder?.dataset.engravedIcon, 'relic', 'the marked named vector stands in');
     assert.equal(restoreArtPlaceholders(document), 1);
     assert.equal(button.querySelector('img'), image, 'Retry restores the same image and its error handler');
     assert.equal(image.getAttribute('src'), source);

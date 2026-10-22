@@ -29,7 +29,7 @@ import { startingKitViews } from '../../model/startingKits.js';
 import { createRunState } from '../../model/state.js';
 import {
   el, pane, row, labelStack, button, buttonRow, optionCard, options, pill, flavour, blocker, eyebrow,
-  segmented, swatch, swatches, iconButton, hairline,
+  segmented, swatch, swatches, iconButton, hairline, glyph,
 } from '../kit/index.js';
 
 const NAME_KEY = 'sote_lan_name';
@@ -127,7 +127,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       }
       hosts.forEach((h, i) => {
         const card = optionCard({
-          glyph: '⚑', name: h.name, meta: h.local ? 'This fire' : `${h.addr}:${h.port}`,
+          glyph: 'combat', name: h.name, meta: h.local ? 'This fire' : `${h.addr}:${h.port}`,
           className: 'lb-join', attrs: { dataset: { i } },
         });
         card.addEventListener('click', () => join(hosts[Number(card.dataset.i)]));
@@ -207,7 +207,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
         : p.ready ? { label: t('lobby.ready'), on: true } : { label: 'Not ready', on: false };
     return row({
       tag: 'div', setting: true,
-      glyph: p.isHost ? '⚑' : (p.classId ? classGlyph(p.classId) : '…'),
+      glyph: p.isHost ? 'combat' : (p.classId ? classGlyph(p.classId) : '…'),
       labelNode: el('span', { class: 'r-label' }, [
         el('span', { style: { color: tintCss(p.tint) }, text: p.name }),
         p.id === myId ? ' (you)' : '',
@@ -241,7 +241,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
     const resumeWrap = el('div', { id: 'lb-resume-wrap' });
     const seedInput = iAmHost ? textInput({ id: 'lb-seed', value: state.seedString }) : null;
     const startBtn = iAmHost ? button({ label: allReady ? t('gameProfile.creation.copy2') : t('lobby.beginWaiting'), weight: 'primary', id: 'lb-start', disabled: !(state.players.length && allReady) }) : null;
-    const readyBtn = iAmHost ? null : button({ label: state.ready ? '✓ Ready — waiting for the host' : 'Ready up', weight: 'primary', id: 'lb-ready' });
+    const readyBtn = iAmHost ? null : button({ label: state.ready ? 'Ready — waiting for the host' : 'Ready up', weight: 'primary', id: 'lb-ready' });
     const leaveBtn = button({ label: 'Leave', role: 'exit', id: 'lb-leave' });
 
     mountScreen(pane({
@@ -343,10 +343,11 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       localsBox.innerHTML = '';
       state.locals.forEach((lp, i) => {
         const nameField = textInput({ class: 'll-name', maxlength: '14', value: lp.name, 'aria-label': `${t('combat.log.role.player')} ${i + 2} name` });
-        const classBtn = button({ label: `${classGlyph(lp.classId)} ${classList.find((c) => c.id === lp.classId).name}`, className: 'll-class' });
+        const classBtn = button({ label: classList.find((c) => c.id === lp.classId).name, className: 'll-class' });
+        classBtn.prepend(glyph(classGlyph(lp.classId)));
         const kitBtn = button({ label: (kitsFor(lp.classId).find((kit) => kit.id === lp.startingKitId) || kitsFor(lp.classId)[0]).label, className: 'll-kit' });
         const tintBtn = swatch({ color: tintCss(lp.tint), label: 'Next accent', className: 'll-tint' });
-        const del = iconButton({ glyph: '✕', label: 'Remove this player', className: 'll-del' });
+        const del = iconButton({ glyph: 'close', label: 'Remove this player', className: 'll-del' });
         const seat = row({
           tag: 'div', setting: true,
           labelNode: labelStack({ label: `Seat ${i + 2}` }),

@@ -18,7 +18,7 @@ const check = (fn) => { fn(); checks++; };
 // Wiring: both roles reach the door through the Information control, with the
 // control itself as the opener so focus returns to it.
 check(() => assert.doesNotMatch(combat, /function combatantInspectControl/));
-check(() => assert.match(combat, /combatantInfo\(combatantSubject\('player', p\)\.name, opener => openCombatantDoor\(combatantSubject\('player', p\), opener\)\)/));
+check(() => assert.match(combat, /combatantInfo\(combatantName\('player', p\), opener => openCombatantDoor\(combatantSubject\('player', p\), opener\)\)/));
 check(() => assert.match(combat, /if \(enemy\.alive\) leading\.push\(combatantInfo\(def\.name, opener => openCombatantDoor\(combatantSubject\('enemy', enemy\), opener\)\)/));
 
 // Enemy name (#1785, regressed by #1787): with nothing armed, a centre tap or

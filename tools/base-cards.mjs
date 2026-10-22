@@ -8,6 +8,7 @@ import { statuses } from '../src/content/statuses.js';
 import { stances } from '../src/content/stances.js';
 import { TAGS } from '../src/content/tags.js';
 import { fileURLToPath } from 'node:url';
+import { holdForCli } from './lib/build-lock.mjs';
 export const BASE_CARD_PACK = 'games/ashenspire/packs/base-cards';
 export const BASE_CARD_OUTPUT = 'src/content/generated/baseCards.js';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -79,10 +80,15 @@ export function compileBaseCards(root = ROOT) {
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
+    const check = process.argv.includes('--check');
+    if (!check) await holdForCli(ROOT, 'base-cards');
     const text = compileBaseCards();
     if (process.argv.includes('--check')) {
       if (!existsSync(resolve(ROOT, BASE_CARD_OUTPUT)) || readFileSync(resolve(ROOT, BASE_CARD_OUTPUT), 'utf8') !== text) throw new Error(`Stale ${BASE_CARD_OUTPUT}; run node tools/base-cards.mjs`);
-    } else writeFileSync(resolve(ROOT, BASE_CARD_OUTPUT), text);
+    } else {
+      const output = resolve(ROOT, BASE_CARD_OUTPUT);
+      if (!existsSync(output) || readFileSync(output, 'utf8') !== text) writeFileSync(output, text);
+    }
     process.stdout.write(`Base card pack ${process.argv.includes('--check') ? 'checked' : 'compiled'}.\n`);
   } catch (error) { process.stderr.write(`${error.message}\n`); process.exitCode = 1; }
 }

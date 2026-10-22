@@ -123,7 +123,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
     el('span', { class: 'sp-v' }, [el('strong', { class: 'smith-cost-required', text: String(selected.cost) }), el('i', { 'aria-hidden': 'true', text: '/' }), el('strong', { class: 'smith-cost-available', text: String(selected.stones) })]),
   ]);
   const economyNode = (selected) => el('span', { class: 'smith-economy-values' }, [
-    el('span', { class: 'smith-stone-icon', 'aria-hidden': 'true', text: '🪨' }),
+    glyph('weight', { class: 'smith-stone-icon', 'aria-hidden': 'true' }),
     el('b', { text: 'Smithing Stone Cost' }), ' ', costPairNode(selected),
   ]);
 
@@ -203,7 +203,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
     card.setAttribute('aria-label', `${item.name}, ${itemTypeText}, ${item.inventoryCount} in inventory, tier ${item.currentLevel} to ${item.nextLevel}, costs ${item.cost} Smithing Stone. Select to review its exact changes and requirements.`);
     attachTooltip(card, () => `<div class="tt-title">${esc(item.name)} · Tier ${item.currentLevel} → ${item.nextLevel}</div>`
       + `<div>Type: ${esc(itemTypeText)}.</div>`
-      + `<div>Smith Stone Cost: 🪨 ${item.cost}/${item.stones} available.</div>`
+      + `<div>Smith Stone Cost: ${item.cost}/${item.stones} available.</div>`
       + `<div>${item.requirements.length ? item.requirements.map((req) => `${esc(req.label)} ${req.currentRequired} → ${req.nextRequired}; you have ${req.actual == null ? '?' : req.actual}`).join('<br>') : 'No attribute requirement.'}</div>`);
     markUiComponent(card, UI.smithCandidateCard, item.selected ? 'selected' : 'available');
     const piece = item.itemKind === 'relic' ? registries.relics.get(item.itemId)
@@ -338,7 +338,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
     previewHost.replaceChildren(selected
       ? previewCard(selected, smithPaneSlots(model))
       : el('div', { class: 'smith-preview-empty', dataset: { uiComponent: UI.smithUpgradePreview } }, [
-        artWell({ glyph: '⚒', cool: true }),
+        artWell({ glyph: 'smith', cool: true }),
         prose(p.instruction),
       ]));
     if (selected) {

@@ -1,7 +1,7 @@
 // Explicit Core-only mobility content; no runtime card generation.
 export function enemyAdvanceCard(enemyId) {
   return { id: `${enemyId}.advance`, name: 'Advance', class: 'colorless', rarity: 'special',
-    cost: 1, staminaCost: 1, manaCost: 0, costRule: 'fixed', type: 'skill', icon: 'move', keywords: [],
+    cost: 1, staminaCost: 1, manaCost: 0, costRule: 'fixed', type: 'skill', icon: 'motion', keywords: [],
     effects: [{ op: 'moveEngagement', target: 'enemy', bands: -1 }],
     tags: ['camp:physical', 'classification.skill'], textTemplate: 'Close one band.' };
 }

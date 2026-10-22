@@ -45,7 +45,7 @@ export function getEntries() {
 // A CONTROL THAT STOPS WORKING TELLS SOMEONE
 // ---------------------------------------------------------------------------
 //
-// The ☰ button died and the game said nothing. Measured on six channels at
+// The menu button died and the game said nothing. Measured on six channels at
 // once: the TypeError is REAL and it IS emitted — CDP Runtime.exceptionThrown,
 // a page `error` listener installed before navigation, the same listener
 // installed after load, and the log below all carry it, identically over

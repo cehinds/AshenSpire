@@ -37,7 +37,8 @@ test('known intent titles and icon rows match the approved six states', () => {
     [{kind:'block',block:6},'Defending',[{icon:'defend',value:'6'}]],
   ]) {
     const result = view(intent); assert.equal(result.visibility,'known');
-    assert.equal(result.title,title); assert.deepEqual(result.parts,parts);
+    assert.equal(result.title,title); assert.deepEqual(result.parts.map(({ summary, ...part }) => part),parts);
+    if (intent.damage != null && result.parts.some(part => part.value === String(intent.damage))) assert.match(result.parts.find(part => part.value === String(intent.damage)).summary || '', /Total/);
   }
 });
 

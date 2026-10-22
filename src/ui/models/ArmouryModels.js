@@ -144,7 +144,7 @@ export function inventoryItemCardModel(row, { selected = false, draggable = fals
         : ['Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)
           ? armamentIconAsset(row.item || row)
           : row.item?.artAsset || null,
-      icon: row.item?.icon || '◆',
+      icon: row.item?.icon || 'skill',
       category: row.category,
       count: row.count,
       equippedLabels: [...row.equippedLabels],
@@ -173,7 +173,7 @@ export function inventoryDetailCardModel({ row, art, description, mods, instruct
       mods: [...mods],
       instruction,
       art,
-      fallbackIcon: row.item.icon || '◆',
+      fallbackIcon: row.item.icon || 'skill',
       holdAction: classModel?.holdAction === true,
     },
   });

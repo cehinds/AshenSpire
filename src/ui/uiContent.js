@@ -96,7 +96,7 @@ export const NODE_TINT = thaw(components.nodeTint);
 /**
  * legendEntries() → [{ icon, name, tint }], one row per distinct glyph.
  *
- * Bjorn cold-played the map and could not identify `👁`. It is the BOSS — the
+ * Bjorn cold-played the map and could not identify `target`. It is the BOSS — the
  * most important node on the board — and it was missing from the legend, because
  * the legend was hand-written in map.js while the icons live here, in a file
  * whose own header says it is the single source so they "can't diverge".
@@ -280,7 +280,7 @@ export function actPlate(actNumber, plates) {
 
 // ---- the in-run menu: ONE table, two widgets --------------------------------
 //
-// The overlay's tab strip and the ☰ quick-nav dropdown are two presentations of
+// The overlay's tab strip and the menu quick-nav dropdown are two presentations of
 // the same set of destinations. They used to be one presentation and a hardcoded
 // list (`TABS` in overlay.js) — adding the dropdown beside that list would have
 // made it the second copy this file's header exists to prevent (Law 1).
