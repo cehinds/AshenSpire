@@ -20,7 +20,7 @@
 // dependent slot only appears when the choice it depends on is made
 // (SmithWorkspaceModel.js); smithServices.js clears the dependent choices when
 // a parent changes.
-import { engravedIcon } from './engravedIcon.js';
+import { engravedIcon, engravedIconHtml } from './engravedIcon.js';
 import { hideOnError } from '../artFallback.js';
 import { assetUrl } from '../assetmap.js';
 import { esc, attachTooltip } from './tooltip.js';
@@ -165,7 +165,7 @@ export function mountMountServiceModal(host, initialModel, {
       <em>REQ</em><i aria-hidden="true">/</i><em>AVAIL</em>
       <strong class="smith-cost-required">${selected.cost}</strong><i aria-hidden="true">/</i><strong class="smith-cost-available">${selected.stones}</strong>
     </span>`;
-  const economyHtml = (selected) => `<span class="smith-economy-values"><span class="smith-stone-icon" aria-hidden="true">Stone</span><b>Smithing Stone Cost</b>${costPairHtml(selected)}</span>`;
+  const economyHtml = (selected) => `<span class="smith-economy-values"><span class="smith-stone-icon" aria-hidden="true">${engravedIconHtml('weight') || 'Stone'}</span><b>Smithing Stone Cost</b>${costPairHtml(selected)}</span>`;
 
   const mountRowHtml = (mount) => `
     <div class="mount-row${mount.selected ? ' selected' : ''}${mount.extra ? ' is-extra' : ''}" role="option" aria-selected="${String(mount.selected)}"
