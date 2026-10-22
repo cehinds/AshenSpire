@@ -41,15 +41,14 @@ test('archived fixed-loadout presenter cannot enter the runtime graph', () => {
   }
 });
 
-test('UI implementation and authored presentation avoid embedded pictograms', () => {
+test('editable implementation and authored presentation avoid embedded pictograms', () => {
   // Arrows, mathematical operators, controller directions and prose typography
   // are intentionally outside this range. Artwork remains named asset paths.
   const pictogram = /[\u2600-\u27bf\u{1f000}-\u{1faff}]/u;
-  for (const file of files('../src/ui').filter(file => file.endsWith('.js'))) {
+  for (const file of files('../src').filter(file => file.endsWith('.js')
+    && !file.includes('/generated/') && !file.endsWith('.generated.js'))) {
     const source = readFileSync(new URL(file, import.meta.url), 'utf8');
-    // Comments describe history and do not ship embedded runtime glyphs.
-    const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-    assert.doesNotMatch(code, pictogram, file);
+    assert.doesNotMatch(source, pictogram, file);
   }
   const config = readFileSync(new URL('../content/config/ui/presentation/uiContent.json', import.meta.url), 'utf8');
   assert.doesNotMatch(config, pictogram);
