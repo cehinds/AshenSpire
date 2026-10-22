@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 import { engravedIcon, engravedIconHtml } from './engravedIcon.js';
 // The HUD's two quick settings — Fullscreen and Music — are two kit
 // IconButtons (display, audio) in the same cluster as Armoury and the menu, at the same
@@ -97,7 +98,7 @@ function syncMusic(stack, settings) {
   button.setAttribute('aria-pressed', String(plan.active));
   button.setAttribute('aria-label', plan.label);
   button.title = plan.label;
-  button.replaceChildren(engravedIcon('audio') || 'Audio');
+  button.replaceChildren(engravedIcon('audio') || t('settings.row.muteAudio'));
 }
 
 export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } = {}) {

@@ -15,6 +15,7 @@ function installFakeDom() {
     hasAttribute(k) { return k in this.attrs; } removeAttribute(k) { delete this.attrs[k]; }
     appendChild(c) { if (c.parentNode) c.parentNode.removeChild(c); c.parentNode = this; this.children.push(c); return c; }
     append(...cs) { for (const c of cs) if (c && typeof c === 'object') this.appendChild(c); }
+    replaceChildren(...nodes) { for (const child of [...this.children]) this.removeChild(child); this._text = ''; this.append(...nodes); }
     removeChild(c) { this.children = this.children.filter((x) => x !== c); c.parentNode = null; }
     remove() { this.parentNode?.removeChild(this); }
     replaceWith(o) { const p = this.parentNode; if (!p) return; const i = p.children.indexOf(this); if (o.parentNode) o.parentNode.removeChild(o); p.children[i] = o; o.parentNode = p; this.parentNode = null; }
@@ -43,12 +44,13 @@ const { restoreArtPlaceholders } = await import('../src/ui/artFallback.js');
 const imgOf = (el) => (el?.tagName === 'IMG' ? el : el?.querySelector('img'));
 const mount = (el) => { doc.body.appendChild(el); return el; };
 
-test('relicIcon: a failed icon becomes its glyph, and the restore draws the icon again', () => {
-  const relic = { id: 'forsakenMedallion', icon: '◈' };
+test('relicIcon: a failed icon becomes named vector art, and the restore draws the icon again', () => {
+  const relic = { id: 'forsakenMedallion', icon: 'relic' };
   const icon = mount(relicIcon(relic));
   imgOf(icon).dispatch('error');
   const glyph = doc.body.children.at(-1);
-  assert.equal(glyph.textContent, '◈', 'the glyph stands in');
+  assert.equal(glyph.querySelector('.engraved-icon')?.dataset.engravedIcon, 'relic', 'the named vector stands in');
+  assert.equal(glyph.querySelector('img'), null, 'the broken image has been removed');
   assert.ok(glyph.hasAttribute('data-art-placeholder'));
   assert.equal(restoreArtPlaceholders(doc.body), 1);
   const back = doc.body.children.at(-1);
@@ -58,10 +60,10 @@ test('relicIcon: a failed icon becomes its glyph, and the restore draws the icon
 });
 
 test('enemySprite: a failed sprite becomes its placeholder, and the restore builds the sprite again', () => {
-  const def = { id: 'testShade', name: 'Test Shade', size: 'medium', art: '☠' };
+  const def = { id: 'testShade', name: 'Test Shade', size: 'medium', art: 'enemy' };
   const sprite = mount(enemySprite(def, { hp: 5, maxHp: 9 }));
   imgOf(sprite).dispatch('error');
-  assert.equal(sprite.textContent, '☠', 'the placeholder recipe');
+  assert.equal(sprite.textContent, def.name, 'the enemy name remains readable when art fails');
   assert.ok(sprite.hasAttribute('data-art-placeholder'));
   assert.equal(restoreArtPlaceholders(doc.body), 1);
   const back = doc.body.children.at(-1);

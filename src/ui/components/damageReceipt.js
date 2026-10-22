@@ -8,7 +8,7 @@ export function damageReceiptLines(receipt) {
   if (!Array.isArray(receipt?.hits)) return [];
   const lines = [];
   for (const [index, hit] of receipt.hits.entries()) {
-    lines.push(`Hit ${index + 1}: ${number(hit.incoming)} incoming → ${number(hit.hpLoss)} HP damage`);
+    lines.push(`${t('combat.receipt.hitLabel')} ${index + 1}: ${number(hit.incoming)} incoming → ${number(hit.hpLoss)} HP damage`);
     if (Number.isFinite(hit.physical) && Number.isFinite(hit.magical)) lines.push(`Components: ${number(hit.physical)} physical + ${number(hit.magical)} magical`);
     for (const source of hit.sources || []) {
       const operation = source.operation === 'multiply' || Number.isFinite(source.multiplier)
@@ -45,7 +45,7 @@ function groupedHitDetails(hits, describe) {
     }
   }
   return [...groups].flatMap(([text, rows]) => rows.map(indices =>
-    `${indices.length === 1 ? 'Hit' : 'Hits'} ${indices.join(', ')}: ${text}`)).join('; ');
+    `${indices.length === 1 ? t('combat.receipt.hitLabel') : t('combat.receipt.hitsLabel')} ${indices.join(', ')}: ${text}`)).join('; ');
 }
 
 function damageDetailTopics(hits) {
@@ -74,7 +74,7 @@ function damageDetailTopics(hits) {
     if (hit.poiseDamage > 0) rows.push(t('combat.receipt.poiseDamage', { n: detailNumber(hit.poiseDamage) }));
     return rows;
   });
-  return [['Hits', hitDetails, 'Inspect per-hit damage'], ['Sources', sources, 'Inspect damage sources'], ['Defenses', defenses, 'Inspect defense details']]
+  return [[t('combat.receipt.hitsLabel'), hitDetails, 'Inspect per-hit damage'], ['Sources', sources, 'Inspect damage sources'], ['Defenses', defenses, 'Inspect defense details']]
     .filter(([, text]) => text);
 }
 

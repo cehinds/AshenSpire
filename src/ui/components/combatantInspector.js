@@ -75,7 +75,7 @@ function enemyDeckSection(read) {
     el('summary', { text: `${label}: ${card?.name || empty}` }),
     ...(card ? [renderEnemyMoveCards([card])] : []),
   ]);
-  node.append(action('Current action', read.current, read.currentHidden ? 'Unread' : 'None'),
+  node.append(action('Current action', read.current, read.currentHidden ? t('gameProfile.combat.unreadIntent') : 'None'),
     action('Last played', read.last, 'None yet'));
   node.append(el('details', { class: 'combatant-deck-cards', open: true }, [
     el('summary', { text: `Authored deck (${read.cards.reduce((count, card) => count + (card.copies || 1), 0)})` }),

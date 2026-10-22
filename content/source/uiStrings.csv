@@ -1762,3 +1762,6 @@ combat.intent.damageHp,,HP,,
 combat.intent.damageBeforeBlock,,before Block,,
 combat.intent.damageTotal,,Total {amount} {basis},,
 combat.intent.damageContact,,Hit {index}/{count} · next {amount} {basis},,
+
+combat.receipt.hitLabel,,Hit,,
+combat.receipt.hitsLabel,,Hits,,

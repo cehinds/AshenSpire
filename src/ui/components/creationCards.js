@@ -236,7 +236,7 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
     el('div', { class: 'as-stack' }, [
       art,
       el('div', { class: 'as-stack tight' }, [
-        eyebrow('Starting resources'),
+        eyebrow(t('creation.startingResources')),
         resources,
       ]),
       el('div', { class: 'as-stack tight' }, relicCard),

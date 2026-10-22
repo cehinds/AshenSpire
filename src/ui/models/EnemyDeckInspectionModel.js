@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 // Read-only identity bridge: authored cards are joined to the runtime moves by
 // their explicit legacyMove hint, never by guessing names or inventing a deck.
 import { gameContent } from '../../model/gameProfile.js';
@@ -25,7 +26,7 @@ export function enemyDeckInspection(combat, enemy, moves, preview) {
     const last = moveId === lastMoveId;
     const state = [active && 'Current action', last && 'Last played', move.locked && 'Locked'].filter(Boolean).join(' · ');
     return { ...move, id: cardId, cardId, copies: count, name: card.name, active, last,
-      meta: [state || 'Deck', count > 1 ? `${count} copies` : '', `Action cost: ${cost} SP`, `Card base: ${card.staminaCost || 0} SP + ${card.manaCost || 0} MP`, move.meta].filter(Boolean).join(' · '),
+      meta: [state || t('settings.group.Deck'), count > 1 ? `${count} copies` : '', `Action cost: ${cost} SP`, `Card base: ${card.staminaCost || 0} SP + ${card.manaCost || 0} MP`, move.meta].filter(Boolean).join(' · '),
       // Execution uses the shared runtime move projection, whose formulas and
       // tier scaling may differ from the printed base card definition.
       detail: move.detail };
