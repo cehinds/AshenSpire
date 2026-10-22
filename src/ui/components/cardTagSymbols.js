@@ -149,7 +149,11 @@ export function cardSideTags(model, def = {}, registries = null, preview = null,
     const count = occurrences.length === 1 ? occurrences[0].count : undefined;
     selected.push({ id: 'status:' + id, label: status.name, blurb: status.tooltip || status.name, ...(count !== undefined ? { count } : {}) });
   }
-  return selected;
+  // Only a rendered tag can carry an explanation omitted from the face.
+  return selected.slice(0, 5).map(tag => {
+    const status = tag.id.startsWith('status:') && registries?.statuses?.get(tag.id.slice(7));
+    return status?.tooltip ? { ...tag, representedRules: [...(tag.representedRules || []), tag.id] } : tag;
+  });
 }
 
 /** The card rail's solid symbol for one tag id (e.g. 'effect:evade') as a bare SVG element. */

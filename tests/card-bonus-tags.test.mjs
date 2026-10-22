@@ -6,6 +6,7 @@ import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistrie
 import { playingCardDefinition, playingCardModel } from '../src/model/playingCard.js';
 import { cardBonusTags } from '../src/model/cardBonusTags.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
+import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { cardSideTags, cardTagRailHtml } from '../src/ui/components/cardTagSymbols.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -160,4 +161,54 @@ test('a visible Core Smash tag explains the standard matchup without repeating i
   assert.match(text(cardFaceLines(def, null, core)), /Against Defend or Prepared/, 'without a represented tag the complete headless face keeps the rule');
   assert.ok(!cardSideTags(playingCardModel(core, { cardId: 'core.strike' }), definition('core.strike'), core).some(tag => tag.id === 'maneuver:smash'));
   assert.ok(!cardSideTags(playingCardModel(core, { cardId: def.id }), def, legacy).some(tag => tag.id === 'maneuver:smash'));
+});
+
+test('visible status tags carry definitions while the face keeps authored grants and conditions', () => {
+  for (const [id, status] of [['stoneskin', 'stoneskin'], ['entomb', 'entombed'], ['shieldwall', 'bulwarkEcho']]) {
+    const def = applyCombatExpansionCard(legacy.cards.get(id));
+    const tags = cardSideTags({ tags: [] }, def, legacy);
+    const tag = tags.find(tag => tag.id === `status:${status}`);
+    const explanation = legacy.statuses.get(status).tooltip.replace(/\.$/, '');
+    assert.ok(tag?.representedRules.includes(`status:${status}`), id);
+    assert.ok(cardTagRailHtml(tags).includes(`data-tag-id="status:${status}"`), id);
+    assert.ok(tag.blurb.includes(explanation), id);
+    const full = text(faceWith(def, [], null, legacy));
+    const compact = text(faceWith(def, tags, null, legacy));
+    assert.ok(full.includes(explanation), `${id}: default reading keeps the definition`);
+    assert.ok(!compact.includes(explanation), `${id}: printed face delegates the definition`);
+    assert.ok(compact.includes(legacy.statuses.get(status).name), `${id}: the grant stays`);
+    assert.match(compact, /\d/, `${id}: the grant quantity stays`);
+    if (id === 'shieldwall') assert.match(compact, /If you are in bulwark:/, 'the condition remains on the face');
+    if (id === 'entomb') assert.match(compact, /damage/, 'damage remains on the face');
+    assert.ok(text(cardFaceLines(def, null, legacy)).includes(explanation), 'headless text remains complete');
+  }
+});
+
+test('crowded or unknown status tags never remove a definition from printed rules', () => {
+  const def = { ...legacy.cards.get('stoneskin'), effects: [
+    { op: 'damage', target: 'enemy', amount: 1 }, ...legacy.cards.get('stoneskin').effects,
+  ] };
+  const model = { tags: ['fire', 'cold', 'arcane', 'holy', 'blunt'].map(id => ({ id: `damage:${id}`, label: id })) };
+  const tags = cardSideTags(model, def, legacy);
+  assert.equal(tags.length, 5);
+  assert.equal((cardTagRailHtml(tags).match(/data-tag-id=/g) || []).length, tags.length);
+  assert.ok(!tags.some(tag => tag.id === 'status:stoneskin'));
+  assert.match(text(faceWith(def, tags, null, legacy)), /Block is not removed/);
+  const unknown = cardSideTags({ tags: [{ id: 'status:not-authored', label: 'Unknown' }] },
+    { type: 'skill', effects: [] }, legacy);
+  assert.ok(!unknown.some(tag => tag.representedRules?.includes('status:not-authored')));
+});
+
+test('delegating a status definition preserves target, duration, chance and conditional timing', () => {
+  const def = { type: 'skill', effects: [{ op: 'applyStatus', target: 'ally', status: 'stoneskin', stacks: 2,
+    duration: 2, chance: 50, if: { p: 'all', preds: [{ p: 'hasStatus', of: 'self', status: 'prepared', snapshot: 'beforePlay' }] } }] };
+  const tags = cardSideTags({ tags: [] }, def, legacy);
+  const copy = text(faceWith(def, tags, null, legacy));
+  assert.match(copy, /Prepared/);
+  assert.match(copy, /before this card/);
+  assert.match(copy, /Stoneskin 2/);
+  assert.match(copy, /2 turns/);
+  assert.match(copy, /an ally/);
+  assert.match(copy, /50% chance/);
+  assert.doesNotMatch(copy, /Block is not removed/);
 });

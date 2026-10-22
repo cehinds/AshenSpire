@@ -110,7 +110,8 @@ test('a compact face keeps at most three rule lines visible and inspection retai
   assert.match(compact, /data-rules-overflow="true"/);
   assert.match(compact, /data-face-overflow="true"/);
   assert.match(compact, /card-rules-inspect-cue/);
-  assert.doesNotMatch(full, /data-face-overflow="true"|card-rules-inspect-cue/);
+  assert.doesNotMatch(full, /data-face-overflow="true"/);
+  assert.match(full, /card-rules-inspect-cue/, 'inspection can explain a residual geometric overflow too');
   assert.equal(faceLinesOf(full).length, faceLinesOf(compact).length, 'inspection preserves the full compact-face source text');
 }));
 

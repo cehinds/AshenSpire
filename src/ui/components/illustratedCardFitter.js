@@ -47,8 +47,11 @@ export function fitIllustratedCards(cards) {
       const row={face,text,layer,scale,rules,fullRules,compact:rules&&!fullRules&&!expandedHandRules,
         lines:rules?(fullRules?Infinity:Number(text.dataset.maxLines)||3):Number(text.dataset.maxLines)||1,
         hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
-        hasHiddenRules:face.dataset.rulesOverflow==='true'};
+        hasHiddenRules:face.dataset.rulesHidden==='true'};
       if(rules){
+        // A previous clipped fit must not constrain this fit's measurements.
+        text.style.maxHeight='none';layer.style.justifyContent='';
+        row.cue=face.querySelector('.card-rules-inspect-cue');
         row.rankInset=0;
         row.panel=face.querySelector('[data-component="panel"]');
         row.panelTrim=face.querySelector('[data-component="panel-trim"]');
@@ -147,7 +150,7 @@ export function fitIllustratedCards(cards) {
   }
   for(const row of narrow){row.result=row.lo;row.text.style.fontSize=row.result+'px';row.text.dataset.fittedFont=String(row.result/row.scale);}
   for(const row of rules){
-    if(row.compact){row.face.dataset.rulesExpanded='false';row.face.dataset.rulesNarrowFit='false';row.text.dataset.rulesComplete='false';continue;}
+    if(row.compact){row.face.dataset.rulesExpanded='false';row.face.dataset.rulesNarrowFit='false';continue;}
     row.boxHeight=row.authoredHeight;row.extra=Math.min(row.growthLimit,Math.max(0,(row.text.scrollHeight-row.boxHeight)/row.interiorScale));row.face.dataset.rulesNarrowFit=String(narrow.includes(row));
   }
   for(const row of rules){
@@ -160,7 +163,22 @@ export function fitIllustratedCards(cards) {
       if(row.art)row.art.style.height=Math.max(0,row.panelTop-extra-row.artTop)/height*100+'%';
     }
     if(row.rank)row.rank.style.top=(parseFloat(row.panel.style.top)+Number(row.rank.dataset.panelInset))+'%';
-    row.face.dataset.rulesExpanded=String(extra>1);row.text.dataset.rulesComplete='true';
+    row.face.dataset.rulesExpanded=String(extra>1);
+  }
+  // The readable floor and available artwork may still be insufficient. Measure
+  // the final bays together, then reserve an in-bay cue without losing any text.
+  for(const row of rules){
+    row.finalHeight=row.layer.clientHeight;
+    row.cueHeight=Math.min(row.finalHeight,row.cue?.offsetHeight||0);
+    row.overflow=Boolean(row.hasHiddenRules||row.hasHiddenLines||row.overflow
+      ||row.text.scrollHeight>Math.min(row.finalHeight,row.text.clientHeight)+1
+      ||row.text.scrollWidth>row.text.clientWidth+1);
+  }
+  for(const row of rules){
+    row.text.style.maxHeight=row.overflow?`calc(100% - ${row.cueHeight}px)`:'100%';
+    row.layer.style.justifyContent=row.overflow?'flex-start':'';
+    row.text.dataset.rulesComplete=String(!row.overflow);
+    row.face.dataset.rulesOverflow=String(row.overflow);
   }
   applyCardLayouts(faces.filter(face=>!skipped.has(face)));
   faces.forEach((face,i)=>{if(signatures[i]&&!skipped.has(face))fitSignatures.set(face,signatures[i]);});
