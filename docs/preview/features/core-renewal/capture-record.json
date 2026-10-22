@@ -1,0 +1,44 @@
+{
+  "source": "25aed2598167a30cdde0ced7813f5e0737ff95cf",
+  "sha256": "0e20099f6b8e27f470533cb91423198110b084dc888b9aca95f6ac7943e35001",
+  "version": "0.7.1.1773",
+  "digest": "1c4155a92c",
+  "captureDate": "2026-10-22T21:28:28.563Z",
+  "delivery": "fresh frozen local pack with its own objects and indexes",
+  "fixtureScope": "?shot initial scene poses; all subsequent selection, inspection, play, End turn and reaction choices use native browser input",
+  "images": [
+    {
+      "file": "mobile.png",
+      "width": 375,
+      "height": 667,
+      "fixtureUrl": "http://localhost:36567/AshenSpire.html?shot=combat&shotSeed=SHOWCASE&shotClass=reaver",
+      "sha256": "630b1770c8b9e3d2cfc3ace885a8f6d0ba9e2da2330b70fce4f422b20badcbba"
+    },
+    {
+      "file": "desktop.png",
+      "width": 1440,
+      "height": 900,
+      "fixtureUrl": "http://localhost:36567/AshenSpire.html?shot=combat&shotSeed=SHOWCASE&shotClass=reaver",
+      "sha256": "006b4737d492acd1b51e012c85d385e2b2378ed54efb06d41e14507e5ac58bc7"
+    },
+    {
+      "file": "wide.png",
+      "width": 1920,
+      "height": 1080,
+      "fixtureUrl": "http://localhost:36567/AshenSpire.html?shot=combat&shotSeed=SHOWCASE&shotClass=reaver",
+      "sha256": "197b6060d568a8fb61e44f618e790114b3081f646c674ff3e4dc8e87895541d5"
+    },
+    {
+      "file": "tablet.png",
+      "width": 768,
+      "height": 1024,
+      "fixtureUrl": "http://localhost:36567/AshenSpire.html?shot=combat&shotSeed=SHOWCASE&shotClass=reaver",
+      "sha256": "11574223a10bc8c64a16d3e7177b1231c6afa1b412abafc63a184394236c8ff9"
+    }
+  ],
+  "playableUrl": "https://cehinds.github.io/AshenSpire/branches/fix/CoreRenewal/latest/",
+  "publicDelivery": "Pending exact-source public delivery verification; matching successful CI build and artifact are available.",
+  "ciRun": "https://github.com/cehinds/AshenSpire/actions/runs/39857068644",
+  "artifact": "feature-preview-25aed2598167a30cdde0ced7813f5e0737ff95cf",
+  "releaseGalleryVerification": "Release source d310c277fffaaec6ec7a58a87de846577f12312d still identifies published 0.7.1.1517; existing gallery retained unchanged."
+}

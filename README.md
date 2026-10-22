@@ -1,5 +1,16 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — Clearer Core combat
+
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/CoreRenewal/latest/)
+
+Public delivery is awaiting verification. [Verified matching CI build / download artifact](https://github.com/cehinds/AshenSpire/actions/runs/39857068644). These real views show adjusted per-hit enemy forecasts, totals, readable cards and the clear header in build **0.7.1.1773 / 1c4155a92c**. [Capture record](docs/preview/features/core-renewal/README.md).
+
+| Mobile — 375 × 667 | Desktop — 1440 × 900 | Wide — 1920 × 1080 | Tablet — 768 × 1024 |
+| --- | --- | --- | --- |
+| ![Mobile combat with separate hit and total forecasts](docs/preview/features/core-renewal/mobile.png) | ![Desktop combat with readable cards and enemy forecasts](docs/preview/features/core-renewal/desktop.png) | ![Wide combat with enemy forecasts and cards](docs/preview/features/core-renewal/wide.png) | ![Tablet combat with clear intents and controls](docs/preview/features/core-renewal/tablet.png) |
+<!-- feature-preview:end -->
 
 
 
