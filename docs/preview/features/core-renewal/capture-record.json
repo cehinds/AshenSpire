@@ -1,0 +1,45 @@
+{
+  "source": "bef792958e13411064aa7befed38af600c5b2f26",
+  "sha256": "996b2034efd9ac1e6374421001be379ef6597a0aade580bed5a2b4fcc13cfe5e",
+  "version": "0.7.1.1773",
+  "digest": "6fc71c88a1",
+  "captureDate": "2026-10-22T22:18:25.263Z",
+  "delivery": "fresh frozen local pack with its own objects and indexes",
+  "fixtureScope": "?shot initial scene poses; all subsequent selection, inspection, play, End turn and reaction choices use native browser input",
+  "nativeReportSha256": "ca5c7450e4433a32fe24b3c68873d5e37d727a7e6652a7df81e1abaa5fee6c92",
+  "images": [
+    {
+      "file": "mobile.png",
+      "width": 375,
+      "height": 667,
+      "fixtureUrl": "http://localhost:37043/AshenSpire.html?shot=combat&shotSeed=SHOWCASE&shotClass=reaver",
+      "sha256": "630b1770c8b9e3d2cfc3ace885a8f6d0ba9e2da2330b70fce4f422b20badcbba"
+    },
+    {
+      "file": "desktop.png",
+      "width": 1440,
+      "height": 900,
+      "fixtureUrl": "http://localhost:37043/AshenSpire.html?shot=combat&shotSeed=SHOWCASE&shotClass=reaver",
+      "sha256": "502e723e6ee1084b5d17df9d80c6a84d2c6c2910ce39bd2eacf7518145f80c4c"
+    },
+    {
+      "file": "wide.png",
+      "width": 1920,
+      "height": 1080,
+      "fixtureUrl": "http://localhost:37043/AshenSpire.html?shot=combat&shotSeed=SHOWCASE&shotClass=reaver",
+      "sha256": "89e853933d3440375400f07cb2ef402b960f4af76021ad4455a7e7324be000f8"
+    },
+    {
+      "file": "tablet.png",
+      "width": 768,
+      "height": 1024,
+      "fixtureUrl": "http://localhost:37043/AshenSpire.html?shot=combat&shotSeed=SHOWCASE&shotClass=reaver",
+      "sha256": "11574223a10bc8c64a16d3e7177b1231c6afa1b412abafc63a184394236c8ff9"
+    }
+  ],
+  "playableUrl": "https://cehinds.github.io/AshenSpire/branches/fix/CoreRenewal/latest/",
+  "publicDelivery": "UNVERIFIED; review uses successful matching CI build artifact and native verified local official pack as the transparent fallback.",
+  "ciRun": "https://github.com/cehinds/AshenSpire/actions/runs/39863729665",
+  "artifact": "feature-preview-bef792958e13411064aa7befed38af600c5b2f26",
+  "releaseGalleryVerification": "Release source d310c277fffaaec6ec7a58a87de846577f12312d remains 0.7.1.1517; existing gallery unchanged."
+}

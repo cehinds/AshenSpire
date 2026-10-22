@@ -1,5 +1,15 @@
 # AshenSpire
+<!-- feature-preview:start -->
+## Feature preview — Clearer Core combat
 
+[Feature play route — public delivery unverified](https://cehinds.github.io/AshenSpire/branches/fix/CoreRenewal/latest/)
+
+[Verified CI build and download artifact](https://github.com/cehinds/AshenSpire/actions/runs/39863729665) is the review fallback. The official local pack **0.7.1.1773 / 6fc71c88a1** passed native browser checks and these real viewport captures. [Source, hashes and capture record](docs/preview/features/core-renewal/README.md). Public Test delivery is verified separately after promotion.
+
+| Mobile — 375 × 667 | Desktop — 1440 × 900 | Wide — 1920 × 1080 | Tablet — 768 × 1024 |
+| --- | --- | --- | --- |
+| ![Mobile combat with readable hit forecasts and cards](docs/preview/features/core-renewal/mobile.png) | ![Desktop combat with adjusted per-hit previews](docs/preview/features/core-renewal/desktop.png) | ![Wide combat with hit totals and cards](docs/preview/features/core-renewal/wide.png) | ![Tablet combat with clear header and controls](docs/preview/features/core-renewal/tablet.png) |
+<!-- feature-preview:end -->
 
 
 
