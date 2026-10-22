@@ -1,3 +1,4 @@
+import { enemyIntentRead } from '../models/EnemyIntentReadModel.js';
 import { mountCombatRangeAction } from '../components/combatRangeAction.js';
 import { rangeHitLabel, canChooseRangeRoute } from '../models/CombatRangeActionModel.js';
 import { fixCoreEnabled, fixCoreProtectionDescription } from '../../model/fixCoreMechanics.js';
@@ -1002,7 +1003,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       detail: moveDetail(move, moveId === currentMoveId ? intent : null, entity),
       active: moveId === currentMoveId,
     }));
-    const current = currentMoveId && def.moves?.[currentMoveId];
     // Previous actions are the moves that RESOLVED (oldest first). movesHistory
     // records rolls, and a roll cancelled by a stagger never happened.
     const past = entity.performedMoves || [];
@@ -1028,12 +1028,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         ...(combat.breakMeterVersion === 1 && entity.ratings ? [{ label: t('combat.rating.ward'), value: ratingValue(combat, entity, 'ward') }] : []),
         { label: t('combat.protection.block'), value: v.block || 0 },
       ], 'enemy', entity),
-      intent: {
-        name: intent.hidden ? intent.label || '?' : currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
-        detail: intent.hidden ? t('combat.targetHud.unknown') : moveDetail(current, intent),
-        hidden: intent.hidden, knowledgeRead: intent.knowledgeRead, stance: intent.stance, profile: intent.profile,
-        active: true,
-      },
+      intent: enemyIntentRead(combat, entity, { preview: intent, inspectedMoves,
+        unknownDetail: t('combat.targetHud.unknown') }),
       burdenRead: projectEnemyBurdenHand(entity, { turn: combat.turn, registries,
         ownerId: combat.playerKey || 'player', legacySolo: !(combat.players instanceof Map) }),
       skillLabel: 'Move set',
@@ -2084,7 +2080,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const shown = disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id);
     const followUps = disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, combat.phase === 'enemy' || !!combat.reactionCursor);
     return combatantIntent(followUps?.length ? { ...shown, followUps } : shown, () => {
-      const intent = combatantSubject('enemy', enemy).intent;
+      const intent = enemyIntentRead(combat, enemy, { preview: projectCombatIntent(combat, enemy.id),
+        unknownDetail: t('combat.targetHud.unknown') });
       return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
     }, registries, { onTarget: () => {
       if (busy || !getEntity(combat, enemy.id)?.alive || selfArm) return false;
