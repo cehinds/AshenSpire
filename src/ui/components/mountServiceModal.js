@@ -20,6 +20,7 @@
 // dependent slot only appears when the choice it depends on is made
 // (SmithWorkspaceModel.js); smithServices.js clears the dependent choices when
 // a parent changes.
+import { engravedIcon } from './engravedIcon.js';
 import { hideOnError } from '../artFallback.js';
 import { assetUrl } from '../assetmap.js';
 import { esc, attachTooltip } from './tooltip.js';
@@ -90,7 +91,8 @@ export function mountMountServiceModal(host, initialModel, {
         el('strong', { class: 'smith-weapon-name', text: item.name }),
         statusText(t(row.status.id, row.status.tokens), { class: 'smith-row-status' }),
       ]),
-      el('span', { class: 'as-pill smith-weapon-count', 'aria-label': item.whereLabel, text: item.equipped ? 'attack' : 'block' }),
+      el('span', { class: 'as-pill smith-weapon-count', role: 'img', 'aria-label': item.whereLabel },
+        engravedIcon(item.equipped ? 'attack' : 'block') || item.whereLabel),
     );
     card.setAttribute('aria-label', `${item.name}, ${item.whereLabel}, ${item.mounts.length} mount${item.mounts.length === 1 ? '' : 's'}, costs ${item.cost} Smithing Stone. Select to choose a mount.`);
     attachTooltip(card, () => `<div class="tt-title">${esc(item.name)} · ${esc(item.whereLabel)}</div>`

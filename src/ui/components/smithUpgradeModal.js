@@ -123,7 +123,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
     el('span', { class: 'sp-v' }, [el('strong', { class: 'smith-cost-required', text: String(selected.cost) }), el('i', { 'aria-hidden': 'true', text: '/' }), el('strong', { class: 'smith-cost-available', text: String(selected.stones) })]),
   ]);
   const economyNode = (selected) => el('span', { class: 'smith-economy-values' }, [
-    el('span', { class: 'smith-stone-icon', 'aria-hidden': 'true', text: 'weight' }),
+    glyph('weight', { class: 'smith-stone-icon', 'aria-hidden': 'true' }),
     el('b', { text: 'Smithing Stone Cost' }), ' ', costPairNode(selected),
   ]);
 
