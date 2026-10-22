@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-22
 
-- **Core update contract** ([#2245](https://github.com/cehinds/AshenSpire/pull/2245), `0.7.1.1770`). Defines the approved combat previews, readable cards, class and weapon progression, pacing controls and manual editing boundaries before their implementation.
+- **Core update contract** ([#2245](https://github.com/cehinds/AshenSpire/pull/2245), `0.7.1.1772`). Defines the approved combat previews, readable cards, class and weapon progression, pacing controls and manual editing boundaries before their implementation.
 
 ## 2026-10-21
 
