@@ -8,6 +8,27 @@ import * as Triggers from './triggers.js';
 import * as Tactics from './combatCardTactics.js';
 import { enemyMoveDamage } from '../model/state.js';
 
+// Random predicates belong to execution. Do not sample even a detached stream:
+// that would present an uncommitted outcome as a known conditional result.
+function previewPredicate(combat, predicate, action) {
+  if (predicate.p === 'random') return null;
+  if (predicate.p === 'not') {
+    const result = previewPredicate(combat, predicate.pred, action);
+    return result === null ? null : !result;
+  }
+  if (predicate.p === 'all' || predicate.p === 'any') {
+    const decisive = predicate.p === 'any';
+    let uncertain = false;
+    for (const child of predicate.preds) {
+      const result = previewPredicate(combat, child, action);
+      if (result === decisive) return decisive;
+      if (result === null) uncertain = true;
+    }
+    return uncertain ? null : !decisive;
+  }
+  return Triggers.evalPredicate(combat, predicate, action);
+}
+
 export function previewEnemyAction(combat, enemy, moveId) {
   const authored = combat.registries.enemies.get(enemy.enemyId)?.moves?.[moveId];
   if (!authored) return null;
@@ -20,7 +41,9 @@ export function previewEnemyAction(combat, enemy, moveId) {
     const resolve = value => isFormula(value) ? evaluate(value, formulas)
       : Array.isArray(value) ? value.map(resolve)
       : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, resolve(entry)])) : value;
-    return { ...resolve(effect), ...(effect.if ? { conditionMet: Triggers.evalPredicate(combat, effect.if, action) } : {}) };
+    const conditionMet = effect.if ? previewPredicate(combat, effect.if, action) : undefined;
+    return { ...resolve(effect), ...(effect.if ? { conditionMet,
+      ...(conditionMet === null ? { conditionUncertain: true } : {}) } : {}) };
   };
   const payload = row => [
     ...(row.damage != null && carrier.combatProfile.maneuver !== 'counter'

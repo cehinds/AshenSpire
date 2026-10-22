@@ -7,6 +7,7 @@ import { enemySmashFallbackPoise, enemyCounterPoiseDamage } from './stanceRules.
 const words = (value) => String(value || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').replace(/^./, (c) => c.toUpperCase());
 
 export function enemyActionEffectText(effect, registries) {
+  if (effect.conditionUncertain) return `${enemyActionEffectText({ ...effect, conditionUncertain: false }, registries)} (random condition unresolved)`;
   const value = input => typeof input === 'number' || typeof input === 'string' ? String(input) : 'variable';
   const target = effect.target === 'self' ? 'self' : effect.target === 'player' ? 'player' : words(effect.target || 'default target');
   if (effect.op === 'applyStatus') {
