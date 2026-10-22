@@ -1,3 +1,5 @@
+import { uiIconText } from '../../content/uiIcons.js';
+import { engravedIcon } from '../components/engravedIcon.js';
 // src/ui/screens/gameover.js — YOU PERISHED / EMBER RESTORED (SPEC §7.4)
 //
 // THE RUN'S END IS A DECISION DOOR ON THE PAGE (kit §05 body C): Title·L and
@@ -45,16 +47,22 @@ export function mountGameOver(app, { registries, game, victory, onTitle, onHisto
     return kitItem({ glyph: inst.upgraded ? 'staggered' : 'skill', name: def.name, attrs: { class: `mini${inst.upgraded ? ' upgraded' : ''}` } });
   }), { class: 'plain deck-strip' });
 
+  const identity = detailCard({
+    eyebrow: 'Forsaken',
+    name,
+    line: `Floor ${game.floor}${floors} · ${game.stats.fightsWon} fight${game.stats.fightsWon === 1 ? '' : 's'} won`,
+    meta: `Seed ${game.seedString}`,
+    children: cause ? el('div', { class: 'dc-line go-cause', text: cause }) : null,
+  });
+  if (glyph) {
+    identity.querySelector('.dc-name').appendChild(el('span', { class: 'go-sigil', style: { marginInlineStart: '.3em' }, 'aria-hidden': 'true' }, engravedIcon(glyph) || uiIconText(glyph)));
+    identity.querySelector('.dc-name').setAttribute('aria-label', `${name}, sigil ${uiIconText(glyph)}`);
+  }
+
   const body = decide({
     title: victory ? 'Ember restored' : 'You perished',
     children: [
-      detailCard({
-        eyebrow: 'Forsaken',
-        name: `${name} ${glyph}`.trim(),
-        line: `Floor ${game.floor}${floors} · ${game.stats.fightsWon} fight${game.stats.fightsWon === 1 ? '' : 's'} won`,
-        meta: `Seed ${game.seedString}`,
-        children: cause ? el('div', { class: 'dc-line go-cause', text: cause }) : null,
-      }),
+      identity,
       statStrip([
         chip({ key: 'Damage dealt', value: game.stats.damageDealt }),
         chip({ key: 'Damage taken', value: game.stats.damageTaken }),

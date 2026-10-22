@@ -270,7 +270,7 @@ export function optionCard({ glyph: g = '', art = null, name = '', badge = null,
     'aria-checked': attrs.role === 'radio' ? (selected ? 'true' : 'false') : null,
     'aria-disabled': disabled ? 'true' : null,
   }, [
-    art || (g ? el('span', { class: 'og', 'aria-hidden': 'true', text: g }) : null),
+    art || (g ? glyph(g, { class: 'og' }) : null),
     el('span', { class: 'ob' }, [
       name ? el('span', { class: 'on' }, [el('span', { class: 'as-label-text', title: typeof name === 'string' ? name : null }, name), badge]) : null,
       description ? el('span', { class: 'od', text: description }) : null,
@@ -316,7 +316,7 @@ export const chip = ({ key, value, tip = '', attrs = {} } = {}) => el('span', { 
 export const statStrip = (chips, attrs = {}) => el('span', { ...attrs, class: cls('as-statstrip', attrs.class) }, chips);
 export const kitLine = (items, attrs = {}) => el('span', { ...attrs, class: cls('as-kitline', attrs.class) }, items);
 export const kitItem = ({ glyph: g = 'skill', name, tip = '', attrs = {} } = {}) => el('span', { ...attrs, class: cls('ki', attrs.class), title: tip || null }, [
-  el('span', { class: 'kg', 'aria-hidden': 'true', text: g }), el('span', { class: 'kn', text: name }),
+  glyph(g, { class: 'kg' }), el('span', { class: 'kn', text: name }),
 ]);
 export function delta({ from, to, attrs = {} } = {}) {
   const dir = to > from ? 'up' : to < from ? 'down' : 'flat';

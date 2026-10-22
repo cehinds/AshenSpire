@@ -15,6 +15,7 @@
 import { attachTooltip, esc } from './tooltip.js';
 import { t } from '../strings.js';
 import { relicIcon } from '../assets.js';
+import { uiIconText } from '../../content/uiIcons.js';
 import { engravedIcon } from './engravedIcon.js';
 import { keepsakeArtAsset } from '../../content/keepsakeArt.js';
 import { assetUrl } from '../assetmap.js';
@@ -336,9 +337,14 @@ export function tintChoiceButton(tint, selected, onChoose) {
   return markUiComponent(pressable(button, selected, onChoose), UI.tintChoice);
 }
 
+/** The glyph-only character preview uses the same saved sigil as its choices. */
+export function characterSigilPreview(glyph) {
+  return el('span', { class: 'cc-character-sigil', role: 'img', 'aria-label': `Sigil ${uiIconText(glyph)}` }, engravedIcon(glyph) || uiIconText(glyph));
+}
+
 /** A sigil: a Swatch showing its glyph. */
 export function sigilChoiceButton(glyph, selected, onChoose) {
-  const button = el('button', { type: 'button', class: 'as-swatch sigil cz-opt', 'aria-label': `Sigil ${glyph}`, dataset: { sigil: glyph }, text: glyph });
+  const button = el('button', { type: 'button', class: 'as-swatch sigil cz-opt', 'aria-label': `Sigil ${uiIconText(glyph)}`, dataset: { sigil: glyph } }, engravedIcon(glyph) || uiIconText(glyph));
   return markUiComponent(pressable(button, selected, onChoose), UI.sigilChoice);
 }
 

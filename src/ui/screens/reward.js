@@ -1,4 +1,5 @@
-import { engravedIconHtml } from '../components/engravedIcon.js';
+import { uiIconText } from '../../content/uiIcons.js';
+import { engravedIcon, engravedIconHtml } from '../components/engravedIcon.js';
 import { mountRewardDoor } from '../components/rewardDoor.js';
 import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
 import {abilityDraftChoice} from '../../model/abilityDraftReceipts.js';
@@ -967,7 +968,7 @@ export function mountRewards(app, {
       <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' || state === 'skipped' ? ' locked' : ''}${offer}"
            data-kind="${esc(row.kind)}" data-key="${esc(row.key)}" data-state="${esc(state)}"
            data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
-        <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
+        <div class="glyph">${engravedIconHtml(KIND_GLYPHS[row.kind]) || esc(uiIconText(KIND_GLYPHS[row.kind] || '?'))}</div>
         <div class="cp-body">
           <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ` <span class="chip reward-new">${esc(t('reward.card.new'))}</span>` : ''}</h3>
           <p>${body}</p>
@@ -1183,7 +1184,7 @@ export function mountRewards(app, {
     else if (row.kind === 'relic') detailBody.append(renderCollectibleInspection(registries, registries.relics.get(row.relicId), t('reward.kind.relic'), { interactive: false }));
     else if (isFlask) detailBody.append(renderCollectibleInspection(registries, registries.flasks.get(row.flaskId), t('reward.kind.potion')));
     else detailBody.innerHTML = `<div class="class-pick reward-kind" data-kind="${esc(row.kind)}">
-      <div class="glyph">${KIND_GLYPHS[row.kind]}</div>
+      <div class="glyph">${engravedIconHtml(KIND_GLYPHS[row.kind]) || esc(uiIconText(KIND_GLYPHS[row.kind]))}</div>
       <div class="cp-body"><h3>${esc(body.title)}</h3><p>${body.body}</p></div>
     </div>`;
     door({
@@ -1331,7 +1332,7 @@ export function mountRewards(app, {
       const sentence = String(rule?.textTemplate || '').replace(/\{(\w+)\}/g, (m, tok) => tokens[tok] !== undefined ? String(tokens[tok]) : m);
       const tile = el('button', { class: 'class-pick reward-node reward-pick', type: 'button', role: 'radio',
         'aria-checked': String(choiceId === selectedCardId), dataset: { pickId: choiceId } }, [
-        el('div', { class: 'glyph', text: attribute ? 'strength' : feat ? 'staggered' : node?.glyph || 'progression' }),
+        el('div', { class: 'glyph', 'aria-hidden': 'true' }, engravedIcon(attribute ? 'strength' : feat ? 'staggered' : node?.glyph || 'progression') || uiIconText(node?.glyph || 'progression')),
         el('div', { class: 'cp-body' }, [
           el('h3', { text: attribute?.name || feat?.name || node?.label || option.id }),
           el('p', { text: attribute ? `${attribute.now} → ${attribute.now + 1}` : (feat ? getFeatDescription(registries, feat) : '') || sentence || node?.blurb || '' }),
@@ -1348,7 +1349,7 @@ export function mountRewards(app, {
       const tokens = nodeTokens(registries, nodeId);
       const sentence = String((rule && rule.textTemplate) || '').replace(/\{(\w+)\}/g, (m, tok) => (tokens[tok] !== undefined ? String(tokens[tok]) : m));
       const tile = el('button', { class: 'class-pick reward-node reward-pick', type: 'button', role: 'radio', 'aria-checked': String(nodeId === selectedCardId), dataset: { pickId: nodeId, nodeId } }, [
-        el('div', { class: 'glyph', text: node.glyph || 'progression' }),
+        el('div', { class: 'glyph', 'aria-hidden': 'true' }, engravedIcon(node.glyph || 'progression') || uiIconText(node.glyph || 'progression')),
         el('div', { class: 'cp-body' }, [el('h3', { text: node.label }), el('p', { text: sentence || node.blurb || '' })]),
       ]);
       tile.classList.toggle('reward-selected', nodeId === selectedCardId);

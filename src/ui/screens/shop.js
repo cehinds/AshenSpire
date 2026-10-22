@@ -1,3 +1,4 @@
+import { uiIconText } from '../../content/uiIcons.js';
 import { engravedIconHtml } from '../components/engravedIcon.js';
 import { uiZoom } from '../fx.js';
 import { removeOwnedRelic } from '../../model/classRewardProvenance.js';
@@ -587,7 +588,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       el.setAttribute('role', 'button');
       el.tabIndex = available ? 0 : -1;
       el.setAttribute('aria-disabled', String(!available));
-      el.innerHTML = `<div class="glyph">${glyph}</div><div class="cp-body"><h3>${esc(title)}</h3><p>${esc(summary)}</p></div>`;
+      el.innerHTML = `<div class="glyph">${engravedIconHtml(glyph) || esc(uiIconText(glyph))}</div><div class="cp-body"><h3>${esc(title)}</h3><p>${esc(summary)}</p></div>`;
       markUiComponent(el, UI.shopSmithCard, id.replace('shop-', ''));
       const ref = `services:${id.replace('shop-', '')}#0`;
       el.addEventListener('click', () => select('services', ref));
