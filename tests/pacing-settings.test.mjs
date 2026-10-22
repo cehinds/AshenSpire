@@ -62,3 +62,40 @@ test('a saved pre-D11 combatActionDelay (old Action delay) does not carry into t
   assert.equal(actionPacing().gapMs, 500);
   setCombatPacing();
 });
+
+test('animation duration and combat interval independently control their timeline paths', () => {
+  setAnimSpeed('normal'); setCombatPacing();
+  const baseline = actionPacing();
+  setCombatPacing({ animationStepDuration: 195 });
+  const quickSprite = actionPacing();
+  assert.equal(quickSprite.spriteSpeed.lungeMs, 195);
+  for (const key of ['gapMs', 'wordMs', 'afterSpriteMs', 'resultMs', 'reactionMs', 'damageMs', 'resetMs', 'stepMs']) {
+    assert.equal(quickSprite[key], baseline[key], key);
+  }
+  setCombatPacing({ animationStepDuration: 195, combatStepPause: 1000 });
+  assert.equal(actionPacing().gapMs, 1000);
+  assert.deepEqual(actionPacing().spriteSpeed, quickSprite.spriteSpeed);
+  setCombatPacing({ animationStepDuration: Infinity });
+  assert.equal(actionPacing().spriteSpeed.lungeMs, 390);
+  setCombatPacing({ animationStepDuration: -5 });
+  assert.ok(Math.abs(actionPacing().spriteSpeed.lungeMs - 50) < 1e-9);
+  setCombatPacing({ animationStepDuration: 99999 });
+  assert.equal(actionPacing().spriteSpeed.lungeMs, 3000);
+  setCombatPacing();
+});
+
+test('mobile fast preset writes visible persisted controls, manual edits return to custom', async () => {
+  const { combatPacingChanges } = await import('../src/model/autoCombatPolicy.js');
+  const saved = { combatStepPause: 2000, animationStepDuration: 1000, combatSpeed: 2 };
+  Object.assign(saved, combatPacingChanges('combatPacingPreset', 'mobile-fast'));
+  assert.equal(saved.combatStepPause, 250);
+  assert.equal(saved.animationStepDuration, 195);
+  assert.equal(saved.combatSpeed, 2);
+  Object.assign(saved, combatPacingChanges('animationStepDuration', 400));
+  assert.equal(saved.combatPacingPreset, 'custom');
+  assert.equal(saved.combatStepPause, 250);
+  assert.equal(saved.animationStepDuration, 400);
+  const keys = profileKeys(settingsRows());
+  for (const key of ['animationStepDuration', 'combatPacingPreset']) assert.ok(keys.includes(key));
+  assert.deepEqual([row('animationStepDuration').def, row('animationStepDuration').min, row('animationStepDuration').max], [390, 50, 3000]);
+});

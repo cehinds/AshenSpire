@@ -13,6 +13,7 @@ export function settingsRowAvailable(row, profile, nextProfile = null) {
   if (row.coreOnly) return configured && modules.effects?.fixCoreVersion === 1;
   // Ordered draw is consumed by createRunCombat in both foundations.
   if (row.key === 'playInDeckOrder') return !!modules.cards;
+  if (configured && profile.author?.core === 'ashen.core@2.0.0' && row.advancedGroup === 'Opening') return true;
   if (configured && row.cat === 'Advanced' && (LEGACY_MECHANICS_GROUPS.has(row.advancedGroup)
     || (row.key.startsWith('gameConfig.') && !row.key.startsWith('gameConfig.presentation.')))) return false;
   if (row.key === 'askToUpcastAfterTarget') return !configured && !!modules.cards;

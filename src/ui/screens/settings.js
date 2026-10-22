@@ -1,3 +1,4 @@
+import { combatPacingChanges } from '../../model/autoCombatPolicy.js';
 import { settingsRowAvailable, activeSettingsProfile } from '../models/SettingsCapabilitiesModel.js';
 import { mountGameProfileSettings, readNewGameProfile } from '../components/gameProfileSelector.js';
 import { previewPrologue } from './prologue.js';
@@ -383,6 +384,11 @@ const ROWS = [
   { cat: 'Combat', key: 'combatStepPause', type: 'number', def: ACTION_PACING.stageGapMs,
     min: AUTOMATION_DEFAULTS.stageGapMinimumMs, max: AUTOMATION_DEFAULTS.stageGapMaximumMs, step: 250, label: t('settings.row.combatStepPause'),
     note: tFull('settings.row.combatStepPause') },
+  { cat: 'Combat', key: 'animationStepDuration', type: 'number', def: ACTION_PACING.animationStepDurationMs,
+    min: AUTOMATION_DEFAULTS.animationStepMinimumMs, max: AUTOMATION_DEFAULTS.animationStepMaximumMs, step: 25,
+    label: 'Animation step duration (ms)', note: 'Sprite animation duration at normal speed. Independent of the pause between combat steps.' },
+  { cat: 'Combat', key: 'combatPacingPreset', type: 'choice', def: 'custom', choices: ['custom', 'mobile-fast'],
+    label: 'Combat pacing preset', note: 'Mobile fast sets the pause to 250 ms and animation duration to 195 ms. Edit either value to customize.' },
   { cat: 'Combat', key: 'animSpeed', type: 'choice', def: 'auto',
     choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: t('settings.row.animSpeed'),
     note: tFull('settings.row.animSpeed') },
@@ -3579,7 +3585,15 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const { value: val, refusal } = commitNumberRow(settings, row, raw);
       mirror(val);
       settings[key] = val;
-      onChange({ [key]: val });
+      const changes = combatPacingChanges(key, val);
+      Object.assign(settings, changes);
+      onChange(changes);
+      for (const choice of container.querySelectorAll('[data-key="combatPacingPreset"]')) {
+        if (choice.matches('.choice')) {
+          const selected = choice.dataset.val === settings.combatPacingPreset;
+          choice.classList.toggle('on', selected); choice.setAttribute('aria-pressed', String(selected));
+        } else choice.value = settings.combatPacingPreset || 'custom';
+      }
       if (refusal) typedRefusals.set(key, refusal); else typedRefusals.delete(key);
       if (key.startsWith('gameConfig.')) reportAdvancedProblems();
       else {
@@ -3923,14 +3937,19 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const previousSeed = settings[SEED_KEY];
     const wasAt = control.getBoundingClientRect().top;
     choices.forEach(choice => { choice.disabled = true; });
-    settings[key] = value;
+    const changes = combatPacingChanges(key, value);
+    const previousChanges = Object.fromEntries(Object.keys(changes).map(name => [name, settings[name]]));
+    Object.assign(settings, changes);
     let result;
-    try { result = await onChange({ [key]: value }); }
+    try { result = await onChange(changes); }
     catch (error) {
       result = { ok: false };
       if (lifecycleSentinel.isConnected && control.isConnected) showSettingsNotice(error.message);
     }
     if (result?.ok === false) {
+      for (const [name, prior] of Object.entries(previousChanges)) {
+        if (prior === undefined) delete settings[name]; else settings[name] = prior;
+      }
       if (hadValue) settings[key] = previous; else delete settings[key];
       if (previousSeed === undefined) delete settings[SEED_KEY]; else settings[SEED_KEY] = previousSeed;
     }
@@ -3947,7 +3966,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         choice.setAttribute('aria-pressed', String(on));
       } else choice.value = String(selected);
     });
-    markModified(container, settings, { [key]: settings[key] });
+    for (const name of ['combatStepPause', 'animationStepDuration']) {
+      if (!Object.hasOwn(changes, name)) continue;
+      for (const input of container.querySelectorAll(`[data-key="${name}"]`)) {
+        const wrap = input.closest('.num-wrap');
+        for (const field of wrap ? wrap.querySelectorAll('input') : [input]) {
+          if (field.matches('input')) field.value = String(settings[name]);
+        }
+      }
+    }
+    markModified(container, settings, changes);
     syncHeaderState();
     if (key.startsWith('gameConfig.')) reportAdvancedProblems();
     else refreshGates(container, settings);

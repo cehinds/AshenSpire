@@ -1,7 +1,8 @@
 {
   "motion": {
     "spritePlaybackRate": 0.5,
-    "stageGapMs": 500
+    "stageGapMs": 500,
+    "animationStepDurationMs": 390
   },
   "behavior": {
     "autoCombat": false,
@@ -15,6 +16,12 @@
     "autoSpeedMinimum": 1,
     "autoSpeedMaximum": 3,
     "stageGapMinimumMs": 250,
-    "stageGapMaximumMs": 2000
+    "stageGapMaximumMs": 2000,
+    "animationStepMinimumMs": 50,
+    "animationStepMaximumMs": 3000,
+    "mobileFastPreset": {
+      "combatStepPause": 250,
+      "animationStepDuration": 195
+    }
   }
 }

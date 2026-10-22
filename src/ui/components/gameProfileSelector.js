@@ -102,6 +102,32 @@ export function mountGameProfileSelector(host, { profile, importedProfile = null
     } catch (error) { status.textContent = t('gameProfile.settings.invalid', { error: error.message }); }
     finally { upload.value = ''; }
   });
-  panel.append(label, importButton, upload, status); host.append(panel);
+  panel.append(label, importButton, upload, status);
+  if (profile.author?.core === 'ashen.core@2.0.0') {
+    const note = document.createElement('p');
+    note.textContent = 'Class and used weapon XP only. Rates apply to new runs; saved runs keep their rates and earned progress.';
+    panel.append(note);
+    for (const [key, name] of [['classXpMultiplier', 'Class XP multiplier'], ['weaponXpMultiplier', 'Used weapon XP multiplier']]) {
+      const label = document.createElement('label'); label.textContent = name;
+      const input = document.createElement('input'); input.type = 'number';
+      input.min = '0'; input.max = '10'; input.step = '0.1';
+      input.value = String(profile.modules.progression?.[key] ?? 1);
+      input.setAttribute('aria-label', name);
+      input.addEventListener('change', async () => {
+        const number = Number(input.value);
+        if (!Number.isFinite(number) || input.value === '' || number < 0 || number > 10) {
+          input.value = String(profile.modules.progression?.[key] ?? 1);
+          status.textContent = 'XP multiplier must be between 0 and 10.'; return;
+        }
+        const author = structuredClone(profile.author);
+        author.modules ||= {};
+        const previous = author.modules.progression;
+        author.modules.progression = { ...(previous && typeof previous === 'object' ? previous : {}), [key]: number };
+        await apply(author);
+      });
+      label.append(input); panel.append(label);
+    }
+  }
+  host.append(panel);
   return panel;
 }

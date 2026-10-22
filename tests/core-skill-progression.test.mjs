@@ -10,7 +10,7 @@ import { dispatch, previewCard } from '../src/engine/combat.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { recordSkillXp, skillXpReceipt, settleConfiguredSkillProgression } from '../src/engine/skillXp.js';
 import { awardSkillXp, xpToNext } from '../src/model/skills.js';
-import { configuredSkillProgression, skillLevelNotices, acknowledgeSkillLevelNotices } from '../src/model/gameProfileProgression.js';
+import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices } from '../src/model/gameProfileProgression.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { mountGameProfileLevelUp } from '../src/ui/components/gameProfileLevelUp.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
@@ -230,7 +230,7 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
   combat.player.hp = 0;
   run.combatPendingOutcome = { result: 'defeat' };
   const saves = createSaveManager(createMemoryStorage());
-  const screens = [], notices = [], deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression,
+  const screens = [], notices = [], deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
     pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'screens', 'notices', `
@@ -280,4 +280,78 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
   resumed.emptyDefeat();
   assert.deepEqual(screens, [false, false], 'a loss without crossings finishes without a notice or map visit');
   assert.equal(loaded.gameProfilePendingReward, undefined);
+});
+
+test('Core XP affects only class and used weapon groups with independently configurable rates', () => {
+  const settleAt = (multiplier, weaponMultiplier = multiplier) => {
+    const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
+      progression: { classXpMultiplier: multiplier, weaponXpMultiplier: weaponMultiplier },
+    } });
+    const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+    const run = createRunState({ registries, seed: 511, classId: 'reaver' });
+    const combat = createRunCombat({ registries, run, rng: createRng(run.seed), enemyIds: ['wanderingSoldier'] });
+    recordSkillXp(combat, { type: 'damageDealt', sourceId: 'player', targetId: combat.enemies[0].id, amount: 10, usedArmamentId: 'greatsword' });
+    recordSkillXp(combat, { type: 'impactDealt', targetId: 'player', amount: 1000 });
+    recordSkillXp(combat, { type: 'attackEvaded', targetId: 'player' });
+    recordSkillXp(combat, { type: 'combatEnd', victory: true });
+    const receipt = skillXpReceipt(combat);
+    const awards = settleConfiguredSkillProgression(registries, run, combat, { victory: true });
+    return { receipt, awards, run };
+  };
+  const fast = settleAt(1), slow = settleAt(0.5), off = settleAt(0), weaponOnlySlow = settleAt(1, 0.5);
+  assert.equal(weaponOnlySlow.awards.classAward.gained, fast.awards.classAward.gained);
+  assert.equal(weaponOnlySlow.awards.trackAwards[0].gained, slow.awards.trackAwards[0].gained);
+  assert.deepEqual(slow.receipt, fast.receipt, 'rate changes settlement, never combat receipt attribution');
+  assert.equal(slow.awards.classAward.gained, Math.floor(fast.awards.classAward.gained / 2));
+  assert.equal(slow.awards.trackAwards[0].gained, Math.floor(fast.awards.trackAwards[0].gained / 2));
+  assert.deepEqual(Object.keys(slow.run.skills).sort(), ['class:reaver', 'item:blade']);
+  assert.equal(off.awards.classAward, null);
+  assert.equal(off.awards.trackAwards[0].gained, 0);
+  assert.equal(gameModule(profile, 'progression').weaponXpMultiplier, 1);
+});
+
+test('old snapshots keep their original rate and invalid authored rates are refused', async () => {
+  const { configuredSkillXpMultiplier } = await import('../src/model/gameProfileProgression.js');
+  assert.equal(configuredSkillXpMultiplier({ gameProfile: { modules: { progression: { mode: 'configured' } } } }), 1);
+  for (const weaponXpMultiplier of [-1, 11, 'slow']) assert.throws(() => resolveGameProfile({
+    formatVersion: 1, core: 'ashen.core@2.0.0', modules: { progression: { weaponXpMultiplier } },
+  }));
+});
+
+
+test('Core skill-only policy preserves earned character ledgers and blocks old snapshot character leveling', async () => {
+  const { coreSkillOnlyProgression, CORE_PROGRESSION_POLICY_VERSION } = await import('../src/model/gameProfileProgression.js');
+  const { previewGameProfileRest, beginGameProfileRest } = await import('../src/model/gameProfileRest.js');
+  const { gameProfileRestModel } = await import('../src/ui/models/GameProfileRestModel.js');
+  const { run } = live();
+  const old = structuredClone(run);
+  old.gameProfile.modules.progression.characterLevels = true;
+  old.level = { level: 3, xp: 200, unspentPoints: 2 };
+  const earned = structuredClone({ level: old.level, attributes: old.attributes });
+  assert.equal(CORE_PROGRESSION_POLICY_VERSION, 1);
+  assert.equal(coreSkillOnlyProgression(old), true);
+  assert.equal(configuredCharacterLevels(old), false);
+  assert.equal(gameModule(profile, 'progression').characterLevels, false);
+  old.mapNodeId = 'rest-test';
+  old.mapGraph = { nodes: { 'rest-test': { id: 'rest-test', type: 'shrine', actualType: 'rest' } } };
+  const visit = beginGameProfileRest(old);
+  assert.equal(gameProfileRestModel(reg, old, visit).services.some(row => row.id === 'levelUp'), true, 'already earned attributes remain claimable');
+  assert.equal(previewGameProfileRest(reg, old, 'levelUp', { attributeId: 'strength' }).run.level.unspentPoints, 1);
+  const spent = structuredClone(old); spent.level.unspentPoints = 0;
+  assert.throws(() => previewGameProfileRest(reg, spent, 'levelUp', { attributeId: 'strength' }), /leveling is disabled/);
+  assert.equal(gameProfileRestModel(reg, spent, visit).services.some(row => row.id === 'levelUp'), false);
+  assert.deepEqual({ level: old.level, attributes: old.attributes }, earned);
+  assert.equal(configuredCharacterLevels({ gameProfile: resolveGameProfile('current') }), true);
+});
+
+test('a pending Core opening survives the normal save door without changing earned progression', () => {
+  const { run } = live();
+  run.prologue = { version: 2, status: 'pending', scene: 0 };
+  const skills = structuredClone(run.skills);
+  const saves = createSaveManager(createMemoryStorage());
+  saves.saveRun(run, createRng(run.seed));
+  const loaded = saves.loadRun(reg);
+  assert.ok(loaded, JSON.stringify(saves.runStatus()));
+  assert.deepEqual(loaded.prologue, run.prologue);
+  assert.deepEqual(loaded.skills, skills);
 });

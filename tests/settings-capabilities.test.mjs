@@ -15,7 +15,8 @@ const rows=settingsRows(), core=resolveGameProfile('core'), current=resolveGameP
 const available=(key,profile)=>settingsRowAvailable(rows.find(row=>row.key===key),profile);
 test('Core hides legacy-only mechanics in groups, topics and search while retaining real controls',()=>{
   const groups=visibleAdvancedGroups(true,core).map(group=>group.id);
-  for(const group of ['Opening','Progression','Combat','Stats','Recovery','Rewards','Shops','Equipment','World']) assert(!groups.includes(group),group);
+  for(const group of ['Progression','Combat','Stats','Recovery','Rewards','Shops','Equipment','World']) assert(!groups.includes(group),group);
+  assert(groups.includes('Opening'), 'Core opening settings are live');
   assert(groups.includes('Deck'),'ordered draw still applies to configured fights');
   for(const key of ['viewPreset','uiScale','fullscreen','musicEnabled','sfxVolume','textSize','tapFloor','reducedMotion','screenShake','playInDeckOrder']) assert(available(key,core),key);
   assert(!available('askToUpcastAfterTarget',core));assert(!available('mapMode',core));

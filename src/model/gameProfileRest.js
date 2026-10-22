@@ -1,3 +1,4 @@
+import { configuredCharacterLevels } from './gameProfileProgression.js';
 // servicesPerVisit 1 (Current): exactly one committed configured service per persisted visit, no arrival grant.
 // servicesPerVisit "all" (Core, D10): the visit heals on arrival and every listed service (Smith, Level Up) is usable once,
 // in any order; none closes another and only Continue leaves. `visit.used` maps service -> true; `visit.service` is the last one.
@@ -70,6 +71,7 @@ function applyService(registries, draft, service, payload) {
   if (gameModule(draft, 'rest')?.mode !== 'configured' || !visit) throw new Error('Rest visit is unavailable or spent');
   if (!rules.services.includes(service)) throw new Error(`Unknown rest service '${service}'`);
   if (restServiceSpent(draft, visit, service)) throw new Error('Rest visit is unavailable or spent');
+  if (service === 'levelUp' && !configuredCharacterLevels(draft) && !(draft.level?.unspentPoints > 0)) throw new Error('Character leveling is disabled for this profile');
   if (service === 'strategize' && payload.draft) {
     const edited = payload.draft;
     if (edited.gameProfileRestVisitId !== draft.gameProfileRestVisitId) throw new Error('Stale Strategize draft');
