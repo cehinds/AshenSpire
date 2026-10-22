@@ -56,6 +56,20 @@ export function hitBadgeCenter({ bodyCenter, badgeWidth, left, right }) {
 // coordinates. A centred view preset must not subtract its viewport inset again.
 const FORMATION_LOCAL_ORIGIN = Object.freeze({ left: 0, top: 0 });
 
+// Absolute information rows can paint below the header border box. Reserve
+// their actual visible extent in the existing formation fit, so the body and
+// its overhead move/fit together rather than pushing a badge onto its fighter.
+export function combatHeaderKeepoutBottom(header) {
+  if (!header) return null;
+  let bottom = header.getBoundingClientRect().bottom;
+  for (const row of header.querySelectorAll('.hud-info-row')) {
+    if (row.hidden) continue;
+    const box = row.getBoundingClientRect();
+    if (box.width > 0 && box.height > 0 && !['hidden', 'collapse'].includes(getComputedStyle(row).visibility)) bottom = Math.max(bottom, box.bottom);
+  }
+  return bottom;
+}
+
 // Presentation-only adjustment: header clearance moves the compact readout,
 // never the sprite's fitted position, foot anchor, or scale.
 export function targetOverheadPlacement({ art, box, headerBottom, gap = 14, zoom = 1 }) {
@@ -590,7 +604,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // never beside it. On the perspective grid a front-rank enemy's readout
     // goes below its feet; above its head stands the back rank's.
     const hudBelow = () => false;
-    const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
+    const ceiling = hudBand ? Math.max(0, (combatHeaderKeepoutBottom(hudBand) - fieldRect.top) / zoom) : 0;
     const vitality = hudBand?.querySelector('.resbars-host');
     if (vitality) combat.style.setProperty('--combat-header-opaque-end',
       `${Math.max(0, (vitality.getBoundingClientRect().bottom - hudBand.getBoundingClientRect().top) / zoom)}px`);
