@@ -1,3 +1,4 @@
+import { previewEnemyAction } from './enemyActionPreview.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
 import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
@@ -925,7 +926,8 @@ function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, r
   if (!allowBurdenMove(combat,enemy,spCost,move)) return 'blocked';
   // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
   // cancels never happens. This is what did — the inspector's history.
-  const start = { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent };
+  const start = { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent,
+    actionPreview: { ...previewEnemyAction(combat, enemy, moveId), spCost, totalSp } };
   if (!Reactions.usesReactions(combat)) {
     (enemy.performedMoves ||= []).push(moveId);
     combat.emit('enemyMoveStarted', start);
@@ -2915,7 +2917,7 @@ export function previewIntent(combat, enemyInstanceId) {
   const { knowledge, proposalRead, concealed } = intentReadGate(combat, enemy);
   if (!proposalRead && knowledge && !knowledge.exact) return knowledge.intent;
   if (concealed) return concealIntent(intent, profile);
-  const out = { ...intent, profile, stance: combatIntentStance(intent, profile), revealed: true, hidden: false };
+  const out = { ...intent, ...previewEnemyAction(combat, enemy, intent.moveId), profile, stance: combatIntentStance(intent, profile), revealed: true, hidden: false };
   // The armed payload is public only after this observer's read gate. This is
   // base counter damage, matching the inspector's prepared reaction value.
   if (out.stance === 'countering') {
