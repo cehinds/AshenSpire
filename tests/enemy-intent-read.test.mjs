@@ -54,6 +54,8 @@ test('the intent tooltip projects a fresh current read without opening full comb
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   const tooltip = source.slice(source.indexOf('  function intentEl(enemy)'), source.indexOf('  function renderEnemies()'));
   assert.match(tooltip, /enemyIntentRead\(combat, enemy/);
-  assert.match(tooltip, /preview: projectCombatIntent\(combat, enemy.id\)/);
+  assert.match(tooltip, /projectCombatIntent\(combat, enemy.id\)/);
+  assert.match(tooltip, /busy \|\| enemyPlayback \|\| combat.pendingReaction/);
+  assert.match(tooltip, /disp\?\.ents\[enemy.id\]\?\.intentPreview/);
   assert.doesNotMatch(tooltip, /combatantSubject|enemyDeckInspection|Object\.keys/);
 });

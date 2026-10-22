@@ -1,3 +1,4 @@
+import * as IntentReceipt from './enemyIntentReceipt.js';
 import * as Hit from './stanceHit.js';
 import * as Engagement from './combatEngagement.js';
 import { configuredModule } from './gameProfileCombat.js';
@@ -276,10 +277,12 @@ export function beforeReactionAction(ctx, action, hooks) {
     && action.source.alive && !haltReason(ctx, action.source)
     && contactTargetPresent(ctx, group)) {
     group.contactTelegraphed = true;
+    group.publicIntentPreview = IntentReceipt.captureEnemyIntent(ctx, action.source, action);
     ctx.emit('combatContactPrepared', { ...(group.enemyMoveStart || group.counterReturn),
       sourceId: action.source.id, contactKey: group.key, kind: 'attack',
       contactIndex: group.contactSequence?.index ?? 0,
-      contactCount: group.contactSequence?.contacts.length ?? 1 });
+      contactCount: group.contactSequence?.contacts.length ?? 1,
+      intentPreview: group.publicIntentPreview });
   }
   if (stackedReactions(ctx)) return beforeStackedReaction(ctx, action, group, hooks);
   if (!action.source.alive) return false;
@@ -315,7 +318,7 @@ export function beforeReactionAction(ctx, action, hooks) {
       group.reactionAnswered.push(id); continue;
     }
     ctx.pendingReaction = { id: `${group.key}:${id}`, groupKey: group.key, ownerId: id,
-      sourceId: group.sourceId, options };
+      sourceId: group.sourceId, options, intentPreview: group.publicIntentPreview };
     ctx.emit('combatReactionOffered', { offerId: ctx.pendingReaction.id, ownerId: id, sourceId: group.sourceId });
     return true;
   }
@@ -402,7 +405,7 @@ function offerSeats(ctx, group, ids, hooks, open) {
     // A player-card root has no enemy attacker; the offer names the top enemy entry.
     const sourceId = playerRoot ? enemyRows.at(-1).ownerId : group.sourceId;
     ctx.pendingReaction = { id: `${group.key}:${id}:${depth}`, groupKey: group.key, ownerId: id,
-      sourceId, options };
+      sourceId, options, intentPreview: group.publicIntentPreview };
     ctx.emit('combatReactionOffered', { offerId: ctx.pendingReaction.id, ownerId: id, sourceId });
     return true;
   }
@@ -627,7 +630,8 @@ export function restoreReactionQueue(ctx) {
 export function revealActor(ctx, enemy) {
   enemy.actorIntentRevealed = true;
   ctx.emit('enemyActorTurnStarted', { sourceId: enemy.id, enemyId: enemy.enemyId,
-    moveId: enemy.pendingMove?.moveId || enemy.intent?.moveId, intent: structuredClone(enemy.intent) });
+    moveId: enemy.pendingMove?.moveId || enemy.intent?.moveId, intent: structuredClone(enemy.intent),
+    intentPreview: IntentReceipt.captureEnemyIntent(ctx, enemy) });
 }
 
 export function startQueuedEnemy(ctx, action) {
@@ -646,9 +650,10 @@ export function startQueuedEnemy(ctx, action) {
   const prepared = group.contactTelegraphed ? { contactPrepared: true, contactKey: group.key } : {};
   if (group.counterReturn) { ctx.emit('combatCounterTriggered', { ...group.counterReturn, ...prepared }); return; }
   if (group.contactSequence?.index > 0) {
-    ctx.emit('combatHitStarted', { ...group.enemyMoveStart, ...prepared, contactIndex: group.contactSequence.index, contactCount: group.contactSequence.contacts.length });
+    ctx.emit('combatHitStarted', { ...group.enemyMoveStart, ...prepared, intentPreview: IntentReceipt.captureEnemyIntent(ctx, enemy, action), contactIndex: group.contactSequence.index, contactCount: group.contactSequence.contacts.length });
     return;
   }
+  const intentPreview = IntentReceipt.captureEnemyIntent(ctx, enemy, action);
   (enemy.performedMoves ||= []).push(group.enemyMoveStart.moveId);
-  ctx.emit('enemyMoveStarted', { ...group.enemyMoveStart, ...prepared });
+  ctx.emit('enemyMoveStarted', { ...group.enemyMoveStart, ...prepared, intentPreview });
 }

@@ -1757,3 +1757,8 @@ gameProfile.settings.classXpMultiplier,,Class XP multiplier,,
 gameProfile.settings.weaponXpMultiplier,,Used weapon XP multiplier,,
 creation.startingResources,,Starting resources,,
 card.artPlaceholder,,Card,,
+
+combat.intent.damageHp,,HP,,
+combat.intent.damageBeforeBlock,,before Block,,
+combat.intent.damageTotal,,Total {amount} {basis},,
+combat.intent.damageContact,,Hit {index}/{count} · next {amount} {basis},,

@@ -1254,7 +1254,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             counterWardDamage: e.wardDamage, profile: e.combatProfile || {}, stance: 'countering', revealed: true, hidden: false };
           break;
         }
+        case 'combatContactPrepared':
+        case 'combatHitStarted':
+          if (disp.ents[e.sourceId] && e.intentPreview) disp.ents[e.sourceId].intentPreview = e.intentPreview;
+          break;
         case 'enemyMoveStarted': {
+          if (disp.ents[e.sourceId] && e.intentPreview) disp.ents[e.sourceId].intentPreview = e.intentPreview;
           // Reactions return to the planned hold; pooled follow-ups replace it.
           if (e.reaction) break;
           const actor = disp.ents[e.sourceId];
@@ -1269,7 +1274,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'enemyActorTurnStarted': {
           const actor = disp.ents[e.sourceId];
           if (actor) actor.presentationStance = enemyStanceCategory(e.intent);
-          if (actor) actor.intentPreview = { ...e.intent, profile: e.intent?.combatProfile || {},
+          if (actor) actor.intentPreview = e.intentPreview || { ...e.intent, profile: e.intent?.combatProfile || {},
             stance: combatIntentStance(e.intent, e.intent?.combatProfile), revealed: true, hidden: false };
           break;
         }
@@ -2080,7 +2085,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const shown = disp?.ents[enemy.id]?.intentPreview || projectCombatIntent(combat, enemy.id);
     const followUps = disp?.ents[enemy.id]?.followUps ?? followMemo.row(enemy.id, combat.phase === 'enemy' || !!combat.reactionCursor);
     return combatantIntent(followUps?.length ? { ...shown, followUps } : shown, () => {
-      const intent = enemyIntentRead(combat, enemy, { preview: projectCombatIntent(combat, enemy.id),
+      const currentRead = (busy || enemyPlayback || combat.pendingReaction) && disp?.ents[enemy.id]?.intentPreview
+        || projectCombatIntent(combat, enemy.id);
+      const intent = enemyIntentRead(combat, enemy, { preview: currentRead,
         unknownDetail: t('combat.targetHud.unknown') });
       return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
     }, registries, { onTarget: () => {

@@ -111,3 +111,7 @@
 :root .combat[data-layout='formation'] .combatant.context-selected .intent > .intent-followups.intent-followups-expanded { display:inline-flex; }
 :root .combat .intent .intent-followup { display:inline-flex; align-items:center; justify-content:center; min-width:calc(14px / var(--ui-zoom,1)); font:700 var(--intent-value-size)/1 Georgia,serif; color:inherit; }
 :root .combat .intent .intent-followup .intent-icon { width:calc(18px / var(--ui-zoom,1)); height:calc(18px / var(--ui-zoom,1)); }
+
+/* Individual hit values and explicitly scoped totals share one compact stack. */
+:root .combat .intent-damage-read { display:inline-flex; flex-direction:column; align-items:center; gap:2px; }
+:root .combat .intent-damage-scope { display:block; max-width:150px; font:600 calc(11px / var(--ui-zoom,1))/1.15 system-ui,sans-serif; white-space:normal; text-align:center; }
