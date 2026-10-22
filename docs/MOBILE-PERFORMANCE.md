@@ -137,9 +137,12 @@ in places, so no touch-to-action latency is reported from that run. A dedicated
 interaction CPU profile is still needed before attributing those stalls or
 choosing an optimization.
 
-The older card-drag-targeting harness currently reads `.pile.discard .n`, which
-predates the combined Discard/Exhaust control; its full run stops at that stale
-selector. The focused touch and gameplay checks above cover the current flow.
+The card-drag-targeting harness reads the live combat state's discard count,
+separately from exhaust, for its exact-once checks. The combined Discard/Exhaust
+control displays both counts and has no separate discard counter selector.
+A focused fixture checks this distinction and rejects missing or duplicate
+discard commits; the full manual browser corpus was not rerun for this repair.
+The focused touch and gameplay checks above cover the current flow.
 
 See [screenshots](preview/mobile-performance/) and the
 [component catalog](component-catalog.html).
