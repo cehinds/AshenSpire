@@ -1704,7 +1704,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid, entity));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
-      // M1's "absent at zero", applied to pips too: a spent proc row (💧0
+      // M1's "absent at zero", applied to pips too: a spent proc row (Mana 0
       // after a burst) is an empty frame, not information (Sunna's S-flag).
       if (def.proc && stacks <= 0) continue;
       const shownValue = presentation.valueText;
@@ -3127,7 +3127,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (combat.result) {
           // THE FIGHT IS OVER, AND SO IS THIS SCREEN'S MENU.
           //
-          // The keydown handler already comes off here. The ☰ button did NOT,
+          // The keydown handler already comes off here. The quick-navigation button did NOT,
           // so for the handoff below (COMBAT_TIMING.fightEndDelayMs, currently 210 ms) — plus the victory beat main.js
           // awaits after it (balance.ui.victoryBeat.ms, 600 ms, and the beat's
           // overlay is `pointer-events: none`) — Save, Save & Quit, Load and
@@ -3443,7 +3443,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   $('.hand-next').addEventListener('click', () => stepHand(1));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
   //
-  // Under the quick-nav experiment ☰ opens the list instead. Combat is the
+  // Under the quick-nav experiment the menu button opens the list instead. Combat is the
   // screen that MAKES "context-specific" mean something: the draw and discard
   // piles are real destinations that exist nowhere else, and today the only way
   // to them is two small corner targets a thumb has to find.
