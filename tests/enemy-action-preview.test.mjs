@@ -13,11 +13,11 @@ const { previewEnemyAction } = require('src/engine/enemyActionPreview.js');
 const { guardHitFloatParts } = require('src/ui/fx.js');
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function fixture(enemyId, moveId) {
+function fixture(enemyId, moveId, normalize = true) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: 'enemy-action-preview' });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: [enemyId] });
   const enemy = combat.enemies[0];
-  for (const entity of [combat.player, enemy]) {
+  for (const entity of normalize ? [combat.player, enemy] : []) {
     Object.assign(entity, { hp: 1000, maxHp: 1000, block: 0, barrier: 0, statuses: {}, ratings: {}, ratingSources: [],
       basePrecisionBonus: 1000, attributes: { dexterity: 0 }, persistentPoise: { value: 0, max: 0 } });
     delete entity.combatStance; delete entity.combatCounter;
@@ -49,7 +49,9 @@ for (const [enemyId, moveId] of [['stitchedKing', 'graspingHands'], ['blightedVa
 }
 
 test('every registered boss move and charging payload has a deterministic detached action preview', () => {
-  for (const def of registries.enemies.all().filter(e => e.phases?.length)) {
+  const bossIds = new Set(registries.encounters.all().filter(row => row.pool === 'boss').flatMap(row => row.enemies));
+  assert.equal(bossIds.size, 10);
+  for (const def of registries.enemies.all().filter(e => bossIds.has(e.id))) {
     const { combat, enemy } = fixture(def.id, Object.keys(def.moves)[0]);
     for (const [moveId, move] of Object.entries(def.moves)) {
       const before = JSON.stringify({ enemy, player: combat.player, queue: combat.queue, log: combat.eventLog, rng: combat.rng.getCounters() });
@@ -111,4 +113,40 @@ test('concealed support move never exposes the action payload', () => {
   const view = previewIntent(combat, enemy.id);
   assert.equal(view.actionEffects, undefined);
   assert.equal(view.chargingEffects, undefined);
+});
+
+
+test('authored Stitched King ratings and starter protection agree with the live per-contact projection', () => {
+  const { combat, enemy, move } = fixture('stitchedKing', 'graspingHands', false);
+  // Keep the real attributes, equipment, AR/DR, stance and pools; only raise HP
+  // so all contacts can resolve even when the fresh starter would be killed.
+  combat.player.hp = combat.player.maxHp = 1000;
+  const view = previewIntent(combat, enemy.id);
+  assert.ok(view.hitDamages.length === 3);
+  assert.equal(view.totalDamage, view.hitDamages.reduce((sum, n) => sum + n, 0));
+  assert.equal(view.actionEffects.find(row => row.op === 'damage').amount, move.damage);
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  const events = combat.eventLog.slice(start);
+  const contacts = events.filter(e => e.type === 'damageDealt' && e.sourceId === enemy.id && e.targetId === combat.player.id);
+  assert.equal(events.filter(e => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id).length, 1);
+  assert.deepEqual(contacts.map(e => e.hpLoss), view.hitDamages);
+  assert.equal(combat.player.hp, 1000 - view.totalDamage);
+});
+
+test('formula effects resolve against the proper owner and target without running the effect', () => {
+  const { combat, enemy } = fixture('marrowOrganist', 'quietRefrain');
+  const original = combat.registries.enemies;
+  combat.registries = { ...combat.registries, enemies: { ...original, get(id) {
+    const def = original.get(id);
+    return id !== enemy.enemyId ? def : { ...def, moves: { ...def.moves, quietRefrain: { ...def.moves.quietRefrain,
+      effects: [{ op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 10 } }] } } };
+  } } };
+  enemy.hp = 500;
+  const counters = JSON.stringify(combat.rng.getCounters());
+  const view = previewEnemyAction(combat, enemy, 'quietRefrain');
+  assert.equal(view.actionEffects[0].amount, 100);
+  assert.equal(enemy.hp, 500);
+  assert.equal(JSON.stringify(combat.rng.getCounters()), counters);
 });
