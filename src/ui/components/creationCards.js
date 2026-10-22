@@ -163,7 +163,7 @@ export function viewModeToggle(value, onChoose, label = 'View choices') {
 
 /**
  * viewModeSwitch(value, onChoose, label) → ONE small button that flips the
- * view: it shows the arrangement a press would give (▦ from a list, ☰ from a
+ * view: it shows the arrangement a press would give (▦ from a list, menu from a
  * grid) so the pane's width goes to the choices, not to a labelled pair
  * (owner, 2026-09-19). `data-view-mode` is the mode a press selects.
  */
@@ -223,7 +223,7 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
   art.removeAttribute('aria-hidden');
   if (sprite) art.appendChild(sprite);
   const relicCard = relic ? optionCard({
-    glyph: relic.icon || '◆', art: relicIcon(relic), name: relic.name, description: relicDescription,
+    glyph: relic.icon || 'skill', art: relicIcon(relic), name: relic.name, description: relicDescription,
     arrow: false, tag: onRelicInspect ? 'button' : 'div', className: 'cc-class-relic',
     attrs: onRelicInspect ? { 'aria-haspopup': 'dialog', 'aria-label': t('creation.preview.inspectRelic', { name: relic.name }) } : {},
   }) : null;
@@ -259,7 +259,7 @@ export function classUnfold({ cls, sprite = null, resources = null, relic = null
   const relicFace = relic ? el(onRelicInspect ? 'button' : 'span', {
     class: `cc-unfold-relic${onRelicInspect ? ' cc-preview-detail-trigger' : ''}`,
     ...(onRelicInspect ? { type: 'button', 'aria-haspopup': 'dialog', 'aria-label': t('creation.preview.inspectRelic', { name: relic.name }) } : {}),
-  }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true', text: relic.icon || '◆' }), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null;
+  }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true', text: relic.icon || 'skill' }), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null;
   if (relicFace && onRelicInspect) relicFace.addEventListener('click', () => onRelicInspect(relic, relicFace));
   const node = el('span', { class: 'cc-class-unfold', id: `cc-unfold-${cls.id}`, dataset: { class: cls.id } }, [
     el('span', { class: 'cc-unfold-portrait' }, [
@@ -360,7 +360,7 @@ export function keepsakeChoiceButton(keepsake, selected, onChoose) {
 /** A starting relic: an OptionCard. */
 export function relicChoiceButton(relic, description, selected, onChoose) {
   const button = optionCard({
-    glyph: relic.icon || '◆', art: relicIcon(relic), name: relic.name, description, selected, arrow: false,
+    glyph: relic.icon || 'skill', art: relicIcon(relic), name: relic.name, description, selected, arrow: false,
     className: `cc-relic-card${selected ? ' chosen' : ''}`,
     attrs: { dataset: { relicId: relic.id }, 'aria-label': `${relic.name}. ${description}` },
   });

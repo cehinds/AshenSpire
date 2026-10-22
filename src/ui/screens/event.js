@@ -78,7 +78,7 @@ export function mountEvent(app, opts) {
     eyebrow: 'Event',
     title: def.name,
     choices: el('div', { class: 'choice-body-narrative event-narrative' }, [
-      artWell(eventArt ? { src: assetUrl(eventArt), alt: '' } : { glyph: def.art || '❖' }),
+      artWell(eventArt ? { src: assetUrl(eventArt), alt: '' } : { glyph: def.art || 'relic' }),
       prose(def.text),
     ]),
     consequences: el('div', { class: 'choice-body-responses event-responses' },

@@ -82,7 +82,7 @@ import { reasonWhenDisabled } from '../components/refusal.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { unusedInstanceId, ownedCopies } from '../../model/deckRules.js';
 
-const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classMilestone: '☉', classDraft: '☉', skillDraft: '✦', skillRankUp: '⇧', skillAttribute: '▲', skillFeat: '✪', card: '🂠', levelChoice: '✧', levelCard: '✧', flask: '⚗', armament: '⚔', relic: '◆', sigil: '◈' };
+const KIND_GLYPHS = { cinders: 'cinders', smithingStone: 'smith', classMilestone: 'progression', classDraft: 'progression', skillDraft: 'staggered', skillRankUp: '⇧', skillAttribute: '▲', skillFeat: 'skill', card: 'deck', levelChoice: 'vulnerable', levelCard: 'vulnerable', flask: 'flask-health', armament: 'attack', relic: 'skill', sigil: 'skill' };
 
 // `onCollectArmament` is the armament's whole persistence, handed in by the
 // caller (main.js collectArmament): run storage + meta.found + the discovery
@@ -538,11 +538,11 @@ export function mountRewards(app, {
         if (isRelicChoice(row)) {
           const picked = state === 'taken' && chosenRelicId ? registries.relics.get(chosenRelicId) : null;
           return { title: t('reward.kind.relic'), body: state === 'taken' && picked
-            ? `<b>${esc(picked.icon || '◆')} ${esc(picked.name)}</b>`
+            ? `<b>${esc(picked.icon || 'skill')} ${esc(picked.name)}</b>`
             : t('reward.card.chooseOne', { count: row.relicIds.length }) };
         }
         const def = registries.relics.get(row.relicId);
-        return { title: t('reward.kind.relic'), body: `<b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}` };
+        return { title: t('reward.kind.relic'), body: `<b>${esc(def.icon || 'skill')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}` };
       }
       case 'sigil': {
         const def = registries.sigils.get(row.sigilId);
@@ -1330,7 +1330,7 @@ export function mountRewards(app, {
       const sentence = String(rule?.textTemplate || '').replace(/\{(\w+)\}/g, (m, tok) => tokens[tok] !== undefined ? String(tokens[tok]) : m);
       const tile = el('button', { class: 'class-pick reward-node reward-pick', type: 'button', role: 'radio',
         'aria-checked': String(choiceId === selectedCardId), dataset: { pickId: choiceId } }, [
-        el('div', { class: 'glyph', text: attribute ? '▲' : feat ? '✦' : node?.glyph || '☉' }),
+        el('div', { class: 'glyph', text: attribute ? 'strength' : feat ? 'staggered' : node?.glyph || 'progression' }),
         el('div', { class: 'cp-body' }, [
           el('h3', { text: attribute?.name || feat?.name || node?.label || option.id }),
           el('p', { text: attribute ? `${attribute.now} → ${attribute.now + 1}` : (feat ? getFeatDescription(registries, feat) : '') || sentence || node?.blurb || '' }),
@@ -1347,7 +1347,7 @@ export function mountRewards(app, {
       const tokens = nodeTokens(registries, nodeId);
       const sentence = String((rule && rule.textTemplate) || '').replace(/\{(\w+)\}/g, (m, tok) => (tokens[tok] !== undefined ? String(tokens[tok]) : m));
       const tile = el('button', { class: 'class-pick reward-node reward-pick', type: 'button', role: 'radio', 'aria-checked': String(nodeId === selectedCardId), dataset: { pickId: nodeId, nodeId } }, [
-        el('div', { class: 'glyph', text: node.glyph || '☉' }),
+        el('div', { class: 'glyph', text: node.glyph || 'progression' }),
         el('div', { class: 'cp-body' }, [el('h3', { text: node.label }), el('p', { text: sentence || node.blurb || '' })]),
       ]);
       tile.classList.toggle('reward-selected', nodeId === selectedCardId);

@@ -21,7 +21,7 @@ export function merchantThumbnail({ visual, detail = visual, name, desc = '', in
 
 // Reuse the offer's live card/inspection node, so its existing interactions
 // remain available alongside the explicit row action. No prices are derived here.
-export function arrangeMerchantOffer(offer, { fallback = '◇' } = {}) {
+export function arrangeMerchantOffer(offer, { fallback = 'dexterity' } = {}) {
   const { tile, name, desc, price, avail } = offer;
   const visual = offer.visual || tile.querySelector('.shop-inspect-card')
     || tile.querySelector('.card') || tile.querySelector('.equipment-poker-card')

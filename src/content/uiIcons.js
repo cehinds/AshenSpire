@@ -298,8 +298,25 @@ export function uiIconId(value) {
   return knownIcons.has(id) ? id : null;
 }
 
-// Short text remains usable when a caller deliberately renders no artwork.
+// Compact readable fallback labels for callers that deliberately render text.
+// Resource labels match the game HUD; every other label fits a small icon box.
+export const UI_ICON_LABELS = Object.freeze({
+  accessibility: 'Access', actions: 'AP', armour: 'Armor', attack: 'Atk', audio: 'Audio',
+  back: 'Back', bleed: 'Bleed', blight: 'Blight', block: 'Block', boss: 'Boss', burn: 'Burn',
+  check: 'OK', cinders: 'Cinder', close: 'X', collapse: 'Fold', combat: 'Fight', compare: 'Vs',
+  compendium: 'Guide', connected: 'Online', contrast: 'Tone', controls: 'Keys', coop: 'Co-op',
+  deck: 'Deck', dexterity: 'DEX', dialogue: 'Talk', discard: 'Drop', disconnected: 'Away',
+  display: 'View', draw: 'Draw', equipment: 'Gear', expand: 'Open', 'flask-health': 'HP',
+  'flask-mana': 'MP', frail: 'Frail', frost: 'Frost', health: 'HP', history: 'Past', info: 'Info',
+  insanity: 'Insane', inventory: 'Bag', journey: 'Run', link: 'Link', location: 'Place', lock: 'Lock',
+  madness: 'Mad', mana: 'MP', map: 'Map', menu: 'Menu', merchant: 'Shop', motion: 'Move', next: 'Next',
+  poise: 'Poise', profile: 'Hero', progression: 'Rank', quest: 'Quest', regen: 'Regen', relic: 'Relic',
+  reset: 'Reset', rest: 'Rest', reward: 'Loot', save: 'Save', search: 'Find', seed: 'Seed',
+  settings: 'Setup', shield: 'Guard', skill: 'Skill', smith: 'Smith', staggered: 'Stun',
+  stamina: 'SP', strength: 'STR', sword: 'Blade', target: 'Aim', touch: 'Touch', unknown: '?',
+  vulnerable: 'Vuln', warning: 'Warn', weak: 'Weak', weight: 'Weight', world: 'World',
+});
 export function uiIconText(value) {
   const id = uiIconId(value);
-  return ({ health: 'HP', mana: 'MP', stamina: 'SP', actions: 'AP' })[id] || id || String(value || '');
+  return UI_ICON_LABELS[id] || String(value || '');
 }

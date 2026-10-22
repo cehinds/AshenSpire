@@ -107,7 +107,7 @@ export const statusText = (text, attrs = {}) => el('span', { ...attrs, class: cl
 export const flavour = (text, attrs = {}) => el('span', { ...attrs, class: cls('as-flavor', attrs.class), text });
 export const prose = (text, attrs = {}) => el('p', { ...attrs, class: cls('as-prose', attrs.class), text });
 export const hairline = (attrs = {}) => el('hr', { ...attrs, class: cls('as-hairline', attrs.class) });
-export const ornament = (attrs = {}) => el('div', { ...attrs, class: cls('as-ornament', attrs.class), 'aria-hidden': 'true' }, el('span', { text: '◆' }));
+export const ornament = (attrs = {}) => el('div', { ...attrs, class: cls('as-ornament', attrs.class), 'aria-hidden': 'true' }, el('span', { text: 'skill' }));
 
 // ---- control atoms ----------------------------------------------------------
 /** iconButton({ glyph, label, id, className, attrs }) → the one square box. */
@@ -315,7 +315,7 @@ export const chip = ({ key, value, tip = '', attrs = {} } = {}) => el('span', { 
 ]);
 export const statStrip = (chips, attrs = {}) => el('span', { ...attrs, class: cls('as-statstrip', attrs.class) }, chips);
 export const kitLine = (items, attrs = {}) => el('span', { ...attrs, class: cls('as-kitline', attrs.class) }, items);
-export const kitItem = ({ glyph: g = '◆', name, tip = '', attrs = {} } = {}) => el('span', { ...attrs, class: cls('ki', attrs.class), title: tip || null }, [
+export const kitItem = ({ glyph: g = 'skill', name, tip = '', attrs = {} } = {}) => el('span', { ...attrs, class: cls('ki', attrs.class), title: tip || null }, [
   el('span', { class: 'kg', 'aria-hidden': 'true', text: g }), el('span', { class: 'kn', text: name }),
 ]);
 export function delta({ from, to, attrs = {} } = {}) {

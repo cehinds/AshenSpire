@@ -14,7 +14,7 @@
 // former runtime and are superseded by the current contract above.
 //
 // ============================================================================
-// ⚠ AMENDED BY THE OWNER, 2026-08-17. READ THIS BEFORE THE RULING BELOW.
+// warning AMENDED BY THE OWNER, 2026-08-17. READ THIS BEFORE THE RULING BELOW.
 // ============================================================================
 //
 // Constantine, unprompted, in his own words:
@@ -29,7 +29,7 @@
 // Short-screen warning` (settings.js, key `uprightGate`), and `hint()` names
 // that row on the gate's own face.
 //
-// ⚠ AND THE LEAST FLATTERING FACT IN THIS LANE IS ALREADY IN THIS FILE, sixty
+// warning AND THE LEAST FLATTERING FACT IN THIS LANE IS ALREADY IN THIS FILE, sixty
 // lines down: *"A gate that tells a desktop player to rotate their monitor is a
 // gate nobody trusts the second time."* WE WROTE DOWN THAT THIS NAG CAN BE WRONG,
 // SHIPPED IT WITH NO WAY TO TURN IT OFF, AND LEFT THE OWNER TO ASK. The sentence
@@ -251,7 +251,7 @@ const SAY = {
  *                because "is this screen too short" and "does this player want to
  *                be told" are two questions and one of them is his.
  *
- * ⚠ `enabled === false` IS THE ONE DOOR THROUGH THIS REFUSAL AND IT IS NOT THE
+ * warning `enabled === false` IS THE ONE DOOR THROUGH THIS REFUSAL AND IT IS NOT THE
  * "CONTINUE ANYWAY" BUTTON THE HEADER RULES OUT. The header's argument stands
  * unchanged — a door into a wall placed AT the wall is worse than the wall,
  * because it is pressed in the moment of annoyance by someone who has not been

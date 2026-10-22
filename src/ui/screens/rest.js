@@ -255,7 +255,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
              data-points="${level.points}"
              data-blocked-by="${level.blockedBy || ''}"
              data-level="${level.level}" data-xp="${level.xp}" data-xp-to-next="${level.xpToNext}">
-          <div class="glyph">✦</div>
+          <div class="glyph">${engravedIconHtml('staggered')}</div>
           <div class="cp-body">
             <h3>${esc(t('reward.level.button'))}</h3>
             <p>${level.offerable ? `${budget.points} point${budget.points === 1 ? '' : 's'} to assign · Level ${level.level}` : level.capped ? `Level ${level.level} · the level cap` : `Level ${level.level} · ${level.xp} / ${level.xpToNext} XP to the next`}</p>
@@ -274,7 +274,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
         </div>` : ''}
         ${stay.services.flasks ? `<details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
           <summary>
-            <span class="glyph shrine-fold-glyph">⚗</span>
+            <span class="glyph shrine-fold-glyph">${engravedIconHtml('flask-health')}</span>
             <span class="ob shrine-fold-summary"><b class="on">Reallocate Flask Charges</b><small class="om">${charge.assigned}/${charge.capacity} assigned</small></span>
             <span class="r-trail shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
           </summary>
@@ -302,7 +302,7 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
         ${extract ? `<div class="class-pick${extractOpen ? '' : ' locked'}" id="extract-opt"
              role="button" tabindex="${extractOpen ? '0' : '-1'}"
              aria-disabled="${extractOpen ? 'false' : 'true'}">
-          <div class="glyph">⚙</div>
+          <div class="glyph">${engravedIconHtml('settings')}</div>
           <div class="cp-body">
             <h3>Extract a Card</h3>
             <p>${spentHere ? t('gameProfile.rest.spent') : esc(extract.summary)}</p>
@@ -311,21 +311,21 @@ export function mountRest(app, { gameProfileRest = null, registries, run, meta, 
         ${install ? `<div class="class-pick${installOpen ? '' : ' locked'}" id="install-opt"
              role="button" tabindex="${installOpen ? '0' : '-1'}"
              aria-disabled="${installOpen ? 'false' : 'true'}">
-          <div class="glyph">⚒</div>
+          <div class="glyph">${engravedIconHtml('smith')}</div>
           <div class="cp-body">
             <h3>Seat a Card</h3>
             <p>${spentHere ? t('gameProfile.rest.spent') : esc(install.summary)}</p>
           </div>
         </div>` : ''}
         ${board ? `<div class="class-pick" id="board-opt" role="button" tabindex="0">
-          <div class="glyph">✉</div>
+          <div class="glyph">${engravedIconHtml('quest')}</div>
           <div class="cp-body">
             <h3>${esc(t('questBoard.open'))}</h3>
             <p>${esc(t('questBoard.open.summary', { ready: board.ready, open: board.open }))}</p>
           </div>
         </div>` : ''}
         ${deckDoor ? `<div class="class-pick" id="deck-opt" role="button" tabindex="0">
-          <div class="glyph">♠</div>
+          <div class="glyph">${engravedIconHtml('skill')}</div>
           <div class="cp-body">
             <h3>${esc(t('deckEditor.rest'))}</h3>
             <p>${esc(tFull('deckEditor.rest'))}</p>

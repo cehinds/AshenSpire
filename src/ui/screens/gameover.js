@@ -42,7 +42,7 @@ export function mountGameOver(app, { registries, game, victory, onTitle, onHisto
 
   const deck = kitLine(game.deck.map((inst) => {
     const def = resolveCard(registries, inst);
-    return kitItem({ glyph: inst.upgraded ? '✦' : '◆', name: def.name, attrs: { class: `mini${inst.upgraded ? ' upgraded' : ''}` } });
+    return kitItem({ glyph: inst.upgraded ? 'staggered' : 'skill', name: def.name, attrs: { class: `mini${inst.upgraded ? ' upgraded' : ''}` } });
   }), { class: 'plain deck-strip' });
 
   const body = decide({

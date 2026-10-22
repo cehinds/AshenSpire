@@ -1,3 +1,4 @@
+import { engravedIconHtml } from '../components/engravedIcon.js';
 import { uiZoom } from '../fx.js';
 import { removeOwnedRelic } from '../../model/classRewardProvenance.js';
 import { bindCardInspection } from '../components/cardInspection.js';
@@ -172,7 +173,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     run.relics.forEach((rid, at) => {
       const def = registries.relics.get(rid);
       const price = sellPriceFor(registries.balance, 'relic', def);
-      if (price > 0) out.push({ kind: 'relic', at, def, price, title: `${def.icon || '◆'} ${def.name}`, desc: relicText(def, registries) });
+      if (price > 0) out.push({ kind: 'relic', at, def, price, title: `${def.icon || 'skill'} ${def.name}`, desc: relicText(def, registries) });
     });
     run.flasks.forEach((f, at) => {
       const def = registries.flasks.get(f.flaskId);
@@ -249,7 +250,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
                     <div id="shop-remove"${removeOffered ? '' : ' hidden'}>
                       <div class="class-row">
                         <div class="class-pick shop-offer${run.cinders >= stock.removeCost && run.deck.length > 1 ? '' : ' locked'}" id="remove-opt" role="button" tabindex="0">
-                          <div class="glyph">✂</div><div class="cp-body"><h3>Remove a card</h3><p>${stock.removeCost} cinders. The deck remembers what you cut.</p></div>
+                          <div class="glyph">${engravedIconHtml('frail')}</div><div class="cp-body"><h3>Remove a card</h3><p>${stock.removeCost} cinders. The deck remembers what you cut.</p></div>
                         </div>
                       </div>
                       <div id="remove-grid" class="deck-strip card-shelf" style="display:none"></div>
@@ -312,7 +313,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     stock.relics.forEach((item, i) => {
       const def = registries.relics.get(item.id);
       const avail = offerAvailability({ price: item.cost, cinders: run.cinders });
-      const tile = shopItem(`${def.icon || '◆'} ${def.name}`, relicText(def, registries), item.cost, avail, { card: renderCollectibleCard(registries, def, 'Relic', { interactive: false, surface: 'shop' }).card });
+      const tile = shopItem(`${def.icon || 'skill'} ${def.name}`, relicText(def, registries), item.cost, avail, { card: renderCollectibleCard(registries, def, 'Relic', { interactive: false, surface: 'shop' }).card });
       addOffer('relics', {
         ref: relicRefs[i], tile, name: def.name, desc: relicText(def, registries),
         price: t('shop.price', { cost: item.cost }), avail,
@@ -610,7 +611,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     };
     if (smithHere.includes('upgrade')) {
       const plan = smithingPlan(registries, run);
-      const el = smithOption('shop-upgrade', '⚒', 'Upgrade an Item',
+      const el = smithOption('shop-upgrade', 'smith', 'Upgrade an Item',
         plan.candidates.length ? `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'} · choose one owned armament.` : 'No owned armament has an effective tier remaining.',
         plan.candidates.length > 0, function openUpgrade() {
           let selectedItemRef = null;
@@ -632,7 +633,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     for (const service of ['extract', 'install']) {
       if (!smithHere.includes(service)) continue;
       const offer = mountServiceOffer(registries, run, service);
-      const el = smithOption(`shop-${service}`, service === 'extract' ? '⚙' : '⚒',
+      const el = smithOption(`shop-${service}`, service === 'extract' ? 'settings' : 'smith',
         service === 'extract' ? 'Extract a Card' : 'Seat a Card', offer.summary, offer.available, () => openMountService(app, {
           service, registries, run, meta, returnFocusElement: el, multiUse: true, place: 'merchant',
           onCommitted: () => {
@@ -719,11 +720,11 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     // All categories share the book shelf's image/details/action composition.
     // Keep the selected-offer footer as the established keyboard/controller
     // action, while each row also offers a direct, explicitly labelled action.
-    const categoryGlyphs = { armour: '◈', smithStones: '⚒', sigils: '✦', innRest: '☾', reviveTokens: '✧', questEvent: '◇', companions: '♟', services: '⚒' };
+    const categoryGlyphs = { armour: 'skill', smithStones: 'smith', sigils: 'staggered', innRest: 'progression', reviveTokens: 'vulnerable', questEvent: 'dexterity', companions: 'profile', services: 'smith' };
     for (const [key, list] of Object.entries(offers)) {
       if (key === 'skillBooks') continue;
       for (const offer of list) {
-        offer.rowAction = arrangeMerchantOffer(offer, { fallback: categoryGlyphs[key] || '◇' });
+        offer.rowAction = arrangeMerchantOffer(offer, { fallback: categoryGlyphs[key] || 'dexterity' });
         const action = offer.action;
         if (offer.rowAction && action?.enabled) {
           if (action.beat) offerDisarms.push(arm(offer.rowAction, action.beat.id, { ...action.beat.opts, showHint: false }));

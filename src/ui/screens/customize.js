@@ -340,7 +340,7 @@ export function mountCustomize(app, {
     // 1200x730 with real CDP input, mouse and touch alike — open, open, open,
     // open; the menu could be summoned and never put away. `popovertarget`
     // hands the toggle to the browser, which knows an invoker from a stray
-    // click. (quicknav's ☰ toggles correctly at the same door — true, false,
+    // click. (quicknav's menu toggles correctly at the same door — true, false,
     // true — so this was this call site's bug, not the platform's.)
     headTools.id = 'cz-menu-popover';
     menu.setAttribute('popovertarget', headTools.id);

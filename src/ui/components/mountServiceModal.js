@@ -5,7 +5,7 @@
 // until the explicit Confirm.
 //
 // THE CHROME IS THE SHELL'S. This door opens through modalShell.js, so the
-// head (title, one ✕), the foot (the way out left, the way forward right),
+// head (title, one close), the foot (the way out left, the way forward right),
 // Escape, the veil click and focus return are the same here as on every other
 // door — none of it is assembled in this file. What this file owns is the
 // BODY.
@@ -66,7 +66,7 @@ export function mountMountServiceModal(host, initialModel, {
 
   let currentModel = initialModel;
   let closed = false;
-  // Why the door closed: the ✕, Escape and the veil are all "back"; Confirm is
+  // Why the door closed: the close, Escape and the veil are all "back"; Confirm is
   // not, and a programmatic close from the screen is neither.
   let leaving = 'back';
   let disarmDecision = null;
@@ -90,12 +90,12 @@ export function mountMountServiceModal(host, initialModel, {
         el('strong', { class: 'smith-weapon-name', text: item.name }),
         statusText(t(row.status.id, row.status.tokens), { class: 'smith-row-status' }),
       ]),
-      el('span', { class: 'as-pill smith-weapon-count', 'aria-label': item.whereLabel, text: item.equipped ? '⚔' : '▣' }),
+      el('span', { class: 'as-pill smith-weapon-count', 'aria-label': item.whereLabel, text: item.equipped ? 'attack' : 'block' }),
     );
     card.setAttribute('aria-label', `${item.name}, ${item.whereLabel}, ${item.mounts.length} mount${item.mounts.length === 1 ? '' : 's'}, costs ${item.cost} Smithing Stone. Select to choose a mount.`);
     attachTooltip(card, () => `<div class="tt-title">${esc(item.name)} · ${esc(item.whereLabel)}</div>`
       + `<div>${item.mounts.map((mount) => `${esc(mount.kindLabel)}: ${esc(mount.cardName || mount.stateLabel)}`).join('<br>')}</div>`
-      + `<div>Smith Stone Cost: 🪨 ${item.cost}/${item.stones} available.</div>`);
+      + `<div>Smith Stone Cost: ${item.cost}/${item.stones} available.</div>`);
     markUiComponent(card, UI.mountCandidateCard, item.selected ? 'selected' : 'available');
     const piece = item.itemKind === 'armor'
       ? registries.equipment.armour.find(piece => piece.id === item.itemId && piece.classId === item.classId)
@@ -163,7 +163,7 @@ export function mountMountServiceModal(host, initialModel, {
       <em>REQ</em><i aria-hidden="true">/</i><em>AVAIL</em>
       <strong class="smith-cost-required">${selected.cost}</strong><i aria-hidden="true">/</i><strong class="smith-cost-available">${selected.stones}</strong>
     </span>`;
-  const economyHtml = (selected) => `<span class="smith-economy-values"><span class="smith-stone-icon" aria-hidden="true">🪨</span><b>Smithing Stone Cost</b>${costPairHtml(selected)}</span>`;
+  const economyHtml = (selected) => `<span class="smith-economy-values"><span class="smith-stone-icon" aria-hidden="true">Stone</span><b>Smithing Stone Cost</b>${costPairHtml(selected)}</span>`;
 
   const mountRowHtml = (mount) => `
     <div class="mount-row${mount.selected ? ' selected' : ''}${mount.extra ? ' is-extra' : ''}" role="option" aria-selected="${String(mount.selected)}"
@@ -274,7 +274,7 @@ export function mountMountServiceModal(host, initialModel, {
     previewHost.replaceChildren(selected
       ? previewCard(p, smithPaneSlots(model))
       : el('div', { class: 'smith-preview-empty', dataset: { uiComponent: UI.mountServicePreview } }, [
-        artWell({ glyph: '⚙', cool: true }),
+        artWell({ glyph: 'settings', cool: true }),
         prose(p.instruction),
       ]));
     if (selected) {
@@ -355,7 +355,7 @@ export function mountMountServiceModal(host, initialModel, {
     }
   }
 
-  // Back is a way out, and the shell's ✕, Escape and veil click are the same
+  // Back is a way out, and the shell's close, Escape and veil click are the same
   // way out — all four land on onBack through onClose. An open compact item
   // list takes Escape first (w1Workspace.js listens a step earlier).
   back.addEventListener('click', shell.close);

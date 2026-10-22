@@ -1443,11 +1443,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       // THE SEAT LINE: the tinted name (the identity span hudbars reads,
       // first child), a "you" Pill, the energy Chip, and the seat's state as
       // a StatePill — one StatStrip, centred under the sprite.
-      const seatState = !p.connected ? { label: 'away', on: false } : !p.alive ? { label: 'down', on: false } : p.ended ? { label: '✓ ended', on: false } : { label: '● turn', on: true };
+      const seatState = !p.connected ? { label: 'away', on: false } : !p.alive ? { label: 'down', on: false } : p.ended ? { label: 'ended', on: false } : { label: 'turn', on: true };
       const nm = statStrip([
         el('span', { class: 'coop-seat-player', style: { color: tintCss(m.tint) }, text: m.name || p.id }),
         p.id === me ? pill({ label: 'you', round: true, on: true }) : null,
-        chip({ key: '◆', value: `${p.energy}/${p.energyMax}`, attrs: { class: 'stamina-budget', 'aria-label': `${t('combat.actions')} ${p.energy} of ${p.energyMax}` } }),
+        chip({ key: 'skill', value: `${p.energy}/${p.energyMax}`, attrs: { class: 'stamina-budget', 'aria-label': `${t('combat.actions')} ${p.energy} of ${p.energyMax}` } }),
         pill({ ...seatState, attrs: { class: 'coop-turnflag' } }),
       ], { class: 'centered coop-seat-name' });
       const name = document.createElement('div');
@@ -1747,9 +1747,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         </header>
         ${smithReceipts.length ? html(el('div', { class: 'as-kitline coop-smithing-receipts', 'aria-live': 'polite' }, smithReceipts.map((member) => {
           const receipt = member.lastSmithingReceipt;
-          return kitItem({ glyph: '⚒', name: `${member.name} smithed ${receipt.armamentName} · tier ${receipt.beforeLevel}→${receipt.afterLevel} · ${receipt.cost} Stone · ${receipt.affectedCards.length} cards` });
+          return kitItem({ glyph: 'smith', name: `${member.name} smithed ${receipt.armamentName} · tier ${receipt.beforeLevel}→${receipt.afterLevel} · ${receipt.cost} Stone · ${receipt.affectedCards.length} cards` });
         }))) : ''}
-        ${treasureStone ? html(el('div', { class: 'as-kitline coop-treasure-stones', 'aria-live': 'polite' }, [kitItem({ glyph: '⚒', name: t('reward.stone.treasureNote', { note: treasureStone }) })])) : ''}
+        ${treasureStone ? html(el('div', { class: 'as-kitline coop-treasure-stones', 'aria-live': 'polite' }, [kitItem({ glyph: 'smith', name: t('reward.stone.treasureNote', { note: treasureStone }) })])) : ''}
       </div>`;
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
@@ -1847,7 +1847,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       if (p) attachTooltip(member, () => {
         const cls = registries.classes.get(p.classId);
         return `<div class="tt-title">${esc(p.name)} — ${esc(cls ? cls.name : p.classId)}</div>` +
-          `HP ${p.hp}/${p.maxHp} · ⛁ ${p.cinders ?? 0} · deck ${p.deckSize ?? '?'} · relics ${p.relics ?? 0}` +
+          `HP ${p.hp}/${p.maxHp} · Cinders ${p.cinders ?? 0} · deck ${p.deckSize ?? '?'} · relics ${p.relics ?? 0}` +
           `${p.connected ? '' : '<br><b>Away</b> — missed rewards queue for their return.'}${p.alive ? '' : '<br><b>Fallen.</b>'}`;
       });
     });
@@ -1955,8 +1955,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       grid.appendChild(card);
     });
     const takes = [
-      offer.relicId ? choice({ glyph: '◆', name: 'Take the relic', description: registries.relics.get(offer.relicId).name, className: 'coop-take', attrs: { dataset: { take: 'relic' } } }) : null,
-      offer.flaskId ? choice({ glyph: '⚗', name: 'Take the flask', description: registries.flasks.get(offer.flaskId).name, className: 'coop-take', attrs: { dataset: { take: 'flask' } } }) : null,
+      offer.relicId ? choice({ glyph: 'skill', name: 'Take the relic', description: registries.relics.get(offer.relicId).name, className: 'coop-take', attrs: { dataset: { take: 'relic' } } }) : null,
+      offer.flaskId ? choice({ glyph: 'flask-health', name: 'Take the flask', description: registries.flasks.get(offer.flaskId).name, className: 'coop-take', attrs: { dataset: { take: 'flask' } } }) : null,
       choice({ glyph: '›', name: myMember()?.progressionRulesVersion===1?t('reward.continue'):offer.cardIds.length ? 'Skip the card' : t('reward.continue'), attrs: { dataset: { take: 'skip' } } }),
     ];
     sceneDoor({
@@ -1989,9 +1989,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
     sceneDoor({
       title: 'Shrine of Emberlight',
       children: done ? [waiting('Waiting for the party…')] : [options([
-        choice({ glyph: '✚', name: t('rest.eyebrow'), description: restDenied ? `The ${restDenied} will not let you rest here.` : restCopy, disabled: !!restDenied, reason: restDenied ? `The ${restDenied} will not let you rest here.` : '', attrs: restDenied ? {} : { dataset: { shrine: 'rest' } } }),
-        choice({ glyph: '⚒', name: 'Upgrade an item', description: `${stones} Stone${stones === 1 ? '' : 's'}`, disabled: !candidates.length, reason: candidates.length ? '' : 'Nothing here can be upgraded.', attrs: { id: 'coop-smith' } }),
-        ...allies.map((a) => choice({ glyph: '❤', name: `Mend ${a.name}`, description: '+30% HP', className: 'coop-take', attrs: { dataset: { mend: a.id } } })),
+        choice({ glyph: 'health', name: t('rest.eyebrow'), description: restDenied ? `The ${restDenied} will not let you rest here.` : restCopy, disabled: !!restDenied, reason: restDenied ? `The ${restDenied} will not let you rest here.` : '', attrs: restDenied ? {} : { dataset: { shrine: 'rest' } } }),
+        choice({ glyph: 'smith', name: 'Upgrade an item', description: `${stones} Stone${stones === 1 ? '' : 's'}`, disabled: !candidates.length, reason: candidates.length ? '' : 'Nothing here can be upgraded.', attrs: { id: 'coop-smith' } }),
+        ...allies.map((a) => choice({ glyph: 'health', name: `Mend ${a.name}`, description: '+30% HP', className: 'coop-take', attrs: { dataset: { mend: a.id } } })),
         // A denied Rest is not a way on: the member leaves instead, and the
         // host counts the leave as their choice (as the solo screen's LEAVE).
         ...(restDenied ? [choice({ glyph: '→', name: 'Leave', description: 'Take nothing here and move on with the party.', attrs: { dataset: { shrine: 'leave' } } })] : []),
@@ -2144,7 +2144,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         grid,
         item.type === 'reward' && item.offer.cardMissed ? el('p', { class: 'reward-note', dataset: { note: 'cardMissed' }, text: t('reward.note.cardMissed') }) : null,
         options([
-          relic ? choice({ glyph: '◆', name: 'Take the relic', className: 'coop-take', attrs: { dataset: { cu: 'relic' } } }) : null,
+          relic ? choice({ glyph: 'skill', name: 'Take the relic', className: 'coop-take', attrs: { dataset: { cu: 'relic' } } }) : null,
           choice({ glyph: '›', name: mm.progressionRulesVersion===1?t('reward.continue'):'Skip', attrs: { dataset: { cu: 'skip' } } }),
         ], { class: 'coop-choices' }),
       ],

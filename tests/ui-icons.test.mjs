@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { UI_ICON_IDS, LEGACY_UI_ICON_IDS, uiIconId, uiIconText } from '../src/content/uiIcons.js';
+import { UI_ICON_IDS, UI_ICON_LABELS, LEGACY_UI_ICON_IDS, uiIconId, uiIconText } from '../src/content/uiIcons.js';
 import { engravedGlyphId, engravedIconUrl } from '../src/ui/components/engravedIcon.js';
 
 const files = dir => readdirSync(new URL(dir, import.meta.url), { withFileTypes: true }).flatMap(entry =>
@@ -12,6 +12,7 @@ test('named icons and saved legacy glyphs resolve to the same existing artwork',
   for (const id of UI_ICON_IDS) {
     assert.match(id, /^[a-z]+(?:-[a-z]+)*$/);
     assert.equal(engravedGlyphId(id), id);
+    assert.ok(UI_ICON_LABELS[id]?.length <= 6, `${id} has a compact text fallback`);
     assert.ok(engravedIconUrl(id)?.endsWith(`/${id}.svg`), id);
   }
   for (const [legacy, id] of Object.entries(LEGACY_UI_ICON_IDS)) assert.equal(uiIconId(legacy), id);
@@ -38,4 +39,18 @@ test('archived fixed-loadout presenter cannot enter the runtime graph', () => {
     const text = readFileSync(new URL(file, import.meta.url), 'utf8');
     assert.doesNotMatch(text, /(?:import|export)\s[^;]*gameProfileCreation|import\s*\([^)]*gameProfileCreation/);
   }
+});
+
+test('UI implementation and authored presentation avoid embedded pictograms', () => {
+  // Arrows, mathematical operators, controller directions and prose typography
+  // are intentionally outside this range. Artwork remains named asset paths.
+  const pictogram = /[\u2600-\u27bf\u{1f000}-\u{1faff}]/u;
+  for (const file of files('../src/ui').filter(file => file.endsWith('.js'))) {
+    const source = readFileSync(new URL(file, import.meta.url), 'utf8');
+    // Comments describe history and do not ship embedded runtime glyphs.
+    const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    assert.doesNotMatch(code, pictogram, file);
+  }
+  const config = readFileSync(new URL('../content/config/ui/presentation/uiContent.json', import.meta.url), 'utf8');
+  assert.doesNotMatch(config, pictogram);
 });

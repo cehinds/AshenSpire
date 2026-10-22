@@ -55,7 +55,7 @@ export function cindersCounterHtml(model) {
     role: 'status', 'aria-live': model.accessibility.live, 'aria-label': model.accessibility.label,
   }, el('span', { class: 'as-chip hud-cinders' }, [
     el('span', { class: 'ck', text: model.properties.label }),
-    el('span', { class: 'cv', text: `⛁ ${model.properties.value}` }),
+    el('span', { class: 'cv', text: `${model.properties.value} Cinders` }),
   ])));
 }
 

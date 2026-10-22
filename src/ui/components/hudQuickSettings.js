@@ -1,5 +1,6 @@
+import { engravedIcon, engravedIconHtml } from './engravedIcon.js';
 // The HUD's two quick settings — Fullscreen and Music — are two kit
-// IconButtons (⛶, ♫) in the same cluster as Armoury and the menu, at the same
+// IconButtons (display, audio) in the same cluster as Armoury and the menu, at the same
 // size and inset. State is `aria-pressed` + `.on`; the sentence a player needs
 // when fullscreen is refused is a StatusText that appears beside them.
 import { childModel } from '../models/ComponentModel.js';
@@ -24,7 +25,7 @@ export function refreshHudQuickSettings(root, settings) {
   return true;
 }
 
-const GLYPHS = { fullscreen: '⛶', music: '♫' };
+const GLYPHS = { fullscreen: 'display', music: 'audio' };
 
 // THE KIT'S IconButton, AS A STRING. This module is read by tests/engine.test.js
 // under Node, where there is no document for kit.el() to build in, so the
@@ -35,7 +36,7 @@ function controlHtml(model, action, active) {
   const label = esc(model.accessibility.label);
   return `<button type="button" class="as-iconbtn modal-iconbtn hud-quick-setting${active ? ' on' : ''}"`
     + ` ${uiComponentAttrs(model.component, model.variant)} data-hud-quick-action="${action}"`
-    + ` aria-label="${label}" title="${label}" aria-pressed="${active}">${GLYPHS[action]}</button>`;
+    + ` aria-label="${label}" title="${label}" aria-pressed="${active}">${engravedIconHtml(GLYPHS[action])}</button>`;
 }
 
 export function hudQuickSettingsHtml(model) {
@@ -96,7 +97,7 @@ function syncMusic(stack, settings) {
   button.setAttribute('aria-pressed', String(plan.active));
   button.setAttribute('aria-label', plan.label);
   button.title = plan.label;
-  button.textContent = plan.active ? '♫' : '♫̸';
+  button.replaceChildren(engravedIcon('audio') || 'Audio');
 }
 
 export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } = {}) {
