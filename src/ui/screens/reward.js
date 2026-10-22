@@ -84,7 +84,7 @@ import { reasonWhenDisabled } from '../components/refusal.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { unusedInstanceId, ownedCopies } from '../../model/deckRules.js';
 
-const KIND_GLYPHS = { cinders: 'cinders', smithingStone: 'smith', classMilestone: 'progression', classDraft: 'progression', skillDraft: 'staggered', skillRankUp: '⇧', skillAttribute: '▲', skillFeat: 'skill', card: 'deck', levelChoice: 'vulnerable', levelCard: 'vulnerable', flask: 'flask-health', armament: 'attack', relic: 'skill', sigil: 'skill' };
+const KIND_GLYPHS = { cinders: 'cinders', smithingStone: 'smith', classMilestone: 'progression', classDraft: 'progression', skillDraft: 'staggered', skillRankUp: 'progression', skillAttribute: 'strength', skillFeat: 'skill', card: 'deck', levelChoice: 'vulnerable', levelCard: 'vulnerable', flask: 'flask-health', armament: 'attack', relic: 'skill', sigil: 'skill' };
 
 // `onCollectArmament` is the armament's whole persistence, handed in by the
 // caller (main.js collectArmament): run storage + meta.found + the discovery

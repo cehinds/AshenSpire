@@ -102,8 +102,21 @@ test('skill attribute reward choices render the attribute marker instead of its 
   mountRewards(app, { registries, run, checkpoint: { states: {} },
     rewards: { skillAttributes: [{ skillId: 'item:blade', ordinal: 0, attributeIds: ['strength', 'dexterity'] }] },
     onDone() {}, onPersist: () => true, saves });
+  expectArt(app.querySelector('[data-kind="skillAttribute"] .glyph'), 'strength');
   app.querySelector('[data-kind="skillAttribute"]').click();
   const choices = app.querySelectorAll('.reward-node');
   assert.equal(choices.length, 2);
   for (const choice of choices) expectArt(choice.querySelector('.glyph'), 'strength');
+}));
+
+
+test('the mounted skill rank-up offer uses the named progression icon', () => withKitDom(({ document }) => {
+  document.documentElement ??= document.body;
+  const app = document.createElement('main'); document.body.append(app);
+  const run = createRunState({ registries, classId: 'reaver', seed: 21 });
+  run.skills['item:blade'] = { level: 1, xp: 0, pendingDrafts: 0 };
+  mountRewards(app, { registries, run, checkpoint: { states: {} },
+    rewards: { skillRankUps: [{ skillId: 'item:blade', level: 1 }] },
+    onDone() {}, onPersist: () => true, saves });
+  expectArt(app.querySelector('[data-kind="skillRankUp"] .glyph'), 'progression');
 }));
