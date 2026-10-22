@@ -16,6 +16,8 @@ import { projectEnemyBurdenHand } from '../models/EnemyBurdenModel.js';
 import { hasCardChoice, zoneCandidates } from '../../engine/cardZones.js';
 import { foundationStandin } from '../components/foundationStandin.js';
 import { gameModule } from '../../model/gameProfile.js';
+import { previewEnemyAction } from '../../engine/enemyActionPreview.js';
+import { enemyDeckInspection } from '../models/EnemyDeckInspectionModel.js';
 import { editingLocked, markArmourySeen, noncombatEditing } from '../../model/armouryRules.js';
 import { syncArmouryNew } from '../components/runHud.js';
 import { figureAnimationsEnabled } from '../../model/gameAnimationPolicy.js';
@@ -956,12 +958,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function combatantSubject(role, entity) {
     const v = dv(entity);
     if (role === 'player') {
-      const classDef = registries.classes.get(run.class);
       const abilities = activeCombatAbilities(registries, { ...v, stanceId: entity.stanceId, evade: entity.evade }, Boolean(combat.foundation));
       return {
         role: 'player',
-        name: (run.customization?.name || classDef.name).toUpperCase(),
-        subtitle: `${classDef.name} · Level ${characterLevel(run)}`,
+        name: (run.customization?.name || runClassIdentity(registries, run).name).toUpperCase(),
+        subtitle: `${runClassIdentity(registries, run).name} · Level ${characterLevel(run)}`,
         resources: inspectorResources([
           { label: 'HP', value: v.hp, max: entity.maxHp },
           { label: 'MP', value: v.mana, max: entity.maxMana },
@@ -998,8 +999,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // Previous actions are the moves that RESOLVED (oldest first). movesHistory
     // records rolls, and a roll cancelled by a stagger never happened.
     const past = entity.performedMoves || [];
+    const actionPreviews = Object.fromEntries(Object.keys(def.moves || {}).map(moveId => [moveId, previewEnemyAction(combat, entity, moveId)]));
+    const inspectedMoves = enemyMoveCards(def, { ...moveCardOptions, enemy: entity, preview: intent, actionPreviews });
+    const deckInspection = enemyDeckInspection(combat, entity, inspectedMoves, intent);
     return {
       role: 'enemy',
+      deckInspection,
       ...(learning ? { learning, perception: combat.skills?.perception?.level || 0,
         prediction: knowledgePredictionModel(combat, entity),
         onPredict: (actionSerial, maneuver) => {
@@ -1010,6 +1015,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       subtitle: (def.tags || []).map(words).join(' · ') || t('combat.log.role.enemy'),
       resources: inspectorResources([
         { label: 'HP', value: v.hp, max: entity.maxHp },
+        ...(Number.isFinite(entity.maxStamina) ? [{ label: 'SP', value: v.fixCoreStaminaRemaining ?? v.stamina ?? entity.stamina ?? 0, max: entity.maxStamina }] : []),
         { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
         ...(entity.wardMeter ? [{ label: 'Ward', value: v.wardMeter?.value || 0, max: v.wardMeter?.max || entity.wardMeter.max }] : []),
         ...(combat.breakMeterVersion === 1 && entity.ratings ? [{ label: t('combat.rating.ward'), value: ratingValue(combat, entity, 'ward') }] : []),
@@ -1024,7 +1030,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       burdenRead: projectEnemyBurdenHand(entity, { turn: combat.turn, registries,
         ownerId: combat.playerKey || 'player', legacySolo: !(combat.players instanceof Map) }),
       skillLabel: 'Move set',
-      moveCards: learning ? learning.moveCards : enemyMoveCards(def, { ...moveCardOptions, enemy: entity, preview: intent }),
+      moveCards: learning ? learning.moveCards : inspectedMoves,
       skills,
       // The stance an enemy's telegraph set reads only as far as its intent does.
       statuses: [...[intent.hidden ? null : combatStanceRow(v), preparedEvadeRow(v)].filter(Boolean), ...statusDetails(entity)],

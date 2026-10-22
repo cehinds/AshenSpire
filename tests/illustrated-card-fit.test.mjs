@@ -87,3 +87,30 @@ test('compact hidden rules retain their cue even when visible copy fits', () => 
   assert.equal(f.text.dataset.rulesComplete, 'false');
   assert.equal(f.text.style.maxHeight, 'calc(100% - 9px)');
 }));
+
+test('compact effects wrap into the artwork bay instead of losing printed rows', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  // At 180px the authored 26px bay fits fewer than three wrapped effects;
+  // the 80px above it is available artwork, exactly as on a resting hand card.
+  const f = fixture({ chars: 90, width: 180, top: 80, height: 26, full: false });
+  f.fit();
+  assert.ok(f.text.scrollHeight > 3 * parseFloat(f.text.style.fontSize) * 1.25);
+  assert.equal(f.face.dataset.rulesExpanded, 'true');
+  assert.equal(f.text.style.webkitLineClamp, 'unset');
+  assert.equal(f.text.dataset.rulesComplete, 'true');
+  assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1);
+}));
+
+test('narrow dense rules preserve a readable floor and recover when widened', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const f = fixture({ chars: 300, width: 110, top: 80 });
+  f.fit();
+  assert.ok(parseFloat(f.text.style.fontSize) >= 11, 'never solve overflow with 7px rules');
+  assert.equal(f.face.dataset.rulesOverflow, 'true');
+  const smallFont = parseFloat(f.text.style.fontSize);
+  f.state.width = 360;
+  f.state.chars = 60;
+  f.fit();
+  assert.ok(parseFloat(f.text.style.fontSize) > smallFont);
+  assert.equal(f.text.dataset.rulesComplete, 'true');
+}));

@@ -31,6 +31,7 @@ export function fitIllustratedCards(cards) {
   const widths=faces.map(face=>face.clientWidth);
   const signatures=faces.map((face,i)=>widths[i]?fitSignature(face,widths[i]):null);
   const texts=[],skipped=new Set();
+  const { zoom } = layoutMetrics();
   faces.forEach((face,i)=>{
     if(!widths[i])return;
     if(fitSignatures.get(face)===signatures[i]){skipped.add(face);return;}
@@ -39,13 +40,13 @@ export function fitIllustratedCards(cards) {
     for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
       const rules=text.dataset.cardBinding==='rules';
       const layer=text.parentElement;
-      // Compact faces fit within the authored three-line rule budget. The
-      // inspection face keeps every line; it and selected hand faces may
-      // borrow artwork height so readable rules stay inside their parchment.
+      // Compact faces show three semantic effects; each may wrap. Every
+      // face can borrow artwork height before offering full inspection.
       const fullRules=face.dataset.fullRules==='true';
       const expandedHandRules=rules&&Number(text.dataset.maxLines)>3;
       const row={face,text,layer,scale,rules,fullRules,compact:rules&&!fullRules&&!expandedHandRules,
-        lines:rules?(fullRules?Infinity:Number(text.dataset.maxLines)||3):Number(text.dataset.maxLines)||1,
+        // Semantic effect lines can wrap over multiple printed rows.
+        lines:rules?Infinity:Number(text.dataset.maxLines)||1,
         hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
         hasHiddenRules:face.dataset.rulesHidden==='true'};
       if(rules){
@@ -68,7 +69,7 @@ export function fitIllustratedCards(cards) {
         }
         text.style.display='block';
       }
-      row.low=rules?Math.max(Math.min(11,widths[i]/12),22*scale,Number(text.dataset.minFont)*scale):Number(text.dataset.minFont)*scale;
+      row.low=rules?Math.max(11/zoom,22*scale,Number(text.dataset.minFont)*scale):Number(text.dataset.minFont)*scale;
       row.high=Math.max(row.low,Number(text.dataset.maxFont)*scale);
       texts.push(row);
     }
@@ -102,21 +103,20 @@ export function fitIllustratedCards(cards) {
   for(const row of search)row.result=row.lo;
   for(const row of texts){
     row.text.style.fontSize=row.result+'px';
-    row.overflow=row.compact&&(row.hasHiddenRules||row.hasHiddenLines||row.text.scrollHeight>Math.min(row.boxHeight,row.result*1.25*row.lines)+1);
-    row.text.style.webkitLineClamp=row.compact?String(row.lines):row.rules?'unset':String(row.lines);
-    row.text.style.display=row.compact?'-webkit-box':'block';
+    row.overflow=row.compact&&(row.hasHiddenRules||row.hasHiddenLines);
+    row.text.style.webkitLineClamp=row.rules?'unset':String(row.lines);
+    row.text.style.display='block';
     row.text.dataset.fittedFont=String(row.result/row.scale);
     if(row.compact)row.face.dataset.rulesOverflow=String(row.overflow);
   }
   // Measure the whole batch before expanding any panel. No per-card search or
   // layout loop, and a resize starts from authored geometry rather than drift.
-  const rules=texts.filter(row=>row.rules),narrow=[];
-  // Dense rules keep the same readable text floor with the taller base bay.
-  // Tighten only their artwork rail before measuring the expansion boundary.
+  const rules=texts.filter(row=>row.rules);
+  // Preserve the readable font floor; spend available artwork space instead
+  // of silently shrinking dense effects below it.
   for(const row of rules)row.dense=row.text.scrollHeight>row.boxHeight*1.5;
   for(const row of rules)row.face.dataset.rulesDense=String(row.dense);
   for(const row of rules){
-    if(row.compact)continue;
     row.height=row.face.clientHeight;row.top=row.layer.offsetTop;row.panelTop=row.panel?.offsetTop;row.panelHeight=row.panel?.clientHeight;row.artTop=row.art?.offsetTop;
     const title=row.face.querySelector('[data-card-binding="name"]');
     // Offsets stay in layout pixels, including the native UI zoom and rotated
@@ -137,24 +137,11 @@ export function fitIllustratedCards(cards) {
     const bottomInset=row.panelHeight?Math.max(0,(row.panelTop+row.panelHeight-row.top-row.boxHeight)/row.panelHeight):0;
     row.interiorScale=Math.max(.5,1-row.topInset-bottomInset);
     row.authoredHeight=row.boxHeight;
-    if(row.text.scrollHeight>row.boxHeight+row.growthLimit*row.interiorScale+1){
-      // Supported narrow shelves use the authored minimum only after the
-      // preferred floor and all available artwork space have been spent.
-      row.lo=Math.min(row.result,Number(row.text.dataset.minFont)*row.scale,Math.max(7,18*row.scale));
-      row.hi=row.result;row.boxHeight+=row.growthLimit*row.interiorScale;narrow.push(row);
-    }
-  }
-  for(let pass=0;pass<7&&narrow.length;pass++){
-    const mid=row=>(row.lo+row.hi)/2,fits=probe(narrow,mid);
-    narrow.forEach((row,i)=>{const size=mid(row);if(fits[i])row.lo=size;else row.hi=size;});
-  }
-  for(const row of narrow){row.result=row.lo;row.text.style.fontSize=row.result+'px';row.text.dataset.fittedFont=String(row.result/row.scale);}
-  for(const row of rules){
-    if(row.compact){row.face.dataset.rulesExpanded='false';row.face.dataset.rulesNarrowFit='false';continue;}
-    row.boxHeight=row.authoredHeight;row.extra=Math.min(row.growthLimit,Math.max(0,(row.text.scrollHeight-row.boxHeight)/row.interiorScale));row.face.dataset.rulesNarrowFit=String(narrow.includes(row));
   }
   for(const row of rules){
-    if(row.compact)continue;
+    row.boxHeight=row.authoredHeight;row.extra=Math.min(row.growthLimit,Math.max(0,(row.text.scrollHeight-row.boxHeight)/row.interiorScale));row.face.dataset.rulesNarrowFit='false';
+  }
+  for(const row of rules){
     const {extra,height}=row;
     if(extra>1){
       row.layer.style.top=(row.top-extra*(1-row.topInset))/height*100+'%';row.layer.style.height=(row.boxHeight+extra*row.interiorScale)/height*100+'%';
