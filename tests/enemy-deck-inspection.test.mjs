@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, gameContent } from '../src/model/gameProfile.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRunState } from '../src/model/state.js';
+import { previewIntent, dispatch } from '../src/engine/combat.js';
+import { previewEnemyAction } from '../src/engine/enemyActionPreview.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -101,7 +103,63 @@ test('resolved action lists preserve multiple damage effects and expanded pressu
   assert.match(catalog.detail, /5 base Poise damage/);
   assert.match(catalog.detail, /Heal self for 7/);
   const current = enemyMoveCards(definition, { actionPreviews, preview: { moveId: 'attack', damage: 6, hits: 2 } })[0];
-  assert.match(current.detail, /6 × 2 preview damage before Block/);
+  assert.match(current.detail, /6 × 2 projected damage/);
   assert.match(current.detail, /3 damage/);
   assert.doesNotMatch(current.detail, /8 × 2 damage/);
+});
+
+
+test('grouped authored deck retains copy counts without inventing draw order', () => {
+  const f = fixture();
+  const profile = structuredClone(f.combat.gameProfile);
+  const authored = profile.content.enemies.find(row => row.id === f.enemy.enemyId);
+  authored.defaultDeck = ['wanderingSoldier.slash', 'wanderingSoldier.guard', 'wanderingSoldier.slash'];
+  authored.unlockCards = ['wanderingSoldier.guard'];
+  f.combat.gameProfile = profile;
+  const read = enemyDeckInspection(f.combat, f.enemy, f.moves, f.preview);
+  assert.deepEqual(read.cards.map(row => [row.cardId, row.copies]), [['wanderingSoldier.slash', 2], ['wanderingSoldier.guard', 1]]);
+  assert.match(read.cards[0].meta, /2 copies/);
+  assert.equal(read.cards.reduce((count, row) => count + row.copies, 0), authored.defaultDeck.length);
+  assert.equal(read.current.name, 'Guard');
+  assert.equal(read.last.name, 'Slash', 'playing one card does not claim all copies were played');
+});
+
+test('Core Block and rating modifiers distinguish base payload from projected and executed HP loss', () => {
+  const { combat: base } = fixture();
+  const { registries } = base;
+  const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: 'enemy-damage-basis' });
+  const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  const enemy = combat.enemies[0];
+  for (const entity of [combat.player, enemy]) {
+    Object.assign(entity, { hp: 1000, maxHp: 1000, block: 0, barrier: 0, statuses: {}, ratings: {}, ratingSources: [],
+      basePrecisionBonus: 1000, attributes: { dexterity: 0 }, persistentPoise: { value: 0, max: 0 } });
+    delete entity.combatStance; delete entity.combatCounter;
+  }
+  const move = registries.enemies.get(enemy.enemyId).moves.slash;
+  const actionPreview = previewEnemyAction(combat, enemy, 'slash');
+  enemy.intent = { kind: move.intent, moveId: 'slash', damage: move.damage, hits: move.hits || 1, combatProfile: actionPreview.profile };
+  enemy.intentRevealed = true; enemy.plannedMoves = []; enemy.maxStamina = 100; enemy.stamina = 100;
+  enemy.knowledgeAction = { reads: { player: { visibility: 'exact' } } };
+  const unmodified = previewIntent(combat, enemy.id);
+  enemy.ratings.ar = 7;
+  const open = previewIntent(combat, enemy.id);
+  assert.ok(open.totalDamage > unmodified.totalDamage, 'the base payload has not included live AR');
+  combat.player.block = 3;
+  const blocked = previewIntent(combat, enemy.id);
+  assert.ok(blocked.totalDamage < open.totalDamage, 'Core preview already spends Block');
+  const cards = enemyMoveCards(registries.enemies.get(enemy.enemyId), { enemy, registries,
+    preview: blocked, actionPreviews: { slash: actionPreview } });
+  const shown = cards.find(row => row.moveId === 'slash');
+  assert.match(shown.detail, new RegExp(`${blocked.damage} projected damage`));
+  assert.doesNotMatch(shown.detail, /before Block/);
+  const before = combat.player.hp;
+  dispatch(combat, { type: 'setReactions', enabled: false });
+  dispatch(combat, { type: 'endTurn' });
+  assert.equal(before - combat.player.hp, blocked.totalDamage);
+  const receipt = combat.eventLog.find(row => row.type === 'enemyMoveStarted' && row.sourceId === enemy.id);
+  const snapshot = enemyDeckInspection(combat, enemy, cards, blocked).last;
+  const committedBase = receipt.actionPreview.actionEffects.find(row => row.op === 'damage').amount;
+  assert.notEqual(committedBase, blocked.damage, 'the committed base opcode is not the resulting HP loss');
+  assert.match(snapshot.detail, /Base .* damage to player before combat modifiers/);
+  assert.match(snapshot.meta, /Paid .* SP/);
 });

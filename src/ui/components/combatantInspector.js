@@ -78,7 +78,7 @@ function enemyDeckSection(read) {
   node.append(action('Current action', read.current, read.currentHidden ? 'Unread' : 'None'),
     action('Last played', read.last, 'None yet'));
   node.append(el('details', { class: 'combatant-deck-cards', open: true }, [
-    el('summary', { text: `Authored deck (${read.cards.length})` }),
+    el('summary', { text: `Authored deck (${read.cards.reduce((count, card) => count + (card.copies || 1), 0)})` }),
     renderEnemyMoveCards(read.cards),
   ]));
   return node;

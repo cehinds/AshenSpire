@@ -17,7 +17,7 @@ export function enemyActionEffectText(effect, registries) {
   if (effect.op === 'block') return `Give ${target} ${value(effect.amount)} base Block`;
   if (effect.op === 'poiseDamage') return `${value(effect.amount)} base Poise damage to ${target}`;
   if (effect.op === 'addCard') return `Add ${registries?.cards?.get(effect.card)?.name || words(effect.card)} to ${words(effect.pile)}${effect.position ? ` (${effect.position})` : ''}`;
-  if (effect.op === 'damage') return `Deal ${value(effect.amount)}${effect.hits > 1 ? ` × ${effect.hits}` : ''} damage to ${target}`;
+  if (effect.op === 'damage') return `Base ${value(effect.amount)}${effect.hits > 1 ? ` × ${effect.hits}` : ''} damage to ${target} before combat modifiers`;
   if (effect.op === 'moveEngagement') return `${effect.bands < 0 ? 'Close' : 'Retreat'} ${Math.abs(effect.bands)} range band${Math.abs(effect.bands) === 1 ? '' : 's'}`;
   if (effect.op === 'wardDamage') return `${value(effect.amount)} Ward damage to ${target}`;
   if (effect.op === 'buildup') return `Build ${value(effect.amount)} ${registries?.statuses?.get(effect.status)?.name || words(effect.status)} on ${target}`;
@@ -65,7 +65,7 @@ export function enemyMoveCards(def, { enemy = null, preview = null, registries =
       if (poise > 0) pieces.push(`${poise} base counter Poise damage${combatExpansionVersion === 2 ? '' : ` × ${rules.poiseMultiplier}`}`);
     }
     const sequence = liveDamage ? variableIntentDamage(preview) : null;
-    if (damage != null && (!actionPreview || liveDamage)) pieces.push(`${sequence ? `${sequence.text} (${sequence.totalDamage} total)` : `${damage}${hits > 1 ? ` × ${hits}` : ''}`} ${liveDamage ? 'preview damage before Block' : 'base damage'}`);
+    if (damage != null && (!actionPreview || liveDamage)) pieces.push(`${sequence ? `${sequence.text} (${sequence.totalDamage} total)` : `${damage}${hits > 1 ? ` × ${hits}` : ''}`} ${liveDamage ? 'projected damage' : 'base damage'}`);
     if (!actionPreview && move.block != null) pieces.push(`${move.block} base Block`);
     pieces.push(...(actionPreview?.actionEffects || move.effects || []).filter((effect, index) => !(actionPreview && liveDamage && move.damage != null && index === 0 && effect.op === 'damage')).map(effect => `${enemyActionEffectText(effect, registries)}${effect.conditionMet === false ? ' (condition not met)' : ''}`));
     const fallback = enemySmashFallbackPoise(move, profile, { combatExpansionVersion, stanceRules, registries });
