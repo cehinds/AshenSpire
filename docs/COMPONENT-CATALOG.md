@@ -15,7 +15,10 @@ Core enemy inspection joins authored enemy cards to runtime moves through
 action, and the last committed action's SP receipt. `enemyActionPreview` supplies
 read-only expanded effects and resolved formula values. Hidden choices remain
 unread. Base card costs and the enemy AI's actual SP action cost are labelled
-separately.
+separately. Enemy action/contact events capture adjusted public values through
+`enemyIntentReceipt` before the queue advances. `CombatIntentModel` keeps the
+per-hit count or sequence prominent and labels total HP separately; a reaction
+refreshes the next-contact quote from its current defenses.
 
 `fitIllustratedCards` treats compact effects as semantic rows that may wrap,
 borrows available artwork height, and keeps an 11 physical pixel rules floor.
