@@ -1,3 +1,4 @@
+import { engravedIconHtml } from '../components/engravedIcon.js';
 import { mountRewardDoor } from '../components/rewardDoor.js';
 import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
 import {abilityDraftChoice} from '../../model/abilityDraftReceipts.js';
@@ -538,11 +539,11 @@ export function mountRewards(app, {
         if (isRelicChoice(row)) {
           const picked = state === 'taken' && chosenRelicId ? registries.relics.get(chosenRelicId) : null;
           return { title: t('reward.kind.relic'), body: state === 'taken' && picked
-            ? `<b>${esc(picked.icon || 'skill')} ${esc(picked.name)}</b>`
+            ? `<b>${engravedIconHtml(picked.icon || 'relic')} ${esc(picked.name)}</b>`
             : t('reward.card.chooseOne', { count: row.relicIds.length }) };
         }
         const def = registries.relics.get(row.relicId);
-        return { title: t('reward.kind.relic'), body: `<b>${esc(def.icon || 'skill')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}` };
+        return { title: t('reward.kind.relic'), body: `<b>${engravedIconHtml(def.icon || 'relic')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}` };
       }
       case 'sigil': {
         const def = registries.sigils.get(row.sigilId);

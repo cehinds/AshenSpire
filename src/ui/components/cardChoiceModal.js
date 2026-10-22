@@ -28,7 +28,7 @@ export function openCardChoiceModal({ plan, cardName = 'Card', opener = document
     body: (host) => {
       // Uniform tiles like the other card pickers; a stance has no numbers, so its tooltip is the effect line.
       const summaries = plan.options.map(option => ({ id: option.id, className: 'card-choice-option',
-        name: `${option.icon ? option.icon + ' ' : ''}${option.name}${option.active ? ' (active)' : ''}`,
+        name: `${option.name}${option.active ? ' (active)' : ''}`,
         text: option.tooltip || '', line: [], costs: [], disabled: !!option.active,
         attrs: option.active ? { 'data-active': 'true' } : {} }));
       host.appendChild(cardOptionGrid(summaries, { idAttr: 'data-choice', onSelect: id => { chosen = id; shell.close(); } }));

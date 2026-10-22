@@ -1,3 +1,4 @@
+import { uiIconText } from '../content/uiIcons.js';
 import { viewScale, viewViewportBox } from './viewViewport.js';
 import { playCombatEffect, clearCombatEffects } from './combatEffectSprites.js';
 import { combatEffectForEvent } from '../model/combatEffectEvents.js';
@@ -1957,7 +1958,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
         numbers: proc
           ? (ctx) => {
               const info = ctx.statusInfo && ctx.statusInfo(e.cause.slice(5));
-              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} -${e.amount}`, 'burst', info && info.tint);
+              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${uiIconText(info?.icon)} -${e.amount}`, 'burst', info && info.tint);
             }
           : (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `-${e.amount}`, 'burst'),
       };
@@ -2008,7 +2009,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
       return {
         numbers: (ctx) => {
           const info = ctx.statusInfo && ctx.statusInfo(e.status);
-          floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} ${e.blocked} RESISTED`, 'blk small');
+          floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${uiIconText(info?.icon)} ${e.blocked} RESISTED`, 'blk small');
         },
       };
     case 'meterFilled':

@@ -1,3 +1,4 @@
+import { engravedIcon, engravedIconHtml } from './engravedIcon.js';
 import { swapOnError } from '../artFallback.js';
 import { bindCardInspection, cardInspectionLayout, openCardInspection } from './cardInspection.js';
 import { equipmentCardModel, equipmentCardTokens } from '../../model/equipmentCard.js';
@@ -187,7 +188,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     // and leave a card that can no longer be read the second time it is lit.
     const frameHtml = `<span class="epc-frame">
       <span class="epc-name ec-name" style="--title-units:${Math.max(1, Array.from(String(model.name)).length * 0.62)}">${esc(model.name)}<span aria-hidden="true">◆</span></span>
-      ${region('art', `<span class="epc-art">${presentation && !model.art ? `<span class="epc-art-glyph" aria-hidden="true">${esc(model.glyph || piece.icon || 'skill')}</span>` : `<img${imageHintAttrs({ offscreen: true })} src="${esc(presentation ? model.art : equipmentCardArt(piece))}" alt="${esc(model.name)}">`}</span>`)}
+      ${region('art', `<span class="epc-art">${presentation && !model.art ? `<span class="epc-art-glyph" aria-hidden="true">${engravedIconHtml(model.glyph || piece.icon || 'equipment') || 'Item'}</span>` : `<img${imageHintAttrs({ offscreen: true })} src="${esc(presentation ? model.art : equipmentCardArt(piece))}" alt="${esc(model.name)}">`}</span>`)}
       ${region('type', `<span class="epc-type"${rowsAttr(variant?.regions.type)}><span ${tip(model.armor ? model.type : model.type.split(' · ')[0], model.typeExplanation)}>${esc(model.type)}</span><span class="epc-requirement" ${tip(requirement, model.requirementExplanation, requirementRole)}>${esc(requirement)}</span></span>`)}
       ${region('facts', facts)}
       ${region('tags', `<span class="epc-tags ec-tags">${model.tags.map(t => `<span class="epc-tag" ${tip(t.label, t.explanation)}>${esc(t.label)}</span>`).join('')}</span>`)}
@@ -202,7 +203,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     applyCardTokens(card, tokensFor(at));
     card.dataset.cardLevel = at;
     card.style.setProperty('--epc-level-w', cardLevelWidthCss(at));
-    swapOnError(card.querySelector('img'), () => Object.assign(document.createElement('span'), { textContent: piece.icon || 'skill' }));
+    swapOnError(card.querySelector('img'), () => engravedIcon(piece.icon || 'equipment') || Object.assign(document.createElement('span'), { textContent: 'Item' }));
     card.querySelectorAll('[data-card-tip]').forEach(target => {
       const { label, explanation } = explanations[Number(target.dataset.cardTip)];
       const html = () => label === explanation ? `<p>${esc(label)}</p>` : `<div class="tt-title">${esc(label)}</div><p>${esc(explanation)}</p>`;

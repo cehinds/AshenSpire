@@ -173,7 +173,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     run.relics.forEach((rid, at) => {
       const def = registries.relics.get(rid);
       const price = sellPriceFor(registries.balance, 'relic', def);
-      if (price > 0) out.push({ kind: 'relic', at, def, price, title: `${def.icon || 'skill'} ${def.name}`, desc: relicText(def, registries) });
+      if (price > 0) out.push({ kind: 'relic', at, def, price, title: def.name, desc: relicText(def, registries) });
     });
     run.flasks.forEach((f, at) => {
       const def = registries.flasks.get(f.flaskId);
@@ -313,7 +313,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     stock.relics.forEach((item, i) => {
       const def = registries.relics.get(item.id);
       const avail = offerAvailability({ price: item.cost, cinders: run.cinders });
-      const tile = shopItem(`${def.icon || 'skill'} ${def.name}`, relicText(def, registries), item.cost, avail, { card: renderCollectibleCard(registries, def, 'Relic', { interactive: false, surface: 'shop' }).card });
+      const tile = shopItem(def.name, relicText(def, registries), item.cost, avail, { card: renderCollectibleCard(registries, def, 'Relic', { interactive: false, surface: 'shop' }).card });
       addOffer('relics', {
         ref: relicRefs[i], tile, name: def.name, desc: relicText(def, registries),
         price: t('shop.price', { cost: item.cost }), avail,

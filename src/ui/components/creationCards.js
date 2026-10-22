@@ -259,7 +259,7 @@ export function classUnfold({ cls, sprite = null, resources = null, relic = null
   const relicFace = relic ? el(onRelicInspect ? 'button' : 'span', {
     class: `cc-unfold-relic${onRelicInspect ? ' cc-preview-detail-trigger' : ''}`,
     ...(onRelicInspect ? { type: 'button', 'aria-haspopup': 'dialog', 'aria-label': t('creation.preview.inspectRelic', { name: relic.name }) } : {}),
-  }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true', text: relic.icon || 'skill' }), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null;
+  }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true' }, engravedIcon(relic.icon || 'relic') || 'Relic'), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null;
   if (relicFace && onRelicInspect) relicFace.addEventListener('click', () => onRelicInspect(relic, relicFace));
   const node = el('span', { class: 'cc-class-unfold', id: `cc-unfold-${cls.id}`, dataset: { class: cls.id } }, [
     el('span', { class: 'cc-unfold-portrait' }, [
@@ -346,7 +346,7 @@ export function sigilChoiceButton(glyph, selected, onChoose) {
 export function keepsakeChoiceButton(keepsake, selected, onChoose) {
   const artPath = keepsakeArtAsset(keepsake);
   const img = artPath ? el('img', { src: assetUrl(artPath), alt: '', width: '48', height: '48' }) : null;
-  if (img) swapOnError(img, () => el('span', { text: keepsake.icon }));
+  if (img) swapOnError(img, () => engravedIcon(keepsake.icon || 'relic') || el('span', { text: 'Relic' }));
   const art = img ? el('span', { class: 'og relic-art', 'aria-hidden': 'true' }, img) : null;
   const button = optionCard({
     glyph: keepsake.icon, art, name: keepsake.name, description: keepsake.desc, selected, arrow: false,
