@@ -1,3 +1,4 @@
+import * as Matchups from './combatMatchups.js';
 import * as ActionPreview from './enemyActionPreview.js';
 // Public forecasts captured at the event boundary, before the live queue moves
 // on. A contact refresh quotes only that contact, never all remaining hits.
@@ -40,18 +41,21 @@ export function captureEnemyIntent(ctx, enemy, action = null) {
   }
   if (base == null) return out;
   const state = Damage.damagePreviewState(ctx, ctx.player);
-  // Live Core grants a paid Counter's extra Block immediately before its hit.
-  // Quote that same grant on the detached defender so the post-response next
-  // hit agrees with execution; the live pools and charge remain untouched.
-  if (contact && fixCoreEnabled(ctx) && configuredCombat(ctx)) {
-    const planned = action.meta?.expansionContacts?.[0]?.[0];
-    const receipt = planned && group?.targets?.[planned.key]?.receipt;
-    const serial = group?.manualCounterSerials?.[ctx.playerKey || 'player'];
+  // Live Core grants an armed Counter's extra Block immediately before its
+  // covered hit. A whole-action forecast earns that automatic grant once;
+  // later hits spend the same detached Block/Poise state. A freshly paid
+  // per-contact response retains its own serial even after an earlier return.
+  if (fixCoreEnabled(ctx) && configuredCombat(ctx)) {
+    const planned = contact && action.meta?.expansionContacts?.[0]?.[0];
+    const serial = contact && group?.manualCounterSerials?.[ctx.playerKey || 'player'];
+    const receipt = contact ? planned && group?.targets?.[planned.key]?.receipt
+      : Matchups.previewTacticalAction(state.previewCtx, enemy, state.defender, carrier,
+        [{ amount: Actions.computeAttackDamage(state.previewCtx, enemy, state.defender, base, carrier.tags, carrier, { matchups: false, beforeDefense: true }) }]);
     const paid = serial && serial === receipt?.counter?.serial;
     if (receipt && (!Counter.counterReturnSpent(ctx.player) || paid)) {
-      const chance = profileDamageReceipt(ctx, enemy, state.defender, base, carrier);
-      const extra = Counter.counterBlockBonus(ctx, receipt, planned.index, chance.damageReceipt?.hits?.[0]?.incoming);
-      state.defender.block = (state.defender.block || 0) + Counter.counterBlockGrant(ctx, state.defender, extra);
+      const chance = profileDamageReceipt(state.previewCtx, enemy, state.defender, base, carrier);
+      const extra = Counter.counterBlockBonus(state.previewCtx, receipt, contact ? planned.index : 0, chance.damageReceipt?.hits?.[0]?.incoming);
+      state.defender.block = (state.defender.block || 0) + Counter.counterBlockGrant(state.previewCtx, state.defender, extra);
     }
   }
   const values = Damage.previewDamageHits(ctx, enemy, ctx.player, base, carrier.tags, carrier, hits, state);

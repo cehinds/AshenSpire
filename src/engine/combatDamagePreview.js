@@ -1,10 +1,11 @@
 import { fixCoreEnabled, damageReceipt, fixCoreStaggeredRules, fixCoreStaggeredStance } from '../model/fixCoreMechanics.js';
-import { configuredCombat, profileDamageReceipt } from './gameProfileCombat.js';
-import { computeAttackDamage } from './actions.js';
-import { prepareMatchupHit, matchupRules, hitRiders } from './combatMatchups.js';
+import * as ProfileCombat from './gameProfileCombat.js';
+import * as Actions from './actions.js';
+// Receipt capture enters this shared module from multiple bundled engine
+// roots. Read cyclic engine exports when invoked, never during initialization.
+import * as Matchups from './combatMatchups.js';
 import { reconcileWardBlock } from '../model/blockPresentation.js';
-import { matchupPoiseMultiplier, stancePressureMultiplier } from './combatMatchups.js';
-import { ashenBlightMartialPoise } from './ashenBlight.js';
+import * as Blight from './ashenBlight.js';
 import { fixCoreWardDisabled } from '../model/fixCoreMechanics.js';
 
 /**
@@ -45,12 +46,12 @@ export function previewPoiseDrain(ctx, source, state, effect, card, authored) {
   const { defender, previewCtx } = state;
   const poise = defender?.persistentPoise;
   if (!fixCoreEnabled(ctx) || !defender?.alive || !(poise?.value > 0)) return 0;
-  const pressure = previewCtx.combatExpansionVersion === 2 ? stancePressureMultiplier(previewCtx, source, defender, card, undefined) : 1;
+  const pressure = previewCtx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(previewCtx, source, defender, card, undefined) : 1;
   let amount;
   if (effect.op === 'poiseDamage') {
-    const bonus = previewCtx.combatExpansionVersion === 2 ? ashenBlightMartialPoise(previewCtx, source,
+    const bonus = previewCtx.combatExpansionVersion === 2 ? Blight.ashenBlightMartialPoise(previewCtx, source,
       { cycleKey: String(source?.combatOwnerCycle || 0), camp: card?.combatProfile?.camp, authoredPoise: authored }) : 0;
-    amount = Math.ceil((authored + bonus) * matchupPoiseMultiplier(previewCtx, source, defender, card) * pressure);
+    amount = Math.ceil((authored + bonus) * Matchups.matchupPoiseMultiplier(previewCtx, source, defender, card) * pressure);
   } else if (effect.op === 'wardDamage' && fixCoreWardDisabled(ctx)) {
     amount = authored * pressure
       * (!card?.combatWardEdgeApplied && card?.combatProfile?.camp === 'spell' && card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1);
@@ -83,10 +84,10 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
   const local = state || damagePreviewState(ctx, target);
   const { defender, previewCtx, targetKey } = local;
   const attack = { ...carrier, combatRiderTargets: local.combatRiderTargets };
-  if (configuredCombat(ctx)) {
+  if (ProfileCombat.configuredCombat(ctx)) {
     const receipts = [];
     for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
-      const receipt = profileDamageReceipt(previewCtx, source, defender, base, carrier);
+      const receipt = ProfileCombat.profileDamageReceipt(previewCtx, source, defender, base, carrier);
       receipts.push(receipt);
       if (defender) applyReceiptToPreviewTarget(ctx, defender, receipt);
     }
@@ -98,11 +99,11 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
       hitChance: receipts[0]?.hitChance ?? 1, uncertain: receipts.some(receipt => receipt.uncertain),
       hpLossBounds: [receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[0], 0), receipts.reduce((sum, receipt) => sum + receipt.hpLossBounds[1], 0)] };
   }
-  const rules = matchupRules(ctx);
+  const rules = Matchups.matchupRules(ctx);
   const hitDamages = [];
   for (let hit = 0; hit < Math.max(0, Math.floor(hits)); hit++) {
-    const raw = computeAttackDamage(previewCtx, source, defender, base, tags, attack, { matchups: false });
-    const receipt = prepareMatchupHit(previewCtx, source, defender, attack, raw);
+    const raw = Actions.computeAttackDamage(previewCtx, source, defender, base, tags, attack, { matchups: false });
+    const receipt = Matchups.prepareMatchupHit(previewCtx, source, defender, attack, raw);
     hitDamages.push(receipt.amount);
     if (!defender) continue;
     const blocked = Math.min(Math.max(0, defender.block || 0), Math.max(0, receipt.amount - receipt.guardBypass));
@@ -114,7 +115,7 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
     const type = rules.damageAliases?.[receipt.profile?.damageType] || receipt.profile?.damageType;
     // Mirrors matchupRiderEffects: damage-type and technique riders share
     // one once-per-target budget, spent when any of them applies.
-    const riders = hitRiders(rules, type, attack, ctx).filter(row => !row.requiresHpLoss || receipt.amount > blocked);
+    const riders = Matchups.hitRiders(rules, type, attack, ctx).filter(row => !row.requiresHpLoss || receipt.amount > blocked);
     if (!attack.combatReaction && receipt.profile && receipt.amount > 0 && riders.length
       && !local.combatRiderTargets.includes(targetKey)) {
       local.combatRiderTargets.push(targetKey);
