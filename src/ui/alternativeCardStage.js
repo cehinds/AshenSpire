@@ -7,6 +7,7 @@ import { alternativeArtUrl } from './alternativeArt.js';
 import { auraFilter } from './combatAura.js';
 import { createAlternativeAuraRenderer } from './alternativeAuraRenderer.js';
 import { reducedMotionRequested } from './motion.js';
+import { liteRendering } from './performance.js';
 import { DEFEATED_ART } from '../content/defeatedArt.js';
 import { playerHurtFrames } from '../content/playerHurtFrames.js';
 import { assetUrl } from './assetmap.js';
@@ -102,12 +103,15 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   let pose='ready', rest='idle', stance=null, playing=null, elapsed=0, last=0, request=null, holdUntil=0, flashAt=null, flashMs=220, flashElapsed=0, disposed=false;
   // A selected target reaction shares the RAF, but starts its own finite clock.
   // It overlays the body without replacing the action or last confirmed stance.
-  let resources=[], reactionTimer=null, currentArt=null, bodyReaction=null;
+  let resources=[], reactionTimer=null, currentArt=null, bodyReaction=null, paintedLite=null;
   const restPose = () => rest === 'defeated' ? 'defeated' : stance ? 'stance-'+stance : rest === 'counter' ? (pilotFrames ? 'pilot-counter' : selected.stances.counter) : ['defend','guard','evade'].includes(rest) ? 'guard-brace' : 'ready';
+  // Lite already omits decorative filters on image-backed figures. Apply the
+  // same quality policy to canvas bodies; contact, recoil and hit masks stay.
   const filterFor = (frame, action, paid = resources, active = !!action) =>
-    auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
+    liteRendering() ? 'none' : auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
   function paint(now=performance.now(), materialize=false) {
     if (disposed) return;
+    paintedLite=liteRendering();
     ctx.clearRect(0,0,canvas.width,canvas.height);
     currentArt=null;
     let x=0, effect=null;
@@ -249,7 +253,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       // must not rasterize it again; initial/failed loads have no currentArt,
       // and action, reaction and asset-load paths still paint themselves.
       if(next===rest&&!resume&&!playing&&flashAt===null&&!bodyReaction
-        &&currentArt&&el.dataset.rest===next&&pose===restPose()){resources=[];elapsed=0;return;}
+        &&currentArt&&paintedLite===liteRendering()&&el.dataset.rest===next&&pose===restPose()){resources=[];elapsed=0;return;}
       rest=next;el.dataset.rest=next;if(next==='defeated'){bodyReaction=null;flashAt=null;}
       if(resume?.action&&resume.rest===next&&!immediate&&!still&&!reducedMotionRequested()){
         const sequence=family.sequences[resume.action];
