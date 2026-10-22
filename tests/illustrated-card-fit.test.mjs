@@ -6,7 +6,7 @@ import { withKitDom } from './helpers/kit-dom.mjs';
 
 // Layout-backed doubles: scroll size follows font/width, while the containing
 // bay follows the fitter's real percentage-height and max-height writes.
-function fixture({ chars = 500, width = 110, top = 0, height = 26, full = true, hidden = false } = {}) {
+function fixture({ chars = 500, width = 110, top = 0, height = 26, full = true, hidden = false, titleBottom = 0, railBottom = 0 } = {}) {
   const state = { width, chars };
   const faceHeight = 200;
   const layer = { style: { top: `${top / 2}%`, height: `${height / 2}%` },
@@ -34,7 +34,12 @@ function fixture({ chars = 500, width = 110, top = 0, height = 26, full = true, 
     dataset: { designWidth: '360', fullRules: String(full), rulesHidden: String(hidden) },
     get clientWidth() { return state.width; }, clientHeight: faceHeight,
     get textContent() { return 'x'.repeat(state.chars); },
-    querySelector(selector) { return selector === '.card-rules-inspect-cue' ? cue : null; },
+    querySelector(selector) {
+      if (selector === '.card-rules-inspect-cue') return cue;
+      if (selector === '[data-card-binding="name"]' && titleBottom) return { parentElement: { offsetTop: 0, clientHeight: titleBottom }, offsetTop: 0, offsetHeight: titleBottom };
+      if (selector === '.card-tag-rail' && railBottom) return { offsetTop: 0, offsetHeight: railBottom };
+      return null;
+    },
     querySelectorAll(selector) { return selector === '.ic-text[data-auto-fit="true"]' ? [text] : []; } };
   const card = { querySelector: () => face };
   return { state, face, text, layer, cue, fit: () => fitIllustratedCards([card]) };
@@ -112,5 +117,36 @@ test('narrow dense rules preserve a readable floor and recover when widened', ()
   f.state.chars = 60;
   f.fit();
   assert.ok(parseFloat(f.text.style.fontSize) > smallFont);
+  assert.equal(f.text.dataset.rulesComplete, 'true');
+}));
+
+test('preferred rules font borrows artwork before searching smaller fonts', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  // At 180px the preferred authored 30/360 font is 15px. These rules need
+  // 75px, exceeding the original 26px bay but fitting its 104px grown bay.
+  const f = fixture({ chars: 80, width: 180, top: 80, height: 26, full: false });
+  f.fit();
+  assert.equal(parseFloat(f.text.style.fontSize), 15, 'keep the preferred font when borrowing artwork suffices');
+  assert.ok(f.text.scrollHeight > 26, 'original bay cannot hold the preferred font');
+  assert.ok(f.layer.clientHeight > 26, 'parchment grows rather than shrinking the font');
+  assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1);
+  assert.equal(f.face.dataset.rulesExpanded, 'true');
+  assert.equal(f.text.dataset.rulesComplete, 'true');
+  f.state.width = 110;
+  f.fit();
+  assert.ok(parseFloat(f.text.style.fontSize) >= 11, 'a smaller shelf still respects the readable floor');
+  f.state.width = 180;
+  f.fit();
+  assert.equal(parseFloat(f.text.style.fontSize), 15, 'widening restores the preferred font without geometric drift');
+}));
+
+
+test('preferred font search respects the title and tag rail expansion boundary', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const f = fixture({ chars: 40, width: 180, top: 80, height: 26, full: false, titleBottom: 20, railBottom: 65 });
+  f.fit();
+  assert.ok(parseFloat(f.text.style.fontSize) < 15, 'shrink only when preferred text cannot fit even after legal growth');
+  assert.ok(parseFloat(f.text.style.fontSize) >= 11);
+  assert.ok(f.layer.offsetTop >= 67 - .01, 'retain the tag rail plus its two-pixel margin');
   assert.equal(f.text.dataset.rulesComplete, 'true');
 }));
