@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { uiIconId } from '../src/content/uiIcons.js';
 // Re-runnable conversion: legacy weighted `moves` enemies (content/source/act1-3Enemies.json, via the src/content/enemies/act*.js re-exports) -> enemies-module
 // pack JSON (games/ashenspire/packs/core/characters.json enemy rows, enemyCards.json, enemyRelics.json). Owner 2026-10-17,
 // docs/plans/enemy-decks.md. Enemies follow the player's rules: player-shaped cards with owner-relative
@@ -109,7 +110,7 @@ function cardFor(enemy, tier, moveId, move) {
     manaCost: cost.mp,
     costRule: 'fixed',
     type,
-    icon: maneuver,
+    icon: uiIconId(maneuver) || 'skill',
     keywords: tags.includes('lifecycle.exhaust') ? ['exhaust'] : [],
     effects,
     tags,

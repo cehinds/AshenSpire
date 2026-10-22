@@ -53,3 +53,32 @@ test('editable implementation and authored presentation avoid embedded pictogram
   const config = readFileSync(new URL('../content/config/ui/presentation/uiContent.json', import.meta.url), 'utf8');
   assert.doesNotMatch(config, pictogram);
 });
+
+test('the active Core bundle authors readable icon IDs in every installed source pack', () => {
+  const bundle = JSON.parse(readFileSync(new URL('../games/ashenspire/bundles/core/bundle.json', import.meta.url), 'utf8'));
+  let checked = 0;
+  const visit = (value, path) => {
+    if (Array.isArray(value)) return value.forEach((entry, i) => visit(entry, `${path}[${i}]`));
+    if (!value || typeof value !== 'object') return;
+    for (const [key, entry] of Object.entries(value)) {
+      // Source proposals are frozen evidence, not runtime icon authoring.
+      if (key === 'provenance') continue;
+      if (key === 'icon' || key === 'glyph') {
+        assert.ok(typeof entry === 'string' && /^[a-z][a-z-]*$/.test(entry) && uiIconId(entry), `${path}.${key}: ${JSON.stringify(entry)}`);
+        assert.equal(engravedGlyphId(entry), uiIconId(entry), `${path}.${key} resolves to named vector art`);
+        checked++;
+      } else visit(entry, `${path}.${key}`);
+    }
+  };
+  for (const pack of bundle.packs) {
+    const manifestUrl = new URL(pack.path, new URL('../games/ashenspire/bundles/core/bundle.json', import.meta.url));
+    const manifest = JSON.parse(readFileSync(manifestUrl, 'utf8'));
+    for (const path of Object.values(manifest.content)) visit(JSON.parse(readFileSync(new URL(path, manifestUrl), 'utf8')), path);
+  }
+  assert.ok(checked > 100, 'the guard traverses installed source content, including reward cards');
+  assert.equal(engravedGlyphId('\u2694'), 'attack', 'saved legacy attack glyph remains compatible');
+  assert.equal(engravedGlyphId('defend'), 'block', 'older maneuver icon IDs remain compatible');
+  assert.equal(engravedGlyphId('move'), 'motion');
+  assert.equal(engravedGlyphId('\u25b0'), 'block', 'saved base-card defense glyph remains compatible');
+  assert.equal(engravedGlyphId('\u25d2'), 'mana');
+});

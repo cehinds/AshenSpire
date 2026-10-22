@@ -96,6 +96,30 @@
       "command": "${env.COMSPEC}",
       "args": ["/d", "/c", "node --test tests/ui-icons.test.mjs"],
       "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Compile Core game profiles",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/game-config.mjs build"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Check Core game profiles",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/game-config.mjs check"],
+      "workingDirectory": "${workspaceRoot}"
+    },
+    {
+      "taskLabel": "AshenSpire: Build game artifact",
+      "appliesTo": "/package.json",
+      "type": "launch",
+      "command": "${env.COMSPEC}",
+      "args": ["/d", "/c", "node tools/build-game.mjs"],
+      "workingDirectory": "${workspaceRoot}"
     }
   ]
 }

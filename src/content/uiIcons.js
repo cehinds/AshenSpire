@@ -82,7 +82,7 @@ export const UI_ICON_IDS = Object.freeze([
   "weight",
   "world"
 ]);
-export const UI_ICON_ALIASES = Object.freeze({ hp: 'health', action: 'actions', energy: 'actions', crimsonBlight: 'blight', necroticBlight: 'blight', confused: 'madness', slowed: 'weak', entombed: 'staggered' });
+export const UI_ICON_ALIASES = Object.freeze({ defend: 'block', casting: 'skill', smash: 'attack', counter: 'shield', move: 'motion', evade: 'motion', hp: 'health', action: 'actions', energy: 'actions', crimsonBlight: 'blight', necroticBlight: 'blight', confused: 'madness', slowed: 'weak', entombed: 'staggered' });
 export const LEGACY_UI_ICON_IDS = Object.freeze({
   "\ud83d\udc3a": "strength",
   "\u2630": "menu",
@@ -288,7 +288,15 @@ export const LEGACY_UI_ICON_IDS = Object.freeze({
   "\u27b9": "attack",
   "\ud83c\udfaf": "target",
   "\u291e": "attack",
-  "\ud83e\udd1d": "coop"
+  "\ud83e\udd1d": "coop",
+  "\u25b0": "block",
+  "\u25d2": "mana",
+  "\u2297": "weak",
+  "\u2661": "health",
+  "\u21b6": "reset",
+  "\u2194": "motion",
+  "\u25cd": "target",
+  "\u25c9": "cinders"
 });
 
 const knownIcons = new Set(UI_ICON_IDS);

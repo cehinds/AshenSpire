@@ -7,14 +7,77 @@ Use **Serve without opening a browser** for the source game, then open the
 printed local URL. **Build standalone** creates the portable game and stamps a
 build; run it when ready to package your changes.
 
-## Find the owner first
+## Core: edit the active game pack first
+
+The default player game is **Core**. Its authored selection is
+`games/ashenspire/game.json`, which selects
+`games/ashenspire/bundles/core/bundle.json`. That bundle installs both
+`games/ashenspire/packs/core/pack.json` and `packs/base-cards/pack.json`.
+Edit these source files for the Core player flow:
+
+| Change | Core source owner |
+| --- | --- |
+| Basic player card costs, effects, text and named icons | `games/ashenspire/packs/core/cards.json` |
+| Base reward cards and statuses | `games/ashenspire/packs/base-cards/cards.json` (`definition`), `statuses.json`; preserve each frozen `provenance.sourceProposal` |
+| Equipment and its modifiers | `games/ashenspire/packs/core/gear.json` |
+| Enemy attacks and per-hit damage | `games/ashenspire/packs/core/enemyCards.json` |
+| Player/enemy attributes, decks, behavior and boss phase hooks | `games/ashenspire/packs/core/characters.json` |
+| Card pools, starting hands, routes, rewards, shops and rests | Matching JSON in `games/ashenspire/packs/core/` |
+| Class and weapon XP rates | `games/ashenspire/bundles/core/bundle.json` → `modules.progression.settings.classXpMultiplier` / `weaponXpMultiplier` |
+| Step gaps, animation duration and playback | `content/config/ui/presentation/actionPacing.json` → `motion` and `behavior` |
+
+The Visual Studio **Compile Core game profiles**, **Check Core game profiles**
+and **Build game artifact** tasks run these commands.
+After pack or bundle edits run `node tools/game-config.mjs build`, then
+`node tools/game-config.mjs check`. The compiler regenerates the catalog,
+base-card projection and compatibility lock; do not hand-edit these outputs or
+relax compatibility checks to accept them. Then run `node tools/build-game.mjs`
+and `node tools/build-game.mjs --check` to refresh/check the derived game artifact
+and summary. This is separate from packaging the standalone HTML. After pacing
+edits run `node tools/config-build.mjs` and its `--check`, followed by the game
+artifact build/check. Keep generated source/lock/summary changes with their
+source edit; the full `dist/build/` artifact is ignored.
+
+### Worked recipe: a real boss attack with three hits
+
+Find `stitchedKing.graspingHands` in Core `enemyCards.json`. Its damage effect
+has `amount: 5` and `hits: 3`: three base hits of five, before modifiers. To
+retune this attack to four per hit, change only its `amount` to `4`, keeping
+`hits: 3` and its parameterized `textTemplate`. Recompile as above and inspect
+the boss card plus a real hit receipt. The Stitched King's phase hook in
+`characters.json` grants Strength below 50% HP, and gear, ratings, defenses and
+statuses can further change each hit. A displayed base 5 × 3 is not a promise
+of fifteen HP lost: use the receipt's base/modifier/defense breakdown before
+changing the authored base to compensate for an active modifier.
+
+### Worked recipe: XP and pacing defaults
+
+To make Core class training twice as fast, set
+`modules.progression.settings.classXpMultiplier` to `2` in the Core bundle;
+leave `weaponXpMultiplier` at `1` to preserve weapon training. Rebuild/check
+profiles and the game artifact. New runs snapshot the resolved module
+settings; existing runs retain their authored snapshot, so verify with a new
+run instead of silently changing an old save's compatibility identity.
+For a shorter pause between action stages, change `motion.stageGapMs` in
+`actionPacing.json` from `500` to `250`; `motion.animationStepDurationMs`
+(currently `390`) controls animation steps separately, and
+`motion.spritePlaybackRate` controls sprite playback. Compile/check the
+presentation config and game artifact. Verify a fresh run with default
+settings: saved player settings can override these defaults. Change one timing
+at a time and inspect a multi-hit action on desktop and phone.
+
+## Current/legacy content owners
+
+These owners still serve active optional profiles and shared content. They do
+not replace the Core pack owners above. A legacy converter can rewrite pack
+JSON: review its diff before compiling if you run one deliberately.
 
 | Change | Edit here | Verify |
 | --- | --- | --- |
 | A base card's costs, effects, text or icon | `content/source/cards/*.json`; Rogue and co-op additions currently remain in `src/content/cards/rogue.js` / `coop.js` | Compile authored content; Fast core tests |
-| Core generated ability grades and riders | `src/content/progression/cardFamilies.js`, `cards.js`, `lessons.js`, `cardRecipeText.js` | `node --test tests/progression-card-content.test.mjs` |
-| Enemy definitions | `content/source/act1Enemies.json`, `act2Enemies.json`, `act3Enemies.json`; Core expansion owners in `src/content/enemyExpansion.js` | Compile authored content; Fast core tests |
-| Weapons, starting kits, mounted cards | `content/source/weapons.csv`, `startingKits.csv`, `weaponCardPackages.json`; Core gear in `src/content/progression/gear.js` | Compile authored content; Fast core tests |
+| Shared progression ability grades and riders | `src/content/progression/cardFamilies.js`, `cards.js`, `lessons.js`, `cardRecipeText.js` | `node --test tests/progression-card-content.test.mjs` |
+| Enemy definitions | `content/source/act1Enemies.json`, `act2Enemies.json`, `act3Enemies.json`; shared expansion owners in `src/content/enemyExpansion.js` | Compile authored content; Fast core tests |
+| Weapons, starting kits, mounted cards | `content/source/weapons.csv`, `startingKits.csv`, `weaponCardPackages.json`; shared progression gear in `src/content/progression/gear.js` | Compile authored content; Fast core tests |
 | Relics, statuses, flasks, stances | Matching JSON in `content/source/`; expansion rules in `src/content/combatStatusRules.js` | Compile authored content; Fast core tests |
 | Progression, experience, unlocks | `src/content/progression/rules.js`, `unlocks.js`, `feats.js`; existing table-driven unlocks in `content/source/unlocks.csv` | Fast core tests; check saved and new runs |
 | Balance and rules | `src/content/balance.js`, `combatRules.js`, `actionCosts.js` | Fast core tests; update `SPEC.md` first for contractual changes |
