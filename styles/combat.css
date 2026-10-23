@@ -1745,7 +1745,7 @@
 :root .combat[data-composition='option-c'] > .hand-area :is(.hand,.hand-page,.card,.combat-action-row) { pointer-events: auto; }
 /* The raised HUD can reveal an HP tooltip where the next coach step moves.
    Keep tutorial exits above those reading surfaces. */
-:root:has(.combat[data-composition='option-c']) .tut-veil { z-index: 1100; }
+:root .combat[data-composition='option-c'] ~ .tut-veil { z-index: 1100; }
 
 /* The player's complete widget grows upward in every formation layout. */
 :root .combat[data-layout='formation'] .combatant.player .combatant-leading {
