@@ -469,7 +469,9 @@ if (!settingsChoicePending) {
   seedPromotedDefaults(activeMeta, activeSettings);
 }
 let settingsChoiceChecked = !!shotState;
-rebuildRegistries(activeSettings);
+// Build (and validate) the profile a new game will play, the one showTitle
+// rebuilds with: a saved newGameProfile must not cost a second validation there.
+rebuildRegistries(activeSettings, null, selectedGameProfile);
 const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
 // Haptics have their own seam (ui/haptics.js), played by the call sites that
