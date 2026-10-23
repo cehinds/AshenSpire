@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-23
 
-- **Smaller stance damage bonus** ([#2254](https://github.com/cehinds/AshenSpire/pull/2254), `0.7.1.1782`). Core Smash against Defend or Prepared now uses a 1.25× bonus instead of 2× for players and enemies. Damage previews use the same reduced value; Block and Poise effects stay in place.
+- **Smaller stance bonuses and clearer cards** ([#2254](https://github.com/cehinds/AshenSpire/pull/2254), `0.7.1.1782`). Core Smash against defensive stances uses 1.25× instead of 2×. Class selection displays graphical icons while code keeps readable names. Card rules shrink to fit a fixed box, and Counter reads Gain Block and Counter with their values.
 
 - **Smaller stance bonus contract** ([#2253](https://github.com/cehinds/AshenSpire/pull/2253), `0.7.1.1782`). Specifies a 1.25× Core Smash bonus against defensive stances, replacing 2× for both sides. This documents the balance change; implementation follows separately.
 
