@@ -196,17 +196,18 @@ import { dlog, failureBanner } from './ui/debuglog.js';
 import { DEBUG_CHROME_READY } from './ui/components/debugChrome.js';
 import { applyLoreType } from './ui/models/LoreTypeModel.js';
 import { createContentValidationCache } from './model/contentValidationCache.js';
-import { classMasteryProblems } from './model/classMasteryContent.js';
 void DEBUG_CHROME_READY;
 
 const app = document.getElementById('app');
 
 // ---- content validation at boot (SPEC §3.14) — loud, on-screen -------------
-// BOOT DEFERS ITS CHECKS TO AN IDLE MOMENT after the title is up: on a phone the
-// two validations and the class-mastery pass (which builds registries and a run
-// per starting kit) were seconds of blank screen. The failure is as loud as ever
-// (the same banner and console output), just a moment later; tests, tools and CI
-// still run validateContent whole.
+// BOOT VALIDATES THE CONTENT IT PLAYS, ONCE, behind the boot splash: the first
+// rebuildRegistries below checks the configured content (class mastery
+// included) before the startup gate. The raw bundle is not validated a second
+// time here; it is what the configured content is projected from, and CI's
+// validateContent runs check it whole. Deferring the check to idle time moved a
+// second of script onto the gate and title, where players (and the startup-gate
+// probe) tap.
 function reportContentValidationFailure(errors) {
   // The header said 34 and the list showed 12 and nothing said the list was cut
   // (#67, Sunna's D19). A tuning pass that sweeps one field wrong makes exactly
@@ -227,34 +228,6 @@ function reportContentValidationFailure(errors) {
   );
   console.error('Content validation errors:', errors);
 }
-// The checks wait for the title itself, not just for idle time: on a phone they
-// are a second of script, and the startup gate is the first screen a player
-// taps. A fallback releases them on a path that never reaches the title.
-let bootChecksReleased = false;
-const bootChecks = [];
-function whenIdle(task) {
-  if (!bootChecksReleased) { bootChecks.push(task); return; }
-  if (typeof requestIdleCallback === 'function') requestIdleCallback(task, { timeout: 4000 });
-  else setTimeout(task, 1500);
-}
-function releaseBootChecks() {
-  if (bootChecksReleased) return;
-  bootChecksReleased = true;
-  for (const task of bootChecks.splice(0)) whenIdle(task);
-}
-setTimeout(releaseBootChecks, 15000);
-// The class-mastery pass of a bundle whose other passes were clean.
-function deferClassMasteryCheck(bundle, onFail = () => {}) {
-  whenIdle(() => {
-    const problems = classMasteryProblems(bundle);
-    if (problems.length) { onFail(); reportContentValidationFailure(problems.map((msg) => ({ path: 'classMastery', msg }))); }
-  });
-}
-whenIdle(() => {
-  const validation = validateContent(contentBundle, { deferred: ['classMastery'] });
-  if (!validation.ok) reportContentValidationFailure(validation.errors);
-  else deferClassMasteryCheck(contentBundle);
-});
 
 // ---- navigable surfaces: declared, and handled (#78) -----------------------
 // The same shape as the block above and for the same reason. A surface declared
@@ -288,16 +261,10 @@ configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
 const cachedContentValidation = createContentValidationCache((gameProfile, configuration, configured) => {
-  // Settings laid over the authored content are validated whole, class mastery
-  // included, so a failure still falls back to the authored defaults.
-  bootRebuildPending = false;
   const result = validateContent(configured);
   const structuralProblems = isConfiguredRun(gameProfile) ? [] : advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
   return { result, structuralProblems };
 });
-
-// True until the session's first build has been validated (that one defers to idle).
-let bootRebuildPending = true;
 
 // The last VALID build (before any per-run mastery overlay). The same profile and
 // the same settings build the same registries, so a repeat rebuild (the title
@@ -323,40 +290,22 @@ function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = 
   }
   const authored = applyGameProfileToContent(contentBundle, gameProfile);
   const configured = isConfiguredRun(gameProfile) ? authored : configuredContentBundle(authored, configuration);
-  let validated;
-  let checkAtIdle = false;
-  if (bootRebuildPending && isConfiguredRun(gameProfile)) {
-    // A configured profile's content is authored, with no user settings laid over
-    // it, so there is no fallback for this validation to choose: check it once
-    // the page is idle and report a failure on the same banner.
-    bootRebuildPending = false;
-    checkAtIdle = true;
-    validated = { result: { ok: true, errors: [] }, structuralProblems: [] };
-  } else validated = cachedContentValidation(gameProfile, configuration, configured);
-  const { result, structuralProblems } = validated;
+  const { result, structuralProblems } = cachedContentValidation(gameProfile, configuration, configured);
   if (!result.ok || structuralProblems.length) {
     const first = structuralProblems[0] || `${result.errors[0].path}: ${result.errors[0].msg}`;
     const message = `Game configuration unchanged: ${first} Authored defaults remain active until the values form a valid configuration.`;
     console.warn('[advanced-config]', message, result.errors, structuralProblems);
     if (typeof document !== 'undefined') showSettingsNotice(message, 'game-config');
-    if (isConfiguredRun(gameProfile)) throw new Error(`Invalid game profile ${gameProfile.id}: ${first}`);
+    if (isConfiguredRun(gameProfile)) {
+      if (result.errors.length) reportContentValidationFailure(result.errors);
+      throw new Error(`Invalid game profile ${gameProfile.id}: ${first}`);
+    }
     registries = createRegistries(contentBundle);
   } else {
     registries = createRegistries(configured);
   }
   registries = bindGameProfileRegistries(registries, gameProfile);
-  const build = (result.ok && !structuralProblems.length && buildKey !== null) ? { key: buildKey, profile: gameProfile, registries } : null;
-  lastRegistryBuild = build;
-  if (checkAtIdle) {
-    // Until the idle check passes this build is provisional: a failure forgets it,
-    // so the next rebuild validates synchronously and refuses the profile.
-    const forget = () => { if (lastRegistryBuild === build) lastRegistryBuild = null; };
-    whenIdle(() => {
-      const check = validateContent(configured, { deferred: ['classMastery'] });
-      if (!check.ok) { forget(); reportContentValidationFailure(check.errors); }
-      else deferClassMasteryCheck(configured, forget);
-    });
-  }
+  lastRegistryBuild = (result.ok && !structuralProblems.length && buildKey !== null) ? { key: buildKey, profile: gameProfile, registries } : null;
   if (!isConfiguredRun(gameProfile)) registries = registriesForClassMastery(registries, masteryRun);
   configureTooltipGlossary(registries);
   setClassGlyphs(registries.classes.all());
@@ -1960,7 +1909,6 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     artNotice: drawArtNotice,
   });
   if (focusDefault) focusTitleDefault(app, { showCursor: focusCursor });
-  releaseBootChecks();
   // Fullscreen-first stays first. Offer the choice only after the startup gate
   // and profile sync have settled, before the player starts or resumes a run.
   if (!settingsChoiceChecked && saves.profileStatus().ok) {

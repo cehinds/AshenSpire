@@ -60,19 +60,16 @@ test('a settings change that alters nothing in the key still rebuilds when any s
   assert.notEqual(rebuild({ amount: 7, other: 2 }, null, { id: 'other', mode: 'legacy' }).mutable, a.mutable);
 });
 
-test('the first build of a configured profile validates at idle, later ones synchronously', () => {
+test('the first build of a configured profile validates synchronously, reports and refuses invalid content', () => {
   const { rebuild, calls } = fixture({ warm: false });
   const profile = { id: 'core', mode: 'configured', invalid: true };
-  assert.doesNotThrow(() => rebuild({}, null, profile));
-  assert.equal(calls.validate, 0); assert.equal(calls.idle.length, 1);
-  calls.idle[0]();
-  assert.deepEqual(calls.options, [{ deferred: ['classMastery'] }]);
+  assert.throws(() => rebuild({}, null, profile), /Invalid game profile core/);
+  assert.equal(calls.validate, 1); assert.equal(calls.idle.length, 0);
+  assert.deepEqual(calls.options, [undefined], 'boot validates whole, class mastery included');
   assert.equal(calls.reported.length, 1); assert.equal(calls.reported[0][0].path, 'amount');
   const ok = fixture({ warm: false });
-  ok.rebuild({}, null, { id: 'core', mode: 'configured' }); ok.calls.idle[0]();
-  assert.equal(ok.calls.reported.length, 0); assert.equal(ok.calls.deferredMastery.length, 1);
-  assert.throws(() => rebuild({}, null, profile), /Invalid game profile core/, 'a failed idle check forgets the provisional build');
-  assert.throws(() => rebuild({ again: 1 }, null, profile), /Invalid game profile core/);
+  ok.rebuild({}, null, { id: 'core', mode: 'configured' });
+  assert.equal(ok.calls.validate, 1); assert.equal(ok.calls.reported.length, 0);
 });
 
 test('the first build of saved legacy settings validates whole, so a failure still falls back', () => {
