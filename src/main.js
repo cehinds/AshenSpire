@@ -275,7 +275,6 @@ let xpCombat = null;
 configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
-let bootRebuildPending = true;
 const cachedContentValidation = createContentValidationCache((gameProfile, configuration, configured) => {
   // The first build of the session defers its class-mastery pass to idle (as the
   // boot check above does); a later rebuild (a settings change) validates it all
@@ -291,6 +290,9 @@ const cachedContentValidation = createContentValidationCache((gameProfile, confi
   const structuralProblems = isConfiguredRun(gameProfile) ? [] : advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
   return { result, structuralProblems };
 });
+
+// True until the session's first build has been validated (that one defers to idle).
+let bootRebuildPending = true;
 
 // The last VALID build (before any per-run mastery overlay). The same profile and
 // the same settings build the same registries, so a repeat rebuild (the title
