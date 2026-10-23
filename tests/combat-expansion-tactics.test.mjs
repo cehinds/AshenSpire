@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatExpansionMatchups } from '../src/content/combatMatchups.js';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createCombat } from '../src/engine/combat.js';
+import { createRng } from '../src/engine/rng.js';
+const registries = createRegistries(contentBundle);
 import { tacticalCarrier, prepareTacticalCard, enqueueCounterWard } from '../src/engine/combatCardTactics.js';
 import { armCombatCounter, setCombatStance, startTacticalTurn, prepareCombatEvade,
   previewTacticalAction, beginTacticalAction, completeTacticalAction, recordTacticalContact,
@@ -11,18 +16,25 @@ import { combatExpansionEntityProblems, combatExpansionMatchupRulesProblems, com
 const carrier = (maneuver = 'attack', extra = {}) => ({ combatProfile: {
   camp: 'physical', maneuver, range: 'melee', targeting: 'single', damageType: 'slashing', ...extra,
 } });
-function fixture(dice = [5]) {
+function fixture(dice = [20]) {
   const queue = [], events = [], rolls = [];
   const source = { id: 'enemy', kind: 'enemy', alive: true, hp: 50, block: 0, statuses: {} };
   const target = { id: 'player', kind: 'player', alive: true, hp: 50, block: 8, statuses: {},
     attributes: { dexterity: 1, wisdom: 3, intelligence: 4 }, armorClass: 'medium', ratings: { ar: 4, dr: 3 } };
-  const ctx = { combatExpansionVersion: 2, turn: 1, player: target, enemies: [source],
-    registries: {}, emit: (type, payload) => events.push({ type, ...payload }), enqueue: action => queue.push(action),
-    rng: { int: (stream, min, max) => { rolls.push({ stream, min, max }); return dice.shift() ?? min; } },
+  // Counter returns now own a committed contact group even with reactions off.
+  // Keep the focused entities/dice, with the real context and cloneable RNG.
+  const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2,
+    enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', maxHp: 50, hp: 50,
+      maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
+  target.counters = structuredClone(ctx.player.counters);
+  Object.assign(ctx, { turn: 1, player: target, enemies: [source], queue,
+    emit: (type, payload) => events.push({ type, ...payload }), enqueue: action => queue.push(action),
     combatControlRestrictions: entity => ({ counterDisabled: Boolean(entity.locked), evadeDisabled: Boolean(entity.locked) }),
-  };
+  });
+  ctx.rng.int = (stream, min, max) => { rolls.push({ stream, min, max }); return dice.shift() ?? max; };
   return { ctx, source, target, queue, events, rolls };
 }
+const payloads = fixture => fixture.queue.filter(action => action.effect.op !== 'completeCombatAction' && !action.meta?.stanceEntry && !action.meta?.stanceRestore);
 function prepare(f, profile = {}, options = { damage: 7 }) {
   const card = carrier('counter', profile);
   setCombatStance(f.ctx, f.target, card);
@@ -37,49 +49,46 @@ function absorb(f, receipt) {
   recordTacticalContact(receipt, { blocked, hpLoss });
 }
 
-test('Reaver Counter uses ceil(15*.5), strict Evade, Block8, and exactly printed return7', () => {
-  const f = fixture([5]); prepare(f); prepareCombatEvade(f.ctx, f.target);
+test('Counter preserves incoming HP and returns its printed payload only after complete absorption', () => {
+  const f = fixture(); prepare(f); f.target.block = 15;
   const incoming = carrier('smash');
   const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 15 }]);
-  assert.equal(receipt.amount, 8);
-  assert.equal(receipt.avoidance.evade.total, 4);
-  assert.equal(receipt.avoidance.evade.difficulty, 16);
+  assert.equal(receipt.amount, 15);
   assert.equal(receipt.avoided, false);
   absorb(f, receipt); completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
   assert.equal(f.target.hp, 50);
-  assert.deepEqual(f.queue.map(action => [action.effect.op, action.effect.amount]), [['damage', 7]]);
+  assert.deepEqual(payloads(f).map(action => [action.effect.op, action.effect.amount]), [['damage', 7]]);
   assert.equal(f.target.combatCounter.charges, 0);
-  assert.equal(previewTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 15 }]).amount, 15);
 });
 
 test('multi-hit rounding conserves one action budget, failed full absorption spends charge without reply', () => {
   const f = fixture(); prepare(f); f.target.block = 0;
   const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 1 }, { amount: 1 }]);
-  assert.equal(receipt.amount, 1);
-  assert.deepEqual(receipt.amounts, [1, 0]);
+  assert.equal(receipt.amount, 2);
+  assert.deepEqual(receipt.amounts, [1, 1]);
   recordTacticalContact(receipt, { hpLoss: 1 });
   assert.deepEqual(completeTacticalAction(f.ctx, f.source, f.target, carrier(), receipt), []);
   assert.equal(f.target.combatCounter.charges, 0);
 });
 
-test('only active Defend grants Smash bonus, and stances remain after preparation expiry', () => {
+test('Smash punishes defensive stances without restoring turn-start protection', () => {
   const f = fixture(); prepare(f);
-  assert.equal(previewTacticalAction(f.ctx, f.source, f.target, carrier('smash'), [{ amount: 10 }]).amount, 5);
+  assert.equal(previewTacticalAction(f.ctx, f.source, f.target, carrier('smash'), [{ amount: 10 }]).amount, 10);
   startTacticalTurn(f.ctx, f.target);
   assert.equal(f.target.combatStance.maneuver, 'counter');
   assert.equal(f.target.combatCounter, undefined);
   assert.equal(previewTacticalAction(f.ctx, f.source, f.target, carrier('smash'), [{ amount: 10 }]).amount, 10);
   setCombatStance(f.ctx, f.target, carrier('defend'));
   assert.equal(previewTacticalAction(f.ctx, f.source, f.target, carrier('smash'), [{ amount: 10 }]).amount, 15);
-  assert.equal(previewTacticalAction(f.ctx, f.source, f.target, carrier('sweep', { targeting: 'area' }), [{ amount: 10 }]).amount, 8);
-  assert.deepEqual(startTacticalTurn(f.ctx, f.target), { block: 4, barrier: 0 });
+  assert.equal(previewTacticalAction(f.ctx, f.source, f.target, carrier('sweep', { targeting: 'area' }), [{ amount: 10 }]).amount, 10);
+  assert.deepEqual(startTacticalTurn(f.ctx, f.target), { block: 0, barrier: 0 });
   setCombatStance(f.ctx, f.target, carrier('defend', { camp: 'spell' }));
-  assert.deepEqual(startTacticalTurn(f.ctx, f.target), { block: 0, barrier: 4 });
+  assert.deepEqual(startTacticalTurn(f.ctx, f.target), { block: 0, barrier: 0 });
 });
 
-test('Attack punishes active Smash, support preserves stance and switching cancels preparation', () => {
+test('Attack has no old Smash multiplier; support preserves stance and switching cancels preparation', () => {
   const f = fixture(); setCombatStance(f.ctx, f.target, carrier('smash'));
-  assert.equal(previewTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 8 }]).amount, 10);
+  assert.equal(previewTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 8 }]).amount, 8);
   prepare(f);
   prepareTacticalCard(f.ctx, f.target, f.source, carrier('casting', { stanceTrigger: false }), [{ op: 'draw', count: 1 }]);
   assert.equal(f.target.combatStance.maneuver, 'counter');
@@ -87,13 +96,13 @@ test('Attack punishes active Smash, support preserves stance and switching cance
   assert.equal(f.target.combatCounter, undefined);
 });
 
-test('Counter support has no free protection or unprinted return in v2', () => {
+test('Counter adds entry protection and only its absent-Poise fallback to support', () => {
   const f = fixture(); const card = carrier('counter');
   const support = prepareTacticalCard(f.ctx, f.target, f.source, card, [{ op: 'draw', count: 1 }]);
   enqueueCounterWard(f.ctx, f.target, card);
   assert.deepEqual(support, [{ op: 'draw', count: 1 }]);
-  assert.deepEqual(f.target.combatCounter.payload, { hp: 0, poise: 0, ward: 0 });
-  assert.equal(f.queue.length, 0);
+  assert.deepEqual(f.target.combatCounter.payload, { hp: 0, poise: 3, ward: 0 });
+  assert.equal(payloads(f).length, 0);
 });
 
 test('coverage AND filters reject one-target Area; dedicated Area coverage can catch Sweep', () => {
@@ -113,9 +122,9 @@ test('Piercing pressures Guard rather than universal bypass, Force needs printed
     const incoming = carrier('attack', { damageType });
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
     assert.equal(receipt.counterEligible, true);
-    assert.equal(receipt.amount, 4);
+    assert.equal(receipt.amount, 8);
     absorb(f, receipt); completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
-    assert.equal(f.queue.length, damageType === 'piercing' ? 0 : 1);
+    assert.equal(payloads(f).length, damageType === 'piercing' ? 0 : 1);
   }
   const f = fixture(); prepare(f);
   const incoming = carrier('attack', { damageType: 'force', traits: ['unreflectable'] });
@@ -129,9 +138,9 @@ test('Connected Lightning interrupts Counter even fully blocked; Grounded preser
     if (grounded) f.target.combatTraits = ['grounded'];
     const incoming = carrier('attack', { camp: 'spell', school: 'lightning', damageType: 'lightning' });
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
-    recordTacticalContact(receipt, { blocked: 4 });
+    recordTacticalContact(receipt, { blocked: receipt.amount });
     completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
-    assert.equal(f.queue.length, grounded ? 1 : 0);
+    assert.equal(payloads(f).length, grounded ? 1 : 0);
   }
 });
 
@@ -143,7 +152,7 @@ test('all admitted partial status pressure blocks full reply; Ward-resisted stat
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ effect: 'status', pressure: 6, amount: 0 }]);
     recordTacticalStatus(receipt, { acceptedBuildup: accepted, activeAdded: 0, resisted: 6 - accepted, wardSpent: 1 });
     completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
-    assert.equal(f.queue.length, accepted ? 0 : 3);
+    assert.equal(payloads(f).length, accepted ? 0 : 3);
   }
 });
 
@@ -153,14 +162,14 @@ test('spell return HP requires visible caster; explicit Ward and Poise return re
   const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
   recordTacticalContact(receipt, { wardResisted: 8 });
   completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
-  assert.deepEqual(f.queue.map(action => [action.effect.op, action.effect.amount]), [['poiseDamage', 2], ['wardDamage', 1]]);
+  assert.deepEqual(payloads(f).map(action => [action.effect.op, action.effect.amount]), [['poiseDamage', 2], ['wardDamage', 1]]);
 });
 
 test('same-camp covered and uncovered deliveries cannot return when any direct HP leaks', () => {
   const f = fixture(); prepare(f);
   const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 8 }, { amount: 8, range: 'reach', maneuver: 'ranged' }]);
-  assert.equal(receipt.amount, 12);
-  assert.deepEqual(receipt.amounts, [6, 6]); // Final budget follows pre-matchup contact proportions.
+  assert.equal(receipt.amount, 16);
+  assert.deepEqual(receipt.amounts, [8, 8]); // Final budget follows pre-matchup contact proportions.
   recordTacticalContact(receipt, { blocked: 6, hpLoss: 6 });
   assert.deepEqual(completeTacticalAction(f.ctx, f.source, f.target, carrier(), receipt), []);
 });
@@ -175,8 +184,8 @@ test('mixed-camp actions are rejected before consuming Counter or avoidance RNG'
 test('Counter rounds the whole action before the additive incoming status modifier stage', () => {
   const f = fixture(); prepare(f);
   const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 6 }, { amount: 7 }], { percent: 35 });
-  assert.equal(receipt.amount, 10); // ceil(ceil(13 × .5) × 1.35), contract two-stage order.
-  assert.equal(receipt.amounts.reduce((sum, amount) => sum + amount, 0), 10);
+  assert.equal(receipt.amount, 18); // ceil(13 × 1.35), after the shared stance stage.
+  assert.equal(receipt.amounts.reduce((sum, amount) => sum + amount, 0), 18);
 });
 
 test('same-camp mixed delivery applies each contact status modifier before the action-wide status rounding', () => {
@@ -197,7 +206,7 @@ test('active Grounded preserves Counter against fully blocked Lightning', () => 
   assert.equal(completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt).length, 1);
 });
 
-test('guaranteed direct-action prevention consumes one Invulnerability, preserves Evade and admits independent pressure', () => {
+test('Invulnerability follows the shared Evade attempt and admits independent pressure', () => {
   const f = fixture(); prepare(f); prepareCombatEvade(f.ctx, f.target);
   f.target.statuses.invulnerability = { stacks: 2 };
   const incoming = carrier();
@@ -207,7 +216,9 @@ test('guaranteed direct-action prevention consumes one Invulnerability, preserve
   assert.equal(receipt.avoided, true); assert.equal(receipt.connected, false);
   assert.equal(receipt.avoidance.prevention, 'invulnerability');
   assert.equal(f.target.statuses.invulnerability.stacks, 1);
-  assert.equal(f.target.combatEvade.charges, 1); assert.deepEqual(f.rolls, []);
+  assert.equal(receipt.counterAttack.evadeAttempted, true, 'the shared Accuracy check attempted prepared Evade before prevention');
+  assert.equal(f.target.combatEvade.charges, 0, 'the attempted charge is spent even when later Invulnerability prevents the landed action');
+  assert.equal(f.rolls.length, 1, 'one universal d20 roll, no distance or prepared-Evade roll');
   recordTacticalStatus(receipt, { acceptedBuildup: 4 });
   assert.equal(receipt.statusAccepted, 4);
   assert.deepEqual(completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt), []);
@@ -221,29 +232,29 @@ test('Decoy catches only one positive Single Reach/Ranged action, never Area, Me
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount }]);
     assert.equal(receipt.avoided, catches);
     assert.equal(!!f.target.statuses.decoy, !catches);
-    assert.deepEqual(f.rolls, []);
+    assert.equal(f.rolls.length, 1, 'one universal attack d20; prevention adds no second roll');
   }
 });
 
 test('one successful return budget survives reprepare, finalize replay, and JSON restoration', () => {
   const f = fixture(); prepare(f); const incoming = carrier();
   const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
-  recordTacticalContact(receipt, { blocked: 4 }); completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
+  recordTacticalContact(receipt, { blocked: receipt.amount }); completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
   completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
   f.target = JSON.parse(JSON.stringify(f.target)); prepare(f);
   const second = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
-  recordTacticalContact(second, { blocked: 4 }); completeTacticalAction(f.ctx, f.source, f.target, incoming, second);
-  assert.equal(f.queue.length, 1);
+  recordTacticalContact(second, { blocked: second.amount }); completeTacticalAction(f.ctx, f.source, f.target, incoming, second);
+  assert.equal(payloads(f).length, 1);
   startTacticalTurn(f.ctx, f.target); prepare(f);
   const third = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
-  recordTacticalContact(third, { blocked: 4 }); completeTacticalAction(f.ctx, f.source, f.target, incoming, third);
-  assert.equal(f.queue.length, 2);
+  recordTacticalContact(third, { blocked: third.amount }); completeTacticalAction(f.ctx, f.source, f.target, incoming, third);
+  assert.equal(payloads(f).length, 2);
 });
 
 test('incapacitation snapshots suppress Counter/Evade; clearing it after impact cannot retroactively reply', () => {
   const f = fixture(); prepare(f); prepareCombatEvade(f.ctx, f.target); f.target.locked = true;
   const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 8 }]);
-  assert.equal(receipt.counterEligible, false); assert.equal(f.rolls.length, 0);
+  assert.equal(receipt.counterEligible, false); assert.equal(f.rolls.length, 1);
   recordTacticalContact(receipt, { blocked: 8 }); f.target.locked = false;
   assert.deepEqual(completeTacticalAction(f.ctx, f.source, f.target, carrier(), receipt), []);
 });
@@ -251,29 +262,29 @@ test('incapacitation snapshots suppress Counter/Evade; clearing it after impact 
 test('a same-action stagger clears pending Counter before full-action finalization', () => {
   const f = fixture(); prepare(f);
   const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 8 }]);
-  recordTacticalContact(receipt, { blocked: 4 });
+  recordTacticalContact(receipt, { blocked: receipt.amount });
   setCombatStance(f.ctx, f.target, carrier('attack'));
   assert.deepEqual(completeTacticalAction(f.ctx, f.source, f.target, carrier(), receipt), []);
 });
 
-test('distance rolls before Evade, preserves charge on success, and exposes combined32% purely', () => {
-  const f = fixture([20]); f.target.armorClass = 'light';
-  setCombatStance(f.ctx, f.target, carrier('ranged', { range: 'reach' })); prepareCombatEvade(f.ctx, f.target);
-  const preview = previewAvoidance(f.ctx, f.target, carrier().combatProfile, 9);
-  assert.equal(preview.distance.chance, 20); assert.equal(preview.evade.chance, 15); assert.equal(preview.chance, 32);
-  assert.equal(f.rolls.length, 0);
+test('range failure uses the shared hit gate and preserves legacy preparation charges', () => {
+  const f = fixture([20]); setCombatStance(f.ctx, f.target, carrier('ranged', { range: 'ranged' }));
+  prepareCombatEvade(f.ctx, f.target);
   const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 9 }]);
-  assert.equal(receipt.avoided, true); assert.equal(f.target.combatEvade.charges, 1);
-  assert.deepEqual(f.rolls.map(roll => roll.max), [100]);
+  assert.equal(receipt.avoided, true, 'a melee attacker cannot reach a ranged target');
+  assert.equal(f.target.combatEvade.charges, 1);
+  assert.equal(f.rolls.length, 0, 'range failure needs no d20');
 });
 
-test('distance failure permits one action-wide Evade, strict tie fails, high DC has no natural20 floor', () => {
-  for (const [damage, dice, avoided] of [[8, [100, 17], false], [8, [100, 18], true], [30, [100, 20], false]]) {
-    const f = fixture(dice); setCombatStance(f.ctx, f.target, carrier('ranged', { range: 'reach' })); prepareCombatEvade(f.ctx, f.target);
-    const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: damage / 2 }, { amount: damage / 2 }]);
-    assert.equal(receipt.avoided, avoided); assert.equal(f.target.combatEvade.charges, 0);
-    assert.equal(f.rolls.length, 2);
-    beginTacticalAction(f.ctx, f.source, f.target, carrier(), [], { receipt }); assert.equal(f.rolls.length, 2);
+test('one action-wide d20 controls multi-hit avoidance and replay spends no second roll', () => {
+  for (const [roll, avoided] of [[1, true], [20, false]]) {
+    const f = fixture([roll]); f.target.statuses.evade = { stacks: 2 };
+    const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 4 }, { amount: 4 }]);
+    assert.equal(receipt.avoided, avoided);
+    assert.equal(f.rolls.length, 1);
+    assert.equal(f.target.statuses.evade.stacks, avoided ? 1 : 2, 'an eligible miss spends exactly one stack; a hit spends none');
+    beginTacticalAction(f.ctx, f.source, f.target, carrier(), [], { receipt });
+    assert.equal(f.rolls.length, 1);
   }
 });
 
@@ -290,9 +301,9 @@ test('Advantage chooses high d20 / low d100; Disadvantage reverses and both canc
 test('school edges modify only explicitly selected printed effect and weakness wins', () => {
   const f = fixture(); prepare(f, { school: 'fire', schoolEffect: 'poise' }, { payload: { hp: 7, poise: 8, ward: 4 } });
   const incoming = carrier('attack', { school: 'frost', damageType: 'blunt' });
-  const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]); recordTacticalContact(receipt, { blocked: 4 });
+  const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]); recordTacticalContact(receipt, { blocked: receipt.amount });
   completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
-  assert.deepEqual(f.queue.map(action => action.effect.amount), [7, 6, 4]);
+  assert.deepEqual(payloads(f).map(action => action.effect.amount), [7, 6, 4]);
 });
 
 test('Spell Piercing does not borrow Martial Guard bypass and Counter Ward uses one fractional edge', () => {
@@ -309,8 +320,8 @@ test('Spell Piercing does not borrow Martial Guard bypass and Counter Ward uses 
     const receipt = beginTacticalAction(row.ctx, row.source, row.target, incoming, [{ amount: 4 }]);
     recordTacticalContact(receipt, { wardResisted: 4 });
     completeTacticalAction(row.ctx, row.source, row.target, incoming, receipt);
-    assert.equal(row.queue[0].effect.amount, expected);
-    assert.equal(row.queue[0].card.combatWardEdgeApplied, true);
+    assert.equal(payloads(row)[0].effect.amount, expected);
+    assert.equal(payloads(row)[0].card.combatWardEdgeApplied, true);
   }
 });
 
@@ -321,7 +332,7 @@ test('co-op receipt identity belongs to seat, not duplicate player entity ids', 
   const a = previewTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 8 }]);
   const b = previewTacticalAction(f.ctx, f.source, other, carrier(), [{ amount: 8 }]);
   assert.equal(a.targetKey, 'seat-a'); assert.equal(b.targetKey, 'seat-b');
-  assert.notEqual(a.avoidance.evade.bonus, b.avoidance.evade.bonus);
+  assert.notEqual(a.counterAttack.evasion, b.counterAttack.evasion);
 });
 
 test('authoring preserves explicit coverage/payload/Evade fields and adds range/targeting chips', () => {
@@ -348,4 +359,19 @@ test('version2 tactical snapshots and tuning validate strictly while legacy coun
     entity => entity.combatCounter.serial++]) {
     const invalid = structuredClone(f.target); change(invalid); assert.ok(combatExpansionEntityProblems(invalid).length > 0);
   }
+});
+
+test('saved Evade Counter requires an authored Counter carrier and retains strict stance validation', () => {
+  const f = fixture();
+  prepare(f, { evade: { charges: 1 } });
+  assert.equal(f.target.combatStance.maneuver, 'evade');
+  assert.deepEqual(combatExpansionEntityProblems(f.target), []);
+  const forged = structuredClone(f.target);
+  forged.combatCounter.carrier.combatProfile.maneuver = 'attack';
+  assert.ok(combatExpansionEntityProblems(forged).some(problem => /requires Counter stance/.test(problem)));
+  forged.combatStance.maneuver = 'unsupported';
+  assert.ok(combatExpansionEntityProblems(forged).some(problem => /maneuver is unsupported/.test(problem)));
+  const spell = fixture();
+  setCombatStance(spell.ctx, spell.target, carrier('casting', { camp: 'spell', range: 'ranged' }));
+  assert.deepEqual(combatExpansionEntityProblems(spell.target), []);
 });

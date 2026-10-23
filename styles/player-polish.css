@@ -99,7 +99,7 @@
   background-image:linear-gradient(90deg, #0d0b0838, #0d0b0870), url('../assets/player-polish/scenes/spire-vista-desktop.webp');
   background-size:cover; background-position:center; background-repeat:no-repeat;
 }
-.title-screen .tower-hall { display:none; }
+.title-screen .tower-hall { display:block; }
 .title-screen::before { background:linear-gradient(180deg, #0d0b0820, #0d0b0870); }
 .title-screen .as-titlemenu {
   margin-inline:6% auto; width:46%; max-width:64rem;
@@ -158,7 +158,7 @@
 :root[data-layout='narrow'] .master-workspace {
   background-image:linear-gradient(#0d0b0830, #0d0b0870), url('../assets/player-polish/scenes/armoury-still-life-master.webp');
 }
-:root[data-layout='narrow'] .title-screen { justify-content:flex-end; padding:1.6rem; }
+:root[data-layout='narrow'] .title-screen { justify-content:center; padding:1.6rem; }
 :root[data-layout='narrow'] .title-screen .as-titlemenu { width:100%; margin:0; max-width:none; padding:1.6rem; box-sizing:border-box; }
 :root[data-layout='narrow'] .title-screen .tm-name { font-size:min(11cqi, 4.8rem); }
 :root[data-layout='narrow'] .shop-workspace { padding-top:18%; }
@@ -238,7 +238,7 @@ body.hi-contrast :is(.modal, .as-detailcard, .as-option, .card, .shop-frame, .as
 .title-screen .ember { position:absolute; z-index:0; pointer-events:none; }
 .title-screen .title-more { position:relative; color:var(--parchment); font-size:1.2rem; }
 .title-more summary { cursor:pointer; min-height:var(--tap-floor); display:flex; align-items:center; justify-content:center; }
-.title-more[open] { background-color:var(--bg); border:1px solid var(--gold); padding:.8rem; position:absolute; bottom:6rem; width:min(95%,44rem); left:50%; transform:translateX(-50%); max-height:40vh; overflow:auto; z-index:5; }
+.title-more[open] { background-color:var(--bg); border:1px solid var(--gold); padding:.8rem; position:absolute; bottom:6rem; width:min(95%,44rem); left:50%; transform:translateX(-50%); max-height:calc(40 * var(--view-vh, 1vh)); overflow:auto; z-index:5; }
 .title-more > button { display:block; width:100%; margin-top:.5rem; }
 .title-screen .tm-foot { margin-top:1rem; font-size:.95rem; letter-spacing:.1em; }
 .title-screen .build-stamp { position:absolute; bottom:1rem; left:0; width:100%; pointer-events:none; }
@@ -315,7 +315,7 @@ body.reduced-motion :is(.ember,.title-glow) { animation:none; }
 @media (prefers-reduced-motion:reduce) {
   .screen, :is(.tm-entry,.as-btn,.as-iconbtn,.as-option,.as-tab,.as-railitem,.cp-cell) { animation:none !important; transition:none; }
 }
-:root[data-layout='narrow'] .title-screen { justify-content:flex-end; padding:1.8rem 1.6rem 3.6rem; }
+:root[data-layout='narrow'] .title-screen { justify-content:center; padding:12rem 1.6rem 3.6rem; }
 :root[data-layout='narrow'] .title-screen .as-titlemenu { width:100%; margin:0; padding:0; background:none; }
 :root[data-layout='narrow'] .title-screen .tm-name { font-size:min(10cqi,4.4rem); }
 :root[data-layout='narrow'] .title-screen .title-menu { gap:.6rem; margin-block:1rem; }
@@ -351,7 +351,15 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 :root[data-layout='wide']:not([data-composition='short-wide']) .modal:has(.set-railed) { width:72%; max-width:none; margin-inline:auto 2%; }
 .modal.armoury .armoury-sprite-pane .armoury-figure { height:92%; max-height:92%; max-width:88%; }
 :root[data-layout='wide'] .armoury[data-pane='character'] .armoury-character { grid-template-rows:auto minmax(28rem,1fr) auto; }
-.gameover .gameover-door { background-color:#17130fde; max-width:64rem; }
+/* `max-width:64rem` alone beat the modal rung's own `max-width:100%`, so the md
+   door (57rem) stayed 570px wide on a 390px phone and the whole screen scrolled
+   sideways. The cap is the smaller of the two. */
+.gameover .gameover-door { background-color:#17130fde; max-width:min(64rem, 100%); }
+/* Four chips on a phone: two by two, not three and an orphan. */
+:root[data-layout='narrow'] .gameover-door .stats-table {
+  display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); justify-items:center; gap:0.75rem 0.5rem;
+}
+:root[data-layout='narrow'] .gameover-door .stats-table .as-chip { white-space:normal; flex-wrap:wrap; justify-content:center; min-width:0; }
 .history-screen > .modal { background-color:#17130fe8; }
 :root[data-layout='narrow'] .rest-screen { padding:12rem 1rem 1rem; }
 :root[data-layout='narrow'] .rest-screen .rest-door { max-height:62%; }
@@ -363,7 +371,6 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 /* Experimental pass 2: scene-first compositions from boards 01, 05 and 08. */
 .title-screen .as-titlemenu { width:min(35%,42rem); }
 .title-screen .title-menu { gap:.65rem; }
-.title-screen .title-menu > li:nth-child(n+3) { width:82%; align-self:center; }
 .title-screen .title-menu .tm-entry { display:flex; align-items:center; justify-content:center; gap:.8rem; font-weight:500; }
 .title-screen .title-menu .slot-continue { min-height:6.2rem; }
 .title-screen .title-menu .tm-entry .engraved-icon { color:var(--gold); }
@@ -415,9 +422,8 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 
 :root[data-layout='narrow'] .title-screen .as-titlemenu { width:100%; }
 :root[data-layout='narrow'] .title-screen .title-traveler { width:36%; height:32%; left:1%; top:5%; bottom:auto; }
-:root[data-layout='narrow'] .title-screen .title-menu > li:nth-child(n+3) { width:88%; }
 :root[data-layout='narrow'] :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) > .shared-hud > .hud-top { grid-template-columns:14rem 1fr auto; }
-:root[data-layout='narrow'] .shop-workspace:not(.master-workspace) { padding:30vh 1rem 1rem; }
+:root[data-layout='narrow'] .shop-workspace:not(.master-workspace) { padding:calc(30 * var(--view-vh, 1vh)) 1rem 1rem; }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) .shop-frame { width:100%; }
 :root[data-layout='narrow'] .merchant-workspace .shop-railitem { display:none; }
 :root[data-layout='narrow'] .shop-category-select { display:block; width:100%; min-height:44px; background:#17130f; color:var(--parchment); padding:.5rem; border:1px solid var(--gold); }
@@ -438,7 +444,7 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 /* Dodge already reveals its full rules through normal card selection. */
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-card-id='dodgeRoll'] > .card-more-button { display:none; }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-card-id='dodgeRoll'][data-truncated='true'] .cname { padding-left:0; }
-:root[data-layout='narrow'] .title-screen .as-titlemenu { position:static; max-height:calc(100% - 12rem); overflow:auto; }
+:root[data-layout='narrow'] .title-screen .as-titlemenu { position:static; max-height:100%; overflow:auto; }
 :root[data-layout='narrow'] .title-screen .tm-name { position:absolute; top:5rem; left:0; width:100%; margin:0; font-size:3.5rem; }
 :root[data-layout='narrow'] .title-screen .tm-sub { position:absolute; top:10rem; left:0; width:100%; }
 :root[data-layout='narrow'] .title-screen .as-titlemenu > .as-ornament:first-child { display:none; }
@@ -465,7 +471,7 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls select { min-width:calc(88px / var(--ui-zoom,1)); }
 /* Keep room for a readable face between two real44px pagers on compact
    phones. Labels remain visible; the Reaction track wraps below its label. */
-@media (max-width:359px) {
+@container game-viewport (max-width:359px) {
  :root .combat[data-layout='formation'] .combat-tools { --combat-tools-physical-width:112; }
  :root .combat[data-layout='formation'] .combat-tools .reaction-switch { flex-wrap:wrap; justify-content:center; }
 }
@@ -479,47 +485,89 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
   background-image: linear-gradient(#201b15b8, #100d09c9), url('../assets/player-polish/materials/soot-leather-material.webp');
   background-size: cover;
 }
-:root .rest-screen.choice-screen { justify-content:flex-end; padding:12rem 3rem 2rem; }
-:root .rest-screen.choice-screen .rest-door { flex:0 1 48%; max-height:48%; background-color:#17130fd4; background-image:none; }
-:root .rest-screen.choice-screen .rest-door > :is(.modal-head,.modal-foot) { min-height:4.5rem; }
+:root[data-layout] .rest-screen.choice-screen { justify-content:flex-end; padding:12rem 3rem 2rem; }
+:root[data-layout] .rest-screen.choice-screen .rest-door { flex:0 1 48%; max-height:48%; background-color:#17130fd4; background-image:none; }
+:root[data-layout] .rest-screen.choice-screen .rest-door > :is(.modal-head,.modal-foot) { min-height:4.5rem; }
 :root[data-layout='narrow'] .rest-screen.choice-screen { padding:12rem 1rem 1rem; }
 :root[data-layout='narrow'] .rest-screen.choice-screen .rest-door { flex-basis:60%; max-height:60%; }
 :root[data-composition='short-wide'] .rest-screen.choice-screen { padding:2rem 1rem 1rem; }
 :root[data-composition='short-wide'] .rest-screen.choice-screen .rest-door { flex-basis:88%; max-height:88%; }
 
-/* The chapel's foreground and recovery ledger share the live rest plan.
-   The backdrop and traveler sit on a square stage in the backdrop's own
-   coordinates (emulating object-fit:cover), so the foreground stays on the
-   painted floor at every viewport aspect. */
-.rest-screen .polish-scene-painting { container-type:size; --rest-focus-x:.5; --rest-focus-y:1; --rest-floor-y:70%; }
-.rest-screen .rest-scene-stage { position:absolute; aspect-ratio:1 / 1;
- width:max(100cqw, 100cqh); height:max(100cqw, 100cqh);
- left:calc((100cqw - max(100cqw, 100cqh)) * var(--rest-focus-x)); top:calc((100cqh - max(100cqw, 100cqh)) * var(--rest-focus-y)); }
-.rest-screen .rest-scene-stage > img:first-child { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; }
+/* Rest keeps the room as scenery and the visit in a compact reading rail.
+   The square painting and traveler share source coordinates; no image is
+   stretched, and the scene scales from the available scenery rather than the
+   full viewport width. */
+:root[data-layout] .rest-screen.choice-screen {
+ --rest-rail:calc(464px / var(--ui-zoom, 1));
+ --rest-gap:calc(24px / var(--ui-zoom, 1));
+ justify-content:center; align-items:flex-end;
+ padding:calc(100px / var(--ui-zoom, 1)) var(--rest-gap) var(--rest-gap);
+ background-image:none;
+}
+:root[data-layout] .rest-screen.choice-screen .rest-door {
+ flex:0 1 auto; width:var(--rest-rail); max-width:100%;
+ height:100%; max-height:100%; min-height:0;
+ background:#17130fec; background-image:none;
+ --rest-inset:calc(20px / var(--ui-zoom, 1));
+ --choice-inset-x:var(--rest-inset);
+ font-size:calc(16px / var(--ui-zoom, 1));
+}
+:root .rest-screen .rest-door > :is(.modal-head,.modal-foot) {
+ min-height:0; padding:var(--rest-inset); flex-shrink:0;
+}
+:root .rest-screen .rest-door .modal-head { gap:calc(10px / var(--ui-zoom, 1)); }
+:root .rest-screen .rest-door .modal-head-id h2 { font-size:calc(24px / var(--ui-zoom, 1)); }
+:root .rest-screen .rest-door .modal-head-status { font-size:calc(13px / var(--ui-zoom, 1)); }
+:root .rest-screen .rest-door > .modal-body { padding:var(--rest-inset); }
+:root .rest-screen .choice-body-columns { grid-template-columns:minmax(0,1fr); gap:calc(16px / var(--ui-zoom, 1)); }
+.rest-screen .rest-consequences { order:-1; gap:calc(10px / var(--ui-zoom, 1)); }
+:root .rest-screen .rest-door .as-flavor { font-size:calc(14px / var(--ui-zoom, 1)); line-height:1.45; margin:0; }
+:root .rest-screen .rest-door .as-eyebrow { font-size:calc(11px / var(--ui-zoom, 1)); margin-bottom:calc(6px / var(--ui-zoom, 1)); }
+.rest-recovery { margin-bottom:1.2rem; }
+.rest-screen .rest-recovery { margin:0; }
+.rest-recovery-row { display:grid; grid-template-columns:24px 1fr auto 3rem; align-items:center; gap:.7rem; padding:.7rem 0; border-bottom:1px solid var(--line-soft); }
+.rest-screen .rest-recovery-row { grid-template-columns:calc(20px / var(--ui-zoom, 1)) 1fr auto 2.4em; gap:.5em; padding:.45em 0; }
+.rest-screen .rest-recovery-row .engraved-icon { width:calc(20px / var(--ui-zoom, 1)); height:calc(20px / var(--ui-zoom, 1)); }
+.rest-recovery-gain { color:var(--control-positive-border); text-align:right; }
+/* The service cards already explain availability; their duplicated ledger
+   remains available to assistive technology without repeating three rows. */
+.rest-screen .choice-status-list { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+:root .rest-screen .shrine-option-list { display:flex; flex-direction:column; gap:calc(10px / var(--ui-zoom, 1)); }
+:root .rest-screen .class-pick {
+ display:grid; height:auto; width:100%; min-height:var(--tap-floor); padding:calc(14px / var(--ui-zoom, 1));
+ grid-template-columns:calc(28px / var(--ui-zoom, 1)) minmax(0,1fr);
+ gap:calc(12px / var(--ui-zoom, 1));
+}
+:root .rest-screen .class-pick .cp-body h3 { font-size:calc(18px / var(--ui-zoom, 1)); margin:0 0 .25em; }
+:root .rest-screen .class-pick .cp-body p { font-size:calc(14px / var(--ui-zoom, 1)); line-height:1.4; margin:0; }
+:root .rest-screen .class-pick > .glyph { width:calc(28px / var(--ui-zoom, 1)); }
+:root .rest-screen .class-pick > .glyph .engraved-icon { width:100%; height:calc(28px / var(--ui-zoom, 1)); color:var(--gold); }
+:root .rest-screen #shrine-leave { font-size:calc(16px / var(--ui-zoom, 1)); min-height:var(--tap-floor); }
+.rest-screen .polish-scene-painting { container-type:size; background:#17130f; }
+:root .rest-screen .rest-scene-stage {
+ position:absolute; aspect-ratio:1;
+ --rest-scene-size:max(100cqh, calc(100cqw - var(--rest-rail) - 2 * var(--rest-gap)));
+ width:var(--rest-scene-size); height:var(--rest-scene-size);
+ left:0; top:calc((100cqh - var(--rest-scene-size)) * .5);
+}
+.rest-screen .rest-scene-stage > img:first-child { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
 .rest-screen .rest-scene-stage > .rest-traveler-foreground {
- position:absolute; left:15%; width:44%; height:auto; aspect-ratio:720 / 480; object-fit:contain;
- bottom:calc(100% - var(--rest-floor-y) - 44% * 31 / 720 * 1);
+ position:absolute; left:26%; width:32%; height:auto; aspect-ratio:720 / 480; object-fit:contain;
+ bottom:calc(30% - 32% * 31 / 720);
  animation:playerSceneReveal 700ms ease-out; filter:drop-shadow(0 7px 12px #100a08a0); pointer-events:none;
 }
-.rest-recovery { margin-bottom:1.2rem; }
-.rest-recovery-row { display:grid; grid-template-columns:24px 1fr auto 3rem; align-items:center; gap:.7rem; padding:.7rem 0; border-bottom:1px solid var(--line-soft); }
-.rest-recovery-gain { color:var(--control-positive-border); text-align:right; }
-.rest-screen .rest-consequences { order:-1; }
-.rest-screen .choice-body-columns { grid-template-columns:minmax(0,1fr) minmax(0,1.6fr); }
 .rest-availability summary { cursor:pointer; padding:.5rem 0; color:var(--ink-dim); }
-.rest-screen .class-pick > .glyph .engraved-icon { width:30px; height:30px; color:var(--gold); }
-/* Narrow: the floor (--rest-floor-y, 70% of the stage) must land just above the
-   rest door (its top is near 47% of the frame), so the stage is sized from the
-   floor line. The 0.70 below is --rest-floor-y as a fraction; keep it in sync. */
-:root[data-layout='narrow'] .rest-screen .polish-scene-painting { --rest-focus-x:.42; --rest-floor-screen:.46; background:#17130f; }
-:root[data-layout='narrow'] .rest-screen .rest-scene-stage {
- --rest-stage-size:max(100cqw, 100cqh * var(--rest-floor-screen) / .70);
- width:var(--rest-stage-size); height:var(--rest-stage-size);
- left:calc((100cqw - var(--rest-stage-size)) * var(--rest-focus-x));
- top:calc(100cqh * var(--rest-floor-screen) - .70 * var(--rest-stage-size));
+/* On phones the room gets its own quiet upper aperture. The rail stays in
+   normal screen flow and only its body scrolls, with Continue always visible. */
+@media (max-width:700px) {
+ :root[data-layout] .rest-screen.choice-screen { padding:calc(100px / var(--ui-zoom, 1)) calc(12px / var(--ui-zoom, 1)) calc(12px / var(--ui-zoom, 1)); justify-content:flex-end; }
+ :root[data-layout] .rest-screen.choice-screen .rest-door { flex:0 0 auto; width:100%; height:calc(72vh / var(--ui-zoom, 1)); max-height:calc(72vh / var(--ui-zoom, 1)); --rest-inset:calc(14px / var(--ui-zoom, 1)); }
+ :root .rest-screen .rest-scene-stage {
+  --rest-scene-size:max(100cqw, 100cqh * .56);
+  left:calc((100cqw - var(--rest-scene-size)) * .5);
+  top:calc(100cqh * .24 - var(--rest-scene-size) * .70);
+ }
 }
-:root[data-layout='narrow'] .rest-screen .choice-body-columns { grid-template-columns:minmax(0,1fr); }
-:root[data-layout='narrow'] .rest-recovery { margin-bottom:0; }
 body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 @media (prefers-reduced-motion:reduce) { .rest-screen .rest-traveler-foreground { animation:none; } }
 /* The outer fan cards dip below their anchors; leave that arc above the
@@ -538,9 +586,11 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 }
 :root .shared-hud .hud-vitals-panel { padding:0; }
 :root .shared-hud .hud-info-row { align-self:center; }
-:root .shared-hud .illustrated-hud-button { display:flex; align-items:center; justify-content:center; background:none; border:0; box-shadow:none; padding:5px; }
-:root .shared-hud .illustrated-hud-icon { position:relative; display:block; overflow:hidden; pointer-events:none; }
-:root .shared-hud .illustrated-hud-icon img { position:absolute; max-width:none; object-fit:fill; }
+:root .shared-hud .illustrated-hud-button { display:flex; align-items:center; justify-content:center; background:none; border:0; box-shadow:none; padding:5px; min-width:calc(44px / var(--ui-zoom,1)); min-height:calc(44px / var(--ui-zoom,1)); box-sizing:border-box; }
+:root :is(.combat, .w4-frame) .shared-hud.topbar .illustrated-hud-button.topbar-btn { width:calc(44px / var(--ui-zoom,1)); height:calc(44px / var(--ui-zoom,1)); min-width:calc(44px / var(--ui-zoom,1)); min-height:calc(44px / var(--ui-zoom,1)); }
+:root .shared-hud .illustrated-hud-icon { position:relative; display:block; width:100%; height:100%; overflow:hidden; pointer-events:none; }
+/* The svg viewBox crops the sheet and 'meet' keeps the icon's natural ratio in any button box. */
+:root .shared-hud .illustrated-hud-icon svg { display:block; width:100%; height:100%; }
 :root .shared-hud .illustrated-hud-button:is(:hover,:focus-visible) { filter:drop-shadow(0 0 3px #e1bd73); }
 
 :root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .hud-vitals-panel { background:none; }
@@ -559,35 +609,6 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 /* Enlarge the complete HP row while reserving its scaled height above relics. */
 :root .shared-hud .resbars-host { zoom:1.22; }
 
-/* Combat vitality occupies the available lane up to the quick-access tiles.
-   Its trough shows capacity; the shared meter retains the real current/max fill. */
-:root .combat[data-layout='formation'] > .combat-hud.shared-hud > .hud-top {
- grid-template-columns:minmax(0,1fr) auto;
- grid-template-areas:'meters actions' 'rail actions';
- column-gap:calc(12px / var(--ui-zoom,1));
-}
-:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-vitals-panel { width:100%; max-width:none; padding:0; }
-:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resbars-host { zoom:1; }
-:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resbars { display:flex; flex-direction:column; width:100%; }
-:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resline { width:100%; min-width:0; }
-:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] {
- flex-direction:column; align-items:stretch; gap:calc(4px / var(--ui-zoom,1));
-}
-:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-plate {
- justify-content:flex-start; align-items:center; gap:calc(6px / var(--ui-zoom,1));
-}
-:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-label {
- display:inline-flex; align-items:center; font-size:0; letter-spacing:0;
-}
-:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-label .engraved-icon {
- width:calc(18px / var(--ui-zoom,1)); height:calc(18px / var(--ui-zoom,1)); font-size:calc(18px / var(--ui-zoom,1));
-}
-:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-value { font-size:calc(14px / var(--ui-zoom,1)); line-height:1; }
-:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-well { width:100%; flex:none; }
-:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-track {
- width:100% !important; height:calc(3px / var(--ui-zoom,1)); border-radius:0;
-}
-
 /* Thin black edges keep floating header items legible over bright artwork. */
 :root :is(.shared-hud, .atlas-header) {
  text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;
@@ -602,7 +623,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-value {
  text-shadow:var(--hud-text-shadow, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000);
 }
-:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] { max-width:var(--hud-header-hp-max-width); }
+
 :root :is(.shared-hud .hud-actions, .atlas-header-actions) > button { border:1px solid #000; }
 
 
@@ -656,7 +677,9 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head { grid-template-columns:minmax(0,1fr) auto auto; gap:8px; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-head-status { grid-column:2; grid-row:1; font-size:11px; }
 :root[data-layout='narrow'] .merchant-workspace .shop-frame .modal-close { grid-column:3; }
-@media (max-height:500px) {
+@container game-viewport (max-height:500px) {
  :root .shop-workspace.merchant-workspace { padding-top:max(1rem,var(--merchant-hud-clearance,0px)); }
  :root .shop-workspace.merchant-workspace .merchant-category-dock { grid-template-columns:repeat(6,minmax(0,1fr)); max-height:calc(44px / var(--ui-zoom,1)); }
 }
+/* The shared renderer inherits the existing optional HP-width preference. */
+:root .shared-hud .resunit[data-res='hp'] { max-width:var(--hud-header-hp-max-width); }

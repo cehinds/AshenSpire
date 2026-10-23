@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
@@ -132,7 +133,7 @@ test('combat snapshot restores selected carriers and spent gates without replay'
  const before=restored.queue.length;triggers.emitEvent(restored,event.type,event);assert.equal(restored.queue.length,before);
 });
 
-test('co-op mounts each seat selection under its own identity',()=>{
+test('co-op mounts each seat selection under its own identity', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON },()=>{
  const c=createCoopCombat({registries:reg,rng:createRng(19),players:[{...player([id('coal-on-steel')]),id:'a'},{...player([id('brace-and-bite')]),id:'b'}],enemyIds:['wanderingSoldier']});
  const a=propertyMountsOf(c,c.players.get('a').entity),b=propertyMountsOf(c,c.players.get('b').entity);assert.ok(a['feat:'+id('coal-on-steel')]);assert.ok(!a['feat:'+id('brace-and-bite')]);assert.ok(b['feat:'+id('brace-and-bite')]);
 });
@@ -207,7 +208,7 @@ test('Bearer of Burdens restores Mana for a newly enemy-applied debuff, not a fr
  c.turn++;delete c.player.statuses.frail;apply('frail');assert.equal(c.player.mana,5);
 });
 
-test('Cold Memory retention is independent in co-op seats',()=>{
+test('Cold Memory retention is independent in co-op seats', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON },()=>{
  const c=createCoopCombat({registries:reg,rng:createRng(24),players:[{...player([id('memory-of-winter')]),id:'a'},{...player([]),id:'b'}],enemyIds:['wanderingSoldier']});
  const a=c.players.get('a').entity,b=c.players.get('b').entity;assert.equal(passiveMax(reg,[],'retainBlockUpTo',propertyMountsOf(c,a)),4);assert.equal(passiveMax(reg,[],'retainBlockUpTo',propertyMountsOf(c,b)),0);
 });

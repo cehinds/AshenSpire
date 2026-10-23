@@ -86,6 +86,36 @@ test('none and unknown future grammar retain original direct rendering; no surfa
   assert.equal(f.surfaces.length, 0); assert.equal(f.reads.length, 0);
 });
 
+test('immutable repeated frames reuse current pixels without allocating another surface or skipping readback', () => {
+  const f = fixture(), image = {}, filter = 'drop-shadow(0 0 7px #aabbcc) brightness(1.2)';
+  const draw = (source = image, text = filter, x = 128, y = 16, width = 512, height = 512) =>
+    f.renderer.draw(f.target, source, text, x, y, width, height, {immutable:true,materialize:true});
+  draw();
+  const first = f.draws.length;
+  draw();
+  assert.equal(f.draws.length, first + 1, 'only composite the existing aura on an unchanged frame');
+  assert.equal(f.clears.length, 1);
+  assert.equal(f.reads.length, 2, 'both first and reused frames materialize when requested');
+  assert.equal(f.draws.at(-1).filter, 'brightness(1.2)');
+  // A direct draw cannot alter the separate work surface.
+  f.renderer.draw(f.target, {}, 'blur(2px)', 0, 0);
+  draw(); assert.equal(f.clears.length, 1);
+  for (const args of [[{},filter], [image,filter,129], [image,filter,129,17],
+    [image,filter,129,17,511], [image,filter,129,17,511,510], [image,'drop-shadow(0 0 8px #aabbcc)']]) {
+    const before = f.clears.length; draw(...args);
+    assert.equal(f.clears.length, before + 1, 'source, filter and every geometry input invalidate current pixels');
+  }
+  draw();
+  assert.equal(f.surfaces.length, 1, 'the cache owns no additional canvas');
+  // A mutable source must render on every call and replace the old work pixels.
+  const mutable = {};
+  f.renderer.draw(f.target, mutable, filter, 128, 16);
+  const before = f.clears.length;
+  f.renderer.draw(f.target, mutable, filter, 128, 16);
+  assert.equal(f.clears.length, before + 1);
+  draw(); assert.equal(f.clears.length, before + 2);
+});
+
 test('surface reuse and disposal prevent retained pixels or late allocation/painting', () => {
   const f = fixture();
   for (let n = 0; n < 25; n++) f.renderer.draw(f.target, {}, `drop-shadow(0 0 ${n}px #aabbcc)`, 128, 16);
@@ -116,4 +146,28 @@ test('the selected turning Sweep aura retains both horizontal margins at the ori
   assert.deepEqual(f.draws.at(-2).args.slice(1),[-53,-173,1024,1024]);
   assert.deepEqual(f.draws.at(-1).args,[f.surfaces[0],0,0]);
   f.renderer.dispose();
+});
+
+test('opt-in fixed phase reuse preserves pixels, filter and materialization with four bounded entries',()=>{
+  const surfaces=[],draws=[];
+  const context=owner=>({save(){},restore(){},clearRect(){},drawImage(...args){draws.push({owner,args,filter:this.filter});},getImageData(){draws.push({owner,read:true});}});
+  const visible=context('visible');
+  const renderer=createAlternativeAuraRenderer({createCanvas(){const canvas={width:0,height:0,getContext:()=>context('surface'+surfaces.length)};surfaces.push(canvas);return canvas;}});
+  const filter=auraFilter('class-smash-impact','smash',['stamina'],true),image={};
+  renderer.draw(visible,image,filter,120.5,17,340.25,440,{reuse:true});
+  const before=draws.length;
+  renderer.draw(visible,image,filter,120.5,17,340.25,440,{reuse:true,materialize:true});
+  assert.deepEqual(draws.slice(before).map(row=>[row.owner,!!row.read]),[['visible',false],['visible',true]],'cached phase draws only the exact composed surface and retains the contact readback');
+  assert.equal(draws[before].args[0],surfaces[1]);
+  for(let i=0;i<4;i++)renderer.draw(visible,{},filter,120.5,17,340.25,440,{reuse:true});
+  assert.equal(surfaces[1].width,0,'oldest phase canvas is released when the four-entry budget is exceeded');
+  const bright=auraFilter('power2','idle',['stamina','mana'],true);
+  renderer.draw(visible,image,bright,125.75,9.5,340.25,440,{reuse:true});
+  const brightBefore=draws.length;
+  renderer.draw(visible,image,bright,125.75,9.5,340.25,440,{reuse:true});
+  assert.equal(draws.length,brightBefore+1,'same brightness/placement is reused without shadow work');
+  assert.equal(draws.at(-1).filter,'brightness(1.16)','cached brightness is applied exactly once');
+  renderer.draw(visible,image,bright,126.75,9.5,340.25,440,{reuse:true});
+  assert.ok(draws.length>brightBefore+2,'a changed placement cannot use stale cached geometry');
+  renderer.dispose();assert.ok(surfaces.every(surface=>surface.width===0&&surface.height===0));
 });

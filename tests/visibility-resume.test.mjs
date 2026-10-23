@@ -269,6 +269,39 @@ test('a hidden→visible cycle mid-combat leaves the run and the fight unchanged
   assert.deepStrictEqual(snapshot(combat), before.combat, 'the fight is unchanged: hand, piles, enemies, intents, resources');
 });
 
+test('a mounted layered overlay preserves the fight through resume and art-source refresh, then releases its listener', async () => {
+  const { wireLayeredEnvironment } = await import('../src/ui/components/layeredEnvironment.js');
+  const { ART_SOURCE_EVENT } = await import('../src/ui/highResArt.js');
+  const { LAYERED_SOURCES } = await import('../src/content/layeredEnvironments.js');
+  const { run, combat } = midCombat();
+  const before = { run: snapshot(run), combat: snapshot(combat) };
+  const wasObserver = Object.getOwnPropertyDescriptor(globalThis, 'MutationObserver');
+  let disconnected = false, writes = 0, background = '';
+  const style = { set backgroundImage(value) { background = value; writes++; } };
+  const layer = { dataset: { layerAsset: Object.keys(LAYERED_SOURCES)[0] }, style };
+  const effects = { dataset: {}, querySelectorAll: () => [layer] };
+  globalThis.MutationObserver = class { observe() {} disconnect() { disconnected = true; } };
+  let release;
+  try {
+    release = wireLayeredEnvironment({ querySelector: () => effects });
+    assert.equal(writes, 1, 'mount really paints its decorative source');
+    backgroundAndResume();
+    doc.dispatchEvent(new Event(ART_SOURCE_EVENT));
+    assert.equal(writes, 2, 'the real art-source handler refreshed the mounted overlay');
+    assert.match(background, /^url\(/);
+    assert.deepStrictEqual(snapshot(run), before.run);
+    assert.deepStrictEqual(snapshot(combat), before.combat);
+    release(); release = null;
+    assert.ok(disconnected);
+    doc.dispatchEvent(new Event(ART_SOURCE_EVENT));
+    assert.equal(writes, 2, 'disposed overlays no longer refresh');
+  } finally {
+    release?.();
+    if (wasObserver) Object.defineProperty(globalThis, 'MutationObserver', wasObserver);
+    else delete globalThis.MutationObserver;
+  }
+});
+
 // A HOLD THE BLUR CANCELLED OPENS NOTHING (#1298 post-merge review). End
 // Turn is armed by beatArmer as a review-on-tap hold (`tapOnEarlyRelease`,
 // `onTap` = the confirmation review). A key released EARLY is a tap and opens
@@ -351,14 +384,16 @@ test('combat.js ends a card drag through finishCardDrag, so the unit above is th
 // `.onblur`), a computed event name or a computed key must be
 // [entry, why it cannot move run/combat state].
 const KNOWN = {
-  'src/main.js': ["'resize'", "'load'", "'resize'", '.__worldJourney', '.__uiScale', '.__equipCfg', '.__profile', '.__archives', '.__runstatus', '.__startingAbilities', '.__flasks', '.__spoils', '.__fxProbe', '.__coopSnapshotForShot', '.__coopSentForShot', '.__receiveCoopSnapshotForShot', '.__shotAgeSlot'],
-  'src/ui/assets.js': ["'animationstart'"],
+  'src/main.js': ["'resize'", "'load'", "'resize'", '.__worldJourney', '.__uiScale', '.__equipCfg', '.__profile', '.__archives', '.__runstatus', '.__startingAbilities', '.__flasks', '.__spoils', '.__fxProbe', '.__coopSnapshotForShot', '.__coopSentForShot', '.__receiveCoopSnapshotForShot', '.__shotAgeSlot', '.__rewardStateForShot', '.__restStateForShot'],
   'src/ui/audio.js': [['ev', "one of 'pointerdown', 'pointerup', 'touchend', 'keydown' (the literal list beside it): unlocks/resumes the AudioContext and music only"]],
   'src/ui/components/armamentRadial.js': ["'pointerdown'", "'keydown'"],
   'src/ui/components/battlefieldStage.js': ["'resize'"],
   'src/ui/components/card.js': ["'resize'"],
   'src/ui/components/cardInspection.js': ["'resize'"],
+  'src/ui/components/combatTargetHud.js': ["'resize'"],
+  'src/ui/viewViewport.js': [['type', 'MediaQueryList change-listener method accepts only change; resize observation updates geometry without run/combat mutation']],
   'src/ui/components/combatTools.js': ["'resize'"],
+  'src/ui/components/combatRangeAction.js': [["'resize'", 'Schedules only attachment geometry; mount cleanup removes this same listener, disconnects observers and cancels its pending frame without run/combat mutation']],
   'src/ui/components/confirmationModal.js': [['type', "one of keyEvents = ['keydown', 'keyup']: swallows keys while the confirmation shield stands"], "'keydown'"],
   'src/ui/components/creationInfoLayer.js': ["'resize'"],
   'src/ui/components/dialogueStage.js': ["'resize'"],
@@ -371,12 +406,18 @@ const KNOWN = {
     ["'blur'", 'clears only local pointer and pending-click presentation bookkeeping; the scheduled reveal moves geometry, never run/combat state or a card action, and disposal removes the listener (tests/hand-upcast-visibility.test.mjs)'],
     "'resize'",
   ],
+  'src/ui/components/damageReceipt.js': [
+    ["'pointermove'", 'forwards hover only from hand hit lanes to their numeric damage inspectors; renders public engine receipts without combat actions'],
+    ["'pointerdown'", 'stops the hand hold/drag/play owner when a damage inspector is touched; does not dispatch an action'],
+    ["'click'", 'forwards a native inspection click through the hand lane; opens the same tooltip without playing the card (tests/fixcore-combat-ui.browser.mjs)'],
+  ],
   'src/ui/components/deckCardAnimationPreview.js': [["'visibilitychange'", 'suspends/resumes only the decorative preview frame clock, preserving its frame and explicit Pause state; no run/combat mutation or action dispatch, and disposal removes the listener (tests/deck-card-animation-preview.test.mjs)']],
   'src/ui/components/hints.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerout'", "'gamepadconnected'", "'gamepaddisconnected'"],
   'src/ui/components/holdconfirm.js': ["'keydown'", "'keydown'"],
   'src/ui/components/hudQuickSettings.js': ["'fullscreenchange'", "'webkitfullscreenchange'"],
   'src/ui/components/iconTray.js': ["'pointerdown'"],
   'src/ui/components/intro.js': ["'keydown'"],
+  'src/ui/components/layeredEnvironment.js': [['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), sent by an art-source change: rewrites only mounted decorative layer backgroundImage URLs through layeredArtUrl(); reads no run or combat state, dispatches no gameplay action, and disposal removes the listener; covered by the mounted-overlay test above"]],
   'src/ui/components/localMapCamera.js': ["'pointerup'"],
   'src/ui/components/mapDetail.js': [['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), fired when the built-in art source changes (an Art quality switch), not the page cycle: forgets the map layer's failed detail tiles and requests the visible set again through assetUrl() only"]],
   'src/ui/components/modalShell.js': ["'keydown'"],
@@ -388,11 +429,18 @@ const KNOWN = {
   'src/ui/components/trayComponents.js': ["'pointermove'", "'pointerup'", "'pointercancel'"],
   'src/ui/components/tutorial.js': ["'keydown'", "'resize'"],
   'src/ui/debuglog.js': ["'error'", "'unhandledrejection'"],
-  'src/ui/fx.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerdown'", '.__fx'],
+  'src/ui/modalManager.js': ["'popstate'", "'keydown'"], // the one modal stack: browser Back for entries that opt in; Escape capture for the top entry with dismiss
+  'src/ui/fx.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerdown'",
+    ["'pointerdown'", 'pauses presentation for skip until the matching release; no engine action or authoritative mutation'],
+    ["'pointerup'", 'flushes already committed public receipts for the held presentation skip; no engine dispatch'],
+    ["'pointercancel'", 'finishes only the pending presentation skip; no engine dispatch'],
+    ["'blur'", 'flushes already committed timeline presentation exactly once and removes its listeners; leaves combat/run snapshots unchanged (tests/fx-lifecycle.test.mjs real run/combat lifecycle behavior)'],
+    ["'visibilitychange'", 'on hidden, flushes only already committed timeline presentation; visible does nothing, with snapshots and no late stages checked in tests/fx-lifecycle.test.mjs real run/combat lifecycle behavior'],
+    '.__fx'],
   'src/ui/gesture.js': [["'blur'", 'aborts the in-flight gesture as CANCELLED; driven above through finishCardDrag, which drops nothing'], "'pointerdown'", "'pointermove'", "'pointerup'", "'pointercancel'"],
   'src/ui/input.js': ["'keydown'", "'keydown'", "'keydown'", "'keyup'", ["'blur'", 'cancels the input gate and ends any held press CANCELLED (nothing commits); both halves armed and exercised above'], "'gamepadconnected'", "'gamepaddisconnected'"],
   'src/ui/kit/categoryNav.js': ["'keydown'"],
-  'src/ui/screens/combat.js': ["'keydown'", '.__combat', '.__combatRunForShot', '.__renderCombatForShot', ['ART_REDRAW_EVENT', "the constant 'ashen:art-redraw' (src/ui/highResArt.js), sent by main.js once the built-in art arrives after a failed load (a Retry, step 5) and no dialog is open, not the page cycle: forgets the cached sprite figures and calls render() from the combat's own state; it reads run and combat state and moves none"]],
+  'src/ui/screens/combat.js': ["'keydown'", ["'pointerdown'", "auto combat's pause on player input (document level so the body-mounted reaction modal counts): sets a one-second pause stamp and moves no run or combat state; removed at combat teardown"], ["'keydown'", "the same auto-combat pause on a key press: sets the pause stamp only; removed at combat teardown"], '.__combat', '.__combatRunForShot', '.__renderCombatForShot', ['ART_REDRAW_EVENT', "the constant 'ashen:art-redraw' (src/ui/highResArt.js), sent by main.js once the built-in art arrives after a failed load (a Retry, step 5) and no dialog is open, not the page cycle: forgets the cached sprite figures and calls render() from the combat's own state; it reads run and combat state and moves none"], ['OVERLAY_CLOSED_EVENT', "the constant 'ashenspire:overlay-closed' (src/ui/components/veil.js), sent by closeOverlay when Menu > Settings (or any overlay) closes, not the page cycle: repaints the combat footer's Auto switch from current settings via renderCombatTools; it moves no run or combat state; removed at combat teardown or when the screen is gone"], ['SETTINGS_SETTLED_EVENT', "the constant 'ashenspire:settings-settled' (src/ui/components/veil.js), sent by persistSettingsChange when a settings save settles (saved or rolled back), not the page cycle: repaints the combat footer's Auto switch from current settings via renderCombatTools; it moves no run or combat state; removed at combat teardown or when the screen is gone"]],
   'src/ui/screens/coop.js': ["'keydown'", "'keydown'", '.__coopSnapshot', '.__guardCoopTool'],
   'src/ui/screens/customize.js': ["'pointermove'", "'pointerup'", "'keydown'"],
   'src/ui/screens/deckEditor.js': ["'keydown'"],

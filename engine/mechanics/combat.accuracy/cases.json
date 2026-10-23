@@ -1,0 +1,168 @@
+[
+  {
+    "name": "module-defaults",
+    "when": {
+      "bindingQuery": {
+        "attachments": [
+          {
+            "ownerId": "actor",
+            "sourceInstanceId": "actor",
+            "kind": "entity",
+            "tags": [
+              "combat:accuracy"
+            ]
+          }
+        ],
+        "moduleParameters": {
+          "combat.accuracy": {
+            "baseAC": 1,
+            "evadeStackBase": 1,
+            "evadeStackDex": 1,
+            "precisionBase": 1,
+            "evasionBase": 1,
+            "precisionWeights": {
+              "dex": 0.5,
+              "str": 0.1,
+              "wis": 0.2,
+              "int": 0.2,
+              "level": 1
+            },
+            "maneuverPrecision": {
+              "smash": 1,
+              "sweep": 2
+            },
+            "stanceMinimum": 1,
+            "stanceMaximum": 1.5,
+            "stanceAdvantageBonus": 0.25
+          }
+        },
+        "query": "parameters"
+      }
+    },
+    "then": {
+      "value": {
+        "baseAC": 1,
+        "evadeStackBase": 1,
+        "evadeStackDex": 1,
+        "precisionBase": 1,
+        "evasionBase": 1,
+        "precisionWeights": {
+          "dex": 0.5,
+          "str": 0.1,
+          "wis": 0.2,
+          "int": 0.2,
+          "level": 1
+        },
+        "maneuverPrecision": {
+          "smash": 1,
+          "sweep": 2
+        },
+        "stanceMinimum": 1,
+        "stanceMaximum": 1.5,
+        "stanceAdvantageBonus": 0.25
+      }
+    }
+  },
+  {
+    "name": "source-disable",
+    "when": {
+      "bindingQuery": {
+        "attachments": [
+          {
+            "ownerId": "actor",
+            "sourceInstanceId": "actor",
+            "kind": "entity",
+            "tags": [
+              "combat:accuracy"
+            ],
+            "mechanicBindings": [
+              {
+                "tag": "combat:accuracy",
+                "enabled": false
+              }
+            ]
+          }
+        ],
+        "moduleParameters": {
+          "combat.accuracy": {
+            "baseAC": 1,
+            "evadeStackBase": 1,
+            "evadeStackDex": 1,
+            "precisionBase": 1,
+            "evasionBase": 1,
+            "precisionWeights": {
+              "dex": 0.5,
+              "str": 0.1,
+              "wis": 0.2,
+              "int": 0.2,
+              "level": 1
+            },
+            "maneuverPrecision": {
+              "smash": 1,
+              "sweep": 2
+            },
+            "stanceMinimum": 1,
+            "stanceMaximum": 1.5,
+            "stanceAdvantageBonus": 0.25
+          }
+        },
+        "query": "parameters"
+      }
+    },
+    "then": {
+      "error": "one active binding"
+    }
+  },
+  {
+    "name": "invalid-param",
+    "when": {
+      "bindingQuery": {
+        "attachments": [
+          {
+            "ownerId": "actor",
+            "sourceInstanceId": "actor",
+            "kind": "entity",
+            "tags": [
+              "combat:accuracy"
+            ],
+            "mechanicBindings": [
+              {
+                "tag": "combat:accuracy",
+                "parameters": {
+                  "unknown": 1
+                }
+              }
+            ]
+          }
+        ],
+        "moduleParameters": {
+          "combat.accuracy": {
+            "baseAC": 1,
+            "evadeStackBase": 1,
+            "evadeStackDex": 1,
+            "precisionBase": 1,
+            "evasionBase": 1,
+            "precisionWeights": {
+              "dex": 0.5,
+              "str": 0.1,
+              "wis": 0.2,
+              "int": 0.2,
+              "level": 1
+            },
+            "maneuverPrecision": {
+              "smash": 1,
+              "sweep": 2
+            },
+            "stanceMinimum": 1,
+            "stanceMaximum": 1.5,
+            "stanceAdvantageBonus": 0.25
+          }
+        },
+        "query": "parameters"
+      }
+    },
+    "then": {
+      "error": "unknown parameter"
+    }
+  }
+]

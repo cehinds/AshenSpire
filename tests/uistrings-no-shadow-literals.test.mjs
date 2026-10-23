@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 'common-controls', 'core-profile'].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -48,6 +48,17 @@ function migratedIds() {
 // [file, text, reason]. Every entry must still match at least one site.
 const ID = 'an id or stored value, not copy';
 const ALLOWED = [
+  ['src/ui/highResArt.js', 'Auto', 'ART_AUTO is a persisted resolution choice sentinel; renderer labels are separate from the viewport preset face'],
+  ['src/ui/models/SettingsCapabilitiesModel.js', 'Stats', `legacy advanced-group capability key; ${ID}`],
+  ['src/ui/models/SettingsCapabilitiesModel.js', 'Recovery', `legacy advanced-group capability key; ${ID}`],
+  ['src/ui/models/SettingsCapabilitiesModel.js', 'Deck', `legacy advanced-group capability key; ${ID}`],
+  ['src/ui/models/SettingsCapabilitiesModel.js', 'Progression', `legacy advanced-group capability key; ${ID}`],
+  ['src/ui/screens/settings.js', 'Auto', 'persisted uiScale/textSize option ids and defaults; both displayed choices explicitly read settings.viewPreset.auto'],
+  ['src/ui/screens/settings.js', 'Game rules', 'category key and selected-category comparison; CATEGORY_LABELS renders gameProfile.settings.title'],
+
+  ['src/ui/components/card.js', 'Evade', 'the Evade stat granted on a stance change; not the Evade stance name row'],
+  ['src/ui/components/damageReceipt.js', 'Against', 'leading word of the per-target damage receipt scope line; not the Core Smash stance-matchup sentence'],
+  ['src/ui/previews/itemCards.js', 'Prepared', 'item-card preview pose option label; not the Prepared stance name row'],
   ['src/ui/components/card.js', 'Spell', 'the card face camp subtype and range-name table; not the deck editor stance label'],
   ['src/ui/components/collectibleCard.js', 'Consumable', 'a potion usage line on the collectible card; not the deck editor stance label'],
   ['src/ui/screens/equipment.js', 'Consumable', 'an inventory category id compared against row data; not copy'],
@@ -109,7 +120,6 @@ const ALLOWED = [
   ['src/ui/previews/tooltipReviewScene.js', 'Exhaust', 'dev review scene\'s sample keyword tooltip (a card keyword, not the combat pile)'],
   // The same English word naming a different thing. Rewording the row must NOT move these.
   ['src/ui/components/combatantOverhead.js', 'Inspect', 'combatant overhead inspection names a combatant, not the Reading Desk card inspection action'],
-  ['src/ui/components/creationCards.js', 'List', 'character creation layout selector, separate from the deck display selector'],
   ['src/ui/components/offlinePlay.js', 'All', 'the save-import replacement warning begins with All slots; it is not the collection filter'],
   ['src/ui/input.js', 'Inspect', 'global input binding label, separate from the Reading Desk card action'],
   ['src/ui/screens/settings.js', 'Undo', 'settings change undo, separate from the deck transaction undo'],
@@ -157,9 +167,9 @@ function migratedTexts(ids = migratedIds()) {
 
 // Compiled once, swept once: both assertions below read the same hits.
 let swept;
-function sweep() {
-  if (swept) return swept;
-  const patterns = [...migratedTexts()].map(([text, rows]) => ({
+function sweep(ids = null) {
+  if (!ids && swept) return swept;
+  const patterns = [...migratedTexts(ids ?? migratedIds())].map(([text, rows]) => ({
     text, rows, re: new RegExp(`(?<=['"\`>])${reEscape(text)}(?=['"\`<]| ?\\$\\{| ['"\`])`),
   }));
   const hits = [];
@@ -172,7 +182,8 @@ function sweep() {
       }
     });
   }
-  return (swept = hits);
+  if (!ids) swept = hits;
+  return hits;
 }
 
 test('the sweep has rows to sweep', () => {
@@ -232,7 +243,9 @@ test('all 19 reaction and log rows remain covered after promotion, including tok
     assert.ok(permanent.has(id), `missing permanent coverage for ${id}`);
     assert.ok(uiStrings.some(row => row.id === id), `missing authored row ${id}`);
   }
-  const renderer = stripComments(readFileSync(join(ROOT, 'src/ui/components/reactionChoiceModal.js'), 'utf8'));
+  // The price chips are built by the card option summary model the reaction tiles render, so the row is read there.
+  const renderer = ['src/ui/components/reactionChoiceModal.js', 'src/ui/models/CardOptionSummaryModel.js']
+    .map(file => stripComments(readFileSync(join(ROOT, file), 'utf8'))).join('\n');
   for (const id of ['combat.reaction.sp', 'combat.reaction.mp']) {
     assert.ok(renderer.includes(`t('${id}',`), `the token-first price must still consume ${id}`);
     assert.match(uiStrings.find(row => row.id === id).short, /\{amount\}/);
@@ -251,5 +264,42 @@ test('every allowance still matches something, and gives a reason', () => {
   for (const [file, text, reason] of ALLOWED) {
     assert.ok(reason && reason.length > 10, `${file} "${text}" has no reason`);
     assert.ok(hits.some((hit) => hit.file === file && hit.text === text), `${file} "${text}" is allowlisted but no longer appears — drop it`);
+  }
+});
+
+
+test('shared controls and hidden intent copy remain protected after promotion', () => {
+  const ids = frozenMigrationIds('common-controls');
+  assert.equal(ids.length, 29);
+  for (const id of ids) {
+    assert.ok(permanentMigratedIds().has(id), id);
+    assert.ok(uiStrings.some(row => row.id === id), id);
+  }
+  const texts = migratedTexts(permanentMigratedIds());
+  assert.ok(texts.get('Exact move, damage, and effects unread.')?.includes('combat.targetHud.unknown.short'));
+  assert.ok(texts.get('Choose')?.includes('common.chooseNamed.short'));
+});
+
+
+test('all Core-default migration rows and semantic allowances survive an empty branch delta', () => {
+  const frozen = frozenMigrationIds('core-profile');
+  assert.equal(frozen.length, 99, 'retain all97 added rows and both migrated Deck Editor rows from PR2023');
+  assert.equal(new Set(frozen).size, 99, 'each migration row is frozen once');
+  const permanent = permanentMigratedIds();
+  for (const id of frozen) {
+    assert.ok(permanent.has(id), `missing permanent coverage for ${id}`);
+    assert.ok(uiStrings.some(row => row.id === id), `missing authored row ${id}`);
+  }
+  assert.ok(frozen.includes('deckEditor.cancel') && frozen.includes('deckEditor.keys'),
+    'existing rows migrated by the feature retain coverage alongside added rows');
+  const texts = migratedTexts(permanent);
+  assert.ok(texts.get('Game rules')?.includes('gameProfile.settings.title.short'));
+  assert.ok(texts.get('Auto')?.includes('settings.viewPreset.auto.short'));
+  // Supplying only frozen IDs simulates origin/dev already containing every
+  // feature row, or a checkout with no remote history. No branch delta helps.
+  const hits = sweep(permanent);
+  for (const [file, text] of ALLOWED) {
+    assert.ok(hits.some(hit => hit.file === file && hit.text === text),
+      `${file} "${text}" must remain checked even after the branch delta disappears`);
   }
 });

@@ -6,12 +6,13 @@ import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 // Selection is reversible; only the modal's explicit Confirm command commits.
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 import { t } from '../strings.js';
+import { coreSmithingPreviewRows } from '../../model/smithingCore.js';
 
 const freeze = (value) => Object.freeze(value);
 
 function changeLabel(change) {
   const labels = {
-    damage: 'Attack Rating',
+    damage: 'Damage',
     block: 'Guard',
     draw: 'Draw',
     discard: 'Discard',
@@ -19,7 +20,7 @@ function changeLabel(change) {
     'cost:mana': 'Mana Cost',
     'cost:stamina': 'Stamina Cost',
   };
-  return `${labels[change.op] || change.op}: ${change.before} → ${change.after}`;
+  return `${change.label || labels[change.op] || change.op}: ${change.before} → ${change.after}`;
 }
 
 function groupedAffected(cards) {
@@ -101,7 +102,9 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       kindLabel: itemKind === 'armor' ? 'Armor' : itemKind === 'relic' ? 'Relic' : 'Armament',
       itemTypes: freeze(itemTypes),
       tags: freeze([...(piece.tags || [])]),
-      intrinsicStats: freeze({
+      // Core item ratings come from the tier receipt below, not the legacy
+      // equipment definition's unrelated base AR/DEF values.
+      intrinsicStats: candidate.core ? null : freeze({
         attackRating: piece.attackRating ?? null,
         defenseRating: piece.defenseRating ?? null,
         // The load weight (itemWeightScale applied), as the Armoury shows it.
@@ -109,6 +112,10 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
         weaponArtManaCost: piece.weaponArtManaCost ?? null,
         uniqueSkillStaminaCost: piece.uniqueSkillStaminaCost ?? null,
       }),
+      // Authoritative item-tier receipts, including armor/shield and non-AR changes.
+      // These are cheap item values; do not force the lazy live-card previews.
+      intrinsicChanges: freeze((candidate.changes || []).filter((change) => change.before !== change.after)
+        .map((change) => freeze({ ...change }))),
       currentLevel: candidate.currentLevel,
       nextLevel: candidate.nextLevel,
       cost: candidate.cost,
@@ -116,9 +123,13 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       shortfall: candidate.shortfall,
       affordable: candidate.affordable,
       affectedCount: candidate.affectedCards.length,
-      affectedRows: itemKind === 'armament'
+      // Only the item under review pays for its rows: a Core candidate's card rows run real combats.
+      affectedRows: itemKind === 'armament' && !candidate.core
         ? groupedAffected(candidate.previewCards || candidate.affectedCards)
-        : genericAffected(candidate),
+        : candidate.core
+          // Only the item under review pays for its rows: a Core candidate's card rows run real combats.
+          ? (itemRef === selectedItemRef || candidate.armamentId === selectedItemRef ? groupedAffected(coreSmithingPreviewRows(candidate.itemName, candidate.changes, candidate.coreCardRows)) : freeze([]))
+          : genericAffected(candidate),
       requirements: freeze(candidate.requirements.map((row) => freeze({ ...row }))),
     });
   });

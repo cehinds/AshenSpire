@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
 // tests/dev-sweep-fixes.test.mjs — the four dev defects reported with evidence
 // on #999, which was closed without merging. Each check pins the FIX, and each
 // one fails on the code as it stood:
@@ -83,6 +84,7 @@ ok(!/\.act\s*\|\|\s*1/.test(balanceSrc),
   'and no longer defaults a missing `act` to tier 1');
 
 // ---- 2 + 3. the co-op snapshot carries the seat and the fight's history -----
+if (COOP_TESTS_ENABLED) {
 const host = createSession({ registries: reg, seedString: 'GUARD2' });
 for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
 host.start();
@@ -142,6 +144,7 @@ ok(acted.every((enemy) => historySection(enemy).knowledge === 'known'
   'performed snapshot moves project as known history, newest first');
 ok(/seatName\s*:\s*snap\.seatName\s*\|\|\s*null/.test(coopSrc),
   'coop.js passes the seat name through to the map board\'s act plate');
+}
 
 // ---- 4. a finished fight is not a resume point ------------------------------
 const finished = { result: 'victory', loadout: {}, player: { flasks: [], flaskCharges: {}, hp: 1, maxHp: 1, mana: 0, maxMana: 0, stamina: 0, maxStamina: 0 }, equipmentPoolDeficits: {}, itemUpgradeLevels: {} };
@@ -159,7 +162,7 @@ assert.throws(
 checks += 1;
 
 const combatSrc = code('src/ui/screens/combat.js');
-ok(/fightOver\s*=\s*true\s*;\s*closeQuickNav\(\s*\)\s*;/.test(combatSrc),
+ok(/fightOver\s*=\s*true\s*;\s*targetHud\.release\(\)\s*;\s*closeQuickNav\(\s*\)\s*;/.test(combatSrc),
   'combat.js closes the menu the moment the fight resolves');
 ok(/menuBtn\.disabled\s*=\s*true/.test(combatSrc),
   'and disables the button, so the victory beat is not a window into Save/Quit');

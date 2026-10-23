@@ -1,3 +1,4 @@
+import { attackHitPreview } from '../src/engine/stanceHit.js';
 // The combat range vocabulary (owner, 2026-10-12): melee | reach | ranged, with
 // the pre-rename contact | near | far read through an alias so old saves load.
 import { test } from 'node:test';
@@ -82,7 +83,8 @@ test('an old frozen rules object plays the same avoidance result as the new one 
     const ctx = { combatExpansionVersion: 2, combatExpansionRules: rules, rng, emit: () => {} };
     const incoming = { camp: 'physical', maneuver: 'attack', range: 'melee', targeting: 'single' };
     return [resolveAvoidance(ctx, { id: 'enemy' }, target, incoming, 9),
-      resolveAvoidance({ ...ctx, rng: { int: (s, min) => min } }, { id: 'enemy' }, target, { ...incoming, range: 'ranged', targeting: 'area' }, 6), target.combatEvade.charges];
+      resolveAvoidance({ ...ctx, rng: { int: (s, min) => min } }, { id: 'enemy' }, target, { ...incoming, range: 'ranged', targeting: 'area' }, 6), target.combatEvade.charges,
+      attackHitPreview(ctx, { id: 'enemy', kind: 'enemy' }, target, { combatProfile: incoming })];
   };
   const old = frozenBeforeRename();
   const oldStance = { maneuver: 'ranged', camp: 'physical', reach: 'far' };
@@ -90,7 +92,10 @@ test('an old frozen rules object plays the same avoidance result as the new one 
   bringRangesForward(oldStance);
   const current = play(createCombatExpansionRuleSnapshot(), { maneuver: 'ranged', camp: 'physical', range: 'ranged' });
   assert.deepEqual(play(old, oldStance), current);
-  assert.equal(current[0].distance.chance, 35, 'a ranged stance still avoids melee at the ranged chance');
+  assert.equal(current[0].distance, null, 'v2 uses one unified Accuracy decision rather than a second distance roll');
+  assert.equal(current[3].hitChance, 0, 'melee cannot reach the migrated ranged stance');
+  assert.equal(current[3].missReason, 'range');
+  assert.equal(current[2], 1, 'range misses spend no prepared Evade charge');
 });
 
 test('tags parse range:reach, read legacy reach:near the same way, and chip as range:x', () => {

@@ -1,0 +1,26 @@
+{
+  "id": "status.madness",
+  "tag": "status.madness",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Madness",
+  "description": "At the start of your turn: lose 2 HP per stack, gain 1 Energy per stack, then Madness clears.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.madness"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

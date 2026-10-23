@@ -246,7 +246,7 @@ const BEHAVIOUR = [
     // flasks — so the same claim, on the surface that survived: one content
     // row, ZERO engine commits, and every screen that names the Mana charge
     // (rest.js, combat.js, coop.js all call chargeFlaskDefinition) names the
-    // new entry instead. The row enters `src/content/flasks.js`'s array
+    // new entry instead. The row enters `content/source/flasks.json`'s array
     // through the real bundle and the real registry build.
     name: 'LAW 0: one content row re-points the Mana charge, no engine edit',
     bundle: (b) => {

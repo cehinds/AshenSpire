@@ -1,0 +1,89 @@
+{
+  "action": "ranged",
+  "aliases": [
+    "ranged"
+  ],
+  "origin": "offensive",
+  "timing": {
+    "totalMs": 195,
+    "impactMs": 86.25
+  },
+  "registeredSequence": {
+    "label": "Ranged \u00b7 magic",
+    "poses": [
+      "ranged-load",
+      "ranged-load",
+      "ranged-aim",
+      "ranged-release",
+      "ranged-load"
+    ],
+    "durations": [
+      60,
+      55,
+      50,
+      45,
+      50
+    ],
+    "travel": [
+      0,
+      0,
+      -4,
+      -2,
+      0
+    ],
+    "effect": "starbolt",
+    "impact": 2,
+    "hold": false
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-offensive",
+      "label": "origin stance-offensive",
+      "weight": 1
+    },
+    {
+      "pose": "ranged-load",
+      "registeredFrameId": "ranged-load",
+      "label": "1/5 ranged-load \u00b7 weight 60",
+      "weight": 60,
+      "timeMs": 22.5
+    },
+    {
+      "pose": "ranged-load",
+      "registeredFrameId": "ranged-load",
+      "label": "2/5 ranged-load \u00b7 weight 55",
+      "weight": 55,
+      "timeMs": 65.625
+    },
+    {
+      "pose": "ranged-aim",
+      "registeredFrameId": "ranged-aim",
+      "label": "3/5 ranged-aim \u00b7 weight 50",
+      "weight": 50,
+      "timeMs": 105
+    },
+    {
+      "pose": "ranged-release",
+      "registeredFrameId": "ranged-release",
+      "label": "4/5 ranged-release \u00b7 weight 45",
+      "weight": 45,
+      "timeMs": 140.625
+    },
+    {
+      "pose": "ranged-load",
+      "registeredFrameId": "ranged-load",
+      "label": "5/5 ranged-load \u00b7 weight 50",
+      "weight": 50,
+      "timeMs": 176.25
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "return Attack",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": [
+    "rangedMagic"
+  ]
+}

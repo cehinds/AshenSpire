@@ -149,13 +149,16 @@ test('form factors follow the contract rule order at the reference viewports', (
   assert.equal(formFactorFor(0, 0, t), 'desktop');
 });
 
-test('applyUiScale writes data-form-factor beside data-layout from the balance thresholds', () => {
+test('applyUiScale derives layout and form factor from the same selected view', () => {
   const main = read('src/main.js');
   const body = main.slice(main.indexOf('function applyUiScale('));
   const layout = body.indexOf("setAttribute('data-layout'");
   const formFactor = body.indexOf("setAttribute('data-form-factor'");
   assert.ok(layout > 0 && formFactor > layout && formFactor < body.indexOf('updateUprightGate('), 'written in applyUiScale, after data-layout');
-  assert.match(body.slice(formFactor, formFactor + 200), /formFactorFor\(window\.innerWidth, window\.innerHeight, UI\.uiScale\.formFactor\)/);
+  assert.match(body, /const view = applyViewViewport\(settings\.viewPreset, window\.innerWidth, visibleHeight\)/);
+  assert.match(body, /resolveLayout\(settings\.uiScale, view\.width, view\.height\)/);
+  assert.match(body.slice(formFactor, formFactor + 240), /view\.preset === 'auto' \? formFactorFor\(view\.width, view\.height, UI\.uiScale\.formFactor\) : view\.preset/,
+    'Auto uses the native logical view with balance thresholds; named views select their HUD composition');
 });
 
 test('a form-factor change re-measures the tools row at once and refits the stage', () => {
@@ -163,7 +166,7 @@ test('a form-factor change re-measures the tools row at once and refits the stag
   assert.match(stage, /attributeFilter: \['style', 'data-layout', 'data-short', 'data-composition', 'data-form-factor',/, 'the stage refits on data-form-factor');
   const tools = read('src/ui/components/combatTools.js');
   const begin = tools.indexOf('  const formFactorObserver = new MutationObserver(');
-  const end = tools.indexOf('  function update(model)', begin);
+  const end = tools.indexOf('  const gridObserver =', begin);
   assert.ok(begin > 0 && end > begin);
   let callback, options, flushes = 0, current = 'tablet';
   runInNewContext(tools.slice(begin, end), {
@@ -201,7 +204,7 @@ test('every geometry offset is applied by the code that places its element', () 
   const stage = read('src/ui/components/battlefieldStage.js');
   for (const key of ['playerDetailsDx', 'playerDetailsDy', 'enemyNameplateDy', 'turnRibbonDy']) assert.match(stage, new RegExp(`hudOffsets\\.${key}`));
   assert.match(read('src/ui/components/combatTools.js'), /hudGeometry\(style\)\.toolsDy/);
-  assert.match(read('src/ui/components/combatTools.js'), /toolsRowTop\(\{ dockTop, dy: dy \* zoom/);
+  assert.match(read('src/ui/components/combatTools.js'), /toolsRowTop\(\{ dockTop: defaultTop, dy: dy \* zoom/);
 });
 
 test('the nameplate offset moves the tap target with the plate, and a colliding offset is dropped', () => {
@@ -251,35 +254,84 @@ test('the tools offset only raises the row, stays on screen and is dropped over 
   assert.equal(toolsRowTop({ dockTop: 500, dy: -10, row, screenTop: 0, obstacles: [intent] }), 490, 'a raise that stops short of it is kept');
 });
 
-test('the tools pass reads its row height and obstacles only for a raise', () => {
+test('corner tools dock above the footer and a requested raise cannot cover controls or cards', () => {
   const tools = read('src/ui/components/combatTools.js');
-  const begin = tools.indexOf('  let frame = 0, entryKey');
-  const end = tools.indexOf('  const observer =', begin);
-  const run = (dy) => {
+  const begin = tools.indexOf('  let frame = 0, entryKey'), end = tools.indexOf('  const observer =', begin);
+  const run = ({ dy = 0, split = false, span = 'field', obstacles = [] } = {}) => {
     let rowReads = 0, obstacleReads = 0;
-    const hand = { getBoundingClientRect: () => ({ width: 390, right: 390, left: 0, top: 500 }) };
-    const root = { isConnected: true, style: {}, dataset: {}, getBoundingClientRect: () => { rowReads += 1; return { height: 40, top: 500 }; } };
-    const combatEl = { clientWidth: 390, getBoundingClientRect: () => ({ width: 390, top: 0, bottom: 844 }), style: { setProperty() {} },
-      querySelector: (selector) => (selector === '.hand' ? hand : null) };
+    const hand = { getBoundingClientRect: () => ({ width: 200, right: 300, left: 100, top: 500 }) };
+    const properties = new Map();
+    const root = { isConnected: true, style: { setProperty: (key, value) => properties.set(key, value) }, dataset: {}, getBoundingClientRect: () => { rowReads++; return { height: 40 }; } };
+    const logButton = { getBoundingClientRect: () => ({ width: 80 }) };
+    const combatEl = { clientWidth: 390, dataset: { desktopFooter: String(split) }, getBoundingClientRect: () => ({ left: 0, width: 390, top: 0, bottom: 844 }), style: { setProperty() {} },
+      querySelector: selector => selector === '.hand' ? hand : selector === '.combat-action-row' ? { getBoundingClientRect: () => ({ top: 820 }) } : null };
     const api = runInNewContext(`${tools.slice(begin, end)}\n({ flushGeometry })`, {
-      combatToolsTokens: () => ({ span: 'field', dy }), cardBand: () => null, TOOLS_MIN_WIDTH: 240, toolsRowTop,
-      toolsObstacles: () => { obstacleReads += 1; return [{ left: 100, right: 200, top: 450, bottom: 480 }]; },
-      root, combatEl, state: { size: 'Small' }, panel: { style: {} }, innerWidth: 390, drag: null, snapHeights: () => ({ Small: 125 }),
+      combatToolsTokens: () => ({ span, dy }), CORNER_INSET: 16, toolsRowTop,
+      toolsObstacles: () => { obstacleReads++; return obstacles; },
+      getComputedStyle: () => ({ getPropertyValue: key => key === '--desktop-tools-top' ? '700' : '20' }),
+      root, combatEl, logButton, state: { size: 'Small' }, panel: { style: {} }, drag: null, snapHeights: () => ({ Small: 125 }),
       VIEWPORT_ORIGIN: {}, anchorLocalBox: (_host, rect) => ({ ...rect }), requestAnimationFrame: () => 1, cancelAnimationFrame() {} });
     api.flushGeometry();
-    return { rowReads, obstacleReads, top: parseFloat(root.style.top) };
+    assert.equal(properties.get('--combat-log-button-width'), '80px', 'Deck offset uses the measured Log button width');
+    return { rowReads, obstacleReads, top: parseFloat(root.style.top), left: root.style.left, right: root.style.right, width: root.style.width };
   };
-  assert.deepEqual(run(0), { rowReads: 0, obstacleReads: 0, top: 500 }, 'dy 0 forces no layout read');
-  assert.deepEqual(run(12), { rowReads: 0, obstacleReads: 0, top: 500 }, 'a positive dy is ignored without a read');
-  assert.deepEqual(run(-10), { rowReads: 1, obstacleReads: 1, top: 490 });
-  assert.deepEqual(run(-40), { rowReads: 1, obstacleReads: 1, top: 500 }, 'a raise onto a control is dropped');
+  assert.deepEqual(run(), { rowReads: 1, obstacleReads: 0, top: 776, left: '16px', right: '16px', width: 'auto' });
+  assert.deepEqual(run({ span: 'hand' }), run(), 'a narrow current card band never pulls the approved screen-edge corners inward');
+  assert.equal(run({ dy: 12 }).top, 776, 'positive offsets do not lower tools onto the footer');
+  assert.equal(run({ dy: -10 }).top, 766);
+  assert.equal(run({ dy: -40, obstacles: [{ left: 100, right: 200, top: 740, bottom: 760 }] }).top, 776, 'raise onto a card or control is refused');
+  assert.equal(run({ split: true }).top, 700, 'desktop uses its measured footer geometry');
+  assert.equal(run({ split: true }).rowReads, 0, 'settled desktop tools do not force a row-height measurement');
+  assert.equal(run({ split: true, dy: -10 }).top, 690);
 });
 
-test('the tools row keeps its field span unless the token asks for the card band', () => {
+test('tools measure their final wrapping width on mount, resize and zoomed desktop raises', () => {
   const tools = read('src/ui/components/combatTools.js');
-  assert.match(tools, /span === 'hand' \? cardBand\(hand\) : null/);
-  assert.match(tools, /let width = Math\.max\(0, \(handBox\?\.width \|\| innerWidth\) - 12\);/, 'field: the old width');
-  assert.match(tools, /let left = \(handBox\?\.right \|\| innerWidth\) - width - 6;/, 'field: the old dock');
+  const begin = tools.indexOf('  let frame = 0, entryKey'), end = tools.indexOf('  const observer =', begin);
+  const zoom = 1.25, origin = { left: 60, top: 30 }, measurements = [];
+  let width = 390, dy = 0;
+  const root = { isConnected: true, dataset: {}, style: { right: '12px', setProperty() {} },
+    getBoundingClientRect() {
+      const localWidth = root.style.width === 'auto'
+        ? width - parseFloat(root.style.left || 0) - parseFloat(root.style.right || 0)
+        : parseFloat(root.style.width) || 200;
+      // A narrow row wraps its controls, just as the real grid does on phones.
+      const box = { width: localWidth * zoom, height: (localWidth < 360 ? 60 : 40) * zoom };
+      measurements.push(box); return box;
+    } };
+  const combatEl = { dataset: { desktopFooter: 'false' }, style: { setProperty() {} },
+    get clientWidth() { return width; },
+    getBoundingClientRect: () => ({ ...origin, width: width * zoom, bottom: origin.top + 800 * zoom }),
+    querySelector: selector => selector === '.combat-action-row'
+      ? { getBoundingClientRect: () => ({ top: origin.top + 700 * zoom }) } : null };
+  let obstacles = [];
+  const api = runInNewContext(`${tools.slice(begin, end)}\n({ flushGeometry })`, {
+    combatToolsTokens: () => ({ span: 'field', dy }), CORNER_INSET: 16, toolsRowTop,
+    toolsObstacles: () => obstacles,
+    getComputedStyle: () => ({ getPropertyValue: key => key === '--desktop-tools-top' ? '700' : '24' }),
+    root, combatEl, logButton: { getBoundingClientRect: () => ({ width: 100 }) }, state: { size: 'Medium' },
+    // Geometry for a hidden, unused reader must not enter the visible layout.
+    snapHeights: () => { throw new Error('hidden legacy panel measured'); },
+    anchorLocalBox: (host, rect, { zoom }) => ({ top: (rect.top - host.getBoundingClientRect().top) / zoom }),
+    requestAnimationFrame: () => 1, cancelAnimationFrame() {},
+  });
+  api.flushGeometry();
+  assert.equal(measurements[0].width, 358 * zoom, 'first mount measures the final corner width');
+  assert.ok(Math.abs(parseFloat(root.style.top) - (640 - 4 / zoom ** 2)) < 1e-8, 'wrapped row clears the footer at non-unit zoom and origin');
+  width = 520; api.flushGeometry();
+  assert.equal(measurements.at(-1).width, 488 * zoom, 'resize measures the incoming wider row');
+  assert.ok(Math.abs(parseFloat(root.style.top) - (660 - 4 / zoom ** 2)) < 1e-8, 'unwrapped row docks using its new height');
+  width = 390; combatEl.dataset.desktopFooter = 'true'; dy = -10; api.flushGeometry();
+  assert.equal(measurements.at(-1).width, 342 * zoom, 'desktop raise measures the authored desktop corner inset');
+  assert.equal(root.style.top, '690px');
+  const before = measurements.length; dy = 0; api.flushGeometry();
+  assert.equal(root.style.top, '700px');
+  assert.equal(measurements.length, before, 'settled desktop footer needs no row-height read');
+  dy = -20; obstacles = [{ left: 150, right: 200, top: 885, bottom: 895 }]; api.flushGeometry();
+  assert.equal(root.style.top, '700px', 'a raise onto a control is refused in screen coordinates');
+  dy = -1000; obstacles = []; api.flushGeometry();
+  assert.equal(root.style.top, '0px', 'large negative offset is clamped to the nonzero combat origin');
+  assert.equal(root.dataset.logSize, 'Medium', 'size semantics remain published without measuring the hidden panel');
 });
 
 // ---- --merge: studio exports into content/hud-layout (temp roots only) ----

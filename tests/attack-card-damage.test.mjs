@@ -1,5 +1,6 @@
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { configuredContentBundle, advancedConfigRows } from '../src/model/advancedConfig.js';
@@ -25,10 +26,10 @@ const expectedFaceEffects = (authored, upgraded) => {
   return applyActionCosts({ ...card, cost, effects }, card).effects;
 };
 // A sweep's damage stays unscaled at 2 SP (owner, 2026-10-13: its area pays for it).
-const scaledFor = (face, n) => (face.cost >= 2 && !(face.tags || []).includes('maneuver:sweep') ? Math.round(n * TWO_COST_EFFECT_MULTIPLIER) : n);
+const scaledFor = (face, n) => (face.costRule !== 'fixed' && face.cost >= 2 && !(face.cardTags || face.tags || []).includes('maneuver:sweep') ? Math.round(n * TWO_COST_EFFECT_MULTIPLIER) : n);
 // The formula reads the authored cost (the step runs after it), so the formula sees the authored face.
 const authoredFaceFor = (authored, upgraded) => ({ ...authored, effects: upgraded ? authored.upgrade.effects ?? authored.effects : authored.effects,
-  cost: upgraded && authored.upgrade?.cost !== undefined ? authored.upgrade.cost : authored.cost });
+  cost: authored.costRule === 'fixed' ? authored.cost : upgraded && authored.upgrade?.cost !== undefined ? authored.upgrade.cost : authored.cost });
 
 const defaults = contentBundle.balance.damage.attackCards;
 
@@ -50,7 +51,7 @@ test('every status has a configurable non-negative multiplier', () => {
   const rowKeys = new Set(advancedConfigRows(contentBundle).map((row) => row.key));
   for (const configName of ['attackCards', 'defenseCards', 'potencyCards', 'poiseCards', 'wardCards']) {
     assert.deepEqual(
-      Object.keys(contentBundle.balance.damage[configName].statusMultipliers).sort(),
+      Object.keys(tagged.balance.damage[configName].statusMultipliers).sort(),
       contentBundle.statuses.map((status) => status.id).sort(),
     );
     for (const status of contentBundle.statuses) {
@@ -66,15 +67,15 @@ test('every status has a configurable non-negative multiplier', () => {
 
 test('registry projection recalculates every fixed-cost attack and both card faces', () => {
   const registries = createRegistries(contentBundle);
-  for (const authored of contentBundle.cards.filter((card) => card.type === 'attack' && card.cost !== 'X')) {
+  for (const authored of contentBundle.cards.filter((card) => card.type === 'attack' && card.cost !== 'X' && !Array.isArray(card.gradeProfiles))) {
     for (const upgraded of [false, true]) {
       if (upgraded && !authored.upgrade) continue;
       const face = resolveCard(registries, { cardId: authored.id, upgraded });
       const config = cardIsMagical(face)
         ? registries.balance.damage.potencyCards
         : registries.balance.damage.attackCards;
-      const expected = attackCardBaseDamage(authoredFaceFor(authored, upgraded), config);
-      const primary = face.effects.find((effect) => effect.op === 'damage' && !effect.if);
+      const expected = attackCardBaseDamage({ ...authoredFaceFor(authored, upgraded), damageSchool: face.damageSchool, tags: face.tags }, config);
+      const primary = face.effects.find((effect) => effect.op === 'damage' && typeof effect.amount === 'number' && !effect.if);
       const conditional = face.effects.filter((effect) => effect.op === 'damage' && typeof effect.amount === 'number');
       const baseAmounts = authored.effects
         .filter((effect) => effect.op === 'damage' && typeof effect.amount === 'number');
@@ -358,7 +359,7 @@ test('a malformed status or bonus container is reported by name', () => {
 
 // CO-OP CARRIES THE RESOLVED FACE TOO (#1247 review): its action carrier is
 // built separately from solo's, so it needs the same Ward value.
-test('a staff Strike played in co-op lands its configured Ward impact', async () => {
+test('a staff Strike played in co-op lands its configured Ward impact', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   const { createCoopCombat, playCard } = await import('../src/engine/coopCombat.js');
   const { createRng } = await import('../src/engine/rng.js');
   const { resolveCombatRatings } = await import('../src/model/combatRatings.js');
@@ -402,9 +403,9 @@ test('a card a staff package deals resolves through the magical formulas', () =>
   const authored = contentBundle.legacyProgression.cards.find((card) => card.id === 'stomp');
   const scaledAuthored = dealt.cost >= 2 ? authored.effects.map((effect) => (SCALED_EFFECT_OPS.includes(effect.op) && typeof effect.amount === 'number'
     ? Math.round(effect.amount * TWO_COST_EFFECT_MULTIPLIER) : effect.amount)) : authored.effects.map((effect) => effect.amount);
-  // Stomp is a smash: every smash adds smashPoiseBase to its Poise damage (owner, 2026-10-13).
-  const poiseAt = authored.effects.findIndex((effect) => effect.op === 'poiseDamage');
-  if (poiseAt >= 0) scaledAuthored[poiseAt] += COST_BUDGET.smashPoiseBase;
+  // Stomp already authors Poise damage, so Smash preserves that scaled amount without another fallback.
+  assert.ok(authored.effects.some(effect => effect.op === 'poiseDamage'));
+  assert.equal(dealt.effects.filter(effect => effect.op === 'poiseDamage').length, 1);
   assert.deepEqual(dealt.effects.map((effect) => effect.amount), scaledAuthored,
     'untouched defaults keep its numbers on the magical side, after the action-cost step');
   const tuned = createRegistries(configuredContentBundle(bundle, { 'gameConfig.balance.damage.potencyCards.globalMultiplier': 5 }));
@@ -412,4 +413,37 @@ test('a card a staff package deals resolves through the magical formulas', () =>
     'the PR formula moves it');
   const physical = resolveCard(tuned, { cardId: 'stomp', legacyAbility: true });
   assert.equal(physical.effects[0].amount, scaledFor(physical, authored.effects[0].amount), 'and not its physical face (after the action-cost step)');
+});
+
+
+test('fixed upgrades preserve authored value deltas while advanced settings still retune their base budget', () => {
+  for (const multiplier of [1, 2]) {
+    const bundle = configuredContentBundle(contentBundle, {
+      'gameConfig.balance.damage.attackCards.actionCostMultiplier': multiplier,
+    });
+    const reg = createRegistries(bundle);
+    const base = resolveCard(reg, { cardId: 'hewingArc' });
+    const upgraded = resolveCard(reg, { cardId: 'hewingArc', upgraded: true });
+    assert.equal(base.cost, 2);
+    assert.equal(upgraded.cost, 3, 'actual upgraded payment is preserved');
+    assert.equal(base.effects[0].amount, 6 + (multiplier - 1) * 2);
+    assert.equal(upgraded.effects[0].amount, 8 + (multiplier - 1) * 2);
+  }
+});
+
+
+test('fixed upgrade effect valuation leaves preview and live payment at its authored price', async () => {
+  const { createCombat, dispatch, previewCard } = await import('../src/engine/combat.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const reg = createRegistries(contentBundle);
+  const combat = createCombat({ registries: reg, rng: createRng(70), enemyIds: ['wanderingSoldier'],
+    player: { classId: 'reaver', hp: 100, maxHp: 100, energyMax: 10, mana: 10, maxMana: 10, drawPerTurn: 1,
+      deck: [{ cardId: 'hewingArc', upgraded: true, instanceId: 'fixed-upgrade' }] } });
+  const shown = previewCard(combat, 'fixed-upgrade');
+  assert.equal(shown.cost, 3);
+  assert.equal(shown.resolvedDefinition.effects[0].amount, 8);
+  const energy = combat.player.energy;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'fixed-upgrade' });
+  assert.equal(combat.player.energy, energy - 3);
+  assert.equal(combat.eventLog.find(e => e.type === 'cardPlayed').energySpent, 3);
 });

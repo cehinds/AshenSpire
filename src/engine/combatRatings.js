@@ -1,5 +1,7 @@
+import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { ratingReceipt, ratingValue, sourceRatingValue, attackImpact, isMagicalAttack, isMagicalHit } from '../model/combatRatings.js';
 import * as Properties from './properties.js';
+import { allocateInteger } from '../model/combatRules.js';
 import { passiveMult, passiveSum } from '../model/registries.js';
 import { usesSingleBreakMeter, breakMeterIds } from '../model/breakMeter.js';
 import * as Matchups from './combatMatchups.js';
@@ -21,6 +23,10 @@ export function refreshCombatRatings(ctx) {
   }
   ctx.player.ratings = receipt.totals;
   ctx.player.ratingSources = receipt.sources;
+  if (fixCoreEnabled(ctx)) {
+    ctx.player.baseEvasionBonus = receipt.baseEvasionBonus || 0;
+    ctx.player.basePrecisionBonus = receipt.basePrecisionBonus || 0;
+  }
   if (usesSingleBreakMeter(ctx)) { delete ctx.player.wardMeter; delete ctx.player.wardGuard; delete ctx.player.arcaneExposure; }
   for (const id of breakMeterIds(ctx)) {
     const key = id + 'Meter';
@@ -116,6 +122,7 @@ export function applyRatingImpact(ctx, source, target, carrier, explicitAmount =
  * "Staggered" means, shared by the rating meter and breakEnemy.
  */
 export function enqueueStaggerOnFill(ctx, enemy) {
+  if (fixCoreEnabled(ctx)) return; // staggerEnemy owns the versioned additive riders.
   const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
   for (const eff of cfg.onFill || []) {
     ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: {} });
@@ -188,4 +195,27 @@ export function cardRatingBonus(ctx, source, carrier, op, base = 0) {
   if (op === 'block' && (carrier.type === 'skill' || magical)) return value(magical ? 'pr' : 'dr');
   if (op === 'heal' && magical) return value('pr');
   return 0;
+}
+
+/**
+ * Split spell defenses scale Block with Defense and Ward with Power.
+ * A shared total cap proportionally allocates the available rating bonus;
+ * source-scoped equipment and status ratings use their existing reader.
+ */
+export function spellDefenseRatingBonuses(ctx, source, carrier, base = 0) {
+  if (!source || !carrier?.cardId) return { block: 0, ward: 0 };
+  if (!ctx.ratingsRules || !source.ratings) {
+    const fallback = cardRatingBonus(ctx, source, carrier, 'block', base);
+    return carrier.ratingId === 'dr' ? { block: fallback, ward: 0 } : { block: 0, ward: fallback };
+  }
+  const scoped = !!carrier.equipmentRole;
+  const dr = sourceRatingValue(ctx, source, 'dr', carrier.sourceArmamentId, scoped);
+  const pr = sourceRatingValue(ctx, source, 'pr', carrier.sourceArmamentId, scoped);
+  const sum = dr + pr;
+  if (!(sum > 0)) return { block: 0, ward: 0 };
+  const capped = Number.isFinite(carrier.ratingCap)
+    ? Math.max(0, Math.min(sum, carrier.ratingCap - base)) : sum;
+  if (capped >= sum) return { block: dr, ward: pr };
+  const [block, ward] = allocateInteger(capped, [dr, pr]);
+  return { block, ward };
 }

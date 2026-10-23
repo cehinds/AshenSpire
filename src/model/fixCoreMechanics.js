@@ -1,0 +1,208 @@
+import { rangePolicyProblems } from './combatEngagement.js';
+// Browser-safe rules adapter. Authored JSON is compiled by content-build; no
+// combat state, RNG or rounding is owned by this module.
+import { fixCoreMechanics as defaults } from '../content/generated/fixCoreMechanics.js';
+import { fixCoreProtection } from '../content/generated/fixCoreProtection.js';
+import { compileBindings, evaluateModifiers, queryBinding, parameterDefaults } from './mechanicsKernel.js';
+const mechanics = new Map(fixCoreProtection);
+const behaviorTags = new Set(fixCoreProtection.map(([, row]) => row.manifest.tag));
+
+const families = ['stance','accuracy','perception','statuses','actionCosts'];
+export function fixCoreModuleParameters(rules = defaults) {
+  return { ...rules.protectionParameters, ...Object.fromEntries(families.map(id => [`combat.${id}`,
+    id === 'actionCosts' ? {enemyHealBlockCost:rules.enemyHealBlockCost} : rules[id]])) };
+}
+// Owner, 2026-10-18: Ward code stays; `ward.enabled: false` in fixCoreMechanics.json switches it off. Missing = on.
+// Owner, 2026-10-18 (D13/D4, ruling 20:09): Poise loses what it absorbed (the damage it prevented) plus any extra Poise damage the hit carries;
+// a Poise break puts the owner in the Staggered stance (-staminaLoss SP, +vulnerableStacks Vulnerable that only
+// extends duration). Missing blocks (saves from before this ruling) fall back to these defaults.
+export const FIXCORE_POISE_DEFAULTS = Object.freeze({ drain: 'prevented' });
+export const FIXCORE_STAGGERED_DEFAULTS = Object.freeze({ stance: true, staminaLoss: 1, vulnerableStacks: 1, extendOnly: true });
+// Owner, 2026-10-19: Counter return = floor(returnFraction x incoming damage), Poise = floor(poiseFraction x return); with advantage
+// the return gains floor(advantageIncomingFraction x incoming), Poise uses advantagePoiseFraction and the owner gains
+// floor(advantageBlockFraction x incoming) Block. Enemy-turn reactions in an already matching stance cost handCostDiscount less SP (floor 0).
+export const FIXCORE_COUNTER_DEFAULTS = Object.freeze({ returnFraction: 0.5, poiseFraction: 0.2, advantageIncomingFraction: 0.25, advantagePoiseFraction: 0.5, advantageBlockFraction: 0.25 });
+export const FIXCORE_REACTION_DEFAULTS = Object.freeze({ handCostDiscount: 1 });
+export const fixCoreCounterRules = rules => ({ ...FIXCORE_COUNTER_DEFAULTS, ...(rules?.counter || {}) });
+export const fixCoreReactionRules = rules => ({ ...FIXCORE_REACTION_DEFAULTS, ...(rules?.reaction || {}) });
+export const fixCorePoiseRules = rules => ({ ...FIXCORE_POISE_DEFAULTS, ...(rules?.poise || {}) });
+export const fixCoreStaggeredRules = rules => ({ ...FIXCORE_STAGGERED_DEFAULTS, ...(rules?.staggered || {}) });
+// Owner, 2026-10-19: a Smash against a defensive stance deals damageMultiplier x its normal damage plus blockFraction of the target's Block,
+// and costs the target's Poise poiseFraction of that total (instead of the 25% Poise absorption). Missing blocks keep these defaults.
+export const FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS = Object.freeze({ damageMultiplier: 1.25, blockFraction: 0.25, poiseFraction: 0.5 });
+export const fixCoreSmashVsDefensiveRules = rules => ({ ...FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS, ...(rules?.smashVsDefensive || {}) });
+export const fixCoreWardEnabled = rules => rules?.ward?.enabled !== false;
+const OLD_PERCEPTION_FIELDS = ['levelBaseline','intelligenceBaseline','levelWeight','intelligenceWeight'];
+// Pure v1 -> current migration for persisted rules: a perception block saved
+// before bonuses[] keeps baseDC, drops the four retired fields and gets
+// bonuses: []. Current-shape rules are returned untouched (same object).
+const OLD_ACCURACY_FIELDS = ['evasionPerStack','precisionPerStack'];
+export function normalizeFixCoreRules(rules) {
+  let out = rules;
+  const p = rules?.perception;
+  if (p && typeof p === 'object' && OLD_PERCEPTION_FIELDS.some(key => Object.hasOwn(p, key))) {
+    const perception = { ...p };
+    for (const key of OLD_PERCEPTION_FIELDS) delete perception[key];
+    if (perception.bonuses === undefined) perception.bonuses = [];
+    out = { ...out, perception };
+  }
+  // Retired fields and the shipped unversioned 1 + DEX grant are normalized
+  // without changing caller snapshots or intentional version-2 overrides.
+  const a = rules?.accuracy;
+  if (a && typeof a === 'object' && (a.evasionVersion === undefined || OLD_ACCURACY_FIELDS.some(key => Object.hasOwn(a, key)))) {
+    const accuracy = { ...a };
+    if (OLD_ACCURACY_FIELDS.some(key => Object.hasOwn(a, key))) {
+      for (const key of OLD_ACCURACY_FIELDS) delete accuracy[key];
+      for (const [key, value] of Object.entries(defaults.accuracy)) if (accuracy[key] === undefined && !['maneuverPrecision','stanceMinimum','stanceMaximum','stanceAdvantageBonus'].includes(key)) accuracy[key] = structuredClone(value);
+    }
+    if (a.evasionVersion === undefined) {
+      if (a.evadeStackBase === 1 && a.evadeStackDex === 1) accuracy.evadeStackDex = 0;
+      accuracy.evasionVersion = 2;
+    }
+    out = { ...out, accuracy };
+  }
+  return out;
+}
+const rawRules = ctx => normalizeFixCoreRules(ctx?.fixCoreRules || ctx?.gameProfile?.fixCoreRules || defaults);
+export function validateFixCoreRules(rules) {
+  if (rules?.version !== 1 || typeof rules.enabled !== 'boolean') throw new Error('FixCore rules require version 1 and enabled');
+  const known = new Set(['version','enabled','range','ward','poise','staggered','smashVsDefensive','counter','reaction','defaultTags','protectionParameters',...families.filter(id=>id!=='actionCosts'),'enemyHealBlockCost']);
+  if (rules.ward !== undefined && (typeof rules.ward !== 'object' || rules.ward === null || typeof rules.ward.enabled !== 'boolean' || Object.keys(rules.ward).some(key => key !== 'enabled'))) throw new Error('FixCore ward requires {enabled:boolean}');
+  if (rules.range !== undefined && rangePolicyProblems(rules.range).length) throw new Error('FixCore range requires a valid versioned range policy');
+  const poise = rules.poise, stag = rules.staggered;
+  if (poise !== undefined && (typeof poise !== 'object' || poise === null || poise.drain !== 'prevented' || Object.keys(poise).some(key => key !== 'drain'))) throw new Error('FixCore poise requires {drain:"prevented"}');
+  if (stag !== undefined && (typeof stag !== 'object' || stag === null || typeof stag.stance !== 'boolean' || typeof stag.extendOnly !== 'boolean' || !Number.isInteger(stag.staminaLoss) || stag.staminaLoss < 0 || !Number.isInteger(stag.vulnerableStacks) || stag.vulnerableStacks < 0 || Object.keys(stag).some(key => !['stance','staminaLoss','vulnerableStacks','extendOnly'].includes(key)))) throw new Error('FixCore staggered requires {stance:boolean, staminaLoss:int, vulnerableStacks:int, extendOnly:boolean}');
+  const fractions = (name, row, keys) => { if (row !== undefined && (typeof row !== 'object' || row === null || Object.keys(row).some(key => !keys.includes(key) || !Number.isFinite(row[key]) || row[key] < 0))) throw new Error(`FixCore ${name} requires non-negative numbers for ${keys.join(', ')}`); };
+  fractions('counter', rules.counter, Object.keys(FIXCORE_COUNTER_DEFAULTS));
+  if (rules.reaction !== undefined && (typeof rules.reaction !== 'object' || rules.reaction === null || Object.keys(rules.reaction).some(key => key !== 'handCostDiscount') || !Number.isInteger(rules.reaction.handCostDiscount) || rules.reaction.handCostDiscount < 0)) throw new Error('FixCore reaction requires {handCostDiscount:int >= 0}');
+  const smash = rules.smashVsDefensive;
+  if (smash !== undefined && (typeof smash !== 'object' || smash === null || Object.keys(smash).some(key => !['damageMultiplier','blockFraction','poiseFraction'].includes(key))
+    || ![smash.damageMultiplier,smash.blockFraction,smash.poiseFraction].every(v => typeof v === 'number' && Number.isFinite(v)) || smash.damageMultiplier < 1 || smash.blockFraction < 0 || smash.poiseFraction < 0)) throw new Error('FixCore smashVsDefensive requires {damageMultiplier>=1, blockFraction>=0, poiseFraction>=0}');
+  for(const key of Object.keys(rules)) if(!known.has(key)) throw new Error(`FixCore unknown configuration field ${key}`);
+  for (const tag of rules.defaultTags || []) if (!behaviorTags.has(tag)) throw new Error(`FixCore unknown behavior tag ${tag}`);
+  compileBindings({mechanics,moduleParameters:fixCoreModuleParameters(rules),attachments:[{
+    ownerId:'rules',sourceInstanceId:'rules',kind:'run',tags:families.map(id=>`combat:${id}`)}]});
+  return rules;
+}
+validateFixCoreRules(defaults);
+// Only active sources enter this adapter: worn mounts, current status instances,
+// an actor and an optional card's play window. Inventory is never consulted.
+export function fixCoreAttachments(ctx,entity,carrier=null) {
+  if (!entity) return [];
+  const rules=rawRules(ctx), ownerId=ctx?.playerIdForEntity?.(entity) || entity.id;
+  const table=entity.kind==='enemy' ? ctx?.registries?.enemies : null;
+  const definitionId=entity.enemyId || entity.classId;
+  const definition=table?.has?.(definitionId) ? table.get(definitionId) : {};
+  const rows=[{ownerId,sourceInstanceId:ownerId,kind:'entity',tags:entity.mechanicTags ?? definition.mechanicTags ?? (fixCoreWardEnabled(rules) ? rules.defaultTags : (rules.defaultTags || []).filter(tag => tag !== 'defense:wardProtection')),
+    mechanicBindings:entity.mechanicBindings ?? definition.mechanicBindings ?? []}];
+  for(const [id,mount] of Object.entries(ctx?.propertyMounts?.[ownerId] || {})) rows.push({ownerId,sourceInstanceId:id,
+    kind:({armour:'gear',armament:'gear',sigil:'gear',class:'character',feat:'character',companion:'entity'})[mount.kind] || mount.kind,
+    label:mount.name,tags:mount.mechanicTags || mount.scopeTags || [],mechanicBindings:mount.mechanicBindings || []});
+  for(const [id,instance] of Object.entries(entity.statuses || {})) {
+    if (!(instance.stacks>0 || instance.meter?.value>0)) continue;
+    const def=ctx?.registries?.statuses?.get(id);
+    if(def?.mechanicTags || def?.mechanicBindings) rows.push({ownerId,sourceInstanceId:`status:${id}`,kind:'status',tags:def.mechanicTags || [],mechanicBindings:def.mechanicBindings || []});
+  }
+  if(carrier && (carrier.mechanicTags || carrier.mechanicBindings)) rows.push({ownerId,sourceInstanceId:`card:${carrier.instanceId || carrier.cardId || carrier.moveId || 'active'}`,kind:'card',tags:carrier.mechanicTags || [],mechanicBindings:carrier.mechanicBindings || []});
+  return rows;
+}
+export function fixCoreRules(ctx,entity=null,carrier=null) {
+  const raw=rawRules(ctx), moduleParameters=fixCoreModuleParameters(raw);
+  if(raw!==defaults) validateFixCoreRules(raw);
+  const bindings=compileBindings({mechanics,moduleParameters,attachments:[{ownerId:'rules',sourceInstanceId:'rules',kind:'run',tags:families.map(id=>`combat:${id}`)},...fixCoreAttachments(ctx,entity,carrier)]});
+  const result={...raw};
+  for(const family of families) {
+    const candidates=bindings.filter(binding=>binding.mechanicId===`combat.${family}`);
+    const attached=candidates.filter(binding=>binding.ownerId!=='rules');
+    // Config queries are exclusive replacements. Ambiguous equipped sources
+    // are rejected instead of silently taking an object iteration winner.
+    if(attached.length>1) throw new Error(`Conflicting ${family} rule attachments: ${attached.map(row=>row.sourceInstanceId).join(', ')}`);
+    const value=queryBinding(attached[0] || candidates[0],'parameters');
+    if(family==='actionCosts') result.enemyHealBlockCost=value.enemyHealBlockCost;else result[family]=value;
+  }
+  return result;
+}
+export function fixCoreEnabled(ctx) { return ctx?.combatExpansionVersion === 2 && (ctx?.fixCoreRules?.version === 1 || ctx?.gameProfile?.modules?.effects?.fixCoreVersion === 1) && rawRules(ctx).enabled; }
+/** True when FixCore is active and the data toggle has switched Ward off. */
+export function fixCoreWardDisabled(ctx) { return fixCoreEnabled(ctx) && !fixCoreWardEnabled(rawRules(ctx)); }
+export function protectionBindings(ctx, entity, carrier=null) {
+  return compileBindings({ mechanics, attachments:fixCoreAttachments(ctx,entity,carrier), moduleParameters:fixCoreModuleParameters(rawRules(ctx)) });
+}
+export function protectionReceipt(ctx, entity, kind, amount) {
+  // Detached preview targets may omit inactive pools. Normalize only the
+  // read model; live entities and strict mechanic reference validation stay intact.
+  const owner = entity ? {...entity, persistentWard: entity.persistentWard ?? {value:0,max:0},
+    persistentPoise: entity.persistentPoise ?? {value:0,max:0}} : entity;
+  const ownerId = ctx?.playerIdForEntity?.(entity) || entity?.id;
+  const receipt = evaluateModifiers({ bindings: fixCoreEnabled(ctx) && amount > 0 ? protectionBindings(ctx, entity) : [],
+    phase: 'damage.mitigation', subjectId: ownerId, context: { owner, damageKind: kind }, amount, quantity: true });
+  const sources = [...receipt.sources];
+  if (receipt.rounding) sources.push({ id: 'rounding', label: 'Final damage rounding', stage: 'rounding', operation: 'add', amount: receipt.rounding });
+  // Poise cannot absorb more than it holds (owner, 2026-10-18 20:09): the rest of the hit gets through.
+  const held = kind === 'physical' && owner?.persistentPoise ? Math.max(0, owner.persistentPoise.value) : Infinity;
+  let reduced = Math.max(0, amount - receipt.amount), taken = receipt.amount;
+  if (reduced > held) { taken += reduced - held; sources.push({ id: 'poise-cap', label: 'Poise cannot absorb more than it holds', stage: 'mitigation', operation: 'add', amount: reduced - held }); reduced = held; }
+  return { ...receipt, amount: taken, reduced, sources };
+}
+export function damageReceipt(targetId, hits) {
+  return { version: 1, targetId, hits, totalDamage: hits.reduce((sum, hit) => sum + hit.hpLoss, 0) };
+}
+
+// Read-only status projection for cards, PIPs, logs and inspectors. The base
+// registry is explicit so UI facades cannot recursively query themselves.
+/** The off-combat phrase for Evade's configured (and card-scoped) stack grant. */
+export function evadeStackGainPhrase(ctx, carrier = null) {
+  const { evadeStackBase: base, evadeStackDex: dex } = fixCoreRules(ctx, { id: 'card-face' }, carrier).accuracy;
+  return dex === 0 ? String(base) : `${base} plus ${dex === 1 ? '' : dex + '× '}DEX`;
+}
+/** A card whose whole authored rule is its configured self Evade grant. */
+export const evadeGrantOnlyCard = def => def.effects?.length === 1 && def.effects[0].op === 'applyStatus'
+  && def.effects[0].status === 'evade' && def.effects[0].target === 'self'
+  && Object.keys(def.effects[0]).every(key => ['op', 'target', 'status', 'stacks'].includes(key))
+  && def.effects[0].stacks?.f === 'metric' && def.effects[0].stacks.metric === 'evadeStackGain'
+  && def.effects[0].stacks.of === 'self'
+  && Object.keys(def.effects[0].stacks).every(key => ['f', 'metric', 'of'].includes(key));
+export function fixCoreStatusDefinition(ctx, id, baseDefinition, holder = null) {
+  const base = baseDefinition ?? ctx?.registries?.statuses?.get(id);
+  if (!fixCoreEnabled(ctx)) return base;
+  const rules = fixCoreRules(ctx, holder), overrides = rules.statuses.overrides?.[id];
+  const row = overrides ? {...base,...overrides} : {...base};
+  const facts = {
+    weak: `Attack rating ×${rules.statuses.weakARMultiplier} while active.`,
+    vulnerable: `Damage taken ×${rules.statuses.vulnerabilityMultiplier} while active.`,
+    staggered: `Poise broke: lose ${fixCoreStaggeredRules(rules).staminaLoss} SP next turn and gain ${fixCoreStaggeredRules(rules).vulnerableStacks} Vulnerable. Repeat breaks only extend Vulnerable.`,
+    evade: `Each stack adds ${rules.accuracy.baseAC} + DEX to fixed Evasion. Only attacks roll.`,
+    precision: `Each stack adds another multiple of your Precision score (attributes and level) to your Precision roll.`,
+  };
+  if (id === 'precision') row.tooltip = row.description = `${facts[id]} Applications add stacks. Expires at the end of the owner's turn unless the granting effect is Persistent. Does not increase damage.`;
+  else if (id === 'staggered') row.tooltip = row.description = facts[id];
+  else if (facts[id]) row.tooltip = row.description = `${facts[id]} Applications add stacks. Lose ${rules.statuses.decayAmount} stack at the start of the owner's turn each round.`;
+  return row;
+}
+
+export function fixCoreProtectionDescription(ctx,entity,kind) {
+  if (!fixCoreEnabled(ctx) || !entity) return null;
+  const damageKind = kind === 'ward' || kind === 'magical' ? 'magical' : 'physical';
+  // A deep pool, so the percentages shown are the uncapped absorbed shares.
+  const shadow = {...entity,persistentWard:{...entity.persistentWard,value:1000},persistentPoise:{...entity.persistentPoise,value:1000}};
+  const receipt = protectionReceipt(ctx,shadow,damageKind,100);
+  const restores = fixCoreWardDisabled(ctx) ? 'Poise' : 'both Poise and Ward';
+  // Owner, 2026-10-18 20:09: Poise absorbs a share of each hit and loses exactly what it absorbed.
+  const spends = 'The damage it absorbs is taken off the pool, and when the pool is empty the owner is Staggered.';
+  if (fixCoreWardDisabled(ctx)) {
+    const poise = protectionReceipt(ctx,shadow,'physical',100);
+    return `While active, Poise takes ${poise.reduced}% off each hit (you take the rest, rounded down) and loses what it absorbed. ${spends} Block cards restore Poise by their Block amount, up to its maximum.`;
+  }
+  return `While active, absorbs ${receipt.reduced}% of ${damageKind} damage. ${spends} Block cards restore ${restores} by their Block amount, up to each maximum.`;
+}
+
+export function snapshotFixCoreRules(ctx) {
+  const rules=structuredClone(fixCoreRules(ctx));
+  rules.protectionParameters=Object.fromEntries(fixCoreProtection.filter(([id])=>id.startsWith('defense.')).map(([id,row])=>[id,{...parameterDefaults(row.manifest.parameters),...(rules.protectionParameters?.[id] || {})}]));
+  return validateFixCoreRules(rules);
+}
+
+/** The combat stance a Staggered owner stands in until its next turn begins (shared by live play and previews). */
+// It carries the resolved costs so the inspector row reads the profile's numbers, not hard-coded ones.
+export const fixCoreStaggeredStance = (entity, rules = FIXCORE_STAGGERED_DEFAULTS) => ({ maneuver: 'staggered', camp: 'physical', range: 'melee', staggered: true,
+  staminaLoss: rules.staminaLoss, vulnerableStacks: rules.vulnerableStacks, expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + 1 });

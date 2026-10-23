@@ -107,6 +107,6 @@ console.log(`PASS ${checks}/${checks}; every card owes two beats and the selecti
   assert.deepEqual(layout.layers.slice(0, 3).map(l => l.id), ['base', 'art', 'panel']);
   assert.equal(layout.layers.find(l => l.id === 'art').clip, true);
   assert.ok(layout.layers.find(l => l.id === 'flag').x < 0, 'the cost flag extends beyond the base');
-  assert.equal(layout.layers.find(l => l.bind === 'rules').maxLines, 2);
+  assert.equal(layout.layers.find(l => l.bind === 'rules').maxLines, 3);
   assert.match(read('styles/illustrated-cards.css'), /overflow:visible/, 'the host preserves the projecting flag');
 }

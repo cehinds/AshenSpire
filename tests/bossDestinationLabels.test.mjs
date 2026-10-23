@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
@@ -49,19 +50,21 @@ for (const replaceEnemies of [false, true]) {
     assert.equal(typeof run.savedAt, 'string');
     assert.equal(JSON.stringify({ ...run, savedAt: undefined }), before);
 
-    const host = createSession({ registries: original, seedString: 'GOLDBOUGH', firstSeat: 'weald' });
-    host.addMember({ id: 'p1', name: 'Label tester', classId: 'reaver' }); host.start();
-    const saved = structuredClone(host.serialize());
-    const terminal = saved.mapGraph.bossIds.find((id) => saved.mapGraph.nodes[id].encounterId === 'bossBellKeeper');
-    saved.cursorId = saved.mapGraph.shrineId; saved.reachableIds = [terminal];
-    const savedBytes = JSON.stringify(saved);
-    const restored = restoreSession(current, saved);
-    assert.equal(restored.snapshot().map.nodes.find((node) => node.id === terminal).destinationLabel, expected);
-    const roundTrip = restored.serialize();
-    assert.deepEqual(withoutLabels(roundTrip.mapGraph), withoutLabels(saved.mapGraph));
-    assert.deepEqual(roundTrip.rng, saved.rng);
-    assert.equal(roundTrip.cursorId, saved.cursorId);
-    assert.equal(JSON.stringify(saved), savedBytes);
+    if (COOP_TESTS_ENABLED) {
+      const host = createSession({ registries: original, seedString: 'GOLDBOUGH', firstSeat: 'weald' });
+      host.addMember({ id: 'p1', name: 'Label tester', classId: 'reaver' }); host.start();
+      const saved = structuredClone(host.serialize());
+      const terminal = saved.mapGraph.bossIds.find((id) => saved.mapGraph.nodes[id].encounterId === 'bossBellKeeper');
+      saved.cursorId = saved.mapGraph.shrineId; saved.reachableIds = [terminal];
+      const savedBytes = JSON.stringify(saved);
+      const restored = restoreSession(current, saved);
+      assert.equal(restored.snapshot().map.nodes.find((node) => node.id === terminal).destinationLabel, expected);
+      const roundTrip = restored.serialize();
+      assert.deepEqual(withoutLabels(roundTrip.mapGraph), withoutLabels(saved.mapGraph));
+      assert.deepEqual(roundTrip.rng, saved.rng);
+      assert.equal(roundTrip.cursorId, saved.cursorId);
+      assert.equal(JSON.stringify(saved), savedBytes);
+    }
   });
 }
 

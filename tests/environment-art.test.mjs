@@ -7,7 +7,7 @@ const SHIPPED = manifestIds();
 import { ENVIRONMENTS, MEGA_MAPS, ENVIRONMENT_ATLAS_SIZE } from '../src/content/environments.js';
 import { regionForRun, combatEnvironment, worldMapForRun } from '../src/model/environmentArt.js';
 import { mapTerrainHtml } from '../src/ui/components/environmentArt.js';
-import { mapKnowledge } from '../src/model/mapknowledge.js';
+import { mapKnowledge } from '../src/model/map/mapknowledge.js';
 
 test('all five regions and twenty scenes are reachable without changing the run', () => {
   const seen = new Set();

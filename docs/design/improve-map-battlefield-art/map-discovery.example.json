@@ -1,0 +1,315 @@
+{
+  "formatVersion": 1,
+  "status": "proposal-only",
+  "worldFile": "hex-art.example.json",
+  "description": "Companion proposal: art assets and gameplay hooks are not implemented. No new keys are added to the existing world schema.",
+  "mapLayersBottomToTop": [
+    "terrain",
+    "water-and-roads",
+    "props-by-ground-anchor",
+    "fog-and-discovery",
+    "selection-and-optional-labels"
+  ],
+  "placement": {
+    "scope": "optional-landmarks",
+    "chancePerEligibleTile": 0.25,
+    "maxOccupiedFractionOfEligibleTiles": 0.3,
+    "maxOptionalLandmarksPerTile": 1,
+    "minimumHexDistanceBetweenSamePropType": 3,
+    "emptyTileIsValid": true,
+    "excludeTilesWithAuthoredLandmarks": true,
+    "seedDomain": "map-props-v1",
+    "persistPerRun": true
+  },
+  "sections": [
+    {
+      "id": "western-road",
+      "tileIds": [
+        "west-city",
+        "crossroads",
+        "ruined-watch"
+      ]
+    },
+    {
+      "id": "forest-approach",
+      "tileIds": [
+        "forest-edge",
+        "sheltered-clearing"
+      ]
+    },
+    {
+      "id": "jungle-road",
+      "tileIds": [
+        "jungle-road",
+        "east-city"
+      ]
+    }
+  ],
+  "visibilityRules": {
+    "terrain-known": {
+      "trigger": "terrain-revealed",
+      "mapItemsMayRevealMarker": true
+    },
+    "section-entered": {
+      "trigger": "first-entry-into-owning-section",
+      "mapItemsMayRevealMarker": false
+    },
+    "tile-entered": {
+      "trigger": "first-entry-into-owning-tile",
+      "mapItemsMayRevealMarker": false
+    },
+    "treasure-clue": {
+      "trigger": "first-entry-into-owning-tile",
+      "mapItemsMayRevealMarker": true,
+      "mapItemRevealMode": "marker-only"
+    }
+  },
+  "propTypes": [
+    {
+      "id": "bridge",
+      "name": "Stone bridge",
+      "category": "crossing",
+      "pngAssetId": null,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "requiresAll": [
+        "water-crossing",
+        "connected-banks"
+      ],
+      "visibilityRuleId": "terrain-known"
+    },
+    {
+      "id": "town",
+      "name": "Town",
+      "category": "settlement",
+      "pngAssetId": null,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "requiresAll": [
+        "settlement"
+      ],
+      "visibilityRuleId": "terrain-known"
+    },
+    {
+      "id": "ruins",
+      "name": "Ruins",
+      "category": "landmark",
+      "pngAssetId": null,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "requiresAll": [
+        "ruins"
+      ],
+      "visibilityRuleId": "terrain-known"
+    },
+    {
+      "id": "cave",
+      "name": "Cave entrance",
+      "category": "adventure",
+      "pngAssetId": null,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "requiresAll": [
+        "rock-face"
+      ],
+      "visibilityRuleId": "section-entered"
+    },
+    {
+      "id": "treasure",
+      "name": "Treasure cache",
+      "category": "accessory",
+      "pngAssetId": null,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "requiresAll": [
+        "reachable"
+      ],
+      "visibilityRuleId": "treasure-clue"
+    },
+    {
+      "id": "enemy-camp",
+      "name": "Enemy camp",
+      "category": "encounter",
+      "pngAssetId": null,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "requiresAll": [
+        "reachable",
+        "camp-space"
+      ],
+      "visibilityRuleId": "section-entered"
+    },
+    {
+      "id": "rest-camp",
+      "name": "Rest camp",
+      "category": "service",
+      "pngAssetId": null,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "requiresAll": [
+        "clearing",
+        "sheltered"
+      ],
+      "visibilityRuleId": "section-entered"
+    },
+    {
+      "id": "portal",
+      "name": "Portal",
+      "category": "transport",
+      "pngAssetId": null,
+      "anchor": {
+        "x": 0.5,
+        "y": 0.85
+      },
+      "requiresAll": [
+        "portal-site",
+        "paired-destination"
+      ],
+      "visibilityRuleId": "tile-entered"
+    }
+  ],
+  "authoredProps": [
+    {
+      "id": "westwatch-town",
+      "tileId": "west-city",
+      "propTypeId": "town",
+      "sectionId": "western-road",
+      "spawnCondition": "always"
+    },
+    {
+      "id": "canopy-town",
+      "tileId": "east-city",
+      "propTypeId": "town",
+      "sectionId": "jungle-road",
+      "spawnCondition": "always"
+    },
+    {
+      "id": "broken-watch-ruin",
+      "tileId": "ruined-watch",
+      "propTypeId": "ruins",
+      "sectionId": "western-road",
+      "spawnCondition": "always"
+    },
+    {
+      "id": "watch-cache",
+      "tileId": "ruined-watch",
+      "propTypeId": "treasure",
+      "sectionId": "western-road",
+      "spawnCondition": "always"
+    },
+    {
+      "id": "lantern-rest",
+      "tileId": "sheltered-clearing",
+      "propTypeId": "rest-camp",
+      "sectionId": "forest-approach",
+      "spawnCondition": "saved-rest-discovery-succeeded"
+    }
+  ],
+  "mapItems": [
+    {
+      "id": "greenward-fragment",
+      "name": "Greenward Map Fragment",
+      "description": "Reveal a connected forest/jungle pocket.",
+      "target": {
+        "kind": "connected-tiles",
+        "tileIds": [
+          "forest-edge",
+          "jungle-road",
+          "sheltered-clearing"
+        ]
+      },
+      "reveals": [
+        "terrain",
+        "terrain-known-props"
+      ],
+      "doesNotReveal": [
+        "section-entered-props",
+        "tile-entered-props",
+        "treasure-clue-props"
+      ],
+      "consumePolicy": "on-new-information"
+    },
+    {
+      "id": "greenward-road-chart",
+      "name": "Greenward Road Chart",
+      "description": "Trace the existing road between the two cities.",
+      "target": {
+        "kind": "existing-road",
+        "roadId": "greenward-road"
+      },
+      "reveals": [
+        "road-ribbon",
+        "road-endpoints"
+      ],
+      "doesNotReveal": [
+        "off-route-terrain",
+        "concealed-props"
+      ],
+      "consumePolicy": "on-new-information"
+    },
+    {
+      "id": "watch-treasure-sketch",
+      "name": "Sketch of the Broken Watch",
+      "description": "Mark an existing cache without granting its reward.",
+      "target": {
+        "kind": "existing-prop",
+        "propId": "watch-cache"
+      },
+      "reveals": [
+        "target-marker"
+      ],
+      "doesNotReveal": [
+        "surrounding-terrain",
+        "encounters",
+        "reward-contents"
+      ],
+      "consumePolicy": "on-new-information"
+    }
+  ],
+  "rewardSuggestions": [
+    {
+      "id": "cartographer-fragment-offer",
+      "sourceTileId": "west-city",
+      "sourceKind": "cartographer-trade",
+      "mapItemId": "greenward-fragment"
+    },
+    {
+      "id": "raider-road-chart-drop",
+      "sourceTileId": "crossroads",
+      "sourceKind": "combat-victory",
+      "chance": 0.2,
+      "mapItemId": "greenward-road-chart"
+    },
+    {
+      "id": "trainer-cache-clue",
+      "sourceTileId": "west-city",
+      "sourceKind": "trainer-side-quest-completed",
+      "mapItemId": "watch-treasure-sketch"
+    }
+  ],
+  "savedDiscoveryState": {
+    "terrainKnownTileIds": [],
+    "enteredSectionIds": [],
+    "visitedTileIds": [],
+    "knownPropIds": [],
+    "discoveredPropIds": [],
+    "clearedPropIds": [],
+    "claimedPropIds": [],
+    "knownRoadIds": [],
+    "usedMapRewardIds": []
+  }
+}

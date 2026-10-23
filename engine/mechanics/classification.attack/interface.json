@@ -1,0 +1,8 @@
+{
+  "mechanic": "classification.attack",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

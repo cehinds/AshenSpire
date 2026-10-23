@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { renderCard } from '../src/ui/components/card.js';
+import { illustratedCardHtml } from '../src/ui/components/illustratedCard.js';
 import { applyCardTraits } from '../src/content/traitProjection.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -42,13 +43,45 @@ test('a card without a preview renders face lines starting with Inflict', () => 
   assert.match(textOf(lines[0]), /^Inflict /);
 }));
 
+test('every printed surface moves automatic bonuses to tags and retains distinct authored Precision', () => withKitDom(dom => {
+  const markup = trackInnerHtml(dom);
+  const definition = { ...previewOf('bashingBlow').resolvedDefinition,
+    effects: [...previewOf('bashingBlow').resolvedDefinition.effects,
+      { op: 'applyStatus', status: 'precision', target: 'self', stacks: 2 }] };
+  const printed = (surface, level) => markup.get(renderCard(reg, { cardId: 'bashingBlow' },
+    { definition, surface, level, inspection: false }));
+  const face = (surface, level) => faceLinesOf(printed(surface, level)).map(textOf).join(' | ');
+  const hand = face('combat', 'glance');
+  assert.doesNotMatch(hand, /Entry:/);
+  assert.match(hand, /Precision 2/, 'an authored Precision effect remains on the hand face');
+  assert.match(hand, /Inflict/, 'the attack still explains its damage');
+  for (const [surface, level] of [['combat', 'inspect'], ['reward', 'glance']]) {
+    assert.doesNotMatch(face(surface, level), /Entry:/);
+    assert.match(face(surface, level), /Precision 2/, 'a distinct authored grant remains explicit');
+    assert.match(printed(surface, level), /On changing stance, gain 1 Precision/);
+    assert.match(printed(surface, level), /Gain 2 Precision when this effect resolves/);
+  }
+  const defense = markup.get(renderCard(reg, { cardId: 'crystalBarrier' },
+    { definition: previewOf('crystalBarrier').resolvedDefinition, surface: 'combat', level: 'glance', inspection: false }));
+  assert.doesNotMatch(defense, /Entry:/);
+  assert.match(defense, /data-tag-id="status:precision"[^>]*aria-label="Precision 1"/);
+}));
+
 test('the same card with a preview gives the same line text when the numbers are equal', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
-  const plain = faceLinesOf(markup.get(renderCard(reg, { cardId: 'bashingBlow' }, { inspection: false })));
+  const plain = faceLinesOf(markup.get(renderCard(reg, { cardId: 'bashingBlow' },
+    { inspection: false, rules: { combatExpansionVersion: 2 }, definition: previewOf('bashingBlow').resolvedDefinition })));
   const previewed = faceLinesOf(markup.get(renderCard(reg, { cardId: 'bashingBlow' },
     { inspection: false, preview: previewOf('bashingBlow') })));
   assert.deepEqual(previewed.map(textOf), plain.map(textOf));
 }));
+
+test('the shared title fade appears on a base face without adding a sigil footer', () => {
+  const html = illustratedCardHtml({id:'bashingBlow',name:'Test Base Card',costs:{},type:{},sigils:null,sideTags:[],range:null},
+    {rules:'A short rule.'});
+  assert.match(html, /class="card-title-fade"/);
+  assert.doesNotMatch(html, /class="card-footer-backdrop"/);
+});
 
 test('with faceLineLimit 3 a card with more than three lines marks lines 4+ data-face-extra', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
@@ -63,6 +96,23 @@ test('with faceLineLimit 3 a card with more than three lines marks lines 4+ data
     if (i < 3) assert.doesNotMatch(line.attrs, /data-face-extra/, `line ${i + 1} stays visible`);
     else assert.match(line.attrs, /data-face-extra="true"/, `line ${i + 1} is marked extra`);
   });
+}));
+
+test('a compact face keeps at most three rule lines visible and inspection retains every line', () => withKitDom(dom => {
+  const markup = trackInnerHtml(dom);
+  const cardId = reg.cards.all().map(card => card.id).find(id => {
+    const face = renderCard(reg, { cardId: id }, { inspection: false, level: 'glance' });
+    return faceLinesOf(markup.get(face)).length > 3;
+  });
+  assert.ok(cardId, 'a card with more than three face lines exists');
+  const compact = markup.get(renderCard(reg, { cardId }, { inspection: false, level: 'glance' }));
+  const full = markup.get(renderCard(reg, { cardId }, { inspection: false, level: 'inspect' }));
+  assert.match(compact, /data-rules-overflow="true"/);
+  assert.match(compact, /data-face-overflow="true"/);
+  assert.match(compact, /card-rules-inspect-cue/);
+  assert.doesNotMatch(full, /data-face-overflow="true"/);
+  assert.match(full, /card-rules-inspect-cue/, 'inspection can explain a residual geometric overflow too');
+  assert.equal(faceLinesOf(full).length, faceLinesOf(compact).length, 'inspection preserves the full compact-face source text');
 }));
 
 test('the hand hides detail lines until the card is selected; other views show them', () => withKitDom(dom => {

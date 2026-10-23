@@ -1,0 +1,26 @@
+{
+  "id": "status.decoy",
+  "tag": "status.decoy",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Decoy",
+  "description": "Consume one stack to avoid a Single Near/Far damaging action. Status buildup still applies. Sweep and Holy revelation clear it.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.decoy"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatAvoidance.js",
+    "symbol": "previewAvoidance"
+  }
+}

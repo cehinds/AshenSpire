@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 // A chosen ability discard is its own root action outside a reaction, in solo
 // and co-op alike, and stays inside the paused reaction's action otherwise.
 import test from 'node:test';
@@ -32,7 +34,7 @@ function setup(coop) {
 const roots = out => [...new Set(out.events.map(event => event.rootActionId))];
 
 test('a discard chosen outside a reaction starts a new root action in solo and co-op', () => {
-  const results = [false, true].map(coop => {
+  const results = COOP_MODES.map(coop => {
     const { combat, enemy, play, discard } = setup(coop);
     const played = play('sweep', enemy.id);
     assert.ok(combat.pendingAbilityDiscard); assert.equal(combat.reactionResume, undefined);
@@ -49,12 +51,16 @@ test('a discard chosen outside a reaction starts a new root action in solo and c
     assert.equal(combat.pendingAbilityDiscard, undefined);
     return { playRoot, discardRoots: roots(out) };
   });
-  assert.deepEqual(results[0], results[1]);
+  if (COOP_TESTS_ENABLED) assert.deepEqual(results[0], results[1]);
 });
 
 test('a discard chosen while a reaction is paused stays inside the reaction action', () => {
-  const results = [false, true].map(coop => {
+  const results = COOP_MODES.map(coop => {
     const { combat, enemy, play, discard } = setup(coop);
+    // The reaction-lifecycle fixture needs a landed root and return. Keep real
+    // seeded draws; their ordinary non-fumble threshold is deliberately trivial.
+    const owner = coop ? combat.players.get('a').entity : combat.player;
+    for (const actor of [owner, enemy]) { actor.accuracy = 100; actor.evasion = 0; }
     enemy.combatStance = { camp: 'physical', maneuver: 'counter', range: 'melee', targeting: 'single' };
     armCombatCounter(combat, enemy, { moveId: 'returnCarrier',
       tags: ['camp:physical', 'maneuver:counter', 'range:melee', 'targeting:single'],
@@ -77,5 +83,5 @@ test('a discard chosen while a reaction is paused stays inside the reaction acti
     assert.equal(combat.reactionResume, undefined);
     return { reactionRoot, savedRoot, firstRoot: out.events[0]?.rootActionId };
   });
-  assert.deepEqual(results[0], results[1]);
+  if (COOP_TESTS_ENABLED) assert.deepEqual(results[0], results[1]);
 });

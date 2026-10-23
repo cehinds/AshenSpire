@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
+const COOP_MODES = [false, true].filter(coop => !coop || COOP_TESTS_ENABLED);
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -34,7 +36,9 @@ const stored = (c) => JSON.stringify({ snapshot: serializeCombatSnapshot(c), rng
 test('every direct card, attack profile and armament has an explicit categorized source', () => {
   for (const card of regs.cards.all()) {
     if (![...card.effects, ...(card.upgrade?.effects || [])].some((e) => e.op === 'damage')) continue;
-    assert(attackDescriptor(card).source, `card ${card.id} missing source mapping`);
+    for (const effect of [...card.effects, ...(card.upgrade?.effects || [])].filter(e => e.op === 'damage')) {
+      assert(attackDescriptor({ ...card, attack: { ...card.attack, ...effect.attack }, tags: effect.tags || card.tags }).source, `card ${card.id} damage effect missing source mapping`);
+    }
   }
   for (const profile of regs.equipment.basicCardProfiles.filter((p) => p.role === 'attack')) assert(attackDescriptor(profile).source, profile.id);
   for (const item of regs.equipment.armaments) {
@@ -87,7 +91,7 @@ test('explicit wrong-hand spells fail atomically instead of borrowing the sword'
 });
 
 test('solo and co-op capture the focus before a resource-spent event changes it', () => {
-  for (const coop of [false, true]) {
+  for (const coop of COOP_MODES) {
     const input = mixedInput();
     const c = coop ? createCoopCombat({ ...input, players: [{ ...input.player, id: 'p1' }], combatProfiles: {
       p1: input.combatProfiles.player, e1: input.combatProfiles.e1,
@@ -169,7 +173,7 @@ test('save restoration preserves source ownership and exact-preview behavior', (
   assert.deepEqual(dispatch(copy, intent), expected);
 });
 
-test('co-op spells inherit from their own focus rather than another seat or their sword', () => {
+test('co-op spells inherit from their own focus rather than another seat or their sword', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const input = mixedInput();
   const c = createCoopCombat({ ...input, players: [{ ...input.player, id: 'p1' }, { ...input.player, id: 'p2' }], combatProfiles: {
     p1: input.combatProfiles.player,

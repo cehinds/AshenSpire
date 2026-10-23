@@ -1,0 +1,79 @@
+{
+  "action": "weapon:attack:sword-shield",
+  "aliases": [
+    "weapon:attack:sword-shield",
+    "weapon:spell:sword-shield",
+    "weapon:ranged:sword-shield",
+    "weapon:rangedMagic:sword-shield"
+  ],
+  "origin": "offensive",
+  "timing": {
+    "totalMs": 405,
+    "impactMs": 112.5
+  },
+  "registeredSequence": {
+    "poses": [
+      "rogue.sword-shield.attack.anticipation",
+      "rogue.sword-shield.attack.strike",
+      "rogue.sword-shield.attack.follow-through",
+      "rogue.sword-shield.attack.recovery"
+    ],
+    "durations": [
+      150,
+      80,
+      130,
+      180
+    ],
+    "impact": 1,
+    "travel": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "hold": false,
+    "action": "attack"
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-offensive",
+      "label": "origin stance-offensive",
+      "weight": 1
+    },
+    {
+      "pose": "rogue.sword-shield.attack.anticipation",
+      "registeredFrameId": "rogue.sword-shield.attack.anticipation",
+      "label": "1/4 rogue.sword-shield.attack.anticipation \u00b7 weight 150",
+      "weight": 150,
+      "timeMs": 56.25
+    },
+    {
+      "pose": "rogue.sword-shield.attack.strike",
+      "registeredFrameId": "rogue.sword-shield.attack.strike",
+      "label": "2/4 rogue.sword-shield.attack.strike \u00b7 weight 80",
+      "weight": 80,
+      "timeMs": 142.5
+    },
+    {
+      "pose": "rogue.sword-shield.attack.follow-through",
+      "registeredFrameId": "rogue.sword-shield.attack.follow-through",
+      "label": "3/4 rogue.sword-shield.attack.follow-through \u00b7 weight 130",
+      "weight": 130,
+      "timeMs": 221.25
+    },
+    {
+      "pose": "rogue.sword-shield.attack.recovery",
+      "registeredFrameId": "rogue.sword-shield.attack.recovery",
+      "label": "4/4 rogue.sword-shield.attack.recovery \u00b7 weight 180",
+      "weight": 180,
+      "timeMs": 337.5
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "return Attack",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

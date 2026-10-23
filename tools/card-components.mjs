@@ -23,7 +23,8 @@ export function compileCardComponents(template,cards,base=root){
   for(const visual of [...Object.values(template.components||{}),...Object.values(template.symbols||{}).flatMap(c=>Object.values(c))])if(visual.href&&!hasAsset(visual.href))throw Error('Missing card component image: '+visual.href);
   const ids=new Set();
   for(const layer of template.layers){
-    if(ids.has(layer.id)||!['image','text'].includes(layer.type))throw Error('Invalid or duplicate card layer');ids.add(layer.id);
+    // A layer id is a non-empty string: the generated module encodes an unchanged layer as its id string.
+    if(typeof layer.id!=='string'||!layer.id||ids.has(layer.id)||!['image','text'].includes(layer.type))throw Error('Invalid or duplicate card layer');ids.add(layer.id);
     for(const key of ['x','y','w','h','rotation','opacity'])if(!Number.isFinite(layer[key]))throw Error('Invalid geometry: '+layer.id);
     if(layer.w<=0||layer.h<=0)throw Error('Invalid layer size');
     if(layer.href&&(!/^assets\/[\w/.-]+\.(png|webp|svg)$/.test(layer.href)||layer.href.includes('..')||!hasAsset(layer.href)))throw Error('Missing or unsafe card component: '+layer.href);
@@ -68,14 +69,34 @@ export function importStudioLayout(file,base=root){
   writeFileSync(resolve(base,'src/content/card-layout.json'),JSON.stringify(next,null,2)+'\n');
 }
 export function cardComponentsModule(data){
-  // Keep the editable master once in the bundle. Each exported card still has
-  // its own resolved object and layers, matching the standalone JSON exports.
-  const cards=Object.fromEntries(Object.entries(data.cards).map(([id,card])=>[id,
-    Object.fromEntries(Object.entries(card).filter(([key,value])=>value!==data.template[key]))]));
+  // Keep the editable master once in the bundle. Each card stores its layers as
+  // diffs against the template layer with the same id; the module resolves them
+  // at load into the same per-card objects and layers as the standalone exports.
+  const byId=Object.fromEntries(data.template.layers.map(l=>[l.id,l]));
+  const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+  const encodeLayer=(layer)=>{
+    const base=byId[layer.id];
+    if(!base||Object.keys(base).some(key=>!(key in layer)))return {...layer,$full:true};
+    if(same(layer,base))return layer.id;
+    const diff={id:layer.id};
+    for(const [key,value] of Object.entries(layer))if(key!=='id'&&!same(value,base[key]))diff[key]=value;
+    return diff;
+  };
+  const cards=Object.fromEntries(Object.entries(data.cards).map(([id,card])=>{
+    const out=Object.fromEntries(Object.entries(card).filter(([key,value])=>key!=='layers'&&value!==data.template[key]));
+    if('layers' in card)out.layers=card.layers.map(encodeLayer);
+    return [id,out];
+  }));
   return '// Generated from src/content/card-layout.json by tools/card-components.mjs.\n'
     +'const template = '+JSON.stringify(data.template)+';\n'
+    +'const byId = Object.fromEntries(template.layers.map((l) => [l.id, l]));\n'
+    +'const clone = (v) => JSON.parse(JSON.stringify(v));\n'
+    +'const layer = (l) => typeof l === \'string\' ? clone(byId[l])\n'
+    +'  : l.$full ? (({ $full, ...rest }) => rest)(l)\n'
+    +'  : { ...clone(byId[l.id]), ...l };\n'
+    +'const resolve = (card) => ({ ...template, ...card, ...(card.layers ? { layers: card.layers.map(layer) } : {}) });\n'
     +'export const CARD_COMPONENTS = {schemaVersion:1,template,cards:Object.fromEntries(Object.entries('
-    +JSON.stringify(cards)+').map(([id,card])=>[id,{...template,...card}]))};\n';
+    +JSON.stringify(cards)+').map(([id,card])=>[id,resolve(card)]))};\n';
 }
 export function generateCardComponents(base=root){
   const template=JSON.parse(readFileSync(resolve(base,'src/content/card-layout.json'),'utf8'));
@@ -88,7 +109,7 @@ export function generateCardComponents(base=root){
 export function writeCardObjects(data,out){
   const dir=resolve(out,'cards');mkdirSync(dir,{recursive:true});
   for(const [id,card] of Object.entries(data.cards)){
-    if(!/^[\w-]+$/.test(id))throw Error('Unsafe card id');
+    if(!/^[\w-]+(?:\.[\w-]+)*$/.test(id)||id==='index')throw Error('Unsafe card id: '+id);
     writeFileSync(resolve(dir,id+'.json'),JSON.stringify(card,null,2)+'\n');
   }
   writeFileSync(resolve(dir,'index.json'),JSON.stringify({schemaVersion:1,cards:Object.keys(data.cards)},null,2)+'\n');

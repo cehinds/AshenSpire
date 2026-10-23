@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // tests/card-reward-schedule.test.mjs — SPEC §15.1, the card reward schedule.
 //
 // One test per Falsify line of §15.1, plus the doors the schedule passes
@@ -217,7 +218,7 @@ function coopFirstSpoils(reg, seedString) {
   return host;
 }
 
-test('co-op reads the schedule through cardRewardPlan: a pool turned off offers no card, and a level card is offered and taken', () => {
+test('co-op reads the schedule through cardRewardPlan: a pool turned off offers no card, and a level card is offered and taken', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const off = coopFirstSpoils(withSchedule({ afterCombat: { normal: false }, onLevelUp: true }), 'SCHEDULE');
   assert.equal(off.scene.kind, 'reward');
   const offer = off.scene.offers.p1;
@@ -380,6 +381,9 @@ test('the reward screen draws the level card row, takes it through the chooser, 
     row.click();
     app.querySelectorAll('.reward-row .card')[1].click();
     app.querySelector('#reward-card-confirm').click();
+    assert.deepEqual(run.deck, [], 'Confirm only stages review');
+    assert.equal(app.querySelector('#reward-card-confirm').textContent, t('common.continue'));
+    app.querySelector('#reward-card-confirm').click();
     assert.deepEqual(run.deck.map((c) => c.cardId), ['rend']);
     assert.equal(checkpoint.states['levelCard:0'], 'taken');
     assert.deepEqual(checkpoint.chosenDraftCardIds, { 'levelCard:0': 'rend' });
@@ -423,6 +427,8 @@ test('two level cards are taken, and both picks persist in chosenDraftCardIds[<r
       app.querySelectorAll('.reward-row .card')[2].click();
       picks[key] = app.querySelectorAll('.reward-row .card')[2].dataset.cardId;
       app.querySelector('#reward-card-confirm').click();
+      assert.equal(app.querySelector('#reward-card-confirm').textContent, t('common.continue'));
+      app.querySelector('#reward-card-confirm').click();
     }
     app.remove();
     assert.deepEqual(run.pendingReward.chosenDraftCardIds, picks, 'each pick is kept under its own row key');
@@ -450,7 +456,7 @@ test('a Taken levelCard row with no chosenDraftCardIds map at all is refused by 
   assert.ok(validateRunShape({ ...run, pendingReward }).some((m) => /levelCard:0 Taken state requires its chosen card/.test(m)));
 });
 
-test('a co-op seat that was away claims its level card through the catch-up', () => {
+test('a co-op seat that was away claims its level card through the catch-up', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const reg = withSchedule({ onLevelUp: true });
   const host = createSession({ registries: legacySessionRegistry(reg), seedString: 'AWAY', combatExpansionVersion: 1 });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
@@ -472,7 +478,7 @@ test('a co-op seat that was away claims its level card through the catch-up', ()
   assert.equal(p2.run.deck.at(-1).cardId, picked);
 });
 
-test('co-op: a level-card pick survives a redraw, and a row left unpicked is picked for the seat on close', () => {
+test('co-op: a level-card pick survives a redraw, and a row left unpicked is picked for the seat on close', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
   Object.assign(globalThis, dom);
@@ -520,6 +526,8 @@ test('a taken level card never reuses an instance id a sideboarded card holds', 
     app.querySelector('[data-kind="levelCard"]').click();
     app.querySelectorAll('.reward-row .card')[0].click();
     app.querySelector('#reward-card-confirm').click();
+    assert.equal(app.querySelector('#reward-card-confirm').textContent, t('common.continue'));
+    app.querySelector('#reward-card-confirm').click();
     assert.equal(run.deck.length, 1);
     assert.equal(run.deck[0].cardId, 'rend');
     assert.notEqual(run.deck[0].instanceId, 'r0_rend', 'the sideboarded id is not reused');
@@ -556,7 +564,7 @@ test('run schema 12: a schema-11 save (the captured corpus bytes) loads unchange
   assert.deepEqual(back.pendingReward.rewards.levelCards, run.pendingReward.rewards.levelCards);
 });
 
-test('co-op couch seats: a level-card pick on seat A survives switching to seat B and back, and ends with its door', () => {
+test('co-op couch seats: a level-card pick on seat A survives switching to seat B and back, and ends with its door', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
   Object.assign(globalThis, dom);
@@ -591,7 +599,7 @@ test('co-op couch seats: a level-card pick on seat A survives switching to seat 
   }
 });
 
-test('co-op: a repeat choice while another seat still chooses grants nothing twice', () => {
+test('co-op: a repeat choice while another seat still chooses grants nothing twice', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const host = createSession({ registries: legacySessionRegistry(withSchedule({ onLevelUp: true })), seedString: 'SCHEDULE', combatExpansionVersion: 1 });
   host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
   host.addMember({ id: 'p2', name: 'p2', classId: 'rogue' });

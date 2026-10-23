@@ -1,0 +1,18 @@
+{
+  "$comment": "A gear-type tag in settings.tags: costs nothing, steers where unset points go. Higher priority steers harder.",
+  "greatsword": {
+    "group": "type",
+    "cost": 0,
+    "priority": 50,
+    "weights": {
+      "ratings": {
+        "ar": 3,
+        "poise": 3
+      },
+      "bonus": {
+        "strength": 3,
+        "constitution": 1
+      }
+    }
+  }
+}

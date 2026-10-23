@@ -4,8 +4,11 @@ import { CARD_COMPONENTS } from './cardComponents.generated.js';
 const mark = (label, shape, help, solid = false) => Object.freeze({ label, shape, help, solid });
 export const ACTION_SIGILS = Object.freeze({
   attack: mark('Attack', '<path d="m3 2 7 3 15 18-3 3L6 10Zm26 0-7 3L7 23l3 3L26 10ZM3 22l7 7 2-2-7-7Zm19 5 2 2 7-7-2-2ZM2 29l2 2 4-4-2-2Zm22-2 4 4 2-2-4-4Z"/>', 'A direct attack.', true),
+  defense: mark('Defense', '<path d="M16 2 28 7v10c0 7-12 13-12 13S4 24 4 17V7Zm0 4v20c5-3 8-6 8-9V10Z"/>', 'Defensive stance: grant protection.', true),
+  stance: mark('Stance', '<path d="M5 28 16 3l11 25M10 18h12"/>', 'A combat stance: Attack, Smash, Sweep, Counter, Defense or Evade.'),
+  consumable: mark('Consumable', '<path d="M11 3h10v7l5 8v11H6V18l5-8ZM11 20h10"/>', 'A consumable item card.'),
   defend: mark('Defend', '<path d="M16 2 28 7v10c0 7-12 13-12 13S4 24 4 17V7Zm0 4v20c5-3 8-6 8-9V10Z"/>', 'Guard or other defensive support.', true),
-  evade: mark('Evade', CARD_COMPONENTS.template.symbols.tags.evade.svg.body, 'Defensive stance: prepare one chance to avoid the next eligible direct damaging action.', true),
+  evade: mark('Evade', CARD_COMPONENTS.template.symbols.tags.evade.svg.body, 'Defensive stance used by Evade cards.', true),
   counter: mark('Counter', '<path d="M15 2 26 6v3L7 28c-3-3-4-6-4-11V7Zm11 14v2c0 6-11 12-11 12l-4-2ZM28 2l2 1-1 6L12 26l-3-3ZM6 21l7 7-2 2-7-7ZM2 29l2 2 4-4-2-2Z"/>', 'Prepare a reply to a qualifying incoming action. Inspect for its conditions.', true),
   sweep: mark('Sweep', '<path d="M4 23q12-24 24 0M4 23h24M24 18l4 5-4 5"/>', 'An attack across several targets.'),
   ranged: mark('Ranged', '<path d="m30 2-5 14-4-5L10 22v6l-5 3v-6H0l4-6h6L20 9l-5-3Z"/>', 'An attack made at range.', true),
@@ -26,11 +29,17 @@ export const SCHOOL_SIGILS = Object.freeze({
   decay: mark('Decay', '<path d="M26 5C9 2 3 10 7 22c12 4 20-2 19-17ZM7 25l14-14M12 20l-1-7m6 2 6 1M4 28h.01M27 25h.01"/>', 'Decay magic.'),
 });
 
+// A mirror's mark and word. Technique has no mark of its own: it wears the Skill mark under its own word.
+export function mirrorSigil(id) {
+  return id === 'technique' ? { id: 'skill', mark: Object.freeze({ ...ACTION_SIGILS.skill, label: 'Technique', help: 'A basic technique.' }) } : { id, mark: ACTION_SIGILS[id] };
+}
 export function cardSigilIdentity(primaryType, profile) {
   const action = primaryType.toLowerCase();
   if (!Object.hasOwn(ACTION_SIGILS, action)) throw new Error(`Unknown primary card type: ${primaryType}`);
   // Earth is an alteration school (see the Alteration sigil's help); it has no mark of its own.
   const school = profile.school === 'earth' ? 'alteration' : profile.school || null;
   if (school && !Object.hasOwn(SCHOOL_SIGILS, school)) throw new Error(`Unknown card school: ${school}`);
-  return Object.freeze({ action, school });
+  // A Spell that mirrors a basic card (owner 2026-10-18) shows the Spell mark and its basic's mark.
+  const mirror = action === 'spell' && (profile.mirrors === 'technique' || Object.hasOwn(ACTION_SIGILS, profile.mirrors) && profile.mirrors !== 'spell') ? profile.mirrors : null;
+  return Object.freeze({ action, school, ...(mirror ? { mirror } : {}) });
 }

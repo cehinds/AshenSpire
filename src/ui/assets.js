@@ -1,3 +1,5 @@
+import { engravedIcon, engravedIconUrl } from './components/engravedIcon.js';
+import { uiIconText } from '../content/uiIcons.js';
 import { alternativeSprite, alternativePlayerId } from './alternativeArt.js';
 import { enemyExpansionSprite } from './enemyExpansionStage.js';
 import { createAlternativeCardStage } from './alternativeCardStage.js';
@@ -48,7 +50,7 @@ export function relicIcon(relic) {
   img.alt = '';
   img.style.cssText = 'width:100%;height:100%;object-fit:contain;';
   img.addEventListener('error', () => {
-    icon.textContent = relic.icon || '◆';
+    icon.replaceChildren(engravedIcon(relic.icon || 'relic') || uiIconText(relic.icon || 'relic'));
     // The art comes back with the built-in art (a Retry): the icon is drawn again.
     markArtPlaceholder(icon, () => { const again = relicIcon(relic); if (again) icon.replaceWith(again); });
   }, { once: true });
@@ -77,26 +79,6 @@ export function prologueArtwork(id, layout = 'desktop', {classId = 'reaver', des
 // window (main.js applyUiScale), so larger base sizes mean a bolder board rather
 // than overflow. These are non-text geometry and remain px when Text size
 // changes; UI size still scales the containing application.
-// THE IDLE BOB KEEPS THE DOCUMENT'S CLOCK (D42; #1475 review). A CSS
-// animation's timeline starts when its element is inserted, so a board that
-// rebuilds its combatants (the co-op board replaces them on every render and
-// every received snapshot) snapped every figure back to the bob's start
-// phase. When `sprite-idle` starts on a carrier, its start time is pinned to
-// the document timeline's origin, so its phase is the clock's phase (plus the
-// per-slot delay in styles/combat.css) however often the carrier is rebuilt
-// or re-inserted. A carrier that holds still (dead, Reduced motion, lite)
-// runs no sprite-idle, so nothing is pinned. tools/motion-probe.mjs IDLE
-// checks every carrier's phase against the clock.
-const IDLE_ANIMATION = 'sprite-idle';
-function holdIdlePhase(event) {
-  if (event.animationName !== IDLE_ANIMATION) return;
-  const run = event.target?.getAnimations?.().find((a) => a.animationName === IDLE_ANIMATION);
-  if (run && run.startTime !== 0) run.startTime = 0;
-}
-if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
-  document.addEventListener('animationstart', holdIdlePhase, true);
-}
-
 const SIZE_TIERS = balance.ui.spriteTiers;
 const px = (value) => `${value}px`;
 
@@ -177,7 +159,7 @@ export function enemySprite(enemyDef, entity = {}) {
       `background:var(--panel);border:2px solid ${tint};display:flex;align-items:center;` +
       `justify-content:center;font-size:${px(tier.font)};position:relative;` +
       `box-shadow:0 ${Math.round(tier.h * 0.08)}px 10px rgba(0,0,0,.5);`;
-    el.textContent = enemyDef.art || '☠';
+    el.textContent = enemyDef.name || 'Enemy';
     // The art comes back with the built-in art (a Retry): the sprite is built again.
     markArtPlaceholder(el, () => el.replaceWith(enemySprite(enemyDef, entity)));
   };
@@ -202,10 +184,8 @@ export function enemySprite(enemyDef, entity = {}) {
   //     of `.sprite` rather than a child, so the mirror would survive there by
   //     accident; the day that selector is repaired it would break.
   //
-  // So: a layer between them whose only transform is the facing. The idle
-  // bob (`sprite-idle`, styles/combat.css; D42) does ride this layer, but it
-  // moves the separate `translate` property, which composes with the inline
-  // mirror rather than replacing it.
+  // So: a stationary layer between them whose only transform is the facing.
+  // Action/reaction transforms stay on their own outer animation hosts.
   el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};position:relative;`
     + 'display:flex;align-items:flex-end;justify-content:center;';
   const facing = document.createElement('div');
@@ -273,7 +253,7 @@ export function enemySprite(enemyDef, entity = {}) {
 }
 
 // Character customization options (cosmetic — stored on run.customization).
-export const PORTRAIT_GLYPHS = ['⚔', '🛡', '🔥', '🌙', '☀', '🐺'];
+export const PORTRAIT_GLYPHS = ['attack', 'shield', 'burn', 'progression', 'madness', 'strength'];
 export const PORTRAIT_TINTS = [
   { id: 'gold', css: 'var(--gold)', name: 'Goldbough gold' },
   { id: 'ember', css: 'var(--ember)', name: 'Gorefire ember' },
@@ -299,7 +279,9 @@ export function spritesAreEnabled() {
 // viewBox 110×140, figure standing on a soft shadow.
 function sigilMedallion(cx, cy, t, sigil, plainR) {
   if (!sigil) return `<circle cx="${cx}" cy="${cy}" r="${plainR}" fill="${t}"/>`;
-  const safe = String(sigil).replace(/[<>&"]/g, '');
+  const safe = uiIconText(sigil).slice(0, 2).toUpperCase().replace(/[<>&"]/g, '');
+  const iconUrl = engravedIconUrl(sigil);
+  const href = iconUrl?.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   return (
     `<circle cx="${cx}" cy="${cy}" r="8" fill="#14100c" stroke="${t}" stroke-width="1.5"/>` +
     // The whole figure is mirrored (styles/ui.css, "the figure faces the viewer").
@@ -316,7 +298,7 @@ function sigilMedallion(cx, cy, t, sigil, plainR) {
     // giving four hand-authored viewBoxes a chest anchor apiece. Only the
     // `classic` sprite style and the file:// fallback reach this path.
     `<g transform="translate(${cx * 2},0) scale(-1,1)">` +
-    `<text x="${cx}" y="${cy + 0.5}" font-size="11" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>` +
+    (href ? `<image href="${href}" x="${cx - 6}" y="${cy - 6}" width="12" height="12"/>` : `<text x="${cx}" y="${cy + 0.5}" font-size="8" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>`) +
     `</g>`
   );
 }
@@ -775,7 +757,7 @@ export function playerSprite(customization = {}, classId, armourId = 'default', 
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
   if (spritesEnabled && style !== 'glyph' && presentation.view !== 'portrait') {
-    const cardStage = createAlternativeCardStage(classId, { still: style === 'rendered' || Boolean(presentation.view && presentation.view !== 'combat'), weaponProfile: presentation.selectedWeaponProfile });
+    const cardStage = createAlternativeCardStage(classId, { still: style === 'rendered' || Boolean(presentation.view && presentation.view !== 'combat'), weaponProfile: presentation.selectedWeaponProfile, smashProfile: presentation.classSmashProfile });
     if (cardStage) { registerStage(cardStage.el, cardStage); return cardStage.el; }
     const alternative = alternativeSprite(alternativePlayerId(classId, armourId), 'player');
     if (alternative) return alternative;
@@ -788,7 +770,7 @@ export function playerSprite(customization = {}, classId, armourId = 'default', 
     `width:150px;height:190px;flex:0 0 auto;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
     'display:flex;align-items:center;justify-content:center;font-size:70px;position:relative;' +
     `box-shadow:0 10px 12px rgba(0,0,0,.5), inset 0 0 24px rgba(0,0,0,.4);`;
-  el.textContent = customization.glyph || '🛡';
+  el.replaceChildren(engravedIcon(customization.glyph || 'shield') || uiIconText(customization.glyph || 'shield'));
   return el;
 }
 
@@ -806,7 +788,7 @@ export function setClassGlyphs(classes) {
   for (const c of classes || []) if (c.glyph) classGlyphs[c.id] = c.glyph;
 }
 export function classGlyph(classId) {
-  return classGlyphs[classId] || '❖';
+  return classGlyphs[classId] || 'profile';
 }
 
 /* Inventory artwork uses item identity or its explicit icon alias, independently of rig artKey. */

@@ -1,3 +1,4 @@
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 // `spellDamageDealtMult` (design elements-and-tag-mechanics §2.4) and the
 // Silenced status that uses it: spell-camp damage its owner deals is scaled,
 // physical damage is not; the preview and the hit agree in v1 and v2.
@@ -45,6 +46,7 @@ test('v2: a silenced player casting a spell card deals full damage, and preview 
     const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
       player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10,
         drawPerTurn: 1, deck: [{ cardId: 'starstonePebble', instanceId: 'pebble', upgraded: false }] } });
+    primeAccuracyRolls(combat);
     const enemy = combat.enemies[0];
     enemy.block = enemy.barrier = 0; enemy.hp = enemy.maxHp = 500;
     enemy.damageResistanceFlat = {}; enemy.damageWeaknessPercent = {}; enemy.damageResistPercent = {};
@@ -55,7 +57,8 @@ test('v2: a silenced player casting a spell card deals full damage, and preview 
     if (silenced) combat.player.statuses.silenced = { stacks: 1, duration: 2 };
     const shown = previewCard(combat, 'pebble', enemy.id).values.find(row => row.op === 'damage').totalDamage;
     const before = enemy.hp;
-    dispatch(combat, { type: 'playCard', cardInstanceId: 'pebble', targetId: enemy.id });
+    const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'pebble', targetId: enemy.id });
+    assert.ok(out.events.some(event => event.type === 'attackHit' && event.targetId === enemy.id), 'damage comparison uses a landed, in-range spell');
     return { shown, dealt: before - enemy.hp };
   };
   const loud = run(false), quiet = run(true);

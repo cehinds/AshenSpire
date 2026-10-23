@@ -1,0 +1,27 @@
+{
+  "id": "maneuver_counter",
+  "tag": "maneuver:counter",
+  "version": "1.0.0",
+  "family": "maneuver",
+  "label": "Counter",
+  "description": "Prepare one reaction. Reduce damage from one eligible hit. A fully absorbed eligible hit triggers a stronger reply; Sweep, Force and Piercing bypass melee Counter.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "maneuver_counter",
+    "color": "C8A3D8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatReactions.js",
+    "symbol": "counterCoversAttack"
+  }
+}

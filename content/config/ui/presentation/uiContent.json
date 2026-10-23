@@ -2,37 +2,37 @@
   "components": {
     "nodeTypes": {
       "monster": {
-        "icon": "⚔",
+        "icon": "attack",
         "name": "Monster",
         "blurb": "A fight — cinders and a card reward."
       },
       "fight": {
-        "icon": "⚔",
+        "icon": "attack",
         "name": "Monster",
         "blurb": "A fight — cinders and a card reward."
       },
       "elite": {
-        "icon": "☠",
+        "icon": "madness",
         "name": "Elite",
         "blurb": "A hard fight. Drops a relic."
       },
       "boss": {
-        "icon": "👁",
+        "icon": "boss",
         "name": "Boss",
         "blurb": "The act boss."
       },
       "shrine": {
-        "icon": "♨",
+        "icon": "burn",
         "name": "Shrine of Emberlight",
         "blurb": "Rest (heal), smith an owned armament, or mend an ally."
       },
       "merchant": {
-        "icon": "⚖",
+        "icon": "compare",
         "name": "Merchant",
         "blurb": "Cards, relics, flasks, card removal."
       },
       "treasure": {
-        "icon": "▣",
+        "icon": "block",
         "name": "Treasure",
         "blurb": "A relic, free."
       },
@@ -144,13 +144,13 @@
       {
         "id": "settings",
         "label": "Settings",
-        "icon": "⚙",
+        "icon": "settings",
         "tip": "Display, audio, and accessibility."
       },
       {
         "id": "controls",
         "label": "Controls",
-        "icon": "⌨",
+        "icon": "controls",
         "tip": "Every key and pad button, and how to rebind them."
       }
     ],
@@ -167,7 +167,7 @@
       },
       {
         "act": "fullscreen",
-        "icon": "⛶",
+        "icon": "display",
         "label": "Fullscreen",
         "band": "comfort",
         "control": "switch",
@@ -175,7 +175,7 @@
       },
       {
         "act": "music",
-        "icon": "♫",
+        "icon": "audio",
         "label": "Music",
         "band": "comfort",
         "control": "switch",
@@ -183,21 +183,21 @@
       },
       {
         "act": "inventory",
-        "icon": "▦",
+        "icon": "inventory",
         "label": "Inventory",
         "band": "armoury",
         "tip": "Open carried weapons, armour, and items."
       },
       {
         "act": "character",
-        "icon": "♟",
+        "icon": "profile",
         "label": "Character",
         "band": "armoury",
         "tip": "Open the compact character and vitality view."
       },
       {
         "act": "load",
-        "icon": "↥",
+        "icon": "history",
         "label": "Load",
         "band": "run",
         "tone": "danger",
@@ -205,21 +205,21 @@
       },
       {
         "act": "save",
-        "icon": "💾",
+        "icon": "save",
         "label": "Save",
         "band": "run",
         "tip": "Write the exact committed combat turn to this slot and stay here."
       },
       {
         "act": "saveQuit",
-        "icon": "↯",
+        "icon": "save",
         "label": "Save and Quit",
         "band": "run",
         "tip": "Write the exact committed combat turn, then return to the title."
       },
       {
         "act": "quit",
-        "icon": "⏻",
+        "icon": "close",
         "label": "Quit Without Saving",
         "band": "run",
         "tone": "danger",
@@ -227,11 +227,11 @@
       }
     ],
     "intentIcons": {
-      "attack": "⚔",
-      "block": "🛡",
-      "buff": "↑",
-      "debuff": "☾",
-      "staggered": "✦",
+      "attack": "attack",
+      "block": "shield",
+      "buff": "strength",
+      "debuff": "progression",
+      "staggered": "staggered",
       "unknown": "?"
     },
     "intentBadges": {
@@ -244,14 +244,14 @@
       "staggered": {
         "cls": "staggered",
         "tone": "gold",
-        "glyph": "✦",
+        "glyph": "staggered",
         "label": "Staggered"
       },
       "attack": {
         "cls": "attack",
         "delayedCls": " delayed",
         "tone": "danger",
-        "delayedSuffix": " ⌛"
+        "delayedSuffix": " (delayed)"
       },
       "block": {
         "cls": "block",

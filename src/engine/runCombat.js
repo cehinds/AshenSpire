@@ -1,3 +1,7 @@
+import { reconcileGrantedCards } from '../framework/deckComposition.js';
+import { gameModule } from '../model/gameProfile.js';
+import { gameProfileRatingReceipt, gameProfileEffectiveAttributes } from '../model/gameProfileRun.js';
+import { configuredCombat, configuredModule } from './gameProfileCombat.js';
 // engine/runCombat.js — the one door a run's fight is built through.
 //
 // The live game (src/main.js enterCombat) and every headless simulator
@@ -13,7 +17,10 @@
 // equipment pool deficits) are written back to the run, as the live
 // onCombatEnd does, so the next fight opens where this one ended.
 
-import { createCombat } from './combat.js';
+import { createCombat, previewCard } from './combat.js';
+import { createRng } from './rng.js';
+import { resolveCombatCard } from './combatExpansion.js';
+import { bindCoreSmithingEngine } from '../model/smithingCore.js';
 import { runHandRules } from '../model/handRules.js';
 import { playInDeckOrder } from '../model/deckRules.js';
 import { combatRoundsFor, normalPreviewFor } from '../model/combatRounds.js';
@@ -57,7 +64,7 @@ export function runCombatPlayer(run) {
   return {
     classId: run.class,
     ...(run.classUnequipped ? { classUnequipped: true } : {}),
-    attributes: run.combatExpansionVersion === 2 ? effectiveAshenBlightAttributes(run) : run.attributes,
+    attributes: !configuredCombat(run) && run.combatExpansionVersion === 2 ? effectiveAshenBlightAttributes(run) : run.attributes,
     allocatedAttributes: run.attributes,
     ashenBlight: run.ashenBlight,
     baseResourceMaxima: run.ashenBlightBasePools,
@@ -123,12 +130,15 @@ export function createRunCombat({
 }) {
   // The every-5th-level skill bonus is derived (SPEC §13.4o): stamped fresh
   // here so the fight's copies carry the levels and hands it starts with.
-  stampSkillBonuses(registries, run);
+  if (!configuredCombat(run)) stampSkillBonuses(registries, run);
   const knowledgeRun = run.enemyKnowledgeState ? { ...run, enemyKnowledgeState: structuredClone(run.enemyKnowledgeState) } : null;
   if (knowledgeRun) openKnowledgeEncounter(knowledgeRun, run.mapNodeId || 'combat', encounter?.id || enemyIds.join(','), enemyIds, enemyKnowledgeProfile);
+  const configuredRatings = configuredCombat(run) ? gameProfileRatingReceipt(registries, run) : null;
   const combat = createCombat({
     ...(knowledgeRun ? { knowledge: { rules: run.enemyKnowledgeRules, encounter: knowledgeRun.enemyKnowledgeState.currentEncounter,
       bankable: knowledgeRun.enemyKnowledgeState.bankable, profiles: { player: mergeEnemyKnowledge(knowledgeRun.enemyKnowledgeState.pending, enemyKnowledgeProfile) } } } : {}),
+    gameProfile: run.gameProfile || null,
+    rangePolicy: run.rangePolicy || null,
     combatExpansionVersion: run.combatExpansionVersion || 1,
     reactionRulesVersion: run.reactionRulesVersion || null,
     reactionRules: run.reactionRules,
@@ -155,7 +165,11 @@ export function createRunCombat({
     normalPreview: normalPreviewFor(run.advancedConfigSnapshot?.overrides),
     registries,
     rng,
-    player: { ...runCombatPlayer(run), ...player },
+    player: { ...runCombatPlayer(run),
+      ...(configuredRatings ? { ratings: configuredRatings.totals, ratingSources: configuredRatings.sources,
+        attributes: gameProfileEffectiveAttributes(registries, run),
+        baseEvasionBonus: configuredRatings.baseEvasionBonus, basePrecisionBonus: configuredRatings.basePrecisionBonus } : {}),
+      ...player },
     enemyIds,
     enemyLevels: enemyLevelsForFight(registries, run, enemyIds, encounter),
     hpMult,
@@ -171,13 +185,23 @@ export function createRunCombat({
     // has no equipment code, only statuses applied at combat start.
     playerStatuses: [...playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
+  if (combat.rangeState && !run.rangePolicy) run.rangePolicy = structuredClone(combat.rangeState.policy);
   if (knowledgeRun) run.enemyKnowledgeState = knowledgeRun.enemyKnowledgeState;
   return combat;
 }
 
 /** Write what a fight leaves behind back onto the run (live onCombatEnd's first half). */
 export function runCombatEnd(run, combat) {
+  if(combat.proposalRewards && !combat.proposalRewards.settled) {run.cinders=(run.cinders || 0)+Math.max(0,combat.proposalRewards.cinders || 0);combat.proposalRewards.settled=true;}
   reconcileCombatKnowledge(run, combat);
+  // Headless callers can finish without taking a combat checkpoint. Persist
+  // Core's current equipment grants here too, without copying live piles.
+  if (run.gameProfile?.foundation?.mode === 'configured' && gameModule(run, 'cards')?.mode === 'configured') {
+    run.loadout = structuredClone(combat.loadout);
+    run.drawPerTurn = combat.player.drawPerTurn;
+    run.energyMax = combat.player.energyMax;
+    reconcileGrantedCards(combat.registries, run);
+  }
   if (combat.combatExpansionVersion === 2) {
     run.ashenBlight = structuredClone(combat.player.ashenBlight);
     run.ashenBlightBasePools = structuredClone(combat.player.baseResourceMaxima);
@@ -195,3 +219,6 @@ export function runCombatEnd(run, combat) {
   settleFightConsumables(run, combat);
   tickCompanions(run);
 }
+
+// Core Smith card rows run real fights through this engine (model/smithingCore.js binds rather than imports it).
+bindCoreSmithingEngine({ createRunCombat, previewCard, createRng, resolveCombatCard });

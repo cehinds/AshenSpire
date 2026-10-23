@@ -18,7 +18,7 @@ test('a mixed damage and poise card reads one damage line with the poise joined'
 test('a cleanse card lists its removals, its Ward gain, and the usable-while detail last', () => {
   const all = text('sanctuaryCleanse');
   assert.ok(all.includes('Remove 1 Sleep, 1 Paralysis, 1 Dazed'), all.join(' | '));
-  assert.ok(all.includes('Gain 3 Ward'), all.join(' | '));
+  assert.ok(all.includes('Gain 1 Block, 2 Ward'), all.join(' | '));
   assert.match(all.at(-1), /^Usable through Sleep, Paralysis, Dazed$/);
 });
 
@@ -50,6 +50,17 @@ test('a preview above the static base marks the number up, below it marks down',
 
 test('without a preview no number is marked up or down', () => {
   for (const line of lines('bashingBlow')) assert.doesNotMatch(line.html, /val (up|down)/);
+});
+
+test('a Defend card labels per-play gains separately from its Entry clause', () => {
+  assert.deepEqual(text('crystalBarrier'), ['Gain 2 Block, 1 Ward', 'Entry: +1 Precision, Retain']);
+});
+
+test('a conditional Evade is shown with version-two entry bonuses without duplication', () => {
+  const all = text('crawlingShot');
+  const evade = all.filter(line => /Prepare one Evade with Advantage/.test(line));
+  assert.deepEqual(evade, ['While Prone: Prepare one Evade with Advantage']);
+  assert.ok(all.some(line => line.startsWith('Entry: ')), JSON.stringify(all));
 });
 
 test('a card with an effect it cannot phrase returns null', () => {
@@ -115,8 +126,8 @@ test('a missing self status reads as "No <status>:"', () => {
 
 test('a combat counter reads as prepared, naming its mode and Smash bonus', () => {
   const x = id => (cardFaceLines(applyCombatExpansionCard(card(id)), null, reg) || []).map(line => line.html.replace(/<[^>]+>/g, ''));
-  assert.match(x('shieldBash')[0], /^Prepare Melee Counter: return \d+ Poise damage, \+\d+ Poise against Smash$/);
-  assert.match(x('nockAndWait')[0], /^Prepare Ranged Counter: return /);
+  assert.match(x('shieldBash')[0], /^Return \d+ Poise damage, \+\d+ Poise against Smash$/);
+  assert.match(x('nockAndWait')[0], /^Return /);
 });
 
 test('mechanic statuses add their own line; curse triggers and Blight prices keep the authored text', () => {
@@ -160,4 +171,24 @@ test('an up-front HP payment leads the face, as it runs first', () => {
 
 test('a before-play HP check says "before this card"', () => {
   assert.ok(text('progression-carrion-cut').some(line => /HP is at most \d+% before this card: /.test(line)), JSON.stringify(text('progression-carrion-cut')));
+});
+
+test('custom spell Counter coverage uses compact return and protection lines', () => {
+  for (const id of ['frostCounter', 'forceCounter', 'barrageCounter']) {
+    const all = lines(id);
+    assert.ok(all, id + ' uses compact lines');
+    const wording = all.map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');
+    assert.match(wording, /Return/);
+    assert.match(wording, /Block.*Ward/);
+    assert.doesNotMatch(wording, /after all covered damage/);
+
+  }
+});
+
+test('an authored Grounded effect on a version-two Counter retains its stacks and duration', () => {
+  const base = card('forceCounter');
+  const def = { ...base, effects: [...base.effects,
+    { op: 'applyStatus', target: 'self', status: 'grounded', stacks: 1, duration: 2 }] };
+  const wording = cardFaceLines(def, null, reg).map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');
+  assert.match(wording, /Grounded 1.*2 turns/);
 });

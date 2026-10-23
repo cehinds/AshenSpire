@@ -1,4 +1,6 @@
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -140,9 +142,10 @@ test('a committed successful evade against a multi-hit wholly unknown action cre
   dispatch(combat, { type: 'playCard', cardInstanceId: 'knowledge-counter' });
   assert.equal(combat.enemyKnowledge.owners.player.earnedXp, 0);
   const prepared = structuredClone(combat.player.combatEvade);
+  primeAccuracyRolls(combat, { die: 1 });
   dispatch(combat, { type: 'endTurn' });
   skipReactions(combat);
-  assert.ok(combat.eventLog.some(event => event.type === 'combatAvoidanceResolved' && event.evade?.success), JSON.stringify({ prepared, events: combat.eventLog.slice(-22) }));
+  assert.ok(combat.eventLog.some(event => event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeStacks > 0), JSON.stringify({ prepared, events: combat.eventLog.slice(-22) }));
   assert.equal(combat.enemyKnowledge.owners.player.earnedXp, 1);
   const owner = combat.enemyKnowledge.owners.player;
   assert.equal(owner.pending.enemies[enemy.id].receipts[combat.enemyKnowledge.encounter.id].bonus, true);
@@ -276,13 +279,16 @@ test('actual delayed move retains its serial and read through charge, snapshot a
   const restored = restoreCombatSnapshot({ registries, rng: createRng(run.seed, rng.getCounters()), snapshot: serializeCombatSnapshot(combat) });
   assert.deepEqual(restored.enemies[0].knowledgeAction, original);
   dispatch(restored, { type: 'endTurn' });
+  assert.ok(restored.pendingReaction, 'the released hit pauses before earning prediction credit');
+  assert.equal(restored.enemyKnowledge.owners.player.earnedXp, 0);
+  skipReactions(restored);
   assert.equal(restored.enemyKnowledge.owners.player.earnedXp, 1);
   assert.equal(restored.enemyKnowledge.owners.player.feedback[0].actionSerial, original.serial);
   assert.equal(restored.enemyKnowledge.owners.player.feedback[0].correct, true);
   assert.equal(restored.enemies[0].knowledgeAction.serial, original.serial + 1);
 });
 
-test('actual co-op uses host-private draws, owner predictions, exact restore and inert reconnect', () => {
+test('actual co-op uses host-private draws, owner predictions, exact restore and inert reconnect', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const registries = createRegistries(contentBundle);
   const runs = ['z', 'a'].map(id => ({ id, run: createRunState({ registries, seed: 11, classId: 'reaver' }) }));
   const rules = structuredClone(runs[0].run.enemyKnowledgeRules);

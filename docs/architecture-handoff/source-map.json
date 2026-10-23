@@ -4590,7 +4590,7 @@
       ]
     },
     {
-      "path": "src/model/mapknowledge.js",
+      "path": "src/model/map/mapknowledge.js",
       "lineCount": 425,
       "sha256": "1C334B218D11A4E5019BC451D996819C7A01B8F839D9612D0E954C97B1D9BC83",
       "anchors": [
@@ -4661,7 +4661,7 @@
       ]
     },
     {
-      "path": "src/model/mapview.js",
+      "path": "src/model/map/mapview.js",
       "lineCount": 763,
       "sha256": "81C70896E2093A52023F3EFF4EE353C5884D82B884B218583B5C56FE3745D338",
       "anchors": [

@@ -4,7 +4,8 @@ import { el, button, pane, options, optionCard, pageDoor, statusText, titleS } f
 import { workspaceFrame, land } from '../components/w1Workspace.js';
 import { t } from '../strings.js';
 
-export function mountBestiary(app, { registries, meta = {}, onBack, initialEnemyId = null }) {
+export function mountBestiary(app, { registries, meta = {}, onBack, initialEnemyId = null,
+  combatExpansionVersion = 2, stanceRules = null }) {
   let closed = false;
   function leave() {
     if (closed) return;
@@ -21,7 +22,8 @@ export function mountBestiary(app, { registries, meta = {}, onBack, initialEnemy
   const definitions = registries.enemies.all().filter(def => Object.hasOwn(learned, def.id))
     .sort((a, b) => a.name.localeCompare(b.name));
   // Unencountered definitions are not projected into DOM/accessible labels.
-  const views = definitions.map(def => projectEnemyKnowledge(def, learned[def.id], { registries, ratingsRules: registries.balance?.combatRatings || null }));
+  const views = definitions.map(def => projectEnemyKnowledge(def, learned[def.id], {
+    registries, ratingsRules: registries.balance?.combatRatings || null, combatExpansionVersion, stanceRules }));
   let selectedId = views.find(view => view.id === initialEnemyId)?.id || views[0]?.id || null;
   const detail = el('div', { class: 'cp-detail bestiary-detail', role: 'region', 'aria-label': t('knowledge.details') });
   const list = options([], { class: 'cp-grid cp-scroll bestiary-list', 'aria-label': t('knowledge.encountered') });

@@ -5,6 +5,8 @@
 // itself (cardId, moveId, triggeredBy, source); when an older or thinner event
 // carries none, the card or move being resolved at that point in the stream
 // stands in, but only for an event by that same actor.
+import { t } from '../ui/strings.js';
+
 const word = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
 const ATTACK_KIND_WORDS = { sweep: 'a Sweep', ranged: 'a ranged attack', spell: 'a spell', area: 'an area attack',
   statusOnly: 'a status effect', attack: 'this attack' };
@@ -21,6 +23,19 @@ const PREVENTION_WORDS = { invulnerability: 'Invulnerability', decoy: 'Decoy' };
 const row = (registry, id) => (id != null && registry?.has?.(id) ? registry.get(id) : null);
 
 // Why an in-hand Counter or defensive Sweep was not offered (SPEC §4.10).
+function rangeReturnUnavailableText(event) {
+  const reason = event.reason === 'stamina'
+    ? `not enough SP to Advance (need ${event.required}, have ${event.available})`
+    : 'out of range';
+  return `Counter return skipped: ${reason}. Defense kept.`;
+}
+
+function rangeActionUnavailableText(event) {
+  return event.reason === 'stamina'
+    ? t('combat.range.actionSkippedSp', { required: event.required, available: event.available })
+    : t('combat.range.actionSkippedRange');
+}
+
 function reactionUnavailableText(event, { registries, source, owner }) {
   const card = row(registries?.cards, event.cardId ?? event.cardIds?.[0]);
   const tags = card?.cardTags || card?.tags || [];
@@ -48,6 +63,8 @@ function nameLookup({ registries, players = [], enemies = [] }) {
 
 /** The log's own words for one combatReactionUnavailable, without the co-op seat prefix. */
 export function reactionUnavailableNote(event, { registries, players = [], enemies = [] } = {}) {
+  if (event.type === 'combatRangeReturnUnavailable') return rangeReturnUnavailableText(event);
+  if (event.type === 'combatRangeActionUnavailable') return rangeActionUnavailableText(event);
   const name = nameLookup({ registries, players, enemies });
   return reactionUnavailableText(event, { registries, source: name(event.sourceId), owner: name(event.ownerId) });
 }
@@ -62,7 +79,17 @@ function originName(registries, origin) {
 }
 
 export function combatLogEntries(events, { registries, players = [], enemies = [] } = {}) {
-  const name = nameLookup({ registries, players, enemies });
+  const plainName = nameLookup({ registries, players, enemies });
+  const playerIds = new Set(['player', ...players.map(player => player.id)]);
+  const enemyIds = new Set(enemies.map(enemy => enemy.id));
+  const references = [];
+  // Carry identity through sentence construction. Matching names afterwards
+  // would color card names or misidentify two fighters with the same name.
+  const name = id => {
+    const side = playerIds.has(id) ? 'player' : enemyIds.has(id) ? 'enemy' : null;
+    const index = references.push({ id, text: plainName(id), ...(side ? { side } : {}) }) - 1;
+    return `\u0001${index}\u0002`;
+  };
   const enemyIdOf = new Map(enemies.map(enemy => [enemy.id, enemy.enemyId]));
   const moveName = (actorId, moveId, enemyId) => {
     const def = row(registries?.enemies, enemyIdOf.get(actorId)) || row(registries?.enemies, enemyId);
@@ -142,11 +169,24 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         text = `${source} counterattacked ${target}${label ? ` with ${label}` : ''}.`;
         break;
       }
+      case 'attackHit': case 'attackMissed': {
+        const outcome = event.type === 'attackHit' ? 'hit' : 'missed';
+        const dice = Array.isArray(event.dice) && event.dice.length ? event.dice.join(', ') : event.d20 ?? 'automatic';
+        if (event.evasionDie != null) text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} = ${event.attackTotal} vs d20 [${event.evasionDie}] + Evasion ${event.evasion ?? 0} = ${event.evasionTotal} · ${event.mode || 'normal'} · ${event.hitChance ?? 100}% chance.`;
+        else if (event.fixedDefense && event.dice?.length) text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} = ${event.attackTotal} vs Evasion ${event.evasion ?? 0} · ${event.mode || 'normal'} · ${event.hitChance ?? 100}% chance.`;
+        else if (event.opposed || event.fixedDefense) {
+          // Core automatic outcome: no dice were rolled, so say why instead of showing a die.
+          const why = event.missReason === 'range' ? 'out of range' : event.bypass ? 'Evasion bypassed' : 'automatic';
+          text = `${source} ${outcome} ${target}: ${why} · Precision ${event.accuracy ?? 0} · ${event.hitChance ?? 100}% chance.`;
+        }
+        else text = `${source} ${outcome} ${target}: d20 [${dice}] + Precision ${event.accuracy ?? 0} vs Evasion ${event.evasion ?? 0} · ${event.mode || 'normal'} · stance ×${event.stanceFactor ?? 1} · ${event.hitChance ?? 100}% chance${event.missReason === 'range' ? ' (out of range)' : ''}.`;
+        break;
+      }
       case 'damageDealt': {
         const hit = `${attackText()} hit ${target}`;
         // Silenced: a hit that is all Force is negated whole.
         if (event.silencedImmune) { text = `${hit}: ${target} is immune to Force (Silenced).`; break; }
-        const barrier = event.barrierAbsorbed || 0, ward = event.wardAbsorbed || 0, poise = event.poiseAbsorbed || 0;
+        const barrier = event.barrierAbsorbed || 0, ward = event.wardAbsorbed || 0, poise = event.poiseAbsorbed || 0, poiseDamage = event.poiseDamage || 0;
         const blocked = event.blocked || 0;
         const hp = Math.max(0, event.amount - blocked);
         // What reached the layers (Barrier, Ward, Block, Poise, then HP), after typed resistance or weakness.
@@ -168,6 +208,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
           ...(ward ? [`Ward absorbed ${ward} (${(event.wardRemaining || 0) + ward} → ${event.wardRemaining || 0})`] : []),
           ...(blocked ? [`Block absorbed ${blocked} (${(event.blockRemaining || 0) + blocked} → ${event.blockRemaining || 0})`] : []),
           ...(poise ? [`Poise absorbed ${poise} (${(event.poiseRemaining || 0) + poise} → ${event.poiseRemaining || 0})`] : []),
+          // Smash vs a defensive stance: the Poise pool loses a share of the hit; none of the hit is absorbed by it.
+          ...(poiseDamage ? [`Poise damage ${poiseDamage} (${(event.poiseRemaining || 0) + poiseDamage} → ${event.poiseRemaining || 0})`] : []),
           // Silenced: the hit's Force part was negated, the rest went on.
           ...(event.forceImmune > 0 ? [`${event.forceImmune} Force IMMUNE (Silenced)`] : []),
         ];
@@ -192,7 +234,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'barrierBroken': text = `${target}'s Barrier broke${paren(causeText())}.`; break;
       case 'wardBroken': case 'poiseBroken': {
         const pool = event.type === 'wardBroken' ? 'Ward' : 'Poise';
-        const toll = event.interrupted ? 'interrupted'
+        const toll = event.poiseBreak ? 'staggered' : event.poiseBreak === false ? null : event.interrupted ? 'interrupted'
           : Number.isFinite(event.staminaLoss) ? (event.staminaLoss ? `−${event.staminaLoss} Stamina next turn` : null)
             : pool === 'Poise' ? 'staggered' : null;
         const by = causeText();
@@ -248,6 +290,16 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       }
       case 'playerDowned': text = `${name(event.playerId || 'player')} was downed${event.reason ? ` (${word(event.reason)})` : ''}.`; break;
       case 'combatReactionChosen': if (!event.cardInstanceId) text = `${name(event.ownerId)} skipped the reaction.`; break;
+      case 'combatRangeReturnUnavailable': {
+        const why = rangeReturnUnavailableText(event);
+        text = players.length > 1 ? `${name(event.ownerId)}: ${why}` : why;
+        break;
+      }
+      case 'combatRangeActionUnavailable': {
+        const why = rangeActionUnavailableText(event);
+        text = players.length > 1 ? `${name(event.ownerId)}: ${why}` : why;
+        break;
+      }
       case 'combatReactionUnavailable': {
         const why = reactionUnavailableText(event, { registries, source: name(event.sourceId), owner: name(event.ownerId) });
         text = players.length > 1 ? `${name(event.ownerId)}: ${why}` : why;
@@ -264,7 +316,18 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         break;
       default: break;
     }
-    for (const line of [].concat(text || [])) rows.push({ id, round, text: line });
+    for (const line of [].concat(text || [])) {
+      const segments = [];
+      let cursor = 0;
+      for (const match of line.matchAll(/\u0001(\d+)\u0002/g)) {
+        if (match.index > cursor) segments.push({ text: line.slice(cursor, match.index) });
+        segments.push({ ...references[Number(match[1])] });
+        cursor = match.index + match[0].length;
+      }
+      if (cursor < line.length) segments.push({ text: line.slice(cursor) });
+      rows.push({ id, round, text: segments.map(segment => segment.text).join(''), segments,
+        ...(event.damageReceipt ? { damageReceipt: event.damageReceipt } : {}) });
+    }
   });
   return rows;
 }

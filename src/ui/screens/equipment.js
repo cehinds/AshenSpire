@@ -1,3 +1,6 @@
+import { engravedIcon } from '../components/engravedIcon.js';
+import { uiIconText } from '../../content/uiIcons.js';
+import { logicalViewport, viewViewportBox } from '../viewViewport.js';
 import { characterSheetModel } from '../models/CharacterSheetModel.js';
 import { skillTrackButton } from './characterSheet.js';
 import { characterStatsButton, progressionTip } from '../components/progressionCards.js';
@@ -394,7 +397,7 @@ function buildArmoury(L, ui) {
     slots.append(collection, ui.armamentGridDetail(ordered));
   }
   const equipment = el('section', { class: 'armoury-equipment armoury-section', dataset: { component: 'armoury.armamentsCard', armamentView: ui.armamentView } });
-  const toggle = button({ label: ui.armamentView === 'list' ? 'Grid view' : 'List view', className: 'armoury-armament-view-toggle' });
+  const toggle = button({ label: t(ui.armamentView === 'list' ? 'armoury.view.grid' : 'armoury.view.list'), className: 'armoury-armament-view-toggle' });
   toggle.setAttribute('aria-label', `Show Armaments as ${ui.armamentView === 'list' ? 'grid' : 'list'}`);
   toggle.addEventListener('click', ui.toggleArmamentView);
   const compact = ui.layout.equipment.compactList;
@@ -468,10 +471,10 @@ function modSummary(registries, piece) {
 //
 /** A piece's thumbnail in an ArtWell; the art dies quietly if the file is
  *  missing — the single-file dist and file:// play both depend on this. */
-function pieceArt(piece, fallback = '⚔') {
+function pieceArt(piece, fallback = 'attack') {
   const well = artWell({ src: thumbSrc(piece), alt: '', small: true });
   const image = well.querySelector('img');
-  swapOnError(image, () => Object.assign(document.createElement('span'), { textContent: piece.icon || fallback }));
+  swapOnError(image, () => engravedIcon(piece.icon || fallback) || Object.assign(document.createElement('span'), { textContent: uiIconText(piece.icon || fallback) }));
   return well;
 }
 
@@ -578,7 +581,7 @@ function inventoryReveal(registries, row, {
   } else if (item.artAsset) {
     art = { kind: 'image', value: assetUrl(item.artAsset) };
   } else {
-    art = { kind: 'icon', value: item.icon || '◆' };
+    art = { kind: 'icon', value: item.icon || 'skill' };
   }
   const description = row.category === 'Relic'
     ? relicText(item, registries)
@@ -831,7 +834,7 @@ export function mountEquipment(host, {
   // `panel.dataset.responsive` and the pane observer below asks it again to tell
   // a real breakpoint crossing from a height-only resize; a second copy of the
   // comparison is how those two answers would drift.
-  const responsiveMode = () => typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint ? 'phone' : 'desktop';
+  const responsiveMode = () => typeof window !== 'undefined' && logicalViewport().width <= layout.responsive.breakpoint ? 'phone' : 'desktop';
   let paneObserver = null;
   let paneFrame = 0;
   let inventoryDisclosure = null;
@@ -894,7 +897,7 @@ export function mountEquipment(host, {
   // The 2026-08-23 disclosure correction removed the hold grips and their
   // window listeners; Escape still has to leave through every close road.
   // THE DECK'S FLOOR GATES EVERY ROAD THE PLAYER TAKES OUT (plan phase 3b,
-  // proposal §5): Back, the ✕, Escape and the tap outside all go through
+  // proposal §5): Back, the close, Escape and the tap outside all go through
   // `leave`, which asks the model (loadoutLeaveRefusal) and shows its sentence
   // in place instead of closing. `close` itself stays unconditional — it is
   // also the teardown a host calls when a fight starts, and a door that can
@@ -924,7 +927,7 @@ export function mountEquipment(host, {
   // I nearly ruled the other way, and the measurement is why I did not.
   // Against it: on a phone there is barely any backdrop to tap — 7.8 px of
   // veil down each side and a 33.77 px band top and bottom at 390x844, all
-  // four under the tap floor, so this is NOT the phone's exit. The ✕ is, and
+  // four under the tap floor, so this is NOT the phone's exit. The close is, and
   // it is pinned and floored. For it: the same measurement says the accident
   // it risks is just as small, on desktop the strips are 24-60 px and a mouse
   // hits them on purpose, and — the part that decided it — ESCAPE ALREADY
@@ -1290,8 +1293,8 @@ export function mountEquipment(host, {
     const selected = armamentGridSelection
       && armamentGridSelection.slotId === slot.id
       && armamentGridSelection.index === position.index;
-    const art = position.state === 'locked' ? artWell({ glyph: '🔒', small: true })
-      : position.summary.item ? pieceArt(position.summary.item, position.summary.item.icon || '◆')
+    const art = position.state === 'locked' ? artWell({ glyph: 'lock', small: true })
+      : position.summary.item ? pieceArt(position.summary.item, position.summary.item.icon || 'skill')
         : artWell({ glyph: '＋', small: true });
     const card = optionCard({
       art, name: position.state === 'locked' ? 'Locked' : position.summary.name, badge: positionBadge(position),
@@ -1360,7 +1363,7 @@ export function mountEquipment(host, {
         compared.unchanged
           ? statusText(t('armoury.compare.unchanged'), { class: 'armoury-compare-roles' })
           : kitLine(compared.roles.map((r) => kitItem({
-            glyph: '◆', name: t('armoury.compare.role', { label: r.label, before: r.before, after: r.after }),
+            glyph: 'skill', name: t('armoury.compare.role', { label: r.label, before: r.before, after: r.after }),
           })), { class: 'armoury-compare-roles' }),
       );
     }
@@ -1791,7 +1794,7 @@ export function mountEquipment(host, {
         const plan = inventoryFooterPlan({ target, actionLabel, eligibility }).primary;
         // The footer runs the same act, through the same hold, as the card.
         if (plan) footerPlans.set(row.key, { ...plan, act, explicit: !!armament, holdMs: cardClass.holdAction ? holdDuration : 0 });
-      } else if (row.classCard && !inCombat) {
+      } else if (row.classCard && !inCombat && run.gameProfile?.foundation?.mode !== 'configured') {
         const equipped = !run.classUnequipped && run.class === row.id;
         const label = equipped ? 'Unequip class' : 'Equip class';
         const act = () => { equipClassCard(registries, run, equipped ? null : row.id, { inCombat }); commit(); };
@@ -1799,7 +1802,7 @@ export function mountEquipment(host, {
         actionButton.title = run.pendingReward ? 'Finish the pending reward before changing class cards.' : '';
         actionButton.addEventListener('click', (event) => { event.stopPropagation(); act(); });
         if (!run.pendingReward) footerPlans.set(row.key, { label, kind: 'class', act, holdMs: 0 });
-      } else if (row.read && !inCombat) {
+      } else if (row.read && !inCombat && run.gameProfile?.foundation?.mode !== 'configured') {
         // SPEC §14.3: a skill book is read here, out of combat only — one
         // awardSkillXp on its track (model/consumables.js), then one fewer.
         const label = t('armoury.consumable.read');
@@ -1957,7 +1960,7 @@ export function mountEquipment(host, {
       group('Resources', [[t('combat.actions'), derived('energy')], ['Hand', derived('draw')], ['Resistance', '—']]),
       group('Run', [['Fights won', runStats.fightsWon || 0], ['Damage dealt', runStats.damageDealt || 0], ['Damage taken', runStats.damageTaken || 0]]),
       detailCard({ eyebrow: 'Relics', muted: true, attrs: { class: 'armoury-stats-group' }, children: relicNames.length
-        ? kitLine(relicNames.map((name) => kitItem({ glyph: '◆', name })))
+        ? kitLine(relicNames.map((name) => kitItem({ glyph: 'skill', name })))
         : flavour('0 equipped') }),
       equipmentReceiptPanel(surface),
     ]);
@@ -2090,8 +2093,8 @@ export function mountEquipment(host, {
         if (!card.isConnected || !card.open) return;
         // Focus must not scroll before closing the old card has settled layout.
         if (document.activeElement !== head) head.focus({ preventScroll: true });
-        let top = 0;
-        let bottom = window.innerHeight;
+        let top = viewViewportBox().top;
+        let bottom = viewViewportBox().bottom;
         for (let parent = card.parentElement; parent; parent = parent.parentElement) {
           if (!/(auto|scroll|hidden|clip)/.test(getComputedStyle(parent).overflowY)) continue;
           const rect = parent.getBoundingClientRect();
@@ -2206,7 +2209,7 @@ export function mountEquipment(host, {
     // A run always has its own class ladder (skillProgressRows refuses a class
     // the registry does not know, rather than returning a list without it), so
     // there is no empty case to draw here and none is pretended.
-    const skillRows = skillProgressRows(registries, run);
+    const skillRows = run.gameProfile?.foundation?.mode === 'configured' ? [] : skillProgressRows(registries, run);
     // A ledger row whose track the content no longer declares cannot become a
     // bar — it has no label — but it may be holding drafts, so it is SAID
     // rather than dropped, the way a saved view the table no longer declares
@@ -2223,7 +2226,7 @@ export function mountEquipment(host, {
     progressionTip(progression, 'Open progression');
     progression.addEventListener('click', () => openProgression(progression, 'skills'));
     if (!onCharacterSheet) progression.addEventListener('click', () => skills.hidden = !skills.hidden);
-    const skillSection = el('section', { class: 'character-skill-section' }, [progression, skills]);
+    const skillSection = el('section', { class: 'character-skill-section' }, run.gameProfile?.foundation?.mode === 'configured' ? [] : [progression, skills]);
     box.querySelector('.combatPowerCard').after(skillSection);
     box.appendChild(informationCard({
       id: 'equipmentReceiptsCard',
@@ -2378,17 +2381,17 @@ export function mountEquipment(host, {
     ];
     const tagLine = kitLine(tagRows.length
       ? tagRows.map((tag) => {
-        const item = kitItem({ glyph: '◆', name: tag.label });
+        const item = kitItem({ glyph: 'skill', name: tag.label });
         attachTooltip(item, () => `<div class="tt-title">${esc(tag.label)}</div><p>${esc(tag.description)}</p>`);
         return item;
       })
-      : [kitItem({ glyph: '◆', name: 'No tags authored.' })], { class: 'armoury-armament-tag-details' });
+      : [kitItem({ glyph: 'skill', name: 'No tags authored.' })], { class: 'armoury-armament-tag-details' });
     const detail = el('section', { class: 'armoury-armament-details', dataset: { component: 'armoury.armamentDetailPane' } }, [
       flavour(item.blurb || 'No lore text authored.', { class: 'armoury-armament-lore' }),
       ...facts,
       smithingReceipt ? el('div', { class: 'as-statrow flat armoury-smithing-receipt' }, [
         el('span', { class: 'sr-id' }, el('b', { class: 'sr-name', text: 'Last Smithing' })),
-        el('span', { class: 'sr-vals' }, el('span', { class: 'sp-v', text: `Tier ${smithingReceipt.beforeLevel} → ${smithingReceipt.afterLevel} · ${smithingReceipt.cost} Stone · ${smithingReceipt.affectedCards.length} basic cards improved` })),
+        el('span', { class: 'sr-vals' }, el('span', { class: 'sp-v', text: `Tier ${smithingReceipt.beforeLevel} → ${smithingReceipt.afterLevel} · ${smithingReceipt.cost} Stone · ${(smithingReceipt.changes || []).some((change) => ['stat', 'budget', 'card'].includes(change.kind)) ? smithingReceipt.changes.map((change) => `${change.label} ${change.before} → ${change.after}`).join(', ') : `${smithingReceipt.affectedCards.length} basic cards improved`}` })),
       ]) : null,
       tagLine,
     ]);
@@ -2491,7 +2494,7 @@ export function mountEquipment(host, {
         sortable: region.id === 'cards',
       })),
     });
-    // W1e footer: Back bottom-left (leaves, like the ✕ and Escape); the
+    // W1e footer: Back bottom-left (leaves, like the close and Escape); the
     // selected item's action bottom-right when there is one.
     const back = button({ label: t(picking ? 'armoury.destination.back' : 'common.back'), role: 'exit', className: 'armoury-back', attrs: { dataset: { focusable: 'true' } } });
     back.addEventListener('click', () => { if (picking) { clearInventorySelection(); draw(); } else leave(); });

@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 1,
+  "classId": "herald",
+  "sourceProvenance": "pose-studio/stances/class-smash/herald/provenance.json",
+  "sourceProvenanceSha256": "1065e1f97d669faa76f4d6c7101abcdeeb9da96d9d78d8fc0d376cba033892f3",
+  "sharedLogicalScale": 0.6133603238866396,
+  "groundAnchor": [
+    512,
+    900
+  ],
+  "bodyHeight": 494,
+  "logicalStageAnchor": [
+    384,
+    464
+  ],
+  "sourceLogicalDrawSize": [
+    628.080971659919,
+    628.080971659919
+  ],
+  "sourceLogicalDrawOffset": [
+    69.9595141700405,
+    -88.0242914979757
+  ],
+  "transparentCropMargin": 16,
+  "rasterDownsampleFactors": {
+    "full": 2,
+    "lite": 4
+  },
+  "sourceBookends": {
+    "first": "1ec50550ef3547a0a3127e26003fac86c60e9ce1d73b846d319824fd88f36b13",
+    "last": "1ec50550ef3547a0a3127e26003fac86c60e9ce1d73b846d319824fd88f36b13",
+    "decodedRGBA": "6c19d634022e9de40852162944385a7e9ea8dd9c8ea50d9b277a664fa2e9be17"
+  },
+  "frames": {
+    "held": {
+      "path": "assets-display/alternative/class-smash-herald-held.webp",
+      "lite": "assets-display/alternative/class-smash-herald-held-mobile.webp",
+      "sha256": "5d788369c03c56489d8a1d1b0e3163b6f88ee8a2fb44298a9728bdf837894f90",
+      "liteSha256": "4793dd19f1f2bdf74ae86eba19657bb22a662340082c1571e153c91626f0ccde",
+      "size": [
+        333.668016194332,
+        397.4574898785425
+      ],
+      "drawOffset": [
+        217.165991902834,
+        76.35627530364371
+      ],
+      "bounds": [
+        259,
+        287,
+        765,
+        900
+      ],
+      "sourceCrop": [
+        240,
+        268,
+        784,
+        916
+      ],
+      "stageBounds": [
+        228.81983805668017,
+        88.01012145748987,
+        539.1801619433198,
+        464.0
+      ],
+      "stageAnchor": [
+        384,
+        464
+      ],
+      "rasterSize": [
+        272,
+        324
+      ],
+      "mobileRasterSize": [
+        136,
+        162
+      ],
+      "source": {
+        "path": "pose-studio/stances/class-smash/herald/frames/01-held.png",
+        "sha256": "1ec50550ef3547a0a3127e26003fac86c60e9ce1d73b846d319824fd88f36b13",
+        "width": 1024,
+        "height": 1024
+      },
+      "provenance": "pose-studio/stances/class-smash/herald/provenance.json"
+    },
+    "takeoff": {
+      "path": "assets-display/alternative/class-smash-herald-takeoff.webp",
+      "lite": "assets-display/alternative/class-smash-herald-takeoff-mobile.webp",
+      "sha256": "c6f18707ac621845043934d6dc3cef84e66b75a47691f97b27c2c8a390c4151e",
+      "liteSha256": "7b911722fbbb6c267357e0a37ebb051a9c9b6c0855cf77feef7681e5f2033709",
+      "size": [
+        323.8542510121457,
+        417.08502024291494
+      ],
+      "drawOffset": [
+        222.07287449392715,
+        61.63562753036439
+      ],
+      "bounds": [
+        267,
+        260,
+        757,
+        907
+      ],
+      "sourceCrop": [
+        248,
+        244,
+        776,
+        924
+      ],
+      "stageBounds": [
+        233.72672064777328,
+        71.4493927125506,
+        534.2732793522267,
+        468.2935222672064
+      ],
+      "stageAnchor": [
+        384,
+        464
+      ],
+      "rasterSize": [
+        264,
+        340
+      ],
+      "mobileRasterSize": [
+        132,
+        170
+      ],
+      "source": {
+        "path": "pose-studio/stances/class-smash/herald/frames/02-takeoff.png",
+        "sha256": "9b29e4124f686a91538c049646249e72c170270e71884819c67184d267feb70e",
+        "width": 1024,
+        "height": 1024
+      },
+      "provenance": "pose-studio/stances/class-smash/herald/provenance.json"
+    },
+    "airborne": {
+      "path": "assets-display/alternative/class-smash-herald-airborne.webp",
+      "lite": "assets-display/alternative/class-smash-herald-airborne-mobile.webp",
+      "sha256": "2021e999f207aff3ac8ed1e09dc2127dc59cf6bc8aa61a96d93ae1d06eb6fd77",
+      "liteSha256": "19924611fc40d6f02316a7b9052e134ef77e93286cd2e34a6d91573203030e8a",
+      "size": [
+        318.9473684210526,
+        424.44534412955466
+      ],
+      "drawOffset": [
+        224.5263157894737,
+        -51.22267206477732
+      ],
+      "bounds": [
+        270,
+        78,
+        755,
+        733
+      ],
+      "sourceCrop": [
+        252,
+        60,
+        772,
+        752
+      ],
+      "stageBounds": [
+        235.56680161943322,
+        -40.182186234817806,
+        533.0465587044534,
+        361.56882591093114
+      ],
+      "stageAnchor": [
+        384,
+        464
+      ],
+      "rasterSize": [
+        260,
+        346
+      ],
+      "mobileRasterSize": [
+        130,
+        173
+      ],
+      "source": {
+        "path": "pose-studio/stances/class-smash/herald/frames/03-airborne.png",
+        "sha256": "6ff7b03fc21973e844abe0424560df1ac6d6a6cfda8b56a967fb5d76c0a36d57",
+        "width": 1024,
+        "height": 1024
+      },
+      "provenance": "pose-studio/stances/class-smash/herald/provenance.json"
+    },
+    "impact": {
+      "path": "assets-display/alternative/class-smash-herald-impact.webp",
+      "lite": "assets-display/alternative/class-smash-herald-impact-mobile.webp",
+      "sha256": "a6666342ad94ded122ec473bb0fb07d1ded2d1ff76ac661ff739a75fc53f98d8",
+      "liteSha256": "9f567fae86dc2f33394c207ad4c3ef8e710a73daa3e035bb104f33ffcf85d47f",
+      "size": [
+        426.8987854251012,
+        314.0404858299595
+      ],
+      "drawOffset": [
+        170.5506072874494,
+        191.66801619433198
+      ],
+      "bounds": [
+        180,
+        475,
+        843,
+        952
+      ],
+      "sourceCrop": [
+        164,
+        456,
+        860,
+        968
+      ],
+      "stageBounds": [
+        180.36437246963564,
+        203.32186234817812,
+        587.0222672064777,
+        495.8947368421052
+      ],
+      "stageAnchor": [
+        384,
+        464
+      ],
+      "rasterSize": [
+        348,
+        256
+      ],
+      "mobileRasterSize": [
+        174,
+        128
+      ],
+      "source": {
+        "path": "pose-studio/stances/class-smash/herald/frames/04-impact.png",
+        "sha256": "caad10290e57eb3220df47b723972a8d741aabea09dd6a5c1fada5d7c5a53b41",
+        "width": 1024,
+        "height": 1024
+      },
+      "provenance": "pose-studio/stances/class-smash/herald/provenance.json"
+    }
+  }
+}

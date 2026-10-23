@@ -1,3 +1,4 @@
+import { shareableGameProfile } from '../model/ownedGameProfile.js';
 import { bindTurnStamina } from '../model/turnStamina.js';
 // Revision adapter for the existing solo/co-op action interpreters. No second
 // simulator: the same opcodes, damage entry point, piles, triggers and RNG run.
@@ -56,9 +57,21 @@ export function cardSourceSnapshots(ctx, def, source, card) {
 }
 
 export function cardActions(ctx, def, source, target, card, meta, sourceSnapshots = null) {
-  if (!ctx.foundation) return (def.effects || []).map((effect) => ({ effect, source, owner: source, target, card, meta }));
+  const actionTarget = effect => effect.op === 'moveEngagement' && effect.target === 'pendingAttacker'
+    ? ctx.enemies.find(enemy => enemy.id === ctx._reactionSourceId) || target : target;
+  if (!ctx.foundation) {
+    const damageSources=sourceSnapshots ? [...sourceSnapshots.entries()].filter(([effect])=>effect?.op==='damage').map(([,snapshot])=>snapshot) : [];
+    let damageIndex=0;
+    return (def.effects || []).map(effect=>{
+      // Preparation/charges may copy an authored effect. Keep its ordinal's
+      // frozen source without replacing the accepted root's stance/metadata.
+      const ordinal=effect.op==='damage'?damageIndex++:null;
+      const snapshot=sourceSnapshots?.get(effect) || (ctx.rangeState && ordinal!==null ? damageSources[ordinal] : null);
+      return {effect,source,owner:source,target:actionTarget(effect),card:snapshot?{...card,...snapshot}:card,meta};
+    });
+  }
   if (card.attack) validateAttack(card.attack, ctx.foundation.rules);
-  const formulaContext = { entities: { self: source, owner: source, player: ctx.player, target, enemy: target, allEnemies: ctx.enemies.filter((e) => e.alive) }, energySpent: meta.energySpent, cardsPlayedThisTurn: meta.ordinalThisTurn };
+  const formulaContext = { entities: { self: source, owner: source, player: ctx.player, target, enemy: target, allEnemies: ctx.enemies.filter((e) => e.alive) }, cardId:card.cardId,manaSpent:meta.manaSpent || 0,staminaSpent:meta.staminaSpent || 0, energySpent: meta.energySpent, cardsPlayedThisTurn: meta.ordinalThisTurn };
   const rows = [];
   for (const effect of def.effects || []) {
     if (effect.attack) validateAttack(effect.attack, ctx.foundation.rules);
@@ -75,7 +88,7 @@ export function cardActions(ctx, def, source, target, card, meta, sourceSnapshot
     const resolved = hits > 0 ? snapshot || foundationCarrier(ctx, source, card, effect.attack) : card;
     const carrier = hits > 0 ? { ...resolved, appliedStatusEffects: card.appliedStatusEffects,
       appliedStatuses: card.appliedStatuses } : resolved;
-    const action = { effect, source, owner: source, target, card: carrier, meta: { ...meta, foundationHitCount: total, foundationHitOffset: offset } };
+    const action = { effect, source, owner: source, target: actionTarget(effect), card: carrier, meta: { ...meta, foundationHitCount: total, foundationHitOffset: offset } };
     offset += hits; return action;
   });
 }
@@ -129,7 +142,7 @@ function equippedFoundationSource(ctx, entity, carrier) {
       const family = state.rules.equipmentSources?.itemFamilies?.[piece.id] || state.rules.equipmentSources?.profileFamilies?.[piece.attackProfile];
       if (!family || !identity.damageType) throw new Error(`Missing attack source mapping for '${piece.id}'`);
       return { id: `armament/${piece.id}/${hand}`, itemId: piece.id, name: piece.name, hand, sourceType: kind,
-        weight: piece.weight, grip: 'oneHand', family, damageType: identity.damageType, tags: [...piece.tags], buildup: [] };
+        range: piece.range || 'melee', propertyTags: [...(piece.propertyTags || [])], weight: piece.weight, grip: 'oneHand', family, damageType: identity.damageType, tags: [...piece.tags], buildup: [] };
     }
     if (kind === 'spell') throw new Error(`No spell source for ${foundationActorId(ctx, entity)}`);
     if (explicitHand) return { ...state.rules.fallbackSource, sourceType: 'unarmed', hand: explicitHand };
@@ -266,7 +279,11 @@ export function candidateState(ctx, { detached = false } = {}) {
   for (const [key, value] of Object.entries(ctx)) {
     if (typeof value !== 'function' && key !== 'registries' && key !== 'rng' && !(detached && key === 'eventLog')) data[key] = value;
   }
-  const candidate = { ...structuredClone(data), ...(detached ? { eventLog: [] } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
+  // Only a privately owned immutable profile may bypass the clone. The guard
+  // falls back if another data field aliases it (or one of its descendants).
+  const sharedProfile = shareableGameProfile(data);
+  if (sharedProfile) delete data.gameProfile;
+  const candidate = { ...structuredClone(data), ...(sharedProfile ? { gameProfile: sharedProfile } : {}), ...(detached ? { eventLog: [] } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
   // Catalogue accessors are immutable context, never serializable combat data.
   if (ctx.registriesForPlayer) candidate.registriesForPlayer = ctx.registriesForPlayer;
   if (ctx.registerPlayerRegistries) candidate.registerPlayerRegistries = ctx.registerPlayerRegistries;

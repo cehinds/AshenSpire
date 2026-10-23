@@ -1,0 +1,83 @@
+{
+  "action": "sweep",
+  "aliases": [
+    "sweep"
+  ],
+  "origin": "sweep",
+  "timing": {
+    "totalMs": 195,
+    "impactMs": 41.25
+  },
+  "registeredSequence": {
+    "selection": "starseer-sweep-01",
+    "label": "Existing painted sweep",
+    "poses": [
+      "starseer.sweep.stance",
+      "starseer.sweep.contact",
+      "starseer.sweep.recovery",
+      "ready"
+    ],
+    "durations": [
+      55,
+      60,
+      65,
+      80
+    ],
+    "impact": 1,
+    "travel": [
+      0,
+      55,
+      28,
+      0
+    ],
+    "effects": [
+      null,
+      "starseer.sweep.effect-1",
+      "starseer.sweep.effect-2",
+      null
+    ],
+    "hold": false
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-sweep",
+      "label": "origin stance-sweep",
+      "weight": 1
+    },
+    {
+      "pose": "starseer.sweep.stance",
+      "registeredFrameId": "starseer.sweep.stance",
+      "label": "1/4 starseer.sweep.stance \u00b7 weight 55",
+      "weight": 55,
+      "timeMs": 20.625
+    },
+    {
+      "pose": "starseer.sweep.contact",
+      "registeredFrameId": "starseer.sweep.contact",
+      "label": "2/4 starseer.sweep.contact \u00b7 weight 60",
+      "weight": 60,
+      "timeMs": 63.75
+    },
+    {
+      "pose": "starseer.sweep.recovery",
+      "registeredFrameId": "starseer.sweep.recovery",
+      "label": "3/4 starseer.sweep.recovery \u00b7 weight 65",
+      "weight": 65,
+      "timeMs": 110.625
+    },
+    {
+      "pose": "stance-sweep",
+      "registeredFrameId": "ready",
+      "label": "4/4 ready \u00b7 weight 80",
+      "weight": 80,
+      "timeMs": 165
+    },
+    {
+      "pose": "stance-sweep",
+      "label": "return Sweep",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

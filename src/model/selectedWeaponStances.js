@@ -42,6 +42,8 @@ export function selectedWeaponStanceFor({ profile, stance, card, entity } = {}) 
 export function selectedWeaponReactionFor(event, profile) {
   if (profile !== REAVER_GREATSWORD_PILOT || event?.targetId !== 'player') return null;
   if (event.type === 'combatGuardBroken') return 'guard-break';
+  if (event.type === 'attackMissed' && event.missReason === 'accuracy'
+    && (event.evadeActive || event.evadeStacks > 0)) return 'evade';
   if (event.type === 'attackEvaded' || (event.type === 'combatAvoidanceResolved' && event.avoided && event.evade?.success)) return 'evade';
   if (event.type === 'combatAvoidanceResolved' && event.avoided === true
     && event.prevention === 'invulnerability') return 'defend';

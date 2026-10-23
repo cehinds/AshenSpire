@@ -1,3 +1,5 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { productionBundle } from './helpers/production-bundle.mjs';
@@ -45,7 +47,15 @@ function fixture({ reaction = true, coop = false } = {}) {
   assert.equal(combat.player.combatTraitGuard.poise, 1, 'the real Defend card arms Guard');
   // Crystal Barrier's Barrier absorbs spells; physical Block from another
   // source supplies the reduced physical hit in the ordinary EndTurn case.
-  if (!reaction) combat.player.block = 20;
+  if (!reaction) {
+    combat.player.block = 20;
+    // Crystal Barrier's Reach posture would put this target outside the melee attack's range.
+    // This fixture tests bundled guard spending on a reduced hit, so keep the defender in melee.
+    combat.player.combatStance.range = 'melee';
+    assert.equal(combat.player.combatStance.maneuver, 'defend');
+  }
+  // Preserve the production bundled engine and real transactional RNG while pinning landed contacts.
+  primeAccuracyRolls(combat, { count: reaction ? 2 : 1 });
   return combat;
 }
 
@@ -66,7 +76,7 @@ function assertSettled(combat, turn) {
   assert.equal(combat.queue.length, 0);
 }
 
-for (const coop of [false, true]) test(`bundled ${coop ? 'co-op' : 'solo'} Quickstep resolves Defend Guard and leaves the next EndTurn usable`, () => {
+for (const coop of [false, true]) test(`bundled ${coop ? 'co-op' : 'solo'} Quickstep resolves Defend Guard and leaves the next EndTurn usable`, { skip: coop && !COOP_TESTS_ENABLED ? COOP_TEST_SKIP_REASON : false }, () => {
   const combat = fixture({ coop });
   send(combat, { type: 'endTurn' });
   const offer = combat.pendingReaction;
@@ -88,7 +98,7 @@ for (const coop of [false, true]) test(`bundled ${coop ? 'co-op' : 'solo'} Quick
   assert.equal(guardEvents(combat).length, 1);
 });
 
-for (const coop of [false, true]) test(`bundled ${coop ? 'co-op' : 'solo'} ordinary EndTurn resolves Defend Guard without a reaction card`, () => {
+for (const coop of [false, true]) test(`bundled ${coop ? 'co-op' : 'solo'} ordinary EndTurn resolves Defend Guard without a reaction card`, { skip: coop && !COOP_TESTS_ENABLED ? COOP_TEST_SKIP_REASON : false }, () => {
   const combat = fixture({ reaction: false, coop });
   assert.doesNotThrow(() => send(combat, { type: 'endTurn' }));
   assertSettled(combat, 2);

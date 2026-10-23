@@ -1,0 +1,471 @@
+[
+  {
+    "id": "core.strike",
+    "name": "Strike",
+    "class": "colorless",
+    "rarity": "starter",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 6
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:attack",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.defend",
+    "name": "Defend",
+    "class": "colorless",
+    "rarity": "starter",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 10
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill",
+      "trait:reaction"
+    ],
+    "textTemplate": " Gain {block} Block.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.counter",
+    "name": "Counter",
+    "class": "colorless",
+    "rarity": "starter",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 5
+      },
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 4
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:counter",
+      "classification.attack",
+      "trait:reaction"
+    ],
+    "textTemplate": "Gain {block} Block. Prepare Melee Counter: return {damage} damage.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.smash",
+    "name": "Smash",
+    "class": "colorless",
+    "rarity": "starter",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 12
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:smash",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.sweep",
+    "name": "Sweep",
+    "class": "colorless",
+    "rarity": "starter",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "allEnemies",
+        "amount": 4
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:sweep",
+      "classification.attack",
+      "targeting:area"
+    ],
+    "textTemplate": "Deal {damage} damage to ALL enemies.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.reaverSpecial",
+    "name": "Sundering Art",
+    "class": "reaver",
+    "rarity": "starter",
+    "cost": 2,
+    "staminaCost": 2,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 36
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:smash",
+      "classification.attack",
+      "extractable"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.starseerSpecial",
+    "name": "Star Spark",
+    "class": "starseer",
+    "rarity": "starter",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 1,
+    "costRule": "fixed",
+    "type": "attack",
+    "icon": "skill",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 9
+      },
+      {
+        "op": "applyStatus",
+        "target": "enemy",
+        "status": "vulnerable",
+        "stacks": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "maneuver:casting",
+      "classification.attack"
+    ],
+    "textTemplate": "Deal {damage} damage. Apply {vulnerable} Vulnerable.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.rogueSpecial",
+    "name": "Quick Guard",
+    "class": "rogue",
+    "rarity": "starter",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 7
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:casting",
+      "classification.skill"
+    ],
+    "textTemplate": " Gain {block} Block.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.heraldSpecial",
+    "name": "Lasting Resolve",
+    "class": "herald",
+    "rarity": "starter",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "power",
+    "icon": "shield",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "block",
+        "target": "self",
+        "amount": 4
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:casting",
+      "classification.power"
+    ],
+    "textTemplate": " Gain {block} Block.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.evade",
+    "name": "Evade",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 3,
+    "staminaCost": 3,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "next",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill"
+    ],
+    "stanceTrigger": {
+      "stance": "evade"
+    },
+    "textTemplate": "Gain {evade} Evade.",
+    "flavor": "Core adapter fixture. Evade is available in rewards, never starter."
+  },
+  {
+    "id": "core.cantrip",
+    "name": "Arcane Spark",
+    "class": "colorless",
+    "rarity": "starter",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "attack",
+    "mirrors": "attack",
+    "icon": "attack",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "damage",
+        "target": "enemy",
+        "amount": 6
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "source:spell",
+      "maneuver:casting",
+      "classification.attack",
+      "rank.cantrip"
+    ],
+    "textTemplate": "Deal {damage} damage.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json.",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "id": "core.manaSurge",
+    "name": "Mana Surge",
+    "class": "colorless",
+    "rarity": "starter",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "skill",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "restoreMana",
+        "target": "self",
+        "amount": 2
+      }
+    ],
+    "tags": [
+      "camp:spell",
+      "maneuver:casting",
+      "classification.skill"
+    ],
+    "textTemplate": "Gain {restoreMana} Mana.",
+    "flavor": "Core adapter fixture. Values are provisional and authored in cards.json."
+  },
+  {
+    "id": "core.advance",
+    "name": "Advance",
+    "class": "colorless",
+    "rarity": "common",
+    "cost": 1,
+    "staminaCost": 1,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "move",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": -1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "classification.skill"
+    ],
+    "textTemplate": "Close one band."
+  },
+  {
+    "id": "core.closingDodge",
+    "name": "Closing Dodge",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 4,
+    "staminaCost": 4,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "evade",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
+      },
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": -1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill",
+      "trait:reaction"
+    ],
+    "stanceTrigger": {
+      "stance": "evade"
+    },
+    "textTemplate": "Gain {evade} Evade.\nClose one band."
+  },
+  {
+    "id": "core.backstep",
+    "name": "Backstep",
+    "class": "colorless",
+    "rarity": "uncommon",
+    "cost": 4,
+    "staminaCost": 4,
+    "manaCost": 0,
+    "costRule": "fixed",
+    "type": "skill",
+    "icon": "evade",
+    "keywords": [],
+    "effects": [
+      {
+        "op": "applyStatus",
+        "target": "self",
+        "status": "evade",
+        "stacks": {
+          "f": "metric",
+          "metric": "evadeStackGain",
+          "of": "self"
+        }
+      },
+      {
+        "op": "moveEngagement",
+        "target": "enemy",
+        "bands": 1
+      }
+    ],
+    "tags": [
+      "camp:physical",
+      "maneuver:defend",
+      "classification.skill",
+      "trait:reaction"
+    ],
+    "stanceTrigger": {
+      "stance": "evade"
+    },
+    "textTemplate": "Gain {evade} Evade.\nRetreat one band."
+  }
+]

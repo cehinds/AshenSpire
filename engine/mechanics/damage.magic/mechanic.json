@@ -1,0 +1,26 @@
+{
+  "id": "damage.magic",
+  "tag": "damage.magic",
+  "version": "1.0.0",
+  "family": "damage",
+  "label": "Magic",
+  "description": "Tag damage.magic in the damage family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "damage.magic"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "spellDamageDealtMultiplier"
+  }
+}

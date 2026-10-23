@@ -5,8 +5,8 @@
   /* Body is zoomed. A percentage-height screen is therefore only a zoomed
      fraction of the glass, leaving the apparent "footer" as empty page below
      it. This is the same viewport compensation used by the combat frame. */
-  width: calc(100vw / var(--ui-zoom, 1));
-  height: calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1));
+  width: calc(calc(100 * var(--view-vw, 1vw)) / var(--ui-zoom, 1));
+  height: calc(var(--visible-height, calc(100 * var(--view-vh, 1dvh))) / var(--ui-zoom, 1));
 }
 /* The box the scrollport and its map-only overlays share. The vignette and the
    compact zoom cluster are bounded by this frame, never by the viewport.
@@ -180,7 +180,7 @@
   visibility: hidden;
   position: absolute; left: 50%; bottom: calc(100% + 0.5rem); transform: translateX(-50%);
   transition: visibility 0s linear var(--potion-reveal-fade, 160ms);
-  width: max-content; max-width: 40vw; justify-content: center; flex-wrap: nowrap;
+  width: max-content; max-width: calc(40 * var(--view-vw, 1vw)); justify-content: center; flex-wrap: nowrap;
 }
 /* NOTHING BEHIND THEM (owner, 2026-09-17): the flask's own art over the map
    rather than on a chip, with the count a small number ABOVE it rather than a
@@ -200,12 +200,12 @@
   opacity: 0; transform: translateY(0.7rem);
   transition: opacity var(--potion-reveal-fade, 160ms) ease, transform var(--potion-reveal-fade, 160ms) ease;
 }
-.map-potions:has(:focus-visible) .run-potion-minis > * { opacity: 1; transform: none; }
+.map-potions:has(:focus-visible) .run-potion-minis > :where(.potion-mini, .status-overflow) { opacity: 1; transform: none; }
 /* One after another, nearest the button first — the tray holds four at most. */
-.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(1) { transition-delay: var(--potion-focus-delay, 500ms); }
-.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(2) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 40ms); }
-.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(3) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 80ms); }
-.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(4) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 120ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > :where(.potion-mini, .status-overflow):nth-last-child(1) { transition-delay: var(--potion-focus-delay, 500ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > :where(.potion-mini, .status-overflow):nth-last-child(2) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 40ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > :where(.potion-mini, .status-overflow):nth-last-child(3) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 80ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > :where(.potion-mini, .status-overflow):nth-last-child(4) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 120ms); }
 /* Touch browsers may keep :hover latched after a tap. Only a device with an
    actual fine hover pointer gets the hover reveal; touch keeps the large
    Potions button as its direct, one-tap route to the full list. */
@@ -229,7 +229,7 @@
 .map-tray[data-shown="true"] > .map-tray-reveal > * { opacity: 1; }
 .map-tray[data-instant="true"] > .map-tray-reveal,
 .map-tray[data-instant="true"] > .map-tray-reveal > * { transition: none; }
-.map-tray-reveal > .map-context { flex: 0 0 auto; box-sizing: border-box; height: min(calc(20dvh / var(--ui-zoom, 1)), 8rem); overflow-y: auto; display: grid; align-content: start; gap: .2rem; padding: .6rem 2.5vw 0; }
+.map-tray-reveal > .map-context { flex: 0 0 auto; box-sizing: border-box; height: min(calc(calc(20 * var(--view-vh, 1dvh)) / var(--ui-zoom, 1)), 8rem); overflow-y: auto; display: grid; align-content: start; gap: .2rem; padding: .6rem calc(2.5 * var(--view-vw, 1vw)) 0; }
 .map-tray-reveal > .map-context > * { margin: 0; }
 .mapscreen .map-context-title { font: 600 1.5rem/1.2 var(--font-display); color: var(--parchment); }
 .mapscreen .map-context-line { color: var(--muted); }
@@ -289,7 +289,7 @@ g.map-node:focus:not(:focus-visible) { outline: none; }
 /* ---- the shrine lane (Settings → Display · Shrine path glow) ---------------
    "as new paths open, the path to the nearest shrine should have a glowing
    effect" — Constantine, 2026-08-16. WHICH nodes is decided in
-   model/mapknowledge.js and clipped to what the fog already draws
+   model/map/mapknowledge.js and clipped to what the fog already draws
    (ui/components/mapboard.js); this block is only what that set looks like.
 
    IT MUST NOT READ AS `reachable`, which is the one thing this could break. The
@@ -401,14 +401,14 @@ g.map-node:focus:not(:focus-visible) { outline: none; }
    scrollport is the camera, and the context band scrolls inside itself when
    its content outgrows its share. */
 .world-atlas-screen { display:grid; grid-template-rows:auto minmax(0,1fr) auto auto; overflow:hidden; min-height:0; background:#171612; color:#d5c5a4; }
-.atlas-header { display:grid; grid-template-columns:minmax(0,1fr) auto auto; grid-template-areas:"title vitals actions"; align-items:center; gap:4px 16px; padding:8px 2.5vw; border-bottom:1px solid #5b4a30; background:#171512; }
+.atlas-header { display:grid; grid-template-columns:minmax(0,1fr) auto auto; grid-template-areas:"title vitals actions"; align-items:center; gap:4px 16px; padding:8px calc(2.5 * var(--view-vw, 1vw)); border-bottom:1px solid #5b4a30; background:#171512; }
 .atlas-title { grid-area:title; min-width:0; }
 .atlas-header h1 { font:26px Georgia,serif; letter-spacing:.035em; margin:2px 0 0; color:#eee0be; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .atlas-eyebrow { font:11px system-ui,sans-serif; letter-spacing:.18em; color:#b49a68; }
 .atlas-header-actions { grid-area:actions; display:flex; align-items:center; justify-content:flex-end; gap:6px; }
 .atlas-vitals { grid-area:vitals; font-size:13px; white-space:nowrap; }
-.atlas-scene { position:relative; display:flex; min-height:0; padding:0 2.5vw; }
-.atlas-map-tools { position:absolute; top:8px; right:calc(2.5vw + 8px); z-index:3; display:flex; gap:5px; }
+.atlas-scene { position:relative; display:flex; min-height:0; padding:0 calc(2.5 * var(--view-vw, 1vw)); }
+.atlas-map-tools { position:absolute; top:8px; right:calc(calc(2.5 * var(--view-vw, 1vw)) + 8px); z-index:3; display:flex; gap:5px; }
 .atlas-map-tools .as-btn { min-width:var(--tap-floor); min-height:var(--tap-floor); }
 .atlas-scrollport { flex:1; min-width:0; min-height:0; overflow:auto; border:1px solid #8a744d; background:#9d8051; box-shadow:0 10px 45px #0006; }
 .atlas-world { position:relative; width:calc(100% * var(--atlas-zoom)); min-width:600px; aspect-ratio:1; isolation:isolate; }
@@ -427,7 +427,7 @@ g.map-node:focus:not(:focus-visible) { outline: none; }
 .atlas-map-caption { position:absolute; bottom:4%; width:100%; text-align:center; color:#554226; letter-spacing:.25em; font:18px Georgia,serif; pointer-events:none; }
 .atlas-map-caption small { font:11px Georgia,serif; letter-spacing:.04em; }
 .atlas-node[aria-pressed="true"]::before { content:""; position:absolute; inset:-5px; border:3px solid #f6e7bd; border-radius:50%; box-shadow:0 0 0 2px #1b150ecc; pointer-events:none; }
-.atlas-context { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr); grid-template-rows:auto 1fr; grid-template-areas:"place roads journey" "description roads journey"; gap:4px 28px; align-items:start; max-height:calc(20dvh / var(--ui-zoom,1)); overflow-y:auto; overscroll-behavior:contain; padding:10px 2.5vw; border-top:1px solid #5b4a30; background:linear-gradient(#282218aa,#171612); }
+.atlas-context { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr); grid-template-rows:auto 1fr; grid-template-areas:"place roads journey" "description roads journey"; gap:4px 28px; align-items:start; max-height:calc(calc(20 * var(--view-vh, 1dvh)) / var(--ui-zoom,1)); overflow-y:auto; overscroll-behavior:contain; padding:10px calc(2.5 * var(--view-vw, 1vw)); border-top:1px solid #5b4a30; background:linear-gradient(#282218aa,#171612); }
 .atlas-context h2 { font:22px Georgia,serif; margin:4px 0 2px; color:#eee0be; }
 .atlas-context h3 { font:15px Georgia,serif; margin:0 0 6px; color:#d6bc84; }
 .atlas-context p { margin:2px 0; line-height:1.45; font-size:13px; }
@@ -446,9 +446,9 @@ g.map-node:focus:not(:focus-visible) { outline: none; }
 .atlas-road-list .as-btn { white-space:normal; text-align:left; min-height:var(--tap-floor); padding:6px 12px; line-height:1.3; }
 .atlas-road-list .as-btn[aria-pressed="true"] { border-color:#f6e7bd; color:#f6e7bd; }
 .atlas-progress,.atlas-seed { color:#aa9774; }
-.atlas-footer { padding:8px 2.5vw calc(8px + env(safe-area-inset-bottom,0px) / var(--ui-zoom,1)); border-top:1px solid #5b4a30; background:#171512; }
+.atlas-footer { padding:8px calc(2.5 * var(--view-vw, 1vw)) calc(8px + env(safe-area-inset-bottom,0px) / var(--ui-zoom,1)); border-top:1px solid #5b4a30; background:#171512; }
 .atlas-footer > .modal-btnrow { width:100%; }
-.atlas-dialog { position:fixed; inset:0; margin:auto; padding:0; width:min(1080px,calc(100vw - 32px)); max-width:none; max-height:calc(100dvh - 32px); border:1px solid #947548; color:#dbc9a4; background:#1b1813; box-shadow:0 30px 90px #000b; z-index:500; overflow:auto; }
+.atlas-dialog { position:fixed; inset:0; margin:auto; padding:0; width:min(1080px,calc(calc(100 * var(--view-vw, 1vw)) - 32px)); max-width:none; max-height:calc(calc(100 * var(--view-vh, 1dvh)) - 32px); border:1px solid #947548; color:#dbc9a4; background:#1b1813; box-shadow:0 30px 90px #000b; z-index:500; overflow:auto; }
 .atlas-dialog::backdrop { background:#080808bc; backdrop-filter:blur(4px); }
 .atlas-dialog-head,.atlas-dialog-foot { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:18px 24px; background:#211b14; }
 .atlas-dialog-head { border-bottom:1px solid #655034; }
@@ -471,15 +471,15 @@ g.map-node:focus:not(:focus-visible) { outline: none; }
 .atlas-dialog-foot .as-btn { max-width:65%; white-space:normal; }
 .atlas-location-illustration { aspect-ratio:1; }
 .atlas-location-illustration svg { width:100%; height:100%; }
-@media(max-width:800px) {
- .atlas-header { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"title actions" "vitals actions"; gap:0 10px; padding:6px 2.5vw; }
+@container game-viewport (max-width:800px) {
+ .atlas-header { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"title actions" "vitals actions"; gap:0 10px; padding:6px calc(2.5 * var(--view-vw, 1vw)); }
  .atlas-header .atlas-eyebrow { display:none; }
  .atlas-header h1 { font-size:19px; margin:0; }
  .atlas-vitals { font-size:12px; }
  .atlas-header-actions .as-btn { padding-inline:10px; }
  .atlas-context { grid-template-columns:1fr; grid-template-rows:none; grid-template-areas:"place" "roads" "description" "journey"; gap:8px; padding-block:8px; }
  .atlas-context h2 { font-size:19px; }
- .atlas-dialog { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); }
+ .atlas-dialog { width:calc(calc(100 * var(--view-vw, 1vw)) - 16px); max-height:calc(calc(100 * var(--view-vh, 1dvh)) - 16px); }
  .atlas-dialog-head,.atlas-dialog-foot { padding:14px; gap:10px; }
  .atlas-dialog h2 { font-size:24px; }
  .atlas-location-body { grid-template-columns:1fr; }
@@ -490,7 +490,7 @@ g.map-node:focus:not(:focus-visible) { outline: none; }
 }
 /* A phone keeps the whole title: title and vitals share the first row and the
    three actions take equal shares of the second, within W4b's 10% header. */
-@media(max-width:480px) {
+@container game-viewport (max-width:480px) {
  .atlas-header { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"title vitals" "actions actions"; gap:4px 10px; }
  .atlas-header h1 { white-space:normal; overflow-wrap:anywhere; }
  .atlas-header-actions { justify-content:stretch; }
@@ -503,7 +503,7 @@ dialog.atlas-dialog.modal-veil[open] { display:block; padding:0; background:#1b1
 .atlas-node-label,.atlas-local-point small { pointer-events:none; }
 
 /* Local maps keep controls and information outside the gesture viewport. */
-dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; width:min(1080px,calc((100vw - 24px) / var(--ui-zoom,1))); height:min(860px,calc((100dvh - 24px) / var(--ui-zoom,1))); max-height:calc((100dvh - 24px) / var(--ui-zoom,1)); overflow:hidden; }
+dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; width:min(1080px,calc((calc(100 * var(--view-vw, 1vw)) - 24px) / var(--ui-zoom,1))); height:min(860px,calc((calc(100 * var(--view-vh, 1dvh)) - 24px) / var(--ui-zoom,1))); max-height:calc((calc(100 * var(--view-vh, 1dvh)) - 24px) / var(--ui-zoom,1)); overflow:hidden; }
 .atlas-dialog:has(.atlas-local-port) .atlas-dialog-head,.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { flex:none; }
 .atlas-dialog:has(.atlas-local-port) .atlas-location-body { flex:1; min-height:0; }
 .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { display:flex; flex-direction:column; gap:8px; min-height:0; }
@@ -534,8 +534,8 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex
 .atlas-detail-scroll { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; }
 .atlas-detail-actions { flex:none; padding-top:8px; }
 .atlas-detail-actions .as-btn { margin-top:0; background:#302514; }
-@media(max-width:700px) {
-  dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((100dvh - 16px) / var(--ui-zoom,1)); }
+@container game-viewport (max-width:700px) {
+  dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((calc(100 * var(--view-vh, 1dvh)) - 16px) / var(--ui-zoom,1)); }
   .atlas-dialog:has(.atlas-local-port) .atlas-location-body { grid-template-rows:minmax(0,1.2fr) minmax(0,.8fr); }
   .atlas-dialog:has(.atlas-local-port) .atlas-dialog-head,.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { padding:10px 12px; }
   .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { padding:8px; gap:5px; }
@@ -546,7 +546,7 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex
   .atlas-local-zoom-tools,.atlas-local-pan-tools { gap:2px; }
   .atlas-local-zoom-tools output { min-width:38px; }
 }
-@media(max-height:500px) and (min-width:701px) {
+@container game-viewport (max-height:500px) and (min-width:701px) {
   .atlas-dialog:has(.atlas-local-port) .atlas-dialog-head,.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { padding:6px 12px; }
   .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { padding:6px; gap:3px; }
   .atlas-local-help { display:none; }
@@ -561,7 +561,7 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex
 
 /* Atlas profiles use the same compact circular node vocabulary as traditional runs. */
 .atlas-node-label { top:40px; max-width:130px; white-space:normal; text-align:center; pointer-events:none; }
-@media (max-width:600px) {
+@container game-viewport (max-width:600px) {
  .atlas-node-label { display:none; }
  .atlas-scrollport { box-shadow:none; }
  .atlas-world { min-width:0; }
@@ -591,7 +591,7 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex
 .map-terrain .terrain-detail { opacity:1; }
 
 /* Tall local-location shell: the same map and action layout for every city. */
-dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((100dvh - 24px) / var(--ui-zoom,1)); max-height:calc((100dvh - 24px) / var(--ui-zoom,1)); }
+dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((calc(100 * var(--view-vh, 1dvh)) - 24px) / var(--ui-zoom,1)); max-height:calc((calc(100 * var(--view-vh, 1dvh)) - 24px) / var(--ui-zoom,1)); }
 .atlas-dialog:has(.atlas-local-port) .atlas-location-body { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:minmax(320px, 2fr) minmax(150px,1fr); overflow:auto; overscroll-behavior:contain; }
 .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { grid-column:1 / -1; min-height:280px; padding:12px; }
 .atlas-dialog:has(.atlas-local-port) .atlas-local-port { min-height:220px; }
@@ -599,23 +599,23 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((100dv
 .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { align-self:start; padding:16px 12px; flex-direction:column; }
 .atlas-dialog:has(.atlas-local-port) .atlas-local-help { order:2; }
 .atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { display:flex; flex-wrap:wrap; gap:10px; padding:12px; }
-.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot > span { display:none; }
+.atlas-dialog[data-local-map='true'] .atlas-dialog-foot > span { display:none; }
 .atlas-dialog:has(.atlas-local-port) .atlas-detail-actions { margin-left:auto; padding:0; display:flex; flex-wrap:wrap; gap:8px; }
-.atlas-dialog:has(.atlas-local-port) .atlas-detail-actions .as-btn { margin:0; white-space:normal; }
-@media(max-width:700px) {
+.atlas-dialog[data-local-map='true'] .atlas-detail-actions .as-btn { margin:0; white-space:normal; }
+@container game-viewport (max-width:700px) {
  .atlas-dialog:has(.atlas-local-port) .atlas-location-body { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(300px,1.5fr) auto minmax(160px,1fr); }
  .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { grid-column:1; min-height:300px; }
  .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { grid-row:2; flex-direction:row; padding:6px 10px; }
  .atlas-dialog:has(.atlas-local-port) .atlas-location-detail { min-height:160px; }
 }
-@media(max-height:500px) and (min-width:701px) {
+@container game-viewport (max-height:500px) and (min-width:701px) {
  .atlas-dialog:has(.atlas-local-port) .atlas-location-body { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); grid-template-rows:minmax(220px,1fr) auto; }
  .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { grid-column:1; grid-row:1 / 3; min-height:280px; }
  .atlas-dialog:has(.atlas-local-port) .atlas-location-detail { grid-column:2; grid-row:1; }
  .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { grid-column:2; grid-row:2; padding:6px; flex-direction:row; }
 }
 
-.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot .as-btn { width:auto; min-width:120px; max-width:100%; }
+.atlas-dialog[data-local-map='true'] .atlas-dialog-foot .as-btn { width:auto; min-width:120px; max-width:100%; }
 .atlas-detail-scroll { scrollbar-gutter:stable; scrollbar-color:#947548 #211b14; }
 
 /* A spatial direction pad followed by one minus / Fit / plus row. */
@@ -627,7 +627,7 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((100dv
 .atlas-local-pan-tools [data-local-pan="down"] { grid-area:3 / 2; }
 .atlas-local-tools .as-btn { width:100%; min-width:0; padding:4px; }
 .atlas-local-pan-tools output { grid-area:2 / 2; align-self:center; text-align:center; font-size:12px; font-variant-numeric:tabular-nums; }
-@media(max-height:500px) and (min-width:701px) {
+@container game-viewport (max-height:500px) and (min-width:701px) {
  .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { flex-direction:row; align-items:center; justify-content:space-evenly; flex-wrap:wrap; }
 }
 

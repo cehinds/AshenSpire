@@ -1,0 +1,27 @@
+{
+  "id": "technique_counter",
+  "tag": "technique:counter",
+  "version": "1.0.0",
+  "family": "technique",
+  "label": "Counter",
+  "description": "Categorized Counter identity; effects are authored separately.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "technique_counter",
+    "color": "9FC3E8"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/actions.js",
+    "symbol": "applyProfileDamage"
+  }
+}

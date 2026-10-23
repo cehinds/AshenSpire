@@ -1,0 +1,27 @@
+{
+  "id": "item_blade",
+  "tag": "item:blade",
+  "version": "1.0.0",
+  "family": "item",
+  "label": "Blade",
+  "description": "What this piece IS: the Armoury and the smith name it Blade.",
+  "attaches": [
+    "gear"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "item_blade",
+    "color": "C9502E"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/model/combatAnimation.js",
+    "symbol": "resolveCombatAnimation"
+  }
+}

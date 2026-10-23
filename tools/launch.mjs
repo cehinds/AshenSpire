@@ -114,6 +114,15 @@ if (hudLayout.code !== 0) {
   process.exit(hudLayout.code || 1);
 }
 
+// 0c. Publish the design tokens (content/config/ui/tokens.json →
+// styles/tokens.generated.css). Same reason: the bundler inlines it.
+console.log('launch: compiling design tokens…');
+const tokensCss = await steps.run(resolve(ROOT, 'tools/tokens-css.mjs'), ['--write']);
+if (tokensCss.code !== 0) {
+  console.error('launch: token CSS build failed — fix content/config/ui/tokens.json and retry.');
+  process.exit(tokensCss.code || 1);
+}
+
 // 0. Compile authored content (content/source/*.csv|json → src/content/generated).
 // Runs first so a spreadsheet edit is picked up by the very next launch without
 // anyone remembering a separate command.
@@ -122,6 +131,16 @@ const content = await steps.run(resolve(ROOT, 'tools/content-build.mjs'));
 if (content.code !== 0) {
   console.error('launch: content build failed — fix content/source and retry.');
   process.exit(content.code || 1);
+}
+
+// Compile the authored JSON game profiles into the immutable catalog imported by
+// the runtime. Profile data is independent of content tables but must be current
+// before the bundler starts reading the game graph.
+console.log('launch: compiling JSON game profiles…');
+const gameProfiles = await steps.run(resolve(ROOT, 'tools/game-config.mjs'), ['build']);
+if (gameProfiles.code !== 0) {
+  console.error('launch: game profile build failed — fix games/ashenspire and retry.');
+  process.exit(gameProfiles.code || 1);
 }
 
 const buildDir = resolve(ROOT, 'build');
@@ -185,7 +204,9 @@ if (removed.length) console.log(`launch: removed ${removed.length} stale launche
 const html = resolve(buildDir, 'AshenSpire.html');
 const singleFile = resolve(buildDir, 'download', 'AshenSpire.html');
 mkdirSync(resolve(distDir, 'download'), { recursive: true });
-for (const part of ['packs', 'objects', 'cards']) cpSync(resolve(buildDir, part), resolve(distDir, part), { recursive: true });
+// build/cards/ (per-card layout JSON, ~13 MB) stays a build-tree export for
+// tooling: the game never requests it, so it is not copied into dist/.
+for (const part of ['packs', 'objects']) cpSync(resolve(buildDir, part), resolve(distDir, part), { recursive: true });
 for (const part of ['asset-base.json', '.asset-pack']) copyFileSync(resolve(buildDir, part), resolve(distDir, part));
 const aliases = [
   [html, resolve(distDir, 'AshenSpire.html')],

@@ -1,0 +1,22 @@
+{
+  "id": "classification.encounter",
+  "tag": "classification.encounter",
+  "version": "1.0.0",
+  "family": "classification",
+  "label": "Encounter",
+  "description": "What a encounter is. Every object in the encounter collection carries this, and nothing outside it may.",
+  "attaches": [
+    "run"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "classification.encounter"
+  },
+  "portability": "data"
+}

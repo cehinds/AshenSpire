@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // tests/haptics.test.mjs — haptics on card play, damage taken and turn start,
 // and the setting that turns them off (docs/FINISH.md, wave 13 "Haptics").
 //
@@ -11,9 +12,9 @@ import { readFileSync } from 'node:fs';
 import { HAPTIC_PATTERNS, HAPTICS_DEFAULT_ON, HAPTIC_BATCH_GAP_MS, HAPTIC_BATCH_MAX_MS, hapticPatternIssues } from '../src/content/haptics.js';
 import { createHaptics, hapticsEnabled, haptic, joinPatterns } from '../src/ui/haptics.js';
 import { sfx } from '../src/ui/sfx.js';
-import { playBeatCues, playReceiptSounds, playTimeline } from '../src/ui/fx.js';
+import { playBeatCues, playReceiptSounds, playTimeline, bigHitLanded } from '../src/ui/fx.js';
 
-const NAMED = ['cardPlay', 'damageTaken', 'turnStart'];
+const NAMED = ['cardPlay', 'damageTaken', 'turnStart', 'bigHit', 'poiseBreak', 'victory'];
 const src = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 
 function stubNavigator() {
@@ -152,7 +153,7 @@ test('every HP loss buzzes once per beat: direct hpLost too, and an attack pair 
   assert.deepEqual(felt(() => playBeatCues([{ type: 'playerTurnStart', turn: 2 }])), ['turnStart']);
 });
 
-test('co-op: a card play buzzes from its cardPlayed receipt, for this screen\'s seats only', async () => {
+test('co-op: a card play buzzes from its cardPlayed receipt, for this screen\'s seats only', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   // Preserve this historical host's cards and post-setup combat entry.
   const { legacyContentBundle: contentBundle } = await import('./helpers/legacy-progression-content.mjs');
   const { createRegistries } = await import('../src/model/registries.js');
@@ -193,13 +194,13 @@ test('co-op: a card play buzzes from its cardPlayed receipt, for this screen\'s 
   assert.deepEqual(stub.calls[0], joinPatterns(ids.map((id) => HAPTIC_PATTERNS[id])), 'every cue of the batch, in one pattern');
 });
 
-test('a direct HP loss in a co-op receipt batch buzzes the hurt seat', () => {
+test('a direct HP loss in a co-op receipt batch buzzes the hurt seat', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const events = [{ type: 'hpLost', targetId: 'player', playerId: 'p2', amount: 2, cause: 'effect' }];
   assert.deepEqual(felt(() => playReceiptSounds(events, { isLocalPlayer: (id) => id === 'p2' })), ['damageTaken']);
   assert.deepEqual(felt(() => playReceiptSounds(events, { isLocalPlayer: (id) => id === 'p1' })), []);
 });
 
-test('co-op: a teammate\'s direct HP loss buzzes their device, not mine (#1517 review)', async () => {
+test('co-op: a teammate\'s direct HP loss buzzes their device, not mine (#1517 review)', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   // Every player entity is id 'player', so an hpLost receipt that names no
   // seat cannot be told from my own; the engine stamps the seat it cost, and
   // a receipt with no seat is nobody's here, not everyone's.
@@ -244,7 +245,7 @@ function heardSfx(fn) {
   return ids;
 }
 
-test('co-op: the card that wins the fight still buzzes, though combat is gone (#1517 review)', async () => {
+test('co-op: the card that wins the fight still buzzes, though combat is gone (#1517 review)', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   // settleCombat replaces the combat scene with the reward at once, so the
   // final card's receipts never reach a combat scene; they ride the reward.
   // Preserve this historical host's cards and post-setup combat entry.
@@ -276,7 +277,7 @@ test('co-op: the card that wins the fight still buzzes, though combat is gone (#
   assert.deepEqual(heardSfx(() => coopReceiptSounds(scene, heard, ['p2'])), [], 'the final receipts make no new sound');
 });
 
-test('co-op: a setup HP loss (Warden Horn) buzzes the hurt seat in the opening (#1517 review)', async () => {
+test('co-op: a setup HP loss (Warden Horn) buzzes the hurt seat in the opening (#1517 review)', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   // Preserve this historical host's cards and post-setup combat entry.
   const { legacyContentBundle: contentBundle } = await import('./helpers/legacy-progression-content.mjs');
   const { createRegistries } = await import('../src/model/registries.js');
@@ -310,7 +311,7 @@ test('a skipped timeline still buzzes the hit and the turn start it jumped past,
     { type: 'hpLost', targetId: 'player', amount: 6, cause: 'attack' },
     { type: 'playerTurnStart', turn: 2 },
   ];
-  const ctx = { layer: { closest: () => null }, anchorFor: () => null, onFlush: () => {}, onBeatApplied: () => {} };
+  const ctx = { layer: null, anchorFor: () => null, onFlush: () => {}, onBeatApplied: () => {} };
   const stub = stubNavigator();
   const before = haptic.sink;
   const ids = [];
@@ -337,7 +338,7 @@ test('a skipped timeline still buzzes the hit and the turn start it jumped past,
   assert.deepEqual(sounds, [], 'and the skip replays no sound');
 });
 
-test('co-op: a downed seat spectating does not buzz on a teammate\'s turn; the stinger is shared (#1517 review)', async () => {
+test('co-op: a downed seat spectating does not buzz on a teammate\'s turn; the stinger is shared (#1517 review)', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   // Preserve this historical host's cards and post-setup combat entry.
   const { legacyContentBundle: contentBundle } = await import('./helpers/legacy-progression-content.mjs');
   const { createRegistries } = await import('../src/model/registries.js');
@@ -367,7 +368,7 @@ test('co-op: a downed seat spectating does not buzz on a teammate\'s turn; the s
   assert.deepEqual(felt(() => coopReceiptSounds(scene, heard, ['p1'])).filter((id) => id === 'turnStart'), ['turnStart'], 'the living seat buzzes');
 });
 
-test('co-op: an enemy turn held back by pacing while the fight ends still buzzes, without sound (#1517 audit)', async () => {
+test('co-op: an enemy turn held back by pacing while the fight ends still buzzes, without sound (#1517 audit)', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   // paceEnemyTurn holds frames; when the last is the reward or completion
   // scene, only that scene is rendered, so the held combat frames are heard
   // here, haptics only (pacing is DOM-bound: the wiring is read from source).
@@ -439,7 +440,7 @@ test('a paced co-op timeline buzzes only for its own seats; solo unchanged', asy
     haptic.sink = (id) => ids.push(id);
     setAnimSpeed(speed);
     try {
-      const ctx = { layer: { closest: () => null }, anchorFor: () => null, onFlush: () => {}, onBeatApplied: () => {}, ...(isLocalPlayer ? { isLocalPlayer } : {}) };
+      const ctx = { layer: null, anchorFor: () => null, onFlush: () => {}, onBeatApplied: () => {}, ...(isLocalPlayer ? { isLocalPlayer } : {}) };
       await new Promise((resolve) => {
         playTimeline(events, ctx, resolve);
         if (skip) { fire('pointerdown'); fire('pointerup'); }
@@ -450,11 +451,54 @@ test('a paced co-op timeline buzzes only for its own seats; solo unchanged', asy
   try {
     for (const [speed, skip] of [['instant', false], ['normal', true], ['normal', false]]) {
       const label = `${speed}${skip ? ' (skipped)' : ''}`;
-      assert.deepEqual(await run(speed, coopLocalSeat(['p1']), skip), [], `${label}: a teammate's wound and turn do not buzz`);
-      assert.deepEqual(await run(speed, coopLocalSeat(['p2']), skip), ['damageTaken', 'turnStart'], `${label}: the local seat's do`);
+      if (COOP_TESTS_ENABLED) {
+        assert.deepEqual(await run(speed, coopLocalSeat(['p1']), skip), [], `${label}: a teammate's wound and turn do not buzz`);
+        assert.deepEqual(await run(speed, coopLocalSeat(['p2']), skip), ['damageTaken', 'turnStart'], `${label}: the local seat's do`);
+      }
       assert.deepEqual(await run(speed, undefined, skip), ['damageTaken', 'turnStart'], `${label}: solo (no predicate) is unchanged`);
     }
   } finally {
     globalThis.addEventListener = saved.add; globalThis.removeEventListener = saved.remove;
   }
+});
+
+test('bigHit, poiseBreak and victory rows are pinned', () => {
+  assert.deepEqual([...HAPTIC_PATTERNS.bigHit], [35]);
+  assert.deepEqual([...HAPTIC_PATTERNS.poiseBreak], [30, 20, 50]);
+  assert.deepEqual([...HAPTIC_PATTERNS.victory], [20, 40, 20, 40, 80]);
+  assert.deepEqual(hapticPatternIssues(), []);
+});
+
+test('bigHit: an enemy losing 20%+ of its max HP to a hit buzzes once per beat', () => {
+  const maxHpFor = (id) => (id === 'e1' ? 50 : 0);
+  const hit = (amount, extra = {}) => ({ type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount, blocked: 0, ...extra });
+  assert.deepEqual(felt(() => playBeatCues([hit(10)], { maxHpFor })), ['bigHit'], 'exactly 20% is a big hit');
+  assert.deepEqual(felt(() => playBeatCues([hit(9)], { maxHpFor })), [], 'just under 20% is not');
+  assert.deepEqual(felt(() => playBeatCues([hit(12), hit(30)], { maxHpFor })), ['bigHit'], 'two big hits in one beat are one buzz');
+  assert.deepEqual(felt(() => playBeatCues([hit(20, { blocked: 15 })], { maxHpFor })), [], 'guard soaks it: the share is the HP lost');
+  assert.deepEqual(felt(() => playBeatCues([hit(40)], {})), [], 'no max HP known: not measurable, not big');
+  assert.deepEqual(felt(() => playBeatCues([{ type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 40, blocked: 0 }], { maxHpFor: () => 50 })),
+    ['damageTaken'], 'a hit on the player is damageTaken, never bigHit');
+  // Co-op: only a seat this screen plays feels its own big hit.
+  const mine = (id) => id === 'p1';
+  assert.equal(bigHitLanded(hit(25, { sourcePlayerId: 'p1' }), { isLocalPlayer: mine, maxHpFor }), true);
+  assert.equal(bigHitLanded(hit(25, { sourcePlayerId: 'p2' }), { isLocalPlayer: mine, maxHpFor }), false, 'a teammate\'s hit');
+  assert.equal(bigHitLanded(hit(25), { isLocalPlayer: mine, maxHpFor }), false, 'no seat named: nobody\'s');
+});
+
+test('poiseBreak: an enemy\'s Poise breaking buzzes once per beat; a player\'s does not', () => {
+  const broke = { type: 'poiseBroken', targetId: 'e1', sourceId: 'player', staminaLoss: 0, interrupted: true };
+  assert.deepEqual(felt(() => playBeatCues([broke, { ...broke }])), ['poiseBreak']);
+  assert.deepEqual(felt(() => playBeatCues([{ type: 'poiseBroken', targetId: 'player', sourceId: 'e1', staminaLoss: 1 }])), [], 'the player\'s own Poise break');
+  assert.deepEqual(felt(() => playBeatCues([broke], { isLocalPlayer: () => true })), [], 'co-op: the receipt names no seat');
+});
+
+test('victory: the win screen buzzes once; the defeat screen does not', async () => {
+  const src_ = src('src/ui/screens/gameover.js');
+  assert.equal([...src_.matchAll(/haptic\.play\('victory'\)/g)].length, 1, 'one victory haptic site');
+  assert.match(src_, /if \(victory\) haptic\.play\('victory'\)/, 'only on a win');
+  // Co-op's complete scene is rendered by coop.js, not mountGameOver: it buzzes once per scene, on a win only.
+  const coop = src('src/ui/screens/coop.js');
+  assert.equal([...coop.matchAll(/haptic\.play\('victory'\)/g)].length, 1, 'one co-op victory haptic site');
+  assert.match(coop, /if \(win && !victoryCued\) \{ victoryCued = true; haptic\.play\('victory'\); \}/, 'once, on a win');
 });

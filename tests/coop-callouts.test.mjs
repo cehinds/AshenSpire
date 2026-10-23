@@ -11,6 +11,7 @@ import { reactionUnavailableNote } from '../src/model/combatLog.js';
 import { createSession } from '../tools/session.mjs';
 import { calloutForEvent } from '../src/ui/fx.js';
 import { coopCallouts } from '../src/ui/screens/coop.js';
+import { beginTacticalAction } from '../src/engine/combatMatchups.js';
 
 const registries = createRegistries(contentBundle);
 
@@ -38,6 +39,27 @@ function digestWith(host, receipts) {
 }
 
 const enemyId = host => host.live.combat.enemies[0].id;
+
+for (const status of ['invulnerability', 'decoy']) test(`co-op ${status} shared prevention publishes only Missed`, () => {
+  const host = fight(), combat = host.live.combat;
+  const target = combat.players.get('p1').entity, source = combat.enemies[0];
+  target.statuses = { [status]: { stacks: 1 } };
+  target.evasion = 0;
+  let rolls = 0;
+  combat.rng.int = () => { rolls++; return 20; };
+  const hp = target.hp;
+  const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'ranged', targeting: 'single' } };
+  const receipt = beginTacticalAction(combat, source, target, carrier, [{ amount: 1 }]);
+  assert.equal(receipt.avoided, true);
+  assert.equal(target.statuses[status], undefined);
+  assert.equal(target.hp, hp);
+  assert.equal(rolls, 1);
+  const events = digestWith(host, []);
+  const avoided = events.find(event => event.type === 'combatAvoidanceResolved' && event.targetPlayerId === 'p1');
+  assert.equal(avoided?.hitCheck, true, 'the actual host digest preserves shared-hit ownership');
+  assert.deepEqual(coopCallouts(events).filter(row => row.targetId === 'p1' && ['evaded', 'missed'].includes(row.kind)),
+    [{ kind: 'missed', targetId: 'p1' }]);
+});
 
 test('the co-op digest keeps reaction-unavailable, crit and guard-break receipts with their fields', () => {
   const host = fight();

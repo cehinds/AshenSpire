@@ -469,20 +469,22 @@ export function railInFlow(css) {
 // and zero-width-reserve toolbar have their final geometry. This is a bounded
 // source-shape check, not JavaScript execution or a substitute for native QA.
 export function stableCombatStageRendering(source) {
-  const stage = [...source.matchAll(/^  function renderCombatantStage\(\{\s*fit\s*=\s*true\s*\}\s*=\s*\{\}\)\s*\{([\s\S]*?)^  \}/gm)];
+  const stage = [...source.matchAll(/^  function renderCombatantStage\(([^\n]*)\)\s*\{([\s\S]*?)^  \}/gm)];
   const full = [...source.matchAll(/^  function render\(\)\s*\{([\s\S]*?)^  \}/gm)];
   if (stage.length !== 1 || full.length !== 1) return false;
   // Calls mentioned only in comments or quoted strings cannot satisfy C8.
   const code = text => text.replace(/"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'|`(?:\\[\s\S]|[^`\\])*`|\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$)/g,
     match => match.replace(/[^\n]/g, ' '));
-  const action = code(stage[0][1]), render = code(full[0][1]);
+  const defaults = stage[0][1];
+  if (!/\bfit\s*=\s*true\b/.test(defaults) || !/\brefreshTargets\s*=\s*true\b/.test(defaults)) return false;
+  const action = code(stage[0][2]), render = code(full[0][1]);
   const once = (text, pattern) => [...text.matchAll(pattern)].length === 1;
   const fit = /battlefieldStage\.refresh\(\);/g, movement = /formationMovement\?\.refresh\(\);/g;
-  if (!once(action, /\brenderPlayer\(\);/g) || !once(action, /\brenderEnemies\(\);/g)
+  if (!once(action, /\brenderPlayer\(\);/g) || !once(action, /\brenderEnemies\([^;]*\);/g)
       || !once(action, fit) || !once(action, movement)
-      || !/renderPlayer\(\);\s*renderEnemies\(\);\s*if\s*\(fit\)\s*\{\s*battlefieldStage\.refresh\(\);\s*formationMovement\?\.refresh\(\);\s*\}/.test(action)) return false;
-  if (!once(render, /\brenderCombatantStage\(/g) || !once(render, fit) || !once(render, movement)
-      || !/renderCombatantStage\(\{\s*fit:\s*false\s*\}\);\s*renderControls\(\);\s*renderCombatTools\(\);\s*renderHand\(\);\s*combatTools\.flushGeometry\(\);\s*battlefieldStage\.refresh\(\);\s*formationMovement\?\.refresh\(\);\s*applyTargetLayer\(\);/.test(render)) return false;
+      || !/renderPlayer\(\);\s*renderEnemies\(\{\s*refreshTargets\s*\}\);\s*if\s*\(fit\)\s*\{\s*battlefieldStage\.refresh\(\);\s*formationMovement\?\.refresh\(\);\s*\}/.test(action)) return false;
+  if (!once(render, /\brenderCombatantStage\(/g) || !once(render, fit) || !once(render, movement) || !once(render, /\bsyncHitChances\(\);/g)
+      || !/renderCombatantStage\(\{(?=[^}]*\bfit:\s*false)(?=[^}]*\brefreshTargets:\s*false)[^}]*\}\);\s*renderControls\(\);\s*renderCombatTools\(\);\s*renderHand\(\{\s*refreshHitChances:\s*false\s*\}\);\s*syncHitChances\(\);\s*combatTools\.flushGeometry\(\);\s*battlefieldStage\.refresh\(\);\s*formationMovement\?\.refresh\(\);\s*applyTargetLayer\(\);/.test(render)) return false;
   // Keep the original requirement for actual action-only call sites; neither
   // the declaration nor the deferred full-render call is counted here.
   const callers = code(source.replace(stage[0][0], '').replace(full[0][0], ''));
@@ -515,6 +517,8 @@ export function receipt() {
     creationBrief: read('src/model/creationBrief.js'),
     customize: read('src/ui/screens/customize.js'),
     rest: read('src/ui/screens/rest.js'),
+    restFrame: read('src/ui/components/restFrame.js'),
+    configuredRest: read('src/ui/components/gameProfileRest.js'),
     smithSelectionModel: read('src/ui/models/SmithSelectionModel.js'),
     saveSlotSelectionModel: read('src/ui/models/SaveSlotSelectionModel.js'),
     smithUpgradeModal: read('src/ui/components/smithUpgradeModal.js'),
@@ -584,9 +588,14 @@ export function findings(r) {
   const composes = (text) => /import \{ hudShellHtml \}/.test(text)
     && /import \{ runHudViewModel \}/.test(text)
     && /hudShellHtml\(runHudViewModel\(\{/.test(text);
-  const viaRunHud = (text) => /import \{ runHudHtml, wireRunHud \} from '\.\.\/components\/runHud\.js'/.test(text)
+  const viaRunHud = (text) => /import \{ runHudHtml, wireRunHud \} from '(?:\.\.\/components\/|\.\/)runHud\.js'/.test(text)
     && /\$\{[^`]*runHudHtml\(\{/.test(text) && /wireRunHud\(app, \{/.test(text);
-  if (!composes(r.combat) || !composes(r.runHud) || ![r.map, r.rest, r.shop].every(viaRunHud)
+  // Both Rest service policies compose through the same room frame; require
+  // the complete chain so a new bare profile screen cannot pass by importing it.
+  const viaRestFrame = (text) => /import \{[^}]*\bmountRestFrame\b[^}]*\} from '(?:\.\.\/components\/|\.\/)restFrame\.js'/.test(text)
+    && /mountRestFrame\(app, \{/.test(text);
+  if (!composes(r.combat) || !composes(r.runHud) || ![r.map, r.restFrame, r.shop].every(viaRunHud)
+      || ![r.rest, r.configuredRest].every(viaRestFrame)
       || !/runHudHtml\(\{/.test(r.event) || !/wireRunHud\(app, \{/.test(r.event)) {
     bad.push('C3 Map and Combat no longer consume the same shared HUD composition');
   }
@@ -629,8 +638,8 @@ export function findings(r) {
   // drops its source, and a progress Chip keeps its value and drops the "/ total"
   // — never the value itself, which one blanket `:nth-child(n+2)` did (measured
   // at 390x844: "ACT" and "FLOOR" with no numbers under them).
-  if (!/@media \(max-width: 640px\) \{[\s\S]*?\.as-statstrip\.trail > \.build-stamp > :nth-child\(n\+2\) \{ display: none; \}/.test(r.kit)
-      || !/@media \(max-width: 640px\) \{[\s\S]*?\.as-statstrip\.trail > \.as-chip > \.cv > \* \{ display: none; \}/.test(r.kit)
+  if (!/@container game-viewport \(max-width: 640px\) \{[\s\S]*?\.as-statstrip\.trail > \.build-stamp > :nth-child\(n\+2\) \{ display: none; \}/.test(r.kit)
+      || !/@container game-viewport \(max-width: 640px\) \{[\s\S]*?\.as-statstrip\.trail > \.as-chip > \.cv > \* \{ display: none; \}/.test(r.kit)
       || !/build-number[\s\S]*build-source/.test(r.buildstamp)) {
     bad.push('C7 metadata does not hide Source then Seed while preserving Build ink');
   }
@@ -992,7 +1001,10 @@ function selftest() {
     ['remove Vitals id', 'C1 ', (r) => ({ ...r, registry: r.registry.replace("vitalsPanel: 'vitals-panel',", '') })],
     ['remove Vitals export', 'C2 ', (r) => ({ ...r, hud: r.hud.replace('export function vitalsPanelHtml', 'function vitalsPanelHtml') })],
     ['give Map a second HUD', 'C3 ', (r) => ({ ...r, map: r.map.replace('${runHudHtml({', '${(() => "")({') })],
-    ['give the merchant its own band', 'C3 ', (r) => ({ ...r, shop: r.shop.replace('wireRunHud(app, {', 'wireMerchantBand(app, {') })],
+    ['give the merchant its own band', 'C3 ', (r) => ({ ...r, shop: r.shop.replaceAll('wireRunHud(app, {', 'wireMerchantBand(app, {') })],
+    ['detach Rest from the shared room frame', 'C3 ', (r) => ({ ...r, rest: r.rest.replace('mountRestFrame(app, {', 'mountBareRest(app, {') })],
+    ['detach configured Rest from the shared room frame', 'C3 ', (r) => ({ ...r, configuredRest: r.configuredRest.replace('mountRestFrame(app, {', 'mountBareRest(app, {') })],
+    ['give the shared Rest frame its own HUD', 'C3 ', (r) => ({ ...r, restFrame: r.restFrame.replace('wireRunHud(app, {', 'wireRestBand(app, {') })],
     ['detach the run HUD from the shared shell', 'C3 ', (r) => ({ ...r, runHud: r.runHud.replace('hudShellHtml(runHudViewModel({', 'ownShell({') })],
     ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace("const box = record ? updateCombatantFrame(record.box, slots) : combatantFrame(slots);", "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void slots;") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
@@ -1024,14 +1036,15 @@ function selftest() {
     ['hang the rail from a nested & rule', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom { &.expanded { position: absolute; } }\n` })],
     ['repeat grid-template-areas without meters after the good one', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "meters actions" "rail actions";\n  grid-template-areas: "info actions" "rail actions";') })],
     ['title the map route strip with anything but the act', 'C12 ', (r) => ({ ...r, map: r.map.replace('actRouteStripHtml({ title: mapAdapter?.title || actTitle(', 'actRouteStripHtml({ title: mapAdapter?.title || String(') })],
+    ['make phone metadata follow host width instead of the game viewport', 'C7 ', (r) => ({ ...r, kit: r.kit.replaceAll('@container game-viewport (max-width: 640px)', '@media (max-width: 640px)') })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],
     // The other half of the same rung: a phone that drops the chip's VALUE
     // instead of its total is the defect the photograph caught.
     ['the phone trail drops each fact value instead of its tail', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .as-chip > .cv > * { display: none; }', '.as-statstrip.trail > .as-chip > :nth-child(n+2) { display: none; }') })],
     ['remove Hand reference', 'C8 ', (r) => ({ ...r, combat: r.combat.replace('UI.playerHandTray', "'anonymous-hand'") })],
-    ['remove rendered player frames', 'C8 ', (r) => ({ ...r, combat: r.combat.replace('    renderPlayer();\n    renderEnemies();', '    renderEnemies();') })],
+    ['remove rendered player frames', 'C8 ', (r) => ({ ...r, combat: r.combat.replace(/    renderPlayer\(\);(?=\s*renderEnemies\()/, '') })],
     ['duplicate the deferred full-board fit', 'C8 ', (r) => ({ ...r, combat: r.combat.replace('    combatTools.flushGeometry();\n    battlefieldStage.refresh();', '    combatTools.flushGeometry();\n    battlefieldStage.refresh();\n    battlefieldStage.refresh();') })],
-    ['measure full-board tools before the authored hand', 'C8 ', (r) => ({ ...r, combat: r.combat.replace(/    renderHand\(\);(\s*\/\/[^\n]*\n\s*\/\/[^\n]*\n\s*)combatTools\.flushGeometry\(\);/, '    combatTools.flushGeometry();\n    renderHand();') })],
+    ['measure full-board tools before the authored hand', 'C8 ', (r) => ({ ...r, combat: r.combat.replace(/(    renderHand\([^;]*\);)([\s\S]*?)    combatTools\.flushGeometry\(\);/, (_all, hand, between) => '    combatTools.flushGeometry();\n' + hand + between) })],
     ['bottom-align enemies', 'C9 ', (r) => ({ ...r, css: r.css.replace('align-items: center; justify-content: space-evenly;', 'align-items: flex-end; justify-content: space-evenly;') })],
     ['remove public id from spec', 'C10 ', (r) => ({ ...r, spec: r.spec.replace('`potion-tray`', 'Potion tray') })],
     ['change transparent default', 'C11 ', (r) => ({ ...r, balance: r.balance.replace('componentBackgroundOpacityPct: 0', 'componentBackgroundOpacityPct: 25') })],

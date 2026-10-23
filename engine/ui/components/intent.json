@@ -1,0 +1,49 @@
+{
+  "id": "intent",
+  "description": "Enemy intent badge. Reads src/ui/components/intentIcon.js, combatantOverhead.js and src/ui/models/CombatIntentModel.js. Shows only the observer projected intent, never the enemy definition.",
+  "viewModel": {
+    "props": {
+      "entity": "entityRef"
+    },
+    "bindings": {
+      "intent": "intent.of($entity)",
+      "visibility": "$intent.visibility",
+      "title": "$intent.title",
+      "parts": "$intent.parts",
+      "stance": "$intent.stance",
+      "damageClass": "$intent.damageClass",
+      "projectedDamage": "$intent.projectedDamage"
+    },
+    "visibility": {
+      "query": "enemy_visibility.visibleFields",
+      "appliesTo": "enemy",
+      "fields": {
+        "intent": "intent"
+      }
+    }
+  },
+  "states": [
+    "known",
+    "partial",
+    "unknown"
+  ],
+  "events": {
+    "tap": "inspect.open"
+  },
+  "assets": [
+    "icon.attack",
+    "icon.smash",
+    "icon.sweep",
+    "icon.counter",
+    "icon.defend",
+    "icon.evade",
+    "icon.prepare",
+    "icon.cast",
+    "icon.buff"
+  ],
+  "platforms": [
+    "mobile",
+    "tablet",
+    "desktop"
+  ]
+}

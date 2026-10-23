@@ -1,0 +1,2753 @@
+{
+  "build": {
+    "ordinal": "1516",
+    "digest": "e8ab294493",
+    "version": "0.7.1.1516",
+    "runtimeSource": "2ca669b1c"
+  },
+  "viewport": [
+    1440,
+    1000
+  ],
+  "deviceScaleFactor": 1,
+  "url": "http://127.0.0.1:4402/dist/AshenSpire.html",
+  "browser": "Browser plugin not available; Playwright",
+  "captureType": "In-engine posed review and native stage-layer reference captures, not paid card outcomes",
+  "actors": {
+    "reaver": {
+      "kit": {
+        "right": "greatsword",
+        "left": "",
+        "armour": "default Shot Kit armour"
+      },
+      "legacyNote": "Existing Counter/Sweep source art varies in raster detail and style.",
+      "apiAliases": {
+        "idle": "ready",
+        "guard": "defend",
+        "guardHit": "defend",
+        "cast": "spell",
+        "power": "spell",
+        "buff": "spell",
+        "hit": "general hurt flash",
+        "hurt": "general hurt flash",
+        "defeated": "defeated still"
+      },
+      "held": [
+        {
+          "stance": "ready",
+          "pose": "ready",
+          "screenshot": "reaver/ready-combat.jpg",
+          "preview": "reaver/ready-preview.webp",
+          "crop": "reaver/ready-actor.webp",
+          "legacyNote": ""
+        },
+        {
+          "stance": "offensive",
+          "pose": "stance-offensive",
+          "screenshot": "reaver/offensive-combat.jpg",
+          "preview": "reaver/offensive-preview.webp",
+          "crop": "reaver/offensive-actor.webp",
+          "legacyNote": ""
+        },
+        {
+          "stance": "defensive",
+          "pose": "stance-defensive",
+          "screenshot": "reaver/defensive-combat.jpg",
+          "preview": "reaver/defensive-preview.webp",
+          "crop": "reaver/defensive-actor.webp",
+          "legacyNote": ""
+        },
+        {
+          "stance": "casting",
+          "pose": "stance-casting",
+          "screenshot": "reaver/casting-combat.jpg",
+          "preview": "reaver/casting-preview.webp",
+          "crop": "reaver/casting-actor.webp",
+          "legacyNote": ""
+        },
+        {
+          "stance": "counter",
+          "pose": "stance-counter",
+          "screenshot": "reaver/counter-combat.jpg",
+          "preview": "reaver/counter-preview.webp",
+          "crop": "reaver/counter-actor.webp",
+          "legacyNote": "Existing source art: lower raster detail / style variation"
+        },
+        {
+          "stance": "sweep",
+          "pose": "stance-sweep",
+          "screenshot": "reaver/sweep-combat.jpg",
+          "preview": "reaver/sweep-preview.webp",
+          "crop": "reaver/sweep-actor.webp",
+          "legacyNote": "Existing source art: lower raster detail / style variation"
+        },
+        {
+          "stance": "smash",
+          "pose": "stance-smash",
+          "screenshot": "reaver/smash-combat.jpg",
+          "preview": "reaver/smash-preview.webp",
+          "crop": "reaver/smash-actor.webp",
+          "legacyNote": "Current starter kit depicted"
+        },
+        {
+          "stance": "evade",
+          "pose": "stance-evade",
+          "screenshot": "reaver/evade-combat.jpg",
+          "preview": "reaver/evade-preview.webp",
+          "crop": "reaver/evade-actor.webp",
+          "legacyNote": ""
+        }
+      ],
+      "clips": [
+        {
+          "action": "attack",
+          "aliases": [
+            "attack",
+            "weapon:attack:greatsword"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "pilot-attack-1",
+            "pilot-attack-2",
+            "pilot-attack-3",
+            "pilot-attack-4",
+            "pilot-attack-5",
+            "pilot-attack-6"
+          ],
+          "weights": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 97.5
+          },
+          "directory": "reaver/clips/attack",
+          "animation": "reaver/clips/attack/review.webp",
+          "normalAnimation": "reaver/clips/attack/normal.webp"
+        },
+        {
+          "action": "smash",
+          "aliases": [
+            "smash"
+          ],
+          "origin": "smash",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "origin",
+            "pilot-smash-takeoff",
+            "pilot-smash-airborne",
+            "pilot-smash-impact",
+            "origin"
+          ],
+          "weights": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 117
+          },
+          "directory": "reaver/clips/smash",
+          "animation": "reaver/clips/smash/review.webp",
+          "normalAnimation": "reaver/clips/smash/normal.webp",
+          "gif": "reaver/clips/smash/review.gif"
+        },
+        {
+          "action": "sweep",
+          "aliases": [
+            "sweep"
+          ],
+          "origin": "sweep",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "origin",
+            "pilot-sweep-windup",
+            "pilot-sweep-contact",
+            "pilot-sweep-finish",
+            "origin"
+          ],
+          "weights": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 78
+          },
+          "directory": "reaver/clips/sweep",
+          "animation": "reaver/clips/sweep/review.webp",
+          "normalAnimation": "reaver/clips/sweep/normal.webp"
+        },
+        {
+          "action": "counter",
+          "aliases": [
+            "counter"
+          ],
+          "origin": "counter",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "reaver.counter.stance",
+            "reaver.counter.contact",
+            "reaver.counter.recovery",
+            "ready"
+          ],
+          "weights": [
+            55,
+            60,
+            65,
+            80
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 41.25
+          },
+          "directory": "reaver/clips/counter",
+          "animation": "reaver/clips/counter/review.webp",
+          "normalAnimation": "reaver/clips/counter/normal.webp"
+        },
+        {
+          "action": "defend",
+          "aliases": [
+            "defend"
+          ],
+          "origin": "defensive",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "ready",
+            "guard-rise",
+            "guard-brace",
+            "guard-return",
+            "ready"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "reaver/clips/defend",
+          "animation": "reaver/clips/defend/review.webp",
+          "normalAnimation": "reaver/clips/defend/normal.webp"
+        },
+        {
+          "action": "spell",
+          "aliases": [
+            "spell"
+          ],
+          "origin": "casting",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "spell-return",
+            "spell-load",
+            "spell-release",
+            "spell-release",
+            "spell-return"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "reaver/clips/spell",
+          "animation": "reaver/clips/spell/review.webp",
+          "normalAnimation": "reaver/clips/spell/normal.webp"
+        },
+        {
+          "action": "ranged",
+          "aliases": [
+            "ranged"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "ranged-load",
+            "ranged-aim",
+            "ranged-release",
+            "ranged-release",
+            "ranged-load"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "reaver/clips/ranged",
+          "animation": "reaver/clips/ranged/review.webp",
+          "normalAnimation": "reaver/clips/ranged/normal.webp"
+        },
+        {
+          "action": "rangedMagic",
+          "aliases": [
+            "rangedMagic"
+          ],
+          "origin": "casting",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "magic-return",
+            "magic-load",
+            "magic-release",
+            "magic-release",
+            "magic-return"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "reaver/clips/rangedMagic",
+          "animation": "reaver/clips/rangedMagic/review.webp",
+          "normalAnimation": "reaver/clips/rangedMagic/normal.webp"
+        },
+        {
+          "action": "counterPrepare",
+          "aliases": [
+            "counterPrepare"
+          ],
+          "origin": "counter",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "pilot-counter"
+          ],
+          "weights": [
+            260
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 0
+          },
+          "directory": "reaver/clips/counterPrepare",
+          "animation": "reaver/clips/counterPrepare/review.webp",
+          "normalAnimation": "reaver/clips/counterPrepare/normal.webp"
+        },
+        {
+          "action": "weapon:attack:sword-shield",
+          "aliases": [
+            "weapon:attack:sword-shield",
+            "weapon:spell:sword-shield",
+            "weapon:ranged:sword-shield",
+            "weapon:rangedMagic:sword-shield"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "straightSword or katana + shield",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "reaver.sword-shield.attack.anticipation",
+            "reaver.sword-shield.attack.strike",
+            "reaver.sword-shield.attack.follow-through",
+            "reaver.sword-shield.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "reaver/clips/weapon-attack-sword-shield",
+          "animation": "reaver/clips/weapon-attack-sword-shield/review.webp",
+          "normalAnimation": "reaver/clips/weapon-attack-sword-shield/normal.webp"
+        },
+        {
+          "action": "weapon:attack:bow",
+          "aliases": [
+            "weapon:attack:bow",
+            "weapon:spell:bow",
+            "weapon:ranged:bow",
+            "weapon:rangedMagic:bow"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "shortbow",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "reaver.bow.attack.anticipation",
+            "reaver.bow.attack.strike",
+            "reaver.bow.attack.follow-through",
+            "reaver.bow.attack.recovery"
+          ],
+          "weights": [
+            260,
+            80,
+            120,
+            220
+          ],
+          "timing": {
+            "totalMs": 486.46153846153845,
+            "impactMs": 185.99999999999997
+          },
+          "directory": "reaver/clips/weapon-attack-bow",
+          "animation": "reaver/clips/weapon-attack-bow/review.webp",
+          "normalAnimation": "reaver/clips/weapon-attack-bow/normal.webp"
+        },
+        {
+          "action": "weapon:attack:staff-casting",
+          "aliases": [
+            "weapon:attack:staff-casting",
+            "weapon:spell:staff-casting",
+            "weapon:ranged:staff-casting",
+            "weapon:rangedMagic:staff-casting"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "staff or sceptre",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "reaver.staff-casting.attack.anticipation",
+            "reaver.staff-casting.attack.strike",
+            "reaver.staff-casting.attack.follow-through",
+            "reaver.staff-casting.attack.recovery"
+          ],
+          "weights": [
+            220,
+            100,
+            160,
+            220
+          ],
+          "timing": {
+            "totalMs": 525,
+            "impactMs": 165
+          },
+          "directory": "reaver/clips/weapon-attack-staff-casting",
+          "animation": "reaver/clips/weapon-attack-staff-casting/review.webp",
+          "normalAnimation": "reaver/clips/weapon-attack-staff-casting/normal.webp"
+        },
+        {
+          "action": "weapon:attack:energy-blade",
+          "aliases": [
+            "weapon:attack:energy-blade",
+            "weapon:spell:energy-blade",
+            "weapon:ranged:energy-blade",
+            "weapon:rangedMagic:energy-blade"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "spell blade-tag choreography",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "reaver.energy-blade.attack.anticipation",
+            "reaver.energy-blade.attack.strike",
+            "reaver.energy-blade.attack.follow-through",
+            "reaver.energy-blade.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "reaver/clips/weapon-attack-energy-blade",
+          "animation": "reaver/clips/weapon-attack-energy-blade/review.webp",
+          "normalAnimation": "reaver/clips/weapon-attack-energy-blade/normal.webp"
+        },
+        {
+          "action": "weapon:attack:dual-daggers",
+          "aliases": [
+            "weapon:attack:dual-daggers",
+            "weapon:spell:dual-daggers",
+            "weapon:ranged:dual-daggers",
+            "weapon:rangedMagic:dual-daggers"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "dagger + parryDagger",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "reaver.dual-daggers.attack.anticipation",
+            "reaver.dual-daggers.attack.strike",
+            "reaver.dual-daggers.attack.follow-through",
+            "reaver.dual-daggers.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "reaver/clips/weapon-attack-dual-daggers",
+          "animation": "reaver/clips/weapon-attack-dual-daggers/review.webp",
+          "normalAnimation": "reaver/clips/weapon-attack-dual-daggers/normal.webp"
+        },
+        {
+          "action": "weapon:attack:single-dagger",
+          "aliases": [
+            "weapon:attack:single-dagger",
+            "weapon:spell:single-dagger",
+            "weapon:ranged:single-dagger",
+            "weapon:rangedMagic:single-dagger"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "dagger alone",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "reaver.single-dagger.attack.anticipation",
+            "reaver.single-dagger.attack.strike",
+            "reaver.single-dagger.attack.follow-through",
+            "reaver.single-dagger.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "reaver/clips/weapon-attack-single-dagger",
+          "animation": "reaver/clips/weapon-attack-single-dagger/review.webp",
+          "normalAnimation": "reaver/clips/weapon-attack-single-dagger/normal.webp"
+        },
+        {
+          "action": "weapon:attack:single-sword",
+          "aliases": [
+            "weapon:attack:single-sword",
+            "weapon:spell:single-sword",
+            "weapon:ranged:single-sword",
+            "weapon:rangedMagic:single-sword"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "straightSword or katana alone",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "reaver.single-sword.attack.anticipation",
+            "reaver.single-sword.attack.strike",
+            "reaver.single-sword.attack.follow-through",
+            "reaver.single-sword.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "reaver/clips/weapon-attack-single-sword",
+          "animation": "reaver/clips/weapon-attack-single-sword/review.webp",
+          "normalAnimation": "reaver/clips/weapon-attack-single-sword/normal.webp"
+        },
+        {
+          "action": "counter-guard",
+          "aliases": [
+            "counter-guard"
+          ],
+          "origin": "counter",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "pilot-defend",
+            "pilot-impact-v",
+            "pilot-impact-g",
+            "pilot-impact-h",
+            "pilot-counter",
+            "pilot-defend",
+            "pilot-smash",
+            "pilot-attack-1",
+            "pilot-attack-2",
+            "pilot-attack-3",
+            "pilot-attack-4",
+            "pilot-attack-5",
+            "pilot-attack-6"
+          ],
+          "weights": [
+            2,
+            3,
+            1,
+            2,
+            3,
+            2,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "timing": {
+            "totalMs": 650,
+            "impactMs": 552.5
+          },
+          "directory": "reaver/clips/counter-guard",
+          "animation": "reaver/clips/counter-guard/review.webp",
+          "normalAnimation": "reaver/clips/counter-guard/normal.webp"
+        },
+        {
+          "action": "counter-evade",
+          "aliases": [
+            "counter-evade"
+          ],
+          "origin": "evade",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "pilot-evade-1",
+            "pilot-evade-2",
+            "pilot-evade-3",
+            "pilot-attack-1",
+            "pilot-attack-2",
+            "pilot-attack-3",
+            "pilot-attack-4",
+            "pilot-attack-5",
+            "pilot-attack-6"
+          ],
+          "weights": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "timing": {
+            "totalMs": 292.5,
+            "impactMs": 195
+          },
+          "directory": "reaver/clips/counter-evade",
+          "animation": "reaver/clips/counter-evade/review.webp",
+          "normalAnimation": "reaver/clips/counter-evade/normal.webp"
+        },
+        {
+          "action": "reaction:evade",
+          "aliases": [],
+          "origin": "evade",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "pilot-evade-1",
+            "pilot-evade-2",
+            "pilot-evade-3"
+          ],
+          "weights": [
+            1,
+            1,
+            1
+          ],
+          "timing": {
+            "totalMs": 97.5,
+            "impactMs": 0
+          },
+          "directory": "reaver/clips/reaction-evade",
+          "animation": "reaver/clips/reaction-evade/review.webp"
+        },
+        {
+          "action": "reaction:guard-break",
+          "aliases": [],
+          "origin": "defensive",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "pilot-guard-break"
+          ],
+          "weights": [
+            6
+          ],
+          "timing": {
+            "totalMs": 180,
+            "impactMs": 0
+          },
+          "directory": "reaver/clips/reaction-guard-break",
+          "animation": "reaver/clips/reaction-guard-break/review.webp"
+        },
+        {
+          "action": "reaction:fully-defended",
+          "aliases": [],
+          "origin": "defensive",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "pilot-defend",
+            "pilot-impact-v",
+            "pilot-impact-g",
+            "pilot-impact-h",
+            "pilot-counter",
+            "pilot-defend"
+          ],
+          "weights": [
+            2,
+            3,
+            1,
+            2,
+            3,
+            2
+          ],
+          "timing": {
+            "totalMs": 422.5,
+            "impactMs": 0
+          },
+          "directory": "reaver/clips/reaction-fully-defended",
+          "animation": "reaver/clips/reaction-fully-defended/review.webp"
+        },
+        {
+          "action": "reaction:defend",
+          "aliases": [],
+          "origin": "defensive",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "pilot-defend"
+          ],
+          "weights": [
+            6
+          ],
+          "timing": {
+            "totalMs": 180,
+            "impactMs": 0
+          },
+          "directory": "reaver/clips/reaction-defend",
+          "animation": "reaver/clips/reaction-defend/review.webp"
+        },
+        {
+          "action": "reaction:hurt",
+          "aliases": [
+            "hit",
+            "hurt"
+          ],
+          "origin": "offensive",
+          "sharedPhaseArtWith": [],
+          "timing": {
+            "totalMs": 280,
+            "impactMs": 0
+          },
+          "directory": "reaver/clips/reaction-hurt",
+          "animation": "reaver/clips/reaction-hurt/review.webp"
+        }
+      ],
+      "unavailable": [
+        {
+          "kind": "static pose",
+          "pose": "defeated",
+          "availability": "Defeated still only; no authored animation sequence. Not counted among the 77 animation clip groups."
+        }
+      ]
+    },
+    "rogue": {
+      "kit": {
+        "right": "dagger",
+        "left": "buckler",
+        "armour": "default Shot Kit armour"
+      },
+      "legacyNote": "Legacy weapon depiction: non-Smash held views show paired daggers without a buckler. New Smash shows the current dagger + buckler kit. Existing Counter/Sweep art varies in raster detail and style.",
+      "apiAliases": {
+        "idle": "ready",
+        "guard": "defend",
+        "guardHit": "defend",
+        "cast": "spell",
+        "power": "spell",
+        "buff": "spell",
+        "hit": "general hurt flash",
+        "hurt": "general hurt flash",
+        "defeated": "defeated still"
+      },
+      "held": [
+        {
+          "stance": "ready",
+          "pose": "ready",
+          "screenshot": "rogue/ready-combat.jpg",
+          "preview": "rogue/ready-preview.webp",
+          "crop": "rogue/ready-actor.webp",
+          "legacyNote": "Legacy weapon depiction: paired daggers; buckler absent"
+        },
+        {
+          "stance": "offensive",
+          "pose": "stance-offensive",
+          "screenshot": "rogue/offensive-combat.jpg",
+          "preview": "rogue/offensive-preview.webp",
+          "crop": "rogue/offensive-actor.webp",
+          "legacyNote": "Legacy weapon depiction: paired daggers; buckler absent"
+        },
+        {
+          "stance": "defensive",
+          "pose": "stance-defensive",
+          "screenshot": "rogue/defensive-combat.jpg",
+          "preview": "rogue/defensive-preview.webp",
+          "crop": "rogue/defensive-actor.webp",
+          "legacyNote": "Legacy weapon depiction: paired daggers; buckler absent"
+        },
+        {
+          "stance": "casting",
+          "pose": "stance-casting",
+          "screenshot": "rogue/casting-combat.jpg",
+          "preview": "rogue/casting-preview.webp",
+          "crop": "rogue/casting-actor.webp",
+          "legacyNote": "Legacy weapon depiction: paired daggers; buckler absent"
+        },
+        {
+          "stance": "counter",
+          "pose": "stance-counter",
+          "screenshot": "rogue/counter-combat.jpg",
+          "preview": "rogue/counter-preview.webp",
+          "crop": "rogue/counter-actor.webp",
+          "legacyNote": "Legacy weapon depiction: paired daggers; buckler absent"
+        },
+        {
+          "stance": "sweep",
+          "pose": "stance-sweep",
+          "screenshot": "rogue/sweep-combat.jpg",
+          "preview": "rogue/sweep-preview.webp",
+          "crop": "rogue/sweep-actor.webp",
+          "legacyNote": "Legacy weapon depiction: paired daggers; buckler absent"
+        },
+        {
+          "stance": "smash",
+          "pose": "stance-smash",
+          "screenshot": "rogue/smash-combat.jpg",
+          "preview": "rogue/smash-preview.webp",
+          "crop": "rogue/smash-actor.webp",
+          "legacyNote": "Current starter kit depicted"
+        }
+      ],
+      "clips": [
+        {
+          "action": "attack",
+          "aliases": [
+            "attack"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "ready",
+            "attack-load",
+            "attack-contact",
+            "attack-contact",
+            "ready"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "rogue/clips/attack",
+          "animation": "rogue/clips/attack/review.webp",
+          "normalAnimation": "rogue/clips/attack/normal.webp"
+        },
+        {
+          "action": "smash",
+          "aliases": [
+            "smash"
+          ],
+          "origin": "smash",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "origin",
+            "class-smash-takeoff",
+            "class-smash-airborne",
+            "class-smash-impact",
+            "origin"
+          ],
+          "weights": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 117
+          },
+          "directory": "rogue/clips/smash",
+          "animation": "rogue/clips/smash/review.webp",
+          "normalAnimation": "rogue/clips/smash/normal.webp",
+          "gif": "rogue/clips/smash/review.gif"
+        },
+        {
+          "action": "sweep",
+          "aliases": [
+            "sweep"
+          ],
+          "origin": "sweep",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "rogue.sweep.stance",
+            "rogue.sweep.contact",
+            "rogue.sweep.recovery",
+            "ready"
+          ],
+          "weights": [
+            55,
+            60,
+            65,
+            80
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 41.25
+          },
+          "directory": "rogue/clips/sweep",
+          "animation": "rogue/clips/sweep/review.webp",
+          "normalAnimation": "rogue/clips/sweep/normal.webp"
+        },
+        {
+          "action": "counter",
+          "aliases": [
+            "counter"
+          ],
+          "origin": "counter",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "rogue.counter.stance",
+            "rogue.counter.contact",
+            "rogue.counter.recovery",
+            "ready"
+          ],
+          "weights": [
+            55,
+            60,
+            65,
+            80
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 41.25
+          },
+          "directory": "rogue/clips/counter",
+          "animation": "rogue/clips/counter/review.webp",
+          "normalAnimation": "rogue/clips/counter/normal.webp"
+        },
+        {
+          "action": "defend",
+          "aliases": [
+            "defend"
+          ],
+          "origin": "defensive",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "ready",
+            "guard-rise",
+            "guard-brace",
+            "guard-return",
+            "ready"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "rogue/clips/defend",
+          "animation": "rogue/clips/defend/review.webp",
+          "normalAnimation": "rogue/clips/defend/normal.webp"
+        },
+        {
+          "action": "spell",
+          "aliases": [
+            "spell"
+          ],
+          "origin": "casting",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "spell-return",
+            "spell-load",
+            "spell-release",
+            "spell-release",
+            "spell-return"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "rogue/clips/spell",
+          "animation": "rogue/clips/spell/review.webp",
+          "normalAnimation": "rogue/clips/spell/normal.webp"
+        },
+        {
+          "action": "ranged",
+          "aliases": [
+            "ranged"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "ranged-load",
+            "ranged-aim",
+            "ranged-release",
+            "ranged-release",
+            "ranged-load"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "rogue/clips/ranged",
+          "animation": "rogue/clips/ranged/review.webp",
+          "normalAnimation": "rogue/clips/ranged/normal.webp"
+        },
+        {
+          "action": "rangedMagic",
+          "aliases": [
+            "rangedMagic"
+          ],
+          "origin": "casting",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "magic-return",
+            "magic-load",
+            "magic-release",
+            "magic-release",
+            "magic-return"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "rogue/clips/rangedMagic",
+          "animation": "rogue/clips/rangedMagic/review.webp",
+          "normalAnimation": "rogue/clips/rangedMagic/normal.webp"
+        },
+        {
+          "action": "counterPrepare",
+          "aliases": [
+            "counterPrepare"
+          ],
+          "origin": "counter",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "rogue.counter.stance"
+          ],
+          "weights": [
+            260
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 0
+          },
+          "directory": "rogue/clips/counterPrepare",
+          "animation": "rogue/clips/counterPrepare/review.webp",
+          "normalAnimation": "rogue/clips/counterPrepare/normal.webp"
+        },
+        {
+          "action": "weapon:attack:greatsword",
+          "aliases": [
+            "weapon:attack:greatsword",
+            "weapon:spell:greatsword",
+            "weapon:ranged:greatsword",
+            "weapon:rangedMagic:greatsword"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "greatsword alone",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "rogue.greatsword.attack.anticipation",
+            "rogue.greatsword.attack.strike",
+            "rogue.greatsword.attack.follow-through",
+            "rogue.greatsword.attack.recovery"
+          ],
+          "weights": [
+            180,
+            90,
+            150,
+            200
+          ],
+          "timing": {
+            "totalMs": 465,
+            "impactMs": 135
+          },
+          "directory": "rogue/clips/weapon-attack-greatsword",
+          "animation": "rogue/clips/weapon-attack-greatsword/review.webp",
+          "normalAnimation": "rogue/clips/weapon-attack-greatsword/normal.webp"
+        },
+        {
+          "action": "weapon:attack:sword-shield",
+          "aliases": [
+            "weapon:attack:sword-shield",
+            "weapon:spell:sword-shield",
+            "weapon:ranged:sword-shield",
+            "weapon:rangedMagic:sword-shield"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "straightSword or katana + shield",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "rogue.sword-shield.attack.anticipation",
+            "rogue.sword-shield.attack.strike",
+            "rogue.sword-shield.attack.follow-through",
+            "rogue.sword-shield.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "rogue/clips/weapon-attack-sword-shield",
+          "animation": "rogue/clips/weapon-attack-sword-shield/review.webp",
+          "normalAnimation": "rogue/clips/weapon-attack-sword-shield/normal.webp"
+        },
+        {
+          "action": "weapon:attack:bow",
+          "aliases": [
+            "weapon:attack:bow",
+            "weapon:spell:bow",
+            "weapon:ranged:bow",
+            "weapon:rangedMagic:bow"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "shortbow",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "rogue.bow.attack.anticipation",
+            "rogue.bow.attack.strike",
+            "rogue.bow.attack.follow-through",
+            "rogue.bow.attack.recovery"
+          ],
+          "weights": [
+            260,
+            80,
+            120,
+            220
+          ],
+          "timing": {
+            "totalMs": 486.46153846153845,
+            "impactMs": 185.99999999999997
+          },
+          "directory": "rogue/clips/weapon-attack-bow",
+          "animation": "rogue/clips/weapon-attack-bow/review.webp",
+          "normalAnimation": "rogue/clips/weapon-attack-bow/normal.webp"
+        },
+        {
+          "action": "weapon:attack:staff-casting",
+          "aliases": [
+            "weapon:attack:staff-casting",
+            "weapon:spell:staff-casting",
+            "weapon:ranged:staff-casting",
+            "weapon:rangedMagic:staff-casting"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "staff or sceptre",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "rogue.staff-casting.attack.anticipation",
+            "rogue.staff-casting.attack.strike",
+            "rogue.staff-casting.attack.follow-through",
+            "rogue.staff-casting.attack.recovery"
+          ],
+          "weights": [
+            220,
+            100,
+            160,
+            220
+          ],
+          "timing": {
+            "totalMs": 525,
+            "impactMs": 165
+          },
+          "directory": "rogue/clips/weapon-attack-staff-casting",
+          "animation": "rogue/clips/weapon-attack-staff-casting/review.webp",
+          "normalAnimation": "rogue/clips/weapon-attack-staff-casting/normal.webp"
+        },
+        {
+          "action": "weapon:attack:energy-blade",
+          "aliases": [
+            "weapon:attack:energy-blade",
+            "weapon:spell:energy-blade",
+            "weapon:ranged:energy-blade",
+            "weapon:rangedMagic:energy-blade"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "spell blade-tag choreography",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "rogue.energy-blade.attack.anticipation",
+            "rogue.energy-blade.attack.strike",
+            "rogue.energy-blade.attack.follow-through",
+            "rogue.energy-blade.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "rogue/clips/weapon-attack-energy-blade",
+          "animation": "rogue/clips/weapon-attack-energy-blade/review.webp",
+          "normalAnimation": "rogue/clips/weapon-attack-energy-blade/normal.webp"
+        },
+        {
+          "action": "weapon:attack:dual-daggers",
+          "aliases": [
+            "weapon:attack:dual-daggers",
+            "weapon:spell:dual-daggers",
+            "weapon:ranged:dual-daggers",
+            "weapon:rangedMagic:dual-daggers"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "dagger + parryDagger",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "rogue.dual-daggers.attack.anticipation",
+            "rogue.dual-daggers.attack.strike",
+            "rogue.dual-daggers.attack.follow-through",
+            "rogue.dual-daggers.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "rogue/clips/weapon-attack-dual-daggers",
+          "animation": "rogue/clips/weapon-attack-dual-daggers/review.webp",
+          "normalAnimation": "rogue/clips/weapon-attack-dual-daggers/normal.webp"
+        },
+        {
+          "action": "weapon:attack:single-dagger",
+          "aliases": [
+            "weapon:attack:single-dagger",
+            "weapon:spell:single-dagger",
+            "weapon:ranged:single-dagger",
+            "weapon:rangedMagic:single-dagger"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "dagger alone",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "rogue.single-dagger.attack.anticipation",
+            "rogue.single-dagger.attack.strike",
+            "rogue.single-dagger.attack.follow-through",
+            "rogue.single-dagger.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "rogue/clips/weapon-attack-single-dagger",
+          "animation": "rogue/clips/weapon-attack-single-dagger/review.webp",
+          "normalAnimation": "rogue/clips/weapon-attack-single-dagger/normal.webp"
+        },
+        {
+          "action": "weapon:attack:single-sword",
+          "aliases": [
+            "weapon:attack:single-sword",
+            "weapon:spell:single-sword",
+            "weapon:ranged:single-sword",
+            "weapon:rangedMagic:single-sword"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "straightSword or katana alone",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "rogue.single-sword.attack.anticipation",
+            "rogue.single-sword.attack.strike",
+            "rogue.single-sword.attack.follow-through",
+            "rogue.single-sword.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "rogue/clips/weapon-attack-single-sword",
+          "animation": "rogue/clips/weapon-attack-single-sword/review.webp",
+          "normalAnimation": "rogue/clips/weapon-attack-single-sword/normal.webp"
+        },
+        {
+          "action": "reaction:hurt",
+          "aliases": [
+            "hit",
+            "hurt"
+          ],
+          "origin": "offensive",
+          "sharedPhaseArtWith": [],
+          "timing": {
+            "totalMs": 280,
+            "impactMs": 0
+          },
+          "directory": "rogue/clips/reaction-hurt",
+          "animation": "rogue/clips/reaction-hurt/review.webp"
+        }
+      ],
+      "unavailable": [
+        {
+          "kind": "static pose",
+          "pose": "defeated",
+          "availability": "Defeated still only; no authored animation sequence. Not counted among the 77 animation clip groups."
+        },
+        {
+          "kind": "painted reaction",
+          "reaction": "evade",
+          "fallback": "Existing general hurt/guard presentation; no registered painted reaction clip"
+        },
+        {
+          "kind": "painted reaction",
+          "reaction": "guard-break",
+          "fallback": "Existing general hurt/guard presentation; no registered painted reaction clip"
+        },
+        {
+          "kind": "painted reaction",
+          "reaction": "fully-defended",
+          "fallback": "Existing general hurt/guard presentation; no registered painted reaction clip"
+        },
+        {
+          "kind": "painted reaction",
+          "reaction": "defend",
+          "fallback": "Existing general hurt/guard presentation; no registered painted reaction clip"
+        }
+      ]
+    },
+    "starseer": {
+      "kit": {
+        "right": "ashStaff",
+        "left": "",
+        "armour": "default Shot Kit armour"
+      },
+      "legacyNote": "Legacy weapon depiction: some Magic views include a book alongside the staff. Existing Counter/Sweep art varies in raster detail and style.",
+      "apiAliases": {
+        "idle": "ready",
+        "guard": "defend",
+        "guardHit": "defend",
+        "cast": "spell",
+        "power": "spell",
+        "buff": "spell",
+        "hit": "general hurt flash",
+        "hurt": "general hurt flash",
+        "defeated": "defeated still"
+      },
+      "held": [
+        {
+          "stance": "ready",
+          "pose": "ready",
+          "screenshot": "starseer/ready-combat.jpg",
+          "preview": "starseer/ready-preview.webp",
+          "crop": "starseer/ready-actor.webp",
+          "legacyNote": ""
+        },
+        {
+          "stance": "offensive",
+          "pose": "stance-offensive",
+          "screenshot": "starseer/offensive-combat.jpg",
+          "preview": "starseer/offensive-preview.webp",
+          "crop": "starseer/offensive-actor.webp",
+          "legacyNote": ""
+        },
+        {
+          "stance": "defensive",
+          "pose": "stance-defensive",
+          "screenshot": "starseer/defensive-combat.jpg",
+          "preview": "starseer/defensive-preview.webp",
+          "crop": "starseer/defensive-actor.webp",
+          "legacyNote": ""
+        },
+        {
+          "stance": "casting",
+          "pose": "stance-casting",
+          "screenshot": "starseer/casting-combat.jpg",
+          "preview": "starseer/casting-preview.webp",
+          "crop": "starseer/casting-actor.webp",
+          "legacyNote": "Legacy weapon depiction: staff and book"
+        },
+        {
+          "stance": "counter",
+          "pose": "stance-counter",
+          "screenshot": "starseer/counter-combat.jpg",
+          "preview": "starseer/counter-preview.webp",
+          "crop": "starseer/counter-actor.webp",
+          "legacyNote": "Existing source art: lower raster detail / style variation"
+        },
+        {
+          "stance": "sweep",
+          "pose": "stance-sweep",
+          "screenshot": "starseer/sweep-combat.jpg",
+          "preview": "starseer/sweep-preview.webp",
+          "crop": "starseer/sweep-actor.webp",
+          "legacyNote": "Existing source art: lower raster detail / style variation"
+        },
+        {
+          "stance": "smash",
+          "pose": "stance-smash",
+          "screenshot": "starseer/smash-combat.jpg",
+          "preview": "starseer/smash-preview.webp",
+          "crop": "starseer/smash-actor.webp",
+          "legacyNote": "Current starter kit depicted"
+        }
+      ],
+      "clips": [
+        {
+          "action": "attack",
+          "aliases": [
+            "attack"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "ready",
+            "attack-load",
+            "attack-contact",
+            "attack-contact",
+            "ready"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "starseer/clips/attack",
+          "animation": "starseer/clips/attack/review.webp",
+          "normalAnimation": "starseer/clips/attack/normal.webp"
+        },
+        {
+          "action": "smash",
+          "aliases": [
+            "smash"
+          ],
+          "origin": "smash",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "origin",
+            "class-smash-takeoff",
+            "class-smash-airborne",
+            "class-smash-impact",
+            "origin"
+          ],
+          "weights": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 117
+          },
+          "directory": "starseer/clips/smash",
+          "animation": "starseer/clips/smash/review.webp",
+          "normalAnimation": "starseer/clips/smash/normal.webp",
+          "gif": "starseer/clips/smash/review.gif"
+        },
+        {
+          "action": "sweep",
+          "aliases": [
+            "sweep"
+          ],
+          "origin": "sweep",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "starseer.sweep.stance",
+            "starseer.sweep.contact",
+            "starseer.sweep.recovery",
+            "ready"
+          ],
+          "weights": [
+            55,
+            60,
+            65,
+            80
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 41.25
+          },
+          "directory": "starseer/clips/sweep",
+          "animation": "starseer/clips/sweep/review.webp",
+          "normalAnimation": "starseer/clips/sweep/normal.webp"
+        },
+        {
+          "action": "counter",
+          "aliases": [
+            "counter"
+          ],
+          "origin": "counter",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "starseer.counter.stance",
+            "starseer.counter.contact",
+            "starseer.counter.recovery",
+            "ready"
+          ],
+          "weights": [
+            55,
+            60,
+            65,
+            80
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 41.25
+          },
+          "directory": "starseer/clips/counter",
+          "animation": "starseer/clips/counter/review.webp",
+          "normalAnimation": "starseer/clips/counter/normal.webp"
+        },
+        {
+          "action": "defend",
+          "aliases": [
+            "defend"
+          ],
+          "origin": "defensive",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "ready",
+            "guard-rise",
+            "guard-brace",
+            "guard-return",
+            "ready"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "starseer/clips/defend",
+          "animation": "starseer/clips/defend/review.webp",
+          "normalAnimation": "starseer/clips/defend/normal.webp"
+        },
+        {
+          "action": "spell",
+          "aliases": [
+            "spell"
+          ],
+          "origin": "casting",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "spell-return",
+            "spell-load",
+            "spell-release",
+            "spell-release",
+            "spell-return"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "starseer/clips/spell",
+          "animation": "starseer/clips/spell/review.webp",
+          "normalAnimation": "starseer/clips/spell/normal.webp"
+        },
+        {
+          "action": "ranged",
+          "aliases": [
+            "ranged"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [
+            "rangedMagic"
+          ],
+          "poses": [
+            "ranged-load",
+            "ranged-load",
+            "ranged-aim",
+            "ranged-release",
+            "ranged-load"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "starseer/clips/ranged",
+          "animation": "starseer/clips/ranged/review.webp",
+          "normalAnimation": "starseer/clips/ranged/normal.webp"
+        },
+        {
+          "action": "rangedMagic",
+          "aliases": [
+            "rangedMagic"
+          ],
+          "origin": "casting",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [
+            "ranged"
+          ],
+          "poses": [
+            "ranged-load",
+            "ranged-load",
+            "ranged-aim",
+            "ranged-release",
+            "ranged-load"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "starseer/clips/rangedMagic",
+          "animation": "starseer/clips/rangedMagic/review.webp",
+          "normalAnimation": "starseer/clips/rangedMagic/normal.webp"
+        },
+        {
+          "action": "counterPrepare",
+          "aliases": [
+            "counterPrepare"
+          ],
+          "origin": "counter",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "starseer.counter.stance"
+          ],
+          "weights": [
+            260
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 0
+          },
+          "directory": "starseer/clips/counterPrepare",
+          "animation": "starseer/clips/counterPrepare/review.webp",
+          "normalAnimation": "starseer/clips/counterPrepare/normal.webp"
+        },
+        {
+          "action": "weapon:attack:greatsword",
+          "aliases": [
+            "weapon:attack:greatsword",
+            "weapon:spell:greatsword",
+            "weapon:ranged:greatsword",
+            "weapon:rangedMagic:greatsword"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "greatsword alone",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "starseer.greatsword.attack.anticipation",
+            "starseer.greatsword.attack.strike",
+            "starseer.greatsword.attack.follow-through",
+            "starseer.greatsword.attack.recovery"
+          ],
+          "weights": [
+            180,
+            90,
+            150,
+            200
+          ],
+          "timing": {
+            "totalMs": 465,
+            "impactMs": 135
+          },
+          "directory": "starseer/clips/weapon-attack-greatsword",
+          "animation": "starseer/clips/weapon-attack-greatsword/review.webp",
+          "normalAnimation": "starseer/clips/weapon-attack-greatsword/normal.webp"
+        },
+        {
+          "action": "weapon:attack:sword-shield",
+          "aliases": [
+            "weapon:attack:sword-shield",
+            "weapon:spell:sword-shield",
+            "weapon:ranged:sword-shield",
+            "weapon:rangedMagic:sword-shield"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "straightSword or katana + shield",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "starseer.sword-shield.attack.anticipation",
+            "starseer.sword-shield.attack.strike",
+            "starseer.sword-shield.attack.follow-through",
+            "starseer.sword-shield.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "starseer/clips/weapon-attack-sword-shield",
+          "animation": "starseer/clips/weapon-attack-sword-shield/review.webp",
+          "normalAnimation": "starseer/clips/weapon-attack-sword-shield/normal.webp"
+        },
+        {
+          "action": "weapon:attack:bow",
+          "aliases": [
+            "weapon:attack:bow",
+            "weapon:spell:bow",
+            "weapon:ranged:bow",
+            "weapon:rangedMagic:bow"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "shortbow",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "starseer.bow.attack.anticipation",
+            "starseer.bow.attack.strike",
+            "starseer.bow.attack.follow-through",
+            "starseer.bow.attack.recovery"
+          ],
+          "weights": [
+            260,
+            80,
+            120,
+            220
+          ],
+          "timing": {
+            "totalMs": 486.46153846153845,
+            "impactMs": 185.99999999999997
+          },
+          "directory": "starseer/clips/weapon-attack-bow",
+          "animation": "starseer/clips/weapon-attack-bow/review.webp",
+          "normalAnimation": "starseer/clips/weapon-attack-bow/normal.webp"
+        },
+        {
+          "action": "weapon:attack:staff-casting",
+          "aliases": [
+            "weapon:attack:staff-casting",
+            "weapon:spell:staff-casting",
+            "weapon:ranged:staff-casting",
+            "weapon:rangedMagic:staff-casting"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "staff or sceptre",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "starseer.staff-casting.attack.anticipation",
+            "starseer.staff-casting.attack.strike",
+            "starseer.staff-casting.attack.follow-through",
+            "starseer.staff-casting.attack.recovery"
+          ],
+          "weights": [
+            220,
+            100,
+            160,
+            220
+          ],
+          "timing": {
+            "totalMs": 525,
+            "impactMs": 165
+          },
+          "directory": "starseer/clips/weapon-attack-staff-casting",
+          "animation": "starseer/clips/weapon-attack-staff-casting/review.webp",
+          "normalAnimation": "starseer/clips/weapon-attack-staff-casting/normal.webp"
+        },
+        {
+          "action": "weapon:attack:energy-blade",
+          "aliases": [
+            "weapon:attack:energy-blade",
+            "weapon:spell:energy-blade",
+            "weapon:ranged:energy-blade",
+            "weapon:rangedMagic:energy-blade"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "spell blade-tag choreography",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "starseer.energy-blade.attack.anticipation",
+            "starseer.energy-blade.attack.strike",
+            "starseer.energy-blade.attack.follow-through",
+            "starseer.energy-blade.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "starseer/clips/weapon-attack-energy-blade",
+          "animation": "starseer/clips/weapon-attack-energy-blade/review.webp",
+          "normalAnimation": "starseer/clips/weapon-attack-energy-blade/normal.webp"
+        },
+        {
+          "action": "weapon:attack:dual-daggers",
+          "aliases": [
+            "weapon:attack:dual-daggers",
+            "weapon:spell:dual-daggers",
+            "weapon:ranged:dual-daggers",
+            "weapon:rangedMagic:dual-daggers"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "dagger + parryDagger",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "starseer.dual-daggers.attack.anticipation",
+            "starseer.dual-daggers.attack.strike",
+            "starseer.dual-daggers.attack.follow-through",
+            "starseer.dual-daggers.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "starseer/clips/weapon-attack-dual-daggers",
+          "animation": "starseer/clips/weapon-attack-dual-daggers/review.webp",
+          "normalAnimation": "starseer/clips/weapon-attack-dual-daggers/normal.webp"
+        },
+        {
+          "action": "weapon:attack:single-dagger",
+          "aliases": [
+            "weapon:attack:single-dagger",
+            "weapon:spell:single-dagger",
+            "weapon:ranged:single-dagger",
+            "weapon:rangedMagic:single-dagger"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "dagger alone",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "starseer.single-dagger.attack.anticipation",
+            "starseer.single-dagger.attack.strike",
+            "starseer.single-dagger.attack.follow-through",
+            "starseer.single-dagger.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "starseer/clips/weapon-attack-single-dagger",
+          "animation": "starseer/clips/weapon-attack-single-dagger/review.webp",
+          "normalAnimation": "starseer/clips/weapon-attack-single-dagger/normal.webp"
+        },
+        {
+          "action": "weapon:attack:single-sword",
+          "aliases": [
+            "weapon:attack:single-sword",
+            "weapon:spell:single-sword",
+            "weapon:ranged:single-sword",
+            "weapon:rangedMagic:single-sword"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "straightSword or katana alone",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "starseer.single-sword.attack.anticipation",
+            "starseer.single-sword.attack.strike",
+            "starseer.single-sword.attack.follow-through",
+            "starseer.single-sword.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "starseer/clips/weapon-attack-single-sword",
+          "animation": "starseer/clips/weapon-attack-single-sword/review.webp",
+          "normalAnimation": "starseer/clips/weapon-attack-single-sword/normal.webp"
+        },
+        {
+          "action": "reaction:hurt",
+          "aliases": [
+            "hit",
+            "hurt"
+          ],
+          "origin": "offensive",
+          "sharedPhaseArtWith": [],
+          "timing": {
+            "totalMs": 280,
+            "impactMs": 0
+          },
+          "directory": "starseer/clips/reaction-hurt",
+          "animation": "starseer/clips/reaction-hurt/review.webp"
+        }
+      ],
+      "unavailable": [
+        {
+          "kind": "static pose",
+          "pose": "defeated",
+          "availability": "Defeated still only; no authored animation sequence. Not counted among the 77 animation clip groups."
+        },
+        {
+          "kind": "painted reaction",
+          "reaction": "evade",
+          "fallback": "Existing general hurt/guard presentation; no registered painted reaction clip"
+        },
+        {
+          "kind": "painted reaction",
+          "reaction": "guard-break",
+          "fallback": "Existing general hurt/guard presentation; no registered painted reaction clip"
+        },
+        {
+          "kind": "painted reaction",
+          "reaction": "fully-defended",
+          "fallback": "Existing general hurt/guard presentation; no registered painted reaction clip"
+        },
+        {
+          "kind": "painted reaction",
+          "reaction": "defend",
+          "fallback": "Existing general hurt/guard presentation; no registered painted reaction clip"
+        }
+      ]
+    },
+    "herald": {
+      "kit": {
+        "right": "boneSceptre",
+        "left": "",
+        "armour": "default Shot Kit armour"
+      },
+      "legacyNote": "Legacy weapon depiction: non-Smash held views are largely unarmed or show a book, omitting the bone sceptre. New Smash shows the current bone sceptre kit. Existing Counter/Sweep art varies in raster detail and style.",
+      "apiAliases": {
+        "idle": "ready",
+        "guard": "defend",
+        "guardHit": "defend",
+        "cast": "spell",
+        "power": "spell",
+        "buff": "spell",
+        "hit": "general hurt flash",
+        "hurt": "general hurt flash",
+        "defeated": "defeated still"
+      },
+      "held": [
+        {
+          "stance": "ready",
+          "pose": "ready",
+          "screenshot": "herald/ready-combat.jpg",
+          "preview": "herald/ready-preview.webp",
+          "crop": "herald/ready-actor.webp",
+          "legacyNote": "Legacy weapon depiction: unarmed/book; bone sceptre absent"
+        },
+        {
+          "stance": "offensive",
+          "pose": "stance-offensive",
+          "screenshot": "herald/offensive-combat.jpg",
+          "preview": "herald/offensive-preview.webp",
+          "crop": "herald/offensive-actor.webp",
+          "legacyNote": "Legacy weapon depiction: unarmed/book; bone sceptre absent"
+        },
+        {
+          "stance": "defensive",
+          "pose": "stance-defensive",
+          "screenshot": "herald/defensive-combat.jpg",
+          "preview": "herald/defensive-preview.webp",
+          "crop": "herald/defensive-actor.webp",
+          "legacyNote": "Legacy weapon depiction: unarmed/book; bone sceptre absent"
+        },
+        {
+          "stance": "casting",
+          "pose": "stance-casting",
+          "screenshot": "herald/casting-combat.jpg",
+          "preview": "herald/casting-preview.webp",
+          "crop": "herald/casting-actor.webp",
+          "legacyNote": "Legacy weapon depiction: unarmed/book; bone sceptre absent"
+        },
+        {
+          "stance": "counter",
+          "pose": "stance-counter",
+          "screenshot": "herald/counter-combat.jpg",
+          "preview": "herald/counter-preview.webp",
+          "crop": "herald/counter-actor.webp",
+          "legacyNote": "Legacy weapon depiction: unarmed/book; bone sceptre absent"
+        },
+        {
+          "stance": "sweep",
+          "pose": "stance-sweep",
+          "screenshot": "herald/sweep-combat.jpg",
+          "preview": "herald/sweep-preview.webp",
+          "crop": "herald/sweep-actor.webp",
+          "legacyNote": "Legacy weapon depiction: unarmed/book; bone sceptre absent"
+        },
+        {
+          "stance": "smash",
+          "pose": "stance-smash",
+          "screenshot": "herald/smash-combat.jpg",
+          "preview": "herald/smash-preview.webp",
+          "crop": "herald/smash-actor.webp",
+          "legacyNote": "Current starter kit depicted"
+        }
+      ],
+      "clips": [
+        {
+          "action": "attack",
+          "aliases": [
+            "attack"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "ready",
+            "attack-load",
+            "attack-contact",
+            "attack-contact",
+            "ready"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "herald/clips/attack",
+          "animation": "herald/clips/attack/review.webp",
+          "normalAnimation": "herald/clips/attack/normal.webp"
+        },
+        {
+          "action": "smash",
+          "aliases": [
+            "smash"
+          ],
+          "origin": "smash",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "origin",
+            "class-smash-takeoff",
+            "class-smash-airborne",
+            "class-smash-impact",
+            "origin"
+          ],
+          "weights": [
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 117
+          },
+          "directory": "herald/clips/smash",
+          "animation": "herald/clips/smash/review.webp",
+          "normalAnimation": "herald/clips/smash/normal.webp",
+          "gif": "herald/clips/smash/review.gif"
+        },
+        {
+          "action": "sweep",
+          "aliases": [
+            "sweep"
+          ],
+          "origin": "sweep",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "herald.sweep.stance",
+            "herald.sweep.contact",
+            "herald.sweep.recovery",
+            "ready"
+          ],
+          "weights": [
+            55,
+            60,
+            65,
+            80
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 41.25
+          },
+          "directory": "herald/clips/sweep",
+          "animation": "herald/clips/sweep/review.webp",
+          "normalAnimation": "herald/clips/sweep/normal.webp"
+        },
+        {
+          "action": "counter",
+          "aliases": [
+            "counter"
+          ],
+          "origin": "counter",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "herald.counter.stance",
+            "herald.counter.contact",
+            "herald.counter.recovery",
+            "ready"
+          ],
+          "weights": [
+            55,
+            60,
+            65,
+            80
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 41.25
+          },
+          "directory": "herald/clips/counter",
+          "animation": "herald/clips/counter/review.webp",
+          "normalAnimation": "herald/clips/counter/normal.webp"
+        },
+        {
+          "action": "defend",
+          "aliases": [
+            "defend"
+          ],
+          "origin": "defensive",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "ready",
+            "guard-rise",
+            "guard-brace",
+            "guard-return",
+            "ready"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "herald/clips/defend",
+          "animation": "herald/clips/defend/review.webp",
+          "normalAnimation": "herald/clips/defend/normal.webp"
+        },
+        {
+          "action": "spell",
+          "aliases": [
+            "spell"
+          ],
+          "origin": "casting",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "spell-return",
+            "spell-load",
+            "spell-release",
+            "spell-release",
+            "spell-return"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "herald/clips/spell",
+          "animation": "herald/clips/spell/review.webp",
+          "normalAnimation": "herald/clips/spell/normal.webp"
+        },
+        {
+          "action": "ranged",
+          "aliases": [
+            "ranged"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [
+            "rangedMagic"
+          ],
+          "poses": [
+            "ranged-load",
+            "ranged-load",
+            "ranged-aim",
+            "ranged-release",
+            "ranged-load"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "herald/clips/ranged",
+          "animation": "herald/clips/ranged/review.webp",
+          "normalAnimation": "herald/clips/ranged/normal.webp"
+        },
+        {
+          "action": "rangedMagic",
+          "aliases": [
+            "rangedMagic"
+          ],
+          "origin": "casting",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [
+            "ranged"
+          ],
+          "poses": [
+            "ranged-load",
+            "ranged-load",
+            "ranged-aim",
+            "ranged-release",
+            "ranged-load"
+          ],
+          "weights": [
+            60,
+            55,
+            50,
+            45,
+            50
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 86.25
+          },
+          "directory": "herald/clips/rangedMagic",
+          "animation": "herald/clips/rangedMagic/review.webp",
+          "normalAnimation": "herald/clips/rangedMagic/normal.webp"
+        },
+        {
+          "action": "counterPrepare",
+          "aliases": [
+            "counterPrepare"
+          ],
+          "origin": "counter",
+          "referenceGrip": "canonical starter fixture",
+          "referenceLabel": "Registered canonical starter stage reference",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "herald.counter.stance"
+          ],
+          "weights": [
+            260
+          ],
+          "timing": {
+            "totalMs": 195,
+            "impactMs": 0
+          },
+          "directory": "herald/clips/counterPrepare",
+          "animation": "herald/clips/counterPrepare/review.webp",
+          "normalAnimation": "herald/clips/counterPrepare/normal.webp"
+        },
+        {
+          "action": "weapon:attack:greatsword",
+          "aliases": [
+            "weapon:attack:greatsword",
+            "weapon:spell:greatsword",
+            "weapon:ranged:greatsword",
+            "weapon:rangedMagic:greatsword"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "greatsword alone",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "herald.greatsword.attack.anticipation",
+            "herald.greatsword.attack.strike",
+            "herald.greatsword.attack.follow-through",
+            "herald.greatsword.attack.recovery"
+          ],
+          "weights": [
+            180,
+            90,
+            150,
+            200
+          ],
+          "timing": {
+            "totalMs": 465,
+            "impactMs": 135
+          },
+          "directory": "herald/clips/weapon-attack-greatsword",
+          "animation": "herald/clips/weapon-attack-greatsword/review.webp",
+          "normalAnimation": "herald/clips/weapon-attack-greatsword/normal.webp"
+        },
+        {
+          "action": "weapon:attack:sword-shield",
+          "aliases": [
+            "weapon:attack:sword-shield",
+            "weapon:spell:sword-shield",
+            "weapon:ranged:sword-shield",
+            "weapon:rangedMagic:sword-shield"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "straightSword or katana + shield",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "herald.sword-shield.attack.anticipation",
+            "herald.sword-shield.attack.strike",
+            "herald.sword-shield.attack.follow-through",
+            "herald.sword-shield.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "herald/clips/weapon-attack-sword-shield",
+          "animation": "herald/clips/weapon-attack-sword-shield/review.webp",
+          "normalAnimation": "herald/clips/weapon-attack-sword-shield/normal.webp"
+        },
+        {
+          "action": "weapon:attack:bow",
+          "aliases": [
+            "weapon:attack:bow",
+            "weapon:spell:bow",
+            "weapon:ranged:bow",
+            "weapon:rangedMagic:bow"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "shortbow",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "herald.bow.attack.anticipation",
+            "herald.bow.attack.strike",
+            "herald.bow.attack.follow-through",
+            "herald.bow.attack.recovery"
+          ],
+          "weights": [
+            260,
+            80,
+            120,
+            220
+          ],
+          "timing": {
+            "totalMs": 486.46153846153845,
+            "impactMs": 185.99999999999997
+          },
+          "directory": "herald/clips/weapon-attack-bow",
+          "animation": "herald/clips/weapon-attack-bow/review.webp",
+          "normalAnimation": "herald/clips/weapon-attack-bow/normal.webp"
+        },
+        {
+          "action": "weapon:attack:staff-casting",
+          "aliases": [
+            "weapon:attack:staff-casting",
+            "weapon:spell:staff-casting",
+            "weapon:ranged:staff-casting",
+            "weapon:rangedMagic:staff-casting"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "staff or sceptre",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "herald.staff-casting.attack.anticipation",
+            "herald.staff-casting.attack.strike",
+            "herald.staff-casting.attack.follow-through",
+            "herald.staff-casting.attack.recovery"
+          ],
+          "weights": [
+            220,
+            100,
+            160,
+            220
+          ],
+          "timing": {
+            "totalMs": 525,
+            "impactMs": 165
+          },
+          "directory": "herald/clips/weapon-attack-staff-casting",
+          "animation": "herald/clips/weapon-attack-staff-casting/review.webp",
+          "normalAnimation": "herald/clips/weapon-attack-staff-casting/normal.webp"
+        },
+        {
+          "action": "weapon:attack:energy-blade",
+          "aliases": [
+            "weapon:attack:energy-blade",
+            "weapon:spell:energy-blade",
+            "weapon:ranged:energy-blade",
+            "weapon:rangedMagic:energy-blade"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "spell blade-tag choreography",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "herald.energy-blade.attack.anticipation",
+            "herald.energy-blade.attack.strike",
+            "herald.energy-blade.attack.follow-through",
+            "herald.energy-blade.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "herald/clips/weapon-attack-energy-blade",
+          "animation": "herald/clips/weapon-attack-energy-blade/review.webp",
+          "normalAnimation": "herald/clips/weapon-attack-energy-blade/normal.webp"
+        },
+        {
+          "action": "weapon:attack:dual-daggers",
+          "aliases": [
+            "weapon:attack:dual-daggers",
+            "weapon:spell:dual-daggers",
+            "weapon:ranged:dual-daggers",
+            "weapon:rangedMagic:dual-daggers"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "dagger + parryDagger",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "herald.dual-daggers.attack.anticipation",
+            "herald.dual-daggers.attack.strike",
+            "herald.dual-daggers.attack.follow-through",
+            "herald.dual-daggers.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "herald/clips/weapon-attack-dual-daggers",
+          "animation": "herald/clips/weapon-attack-dual-daggers/review.webp",
+          "normalAnimation": "herald/clips/weapon-attack-dual-daggers/normal.webp"
+        },
+        {
+          "action": "weapon:attack:single-dagger",
+          "aliases": [
+            "weapon:attack:single-dagger",
+            "weapon:spell:single-dagger",
+            "weapon:ranged:single-dagger",
+            "weapon:rangedMagic:single-dagger"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "dagger alone",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "herald.single-dagger.attack.anticipation",
+            "herald.single-dagger.attack.strike",
+            "herald.single-dagger.attack.follow-through",
+            "herald.single-dagger.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "herald/clips/weapon-attack-single-dagger",
+          "animation": "herald/clips/weapon-attack-single-dagger/review.webp",
+          "normalAnimation": "herald/clips/weapon-attack-single-dagger/normal.webp"
+        },
+        {
+          "action": "weapon:attack:single-sword",
+          "aliases": [
+            "weapon:attack:single-sword",
+            "weapon:spell:single-sword",
+            "weapon:ranged:single-sword",
+            "weapon:rangedMagic:single-sword"
+          ],
+          "origin": "offensive",
+          "referenceGrip": "straightSword or katana alone",
+          "referenceLabel": "Registered weapon-family reference; canonical fixture unchanged; not equipment-compatible paid play",
+          "sharedPhaseArtWith": [],
+          "poses": [
+            "herald.single-sword.attack.anticipation",
+            "herald.single-sword.attack.strike",
+            "herald.single-sword.attack.follow-through",
+            "herald.single-sword.attack.recovery"
+          ],
+          "weights": [
+            150,
+            80,
+            130,
+            180
+          ],
+          "timing": {
+            "totalMs": 405,
+            "impactMs": 112.5
+          },
+          "directory": "herald/clips/weapon-attack-single-sword",
+          "animation": "herald/clips/weapon-attack-single-sword/review.webp",
+          "normalAnimation": "herald/clips/weapon-attack-single-sword/normal.webp"
+        },
+        {
+          "action": "reaction:hurt",
+          "aliases": [
+            "hit",
+            "hurt"
+          ],
+          "origin": "offensive",
+          "sharedPhaseArtWith": [],
+          "timing": {
+            "totalMs": 280,
+            "impactMs": 0
+          },
+          "directory": "herald/clips/reaction-hurt",
+          "animation": "herald/clips/reaction-hurt/review.webp"
+        }
+      ],
+      "unavailable": [
+        {
+          "kind": "static pose",
+          "pose": "defeated",
+          "availability": "Defeated still only; no authored animation sequence. Not counted among the 77 animation clip groups."
+        },
+        {
+          "kind": "painted reaction",
+          "reaction": "evade",
+          "fallback": "Existing general hurt/guard presentation; no registered painted reaction clip"
+        },
+        {
+          "kind": "painted reaction",
+          "reaction": "guard-break",
+          "fallback": "Existing general hurt/guard presentation; no registered painted reaction clip"
+        },
+        {
+          "kind": "painted reaction",
+          "reaction": "fully-defended",
+          "fallback": "Existing general hurt/guard presentation; no registered painted reaction clip"
+        },
+        {
+          "kind": "painted reaction",
+          "reaction": "defend",
+          "fallback": "Existing general hurt/guard presentation; no registered painted reaction clip"
+        }
+      ]
+    }
+  },
+  "errors": [],
+  "gifEncoder": "ffmpeg",
+  "curation": {
+    "media": "High-quality animated WebP; JPEG full UI; WebP actor crops; four GIF Smash overviews",
+    "rawCaptureLocation": "Scratch only, not committed",
+    "quality": {
+      "animationWebP": 88,
+      "contactSheetWebP": 93,
+      "heldWebP": 90,
+      "actorCropWebP": 96,
+      "fullUiJpeg": 88
+    },
+    "totalBytes": 29184911
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "mechanic": "item_blade",
+  "commands": {},
+  "events": {},
+  "queries": {},
+  "listens": [],
+  "requires": []
+}

@@ -44,6 +44,9 @@ function fight(cardId, weapon, version, extra = {}) {
   const c = createCombat({ registries: regs, rng: createRng(5), player, enemyIds: ['wanderingSoldier'], combatExpansionVersion: version, ...extra });
   const enemy = c.enemies[0];
   enemy.hp = enemy.maxHp = 500;
+  // This suite checks the damage-type rider, not a full meter's wraparound.
+  // Authored Smash pressure can fill the ordinary meter before the rider assertion.
+  if (version === 1) enemy.poiseMeter = { value: 0, max: 10000 };
   return { c, enemy };
 }
 

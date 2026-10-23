@@ -49,7 +49,7 @@
 // `pointerleave` end it as CANCELLED — the browser taking the gesture, or a thumb
 // sliding off the chip mid-hold, must not commit.
 //
-// ⚠ THE STRIP IS `display: none` ON A NARROW LAYOUT, AND THAT IS THE SEAM.
+// warning THE STRIP IS `display: none` ON A NARROW LAYOUT, AND THAT IS THE SEAM.
 // `styles/ui.css` hides `.hint-bar` under `:root[data-layout='narrow']`, with its
 // reason written at the line: *"On a phone it offers 'E End Turn' to a device with
 // no E."* THAT PREMISE IS THE THING THIS CHANGE RETIRES — the chips are now the

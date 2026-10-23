@@ -45,7 +45,7 @@ export function mountQuestBoard(app, { registries, run, meta, ownerNodeId, hud =
     <div class="screen room-screen quest-board-screen"></div>`;
 
   const cards = view.offers.map((offer) => optionCard({
-    glyph: offer.state === 'done' ? '✓' : '✉',
+    glyph: offer.state === 'done' ? 'check' : 'quest',
     name: offer.title,
     description: offer.text,
     meta: t('questBoard.offer.meta', { reward: offer.reward, objective: offer.objective || t('questBoard.offer.noObjective') }),

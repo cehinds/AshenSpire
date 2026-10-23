@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 // Warrior's Vow (SPEC §5.2): "Innate. Enter a Stance of your choice. Exhaust."
 // The card's effect names a CHOICE, not a stance: playing it offers a pending
 // choice of every stance the playing character's class owns (the stance rows'
@@ -116,7 +117,7 @@ test('the validator refuses an enterStance with neither or both selectors, and a
 
 // Co-op: the session route plays a seat's card through coopCombat.playCard,
 // which must offer the same choice and enter the chosen stance on that seat.
-test('co-op: a seat\'s Vow offers its class stances and enters the chosen one on that seat only', async () => {
+test('co-op: a seat\'s Vow offers its class stances and enters the chosen one on that seat only', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, async () => {
   const { createCoopCombat, playCard, cardChoicePlan: coopPlan } = await import('../src/engine/coopCombat.js');
   for (const stance of reaverStances()) {
     const C = createCoopCombat({ registries: REG, rng: createRng(0xc0ffee), enemyIds: [ENEMY], players: [seat('p1'), seat('p2')] });
@@ -144,11 +145,14 @@ test('the offer marks the stance already active, solo and co-op', async () => {
   dispatch(c, { type: 'playCard', cardInstanceId: 'pvow', choice: 'gorefire' });
   assert.equal(c.player.stanceId, 'gorefire');
 
-  const { createCoopCombat, cardChoicePlan: coopPlan } = await import('../src/engine/coopCombat.js');
-  const C = createCoopCombat({ registries: REG, rng: createRng(0xc0ffee), enemyIds: [ENEMY], players: [seat('p1'), seat('p2')] });
-  C.players.get('p2').entity.stanceId = 'brace';
-  assert.deepEqual(coopPlan(C, 'p2', 'p2vow').options.filter((o) => o.active).map((o) => o.id), ['brace']);
-  assert.ok(coopPlan(C, 'p1', 'p1vow').options.every((o) => !o.active), 'the other seat\'s stance is not this seat\'s');
+  if (COOP_TESTS_ENABLED) {
+    const { createCoopCombat, cardChoicePlan: coopPlan } = await import('../src/engine/coopCombat.js');
+    const C = createCoopCombat({ registries: REG, rng: createRng(0xc0ffee), enemyIds: [ENEMY], players: [seat('p1'), seat('p2')] });
+    C.players.get('p2').entity.stanceId = 'brace';
+    assert.deepEqual(coopPlan(C, 'p2', 'p2vow').options.filter((o) => o.active).map((o) => o.id), ['brace']);
+    assert.ok(coopPlan(C, 'p1', 'p1vow').options.every((o) => !o.active), 'the other seat\'s stance is not this seat\'s');
+  }
+
 });
 
 // BOUNDARY (engine/actions.js enterStance, model/validate.js): only a played

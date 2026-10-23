@@ -11,6 +11,8 @@ import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { artDir, artPath, fetchPlanFor, manifestIds, packSource, packTreeOf, sourceMode, treeOf, HIGH_TREE, MOVING_TREES, PACK_TREES } from '../tools/art-source.mjs';
+import { createHash } from 'node:crypto';
+import { sourceDisplayArtInventory, assertSourceDisplayArt, SOURCE_DISPLAY_ART_OWNERS, readLoadedSourceBody } from '../tools/source-display-art.mjs';
 import { markerFor, readPin } from '../tools/fetch-art.mjs';
 
 const TOOL = fileURLToPath(new URL('../tools/art-source.mjs', import.meta.url));
@@ -185,4 +187,67 @@ test('fetchPlanFor: a rebuild fetches its own commit\'s packs, and only when its
     rmSync(join(root, 'art-release.json'));
     assert.equal(fetchPlanFor(root), null, 'no pin at all');
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+
+function displayFixture() {
+  const root = mkdtempSync(join(tmpdir(), 'display-art-preflight-'));
+  const catalogs = SOURCE_DISPLAY_ART_OWNERS.map(([owner, name], index) => {
+    const file = `fixture-${index}.webp`, bytes = Buffer.from(`authored bytes ${index}`);
+    const path = `assets-display/${index === 1 ? 'shared' : 'alternative'}/${file}`;
+    const value = { hashes: { [file]: createHash('sha256').update(bytes).digest('hex') }, filePaths: { [file]: path } };
+    mkdirSync(join(root, owner, '..'), { recursive: true });
+    mkdirSync(join(root, path, '..'), { recursive: true });
+    writeFileSync(join(root, owner), `export const ${name} = ${JSON.stringify(value)};\n`);
+    writeFileSync(join(root, path), bytes);
+    return { owner, name, path, file, value };
+  });
+  return { root, catalogs, cleanup: () => rmSync(root, { recursive: true, force: true }) };
+}
+
+test('source measurement preflight derives every owner declaration and rejects missing or corrupt bytes', () => {
+  const f = displayFixture();
+  try {
+    assert.equal(sourceDisplayArtInventory(f.root).length, SOURCE_DISPLAY_ART_OWNERS.length);
+    assert.deepEqual(assertSourceDisplayArt(f.root), { checked: SOURCE_DISPLAY_ART_OWNERS.length });
+    // A new declaration is measured without changing any remembered file count.
+    const row = f.catalogs[0], bytes = Buffer.from('new entry');
+    row.value.hashes['added.webp'] = createHash('sha256').update(bytes).digest('hex');
+    writeFileSync(join(f.root, row.owner), `export const ${row.name} = ${JSON.stringify(row.value)};\n`);
+    assert.throws(() => assertSourceDisplayArt(f.root), /missing\/unreadable.*added.webp/);
+    writeFileSync(join(f.root, 'assets-display/alternative/added.webp'), bytes);
+    assert.equal(assertSourceDisplayArt(f.root).checked, SOURCE_DISPLAY_ART_OWNERS.length + 1);
+    writeFileSync(join(f.root, row.path), 'corrupt');
+    assert.throws(() => assertSourceDisplayArt(f.root), /hash mismatch/);
+  } finally { f.cleanup(); }
+});
+
+test('source measurement preflight fails closed on unrecognized, empty, conflicting or unsafe catalog data', () => {
+  for (const mutate of [
+    row => 'export const unrelated = {};',
+    row => `export const ${row.name} = {"hashes":{}};`,
+    row => `export const ${row.name} = arbitraryCode();`,
+    row => { row.value.filePaths[row.file] = '../escape.webp'; return `export const ${row.name} = ${JSON.stringify(row.value)};`; },
+    (row, f) => `export const ${row.name} = ${JSON.stringify(f.catalogs[1].value)};`,
+  ]) {
+    const f = displayFixture();
+    try {
+      const row = f.catalogs[0]; writeFileSync(join(f.root, row.owner), mutate(row, f));
+      assert.throws(() => assertSourceDisplayArt(f.root));
+    } finally { f.cleanup(); }
+  }
+});
+
+test('loaded-body measurement predicate reads metadata only and refuses placeholders or incomplete images', () => {
+  const valid = { image: { complete: true, currentSrc: '/authored.webp', naturalWidth: 512, naturalHeight: 512 },
+    canvas: { width: 932, height: 625 }, width: 512, height: 512 };
+  let reads = 0;
+  const stage = { get currentArt() { reads++; return valid; }, paint() { throw new Error('must not paint'); } };
+  assert.equal(readLoadedSourceBody(stage).ready, true);
+  assert.equal(reads, 1);
+  for (const art of [undefined, {}, { ...valid, image: { ...valid.image, complete: false } },
+    { ...valid, image: { ...valid.image, naturalWidth: 0 } }, { ...valid, canvas: { width: 0, height: 625 } },
+    { ...valid, height: NaN }, { ...valid, image: { ...valid.image, currentSrc: '' } }]) {
+    assert.equal(readLoadedSourceBody({ currentArt: art }).ready, false);
+  }
 });

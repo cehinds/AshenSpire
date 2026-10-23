@@ -1,0 +1,26 @@
+{
+  "id": "status.glassCannon",
+  "tag": "status.glassCannon",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Glass Cannon",
+  "description": "Deal 25% more attack damage, and take 25% more.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.glassCannon"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

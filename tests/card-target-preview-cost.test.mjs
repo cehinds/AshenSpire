@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -60,7 +61,7 @@ function assertPreviewParity(combat, expectedClones) {
   return actual.value;
 }
 
-for (const coop of [false, true]) test(`an ordinary friendly play retains only its real transaction clone, coop=${coop}`, () => {
+for (const coop of (COOP_TESTS_ENABLED ? [false, true] : [false])) test(`an ordinary friendly play retains only its real transaction clone, coop=${coop}`, () => {
   const combat = fixture(coop), id = combat.piles.hand[0].instanceId, owner = combat.playerKey;
   assert.equal(hasEventTriggers(combat, 'cardPreparing'), false);
   assert.equal(assertPreviewParity(combat, 0), false);
@@ -72,7 +73,7 @@ for (const coop of [false, true]) test(`an ordinary friendly play retains only i
   assert.ok(combat.player.block > 0);
 });
 
-for (const coop of [false, true]) test(`live buildup keeps hostile targeting, atomic refusal and one-use consumption, coop=${coop}`, () => {
+for (const coop of (COOP_TESTS_ENABLED ? [false, true] : [false])) test(`live buildup keeps hostile targeting, atomic refusal and one-use consumption, coop=${coop}`, () => {
   const combat = fixture(coop), owner = combat.playerKey, id = combat.piles.hand[0].instanceId;
   grantAbilityCharge(combat.player, charge);
   assert.equal(assertPreviewParity(combat, 0), true);
@@ -110,7 +111,7 @@ test('preparing properties, statuses, stances and enemy phases retain the detach
   assert.deepEqual(combat.player.abilityRiders.charges, {});
 });
 
-test('an inactive co-op preparing listener conservatively preserves detached target inspection', () => {
+test('an inactive co-op preparing listener conservatively preserves detached target inspection', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {
   const combat = fixture(true), inactive = [...combat.players.keys()].find(id => id !== combat.playerKey);
   combat.propertyMounts[inactive] ||= {};
   combat.propertyMounts[inactive].probe = mount([{ on: 'cardPreparing', do: [charge] }]);

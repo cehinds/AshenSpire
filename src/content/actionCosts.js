@@ -73,6 +73,7 @@ export const COST_TAGS = Object.freeze({
   'targeting.ally': { weight: 0, side: 'sp' },
   'targeting.randomEnemy': { weight: 1, side: 'sp' },
   'targeting.allEnemies': { weight: 2, side: 'sp' },
+  'targeting.allAllies': { weight: 2, side: 'sp' },
   // Magic schools
   'school:fire': { weight: 1, side: 'mp' },
   'school:frost': { weight: 1, side: 'mp' },
@@ -83,6 +84,9 @@ export const COST_TAGS = Object.freeze({
   'school:divine': { weight: 1, side: 'mp' },
   'school:decay': { weight: 1, side: 'mp' },
   'school:earth': { weight: 1, side: 'mp' },
+  // Spell identity chips: their authored effects and range own the price.
+  target: { weight: 0, side: 'mp' },
+  hex: { weight: 0, side: 'mp' },
   // Weapon and theme chips (card domain)
   blade: { weight: 1, side: 'sp' },
   heavy: { weight: 0, side: 'sp' },
@@ -99,6 +103,7 @@ export const COST_TAGS = Object.freeze({
   oath: { weight: 0, side: 'sp' },
   ash: { weight: 0, side: 'sp' },
   basic: { weight: 0, side: 'sp' },
+  'rank.cantrip': { weight: 0, side: 'sp' }, // training classification; numerical rank owns the cost
   extractable: { weight: 0, side: 'sp' },
   starstone: { weight: 0, side: 'sp' },
   ritual: { weight: 0, side: 'sp' },
@@ -116,6 +121,8 @@ export const COST_TAGS = Object.freeze({
   'trait:grounded': { weight: 1, side: 'sp' },
   'trait:insulated': { weight: 0, side: 'sp' },
   'trait:mental': { weight: 0, side: 'sp' },
+  // Precision lifetime is a marker; its status grant already prices magnitude.
+  'trait:persistent': { weight: 0, side: 'sp' },
   'trait:projectile': { weight: 0, side: 'sp' },
   'trait:reveal': { weight: 0, side: 'sp' },
   'trait:shattering': { weight: 1, side: 'sp' },

@@ -11,10 +11,10 @@ import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js
 import { INTENT_ICON_SHAPES } from '../src/ui/components/intentIcon.js';
 
 test('all requested identities have unique monochrome geometry', () => {
-  assert.deepEqual(Object.keys(ACTION_SIGILS), ['attack','defend','evade','counter','sweep','ranged','smash','spell','power','skill','status']);
+  assert.deepEqual(Object.keys(ACTION_SIGILS), ['attack','defense','stance','consumable','defend','evade','counter','sweep','ranged','smash','spell','power','skill','status']);
   assert.deepEqual(Object.keys(SCHOOL_SIGILS), ['frost','fire','lightning','force','alteration','illusion','divine','decay']);
   const marks = [...Object.values(ACTION_SIGILS), ...Object.values(SCHOOL_SIGILS)];
-  assert.equal(new Set(marks.map(m => m.shape)).size, 19);
+  assert.equal(new Set(marks.map(m => m.shape)).size, 21);
   for (const m of marks) { assert.ok(m.label && m.help); assert.doesNotMatch(m.shape, /fill=|style=|#[0-9a-f]/i); }
 });
 
@@ -103,7 +103,7 @@ test('every base, upgrade, authored rank and equipment profile uses the shared i
     assert.ok(Object.isFrozen(model.sigils));
     actions.add(model.sigils.action); if(model.sigils.school)schools.add(model.sigils.school);
   }
-  assert.equal(actions.size, 10); assert.equal(schools.size, 8);
+  assert.deepEqual([...actions].sort(), ['attack','counter','defense','evade','power','skill','smash','spell','status','sweep']); assert.equal(schools.size, 8);
 });
 
 test('approved solid footer symbols stay distinct and have a visible action name', () => {
@@ -124,10 +124,10 @@ test('long rank effects keep their Starstone condition, values and draw limit', 
   assert.equal(compactCardRules('If you have starstoneCharge: Deal 4 damage to every living enemy. Apply <span class="val">1</span> starstoneCharge to yourself. Draw <span class="val">1</span> card(s), once per turn from this family.'), 'With Starstone: 4 damage to all enemies. Gain <span class="val">1</span> Starstone. Draw <span class="val">1</span>, once per turn per family.');
 });
 
-test('Ritual Ward keeps Defend below and category followed by effect type on the right', () => {
+test('Ritual Ward keeps its canonical Spell category below and category followed by effect type on the right', () => {
   const reg=createRegistries(contentBundle),ref={cardId:'defend',profileId:'sceptreGuard'};
   const model=playingCardModel(reg,ref),def=resolveCard(reg,ref);
-  assert.equal(model.sigils.action,'defend');
+  assert.equal(model.sigils.action,'spell');
   assert.deepEqual(cardSideTags(model,def,reg).map(t=>t.label),['Spell','Divine']);
 });
 
@@ -196,4 +196,18 @@ test('a press on a tag symbol through the hand lane explains it and never reache
   // One press explains a tag symbol: the symbol skips the select-then-explain step.
   assert.match(tooltip, /const oneTap = term\.classList\.contains\('card-tag-symbol'\);\s*if \(ev\.type === 'click' && !oneTap && selectedControl !== term\)/);
   assert.doesNotMatch(tooltip, /for \(const type of \['pointerdown'/, 'no computed-type page listener');
+});
+
+
+test('dense authored fallback idioms retain quantity, target stacks and own-turn timing', () => {
+  assert.equal(compactCardRules('Deal <span class="val">6</span> damage, plus 1 for each Bleed on the target.'),
+    '<span class="val">6</span> damage, +1 per target Bleed.');
+  assert.equal(compactCardRules('Deal <span class="val">6</span> damage, plus 1 for each <span class="st-bleed">Bleed</span> on the target.'),
+    '<span class="val">6</span> damage, +1 per target <span class="st-bleed">Bleed</span>.');
+  assert.equal(compactCardRules('At the start of your turn, gain 1 Strength and take 1 damage.'),
+    'Your turn start: +1 Strength; take 1 damage.');
+  assert.equal(compactCardRules('At the end of your turn, gain 1 Strength and take 1 damage.'),
+    'At the end of your turn, gain 1 Strength and take 1 damage.');
+  assert.equal(compactCardRules('Deal 6 damage, plus 1 for each Bleed on an ally.'),
+    '6 damage, plus 1 for each Bleed on an ally.');
 });

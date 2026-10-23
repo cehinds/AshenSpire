@@ -1,0 +1,1621 @@
+{
+  "formatVersion": 1,
+  "revision": 3,
+  "status": "selection-proposals",
+  "runtimeEnabled": false,
+  "reference": "User-supplied Counter / Sweep / Sundering Art / Smash / Strike screenshot, latest turn. This replaces the polished master-sheet style as the visual target.",
+  "codeScheme": {
+    "pattern": "^[A-Z][0-9][0-9]$",
+    "letter": "object-family category; card types reference families",
+    "firstDigit": "base object candidate",
+    "secondDigit": "effect candidate",
+    "zero": "Zero is a real object/effect option, never absence.",
+    "examples": {
+      "A30": "Object 3 with effect 0; use object-only view to hide the effect",
+      "A04": "Object 0 with effect 4; use effect-only view to hide the object",
+      "A34": "Object 3 with effect 4",
+      "A00": "Object 0 with effect 0"
+    },
+    "orientation": "Rotation metadata references the exact same PNG; candidate images are alternatives, not claimed to be multiple camera views of one master.",
+    "selection": "Multiple objects, effects and combinations may be retained. Selecting an effect does not automatically select the object shown beside it.",
+    "isolation": "Layer visibility is independent of the selection code. Each component has its own asset ID, PNG and controls."
+  },
+  "scope": {
+    "confirmed": "Ten variants of each of seven core object families: 70 core objects. Cleansed fire is an additional family. Effects and backgrounds are separate.",
+    "coreObjectFamilyCount": 7,
+    "coreObjectCount": 70,
+    "additionalFireObjectCount": 10,
+    "categoryCount": 8,
+    "objectsPerCategory": 10,
+    "effectsPerCategory": 10,
+    "exampleCombinationsPerCategory": 10,
+    "backgroundCount": 10,
+    "deferred": "Ten-option exploration of every element and status family."
+  },
+  "style": {
+    "composition": "Large close-cropped heavy objects occupying 65\u201385% of art area; diagonal handles and blades; cropped handles may enter from the lower/upper edge; dark negative space reserved for motion arcs.",
+    "material": "Worn dark painted metal, irregular chunky planes, subdued bronze; tactile soft painterly rendering, not clean vector icons, ornate silver engraving or glossy catalog objects.",
+    "light": "Most edges and background near black; local colored edge illumination and fog follows motion/contact.",
+    "isolation": "Object-only views have no magical effects. Effect-only views contain no object, weapon silhouette, card face, or stand-in. They share the same placement coordinates as their combination.",
+    "boundaries": "No card border, title, costs, rank, rules text or UI from the reference is part of the art. Labels belong outside each study.",
+    "production": "Actual individual PNG exports. Objects and effects have transparent backgrounds; backgrounds are separate opaque PNGs. Source atlases are internal generation provenance, not the deliverable format."
+  },
+  "categories": [
+    {
+      "letter": "A",
+      "id": "swords",
+      "label": "Swords",
+      "role": "core-object-family",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:attack",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "palette": "Navy-black ground, worn steel, muted gold edge light; a few teal alternatives echo the reference Strike.",
+      "objects": [
+        {
+          "digit": 0,
+          "code": "A00",
+          "name": "Sword variant 0",
+          "candidateMasterId": "candidate.A.0",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/A/objects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "A10",
+          "name": "Sword variant 1",
+          "candidateMasterId": "candidate.A.1",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/A/objects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "A20",
+          "name": "Sword variant 2",
+          "candidateMasterId": "candidate.A.2",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/A/objects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "A30",
+          "name": "Sword variant 3",
+          "candidateMasterId": "candidate.A.3",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/A/objects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "A40",
+          "name": "Sword variant 4",
+          "candidateMasterId": "candidate.A.4",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/A/objects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "A50",
+          "name": "Sword variant 5",
+          "candidateMasterId": "candidate.A.5",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/A/objects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "A60",
+          "name": "Sword variant 6",
+          "candidateMasterId": "candidate.A.6",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/A/objects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "A70",
+          "name": "Sword variant 7",
+          "candidateMasterId": "candidate.A.7",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/A/objects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "A80",
+          "name": "Sword variant 8",
+          "candidateMasterId": "candidate.A.8",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/A/objects/8.png"
+        },
+        {
+          "digit": 9,
+          "code": "A90",
+          "name": "Sword variant 9",
+          "candidateMasterId": "candidate.A.9",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/A/objects/9.png"
+        }
+      ],
+      "effects": [
+        {
+          "digit": 0,
+          "code": "A00",
+          "name": "Narrow gold tip-to-hilt streak",
+          "asset": "cutouts/A/effects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "A01",
+          "name": "Thin teal edge vapor",
+          "asset": "cutouts/A/effects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "A02",
+          "name": "Short gold follow-through slash",
+          "asset": "cutouts/A/effects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "A03",
+          "name": "Sparse amber sparks at contact",
+          "asset": "cutouts/A/effects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "A04",
+          "name": "Broken pale silver blade contour",
+          "asset": "cutouts/A/effects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "A05",
+          "name": "Two offset teal motion trails",
+          "asset": "cutouts/A/effects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "A06",
+          "name": "Fine crimson impact seam",
+          "asset": "cutouts/A/effects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "A07",
+          "name": "Soft gold pressure wake",
+          "asset": "cutouts/A/effects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "A08",
+          "name": "Long diagonal teal-gold slash ribbon",
+          "asset": "cutouts/A/effects/8.png"
+        },
+        {
+          "name": "Thin angled silver contact flash",
+          "digit": 9,
+          "code": "A09",
+          "asset": "cutouts/A/effects/9.png"
+        }
+      ]
+    },
+    {
+      "letter": "B",
+      "id": "scimitars",
+      "label": "Scimitars",
+      "role": "core-object-family",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:sweep",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "palette": "Red-black ground; curved edge near upper left and a sweeping arc through lower/right space as in the reference.",
+      "objects": [
+        {
+          "digit": 0,
+          "code": "B00",
+          "name": "Scimitar variant 0",
+          "candidateMasterId": "candidate.B.0",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/B/objects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "B10",
+          "name": "Scimitar variant 1",
+          "candidateMasterId": "candidate.B.1",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/B/objects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "B20",
+          "name": "Scimitar variant 2",
+          "candidateMasterId": "candidate.B.2",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/B/objects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "B30",
+          "name": "Scimitar variant 3",
+          "candidateMasterId": "candidate.B.3",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/B/objects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "B40",
+          "name": "Scimitar variant 4",
+          "candidateMasterId": "candidate.B.4",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/B/objects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "B50",
+          "name": "Scimitar variant 5",
+          "candidateMasterId": "candidate.B.5",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/B/objects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "B60",
+          "name": "Scimitar variant 6",
+          "candidateMasterId": "candidate.B.6",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/B/objects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "B70",
+          "name": "Scimitar variant 7",
+          "candidateMasterId": "candidate.B.7",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/B/objects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "B80",
+          "name": "Scimitar variant 8",
+          "candidateMasterId": "candidate.B.8",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/B/objects/8.png"
+        },
+        {
+          "digit": 9,
+          "code": "B90",
+          "name": "Scimitar variant 9",
+          "candidateMasterId": "candidate.B.9",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/B/objects/9.png"
+        }
+      ],
+      "effects": [
+        {
+          "digit": 0,
+          "code": "B00",
+          "name": "Thin red crescent sweep",
+          "asset": "cutouts/B/effects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "B01",
+          "name": "Wide open red U-shaped trail",
+          "asset": "cutouts/B/effects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "B02",
+          "name": "Double parallel crimson arcs",
+          "asset": "cutouts/B/effects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "B03",
+          "name": "Short silver-edged red slash",
+          "asset": "cutouts/B/effects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "B04",
+          "name": "Sparse red sparks along a curve",
+          "asset": "cutouts/B/effects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "B05",
+          "name": "Smoky trailing red semicircle",
+          "asset": "cutouts/B/effects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "B06",
+          "name": "Broken sweeping contour",
+          "asset": "cutouts/B/effects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "B07",
+          "name": "Low horizontal crimson wake",
+          "asset": "cutouts/B/effects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "B08",
+          "name": "Long full curved red follow-through",
+          "asset": "cutouts/B/effects/8.png"
+        },
+        {
+          "name": "Thin red spiral follow-through",
+          "digit": 9,
+          "code": "B09",
+          "asset": "cutouts/B/effects/9.png"
+        }
+      ]
+    },
+    {
+      "letter": "C",
+      "id": "scythes",
+      "label": "Scythes",
+      "role": "core-object-family",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:sweep",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "palette": "Red-black ground; curved edge near upper left and a sweeping arc through lower/right space as in the reference.",
+      "objects": [
+        {
+          "digit": 0,
+          "code": "C00",
+          "name": "Scythe variant 0",
+          "candidateMasterId": "candidate.C.0",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/C/objects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "C10",
+          "name": "Scythe variant 1",
+          "candidateMasterId": "candidate.C.1",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/C/objects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "C20",
+          "name": "Scythe variant 2",
+          "candidateMasterId": "candidate.C.2",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/C/objects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "C30",
+          "name": "Scythe variant 3",
+          "candidateMasterId": "candidate.C.3",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/C/objects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "C40",
+          "name": "Scythe variant 4",
+          "candidateMasterId": "candidate.C.4",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/C/objects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "C50",
+          "name": "Scythe variant 5",
+          "candidateMasterId": "candidate.C.5",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/C/objects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "C60",
+          "name": "Scythe variant 6",
+          "candidateMasterId": "candidate.C.6",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/C/objects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "C70",
+          "name": "Scythe variant 7",
+          "candidateMasterId": "candidate.C.7",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/C/objects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "C80",
+          "name": "Scythe variant 8",
+          "candidateMasterId": "candidate.C.8",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/C/objects/8.png"
+        },
+        {
+          "digit": 9,
+          "code": "C90",
+          "name": "Scythe variant 9",
+          "candidateMasterId": "candidate.C.9",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/C/objects/9.png"
+        }
+      ],
+      "effects": [
+        {
+          "digit": 0,
+          "code": "C00",
+          "name": "Thin red crescent sweep",
+          "asset": "cutouts/C/effects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "C01",
+          "name": "Wide open red U-shaped trail",
+          "asset": "cutouts/C/effects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "C02",
+          "name": "Double parallel crimson arcs",
+          "asset": "cutouts/C/effects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "C03",
+          "name": "Short silver-edged red slash",
+          "asset": "cutouts/C/effects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "C04",
+          "name": "Sparse red sparks along a curve",
+          "asset": "cutouts/C/effects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "C05",
+          "name": "Smoky trailing red semicircle",
+          "asset": "cutouts/C/effects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "C06",
+          "name": "Broken sweeping contour",
+          "asset": "cutouts/C/effects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "C07",
+          "name": "Low horizontal crimson wake",
+          "asset": "cutouts/C/effects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "C08",
+          "name": "Long full curved red follow-through",
+          "asset": "cutouts/C/effects/8.png"
+        },
+        {
+          "name": "Thin red spiral follow-through",
+          "digit": 9,
+          "code": "C09",
+          "asset": "cutouts/C/effects/9.png"
+        }
+      ]
+    },
+    {
+      "letter": "D",
+      "id": "hammers",
+      "label": "Hammers",
+      "role": "core-object-family",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:smash",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "palette": "Charcoal-black ground; square weighty worn iron, reference hammer composition, red or violet impact light.",
+      "objects": [
+        {
+          "digit": 0,
+          "code": "D00",
+          "name": "Hammer variant 0",
+          "candidateMasterId": "candidate.D.0",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/D/objects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "D10",
+          "name": "Hammer variant 1",
+          "candidateMasterId": "candidate.D.1",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/D/objects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "D20",
+          "name": "Hammer variant 2",
+          "candidateMasterId": "candidate.D.2",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/D/objects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "D30",
+          "name": "Hammer variant 3",
+          "candidateMasterId": "candidate.D.3",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/D/objects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "D40",
+          "name": "Hammer variant 4",
+          "candidateMasterId": "candidate.D.4",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/D/objects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "D50",
+          "name": "Hammer variant 5",
+          "candidateMasterId": "candidate.D.5",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/D/objects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "D60",
+          "name": "Hammer variant 6",
+          "candidateMasterId": "candidate.D.6",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/D/objects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "D70",
+          "name": "Hammer variant 7",
+          "candidateMasterId": "candidate.D.7",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/D/objects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "D80",
+          "name": "Hammer variant 8",
+          "candidateMasterId": "candidate.D.8",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/D/objects/8.png"
+        },
+        {
+          "digit": 9,
+          "code": "D90",
+          "name": "Hammer variant 9",
+          "candidateMasterId": "candidate.D.9",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/D/objects/9.png"
+        }
+      ],
+      "effects": [
+        {
+          "digit": 0,
+          "code": "D00",
+          "name": "Tight red impact crackle",
+          "asset": "cutouts/D/effects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "D01",
+          "name": "Violet pressure haze",
+          "asset": "cutouts/D/effects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "D02",
+          "name": "Short red downward impact fan",
+          "asset": "cutouts/D/effects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "D03",
+          "name": "Dense ember sparks under head",
+          "asset": "cutouts/D/effects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "D04",
+          "name": "Broken violet circular shock edge",
+          "asset": "cutouts/D/effects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "D05",
+          "name": "Red angular contact flare",
+          "asset": "cutouts/D/effects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "D06",
+          "name": "Low dark dust plume",
+          "asset": "cutouts/D/effects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "D07",
+          "name": "Thin violet contour hugging head",
+          "asset": "cutouts/D/effects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "D08",
+          "name": "Broad red U-shaped impact wake",
+          "asset": "cutouts/D/effects/8.png"
+        },
+        {
+          "name": "Violet edge shock with sparse fragments",
+          "digit": 9,
+          "code": "D09",
+          "asset": "cutouts/D/effects/9.png"
+        }
+      ]
+    },
+    {
+      "letter": "E",
+      "id": "shields",
+      "label": "Shields",
+      "role": "core-object-family",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:defend",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "palette": "Black and dark silver, subtle steel rim, a weighty shield filling most of the crop.",
+      "objects": [
+        {
+          "digit": 0,
+          "code": "E00",
+          "name": "Shield variant 0",
+          "candidateMasterId": "candidate.E.0",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/E/objects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "E10",
+          "name": "Shield variant 1",
+          "candidateMasterId": "candidate.E.1",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/E/objects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "E20",
+          "name": "Shield variant 2",
+          "candidateMasterId": "candidate.E.2",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/E/objects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "E30",
+          "name": "Shield variant 3",
+          "candidateMasterId": "candidate.E.3",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/E/objects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "E40",
+          "name": "Shield variant 4",
+          "candidateMasterId": "candidate.E.4",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/E/objects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "E50",
+          "name": "Shield variant 5",
+          "candidateMasterId": "candidate.E.5",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/E/objects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "E60",
+          "name": "Shield variant 6",
+          "candidateMasterId": "candidate.E.6",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/E/objects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "E70",
+          "name": "Shield variant 7",
+          "candidateMasterId": "candidate.E.7",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/E/objects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "E80",
+          "name": "Shield variant 8",
+          "candidateMasterId": "candidate.E.8",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/E/objects/8.png"
+        },
+        {
+          "digit": 9,
+          "code": "E90",
+          "name": "Shield variant 9",
+          "candidateMasterId": "candidate.E.9",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/E/objects/9.png"
+        }
+      ],
+      "effects": [
+        {
+          "digit": 0,
+          "code": "E00",
+          "name": "Thin silver rim haze",
+          "asset": "cutouts/E/effects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "E01",
+          "name": "Compressed silver frontal arc",
+          "asset": "cutouts/E/effects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "E02",
+          "name": "Low white bracing dust",
+          "asset": "cutouts/E/effects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "E03",
+          "name": "Two quiet concentric shield arcs",
+          "asset": "cutouts/E/effects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "E04",
+          "name": "Small sparks deflecting sideways",
+          "asset": "cutouts/E/effects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "E05",
+          "name": "Short cold-blue impact ripple",
+          "asset": "cutouts/E/effects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "E06",
+          "name": "Broken soft silver perimeter",
+          "asset": "cutouts/E/effects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "E07",
+          "name": "Narrow bronze grounding rays",
+          "asset": "cutouts/E/effects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "E08",
+          "name": "Close pale mist folding around an edge",
+          "asset": "cutouts/E/effects/8.png"
+        },
+        {
+          "name": "Steady dark-blue guard shimmer",
+          "digit": 9,
+          "code": "E09",
+          "asset": "cutouts/E/effects/9.png"
+        }
+      ]
+    },
+    {
+      "letter": "F",
+      "id": "cards",
+      "label": "Cards",
+      "role": "core-object-family",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "classification.skill",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "palette": "Dark green-black ground; substantial tactile simple object, close framing and subdued painted highlights.",
+      "objects": [
+        {
+          "digit": 0,
+          "code": "F00",
+          "name": "Card variant 0",
+          "candidateMasterId": "candidate.F.0",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/F/objects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "F10",
+          "name": "Card variant 1",
+          "candidateMasterId": "candidate.F.1",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/F/objects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "F20",
+          "name": "Card variant 2",
+          "candidateMasterId": "candidate.F.2",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/F/objects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "F30",
+          "name": "Card variant 3",
+          "candidateMasterId": "candidate.F.3",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/F/objects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "F40",
+          "name": "Card variant 4",
+          "candidateMasterId": "candidate.F.4",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/F/objects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "F50",
+          "name": "Card variant 5",
+          "candidateMasterId": "candidate.F.5",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/F/objects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "F60",
+          "name": "Card variant 6",
+          "candidateMasterId": "candidate.F.6",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/F/objects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "F70",
+          "name": "Card variant 7",
+          "candidateMasterId": "candidate.F.7",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/F/objects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "F80",
+          "name": "Card variant 8",
+          "candidateMasterId": "candidate.F.8",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/F/objects/8.png"
+        },
+        {
+          "digit": 9,
+          "code": "F90",
+          "name": "Card variant 9",
+          "candidateMasterId": "candidate.F.9",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/F/objects/9.png"
+        }
+      ],
+      "effects": [
+        {
+          "digit": 0,
+          "code": "F00",
+          "name": "Thin green lifting trail",
+          "asset": "cutouts/F/effects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "F01",
+          "name": "Soft pale-green contour fog",
+          "asset": "cutouts/F/effects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "F02",
+          "name": "Short upward gold-green glint",
+          "asset": "cutouts/F/effects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "F03",
+          "name": "Two calm green curved lines",
+          "asset": "cutouts/F/effects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "F04",
+          "name": "Small dust motes lifting off",
+          "asset": "cutouts/F/effects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "F05",
+          "name": "Broken mint motion arc",
+          "asset": "cutouts/F/effects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "F06",
+          "name": "Short green spiral curl",
+          "asset": "cutouts/F/effects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "F07",
+          "name": "Faint silver focus ring",
+          "asset": "cutouts/F/effects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "F08",
+          "name": "Narrow emerald directional wake",
+          "asset": "cutouts/F/effects/8.png"
+        },
+        {
+          "name": "Short mint wind-like curl",
+          "digit": 9,
+          "code": "F09",
+          "asset": "cutouts/F/effects/9.png"
+        }
+      ]
+    },
+    {
+      "letter": "G",
+      "id": "leaves",
+      "label": "Leaves",
+      "role": "core-object-family",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "classification.skill",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ],
+      "palette": "Dark green-black ground; substantial tactile simple object, close framing and subdued painted highlights.",
+      "objects": [
+        {
+          "digit": 0,
+          "code": "G00",
+          "name": "Leaf variant 0",
+          "candidateMasterId": "candidate.G.0",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/G/objects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "G10",
+          "name": "Leaf variant 1",
+          "candidateMasterId": "candidate.G.1",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/G/objects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "G20",
+          "name": "Leaf variant 2",
+          "candidateMasterId": "candidate.G.2",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/G/objects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "G30",
+          "name": "Leaf variant 3",
+          "candidateMasterId": "candidate.G.3",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/G/objects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "G40",
+          "name": "Leaf variant 4",
+          "candidateMasterId": "candidate.G.4",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/G/objects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "G50",
+          "name": "Leaf variant 5",
+          "candidateMasterId": "candidate.G.5",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/G/objects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "G60",
+          "name": "Leaf variant 6",
+          "candidateMasterId": "candidate.G.6",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/G/objects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "G70",
+          "name": "Leaf variant 7",
+          "candidateMasterId": "candidate.G.7",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/G/objects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "G80",
+          "name": "Leaf variant 8",
+          "candidateMasterId": "candidate.G.8",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/G/objects/8.png"
+        },
+        {
+          "digit": 9,
+          "code": "G90",
+          "name": "Leaf variant 9",
+          "candidateMasterId": "candidate.G.9",
+          "orientation": "Painted orientation in source PNG; further rotation is independent transform metadata.",
+          "alternateView": "Same PNG rotated -25, 0 and +25 degrees; no new camera angle implied.",
+          "asset": "cutouts/G/objects/9.png"
+        }
+      ],
+      "effects": [
+        {
+          "digit": 0,
+          "code": "G00",
+          "name": "Thin green lifting trail",
+          "asset": "cutouts/G/effects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "G01",
+          "name": "Soft pale-green contour fog",
+          "asset": "cutouts/G/effects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "G02",
+          "name": "Short upward gold-green glint",
+          "asset": "cutouts/G/effects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "G03",
+          "name": "Two calm green curved lines",
+          "asset": "cutouts/G/effects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "G04",
+          "name": "Small dust motes lifting off",
+          "asset": "cutouts/G/effects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "G05",
+          "name": "Broken mint motion arc",
+          "asset": "cutouts/G/effects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "G06",
+          "name": "Short green spiral curl",
+          "asset": "cutouts/G/effects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "G07",
+          "name": "Faint silver focus ring",
+          "asset": "cutouts/G/effects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "G08",
+          "name": "Narrow emerald directional wake",
+          "asset": "cutouts/G/effects/8.png"
+        },
+        {
+          "name": "Short mint wind-like curl",
+          "digit": 9,
+          "code": "G09",
+          "asset": "cutouts/G/effects/9.png"
+        }
+      ]
+    },
+    {
+      "letter": "H",
+      "id": "cleansed",
+      "label": "Cleansed \u00b7 fire",
+      "palette": "Black background, actual painterly fire with warm ivory core and amber edge; not a leaf-shaped line icon.",
+      "references": [
+        {
+          "kind": "operation",
+          "id": "removeStatus",
+          "scope": "current",
+          "relation": "related-not-equivalent"
+        }
+      ],
+      "sheet": null,
+      "objects": [
+        {
+          "digit": 0,
+          "code": "H00",
+          "name": "Small upright natural flame",
+          "candidateMasterId": "candidate.H.0",
+          "orientation": "three-quarter diagonal rising from lower-left to upper-right; close crop",
+          "alternateView": "same object in a small side-on or near-front orientation study; preserve its geometry",
+          "asset": "cutouts/H/objects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "H10",
+          "name": "Low three-tongue flame cluster",
+          "candidateMasterId": "candidate.H.1",
+          "orientation": "opposite three-quarter diagonal; retain dark face and readable edge",
+          "alternateView": "same object in a small side-on or near-front orientation study; preserve its geometry",
+          "asset": "cutouts/H/objects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "H20",
+          "name": "Tall narrow purifying flame",
+          "candidateMasterId": "candidate.H.2",
+          "orientation": "near upright, slightly tilted clockwise; close foreshortened view",
+          "alternateView": "same object in a small side-on or near-front orientation study; preserve its geometry",
+          "asset": "cutouts/H/objects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "H30",
+          "name": "Wind-bent flame leaning right",
+          "candidateMasterId": "candidate.H.3",
+          "orientation": "steep diagonal, object face turned toward viewer",
+          "alternateView": "same object in a small side-on or near-front orientation study; preserve its geometry",
+          "asset": "cutouts/H/objects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "H40",
+          "name": "Broad low cleansing fire",
+          "candidateMasterId": "candidate.H.4",
+          "orientation": "low horizontal diagonal, handle or stem entering from lower edge",
+          "alternateView": "same object in a small side-on or near-front orientation study; preserve its geometry",
+          "asset": "cutouts/H/objects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "H50",
+          "name": "Split two-tongue flame",
+          "candidateMasterId": "candidate.H.5",
+          "orientation": "strong three-quarter foreshortening; heavy end toward lower-left",
+          "alternateView": "same object in a small side-on or near-front orientation study; preserve its geometry",
+          "asset": "cutouts/H/objects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "H60",
+          "name": "Curling hooked flame",
+          "candidateMasterId": "candidate.H.6",
+          "orientation": "tilted counterclockwise, side-lit face, edges partly lost in dark",
+          "alternateView": "same object in a small side-on or near-front orientation study; preserve its geometry",
+          "asset": "cutouts/H/objects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "H70",
+          "name": "Compact rounded flame with hot core",
+          "candidateMasterId": "candidate.H.7",
+          "orientation": "upper-left to lower-right diagonal; close focal crop",
+          "alternateView": "same object in a small side-on or near-front orientation study; preserve its geometry",
+          "asset": "cutouts/H/objects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "H80",
+          "name": "Spiraling column of real fire",
+          "candidateMasterId": "candidate.H.8",
+          "orientation": "opposite diagonal with slight top-down view",
+          "alternateView": "same object in a small side-on or near-front orientation study; preserve its geometry",
+          "asset": "cutouts/H/objects/8.png"
+        },
+        {
+          "name": "Compact cleansing fire burst",
+          "orientation": "strong three-quarter diagonal, compact and close framed",
+          "alternateView": "same exported PNG shown rotated -25 and +25 degrees; not a new perspective render",
+          "digit": 9,
+          "code": "H90",
+          "candidateMasterId": "candidate.H.9",
+          "asset": "cutouts/H/objects/9.png"
+        }
+      ],
+      "effects": [
+        {
+          "digit": 0,
+          "code": "H00",
+          "name": "Soft pale smoke rising",
+          "asset": "cutouts/H/effects/0.png"
+        },
+        {
+          "digit": 1,
+          "code": "H01",
+          "name": "Sparse amber ash motes",
+          "asset": "cutouts/H/effects/1.png"
+        },
+        {
+          "digit": 2,
+          "code": "H02",
+          "name": "Thin ivory edge haze",
+          "asset": "cutouts/H/effects/2.png"
+        },
+        {
+          "digit": 3,
+          "code": "H03",
+          "name": "Short gold sparks drifting outward",
+          "asset": "cutouts/H/effects/3.png"
+        },
+        {
+          "digit": 4,
+          "code": "H04",
+          "name": "Low white cleansing vapor",
+          "asset": "cutouts/H/effects/4.png"
+        },
+        {
+          "digit": 5,
+          "code": "H05",
+          "name": "Broken warm circular heat ripple",
+          "asset": "cutouts/H/effects/5.png"
+        },
+        {
+          "digit": 6,
+          "code": "H06",
+          "name": "Two narrow golden vapor trails",
+          "asset": "cutouts/H/effects/6.png"
+        },
+        {
+          "digit": 7,
+          "code": "H07",
+          "name": "Small outward embers",
+          "asset": "cutouts/H/effects/7.png"
+        },
+        {
+          "digit": 8,
+          "code": "H08",
+          "name": "Soft gold-white radiating fog",
+          "asset": "cutouts/H/effects/8.png"
+        },
+        {
+          "name": "Thin warm heat distortion and faint ash",
+          "digit": 9,
+          "code": "H09",
+          "asset": "cutouts/H/effects/9.png"
+        }
+      ],
+      "combinations": [
+        {
+          "code": "K00",
+          "objectId": "K.object.0",
+          "effectId": "K.effect.0"
+        },
+        {
+          "code": "K11",
+          "objectId": "K.object.1",
+          "effectId": "K.effect.1"
+        },
+        {
+          "code": "K22",
+          "objectId": "K.object.2",
+          "effectId": "K.effect.2"
+        },
+        {
+          "code": "K33",
+          "objectId": "K.object.3",
+          "effectId": "K.effect.3"
+        },
+        {
+          "code": "K44",
+          "objectId": "K.object.4",
+          "effectId": "K.effect.4"
+        },
+        {
+          "code": "K55",
+          "objectId": "K.object.5",
+          "effectId": "K.effect.5"
+        },
+        {
+          "code": "K66",
+          "objectId": "K.object.6",
+          "effectId": "K.effect.6"
+        },
+        {
+          "code": "K77",
+          "objectId": "K.object.7",
+          "effectId": "K.effect.7"
+        },
+        {
+          "code": "K88",
+          "objectId": "K.object.8",
+          "effectId": "K.effect.8"
+        },
+        {
+          "code": "K99",
+          "objectId": "K.object.9",
+          "effectId": "K.effect.9"
+        }
+      ],
+      "role": "additional-cleansing-fire"
+    }
+  ],
+  "cardTypes": [
+    {
+      "id": "attack",
+      "objectFamilies": [
+        "A"
+      ],
+      "proposal": "One sword; dark navy and gold or teal edge fog.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:attack",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    {
+      "id": "defend",
+      "objectFamilies": [
+        "E"
+      ],
+      "proposal": "One shield; charcoal and silver edge fog.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:defend",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    {
+      "id": "counter",
+      "objectFamilies": [
+        "E",
+        "A"
+      ],
+      "proposal": "Reuse a selected shield plus selected sword, independently positioned.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:counter",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    {
+      "id": "smash",
+      "objectFamilies": [
+        "D"
+      ],
+      "proposal": "One hammer; dark gold and red impact fog.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:smash",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    {
+      "id": "sweep",
+      "objectFamilies": [
+        "B",
+        "C"
+      ],
+      "proposal": "Choose scimitar or scythe; red-black motion arc.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:sweep",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    {
+      "id": "spell",
+      "objectFamilies": [
+        "F"
+      ],
+      "proposal": "A spell-card object is the current seven-family proposal; future orb or focus is optional.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "maneuver:casting",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    {
+      "id": "skill",
+      "objectFamilies": [
+        "F",
+        "G"
+      ],
+      "proposal": "Use a card for draw/retain, a leaf for nature-related skills.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "classification.skill",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    {
+      "id": "power",
+      "objectFamilies": [
+        "A",
+        "E",
+        "G"
+      ],
+      "proposal": "Reuse the object associated with the power and a stronger secondary aura.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "classification.power",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    },
+    {
+      "id": "consumable",
+      "objectFamilies": [
+        "G",
+        "F"
+      ],
+      "proposal": "Leaf for herb consumables; card for scroll-like consumables. Bottle remains an optional future family.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "classification.flask",
+          "scope": "current",
+          "relation": "related-not-equivalent"
+        }
+      ]
+    },
+    {
+      "id": "status",
+      "objectFamilies": [
+        "F",
+        "G"
+      ],
+      "proposal": "Use an appropriate reusable symbol plus a status overlay; Cleansed explicitly uses H fire.",
+      "references": [
+        {
+          "kind": "tag",
+          "id": "classification.statusCard",
+          "scope": "current",
+          "relation": "exact"
+        }
+      ]
+    }
+  ],
+  "tagComposition": {
+    "maxTags": 4,
+    "typicalTags": 2,
+    "order": [
+      "main action/card type",
+      "secondary effect",
+      "optional supporting tag",
+      "optional supporting tag"
+    ],
+    "mechanics": "Art associations only; preserve existing combat identities.",
+    "catalog": "art-catalog.json"
+  }
+}

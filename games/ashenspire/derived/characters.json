@@ -1,0 +1,4619 @@
+[
+  {
+    "id": "reaver",
+    "name": "Reaver",
+    "displayName": "Reaver",
+    "tags": [
+      "character.player",
+      "class.reaver",
+      "training.basic"
+    ],
+    "kind": "player",
+    "tier": null,
+    "level": 1,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "greatsword",
+            "name": "Greatsword",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 10,
+        "strength": 20,
+        "dexterity": 3,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 0
+      },
+      "total": 46,
+      "formula": "10+10+20+3+2+1+0 = 46"
+    },
+    "pools": {
+      "hp": 46,
+      "sp": 3,
+      "mp": 0,
+      "ar": 4,
+      "dr": 1,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword",
+        "name": "Greatsword"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 11,
+      "cards": [
+        {
+          "id": "core.strike",
+          "name": "Strike",
+          "copies": 3
+        },
+        {
+          "id": "core.defend",
+          "name": "Defend",
+          "copies": 2
+        },
+        {
+          "id": "core.counter",
+          "name": "Counter",
+          "copies": 1
+        },
+        {
+          "id": "core.smash",
+          "name": "Smash",
+          "copies": 1
+        },
+        {
+          "id": "core.sweep",
+          "name": "Sweep",
+          "copies": 1
+        },
+        {
+          "id": "core.evade",
+          "name": "Evade",
+          "copies": 1
+        },
+        {
+          "id": "base.draw",
+          "name": "Draw",
+          "copies": 1
+        },
+        {
+          "id": "core.reaverSpecial",
+          "name": "Sundering Art",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "starseer",
+    "name": "Starseer",
+    "displayName": "Starseer",
+    "tags": [
+      "character.player",
+      "class.starseer",
+      "training.graduate"
+    ],
+    "kind": "player",
+    "tier": null,
+    "level": 1,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "boneSceptre",
+            "name": "Bone_Sceptre",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "intelligence": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "boneSceptre",
+            "name": "Bone_Sceptre",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 10,
+        "strength": 5,
+        "dexterity": 3,
+        "wisdom": 4,
+        "intelligence": 4,
+        "level": 0
+      },
+      "total": 36,
+      "formula": "10+10+5+3+4+4+0 = 36"
+    },
+    "pools": {
+      "hp": 36,
+      "sp": 3,
+      "mp": 2,
+      "ar": 1,
+      "dr": 1,
+      "hand": 8
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "boneSceptre",
+        "name": "Bone_Sceptre"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 11,
+      "cards": [
+        {
+          "id": "core.strike",
+          "name": "Strike",
+          "copies": 3
+        },
+        {
+          "id": "core.defend",
+          "name": "Defend",
+          "copies": 2
+        },
+        {
+          "id": "core.counter",
+          "name": "Counter",
+          "copies": 1
+        },
+        {
+          "id": "core.smash",
+          "name": "Smash",
+          "copies": 1
+        },
+        {
+          "id": "core.sweep",
+          "name": "Sweep",
+          "copies": 1
+        },
+        {
+          "id": "core.evade",
+          "name": "Evade",
+          "copies": 1
+        },
+        {
+          "id": "base.draw",
+          "name": "Draw",
+          "copies": 1
+        },
+        {
+          "id": "core.starseerSpecial",
+          "name": "Star Spark",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "rogue",
+    "name": "Rogue",
+    "displayName": "Rogue",
+    "tags": [
+      "character.player",
+      "class.rogue",
+      "training.basic"
+    ],
+    "kind": "player",
+    "tier": null,
+    "level": 1,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 10,
+        "strength": 5,
+        "dexterity": 6,
+        "wisdom": 2,
+        "intelligence": 1,
+        "level": 0
+      },
+      "total": 34,
+      "formula": "10+10+5+6+2+1+0 = 34"
+    },
+    "pools": {
+      "hp": 34,
+      "sp": 3,
+      "mp": 1,
+      "ar": 1,
+      "dr": 2,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "dagger",
+        "name": "Dagger"
+      },
+      {
+        "key": "offHand",
+        "id": "dagger",
+        "name": "Dagger"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 11,
+      "cards": [
+        {
+          "id": "core.strike",
+          "name": "Strike",
+          "copies": 3
+        },
+        {
+          "id": "core.defend",
+          "name": "Defend",
+          "copies": 2
+        },
+        {
+          "id": "core.counter",
+          "name": "Counter",
+          "copies": 1
+        },
+        {
+          "id": "core.smash",
+          "name": "Smash",
+          "copies": 1
+        },
+        {
+          "id": "core.sweep",
+          "name": "Sweep",
+          "copies": 1
+        },
+        {
+          "id": "core.evade",
+          "name": "Evade",
+          "copies": 1
+        },
+        {
+          "id": "base.draw",
+          "name": "Draw",
+          "copies": 1
+        },
+        {
+          "id": "core.rogueSpecial",
+          "name": "Quick Guard",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "herald",
+    "name": "Herald",
+    "displayName": "Herald",
+    "tags": [
+      "character.player",
+      "class.herald",
+      "training.graduate"
+    ],
+    "kind": "player",
+    "tier": null,
+    "level": 1,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "boneSceptre",
+            "name": "Bone_Sceptre",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "boneSceptre",
+            "name": "Bone_Sceptre",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 10,
+        "strength": 5,
+        "dexterity": 3,
+        "wisdom": 6,
+        "intelligence": 3,
+        "level": 0
+      },
+      "total": 37,
+      "formula": "10+10+5+3+6+3+0 = 37"
+    },
+    "pools": {
+      "hp": 37,
+      "sp": 3,
+      "mp": 2,
+      "ar": 1,
+      "dr": 1,
+      "hand": 7
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "boneSceptre",
+        "name": "Bone_Sceptre"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 11,
+      "cards": [
+        {
+          "id": "core.strike",
+          "name": "Strike",
+          "copies": 3
+        },
+        {
+          "id": "core.defend",
+          "name": "Defend",
+          "copies": 2
+        },
+        {
+          "id": "core.counter",
+          "name": "Counter",
+          "copies": 1
+        },
+        {
+          "id": "core.smash",
+          "name": "Smash",
+          "copies": 1
+        },
+        {
+          "id": "core.sweep",
+          "name": "Sweep",
+          "copies": 1
+        },
+        {
+          "id": "core.evade",
+          "name": "Evade",
+          "copies": 1
+        },
+        {
+          "id": "base.draw",
+          "name": "Draw",
+          "copies": 1
+        },
+        {
+          "id": "core.heraldSpecial",
+          "name": "Lasting Resolve",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "wanderingSoldier",
+    "name": "Wandering_Soldier",
+    "displayName": "Wandering Soldier",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 1,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 0
+      },
+      "total": 48,
+      "formula": "10+20+15+3+0+0+0 = 48"
+    },
+    "pools": {
+      "hp": 48,
+      "sp": 1,
+      "mp": 1,
+      "ar": 3,
+      "dr": 1,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "dagger",
+        "name": "Dagger"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "wanderingSoldier.slash",
+          "name": "Slash",
+          "copies": 1
+        },
+        {
+          "id": "wanderingSoldier.guard",
+          "name": "Guard",
+          "copies": 1
+        },
+        {
+          "id": "wanderingSoldier.warcry",
+          "name": "Warcry",
+          "copies": 1
+        },
+        {
+          "id": "wanderingSoldier.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "blightHound",
+    "name": "Blight_Hound",
+    "displayName": "Blight Hound",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 1,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 0
+      },
+      "total": 48,
+      "formula": "10+20+15+3+0+0+0 = 48"
+    },
+    "pools": {
+      "hp": 48,
+      "sp": 1,
+      "mp": 1,
+      "ar": 3,
+      "dr": 1,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe",
+        "name": "Battleaxe"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "blightHound.bite",
+          "name": "Bite",
+          "copies": 2
+        },
+        {
+          "id": "blightHound.lunge",
+          "name": "Lunge",
+          "copies": 1
+        },
+        {
+          "id": "blightHound.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "huskBrute",
+    "name": "Husk_Brute",
+    "displayName": "Husk Brute",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 2,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 5
+      },
+      "total": 53,
+      "formula": "10+20+15+3+0+0+5 = 53"
+    },
+    "pools": {
+      "hp": 53,
+      "sp": 1,
+      "mp": 1,
+      "ar": 3,
+      "dr": 1,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "dagger",
+        "name": "Dagger"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "huskBrute.club",
+          "name": "Club",
+          "copies": 1
+        },
+        {
+          "id": "huskBrute.bellow",
+          "name": "Bellow",
+          "copies": 1
+        },
+        {
+          "id": "huskBrute.brace",
+          "name": "Brace",
+          "copies": 1
+        },
+        {
+          "id": "huskBrute.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "graveWisp",
+    "name": "Grave_Wisp",
+    "displayName": "Grave Wisp",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 1,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "dexterity": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "ashStaff",
+            "name": "Ash_Staff",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 0,
+        "strength": 0,
+        "dexterity": 0,
+        "wisdom": 2,
+        "intelligence": 2,
+        "level": 0
+      },
+      "total": 14,
+      "formula": "10+0+0+0+2+2+0 = 14"
+    },
+    "pools": {
+      "hp": 14,
+      "sp": 2,
+      "mp": 1,
+      "ar": 0,
+      "dr": 0,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff",
+        "name": "Ash_Staff"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "graveWisp.curse",
+          "name": "Curse",
+          "copies": 2
+        },
+        {
+          "id": "graveWisp.drain",
+          "name": "Drain",
+          "copies": 1
+        },
+        {
+          "id": "graveWisp.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "wyrmAspirant",
+    "name": "Wyrm_Aspirant",
+    "displayName": "Wyrm Aspirant",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 4,
+    "attributePoints": 4,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "greatsword",
+            "name": "Greatsword",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "armor.nightweave",
+            "name": "Nightweave",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 0,
+        "strength": 15,
+        "dexterity": 3,
+        "wisdom": 6,
+        "intelligence": 0,
+        "level": 15
+      },
+      "total": 49,
+      "formula": "10+0+15+3+6+0+15 = 49"
+    },
+    "pools": {
+      "hp": 49,
+      "sp": 3,
+      "mp": 2,
+      "ar": 3,
+      "dr": 1,
+      "hand": 3
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword",
+        "name": "Greatsword"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave",
+        "name": "Nightweave"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "wyrmAspirant.consecrate",
+          "name": "Consecrate",
+          "copies": 1
+        },
+        {
+          "id": "wyrmAspirant.halberdSweep",
+          "name": "Halberd_Sweep",
+          "copies": 2
+        },
+        {
+          "id": "wyrmAspirant.tailSlam",
+          "name": "Tail_Slam",
+          "copies": 1
+        },
+        {
+          "id": "wyrmAspirant.goldenGuard",
+          "name": "Golden_Guard",
+          "copies": 1
+        },
+        {
+          "id": "wyrmAspirant.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "fellWarden",
+    "name": "The_Fell_Warden",
+    "displayName": "The Fell Warden",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 5,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "greatsword",
+            "name": "Greatsword",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.graveSeal",
+            "name": "Grave_Seal",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 7
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 10,
+        "strength": 35,
+        "dexterity": 9,
+        "wisdom": 2,
+        "intelligence": 0,
+        "level": 20
+      },
+      "total": 86,
+      "formula": "10+10+35+9+2+0+20 = 86"
+    },
+    "pools": {
+      "hp": 86,
+      "sp": 3,
+      "mp": 1,
+      "ar": 7,
+      "dr": 3,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword",
+        "name": "Greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger",
+        "name": "Parrying_Dagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.gutterLeathers",
+        "name": "Gutter_Leathers"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.graveSeal",
+        "name": "Grave_Seal"
+      }
+    ],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "fellWarden.caneStrike",
+          "name": "Cane_Strike",
+          "copies": 3
+        },
+        {
+          "id": "fellWarden.hammerToss",
+          "name": "Hammer_Toss",
+          "copies": 2
+        },
+        {
+          "id": "fellWarden.heldBlade",
+          "name": "Held_Blade",
+          "copies": 2
+        },
+        {
+          "id": "fellWarden.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "lanternMoth",
+    "name": "Lantern_Moth",
+    "displayName": "Lantern Moth",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 2,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "dexterity": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "ashStaff",
+            "name": "Ash_Staff",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 0,
+        "strength": 0,
+        "dexterity": 0,
+        "wisdom": 2,
+        "intelligence": 2,
+        "level": 5
+      },
+      "total": 19,
+      "formula": "10+0+0+0+2+2+5 = 19"
+    },
+    "pools": {
+      "hp": 19,
+      "sp": 2,
+      "mp": 1,
+      "ar": 0,
+      "dr": 0,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff",
+        "name": "Ash_Staff"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "lanternMoth.lanternDust",
+          "name": "Lantern_Dust",
+          "copies": 1
+        },
+        {
+          "id": "lanternMoth.wingSparks",
+          "name": "Wing_Sparks",
+          "copies": 2
+        },
+        {
+          "id": "lanternMoth.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "briarHermit",
+    "name": "Briar_Hermit",
+    "displayName": "Briar Hermit",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 2,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 0,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 5
+      },
+      "total": 50,
+      "formula": "10+20+15+0+0+0+5 = 50"
+    },
+    "pools": {
+      "hp": 50,
+      "sp": 1,
+      "mp": 1,
+      "ar": 3,
+      "dr": 0,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe",
+        "name": "Battleaxe"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "briarHermit.rootShelter",
+          "name": "Root_Shelter",
+          "copies": 1
+        },
+        {
+          "id": "briarHermit.briarCast",
+          "name": "Briar_Cast",
+          "copies": 1
+        },
+        {
+          "id": "briarHermit.sapMend",
+          "name": "Sap_Mend",
+          "copies": 1
+        },
+        {
+          "id": "briarHermit.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "chainScavenger",
+    "name": "Chain_Scavenger",
+    "displayName": "Chain Scavenger",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 2,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 5
+      },
+      "total": 23,
+      "formula": "10+0+5+3+0+0+5 = 23"
+    },
+    "pools": {
+      "hp": 23,
+      "sp": 2,
+      "mp": 1,
+      "ar": 1,
+      "dr": 1,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "dagger",
+        "name": "Dagger"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "chainScavenger.hookCast",
+          "name": "Hook_Cast",
+          "copies": 1
+        },
+        {
+          "id": "chainScavenger.chainSnare",
+          "name": "Chain_Snare",
+          "copies": 1
+        },
+        {
+          "id": "chainScavenger.draggingBlow",
+          "name": "Dragging_Blow",
+          "copies": 1
+        },
+        {
+          "id": "chainScavenger.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "bellKeeper",
+    "name": "The_Bell_Keeper",
+    "displayName": "The Bell Keeper",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 5,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "cinderAxe",
+            "name": "Cinder_Axe",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.graveSeal",
+            "name": "Grave_Seal",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 7
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "cinderAxe",
+            "name": "Cinder_Axe",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "armor.nightweave",
+            "name": "Nightweave",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 35,
+        "dexterity": 6,
+        "wisdom": 6,
+        "intelligence": 0,
+        "level": 20
+      },
+      "total": 97,
+      "formula": "10+20+35+6+6+0+20 = 97"
+    },
+    "pools": {
+      "hp": 97,
+      "sp": 3,
+      "mp": 2,
+      "ar": 7,
+      "dr": 2,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe",
+        "name": "Cinder_Axe"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger",
+        "name": "Parrying_Dagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave",
+        "name": "Nightweave"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.graveSeal",
+        "name": "Grave_Seal"
+      }
+    ],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "bellKeeper.bronzeToll",
+          "name": "Bronze_Toll",
+          "copies": 2
+        },
+        {
+          "id": "bellKeeper.clapperSwing",
+          "name": "Clapper_Swing",
+          "copies": 3
+        },
+        {
+          "id": "bellKeeper.muffledPrayer",
+          "name": "Muffled_Prayer",
+          "copies": 2
+        },
+        {
+          "id": "bellKeeper.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "thornMatriarch",
+    "name": "The_Thorn_Matriarch",
+    "displayName": "The Thorn Matriarch",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 5,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "cinderAxe",
+            "name": "Cinder_Axe",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.graveSeal",
+            "name": "Grave_Seal",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 7
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "cinderAxe",
+            "name": "Cinder_Axe",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 1
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "armor.nightweave",
+            "name": "Nightweave",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 10,
+        "strength": 35,
+        "dexterity": 6,
+        "wisdom": 6,
+        "intelligence": 1,
+        "level": 20
+      },
+      "total": 88,
+      "formula": "10+10+35+6+6+1+20 = 88"
+    },
+    "pools": {
+      "hp": 88,
+      "sp": 3,
+      "mp": 2,
+      "ar": 7,
+      "dr": 2,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe",
+        "name": "Cinder_Axe"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger",
+        "name": "Parrying_Dagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave",
+        "name": "Nightweave"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.graveSeal",
+        "name": "Grave_Seal"
+      }
+    ],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "thornMatriarch.rootCrown",
+          "name": "Root_Crown",
+          "copies": 2
+        },
+        {
+          "id": "thornMatriarch.thornNeedles",
+          "name": "Thorn_Needles",
+          "copies": 3
+        },
+        {
+          "id": "thornMatriarch.entwiningRoots",
+          "name": "Entwining_Roots",
+          "copies": 2
+        },
+        {
+          "id": "thornMatriarch.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "gildedKnight",
+    "name": "Gilded_Knight",
+    "displayName": "Gilded Knight",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 6,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 25
+      },
+      "total": 43,
+      "formula": "10+0+5+3+0+0+25 = 43"
+    },
+    "pools": {
+      "hp": 43,
+      "sp": 2,
+      "mp": 2,
+      "ar": 1,
+      "dr": 1,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe",
+        "name": "Battleaxe"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 5,
+      "cards": [
+        {
+          "id": "gildedKnight.thrust",
+          "name": "Thrust",
+          "copies": 1
+        },
+        {
+          "id": "gildedKnight.parry",
+          "name": "Parry",
+          "copies": 1
+        },
+        {
+          "id": "gildedKnight.rally",
+          "name": "Rally",
+          "copies": 1
+        },
+        {
+          "id": "gildedKnight.gildedGuard",
+          "name": "Gilded_Guard",
+          "copies": 1
+        },
+        {
+          "id": "gildedKnight.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "courtSurgeon",
+    "name": "Court_Surgeon",
+    "displayName": "Court Surgeon",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 6,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "dexterity": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "ashStaff",
+            "name": "Ash_Staff",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 0,
+        "strength": 0,
+        "dexterity": 0,
+        "wisdom": 2,
+        "intelligence": 2,
+        "level": 25
+      },
+      "total": 39,
+      "formula": "10+0+0+0+2+2+25 = 39"
+    },
+    "pools": {
+      "hp": 39,
+      "sp": 2,
+      "mp": 2,
+      "ar": 0,
+      "dr": 0,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff",
+        "name": "Ash_Staff"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "courtSurgeon.scalpel",
+          "name": "Scalpel",
+          "copies": 1
+        },
+        {
+          "id": "courtSurgeon.sedate",
+          "name": "Sedate",
+          "copies": 1
+        },
+        {
+          "id": "courtSurgeon.stitch",
+          "name": "Stitch",
+          "copies": 1
+        },
+        {
+          "id": "courtSurgeon.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "stitchedHound",
+    "name": "Stitched_Hound",
+    "displayName": "Stitched Hound",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 6,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 25
+      },
+      "total": 73,
+      "formula": "10+20+15+3+0+0+25 = 73"
+    },
+    "pools": {
+      "hp": 73,
+      "sp": 1,
+      "mp": 2,
+      "ar": 3,
+      "dr": 1,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe",
+        "name": "Battleaxe"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "stitchedHound.maul",
+          "name": "Maul",
+          "copies": 2
+        },
+        {
+          "id": "stitchedHound.rend",
+          "name": "Rend",
+          "copies": 1
+        },
+        {
+          "id": "stitchedHound.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "courtMarionette",
+    "name": "Court_Marionette",
+    "displayName": "Court Marionette",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 6,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 25
+      },
+      "total": 73,
+      "formula": "10+20+15+3+0+0+25 = 73"
+    },
+    "pools": {
+      "hp": 73,
+      "sp": 1,
+      "mp": 2,
+      "ar": 3,
+      "dr": 1,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "dagger",
+        "name": "Dagger"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "courtMarionette.dart",
+          "name": "Dart",
+          "copies": 2
+        },
+        {
+          "id": "courtMarionette.blowdart",
+          "name": "Blowdart",
+          "copies": 1
+        },
+        {
+          "id": "courtMarionette.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "livingArmor",
+    "name": "Living_Armor",
+    "displayName": "Living Armor",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 7,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 30
+      },
+      "total": 78,
+      "formula": "10+20+15+3+0+0+30 = 78"
+    },
+    "pools": {
+      "hp": 78,
+      "sp": 1,
+      "mp": 2,
+      "ar": 3,
+      "dr": 1,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe",
+        "name": "Battleaxe"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 5,
+      "cards": [
+        {
+          "id": "livingArmor.slam",
+          "name": "Slam",
+          "copies": 1
+        },
+        {
+          "id": "livingArmor.fortify",
+          "name": "Fortify",
+          "copies": 1
+        },
+        {
+          "id": "livingArmor.crush",
+          "name": "Crush",
+          "copies": 1
+        },
+        {
+          "id": "livingArmor.rimeCrush",
+          "name": "Rime_Crush",
+          "copies": 1
+        },
+        {
+          "id": "livingArmor.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "courtDuelist",
+    "name": "Duelist_of_the_Court",
+    "displayName": "Duelist of the Court",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 10,
+    "attributePoints": 4,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "greatsword",
+            "name": "Greatsword",
+            "kind": "gear",
+            "amount": 2
+          }
+        ],
+        "total": 4
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "armor.wayfarerPlate",
+            "name": "Wayfarer_Plate",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 20,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 45
+      },
+      "total": 98,
+      "formula": "10+20+20+3+0+0+45 = 98"
+    },
+    "pools": {
+      "hp": 98,
+      "sp": 3,
+      "mp": 2,
+      "ar": 4,
+      "dr": 1,
+      "hand": 3
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword",
+        "name": "Greatsword"
+      },
+      {
+        "key": "armor",
+        "id": "armor.wayfarerPlate",
+        "name": "Wayfarer_Plate"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "courtDuelist.enGarde",
+          "name": "En_Garde",
+          "copies": 1
+        },
+        {
+          "id": "courtDuelist.flurry",
+          "name": "Flurry",
+          "copies": 1
+        },
+        {
+          "id": "courtDuelist.lunge",
+          "name": "Lunge",
+          "copies": 1
+        },
+        {
+          "id": "courtDuelist.riposte",
+          "name": "Riposte",
+          "copies": 1
+        },
+        {
+          "id": "courtDuelist.bindingRiposte",
+          "name": "Binding_Riposte",
+          "copies": 1
+        },
+        {
+          "id": "courtDuelist.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "stitchedKing",
+    "name": "The_Stitched_King",
+    "displayName": "The Stitched King",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 11,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "greatsword",
+            "name": "Greatsword",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "towerShield",
+            "name": "Tower_Shield",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.ashenCore",
+            "name": "Ashen_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 7
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "towerShield",
+            "name": "Tower_Shield",
+            "kind": "gear",
+            "amount": 3
+          },
+          {
+            "source": "armor.wayfarerPlate",
+            "name": "Wayfarer_Plate",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.ashenCore",
+            "name": "Ashen_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 7
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenCore",
+            "name": "Ashen_Core",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 70,
+        "strength": 35,
+        "dexterity": 6,
+        "wisdom": 4,
+        "intelligence": 0,
+        "level": 50
+      },
+      "total": 175,
+      "formula": "10+70+35+6+4+0+50 = 175"
+    },
+    "pools": {
+      "hp": 175,
+      "sp": 5,
+      "mp": 5,
+      "ar": 7,
+      "dr": 2,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword",
+        "name": "Greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "towerShield",
+        "name": "Tower_Shield"
+      },
+      {
+        "key": "armor",
+        "id": "armor.wayfarerPlate",
+        "name": "Wayfarer_Plate"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenCore",
+        "name": "Ashen_Core"
+      }
+    ],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "stitchedKing.scepterBlow",
+          "name": "Scepter_Blow",
+          "copies": 3
+        },
+        {
+          "id": "stitchedKing.graspingHands",
+          "name": "Grasping_Hands",
+          "copies": 2
+        },
+        {
+          "id": "stitchedKing.courtlyDecree",
+          "name": "Courtly_Decree",
+          "copies": 2
+        },
+        {
+          "id": "stitchedKing.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "mirrorScribe",
+    "name": "Mirror_Scribe",
+    "displayName": "Mirror Scribe",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 7,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "dexterity": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "ashStaff",
+            "name": "Ash_Staff",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 0,
+        "strength": 0,
+        "dexterity": 0,
+        "wisdom": 2,
+        "intelligence": 2,
+        "level": 30
+      },
+      "total": 44,
+      "formula": "10+0+0+0+2+2+30 = 44"
+    },
+    "pools": {
+      "hp": 44,
+      "sp": 2,
+      "mp": 2,
+      "ar": 0,
+      "dr": 0,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff",
+        "name": "Ash_Staff"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "mirrorScribe.silverScript",
+          "name": "Silver_Script",
+          "copies": 1
+        },
+        {
+          "id": "mirrorScribe.shardVolley",
+          "name": "Shard_Volley",
+          "copies": 1
+        },
+        {
+          "id": "mirrorScribe.polishedWard",
+          "name": "Polished_Ward",
+          "copies": 1
+        },
+        {
+          "id": "mirrorScribe.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "stitchCrab",
+    "name": "Stitch_Crab",
+    "displayName": "Stitch Crab",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 7,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 30
+      },
+      "total": 78,
+      "formula": "10+20+15+3+0+0+30 = 78"
+    },
+    "pools": {
+      "hp": 78,
+      "sp": 1,
+      "mp": 2,
+      "ar": 3,
+      "dr": 1,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "dagger",
+        "name": "Dagger"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "stitchCrab.shellFold",
+          "name": "Shell_Fold",
+          "copies": 1
+        },
+        {
+          "id": "stitchCrab.seamShears",
+          "name": "Seam_Shears",
+          "copies": 1
+        },
+        {
+          "id": "stitchCrab.scuttleRush",
+          "name": "Scuttle_Rush",
+          "copies": 1
+        },
+        {
+          "id": "stitchCrab.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "glassRegent",
+    "name": "The_Glass_Regent",
+    "displayName": "The Glass Regent",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 11,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "greatsword",
+            "name": "Greatsword",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.titanHeart",
+            "name": "Titan_Heart",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 6
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.titanHeart",
+            "name": "Titan_Heart",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "armor.nightweave",
+            "name": "Nightweave",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 30,
+        "dexterity": 6,
+        "wisdom": 6,
+        "intelligence": 1,
+        "level": 50
+      },
+      "total": 123,
+      "formula": "10+20+30+6+6+1+50 = 123"
+    },
+    "pools": {
+      "hp": 123,
+      "sp": 4,
+      "mp": 4,
+      "ar": 6,
+      "dr": 2,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword",
+        "name": "Greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger",
+        "name": "Parrying_Dagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave",
+        "name": "Nightweave"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titanHeart",
+        "name": "Titan_Heart"
+      }
+    ],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "glassRegent.prismGuard",
+          "name": "Prism_Guard",
+          "copies": 2
+        },
+        {
+          "id": "glassRegent.crystalRapier",
+          "name": "Crystal_Rapier",
+          "copies": 3
+        },
+        {
+          "id": "glassRegent.splinterRain",
+          "name": "Splinter_Rain",
+          "copies": 2
+        },
+        {
+          "id": "glassRegent.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "marrowOrganist",
+    "name": "The_Marrow_Organist",
+    "displayName": "The Marrow Organist",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 11,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "greatsword",
+            "name": "Greatsword",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.titanHeart",
+            "name": "Titan_Heart",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 6
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.titanHeart",
+            "name": "Titan_Heart",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "armor.nightweave",
+            "name": "Nightweave",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 30,
+        "dexterity": 6,
+        "wisdom": 6,
+        "intelligence": 1,
+        "level": 50
+      },
+      "total": 123,
+      "formula": "10+20+30+6+6+1+50 = 123"
+    },
+    "pools": {
+      "hp": 123,
+      "sp": 4,
+      "mp": 4,
+      "ar": 6,
+      "dr": 2,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "greatsword",
+        "name": "Greatsword"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger",
+        "name": "Parrying_Dagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave",
+        "name": "Nightweave"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titanHeart",
+        "name": "Titan_Heart"
+      }
+    ],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "marrowOrganist.bonePrelude",
+          "name": "Bone_Prelude",
+          "copies": 2
+        },
+        {
+          "id": "marrowOrganist.ivoryKeys",
+          "name": "Ivory_Keys",
+          "copies": 2
+        },
+        {
+          "id": "marrowOrganist.funeralChord",
+          "name": "Funeral_Chord",
+          "copies": 2
+        },
+        {
+          "id": "marrowOrganist.quietRefrain",
+          "name": "Quiet_Refrain",
+          "copies": 1
+        },
+        {
+          "id": "marrowOrganist.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "ashRevenant",
+    "name": "Ash_Revenant",
+    "displayName": "Ash Revenant",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 13,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 60
+      },
+      "total": 108,
+      "formula": "10+20+15+3+0+0+60 = 108"
+    },
+    "pools": {
+      "hp": 108,
+      "sp": 1,
+      "mp": 3,
+      "ar": 3,
+      "dr": 1,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "dagger",
+        "name": "Dagger"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "ashRevenant.cinderSlash",
+          "name": "Cinder_Slash",
+          "copies": 2
+        },
+        {
+          "id": "ashRevenant.reform",
+          "name": "Reform",
+          "copies": 1
+        },
+        {
+          "id": "ashRevenant.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "emberStarvedPilgrim",
+    "name": "Ember-Starved_Pilgrim",
+    "displayName": "Ember-Starved Pilgrim",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 13,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 60
+      },
+      "total": 108,
+      "formula": "10+20+15+3+0+0+60 = 108"
+    },
+    "pools": {
+      "hp": 108,
+      "sp": 1,
+      "mp": 3,
+      "ar": 3,
+      "dr": 1,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe",
+        "name": "Battleaxe"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "emberStarvedPilgrim.desperateClaw",
+          "name": "Desperate_Claw",
+          "copies": 2
+        },
+        {
+          "id": "emberStarvedPilgrim.wail",
+          "name": "Wail",
+          "copies": 1
+        },
+        {
+          "id": "emberStarvedPilgrim.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "valkyrieShade",
+    "name": "Valkyrie_Shade",
+    "displayName": "Valkyrie Shade",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 14,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 65
+      },
+      "total": 113,
+      "formula": "10+20+15+3+0+0+65 = 113"
+    },
+    "pools": {
+      "hp": 113,
+      "sp": 1,
+      "mp": 3,
+      "ar": 3,
+      "dr": 1,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe",
+        "name": "Battleaxe"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "valkyrieShade.spiralLance",
+          "name": "Spiral_Lance",
+          "copies": 2
+        },
+        {
+          "id": "valkyrieShade.bloodFeather",
+          "name": "Blood_Feather",
+          "copies": 1
+        },
+        {
+          "id": "valkyrieShade.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "charredColossus",
+    "name": "Charred_Colossus",
+    "displayName": "Charred Colossus",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 15,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 15,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 70
+      },
+      "total": 118,
+      "formula": "10+20+15+3+0+0+70 = 118"
+    },
+    "pools": {
+      "hp": 118,
+      "sp": 1,
+      "mp": 3,
+      "ar": 3,
+      "dr": 1,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "battleaxe",
+        "name": "Battleaxe"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "charredColossus.smash",
+          "name": "Smash",
+          "copies": 1
+        },
+        {
+          "id": "charredColossus.ashCloud",
+          "name": "Ash_Cloud",
+          "copies": 1
+        },
+        {
+          "id": "charredColossus.harden",
+          "name": "Harden",
+          "copies": 1
+        },
+        {
+          "id": "charredColossus.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "wyrmLord",
+    "name": "Wyrm_Lord",
+    "displayName": "Wyrm Lord",
+    "tags": [
+      "character.enemy",
+      "tier.elite"
+    ],
+    "kind": "enemy",
+    "tier": "elite",
+    "level": 18,
+    "attributePoints": 4,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "cinderAxe",
+            "name": "Cinder_Axe",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 6
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "cinderAxe",
+            "name": "Cinder_Axe",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "armor.wayfarerPlate",
+            "name": "Wayfarer_Plate",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 5
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 50,
+        "strength": 30,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 85
+      },
+      "total": 178,
+      "formula": "10+50+30+3+0+0+85 = 178"
+    },
+    "pools": {
+      "hp": 178,
+      "sp": 3,
+      "mp": 5,
+      "ar": 6,
+      "dr": 1,
+      "hand": 3
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe",
+        "name": "Cinder_Axe"
+      },
+      {
+        "key": "armor",
+        "id": "armor.wayfarerPlate",
+        "name": "Wayfarer_Plate"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 6,
+      "cards": [
+        {
+          "id": "wyrmLord.consecration",
+          "name": "Consecration",
+          "copies": 1
+        },
+        {
+          "id": "wyrmLord.halberdReign",
+          "name": "Halberd_Reign",
+          "copies": 2
+        },
+        {
+          "id": "wyrmLord.tailSweep",
+          "name": "Tail_Sweep",
+          "copies": 1
+        },
+        {
+          "id": "wyrmLord.goldenBulwark",
+          "name": "Golden_Bulwark",
+          "copies": 1
+        },
+        {
+          "id": "wyrmLord.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "blightedValkyrie",
+    "name": "The_Blighted_Valkyrie",
+    "displayName": "The Blighted Valkyrie",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 19,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "halberd",
+            "name": "Halberd",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 7
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 2
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "armor.nightweave",
+            "name": "Nightweave",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 2
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 20,
+        "strength": 35,
+        "dexterity": 6,
+        "wisdom": 4,
+        "intelligence": 1,
+        "level": 90
+      },
+      "total": 166,
+      "formula": "10+20+35+6+4+1+90 = 166"
+    },
+    "pools": {
+      "hp": 166,
+      "sp": 2,
+      "mp": 5,
+      "ar": 7,
+      "dr": 2,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "halberd",
+        "name": "Halberd"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger",
+        "name": "Parrying_Dagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave",
+        "name": "Nightweave"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "blightedValkyrie.spiralThrust",
+          "name": "Spiral_Thrust",
+          "copies": 3
+        },
+        {
+          "id": "blightedValkyrie.whirlwind",
+          "name": "Whirlwind",
+          "copies": 2
+        },
+        {
+          "id": "blightedValkyrie.rotWings",
+          "name": "Rot_Wings",
+          "copies": 2
+        },
+        {
+          "id": "blightedValkyrie.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "cinderMantis",
+    "name": "Cinder_Mantis",
+    "displayName": "Cinder Mantis",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 14,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "wisdom": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 0,
+        "strength": 5,
+        "dexterity": 3,
+        "wisdom": 0,
+        "intelligence": 0,
+        "level": 65
+      },
+      "total": 83,
+      "formula": "10+0+5+3+0+0+65 = 83"
+    },
+    "pools": {
+      "hp": 83,
+      "sp": 3,
+      "mp": 3,
+      "ar": 1,
+      "dr": 1,
+      "hand": 2
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "dagger",
+        "name": "Dagger"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "cinderMantis.scythePair",
+          "name": "Scythe_Pair",
+          "copies": 1
+        },
+        {
+          "id": "cinderMantis.emberPounce",
+          "name": "Ember_Pounce",
+          "copies": 1
+        },
+        {
+          "id": "cinderMantis.foldedBlades",
+          "name": "Folded_Blades",
+          "copies": 1
+        },
+        {
+          "id": "cinderMantis.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "eclipseCantor",
+    "name": "Eclipse_Cantor",
+    "displayName": "Eclipse Cantor",
+    "tags": [
+      "character.enemy",
+      "tier.minion"
+    ],
+    "kind": "enemy",
+    "tier": "minion",
+    "level": 14,
+    "attributePoints": 2,
+    "attributes": {
+      "strength": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "dexterity": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "ashStaff",
+            "name": "Ash_Staff",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 0,
+        "strength": 0,
+        "dexterity": 0,
+        "wisdom": 2,
+        "intelligence": 2,
+        "level": 65
+      },
+      "total": 79,
+      "formula": "10+0+0+0+2+2+65 = 79"
+    },
+    "pools": {
+      "hp": 79,
+      "sp": 3,
+      "mp": 3,
+      "ar": 0,
+      "dr": 0,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "ashStaff",
+        "name": "Ash_Staff"
+      }
+    ],
+    "relics": [],
+    "deck": {
+      "size": 4,
+      "cards": [
+        {
+          "id": "eclipseCantor.darkHymn",
+          "name": "Dark_Hymn",
+          "copies": 1
+        },
+        {
+          "id": "eclipseCantor.lunarRay",
+          "name": "Lunar_Ray",
+          "copies": 1
+        },
+        {
+          "id": "eclipseCantor.fadingEcho",
+          "name": "Fading_Echo",
+          "copies": 1
+        },
+        {
+          "id": "eclipseCantor.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "furnaceSaint",
+    "name": "The_Furnace_Saint",
+    "displayName": "The Furnace Saint",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 19,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "cinderAxe",
+            "name": "Cinder_Axe",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "towerShield",
+            "name": "Tower_Shield",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.titanHeart",
+            "name": "Titan_Heart",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 6
+      },
+      "dexterity": {
+        "own": 2,
+        "bonuses": [],
+        "total": 2
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "cinderAxe",
+            "name": "Cinder_Axe",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "towerShield",
+            "name": "Tower_Shield",
+            "kind": "gear",
+            "amount": 3
+          },
+          {
+            "source": "armor.wayfarerPlate",
+            "name": "Wayfarer_Plate",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.titanHeart",
+            "name": "Titan_Heart",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 8
+      },
+      "wisdom": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 80,
+        "strength": 30,
+        "dexterity": 6,
+        "wisdom": 2,
+        "intelligence": 0,
+        "level": 90
+      },
+      "total": 218,
+      "formula": "10+80+30+6+2+0+90 = 218"
+    },
+    "pools": {
+      "hp": 218,
+      "sp": 6,
+      "mp": 6,
+      "ar": 6,
+      "dr": 2,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe",
+        "name": "Cinder_Axe"
+      },
+      {
+        "key": "offHand",
+        "id": "towerShield",
+        "name": "Tower_Shield"
+      },
+      {
+        "key": "armor",
+        "id": "armor.wayfarerPlate",
+        "name": "Wayfarer_Plate"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titanHeart",
+        "name": "Titan_Heart"
+      }
+    ],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "furnaceSaint.openFurnace",
+          "name": "Open_Furnace",
+          "copies": 2
+        },
+        {
+          "id": "furnaceSaint.censerSweep",
+          "name": "Censer_Sweep",
+          "copies": 3
+        },
+        {
+          "id": "furnaceSaint.coolingAsh",
+          "name": "Cooling_Ash",
+          "copies": 2
+        },
+        {
+          "id": "furnaceSaint.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "hollowAstronomer",
+    "name": "The_Hollow_Astronomer",
+    "displayName": "The Hollow Astronomer",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 19,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "cinderAxe",
+            "name": "Cinder_Axe",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.titanHeart",
+            "name": "Titan_Heart",
+            "kind": "relic",
+            "amount": 1
+          }
+        ],
+        "total": 6
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "constitution": {
+        "own": 0,
+        "bonuses": [
+          {
+            "source": "cinderAxe",
+            "name": "Cinder_Axe",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.titanHeart",
+            "name": "Titan_Heart",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "armor.nightweave",
+            "name": "Nightweave",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 3
+      },
+      "intelligence": {
+        "own": 1,
+        "bonuses": [],
+        "total": 1
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 30,
+        "strength": 30,
+        "dexterity": 6,
+        "wisdom": 6,
+        "intelligence": 1,
+        "level": 90
+      },
+      "total": 173,
+      "formula": "10+30+30+6+6+1+90 = 173"
+    },
+    "pools": {
+      "hp": 173,
+      "sp": 4,
+      "mp": 5,
+      "ar": 6,
+      "dr": 2,
+      "hand": 5
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "cinderAxe",
+        "name": "Cinder_Axe"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger",
+        "name": "Parrying_Dagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave",
+        "name": "Nightweave"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.titanHeart",
+        "name": "Titan_Heart"
+      }
+    ],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "hollowAstronomer.starChart",
+          "name": "Star_Chart",
+          "copies": 2
+        },
+        {
+          "id": "hollowAstronomer.orbitalShards",
+          "name": "Orbital_Shards",
+          "copies": 3
+        },
+        {
+          "id": "hollowAstronomer.totalEclipse",
+          "name": "Total_Eclipse",
+          "copies": 2
+        },
+        {
+          "id": "hollowAstronomer.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "ashheartDragon",
+    "name": "The_Ashheart_Dragon",
+    "displayName": "The Ashheart Dragon",
+    "tags": [
+      "character.enemy",
+      "tier.boss"
+    ],
+    "kind": "enemy",
+    "tier": "boss",
+    "level": 19,
+    "attributePoints": 6,
+    "attributes": {
+      "strength": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "halberd",
+            "name": "Halberd",
+            "kind": "gear",
+            "amount": 2
+          },
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 7
+      },
+      "dexterity": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "parryDagger",
+            "name": "Parrying_Dagger",
+            "kind": "gear",
+            "amount": 1
+          }
+        ],
+        "total": 2
+      },
+      "constitution": {
+        "own": 1,
+        "bonuses": [
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": 2
+          }
+        ],
+        "total": 3
+      },
+      "wisdom": {
+        "own": 2,
+        "bonuses": [
+          {
+            "source": "armor.nightweave",
+            "name": "Nightweave",
+            "kind": "gear",
+            "amount": 1
+          },
+          {
+            "source": "enemy.relic.ashenBlightCore",
+            "name": "Ashen_Blight_Core",
+            "kind": "relic",
+            "amount": -1
+          }
+        ],
+        "total": 2
+      },
+      "intelligence": {
+        "own": 0,
+        "bonuses": [],
+        "total": 0
+      }
+    },
+    "hp": {
+      "terms": {
+        "base": 10,
+        "constitution": 30,
+        "strength": 35,
+        "dexterity": 6,
+        "wisdom": 4,
+        "intelligence": 0,
+        "level": 90
+      },
+      "total": 175,
+      "formula": "10+30+35+6+4+0+90 = 175"
+    },
+    "pools": {
+      "hp": 175,
+      "sp": 2,
+      "mp": 5,
+      "ar": 7,
+      "dr": 2,
+      "hand": 4
+    },
+    "gear": [
+      {
+        "key": "mainHand",
+        "id": "halberd",
+        "name": "Halberd"
+      },
+      {
+        "key": "offHand",
+        "id": "parryDagger",
+        "name": "Parrying_Dagger"
+      },
+      {
+        "key": "armor",
+        "id": "armor.nightweave",
+        "name": "Nightweave"
+      }
+    ],
+    "relics": [
+      {
+        "key": "relic1",
+        "id": "enemy.relic.ashenBlightCore",
+        "name": "Ashen_Blight_Core"
+      }
+    ],
+    "deck": {
+      "size": 8,
+      "cards": [
+        {
+          "id": "ashheartDragon.obsidianClaws",
+          "name": "Obsidian_Claws",
+          "copies": 3
+        },
+        {
+          "id": "ashheartDragon.tailBastion",
+          "name": "Tail_Bastion",
+          "copies": 2
+        },
+        {
+          "id": "ashheartDragon.heartRumble",
+          "name": "Heart_Rumble",
+          "copies": 2
+        },
+        {
+          "id": "ashheartDragon.advance",
+          "name": "Advance",
+          "copies": 1
+        }
+      ]
+    }
+  }
+]

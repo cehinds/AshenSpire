@@ -276,6 +276,7 @@ function ENEMY_ID_OF(c) {
 function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
   const run = createRunState({ seed, classId, registries });
   const c = createRunCombat({ registries, rng: createRng(seed), run, enemyIds, settings: {} });
+  assert.equal('combatRounds' in c, false, 'the scripted baseline uses ordinary combat');
   const log = [];
   if (c.pendingReaction) log.push(['pending', c.pendingReaction.kind ?? 'x']);
   try { dispatch(c, { type: 'setReactions', enabled: false }); } catch (e) { log.push(['noreact', String(e.message)]); }
@@ -292,8 +293,16 @@ function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
   return JSON.stringify(log);
 }
 
-test('with the preview off, a scripted fight event log is byte-identical to the recorded golden', () => {
-  const all = [1, 2, 3].map((s) => scriptedLog(s)).join('\n');
+test('with round preview off, seeded fight receipts preserve the golden apart from public enemy forecasts', () => {
+  const logs = [1, 2, 3].map((s) => scriptedLog(s));
+  const all = logs.join('\n');
+  assert.deepEqual(logs.map(log => JSON.parse(log).at(-1)), [
+    ['state', null, 45, [['e1', 31, true]], 5],
+    ['state', null, 49, [['e1', 6, true]], 5],
+    ['state', null, 24, [['e1', 27, true]], 5],
+  ], 'accepted metadata and Mana-floor changes preserve the three ordinary fight outcomes');
+  assert.equal([1, 2, 3].map((s) => scriptedLog(s)).join('\n'), all,
+    'fresh fights reproduce the complete seeded event log byte for byte');
   // Re-recorded for the retuned Wandering Soldier (2 SP, HP 31-36, Slash 8; owner 2026-10-13: harder tier-1 normals).
   // Re-recorded at the origin/dev merge of 2026-10-13 (#1931, #1896 and the rest): dev's combat changes (reaction rules
   // version 2, split hits, Silenced, the damage-type tags the cost formula prices) change what the script plays.
@@ -301,8 +310,38 @@ test('with the preview off, a scripted fight event log is byte-identical to the 
   // log with keys added and nothing else changed: moveId on each enemy move's events, incoming and base on damageDealt,
   // source 'defendStance' on a stance block, triggeredBy on a triggered stagger. The PR #1953 review fixes (a mid-turn
   // stagger, a charge in a round, normal momentum per exchange) do not reach this preview-off script.
-  assert.equal(createHash('sha256').update(all).digest('hex'), 'b0e575b620cccace23b5bbb263eca69d8489014670dcad278b7809a9f5272e4a');
-  assert.equal(all.length, 407839);
+  // Re-recorded for WardToBlock after merging dev 50017efe: ordinary combat now
+  // uses the revised defensive Reaction ranks and Counter return reach/Accuracy
+  // receipts. No preview state is introduced; the full seeded log repeats above.
+  // Re-recorded from ae2899cf CI after universal Accuracy and stance entry/provenance changed the ordinary combat log.
+  // The independent fresh-fight repeat assertion above passed before accepting this new receipt.
+  // Re-recorded from 4f690ecc CI after explicit Evade-attempt receipts were added.
+  // The fresh three-seed replay assertion above passed before the generated hash was recorded.
+  // Compared independently with origin/dev 37c414acd: play/contact order and
+  // all fight outcomes are unchanged. Differences are the accepted Gorefire
+  // Weapon Art MP floor (payment and snapshots) and card-use/type bookkeeping.
+  // Re-recorded for #2192 (Core hit rolls): hit events carry `opposed: false` under the default profile. A key-by-key
+  // comparison with origin/dev bbfb89959 shows that is the only difference; fight outcomes and every other field match.
+  // Compared independently against dev eb6dae53d: exactly 56 additions are
+  // public forecasts on the actor-start/move-start events. Remove only those
+  // two new fields at those event boundaries; every old field and ordering
+  // must still match the existing golden. The full new log repeats above.
+  const legacy = logs.map(text => {
+    const log = JSON.parse(text);
+    for (const entry of log) {
+      const events = entry[0] === 'play' ? entry[2] : entry[0] === 'end' ? entry[1] : [];
+      for (const event of events) {
+        if (event.type === 'enemyActorTurnStarted') delete event.intentPreview;
+        if (event.type === 'enemyMoveStarted') {
+          delete event.intentPreview;
+          delete event.actionPreview;
+        }
+      }
+    }
+    return JSON.stringify(log);
+  }).join('\n');
+  assert.deepEqual({ sha256: createHash('sha256').update(legacy).digest('hex'), length: legacy.length },
+    { sha256: '92b4c6bfaedbf896ec467255a35b34d19c7f0559793d2c956a0135e1fb8fccca', length: 414758 });
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

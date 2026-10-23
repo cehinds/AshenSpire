@@ -1,0 +1,26 @@
+{
+  "id": "status.astralArmor",
+  "tag": "status.astralArmor",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Astral Armor",
+  "description": "At the end of your turn, gain 4 Block per stack.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.astralArmor"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/content/statuses.js",
+    "source": "content/source/statuses.json"
+  }
+}

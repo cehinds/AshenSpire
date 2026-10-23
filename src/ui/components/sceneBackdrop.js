@@ -1,3 +1,4 @@
+import { fitLayeredEnvironment } from './layeredEnvironment.js';
 // src/ui/components/sceneBackdrop.js — WGS1, the environment plate of a W4
 // scene: WGS6 skyline behind, WGS7 floor at the bottom.
 //
@@ -28,7 +29,19 @@ const sceneById = (id) => [...LEGACY_SCENES, ...ENVIRONMENTS.flatMap(region => r
  * so its ground line meets the floor band and its sky fills the rest. Feet and
  * portraits are not moved.
  */
-export function fitSceneBackdrop(backdrop, { width, height, zoom = 1, windowTop = 0, windowHeight = height, config } = {}) {
+export function fitSceneBackdrop(backdrop, { width, height, zoom = 1, windowTop = 0, windowHeight = height, config, groundY } = {}) {
+  if (backdrop?.classList.contains('layered-environment')) {
+    const chosen = resolveSceneConfig(config || wireframeUi.scene, activeWireframeChoices());
+    const floorLine = groundY ?? windowTop + windowHeight * (1 - chosen.floorFraction);
+    const geometry = fitLayeredEnvironment(backdrop, { width, height, groundY: floorLine });
+    if (!geometry) return null;
+    backdrop.dataset.floorTop = String(floorLine * zoom);
+    backdrop.dataset.skyline = chosen.skyline ? 'on' : 'off';
+    backdrop.dataset.floor = chosen.floor ? 'on' : 'off';
+    return { geometry, aligned: true, skyline: { visible: !!chosen.skyline },
+      floor: { visible: !!chosen.floor, top: floorLine, height: height - floorLine },
+      frame: { floorLine, windowTop, windowHeight, height } };
+  }
   const art = backdrop?.querySelector(':scope > svg');
   if (!art) return null;
   const scene = sceneById(backdrop.dataset.scene);

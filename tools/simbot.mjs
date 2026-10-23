@@ -13,6 +13,8 @@
 // instead of ending its turn. refusalsFor(combat) hands out that set and
 // clears it when a new player turn begins.
 
+import { discardCandidates } from '../src/engine/abilityRiders.js';
+import { zoneCandidates } from '../src/engine/cardZones.js';
 import { cardTargetPlan } from '../src/model/cardTargets.js';
 import { cardPlayCosts, cardNeedsEnemyTargetNow } from '../src/engine/combat.js';
 import { cardNeedsEnemyTargetForPlayer } from '../src/engine/coopCombat.js';
@@ -24,6 +26,11 @@ import { controlGate, recoveryControls } from '../src/engine/combatStatusControl
 export function botControlAction(combat) {
   // Optional prompts are deterministic skips for the existing leftmost-card
   // policy. Resolve the choice before ordinary cards, flasks or End Turn.
+  if (combat.pendingAbilityDiscard) return { type: 'chooseDiscard', cardInstanceIds: discardCandidates(combat).slice(0, combat.pendingAbilityDiscard.count).map(card => card.instanceId) };
+  if (combat.pendingCardChoice) {
+    const pending = combat.pendingCardChoice;
+    return { type: 'chooseCards', cardInstanceIds: zoneCandidates(combat, pending.effect).filter(card => pending.candidateIds.includes(card.instanceId)).slice(0, pending.count).map(card => card.instanceId) };
+  }
   if (combat.pendingReaction) return { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null };
   if (combat.combatExpansionVersion !== 2 || combat.result || combat.phase !== 'player') return null;
   const pending = combat.player.ashenBlight?.milestones?.find(row => row.path === null);

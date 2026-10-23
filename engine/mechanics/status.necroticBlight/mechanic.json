@@ -1,0 +1,26 @@
+{
+  "id": "status.necroticBlight",
+  "tag": "status.necroticBlight",
+  "version": "1.0.0",
+  "family": "status",
+  "label": "Necrotic Blight",
+  "description": "At the start of its turn, loses HP equal to Necrotic Blight stacks (ignores Block). Applied by Necrotic damage. Stacks do not tick down and it lasts the whole fight; only a cleanse removes it.",
+  "attaches": [
+    "status"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "status.necroticBlight"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatMatchups.js",
+    "symbol": "matchupRiderEffects"
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "action": "counter-evade",
+  "aliases": [
+    "counter-evade"
+  ],
+  "origin": "evade",
+  "timing": {
+    "totalMs": 292.5,
+    "impactMs": 195
+  },
+  "registeredSequence": {
+    "poses": [
+      "pilot-evade-1",
+      "pilot-evade-2",
+      "pilot-evade-3",
+      "pilot-attack-1",
+      "pilot-attack-2",
+      "pilot-attack-3",
+      "pilot-attack-4",
+      "pilot-attack-5",
+      "pilot-attack-6"
+    ],
+    "durations": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "impact": 6,
+    "travel": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "hold": false,
+    "pilot": true,
+    "reaction": false
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-evade",
+      "label": "origin stance-evade",
+      "weight": 1
+    },
+    {
+      "pose": "pilot-evade-1",
+      "registeredFrameId": "pilot-evade-1",
+      "label": "1/9 pilot-evade-1 \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 16.25
+    },
+    {
+      "pose": "pilot-evade-2",
+      "registeredFrameId": "pilot-evade-2",
+      "label": "2/9 pilot-evade-2 \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 48.75
+    },
+    {
+      "pose": "pilot-evade-3",
+      "registeredFrameId": "pilot-evade-3",
+      "label": "3/9 pilot-evade-3 \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 81.25
+    },
+    {
+      "pose": "pilot-attack-1",
+      "registeredFrameId": "pilot-attack-1",
+      "label": "4/9 pilot-attack-1 \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 113.75
+    },
+    {
+      "pose": "pilot-attack-2",
+      "registeredFrameId": "pilot-attack-2",
+      "label": "5/9 pilot-attack-2 \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 146.25
+    },
+    {
+      "pose": "pilot-attack-3",
+      "registeredFrameId": "pilot-attack-3",
+      "label": "6/9 pilot-attack-3 \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 178.75000000000003
+    },
+    {
+      "pose": "pilot-attack-4",
+      "registeredFrameId": "pilot-attack-4",
+      "label": "7/9 pilot-attack-4 \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 211.25
+    },
+    {
+      "pose": "pilot-attack-5",
+      "registeredFrameId": "pilot-attack-5",
+      "label": "8/9 pilot-attack-5 \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 243.75
+    },
+    {
+      "pose": "pilot-attack-6",
+      "registeredFrameId": "pilot-attack-6",
+      "label": "9/9 pilot-attack-6 \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 276.25
+    },
+    {
+      "pose": "stance-evade",
+      "label": "return Evade",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

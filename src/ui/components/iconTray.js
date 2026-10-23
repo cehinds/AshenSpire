@@ -25,6 +25,7 @@ import { planIconTray } from '../models/IconTrayModel.js';
 import { attachTooltip, hideTooltip, showTooltipFor } from './tooltip.js';
 import { pip, pips } from '../kit/index.js';
 import { t, tFull } from '../strings.js';
+import { layoutMetrics } from '../layoutMetrics.js';
 
 const trays = new WeakMap();
 const overflowActions = new WeakMap();
@@ -70,6 +71,20 @@ export function trayIcon({
 } = {}) {
   const node = pip({ glyph: art ? '' : glyph, count, tone, ring, attrs: { ...attrs, class: ['tray-icon', attrs.class].filter(Boolean).join(' ') } });
   if (art) node.prepend(art);
+  // Status pips can use a text glyph, an engraved icon, or caller-supplied
+  // artwork. Give only those pips a stable box so the HUD can size and center
+  // the glyph independently from its count pill.
+  if (node.classList.contains('status-icon')) {
+    const countPill = node.querySelector('.stk');
+    const glyphNodes = [...node.childNodes].filter(child => child !== countPill);
+    if (glyphNodes.length) {
+      const glyph = document.createElement('span');
+      glyph.className = 'status-icon-glyph';
+      glyph.setAttribute('aria-hidden', 'true');
+      node.insertBefore(glyph, countPill || null);
+      glyph.append(...glyphNodes);
+    }
+  }
   node.tabIndex = 0;
   node.setAttribute('role', 'button');
   if (label) node.setAttribute('aria-label', label);
@@ -121,6 +136,15 @@ export function unobserveIconTray(row) {
 }
 
 // Reuse each icon and its listeners when space changes; only what shows moves.
+// Body zoom and the root font size are computed-style reads, and every tray
+// fit is followed by style writes, so each read after the first tray's write
+// flushed style again (a render fits a tray per combatant). They come from the
+// shared layout-constants cache, which is dropped when the page's scale writes.
+function trayMetrics() {
+  const { zoom, rem } = layoutMetrics();
+  return { zoom, rem };
+}
+
 export function fitIconTray(row, width) {
   if (!row) return;
   let state = trays.get(row);
@@ -162,8 +186,7 @@ export function fitIconTray(row, width) {
   const { items, overflow, summary, list } = state;
   // `width` arrives in viewport px; the tray is laid out in local (pre-zoom) px.
   // A reference rem is at least 16 physical px, as in the hand and footer plans.
-  const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
-  const rem = Math.max(16 / zoom, parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
+  const { zoom, rem } = trayMetrics();
   const plan = planIconTray({ count: items.length, width: width / zoom, rem });
   row.style.setProperty('--icon-tray-size', `${plan.size}px`);
   row.style.setProperty('--icon-tray-gap', `${plan.gap}px`);

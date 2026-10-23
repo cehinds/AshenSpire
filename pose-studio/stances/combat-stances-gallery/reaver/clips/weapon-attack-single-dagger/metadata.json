@@ -1,0 +1,79 @@
+{
+  "action": "weapon:attack:single-dagger",
+  "aliases": [
+    "weapon:attack:single-dagger",
+    "weapon:spell:single-dagger",
+    "weapon:ranged:single-dagger",
+    "weapon:rangedMagic:single-dagger"
+  ],
+  "origin": "offensive",
+  "timing": {
+    "totalMs": 405,
+    "impactMs": 112.5
+  },
+  "registeredSequence": {
+    "poses": [
+      "reaver.single-dagger.attack.anticipation",
+      "reaver.single-dagger.attack.strike",
+      "reaver.single-dagger.attack.follow-through",
+      "reaver.single-dagger.attack.recovery"
+    ],
+    "durations": [
+      150,
+      80,
+      130,
+      180
+    ],
+    "impact": 1,
+    "travel": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "hold": false,
+    "action": "attack"
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-offensive",
+      "label": "origin stance-offensive",
+      "weight": 1
+    },
+    {
+      "pose": "reaver.single-dagger.attack.anticipation",
+      "registeredFrameId": "reaver.single-dagger.attack.anticipation",
+      "label": "1/4 reaver.single-dagger.attack.anticipation \u00b7 weight 150",
+      "weight": 150,
+      "timeMs": 56.25
+    },
+    {
+      "pose": "reaver.single-dagger.attack.strike",
+      "registeredFrameId": "reaver.single-dagger.attack.strike",
+      "label": "2/4 reaver.single-dagger.attack.strike \u00b7 weight 80",
+      "weight": 80,
+      "timeMs": 142.5
+    },
+    {
+      "pose": "reaver.single-dagger.attack.follow-through",
+      "registeredFrameId": "reaver.single-dagger.attack.follow-through",
+      "label": "3/4 reaver.single-dagger.attack.follow-through \u00b7 weight 130",
+      "weight": 130,
+      "timeMs": 221.25
+    },
+    {
+      "pose": "reaver.single-dagger.attack.recovery",
+      "registeredFrameId": "reaver.single-dagger.attack.recovery",
+      "label": "4/4 reaver.single-dagger.attack.recovery \u00b7 weight 180",
+      "weight": 180,
+      "timeMs": 337.5
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "return Attack",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

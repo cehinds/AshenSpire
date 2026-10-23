@@ -189,8 +189,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the fullscreen switch loses its accessible name',
         file: 'src/ui/screens/settings.js',
-        find: ' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : \'\'}',
-        replace: ' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : \'\'}',
+        find: 'data-key="${r.key}" aria-label="${esc(r.label)}"${r.type === \'action\' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : \'\'}',
+        replace: 'data-key="${r.key}"${r.type === \'action\' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : \'\'}',
         expectRed: /fullscreen switch lacks an accessible name or description/,
       },
       {
@@ -333,19 +333,43 @@ const INTENT_OVERLAP = `(async () => {
         || Math.abs(playerAfter.left + playerAfter.width / 2 - playerBefore.left - playerBefore.width / 2) > 1)
       throw new Error('screenreach: small-player fixture changed its foot anchor or is not small');
   }
-  const frames = [...document.querySelectorAll('.combatant.enemy')];
-  const depth = frame => Number(getComputedStyle(frame.querySelector('.combatant-card > .sprite')).zIndex);
-  const low = frames.reduce((a, b) => depth(a) < depth(b) ? a : b);
-  const high = frames.find(frame => depth(frame) > depth(low));
-  const intent = low?.querySelector('.intent');
-  const sprite = high?.querySelector('.combatant-card > .sprite');
-  if (!intent || !sprite) throw new Error('screenreach: intent overlap fixture is missing its two enemies');
+  const visible = node => {
+    if (!node) return false;
+    const box = node.getBoundingClientRect(), style = getComputedStyle(node);
+    return box.width > 0 && box.height > 0 && style.display !== 'none'
+      && style.visibility !== 'hidden' && style.visibility !== 'collapse';
+  };
+  const frames = [...document.querySelectorAll('.combatant.enemy')].filter(frame =>
+    !frame.classList.contains('dead') && visible(frame.querySelector('.intent'))
+      && visible(frame.querySelector('.combatant-card > .sprite')));
+  const depth = frame => {
+    const value = getComputedStyle(frame.querySelector('.combatant-card > .sprite')).zIndex;
+    if (value === 'auto' || !Number.isFinite(Number(value)))
+      throw new Error('screenreach: intent overlap fixture requires numeric sprite depth');
+    return Number(value);
+  };
+  if (frames.length < 2) throw new Error('screenreach: intent overlap fixture is missing its two enemies');
+  let low = frames.reduce((a, b) => depth(a) < depth(b) ? a : b);
+  let high = frames.find(frame => depth(frame) > depth(low));
+  // Same-row enemies legitimately share a depth. Their later sibling paints
+  // above the earlier one; use that real order without changing authored layers.
+  if (!high) {
+    const pair = frames.flatMap((frame, index) => frames.slice(index + 1)
+      .filter(other => other.parentElement === frame.parentElement && depth(other) === depth(frame))
+      .map(other => [frame, other]))[0];
+    if (pair) [low, high] = pair;
+    if (!high)
+      throw new Error('screenreach: intent overlap fixture requires two ordered same-depth siblings');
+  }
+  const intent = low.querySelector('.intent');
+  const sprite = high.querySelector('.combatant-card > .sprite');
   const a = intent.getBoundingClientRect(), initial = sprite.getBoundingClientRect();
   const intentScale = a.width / intent.offsetWidth, spriteScale = initial.width / sprite.offsetWidth;
   // Authored formations can make this neighbour narrower than an XL badge.
   // Grow only the fixture's artwork, retaining its normal stacking context.
   sprite.style.transformOrigin = 'center bottom';
-  sprite.style.scale = String(Math.max(1, (a.width + 16) / initial.width, (a.height + 64) / initial.height));
+  const existingScale = parseFloat(getComputedStyle(sprite).scale) || 1;
+  sprite.style.scale = String(existingScale * Math.max(1, (a.width + 16) / initial.width, (a.height + 64) / initial.height));
   const grown = sprite.getBoundingClientRect();
   const field = sprite.closest('.field'), fieldBox = field.getBoundingClientRect(), zoom = fieldBox.width / field.clientWidth;
   // A grid-cell centre can otherwise hit the player's name or artwork and
@@ -374,8 +398,10 @@ const INTENT_OVERLAP = `(async () => {
   const b = sprite.getBoundingClientRect(), frameBox = high.getBoundingClientRect();
   high.style.setProperty('--enemy-hit-x', ((b.left + b.width / 2 - frameBox.left) / zoom) + 'px');
   high.style.setProperty('--enemy-hit-y', ((b.bottom - frameBox.top) / zoom) + 'px');
-  intent.style.translate = ((b.left + b.width / 2 - a.left - a.width / 2) / intentScale) + 'px '
-    + ((b.top + 8 - a.top) / intentScale) + 'px';
+  // Compact Core intent layout resets translate with !important. The fixture
+  // must override that placement to stage the same measured overlap.
+  intent.style.setProperty('translate', ((b.left + b.width / 2 - a.left - a.width / 2) / intentScale) + 'px '
+    + ((b.top + 8 - a.top) / intentScale) + 'px', 'important');
   const moved = intent.getBoundingClientRect();
   if (b.left > moved.left || b.right < moved.right || b.top > moved.top || b.bottom < moved.bottom)
     throw new Error('screenreach: neighbouring sprite does not cover the intent fixture');
@@ -435,12 +461,17 @@ const SCREENS = [
   // control apiece (Rest holds, the Smith confirms, the brazier confirms), and
   // a confirm panel that pushes a CANCEL button off a 360 px screen is exactly
   // the class this sweep exists to catch.
-  { name: 'rest', q: '?shot=rest', ready: `!!document.querySelector('#rest-opt')` },
+  { name: 'rest', q: '?shot=rest', ready: `!!document.querySelector('#rest-opt, #strategize-opt')` },
   // THE SMITH is a modal over the Shrine, and until 2026-09-11 it had no state
   // of its own — the review that photographed every room got the title screen
   // for `?shot=smith`. Its controls (the candidates, Back, Upgrade) are as
   // reachable-or-not as any room's.
-  { name: 'smith', q: '?shot=smith', ready: `!!document.querySelector('.smith-candidate-region')`,
+  { name: 'smith', q: '?shot=smith', ready: `!!document.querySelector('.smith-candidate-region, #smith-opt')`,
+    setup: `(() => {
+      if (!document.querySelector('.smith-candidate-region')) document.querySelector('#smith-opt')?.click();
+      if (!document.querySelector('.smith-candidate-region')) throw new Error('screenreach: Smith option did not open its candidate dialog');
+      return true;
+    })()`,
     overlay: 'the Smith is a modal over the Shrine; the Shrine\'s band and cards under its veil are covered on purpose' },
   { name: 'shop', q: '?shot=shop', ready: `!!document.querySelector('#leave-shop')` },
 ];
@@ -491,7 +522,7 @@ const PROBE = `(() => {
   const covered = [], scrolledOut = [];
   const all = [...app.querySelectorAll(sel)].filter((e) => {
     const r = e.getBoundingClientRect();
-    return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden'
+    return !e.matches(':disabled') && r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden'
       && !e.closest('details:not([open]), [inert]');
   });
   const frameOwnsHit = ${frameOwnsHit.toString()};
@@ -531,10 +562,13 @@ const PROBE = `(() => {
         ? proxyStyle : getComputedStyle(c, '::after');
       const tx = r.left + parseFloat(targetStyle.left) * z, ty = r.top + parseFloat(targetStyle.top) * z;
       const halfWidth = parseFloat(targetStyle.width) * z / 2, halfHeight = parseFloat(targetStyle.height) * z / 2;
-      // Waist-overlap players expose their artwork; their plate is hidden.
+      // Waist-overlap players keep their independently packed proxy; their
+      // artwork remains another selection route.
       // A core that packing explicitly gave up (data-core-obstructed) takes no
-      // input by design; that enemy is reached through its artwork.
+      // input by design; that enemy is reached through its artwork. A zero-size
+      // proxy also supplies no tap surface (unmeasured responsive fallback).
       const hasPlate = targetStyle.display !== 'none' && targetStyle.content !== 'none'
+        && parseFloat(targetStyle.width) > 0 && parseFloat(targetStyle.height) > 0
         && c.dataset.coreObstructed !== 'true';
       const reach = hasPlate && c.matches('.enemy-target-hitbox,.player-target-hitbox') && sr
         ? exposedPatch(c, 24, { left: tx - halfWidth, right: tx + halfWidth,
@@ -668,10 +702,26 @@ const PROBE = `(() => {
     const hud = document.querySelector('.combat-hud')?.getBoundingClientRect();
     const hand = document.querySelector('.hand-area')?.getBoundingClientRect();
     for (const frame of document.querySelectorAll('.enemy-row .combatant')) {
-      const r = frame.getBoundingClientRect();
       const label = frame.querySelector('.nm')?.textContent?.trim() || frame.dataset.eid || 'enemy';
-      if (hud && r.top < hud.bottom - 0.5) visual.push(label + ' frame paints under the HUD by ' + (hud.bottom - r.top).toFixed(1) + 'px');
-      if (hand && r.bottom > hand.top + 0.5) visual.push(label + ' frame paints under the hand by ' + (r.bottom - hand.top).toFixed(1) + 'px');
+      // Responsive HUD frames are transparent full-field geometry owners.
+      // Their artwork, health meters and detail panel are the painted receipt;
+      // overhead intent/inspection buttons keep their separate hit-test above.
+      // Legacy layouts retain their complete frame boundary check.
+      const combat = frame.closest('.combat');
+      const responsive = combat?.dataset.targetHud === 'true';
+      const detail = responsive ? [...combat.querySelectorAll('.target-hud-detail')]
+        .find(shell => shell.dataset.eid === frame.dataset.eid) : null;
+      const receipts = responsive
+        ? [...frame.querySelectorAll('.combatant-card > .sprite, .target-hud-overhead-meters .meters'),
+          ...(detail?.querySelectorAll('.target-hud-panel, .target-hud-statuses') || [])]
+        : [frame];
+      for (const receipt of receipts) {
+        const r = receipt.getBoundingClientRect();
+        if (r.width <= 2 || r.height <= 2 || getComputedStyle(receipt).visibility === 'hidden') continue;
+        const part = responsive ? ' painted receipt' : ' frame';
+        if (hud && r.top < hud.bottom - 0.5) visual.push(label + part + ' paints under the HUD by ' + (hud.bottom - r.top).toFixed(1) + 'px');
+        if (hand && r.bottom > hand.top + 0.5) visual.push(label + part + ' paints under the hand by ' + (r.bottom - hand.top).toFixed(1) + 'px');
+      }
     }
     // Information is the owner's one card-details control. Detect the removed
     // extra button through the rendered page, including a reintroduced box.

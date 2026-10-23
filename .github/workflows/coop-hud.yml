@@ -56,7 +56,7 @@ jobs:
   # whose tree equals origin/test: a release that carries only the SHA the test
   # stage already ran is not run again. A fix that landed on release directly
   # differs from test and runs. A failed fetch or diff counts as a difference.
-  # Pure git, no tool runs here. The same decision as ci.yml's `stage` job.
+  # The stage decision also reads the authored co-op switch; no art or browser.
   # ---------------------------------------------------------------------------
   stage:
     name: stage decision
@@ -74,6 +74,7 @@ jobs:
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /.github/
+            /content/config/ui/screens/title.json
 
       - name: Decide whether this workflow runs
         id: decide
@@ -88,6 +89,11 @@ jobs:
             elif git diff --quiet origin/test HEAD; then
               run=0
             fi
+          fi
+          coop=$(node -e 'const fs = require("node:fs"); const config = JSON.parse(fs.readFileSync("content/config/ui/screens/title.json", "utf8")); if (typeof config.behavior?.coopEnabled !== "boolean") throw Error("coopEnabled must be boolean"); console.log(config.behavior.coopEnabled);')
+          if [ "$coop" = false ]; then
+            echo "SKIP co-op HUD: behavior.coopEnabled=false in content/config/ui/screens/title.json"
+            run=0
           fi
           echo "run=$([ "$run" = 1 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
           echo "stage decision: run=$run (event=$EVENT_NAME ref=$REF_NAME)"

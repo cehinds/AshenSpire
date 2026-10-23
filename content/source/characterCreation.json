@@ -54,28 +54,28 @@
     {
       "id": "none",
       "name": "Nothing",
-      "icon": "🕳",
+      "icon": "skill",
       "desc": "Walk alone. The climb is enough.",
       "effects": []
     },
     {
       "id": "oldCinder",
       "name": "Old Cinder",
-      "icon": "🪙",
+      "icon": "relic",
       "desc": "Begin the climb with 50 cinders.",
       "effects": [{ "op": "addCinders", "amount": 50 }]
     },
     {
       "id": "travelersFlask",
       "name": "Traveler's Flask",
-      "icon": "🧪",
+      "icon": "flask-health",
       "desc": "Begin with one additional Crimson charge.",
       "effects": [{ "op": "addFlaskCapacity", "kind": "hp", "amount": 1 }]
     },
     {
       "id": "whetstoneMemory",
       "name": "Whetstone Memory",
-      "icon": "🪨",
+      "icon": "weight",
       "desc": "Begin with one armament already Smithed, improving all of its sourced basic cards.",
       "effects": [{ "op": "upgradeCard", "card": "strike" }]
     }

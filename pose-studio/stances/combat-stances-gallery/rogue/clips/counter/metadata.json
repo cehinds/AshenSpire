@@ -1,0 +1,83 @@
+{
+  "action": "counter",
+  "aliases": [
+    "counter"
+  ],
+  "origin": "counter",
+  "timing": {
+    "totalMs": 195,
+    "impactMs": 41.25
+  },
+  "registeredSequence": {
+    "selection": "rogue-counter-03",
+    "label": "High crossed daggers \u2192 downward riposte",
+    "poses": [
+      "rogue.counter.stance",
+      "rogue.counter.contact",
+      "rogue.counter.recovery",
+      "ready"
+    ],
+    "durations": [
+      55,
+      60,
+      65,
+      80
+    ],
+    "impact": 1,
+    "travel": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "effects": [
+      null,
+      "rogue.counter.effect-1",
+      "rogue.counter.effect-2",
+      null
+    ],
+    "hold": false
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-counter",
+      "label": "origin stance-counter",
+      "weight": 1
+    },
+    {
+      "pose": "rogue.counter.stance",
+      "registeredFrameId": "rogue.counter.stance",
+      "label": "1/4 rogue.counter.stance \u00b7 weight 55",
+      "weight": 55,
+      "timeMs": 20.625
+    },
+    {
+      "pose": "rogue.counter.contact",
+      "registeredFrameId": "rogue.counter.contact",
+      "label": "2/4 rogue.counter.contact \u00b7 weight 60",
+      "weight": 60,
+      "timeMs": 63.75
+    },
+    {
+      "pose": "rogue.counter.recovery",
+      "registeredFrameId": "rogue.counter.recovery",
+      "label": "3/4 rogue.counter.recovery \u00b7 weight 65",
+      "weight": 65,
+      "timeMs": 110.625
+    },
+    {
+      "pose": "stance-counter",
+      "registeredFrameId": "ready",
+      "label": "4/4 ready \u00b7 weight 80",
+      "weight": 80,
+      "timeMs": 165
+    },
+    {
+      "pose": "stance-counter",
+      "label": "return Counter",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

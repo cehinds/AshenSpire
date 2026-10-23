@@ -1,0 +1,76 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "minRank": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "lowerRankChance": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "rankOfRarity": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 10
+      }
+    },
+    "skipOwnedBasics": {
+      "type": "boolean"
+    },
+    "stanceCoverage": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "reservedSlots": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "preferTiers": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "basic",
+              "cantrip"
+            ]
+          }
+        },
+        "excludePools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "enabled",
+        "reservedSlots",
+        "preferTiers",
+        "excludePools"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "mode",
+    "minRank",
+    "lowerRankChance",
+    "rankOfRarity",
+    "skipOwnedBasics",
+    "stanceCoverage"
+  ],
+  "additionalProperties": false
+}

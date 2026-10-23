@@ -1,3 +1,5 @@
+import { projectGameCard } from './gameProfile.js';
+import { evadeStackGainPhrase } from './fixCoreMechanics.js';
 // src/model/playingCard.js — what a playing card IS, with no opinion about
 // how it looks.
 //
@@ -27,13 +29,18 @@
 // run object retained. Everything is read at call time and the result is deep
 // frozen, so a renderer cannot quietly make the model its scratch space.
 
+import { cardTagExplanation } from './cardTagExplanation.js';
+import { coreSmashClause } from './smashClause.js';
+import { cardClassification } from './cardClassification.js';
 import { resolveCard } from './registries.js';
 import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
 import { applyCardTraits } from '../content/traitProjection.js';
 import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
+import { wardReadsAsPoise, poiseMergeGroups } from './wardOffCardText.js';
 import { balance } from '../content/balance.js';
 import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
+import { spellDefenseSplit } from './spellDefense.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, splitContactParts, splitDamageTypesOf } from './combatRatings.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
@@ -94,15 +101,9 @@ export function combatCardDamageLabel(def, preview = null, registries = null, in
 }
 
 export function combatCardType(def) {
-  const p = combatProfileFor(def);
-  if (def.type === 'power') return 'Power';
-  if (['status', 'curse'].includes(def.type)) return 'Status';
-  if (def.type === 'skill' && !p.maneuver) return 'Skill';
-  if (p.maneuver === 'counter') return 'Counter';
-  if (p.maneuver === 'defend') return 'Defend';
-  if (p.camp === 'spell') return 'Spell';
-  return p.maneuver && p.maneuver !== 'casting' ? p.maneuver[0].toUpperCase() + p.maneuver.slice(1)
-    : def.type[0].toUpperCase() + def.type.slice(1);
+  const classification = cardClassification(def);
+  const type = (classification.stanceType !== 'prepare' && classification.stanceType) || (classification.cardCategory === 'curse' ? 'status' : classification.cardCategory);
+  return type[0].toUpperCase() + type.slice(1);
 }
 
 /**
@@ -111,13 +112,20 @@ export function combatCardType(def) {
  * predicate phrase (`condition`), the combat profile, the token bindings and the
  * static tokens. Every card-face text model reads through this one context.
  */
-export function cardSummaryContext(def, preview = null, registries = null) {
-  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def);
+export function cardSummaryContext(def, preview = null, registries = null, rules = null) {
+  const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def, registries, rules);
   const value = (effect, index, field = 'amount') => {
     const token = bindings.find(row => row.index === index && row.field === field)?.token;
     const live = preview?.values?.[index];
     return preview?.tokens?.[token] ?? (live?.op === effect.op ? live.value : undefined)
       ?? tokens[token] ?? (typeof effect[field] === 'number' ? effect[field] : '?');
+  };
+  const defenseValue = (effect, index) => {
+    const live = preview?.values?.[index];
+    if (live?.defenseSplit) return live.defenseSplit;
+    const token = bindings.find(row => row.index === index && row.field === 'amount')?.token;
+    const block = preview?.tokens?.[token + '.block'], ward = preview?.tokens?.[token + '.ward'];
+    return Number.isFinite(block) && Number.isFinite(ward) ? { block, ward } : null;
   };
   const title = id => registries?.statuses?.has(id) ? registries.statuses.get(id).name : id[0].toUpperCase() + id.slice(1);
   const condition = pred => {
@@ -145,12 +153,14 @@ export function cardSummaryContext(def, preview = null, registries = null) {
     if (['all', 'any'].includes(pred.p)) { const parts = pred.preds.map(condition); return parts.every(Boolean) ? parts.join(pred.p === 'all' ? ' and ' : ' or ') : ''; }
     return '';
   };
-  return { value, title, condition, profile: combatProfileFor(def), bindings, tokens };
+  // Ward off (Core 2): Ward damage reads as Poise damage, merged with the card's other Poise damage (wardOffCardText.js).
+  const poiseMerge = wardReadsAsPoise(registries) ? poiseMergeGroups(def.effects) : null;
+  return { value, defenseValue, title, condition, profile: combatProfileFor(def), bindings, tokens, poiseMerge };
 }
 
 /** Plain complete effect text. Numeric values come from the resolved preview. */
 export function combatCardSummary(def, preview = null, registries = null) {
-  const { value, title, condition, profile: p } = cardSummaryContext(def, preview, registries);
+  const { value, defenseValue, title, condition, profile: p, poiseMerge } = cardSummaryContext(def, preview, registries);
   const ratings = registries?.balance?.combatRatings ?? null, parts = [];
   for (const [index, effect] of (def.effects || []).entries()) {
     const n = value(effect, index), area = effect.target === 'allEnemies' ? ' to all enemies'
@@ -173,12 +183,19 @@ export function combatCardSummary(def, preview = null, registries = null) {
       }
       case 'block': {
         const verb = effect.target === 'ally' ? 'Ally gains' : 'Gain';
-        const split = splitOf(def, p, n, ratings);
-        text = split ? uiText('combat.card.splitBlock', { verb, block: split.physical, ward: split.magic }) : `${verb} ${n} Block`;
+        const defense = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2
+          ? (defenseValue(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n)) : null;
+        const split = defense || splitOf(def, p, n, ratings);
+        text = split ? uiText('combat.card.splitBlock', { verb, block: defense ? defense.block : split.physical, ward: defense ? defense.ward : split.magic }) : `${verb} ${n} Block`;
         break;
       }
       // A Spell's gain refills Ward first and only the overflow is Barrier, so it reads Ward.
-      case 'gainBarrier': text = `Gain ${n} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`; break;
+      case 'gainBarrier': {
+        const split = defenseValue(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n);
+        text = split ? uiText('combat.card.splitBlock', { verb: effect.target === 'ally' ? 'Ally gains' : 'Gain', block: split.block, ward: split.ward })
+          : `Gain ${n} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`;
+        break;
+      }
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;
       case 'gainPoise': text = `Gain ${n} Poise guard`; break;
       case 'buildup': text = `Add ${n} ${title(effect.status)} buildup${area}${effect.chance !== undefined && effect.chance < 100 ? ` (${effect.chance}%)` : ''}`; break;
@@ -201,11 +218,23 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'gainEnergy': text = `Gain ${n} SP`; break;
       case 'restoreMana': text = `Restore ${n} Mana`; break;
       case 'restoreStamina': text = `Restore ${n} SP`; break;
-      case 'poiseDamage': text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${n} Poise${area}`; break;
-      case 'wardDamage': text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${n} Ward impact${area}`; break;
+      case 'poiseDamage': case 'wardDamage': {
+        const merged = poiseMerge?.get(index);
+        if (merged && !merged.leader) continue; // its figure is in the leader's combined Poise
+        const figure = merged ? merged.indices.map(i => value(def.effects[i], i)) : [n];
+        if (figure.some(amount => typeof amount !== 'number')) return null;
+        text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${figure.reduce((sum, amount) => sum + amount, 0)} ${merged || effect.op === 'poiseDamage' ? 'Poise' : 'Ward impact'}${area}`; break;
+      }
       case 'retain': text = `Retain ${n}`; break;
       case 'grantRollMode': text = `Next ${effect.roll}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`; break;
       case 'enterStance': text = effect.choose ? 'Choose a stance' : `Enter ${registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance}`; break;
+      case 'moveEngagement': {
+        if (![-1, 1].includes(effect.bands) || !['enemy', 'pendingAttacker'].includes(effect.target)
+          || Object.keys(effect).some(key => !['op', 'target', 'bands', 'if'].includes(key))) return null;
+        const target = effect.target === 'pendingAttacker' ? 'attacker' : 'target';
+        text = effect.bands < 0 ? `Close 1 band toward ${target}` : `Retreat 1 band from ${target}`;
+        break;
+      }
       case 'addCard': text = `Add ${effect.count || 1} ${registries?.cards?.has(effect.card) ? registries.cards.get(effect.card).name : effect.card} to ${effect.pile || 'hand'}`; break;
       case 'grantCardCharge': {
         const bonuses = Object.entries({ damage: 'damage', block: 'Block', heal: 'healing', break: 'Poise', buildup: `${effect.buildupStatus || ''} buildup`, manaDiscount: 'Mana discount' })
@@ -223,17 +252,23 @@ export function combatCardSummary(def, preview = null, registries = null) {
   }
   if (p.maneuver === 'counter') {
     const payload = def.counterPayload || {}, returns = [];
+    const wardOff = Boolean(poiseMerge);
+    let poiseReturn = 0;
     for (const [key, label, op] of [['hp', 'damage', 'damage'], ['poise', 'Poise', 'poiseDamage'], ['ward', 'Ward', 'wardDamage']]) {
       if (def.effects.some(effect => effect.op === op)) continue;
       const live = preview?.values?.find(row => row.op === op)?.value;
       const amount = live ?? payload[key];
       const type = key === 'hp' ? combatCardDamageLabel(def, preview, registries) : '';
+      if (wardOff && key !== 'hp') { if (typeof amount === 'number' && amount > 0) poiseReturn += amount; continue; } // Ward drains Poise
       if (typeof amount === 'number' && amount > 0) returns.push(`${amount} ${type ? `${type} ` : ''}${label}`);
     }
+    if (poiseReturn > 0) returns.push(`${poiseReturn} Poise`);
     if (returns.length) parts.push(`Return ${returns.join(' + ')}`);
     if (def.pronePoiseBonus) parts.push(`+${def.pronePoiseBonus} Poise while Prone`);
   }
   if (def.evade) parts.push(`${def.evade.whileStatus ? `While ${title(def.evade.whileStatus)}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}`);
+  const smashClause = coreSmashClause(def, registries);
+  if (smashClause) parts.push(smashClause.replace(/\.$/, ''));
   if (def.comboHook) return null;
   if (def.usableWhile?.length) parts.unshift(`Usable through ${def.usableWhile.map(title).join(', ')}`);
   for (const keyword of def.keywords || []) if (['exhaust', 'retain', 'ethereal', 'innate'].includes(keyword)) parts.push(keyword[0].toUpperCase() + keyword.slice(1));
@@ -249,7 +284,8 @@ export function combatCardSummary(def, preview = null, registries = null) {
  * `card.js` keeps exporting `staticTokens` as a re-export of this, because
  * five files import that name and a rename would be churn that proves nothing.
  */
-export function staticCardTokens(def) {
+// `rules` is the run's snapshotted rules (run.gameProfile) for faces outside combat; it wins over the current registries' profile.
+export function staticCardTokens(def, registries = null, rules = null) {
   const tokens = {};
   const effects = cardTokenEffects(def);
   // Rank composition wraps constant stacks in add formulas. Resolve only
@@ -261,12 +297,27 @@ export function staticCardTokens(def) {
     return args.every(Number.isFinite) ? args.reduce((sum, item) => sum + item, 0) : undefined;
   };
   for (const binding of computeTokenBindings(effects)) {
-    const raw = (effects[binding.index] || {})[binding.field];
+    const effect = effects[binding.index] || {};
+    const raw = effect[binding.field];
     const value = constant(raw);
     if (typeof value === 'number') tokens[binding.token] = value;
     else {
-      const authored = constantFormulaValue(raw) ?? describeFormula(raw);
+      // Evade's gain is configured (accuracy.evadeStackBase/Dex, card overrides included), so its phrase reads the rules, not a literal.
+      const configured = raw?.f === 'metric' && raw.metric === 'evadeStackGain' && raw.of === 'self' && raw.per === undefined
+        ? evadeStackGainPhrase({ combatExpansionVersion: 2, gameProfile: rules?.gameProfile ?? registries?.gameProfile }, def) : undefined;
+      const authored = configured ?? constantFormulaValue(raw) ?? describeFormula(raw);
       if (authored !== undefined) tokens[binding.token] = authored;
+      // Weapon-scaled attacks have a static authored multiplier even though
+      // their resolved damage depends on the equipped weapon. Keep that
+      // multiplier visible on non-combat faces without guessing a damage
+      // value from a runtime loadout.
+      else if (raw?.f === 'metric' && raw.metric === 'weaponDamage'
+          && raw.of === 'self'
+          && Number.isFinite(raw.per) && raw.per > 0
+          && Object.keys(raw).every(key => ['f', 'metric', 'of', 'per'].includes(key))
+          && effect.attack?.source === 'weapon') {
+        tokens[binding.token] = `${raw.per}×`;
+      }
     }
   }
   return tokens;
@@ -276,6 +327,8 @@ export function staticCardTokens(def) {
 export function playingCardDefinition(registries, ref, { preview = null, definition = null, rules = null } = {}) {
   if (preview?.resolvedDefinition) return preview.resolvedDefinition;
   if (definition) return definition;
+  const configured = projectGameCard(rules?.gameProfile ? rules : registries, ref);
+  if (configured) return configured;
   const def = rules?.breakMeterVersion == null
     ? resolveCard(registries, ref) : resolveCard(registries, ref, rules.breakMeterVersion);
   if (rules?.combatExpansionVersion !== 2) return def;
@@ -319,12 +372,13 @@ export function playingCardDefinition(registries, ref, { preview = null, definit
 
 export function playingCardModel(registries, ref, { preview = null, definition = null, rules = null } = {}) {
   const def = playingCardDefinition(registries, ref, { preview, definition, rules });
-  const base = staticCardTokens(def);
+  const base = staticCardTokens(def, registries, rules);
 
   // Type presentation is authored data (balance.ui.cardTypes): corner radii
   // carry the type (attack squarest → power roundest) and each type owns its
   // banner colour. A type with no row keeps the card drawable.
-  const typeRow = balance.ui.cardTypes[def.type] || null;
+  const classification = cardClassification(def);
+  const typeRow = balance.ui.cardTypes[classification.cardCategory] || balance.ui.cardTypes[def.type] || null;
 
   // The class motif hue is authored on the class (`cardTint`). Colourless
   // cards have no owning class and fall back to the neutral frame, which is
@@ -344,6 +398,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     mana: preview ? (preview.displayCosts?.mana ?? preview.manaCost) : profile.mana,
     stamina: preview ? (preview.displayCosts?.stamina ?? preview.staminaCost ?? 0) : (profile.stamina || 0),
     ...(preview?.costIsEstimate ? { estimated: true } : {}),
+    ...(preview?.costShift ? { shift: preview.costShift } : {}),
   });
 
   // TAGS, resolved against the ACTIVE registries in all three branches.
@@ -382,7 +437,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
       label: tag.label,
       glyph: tag.glyph,
       color: tag.color,
-      blurb: tag.blurb,
+      blurb: cardTagExplanation(def, tag, registries),
       // An array rather than a Set: a model is serializable, and a Set is not.
       inheritedFrom: freeze([...(inheritedBy.get(tag.id) || [])]),
     })));
@@ -407,7 +462,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     id: def.id,
     instanceId: ref.instanceId || null,
     name: def.name,
-    icon: def.icon || '❖',
+    icon: def.icon || 'unknown',
     rarity: def.rarity,
     classId: def.class,
     upgraded: !!ref.upgraded,
@@ -417,12 +472,16 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     rankBadge,
     rankHelp,
     type: freeze({
-      id: def.type,
-      label: abilityLabel || (typeRow && typeRow.label) || def.type.toUpperCase(),
-      subtype: abilityLabel && weaponArt ? 'Weapon Art' : null,
-      glyph: abilityLabel ? def.abilityKind === 'spell' ? '✦' : weaponArt ? '⚔' : '◆' : null,
+      id: classification.cardCategory,
+      label: classification.cardCategory.toUpperCase(),
+      subtype: classification.stanceType ? classification.stanceType[0].toUpperCase() + classification.stanceType.slice(1) : null,
+      abilityLabel,
+      weaponArt: weaponArt ? 'Weapon Art' : null,
+      glyph: abilityLabel ? def.abilityKind === 'spell' ? 'skill' : weaponArt ? 'attack' : 'actions' : null,
       help: abilityLabel ? `${abilityLabel}${weaponArt ? ' · Weapon Art' : ''}. ${rankHelp}` : '',
     }),
+    ...classification,
+    legacyType: def.type,
     costs,
     tags,
     sigils: cardSigilIdentity(combatCardType(def), combatProfileFor(def)),
@@ -451,6 +510,6 @@ export function playingCardModel(registries, ref, { preview = null, definition =
  */
 export function playingCardClasses(model) {
   return `card as-card playing-poker-card rarity-${model.rarity}`
-    + ` cls-${model.classId} type-${model.type.id}${model.upgraded ? ' upgraded' : ''}`;
+    + ` cls-${model.classId} type-${model.type.id}${model.legacyType && model.legacyType !== model.type.id ? ` type-${model.legacyType}` : ''}${model.upgraded ? ' upgraded' : ''}`;
 }
 

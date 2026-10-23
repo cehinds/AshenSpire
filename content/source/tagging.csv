@@ -4020,3 +4020,11 @@ card,,entomb,maneuver:casting
 card,,entomb,range:reach
 card,,entomb,targeting:single
 card,,entomb,source:spell
+card,,hex,target
+card,,crimsonCleave,targeting:area
+card,,hewingArc,targeting:area
+card,,whirlingGuard,targeting:area
+card,,cleavingBlow,targeting:area
+card,,sweepingBlow,targeting:area
+card,,progression-ashen-cleaver,targeting:area
+armament,,dagger,throw

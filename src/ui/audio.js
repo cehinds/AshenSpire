@@ -20,6 +20,22 @@ import { assetUrl } from './assetmap.js';
 // shared with ui/screens/settings.js.
 export const AUDIO_DEFAULTS = balance.ui.audio;
 
+// Pitch variance for synthesized tones: every cue is multiplied by
+// 1 + (rng() * 2 * spread - spread), drawn once per cue and shared by its
+// tone layers, so the same cue never sounds twice the same (+/-4 %) and its
+// intervals never drift against themselves. `rng` is a hook so a test can pin
+// the factor; noise bursts are unaffected. The hold-confirmation phrase is
+// exempt: its notes sit exactly where the score puts them (see isPhrase).
+export const sfxVariance = { spread: 0.04, rng: Math.random };
+const pitchFactor = () => 1 + (sfxVariance.rng() * 2 * sfxVariance.spread - sfxVariance.spread);
+
+// The hold-confirmation phrase (holdTick ×3 then holdCommit, see
+// components/holdbeat.js) is one authored line, not a stream of events:
+// every crossed mark must sound even inside one frame, and every note sits
+// exactly where the score puts it. So it skips the 40 ms dedupe and the
+// per-cue pitch draw. `holdTick_endTurn` and the like are the same phrase.
+const isPhrase = (id) => /^hold(Tick|Commit)(?:_|$)/.test(String(id));
+
 /** Resolve the sparse music-only preference without deriving it from volume. */
 export function resolveMusicEnabled(settings = {}) {
   return typeof settings.musicEnabled === 'boolean'
@@ -60,6 +76,10 @@ export function initAudio(settings = {}) {
     timer: null,
     pulseTimer: null, // rhythmic low-thump layer (battle beds)
     sampleCache: new Map(),
+    // Voice cap + per-id dedupe for SFX. `voices` counts live tone/noise nodes
+    // (up from start, down in onended); `lastAt` is the audio-clock time each
+    // id last played. A cue refused by either is dropped silently.
+    sfxVoices: { voices: 0, max: 8, lastAt: new Map(), dedupeSec: 0.04 },
     folder: '', // external music folder/URL
     tracks: {}, // context → [track urls] from the folder manifest
     mediaEl: null, // currently-playing external <audio>, if any
@@ -149,27 +169,56 @@ export function initAudio(settings = {}) {
     // MUSIC IS DELIBERATELY NOT DROPPED — a bed that starts a beat late is a
     // bed, not a report about an event, and music() keeps its own path.
     if (ctx.state !== 'running') return;
+    // The same id inside 40 ms is one sound (a five-card draw is one draw
+    // cue), and a cue whose voices would pass 8 live is refused. Both drop
+    // silently: a late or clipped cue is worse than none, same as above.
+    const gate = state.sfxVoices;
+    const at = now();
+    const phrase = isPhrase(id);
+    const prev = gate.lastAt.get(id);
+    if (!phrase && prev !== undefined && at - prev < gate.dedupeSec) return;
+    // Reserve the whole cue by what will actually sound: a cached sample is
+    // one voice; anything else (no sample, or one still warming or failed)
+    // falls back to the synth, one voice per recipe layer, so a 4-layer burst
+    // on 6 live voices is refused, not let through to 10.
     const sample = assetUrl(own(SFX_MANIFEST, id) || `assets/sfx/${encodeURIComponent(id)}.ogg`);
-    if (playCachedSample(sample, sfxBus)) return;
+    const cached = state.sampleCache.get(sample)?.status === 'ready';
+    const layers = cached ? 1 : Math.max(1, resolveRecipe(id).recipe.length);
+    if (gate.voices + layers > gate.max) return;
+    gate.lastAt.set(id, at);
+    if (cached && playCachedSample(sample, sfxBus)) return;
     synthSfx(id);
     warmSample(sample);
   }
 
   const now = () => ctx.currentTime;
 
-  function tone({ type = 'sine', freq, to, t0 = 0, dur, peak = 0.6, bus = sfxBus }) {
+  // `k` is the cue's pitch factor: synthSfx draws it once per cue so the
+  // intervals inside a cue (holdCommit's octave, the victory arpeggio) hold
+  // while the whole cue transposes; a lone tone() draws its own.
+  function tone({ type = 'sine', freq, to, t0 = 0, dur, peak = 0.6, bus = sfxBus, k = pitchFactor() }) {
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     o.type = type;
     const start = now() + t0;
-    o.frequency.setValueAtTime(freq, start);
-    if (to != null) o.frequency.exponentialRampToValueAtTime(Math.max(1, to), start + dur);
+    o.frequency.setValueAtTime(freq * k, start);
+    if (to != null) o.frequency.exponentialRampToValueAtTime(Math.max(1, to * k), start + dur);
     g.gain.setValueAtTime(0.0001, start);
     g.gain.exponentialRampToValueAtTime(peak, start + Math.min(0.02, dur * 0.3));
     g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
     o.connect(g).connect(bus);
+    holdVoice(o);
     o.start(start);
     o.stop(start + dur + 0.02);
+  }
+
+  // A voice is live from start until its node reports ended.
+  function holdVoice(node) {
+    state.sfxVoices.voices++;
+    node.onended = () => {
+      node.onended = null;
+      state.sfxVoices.voices = Math.max(0, state.sfxVoices.voices - 1);
+    };
   }
 
   function noise({ dur, peak = 0.5, t0 = 0, hp = 400, lp = 6000, bus = sfxBus }) {
@@ -190,6 +239,7 @@ export function initAudio(settings = {}) {
     g.gain.setValueAtTime(peak, start);
     g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
     src.connect(hpF).connect(lpF).connect(g).connect(bus);
+    holdVoice(src);
     src.start(start);
     src.stop(start + dur + 0.02);
   }
@@ -225,9 +275,12 @@ export function initAudio(settings = {}) {
           `, in src/content/sfx.js.`
       );
     }
+    // One draw per cue keeps its layers in tune with each other. The hold
+    // phrase draws none: its notes sit exactly on the score's pitch.
+    const k = isPhrase(id) ? 1 : pitchFactor();
     for (const { kind, ...params } of recipe) {
       if (kind === 'noise') noise(params);
-      else tone(params);
+      else tone({ ...params, k });
     }
   }
 
@@ -667,6 +720,7 @@ export function initAudio(settings = {}) {
     const src = ctx.createBufferSource();
     src.buffer = entry.buffer;
     src.connect(bus);
+    holdVoice(src); // a sample is a voice too, under the same cap as the synth
     src.start();
     return true;
   }

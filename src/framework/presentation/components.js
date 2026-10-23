@@ -99,7 +99,7 @@ export function SharedModal({ titleText, closeLabel, summary, body, details = nu
   return node('dialog', { className: 'fw-modal', accessibleName: titleText, modal: true }, [
     node('header', { className: 'fw-modal-header' }, [
       icon, node('h2', { text: titleText, typographyRole: 'type.heading' }),
-      node('button', { className: 'fw-modal-close', text: '✕', accessibleName: closeLabel, interactive: true }),
+      node('button', { className: 'fw-modal-close', text: 'X', accessibleName: closeLabel, interactive: true }),
     ].filter(Boolean)),
     node('section', { className: 'fw-modal-summary', text: summary || '' }),
     node('section', { className: 'fw-modal-body' }, body || []),

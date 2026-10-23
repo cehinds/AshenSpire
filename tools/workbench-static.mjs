@@ -40,7 +40,7 @@ const GAME_REWRITE = /(["'`(])\/(workbench|styles|src|assets|pose-studio)\//g;
 const PREVIEW_PAGE = /^([\w.-]+-preview|tooltip-review[\w.-]*)\.html$/;
 const UI_TEXT = /\.(html|mjs|js|css)$/;
 const GAME_TEXT = /\.(html|mjs|js|css|json|svg)$/;
-const SNAPSHOT_DIRS = ['content', 'docs/tag-model', 'pose-studio/renewal', 'pose-studio/stances', 'workbench/workspace', 'ui-studio/workspace'];
+const SNAPSHOT_DIRS = ['content', 'docs/tag-model', 'pose-studio/renewal', 'pose-studio/stances', 'workbench/workspace', 'ui-studio/workspace', 'games/ashenspire', 'engine/modules'];
 const SNAPSHOT_FILES = ['src/content/card-layout.json', 'src/content/formationPositioningPresets.js', 'src/content/bookArtPresets.js'];
 const SNAPSHOT_APIS = ['tools', 'files/list', 'library', 'previews', 'assets/list', 'export/manifest', 'settings', 'jobs', 'review/state', 'files/backups', 'git'];
 
@@ -200,7 +200,9 @@ async function main() {
   await fs.mkdir(out, { recursive: true });
 
   const previews = await rootPreviewPages();
-  const files = await buildSnapshot(out, { base, previews });
+  const mirroredPages = [...previews];
+  if (existsSync(path.join(REPO, 'pose-studio/enemy-back-proposals/index.html'))) mirroredPages.push('pose-studio/enemy-back-proposals/index.html');
+  const files = await buildSnapshot(out, { base, previews: mirroredPages });
 
   // The UI, with its absolute paths moved under the base.
   const uiRewrite = { re: UI_REWRITE, to: `$1${base}$2` };
@@ -241,6 +243,15 @@ async function main() {
   for (const entry of await fs.readdir(path.join(REPO, 'pose-studio'), { withFileTypes: true })) {
     if (entry.isFile() && /\.(mjs|js|css|html)$/.test(entry.name)) {
       await copyTree(path.join(REPO, 'pose-studio', entry.name), path.join(game, 'pose-studio', entry.name), { textRe: GAME_TEXT, rewrite: gameRewrite });
+    }
+  }
+  // Scoped authoring review: nested module and its feature-local draft sources.
+  for (const dir of ['pose-studio/enemy-back-proposals', 'art/enemy-back-proposals', 'art/enemy-back-motion']) {
+    const source = path.join(REPO, dir);
+    if (existsSync(source)) await copyTree(source, path.join(game, dir), { textRe: GAME_TEXT, rewrite: gameRewrite });
+    if (dir === 'pose-studio/enemy-back-proposals' && existsSync(path.join(game, dir, 'index.html'))) {
+      const page = path.join(game, dir, 'index.html');
+      await fs.writeFile(page, (await fs.readFile(page, 'utf8')).replace('../../workbench/index.html#mod=assets', `${base}index.html#mod=assets`));
     }
   }
   if (art) {

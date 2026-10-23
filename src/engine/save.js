@@ -1,3 +1,5 @@
+import { gameModule, gameContent } from '../model/gameProfile.js';
+import { validateVerifiedProfile as validateResolvedGameProfile } from '../model/verifiedProfiles.js';
 import { migrateAbilityGrades } from '../model/abilityGrades.js';
 // src/engine/save.js — run persistence with schema + content versioning
 // (SPEC §3.12)
@@ -40,7 +42,7 @@ import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
 import { openLedger, closeLedger, note, readLedger } from '../model/healLedger.js';
 import { combatSnapshotReferenceProblems } from '../model/combatSnapshot.js';
-import { assertSavedBossReferences } from '../model/mapReferences.js';
+import { assertSavedBossReferences } from '../model/map/mapReferences.js';
 import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.js';
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
@@ -632,10 +634,32 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
      * relic/flask id that no longer resolves against the current registries.
      * A schemaVersion NEWER than this build is refused and left in the slot.
      */
+    // Read the pinned selection before reference validation. Never mutates,
+    // migrates or archives a slot; the caller must resolve/verify the snapshot.
+    peekRunGameProfile(slot = 1) {
+      const json = storage.getItem(runKey(slot));
+      if (!json) return null;
+      const snapshot = JSON.parse(json).gameProfile;
+      return snapshot ? validateResolvedGameProfile(snapshot) : null;
+    },
+
     loadRun(registries, slot = 1) {
       const json = storage.getItem(runKey(slot));
       if (!json) {
         runStatusRecord = { state: 'none', reason: `slot ${slot} is empty`, ledger: null };
+        return null;
+      }
+      // Profile mismatch is recoverable: preserve the original bytes instead
+      // of archiving a slot against the wrong content registry.
+      let pinned = null;
+      try { pinned = JSON.parse(json).gameProfile; } catch { /* Legacy malformed JSON follows the existing archive path below. */ }
+      try {
+        if (pinned) {
+          validateResolvedGameProfile(pinned);
+          if (registries.gameProfile?.hash !== pinned.hash) throw new Error('Pinned game profile does not match the load registry');
+        }
+      } catch (error) {
+        runStatusRecord = { state: 'profile-mismatch', reason: error.message, ledger: null };
         return null;
       }
       // A run written by a NEWER build: refuse AND PRESERVE, the run-side twin
@@ -780,7 +804,17 @@ export function createSaveManager(storage, { readOnlyProfile = false } = {}) {
           });
         }
         normalizeRunAttributes(run, registries);
-        validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
+        if (gameModule(run, 'class-selection')?.mode === 'configured') {
+          // A configured birth kit is pinned by the class pack, not the legacy
+          // baseline kit sharing its UI identity. Current equipment may differ.
+          const birth = run.startingKitSnapshot;
+          const fixed = gameContent(run, 'classes')?.find(row => row.id === birth?.classId)?.loadout;
+          if (!fixed || birth.id !== run.startingKitId || birth.classId !== run.class
+            || ['rightHand', 'leftHand'].some(hand => (birth[hand] || null) !== (fixed[hand] || null))) {
+            throw new Error('Configured starting kit disagrees with the pinned class loadout');
+          }
+          for (const id of Object.values(fixed).filter(Boolean)) if (!(registries.equipment.armaments || []).some(row => row.id === id)) throw new Error(`Configured starting kit has unknown armament '${id}'`);
+        } else validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
       } catch (e) {
         const reason = e && e.message ? e.message : 'corrupt save';
         const archiveId = archive(json, reason, slot);

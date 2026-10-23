@@ -45,8 +45,8 @@ import {
 } from '../../model/blacksmith.js';
 
 const GLYPH = Object.freeze({
-  armaments: '⚔', upgrade: '⚒', smithStones: '◆', refineStones: '◈', sigilSlots: '◇',
-  sigils: '✦', extractArt: '⚙', installArt: '⚒', upgradeArt: '✧', stackCopy: '❖',
+  armaments: 'attack', upgrade: 'smith', smithStones: 'skill', refineStones: 'skill', sigilSlots: 'dexterity',
+  sigils: 'staggered', extractArt: 'settings', installArt: 'smith', upgradeArt: 'vulnerable', stackCopy: 'relic',
 });
 
 export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged = () => {}, onArmamentPurchased = () => {}, priceMult = 1, hud = null }) {

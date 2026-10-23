@@ -1,0 +1,39 @@
+{
+  "id": "victory",
+  "description": "Victory screen. Mounted by src/ui/screens/gameover.js (mountGameOver, victory true).",
+  "route": "victory",
+  "viewModel": {
+    "props": {
+      "game": "object",
+      "earned": "array",
+      "victory": "boolean"
+    }
+  },
+  "regions": [
+    {
+      "slot": "body",
+      "component": "choiceBody",
+      "props": {
+        "title": "victory.title",
+        "choices": "$earned"
+      }
+    },
+    {
+      "slot": "footer",
+      "component": "buttons",
+      "props": {
+        "items": [
+          "history",
+          "title"
+        ]
+      }
+    }
+  ],
+  "events": {
+    "history": "history.open",
+    "title": "nav.title"
+  },
+  "assets": [
+    "scene.victory"
+  ]
+}

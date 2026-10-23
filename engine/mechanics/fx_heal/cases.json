@@ -1,0 +1,121 @@
+[
+  {
+    "name": "heals the target by the amount",
+    "given": {
+      "entities": {
+        "self": {
+          "hp": 5,
+          "maxHp": 20
+        }
+      }
+    },
+    "when": {
+      "command": "fx_heal.heal",
+      "with": {
+        "target": "self",
+        "amount": 5
+      }
+    },
+    "then": {
+      "entities": {
+        "self": {
+          "hp": 10
+        }
+      },
+      "events": [
+        "fx_heal.healed"
+      ]
+    }
+  },
+  {
+    "name": "clamps to max HP",
+    "given": {
+      "entities": {
+        "self": {
+          "hp": 8,
+          "maxHp": 10
+        }
+      }
+    },
+    "when": {
+      "command": "fx_heal.heal",
+      "with": {
+        "target": "self",
+        "amount": 5
+      }
+    },
+    "then": {
+      "entities": {
+        "self": {
+          "hp": 10
+        }
+      },
+      "events": [
+        "fx_heal.healed"
+      ]
+    }
+  },
+  {
+    "name": "heals an ally and leaves the caster alone",
+    "given": {
+      "entities": {
+        "self": {
+          "hp": 12,
+          "maxHp": 30
+        },
+        "ally": {
+          "hp": 1,
+          "maxHp": 30
+        }
+      }
+    },
+    "when": {
+      "command": "fx_heal.heal",
+      "with": {
+        "target": "ally",
+        "amount": 10
+      }
+    },
+    "then": {
+      "entities": {
+        "self": {
+          "hp": 12
+        },
+        "ally": {
+          "hp": 11
+        }
+      },
+      "events": [
+        "fx_heal.healed"
+      ]
+    }
+  },
+  {
+    "name": "a heal of zero changes nothing",
+    "given": {
+      "entities": {
+        "self": {
+          "hp": 7,
+          "maxHp": 20
+        }
+      }
+    },
+    "when": {
+      "command": "fx_heal.heal",
+      "with": {
+        "target": "self",
+        "amount": 0
+      }
+    },
+    "then": {
+      "entities": {
+        "self": {
+          "hp": 7
+        }
+      },
+      "events": [
+        "fx_heal.healed"
+      ]
+    }
+  }
+]

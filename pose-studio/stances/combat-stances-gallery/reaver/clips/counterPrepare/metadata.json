@@ -1,0 +1,45 @@
+{
+  "action": "counterPrepare",
+  "aliases": [
+    "counterPrepare"
+  ],
+  "origin": "counter",
+  "timing": {
+    "totalMs": 195,
+    "impactMs": 0
+  },
+  "registeredSequence": {
+    "poses": [
+      "pilot-counter"
+    ],
+    "durations": [
+      260
+    ],
+    "impact": 0,
+    "travel": [
+      0
+    ],
+    "hold": true
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-counter",
+      "label": "origin stance-counter",
+      "weight": 1
+    },
+    {
+      "pose": "pilot-counter",
+      "registeredFrameId": "pilot-counter",
+      "label": "1/1 pilot-counter \u00b7 weight 260",
+      "weight": 260,
+      "timeMs": 97.5
+    },
+    {
+      "pose": "stance-counter",
+      "label": "return Counter",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

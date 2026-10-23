@@ -1,4 +1,5 @@
 import { concealIntent } from '../src/model/combatIntentVisibility.js';
+import { enemyStanceCategory } from '../src/model/enemyStancePose.js';
 import { concealKnowledgeIntent } from '../src/model/enemyIntentKnowledge.js';
 
 // A connection owns its main seat and its couch seats. Reads from another
@@ -22,7 +23,7 @@ export function projectLanSnapshot(snapshot, memberIds) {
       for (const previous of receipt?.history || []) concealPerception(previous);
     }
     concealPerception(seat.xpProgression);
-    for (const card of seat.hand || []) for (const key of ['combatPreview', 'upcastPreviews', 'values', 'tokens', 'damageSequences']) delete card[key];
+    for (const card of [...(seat.hand || []), ...(seat.pendingCardChoice?.candidates || [])]) for (const key of ['combatPreview', 'upcastPreviews', 'values', 'tokens', 'damageSequences']) delete card[key];
   }
   if (view.scene?.kind !== 'combat') return view;
   if (view.scene.enemyKnowledge) {
@@ -34,6 +35,9 @@ export function projectLanSnapshot(snapshot, memberIds) {
   }
   for (const enemy of view.scene.enemies || []) {
     const intent = enemy.intent || { kind: 'unknown', moveId: null };
+    // Publish only the six-way body category before removing exact move data.
+    // Recompute from authority; incoming arbitrary pose paths are never trusted.
+    enemy.presentationStance = enemyStanceCategory(intent);
     const profile = intent.profile || intent.combatProfile || {};
     const reads = enemy.intentReads;
     const knowledgeAction = enemy.knowledgeAction;

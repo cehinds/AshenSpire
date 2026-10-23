@@ -19,6 +19,7 @@
 // without any of the three having to apply it to find out what it says.
 
 import { FLASK_KINDS } from './schemas.js';
+import { gameModule } from './gameProfile.js';
 
 export const CHARGE_FLASK_KINDS = Object.freeze(['hp', 'mana']);
 // Save-schema compatibility only. Runtime identity is derived from the current
@@ -239,6 +240,42 @@ export function chargeKindForFlask(registries, id) {
 }
 
 export function isFlaskChargeId(registries, id) { return chargeKindForFlask(registries, id) != null; }
+
+/** Acquisition query shared by rewards, shops and event effects. Old snapshots
+ * without the resource policy keep their inventory-only acquisition behavior. */
+export function flaskAcquisitionPlan(registries, run, flaskId) {
+  registries.flasks.get(flaskId);
+  const amount = gameModule(run, 'resources')?.chargeFlaskCapacityPerPickup || 0;
+  const chargeKind = amount > 0 ? chargeKindForFlask(registries, flaskId) : null;
+  if (chargeKind) {
+    const charges = run.flaskCharges;
+    const valid = charges && Number.isSafeInteger(amount) && amount > 0
+      && charges.base > 0 && charges.capacity > 0
+      && ['capacity', 'base', 'hp', 'mana', 'hpCurrent', 'manaCurrent', 'granted'].every(key => Number.isSafeInteger(charges[key]) && charges[key] >= 0)
+      && CHARGE_FLASK_KINDS.every(kind => Number.isSafeInteger(charges.grown?.[kind]) && charges.grown[kind] >= 0 && charges[`${kind}Current`] <= charges[kind])
+      && charges.hp + charges.mana === charges.capacity
+      && charges.capacity === charges.base + charges.grown.hp + charges.grown.mana + charges.granted
+      && Number.isSafeInteger(charges.capacity + amount);
+    return { ok: !!valid, kind: 'capacity', chargeKind, amount, reason: valid ? null : 'Invalid flask capacity ledger' };
+  }
+  const ok = Array.isArray(run.flasks) && run.flasks.length < flaskSlotCap(registries.balance);
+  return { ok, kind: 'consumable', amount: 1, reason: ok ? null : 'Potion slots are full' };
+}
+
+/** Apply one already-authorized acquisition; callers own their once-only claim
+ * receipt. Re-query immediately before writing, so refused pickups change nothing. */
+export function acquireFlask(registries, run, flaskId) {
+  const plan = flaskAcquisitionPlan(registries, run, flaskId);
+  if (!plan.ok) return plan;
+  if (plan.kind === 'capacity') {
+    const charges = run.flaskCharges;
+    charges.capacity += plan.amount;
+    charges[plan.chargeKind] += plan.amount;
+    charges[`${plan.chargeKind}Current`] += plan.amount;
+    charges.granted += plan.amount;
+  } else run.flasks.push({ flaskId });
+  return plan;
+}
 export function utilityFlaskIds(registries) {
   return registries.flasks.ids().filter((id) => !isFlaskChargeId(registries, id));
 }
@@ -365,7 +402,7 @@ export function graceRefillPlan(registries, run, { counts = {} } = {}) {
  * graceRefillRefusals(bundle) → [{ key, msg }]
  *
  * LAW 1 CLAUSE 5, at boot, naming the entry. Shaped exactly like
- * `geometryRefusals` in model/mapview.js and consumed the same way from
+ * `geometryRefusals` in model/map/mapview.js and consumed the same way from
  * model/validate.js, because one refusal shape in one place is cheaper than two
  * that agree today.
  *

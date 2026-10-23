@@ -1,19 +1,26 @@
+import * as IntentReceipt from './enemyIntentReceipt.js';
+import * as Hit from './stanceHit.js';
+import * as Engagement from './combatEngagement.js';
+import { configuredModule } from './gameProfileCombat.js';
 // SPEC 4.10: choices pause a committed contact plan before defense begins.
 // Callbacks are supplied by the solo/co-op command door, never saved in state.
 import { candidateState } from './combatRules.js';
 import { resolveCombatCard } from './combatExpansion.js';
-import { counterCoverageMatches } from './combatMatchups.js';
+// Matchups imports the reaction path too; defer access until the bundled cycle initializes.
+import * as Matchups from './combatMatchups.js';
 import { cardChoice } from '../model/cardChoices.js';
 import { upcastOptions } from '../model/upcasting.js';
 import { controlRestrictions } from './combatStatusControl.js';
 import { cardTargetPlan } from '../model/cardTargets.js';
 import { fightReacts, incomingAgainst, openEnemyWindow, playerRootSeat, runEnemyPlan, seatGone } from './enemyReactions.js';
+import { reactionPaused } from './reactionState.js';
+import { activateCombatContact, expansionEntity, expansionTargetPresent } from './combatExpansionActions.js';
 
 // Reaction rules: 1 = one reaction per root; 2 = card traits plus the reaction stack.
 export const usesReactions = ctx => ctx.reactionRulesVersion >= 1;
 export const stackedReactions = ctx => ctx.reactionRulesVersion === 2;
 export const cardTraitsActive = ctx => ctx.reactionRulesVersion === 2;
-export const reactionPaused = ctx => !!(ctx.pendingReaction || ctx.reactionResume || ctx.pendingAbilityDiscard);
+export { reactionPaused };
 
 export function setReactionsEnabled(ctx, entity, enabled) {
   if (!usesReactions(ctx)) throw new Error('Optional reactions are unavailable in this saved combat');
@@ -29,18 +36,19 @@ export function counterCoversAttack(ctx, def, profile, effect = 'damage') {
   if (!tags.includes('maneuver:counter')) return false;
   const coverage = def.counterCoverage || ctx.combatExpansionRules.matchups.counter.defaultCoverage[
     tags.includes('counter:spell') ? 'spell' : tags.includes('counter:ranged') ? 'ranged' : 'melee'];
-  return counterCoverageMatches(coverage, profile, effect);
+  return Matchups.counterCoverageMatches(coverage, profile, effect);
 }
 
 const counterCovered = (ctx, def, row) => row.contacts.some(contact =>
   counterCoversAttack(ctx, def, contact, contact.effect || 'damage'));
 
 // Version 2: a `trait:reaction` card is eligible by tag (a Counter still needs coverage,
-// anything else a positive contact). Untagged cards keep the version 1 rule until the
-// trait projection tags them.
+// anything else a positive contact). Legacy Counter/Sweep fallback is version 1 only;
+// version 2 requires the projected Reaction trait.
 function eligible(ctx, def, row) {
   const tags = def.cardTags || def.tags || [];
-  if (cardTraitsActive(ctx) && tags.includes('trait:reaction')) {
+  if (cardTraitsActive(ctx)) {
+    if (!tags.includes('trait:reaction')) return false;
     return tags.includes('maneuver:counter') ? counterCovered(ctx, def, row) : row.contacts.some(positive);
   }
   if (tags.includes('maneuver:counter')) return counterCovered(ctx, def, row);
@@ -50,7 +58,7 @@ function eligible(ctx, def, row) {
 // A hand card that could answer some incoming root by its maneuver (SPEC §4.10).
 const candidateByManeuver = (ctx, def) => {
   const tags = def.cardTags || def.tags || [];
-  if (cardTraitsActive(ctx) && tags.includes('trait:reaction')) return true;
+  if (cardTraitsActive(ctx)) return tags.includes('trait:reaction');
   return tags.includes('maneuver:counter') || (tags.includes('maneuver:sweep') && def.defensiveReaction === true);
 };
 // The committed reaction stack of this incoming root (version 2 only).
@@ -129,7 +137,7 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
     const choices = cardChoice(ctx.registries, base, ctx.player.classId)?.options || [null];
     const aimed = cardTargetPlan(base, seat, ctx.enemies, players, { solo: !ctx.players }).mode === 'enemy';
     const aims = aimed ? [...new Set(answered.map(threat => threat.enemyId))] : [answered[0].enemyId];
-    for (const aim of aims) for (const tier of [0, ...upcastOptions(base).map(option => option.ranks)]) for (const choice of choices) {
+    for (const rangeRoute of (ctx.rangeState && (base.cardTags || base.tags || []).includes('maneuver:counter') ? ['advance','throw'] : [undefined])) for (const aim of aims) for (const tier of [0, ...upcastOptions(base).map(option => option.ranks)]) for (const choice of choices) {
       const candidate = candidateState(ctx, { detached: true });
       candidate.queue = []; delete candidate.pendingReaction; delete candidate.reactionResume;
       candidate._reactionPlaying = true; candidate._buffer = null;
@@ -138,15 +146,29 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
       if (candidate.foundation) { candidate.foundation.eventCount = 0; candidate.foundation.rolls = {}; candidate.foundation.counts = {}; }
       hooks.setOwner?.(candidate, seat);
       const play = { cardInstanceId: inst.instanceId, ...(aimed ? { targetId: aim } : {}),
-        ...(choice ? { choice: choice.id } : {}), ...(tier ? { upcastTier: tier } : {}) };
+        ...(choice ? { choice: choice.id } : {}), ...(tier ? { upcastTier: tier } : {}), ...(rangeRoute ? {rangeRoute} : {}) };
       try {
         const paymentStart = candidate.eventLog.length;
         if (captureIncoming) candidate._groupSink = [];
-        hooks.play(candidate, play);
+        const restoreRange = Engagement.incomingRangeScope(candidate,group,candidate.player);
+        try { hooks.play(candidate, play); } finally { restoreRange(); }
         const planned = candidate._groupSink?.find(row => row.carrier?.instanceId === inst.instanceId);
         delete candidate._groupSink;
         const paid = candidate.eventLog.slice(paymentStart).find(event => event.type === 'cardPlayed');
         if (!paid || !candidate.player.alive) { note('other'); continue; }
+        const preparedCounter = candidate.player.combatCounter?.carrier;
+        const reservation = preparedCounter?.rangeCounterReservation;
+        if (rangeRoute === 'throw' && !reservation?.rangePlan.targets.some(row => row.missingBands > 0)) continue;
+        let range;
+        if (reservation) {
+          const restoreQuote = Engagement.incomingRangeScope(candidate,group,candidate.player);
+          const rawAttacker = candidate.enemies.find(enemy=>enemy.id===aim);
+          const attacker = Hit.previewTargetFor(rawAttacker,seat,{turn:candidate.turn,legacySolo:!candidate.players});
+          const previewActor = {...candidate.player,energy:candidate.player.energy+(paid.staminaSpent || 0),stamina:candidate.player.stamina+(paid.staminaSpent || 0),mana:candidate.player.mana+(paid.manaSpent || 0)};
+          const baseSp = (paid.staminaSpent || 0)-reservation.rangePlan.advanceSp;
+          try { range = Engagement.previewRangeRoutes(candidate,previewActor,[{source:previewActor,target:attacker,card:preparedCounter,effect:{op:'damage',target:'enemy',amount:0}}],{energy:baseSp,stamina:baseSp,mana:paid.manaSpent || 0},{rangeRoute,hitPreview:Hit.attackHitPreview}); }
+          finally { restoreQuote(); }
+        }
         // The stacked entries resolve after this option, last pushed first; all must play.
         // An enemy entry runs its committed plan; one that fizzles is a valid outcome.
         for (const entry of [...entries].reverse()) {
@@ -163,10 +185,10 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
           const amount = incomingAgainst(planned, enemy.id);
           if (amount > 0) incoming[enemy.id] = amount;
         }
-        options.push({ id: `${inst.instanceId}:${tier}:${choice?.id || 'default'}${aimed && enemyEntries ? `:${aim}` : ''}`, name: base.name,
+        options.push({ id: `${inst.instanceId}:${tier}:${choice?.id || 'default'}${rangeRoute === 'throw' ? ':throw' : ''}${aimed && enemyEntries ? `:${aim}` : ''}`, name: base.name,
           cardId: inst.cardId, play, staminaCost: paid.staminaSpent ?? paid.energySpent ?? 0,
           manaCost: paid.manaSpent || 0, choiceName: choice?.label || choice?.name || null,
-          ...(captureIncoming ? { incoming } : {}), ...(enemyEntries ? { sourceId: aim } : {}) });
+          ...(range ? {range} : {}), ...(captureIncoming ? { incoming } : {}), ...(enemyEntries ? { sourceId: aim } : {}) });
       } catch (error) {
         // Ineligible under the normal card/payment/control rules; the refusal names why.
         const { reason, ...extra } = error?.playRefusal || {};
@@ -221,8 +243,16 @@ function seatPresent(ctx, id) {
   return !!(seat?.entity || ctx.player)?.alive && (!seat || seat.connected === true);
 }
 
+// A later seeded contact keeps its original target. A fallen/disconnected body
+// cannot receive a swing cue, but does not cancel contacts on other targets.
+const contactTargetPresent = (ctx, group) => Object.values(group.targets).some(row =>
+  row.contacts.some(positive) && expansionTargetPresent(ctx, expansionEntity(ctx, row)));
+
 // Fallback for a later action of an already answered root (reportRestOfRoot usually fires first).
 function reportAlreadyAnswered(ctx, action, group, hooks) {
+  // Per-hit choices have already settled this contact, not the later hits.
+  // Those contacts get their own offer after the current return finishes.
+  if (group.contactSequence) return;
   const contacts = (action.meta?.expansionContacts || []).flat();
   for (const id of group.reactionAnswered || []) {
     const row = rowFor(ctx, group, id);
@@ -233,6 +263,7 @@ function reportAlreadyAnswered(ctx, action, group, hooks) {
 }
 
 export function beforeReactionAction(ctx, action, hooks) {
+  activateCombatContact(ctx, action);
   if (!usesReactions(ctx) || ctx._reactionPlaying) return false;
   if (ctx.pendingReaction) return true;
   const group = action.meta?.expansionGroup;
@@ -242,6 +273,18 @@ export function beforeReactionAction(ctx, action, hooks) {
   // answered or not, so the live window never opens for it (one prompt per attack).
   if (group.roundSettled) return false;
   if (group.begun) { reportAlreadyAnswered(ctx, action, group, hooks); return false; }
+  if (ctx.reactionRules?.contactPolicy === 'perHit' && !group.contactTelegraphed
+    && action.source.alive && !haltReason(ctx, action.source)
+    && contactTargetPresent(ctx, group)) {
+    group.contactTelegraphed = true;
+    const intentPreview = IntentReceipt.captureEnemyIntent(ctx, action.source, action);
+    if (intentPreview) group.publicIntentPreview = intentPreview;
+    ctx.emit('combatContactPrepared', { ...(group.enemyMoveStart || group.counterReturn),
+      sourceId: action.source.id, contactKey: group.key, kind: 'attack',
+      contactIndex: group.contactSequence?.index ?? 0,
+      contactCount: group.contactSequence?.contacts.length ?? 1,
+      ...(group.publicIntentPreview ? { intentPreview: group.publicIntentPreview } : {}) });
+  }
   if (stackedReactions(ctx)) return beforeStackedReaction(ctx, action, group, hooks);
   if (!action.source.alive) return false;
   const ids = ctx.players ? ctx.order : ['player'];
@@ -276,7 +319,7 @@ export function beforeReactionAction(ctx, action, hooks) {
       group.reactionAnswered.push(id); continue;
     }
     ctx.pendingReaction = { id: `${group.key}:${id}`, groupKey: group.key, ownerId: id,
-      sourceId: group.sourceId, options };
+      sourceId: group.sourceId, options, ...(group.publicIntentPreview ? { intentPreview: group.publicIntentPreview } : {}) };
     ctx.emit('combatReactionOffered', { offerId: ctx.pendingReaction.id, ownerId: id, sourceId: group.sourceId });
     return true;
   }
@@ -332,7 +375,8 @@ function beforePlayerRoot(ctx, group, hooks) {
 function offerSeats(ctx, group, ids, hooks, open) {
   const stack = stackOf(ctx, group);
   const playerRoot = !!playerRootSeat(ctx, group);
-  const cap = group.counterReturn ? ctx.reactionRules.stack.counterReturnMaxDepth : ctx.reactionRules.stack.maxDepth;
+  const cap = ctx.reactionRules.contactPolicy === 'perHit' ? 1 : group.counterReturn ? ctx.reactionRules.stack.counterReturnMaxDepth
+    : configuredModule(ctx, 'reactions')?.chainLimit ?? ctx.reactionRules.stack.maxDepth;
   group.reactionAnswered ||= [];
   for (const id of ids) {
     const row = playerRoot ? null : rowFor(ctx, group, id);
@@ -362,7 +406,7 @@ function offerSeats(ctx, group, ids, hooks, open) {
     // A player-card root has no enemy attacker; the offer names the top enemy entry.
     const sourceId = playerRoot ? enemyRows.at(-1).ownerId : group.sourceId;
     ctx.pendingReaction = { id: `${group.key}:${id}:${depth}`, groupKey: group.key, ownerId: id,
-      sourceId, options };
+      sourceId, options, ...(group.publicIntentPreview ? { intentPreview: group.publicIntentPreview } : {}) };
     ctx.emit('combatReactionOffered', { offerId: ctx.pendingReaction.id, ownerId: id, sourceId });
     return true;
   }
@@ -453,9 +497,10 @@ function playStackEntry(ctx, group, entry, hooks) {
   ctx._reactionPlaying = true;
   ctx._reactionSourceId = entry.sourceId || group.sourceId;
   let refusal = null;
+  const restoreRange = Engagement.incomingRangeScope(ctx,group,ctx.player);
   try { hooks.play(ctx, { ...play }); }
   catch (error) { if (!error?.playRefusal) throw error; refusal = error.playRefusal; }
-  finally { delete ctx._reactionPlaying; delete ctx._reactionSourceId; }
+  finally { restoreRange(); delete ctx._reactionPlaying; delete ctx._reactionSourceId; }
   if (refusal) {
     restoreReactionQueue(ctx);
     ctx.emit('combatReactionFizzled', { ownerId, cardInstanceId: play.cardInstanceId, reason: refusal.reason || 'other' });
@@ -504,6 +549,7 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
       cardInstanceId: option.play.cardInstanceId, maneuver: (def.cardTags || def.tags || []).includes('maneuver:counter') ? 'counter' : null,
       ...(option.sourceId ? { sourceId: option.sourceId } : {}), ...(option.incoming ? { incoming: option.incoming } : {}) };
     stack.entries.push(entry);
+    if (ctx.reactionRules.contactPolicy === 'perHit') group.reactionAnswered.push(ownerId);
     delete ctx.pendingReaction;
     const depth = stack.entries.filter(row => row.side === 'player' && row.ownerId === ownerId).length;
     ctx.emit('combatReactionChosen', { offerId, ownerId, cardInstanceId: option.play.cardInstanceId });
@@ -526,8 +572,10 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
     ctx.foundation.eventCount = 0; ctx.foundation.rolls = {}; ctx.foundation.counts = {};
   }
   ctx._reactionPlaying = true;
+  ctx._reactionSourceId = group.sourceId;
+  const restoreRange = Engagement.incomingRangeScope(ctx,group,ctx.player);
   try { hooks.play(ctx, option.play); }
-  finally { delete ctx._reactionPlaying; }
+  finally { restoreRange(); delete ctx._reactionPlaying; delete ctx._reactionSourceId; }
   if (ctx.player.combatCounter && option.play.cardInstanceId === ctx.player.combatCounter.carrier?.instanceId) {
     (group.manualCounterSerials ||= {})[ownerId] = ctx.player.combatCounter.serial;
   }
@@ -540,6 +588,7 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
 // A reaction that killed, staggered or locked the attacker cancels the rest, so
 // there is nothing left to explain (Codex on #1849).
 function reportRestOfRoot(ctx, group, ownerId, hooks) {
+  if (group.contactSequence) return;
   if (playerRootSeat(ctx, group)) return;
   const row = rowFor(ctx, group, ownerId);
   if (!row || row.contacts.filter(positive).length < 2 || !seatPresent(ctx, ownerId)) return;
@@ -571,7 +620,7 @@ function restoreRootPlay(ctx) {
 }
 
 export function restoreReactionQueue(ctx) {
-  if (!ctx.reactionResume || ctx.pendingAbilityDiscard || ctx.pendingAbilityPlay) return;
+  if (!ctx.reactionResume || (ctx.pendingAbilityDiscard || ctx.pendingCardChoice) || ctx.pendingAbilityPlay) return;
   const saved = ctx.reactionResume;
   ctx.queue.push(...saved.queue);
   if (ctx.foundation && saved.foundation) Object.assign(ctx.foundation, saved.foundation);
@@ -581,18 +630,32 @@ export function restoreReactionQueue(ctx) {
 
 export function revealActor(ctx, enemy) {
   enemy.actorIntentRevealed = true;
+  const intentPreview = IntentReceipt.captureEnemyIntent(ctx, enemy);
   ctx.emit('enemyActorTurnStarted', { sourceId: enemy.id, enemyId: enemy.enemyId,
-    moveId: enemy.pendingMove?.moveId || enemy.intent?.moveId, intent: structuredClone(enemy.intent) });
+    moveId: enemy.pendingMove?.moveId || enemy.intent?.moveId, intent: structuredClone(enemy.intent),
+    ...(intentPreview ? { intentPreview } : {}) });
 }
 
 export function startQueuedEnemy(ctx, action) {
   const group = action.meta?.expansionGroup;
-  if (!group || group.payloadStarted || (!group.enemyMoveStart && !group.counterReturn)) return;
+  if (!group) return;
+  // A per-hit Counter may end its actor after the last damage contact but
+  // before the move's trailing effects. Those effects belong to the same root.
+  if (group.contactSequence && (!action.source?.alive || haltReason(ctx, action.source))) group.cancelled = true;
+  if (!group.enemyMoveStart && !group.counterReturn) return;
+  if (group.cancelled || group.payloadStarted) return;
   group.payloadStarted = true;
   const enemy = action.source;
   group.cancelled = !enemy?.alive || enemy.skipNextTurn || controlRestrictions(ctx, enemy).locked;
   if (group.cancelled) return;
-  if (group.counterReturn) { ctx.emit('combatCounterTriggered', group.counterReturn); return; }
+  if (group.contactSequence && !contactTargetPresent(ctx, group)) return;
+  const prepared = group.contactTelegraphed ? { contactPrepared: true, contactKey: group.key } : {};
+  if (group.counterReturn) { ctx.emit('combatCounterTriggered', { ...group.counterReturn, ...prepared }); return; }
+  const intentPreview = IntentReceipt.captureEnemyIntent(ctx, enemy, action);
+  if (group.contactSequence?.index > 0) {
+    ctx.emit('combatHitStarted', { ...group.enemyMoveStart, ...prepared, ...(intentPreview ? { intentPreview } : {}), contactIndex: group.contactSequence.index, contactCount: group.contactSequence.contacts.length });
+    return;
+  }
   (enemy.performedMoves ||= []).push(group.enemyMoveStart.moveId);
-  ctx.emit('enemyMoveStarted', group.enemyMoveStart);
+  ctx.emit('enemyMoveStarted', { ...group.enemyMoveStart, ...prepared, ...(intentPreview ? { intentPreview } : {}) });
 }

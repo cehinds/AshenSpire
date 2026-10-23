@@ -1,0 +1,23 @@
+{
+  "id": "trait_insulated",
+  "tag": "trait:insulated",
+  "version": "1.0.0",
+  "family": "trait",
+  "label": "Insulated",
+  "description": "Insulated combat interaction.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "trait_insulated",
+    "color": "9FC3E8"
+  },
+  "portability": "data"
+}

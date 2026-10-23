@@ -2,6 +2,7 @@
 // only by the v2 resolver; old runs continue to use their original definitions.
 import { applyCombatExpansionMartial } from './combatExpansionMartial.js';
 import { RANGES } from '../model/combatRanges.js';
+import { spellDefenseSplit } from '../model/spellDefense.js';
 const SCHOOL_IDS = {
   force: ['starstonePebble', 'cometFragment', 'starbladePhalanx', 'starShower', 'starSlicer', 'starlance', 'starstoneArc', 'moonrendCut', 'meteorite', 'meteorSwarm', 'astralCleave', 'radiantSpray', 'supernova', 'starstoneKris', 'starfallBeam', 'starcaller', 'shootingShard', 'celestialLance', 'progression-comet-needle', 'progression-falling-constellation'],
   frost: ['frostVeil', 'frostNova', 'progression-rime-mirror', 'progression-eclipse-lance'],
@@ -84,15 +85,45 @@ function rewriteTags(def, row, maneuver) {
   return tags;
 }
 
+// Protection range is separate from the authored offensive range. Only the
+// incoming range filter widens; camp, targeting and trait restrictions stay.
+function withSpellDefenseRange(def) {
+  const tags = def.cardTags || def.tags || [];
+  const defensiveRole = tags.some(tag => tag === 'maneuver:defend' || tag === 'maneuver:counter');
+  const grants = [...(def.effects || []), ...(def.upgrade?.effects || []), ...(def.comboHook?.effects || [])]
+    .some(effect => ['block', 'gainBarrier', 'gainWard'].includes(effect.op));
+  if (!spellDefenseSplit(def, 0) || (!defensiveRole && !grants)) return def;
+  const defenseRange = def.defenseRange || 'ranged';
+  const ranges = RANGES.slice(0, RANGES.indexOf(defenseRange) + 1);
+  return { ...def, defenseRange,
+    ...(def.counterCoverage ? { counterCoverage: { ...def.counterCoverage, ranges } } : {}) };
+}
+
+// Hostile spell skills have the same Spell stance as ranged offensive spells.
+// The payload decides this role; classifying a card as Skill does not make it support.
+function withSpellOffenseStance(def) {
+  const tags = def.cardTags || def.tags || [];
+  if (def.stanceTrigger === false || def.combatProfile?.stanceTrigger === false
+    || !tags.includes('camp:spell') || def.combatProfile?.maneuver
+    || tags.some(tag => tag.startsWith('maneuver:'))) return def;
+  const range = def.range || def.combatProfile?.range || tags.find(tag => tag.startsWith('range:'))?.slice(6) || 'reach';
+  const hostile = [...(def.effects || []), ...(def.upgrade?.effects || [])].some(effect =>
+    ['enemy', 'allEnemies', 'randomEnemy', 'otherEnemies', 'target'].includes(effect.target));
+  if (range === 'melee' || !hostile) return def;
+  const nextTags = [...tags, 'maneuver:casting'];
+  return { ...def, tags: nextTags, cardTags: nextTags,
+    ...(def.combatProfile ? { combatProfile: { ...def.combatProfile, maneuver: 'casting' } } : {}) };
+}
+
 export function applyCombatExpansionCard(def) {
-  def = applyCombatExpansionMartial(def);
+  def = { ...applyCombatExpansionMartial(def), defenseRulesVersion: 2 };
   // Each paid Power instance leaves the usable deck for this combat. Its
   // installed status remains active; old runs never enter this projection.
   if (def.type === 'power' && !(def.keywords || []).includes('exhaust')) {
     def = { ...def, keywords: [...(def.keywords || []), 'exhaust'] };
   }
   const row = combatExpansionSpellProfiles[def.equipmentProfileId] || combatExpansionCardOverlay[def.id];
-  if (!row) return def;
+  if (!row) return withSpellDefenseRange(withSpellOffenseStance(def));
   const originalTags = def.cardTags || def.tags || [];
   const maneuver = row.maneuver || (COUNTERS[def.id] ? 'counter' : originalTags.find(tag => tag.startsWith('maneuver:'))?.slice(9)
     || (def.type === 'attack' ? 'casting' : null));
@@ -139,7 +170,7 @@ export function applyCombatExpansionCard(def) {
   card.effects = revise(card.effects, 50);
   if (card.upgrade?.effects) card.upgrade.effects = revise(card.upgrade.effects, 75);
   if (card.upcast && CHANCE_PRESSURE.has(def.id)) card.upcast.chancePerRank = 25;
-  return card;
+  return withSpellDefenseRange(withSpellOffenseStance(card));
 }
 
 const counter = (id, school, { camps = ['spell'], ranges = ['melee', 'reach', 'ranged'], targeting = ['single'], poise = 0, ward = 2, cost = 1 } = {}) => ({
@@ -152,7 +183,7 @@ const counter = (id, school, { camps = ['spell'], ranges = ['melee', 'reach', 'r
   upcast: { baseTier: 0, unlockedTiers: [1, 2, 3], maximumTier: 3, blockPerRank: 2 },
 });
 const cantrip = (id, name, school, damage, status = null, units = 3) => ({
-  id, name, class: 'colorless', rarity: 'common', cost: 1, manaCost: 0, type: 'attack', keywords: [],
+  id, name, class: 'colorless', rarity: 'common', cost: 1, manaCost: 0, costRule: 'fixed', type: 'attack', keywords: [],
   tags: ['camp:spell', `school:${school}`, `damage:${TYPE[school]}`, 'maneuver:casting', 'range:reach', 'targeting:single'],
   damageSchool: 'magic', exposureBuildupPerHit: 0, attack: { source: 'spell', damageType: TYPE[school] }, range: 'reach', targeting: 'single',
   effects: [{ op: 'damage', target: 'enemy', amount: damage }, ...(status ? [{ op: 'buildup', target: 'enemy', status, amount: units, camp: 'spell', recoveryProfile: combatProfileForPressure(status), chance: 50 }] : [])],
@@ -168,13 +199,13 @@ export const combatExpansionNewCards = [
   counter('illusionCounter', 'illusion', { camps: ['physical', 'spell'], poise: 1, ward: 1 }),
   counter('divineCounter', 'divine'), counter('decayCounter', 'decay'),
   { ...counter('barrageCounter', 'alteration', { camps: ['physical', 'spell'], targeting: ['area'], ranges: ['melee', 'reach', 'ranged'], ward: 1, poise: 1, cost: 2 }), name: 'Barrage Interception' },
-  cantrip('rimeNeedle', 'Rime Needle', 'frost', 3, 'frost'),
+  cantrip('rimeNeedle', 'Rime Needle', 'frost', 6, 'frost'),
   cantrip('emberDart', 'Ember Dart', 'fire', 5, 'burn', 4),
-  cantrip('staticNeedle', 'Static Needle', 'lightning', 3, 'paralysis'),
-  cantrip('forceNudge', 'Force Nudge', 'force', 4),
-  cantrip('drowsingMote', 'Drowsing Mote', 'illusion', 2, 'sleep'),
-  cantrip('holySpark', 'Holy Spark', 'divine', 4),
-  cantrip('rotMote', 'Rot Mote', 'decay', 3, 'crimsonBlight'),
+  cantrip('staticNeedle', 'Static Needle', 'lightning', 6, 'paralysis'),
+  cantrip('forceNudge', 'Force Nudge', 'force', 8),
+  cantrip('drowsingMote', 'Drowsing Mote', 'illusion', 5, 'sleep'),
+  cantrip('holySpark', 'Holy Spark', 'divine', 8),
+  cantrip('rotMote', 'Rot Mote', 'decay', 6, 'crimsonBlight'),
   { id: 'phaseWard', name: 'Phase Ward', class: 'colorless', rarity: 'rare', cost: 2, manaCost: 2, type: 'skill', keywords: ['exhaust'],
     tags: ['camp:spell', 'school:alteration', 'damage:blunt', 'range:melee', 'targeting:single'],
     effects: [{ op: 'applyStatus', target: 'self', status: 'invulnerability', stacks: 1 }],

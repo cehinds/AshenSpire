@@ -39,6 +39,7 @@ export function reactionRulesProblems(rules) {
   if (record(stack) && stack.counterReturnMaxDepth !== 1) problems.push('Counter return maxDepth must be exactly 1');
   if (!record(advantage) || Object.values(advantage).some(list => !Array.isArray(list) || list.some(item => typeof item !== 'string'))) problems.push('Advantage map must map maneuvers to arrays of maneuvers');
   if (rules.enemyReactions !== undefined && typeof rules.enemyReactions !== 'boolean') problems.push('Enemy reactions flag must be a boolean when present');
+  if (rules.contactPolicy !== undefined && rules.contactPolicy !== 'perHit') problems.push('Unknown reaction contact policy');
   return problems;
 }
 

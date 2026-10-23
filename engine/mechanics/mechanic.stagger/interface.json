@@ -1,0 +1,27 @@
+{
+  "mechanic": "mechanic.stagger",
+  "commands": {
+    "breakPoise": {
+      "params": {
+        "target": "entityRef",
+        "amount": "value"
+      },
+      "description": "Deal poise damage; the runtime raises runtime.poiseBroken when the meter empties."
+    }
+  },
+  "events": {
+    "staggered": {
+      "payload": {
+        "target": "entityRef"
+      },
+      "description": "Raised after the stagger penalty is applied."
+    }
+  },
+  "queries": {},
+  "listens": [
+    "runtime.poiseBroken"
+  ],
+  "requires": [
+    "status.vulnerable"
+  ]
+}

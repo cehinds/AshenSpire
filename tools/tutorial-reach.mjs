@@ -293,7 +293,7 @@ const SPOT_ON_TARGET = `(() => {
 })()`;
 
 // Page-side: resolves once the board and the spotlight are AT REST — the lit
-// box, every step's target, the viewport and --ui-zoom all unchanged for
+// box, every step's layout anchor, the viewport and --ui-zoom unchanged for
 // SETTLED_MS of time AND SETTLED_FRAMES rendered frames — and says how long
 // that took. The spotlight checks read after this, never after a fixed sleep.
 // Measured on a loaded 4-core machine: the page delivered a resize 3.6 s after
@@ -309,7 +309,9 @@ const SETTLED_MS = 700;
 const SETTLED_FRAMES = 30;
 const SETTLED_TIMEOUT_MS = 15000;
 const SETTLED = `new Promise((resolve) => {
-  const sels = ['.energy-orb', '.enemy-row .intent', '.hand .card', '.end-turn'];
+  // The enemy frame is the stable layout anchor. Check actual overhead
+  // intent coverage separately below after the board settles.
+  const sels = ['.energy-orb', '.enemy-row .enemy', '.hand .card', '.end-turn'];
   const rect = (el) => { if (!el) return '-'; const r = el.getBoundingClientRect(); return [r.left, r.top, r.width, r.height].map(Math.round).join(','); };
   const key = () => [innerWidth, innerHeight, getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom'),
     rect(document.querySelector('.tut-spot')), ...sels.map((s) => rect(document.querySelector(s)))].join('|');
@@ -369,6 +371,25 @@ async function main() {
     await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 }, S);
     await wait(ms);
     await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 }, S);
+    await wait(340);
+  };
+  // A completed card hold arms its target while the pointer is still down.
+  // The hand may repaint and reset data-hold, so observe the intended selected
+  // card plus its target, not an inspection highlight or transient fill flag.
+  const holdCardToSelect = async ({ x, y, instanceId }, targetSelector) => {
+    if (await evalIn(`!!document.querySelector('.enemy-row .enemy.targetable, .combatant.player.armed')`)) {
+      throw new Error('selection hold requires an unarmed board');
+    }
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 }, S);
+    try {
+      const selector = `.hand .card[data-instance-id=${JSON.stringify(instanceId)}]`;
+      await until(`(() => {
+        const card = document.querySelector(${JSON.stringify(selector)});
+        return card?.classList.contains('selected') && !!document.querySelector(${JSON.stringify(targetSelector)});
+      })()`, `completed selection hold for ${instanceId}`);
+    } finally {
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 }, S);
+    }
     await wait(340);
   };
   const pressKey = async (key, code, keyCode) => {
@@ -431,10 +452,14 @@ async function main() {
         });
         if (!c) return null;
         const r = c.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: c.dataset.cardId };
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: c.dataset.cardId, instanceId: c.dataset.instanceId };
       })()`);
       if (!pt) return { armed: false, card: null };
-      await clickAt(pt.x, pt.y);
+      // A completed card hold selects without playing, including singleton
+      // targets under the shipped oneTapPlay default (SPEC §7.3).
+      const beforeHold = await gameplayReceipt();
+      await holdCardToSelect(pt, '.enemy-row .enemy.targetable');
+      ok(await gameplayReceipt() === beforeHold, 'attack selection hold leaves gameplay unchanged');
       const state = await evalIn(`({
         armed: !!document.querySelector('.hand .card.selected') && !!document.querySelector('.enemy-row .enemy.targetable'),
         card: (document.querySelector('.hand .card.selected') || {}).dataset?.cardId || null,
@@ -461,10 +486,14 @@ async function main() {
         });
         if (!c) return null;
         const r = c.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, instanceId: c.dataset.instanceId };
       })()`);
       if (!pt) return { armed: false, card: null };
-      await clickAt(pt.x, pt.y);
+      // A completed card hold selects without playing, including singleton
+      // targets under the shipped oneTapPlay default (SPEC §7.3).
+      const beforeHold = await gameplayReceipt();
+      await holdCardToSelect(pt, '.combatant.player.armed');
+      ok(await gameplayReceipt() === beforeHold, 'self-Counter selection hold leaves gameplay unchanged');
       const state = await evalIn(`({
         armed: !!document.querySelector('.hand .card.selected') && !!document.querySelector('.combatant.player.armed'),
         enemyTarget: !!document.querySelector('.enemy-row .enemy.targetable'),
@@ -570,35 +599,39 @@ async function main() {
       }
     };
     await clickSel('#cz-classes .cz-class', 'the first class');
-    await clickSel('#cz-next', 'Next (to Attributes)');
-    await until(`${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Attributes stage');
-    await openFace('primary');
-    const mode = await evalIn(`(() => { const s = document.querySelector('#cz-statedit .cc-mode-select'); s.value = 'lean'; s.dispatchEvent(new Event('change', { bubbles: true })); return s.value; })()`);
-    if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
-    await clickSel('#cz-next', 'Next (to Keepsake)');
-    await until(onStage('keepsake'), 'the Keepsake stage');
-    await clickSel('#cz-keepsakes [data-keepsake-id]', 'the first keepsake');
-    await clickSel('#cz-next', 'Next (to Equipment)');
-    await until(onStage('equipment'), 'the Equipment stage');
-    await openFace('armour');
-    await clickSel('#cz-armours .equip-chip .equipment-poker-card', 'the first armour');
-    // The armour's own Choose button is spent only when the stage shows it
-    // (a card click may already have chosen the armour); the probe never
-    // clicks an element it cannot see.
-    if (await evalIn(`(() => { const b = document.querySelector('#cz-armours .equip-chip .equipment-choose'); if (!b) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !b.disabled; })()`)) {
-      await clickSel('#cz-armours .equip-chip .equipment-choose', 'Choose armour');
-    }
-    for (let step = 0; step < 8; step += 1) {
-      if (await evalIn(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
-      if (await evalIn(`document.querySelector('[data-equipment-section="startingAbilities"]')?.closest('details')?.open === true`)) {
-        while (await evalIn(`!!document.querySelector('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])') && document.querySelector('#cz-next')?.getAttribute('aria-disabled') === 'true'`)) {
-          await clickSel('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])', 'a starting ability');
-        }
+    await clickSel('#cz-next', 'Next after Class');
+    // Core uses fixed starting choices and goes straight to Review. Detailed
+    // creation retains the authored Attributes -> Equipment walk below.
+    await until(`(${onStage('review')}) || (${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select'))`, 'Review or Attributes after Class');
+    if (await evalIn(onStage('attributes'))) {
+      await openFace('primary');
+      const mode = await evalIn(`(() => { const s = document.querySelector('#cz-statedit .cc-mode-select'); s.value = 'lean'; s.dispatchEvent(new Event('change', { bubbles: true })); return s.value; })()`);
+      if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
+      await clickSel('#cz-next', 'Next (to Keepsake)');
+      await until(onStage('keepsake'), 'the Keepsake stage');
+      await clickSel('#cz-keepsakes [data-keepsake-id]', 'the first keepsake');
+      await clickSel('#cz-next', 'Next (to Equipment)');
+      await until(onStage('equipment'), 'the Equipment stage');
+      await openFace('armour');
+      await clickSel('#cz-armours .equip-chip .equipment-poker-card', 'the first armour');
+      // The armour's own Choose button is spent only when the stage shows it
+      // (a card click may already have chosen the armour); the probe never
+      // clicks an element it cannot see.
+      if (await evalIn(`(() => { const b = document.querySelector('#cz-armours .equip-chip .equipment-choose'); if (!b) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !b.disabled; })()`)) {
+        await clickSel('#cz-armours .equip-chip .equipment-choose', 'Choose armour');
       }
-      await clickSel('#cz-next', 'Next (towards Review)');
+      for (let step = 0; step < 8; step += 1) {
+        if (await evalIn(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
+        if (await evalIn(`document.querySelector('[data-equipment-section="startingAbilities"]')?.closest('details')?.open === true`)) {
+          while (await evalIn(`!!document.querySelector('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])') && document.querySelector('#cz-next')?.getAttribute('aria-disabled') === 'true'`)) {
+            await clickSel('.cc-ability-choose:not([aria-pressed="true"]):not([disabled])', 'a starting ability');
+          }
+        }
+        await clickSel('#cz-next', 'Next (towards Review)');
+      }
     }
     await until(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`, 'the Review stage');
-    // Fix the seed so the first floor reliably offers a fight (the same seed the
+    // Fix the seed so the opening route reliably offers a fight (the same seed the
     // ?shot= harness uses); everything else stays at the shipped defaults.
     await evalIn(`(() => { const s = document.querySelector('#seed-input'); if (!s) return null; s.value = ${JSON.stringify(seed)}; s.dispatchEvent(new Event('input', { bubbles: true })); return s.value; })()`);
     await until(`(() => { const b = document.querySelector('#cz-start'); return !!b && !b.disabled && b.getAttribute('aria-disabled') !== 'true'; })()`, 'Begin accepting the finished character', 5000);
@@ -617,7 +650,28 @@ async function main() {
       await clickSel('.class-mastery-node', 'the initial class tree choice');
     }
     await until(`!!document.querySelector('.map-node.reachable')`, 'the map');
+    // Core begins with a visible Rest landmark before its first split. Leave
+    // through the real room UI; Current can offer a fight immediately.
+    if (!(await reachableFightSelector()) && await evalIn(`!!document.querySelector('.map-node.shrine.reachable')`)) {
+      await clickSel('.map-node.shrine.reachable', 'the initial Rest landmark');
+      await until(`!!document.querySelector('#map-enter:not([disabled])')`, 'Enter for the initial Rest');
+      await clickSel('#map-enter', 'ENTER the initial Rest');
+      await until(`!!document.querySelector('#shrine-leave')`, 'Continue from the initial Rest');
+      await clickSel('#shrine-leave', 'Continue from the initial Rest');
+      await until(`!!document.querySelector('.map-node.reachable:not(.current)')`, 'the map after the initial Rest');
+    }
   };
+
+  // Fog hides Core fight icons as Unknown. Choose the deterministic fixture's
+  // fight from the saved route, then require and click its real reachable node.
+  const reachableFightSelector = () => evalIn(`(() => {
+    const saved = JSON.parse(localStorage.getItem('sote_run_v1') || 'null');
+    const node = [...document.querySelectorAll('.map-node.reachable:not(.current)')].find(el => {
+      const row = saved?.mapGraph?.nodes?.[el.dataset.node];
+      return row?.actualType === 'fight' || row?.type === 'monster';
+    });
+    return node ? '.map-node.reachable[data-node="' + node.dataset.node + '"]' : null;
+  })()`);
 
   // A fresh combat board at this viewport, with the tutorial mounted over it.
   // ?shot=combat suppresses the first-run flag, so we mount the real module by
@@ -628,16 +682,19 @@ async function main() {
     await until(`!!document.querySelector('.combat .hand .card')`, 'combat board');
     await wait(700); // auto-zoom re-flexes on a 150ms debounce, plus a boot re-apply
     return evalIn(`(async () => {
-      // The expanded Reaver opener may legitimately draw only Counters and
-      // friendly actions. This cell verifies Escape while a CARD target is
-      // armed, not the shuffle, so give the shot fixture one authored,
-      // affordable hostile card instead of mistaking Shield Bash's deferred
-      // reply for an immediate attack.
+      // Starting decks and their opening draws need not include an attack or
+      // Counter. Seed authored cards for both Escape paths; their real target
+      // plans, selection holds and no-spend receipts stay under test.
+      const { projectGameCard } = await import('/src/model/gameProfile.js');
       const combat = window.__combat;
-      if (!combat.piles.hand.some(card => card.instanceId === 'tutorial-reach-attack')) {
-        combat.piles.hand.unshift({ instanceId: 'tutorial-reach-attack', cardId: 'strike', upgraded: false });
-        window.__renderCombatForShot();
+      const fixtureCards = [
+        { instanceId: 'tutorial-reach-attack', cardId: 'strike', upgraded: false },
+        { instanceId: 'tutorial-reach-counter', cardId: projectGameCard(combat, 'core.counter') ? 'core.counter' : 'shieldBash', upgraded: false },
+      ];
+      for (const card of fixtureCards) {
+        if (!combat.piles.hand.some(inst => inst.instanceId === card.instanceId)) combat.piles.hand.push(card);
       }
+      window.__renderCombatForShot();
       const m = await import('/src/ui/components/tutorial.js');
       window.__tutDone = 0;
       m.mountTutorial(document.getElementById('app'), { onDone: () => { window.__tutDone++; } });
@@ -921,8 +978,8 @@ async function main() {
     // pannable canvas and legitimately need it.
     await walkNewClimb('SHOWCASE');
     await wait(500);
-    const haveFight = await evalIn(`!!document.querySelector('.map-node.monster.reachable')`);
-    ok(haveFight, 'first-run: the first floor offers a fight to walk into');
+    const haveFight = await reachableFightSelector();
+    ok(!!haveFight, 'first-run: the opening route offers a reachable fight to walk into');
     const savedRules = await evalIn(`(() => {
       const saved = JSON.parse(localStorage.getItem('sote_run_v1') || 'null');
       return { expansion: saved?.combatExpansionVersion, defense: saved?.advancedConfigSnapshot?.breakMeterVersion };
@@ -937,17 +994,28 @@ async function main() {
     // rather than mutating the rendered combat object. The profile stays
     // first-run: seenTutorial is still absent/false and the coach marks must
     // mount itself.
-    const seededFlask = await evalIn(`(() => {
+    const seededFlask = await evalIn(`(async () => {
+      const { projectGameCard } = await import('/src/model/gameProfile.js');
+      const { combatProfileFor } = await import('/src/model/combatCardProfile.js');
+      const { hasImmediateHostileDamage } = await import('/tools/click-impact-card.mjs');
       const key = 'sote_run_v1';
       const raw = localStorage.getItem(key);
       if (!raw) return false;
       const saved = JSON.parse(raw);
       saved.flasks = [{ flaskId: 'blightCoating' }];
-      saved.deck = saved.deck.filter(card => card.instanceId !== 'tutorial-reach-attack');
-      const selfCounter = saved.deck.find(card => card.cardId === 'shieldBash');
-      if (!selfCounter) return false;
-      saved.deck = saved.deck.filter(card => card.instanceId !== selfCounter.instanceId);
-      saved.deck.unshift({ instanceId: 'tutorial-reach-attack', cardId: 'strike', upgraded: false }, selfCounter);
+      // The class starter deck may have no Counter. Add an owned authored
+      // instance before CONTINUE, then let the real loader and draw find it.
+      const selfCounter = saved.deck.find(card => {
+        const def = projectGameCard(saved, card);
+        return def ? combatProfileFor(def).maneuver === 'counter' : card.cardId === 'shieldBash';
+      }) || { instanceId: 'tutorial-reach-counter', cardId: projectGameCard(saved, 'core.counter') ? 'core.counter' : 'shieldBash', upgraded: false };
+      const attack = saved.deck.find(card => {
+        const def = projectGameCard(saved, card);
+        return def ? combatProfileFor(def).maneuver !== 'counter' && hasImmediateHostileDamage(def, { targeted: true }) : card.cardId === 'strike';
+      });
+      if (!selfCounter || !attack) return false;
+      saved.deck = saved.deck.filter(card => ![attack.instanceId, selfCounter.instanceId].includes(card.instanceId));
+      saved.deck.unshift(attack, selfCounter);
       localStorage.setItem(key, JSON.stringify(saved));
       const metaKey = 'sote_meta_v1';
       const meta = JSON.parse(localStorage.getItem(metaKey));
@@ -955,15 +1023,18 @@ async function main() {
       localStorage.setItem(metaKey, JSON.stringify(meta));
       const reread = JSON.parse(localStorage.getItem(key));
       return reread.flasks?.[0]?.flaskId === 'blightCoating'
-        && reread.deck?.[0]?.instanceId === 'tutorial-reach-attack';
+        && reread.deck?.[0]?.instanceId === attack.instanceId
+        && reread.deck?.[1]?.instanceId === selfCounter.instanceId;
     })()`);
-    ok(seededFlask, 'first-run: valid attack and Blight Coating rows entered through the durable save');
+    ok(seededFlask, 'first-run: valid attack, self Counter and Blight Coating rows entered through the durable save');
     await cdp.send('Page.navigate', { url: base }, S);
     await passStartupGate();
     await until(`!!document.querySelector('.slot-continue:not([disabled])')`, 'the title screen with the flask-seeded run');
     await clickSel('.slot-continue', 'CONTINUE the flask-seeded run');
-    await until(`!!document.querySelector('.map-node.monster.reachable')`, 'the resumed map with a reachable fight');
-    await clickSel('.map-node.monster.reachable', 'a monster node');
+    await until(`!!document.querySelector('.map-node.reachable:not(.current)')`, 'the resumed map');
+    const fightSelector = await reachableFightSelector();
+    if (!fightSelector) throw new Error('the resumed map has no reachable fight in the saved route');
+    await clickSel(fightSelector, 'the reachable fight node');
     // The resumed map settles its camera and footer after it mounts; ENTER was
     // measured below the fold (top 1139 in 1080) on one run in ~6 when pressed
     // at once. Wait for it to stand on screen rather than scroll to it.

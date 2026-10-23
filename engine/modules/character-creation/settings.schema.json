@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "mode": {
+      "enum": [
+        "legacy",
+        "configured"
+      ]
+    },
+    "attributeAllocation": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "mode",
+    "attributeAllocation"
+  ],
+  "additionalProperties": false
+}

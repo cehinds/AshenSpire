@@ -56,23 +56,23 @@ function sprite(animation, style = 'animated', view = 'combat') {
   return classSprite('reaver', '#c9a227', null, 'gold', style, null, 'default', { animation, view });
 }
 
-test('actual Classic animated combat stage plays mounted Shield Counter and settles at its shield guard', () => {
+test('actual Classic class-default combat stage plays mounted Shield Counter and settles at guard', () => {
   const { run, card, animation, context } = fixture();
   const before = structuredClone({ run, card });
   const definition = resolveCombatCard(context, card, { upcastTier: 2 });
   const plan = resolveCombatAnimation(definition, equippedPieces(registries, run.loadout, run.class),
     { combatExpansionVersion: 2, classId: run.class, appearance: 'classic' });
-  assert.deepEqual([plan.group, plan.technique, plan.rest], ['defend', 'shieldGuard', 'shieldGuard']);
-  const host = sprite(animation); const stage = stageFor(host);
+  assert.deepEqual([plan.group, plan.technique, plan.rest], ['defend', 'guard', 'guard']);
+  const host = sprite(null); const stage = stageFor(host);
   try {
     assert.ok(stage.el.classList.contains('painted-stage'));
     assert.equal(stage.el.classList.contains('rendered-stage'), false);
-    assert.equal(stage.animationSetId, animation.setId);
-    assert.equal(stage.play(plan.technique, 260), true, 'normal combat can play its authored equipment sequence');
-    assert.equal(stage.pose, 'shieldGuard1', 'painted Shield Guard uses its authored technique sequence');
+    assert.equal(stage.animationSetId, null);
+    assert.equal(stage.play(plan.technique, 260), true, 'normal combat can play the class-default guard');
+    assert.equal(stage.pose, 'guard');
     stage.setRestPose(resolveCombatPose({ hp: 20 }, plan.rest), { immediate: true });
-    assert.equal(stage.rest, 'shieldGuard');
-    assert.equal(stage.pose, 'shieldGuard3');
+    assert.equal(stage.rest, 'guard');
+    assert.equal(stage.pose, 'guard');
     assert.deepEqual({ run, card }, before, 'sprite presentation never edits the mounted card or run');
   } finally { stage.dispose(); }
 });

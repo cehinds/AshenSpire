@@ -40,8 +40,8 @@ import {
 } from '../../model/master.js';
 
 const GLYPH = Object.freeze({
-  skillBooks: '📖', weaponArts: '✧', armaments: '⚔', training: '⚒', respec: '↺',
-  lesson: '✎', appraisal: '◎', redistribute: '⇄', sell: '◆',
+  skillBooks: 'quest', weaponArts: 'vulnerable', armaments: 'attack', training: 'smith', respec: '↺',
+  lesson: 'quest', appraisal: 'target', redistribute: '⇄', sell: 'skill',
 });
 // An element id for a track id (`item:magic-focus` → `item-magic-focus`).
 const slug = (id) => String(id).replace(/[^a-z0-9]/gi, '-');

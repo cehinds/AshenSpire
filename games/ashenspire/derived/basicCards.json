@@ -1,0 +1,332 @@
+{
+  "pools": {
+    "strike": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.strike"
+      },
+      "byClass": {}
+    },
+    "defend": {
+      "slot": "offHand",
+      "fallbackSlot": "mainHand",
+      "byTag": {
+        "default": "core.defend"
+      },
+      "byClass": {}
+    },
+    "counter": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.counter"
+      },
+      "byClass": {}
+    },
+    "smash": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.smash"
+      },
+      "byClass": {}
+    },
+    "sweep": {
+      "slot": "mainHand",
+      "byTag": {
+        "default": "core.sweep"
+      },
+      "byClass": {}
+    },
+    "evade": {
+      "slot": "offHand",
+      "fallbackSlot": "mainHand",
+      "byTag": {
+        "default": "core.evade"
+      },
+      "byClass": {}
+    },
+    "special": {
+      "slot": "mainHand",
+      "byTag": {},
+      "byClass": {
+        "class.reaver": {
+          "default": "core.reaverSpecial"
+        },
+        "class.starseer": {
+          "default": "core.starseerSpecial"
+        },
+        "class.rogue": {
+          "default": "core.rogueSpecial"
+        },
+        "class.herald": {
+          "default": "core.heraldSpecial"
+        }
+      }
+    }
+  },
+  "cards": [
+    {
+      "id": "core.strike",
+      "name": "Strike",
+      "rarity": "starter",
+      "rank": 0,
+      "type": "attack",
+      "sp": 1,
+      "mp": 0,
+      "tags": [
+        "camp:physical",
+        "maneuver:attack",
+        "classification.attack"
+      ],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 6
+        }
+      ],
+      "copiesWithBasicTraining": "unlimited"
+    },
+    {
+      "id": "core.defend",
+      "name": "Defend",
+      "rarity": "starter",
+      "rank": 0,
+      "type": "skill",
+      "sp": 1,
+      "mp": 0,
+      "tags": [
+        "camp:physical",
+        "maneuver:defend",
+        "classification.skill",
+        "trait:reaction"
+      ],
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 10
+        }
+      ],
+      "copiesWithBasicTraining": "unlimited"
+    },
+    {
+      "id": "core.counter",
+      "name": "Counter",
+      "rarity": "starter",
+      "rank": 0,
+      "type": "attack",
+      "sp": 1,
+      "mp": 0,
+      "tags": [
+        "camp:physical",
+        "maneuver:counter",
+        "classification.attack",
+        "trait:reaction"
+      ],
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 5
+        },
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 4
+        }
+      ],
+      "copiesWithBasicTraining": "unlimited"
+    },
+    {
+      "id": "core.smash",
+      "name": "Smash",
+      "rarity": "starter",
+      "rank": 0,
+      "type": "attack",
+      "sp": 2,
+      "mp": 0,
+      "tags": [
+        "camp:physical",
+        "maneuver:smash",
+        "classification.attack"
+      ],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 12
+        }
+      ],
+      "copiesWithBasicTraining": "unlimited"
+    },
+    {
+      "id": "core.sweep",
+      "name": "Sweep",
+      "rarity": "starter",
+      "rank": 0,
+      "type": "attack",
+      "sp": 1,
+      "mp": 0,
+      "tags": [
+        "camp:physical",
+        "maneuver:sweep",
+        "classification.attack",
+        "targeting:area"
+      ],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "allEnemies",
+          "amount": 4
+        }
+      ],
+      "copiesWithBasicTraining": "unlimited"
+    },
+    {
+      "id": "core.reaverSpecial",
+      "name": "Sundering Art",
+      "rarity": "starter",
+      "rank": 0,
+      "type": "attack",
+      "sp": 2,
+      "mp": 1,
+      "tags": [
+        "camp:physical",
+        "maneuver:smash",
+        "classification.attack",
+        "extractable"
+      ],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 36
+        }
+      ],
+      "copiesWithBasicTraining": "owned"
+    },
+    {
+      "id": "core.starseerSpecial",
+      "name": "Star Spark",
+      "rarity": "starter",
+      "rank": 0,
+      "type": "attack",
+      "sp": 1,
+      "mp": 1,
+      "tags": [
+        "camp:spell",
+        "maneuver:casting",
+        "classification.attack"
+      ],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 9
+        },
+        {
+          "op": "applyStatus",
+          "target": "enemy",
+          "status": "vulnerable",
+          "stacks": 2
+        }
+      ],
+      "copiesWithBasicTraining": "owned"
+    },
+    {
+      "id": "core.rogueSpecial",
+      "name": "Quick Guard",
+      "rarity": "starter",
+      "rank": 0,
+      "type": "skill",
+      "sp": 1,
+      "mp": 0,
+      "tags": [
+        "camp:physical",
+        "maneuver:casting",
+        "classification.skill"
+      ],
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 7
+        }
+      ],
+      "copiesWithBasicTraining": "owned"
+    },
+    {
+      "id": "core.heraldSpecial",
+      "name": "Lasting Resolve",
+      "rarity": "starter",
+      "rank": 0,
+      "type": "power",
+      "sp": 1,
+      "mp": 0,
+      "tags": [
+        "camp:physical",
+        "maneuver:casting",
+        "classification.power"
+      ],
+      "effects": [
+        {
+          "op": "block",
+          "target": "self",
+          "amount": 4
+        }
+      ],
+      "copiesWithBasicTraining": "owned"
+    },
+    {
+      "id": "core.cantrip",
+      "name": "Arcane Spark",
+      "rarity": "starter",
+      "rank": 0,
+      "type": "attack",
+      "sp": 1,
+      "mp": 0,
+      "tags": [
+        "camp:spell",
+        "source:spell",
+        "maneuver:casting",
+        "classification.attack",
+        "rank.cantrip"
+      ],
+      "effects": [
+        {
+          "op": "damage",
+          "target": "enemy",
+          "amount": 6
+        }
+      ],
+      "copiesWithBasicTraining": "owned"
+    },
+    {
+      "id": "core.manaSurge",
+      "name": "Mana Surge",
+      "rarity": "starter",
+      "rank": 0,
+      "type": "skill",
+      "sp": 1,
+      "mp": 0,
+      "tags": [
+        "camp:spell",
+        "maneuver:casting",
+        "classification.skill"
+      ],
+      "effects": [
+        {
+          "op": "restoreMana",
+          "target": "self",
+          "amount": 2
+        }
+      ],
+      "copiesWithBasicTraining": "owned"
+    }
+  ],
+  "cantrips": [
+    "core.starseerSpecial",
+    "core.cantrip",
+    "core.manaSurge"
+  ]
+}

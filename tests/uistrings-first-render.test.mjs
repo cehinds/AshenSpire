@@ -35,6 +35,11 @@ reword('combat.endTurn', 'REWORDED end turn');
 reword('combat.discard', 'REWORDED discard');
 reword('combat.exhaust', 'REWORDED exhaust');
 reword('combat.actions', 'REWORDED actions');
+reword('creation.view.gridLabel', 'REWORDED tiles');
+reword('creation.view.listLabel', 'REWORDED rows');
+reword('creation.view.grid', 'REWORDED tile accessibility');
+reword('creation.view.list', 'REWORDED row accessibility');
+reword('quit.title', 'REWORDED <farewell>');
 
 const { openHandDiscard } = await import('../src/ui/components/handDiscard.js');
 const { renderSettingsSync } = await import('../src/ui/components/settingsSync.js');
@@ -190,11 +195,35 @@ test('both boards repaint through the shared paths, not their own literals', asy
   const { readFileSync } = await import('node:fs');
   const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
   const solo = read('src/ui/screens/combat.js');
-  const renderControls = solo.slice(solo.indexOf('function renderControls()'), solo.indexOf('function renderControls()') + 2500);
+  const start = solo.indexOf('function renderControls()');
+  const renderControls = solo.slice(start, solo.indexOf('\n  function ', start + 1));
   assert.match(renderControls, /paintEndTurnKey\(\$\('\.end-turn'\), etKey\)/, 'solo renderControls repaints End Turn its own way');
-  assert.match(renderControls, /paintCombatActionCounts\(actionRow, \{ energy: combat\.player\.energy, energyMax: combat\.player\.energyMax,/, 'solo renderControls paints Actions its own way');
+  assert.match(renderControls, /paintActionCounts\(\)/, 'solo renderControls uses the paced shared row adapter');
+  assert.match(solo, /paintCombatActionCounts\(actionRow, \{ energy: p\.energy, energyMax: p\.energyMax,/, 'the adapter paints through the shared renderer');
+  assert.match(solo, /const p = dv\(combat\.player\)/, 'the shared row adapter reads the current presentation snapshot');
   assert.match(solo, /<div class="tt-title">\$\{esc\(t\('combat\.endTurn'\)\)\}<\/div>/, 'solo End Turn tooltip title');
   const coop = read('src/ui/screens/coop.js');
   assert.match(coop, /combatActionRowHtml\(\{ endTurnId: 'coop-endturn' \}\)/);
   assert.match(coop, /paintCombatActionCounts\(row, \{\s*energy: meP/, 'co-op repaints the row its own way');
+});
+
+
+test('creation view choices read their own faces and accessible names on first render', async () => {
+  const { viewModeToggle } = await import('../src/ui/components/creationCards.js');
+  withKitDom(() => {
+    const control = viewModeToggle('grid', () => {});
+    const grid = control.querySelector('[data-view-mode="grid"]');
+    const list = control.querySelector('[data-view-mode="list"]');
+    assert.match(textOf(grid), /REWORDED tiles/);
+    assert.match(textOf(list), /REWORDED rows/);
+    assert.equal(grid.getAttribute('aria-label'), 'REWORDED tile accessibility');
+    assert.equal(list.getAttribute('aria-label'), 'REWORDED row accessibility');
+  });
+});
+
+test('quit first paint consumes and escapes its authored title', async () => {
+  const { mountQuitScreen } = await import('../src/ui/quitGame.js');
+  const app = { innerHTML: '', querySelector: () => ({ addEventListener() {}, focus() {} }) };
+  mountQuitScreen(app, { schedule: () => 0 });
+  assert.match(app.innerHTML, /REWORDED &lt;farewell&gt;/);
 });

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // tools/statusreach.mjs — CAN A PLAYER EVER MEET THIS STATUS?
 //
-// Every row in content/statuses.js is applied by something a player can
+// Every row in content/source/statuses.json (plus the derived expansion rows in
+// src/content/combatStatusRules.js) is applied by something a player can
 // actually encounter, or this goes red and names the row.
 //
 // Rune, 2026-08-08. Law 1 clause 1 says adding content never touches code —
@@ -91,6 +92,10 @@
 //   R7  v2        production card/enemy overlays, positive buildup speakers
 //                 plus valid thresholds/grants, and typed damage riders with
 //                 an actual damaging carrier. Vocabulary alone is not reach.
+//   R8  burden    a shipped card's burden.status, but only when a shipped card
+//                 has an addBurden effect that can put that burden into an
+//                 enemy pile. The status card definition is vocabulary; the
+//                 speaker is the second half that makes the route real.
 //
 // R5 IS THE WEAKEST EDGE IN THIS FILE AND IT IS A SUBSTRING MATCH — the same
 // technique this file's own header calls a trap. It is admissible only because
@@ -145,8 +150,10 @@
 //      Six, not two: the two proc rows took their resist rows and their
 //      exposure rows down with them, which is R2/R3 being transitive and is
 //      the honest size of the hole.
-//   2. A new row `plantedRimeAsh` appended to src/content/statuses.js — the
-//      population's own door:
+//   2. A new row `plantedRimeAsh` appended to content/source/statuses.json and
+//      recompiled with `node tools/content-build.mjs` (it was appended to
+//      src/content/statuses.js when this was observed; that file is a shim now)
+//      — the population's own door:
 //        FAIL — 7 of 44 … plantedRimeAsh, exit 1.
 //   3. `strike.burn=+2` deleted from `torch` (and `gorefireBrand`) in
 //      content/source/weapons.csv, recompiled — R4's door:
@@ -185,6 +192,8 @@ import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js
 import { combatStatusRules } from '../src/content/combatStatusRules.js';
 import { combatExpansionMatchups } from '../src/content/combatMatchups.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
+import { applyCombatExpansionMartial } from '../src/content/combatExpansionMartial.js';
+import { stanceEntryBonuses, stanceRulesFor } from '../src/model/stanceRules.js';
 import { expandedEnemyMove } from '../src/engine/combatCardTactics.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -341,17 +350,42 @@ export function statusReach(bundle, opts = {}) {
       for (const value of Object.values(node)) walk(value);
     };
     walk(carrier);
-    const profile = combatProfileFor(carrier);
+    const profile = { ...combatProfileFor(carrier), ...(carrier.combatProfile || {}) };
+    // R8: mirror actual stance entry, requiring a shipped stance-bearing carrier and a positive configured grant.
+    const stanceContext = { stanceRules: opts.stanceRules || bundle.balance?.stanceRules };
+    const entry = stanceEntryBonuses({ ...carrier, combatProfile: profile }, stanceContext);
+    for (const status of ['precision', 'evade']) if (entry[status] > 0) note(status, `R8 stance entry ${where}`);
+    if (profile.camp === 'spell' && stanceRulesFor(stanceContext).spellStatusStacks > 0
+      && (carrier.effects || []).some(effect => ['applyStatus', 'buildup'].includes(effect.op)
+        && effect.chance !== 0 && positive(effect.stacks ?? effect.amount ?? 1))) note('precision', `R8 authored spell status ${where}`);
     const damaging = positive(carrier.damage) || [...(carrier.effects || []), ...(carrier.upgrade?.effects || [])]
       .some(effect => effect.op === 'damage' && positive(effect.amount));
     const type = expansionMatchups.damageAliases?.[profile.damageType] || profile.damageType;
     const rider = profile.camp && damaging ? expansionMatchups.damageRiders?.[type] : null;
     if (rider?.status && positive(rider.pressure)) pressure(rider.status, `${where} damage:${type}`);
   };
-  for (const card of bundle.cards || []) projected(applyCombatExpansionCard(card), `cards:${card.id}`);
+  for (const card of bundle.cards || []) projected(applyCombatExpansionMartial(applyCombatExpansionCard(card)), `cards:${card.id}`);
   for (const enemy of bundle.enemies || []) for (const [moveId, move] of Object.entries(enemy.moves || {})) {
     projected({ ...expandedEnemyMove({ enemyId: enemy.id }, move, moveId, { combatExpansionVersion: 2 }),
       enemyId: enemy.id, moveId }, `enemies:${enemy.id}/${moveId}`);
+  }
+
+  // ---- R8: generated burden status + a card that actually adds it ----------
+  // enemyBurdens.js applies a generated card's burden.status when it is drawn;
+  // the card registry alone is only vocabulary, so require an addBurden effect
+  // that names the same card before treating the status as reachable.
+  const cardsById = new Map((bundle.cards || []).map(card => [card.id, card]));
+  const burdenRefs = node => {
+    if (Array.isArray(node)) return node.flatMap(burdenRefs);
+    if (!node || typeof node !== 'object') return [];
+    return [ ...(node.op === 'addBurden' && typeof node.card === 'string' ? [node.card] : []),
+      ...Object.values(node).flatMap(burdenRefs) ];
+  };
+  for (const speaker of bundle.cards || []) {
+    for (const burdenId of new Set(burdenRefs([speaker.effects, speaker.upgrade?.effects, speaker.effectVariants]))) {
+      const status = cardsById.get(burdenId)?.burden?.status;
+      if (typeof status === 'string' && status) note(status, `R8 burden ${burdenId} via cards:${speaker.id}`);
+    }
   }
 
   // ---- R5: code-side, closed and ratcheted (F4) ---------------------------
@@ -435,7 +469,7 @@ on the real tree at dev = cd3da94, four times, each plant entering by the door
 the real input enters and travelling every stage the real run travels
 (content-build recompile -> src/content/index.js -> the same statusReach()):
   · no plant at all, the shipped content:  FAIL 6/43, exit 1
-  · a row appended to src/content/statuses.js:  FAIL 7/44, names it, exit 1
+  · a row appended to content/source/statuses.json, recompiled:  FAIL 7/44, names it, exit 1
   · strike.burn=+2 deleted from content/source/weapons.csv, recompiled:  FAIL 7/43, exit 1
   · all 25 bleed appliers deleted from the nine content files:  FAIL 8/43
     (bleed AND bleedResist), exit 1
@@ -472,7 +506,7 @@ BOUNDARY — what a green from this tool does NOT mean:
     question (every number on that path is marked PROVISIONAL), not this
     tool's. Reach here means the arithmetic cannot floor to zero.
   · THE UPGRADE PATH IS WALKED, the equipment path is walked, the intent path
-    is walked — but any FUTURE way to apply a status that is none of R1–R7
+    is walked — but any FUTURE way to apply a status that is none of R1–R8
     reads as unreachable here, loudly, which is the right way round. R6 is
     what that clause looks like discharged: the exposure door landed after
     R1-R5 were enumerated, read as unreachable, loudly, and was then
@@ -504,7 +538,7 @@ function report(r, { json = false } = {}) {
   } else if (r.verdict === 'FAIL') {
     console.log(`RESULT: FAIL — ${r.unreached.length} of ${r.total} shipped statuses have no applier: ${r.unreached.join(', ')}.`);
   } else {
-    console.log(`RESULT: ${r.total}/${r.total} shipped statuses have at least one applier, by routes R1-R7.`);
+    console.log(`RESULT: ${r.total}/${r.total} shipped statuses have at least one applier, by routes R1-R8.`);
   }
   console.log(DOOR);
   console.log(BOUNDARY);
@@ -714,11 +748,26 @@ async function selftest(real) {
   expansionRules.statuses.plantedPressure.initialThreshold = 0;
   expect('P14 unusable threshold severs its active grant', statusReach(b, projectedOpts).unreached.includes('plantedActive'), true);
 
+  // 11 — R8: a burden marker is applied by enemyBurdens when a named burden is
+  // drawn, but the burden definition alone is still only vocabulary. Require
+  // a real addBurden card speaker and prove removing that speaker turns red.
+  b = clone(real);
+  b.statuses.push({ id: 'plantedBurdenStatus', name: 'Planted burden', stackMode: 'add' });
+  b.cards.push({ id: 'plantedBurdenCard', burden: { status: 'plantedBurdenStatus' }, effects: [] });
+  r = statusReach(b, codeOk());
+  expect('P15 burden definition without an addBurden speaker is not reach', r.unreached.includes('plantedBurdenStatus'), true);
+  b.cards.push({ id: 'plantedBurdenSpeaker', effects: [{ op: 'addBurden', card: 'plantedBurdenCard' }] });
+  r = statusReach(b, codeOk());
+  expect('G4 a shipped addBurden speaker reaches the generated burden status', !r.unreached.includes('plantedBurdenStatus'), true);
+  b.cards.pop();
+  r = statusReach(b, codeOk());
+  expect('P16 removing the sole burden speaker makes its status unreachable', r.unreached.includes('plantedBurdenStatus'), true);
+
   // The harness quotes this line verbatim (tests/run-node.mjs) rather than
   // recomposing numbers out of it — a recomposed verdict is a second home for
   // the verdict, and it drifts. So it ends in a full stop, on purpose.
   console.log(`\nRESULT: ${bad === 0 ? 'corpus held' : `CORPUS BROKE — ${bad} plant(s) did not behave`}`
-    + ` — 20 assertions over 17 planted mechanisms, 3 of them required to go GREEN.`);
+    + ` — 23 assertions over 18 planted mechanisms, 4 of them required to go GREEN.`);
   return bad === 0 ? 0 : 1;
 }
 

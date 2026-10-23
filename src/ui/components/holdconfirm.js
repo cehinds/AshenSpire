@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 // src/ui/components/holdconfirm.js — THE SECOND BEAT, in both its forms.
 //
 // Constantine, asked whether to build it: "yes press and hold" — and the same
@@ -46,6 +47,15 @@
 //      actions holds on pointer, keyboard AND gamepad. When it is `off`, the
 //      shortcut is disabled and all three inputs still open the review modal.
 //      There is no per-input or per-action interaction rule left to drift.
+//
+//      ADDED, OWNER, 2026-10-18 (the paragraph above is left as it was):
+//      "End Turn is a single tap when no card is playable; the hold/confirm
+//      stays when a card is still affordable", and "a tap on a playable card
+//      plays it when its target is unambiguous". For exactly those two cases
+//      the 'same in all instances' rule gives way: End Turn's row is
+//      state-dependent (model/secondbeat.js) and arms with `tapWhenNone`, and
+//      the card tap is combat.js's `oneTapPlays`. Every other action is as
+//      ruled on 2026-08-17.
 //
 //      WHAT IT REPLACED, kept because the reasoning was good and is no longer
 //      the ruling. This form used to refuse every non-pointer source on the
@@ -213,6 +223,11 @@ export function armHold(btn, {
     for (const target of [btn, ...activeFeedback]) {
       target.style.setProperty('--hold', String(p));
       target.dataset.holdProgress = p.toFixed(3);
+      const hint = target.querySelector?.('.hold-hint');
+      if (hint) {
+        hint.textContent = target.dataset.hold === 'holding' ? `${Math.round(p * 100)}%` : 'HOLD';
+        hint.setAttribute('aria-label', target.dataset.hold === 'holding' ? `Hold progress ${Math.round(p * 100)} percent` : t('settings.row.holdConfirm'));
+      }
     }
   };
 
@@ -539,6 +554,11 @@ export function armHold(btn, {
       return;
     }
     if (!heldThisPress) {
+      // Composite cards finish pointer taps on release. A rebuilt binding can
+      // receive the old press's trailing click without owning that press.
+      if (tapOnPointerRelease && ev.detail > 0) {
+        ev.preventDefault(); ev.stopPropagation(); return;
+      }
       if (pointerOnly && onTap) onTap(ev);
       else onConfirm(ev);
       return;
@@ -851,7 +871,7 @@ let activeConfirm = null;
 /**
  * reveal(panel, actions) — bring a freshly-opened confirm panel ON SCREEN.
  *
- * ⚠ WHY THIS EXISTS, AND THE MEASUREMENT IS THE WHOLE ARGUMENT. The panel is
+ * warning WHY THIS EXISTS, AND THE MEASUREMENT IS THE WHOLE ARGUMENT. The panel is
  * inserted `afterend` of the control it asks about, so where it LANDS is decided
  * by however tall the screen above it happens to be. At `db09846`, tapping a
  * Smith candidate put both answers at
@@ -1045,6 +1065,11 @@ export function holdMs(settings, holdConfirm) {
  *                which of its elements is the one with room.
  *   hintBefore   the child of that host to insert the hint before (default:
  *                appended last).
+ *   tapWhenNone  default false. When true and the action's form is 'none' AT
+ *                THE MOMENT OF THE PRESS, the press has no timer and a tap
+ *                commits with no review (owner, 2026-10-18: End Turn with no
+ *                card left to play). Other forms, and controls that do not
+ *                opt in, are unchanged.
  *
  * EVERY ARMED CONTROL MARKS ITSELF, including the ones that owe no beat:
  * `data-beat="none|hold|confirm"` and `data-beat-action="<id>"`. That is not
@@ -1056,10 +1081,12 @@ export function holdMs(settings, holdConfirm) {
 export function beatArmer(meta, registries) {
   const dialMs = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
 
-  return function arm(el, actionId, { ctx = {}, onConfirm, question, target, message, detailHtml, confirmLabel, policyAction = null, hintHost = null, hintBefore = null, showHint = true } = {}) {
+  return function arm(el, actionId, { ctx = {}, onConfirm, question, target, message, detailHtml, confirmLabel, policyAction = null, hintHost = null, hintBefore = null, showHint = true, tapWhenNone = false } = {}) {
     // `ctxOf` so a row whose stakes move with the game state (End Turn) is
     // evaluated at the moment the finger lands, not at the moment the screen
     // mounted. A screen passes a function; a static action passes an object.
+    // A control that opts in with `tapWhenNone` reads the form per press
+    // (`owesNoBeat` below): 'none' means the press commits directly.
     const ctxOf = typeof ctx === 'function' ? ctx : () => ctx;
     const formNow = () => beatFor(actionId, ctxOf()).form;
 
@@ -1070,6 +1097,9 @@ export function beatArmer(meta, registries) {
     el.dataset.optionTap = 'modal';
     el.dataset.optionHold = dialMs > 0 ? 'commit' : 'disabled';
 
+    // (Owner, 2026-10-18: a control that opts in with `tapWhenNone` and whose
+    // form is 'none' owes no review at all — see `owesNoBeat` below. The
+    // contract that follows holds for every other control.)
     // Constantine's revised universal option contract: a short activation
     // reviews, while a deliberate hold approves the exact same callback and
     // skips the modal. The old beat classification remains published for
@@ -1104,15 +1134,29 @@ export function beatArmer(meta, registries) {
         tone: reviewTone(current, policy ? registries.framework.confirmationTone(policy) : 'normal'),
         detailsHtml: authoredDetail || '',
         confirmLabel: confirmLabel || 'Confirm change',
-        cancelLabel: 'Back',
+        cancelLabel: t('common.back'),
         onConfirm,
         returnFocusElement: el,
       });
     };
+    // A CONTROL MAY LET THE FORM DRIVE THE BEHAVIOUR (`tapWhenNone`; owner,
+    // 2026-10-18; first used by End Turn, whose stakes move with the hand). The
+    // form is re-read for EVERY press, because the state a row's stakes move
+    // with (a hand that still has a playable card) changes inside one screen:
+    //   form 'none'           ms resolves to 0 and a tap commits at once, with
+    //                         no review. Every tap path (pointer release, a
+    //                         click, a key or pad activation) ends in `onTap`,
+    //                         so the one decision below covers them all.
+    //   form 'hold'|'confirm' unchanged: a tap reviews, a completed hold commits.
+    // OPT-IN, because the universal option contract below still stands for
+    // every other control: an event bar whose choice owes no beat is still an
+    // option bar that offers the hold and reviews on a tap (tools/holdconfirm.mjs
+    // "every option bar offers the hold shortcut").
+    const owesNoBeat = () => tapWhenNone && formNow() === 'none';
     const disarm = armHold(el, {
-      ms: dialMs,
+      ms: () => (owesNoBeat() ? 0 : dialMs),
       onConfirm,
-      onTap: review,
+      onTap: (ev) => (owesNoBeat() ? onConfirm(ev) : review(ev)),
       tapOnEarlyRelease: true,
       id: actionId,
       hintHost,

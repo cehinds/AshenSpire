@@ -22,6 +22,9 @@ function fixture({ version = 2, enemies = 1 } = {}) {
     enemyIds: Array(enemies).fill('wanderingSoldier'),
     player: { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10,
       energyMax: 10, drawPerTurn: 1, deck: [] } });
+  // These tests isolate on-hit trait budgets; Accuracy itself has dedicated tests.
+  const drawInt = combat.rng.int.bind(combat.rng);
+  combat.rng.int = (stream, min, max) => { const value = drawInt(stream, min, max); return stream === 'combatAvoidance' ? 20 : value; };
   for (const enemy of combat.enemies) {
     enemy.block = enemy.barrier = 0;
     enemy.hp = enemy.maxHp = 500;
@@ -100,7 +103,11 @@ test('Impact applies once per target on an area hit with several contacts', () =
 });
 
 test('an evaded hit gives no Impact or Flux', () => {
-  const evade = { before: f => { f.enemies[0].combatEvade = { charges: 1, bonus: 1000, advantage: false, disadvantage: false, expiresOnOwnerCycle: 99 }; } };
+  const evade = { before: f => {
+    f.enemies[0].statuses.evade = { stacks: 1 };
+    const drawInt = f.combat.rng.int.bind(f.combat.rng);
+    f.combat.rng.int = (stream, min, max) => { const value = drawInt(stream, min, max); return stream === 'combatAvoidance' ? 1 : value; };
+  } };
   const base = outcome({ effects: [damage(5)], ...evade });
   const traited = outcome({ effects: [damage(5)], traitValues: { impact: 2, flux: 1 }, ...evade });
   assert.equal(traited.hit[0], 0, 'the strike was avoided');
@@ -158,9 +165,11 @@ function counterReturn({ version = 2, traitValues, payload = { hp: 10, poise: 4,
   incomingBlock = 8, maneuver = 'counter', profile = PHYSICAL, coverage } = {}) {
   const f = fixture({ version });
   const { combat } = f;
+  // These assertions isolate authored return magnitudes after a successful hit.
+  combat.rng.int = () => 20;
   const enemy = f.enemies[0];
   const counter = { cardId: 'testCounter', instanceId: 'test-counter', type: 'skill',
-    combatProfile: { ...profile, maneuver, ...(mode === 'spell' ? { camp: 'spell', school: 'fire' } : {}) },
+    combatProfile: { ...profile, range: incoming.range, maneuver, ...(mode === 'spell' ? { camp: 'spell', school: 'fire' } : {}) },
     combatRiderTargets: [], ...(traitValues ? { traitValues } : {}) };
   setCombatStance(combat, combat.player, counter);
   armCombatCounter(combat, combat.player, counter, { payload, ...(mode ? { mode } : {}), ...(coverage ? { coverage } : {}) });
@@ -265,6 +274,7 @@ test('the owner turn start clears an unspent Defend trait guard', () => {
 test('a Defend trait guard survives a combat snapshot round trip', () => {
   const f = guardFight();
   setCombatStance(f.combat, f.combat.player, { ...f.defend, traitValues: { impact: 2, flux: 1 } });
+  drain(f.combat); // Resolve the stance's queued entry protection before saving.
   const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(f.combat)));
   const restored = restoreCombatSnapshot({ registries, rng: createRng(901), snapshot: saved });
   assert.deepEqual(restored.player.combatTraitGuard, { poise: 2, ward: 1 });

@@ -100,7 +100,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
   let disarmDecision = null;
 
   const CHANGE_LABELS = {
-    damage: 'AR', block: 'GUARD', draw: 'DRAW', discard: 'DISCARD', 'cost:action': 'STAMINA', 'cost:mana': 'MANA', 'cost:stamina': 'STAMINA',
+    damage: 'DAMAGE', block: 'GUARD', draw: 'DRAW', discard: 'DISCARD', 'cost:action': 'STAMINA', 'cost:mana': 'MANA', 'cost:stamina': 'STAMINA',
   };
   /** A row's changes as StatPairs with deltas: "AR 7 → 10". */
   const changeSummary = (row) => el('span', { class: 'smith-fold-values' }, row.values.map((change) => {
@@ -123,19 +123,22 @@ export function mountSmithUpgradeModal(host, initialModel, {
     el('span', { class: 'sp-v' }, [el('strong', { class: 'smith-cost-required', text: String(selected.cost) }), el('i', { 'aria-hidden': 'true', text: '/' }), el('strong', { class: 'smith-cost-available', text: String(selected.stones) })]),
   ]);
   const economyNode = (selected) => el('span', { class: 'smith-economy-values' }, [
-    el('span', { class: 'smith-stone-icon', 'aria-hidden': 'true', text: '🪨' }),
+    glyph('weight', { class: 'smith-stone-icon', 'aria-hidden': 'true' }),
     el('b', { text: 'Smithing Stone Cost' }), ' ', costPairNode(selected),
   ]);
 
   const intrinsicStatsNode = (selected) => {
     const stats = selected.intrinsicStats || {};
+    const changes = selected.intrinsicChanges || [];
     const hasStats = ['attackRating', 'defenseRating', 'weight', 'weaponArtManaCost', 'uniqueSkillStaminaCost']
       .every((key) => stats[key] !== null && stats[key] !== undefined);
-    if (!hasStats) return null;
+    if (!hasStats && !changes.length) return null;
     const rowNode = statRow({
       flat: true,
       nameNode: el('span', { class: 'smith-data-heading' }, [el('b', { class: 'sr-name', text: 'Equipment Stats' }), el('small', { class: 'sr-hint', text: selected.kindLabel })]),
       values: [
+        changes.length ? changeSummary({ values: changes }) : null,
+        ...(hasStats ? [
         el('span', { class: 'smith-fold-values smith-primary-stats' }, [
           pairSpaced('AR', el('b', { class: 'sp-v', text: String(stats.attackRating) })),
           pairSpaced('DEF', el('b', { class: 'sp-v', text: String(stats.defenseRating) })),
@@ -145,6 +148,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
           el('span', {}, ['Weapon Art ', el('strong', { text: `Mana ${stats.weaponArtManaCost}` })]), el('i', { text: ' · ' }),
           el('span', {}, ['Unique Skill ', el('strong', { text: `${t('combat.actions')} ${stats.uniqueSkillStaminaCost}` })]),
         ]),
+        ] : []),
       ],
       className: 'smith-data-row smith-intrinsic-stats',
     });
@@ -161,6 +165,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
   /** The decision door's details: the same cost and deltas, as kit rows. */
   const confirmationDetails = (selected) => html([
     el('div', { class: `confirmation-cost as-statrow flat ${selected.affordable ? 'affordable' : 'unaffordable'}` }, economyNode(selected)),
+    ...(currentModel.properties.servicePreviewHtml ? [el('div', { html: currentModel.properties.servicePreviewHtml })] : []),
     el('div', { class: 'confirmation-change-list' }, [
       ...selected.affectedRows.map((row) => statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: row.name }), values: changeSummary(row) })),
       statRow({ flat: true, nameNode: el('b', { class: 'sr-name', text: 'Requirements' }), values: el('span', { class: 'smith-fold-values' }, requirementNodes(selected)) }),
@@ -198,7 +203,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
     card.setAttribute('aria-label', `${item.name}, ${itemTypeText}, ${item.inventoryCount} in inventory, tier ${item.currentLevel} to ${item.nextLevel}, costs ${item.cost} Smithing Stone. Select to review its exact changes and requirements.`);
     attachTooltip(card, () => `<div class="tt-title">${esc(item.name)} · Tier ${item.currentLevel} → ${item.nextLevel}</div>`
       + `<div>Type: ${esc(itemTypeText)}.</div>`
-      + `<div>Smith Stone Cost: 🪨 ${item.cost}/${item.stones} available.</div>`
+      + `<div>Smith Stone Cost: ${item.cost}/${item.stones} available.</div>`
       + `<div>${item.requirements.length ? item.requirements.map((req) => `${esc(req.label)} ${req.currentRequired} → ${req.nextRequired}; you have ${req.actual == null ? '?' : req.actual}`).join('<br>') : 'No attribute requirement.'}</div>`);
     markUiComponent(card, UI.smithCandidateCard, item.selected ? 'selected' : 'available');
     const piece = item.itemKind === 'relic' ? registries.relics.get(item.itemId)
@@ -276,7 +281,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
       ]),
     ]);
     const folds = el('div', { class: 'smith-upgrade-folds' }, selected.affectedRows.map((row, index) => {
-      const fold = el('details', { open: true, class: `smith-upgrade-fold smith-upgrade-row${row.used === false ? ' is-unused' : ''}` });
+      const fold = el('details', { class: `smith-upgrade-fold smith-upgrade-row${row.used === false ? ' is-unused' : ''}` });
       const summary = el('summary', {}, statRow({
         tag: 'span',
         nameNode: el('b', { class: 'sr-name', text: row.name }),
@@ -288,7 +293,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
         ...row.changes.map((change) => prose(change)),
         row.rating
           ? flavour(`Uses the source item’s ${row.rating.label}.`, { class: 'smith-scaling' })
-          : flavour('No source rating.', { class: 'smith-scaling' }),
+          : row.reference ? flavour('No source rating.', { class: 'smith-scaling' }) : null,
         flavour(`Source: ${selected.name}`),
       ]);
       const detail = el('div', { class: `smith-fold-detail${row.reference ? '' : ' no-card'}` }, [
@@ -302,7 +307,8 @@ export function mountSmithUpgradeModal(host, initialModel, {
       el('div', { class: `smith-summary-cell smith-preview-economy ${selected.affordable ? 'affordable' : 'unaffordable'}` }, economyNode(selected)),
       selected.affordable ? null : blocker(`Short ${selected.shortfall} Smithing Stone${selected.shortfall === 1 ? '' : 's'}.`, { placement: 'pinned', attrs: { class: 'smith-preview-shortfall' } }),
     ]);
-    const slot = { selected: [head], changes: [intrinsicStatsNode(selected), requirementsRow(selected), folds], cost: [cost] };
+    const servicePreview = currentModel.properties.servicePreviewHtml ? el('div', { html: currentModel.properties.servicePreviewHtml }) : null;
+    const slot = { selected: [head], changes: [intrinsicStatsNode(selected), requirementsRow(selected), folds], cost: [servicePreview, cost].filter(Boolean) };
     return detailCard({
       attrs: { class: 'smith-preview-card', dataset: { uiComponent: UI.smithUpgradePreview } },
       children: slots.flatMap((name) => slot[name] || []),
@@ -332,7 +338,7 @@ export function mountSmithUpgradeModal(host, initialModel, {
     previewHost.replaceChildren(selected
       ? previewCard(selected, smithPaneSlots(model))
       : el('div', { class: 'smith-preview-empty', dataset: { uiComponent: UI.smithUpgradePreview } }, [
-        artWell({ glyph: '⚒', cool: true }),
+        artWell({ glyph: 'smith', cool: true }),
         prose(p.instruction),
       ]));
     if (selected) {

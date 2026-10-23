@@ -1,0 +1,19 @@
+{
+  "status": "adapter-provisional",
+  "choices": [
+    "Card costs/damage/block and class-special effects are adapter fixtures, not owner-approved balance.",
+    "Legacy class HP values are temporary until derived starting pools are settled.",
+    "Starseer uses the existing boneSceptre ID as a valid scepter adapter.",
+    "Core2 FixCore Ward and Poise reduce their matching magical/physical damage by 25% while positive; prevented damage spends that pool. Block restores both pools by its final amount, capped independently. Rule parameters are authored in content/source/fixCoreMechanics.json and defense protection mechanics.",
+    "Core2 FixCore uses seeded d20 + Precision against Evasion (base 1 + DEX + stacks + bonuses, with the configured stance multiplier). Natural 1 misses and 20 hits for applicable legal attacks. Evade grants Evasion stacks; the archived Core1 chance formula and failed-dodge double damage do not describe Core2.",
+    "Stance advantage multiplier 1.25, bounded Smash stagger and Prepared interruption are provisional adapter policies.",
+    "Reward take-one, free-work and reaction limits remain provisional. Deck editing is available at safe idle combat boundaries; committed deck composition applies next encounter and preserves active combat piles. Equipment editing retains its own timing restrictions.",
+    "CON contributes 0.5 SP per point: CON1 to CON3 adds one max SP. Other secondary floors remain legacy; combined-contribution rounding is provisional.",
+    "Herald power behavior is a provisional card fixture; persistent stacking needs the runtime adapter.",
+    "Core2 rest floors [3,7] are mandatory merged route nodes; floor7 immediately precedes the boss on floor8. Runtime shrine nodes represent rests. Generic shop price10 remains provisional; shops offer up to3 distinct eligible items per category.",
+    "Stance advantage multiplier1.25 and one Smash advantage stagger per target/round are provisional.",
+    "Smith upgrades exactly one equipment tier for free as the one rest service; the foregone Strategize/Level Up is its visit budget. Free Smith is provisional until an explicit upgrade economy is authored.",
+    "Equipment attribute requirementsPolicy defaults to none for six-total core attributes; ownership, slot fit and timing remain enforced. Explicit legacy restores old minima. This is provisional until core item requirements are balanced.",
+    "Core2 configured equipped gear contributes resolved authored stat values once, with a Core armor budget of 3 points plus 1 point per Smith tier (perRank 1, mirroring weaponARPerTier) and a per-rarity bonus (default 0). Item tiers affect resolution; the archived Core1 highest-active-tier AR/DR adapter remains a separate versioned policy."
+  ]
+}

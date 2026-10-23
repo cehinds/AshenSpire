@@ -10,89 +10,74 @@ const source = readFileSync(new URL('../tools/motion-probe.mjs', import.meta.url
 const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
 const idleSource = source.slice(source.indexOf('async function idle('), source.indexOf('\nconst server ='));
 
-// Exercise the production browser predicate on the actual alternative figure
-// tree. Animation objects stand in for measured Web Animations state; the
-// same-door browser plants separately exercise real CSS and document clocks.
-async function inspect({ missing = false, duplicate = false, imageCarrier = false, flat = false,
-  offClock = false, unloaded = false, transparent = false, canvas = false, blank = false, canvasIdle = 'bob' } = {}) {
-  const dom = rewardDom();
-  const originalDocument = globalThis.document, originalImage = globalThis.Image;
-  globalThis.document = dom.document;
-  globalThis.Image = function Image() { return dom.document.createElement('img'); };
+// Exercise the production browser predicate on the real alternative figure
+// tree, with observed Web Animations, frame bounds and painted pixel samples.
+async function inspect({ moving = false, imageMotion = false, duplicate = false, flat = false, opacityOnly = false,
+  scriptMove = false, scale = false, unloaded = false, transparent = false, canvas = false,
+  blank = false, lateBlank = false, pixelChange = false } = {}) {
+  const dom=rewardDom(),oldDocument=globalThis.document,oldImage=globalThis.Image;
+  globalThis.document=dom.document;globalThis.Image=function Image(){return dom.document.createElement('img');};
+  let frames=0,reads=0;
   try {
-    const figure = alternativeSprite('reaver-default', 'player');
-    if (canvas) {
-      figure.className = 'pose-stage painted-stage alternative-card-stage';
-      const painted = dom.document.createElement('canvas');
-      painted.width = painted.height = 2;
-      painted.getContext = () => ({ getImageData: () => ({ data: new Uint8ClampedArray([0, 0, 0, blank ? 0 : 255]) }) });
+    const figure=alternativeSprite('reaver-default','player');
+    if(canvas){
+      figure.className='pose-stage painted-stage alternative-card-stage';
+      const painted=dom.document.createElement('canvas');painted.width=painted.height=2;
+      painted.getContext=()=>({getImageData(){reads++;return {data:new Uint8ClampedArray([pixelChange&&frames>8?120:0,0,0,blank||lateBlank&&frames>8?0:255])};}});
       figure.replaceChildren(painted);
     }
-    const frame = dom.document.createElement('div'); frame.className = 'combatant player';
-    const sprite = dom.document.createElement('div'); sprite.className = 'sprite';
-    sprite.appendChild(figure); frame.appendChild(sprite); dom.document.body.appendChild(frame);
-    const name = dom.document.createElement('span'); name.className = 'nm'; name.textContent = 'Reaver'; frame.appendChild(name);
-    const stage = canvas ? figure : figure.querySelector('.alternative-silhouette'), crop = canvas ? figure.querySelector('canvas') : figure.querySelector('.alternative-crop');
-    const image = figure.querySelector(canvas ? 'canvas' : 'img');
-    const walk = node => [node, ...node.children.flatMap(walk)];
-    for (const node of walk(dom.document.body)) {
-      Object.defineProperty(node, 'parentElement', { get() { return this.parentNode; } });
-      node.classList[Symbol.iterator] = function* () { yield* node.className.split(/\s+/).filter(Boolean); };
-      node.getBoundingClientRect = () => ({ width: 100, height: 190 });
-      node.getAnimations = () => [];
+    const frame=dom.document.createElement('div');frame.className='combatant player';
+    const sprite=dom.document.createElement('div');sprite.className='sprite';sprite.appendChild(figure);frame.appendChild(sprite);dom.document.body.appendChild(frame);
+    const name=dom.document.createElement('span');name.className='nm';name.textContent='Reaver';frame.appendChild(name);
+    const stage=canvas?figure:figure.querySelector('.alternative-silhouette'),image=figure.querySelector(canvas?'canvas':'img');
+    const walk=node=>[node,...node.children.flatMap(walk)];
+    for(const node of walk(dom.document.body)){
+      Object.defineProperty(node,'parentElement',{get(){return this.parentNode;}});
+      node.classList[Symbol.iterator]=function*(){yield*node.className.split(/\s+/).filter(Boolean);};
+      node.getBoundingClientRect=()=>({left:20+(scriptMove&&node===image&&frames>8?4:0),top:30,width:100+(scale&&node===image&&frames>8?8:0),height:190});
+      node.getAnimations=()=>[];
     }
-    image.complete = true; image.naturalWidth = unloaded ? 0 : 1024;
-    dom.document.timeline = { currentTime: 6000 };
-    const animation = {
-      animationName: 'sprite-idle', playState: 'running', effect: {
-        getComputedTiming: () => ({ activeDuration: Infinity, duration: 3100, delay: 0,
-          progress: offClock ? 0 : (6000 % 3100) / 3100 }),
-        getKeyframes: () => [{ translate: '0 0' }, { translate: flat ? '0 0' : '0 -4px' }],
-      },
-    };
-    const carriers = missing ? [] : imageCarrier ? [image] : duplicate ? [stage, crop] : [stage];
-    for (const carrier of carriers) carrier.getAnimations = () => [animation];
-    const browser = { document: dom.document, requestAnimationFrame: callback => callback(),
-      getComputedStyle: node => ({ visibility: 'visible', display: 'block', opacity: transparent && node === figure ? '0' : '1',
-        animationName: carriers.includes(node) ? 'sprite-idle' : 'none' }) };
-    const verdicts = [];
-    const idle = runInNewContext(`${idleSource}\nidle`, { check: (ok, label, detail) => verdicts.push({ ok, label, detail }) });
-    await idle({ evaluate: expression => runInNewContext(expression, browser) }, 'IDLE', canvasIdle);
-    return verdicts;
-  } finally {
-    if (originalDocument === undefined) delete globalThis.document; else globalThis.document = originalDocument;
-    if (originalImage === undefined) delete globalThis.Image; else globalThis.Image = originalImage;
-  }
+    image.complete=true;image.naturalWidth=unloaded?0:1024;
+    const animation={playState:'running',effect:{getKeyframes:()=>opacityOnly?[{opacity:1},{opacity:.5}]:[{translate:'0 0'},{translate:flat?'0 0':'0 -4px'}]}};
+    for(const carrier of duplicate?[stage,image]:imageMotion?[image]:moving||flat||opacityOnly?[stage]:[])carrier.getAnimations=()=>[animation];
+    const browser={document:dom.document,requestAnimationFrame(callback){frames++;callback(frames*16);},
+      getComputedStyle:node=>({visibility:'visible',display:'block',opacity:transparent&&node===figure?'0':'1'})};
+    const verdicts=[];const idle=runInNewContext(`${idleSource}\nidle`,{check:(ok,label,detail)=>verdicts.push({ok,label,detail})});
+    await idle({evaluate:expression=>runInNewContext(expression,browser)},'IDLE');
+    return {verdicts,frames,reads};
+  }finally{if(oldDocument===undefined)delete globalThis.document;else globalThis.document=oldDocument;if(oldImage===undefined)delete globalThis.Image;else globalThis.Image=oldImage;}
 }
 
-test('actual alternative figure has one shared moving carrier with existing period, delays and stop states', async () => {
-  const alive = /\.combatant \.sprite :is\(([^\n]+)\) \{ animation: sprite-idle 3\.1s ease-in-out infinite;/.exec(css);
-  assert.ok(alive?.[1].includes('.alternative-silhouette'), 'the actual alternative stage must be an idle carrier');
-  for (const selector of ['.combatant.dead', '.combatant.down', '.reduced-motion', '.combatant.enemy',
-    '.combatant:nth-child(2)', '.combatant:nth-child(3)', '.combatant:nth-child(4)']) {
-    const line = css.split('\n').find(row => row.startsWith(selector) && row.includes('.alternative-silhouette'));
-    assert.ok(line, `${selector} must retain the same carrier rule`);
-  }
-  const verdicts = await inspect();
-  assert.equal(verdicts.length, 1);
-  assert.equal(verdicts[0].ok, true, verdicts[0].detail);
-  assert.match(verdicts[0].detail, /painted-stage\.alternative-silhouette/);
+test('every figure style holds still without a shared idle clock; bounded action CSS remains',async()=>{
+  assert.doesNotMatch(css,/@keyframes sprite-idle|animation:\s*sprite-idle/);
+  assert.match(css,/\.enemy \.sprite\.act-attack \{ animation: lunge-left/);
+  assert.match(css,/\.sprite\.hitflash > :first-child \{ animation: hitflash/);
+  const assets=readFileSync(new URL('../src/ui/assets.js',import.meta.url),'utf8');
+  assert.doesNotMatch(assets,/holdIdlePhase|IDLE_ANIMATION/);
+  const result=await inspect();assert.equal(result.verdicts.length,1);
+  assert.equal(result.verdicts[0].ok,true,result.verdicts[0].detail);
+  assert.equal(result.frames,22,'two settling frames plus twenty actual frame observations');
 });
 
-test('alternative browser predicate rejects absent, duplicate, wrong-layer and broken idle motion', async () => {
-  const plants = [
-    [{ missing: true }, /no idle animation/],
-    [{ duplicate: true }, /bobbed twice/],
-    [{ imageCarrier: true }, /outside the alternative silhouette carrier/],
-    [{ flat: true }, /keyframes never move/],
-    [{ offClock: true }, /off the document clock/],
-    [{ unloaded: true }, /image did not load/],
-    [{ transparent: true }, /no visible figure image/],
-  ];
-  for (const [plant, reason] of plants) {
-    const [verdict] = await inspect(plant);
-    assert.equal(verdict.ok, false, JSON.stringify(plant));
-    assert.match(verdict.detail, reason);
+test('stationary-rest predicate rejects moving layers/images, late script motion, resizing and missing artwork',async()=>{
+  for(const [fault,reason] of [[{moving:true},/moves while resting/],[{imageMotion:true},/moves while resting/],
+    [{duplicate:true},/moves while resting/],[{scriptMove:true},/moves while resting/],[{scale:true},/moves while resting/],
+    [{unloaded:true},/image did not load/],[{transparent:true},/no visible figure image/]]){
+    const {verdicts:[verdict]}=await inspect(fault);assert.equal(verdict.ok,false,JSON.stringify(fault));assert.match(verdict.detail,reason);
+  }
+});
+
+test('painted canvas rest requires nonblank stable content, not just a stationary wrapper',async()=>{
+  const result=await inspect({canvas:true});assert.equal(result.verdicts[0].ok,true,result.verdicts[0].detail);
+  assert.equal(result.reads,2,'first and last rest samples materialize pixels');
+  for(const fault of [{blank:true},{lateBlank:true},{pixelChange:true},{moving:true},{imageMotion:true},{scriptMove:true},{scale:true},{transparent:true}]){
+    const {verdicts:[bad]}=await inspect({canvas:true,...fault});assert.equal(bad.ok,false,JSON.stringify(fault));
+  }
+});
+
+test('non-displacing aura feedback and a static animation do not count as a fighter bob',async()=>{
+  for(const options of [{opacityOnly:true},{flat:true}]){
+    const {verdicts:[clean]}=await inspect(options);assert.equal(clean.ok,true,clean.detail);
   }
 });
 
@@ -150,81 +135,27 @@ test('the primary branch retains the attached-layer flipbook plant and exact scr
   assert.equal(plant.expectRed.test('RED REDUCED-SCRIPT setting+os — img.painted-combat-effect'), false);
 });
 
-test('every same-door variant plant still changes the current real source', async () => {
+test('same-door stationary-rest and reduced-motion negatives still mutate real source',async()=>{
   let corpus;
-  const selftest = source.slice(source.indexOf("if (argv.includes('--selftest')) {"), source.indexOf('\nconst ROOT ='))
-    .replace("await import('./doorplant.mjs')", 'await harness()');
-  await runInNewContext(`(async () => { ${selftest} })()`, {
-    argv: ['--selftest'], ALTERNATIVE: true, CANVAS_IDLE: 'anchored',
-    process: { exit() {} }, console: { log() {}, error() {}, info() {} },
-    harness: async () => ({ resolveShard: () => null, doorSelftest: async options => { corpus = options; return 0; } }),
+  const selftest=source.slice(source.indexOf("if (argv.includes('--selftest')) {"),source.indexOf('\nconst ROOT =')).replace("await import('./doorplant.mjs')",'await harness()');
+  await runInNewContext(`(async()=>{${selftest}})()`,{
+    argv:['--selftest'],ALTERNATIVE:true,CANVAS_IDLE:'anchored',process:{exit(){}},console:{log(){},error(){},info(){}},
+    harness:async()=>({resolveShard:()=>null,doorSelftest:async options=>{corpus=options;return 0;}}),
   });
-  const originalNames = [
-    'the idle bob goes back to the dead `.sprite > img` selector',
-    "the idle bob leaves out the Rendered style's painting",
-    'the Rendered style bobs its painting and its nested stage separately',
-    'the idle keyframes are flattened to one position',
-    'the idle keyframes fade instead of moving',
-    'the idle carriers are made transparent',
-    'the combatants are made transparent',
-    'the idle bob starts with its carrier instead of keeping the clock',
-    'the idle keyframes are flattened while a shake runs beside them',
-    'the idle carriers run another infinite animation, not the bob',
-    'the idle bob sits on the figure images instead of their layer',
-    'the class canvas paints no character pixels',
-    'the class canvas ignores reduced motion',
-    'the Reduced motion setting stops shortening CSS animations',
-    'the OS preference stops shortening CSS animations',
-    'the OS preference shortens CSS animations to 11 ms, not 0.01 ms',
-    'the card-play flight (Element.animate) ignores reduced motion',
-    'the combatant effect flipbook runs under reduced motion',
-  ];
-  assert.equal(corpus.plants.length, originalNames.length + 2, 'only the two additive fixed-rest negatives extend the corpus');
-  for (const name of originalNames) assert.equal(corpus.plants.filter(plant => plant.name === name).length, 1,
-    `${name}: retain the original known-bad exactly once`);
-  assert.equal(corpus.timeoutMs, 240000, 'the same-door deadline remains unchanged');
-  for (const plant of corpus.plants) {
-    const classicBob = /idle bob|idle keyframes|idle carriers|combatants are made transparent|Rendered style bobs/.test(plant.name);
-    assert.equal(plant.args?.includes('--classic') || false, classicBob,
-      `${plant.name}: bob defects exercise the real Classic appearance; Default canvas defects retain Default`);
-  }
-  assert.ok(corpus.extraCopy.includes('assets-display'), 'clean and planted copies must contain the same variant artwork');
-  const blankCanvas = corpus.plants.find(plant=>plant.name === 'the class canvas paints no character pixels');
-  assert.equal(blankCanvas.find, '    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize});ctx.restore();');
-  assert.equal(blankCanvas.replace, '    ctx.restore();', 'the plant removes character painting while preserving canvas state cleanup');
-  for (const plant of corpus.plants) {
-    for (const edit of plant.edits || [plant]) {
-      const current = readFileSync(new URL(`../${edit.file}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
-      assert.ok(current.includes(edit.find), `${plant.name}: drifted mutation in ${edit.file}`);
-      assert.notEqual(edit.find, edit.replace, `${plant.name}: a no-op is not a known-bad`);
-    }
-  }
-});
-
-
-test('the retained canvas-bob predicate requires painted pixels and exactly one clocked stage carrier', async () => {
-  const [clean] = await inspect({ canvas: true });
-  assert.equal(clean.ok, true, clean.detail);
-  assert.match(clean.detail, /canvas moved by sprite-idle on div.pose-stage.painted-stage/);
-  for (const [fault, reason] of [
-    [{ blank: true }, /canvas has no painted pixels/],
-    [{ missing: true }, /no idle animation/],
-    [{ duplicate: true }, /bobbed twice/],
-    [{ imageCarrier: true }, /outside the alternative silhouette carrier/],
-    [{ offClock: true }, /off the document clock/],
-    [{ transparent: true }, /no visible figure image/],
-  ]) {
-    const [verdict] = await inspect({ canvas: true, ...fault });
-    assert.equal(verdict.ok, false, JSON.stringify(fault));
-    assert.match(verdict.detail, reason);
-  }
-});
-
-test('primary anchored canvas is painted and has no external idle carrier', async () => {
-  const [held]=await inspect({canvas:true,missing:true,canvasIdle:'anchored'});
-  assert.equal(held.ok,true,held.detail);
-  for(const fault of [{blank:true,missing:true},{transparent:true,missing:true},{},{duplicate:true},{imageCarrier:true}]){
-    const [bad]=await inspect({canvas:true,canvasIdle:'anchored',...fault});
-    assert.equal(bad.ok,false,JSON.stringify(fault));
+  assert.equal(corpus.plants.length,20,'eleven obsolete bob-positive negatives are replaced, not skipped; action and canvas negatives remain');
+  assert.equal(corpus.timeoutMs,240000,'same-door deadline is unchanged');
+  for(const name of ['a resting facing layer bobs','the Rendered figure bobs','the hidden Rendered rest layer bobs',
+    'a figure image bobs inside a stationary stage','a resting figure scales','the idle carriers are made transparent',
+    'the combatants are made transparent','a resting actor wrapper translates','a resting figure rotates',
+    'a companion shake moves resting art','the resting figure artwork is hidden','the class canvas paints no character pixels',
+    'the class canvas ignores reduced motion','the fixed rear stage gains an idle translation','the fixed rear stage changes scale while resting',
+    'the Reduced motion setting stops shortening CSS animations','the OS preference stops shortening CSS animations',
+    'the OS preference shortens CSS animations to 11 ms, not 0.01 ms','the card-play flight (Element.animate) ignores reduced motion',
+    'the combatant effect flipbook runs under reduced motion'])assert.equal(corpus.plants.filter(p=>p.name===name).length,1,name);
+  assert.ok(corpus.extraCopy.includes('assets-display'));
+  for(const plant of corpus.plants)for(const edit of plant.edits||[plant]){
+    const current=readFileSync(new URL(`../${edit.file}`,import.meta.url),'utf8').replace(/\r\n/g,'\n');
+    assert.equal(current.split(edit.find).length,2,`${plant.name}: mutation must match actual source exactly once`);
+    assert.notEqual(edit.find,edit.replace,`${plant.name}: mutation is not a no-op`);
   }
 });

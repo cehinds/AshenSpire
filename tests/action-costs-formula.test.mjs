@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { applyAbilityGrade } from '../src/model/abilityGrades.js';
-import { COST_CONFIG, cardCostBudget, applyActionCosts, enemyPoolOf, enemyAttributesOf, isCostOptOut, validateCostConfig } from '../src/model/actionCosts.js';
+import { COST_CONFIG, cardCostBudget, applyActionCosts, enemyPoolOf, enemyAttributesOf, isCostOptOut, ownRestoreFunds, validateCostConfig } from '../src/model/actionCosts.js';
 import { COST_BUDGET, COST_TAGS, ENEMY_SP_ROW, ENEMY_SP_BANDS, ENEMY_BLIGHT_SHIFT } from '../src/content/actionCosts.js';
 import { derivedStatRules } from '../src/content/derivedStats.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
@@ -21,6 +21,14 @@ const variant = ({ budget = {}, tags = {} } = {}) => ({ ...COST_CONFIG, budget: 
 // max(floor(6/20),1) = 1".
 const SWORD_STRIKE = Object.freeze({ id: 'swordStrike', type: 'attack', cost: 1, effects: [{ op: 'damage', target: 'enemy', amount: 3 }],
   tags: ['blade', 'camp:physical', 'damage:slashing'] });
+
+test('Persistent registers its lifetime metadata without changing the Precision grant budget', () => {
+  assert.deepEqual(COST_TAGS['trait:persistent'], { weight: 0, side: 'sp' });
+  const grant = { id: 'precisionGrant', type: 'skill', effects: [{ op: 'applyStatus', target: 'self', status: 'precision', stacks: 3 }], tags: [] };
+  const plain = cardCostBudget(grant);
+  const persistent = cardCostBudget({ ...grant, tags: ['trait:persistent'] });
+  for (const field of ['sSp', 'sMp', 'sp', 'mp']) assert.equal(persistent[field], plain[field], field);
+});
 
 test('the Sword Strike fixture: the owner\'s example prices to S_sp 6, and 1 SP at D = 20 and at the shipped tunables', () => {
   const owner = variant({ budget: { spDivisor: 20, damageWeight: 1, damageSteps: [] },
@@ -176,37 +184,35 @@ test('a magic card\'s rank weighs on its Mana side as well as its Stamina side; 
   for (let rank = 1; rank <= 5; rank++) assert.ok(cardCostBudget(spell, { rank }).mp >= cardCostBudget(spell, { rank: rank - 1 }).mp, `rank ${rank}`);
 });
 
-// Owner, 2026-10-13: restore cards break even. A card costs what it restores in that pool, its own restore pays that
-// part, so it is castable at 0 of the pool and changes it by 0.
-test('a restore card costs exactly what it restores, in the same pool, and that part is funded by the restore', () => {
-  for (const id of ['attune', 'emberCommunion']) {
-    const card = registries.cards.get(id);
-    const priced = cardCostBudget(card);
-    const restored = card.effects.filter((e) => e.op === 'restoreMana').reduce((sum, e) => sum + e.amount, 0);
-    assert.ok(restored > 0, `fixture: ${id} restores Mana`);
-    assert.equal(COST_BUDGET.restoreWeight, 1, 'one Mana of price per Mana restored');
-    assert.equal(priced.mp, priced.rawMp + restored, `${id}: its Mana price is its other Mana price plus what it restores`);
-    assert.equal(priced.funded.mp, restored, `${id}: the restore funds that part`);
-    assert.equal(resolveCard(registries, { cardId: id }).manaCost, priced.mp, `${id}: the face shows the full price`);
-  }
+// Generic derived restores still fund their own price. The paid entry spells
+// opt into authored prices so restoring two Mana actually gains one after payment.
+test('derived restores fund their price while authored recovery spells keep their gain', () => {
   const surge = { id: 'surge', type: 'skill', cost: 1, effects: [{ op: 'gainEnergy', amount: 2 }, { op: 'damage', target: 'enemy', amount: 30 }], tags: ['camp:physical', 'heavy'] };
   const out = cardCostBudget(surge);
-  assert.equal(out.sp, Math.max(1, out.rawSp) + 2, 'its Stamina price plus the 2 Stamina it restores');
+  assert.equal(out.sp, Math.max(1, out.rawSp) + 2);
   assert.deepEqual({ ...out.funded }, { sp: 2, mp: 0 });
+  for (const id of ['attune', 'emberCommunion']) {
+    const card = resolveCard(registries, { cardId: id });
+    assert.equal(card.manaCost, 1, `${id}: actual payment stays one Mana`);
+    assert.equal(card.effects.find(e => e.op === 'restoreMana').amount, 2);
+    assert.deepEqual(ownRestoreFunds(card), { stamina: 0, mana: 0 });
+  }
 });
 
-test('Attune and Ember Communion are castable at 0 Mana and change Mana by exactly 0', () => {
+test('Attune and Ember Communion pay one Mana and restore two through the real interpreter', () => {
   for (const [classId, cardId] of [['herald', 'emberCommunion'], ['starseer', 'attune']]) {
-    for (const start of [0, 2]) {
+    for (const start of [0, 1, 2]) {
       const run = createRunState({ seed: 3, classId, registries });
       const combat = createRunCombat({ registries, rng: createRng(3), run, enemyIds: ['wanderingSoldier'], settings: {} });
-      combat.player.maxMana = Math.max(combat.player.maxMana, start);
+      combat.player.maxMana = Math.max(combat.player.maxMana, start + 2);
       combat.player.mana = start;
-      combat.piles.hand.push({ instanceId: `dry-${cardId}`, cardId, upgraded: false });
-      assert.ok(resolveCard(registries, { cardId }).manaCost >= 1, `${cardId} shows a Mana price`);
-      dispatch(combat, { type: 'playCard', cardInstanceId: `dry-${cardId}` });
-      assert.ok(combat.eventLog.some((e) => e.type === 'cardPlayed' && e.cardInstanceId === `dry-${cardId}`), `${cardId} was cast from ${start} Mana`);
-      assert.equal(combat.player.mana, start, `${cardId}: net Mana change 0 from ${start} Mana`);
+      combat.piles.hand.push({ instanceId: `paid-${cardId}`, cardId, upgraded: false });
+      const play = () => dispatch(combat, { type: 'playCard', cardInstanceId: `paid-${cardId}` });
+      if (start === 0) assert.throws(play, /Not enough Stamina or Mana/);
+      else play();
+      const played = combat.eventLog.some(e => e.type === 'cardPlayed' && e.cardInstanceId === `paid-${cardId}`);
+      assert.equal(played, start > 0, `${cardId}: one Mana is required`);
+      assert.equal(combat.player.mana, start ? start + 1 : 0, `${cardId}: paid cast gains exactly one net Mana`);
     }
   }
 });
@@ -251,7 +257,7 @@ test('every base (rank 0) smash and sweep costs at least 2 SP; a higher rank has
   assert.equal(applyActionCosts({ ...light, cost: 0 }, light, { rank: 0 }).cost, 1, 'an authored upgrade that lowers the cost lowers the floor');
 });
 
-test('all smashes deal Poise damage: smashPoiseBase plus their own, scaled at 2 SP; the face says it', () => {
+test('all smashes deal Poise damage: only absent authored Poise gains the fallback; the face says it', () => {
   const base = COST_BUDGET.smashPoiseBase;
   assert.ok(base > 0);
   const faces = maneuverFaces('maneuver:smash');
@@ -259,14 +265,18 @@ test('all smashes deal Poise damage: smashPoiseBase plus their own, scaled at 2 
   for (const { card, ref } of faces) {
     const def = resolveCard(registries, ref);
     const poise = def.effects.filter((e) => e.op === 'poiseDamage' && typeof e.amount === 'number').reduce((sum, e) => sum + e.amount, 0);
-    assert.ok(poise >= base, `${card.id} ${JSON.stringify(ref)} deals ${poise} Poise`);
+    assert.ok(poise > 0, `${card.id} ${JSON.stringify(ref)} retains positive authored or fallback Poise`);
     assert.match(def.textTemplate, /\{poiseDamage\}/, `${card.id}: the face names its Poise damage`);
   }
   const smash = { id: 's', type: 'attack', cost: 1, effects: [{ op: 'damage', target: 'enemy', amount: 40 }, { op: 'poiseDamage', target: 'enemy', amount: 5 }], tags: ['camp:physical', 'maneuver:smash'] };
   const out = applyActionCosts(smash, smash);
   assert.ok(out.cost >= 2);
   assert.equal(out.effects.find((e) => e.op === 'damage').amount, Math.round(40 * COST_BUDGET.twoCostMultiplier), 'damage scales');
-  assert.equal(out.effects.find((e) => e.op === 'poiseDamage').amount, Math.round(5 * COST_BUDGET.twoCostMultiplier) + base, 'its own Poise scales, then the base adds');
+  assert.equal(out.effects.find((e) => e.op === 'poiseDamage').amount, Math.round(5 * COST_BUDGET.twoCostMultiplier), 'its own Poise scales without another fallback');
+  const absent = { ...smash, effects: smash.effects.filter(effect => effect.op !== 'poiseDamage') };
+  const fallback = applyActionCosts(absent, absent);
+  assert.equal(fallback.effects.filter(effect => effect.op === 'poiseDamage').length, 1);
+  assert.equal(fallback.effects.find(effect => effect.op === 'poiseDamage').amount, base, 'absent Poise receives the fallback once');
 });
 
 test('a sweep pays for its area: its damage is unscaled at 2 SP, its other riders scale', () => {
@@ -281,5 +291,13 @@ test('a sweep pays for its area: its damage is unscaled at 2 SP, its other rider
     const authored = Array.isArray(card.gradeProfiles) ? applyAbilityGrade(card, ref.abilityRank) : card;
     const dmg = (d) => d.effects.filter((e) => e.op === 'damage' && typeof e.amount === 'number').map((e) => e.amount);
     if (ref.rank === undefined || ref.rank === 1) assert.deepEqual(dmg(def), dmg(authored), `${card.id} ${JSON.stringify(ref)}`);
+  }
+});
+
+test('cantrip training classification adds no resource budget or cost', () => {
+  for (const card of [SWORD_STRIKE, {...SWORD_STRIKE, tags:['camp:spell','source:spell','damage:arcane']}]) {
+    const before=cardCostBudget(card,{rank:0});
+    const after=cardCostBudget({...card,tags:[...card.tags,'rank.cantrip']},{rank:0});
+    assert.deepEqual([after.sSp,after.sMp,after.sp,after.mp],[before.sSp,before.sMp,before.sp,before.mp]);
   }
 });

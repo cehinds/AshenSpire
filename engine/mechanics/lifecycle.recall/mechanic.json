@@ -1,0 +1,22 @@
+{
+  "id": "lifecycle.recall",
+  "tag": "lifecycle.recall",
+  "version": "1.0.0",
+  "family": "lifecycle",
+  "label": "Recall",
+  "description": "Tag lifecycle.recall in the lifecycle family.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "lifecycle.recall"
+  },
+  "portability": "data"
+}

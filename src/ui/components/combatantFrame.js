@@ -2,6 +2,7 @@
 // slots and interaction callbacks; this component owns only stable structure,
 // role semantics, and component identity.
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { classicAppearance } from '../displayAppearance.js';
 import { artworkAnchor } from '../models/IdentityModel.js';
 
 const ownedClasses = new WeakMap();
@@ -19,6 +20,12 @@ export function updateCombatantFrame(frame, { classNames = [], leading = [], blo
   for (const value of ownedClasses.get(frame) || []) if (!classNames.includes(value)) frame.classList.remove(value);
   for (const value of classNames.filter(Boolean)) frame.classList.add(value);
   ownedClasses.set(frame, classNames.filter(Boolean));
+  // The action glyph owns a live selection callback and is reconciled by
+  // syncPlayerActionIntent. Rebuilding HUD slots must not defeat that
+  // maneuver guard and schedule another geometry pass for the same glyph.
+  const action = frame.classList.contains('player') ? frame.querySelector('.player-action-intent') : null;
+  const actionFocused = action && document.activeElement === action;
+  frame.querySelector(':scope > .target-hud-overhead-meters')?.remove();
   const leadingHost = frame.querySelector('.combatant-leading');
   leadingHost.replaceChildren(...leading.filter(Boolean));
   const card = frame.querySelector('.combatant-card');
@@ -32,8 +39,11 @@ export function updateCombatantFrame(frame, { classNames = [], leading = [], blo
     widget.appendChild(name);
   }
   if (meters) widget.appendChild(meters);
-  appendAll(widget, trailing.filter(n => n?.classList.contains('statuses')));
+  appendAll(frame.classList.contains('enemy') && !classicAppearance() ? leadingHost : widget,
+    trailing.filter(n => n?.classList.contains('statuses')));
   appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
+  if (action) leadingHost.appendChild(action);
+  if (actionFocused) action.focus({ preventScroll: true });
   return frame;
 }
 
@@ -61,6 +71,9 @@ export function adoptCombatantFrame(frame) {
   if (name) markName(name, role);
   const sprite = card.querySelector(':scope > .sprite');
   if (sprite) markArtwork(sprite);
+  if (role === 'enemy' && !classicAppearance()) {
+    for (const status of card.querySelectorAll(':scope > .statuses')) leading.append(status);
+  }
   if (role === 'player') {
     const widget = playerWidget(leading);
     for (const child of [...card.children]) if (child !== sprite) widget.append(child);
@@ -120,9 +133,35 @@ export function combatantFrame({
     widget.appendChild(name);
   }
   if (meters) widget.appendChild(meters);
-  appendAll(widget, trailing.filter(n => n?.classList.contains('statuses')));
+  appendAll(role === 'enemy' && !classicAppearance() ? leadingHost : widget,
+    trailing.filter(n => n?.classList.contains('statuses')));
   appendAll(widget, trailing.filter(n => !n?.classList.contains('statuses')));
   stack.appendChild(card);
   frame.appendChild(stack);
   return frame;
+}
+
+// The contextual desktop HUD keeps only HP beside the overhead intent. Move
+// the shared live meter nodes, including their tooltips, instead of cloning a
+// second health display or changing the sprite's frame geometry.
+export function setCombatantTargetHud(frame, enabled) {
+  const leading = frame.querySelector('.combatant-leading');
+  const rack = frame.querySelector(':scope > .target-hud-overhead-meters');
+  if (!leading) return;
+  if (enabled) {
+    if (rack) {
+      for (const intent of leading.querySelectorAll(':scope > .intent, :scope > .player-action-intent')) rack.prepend(intent);
+      return;
+    }
+    const meters = frame.querySelector('.combatant-card .meters, .combatant-mini-hud .meters');
+    if (!meters) return;
+    for (const slot of [meters, ...frame.querySelectorAll('.nm')]) { slot.style.removeProperty('transform'); slot.style.removeProperty('translate'); slot.style.removeProperty('position'); slot.style.removeProperty('left'); slot.style.removeProperty('top'); }
+    const host = document.createElement('div'); host.className = 'target-hud-overhead-meters';
+    host.append(...leading.querySelectorAll(':scope > .intent, :scope > .player-action-intent'), meters); frame.append(host);
+  } else if (rack) {
+    const parent = frame.classList.contains('player') ? leading.querySelector('.combatant-mini-hud') : frame.querySelector('.combatant-card');
+    for (const intent of rack.querySelectorAll(':scope > .intent, :scope > .player-action-intent')) leading.append(intent);
+    if (parent) parent.append(...rack.childNodes);
+    rack.remove();
+  }
 }

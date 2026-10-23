@@ -167,7 +167,7 @@ test('the preview script injects the dev channel flag right after <head> and set
 test('the index section lists each open-PR build and says so when there are none', () => {
   const none = branchPreviewSection([]);
   assert.match(none, /id="branch-builds"/);
-  assert.match(none, /No open pull request into/);
+  assert.match(none, /No feature branch has/);
 
   const html = branchPreviewSection([{ branch: 'feature/x', path: 'feature/x', pr: 12, sha: 'a1b2c3d4e5f6', file: 'AshenSpire-dev-preview.html' }]);
   assert.match(html, /open pull request #12 into dev/);

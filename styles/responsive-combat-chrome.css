@@ -1,0 +1,65 @@
+/* Shared combat paint contract. Actor-local art stays below root readouts. */
+:root .combat[data-layout='formation'] {
+  --combat-layer-scenery: 0;
+  --combat-layer-shadows: 100;
+  --combat-layer-enemy: 200;
+  --combat-layer-player: 200;
+  --combat-layer-fade: 375;
+  --combat-layer-selection: 800;
+  --combat-layer-cards: 900;
+  --combat-layer-hud: 700;
+  --combat-layer-banner: 1000;
+}
+:root .combat[data-layout='formation'] .fx-layer { z-index: 400; }
+:root .combat[data-layout='formation'] :is(.combat-floater-layer,.target-hud-layer,.combat-info-portals) { z-index: 800; }
+:root .combat[data-layout='formation'] .combat-tools,
+:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] { z-index: 700 !important; }
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] { overflow: visible; touch-action: pan-y; }
+:root .combat[data-layout='formation'] .hand-overlay > :is(.hand-prev,.hand-next) { display: none; }
+/* The footer is the only lower backing; its fade rises gently into the field. */
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] > .hand-area { background: transparent; }
+:root .combat[data-layout='formation']:has(> .environment-backdrop)::before { background: none; }
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] > .hand-area::before {
+  content: ''; position: absolute; inset: auto 0 0; height: calc(var(--w4-band-footer) * 1.65);
+  background: linear-gradient(to bottom, transparent, #211d16 65%); pointer-events: none; z-index: 0;
+}
+:root .combat[data-layout='formation'] .turn-ribbon {
+  position: absolute; top: calc(7px / var(--ui-zoom,1)); left: 50%; translate: -50% 0;
+  font-size: calc(12px / var(--ui-zoom,1)); min-height: 0; padding-block: 0;
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'][data-desktop-footer='true'] > .hand-area::before {
+  inset: auto 0 0; height: calc(var(--w4-band-footer) * 1.65);
+  background: linear-gradient(to bottom, transparent, #211d16 65%);
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] .turn-ribbon { font-size: calc(12px / var(--ui-zoom,1)); }
+:root[data-display-appearance='alternative'] .combat[data-desktop-header='true'] > .combat-hud.shared-hud > .turn-ribbon {
+  top: calc(5px / var(--ui-zoom,1)); left: 50%; translate: none; transform: translateX(-50%);
+  max-width: 70%; font-size: calc(11px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .formation-grid { z-index: 100; }
+:root[data-form-factor='mobile'] .combat[data-layout='formation'] > .hand-area::before { height: calc(var(--w4-band-footer) * 1.15); }
+:root[data-form-factor='tablet'] .combat[data-layout='formation'] > .hand-area::before { height: calc(var(--w4-band-footer) * 1.2); }
+/* Root material covers the complete footer, independent of the hand grid. */
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] > .alternative-card-fade {
+  display: block; position: absolute; inset: auto 0 0;
+  height: calc(var(--w4-band-footer) + 60px / var(--ui-zoom,1));
+  background: linear-gradient(to bottom, transparent, #211d16 calc(60px / var(--ui-zoom,1)), #211d16);
+  mask-image: none; -webkit-mask-image: none; z-index: var(--combat-layer-fade); pointer-events: none;
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation']:is([data-desktop-footer='true'],[data-desktop-footer='false']) > .hand-area::before { display: none; }
+/* All compact faces and their labels share the same bounded footer band. */
+:root[data-form-factor='mobile'] .combat[data-layout='formation'] .combat-action-row[data-footer-art] > :is(.energy-orb,.pile,.end-turn,.combat-potions) {
+  max-height: calc(var(--w4-band-footer) - 4px / var(--ui-zoom,1));
+  align-self: center;
+}
+:root[data-form-factor='mobile'] .combat[data-layout='formation'][data-compact-combat='true']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > :is(.pile,.end-turn,.combat-potions) {
+  height: calc(var(--w4-band-footer) - 4px / var(--ui-zoom,1));
+  min-height: 0; max-height: calc(var(--w4-band-footer) - 4px / var(--ui-zoom,1));
+  padding-block: 0; overflow: visible;
+}
+:root[data-form-factor='mobile'] .combat[data-layout='formation'][data-compact-combat='true'] .combat-action-row[data-footer-art][data-footer-compact='true'] :is(.pile,.combat-potions) .footer-art-face[data-art-fit='contain'] {
+  height: calc(40px / var(--ui-zoom,1)); max-height: calc(40px / var(--ui-zoom,1)); flex: 0 0 auto;
+}
+:root[data-display-appearance='alternative'] .combat[data-layout='formation'] > .alternative-card-fade {
+  background-image: linear-gradient(to bottom, transparent, #211d16 calc(60px / var(--ui-zoom,1)), #211d16) !important;
+}

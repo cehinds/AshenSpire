@@ -1,0 +1,81 @@
+{
+  "revision": 8,
+  "sourceCommit": "15e77d6ae9905e6e730450911621e3dacc6052e4",
+  "request": "Follow the supplied models with transparent energy silhouettes; extend the outline through the scepter guard, grip and pommel.",
+  "changedPngs": [
+    "Y.effect.0",
+    "Y.effect.1",
+    "Y.effect.2",
+    "Y.effect.3",
+    "Y.effect.4",
+    "Y.effect.5",
+    "Y.effect.6",
+    "Y.effect.7",
+    "Y.effect.8",
+    "Y.effect.9"
+  ],
+  "unchangedPngCount": 352,
+  "generationSources": [
+    {
+      "assetId": "Y.effect.0",
+      "referenceAssetId": "O.object.0",
+      "sourceFile": "/workspace/generated_images/exec-2af7e2f4-3270-471f-98e6-a13202fbc847.png",
+      "sourceSha256": "999445446647ca93ed5e4233cd027c441abc5b37f165d6ad4f601822c7f8c800"
+    },
+    {
+      "assetId": "Y.effect.5",
+      "referenceAssetId": "O.object.0",
+      "sourceFile": "/workspace/generated_images/exec-2af7e2f4-3270-471f-98e6-a13202fbc847.png",
+      "sourceSha256": "999445446647ca93ed5e4233cd027c441abc5b37f165d6ad4f601822c7f8c800"
+    },
+    {
+      "assetId": "Y.effect.1",
+      "referenceAssetId": "O.object.1",
+      "sourceFile": "/workspace/generated_images/exec-75cc7ec1-ff47-4aa3-acad-80ec82b8624c.png",
+      "sourceSha256": "1bd63c4cc24a59bb1743b066e33cf43702a625480e905ba4cdc7b9b8bbec39ff"
+    },
+    {
+      "assetId": "Y.effect.6",
+      "referenceAssetId": "O.object.1",
+      "sourceFile": "/workspace/generated_images/exec-75cc7ec1-ff47-4aa3-acad-80ec82b8624c.png",
+      "sourceSha256": "1bd63c4cc24a59bb1743b066e33cf43702a625480e905ba4cdc7b9b8bbec39ff"
+    },
+    {
+      "assetId": "Y.effect.2",
+      "referenceAssetId": "L.object.4",
+      "sourceFile": "/workspace/generated_images/exec-f6e975ae-75f5-4f78-a612-c09e8327debb.png",
+      "sourceSha256": "b2a7cf6f37667f63f7a6468b706ebdedad41849e56a97ca0e193cdb659a42106"
+    },
+    {
+      "assetId": "Y.effect.7",
+      "referenceAssetId": "L.object.4",
+      "sourceFile": "/workspace/generated_images/exec-f6e975ae-75f5-4f78-a612-c09e8327debb.png",
+      "sourceSha256": "b2a7cf6f37667f63f7a6468b706ebdedad41849e56a97ca0e193cdb659a42106"
+    },
+    {
+      "assetId": "Y.effect.3",
+      "referenceAssetId": "O.object.2",
+      "sourceFile": "/workspace/generated_images/exec-148d5d78-5937-4b85-8bac-8128c4358587.png",
+      "sourceSha256": "9eee6be3a53623d0d1535187c298ddebb199c3881ae0b02687e6dc419d4d3b48"
+    },
+    {
+      "assetId": "Y.effect.8",
+      "referenceAssetId": "O.object.2",
+      "sourceFile": "/workspace/generated_images/exec-148d5d78-5937-4b85-8bac-8128c4358587.png",
+      "sourceSha256": "9eee6be3a53623d0d1535187c298ddebb199c3881ae0b02687e6dc419d4d3b48"
+    },
+    {
+      "assetId": "Y.effect.4",
+      "referenceAssetId": "O.object.4",
+      "sourceFile": "/workspace/generated_images/exec-faca88be-84c3-454e-9e43-84e37002ed29.png",
+      "sourceSha256": "dfcf94b97702b530b7d6a39c720fb15e94d66d9515ed1ae290d8b48b9a4ec294"
+    },
+    {
+      "assetId": "Y.effect.9",
+      "referenceAssetId": "O.object.4",
+      "sourceFile": "/workspace/generated_images/exec-faca88be-84c3-454e-9e43-84e37002ed29.png",
+      "sourceSha256": "dfcf94b97702b530b7d6a39c720fb15e94d66d9515ed1ae290d8b48b9a4ec294"
+    }
+  ],
+  "labelPolicy": "Keep category/object/effect codes and names outside the PNG pixels."
+}

@@ -55,6 +55,35 @@ function section(title, rows, empty) {
   ]);
 }
 
+function revealedHandSection(read) {
+  if (read?.visible !== true) return null;
+  const rows = read.cards.map(card => ({ name: `${card.name} ×${card.count}`, detail: card.type }));
+  const node = section('Revealed enemy hand', rows, 'Hand is empty.');
+  node.dataset.section = 'revealed-hand';
+  node.append(statusText(['draw', 'hand', 'discard', 'exhaust']
+    .map(zone => `${zone}: ${read.counts[zone]}`).join(' · ')));
+  return node;
+}
+
+function enemyDeckSection(read) {
+  if (!read) return null;
+  const node = el('section', { class: 'combatant-inspector-section', dataset: { section: 'enemy-deck' } }, [
+    eyebrow('Enemy deck & played cards'), hairline(),
+    statusText('Action SP includes combat modifiers. Card base shows authored SP/MP; effects use combat move rules.'),
+  ]);
+  const action = (label, card, empty) => el('details', { class: 'combatant-played-card', open: true }, [
+    el('summary', { text: `${label}: ${card?.name || empty}` }),
+    ...(card ? [renderEnemyMoveCards([card])] : []),
+  ]);
+  node.append(action('Current action', read.current, read.currentHidden ? t('gameProfile.combat.unreadIntent') : 'None'),
+    action('Last played', read.last, 'None yet'));
+  node.append(el('details', { class: 'combatant-deck-cards', open: true }, [
+    el('summary', { text: `Authored deck (${read.cards.reduce((count, card) => count + (card.copies || 1), 0)})` }),
+    renderEnemyMoveCards(read.cards),
+  ]));
+  return node;
+}
+
 function abilitySection(abilities) {
   const list = el('details', { class: 'combatant-inspector-section combatant-abilities', open: true }, [
     el('summary', { class: 'as-eyebrow', text: `${helpText('activeListTitle')} (${abilities.length})` }), hairline(),
@@ -113,9 +142,11 @@ export function combatantDetailBody(subject, { heading = true } = {}) {
     heading ? labelStack({ label: subject.name, hint: subject.subtitle || '' }) : null,
     projectedSection(byId.summary),
     projectedSection(byId.state),
+    revealedHandSection(subject.burdenRead || subject.intent?.burdenRead),
     subject.learning ? renderEnemyKnowledge(subject.learning, { perception: subject.perception }) : null,
     subject.prediction ? renderIntentPrediction(subject.prediction, subject.onPredict) : null,
     projectedSection(byId.history),
+    enemyDeckSection(subject.deckInspection),
     subject.learning ? null : abilities,
     projectedSection(byId.traits),
     projectedSection(byId.lore),
@@ -155,7 +186,7 @@ export function mountCombatantInspector(host, model, { onToggle = null } = {}) {
   host.hidden = false;
   host.className = `combatant-inspector-host ${model.properties.edge}`;
   host.style.setProperty('--combatant-inspector-width-rem', String(model.tokens.widthRem));
-  host.style.setProperty('--combatant-inspector-mobile-vw', `${model.tokens.mobileWidthViewportPct}vw`);
+  host.style.setProperty('--combatant-inspector-mobile-vw', `calc(${model.tokens.mobileWidthViewportPct} * var(--view-vw, 1vw))`);
   host.setAttribute('aria-label', model.accessibility.label);
   markUiComponent(host, model.component, model.variant);
 

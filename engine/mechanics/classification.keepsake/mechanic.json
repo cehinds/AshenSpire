@@ -1,0 +1,22 @@
+{
+  "id": "classification.keepsake",
+  "tag": "classification.keepsake",
+  "version": "1.0.0",
+  "family": "classification",
+  "label": "Keepsake",
+  "description": "What a keepsake is. Every object in the keepsake collection carries this, and nothing outside it may.",
+  "attaches": [
+    "run"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "classification.keepsake"
+  },
+  "portability": "data"
+}

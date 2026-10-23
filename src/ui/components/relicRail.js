@@ -14,7 +14,7 @@ import { observeIconTray, setIconTrayItems, trayIcon } from './iconTray.js';
 export function relicRailTile(registries, relicId) {
   const def = registries.relics.get(relicId);
   const tile = trayIcon({
-    glyph: def.icon || '◆', art: relicIcon(def), tone: def.tint || '', label: def.name,
+    glyph: def.icon || 'skill', art: relicIcon(def), tone: def.tint || '', label: def.name,
     attrs: { class: 'relic', dataset: { relicId } },
     tip: () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`,
     activate: (node) => openCollectibleInspection(registries, def, 'Relic', node),

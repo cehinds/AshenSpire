@@ -1,0 +1,27 @@
+{
+  "id": "counter_spell",
+  "tag": "counter:spell",
+  "version": "1.0.0",
+  "family": "counter",
+  "label": "Spell counter",
+  "description": "Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health.",
+  "attaches": [
+    "card"
+  ],
+  "files": {
+    "model": "model.schema.json",
+    "interface": "interface.json",
+    "service": "service.json",
+    "cases": "cases.json",
+    "guide": "guide.md"
+  },
+  "presentation": {
+    "icon": "counter_spell",
+    "color": "D7B36B"
+  },
+  "portability": "legacy",
+  "legacy": {
+    "file": "src/engine/combatReactions.js",
+    "symbol": "counterCoversAttack"
+  }
+}

@@ -1,7 +1,7 @@
 // tests/run-node.mjs — Node test runner: `node tests/run-node.mjs`
 // Prints one line per test; exits 1 on any failure.
 //
-// No flags run the original whole corpus. CI may schedule the same work as:
+// No flags run the active-feature corpus; disabled co-op stays parked by config. CI may schedule the same work as:
 //   --no-selftests --no-discovered   engine and tool verdicts
 //   --discovered-only --shard i/n   deterministic shards of discovered tests
 //   --no-slow | --slow-only          with --discovered-only: leave out, or run
@@ -10,8 +10,9 @@
 // Selftests that write mutants must run in a separate checkout from tree gates.
 // tools/gatelist.mjs and tools/testnumbers.mjs still read this invocation list.
 
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import { runTests } from './engine.test.js';
-import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
+import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, discoveryFeatureFiles, SLOW_DISCOVERED, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
 
 let options;
 try {
@@ -139,9 +140,12 @@ if (DISCOVER) {
   walk(root);
   found.sort();
   const stale = [...NOT_SPAWNED.keys()].filter(file => !existsSync(join(root, file)));
+  const eligible = discoveryFeatureFiles(found.filter(file => !NOT_SPAWNED.has(file)), { coopEnabled: COOP_TESTS_ENABLED });
+  const parkedCount = found.filter(file => !NOT_SPAWNED.has(file)).length - eligible.length;
+  if (!COOP_TESTS_ENABLED) console.log(`SKIP ${parkedCount} dedicated co-op files: ${COOP_TEST_SKIP_REASON}`);
   let files;
   try {
-    files = discoveryShardFiles(discoverySpeedFiles(found.filter(file => !NOT_SPAWNED.has(file)), options.slow), options.shard);
+    files = discoveryShardFiles(discoverySpeedFiles(eligible, options.slow), options.shard);
   } catch (error) {
     console.error(`run-node: ${error.message}`);
     process.exit(2);
@@ -1217,6 +1221,27 @@ if (CORE) {
     zoomPassed++;
   } catch (error) {
     console.log(`FAIL  generated HUD layout CSS: ${error.stderr || error.stdout || error.message}`);
+    zoomExtra++;
+  }
+  // The design tokens in content/config/ui/tokens.json publish as CSS custom
+  // properties in styles/tokens.generated.css (tests/tokens-css.test.mjs).
+  try {
+    execFileSync(process.execPath, ['tools/tokens-css.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  generated token CSS is current with content/config/ui/tokens.json (tokens-css --check)');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  generated token CSS: ${error.stderr || error.stdout || error.message}`);
+    zoomExtra++;
+  }
+  // The style ratchet: raw font sizes below the text minimum, bare z-index of
+  // 100+ and bare hex colours in styles/*.css may fall but never rise above
+  // tools/style-lint-baseline.json (tests/style-lint.test.mjs holds the rules).
+  try {
+    execFileSync(process.execPath, ['tools/style-lint.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  style lint is within its baseline (style-lint --check)');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  style lint: ${error.stderr || error.stdout || error.message}`);
     zoomExtra++;
   }
   // The tag tree's derived views — tags, domains, pairings, property rules and

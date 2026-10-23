@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {withLayeredArt} from './layered-art.mjs';
 // tools/asset-pack.mjs — the pack format: a content-addressed object store and
 // one hash-pinnable index per pack, written from the trees in this repository.
 //
@@ -65,6 +66,7 @@
 // tests/asset-pack.test.mjs proves that, and plants a wrong hash, a stray and a
 // twin that does not match, each of which --check must catch.
 
+import { withCardCutouts } from './card-cutout-assets.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -129,6 +131,7 @@ const FONTS_FN = '__ashenFonts';
  * 'auto' (each pack's verified cache, else its tree: tools/art-source.mjs).
  */
 export function withAlternativeArt(manifest, root = ROOT) {
+  manifest = withCardCutouts(manifest, root);
   const catalogFile = resolve(root, 'src/ui/alternativeArtCatalog.js');
   if (!existsSync(catalogFile)) return manifest;
   const match = readFileSync(catalogFile, 'utf8').match(/^export const alternativeArtCatalog = (.+);\r?$/m);
@@ -157,6 +160,16 @@ export function withAlternativeArt(manifest, root = ROOT) {
       if (stancesCatalog.filePaths?.[file]) catalog.filePaths[file] = stancesCatalog.filePaths[file];
     }
   }
+  const smashFile = resolve(root, 'src/content/classSmashAnimations.js');
+  if (existsSync(smashFile)) {
+    const match = readFileSync(smashFile, 'utf8').match(/^export const classSmashAnimations = (.+);\r?$/m);
+    if (!match) throw new Error('Class Smash must be exported before packing');
+    const smash = JSON.parse(match[1]);
+    for (const [file, hash] of Object.entries(smash.hashes)) {
+      if (Object.hasOwn(catalog.hashes, file)) throw new Error(`Duplicate alternative art: ${file}`);
+      catalog.hashes[file] = hash;catalog.filePaths[file] = smash.filePaths[file];
+    }
+  }
   const assets = { ...manifest.assets };
   for (const [file, expected] of Object.entries(catalog.hashes)) {
     if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(file)) throw new Error(`Invalid alternative art filename: ${file}`);
@@ -175,7 +188,7 @@ export function planPacks(root = ROOT, packs = PACKS, { source: from = 'auto' } 
   if (!SOURCES.includes(from)) return { packs: {}, fonts: null, problems: [`unknown source ${JSON.stringify(from)} (one of ${SOURCES.join(', ')})`] };
   const manifestFile = resolve(root, MANIFEST_PATH);
   if (!existsSync(manifestFile)) return { packs: {}, fonts: null, problems: [`${MANIFEST_PATH} is missing — node tools/art-manifest.mjs --write`] };
-  const manifest = withAlternativeArt(JSON.parse(readFileSync(manifestFile, 'utf8')), root);
+  const manifest = withLayeredArt(withAlternativeArt(JSON.parse(readFileSync(manifestFile, 'utf8')), root),root);
   if (manifest.schema !== 2) problems.push(`${MANIFEST_PATH} is schema ${manifest.schema}; the pack format needs schema 2 (node tools/art-manifest.mjs --write)`);
   let sources = null;
   const treeSources = () => (sources = sources || new Map(commonSources(root).map((c) => [c.id, c.source])));
@@ -530,7 +543,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const packs = packArg ? packArg.split(',').filter(Boolean) : PACKS;
   try {
     if (args.includes('--check')) {
-      const manifest = withAlternativeArt(JSON.parse(readFileSync(resolve(ROOT, MANIFEST_PATH), 'utf8')));
+      const manifest = withLayeredArt(withAlternativeArt(JSON.parse(readFileSync(resolve(ROOT, MANIFEST_PATH), 'utf8'))),ROOT);
       const problems = verifyPacks(out, { manifest, packs });
       if (problems.length) {
         console.error(`asset-pack: FAIL — ${problems.length} problem(s) in ${posix(relative(process.cwd(), out)) || '.'}:`);

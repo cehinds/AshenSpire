@@ -1,11 +1,12 @@
 // The pending choice a card offers before it plays (model/cardChoices.js;
 // SPEC §5.2 Warrior's Vow: "Enter a Stance of your choice"). One dialog for
 // solo (screens/combat.js) and co-op (screens/coop.js): one button per
-// option, each naming the stance and what it does; Cancel plays nothing. The
+// option (a uniform tile naming the stance and what it does); Cancel plays nothing. The
 // stance the player is already in (`option.active`) is shown but disabled and
 // marked, since re-entering it does nothing (#1449 review, Codex P2).
-import { openModal, button, el } from '../kit/index.js';
+import { openModal, button } from '../kit/index.js';
 import { t } from '../strings.js';
+import { cardOptionGrid } from './cardOptionGrid.js';
 
 /**
  * openCardChoiceModal({ plan, cardName, opener, onChoose, onClosed }) → the
@@ -13,33 +14,24 @@ import { t } from '../strings.js';
  * or Escape runs nothing and the card stays in hand. `onClosed()` runs on
  * every close, before `onChoose`, so a screen can tell the dialog is gone.
  */
-export function openCardChoiceModal({ plan, cardName = 'Card', opener = document.activeElement, onChoose, onClosed = null }) {
+export function openCardChoiceModal({ plan, cardName = t('card.artPlaceholder'), opener = document.activeElement, onChoose, onClosed = null }) {
   let chosen = null;
   const cancel = button({ label: t('common.cancel'), role: 'exit', attrs: { 'data-focusable': 'true' } });
   const shell = openModal({
-    size: 'sm',
+    size: 'md',
     className: 'card-choice',
     opener,
     eyebrow: cardName,
-    title: plan.kind === 'stance' ? 'Choose a stance' : 'Choose',
+    title: plan.kind === 'stance' ? t('cardChoice.stanceTitle') : t('common.choose'),
     closeLabel: `${t('common.cancel')} ${cardName}`,
     bodyClassName: 'as-pane card-choice-body',
     body: (host) => {
-      for (const option of plan.options) {
-        const pick = button({
-          label: `${option.icon ? option.icon + ' ' : ''}${option.name}${option.active ? ' (active)' : ''}`,
-          weight: 'primary',
-          className: 'card-choice-option',
-          disabled: !!option.active,
-          attrs: { 'data-focusable': 'true', 'data-choice': option.id, 'aria-describedby': `card-choice-${option.id}`,
-            ...(option.active ? { 'data-active': 'true', 'aria-disabled': 'true', title: t('cardChoice.stance.active') } : {}) },
-        });
-        pick.addEventListener('click', () => { if (option.active) return; chosen = option.id; shell.close(); });
-        host.appendChild(el('div', { class: 'card-choice-row' }, [
-          pick,
-          el('p', { class: 'as-prose', id: `card-choice-${option.id}`, text: option.tooltip || '' }),
-        ]));
-      }
+      // Uniform tiles like the other card pickers; a stance has no numbers, so its tooltip is the effect line.
+      const summaries = plan.options.map(option => ({ id: option.id, className: 'card-choice-option',
+        name: `${option.name}${option.active ? ' (active)' : ''}`,
+        text: option.tooltip || '', line: [], costs: [], disabled: !!option.active,
+        attrs: option.active ? { 'data-active': 'true' } : {} }));
+      host.appendChild(cardOptionGrid(summaries, { idAttr: 'data-choice', onSelect: id => { chosen = id; shell.close(); } }));
     },
     primary: cancel,
     footSize: 'short',

@@ -1,0 +1,6 @@
+{
+  "id": "ashen.kernel",
+  "version": "1.0.0",
+  "contracts": "../contracts/game-profile.json",
+  "implementation": "gameConfig.js"
+}

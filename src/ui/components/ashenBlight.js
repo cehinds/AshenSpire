@@ -1,3 +1,4 @@
+import { t } from '../strings.js';
 import { ashenBlightFeatChoices, ashenBlightFeat } from '../../content/ashenBlight.js';
 import { openModal, button, el } from '../kit/index.js';
 import { esc } from './tooltip.js';
@@ -51,7 +52,7 @@ export function openAshenBlightMilestone({ threshold, onChoose, onClosed, opener
       host.appendChild(el('p', { class: 'as-prose', text: 'Choose two benefits and one drawback. This choice lasts for the run. Normal cards wait until you choose.' }));
       for (const feat of choices) {
         const row = el('div', { class: 'ashen-blight-choice-row' }); row.innerHTML = ashenBlightFeatHtml(feat);
-        const pick = button({ label: `Choose ${feat.name}`, weight: 'primary', attrs: { 'data-focusable': 'true', 'data-blight-path': feat.path } });
+        const pick = button({ label: t('common.chooseNamed', { name: feat.name }), weight: 'primary', attrs: { 'data-focusable': 'true', 'data-blight-path': feat.path } });
         pick.addEventListener('click', async () => {
           if (busy) return; busy = true; pick.disabled = true;
           try {

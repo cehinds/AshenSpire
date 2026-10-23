@@ -1,3 +1,4 @@
+import { gameModule } from '../../model/gameProfile.js';
 // src/ui/screens/map.js — the act map SCREEN (SPEC §7.1, mockup: map-screen.svg)
 //
 // THE BOARD IS NOT HERE ANY MORE. Geometry, edges, nodes, fog, the camera, the
@@ -22,7 +23,7 @@
 //
 // WHAT IS DRAWN IS NOT WHAT IS CLICKABLE. `reachable` governs CLICKS; fog governs
 // DRAWING, and it asks a different question of a different set — the ladder in
-// model/mapknowledge.js. The Sealstone Key is not a case this screen checks for:
+// model/map/mapknowledge.js. The Sealstone Key is not a case this screen checks for:
 // it is the operator that lifts a node from `placed` to `known`.
 
 import { passiveFlag } from '../../model/registries.js';
@@ -33,7 +34,7 @@ import { matchAction, actionDestinationForEvent, isEngaged, focusFirst, focusEle
 import { hintBarHtml } from '../components/hints.js';
 import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
 import { mountMapBoard } from '../components/mapboard.js';
-import { resolveMapMode } from '../../model/mapknowledge.js';
+import { resolveMapMode } from '../../model/map/mapknowledge.js';
 import { actRouteStripHtml } from '../components/actRouteStrip.js';
 import { seatNameOf } from '../components/runHud.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
@@ -141,8 +142,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const reachable = new Set(mapAdapter?.reachable || (current ? map.nodes[current].next : map.startIds));
   // A left classic rest site stays enterable until a new node is chosen (owner, 2026-10-12).
   if (!mapAdapter && revisitId && map.nodes[revisitId]) reachable.add(revisitId);
-  const reveal = passiveFlag(registries, run.relics, 'revealUnknown');
-  const mode = mapAdapter?.mode || resolveMapMode(meta);
+  const configuredRoutes = gameModule(run, 'routes')?.mode === 'configured';
+  const reveal = configuredRoutes ? false : passiveFlag(registries, run.relics, 'revealUnknown');
+  const mode = configuredRoutes ? resolveMapMode(meta, run) : mapAdapter?.mode || resolveMapMode(meta, run);
   const fog = mode === 'fog';
 
   const atEntrance = !current;

@@ -1,3 +1,4 @@
+import { DEFAULT_COMBAT_WEAPONS } from './combatWeaponPresentation.js';
 import { uiConfig } from '../config/generated/ui.js';
 import { figureSpec, gripOf } from './loadout.js';
 
@@ -117,6 +118,11 @@ export function equipmentAnimationForLoadout(registries, loadout, classId) {
   return { ...selected, frames: { ...selected.frames, ...frames },
     clips: { ...selected.clips, bladeAttack: { ...attack, frames: attack.frames.map(key => `BLADE-${key}`) } },
     references: { ...selected.references, bladeAttack: 'bladeAttack' } };
+}
+
+/** Combat defaults do not borrow equipped-weapon paintings; other views still may. */
+export function combatEquipmentAnimationForLoadout(registries, loadout, classId) {
+  return DEFAULT_COMBAT_WEAPONS ? null : equipmentAnimationForLoadout(registries, loadout, classId);
 }
 
 export function animationClip(component, roleOrPose) {

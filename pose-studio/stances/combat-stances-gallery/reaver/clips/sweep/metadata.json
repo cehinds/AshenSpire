@@ -1,0 +1,78 @@
+{
+  "action": "sweep",
+  "aliases": [
+    "sweep"
+  ],
+  "origin": "sweep",
+  "timing": {
+    "totalMs": 195,
+    "impactMs": 78
+  },
+  "registeredSequence": {
+    "poses": [
+      "origin",
+      "pilot-sweep-windup",
+      "pilot-sweep-contact",
+      "pilot-sweep-finish",
+      "origin"
+    ],
+    "durations": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "impact": 2,
+    "travel": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "hold": false,
+    "pilot": true,
+    "timingUnits": 5,
+    "contactCue": true
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-sweep",
+      "registeredFrameId": "origin",
+      "label": "1/5 origin \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 19.5
+    },
+    {
+      "pose": "pilot-sweep-windup",
+      "registeredFrameId": "pilot-sweep-windup",
+      "label": "2/5 pilot-sweep-windup \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 58.5
+    },
+    {
+      "pose": "pilot-sweep-contact",
+      "registeredFrameId": "pilot-sweep-contact",
+      "label": "3/5 pilot-sweep-contact \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 97.5
+    },
+    {
+      "pose": "pilot-sweep-finish",
+      "registeredFrameId": "pilot-sweep-finish",
+      "label": "4/5 pilot-sweep-finish \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 136.5
+    },
+    {
+      "pose": "stance-sweep",
+      "registeredFrameId": "origin",
+      "label": "5/5 origin \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 175.5
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

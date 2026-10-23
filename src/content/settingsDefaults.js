@@ -12,7 +12,7 @@
 //   · Reset puts a key back to this value, not to the row's code default.
 // Empty values mean the code defaults stand, exactly as before this file.
 export const SETTINGS_DEFAULTS = Object.freeze({
-  digest: '0aa7fd2c1c',
+  digest: '4b27cb61ad',
   values: Object.freeze({
     "gameConfig.balance.level.xp.growth": 1.5,
     "gameConfig.balance.rewards.cardChoices": 3,
@@ -51,7 +51,7 @@ export const SETTINGS_DEFAULTS = Object.freeze({
     "gameConfig.presentation.rowEScale": 1,
     "gameConfig.presentation.rowFLayer": 0,
     "gameConfig.presentation.rowFScale": 1,
-    "gameConfig.presentation.showFormationGrid": false,
+    "gameConfig.presentation.showFormationGrid": true,
     "gameConfig.prologue.scenes.extraA.character": false,
     "gameConfig.prologue.scenes.step.actor.desktop.height": 40,
     "gameConfig.prologue.scenes.step.actor.desktop.layer": "behindWash",

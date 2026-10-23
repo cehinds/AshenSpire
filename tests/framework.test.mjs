@@ -689,8 +689,7 @@ test('the tooltip cost line renders identically through the framework for every 
       const rendered = `${pools.variable ? 'X' : pools.action} ${bridge.resourceWord('action')}`
         + (pools.mana ? ` + ${pools.mana} ${bridge.resourceWord('mana')}` : '');
       const legacy = `${def.cost} Stamina`
-        + (def.manaCost ? ` + ${def.manaCost} Mana` : '')
-        + (def.staminaCost ? ` + ${def.staminaCost} Stamina` : '');
+        + (def.manaCost ? ` + ${def.manaCost} Mana` : ''); // staminaCost is the cost-field alias, not a second charge.
       eq(rendered, legacy, `${card.id}${upgraded ? '+' : ''} cost line`);
     }
   }
@@ -808,6 +807,27 @@ test('the status-semantics door forwards shipped state, results and errors', () 
   for (const name of Object.keys(semanticsHome)) {
     eq(typeof semanticsDoor[name], 'function', `door serves ${name}`);
   }
+});
+
+test('the status-semantics door forwards Core 2 owner-start decay and round gates', () => {
+  const exercise = api => {
+    const definition = {id:'buff',stackMode:'add',decay:'perTurnEnd',modifiers:{}};
+    const player = {id:'player',kind:'player',alive:true,statuses:{buff:{stacks:3}}};
+    const events = [];
+    const ctx = {player,enemies:[],turn:11,combatExpansionVersion:2,
+      gameProfile:{modules:{effects:{fixCoreVersion:1}}},
+      registries:{statuses:{get:()=>definition}},emit:(type,payload)=>events.push({type,...payload})};
+    eq(api.statusDefinition(ctx,'buff'),definition,'effective definitions use the implementation');
+    eq(api.decayAtTurnStart(ctx,player),undefined,'owner-start decay forwards its return');
+    eq(player.statuses.buff.stacks,2,'the owner-start clock removes one stack');
+    api.decayAtTurnStart(ctx,player);
+    eq(player.statuses.buff.stacks,2,'a repeated clock in the same round cannot decay twice');
+    ctx.turn=12;
+    api.decayAtTurnStart(ctx,player);
+    eq(player.statuses.buff.stacks,1,'the next round advances decay');
+    return {player,events};
+  };
+  eq(exercise(semanticsDoor),exercise(semanticsHome),'the framework forwards actual Core 2 state and receipts');
 });
 
 test('the router door serves the whole routed-interaction surface, identically', () => {

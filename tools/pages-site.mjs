@@ -296,10 +296,22 @@ function buildsOf(branch, keep) {
 
 // Builds skipped this run, each with its reason — printed above the verdict and
 // on the branch's page, so a gap in the list is explained rather than silent.
+/**
+ * A GitHub warning annotation, except during --selftest. The selftest assembles
+ * a throwaway site with --keep 1, no --build-missing and every committed build
+ * simulated as purged, so its "skipped … LFS object unavailable" and "has no
+ * /latest/ … newest served build is 548" warnings are the PLANT, not the site.
+ * They landed on the real run's annotation list (run 39267231395) and read as
+ * "dev/latest is not published" when the real assemble step had served it.
+ */
+function annotate(title, message) {
+  if (process.env.GITHUB_ACTIONS && !process.argv.includes('--selftest')) console.log(`::warning title=${title}::${message}`);
+}
+
 const skippedBuilds = [];
 function skip(b, reason) {
   skippedBuilds.push({ branch: b.branch, ordinal: b.ordinal, sha: b.sha, reason });
-  if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site skipped ${b.branch}/${b.ordinal}::${reason}`);
+  annotate(`pages-site skipped ${b.branch}/${b.ordinal}`, reason);
 }
 
 /**
@@ -326,6 +338,24 @@ function purgedOrThrow(error) {
   const text = `${error.message || ''}\n${error.stderr || ''}`;
   if (/Object does not exist|\[404\]|404 Not Found/i.test(text) && !/does not match|Malformed/.test(text)) return null;
   throw error;
+}
+
+/**
+ * WHAT A FAILED REBUILD SAYS (2026-10-19). The old text was the LAST TWO lines of
+ * stderr, and bundle.mjs ends every failure with "NOTE: dist/AshenSpire.html is
+ * untouched…" after the launcher's "mobile build failed — aborting." — so the
+ * annotation named neither the real cause (bundle.mjs: ERROR — the mobile build
+ * is … over its … budget) nor the commit's step. Now: the lines that name an
+ * error come first, the boilerplate that follows every failure is dropped, and
+ * the launcher's own verdict line closes it.
+ */
+function rebuildFailureDetail(error) {
+  const text = `${error.stderr || ''}\n${error.message || ''}`;
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
+    .filter((l) => !/^NOTE: dist\/AshenSpire\.html is untouched/.test(l) && !/now holds a build-failed page/.test(l));
+  const causes = lines.filter((l) => /\bERROR\b|\bError:|failed|refus|ENOSPC|ENOENT|not found/i.test(l));
+  const picked = [...new Set(causes.length ? causes.slice(0, 4) : lines.slice(-3))];
+  return picked.join(' | ').slice(0, 900) || String(error.message || error).slice(0, 300);
 }
 
 const rebuilt = new Map();   // `${sha}:${tier}` → { dir } | { error }
@@ -395,8 +425,7 @@ function rebuildAt(sha, fullArt) {
     console.log(`  rebuilt ${sha.slice(0, 10)} (${fullArt ? 'full' : 'light'} art requested${!fullArt && existsSync(join(dir, MOBILE_ARTIFACT)) ? '; this commit predates the light tier and built full art with its mobile twin' : ''}) in ${Math.round((Date.now() - t0) / 1000)}s`);
     result = { dir };
   } catch (error) {
-    const detail = String(error.stderr || error.message || error).trim().split('\n').slice(-2).join(' ');
-    result = { error: `rebuild failed: ${detail}` };
+    result = { error: `rebuild failed: ${rebuildFailureDetail(error)}` };
   }
   rebuilt.set(key, result);
   return result;
@@ -908,9 +937,9 @@ export function publishBranchPreviews(outDir, previews) {
 
 export function branchPreviewSection(previews) {
   const head = '<h2 id="branch-builds">Feature branch builds</h2>';
-  if (!previews.length) return `${head}\n<p>No open pull request into <code>dev</code> has a playable build right now.</p>`;
-  const cards = previews.map((p) => `<section class="card"><h3>${esc(p.branch)}</h3><p class="role">open pull request${p.pr ? ` #${p.pr}` : ''} into dev</p>${p.sha ? `<p class="meta">commit <a href="${REPO_URL}/commit/${p.sha}">${p.sha.slice(0, 10)}</a></p>` : ''}<a class="play" href="branches/${esc(p.path)}/latest/">Sandboxed preview of ${esc(p.branch)}</a> <a href="branches/${esc(p.path)}/latest/${PREVIEW_BUILD_FILE}" download="${esc(p.file)}">Download build</a></section>`).join('\n');
-  return `${head}\n<p>Each open pull request into <code>dev</code> has its newest build here, played in a sandbox that does not keep progress. A build leaves this page when its pull request merges or closes.</p>\n<div class="grid">${cards}</div>`;
+  if (!previews.length) return `${head}\n<p>No feature branch has a playable build right now.</p>`;
+  const cards = previews.map((p) => `<section class="card"><h3>${esc(p.branch)}</h3><p class="role">${p.pr ? `open pull request #${p.pr} into dev` : 'feature branch build'}</p>${p.sha ? `<p class="meta">commit <a href="${REPO_URL}/commit/${p.sha}">${p.sha.slice(0, 10)}</a></p>` : ''}<a class="play" href="branches/${esc(p.path)}/latest/">Sandboxed preview of ${esc(p.branch)}</a> <a href="branches/${esc(p.path)}/latest/${PREVIEW_BUILD_FILE}" download="${esc(p.file)}">Download build</a></section>`).join('\n');
+  return `${head}\n<p>Current feature, fix and chore branch builds appear here, played in a sandbox that does not keep progress. Only builds matching current code are published.</p>\n<div class="grid">${cards}</div>`;
 }
 
 export function rootIndex(branchData, generatedAt, otherPages, previews = null) {
@@ -990,7 +1019,7 @@ function writeOgImage(outDir, mainRef) {
   if (!pick) {
     const why = `no object in the store and no published branch's tree carries ${OG_IMAGE.source}; /${OG_IMAGE.sitePath} (every build's og:image) is not served`;
     console.log(`  NO OG IMAGE ${why}`);
-    if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site has no og:image::${why}`);
+    annotate(`pages-site has no og:image`, why);
     return;
   }
   writeFileSync(join(outDir, OG_IMAGE.sitePath), ogImageBytes(outDir, pick));
@@ -1034,7 +1063,7 @@ function writeSourceAssets(outDir, mainRef) {
   if (missing) {
     const why = `${missing} of main's ${plan.length} assets/ ids have no object in the store; those images are missing on /index-game.html and the preview pages`;
     console.log(`  ${why}`);
-    if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site /assets/ incomplete::${why}`);
+    annotate(`pages-site /assets/ incomplete`, why);
   }
 }
 /** The bytes a choice names: the store's object, or the branch tree's art. */
@@ -1308,7 +1337,7 @@ function assemble(outDir, keep) {
     if (builds[0] && !current) {
       const why = `${branch}/latest/ not published: the head's build ${headOrdinal ?? '(unnamed)'} is not served; the newest served build is ${builds[0].ordinal}`;
       console.log(`  NO LATEST ${why}`);
-      if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site ${branch} has no /latest/::${why}`);
+      annotate(`pages-site ${branch} has no /latest/`, why);
     }
     if (builds[0] && current) {
       const latest = join(outDir, branch, 'latest');
@@ -1316,7 +1345,7 @@ function assemble(outDir, keep) {
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'index.html'), join(latest, 'index.html'));
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'build.json'), join(latest, 'build.json'));
       const stamp = esc(builds[0].version ? `${builds[0].version}.${builds[0].ordinal}` : builds[0].ordinal);
-      writeFileSync(join(latest, 'build.svg'), `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="24" role="img" aria-label="Published build ${stamp}"><rect width="220" height="24" rx="4" fill="#243344"/><text x="110" y="16" text-anchor="middle" fill="white" font-family="sans-serif" font-size="13">Build ${stamp}</text></svg>`);
+      writeFileSync(join(latest, 'build.svg'), `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="44" viewBox="0 0 220 44" role="img" aria-label="Published build ${stamp}"><rect width="220" height="44" rx="6" fill="#243344"/><text x="110" y="28" text-anchor="middle" fill="white" font-family="sans-serif" font-size="18" font-weight="600">Build ${stamp}</text></svg>`);
       // A pack-shaped build's base (same depth, so the same text) and its download.
       for (const extra of [ASSET_BASE_FILE, 'download']) {
         const from = join(outDir, branch, String(builds[0].ordinal), extra);

@@ -11,7 +11,7 @@
 //                and is reported as such — `unknown`, never green.
 //   (default)    THE RENDERED PAGE, over CDP, walking an act step by step and
 //                comparing the SET of nodes the DOM actually holds against the
-//                set `model/mapknowledge.js` says it should. Two counts agreeing
+//                set `model/map/mapknowledge.js` says it should. Two counts agreeing
 //                is not two sets agreeing, so this compares ids.
 //
 // WHY BOTH. The ladder is pure and the screen is what a player meets, and the
@@ -67,7 +67,7 @@ import { createRng, seedFromString } from '../src/engine/rng.js';
 import {
   mapKnowledge, litNodes, nodeReading, resolveMapMode, nearestShrine,
   HIDDEN, PLACED, KNOWN, RUNGS, rungHeight, MAP_MODES, MAP_MODE_DEFAULT,
-} from '../src/model/mapknowledge.js';
+} from '../src/model/map/mapknowledge.js';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -171,7 +171,7 @@ const MUTANTS = [
   // was the shipped rule on half the corpus — the narrow reading of "only next
   // node and all previous nodes" — and it was a mutant only on the `+forks`
   // cells. He answered: a fork stays lit once you are past it. So the boolean
-  // and its shot flag are deleted from the game (model/mapknowledge.js) and the
+  // and its shot flag are deleted from the game (model/map/mapknowledge.js) and the
   // losing reading is DEMOTED to a known-bad, red on every cell now, killed by
   // the monotone property below. A reading we chose against belongs in the
   // instrument, not in a setting nobody selected.

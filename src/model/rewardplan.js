@@ -255,7 +255,7 @@ const KINDS = {
     // A full belt is DERIVED here, not discovered at apply time: the old
     // screen dropped the flask in the mud with a note; the menu says so
     // before any tap, and auto-collect respects the same word.
-    blocked: (r, facts) => (facts.flaskSlotsFree > 0 ? null : 'slots'),
+    blocked: (r, facts) => ((facts.flaskCanAcquire ?? facts.flaskSlotsFree > 0) ? null : 'slots'),
   },
   armament: {
     present: (r) => !!r.armamentId,

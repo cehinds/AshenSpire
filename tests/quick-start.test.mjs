@@ -53,17 +53,18 @@ test('the quick start config begins a real run with a dealt deck', () => {
   assert.ok(Array.isArray(run.deck) && run.deck.length > 0, 'the run has a starting deck');
 });
 
-test('the Title offers Quick start and the composition root begins it without the character workspace', () => {
+test('the default Title offers New Game while preserving the internal quick-start helper', () => {
   const title = readFileSync(`${ROOT}src/ui/screens/title.js`, 'utf8');
-  assert.match(title, /entry\(t\('title\.quickstart'\), 'quick-start'/);
+  assert.match(title, /entry\('New Game', 'new'/);
+  assert.doesNotMatch(title, /entry\([^\n]*'quick-start'/);
   assert.match(title, /action === 'quick-start'\) onQuickStart\?\.\(\)/);
   const main = readFileSync(`${ROOT}src/main.js`, 'utf8');
   assert.match(main, /onQuickStart: \(\) => \{[\s\S]{0,400}startRunInSlot\(\{ \.\.\.quickStartRunConfig\(registries\), seedString: randomSeedString\(\) \}/);
   assert.match(main, /startClimb\(\{ skipOpening \}\)/);
-  assert.match(main, /if \(!skipOpening && \(!shotState/);
+  assert.match(main, /if \(runSupportsPrologue\(run\) && !skipOpening && \(!shotState/);
 });
 
-test('the Title focuses Quick start by priority, after Continue and before New', () => {
+test('the Title focus priority reaches New Game when legacy Quick Start is absent', () => {
   // The browser check is tools/quick-start-inputs.mjs ("a fresh profile's Title
   // focuses Quick start"); this pins the priority list it relies on.
   const title = readFileSync(`${ROOT}src/ui/screens/title.js`, 'utf8');

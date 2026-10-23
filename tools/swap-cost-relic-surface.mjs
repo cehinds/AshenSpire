@@ -73,7 +73,8 @@ import { fileURLToPath } from 'node:url';
 // THE SAME-DOOR CORPUS
 // ---------------------------------------------------------------------------
 //
-// Relics are authored in `src/content/relics.js` — there is no relics CSV, so
+// Relics are authored in `content/source/relics.json` (content-build compiles it
+// to src/content/generated/relics.js) — there is no relics CSV, so
 // that FILE is the door a real relic enters by, and a plant of its bytes in a
 // copied tree travels the whole import graph exactly as a real row would. The
 // surface plants enter at the source files a real surface would be written in.
@@ -85,9 +86,10 @@ if (process.argv.includes('--selftest')) {
       {
         // THE PREMISE DYING, through the door a relic actually enters by.
         name: 'WAKE: a relic authors swapCostDelta while nothing on any screen reports it',
-        file: 'src/content/relics.js',
-        find: "    passives: { poiseThresholdAdd: 2 },",
-        replace: "    passives: { poiseThresholdAdd: 2, swapCostDelta: 1 },",
+        file: 'content/source/relics.json',
+        find: '"poiseThresholdAdd": 2',
+        replace: '"poiseThresholdAdd": 2, "swapCostDelta": 1',
+        prep: [['node', 'tools/content-build.mjs']],
         expectRed: /FAIL\s+WAKE RED.*THE PREMISE DIED AND THE RELIC CHANNEL STILL HAS NO SURFACE/,
       },
       {
@@ -317,7 +319,7 @@ console.log('DOOR: the premise is read from the real content bundle by import; t
 console.log('      BEHAVIOURALLY — seven shipped read models run twice against two real registries,');
 console.log('      outputs diffed — plus a comment-stripped census of every src/ui/**.js file.');
 console.log('      `--selftest` re-observes three known-bads planted as bytes in a copy of the real');
-console.log('      tree: the relic passive enters at src/content/relics.js, which IS the door a relic');
+console.log('      tree: the relic passive enters at content/source/relics.json, which IS the door a relic');
 console.log('      enters by (relics have no CSV), and each surface limb enters at a source file a');
 console.log('      real surface would be written in.');
 console.log('\nBOUNDARY — what a green here does NOT mean:');

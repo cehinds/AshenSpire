@@ -55,6 +55,7 @@
 // is VISIBLE on any screen — that is ink, not source, and it is
 // tools/buildstamp-shot.mjs with a browser.
 
+import { decodeCatalogJSONText } from '../src/model/catalogJson.js';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, existsSync, statSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -184,6 +185,7 @@ export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'asset-
  */
 export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/bundle.mjs',
+  'tools/card-cutout-assets.mjs',
   'tools/card-components.mjs',
   'tools/assetmime.mjs',
   'tools/buildversion.mjs',
@@ -205,6 +207,7 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/zip.mjs',
   'tools/art-manifest.mjs',
   'tools/asset-pack.mjs',
+  'tools/layered-art.mjs',
   'tools/asset-css.mjs',
   // The art release this tree pins and the manifest every pack is checked
   // against (docs/EXTERNAL-ASSETS-PLAN.md §2 *Build identity*, step 11). Not
@@ -324,6 +327,132 @@ function isProse(value) {
 /** True for a named contract column whose value is prose — the only clearance. */
 function isContractColumn(file, key, value) {
   return CONTRACT_COLUMN_SITES.some((c) => c.file === file && c.key === key) && isProse(value);
+}
+
+/** Independent catalog protocol/package versions, identified by their exact schema locations.
+ * Never clear a whole generated file: UI/release fields and appended declarations
+ * still pass through both second-copy detectors. Invalid JSON fails closed.
+ */
+// Materialize only the recognized data call. Never execute generated JavaScript;
+// every surrounding declaration remains in the scan and exact value-span rules.
+export function catalogVersionScanText(file, text) {
+  const name = file === 'src/content/generated/gameProfiles.js' ? 'gameProfileCatalog'
+    : file === 'src/content/generated/tagging.js' ? 'tagging' : null;
+  if (!name) return text;
+  const declaration = new RegExp('^export const ' + name + '\\s*=\\s*', 'm').exec(text);
+  if (!declaration) return text;
+  const start = declaration.index + declaration[0].length;
+  if (!text.slice(start).startsWith('decodeCatalogJSON(')) {
+    if (!text.slice(start).startsWith(name === 'tagging' ? '[' : '{')) throw new Error('Unrecognized generated catalog expression');
+    return text;
+  }
+  const body = text.slice(start + 'decodeCatalogJSON('.length);
+  // Payload contains no executable expression: exactly one JSON object followed
+  // by the call/declaration terminators. JSON strings may contain braces/quotes.
+  let depth = 0, quoted = false, escaped = false, end = -1;
+  if (body[0] !== '{') throw new Error('Malformed encoded game-profile catalog');
+  for (let i = 0; i < body.length; i++) {
+    const ch = body[i];
+    if (quoted) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') quoted = false;
+    } else if (ch === '"') quoted = true;
+    else if (ch === '{' || ch === '[') depth++;
+    else if ((ch === '}' || ch === ']') && --depth === 0) { end = i + 1; break; }
+  }
+  if (end < 0 || body.slice(end, end + 2) !== ');') throw new Error('Malformed encoded game-profile catalog');
+  const literal = body.slice(0, end), payload = JSON.parse(literal);
+  // The owned encoded payload is canonical JSON. Refuse duplicate keys or
+  // alternate payload syntax instead of discarding hidden dictionary material.
+  if (JSON.stringify(payload) !== literal) throw new Error('Noncanonical encoded game-profile catalog');
+  const decoded = decodeCatalogJSONText(payload);
+  JSON.parse(decoded);
+  return text.slice(0, start) + decoded + text.slice(start + 'decodeCatalogJSON('.length + end + 1);
+}
+
+export function catalogSchemaVersionSpans(file, text) {
+  const spans = [];
+  const mechanics = file === 'src/content/generated/fixCoreProtection.js';
+  if (file !== 'src/content/generated/gameProfiles.js' && !mechanics) return spans;
+  const declaration = (mechanics ? /^export const fixCoreProtection\s*=\s*/m : /^export const gameProfileCatalog\s*=\s*/m).exec(text);
+  if (!declaration) return spans;
+  const start = declaration.index + declaration[0].length;
+  // Tokenize only the JSON export, never JavaScript expressions. JSON.parse
+  // validates the complete literal before any exact value token is cleared.
+  const token = /"(?:\\[\s\S]|[^"\\])*"|[{}\[\],:]|[^\s{}\[\],:"]+/gy;
+  const tokens = [];
+  let cursor = start, depth = 0;
+  do {
+    while (/\s/.test(text[cursor] || '') && cursor < text.length) cursor++;
+    token.lastIndex = cursor;
+    const match = token.exec(text);
+    if (!match) return spans;
+    tokens.push({ text: match[0], start: cursor, end: token.lastIndex });
+    cursor = token.lastIndex;
+    if (match[0] === '{' || match[0] === '[') depth++;
+    if (match[0] === '}' || match[0] === ']') depth--;
+  } while (depth > 0);
+  if (tokens[0].text !== (mechanics ? '[' : '{') || !/^\s*;/.test(text.slice(cursor))) return spans;
+  let catalog;
+  try { catalog = JSON.parse(text.slice(start, cursor)); } catch { return spans; }
+  const owners = new WeakSet();
+  const allow = value => { if (value && typeof value === 'object') owners.add(value); };
+  const artifacts = values => { for (const value of values || []) allow(value); };
+  if (mechanics) {
+    if (!Array.isArray(catalog)) return [];
+    for (const row of catalog) {
+      if (!Array.isArray(row) || row.length !== 2 || typeof row[0] !== 'string' || row[1]?.manifest?.id !== row[0]) return [];
+      allow(row[1].manifest);
+    }
+  }
+  allow(catalog.contracts);
+  allow(catalog.foundation);
+  for (const entry of Object.values(catalog.modules || {})) {
+    allow(entry.manifest);
+    artifacts(entry.artifacts);
+  }
+  for (const kind of ['bundles', 'packs']) {
+    for (const entry of Object.values(catalog[kind] || {})) {
+      allow(entry.manifest);
+      artifacts(entry.artifacts);
+      if (kind === 'bundles') {
+        for (const module of Object.values(entry.manifest?.modules || {})) allow(module);
+        artifacts(entry.manifest?.packs);
+      }
+    }
+  }
+  artifacts(catalog.runtimeArtifacts);
+  let index = 0;
+  function visit(value) {
+    const current = tokens[index++];
+    if (current.text === '{') {
+      const keys = new Set();
+      while (tokens[index].text !== '}') {
+        const key = JSON.parse(tokens[index++].text);
+        if (keys.has(key)) throw new Error('duplicate JSON key');
+        keys.add(key);
+        index++; // colon, already validated by JSON.parse
+        const valueToken = tokens[index];
+        if (key === 'version' && typeof value[key] === 'string' && owners.has(value)) {
+          spans.push({ start: valueToken.start, end: valueToken.end });
+        }
+        visit(value[key]);
+        if (tokens[index].text === ',') index++;
+      }
+      index++;
+    } else if (current.text === '[') {
+      let item = 0;
+      while (tokens[index].text !== ']') {
+        visit(value[item++]);
+        if (tokens[index].text === ',') index++;
+      }
+      index++;
+    }
+  }
+  try { visit(catalog); } catch { return []; }
+  return spans;
+
 }
 
 /**
@@ -870,8 +999,19 @@ export function check(root = REPO_ROOT) {
   for (const f of inputFiles(root)) {
     if (f === RELEASE_HOME) continue;
     if (!/\.(js|css|html|json)$/.test(f)) continue;
-    const text = readFileSync(resolve(root, f), 'utf8');
-    text.split('\n').forEach((line, i) => {
+    let text = readFileSync(resolve(root, f), 'utf8');
+    try { text = catalogVersionScanText(f, text); }
+    catch (error) { sites.push({ file: f, line: 1, key: 'encoded catalog', value: error.message }); continue; }
+    const schemaVersions = catalogSchemaVersionSpans(f, text);
+    // Preserve offsets/newlines and inspect everything beside each approved
+    // value, including unknown fields on the same compact catalog line.
+    let scan = '', offset = 0;
+    for (const span of schemaVersions) {
+      scan += text.slice(offset, span.start) + ' '.repeat(span.end - span.start);
+      offset = span.end;
+    }
+    scan += text.slice(offset);
+    scan.split('\n').forEach((line, i) => {
       const t = line.trim();
       // arm 1 — the value equals the release
       if (line.includes(`'${rel}'`) || line.includes(`"${rel}"`) || line.includes(`\`${rel}\``)) {
@@ -914,7 +1054,7 @@ export function check(root = REPO_ROOT) {
   } else {
     add(true, 'B NO SECOND COPY',
       `no second home for the release under ${INPUT_ROOTS.join(', ')}: no file re-types '${rel}'`
-      + ` outside ${RELEASE_HOME} (arm 1), and no other site declares a version at all (arm 2,`
+      + ` outside ${RELEASE_HOME} (arm 1), and no other release-version site is declared (arm 2,`
       + ` which never compares the value to the release, so it does not go quiet when the value drifts).`
       + ` ${commentHits} prose mention${commentHits === 1 ? '' : 's'} in comments, which assert nothing and are not copies.`);
   }

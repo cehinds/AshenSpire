@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {contentBundle} from '../src/content/index.js';
@@ -39,7 +40,7 @@ test('cost variants retain auras, defensive identities and actual X spending',()
  assert.equal(combatEffectPlan(x,{energySpent:1}).activation,'mundaneLow');
  assert.equal(combatEffectPlan(x,{energySpent:3}).activation,'mundaneHigh');
 });
-test('real co-op receipts retain the casting seat and a different friendly recipient',()=>{
+test('real co-op receipts retain the casting seat and a different friendly recipient', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, ()=>{
  // This receipt fixture replays historical cards after character setup.
  const host=createSession({registries:createRegistries(legacyContentBundle),seedString:'GUARD2'});
  for(const id of ['p1','p2'])host.addMember({id,name:id,classId:'reaver'});
@@ -94,9 +95,9 @@ test('every authored playable card and equipment profile resolves to existing ar
  assert.equal(new Set(COMBAT_EFFECT_RULES.map(r=>r.id)).size,COMBAT_EFFECT_RULES.length);
  for(const rule of COMBAT_EFFECT_RULES)assert.ok(COMBAT_EFFECT_ART[rule.kind],rule.id);
 });
-// Gorefire Slash costs 2 SP and no Mana under the cost formula (SPEC §4.3a): a high mundane blade attack, a whirlwind.
+// Gorefire Slash now pays the authored weapon-art Mana floor and uses its blood spell effect.
 test('specific combinations beat generic schools and defensive tags',()=>{
- for(const [id,kind]of [['shieldBash','shieldBash'],['gorefireSlash','whirlwind'],['riposte','riposte'],['guardCounter','riposte'],['crystalBarrier','barrier'],['enterBulwark','ward'],['starstoneArc','starbolt']])assert.equal(plan(id).kind,kind,id);
+ for(const [id,kind]of [['shieldBash','shieldBash'],['gorefireSlash','bloodSlash'],['riposte','riposte'],['guardCounter','riposte'],['crystalBarrier','barrier'],['enterBulwark','ward'],['starstoneArc','starbolt']])assert.equal(plan(id).kind,kind,id);
  assert.equal(plan('strike','shieldAttack').kind,'shieldBash');
  assert.equal(plan('defend','staffGuard').kind,'magicGuard');
  assert.equal(plan('defend','sceptreGuard').kind,'arcaneWard');

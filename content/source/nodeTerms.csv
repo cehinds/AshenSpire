@@ -19,6 +19,8 @@ classification.statusCard,term.statusCard,term.tooltip.statusCard,
 damage.physical,term.physical,term.tooltip.physical,
 damage.magic,term.magic,term.tooltip.magic,
 damage.arcane,term.arcane,term.tooltip.arcane,
+damage.fire,term.fire,term.tooltip.fire,
+damage.holy,term.sacred,term.tooltip.sacred,
 damage.blade,term.blade,term.tooltip.blade,
 damage.blunt,term.blunt,term.tooltip.blunt,
 damage.piercing,term.piercing,term.tooltip.piercing,
@@ -55,6 +57,7 @@ targeting.enemy,term.targetEnemy,term.tooltip.targetEnemy,
 targeting.allEnemies,term.targetAllEnemies,term.tooltip.targetAllEnemies,
 targeting.randomEnemy,term.targetRandomEnemy,term.tooltip.targetRandomEnemy,
 targeting.ally,term.targetAlly,term.tooltip.targetAlly,
+targeting.allAllies,term.targetAllAllies,term.tooltip.targetAllAllies,
 internal.unplayable,term.unplayable,term.tooltip.unplayable,
 siphon,,,"Breaking a foe's Arcane Exposure restores {restoreMana} Mana, or {restoreMana.2} once your focus skill is mastered."
 overcharge,,,Your hits build Arcane Exposure faster.
@@ -176,3 +179,4 @@ progression-whisperglass-die,,,"If your first card in combat is a Blade attack, 
 progression-purse-of-borrowed-shadows,,,"After your first explicit discard each turn, gain {block} Block."
 progression-ember-alms-bowl,,,Your first nonlethal HP offering each turn grants {block} Block after its payment.
 progression-ossuary-prayer-wheel,,,Your first credited kill of an enemy with Crimson or Necrotic Blight buildup each combat restores {restoreMana} Mana.
+throw,,,"Choose Throw to attack one extra band with the configured Precision penalty; retain the weapon."

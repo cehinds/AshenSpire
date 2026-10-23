@@ -13,6 +13,31 @@ import { combatLogEntries } from '../src/model/combatLog.js';
 const registries = createRegistries(contentBundle);
 const enemies = [{ id: 'e1', enemyId: 'wyrmLord' }, { id: 'e2', enemyId: 'wanderingSoldier' }];
 const log = events => combatLogEntries(events, { registries, enemies }).map(row => row.text);
+
+test('public log carries semantic identity spans without matching names in card text', () => {
+  const entries = combatLogEntries([{ type: 'cardPlayed', sourceId: 'player', targetId: 'e1', cardId: 'strike' }], {
+    registries, players: [{ id: 'player', name: 'Strike' }], enemies,
+  });
+  const row = entries[0];
+  assert.equal(row.segments.map(part => part.text).join(''), row.text);
+  assert.deepEqual(row.segments.filter(part => part.side).map(({ id, side, text }) => ({ id, side, text })), [
+    { id: 'player', side: 'player', text: 'Strike' }, { id: 'e1', side: 'enemy', text: 'Wyrm Lord' },
+  ]);
+  assert.ok(!row.text.includes('\u0001'));
+  assert.ok(row.segments.some(part => !part.side && part.text.includes('Strike')));
+});
+
+test('same-named players and enemies keep their own identity roles in co-op', () => {
+  const entries = combatLogEntries([{ type: 'damageDealt', sourceId: 'player', sourcePlayerId: 'seat-a', targetId: 'e1', amount: 2 }], {
+    registries, players: [{ id: 'seat-a', name: 'Wyrm Lord' }], enemies,
+  });
+  assert.deepEqual(entries[0].segments.filter(part => part.side).map(part => [part.id, part.side]), [['seat-a', 'player'], ['e1', 'enemy']]);
+});
+
+test('unknown and environmental sources have no enemy identity role', () => {
+  const entries = combatLogEntries([{ type: 'healed', sourceId: 'environment', targetId: 'player', amount: 2 }], { registries, enemies });
+  assert.ok(entries[0].segments.every(part => part.id !== 'environment' || part.side === undefined));
+});
 // Moves carry no authored name: the log words the move id ('goldenBulwark' → 'Golden Bulwark').
 const move = (enemyId, moveId) => registries.enemies.get(enemyId).moves[moveId].name
   || moveId.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
@@ -116,15 +141,20 @@ test('one Bashing Blow logs each stagger-meter impact with its own cause, and a 
       relicIds: ['forsakenMedallion'], attributes: { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 },
       deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `s${i}`, cardId: 'bashingBlow', upgraded: false })) },
     enemyIds: ['valkyrieShade'] });
+  // This source-attribution test exercises a landed hit with real seeded draws.
+  c.player.accuracy = 100; c.enemies[0].evasion = 0;
+  // Valkyrie can telegraph from range; this fixture tests contact attribution.
+  if (c.enemies[0].combatStance) c.enemies[0].combatStance.range = 'melee';
   dispatch(c, { type: 'playCard', cardInstanceId: c.piles.hand[0].instanceId, targetId: c.enemies[0].id });
   const impacts = c.eventLog.filter(event => event.type === 'ratingImpact');
   assert.deepEqual(impacts.map(event => event.cause), ['hit', 'rider:blunt', 'poiseDamage', 'trait:impact', 'relic:forsakenMedallion']);
   const lines = combatLogEntries(c.eventLog, { registries, enemies: c.enemies }).map(row => row.text).filter(text => text.includes('stagger meter'));
   const relic = registries.relics.get('forsakenMedallion').name;
   // Bashing Blow is a smash, so its Poise damage is the cost formula's, not the authored 4 (SPEC §4.3a; owner 2026-10-13:
-  // "All smashes deal poise damage"): the 2-SP scale plus smashPoiseBase. The Impact trait repeats that amount.
+  // "All smashes deal poise damage"): the 2-SP scale applies to its authored Poise.
+  // The +3 fallback applies only when no Poise was authored. Impact repeats that amount.
   const poise = resolveCard(registries, { cardId: 'bashingBlow', upgraded: false }).effects.find(e => e.op === 'poiseDamage').amount;
-  assert.ok(poise > 4, 'fixture: the smash adds Poise damage to the authored 4');
+  assert.ok(poise > 4, 'fixture: the 2-SP scale increases the authored 4');
   assert.deepEqual(lines.map(text => text.replace(/ \(\d+\/\d+(, broke)?\)\.$/, '')), [
     "Valkyrie Shade's stagger meter took 1 from the hit (Forsaken's Bashing Blow)",
     "Valkyrie Shade's stagger meter took 2 from Blunt (Forsaken's Bashing Blow)",
@@ -145,7 +175,13 @@ test('engine events carry their cause: an enemy move stamps moveId, a status tic
     try { dispatch(c, { type: 'endTurn' }); } catch { break; }
   }
   const fromMove = c.eventLog.filter(event => ['blockGained', 'healed', 'statusApplied'].includes(event.type) && event.sourceId === 'e1');
-  assert.ok(fromMove.length > 0 && fromMove.every(event => event.moveId), 'every enemy move effect names its move');
+  assert.ok(fromMove.length > 0 && fromMove.every(event => event.moveId
+    || (event.preparing === true && event.triggeredBy?.kind === 'stance' && event.triggeredBy.ownerId === event.sourceId)),
+  'every enemy effect names its executed move or its safely concealed stance preparation');
+  const preparation = fromMove.filter(event => event.preparing);
+  assert.ok(preparation.length > 0, 'fixture includes new enemy stance entry effects');
+  assert.ok(preparation.every(event => event.moveId === undefined && event.cardId === undefined),
+    'stance preparation does not disclose the unexecuted move or card');
   const ticks = c.eventLog.filter(event => event.type === 'hpLost' && event.cause === 'effect');
   assert.ok(ticks.length > 0 && ticks.every(event => event.triggeredBy?.kind === 'status'), 'every status tick names its status');
   const lines = combatLogEntries(c.eventLog, { registries, enemies: c.enemies }).map(row => row.text);
@@ -180,4 +216,22 @@ test('a hidden charging enemy logs its Block and Barrier as preparing, never nam
     assert.ok(lines.includes(`${warden} gained 3 Barrier (preparing).`), lines.join('\n'));
     for (const text of lines) assert.ok(!text.includes(name), `the log never names the hidden move: ${text}`);
   }
+});
+
+test('Core automatic outcomes (Evasion bypassed, out of range) log without the removed stance term', () => {
+  const lines = log([
+    { type: 'attackHit', sourceId: 'player', targetId: 'e1', opposed: true, bypass: true, dice: [], d20: null, accuracy: 4, evasion: 3, hitChance: 100, mode: 'normal' },
+    { type: 'attackMissed', sourceId: 'player', targetId: 'e1', opposed: true, inRange: false, missReason: 'range', dice: [], d20: null, accuracy: 4, evasion: 3, hitChance: 0, mode: 'normal' },
+  ]);
+  assert.equal(lines.length, 2);
+  assert.match(lines[0], /hit .*: Evasion bypassed · Precision 4 · 100% chance\.$/);
+  assert.match(lines[1], /missed .*: out of range · Precision 4 · 0% chance\.$/);
+  for (const line of lines) assert.doesNotMatch(line, /stance/);
+});
+
+test('Core hit log shows one attacker roll against Evasion', () => {
+  const [line] = log([{ type: 'attackHit', sourceId: 'player', targetId: 'e1', fixedDefense: true,
+    dice: [8, 13], d20: 8, attackTotal: 17, accuracy: 4, evasion: 9, evasionTotal: 9, hitChance: 96, mode: 'advantage' }]);
+  assert.match(line, /d20 \[8, 13\] \+ Precision 4 = 17 vs Evasion 9 · advantage · 96% chance\.$/);
+  assert.doesNotMatch(line, /vs d20|stance/);
 });

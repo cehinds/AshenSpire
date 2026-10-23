@@ -30,14 +30,14 @@ test('a smash and a sweep cost 2 SP or more and scale their numbers; a ranked sp
   for (const id of ['bashingBlow', 'sweepingBlow', 'colossusSmash']) {
     const card = cardOf(id);
     assert.ok(card.cost >= 2, `${id} costs ${card.cost}`);
-    assert.equal(card.manaCost || 0, 0, `${id} is physical`);
+    assert.equal(card.manaCost || 0, ['bashingBlow', 'sweepingBlow'].includes(id) ? 1 : 0, `${id}: weapon arts also pay Mana`);
     // A smash scales its damage; a sweep's damage stays normal (owner, 2026-10-13).
     const sweep = (authoredOf(id).tags || []).includes('maneuver:sweep');
     assert.equal(amountOf(card, 'damage'), sweep ? amountOf(authoredOf(id), 'damage') : Math.round(amountOf(authoredOf(id), 'damage') * TWO_COST_EFFECT_MULTIPLIER), id);
   }
   assert.equal(cardOf('bashingBlow').cost, 2, 'a light smash costs 2');
   const cantrip = cardOf('blightTouch');
-  assert.deepEqual([cantrip.cost, cantrip.manaCost || 0], [1, 0], 'a cantrip costs 1 Stamina and no Mana');
+  assert.deepEqual([cantrip.cost, cantrip.manaCost || 0], [1, 1], 'a cantrip still costs 1 Stamina and pays the spell Mana minimum');
   const ranked = resolveCard(registries, { cardId: 'cometFragment', abilityRank: 2 });
   assert.ok(ranked.manaCost >= 1 && ranked.cost >= 1, 'a rank-2 spell pays Mana, and its casting effort Stamina');
 });
@@ -68,12 +68,15 @@ test('the opt-outs keep their authored cost and their numbers: costRule fixed, c
   }
 });
 
-test('every 0-cost card is an explicit costRule opt-out in content, and no other card carries one', () => {
+test('every zero-cost card opts out explicitly and fixed cards author valid pool prices', () => {
   const all = registries.cards.all();
   const zeros = all.filter((c) => c.cost === 0 && c.type !== 'curse' && c.type !== 'status');
   const optedOut = all.filter((c) => c.costRule === 'fixed');
   for (const c of zeros) assert.equal(c.costRule, 'fixed', `${c.id} costs 0 and must opt out explicitly`);
-  for (const c of optedOut) assert.ok(c.cost === 0 || c.type === 'curse' || c.type === 'status', `${c.id} opts out without a fixed cost`);
+  for (const c of optedOut) {
+    assert.ok(c.cost === 'X' || Number.isInteger(c.cost) && c.cost >= 0, `${c.id}: fixed SP is a nonnegative integer or the explicit X contract`);
+    assert.ok(Number.isInteger(c.manaCost || 0) && (c.manaCost || 0) >= 0, `${c.id}: fixed MP is a nonnegative integer`);
+  }
 });
 
 test('the formula prices the face it is given: an upgrade is priced on its own effects, and Mana is derived', () => {

@@ -16,6 +16,7 @@ import { Tool, toolDefs } from '../core/tools.mjs';
 import { buildsFor, isBuildOutput } from '../core/watch.mjs';
 import { resolveExternal } from '../core/settings.mjs';
 import { serve } from '../../tools/serve.mjs';
+import { CLI_WAIT_MS } from '../../tools/lib/build-lock.mjs';
 import { manifestTables, manifestSummary, EXPORT_FORMAT } from '../ui/logic.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -103,6 +104,25 @@ test('HTTP: token, origin and host are enforced; only the page files are served'
   assert.equal((await call('/api/doc?path=../SPEC.md')).status, 400);
 });
 
+test('profile validation uses the shared resolver and reports author path errors', async (t) => {
+  const root = await project(t);
+  const { call } = await boot(t, root);
+  const author = JSON.parse(await fs.readFile(new URL('../../games/ashenspire/game.json', import.meta.url), 'utf8'));
+  const post = (path, data) => call(path, { method: 'POST', body: JSON.stringify(data) });
+  const valid = await post('/api/game-profile/validate', { author });
+  assert.equal(valid.status, 200);
+  const resolved = await valid.json();
+  assert.equal(resolved.valid, true);
+  assert.equal(resolved.id, 'core');
+  assert.match(resolved.hash, /^sha256:/);
+  assert.ok(resolved.modules.cards);
+
+  const invalid = await post('/api/game-profile/validate', { author: { formatVersion: 1, core: 'missing.bundle@1', modules: {} } });
+  assert.equal(invalid.status, 422);
+  const problem = await invalid.json();
+  assert.ok(problem.problems[0].message);
+});
+
 test('jobs: only allowlisted ids run, one at a time, and history is kept', async (t) => {
   const root = await project(t);
   const { app, call } = await boot(t, root);
@@ -113,7 +133,7 @@ test('jobs: only allowlisted ids run, one at a time, and history is kept', async
   }
   const { defs } = await (await call('/api/jobs')).json();
   assert.deepEqual(defs.map((d) => d.id), Object.keys(JOBS));
-  assert.deepEqual(JOBS['content-build'].steps(root).map((st) => st.args[0]), ['tools/framework-data-build.mjs', 'tools/content-build.mjs']);
+  assert.deepEqual(JOBS['content-build'].steps(root).map((st) => st.args[0]), ['tools/framework-data-build.mjs', 'tools/content-build.mjs', 'tools/game-config.mjs']);
   assert.equal(defs.find((d) => d.id === 'engine-export').available, false, 'missing exporter is reported, not hidden');
   // The exporter is missing in this project: the run fails gracefully with a message.
   const started = await (await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'engine-export' }) })).json();
@@ -139,9 +159,18 @@ test('jobs: only allowlisted ids run, one at a time, and history is kept', async
 
 test('engine export: the real exporter runs as a job, and its manifest and files are served read-only', async (t) => {
   const root = await project(t);
-  // The job runs tools/engine-export.mjs in the project. Plant a shim that runs
-  // the repository's real exporter, narrowed to two tables so it stays fast.
-  const exporter = path.resolve(HERE, '../../tools/engine-export.mjs');
+  // The real exporter derives its compiler/lock root from its script path.
+  // Give this case a private copy: the other export suite may compile the real
+  // checkout concurrently, including in the heavy discovered test shard.
+  const sourceRoot = path.resolve(HERE, '../..');
+  const compilerRoot = path.join(root, 'compiler-fixture');
+  for (const rel of ['tools', 'src', 'engine', 'content', 'games', 'asset-data',
+    'art-manifest.json', 'art-release.json', 'buildordinal.json']) {
+    await fs.cp(path.join(sourceRoot, rel), path.join(compilerRoot, rel), { recursive: true });
+  }
+  const exporter = path.join(compilerRoot, 'tools/engine-export.mjs');
+  assert.notEqual(path.dirname(path.dirname(exporter)), sourceRoot);
+  assert.equal(await fs.readFile(exporter, 'utf8'), await fs.readFile(path.join(sourceRoot, 'tools/engine-export.mjs'), 'utf8'), 'run the real exporter, not a fixture implementation');
   await fs.mkdir(path.join(root, 'tools'), { recursive: true });
   await fs.writeFile(path.join(root, 'tools/engine-export.mjs'), `import { spawnSync } from 'node:child_process';
 const r = spawnSync(process.execPath, [${JSON.stringify(exporter)}, ...process.argv.slice(2), '--only', 'content.cards,content.enemies'], { stdio: 'inherit' });
@@ -150,10 +179,21 @@ process.exit(r.status ?? 1);\n`);
   const { defs } = await (await call('/api/jobs')).json();
   assert.equal(defs.find((d) => d.id === 'engine-export').available, true);
   const started = await (await call('/api/jobs', { method: 'POST', body: JSON.stringify({ id: 'engine-export' }) })).json();
-  for (let i = 0; i < 600 && app.jobs.active.size; i++) await new Promise((r) => setTimeout(r, 50));
+  let compilerLock, projectLock;
+  const deadline = Date.now() + CLI_WAIT_MS + 60 * 1000;
+  while (app.jobs.active.size && Date.now() < deadline) {
+    compilerLock ||= await fs.readFile(path.join(compilerRoot, '.build-lock'), 'utf8').then(JSON.parse).catch(() => null);
+    projectLock ||= await fs.readFile(path.join(root, '.build-lock'), 'utf8').then(JSON.parse).catch(() => null);
+    await new Promise((r) => setTimeout(r, 50));
+  }
   const run = await (await call(`/api/jobs/runs/${started.runId}`)).json();
   assert.equal(run.status, 'passed', run.log);
   assert.match(run.log, /engine-export: OK — 2 tables/);
+  assert.ok(compilerLock?.token, 'the copied exporter acquires its nested compiler lock');
+  assert.ok(projectLock?.token, 'the Workbench job owns its project lock');
+  assert.notEqual(compilerLock.token, projectLock.token, 'compiler and project locks have independent identities');
+  await assert.rejects(fs.access(path.join(compilerRoot, '.build-lock')), { code: 'ENOENT' }, 'nested exporter releases its own lock');
+  assert.ok((await fs.stat(path.join(compilerRoot, 'src/content/generated/gameProfiles.js'))).isFile(), 'the copied compiler retains the generated profile artifact');
 
   const body = await (await call('/api/export/manifest')).json();
   assert.equal(body.exists, true);
@@ -273,12 +313,36 @@ test('a content/config change runs the config compiler before the reload; a fail
   assert.deepEqual(buildsFor(['content/source/a.csv', 'content/framework/new.json', 'content/config/ui/tokens.json'], root),
     ['tools/framework-data-build.mjs', 'tools/config-build.mjs', 'tools/content-build.mjs'], 'framework mirrors and config before the content compiler');
   assert.deepEqual(buildsFor(['content/source/a.csv'], root), ['tools/content-build.mjs']);
+  await fs.writeFile(path.join(root, 'tools/game-config.mjs'), '');
+  assert.deepEqual(buildsFor(['games/ashenspire/game.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['games/ashenspire/presets/current.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['games/ashenspire/presets/core.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['games/ashenspire/bundles/core/bundle.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['games/ashenspire/packs/core/pack.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['engine/modules/animation/defaults.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['engine/kernel/kernel.json'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['content/hud-layout/mobile.json'], root), [], 'no tools/hud-layout-css.mjs in this checkout: no step');
+  await fs.writeFile(path.join(root, 'tools/hud-layout-css.mjs'), '');
+  assert.deepEqual(buildsFor(['content/hud-layout/mobile.json'], root), ['tools/hud-layout-css.mjs --write']);
+  assert.deepEqual(buildsFor(['content/source/a.csv', 'content/config/ui/tokens.json', 'content/hud-layout/mobile.json'], root),
+    ['tools/config-build.mjs', 'tools/hud-layout-css.mjs --write', 'tools/content-build.mjs', 'tools/game-config.mjs build'], 'config, then the HUD stylesheet, then the content compiler, then the game profiles last');
+  // game-config hashes src/**, so it runs last after anything that writes src/ (and not after the HUD stylesheet, which writes styles/ and docs/)
+  assert.deepEqual(buildsFor(['content/source/a.csv'], root), ['tools/content-build.mjs', 'tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['games/ashenspire/game.json', 'content/source/a.csv'], root), ['tools/content-build.mjs', 'tools/game-config.mjs build'], 'one game-config build, last');
+  assert.deepEqual(buildsFor(['src/main.js'], root), ['tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['src/content/generated/gameProfiles.js'], root), [], 'a file game-config skips is no input');
+  assert.deepEqual(buildsFor(['src/content/changelog.generated.js'], root), []);
+  assert.deepEqual(buildsFor(['content/hud-layout/mobile.json'], root), ['tools/hud-layout-css.mjs --write'], 'the HUD stylesheet is outside src/: no game-config');
+  await fs.writeFile(path.join(root, 'tools/card-components.mjs'), '');
+  assert.deepEqual(buildsFor(['src/content/card-layout.json'], root), ['tools/card-components.mjs', 'tools/game-config.mjs build']);
+  assert.deepEqual(buildsFor(['games/ashenspire/game.lock.json'], root), [], 'the lock is generated: saving it is no build input');
+  assert.deepEqual(buildsFor(['engine/docs/notes.md'], root), [], 'only the engine trees the compiler reads are inputs');
   await fs.rm(path.join(root, 'tools/framework-data-build.mjs'));
   const { app } = await boot(t, root);
   nextEvent.onOpen = async () => { await new Promise((r) => setTimeout(r, 300)); await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{}\n'); };
   const event = await nextEvent(app, 'reload');
   assert.deepEqual(event.files, ['content/config/ui/tokens.json'], 'the generated output does not trigger a second batch');
-  assert.deepEqual(event.built, ['tools/config-build.mjs']);
+  assert.deepEqual(event.built, ['tools/config-build.mjs', 'tools/game-config.mjs build']);
   await fs.writeFile(path.join(root, 'tools/config-build.mjs'), "console.error('bad config'); process.exit(1);\n");
   nextEvent.onOpen = async () => { await new Promise((r) => setTimeout(r, 900)); await fs.writeFile(path.join(root, 'content/config/ui/tokens.json'), '{"x":1}\n'); };
   const failed = await nextEvent(app, 'reload-failed');
@@ -292,11 +356,13 @@ async function collectEvents(app, name, done, { onEvent, onOpen, timeoutMs = 800
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   const deadline = Date.now() + timeoutMs;
-  const events = []; let buffer = ''; let pending = null; let opened = false;
+  const events = []; const observed = [];
+  let buffer = ''; let pending = null; let opening = null;
+  let openFailed = new Promise(() => {});
   try {
     while (Date.now() < deadline) {
       pending ||= reader.read();
-      const result = await Promise.race([pending, new Promise((r) => setTimeout(() => r(null), 100))]);
+      const result = await Promise.race([pending, openFailed, new Promise((r) => setTimeout(() => r(null), 100))]);
       if (result) pending = null;
       if (result && result.done) break;
       if (result && result.value) buffer += decoder.decode(result.value, { stream: true });
@@ -305,14 +371,65 @@ async function collectEvents(app, name, done, { onEvent, onOpen, timeoutMs = 800
         const ev = frame.match(/^event: (.+)$/m); const data = frame.match(/^data: (.+)$/m);
         if (!ev || !data) continue;
         const parsed = JSON.parse(data[1]);
+        observed.push({ name: ev[1], data: parsed });
         if (onEvent) await onEvent(ev[1], parsed);
         if (ev[1] === name) { events.push(parsed); if (done(events)) return events; }
       }
-      if (!opened && onOpen) { opened = true; await onOpen(); }
+      if (!opening && onOpen) {
+        // Keep consuming SSE while the stimulus runs. Awaiting onOpen here can leave an
+        // already-emitted reload unread until the deadline, reporting a false empty stream.
+        opening = Promise.resolve().then(onOpen);
+        openFailed = opening.then(() => new Promise(() => {}));
+      }
     }
-    throw Error(`${name} events so far: ${JSON.stringify(events)}`);
-  } finally { reader.cancel().catch(() => {}); }
+    throw Error(`${name} events so far: ${JSON.stringify(events)}; all events: ${JSON.stringify(observed)}; reload count: ${app.reloads}`);
+  } finally {
+    reader.cancel().catch(() => {});
+    // The stimulus's assertions and writes must finish before the test or its cleanup does.
+    await opening;
+  }
 }
+
+test('the SSE collector consumes events while its opening stimulus is still running', async (t) => {
+  const root = await project(t);
+  const { app } = await boot(t, root);
+  let acknowledge;
+  const eventSeen = new Promise((resolve) => { acknowledge = resolve; });
+  let finished = false; let timer;
+  try {
+    const events = await collectEvents(app, 'collector-test', () => true, {
+      onOpen: async () => {
+        app.hub.send('collector-test', { arrived: true });
+        await Promise.race([eventSeen, new Promise((_, reject) => {
+          timer = setTimeout(() => reject(Error('the opening stimulus blocked SSE consumption')), 10000);
+        })]);
+        finished = true;
+      },
+      onEvent: (name) => { if (name === 'collector-test') acknowledge(); },
+    });
+    assert.deepEqual(events, [{ arrived: true }]);
+    assert.equal(finished, true, 'the collector also waits for the opening stimulus to finish');
+  } finally { clearTimeout(timer); }
+});
+
+test('the Workbench watches engine/ as well as the content, source and game trees', async (t) => {
+  const root = await project(t);
+  await fs.mkdir(path.join(root, 'engine/modules/animation'), { recursive: true });
+  const { call } = await boot(t, root);
+  const session = await (await call('/api/session')).json();
+  assert.ok(session.watching.engine, 'engine/ has a watch mode');
+  assert.ok(session.watching.styles, 'styles/ is still watched');
+});
+
+test('the game profile, base card and HUD layout outputs are build outputs', () => {
+  assert.equal(isBuildOutput('src/content/generated/gameProfiles.js'), true);
+  assert.equal(isBuildOutput('src/content/generated/baseCards.js'), true);
+  assert.equal(isBuildOutput('games/ashenspire/game.lock.json'), true);
+  assert.equal(isBuildOutput('styles/hud-layout.generated.css'), true);
+  assert.equal(isBuildOutput('docs/hud-layout-tokens.md'), true);
+  assert.equal(isBuildOutput('games/ashenspire/game.json'), false, 'authored game JSON is an input, not an output');
+  assert.equal(isBuildOutput('content/hud-layout/mobile.json'), false, 'authored HUD layout JSON is an input');
+});
 
 test('an edit made while a build runs is kept for the next reload; only the build output is ignored', async (t) => {
   assert.equal(isBuildOutput('src/config/generated/ui.js'), true);

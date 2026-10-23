@@ -1,0 +1,18 @@
+{
+  "id": "landmark",
+  "kind": "landmark",
+  "label": "Landmark",
+  "description": "A named place on the world atlas. Landmarks carry cut-out art and are not placed by the act generator.",
+  "icon": "landmark-pin",
+  "placement": {
+    "atlas": "content/source/worldAtlas.json",
+    "table": "nodes",
+    "source": "content/source/worldAtlas.json (nodes.landmarkAssetId)"
+  },
+  "assets": [
+    "environments.crownfall-landmark"
+  ],
+  "tags": [
+    "atlas"
+  ]
+}

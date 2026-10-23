@@ -1,3 +1,6 @@
+import { fixCoreEnabled, fixCoreRules, fixCoreWardDisabled } from './fixCoreMechanics.js';
+import { gameProfileRatingReceipt } from './gameProfileRun.js';
+import { stanceRatingBonus } from './stanceRules.js';
 import { equippedPieces } from './loadout.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
 import { evaluate } from './formulas.js';
@@ -303,13 +306,14 @@ export function combatRatingRows(bundle) {
       ? 'A spell with no magic school that hits in melee with a physical damage type deals this share of its damage as magic (Barrier and Ward) and the rest as physical (Block, then Poise). A school with its own share (force: half; alteration: none) decides instead.'
       : 'A martial technique with spell effects (a magic school, a magic damage type, or a spell rider) deals this share of its damage as magic and the rest as physical.',
   });
+  const statusLabel = status => bundle.statuses.filter(other => other.name === status.name).length > 1 ? `${status.name} (${status.id})` : status.name;
   for (const status of bundle.statuses) {
     for (const id of ['poise', 'ward']) add(`statuses.${status.id}.${id}`, combatRatingDefaults.statuses[status.id]?.[id] || 0,
-      `${status.name} — ${ratingLabel(id)} weight`, 'Status resistance', {
+      `${statusLabel(status)} — ${ratingLabel(id)} weight`, 'Status resistance', {
         max: 1, step: 0.05,
         note: 'Reduces hostile buildup or incoming stacks, never duration or proc severity. Both weights zero means unresisted. Weights are added without normalization.',
       });
-    for (const id of ratingIds) add(`bonuses.status:${status.id}.${id}`, 0, `${status.name} — ${ratingLabel(id)} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
+    for (const id of ratingIds) add(`bonuses.status:${status.id}.${id}`, 0, `${statusLabel(status)} — ${ratingLabel(id)} per stack`, 'Status bonuses', { note: id === 'poise' || id === 'ward' ? 'Extra resistance per status stack. Temporary bonuses do not change the current break threshold.' : 'Extra rating per status stack, added to eligible card effects.' });
   }
   // WHO WEARS IT, AND WHICH ONE IT IS. Every class owns a free starting
   // armour that shares its name with an "All classes" set piece — the Reaver
@@ -361,7 +365,8 @@ export function combatRatingRows(bundle) {
   const cardLabel = (card) => {
     if ((cardNameCount.get(card.name) || 0) < 2) return card.name;
     const owner = !card.class || card.class === 'colorless' ? 'All classes' : (classNames.get(card.class) || words(card.class));
-    return `${card.name} (${owner})`;
+    const sameOwner = bundle.cards.filter(other => other.name === card.name && (other.class || 'colorless') === (card.class || 'colorless'));
+    return `${card.name} (${owner}${sameOwner.length > 1 ? `, ${words(card.id.replaceAll('.', ' '))}` : ''})`;
   };
   for (const card of bundle.cards) add(`attackImpact.${card.id}`, -1, `${cardLabel(card)} — impact override`, 'Attack overrides', {
     min: -1, max: 99, integer: true, step: 1, note: '-1 uses attack type and weapon weight. 0 causes no impact. Other values override impact per hit.',
@@ -415,6 +420,9 @@ export function resolveCombatRatings(rawSettings, bundle) {
     if (row.type === 'choice' && !row.choices.includes(value)) continue;
     if (typeof value === 'number' && (!Number.isFinite(value) || value < row.min || value > row.max || (row.integer && !Number.isInteger(value)))) continue;
     const path = row.key.slice(prefix.length).split('.');
+    // Status IDs may be namespaced (base.bleed). The final segment is the
+    // rating field; everything between it and statuses is one registry key.
+    if (path[0] === 'statuses' && path.length > 3) path.splice(1, path.length - 2, path.slice(1, -1).join('.'));
     // A RATING WITH A COLUMN IS NOT WRITTEN TWICE. `applyItemRatingConfig` puts
     // it on the piece itself, and `ratingReceipt` reads the piece — keeping a
     // copy here would be a second home for one number, and the two would part
@@ -492,6 +500,8 @@ function ratingLevelOf(run) {
 }
 
 export function ratingReceipt(registries, run, config) {
+  const configured = gameProfileRatingReceipt(registries,run);
+  if (configured) return configured;
   const totals = Object.fromEntries(ratingIds.map(id => [id, 0]));
   const sources = [];
   const attributeReceipts = {};
@@ -552,21 +562,24 @@ export function ratingReceipt(registries, run, config) {
 }
 
 export function ratingValue(ctx, entity, id) {
-  let value = entity?.ratings?.[id] || 0;
+  let value = (entity?.ratings?.[id] || 0) + stanceRatingBonus(ctx, entity, id);
   for (const [status, instance] of Object.entries(entity?.statuses || {})) value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
+  if (fixCoreEnabled(ctx) && id === 'ar' && entity?.statuses?.weak?.stacks > 0) value = Math.floor(value * fixCoreRules(ctx, entity).statuses.weakARMultiplier); // whole numbers (owner, 2026-10-18)
   return Math.max(0, value);
 }
 
 export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentScoped = false) {
   if ((!sourceArmamentId && !equipmentScoped) || !Array.isArray(entity?.ratingSources)) return ratingValue(ctx, entity, id);
-  let value = 0;
+  let value = stanceRatingBonus(ctx, entity, id);
   for (const source of entity.ratingSources) {
     if (source.kind !== 'equipment') value += Number(source[id]) || 0;
-    else if (sourceArmamentId && source.sourceId === sourceArmamentId) value += Number(source.effectiveRatings?.[id] ?? source[id]) || 0;
+    else if (sourceArmamentId && (source.sourceId === sourceArmamentId || source.sourceId === `armament/${sourceArmamentId}`)
+      || fixCoreEnabled(ctx) && (source.slot === 'armor' || source.sourceId?.startsWith('armor/'))) value += Number(source.effectiveRatings?.[id] ?? source[id]) || 0;
   }
   for (const [status, instance] of Object.entries(entity.statuses || {})) {
     value += (ctx.ratingsRules?.bonuses?.[`status:${status}`]?.[id] || 0) * (instance.stacks || 0);
   }
+  if (fixCoreEnabled(ctx) && id === 'ar' && entity?.statuses?.weak?.stacks > 0) value = Math.floor(value * fixCoreRules(ctx, entity).statuses.weakARMultiplier); // whole numbers (owner, 2026-10-18)
   return Math.max(0, value);
 }
 
@@ -832,6 +845,7 @@ export function schoolResistanceMultiplier(ctx, target, school) {
 
 /** persistentWardMaximum(ctx, entity) → the Ward pool a combatant starts a fight with. */
 export function persistentWardMaximum(ctx, entity) {
+  if (fixCoreWardDisabled(ctx)) return 0; // data toggle: content/source/fixCoreMechanics.json ward.enabled
   const share = ctx?.ratingsRules?.resistance?.wardPool;
   return Math.max(0, Math.floor(ratingValue(ctx, entity, 'ward') * (Number.isFinite(share) ? share : combatRatingDefaults.resistance.wardPool)));
 }

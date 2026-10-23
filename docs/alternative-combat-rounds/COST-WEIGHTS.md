@@ -187,6 +187,7 @@ player's piles).
 | `targeting.ally` | 0 | SP | Not carried by a card today; the base. |
 | `targeting.randomEnemy` | 1 | SP | Not carried by a card today; between single and area. |
 | `targeting.allEnemies` | 2 | SP | Not carried by a card today; as targeting:area. |
+| `targeting.allAllies` | 2 | SP | Every ally at once; as targeting:area. |
 
 ### Magic schools
 
@@ -221,7 +222,10 @@ player's piles).
 | `oath` | 0 | SP | An archetype chip. |
 | `ash` | 0 | SP | An archetype chip. |
 | `basic` | 0 | SP | An archetype chip. |
+| `rank.cantrip` | 0 | SP | Training classification only; the numerical rank and authored effects own the cost. |
 | `extractable` | 0 | SP | A loot marker. |
+| `target` | 0 | MP | Spell identity; its authored effects and range own the price. |
+| `hex` | 0 | MP | Spell identity; its authored effects and range own the price. |
 | `starstone` | 0 | SP | An archetype chip; its charge status is priced instead. |
 | `ritual` | 0 | SP | An archetype chip. |
 | `blight` | 0 | SP | An archetype chip; its status is priced instead. |
@@ -246,6 +250,7 @@ player's piles).
 | `trait:grounded` | 1 | SP | Holds its ground: 1. |
 | `trait:insulated` | 0 | SP | A matchup trait, not power. |
 | `trait:mental` | 0 | SP | A matchup trait, not power. |
+| `trait:persistent` | 0 | SP | Precision lifetime marker; the status grant prices its magnitude. Preserves the existing grant cost. |
 | `trait:projectile` | 0 | SP | Priced by range. |
 | `trait:reveal` | 0 | SP | Information, not power. |
 | `trait:shattering` | 1 | SP | Breaks guards: 1. |
@@ -299,6 +304,8 @@ Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (own
 
 | Status | Weight | Side | Reason |
 |---|---|---|---|
+| `precision` | 2 | card | The owner's floor for an authored status grant. |
+| `evade` | 2 | card | The owner's floor for an authored status grant. |
 | `strength` | 2 | card | The owner's floor for a status. |
 | `dexterity` | 2 | card | The owner's floor for a status. |
 | `weak` | 2 | card | The owner's floor for a status. |

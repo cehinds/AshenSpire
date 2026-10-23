@@ -1,3 +1,4 @@
+import { COOP_TESTS_ENABLED, COOP_TEST_SKIP_REASON } from './feature-scopes.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -55,7 +56,7 @@ test('Combat Rounds restore badges respect discounts held by other queued cards'
   dispatch(combat, { type: 'playCard', cardInstanceId: 'held' });
   assert.deepEqual(combat.combatRounds.playerQueue[0].claims, ['held-discount']);
   assert.equal(manaBadge(), 1, 'Attune cannot borrow another queued card’s held discount');
-  assert.equal(cardPlayCosts(combat, 'restore').mana, 0, 'restore funding still covers its net requirement');
+  assert.equal(cardPlayCosts(combat, 'restore').mana, 1, 'the reserved discount cannot reduce upfront Mana payment');
   dispatch(combat, { type: 'unqueueCard', cardInstanceId: 'held' });
   assert.equal(manaBadge(), 0, 'unqueuing releases the discount');
   dispatch(combat, { type: 'playCard', cardInstanceId: 'restore' });
@@ -64,34 +65,38 @@ test('Combat Rounds restore badges respect discounts held by other queued cards'
 
 for (const coop of [false, true]) for (const version of [1, 2]) {
   for (const cardId of ['attune', 'emberCommunion']) for (const discount of [0, 1, 3]) {
-    test(`${coop ? 'co-op' : 'solo'} v${version} ${cardId} shows the full price with discount ${discount}, playable at zero Mana`, () => {
+    test(`${coop ? 'co-op' : 'solo'} v${version} ${cardId} shows the full price with discount ${discount}, requires its discounted upfront Mana`, { skip: coop && !COOP_TESTS_ENABLED ? COOP_TEST_SKIP_REASON : false }, () => {
       const f = fixture(cardId, { coop, version, discount });
       const before = JSON.stringify({ owner: f.owner, piles: f.combat.piles,
         events: f.combat.eventLog, rng: f.combat.rng.getCounters() });
       const receipt = f.preview();
-      assert.equal(receipt.manaCost, 0, 'affordability uses the net Mana requirement');
-      const model = playingCardModel(registries, f.ref, { preview: receipt });
       const fullMana = discount ? 0 : 1;
+      assert.equal(receipt.manaCost, fullMana, 'affordability requires upfront Mana');
+      const model = playingCardModel(registries, f.ref, { preview: receipt });
       assert.equal(model.costs.mana, fullMana, 'discount the full price before subtracting restore funding');
       assert.equal(JSON.stringify({ owner: f.owner, piles: f.combat.piles,
         events: f.combat.eventLog, rng: f.combat.rng.getCounters() }), before, 'preview is pure');
       const affordable = combatSnapshotCardCosts(registries, { ...receipt.resolvedDefinition, combatPreview: receipt }, f.owner);
-      assert.equal(affordable.mana, 0, 'co-op host receipts keep the net requirement');
-      const card = renderCard(registries, f.ref, { preview: receipt, affordable: true, inspection: false });
+      assert.equal(affordable.mana, fullMana, 'co-op host receipts retain upfront payment');
+      const card = renderCard(registries, f.ref, { preview: receipt, affordable: !fullMana, inspection: false });
       if (fullMana) assert.match(card.innerHTML, /data-card-binding="mana"[^>]*>1<\/div>/);
       else assert.doesNotMatch(card.innerHTML, /data-component="mana-(icon|value)"/);
-      assert.equal(card.classList.contains('unaffordable'), false);
+      assert.equal(card.classList.contains('unaffordable'), !!fullMana);
       const other = coop && structuredClone(f.combat.players.get('b'));
       const oldSP = f.owner.energy;
+      if (fullMana) {
+        assert.throws(f.play, /Not enough.*mana/i);
+        f.owner.mana = fullMana;
+      }
       f.play();
       const paidOwner = coop ? f.combat.players.get('a').entity : f.combat.player;
-      assert.equal(paidOwner.mana, 0, 'the restore funds its own price: net Mana remains zero');
+      assert.equal(paidOwner.mana, 2, 'after upfront payment the authored restore grants two Mana');
       assert.equal(paidOwner.energy, oldSP - receipt.cost);
       assert.ok(f.combat.eventLog.some(event => event.type === 'cardPlayed' && event.cardInstanceId === 'restore'));
       if (coop) assert.deepEqual(f.combat.players.get('b'), other, 'other seat is unchanged');
     });
   }
-  test(`${coop ? 'co-op' : 'solo'} v${version} Stamina restores show full SP and pay only the unfunded part`, () => {
+  test(`${coop ? 'co-op' : 'solo'} v${version} Stamina restores show full SP and pay only the unfunded part`, { skip: coop && !COOP_TESTS_ENABLED ? COOP_TEST_SKIP_REASON : false }, () => {
     const f = fixture(staminaRestore.id, { coop, version });
     const receipt = f.preview();
     const model = playingCardModel(registries, f.ref, { preview: receipt });

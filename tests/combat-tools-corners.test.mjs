@@ -8,12 +8,14 @@ import { readFileSync } from 'node:fs';
 const tools = readFileSync(new URL('../src/ui/components/combatTools.js', import.meta.url), 'utf8');
 const hand = readFileSync(new URL('../src/ui/components/hand.js', import.meta.url), 'utf8');
 
-test('desktop combat tools sit in the screen corners, level with the card bottoms', () => {
-  assert.match(tools, /const corners = globalThis\.document\?\.documentElement\?\.dataset\.formFactor === 'desktop' && handBox;/);
-  assert.match(tools, /corners \? handBox\.bottom - root\.getBoundingClientRect\(\)\.height/);
-  assert.match(tools, /root\.style\.left = `\$\{CORNER_INSET\}px`;\s*root\.style\.right = `\$\{CORNER_INSET\}px`;/);
+test('combat tools use screen-edge corners and independently measured footer geometry on every form factor', () => {
+  assert.match(tools, /const split = combatEl.dataset.desktopFooter === 'true';/);
+  assert.match(tools, /getPropertyValue\('--desktop-tools-top'\)/);
+  assert.match(tools, /footerControls\?\.getBoundingClientRect\(\)\.top \?\? dockTop/);
+  assert.match(tools, /root.dataset.toolsPlacement = 'corners';/);
 });
 
-test('the desktop hand reserves no tool row while the tools are in the corners', () => {
-  assert.match(hand, /cornerTools \? 0 :/);
+test('the fan does not reserve a second tools band above its cards', () => {
+  assert.match(hand, /const toolsHeight = 0;/);
+  assert.match(hand, /height: handEl.clientHeight - toolsHeight/);
 });

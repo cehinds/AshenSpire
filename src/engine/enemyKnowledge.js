@@ -5,6 +5,7 @@ import { advancePerception, perceptionLevel, perceptionProblems, PERCEPTION_SKIL
 import { emptyEnemyKnowledge, mergeEnemyKnowledge, enemyKnowledgeProblems, knowledgeKey } from '../model/enemyKnowledgeProfile.js';
 import { addKnowledgeCounterBonus, reconcilePerception } from '../model/enemyKnowledgeRun.js';
 import { enemyMasteryTarget, enemyKnowledgeRuleProblems } from '../model/enemyKnowledgeRules.js';
+import { proposalIntentRevealUntil } from '../model/proposalIntentReveal.js';
 
 export function initializeCombatKnowledge(combat, { rules, encounter = null, bankable = false, profiles = {}, privateSeed = null }) {
   const problems = enemyKnowledgeRuleProblems(rules);
@@ -78,7 +79,7 @@ export function addKnowledgeObserver(combat, ownerId, profile = emptyEnemyKnowle
   const selected = combat.enemies.filter(enemy => enemy.alive && enemy.knowledgeAction && !enemy.knowledgeAction.executed && !enemy.knowledgeAction.cancelled)
     .sort((a, b) => a.knowledgeAction.serial - b.knowledgeAction.serial);
   for (const enemy of selected) if (!Object.hasOwn(enemy.knowledgeAction.reads, ownerId)) {
-    enemy.knowledgeAction.reads[ownerId] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: perceptionLevel(owner.skills) }, enemy.knowledgeAction.category);
+    enemy.knowledgeAction.reads[ownerId] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: perceptionLevel(owner.skills) }, enemy.knowledgeAction.category, { ctx: combat, target: enemy });
   }
   storeReadCounters(state, rng);
   return state.owners[ownerId];
@@ -103,13 +104,18 @@ export function rollEnemyKnowledge(combat, enemy, { charging = false } = {}) {
   const action = { serial: ++state.nextSerial, category, executed: false, reads: {} };
   for (const owner of observers(combat).filter(row => row.entity?.alive && row.connected)) {
     if (!Object.hasOwn(state.owners, owner.id)) state.owners[owner.id] = newKnowledgeOwner(state);
-    action.reads[owner.id] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: perceptionLevel(owner.skills) }, category);
+    action.reads[owner.id] = rollKnowledgeRead(rng, state.rules, { ...owner, perception: perceptionLevel(owner.skills) }, category, { ctx: combat, target: enemy });
   }
   storeReadCounters(state, rng);
   enemy.knowledgeAction = action;
   return true;
 }
 export function knowledgeIntentProjection(combat, enemy, ownerId = combat.playerKey || 'player') {
+  // A marker status alone cannot reveal any enemy's move. The card records its
+  // read against one selected enemy and one owner.
+  const proposalUntil = proposalIntentRevealUntil(enemy, ownerId, combat.turn,
+    { legacySolo: !(combat.players instanceof Map) });
+  if (proposalUntil !== null) return { exact: true, source: 'proposal' };
   if (!combat.enemyKnowledge) return null;
   // Staggered is a currently public status, even when it cancels an older
   // unread selected action; the old read is retained for committed responses.
@@ -209,6 +215,9 @@ export function recordKnowledgeEvent(combat, event) {
   if (!combat.enemyKnowledge) return;
   // A reaction move is not the telegraphed intent; it leaves the pending knowledge action unresolved.
   if (event.type === 'enemyMoveStarted' && !event.reaction) resolveKnowledgeAction(combat, combat.enemies.find(row => row.id === event.sourceId));
+  if (event.type === 'attackMissed' && event.missReason === 'accuracy' && (event.evadeActive || event.evadeStacks > 0)) creditKnowledgeResponse(combat,
+    event.targetPlayerId || (combat.players instanceof Map ? null : combat.playerKey || 'player'), event.sourceId,
+    { committed: true, kind: 'evade', amount: 1, actionSerial: event.enemyActionSerial });
   if (event.type === 'attackEvaded') creditKnowledgeResponse(combat, event.targetPlayerId || (combat.players instanceof Map ? null : combat.playerKey || 'player'), event.sourceId,
     { committed: true, kind: 'evade', amount: 1, actionSerial: event.enemyActionSerial });
   if (event.type === 'combatAvoidanceResolved' && event.avoided && (event.evade?.success || event.prevention)) creditKnowledgeResponse(combat,

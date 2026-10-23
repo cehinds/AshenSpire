@@ -1,3 +1,4 @@
+import { engravedIconHtml } from './engravedIcon.js';
 import { renderCollectibleInspection } from './collectibleCard.js';
 import { esc } from './tooltip.js';
 import { assetUrl } from '../assetmap.js';
@@ -24,7 +25,7 @@ export function closeFlaskActionMenu({ cancelled = true, restoreFocus = false } 
 export function flaskIdentityHtml(def, { showName = true, className = '' } = {}) {
   const art = def.artAsset
     ? `<img class="flask-art-image"${imageHintAttrs()} src="${esc(assetUrl(def.artAsset))}" alt="">`
-    : `<span class="flask-art-glyph">${esc(def.icon)}</span>`;
+    : `<span class="flask-art-glyph">${engravedIconHtml(def.icon || 'flask-health') || 'Flask'}</span>`;
   return `<span class="flask-identity ${esc(className)}" data-flask-art="${esc(def.artKey)}" style="--flask-tint:${esc(def.tint)}" aria-label="${esc(def.name)}">`
     + `<span class="flask-art" aria-hidden="true">${art}</span>`
     + (showName ? `<span class="flask-name">${esc(def.name)}</span>` : '')
