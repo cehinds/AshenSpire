@@ -1342,10 +1342,10 @@
    fine hover pointer. Keeping the tray itself in the selector lets the pointer
    cross into a mini and use it. */
 @media (hover: hover) and (pointer: fine) {
-  :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:hover, > .combat-potion-tray:hover) > .combat-potion-tray {
+  :root .combat[data-layout='formation'] .combat-action-row > :is(.combat-potions:hover + .combat-potion-tray, .combat-potion-tray:hover) {
     visibility: visible; transition-delay: var(--potion-reveal-delay, 500ms);
   }
-  :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:hover, > .combat-potion-tray:hover) > .combat-potion-tray > :where(.potion-mini, .status-overflow) {
+  :root .combat[data-layout='formation'] .combat-action-row > :is(.combat-potions:hover + .combat-potion-tray, .combat-potion-tray:hover) > :where(.potion-mini, .status-overflow) {
     opacity: 1; transform: none;
     transition-delay: calc(var(--potion-reveal-delay, 500ms) + var(--potion-stagger, 0ms));
   }
@@ -1745,7 +1745,7 @@
 :root .combat[data-composition='option-c'] > .hand-area :is(.hand,.hand-page,.card,.combat-action-row) { pointer-events: auto; }
 /* The raised HUD can reveal an HP tooltip where the next coach step moves.
    Keep tutorial exits above those reading surfaces. */
-:root:has(.combat[data-composition='option-c']) .tut-veil { z-index: 1100; }
+:root .combat[data-composition='option-c'] ~ .tut-veil { z-index: 1100; }
 
 /* The player's complete widget grows upward in every formation layout. */
 :root .combat[data-layout='formation'] .combatant.player .combatant-leading {

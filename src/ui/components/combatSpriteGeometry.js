@@ -2,6 +2,7 @@
 // animation/stance changes must never resize the formation during a turn.
 import { stageFor } from '../services/PoseAnimator.js';
 import { projectBodyBounds } from '../models/CombatBodyModel.js';
+import { measure, invalidateMeasures } from '../frameMeasure.js';
 const boundsCache = new Map();
 // Painted enemy art shares a floor at 364/384 of its canvas height. The light
 // tier resizes that canvas to 120px; pixel 364 is not a floor in that image.
@@ -121,22 +122,11 @@ export function combatSpriteGeometry(sprite, refresh) {
 
 // Painted canvases' boxes, remembered for the rest of the current task so the
 // 30-50 reads a play makes (body, art, hit badge, overhead, HUD) are one layout
-// read apiece per canvas instead of one each. The cache dies at the next
-// microtask, and any caller that writes geometry (a sprite's zoom, margin or
+// read apiece per canvas instead of one each (the cache itself is frameMeasure's,
+// shared with fx.js). Any caller that writes geometry (a sprite's zoom, margin or
 // position) calls invalidateSpriteRects() around the write.
-const rectCache = new Map();
-let rectCacheLive = false;
-export function invalidateSpriteRects() { rectCache.clear(); }
-export function cachedCanvasRect(canvas) {
-  let rect = rectCache.get(canvas);
-  if (!rect) {
-    const live = canvas.getBoundingClientRect();
-    rect = { left: live.left, top: live.top, width: live.width, height: live.height, right: live.right, bottom: live.bottom };
-    rectCache.set(canvas, rect);
-    if (!rectCacheLive) { rectCacheLive = true; queueMicrotask(() => { rectCacheLive = false; rectCache.clear(); }); }
-  }
-  return rect;
-}
+export function invalidateSpriteRects() { invalidateMeasures(); }
+export const cachedCanvasRect = (canvas) => measure(canvas);
 
 // Current pose ink, in physical screen pixels. Formation fitting continues to
 // use the stable idle envelope; only the overhead widget follows pose/lunge.

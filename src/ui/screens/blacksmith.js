@@ -232,7 +232,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     const categories = shopStockOfferings(stock).filter((key) => SHELVES[key]);
     if (!categories.includes(activeCategory)) activeCategory = categories[0] || null;
     app.innerHTML = `
-      ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header' }) : ''}
+      ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' }) : ''}
       <div class="screen room-screen shop-workspace blacksmith-workspace" data-wireframe="W1d" data-shop-kind="blacksmith">
         <div class="shop-frame">
           <div class="as-railed shop-railed">

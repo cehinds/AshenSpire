@@ -516,8 +516,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const original = Object.keys(overrides).map((name) => [name, actorEl.style.getPropertyValue(name), actorEl.style.getPropertyPriority(name)]);
     let contactCue=null;
     if (totalMs && fxCtx.figureAnimations !== false) {
-      actorEl.classList.remove(actionClass);
-      void actorEl.offsetWidth;
+      // A class that is not on needs no flush to restart its animation.
+      if (actorEl.classList.contains(actionClass)) {
+        actorEl.classList.remove(actionClass);
+        void actorEl.offsetWidth;
+      }
       for (const [name, value] of Object.entries(overrides)) actorEl.style.setProperty(name, value);
       if (!stage?.ownsMotion) actorEl.classList.add(actionClass);
       // A damaging spell still needs its enemy attack drawing; its motion
@@ -1094,11 +1097,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // Attributes a render can change; a reused frame gets these again without
   // a second set of listeners.
   function refreshCombatantContext(box, name) {
-    box.tabIndex = -1;
-    box.dataset.focusable = '';
-    box.setAttribute('role', 'button');
-    box.setAttribute('aria-label', `Select ${name}`);
-    box.setAttribute('aria-pressed', String(selectedCombatantId === box.dataset.eid));
+    // Written only when it differs: this runs for every combatant on every
+    // render, and an attribute write on the focused box makes the browser
+    // flush style to re-check that it can keep focus.
+    const setAttr = (attr, value) => { if (box.getAttribute(attr) !== value) box.setAttribute(attr, value); };
+    setAttr('tabindex', '-1');
+    if (box.dataset.focusable !== '') box.dataset.focusable = '';
+    setAttr('role', 'button');
+    setAttr('aria-label', `Select ${name}`);
+    setAttr('aria-pressed', String(selectedCombatantId === box.dataset.eid));
   }
   function wireCombatantContext(box, name) {
     refreshCombatantContext(box, name);
@@ -1839,10 +1846,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     for (const enemy of combat.enemies) {
       const frame = enemyFrames.get(enemy.id)?.box;
       if (!frame) continue;
-      frame.querySelector('.combat-hit-chance')?.remove();
+      // Update the existing badge in place: removing and re-adding it dirtied
+      // layout, and the placement pass right after read it back (forced layout).
+      const existing = frame.querySelector(':scope > .combat-hit-chance');
       const badge = hitChanceBadge(enemy);
-      if (badge) {
-        frame.append(badge);
+      if (!badge) existing?.remove();
+      else {
+        if (!existing) frame.append(badge);
+        else if (existing.className !== badge.className || existing.textContent !== badge.textContent
+          || existing.dataset.rollMode !== badge.dataset.rollMode || existing.dataset.rangeDetail !== badge.dataset.rangeDetail) {
+          existing.replaceWith(badge);
+        }
         if (selectedCard) {
           const odds = badge.cloneNode(true);
           odds.className = 'card-hit-chance';
