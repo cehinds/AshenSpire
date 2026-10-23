@@ -1,4 +1,11 @@
 import { stanceOf } from '../model/stanceRules.js';
+import { core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
+import { previewEnemyAction } from './enemyActionPreview.js';
+import { expandedEnemyMove, enemyMoveCarrier } from './combatCardTactics.js';
+import { quoteRangeActions } from './combatEngagement.js';
+import * as Actions from './actions.js';
+import { evaluate } from '../model/formulas.js';
+import { createRng } from './rng.js';
 // Combat Rounds Preview, solo adapter (SPEC §4.11, PREVIEW-PLAN P3a/P3b). Headless: no DOM, no timers.
 //
 // combat.js calls this module only when `combat.combatRounds` is set; every other path is untouched.
@@ -39,9 +46,51 @@ export function roundState(combat) {
 // move costs one more SP per Silenced stack, as a player's spell card does (owner, 2026-10-13).
 export function moveSp(move, { enemy = null, moveId, combat = null } = {}) {
   const entity = enemy && combat?.combatExpansionVersion === 2 ? enemy : null;
-  return enemyMoveSpOf(move, moveKind(move), MOVE_SP, { entity, enemyId: enemy?.enemyId, moveId, ctx: combat });
+  const price = enemyMoveSpOf(move, moveKind(move), MOVE_SP, { entity, enemyId: enemy?.enemyId, moveId, ctx: combat });
+  return core2ActionPolicyEnabled(combat) && enemyMoveHasMultipleHits(move, { enemy, moveId, combat }) ? Math.max(2, price) : price;
 }
 export const enemyMoveSp = moveSp;
+
+// Count HP-damage contacts per target, before damage components split into
+// physical/magical lanes. An area attack hitting each defender once is one hit.
+export function enemyMoveHasMultipleHits(move, { enemy, moveId, combat }) {
+  const expanded = expandedEnemyMove(enemy, move, moveId, combat);
+  const carrier = enemyMoveCarrier(enemy, expanded, moveId, combat);
+  if (carrier.combatProfile.maneuver === 'counter') return false;
+  const effects = [...(expanded.damage != null ? [{ op: 'damage', target: 'player', amount: expanded.damage, hits: expanded.hits ?? 1 }] : []), ...(expanded.effects || [])];
+  const counts = new Map();
+  const detached = { ...combat, rng: createRng(combat.rng.seed, combat.rng.getCounters()) };
+  for (const effect of effects) {
+    if (effect.op !== 'damage') continue;
+    const action = { source: enemy, owner: enemy, target: combat.player, card: carrier, effect };
+    const formulas = Actions.formulaCtxFor(combat, action, action.target);
+    const hits = Math.max(0, Math.floor(evaluate(effect.hits ?? 1, formulas))) * Math.max(0, Math.floor(evaluate(effect.repeat ?? 1, formulas)));
+    for (let i = 0; i < hits; i++) for (const target of Actions.resolveTargets(detached, action, effect.target)) {
+      const key = target.id;
+      counts.set(key, (counts.get(key) || 0) + 1);
+      if (counts.get(key) > 1) return true;
+    }
+  }
+  return false;
+}
+
+// A forecast only: range quotes use detached streams and do not move or charge
+// either combatant. Execution revalidates this total against the live pool.
+export function enemyMoveQuote(move, { enemy, moveId, combat }) {
+  const sp = moveSp(move, { enemy, moveId, combat });
+  if (!core2ActionPolicyEnabled(combat)) return { sp, advanceSp: 0, totalSp: sp, rangeQuote: null };
+  const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
+  const effects = previewEnemyAction(combat, enemy, moveId)?.actionEffects || [];
+  const actions = effects.map(effect => ({ effect, source: enemy, owner: enemy, target: combat.player, card: carrier }));
+  const rangeQuote = quoteRangeActions(combat, enemy, actions, { route: 'advance', preview: true });
+  const advanceSp = rangeQuote?.advanceSp || 0;
+  return { sp, advanceSp, totalSp: sp + advanceSp, rangeQuote };
+}
+
+export function enemyTurnSp(enemy, def, combat) {
+  return core2ActionPolicyEnabled(combat)
+    ? Math.max(0, (enemy.maxStamina ?? enemyPool(def)) - (enemy.pendingStaminaLoss || 0)) : enemyPool(def);
+}
 
 // The enemy's SP pool per turn (SPEC §4.6a, owner 2026-10-12): stat-driven, the stamina row read on the enemy's
 // `attributes` plus its `equipmentSp` (model/actionCosts.js enemyPoolOf). An enemy with no authored stats has 1.
@@ -65,7 +114,8 @@ export function buildEnemyQueue(enemy, def, { isFirstTurn = false, pick, combat 
 // `combat` (optional) prices each move for this enemy: see moveSp().
 // `endAtCharge` (rounds queues): stop after a charging move (see buildEnemyQueue).
 export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick, combat = null, endAtCharge = false }) {
-  const pool = enemyPool(def);
+  const policy = core2ActionPolicyEnabled(combat);
+  const pool = enemyTurnSp(enemy, def, combat);
   // Price the accepted sequence against the stance before each move; planning grants nothing.
   const pricingEnemy = { ...enemy };
   for (const entry of queue) {
@@ -74,14 +124,15 @@ export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick,
   }
   let spent = queue.reduce((sum, entry) => sum + entry.sp, 0);
   while (queue.length < QUEUE_MAX) {
-    if (endAtCharge && queue.some((entry) => def.moves[entry.moveId]?.delay)) break;
+    if ((endAtCharge || policy) && queue.some((entry) => def.moves[entry.moveId]?.delay)) break;
     if (queue.length > 0 && spent >= pool) break;
     const opener = isFirstTurn && queue.length === 0 && def.firstMove ? def.firstMove : null;
     let moveId = opener ?? pick(pricingEnemy, def, pool - spent);
-    if (moveId == null && queue.length === 0 && opener == null) moveId = pick(pricingEnemy, def, Infinity);
+    if (policy && moveId != null && enemyMoveQuote(def.moves[moveId], { enemy: pricingEnemy, moveId, combat }).totalSp > pool - spent) moveId = pick(pricingEnemy, def, pool - spent);
+    if (!policy && moveId == null && queue.length === 0 && opener == null) moveId = pick(pricingEnemy, def, Infinity);
     if (moveId == null) break;
-    const sp = moveSp(def.moves[moveId], { enemy: pricingEnemy, moveId, combat });
-    if (spent + sp > pool && queue.length > 0) break;
+    const sp = policy ? enemyMoveQuote(def.moves[moveId], { enemy: pricingEnemy, moveId, combat }).totalSp : moveSp(def.moves[moveId], { enemy: pricingEnemy, moveId, combat });
+    if (spent + sp > pool && (policy || queue.length > 0)) break;
     spent += sp;
     enemy.movesHistory.push(moveId);
     queue.push({ moveId, sp });

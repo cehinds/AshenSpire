@@ -1,5 +1,5 @@
 import { previewEnemyAction } from './enemyActionPreview.js';
-import { CORE2_ACTION_RULES_VERSION } from '../model/core2ActionPolicy.js';
+import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
 import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
@@ -741,6 +741,7 @@ function enemyOwnerTurnStart(combat, enemy) {
   if (fixCoreEnabled(combat)) {
     // A Poise break (Staggered stance) took SP from this turn's pool; it is owed once.
     enemy.fixCoreStaminaRemaining = Math.max(0, (enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId))) - (enemy.pendingStaminaLoss || 0));
+    if (core2ActionPolicyEnabled(combat)) enemy.stamina = enemy.fixCoreStaminaRemaining;
     enemy.pendingStaminaLoss = 0;
   }
   beginEnemyBurdens(combat,enemy,Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId)));
@@ -1063,7 +1064,7 @@ function presentIntent(combat, enemy, def, moveId) {
 function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
   const entries = Object.entries(def.moves).filter(
     ([id, mv]) => !mv.reaction && (!mv.locked || enemy.unlockedMoves.includes(id))
-      && Rounds.enemyMoveSp(mv, { enemy, moveId: id, combat }) <= maxSp
+      && (core2ActionPolicyEnabled(combat) ? Rounds.enemyMoveQuote(mv, { enemy, moveId: id, combat }).totalSp : Rounds.enemyMoveSp(mv, { enemy, moveId: id, combat })) <= maxSp
   );
   if (entries.length === 0) return null;
 
