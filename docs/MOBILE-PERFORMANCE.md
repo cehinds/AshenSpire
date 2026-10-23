@@ -33,6 +33,9 @@ high-default build):
   against `art-manifest.json`. Settings → About names the tier.
 - The separate mobile file (`AshenSpire-mobile.html`, `bundle.mjs --mobile`) and
   the full-art single file (~253 MB) are retired (owner answers 2 and 6).
+- Phones use the Pages *Play* link (`/<branch>/latest/`, the pack build). The
+  Pages *HTML* link (`/<branch>/latest/download/AshenSpire.html`) is the offline
+  desktop file: ~132 MB, 15–80 s to open on a phone and ~440 MB of memory there.
 
 Production hosting should cache individual versioned asset URLs and compress
 HTML; the Pages service worker (step 6b) keeps a build for offline play. The
