@@ -2220,10 +2220,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function renderHand({ refreshHitChances = true } = {}) {
     const handList = heldTurnHand || (disp ? disp.hand : combat.piles.hand);
-    combatEl.dataset.turn = enemyPlayback || combat.phase === 'enemy' ? 'enemy' : 'player';
-    $('.turn-ribbon').textContent = enemyPlayback || combat.phase === 'enemy' ? 'Enemy Turn' : 'Player Turn';
-    $('.hand').inert = busy || enemyPlayback || !!combat.pendingReaction || !!combat.result;
-    $('.hand').setAttribute('aria-disabled', String(busy || enemyPlayback || !!combat.pendingReaction || !!combat.result));
+    // Each write below is skipped when it would repeat: an unchanged attribute or text node
+    // still dirties style/layout for the board that hangs off it.
+    const enemySide = enemyPlayback || combat.phase === 'enemy';
+    if (combatEl.dataset.turn !== (enemySide ? 'enemy' : 'player')) combatEl.dataset.turn = enemySide ? 'enemy' : 'player';
+    const ribbon = $('.turn-ribbon');
+    if (ribbon.textContent !== (enemySide ? 'Enemy Turn' : 'Player Turn')) ribbon.textContent = enemySide ? 'Enemy Turn' : 'Player Turn';
+    const handLocked = busy || enemyPlayback || !!combat.pendingReaction || !!combat.result;
+    const handNode = $('.hand');
+    if (handNode.inert !== handLocked) handNode.inert = handLocked;
+    if (handNode.getAttribute('aria-disabled') !== String(handLocked)) handNode.setAttribute('aria-disabled', String(handLocked));
     if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.
     const stackedIds = stackedCardIds(combat.reactionStack);
     // The state half of the key is everything a card's preview can read; the aim
@@ -2248,15 +2254,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           if (disp?.handPreviews.has(inst.instanceId)) pv = disp.handPreviews.get(inst.instanceId);
           else if (!heldTurnHand) {
             const isSelected = selected === inst.instanceId;
-            const cached = previewCache.get(inst.instanceId);
-            // A card's quote depends on the target only while it is the selected card.
-            if (cached && cached.isSelected === isSelected && (!isSelected || cached.aim === lastTargetId)) pv = cached.pv;
+            // A card's quote depends on the target only while it is the selected card, so a
+            // card keeps one quote for each: plain, and aimed at the last target.
+            const cached = previewCache.get(inst.instanceId) || {};
+            const hit = isSelected ? (cached.aimed && cached.aimed.aim === lastTargetId ? cached.aimed : null) : cached.plain;
+            if (hit) pv = hit.pv;
             else {
               const targetId = isSelected ? (lastTargetId && cardTargets(inst.instanceId).legalIds.includes(lastTargetId) ? lastTargetId : cardTargets(inst.instanceId).legalIds.find(id => getEntity(combat, id)?.kind === 'enemy')) : undefined;
               pv = previewCard(combat, inst.instanceId, targetId, upcastRanksByCard.get(inst.instanceId));
               if (targetId) pv = { ...pv, targetName: registries.enemies.get(getEntity(combat, targetId)?.enemyId)?.name || targetId };
             }
-            nextPreviews.set(inst.instanceId, { isSelected, aim: lastTargetId, pv });
+            nextPreviews.set(inst.instanceId, isSelected ? { ...cached, aimed: hit || { aim: lastTargetId, pv } } : { ...cached, plain: hit || { pv } });
           }
         } catch (e) {
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
