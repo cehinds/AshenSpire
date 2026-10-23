@@ -353,14 +353,17 @@ export function extractTemplateTokens(template) {
  * last problem in the list rather than an exception at the boot banner. Specific
  * rules still come first and still say the useful thing; this is the floor under
  * them, not a substitute for them.
+ *
+ * `options.deferred` names passes the caller will run itself later
+ * (`['classMastery']`); the default runs everything.
  */
-export function validateContent(bundle) {
+export function validateContent(bundle, options = {}) {
   // The accumulator is created HERE and handed in, so a throw partway through
   // KEEPS every field-addressed error found before it. A floor that returns a
   // fresh list erases the diagnosis it was meant to stand behind.
   const errors = [];
   try {
-    return collectContentProblems(bundle, errors);
+    return collectContentProblems(bundle, errors, options);
   } catch (error) {
     errors.push({
       path: '<bundle>',
@@ -370,7 +373,7 @@ export function validateContent(bundle) {
   }
 }
 
-function collectContentProblems(bundle, errors = []) {
+function collectContentProblems(bundle, errors = [], options = {}) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
   if (b.classMasteryVersion !== undefined && b.classMasteryVersion !== 1) err('classMasteryVersion', 'must be 1 when present');
@@ -2170,7 +2173,9 @@ function collectContentProblems(bundle, errors = []) {
 
   // The cross-table mastery planner needs structurally valid dependencies.
   // Keep their existing field-addressed refusals before asking it to plan.
-  if (!errors.length) for (const problem of classMasteryProblems(b)) err('classMastery', problem);
+  // `options.deferred: ['classMastery']` leaves this slow pass to the caller
+  // (boot runs it after the title is up); every other caller runs it here.
+  if (!errors.length && !options.deferred?.includes('classMastery')) for (const problem of classMasteryProblems(b)) err('classMastery', problem);
   return { ok: errors.length === 0, errors, scriptReport };
 }
 

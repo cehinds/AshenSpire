@@ -12,36 +12,66 @@ const start = cacheStart < 0 ? main.indexOf('function rebuildRegistries(') : cac
 const end = main.indexOf('\n}\n\n// Dev screenshot hook', start) + 2;
 assert.ok(start >= 0 && end > start, 'production rebuild function is present');
 const production = main.slice(start, end);
-function fixture() {
-  const calls = { validate: 0, mastery: 0, warnings: [] };
+function fixture({ warm = true } = {}) {
+  const calls = { validate: 0, mastery: 0, warnings: [], idle: [], reported: [], deferredMastery: [], options: [] };
   const contentBundle = { amount: 5 };
   const deps = {
     createContentValidationCache, contentBundle,
     applyGameProfileToContent: (bundle, profile) => ({ ...bundle, profile: structuredClone(profile), ...(profile.invalid ? { invalid: true } : {}) }),
     isConfiguredRun: profile => profile.mode === 'configured',
     configuredContentBundle: (bundle, configuration) => ({ ...bundle, ...configuration }),
-    validateContent: bundle => { calls.validate++; return { ok: !bundle.invalid, errors: bundle.invalid ? [{ path: 'amount', msg: 'invalid amount' }] : [] }; },
+    validateContent: (bundle, options) => { calls.validate++; calls.options.push(options); return { ok: !bundle.invalid, errors: bundle.invalid ? [{ path: 'amount', msg: 'invalid amount' }] : [] }; },
     advancedConfigStructuralProblems: (bundle, configuration) => configuration.structural ? ['invalid structure'] : [],
     createRegistries: bundle => ({ rows: structuredClone(bundle), mutable: new Map(), classes: { all: () => [] } }),
     bindGameProfileRegistries: (registry, profile) => ({ ...registry, profile }),
     registriesForClassMastery: (registry, run) => { calls.mastery++; return { ...registry, mastery: run?.mastery ?? 0 }; },
     configureTooltipGlossary: () => {}, setClassGlyphs: () => {},
+    whenIdle: task => calls.idle.push(task),
+    reportContentValidationFailure: errors => calls.reported.push(errors),
+    deferClassMasteryCheck: bundle => calls.deferredMastery.push(bundle),
     console: { warn: (...args) => calls.warnings.push(args) }
   };
   const create = new Function(...Object.keys(deps), `let registryGameProfile; let registries; ${production}; return rebuildRegistries;`);
-  return { rebuild: create(...Object.values(deps)), calls };
+  const rebuild = create(...Object.values(deps));
+  if (warm) { // the session's first build defers its validation (tested below); spend it
+    rebuild({ warm: true }, null, { id: 'warm', mode: 'legacy' });
+    for (const key of ['validate', 'mastery']) calls[key] = 0;
+    calls.warnings.length = calls.idle.length = calls.reported.length = calls.deferredMastery.length = calls.options.length = 0;
+  }
+  return { rebuild, calls };
 }
 
-test('actual rebuild reuses validation but creates fresh registries and recomputes changed mastery', () => {
-  const { rebuild, calls } = fixture(), profile = { id: 'current', mode: 'legacy', lock: { runtime: 'a' } };
+test('actual rebuild reuses validation and registries for an unchanged profile and settings, and recomputes mastery', () => {
+  const { rebuild, calls } = fixture(), profile = { id: 'current', mode: 'legacy', hash: 'sha256:a', lock: { runtime: 'a' } };
   const first = rebuild({ amount: 7 }, { mastery: 1 }, profile);
-  first.mutable.set('foreign', true); first.rows.amount = 999;
   const second = rebuild({ amount: 7 }, { mastery: 2 }, structuredClone(profile));
   assert.equal(calls.validate, 1); assert.equal(calls.mastery, 2);
-  assert.equal(second.rows.amount, 7); assert.equal(second.mastery, 2);
-  assert.equal(second.mutable.has('foreign'), false); assert.notEqual(second.mutable, first.mutable);
+  assert.equal(second.rows.amount, 7); assert.equal(second.mastery, 2); assert.equal(first.mastery, 1);
+  assert.equal(second.mutable, first.mutable, 'the unchanged build is reused, not rebuilt');
   rebuild({ amount: 8 }, null, profile); assert.equal(calls.validate, 2);
-  rebuild({ amount: 8 }, null, { ...profile, lock: { runtime: 'b' } }); assert.equal(calls.validate, 3);
+  const changed = rebuild({ amount: 8 }, null, { ...profile, hash: 'sha256:b', lock: { runtime: 'b' } });
+  assert.equal(calls.validate, 3); assert.notEqual(changed.mutable, second.mutable);
+});
+
+test('a settings change that alters nothing in the key still rebuilds when any setting differs', () => {
+  const { rebuild } = fixture(), profile = { id: 'current', mode: 'legacy' };
+  const a = rebuild({ amount: 7, other: 1 }, null, profile);
+  assert.notEqual(rebuild({ amount: 7, other: 2 }, null, profile).mutable, a.mutable);
+  assert.notEqual(rebuild({ amount: 7, other: 2 }, null, { id: 'other', mode: 'legacy' }).mutable, a.mutable);
+});
+
+test('the first build of a configured profile validates at idle, later ones synchronously', () => {
+  const { rebuild, calls } = fixture({ warm: false });
+  const profile = { id: 'core', mode: 'configured', invalid: true };
+  assert.doesNotThrow(() => rebuild({}, null, profile));
+  assert.equal(calls.validate, 0); assert.equal(calls.idle.length, 1);
+  calls.idle[0]();
+  assert.deepEqual(calls.options, [{ deferred: ['classMastery'] }]);
+  assert.equal(calls.reported.length, 1); assert.equal(calls.reported[0][0].path, 'amount');
+  const ok = fixture({ warm: false });
+  ok.rebuild({}, null, { id: 'core', mode: 'configured' }); ok.calls.idle[0]();
+  assert.equal(ok.calls.reported.length, 0); assert.equal(ok.calls.deferredMastery.length, 1);
+  assert.throws(() => rebuild({ again: 1 }, null, profile), /Invalid game profile core/);
 });
 
 test('actual invalid legacy configurations keep loud defaults fallback on each attempt', () => {

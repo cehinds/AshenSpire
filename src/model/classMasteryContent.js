@@ -67,8 +67,9 @@ export function classMasteryProblems(bundle) {
   // must remain core even when it belongs to another class's reward pool.
   const globallyGatedCards=new Set(rows.filter(r=>r?.kind==='cards').map(r=>r.ref));
   try {
-    const copy=value=>Array.isArray(value)?value.map(copy):value && typeof value==='object'?Object.fromEntries(Reflect.ownKeys(value).map(key=>[key,copy(value[key])])):value;
-    const deckBundle=copy(bundle);
+    // Only `equipment` is edited below, so only it is copied (and only the two
+    // arrays replaced); createRegistries reads the rest of the bundle as given.
+    const deckBundle={...bundle,equipment:{...bundle.equipment}};
     // This check concerns the composed cards. Alternate kits may require a
     // player's allocation above a configured preset; that is Begin's gate.
     deckBundle.equipment.equipmentRequirements=deckBundle.equipment.equipmentRequirements.map(row=>({...row,minimum:0}));
