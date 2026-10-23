@@ -15,6 +15,9 @@ export const SEED_KEY = 'settingsDefaultsSeed';
 export function needsSettingsChoice(meta, build, rows, promoted = {}) {
   if (meta?.settingsChoiceBuild === build) return false;
   const settings = meta?.settings || {};
+  // Every row needs a stored value to count, so a profile that stores none
+  // never reads `rows` (which lets the caller hand over a lazily built view).
+  if (Object.keys(settings).length === 0) return false;
   const valueTypes = new Set(['number', 'range', 'choice', 'color', 'colorSwatch', 'text', 'textarea', 'toggle', undefined]);
   return rows.some(row => valueTypes.has(row.type)
     && settings[row.key] !== undefined
