@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-22
 
+- **Current targeting checks** ([#2250](https://github.com/cehinds/AshenSpire/pull/2250), `0.7.1.1776`). The manual targeting harness reads discarded cards separately from exhausted cards without relying on the retired discard control. Its exact-once and illegal-play checks remain active.
+
 - **Reliable editor reload checks** ([#2248](https://github.com/cehinds/AshenSpire/pull/2248), `0.7.1.1776`). Workbench tests keep reading reload events while their opening actions run, so an event the editor already sent is not missed. The existing event deadline and build-lock ordering checks remain in place.
 
 - **Clearer Core combat and editing** ([#2246](https://github.com/cehinds/AshenSpire/pull/2246), `0.7.1.1774`). Enemy previews retain adjusted per-hit values and clearly marked totals during playback and reactions. Restores the opening and class/used-weapon progression, keeps card effects readable, and adds enemy SP, deck and played-card inspection. Combat pauses and animation duration have separate controls. Named icon references, Visual Studio tasks and a manual guide make edits easier.
