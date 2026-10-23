@@ -516,8 +516,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const original = Object.keys(overrides).map((name) => [name, actorEl.style.getPropertyValue(name), actorEl.style.getPropertyPriority(name)]);
     let contactCue=null;
     if (totalMs && fxCtx.figureAnimations !== false) {
-      actorEl.classList.remove(actionClass);
-      void actorEl.offsetWidth;
+      // A class that is not on needs no flush to restart its animation.
+      if (actorEl.classList.contains(actionClass)) {
+        actorEl.classList.remove(actionClass);
+        void actorEl.offsetWidth;
+      }
       for (const [name, value] of Object.entries(overrides)) actorEl.style.setProperty(name, value);
       if (!stage?.ownsMotion) actorEl.classList.add(actionClass);
       // A damaging spell still needs its enemy attack drawing; its motion
