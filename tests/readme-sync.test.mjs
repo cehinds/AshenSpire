@@ -75,3 +75,10 @@ test('renderChannels emits four entries with separate badge paragraphs', () => {
   assert.equal(lines.length, 8);
   assert.equal(REGIONS.length, 1);
 });
+
+test('the HTML link names itself the offline desktop file, not a phone download', () => {
+  const rows = committed.split('\n').filter((line) => line.includes('/download/AshenSpire.html'));
+  assert.equal(rows.length, 4);
+  for (const row of rows) assert.match(row, /\[HTML \(offline, desktop, ~140 MB\)\]/);
+  assert.match(renderChannels(), /\[HTML \(offline, desktop, ~140 MB\)\]/);
+});

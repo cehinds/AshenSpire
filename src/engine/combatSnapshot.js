@@ -4,6 +4,7 @@ import { formationOccupancyProblems } from '../model/formationOccupancy.js';
 import { enemyBurdenProblems } from './enemyBurdens.js';
 import { hasCardChoice } from './cardZones.js';
 import { validateGameProfileSnapshot, gameModule } from '../model/gameProfile.js';
+import { markVerifiedProfile } from '../model/verifiedProfiles.js';
 import { freezeProfile, configuredCombat } from './gameProfileCombat.js';
 // src/engine/combatSnapshot.js — CombatSnapshotService.
 //
@@ -48,6 +49,8 @@ function carryRelicGateKeys(entries) {
     return m ? [`property:${m[1]}:relic:${m[2]}:${m[3]}`, entry[1]] : entry;
   });
 }
+
+const snapshotProfilesValidated = new WeakSet();
 
 /** Return the JSON-safe state of one fully committed combat turn. */
 export function serializeCombatSnapshot(combat) {
@@ -147,7 +150,16 @@ export function serializeCombatSnapshot(combat) {
     // SPEC §15.4: the attuned legendaries, which a restore mounts again.
     attunedSigils: Array.isArray(combat.attunedSigils) ? combat.attunedSigils : [],
   });
+  // The snapshot carries a structuredClone of the fight's game profile, which
+  // is an immutable per-run snapshot. Re-hashing an identical copy on every save
+  // cost ~100 ms at 4x CPU, so once a profile object has passed validation in a
+  // snapshot, later clones of that same object inherit it (the runtime-hash
+  // check in validateVerifiedProfile still applies). First save validates for real.
+  const source = combat.gameProfile;
+  const trusted = !!snapshot.gameProfile && snapshotProfilesValidated.has(source);
+  if (trusted) markVerifiedProfile(snapshot.gameProfile);
   assertCombatSnapshot(snapshot);
+  if (snapshot.gameProfile && source && typeof source === 'object') snapshotProfilesValidated.add(source);
   return snapshot;
 }
 

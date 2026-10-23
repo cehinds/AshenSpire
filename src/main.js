@@ -2267,6 +2267,7 @@ function showCombatDeckEditor(combat, nodeId, encounterId) {
       try {
         commitDeckEditDraft(registries, owner, draft, settings);
         commitCombatSnapshot({ run: owner, combat, nodeId, encounterId });
+        supersedePendingEntryCheckpoint();
         persist();
         showSettingsNotice('Deck saved. Changes apply next encounter; current combat piles stay unchanged.');
       } catch (error) {
@@ -2732,6 +2733,8 @@ function syncWorldPosition() {
 }
 
 function enterWorldNode(nodeId) {
+  // A fight is being entered (startFight's one-frame yield): no second travel.
+  if (fightEntryPending) return;
   travelJourney(run.journey, nodeId);
   delete run.journey.inspectNodeId;
   syncWorldPosition();
@@ -2883,6 +2886,8 @@ function finishWorldService() {
 }
 
 function enterNode(nodeId) {
+  // A fight is being entered (startFight's one-frame yield): no second travel.
+  if (fightEntryPending) return;
   // Re-entering the node the player stands on is not travel, so no travel sound.
   if (nodeId !== run.mapNodeId) sfx.play('nodeTravel');
   const node = run.mapGraph.nodes[nodeId];
@@ -3063,7 +3068,26 @@ function openLegacyEntrance(encounterId, nodeId) {
   beginDungeon(run, def, nodeId); persist(); showMap(); return true;
 }
 
+// The Enter tap paints before the fight is built: building and mounting the
+// battlefield is one long synchronous task, so the tap yields a frame first
+// (aria-busy marks the wait) and a second tap in that gap is ignored. Capture
+// states stay synchronous.
+let fightEntryPending = false;
 function startFight(pool, nodeId) {
+  if (fightEntryPending) return;
+  if (shotState || typeof requestAnimationFrame !== 'function') return startFightNow(pool, nodeId);
+  const owner = run;
+  fightEntryPending = true;
+  app.setAttribute('aria-busy', 'true');
+  requestAnimationFrame(() => setTimeout(() => {
+    fightEntryPending = false;
+    app.removeAttribute('aria-busy');
+    if (run !== owner) return;
+    startFightNow(pool, nodeId);
+  }, 0));
+}
+
+function startFightNow(pool, nodeId) {
   if (run.journey) {
     const enc = journeyEncounter(run.journey, nodeId, registries);
     if (openLegacyEntrance(enc.id, nodeId)) return;
@@ -3147,11 +3171,28 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
       return committed;
     };
     if (!savedSnapshot) {
-      durable(combat);
-      rng.restoreCounters(entryRng.getCounters());
-      combat.rng = rng;
+      // The entry checkpoint serializes and validates the whole fight (~430 ms
+      // at 4x CPU). It is queued until after the battlefield has painted, and
+      // is flushed before the first action commits, on page hide, and within
+      // 500 ms regardless, so it is always on disk before the player can act
+      // (SPEC §3.12: abandoning restarts from it). Captures and a fight that
+      // already ended save at once.
+      if (shotState || combat.result || typeof requestAnimationFrame !== 'function') {
+        durable(combat);
+        rng.restoreCounters(entryRng.getCounters());
+        combat.rng = rng;
+      } else {
+        // Same counters the synchronous path stamps: entryRng, frozen here.
+        const checkpointRng = createRng(rng.seed, entryRng.getCounters());
+        rng.restoreCounters(entryRng.getCounters());
+        combat.rng = rng;
+        pendingEntryCheckpoint = { run, combat, durable, checkpointRng, nodeId, encounterId, timer: 0 };
+      }
     }
-    combat.beforeCombatCommit = durable;
+    combat.beforeCombatCommit = candidate => {
+      flushPendingEntryCheckpoint();
+      return durable(candidate);
+    };
     if (combat.result) return onCombatEnd(combat.result, combat, enc);
   }
   // A restored combat owns the live loadout copy from its snapshot. Rejoin it
@@ -3266,10 +3307,12 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     quickControls: quickMenuControls,
     onSave: () => {
       commitCombatSnapshot({ run, combat, nodeId, encounterId });
+      supersedePendingEntryCheckpoint();
       return saveNow();
     },
     onQuit: () => {
       commitCombatSnapshot({ run, combat, nodeId, encounterId });
+      supersedePendingEntryCheckpoint();
       persist();
       showCollapsedTitle();
     },
@@ -3291,7 +3334,49 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
       }
     );
   }
+  schedulePendingEntryCheckpoint();
 }
+
+// THE QUEUED ENTRY CHECKPOINT (see enterCombat). One at a time; it belongs to
+// the run and fight that queued it and drops itself if either is gone.
+let pendingEntryCheckpoint = null;
+function flushPendingEntryCheckpoint() {
+  const pending = pendingEntryCheckpoint;
+  if (!pending) return false;
+  pendingEntryCheckpoint = null;
+  clearTimeout(pending.timer);
+  const entered = run?.combatEntered;
+  if (run !== pending.run || pending.combat.result || !entered || entered.snapshot
+    || entered.nodeId !== pending.nodeId || entered.encounterId !== pending.encounterId) return false;
+  const liveRng = pending.combat.rng;
+  pending.combat.rng = pending.checkpointRng;
+  try { pending.durable(pending.combat); }
+  catch (error) {
+    // Keep it queued: with no entry snapshot on disk, the first action's save
+    // would otherwise become the checkpoint. The next commit retries it first.
+    if (!pendingEntryCheckpoint) pendingEntryCheckpoint = pending;
+    throw error;
+  } finally { pending.combat.rng = liveRng; }
+  return true;
+}
+function flushPendingEntryCheckpointSafely() {
+  try { flushPendingEntryCheckpoint(); }
+  catch (error) { showSettingsNotice(error.message || 'The combat could not be saved.'); }
+}
+function schedulePendingEntryCheckpoint() {
+  const pending = pendingEntryCheckpoint;
+  if (!pending) return;
+  pending.timer = setTimeout(() => { if (pendingEntryCheckpoint === pending) flushPendingEntryCheckpointSafely(); }, 500);
+  requestAnimationFrame(() => setTimeout(() => { if (pendingEntryCheckpoint === pending) flushPendingEntryCheckpointSafely(); }, 0));
+}
+// An explicit save or quit writes the exact current snapshot, which replaces
+// the queued entry one.
+function supersedePendingEntryCheckpoint() {
+  if (pendingEntryCheckpoint) clearTimeout(pendingEntryCheckpoint.timer);
+  pendingEntryCheckpoint = null;
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushPendingEntryCheckpointSafely(); });
+window.addEventListener('pagehide', flushPendingEntryCheckpointSafely);
 
 /**
  * THE FIGHT'S TITLE, ONE HOME: the spoils door is headed with it and the

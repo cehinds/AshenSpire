@@ -98,7 +98,7 @@ export function mountConfiguredShop(app, { registries, run, offer, onTake, onLea
   clearSelection();
   app.replaceChildren();
   if (hud) {
-    const band = el('div'); band.innerHTML = runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header' });
+    const band = el('div'); band.innerHTML = runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' });
     app.append(...band.childNodes);
     wireRunHud(app, { ...hud, registries, run, meta, remount: () => mountConfiguredShop(app, { registries, run, offer, onTake, onLeave, meta, hud }) });
   }
@@ -235,7 +235,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     // SELL IS ABSENT, NEVER GREYED, WHEN HIS TOGGLE IS OFF — the recorded
     // answer: no rail item and no #shop-sell node at all.
     app.innerHTML = `
-      ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header' }) : ''}
+      ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' }) : ''}
       <div class="screen room-screen shop-workspace merchant-workspace" data-wireframe="W1d">
         <div class="shop-frame">
           <div class="as-railed shop-railed">

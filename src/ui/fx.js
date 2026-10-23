@@ -34,6 +34,7 @@ import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
 import { runActionTimeline } from './actionTimeline.js';
 import { actionPacing } from './animationPace.js';
+import { measure, measureThenMutate } from './frameMeasure.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
 export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, getBeatOrder, setBeatOrder };
 
@@ -98,6 +99,19 @@ export function anchorLocalBox(layer, anchor, { zoom } = {}) {
     width: ar.width / z,
     height: ar.height / z,
   };
+}
+
+// anchorLocalBox for a READ PHASE: the boxes come from frameMeasure's per-task
+// snapshot, so a layer and an anchor shared by several floats, words and flares
+// in one beat are each read from layout once. Only for callers that have not
+// written geometry since the snapshot (the effect elements they append are
+// absolutely positioned in a layer and never move an anchor).
+const cachedRectOf = (o) => (o && typeof o.getBoundingClientRect === 'function' ? measure(o) : o);
+function anchorLocalBoxCached(layer, anchor, zoom) {
+  const lr = cachedRectOf(layer);
+  const ar = cachedRectOf(anchor);
+  const z = Number.isFinite(zoom) && zoom > 0 ? zoom : uiZoom();
+  return { left: (ar.left - lr.left) / z, top: (ar.top - lr.top) / z, width: ar.width / z, height: ar.height / z };
 }
 
 /**
@@ -368,7 +382,9 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   const x = Number.isFinite(placement.x) ? placement.x : 0;
   const y = Number.isFinite(placement.y) ? placement.y : 0;
   const jitter = placement.jitter !== false;
-  const b = anchorLocalBox(layer, anchor);
+  const zoom = uiZoom();
+  const b = anchorLocalBoxCached(layer, anchor, zoom);
+  const view = anchorLocalBoxCached(layer, layer, zoom);
   const el = document.createElement('div');
   el.className = `float-num ${cls}`;
   const feedbackComponent = /\bblk\b/.test(cls)
@@ -399,15 +415,15 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   // layout rather than guessed from the string. offsetWidth is the untransformed
   // box, so the running pop animation cannot skew it. Keep it inside the layer
   // through the one home for that arithmetic (clampBox), then hand `left` back
-  // as a centre, which is what the CSS expects.
-  const half = el.offsetWidth / 2;
-  const view = anchorLocalBox(layer, layer);
-  const at = clampBox(
-    { left: centre - half, top, width: el.offsetWidth, height: el.offsetHeight },
-    view,
-    { pad: 6 }
-  );
-  el.style.left = `${at.left + half}px`;
+  // as a centre, which is what the CSS expects. The measure waits for the end
+  // of this task (before paint), so every float and word of a beat shares one
+  // layout flush instead of forcing one apiece.
+  measureThenMutate(el, () => {
+    const width = el.offsetWidth, height = el.offsetHeight;
+    const half = width / 2;
+    const at = clampBox({ left: centre - half, top, width, height }, view, { pad: 6 });
+    return () => { el.style.left = `${at.left + half}px`; };
+  });
   setTimeout(() => el.remove(), 600);
   return el;
 }
@@ -458,13 +474,13 @@ const CALLOUT_RISE_PX = 26;
 const OVERHEAD_SELECTOR = '.combatant-leading, .overhead-control, .as-meters';
 
 /** The lowest bottom edge (layer space) of the HUD sitting over the figure's top, or null. */
-function overheadFloor(layer, anchor, b) {
+function overheadFloor(layer, anchor, b, zoom) {
   const root = anchor.closest?.('.combatant');
   if (!root?.querySelectorAll) return null;
   let floor = null;
   for (const node of root.querySelectorAll(OVERHEAD_SELECTOR)) {
     if (anchor.contains?.(node)) continue;
-    const box = anchorLocalBox(layer, node);
+    const box = anchorLocalBoxCached(layer, node, zoom);
     if (!(box.width > 0 && box.height > 0)) continue;
     const overlapsX = box.left < b.left + b.width && box.left + box.width > b.left;
     const overHead = box.top + box.height >= b.top - 16 && box.top < b.top + b.height / 2;
@@ -576,25 +592,34 @@ function layoutCallouts(layer, anchor, q, now, lifeMs = CALLOUT_MS) {
       it.timer = setTimeout(() => it.el.remove(), Math.max(0, it.end - now));
     }
   }
-  const b = anchorLocalBox(layer, anchor);
-  const floor = overheadFloor(layer, anchor, b);
-  const base = floor == null ? b.top + 4 : Math.max(b.top + 4, floor + 2 + (q.items[0]?.el.offsetHeight || 30) + CALLOUT_RISE_PX);
-  const centre = b.left + b.width / 2;
-  // Every word's box is read before any word is moved: a left/top write
-  // between two offsetWidth reads made each later read a forced layout.
-  const bounds = anchorLocalBox(layer, layer);
-  const boxes = q.items.map((it) => ({ it, width: it.el.offsetWidth || 0, height: it.el.offsetHeight || 30 }));
-  for (const { it, width, height } of boxes) {
-    const el = it.el;
-    // Lane 0 is the top: its slot is the highest. Slot 0 sits nearest the head.
-    const slot = floor == null ? (STACK_LANES - 1 - it.lane) : it.lane;
-    el.dataset.calloutSlot = String(slot);
-    const bottom = base + (floor == null ? -1 : 1) * slot * CALLOUT_SLOT_PX;
-    let at = { left: centre - width / 2, top: bottom - height };
-    if (width) at = clampBox({ left: at.left, top: at.top, width, height }, bounds, { pad: 6 });
-    el.style.left = `${at.left + width / 2}px`;
-    el.style.top = `${at.top + height}px`;
-  }
+  // Placement is measured and written once per fighter at the end of this task,
+  // with every other pending float and word: a word made now waits for its own
+  // box, and each box read right after the last word was appended forced a
+  // layout. The slot is decided there too (it depends on the HUD over the head).
+  const zoom = uiZoom();
+  measureThenMutate(q, () => {
+    const b = anchorLocalBoxCached(layer, anchor, zoom);
+    const floor = overheadFloor(layer, anchor, b, zoom);
+    const base = floor == null ? b.top + 4 : Math.max(b.top + 4, floor + 2 + (q.items[0]?.el.offsetHeight || 30) + CALLOUT_RISE_PX);
+    const centre = b.left + b.width / 2;
+    // Every word's box is read before any word is moved: a left/top write
+    // between two offsetWidth reads made each later read a forced layout.
+    const bounds = anchorLocalBoxCached(layer, layer, zoom);
+    const boxes = q.items.map((it) => ({ it, width: it.el.offsetWidth || 0, height: it.el.offsetHeight || 30 }));
+    return () => {
+      for (const { it, width, height } of boxes) {
+        const el = it.el;
+        // Lane 0 is the top: its slot is the highest. Slot 0 sits nearest the head.
+        const slot = floor == null ? (STACK_LANES - 1 - it.lane) : it.lane;
+        el.dataset.calloutSlot = String(slot);
+        const bottom = base + (floor == null ? -1 : 1) * slot * CALLOUT_SLOT_PX;
+        let at = { left: centre - width / 2, top: bottom - height };
+        if (width) at = clampBox({ left: at.left, top: at.top, width, height }, bounds, { pad: 6 });
+        el.style.left = `${at.left + width / 2}px`;
+        el.style.top = `${at.top + height}px`;
+      }
+    };
+  });
 }
 
 /** Show callout `kind` over `anchor` (fighter `forId`) in `layer`; returns the element, or null. */
@@ -768,8 +793,12 @@ function shake(combatEl, px = FIXED_SHAKE_PX) {
     const running = combatEl.getAnimations({ subtree: true }).filter(a => a.animationName === 'shake');
     if (running.length) { for (const animation of running) animation.currentTime = 0; return; }
   }
-  combatEl.classList.remove('shake');
-  void combatEl.offsetWidth; // restart animation
+  // Only a class that is already on needs a style flush between remove and add
+  // to restart its finished animation; a first shake just starts.
+  if (combatEl.classList.contains('shake')) {
+    combatEl.classList.remove('shake');
+    void combatEl.offsetWidth; // restart animation
+  }
   combatEl.classList.add('shake');
 }
 
@@ -788,8 +817,11 @@ function flash(el, cls, ms = 300, pauseMs = 0) {
     el.classList.remove('hit-heavy');
     el.style.setProperty('--hurt-duration', `${ms}ms`);
   }
-  el.classList.remove(cls);
-  void el.offsetWidth;
+  // The flush that restarts a running animation is only needed when the class is already on.
+  if (el.classList.contains(cls)) {
+    el.classList.remove(cls);
+    void el.offsetWidth;
+  }
   el.classList.add(cls);
   const entry = { due: Date.now() + ms + pauseMs };
   entry.id = setTimeout(() => { el.classList.remove(cls); timers.delete(cls); }, ms + pauseMs);

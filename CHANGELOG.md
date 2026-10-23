@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-23
 
+- **Faster combat entry and plays on phones** ([#2268](https://github.com/cehinds/AshenSpire/pull/2268), `0.7.1.1794`). Tapping Enter on the map responds at once and the fight opens sooner, damage numbers and callouts no longer make the browser redo layout over and over, and the map, shop, rest and card faces draw with less work. The HTML download link now says it is the large offline desktop file and points phones to Play.
+
 - **Faster on phones: instant loading screen, quicker boot and combat** ([#2266](https://github.com/cehinds/AshenSpire/pull/2266), `0.7.1.1792`). The game shows a loading screen the moment the page opens instead of a blank page, reaches the title sooner, and repaints combat less on every play and enemy turn. Lite mode skips costly glow, shadow and blend effects.
 
 - **Smaller desktop cards and sharper scenery** ([#2264](https://github.com/cehinds/AshenSpire/pull/2264), `0.7.1.1790`). Desktop combat cards are slightly smaller and the arena sits lower. Reviewed backgrounds retain more detail on desktop, while Light quality, phones and tablets keep their smaller artwork. Auto still respects Data Saver, small screens and low-memory devices.
