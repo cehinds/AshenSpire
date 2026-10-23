@@ -29,7 +29,7 @@
 // per-device (LOCAL_ONLY_KEYS in src/model/settingsSync.js), never synced.
 
 import {
-  ART_QUALITY_KEY, ART_AUTO, ART_LIGHT, ART_HIGH, ART_LOCAL_HIGH, ART_QUALITY_CHOICES, LEGACY_ART_QUALITY,
+  ART_QUALITY_KEY, ART_AUTO, ART_LIGHT, ART_HIGH, ART_LOCAL_HIGH, ART_QUALITY_CHOICES, LEGACY_ART_QUALITY, ART_SOURCE_EVENT,
 } from './highResArt.js';
 import {
   ASSET_PACKS, packsPinned, builtInArtStatus, loadBuiltInPacks, startBuiltInArt,
@@ -90,6 +90,13 @@ export function tierChoiceDisabled(choice, pin = ASSET_PACKS, inlineMap = ASSET_
 }
 
 let lastSettings = null;
+let lastSceneryChoice = null;
+
+// Display exports are common to both packs, so their desktop default is high.
+export function displaySceneryTier(env = {}) {
+  return requestedTier(lastSettings, { ...env, defaultTier: 'high' });
+}
+
 let lastChoice = null; // the choice the art on screen was loaded for
 let switching = false;
 let retrying = false; // a Retry (step 5) is running
@@ -213,6 +220,11 @@ export function onTierArrived(fn) { onArrived = typeof fn === 'function' ? fn : 
  */
 export function applyArtTier(settings, opts = {}) {
   lastSettings = settings;
+  const sceneryChoice = artQualityChoice(settings);
+  if (sceneryChoice !== lastSceneryChoice) {
+    lastSceneryChoice = sceneryChoice;
+    try { globalThis.document?.dispatchEvent?.(new CustomEvent(ART_SOURCE_EVENT)); } catch { /* a listener must not break the setting */ }
+  }
   const pin = opts.pin ?? ASSET_PACKS;
   if (!packsPinned(pin, opts.inlineMap ?? ASSET_MAP)) return Promise.resolve(null);
   const state = builtInArtStatus().state;
@@ -321,6 +333,7 @@ export function retryBuiltInArt(settings = lastSettings, opts = {}) {
 /** For tests: forget the switches. */
 export function resetArtTier() {
   lastSettings = null;
+  lastSceneryChoice = null;
   lastChoice = null;
   switching = false;
   retrying = false;
