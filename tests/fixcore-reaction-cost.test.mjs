@@ -13,6 +13,10 @@ import { live, registries, baseRegistries, profile } from './helpers/fixcore-com
 
 test('enemy 5 × 3 deals three hits of 5, with 15 total HP loss', () => {
   const ctx = live(), enemy = ctx.enemies[0];
+  // The contact fixture needs the two SP its repeated-hit move now costs.
+  Object.assign(enemy, { maxStamina: 2, stamina: 2 });
+  enemy.intent = { ...enemy.intent, moveId: 'slash' };
+  enemy.plannedMoves = [];
   primeAccuracyRolls(ctx, { count: 3 });
   const accuracyStart = ctx.rng.getCounters().combatAvoidance;
   dispatch(ctx, { type: 'setReactions', enabled: false });
@@ -27,7 +31,7 @@ test('enemy 5 × 3 deals three hits of 5, with 15 total HP loss', () => {
   assert.equal(ctx.player.hp, 85);
 });
 
-test('enemy move budgets retain the authored matching-stance rule for the 2-SP hound lunge', () => {
+test('matching stance cannot reduce a multi-hit hound lunge below two SP', () => {
   const run = createRunState({ registries: baseRegistries, classId: 'reaver', seed: 511 });
   const ctx = createRunCombat({ registries: baseRegistries, run, rng: createRng(511), enemyIds: ['blightHound'] });
   const enemy = ctx.enemies[0];
@@ -41,9 +45,13 @@ test('enemy move budgets retain the authored matching-stance rule for the 2-SP h
   const start = ctx.eventLog.length;
   dispatch(ctx, { type: 'endTurn' });
   const events = ctx.eventLog.slice(start);
-  assert.ok(events.some(row => row.type === 'enemyMoveStarted' && row.moveId === 'lunge'));
-  assert.equal(events.filter(row => row.type === 'damageDealt' && row.sourceId === enemy.id && row.targetId === ctx.player.id).length, 2);
-  assert.ok(!events.some(row => row.type === 'enemyMoveUnavailable'));
+  assert.ok(!events.some(row => row.type === 'enemyMoveStarted' && row.moveId === 'lunge'));
+  assert.equal(events.filter(row => row.type === 'damageDealt' && row.sourceId === enemy.id && row.targetId === ctx.player.id).length, 0);
+  const refused = events.find(row => row.type === 'enemyMoveUnavailable' && row.moveId === 'lunge');
+  assert.ok(refused);
+  assert.equal(refused.sourceId, enemy.id);
+  assert.equal(refused.required, 2); assert.equal(refused.available, 1);
+  assert.equal(refused.resource, 'sp');
 });
 
 test('Martial Adept discounts matching nonspell SP on both turns, with a zero floor only for reactions', () => {
@@ -73,6 +81,9 @@ test('real Counter preview, affordability and own-turn payment use authored SP',
 
 test('an actual enemy-turn matching Counter remains affordable and pays the discounted price', () => {
   const ctx = live();
+  Object.assign(ctx.enemies[0], { maxStamina: 2, stamina: 2 });
+  ctx.enemies[0].intent = { ...ctx.enemies[0].intent, moveId: 'slash' };
+  ctx.enemies[0].plannedMoves = [];
   ctx.piles.hand = [{ instanceId: 'counter', cardId: 'core.counter' }];
   ctx.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
   ctx.player.stamina = 0;
