@@ -316,7 +316,20 @@ function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = 
   }
   const authored = applyGameProfileToContent(contentBundle, gameProfile);
   const configured = isConfiguredRun(gameProfile) ? authored : configuredContentBundle(authored, configuration);
-  const { result, structuralProblems } = cachedContentValidation(gameProfile, configuration, configured);
+  let validated;
+  if (bootRebuildPending && isConfiguredRun(gameProfile)) {
+    // A configured profile's content is authored, with no user settings laid over
+    // it, so there is no fallback for this validation to choose: check it once
+    // the page is idle and report a failure on the same banner.
+    bootRebuildPending = false;
+    validated = { result: { ok: true, errors: [] }, structuralProblems: [] };
+    whenIdle(() => {
+      const check = validateContent(configured, { deferred: ['classMastery'] });
+      if (!check.ok) reportContentValidationFailure(check.errors);
+      else deferClassMasteryCheck(configured);
+    });
+  } else validated = cachedContentValidation(gameProfile, configuration, configured);
+  const { result, structuralProblems } = validated;
   if (!result.ok || structuralProblems.length) {
     const first = structuralProblems[0] || `${result.errors[0].path}: ${result.errors[0].msg}`;
     const message = `Game configuration unchanged: ${first} Authored defaults remain active until the values form a valid configuration.`;
