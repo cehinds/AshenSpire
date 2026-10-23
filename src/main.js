@@ -3258,6 +3258,7 @@ async function onCombatEnd(result, combat, enc) {
   // takes it now, win or loss, and climbs whatever the XP buys.
   const configuredProgression = isConfiguredRun(run);
   const skillProgression = configuredSkillProgression(run);
+  const skillStateBefore = skillProgression ? { classMasteryState: structuredClone(run.classMasteryState) } : null;
   const trackReceipt = configuredProgression && !skillProgression ? {} : skillXpReceipt(combat);
   for (const [skillId, amount] of Object.entries(trackReceipt)) {
     const kind = skillKindOf(registries, skillId);
@@ -3273,6 +3274,7 @@ async function onCombatEnd(result, combat, enc) {
   // the door's pool: a won fight, more for a boss; a lost one nothing.
   const classAward = configuredAwards?.classAward || (configuredProgression ? null : awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, bank: manualLevelUp, multiplier: featMultiplier(run, 'classXp') }));
   const progression = skillProgression ? skillLevelNotices(registries, [classAward, ...trackAwards], {
+    run, beforeState: skillStateBefore,
     usedArmaments: combat.skillXp?.[combat.playerKey || 'player']?.usedArmaments || [],
   }) : [];
   // Character XP is paid now; the level and its stat points wait for the blue
@@ -3914,7 +3916,7 @@ function showGameProfileReward() {
       showGameProfileReward();
     },
   });
-  if (pending.progression?.length) return mountGameProfileLevelUp(app, { rows: pending.progression, onContinue: () => {
+  if (pending.progression?.length) return mountGameProfileLevelUp(app, { rows: pending.progression, registries, run, onContinue: () => {
     acknowledgeSkillLevelNotices(pending);
     persist();
     showGameProfileReward();
