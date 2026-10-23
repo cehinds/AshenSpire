@@ -1265,8 +1265,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Classic compact intents can be wider than the old fixed badge. Reuse
     // the measured overhead packer after the HP alignment above; move only
     // unselected reading controls, preserving selected controls and artwork.
-    if (classicAppearance()) {
-      const compactMoves = intentMoves.filter(move => move && !move.selected);
+    const compactMoves = classicAppearance() && combat.dataset.targetHud === 'false'
+      ? intentMoves.filter(move => move && !move.selected) : [];
+    if (compactMoves.length) {
       const controls = compactMoves.map(move => {
         const box = move.intent.getBoundingClientRect();
         return { id: move.frame.dataset.eid, side: 'enemy', x: box.left + box.width / 2 - fieldRect.left + move.dx * zoom,
