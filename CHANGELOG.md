@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-23
 
-- **Lighter card selection in combat** ([#2271](https://github.com/cehinds/AshenSpire/pull/2271), `0.7.1.1796`). Selecting a card, and combat with four or more enemies, ask the browser for less restyling work, so taps respond a little faster on slower phones.
+- **Lighter card selection in combat** ([#2271](https://github.com/cehinds/AshenSpire/pull/2271), `0.7.1.1798`). Selecting a card, and combat with four or more enemies, ask the browser for less restyling work, so taps respond a little faster on slower phones.
 
 - **Card details no longer crash on stance-choice cards** ([#2270](https://github.com/cehinds/AshenSpire/pull/2270), `0.7.1.1796`). Opening the details of Strike and Settle, Flowing Transition or Force Stance no longer throws an error.
 
