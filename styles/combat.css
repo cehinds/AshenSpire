@@ -484,6 +484,16 @@
 .float-num { z-index: 1; }
 .reduce-flashes .fx-callout { animation: callout-rise var(--fx-callout-ms, 900ms) ease-out forwards; }
 .reduced-motion .fx-callout { animation: callout-fade var(--fx-callout-ms, 900ms) ease-out forwards; }
+/* Beneficial status gains are combat readouts. Keep them legible and still
+   for their queued lifetime when motion is reduced, including the OS setting. */
+.reduced-motion .fx-callout[data-callout-kind^='buff:'] {
+  animation: none !important; opacity: 1; transform: none; filter: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fx-callout[data-callout-kind^='buff:'] {
+    animation: none !important; opacity: 1; transform: none; filter: none;
+  }
+}
 @keyframes callout-rise {
   0% { opacity: 0; transform: translateY(8px) scale(0.85); }
   14% { opacity: 1; transform: translateY(0) scale(1.06); }

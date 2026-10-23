@@ -546,7 +546,19 @@ function layoutCallouts(layer, anchor, q, now, lifeMs = CALLOUT_MS) {
     it.end = it.start + lifeMs;
     it.el.style.animationDelay = row.start > 0 ? `${row.start}ms` : '';
     clearTimeout(it.timer);
-    it.timer = setTimeout(() => it.el.remove(), it.end - now);
+    if (it.kind.startsWith('buff:') && row.start > 0) {
+      // Static reduced-motion callouts cannot use animation-delay to hide
+      // queued words. Keep each pending gain hidden until its planned lane
+      // start, then reuse its single timer for the same queued lifetime.
+      it.el.style.visibility = 'hidden';
+      it.timer = setTimeout(() => {
+        it.el.style.visibility = '';
+        it.timer = setTimeout(() => it.el.remove(), Math.max(0, it.end - Date.now()));
+      }, row.start);
+    } else {
+      if (it.kind.startsWith('buff:')) it.el.style.visibility = '';
+      it.timer = setTimeout(() => it.el.remove(), Math.max(0, it.end - now));
+    }
   }
   const b = anchorLocalBox(layer, anchor);
   const floor = overheadFloor(layer, anchor, b);
@@ -595,6 +607,7 @@ function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
   el.dataset.calloutKind = kind;
   el.setAttribute('aria-hidden', 'true');
   el.textContent = def.word || t(def.string);
+  if (kind.startsWith('buff:')) el.style.visibility = 'hidden';
   if (def.colour) el.style.color = def.colour;
   const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS * (actionPacing().scale || 1);
   el.style.setProperty('--fx-callout-ms', `${ms}ms`);

@@ -55,6 +55,7 @@ import { isProgressionReward, progressionRewardUnlocked } from '../../model/defe
 // Math.random — a UI pick that desyncs a seeded run is a defect.
 
 import { renderCard } from '../components/card.js';
+import { openBoundCardInspection } from '../components/cardInspection.js';
 import { sigilRuleText } from '../../model/sigils.js';
 import { renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
@@ -1238,11 +1239,18 @@ export function mountRewards(app, {
     const confirmButton = button({
       label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
     });
+    const inspectionFaces = new Map();
+    const inspectButton = button({ label: 'Inspect', id: 'reward-inspect', disabled: true,
+      attrs: { 'aria-label': 'Inspect selected reward' } });
+    inspectButton.hidden = isNodeRow || isLevelChoice || (isMilestone && row.rewardKind !== 'cards');
+    inspectButton.addEventListener('click', () => {
+      if (!confirming && !taken()) openBoundCardInspection(inspectionFaces.get(selectedCardId), inspectButton);
+    });
     door({
       eyebrow: row.kind === 'levelCard' || row.kind === 'levelChoice' ? '' : row.kind === 'skillDraft' || row.kind === 'classDraft' || isRelic || isRankUp || row.kind === 'skillAttribute' || row.kind === 'skillFeat' ? rowBody(row).title : t('reward.card.eyebrow'),
       title: isMilestone || row.source ? rowBody(row).title : row.kind === 'levelCard' || row.kind === 'levelChoice' ? t('reward.levelUp.action') : rewards.title || t('reward.title.victory'),
       body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': t('reward.card.aria') }),
-      foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
+      foot: modalFooter({ secondary: [backButton, inspectButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
     });
     const strip = app.querySelector('.reward-row');
     if (characterLevelRow(row)) {
@@ -1251,15 +1259,15 @@ export function mountRewards(app, {
     }
     let selectedCardId = pendingByKey[row.key] || null;
     let confirming = false;
+    let reviewing = false;
     const message = el('p', { role: 'status', class: 'reward-confirm-status', hidden: true });
     strip.after(message);
     // Nothing chosen yet: the reason stands under Confirm as text (FINISH §6).
     // A press in flight is a beat, not a reason, so it stays quiet.
     const confirmReason = reasonWhenDisabled(confirmButton, () => (selectedCardId ? null : t('reward.confirm.reason')));
-    // ONE SELECTION PATH. The strip's own click and the inspect door's Choose
-    // both land here, so a card chosen from inside the door is lit in the
-    // strip behind it and Back still shows what you picked.
+    // Choosing belongs to this screen; inspection only reads the selected face.
     const selectCard = (cardId) => {
+      if (reviewing || confirming || taken()) return;
       selectedCardId = cardId;
       pendingByKey[row.key] = cardId;
       // Candidates are found by CLASS, not by attribute: the reward door's
@@ -1282,6 +1290,7 @@ export function mountRewards(app, {
         face.classList.toggle('is-chosen', selected);
       }
       confirmButton.disabled = false;
+      inspectButton.disabled = !inspectionFaces.has(selectedCardId);
       confirmReason();
       message.hidden = true;
     };
@@ -1300,6 +1309,7 @@ export function mountRewards(app, {
         // Its controls remain siblings of the choice button, never nested.
         const inspection = row.rewardKind === 'armory' ? renderEquipmentInspection(registries, option.definition)
           : renderCollectibleInspection(registries, option.definition, t('reward.kind.relic'), { interactive: false });
+        inspection.dataset.pickId = id;
         tile.after(inspection);
       }
     }
@@ -1309,17 +1319,18 @@ export function mountRewards(app, {
     }
     for (const id of isRelic ? ids : []) {
       const option = relicOption(id);
-      // One column per relic: the card face on top at glance (no inspection door,
-      // no lore), the text button under it as the accessible radio. Both select.
-      // The face binds no door of its own, so a tap on it only selects.
-      // A relic the run already holds (one gained earlier on this screen) is
-      // shown but cannot be picked: its face and button are disabled.
+      // One column per relic: a glance face with its shared Information door,
+      // then the accessible choice radio. Reading never chooses a reward.
+      // A relic the run already holds can still be read; choosing it is disabled.
       const owned = run.relics.includes(id);
       const column = el('div', { class: `reward-choice-option${owned ? ' is-owned' : ''}`, dataset: { pickId: id } });
       if (option.definition) {
-        const face = renderCollectibleCard(registries, option.definition, t('reward.kind.relic'), { interactive: false, inspection: false, level: 'glance' }).card;
+        const face = renderCollectibleCard(registries, option.definition, t('reward.kind.relic'), { interactive: false, inspection: true, actionOwnsTouch: true, level: 'glance' }).card;
         face.classList.add('reward-choice-face');
         face.dataset.pickId = id;
+        face.classList.toggle('reward-selected', id === selectedCardId);
+        face.classList.toggle('is-chosen', id === selectedCardId);
+        inspectionFaces.set(id, face);
         if (owned) face.classList.add('is-owned');
         else face.addEventListener('click', () => selectCard(id));
         column.appendChild(face);
@@ -1376,11 +1387,11 @@ export function mountRewards(app, {
         owned: ownedCopies(run, inst.cardId),
         actionOwnsTouch: true,
         surface: 'reward',
-        availability: { choose: taken() ? t('reward.card.alreadyTaken') : true },
-        commands: { choose: () => { selectCard(inst.instanceId); confirmButton.click(); } },
+        only: [],
       });
       face.dataset.cardId = inst.cardId;
       face.dataset.pickId = inst.instanceId;
+      inspectionFaces.set(inst.instanceId, face);
       face.classList.add('reward-pick');
       face.setAttribute('role', 'radio');
       face.setAttribute('aria-checked', String(inst.instanceId === selectedCardId));
@@ -1401,12 +1412,6 @@ export function mountRewards(app, {
       strip.style.setProperty('--choice-count', String(ids.length));
       // This face only selects; collection belongs to Confirm. Inspection must
       // not consume the touch tap before selection enables that button.
-      // THE DOOR OFFERS THE VERB THE PLAYER CAME FOR. Opening a card here used
-      // to show a dead `Play card` — combat's verb, inherited from the default
-      // that services/cardActions.js replaced — on the one screen whose whole
-      // purpose is taking the card being read. Choosing from inside the door
-      // lights the same card behind it and presses the same Confirm, so there
-      // is one commit and one place the receipt is written.
       const grade = draftInstance(row, cardId, choiceId);
       // The face shows what the card will be once taken: its rank and the
       // skill bonus and passive Block it would be stamped with (SPEC §13.4o).
@@ -1419,11 +1424,11 @@ export function mountRewards(app, {
         owned: ownedCopies(run, cardId),
         actionOwnsTouch: true,
         surface: 'reward',
-        availability: { choose: taken() ? t('reward.card.alreadyTaken') : true },
-        commands: { choose: () => { selectCard(choiceId); confirmButton.click(); } },
+        only: [],
       });
       face.dataset.cardId = cardId;
       face.dataset.pickId = choiceId;
+      inspectionFaces.set(choiceId, face);
       // The face is one half of its option column; the text button under it is
       // the accessible radio (reward-pick). Both select; both take the chosen trim.
       face.classList.add('reward-choice-face');
@@ -1462,13 +1467,14 @@ export function mountRewards(app, {
       strip.appendChild(column);
     }
     confirmButton.disabled = !selectedCardId;
+    inspectButton.disabled = !inspectionFaces.has(selectedCardId);
     confirmReason();
     // Confirm stages a review only. Continue is the sole persistence door;
     // Back can change the selection without undoing inventory or class grants.
-    let reviewing = false;
     const commitSelection = () => {
       if (!selectedCardId || confirming || taken()) return;
       confirming = true;
+      inspectButton.disabled = true; strip.inert = true;
       confirmButton.disabled = true;
       try {
         const cardSelection = row.kind === 'skillDraft' && row.choiceIds ? { cardId: row.cardIds[row.choiceIds.indexOf(selectedCardId)] } : {};
@@ -1479,6 +1485,7 @@ export function mountRewards(app, {
       }
       message.hidden = false;
       confirming = false;
+      inspectButton.disabled = !inspectionFaces.has(selectedCardId); strip.inert = false;
       confirmButton.disabled = false;
     };
     confirmButton.addEventListener('click', () => {
@@ -1493,7 +1500,7 @@ export function mountRewards(app, {
         option.hidden = !option.matches('.reward-selected') && !option.querySelector('.reward-selected')
           && option.dataset.pickId !== selectedCardId;
       }
-      strip.inert = true;
+      for (const control of strip.querySelectorAll('button.reward-pick')) control.disabled = true;
     });
     backButton.addEventListener('click', () => {
       if (confirming || taken()) return;
