@@ -25,6 +25,8 @@ import { cardClassification } from '../../model/cardClassification.js';
 import { deckRules } from '../../content/deckRules.js';
 import { has, t } from '../strings.js';
 import { rangeCardAvailable } from '../../model/rangeCardAvailability.js';
+import { hasCollectedCardPolicy, knownCollectedCardIds } from '../../model/collectedCards.js';
+import { activeAdeptTraining } from '../../model/deckCopyLimit.js';
 
 /** The cost buckets the curve and the cost filter share. */
 export const DECK_COST_BUCKETS = Object.freeze(['0', '1', '2', '3', '4', '5+', 'X']);
@@ -47,7 +49,9 @@ const TECHNIQUE_TAG_PREFIX = 'technique:';
 export function deckVariantKey(card) {
   const mods = Array.isArray(card.mods) ? card.mods.join(',') : '';
   const rank = Number.isInteger(card.rank) && card.rank > 1 ? `~r${card.rank}` : '';
-  return `${card.cardId}~${card.upgraded ? 'u' : ''}~${mods}${card.grantedBy ? `~${card.grantedBy}` : ''}${rank}`;
+  const ability = card.abilityRank > 0 ? `~a${card.abilityRank}` : '';
+  const smithing = card.smithingLevel > 0 ? `~s${card.smithingLevel}` : '';
+  return `${card.cardId}~${card.upgraded ? 'u' : ''}~${mods}${card.grantedBy ? `~${card.grantedBy}` : ''}${rank}${ability}${smithing}`;
 }
 
 function costBucket(cost) {
@@ -274,9 +278,12 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
   for (const basic of basicTiles(registries, run)) {
     const row = describe(registries, basic.card, run);
     const removeInstanceId = lastInstanceId(deck, basic.belongs);
+    const eligible = deckCardEquipmentEligible(registries, run, basic.card);
+    const mintRefusal = !rangeCardAvailable(run, resolveCard(registries, basic.card)) ? 'Range mechanics are disabled'
+      : !eligible ? t('deckEditor.refuse.equipment') : '';
     tiles.push(basic.mint
       ? { ...row, source: 'basic', key: basic.key, unlimited: true, owned: Infinity, inDeck: basic.inDeck,
-        countText: t('deckEditor.tile.basic', { inDeck: basic.inDeck }), addable: true, refusal: '',
+        countText: t('deckEditor.tile.basic', { inDeck: basic.inDeck }), addable: !mintRefusal, refusal: mintRefusal,
         removeInstanceId, removable: removeInstanceId != null }
       : { ...row, source: 'basic', key: basic.key, unlimited: false, owned: basic.count, inDeck: basic.inDeck,
         countText: t(basic.card.upgraded ? 'deckEditor.tile.keptUpgraded' : 'deckEditor.tile.kept', { count: basic.count }),
@@ -299,6 +306,11 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
     if (deck.includes(card)) entry.inDeck += 1; else entry.loose += 1;
     limited.set(variant, entry);
   }
+  if (hasCollectedCardPolicy(run)) for (const cardId of knownCollectedCardIds(run)) {
+    if (unlimitedCardIds(run).includes(cardId) || [...limited.values()].some(entry => entry.card.cardId === cardId)) continue;
+    const card = { cardId };
+    limited.set(deckVariantKey(card), { card, owned: 0, inDeck: 0, loose: 0 });
+  }
   for (const [variant, entry] of limited) {
     const row = describe(registries, entry.card, run);
     const limit = deckCopyLimit(registries, entry.card.cardId, settings, run);
@@ -306,6 +318,7 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
     let tileRefusal = '';
     if (!rangeCardAvailable(run, resolveCard(registries, entry.card))) tileRefusal = 'Range mechanics are disabled';
     else if (!equipmentEligible) tileRefusal = t('deckEditor.refuse.equipment');
+    else if (!entry.owned) tileRefusal = 'No owned copy is available.';
     else if (!entry.loose) tileRefusal = t('deckEditor.refuse.allInDeck', { name: row.name });
     else if ((inDeckById.get(entry.card.cardId) || 0) >= limit) tileRefusal = t('deckEditor.refuse.copyLimit', { name: row.name, limit });
     const removeInstanceId = lastInstanceId(deck, (c) => deckVariantKey(c) === variant);
@@ -326,6 +339,7 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
     || described.some(({ row }) => row.costBucket === 'X') || tiles.some((tile) => tile.costBucket === 'X'));
 
   return Object.freeze({
+    adept: activeAdeptTraining(run),
     counter: Object.freeze({
       count, min: bounds.min, max: bounds.max,
       text: t('deckEditor.counter', { count, min: bounds.min, max: maxText }),

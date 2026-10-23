@@ -15,8 +15,9 @@
 // Engine code only: no DOM. Events reach here from emitEvent (triggers.js); the hooks in combat.js are the
 // turn start, the enemy phase's end and the play of a card (its stance).
 import { creditExchange } from './combatRounds/timeline.js';
+import { fixCoreEnabled } from '../model/fixCoreMechanics.js';
 import { clampMomentum, decayMomentum, MOMENTUM_MAX, MOMENTUM_MIN, parseStanceAdvantage } from './combatRounds/resolver.js';
-import { enemyTimelineCard, moveKind, stanceFor } from './combatRoundsAdapter.js';
+import { enemyTimelineCard, enemyMoveQuote, moveKind, stanceFor } from './combatRoundsAdapter.js';
 import { STANCE_ADVANTAGE_CSV } from '../content/combatRounds.js';
 
 const STANCE_TABLE = parseStanceAdvantage(STANCE_ADVANTAGE_CSV);
@@ -37,7 +38,7 @@ function stateOf(combat) {
 
 /** True when the fight carries the multi-action toggle in normal combat (combat.normalPreview.multiAction). */
 export function multiActionOn(combat) {
-  return combat?.normalPreview?.multiAction === true;
+  return fixCoreEnabled(combat) || combat?.normalPreview?.multiAction === true;
 }
 
 /**
@@ -49,7 +50,7 @@ export function enemyPlanActions(combat, enemy) {
   const intent = enemy.intent;
   if (!intent?.moveId || intent.kind === 'staggered') return [];
   const def = combat.registries.enemies.get(enemy.enemyId);
-  const head = { moveId: intent.moveId, sp: 1 };
+  const head = { moveId: intent.moveId, sp: fixCoreEnabled(combat) ? enemyMoveQuote(def.moves[intent.moveId], { enemy, moveId: intent.moveId, combat }).totalSp : 1 };
   return [head, ...(enemy.plannedMoves ?? [])].map((entry, i) => enemyTimelineCard(enemy, entry, i, def));
 }
 

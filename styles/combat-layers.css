@@ -364,7 +364,7 @@
   color: #ffe7ab; font-size: calc(16px / var(--ui-zoom,1));
   text-shadow: var(--hud-text-shadow, none);
 }
-:root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent > :not(.intent-compact) { display: none; }
+:root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent > :not(.intent-compact):not(.cr-followups) { display: none; }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent .intent-compact { display: inline-flex; }
 :root .combat[data-layout='formation'] .context-selected .intent { border: 1px solid var(--hud-enemy-panel-border, var(--combatant-highlight)); }
 /* HUD layout tokens: the selected intent bubble shares the panel style. */
@@ -516,3 +516,16 @@
 :root[data-performance='lite'] .combat [data-target-outline='green'] { filter: drop-shadow(0 0 calc(1.5px / var(--ui-zoom,1)) var(--green)) !important; }
 :root[data-performance='lite'] .combat [data-target-outline='yellow'] { filter: drop-shadow(0 0 calc(1.5px / var(--ui-zoom,1)) var(--gold)) !important; }
 :root[data-performance='lite'] .combat [data-target-outline='red'] { filter: drop-shadow(0 0 calc(1.5px / var(--ui-zoom,1)) var(--ember)) !important; }
+
+/* Classic compact controls keep the complete scope label and follow-ups on one
+   line. Their measured width is packed by battlefieldStage; expanded/default
+   HUD intents retain their existing composition and sizing. */
+:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent {
+  flex-direction: row; width: max-content;
+  max-width: calc((100 * var(--view-vw, 1vw) - 16px) / var(--ui-zoom,1));
+}
+:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent .intent-damage-read {
+  flex-direction: row; align-items: center; gap: calc(4px / var(--ui-zoom,1));
+}
+:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent .intent-actions { flex-wrap: nowrap; }
+:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent :is(.intent-compact,.cr-followups) { flex: none; }

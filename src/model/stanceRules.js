@@ -1,7 +1,10 @@
 import { fixCoreEnabled, fixCoreRules, fixCoreReactionRules } from './fixCoreMechanics.js';
 import { stanceRules } from '../content/stanceRules.js';
 import { cardPreparationCategory } from './cardClassification.js';
-import { combatProfileFor } from './combatCardProfile.js';
+import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
+import { core2ActionPolicyEnabled } from './core2ActionPolicy.js';
+import { gameContent } from './gameProfile.js';
+import { characterTags } from '../../engine/kernel/gameConfig.js';
 import { mirroredManeuver, MIRRORED_TYPES } from './profileStance.js';
 export { mirroredManeuver };
 
@@ -52,7 +55,17 @@ export function sameStance(entity, carrier) {
   const active = stanceOf(entity?.combatStance), next = stanceOf(carrier, entity);
   return !!next && [...(entity?.concurrentStances || []),active].some(row=>row && row.maneuver===next.maneuver && row.camp===next.camp);
 }
-// Core SP reduction is reserved for an enemy-turn reaction in the current stance.
+function hasAdept(ctx, entity, tag) {
+  if (entity?.kind === 'enemy' || entity?.classUnequipped) return false;
+  const character = gameContent(ctx, 'characters')?.find(row => row.id === entity?.classId);
+  return !!character && characterTags(character).includes(tag);
+}
+function adeptMinimum(ctx, carrier, ownTurnMinimum) {
+  const tags = carrier?.cardTags || carrier?.tags || [];
+  return ctx.phase === 'enemy' && tags.some(tag => (typeof tag === 'string' ? tag : tag?.id) === 'trait:reaction')
+    ? 0 : ownTurnMinimum;
+}
+// New fights use class-entitled resource lanes; existing active fights retain their accepted pricing.
 export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0) {
   if (ctx?.combatExpansionVersion !== 2 || !sameStance(entity, carrier)) return base;
   if (fixCoreEnabled(ctx)) {
@@ -62,6 +75,11 @@ export function stanceStaminaCost(base, entity, carrier, ctx = null, mpBase = 0)
       if (!(base > 0) || mpBase > 0) return base;
       const cfg = fixCoreRules(ctx, entity, carrier).stance;
       return Math.max(cfg.minimumCost, base - cfg.discount);
+    }
+    if (core2ActionPolicyEnabled(ctx)) {
+      if (!(base > 0) || carrier?.cost === 'X' || isSpellCard(carrier) || !hasAdept(ctx, entity, 'training.basic')) return base;
+      const cfg = fixCoreRules(ctx, entity, carrier).stance;
+      return Math.max(adeptMinimum(ctx, carrier, cfg.minimumCost), base - cfg.discount);
     }
     const tags = carrier?.cardTags || carrier?.tags || [];
     if (!(base > 0) || carrier?.cost === 'X' || ctx.phase !== 'enemy'
@@ -104,7 +122,14 @@ export function spellChain(entity, carrier) {
     && [...(entity?.concurrentStances || []), stanceOf(entity?.combatStance)].some(row => row && row.camp === 'spell' && (row.mirrored || next.mirrored));
 }
 export function stanceManaCost(base, entity, carrier, ctx) {
-  if (!fixCoreEnabled(ctx) || !(base > 0) || !(sameStance(entity, carrier) || spellChain(entity, carrier))) return base;
+  if (!fixCoreEnabled(ctx) || !(base > 0)) return base;
+  if (core2ActionPolicyEnabled(ctx) && entity?.kind !== 'enemy') {
+    const adept = isSpellCard(carrier) && hasAdept(ctx, entity, 'training.graduate') && sameStance(entity, carrier);
+    if (!adept && !spellChain(entity, carrier)) return base;
+    const cfg = fixCoreRules(ctx, entity, carrier).stance;
+    return Math.max(adept ? adeptMinimum(ctx, carrier, cfg.minimumCost) : cfg.minimumCost, base - cfg.discount);
+  }
+  if (!(sameStance(entity, carrier) || spellChain(entity, carrier))) return base;
   const cfg = fixCoreRules(ctx, entity, carrier).stance;
   return Math.max(cfg.minimumCost, base - cfg.discount);
 }

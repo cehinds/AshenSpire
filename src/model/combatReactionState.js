@@ -13,6 +13,7 @@ const playerEntry = (entry, ownerIds) => ownerIds.has(entry.ownerId) && text(ent
 // to entities plus the one planned group they share).
 const ref = value => value === null || (record(value) && text(value.id) && (value.playerId === undefined || text(value.playerId)));
 const enemyEntry = (entry, state, ownerIds, stack) => (state.enemies || []).some(enemy => enemy.id === entry.ownerId)
+  && (entry.spPayment === undefined || enemySpPaymentValid(entry.spPayment))
   && text(entry.moveId) && ownerIds.has(entry.targetPlayerId) && record(entry.plan) && record(entry.plan.group)
   && text(entry.plan.group.key) && entry.plan.group.key !== stack.groupKey && record(entry.plan.group.targets)
   && entry.plan.group.carrier?.combatReaction === true && Array.isArray(entry.plan.actions) && entry.plan.actions.length > 0
@@ -314,3 +315,4 @@ export function combatRangeProblems(state, { queue = state.abilityQueue || state
   }
   return [...new Set(problems)];
 }
+import { enemySpPaymentValid } from './core2ActionPolicy.js';

@@ -39,18 +39,20 @@ test('Core Herald starts with 4 Resource Echo, 3 Ethereal, 1 Smash, 1 Exhaust an
   assert.deepEqual(run.sideboard, []);
 });
 
-test('Core editor offers only owned cards (owner ruling 2026-10-19)', async () => {
+test('Core editor offers only collected definitions under the matching Adept (owner ruling 2026-10-23)', async () => {
   const { unlimitedCardIds } = await import('../src/model/deckRules.js');
-  for (const id of ['reaver', 'rogue', 'starseer', 'herald']) assert.deepEqual(unlimitedCardIds(start(id)), []);
+  const expected = { reaver: ['core.strike', 'core.defend', 'core.counter'],
+    rogue: ['core.strike', 'core.defend', 'core.counter', 'core.evade'], starseer: ['core.cantrip'], herald: [] };
+  for (const id of Object.keys(expected)) assert.deepEqual(unlimitedCardIds(start(id)), expected[id]);
 });
 
 test('a non-Core profile with deck-training keeps its unlimited-copy collection entries', async () => {
   const { unlimitedCardIds } = await import('../src/model/deckRules.js');
   const run = start('reaver');
   assert.equal(run.gameProfile.modules['deck-training'].ownedOnlyCollection, true, 'only the Core bundle sets the flag');
-  const other = { ...run, gameProfile: { ...run.gameProfile, modules: { ...run.gameProfile.modules, 'deck-training': { ...run.gameProfile.modules['deck-training'], ownedOnlyCollection: undefined } } } };
+  const other = { gameProfile: resolveGameProfile('ashen.core@1.0.0'), class: 'reaver', deck: [], sideboard: [] };
   assert.ok(unlimitedCardIds(other).length > 0, 'unlimited basics are offered when the flag is absent');
-  assert.ok(unlimitedCardIds(other).includes('core.strike'));
+  assert.ok(unlimitedCardIds(other).includes('core.strike'), 'archived Core 1 still offers uncollected basics under its original rule');
 });
 
 // Codex P2 (PR #2199): owned-only Core must still classify owned basics as basics.
@@ -58,14 +60,14 @@ test('Core owned basics are sourced basic and the Basic filter is non-empty, wit
   const { deckEditorModel } = await import('../src/ui/models/DeckEditorModel.js');
   const { unlimitedCardIds, basicCardIds, isBasicCard } = await import('../src/model/deckRules.js');
   const run = start('reaver');
-  assert.deepEqual(unlimitedCardIds(run), [], 'policy: nothing minted unowned');
+  assert.deepEqual(unlimitedCardIds(run), ['core.strike', 'core.defend', 'core.counter'], 'policy: only collected trained basics can be minted');
   for (const id of ['core.strike', 'core.defend', 'core.counter']) assert.ok(basicCardIds(run).includes(id), `${id} classified basic`);
   for (const c of run.deck.filter((x) => ['core.strike', 'core.defend', 'core.counter'].includes(x.cardId))) assert.ok(isBasicCard(c, run), c.cardId);
   const model = deckEditorModel({ registries: reg, run });
   const owned = (rows) => rows.filter((r) => ['core.strike', 'core.defend', 'core.counter'].includes(r.card?.cardId ?? r.cardId));
   const basics = [...model.deck, ...model.collection].filter((r) => r.source === 'basic');
   assert.ok(basics.length > 0, 'Basic filter has rows');
-  assert.ok(model.collection.every((r) => !r.unlimited), 'no unowned unlimited basic tile');
+  assert.ok(model.collection.filter(row => row.unlimited).every(row => run.collectedCardIds.includes(row.cardId)), 'no uncollected unlimited basic tile');
   assert.ok(owned(model.deck).every((r) => r.source === 'basic'), 'owned Strike/Defend/Counter in the deck are basic');
 });
 
