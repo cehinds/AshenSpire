@@ -11,6 +11,8 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { cardPlainText } from '../src/ui/components/card.js';
+import { fixCoreSmashVsDefensiveRules } from '../src/model/fixCoreMechanics.js';
+import { profileDamageReceipt } from '../src/engine/gameProfileCombat.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
 
 const oldRuntime = 'sha256:0ca590715034b7f075d9ca81ad54ce1734e2d6af951ffd39e202d2148f2c10e9';
@@ -38,9 +40,16 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   assert.equal(restoredRun.gameProfile.hash, originalHash);
   const combat = createRunCombat({ registries, run: restoredRun, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const snapshot = serializeCombatSnapshot(combat);
+  snapshot.fixCoreRules.smashVsDefensive.damageMultiplier = 2;
   delete snapshot.fixCoreRules.accuracy.evasionVersion;snapshot.fixCoreRules.accuracy.evadeStackDex = 1;
   const restored = restoreCombatSnapshot({ registries, rng: createRng(511), snapshot, expectedGameProfile: restoredRun.gameProfile });
   assert.equal(restored.gameProfile.hash, originalHash);
+  assert.equal(fixCoreSmashVsDefensiveRules(restored.fixCoreRules).damageMultiplier, 2);
+  const target = restored.enemies[0];
+  Object.assign(target, { block: 0, statuses: {}, combatStance: { maneuver: 'defend', camp: 'physical', range: 'melee' }, persistentPoise: {value: 20, max: 20} });
+  delete target.combatCounter;
+  const smash = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee' } };
+  assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 24);
   assert.equal(restored.fixCoreRules.accuracy.evasionVersion, 2);assert.equal(restored.fixCoreRules.accuracy.evadeStackDex, 0);
   restored.piles.hand.push({cardId:'core.evade',instanceId:'resumed-evade',upgraded:false});
   const def = registries.cards.get('core.evade');
@@ -66,7 +75,7 @@ test('compatibility rejects digest damage, unknown runtimes, other cores and fut
 
 test('current shipped Core runtime and combat saves survive presentation-only changes', () => {
   const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} }));
-  assert.equal(profile.lock.runtimeHash, 'sha256:fd3088b4bbca6111a7095f8eb823ae3a30abd5badcb82b91dd32112b0f2e80e8');
+  assert.equal(profile.lock.runtimeHash, 'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
@@ -74,7 +83,14 @@ test('current shipped Core runtime and combat saves survive presentation-only ch
   const restoredRun = deserializeRun(serializeRun(run));
   assert.equal(restoredRun.gameProfile.hash, originalHash);
   const combat = createRunCombat({ registries, run: restoredRun, rng: createRng(512), enemyIds: ['wanderingSoldier'] });
+  assert.equal(combat.fixCoreRules.smashVsDefensive.damageMultiplier, 1.25);
   const restored = restoreCombatSnapshot({ registries, rng: createRng(512), snapshot: serializeCombatSnapshot(combat), expectedGameProfile: restoredRun.gameProfile });
   assert.equal(restored.gameProfile.hash, originalHash);
+  assert.equal(fixCoreSmashVsDefensiveRules(restored.fixCoreRules).damageMultiplier, 1.25);
+  const target = restored.enemies[0];
+  Object.assign(target, { block: 0, statuses: {}, combatStance: { maneuver: 'defend', camp: 'physical', range: 'melee' }, persistentPoise: {value: 20, max: 20} });
+  delete target.combatCounter;
+  const smash = { skipRatingBonus: true, combatProfile: { camp: 'physical', maneuver: 'smash', range: 'melee' } };
+  assert.equal(profileDamageReceipt(restored, restored.player, target, 12, smash).amount, 15);
   assert.equal(restored.gameProfile.lock.runtimeHash, profile.lock.runtimeHash);
 });
