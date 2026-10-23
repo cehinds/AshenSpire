@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-23
 
-- **Adept copies and affordable enemy actions** ([#2265](https://github.com/cehinds/AshenSpire/pull/2265), `0.7.1.1788`). Collected Basics and Cantrips can be copied under the equipped Martial or Magic Adept class. Matching stances reduce the class's correct SP or MP cost. Enemy plans respect available Stamina, multi-hit minimums and range charges; preparations and reactions pay once. Active saved fights keep their previous action prices.
+- **Adept copies and affordable enemy actions** ([#2265](https://github.com/cehinds/AshenSpire/pull/2265), `0.7.1.1790`). Collected Basics and Cantrips can be copied under the equipped Martial or Magic Adept class. Matching stances reduce the class's correct SP or MP cost. Enemy plans respect available Stamina, multi-hit minimums and range charges; preparations and reactions pay once. Active saved fights keep their previous action prices.
+- **Smaller desktop cards and sharper scenery** ([#2264](https://github.com/cehinds/AshenSpire/pull/2264), `0.7.1.1790`). Desktop combat cards are slightly smaller and the arena sits lower. Reviewed backgrounds retain more detail on desktop, while Light quality, phones and tablets keep their smaller artwork. Auto still respects Data Saver, small screens and low-memory devices.
 
 - **Core adept and enemy SP rules** ([#2263](https://github.com/cehinds/AshenSpire/pull/2263), `0.7.1.1788`). Defines collected-card copies for Martial and Magic Adept, matching-stance SP and MP discounts, and affordable enemy multi-hit, charge and reaction costs. Existing active battles retain accepted prices. This specifies the rule changes; implementation follows.
 

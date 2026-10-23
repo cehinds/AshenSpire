@@ -3,10 +3,16 @@ import hashlib
 import json
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
+if '--desktop-scenes-only' in sys.argv:
+    from desktop_scene_export import main
+    main(ROOT)
+    raise SystemExit(0)
+
 SOURCE = ROOT / 'docs/design/combat-depth-2026-10-05'
 OUT = ROOT / 'assets-display/alternative'
 SHARED = ROOT / 'assets-display/shared'
