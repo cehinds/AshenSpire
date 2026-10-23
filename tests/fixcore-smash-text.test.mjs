@@ -17,7 +17,7 @@ const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0',
 const core = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const current = createRegistries(contentBundle);
 const plain = lines => lines.map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');
-const RULE = /double damage, plus a quarter of their Block; half of it breaks Poise/;
+const RULE = /1\.25× damage, plus a quarter of their Block; half of it breaks Poise/;
 
 test('the shared Core Smash sentence states the owner rule', () => {
   assert.match(coreSmashClause(core.cards.get('core.reaverSpecial'), core), RULE);
@@ -100,7 +100,7 @@ test('the stance list is read from the active smash matchup table', () => {
   assert.equal(coreSmashClause(reaver, withMatchup([])), '', 'a Smash that beats nothing says nothing');
 });
 
-test('a Core Smash tag with an empty smash matchup keeps its blurb (no double-damage text)', () => {
+test('a Core Smash tag with an empty smash matchup keeps its blurb (no stance-bonus text)', () => {
   const stances = { ...core.gameProfile.modules.stances, matchups: { ...core.gameProfile.modules.stances.matchups, smash: [] } };
   const empty = { ...core, gameProfile: { ...core.gameProfile, modules: { ...core.gameProfile.modules, stances } } };
   const tag = { id: 'maneuver:smash', blurb: 'X' };
