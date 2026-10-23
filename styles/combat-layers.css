@@ -364,7 +364,7 @@
   color: #ffe7ab; font-size: calc(16px / var(--ui-zoom,1));
   text-shadow: var(--hud-text-shadow, none);
 }
-:root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent > :not(.intent-compact) { display: none; }
+:root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent > :not(.intent-compact):not(.cr-followups) { display: none; }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent .intent-compact { display: inline-flex; }
 :root .combat[data-layout='formation'] .context-selected .intent { border: 1px solid var(--hud-enemy-panel-border, var(--combatant-highlight)); }
 /* HUD layout tokens: the selected intent bubble shares the panel style. */
