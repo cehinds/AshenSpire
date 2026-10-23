@@ -1,6 +1,8 @@
 import { configuredModule } from './gameProfileCombat.js';
 import { core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
-import { enemyMoveQuote, enemyAvailableSp, commitEnemySp } from './combatRoundsAdapter.js';
+// The adapter loads preview -> tactics -> reactions -> this module. Resolve
+// its policy helpers at use time, after that production-bundle cycle completes.
+import * as Rounds from './combatRoundsAdapter.js';
 // Enemy reactions (docs/combat-card-traits-contract.md, "Enemy reactions").
 // A reaction move is an enemy move with `reaction: { on, minIncoming, chance }`.
 // openEnemyWindow asks decideEnemyReaction for each enemy in roster order and commits
@@ -48,7 +50,7 @@ export function decideEnemyReaction(ctx, enemy, reactionWindow, { groupKey, wind
   if (enemy.combatReactionTurn === ctx.turn) return null;
   if (controlRestrictions(ctx, enemy).locked) return null;
   for (const [moveId, move] of reactionMovesOf(ctx, enemy, reactionWindow)) {
-    if (core2ActionPolicyEnabled(ctx) && enemyMoveQuote(move, { enemy, moveId, combat: ctx }).totalSp > enemyAvailableSp(enemy)) continue;
+    if (core2ActionPolicyEnabled(ctx) && Rounds.enemyMoveQuote(move, { enemy, moveId, combat: ctx }).totalSp > Rounds.enemyAvailableSp(enemy)) continue;
     const { minIncoming = 1, chance = 1 } = move.reaction;
     if (minIncoming !== 0 && !(incoming > 0 && incoming >= minIncoming)) continue;
     if (chance >= 1) return moveId;
@@ -100,9 +102,9 @@ export function pushEnemyReaction(ctx, group, enemy, moveId, targetPlayerId, hoo
   let spPayment;
   if (core2ActionPolicyEnabled(ctx)) {
     const move = ctx.registries.enemies.get(enemy.enemyId).moves[moveId];
-    const quote = enemyMoveQuote(move, { enemy, moveId, combat: ctx });
-    if (quote.totalSp > enemyAvailableSp(enemy)) return null;
-    if (!commitEnemySp(ctx, enemy, moveId, quote.sp)) return null;
+    const quote = Rounds.enemyMoveQuote(move, { enemy, moveId, combat: ctx });
+    if (quote.totalSp > Rounds.enemyAvailableSp(enemy)) return null;
+    if (!Rounds.commitEnemySp(ctx, enemy, moveId, quote.sp)) return null;
     spPayment = { sp: quote.sp, advanceSp: quote.advanceSp, totalSp: quote.totalSp };
   }
   const stack = ctx.reactionStack ||= { groupKey: group.key, entries: [], resolving: false };
