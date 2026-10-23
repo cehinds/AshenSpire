@@ -3324,3 +3324,11 @@ The owner approved the following Core update. This amendment precedes its implem
 - **Editing and archive boundaries.** Preserve the public launch doors and architecture layers. Use readable named icon identifiers and asset references in editable source; centralized legacy aliases may preserve old data compatibility. Keep authored content/configuration authoritative, with practical Visual Studio editing recipes and validation commands. Move code into an excluded archive only after checking runtime, dynamic, tooling and test references; retain provenance and restoration instructions.
 
 The mobile goal is at least 2× faster interactions, with a 300% increase (4× throughput) as the stretch target. Report the measured baseline, device/browser or emulation settings, complete action correctness and remaining stalls; a timing preset alone does not satisfy that goal.
+
+### Reward inspection and earned-effect feedback (owner, 2026-10-23)
+
+Reward choices retain a separate Inspect action before collection and during confirmation review. Full card, equipment, relic and potion details use their existing read-only inspectors. Closing inspection preserves the selection and review stage. An in-flight claim disables inspection until the save succeeds or fails.
+
+Class and used-weapon level notices show the earned level transition, visible progression, actual resolved card-value changes and newly available unlocks where the active progression rules grant them. A level with no stat bonus or unlock says so explicitly. Next-benefit previews follow the active authored rules and owned-card context. The saved notice resumes without paying XP or granting effects again; Reduced motion keeps the final values visible without the progression animation.
+
+Positive combat status grants show `+N Status name` above the recipient, including player and enemy self-buffs and grants from another actor. N is the actual increase after caps and refresh/unique stacking, so a reapplication that adds nothing shows no gain. Use the recipient registry's displayed status name. Buildup and hostile status feedback retain their existing channels. Buff labels share the existing overhead queue and appear with the action's results without adding combat steps or waits.

@@ -19,6 +19,7 @@ import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.
 import { playPoseOn, stageFor } from './services/PoseAnimator.js';
 import { reducedMotionRequested } from './motion.js';
 import { t } from './strings.js';
+import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 
 
 // ---------------------------------------------------------------------------
@@ -545,7 +546,35 @@ function layoutCallouts(layer, anchor, q, now, lifeMs = CALLOUT_MS) {
     it.end = it.start + lifeMs;
     it.el.style.animationDelay = row.start > 0 ? `${row.start}ms` : '';
     clearTimeout(it.timer);
-    it.timer = setTimeout(() => it.el.remove(), it.end - now);
+    if (it.kind.startsWith('buff:') && row.start > 0) {
+      // Static reduced-motion callouts cannot use animation-delay to hide
+      // queued words. Keep each pending gain hidden until its planned lane
+      // start, then reuse its single timer for the same queued lifetime.
+      const revealBuff = () => {
+        const at = Date.now();
+        const predecessors = q.items.filter(other => other !== it && other.lane === it.lane
+          && other.start < it.start && other.el.parentNode === layer);
+        for (const previous of predecessors) if (previous.end <= at) {
+          // A same-deadline start timer can run before the predecessor's
+          // expiry timer. Its lifetime has ended, so remove it here before
+          // exposing the next word in this lane.
+          clearTimeout(previous.timer);
+          previous.el.remove();
+        }
+        const stillShowing = predecessors.find(previous => previous.end > at);
+        if (stillShowing) {
+          it.timer = setTimeout(revealBuff, Math.max(1, stillShowing.end - at));
+          return;
+        }
+        it.el.style.visibility = '';
+        it.timer = setTimeout(() => it.el.remove(), Math.max(0, it.end - Date.now()));
+      };
+      it.el.style.visibility = 'hidden';
+      it.timer = setTimeout(revealBuff, row.start);
+    } else {
+      if (it.kind.startsWith('buff:')) it.el.style.visibility = '';
+      it.timer = setTimeout(() => it.el.remove(), Math.max(0, it.end - now));
+    }
   }
   const b = anchorLocalBox(layer, anchor);
   const floor = overheadFloor(layer, anchor, b);
@@ -575,19 +604,26 @@ export function callout(layer, anchor, forId, kind) {
   const def = kind.startsWith('action:') ? { word: kind.slice(7), tone: 'white' } : isStatus
     ? (Object.prototype.hasOwnProperty.call(STATUS_WORDS, statusId) ? { string: `combat.status.applied.${statusId}`, tone: 'status', colour: STATUS_WORDS[statusId].colour } : null)
     : CALLOUT_KINDS[kind];
+  return queuedCallout(layer, anchor, forId, kind, def);
+}
+
+// Buff gains use the same overhead lanes and cleanup as outcome words. Each
+// committed gain stays visible even when two receipts have the same amount.
+function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
   if (!layer || !anchor || !def || forId == null) return null;
   layer = combatReadoutLayer(layer);
   const now = Date.now();
   const q = queueFor(layer, forId);
   // Words that have finished leave the queue.
   q.items = q.items.filter((it) => it.end > now || it.end === undefined);
-  if (q.items.some((it) => it.kind === kind) || liveCallouts(layer, forId).some((node) => node.dataset.calloutKind === kind)) return null;
+  if (!repeat && (q.items.some((it) => it.kind === kind) || liveCallouts(layer, forId).some((node) => node.dataset.calloutKind === kind))) return null;
   const el = document.createElement('div');
   el.className = `fx-callout ${def.tone}`;
   el.dataset.calloutFor = String(forId);
   el.dataset.calloutKind = kind;
   el.setAttribute('aria-hidden', 'true');
   el.textContent = def.word || t(def.string);
+  if (kind.startsWith('buff:')) el.style.visibility = 'hidden';
   if (def.colour) el.style.color = def.colour;
   const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS * (actionPacing().scale || 1);
   el.style.setProperty('--fx-callout-ms', `${ms}ms`);
@@ -1776,7 +1812,6 @@ export const STATUS_WORDS = {
   dazed: { colour: '#ffe14d' },
   offBalance: { colour: '#d9c9a3' },
   prone: { colour: '#d9c9a3' },
-  grounded: { colour: '#d9c9a3' },
   insanity: { colour: '#a06bd0' },
   madness: { colour: '#a06bd0' },
   crimsonBlight: { colour: 'var(--rot)' },
@@ -1869,6 +1904,17 @@ function breakBurst(e, tone, sound) {
 
 function baseVisualParts(e, beatKind, { sequential = false } = {}) {
   switch (e.type) {
+    case 'statusApplied': {
+      if (buffGainFor(e) <= 0) return null;
+      const showGain = ctx => {
+        const popup = buffPopupFor(e, ctx.statusInfo?.(e.status));
+        if (popup) queuedCallout(ctx.layer, ctx.anchorFor(popup.targetId), popup.targetId, popup.kind, popup, true);
+      };
+      // The sequential core timeline runs numbers after the target reaction.
+      // Older impact and instant paths render callout-only events at once, so
+      // using a numbers part there would add one stepMs delay per status.
+      return sequential ? { numbers: showGain } : { callout: showGain };
+    }
     case 'damageDealt': {
       // One event owns both visible channels: unsigned guard consumed, then
       // only the HP residual as damage. Paired results sit side-by-side without
