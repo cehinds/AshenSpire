@@ -15,6 +15,44 @@ import { withKitDom } from './helpers/kit-dom.mjs';
 
 const PageEvent = globalThis.Event;
 
+test('ordered FX counts real watchdog expiry while normal, cancel and skip finishes do not count', async (t) => {
+  // Load a browser-scoped instance so this exercises the actual window.__fx
+  // counter binding, rather than a copied hook or a test-only counter.
+  const previousWindow = globalThis.window;
+  const browserWindow = {};
+  let browserFx;
+  globalThis.window = browserWindow;
+  try { browserFx = await import('../src/ui/fx.js?watchdog-counter'); }
+  finally {
+    if (previousWindow === undefined) delete globalThis.window; else globalThis.window = previousWindow;
+  }
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: 0 });
+  setAnimSpeed('normal'); setBeatOrder('sequential'); setCombatPacing();
+  try {
+    withKitDom((dom) => {
+      for (const exit of ['normal', 'cancel', 'skip', 'watchdog']) {
+        const before = { ...browserWindow.__fx };
+        let completed = 0, flushes = 0;
+        const handle = browserFx.playTimeline([
+          { type: 'cardPlayed', cardType: 'skill', cardInstanceId: 'test-card', targetId: 'player' },
+        ], { layer: dom.document.createElement('div'), anchorFor: () => null, onFlush: () => flushes++ }, () => completed++);
+        if (exit === 'watchdog') handle.pauseForSkip();
+        else if (exit !== 'normal') handle[exit]();
+        assert.equal(browserWindow.__fx.watchdog, before.watchdog, 'starting, pausing and explicit exits do not count');
+        for (let ms = 0; ms < 60000 && !handle.finished; ms++) t.mock.timers.tick(1);
+        assert.equal(handle.finished, true, `${exit} finishes within its existing budget`);
+        assert.equal(browserWindow.__fx.watchdog, before.watchdog + (exit === 'watchdog' ? 1 : 0));
+        assert.equal(browserWindow.__fx.open, before.open + 1);
+        assert.equal(browserWindow.__fx.finished, before.finished + 1);
+        assert.equal(flushes, exit === 'normal' ? 0 : 1); assert.equal(completed, 1);
+        handle.cancel(); handle.skip(); t.mock.timers.tick(60000);
+        assert.equal(browserWindow.__fx.watchdog, before.watchdog + (exit === 'watchdog' ? 1 : 0));
+        assert.equal(completed, 1, 'late timer work and repeated exits cannot complete twice');
+      }
+    });
+  } finally { setCombatPacing(); setAnimSpeed('normal'); setBeatOrder('sequential'); }
+});
+
 // Preserve Maps, cycles and function identities while copying mutable state.
 function snapshot(value, seen = new Map()) {
   if (value === null || typeof value !== 'object') return value;
