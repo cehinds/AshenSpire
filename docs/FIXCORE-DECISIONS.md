@@ -53,3 +53,16 @@ These settle every item that was open above. Where a reading above says **open**
 - Poise loss = the 25% it prevented (D13: floor(0.2 × damage) before damage).
 - Pacing 0.5 s, auto ×1 (D11: 1 s, auto ×1.5).
 - Vulnerable 1.5 in the Current profile (D16: 1.25).
+
+## Stance bonus reduction (2026-10-23)
+
+Owner: "Update stance bonuses to reduce it to 1.25 instead of 2x".
+
+Core matching-stance effectiveness and ordinary offensive stance advantage are
+already 1.25. Reduce the remaining Core Smash-versus-Defend/Prepared damage
+multiplier from 2 to 1.25, for players and enemies. This replaces the ordinary
+advantage multiplier; do not apply both. Keep the 25% current-Block contribution,
+50% total-damage Poise drain, flooring and all other stance effects. The current
+JSON default and the fallback for a missing `smashVsDefensive` block must agree.
+Persisted explicit rule values remain snapshots; this does not rewrite custom
+configuration or historical non-Core profiles.
