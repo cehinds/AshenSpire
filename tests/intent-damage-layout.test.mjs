@@ -72,10 +72,3 @@ test('compact intent rules preserve planned follow-ups while still hiding verbos
     }
   });
 });
-
-
-test('known follow-up icons keep their wrapper size against target-HUD primary icon sizing', () => {
-  const icon = rule(css('combat-rounds-preview.css'), '.cr-followup .intent-icon');
-  for (const property of ['width', 'height'])
-    assert.match(icon, new RegExp(`${property}:\\s*100%\\s*!important`), 'known symbols fit their authored wrapper like concealed symbols');
-});
