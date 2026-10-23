@@ -55,7 +55,7 @@ test('concise Counter retains live Block and return amounts and change marks', a
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const def = projectGameCard(profile, 'core.counter');
   const values = def.effects.map(effect => ({ op: effect.op, value: effect.op === 'damage' ? 7 : 9, hits: 1 }));
-  const lines = cardFaceLines(def, { values }, registries, null, { stanceEntry: false });
+  const lines = cardFaceLines(def, { values, counterReturn: { hp: 7, poise: 3, ward: 0 } }, registries, null, { stanceEntry: false });
   assert.deepEqual(lines.map(row => row.html.replace(/<[^>]+>/g, '')), ['Gain 9 Block', 'Counter 7']);
   assert.ok(lines.every(row => row.html.includes('class="val up"')));
 });

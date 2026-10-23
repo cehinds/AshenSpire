@@ -6,7 +6,7 @@ import { withKitDom } from './helpers/kit-dom.mjs';
 
 // Layout-backed doubles: scroll size follows font/width, while the containing
 // bay follows the fitter's real percentage-height and max-height writes.
-function fixture({ chars = 500, width = 110, top = 0, height = 26, full = true, hidden = false, titleBottom = 0, railBottom = 0 } = {}) {
+function fixture({ chars = 500, width = 110, top = 0, height = 26, full = true, hidden = false, titleBottom = 0, railBottom = 0, printedRows = 1 } = {}) {
   const state = { width, chars };
   const faceHeight = 200;
   const layer = { style: { top: `${top / 2}%`, height: `${height / 2}%` },
@@ -18,7 +18,7 @@ function fixture({ chars = 500, width = 110, top = 0, height = 26, full = true, 
     get scrollWidth() { return this.clientWidth; },
     get scrollHeight() {
       const font = parseFloat(this.style.fontSize) || 10;
-      return Math.ceil(state.chars / Math.max(1, Math.floor(this.clientWidth / (font * .5)))) * font * 1.25;
+      return Math.max(printedRows, Math.ceil(state.chars / Math.max(1, Math.floor(this.clientWidth / (font * .5))))) * font * (parseFloat(this.style.lineHeight) || 1.25);
     },
     get clientHeight() {
       let cap = Infinity;
@@ -104,4 +104,16 @@ test('long rules shrink inside a fixed bay, preserving parchment and artwork geo
   assert.equal(parseFloat(f.text.style.fontSize), 15, 'short copy restores preferred font');
   assert.equal(f.text.dataset.rulesComplete, 'true');
   assert.equal(f.layer.clientHeight, 45);
+}));
+
+test('two live Counter rows shrink below design minimum within the native hand bay', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const f = fixture({ chars: 20, width: 180, top: 80, height: 28, full: false, printedRows: 2 });
+  f.fit();
+  assert.ok(parseFloat(f.text.style.fontSize) < 15);
+  assert.ok(parseFloat(f.text.style.fontSize) >= 11);
+  assert.ok(Math.abs(f.layer.clientHeight - 28) < .001);
+  assert.equal(f.text.dataset.rulesComplete, 'true');
+  assert.equal(f.face.dataset.rulesOverflow, 'false');
+  assert.equal(f.text.style.maxHeight, '100%', 'no inspection cue reserves space when both rows fit');
 }));

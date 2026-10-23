@@ -426,8 +426,8 @@ test('the card face renders the computed return against a 12-damage Attack (core
     const r = view.counterReturn;
     assert.ok(r, `${cardId}: return computed`);
     assert.match(text, new RegExp(`\\b${r.hp}\\b`), `${cardId}: HP return ${r.hp} on the face`);
-    assert.match(text, new RegExp(`\\b${r.poise}\\b[^|]*Poise|Poise[^|]*\\b${r.poise}\\b`), `${cardId}: Poise return ${r.poise} on the face`);
-    if (r.advantaged && r.block > 0) assert.match(text, new RegExp(`\\+${r.block}\\b[^|]*Block`), `${cardId}: Block +${r.block}`);
+    assert.doesNotMatch(text, /Poise/, `${cardId}: automatic Poise return is explained in inspection`);
+    if (r.advantaged && r.block > 0) assert.doesNotMatch(text, /Block against it/, 'automatic advantage reply stays in Counter inspection');
   }
 });
 
@@ -501,7 +501,8 @@ test('a support-only Core Counter vs a hidden intent keeps the authored payload;
   assert.match(hidden.text, /Poise/, hidden.text);
   const covered = supportFace('wanderingSoldier');
   assert.ok(covered.view.counterReturn?.poise > 0 && !covered.view.counterReturn.uncovered);
-  assert.match(covered.text, /Poise/, covered.text);
+  assert.match(covered.text, /Counter 6/, covered.text);
+  assert.doesNotMatch(covered.text, /Poise/, 'computed automatic reply stays in Counter inspection');
 });
 
 test('a Counter already returned this owner cycle previews no return, and live agrees (once per cycle)', () => {
@@ -533,8 +534,8 @@ test('a Counter with several damage rows (rank-3 Guard Counter) previews the one
   assert.equal(rows.reduce((sum, row) => sum + row.totalDamage, 0), 6, 'exactly one return of floor(0.5 x 8) + floor(0.25 x 8)');
   assert.equal(rows.filter(row => row.counterReturn).length, 1, 'the computed return sits in exactly one row');
   const text = (cardFaceLines(view.resolvedDefinition, view, reg) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
-  assert.match(text, /Return 6 damage/, text);
-  assert.doesNotMatch(text, /Return 8|Return 0|If you have Block/, text);
+  assert.match(text, /Counter 6/, text);
+  assert.doesNotMatch(text, /Counter 8|Counter 0|If you have Block/, text);
   dispatch(combat, { type: 'playCard', cardInstanceId: 'g1' });
   Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });
   dispatch(combat, { type: 'setReactions', enabled: false });
@@ -577,11 +578,11 @@ test('guardCounter rank 3: a spent or uncovered read leaves no Return line on th
     const lines = cardFaceLines(view.resolvedDefinition, view, reg) || [];
     return lines.map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
   };
-  assert.doesNotMatch(face(true, true), /Return/, 'spent');
-  assert.doesNotMatch(face(false, false), /Return/, 'uncovered area Sweep');
+  assert.doesNotMatch(face(true, true), /Counter \d/, 'spent');
+  assert.doesNotMatch(face(false, false), /Counter \d/, 'uncovered area Sweep');
   const covered = face(true, false);
-  assert.match(covered, /Return 6 damage/);
-  assert.doesNotMatch(covered, /Return \d+ damage[^|]*\|[^|]*Return/, 'covered: one Return row only');
+  assert.match(covered, /Counter 6/);
+  assert.doesNotMatch(covered, /Counter \d+[^|]*\|[^|]*Counter \d+/, 'covered: one Return row only');
 });
 
 function armedThen(...cardIds) {
@@ -710,4 +711,17 @@ test('Many Forms: a retained Defend before Frost Counter previews the same retur
   assert.ok(triggered, 'live returns');
   assert.equal(view.counterReturn.hp, triggered.amount, 'preview == live HP return');
   assert.equal(view.counterReturn.poise, triggered.poiseDamage, 'preview == live Poise return');
+});
+
+test('default Counter compact face keeps the actual computed HP reply and Block in two rows', () => {
+  const { combat, enemy } = live();
+  const view = previewCard(combat, 'cx1', enemy.id);
+  assert.ok(view.counterReturn.poise > 0, 'the real engine preview includes an automatic Poise reply');
+  const rows = cardFaceLines(view.resolvedDefinition, view, reg, null, { stanceEntry: false });
+  const text = rows.map(row => row.html.replace(/<[^>]+>/g, ''));
+  const grant = view.values.find(row => row.op === 'block');
+  assert.equal(text[0], `Gain ${grant.value} Block`);
+  assert.equal(text[1], `Counter ${view.counterReturn.hp}`);
+  assert.equal(text.length, 2);
+  assert.ok(!text.some(row => /Poise/.test(row)), 'automatic Poise is kept in the Counter explanation');
 });

@@ -349,6 +349,10 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     // Ward off (Core 2): the payload's Ward drains Poise too, so it joins the Poise figure.
     let poiseReturn = 0, poiseAuthored = 0;
     for (const [key, label, op] of [['hp', 'damage', 'damage'], ['poise', 'Poise', 'poiseDamage'], ['ward', 'Ward', 'wardDamage']]) {
+      // The configured Counter face states HP return once. Its automatic
+      // Poise/Ward reply is explained by Counter inspection; distinct authored
+      // effect rows above remain visible.
+      if (conciseCounter && preview?.counterReturn && key !== 'hp') continue;
       if ((def.effects || []).some(effect => effect.op === op)) continue;
       // Core 2 (SPEC §17): the computed return against the revealed attack replaces the authored payload; Ward is not part of it.
       const core = preview?.counterReturn;
@@ -357,11 +361,11 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       if (typeof amount !== 'number' || !(amount > 0)) continue;
       if (poiseMerge && key !== 'hp') { poiseReturn += amount; poiseAuthored += payload[key] || 0; continue; }
       const type = key === 'hp' ? combatCardDamageLabel(def, preview, registries) : '';
-      unconditional.push({ cat: 'damage', text: `${typed(num(amount, payload[key]), type)} ${label}` });
+      unconditional.push({ cat: 'damage', text: conciseCounter && key === 'hp' ? num(amount, payload[key]) : `${typed(num(amount, payload[key]), type)} ${label}` });
     }
     if (poiseReturn > 0) unconditional.push({ cat: 'damage', text: `${num(poiseReturn, poiseAuthored)} Poise` });
     // Beating the revealed hit also adds Block before it lands.
-    if (preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', text: `+${num(preview.counterReturn.block)} Block against it` });
+    if (!conciseCounter && preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', text: `+${num(preview.counterReturn.block)} Block against it` });
   }
   if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
