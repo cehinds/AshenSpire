@@ -409,6 +409,9 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   // selection, showing an information button on a card nobody chose.
   const douse = () => {
     card.classList.remove('inspection-selected', 'inspection-info-visible', 'selected');
+    // Keep combat.css's `.hand[data-has-selection]` (the old `.hand:has(.selected)`) true to the DOM.
+    const hand = card.closest('.hand');
+    if (hand && hand.getAttribute('data-has-selection') === 'true' && !hand.querySelector('.selected')) hand.setAttribute('data-has-selection', 'false');
     card.setAttribute('aria-pressed', 'false');
     card.removeAttribute('aria-current');
     card.dispatchEvent(new CustomEvent('cardinspectioncancelreveal'));
