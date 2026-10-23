@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { BUFF_STATUS_IDS, buffGainFor, buffPopupFor } from '../src/ui/buffFeedback.js';
 import { playTimeline, setAnimSpeed, setBeatOrder, clearCallouts, statusPopupFor } from '../src/ui/fx.js';
 import { statuses } from '../src/content/statuses.js';
+import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
 const definitions = new Map(statuses.map(row => [row.id, row]));
@@ -128,6 +129,7 @@ test('reduced-motion buff gains stay readable, start in queued lanes and clear o
     assert.deepEqual(starts, [0, 150, 300, 500, 650, 800, 1000]);
     assert.equal(buffs[0].style.visibility, '', 'the first lane is visible immediately');
     assert.ok(buffs.slice(1).every(node => node.style.visibility === 'hidden'), 'future lane words stay hidden until scheduled');
+    flushMeasureJobs(); // placement is measured at the end of the task
     assert.equal(new Set(buffs.slice(0, 3).map(node => node.dataset.calloutSlot)).size, 3);
 
     // The second lane starts within its planned 150 ms offset and keeps the
