@@ -7,6 +7,28 @@ const ruleGeometry = new WeakMap();
 // fit again with the same inputs keeps the result it has (the hand refits every
 // card on each render, and almost none of them changed).
 const fitSignatures = new WeakMap();
+// Share only the numeric search result across newly mounted, equivalent rows.
+// Geometry, overflow and inspection cues are still measured/applied each time.
+const fontResults = new Map(), FONT_RESULTS_MAX = 128;
+const fontProperties = ['fontFamily','fontSize','fontWeight','fontStyle','fontStretch','fontVariant','fontVariantLigatures','fontVariantCaps','fontVariantNumeric','fontFeatureSettings','fontVariationSettings','fontKerning','fontOpticalSizing','letterSpacing','wordSpacing','lineHeight','whiteSpace','wordBreak','overflowWrap','hyphens','textTransform','textIndent','direction','writingMode','tabSize','display','paddingLeft','paddingRight','boxSizing'];
+const typography = node => {
+  const style = getComputedStyle(node);
+  return fontProperties.map(name => style[name]);
+};
+function fontResultKey(row) {
+  const descendants = [...row.text.querySelectorAll('*')];
+  // Replaced/graphical content has sizing inputs beyond text typography.
+  if (descendants.some(node => !['SPAN','B','I','STRONG','EM','SMALL','MARK','SUB','SUP','BR'].includes(node.tagName))) return null;
+  return JSON.stringify([row.signature,row.index,row.text.dataset.cardBinding,row.text.innerHTML,
+    row.text.clientWidth,row.boxHeight,row.scale,row.low,row.high,row.lineHeight,row.lines,
+    row.compact,row.fullRules,row.hasHiddenRules,row.hasHiddenLines,
+    typography(row.text),descendants.map(typography)]);
+}
+function rememberFont(key, result) {
+  if (key == null) return;
+  if (fontResults.size >= FONT_RESULTS_MAX && !fontResults.has(key)) fontResults.delete(fontResults.keys().next().value);
+  fontResults.set(key, result);
+}
 let fontEpoch = 0, fontsWatched = false;
 function watchFonts() {
   if (fontsWatched || typeof document === 'undefined' || !document.fonts?.addEventListener) return;
@@ -16,10 +38,13 @@ function watchFonts() {
 function fitSignature(face, width) {
   const { fontSize, zoom } = layoutMetrics();
   const texts = [...face.querySelectorAll('.ic-text[data-auto-fit="true"]')]
-    .map(text => `${text.dataset.maxLines}|${text.dataset.minFont}|${text.dataset.maxFont}|${text.dataset.cardBinding}`);
+    .map(text => [text.dataset.maxLines,text.dataset.minFont,text.dataset.maxFont,text.dataset.cardBinding,
+      text.innerHTML,...fontProperties.filter(name => !['fontSize','lineHeight','display'].includes(name)).map(name => text.style[name])]);
+  const root = document.documentElement, body = document.body;
   return [width, fontEpoch, fontSize, zoom, face.className, face.parentElement?.className, face.dataset.designWidth,
-    face.dataset.fullRules, face.dataset.cardLayoutId, face.querySelector('[data-face-overflow="true"]') ? 1 : 0,
-    face.textContent, texts.join(',')].join('\u0001');
+    face.dataset.fullRules, face.dataset.rulesHidden, face.dataset.cardLayoutId, face.querySelector('[data-face-overflow="true"]') ? 1 : 0,
+    root.className,body?.className,root.dataset.formFactor,root.dataset.layout,root.dataset.handLayout,root.dataset.displayAppearance,
+    root.style?.cssText,body?.style?.cssText,face.textContent,JSON.stringify(texts)].join('\u0001');
 }
 
 // Search fonts inside the authored bays. Text must never resize the parchment
@@ -37,6 +62,7 @@ export function fitIllustratedCards(cards) {
     if(fitSignatures.get(face)===signatures[i]){skipped.add(face);return;}
     resetCardLayout(face);
     const scale=widths[i]/Number(face.dataset.designWidth);
+    let index=0;
     for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
       const rules=text.dataset.cardBinding==='rules';
       const layer=text.parentElement;
@@ -44,7 +70,7 @@ export function fitIllustratedCards(cards) {
       // the same authored rules bay.
       const fullRules=face.dataset.fullRules==='true';
       const expandedHandRules=rules&&Number(text.dataset.maxLines)>3;
-      const row={face,text,layer,scale,rules,fullRules,lineHeight:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
+      const row={face,text,layer,scale,index:index++,signature:signatures[i],rules,fullRules,lineHeight:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
         // Semantic effect lines can wrap over multiple printed rows.
         lines:rules?Infinity:Number(text.dataset.maxLines)||1,
         hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
@@ -94,19 +120,28 @@ export function fitIllustratedCards(cards) {
   for(const row of texts)row.boxHeight=row.layer.clientHeight;
   const rules=texts.filter(row=>row.rules);
   for(const row of rules)row.face.dataset.rulesDense='false';
+  // Batch actual width and resolved typography reads before any font probes.
+  // Even a hit continues through the native final-overflow/layout pipeline.
+  for(const row of texts)row.fontKey=fontResultKey(row);
+  const uncached=[];
+  for(const row of texts){
+    if(row.fontKey!=null&&fontResults.has(row.fontKey))row.result=fontResults.get(row.fontKey);
+    else uncached.push(row);
+  }
   const probe=(list,sizeOf)=>{
     for(const row of list){row.text.style.webkitLineClamp='unset';row.text.style.fontSize=sizeOf(row)+'px';}
     return list.map(row=>row.text.scrollHeight<=Math.min(row.boxHeight,sizeOf(row)*row.lineHeight*row.lines)+1&&row.text.scrollWidth<=row.text.clientWidth+1);
   };
-  const atHigh=probe(texts,row=>row.high);
+  const atHigh=probe(uncached,row=>row.high);
   const search=[];
-  texts.forEach((row,i)=>{if(atHigh[i])row.result=row.high;else{row.lo=row.low;row.hi=row.high;search.push(row);}});
+  uncached.forEach((row,i)=>{if(atHigh[i])row.result=row.high;else{row.lo=row.low;row.hi=row.high;search.push(row);}});
   for(let pass=0;pass<7&&search.length;pass++){
     const mid=row=>(row.lo+row.hi)/2;
     const fits=probe(search,mid);
     search.forEach((row,i)=>{const size=mid(row);if(fits[i])row.lo=size;else row.hi=size;});
   }
   for(const row of search)row.result=row.lo;
+  for(const row of uncached)rememberFont(row.fontKey,row.result);
   for(const row of texts){
     row.text.style.fontSize=row.result+'px';
     row.overflow=row.compact&&(row.hasHiddenRules||row.hasHiddenLines);
