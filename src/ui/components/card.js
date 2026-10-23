@@ -667,8 +667,11 @@ export function upgradePreviewHtml(registries, ref) {
  * words-only display, which is exactly the behavior this file had before.
  */
 function glossaryEntry(registries, kind, id) {
+  if (id == null) return null;
   const source = kind === 'status' ? registries.statuses : registries.stances;
-  const row = source?.get?.(id) || null;
+  // A maneuver ('attack'/'defend') is a stance word with no stance row: the
+  // registry's get() throws for it, so an unknown id takes the words-only path.
+  const row = (typeof source?.has === 'function' ? (source.has(id) ? source.get(id) : null) : source?.get?.(id)) || null;
   const withWords = kind === 'status'
     ? registries.frameworkTerms.withStatusWords
     : registries.frameworkTerms.withStanceWords;
