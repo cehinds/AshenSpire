@@ -1704,9 +1704,9 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-level-summary { margin: 0 0 .6rem; color: #a7d9ff; font-variant-numeric: tabular-nums; }
 .reward-door .reward-skill-summary + .reward-skill-summary { margin-top: 1.2rem; }
 .reward-door .reward-skill-meter { height: .4rem; background: var(--line); border-radius: .2rem; overflow: hidden; margin-bottom: .65rem; }
-.reward-door .reward-skill-fill { display: block; height: 100%; background: #75bfff; animation: reward-skill-fill .7s ease-out; }
+.reward-door .reward-skill-fill { display: block; height: 100%; background: var(--frost); animation: reward-skill-fill .7s ease-out; }
 .reward-door .reward-skill-effects { color: var(--text); font-variant-numeric: tabular-nums; }
-.reward-door .reward-skill-next { margin: .5rem 0 0; color: var(--muted); font-size: .9rem; }
+.reward-door .reward-skill-next { margin: .5rem 0 0; color: var(--muted); }
 @keyframes reward-skill-fill { from { width: var(--skill-before); } }
 .reduced-motion .reward-skill-fill { animation: none; }
 @media (prefers-reduced-motion: reduce) { .reward-skill-fill { animation: none; } }

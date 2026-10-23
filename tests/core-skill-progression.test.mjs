@@ -296,6 +296,26 @@ test('mastery summaries report only newly available authored unlocks and preserv
   assert.deepEqual(skillLevelNotices(scoped, [award], { run, beforeState: veteran })[0].effects.changes, [], 'already unlocked rows are not newly awarded');
 });
 
+test('shared schools count simultaneous gains once and skip rounded multihit non-benefits', () => {
+  const source = createRegistries(contentBundle);
+  const run = createRunState({ registries: source, seed: 511, classId: 'reaver' });
+  run.deck = [{ cardId: 'twinPrick', instanceId: 'two-hits' }];
+  run.sideboard = [];
+  run.skills['item:blade'] = { level: 4 };
+  run.skills.dualWield = { level: 5 };
+  const waiting = skillLevelNotices(source, [{ skillId: 'item:blade', before: 3, after: 4, levelUps: 1 }], { run })[0].effects;
+  assert.equal(waiting.nextMilestone.level, 10, 'level 5 is absorbed by existing per-hit rounding');
+  run.skills['item:blade'].level = 5;
+  const rounded = skillLevelNotices(source, [{ skillId: 'item:blade', before: 4, after: 5, levelUps: 1 }], { run })[0].effects;
+  assert.deepEqual(rounded.changes, [], 'a larger stamped flat is not itself a card-number benefit');
+  run.deck = [{ cardId: 'gorefireSlash', instanceId: 'one-hit' }];
+  const both = skillLevelNotices(source, [
+    { skillId: 'item:blade', before: 4, after: 5, levelUps: 1 },
+    { skillId: 'dualWield', before: 4, after: 5, levelUps: 1 },
+  ], { run });
+  assert.deepEqual(both.map(row => row.effects.changes.map(change => [change.before, change.after])), [[[9, 10]], [[10, 11]]]);
+});
+
 test('actual main defeat settlement persists earned weapon notice, resumes once, then finishes the loss', async () => {
   const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   const body = (start, end) => source.slice(source.indexOf(start), source.indexOf(end, source.indexOf(start)));
