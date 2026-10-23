@@ -504,3 +504,8 @@
 :root .combat[data-layout='formation'] > .combat-floater-layer {
   position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 800;
 }
+
+/* Lite: one drop-shadow instead of three on the selected combatant's sprite. */
+:root[data-performance='lite'] .combat[data-layout='formation'] .combatant.context-selected .sprite {
+  filter: drop-shadow(0 0 2px var(--combatant-highlight));
+}

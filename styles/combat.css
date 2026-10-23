@@ -1056,6 +1056,8 @@
 /* Finite feedback uses opacity/light, preserving the hand fan and hit boxes. */
 .hand .card.card-drawn { animation: card-arrive 240ms ease-out; }
 @keyframes card-arrive { from { opacity: 0.35; filter: brightness(1.6); } to { opacity: 1; filter: none; } }
+@keyframes card-arrive-lite { from { opacity: 0.35; } to { opacity: 1; } }
+:root[data-performance='lite'] .hand .card.card-drawn { animation-name: card-arrive-lite; }
 .combat .pile.spent.pile-received { animation: pile-receive 320ms ease-out; }
 @keyframes pile-receive { 35% { box-shadow: inset 0 0 16px var(--gold); } }
 .combat .pile.spent[data-card-outcome="exhaust"] { border-bottom-color: var(--ember); }
