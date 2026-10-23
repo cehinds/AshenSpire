@@ -138,6 +138,42 @@ test('native enemy reaction pays on enqueue, retains payment if it fizzles, and 
   }
 });
 
+test('a native ranged enemy reaction pays base and Advance before its stacked event and never pays twice after restore', () => {
+  const combat = fight('gildedKnight'), enemy = combat.enemies[0];
+  combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 1;
+  const move = registries.enemies.get(enemy.enemyId).moves.gildedGuard;
+  const quote = enemyMoveQuote(move, { enemy, moveId: 'gildedGuard', combat });
+  assert.deepEqual([quote.sp, quote.advanceSp, quote.totalSp], [1, 1, 2]);
+  const before = enemy.stamina, observed = [];
+  // dispatch runs on a transactional candidate. Observe the real event seam
+  // there, before its state is copied back to the combat object.
+  const emit = combat._emitEvent;
+  combat._emitEvent = (ctx, type, event) => {
+    if (type === 'combatEnemyReactionStacked') {
+      const actor = ctx.enemies.find(row => row.id === event.sourceId);
+      observed.push({ stamina: actor.stamina, remaining: actor.fixCoreStaminaRemaining,
+        payment: structuredClone(ctx.reactionStack.entries.at(-1).spPayment) });
+    }
+    return emit(ctx, type, event);
+  };
+  const card = combat.piles.hand.find(row => row.cardId === 'core.strike');
+  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
+  assert.ok(observed.length > 0);
+  for (const state of observed) {
+    assert.equal(state.stamina, before - quote.totalSp, 'the full quote is paid before the stacked event');
+    assert.equal(state.remaining, state.stamina);
+    assert.deepEqual(state.payment, { sp: quote.sp, advanceSp: quote.advanceSp, totalSp: quote.totalSp });
+  }
+  assert.ok(combat.pendingReaction);
+  const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(511, combat.rng.getCounters()), snapshot });
+  settle(combat); settle(restored);
+  assert.equal(combat.enemies[0].stamina, before - quote.totalSp);
+  assert.equal(restored.enemies[0].stamina, combat.enemies[0].stamina);
+  assert.deepEqual(restored.enemies[0].performedMoves, combat.enemies[0].performedMoves);
+  assert.deepEqual(restored.rng.getCounters(), combat.rng.getCounters());
+});
+
 test('an old active fight keeps its free enemy reaction and charge-time payment behavior', () => {
   const combat = fight('gildedKnight'), enemy = combat.enemies[0];
   delete combat.core2ActionRulesVersion;
