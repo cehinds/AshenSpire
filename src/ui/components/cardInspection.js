@@ -347,8 +347,18 @@ export function openCardInspection({ title, card, details, opener, actions = nul
   return shell;
 }
 
+// Hosts can expose a visible Inspect action without simulating the face's
+// Information button. The renderer owns the reading; opening it owns no choice.
+const boundInspections = new WeakMap();
+export function openBoundCardInspection(card, opener = card) {
+  const open = boundInspections.get(card);
+  if (!card?.isConnected || !open) return false;
+  return open(opener);
+}
+
 /** Information owns only its own button; action/hold/drag handlers stay on hosts. */
 export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false, actionOwnsTouch = false, identity: givenIdentity = null }) {
+  boundInspections.set(card, open);
   card.style.userSelect = 'none';
   card.classList.add('card-inspection-target');
   if (!card.hasAttribute('tabindex')) card.tabIndex = 0;
