@@ -1260,8 +1260,36 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const intentTop = intentFieldBox.top + dy;
         if (sharesColumns && intentTop < ribbonFloor) dy += ribbonFloor - intentTop;
       }
-      return { leadingHost, dx, dy, footerShiftX, frame };
+      return { leadingHost, dx, dy, footerShiftX, frame, intent, selected };
     });
+    // Classic compact intents can be wider than the old fixed badge. Reuse
+    // the measured overhead packer after the HP alignment above; move only
+    // unselected reading controls, preserving selected controls and artwork.
+    if (classicAppearance()) {
+      const compactMoves = intentMoves.filter(move => move && !move.selected);
+      const controls = compactMoves.map(move => {
+        const box = move.intent.getBoundingClientRect();
+        return { id: move.frame.dataset.eid, side: 'enemy', x: box.left + box.width / 2 - fieldRect.left + move.dx * zoom,
+          width: box.width, top: box.top - fieldRect.top + move.dy * zoom,
+          bottom: box.bottom - fieldRect.top + move.dy * zoom };
+      });
+      const header = combat.querySelector(':scope > .combat-hud')?.getBoundingClientRect();
+      const obstacles = [...combat.querySelectorAll('.turn-ribbon, .combat-health-row, .combatant-info, .player .combatant-leading, .enemy.context-selected .intent')]
+        .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean)
+        .map(box => ({ left: box.left - fieldRect.left, right: box.right - fieldRect.left,
+          top: box.top - fieldRect.top, bottom: box.bottom - fieldRect.top }));
+      const anchors = combatOverheadAnchors({ width: fieldRect.width, controls,
+        height: Math.min(fieldRect.height, (readRestingHand()?.clearanceTop ?? fieldRect.bottom) - fieldRect.top),
+        ribbon: { left: 0, right: fieldRect.width, top: -Infinity,
+          bottom: Math.max(0, (header?.bottom ?? fieldRect.top) - fieldRect.top) },
+        ribbonClearance: 6, obstacles });
+      for (const move of compactMoves) {
+        const control = controls.find(source => source.id === move.frame.dataset.eid);
+        const anchor = anchors.find(source => source.id === control.id);
+        move.dx += (anchor.x - control.x) / zoom;
+        move.dy += (anchor.offsetY ?? 0) / zoom;
+      }
+    }
     for (const move of intentMoves) {
       if (!move || (Math.abs(move.dx) < 0.01 && Math.abs(move.dy) < 0.01)) continue;
       const { leadingHost, dx, dy, footerShiftX, frame } = move;
