@@ -15,7 +15,7 @@ for (const classId of ['reaver','rogue','starseer','herald']) test(`${classId} e
   assert.deepEqual(unlimitedCardIds(run), []);
   assert.throws(() => addBasicCard(reg, run, 'core.strike', { plain: true }), /not an unlimited card id/);
   assert.equal(run.deck.length, 0);
-  if (!['starseer','herald'].includes(classId)) assert.equal(deckCopyLimit(reg, 'core.strike', {}, run), Infinity);
+  assert.equal(deckCopyLimit(reg, 'core.strike', {}, run), 0, 'an uncollected card cannot be minted even with the right Adept');
   const special = profile.content.classes.find(c=>c.id===classId).specialCardId;
   run.sideboard.push({instanceId:'owned',cardId:special,rank:2});
   assert.equal(moveFromSideboard(reg,run,'owned'),true);

@@ -1,4 +1,5 @@
 import { spendClassRewardItem } from './classRewardProvenance.js';
+import { recordCollectedCards } from './collectedCards.js';
 // Permanent deck removal retires a basic attack slot, not its current weapon face.
 export function retiredAttackSlots(count, ids = []) {
   if (!Array.isArray(ids) || new Set(ids).size !== ids.length
@@ -91,6 +92,7 @@ export function removeDeckCard(run, instanceId, { keepOne = false } = {}) {
     run.removedAttackSlotIds = [...retired];
   }
   spendClassRewardItem(run,'cards',card.instanceId,'removed');
+  recordCollectedCards(run);
   run.deck.splice(index, 1);
   return true;
 }

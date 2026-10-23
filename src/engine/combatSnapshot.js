@@ -59,6 +59,7 @@ export function serializeCombatSnapshot(combat) {
   if (formationErrors.length) throw new Error(formationErrors.join('; '));
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
+    ...(combat.core2ActionRulesVersion !== undefined ? { core2ActionRulesVersion: combat.core2ActionRulesVersion } : {}),
     ...(combat.fixCoreRules ? {fixCoreRules:validateFixCoreRules(combat.fixCoreRules)} : {}),
     ...(combat.rangeState !== undefined ? { rangeState: combat.rangeState } : {}),
     ...(combat.formationPolicy ? { formationPolicy: combat.formationPolicy } : {}),
@@ -184,6 +185,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   for(const enemy of saved.enemies) {const errors=enemyBurdenProblems(enemy,registries);if(errors.length)throw new Error(`Malformed enemy burden: ${errors.join('; ')}`);}
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
+    ...(saved.core2ActionRulesVersion !== undefined ? { core2ActionRulesVersion: saved.core2ActionRulesVersion } : {}),
     ...(saved.fixCoreRules ? {fixCoreRules:validateFixCoreRules(saved.fixCoreRules)} : {}),    ...(saved.gameProfile ? { gameProfile: pinGameProfileCopy(saved.gameProfile, freezeProfile), gameProfileCommands: saved.gameProfileCommands || 0, gameProfileInterrupts: saved.gameProfileInterrupts || {} } : {}),
     registries,
     rng,

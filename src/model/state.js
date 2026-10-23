@@ -1,6 +1,7 @@
 import { gameProfileEffectiveAttributes } from './gameProfileGear.js';
 import { validateVerifiedProfile as validateResolvedGameProfile } from './verifiedProfiles.js';
 import { gameModule, gameContent } from './gameProfile.js';
+import { recordCollectedCards, collectedCardProblems } from './collectedCards.js';
 import { isConfiguredRun, gameProfileAttributes, gameProfileClassAvailable, gameProfileStatOptions, initializeGameProfileRun } from './gameProfileRun.js';
 import { startingAbilityRefs } from './startingAbilities.js';
 import { coopProgressionProblems } from './coopProgression.js';
@@ -695,6 +696,7 @@ export function initializeRunDerivedStats(run, registries, {
  * are allowed through untouched — this is a floor, not a whitelist.
  */
 export const RUN_SHAPE = [
+  { key: 'collectedCardIds', type: 'array', optional: true },
   { key: 'gameProfile', type: 'object', optional: true },
   { key: 'rangePolicy', type: 'object', optional: true },
   { key: 'runId', type: 'string', optional: true },
@@ -866,6 +868,7 @@ export { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones };
  * phase 3b, nothing else may write these two fields.
  */
 export function syncZones(run) {
+  recordCollectedCards(run);
   const next = projectZones(run);
   const changed = JSON.stringify({ z: run.zones, c: run.collection }) !== JSON.stringify({ z: next.zones, c: next.collection });
   // Write only on change: a save whose projection is current serializes the
@@ -1120,6 +1123,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     }
     if (!typeOk(v, f.type)) problems.push(`'${f.key}' should be ${f.type}`);
   }
+  problems.push(...collectedCardProblems(run));
   const modeAbsent = run.attributeMode === undefined;
   const attributesAbsent = run.attributes === undefined;
   if (modeAbsent !== attributesAbsent) problems.push('attributeMode and attributes must both be present or both be absent');

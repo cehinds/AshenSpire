@@ -1,4 +1,5 @@
 import { validateFixCoreRules, normalizeFixCoreRules } from './fixCoreMechanics.js';
+import { enemySpPaymentValid } from './core2ActionPolicy.js';
 import { enemyBurdenProblems } from '../engine/enemyBurdens.js';
 import { validateZoneEffect } from '../engine/cardZones.js';
 import { validateGameProfileSnapshot, projectGameCard } from './gameProfile.js';
@@ -44,6 +45,7 @@ function nonEmptyString(value) {
 function entityProblems(entity, path, { player = false } = {}) {
   const problems = [];
   if (!record(entity)) return [`${path} must be an object`];
+  if (entity.pendingMove?.spPayment !== undefined && !enemySpPaymentValid(entity.pendingMove.spPayment)) problems.push(`${path}.pendingMove.spPayment must be a valid committed SP payment`);
   if (entity.reactionsEnabled !== undefined && typeof entity.reactionsEnabled !== 'boolean') problems.push(`${path}.reactionsEnabled must be boolean`);
   if (entity.combatCounter !== undefined) problems.push(...combatCounterProblems(entity.combatCounter, `${path}.combatCounter`));
   if (entity.combatTraitGuard !== undefined) problems.push(...combatTraitGuardProblems(entity.combatTraitGuard, `${path}.combatTraitGuard`));
@@ -123,6 +125,7 @@ function cardProblems(card, path) {
 export function combatSnapshotProblems(snapshot) {
   if (!record(snapshot)) return ['snapshot must be an object'];
   const problems = [];
+  if (snapshot.core2ActionRulesVersion !== undefined && snapshot.core2ActionRulesVersion !== 1) problems.push('snapshot.core2ActionRulesVersion must be 1 when present');
   if (snapshot.gameProfile !== undefined) {
     try { validateGameProfileSnapshot(snapshot.gameProfile); } catch (error) { problems.push(`gameProfile: ${error.message}`); }
     if (!Number.isInteger(snapshot.gameProfileCommands) || snapshot.gameProfileCommands < 0) problems.push('gameProfileCommands must be a nonnegative integer');

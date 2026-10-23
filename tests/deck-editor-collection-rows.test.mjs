@@ -59,8 +59,10 @@ test('the ten-card core starter retains owned counts and exposes trained basics'
   assert.equal(run.deck.length, 10);
   assert.deepEqual(rows().filter(row => row.inDeck > 0).map(row => row.cardId).sort(), [...new Set(run.deck.map(card => card.cardId))].sort());
   assert.equal(rows().reduce((sum, row) => sum + row.inDeck, 0), 10);
-  // Owner ruling 2026-10-19: only owned cards are listed; the Reaver owns no Evade or Draw.
-  assert.equal(rows().find(row => row.cardId === 'core.strike').owned, 4);
+  // Owner ruling 2026-10-23: collected Basics are unlimited under Martial
+  // Adept; uncollected cards remain hidden and actual deck counts stay exact.
+  assert.equal(rows().find(row => row.cardId === 'core.strike').owned, Infinity);
+  assert.equal(rows().find(row => row.cardId === 'core.strike').inDeck, 4);
   assert.equal(rows().some(row => row.cardId === 'core.evade'), false);
   assert.equal(rows().some(row => row.cardId === 'base.draw'), false);
 });
