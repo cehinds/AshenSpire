@@ -492,6 +492,9 @@
   60% { opacity: 0.5; }
   100% { transform: translate(26px, -92vh); opacity: 0; }
 }
+/* Lite: no looping glow or rising embers; one still frame of the glow. */
+:root[data-performance='lite'] .title-glow { animation: none; text-shadow: 0 0 43px color-mix(in srgb, var(--gold) 42%, transparent); }
+:root[data-performance='lite'] .ember { animation: none; display: none; }
 @container game-viewport (max-width: 480.0px) {
 
   .title-screen { padding: 1.2rem 0.8rem 1rem; }}

@@ -156,17 +156,13 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
   document.addEventListener('webkitfullscreenchange', onFullscreenChange);
   syncFullscreen(stack);
   syncMusic(stack, binding.settings);
-  // Fullscreen exit notifications are inconsistent in embedded and mobile
-  // browser shells. A cheap state read keeps the control truthful even when
-  // the platform drops that event; this interval owns no simulation state.
-  const fullscreenStatePoll = setInterval(() => syncFullscreen(stack), 2000);
+  // fullscreenchange / webkitfullscreenchange (bound above) keep the control truthful; no polling.
 
   const detachObserver = new MutationObserver(() => {
     if (!stack.isConnected) release();
   });
   const release = () => {
     detachObserver.disconnect();
-    clearInterval(fullscreenStatePoll);
     clearTimeout(noticeTimer);
     fullscreenSyncTimers.forEach(clearTimeout);
     fullscreenSyncTimers.clear();

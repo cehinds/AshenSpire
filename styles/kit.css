@@ -776,6 +776,7 @@ input[type="range"] { min-height: var(--tap-floor); }
 .rebind-ctl .as-keycap { min-width: 4.4rem; min-height: var(--tap-floor); padding-inline: 0.8rem; font-size: 1.2rem; color: var(--gold); }
 .rebind-ctl .rebind-btn { padding-inline: 1.2rem; }
 .rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.9s ease-in-out infinite alternate; }
+:root[data-performance='lite'] .rebind-btn.listening { animation: none; box-shadow: 0 0 14px color-mix(in srgb, var(--gold) 55%, transparent); }
 .pad-live { color: var(--green); }
 .pad-off { color: var(--muted); }
 .controls-pane { padding: 0; }
@@ -854,6 +855,11 @@ input[type="range"] { min-height: var(--tap-floor); }
     inset 0 0 0 5px color-mix(in srgb, var(--green) 45%, #695334);
 }
 .card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
+/* Lite: filters force an offscreen pass per card. Selection is a ring, unaffordable a flat dim; no filter on either. */
+:root[data-performance='lite'] .card.selected, :root[data-performance='lite'] .card[data-selected="true"], :root[data-performance='lite'] .as-card[data-selected="true"] {
+  filter: none; box-shadow: 0 0 0 2px var(--gold), 0 0 12px color-mix(in srgb, var(--gold) 55%, transparent);
+}
+:root[data-performance='lite'] .card.unaffordable:not(.illustrated-card) { filter: none; opacity: 0.6; }
 .card[data-small="true"] { transform: scale(0.92); }
 /* CostMedallion — top-left, outside the frame, the only element allowed to break the edge. */
 .card .card-costs { display: contents; }
@@ -2356,6 +2362,8 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   background: var(--ember); box-shadow: 0 0 0.55rem rgba(201, 80, 46, 0.55); opacity: 0;
   animation: startupAshRise var(--ash-duration) linear var(--ash-delay) infinite;
 }
+/* Lite: the rising ash is decoration only; hide it. */
+:root[data-performance='lite'] .startup-ash-field { display: none; }
 @keyframes startupAshRise {
   0% { transform: translate3d(0, 0, 0); opacity: 0; }
   14% { opacity: 0.62; }
@@ -2604,6 +2612,8 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .as-meter.skinny { --meter-h: 4px; }
 .as-meter.skinny > .m-plate { display: none; }
 .as-meter.pulse .m-fill { animation: pulse-gold 600ms infinite alternate; }
+/* Lite: pulse-gold animates box-shadow (paint every frame); show one still glow. */
+:root[data-performance='lite'] .as-meter.pulse .m-fill { animation: none; box-shadow: 0 0 14px color-mix(in srgb, var(--gold) 55%, transparent); }
 .reduced-motion .as-meter.pulse .m-fill { animation: none; }
 /* A dashed rim says "this length is the floor, not the data". */
 .as-meter .m-track[data-floored="1"] { box-shadow: none; border: 1px dashed var(--line-soft); }

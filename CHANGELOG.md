@@ -34,6 +34,12 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-23
 
+- **Faster on phones: instant loading screen, quicker boot and combat** ([#2266](https://github.com/cehinds/AshenSpire/pull/2266), `0.7.1.1792`). The game shows a loading screen the moment the page opens instead of a blank page, reaches the title sooner, and repaints combat less on every play and enemy turn. Lite mode skips costly glow, shadow and blend effects.
+
+- **Smaller desktop cards and sharper scenery** ([#2264](https://github.com/cehinds/AshenSpire/pull/2264), `0.7.1.1790`). Desktop combat cards are slightly smaller and the arena sits lower. Reviewed backgrounds retain more detail on desktop, while Light quality, phones and tablets keep their smaller artwork. Auto still respects Data Saver, small screens and low-memory devices.
+
+- **Core adept and enemy SP rules** ([#2263](https://github.com/cehinds/AshenSpire/pull/2263), `0.7.1.1788`). Defines collected-card copies for Martial and Magic Adept, matching-stance SP and MP discounts, and affordable enemy multi-hit, charge and reaction costs. Existing active battles retain accepted prices. This specifies the rule changes; implementation follows.
+
 - **Inspect rewards and see actual gains** ([#2260](https://github.com/cehinds/AshenSpire/pull/2260), `0.7.1.1786`). Reward offers provide Inspect for full details before taking an item. Skill-level notices show actual card-value changes and unlocks, or say when a level grants no stat bonus or unlock, with animated level progress that respects reduced motion. Saved notices resume without paying XP again. Combat buff labels show the stacks actually gained, including refreshes and caps, instead of the total already held.
 
 - **Smaller stance bonuses and clearer cards** ([#2254](https://github.com/cehinds/AshenSpire/pull/2254), `0.7.1.1784`). Core Smash against defensive stances uses 1.25× instead of 2×. Class selection displays graphical icons while code keeps readable names. Card rules shrink to fit a fixed box, and Counter reads Gain Block and Counter with their values. Mixed reward cards and their buttons share consistent dimensions. Core Victory restores class and used-weapon XP bars before rewards, preserving slow progression and saved receipts.
