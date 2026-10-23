@@ -923,7 +923,7 @@ let inlinedAssets = 0;
 let inlinedAssetBytes = 0;
 
 function inlineCssUrls(css, cssAbs) {
-  return css.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (whole, _q, ref) => {
+  return stripCssComments(css).replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (whole, _q, ref) => {
     if (/^(data:|https?:|\/\/)/i.test(ref)) return whole;
     const assetAbs = resolve(dirname(cssAbs), ref.split('?')[0].split('#')[0]);
     const ext = extname(assetAbs).toLowerCase();
@@ -969,7 +969,7 @@ function inlineCssUrls(css, cssAbs) {
 const styleBlocks = cssHrefs.map((href) => {
   const cssAbs = resolve(ROOT, href);
   if (!existsSync(cssAbs)) fail('stylesheet not found: ' + href);
-  const css = EXTERNAL_ART ? externalStyles.get(href) : inlineCssUrls(stripCssComments(readText(cssAbs)), cssAbs);
+  const css = EXTERNAL_ART ? externalStyles.get(href) : inlineCssUrls(readText(cssAbs), cssAbs);
   return `  <style data-src="${href}">\n${css}\n  </style>`;
 });
 
