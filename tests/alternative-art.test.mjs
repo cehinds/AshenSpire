@@ -124,11 +124,14 @@ test('smaller exports preserve the original crop registration and scene resoluti
     assert(width<=256 && height<=256,id);
   }
   for(const [id,art] of Object.entries(catalog.sceneLayers)) {
-    for(const path of [art.path,art.mobilePath]) {
-      const {width,height}=webpDimensions(readFileSync(new URL('../'+path,import.meta.url)));
-      assert.deepEqual([width,height],art.size,id);
-      assert(width<=256 && height<=256,id);
-    }
+    const desktop=webpDimensions(readFileSync(new URL('../'+art.path,import.meta.url)));
+    const phone=webpDimensions(readFileSync(new URL('../'+art.mobilePath,import.meta.url)));
+    assert.deepEqual([desktop.width,desktop.height],art.size,id);
+    assert.deepEqual([phone.width,phone.height],art.mobileSize || art.size,id);
+    assert(desktop.width<=1280 && desktop.height<=720,id);
+    assert(phone.width<=256 && phone.height<=256,id);
+    const source=catalog.sources['scene-'+id];
+    assert(desktop.width<=source.size[0] && desktop.height<=source.size[1],id);
   }
   for(const art of Object.values(catalog.sprites)) {
     assert.equal(catalog.hashes[art.path.split('/').pop()],catalog.hashes[art.mobilePath.split('/').pop()]);

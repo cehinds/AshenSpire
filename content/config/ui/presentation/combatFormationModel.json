@@ -46,7 +46,7 @@
         "playerTop": 0.68,
         "playerRowHeight": 0.26,
         "skew": 0.95,
-        "top": 0.52,
+        "top": 0.56,
         "rowHeight": 0.11
       },
       "narrow": {
@@ -184,7 +184,7 @@
           "playerTop": 0.68,
           "playerRowHeight": 0.26,
           "skew": 0.95,
-          "top": 0.52,
+          "top": 0.56,
           "rowHeight": 0.11
         }
       },
