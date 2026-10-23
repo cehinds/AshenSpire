@@ -96,6 +96,7 @@ export function mountRewards(app, {
   registries, run, rewards, onDone, saves = null, rng = null,
   onCollectArmament = null, onPersist = null, checkpoint = null,
   onClaimLevel = null, onClaimSkill = null, onAllocateStat = null, onClaimClassReward = null,
+  receiptOnly = false,
 }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
@@ -147,6 +148,7 @@ export function mountRewards(app, {
   const readyTrack = (row) => xpAnimationDone && !refill && !row.capped && (row.id === 'character'
     ? !!onClaimLevel && pendingLevelCount(registries, run) > 0
     : !!onClaimSkill && pendingSkillLevelCount(registries, run, row.id) > 0);
+  let receiptContinued = false;
   let claimBonusStarts = {};
   let claimedLevels = checkpoint?.levelClaims || 0;
   const claimedSkills = { ...(checkpoint?.skillClaims || {}) };
@@ -942,7 +944,16 @@ export function mountRewards(app, {
     // The action is registered in secondbeat's enumerable table, so native
     // keyboard/gamepad presses enter the same shared armPress door as pointer
     // and touch; the configured dial remains the one duration authority.
-    beatArmer(meta, registries)(cont, 'rewardContinue', {
+    if (receiptOnly) cont.addEventListener('click', () => {
+      if (receiptContinued || !xpAnimationDone || refill) return;
+      receiptContinued = true;
+      try { finish(); }
+      catch (error) {
+        receiptContinued = false;
+        note.textContent = error.message;
+      }
+    });
+    else beatArmer(meta, registries)(cont, 'rewardContinue', {
       question: t('reward.leave.question'),
       confirmLabel: t('reward.leave.confirm'),
       onConfirm: finish,
@@ -1009,6 +1020,7 @@ export function mountRewards(app, {
 
   // The menu's foot note: what Continue does from here.
   function holdNote() {
+    if (receiptOnly) return "Experience earned in this battle.";
     const pending = plan.rows.filter((r) => !states[r.key] && !r.blockedBy);
     const levelsPending = Boolean((progress?.character && pendingLevelCount(registries, run) > 0)
       || progress?.skills.some(row => pendingSkillLevelCount(registries, run, row.id) > 0)
@@ -1620,7 +1632,8 @@ export function mountRewards(app, {
 
   sfx.play('victory');
   grantCinders();
-  if (checkpoint?.expanded) expandVictory();
+  if (receiptOnly) renderMenu();
+  else if (checkpoint?.expanded) expandVictory();
   else if (!checkpoint?.source || !rewards.xpGains) renderMenu();
   else renderCompactVictory();
 }
