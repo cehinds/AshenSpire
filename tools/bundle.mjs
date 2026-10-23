@@ -24,6 +24,7 @@ import { MOBILE_ASSET_DIR, distinctAssetId } from './mobileart-policy.mjs';
 import { headMetaTags } from './head-meta.mjs';
 import { writePacks, inBuildOrDist, objectPath } from './asset-pack.mjs';
 import { artDir, artPath, treeOf } from './art-source.mjs';
+import { stripCssComments } from './css-strip.mjs';
 import { externalizeCss, newTemplate, templateValue, slotIds } from './asset-css.mjs';
 import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_HIGH, EDITION_LIGHT } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname } from 'node:path';
@@ -688,7 +689,7 @@ if (EXTERNAL_ART) {
       const cssAbs = resolve(ROOT, href);
       if (!existsSync(cssAbs)) fail('stylesheet not found: ' + href);
       try {
-        externalStyles.set(href, externalizeCss(readText(cssAbs), { idFor: idFor(cssAbs), inlineData, template }));
+        externalStyles.set(href, externalizeCss(stripCssComments(readText(cssAbs)), { idFor: idFor(cssAbs), inlineData, template }));
       } catch (e) {
         fail(`${href}: ${e.message}`);
       }
@@ -968,7 +969,7 @@ function inlineCssUrls(css, cssAbs) {
 const styleBlocks = cssHrefs.map((href) => {
   const cssAbs = resolve(ROOT, href);
   if (!existsSync(cssAbs)) fail('stylesheet not found: ' + href);
-  const css = EXTERNAL_ART ? externalStyles.get(href) : inlineCssUrls(readText(cssAbs), cssAbs);
+  const css = EXTERNAL_ART ? externalStyles.get(href) : inlineCssUrls(stripCssComments(readText(cssAbs)), cssAbs);
   return `  <style data-src="${href}">\n${css}\n  </style>`;
 });
 
