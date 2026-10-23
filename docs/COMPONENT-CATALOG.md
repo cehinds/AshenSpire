@@ -430,7 +430,7 @@ The interactive reference catalog's detail drawer links to the same specimens.
 | `character-disclosure` | disclosure entries | `disclosure.mountDisclosure` | Character Creation + catalog |
 | `class-preview-pane` | class preview presentation | `creationCards.classPreviewPane` + `classUnfold` | Class preview + catalog; compact contained sprite and icon beside class details. Native stat and relic buttons open shared modal details through `creationPreviewDetails`; stat definition and value precede the projected calculation at the bottom. |
 | `class-resource-grid` | `statProjection.derived[]` + hand resource rows | `creationCards.classResourceGrid` | Class preview + catalog; HP, SP, MP, opening Hand and Draw. Optional inspection callback renders native buttons with full accessible names. |
-| `class-choice-card` | class row + selected/locked/expanded state | `creationCards.classChoiceCard` | Class selection + catalog; folded choices are buttons, the expanded selected card is a labelled article so its detail buttons have no interactive ancestor. |
+| `class-choice-card` | class row + selected/locked/expanded state | `creationCards.classChoiceCard` | Class selection + catalog; named visual IDs resolve to the existing engraved icon masks. Folded choices are buttons, the expanded selected card is a labelled article so its detail buttons have no interactive ancestor. |
 | `view-mode-toggle` | view-mode state | `creationCards.viewModeToggle` | Class/Equipment + catalog |
 | `boolean-setting-toggle` | boolean setting state | `creationCards.booleanSettingToggle` | Auto-advance + future settings |
 | `selection-section-face` | label/value/visual receipt | `creationCards.selectionSectionFace` | Equipment disclosures + catalog |
