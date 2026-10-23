@@ -77,11 +77,17 @@ export function wireCombatLayout(combatEl) {
   function apply() {
     frame = 0;
     if (!combatEl.isConnected) { release(); return; }
-    const zoom = combatEl.getBoundingClientRect().width / combatEl.clientWidth || 1;
+    // Every box this pass needs is read here, before the first write: a read after
+    // the custom-property writes below forces a style and layout flush (one 149 ms
+    // recalc on a phone profile at the footer host's clientWidth).
+    const clientWidth = combatEl.clientWidth, clientHeight = combatEl.clientHeight;
+    const zoom = combatEl.getBoundingClientRect().width / clientWidth || 1;
+    const host = row ? row.parentElement || combatEl : null;
+    const hostWidth = host ? host.clientWidth - inlinePadding(host) : 0;
     const rem = Math.max(16 / zoom, parseFloat(layoutMetrics().fontSize) || 16);
     // The plan gets the width between the safe-area insets, so the rails and
     // the hand they wrap stay clear of a notch.
-    const width = combatEl.clientWidth - inlinePadding(handArea);
+    const width = clientWidth - inlinePadding(handArea);
     // The HUD form factor main.js writes to <html> (widescreen | mobile | tablet
     // | desktop). The plan reads it; it is mirrored on the combat root for CSS.
     const formFactor = document.documentElement.dataset.formFactor || null;
@@ -94,7 +100,7 @@ export function wireCombatLayout(combatEl) {
       combatEl.style.setProperty('--desktop-header-left-width', Math.max(0, width / 2 - ribbonWidth / 2 - 32 / zoom) + 'px');
     }
     if (split && row && handArea) {
-      const plan = desktopFooterLayout({ width: combatEl.clientWidth, height: combatEl.clientHeight, zoom });
+      const plan = desktopFooterLayout({ width: clientWidth, height: clientHeight, zoom });
       const areaTop = (handArea.getBoundingClientRect().top - combatEl.getBoundingClientRect().top) / zoom;
       for (const [name, value] of Object.entries({ 'area-top': areaTop, 'hand-top': plan.handTop - areaTop, 'hand-height': plan.handHeight, 'background-top': plan.backgroundTop - areaTop, 'background-fade-height': plan.backgroundFadeHeight, 'tools-top': plan.toolsTop, 'corner-inset': plan.corner, 'end-art-width': plan.endArtWidth, 'end-art-height': plan.endArtHeight })) combatEl.style.setProperty('--desktop-' + name, value + 'px');
       const selectors = { sp: '.energy-orb', draw: '.draw', end: '.end-turn', discard: '.spent', potions: '.combat-potions' };
@@ -105,10 +111,10 @@ export function wireCombatLayout(combatEl) {
     }
     const compact = width * zoom <= uiConfig.scenes.w4a.sizing.compactCombat.maxWidthPx;
     combatEl.dataset.compactCombat = String(compact);
-    const allocatedBands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem, compact, footerArtPx: footerArtHeight(width, zoom, formFactor) * zoom });
+    const allocatedBands = allocateCombatBands({ width, height: clientHeight, zoom, rem, compact, footerArtPx: footerArtHeight(width, zoom, formFactor) * zoom });
     // Mobile gives the original controls a shallow dock; the freed height
     // returns to the battlefield rather than an opaque hand backing.
-    const footer = formFactor === 'mobile' ? Math.max(76 / zoom, Math.min(84 / zoom, combatEl.clientHeight * .095)) : allocatedBands.footer;
+    const footer = formFactor === 'mobile' ? Math.max(76 / zoom, Math.min(84 / zoom, clientHeight * .095)) : allocatedBands.footer;
     const bands = { ...allocatedBands, footer, battlefield: allocatedBands.battlefield + allocatedBands.footer - footer };
     // The W4 parent's bands (kit.css, shared with the quest dialogue): the
     // battlefield is the scene band, the grid's flexible row; the hand is the
@@ -145,8 +151,7 @@ export function wireCombatLayout(combatEl) {
     row.style.setProperty('--footer-art-width', footerArtWidth(width, zoom, formFactor) + 'px');
     // Measure the band's host, not the row: the row's own width is what this
     // plan sets, and a pre-plan cap on it would otherwise feed back.
-    const host = row.parentElement || combatEl;
-    const packedFooter = bands.rails || packCombatFooter({ width: host.clientWidth - inlinePadding(host), height: bands.footer, zoom, rem });
+    const packedFooter = bands.rails || packCombatFooter({ width: hostWidth, height: bands.footer, zoom, rem });
     row.style.setProperty('--footer-gap', packedFooter.gap + 'px');
     row.style.setProperty('--footer-circle', packedFooter.diameter + 'px');
     row.style.setProperty('--footer-pile-width', packedFooter.pileWidth + 'px');
