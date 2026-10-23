@@ -1121,7 +1121,10 @@
 :root .combat:not(.coop) .combatant-card { width: max-content; }
 :root .combat:not(.coop) .combatant .sprite { flex: 0 0 auto; min-width: max-content; overflow: visible; }
 
-/* Normal encounters fit the viewport. Only four or more enemies may scroll. */
+/* Normal encounters fit the viewport. Only four or more enemies may scroll.
+   `data-wide-enemy-row` (set in combat.js renderEnemies) replaces the old
+   `.field:has(.enemy-row > .combatant:nth-child(4))`; it is repeated three times
+   because that :has() argument carried three classes of specificity. */
 @container game-viewport (max-width:640px) {
   /* The shared fitter still owns the row. Art may cross adjacent cells a
      little; scale only the figures so meters, labels and intent stay readable. */
@@ -1130,10 +1133,10 @@
   :root .combat:not(.coop) .combatant .meters { width:80px; }
   :root .combat:not(.coop) .combatant .sprite { width:80px; min-width:0; }
   :root .combat:not(.coop) .combatant .sprite > :first-child { flex-shrink:0; }
-  :root .combat:not(.coop) .field:not(:has(.enemy-row > .combatant:nth-child(4))) { overflow-x:clip; overflow-clip-margin:4px; }
-  :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) { overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
-  :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) .enemy-row { flex:0 0 auto; min-width:max-content; }
-  :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) .enemy-row > .combatant { min-width:calc(86px / var(--ui-zoom,1)); }
+  :root .combat:not(.coop) .field:not([data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true']) { overflow-x:clip; overflow-clip-margin:4px; }
+  :root .combat:not(.coop) .field[data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true'] { overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; }
+  :root .combat:not(.coop) .field[data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true'] .enemy-row { flex:0 0 auto; min-width:max-content; }
+  :root .combat:not(.coop) .field[data-wide-enemy-row='true'][data-wide-enemy-row='true'][data-wide-enemy-row='true'] .enemy-row > .combatant { min-width:calc(86px / var(--ui-zoom,1)); }
 }
 
 /* A hand card has one portrait profile; viewport changes never resize one axis
@@ -1192,12 +1195,12 @@
 
 /* Painted frames own their alpha-shaped glow; do not add the generic gold or
    white cast halo around their parent (which also contains HUD elements). */
-.sprite.act-move[data-action-motion="cast"]:has(.painted-stage),
-.sprite.act-move[data-action-motion="brace"]:has(.painted-stage) { animation-name: none; }
+.sprite.act-move[data-action-motion="cast"][data-painted-stage],
+.sprite.act-move[data-action-motion="brace"][data-painted-stage] { animation-name: none; }
 
 /* Selection reveals the same card without rebuilding or relocating the fan. */
 :root .combat:not(.coop) .hand .card.selected { transform: var(--card-fan-transform) !important; z-index: 100 !important; }
-:root .combat:not(.coop) .hand:has(.selected) .card:not(.selected):hover { transform: var(--card-fan-transform) !important; z-index: auto !important; }
+:root .combat:not(.coop) .hand[data-has-selection='true'] .card:not(.selected):hover { transform: var(--card-fan-transform) !important; z-index: auto !important; }
 .combat .hand .card.drag-source { opacity: .2; }
 .combat .combatant.player.skill-selected .sprite { filter: drop-shadow(0 0 .6rem var(--gold)); }
 .combat .hand .card { touch-action: none; }

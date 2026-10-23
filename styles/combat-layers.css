@@ -43,7 +43,7 @@
 :root .combat[data-layout='formation'] > .alternative-card-fade { z-index: var(--combat-layer-fade); }
 :root .combat[data-layout='formation'] .fx-layer { z-index: 400; }
 :root .combat[data-layout='formation'] .enemy-target-picker { z-index: var(--combat-layer-selection); }
-:root .combat[data-layout='formation']:has(> .environment-backdrop)::before {
+:root .combat[data-layout='formation'][data-has-backdrop~='environment']::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   z-index: var(--combat-layer-fade);
   background: linear-gradient(180deg, transparent 58%, #17130f 79%);
