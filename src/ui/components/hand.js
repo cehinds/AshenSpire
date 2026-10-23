@@ -111,6 +111,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   let previousCards = new Set();
   let handEls = []; // the rendered cards, in hand order (filled by render)
   let fanMeasurement = null;
+  let fanApplied = false; // a fan plan has been applied to the cards now in the strip
   let handFan = []; // each card's shipped fan transform, same index
   const renderedCards = new Map();
   let presentationOrder = [];
@@ -279,9 +280,14 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     presentationOrder = reconcileHandOrder(presentationOrder, cards.map(entry => entry.inst.instanceId));
     const entries = new Map(cards.map(entry => [entry.inst.instanceId, entry]));
     cards = presentationOrder.map(id => entries.get(id));
+    const n0 = handEls.length;
     const wanted = new Set(cards.map(entry => entry.inst.instanceId));
+    // Whether this pass changed anything the fan plan reads: a card made or
+    // dropped, or the order. A pure selection change keeps every element, so the
+    // plan (and its forced layout) is the one already applied.
+    let reshaped = !fanApplied || emptyHtml != null || n0 !== cards.length;
     for (const [id, record] of renderedCards) if (!reuseCards || emptyHtml != null || !wanted.has(id)) {
-      record.release?.(); record.el.remove(); renderedCards.delete(id);
+      record.release?.(); record.el.remove(); renderedCards.delete(id); reshaped = true;
     }
     const drawn = new Set(cards.filter(entry => !previousCards.has(entry.inst.instanceId)).map(entry => entry.inst.instanceId));
     previousCards = new Set(cards.map(entry => entry.inst.instanceId));
@@ -319,9 +325,10 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         record.el.classList.toggle('selected', !!entry.selected);
         setHandFaceBudget(record.el, !!entry.selected);
         record.el.classList.toggle('is-stacked', !!entry.stacked);
-        if (handEl.children[i] !== record.el) handEl.insertBefore(record.el, handEl.children[i] || null);
+        if (handEl.children[i] !== record.el) { handEl.insertBefore(record.el, handEl.children[i] || null); reshaped = true; }
         return;
       }
+      reshaped = true;
       // THE SURFACE HAS TO REACH THE DOOR, AND FOR ONE RELEASE IT DID NOT.
       // #1000 replaced the inspect door's inherited verb with a triple the
       // surface supplies: `surface` names the place, `availability` says
@@ -416,7 +423,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // Re-observing an unchanged card requests a fresh initial size delivery,
     // which used to schedule another fan and battlefield fit after every render.
     observeCards();
-    applyHandLayout();
+    if (reshaped) { applyHandLayout(); fanApplied = true; }
   }
 
   function teardown() {
