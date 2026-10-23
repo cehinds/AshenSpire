@@ -363,6 +363,8 @@ g.map-node:focus:not(:focus-visible) { outline: none; }
    tone — which is precisely what my first draft did, photographed: the map read
    as flat concrete. */
 .map-fog-ground image { opacity: 1; mix-blend-mode: soft-light; }
+/* Lite: no blend pass over the map; the plate reads as a plain, faint texture instead. */
+:root[data-performance='lite'] .map-fog-ground image { mix-blend-mode: normal; opacity: 0.12; }
 /* Three acts, three washes. Deliberately close to each other and to the panel
    colour — the ground is meant to read as "nothing legible here", not as a
    feature competing with the nodes drawn on top of it. */

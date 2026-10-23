@@ -30,7 +30,10 @@ export function createContentValidationCache(validate) {
   return (profile, configuration, configured) => {
     // Full values, including every profile lock and configuration key, define
     // identity. Unsupported/cyclic values are never allowed to hit the cache.
-    const key = valueKey([profile, configuration]);
+    // A frozen profile carrying its digest (a resolved snapshot) is identified by
+    // that digest, which covers every lock and module; anything else by value.
+    const identity = Object.isFrozen(profile) && typeof profile?.hash === 'string' ? { digest: profile.hash } : profile;
+    const key = valueKey([identity, configuration]);
     if (key !== null && key === previousKey) return structuredClone(previous);
     const projected = validate(profile, configuration, configured);
     if (key !== null && projected.result.ok && !projected.structuralProblems.length) {

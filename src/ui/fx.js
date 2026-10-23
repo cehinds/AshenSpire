@@ -760,6 +760,14 @@ function shake(combatEl, px = FIXED_SHAKE_PX) {
   if (now < shakeUntil && px < shakeNow) return;
   shakeStates.set(combatEl, { shakeUntil: now + SHAKE_MS, shakeNow: px });
   combatEl.style.setProperty('--shake-px', `${px}px`);
+  // The class stays on after the first shake, so a later one must restart the
+  // running or finished CSS animations. Doing that through the Web Animations API
+  // costs no style flush; the old remove / read offsetWidth / add restyled the
+  // whole combat tree synchronously (77-109 ms per play on a phone profile).
+  if (combatEl.classList.contains('shake') && typeof combatEl.getAnimations === 'function') {
+    const running = combatEl.getAnimations({ subtree: true }).filter(a => a.animationName === 'shake');
+    if (running.length) { for (const animation of running) animation.currentTime = 0; return; }
+  }
   combatEl.classList.remove('shake');
   void combatEl.offsetWidth; // restart animation
   combatEl.classList.add('shake');

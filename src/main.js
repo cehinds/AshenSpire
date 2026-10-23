@@ -196,32 +196,53 @@ import { dlog, failureBanner } from './ui/debuglog.js';
 import { DEBUG_CHROME_READY } from './ui/components/debugChrome.js';
 import { applyLoreType } from './ui/models/LoreTypeModel.js';
 import { createContentValidationCache } from './model/contentValidationCache.js';
+import { classMasteryProblems } from './model/classMasteryContent.js';
 void DEBUG_CHROME_READY;
 
 const app = document.getElementById('app');
 
 // ---- content validation at boot (SPEC §3.14) — loud, on-screen -------------
-const validation = validateContent(contentBundle);
-if (!validation.ok) {
+// BOOT DEFERS ITS CHECKS TO AN IDLE MOMENT after the title is up: on a phone the
+// two validations and the class-mastery pass (which builds registries and a run
+// per starting kit) were seconds of blank screen. The failure is as loud as ever
+// (the same banner and console output), just a moment later; tests, tools and CI
+// still run validateContent whole.
+function reportContentValidationFailure(errors) {
   // The header said 34 and the list showed 12 and nothing said the list was cut
   // (#67, Sunna's D19). A tuning pass that sweeps one field wrong makes exactly
   // that shape: fix twelve, reload, get a fresh twelve, and never learn how
   // deep the hole goes or that the console has the rest. Same family as the
   // silent no-op — a number promising more than the screen shows. The
   // truncation is fine; hiding it was not.
-  const shown = validation.errors.slice(0, 12);
-  const hidden = validation.errors.length - shown.length;
+  const shown = errors.slice(0, 12);
+  const hidden = errors.length - shown.length;
   // Wording unchanged; the ELEMENT is no longer built here. failureBanner() is
   // the one home for "the game says something is structurally wrong", and this
   // banner now carries the Command log door the uncaught-error one does.
   failureBanner(
     'boot:content',
-    `CONTENT VALIDATION FAILED (${validation.errors.length} errors)`,
+    `CONTENT VALIDATION FAILED (${errors.length} errors)`,
     shown.map((e) => ` · ${e.path}: ${e.msg}`).join('\n') +
-      (hidden > 0 ? `\n · …and ${hidden} more — all ${validation.errors.length} are in the browser console.` : '')
+      (hidden > 0 ? `\n · …and ${hidden} more — all ${errors.length} are in the browser console.` : '')
   );
-  console.error('Content validation errors:', validation.errors);
+  console.error('Content validation errors:', errors);
 }
+function whenIdle(task) {
+  if (typeof requestIdleCallback === 'function') requestIdleCallback(task, { timeout: 4000 });
+  else setTimeout(task, 1500);
+}
+// The class-mastery pass of a bundle whose other passes were clean.
+function deferClassMasteryCheck(bundle, onFail = () => {}) {
+  whenIdle(() => {
+    const problems = classMasteryProblems(bundle);
+    if (problems.length) { onFail(); reportContentValidationFailure(problems.map((msg) => ({ path: 'classMastery', msg }))); }
+  });
+}
+whenIdle(() => {
+  const validation = validateContent(contentBundle, { deferred: ['classMastery'] });
+  if (!validation.ok) reportContentValidationFailure(validation.errors);
+  else deferClassMasteryCheck(contentBundle);
+});
 
 // ---- navigable surfaces: declared, and handled (#78) -----------------------
 // The same shape as the block above and for the same reason. A surface declared
@@ -255,16 +276,52 @@ configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
 const cachedContentValidation = createContentValidationCache((gameProfile, configuration, configured) => {
+  // Settings laid over the authored content are validated whole, class mastery
+  // included, so a failure still falls back to the authored defaults.
+  bootRebuildPending = false;
   const result = validateContent(configured);
   const structuralProblems = isConfiguredRun(gameProfile) ? [] : advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
   return { result, structuralProblems };
 });
 
+// True until the session's first build has been validated (that one defers to idle).
+let bootRebuildPending = true;
+
+// The last VALID build (before any per-run mastery overlay). The same profile and
+// the same settings build the same registries, so a repeat rebuild (the title
+// screen rebuilds on every arrival) returns it. The key is the WHOLE settings
+// object, not just the keys known to shape content, so no setting that matters
+// can be missed; an unserialisable one simply never hits.
+let lastRegistryBuild = null;
+function registryBuildKey(configuration) {
+  try { return JSON.stringify(configuration ?? {}); } catch { return null; }
+}
+function sameRegistryProfile(a, b) {
+  return a === b || (typeof a?.hash === 'string' && a.hash === b?.hash);
+}
+
 function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = registryGameProfile) {
   registryGameProfile = gameProfile;
+  const buildKey = registryBuildKey(configuration);
+  if (buildKey !== null && lastRegistryBuild && lastRegistryBuild.key === buildKey && sameRegistryProfile(lastRegistryBuild.profile, gameProfile)) {
+    registries = isConfiguredRun(gameProfile) ? lastRegistryBuild.registries : registriesForClassMastery(lastRegistryBuild.registries, masteryRun);
+    configureTooltipGlossary(registries);
+    setClassGlyphs(registries.classes.all());
+    return registries;
+  }
   const authored = applyGameProfileToContent(contentBundle, gameProfile);
   const configured = isConfiguredRun(gameProfile) ? authored : configuredContentBundle(authored, configuration);
-  const { result, structuralProblems } = cachedContentValidation(gameProfile, configuration, configured);
+  let validated;
+  let checkAtIdle = false;
+  if (bootRebuildPending && isConfiguredRun(gameProfile)) {
+    // A configured profile's content is authored, with no user settings laid over
+    // it, so there is no fallback for this validation to choose: check it once
+    // the page is idle and report a failure on the same banner.
+    bootRebuildPending = false;
+    checkAtIdle = true;
+    validated = { result: { ok: true, errors: [] }, structuralProblems: [] };
+  } else validated = cachedContentValidation(gameProfile, configuration, configured);
+  const { result, structuralProblems } = validated;
   if (!result.ok || structuralProblems.length) {
     const first = structuralProblems[0] || `${result.errors[0].path}: ${result.errors[0].msg}`;
     const message = `Game configuration unchanged: ${first} Authored defaults remain active until the values form a valid configuration.`;
@@ -276,6 +333,18 @@ function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = 
     registries = createRegistries(configured);
   }
   registries = bindGameProfileRegistries(registries, gameProfile);
+  const build = (result.ok && !structuralProblems.length && buildKey !== null) ? { key: buildKey, profile: gameProfile, registries } : null;
+  lastRegistryBuild = build;
+  if (checkAtIdle) {
+    // Until the idle check passes this build is provisional: a failure forgets it,
+    // so the next rebuild validates synchronously and refuses the profile.
+    const forget = () => { if (lastRegistryBuild === build) lastRegistryBuild = null; };
+    whenIdle(() => {
+      const check = validateContent(configured, { deferred: ['classMastery'] });
+      if (!check.ok) { forget(); reportContentValidationFailure(check.errors); }
+      else deferClassMasteryCheck(configured, forget);
+    });
+  }
   if (!isConfiguredRun(gameProfile)) registries = registriesForClassMastery(registries, masteryRun);
   configureTooltipGlossary(registries);
   setClassGlyphs(registries.classes.all());
@@ -828,6 +897,13 @@ if (typeof window !== 'undefined') {
   setTimeout(reflexAutoScale, 300);
 }
 
+// A resize fires many times a second; most of the card-size properties come out
+// the same each time, and rewriting an unchanged custom property still dirties
+// style for the whole page. Write only what differs.
+function setRootPropertyIfChanged(name, value) {
+  const style = document.documentElement.style;
+  if (style.getPropertyValue(name) !== String(value)) style.setProperty(name, value);
+}
 // CARD SIZE IS TUNABLE WHILE YOU LOOK AT A CARD. The authored table in
 // content/config/ui/components/card.json is the default and the only thing
 // that ships; Settings > Advanced > Card size lays an override over it, and
@@ -839,7 +915,7 @@ if (typeof window !== 'undefined') {
 function applyCardSizeSettings(settings) {
   const { levels, refused } = cardLevelsWithOverrides(settings);
   for (const [name, value] of Object.entries(cardLevelCssPropertiesFor(levels))) {
-    document.documentElement.style.setProperty(name, value);
+    setRootPropertyIfChanged(name, value);
   }
   // A RESTING CARD IS SIZED FOR THE VIEWPORT IT IS RESTING IN. `glance` is the
   // browsing size and `glance.variants.mobile` is that size on a phone; the
@@ -848,12 +924,12 @@ function applyCardSizeSettings(settings) {
   // inside a media query would have been the later-rule-wins shape that has
   // already produced three defects in this component.
   const resting = restingWidthPx(resolveViewViewport(settings.viewPreset, window.innerWidth, window.innerHeight).width, levels);
-  document.documentElement.style.setProperty('--card-w-glance', `${resting}px`);
+  setRootPropertyIfChanged('--card-w-glance', `${resting}px`);
   // The shelf floors its tracks at a legible width; that floor cannot stand
   // above the resting card it floors, so it is re-projected against the width
   // just chosen rather than left at the authored one.
   for (const [name, value] of Object.entries(cardShelfCssProperties(undefined, resting))) {
-    document.documentElement.style.setProperty(name, value);
+    setRootPropertyIfChanged(name, value);
   }
   // The door's threshold reads `--card-w-inspect`, which has just moved. Its
   // observer only sees the layout's own box change, and the modal layout is
@@ -1050,7 +1126,11 @@ applyDisplaySettings(activeSettings);
 // The resting width depends on the viewport, so it is re-resolved when the
 // viewport changes — a phone rotated into landscape crosses the compact
 // breakpoint, and a desktop window dragged narrow crosses it too.
-window.addEventListener('resize', () => applyCardSizeSettings(activeSettings));
+let cardSizeResizeTimer = 0;
+window.addEventListener('resize', () => {
+  clearTimeout(cardSizeResizeTimer);
+  cardSizeResizeTimer = setTimeout(() => applyCardSizeSettings(activeSettings), 150);
+});
 
 /**
  * applyRestoredSettings(restored) — re-dress the running app in a profile that

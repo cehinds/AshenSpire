@@ -118,3 +118,8 @@
 :root .combat .target-hud-intent { flex-wrap:wrap; }
 :root .combat .intent-damage-read { min-width:0; max-width:100%; display:inline-flex; flex-direction:column; align-items:center; gap:2px; }
 :root .combat .intent-damage-scope { display:block; max-width:150px; font:600 calc(11px / var(--ui-zoom,1))/1.15 system-ui,sans-serif; white-space:normal; overflow-wrap:anywhere; text-align:center; }
+
+/* Lite: one drop-shadow instead of three on the matchup-highlighted sprite. */
+:root[data-performance='lite'] .combat[data-target-hud='true'] .combatant.enemy[data-matchup-active='true'] .sprite {
+  filter: drop-shadow(0 0 1.5px var(--combat-matchup-color, var(--ember))) !important;
+}
