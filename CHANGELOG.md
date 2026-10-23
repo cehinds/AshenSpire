@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-23
 
+- **Smaller stance bonus contract** ([#2253](https://github.com/cehinds/AshenSpire/pull/2253), `0.7.1.1780`). Specifies a 1.25× Core Smash bonus against defensive stances, replacing 2× for both sides. This documents the balance change; implementation follows separately.
+
 - **Accurate playback timeout logs** ([#2251](https://github.com/cehinds/AshenSpire/pull/2251), `0.7.1.1780`). Command logs now count genuine timeouts in sequential combat playback. Normal completion, Skip and Cancel do not add false timeout reports; combat pacing is unchanged.
 
 ## 2026-10-22
