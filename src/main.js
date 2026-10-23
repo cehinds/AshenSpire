@@ -894,6 +894,13 @@ if (typeof window !== 'undefined') {
   setTimeout(reflexAutoScale, 300);
 }
 
+// A resize fires many times a second; most of the card-size properties come out
+// the same each time, and rewriting an unchanged custom property still dirties
+// style for the whole page. Write only what differs.
+function setRootPropertyIfChanged(name, value) {
+  const style = document.documentElement.style;
+  if (style.getPropertyValue(name) !== String(value)) style.setProperty(name, value);
+}
 // CARD SIZE IS TUNABLE WHILE YOU LOOK AT A CARD. The authored table in
 // content/config/ui/components/card.json is the default and the only thing
 // that ships; Settings > Advanced > Card size lays an override over it, and
@@ -905,7 +912,7 @@ if (typeof window !== 'undefined') {
 function applyCardSizeSettings(settings) {
   const { levels, refused } = cardLevelsWithOverrides(settings);
   for (const [name, value] of Object.entries(cardLevelCssPropertiesFor(levels))) {
-    document.documentElement.style.setProperty(name, value);
+    setRootPropertyIfChanged(name, value);
   }
   // A RESTING CARD IS SIZED FOR THE VIEWPORT IT IS RESTING IN. `glance` is the
   // browsing size and `glance.variants.mobile` is that size on a phone; the
@@ -914,12 +921,12 @@ function applyCardSizeSettings(settings) {
   // inside a media query would have been the later-rule-wins shape that has
   // already produced three defects in this component.
   const resting = restingWidthPx(resolveViewViewport(settings.viewPreset, window.innerWidth, window.innerHeight).width, levels);
-  document.documentElement.style.setProperty('--card-w-glance', `${resting}px`);
+  setRootPropertyIfChanged('--card-w-glance', `${resting}px`);
   // The shelf floors its tracks at a legible width; that floor cannot stand
   // above the resting card it floors, so it is re-projected against the width
   // just chosen rather than left at the authored one.
   for (const [name, value] of Object.entries(cardShelfCssProperties(undefined, resting))) {
-    document.documentElement.style.setProperty(name, value);
+    setRootPropertyIfChanged(name, value);
   }
   // The door's threshold reads `--card-w-inspect`, which has just moved. Its
   // observer only sees the layout's own box change, and the modal layout is
@@ -1116,7 +1123,11 @@ applyDisplaySettings(activeSettings);
 // The resting width depends on the viewport, so it is re-resolved when the
 // viewport changes — a phone rotated into landscape crosses the compact
 // breakpoint, and a desktop window dragged narrow crosses it too.
-window.addEventListener('resize', () => applyCardSizeSettings(activeSettings));
+let cardSizeResizeTimer = 0;
+window.addEventListener('resize', () => {
+  clearTimeout(cardSizeResizeTimer);
+  cardSizeResizeTimer = setTimeout(() => applyCardSizeSettings(activeSettings), 150);
+});
 
 /**
  * applyRestoredSettings(restored) — re-dress the running app in a profile that
