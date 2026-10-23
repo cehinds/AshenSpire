@@ -930,7 +930,8 @@ function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, r
     const required = prepaid ? Math.max(0, (rangeQuote?.advanceSp || 0) - spPayment.advanceSp) : totalSp;
     if(!prepaid && required>available && rangeQuote?.advanceSp > 0) {
       const def = combat.registries.enemies.get(enemy.enemyId), closingId = def.rangeClosingMove, closing = def.moves[closingId];
-      if (closing && closingId !== moveId && closing.effects?.some(effect => effect.op === 'moveEngagement') && Rounds.enemyMoveSp(closing,{enemy,moveId:closingId,combat}) <= available) return executeMovePayload(combat, enemy, closing, closingId, { roundEntry, roundPoiseMultiplier });
+      const closingEligible = !core2ActionPolicyEnabled(combat) || (!closing?.reaction && (!closing?.locked || enemy.unlockedMoves.includes(closingId)));
+      if (closingEligible && closing && closingId !== moveId && closing.effects?.some(effect => effect.op === 'moveEngagement') && Rounds.enemyMoveSp(closing,{enemy,moveId:closingId,combat}) <= available) return executeMovePayload(combat, enemy, closing, closingId, { roundEntry, roundPoiseMultiplier });
     }
     if(required>available) {combat.emit('enemyMoveUnavailable',{sourceId:enemy.id,moveId,required,available,resource:'sp'});return 'refused';}
     enemy.fixCoreStaminaRemaining=available-(prepaid ? required : spCost);
@@ -1080,7 +1081,8 @@ function presentIntent(combat, enemy, def, moveId) {
 function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
   const policy = core2ActionPolicyEnabled(combat);
   const closingId = def.rangeClosingMove, closing = def.moves[closingId];
-  const canClose = policy && closing?.effects?.some(effect => effect.op === 'moveEngagement')
+  const canClose = policy && !closing?.reaction && (!closing?.locked || enemy.unlockedMoves.includes(closingId))
+    && closing?.effects?.some(effect => effect.op === 'moveEngagement')
     && Rounds.enemyMoveQuote(closing, { enemy, moveId: closingId, combat }).totalSp <= maxSp;
   const replacements = new Map();
   const entries = Object.entries(def.moves).filter(
