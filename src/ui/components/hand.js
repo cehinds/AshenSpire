@@ -289,8 +289,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     const badge = el.querySelector(':scope > .key-hint');
     if (i < 10) {
       const text = i < 9 ? String(i + 1) : 'Q';
-      if (!badge) el.appendChild(keycap(text, { class: 'float key-hint' }));
-      else if (badge.textContent !== text) badge.replaceWith(keycap(text, { class: 'float key-hint' }));
+      if (badge && badge.textContent === text) { /* already right */ }
+      else { badge?.remove(); el.appendChild(keycap(text, { class: 'float key-hint' })); }
     } else badge?.remove();
     el.style.transform = slotTransform(i, n);
     el.style.setProperty('--card-fan-transform', el.style.transform);
