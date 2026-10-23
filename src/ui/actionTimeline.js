@@ -8,10 +8,11 @@ export function runActionTimeline(beats, hooks, timingIn, { setTimer = setTimeou
   const stage = (name, beat, fn) => { safe(() => hooks.onStage?.(name, beat)); return safe(fn); };
   const schedule = (fn, ms = 0) => { clearTimer(timer); timer = setTimer(() => { timer = null; if (!finished) fn(); }, Math.max(0, Number(ms) || 0)); };
   const cancelActor = () => { safe(() => actor?.cancel?.()); actor = null; };
-  const finish = (flush = false) => {
+  const finish = (flush = false, watchdogExpired = false) => {
     if (finished) return;
     finished = true;
     clearTimer(timer); clearTimer(watchdog); cancelActor();
+    if (watchdogExpired) safe(() => hooks.onWatchdog?.());
     if (flush) safe(() => hooks.onFlush?.());
     safe(() => hooks.onDone?.());
   };
@@ -37,7 +38,7 @@ export function runActionTimeline(beats, hooks, timingIn, { setTimer = setTimeou
         const total = Math.max(impact, Number(actor?.totalMs) || 0);
         // Authored handles are the final timing authority. A longer real clip
         // must extend the budget even when the caller underestimated its cap.
-        clearTimer(watchdog); watchdog = setTimer(() => finish(true), budget + total);
+        clearTimer(watchdog); watchdog = setTimer(() => finish(true, true), budget + total);
         schedule(() => {
           const contactHold = stage('contact', beat, () => { actor?.contact?.(); return hooks.onContact?.(beat, actor); });
           // Some sprite services extend their recovery after contact (hit-stop).
@@ -87,7 +88,7 @@ export function runActionTimeline(beats, hooks, timingIn, { setTimer = setTimeou
     + timing.damageMs + timing.resetMs + timing.stepMs + 1000
     + Math.max(0, Number(safe(() => hooks.maxSpriteMs?.(timing.spriteSpeed))) || 0);
   const budget = 2000 + beats.reduce((budget, beat) => budget + Math.max(perAction + Math.max(0, (safe(() => hooks.reactionGroups?.(beat))?.length || 1) - 1) * (timing.resultMs + timing.reactionMs + timing.damageMs + timing.stepMs), timing.bannerMs + timing.stepMs), 0);
-  watchdog = setTimer(() => finish(true), budget);
+  watchdog = setTimer(() => finish(true, true), budget);
   next();
   return { pauseForSkip: () => { clearTimer(timer); cancelActor(); }, cancel: () => finish(true), skip: () => finish(true), get finished() { return finished; } };
 }

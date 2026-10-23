@@ -9,7 +9,7 @@ function clock() {
   return { get now() { return now; }, setTimer(fn, ms) { timers.set(++id, { fn, at: now + ms }); return id; },
     clearTimer(key) { timers.delete(key); },
     advance(ms) { const end = now + ms; for (;;) { const next = [...timers.entries()].sort((a,b) => a[1].at - b[1].at || a[0] - b[0])[0]; if (!next || next[1].at > end) break; now = next[1].at; timers.delete(next[0]); next[1].fn(); } now = end; },
-    get pending() { return timers.size; } };
+    get pending() { return timers.size; }, get callbacks() { return [...timers.values()].map(timer => timer.fn); } };
 }
 function run(multiplier = 1) {
   setAnimSpeed('normal'); setCombatPacing({ combatSpeed: multiplier });
@@ -18,6 +18,7 @@ function run(multiplier = 1) {
     onStage: (stage, beat) => trace.push([stage, beat.actorId, c.now]),
     onSprite: (_beat, speed) => ({ impactMs: speed.lungeMs / 2, totalMs: speed.lungeMs, cancel() {} }),
     maxSpriteMs: speed => speed.lungeMs,
+    onWatchdog: () => trace.push(['watchdog', '', c.now]),
     onFlush: () => trace.push(['flush', '', c.now]), onDone: () => trace.push(['done', '', c.now]),
   }, timing, c);
   return { c, trace, handle };
@@ -41,6 +42,46 @@ test('cancel and repeated skips flush once and leave no late mutation or next ac
   const { c, trace, handle } = run(); c.advance(600); handle.cancel(); handle.skip(); c.advance(20000);
   assert.deepEqual(trace.map(row => row[0]), ['intent', 'action', 'sprite', 'flush', 'done']);
   assert.equal(c.pending, 0); assert.equal(handle.finished, true);
+});
+for (const exit of ['normal', 'cancel', 'skip']) test(`${exit} completion does not report a watchdog, even through a late timeout callback`, () => {
+  const { c, trace, handle } = run();
+  const lateTimeout = c.callbacks[0];
+  if (exit === 'normal') c.advance(20000); else handle[exit]();
+  const completed = [...trace];
+  lateTimeout(); handle.cancel(); handle.skip(); c.advance(100000);
+  assert.deepEqual(trace, completed, 'cleared timeout and repeated exits cannot mutate a finished timeline');
+  assert.equal(trace.filter(row => row[0] === 'watchdog').length, 0);
+  assert.equal(trace.filter(row => row[0] === 'flush').length, exit === 'normal' ? 0 : 1);
+  assert.equal(trace.filter(row => row[0] === 'done').length, 1);
+});
+for (const advance of [0, 600]) test(`watchdog expiration ${advance ? 'after' : 'before'} the sprite reports once and preserves flush/done order`, () => {
+  const c = clock(), trace = [];
+  let handle;
+  handle = runActionTimeline([{ actorId: 'player', kind: 'attack' }], {
+    onSprite: () => ({ impactMs: 1000, totalMs: 2000, cancel() {} }),
+    onWatchdog: () => { assert.equal(handle.finished, true); trace.push('watchdog'); handle.skip(); },
+    onFlush: () => trace.push('flush'), onDone: () => trace.push('done'),
+  }, { wordMs: 500 }, c);
+  c.advance(advance);
+  const lateCallbacks = c.callbacks;
+  handle.pauseForSkip();
+  assert.deepEqual(trace, [], 'pausing alone is not a timeout');
+  c.advance(100000);
+  assert.deepEqual(trace, ['watchdog', 'flush', 'done']);
+  for (const callback of lateCallbacks) callback();
+  handle.cancel(); handle.skip(); c.advance(100000);
+  assert.deepEqual(trace, ['watchdog', 'flush', 'done'], 'late callbacks and exits cannot count or finish twice');
+  assert.equal(c.pending, 0);
+});
+test('a failing watchdog hook reports its error and still flushes and completes once', () => {
+  const c = clock(), trace = [];
+  const handle = runActionTimeline([{ actorId: 'player', kind: 'attack' }], {
+    onWatchdog: () => { trace.push('watchdog'); throw Error('diagnostic failed'); },
+    onError: error => trace.push(error.message), onFlush: () => trace.push('flush'), onDone: () => trace.push('done'),
+  }, { wordMs: 500 }, c);
+  handle.pauseForSkip(); c.advance(100000);
+  assert.deepEqual(trace, ['watchdog', 'diagnostic failed', 'flush', 'done']);
+  assert.equal(handle.finished, true); assert.equal(c.pending, 0);
 });
 test('instant and reduced motion retain semantic event order with zero waits', () => {
   setAnimSpeed('instant'); const instant = actionPacing();

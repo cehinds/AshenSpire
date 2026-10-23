@@ -1089,6 +1089,7 @@ export function playTimeline(events, ctx, done) {
       for (const event of beat.events) if (terminal(event)) visualSafe(() => visualFor(event, beat.kind, receiptOptions)?.(ctx));
       ctx.onResolution?.(beat);
     },
+    onWatchdog: () => { dbg.watchdog = (dbg.watchdog || 0) + 1; },
     onFlush: () => {
       for (const beat of beats) cue(beat, false);
       clearHeldFigures(); clearCallouts(ctx.layer); clearCombatEffects(ctx.layer);
