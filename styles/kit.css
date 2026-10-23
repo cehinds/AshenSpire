@@ -1735,8 +1735,9 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* Every face uses the shared glance width, independent of its card family or
    selection. Equal grid rows and flexible buttons let the longest rules set
    their common height, including when phone choices wrap onto a second row. */
-.reward-door .reward-choice-option > :is(.equipment-poker-card, .card) { width: 100%; max-width: var(--card-w-glance, 152px); margin-inline: auto; flex: 0 0 auto; zoom: 1; }
-.reward-door .reward-choice-option > .reward-pick { flex: 1 1 auto; width: 100%; min-width: 0; min-height: var(--tap-floor); box-sizing: border-box; padding: .7rem .8rem; gap: .3rem; }
+.reward-door .reward-choice-option > :is(.equipment-poker-card, .card) { width: 100%; max-width: var(--card-w-glance, 152px); height: auto; min-height: 0; aspect-ratio: var(--card-ratio, 5 / 8); margin-inline: auto; flex: 0 0 auto; zoom: 1; box-sizing: border-box; }
+.reward-door .reward-choice-face.equipment-poker-card > .epc-frame { height: calc(var(--epc-frame-w, 350px) / var(--card-ratio, .666667)); }
+.reward-door .reward-choice-option > .reward-pick { flex: 1 0 3.5rem; height: auto; align-items: center; justify-content: center; white-space: normal; overflow-wrap: anywhere; line-height: 1.2; width: 100%; min-width: 0; min-height: var(--tap-floor); box-sizing: border-box; padding: .7rem .8rem; gap: .3rem; }
 .reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(1.2rem, calc(1.5 * var(--view-vw, 1vw)), 1.6rem); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
 .reward-door .reward-choice-option > .reward-pick p { font-size: clamp(1.1rem, calc(1.25 * var(--view-vw, 1vw)), 1.35rem); overflow-wrap: anywhere; }
 @container game-viewport (max-width: 520px) {

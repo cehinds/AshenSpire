@@ -28,7 +28,7 @@
     "handCostDiscount": 1
   },
   "smashVsDefensive": {
-    "damageMultiplier": 2,
+    "damageMultiplier": 1.25,
     "blockFraction": 0.25,
     "poiseFraction": 0.5
   },

@@ -154,7 +154,7 @@ test('a visible Core Smash tag explains the standard matchup without repeating i
   const def = definition('core.reaverSpecial');
   const tags = cardSideTags(playingCardModel(core, { cardId: def.id }), def, core);
   const smash = tags.find(tag => tag.id === 'maneuver:smash');
-  assert.match(smash.blurb, /double damage, plus a quarter of their Block; half of it breaks Poise/);
+  assert.match(smash.blurb, /1\.25× damage, plus a quarter of their Block; half of it breaks Poise/);
   assert.match(cardTagRailHtml([smash]), /tabindex="0".*data-tip="Smash/);
   assert.deepEqual(faceWith(def, tags).map(line => line.kind), ['damage']);
   assert.doesNotMatch(text(faceWith(def, tags)), /Defend|Prepared|Poise|Precision/);

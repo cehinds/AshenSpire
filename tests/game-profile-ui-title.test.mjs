@@ -41,6 +41,36 @@ test('configured Counter face describes Block and its deferred return', async ()
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
   const lines = cardFaceLines(projectGameCard(profile, 'core.counter'), null, registries).map(row => row.html).join(' ');
   assert.match(lines, /Block/);
-  assert.match(lines, /Prepare Melee Counter: return/);
+  assert.match(lines, /^Gain <span class="val">5<\/span> Block Counter <span class="val">4<\/span>/);
+  assert.doesNotMatch(lines, /Prepare|Melee|return|damage/);
   assert.doesNotMatch(lines, /Inflict/);
+});
+
+test('concise Counter retains live Block and return amounts and change marks', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries, projectGameCard } = await import('../src/model/gameProfile.js');
+  const { cardFaceLines } = await import('../src/model/cardFaceText.js');
+  const profile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const def = projectGameCard(profile, 'core.counter');
+  const values = def.effects.map(effect => ({ op: effect.op, value: effect.op === 'damage' ? 7 : 9, hits: 1 }));
+  const lines = cardFaceLines(def, { values, counterReturn: { hp: 7, poise: 3, ward: 0 } }, registries, null, { stanceEntry: false });
+  assert.deepEqual(lines.map(row => row.html.replace(/<[^>]+>/g, '')), ['Gain 9 Block', 'Counter 7']);
+  assert.ok(lines.every(row => row.html.includes('class="val up"')));
+});
+
+test('configured long damage faces retain type, damage and Poise in compact wording', async () => {
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { resolveGameProfile, applyGameProfileToContent, bindGameProfileRegistries } = await import('../src/model/gameProfile.js');
+  const { applyCombatExpansionCard } = await import('../src/content/combatExpansionCards.js');
+  const { cardFaceLines } = await import('../src/model/cardFaceText.js');
+  const profile = resolveGameProfile('core');
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
+  const def = applyCombatExpansionCard(registries.cards.get('sunderingChop'));
+  const lines = cardFaceLines(def, null, registries, null, { stanceEntry: false });
+  const text = lines.map(row => row.html.replace(/<[^>]+>/g, ''));
+  assert.equal(text[0], '9 Blunt damage, 7 Poise');
+  assert.doesNotMatch(text[0], /Inflict|Poise damage/);
 });

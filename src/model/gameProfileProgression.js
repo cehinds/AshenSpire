@@ -46,3 +46,18 @@ export function coreSkillOnlyProgression(subject) {
 export function configuredCharacterLevels(subject) {
   return !coreSkillOnlyProgression(subject) && gameModule(subject, 'progression')?.characterLevels === true;
 }
+
+// A receipt acknowledges already-paid XP. A failed save keeps it resumable;
+// neither opening nor continuing this screen may pay a ledger again.
+export function acknowledgeVictoryReceipt(pending, persist) {
+  const receipt = pending.victoryReceipt;
+  if (!receipt) return false;
+  delete pending.victoryReceipt;
+  try {
+    if (persist() === false) throw new Error('Victory receipt save was refused.');
+  } catch (error) {
+    pending.victoryReceipt = receipt;
+    throw error;
+  }
+  return true;
+}

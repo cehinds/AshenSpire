@@ -29,7 +29,7 @@ export const fixCorePoiseRules = rules => ({ ...FIXCORE_POISE_DEFAULTS, ...(rule
 export const fixCoreStaggeredRules = rules => ({ ...FIXCORE_STAGGERED_DEFAULTS, ...(rules?.staggered || {}) });
 // Owner, 2026-10-19: a Smash against a defensive stance deals damageMultiplier x its normal damage plus blockFraction of the target's Block,
 // and costs the target's Poise poiseFraction of that total (instead of the 25% Poise absorption). Missing blocks keep these defaults.
-export const FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS = Object.freeze({ damageMultiplier: 2, blockFraction: 0.25, poiseFraction: 0.5 });
+export const FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS = Object.freeze({ damageMultiplier: 1.25, blockFraction: 0.25, poiseFraction: 0.5 });
 export const fixCoreSmashVsDefensiveRules = rules => ({ ...FIXCORE_SMASH_VS_DEFENSIVE_DEFAULTS, ...(rules?.smashVsDefensive || {}) });
 export const fixCoreWardEnabled = rules => rules?.ward?.enabled !== false;
 const OLD_PERCEPTION_FIELDS = ['levelBaseline','intelligenceBaseline','levelWeight','intelligenceWeight'];
