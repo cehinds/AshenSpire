@@ -17,7 +17,7 @@ function fixture() {
     saves: { loadMeta: () => ({ settings: { deckMinUnlimited: true } }) },
     document: { body: {} }, mountDeckEditor: (_host, args) => { editor = args; },
     commitCombatSnapshot: args => { assert.equal(args.combat, combat); assert.equal(args.nodeId, 'n'); snapshots++; },
-    persist: () => { writes++; }, showSettingsNotice() {},
+    persist: () => { writes++; }, showSettingsNotice() {}, supersedePendingEntryCheckpoint() {},
   };
   const open = runInNewContext(source.slice(begin, end) + '\nshowCombatDeckEditor;', context);
   open(combat, 'n', 'enc');
