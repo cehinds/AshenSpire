@@ -310,22 +310,7 @@ let releasePromotion = null;
 const PROMOTED_DEFAULTS = Object.freeze({ ...(SETTINGS_DEFAULTS.values || {}) });
 
 /** settingsRows() → every row this screen draws (the sync profile's key list). */
-// A read-only view that builds ROWS on first touch. The boot path asks for
-// settingsRows() to pass to needsSettingsChoice, which on a returning player
-// on the same build never reads a row; the view keeps that from costing the
-// ~0.3 s (4x CPU) the generated advanced rows take. Every read forwards to
-// the real array, so it behaves as the array does (some, filter, iteration).
-const ROWS_VIEW = new Proxy([], {
-  get: (_target, key) => { const rows = allRows(); const v = Reflect.get(rows, key, rows); return typeof v === 'function' ? v.bind(rows) : v; },
-  has: (_target, key) => Reflect.has(allRows(), key),
-  ownKeys: () => Reflect.ownKeys(allRows()),
-  getOwnPropertyDescriptor: (_target, key) => {
-    if (key === 'length') return Reflect.getOwnPropertyDescriptor([], 'length');
-    const d = Reflect.getOwnPropertyDescriptor(allRows(), key);
-    return d && { ...d, configurable: true };
-  },
-});
-export function settingsRows() { return ROWS_VIEW; }
+export function settingsRows() { return allRows(); }
 
 // ---- RECOVERY (owner, 2026-09-27) ------------------------------------------
 // "a setting to set recovery rate for hp stamina and mp to at rest and or after
