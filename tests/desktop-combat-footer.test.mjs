@@ -8,7 +8,7 @@ test('approved footer follows the chosen wide preset and alternative appearance 
   for (const formFactor of ['mobile', 'tablet']) assert.equal(desktopFooterEnabled({formFactor,appearance:'alternative',layout:'formation'}),false);
   assert.equal(desktopFooterEnabled({formFactor:'desktop',appearance:'classic',layout:'formation'}),false);
 });
-for (const [width,height,zoom] of [[1440,900,1.2],[1920,1080,1.48]]) test(`desktop ${width}: fixed footer, larger proportional cards, and variable fan`, () => {
+for (const [width,height,zoom] of [[1440,900,1.2],[1920,1080,1.48]]) test(`desktop ${width}: fixed footer, smaller proportional cards, and variable fan`, () => {
   const footer=desktopFooterLayout({width:width/zoom,height:height/zoom,zoom});
   const first=footer.controls.sp,last=footer.controls.potions,end=footer.controls.end;
   assert.ok(first.x*zoom>=19);
@@ -17,7 +17,7 @@ for (const [width,height,zoom] of [[1440,900,1.2],[1920,1080,1.48]]) test(`deskt
   assert.ok(Math.abs((end.y+end.h)*zoom-(height-6*footer.unit*zoom))<.001);
   for(const count of [1,3,5,7,10]){
     const hand=desktopHandLayout({width:width/zoom,height:footer.handHeight,count,zoom});
-    assert.ok(hand.cardWidth*zoom>=204);
+    assert.ok(hand.cardWidth*zoom>=184 && hand.cardWidth*zoom<204, 'desktop cards stay readable and below the previous reference size');
     assert.ok(Math.abs(hand.cardWidth/hand.cardHeight-2/3)<1e-9);
     assert.ok(hand.cards[0].x>=0);
     assert.ok(hand.cards.at(-1).x+hand.cardWidth<=width/zoom);

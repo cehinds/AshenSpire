@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "library": "alternative",
-  "pinnedRelease": "hd-assets-v19",
+  "pinnedRelease": "hd-assets-v23",
   "note": "Display-specific exports stored beside this index.",
   "assets": {
     "assets-display/alternative/ashheartDragon-mobile.webp": {
@@ -1394,25 +1394,85 @@
       "sha256": "034649efb97e8fe63368c393ff1843217aac02a83d7bcb7676ad96edecbab593",
       "bytes": 45792
     },
+    "assets-display/alternative/reaver-greatsword-pilot-smash-airborne-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "b37bf6f1f0358eb4acf23efc6d0404e4bd0e2a9485c05a55659fbd0fb9aa826b",
+      "bytes": 20986
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-smash-airborne.webp": {
+      "source": "reviewed-export",
+      "sha256": "c4ac87cae60eba72c3ecfdb3b2ece7361d7134b22818f56362d353e0a86b0041",
+      "bytes": 143002
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-smash-impact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "914b99ad6d332d7674108dfec5587a4a66a8250ee651a19e062218d1e2831b81",
+      "bytes": 30572
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-smash-impact.webp": {
+      "source": "reviewed-export",
+      "sha256": "3962cbdeccb8dae3c2a93e4f84c60bf7172bdda56c26c42ad521d167e13ca945",
+      "bytes": 212390
+    },
     "assets-display/alternative/reaver-greatsword-pilot-smash-mobile.webp": {
       "source": "reviewed-export",
       "sha256": "7d96cbc87ccb1159befa85a192f4cdf72cea0170f7dd00b34af26074ad70a182",
       "bytes": 15464
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-smash-takeoff-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "d9c9de71f491b36bd492148ffa427b520a4ba830c3c7fecb363e69897b14620d",
+      "bytes": 21902
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-smash-takeoff.webp": {
+      "source": "reviewed-export",
+      "sha256": "3ea4253510405611871fecb84d896f251a16d0acfcf7fd3bf03875ab1a2be5ba",
+      "bytes": 150152
     },
     "assets-display/alternative/reaver-greatsword-pilot-smash.webp": {
       "source": "reviewed-export",
       "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
       "bytes": 53668
     },
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-contact-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "92efd91d23e37086a3d5d7c3e58b58b35dd48d10779dae34fd39696736abfe5f",
+      "bytes": 22360
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp": {
+      "source": "reviewed-export",
+      "sha256": "2f57d14e2f17a7366977829957514d0a97f64adf91cb24c26ede51a25e56bbb2",
+      "bytes": 226646
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-finish-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "266b7ccba64d2413bb02fd1f2770578f04149fcacb3b0a77f72230c2b8d24d37",
+      "bytes": 19994
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-finish.webp": {
+      "source": "reviewed-export",
+      "sha256": "96a520910a6962ade28c268da0cc34fed5c747b309b6a60580a32ebdd58c429b",
+      "bytes": 205162
+    },
     "assets-display/alternative/reaver-greatsword-pilot-sweep-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "fdcf94d82cc892764f259ab85d82b767527afac34386029336c1a3671a79d24f",
-      "bytes": 6442
+      "sha256": "20fd757bf9a39e06e6ba03bc265bc272d4eebd2734e1d24655000936a57bd601",
+      "bytes": 16570
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-windup-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "b6eeb8ecb140678365100c3f1d162c17e9852716b037283cbfb209e90f39de9c",
+      "bytes": 22722
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-windup.webp": {
+      "source": "reviewed-export",
+      "sha256": "e42ea1976a0a162c78098cb7a13010cc1b855d5baf6f4fe0fe90e42cc9991f4d",
+      "bytes": 231178
     },
     "assets-display/alternative/reaver-greatsword-pilot-sweep.webp": {
       "source": "reviewed-export",
-      "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865",
-      "bytes": 42606
+      "sha256": "81d348d0382b9a99c1f72d5d23dab4975bbe648b3db979d8f725fc250d02db7c",
+      "bytes": 192832
     },
     "assets-display/alternative/reaver-oathsworn-mobile.webp": {
       "source": "reviewed-export",
@@ -1521,8 +1581,8 @@
     },
     "assets-display/alternative/scene-ashen-crown-1-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "5ecbec5c54baa84b14e06b4a0d82454362a31b4b28052de4118cf39a7e8459d6",
-      "bytes": 11008
+      "sha256": "8b8210fad5499a4b5d04894bd6aeec299d7799732e8e5792aa639a2e8bc9c0f0",
+      "bytes": 133168
     },
     "assets-display/alternative/scene-ashen-crown-2-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1531,8 +1591,8 @@
     },
     "assets-display/alternative/scene-ashen-crown-2-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "712532a46a34483d4833eeca97e5d9878cd12d96616e7771ca96adf650b16e5e",
-      "bytes": 11062
+      "sha256": "36d247f1874801e2d756e2c4103a40a6f2c6a74c15f66c4d6440ad6eb0e718e0",
+      "bytes": 138268
     },
     "assets-display/alternative/scene-ashen-crown-3-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1541,8 +1601,8 @@
     },
     "assets-display/alternative/scene-ashen-crown-3-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "18ac30f31f4b4a5900169725a6db573071de698985a70847f96cb973f04c7039",
-      "bytes": 10184
+      "sha256": "53b8bf46edfe8eb7db40c4a7ed5bbc8e8f7e1d80d26ba5a33b081b641236f1be",
+      "bytes": 130156
     },
     "assets-display/alternative/scene-ashen-crown-4-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1551,8 +1611,8 @@
     },
     "assets-display/alternative/scene-ashen-crown-4-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "52a66c988bdf56bc66c728c867c85135a15a8393b98653d17d6f2fea57dfd176",
-      "bytes": 9684
+      "sha256": "33e6ace88395d9d8d37254e5c1111bdfd2dc8c875ce4b55d009867df0a2c8353",
+      "bytes": 110868
     },
     "assets-display/alternative/scene-ashen-crown-far-mobile.webp": {
       "source": "reviewed-export",
@@ -1561,8 +1621,8 @@
     },
     "assets-display/alternative/scene-ashen-crown-far.webp": {
       "source": "reviewed-export",
-      "sha256": "a385a3b3a0b92881a3d1256fc3b9540b098aca2b9e92b1fe150906688c3f265f",
-      "bytes": 3810
+      "sha256": "4f6835ee3cbce6f9e45234a2416e2df543df306723f49c73ac70c9d449d97911",
+      "bytes": 37494
     },
     "assets-display/alternative/scene-ashen-crown-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -1571,8 +1631,8 @@
     },
     "assets-display/alternative/scene-ashen-crown-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "6ecc96f062198e54db05e97f4a2d2cb6e18ec464b07304893543ca23e49441d9",
-      "bytes": 7952
+      "sha256": "35b9a657f5f2421415f5fd4b21f11c895b6ade8692422cf64793d0078f42a53e",
+      "bytes": 94386
     },
     "assets-display/alternative/scene-ashen-crown-ground-mobile.webp": {
       "source": "reviewed-export",
@@ -1581,8 +1641,8 @@
     },
     "assets-display/alternative/scene-ashen-crown-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "fb6db31fd8109a70246b41facaf9d730881c14a479e65cbd213db2f2bf4498f3",
-      "bytes": 8562
+      "sha256": "fce694b1c307e0189512c434dbca22f25dfc8c8b7746c89b9b4d6a6ea0a7da84",
+      "bytes": 146054
     },
     "assets-display/alternative/scene-ashen-crown-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -1591,8 +1651,8 @@
     },
     "assets-display/alternative/scene-ashen-crown-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "1adb596169109c7681b8512a689d4b8138d76365992d0c653c673a430a96ef83",
-      "bytes": 9568
+      "sha256": "63d8dc95d00fd46fe29e79491decec49b594ae73ca90bc9d03fcaeb068c5d825",
+      "bytes": 53558
     },
     "assets-display/alternative/scene-BS-ENV-01-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1601,8 +1661,8 @@
     },
     "assets-display/alternative/scene-BS-ENV-01-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "118791471b79a9d6db18d389afcec51ddf46437f9072752887403178120b49db",
-      "bytes": 12056
+      "sha256": "f53a668f18f213ee2854091a6880c2635973f114da4657d3a536ccfb95f0c5ef",
+      "bytes": 150978
     },
     "assets-display/alternative/scene-BS-ENV-02-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1611,8 +1671,8 @@
     },
     "assets-display/alternative/scene-BS-ENV-02-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "a9fdf5be594a1204e501564f65c8e162468f5d16beb924534565769a7ea6755b",
-      "bytes": 13122
+      "sha256": "6d7d6f140ab47a076104a0b2c0d8a2258d06dcef6c37b10b413b648c32e5f57a",
+      "bytes": 162272
     },
     "assets-display/alternative/scene-BS-ENV-03-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1621,8 +1681,8 @@
     },
     "assets-display/alternative/scene-BS-ENV-03-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "6904479b9e63ba33fcf8f490bbc15f8a094aac568193e67ee5e0bc9fe24ccc61",
-      "bytes": 12514
+      "sha256": "3941df3ddd4996e50fb5ec2d5d350cae33551fa1490d77aa78ccb4531f1ff395",
+      "bytes": 155608
     },
     "assets-display/alternative/scene-BS-ENV-04-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1631,8 +1691,8 @@
     },
     "assets-display/alternative/scene-BS-ENV-04-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "5ecb21b55c7c5f6ffe8bcd51983817387b7e2846fb4d8ce225c071addb200716",
-      "bytes": 11544
+      "sha256": "8b9b5ec06fd31a79dc5341996b57df08208d4a552ede57bba638d0524f83d318",
+      "bytes": 140498
     },
     "assets-display/alternative/scene-BS-far-mobile.webp": {
       "source": "reviewed-export",
@@ -1641,8 +1701,8 @@
     },
     "assets-display/alternative/scene-BS-far.webp": {
       "source": "reviewed-export",
-      "sha256": "a6a924bcfb4fa832681756c5930e0f35185f8e7bbaa34b9605ab67b5f4356b22",
-      "bytes": 5024
+      "sha256": "4962b163a18f71d3867268ea4491ac0ced30c562e765202a31a5907fc5aa688e",
+      "bytes": 83368
     },
     "assets-display/alternative/scene-BS-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -1651,8 +1711,8 @@
     },
     "assets-display/alternative/scene-BS-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "aa7d026152d1f80ee93159a17bf643b4560de7026460e9fa4a0f76fb3d75ba51",
-      "bytes": 8244
+      "sha256": "601304f32786d8f21cfbf716711da9c69e0eb16e01126e41c8f93517f49c98f2",
+      "bytes": 94530
     },
     "assets-display/alternative/scene-BS-ground-mobile.webp": {
       "source": "reviewed-export",
@@ -1661,8 +1721,8 @@
     },
     "assets-display/alternative/scene-BS-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "e0bf99778373d89a3e0a935556dd487bcd62f426c0381d498aa10649a3333184",
-      "bytes": 9800
+      "sha256": "c1e98fe6083f67af1671021d1b1d97e8a4e356183b166a4bcbb8949a96ff9cc0",
+      "bytes": 134562
     },
     "assets-display/alternative/scene-BS-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -1671,8 +1731,8 @@
     },
     "assets-display/alternative/scene-BS-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "843a51030a62ea948421d7be64ca5c985e4c6d3e25a4e9523a62f4ca037fe386",
-      "bytes": 8512
+      "sha256": "1d67c16f6a72dee4e209a8a80e2805f4ba2fdf6b06f01903efb364cbdc2352e1",
+      "bytes": 46148
     },
     "assets-display/alternative/scene-cinder-reach-1-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1681,8 +1741,8 @@
     },
     "assets-display/alternative/scene-cinder-reach-1-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "50bda24c84be5713632791288976d23d95dd65176b5ffc9c8ef70ae650d0b517",
-      "bytes": 8900
+      "sha256": "e7d125fa5e50ff0789503580481a2440ec9c0a551c69d03fa7e81d2edab815dc",
+      "bytes": 101654
     },
     "assets-display/alternative/scene-cinder-reach-2-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1691,8 +1751,8 @@
     },
     "assets-display/alternative/scene-cinder-reach-2-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "e0fe782a8fb84017491983ec993173884ba2afd182680fb43b44a22d641ef448",
-      "bytes": 11144
+      "sha256": "d43ca1faa6903720bf3420bbc962109b039c2b3d2dfbfb8499a6b5f5db2d291f",
+      "bytes": 124390
     },
     "assets-display/alternative/scene-cinder-reach-3-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1701,8 +1761,8 @@
     },
     "assets-display/alternative/scene-cinder-reach-3-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "7671818fe2e73184837337ed68bdf8422b5fa6ab49f7dfa108a0c03724c88bef",
-      "bytes": 9366
+      "sha256": "39be9a44713cb6458b295a88d7a4632429e04a267d7d2b3295f49d9c79664c20",
+      "bytes": 108248
     },
     "assets-display/alternative/scene-cinder-reach-4-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1711,8 +1771,8 @@
     },
     "assets-display/alternative/scene-cinder-reach-4-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "a37a6e5f527e0dd7dc024405e4cd6253c23faa99829eaf18ee63628d335db8e4",
-      "bytes": 8970
+      "sha256": "4f163c751ae558b7a76db4cfe26b79bd2e8a801b1630c29bdea9b60d5b15c288",
+      "bytes": 107348
     },
     "assets-display/alternative/scene-cinder-reach-far-mobile.webp": {
       "source": "reviewed-export",
@@ -1721,8 +1781,8 @@
     },
     "assets-display/alternative/scene-cinder-reach-far.webp": {
       "source": "reviewed-export",
-      "sha256": "1c8fabfd5280887f1cb823f1d828b19e69e3ee5a2b49cce49e27249379c80bcb",
-      "bytes": 3728
+      "sha256": "8b899aada66806d6d04ed27e420a6ba991a2e5e22a9e1b52dc3f0409b1186823",
+      "bytes": 47550
     },
     "assets-display/alternative/scene-cinder-reach-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -1731,8 +1791,8 @@
     },
     "assets-display/alternative/scene-cinder-reach-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "34f021dfcd7c7e0bd307e9926973efd93be7de0052188592341dea93e0cdce5b",
-      "bytes": 7140
+      "sha256": "a3d990a50b08c5c7f4abd038014b495477ba6d1a01ee5cfa619db9553ff79762",
+      "bytes": 87742
     },
     "assets-display/alternative/scene-cinder-reach-ground-mobile.webp": {
       "source": "reviewed-export",
@@ -1741,8 +1801,8 @@
     },
     "assets-display/alternative/scene-cinder-reach-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "79c3cb6f0caf06daae69435ab8e8712f6bbc28b1a9d30f7fd638025ddbe47b1e",
-      "bytes": 8092
+      "sha256": "f5c050ed636f4d00a0deb05d2db491c5cf20c4016d7d75650f855b6df2d88bdc",
+      "bytes": 125514
     },
     "assets-display/alternative/scene-cinder-reach-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -1751,8 +1811,8 @@
     },
     "assets-display/alternative/scene-cinder-reach-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "0de65c466d2ae4d3145d67a07b732eba09cf3bcd13da7992ad18ca1123e163a1",
-      "bytes": 6816
+      "sha256": "02ac7ac5dc1a6507ee6dbb51771c6e282fdd70d56ce1a72c84961ad181977736",
+      "bytes": 37460
     },
     "assets-display/alternative/scene-drowned-coast-1-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1761,8 +1821,8 @@
     },
     "assets-display/alternative/scene-drowned-coast-1-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "c167d85c984301148895686444cea6b7ca771dacc3af812b96a1a8209248942b",
-      "bytes": 10092
+      "sha256": "fb8883360a8d25692175a59ad8a50c655f96eeec1f6dad7bfb356aaddf613689",
+      "bytes": 121070
     },
     "assets-display/alternative/scene-drowned-coast-2-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1771,8 +1831,8 @@
     },
     "assets-display/alternative/scene-drowned-coast-2-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "cd3083b96284c2440e593f75140c454f390a23657a0a9081c901d07c8a229a1c",
-      "bytes": 10026
+      "sha256": "eb58d09cca4d0efe1ec63c5780eb9f8d1939f47904ad8edfe8e6dc4088de31bb",
+      "bytes": 123636
     },
     "assets-display/alternative/scene-drowned-coast-3-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1781,8 +1841,8 @@
     },
     "assets-display/alternative/scene-drowned-coast-3-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "72f953be03d98857b2932679bfd2889181c2189e37fa968fae1b9598b31a7433",
-      "bytes": 10430
+      "sha256": "6e7647bf92b5203ccfae5b62039ca1727fa6e6019b35c39c751d608677695917",
+      "bytes": 113620
     },
     "assets-display/alternative/scene-drowned-coast-4-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1791,8 +1851,8 @@
     },
     "assets-display/alternative/scene-drowned-coast-4-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "62a3967efbd1462a60a5a7be0ee7d8cc8438e01fb49236e51ab0d43b3d0eda42",
-      "bytes": 11020
+      "sha256": "3767c2e3d431243fe5d5445021d24a2e0d5020603aaea8e51257fa00cec5c2ad",
+      "bytes": 130628
     },
     "assets-display/alternative/scene-drowned-coast-far-mobile.webp": {
       "source": "reviewed-export",
@@ -1801,8 +1861,8 @@
     },
     "assets-display/alternative/scene-drowned-coast-far.webp": {
       "source": "reviewed-export",
-      "sha256": "5341805848a112f18107d44cdff1effe2571ef6783b48664c76a43a0cffa03b5",
-      "bytes": 6380
+      "sha256": "fff6cca8a7aa5a59c4689891f19c2cc59401a2c0ba1fb1f0fb213641f1c637a9",
+      "bytes": 80278
     },
     "assets-display/alternative/scene-drowned-coast-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -1811,8 +1871,8 @@
     },
     "assets-display/alternative/scene-drowned-coast-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "c4a5db4c907c6723ffd05cf0ef4e1c8cfbdb541c6831f069a71eb27cd23363e5",
-      "bytes": 7586
+      "sha256": "4a210f7968a32df124b06f0dd54b7d80d40d15763f1b5ea0b852a574781b44cd",
+      "bytes": 86458
     },
     "assets-display/alternative/scene-drowned-coast-ground-mobile.webp": {
       "source": "reviewed-export",
@@ -1821,8 +1881,8 @@
     },
     "assets-display/alternative/scene-drowned-coast-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "90e7822cc74a65fdfa9f2867220b908f244e8f593702f2ce1a1aa8800a033881",
-      "bytes": 8430
+      "sha256": "e4204d8ce2d7a6df367657932e2160dbd7222d2557ca18892bc73ff1f7ae8b27",
+      "bytes": 134900
     },
     "assets-display/alternative/scene-drowned-coast-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -1831,8 +1891,8 @@
     },
     "assets-display/alternative/scene-drowned-coast-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "7472d7858307bc5db6e0433f1bcd648363e6311135907ebeeafc8c29ac2f6e2c",
-      "bytes": 8456
+      "sha256": "629095c3af1b547b87ce3fd9f44d651137becd6ae868a233d6540697f75a6e9d",
+      "bytes": 49522
     },
     "assets-display/alternative/scene-FC-ENV-01-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1841,8 +1901,8 @@
     },
     "assets-display/alternative/scene-FC-ENV-01-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "df394c945080cdef7454893d7a960ab7dadd9d8956b9b4b498341216665b8a3d",
-      "bytes": 9766
+      "sha256": "8c05ec8f40e73b2e1e115d0086e7073e16c15eba66d1c23fe8e797092726b1b1",
+      "bytes": 102558
     },
     "assets-display/alternative/scene-FC-ENV-02-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1851,8 +1911,8 @@
     },
     "assets-display/alternative/scene-FC-ENV-02-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "669946d32abc97fd9918b0c43e20f9bcf65c3360699eeee74df8172189418ebc",
-      "bytes": 11402
+      "sha256": "a3b4acaa7ffd9bbbbc7d2b048d0b9dc8200c89154ed11cb9c2ccc193c6ae4229",
+      "bytes": 131494
     },
     "assets-display/alternative/scene-FC-ENV-03-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1861,8 +1921,8 @@
     },
     "assets-display/alternative/scene-FC-ENV-03-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "3a9bc72f5d7ab319bbfa52374e94511ba1336e172407804d12a56727ca5146a7",
-      "bytes": 9966
+      "sha256": "1baa432ac20050e9029a9c76b899a1c7863cec7a7f53e17e6ea84152ed05b912",
+      "bytes": 115838
     },
     "assets-display/alternative/scene-FC-ENV-04-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1871,8 +1931,8 @@
     },
     "assets-display/alternative/scene-FC-ENV-04-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "5c2ee23e6414a570b5d16ea4078cab726a7d25ed58286b0ea4c58d88ef991e2f",
-      "bytes": 10934
+      "sha256": "7ea936a72473d1916e461dc5fbcb70acc9829059545617889e8172ec05539600",
+      "bytes": 137464
     },
     "assets-display/alternative/scene-FC-far-mobile.webp": {
       "source": "reviewed-export",
@@ -1881,8 +1941,8 @@
     },
     "assets-display/alternative/scene-FC-far.webp": {
       "source": "reviewed-export",
-      "sha256": "d2c75e670ae92ecb9eebdb32b15cd210ebcb6aec5d6455b063996276e299923b",
-      "bytes": 3846
+      "sha256": "efe61b64d34244c0bede4d250c7d79840f3051b473b310ab015c84ace990a373",
+      "bytes": 36240
     },
     "assets-display/alternative/scene-FC-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -1891,8 +1951,8 @@
     },
     "assets-display/alternative/scene-FC-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "83262716a8f6052afbb70433bb5bd2547cb3607306e518f2153ed79d7351bfe3",
-      "bytes": 7650
+      "sha256": "c3f8db30ace4910add792c7a7c8b133a2917a681c5490ad4bcab2c1f8f766d37",
+      "bytes": 93016
     },
     "assets-display/alternative/scene-FC-ground-mobile.webp": {
       "source": "reviewed-export",
@@ -1901,8 +1961,8 @@
     },
     "assets-display/alternative/scene-FC-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "95f0c9166a910d503e0b3f2b9853a7bc277c6c393f288992dce816c222ff26a8",
-      "bytes": 9974
+      "sha256": "23c484025c1921d219f1d58332926e391bd1b1dd7a8d4eb04be7d6d0f0a3cdf8",
+      "bytes": 135956
     },
     "assets-display/alternative/scene-FC-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -1911,8 +1971,8 @@
     },
     "assets-display/alternative/scene-FC-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "1a5558b002847d3f499e0cff474d8489c7ab7abf26ccadda14894b65839d2586",
-      "bytes": 8062
+      "sha256": "40ec7ce0d489c08d2c144a216de2f3e7428fe3848d748a6c852a4e81f668d6e3",
+      "bytes": 45088
     },
     "assets-display/alternative/scene-glass-lake-ground-mobile.webp": {
       "source": "reviewed-export",
@@ -1921,8 +1981,8 @@
     },
     "assets-display/alternative/scene-glass-lake-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "fb9d7663f52e06a0665d1a4399ac373aef1011d5666c2c8cce3f59be93b89748",
-      "bytes": 8242
+      "sha256": "89808b9c0e57de9e981dbc8f52648d74588d7acca7bd098e0556b4087b417574",
+      "bytes": 114186
     },
     "assets-display/alternative/scene-grave-ships-ground-mobile.webp": {
       "source": "reviewed-export",
@@ -1931,8 +1991,8 @@
     },
     "assets-display/alternative/scene-grave-ships-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "e80f05083bb17280a92791453a2fad46ed56e66be5264b33582250ca84cf2ac0",
-      "bytes": 7250
+      "sha256": "dd775b78e25d423589983c92ca4409bc5c6294261581b8f1dc98881ec87702c6",
+      "bytes": 96814
     },
     "assets-display/alternative/scene-HM-ENV-01-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1941,8 +2001,8 @@
     },
     "assets-display/alternative/scene-HM-ENV-01-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "f5a3bd3f15072d80d4616bb1138edbb68d529663ad38067646782d052a54e083",
-      "bytes": 12548
+      "sha256": "5a32658fdac8e6cfd4eefe5ee5c2b9ee82764516f5e01a8352b8d5c6ae0a85b2",
+      "bytes": 141844
     },
     "assets-display/alternative/scene-HM-ENV-02-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1951,8 +2011,8 @@
     },
     "assets-display/alternative/scene-HM-ENV-02-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "2ab0c5ff0a76fd257fcd7c8e4d4e9498d5d92a09fcbfa6a1cc35d5fe0fcc808e",
-      "bytes": 14158
+      "sha256": "e6cb80bd59ece2ecc07b26e2b50b68cda91ec56b67c87b50e2bac48c2b3d3620",
+      "bytes": 181788
     },
     "assets-display/alternative/scene-HM-ENV-03-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1961,8 +2021,8 @@
     },
     "assets-display/alternative/scene-HM-ENV-03-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "5b8aabcedf0fe1d1a2dfdaf00e31ae899d4513292c9dee4df69b84c2187f4d3b",
-      "bytes": 11894
+      "sha256": "0c8e02c344afb10acb997cddf76f98ef7c10a6e220f2b1cf7e4958e0d32f9e75",
+      "bytes": 143666
     },
     "assets-display/alternative/scene-HM-ENV-04-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -1971,8 +2031,8 @@
     },
     "assets-display/alternative/scene-HM-ENV-04-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "a6a9cda0f311c47b163f19d4628ae99065482bca923fd62949b38c13b6ddecf4",
-      "bytes": 10930
+      "sha256": "1dc7993e0ecf7e4f11d0d788c8543df9974804fb4709b4b2146f9c2381bb4df1",
+      "bytes": 135518
     },
     "assets-display/alternative/scene-HM-far-mobile.webp": {
       "source": "reviewed-export",
@@ -1981,8 +2041,8 @@
     },
     "assets-display/alternative/scene-HM-far.webp": {
       "source": "reviewed-export",
-      "sha256": "321e012b4abfb4d65c98a9a7486eacf3f7febe0412631ba29a0538509d1af521",
-      "bytes": 7002
+      "sha256": "bd1e1d692f90c389403b82e15e6880c310e84d9a62ee50ef2498c5010176773e",
+      "bytes": 106678
     },
     "assets-display/alternative/scene-HM-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -1991,8 +2051,8 @@
     },
     "assets-display/alternative/scene-HM-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "9276bc987948c96ac18b64ed319de8bd03966f0b716020ae5e61900e0b974f55",
-      "bytes": 8958
+      "sha256": "5850210ab468333fb709235fe5161cfb18eecc94b0ec424f39b2dd5a57c9fece",
+      "bytes": 110456
     },
     "assets-display/alternative/scene-HM-ground-mobile.webp": {
       "source": "reviewed-export",
@@ -2001,8 +2061,8 @@
     },
     "assets-display/alternative/scene-HM-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "b8ec95c5d8b14716d6edd858ab51e022f3084fb0c247fa78de44ff5b54993cac",
-      "bytes": 8142
+      "sha256": "d600438874956168108a0294ec07cd7ef8b80b7db7cc4142e81945862a88b766",
+      "bytes": 123404
     },
     "assets-display/alternative/scene-HM-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -2011,8 +2071,8 @@
     },
     "assets-display/alternative/scene-HM-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "30dda5df50053fc3557c1fd1ec59681165ced05042db77a2ee4a06537562c60d",
-      "bytes": 11098
+      "sha256": "40fe8bfbde41a4e14140d637880656c0283c7af0d64ed0fc454f22065341f9bc",
+      "bytes": 62740
     },
     "assets-display/alternative/scene-hollow-night-far-mobile.webp": {
       "source": "reviewed-export",
@@ -2021,8 +2081,8 @@
     },
     "assets-display/alternative/scene-hollow-night-far.webp": {
       "source": "reviewed-export",
-      "sha256": "68cafc6e4e927bd3a45e48984d4770b1e0ed4d791b49c343b5235ebeb5194e86",
-      "bytes": 3500
+      "sha256": "b4fa9898dbdce5b3ecbc113373056f9f39f98a2de85e123668d51e98e0fd45e0",
+      "bytes": 38104
     },
     "assets-display/alternative/scene-hollow-weald-1-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -2031,8 +2091,8 @@
     },
     "assets-display/alternative/scene-hollow-weald-1-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "23e7cfe50ac10587800c7e1e24b8dd274c09b12e947fc19237235a0f18d77e55",
-      "bytes": 13522
+      "sha256": "1e9e301b52d4bc5e4e0d93b3d75919749f80123b985186dcadaa30e3904b945e",
+      "bytes": 166552
     },
     "assets-display/alternative/scene-hollow-weald-2-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -2041,8 +2101,8 @@
     },
     "assets-display/alternative/scene-hollow-weald-2-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "29a33f9e90c41d939727cacb43dad7eac7ac1de56e3b8a2ff1167e72ba4dc78c",
-      "bytes": 9336
+      "sha256": "f81eb9528dc0bc172cea46d2757931010493a2defc35e41a6f979ddf60059364",
+      "bytes": 108772
     },
     "assets-display/alternative/scene-hollow-weald-3-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -2051,8 +2111,8 @@
     },
     "assets-display/alternative/scene-hollow-weald-3-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "5d8ceacd65dabed2b04ae4edf4822a00c0d85b6cf50de71749130cb3904c8937",
-      "bytes": 11490
+      "sha256": "0ae65c0b60e1f9163c18cc24d077339576921bd577a3b980375b1fb6e46b3699",
+      "bytes": 142358
     },
     "assets-display/alternative/scene-hollow-weald-4-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -2061,8 +2121,8 @@
     },
     "assets-display/alternative/scene-hollow-weald-4-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "9df96c8f7f9ca58eab32434c8f883364a724cbf2fda4e39a01c546752ca31c47",
-      "bytes": 10608
+      "sha256": "397f42301f797d389382669e5e5e17f4637ea3864c100be523ed06122bda20fa",
+      "bytes": 134236
     },
     "assets-display/alternative/scene-hollow-weald-far-mobile.webp": {
       "source": "reviewed-export",
@@ -2071,8 +2131,8 @@
     },
     "assets-display/alternative/scene-hollow-weald-far.webp": {
       "source": "reviewed-export",
-      "sha256": "d65e6a99832f884f7bf1744701604a30a9f0dd0b3a8618dd0b863b8c183cda98",
-      "bytes": 2802
+      "sha256": "564f6173526e15d9d71fc5fe553170f98581a66a369f7233ff521f47bd359506",
+      "bytes": 34592
     },
     "assets-display/alternative/scene-hollow-weald-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -2081,8 +2141,8 @@
     },
     "assets-display/alternative/scene-hollow-weald-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "aec5c50c51dc3cf265942db18121fb5fde5ad6a6b12106530cd726998a77372a",
-      "bytes": 8464
+      "sha256": "c32d5557318bf5e2341817265f7cbbeac2559a0f19a378b7e6b270582358a46a",
+      "bytes": 140542
     },
     "assets-display/alternative/scene-hollow-weald-ground-mobile.webp": {
       "source": "reviewed-export",
@@ -2091,8 +2151,8 @@
     },
     "assets-display/alternative/scene-hollow-weald-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "954ef39b6d87f8c57a6cf55489ea30b93a34846bb4ca7c0a47b4f37ad4ce1038",
-      "bytes": 7898
+      "sha256": "195096c8cf8e50e1cd236cd947671496dcc89d2c324487a6058d55912b36f095",
+      "bytes": 146598
     },
     "assets-display/alternative/scene-hollow-weald-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -2101,8 +2161,8 @@
     },
     "assets-display/alternative/scene-hollow-weald-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "01c952164b5beb942cdff682635751f306057789fb4781c2c39faabb9700e688",
-      "bytes": 10332
+      "sha256": "fdd1588a2ebb71f72965766e71a79bcafa1fb5d3621d15a43db7a0fd73c49a6d",
+      "bytes": 60232
     },
     "assets-display/alternative/scene-pale-marches-1-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -2111,8 +2171,8 @@
     },
     "assets-display/alternative/scene-pale-marches-1-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "a25733ff3eca9b033a6bb61d7a824f46bfa8381716facc1d71d87bb61b375ef5",
-      "bytes": 9126
+      "sha256": "aca8a3b6e68cd2f13ae428f4feb6aef7a8c8243b75377799de000992f683d2d4",
+      "bytes": 111364
     },
     "assets-display/alternative/scene-pale-marches-2-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -2121,8 +2181,8 @@
     },
     "assets-display/alternative/scene-pale-marches-2-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "5ac0b277f57c9b9693d4edaee8ab7e3ad7f5ac4afd3d0dff29484309e3b74b4d",
-      "bytes": 11728
+      "sha256": "15d4946b63a16dc21673c808621d48f0ae007ee735d2345c0ff66cd11c1d1d99",
+      "bytes": 140812
     },
     "assets-display/alternative/scene-pale-marches-3-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -2131,8 +2191,8 @@
     },
     "assets-display/alternative/scene-pale-marches-3-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "dc3db5c97a1f9b1f2fa46d0b523059280b99786e70b9a6e4ba579c863f66aa52",
-      "bytes": 12680
+      "sha256": "d9d16a53bbc1af03ea982905259580803fb23f9c985b19aeb27d5620e2aa4bde",
+      "bytes": 142448
     },
     "assets-display/alternative/scene-pale-marches-4-landmark-mobile.webp": {
       "source": "reviewed-export",
@@ -2141,8 +2201,8 @@
     },
     "assets-display/alternative/scene-pale-marches-4-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "cfcb57ea58416e79c7341178932bb45f38d6702ace0455d6a1365a2fe89b1112",
-      "bytes": 10266
+      "sha256": "dbca810e9325173bc937a42acb1fa85dddfe504f350ac55f2c36d3a0c1bdc4f2",
+      "bytes": 112806
     },
     "assets-display/alternative/scene-pale-marches-far-mobile.webp": {
       "source": "reviewed-export",
@@ -2151,8 +2211,8 @@
     },
     "assets-display/alternative/scene-pale-marches-far.webp": {
       "source": "reviewed-export",
-      "sha256": "c714091df19dfe2845dc6a4e038afbd468a53e78936209156971b1d1b5af02d6",
-      "bytes": 4366
+      "sha256": "e3fe17952d6c830cc87603d888d649f13f0de5e7783a87fd11d38aaac9e1e867",
+      "bytes": 46824
     },
     "assets-display/alternative/scene-pale-marches-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -2161,8 +2221,8 @@
     },
     "assets-display/alternative/scene-pale-marches-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "d540f5bd166c741117ce5515620439e8c095ea14600f4623cbdf8ab1f6bcf036",
-      "bytes": 11182
+      "sha256": "afa446e95905e67dabe7875d34864a6c634ad865018a337aff9e743523b4f075",
+      "bytes": 141126
     },
     "assets-display/alternative/scene-pale-marches-ground-mobile.webp": {
       "source": "reviewed-export",
@@ -2171,8 +2231,8 @@
     },
     "assets-display/alternative/scene-pale-marches-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "e9e83de57244ac25116da7741a077585606d4daf33bc14d2620d067d46447d20",
-      "bytes": 10190
+      "sha256": "203d1e54c339e32551c32bad5999708fa7449f081d5d0b79f2356299863e4cd9",
+      "bytes": 137466
     },
     "assets-display/alternative/scene-pale-marches-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
@@ -2181,8 +2241,8 @@
     },
     "assets-display/alternative/scene-pale-marches-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "0775454c0b6eddc5c551dbf143d4f34f3c6cf52eada89e2a14cefc440c922c86",
-      "bytes": 11346
+      "sha256": "cc9e51f05f8d854bdcda3f9e9ee5e1f85b6f7a25293416e09046edab03341b66",
+      "bytes": 63486
     },
     "assets-display/alternative/scene-starwatch-far-mobile.webp": {
       "source": "reviewed-export",
@@ -2191,8 +2251,8 @@
     },
     "assets-display/alternative/scene-starwatch-far.webp": {
       "source": "reviewed-export",
-      "sha256": "add5c666c1606aa795336f3139cbf1b8e2d9c802b07c6a92a3eecdb8406fd34f",
-      "bytes": 4014
+      "sha256": "72df8352a50f8369388ba1e68d21c47aca742527c8088fad76d7f4eca08c37cb",
+      "bytes": 62166
     },
     "assets-display/alternative/scene-undercroft-far-mobile.webp": {
       "source": "reviewed-export",
@@ -2201,8 +2261,8 @@
     },
     "assets-display/alternative/scene-undercroft-far.webp": {
       "source": "reviewed-export",
-      "sha256": "264d39171ac42f737fd91c2d6c530c70e0ecc56c19e2ee8b4299b51adcf9461e",
-      "bytes": 1886
+      "sha256": "3361f8b3f165f5c05fae55a72adf8ed756e5a8e539dbfe7a8d57e8024a4fe1fd",
+      "bytes": 26454
     },
     "assets-display/alternative/stances/herald/casting-mobile.webp": {
       "source": "reviewed-export",
