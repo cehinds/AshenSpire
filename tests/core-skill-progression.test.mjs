@@ -10,7 +10,7 @@ import { dispatch, previewCard } from '../src/engine/combat.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { recordSkillXp, skillXpReceipt, settleConfiguredSkillProgression } from '../src/engine/skillXp.js';
 import { awardSkillXp, xpToNext } from '../src/model/skills.js';
-import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices } from '../src/model/gameProfileProgression.js';
+import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt } from '../src/model/gameProfileProgression.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { mountGameProfileLevelUp } from '../src/ui/components/gameProfileLevelUp.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
@@ -24,6 +24,8 @@ import { featMultiplier } from '../src/model/feats.js';
 import { awardLevelXp, pendingLevelCount, combatXpReceipt } from '../src/model/levelup.js';
 import { combatXpGains } from '../src/model/rewardprogress.js';
 import { validateRunShape } from '../src/model/state.js';
+import { mountRewards } from '../src/ui/screens/reward.js';
+import { withKitDom } from './helpers/kit-dom.mjs';
 import { withModalDom } from './helpers/modal-dom.mjs';
 
 const profile = resolveGameProfile('core');
@@ -232,7 +234,7 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
   const saves = createSaveManager(createMemoryStorage());
   const screens = [], notices = [], deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
-    pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices };
+    pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'screens', 'notices', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = {}; let xpCombat = combat;
@@ -354,4 +356,49 @@ test('a pending Core opening survives the normal save door without changing earn
   assert.ok(loaded, JSON.stringify(saves.runStatus()));
   assert.deepEqual(loaded.prologue, run.prologue);
   assert.deepEqual(loaded.skills, skills);
+});
+
+
+test('Core Victory bars resume the paid slow-rate receipt and Continue acknowledges once without paying XP', () => {
+  const { run, combat } = live();
+  recordSkillXp(combat, { type: 'damageDealt', sourceId: 'player', targetId: combat.enemies[0].id, amount: 10, usedArmamentId: 'greatsword' });
+  recordSkillXp(combat, { type: 'combatEnd', victory: true });
+  const before = structuredClone(run.skills);
+  const awards = settleConfiguredSkillProgression(reg, run, combat, { victory: true });
+  const gains = combatXpGains({ awards: [awards.classAward, ...awards.trackAwards] });
+  assert.equal(gains.level, 0);
+  assert.equal(gains.tracks['item:blade'], awards.trackAwards[0].gained);
+  assert.equal(gains.tracks['item:shield'], undefined);
+  run.gameProfilePendingReward = { offerId: 'battle', source: 'combat', after: 'map', levelOffers: 0,
+    victoryReceipt: { title: 'Victory', xpGains: gains, xpBefore: { tracks: before } } };
+  const saves = createSaveManager(createMemoryStorage());
+  saves.saveRun(run, createRng(run.seed));
+  const loaded = saves.loadRun(reg);
+  assert.ok(loaded, saves.runStatus().reason);
+  const paid = structuredClone(loaded.skills);
+  const pending = loaded.gameProfilePendingReward;
+  assert.throws(() => acknowledgeVictoryReceipt(pending, () => { throw Error('save refused'); }), /save refused/);
+  assert.ok(pending.victoryReceipt, 'a failed save retains the receipt');
+  withKitDom(({ document }) => {
+    document.documentElement ??= document.body;
+    document.body.classList.add('reduced-motion');
+    const app = document.createElement('main'); document.body.append(app);
+    let continues = 0;
+    mountRewards(app, { registries: reg, run: loaded, rewards: pending.victoryReceipt, receiptOnly: true,
+      onDone() {
+        // Reentrant activation during a screen transition cannot acknowledge twice.
+        app.querySelector('#reward-continue').click();
+        acknowledgeVictoryReceipt(pending, () => saves.saveRun(loaded, createRng(loaded.seed)));
+        continues++;
+      } });
+    assert.equal(app.querySelectorAll('.reward-progress-row').length, 2);
+    assert.equal(app.querySelector('[data-track="character"]'), null);
+    assert.ok(app.querySelector('[role="progressbar"][data-track="class:reaver"]'));
+    assert.ok(app.querySelector('[role="progressbar"][data-track="item:blade"]'));
+    const done = app.querySelector('#reward-continue'); done.click(); done.click();
+    assert.equal(continues, 1);
+    assert.equal(saves.loadRun(reg).gameProfilePendingReward.victoryReceipt, undefined);
+    assert.deepEqual(saves.loadRun(reg).skills, paid);
+    assert.equal(acknowledgeVictoryReceipt(pending, () => { throw Error('already done'); }), false);
+  });
 });
