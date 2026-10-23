@@ -1450,14 +1450,15 @@ export function mountRewards(app, {
         face.appendChild(badge);
       }
       face.addEventListener('click', () => selectCard(choiceId));
-      // The text under the face: the card's name and its effect as plain text
-      // from the same template the face fills. The face's .ctext is drawn
-      // later, so it cannot be read here.
+      // A fixed-size choice button names the card. Full rules remain in the
+      // shared inspection and in its accessible description, without clipping
+      // a paragraph into the same box as the name.
       const effect = cardPlainText(registries, faceRef, { rules: run });
-      const tile = el('button', { class: 'class-pick reward-node reward-pick reward-choice-button', type: 'button', role: 'radio',
-        'aria-checked': String(choiceId === selectedCardId), dataset: { pickId: choiceId, cardId } }, [
-        el('div', { class: 'cp-body' }, [el('h3', { text: registries.cards.get(cardId)?.name || cardId }), el('p', { text: effect })]),
-      ]);
+      const tile = button({ label: registries.cards.get(cardId)?.name || cardId,
+        className: 'class-pick reward-node reward-pick reward-choice-button',
+        attrs: { role: 'radio', 'aria-checked': String(choiceId === selectedCardId),
+          'aria-description': effect, dataset: { pickId: choiceId, cardId } },
+      });
       // The button wears the green trim only; `reward-selected` stays the
       // card face's own lift, so one card reads as the one lit selection.
       tile.classList.toggle('is-chosen', choiceId === selectedCardId);
