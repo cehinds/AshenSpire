@@ -122,8 +122,8 @@ const LEVEL_DEFAULTS = balance.levelUp || {};
 // near-identical "starting stat pool" rows for one reachable pool; this is the
 // line that stops that. parseAdvancedConfigFile reads advancedConfigRows()
 // directly, so import is unaffected.
-const authoredAdvancedRows = advancedConfigRows(contentBundle);
-const ADVANCED_CONFIG_ROWS = authoredAdvancedRows.filter((row) => !row.retired)
+function buildAdvancedConfigRows(authoredAdvancedRows) {
+  return authoredAdvancedRows.filter((row) => !row.retired)
   // An override switch shows its EFFECTIVE state: stored, else on when the
   // class ships its own value or a profile already pinned one.
   .map((row) => (row.own ? { ...row, resolve: (settings) => ownOn(settings, row.own) } : row))
@@ -132,7 +132,19 @@ const ADVANCED_CONFIG_ROWS = authoredAdvancedRows.filter((row) => !row.retired)
   .map((row) => (row.shopLabel ? { ...row, label: shopRowLabel(row.shopLabel), shopTopic: t(`settings.shops.topic.${row.shopTopic}`) } : row))
   // A row whose words are a uiStrings row (SPEC §4.11 Combat rounds preview) wears them: short label, full note.
   .map((row) => (row.uiTextId ? { ...row, label: t(row.uiTextId), note: tFull(row.uiTextId) } : row));
-const INERT_CONFIG_ROWS = authoredAdvancedRows.filter((row) => row.inert);
+}
+// advancedConfigRows walks the whole content bundle (~0.35 s at 4x CPU), and
+// only the Settings screen, settingOn and the export/import doors need its
+// rows, so they are built on first use, not when this module is evaluated.
+let advancedRowsCache = null;
+function advancedRowSets() {
+  if (!advancedRowsCache) {
+    const authored = advancedConfigRows(contentBundle);
+    advancedRowsCache = { config: buildAdvancedConfigRows(authored), inert: authored.filter((row) => row.inert) };
+    advancedRowsCache.fixedDraw = advancedRowsCache.config.filter((row) => row.fixedOnly);
+  }
+  return advancedRowsCache;
+}
 
 /**
  * A Shops row's label: the kind and the offering by their uiStrings names
@@ -151,7 +163,6 @@ export function shopRowLabel({ id, tokens, names = {} }) {
   return t(id, filled);
 }
 // The Draw / turn stat row's editors, which only a fixed draw reads.
-const FIXED_DRAW_ROWS = ADVANCED_CONFIG_ROWS.filter((row) => row.fixedOnly);
 
 // A row that holds no value of its own: a button, the fullscreen action, the
 // opening's list editor. They are never exported and never reset, because
@@ -267,7 +278,7 @@ function releaseHidden() {
     const into = releaseGroups.has(group.id) ? shown : debugOnly;
     for (const sub of cachedSubgroups(advanced, group.id)) for (const row of sub.rows) into.add(row.key);
   }
-  for (const row of ROWS) if (GENERAL_GROUPS.includes(row.cat) || row.cat === 'Accessibility') shown.add(row.key);
+  for (const row of allRows()) if (GENERAL_GROUPS.includes(row.cat) || row.cat === 'Accessibility') shown.add(row.key);
   return (key) => !shown.has(key) && (debugOnly.has(key) || key.startsWith('gameConfig.'));
 }
 
@@ -299,7 +310,7 @@ let releasePromotion = null;
 const PROMOTED_DEFAULTS = Object.freeze({ ...(SETTINGS_DEFAULTS.values || {}) });
 
 /** settingsRows() → every row this screen draws (the sync profile's key list). */
-export function settingsRows() { return ROWS; }
+export function settingsRows() { return allRows(); }
 
 // ---- RECOVERY (owner, 2026-09-27) ------------------------------------------
 // "a setting to set recovery rate for hp stamina and mp to at rest and or after
@@ -330,7 +341,11 @@ function recoverySettingRows() {
   });
 }
 
-const ROWS = [
+// ROWS is built on first use (see advancedRowSets), through allRows().
+let rowsCache = null;
+function allRows() { return rowsCache || (rowsCache = buildRows()); }
+function buildRows() {
+return [
   { cat: 'Combat', key: 'askToUpcastAfterTarget', type: 'toggle', def: false, label: 'Ask to upcast after choosing a target', note: 'Off: use the Upcast button under an eligible selected card. On: choose a temporary rank before committing the play; Cancel spends nothing.' },
   { cat: 'Combat', key: 'combatLogPlayerColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.player,
     label: t('settings.row.combatLogPlayerColor'), note: tFull('settings.row.combatLogPlayerColor') },
@@ -871,7 +886,7 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Deck', key: 'playInDeckOrder', def: deckRules.defaults.playInDeckOrder, label: t('settings.row.playInDeckOrder'),
     note: tFull('settings.row.playInDeckOrder') },
   ...recoverySettingRows(),
-  ...ADVANCED_CONFIG_ROWS,
+  ...advancedRowSets().config,
   { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: t('settings.row.promptSettingsExport'),
     note: tFull('settings.row.promptSettingsExport') },
   { cat: 'Advanced', advancedGroup: 'Export', key: 'gameConfigExport', type: 'button', btn: 'Export JSON', label: t('settings.row.gameConfigExport'),
@@ -884,6 +899,7 @@ const ROWS = [
   ...graceRefillRows(),
   ...wireframeChoiceRows(),
 ];
+}
 
 // ---- categories: a heading is DERIVED from what is under it (#78) ----------
 //
@@ -1009,7 +1025,7 @@ export function developerSwitchHtml(state = debugSwitch()) {
 /** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
 export function visibleAdvancedGroups(debug = pageDebug(), profile = null) {
   const groups = debug ? ADVANCED_GROUPS : ADVANCED_GROUPS.filter((group) => RELEASE_ADVANCED_GROUP_IDS.includes(group.id));
-  return profile ? groups.filter(group => MOUNTED_ADVANCED_GROUPS[group.id] || cachedSubgroups(ROWS, group.id, profile).length) : groups;
+  return profile ? groups.filter(group => MOUNTED_ADVANCED_GROUPS[group.id] || cachedSubgroups(allRows(), group.id, profile).length) : groups;
 }
 
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
@@ -1071,7 +1087,7 @@ export function storedAdvancedTopic(settings, groupId) {
   const old = settings?.[`settingsAdvancedSubgroup.${raw}`];
   // A topic that kept its name under Stats (Resistance, Impact, Breaks, the
   // per-item tables) reopens as itself (Codex, on #1252).
-  if (MERGED_ADVANCED_GROUPS[raw] && advancedSubgroups(ROWS, 'Stats').some((group) => group.id === old)) return old;
+  if (MERGED_ADVANCED_GROUPS[raw] && advancedSubgroups(allRows(), 'Stats').some((group) => group.id === old)) return old;
   // Stats & Defence's own General and legacy-poise topics.
   if (raw === 'Ratings & Resistance') return { General: 'Overview', 'Without ratings (legacy poise)': 'Poise' }[old];
   return MIGRATED_STATS_TOPICS[raw] || MIGRATED_STATS_TOPICS[old];
@@ -1115,9 +1131,9 @@ function categoryLabel(cat) {
  * failure; nothing here guesses.
  */
 export function categoryHandler(cat) {
-  if (cat === 'General') return { rows: ROWS.filter(row => GENERAL_GROUPS.includes(row.cat) && !row.retired) };
+  if (cat === 'General') return { rows: allRows().filter(row => GENERAL_GROUPS.includes(row.cat) && !row.retired) };
   if (SECTIONS[cat]) return SECTIONS[cat];
-  const rows = ROWS.filter((r) => r.cat === cat && !r.retired);
+  const rows = allRows().filter((r) => r.cat === cat && !r.retired);
   return rows.length ? { rows } : null;
 }
 
@@ -1208,8 +1224,9 @@ function rowNote(settings, row) {
 // override row also shows the value it is inheriting in place of its own, so
 // the number on screen is always the number in force. Its own stored value is
 // kept, and comes back when the switch does.
-const GATED_ROWS = ROWS.filter((row) => row.gates?.length);
-const rowByKey = (key) => ROWS.find((row) => row.key === key);
+let gatedRowsCache = null;
+const gatedRows = () => gatedRowsCache || (gatedRowsCache = allRows().filter((row) => row.gates?.length));
+const rowByKey = (key) => allRows().find((row) => row.key === key);
 
 function inheritedValue(gate, settings) {
   if (gate.inherited) return gate.inherited(settings);
@@ -1250,7 +1267,7 @@ export function setSettingsControlDisabled(control, disabled) {
 
 export function refreshHandRuleControls(section, rules) {
   if (!section) return;
-  for (const row of [...handRulesRows(), ...FIXED_DRAW_ROWS]) {
+  for (const row of [...handRulesRows(), ...advancedRowSets().fixedDraw]) {
     const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
     const read = path => path.split('.').reduce((v, k) => v[k], rules);
     const disabled = (row.requires && read(row.requires[0]) !== row.requires[1])
@@ -1271,7 +1288,7 @@ export function refreshGates(container, settings) {
     if (!controls.has(el.dataset.key)) controls.set(el.dataset.key, []);
     controls.get(el.dataset.key).push(el);
   }
-  for (const row of GATED_ROWS) {
+  for (const row of gatedRows()) {
     const els = controls.get(row.key);
     if (!els) continue;
     const closed = closedGate(settings, row);
@@ -1305,7 +1322,7 @@ export function refreshGates(container, settings) {
 
 function refreshConditionNotes(container, settings) {
   container.querySelectorAll('[data-setting-condition]').forEach((node) => {
-    const row = ROWS.find((candidate) => candidate.key === node.dataset.settingCondition);
+    const row = allRows().find((candidate) => candidate.key === node.dataset.settingCondition);
     if (row) node.textContent = rowNote(settings, row);
   });
 }
@@ -1341,7 +1358,7 @@ function controlOn(settings, row) {
  * reason to touch that function, one at a time.
  */
 export function settingOn(settings, key) {
-  const row = ROWS.find((r) => r.key === key);
+  const row = allRows().find((r) => r.key === key);
   if (!row) throw new Error(`settingOn: no settings row named '${key}'`);
   return valueOf(settings || {}, row);
 }
@@ -1636,7 +1653,7 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
 
 /** allResettableKeys() → every stored key Reset all puts back, inert retired ones included. */
 export function allResettableKeys() {
-  return [...ROWS, ...INERT_CONFIG_ROWS].filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key)
+  return [...allRows(), ...advancedRowSets().inert].filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key)
     .concat(Object.values(CUSTOM_GENERAL_GROUPS).flat());
 }
 
@@ -1980,7 +1997,7 @@ export function resolveGraceRefill(settings) {
   const s = settings || {};
   const counts = {};
   const bad = [];
-  for (const r of ROWS) {
+  for (const r of allRows()) {
     if (!r.graceRefillKind) continue;
     const def = Number(r.def);
     const stored = s[r.key];
@@ -2168,7 +2185,7 @@ export function commitNumberRow(settings, row, raw) {
  * renders instead of a second copy of its bounds.
  */
 export function settingsRow(key) {
-  const row = ROWS.find((r) => r.key === key);
+  const row = allRows().find((r) => r.key === key);
   if (!row) throw new Error(`settingsRow: no settings row named '${key}'`);
   return row;
 }
@@ -2179,11 +2196,11 @@ export function settingsRow(key) {
  * test imports a real exported file through exactly what the screen uses.
  */
 export function settingsImportRows() {
-  return ROWS;
+  return allRows();
 }
 
 export function resolveLevelUpValue(settings) {
-  return resolveNumberRow(settings, ROWS.find((r) => r.key === 'levelUpValue'));
+  return resolveNumberRow(settings, allRows().find((r) => r.key === 'levelUpValue'));
 }
 
 /**
@@ -2206,7 +2223,7 @@ function numberAppliedHtml(settings, row) {
 
 
 export function resolveTapSize(settings) {
-  const row = ROWS.find((r) => r.key === 'tapFloor');
+  const row = allRows().find((r) => r.key === 'tapFloor');
   const def = Number(row.def);
   const stored = (settings || {}).tapFloor;
   if (stored === undefined || stored === null || stored === '') {
@@ -2344,7 +2361,7 @@ function appliedHtml(settings) {
 // empty case work at all.
 function refreshApplied(container, settings) {
   container.querySelectorAll('[data-applied]').forEach((slot) => {
-    const row = ROWS.find((r) => r.key === slot.dataset.applied);
+    const row = allRows().find((r) => r.key === slot.dataset.applied);
     if (!row || !row.applied) return;
     slot.innerHTML = row.applied(settings, row) || '';
   });
@@ -2668,7 +2685,7 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
   const words = q ? q.split(/\s+/) : [];
   const hiddenByRules = new Set();
   if (settings && resolveHandRules(settings).drawMode !== 'fixed') {
-    for (const row of [...handRulesRows(), ...FIXED_DRAW_ROWS]) if (row.fixedOnly) hiddenByRules.add(row.key);
+    for (const row of [...handRulesRows(), ...advancedRowSets().fixedDraw]) if (row.fixedOnly) hiddenByRules.add(row.key);
   }
   const hit = (row) => {
     if (hiddenByRules.has(row.key) || !settingsRowAvailable(row, profile, nextProfile)) return false;
@@ -2677,7 +2694,7 @@ export function settingsSearchHits(query, debug = pageDebug(), settings = null, 
     return words.every((word) => hay.includes(word));
   };
   const hits = [];
-  for (const row of ROWS) {
+  for (const row of allRows()) {
     if (row.retired || !(GENERAL_GROUPS.includes(row.cat) || row.cat === 'Accessibility')) continue;
     if (hit(row)) hits.push({ row, where: row.cat === 'Accessibility' ? 'Accessibility' : `General › ${row.cat}` });
   }
@@ -2959,7 +2976,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly(), activeProfile(), nextProfile())}</div></div>`;
     }
   } else {
-    html = ROWS.filter((r) => !r.retired && settingsRowAvailable(r, activeProfile(), nextProfile())).map((r) => settingsRowHtml(settings, r)).join('');
+    html = allRows().filter((r) => !r.retired && settingsRowAvailable(r, activeProfile(), nextProfile())).map((r) => settingsRowHtml(settings, r)).join('');
   }
   const view = captureView(container);
   container.innerHTML = html;
@@ -3220,7 +3237,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   const reportAdvancedProblems = () => {
     refreshGates(container, settings);
     for (const input of container.querySelectorAll('[data-key^="gameConfig.attributeRules.presets."]')) {
-      if (settings[input.dataset.key] === undefined) input.value = resolveNumberRow(settings, ROWS.find(row => row.key === input.dataset.key));
+      if (settings[input.dataset.key] === undefined) input.value = resolveNumberRow(settings, allRows().find(row => row.key === input.dataset.key));
     }
     const rules = resolveHandRules(settings);
     // The Stats → Draw & hand worked example states the hand these rules deal
@@ -3248,7 +3265,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   const changelogMount = container.querySelector('.set-changelog-mount');
   if (changelogMount) renderChangelogSection(changelogMount);
   const syncMount = container.querySelector('.set-sync-mount');
-  if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: ROWS, promoted: buildPromotion(), afterApply: (moved, before, seedMoved = false) => {
+  if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: allRows(), promoted: buildPromotion(), afterApply: (moved, before, seedMoved = false) => {
     if (moved || seedMoved) {
       // A new profile: nothing offered before it applies any more. Its own
       // Undo belongs to the new generation.
@@ -3364,7 +3381,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   headerTools.querySelectorAll('[data-reset-config]').forEach((button) => {
     button.onclick = () => {
       const currentGroup = activeAdvancedGroup(settings, activeProfile());
-      const groups = cachedSubgroups(ROWS, currentGroup, activeProfile());
+      const groups = cachedSubgroups(allRows(), currentGroup, activeProfile());
       const selected = storedAdvancedTopic(settings, currentGroup);
       // Reset all also clears inert retired keys: they are off the screen, so
       // this is the only door that can take a stale one out of a profile.
@@ -3372,7 +3389,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // the matches — every one the pane counts, not only the page it draws —
       // and never the section that was open behind the search.
       const query = searchQuery();
-      const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]
+      const rows = button.dataset.resetConfig === 'all' ? [...allRows(), ...advancedRowSets().inert]
         : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly(), profile: activeProfile(), nextProfile: nextProfile() }).map((hit) => hit.row)
         : current === 'General' || current === 'Accessibility' ? (() => {
           const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
@@ -3578,7 +3595,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   container.querySelectorAll('.num-wrap').forEach((wrap) => {
     const field = wrap.querySelector('.set-num');
     const key = field.dataset.key;
-    const row = ROWS.find((r) => r.key === key);
+    const row = allRows().find((r) => r.key === key);
     // ONE COMMIT PATH, WRITTEN FOR TWO CONTROLS BEFORE THE SECOND ONE EXISTS.
     // `mirror` walks every input in the wrap, so Part B's slider is three lines
     // — a tag in the markup above — and cannot fall out of sync with the field,
@@ -3675,7 +3692,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       btn.textContent = 'Saving…';
       const result = await saveAdvancedConfigFile(panelSettings || settings, {
         build: { contentVersion: contentBundle.version },
-        includeKeys: ROWS.filter((row) => row.cat === 'Advanced' && !CONTROL_ROW_TYPES.has(row.type)).map((row) => row.key),
+        includeKeys: allRows().filter((row) => row.cat === 'Advanced' && !CONTROL_ROW_TYPES.has(row.type)).map((row) => row.key),
       });
       btn.disabled = false;
       btn.textContent = result.ok ? (result.method === 'save-as' ? 'Saved' : 'Downloaded') : 'Unavailable';
@@ -3715,7 +3732,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         // A raised floor is reported, not thrown: the rest of the file lands.
         const warnings = [];
         const text = await file.text();
-        const changes = parseAdvancedConfigFile(text, contentBundle, settings, ROWS, warnings);
+        const changes = parseAdvancedConfigFile(text, contentBundle, settings, allRows(), warnings);
         const outside = openingOnly ? Object.keys(changes).filter(key => !key.startsWith(PROLOGUE_PREFIX)) : [];
         if (outside.length) {
           throw new Error(`that file carries ${outside.length} setting${outside.length === 1 ? '' : 's'} from outside the opening. Load it under Advanced → Export, or export the opening on its own first. Nothing was imported.`);
@@ -3964,7 +3981,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     // Both guards matter: the overlay keeps its container when another tab
     // replaces the Settings controls; a modal can instead detach everything.
     if (!lifecycleSentinel.isConnected || !control.isConnected || !container.contains(control)) return;
-    const row = ROWS.find(row => row.key === key);
+    const row = allRows().find(row => row.key === key);
     const selected = settings[key] ?? rowDefault(row);
     choices.forEach((choice, index) => {
       choice.disabled = disabled[index];
@@ -4012,7 +4029,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const now = !btn.classList.contains('on');
       btn.classList.toggle('on', now);
       btn.setAttribute('aria-checked', String(now));
-      const row = ROWS.find((candidate) => candidate.key === btn.dataset.key);
+      const row = allRows().find((candidate) => candidate.key === btn.dataset.key);
       const stored = row && row.positiveWhen === false ? !now : now;
       settings[btn.dataset.key] = stored;
       onChange({ [btn.dataset.key]: stored });
@@ -4220,7 +4237,7 @@ function settingsHeaderTools() {
   // neither the menu item, the Load button, nor the export prompt on Done.
   if (exportItem) exportItem.onclick = () => saveAdvancedConfigFile(panelSettings || {}, {
     build: { contentVersion: contentBundle.version },
-    includeKeys: ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
+    includeKeys: allRows().filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
   });
   return tools;
 }
@@ -4265,7 +4282,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       if (file.size > 1024 * 1024) throw new Error('Choose a file smaller than 1 MB.');
       const warnings = [];
       const text = await file.text();
-      const changes = parseAdvancedConfigFile(text, contentBundle, settings, ROWS, warnings);
+      const changes = parseAdvancedConfigFile(text, contentBundle, settings, allRows(), warnings);
       // A sync profile loaded by hand keeps the ownership it records.
       const saved = { ...changes, ...importOwnership(text, changes, settings, buildPromotion()) };
       const problem = promotionProblem(contentBundle, settings, saved);
@@ -4295,7 +4312,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       exportButton.disabled = true;
       const result = await saveAdvancedConfigFile(panelSettings || settings, {
         build: { contentVersion: contentBundle.version },
-        includeKeys: ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
+        includeKeys: allRows().filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
       });
       exportButton.disabled = false;
       if (result.ok) { prompt.close(); door.close(); }
