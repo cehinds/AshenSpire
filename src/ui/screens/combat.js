@@ -777,8 +777,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // BUILDS it, gated on `targeting`, so only a repaint can take it away.
     // (`selectedFlask` is deliberately untouched above, and a raised flask keeps
     // `targeting` true, so the repaint is what decides — not this call site.)
-    // No figure moves when an aim is put down, so the geometry refit is skipped.
-    renderCombatantStage({ fit: false });
+    renderCombatantStage();
     syncCardSelection();
   });
   // WGC4: the one writer of the target layer. Selection changes and board
