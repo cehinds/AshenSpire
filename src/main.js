@@ -2733,6 +2733,8 @@ function syncWorldPosition() {
 }
 
 function enterWorldNode(nodeId) {
+  // A fight is being entered (startFight's one-frame yield): no second travel.
+  if (fightEntryPending) return;
   travelJourney(run.journey, nodeId);
   delete run.journey.inspectNodeId;
   syncWorldPosition();
@@ -2884,6 +2886,8 @@ function finishWorldService() {
 }
 
 function enterNode(nodeId) {
+  // A fight is being entered (startFight's one-frame yield): no second travel.
+  if (fightEntryPending) return;
   // Re-entering the node the player stands on is not travel, so no travel sound.
   if (nodeId !== run.mapNodeId) sfx.play('nodeTravel');
   const node = run.mapGraph.nodes[nodeId];

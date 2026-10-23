@@ -403,6 +403,8 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
 
 /* ---------- screen transitions (every mount fades in) ---------- */
 #app > * { animation: screenIn 240ms ease-out; }
+/* A fight is being entered (one frame): taps elsewhere wait (main.js startFight). */
+#app[aria-busy="true"] { pointer-events: none; }
 @keyframes screenIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
