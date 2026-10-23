@@ -1433,7 +1433,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // those changed. Reading them off the inline style is no layout read.
   const LAYOUT_ROOT_VARS = ['--ui-zoom', '--visible-height', '--view-width', '--view-height', '--view-fit', '--view-left', '--view-top'];
   // Text size is the root's inline font-size; the HUD is sized in rem.
-  const rootLayoutKey = () => [...LAYOUT_ROOT_VARS.map(name => document.documentElement.style.getPropertyValue(name)), document.documentElement.style.fontSize].join('|');
+  const rootLayoutKey = () => {
+    const rootStyle = document.documentElement.style;
+    if (!rootStyle) return '';
+    return [...LAYOUT_ROOT_VARS.map(name => rootStyle.getPropertyValue(name)), rootStyle.fontSize].join('|');
+  };
   let lastRootLayoutKey = rootLayoutKey();
   const layoutObserver = new MutationObserver(records => {
     const key = rootLayoutKey();
