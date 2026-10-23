@@ -296,9 +296,9 @@ body.hi-contrast :is(.modal, .as-detailcard, .as-option, .card, .shop-frame, .as
 .combat > .combat-hud .hud-center,
 .combat > .combat-hud .hud-trail { background:#17130fd9; }
 .combat .hand-area { background:none; }
-:root main:has(> .shop-workspace) > .shared-hud { position:absolute; inset:0 0 auto; z-index:20; background:none; border:0; pointer-events:none; }
-main:has(> .shop-workspace) > .shared-hud .hud-vitals-panel { max-width:28rem; padding:.5rem; background:#17130fe8; }
-main:has(> .shop-workspace) > .shared-hud :is(.hud-info-row,.hud-vitals-panel,.hud-control-grid,.hud-bottom) { pointer-events:auto; }
+:root main > .shared-hud.workspace-hud { position:absolute; inset:0 0 auto; z-index:20; background:none; border:0; pointer-events:none; }
+main > .shared-hud.workspace-hud .hud-vitals-panel { max-width:28rem; padding:.5rem; background:#17130fe8; }
+main > .shared-hud.workspace-hud :is(.hud-info-row,.hud-vitals-panel,.hud-control-grid,.hud-bottom) { pointer-events:auto; }
 .shop-workspace:not(.master-workspace) { padding-top:12rem; }
 
 /* Let the supplied frames respond visibly to native input states. No control
@@ -345,9 +345,9 @@ body.reduced-motion :is(.ember,.title-glow) { animation:none; }
 .rest-screen { position:relative; isolation:isolate; justify-content:flex-end; padding:12rem 3rem 3rem; }
 .rest-screen .polish-scene-painting { position:absolute; inset:0; width:100%; height:100%; max-height:none; z-index:-1; }
 .rest-screen .rest-door { margin:0; width:100%; max-width:none; max-height:54%; min-height:0; flex:0 1 auto; }
-:root main:has(> .rest-screen) > .shared-hud { position:absolute; inset:0 0 auto; z-index:20; background:none; border:0; pointer-events:none; }
-main:has(> .rest-screen) > .shared-hud :is(.hud-info-row,.hud-vitals-panel,.hud-control-grid,.hud-bottom) { pointer-events:auto; }
-main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padding:.5rem; background:#17130fe8; }
+:root main > .shared-hud.workspace-hud { position:absolute; inset:0 0 auto; z-index:20; background:none; border:0; pointer-events:none; }
+main > .shared-hud.workspace-hud :is(.hud-info-row,.hud-vitals-panel,.hud-control-grid,.hud-bottom) { pointer-events:auto; }
+main > .shared-hud.workspace-hud .hud-vitals-panel { max-width:28rem; padding:.5rem; background:#17130fe8; }
 :root[data-layout='wide']:not([data-composition='short-wide']) .modal:has(.set-railed) { width:72%; max-width:none; margin-inline:auto 2%; }
 .modal.armoury .armoury-sprite-pane .armoury-figure { height:92%; max-height:92%; max-width:88%; }
 :root[data-layout='wide'] .armoury[data-pane='character'] .armoury-character { grid-template-rows:auto minmax(28rem,1fr) auto; }
@@ -379,16 +379,16 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 .title-screen .tm-name { font-weight:500; letter-spacing:.07em; }
 
 /* A compact corner HUD exposes the painting while retaining every resource. */
-:root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) > .shared-hud { padding:1rem 1.4rem; }
-:root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) > .shared-hud > .hud-top {
+:root :is(.combat > .shared-hud,main > .shared-hud.workspace-hud) { padding:1rem 1.4rem; }
+:root :is(.combat > .shared-hud,main > .shared-hud.workspace-hud) > .hud-top {
  display:grid; grid-template-columns:18rem 1fr auto; grid-template-areas:'info . actions' 'meters . actions' 'rail . .'; gap:.35rem 1rem; align-items:start;
 }
-:root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .hud-info-row { display:flex; flex-wrap:wrap; gap:.35rem; padding:0; }
-:root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .hud-identity { flex:1; }
-:root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .hud-trail { display:none; }
-:root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .hud-vitals-panel { width:100%; max-width:none; box-sizing:border-box; padding:.4rem .6rem; background:#17130fc9; }
-:root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .resbars { display:flex; flex-direction:column; gap:.3rem; }
-:root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .hud-bottom { background:none; }
+:root :is(.combat .shared-hud,main > .shared-hud.workspace-hud) .hud-info-row { display:flex; flex-wrap:wrap; gap:.35rem; padding:0; }
+:root :is(.combat .shared-hud,main > .shared-hud.workspace-hud) .hud-identity { flex:1; }
+:root :is(.combat .shared-hud,main > .shared-hud.workspace-hud) .hud-trail { display:none; }
+:root :is(.combat .shared-hud,main > .shared-hud.workspace-hud) .hud-vitals-panel { width:100%; max-width:none; box-sizing:border-box; padding:.4rem .6rem; background:#17130fc9; }
+:root :is(.combat .shared-hud,main > .shared-hud.workspace-hud) .resbars { display:flex; flex-direction:column; gap:.3rem; }
+:root :is(.combat .shared-hud,main > .shared-hud.workspace-hud) .hud-bottom { background:none; }
 
 :root .combat[data-layout='formation'] > .hand-area { margin:0; padding:0; }
 :root .combat[data-layout='formation'] .environment-backdrop::before { background:linear-gradient(180deg,#08070610 25%,transparent calc(var(--scene-paint-bottom, 100%) - 16%),#17130f var(--scene-paint-bottom, 100%)); }
@@ -422,7 +422,7 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 
 :root[data-layout='narrow'] .title-screen .as-titlemenu { width:100%; }
 :root[data-layout='narrow'] .title-screen .title-traveler { width:36%; height:32%; left:1%; top:5%; bottom:auto; }
-:root[data-layout='narrow'] :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) > .shared-hud > .hud-top { grid-template-columns:14rem 1fr auto; }
+:root[data-layout='narrow'] :is(.combat > .shared-hud,main > .shared-hud.workspace-hud) > .hud-top { grid-template-columns:14rem 1fr auto; }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) { padding:calc(30 * var(--view-vh, 1vh)) 1rem 1rem; }
 :root[data-layout='narrow'] .shop-workspace:not(.master-workspace) .shop-frame { width:100%; }
 :root[data-layout='narrow'] .merchant-workspace .shop-railitem { display:none; }
@@ -432,8 +432,8 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 :root[data-layout='narrow'] .service-portrait { width:58%; height:31%; top:0; }
 @media (prefers-reduced-motion:reduce) { .shop-workspace .shop-pane { animation:none; } }
 body.reduced-motion .shop-workspace .shop-pane { animation:none; }
-:root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .hud-run-meta { display:none; }
-:root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .resbar { width:100% !important; }
+:root :is(.combat .shared-hud,main > .shared-hud.workspace-hud) .hud-run-meta { display:none; }
+:root :is(.combat .shared-hud,main > .shared-hud.workspace-hud) .resbar { width:100% !important; }
 
 
 .title-screen .title-landscape { position:absolute; inset:-1%; z-index:0; background:inherit; pointer-events:none; }
@@ -581,7 +581,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 }
 :root .shared-hud :is(.hud-info-row,.resbars) { text-shadow:0 1px 3px #000,0 0 5px #0009; }
 
-:root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) > .shared-hud > .hud-top {
+:root :is(.combat > .shared-hud,main > .shared-hud.workspace-hud) > .hud-top {
  grid-template-areas:'meters . actions' 'rail . actions';
 }
 :root .shared-hud .hud-vitals-panel { padding:0; }
@@ -593,7 +593,7 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 :root .shared-hud .illustrated-hud-icon svg { display:block; width:100%; height:100%; }
 :root .shared-hud .illustrated-hud-button:is(:hover,:focus-visible) { filter:drop-shadow(0 0 3px #e1bd73); }
 
-:root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .hud-vitals-panel { background:none; }
+:root :is(.combat .shared-hud,main > .shared-hud.workspace-hud) .hud-vitals-panel { background:none; }
 
 /* The card's dark leather backs Vitality, fading out at the turn ribbon.
    Mask the complete material so its texture also becomes transparent. */
