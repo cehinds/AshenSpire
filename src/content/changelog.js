@@ -6,8 +6,9 @@
 // creating a second hand-maintained copy of their prose.
 
 import { GENERATED_CHANGELOG } from './changelog.generated.js';
+import { REPOSITORY_URL } from './projectRepository.js';
 
-export const PROJECT_REPOSITORY_URL = 'https://github.com/cehinds/AshenSpire';
+export const PROJECT_REPOSITORY_URL = REPOSITORY_URL;
 
 export function validateChangelog(entries) {
   if (!Array.isArray(entries) || entries.length === 0) throw new Error('changelog has no entries');

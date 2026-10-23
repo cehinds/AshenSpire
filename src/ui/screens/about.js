@@ -20,7 +20,7 @@
 import { esc } from '../components/tooltip.js';
 import { AI_DISCLOSURE, disclosureAsText } from '../../content/aiDisclosure.js';
 import { ABOUT_BUILD_LINE, BUILD_VERSION, RUN_PATH } from '../../buildversion.js';
-import { CHANGELOG, PROJECT_REPOSITORY_URL } from '../../content/changelog.js';
+import { REPOSITORY_URL as PROJECT_REPOSITORY_URL } from '../../content/projectRepository.js';
 import { el, prose, eyebrow, titleS, button, buttonRow, statusText, flavour, fold, hairline } from '../kit/index.js';
 import { t } from '../strings.js';
 
@@ -61,11 +61,19 @@ function changelogNodes(entries, { linkExternal = false } = {}) {
   return nodes;
 }
 
+// The receipts are ~670 KB of generated data only this view reads, so the
+// module that holds them is evaluated on first use, not at boot. Passing
+// `changelog` renders synchronously; otherwise the section fills in when the
+// module resolves (a promise, which the caller may ignore).
 export function renderChangelogSection(container, {
-  changelog = CHANGELOG,
+  changelog = null,
   runPath = RUN_PATH,
   locationLike = globalThis.location,
 } = {}) {
+  if (!changelog) {
+    return import('../../content/changelog.js').then(({ CHANGELOG }) =>
+      renderChangelogSection(container, { changelog: CHANGELOG, runPath, locationLike }));
+  }
   const changeLinks = shouldLinkChangelog({ runPath, locationLike });
   container.innerHTML = '';
   container.appendChild(el('section', { class: 'about-changelog', 'aria-labelledby': 'advanced-changelog-title' }, [
