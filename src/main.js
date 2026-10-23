@@ -232,10 +232,10 @@ function whenIdle(task) {
   else setTimeout(task, 1500);
 }
 // The class-mastery pass of a bundle whose other passes were clean.
-function deferClassMasteryCheck(bundle) {
+function deferClassMasteryCheck(bundle, onFail = () => {}) {
   whenIdle(() => {
     const problems = classMasteryProblems(bundle);
-    if (problems.length) reportContentValidationFailure(problems.map((msg) => ({ path: 'classMastery', msg })));
+    if (problems.length) { onFail(); reportContentValidationFailure(problems.map((msg) => ({ path: 'classMastery', msg }))); }
   });
 }
 whenIdle(() => {
@@ -276,17 +276,10 @@ configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
 const cachedContentValidation = createContentValidationCache((gameProfile, configuration, configured) => {
-  // The first build of the session defers its class-mastery pass to idle (as the
-  // boot check above does); a later rebuild (a settings change) validates it all
-  // before the change applies.
-  let result;
-  if (bootRebuildPending) {
-    bootRebuildPending = false;
-    result = validateContent(configured, { deferred: ['classMastery'] });
-    if (result.ok) deferClassMasteryCheck(configured);
-  } else {
-    result = validateContent(configured);
-  }
+  // Settings laid over the authored content are validated whole, class mastery
+  // included, so a failure still falls back to the authored defaults.
+  bootRebuildPending = false;
+  const result = validateContent(configured);
   const structuralProblems = isConfiguredRun(gameProfile) ? [] : advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
   return { result, structuralProblems };
 });
@@ -319,17 +312,14 @@ function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = 
   const authored = applyGameProfileToContent(contentBundle, gameProfile);
   const configured = isConfiguredRun(gameProfile) ? authored : configuredContentBundle(authored, configuration);
   let validated;
+  let checkAtIdle = false;
   if (bootRebuildPending && isConfiguredRun(gameProfile)) {
     // A configured profile's content is authored, with no user settings laid over
     // it, so there is no fallback for this validation to choose: check it once
     // the page is idle and report a failure on the same banner.
     bootRebuildPending = false;
+    checkAtIdle = true;
     validated = { result: { ok: true, errors: [] }, structuralProblems: [] };
-    whenIdle(() => {
-      const check = validateContent(configured, { deferred: ['classMastery'] });
-      if (!check.ok) reportContentValidationFailure(check.errors);
-      else deferClassMasteryCheck(configured);
-    });
   } else validated = cachedContentValidation(gameProfile, configuration, configured);
   const { result, structuralProblems } = validated;
   if (!result.ok || structuralProblems.length) {
@@ -343,7 +333,18 @@ function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = 
     registries = createRegistries(configured);
   }
   registries = bindGameProfileRegistries(registries, gameProfile);
-  lastRegistryBuild = (result.ok && !structuralProblems.length && buildKey !== null) ? { key: buildKey, profile: gameProfile, registries } : null;
+  const build = (result.ok && !structuralProblems.length && buildKey !== null) ? { key: buildKey, profile: gameProfile, registries } : null;
+  lastRegistryBuild = build;
+  if (checkAtIdle) {
+    // Until the idle check passes this build is provisional: a failure forgets it,
+    // so the next rebuild validates synchronously and refuses the profile.
+    const forget = () => { if (lastRegistryBuild === build) lastRegistryBuild = null; };
+    whenIdle(() => {
+      const check = validateContent(configured, { deferred: ['classMastery'] });
+      if (!check.ok) { forget(); reportContentValidationFailure(check.errors); }
+      else deferClassMasteryCheck(configured, forget);
+    });
+  }
   if (!isConfiguredRun(gameProfile)) registries = registriesForClassMastery(registries, masteryRun);
   configureTooltipGlossary(registries);
   setClassGlyphs(registries.classes.all());

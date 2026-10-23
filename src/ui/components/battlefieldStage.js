@@ -1432,7 +1432,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // the view box move this layout, so a style mutation refits only when one of
   // those changed. Reading them off the inline style is no layout read.
   const LAYOUT_ROOT_VARS = ['--ui-zoom', '--visible-height', '--view-width', '--view-height', '--view-fit', '--view-left', '--view-top'];
-  const rootLayoutKey = () => LAYOUT_ROOT_VARS.map(name => document.documentElement.style.getPropertyValue(name)).join('|');
+  // Text size is the root's inline font-size; the HUD is sized in rem.
+  const rootLayoutKey = () => [...LAYOUT_ROOT_VARS.map(name => document.documentElement.style.getPropertyValue(name)), document.documentElement.style.fontSize].join('|');
   let lastRootLayoutKey = rootLayoutKey();
   const layoutObserver = new MutationObserver(records => {
     const key = rootLayoutKey();

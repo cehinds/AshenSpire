@@ -71,7 +71,15 @@ test('the first build of a configured profile validates at idle, later ones sync
   const ok = fixture({ warm: false });
   ok.rebuild({}, null, { id: 'core', mode: 'configured' }); ok.calls.idle[0]();
   assert.equal(ok.calls.reported.length, 0); assert.equal(ok.calls.deferredMastery.length, 1);
+  assert.throws(() => rebuild({}, null, profile), /Invalid game profile core/, 'a failed idle check forgets the provisional build');
   assert.throws(() => rebuild({ again: 1 }, null, profile), /Invalid game profile core/);
+});
+
+test('the first build of saved legacy settings validates whole, so a failure still falls back', () => {
+  const { rebuild, calls } = fixture({ warm: false });
+  const fallback = rebuild({ invalid: true }, null, { id: 'current', mode: 'legacy' });
+  assert.equal(fallback.rows.invalid, undefined); assert.equal(calls.idle.length, 0);
+  assert.deepEqual(calls.options, [undefined]);
 });
 
 test('actual invalid legacy configurations keep loud defaults fallback on each attempt', () => {
