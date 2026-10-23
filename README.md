@@ -1,5 +1,19 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — Core adept skills and enemy action budgets
+
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/feature/CoreAdeptEnemyBudget/latest/)
+
+Build 0.7.1.1801 / `2dee91799d` passed native local QA. Published HTTP verification for its final source is pending; see the capture details.
+
+Matching adept stances reduce the intended resource lane, collected basic attacks or cantrips remain available to eligible classes, and Core enemy plans pay their action costs. Compact enemy reads retain the complete current-action scope and planned follow-up symbols. Controlled fixtures below exercise native reaction and combat controls; [capture details and fixture disclosures](docs/preview/features/core-adept-enemy-budget/README.md).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Phone: native Frost Counter reaction cost](docs/preview/features/core-adept-enemy-budget/mobile.png) | ![Desktop: native Counter reaction cost](docs/preview/features/core-adept-enemy-budget/desktop.png) | ![Wide: Warden current action and planned follow-ups](docs/preview/features/core-adept-enemy-budget/wide.png) | ![Tablet: once-paid charge resolution](docs/preview/features/core-adept-enemy-budget/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 
