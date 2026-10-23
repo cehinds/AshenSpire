@@ -227,10 +227,22 @@ function reportContentValidationFailure(errors) {
   );
   console.error('Content validation errors:', errors);
 }
+// The checks wait for the title itself, not just for idle time: on a phone they
+// are a second of script, and the startup gate is the first screen a player
+// taps. A fallback releases them on a path that never reaches the title.
+let bootChecksReleased = false;
+const bootChecks = [];
 function whenIdle(task) {
+  if (!bootChecksReleased) { bootChecks.push(task); return; }
   if (typeof requestIdleCallback === 'function') requestIdleCallback(task, { timeout: 4000 });
   else setTimeout(task, 1500);
 }
+function releaseBootChecks() {
+  if (bootChecksReleased) return;
+  bootChecksReleased = true;
+  for (const task of bootChecks.splice(0)) whenIdle(task);
+}
+setTimeout(releaseBootChecks, 15000);
 // The class-mastery pass of a bundle whose other passes were clean.
 function deferClassMasteryCheck(bundle, onFail = () => {}) {
   whenIdle(() => {
@@ -1948,6 +1960,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     artNotice: drawArtNotice,
   });
   if (focusDefault) focusTitleDefault(app, { showCursor: focusCursor });
+  releaseBootChecks();
   // Fullscreen-first stays first. Offer the choice only after the startup gate
   // and profile sync have settled, before the player starts or resumes a run.
   if (!settingsChoiceChecked && saves.profileStatus().ok) {
