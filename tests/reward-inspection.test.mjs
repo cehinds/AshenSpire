@@ -22,29 +22,37 @@ const cases = [
 // rewardDom intentionally omits HTML text nodes. This makes full detail text
 // testable without pretending the fixture measures browser layout or gestures.
 function withInspectionDom(fn) {
-  return withKitDom(dom => {
-    dom.document.documentElement = dom.document.body;
-    dom.document.getSelection = () => null;
-    const proto = Object.getPrototypeOf(dom.document.body);
-    const original = Object.getOwnPropertyDescriptor(proto, 'innerHTML');
-    const outer = Object.getOwnPropertyDescriptor(proto, 'outerHTML');
-    Object.defineProperty(proto, 'outerHTML', { ...outer,
-      set(value) {
-        const holder = dom.document.createElement('div'); holder.innerHTML = value;
-        for (const node of [...holder.children]) this.before(node);
-        this.remove();
-      },
-    });
-    Object.defineProperty(proto, 'innerHTML', { configurable: true,
-      set(value) { this.inspectionMarkup = value; original.set.call(this, value); },
-    });
-    try { return fn(dom); }
-    finally {
-      clearSelection();
-      Object.defineProperty(proto, 'innerHTML', original);
-      Object.defineProperty(proto, 'outerHTML', outer);
-    }
+  const { dom, globals } = withKitDom((dom, globals) => ({ dom, globals }));
+  const saved = Object.fromEntries(Object.keys(globals).map(key => [key, globalThis[key]]));
+  Object.assign(globalThis, globals);
+  dom.document.documentElement = dom.document.body;
+  dom.document.getSelection = () => null;
+  const proto = Object.getPrototypeOf(dom.document.body);
+  const original = Object.getOwnPropertyDescriptor(proto, 'innerHTML');
+  const outer = Object.getOwnPropertyDescriptor(proto, 'outerHTML');
+  Object.defineProperty(proto, 'outerHTML', { ...outer,
+    set(value) {
+      const holder = dom.document.createElement('div'); holder.innerHTML = value;
+      for (const node of [...holder.children]) this.before(node);
+      this.remove();
+    },
   });
+  Object.defineProperty(proto, 'innerHTML', { configurable: true,
+    set(value) { this.inspectionMarkup = value; original.set.call(this, value); },
+  });
+  const cleanup = () => {
+    clearSelection();
+    Object.defineProperty(proto, 'innerHTML', original);
+    Object.defineProperty(proto, 'outerHTML', outer);
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete globalThis[key]; else globalThis[key] = value;
+    }
+  };
+  try {
+    const result = fn(dom);
+    if (result?.then) return result.finally(cleanup);
+    cleanup(); return result;
+  } catch (error) { cleanup(); throw error; }
 }
 const reading = node => [node.textContent, node.inspectionMarkup, ...node.children.map(reading)].filter(Boolean).join(' ');
 
@@ -75,7 +83,7 @@ for (const [kind, id] of cases) test(`${kind} can be fully inspected in selectio
     const chosen = app.querySelector('.reward-selected');
     for (const stage of ['selection', 'review']) {
       if (stage === 'review') confirm.click();
-      assert.equal(app.querySelector('.reward-row').inert, undefined, 'review does not block Information');
+      assert.notEqual(app.querySelector('.reward-row').inert, true, 'review does not block Information');
       const labels = [...app.querySelector('.modal-foot-actions').children].map(button => button.textContent);
       inspect.click();
       const dialog = document.querySelector('.card-inspection-modal');
@@ -159,5 +167,56 @@ test('bound inspection API refuses detached and unbound nodes without invoking a
     assert.equal(opens, 0);
     assert.equal(openBoundCardInspection(card), 'opened'); assert.equal(opens, 1);
     card.remove(); assert.equal(openBoundCardInspection(card), false); assert.equal(opens, 1);
+  });
+});
+
+test('pending claims block inspection and failed saves and exits restore the review for retry', async () => {
+  await withInspectionDom(async () => {
+    let rejectClaim, resolveClaim, takes = 0, exits = 0;
+    const { app, run, offer } = mount('combatCards', 'frostNova', {
+      onTake() {
+        takes++;
+        return new Promise((resolve, reject) => { resolveClaim = resolve; rejectClaim = reject; });
+      },
+      onContinue() { exits++; if (exits === 1) throw new Error('exit refused'); },
+    });
+    const before = structuredClone({ run, offer });
+    app.querySelector('.reward-pick').click();
+    const chosen = app.querySelector('.reward-selected');
+    const inspect = app.querySelector('#reward-inspect');
+    const confirm = app.querySelector('#reward-card-confirm');
+    const strip = app.querySelector('.reward-row');
+    confirm.click(); confirm.click();
+    assert.equal(takes, 1); assert.equal(inspect.disabled, true);
+    assert.equal(strip.inert, true, 'face Information is unavailable while saving');
+    // Dispatch directly as well as pressing the disabled button: the handler
+    // guards stale queued activation independently of disabled presentation.
+    inspect.click(); inspect.dispatchEvent(new Event('click', { bubbles: true }));
+    assert.equal(document.querySelector('.card-inspection-modal'), null);
+    rejectClaim(new Error('save refused'));
+    await Promise.resolve(); await Promise.resolve();
+    assert.equal(inspect.disabled, false); assert.equal(strip.inert, false);
+    assert.equal(confirm.textContent, 'Continue');
+    assert.deepEqual({ run, offer }, before);
+    inspect.click(); document.querySelector('.card-inspection-modal .modal-close').click();
+    assert.equal(document.activeElement, inspect);
+    assert.equal(app.querySelector('.reward-selected'), chosen);
+    assert.equal(takes, 1); assert.equal(exits, 0);
+    confirm.click(); assert.equal(takes, 2); assert.equal(inspect.disabled, true);
+    offer.taken.push(0); offer.claimed = 0; resolveClaim(offer);
+    await Promise.resolve(); await Promise.resolve();
+    assert.equal(exits, 1); assert.equal(inspect.disabled, false);
+    assert.equal(strip.inert, false, 'an exit save refusal restores Information');
+    inspect.click(); document.querySelector('.card-inspection-modal .modal-close').click();
+    assert.equal(document.activeElement, inspect);
+    assert.equal(app.querySelector('.reward-selected'), chosen);
+    assert.equal(confirm.textContent, 'Continue');
+    assert.deepEqual(run, before.run); assert.deepEqual(offer.taken, [0]);
+    confirm.click();
+    await Promise.resolve(); await Promise.resolve();
+    assert.equal(takes, 2, 'exit retry must not repeat the claim'); assert.equal(exits, 2);
+    assert.equal(inspect.disabled, true); assert.equal(strip.inert, true);
+    inspect.dispatchEvent(new Event('click', { bubbles: true }));
+    assert.equal(document.querySelector('.card-inspection-modal'), null, 'completed reviews cannot reopen inspection');
   });
 });

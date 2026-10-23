@@ -29,7 +29,7 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   const confirm = button({ label: t('common.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true });
   const inspect = button({ label: 'Inspect', id: 'reward-inspect', disabled: true });
   inspect.addEventListener('click', () => {
-    if (selected !== null) openBoundCardInspection(choices[selected].face, inspect);
+    if (!pending && !completed && selected !== null) openBoundCardInspection(choices[selected].face, inspect);
   });
   // Owner 2026-10-18: reviewing a card offers "Add to deck" and (when a deck door is open) "Edit deck".
   const editDeck = button({ label: t('reward.configured.editDeck'), id: 'reward-edit-deck', className: 'reward-edit-deck' });
@@ -108,17 +108,20 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
         mountGameProfileOffers(app, { registries, run, offer, title, onTake, onContinue, settings, onAddToDeck, addRefusal, onEditDeck, canEditDeck, deckMax, onEditEquipment, canEditEquipment });
       }
     } catch (error) {
+      inspect.disabled = completed; strip.inert = completed;
       status.textContent = error.message; pending = false; confirm.disabled = false; next.disabled = false; editDeck.disabled = false; equip.disabled = false; keep.disabled = false;
     }
   }
   async function commit(take, afterClaim = proceed) {
     if (pending || completed || selected === null) return;
+    inspect.disabled = true; strip.inert = true;
     pending = true; confirm.disabled = true; next.disabled = true; editDeck.disabled = true; equip.disabled = true; keep.disabled = true;
     try {
       const updated = await take(selected);
       if (updated?.id === offer.id) offer = updated;
       afterClaim();
     } catch (error) {
+      pending = false; inspect.disabled = completed; strip.inert = completed;
       status.textContent = error.message;
       confirm.disabled = false; next.disabled = false; editDeck.disabled = false; equip.disabled = false; keep.disabled = false;
     } finally { if (!completed && afterClaim === proceed) pending = false; }
