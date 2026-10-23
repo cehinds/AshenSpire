@@ -1125,6 +1125,13 @@ const title = (/<title>([\s\S]*?)<\/title>/i.exec(indexHtml) || [, 'AshenSpire']
 // Web/share metadata (description, og:*, icon, theme-color) — copied from index.html.
 let headMeta;
 try { headMeta = headMetaTags(indexHtml); } catch (e) { fail(e.message); }
+// First-paint splash (style + element), copied from index.html like the head
+// meta so the two cannot drift. The style goes BEFORE the big stylesheets and the
+// element sits before the 13 MB script, so the browser can paint it while the
+// script is still parsing. #app:not(:empty)~#boot-splash hides it once the game mounts.
+const splashStyle = /<style\b[^>]*\bid=["']boot-splash-style["'][^>]*>[\s\S]*?<\/style>/i.exec(indexHtml);
+const splashEl = /<div\b[^>]*\bid=["']boot-splash["'][^>]*>[\s\S]*?<\/div>\s*<\/div>/i.exec(indexHtml);
+if (!splashStyle || !splashEl) fail('index.html is missing the #boot-splash element or its #boot-splash-style block');
 
 const html = `<!DOCTYPE html>
 <html lang="en">
@@ -1135,10 +1142,12 @@ const html = `<!DOCTYPE html>
   <meta name="mobile-web-app-capable" content="yes" />
   <title>${title}</title>
 ${headMeta.map((tag) => '  ' + tag).join('\n')}
+  ${splashStyle[0]}
 ${styleBlocks.join('\n')}
 </head>
 <body>
   <main id="app" aria-live="polite"></main>
+  ${splashEl[0]}
   <script>
 ${runtime}
   </script>

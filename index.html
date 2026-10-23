@@ -13,6 +13,16 @@
   <meta property="og:description" content="A single-player roguelike deckbuilder for the browser: four classes, three acts, seeded and resumable runs." />
   <meta property="og:image" content="https://cehinds.github.io/AshenSpire/og-image.webp" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230d0b08'/%3E%3Cpath d='M32 6 L40 58 H24 Z' fill='%23c9a227'/%3E%3C/svg%3E" />
+  <style id="boot-splash-style">
+    /* First paint: shown while the big script loads, hidden the moment #app has a child. */
+    html{background:#0d0b08}
+    #boot-splash{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6rem;background:#0d0b08;color:#c9a227;font-family:Georgia,"Times New Roman",serif;text-align:center}
+    #boot-splash .bs-name{font-size:clamp(1.8rem,9vw,3.2rem);letter-spacing:.18em;text-transform:uppercase}
+    #boot-splash .bs-load{font-family:system-ui,sans-serif;font-size:.9rem;letter-spacing:.1em;color:#a39a86;animation:bsPulse 1.6s ease-in-out infinite alternate}
+    @keyframes bsPulse{from{opacity:.35}to{opacity:1}}
+    @media (prefers-reduced-motion:reduce){#boot-splash .bs-load{animation:none}}
+    #app:not(:empty)~#boot-splash{display:none}
+  </style>
   <link rel="stylesheet" href="styles/base.css" />
   <link rel="stylesheet" href="styles/tokens.generated.css" />
   <link rel="stylesheet" href="styles/prologue.css" />
@@ -44,6 +54,7 @@
 </head>
 <body>
   <main id="app" aria-live="polite"></main>
+  <div id="boot-splash" role="status"><div class="bs-name">AshenSpire</div><div class="bs-load">Loading…</div></div>
   <script type="module" src="src/main.js"></script>
 </body>
 </html>
