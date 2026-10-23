@@ -44,7 +44,7 @@ export function fitIllustratedCards(cards) {
       // the same authored rules bay.
       const fullRules=face.dataset.fullRules==='true';
       const expandedHandRules=rules&&Number(text.dataset.maxLines)>3;
-      const row={face,text,layer,scale,rules,fullRules,compact:rules&&!fullRules&&!expandedHandRules,
+      const row={face,text,layer,scale,rules,fullRules,lineHeight:rules&&!fullRules?1.05:1.25,compact:rules&&!fullRules&&!expandedHandRules,
         // Semantic effect lines can wrap over multiple printed rows.
         lines:rules?Infinity:Number(text.dataset.maxLines)||1,
         hasHiddenLines:Boolean(face.querySelector('[data-face-overflow="true"]')),
@@ -68,8 +68,12 @@ export function fitIllustratedCards(cards) {
           row.rank.style.top=(parseFloat(row.panel.style.top)+Number(row.rank.dataset.panelInset))+'%';
         }
         text.style.display='block';
+        // Two short benefit rows remain readable in the narrow native hand bay.
+        text.style.lineHeight=String(row.lineHeight);
       }
-      row.low=rules?Math.max(11/zoom,22*scale,Number(text.dataset.minFont)*scale):Number(text.dataset.minFont)*scale;
+      // Rules may shrink below the design font minimum, but never below
+      // eleven on-screen pixels after the page's native zoom.
+      row.low=rules?11/zoom:Number(text.dataset.minFont)*scale;
       row.high=Math.max(row.low,Number(text.dataset.maxFont)*scale);
       texts.push(row);
     }
@@ -92,7 +96,7 @@ export function fitIllustratedCards(cards) {
   for(const row of rules)row.face.dataset.rulesDense='false';
   const probe=(list,sizeOf)=>{
     for(const row of list){row.text.style.webkitLineClamp='unset';row.text.style.fontSize=sizeOf(row)+'px';}
-    return list.map(row=>row.text.scrollHeight<=Math.min(row.boxHeight,sizeOf(row)*1.25*row.lines)+1&&row.text.scrollWidth<=row.text.clientWidth+1);
+    return list.map(row=>row.text.scrollHeight<=Math.min(row.boxHeight,sizeOf(row)*row.lineHeight*row.lines)+1&&row.text.scrollWidth<=row.text.clientWidth+1);
   };
   const atHigh=probe(texts,row=>row.high);
   const search=[];
