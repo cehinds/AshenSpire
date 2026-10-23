@@ -30,3 +30,7 @@ before captures use the same source with only visualNode reverted temporarily.
 Full-page screenshot extents are identical before and after: 433×938 for the
 390×844 viewport, 1200×1600 for 768×1024, 1440×900 and 1920×1080 for the desktop
 viewports. The extra phone/tablet extent therefore predates this change.
+
+Additional production `gameProfile=current` shots at 1440×900 rendered engraved
+icon DOM in shop (3), reward (15), death (14), and rest (9). Reward and merchant
+captures were visually inspected; reward-kind and relic marks remain artwork.
