@@ -1,5 +1,5 @@
 import { gameModule } from './gameProfile.js';
-import { skillTracks, skillBonusFor, skillMaxLevel } from './skills.js';
+import { skillTracks, skillBonusFor, skillMaxLevel, MAX_SKILL_BONUS } from './skills.js';
 import { resolveCard, primaryEffectIndex } from './registries.js';
 import { hasClassMastery, masteryUnlockName } from './classMasteryRun.js';
 import { masteryRowId } from './classMastery.js';
@@ -86,10 +86,15 @@ function progressionEffects(registries, before, after, award, beforeState, settl
     const every = registries.balance.skill.flatEvery;
     const level = Number.isInteger(every) && every > 0 ? (Math.floor(award.after / every) + 1) * every : null;
     const cap = skillMaxLevel(registries, track.kind);
-    if (level && (cap === null || level <= cap)) {
-      const future = { ...settled, skills: { ...settled.skills, [award.skillId]: { ...settled.skills[award.skillId], level } } };
+    // Hit splitting can absorb an intermediate flat without changing a card's
+    // number. Look ahead to the next actual gain, bounded by cap/saturation.
+    for (let milestone = level; milestone && milestone <= (cap ?? MAX_SKILL_BONUS * every); milestone += every) {
+      const future = { ...settled, skills: { ...settled.skills, [award.skillId]: { ...settled.skills[award.skillId], level: milestone } } };
       const gains = cardChanges(registries, settled, future);
-      if (gains.length) nextMilestone = { level, labels: gains.map(row => `${row.label} ${row.before} → ${row.after}`) };
+      if (gains.length) {
+        nextMilestone = { level: milestone, labels: gains.map(row => `${row.label} ${row.before} → ${row.after}`) };
+        break;
+      }
     }
   }
   return { version: 1, changes, nextMilestone };
