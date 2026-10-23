@@ -53,16 +53,16 @@
    opaque plates and hit targets over both light parchment and dark terrain. */
 .map-terrain .map-fog-ground .terrain-paper { fill: #c4af85; }
 .map-terrain .terrain-detail { opacity: 0.9; }
-.mapscreen .map-scroll:has(.map-terrain) { background: #c4af85; }
-.mapscreen svg:has(.map-terrain) .map-act-title {
+.mapscreen .map-scroll[data-terrain='generated'] { background: #c4af85; }
+.mapscreen svg > .map-terrain ~ .map-act-title {
   fill: #392613; stroke: #d8c49a; stroke-width: 2; paint-order: stroke;
 }
-.mapscreen svg:has(.map-terrain) .map-edge {
+.mapscreen svg > .map-terrain ~ .map-edge {
   stroke: #775125; stroke-opacity: 1; filter: drop-shadow(0 1px 1px #e2c994);
 }
-.mapscreen svg:has(.map-terrain) .map-edge.traveled { stroke: #b27c1f; }
-.mapscreen svg:has(.map-terrain) .map-edge.shrine-lane { stroke: #dec46e; }
-.mapscreen.map-fog .map-frame:has(.map-terrain) .map-vignette {
+.mapscreen svg > .map-terrain ~ .map-edge.traveled { stroke: #b27c1f; }
+.mapscreen svg > .map-terrain ~ .map-edge.shrine-lane { stroke: #dec46e; }
+.mapscreen.map-fog .map-scroll[data-terrain='generated'] ~ .map-vignette {
   background: radial-gradient(ellipse at center, transparent 65%, rgba(45, 30, 13, 0.2));
 }
 
@@ -584,12 +584,12 @@ dialog.atlas-dialog.modal-veil[open][data-local-map='true'] { display:flex; flex
 .mapscreen .map-route-outline, .world-atlas-screen .atlas-roads .map-route-outline {
   stroke:#29251a; stroke-width:var(--map-route-outline-width,6px); stroke-linecap:round; stroke-dasharray:none; fill:none; opacity:.95;
 }
-.mapscreen svg:has(.map-terrain) .map-edge, .world-atlas-screen .atlas-roads path:not(.map-route-outline) {
+.mapscreen svg > .map-terrain ~ .map-edge, .world-atlas-screen .atlas-roads path:not(.map-route-outline) {
   stroke:#c9b987; stroke-width:var(--map-route-width,3px); stroke-opacity:1; stroke-linecap:round;
 }
-.mapscreen svg:has(.map-terrain) .map-edge.traveled, .world-atlas-screen .atlas-roads .traveled { stroke:#ead090; }
-.mapscreen svg:has(.map-terrain) .map-edge.shrine-lane, .world-atlas-screen .atlas-roads .available { stroke:#ffe39a; stroke-width:3.5px; }
-.mapscreen .map-scroll:has(.map-terrain), .atlas-scrollport, .atlas-world { background:#8b7d61; }
+.mapscreen svg > .map-terrain ~ .map-edge.traveled, .world-atlas-screen .atlas-roads .traveled { stroke:#ead090; }
+.mapscreen svg > .map-terrain ~ .map-edge.shrine-lane, .world-atlas-screen .atlas-roads .available { stroke:#ffe39a; stroke-width:3.5px; }
+.mapscreen .map-scroll[data-terrain='generated'], .atlas-scrollport, .atlas-world { background:#8b7d61; }
 .map-terrain .terrain-detail { opacity:1; }
 
 /* Tall local-location shell: the same map and action layout for every city. */
