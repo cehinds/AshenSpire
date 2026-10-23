@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { callout, clearCallouts, CALLOUT_KINDS, playTimeline, setAnimSpeed, setBeatOrder, ANIM_SPEEDS, calloutForEvent } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { t } from '../src/ui/strings.js';
+import { flushMeasureJobs } from '../src/ui/frameMeasure.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
 const callouts = (layer) => layer.children.filter((node) => node.dataset?.calloutFor !== undefined);
@@ -32,15 +33,19 @@ test('a callout names its fighter, shows three in lanes, queues the rest, and sk
     const first = callout(layer, anchor, 'e1', 'staggered');
     assert.equal(first.textContent, 'STAGGERED');
     assert.equal(first.dataset.calloutFor, 'e1');
+    flushMeasureJobs(); // placement is measured at the end of the task
     assert.equal(first.dataset.calloutSlot, '2', 'lane 0 is the top slot');
     assert.match(first.className, /\bfx-callout\b.*\bgold\b/);
     assert.equal(callout(layer, anchor, 'e1', 'staggered'), null, 'the same word is not repeated on one fighter');
     const second = callout(layer, anchor, 'e1', 'critical');
+    flushMeasureJobs(); // placement is measured at the end of the task
     assert.equal(second.dataset.calloutSlot, '1', 'lane 1 sits under lane 0');
     assert.match(second.className, /\bred\b/);
     const other = callout(layer, anchor, 'player', 'evaded');
+    flushMeasureJobs(); // placement is measured at the end of the task
     assert.equal(other.dataset.calloutSlot, '2', 'another fighter has its own stack');
     const third = callout(layer, anchor, 'e1', 'guardBreak');
+    flushMeasureJobs(); // placement is measured at the end of the task
     assert.equal(third.dataset.calloutSlot, '0', 'lane 2 is the bottom slot');
     const fourth = callout(layer, anchor, 'e1', 'countered');
     const starts = [first, second, third].map((node) => Number.parseInt(node.style.animationDelay || '0', 10));
