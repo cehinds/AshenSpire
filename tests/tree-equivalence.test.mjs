@@ -77,7 +77,10 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   // while preserving each damage ID, domain, colour and glyph. The historical
   // fixture stays intact; every approved changed field is named here. The
   // approved Spell presentation uses one outlined sparkle across its identities.
+  // Core 2's approved Adept name changes only the Cantrip blurb; its stable
+  // tag identity and all other registered metadata remain under this proof.
   const tacticalMetadata = {
+    'rank.cantrip': { blurb: 'Basic spell eligible for Magic Adept deck copies.' },
     'source:spell': { glyph: '✧' },
     'camp:spell': { glyph: '✧' },
     'maneuver:casting': { glyph: '✧' },
@@ -159,7 +162,7 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   const ADDED_DAMAGE_TYPES = ['damage:poison', 'damage:psychic', 'damage:earth'];
   // FixCore's registered identity distinguishes trained basic spells from ordinary spells.
   const FIXCORE_TAGS = ['rank.cantrip'];
-  assert.deepEqual(tags.get('rank.cantrip'), {id:'rank.cantrip',domain:'card',label:'Cantrip',color:'7FA8C9',glyph:'✦',visibility:'',blurb:'Basic spell eligible for Arcane Graduate deck copies.'});
+  assert.deepEqual(tags.get('rank.cantrip'), {id:'rank.cantrip',domain:'card',label:'Cantrip',color:'7FA8C9',glyph:'✦',visibility:'',blurb:tacticalMetadata['rank.cantrip'].blurb});
   // Owner stance continuation: Target is an explicit card identity, distinct from a selector.
   const tacticalIds = [...Object.values(TACTICAL_TAGS).flat(), 'targeting:single', 'targeting:area', 'target', ...ADDED_DAMAGE_TYPES];
   assert.deepEqual(TAGS.filter(t => t.id.startsWith('ability:')).map(t => t.id).sort(), [...ABILITY_TAGS].sort(), 'the fifty approved ability identities are exact');
