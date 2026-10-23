@@ -1,4 +1,5 @@
 import * as RangeLineage from './combatRangeLineage.js';
+import { recordCollectedCards } from '../model/collectedCards.js';
 import * as Engagement from './combatEngagement.js';
 import { resolveAttackHit } from './stanceHit.js';
 import { evadeStackGain } from './stanceHit.js';
@@ -2086,6 +2087,7 @@ function runRunOpcode(ctx, action, eff) {
     case 'addCardToDeck': {
       ctx.registries.cards.get(eff.card); // throws on dangling id
       run.deck.push({ instanceId: ctx.nextInstanceId(), cardId: eff.card, upgraded: false });
+      recordCollectedCards(run);
       break;
     }
     case 'removeCardFromDeck': {

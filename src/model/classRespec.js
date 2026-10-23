@@ -1,4 +1,5 @@
 import { expandedProgression, classRewardBudget } from './classMilestones.js';
+import { recordCollectedCards } from './collectedCards.js';
 import { classMilestoneOptions } from './classMilestoneOffers.js';
 import { classRewardGrants, classRewardPresent } from './classRewardProvenance.js';
 import { abilityOfferPool } from './abilityOffers.js';
@@ -55,6 +56,7 @@ function removeGrantItem(candidate,grant) {
   const selection = grant.selection;
   if (!selection || grant.state !== 'taken') return;
   if (grant.kind === 'cards') {
+    recordCollectedCards(candidate);
     candidate.deck = candidate.deck.filter(inst => inst.instanceId !== selection.instanceId);
     candidate.sideboard = (candidate.sideboard || []).filter(inst => inst.instanceId !== selection.instanceId);
   } else if (grant.kind === 'relic') candidate.relics = candidate.relics.filter(id => id !== selection.id);
