@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-23
 
-- **Card details no longer crash on stance-choice cards** ([#2270](https://github.com/cehinds/AshenSpire/pull/2270), `0.7.1.1794`). Opening the details of Strike and Settle, Flowing Transition or Force Stance no longer throws an error.
+- **Card details no longer crash on stance-choice cards** ([#2270](https://github.com/cehinds/AshenSpire/pull/2270), `0.7.1.1796`). Opening the details of Strike and Settle, Flowing Transition or Force Stance no longer throws an error.
 
 - **Faster combat entry and plays on phones** ([#2268](https://github.com/cehinds/AshenSpire/pull/2268), `0.7.1.1794`). Tapping Enter on the map responds at once and the fight opens sooner, damage numbers and callouts no longer make the browser redo layout over and over, and the map, shop, rest and card faces draw with less work. The HTML download link now says it is the large offline desktop file and points phones to Play.
 
