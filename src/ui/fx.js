@@ -19,6 +19,7 @@ import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.
 import { playPoseOn, stageFor } from './services/PoseAnimator.js';
 import { reducedMotionRequested } from './motion.js';
 import { t } from './strings.js';
+import { buffGainFor, buffPopupFor } from './buffFeedback.js';
 
 
 // ---------------------------------------------------------------------------
@@ -575,13 +576,19 @@ export function callout(layer, anchor, forId, kind) {
   const def = kind.startsWith('action:') ? { word: kind.slice(7), tone: 'white' } : isStatus
     ? (Object.prototype.hasOwnProperty.call(STATUS_WORDS, statusId) ? { string: `combat.status.applied.${statusId}`, tone: 'status', colour: STATUS_WORDS[statusId].colour } : null)
     : CALLOUT_KINDS[kind];
+  return queuedCallout(layer, anchor, forId, kind, def);
+}
+
+// Buff gains use the same overhead lanes and cleanup as outcome words. Each
+// committed gain stays visible even when two receipts have the same amount.
+function queuedCallout(layer, anchor, forId, kind, def, repeat = false) {
   if (!layer || !anchor || !def || forId == null) return null;
   layer = combatReadoutLayer(layer);
   const now = Date.now();
   const q = queueFor(layer, forId);
   // Words that have finished leave the queue.
   q.items = q.items.filter((it) => it.end > now || it.end === undefined);
-  if (q.items.some((it) => it.kind === kind) || liveCallouts(layer, forId).some((node) => node.dataset.calloutKind === kind)) return null;
+  if (!repeat && (q.items.some((it) => it.kind === kind) || liveCallouts(layer, forId).some((node) => node.dataset.calloutKind === kind))) return null;
   const el = document.createElement('div');
   el.className = `fx-callout ${def.tone}`;
   el.dataset.calloutFor = String(forId);
@@ -1776,7 +1783,6 @@ export const STATUS_WORDS = {
   dazed: { colour: '#ffe14d' },
   offBalance: { colour: '#d9c9a3' },
   prone: { colour: '#d9c9a3' },
-  grounded: { colour: '#d9c9a3' },
   insanity: { colour: '#a06bd0' },
   madness: { colour: '#a06bd0' },
   crimsonBlight: { colour: 'var(--rot)' },
@@ -1869,6 +1875,17 @@ function breakBurst(e, tone, sound) {
 
 function baseVisualParts(e, beatKind, { sequential = false } = {}) {
   switch (e.type) {
+    case 'statusApplied': {
+      if (buffGainFor(e) <= 0) return null;
+      const showGain = ctx => {
+        const popup = buffPopupFor(e, ctx.statusInfo?.(e.status));
+        if (popup) queuedCallout(ctx.layer, ctx.anchorFor(popup.targetId), popup.targetId, popup.kind, popup, true);
+      };
+      // The sequential core timeline runs numbers after the target reaction.
+      // Older impact and instant paths render callout-only events at once, so
+      // using a numbers part there would add one stepMs delay per status.
+      return sequential ? { numbers: showGain } : { callout: showGain };
+    }
     case 'damageDealt': {
       // One event owns both visible channels: unsigned guard consumed, then
       // only the HP residual as damage. Paired results sit side-by-side without
