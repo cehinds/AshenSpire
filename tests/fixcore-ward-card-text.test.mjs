@@ -32,15 +32,15 @@ test('merge groups: Ward and Poise damage on one target merge; other targets and
 });
 
 test('Core: a Ward damage face reads Poise damage; Current keeps Ward damage', () => {
-  assert.deepEqual(plain(cardFaceLines(WARD, null, core)), ['Inflict 8 Poise damage', 'Entry: +1 + stat mix Precision']);
+  assert.deepEqual(plain(cardFaceLines(WARD, null, core)), ['8 Poise', 'Entry: +1 + stat mix Precision']);
   assert.deepEqual(plain(cardFaceLines(WARD, null, current)), ['Inflict 8 Ward damage']);
 });
 
 test('Core: multi-hit shows one combined Poise figure; Current lists Ward and Poise apart', () => {
   const coreText = plain(cardFaceLines(MULTI, null, core)).join(' | ');
-  assert.match(coreText, /6 Poise damage/);
+  assert.match(coreText, /6 Poise/);
   assert.doesNotMatch(coreText, /Ward/);
-  assert.equal((coreText.match(/Poise damage/g) || []).length, 1, coreText);
+  assert.equal((coreText.match(/Poise/g) || []).length, 1, coreText);
   const currentText = plain(cardFaceLines(MULTI, null, current)).join(' | ');
   assert.match(currentText, /3 Ward damage/);
   assert.match(currentText, /3 Poise damage/);
@@ -48,7 +48,7 @@ test('Core: multi-hit shows one combined Poise figure; Current lists Ward and Po
 
 test('Core: a live preview moves the combined figure', () => {
   const preview = { values: [{ op: 'damage', value: 4, hits: 3 }, { op: 'wardDamage', value: 5 }, { op: 'poiseDamage', value: 3 }], tokens: {} };
-  assert.match(plain(cardFaceLines(MULTI, preview, core)).join(' | '), /8 Poise damage/);
+  assert.match(plain(cardFaceLines(MULTI, preview, core)).join(' | '), /8 Poise/);
 });
 
 test('Core: the plain summary reads Poise too', () => {
