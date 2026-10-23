@@ -164,6 +164,10 @@ import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashe
 // The event types that move the displayed hand between beats — the same four
 // applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
 const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']);
+// A beat that can change who stands where or how big a figure is: only these
+// ask the battlefield for its expensive geometry refit. A hit, a heal, a
+// status or a resource change moves no one.
+const GEOMETRY_BEAT_EVENT = /Spawn|Summon|Died|Defeated|Moved|Formation|Transform|Phase|Fled|Revive|Resurrect|Swap|combatEnded/i;
 
 // THE POSITIONAL CARD KEYS (SPEC §7.3, §9 M4), as a pure mapping so it can be
 // tested without a DOM. `1`–`9` name hand slots 1–9 and `q`/`Q` names slot 10
@@ -545,6 +549,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let selectedCombatantId = null; // contextual reading selection; never combat targeting
   let heldTurnHand = null;
   let enemyPlayback = false;
+  const beatDirty = { on: false, geometry: false, hand: false, frame: 0 };
+  let pileReceivedFrame = 0;
   let busy = false; // animating / resolving
   // Diagnostic only. When a tap is ignored because the screen is busy, the log
   // line names every lock and how long busy has held: an input that "does
@@ -1981,6 +1987,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let playerRenderKey = null;
   let topbarRenderKey = null;
   let handRenderKey = null;
+  let handPreviewCache = { stateKey: null, cards: new Map() };
   const enemyFrames = new Map();
 
   function renderPlayer() {
@@ -2213,15 +2220,28 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function renderHand({ refreshHitChances = true } = {}) {
     const handList = heldTurnHand || (disp ? disp.hand : combat.piles.hand);
-    combatEl.dataset.turn = enemyPlayback || combat.phase === 'enemy' ? 'enemy' : 'player';
-    $('.turn-ribbon').textContent = enemyPlayback || combat.phase === 'enemy' ? 'Enemy Turn' : 'Player Turn';
-    $('.hand').inert = busy || enemyPlayback || !!combat.pendingReaction || !!combat.result;
-    $('.hand').setAttribute('aria-disabled', String(busy || enemyPlayback || !!combat.pendingReaction || !!combat.result));
+    // Each write below is skipped when it would repeat: an unchanged attribute or text node
+    // still dirties style/layout for the board that hangs off it.
+    const enemySide = enemyPlayback || combat.phase === 'enemy';
+    if (combatEl.dataset.turn !== (enemySide ? 'enemy' : 'player')) combatEl.dataset.turn = enemySide ? 'enemy' : 'player';
+    const ribbon = $('.turn-ribbon');
+    if (ribbon.textContent !== (enemySide ? 'Enemy Turn' : 'Player Turn')) ribbon.textContent = enemySide ? 'Enemy Turn' : 'Player Turn';
+    const handLocked = busy || enemyPlayback || !!combat.pendingReaction || !!combat.result;
+    const handNode = $('.hand');
+    if (handNode.inert !== handLocked) handNode.inert = handLocked;
+    if (handNode.getAttribute('aria-disabled') !== String(handLocked)) handNode.setAttribute('aria-disabled', String(handLocked));
     if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.
     const stackedIds = stackedCardIds(combat.reactionStack);
-    const key = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
-      combat.turn, combat.phase, combat.result, selected, selfArm, lastTargetId, combat.rangeState, [...rangeRoutesByCard], [...stackedIds], readSettings()]);
+    // The state half of the key is everything a card's preview can read; the aim
+    // half (selected / selfArm / lastTargetId) changes on every tap. Stringified
+    // once, the halves let a pure selection change reuse the unselected cards'
+    // previews instead of re-quoting the whole hand.
+    const stateKey = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
+      combat.turn, combat.phase, combat.result, combat.rangeState, [...rangeRoutesByCard], [...upcastRanksByCard], [...stackedIds], readSettings()]);
+    const key = stateKey + '|' + JSON.stringify([selected, selfArm, lastTargetId]);
     if (handRenderKey === key) { syncHandPager(handList); return; }
+    const previewCache = handPreviewCache.stateKey === stateKey && handRenderKey !== null && !upcastPreviewRefresh ? handPreviewCache.cards : new Map();
+    const nextPreviews = new Map();
     handStrip.render({
       cards: handList.map((inst) => {
         // disp.hand is a pre-dispatch snapshot; on a combat-ending play the
@@ -2233,9 +2253,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         try {
           if (disp?.handPreviews.has(inst.instanceId)) pv = disp.handPreviews.get(inst.instanceId);
           else if (!heldTurnHand) {
-            const targetId = selected === inst.instanceId ? (lastTargetId && cardTargets(inst.instanceId).legalIds.includes(lastTargetId) ? lastTargetId : cardTargets(inst.instanceId).legalIds.find(id => getEntity(combat, id)?.kind === 'enemy')) : undefined;
-            pv = previewCard(combat, inst.instanceId, targetId, upcastRanksByCard.get(inst.instanceId));
-            if (targetId) pv = { ...pv, targetName: registries.enemies.get(getEntity(combat, targetId)?.enemyId)?.name || targetId };
+            const isSelected = selected === inst.instanceId;
+            // A card's quote depends on the target only while it is the selected card, so a
+            // card keeps one quote for each: plain, and aimed at the last target.
+            const cached = previewCache.get(inst.instanceId) || {};
+            const hit = isSelected ? (cached.aimed && cached.aimed.aim === lastTargetId ? cached.aimed : null) : cached.plain;
+            if (hit) pv = hit.pv;
+            else {
+              const targetId = isSelected ? (lastTargetId && cardTargets(inst.instanceId).legalIds.includes(lastTargetId) ? lastTargetId : cardTargets(inst.instanceId).legalIds.find(id => getEntity(combat, id)?.kind === 'enemy')) : undefined;
+              pv = previewCard(combat, inst.instanceId, targetId, upcastRanksByCard.get(inst.instanceId));
+              if (targetId) pv = { ...pv, targetName: registries.enemies.get(getEntity(combat, targetId)?.enemyId)?.name || targetId };
+            }
+            nextPreviews.set(inst.instanceId, isSelected ? { ...cached, aimed: hit || { aim: lastTargetId, pv } } : { ...cached, plain: hit || { pv } });
           }
         } catch (e) {
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
@@ -2252,6 +2281,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
     syncHandPager(handList);
     handRenderKey = key;
+    handPreviewCache = { stateKey, cards: nextPreviews };
     if (refreshHitChances) syncHitChances();
   }
 
@@ -3136,6 +3166,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         timelinePlayback = null;
         if (!combatEl.isConnected) return;
         try { applyVisualEvents(events); } catch (e) { console.warn('[combat] final visual apply failed:', e && e.message); }
+        discardBeatRender(); // the full render below paints what a coalesced beat still owed
         disp = null;
         heldTurnHand = null;
         enemyPlayback = false;
@@ -3180,28 +3211,30 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         ...fxCtx,
         onIntent: beat => {
           const events = beat.events.filter(event => event.type === 'enemyActorTurnStarted');
-          if (events.length) { applyBeatToDisp({ ...beat, events }); renderCombatantStage(); }
+          if (events.length) { applyBeatToDisp({ ...beat, events }); renderCombatantStage({ fit: false }); }
         },
         actionWordForBeat: beat => combatActionIdentity(beat, registries, id => combat.enemies.find(row => row.id === id)),
         onBeatApplied: (beat) => {
           applyVisualEvents(beat.events);
           applyBeatToDisp(beat);
-          renderTopbar();
-          renderCombatantStage();
+          // Repaint once per frame, and fit the battlefield only when a figure
+          // can have moved or resized. The flush and the terminal callback
+          // still render the whole board.
+          beatDirty.on = true;
+          if (beat.events.some((event) => GEOMETRY_BEAT_EVENT.test(event.type))) beatDirty.geometry = true;
+          if (beat.events.some((event) => HAND_BEAT_EVENTS.has(event.type))) beatDirty.hand = true;
+          // Spawns, deaths and moves reshape the board the beat's own effects
+          // aim at, so those beats paint before the effects start.
+          if (beatDirty.geometry || typeof requestAnimationFrame !== 'function') flushBeatRender();
+          else if (!beatDirty.frame) beatDirty.frame = requestAnimationFrame(flushBeatRender);
           for (const event of beat.events) {
             const reaction = bloodRiteReaction(dv(combat.player), event, 'player');
             if (reaction) stageFor($('.combatant.player'))?.react?.(reaction);
           }
-          // The displayed hand (disp.hand) moves only on the four card events
-          // applyBeatToDisp handles; every other beat — a hit, a heal, a
-          // status — re-rendered every card in the hand for no change. The
-          // flush and the terminal callback still render the whole board.
-          if (beat.events.some((event) => HAND_BEAT_EVENTS.has(event.type))) renderHand();
-          renderControls();
-          renderCombatTools();
           showPileFeedback(beat.events);
         },
         onFlush: () => {
+          discardBeatRender(); // the full render below paints what a coalesced beat still owed
           applyVisualEvents(events);
           // A skipped playback never applied the remaining beats: reduce their receipts into the row memo first.
           reduceFollowRows(events);
@@ -3219,9 +3252,32 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
   }
 
+  // Beats that land within one frame share one repaint of the pieces they touch.
+  function discardBeatRender() {
+    if (beatDirty.frame) { if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(beatDirty.frame); beatDirty.frame = 0; }
+    beatDirty.on = beatDirty.geometry = beatDirty.hand = false;
+  }
+  function flushBeatRender() {
+    if (beatDirty.frame) { if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(beatDirty.frame); beatDirty.frame = 0; }
+    if (!beatDirty.on) return;
+    const { geometry, hand } = beatDirty;
+    beatDirty.on = beatDirty.geometry = beatDirty.hand = false;
+    if (!combatEl.isConnected) return;
+    renderTopbar();
+    renderCombatantStage({ fit: geometry });
+    // The displayed hand (disp.hand) moves only on the four card events
+    // applyBeatToDisp handles; every other beat — a hit, a heal, a
+    // status — re-rendered every card in the hand for no change.
+    if (hand) renderHand();
+    renderControls();
+    renderCombatTools();
+  }
+
   // Cosmetic animations never own combat timing or retain interactive clones.
   const cardFlights = new Set();
   function clearCardFeedback() {
+    if (pileReceivedFrame) cancelAnimationFrame(pileReceivedFrame);
+    pileReceivedFrame = 0;
     for (const animation of cardFlights) animation.cancel();
     cardFlights.clear();
     app.querySelectorAll('.hand .card.card-drawn').forEach(el => el.classList.remove('card-drawn'));
@@ -3241,9 +3297,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     pile.dataset.cardOutcome = exhausted ? 'exhaust' : 'discard';
     pile.setAttribute('aria-description', [discarded && (discarded + ' discarded'), exhausted && (exhausted + ' exhausted')].filter(Boolean).join('; '));
     if (animate && !reducedMotionRequested()) {
+      // Restart the CSS animation without a forced reflow: drop the class now
+      // and re-add it on the next frame (a synchronous offsetWidth read cost
+      // 69-79 ms per play at 4x CPU).
       pile.classList.remove('pile-received');
-      void pile.offsetWidth;
-      pile.classList.add('pile-received');
+      const restart = () => { pileReceivedFrame = 0; if (pile.isConnected) pile.classList.add('pile-received'); };
+      if (typeof requestAnimationFrame !== 'function') restart();
+      else { cancelAnimationFrame(pileReceivedFrame); pileReceivedFrame = requestAnimationFrame(restart); }
     }
   }
   $('.pile.spent').addEventListener('animationend', event => {

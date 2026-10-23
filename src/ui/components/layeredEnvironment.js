@@ -18,9 +18,13 @@ export function layeredEnvironmentGeometry(scene, { width, height, groundY = hei
   const origin = { x: (width - LAYERED_CANVAS.width * scale) / 2, y: groundY - line * scale };
   return scene.layers.map(layer => {
     const source = sources[layer.asset];
-    if (['filter', 'particles'].includes(layer.role)) {
-      const side = 2 * Math.max(width, height);
-      return { layer, x: (width - side) / 2, y: (height - side) / 2, width: side, height: side };
+    // The filter is a near-uniform tint: the viewport is enough (it used to be a 2x square, a huge layer to composite).
+    if (layer.role === 'filter') return { layer, x: 0, y: 0, width, height };
+    if (layer.role === 'particles') {
+      // The tile scrolls by translating the layer, so it only needs the viewport plus the travel distance, anchored so
+      // the viewport stays covered from the start to the end of each loop.
+      const dx = layer.motion?.deltaSourcePixels?.x ?? 0, dy = layer.motion?.deltaSourcePixels?.y ?? 0;
+      return { layer, x: -Math.max(0, dx), y: -Math.max(0, dy), width: width + Math.abs(dx), height: height + Math.abs(dy) };
     }
     if (layer.role !== 'prop' || !source?.visibleBoundsAt32) return { layer, x: origin.x, y: origin.y, width: LAYERED_CANVAS.width * scale, height: LAYERED_CANVAS.height * scale };
     const [left, top, right, bottom] = source.visibleBoundsAt32;

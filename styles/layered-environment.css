@@ -2,12 +2,12 @@
 .layered-environment::before,.layered-environment::after{display:none}
 .layered-environment-layer{position:absolute;max-width:none;pointer-events:none;user-select:none}
 .layered-environment-effects{position:absolute;inset:0;z-index:var(--layer-environment-effects)}
-.layered-particles{background-repeat:repeat;background-size:var(--layered-weather-tile,1024px) var(--layered-weather-tile,1024px);animation:layered-weather-scroll var(--layered-weather-duration,24s) linear infinite}
-@keyframes layered-weather-scroll{to{background-position:var(--layered-weather-dx,0px) var(--layered-weather-dy,0px)}}
+.layered-particles{background-repeat:repeat;background-size:var(--layered-weather-tile,1024px) var(--layered-weather-tile,1024px);animation:layered-weather-scroll var(--layered-weather-duration,24s) linear infinite;will-change:transform}
+@keyframes layered-weather-scroll{from{transform:translate3d(0,0,0)}to{transform:translate3d(var(--layered-weather-dx,0px),var(--layered-weather-dy,0px),0)}}
 /* Lite keeps weather artwork still, matching its backdrop ambient policy. */
-:root[data-performance='lite'] .layered-particles{animation:none}
-.layered-environment-effects[data-reduced-motion='true'] .layered-particles,.reduced-motion .layered-particles{animation:none}
-@media(prefers-reduced-motion:reduce){.layered-particles{animation:none}}
+:root[data-performance='lite'] .layered-particles{animation:none;will-change:auto}
+.layered-environment-effects[data-reduced-motion='true'] .layered-particles,.reduced-motion .layered-particles{animation:none;will-change:auto}
+@media(prefers-reduced-motion:reduce){.layered-particles{animation:none;will-change:auto}}
 .layered-environment[data-skyline='off'] > [data-role='backdrop'],.layered-environment[data-skyline='off'] > [data-role='prop']:not([data-placement='floor-surface']){display:none}
 .layered-environment[data-floor='off'] > [data-role='ground'],.layered-environment[data-floor='off'] > [data-placement='floor-surface']{display:none}
 

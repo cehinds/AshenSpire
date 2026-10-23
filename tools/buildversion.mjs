@@ -192,6 +192,7 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/dirorder.mjs',
   'tools/mobileart-policy.mjs',
   'tools/head-meta.mjs',
+  'tools/css-strip.mjs',
   // THE REST OF THE BUNDLER'S IMPORT GRAPH (docs/EXTERNAL-ASSETS-PLAN.md step
   // 12): every tools/ module tools/bundle.mjs reaches decides which bytes a
   // build carries, so a change to any of them is a new build.

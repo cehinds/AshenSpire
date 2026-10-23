@@ -235,3 +235,23 @@ test('hidden scene fits preserve existing art and recover when the container ret
   assert.ok(nodes.every(node=>/^[-\d.]+px$/.test(node.style.width)));
   assert.notEqual(nodes[0].style.width,priorArt[0].width,'visible resize refreshes geometry');
 });
+
+test('weather particles scroll by transform and stay covering the viewport for the whole loop', () => {
+  const scene = { layers: [
+    { role:'filter',asset:'f' },
+    { role:'particles',asset:'rain',motion:{durationMs:4000,deltaSourcePixels:{x:256,y:1024}} },
+    { role:'particles',asset:'ash',motion:{durationMs:32000,deltaSourcePixels:{x:-512,y:-256}} },
+    { role:'particles',asset:'still' },
+  ] };
+  const [filter, ...weather] = layeredEnvironmentGeometry(scene, { width:390, height:844 }, {});
+  assert.deepEqual([filter.x, filter.y, filter.width, filter.height], [0, 0, 390, 844], 'the tint is viewport-sized');
+  const deltas = [[256,1024],[-512,-256],[0,0]];
+  weather.forEach((box, i) => {
+    const [dx, dy] = deltas[i];
+    for (const t of [0, 1]) {
+      const left = box.x + dx * t, top = box.y + dy * t;
+      assert.ok(left <= 0 && left + box.width >= 390, `particles ${i} cover horizontally at t=${t}`);
+      assert.ok(top <= 0 && top + box.height >= 844, `particles ${i} cover vertically at t=${t}`);
+    }
+  });
+});

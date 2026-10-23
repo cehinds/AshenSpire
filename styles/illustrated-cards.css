@@ -103,3 +103,13 @@
 :root .illustrated-card-face .cost-shift[data-shift='up'] { color:var(--danger); }
 :root .illustrated-card-face .cost-shift::after { content:'\25BE'; font-size:.5em; vertical-align:top; margin-left:.1em; }
 :root .illustrated-card-face .cost-shift[data-shift='up']::after { content:'\25B4'; }
+/* Lite: no per-card filter. Unaffordable is a flat dim overlay; selected/hover is a ring on the face. */
+:root[data-performance='lite'] .card.illustrated-card.unaffordable,
+:root[data-performance='lite'] .card.illustrated-card.unaffordable .illustrated-card-face,
+:root[data-performance='lite'] .card.illustrated-card:is(:hover,:focus-visible,.selected) .illustrated-card-face { filter: none; }
+:root[data-performance='lite'] .card.illustrated-card.unaffordable .illustrated-card-face::after {
+  content: ''; position: absolute; inset: 0; z-index: 50; border-radius: inherit; background: rgba(0, 0, 0, 0.4); pointer-events: none;
+}
+:root[data-performance='lite'] .card.illustrated-card:is(:hover,:focus-visible,.selected) .illustrated-card-face {
+  filter: none; box-shadow: 0 0 0 2px var(--gold), 0 0 8px color-mix(in srgb, var(--gold) 55%, transparent);
+}
