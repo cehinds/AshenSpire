@@ -275,6 +275,28 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     ro.observe(handEl);
   }
 
+  // The shipped fan angle of slot i of n (the legacy transform fan; the fitted
+  // hand overwrites it in applyHandLayout).
+  function slotTransform(i, n) {
+    const spread = Math.min(6, n) * 1.2;
+    const mid = (n - 1) / 2;
+    return `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`;
+  }
+  // A kept card that moved: its positional key badge (1-9, then Q), fan angle and stacking.
+  function syncSlot(record, i, n) {
+    const el = record.el;
+    record.slot = i + '/' + n;
+    const badge = el.querySelector(':scope > .key-hint');
+    if (i < 10) {
+      const text = i < 9 ? String(i + 1) : 'Q';
+      if (!badge) el.appendChild(keycap(text, { class: 'float key-hint' }));
+      else if (badge.textContent !== text) badge.replaceWith(keycap(text, { class: 'float key-hint' }));
+    } else badge?.remove();
+    el.style.transform = slotTransform(i, n);
+    el.style.setProperty('--card-fan-transform', el.style.transform);
+    el.style.zIndex = i;
+  }
+
   function render({ cards = [], emptyHtml = null }) {
     lastRender = { cards, emptyHtml };
     presentationOrder = reconcileHandOrder(presentationOrder, cards.map(entry => entry.inst.instanceId));
@@ -312,13 +334,16 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const id = entry.inst.instanceId;
       // Solo action callbacks resolve current combat state by instance ID. A
       // preview/affordability change invalidates both the face and its inputs.
+      // The slot (index, count) is NOT in it: a card that only changes place
+      // (a neighbour was played) keeps its element and takes its new key badge
+      // and fan angle in place (syncSlot below).
       // The signature carries the ACTION STATE too. A card whose play becomes
       // refused mid-turn — the energy spent, the target gone — keeps its face
       // otherwise, and with it a door that still says the act is available.
       // `commands` is deliberately absent: those are closures that resolve the
       // live combat by instance id when pressed, so a kept one is never stale,
       // and JSON.stringify would drop them anyway.
-      const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, i, n, entry.surface, entry.availability]);
+      const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, entry.surface, entry.availability]);
       let record = renderedCards.get(id);
       if (record && record.signature !== signature) { record.release?.(); record.el.remove(); renderedCards.delete(id); record = null; }
       if (record) {
@@ -326,6 +351,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         setHandFaceBudget(record.el, !!entry.selected);
         record.el.classList.toggle('is-stacked', !!entry.stacked);
         if (handEl.children[i] !== record.el) { handEl.insertBefore(record.el, handEl.children[i] || null); reshaped = true; }
+        if (record.slot !== i + '/' + n) { syncSlot(record, i, n); reshaped = true; }
         return;
       }
       reshaped = true;
@@ -342,7 +368,6 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const el = renderCard(registries, entry.inst,
         { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, range: true,
           surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3 });
-      const spread = Math.min(6, n) * 1.2;
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
       // CENTRE. Same arc, same step, same look — translated so the LOWEST card
       // sits on the strip's own baseline and nothing is pushed below it.
@@ -371,8 +396,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // 0.00. That is an accident of n = 5, not a fit: at n = 6 the lift is 15 px
       // against the same 12 and the phone's scroller starts clipping the card it
       // is meant to feature. A number that is only right for today's hand size.
-      const mid = (n - 1) / 2;
-      el.style.transform = `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`;
+      el.style.transform = slotTransform(i, n);
       el.style.setProperty('--card-fan-transform', el.style.transform);
       el.style.zIndex = i;
       if (animateArrival && drawn.has(entry.inst.instanceId) && !reducedMotionRequested()) {
@@ -412,7 +436,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // every hand card as well.
       if (inspectHold && !entry.commands) armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
       const releaseInput = wireCard?.(el, entry, i);
-      renderedCards.set(id, { el, signature, release: typeof releaseInput === 'function' ? releaseInput : null });
+      renderedCards.set(id, { el, signature, slot: i + '/' + n, release: typeof releaseInput === 'function' ? releaseInput : null });
       handEl.insertBefore(el, handEl.children[i] || null);
     });
     // The overlap arm: record what this render made, then reconcile. Inert —
