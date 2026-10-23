@@ -8,6 +8,20 @@ import { assetUrl } from '../assetmap.js';
 import { combatEnvironment } from '../../model/environmentArt.js';
 import { ENVIRONMENTS, ENVIRONMENT_ATLAS_SIZE, MAP_TERRAIN_REVEAL_RADIUS } from '../../content/environments.js';
 
+// The `.combat` root's `data-has-backdrop`: which backdrops are its direct
+// children ('environment', 'alternative', both, or none). CSS reads
+// `[data-has-backdrop~='environment']` instead of `.combat:has(> .environment-backdrop)`.
+// Call after the backdrop markup is inserted or swapped, before the next paint.
+export function syncBackdropFlag(combat) {
+  if (!combat) return;
+  const kinds = [];
+  if (combat.querySelector(':scope > .environment-backdrop')) kinds.push('environment');
+  if (combat.querySelector(':scope > .alternative-backdrop')) kinds.push('alternative');
+  const value = kinds.join(' ');
+  if (value) { if (combat.getAttribute('data-has-backdrop') !== value) combat.setAttribute('data-has-backdrop', value); }
+  else if (combat.hasAttribute('data-has-backdrop')) combat.removeAttribute('data-has-backdrop');
+}
+
 export function combatBackdropHtml(run, previewSceneId = null) {
   if (previewSceneId) {
     const layered = alternativeBackdropHtml(previewSceneId);
