@@ -944,19 +944,19 @@ export function mountRewards(app, {
     // The action is registered in secondbeat's enumerable table, so native
     // keyboard/gamepad presses enter the same shared armPress door as pointer
     // and touch; the configured dial remains the one duration authority.
-    if (receiptOnly) cont.addEventListener('click', () => {
-      if (receiptContinued || !xpAnimationDone || refill) return;
-      receiptContinued = true;
-      try { finish(); }
-      catch (error) {
-        receiptContinued = false;
-        note.textContent = error.message;
-      }
-    });
-    else beatArmer(meta, registries)(cont, 'rewardContinue', {
+    beatArmer(meta, registries)(cont, 'rewardContinue', {
       question: t('reward.leave.question'),
       confirmLabel: t('reward.leave.confirm'),
-      onConfirm: finish,
+      onConfirm: () => {
+        if (!receiptOnly) return finish();
+        if (receiptContinued || !xpAnimationDone || refill) return;
+        receiptContinued = true;
+        try { finish(); }
+        catch (error) {
+          receiptContinued = false;
+          note.textContent = error.message;
+        }
+      },
     });
 
     followUp(app.querySelector('.reward-claim-layout'));
