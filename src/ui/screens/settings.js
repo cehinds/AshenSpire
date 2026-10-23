@@ -343,8 +343,12 @@ function recoverySettingRows() {
 
 // ROWS is built on first use (see advancedRowSets), through allRows().
 let rowsCache = null;
-function allRows() { return rowsCache || (rowsCache = buildRows()); }
-function buildRows() {
+function allRows() { return rowsCache || (rowsCache = buildRows(true)); }
+// The rows minus the generated advanced-config ones: enough to answer "does this
+// category have rows?" on the boot path without walking the content bundle.
+let baseRowsCache = null;
+function baseRows() { return baseRowsCache || (baseRowsCache = buildRows(false)); }
+function buildRows(withAdvanced) {
 return [
   { cat: 'Combat', key: 'askToUpcastAfterTarget', type: 'toggle', def: false, label: 'Ask to upcast after choosing a target', note: 'Off: use the Upcast button under an eligible selected card. On: choose a temporary rank before committing the play; Cancel spends nothing.' },
   { cat: 'Combat', key: 'combatLogPlayerColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.player,
@@ -886,7 +890,7 @@ return [
   { cat: 'Advanced', advancedGroup: 'Deck', key: 'playInDeckOrder', def: deckRules.defaults.playInDeckOrder, label: t('settings.row.playInDeckOrder'),
     note: tFull('settings.row.playInDeckOrder') },
   ...recoverySettingRows(),
-  ...advancedRowSets().config,
+  ...(withAdvanced ? advancedRowSets().config : []),
   { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: t('settings.row.promptSettingsExport'),
     note: tFull('settings.row.promptSettingsExport') },
   { cat: 'Advanced', advancedGroup: 'Export', key: 'gameConfigExport', type: 'button', btn: 'Export JSON', label: t('settings.row.gameConfigExport'),
@@ -1131,10 +1135,13 @@ function categoryLabel(cat) {
  * failure; nothing here guesses.
  */
 export function categoryHandler(cat) {
-  if (cat === 'General') return { rows: allRows().filter(row => GENERAL_GROUPS.includes(row.cat) && !row.retired) };
+  // `rows` is read when a screen draws, not when the boot-time surface check
+  // asks whether the heading is handled, so it is a getter over the full set.
+  if (cat === 'General') return { get rows() { return allRows().filter(row => GENERAL_GROUPS.includes(row.cat) && !row.retired); } };
   if (SECTIONS[cat]) return SECTIONS[cat];
-  const rows = allRows().filter((r) => r.cat === cat && !r.retired);
-  return rows.length ? { rows } : null;
+  const present = (rows) => rows.some((r) => r.cat === cat && !r.retired);
+  if (!present(rowsCache || baseRows()) && !present(allRows())) return null;
+  return { get rows() { return allRows().filter((r) => r.cat === cat && !r.retired); } };
 }
 
 /**
