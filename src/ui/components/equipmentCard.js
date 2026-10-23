@@ -77,7 +77,7 @@ function applyCardTokens(card, tokens) {
  * level there: the creation picker shows rarity while you are choosing, the
  * combat hand does not show it at all.
  */
-export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, owned = null, level = null, surface = 'none', identity: identityOverride = null } = {}) {
+export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, actionOwnsTouch = false, owned = null, level = null, surface = 'none', identity: identityOverride = null } = {}) {
   configureTooltipGlossary(registries);
   const model = presentation || equipmentCardModel(registries, piece);
   // `inspection: false` MEANS "no door on this face", NOT "this face says
@@ -214,7 +214,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
   // Keep explanation gestures out of the containing equipment hold action.
   if (interactive) for (const type of ['pointerdown', 'touchstart', 'click', 'keydown']) card.addEventListener(type, event => event.stopPropagation());
   if (inspection) {
-    bindCardInspection(card, { title: model.name, readOnly: interactive, identity,
+    bindCardInspection(card, { title: model.name, readOnly: interactive, actionOwnsTouch, identity,
       open: opener => {
         // THE DOOR READS ITS OWN FACE'S EXPLANATIONS, not this one's. The
         // outer card may be standing at `glance`, where it has not built a tag
