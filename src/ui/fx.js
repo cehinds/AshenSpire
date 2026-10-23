@@ -550,11 +550,27 @@ function layoutCallouts(layer, anchor, q, now, lifeMs = CALLOUT_MS) {
       // Static reduced-motion callouts cannot use animation-delay to hide
       // queued words. Keep each pending gain hidden until its planned lane
       // start, then reuse its single timer for the same queued lifetime.
-      it.el.style.visibility = 'hidden';
-      it.timer = setTimeout(() => {
+      const revealBuff = () => {
+        const at = Date.now();
+        const predecessors = q.items.filter(other => other !== it && other.lane === it.lane
+          && other.start < it.start && other.el.parentNode === layer);
+        for (const previous of predecessors) if (previous.end <= at) {
+          // A same-deadline start timer can run before the predecessor's
+          // expiry timer. Its lifetime has ended, so remove it here before
+          // exposing the next word in this lane.
+          clearTimeout(previous.timer);
+          previous.el.remove();
+        }
+        const stillShowing = predecessors.find(previous => previous.end > at);
+        if (stillShowing) {
+          it.timer = setTimeout(revealBuff, Math.max(1, stillShowing.end - at));
+          return;
+        }
         it.el.style.visibility = '';
         it.timer = setTimeout(() => it.el.remove(), Math.max(0, it.end - Date.now()));
-      }, row.start);
+      };
+      it.el.style.visibility = 'hidden';
+      it.timer = setTimeout(revealBuff, row.start);
     } else {
       if (it.kind.startsWith('buff:')) it.el.style.visibility = '';
       it.timer = setTimeout(() => it.el.remove(), Math.max(0, it.end - now));

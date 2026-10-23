@@ -1240,8 +1240,8 @@ export function mountRewards(app, {
       label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
     });
     const inspectionFaces = new Map();
-    const inspectButton = button({ label: 'Inspect', id: 'reward-inspect', disabled: true,
-      attrs: { 'aria-label': 'Inspect selected reward' } });
+    const inspectButton = button({ label: t('deckEditor.inspectAction'), id: 'reward-inspect', disabled: true,
+      attrs: { 'aria-label': t('deckEditor.inspectAction') } });
     inspectButton.hidden = isNodeRow || isLevelChoice || (isMilestone && row.rewardKind !== 'cards');
     inspectButton.addEventListener('click', () => {
       if (!confirming && !taken()) openBoundCardInspection(inspectionFaces.get(selectedCardId), inspectButton);

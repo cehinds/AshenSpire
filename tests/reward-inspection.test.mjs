@@ -33,21 +33,12 @@ function withInspectionDom(fn) {
   dom.document.getSelection = () => null;
   const proto = Object.getPrototypeOf(dom.document.body);
   const original = Object.getOwnPropertyDescriptor(proto, 'innerHTML');
-  const outer = Object.getOwnPropertyDescriptor(proto, 'outerHTML');
-  Object.defineProperty(proto, 'outerHTML', { ...outer,
-    set(value) {
-      const holder = dom.document.createElement('div'); holder.innerHTML = value;
-      for (const node of [...holder.children]) this.before(node);
-      this.remove();
-    },
-  });
   Object.defineProperty(proto, 'innerHTML', { configurable: true,
     set(value) { this.inspectionMarkup = value; original.set.call(this, value); },
   });
   const cleanup = () => {
     clearSelection();
     Object.defineProperty(proto, 'innerHTML', original);
-    Object.defineProperty(proto, 'outerHTML', outer);
     for (const [key, value] of Object.entries(saved)) {
       if (value === undefined) delete globalThis[key]; else globalThis[key] = value;
     }
@@ -367,5 +358,26 @@ for (const rewardKind of ['armory', 'relic']) test(`normal ${rewardKind} milesto
     assert.equal(app.querySelector('#reward-card-confirm').textContent, 'Confirm');
     assert.deepEqual(readings().map(inspection => inspection.hidden), [false, false]);
     assert.deepEqual({ run, checkpoint }, before); assert.equal(claims, 0); assert.equal(writes, 0);
+  });
+});
+
+
+test('shared reward DOM replaces only the frame when outerHTML repaints a face', () => {
+  withInspectionDom(() => {
+    const card = document.createElement('div');
+    const before = document.createElement('span'); before.id = 'before';
+    const frame = document.createElement('span'); frame.id = 'frame';
+    const info = document.createElement('button'); info.id = 'information';
+    let opens = 0; info.addEventListener('click', () => { opens++; });
+    card.append(before, frame, info); document.body.append(card);
+    frame.outerHTML = '<span id="replacement"><b id="detail"></b></span><span id="extra"></span>';
+    assert.deepEqual(card.children.map(node => node.id), ['before', 'replacement', 'extra', 'information']);
+    assert.equal(frame.parentNode, null); assert.equal(frame.isConnected, false);
+    const replacement = card.querySelector('#replacement');
+    assert.equal(replacement.parentNode, card);
+    assert.equal(replacement.querySelector('#detail').parentNode, replacement);
+    assert.equal(card.querySelector('#information'), info); info.click(); assert.equal(opens, 1);
+    frame.outerHTML = '<span id="detached"></span>';
+    assert.equal(card.querySelector('#detached'), null, 'setting outerHTML on a detached node is a no-op');
   });
 });

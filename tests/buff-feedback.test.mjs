@@ -40,13 +40,28 @@ function playback(t, fn) {
       const layer = dom.document.createElement('div'), shown = [], stages = [];
       const anchors = Object.fromEntries(['player', 'e1', 'ally'].map(id => [id, dom.document.createElement('div')]));
       const append = layer.appendChild.bind(layer);
-      layer.appendChild = node => { shown.push({ node, at: Date.now() }); return append(node); };
+      let peakVisibleBuffs = 0;
+      const visibleBuffCount = () => [...layer.children].filter(node =>
+        node.dataset?.calloutKind?.startsWith('buff:') && node.style.visibility !== 'hidden').length;
+      layer.appendChild = node => {
+        shown.push({ node, at: Date.now() });
+        const result = append(node);
+        if (node.dataset?.calloutKind?.startsWith('buff:')) {
+          let visibility = node.style.visibility;
+          Object.defineProperty(node.style, 'visibility', { configurable: true,
+            get: () => visibility,
+            set: value => { visibility = value; peakVisibleBuffs = Math.max(peakVisibleBuffs, visibleBuffCount()); },
+          });
+          peakVisibleBuffs = Math.max(peakVisibleBuffs, visibleBuffCount());
+        }
+        return result;
+      };
       let completions = 0, endedAt;
       const handle = playTimeline(events, { layer, anchorFor: id => anchors[id], figureAnimations: false,
         statusInfo: id => definitions.get(id),
         animateActor: () => ({ impactMs: 100, totalMs: 300, cancel() {} }),
         onStage: name => stages.push({ name, at: Date.now() }), ...options }, () => { completions++; endedAt = Date.now(); });
-      return { layer, shown, stages, handle, finish() {
+      return { layer, shown, stages, handle, peakVisibleBuffs: () => peakVisibleBuffs, finish() {
         for (let i = 0; i < 20000 && !completions; i++) t.mock.timers.tick(1);
         assert.equal(completions, 1); return endedAt;
       } };
@@ -105,12 +120,12 @@ test('reduced-motion buff gains stay readable, start in queued lanes and clear o
   playback(t, ({ dom, run }) => {
     setAnimSpeed('instant');
     dom.document.body.classList.add('reduced-motion');
-    const result = run(['precision', 'precision', 'regen', 'evade', 'decoy', 'concealed'].map(status => grant(status)));
+    const result = run(['precision', 'precision', 'regen', 'evade', 'decoy', 'concealed', 'strength'].map(status => grant(status)));
     result.finish();
     const buffs = result.shown.filter(({ node }) => node.dataset.calloutKind?.startsWith('buff:')).map(row => row.node);
-    assert.equal(buffs.length, 6, 'equal repeated gains are separate committed outcomes');
+    assert.equal(buffs.length, 7, 'equal repeated gains are separate committed outcomes');
     const starts = buffs.map(node => Number.parseInt(node.style.animationDelay || '0', 10));
-    assert.deepEqual(starts, [0, 150, 300, 500, 650, 800]);
+    assert.deepEqual(starts, [0, 150, 300, 500, 650, 800, 1000]);
     assert.equal(buffs[0].style.visibility, '', 'the first lane is visible immediately');
     assert.ok(buffs.slice(1).every(node => node.style.visibility === 'hidden'), 'future lane words stay hidden until scheduled');
     assert.equal(new Set(buffs.slice(0, 3).map(node => node.dataset.calloutSlot)).size, 3);
@@ -128,6 +143,8 @@ test('reduced-motion buff gains stay readable, start in queued lanes and clear o
     assert.ok(result.layer.children.includes(buffs[1]), 'the word stays readable for its selected lifetime');
     t.mock.timers.tick(1);
     assert.ok(!result.layer.children.includes(buffs[1]), 'the lane word clears at the end of its lifetime');
+    t.mock.timers.tick(500);
+    assert.ok(result.peakVisibleBuffs() <= 3, 'a later lane never appears before its expired predecessor leaves the DOM');
     clearCallouts(result.layer);
     assert.ok(buffs.every(node => !result.layer.children.includes(node)));
     t.mock.timers.tick(5000);

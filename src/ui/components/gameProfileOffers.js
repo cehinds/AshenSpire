@@ -27,7 +27,7 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
   const note = el('p', { class: 'reward-note', text: t(!noncombatEditing(run) ? 'reward.configured.note' : armouryOpensDeckEditor(run, settings) ? 'reward.configured.noteArmoury' : 'reward.configured.noteNoEditor', { count: offer.takeCount }) });
   const status = el('p', { class: 'reward-confirm-status', role: 'alert' });
   const confirm = button({ label: t('common.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true });
-  const inspect = button({ label: 'Inspect', id: 'reward-inspect', disabled: true });
+  const inspect = button({ label: t('deckEditor.inspectAction'), id: 'reward-inspect', disabled: true });
   inspect.addEventListener('click', () => {
     if (!pending && !completed && selected !== null) openBoundCardInspection(choices[selected].face, inspect);
   });
@@ -53,7 +53,7 @@ export function mountGameProfileOffers(app, { registries, run, offer, title, onT
       control.classList.toggle('is-chosen', chosen); control.setAttribute('aria-checked', String(chosen));
     }
     confirm.disabled = false; inspect.disabled = false;
-    inspect.setAttribute('aria-label', `Inspect ${choices[index].control.textContent}`);
+    inspect.setAttribute('aria-label', t('deckEditor.inspectNamed', { name: choices[index].control.textContent }));
     status.textContent = '';
   }
   for (const [index, option] of offer.options.entries()) {
