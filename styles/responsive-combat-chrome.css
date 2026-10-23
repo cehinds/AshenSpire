@@ -18,7 +18,7 @@
 :root .combat[data-layout='formation'] .hand-overlay > :is(.hand-prev,.hand-next) { display: none; }
 /* The footer is the only lower backing; its fade rises gently into the field. */
 :root[data-display-appearance='alternative'] .combat[data-layout='formation'] > .hand-area { background: transparent; }
-:root .combat[data-layout='formation']:has(> .environment-backdrop)::before { background: none; }
+:root .combat[data-layout='formation'][data-has-backdrop~='environment']::before { background: none; }
 :root[data-display-appearance='alternative'] .combat[data-layout='formation'] > .hand-area::before {
   content: ''; position: absolute; inset: auto 0 0; height: calc(var(--w4-band-footer) * 1.65);
   background: linear-gradient(to bottom, transparent, #211d16 65%); pointer-events: none; z-index: 0;

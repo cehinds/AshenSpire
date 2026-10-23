@@ -110,7 +110,8 @@ import { combatHealthRow } from '../components/combatHealth.js';
 import { protectionPresentation } from '../../model/blockPresentation.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
-import { combatBackdropHtml } from '../components/environmentArt.js';
+import { combatBackdropHtml, syncBackdropFlag } from '../components/environmentArt.js';
+import { markSpriteArt } from '../components/spriteArtFlags.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { formationGridHtml } from '../components/formationGrid.js';
@@ -1404,6 +1405,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
         </div>
         <div class="fx-layer"></div>
       </div>`;
+    syncBackdropFlag(app.querySelector('.combat'));
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
     app.querySelector('#coop-blight-feat')?.addEventListener('click', () => {
       const pending = meP.ashenBlight.milestones.find(row => row.path === null), seatAtOpen = me;
@@ -1436,6 +1438,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId, { animation: combatEquipmentAnimationForLoadout(registries, m.loadout, m.classId), view: 'combat' }));
+      markSpriteArt(sprite);
       const resume = posePresentations.get(p.id);
       stageFor(sprite)?.setStance?.(heldStances.get(p.id));
       stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)), { resume, immediate: !resume });
@@ -1505,6 +1508,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, readSettin
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(enemySprite(def, { ...e, presentationStance: Object.hasOwn(e, 'presentationStance') ? e.presentationStance : enemyStanceCategory(e.intent) }));
+      markSpriteArt(sprite);
       box.appendChild(sprite);
       const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = def.name; box.appendChild(nm);
       box.appendChild(meterBars(e, true, (sc.events || []).filter((event) => (

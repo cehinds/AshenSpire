@@ -1,6 +1,7 @@
 // One DOM frame for player and enemy combatants. The screen supplies rendered
 // slots and interaction callbacks; this component owns only stable structure,
 // role semantics, and component identity.
+import { markSpriteArt } from './spriteArtFlags.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { classicAppearance } from '../displayAppearance.js';
 import { artworkAnchor } from '../models/IdentityModel.js';
@@ -125,6 +126,7 @@ export function combatantFrame({
   markUiComponent(spriteHost, UI.combatantSprite, role);
   markArtwork(spriteHost);
   spriteHost.appendChild(sprite);
+  markSpriteArt(spriteHost);
   if (blockBadge) spriteHost.appendChild(blockBadge);
   card.appendChild(spriteHost);
   const widget = role === 'player' ? playerWidget(leadingHost) : card;

@@ -297,7 +297,13 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     el.style.zIndex = i;
   }
 
-  function render({ cards = [], emptyHtml = null }) {
+  function render(args) {
+    renderCards(args);
+    // `data-has-selection` stands in for `.hand:has(.selected)` in combat.css.
+    const on = String(!!handEl.querySelector('.selected'));
+    if (handEl.getAttribute('data-has-selection') !== on) handEl.setAttribute('data-has-selection', on);
+  }
+  function renderCards({ cards = [], emptyHtml = null }) {
     lastRender = { cards, emptyHtml };
     presentationOrder = reconcileHandOrder(presentationOrder, cards.map(entry => entry.inst.instanceId));
     const entries = new Map(cards.map(entry => [entry.inst.instanceId, entry]));
