@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-23
 
+- **Adept copies and affordable enemy actions** ([#2265](https://github.com/cehinds/AshenSpire/pull/2265), `0.7.1.1788`). Collected Basics and Cantrips can be copied under the equipped Martial or Magic Adept class. Matching stances reduce the class's correct SP or MP cost. Enemy plans respect available Stamina, multi-hit minimums and range charges; preparations and reactions pay once. Active saved fights keep their previous action prices.
+
 - **Core adept and enemy SP rules** ([#2263](https://github.com/cehinds/AshenSpire/pull/2263), `0.7.1.1788`). Defines collected-card copies for Martial and Magic Adept, matching-stance SP and MP discounts, and affordable enemy multi-hit, charge and reaction costs. Existing active battles retain accepted prices. This specifies the rule changes; implementation follows.
 
 - **Inspect rewards and see actual gains** ([#2260](https://github.com/cehinds/AshenSpire/pull/2260), `0.7.1.1786`). Reward offers provide Inspect for full details before taking an item. Skill-level notices show actual card-value changes and unlocks, or say when a level grants no stat bonus or unlock, with animated level progress that respects reduced motion. Saved notices resume without paying XP again. Combat buff labels show the stacks actually gained, including refreshes and caps, instead of the total already held.
