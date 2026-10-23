@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-23
 
+- **Smaller stance bonuses and clearer cards** ([#2254](https://github.com/cehinds/AshenSpire/pull/2254), `0.7.1.1782`). Core Smash against defensive stances uses 1.25× instead of 2×. Class selection displays graphical icons while code keeps readable names. Card rules shrink to fit a fixed box, and Counter reads Gain Block and Counter with their values. Mixed reward cards and their buttons share consistent dimensions. Core Victory restores class and used-weapon XP bars before rewards, preserving slow progression and saved receipts.
+
 - **Smaller stance bonus contract** ([#2253](https://github.com/cehinds/AshenSpire/pull/2253), `0.7.1.1782`). Specifies a 1.25× Core Smash bonus against defensive stances, replacing 2× for both sides. This documents the balance change; implementation follows separately.
 
 - **Accurate playback timeout logs** ([#2251](https://github.com/cehinds/AshenSpire/pull/2251), `0.7.1.1780`). Command logs now count genuine timeouts in sequential combat playback. Normal completion, Skip and Cancel do not add false timeout reports; combat pacing is unchanged.

@@ -10,7 +10,7 @@ import { dispatch, previewCard } from '../src/engine/combat.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { recordSkillXp, skillXpReceipt, settleConfiguredSkillProgression } from '../src/engine/skillXp.js';
 import { awardSkillXp, xpToNext } from '../src/model/skills.js';
-import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices } from '../src/model/gameProfileProgression.js';
+import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt } from '../src/model/gameProfileProgression.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { mountGameProfileLevelUp } from '../src/ui/components/gameProfileLevelUp.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
@@ -24,6 +24,8 @@ import { featMultiplier } from '../src/model/feats.js';
 import { awardLevelXp, pendingLevelCount, combatXpReceipt } from '../src/model/levelup.js';
 import { combatXpGains } from '../src/model/rewardprogress.js';
 import { validateRunShape } from '../src/model/state.js';
+import { mountRewards } from '../src/ui/screens/reward.js';
+import { withKitDom } from './helpers/kit-dom.mjs';
 import { withModalDom } from './helpers/modal-dom.mjs';
 
 const profile = resolveGameProfile('core');
@@ -232,7 +234,7 @@ test('actual main defeat settlement persists earned weapon notice, resumes once,
   const saves = createSaveManager(createMemoryStorage());
   const screens = [], notices = [], deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
     skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
-    pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices };
+    pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt };
   const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'screens', 'notices', `
     const { ${Object.keys(deps).join(', ')} } = deps;
     const activeSlot = 1, rng = combat.rng, app = {}; let xpCombat = combat;
@@ -354,4 +356,117 @@ test('a pending Core opening survives the normal save door without changing earn
   assert.ok(loaded, JSON.stringify(saves.runStatus()));
   assert.deepEqual(loaded.prologue, run.prologue);
   assert.deepEqual(loaded.skills, skills);
+});
+
+
+test('Core Victory bars resume the paid slow-rate receipt and Continue acknowledges once without paying XP', () => {
+  const { run, combat } = live();
+  recordSkillXp(combat, { type: 'damageDealt', sourceId: 'player', targetId: combat.enemies[0].id, amount: 10, usedArmamentId: 'greatsword' });
+  recordSkillXp(combat, { type: 'combatEnd', victory: true });
+  const before = structuredClone(run.skills);
+  const awards = settleConfiguredSkillProgression(reg, run, combat, { victory: true });
+  const gains = combatXpGains({ awards: [awards.classAward, ...awards.trackAwards] });
+  assert.equal(gains.level, 0);
+  assert.equal(gains.tracks['item:blade'], awards.trackAwards[0].gained);
+  assert.equal(gains.tracks['item:shield'], undefined);
+  run.gameProfilePendingReward = { offerId: 'battle', source: 'combat', after: 'map', levelOffers: 0,
+    victoryReceipt: { title: 'Victory', xpGains: gains, xpBefore: { tracks: before } } };
+  const saves = createSaveManager(createMemoryStorage());
+  saves.saveRun(run, createRng(run.seed));
+  const loaded = saves.loadRun(reg);
+  assert.ok(loaded, saves.runStatus().reason);
+  const paid = structuredClone(loaded.skills);
+  const pending = loaded.gameProfilePendingReward;
+  assert.throws(() => acknowledgeVictoryReceipt(pending, () => { throw Error('save refused'); }), /save refused/);
+  assert.ok(pending.victoryReceipt, 'a failed save retains the receipt');
+  withKitDom(({ document }) => {
+    document.documentElement ??= document.body;
+    document.body.classList.add('reduced-motion');
+    const app = document.createElement('main'); document.body.append(app);
+    let continues = 0, refuse = true;
+    mountRewards(app, { registries: reg, run: loaded, rewards: pending.victoryReceipt, receiptOnly: true,
+      onDone() {
+        // Reentrant activation during a screen transition cannot acknowledge twice.
+        app.querySelector('#reward-continue').click();
+        acknowledgeVictoryReceipt(pending, () => {
+          if (refuse) throw Error('receipt save refused');
+          return saves.saveRun(loaded, createRng(loaded.seed));
+        });
+        continues++;
+      } });
+    assert.equal(app.querySelectorAll('.reward-progress-row').length, 2);
+    assert.equal(app.querySelector('[data-track="character"]'), null);
+    assert.ok(app.querySelector('[role="progressbar"][data-track="class:reaver"]'));
+    assert.ok(app.querySelector('[role="progressbar"][data-track="item:blade"]'));
+    const done = app.querySelector('#reward-continue');
+    assert.equal(done.dataset.beatAction, 'rewardContinue');
+    done.click();
+    assert.equal(continues, 0);
+    assert.ok(pending.victoryReceipt);
+    assert.match(app.querySelector('#reward-hold-copy').textContent, /receipt save refused/);
+    refuse = false;
+    done.click();
+    done.click();
+    assert.equal(continues, 1);
+    assert.equal(saves.loadRun(reg).gameProfilePendingReward.victoryReceipt, undefined);
+    assert.deepEqual(saves.loadRun(reg).skills, paid);
+    assert.equal(acknowledgeVictoryReceipt(pending, () => { throw Error('already done'); }), false);
+  });
+});
+
+test('actual Core victory settlement persists the scaled XP receipt before offers and resumes without repayment', async () => {
+  const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const body = (start, end) => source.slice(source.indexOf(start), source.indexOf(end, source.indexOf(start)));
+  const { run, combat } = live();
+  run.stats = { fightsWon: 0 };
+  play(combat, 'core.strike');
+  recordSkillXp(combat, { type: 'combatEnd', victory: true });
+  const saves = createSaveManager(createMemoryStorage());
+  const receipts = [], offers = [];
+  const deps = { runCombatEnd, isConfiguredRun, configuredSkillProgression, configuredCharacterLevels,
+    skillXpReceipt, skillKindOf, featMultiplier, settleConfiguredSkillProgression, skillLevelNotices,
+    pendingLevelCount, combatXpReceipt, gameModule, awardLevelXp, combatXpGains,
+    acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt, gameProfileRewardOffers };
+  const make = run => new Function('deps', 'run', 'combat', 'registries', 'saves', 'receipts', 'offers', `
+    const { ${Object.keys(deps).join(', ')} } = deps;
+    const activeSlot = 1, rng = combat.rng, app = { querySelector() { return null; } }; let xpCombat = combat;
+    const persist = () => saves.saveRun(run, rng);
+    const audio = {}, sfx = { play() {} }, sendLanStatus = () => {};
+    const rollLevelChoices = () => [], victoryTitle = () => 'VICTORY', victoryBeat = async () => {};
+    const applyAfterCombatRecovery = () => {}, featStacks = () => 0, victoryCompletesJourneyNode = () => false;
+    const rollRuneReward = () => 0;
+    const showFinishedRun = () => { throw Error('ordinary victory must not finish the run'); };
+    const showMap = () => {}, advanceAct = () => {};
+    const mountRewards = (_app, model) => receipts.push(model);
+    const mountGameProfileLevelUp = () => { throw Error('small award must not cross levels'); };
+    const deckDoors = () => ({});
+    const mountGameProfileOffers = (_app, model) => offers.push(model);
+    const transactReward = () => {}, deckEditBounds = () => ({ max: 30 });
+    ${body('async function onCombatEnd(', '\n/**\n * The spoils')}
+    ${body('function beginGameProfileReward(', '\nfunction showShop(')}
+    return { settle: () => onCombatEnd('victory', combat, { pool: 'normal', enemies: ['wanderingSoldier'] }), resume: showGameProfileReward };
+  `)(deps, run, combat, reg, saves, receipts, offers);
+  const main = make(run);
+  await main.settle();
+  assert.equal(receipts.length, 1);
+  assert.equal(receipts[0].receiptOnly, true);
+  assert.equal(offers.length, 0, 'the existing Victory modal precedes the offer');
+  const paid = structuredClone(run.skills);
+  const saved = saves.loadRun(reg);
+  assert.ok(saved, saves.runStatus().reason);
+  const gain = saved.gameProfilePendingReward.victoryReceipt.xpGains;
+  assert.equal(gain.level, 0);
+  assert.equal(gain.tracks['item:blade'], paid['item:blade'].xp);
+  assert.equal(gain.tracks['class:reaver'], paid['class:reaver'].xp);
+  assert.equal(gain.tracks['item:shield'], undefined);
+  await main.settle();
+  assert.equal(receipts.length, 1, 'duplicate combat callback cannot pay or reopen');
+  const resumed = make(saved); resumed.resume();
+  assert.equal(receipts.length, 2);
+  receipts[1].onDone();
+  assert.equal(offers.length, 1);
+  assert.equal(saves.loadRun(reg).gameProfilePendingReward.victoryReceipt, undefined);
+  assert.deepEqual(saved.skills, paid);
+  resumed.resume();
+  assert.equal(receipts.length, 2, 'acknowledged receipt stays closed');
 });

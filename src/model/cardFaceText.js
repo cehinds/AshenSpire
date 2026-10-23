@@ -97,7 +97,9 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   // Coverage is named by the mode whose default it equals; any other coverage keeps the authored text.
   const counterMode = counter ? counterModeOf(def, p) : null;
   if (counter && !counterMode && def.defenseRulesVersion !== 2) return null;
-  const damageVerb = counter ? def.defenseRulesVersion === 2 ? 'Return' : `Prepare ${{ melee: 'Melee', ranged: 'Ranged', spell: 'Spell' }[counterMode]} Counter: return` : 'Inflict';
+  const concise = registries?.gameProfile?.foundation?.mode === 'configured';
+  const conciseCounter = counter && concise;
+  const damageVerb = conciseCounter ? 'Counter' : counter ? def.defenseRulesVersion === 2 ? 'Return' : `Prepare ${{ melee: 'Melee', ranged: 'Ranged', spell: 'Spell' }[counterMode]} Counter: return` : 'Inflict';
 
   // The static number an effect's field authored: its token's base, else the literal.
   const baseOf = (effect, index, field) => {
@@ -166,7 +168,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         } else {
           text = `${num(n, base)} ${word}${hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}`;
         }
-        return frag('damage', text + area);
+        return frag('damage', conciseCounter && hits === 1 ? num(n, base) + area : text + area);
       }
       case 'poiseDamage': case 'wardDamage': {
         // Core 2: the computed return stands for every authored Poise row; a row the return zeroes is not listed.
@@ -177,9 +179,9 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
           if (!merged.leader) return [];
           const live = merged.indices.map(i => value(def.effects[i], i)), authored = merged.indices.map(i => baseOf(def.effects[i], i, 'amount'));
           const sum = list => list.reduce((total, amount) => total + amount, 0);
-          return frag('damage', `${num(sum(live), authored.every(amount => typeof amount === 'number') ? sum(authored) : undefined)} Poise damage${area}`);
+          return frag('damage', `${num(sum(live), authored.every(amount => typeof amount === 'number') ? sum(authored) : undefined)} Poise${concise ? '' : ' damage'}${area}`);
         }
-        return frag('damage', `${num(n, base)} ${effect.op === 'poiseDamage' ? 'Poise' : 'Ward'} damage${area}`);
+        return frag('damage', `${num(n, base)} ${effect.op === 'poiseDamage' ? 'Poise' : 'Ward'}${concise ? '' : ' damage'}${area}`);
       }
       case 'block': {
         const defense = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2
@@ -284,9 +286,9 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     const out = [];
     const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
     if (cost.length) out.push({ kind: 'cost', text: joinList(cost) });
-    if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${joinList(damage)}` });
+    if (damage.length) out.push({ kind: 'damage', text: `${concise && !counter ? '' : damageVerb + ' '}${joinList(damage)}` });
     else if (counter && fragments === unconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
-    if (status.length) out.push({ kind: 'status', text: `Inflict ${joinList(status)}` });
+    if (status.length) out.push({ kind: 'status', text: `${concise ? '' : 'Inflict '}${joinList(status)}` });
     if (remove.length) out.push({ kind: 'status', text: `Remove ${joinList(remove)}` });
     if (consume.length) out.push({ kind: 'consume', text: `Remove ${joinList(consume)}` });
     if (gain.length) out.push({ kind: 'gain', text: `Gain ${joinList(gain)}` });
@@ -347,6 +349,10 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     // Ward off (Core 2): the payload's Ward drains Poise too, so it joins the Poise figure.
     let poiseReturn = 0, poiseAuthored = 0;
     for (const [key, label, op] of [['hp', 'damage', 'damage'], ['poise', 'Poise', 'poiseDamage'], ['ward', 'Ward', 'wardDamage']]) {
+      // The configured Counter face states HP return once. Its automatic
+      // Poise/Ward reply is explained by Counter inspection; distinct authored
+      // effect rows above remain visible.
+      if (conciseCounter && preview?.counterReturn && key !== 'hp') continue;
       if ((def.effects || []).some(effect => effect.op === op)) continue;
       // Core 2 (SPEC §17): the computed return against the revealed attack replaces the authored payload; Ward is not part of it.
       const core = preview?.counterReturn;
@@ -355,11 +361,11 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
       if (typeof amount !== 'number' || !(amount > 0)) continue;
       if (poiseMerge && key !== 'hp') { poiseReturn += amount; poiseAuthored += payload[key] || 0; continue; }
       const type = key === 'hp' ? combatCardDamageLabel(def, preview, registries) : '';
-      unconditional.push({ cat: 'damage', text: `${typed(num(amount, payload[key]), type)} ${label}` });
+      unconditional.push({ cat: 'damage', text: conciseCounter && key === 'hp' ? num(amount, payload[key]) : `${typed(num(amount, payload[key]), type)} ${label}` });
     }
     if (poiseReturn > 0) unconditional.push({ cat: 'damage', text: `${num(poiseReturn, poiseAuthored)} Poise` });
     // Beating the revealed hit also adds Block before it lands.
-    if (preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', text: `+${num(preview.counterReturn.block)} Block against it` });
+    if (!conciseCounter && preview?.counterReturn?.advantaged && preview.counterReturn.block > 0) unconditional.push({ cat: 'bonus', text: `+${num(preview.counterReturn.block)} Block against it` });
   }
   if (counter && !counterUncovered && !preview?.counterReturn && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   // Every card tagged maneuver:smash says the Core rule, from one shared row (model/smashClause.js).
@@ -418,7 +424,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   if (def.usableWhile?.length) byKind.detail.push(`Usable through ${def.usableWhile.map(id => esc(title(id))).join(', ')}`);
 
   const lines = [];
-  for (const kind of LINE_ORDER) for (const html of byKind[kind]) if (html) lines.push({ kind, html });
+  for (const kind of (conciseCounter ? ['gain', ...LINE_ORDER.filter(kind => kind !== 'gain')] : LINE_ORDER)) for (const html of byKind[kind]) if (html) lines.push({ kind, html });
   // Nothing phrased (a status or curse with no effects) keeps the authored text, as combatCardSummary does.
   return lines.length || representedEffects.length ? lines : null;
 }

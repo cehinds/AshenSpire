@@ -95,7 +95,7 @@ export function profileDamageReceipt(ctx, source, target, base, carrier = {}, { 
   if (!modern) raw=Math.max(0,Math.floor(raw));
   if(proposal && target && !flatReturn) raw=transition('status-rules','Other status modifiers',raw,proposalHitPlan(ctx,source,target,raw,carrier,{roundDamage:!modern}).amount);
   const defense = stanceMitigation(ctx, attacking, defending);
-  // Owner, 2026-10-19: a Smash that beats the target's stance (Defend or Prepared) deals 2x its normal damage in place of the
+  // Owner, 2026-10-19: a Smash that beats the target's stance (Defend or Prepared) deals the configured multiplier of its normal damage in place of the
   // generic advantage multiplier, plus a share of the target's Block (below), and costs Poise by a share of the total instead of the 25% absorption.
   const smashRule = modern && advantage && attacking === 'smash' ? fixCoreSmashVsDefensiveRules(fixCoreRules(ctx, target)) : null;
   // Core 2 Counter returns carry their advantage in the return itself (SPEC §17), so the chain does not multiply it again.

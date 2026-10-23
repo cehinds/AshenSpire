@@ -5,7 +5,7 @@ import { t } from './ui/strings.js';
 import { gameProfileRewardOffers, claimGameProfileReward, claimGameProfileRewardToDeck, rewardDeckAddRefusal, rewardInstanceId, gameProfileShopStock, purchaseGameProfileShopOffer } from './model/gameProfileRewards.js';
 import { mountGameProfileOffers } from './ui/components/gameProfileOffers.js';
 import { mountGameProfileLevelUp } from './ui/components/gameProfileLevelUp.js';
-import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices } from './model/gameProfileProgression.js';
+import { configuredSkillProgression, configuredCharacterLevels, skillLevelNotices, acknowledgeSkillLevelNotices, acknowledgeVictoryReceipt } from './model/gameProfileProgression.js';
 import { announceSettingsSettled } from './ui/components/veil.js';
 import { profileStarterCount } from './ui/models/GameProfileTitleModel.js';
 import { readNewGameProfile } from './ui/components/gameProfileSelector.js';
@@ -3336,11 +3336,14 @@ async function onCombatEnd(result, combat, enc) {
   // losing either the Stone or the other spoils.
 
   if (configuredProgression) {
+    // The receipt reflects the settled (rate-scaled) awards, never raw combat XP.
+    const victoryReceipt = { title: victoryTitle(enc), xpBefore,
+      xpGains: combatXpGains({ awards: [classAward, ...trackAwards], levelGained: levelAward.gained }) };
     run.cinders += Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics));
     const boss = enc.pool === 'boss';
     if (boss) run.bossesBeaten = [...new Set([...(run.bossesBeaten || []), ...enc.enemies])];
-    if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return beginGameProfileReward({ after: 'victory', progression, noticeOnly: true });
-    return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression });
+    if (boss && run.actNumber >= (gameModule(run, 'routes')?.acts || 3)) return beginGameProfileReward({ after: 'victory', progression, noticeOnly: true, victoryReceipt });
+    return beginGameProfileReward({ source: 'combat', after: boss ? 'advanceAct' : 'map', levelOffers: levelsEarned, progression, victoryReceipt });
   }
 
   if (enc.pool === 'boss') {
@@ -3893,17 +3896,24 @@ function showRest(openPanel = null, locationId = null) {
   });
 }
 
-function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false } = {}) {
+function beginGameProfileReward({ source = 'combat', after = 'map', levelOffers = 0, progression = [], noticeOnly = false, victoryReceipt = null } = {}) {
   noticeOnly ||= !gameModule(run, 'rewards');
-  if (noticeOnly && !progression.length) { persist(); return after === 'victory' ? showFinishedRun(true) : after === 'defeat' ? showFinishedRun(false) : after === 'advanceAct' ? advanceAct() : showMap(); }
+  if (noticeOnly && !progression.length && !victoryReceipt) { persist(); return after === 'victory' ? showFinishedRun(true) : after === 'defeat' ? showFinishedRun(false) : after === 'advanceAct' ? advanceAct() : showMap(); }
   const offerId = `${run.actNumber}:${run.mapNodeId}:${source}`;
   if (!noticeOnly) gameProfileRewardOffers(registries, run, rng, { offerId, source });
-  run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}) };
+  run.gameProfilePendingReward = { offerId, source, after, levelOffers, ...(progression.length ? { progression } : {}), ...(noticeOnly ? { noticeOnly } : {}), ...(victoryReceipt ? { victoryReceipt } : {}) };
   persist(); return showGameProfileReward();
 }
 
 function showGameProfileReward() {
   const pending = run.gameProfilePendingReward;
+  if (pending.victoryReceipt) return mountRewards(app, { registries, run,
+    rewards: pending.victoryReceipt, saves, receiptOnly: true,
+    onDone: () => {
+      acknowledgeVictoryReceipt(pending, persist);
+      showGameProfileReward();
+    },
+  });
   if (pending.progression?.length) return mountGameProfileLevelUp(app, { rows: pending.progression, onContinue: () => {
     acknowledgeSkillLevelNotices(pending);
     persist();

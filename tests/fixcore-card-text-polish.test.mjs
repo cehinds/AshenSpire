@@ -29,5 +29,5 @@ test('Sundering Art reads the Smash rule then the Entry grant with a single comm
 });
 
 test('Counter face still reads as separate clean lines', () => {
-  assert.match(faceOf(core.cards.get('core.counter')), /^Prepare Melee Counter: return \d+ damage \| Gain \d+ Block \| Entry: /);
+  assert.match(faceOf(core.cards.get('core.counter')), /^Gain 5 Block \| Counter 4 \| Entry: /);
 });

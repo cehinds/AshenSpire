@@ -6,7 +6,7 @@ import { withKitDom } from './helpers/kit-dom.mjs';
 
 // Layout-backed doubles: scroll size follows font/width, while the containing
 // bay follows the fitter's real percentage-height and max-height writes.
-function fixture({ chars = 500, width = 110, top = 0, height = 26, full = true, hidden = false, titleBottom = 0, railBottom = 0 } = {}) {
+function fixture({ chars = 500, width = 110, top = 0, height = 26, full = true, hidden = false, titleBottom = 0, railBottom = 0, printedRows = 1 } = {}) {
   const state = { width, chars };
   const faceHeight = 200;
   const layer = { style: { top: `${top / 2}%`, height: `${height / 2}%` },
@@ -18,7 +18,7 @@ function fixture({ chars = 500, width = 110, top = 0, height = 26, full = true, 
     get scrollWidth() { return this.clientWidth; },
     get scrollHeight() {
       const font = parseFloat(this.style.fontSize) || 10;
-      return Math.ceil(state.chars / Math.max(1, Math.floor(this.clientWidth / (font * .5)))) * font * 1.25;
+      return Math.max(printedRows, Math.ceil(state.chars / Math.max(1, Math.floor(this.clientWidth / (font * .5))))) * font * (parseFloat(this.style.lineHeight) || 1.25);
     },
     get clientHeight() {
       let cap = Infinity;
@@ -74,16 +74,6 @@ test('a later fit of shorter copy clears its previous cap and geometric overflow
   assert.deepEqual(f.text.style, settled, 'unchanged inputs retain the settled fit');
 }));
 
-test('expanded rules measure their final bay after borrowing artwork height', () => withKitDom(() => {
-  invalidateLayoutMetrics();
-  const f = fixture({ chars: 90, width: 180, top: 80, height: 26 });
-  f.fit();
-  assert.equal(f.face.dataset.rulesExpanded, 'true');
-  assert.ok(f.layer.clientHeight > 26);
-  assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1);
-  assert.equal(f.text.dataset.rulesComplete, 'true');
-}));
-
 test('compact hidden rules retain their cue even when visible copy fits', () => withKitDom(() => {
   invalidateLayoutMetrics();
   const f = fixture({ chars: 3, full: false, hidden: true });
@@ -93,60 +83,37 @@ test('compact hidden rules retain their cue even when visible copy fits', () => 
   assert.equal(f.text.style.maxHeight, 'calc(100% - 9px)');
 }));
 
-test('compact effects wrap into the artwork bay instead of losing printed rows', () => withKitDom(() => {
+test('long rules shrink inside a fixed bay, preserving parchment and artwork geometry', () => withKitDom(() => {
   invalidateLayoutMetrics();
-  // At 180px the authored 26px bay fits fewer than three wrapped effects;
-  // the 80px above it is available artwork, exactly as on a resting hand card.
-  const f = fixture({ chars: 90, width: 180, top: 80, height: 26, full: false });
+  const f = fixture({ chars: 40, width: 180, top: 80, height: 45, full: false });
+  const geometry = { ...f.layer.style };
   f.fit();
-  assert.ok(f.text.scrollHeight > 3 * parseFloat(f.text.style.fontSize) * 1.25);
-  assert.equal(f.face.dataset.rulesExpanded, 'true');
-  assert.equal(f.text.style.webkitLineClamp, 'unset');
+  assert.ok(parseFloat(f.text.style.fontSize) < 15, 'preferred font does not fit');
+  assert.ok(parseFloat(f.text.style.fontSize) >= 11, 'readable floor');
+  assert.deepEqual({ top: f.layer.style.top, height: f.layer.style.height }, geometry);
+  assert.equal(f.face.dataset.rulesExpanded, 'false');
   assert.equal(f.text.dataset.rulesComplete, 'true');
   assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1);
-}));
-
-test('narrow dense rules preserve a readable floor and recover when widened', () => withKitDom(() => {
-  invalidateLayoutMetrics();
-  const f = fixture({ chars: 300, width: 110, top: 80 });
+  f.state.chars = 300;
   f.fit();
-  assert.ok(parseFloat(f.text.style.fontSize) >= 11, 'never solve overflow with 7px rules');
-  assert.equal(f.face.dataset.rulesOverflow, 'true');
-  const smallFont = parseFloat(f.text.style.fontSize);
-  f.state.width = 360;
-  f.state.chars = 60;
-  f.fit();
-  assert.ok(parseFloat(f.text.style.fontSize) > smallFont);
-  assert.equal(f.text.dataset.rulesComplete, 'true');
-}));
-
-test('preferred rules font borrows artwork before searching smaller fonts', () => withKitDom(() => {
-  invalidateLayoutMetrics();
-  // At 180px the preferred authored 30/360 font is 15px. These rules need
-  // 75px, exceeding the original 26px bay but fitting its 104px grown bay.
-  const f = fixture({ chars: 80, width: 180, top: 80, height: 26, full: false });
-  f.fit();
-  assert.equal(parseFloat(f.text.style.fontSize), 15, 'keep the preferred font when borrowing artwork suffices');
-  assert.ok(f.text.scrollHeight > 26, 'original bay cannot hold the preferred font');
-  assert.ok(f.layer.clientHeight > 26, 'parchment grows rather than shrinking the font');
-  assert.ok(f.text.scrollHeight <= f.layer.clientHeight + 1);
-  assert.equal(f.face.dataset.rulesExpanded, 'true');
-  assert.equal(f.text.dataset.rulesComplete, 'true');
-  f.state.width = 110;
-  f.fit();
-  assert.ok(parseFloat(f.text.style.fontSize) >= 11, 'a smaller shelf still respects the readable floor');
-  f.state.width = 180;
-  f.fit();
-  assert.equal(parseFloat(f.text.style.fontSize), 15, 'widening restores the preferred font without geometric drift');
-}));
-
-
-test('preferred font search respects the title and tag rail expansion boundary', () => withKitDom(() => {
-  invalidateLayoutMetrics();
-  const f = fixture({ chars: 40, width: 180, top: 80, height: 26, full: false, titleBottom: 20, railBottom: 65 });
-  f.fit();
-  assert.ok(parseFloat(f.text.style.fontSize) < 15, 'shrink only when preferred text cannot fit even after legal growth');
+  assert.equal(f.face.dataset.rulesOverflow, 'true', 'unfit copy offers inspection without growing');
+  assert.equal(f.layer.clientHeight, 45);
   assert.ok(parseFloat(f.text.style.fontSize) >= 11);
-  assert.ok(f.layer.offsetTop >= 67 - .01, 'retain the tag rail plus its two-pixel margin');
+  f.state.chars = 3;
+  f.fit();
+  assert.equal(parseFloat(f.text.style.fontSize), 15, 'short copy restores preferred font');
   assert.equal(f.text.dataset.rulesComplete, 'true');
+  assert.equal(f.layer.clientHeight, 45);
+}));
+
+test('two live Counter rows shrink below design minimum within the native hand bay', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const f = fixture({ chars: 20, width: 180, top: 80, height: 28, full: false, printedRows: 2 });
+  f.fit();
+  assert.ok(parseFloat(f.text.style.fontSize) < 15);
+  assert.ok(parseFloat(f.text.style.fontSize) >= 11);
+  assert.ok(Math.abs(f.layer.clientHeight - 28) < .001);
+  assert.equal(f.text.dataset.rulesComplete, 'true');
+  assert.equal(f.face.dataset.rulesOverflow, 'false');
+  assert.equal(f.text.style.maxHeight, '100%', 'no inspection cue reserves space when both rows fit');
 }));
