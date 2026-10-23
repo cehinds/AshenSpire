@@ -1,5 +1,17 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — desktop combat polish
+
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/DesktopCombatPolish/latest/) — publication and browser verification pending.
+
+Smaller desktop cards, a slightly lower arena and sharper reviewed scenery. Controlled showcase captures from build **0.7.1.1789**, source **279edd9a97**; mobile and tablet retain their smaller artwork. [Capture record](docs/preview/features/desktop-combat-polish/README.md). Explicit Light quality checks are pending.
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile: preserved combat layout and smaller scene artwork](docs/preview/features/desktop-combat-polish/mobile.png) | ![Desktop: smaller cards and lower arena against detailed scenery](docs/preview/features/desktop-combat-polish/desktop.png) | ![Wide: desktop combat composition and sharper scenery](docs/preview/features/desktop-combat-polish/wide.png) | ![Tablet: preserved combat layout and smaller scene artwork](docs/preview/features/desktop-combat-polish/tablet.png) |
+<!-- feature-preview:end -->
+
 
 
 
