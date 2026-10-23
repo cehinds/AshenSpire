@@ -3221,7 +3221,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // Cosmetic animations never own combat timing or retain interactive clones.
   const cardFlights = new Set();
+  let pileReceivedFrame = 0;
   function clearCardFeedback() {
+    cancelAnimationFrame(pileReceivedFrame); pileReceivedFrame = 0;
     for (const animation of cardFlights) animation.cancel();
     cardFlights.clear();
     app.querySelectorAll('.hand .card.card-drawn').forEach(el => el.classList.remove('card-drawn'));
@@ -3241,9 +3243,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     pile.dataset.cardOutcome = exhausted ? 'exhaust' : 'discard';
     pile.setAttribute('aria-description', [discarded && (discarded + ' discarded'), exhausted && (exhausted + ' exhausted')].filter(Boolean).join('; '));
     if (animate && !reducedMotionRequested()) {
+      // Restart the CSS animation without a forced reflow: drop the class now
+      // and re-add it on the next frame (a synchronous offsetWidth read cost
+      // 69-79 ms per play at 4x CPU).
       pile.classList.remove('pile-received');
-      void pile.offsetWidth;
-      pile.classList.add('pile-received');
+      cancelAnimationFrame(pileReceivedFrame);
+      pileReceivedFrame = requestAnimationFrame(() => { pileReceivedFrame = 0; if (pile.isConnected) pile.classList.add('pile-received'); });
     }
   }
   $('.pile.spent').addEventListener('animationend', event => {
