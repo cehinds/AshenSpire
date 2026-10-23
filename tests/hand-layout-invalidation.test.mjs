@@ -63,3 +63,25 @@ test('resize subscriptions retain stable nodes and reconcile only additions/remo
   scope.handEls = [replacement, b]; sync(); assert.deepEqual(calls, [['unobserve', a], ['observe', replacement]]);
   calls.length = 0; scope.handEls = []; sync(); assert.deepEqual(calls, [['unobserve', b], ['unobserve', replacement]]);
 });
+
+test('fitted fan reads its container basis once before style writes while retaining native control measurement', () => {
+  const f = fixture(), order = [];
+  const hand = f.scope.handEl;
+  const write = hand.style.setProperty;
+  hand.style.setProperty = (name, value) => { order.push(`write:${name}`); write(name, value); };
+  Object.defineProperties(hand, {
+    clientWidth: { get() { order.push('read:width'); return 390; } },
+    clientHeight: { get() { order.push('read:height'); return 250; } },
+  });
+  f.scope.handEls[0].controls = { height: 24 };
+  f.scope.measureHandUpcastHeight = controls => { order.push('measure:controls'); return controls.height; };
+  f.apply();
+  assert.equal(order.filter(event => event === 'read:width').length, 1);
+  assert.equal(order.filter(event => event === 'read:height').length, 1);
+  const firstWrite = order.findIndex(event => event.startsWith('write:'));
+  assert.ok(firstWrite > order.indexOf('read:width'));
+  assert.ok(firstWrite > order.indexOf('read:height'));
+  assert.ok(order.indexOf('measure:controls') > firstWrite, 'native controls are still measured after their width constraint is published');
+  assert.ok(!order.slice(firstWrite).some(event => event.startsWith('read:')), 'publishing fan variables never rereads the container');
+  assert.equal(f.events(), 1);
+});

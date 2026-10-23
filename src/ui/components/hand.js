@@ -136,7 +136,11 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // Scoped physical touch targets must apply on the very first measure.
       if (handEl.dataset.wireframeHand !== 'true') handEl.dataset.wireframeHand = 'true';
       const rect = handEl.getBoundingClientRect();
-      const zoom = rect.width / handEl.clientWidth || 1;
+      // Capture the container basis before publishing fan styles. The cards
+      // are absolutely positioned within this independently sized hand box.
+      const localWidth = handEl.clientWidth;
+      const localHeight = handEl.clientHeight;
+      const zoom = rect.width / localWidth || 1;
       const fontSize = layoutMetrics().fontSize;
       const rem = Math.max(16 / zoom, parseFloat(fontSize) || 16);
       const compact = handEl.closest('.combat')?.dataset.compactCombat === 'true';
@@ -145,7 +149,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const formFactor = document.documentElement.dataset.formFactor || handEl.closest('.combat')?.dataset.formFactor || null;
       // Log and reactions are below the resting fan on every form factor.
       const toolsHeight = 0;
-      setVar(handEl, '--hand-controls-max-width', `${Math.max(0, handEl.clientWidth - 2 / zoom)}px`);
+      setVar(handEl, '--hand-controls-max-width', `${Math.max(0, localWidth - 2 / zoom)}px`);
       // Measure the complete row, including the normally hidden native picker.
       // Hidden, inert clones reserve its space before a press selects a face;
       // selection must never resize the fan underneath that pointer.
@@ -156,12 +160,12 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         if (!controls) return;
         controlled.push(index);
         controlsHeight = Math.max(controlsHeight, measureHandUpcastHeight(controls,
-          { zoom, width: Math.max(0, handEl.clientWidth - 2 / zoom), cache: upcastMeasurements }));
+          { zoom, width: Math.max(0, localWidth - 2 / zoom), cache: upcastMeasurements }));
       });
       // On a phone the selected card's lift rises over the tool row (it paints
       // above the row), so no empty lift band separates the row from the fan.
       const layoutHand = handEl.closest('.combat')?.dataset.desktopFooter === 'true' ? desktopHandLayout : handLayout;
-      const input = { width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
+      const input = { width: localWidth, height: localHeight - toolsHeight,
         count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0, formFactor };
       const plan = responsiveHandLayout(input, layoutHand(input));
       if (handEl.dataset.wireframeHand !== 'true') handEl.dataset.wireframeHand = 'true';
@@ -170,7 +174,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       setVar(handEl, '--hand-rest-left', plan.restLeft + 'px');
       setVar(handEl, '--hand-rest-top', (toolsHeight + plan.restTop) + 'px');
       setVar(handEl, '--hand-clearance-top', (toolsHeight + plan.clearanceTop) + 'px');
-      const geometryKey = handGeometryKey({ width: handEl.clientWidth, height: handEl.clientHeight, zoom, fontSize, left: rect.left });
+      const geometryKey = handGeometryKey({ width: localWidth, height: localHeight, zoom, fontSize, left: rect.left });
       if (handEl.dataset.handGeometry !== geometryKey) handEl.dataset.handGeometry = geometryKey;
       setVar(handEl, '--hand-selection-lift', plan.lift + 'px');
       cards.forEach((el, i) => {
