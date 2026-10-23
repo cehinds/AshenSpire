@@ -8,12 +8,14 @@
 //   measure(el)               one getBoundingClientRect per element until the
 //                             task (and its microtasks) ends or the owner of a
 //                             geometry write calls invalidateMeasures().
-//   measureThenMutate(k, fn)  runs fn in a microtask with every other queued
-//                             job: all the reads first (fn returns its
-//                             writes), then all the writes. Several floats or
-//                             words made in one task cost one flush, not one
-//                             each. A later job with the same key replaces the
-//                             earlier one. The jobs run before the next paint.
+//   measureThenMutate(k, fn)  runs fn at the start of the next animation frame
+//                             (a microtask where there is no rAF) with every
+//                             other queued job: all the reads first (fn returns
+//                             its writes), then all the writes. Every float and
+//                             word made by the beats of a frame costs one flush,
+//                             the one that frame pays anyway, not one each. A
+//                             later job with the same key replaces the earlier
+//                             one. The jobs run before that frame paints.
 //
 // Headless-safe: nothing here touches the DOM beyond the element it is given.
 const rects = new Map();
@@ -35,8 +37,10 @@ export function measure(el) {
 
 const jobs = new Map();
 let flushQueued = false;
+let frameHandle = 0;
 function flushJobs() {
   flushQueued = false;
+  if (frameHandle) { cancelAnimationFrame(frameHandle); frameHandle = 0; }
   const batch = [...jobs.values()];
   jobs.clear();
   // Boxes read earlier in this task may predate writes made since.
@@ -54,7 +58,10 @@ const reportFailure = (error) => { if (typeof reportError === 'function') report
 
 export function measureThenMutate(key, read) {
   jobs.set(key, read);
-  if (!flushQueued) { flushQueued = true; queueMicrotask(flushJobs); }
+  if (flushQueued) return;
+  flushQueued = true;
+  if (typeof requestAnimationFrame === 'function') frameHandle = requestAnimationFrame(() => { frameHandle = 0; flushJobs(); });
+  else queueMicrotask(flushJobs);
 }
 
 /** Run any queued jobs now (an instrument or test that needs the settled boxes). */
