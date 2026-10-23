@@ -21,7 +21,8 @@ per-hit count or sequence prominent and labels total HP separately; a reaction
 refreshes the next-contact quote from its current defenses.
 
 `fitIllustratedCards` treats compact effects as semantic rows that may wrap,
-borrows available artwork height, and keeps an 11 physical pixel rules floor.
+shrinks fonts inside the fixed authored parchment, and keeps an 11 physical pixel rules floor.
+Standard Counter faces show Gain Block and Counter values; tag help and inspection retain the mechanics.
 Complete rules remain accessible when the panel cannot contain them. Editable
 source names icons through `src/content/uiIcons.js`; the shared engraved renderer
 resolves those names to existing assets and centralized legacy aliases.
