@@ -50,9 +50,9 @@ test('a non-Core profile with deck-training keeps its unlimited-copy collection 
   const { unlimitedCardIds } = await import('../src/model/deckRules.js');
   const run = start('reaver');
   assert.equal(run.gameProfile.modules['deck-training'].ownedOnlyCollection, true, 'only the Core bundle sets the flag');
-  const other = { ...run, gameProfile: { ...run.gameProfile, modules: { ...run.gameProfile.modules, 'deck-training': { ...run.gameProfile.modules['deck-training'], ownedOnlyCollection: undefined } } } };
+  const other = { gameProfile: resolveGameProfile('ashen.core@1.0.0'), class: 'reaver', deck: [], sideboard: [] };
   assert.ok(unlimitedCardIds(other).length > 0, 'unlimited basics are offered when the flag is absent');
-  assert.ok(unlimitedCardIds(other).includes('core.strike'));
+  assert.ok(unlimitedCardIds(other).includes('core.strike'), 'archived Core 1 still offers uncollected basics under its original rule');
 });
 
 // Codex P2 (PR #2199): owned-only Core must still classify owned basics as basics.
