@@ -76,6 +76,7 @@ import { focusCreationClassPreview, openCreationStatDetail, openCreationRelicDet
 import { placeAnchored, placeGap, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
 import { gameContent } from '../../model/gameProfile.js';
+import { activeAdeptTraining } from '../../model/deckCopyLimit.js';
 import { profileClassChoiceIds } from '../models/ProfileClassChoiceModel.js';
 
 const CREATION_DERIVED_LABELS = Object.freeze({
@@ -712,6 +713,7 @@ export function mountCustomize(app, {
       const card = state.classChosen ? classBox.querySelector(`.cz-class[data-class="${state.classId}"]`) : null;
       if (card) {
         const unfold = classUnfold({ cls, sprite, resources, relic,
+          adept: activeAdeptTraining({ gameProfile, class: cls.id }),
           visual: classGlyph(cls.id), mastery: fixedCreation ? null : masteryClassSummary(registries, meta, cls.id), onRelicInspect: inspectRelic });
         card.classList.add('unfolded');
         card.append(unfold);

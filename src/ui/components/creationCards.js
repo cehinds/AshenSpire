@@ -253,7 +253,7 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
  * the summary stats on the right. Appended inside the selected article;
  * its resources and relic may open detail modals without nested buttons.
  */
-export function classUnfold({ cls, sprite = null, resources = null, relic = null, visual = null, mastery = '', onRelicInspect = null }) {
+export function classUnfold({ cls, sprite = null, resources = null, relic = null, visual = null, mastery = '', adept = null, onRelicInspect = null }) {
   // The selected card is an article so these native detail buttons have no
   // interactive ancestor. Folded class choices remain ordinary buttons.
   if (sprite && sprite.tagName === 'IMG') sprite.alt = '';
@@ -271,6 +271,8 @@ export function classUnfold({ cls, sprite = null, resources = null, relic = null
     el('span', { class: 'cc-unfold-summary' }, [
       el('span', { class: 'cc-unfold-heading', text: cls.name }),
       el('span', { class: 'cc-unfold-description', text: cls.description }),
+      adept ? el('span', { class: 'cc-unfold-description', dataset: { adept: adept.id },
+        text: `${adept.label}: unlimited pristine copies of collected ${adept.kind} cards.` }) : null,
       mastery ? el('span', { class: 'cc-unfold-mastery', text: mastery }) : null,
       resources,
       relicFace,
