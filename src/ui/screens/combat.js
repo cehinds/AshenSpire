@@ -1094,11 +1094,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // Attributes a render can change; a reused frame gets these again without
   // a second set of listeners.
   function refreshCombatantContext(box, name) {
-    box.tabIndex = -1;
-    box.dataset.focusable = '';
-    box.setAttribute('role', 'button');
-    box.setAttribute('aria-label', `Select ${name}`);
-    box.setAttribute('aria-pressed', String(selectedCombatantId === box.dataset.eid));
+    // Written only when it differs: this runs for every combatant on every
+    // render, and an attribute write on the focused box makes the browser
+    // flush style to re-check that it can keep focus.
+    const setAttr = (attr, value) => { if (box.getAttribute(attr) !== value) box.setAttribute(attr, value); };
+    setAttr('tabindex', '-1');
+    if (box.dataset.focusable !== '') box.dataset.focusable = '';
+    setAttr('role', 'button');
+    setAttr('aria-label', `Select ${name}`);
+    setAttr('aria-pressed', String(selectedCombatantId === box.dataset.eid));
   }
   function wireCombatantContext(box, name) {
     refreshCombatantContext(box, name);
