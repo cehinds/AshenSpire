@@ -1,4 +1,5 @@
 import { previewEnemyAction } from './enemyActionPreview.js';
+import { CORE2_ACTION_RULES_VERSION } from '../model/core2ActionPolicy.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
 import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
@@ -333,6 +334,7 @@ export function createCombat({
   };
   if (fixCoreEnabled(combat)) {
     combat.fixCoreRules = snapshotFixCoreRules(combat);
+    combat.core2ActionRulesVersion = CORE2_ACTION_RULES_VERSION;
     if (combat.reactionRulesVersion === 2) combat.reactionRules.contactPolicy = 'perHit';
   }
   combat.emit = (type, payload) => emitEvent(combat, type, payload);

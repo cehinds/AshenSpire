@@ -123,6 +123,7 @@ function cardProblems(card, path) {
 export function combatSnapshotProblems(snapshot) {
   if (!record(snapshot)) return ['snapshot must be an object'];
   const problems = [];
+  if (snapshot.core2ActionRulesVersion !== undefined && snapshot.core2ActionRulesVersion !== 1) problems.push('snapshot.core2ActionRulesVersion must be 1 when present');
   if (snapshot.gameProfile !== undefined) {
     try { validateGameProfileSnapshot(snapshot.gameProfile); } catch (error) { problems.push(`gameProfile: ${error.message}`); }
     if (!Number.isInteger(snapshot.gameProfileCommands) || snapshot.gameProfileCommands < 0) problems.push('gameProfileCommands must be a nonnegative integer');
