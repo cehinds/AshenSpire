@@ -86,7 +86,7 @@ test('combat.combatRounds is stamped only when on, with empty state', () => {
 // Review finding 3: a save must carry the round state. The off-mode golden below is the snapshot text
 // as it was before the preview saved anything (two fights, a turn each): the preview-off save must not change.
 
-test('a preview-off save is byte-identical to the save before the preview saved round state', () => {
+test('preview-off saves preserve historical bytes apart from approved event metadata', () => {
   const out = [];
   for (const [seed, classId] of [[5, 'rogue'], [9, 'reaver']]) {
     const run = createRunState({ seed, classId, registries, profileMeta: { settings: {} } });
@@ -116,8 +116,19 @@ test('a preview-off save is byte-identical to the save before the preview saved 
   // public intent/action receipt keys on six actor/move events. Normalize only
   // those approved event fields to retain both historical snapshot goldens.
   let receiptKeys = 0;
+  const previousTotals = [], metadataCompatible = [];
   const compatible = out.map(text => {
     const snapshot = JSON.parse(text);
+    // #2260's additive status receipt records the pre-grant total. Verify
+    // every occurrence before excluding only that field from prior goldens.
+    for (const event of snapshot.eventLog) {
+      if (event.type === 'statusApplied') {
+        assert.ok(Number.isInteger(event.previousTotal) && event.previousTotal >= 0);
+        previousTotals.push(event.previousTotal);
+        delete event.previousTotal;
+      } else assert.equal(Object.hasOwn(event, 'previousTotal'), false, 'before-total metadata belongs only to statusApplied');
+    }
+    metadataCompatible.push(JSON.stringify(snapshot));
     for (const event of snapshot.eventLog) {
       if (event.type === 'enemyActorTurnStarted') {
         assert.equal(typeof event.intentPreview?.moveId, 'string');
@@ -130,6 +141,10 @@ test('a preview-off save is byte-identical to the save before the preview saved 
     }
     return snapshot;
   });
+  assert.equal(previousTotals.length, 6, 'the four snapshots carry exactly six status before-total receipts');
+  assert.deepEqual(previousTotals, [0, 0, 0, 0, 0, 0]);
+  assert.equal(createHash('sha256').update(metadataCompatible.join('\n')).digest('hex'), '85aa5931f4ec09a49f7ebf62ab172d024a1828d8d2ed2c6e886dc567d7829778',
+    'removing only the six approved status fields retains the previous complete snapshot golden');
   assert.equal(receiptKeys, 10, 'two actor and four move events carry the approved metadata');
   const compatibleText = compatible.map(snapshot => JSON.stringify(snapshot)).join('\n');
   assert.equal(createHash('sha256').update(compatibleText).digest('hex'), 'dda5335e3fdf198f3a00ed7d040e1597a028e75a845941623ab2f215d917ce99');
@@ -141,7 +156,10 @@ test('a preview-off save is byte-identical to the save before the preview saved 
     return JSON.stringify(snapshot);
   }).join('\n');
   assert.equal(createHash('sha256').update(legacyText).digest('hex'), '3838c6297bf49a523a78e4c35b805bf0b9a3e199e316a47243b8c268cef8a57a');
-  assert.equal(createHash('sha256').update(all).digest('hex'), '85aa5931f4ec09a49f7ebf62ab172d024a1828d8d2ed2c6e886dc567d7829778');
+  // Independently verified full text: the old raw golden above plus exactly
+  // six previousTotal:0 fields. Gameplay and historical goldens stay pinned.
+  assert.equal(all.length, 137297);
+  assert.equal(createHash('sha256').update(all).digest('hex'), '99e51d2dc12e025176c5bc228ecdd68189aa34f7dab51134bad239e3eed484ff');
 });
 
 test('a preview fight with queued cards saves and restores: queues and paid SP intact, End Turn works after restore', () => {
