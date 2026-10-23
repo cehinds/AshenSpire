@@ -513,7 +513,7 @@ test('a Counter already returned this owner cycle previews no return, and live a
   assert.equal(row.counterReturn, undefined, 'no computed return on the damage row');
   assert.equal(row.totalDamage, 0, 'the face token reads no return, like an uncovered hit');
   const text = (cardFaceLines(view.resolvedDefinition, view, reg) || []).map(line => line.html).join(' | ').replace(/<[^>]+>/g, '');
-  assert.doesNotMatch(text, /Return \d|Return damage/, text);
+  assert.doesNotMatch(text, /Counter \d|Return \d|Return damage/, text);
   dispatch(combat, { type: 'playCard', cardInstanceId: 'cx1' });
   Object.assign(combat.player, { block: 5, persistentPoise: { value: 20, max: 20 } });
   dispatch(combat, { type: 'setReactions', enabled: false });
