@@ -3346,7 +3346,13 @@ function flushPendingEntryCheckpoint() {
     || entered.nodeId !== pending.nodeId || entered.encounterId !== pending.encounterId) return false;
   const liveRng = pending.combat.rng;
   pending.combat.rng = pending.checkpointRng;
-  try { pending.durable(pending.combat); } finally { pending.combat.rng = liveRng; }
+  try { pending.durable(pending.combat); }
+  catch (error) {
+    // Keep it queued: with no entry snapshot on disk, the first action's save
+    // would otherwise become the checkpoint. The next commit retries it first.
+    if (!pendingEntryCheckpoint) pendingEntryCheckpoint = pending;
+    throw error;
+  } finally { pending.combat.rng = liveRng; }
   return true;
 }
 function flushPendingEntryCheckpointSafely() {
