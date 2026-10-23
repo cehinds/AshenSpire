@@ -30,7 +30,7 @@ import { enemyMoveCarrier } from '../../engine/combatCardTactics.js';
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, playerActionIntent, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
-import { combatBackdropHtml } from '../components/environmentArt.js';
+import { combatBackdropHtml, syncBackdropFlag } from '../components/environmentArt.js';
 import { displayAppearance, onDisplayAppearanceChange } from '../displayAppearance.js';
 import { alternativeCompanionIcon } from '../alternativeArt.js';
 import { targetLayer } from '../models/TargetLayerModel.js';
@@ -290,6 +290,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
+  syncBackdropFlag(combatEl);
   const combatToolsState = { open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true };
   const combatTools = mountCombatTools(combatEl, { state: combatToolsState,
     readSettings,
@@ -847,6 +848,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       card.classList.toggle('selected', on);
       card.setAttribute('aria-pressed', String(on));
     });
+    // `.hand[data-has-selection]` stands in for `.hand:has(.selected)` in combat.css.
+    const handEl = $('.hand');
+    handEl?.setAttribute('data-has-selection', String(!!handEl.querySelector('.selected')));
     // The preview's target outline follows the aimed card, which this sync is the one place that changes.
     decorateRoundsScreen();
     const player = $('.combatant.player');
@@ -1554,6 +1558,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (paintedAppearance !== displayAppearance()) {
       combatEl.querySelectorAll(':scope > .backdrop, :scope > .alternative-card-fade, :scope > .layered-environment-effects').forEach(node => node.remove());
       combatEl.insertAdjacentHTML('afterbegin', combatBackdropHtml(run, previewSceneId));
+      syncBackdropFlag(combatEl);
       paintedAppearance = displayAppearance();
     }
     renderTopbar();
@@ -2226,6 +2231,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!record) row.appendChild(box);
       enemyFrames.set(enemy.id, { key: artKey, renderKey, box });
     }
+    // `data-wide-enemy-row` stands in for `.field:has(.enemy-row > .combatant:nth-child(4))`
+    // in combat.css. One frame per enemy, dead ones included, and nothing else lives in the row.
+    $('.field')?.setAttribute?.('data-wide-enemy-row', String(enemyFrames.size >= 4));
     if (refreshTargets) {
       syncHitChances();
       applyTargetLayer();
