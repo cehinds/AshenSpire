@@ -48,31 +48,35 @@ ok(/commands:\s*\{\s*play:/.test(combat), 'combat.js supplies the play command')
 // Read the ONE renderCard call in mountHand rather than the file at large: the
 // defect was that this call's option object omitted the fields, while the same
 // names appeared elsewhere in the file on the entry it was given.
-const call = hand.match(/renderCard\(registries,\s*entry\.inst,[\s\S]*?\}\);/);
-ok(!!call, 'mountHand still renders its cards through renderCard');
-for (const field of ['surface', 'availability', 'commands']) {
-  ok(new RegExp(`${field}:\\s*entry\\.${field}`).test(call[0]),
+const call = hand.match(/renderCard\(registries,\s*entry\.inst,\s*options\)/);
+ok(!!call, 'mountHand still renders its cards through renderCard with retained options');
+const options = hand.match(/const options = \{[\s\S]*?faceLineLimit:\s*3 \};/);
+ok(!!options, 'the options object is created for the renderCard call');
+for (const field of ['surface', 'availability']) {
+  ok(new RegExp(`${field}:\\s*entry\\.${field}`).test(options[0]),
     `mountHand forwards entry.${field} to renderCard`);
 }
+ok(/commands:\s*\{\s*\.\.\.entry\.commands\s*\}/.test(options[0]),
+  'mountHand forwards commands in a private map that an open inspector can retain');
 
 // The retired field is gone from the code rather than merely unused: leaving it
 // readable is what let a live-looking line keep the real one from being written.
 ok(!/inspectionAction/.test(hand), 'hand.js no longer reads the retired inspectionAction');
 ok(!/inspectionAction/.test(combat), 'combat.js no longer builds the retired inspectionAction');
 
-// ---- the reuse signature carries the action state ---------------------------
-// A kept card is a card whose signature did not change. Availability moves
-// within a turn — the energy spent, the target gone — so a signature blind to
-// it keeps a door that still says the act is offered.
+// ---- kept faces carry current action state without a repaint ----------------
 const signature = hand.match(/const signature = JSON\.stringify\(\[[^\]]*\]\);/);
 ok(!!signature, 'the hand still derives a reuse signature');
-ok(/entry\.surface/.test(signature[0]) && /entry\.availability/.test(signature[0]),
-  'the reuse signature includes the surface and its availability');
-// `commands` are closures that resolve the live combat when pressed, so a kept
-// one is never stale — and JSON.stringify drops functions, which would make a
-// signature that named them silently blind rather than strict.
-ok(!/entry\.commands/.test(signature[0]),
-  'the reuse signature does NOT name commands, which JSON cannot carry');
+ok(/entry\.surface/.test(signature[0]) && !/entry\.availability/.test(signature[0]),
+  'surface invalidates the face while availability is refreshed on its options');
+ok(/record\.options\.availability = entry\.availability/.test(hand),
+  'a retained face reads current availability when its inspector opens');
+ok(/Object\.assign\(record\.options\.commands, entry\.commands\)/.test(hand),
+  'a retained face updates the private commands map captured by an open inspector');
+ok(/inspectHold && Boolean\(entry\.commands\)/.test(signature[0]),
+  'only the creation-time generic hold ownership shape invalidates a retained card');
+ok(!/entry\.commands/.test(signature[0].replace('inspectHold && Boolean(entry.commands)', '')),
+  'the reuse signature does not compare command maps or function identity');
 
 // ---- the generic hold still belongs to cards with no act --------------------
 // The predicate used to read the retired field, so it had quietly become

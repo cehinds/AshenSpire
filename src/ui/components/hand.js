@@ -274,6 +274,52 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     ro.observe(handEl);
   }
 
+  function positionCard(record, i, n) {
+    if (record.index === i && record.count === n) return;
+    const el = record.el;
+    const spread = Math.min(6, n) * 1.2;
+    // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
+    // CENTRE. Same arc, same step, same look — translated so the LOWEST card
+    // sits on the strip's own baseline and nothing is pushed below it.
+    //
+    // WHY, and it is his ask plus a defect the ask uncovered. He asked for the
+    // control strip to sit "at the bottom under the cards ... perhaps shift
+    // the cards up a bit to make space". The strip is now the last row of the
+    // .combat column (styles/ui.css .hint-bar.hint-combat), so the column
+    // supplies the space. But the old expression pushed the OUTER cards DOWN
+    // by |i-mid| * 6, and the outermost card's box therefore ended 5.65 local
+    // px BELOW .hand — measured identical, to two decimals, on all eight wide
+    // shapes at db09846, which is a constant and not a coincidence of one
+    // window. Off the bottom of the viewport before this change; onto the
+    // strip after it. A gap constant on the strip would have hidden that
+    // instead of removing it, and would have been re-tuned by the next hand
+    // change: the fan's own overflow is the fan's to not have.
+    //
+    // max|i-mid| is mid, at i = 0 and i = n-1, so subtracting mid puts those
+    // two at 0 and lifts the centre by mid * 6. DERIVED from the same mid the
+    // rotation already uses — no second constant, and n = 1 stays 0.
+    //
+    // THE LIFT HAS TO BE RESERVED, AND IT IS RESERVED FROM HERE — see
+    // FAN_LIFT_PROP below. Measured at 390x844 with the shipped hand of five:
+    // mid * 6 = 12 px and the narrow strip's padding-top is 1.2rem = 12 px, so
+    // the centre card's top landed EXACTLY on .hand's border edge, clearance
+    // 0.00. That is an accident of n = 5, not a fit: at n = 6 the lift is 15 px
+    // against the same 12 and the phone's scroller starts clipping the card it
+    // is meant to feature. A number that is only right for today's hand size.
+    const mid = (n - 1) / 2;
+    const transform = `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`;
+    if (el.style.transform !== transform) el.style.transform = transform;
+    setVar(el, '--card-fan-transform', transform);
+    if (el.style.zIndex !== String(i)) el.style.zIndex = String(i);
+    const label = i < 9 ? String(i + 1) : i === 9 ? 'Q' : null;
+    if (!label) { record.keyHint?.remove(); record.keyHint = null; }
+    else if (!record.keyHint) {
+      record.keyHint = keycap(label, { class: 'float key-hint' });
+      el.appendChild(record.keyHint);
+    } else if (record.keyHint.textContent !== label) record.keyHint.textContent = label;
+    record.index = i; record.count = n;
+  }
+
   function render({ cards = [], emptyHtml = null }) {
     lastRender = { cards, emptyHtml };
     presentationOrder = reconcileHandOrder(presentationOrder, cards.map(entry => entry.inst.instanceId));
@@ -304,18 +350,20 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     handEl.style.setProperty(FAN_LIFT_PROP, fitFan ? '0px' : `${((n - 1) / 2) * 6}px`);
     cards.forEach((entry, i) => {
       const id = entry.inst.instanceId;
-      // Solo action callbacks resolve current combat state by instance ID. A
-      // preview/affordability change invalidates both the face and its inputs.
-      // The signature carries the ACTION STATE too. A card whose play becomes
-      // refused mid-turn — the energy spent, the target gone — keeps its face
-      // otherwise, and with it a door that still says the act is available.
-      // `commands` is deliberately absent: those are closures that resolve the
-      // live combat by instance id when pressed, so a kept one is never stale,
-      // and JSON.stringify would drop them anyway.
-      const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, i, n, entry.surface, entry.availability]);
+      // Count and action availability change without changing the face.
+      // A changed slot replaces the node: callers may have input listeners
+      // outside their returned cleanup. Preview and affordability also retain
+      // their face/input invalidation, so captured input facts stay current.
+      const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, i, entry.surface, inspectHold && Boolean(entry.commands)]);
       let record = renderedCards.get(id);
       if (record && record.signature !== signature) { record.release?.(); record.el.remove(); renderedCards.delete(id); record = null; }
       if (record) {
+        record.options.availability = entry.availability;
+        // An open inspector captures this private map. Keep its identity while
+        // replacing its contents, without mutating the caller's command object.
+        for (const key of Object.keys(record.options.commands)) if (!(key in (entry.commands || {}))) delete record.options.commands[key];
+        Object.assign(record.options.commands, entry.commands);
+        positionCard(record, i, n);
         record.el.classList.toggle('selected', !!entry.selected);
         setHandFaceBudget(record.el, !!entry.selected);
         record.el.classList.toggle('is-stacked', !!entry.stacked);
@@ -332,42 +380,10 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // surface `none`, and the door that exists to offer `Play card` offered
       // nothing at all. Caught in review on the promotion, not by a test,
       // which is why tests/hand-forwards-surface.test.mjs now exists.
-      const el = renderCard(registries, entry.inst,
-        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, range: true,
-          surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3 });
-      const spread = Math.min(6, n) * 1.2;
-      // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
-      // CENTRE. Same arc, same step, same look — translated so the LOWEST card
-      // sits on the strip's own baseline and nothing is pushed below it.
-      //
-      // WHY, and it is his ask plus a defect the ask uncovered. He asked for the
-      // control strip to sit "at the bottom under the cards ... perhaps shift
-      // the cards up a bit to make space". The strip is now the last row of the
-      // .combat column (styles/ui.css .hint-bar.hint-combat), so the column
-      // supplies the space. But the old expression pushed the OUTER cards DOWN
-      // by |i-mid| * 6, and the outermost card's box therefore ended 5.65 local
-      // px BELOW .hand — measured identical, to two decimals, on all eight wide
-      // shapes at db09846, which is a constant and not a coincidence of one
-      // window. Off the bottom of the viewport before this change; onto the
-      // strip after it. A gap constant on the strip would have hidden that
-      // instead of removing it, and would have been re-tuned by the next hand
-      // change: the fan's own overflow is the fan's to not have.
-      //
-      // max|i-mid| is mid, at i = 0 and i = n-1, so subtracting mid puts those
-      // two at 0 and lifts the centre by mid * 6. DERIVED from the same mid the
-      // rotation already uses — no second constant, and n = 1 stays 0.
-      //
-      // THE LIFT HAS TO BE RESERVED, AND IT IS RESERVED FROM HERE — see
-      // FAN_LIFT_PROP below. Measured at 390x844 with the shipped hand of five:
-      // mid * 6 = 12 px and the narrow strip's padding-top is 1.2rem = 12 px, so
-      // the centre card's top landed EXACTLY on .hand's border edge, clearance
-      // 0.00. That is an accident of n = 5, not a fit: at n = 6 the lift is 15 px
-      // against the same 12 and the phone's scroller starts clipping the card it
-      // is meant to feature. A number that is only right for today's hand size.
-      const mid = (n - 1) / 2;
-      el.style.transform = `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`;
-      el.style.setProperty('--card-fan-transform', el.style.transform);
-      el.style.zIndex = i;
+      const options = { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, range: true,
+        surface: entry.surface, availability: entry.availability, commands: { ...entry.commands }, faceLineLimit: 3 };
+      const el = renderCard(registries, entry.inst, options);
+      record = { el, signature, options, index: null, count: null, keyHint: null, release: null };
       if (animateArrival && drawn.has(entry.inst.instanceId) && !reducedMotionRequested()) {
         el.classList.add('card-drawn');
         el.addEventListener('animationend', event => {
@@ -390,7 +406,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // Positional quick-play key badge: 1-9 then Q, tied to the slot not the
       // card — BOTH surfaces map those keys to the same slots. Hidden while a
       // gamepad drives (body.pad-mode via refreshHintBars).
-      if (i < 10) el.appendChild(keycap(i < 9 ? String(i + 1) : 'Q', { class: 'float key-hint' }));
+      positionCard(record, i, n);
       // The reading hold — EVERY card, before the play wiring on purpose:
       // affordability gates playing, never reading (the card you cannot pay
       // for is the one you most need to read), and same-element listeners run
@@ -405,7 +421,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // every hand card as well.
       if (inspectHold && !entry.commands) armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
       const releaseInput = wireCard?.(el, entry, i);
-      renderedCards.set(id, { el, signature, release: typeof releaseInput === 'function' ? releaseInput : null });
+      record.release = typeof releaseInput === 'function' ? releaseInput : null;
+      renderedCards.set(id, record);
       handEl.insertBefore(el, handEl.children[i] || null);
     });
     // The overlap arm: record what this render made, then reconcile. Inert —
