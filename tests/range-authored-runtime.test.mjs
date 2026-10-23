@@ -13,6 +13,8 @@ import { dispatch, previewCard } from '../src/engine/combat.js';
 import { rangePairKey } from '../src/model/combatEngagement.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { validateContent } from '../src/model/validate.js';
+import { enemyPlanActions } from '../src/engine/normalPreview.js';
+import { enemyMoveQuote } from '../src/engine/combatRoundsAdapter.js';
 
 const profile = resolveGameProfile('core');
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -124,16 +126,20 @@ test('Core mobility projection preserves nested and explicit flat offense overri
   assert.equal(explicit.enemies.find(row => row.id === 'wanderingSoldier').moves.slash.damage, 77);
 });
 
-test('a real authored 1 SP enemy closes Ranged to Reach to Melee, then attacks on successive turns', () => {
-  // Seed 2 naturally schedules the shipped soldier's Slash for these turns;
-  // no move, intent, SP pool, enemy stat, or engagement state is injected.
+test('a real authored 1 SP enemy closes Ranged to Reach to Melee and attacks with legitimate support interleaves', () => {
+  // The old planner consumed two AI picks for its nominal 2 SP queue even
+  // though this native enemy can execute only one. Strict actual-pool planning
+  // consumes one pick: preserve its legitimate Guard decisions, not hidden draws.
+  // No move, intent, SP pool, enemy stat, or engagement state is injected.
   const { combat, enemy } = live('shortbow', 'wanderingSoldier', 2);
   assert.equal(enemy.maxStamina, 1, 'the actual configured enemy has only 1 SP');
   assert.equal(combat.rangeState.engagements[pair(enemy)], 2, 'the equipped bow establishes Ranged');
   const source = profile.content.enemies.find(row => row.id === enemy.enemyId);
   assert.ok(source.defaultDeck.includes('wanderingSoldier.advance'));
   assert.equal(registries.enemies.get(enemy.enemyId).moves.advance.sp, 1);
-  for (const [index, band] of [1, 0, 0].entries()) {
+  const trace = ['advance', 'guard', 'advance', 'guard', 'slash'];
+  for (const [index, band] of [1, 1, 0, 0, 0].entries()) {
+    assert.deepEqual(enemyPlanActions(combat, enemy).map(row => [row.id, row.sp]), [[trace[index], 1]], 'the complete affordable action is forecast before execution');
     const start = combat.eventLog.length;
     dispatch(combat, { type: 'endTurn' });
     let attempts = 0;
@@ -143,15 +149,49 @@ test('a real authored 1 SP enemy closes Ranged to Reach to Melee, then attacks o
     assert.equal(enemy.maxStamina, 1, 'movement cannot inflate the authored pool');
     assert.equal(enemy.stamina, 0, 'one normally priced action spends the complete 1 SP');
     const events = combat.eventLog.slice(start);
-    const expectedMove = index < 2 ? 'advance' : 'slash';
+    const expectedMove = trace[index];
     assert.deepEqual(events.filter(row => row.type === 'enemyMoveStarted').map(row => row.moveId), [expectedMove]);
-    assert.deepEqual(enemy.performedMoves, ['advance', 'advance', 'slash'].slice(0, index + 1));
-    if (index < 2) {
+    assert.deepEqual(enemy.performedMoves, trace.slice(0, index + 1));
+    if (expectedMove === 'advance') {
       assert.equal(events.filter(row => row.type === 'combatEngagementMoved').length, 1);
       assert.equal(events.some(row => row.type === 'damageDealt' && row.sourceId === enemy.id), false, 'closing is a paid movement action, not an attack');
-    } else {
-      assert.ok(events.some(row => ['attackHit', 'attackMissed'].includes(row.type) && row.sourceId === enemy.id), 'the third turn resolves a genuine attack');
+    } else if (expectedMove === 'slash') {
+      assert.ok(events.some(row => ['attackHit', 'attackMissed'].includes(row.type) && row.sourceId === enemy.id), 'the fifth turn resolves a genuine attack');
       assert.equal(events.some(row => row.missReason === 'range'), false);
     }
   }
+});
+
+test('the native paid closing move is committed and previewed before execution without spending SP or RNG', () => {
+  const { combat, enemy } = live('shortbow', 'wanderingSoldier', 2);
+  const before = JSON.stringify({ stamina: enemy.stamina, intent: enemy.intent, plan: enemy.plannedMoves,
+    distance: combat.rangeState, rng: combat.rng.getCounters() });
+  assert.equal(enemy.intent.moveId, 'advance', 'the forecast commits owned mobility rather than an unaffordable Slash');
+  assert.deepEqual(enemy.plannedMoves, []);
+  assert.deepEqual(enemyPlanActions(combat, enemy).map(action => [action.id, action.sp]), [['advance', 1]]);
+  const def = registries.enemies.get(enemy.enemyId);
+  assert.equal(enemyMoveQuote(def.moves.slash, { enemy, moveId: 'slash', combat }).totalSp, 3);
+  assert.equal(enemyMoveQuote(def.moves.advance, { enemy, moveId: 'advance', combat }).totalSp, 1);
+  assert.equal(JSON.stringify({ stamina: enemy.stamina, intent: enemy.intent, plan: enemy.plannedMoves,
+    distance: combat.rangeState, rng: combat.rng.getCounters() }), before);
+  const start = combat.eventLog.length;
+  dispatch(combat, { type: 'endTurn' });
+  for (let count = 0; combat.pendingReaction; count++) {
+    assert.ok(count < 20);
+    dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+  }
+  const started = combat.eventLog.slice(start).filter(event => event.type === 'enemyMoveStarted');
+  assert.deepEqual(started.map(event => event.moveId), ['advance']);
+  assert.equal(started[0].actionPreview.totalSp, 1);
+  assert.equal(enemy.stamina, 0);
+  assert.equal(enemy.maxStamina, 1);
+});
+
+test('native range closing does not make a multi-hit move affordable below its 2 SP base floor', () => {
+  const { combat, enemy } = live('shortbow', 'blightHound', 2);
+  const def = registries.enemies.get(enemy.enemyId);
+  assert.equal(enemy.maxStamina, 1);
+  assert.equal(enemyMoveQuote(def.moves.lunge, { enemy, moveId: 'lunge', combat }).sp, 2);
+  assert.equal(enemy.intent.moveId, 'advance');
+  assert.deepEqual(enemyPlanActions(combat, enemy).map(action => [action.id, action.sp]), [['advance', 1]]);
 });

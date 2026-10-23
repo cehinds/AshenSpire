@@ -910,6 +910,6 @@ test('scopes the delayed Poise multiplier to payload completion, not reaction at
     'completion-generated guard-break and trait pressure carry the multiplier');
   assert.match(expansionSource, /finally \{\s+if \(roundPoiseMultiplier\) ctx\.enqueue = previousEnqueue;/,
     'the completion-only enqueue wrapper is always restored');
-  assert.match(source, /executeMovePayload\(combat, enemy, move, moveId, \{ roundPoiseMultiplier \}\)/, 'the delayed move passes its saved scope to its payload');
+  assert.match(source, /executeMovePayload\(combat, enemy, move, moveId, \{ roundPoiseMultiplier, spPayment \}\)/, 'the delayed move passes its saved scope and payment receipt to its payload');
   assert.doesNotMatch(source, /cursor\.roundPoiseMultiplier/, 'the whole reaction drain is never globally scoped');
 });

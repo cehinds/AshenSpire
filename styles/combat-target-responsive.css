@@ -31,7 +31,7 @@
   height:calc(37px / var(--ui-zoom,1))!important; min-height:calc(37px / var(--ui-zoom,1))!important; max-height:calc(37px / var(--ui-zoom,1))!important; flex:0 0 calc(37px / var(--ui-zoom,1)); margin:0!important; padding:0!important;
   background:transparent!important; border:0!important; box-shadow:none!important; color:#ffe7ab;
 }
-:root .combat[data-target-hud='true'] .intent > :not(.intent-compact) { display:none!important; }
+:root .combat[data-target-hud='true'] .intent > :not(.intent-compact):not(.cr-followups) { display:none!important; }
 :root .combat[data-target-hud='true'] .intent .intent-compact { display:flex!important; justify-content:center; }
 :root .combat[data-target-hud='true'] .intent-actions { display:inline-flex; justify-content:center; align-items:flex-end; gap:calc(5px / var(--ui-zoom,1)); }
 /* Owner 2026-10-18: the amount sits LEFT of its maneuver icon on one row, vertically centred

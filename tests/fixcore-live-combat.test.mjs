@@ -66,8 +66,8 @@ test('mixed multihit receipt spends Block Barrier Ward and Poise sequentially an
  assert.deepEqual(receipts.map(row=>row.hpLoss),preview.hitDamages);assert.equal(500-target.hp,50);
  assert.deepEqual(receipts.map(row=>[row.blocked,row.barrierReduced,row.wardReduced,row.poiseReduced]),[[10,2,2,0],[0,0,0,1],[0,0,0,0]]);
 });
-test('prepared spell stance matches casting cards for MP and fractional effect',()=>{
- const {combat}=live();const card={resourceCosts:{sp:0,mp:3},combatProfile:{camp:'spell',maneuver:'casting',range:'melee'}};
+test('Magic Adept prepared spell stance matches casting cards for the MP discount',()=>{
+ const {combat}=live('starseer');const card={resourceCosts:{sp:0,mp:3},combatProfile:{camp:'spell',maneuver:'casting',range:'melee'}};
  setProfileStance(combat,combat.player,{...card});
  assert.equal(profileCardCosts(combat,card).mana,2);
 });

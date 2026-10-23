@@ -494,6 +494,9 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     card.classList.add('inspection-selected');
     card.setAttribute('aria-pressed', 'true');
     card.setAttribute('aria-current', 'true');
+    // The old node's pending reveal cannot paint after it is detached. The
+    // selected replacement owns its own delay, without a new selection event.
+    revealInfo();
   }
   card.append(info);
   card.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });

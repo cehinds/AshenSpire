@@ -12,7 +12,12 @@ const { createRunCombat } = require('src/engine/runCombat.js');
 const { captureEnemyIntent } = require('src/engine/enemyIntentReceipt.js');
 const { armCombatCounter } = require('src/engine/combatMatchups.js');
 const { dispatch } = require('src/engine/combat.js');
-const profile = resolveGameProfile('core');
+// A three-contact Slash needs two SP, including during its initial forecast.
+// Neutral JSON records cross the fixture VM boundary without host prototypes.
+const author = JSON.parse(JSON.stringify({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {
+  characters: { tagRules: { 'tier.minion': { pools: { sp: 4 } } } },
+} }), (_key, value) => value && typeof value === 'object' ? Object.assign(Object.create(null), value) : value);
+const profile = resolveGameProfile(author);
 const base = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
 const registries = { ...base, enemies: { ...base.enemies, get(id) {
   const def = base.enemies.get(id);
@@ -22,6 +27,8 @@ const registries = { ...base, enemies: { ...base.enemies, get(id) {
 function fixture({ spent = false } = {}) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: 'automatic-counter-forecast' });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
+  assert.equal(combat.enemies[0].maxStamina, 2);
+  assert.equal(combat.enemies[0].intent.moveId, 'slash');
   for (const entity of [combat.player, ...combat.enemies]) {
     Object.assign(entity, { hp: 100, maxHp: 100, block: 0, barrier: 0, statuses: {}, ratings: {}, ratingSources: [],
       persistentPoise: { value: 0, max: 0 }, basePrecisionBonus: 1000 });

@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-23
 
+- **Adept copies and affordable enemy actions** ([#2265](https://github.com/cehinds/AshenSpire/pull/2265), `0.7.1.1802`). Collected Basics and Cantrips can be copied under the equipped Martial or Magic Adept class. Matching stances reduce the class's correct SP or MP cost. Enemy plans respect available Stamina, multi-hit minimums and range charges, and price follow-ups after their queued movement; preparations and reactions pay once. Active saved fights keep their previous action prices. Selected hand cards retain their Information control after a repaint.
 - **Steadier first tap after loading** ([#2273](https://github.com/cehinds/AshenSpire/pull/2273), `0.7.1.1800`). The game checks its content once while the loading screen is up, instead of pausing for a moment on the startup and title screens, so the first tap or controller press there is not delayed.
 
 - **Lighter card selection in combat** ([#2271](https://github.com/cehinds/AshenSpire/pull/2271), `0.7.1.1798`). Selecting a card, and combat with four or more enemies, ask the browser for less restyling work, so taps respond a little faster on slower phones.
