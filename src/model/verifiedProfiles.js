@@ -5,6 +5,7 @@
 import { validateResolvedGameProfile } from '../../engine/kernel/gameConfig.js';
 const verified = new WeakSet();
 export function markVerifiedProfile(profile) { if (profile && typeof profile === 'object') verified.add(profile); return profile; }
+export function isVerifiedProfile(profile) { return !!profile && typeof profile === 'object' && verified.has(profile); }
 export function validateVerifiedProfile(snapshot, supportedRuntimeHash) {
   if (verified.has(snapshot) && (!supportedRuntimeHash || snapshot.lock?.runtimeHash === supportedRuntimeHash)) return snapshot;
   return markVerifiedProfile(validateResolvedGameProfile(snapshot, supportedRuntimeHash));
