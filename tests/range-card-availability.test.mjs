@@ -9,6 +9,7 @@ import { moveFromSideboard, moveToSideboard, commitDeckEditDraft } from '../src/
 import { deckEditorModel } from '../src/ui/models/DeckEditorModel.js';
 import { createRng } from '../src/engine/rng.js';
 import { gameDigest } from '../engine/kernel/gameConfig.js';
+import { recordCollectedCards } from '../src/model/collectedCards.js';
 
 const profile = structuredClone(resolveGameProfile('core'));
 const template = profile.content.cards.find(card => card.id === 'core.defend');
@@ -51,6 +52,7 @@ test('range-off refuses stale movement claims and sideboard additions without ch
   const advance = { cardId: movement.id, instanceId: 'owned-advance', upgraded: false };
   const dodge = { cardId: mixed.id, instanceId: 'owned-dodge', upgraded: false };
   run.sideboard.push(advance, dodge);
+  recordCollectedCards(run);
   const before = structuredClone(run);
   assert.equal(moveFromSideboard(reg, run, advance.instanceId), false);
   assert.deepEqual(run, before);
