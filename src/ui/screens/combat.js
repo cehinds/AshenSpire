@@ -1981,6 +1981,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let playerRenderKey = null;
   let topbarRenderKey = null;
   let handRenderKey = null;
+  let handPreviewCache = { stateKey: null, cards: new Map() };
   const enemyFrames = new Map();
 
   function renderPlayer() {
@@ -2219,9 +2220,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     $('.hand').setAttribute('aria-disabled', String(busy || enemyPlayback || !!combat.pendingReaction || !!combat.result));
     if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.
     const stackedIds = stackedCardIds(combat.reactionStack);
-    const key = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
-      combat.turn, combat.phase, combat.result, selected, selfArm, lastTargetId, combat.rangeState, [...rangeRoutesByCard], [...stackedIds], readSettings()]);
+    // The state half of the key is everything a card's preview can read; the aim
+    // half (selected / selfArm / lastTargetId) changes on every tap. Stringified
+    // once, the halves let a pure selection change reuse the unselected cards'
+    // previews instead of re-quoting the whole hand.
+    const stateKey = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
+      combat.turn, combat.phase, combat.result, combat.rangeState, [...rangeRoutesByCard], [...upcastRanksByCard], [...stackedIds], readSettings()]);
+    const key = stateKey + '|' + JSON.stringify([selected, selfArm, lastTargetId]);
     if (handRenderKey === key) { syncHandPager(handList); return; }
+    const previewCache = handPreviewCache.stateKey === stateKey && handRenderKey !== null && !upcastPreviewRefresh ? handPreviewCache.cards : new Map();
+    const nextPreviews = new Map();
     handStrip.render({
       cards: handList.map((inst) => {
         // disp.hand is a pre-dispatch snapshot; on a combat-ending play the
@@ -2233,9 +2241,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         try {
           if (disp?.handPreviews.has(inst.instanceId)) pv = disp.handPreviews.get(inst.instanceId);
           else if (!heldTurnHand) {
-            const targetId = selected === inst.instanceId ? (lastTargetId && cardTargets(inst.instanceId).legalIds.includes(lastTargetId) ? lastTargetId : cardTargets(inst.instanceId).legalIds.find(id => getEntity(combat, id)?.kind === 'enemy')) : undefined;
-            pv = previewCard(combat, inst.instanceId, targetId, upcastRanksByCard.get(inst.instanceId));
-            if (targetId) pv = { ...pv, targetName: registries.enemies.get(getEntity(combat, targetId)?.enemyId)?.name || targetId };
+            const isSelected = selected === inst.instanceId;
+            const cached = previewCache.get(inst.instanceId);
+            // A card's quote depends on the target only while it is the selected card.
+            if (cached && cached.isSelected === isSelected && (!isSelected || cached.aim === lastTargetId)) pv = cached.pv;
+            else {
+              const targetId = isSelected ? (lastTargetId && cardTargets(inst.instanceId).legalIds.includes(lastTargetId) ? lastTargetId : cardTargets(inst.instanceId).legalIds.find(id => getEntity(combat, id)?.kind === 'enemy')) : undefined;
+              pv = previewCard(combat, inst.instanceId, targetId, upcastRanksByCard.get(inst.instanceId));
+              if (targetId) pv = { ...pv, targetName: registries.enemies.get(getEntity(combat, targetId)?.enemyId)?.name || targetId };
+            }
+            nextPreviews.set(inst.instanceId, { isSelected, aim: lastTargetId, pv });
           }
         } catch (e) {
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
@@ -2252,6 +2267,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
     syncHandPager(handList);
     handRenderKey = key;
+    handPreviewCache = { stateKey, cards: nextPreviews };
     if (refreshHitChances) syncHitChances();
   }
 
