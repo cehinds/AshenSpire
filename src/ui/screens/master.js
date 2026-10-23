@@ -216,7 +216,7 @@ export function mountMaster(app, { registries, run, meta, rng = null, flatRarity
     const categories = [...shopStockOfferings(stock).filter((key) => SHELVES[key]), ...(sellOn() ? ['sell'] : [])];
     if (!categories.includes(activeCategory)) activeCategory = categories[0] || null;
     app.innerHTML = `
-      ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header' }) : ''}
+      ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header workspace-hud' }) : ''}
       <div class="screen room-screen shop-workspace master-workspace" data-wireframe="W1d" data-shop-kind="master">
         <div class="shop-frame">
           <div class="as-railed shop-railed">
