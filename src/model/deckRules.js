@@ -92,7 +92,7 @@ export function playInDeckOrder(settings) { return !!setting(settings, 'playInDe
  * equipment decks mint by role.
  */
 export function basicCardIds(run) {
-  if (hasCollectedCardPolicy(run)) return collectedAdeptCardIds(run);
+  if (hasCollectedCardPolicy(run) && gameModule(run, 'deck-training')?.mode === 'configured') return collectedAdeptCardIds(run);
   return gameModule(run, 'cards')?.mode === 'configured'
     ? (gameModule(run, 'deck-training')?.mode === 'configured'
       ? (gameContent(run, 'cards') || []).filter(card => configuredDeckCopyLimit(run, card.id) === Infinity).map(card => card.id)
@@ -378,7 +378,7 @@ export function commitDeckEditDraft(registries, run, edited, settings = {}) {
     if (owned && JSON.stringify(owned) !== JSON.stringify(card)) throw new Error('Deck editing cannot modify an owned card');
     if (!owned && (!isUnlimitedBasic(card, run) || card.upgraded || card.rank > 1 || card.mods?.length || Object.keys(card).some(key => !['instanceId','cardId','upgraded'].includes(key)))) throw new Error('Deck editing cannot invent a limited or enhanced card');
   }
-  for (const [id, card] of before) if ((!isUnlimitedBasic(card, run) || card.upgraded || card.rank > 1 || card.mods?.length) && !after.some(row => row.instanceId === id)) throw new Error('Deck editing cannot delete an owned limited card');
+  for (const [id, card] of before) if ((!isUnlimitedBasic(card, run) || card.upgraded || card.rank > 1 || card.abilityRank > 0 || card.smithingLevel > 0 || card.mods?.length) && !after.some(row => row.instanceId === id)) throw new Error('Deck editing cannot delete an owned limited card');
   for (const id of new Set(edited.deck.map(card => card.cardId))) if (edited.deck.filter(card => card.cardId === id).length > deckCopyLimit(registries, id, settings, run)) throw new Error('Deck editing exceeds the card copy limit');
   recordCollectedCards(run);
   for (const key of EDIT_STATE_KEYS) {

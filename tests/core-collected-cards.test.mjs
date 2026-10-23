@@ -134,4 +134,8 @@ test('minting keeps upgraded variants exact and Undo, Cancel and draft commits p
   const uncollected = structuredClone(run);
   uncollected.deck.push({ instanceId: 'forged', cardId: 'core.evade', upgraded: false });
   assert.throws(() => commitDeckEditDraft(registries, run, uncollected, { deckMinUnlimited: true }), /invent/);
+  run.sideboard.push({ cardId: 'core.strike', instanceId: 'graded', upgraded: false, abilityRank: 1 });
+  const dropped = structuredClone(run);
+  dropped.sideboard = dropped.sideboard.filter(card => card.instanceId !== 'graded');
+  assert.throws(() => commitDeckEditDraft(registries, run, dropped, { deckMinUnlimited: true }), /delete an owned limited/);
 });
