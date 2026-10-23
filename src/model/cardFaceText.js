@@ -97,7 +97,9 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   // Coverage is named by the mode whose default it equals; any other coverage keeps the authored text.
   const counterMode = counter ? counterModeOf(def, p) : null;
   if (counter && !counterMode && def.defenseRulesVersion !== 2) return null;
-  const damageVerb = counter ? def.defenseRulesVersion === 2 ? 'Return' : `Prepare ${{ melee: 'Melee', ranged: 'Ranged', spell: 'Spell' }[counterMode]} Counter: return` : 'Inflict';
+  const concise = registries?.gameProfile?.foundation?.mode === 'configured';
+  const conciseCounter = counter && concise;
+  const damageVerb = conciseCounter ? 'Counter' : counter ? def.defenseRulesVersion === 2 ? 'Return' : `Prepare ${{ melee: 'Melee', ranged: 'Ranged', spell: 'Spell' }[counterMode]} Counter: return` : 'Inflict';
 
   // The static number an effect's field authored: its token's base, else the literal.
   const baseOf = (effect, index, field) => {
@@ -166,7 +168,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
         } else {
           text = `${num(n, base)} ${word}${hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}`;
         }
-        return frag('damage', text + area);
+        return frag('damage', conciseCounter && hits === 1 ? num(n, base) + area : text + area);
       }
       case 'poiseDamage': case 'wardDamage': {
         // Core 2: the computed return stands for every authored Poise row; a row the return zeroes is not listed.
@@ -177,9 +179,9 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
           if (!merged.leader) return [];
           const live = merged.indices.map(i => value(def.effects[i], i)), authored = merged.indices.map(i => baseOf(def.effects[i], i, 'amount'));
           const sum = list => list.reduce((total, amount) => total + amount, 0);
-          return frag('damage', `${num(sum(live), authored.every(amount => typeof amount === 'number') ? sum(authored) : undefined)} Poise damage${area}`);
+          return frag('damage', `${num(sum(live), authored.every(amount => typeof amount === 'number') ? sum(authored) : undefined)} Poise${concise ? '' : ' damage'}${area}`);
         }
-        return frag('damage', `${num(n, base)} ${effect.op === 'poiseDamage' ? 'Poise' : 'Ward'} damage${area}`);
+        return frag('damage', `${num(n, base)} ${effect.op === 'poiseDamage' ? 'Poise' : 'Ward'}${concise ? '' : ' damage'}${area}`);
       }
       case 'block': {
         const defense = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2
@@ -284,9 +286,9 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
     const out = [];
     const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
     if (cost.length) out.push({ kind: 'cost', text: joinList(cost) });
-    if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${joinList(damage)}` });
+    if (damage.length) out.push({ kind: 'damage', text: `${concise && !counter ? '' : damageVerb + ' '}${joinList(damage)}` });
     else if (counter && fragments === unconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
-    if (status.length) out.push({ kind: 'status', text: `Inflict ${joinList(status)}` });
+    if (status.length) out.push({ kind: 'status', text: `${concise ? '' : 'Inflict '}${joinList(status)}` });
     if (remove.length) out.push({ kind: 'status', text: `Remove ${joinList(remove)}` });
     if (consume.length) out.push({ kind: 'consume', text: `Remove ${joinList(consume)}` });
     if (gain.length) out.push({ kind: 'gain', text: `Gain ${joinList(gain)}` });
@@ -418,7 +420,7 @@ function buildLines(def, preview, registries, rules = null, { stanceEntry, repre
   if (def.usableWhile?.length) byKind.detail.push(`Usable through ${def.usableWhile.map(id => esc(title(id))).join(', ')}`);
 
   const lines = [];
-  for (const kind of LINE_ORDER) for (const html of byKind[kind]) if (html) lines.push({ kind, html });
+  for (const kind of (conciseCounter ? ['gain', ...LINE_ORDER.filter(kind => kind !== 'gain')] : LINE_ORDER)) for (const html of byKind[kind]) if (html) lines.push({ kind, html });
   // Nothing phrased (a status or curse with no effects) keeps the authored text, as combatCardSummary does.
   return lines.length || representedEffects.length ? lines : null;
 }
