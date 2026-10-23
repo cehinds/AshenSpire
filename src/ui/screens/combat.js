@@ -31,6 +31,7 @@ import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.j
 import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, playerActionIntent, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatBackdropHtml, syncBackdropFlag } from '../components/environmentArt.js';
+import { markSpriteArt } from '../components/spriteArtFlags.js';
 import { displayAppearance, onDisplayAppearanceChange } from '../displayAppearance.js';
 import { alternativeCompanionIcon } from '../alternativeArt.js';
 import { targetLayer } from '../models/TargetLayerModel.js';
@@ -194,7 +195,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const profileArt = (render, options) => {
     if (configuredArt && !gameModule(run, 'art')) return foundationStandin(options);
     const figure = render();
-    if (configuredArt) figure.addEventListener('error', () => figure.replaceChildren(foundationStandin(options)), { capture: true, once: true });
+    if (configuredArt) figure.addEventListener('error', () => {
+      figure.replaceChildren(foundationStandin(options));
+      // The stand-in has no painted stage: re-read the host's art flags.
+      markSpriteArt(figure.closest?.('.sprite'));
+    }, { capture: true, once: true });
     return figure;
   };
   const profilePlayerSprite = (customization, classId, armourId, presentation) => profileArt(
