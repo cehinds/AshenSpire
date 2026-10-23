@@ -46,14 +46,14 @@ test('enemy move budgets retain the authored matching-stance rule for the 2-SP h
   assert.ok(!events.some(row => row.type === 'enemyMoveUnavailable'));
 });
 
-test('SP discount requires an enemy-turn reaction in the existing matching stance, once only', () => {
+test('Martial Adept discounts matching nonspell SP on both turns, with a zero floor only for reactions', () => {
   const ctx = live();
   const reaction = { id: 'fixture', staminaCost: 3, manaCost: 0, cardTags: ['trait:reaction'], combatProfile: { maneuver: 'counter', camp: 'physical', range: 'melee' } };
   const cost = def => profileCardCosts(ctx, def).stamina;
   ctx.player.combatStance = { maneuver: 'counter', camp: 'physical', range: 'melee' };
-  ctx.phase = 'player'; assert.equal(cost(reaction), 3);
+  ctx.phase = 'player'; assert.equal(cost(reaction), 2);
   ctx.phase = 'enemy'; assert.equal(cost(reaction), 2);
-  assert.equal(cost({ ...reaction, cardTags: [] }), 3);
+  assert.equal(cost({ ...reaction, cardTags: [] }), 2);
   assert.equal(cost({ ...reaction, staminaCost: 1 }), 0);
   assert.equal(cost({ ...reaction, staminaCost: 0 }), 0);
   assert.equal(cost({ ...reaction, manaCost: 2 }), 2, 'MP cost does not disable the conditional SP discount');
