@@ -44,3 +44,15 @@ test('Current fights stay outside the Core policy and invalid saved versions are
   saved.core2ActionRulesVersion = 2;
   assert.ok(combatSnapshotProblems(saved).some(message => message.includes('core2ActionRulesVersion')));
 });
+
+test('archived Core 1 fights do not stamp or enable the new policy', () => {
+  const oldProfile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@1.0.0', modules: {} });
+  const oldRegistries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, oldProfile)), oldProfile);
+  const combat = fight(oldRegistries);
+  assert.equal(Object.hasOwn(combat, 'core2ActionRulesVersion'), false);
+  assert.equal(core2ActionPolicyEnabled({ ...combat, core2ActionRulesVersion: 1 }), false);
+  const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  const restored = restoreCombatSnapshot({ registries: oldRegistries, rng: createRng(511), snapshot: saved });
+  assert.equal(core2ActionPolicyEnabled(restored), false);
+  assert.equal(Object.hasOwn(serializeCombatSnapshot(restored), 'core2ActionRulesVersion'), false);
+});
