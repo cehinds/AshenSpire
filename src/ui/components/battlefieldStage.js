@@ -11,7 +11,7 @@ import { formationTileGeometry, perspectiveCellOutlinePath } from '../models/For
 import { FORMATION_ROWS, formationDimensions, playerFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
-import { combatSpriteGeometry, currentSpriteArtBounds, currentSpriteBodyBounds } from './combatSpriteGeometry.js';
+import { combatSpriteGeometry, currentSpriteArtBounds, currentSpriteBodyBounds, invalidateSpriteRects } from './combatSpriteGeometry.js';
 import { classicAppearance, displayAppearance } from '../displayAppearance.js';
 import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
@@ -302,7 +302,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       }
     };
   }
-  function placeHitBadges() { readHitBadges()?.(); }
+  function placeHitBadges() { invalidateSpriteRects(); readHitBadges()?.(); }
   // The detailed-target presentation owns its side panels. Only the compact
   // overhead follows the visible figure; selecting it never moves that figure.
   // One pass, in phases: every read (hit badges, each figure's body and box),
@@ -311,6 +311,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // between two reads made each following read a forced layout, once per
   // combatant per tracked frame.
   function centerTargetOverheads() {
+    invalidateSpriteRects();
     const zoom = uiZoom();
     const commitBadges = readHitBadges();
     const config = uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid;
@@ -555,6 +556,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   let trackUntil = 0;
   const extendTracking = () => { trackUntil = performance.now() + TRACK_WINDOW_MS; };
   function trackPlayerHud() {
+    invalidateSpriteRects();
     // Reduced motion has no idle or pose drift to follow. Do not turn the HUD
     // into a script-driven animation by rewriting its settled coordinates.
     if (reducedMotionRequested()) { trackingRequest = 0; return; }
@@ -572,6 +574,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   }
   const refresh = () => {
     cancelAnimationFrame(frameRequest);
+    invalidateSpriteRects();
     // Fit replacement DOM synchronously before it can paint at intrinsic width.
     if (!field.isConnected) return;
     const combat = field.closest('.combat');
@@ -654,60 +657,6 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       uiConfig.presentation.combatFormationModel.positioning.perspectiveGrid.enemyMiniHudScale,
       Math.max(1, Math.min((fieldRect.width - 24) / plan.rows,
         ...plan.cells.map(cell => (cell.box?.width ?? Infinity) - 12)) / 104))));
-    const grid = field.querySelector('.formation-grid');
-    if (grid) {
-      grid.dataset.shape = presentation.gridShape;
-      grid.dataset.perspective = String(!classicAppearance());
-      grid.style.zIndex = presentation.gridLayer === 'above'
-        ? 'var(--combat-layer-selection)' : 'calc(var(--combat-layer-shadows) - 1)';
-      grid.style.setProperty('--player-grid-color', presentation.playerGridColor);
-      grid.style.setProperty('--enemy-grid-color', presentation.enemyGridColor);
-      const occupied = new Set(plan.slots.map(slot => slot.cell));
-      // Offsets and edge clamping must not resize the reference tiles.
-      const gridCells = plan.visualCells || plan.cells;
-      const activeCells = new Set(gridCells.map(cell => cell.cell));
-      for (const tile of grid.querySelectorAll('[data-cell]')) tile.hidden = !activeCells.has(tile.dataset.cell);
-      for (const cell of gridCells) {
-        const tile = grid.querySelector(`[data-cell="${cell.cell}"]`);
-        if (!tile) continue;
-        // A perspective cell is drawn whole, its shadow at the foot anchor.
-        const geometry = cell.box ? { width: cell.box.width, height: cell.box.height, transform: 'none' }
-          : formationTileGeometry(cell, plan, presentation);
-        const localTile = anchorLocalBox(FORMATION_LOCAL_ORIGIN, cell.box ?? {
-          left: cell.x - geometry.width / 2, top: cell.ground,
-          width: geometry.width, height: geometry.height,
-        }, { zoom: pageZoom });
-        if (cell.box) {
-          tile.style.setProperty('--foot-y', `${(cell.ground - cell.box.top) / cell.box.height * 100}%`);
-          // Shear the rectangle about its centre into the cell's parallelogram;
-          // the shadow is sheared back so it stays a level ellipse.
-          const shear = Math.atan(cell.box.skew || 0);
-          tile.style.transform = `skewX(${-shear}rad)`;
-          tile.style.setProperty('--cell-unskew', `${shear}rad`);
-        } else {
-          tile.style.removeProperty('--foot-y');
-          tile.style.removeProperty('transform');
-          tile.style.removeProperty('--cell-unskew');
-        }
-        tile.style.left = `${localTile.left}px`;
-        tile.style.top = `${localTile.top}px`;
-        tile.style.width = `${localTile.width}px`;
-        tile.style.height = `${localTile.height}px`;
-        tile.style.setProperty('--tile-transform', geometry.transform);
-        tile.dataset.side = cell.side || (Number(cell.cell[1]) <= plan.columns ? 'player' : 'enemy');
-        tile.dataset.occupied = String(occupied.has(cell.cell));
-        tile.dataset.visualBand = cell.visualBand || '';
-        tile.dataset.visualOnly = String(!!cell.visualOnly);
-        // Each shared edge is painted once, so translucent seams stay thin.
-        tile.querySelector('[data-perspective-outline]')?.setAttribute('d',
-          perspectiveCellOutlinePath(cell, plan.rows));
-        tile.dataset.anchorX = String(cell.x);
-        tile.dataset.anchorY = String(cell.ground);
-      }
-      field.formationPlan = { plan, width: fieldRect.width, height: fieldRect.height };
-      wireGridTargeting(field);
-      field.dispatchEvent(new Event('formationlayoutchange'));
-    }
     // Geometry uses local offset dimensions, which already exclude CSS zoom.
     // Keep the fitted zoom while reading; resetting it would invalidate every
     // sprite descendant before the unchanged final zoom is written below.
@@ -898,6 +847,63 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (anchor?.obstructed) frame.dataset.overheadObstructed = 'true';
       else delete frame.dataset.overheadObstructed;
     };
+    // The grid tiles are written here, after the read phase above (sprite, hint and hand boxes),
+    // so their style writes no longer force a layout before those reads. Nothing read above depends on them.
+    const grid = field.querySelector('.formation-grid');
+    if (grid) {
+      grid.dataset.shape = presentation.gridShape;
+      grid.dataset.perspective = String(!classicAppearance());
+      grid.style.zIndex = presentation.gridLayer === 'above'
+        ? 'var(--combat-layer-selection)' : 'calc(var(--combat-layer-shadows) - 1)';
+      grid.style.setProperty('--player-grid-color', presentation.playerGridColor);
+      grid.style.setProperty('--enemy-grid-color', presentation.enemyGridColor);
+      const occupied = new Set(plan.slots.map(slot => slot.cell));
+      // Offsets and edge clamping must not resize the reference tiles.
+      const gridCells = plan.visualCells || plan.cells;
+      const activeCells = new Set(gridCells.map(cell => cell.cell));
+      for (const tile of grid.querySelectorAll('[data-cell]')) tile.hidden = !activeCells.has(tile.dataset.cell);
+      for (const cell of gridCells) {
+        const tile = grid.querySelector(`[data-cell="${cell.cell}"]`);
+        if (!tile) continue;
+        // A perspective cell is drawn whole, its shadow at the foot anchor.
+        const geometry = cell.box ? { width: cell.box.width, height: cell.box.height, transform: 'none' }
+          : formationTileGeometry(cell, plan, presentation);
+        const localTile = anchorLocalBox(FORMATION_LOCAL_ORIGIN, cell.box ?? {
+          left: cell.x - geometry.width / 2, top: cell.ground,
+          width: geometry.width, height: geometry.height,
+        }, { zoom: pageZoom });
+        if (cell.box) {
+          tile.style.setProperty('--foot-y', `${(cell.ground - cell.box.top) / cell.box.height * 100}%`);
+          // Shear the rectangle about its centre into the cell's parallelogram;
+          // the shadow is sheared back so it stays a level ellipse.
+          const shear = Math.atan(cell.box.skew || 0);
+          tile.style.transform = `skewX(${-shear}rad)`;
+          tile.style.setProperty('--cell-unskew', `${shear}rad`);
+        } else {
+          tile.style.removeProperty('--foot-y');
+          tile.style.removeProperty('transform');
+          tile.style.removeProperty('--cell-unskew');
+        }
+        tile.style.left = `${localTile.left}px`;
+        tile.style.top = `${localTile.top}px`;
+        tile.style.width = `${localTile.width}px`;
+        tile.style.height = `${localTile.height}px`;
+        tile.style.setProperty('--tile-transform', geometry.transform);
+        tile.dataset.side = cell.side || (Number(cell.cell[1]) <= plan.columns ? 'player' : 'enemy');
+        tile.dataset.occupied = String(occupied.has(cell.cell));
+        tile.dataset.visualBand = cell.visualBand || '';
+        tile.dataset.visualOnly = String(!!cell.visualOnly);
+        // Each shared edge is painted once, so translucent seams stay thin.
+        tile.querySelector('[data-perspective-outline]')?.setAttribute('d',
+          perspectiveCellOutlinePath(cell, plan.rows));
+        tile.dataset.anchorX = String(cell.x);
+        tile.dataset.anchorY = String(cell.ground);
+      }
+      field.formationPlan = { plan, width: fieldRect.width, height: fieldRect.height };
+      wireGridTargeting(field);
+      field.dispatchEvent(new Event('formationlayoutchange'));
+    }
+    invalidateSpriteRects();
     const depthOrder = [...new Set(plan.slots.map(slot => slot.layer))].sort((a, b) => a - b);
     for (const actor of actors) {
       const { slot, frame, stack, sprite, boxHeight, footOffset, ratio, leadingHost, leadingHeight } = actor;
@@ -978,6 +984,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       frame.classList.toggle('player-target-hitbox', frame.classList.contains('player'));
       placed.push({ frame, sprite, scale });
     }
+    invalidateSpriteRects();
     for (const entry of leadingWrites) placeLeading(entry, overheads);
     // WCO2: the guard badge lives inside this zoomed host. Publish the zoom
     // and the visible artwork's box (local px, relative to the host) so the
@@ -1420,7 +1427,20 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   resizeObserver.observe(field);
   // CSS zoom can move the rendered floor without changing the observed
   // element's unzoomed content box. Refit after responsive UI settings settle.
-  const layoutObserver = new MutationObserver(schedule);
+  // The root's inline style is rewritten by many unrelated custom properties
+  // (dialogue bands, shop rails, tower light timings); only the page zoom and
+  // the view box move this layout, so a style mutation refits only when one of
+  // those changed. Reading them off the inline style is no layout read.
+  const LAYOUT_ROOT_VARS = ['--ui-zoom', '--visible-height', '--view-width', '--view-height', '--view-fit', '--view-left', '--view-top'];
+  const rootLayoutKey = () => LAYOUT_ROOT_VARS.map(name => document.documentElement.style.getPropertyValue(name)).join('|');
+  let lastRootLayoutKey = rootLayoutKey();
+  const layoutObserver = new MutationObserver(records => {
+    const key = rootLayoutKey();
+    const styleOnly = records.every(record => record.attributeName === 'style');
+    if (styleOnly && key === lastRootLayoutKey) return;
+    lastRootLayoutKey = key;
+    schedule();
+  });
   layoutObserver.observe(document.documentElement, {
     // The two scene words are named here rather than left to ride on
     // `data-formation-settings` (which applyDisplaySettings also rewrites on
