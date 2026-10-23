@@ -7,16 +7,20 @@ import { withKitDom } from './helpers/kit-dom.mjs';
 // Layout-backed doubles: scroll size follows font/width, while the containing
 // bay follows the fitter's real percentage-height and max-height writes.
 function fixture({ chars = 500, width = 110, top = 0, height = 26, full = true, hidden = false, titleBottom = 0, railBottom = 0, printedRows = 1 } = {}) {
-  const state = { width, chars };
+  const state = { width, chars, fontWrites: [], scrollReads: 0 };
   const faceHeight = 200;
   const layer = { style: { top: `${top / 2}%`, height: `${height / 2}%` },
     get clientHeight() { return parseFloat(this.style.height) / 100 * faceHeight; },
     get offsetTop() { return parseFloat(this.style.top) / 100 * faceHeight; } };
-  const text = { style: {}, parentElement: layer,
+  const text = { style: new Proxy({}, { set(target, key, value) {
+      if (key === 'fontSize') state.fontWrites.push(value);
+      target[key] = value; return true;
+    } }), parentElement: layer,
     dataset: { cardBinding: 'rules', minFont: '22', maxFont: '30', maxLines: full ? '5' : '3' },
     get clientWidth() { return state.width * .7; },
     get scrollWidth() { return this.clientWidth; },
     get scrollHeight() {
+      state.scrollReads++;
       const font = parseFloat(this.style.fontSize) || 10;
       return Math.max(printedRows, Math.ceil(state.chars / Math.max(1, Math.floor(this.clientWidth / (font * .5))))) * font * (parseFloat(this.style.lineHeight) || 1.25);
     },
@@ -116,4 +120,53 @@ test('two live Counter rows shrink below design minimum within the native hand b
   assert.equal(f.text.dataset.rulesComplete, 'true');
   assert.equal(f.face.dataset.rulesOverflow, 'false');
   assert.equal(f.text.style.maxHeight, '100%', 'no inspection cue reserves space when both rows fit');
+}));
+
+test('overflow at identical font bounds skips redundant probes but retains the readable floor and inspection cue', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const f = fixture({ chars: 500, width: 110, height: 26, full: false });
+  const geometry = { ...f.layer.style };
+  f.fit();
+  assert.deepEqual(f.state.fontWrites, ['11px', '11px'], 'one initial probe and the native final font write suffice');
+  assert.ok(f.state.scrollReads > 1, 'initial fitting and final geometric overflow still measure the text');
+  assert.equal(f.face.textContent.length, 500, 'overflow retains all inspection text');
+  assert.equal(f.text.dataset.fittedFont, '36');
+  assert.equal(f.text.dataset.rulesComplete, 'false');
+  assert.equal(f.face.dataset.rulesOverflow, 'true');
+  assert.equal(f.text.style.maxHeight, 'calc(100% - 9px)');
+  assert.equal(f.text.clientHeight + f.cue.offsetHeight, 26);
+  assert.equal(f.layer.style.justifyContent, 'flex-start');
+  assert.deepEqual({ top: f.layer.style.top, height: f.layer.style.height }, geometry, 'the authored bay never grows');
+}));
+
+test('nondegenerate bounds retain the native seven-pass shrink result', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const f = fixture({ chars: 40, width: 180, height: 45, full: false });
+  f.fit();
+  assert.equal(f.state.fontWrites.length, 9, 'initial probe, seven binary probes and final font write');
+  assert.equal(f.text.style.fontSize, '14.59375px', 'the established search result remains unchanged');
+  assert.equal(f.text.dataset.rulesComplete, 'true');
+  assert.equal(f.face.dataset.rulesOverflow, 'false');
+  assert.equal(f.text.style.maxHeight, '100%');
+  assert.equal(f.layer.clientHeight, 45);
+}));
+
+test('a mixed batch fits floor, shrink and already-fitting rows while applying all final layouts', () => withKitDom(() => {
+  invalidateLayoutMetrics();
+  const floor = fixture({ chars: 500, width: 110, height: 26, full: false });
+  const shrink = fixture({ chars: 40, width: 180, height: 45, full: false });
+  const short = fixture({ chars: 3, width: 110, height: 26, full: false });
+  const faces = [floor, shrink, short], layers = [];
+  for (const f of faces) {
+    const layer = { style: {}, dataset: { cardLayer: '4' } }, original = f.face.querySelectorAll;
+    layers.push(layer);
+    f.face.querySelectorAll = selector => selector === '[data-card-layer]' ? [layer] : original(selector);
+  }
+  fitIllustratedCards(faces.map(f => ({ querySelector: () => f.face })));
+  assert.deepEqual(faces.map(f => f.state.fontWrites.length), [2, 9, 2]);
+  assert.deepEqual(faces.map(f => f.text.style.fontSize), ['11px', '14.59375px', '11px']);
+  assert.deepEqual(faces.map(f => f.text.dataset.rulesComplete), ['false', 'true', 'true']);
+  assert.deepEqual(faces.map(f => f.text.style.maxHeight), ['calc(100% - 9px)', '100%', '100%']);
+  assert.deepEqual(faces.map(f => f.layer.clientHeight), [26, 45, 26]);
+  assert.ok(layers.every(layer => layer.style.zIndex), 'native applyCardLayouts visits every row owner');
 }));
