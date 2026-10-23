@@ -1078,9 +1078,26 @@ function presentIntent(combat, enemy, def, moveId) {
 // Reaction moves (docs/combat-card-traits-contract.md, "Enemy reactions") are never rolled: they are dropped before any
 // weighting, maxConsecutive or pattern indexing.
 function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
+  const policy = core2ActionPolicyEnabled(combat);
+  const closingId = def.rangeClosingMove, closing = def.moves[closingId];
+  const canClose = policy && closing?.effects?.some(effect => effect.op === 'moveEngagement')
+    && Rounds.enemyMoveQuote(closing, { enemy, moveId: closingId, combat }).totalSp <= maxSp;
+  const replacements = new Map();
   const entries = Object.entries(def.moves).filter(
-    ([id, mv]) => !mv.reaction && (!mv.locked || enemy.unlockedMoves.includes(id))
-      && (core2ActionPolicyEnabled(combat) ? Rounds.enemyMoveQuote(mv, { enemy, moveId: id, combat }).totalSp : Rounds.enemyMoveSp(mv, { enemy, moveId: id, combat })) <= maxSp
+    ([id, mv]) => {
+      if (mv.reaction || (mv.locked && !enemy.unlockedMoves.includes(id))) return false;
+      if (!policy) return Rounds.enemyMoveSp(mv, { enemy, moveId: id, combat }) <= maxSp;
+      const quote = Rounds.enemyMoveQuote(mv, { enemy, moveId: id, combat });
+      if (quote.totalSp <= maxSp) return true;
+      // Preserve the authored attack choice when only its approach is too
+      // expensive. Commit its owned, affordable closing move in the forecast,
+      // rather than filtering the attack before AI weighting can choose it.
+      if (canClose && quote.sp <= maxSp && quote.advanceSp > 0) {
+        replacements.set(id, closingId);
+        return true;
+      }
+      return false;
+    }
   );
   if (entries.length === 0) return null;
 
@@ -1097,13 +1114,14 @@ function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
   const pool = eligible.length > 0 ? eligible : entries;
 
   const total = pool.reduce((acc, [, mv]) => acc + mv.weight, 0);
-  if (total <= 0) return pool[0][0];
+  if (total <= 0) return replacements.get(pool[0][0]) ?? pool[0][0];
   let r = combat.rng.float('enemyAI') * total;
   for (const [id, mv] of pool) {
     r -= mv.weight;
-    if (r < 0) return id;
+    if (r < 0) return replacements.get(id) ?? id;
   }
-  return pool[pool.length - 1][0];
+  const last = pool[pool.length - 1][0];
+  return replacements.get(last) ?? last;
 }
 
 function buildIntent(move, moveId, enemy = null, combat = null) {
