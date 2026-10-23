@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { uiIconId, uiIconText } from '../src/content/uiIcons.js';
-import { sigilChoiceButton, characterSigilPreview } from '../src/ui/components/creationCards.js';
+import { sigilChoiceButton, characterSigilPreview, classChoiceCard, classUnfold, selectionSectionFace } from '../src/ui/components/creationCards.js';
 import { kitItem, optionCard, ornament } from '../src/ui/kit/index.js';
 import { mountGameOver } from '../src/ui/screens/gameover.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
@@ -131,4 +131,22 @@ test('shared ornamental span paints skill artwork without adding glyph sizing or
   assert.equal(span.querySelector('[data-engraved-icon]')?.dataset.engravedIcon,'skill');
   assert.doesNotMatch(node.outerHTML,/>skill</);
   assert.equal(node.querySelector('.as-glyph'),null,'ornament keeps its own sizing span');
+}));
+
+
+test('class choices and expanded previews paint each production class icon without exposing source IDs', () => withKitDom(({ document }) => {
+  for (const cls of registries.classes.all()) {
+    for (const render of [() => classChoiceCard(cls, { visual: cls.glyph }), () => classUnfold({ cls, visual: cls.glyph })]) {
+      const card = render();
+      const visual = card.querySelector('.og') || card.querySelector('.cc-unfold-class-icon');
+      expectArt(visual, uiIconId(cls.glyph));
+      assert.equal(readableText(visual), '', 'the icon well contains no visible source identifier');
+      assert.match(readableText(card), new RegExp(cls.name));
+    }
+  }
+  const cls = registries.classes.all()[0];
+  const custom = document.createElement('img');
+  assert.equal(classChoiceCard(cls, { visual: custom }).querySelector('.og').firstChild, custom);
+  assert.equal(readableText(classChoiceCard(cls, { visual: 'custom mark' }).querySelector('.og')), 'custom mark');
+  expectArt(selectionSectionFace('Class', cls.name, 'attack').node, 'attack');
 }));

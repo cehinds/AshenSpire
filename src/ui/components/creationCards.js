@@ -29,7 +29,8 @@ import {
 
 function visualNode(visual) {
   if (visual == null || visual === '') return null;
-  return visual instanceof Node ? visual : String(visual);
+  // Content keeps readable IDs; resolve them only at the display boundary.
+  return visual instanceof Node ? visual : engravedIcon(visual) || String(visual);
 }
 
 /** A pressable choice: aria-pressed says which one is chosen; `.chosen` rides along for the pad cursor. */
