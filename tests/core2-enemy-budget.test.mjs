@@ -10,6 +10,7 @@ import { dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { enemyMoveSp, enemyMoveQuote, buildEnemyQueue } from '../src/engine/combatRoundsAdapter.js';
 import { enemyPlanActions } from '../src/engine/normalPreview.js';
+import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
@@ -72,4 +73,82 @@ test('native reaction pause restore preserves one payment per move and committed
     moves: ctx.enemies[0].performedMoves, contacts: ctx.eventLog.filter(row => ['enemyMoveStarted', 'attackHit'].includes(row.type)).map(row => [row.type, row.moveId]), counters: ctx.rng.getCounters() });
   assert.deepEqual(project(restored), project(combat));
   assert.ok(combat.enemies[0].stamina >= 0);
+});
+
+test('charge preparation pays once and its saved receipt prevents payment again on resolution', () => {
+  const combat = fight('bellKeeper'), enemy = combat.enemies[0];
+  const before = enemy.stamina;
+  dispatch(combat, { type: 'endTurn' });
+  assert.deepEqual(enemy.pendingMove.spPayment, { sp: 1, advanceSp: 0, totalSp: 1 });
+  assert.equal(enemy.stamina, before - 1, 'preparation pays before granting its Block');
+  const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  const invalid = structuredClone(snapshot);
+  invalid.enemies[0].pendingMove.spPayment.totalSp += 1;
+  assert.ok(combatSnapshotProblems(invalid).some(message => message.includes('spPayment')));
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(511, combat.rng.getCounters()), snapshot });
+  dispatch(restored, { type: 'endTurn' });
+  assert.ok(restored.pendingReaction, 'the paid charge reaches its first contact');
+  assert.equal(restored.enemies[0].stamina, enemy.maxStamina, 'the resolving payload does not charge its base again');
+  settle(restored);
+  assert.equal(restored.enemies[0].performedMoves.filter(id => id === 'bronzeToll').length, 1);
+});
+
+test('a charged move prepays its full Advance quote without paying it again on resolution', () => {
+  const combat = fight('bellKeeper'), enemy = combat.enemies[0];
+  const pair = Object.keys(combat.rangeState.engagements)[0];
+  combat.rangeState.engagements[pair] = 2;
+  const def = registries.enemies.get(enemy.enemyId);
+  const quote = enemyMoveQuote(def.moves.bronzeToll, { enemy, moveId: 'bronzeToll', combat });
+  assert.ok(quote.advanceSp > 0);
+  assert.ok(quote.totalSp <= enemy.maxStamina);
+  dispatch(combat, { type: 'endTurn' });
+  assert.equal(enemy.stamina, enemy.maxStamina - quote.totalSp);
+  assert.equal(enemy.pendingMove.spPayment.totalSp, quote.totalSp);
+  dispatch(combat, { type: 'endTurn' });
+  settle(combat);
+  assert.equal(enemy.stamina, enemy.maxStamina, 'both base and the accepted Advance were paid at preparation');
+  assert.equal(enemy.performedMoves.filter(id => id === 'bronzeToll').length, 1);
+});
+
+test('an execution-time loss can refuse a charge before any preparation effects', () => {
+  const combat = fight('bellKeeper'), enemy = combat.enemies[0];
+  enemy.pendingStaminaLoss = enemy.maxStamina;
+  dispatch(combat, { type: 'endTurn' });
+  assert.equal(enemy.pendingMove, null);
+  assert.equal(enemy.stamina, 0);
+  assert.ok(combat.eventLog.some(row => row.type === 'enemyMoveUnavailable' && row.moveId === 'bronzeToll'));
+});
+
+test('native enemy reaction pays on enqueue, retains payment if it fizzles, and refuses at zero SP', () => {
+  for (const available of [0, 2]) {
+    const combat = fight('gildedKnight'), enemy = combat.enemies[0];
+    enemy.stamina = available;
+    const card = combat.piles.hand.find(row => row.cardId === 'core.strike');
+    assert.ok(card);
+    dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
+    const stacked = combat.eventLog.filter(row => row.type === 'combatEnemyReactionStacked');
+    assert.equal(stacked.length, available ? 1 : 0);
+    assert.equal(enemy.stamina, available ? 1 : 0);
+    if (available) {
+      assert.ok(combat.pendingReaction);
+      enemy.skipNextTurn = true;
+      settle(combat);
+      assert.equal(enemy.stamina, 1, 'a committed reaction that fizzles does not refund its SP');
+    }
+  }
+});
+
+test('an old active fight keeps its free enemy reaction and charge-time payment behavior', () => {
+  const combat = fight('gildedKnight'), enemy = combat.enemies[0];
+  delete combat.core2ActionRulesVersion;
+  const card = combat.piles.hand.find(row => row.cardId === 'core.strike');
+  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
+  settle(combat);
+  assert.equal(enemy.stamina, enemy.maxStamina);
+  assert.ok(combat.eventLog.some(row => row.type === 'enemyMoveStarted' && row.moveId === 'gildedGuard'));
+  const charge = fight('bellKeeper');
+  delete charge.core2ActionRulesVersion;
+  dispatch(charge, { type: 'endTurn' });
+  assert.equal(charge.enemies[0].stamina, charge.enemies[0].maxStamina);
+  assert.equal(charge.enemies[0].pendingMove.spPayment, undefined);
 });

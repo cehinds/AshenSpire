@@ -1,4 +1,6 @@
 import { configuredModule } from './gameProfileCombat.js';
+import { core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
+import { enemyMoveQuote, enemyAvailableSp, commitEnemySp } from './combatRoundsAdapter.js';
 // Enemy reactions (docs/combat-card-traits-contract.md, "Enemy reactions").
 // A reaction move is an enemy move with `reaction: { on, minIncoming, chance }`.
 // openEnemyWindow asks decideEnemyReaction for each enemy in roster order and commits
@@ -44,6 +46,7 @@ export function decideEnemyReaction(ctx, enemy, reactionWindow, { groupKey, wind
   if (enemy.combatReactionTurn === ctx.turn) return null;
   if (controlRestrictions(ctx, enemy).locked) return null;
   for (const [moveId, move] of reactionMovesOf(ctx, enemy, reactionWindow)) {
+    if (core2ActionPolicyEnabled(ctx) && enemyMoveQuote(move, { enemy, moveId, combat: ctx }).totalSp > enemyAvailableSp(enemy)) continue;
     const { minIncoming = 1, chance = 1 } = move.reaction;
     if (minIncoming !== 0 && !(incoming > 0 && incoming >= minIncoming)) continue;
     if (chance >= 1) return moveId;
@@ -92,6 +95,14 @@ function entityOf(ctx, ref) {
  * reconnects them to the live (or candidate) entities when it runs.
  */
 export function pushEnemyReaction(ctx, group, enemy, moveId, targetPlayerId, hooks) {
+  let spPayment;
+  if (core2ActionPolicyEnabled(ctx)) {
+    const move = ctx.registries.enemies.get(enemy.enemyId).moves[moveId];
+    const quote = enemyMoveQuote(move, { enemy, moveId, combat: ctx });
+    if (quote.totalSp > enemyAvailableSp(enemy)) return null;
+    if (!commitEnemySp(ctx, enemy, moveId, quote.sp)) return null;
+    spPayment = { sp: quote.sp, advanceSp: quote.advanceSp, totalSp: quote.totalSp };
+  }
   const stack = ctx.reactionStack ||= { groupKey: group.key, entries: [], resolving: false };
   const previous = ctx.playerKey;
   const sink = [];
@@ -114,7 +125,7 @@ export function pushEnemyReaction(ctx, group, enemy, moveId, targetPlayerId, hoo
     const { expansionGroup, ...rest } = meta || {};
     return { ...action, meta: rest, sourceRef: refOf(ctx, source), ownerRef: refOf(ctx, owner), targetRef: refOf(ctx, target) };
   });
-  const entry = { side: 'enemy', ownerId: enemy.id, enemyId: enemy.enemyId, moveId, targetPlayerId, plan: { group: planned, actions } };
+  const entry = { side: 'enemy', ownerId: enemy.id, enemyId: enemy.enemyId, moveId, targetPlayerId, plan: { group: planned, actions }, ...(spPayment ? { spPayment } : {}) };
   stack.entries.push(entry);
   enemy.combatReactionTurn = ctx.turn;
   ctx.emit('combatEnemyReactionStacked', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, targetPlayerId,
@@ -213,7 +224,10 @@ export function openEnemyWindow(ctx, group, reactionWindow, pushed, hooks) {
     // root or that the root card targets (contract); the decision then qualifies on `incoming`.
     if (reactionWindow === 'playerAction' ? !(incoming > 0) : group.sourceId !== enemy.id && !(incomingAgainst(group, enemy.id) > 0)) continue;
     const moveId = decideEnemyReaction(ctx, enemy, reactionWindow, { groupKey: group.key, windowIndex: index, incoming });
-    if (moveId) pushedEntries.push(pushEnemyReaction(ctx, group, enemy, moveId, targetPlayerId, hooks));
+    if (moveId) {
+      const entry = pushEnemyReaction(ctx, group, enemy, moveId, targetPlayerId, hooks);
+      if (entry) pushedEntries.push(entry);
+    }
   }
   return pushedEntries;
 }

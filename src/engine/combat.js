@@ -802,8 +802,9 @@ function enemyPhase(combat) {
         // Rounds mode: a charge whose hit roll missed resolves as that miss, applying nothing.
         const missed = enemy.pendingMove.missed === true;
         const roundPoiseMultiplier = enemy.pendingMove.roundPoiseMultiplier;
+        const spPayment = enemy.pendingMove.spPayment;
         enemy.pendingMove = null;
-        if (!missed) executeMovePayload(combat, enemy, move, moveId, { roundPoiseMultiplier });
+        if (!missed) executeMovePayload(combat, enemy, move, moveId, { roundPoiseMultiplier, spPayment });
       }
       // else: still charging (delay.turns > 1) — the enemy does nothing.
     } else if (!preview && enemy.intent && enemy.intent.moveId) {
@@ -878,6 +879,12 @@ function enemyPhase(combat) {
 // Commit turn of a delayed move: telegraph stays, do the whileCharging part now, resolve the real
 // payload on a later enemy turn.
 function startDelayedMove(combat, enemy, move, moveId) {
+  let spPayment;
+  if (core2ActionPolicyEnabled(combat)) {
+    const quote = Rounds.enemyMoveQuote(move, { enemy, moveId, combat });
+    if (!Rounds.commitEnemySp(combat, enemy, moveId, quote.totalSp)) return 'refused';
+    spPayment = { sp: quote.sp, advanceSp: quote.advanceSp, totalSp: quote.totalSp };
+  }
   const wc = (move.delay && move.delay.whileCharging) || {};
   const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
   if (wc.block != null) {
@@ -899,6 +906,7 @@ function startDelayedMove(combat, enemy, move, moveId) {
   enemy.pendingMove = {
     moveId,
     resolveOnTurn: combat.turn + (move.delay.turns != null ? move.delay.turns : 1),
+    ...(spPayment ? { spPayment } : {}),
   };
   if (enemy.intent?.moveId === moveId) enemy.intent = { ...enemy.intent, pending: true };
 }
@@ -909,22 +917,30 @@ function startDelayedMove(combat, enemy, move, moveId) {
 // one actor at a time (SPEC §7.4); content triggers may also key off it.
 // `roundEntry`: the move resolves a Combat Rounds timeline entry, whose reaction point was the round prompt (SPEC
 // §4.11), so its group is marked roundSettled and the live reaction window does not open for it again.
-function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, roundPoiseMultiplier = combat.roundPoiseMultiplier } = {}) {
-  const spCost=Rounds.enemyMoveSp(move,{enemy,moveId,combat});
+function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, roundPoiseMultiplier = combat.roundPoiseMultiplier, spPayment } = {}) {
+  const prepaid = core2ActionPolicyEnabled(combat) && spPayment;
+  const spCost=prepaid ? spPayment.sp : Rounds.enemyMoveSp(move,{enemy,moveId,combat});
   move = expandedEnemyMove(enemy, move, moveId, combat);
   const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
   const actions = enemyMoveActions(combat, enemy, move, moveId, carrier);
   const rangeQuote = quoteRangeActions(combat, enemy, actions, { route: 'advance', preview: true });
   const totalSp = spCost + (rangeQuote?.advanceSp || 0);
   if (fixCoreEnabled(combat)) {
-    const available=enemy.fixCoreStaminaRemaining ?? enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId));
-    if(totalSp>available && rangeQuote?.advanceSp > 0) {
+    const available=core2ActionPolicyEnabled(combat) ? Rounds.enemyAvailableSp(enemy) : enemy.fixCoreStaminaRemaining ?? enemy.maxStamina ?? Rounds.enemyPool(combat.registries.enemies.get(enemy.enemyId));
+    const required = prepaid ? Math.max(0, (rangeQuote?.advanceSp || 0) - spPayment.advanceSp) : totalSp;
+    if(!prepaid && required>available && rangeQuote?.advanceSp > 0) {
       const def = combat.registries.enemies.get(enemy.enemyId), closingId = def.rangeClosingMove, closing = def.moves[closingId];
       if (closing && closingId !== moveId && closing.effects?.some(effect => effect.op === 'moveEngagement') && Rounds.enemyMoveSp(closing,{enemy,moveId:closingId,combat}) <= available) return executeMovePayload(combat, enemy, closing, closingId, { roundEntry, roundPoiseMultiplier });
     }
-    if(totalSp>available) {combat.emit('enemyMoveUnavailable',{sourceId:enemy.id,moveId,required:totalSp,available,resource:'sp'});return 'refused';}
-    enemy.fixCoreStaminaRemaining=available-spCost;
+    if(required>available) {combat.emit('enemyMoveUnavailable',{sourceId:enemy.id,moveId,required,available,resource:'sp'});return 'refused';}
+    enemy.fixCoreStaminaRemaining=available-(prepaid ? required : spCost);
     enemy.stamina=enemy.fixCoreStaminaRemaining;
+    if (prepaid && combat.rangeState) {
+      // The charge already paid its accepted price. Retain that payment when
+      // it lands; only a newly required Advance surcharge is charged above.
+      carrier.rangePlan = quoteRangeActions(combat, enemy, actions, { route: 'advance' });
+      carrier.rangePlan.paid = { energy: spPayment.totalSp + required, stamina: spPayment.totalSp + required, mana: 0 };
+    }
   }
   if (!allowBurdenMove(combat,enemy,spCost,move)) return 'blocked';
   // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger

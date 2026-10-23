@@ -92,6 +92,18 @@ export function enemyTurnSp(enemy, def, combat) {
     ? Math.max(0, (enemy.maxStamina ?? enemyPool(def)) - (enemy.pendingStaminaLoss || 0)) : enemyPool(def);
 }
 
+export const enemyAvailableSp = enemy => Math.max(0, enemy.stamina ?? enemy.fixCoreStaminaRemaining ?? enemy.maxStamina ?? 0);
+export function commitEnemySp(combat, enemy, moveId, required) {
+  const available = enemyAvailableSp(enemy);
+  if (required > available) {
+    combat.emit('enemyMoveUnavailable', { sourceId: enemy.id, moveId, required, available, resource: 'sp' });
+    return false;
+  }
+  enemy.fixCoreStaminaRemaining = available - required;
+  enemy.stamina = enemy.fixCoreStaminaRemaining;
+  return true;
+}
+
 // The enemy's SP pool per turn (SPEC §4.6a, owner 2026-10-12): stat-driven, the stamina row read on the enemy's
 // `attributes` plus its `equipmentSp` (model/actionCosts.js enemyPoolOf). An enemy with no authored stats has 1.
 export const enemyPool = (def) => enemyPoolOf(def);
