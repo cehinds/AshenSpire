@@ -12,9 +12,9 @@ const start = cacheStart < 0 ? main.indexOf('function rebuildRegistries(') : cac
 const end = main.indexOf('\n}\n\n// Dev screenshot hook', start) + 2;
 assert.ok(start >= 0 && end > start, 'production rebuild function is present');
 const production = main.slice(start, end);
-function fixture({ warm = true } = {}) {
-  const calls = { validate: 0, mastery: 0, warnings: [], idle: [], reported: [], deferredMastery: [], options: [] };
-  const contentBundle = { amount: 5 };
+function fixture({ warm = true, authored = { amount: 5 } } = {}) {
+  const calls = { validate: 0, mastery: 0, warnings: [], reported: [], options: [] };
+  const contentBundle = authored;
   const deps = {
     createContentValidationCache, contentBundle,
     applyGameProfileToContent: (bundle, profile) => ({ ...bundle, profile: structuredClone(profile), ...(profile.invalid ? { invalid: true } : {}) }),
@@ -26,17 +26,15 @@ function fixture({ warm = true } = {}) {
     bindGameProfileRegistries: (registry, profile) => ({ ...registry, profile }),
     registriesForClassMastery: (registry, run) => { calls.mastery++; return { ...registry, mastery: run?.mastery ?? 0 }; },
     configureTooltipGlossary: () => {}, setClassGlyphs: () => {},
-    whenIdle: task => calls.idle.push(task),
     reportContentValidationFailure: errors => calls.reported.push(errors),
-    deferClassMasteryCheck: bundle => calls.deferredMastery.push(bundle),
     console: { warn: (...args) => calls.warnings.push(args) }
   };
   const create = new Function(...Object.keys(deps), `let registryGameProfile; let registries; ${production}; return rebuildRegistries;`);
   const rebuild = create(...Object.values(deps));
-  if (warm) { // the session's first build defers its validation (tested below); spend it
+  if (warm) { // spend one build so each test starts from a warm cache
     rebuild({ warm: true }, null, { id: 'warm', mode: 'legacy' });
     for (const key of ['validate', 'mastery']) calls[key] = 0;
-    calls.warnings.length = calls.idle.length = calls.reported.length = calls.deferredMastery.length = calls.options.length = 0;
+    calls.warnings.length = calls.reported.length = calls.options.length = 0;
   }
   return { rebuild, calls };
 }
@@ -64,7 +62,7 @@ test('the first build of a configured profile validates synchronously, reports a
   const { rebuild, calls } = fixture({ warm: false });
   const profile = { id: 'core', mode: 'configured', invalid: true };
   assert.throws(() => rebuild({}, null, profile), /Invalid game profile core/);
-  assert.equal(calls.validate, 1); assert.equal(calls.idle.length, 0);
+  assert.equal(calls.validate, 1);
   assert.deepEqual(calls.options, [undefined], 'boot validates whole, class mastery included');
   assert.equal(calls.reported.length, 1); assert.equal(calls.reported[0][0].path, 'amount');
   const ok = fixture({ warm: false });
@@ -75,8 +73,16 @@ test('the first build of a configured profile validates synchronously, reports a
 test('the first build of saved legacy settings validates whole, so a failure still falls back', () => {
   const { rebuild, calls } = fixture({ warm: false });
   const fallback = rebuild({ invalid: true }, null, { id: 'current', mode: 'legacy' });
-  assert.equal(fallback.rows.invalid, undefined); assert.equal(calls.idle.length, 0);
-  assert.deepEqual(calls.options, [undefined]);
+  assert.equal(fallback.rows.invalid, undefined);
+  assert.deepEqual(calls.options, [undefined, undefined], 'the settings build, then the authored fallback, validate whole');
+  assert.equal(calls.reported.length, 0, 'valid authored content raises no banner: the settings were at fault');
+});
+
+test('a legacy fallback onto broken authored content raises the content banner', () => {
+  const { rebuild, calls } = fixture({ warm: false, authored: { amount: 5, invalid: true } });
+  rebuild({}, null, { id: 'current', mode: 'legacy' });
+  assert.equal(calls.reported.length, 1, 'the authored bundle failed, not the settings: say so loudly');
+  assert.equal(calls.reported[0][0].path, 'amount');
 });
 
 test('actual invalid legacy configurations keep loud defaults fallback on each attempt', () => {
@@ -85,7 +91,7 @@ test('actual invalid legacy configurations keep loud defaults fallback on each a
     const fallback = rebuild({ invalid: true }, null, profile);
     assert.equal(fallback.rows.amount, 5); assert.equal(fallback.rows.invalid, undefined);
   }
-  assert.equal(calls.validate, 2); assert.equal(calls.warnings.length, 2);
+  assert.equal(calls.validate, 4, 'each attempt validates the settings and the authored fallback'); assert.equal(calls.warnings.length, 2);
   assert.match(calls.warnings[0].join(' '), /configuration unchanged/i);
   rebuild({ structural: true }, null, profile);
   assert.equal(calls.warnings.length, 3);

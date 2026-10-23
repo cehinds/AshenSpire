@@ -300,6 +300,10 @@ function rebuildRegistries(configuration = {}, masteryRun = null, gameProfile = 
       if (result.errors.length) reportContentValidationFailure(result.errors);
       throw new Error(`Invalid game profile ${gameProfile.id}: ${first}`);
     }
+    // The fallback is the authored bundle itself: if that is what failed (no
+    // user settings to blame), say so as loudly as boot always has.
+    const authoredCheck = validateContent(contentBundle);
+    if (!authoredCheck.ok) reportContentValidationFailure(authoredCheck.errors);
     registries = createRegistries(contentBundle);
   } else {
     registries = createRegistries(configured);
