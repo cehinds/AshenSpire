@@ -2161,7 +2161,7 @@ function enemyMoveAt(combat, enemy, moveId, { landed = true } = {}) {
   }
   Rounds.markEnemyActed(combat, enemy.id);
   if (move.delay) {
-    startDelayedMove(combat, enemy, move, moveId);
+    if (startDelayedMove(combat, enemy, move, moveId) === 'refused') return 'refused';
     if (combat.roundPoiseMultiplier) enemy.pendingMove.roundPoiseMultiplier = { ...combat.roundPoiseMultiplier };
     if (!landed) enemy.pendingMove.missed = true;
   } else executeMovePayload(combat, enemy, move, moveId, { roundEntry: true });

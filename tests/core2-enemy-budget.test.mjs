@@ -7,6 +7,7 @@ import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
+import { COMBAT_ROUNDS_KEY, combatRoundsFor } from '../src/model/combatRounds.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { enemyMoveSp, enemyMoveQuote, buildEnemyQueue } from '../src/engine/combatRoundsAdapter.js';
 import { enemyPlanActions } from '../src/engine/normalPreview.js';
@@ -14,9 +15,18 @@ import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 
 const profile = resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} });
 const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, profile)), profile);
-function fight(id = 'fellWarden') {
-  const run = createRunState({ registries, classId: 'reaver', seed: 511 });
+function fight(id = 'fellWarden', { rounds = false } = {}) {
+  const run = createRunState({ registries, classId: 'reaver', seed: 511,
+    profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: rounds } } });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: [id] });
+  if (rounds) {
+    // Native configured creation disables the debug preview. Exercise its live
+    // adapter explicitly with the already-accepted enemy plan and frozen rules.
+    const enemy = combat.enemies[0], moveId = enemy.intent.moveId;
+    const quote = enemyMoveQuote(registries.enemies.get(id).moves[moveId], { enemy, moveId, combat });
+    combat.combatRounds = { rules: structuredClone(combatRoundsFor({ [COMBAT_ROUNDS_KEY]: true })),
+      enemyQueues: { [enemy.id]: [{ moveId, sp: quote.totalSp }] }, momentum: {}, poiseDouble: {}, charges: {} };
+  }
   combat.player.hp = combat.player.maxHp = 10000;
   return combat;
 }
@@ -187,4 +197,39 @@ test('an old active fight keeps its free enemy reaction and charge-time payment 
   dispatch(charge, { type: 'endTurn' });
   assert.equal(charge.enemies[0].stamina, charge.enemies[0].maxStamina);
   assert.equal(charge.enemies[0].pendingMove.spPayment, undefined);
+});
+
+
+for (const unaffordable of [true, false]) test(`Combat Rounds charge ${unaffordable ? 'refuses a legal plan after SP loss' : 'pays once and preserves its saved charge fields'}`, () => {
+  const combat = fight('bellKeeper', { rounds: true }), enemy = combat.enemies[0];
+  assert.equal(combat.combatRounds.enemyQueues[enemy.id][0].moveId, 'bronzeToll', 'the charge was legally planned');
+  combat.combatRounds.poiseDouble[enemy.id] = true;
+  if (unaffordable) enemy.pendingStaminaLoss = enemy.maxStamina;
+  // Rounds carries its Poise receipt to a charge even when no contact lands yet.
+  assert.doesNotThrow(() => {
+    dispatch(combat, { type: 'endTurn' });
+    settle(combat);
+  });
+  const unavailable = combat.eventLog.filter(row => row.type === 'enemyMoveUnavailable' && row.moveId === 'bronzeToll');
+  if (unaffordable) {
+    assert.equal(enemy.pendingMove, null);
+    assert.equal(enemy.stamina, 0);
+    assert.equal(enemy.block, 0, 'refusal grants no charging protection');
+    assert.equal(enemy.barrier, 0);
+    assert.equal(unavailable.length, 1);
+    assert.equal(combat.eventLog.filter(row => row.type === 'enemyMoveStarted' && row.moveId === 'bronzeToll').length, 0);
+    assert.deepEqual(enemy.performedMoves, [], 'no charge payload runs');
+  } else {
+    assert.equal(unavailable.length, 0);
+    assert.equal(enemy.stamina, enemy.maxStamina - 1);
+    assert.deepEqual(enemy.pendingMove.spPayment, { sp: 1, advanceSp: 0, totalSp: 1 });
+    assert.ok(enemy.pendingMove.roundPoiseMultiplier, 'Rounds receipt is retained for the later payload');
+    const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+    const restored = restoreCombatSnapshot({ registries, rng: createRng(511, combat.rng.getCounters()), snapshot });
+    assert.deepEqual(restored.enemies[0].pendingMove, enemy.pendingMove);
+    dispatch(restored, { type: 'endTurn' });
+    settle(restored);
+    assert.equal(restored.enemies[0].stamina, enemy.maxStamina, 'the saved payload never pays its base again');
+    assert.equal(restored.enemies[0].performedMoves.filter(id => id === 'bronzeToll').length, 1);
+  }
 });
