@@ -3,7 +3,9 @@ import { stanceRulesFor, enemySmashFallbackPoise, enemyCounterPoiseDamage } from
 import { combatProfileFor } from '../model/combatCardProfile.js';
 import { evaluate, isFormula } from '../model/formulas.js';
 import { counterstrikeAmount, counterstrikePct, hasStanceAdvantage, stanceManeuverOf } from './combatCardTraitMath.js';
-import { evalPredicate } from './triggers.js';
+// Enemy pricing reaches tactics while the event bus is still initializing.
+// Read predicates at invocation so the shipped CommonJS loader keeps the cycle live.
+import * as Triggers from './triggers.js';
 import { cardRatingBonus } from './combatRatings.js';
 import { armCombatCounter, matchupRules, combatExpansionEnabled, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
 import { attackDescriptor, weaponDamageType, weaponDamageComponents, dominantDamageType } from '../model/attackTags.js';
@@ -95,7 +97,7 @@ export function counterEffectPreview(ctx, source, target, carrier, effect, meta 
   const action = { source, owner: source, target, card: carrier, meta };
   const formulas = counterFormulaContext(ctx, source, target, meta);
   const payloadOps = counterPayloadOps(ctx);
-  if (!payloadOps.includes(effect.op) || (!ignoreCondition && effect.if && !evalPredicate(ctx, effect.if, action))) return null;
+  if (!payloadOps.includes(effect.op) || (!ignoreCondition && effect.if && !Triggers.evalPredicate(ctx, effect.if, action))) return null;
   const base = Math.max(0, Math.floor(evaluate(effect.amount ?? 0, formulas)));
   const hits = Math.max(0, Math.floor(evaluate(effect.hits ?? 1, formulas)))
     * Math.max(0, Math.floor(evaluate(effect.repeat ?? 1, formulas)));

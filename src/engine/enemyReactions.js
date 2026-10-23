@@ -8,7 +8,9 @@ import { enemyMoveQuote, enemyAvailableSp, commitEnemySp } from './combatRoundsA
 // (engine/combatReactions.js) reaches it.
 import { controlRestrictions } from './combatStatusControl.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
-import { closeEnemyExchange } from './normalPreview.js';
+// The move adapter is initialized through normalPreview. Keep this cyclic
+// dependency live until a committed reaction actually finishes.
+import * as NormalPreview from './normalPreview.js';
 import { reactionPaused } from './reactionState.js';
 
 // Version 2 with the flag. Absent (or a version-1 snapshot) means no enemy reactions.
@@ -184,7 +186,7 @@ export function runEnemyPlan(ctx, entry, hooks) {
     hooks.drain(ctx);
     // The reaction move has resolved: its normal-combat momentum exchange ends with it (SPEC §4.11). A drain that
     // paused for a reaction has not resolved it yet, so the exchange stays open for the resume (as in enemyPhase).
-    if (!reactionPaused(ctx)) closeEnemyExchange(ctx, entry.ownerId);
+    if (!reactionPaused(ctx)) NormalPreview.closeEnemyExchange(ctx, entry.ownerId);
   } finally {
     if (wasPlaying) ctx._reactionPlaying = wasPlaying; else delete ctx._reactionPlaying;
     const left = ctx.queue;
