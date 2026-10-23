@@ -100,7 +100,8 @@ export function fitIllustratedCards(cards) {
   };
   const atHigh=probe(texts,row=>row.high);
   const search=[];
-  texts.forEach((row,i)=>{if(atHigh[i])row.result=row.high;else{row.lo=row.low;row.hi=row.high;search.push(row);}});
+  // Equal bounds have no smaller font to search, even when the readable floor overflows.
+  texts.forEach((row,i)=>{if(atHigh[i]||row.high===row.low)row.result=row.high;else{row.lo=row.low;row.hi=row.high;search.push(row);}});
   for(let pass=0;pass<7&&search.length;pass++){
     const mid=row=>(row.lo+row.hi)/2;
     const fits=probe(search,mid);
