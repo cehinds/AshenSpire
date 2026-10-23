@@ -1121,7 +1121,7 @@ pools, `rogue.js` and `coop.js`, hold functions and stay JS: author those in the
 ```json
 {
   "id": "moonSlash", "name": "Moon Slash", "class": "reaver", "rarity": "common",
-  "cost": 1, "type": "attack", "keywords": [], "icon": "🌙",
+  "cost": 1, "type": "attack", "keywords": [], "icon": "progression",
   "effects": [
     { "op": "damage", "target": "enemy", "amount": 6 },
     { "op": "applyStatus", "target": "enemy", "status": "weak", "stacks": 1 }
@@ -1163,7 +1163,7 @@ live in `content/source/CONTENT-NOTES.md`, keyed by id.
 
 ```json
 {
-  "id": "frostbite", "name": "Frostbite", "icon": "❄",
+  "id": "frostbite", "name": "Frostbite", "icon": "frost",
   "stackMode": "unique", "decay": "onConsume",
   "modifiers": { "damageTakenMult": 1.3 },
   "tooltip": "Takes 30% more attack damage until consumed."
@@ -1187,7 +1187,7 @@ and commit the regenerated file.
 
 ```json
 {
-  "id": "whetstoneFragment", "name": "Whetstone Fragment", "rarity": "common", "icon": "🪨",
+  "id": "whetstoneFragment", "name": "Whetstone Fragment", "rarity": "common", "icon": "weight",
   "passives": { "poiseThresholdAdd": 1 },
   "textTemplate": "Your first attack each combat deals {damage} extra damage. Poise threshold +1.",
   "flavor": "Worn smooth by a thousand blades."
