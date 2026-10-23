@@ -69,6 +69,8 @@ export function mountStartupGate(app, {
     </section>`;
 
   const root = app.querySelector('.startup-gate');
+  // Drop the static first-paint splash (index.html); CSS already hides it, this frees the node.
+  app.ownerDocument?.getElementById?.('boot-splash')?.remove();
   const { lightUpMs, holdMs, fadeMs } = properties.entrance;
   root.style.setProperty('--tower-light-ms', `${lightUpMs}ms`);
   root.style.setProperty('--tower-fade-ms', `${fadeMs}ms`);
