@@ -37,7 +37,7 @@ export const CHANNELS = Object.freeze([
 
 function channelRow({ name, slug, label }) {
   return `${label} · [Play ${name}](${BASE}/${slug}/latest/) `
-    + `· [HTML (offline, desktop, ~130 MB)](${BASE}/${slug}/latest/download/AshenSpire.html)\n\n`
+    + `· [HTML (offline, desktop, ~140 MB)](${BASE}/${slug}/latest/download/AshenSpire.html)\n\n`
     + `[![${name} build](${BASE}/${slug}/latest/build.svg)](${BASE}/${slug}/)`;
 }
 

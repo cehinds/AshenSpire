@@ -23,7 +23,7 @@ high-default build):
   to 5/16, 512 → 160, all re-encoded lossy, `tools/mobileart-policy.mjs`: q35,
   alpha q40; full-screen backdrops under `environments/`, `bg/` and `map/` keep
   0.4 scale at q50, because a 1536-wide backdrop at 5/16 blocks visibly across a
-  phone). It is ~31 MB on 0.7.1 (the retired mobile file's 30 MB budget is an
+  phone). It was ~31 MB early in 0.7.1 and is ~140 MB at build 0.7.1.1790 (the retired mobile file's 30 MB budget is an
   open owner question for it; `verify-shipped.mjs` prints the size against it),
   with the inlined art itself held under 20 MB by `mobile-art.mjs --check`. It
   is the build's *Download* on Pages (`/<branch>/<ordinal>/download/`).
@@ -35,7 +35,7 @@ high-default build):
   the full-art single file (~253 MB) are retired (owner answers 2 and 6).
 - Phones use the Pages *Play* link (`/<branch>/latest/`, the pack build). The
   Pages *HTML* link (`/<branch>/latest/download/AshenSpire.html`) is the offline
-  desktop file: ~132 MB, 15–80 s to open on a phone and ~440 MB of memory there.
+  desktop file: ~140 MB, 15–80 s to open on a phone and ~440 MB of memory there.
 
 Production hosting should cache individual versioned asset URLs and compress
 HTML; the Pages service worker (step 6b) keeps a build for offline play. The

@@ -239,7 +239,7 @@ discard controls, under a live worked example.
 `dist/` (docs/EXTERNAL-ASSETS-PLAN.md step 8e, owner answers 2, 3 and 6): the
 pack-shaped game file `AshenSpire.html` (~10 MB of code, no media) with
 `asset-base.json`, `packs/` and `objects/` beside it, and the **light single
-file** at `download/AshenSpire.html` (~31 MB, every byte inline, held to no
+file** at `download/AshenSpire.html` (~140 MB at 0.7.1.1790, every byte inline, held to no
 byte budget); `dist/` also gets the version-stamped `AshenSpire-<version>.html`,
 and the root alias `AshenSpire.html` is the light single file. **By default
 the pack-shaped file's tier is light** (owner, 2026-09-26: dev builds are
