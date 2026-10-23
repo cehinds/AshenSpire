@@ -279,6 +279,8 @@ if (!entrySrc) fail('no <script type="module" src="..."> entry found in index.ht
 const IMPORT_RE =
   /^[ \t]*import\s+['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$|^[ \t]*import\b(?:[\s\S]*?)from\s*['"]([^'"]+)['"](?:[ \t]*;)*[ \t]*$/gm;
 
+const DYNAMIC_IMPORT_RE = /\bimport\s*\(\s*(['"])(\.[^'"\n]*)\1\s*\)/g;
+
 function resolveSpecifier(fromAbs, spec) {
   if (!spec.startsWith('.')) {
     fail(
@@ -302,10 +304,16 @@ function findImportSpecifiers(src, fromAbs) {
     const spec = m[1] !== undefined ? m[1] : m[2];
     specs.push(spec);
   }
-  // Guard against dynamic import() slipping through — should already be absent.
-  if (/\bimport\s*\(/.test(src)) {
-    fail('dynamic import() found in ' + idOf(fromAbs) + ' — not supported by this bundler');
+  // Dynamic import('./x.js') with a literal relative specifier is supported as
+  // LAZY EVALUATION (not lazy download): the module is bundled like any other
+  // but its factory only runs when the import() call does. Anything else (a
+  // computed specifier) still fails loudly.
+  const stripped = src.replace(DYNAMIC_IMPORT_RE, () => '');
+  if (/\bimport\s*\(/.test(stripped)) {
+    fail('dynamic import() with a non-literal or non-relative specifier in ' + idOf(fromAbs) + ' — not supported by this bundler');
   }
+  DYNAMIC_IMPORT_RE.lastIndex = 0;
+  while ((m = DYNAMIC_IMPORT_RE.exec(src)) !== null) specs.push(m[2]);
   return specs;
 }
 
@@ -826,6 +834,10 @@ function transformModule(id, src, absPath) {
   // matching whole import statements with the same anchored regex used for
   // discovery, and replacing each with its require() form.
   let out = src.replace(IMPORT_RE, (stmt) => rewriteImport(stmt, absPath));
+  // import('./x.js') -> a promise of the module's exports; the factory is
+  // evaluated on first use, inside the microtask.
+  out = out.replace(DYNAMIC_IMPORT_RE, (_all, _q, spec) =>
+    `Promise.resolve().then(() => require(${JSON.stringify(idOf(resolveSpecifier(absPath, spec)))}))`);
 
   // Now process exports, line by line, anchored at line start. Normalize CRLF
   // to LF so anchored per-line regexes (which use `$`, and `.` that excludes
