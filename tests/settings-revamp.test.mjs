@@ -91,7 +91,7 @@ test('Settings Sync loads with the promotion this build seeds, never the unfilte
   const render = sync.slice(sync.indexOf('export function renderSettingsSync('));
   assert.doesNotMatch(render, /\bPROMOTED\b(?!\s*\})/, 'the panel reads the promotion it was handed');
   assert.match(sync, /applied = await applyProfile\(settings, onChange, parsed, promoted\)/, 'auto-load awaits the owned write');
-  assert.match(screen, /renderSettingsSync\(syncMount, \{ settings, onChange, rows: allRows\(\), promoted: buildPromotion\(\),/);
+  assert.match(screen, /renderSettingsSync\(syncMount, \{ settings, onChange, rows: ROWS, promoted: buildPromotion\(\),/);
   assert.match(main, /stillWanted: \(\) => waiting,\n    promoted: promotionFor\(SETTINGS_DEFAULTS, promotionDebug\(\)\)\.values \}\)/, 'start-up auto-load passes the build promotion');
 });
 
