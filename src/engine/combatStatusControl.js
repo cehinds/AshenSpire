@@ -257,7 +257,7 @@ export function applyExpansionActiveStatus(ctx, target, id, amount, source = nul
   const def = ctx.registries?.statuses?.get(id);
   if (def?.decay?.duration) inst.duration = def.decay.duration;
   emit(ctx, 'statusApplied', target, { sourceId: source?.id ?? null, sourceKind: source?.kind, targetKind: target.kind,
-    status: id, stacks: add, total: inst.stacks, wasAbsent: before === 0 });
+    status: id, stacks: add, previousTotal: before, total: inst.stacks, wasAbsent: before === 0 });
   return true;
 }
 
@@ -269,7 +269,7 @@ function grant(ctx, target, id, amount, source) {
   inst.stacks = def?.stackMode === 'unique' ? 1 : def?.stackMode === 'refresh' ? Math.max(prior, amount) : prior + amount;
   syncPools(ctx, target);
   if (def?.decay?.duration) inst.duration = def.decay.duration;
-  emit(ctx, 'statusApplied', target, { sourceId: source?.id ?? null, status: id, stacks: amount, total: inst.stacks, wasAbsent: !prior });
+  emit(ctx, 'statusApplied', target, { sourceId: source?.id ?? null, status: id, stacks: amount, previousTotal: prior, total: inst.stacks, wasAbsent: !prior });
 }
 
 /** Root action interpreter calls this opcode with authored source identity. */

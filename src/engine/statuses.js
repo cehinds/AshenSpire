@@ -69,7 +69,8 @@ function applyStatusRaw(ctx, target, statusId, stacks = 1, source = null) {
   if (!(fixCoreEnabled(ctx) && fixCoreRules(ctx, target).statuses.overrides?.[statusId]) && Control.applyExpansionActiveStatus(ctx, target, statusId, stacks, source)) return;
   const def = statusDefinition(ctx, statusId);
   if (!target || !target.alive) return;
-  const wasAbsent = getStacks(target, statusId) <= 0;
+  const previousTotal = getStacks(target, statusId);
+  const wasAbsent = previousTotal <= 0;
   let amount = Math.floor(stacks);
   const weights = ctx.ratingsRules?.statuses?.[statusId];
   if (weights && target.ratings && source && source.id !== target.id && amount > 0) {
@@ -150,6 +151,7 @@ function applyStatusRaw(ctx, target, statusId, stacks = 1, source = null) {
     sourceId: source ? source.id : null,
     status: statusId,
     stacks: amount,
+    previousTotal,
     total: getStacks(target, statusId),
   });
 
