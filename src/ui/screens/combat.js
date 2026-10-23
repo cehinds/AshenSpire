@@ -1839,10 +1839,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     for (const enemy of combat.enemies) {
       const frame = enemyFrames.get(enemy.id)?.box;
       if (!frame) continue;
-      frame.querySelector('.combat-hit-chance')?.remove();
+      // Update the existing badge in place: removing and re-adding it dirtied
+      // layout, and the placement pass right after read it back (forced layout).
+      const existing = frame.querySelector(':scope > .combat-hit-chance');
       const badge = hitChanceBadge(enemy);
-      if (badge) {
-        frame.append(badge);
+      if (!badge) existing?.remove();
+      else {
+        if (!existing) frame.append(badge);
+        else if (existing.className !== badge.className || existing.textContent !== badge.textContent
+          || existing.dataset.rollMode !== badge.dataset.rollMode || existing.dataset.rangeDetail !== badge.dataset.rangeDetail) {
+          existing.replaceWith(badge);
+        }
         if (selectedCard) {
           const odds = badge.cloneNode(true);
           odds.className = 'card-hit-chance';
