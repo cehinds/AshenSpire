@@ -8,7 +8,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { enemyMoveSp, enemyMoveQuote, buildEnemyQueue } from '../src/engine/combatRoundsAdapter.js';
+import { enemyMoveSp, enemyMoveQuote, buildEnemyQueue, extendEnemyQueue } from '../src/engine/combatRoundsAdapter.js';
 import { enemyPlanActions } from '../src/engine/normalPreview.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 
@@ -187,4 +187,85 @@ test('an old active fight keeps its free enemy reaction and charge-time payment 
   dispatch(charge, { type: 'endTurn' });
   assert.equal(charge.enemies[0].stamina, charge.enemies[0].maxStamina);
   assert.equal(charge.enemies[0].pendingMove.spPayment, undefined);
+});
+
+
+for (const replay of [false, true]) test(`native Core planning projects persistent Advance ${replay ? 'already accepted in its queue' : 'before selecting follow-ups'}`, () => {
+  const combat = fight(), enemy = combat.enemies[0], def = registries.enemies.get(enemy.enemyId);
+  const pair = Object.keys(combat.rangeState.engagements)[0];
+  combat.rangeState.engagements[pair] = 1;
+  enemy.maxStamina = enemy.stamina = 3;
+  enemy.movesHistory = [];
+  delete enemy.combatStance;
+  const range = structuredClone(combat.rangeState), counters = combat.rng.getCounters();
+  let index = replay ? 1 : 0;
+  const moves = ['advance', 'caneStrike', 'caneStrike'];
+  const queue = replay ? [{ moveId: 'advance', sp: 1 }] : [];
+  extendEnemyQueue(enemy, def, queue, { combat, pick: (actor, row, available, pricing = combat) => {
+    const moveId = moves[index++];
+    return moveId && enemyMoveQuote(row.moves[moveId], { enemy: actor, moveId, combat: pricing }).totalSp <= available ? moveId : null;
+  } });
+  assert.deepEqual(queue, moves.map(moveId => ({ moveId, sp: 1 })));
+  assert.deepEqual(combat.rangeState, range, 'forecasting never moves the live pair');
+  assert.deepEqual(combat.rng.getCounters(), counters, 'projection consumes no extra random draws');
+  assert.equal(enemy.stamina, 3);
+  // Commit the accepted normal-combat plan, then resume the same snapshot.
+  enemy.intent = { ...enemy.intent, kind: 'buff', moveId: 'advance' };
+  enemy.plannedMoves = queue.slice(1);
+  enemy.planDue = true;
+  combat.player.reactionsEnabled = false;
+  const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(511, counters), snapshot });
+  for (const ctx of [combat, restored]) {
+    dispatch(ctx, { type: 'endTurn' });
+    assert.deepEqual(ctx.enemies[0].performedMoves, moves);
+    assert.equal(ctx.enemies[0].stamina, 0, 'all three real one-SP actions fit the pool');
+    assert.equal(ctx.rangeState.engagements[pair], 0);
+    assert.equal(ctx.eventLog.filter(row => row.type === 'combatEngagementMoved').length, 1);
+    assert.equal(ctx.eventLog.filter(row => row.type === 'enemyMoveUnavailable').length, 0);
+  }
+  assert.deepEqual(restored.rng.getCounters(), combat.rng.getCounters());
+});
+
+test('an attack approach remains temporary and is paid again by the next planned attack', () => {
+  const combat = fight(), enemy = combat.enemies[0], def = registries.enemies.get(enemy.enemyId);
+  combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 1;
+  enemy.maxStamina = 4;
+  enemy.movesHistory = [];
+  delete enemy.combatStance;
+  const queue = buildEnemyQueue(enemy, def, { combat, pick: () => 'caneStrike' });
+  assert.deepEqual(queue, [{ moveId: 'caneStrike', sp: 2 }, { moveId: 'caneStrike', sp: 2 }]);
+});
+
+
+test('native intent selection and acceptance use the same projected range after an owned Advance', () => {
+  const original = registries.enemies.get('fellWarden');
+  const def = { ...original, startingRange: 'reach', firstMove: 'advance', moves: {
+    advance: original.moves.advance, caneStrike: { ...original.moves.caneStrike, weight: 100 },
+  } };
+  const reg = { ...registries, enemies: { ...registries.enemies, get: id => id === def.id ? def : registries.enemies.get(id) } };
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 511 });
+  const combat = createRunCombat({ registries: reg, run, rng: createRng(511), enemyIds: ['fellWarden'] });
+  const enemy = combat.enemies[0];
+  assert.equal(enemy.maxStamina, 3);
+  assert.equal(combat.combatRounds, undefined, 'the normal Core route owns this plan');
+  assert.equal(enemy.intent.moveId, 'advance');
+  assert.deepEqual(enemy.plannedMoves, [{ moveId: 'caneStrike', sp: 1 }, { moveId: 'caneStrike', sp: 1 }]);
+  assert.equal(combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]], 1, 'constructing the plan does not execute Advance');
+});
+
+test('movement projection resolves authored repeat formulas without granting other effects', () => {
+  const combat = fight(), enemy = combat.enemies[0], original = registries.enemies.get(enemy.enemyId);
+  const def = { ...original, moves: { ...original.moves, advance: { ...original.moves.advance, effects: [
+    { op: 'block', target: 'self', amount: 999 },
+    { op: 'moveEngagement', target: 'enemy', bands: -1, repeat: { f: 'add', args: [1, 1] } },
+  ] } } };
+  combat.registries = { ...registries, enemies: { ...registries.enemies, get: id => id === enemy.enemyId ? def : registries.enemies.get(id) } };
+  combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 2;
+  enemy.maxStamina = 3;
+  const before = { range: structuredClone(combat.rangeState), block: enemy.block, counters: combat.rng.getCounters() };
+  let index = 0;
+  const queue = buildEnemyQueue(enemy, def, { combat, pick: () => ['advance', 'caneStrike', 'caneStrike'][index++] });
+  assert.deepEqual(queue, [{ moveId: 'advance', sp: 1 }, { moveId: 'caneStrike', sp: 1 }, { moveId: 'caneStrike', sp: 1 }]);
+  assert.deepEqual({ range: combat.rangeState, block: enemy.block, counters: combat.rng.getCounters() }, before);
 });

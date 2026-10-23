@@ -1022,7 +1022,7 @@ function rollIntents(combat, isFirstTurn = false) {
   // stream; slot 0 becomes the intent, so the intent box and the visibility rolls read as before.
   const queues = combat.combatRounds ? Rounds.buildEnemyQueues(combat, {
     isFirstTurn,
-    pick: (enemy, def, maxSp) => weightedMovePick(combat, enemy, def, maxSp),
+    pick: (enemy, def, maxSp, pricing = combat) => weightedMovePick(pricing, enemy, def, maxSp),
     held: (enemy) => Boolean(enemy.pendingMove) || enemy.skipNextTurn || S.getFlag(combat, enemy, 'skipTurn'),
   }) : null;
   // Normal combat (SPEC §4.6, owner 2026-10-12): every enemy plans its pool of SP with the same weighted pick. The head
@@ -1043,7 +1043,7 @@ function rollIntents(combat, isFirstTurn = false) {
     // Rounds mode: the queue's slot 0, already recorded in movesHistory. Normal combat: the head of the plan, whose picks
     // were recorded when planned (SPEC §4.11 multi-action preview; the pool plays all of it).
     const moveId = queues ? (queues[enemy.id]?.[0]?.moveId ?? null)
-      : Rounds.takePlannedMove(combat, enemy, def, { isFirstTurn, pick: (e, d, maxSp) => weightedMovePick(combat, e, d, maxSp) });
+      : Rounds.takePlannedMove(combat, enemy, def, { isFirstTurn, pick: (e, d, maxSp, pricing = combat) => weightedMovePick(pricing, e, d, maxSp) });
     if (moveId == null) {
       enemy.intent = { kind: 'unknown', moveId: null };
       continue;

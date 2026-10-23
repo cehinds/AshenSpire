@@ -1,4 +1,5 @@
 import { stanceOf } from '../model/stanceRules.js';
+import { actorRangeKey, movedEngagementState } from '../model/combatEngagement.js';
 import { core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
 import { previewEnemyAction } from './enemyActionPreview.js';
 import { expandedEnemyMove, enemyMoveCarrier } from './combatCardTactics.js';
@@ -130,7 +131,9 @@ export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick,
   const pool = enemyTurnSp(enemy, def, combat);
   // Price the accepted sequence against the stance before each move; planning grants nothing.
   const pricingEnemy = { ...enemy };
+  const pricing = policy ? { ...combat, rangeState: combat.rangeState && structuredClone(combat.rangeState) } : combat;
   for (const entry of queue) {
+    if (policy) projectEnemyMovement(pricing, pricingEnemy, entry.moveId);
     const stance = stanceOf({ ...def.moves[entry.moveId], enemyId: enemy.enemyId, moveId: entry.moveId });
     if (stance) pricingEnemy.combatStance = stance;
   }
@@ -139,19 +142,37 @@ export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick,
     if ((endAtCharge || policy) && queue.some((entry) => def.moves[entry.moveId]?.delay)) break;
     if (queue.length > 0 && spent >= pool) break;
     const opener = isFirstTurn && queue.length === 0 && def.firstMove ? def.firstMove : null;
-    let moveId = opener ?? pick(pricingEnemy, def, pool - spent);
-    if (policy && moveId != null && enemyMoveQuote(def.moves[moveId], { enemy: pricingEnemy, moveId, combat }).totalSp > pool - spent) moveId = pick(pricingEnemy, def, pool - spent);
-    if (!policy && moveId == null && queue.length === 0 && opener == null) moveId = pick(pricingEnemy, def, Infinity);
+    let moveId = opener ?? pick(pricingEnemy, def, pool - spent, pricing);
+    if (policy && moveId != null && enemyMoveQuote(def.moves[moveId], { enemy: pricingEnemy, moveId, combat: pricing }).totalSp > pool - spent) moveId = pick(pricingEnemy, def, pool - spent, pricing);
+    if (!policy && moveId == null && queue.length === 0 && opener == null) moveId = pick(pricingEnemy, def, Infinity, pricing);
     if (moveId == null) break;
-    const sp = policy ? enemyMoveQuote(def.moves[moveId], { enemy: pricingEnemy, moveId, combat }).totalSp : moveSp(def.moves[moveId], { enemy: pricingEnemy, moveId, combat });
+    const sp = policy ? enemyMoveQuote(def.moves[moveId], { enemy: pricingEnemy, moveId, combat: pricing }).totalSp : moveSp(def.moves[moveId], { enemy: pricingEnemy, moveId, combat });
     if (spent + sp > pool && (policy || queue.length > 0)) break;
     spent += sp;
     enemy.movesHistory.push(moveId);
     queue.push({ moveId, sp });
+    if (policy) projectEnemyMovement(pricing, pricingEnemy, moveId);
     const stance = stanceOf({ ...def.moves[moveId], enemyId: enemy.enemyId, moveId });
     if (stance) pricingEnemy.combatStance = stance;
   }
   return queue;
+}
+
+// Only authored movement persists between actions. An attack's implicit Advance
+// is temporary to that action and must still be quoted on every later attack.
+function projectEnemyMovement(pricing, enemy, moveId) {
+  if (!pricing.rangeState?.policy.enabled) return;
+  const move = expandedEnemyMove(enemy, pricing.registries.enemies.get(enemy.enemyId).moves[moveId], moveId, pricing);
+  if (move.delay || !move.effects?.some(effect => effect.op === 'moveEngagement')) return;
+  const preview = previewEnemyAction(pricing, enemy, moveId);
+  for (const effect of preview?.actionEffects || []) {
+    if (effect.op !== 'moveEngagement' || effect.if && effect.conditionMet !== true || effect.oncePerTurn) continue;
+    const repeats = Math.max(0, Math.floor(effect.repeat ?? 1));
+    for (let repeat = 0; repeat < repeats; repeat++) {
+      pricing.rangeState = movedEngagementState(pricing.rangeState, actorRangeKey(pricing, enemy),
+        actorRangeKey(pricing, pricing.player), effect.bands);
+    }
+  }
 }
 
 // Builds every living, unheld enemy's queue (combat.enemyQueues). `held(enemy)` is true for an enemy
