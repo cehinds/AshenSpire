@@ -520,12 +520,12 @@
 /* Classic compact controls keep the complete scope label and follow-ups on one
    line. Their measured width is packed by battlefieldStage; expanded/default
    HUD intents retain their existing composition and sizing. */
-:root .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent {
+:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent {
   flex-direction: row; width: max-content;
   max-width: calc((100 * var(--view-vw, 1vw) - 16px) / var(--ui-zoom,1));
 }
-:root .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent .intent-damage-read {
+:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent .intent-damage-read {
   flex-direction: row; align-items: center; gap: calc(4px / var(--ui-zoom,1));
 }
-:root .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent .intent-actions { flex-wrap: nowrap; }
-:root .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent :is(.intent-compact,.cr-followups) { flex: none; }
+:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent .intent-actions { flex-wrap: nowrap; }
+:root[data-display-appearance='classic'] .combat[data-layout='formation'][data-target-hud='false'] .enemy:not(.context-selected) .intent :is(.intent-compact,.cr-followups) { flex: none; }
