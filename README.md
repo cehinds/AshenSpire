@@ -24,19 +24,19 @@ Choose **Test** for the latest promoted game. Badges show the full **published**
 build number and link to its history. Play and HTML follow that channel's latest build.
 
 <!-- readme-sync:channels -->
-**Test** — promoted · [Play Test](https://cehinds.github.io/AshenSpire/test/latest/) · [HTML](https://cehinds.github.io/AshenSpire/test/latest/download/AshenSpire.html)
+**Test** — promoted · [Play Test](https://cehinds.github.io/AshenSpire/test/latest/) · [HTML (offline, desktop, ~130 MB)](https://cehinds.github.io/AshenSpire/test/latest/download/AshenSpire.html)
 
 [![Test build](https://cehinds.github.io/AshenSpire/test/latest/build.svg)](https://cehinds.github.io/AshenSpire/test/)
 
-Dev — integration · [Play Dev](https://cehinds.github.io/AshenSpire/dev/latest/) · [HTML](https://cehinds.github.io/AshenSpire/dev/latest/download/AshenSpire.html)
+Dev — integration · [Play Dev](https://cehinds.github.io/AshenSpire/dev/latest/) · [HTML (offline, desktop, ~130 MB)](https://cehinds.github.io/AshenSpire/dev/latest/download/AshenSpire.html)
 
 [![Dev build](https://cehinds.github.io/AshenSpire/dev/latest/build.svg)](https://cehinds.github.io/AshenSpire/dev/)
 
-Release — candidate · [Play Release](https://cehinds.github.io/AshenSpire/release/latest/) · [HTML](https://cehinds.github.io/AshenSpire/release/latest/download/AshenSpire.html)
+Release — candidate · [Play Release](https://cehinds.github.io/AshenSpire/release/latest/) · [HTML (offline, desktop, ~130 MB)](https://cehinds.github.io/AshenSpire/release/latest/download/AshenSpire.html)
 
 [![Release build](https://cehinds.github.io/AshenSpire/release/latest/build.svg)](https://cehinds.github.io/AshenSpire/release/)
 
-Main — earlier stable · [Play Main](https://cehinds.github.io/AshenSpire/main/latest/) · [HTML](https://cehinds.github.io/AshenSpire/main/latest/download/AshenSpire.html)
+Main — earlier stable · [Play Main](https://cehinds.github.io/AshenSpire/main/latest/) · [HTML (offline, desktop, ~130 MB)](https://cehinds.github.io/AshenSpire/main/latest/download/AshenSpire.html)
 
 [![Main build](https://cehinds.github.io/AshenSpire/main/latest/build.svg)](https://cehinds.github.io/AshenSpire/main/)
 <!-- /readme-sync:channels -->
