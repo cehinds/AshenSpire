@@ -3,19 +3,25 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { UI_ICON_IDS, UI_ICON_LABELS, LEGACY_UI_ICON_IDS, uiIconId, uiIconText } from '../src/content/uiIcons.js';
+import { UI_ICON_IDS, UI_VECTOR_ICON_IDS, HISTORICAL_UI_GLYPHS, UI_ICON_LABELS, LEGACY_UI_ICON_IDS, uiIconId, uiIconText } from '../src/content/uiIcons.js';
 import { engravedGlyphId, engravedIconUrl } from '../src/ui/components/engravedIcon.js';
 
 const files = dir => readdirSync(new URL(dir, import.meta.url), { withFileTypes: true }).flatMap(entry =>
   entry.isDirectory() ? files(`${dir}/${entry.name}`) : [`${dir}/${entry.name}`]);
 
-test('named icons and saved legacy glyphs resolve to the same existing artwork', () => {
+test('named vector and historical glyph IDs resolve without changing saved legacy aliases', () => {
   assert.equal(new Set(UI_ICON_IDS).size, UI_ICON_IDS.length);
   for (const id of UI_ICON_IDS) {
     assert.match(id, /^[a-z]+(?:-[a-z]+)*$/);
     assert.equal(engravedGlyphId(id), id);
     assert.ok(UI_ICON_LABELS[id]?.length <= 6, `${id} has a compact text fallback`);
-    assert.ok(engravedIconUrl(id)?.endsWith(`/${id}.svg`), id);
+    if (UI_VECTOR_ICON_IDS.includes(id)) assert.ok(engravedIconUrl(id)?.endsWith(`/${id}.svg`), id);
+    else {
+      assert.ok(Object.hasOwn(HISTORICAL_UI_GLYPHS, id));
+      const url = engravedIconUrl(id);
+      assert.ok(url.startsWith('data:image/svg+xml;charset=utf-8,'), id);
+      assert.ok(decodeURIComponent(url.split(',')[1]).includes(HISTORICAL_UI_GLYPHS[id]));
+    }
   }
   for (const [legacy, id] of Object.entries(LEGACY_UI_ICON_IDS)) assert.equal(uiIconId(legacy), id);
   assert.equal(uiIconText('health'), 'HP');

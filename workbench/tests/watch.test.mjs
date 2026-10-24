@@ -3,6 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { createWatcher, watchModeFor, recursiveEventPaths } from '../core/watch.mjs';
@@ -263,4 +264,39 @@ test('on macOS a known folder moved out and back again batches its files', async
   await fs.rename(path.join(outside, 'ui'), path.join(root, 'content/ui'));
   await waitFor(() => batches.flat().includes('content/ui/tokens.json'));
   assert.ok(batches.flat().includes('content/ui/tokens.json'), `the returned folder's file is batched: ${batches.flat()}`);
+});
+
+
+test('watch batches deduplicate paths and reset the quiet period before flushing', async (t) => {
+  const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'watch-test-')));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.mkdir(path.join(root, 'styles'));
+  await fs.mkdir(path.join(root, 'src'));
+  const callbacks = new Map();
+  t.mock.method(fsSync, 'watch', (dir, callback) => {
+    callbacks.set(dir, callback);
+    return { on() { return this; }, close() {} };
+  });
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const batches = [];
+  const watcher = createWatcher({ root, dirs: ['styles', 'src'], platform: 'linux', debounceMs: 120,
+    onBatch: (files) => batches.push(files) });
+  try {
+    callbacks.get(path.join(root, 'styles'))('change', 'main.css');
+    t.mock.timers.tick(60);
+    callbacks.get(path.join(root, 'src'))('change', 'new.js');
+    t.mock.timers.tick(60);
+    assert.deepEqual(batches, [], 'the second path resets the first deadline');
+    callbacks.get(path.join(root, 'src'))('change', 'new.js');
+    t.mock.timers.tick(119);
+    assert.deepEqual(batches, [], 'a duplicate event also resets the quiet period');
+    t.mock.timers.tick(1);
+    assert.deepEqual(batches, [['src/new.js', 'styles/main.css']], 'one sorted, deduplicated batch');
+    callbacks.get(path.join(root, 'styles'))('change', 'main.css');
+    t.mock.timers.tick(120);
+    assert.deepEqual(batches, [['src/new.js', 'styles/main.css'], ['styles/main.css']],
+      'a later quiet period produces a distinct batch');
+  } finally {
+    watcher.close();
+  }
 });
