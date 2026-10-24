@@ -319,3 +319,11 @@ File header: class definitions (SPEC section 5.1). Only the Reaver registered in
 classes are UI display data, exported separately and NOT part of the bundle).
 
 - **cardPool** — each class's list was grouped by rarity with comments. In order: Commons, Uncommons, Rares. Reaver: Commons start at `crimsonCleave`, Uncommons at `stomp`, Rares at `executioner`. Starseer: Commons start at `cometFragment`, Uncommons at `starstoneArc`, Rares at `supernova` (the group runs to `riteOfCinders`, the end of its list). Rogue's list carried no rarity comments. Herald: Commons start at `bloodPact`, Uncommons at `martyrBlood`, Rares at `secondBloom`. A card's rarity is authoritative in its card row (content/source/cards/*.json), not by position in this list.
+
+## Progression (content/source/progression*.json)
+
+The class-progression content under `src/content/progression/`. Flat top-level file names (the compiler reads only `cards/` as a subfolder). Each module imports its generated rows from `src/content/generated/` and keeps its real logic in JS; each module's header says which part is which.
+
+### Card families (progressionCardFamilies.json)
+
+`src/content/progression/cardFamilies.js` re-exports it as `cardFamilies`. Header comment: "Approved progression catalogue; exact family identities, unlocks and rank costs. Recipes live in cards.js; tags live only in content/source/tagging.csv." The recipes that turn a row into a card (riders, grade budget) are code in `cards.js`.
