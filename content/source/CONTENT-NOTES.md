@@ -358,3 +358,14 @@ Each row was a positional tuple `[id, source, default rank, exact Actions at ran
 - **grades** (optional) — six explicit grade profiles, used instead of `values`. They preserve the previous resolved resource prices and riders, and author the payoff of the paid entry spells and arts directly instead of letting a stronger effect buy another resource tax.
 - **alwaysRiders** (optional) — keep the non-primary effects at every rank (otherwise they start at rank 2).
 - **fixedGradeCosts** (optional) — `{ "<rank>": { actionCost, manaCost } }`. The `crimsonCleave` entry preserves the existing resolved grade-4 price after correcting Sweep area targeting.
+
+### Cards and grade rules (progressionGradeRules.json)
+
+`src/content/progression/cards.js` ("Forty class families. Rank is a recipe selection, never an imperative card hook.") stays JS: it holds `riders`, one function per family that builds that family's rank-2-and-up effects, plus `familyGrade` and the card assembly, all logic over the card families and lore rows. Its comment "Only the family rider is specialized. Shared grade milestones and budgets are composed below, with no engine branch naming one of these families." still applies.
+
+The two constants it shares with `lessons.js` are data:
+
+- **gradeBudget** — the approved total direct damage and Block ceiling at each of the six ranks. Catalogue values are per hit; the explicit immediate rider budget and the milestone Block are reserved before a primary is clamped to this ceiling.
+- **areaFamilies** — families whose primary hits every living enemy from rank 3.
+
+`cardRecipeText.js` (the display text builder; "Display is derived from the same numeric recipe rather than copying numbers into prose. Condition descriptions carry no hidden combat implementation.") and `rules.js` (re-exports `balance.progression`; numeric defaults and their Advanced help live in the one balance source) are wholly logic or derived from another module, and stay JS.

@@ -12,11 +12,12 @@ import { heraldCards } from '../cards/herald.js';
 import { recipeText } from './cardRecipeText.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { cardExposure } from '../generated/cardExposure.js';
+import { progressionGradeRules } from '../generated/progressionGradeRules.js';
 import { progressionLessonRecipes as recipes } from '../generated/progressionLessonRecipes.js';
 
 const originals = new Map([...reaverCards, ...starseerCards, ...rogueCards, ...heraldCards].map(c => [c.id, c]));
 const legacyCarriers = new Map(cardExposure.map(({ cardId, ...carrier }) => [cardId, carrier]));
-const budget = [6, 9, 13, 18, 24, 30];
+const budget = progressionGradeRules.gradeBudget;
 
 function lessonGrade(recipe, rank) {
   const { id, abilityKind, actionCost, primaryIndex, values, ...options } = recipe;
