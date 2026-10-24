@@ -1,8 +1,23 @@
-import { expansionStatuses } from './combatStatusRules.js';
 // src/content/balance.js — every global tuning constant (SPEC §3.1(4))
 //
-// Code never embeds a balance number; a balance change is a one-file diff here.
+// Code never embeds a balance number; a balance change is a one-file diff.
+//
+// THE NUMBERS ARE JSON. Each top-level key of `balance` is
+// content/source/balance<Key>.json (the small scalars share balanceCore.json);
+// tools/content-build.mjs compiles them to ./generated/balance<Key>.js, and this
+// module reassembles `balance` from those parts in the original key order. The
+// comments that sat beside the numbers, and how a `[NOTE]` is written, are in
+// content/source/CONTENT-NOTES.md under "Balance". A `"$note"` key in a JSON file
+// is the NOTE symbol below (src/content/noteKeys.js withNotes turns it back).
+//
+// WHAT STAYS HERE is code, not data: the parts that come from other modules
+// (combatMatchups, combatIntent, enemyKnowledge, the progression gear table), the
+// `damage` card-value rule (one template for five card kinds, whose status roster is
+// derived from expansionStatuses), the `progression` note sentences computed from
+// the gear rows, ui.tooltipPlacement.hoverDelayMs (derived from the tooltip
+// settings), and balanceWords.
 
+import { expansionStatuses } from './combatStatusRules.js';
 import { tooltipHelp } from './tooltipHelp.js';
 import { progressionGearRequirements } from './progression/gear.js';
 import { combatMatchups, combatIntent } from './combatMatchups.js';
@@ -41,41 +56,8 @@ import { balanceArcaneExposure } from './generated/balanceArcaneExposure.js';
 import { balanceProgressionRelics } from './generated/balanceProgressionRelics.js';
 import { balanceCore } from './generated/balanceCore.js';
 
-// ---- WHAT EACH NUMBER DOES, WRITTEN BESIDE IT (owner, 2026-09-23) ----------
-//
-// Every object below carries a `[NOTE]` block beside its own numbers: the
-// sentence Settings → Advanced shows under each row. They lived in
-// model/balanceNotes.js until the owner asked for them here, and the reason
-// is the one this file's header gives for the numbers — a description kept in
-// a second file drifts from the number it describes, because nobody editing
-// the number sees it. Two of the sentences reviewed in #1243 had been copied
-// from a comment in this file that the code had since outgrown.
-//
-// THE KEY IS A SYMBOL, and that is what lets a sentence sit inside an object
-// the engine reads as numbers. `Object.keys`, `Object.entries`, JSON and
-// structuredClone all skip it, so `validate.js`'s unknown-field checks,
-// model/advancedConfig.js's `leafRows` and every engine reader walk past it:
-// `balance.shop.sellFraction` is still 0.5 and `balance.shop` still has the
-// keys it had. `Symbol.for`, so a second copy of this module shares the key.
-//
-// HOW TO WRITE ONE. A key names a number by its path under the object that
-// holds the block:
-//
-//   sellFraction: 'What the merchant pays …'           this one number
-//   '{kind}Cost.{rarity}.{end}': 'The {band} of …'     every number of a family
-//   '{statId}.perLevel': { text: '…', inert: true }    a number nothing reads
-//
-// `{name}` in a key captures a path segment. In a sentence, `{name}` is a
-// blank model/balanceNotes.js fills with a NAME — a relic's from the relic, a
-// class's from the class — and `{a name}` fills it with its article too.
-// Nothing there writes prose; the phrases it picks between are `balanceWords`
-// below. Every note but an inert one ends with `balanceWords.newRun`; an
-// inert one says nothing reads it, and does not then promise to apply.
-//
-// A number with no note falls back to "Authored balance value: <path>", and
-// tests/advanced-config.test.mjs fails on it. So does a note naming a number
-// that is not here, which is what keeps a sentence and its number together:
-// rename the number without moving its sentence and the test says so.
+// The symbol key a sentence about a number sits under: `Object.keys`, JSON and structuredClone skip it,
+// so the engine still reads plain numbers. `Symbol.for`, so a second copy of this module shares it.
 export const NOTE = Symbol.for('ashenspire.balance.note');
 
 // The vocabulary the note blanks are filled from. Words, not rules: a phrase
@@ -272,46 +254,29 @@ export const balance = {
   [NOTE]: balanceCore[NOTE],
 
   poise: balancePoise,
-
   stagger: balanceStagger,
-
   mana: balanceMana,
-
   deck: balanceDeck,
-
   classMastery: balanceClassMastery,
   skill: balanceSkill,
-
   tagMechanics: balanceTagMechanics,
-
   rewards: balanceRewards,
-
   shop: balanceShop,
-
   rest: balanceRest,
-
   atlas: balanceAtlas,
-
   smithing: balanceSmithing,
-
   levels: balanceLevels,
-
   level: balanceCore.level,
   xp: balanceXp,
   levelUp: balanceLevelUp,
-
   graceRefill: balanceCore.graceRefill,
   graceRefillAtRunStart: balanceCore.graceRefillAtRunStart,
-
   gauntlet: balanceGauntlet,
-
   coop: balanceCoop,
-
   endless: balanceEndless,
   seatTiers: balanceSeatTiers,
   bossTiers: balanceBossTiers,
   customMods: balanceCustomMods,
-
   // ui is JSON except the one number derived from the tooltip settings table
   // (the key sits first in tooltipPlacement, as it always did).
   ui: {
@@ -328,6 +293,4 @@ export const balance = {
   sigils: balanceSigils,
   equipment: balanceEquipment,
   progressionFeats: balanceProgressionFeats,
-
-
 };
