@@ -15,12 +15,12 @@ Status key: `todo` · `in progress` · `done (#PR)`
 
 | # | Area | From | To | Status |
 |---|------|------|----|--------|
-| 1 | Rogue cards | `src/content/cards/rogue.js` | `content/source/cards/rogueCards.json` | in review (#2287) |
-| 2 | Encounters (three seats) | `src/content/encounters/*.js` | `content/source/{weald,marches,reach}Encounters.json` | in progress |
-| 3 | Shops | `src/content/shops.js` | `content/source/shops.json` | todo |
-| 4 | Consumables, companions, keywords | `src/content/{consumables,companions,keywords}.js` | `content/source/*.json` | todo |
-| 5 | Equipment, attributes, derived stats, action costs | `src/content/{equipment,attributes,derivedStats,actionCosts}.js` | `content/source/*.json` | todo |
-| 6 | Expansion cards and martial/equipment/lore tables | `src/content/combatExpansion*.js` | `content/source/*.json` | todo |
+| 1 | Rogue cards | `src/content/cards/rogue.js` | `content/source/cards/rogueCards.json` | done (#2287) |
+| 2 | Encounters (three seats) | `src/content/encounters/*.js` | `content/source/{weald,marches,reach}Encounters.json` | in review (#2288) |
+| 3 | Shops | `src/content/shops.js` | `content/source/shops.json` | done, queued (adds the `"$note"` field for Settings notes) |
+| 4 | Consumables, companions, keywords | `src/content/{consumables,companions,keywords}.js` | `content/source/*.json` | done, queued (class books stay derived from classes) |
+| 5 | Equipment, attributes, derived stats, action costs | `src/content/{equipment,attributes,derivedStats,actionCosts}.js` | `content/source/*.json` | in progress |
+| 6 | Expansion cards and martial/equipment/lore tables | `src/content/combatExpansion*.js` | `content/source/*.json` | done, queued (apply functions stay JS) |
 | 7 | Progression (card families, lessons, lore, feats, unlocks, gear) | `src/content/progression/*.js` | `content/source/progression/*.json` | todo |
 | 8 | Balance numbers (2,700 lines) | `src/content/balance.js` | split by topic into `content/source/balance/*.json` | todo |
 | 9 | One-page editing guide: "to change X, edit Y" for every area above | `docs/MANUAL-EDITING.md` | — | todo |
