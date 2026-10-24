@@ -62,6 +62,11 @@ export function mountHandInspectionOverlay(hand) {
   const pointers = new Set();
   let awaitingClick = false;
   let revealOwner = null;
+  // What the last reveal measured against (and left behind). A mutation burst
+  // after one selection asks for the same reveal again and again; asking the
+  // same question of the same geometry measures (and forces layout) for nothing.
+  let revealedKey = null;
+  let forceReveal = false;
   const restore = () => {
     if (control) {
       control.classList.remove('hand-info-portal');
@@ -84,7 +89,17 @@ export function mountHandInspectionOverlay(hand) {
         revealOwner.parentElement === hand && revealOwner.matches?.('.selected,.inspection-selected'))
         ? revealOwner : focused || selectedOwner;
       const ownedControl = active === upcast?.parentElement ? upcast : active?.querySelector?.('.card-upcast-controls');
-      if (active) revealHandUpcastControl(hand, ownedControl?.getBoundingClientRect().width ? ownedControl : active);
+      if (active) {
+        const target = ownedControl?.getBoundingClientRect().width ? ownedControl : active;
+        const key = () => [active.dataset?.instanceId, active === focused, target === active, hand.clientWidth, hand.scrollLeft,
+          viewViewportBox().right, active.style?.cssText, target.hidden].join('|');
+        const before = key();
+        if (forceReveal || before !== revealedKey) {
+          revealHandUpcastControl(hand, target);
+          revealedKey = key();
+        }
+      } else revealedKey = null;
+      forceReveal = false;
     }
     const selected = hand.querySelector('.card.inspection-selected.inspection-info-visible');
     if (selected !== owner) {
@@ -130,7 +145,7 @@ export function mountHandInspectionOverlay(hand) {
   // A new press, keyboard action or blur also releases a suppressed click.
   const settle = () => { awaitingClick = false; schedule(); };
   const blur = () => { pointers.clear(); settle(); };
-  const choose = event => { revealOwner = event.target.closest('.card'); schedule(); };
+  const choose = event => { revealOwner = event.target.closest('.card'); forceReveal = true; schedule(); };
   const observer = new MutationObserver(schedule);
   observer.observe(hand, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'hidden'] });
   hand.addEventListener('scroll', followScroll);
