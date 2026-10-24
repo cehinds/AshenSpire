@@ -328,12 +328,14 @@ test('Export exceptions permit only stored section keys and reject visible label
     const remaining = file.endsWith('/settings.js')
       ? code.replace(/\b(?:advancedGroup|id):\s*'Export'/g, '')
       : code.replace(/\bsection\s*===\s*'Export'/g, '');
-    assert.deepEqual(remaining.match(/(['"`])Export\1/g) || [], [], `${file}: Export is allowed only as a semantic section key`);
+    assert.deepEqual(remaining.match(/(?<=['"`>])Export(?=['"`<]| ?\$\{| ['"`])/g) || [], [], `${file}: Export is allowed only as a semantic section key`);
   };
   for (const file of files) {
     const source = readFileSync(join(ROOT, file), 'utf8');
     assertSemanticOnly(file, source);
     assert.throws(() => assertSemanticOnly(file, source + "\nconst regression = { label: 'Export' };"),
       /Export is allowed only as a semantic section key/, 'a visible Export label must use its catalog row');
+    assert.throws(() => assertSemanticOnly(file, source + "\nconst regressionHTML = '<button>Export</button>';"),
+      /Export is allowed only as a semantic section key/, 'visible Export markup must use its catalog row');
   }
 });
