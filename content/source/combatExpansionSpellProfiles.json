@@ -1,0 +1,26 @@
+{
+  "staffMagicAttack": {
+    "school": "force",
+    "damageType": "blunt",
+    "maneuver": "casting",
+    "range": "reach"
+  },
+  "sceptreArcaneAttack": {
+    "school": "force",
+    "damageType": "blunt",
+    "maneuver": "casting",
+    "range": "reach"
+  },
+  "staffGuard": {
+    "school": "alteration",
+    "damageType": "blunt",
+    "maneuver": "defend",
+    "range": "melee"
+  },
+  "sceptreGuard": {
+    "school": "alteration",
+    "damageType": "blunt",
+    "maneuver": "defend",
+    "range": "melee"
+  }
+}

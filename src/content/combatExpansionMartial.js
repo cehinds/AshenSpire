@@ -1,47 +1,21 @@
+// src/content/combatExpansionMartial.js — the Martial projection (applyCombatExpansionMartial).
+// The tables are JSON: the per-card role rows (combatExpansionMartialOverlay) are authored in
+// content/source/combatExpansionMartialOverlay.json, and the lists and numbers the projection
+// reads (area, ranged, evades, poise replies, upcast, status) in
+// content/source/combatExpansionMartialTables.json; content-build compiles both to
+// src/content/generated/. The projection itself is real logic and stays JS. The comments that
+// lived here are in content/source/CONTENT-NOTES.md under "## Combat expansion tables".
 import { objectTagIds } from './tags.js';
-
-// Existing ids, rather than display names, own every changed Martial role.
-// This projection runs after equipment composition and only for version 2.
-const groups = {
-  attack: 'viperStrike septicBlade lethalDose strike gorefireSlash serratedBlade rend twinbladeFlurry impale executioner stitchedArms bloodhuntersStrike goreslash flameToBlade bloodTithe ambush rogueShiv quickCut twinPrick hamstringRogue serratedShiv lowBlow cheapShot bladeDanceRogue garrote coupDeGrace sap assassinate thousandCutsRogue deathblow katanaDrawCut twinFang rimeThrust progression-ember-hew progression-furnace-advance progression-shiv-of-ash progression-needle-feint progression-back-alley-cut progression-wire-snare progression-carrion-cut progression-twinshade progression-last-laugh',
-  defend: 'stoneskin defend technique ironResolve enterBulwark shieldwall wardingLunge unbreakable lastStand bracingStance ironVowCard brace setTheShield aegisOfEmbers smokePellet pocketSand smokeVeil vanish misdirect smokeBomb ironSkin quickGuard shieldGuardian guardianBulwark shieldBastion progression-cinder-guard progression-bloodstep progression-warbound-defiance progression-red-standard progression-crown-of-cinders progression-pocket-coil progression-silent-exchange',
-  sweep: 'crimsonCleave cleavingBlow hewingArc whirlingGuard sweepingBlow progression-ashen-cleaver',
-  smash: 'stomp kickOff ruinousBlow poiseBreaker sunderplate sunderingChop shieldCrash greatswordSunderingHew bashingBlow colossusSmash kilnCleave progression-breaker-s-toll',
-  counter: 'shieldBash guardCounter riposte rondelParry bindingParry spikedReprisal progression-crimson-reprisal evasiveGuard dodgeRoll quickstep backstep acrobaticsRogue shadowstep progression-nightstep',
-  ranged: 'aspDart ricochet fanOfKnives toxicVolley pinningShot arrowVolley aimedShot barbedArrow',
-  support: 'enterGorefire rallyingStandard warSurgeon hemorrhage warcry goreblood warriorsVow sanguinePactCard feint pilfer setupRogue disorient afterimageCard bloodletterRogue venomcoat deadlyTempoCard opportunistCard envenomCard executionWindow perfectHeist prepare honedEdge fieldDressing blindingSand hamstring masterOfStrategy enfeeble wound dazed slimed guilt rallyingBanner',
-};
-export const combatExpansionMartialOverlay = Object.fromEntries(Object.entries(groups)
-  .flatMap(([maneuver, ids]) => ids.split(' ').map(id => [id, { maneuver }])));
-// Lethal Dose is a thrown vial: a projectile at Reach, never a Ranged maneuver (owner #22).
-combatExpansionMartialOverlay.lethalDose = { maneuver: 'attack', range: 'reach', projectile: true };
-combatExpansionMartialOverlay.nockAndWait = { maneuver: 'counter', range: 'reach', counterMode: 'ranged' };
-// Defensive use still pays and resolves the card's printed effects.
-combatExpansionMartialOverlay.whirlingGuard.defensiveReaction = true;
-combatExpansionMartialOverlay.sweepingBlow.defensiveReaction = true;
-// A wide sweep disrupts footing through authored bodily pressure, rather than
-// granting every Sweep an automatic active status. Two base sweeps fill 6.
-combatExpansionMartialOverlay.sweepingBlow.buildup = {
-  op: 'buildup', target: 'allEnemies', status: 'offBalance', amount: 3,
-  camp: 'physical', recoveryProfile: 'bodily',
-};
-const AREA = new Set(['ricochet', 'fanOfKnives', 'toxicVolley', 'arrowVolley']);
-const RANGED = new Set(['aimedShot', 'barbedArrow']);
-const EVADES = new Set(['evasiveGuard', 'dodgeRoll', 'quickstep', 'backstep', 'acrobaticsRogue', 'shadowstep', 'progression-nightstep']);
-const POISE_REPLIES = { shieldBash: 4, riposte: 4, rondelParry: 4, bindingParry: 3, spikedReprisal: 5,
-  'progression-crimson-reprisal': 5, evasiveGuard: 2, backstep: 3, acrobaticsRogue: 3,
-  shadowstep: 4, 'progression-nightstep': 4, nockAndWait: 3 };
-// These are the authored, ungraded v2 source amounts. Permanent primary
-// damage improvements become Poise improvements on zero-HP Counters; they
-// never restore HP retaliation. Conditional grade effects keep their gates.
-const REPLY_SOURCE_BASE = {
-  shieldBash: { damage: 3, poise: 0 }, riposte: { damage: 4, poise: 0 },
-  rondelParry: { damage: 0, poise: 5 }, bindingParry: { damage: 0, poise: 0 },
-  spikedReprisal: { damage: 4, poise: 0 }, 'progression-crimson-reprisal': { damage: 5, poise: 0 },
-  evasiveGuard: { damage: 0, poise: 0 }, backstep: { damage: 0, poise: 0 },
-  acrobaticsRogue: { damage: 0, poise: 0 }, shadowstep: { damage: 0, poise: 0 },
-  'progression-nightstep': { damage: 0, poise: 0 }, nockAndWait: { damage: 0, poise: 0 },
-};
+import { combatExpansionMartialOverlay } from './generated/combatExpansionMartialOverlay.js';
+import { combatExpansionMartialTables } from './generated/combatExpansionMartialTables.js';
+export { combatExpansionMartialOverlay };
+const AREA = new Set(combatExpansionMartialTables.area);
+const RANGED = new Set(combatExpansionMartialTables.ranged);
+const EVADES = new Set(combatExpansionMartialTables.evades);
+const POISE_REPLIES = combatExpansionMartialTables.poiseReplies;
+const REPLY_SOURCE_BASE = combatExpansionMartialTables.replySourceBase;
+const UPCAST = combatExpansionMartialTables.upcast;
+const STATUS = combatExpansionMartialTables.status;
 const addedAmount = (amount, delta) => typeof amount === 'number' ? Math.max(0, amount + delta)
   : { f: 'add', args: [amount, delta], min: 0 };
 function replyProjection(def) {
@@ -57,12 +31,6 @@ function replyProjection(def) {
   return { amount: POISE_REPLIES[def.id] + Math.max(0, damage - baseline.damage)
     + Math.max(0, poise - baseline.poise), conditional };
 }
-const UPCAST = {
-  shieldBash: { blockPerRank: 2, poisePerRank: 1 }, bashingBlow: { damagePerRank: 2, poisePerRank: 1 },
-  stomp: { damagePerRank: 2, poisePerRank: 1 }, ironSkin: { blockPerRank: 2 },
-  guardCounter: { damagePerRank: 2 }, quickstep: { damagePerRank: 2, blockPerRank: 2 },
-};
-const STATUS = { bleed: 'bodily', venom: 'bodily', weak: 'mental', vulnerable: 'curse', burn: 'elemental', frost: 'elemental' };
 function pressureEffects(effects = []) {
   return effects.filter(effect => effect.op !== 'dodgeRoll').map(effect => {
     if (effect.op !== 'applyStatus' || !STATUS[effect.status] || !['enemy', 'allEnemies', 'target'].includes(effect.target)) return structuredClone(effect);

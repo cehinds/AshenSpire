@@ -1,43 +1,26 @@
-// Explicit authored ids are the mapping authority. This overlay is applied
-// only by the v2 resolver; old runs continue to use their original definitions.
+// src/content/combatExpansionCards.js — the spell projection (applyCombatExpansionCard).
+// The tables are JSON, compiled by content-build to src/content/generated/: the school/damage-type
+// row per card id (content/source/combatExpansionCardOverlay.json), the weapon spell profiles
+// (combatExpansionSpellProfiles.json), the colorless counters and cantrips added for the
+// expansion (content/source/cards/combatExpansionNewCards.json, a card pool), and the lists and
+// numbers the projection reads (combatExpansionCardTables.json). The projection is real logic and
+// stays JS. The comments that lived here are in content/source/CONTENT-NOTES.md under
+// "## Combat expansion tables".
 import { applyCombatExpansionMartial } from './combatExpansionMartial.js';
 import { RANGES } from '../model/combatRanges.js';
 import { spellDefenseSplit } from '../model/spellDefense.js';
-const SCHOOL_IDS = {
-  force: ['starstonePebble', 'cometFragment', 'starbladePhalanx', 'starShower', 'starSlicer', 'starlance', 'starstoneArc', 'moonrendCut', 'meteorite', 'meteorSwarm', 'astralCleave', 'radiantSpray', 'supernova', 'starstoneKris', 'starfallBeam', 'starcaller', 'shootingShard', 'celestialLance', 'progression-comet-needle', 'progression-falling-constellation'],
-  frost: ['frostVeil', 'frostNova', 'progression-rime-mirror', 'progression-eclipse-lance'],
-  lightning: ['azureCoilCard', 'starSpark'],
-  fire: ['cinderSigil', 'ashenMote', 'emberVigil', 'readTheAsh', 'pyreOfCharts', 'ashCircle', 'kindledOmen', 'cinderLance', 'ashfallRite', 'pyreLight', 'riteOfCinders', 'progression-cinder-orbit'],
-  alteration: ['crystalBarrier', 'starstoneWard', 'astralArmorCard', 'gravityWell', 'timeDilation', 'umbralWard', 'wardingStar', 'moonlitShieldCard', 'astralInsight', 'attune', 'transmute', 'progression-lunar-aegis', 'progression-wellspring-sigil', 'progression-gravitic-knot', 'progression-firmament-ward'],
-  illusion: ['scholarsInsight', 'twinkling', 'lucidity', 'stargazerCard', 'constellationCard', 'waxingMoonCard', 'starPath', 'astromancerCard', 'hex', 'progression-nightglass-reading'],
-  divine: ['phoenixChart', 'urgentHeal', 'emberCommunion', 'penance', 'transfusion', 'blightward', 'sacredHarvest', 'thornHaloCard', 'communionCard', 'gildedOath', 'reclamation', 'secondBloom', 'lifeTitheCard', 'lastRites', 'zealotryCard', 'lastMercy', 'warmLitany', 'sharedFlame', 'ashOath', 'vesperWard', 'progression-ash-benediction', 'progression-pallbearer-s-ward', 'progression-pilgrim-s-shelter', 'progression-dawn-after-ash'],
-  decay: ['bloodPact', 'blightTouch', 'flagellation', 'litany', 'graveOffering', 'bloodletting', 'contagion', 'cullTheWeak', 'martyrBlood', 'blightBloom', 'plagueBearer', 'exsanguinate', 'stigmataCard', 'scourge', 'butterflyPlague', 'crimsonRite', 'blightNova', 'bloodHarvest', 'painOffering', 'witheringTouch', 'desperateRite', 'emberTideCard', 'bloodOfferingRite', 'harbingerOfBlightCard', 'blightwardLash', 'progression-blood-censer', 'progression-blight-litany', 'progression-ember-tithe', 'progression-ossuary-cant', 'progression-requiem-brand', 'progression-crown-of-scars'],
-};
-const TYPE = { force: 'blunt', frost: 'frost', lightning: 'piercing', fire: 'fire', alteration: 'blunt', illusion: 'psychic', divine: 'sacred', decay: 'decay' };
-export const combatExpansionCardOverlay = Object.fromEntries(Object.entries(SCHOOL_IDS).flatMap(([school, ids]) => ids.map(id => [id, { school, damageType: TYPE[school] }])));
-export const combatExpansionSpellProfiles = {
-  staffMagicAttack: { school: 'force', damageType: 'blunt', maneuver: 'casting', range: 'reach' },
-  sceptreArcaneAttack: { school: 'force', damageType: 'blunt', maneuver: 'casting', range: 'reach' },
-  staffGuard: { school: 'alteration', damageType: 'blunt', maneuver: 'defend', range: 'melee' },
-  sceptreGuard: { school: 'alteration', damageType: 'blunt', maneuver: 'defend', range: 'melee' },
-};
-const AREA = new Set(['frostNova', 'meteorSwarm', 'radiantSpray', 'supernova', 'starfallBeam', 'gravityWell', 'pyreOfCharts', 'ashCircle', 'ashfallRite', 'graveOffering', 'contagion', 'scourge', 'butterflyPlague', 'bloodHarvest']);
-const RANGED = new Set(['starlance', 'starfallBeam', 'celestialLance', 'meteorite', 'meteorSwarm', 'progression-eclipse-lance', 'progression-comet-needle']);
-const COUNTERS = {
-  umbralWard: { camps: ['physical', 'spell'], ranges: ['reach', 'ranged'], targeting: ['single'], ward: 3, poise: 1 },
-  wardingStar: { camps: ['spell'], ranges: ['melee', 'reach', 'ranged'], targeting: ['single'], ward: 2, poise: 0 },
-  'progression-rime-mirror': { camps: ['physical', 'spell'], ranges: ['melee', 'reach'], targeting: ['single'], ward: 2, poise: 1 },
-};
-const UPCAST = {
-  starstonePebble: { damagePerRank: 2 }, cometFragment: { damagePerRank: 2 },
-  frostNova: { damagePerRank: 1, pressurePerRank: 1 }, starSpark: { damagePerRank: 1, pressurePerRank: 1 },
-  cinderSigil: { damagePerRank: 2, pressurePerRank: 1 }, crystalBarrier: { blockPerRank: 2 },
-  wardingStar: { blockPerRank: 2 }, blightTouch: { damagePerRank: 1, pressurePerRank: 1 },
-  contagion: { pressurePerRank: 1 }, hex: { pressurePerRank: 1 },
-};
-const CHANCE_PRESSURE = new Set(['ashenMote', 'cinderSigil', 'starSpark', 'blightTouch', 'witheringTouch', 'hex']);
-const STATUS = { frost: 'frost', burn: 'burn', crimsonBlight: 'crimsonBlight', necroticBlight: 'necroticBlight', weak: 'weak', vulnerable: 'vulnerable', bleed: 'bleed', insanity: 'dazed' };
-const PROFILE = { frost: 'elemental', burn: 'elemental', crimsonBlight: 'curse', necroticBlight: 'curse', weak: 'mental', vulnerable: 'curse', bleed: 'bodily', insanity: 'mental' };
+import { combatExpansionCardOverlay } from './generated/combatExpansionCardOverlay.js';
+import { combatExpansionSpellProfiles } from './generated/combatExpansionSpellProfiles.js';
+import { combatExpansionNewCards } from './generated/cards/combatExpansionNewCards.js';
+import { combatExpansionCardTables } from './generated/combatExpansionCardTables.js';
+export { combatExpansionCardOverlay, combatExpansionSpellProfiles, combatExpansionNewCards };
+const AREA = new Set(combatExpansionCardTables.area);
+const RANGED = new Set(combatExpansionCardTables.ranged);
+const COUNTERS = combatExpansionCardTables.counters;
+const UPCAST = combatExpansionCardTables.upcast;
+const CHANCE_PRESSURE = new Set(combatExpansionCardTables.chancePressure);
+const STATUS = combatExpansionCardTables.status;
+const PROFILE = combatExpansionCardTables.profile;
 function pressureValue(stacks, id) {
   // Frost's old units are retuned as units; other old stack grants become four
   // pressure units per stack instead of bypassing the new gauges/defenses.
@@ -172,56 +155,3 @@ export function applyCombatExpansionCard(def) {
   if (card.upcast && CHANCE_PRESSURE.has(def.id)) card.upcast.chancePerRank = 25;
   return withSpellDefenseRange(withSpellOffenseStance(card));
 }
-
-const counter = (id, school, { camps = ['spell'], ranges = ['melee', 'reach', 'ranged'], targeting = ['single'], poise = 0, ward = 2, cost = 1 } = {}) => ({
-  id, name: `${school[0].toUpperCase() + school.slice(1)} Counter`, class: 'colorless', rarity: 'common', cost, manaCost: 1, type: 'skill', keywords: [],
-  tags: ['camp:spell', `school:${school}`, `damage:${TYPE[school]}`, 'maneuver:counter', targeting.includes('area') ? 'counter:ranged' : 'counter:spell', 'range:reach', 'targeting:single'],
-  range: 'reach', targeting: 'single', counterCoverage: { camps, ranges, targeting, effects: ['damage', 'status'] },
-  counterPayload: { hp: 0, ward, poise }, schoolEffect: ward ? 'ward' : 'poise',
-  effects: [{ op: 'gainBarrier', target: 'self', amount: 5 }],
-  textTemplate: `Gain {gainBarrier} Barrier. Prepare a ${school} Counter: ${ward} Ward${poise ? ` and ${poise} Poise` : ''} return.`,
-  upcast: { baseTier: 0, unlockedTiers: [1, 2, 3], maximumTier: 3, blockPerRank: 2 },
-});
-const cantrip = (id, name, school, damage, status = null, units = 3) => ({
-  id, name, class: 'colorless', rarity: 'common', cost: 1, manaCost: 0, costRule: 'fixed', type: 'attack', keywords: [],
-  tags: ['camp:spell', `school:${school}`, `damage:${TYPE[school]}`, 'maneuver:casting', 'range:reach', 'targeting:single'],
-  damageSchool: 'magic', exposureBuildupPerHit: 0, attack: { source: 'spell', damageType: TYPE[school] }, range: 'reach', targeting: 'single',
-  effects: [{ op: 'damage', target: 'enemy', amount: damage }, ...(status ? [{ op: 'buildup', target: 'enemy', status, amount: units, camp: 'spell', recoveryProfile: combatProfileForPressure(status), chance: 50 }] : [])],
-  textTemplate: `Deal {damage} damage.${status ? ` May add {${status}} ${status} buildup; upcasting improves its chance.` : ''}`,
-  upcast: { baseTier: 0, unlockedTiers: [1, 2, 3], maximumTier: 3, damagePerRank: 1, ...(status ? { pressurePerRank: 1, chancePerRank: 25 } : {}) },
-});
-function combatProfileForPressure(id) { return { sleep: 'mental', crimsonBlight: 'curse', weak: 'mental' }[id] || 'elemental'; }
-export const combatExpansionNewCards = [
-  counter('frostCounter', 'frost', { camps: ['physical', 'spell'], ranges: ['melee', 'reach'], poise: 1 }),
-  counter('fireCounter', 'fire'), counter('lightningCounter', 'lightning'),
-  counter('forceCounter', 'force', { camps: ['physical'], ranges: ['reach', 'ranged'], ward: 0, poise: 3 }),
-  counter('alterationCounter', 'alteration', { camps: ['physical', 'spell'], ward: 1, poise: 1 }),
-  counter('illusionCounter', 'illusion', { camps: ['physical', 'spell'], poise: 1, ward: 1 }),
-  counter('divineCounter', 'divine'), counter('decayCounter', 'decay'),
-  { ...counter('barrageCounter', 'alteration', { camps: ['physical', 'spell'], targeting: ['area'], ranges: ['melee', 'reach', 'ranged'], ward: 1, poise: 1, cost: 2 }), name: 'Barrage Interception' },
-  cantrip('rimeNeedle', 'Rime Needle', 'frost', 6, 'frost'),
-  cantrip('emberDart', 'Ember Dart', 'fire', 5, 'burn', 4),
-  cantrip('staticNeedle', 'Static Needle', 'lightning', 6, 'paralysis'),
-  cantrip('forceNudge', 'Force Nudge', 'force', 8),
-  cantrip('drowsingMote', 'Drowsing Mote', 'illusion', 5, 'sleep'),
-  cantrip('holySpark', 'Holy Spark', 'divine', 8),
-  cantrip('rotMote', 'Rot Mote', 'decay', 6, 'crimsonBlight'),
-  { id: 'phaseWard', name: 'Phase Ward', class: 'colorless', rarity: 'rare', cost: 2, manaCost: 2, type: 'skill', keywords: ['exhaust'],
-    tags: ['camp:spell', 'school:alteration', 'damage:blunt', 'range:melee', 'targeting:single'],
-    effects: [{ op: 'applyStatus', target: 'self', status: 'invulnerability', stacks: 1 }],
-    textTemplate: 'Gain {invulnerability} Invulnerability: avoid the next direct damaging action. Status buildup still applies. Exhaust.' },
-  { id: 'illusionDecoy', name: 'Illusion Decoy', class: 'colorless', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'skill', keywords: [],
-    tags: ['camp:spell', 'school:illusion', 'damage:psychic', 'range:melee', 'targeting:single'],
-    effects: [{ op: 'applyStatus', target: 'self', status: 'decoy', stacks: 1 }],
-    textTemplate: 'Gain {decoy} Decoy: avoid a Single Reach/Ranged damaging action. Status buildup still applies; Sweep and Holy reveal it.' },
-  { id: 'earthGrounding', name: 'Earth Grounding', class: 'colorless', rarity: 'common', cost: 1, manaCost: 0, type: 'skill', keywords: [],
-    tags: ['camp:spell', 'school:alteration', 'damage:blunt', 'range:melee', 'targeting:single', 'trait:grounded'],
-    effects: [{ op: 'applyStatus', target: 'self', status: 'grounded', stacks: 1 }], textTemplate: 'Gain {grounded} Grounded for 2 turns and clear pending Paralysis pressure.' },
-  { id: 'restfulDream', name: 'Restful Dream', class: 'colorless', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'skill', keywords: [],
-    tags: ['camp:spell', 'school:illusion', 'damage:psychic', 'range:melee', 'targeting:single'],
-    effects: [{ op: 'applyStatus', target: 'self', status: 'sleep', stacks: 1 }], textTemplate: 'Gain {sleep} Sleep: lock ordinary cards and become vulnerable. Rest next turn within the combat healing and Ward caps.' },
-  { id: 'sanctuaryCleanse', name: 'Sanctuary Cleanse', class: 'colorless', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'skill', keywords: [],
-    tags: ['camp:spell', 'school:divine', 'damage:sacred', 'range:melee', 'targeting:single'], usableWhile: ['sleep', 'paralysis', 'dazed'],
-    effects: [{ op: 'removeStatus', target: 'self', status: 'sleep', amount: 1 }, { op: 'removeStatus', target: 'self', status: 'paralysis', amount: 1 }, { op: 'removeStatus', target: 'self', status: 'dazed', amount: 1 }, { op: 'gainBarrier', target: 'self', amount: 3 }],
-    textTemplate: 'Usable through Sleep, Paralysis and Dazed. Cleanse {removeStatus} Sleep, {removeStatus.2} Paralysis and {removeStatus.3} Dazed. Gain {gainBarrier} Barrier.' },
-].map(card => ({ ...card, minCombatExpansionVersion: 2 }));
