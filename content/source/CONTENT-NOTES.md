@@ -780,3 +780,24 @@ _No comments were written beside these numbers in the old balance.js._
   cost node (content/source/nodes.csv cost.action/stamina/mana) with no
   amount of its own. Bound in variableBindings.csv; read into the generated
   framework data at build.
+
+### balanceClassTree.json — classTree
+
+- **`classTree`** — The class tree's numbers (plan phase 5b): one row per node, read by its
+  variable bindings; the tree itself is content/source/classTree.csv.
+
+### balancePowers.json — powers
+
+- **`powers.ashenGrip`** — The four class kit relics (plan phase 5a, proposal §4).
+- **`powers.hollowSquire`** — The two companions (SPEC §14.3): their property rules read these, so a
+  companion's numbers are tuned beside every relic's.
+
+### balanceSigils.json — sigils
+
+- **`sigils`** — THE SIGILS' NUMBERS (SPEC §14.3, §15.4). A sigil's property rule lives in
+  nodeEffects.json and reads its numbers here, through variableBindings.csv,
+  so each gets its generated Settings row like every balance number.
+- **`sigils.vigilSigil`** — The legendary sigils (SPEC §15.4): attuned, never slotted.
+- **`sigils.attuneMax`** — How many legendary sigils a run may hold attuned at once (0: none).
+- **`sigils.dropChancePct`** — The chance, 0-100, that a won fight or a treasure room drops one
+  legendary sigil the run does not own. Shipped off: 0 draws nothing.
