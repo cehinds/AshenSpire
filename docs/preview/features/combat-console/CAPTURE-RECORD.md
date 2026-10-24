@@ -8,9 +8,11 @@ Source commit: `fe7c6988e7428e11f364529582add3fa63cc98d3`.
 Source tree: `712f0b1321885f1fcbdb43faa33c90e37e3e9953`.
 Build: `0.7.1.1814`, source digest `ddf4bd050f`, built 2026-10-24.
 HTML: 14,807,180 bytes; SHA-256 `e2f4599b88248312f1ac26c28c46ab9ce75d4c560e694cef40964b8e78f78a5d`.
-The stable review branch `fix/CombatLogConsoleReview` is at
-`e38ae247e570435a347318f99edb3877772c56c8`, with the identical complete Git tree
-`712f0b1321885f1fcbdb43faa33c90e37e3e9953` as the captured source.
+The stable review build on `fix/CombatLogConsoleReview` uses source commit
+`e38ae247e570435a347318f99edb3877772c56c8`. That built commit has the identical
+complete Git tree `712f0b1321885f1fcbdb43faa33c90e37e3e9953` as the captured
+source. Later documentation-only commits attach this record and its screenshots;
+they do not change the tested runtime.
 Screenshots show that stable review snapshot, not the canonical branch’s later
 integration head. Canonical integration before evidence publication:
 `651d1715dbc4db05e10c3539ffc4e91019918faf` (committed box 1821).
