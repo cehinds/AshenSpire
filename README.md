@@ -1,5 +1,16 @@
 # AshenSpire
+<!-- feature-preview:start -->
+## Feature preview — unavailable card costs
 
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/UnavailableCardBadges/latest/)
+
+Lite mode dims overflowing cost badges while keeping card faces opaque.
+Build **0.7.1.1805** · source **27954845c7**. [Capture and verification details](docs/preview/features/unavailable-card-badges/README.md).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile Lite: unavailable Stamina and Mana badges dim above an opaque card](docs/preview/features/unavailable-card-badges/mobile.png) | ![Desktop Full: native selected-card inspection and unchanged card cue](docs/preview/features/unavailable-card-badges/desktop.png) | ![Wide Full: selected unavailable card and target controls](docs/preview/features/unavailable-card-badges/wide.png) | ![Tablet Lite: dimmed overflowing costs and opaque selected card](docs/preview/features/unavailable-card-badges/tablet.png) |
+<!-- feature-preview:end -->
 
 
 
