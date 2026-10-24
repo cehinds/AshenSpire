@@ -555,7 +555,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // Pose animations (attacks, hurt, stance) settle well inside this window.
   const TRACK_WINDOW_MS = 900;
   let trackUntil = 0;
-  const extendTracking = () => { trackUntil = performance.now() + TRACK_WINDOW_MS; trackFresh = true; if (!trackingRequest) trackStable = 0; };
+  // A class change can start a pose whose first frames read the same as rest (an eased lunge at 0%), so the
+  // early stop waits this long after the latest change before two unmoved frames may end the window.
+  const TRACK_SETTLE_MS = 120;
+  let trackChangedAt = 0;
+  const extendTracking = () => { trackChangedAt = performance.now(); trackUntil = trackChangedAt + TRACK_WINDOW_MS; trackFresh = true; if (!trackingRequest) trackStable = 0; };
   // Tracking only has work while a body actually moves. Each frame compares every figure's painted body with the
   // previous frame's (kept across windows, so a selection that moves nothing settles at once): the first frame of a
   // window always places, a frame whose bodies did not move (within half a pixel) skips the placement, and two such
@@ -597,7 +601,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Follow pose/stance motion only for a bounded window after it changes.
     // Tracking idle breathing every frame forced a full layout read per frame
     // and made combat unplayable on phones; the bob's few pixels are tolerated.
-    trackingRequest = open && trackStable < 2 ? requestAnimationFrame(trackPlayerHud) : 0;
+    trackingRequest = open && (trackStable < 2 || performance.now() - trackChangedAt < TRACK_SETTLE_MS) ? requestAnimationFrame(trackPlayerHud) : 0;
   }
   const refresh = () => {
     cancelAnimationFrame(frameRequest);
