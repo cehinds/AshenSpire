@@ -41,7 +41,7 @@ globalThis.window = {
   addEventListener: (type, fn) => { listeners.set(type, [...(listeners.get(type) || []), fn]); },
 };
 
-const { consoleRecorder } = await import('../src/ui/consoleLog.js');
+const { consoleRecorder, consoleLogText } = await import('../src/ui/consoleLog.js');
 const { isBenignPageNotice, getEntries } = await import('../src/ui/debuglog.js');
 
 const fire = (message, extra = {}) => {
@@ -96,4 +96,28 @@ test('console capture starts at boot with no shortcut setting and includes globa
   for (const listener of listeners.get('unhandledrejection') || []) listener({ reason: new Error('rejection console marker') });
   assert.match(consoleRecorder.getEntries().at(-1).text, /Unhandled promise rejection:.*rejection console marker/);
   assert.equal(getEntries().at(-1).kind, 'ERROR', 'the existing command log still records failures');
+});
+
+test('uncaught error location and the existing trace reach console exports with one stack read', () => {
+  let stackReads = 0;
+  const error = new Error('event stack marker');
+  Object.defineProperty(error, 'stack', { get() { stackReads++; return 'Error: event stack marker\n    at failedButton (combat.js:123:7)\n    at input.js:44:2'; } });
+  fire(error.message, { error, filename: 'https://example.test/src/ui/screens/combat.js', lineno: 123 });
+  assert.equal(stackReads, 1, 'the existing error channel reads the stack once for both logs');
+  const entry = consoleRecorder.getEntries().at(-1);
+  assert.match(entry.text, /event stack marker at combat.js:123/);
+  assert.match(entry.text, /at failedButton \(combat.js:123:7\)/);
+  assert.match(getEntries().at(-1).detail, /at input.js:44:2/);
+  assert.match(consoleLogText(), /at failedButton \(combat.js:123:7\)/);
+});
+
+test('unhandled promise trace reaches both logs and export without a second stack read', () => {
+  let stackReads = 0;
+  const reason = new Error('promise stack marker');
+  Object.defineProperty(reason, 'stack', { get() { stackReads++; return 'Error: promise stack marker\n    at asyncAction (combat.js:321:4)'; } });
+  for (const listener of listeners.get('unhandledrejection') || []) listener({ reason });
+  assert.equal(stackReads, 1);
+  assert.match(consoleRecorder.getEntries().at(-1).text, /Unhandled promise rejection: promise stack marker/);
+  assert.match(consoleLogText(), /at asyncAction \(combat.js:321:4\)/);
+  assert.match(getEntries().at(-1).detail, /at asyncAction \(combat.js:321:4\)/);
 });

@@ -1,10 +1,11 @@
 // Mobile file sharing when supported, otherwise a browser download. No network.
+import { t } from '../strings.js';
 export async function saveTextFile(text, { filename = 'ashen-spire-console.txt', navigator: nav = globalThis.navigator, window: win = globalThis.window, document: doc = globalThis.document, File: FileType = globalThis.File } = {}) {
   if (FileType && typeof nav?.canShare === 'function' && typeof nav.share === 'function') {
     try {
       const file = new FileType([text], filename, { type: 'text/plain' });
       if (nav.canShare({ files: [file] })) {
-        await nav.share({ files: [file], title: 'AshenSpire console log' });
+        await nav.share({ files: [file], title: t('debugChrome.consoleExportTitle') });
         return { ok: true, method: 'share' };
       }
     } catch (error) {

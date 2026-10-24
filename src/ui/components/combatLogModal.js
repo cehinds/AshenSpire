@@ -80,7 +80,7 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
     detailButton.setAttribute('aria-pressed', String(detailed));
     renderCombatLogEntries(list, currentEntries, { detailed, palette, legend: true });
   });
-  const consoleButton = button({ label: 'Console', attrs: { 'aria-haspopup': 'dialog', 'data-console-shortcut': '' } });
+  const consoleButton = button({ label: t('debugChrome.console'), attrs: { 'aria-haspopup': 'dialog', 'data-console-shortcut': '' } });
   let consoleModal = null;
   consoleButton.addEventListener('click', () => {
     if (!consoleModal) consoleModal = openConsoleLog({ opener: consoleButton, onClose: () => { consoleModal = null; } });

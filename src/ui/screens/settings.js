@@ -332,8 +332,8 @@ function recoverySettingRows() {
 
 const ROWS = [
   { cat: 'Combat', key: 'askToUpcastAfterTarget', type: 'toggle', def: false, label: 'Ask to upcast after choosing a target', note: 'Off: use the Upcast button under an eligible selected card. On: choose a temporary rank before committing the play; Cancel spends nothing.' },
-  { cat: 'Combat', key: 'combatLogConsole', type: 'toggle', def: false, label: 'Console button in combat log',
-    note: 'Show Console in the full combat log to read, copy or export console output and errors from this session. No saved game or profile is attached.' },
+  { cat: 'Combat', key: 'combatLogConsole', type: 'toggle', def: false, label: t('settings.row.combatLogConsole'),
+    note: tFull('settings.row.combatLogConsole') },
   { cat: 'Combat', key: 'combatLogPlayerColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.player,
     label: t('settings.row.combatLogPlayerColor'), note: tFull('settings.row.combatLogPlayerColor') },
   { cat: 'Combat', key: 'combatLogEnemyColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.enemy,
@@ -839,7 +839,7 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_inspect', type: 'number',
     def: CARD_LEVELS.inspect.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: t('settings.row.cardWidth_inspect'),
     note: tFull('settings.row.cardWidth_inspect') },
-  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardSizeExport', type: 'button', btn: 'Copy',
+  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardSizeExport', type: 'button', btn: t('common.copy'),
     label: t('settings.row.cardSizeExport'),
     note: tFull('settings.row.cardSizeExport') },
   { cat: 'Advanced', advancedGroup: 'Progression', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
@@ -3931,7 +3931,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
           ? `A copy is still with the clipboard, so this one is in the browser console instead — ${what}. Starting a second write could land out of order.`
           : `Could not reach the clipboard. The block is in the browser console — ${what}.`,
       settledRefusal ? 'card-size' : '');
-      setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+      setTimeout(() => { btn.textContent = t('common.copy'); }, 2000);
     });
   });
 

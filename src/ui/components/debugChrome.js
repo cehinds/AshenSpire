@@ -11,7 +11,7 @@
 
 import { el, openModal, button, logBox, flavour, prose, titleS, blocker } from '../kit/index.js';
 import { registerDebugChrome, logText, MAX_ENTRIES } from '../debuglog.js';
-import { t } from '../strings.js';
+import { t, tFull } from '../strings.js';
 import { consoleRecorder, consoleLogText } from '../consoleLog.js';
 import { BUILD_STAMP_TEXT } from '../../buildversion.js';
 import { saveTextFile } from '../services/saveTextFile.js';
@@ -29,7 +29,7 @@ function banner({ title, body, onOpen }) {
 /** The log viewer: a lg door through openModal, the log as the kit's LogBox. */
 function door() {
   const body = logBox('', { class: 'debug-log-body' });
-  const copy = button({ label: 'Copy', id: 'dbg-copy' });
+  const copy = button({ label: t('common.copy'), id: 'dbg-copy' });
   const refresh = button({ label: t('debugChrome.refresh'), id: 'dbg-refresh' });
   const close = button({ label: 'Close', role: 'exit', id: 'dbg-close' });
   const modal = openModal({
@@ -65,7 +65,7 @@ function door() {
       sel.addRange(range);
       copy.textContent = 'Select+Ctrl C';
     }
-    setTimeout(() => (copy.textContent = 'Copy'), 1500);
+    setTimeout(() => (copy.textContent = t('common.copy')), 1500);
   });
   close.addEventListener('click', modal.close);
   return modal;
@@ -73,11 +73,11 @@ function door() {
 
 /** Session console viewer: event-driven updates, touch-selectable text, shared focus/escape. */
 function consoleDoor({ opener = document.activeElement, onClose = null } = {}) {
-  const body = el('textarea', { class: 'console-log-text', readonly: '', 'aria-label': 'Console output', wrap: 'soft', spellcheck: 'false' });
+  const body = el('textarea', { class: 'console-log-text', readonly: '', 'aria-label': t('debugChrome.consoleOutput'), wrap: 'soft', spellcheck: 'false' });
   const status = el('p', { class: 'as-flavor', role: 'status', 'aria-live': 'polite' });
-  const copy = button({ label: 'Copy', id: 'console-copy' });
-  const download = button({ label: 'Export', id: 'console-export' });
-  const close = button({ label: 'Close', role: 'exit' });
+  const copy = button({ label: t('common.copy'), id: 'console-copy' });
+  const download = button({ label: t('common.export'), id: 'console-export' });
+  const close = button({ label: t('common.close'), role: 'exit' });
   let closed = false, queued = false, manual = false;
   const text = () => consoleLogText({ Build: BUILD_STAMP_TEXT, Device: globalThis.navigator?.userAgent || 'unavailable',
     Viewport: `${window.innerWidth} × ${window.innerHeight}`, 'Device pixel ratio': window.devicePixelRatio || 1 });
@@ -92,8 +92,8 @@ function consoleDoor({ opener = document.activeElement, onClose = null } = {}) {
     queued = true;
     queueMicrotask(() => { queued = false; if (!closed && !manual) fill(); });
   });
-  const modal = openModal({ size: 'lg', className: 'console-modal', title: 'Console', opener,
-    body: el('div', { class: 'console-log-pane' }, [flavour('Game console output and uncaught errors from this session. Browser network and DevTools-only messages may be unavailable. Review messages before sharing.'), body, status]),
+  const modal = openModal({ size: 'lg', className: 'console-modal', title: t('debugChrome.console'), opener,
+    body: el('div', { class: 'console-log-pane' }, [flavour(tFull('debugChrome.consoleOutput')), body, status]),
     secondary: [copy, download], primary: close, footSize: 'short',
     onClose: () => { closed = true; unsubscribe(); onClose?.(); },
   });
@@ -105,14 +105,14 @@ function consoleDoor({ opener = document.activeElement, onClose = null } = {}) {
     const snapshot = text();
     try {
       await navigator.clipboard.writeText(snapshot);
-      if (!closed) status.textContent = 'Copied.';
+      if (!closed) status.textContent = t('common.copied');
     } catch {
       if (closed) return;
       manual = true;
       body.value = snapshot;
       body.focus();
       body.select();
-      status.textContent = 'Text selected. Touch and hold to copy, or use your copy shortcut. Live updates are paused until you reopen Console.';
+      status.textContent = tFull('debugChrome.consoleManualCopy');
     }
   });
   download.addEventListener('click', async () => {
@@ -120,8 +120,8 @@ function consoleDoor({ opener = document.activeElement, onClose = null } = {}) {
     const result = await saveTextFile(text());
     if (closed) return;
     download.disabled = false;
-    status.textContent = result.ok ? result.method === 'share' ? 'Shared.' : 'Download requested.'
-      : result.method === 'cancelled' ? 'Export cancelled.' : 'Export unavailable. Use Copy, or select the console text to copy it.';
+    status.textContent = result.ok ? result.method === 'share' ? t('debugChrome.consoleShared') : t('debugChrome.consoleDownloaded')
+      : result.method === 'cancelled' ? t('debugChrome.consoleExportCancelled') : tFull('debugChrome.consoleExportUnavailable');
   });
   close.addEventListener('click', modal.close);
   return modal;

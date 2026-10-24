@@ -1,4 +1,5 @@
-// Bounded, session-only console capture. Leaf: never import UI or game state here.
+// Bounded, session-only console capture. Leaf: only the leaf strings table is imported.
+import { t, tFull } from './strings.js';
 export const CONSOLE_MAX_ENTRIES = 300;
 export const CONSOLE_MAX_TEXT = 8192;
 const LEVELS = ['log', 'info', 'warn', 'error', 'debug'];
@@ -89,9 +90,9 @@ if (typeof window !== 'undefined' && window.console) consoleRecorder.install(win
 
 /** Metadata is supplied by chrome, keeping this module free of game imports. */
 export function consoleLogText(metadata = {}) {
-  return ['AshenSpire console log', ...Object.entries(metadata).map(([key, value]) => `${key}: ${value}`),
-    `Exported: ${new Date().toISOString()}`, `Last ${CONSOLE_MAX_ENTRIES} captured entries, oldest first; session memory only.`,
-    'Includes game console calls and uncaught page errors. Browser network/DevTools-only messages may be unavailable.',
-    'No save or profile is attached. Review console messages before sharing.', '---',
+  return [t('debugChrome.consoleExportTitle'), ...Object.entries(metadata).map(([key, value]) => `${key}: ${value}`),
+    t('debugChrome.consoleExportTime', { time: new Date().toISOString() }), tFull('debugChrome.consoleRetention', { max: CONSOLE_MAX_ENTRIES }),
+    tFull('debugChrome.consoleExportBoundary'),
+    tFull('debugChrome.consoleExportPrivacy'), '---',
     ...consoleRecorder.getEntries().map(entry => `${entry.time} [${entry.level}] ${entry.text}`)].join('\n');
 }
