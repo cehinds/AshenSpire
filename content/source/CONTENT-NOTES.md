@@ -371,3 +371,50 @@ File header (was the comment block at the top of src/content/shops.js): the thre
 - **master.respecRefundPct** — a respec pays back this whole percentage of the XP spent above level 1 into the training pool (SPEC §14.5). Every reader clamps it to 50–75.
 - **master shelves and services (SPEC §14.5)** — the stocked shelves (`skillBooks`, `weaponArts`, `armaments`) are each filtered to the visiting master's tracks and rolled on `shopOffers` after the offering roll. The services (`training`, `respec`, `lesson`, `appraisal`, `redistribute`) each stay laid out once rolled and are judged live. Training and appraisal can always act: every master teaches three or four tracks.
 - **masters (SPEC §14.5)** — not a kind and no Settings row: who a master visit can be. A visit picks one on the `shop` stream, in written order. Each teaches 3 or 4 distinct weapon, focus or dual-wield tracks (never an armour track, which has no item type, nor a `class:` track, whose respec would strand the class tree's picks), and speaks as a speakers.csv row.
+
+## Keywords
+
+Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for
+these ids are engine primitives (card-zone/turn rules that cannot be data); this
+registry supplies only what tooltips show.
+
+## Consumables
+
+Skill books and revive tokens (SPEC §14.3). Hand-authored rows are `content/source/consumableBooks.json`
+(books) and `consumableTokens.json` (revive tokens); the per-class books are derived in
+`src/content/consumables.js` from `classes`, so a new class still gets its book.
+
+A consumable is carried as a count in `run.consumables` ({ [id]: count }), bought at the market and
+sold back through its Sell pane.
+
+- skillBook `{ skill, xp }`: read out of combat from the Armoury's Inventory: choose a lesson,
+  awardSkillXp on its track and learn one card, then the count drops by one.
+- revive `{ hpPct }`: spent by itself when the player would drop to 0 HP in a fight; HP becomes
+  max(1, floor(maxHp x hpPct / 100)).
+
+EVERY NUMBER HERE IS A DEFAULT. Each carries a note (the `$note` key, the sentence its row shows), and
+Settings > Advanced > Shops generates a row per number, `gameConfig.consumables.<id>.<key>`, frozen into
+the run's snapshot like the Shops rows (model/consumables.js consumableConfigRows). validateContent
+refuses a number with no note, a fraction, a price below 1 and a `sellValue` above `cost` (a sale never
+beats the price), each by name.
+
+`blurb` may name `{xp}`, `{hpPct}` and `{skill}` (the track's label); the shelf fills them from the row's
+live values, so a tuned number never leaves a stale sentence.
+
+## Companions
+
+Temporary companions (SPEC §14.3). A companion travels with the run for `combats` fights, held in
+`run.companions` as { id, combatsLeft }; `combatsLeft` drops by one at each combat end
+(engine/runCombat.js runCombatEnd) and it leaves at 0. One of each at a time: the market never offers
+one already travelling.
+
+WHAT IT DOES IS NOT WRITTEN HERE (Codex on #1376; coordinator ruling). A companion's effect is a
+property rule, as a relic's and a location's are: its `family = companion` rows in
+content/source/tagging.csv name leaves under the `companion` branch of `property` in nodes.csv, whose
+rules live in nodeEffects.json with their numbers bound to balance.powers.*. stampTags derives
+`propertyTags`, and the fight mounts it as a `companion` carrier (engine/properties.js
+syncCompanionProperties). validateContent refuses a row that writes `triggers` or `modifiers`, and one
+with no property tag.
+
+`cost` and `combats` are defaults, each with a note (`$note`): Settings > Advanced > Shops generates
+`gameConfig.companions.<id>.<key>` for them.
