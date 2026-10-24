@@ -21,7 +21,7 @@ function fixture(change = () => {}) {
     else if (url.pathname.endsWith('/preview.js')) body = PREVIEW_SCRIPT;
     else if (url.pathname.endsWith('/build.txt')) { headers.set('content-length', '78000000'); headers.set('content-type', 'text/plain; charset=utf-8'); }
     else body = previewWrapperHtml(target.dir);
-    const response = { status, headers, text: async () => body };
+    const response = { status, headers, text: async () => body, get body() { return new Response(body).body; } };
     change({ url, options, response, setBody: (value) => { body = value; } });
     return response;
   };
@@ -186,4 +186,49 @@ test('checks each primary channel against its own captured source and page', asy
   assert.equal(setup.reports.length, 2);
   assert.match(setup.reports[0], /dev.*dddddddddd/);
   assert.match(setup.reports[1], /test.*cccccccccc/);
+});
+
+
+test('rejects oversized public index and metadata without consuming the complete response', async () => {
+  for (const [path, limit] of [['/AshenSpire/', 1024 * 1024], ['/AshenSpire/test/latest/build.json', 64 * 1024]]) {
+    const setup = primaryFixture();
+    const normalFetch = setup.fetchImpl;
+    let cancelled = false, chunks = 0;
+    setup.fetchImpl = async (url, options) => {
+      if (url.pathname !== path) return normalFetch(url, options);
+      return new Response(new ReadableStream({
+        pull(controller) { chunks++; if (chunks <= 3) controller.enqueue(new Uint8Array(limit + 1)); else controller.close(); },
+        cancel() { cancelled = true; },
+      }));
+    };
+    await assert.rejects(checkFeaturePages(setup), /response exceeds .* byte limit/);
+    assert.equal(cancelled, true);
+    assert.ok(chunks <= 2, 'the oversized stream is stopped promptly');
+    assert.equal(setup.reports.length, 0);
+  }
+});
+
+test('interrupted public text streams fail verification without printing their partial body', async () => {
+  for (const path of ['/AshenSpire/', '/AshenSpire/test/latest/build.json']) {
+    const setup = primaryFixture(), normalFetch = setup.fetchImpl;
+    setup.fetchImpl = async (url, options) => {
+      if (url.pathname !== path) return normalFetch(url, options);
+      let started = false;
+      return new Response(new ReadableStream({
+        pull(controller) {
+          if (!started) { started = true; controller.enqueue(new TextEncoder().encode('private partial response')); }
+          else controller.error(new Error('truncated transport'));
+        },
+      }));
+    };
+    await assert.rejects(checkFeaturePages(setup), error => /response stream failed/.test(error.message) && !error.message.includes('private'));
+    assert.equal(setup.reports.length, 0);
+  }
+});
+
+test('feature-only index verification uses the same bounded text reader', async () => {
+  const setup = fixture(), normalFetch = setup.fetchImpl;
+  setup.fetchImpl = async (url, options) => url.pathname === '/AshenSpire/'
+    ? new Response('x'.repeat(1024 * 1024 + 1)) : normalFetch(url, options);
+  await assert.rejects(checkFeaturePages(setup), /response exceeds .* byte limit/);
 });

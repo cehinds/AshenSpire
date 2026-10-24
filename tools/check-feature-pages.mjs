@@ -26,7 +26,7 @@ export async function checkFeaturePages({ baseUrl, targets, primaryTargets, fetc
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
       const indexResponse = await request('');
-      const index = await indexResponse.text();
+      const index = await boundedText(indexResponse, 'public index', 1024 * 1024);
       const cards = index.match(/<section\b[^>]*>[\s\S]*?<\/section>/g) || [];
       for (const { dir, sha } of targets) {
         const route = `branches/${dir}/latest/`;
@@ -57,6 +57,31 @@ const observedCommit = (card) => card?.match(/\/commit\/([a-f0-9]{40})/)?.[1] ||
 function cacheContext(response) {
   return [['Age', 'age'], ['ETag', 'etag'], ['Last-Modified', 'last-modified']].map(([label, header]) =>
     `${label}=${(response.headers.get(header) || 'missing').replace(/[\r\n]/g, ' ').slice(0, 120)}`).join('; ');
+}
+// Read only small public documents; abort oversized or interrupted streams without logging body text.
+async function boundedText(response, label, limit) {
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error(`${label}: empty response; ${cacheContext(response)}`);
+  const chunks = [];
+  let bytes = 0;
+  try {
+    while (true) {
+      let part;
+      try { part = await reader.read(); }
+      catch {
+        await reader.cancel().catch(() => {});
+        throw new Error(`${label}: response stream failed; ${cacheContext(response)}`);
+      }
+      if (part.done) break;
+      bytes += part.value.length;
+      if (bytes > limit) {
+        await reader.cancel().catch(() => {});
+        throw new Error(`${label}: response exceeds ${limit} byte limit; ${cacheContext(response)}`);
+      }
+      chunks.push(part.value);
+    }
+  } finally { reader.releaseLock(); }
+  return Buffer.concat(chunks, bytes).toString('utf8');
 }
 function validatePrimaryTargets(targets) {
   if (!Array.isArray(targets)) throw new Error('Invalid primary targets');
@@ -109,7 +134,7 @@ export async function checkPrimaryChannels({ baseUrl, targets, fetchImpl = fetch
   // Same bounded eventual-consistency policy as feature previews; every retry re-reads the index.
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      const indexResponse = await request(''), index = await indexResponse.text();
+      const indexResponse = await request(''), index = await boundedText(indexResponse, 'public index', 1024 * 1024);
       const cards = index.match(/<section\b[^>]*>[\s\S]*?<\/section>/g) || [];
       const verified = [];
       for (const expected of targets) {
@@ -119,7 +144,8 @@ export async function checkPrimaryChannels({ baseUrl, targets, fetchImpl = fetch
           || !card.includes(`<p class="stamp">${stamp}</p>`)) throw new Error(`${branch}: stale or missing public index card; expected ${commit} ${stamp}, observed ${observedCommit(card)}; ${cacheContext(indexResponse)}`);
         const route = `${branch}/latest/`, metadataResponse = await request(`${route}build.json`);
         let actual;
-        try { actual = JSON.parse(await metadataResponse.text()); } catch { throw new Error(`${branch}: invalid public metadata JSON; ${cacheContext(metadataResponse)}`); }
+        const metadataText = await boundedText(metadataResponse, `${branch} metadata`, 64 * 1024);
+        try { actual = JSON.parse(metadataText); } catch { throw new Error(`${branch}: invalid public metadata JSON; ${cacheContext(metadataResponse)}`); }
         if (!actual || PRIMARY_FIELDS.slice(0, 6).some(key => actual[key] !== expected[key])
           || actual.pageSha256 !== undefined && actual.pageSha256 !== expected.pageSha256
           || actual.pageBytes !== undefined && actual.pageBytes !== expected.pageBytes
