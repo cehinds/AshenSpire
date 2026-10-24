@@ -11,8 +11,8 @@ const end = source.indexOf('\n  }\n', source.indexOf('  function trackPlayerHud(
 assert.ok(start > 0 && end > start);
 
 function loop() {
-  let now = 0, frames = [], x = 0;
-  const sprite = {};
+  let now = 0, frames = [], x = 0, animations = [];
+  const sprite = { getAnimations: () => animations };
   const env = {
     performance: { now: () => now },
     requestAnimationFrame: fn => { frames.push(fn); return frames.length; },
@@ -25,7 +25,7 @@ function loop() {
   const body = `let trackingRequest = 0, inspectTick = 0;\n${source.slice(start, end)}\nreturn { extendTracking, trackPlayerHud, running: () => trackingRequest };`;
   const api = new Function(...Object.keys(env), body)(...Object.values(env));
   const step = () => { now += 16; const next = frames.shift(); next?.(); };
-  return { api, step, move: px => { x += px; }, frames: () => frames.length };
+  return { api, step, move: px => { x += px; }, frames: () => frames.length, animate: list => { animations = list; } };
 }
 
 test('a pose that lands just as the bodies settle is still followed once it moves', () => {
@@ -46,4 +46,17 @@ test('with nothing moving, the loop still stops shortly after the settle time', 
   while (l.frames() && steps < 60) { l.step(); steps++; }
   assert.equal(l.frames(), 0, 'it stops');
   assert.ok(steps * 16 <= 200, `it stops within the settle time plus two frames (took ${steps} frames)`);
+});
+
+test('a classic figure holding mid-action keeps the loop running until its animation ends', () => {
+  const l = loop();
+  const hit = { playState: 'running', effect: { getTiming: () => ({ iterations: 1 }) } };
+  const bob = { playState: 'running', effect: { getTiming: () => ({ iterations: Infinity }) } };
+  l.animate([hit, bob]);
+  l.api.extendTracking(); l.api.trackPlayerHud();
+  for (let i = 0; i < 20; i++) l.step();            // the hit holds its displaced pose: nothing moves
+  assert.ok(l.frames() > 0, 'a running finite CSS action counts as busy');
+  l.animate([bob]);                                  // the hit ends; only the idle bob remains
+  for (let i = 0; i < 4; i++) l.step();
+  assert.equal(l.frames(), 0, 'the endless idle bob alone does not keep tracking');
 });

@@ -566,6 +566,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // frames in a row end the window. Lite samples every second frame, except the one that closes the window.
   let trackFresh = true, trackStable = 0, trackTick = 0, trackBodies = null;
   const lite = () => document.documentElement.dataset.performance === 'lite';
+  // Classic figures report no `busy`: their actions are finite CSS animations (a hit holds its displaced pose
+  // mid-way, then recovers with no attribute change), so a running one counts as busy. The idle bob loops forever
+  // and does not.
+  const figureBusy = sprite => !!stageFor(sprite)?.busy
+    || !!(sprite.closest?.('.combatant') || sprite).getAnimations?.({ subtree: true })
+      .some(animation => animation.playState === 'running' && animation.effect?.getTiming?.().iterations !== Infinity);
   function trackedBodies() {
     const rows = [];
     for (const sprite of field.querySelectorAll('.combatant .sprite')) {
@@ -589,7 +595,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     trackBodies = bodies;
     // A pose sequence, reaction or hit-stop hold can pause the body and then move it again with no attribute change,
     // so an unmoved frame only counts toward the early stop while every figure is at rest.
-    trackStable = same && ![...field.querySelectorAll('.combatant .sprite')].some(sprite => stageFor(sprite)?.busy) ? trackStable + 1 : 0;
+    trackStable = same && ![...field.querySelectorAll('.combatant .sprite')].some(figureBusy) ? trackStable + 1 : 0;
     if (place) {
       // Keep the settled target cores reserved, or the HUD can snap back over the player target.
       placePlayerHud(false, settledTargetCores, true);
