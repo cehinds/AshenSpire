@@ -11,6 +11,7 @@ import { formationTileGeometry, perspectiveCellOutlinePath } from '../models/For
 import { FORMATION_ROWS, formationDimensions, playerFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
+import { stageFor } from '../services/PoseAnimator.js';
 import { combatSpriteGeometry, currentSpriteArtBounds, currentSpriteBodyBounds, invalidateSpriteRects } from './combatSpriteGeometry.js';
 import { classicAppearance, displayAppearance } from '../displayAppearance.js';
 import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
@@ -554,23 +555,49 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // Pose animations (attacks, hurt, stance) settle well inside this window.
   const TRACK_WINDOW_MS = 900;
   let trackUntil = 0;
-  const extendTracking = () => { trackUntil = performance.now() + TRACK_WINDOW_MS; };
+  const extendTracking = () => { trackUntil = performance.now() + TRACK_WINDOW_MS; trackFresh = true; if (!trackingRequest) trackStable = 0; };
+  // Tracking only has work while a body actually moves. Each frame compares every figure's painted body with the
+  // previous frame's (kept across windows, so a selection that moves nothing settles at once): the first frame of a
+  // window always places, a frame whose bodies did not move (within half a pixel) skips the placement, and two such
+  // frames in a row end the window. Lite samples every second frame, except the one that closes the window.
+  let trackFresh = true, trackStable = 0, trackTick = 0, trackBodies = null;
+  const lite = () => document.documentElement.dataset.performance === 'lite';
+  function trackedBodies() {
+    const rows = [];
+    for (const sprite of field.querySelectorAll('.combatant .sprite')) {
+      const body = currentSpriteBodyBounds(sprite, schedule);
+      rows.push(body.left, body.right, body.top, body.bottom, body.headY, body.feetY);
+    }
+    return rows;
+  }
+  const sameBodies = (a, b) => !!a && !!b && a.length === b.length
+    && a.every((value, i) => value === b[i] || Math.abs(value - b[i]) <= .5 || (Number.isNaN(value) && Number.isNaN(b[i])));
   function trackPlayerHud() {
     invalidateSpriteRects();
     // Reduced motion has no idle or pose drift to follow. Do not turn the HUD
     // into a script-driven animation by rewriting its settled coordinates.
     if (reducedMotionRequested()) { trackingRequest = 0; return; }
-    // Keep the settled target cores reserved, or the HUD can snap back over the player target.
-    placePlayerHud(false, settledTargetCores, true);
-    if (field.closest('.combat')?.dataset.targetHud !== 'true') placeHitBadges();
-    // A neighbour's intent that moves between refits re-picks the spot about
-    // four times a second; the Inspect itself never follows the body's bob.
-    if (++inspectTick % 15 === 0 && field.closest('.combat')?.dataset.targetHud !== 'true') placeEnemyInspect();
+    const open = field.isConnected && field.querySelector('.combatant.player') && performance.now() < trackUntil;
+    if (open && lite() && trackTick++ % 2 === 1) { trackingRequest = requestAnimationFrame(trackPlayerHud); return; }
+    const bodies = trackedBodies();
+    const same = sameBodies(bodies, trackBodies), place = trackFresh || !same;
+    trackFresh = false;
+    trackBodies = bodies;
+    // A pose sequence, reaction or hit-stop hold can pause the body and then move it again with no attribute change,
+    // so an unmoved frame only counts toward the early stop while every figure is at rest.
+    trackStable = same && ![...field.querySelectorAll('.combatant .sprite')].some(sprite => stageFor(sprite)?.busy) ? trackStable + 1 : 0;
+    if (place) {
+      // Keep the settled target cores reserved, or the HUD can snap back over the player target.
+      placePlayerHud(false, settledTargetCores, true);
+      if (field.closest('.combat')?.dataset.targetHud !== 'true') placeHitBadges();
+      // A neighbour's intent that moves between refits re-picks the spot about
+      // four times a second; the Inspect itself never follows the body's bob.
+      if (++inspectTick % 15 === 0 && field.closest('.combat')?.dataset.targetHud !== 'true') placeEnemyInspect();
+    }
     // Follow pose/stance motion only for a bounded window after it changes.
     // Tracking idle breathing every frame forced a full layout read per frame
     // and made combat unplayable on phones; the bob's few pixels are tolerated.
-    trackingRequest = field.isConnected && field.querySelector('.combatant.player') && performance.now() < trackUntil
-      ? requestAnimationFrame(trackPlayerHud) : 0;
+    trackingRequest = open && trackStable < 2 ? requestAnimationFrame(trackPlayerHud) : 0;
   }
   const refresh = () => {
     cancelAnimationFrame(frameRequest);
@@ -1516,6 +1543,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const next = reducedMotionRequested();
     if (next === reduced) return;
     reduced = next;
+    trackFresh = true; trackStable = 0;
     cancelAnimationFrame(trackingRequest);
     trackingRequest = 0;
     schedule();
