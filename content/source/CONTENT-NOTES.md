@@ -335,3 +335,7 @@ The class-progression content under `src/content/progression/`. Flat top-level f
 ### Gear requirements (progressionGearRequirements.json)
 
 `src/content/progression/gear.js` re-exports `progressionGearRequirements`. Header comment: "All 63 gear requirements, including the level-zero public baseline." Level 0 rows are the baseline every class starts with. `unlocks.js` turns each row above level 0 into a `weapon` or `armament` unlock row.
+
+### Relics (progressionRelics.json, progressionRelicUnlocks.json)
+
+`src/content/progression/relics.js` re-exports `progressionRelics` and `progressionRelicUnlocks`. Header comment: "Relic definitions and gates are one independently installable module." The relic rows are the definitions; the unlock rows (`kind: "relic"`) are the class-level gates for them.
