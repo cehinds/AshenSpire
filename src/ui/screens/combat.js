@@ -1208,7 +1208,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (plan) followPlans[e.id] = plan;
     }
     const handPreviews = new Map();
+    // Answering a reaction offer snapshots a hand that is inert until the turn resumes: its faces
+    // keep the quotes already painted instead of quoting every card again for each answer.
+    const paintedQuotes = combat.pendingReaction ? handPreviewCache.cards : null;
     for (const inst of combat.piles.hand) {
+      const painted = paintedQuotes?.get(inst.instanceId)?.plain?.pv;
+      if (painted) { handPreviews.set(inst.instanceId, painted); continue; }
       try { handPreviews.set(inst.instanceId, previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId))); } catch {}
     }
     return { ents, followPlans, hand: [...combat.piles.hand], handPreviews,
@@ -2012,6 +2017,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let topbarRenderKey = null;
   let handRenderKey = null;
   let handPreviewCache = { stateKey: null, cards: new Map() };
+  let handPaintedIds = null;
+  let lastEndTurnPlayable = null;
   const enemyFrames = new Map();
 
   function renderPlayer() {
@@ -2266,7 +2273,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const stateKey = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
       combat.turn, combat.phase, combat.result, combat.rangeState, [...rangeRoutesByCard], [...upcastRanksByCard], [...stackedIds], readSettings()]);
     const key = stateKey + '|' + JSON.stringify([selected, selfArm, lastTargetId]);
-    if (handRenderKey === key) { syncHandPager(handList); return; }
+    if (handRenderKey === key || (combat.pendingReaction && handRenderKey === stateKey + '|paused')) { syncHandPager(handList); return; }
+    // While a reaction offer is pending the hand is inert and the fight is mid-turn, so a repaint
+    // of the same cards would only re-quote them against state that changes again when the offer
+    // resolves. Keep the faces as painted; the key below is never a live key, so the first render
+    // after the offer repaints and re-quotes.
+    const handIds = handList.map(inst => inst.instanceId).join('|');
+    if (combat.pendingReaction && handRenderKey !== null && !upcastPreviewRefresh && handPaintedIds === handIds && selected == null && selfArm == null) {
+      handRenderKey = stateKey + '|paused'; syncHandPager(handList); return;
+    }
     const previewCache = handPreviewCache.stateKey === stateKey && handRenderKey !== null && !upcastPreviewRefresh ? handPreviewCache.cards : new Map();
     const nextPreviews = new Map();
     handStrip.render({
@@ -2308,6 +2323,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
     syncHandPager(handList);
     handRenderKey = key;
+    handPaintedIds = handIds;
     handPreviewCache = { stateKey, cards: nextPreviews };
     if (refreshHitChances) syncHitChances();
   }
@@ -2413,7 +2429,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // No outer Energy gate: a Light dodge costs 0 Actions and 1 Stamina, so a
     // player at 0 Energy with Stamina left still holds a playable card, and
     // the per-card check below already prices every pool.
-    return combat.piles.hand.some((inst) => {
+    // End Turn is disabled while a reaction offer is pending, so the answer keeps the value it had
+    // before the offer rather than quoting the whole hand again for each beat.
+    if (combat.pendingReaction && lastEndTurnPlayable !== null) return lastEndTurnPlayable;
+    return lastEndTurnPlayable = combat.piles.hand.some((inst) => {
       if (isUnplayable(inst)) return false;
       // The live preview — class-priced dodge costs, Power reductions — the
       // same numbers the badge shows and the engine charges, in all three
