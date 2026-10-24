@@ -3435,7 +3435,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // One line in the Command log for a tap that reached playCard and went no further;
   // `tip` (plain player words) also shows on the card when it is given.
   function refusePlay(instanceId, line, tip) {
-    dlog('ignored', `playCard ${instanceId}`, line);
+    logIgnored(`playCard ${instanceId}`, line);
     if (!tip) return;
     const cardEl = combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(instanceId)}"]`);
     if (cardEl) showTooltipFor(cardEl, '<p>' + esc(tip) + '</p>');

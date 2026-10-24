@@ -28,7 +28,7 @@ function harness({ energy = 5, stamina = 5, legalIds = ['e1'], cost = 0, stamina
     dlog: (...args) => logs.push(args), esc: v => String(v),
     showTooltipFor: (el, html) => tips.push({ el, html }),
     combatEl: { querySelector: () => cardEl },
-    logIgnored() {}, lockReport: () => ({}), showPendingDiscard() {}, unqueueCard() {},
+    logIgnored: (what, why) => logs.push(['ignored', what, why]), lockReport: () => ({}), showPendingDiscard() {}, unqueueCard() {},
     expansionChoiceShell: null, hideTooltip() {}, selected: null,
     takeSnapshot: () => ({}), dispatch: () => { throw new Error('must not dispatch'); },
     lastTargetId: null, render() {}, console: { debug() {}, warn() {} },
