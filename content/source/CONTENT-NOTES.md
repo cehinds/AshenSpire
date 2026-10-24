@@ -589,3 +589,127 @@ Compiled to `src/content/generated/derivedStatRules.js`; `src/content/derivedSta
     sense line below is the player's words, one tap down.
 
     Retained for old saves and exports; omitted from character stat surfaces.
+
+## Action costs (actionCosts.json)
+
+`content/source/actionCosts.json` is one object whose keys are the export names of `src/content/actionCosts.js`; content-build compiles it to `src/content/generated/actionCosts.js`. The module re-exports each key frozen at the depth the old hand-written constants had (a freeze is code, not data) and derives `TWO_COST_EFFECT_MULTIPLIER` from `COST_BUDGET.twoCostMultiplier`. These are the comments that lived in the old `actionCosts.js`, in file order (JSON has no comments); each comment block is indented as text, and a trailing comment on a row appears as a bullet. docs/alternative-combat-rounds/COST-WEIGHTS.md gives the reason for every weight.
+
+
+    src/content/actionCosts.js — the action-cost tunables (owner decisions, 2026-10-12).
+
+    Every number a card's Stamina (SP) and Mana (MP) cost reads, and every number an enemy move's SP and an enemy's SP
+    pool read, lives here. src/model/actionCosts.js validates these tables and derives the costs; this file is data only.
+    docs/alternative-combat-rounds/COST-WEIGHTS.md gives the reason for every weight, and
+    tests/action-costs-weights-doc.test.mjs fails when the doc and this file disagree.
+
+    PLAYER CARDS (owner, 2026-10-12, SPEC §4.3a). Each resource is priced on its own side:
+      S_sp = damageWeight × physical damage + rankWeight × rank + Σ SP-side tag weights × stacks + range weight
+             + castingEffort (cast cards) + restoreWeight × Mana restored + drawback weights (negative)
+      S_mp = damageWeight × magical damage + rankWeightMp × rank (magical cards) + Σ MP-side tag weights × stacks
+             + restoreWeight × Stamina restored
+      SP = floor(S_sp / spDivisor) − Stamina restored, MP = floor(S_mp / mpDivisor) − Mana restored, each at least 0.
+      If both are 0, the larger side pays 1 (SP on a tie); a Mana-restoring card pays SP.
+    Opt-outs keep the authored cost and numbers: costRule 'fixed', curses and statuses (by type), and X costs.
+
+    ENEMIES (owner, 2026-10-13, SPEC §4.6a). An enemy's SP pool is its stats: ENEMY_SP_ROW read on its `attributes`
+    (shifted by ENEMY_BLIGHT_SHIFT when it is `blighted`), plus its `equipmentSp`. A move's SP is its own `sp`, else the
+    stance price below.
+
+    ---- Player cards: the budget tunables -------------------------------------------------------------------------
+
+- **spDivisor:** — D: S_sp points per Stamina (the owner's ruling, 2026-10-12: "use D as 6")
+
+- **mpDivisor:** — P: S_mp points per Mana (raised from 6: at 6, rank 1-3 spells and rank 1-2 cards miss 80%)
+
+- **damageWeight:** — points per damage step reached (damageSteps); raw damage would swamp the tags
+
+- **damageSteps:** — damage thresholds (hits counted); empty = linear damage × damageWeight
+
+- **rankWeight:** — points per rank above the base (a base card, rank 0, adds nothing); SP side
+
+- **rankWeightMp:** — points per rank on the MP side of a magical card (owner, 2026-10-12: rank counts on the Mana side too)
+
+- **castingEffortWeight:** — points on any cast card (camp:spell or maneuver:casting); SP side
+
+- **restoreWeight:** — points per Mana restored (SP side) or Stamina restored (MP side)
+
+- **smashPoiseBase:** — Poise damage every smash adds to its own (owner, 2026-10-13: "All smashes deal poise damage")
+
+- **twoCostMultiplier:** — a card whose derived SP is 2 or more multiplies its effect amounts by this
+
+    Combat tag weights (-3..3) and the side each counts on. A tag counts once per card at its weight. A tag the card
+    does not carry, or that this table does not list, adds nothing. Range tags are priced by RANGE_WEIGHTS instead.
+
+    Damage types
+
+    Camps and sources
+
+    Maneuvers
+
+    Targeting
+
+    Magic schools
+
+    Spell identity chips: their authored effects and range own the price.
+
+    Weapon and theme chips (card domain)
+
+- **rank.cantrip:** — training classification; numerical rank owns the cost
+
+    Techniques
+
+    Traits
+
+    Precision lifetime is a marker; its status grant already prices magnitude.
+
+    Reaction rules version 2 traits (docs/combat-card-traits-contract.md). Combat adds them after the cost is derived
+    (engine/combatExpansion.js applyCardTraits), so today these weights price no shipped card.
+
+    Keywords
+
+    Drawbacks (owner, 2026-10-12: negative weights). Read from the card's keywords and effects (DRAWBACK_SOURCES).
+
+    Where a card's drawback and keyword tags come from: a keyword it carries, or an effect it makes the player pay.
+
+    Keyword tags that are drawbacks (owner, 2026-10-12): they may weigh below 0.
+
+- **loseHp:** — an HP (or other resource) cost
+
+- **discard:** — a discard the player pays
+
+- **grantCardCharge:** — takes several turns to cast (a charge the player builds first)
+
+- **addCard:** — a curse or status added to the player's own piles
+
+    Range weights (owner, 2026-10-12: melee 1, reach 2, ranged 3). A card takes the largest range it carries. SP side.
+
+    Tags that mark a cast (the casting-effort weight).
+
+    Statuses the card applies (applyStatus or buildup): weight × stacks (a buildup counts as 1 stack). Every status weighs
+    2 or more (owner). A status counts on the card's side: MP on a card with any MP-side tag, else SP.
+
+    Stacks above this count as this many; null counts every stack (owner, 2026-10-12: status stacks count).
+
+    The effect ops that restore Stamina (priced on the MP side) and Mana (priced on the SP side).
+
+    The maneuver floor (owner, 2026-10-13: "basic ones are 2sp"): at rank 0 a card with this tag costs at least this SP.
+    A higher rank has no floor ("some higher rank ones could cost 1 sp"); an authored upgrade that lowers the cost lowers
+    the floor by as much.
+
+    A sweep pays for its area, so these ops stay unscaled on a 2-SP sweep (owner, 2026-10-13: "AoE for sweeps but normal
+    damage"); its other riders (Block, buildup, Poise) scale.
+
+    The effect ops whose `amount` scales on a 2-SP card. Costs, card counts (draw, discard, addCard), turns and
+    durations (applyStatus.duration), stack counts and hit counts are never scaled.
+
+    ---- Enemies ---------------------------------------------------------------------------------------------------
+    The enemy SP row (owner, 2026-10-13: "enemies are essentially characters with cards, at about 2 SP"; minions usually
+    1-2 SP, elites 2-3, bosses 3-4, all from stats and equipment). SP = base + Σ floor(attribute × weight) + equipmentSp,
+    each attribute term floored on its own. Enemy attributes are inflated next to a player's 1-4.
+
+    The SP band an enemy's pool (normal, elite, boss) must land in; a test holds every enemy to it.
+
+    Blight (owner, 2026-10-13): "blight lowers INT, WIS and DEX and raises STR and CON". A `blighted` enemy's attributes
+    shift by these amounts (floored at 0) wherever its stats are read.
+
+    SP per stance for an enemy move that does not name its own `sp`.
