@@ -14,3 +14,20 @@ test('captured375 and390 absolute captions occupy the header grid band at physic
     row.hidden=true;assert.equal(combatHudBandHeight(header,72/zoom,zoom),72/zoom);row.hidden=false;
   }
 }));
+
+test('an unchanged size key returns the cached band with no layout read', () => withKitDom(({document}) => {
+  const header=document.createElement('header'),row=document.createElement('div');row.className='hud-info-row';row.textContent='Intent';header.append(row);document.body.append(header);
+  let reads=0;
+  header.getBoundingClientRect=()=>{reads++;return {top:0};};
+  row.getBoundingClientRect=()=>{reads++;return {height:20,bottom:40};};
+  const memo={width:390,height:844,fontSize:'16px'};
+  const first=combatHudBandHeight(header,10,1,memo);
+  const afterFirst=reads;
+  assert.equal(first,44);
+  assert.equal(combatHudBandHeight(header,10,1,memo),first);
+  assert.equal(reads,afterFirst,'cache hit reads no rect');
+  memo.width=400;combatHudBandHeight(header,10,1,memo);
+  assert.ok(reads>afterFirst,'a changed width measures again');
+  row.hidden=true;
+  assert.equal(combatHudBandHeight(header,10,1,memo),10);
+}));

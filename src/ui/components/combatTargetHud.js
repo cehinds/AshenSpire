@@ -9,6 +9,11 @@ import { currentSpriteBodyBounds } from './combatSpriteGeometry.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { reducedMotionRequested } from '../motion.js';
 
+// Inline writes that skip an unchanged value, so a repeated geometry pass
+// dirties no layout and the next pass's reads are not forced flushes.
+const setVar = (node, name, value) => { if (node.style.getPropertyValue(name) !== value) node.style.setProperty(name, value); };
+const setStyle = (node, name, value) => { if (node.style[name] !== value) node.style[name] = value; };
+const setData = (node, name, value) => { if (node.dataset[name] !== value) node.dataset[name] = value; };
 const rect = node => { const r = node.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height }; };
 const contains = (r, x, y, pad = 0) => x >= r.left - pad && x <= r.left + r.width + pad && y >= r.top - pad && y <= r.top + r.height + pad;
 function corridor(a, b, x, y, radius) {
@@ -302,15 +307,15 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
     }
     // Phase 3: panel sizing writes, then every panel's height.
     for (const { panel, crowded, width, font, statusSize } of sizing) {
-      panel.node.dataset.crowded = String(crowded);
-      panel.node.style.setProperty('--target-hud-padding-block', `${crowded ? config.sizing.crowdedPaddingBlockEm : .65}em`);
-      panel.node.style.setProperty('--target-hud-padding-inline', `${crowded ? config.sizing.crowdedPaddingInlineEm : .75}em`);
+      setData(panel.node, 'crowded', String(crowded));
+      setVar(panel.node, '--target-hud-padding-block', `${crowded ? config.sizing.crowdedPaddingBlockEm : .65}em`);
+      setVar(panel.node, '--target-hud-padding-inline', `${crowded ? config.sizing.crowdedPaddingInlineEm : .75}em`);
       // The width term only. A plain origin stands in for VIEWPORT_ORIGIN, whose
       // getters read window.innerWidth (a forced layout) for a `left` not used here.
       const panelLocalWidth = anchorLocalBox({ left: 0, top: 0 }, { left: 0, top: 0, width, height: 0 }, { zoom }).width;
-      panel.node.style.width = `${panelLocalWidth}px`;
-      panel.node.style.setProperty('--target-hud-font', `${font / zoom}px`);
-      panel.node.style.setProperty('--target-hud-status-size', `${statusSize / zoom}px`);
+      setStyle(panel.node, 'width', `${panelLocalWidth}px`);
+      setVar(panel.node, '--target-hud-font', `${font / zoom}px`);
+      setVar(panel.node, '--target-hud-status-size', `${statusSize / zoom}px`);
     }
     const requests = sizing.map(({ id, entry, panel, anchor, lane, width }) => ({ id, role: entry.role, lane, anchor, width: width + 25,
       height: panel.node.getBoundingClientRect().height || config.sizing.panelHeightPx + config.sizing.statusHeightPx }));
@@ -321,8 +326,8 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       const panel = panels.get(box.id)?.node; if (!panel) continue;
       // anchorLocalBox(field, ...) with the field box read above, not read again.
       const panelLocal = anchorLocalBox(fieldBox, { left: box.left + 25, top: box.top, width: 0, height: 0 }, { zoom });
-      panel.style.left = `${panelLocal.left}px`; panel.style.top = `${panelLocal.top}px`;
-      panel.dataset.side = box.side; panel.classList.add('visible');
+      setStyle(panel, 'left', `${panelLocal.left}px`); setStyle(panel, 'top', `${panelLocal.top}px`);
+      setData(panel, 'side', box.side); panel.classList.add('visible');
       const info = infoButtons.get(box.id);
       if (info) positioned.push({ info, panel });
     }
@@ -331,14 +336,14 @@ export function mountCombatTargetHud(combat, { field = combat.querySelector('.fi
       // The separate root control escapes the detail's layer while sharing its measured position.
       const infoBox = anchorLocalBox(rootBox, { left: panelBox.left - 25,
         top: panelBox.top + panelBox.height / 2 - 10, width: 20, height: 20 });
-      info.style.left = `${infoBox.left}px`;
-      info.style.top = `${infoBox.top}px`;
-      info.style.width = `${infoBox.width}px`;
-      info.style.height = `${infoBox.height}px`;
+      setStyle(info, 'left', `${infoBox.left}px`);
+      setStyle(info, 'top', `${infoBox.top}px`);
+      setStyle(info, 'width', `${infoBox.width}px`);
+      setStyle(info, 'height', `${infoBox.height}px`);
     }
     for (const { frame, placement } of intents) {
-      frame.style.setProperty('--combat-selected-intent-top', `${placement.selectedTop}px`);
-      frame.style.setProperty('--combat-selected-intent-center', `${placement.center}px`);
+      setVar(frame, '--combat-selected-intent-top', `${placement.selectedTop}px`);
+      setVar(frame, '--combat-selected-intent-center', `${placement.center}px`);
     }
     // Phase 5: the tint cells, rebuilt only when what they draw changed (replacing
     // them dirtied layout, so the next run's first read was a forced layout).
