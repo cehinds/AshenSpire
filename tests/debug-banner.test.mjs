@@ -37,9 +37,11 @@ const markConnected = (node) => { for (const child of node.children) { child.isC
 
 globalThis.document = { body, createElement: (tag) => new Node(tag) };
 globalThis.window = {
+  console: { log() {}, info() {}, warn() {}, error() {}, debug() {} },
   addEventListener: (type, fn) => { listeners.set(type, [...(listeners.get(type) || []), fn]); },
 };
 
+const { consoleRecorder } = await import('../src/ui/consoleLog.js');
 const { isBenignPageNotice, getEntries } = await import('../src/ui/debuglog.js');
 
 const fire = (message, extra = {}) => {
@@ -83,4 +85,15 @@ test('a real uncaught error still raises the banner', () => {
   assert.match(raised[0].text, /Cannot read properties of null/);
   assert.match(raised[0].text, /map\.js:12/, 'and it still says where');
   assert.equal(getEntries().at(-1).kind, 'ERROR');
+});
+
+test('console capture starts at boot with no shortcut setting and includes global failures', () => {
+  window.console.warn('before any Console shortcut');
+  assert.match(consoleRecorder.getEntries().at(-1).text, /before any Console shortcut/);
+  const error = new Error('uncaught console marker');
+  fire(error.message, { error });
+  assert.match(consoleRecorder.getEntries().at(-1).text, /uncaught console marker/);
+  for (const listener of listeners.get('unhandledrejection') || []) listener({ reason: new Error('rejection console marker') });
+  assert.match(consoleRecorder.getEntries().at(-1).text, /Unhandled promise rejection:.*rejection console marker/);
+  assert.equal(getEntries().at(-1).kind, 'ERROR', 'the existing command log still records failures');
 });

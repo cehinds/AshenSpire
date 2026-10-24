@@ -332,6 +332,8 @@ function recoverySettingRows() {
 
 const ROWS = [
   { cat: 'Combat', key: 'askToUpcastAfterTarget', type: 'toggle', def: false, label: 'Ask to upcast after choosing a target', note: 'Off: use the Upcast button under an eligible selected card. On: choose a temporary rank before committing the play; Cancel spends nothing.' },
+  { cat: 'Combat', key: 'combatLogConsole', type: 'toggle', def: false, label: 'Console button in combat log',
+    note: 'Show Console in the full combat log to read, copy or export console output and errors from this session. No saved game or profile is attached.' },
   { cat: 'Combat', key: 'combatLogPlayerColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.player,
     label: t('settings.row.combatLogPlayerColor'), note: tFull('settings.row.combatLogPlayerColor') },
   { cat: 'Combat', key: 'combatLogEnemyColor', type: 'color', def: COMBAT_LOG_PALETTE_DEFAULTS.enemy,
@@ -2516,7 +2518,7 @@ export function generalGroups(category, profile = null, nextProfile = null) {
       // `cat: 'Combat'` now, so what is left here is the title entrance — and
       // the topic is named for the one thing it holds.
       : /titleCity/.test(key) ? 'Title screen' : 'Interface'
-      : category === 'Combat' ? row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
+      : category === 'Combat' ? /^combatLog/.test(key) ? t('combat.log.title') : row.rangeSetting ? t('settings.range.topic') : /armaments/i.test(key) ? 'Armaments' : 'Animation & effects'
       : category === 'Accessibility' ? /tooltip/i.test(key) ? 'Tooltips' : /Flick/.test(key) ? 'Touch gestures'
       : /Motion|Flashes|colorblind/.test(key) ? 'Motion & colour' : 'Readability' : 'Audio';
     if (!groups.has(label)) groups.set(label, []);

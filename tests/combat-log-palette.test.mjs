@@ -4,7 +4,7 @@ import { combatLogPalette, COMBAT_LOG_PALETTE_DEFAULTS, hasCombatLogColorContras
 import { openCombatLogModal } from '../src/ui/components/combatLogModal.js';
 import { resetModalState } from '../src/ui/modalState.js';
 import { withModalDom } from './helpers/modal-dom.mjs';
-import { allResettableKeys, settingsRows } from '../src/ui/screens/settings.js';
+import { settingsSearchHits, allResettableKeys, settingsRows } from '../src/ui/screens/settings.js';
 
 test('log actor segments render as escaped text with player and enemy roles', () => {
   withModalDom((dom) => {
@@ -51,4 +51,12 @@ test('player and enemy colors are ordinary resettable settings', () => {
     assert.equal(row.def, color);
     assert.ok(allResettableKeys().includes(key), `${role} palette setting follows standard settings persistence and reset`);
   }
+});
+
+test('Console is an ordinary Combat toggle available with developer tools off', () => {
+  const row = settingsRows().find(row => row.key === 'combatLogConsole');
+  assert.equal(row.cat, 'Combat'); assert.equal(row.type, 'toggle'); assert.equal(row.def, false);
+  assert.equal(row.debugTopic, undefined);
+  assert.ok(allResettableKeys().includes(row.key));
+  assert.ok(settingsSearchHits('Console button', false, {}).some(hit => hit.row.key === row.key));
 });
