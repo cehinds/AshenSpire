@@ -90,12 +90,14 @@ export function mountHandInspectionOverlay(hand) {
         ? revealOwner : focused || selectedOwner;
       const ownedControl = active === upcast?.parentElement ? upcast : active?.querySelector?.('.card-upcast-controls');
       if (active) {
-        const target = ownedControl?.getBoundingClientRect().width ? ownedControl : active;
-        const key = () => [active.dataset?.instanceId, active === focused, target === active, hand.clientWidth, hand.scrollLeft,
-          viewViewportBox().right, active.style?.cssText, target.hidden].join('|');
+        // The key reads attributes only: a layout read here would flush the
+        // render's pending style work just to learn that nothing moved. A
+        // resize or a fan re-fit forces the reveal (below).
+        const key = () => [active.dataset?.instanceId, active === focused, ownedControl === upcast, ownedControl?.hidden,
+          active.style?.cssText].join('|');
         const before = key();
         if (forceReveal || before !== revealedKey) {
-          revealHandUpcastControl(hand, target);
+          revealHandUpcastControl(hand, ownedControl?.getBoundingClientRect().width ? ownedControl : active);
           revealedKey = key();
         }
       } else revealedKey = null;
@@ -129,7 +131,11 @@ export function mountHandInspectionOverlay(hand) {
     control.style.left = `${local.left}px`;
     control.style.top = `${local.top}px`;
   };
-  const schedule = () => { cancelAnimationFrame(request); request = requestAnimationFrame(() => position()); };
+  // A gesture, key, focus, resize or fan re-fit always re-reveals (the viewer
+  // may have panned away since). A DOM mutation burst does not: it re-asks the
+  // reveal only when the card it is about has changed (see revealedKey).
+  const lazy = () => { cancelAnimationFrame(request); request = requestAnimationFrame(() => position()); };
+  const schedule = () => { forceReveal = true; lazy(); };
   // A browser-owned pan already chose the viewport. Following its scroll must
   // not drag it back to an older pager cursor or selected card. Info still
   // tracks its owner; explicit focus, selection and layout changes reveal.
@@ -145,8 +151,8 @@ export function mountHandInspectionOverlay(hand) {
   // A new press, keyboard action or blur also releases a suppressed click.
   const settle = () => { awaitingClick = false; schedule(); };
   const blur = () => { pointers.clear(); settle(); };
-  const choose = event => { revealOwner = event.target.closest('.card'); forceReveal = true; schedule(); };
-  const observer = new MutationObserver(schedule);
+  const choose = event => { revealOwner = event.target.closest('.card'); schedule(); };
+  const observer = new MutationObserver(lazy);
   observer.observe(hand, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'hidden'] });
   hand.addEventListener('scroll', followScroll);
   hand.addEventListener('handlayoutchange', schedule);
