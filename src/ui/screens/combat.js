@@ -2278,7 +2278,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // of the same cards would only re-quote them against state that changes again when the offer
     // resolves. Keep the faces as painted; the key below is never a live key, so the first render
     // after the offer repaints and re-quotes.
-    const handIds = handList.map(inst => inst.instanceId).join('|');
+    // The stack's members are part of what is painted: a committed reaction card stays in hand but
+    // wears its stacked marker, so a new offer on the same stack must repaint it.
+    const handIds = handList.map(inst => inst.instanceId).join('|') + '#' + [...stackedIds].join('|');
     if (combat.pendingReaction && handRenderKey !== null && !upcastPreviewRefresh && handPaintedIds === handIds && selected == null && selfArm == null) {
       handRenderKey = stateKey + '|paused'; syncHandPager(handList); return;
     }

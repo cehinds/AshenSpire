@@ -97,3 +97,16 @@ test('quotes are reused while a reaction offer is pending, and re-taken after it
   f.context.renderHand();
   assert.equal(quotes(), settled, 'and that quote is then cached');
 }));
+
+test('a card committed to the reaction stack repaints with its stacked marker while the offer is pending', () => withKitDom(({ document }) => {
+  const f = fixture(document);
+  f.context.renderHand();
+  f.combat.pendingReaction = { id: 'g:p', groupKey: 'g', ownerId: f.combat.player.id, options: [] };
+  f.context.renderHand();
+  assert.equal(f.rendered.length, 1, 'the paused hand is not repainted');
+  // The committed card stays in hand; a second offer on the same stack arrives.
+  f.context.stackedCardIds = () => new Set(['spark-1']);
+  f.context.renderHand();
+  assert.equal(f.rendered.length, 2, 'a change in stack membership repaints the paused hand');
+  assert.equal(f.rendered[1][0].stacked, true, 'and the committed card is painted as stacked');
+}));
