@@ -1,5 +1,16 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — original class and map icons
+
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/RestoreClassMapIcons/latest/)
+
+Original class symbols and map marks return, including map state tints and text-sized legend icons. Captured from official local build **0.7.1.1809 / 493caba95c** using native showcase states. [Capture identity and QA limits](docs/preview/features/restore-class-map-icons/README.md).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile: original class symbols](docs/preview/features/restore-class-map-icons/mobile.png) | ![Desktop: Core class choices](docs/preview/features/restore-class-map-icons/desktop.png) | ![Wide: Core atlas location marks](docs/preview/features/restore-class-map-icons/wide.png) | ![Tablet: original map symbols in the legend](docs/preview/features/restore-class-map-icons/tablet.png) |
+<!-- feature-preview:end -->
 
 
 
