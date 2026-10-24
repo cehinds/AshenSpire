@@ -1,0 +1,138 @@
+{
+  "area": [
+    "frostNova",
+    "meteorSwarm",
+    "radiantSpray",
+    "supernova",
+    "starfallBeam",
+    "gravityWell",
+    "pyreOfCharts",
+    "ashCircle",
+    "ashfallRite",
+    "graveOffering",
+    "contagion",
+    "scourge",
+    "butterflyPlague",
+    "bloodHarvest"
+  ],
+  "ranged": [
+    "starlance",
+    "starfallBeam",
+    "celestialLance",
+    "meteorite",
+    "meteorSwarm",
+    "progression-eclipse-lance",
+    "progression-comet-needle"
+  ],
+  "counters": {
+    "umbralWard": {
+      "camps": [
+        "physical",
+        "spell"
+      ],
+      "ranges": [
+        "reach",
+        "ranged"
+      ],
+      "targeting": [
+        "single"
+      ],
+      "ward": 3,
+      "poise": 1
+    },
+    "wardingStar": {
+      "camps": [
+        "spell"
+      ],
+      "ranges": [
+        "melee",
+        "reach",
+        "ranged"
+      ],
+      "targeting": [
+        "single"
+      ],
+      "ward": 2,
+      "poise": 0
+    },
+    "progression-rime-mirror": {
+      "camps": [
+        "physical",
+        "spell"
+      ],
+      "ranges": [
+        "melee",
+        "reach"
+      ],
+      "targeting": [
+        "single"
+      ],
+      "ward": 2,
+      "poise": 1
+    }
+  },
+  "upcast": {
+    "starstonePebble": {
+      "damagePerRank": 2
+    },
+    "cometFragment": {
+      "damagePerRank": 2
+    },
+    "frostNova": {
+      "damagePerRank": 1,
+      "pressurePerRank": 1
+    },
+    "starSpark": {
+      "damagePerRank": 1,
+      "pressurePerRank": 1
+    },
+    "cinderSigil": {
+      "damagePerRank": 2,
+      "pressurePerRank": 1
+    },
+    "crystalBarrier": {
+      "blockPerRank": 2
+    },
+    "wardingStar": {
+      "blockPerRank": 2
+    },
+    "blightTouch": {
+      "damagePerRank": 1,
+      "pressurePerRank": 1
+    },
+    "contagion": {
+      "pressurePerRank": 1
+    },
+    "hex": {
+      "pressurePerRank": 1
+    }
+  },
+  "chancePressure": [
+    "ashenMote",
+    "cinderSigil",
+    "starSpark",
+    "blightTouch",
+    "witheringTouch",
+    "hex"
+  ],
+  "status": {
+    "frost": "frost",
+    "burn": "burn",
+    "crimsonBlight": "crimsonBlight",
+    "necroticBlight": "necroticBlight",
+    "weak": "weak",
+    "vulnerable": "vulnerable",
+    "bleed": "bleed",
+    "insanity": "dazed"
+  },
+  "profile": {
+    "frost": "elemental",
+    "burn": "elemental",
+    "crimsonBlight": "curse",
+    "necroticBlight": "curse",
+    "weak": "mental",
+    "vulnerable": "curse",
+    "bleed": "bodily",
+    "insanity": "mental"
+  }
+}

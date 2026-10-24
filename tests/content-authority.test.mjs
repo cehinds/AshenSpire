@@ -27,6 +27,8 @@ import { classes, LOCKED_CLASSES } from '../src/content/classes.js';
 import { contentBundle } from '../src/content/index.js';
 import { combatExpansionLore } from '../src/content/combatExpansionLore.js';
 import { combatExpansionEquipment } from '../src/content/combatExpansionEquipment.js';
+import { combatExpansionCardOverlay, combatExpansionSpellProfiles, combatExpansionNewCards } from '../src/content/combatExpansionCards.js';
+import { combatExpansionCardTables } from '../src/content/generated/combatExpansionCardTables.js';
 import { combatExpansionMartialOverlay } from '../src/content/combatExpansionMartial.js';
 import { combatExpansionMartialTables } from '../src/content/generated/combatExpansionMartialTables.js';
 
@@ -210,6 +212,9 @@ const EXPANSION_TABLES = {
   combatExpansionEquipment: [combatExpansionEquipment, 'combatExpansionEquipment'],
   combatExpansionMartialOverlay: [combatExpansionMartialOverlay, 'combatExpansionMartial'],
   combatExpansionMartialTables: [combatExpansionMartialTables, 'combatExpansionMartial'],
+  combatExpansionCardOverlay: [combatExpansionCardOverlay, 'combatExpansionCards'],
+  combatExpansionSpellProfiles: [combatExpansionSpellProfiles, 'combatExpansionCards'],
+  combatExpansionCardTables: [combatExpansionCardTables, 'combatExpansionCards'],
 };
 
 for (const [name, [exported, moduleName]] of Object.entries(EXPANSION_TABLES)) {
@@ -224,6 +229,20 @@ for (const [name, [exported, moduleName]] of Object.entries(EXPANSION_TABLES)) {
     assert.match(text, new RegExp(`from '\\./generated/${name}\\.js'`));
   });
 }
+
+// The expansion's colorless counters and cantrips are a card pool: JSON under
+// content/source/cards, re-exported by combatExpansionCards.js (which keeps the projection).
+test('expansion cards: combatExpansionNewCards deep-equals content/source/cards/combatExpansionNewCards.json', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/cards/combatExpansionNewCards.json'), 'utf8'));
+  assert.ok(Array.isArray(authored) && authored.length > 0, 'combatExpansionNewCards.json is a non-empty array');
+  assert.deepStrictEqual(combatExpansionNewCards, authored);
+  assert.equal(new Set(authored.map((card) => card.id)).size, authored.length, 'card ids are unique');
+  assert.ok(authored.every((card) => card.minCombatExpansionVersion === 2), 'every row is a version 2 card');
+  assert.equal(Object.isFrozen(combatExpansionNewCards), false);
+  const text = readFileSync(resolve(ROOT, 'src/content/combatExpansionCards.js'), 'utf8');
+  assert.match(text, /from '\.\/generated\/cards\/combatExpansionNewCards\.js'/);
+  assert.ok(!/^const (counter|cantrip) = \(/m.test(text), 'the counter and cantrip row builders are gone: edit the JSON rows');
+});
 
 test('the generated modules are current (content-build --check exits 0)', () => {
   const r = spawnSync(process.execPath, ['tools/content-build.mjs', '--check'], { cwd: ROOT, encoding: 'utf8' });
