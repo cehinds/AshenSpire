@@ -11,6 +11,7 @@ import { el, button } from '../kit/index.js';
 import { openModal } from './modalShell.js';
 import { t, tFull } from '../strings.js';
 import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
+import { openConsoleLog } from '../debuglog.js';
 import { combatLogPalette } from '../models/CombatLogPaletteModel.js';
 
 function appendEntryText(item, entry) {
@@ -68,7 +69,7 @@ export function renderCombatLogEntries(container, entries, { detailed = false, p
  * `setEntries` redraws in place and keeps the reader at the bottom only when
  * they already were there, so reading back in the log is never yanked away.
  */
-export function openCombatLogModal({ entries = [], opener = document.activeElement, onClose = null, detailed = true, palette = {} } = {}) {
+export function openCombatLogModal({ entries = [], opener = document.activeElement, onClose = null, detailed = true, palette = {}, showConsole = false } = {}) {
   const list = el('div', { class: 'combat-log-modal-entries', tabindex: '0', role: 'region', 'aria-label': t('combat.log.actions') });
   let currentEntries = entries;
   renderCombatLogEntries(list, entries, { detailed, palette, legend: true });
@@ -78,6 +79,11 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
     detailButton.textContent = detailed ? 'Compact log' : 'Full detail';
     detailButton.setAttribute('aria-pressed', String(detailed));
     renderCombatLogEntries(list, currentEntries, { detailed, palette, legend: true });
+  });
+  const consoleButton = button({ label: t('debugChrome.console'), attrs: { 'aria-haspopup': 'dialog', 'data-console-shortcut': '' } });
+  let consoleModal = null;
+  consoleButton.addEventListener('click', () => {
+    if (!consoleModal) consoleModal = openConsoleLog({ opener: consoleButton, onClose: () => { consoleModal = null; } });
   });
   const closeButton = button({ label: t('common.close'), role: 'exit', attrs: { 'data-back': '' } });
   // The shell reads the opener only at close, so hand it a live reference that
@@ -89,8 +95,16 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
   };
   const modal = openModal({
     name: 'combat-log', size: 'xl', className: 'combat-log-modal', title: t('combat.log.title'),
-    titleId: 'combat-log-modal-title', body: list, secondary: [closeButton, detailButton], opener: openerRef, onClose,
+    titleId: 'combat-log-modal-title', body: list, secondary: [closeButton, detailButton, consoleButton], opener: openerRef, onClose: () => { consoleModal?.close(); onClose?.(); },
   });
+  let consoleEnabled = null;
+  const setConsoleEnabled = enabled => {
+    if (consoleEnabled === !!enabled) return;
+    consoleEnabled = !!enabled;
+    consoleButton.hidden = !enabled;
+    modal.foot.querySelector('.modal-foot-actions').dataset.actionCount = enabled ? '3' : '2';
+  };
+  setConsoleEnabled(showConsole);
   markUiComponent(modal.panel, UI.combatLogModal);
   // Reading the log must not skip the attack that is playing: fx.js's
   // click-to-skip ignores anything under [data-combat-read-only].
@@ -99,6 +113,7 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
   modal.body.scrollTop = modal.body.scrollHeight;
   return Object.freeze({
     panel: modal.panel,
+    setConsoleEnabled,
     setEntries(next, nextPalette = palette) {
       const { body } = modal;
       const atEnd = body.scrollTop + body.clientHeight >= body.scrollHeight - 4;
