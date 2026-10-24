@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-24
 
-- **Shops are now an editable data file** ([#2289](https://github.com/cehinds/AshenSpire/pull/2289), `0.7.1.1815`). The shop kinds and what each one offers live in `content/source/shops.json`. The explanation shown beside each Settings number is a plain `"$note"` field there too. Nothing in play changes.
+- **Shops are now an editable data file** ([#2289](https://github.com/cehinds/AshenSpire/pull/2289), `0.7.1.1817`). The shop kinds and what each one offers live in `content/source/shops.json`. The explanation shown beside each Settings number is a plain `"$note"` field there too. Nothing in play changes.
 - **Encounters are now editable data files** ([#2288](https://github.com/cehinds/AshenSpire/pull/2288), `0.7.1.1815`). Which enemies you meet in each region lives in `content/source/wealdEncounters.json`, `marchesEncounters.json` and `reachEncounters.json`. Nothing in play changes.
 - **Rogue cards are now an editable data file** ([#2287](https://github.com/cehinds/AshenSpire/pull/2287), `0.7.1.1813`). The Rogue card pool lives in `content/source/cards/rogueCards.json` like every other class. Nothing in play changes.
 - **Combat says why a card won't play** ([#2283](https://github.com/cehinds/AshenSpire/pull/2283), `0.7.1.1811`). Tapping a card you can't afford, or a target it can't reach, now shows the reason on the card instead of doing nothing. Every ignored or refused tap also leaves a short line in Settings → Command log, to help track down taps that fail on phones.
