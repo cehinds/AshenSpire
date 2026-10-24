@@ -339,3 +339,7 @@ The class-progression content under `src/content/progression/`. Flat top-level f
 ### Relics (progressionRelics.json, progressionRelicUnlocks.json)
 
 `src/content/progression/relics.js` re-exports `progressionRelics` and `progressionRelicUnlocks`. Header comment: "Relic definitions and gates are one independently installable module." The relic rows are the definitions; the unlock rows (`kind: "relic"`) are the class-level gates for them.
+
+### Feats (progressionFeatRows.json, progressionFeatUnlocks.json)
+
+`src/content/progression/feats.js` keeps `progressionFeats` and `progressionFeatUnlocks` (both frozen) and builds them from the generated rows. Header comment: "Fifty class feats. Their descriptions and effects share normalized balance bindings." The rows hold id, skill, minimum level and name only; each feat's `description` is derived in JS by `getFeatDescription` from balance, property rules, tagging and the variable bindings, so it stays code. The unlock rows (`kind: "feat"`) are the class-level gates.
