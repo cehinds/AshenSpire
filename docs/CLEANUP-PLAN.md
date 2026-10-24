@@ -17,8 +17,8 @@ Status key: `todo` · `in progress` · `done (#PR)`
 |---|------|------|----|--------|
 | 1 | Rogue cards | `src/content/cards/rogue.js` | `content/source/cards/rogueCards.json` | done (#2287) |
 | 2 | Encounters (three seats) | `src/content/encounters/*.js` | `content/source/{weald,marches,reach}Encounters.json` | done (#2288) |
-| 3 | Shops | `src/content/shops.js` | `content/source/shops.json` | in review (#2289; adds the `"$note"` field for Settings notes) |
-| 4 | Consumables, companions, keywords | `src/content/{consumables,companions,keywords}.js` | `content/source/*.json` | done, queued (class books stay derived from classes) |
+| 3 | Shops | `src/content/shops.js` | `content/source/shops.json` | done (#2289; adds the `"$note"` field for Settings notes) |
+| 4 | Consumables, companions, keywords | `src/content/{consumables,companions,keywords}.js` | `content/source/*.json` | in review (#2290; class books stay derived from classes) |
 | 5 | Equipment, attributes, derived stats, action costs | `src/content/{equipment,attributes,derivedStats,actionCosts}.js` | `content/source/*.json` | done, queued (equipment stays JS: lookups only) |
 | 6 | Expansion cards and martial/equipment/lore tables | `src/content/combatExpansion*.js` | `content/source/*.json` | done, queued (apply functions stay JS) |
 | 7 | Progression (card families, lessons, lore, feats, unlocks, gear) | `src/content/progression/*.js` | `content/source/progression*.json` | done, queued (grade maths and derivations stay JS) |
