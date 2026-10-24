@@ -6581,3 +6581,8 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .combat-log-role-swatch { width:0.75em; height:0.75em; border:1px solid currentColor; border-radius:50%; }
 .combat-log-role--player .combat-log-role-swatch { background:var(--combat-log-player-color); }
 .combat-log-role--enemy .combat-log-role-swatch { background:var(--combat-log-enemy-color); }
+
+/* Console uses the shared modal and a native selectable text field on phones. */
+.console-log-pane { display: flex; flex-direction: column; gap: var(--space-2, 8px); min-width: 0; }
+.console-log-text { box-sizing: border-box; width: 100%; min-width: 0; height: 48vh; height: 48dvh; min-height: 8rem; resize: none; white-space: pre-wrap; overflow-wrap: anywhere; font-family: monospace; font-size: max(16px, 1rem); line-height: 1.4; user-select: text; touch-action: auto; }
+.combat-log-modal [data-console-shortcut][hidden] { display: none !important; }

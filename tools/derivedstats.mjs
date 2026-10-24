@@ -524,7 +524,8 @@ check('the integrated dependency seam has one rules owner and value-only consume
 // check goes RED rather than quiet. It fails closed in every direction.
 const BANNED = /dodge|reaction|handMax/i;
 const PROSE_KEYS = new Set(['label', 'faceLabel', 'sense']);
-const CONTENT_FILE = 'src/content/derivedStats.js';
+// Authored in JSON since the stats-tables move (the shim src/content/derivedStats.js only re-exports it).
+const CONTENT_FILE = 'content/source/derivedStatRules.json';
 const MODEL_FILE = 'src/model/derivedStats.js';
 
 check('no Dodge/reaction behavior or handMax policy is smuggled into the contract', () => {
@@ -550,13 +551,10 @@ check('no Dodge/reaction behavior or handMax policy is smuggled into the contrac
   // The content file allows each declaration, once, with its key attached.
   let residue = readFileSync(resolve(ROOT, CONTENT_FILE), 'utf8');
   for (const [key, value] of declarations) {
-    for (const quote of ["'", '"']) {
-      const needle = `${key}: ${quote}${value}${quote}`;
-      const at = residue.indexOf(needle);
-      if (at < 0) continue;
-      residue = residue.slice(0, at) + ' ' + residue.slice(at + needle.length);
-      break;                                     // ONCE. A second copy survives.
-    }
+    const needle = `${JSON.stringify(key)}: ${JSON.stringify(value)}`;   // JSON form: "sense": "…"
+    const at = residue.indexOf(needle);
+    if (at < 0) continue;
+    residue = residue.slice(0, at) + ' ' + residue.slice(at + needle.length);   // ONCE. A second copy survives.
   }
   const hit = residue.match(BANNED);
   assert(!hit, `${CONTENT_FILE}: '${hit && hit[0]}' outside a single declared presentation value`);

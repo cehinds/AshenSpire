@@ -108,6 +108,9 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
   // focus return moves to this button, and a closed handle is dropped.
   if (state.fullLog && !state.fullLog.panel.isConnected) state.fullLog = null;
   state.fullLog?.setOpener(fullLog);
+  state.fullLog?.setConsoleEnabled(readSettings()?.combatLogConsole === true);
+  state.drawerLog?.setConsoleEnabled(readSettings()?.combatLogConsole === true);
+  state.drawerLog?.setOpener(logButton);
   const head = el('div', { class: 'combat-log-head' });
   head.append(title, fullLog);
   const list = el('div', { class: 'combat-log-entries', 'data-combat-tool': 'entries', tabindex: '0', role: 'region', 'aria-label': t('combat.log.actions') });
@@ -173,7 +176,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
   };
   fullLog.addEventListener('click', () => {
     if (state.fullLog) return;
-    state.fullLog = openCombatLogModal({ entries: latestEntries, palette: readPalette(), opener: fullLog, onClose: () => { state.fullLog = null; } });
+    state.fullLog = openCombatLogModal({ entries: latestEntries, palette: readPalette(), showConsole: readSettings()?.combatLogConsole === true, opener: fullLog, onClose: () => { state.fullLog = null; } });
   });
   reaction.addEventListener('click', () => onToggle(reaction.getAttribute('aria-checked') !== 'true'));
   // Like the Grid checkbox: wait for the write, block overlapping toggles, and repaint from the persisted
@@ -300,7 +303,7 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     // as the full log, so battlefield stacking contexts cannot cover it.
     panel.hidden = true;
     if (log.open && !state.drawerLog) state.drawerLog = openCombatLogModal({
-      entries: log.entries, palette: readPalette(), opener: logButton, detailed: false,
+      entries: log.entries, palette: readPalette(), showConsole: readSettings()?.combatLogConsole === true, opener: logButton, detailed: false,
       onClose: () => { state.drawerLog = null; state.open = false; onViewChange(); },
     });
     if (!log.open && state.drawerLog) { const drawer = state.drawerLog; state.drawerLog = null; drawer.close(); }
@@ -308,6 +311,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     logButton.setAttribute('aria-description', `${log.size}. Tap to open or close; drag up or down to resize. Arrow keys change size.`);
     latestEntries = log.entries;
     const palette = readPalette();
+    state.fullLog?.setConsoleEnabled(readSettings()?.combatLogConsole === true);
+    state.drawerLog?.setConsoleEnabled(readSettings()?.combatLogConsole === true);
     const key = JSON.stringify([log.entries, palette]);
     if (key !== entryKey) {
       entryKey = key;

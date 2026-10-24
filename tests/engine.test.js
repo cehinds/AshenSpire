@@ -7353,11 +7353,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(GENERAL_GROUPS.join(','), 'Display,Combat,Audio,Game rules',
       'General offers Display, Combat, Audio and the custom Game rules section');
     const combatTopics = generalGroups('Combat');
-    eq([...combatTopics.keys()].join(','), 'Animation & effects,Range,Armaments',
+    eq([...combatTopics.keys()].join(','), 'Animation & effects,Combat log,Range,Armaments',
       'Combat names its topics for what a player came looking for');
     eq(combatTopics.get('Animation & effects').map((r) => r.key).join(','),
-      'askToUpcastAfterTarget,combatLogPlayerColor,combatLogEnemyColor,useSprites,autoCombat,combatSpeed,autoCombatSpeed,combatStepPause,animationStepDuration,combatPacingPreset,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
-      'every combat pacing, log identity color, quality, shake, sprite, played-card and upcast switch is under one name');
+      'askToUpcastAfterTarget,useSprites,autoCombat,combatSpeed,autoCombatSpeed,combatStepPause,animationStepDuration,combatPacingPreset,animSpeed,performanceMode,screenShake,showPlayedCard,manaRing',
+      'every combat pacing, quality, shake, sprite, played-card and upcast switch is under one name');
+    eq(combatTopics.get('Combat log').map(r => r.key).join(','),
+      'combatLogConsole,combatLogPlayerColor,combatLogEnemyColor',
+      'console access and log identity colors share the Combat log topic');
+    eq(combat.find(r => r.key === 'combatLogConsole').def, false, 'Console shortcut defaults off');
+    eq(combat.find(r => r.key === 'combatLogConsole').type, 'toggle', 'Console shortcut is an ordinary toggle');
+    eq(combat.find(r => r.key === 'combatLogConsole').debugTopic, undefined, 'Console shortcut has no developer gate');
     eq(combatTopics.get('Range').map(r => r.key).join(','),
       'rangeMechanics,rangeAdvanceSpPerBand,rangeReachPrecisionBonus,rangeThrowPrecisionPenalty',
       'new-run range rules have their own Combat topic');
@@ -7376,7 +7382,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the bag that mixed combat pacing with the title entrance is gone');
     eq(displayTopics.get('Title screen').map((r) => r.key).join(','), 'titleCityHold',
       'what is left of it is named for the title screen it actually holds');
-    for (const key of ['useSprites', 'animSpeed', 'performanceMode', 'screenShake', 'showPlayedCard',
+    for (const key of ['combatLogConsole', 'combatLogPlayerColor', 'combatLogEnemyColor', 'useSprites', 'animSpeed', 'performanceMode', 'screenShake', 'showPlayedCard',
       'armamentsPresentation', 'armamentsPhonePlacement']) {
       eq(categoryHandler('General').rows.filter((r) => r.key === key).length, 1,
         `${key} has exactly one home in the General tab`);

@@ -1,4 +1,4 @@
-# Content authoring notes (relics, stances, flasks, statuses, events, cards, enemies, classes)
+# Content authoring notes (relics, stances, flasks, statuses, events, cards, enemies, classes, attributes, derived stats, action costs)
 
 The relics are `content/source/relics.json`, compiled to `src/content/generated/relics.js` by
 `tools/content-build.mjs`. These are the design notes that lived as comments in the old
@@ -371,3 +371,457 @@ File header (was the comment block at the top of src/content/shops.js): the thre
 - **master.respecRefundPct** — a respec pays back this whole percentage of the XP spent above level 1 into the training pool (SPEC §14.5). Every reader clamps it to 50–75.
 - **master shelves and services (SPEC §14.5)** — the stocked shelves (`skillBooks`, `weaponArts`, `armaments`) are each filtered to the visiting master's tracks and rolled on `shopOffers` after the offering roll. The services (`training`, `respec`, `lesson`, `appraisal`, `redistribute`) each stay laid out once rolled and are judged live. Training and appraisal can always act: every master teaches three or four tracks.
 - **masters (SPEC §14.5)** — not a kind and no Settings row: who a master visit can be. A visit picks one on the `shop` stream, in written order. Each teaches 3 or 4 distinct weapon, focus or dual-wield tracks (never an armour track, which has no item type, nor a `class:` track, whose respec would strand the class tree's picks), and speaks as a speakers.csv row.
+
+## Keywords
+
+Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for
+these ids are engine primitives (card-zone/turn rules that cannot be data); this
+registry supplies only what tooltips show.
+
+## Consumables
+
+Skill books and revive tokens (SPEC §14.3). Hand-authored rows are `content/source/consumableBooks.json`
+(books) and `consumableTokens.json` (revive tokens); the per-class books are derived in
+`src/content/consumables.js` from `classes`, so a new class still gets its book.
+
+A consumable is carried as a count in `run.consumables` ({ [id]: count }), bought at the market and
+sold back through its Sell pane.
+
+- skillBook `{ skill, xp }`: read out of combat from the Armoury's Inventory: choose a lesson,
+  awardSkillXp on its track and learn one card, then the count drops by one.
+- revive `{ hpPct }`: spent by itself when the player would drop to 0 HP in a fight; HP becomes
+  max(1, floor(maxHp x hpPct / 100)).
+
+EVERY NUMBER HERE IS A DEFAULT. Each carries a note (the `$note` key, the sentence its row shows), and
+Settings > Advanced > Shops generates a row per number, `gameConfig.consumables.<id>.<key>`, frozen into
+the run's snapshot like the Shops rows (model/consumables.js consumableConfigRows). validateContent
+refuses a number with no note, a fraction, a price below 1 and a `sellValue` above `cost` (a sale never
+beats the price), each by name.
+
+`blurb` may name `{xp}`, `{hpPct}` and `{skill}` (the track's label); the shelf fills them from the row's
+live values, so a tuned number never leaves a stale sentence.
+
+## Companions
+
+Temporary companions (SPEC §14.3). A companion travels with the run for `combats` fights, held in
+`run.companions` as { id, combatsLeft }; `combatsLeft` drops by one at each combat end
+(engine/runCombat.js runCombatEnd) and it leaves at 0. One of each at a time: the market never offers
+one already travelling.
+
+WHAT IT DOES IS NOT WRITTEN HERE (Codex on #1376; coordinator ruling). A companion's effect is a
+property rule, as a relic's and a location's are: its `family = companion` rows in
+content/source/tagging.csv name leaves under the `companion` branch of `property` in nodes.csv, whose
+rules live in nodeEffects.json with their numbers bound to balance.powers.*. stampTags derives
+`propertyTags`, and the fight mounts it as a `companion` carrier (engine/properties.js
+syncCompanionProperties). validateContent refuses a row that writes `triggers` or `modifiers`, and one
+with no property tag.
+
+`cost` and `combats` are defaults, each with a note (`$note`): Settings > Advanced > Shops generates
+`gameConfig.companions.<id>.<key>` for them.
+
+## Combat expansion tables (combatExpansionLore.json, combatExpansionEquipment.json, combatExpansionMartialOverlay.json, combatExpansionCardOverlay.json, combatExpansionSpellProfiles.json, cards/combatExpansionNewCards.json)
+
+Each compiles to `src/content/generated/` (the card pool to `generated/cards/`); the matching `src/content/combatExpansion*.js` module re-exports it.
+
+- **combatExpansionLore** — three-part lore for the expanded techniques and borrowed Blight cards.
+- **combatExpansionEquipment** — scoped ids are deliberate in `armour`: two classes can wear different sets named `default`, so a key is `<class>:<set>`.
+- **combatExpansionMartialOverlay** — existing ids, rather than display names, own every changed Martial role. The projection runs after equipment composition and only for version 2. Each id maps to its maneuver (`attack`, `defend`, `sweep`, `smash`, `counter`, `ranged`, `support`). Exceptions: `lethalDose` is a thrown vial, a projectile at Reach, never a Ranged maneuver (owner #22); `nockAndWait` is a Counter with `counterMode: "ranged"` at Reach; `whirlingGuard` and `sweepingBlow` carry `defensiveReaction` (defensive use still pays and resolves the card's printed effects); `sweepingBlow.buildup` is authored bodily pressure on all enemies, so a wide sweep disrupts footing without every Sweep granting an automatic active status (two base sweeps fill 6).
+- **combatExpansionMartialTables** (not exported; read by `applyCombatExpansionMartial` in `combatExpansionMartial.js`, which stays JS because it is logic) — `area`, `ranged`, `evades` are id lists; `poiseReplies` is the Poise a Counter returns; `replySourceBase` holds the authored, ungraded v2 source amounts: permanent primary damage improvements become Poise improvements on zero-HP Counters and never restore HP retaliation, while conditional grade effects keep their gates; `upcast` is per-rank growth; `status` maps a status to its recovery profile.
+- **combatExpansionCardOverlay** — explicit authored ids are the mapping authority: each card id maps to its `school` and `damageType`. This overlay is applied only by the v2 resolver; old runs continue to use their original definitions. School to damage type: force blunt, frost frost, lightning piercing, fire fire, alteration blunt, illusion psychic, divine sacred, decay decay.
+- **combatExpansionSpellProfiles** — spell profiles for the staff and sceptre weapon cards, keyed by `equipmentProfileId`.
+- **cards/combatExpansionNewCards.json** — the eight school Counters (`<school>Counter`, plus `barrageCounter` "Barrage Interception"), the seven cantrips and the five status cards added for the expansion. The counters and cantrips were once built by two JS helpers (`counter`, `cantrip`); the rows are now written out in full. Every row has `minCombatExpansionVersion: 2`. A counter's text is "Gain {gainBarrier} Barrier. Prepare a <school> Counter: <ward> Ward and <poise> Poise return."; a cantrip's pressure status maps to its recovery profile (`sleep` and `weak` mental, `crimsonBlight` curse, anything else elemental).
+- **combatExpansionCardTables** (not exported; read by `applyCombatExpansionCard` in `combatExpansionCards.js`, which stays JS because it is logic) — `area` and `ranged` are id lists; `counters` is the spell Counter coverage and Ward/Poise return per card; `upcast` is per-rank growth; `chancePressure` lists the cards whose buildup becomes a chance (50 base, 75 upgraded, plus 25 per upcast rank); `status` maps an old status to its buildup status and `profile` maps a buildup status to its recovery profile.
+
+## Attributes and character creation (attributes.json, creationModes.json, attributeRules.json)
+
+Compiled to `src/content/generated/`; `src/content/attributes.js` re-exports them. These are the comments that lived in the old `attributes.js`, in file order (JSON has no comments); each comment block is indented as text.
+
+
+    src/content/attributes.js — authoritative Phase 1 creation-stat data.
+
+    These values are inert run identity. Combat, checks, resource pools and
+    derived formulas do not read them in Phase 1. `strength` and `dexterity`
+    deliberately share display words with existing transient combat statuses;
+    they remain separate namespaces until a later feature defines a bridge.
+
+    Constitution is the authored HP and Stamina source. Vigour is the retired
+    three-day save spelling; the load door migrates it through retiredNames.js.
+
+    `sense` and `disclosure` are the D26 short form (model/disclosure.js).
+
+      sense       ONE player sentence, and it carries NO NUMBER. Every number in
+                  a reveal is derived from the table that owns it — a figure
+                  typed into prose is a copy nothing syncs (Law 1 clause 2,
+                  which calls that a defect "even in tooltip prose"). So this
+                  says what the attribute IS; what it FEEDS and what it UNLOCKS
+                  are read off derivedStatRules and equipmentRequirements at
+                  render time and can never go stale.
+      disclosure  'face' (in the short form) or 'reveal' (behind the tap). All
+                  five are face-tier because he named them: "just the starting
+                  stats". This is data, not a decision the screen makes.
+
+    ---- THE LEAN SCALE (owner, 2026-09-20) ---------------------------------
+
+    His words: "I'd like the default stats to be low, with everyone having a
+    total pool of points starting off. the default stat for each stat is 1 and
+    assign allows a user to assign 3 points."
+
+    So the mode IS those two sentences and nothing more:
+      baseline 1      "the default stat for each stat is 1"
+      bonusPool 3     "assign allows a user to assign 3 points"
+      minimum 1       a stat cannot be worth less than existing
+      maximum 4       1 + 3 — pouring the whole pool into one attribute is the
+                      ceiling, so no cell can be typed that the pool cannot pay
+      total 8         5 x 1 + 3, which is what every class carries at creation
+
+    A NEW MODE, NOT AN EDIT TO tuned2 — the same reason tuned2 was a new mode
+    and not an edit to tuned. Every in-flight save is validated at the load
+    door against the total of the mode it was created under, and save.js
+    ARCHIVES what fails there. tuned2 stays in this table, and leaves creation
+    through characterCreation.visibleModeIds.
+    THE LABEL IS 'Standard' (owner, 2026-09-24, second pass: creation "should
+    have the option of standard (pre assigned class presets) and assign points
+    (x points to assign but configurable in advanced settings)"). It briefly
+    read 'Assigned' earlier that day. The id stays `lean`: every save and
+    exported configuration keys on it, and every character made under it was
+    made at exactly these presets, so Standard IS this mode — same total, same
+    bounds, same presets — and no save validated against it can change verdict.
+    `opensOn: 'preset'`: choosing it seats the class preset with nothing left
+    to spend, so the player can continue at once; Edit points still reshapes
+    the same fixed total.
+
+    'allow' is the reclaim clause: a point placed can be taken back off a
+    stat down to `minimum`. At baseline 1 there is nothing below to reclaim
+    to — it matters the moment the baseline is raised in Settings, which is
+    now a dial (gameConfig.startingStats.lean.baseline).
+
+    NO CONVERSION SCALE, AND THE POOLS ARE SMALLER FOR IT (owner,
+    2026-09-21: "all calculations should be sum(floor(statmult*stat)) +
+    equipment bonus"). This mode shipped `statConversionScale: 1/5` so the
+    ruleset-5 coefficients — Mana IS Wisdom, HP is 30 + 4 × CON, every one
+    read off the tuned2 span 3-12 — would land on tuned2's own pools when
+    the span became 1-4. The cost was that no formula read the attribute on
+    the character sheet: every one of them divided by the fifth first, and
+    the settings rows the player tunes described arithmetic the game did not
+    do. The divisor is gone from the codebase; what a coefficient says is
+    what it does. THE POOLS THIS MODE OPENS ON ARE THEREFORE WELL UNDER WHAT
+    #1238 SHIPPED — a stock Reaver climbs on 48 HP where it climbed on 70,
+    both figures counting the Forsaken Medallion's flat ten — and moving
+    them is a retune of `derivedStatRules` and the rating weights, in the
+    open, not a scale hidden behind them. The bases carry part of that
+    restatement already (hp 20 → 30, Actions and draw → 3, Mana, Stamina,
+    Poise and Ward → 1), which is why it is not the bare fifth the divisor
+    would have made it.
+    THAT RETUNE LANDED (A3, 2026-09-27, FINISH D28): hp.base 30 → 51, sized
+    from the simulator's incoming damage over a run's first three fights
+    (`node tools/runsim.mjs 100 --seeded-seats --incoming`), not from the
+    old 70 — a stock Reaver now opens on 70, Starseer 69, Rogue and Herald
+    59. The row and its measurement live in content/derivedStats.js.
+
+    ASSIGN POINTS ON THE LEAN SCALE (owner, 2026-09-24): every attribute at
+    1 and the whole pool unspent (`opensOn: 'baseline'`), the pool a dial of
+    its own (`gameConfig.startingStats.assign.*`). A NEW ID, because `lean` is
+    Standard's and saves key on it; NOT `pointbuy` or `standard`, whose
+    10-scale totals every save made under them is still validated against.
+    Its numbers start equal to lean's, so both open on eight points.
+
+    THE REBASED SCALE (plan phase 9). Ten was never a floor a player chose —
+    it was the middle of a d20 habit this game does not otherwise keep. Five
+    is the baseline, ten points are yours to place, and the span 3–12 is wide
+    enough that a point is worth spending: under ruleset 5 a point of Wisdom
+    IS a point of Mana and a point of Constitution IS a point of Stamina, so
+    the scale and the pools finally speak the same units.
+
+    THE OLDER MODES BELOW ARE KEPT AND HIDDEN. Every in-flight save was
+    validated against its own mode's fixed total at the load door, and
+    save.js ARCHIVES what fails there, so deleting a mode would refuse every
+    run created under it. They stay in the table and out of creation, which
+    characterCreation.visibleModeIds decides.
+
+    E5 (#250) — Constantine's own numbers, verbatim from the card: "10 points,
+    configurable; points come back out when a stat is dropped; floor 8, ceiling
+    15 at creation, both customizable; the floor is the reclaim limit; 15 caps
+    CREATION, not the character."
+      bonusPool 10        the ten points ("configurable" = it is content, here)
+      minimum 8 + allow   the floor IS the reclaim limit: a stat may be dropped
+                          below its baseline down to 8, and fixedTotal hands
+                          the difference back to the pool by construction
+      maximum 15          caps creation only — allocationProblems already
+                          raises the ceiling by levelled points, which is his
+                          "not the character" clause, shipped before this mode
+    A SECOND MODE, NOT AN EDIT TO `standard`: standard's fixedTotal of 55 is
+    what every existing save is validated against at the load door, and
+    save.js ARCHIVES what fails there. Changing standard's pool would refuse
+    every in-flight run the first boot after update.
+
+    Complete mode × class × attribute product. No Origins are enabled in Phase 1.
+    The pointbuy presets are the EDITOR'S OPENING POSITION and the load-door
+    refill value — a legal allocation (sum 60, cells 8..15), thematically the
+    standard preset with the five extra points laid along each class's grain.
+    The player reshapes them; nothing here is a recommendation.
+
+    ---- LEAN ------------------------------------------------------------
+    Baseline 1 in every cell, plus the three assignable points laid along
+    each class's grain. Every row therefore sums to 8 and sits inside 1–4,
+    and every row can hold the kit its class starts in after the equipment
+    table was restated for this span (content/source/equipmentRequirements.csv):
+    the Reaver's Iron Vanguard sword asks 2 Strength, the Starseer's Ash
+    Focus staff 3 Intelligence, the Rogue's knife 2 Dexterity.
+    attributeContentProblems and validate.js refuse any row that fails either.
+
+    ---- ASSIGN ----------------------------------------------------------
+    The player never opens on these — Assign points opens on all 1s — but a
+    mode needs a legal preset per class: it is what the creation preview
+    shows before the pool is spent, and the load door's refill value. So
+    they are lean's rows, the class's grain on the same eight points.
+
+    Each row sums to the mode's total (5 × 5 + 10 = 35) and sits inside
+    3–12; attributeContentProblems refuses any that does not, by name.
+
+## Derived stats (derivedStatRules.json)
+
+Compiled to `src/content/generated/derivedStatRules.js`; `src/content/derivedStats.js` re-exports it. These are the comments that lived in the old `derivedStats.js`, in file order (JSON has no comments); each comment block is indented as text, and a trailing comment on a row appears as a bullet.
+
+
+    src/content/derivedStats.js — shipping authority for derived-stat rules.
+
+    The content registry validates this table, and run creation snapshots its
+    resolved rules so saves, sessions, and co-op keep the same derived values.
+
+    RULESET 6 — ONE FORMAT FOR EVERY STAT AND RESOURCE (owner, 2026-09-21).
+
+    "make mp hp and every resource now a similar calculation to AR, PR, DR,
+    etc. I'll just use decimal values to set the growth per level, in fact I'd
+    like all the resources and stats to be in the same format so that there was
+    no confusion to include the base values and everything because they are way
+    too separated."
+
+    So a row here is now the SAME ROW a combat rating is (model/ratingFormula.js
+    — AR, DR, PR, Poise, Ward), with the level term on it:
+
+      base         before a single point is spent
+      <attribute>  that attribute's decimal contribution per point, floored on
+                   its own: 0.2 gives nothing until the attribute reaches 5
+      perLevel     DECIMAL growth per character level: 0.2 is a point every
+                   five levels, 1 is one every level
+
+    WHAT MOVED FROM RULESET 5: nothing in the attribute terms — every weight
+    below is ruleset 5's `gainPerTier / pointsPerTier` restated, and lands on
+    the same number at every attribute value. The LEVEL terms are decimals now
+    and so are SMOOTH: HP climbs 1 per level instead of 5 every fifth level
+    (the same rate, arriving each level rather than in lumps); Mana, Stamina
+    and draw land on exactly the levels they always did. Ruleset 5 and earlier
+    are restored exactly as they were saved; only new runs read this.
+    RULESET 7 — EVERY STAT IN THIS TABLE (owner, 2026-09-24).
+
+    "mana should be derived but mostly comes from about 4 points in wisdom
+    with some from constitution strength and intelligence … I'd like all
+    features, handsize, draw amount, actions, ar, dr, pr, ward, poise, stamina,
+    mana, hp settings to have a similiar interface and be driven by only that
+    interface. default should equal about 2 when adding all partials values as
+    the budget per with mana and stamina budget is about 1."
+
+    So the combat ratings (AR, DR, PR, Ward, Poise — formerly model/
+    ratingFormula.js) and the hand (opening hand, per-turn draw, hand size —
+    formerly content/handRules.js and the balance fallback hand size) are rows here, in the
+    row every pool already used:
+
+      base         before a single point is spent (whole points)
+      <attribute>  that attribute's decimal contribution per point, floored
+                   on its own: 0.125 gives nothing until the attribute is 8
+      perLevel     decimal growth per character level after the first
+      min / max    optional bounds the value never leaves
+
+    THE BUDGET: a row's weights sum to about 2, Mana's and Stamina's to 1.
+    HP, Actions and the three hand rows are PRESERVED rather than re-budgeted
+    — a literal sum of 2 would hand out some ten extra Actions at creation —
+    and read what ruleset 6 read at every attribute 5 and at 12 in the lead
+    stat. Rulesets 1–6 are restored exactly as they were saved; only new runs
+    read this.
+
+    Owner defaults, 2026-09-24 (ashen-spire-game-config_4.json): every
+    pool reads a spread of attributes, not one.
+
+    A3 LEAN RETUNE (2026-09-27, FINISH D28). Two numbers moved, each sized
+    from `node tools/runsim.mjs 100 --seeded-seats --incoming`:
+      energy.dexterity 0.2 → 0.25   the first extra Action at DEX 4, not 5:
+          reachable at creation (Assign points can put all three points
+          there), one level-up away for the Standard Rogue (DEX 3) and three
+          for every DEX-1 preset. The level term (0.1) is unchanged.
+      hp.base 30 → 51               the lowest stock pool (Rogue and Herald,
+          38 before) now covers the fleet's 90th-percentile HP lost over a
+          run's first three fights (59, every class pooled). Every stock
+          pool rises by the same 21: Reaver 70, Starseer 69, Rogue and
+          Herald 59. Only the base moved; CON still pays 4 a point.
+
+- **energy:** — Retired save row; combat reads Stamina.
+
+    Owner, 2026-10-03: open and draw four, with the existing Draw scaling
+    (+1 per five INT above 4). Retain adds to the next draw. Owner,
+    2026-10-11: the hand size is now 7 + INT scaling (+1 per five INT above
+    4, like Draw), capped at 20. Each row remains configurable, and
+    existing runs continue to read their snapshotted rows.
+
+    Owner, 2026-10-06: each primary attribute has a clear +1 main bonus.
+    Bases, level growth and secondary resource rules stay independently
+    configurable. Existing runs retain their snapshotted coefficients.
+
+    Budget 1 each, the owner's own sums.
+
+    Equipment, relics and statuses add on top of each attribute's bonus.
+
+    ONE Poise: the rating and the pool were two rows for one number. Armour
+    and relics remain its external addends, exactly as HP's equipment bonus.
+
+    ---- D26: how each row READS, authored beside the row it describes -------
+
+    WHY IT IS A SIBLING OF `rules` AND NOT A FIELD ON EACH RULE. A rule row is
+    SNAPSHOTTED into every save and every co-op handshake (createDerivedStat-
+    RuleSnapshot): putting a label and a sentence in there would write prose
+    into save bytes and make a copy-edit a save-compatibility question. So
+    presentation sits outside the snapshot and inside the same FILE — one
+    author edit adds a derived stat and how it reads, and a row here with no
+    rule (or a rule with no row) is refused BY NAME at the content door
+    (derivedStatPresentationProblems, model/derivedStats.js).
+
+      label       the row title. These five strings were the hard-coded LABELS
+                  map in model/statProjection.js until now — a second home for
+                  a fact the table should own. Moved, not copied.
+      faceLabel   OPTIONAL. What the chip says when the label is a phrase. Left
+                  out, the face uses `label` (Law 0 clause 3: derivation is
+                  overridable and the override is data).
+      order       the order every stat surface reads them in.
+      disclosure  'face' = in the short form · 'reveal' = behind the tap.
+      sense       ONE player sentence, no numbers in it (Law 1 clause 2).
+
+    STAMINA IS 'reveal' ON PURPOSE and it is the honest half of this table:
+    a Stamina-cost card spends it — the sense line below names which — and an
+    idle turn recovers some (framework Mana & Stamina rule). The old panel once said
+    "No current consumer" in engine words on the first screen of the game; the
+    sense line below is the player's words, one tap down.
+
+    Retained for old saves and exports; omitted from character stat surfaces.
+
+## Action costs (actionCosts.json)
+
+`content/source/actionCosts.json` is one object whose keys are the export names of `src/content/actionCosts.js`; content-build compiles it to `src/content/generated/actionCosts.js`. The module re-exports each key frozen at the depth the old hand-written constants had (a freeze is code, not data) and derives `TWO_COST_EFFECT_MULTIPLIER` from `COST_BUDGET.twoCostMultiplier`. These are the comments that lived in the old `actionCosts.js`, in file order (JSON has no comments); each comment block is indented as text, and a trailing comment on a row appears as a bullet. docs/alternative-combat-rounds/COST-WEIGHTS.md gives the reason for every weight.
+
+
+    src/content/actionCosts.js — the action-cost tunables (owner decisions, 2026-10-12).
+
+    Every number a card's Stamina (SP) and Mana (MP) cost reads, and every number an enemy move's SP and an enemy's SP
+    pool read, lives here. src/model/actionCosts.js validates these tables and derives the costs; this file is data only.
+    docs/alternative-combat-rounds/COST-WEIGHTS.md gives the reason for every weight, and
+    tests/action-costs-weights-doc.test.mjs fails when the doc and this file disagree.
+
+    PLAYER CARDS (owner, 2026-10-12, SPEC §4.3a). Each resource is priced on its own side:
+      S_sp = damageWeight × physical damage + rankWeight × rank + Σ SP-side tag weights × stacks + range weight
+             + castingEffort (cast cards) + restoreWeight × Mana restored + drawback weights (negative)
+      S_mp = damageWeight × magical damage + rankWeightMp × rank (magical cards) + Σ MP-side tag weights × stacks
+             + restoreWeight × Stamina restored
+      SP = floor(S_sp / spDivisor) − Stamina restored, MP = floor(S_mp / mpDivisor) − Mana restored, each at least 0.
+      If both are 0, the larger side pays 1 (SP on a tie); a Mana-restoring card pays SP.
+    Opt-outs keep the authored cost and numbers: costRule 'fixed', curses and statuses (by type), and X costs.
+
+    ENEMIES (owner, 2026-10-13, SPEC §4.6a). An enemy's SP pool is its stats: ENEMY_SP_ROW read on its `attributes`
+    (shifted by ENEMY_BLIGHT_SHIFT when it is `blighted`), plus its `equipmentSp`. A move's SP is its own `sp`, else the
+    stance price below.
+
+    ---- Player cards: the budget tunables -------------------------------------------------------------------------
+
+- **spDivisor:** — D: S_sp points per Stamina (the owner's ruling, 2026-10-12: "use D as 6")
+
+- **mpDivisor:** — P: S_mp points per Mana (raised from 6: at 6, rank 1-3 spells and rank 1-2 cards miss 80%)
+
+- **damageWeight:** — points per damage step reached (damageSteps); raw damage would swamp the tags
+
+- **damageSteps:** — damage thresholds (hits counted); empty = linear damage × damageWeight
+
+- **rankWeight:** — points per rank above the base (a base card, rank 0, adds nothing); SP side
+
+- **rankWeightMp:** — points per rank on the MP side of a magical card (owner, 2026-10-12: rank counts on the Mana side too)
+
+- **castingEffortWeight:** — points on any cast card (camp:spell or maneuver:casting); SP side
+
+- **restoreWeight:** — points per Mana restored (SP side) or Stamina restored (MP side)
+
+- **smashPoiseBase:** — Poise damage every smash adds to its own (owner, 2026-10-13: "All smashes deal poise damage")
+
+- **twoCostMultiplier:** — a card whose derived SP is 2 or more multiplies its effect amounts by this
+
+    Combat tag weights (-3..3) and the side each counts on. A tag counts once per card at its weight. A tag the card
+    does not carry, or that this table does not list, adds nothing. Range tags are priced by RANGE_WEIGHTS instead.
+
+    Damage types
+
+    Camps and sources
+
+    Maneuvers
+
+    Targeting
+
+    Magic schools
+
+    Spell identity chips: their authored effects and range own the price.
+
+    Weapon and theme chips (card domain)
+
+- **rank.cantrip:** — training classification; numerical rank owns the cost
+
+    Techniques
+
+    Traits
+
+    Precision lifetime is a marker; its status grant already prices magnitude.
+
+    Reaction rules version 2 traits (docs/combat-card-traits-contract.md). Combat adds them after the cost is derived
+    (engine/combatExpansion.js applyCardTraits), so today these weights price no shipped card.
+
+    Keywords
+
+    Drawbacks (owner, 2026-10-12: negative weights). Read from the card's keywords and effects (DRAWBACK_SOURCES).
+
+    Where a card's drawback and keyword tags come from: a keyword it carries, or an effect it makes the player pay.
+
+    Keyword tags that are drawbacks (owner, 2026-10-12): they may weigh below 0.
+
+- **loseHp:** — an HP (or other resource) cost
+
+- **discard:** — a discard the player pays
+
+- **grantCardCharge:** — takes several turns to cast (a charge the player builds first)
+
+- **addCard:** — a curse or status added to the player's own piles
+
+    Range weights (owner, 2026-10-12: melee 1, reach 2, ranged 3). A card takes the largest range it carries. SP side.
+
+    Tags that mark a cast (the casting-effort weight).
+
+    Statuses the card applies (applyStatus or buildup): weight × stacks (a buildup counts as 1 stack). Every status weighs
+    2 or more (owner). A status counts on the card's side: MP on a card with any MP-side tag, else SP.
+
+    Stacks above this count as this many; null counts every stack (owner, 2026-10-12: status stacks count).
+
+    The effect ops that restore Stamina (priced on the MP side) and Mana (priced on the SP side).
+
+    The maneuver floor (owner, 2026-10-13: "basic ones are 2sp"): at rank 0 a card with this tag costs at least this SP.
+    A higher rank has no floor ("some higher rank ones could cost 1 sp"); an authored upgrade that lowers the cost lowers
+    the floor by as much.
+
+    A sweep pays for its area, so these ops stay unscaled on a 2-SP sweep (owner, 2026-10-13: "AoE for sweeps but normal
+    damage"); its other riders (Block, buildup, Poise) scale.
+
+    The effect ops whose `amount` scales on a 2-SP card. Costs, card counts (draw, discard, addCard), turns and
+    durations (applyStatus.duration), stack counts and hit counts are never scaled.
+
+    ---- Enemies ---------------------------------------------------------------------------------------------------
+    The enemy SP row (owner, 2026-10-13: "enemies are essentially characters with cards, at about 2 SP"; minions usually
+    1-2 SP, elites 2-3, bosses 3-4, all from stats and equipment). SP = base + Σ floor(attribute × weight) + equipmentSp,
+    each attribute term floored on its own. Enemy attributes are inflated next to a player's 1-4.
+
+    The SP band an enemy's pool (normal, elite, boss) must land in; a test holds every enemy to it.
+
+    Blight (owner, 2026-10-13): "blight lowers INT, WIS and DEX and raises STR and CON". A `blighted` enemy's attributes
+    shift by these amounts (floored at 0) wherever its stats are read.
+
+    SP per stance for an enemy move that does not name its own `sp`.
