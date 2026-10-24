@@ -15,7 +15,7 @@ Status key: `todo` · `in progress` · `done (#PR)`
 
 | # | Area | From | To | Status |
 |---|------|------|----|--------|
-| 1 | Rogue cards | `src/content/cards/rogue.js` | `content/source/cards/rogueCards.json` | in progress |
+| 1 | Rogue cards | `src/content/cards/rogue.js` | `content/source/cards/rogueCards.json` | in review (#2287) |
 | 2 | Encounters (three seats) | `src/content/encounters/*.js` | `content/source/{weald,marches,reach}Encounters.json` | in progress |
 | 3 | Shops | `src/content/shops.js` | `content/source/shops.json` | todo |
 | 4 | Consumables, companions, keywords | `src/content/{consumables,companions,keywords}.js` | `content/source/*.json` | todo |
