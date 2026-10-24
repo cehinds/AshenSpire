@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 'common-controls', 'core-profile'].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915, 2190, 2284, 'common-controls', 'core-profile'].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -48,6 +48,8 @@ function migratedIds() {
 // [file, text, reason]. Every entry must still match at least one site.
 const ID = 'an id or stored value, not copy';
 const ALLOWED = [
+  ['src/ui/models/AdvancedSettingsGroups.js', 'Export', 'stable advanced-section key compared for topic routing; its displayed heading reads settings.group.Export'],
+  ['src/ui/screens/settings.js', 'Export', 'persisted advancedGroup and section id for diagnostics; the displayed heading reads settings.group.Export'],
   ['src/ui/highResArt.js', 'Auto', 'ART_AUTO is a persisted resolution choice sentinel; renderer labels are separate from the viewport preset face'],
   ['src/ui/models/SettingsCapabilitiesModel.js', 'Stats', `legacy advanced-group capability key; ${ID}`],
   ['src/ui/models/SettingsCapabilitiesModel.js', 'Recovery', `legacy advanced-group capability key; ${ID}`],
@@ -302,5 +304,38 @@ test('all Core-default migration rows and semantic allowances survive an empty b
   for (const [file, text] of ALLOWED) {
     assert.ok(hits.some(hit => hit.file === file && hit.text === text),
       `${file} "${text}" must remain checked even after the branch delta disappears`);
+  }
+});
+
+test('all Console copy remains protected after its branch delta disappears', () => {
+  const ids = frozenMigrationIds(2284), permanent = permanentMigratedIds();
+  assert.equal(ids.length, 15); assert.equal(new Set(ids).size, 15);
+  for (const id of ids) {
+    assert.ok(permanent.has(id), id);
+    assert.ok(uiStrings.some(row => row.id === id), id);
+  }
+  const texts = migratedTexts(permanent);
+  assert.ok(texts.get('Console')?.includes('debugChrome.console.short'));
+  assert.ok(texts.get('Export')?.includes('common.export.short'));
+  assert.ok(texts.get('Text selected. Touch and hold to copy, or use your copy shortcut. Live updates are paused until you reopen Console.')?.includes('debugChrome.consoleManualCopy.full'));
+});
+
+
+test('Export exceptions permit only stored section keys and reject visible labels', () => {
+  const files = ['src/ui/screens/settings.js', 'src/ui/models/AdvancedSettingsGroups.js'];
+  const assertSemanticOnly = (file, source) => {
+    const code = stripComments(source);
+    const remaining = file.endsWith('/settings.js')
+      ? code.replace(/\b(?:advancedGroup|id):\s*'Export'/g, '')
+      : code.replace(/\bsection\s*===\s*'Export'/g, '');
+    assert.deepEqual(remaining.match(/(?<=['"`>])Export(?=['"`<]| ?\$\{| ['"`])/g) || [], [], `${file}: Export is allowed only as a semantic section key`);
+  };
+  for (const file of files) {
+    const source = readFileSync(join(ROOT, file), 'utf8');
+    assertSemanticOnly(file, source);
+    assert.throws(() => assertSemanticOnly(file, source + "\nconst regression = { label: 'Export' };"),
+      /Export is allowed only as a semantic section key/, 'a visible Export label must use its catalog row');
+    assert.throws(() => assertSemanticOnly(file, source + "\nconst regressionHTML = '<button>Export</button>';"),
+      /Export is allowed only as a semantic section key/, 'visible Export markup must use its catalog row');
   }
 });
