@@ -1040,7 +1040,7 @@
             "frozen": false,
             "values": {
               "icon": {
-                "__string": "attack"
+                "__string": "historic-crossed-swords"
               },
               "name": {
                 "__string": "Monster"
@@ -1059,7 +1059,7 @@
             "frozen": false,
             "values": {
               "icon": {
-                "__string": "attack"
+                "__string": "historic-crossed-swords"
               },
               "name": {
                 "__string": "Monster"
@@ -1078,7 +1078,7 @@
             "frozen": false,
             "values": {
               "icon": {
-                "__string": "madness"
+                "__string": "historic-skull"
               },
               "name": {
                 "__string": "Elite"
@@ -1097,7 +1097,7 @@
             "frozen": false,
             "values": {
               "icon": {
-                "__string": "boss"
+                "__string": "historic-eye"
               },
               "name": {
                 "__string": "Boss"
@@ -1116,7 +1116,7 @@
             "frozen": false,
             "values": {
               "icon": {
-                "__string": "burn"
+                "__string": "historic-hot-springs"
               },
               "name": {
                 "__string": "Shrine of Emberlight"
@@ -1135,7 +1135,7 @@
             "frozen": false,
             "values": {
               "icon": {
-                "__string": "compare"
+                "__string": "historic-scales"
               },
               "name": {
                 "__string": "Merchant"
@@ -1154,7 +1154,7 @@
             "frozen": false,
             "values": {
               "icon": {
-                "__string": "block"
+                "__string": "historic-chest"
               },
               "name": {
                 "__string": "Treasure"
@@ -1572,7 +1572,7 @@
     },
     "probes": {
       "nodeIcon([\"boss\"])": {
-        "__string": "boss"
+        "__string": "historic-eye"
       },
       "nodeIcon([\"nope\"])": {
         "__string": "?"
@@ -1594,7 +1594,7 @@
             "frozen": false,
             "values": {
               "icon": {
-                "__string": "attack"
+                "__string": "historic-crossed-swords"
               },
               "name": {
                 "__string": "Monster"
@@ -1613,7 +1613,7 @@
             "frozen": false,
             "values": {
               "icon": {
-                "__string": "madness"
+                "__string": "historic-skull"
               },
               "name": {
                 "__string": "Elite"
@@ -1632,7 +1632,7 @@
             "frozen": false,
             "values": {
               "icon": {
-                "__string": "boss"
+                "__string": "historic-eye"
               },
               "name": {
                 "__string": "Boss"
@@ -1651,7 +1651,7 @@
             "frozen": false,
             "values": {
               "icon": {
-                "__string": "burn"
+                "__string": "historic-hot-springs"
               },
               "name": {
                 "__string": "Shrine of Emberlight"
@@ -1670,7 +1670,7 @@
             "frozen": false,
             "values": {
               "icon": {
-                "__string": "compare"
+                "__string": "historic-scales"
               },
               "name": {
                 "__string": "Merchant"
@@ -1689,7 +1689,7 @@
             "frozen": false,
             "values": {
               "icon": {
-                "__string": "block"
+                "__string": "historic-chest"
               },
               "name": {
                 "__string": "Treasure"

@@ -269,15 +269,15 @@ for (const mode of ['watch', 'poll']) {
       },
     });
     assert.deepEqual(files(reloads), ['src/new.js', 'styles/main.css']);
-    // On macOS each watched folder has its own FSEvents stream, and one can deliver after the
-    // debounce, so the two writes may land in two batches. Elsewhere they are one batch.
-    if (process.platform !== 'darwin') assert.equal(reloads.length, 1, 'both writes are one batch');
-    const event = reloads[0];
-    assert.equal(event.count, event.files.length);
-    assert.deepEqual(event.built, []);
-    // When the batch's file set was fixed: a save sent after this cannot be the save this build answers.
-    assert.equal(typeof event.startedAt, 'number');
-    assert.ok(event.startedAt <= event.at);
+    // Independent OS writes can reach different quiet periods on any platform.
+    // The watcher unit test controls event timing to verify batching itself.
+    for (const event of reloads) {
+      assert.equal(event.count, event.files.length);
+      assert.deepEqual(event.built, []);
+      // When the batch's file set was fixed: a later save cannot be answered by this build.
+      assert.equal(typeof event.startedAt, 'number');
+      assert.ok(event.startedAt <= event.at);
+    }
   });
 }
 

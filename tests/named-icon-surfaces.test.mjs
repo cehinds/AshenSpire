@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { withKitDom } from './helpers/kit-dom.mjs';
-import { uiIconId, uiIconText } from '../src/content/uiIcons.js';
+import { uiIconId, uiIconText, uiIconGlyph } from '../src/content/uiIcons.js';
 import { sigilChoiceButton, characterSigilPreview, classChoiceCard, classUnfold, selectionSectionFace } from '../src/ui/components/creationCards.js';
 import { kitItem, optionCard, ornament } from '../src/ui/kit/index.js';
 import { mountGameOver } from '../src/ui/screens/gameover.js';
@@ -140,7 +140,7 @@ test('class choices and expanded previews paint each production class icon witho
       const card = render();
       const visual = card.querySelector('.og') || card.querySelector('.cc-unfold-class-icon');
       expectArt(visual, uiIconId(cls.glyph));
-      assert.equal(readableText(visual), '', 'the icon well contains no visible source identifier');
+      assert.equal(readableText(visual), uiIconGlyph(cls.glyph) || '', 'the icon well contains the glyph, never its source identifier');
       assert.match(readableText(card), new RegExp(cls.name));
     }
   }

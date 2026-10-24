@@ -131,3 +131,16 @@ inactive presenter retained outside the runtime tree, including its original
 path and restoration procedure. An absent text-search result alone is not
 proof that another module is unused: inspect imports, dynamic registries,
 authored component references, previews, tests and tooling before archiving it.
+
+### Original class and map symbols
+
+Author icon fields with readable IDs from `src/content/uiIcons.js`. `historic-*`
+IDs name a fixed whitelist of the original class/location glyphs; their escaped
+code points live only in that registry. They do not require new SVG asset files.
+Generic vector IDs such as `progression`, `sword` and `madness` keep their existing
+artwork. Saved raw-symbol aliases keep their existing generic-ID compatibility;
+use an explicit historical ID to request the original glyph rather than an alias.
+DOM/HTML icons inherit the caller’s color and box. URL-only consumers receive an
+encoded SVG with an explicit gold fill. Map node faces use inline text so their
+existing type, reachable and current-state tints still apply. Custom named vector
+IDs and custom visual DOM nodes keep their existing rendering paths.

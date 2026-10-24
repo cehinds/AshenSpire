@@ -86,6 +86,7 @@ const ALLOWED = [
   ['src/ui/screens/customRun.js', 'Class', 'custom run class selector, separate from the progression tab'],
   ['src/ui/screens/customize.js', 'Character', 'character creation fold, separate from the progression tab'],
   ['src/ui/components/illustratedCard.js', 'Georgia', 'CSS font-family fallback, not a displayed font-selection label'],
+  ['src/ui/components/engravedIcon.js', 'Inter', 'CSS font-family identifier for standalone historical-glyph SVGs, not the lore font-selection label'],
   ['src/ui/screens/settings.js', 'Stamina', `Recovery topic id; ${ID}`],
   // Settings: category, advanced-group and topic ids. The faces read t('settings.group.*').
   ['src/ui/screens/settings.js', 'Audio', `category id (cat: 'Audio', GENERAL_GROUPS) and General › Audio's own subgroup; ${ID}`],

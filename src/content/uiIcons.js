@@ -1,7 +1,7 @@
-// Authoritative named UI icon vocabulary. IDs resolve to existing vector art.
+// Authoritative named UI icon vocabulary: existing vector art and preserved glyphs.
 // Use these readable IDs in authored icon/glyph fields; never paste a symbol.
 // Legacy code points only keep older saved/configured glyph values compatible.
-export const UI_ICON_IDS = Object.freeze([
+export const UI_VECTOR_ICON_IDS = Object.freeze([
   "accessibility",
   "actions",
   "armour",
@@ -82,6 +82,23 @@ export const UI_ICON_IDS = Object.freeze([
   "weight",
   "world"
 ]);
+// Explicit historical identities, separate from generic vector aliases. Escaped
+// code points keep authored fields readable without changing saved raw aliases.
+export const HISTORICAL_UI_GLYPHS = Object.freeze({
+  'historic-crossed-swords': '\u2694',
+  'historic-comet': '\u2604',
+  'historic-dagger': '\ud83d\udde1',
+  'historic-sun': '\u2600',
+  'historic-skull': '\u2620',
+  'historic-eye': '\ud83d\udc41',
+  'historic-hot-springs': '\u2668',
+  'historic-scales': '\u2696',
+  'historic-chest': '\u25a3',
+});
+export const UI_ICON_IDS = Object.freeze([...UI_VECTOR_ICON_IDS, ...Object.keys(HISTORICAL_UI_GLYPHS)]);
+export function uiIconGlyph(value) {
+  return Object.hasOwn(HISTORICAL_UI_GLYPHS, value) ? HISTORICAL_UI_GLYPHS[value] : null;
+}
 export const UI_ICON_ALIASES = Object.freeze({ defend: 'block', casting: 'skill', smash: 'attack', counter: 'shield', move: 'motion', evade: 'motion', hp: 'health', action: 'actions', energy: 'actions', crimsonBlight: 'blight', necroticBlight: 'blight', confused: 'madness', slowed: 'weak', entombed: 'staggered' });
 export const LEGACY_UI_ICON_IDS = Object.freeze({
   "\ud83d\udc3a": "strength",
@@ -323,6 +340,9 @@ export const UI_ICON_LABELS = Object.freeze({
   settings: 'Setup', shield: 'Guard', skill: 'Skill', smith: 'Smith', staggered: 'Stun',
   stamina: 'SP', strength: 'STR', sword: 'Blade', target: 'Aim', touch: 'Touch', unknown: '?',
   vulnerable: 'Vuln', warning: 'Warn', weak: 'Weak', weight: 'Weight', world: 'World',
+  'historic-crossed-swords': 'Swords', 'historic-comet': 'Comet', 'historic-dagger': 'Dagger',
+  'historic-sun': 'Sun', 'historic-skull': 'Skull', 'historic-eye': 'Eye',
+  'historic-hot-springs': 'Rest', 'historic-scales': 'Scales', 'historic-chest': 'Chest',
 });
 export function uiIconText(value) {
   const id = uiIconId(value);
