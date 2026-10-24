@@ -559,9 +559,9 @@ const PLANTS = [
   },
   {
     name: 'P2 an illegal tier in the content table',
-    file: 'src/content/attributes.js',
-    from: "{ id: 'strength', label: 'Strength', shortLabel: 'STR', order: 1, disclosure: 'face'",
-    to: "{ id: 'strength', label: 'Strength', shortLabel: 'STR', order: 1, disclosure: 'faec'",
+    file: 'src/content/generated/attributes.js',
+    from: '{"id":"strength","label":"Strength","shortLabel":"STR","order":1,"disclosure":"face"',
+    to: '{"id":"strength","label":"Strength","shortLabel":"STR","order":1,"disclosure":"faec"',
     what: 'one attribute row is authored into a tier that does not exist',
     expect: 'the content door refuses it BY NAME, with the typo in the message',
     mustRed: (out) => /faec/.test(out) && /content door refused/.test(out),
