@@ -20,6 +20,7 @@ import { starseerCards } from '../src/content/cards/starseer.js';
 import { armamentCards } from '../src/content/cards/armaments.js';
 import { colorlessCards } from '../src/content/cards/colorless.js';
 import { corruptedCards } from '../src/content/cards/corrupted.js';
+import { rogueCards } from '../src/content/cards/rogue.js';
 import { act1Enemies } from '../src/content/enemies/act1.js';
 import { act2Enemies } from '../src/content/enemies/act2.js';
 import { act3Enemies } from '../src/content/enemies/act3.js';
@@ -118,8 +119,8 @@ test('events: src/content/events.js is a shim with no event literal', () => {
   }
 });
 
-// Cards: six class/armament pools are JSON under content/source/cards, named for the
-// export they compile to. rogue.js and coop.js hold builder functions and stay JS.
+// Cards: seven class/armament pools are JSON under content/source/cards, named for the
+// export they compile to. coop.js holds builder functions and stays JS.
 // None of the old pools was frozen, and none is now.
 const CARD_POOLS = {
   herald: ['heraldCards', heraldCards],
@@ -128,6 +129,7 @@ const CARD_POOLS = {
   armaments: ['armamentCards', armamentCards],
   colorless: ['colorlessCards', colorlessCards],
   corrupted: ['corruptedCards', corruptedCards],
+  rogue: ['rogueCards', rogueCards],
 };
 
 for (const [file, [exportName, exported]] of Object.entries(CARD_POOLS)) {
@@ -154,8 +156,8 @@ test('cards: the pools keep the freeze depth they had (unfrozen, top level and r
   }
 });
 
-test('cards: the shim for a builder pool (rogue, coop) still authors its cards in JS', () => {
-  for (const file of ['rogue', 'coop']) {
+test('cards: the shim for a builder pool (coop) still authors its cards in JS', () => {
+  for (const file of ['coop']) {
     const text = readFileSync(resolve(ROOT, `src/content/cards/${file}.js`), 'utf8');
     assert.ok(!/generated\/cards\//.test(text), `${file}.js holds builder functions and stays JS`);
   }
