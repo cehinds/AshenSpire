@@ -1147,9 +1147,9 @@ async function mutate() {
       const hit = (r.errors || []).map((e) => `${e.path}: ${e.msg}`).find((m) => m.includes("Missing 'default' recipe"));
       report(!r.ok && !!hit, 'M3', "sfx 'default' recipe typo'd to 'defualt'", hit || 'validated clean');
     }
-    // M4 — a dangling id planted into a real encounter.
+    // M4 — a dangling id planted into a real encounter (the compiled form of content/source/wealdEncounters.json).
     {
-      const { contentBundle: mb } = await import(copyContent('m4', [['encounters/weald.js', "'wanderingSoldier'", "'wanderingSoldat'"]]));
+      const { contentBundle: mb } = await import(copyContent('m4', [['generated/wealdEncounters.js', '"wanderingSoldier"', '"wanderingSoldat"']]));
       const r = G.validateContent(mb);
       const hit = (r.errors || []).map((e) => `${e.path}: ${e.msg}`).find((m) => m.includes('wanderingSoldat'));
       report(!r.ok && !!hit, 'M4', "encounter enemy id typo'd to 'wanderingSoldat' — must be named in the message", hit || 'validated clean');

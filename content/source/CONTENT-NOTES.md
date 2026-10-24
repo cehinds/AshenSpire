@@ -329,3 +329,26 @@ File header: class definitions (SPEC section 5.1). Only the Reaver registered in
 classes are UI display data, exported separately and NOT part of the bundle).
 
 - **cardPool** — each class's list was grouped by rarity with comments. In order: Commons, Uncommons, Rares. Reaver: Commons start at `crimsonCleave`, Uncommons at `stomp`, Rares at `executioner`. Starseer: Commons start at `cometFragment`, Uncommons at `starstoneArc`, Rares at `supernova` (the group runs to `riteOfCinders`, the end of its list). Rogue's list carried no rarity comments. Herald: Commons start at `bloodPact`, Uncommons at `martyrBlood`, Rares at `secondBloom`. A card's rarity is authoritative in its card row (content/source/cards/*.json), not by position in this list.
+
+## Encounters (content/source/wealdEncounters.json, marchesEncounters.json, reachEncounters.json)
+
+The encounter pools are one JSON file per seat, compiled by `tools/content-build.mjs` to
+`src/content/generated/<seat>Encounters.js` and re-exported by `src/content/encounters/<seat>.js`. These are
+the header and inline comments that lived in those three modules (JSON has no comments). Row order is
+meaningful: pools are read in bundle order, so do not reorder rows.
+
+### wealdEncounters.json (The Hollow Weald)
+
+File header: src/content/encounters/weald.js — The Hollow Weald encounter pool (SPEC §13.2). The seat's numbers are authored at baseTier 1 (content/seats.js); a climb at another tier scales them by balance.seatTiers (§13.3). Rows are the act-1 rows they always were, re-homed: `act: 1` became `seat: 'weald'`.
+
+Trailing note: `M1_GAUNTLET = ['patrol','packHunt','eliteWyrm','bossOmen']` — the M1 acceptance walk, SPEC §9 M1 — stood here and in the content barrel with no reader anywhere in the tree, found by tools/closedsets.mjs. Deleted: the map flow has been the real thing since M2, the headless bot test runs off `balance.gauntlet`, and four ids nothing resolves are four ids that rot when an encounter is renamed. SPEC §9 M1's prose is the record of that acceptance.
+
+### marchesEncounters.json (The Pale Marches)
+
+File header: src/content/encounters/marches.js — The Pale Marches encounter pool (SPEC §13.2). The seat's numbers are authored at baseTier 2 (content/seats.js); a climb at another tier scales them by balance.seatTiers (§13.3). Rows are the act-2 rows they always were, re-homed: `act: 2` became `seat: 'marches'`.
+
+### reachEncounters.json (The Cinder Reach)
+
+File header: src/content/encounters/reach.js — The Cinder Reach encounter pool (SPEC §13.2). The seat's numbers are authored at baseTier 3 (content/seats.js); a climb at another tier scales them by balance.seatTiers (§13.3). Rows are the act-3 rows they always were, re-homed: `act: 3` became `seat: 'reach'`.
+
+- **a3_bossRotValkyrie** — THE ONE NULL SEAT (SPEC §13.5): the Blighted Valkyrie is the tier-3 act's extra terminal whatever seat holds it, so she is in no seat's pool (`seat` is `null`). She stays in this file, in this position (after `a3_eliteWyrmLord`, before `a3_cinderNest`), because the boss pool is read in bundle order and moving her would move which column each destination lands in.
