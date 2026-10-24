@@ -32,7 +32,7 @@ const GLYPH_SVG_ATTRS = Object.freeze({ viewBox: '-2 -2 68 68', width: '100%', h
 const GLYPH_TEXT_ATTRS = Object.freeze({ x: '32', y: '32', 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': '46' });
 // In-document glyphs inherit the existing UI font and its original symbol
 // fallback. Standalone SVG images cannot inherit that stack from their caller.
-const URL_GLYPH_FONT_FAMILY = '"Inter", "Segoe UI", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", sans-serif';
+const URL_GLYPH_FONT_FAMILY = '"Inter", "Segoe UI", system-ui, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", sans-serif';
 const svgAttrs = (attrs) => Object.entries(attrs).map(([key, value]) => `${key}="${htmlAttribute(value)}"`).join(' ');
 function glyphSvgHtml(glyph, fill, family = null) {
   const attrs = { ...GLYPH_TEXT_ATTRS, fill, ...(family ? { 'font-family': family } : {}) };
