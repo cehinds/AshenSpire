@@ -70,11 +70,11 @@ export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=54
           // each shadow offset. Only the source-alpha shadow enters the stage.
           const outside = canvasWidth + width + Math.abs(x);
           for (const glow of plan.shadows) {
-            work.save(); work.filter = 'none'; work.shadowColor = glow.color; work.shadowBlur = glow.blur;
+            work.save(); work.shadowColor = glow.color; work.shadowBlur = glow.blur;
             work.shadowOffsetX = glow.x - outside; work.shadowOffsetY = glow.y;
             work.drawImage(image, x + outside, y, width, height); work.restore();
           }
-          work.save(); work.filter = 'none'; work.drawImage(image, x, y, width, height); work.restore();
+          work.save(); work.drawImage(image, x, y, width, height); work.restore();
           current = immutable ? {image,filter,x,y,width,height,surface} : null;
           if (reuse) {
             const copy = createCanvas(); copy.width = canvasWidth; copy.height = canvasHeight;

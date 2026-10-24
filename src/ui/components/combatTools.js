@@ -3,7 +3,6 @@ import { button, el } from '../kit/index.js';
 import { childModel } from '../models/ComponentModel.js';
 import { combatLogHeight, combatLogSnapSize, combatLogDragScale, COMBAT_LOG_SIZES } from '../models/CombatToolsModel.js';
 import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
-import { anchorLocalBox } from '../fx.js';
 import { t } from '../strings.js';
 import { trackGesture } from '../gesture.js';
 import { hudGeometry, toolsRowTop } from '../models/HudLayoutOffsetModel.js';
@@ -193,12 +192,28 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     }
   });
   let frame = 0, entryKey = '';
+  // Writes only what changed: a repeated pass (renderCombatTools runs eight to ten
+  // times in an End Turn) then dirties nothing, so the next read is not a flush.
+  // Custom properties are remembered here (the toolbar and the combat root are the
+  // only writers of these two); plain inline properties compare with the style itself.
+  const customWritten = new Map();
+  const put = (node, name, value) => {
+    if (name.startsWith('--')) {
+      if (customWritten.get(name) === value) return;
+      customWritten.set(name, value); node.style.setProperty(name, value);
+    } else if (node.style[name] !== value) node.style[name] = value;
+  };
+  // The toolbar's own height depends on its labels, the combat width and the text
+  // size, so it is read once per width/zoom/inset/log-button key and again when
+  // update() changes a label.
+  let heightKey = '', heightValue = 0, toolbarLabelKey = '';
   function measure() {
     frame = 0;
     if (!root.isConnected) return;
+    // Phase 1: every read, before the first write of this pass.
     const combatBox = combatEl.getBoundingClientRect();
     const zoom = combatBox.width / combatEl.clientWidth || 1;
-    root.style.setProperty('--combat-log-button-width', `${logButton.getBoundingClientRect().width / zoom}px`);
+    const logWidth = logButton.getBoundingClientRect().width / zoom;
     const hand = combatEl.querySelector('.hand');
     const handBox = hand?.getBoundingClientRect();
     // HUD layout tokens (docs/hud-layout-tokens.md), read once per pass.
@@ -208,16 +223,6 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     const left = combatBox.left + CORNER_INSET * zoom;
     const split = combatEl.dataset.desktopFooter === 'true';
     const inset = split ? parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-corner-inset')) : CORNER_INSET;
-    // Measure the row in its final corner geometry, including the first pass
-    // after a resize. A temporary explicit width dirtied the whole toolbar
-    // before its height read, only to be replaced by these same edge anchors.
-    root.style.left = `${inset}px`;
-    root.style.right = `${inset}px`;
-    root.style.width = 'auto';
-    root.dataset.toolsPlacement = 'corners';
-    // A compact toolbar occupies the top of the card band. It never consumes
-    // hand width: doing that collapsed every card onto one slot on phones.
-    combatEl.style.setProperty('--combat-tools-reserve', '0px');
     // Negative offsets may raise the dock, but cannot cover artwork, cards,
     // or controls. Compact docking needs the measured row height; the desktop
     // footer already supplies its top and only measures a requested raise.
@@ -226,17 +231,31 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     const footerTop = split
       ? combatBox.top + parseFloat(getComputedStyle(combatEl).getPropertyValue('--desktop-tools-top')) * zoom
       : footerControls?.getBoundingClientRect().top ?? dockTop;
-    const rowHeight = !split || dy < 0 ? root.getBoundingClientRect().height : 0;
+    // Phase 2: the row in its final corner geometry (first pass after a resize
+    // included). Skipped writes keep a repeated pass from dirtying layout.
+    put(root, '--combat-log-button-width', `${logWidth}px`);
+    put(root, 'left', `${inset}px`);
+    put(root, 'right', `${inset}px`);
+    put(root, 'width', 'auto');
+    if (root.dataset.toolsPlacement !== 'corners') root.dataset.toolsPlacement = 'corners';
+    // A compact toolbar occupies the top of the card band. It never consumes
+    // hand width: doing that collapsed every card onto one slot on phones.
+    put(combatEl, '--combat-tools-reserve', '0px');
+    let rowHeight = 0;
+    if (!split || dy < 0) {
+      const key = [combatBox.width, zoom, inset, logWidth].join('|');
+      if (key !== heightKey || dy < 0) { heightValue = root.getBoundingClientRect().height; heightKey = key; }
+      rowHeight = heightValue;
+    }
     const defaultTop = split ? footerTop : footerTop - rowHeight - 4 / zoom;
     const top = dy < 0 ? toolsRowTop({ dockTop: defaultTop, dy: dy * zoom,
       row: { left, width, height: rowHeight }, screenTop: combatBox.top,
       obstacles: toolsObstacles(combatEl, zoom) }) : defaultTop;
-    const localDock = anchorLocalBox(combatEl, { left,
-      top, width: 0, height: 0 }, { zoom });
-    root.style.top = `${localDock.top}px`;
+    // anchorLocalBox(combatEl, ...) with the box read above, not read again.
+    put(root, 'top', `${(top - combatBox.top) / zoom}px`);
     // The legacy panel is always hidden; both readers are body modals. Only a
     // real Log press needs snapHeights(), to preserve drag/snap/cancel behavior.
-    root.dataset.logSize = state.size;
+    if (root.dataset.logSize !== state.size) root.dataset.logSize = state.size;
   }
   const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };
   function flushGeometry() {
@@ -275,6 +294,8 @@ export function mountCombatTools(combatEl, { state, onToggle, onAutoToggle, read
     const autoLabel = t(autoOn ? 'combat.reactions.enabled' : 'combat.reactions.disabled');
     auto.setAttribute('aria-label', t('combat.auto.state', { state: autoLabel }));
     autoValue.textContent = autoLabel;
+    const labelKey = stateLabel + '|' + autoLabel + '|' + !!onAutoToggle;
+    if (labelKey !== toolbarLabelKey) { toolbarLabelKey = labelKey; heightKey = ''; }
     // Expanded reading uses the same body portal, focus/back handling and layer
     // as the full log, so battlefield stacking contexts cannot cover it.
     panel.hidden = true;

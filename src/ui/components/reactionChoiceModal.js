@@ -41,10 +41,14 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
   let dismissed = false;
   const play = button({ label: t('combat.reaction.play'), weight: 'primary', disabled: true });
   const decline = button({ label: t(stacked ? 'combat.reaction.resolve' : 'common.back'), role: 'exit' });
+  let bodyHost = null;
   const shell = openModal({
     title: t('combat.reaction.title'), eyebrow: t('combat.reaction.eyebrow'), size: 'md',
-    className: 'reaction-choice', closeLabel: t('common.back'), secondary: [decline], primary: play,
+    className: 'reaction-choice', deferFocus: true,
+    initialFocus: () => bodyHost?.querySelector('[data-reaction-option]') || null,
+    closeLabel: t('common.back'), secondary: [decline], primary: play,
     body(host) {
+      bodyHost = host;
       const incoming = intentDamageRead(pending.intentPreview);
       if (incoming) host.append(el('p', { class: 'reaction-incoming-damage', text: `${incoming.label} · ${incoming.summary}` }));
       host.append(el('p', { text: tFull(stacked ? 'combat.reaction.helpStack' : 'combat.reaction.help') }));
@@ -70,6 +74,5 @@ export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [
   });
   play.addEventListener('click', () => { if (!selected) return; settled = true; shell.close(); });
   decline.addEventListener('click', () => shell.close());
-  shell.body.querySelector('[data-reaction-option]')?.focus({ preventScroll: true });
   return { ...shell, dismiss() { dismissed = true; shell.close(); } };
 }
