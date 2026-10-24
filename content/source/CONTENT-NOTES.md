@@ -319,3 +319,9 @@ File header: class definitions (SPEC section 5.1). Only the Reaver registered in
 classes are UI display data, exported separately and NOT part of the bundle).
 
 - **cardPool** — each class's list was grouped by rarity with comments. In order: Commons, Uncommons, Rares. Reaver: Commons start at `crimsonCleave`, Uncommons at `stomp`, Rares at `executioner`. Starseer: Commons start at `cometFragment`, Uncommons at `starstoneArc`, Rares at `supernova` (the group runs to `riteOfCinders`, the end of its list). Rogue's list carried no rarity comments. Herald: Commons start at `bloodPact`, Uncommons at `martyrBlood`, Rares at `secondBloom`. A card's rarity is authoritative in its card row (content/source/cards/*.json), not by position in this list.
+
+## Keywords
+
+Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for
+these ids are engine primitives (card-zone/turn rules that cannot be data); this
+registry supplies only what tooltips show.
