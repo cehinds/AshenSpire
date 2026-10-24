@@ -199,6 +199,41 @@ test('classes: src/content/classes.js is a shim; LOCKED_CLASSES stays an empty J
   assert.deepStrictEqual(LOCKED_CLASSES, []);
 });
 
+// Progression: the constant tables are authored in content/source/progression*.json.
+// Each module still derives from other content in JS (lessons, cards, feat
+// descriptions, item-gate unlock rows), so only the data-only modules must be shims.
+const PROGRESSION_SOURCES = {
+  cardFamilies: [['progressionCardFamilies', 'cardFamilies']],
+  cardLore: [['progressionCardLore', 'progressionCardLore']],
+  gear: [['progressionGearRequirements', 'progressionGearRequirements']],
+  relics: [['progressionRelics', 'progressionRelics'], ['progressionRelicUnlocks', 'progressionRelicUnlocks']],
+};
+for (const [file, sources] of Object.entries(PROGRESSION_SOURCES)) {
+  test(`progression: ${file}.js re-exports its JSON source and authors no row`, async () => {
+    const mod = await import(`../src/content/progression/${file}.js`);
+    const text = readFileSync(resolve(ROOT, `src/content/progression/${file}.js`), 'utf8');
+    for (const [source, exportName] of sources) {
+      const authored = JSON.parse(readFileSync(resolve(ROOT, `content/source/${source}.json`), 'utf8'));
+      assert.deepStrictEqual(JSON.parse(JSON.stringify(mod[exportName])), authored, `${exportName} deep-equals ${source}.json`);
+      assert.match(text, new RegExp(`from '\\.\\./generated/${source}\\.js'`));
+    }
+    assert.ok(!/\{\s*(id|classId)\s*:/.test(text) && !/^\s*["']?(name|id|classId|ref)["']?\s*:/m.test(text), `${file}.js authors a row — edit content/source/ instead`);
+  });
+}
+
+test('progression: feats, unlocks, lessons and cards keep their derivations in JS over generated rows', async () => {
+  const read = (f) => readFileSync(resolve(ROOT, `src/content/progression/${f}.js`), 'utf8');
+  assert.match(read('feats'), /getFeatDescription/);
+  assert.match(read('feats'), /generated\/progressionFeatRows\.js/);
+  assert.match(read('unlocks'), /ARMAMENTS/);
+  assert.match(read('unlocks'), /generated\/progressionUnlockRows\.js/);
+  assert.match(read('lessons'), /generated\/progressionLessonRecipes\.js/);
+  assert.match(read('cards'), /generated\/progressionGradeRules\.js/);
+  const { progressionFeats, progressionFeatUnlocks } = await import('../src/content/progression/feats.js');
+  assert.ok(Object.isFrozen(progressionFeats) && Object.isFrozen(progressionFeatUnlocks));
+  assert.ok(progressionFeats.every((feat) => typeof feat.description === 'string' && feat.description.length > 0));
+});
+
 test('the generated modules are current (content-build --check exits 0)', () => {
   const r = spawnSync(process.execPath, ['tools/content-build.mjs', '--check'], { cwd: ROOT, encoding: 'utf8' });
   assert.equal(r.status, 0, `content-build --check:\n${r.stdout}\n${r.stderr}`);
