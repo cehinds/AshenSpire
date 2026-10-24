@@ -7,6 +7,14 @@ import { tooltipHelp } from './tooltipHelp.js';
 import { progressionGearRequirements } from './progression/gear.js';
 import { combatMatchups, combatIntent } from './combatMatchups.js';
 import { enemyKnowledgeTuning } from './enemyKnowledge.js';
+import { balanceClassMastery } from './generated/balanceClassMastery.js';
+import { balanceDeck } from './generated/balanceDeck.js';
+import { balanceMana } from './generated/balanceMana.js';
+import { balanceStagger } from './generated/balanceStagger.js';
+import { balancePoise } from './generated/balancePoise.js';
+import { balanceExposure } from './generated/balanceExposure.js';
+import { balanceArcaneExposure } from './generated/balanceArcaneExposure.js';
+import { balanceProgressionRelics } from './generated/balanceProgressionRelics.js';
 import { balanceCore } from './generated/balanceCore.js';
 
 // ---- WHAT EACH NUMBER DOES, WRITTEN BESIDE IT (owner, 2026-09-23) ----------
@@ -220,39 +228,7 @@ export const balance = {
       'respec.enabled': 'Allows a class respec preview and atomic exchange of eligible choices through the current class level.',
     },
   },
-  progressionRelics: {
-    "progression-emberjaw-token": {
-      "bleed": 2
-    },
-    "progression-cracked-war-anvil": {
-      "poiseDamage": 1
-    },
-    "progression-cinderbound-crown": {
-      "heal": 4
-    },
-    "progression-moonwell-lens": {
-      "block": 2
-    },
-    "progression-nightglass-rosary": {
-      "restoreMana": 1
-    },
-    "progression-fragment-of-the-third-sky": {
-      "block": 5
-    },
-    "progression-whisperglass-die": {
-      "chargeDamage": 5
-    },
-    "progression-purse-of-borrowed-shadows": {
-      "block": 2
-    },
-    "progression-ember-alms-bowl": {
-      "block": 2
-    },
-    "progression-ossuary-prayer-wheel": {
-      "restoreMana": 1
-    },
-    [NOTE]: { "{id}.{effect}": "The {effect} amount conferred by the progression relic {id}." },
-  },
+  progressionRelics: balanceProgressionRelics,
   // Primary card values and physical/magical impact are derived from costs:
   // floor(global × (AP×action + MP×mana + SP×stamina)
   //       − statusEffectReduction × Σ(each distinct applied status))
@@ -275,53 +251,8 @@ export const balance = {
       '{config}.cardBonuses.{cardId}': '{cardName}: a signed bonus added to {valueOf} after the cost-derived value is rounded down. The result never falls below 0.',
     },
   },
-  // Arcane Exposure host resolution: visible name plus the explicit school
-  // mapping actions.js consumes. No buildup is inferred from card tags.
-  arcaneExposure: {
-    label: 'Arcane Exposure',
-    // Explicit carrier schools. Physical/holy/fire are currently unmapped and
-    // therefore add zero even if a malformed card tries to author buildup.
-    schoolBuildupMultipliers: {
-      magic: 1, arcane: 1,
-      [NOTE]: {
-        '{school}': 'Multiplies the Arcane Exposure {a school} card builds on its target. 0 means {school} damage never builds Exposure at all.',
-      },
-    }, // PROVISIONAL
-  },
-  // Focus properties (docs/proposal-progression-and-property-system.md §7.2,
-  // §10): what an Arcane Break, or a hit, is worth to the caster whose focus
-  // holds the property. content/source/nodeEffects.json reads these, through variableBindings.csv,
-  // through `{ "balance": "exposure.…" }`; no number is typed in that file.
-  exposure: {
-    foldScale: 0.5,
-    staggerBreakImpact: 2,
-    defaultPayoff: {
-      status: 'magicVulnerable', value: 25, duration: 2,
-      [NOTE]: { value: 'Magical damage vulnerability after an enemy suffers a magical Stagger, in percent.', duration: 'Turns the default magical Stagger payoff lasts.' },
-    },
-    siphonRefund: 1, // PROVISIONAL — Mana back on YOUR arcane break (scepter `siphon`)
-    siphonRefundMastered: 2, // PROVISIONAL — the same, once the focus skill reaches siphonMasteryLevel
-    siphonMasteryLevel: 7, // PROVISIONAL — focus skill level; the ledger arrives in plan phase 4
-    overchargeBuildupMult: 1.5, // PROVISIONAL — buildup per hit × (wand `overcharge`)
-    // Plan phase 8 (proposal §7.2): what the other two foci make of YOUR break.
-    staggerBreakPoise: 6, // PROVISIONAL — Poise damage to the broken foe (staff `staggerBreak`)
-    resonanceSpreadPct: 50, // PROVISIONAL — % of the broken foe's threshold poured into every OTHER foe (orb `resonance`)
-    // A Mana spell's buildup per hit (content/source/cardExposure.csv must carry at
-    // least this on a card that costs Mana): an empty caster still works toward
-    // a break with action-only spells, a Mana spell works faster.
-    buildupPerManaSpell: 5, // PROVISIONAL
-    [NOTE]: {
-      foldScale: 'Multiplies a spell\'s old Arcane buildup before it joins the shared Poise impact.',
-      staggerBreakImpact: 'Extra magical impact on spell hits while a focus carries Stagger Break.',
-      siphonRefund: 'Mana the Siphon focus property hands back when you break a foe\'s Arcane Exposure.',
-      siphonRefundMastered: 'Mana Siphon hands back instead, once the focus skill reaches the mastery level below.',
-      siphonMasteryLevel: 'The focus skill level at which Siphon starts paying its mastered refund.',
-      overchargeBuildupMult: 'Multiplies the Arcane Exposure each hit builds while a focus carries Overcharge.',
-      staggerBreakPoise: 'Poise damage Stagger Break deals to a foe whose Arcane Exposure you break.',
-      resonanceSpreadPct: 'Percent of a broken foe\'s Exposure threshold that Resonance pours into every OTHER foe.',
-      buildupPerManaSpell: 'The least Arcane Exposure a card that costs Mana must build per hit, so a Mana spell always works toward a break faster than an action-only one.',
-    },
-  },
+  arcaneExposure: balanceArcaneExposure,
+  exposure: balanceExposure,
   energy: balanceCore.energy,
   draw: balanceCore.draw,
   flaskCapacity: balanceCore.flaskCapacity,
@@ -331,93 +262,15 @@ export const balance = {
   startingDeckSize: balanceCore.startingDeckSize,
   [NOTE]: balanceCore[NOTE],
 
-  // Engine-consulted poise config (see ENGINE-API §1). onFill is where content
-  // defines what "Staggered" means — the engine never names the status.
-  poise: {
-    growthMult: 1.25,
-    onFill: [{ op: 'applyStatus', target: 'self', status: 'staggered', stacks: 2 }],
-    // THE PLAYER'S VESSEL (plan phase 8, proposal §7.3): its max is Constitution ×
-    // this, plus the worn body armour's poiseThreshold, plus relic
-    // poiseThresholdAdd (model/statProjection.js playerPoiseThresholdReceipt).
-    // THE CONSTITUTION TERM LEFT THIS BLOCK IN PHASE 9. It is a derived-stat
-    // row now (derivedStats.js `poise`, ruleset 5) and the receipt reads it
-    // there; a copy here would be a second home for one number.
-    // OUTSIDE the foundation ruleset (the shipped fight has none), an enemy
-    // blow that draws blood rocks the player by this much; the ruleset's
-    // weapon impact replaces it wherever a ruleset is handed in.
-    playerImpactPerHit: 2, // PROVISIONAL
-    [NOTE]: {
-      growthMult: 'How much a Poise threshold grows each time the meter fills, so the second stagger of a fight is dearer than the first. Only while combat ratings are off; with ratings on, Break threshold multiplier sets this.',
-      playerImpactPerHit: 'Poise the player loses per enemy hit that lands, outside a ruleset that states its own weapon impact. Only while combat ratings are off; with ratings on, the impact rows set how much each hit fills the meter.',
-      'onFill.{i}.stacks': 'Stacks of {statusName} that {recipient} when its Poise meter fills. The player\'s own fill runs no row from this list — it reads Stagger · Player instead. With combat ratings on, every enemy break runs it too, Poise or Ward, beside the skipped turn.',
-    },
-  },
+  poise: balancePoise,
 
-  // WHAT A PLAYER STAGGER COSTS (plan phase 8, proposal §7.3): the poise meter
-  // filling takes this many actions off the NEXT turn and applies these
-  // statuses (ordinary decay). The engine reads the map; it names no status.
-  stagger: {
-    player: {
-      actionLoss: 1, statuses: { vulnerable: 2, weak: 2 },
-      [NOTE]: {
-        actionLoss: 'Actions taken off the player\'s NEXT turn when their Poise meter fills. Only while combat ratings are off; with ratings on, Poise action loss sets this.',
-        'statuses.{status}': 'Stacks of {statusName} the player takes when their own Poise meter fills. Only while combat ratings are off; with ratings on, a break costs actions and applies no status.',
-      },
-    },
-  },
+  stagger: balanceStagger,
 
-  // Mana is an additional cost beside the single turn-Stamina cost.
-  // minActionCost retains its serialized name; the old additive floor is zero.
-  mana: {
-    minActionCost: 1, minStaminaCost: 0,
-    [NOTE]: {
-      minActionCost: 'The least turn Stamina a card that costs Mana must also cost.',
-      minStaminaCost: 'Retired additive Stamina floor; keep zero.',
-    },
-  },
+  mana: balanceMana,
 
-  // ---- The deck's floor (plan phase 3b, proposal §5) -----------------------
-  // A run may not LEAVE the Armoury holding fewer cards than this. `minimum`
-  // is the floor at character level 0; it rises by `minimumPerStep` every
-  // `minimumStepLevels` levels (the proposal's "+1 every 2 levels"). Character
-  // level lands in phase 6; until then every run reads as level 0 and the
-  // floor is `minimum`. model/loadout.js deckMinimum is the one reader.
-  deck: {
-    minimum: 8, minimumStepLevels: 2, minimumPerStep: 1,
-    [NOTE]: {
-      minimum: 'The fewest cards a run may leave the Armoury holding, at character level 0.',
-      minimumStepLevels: 'How many character levels apart each rise in that deck floor sits.',
-      minimumPerStep: 'How far the deck floor rises at each of those steps.',
-    },
-  },
+  deck: balanceDeck,
 
-  // ---- Skill tracks (plan phase 4a, proposal §6.1 and §10) ----------------
-  // One curve shape for every track: the step from level n costs
-  // round(base × growth^n, roundTo). `xp` is the weapon, armour, focus and
-  // dual-wield curve; `class.xp` the class curve. The award rows are
-  // what the engine's hooks pay (engine/skillXp.js): perHit for a hit or a
-  // block a group's card resolves on a live target; perWinEquipped per
-  // equipped group on a win, × killMult when that group landed the killing
-  // hit; one XP per impactPerXp impact absorbed (heavy), evadeXp per hit
-  // evaded (light; medium reads half of each), one XP per buildupPerXp arcane
-  // buildup dealt (focus). model/skills.js is the one reader of the curve.
-  classMastery: {
-    xp: { base: 50, growth: 1.25, roundTo: 5, maxLevel: 20 },
-    pay: { perWin: 10, perElite: 25, perBoss: 50, perQuest: 10 },
-    cycle: ['cards', 'armament', 'cards', 'relic', 'cards', 'feat', 'cards', 'weapon'],
-    corePoolShare: 0.6,
-    [NOTE]: {
-      'xp.base': 'Lifetime class mastery XP needed for the first claimed level.',
-      'xp.growth': 'Exponential increase per mastery level; 1.25 brings twenty levels to about 17,000 XP.',
-      'xp.roundTo': 'Round each mastery level cost to this many XP.',
-      'xp.maxLevel': 'Highest class mastery level. XP earned beyond it stays on the profile.',
-      'pay.perWin': 'Mastery XP for an ordinary fight won.',
-      'pay.perElite': 'Mastery XP for an elite fight won, replacing the ordinary award.',
-      'pay.perBoss': 'Mastery XP for a boss fight won, replacing the ordinary award.',
-      'pay.perQuest': 'Mastery XP for a completed quest.',
-      corePoolShare: 'Minimum share of each class card pool available before any mastery unlock.',
-    },
-  },
+  classMastery: balanceClassMastery,
   skill: {
     xp: {
       base: 100, linear: false, multScaler: 1.3, growth: 1.995, roundTo: 5, maxLevel: 10, perHit: 5, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 5, buildupPerXp: 5,

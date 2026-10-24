@@ -455,3 +455,82 @@ generated module loads; `balance.js` still exports `NOTE` for the readers.
   Grace refills the current Crimson/Azure counts to the allocation stored on
   the run. The allocation may be redistributed but always sums to capacity.
   This legacy table remains empty so old debug readers fail harmlessly.
+
+### balanceProgressionRelics.json — progressionRelics
+
+_No comments were written beside these numbers in the old balance.js._
+
+
+### balanceArcaneExposure.json — arcaneExposure
+
+- **`arcaneExposure`** — Arcane Exposure host resolution: visible name plus the explicit school
+  mapping actions.js consumes. No buildup is inferred from card tags.
+- **`arcaneExposure.schoolBuildupMultipliers`** — Explicit carrier schools. Physical/holy/fire are currently unmapped and
+  therefore add zero even if a malformed card tries to author buildup.
+- **`arcaneExposure.schoolBuildupMultipliers`** — PROVISIONAL
+
+### balanceExposure.json — exposure
+
+- **`exposure`** — Focus properties (docs/proposal-progression-and-property-system.md §7.2,
+  §10): what an Arcane Break, or a hit, is worth to the caster whose focus
+  holds the property. content/source/nodeEffects.json reads these, through variableBindings.csv,
+  through `{ "balance": "exposure.…" }`; no number is typed in that file.
+- **`exposure.siphonRefund`** — PROVISIONAL — Mana back on YOUR arcane break (scepter `siphon`)
+- **`exposure.siphonRefundMastered`** — PROVISIONAL — the same, once the focus skill reaches siphonMasteryLevel
+- **`exposure.siphonMasteryLevel`** — PROVISIONAL — focus skill level; the ledger arrives in plan phase 4
+- **`exposure.overchargeBuildupMult`** — PROVISIONAL — buildup per hit × (wand `overcharge`)
+- **`exposure.staggerBreakPoise`** — Plan phase 8 (proposal §7.2): what the other two foci make of YOUR break.
+- **`exposure.staggerBreakPoise`** — PROVISIONAL — Poise damage to the broken foe (staff `staggerBreak`)
+- **`exposure.resonanceSpreadPct`** — PROVISIONAL — % of the broken foe's threshold poured into every OTHER foe (orb `resonance`)
+- **`exposure.buildupPerManaSpell`** — A Mana spell's buildup per hit (content/source/cardExposure.csv must carry at
+  least this on a card that costs Mana): an empty caster still works toward
+  a break with action-only spells, a Mana spell works faster.
+- **`exposure.buildupPerManaSpell`** — PROVISIONAL
+
+### balancePoise.json — poise
+
+- **`poise`** — Engine-consulted poise config (see ENGINE-API §1). onFill is where content
+  defines what "Staggered" means — the engine never names the status.
+- **`poise.playerImpactPerHit`** — THE PLAYER'S VESSEL (plan phase 8, proposal §7.3): its max is Constitution ×
+  this, plus the worn body armour's poiseThreshold, plus relic
+  poiseThresholdAdd (model/statProjection.js playerPoiseThresholdReceipt).
+  THE CONSTITUTION TERM LEFT THIS BLOCK IN PHASE 9. It is a derived-stat
+  row now (derivedStats.js `poise`, ruleset 5) and the receipt reads it
+  there; a copy here would be a second home for one number.
+  OUTSIDE the foundation ruleset (the shipped fight has none), an enemy
+  blow that draws blood rocks the player by this much; the ruleset's
+  weapon impact replaces it wherever a ruleset is handed in.
+- **`poise.playerImpactPerHit`** — PROVISIONAL
+
+### balanceStagger.json — stagger
+
+- **`stagger`** — WHAT A PLAYER STAGGER COSTS (plan phase 8, proposal §7.3): the poise meter
+  filling takes this many actions off the NEXT turn and applies these
+  statuses (ordinary decay). The engine reads the map; it names no status.
+
+### balanceMana.json — mana
+
+- **`mana`** — Mana is an additional cost beside the single turn-Stamina cost.
+  minActionCost retains its serialized name; the old additive floor is zero.
+
+### balanceDeck.json — deck
+
+- **`deck`** — ---- The deck's floor (plan phase 3b, proposal §5) -----------------------
+  A run may not LEAVE the Armoury holding fewer cards than this. `minimum`
+  is the floor at character level 0; it rises by `minimumPerStep` every
+  `minimumStepLevels` levels (the proposal's "+1 every 2 levels"). Character
+  level lands in phase 6; until then every run reads as level 0 and the
+  floor is `minimum`. model/loadout.js deckMinimum is the one reader.
+
+### balanceClassMastery.json — classMastery
+
+- **`classMastery`** — ---- Skill tracks (plan phase 4a, proposal §6.1 and §10) ----------------
+  One curve shape for every track: the step from level n costs
+  round(base × growth^n, roundTo). `xp` is the weapon, armour, focus and
+  dual-wield curve; `class.xp` the class curve. The award rows are
+  what the engine's hooks pay (engine/skillXp.js): perHit for a hit or a
+  block a group's card resolves on a live target; perWinEquipped per
+  equipped group on a win, × killMult when that group landed the killing
+  hit; one XP per impactPerXp impact absorbed (heavy), evadeXp per hit
+  evaded (light; medium reads half of each), one XP per buildupPerXp arcane
+  buildup dealt (focus). model/skills.js is the one reader of the curve.
