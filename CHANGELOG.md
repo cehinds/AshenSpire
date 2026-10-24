@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-24
 
-- **Combat expansion tables are now editable data files** ([#2292](https://github.com/cehinds/AshenSpire/pull/2292), `0.7.1.1819`). The expansion's lore, equipment, martial and card tables, and its new cards, live in `content/source/`. Only the rules that apply them stay in code. Nothing in play changes.
+- **Combat expansion tables are now editable data files** ([#2292](https://github.com/cehinds/AshenSpire/pull/2292), `0.7.1.1821`). The expansion's lore, equipment, martial and card tables, and its new cards, live in `content/source/`. Only the rules that apply them stay in code. Nothing in play changes.
 - **Consumables, companions and keywords are now editable data files** ([#2290](https://github.com/cehinds/AshenSpire/pull/2290), `0.7.1.1819`). Skill books, revive tokens, companions and keyword definitions live in `content/source/`. Class skill books are still built automatically, one per class. Nothing in play changes.
 - **Shops are now an editable data file** ([#2289](https://github.com/cehinds/AshenSpire/pull/2289), `0.7.1.1817`). The shop kinds and what each one offers live in `content/source/shops.json`. The explanation shown beside each Settings number is a plain `"$note"` field there too. Nothing in play changes.
 - **Encounters are now editable data files** ([#2288](https://github.com/cehinds/AshenSpire/pull/2288), `0.7.1.1815`). Which enemies you meet in each region lives in `content/source/wealdEncounters.json`, `marchesEncounters.json` and `reachEncounters.json`. Nothing in play changes.
