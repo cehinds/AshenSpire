@@ -434,10 +434,11 @@ if (process.argv.includes('--selftest')) {
         // number being WRONG in both homes, not merely inconsistent between them.
         name: 'the threshold creeps up and refuses a working window (the branch\'s own first bug)',
         edits: [
-          { file: 'src/content/balance.js', find: '      shortWideMinH: 340,', replace: '      shortWideMinH: 395,' },
-          { file: 'src/content/balance.js', find: '//   340 <= h < 465           compact wide composition (when width fits)', replace: '//   395 <= h < 465           compact wide composition (when width fits)' },
-          { file: 'src/content/balance.js', find: '//   h < 340                  truthful upright/resize refusal', replace: '//   h < 395                  truthful upright/resize refusal' },
+          { file: 'content/source/balanceUi.json', find: '    "shortWideMinH": 340,', replace: '    "shortWideMinH": 395,' },
+          { file: 'content/source/CONTENT-NOTES.md', find: '    340 <= h < 465           compact wide composition (when width fits)', replace: '    395 <= h < 465           compact wide composition (when width fits)' },
+          { file: 'content/source/CONTENT-NOTES.md', find: '    h < 340                  truthful upright/resize refusal', replace: '    h < 395                  truthful upright/resize refusal' },
         ],
+        prep: [['node', 'tools/content-build.mjs']],
         expectRed: /GATE STANDS WHERE NOTHING WALLS/,
       },
       {
@@ -447,9 +448,10 @@ if (process.argv.includes('--selftest')) {
         // but it is written TWICE (constants + the documented band table in the
         // same file), and the copies must agree. This plant moves one copy.
         name: 'the band edge moves in the constants and not in its own documentation',
-        file: 'src/content/balance.js',
-        find: '      gateBelowH: 465,',
-        replace: '      gateBelowH: 520,',
+        file: 'content/source/balanceUi.json',
+        find: '    "gateBelowH": 465,',
+        replace: '    "gateBelowH": 520,',
+        prep: [['node', 'tools/content-build.mjs']],
         expectRed: /THE BAND CONTRACT DISAGREES WITH ITS OWN DOCUMENTATION/,
       },
     ],
@@ -496,10 +498,11 @@ if (process.argv.includes('--selftest')) {
         // move, for the reason the group-1 plant above records.
         name: 'the threshold creeps three pixels above the last wall (the branch\'s own SECOND bug, re-anchored at Text XL)',
         edits: [
-          { file: 'src/content/balance.js', find: '      shortWideMinH: 340,', replace: '      shortWideMinH: 343,' },
-          { file: 'src/content/balance.js', find: '//   340 <= h < 465           compact wide composition (when width fits)', replace: '//   343 <= h < 465           compact wide composition (when width fits)' },
-          { file: 'src/content/balance.js', find: '//   h < 340                  truthful upright/resize refusal', replace: '//   h < 343                  truthful upright/resize refusal' },
+          { file: 'content/source/balanceUi.json', find: '    "shortWideMinH": 340,', replace: '    "shortWideMinH": 343,' },
+          { file: 'content/source/CONTENT-NOTES.md', find: '    340 <= h < 465           compact wide composition (when width fits)', replace: '    343 <= h < 465           compact wide composition (when width fits)' },
+          { file: 'content/source/CONTENT-NOTES.md', find: '    h < 340                  truthful upright/resize refusal', replace: '    h < 343                  truthful upright/resize refusal' },
         ],
+        prep: [['node', 'tools/content-build.mjs']],
         expectRed: /GATE STANDS WHERE NOTHING WALLS/,
       },
     ],
@@ -540,16 +543,18 @@ if (process.argv.includes('--selftest')) {
     plants: [
       {
         name: '--ladder: the constant sits below the last wall (what 432 was — a wall with no gate)',
-        file: 'src/content/balance.js',
-        find: '      shortWideMinH: 340,',
-        replace: '      shortWideMinH: 335,',
+        file: 'content/source/balanceUi.json',
+        find: '    "shortWideMinH": 340,',
+        replace: '    "shortWideMinH": 335,',
+        prep: [['node', 'tools/content-build.mjs']],
         expectRed: /THE CONSTANT LEAVES A WALL UNGATED/,
       },
       {
         name: '--ladder: the constant refuses above the last wall (a refusal that outgrew its premise)',
-        file: 'src/content/balance.js',
-        find: '      shortWideMinH: 340,',
-        replace: '      shortWideMinH: 348,',
+        file: 'content/source/balanceUi.json',
+        find: '    "shortWideMinH": 340,',
+        replace: '    "shortWideMinH": 348,',
+        prep: [['node', 'tools/content-build.mjs']],
         expectRed: /THE CONSTANT REFUSES ABOVE ITS OWN PREMISE/,
       },
     ],
@@ -589,9 +594,10 @@ if (process.argv.includes('--selftest')) {
     plants: [
       {
         name: '--predicates: the constant drops below the wall\'s top edge — a wall the gate does not stand on',
-        file: 'src/content/balance.js',
-        find: '      shortWideMinH: 340,',
-        replace: '      shortWideMinH: 335,',
+        file: 'content/source/balanceUi.json',
+        find: '    "shortWideMinH": 340,',
+        replace: '    "shortWideMinH": 335,',
+        prep: [['node', 'tools/content-build.mjs']],
         expectRed: /A WALL WITH NO GATE/,
       },
     ],
@@ -1750,14 +1756,16 @@ async function main() {
   // `shortWideMinH` and is `--ladder`'s subject. A consistency check sold as a
   // correctness check is how a green stops meaning anything.
   const bandDoc = await (async () => {
-    const src = readFileSync(resolve(ROOT, 'src/content/balance.js'), 'utf8');
+    // The band table is documentation: it sat as comments in balance.js and now
+    // sits in content/source/CONTENT-NOTES.md (Balance, under ui.uiScale.gateBelowH).
+    const src = readFileSync(resolve(ROOT, 'content/source/CONTENT-NOTES.md'), 'utf8');
     const { balance } = await import(pathToFileURL(resolve(ROOT, 'src/content/balance.js')).href + `?band=${Date.now()}`);
     const z = balance?.ui?.uiScale || {};
-    const wide = /^\s*\/\/\s*h\s*>=\s*(\d+)\s/m.exec(src);
-    const band = /^\s*\/\/\s*(\d+)\s*<=\s*h\s*<\s*(\d+)\s/m.exec(src);
-    const refuse = /^\s*\/\/\s*h\s*<\s*(\d+)\s/m.exec(src);
+    const wide = /^\s*h\s*>=\s*(\d+)\s/m.exec(src);
+    const band = /^\s*(\d+)\s*<=\s*h\s*<\s*(\d+)\s/m.exec(src);
+    const refuse = /^\s*h\s*<\s*(\d+)\s/m.exec(src);
     if (!wide || !band || !refuse) {
-      return `THE BAND TABLE IS UNREADABLE in src/content/balance.js — the three documented lines (\`h >= N\`, \`N <= h < N\`, \`h < N\`) did not parse. `
+      return `THE BAND TABLE IS UNREADABLE in content/source/CONTENT-NOTES.md — the three documented lines (\`h >= N\`, \`N <= h < N\`, \`h < N\`) did not parse. `
         + `The table is the only second copy of these constants; if it moved or was reworded, this check has stopped checking and must be re-aimed, not deleted.`;
     }
     const docWide = +wide[1], docLo = +band[1], docHi = +band[2], docRefuse = +refuse[1];
@@ -1766,7 +1774,7 @@ async function main() {
     if (docLo !== z.shortWideMinH || docRefuse !== z.shortWideMinH) bad.push(`documented compact floor ${docLo}/${docRefuse} vs balance.ui.uiScale.shortWideMinH ${z.shortWideMinH}`);
     if (!bad.length) return null;
     return `THE BAND CONTRACT DISAGREES WITH ITS OWN DOCUMENTATION — ${bad.join('; ')}. `
-      + `balance.js writes the band table twice: once as constants the game reads, once as prose a person reads. A number that moves in one home and not the other `
+      + `The band table is written twice: once as constants the game reads (balanceUi.json), once as prose a person reads (CONTENT-NOTES.md). A number that moves in one home and not the other `
       + `ships a game whose documentation describes a different game. Move both, in the same act.`;
   })();
   if (bandDoc) { fails.push(bandDoc); console.log(`      <-- ${bandDoc}`); }

@@ -1,0 +1,8 @@
+{
+  "1": 1,
+  "2": 1.5,
+  "3": 1.9,
+  "$note": {
+    "{tier}": "Enemy HP multiplier for a tier-{tier} seat. A fight scales by this over the tier its roster was authored at, so a seat at its own tier is exactly 1."
+  }
+}

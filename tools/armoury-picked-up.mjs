@@ -223,9 +223,10 @@ if (process.argv.includes('--selftest')) {
         // profile as well as the run, so a piece found in an earlier climb is
         // offered in this one. One word in a content table, which is the point.
         name: 'the shelf goes back to profile-wide (persistence: both)',
-        edits: [{ file: 'src/content/balance.js',
-          find: "    persistence: 'perRun',",
-          replace: "    persistence: 'both'," }],
+        edits: [{ file: 'content/source/balanceEquipment.json',
+          find: '  "persistence": "perRun",',
+          replace: '  "persistence": "both",' }],
+        prep: [['node', 'tools/content-build.mjs']],
         // BOUND TO ITS OWN DIRECTION BY CODE, not by prose. `both` widens the
         // shelf past the run, so A1.wide is the sentence this defect owns.
         expectRed: redRe('A1.wide'),
@@ -237,9 +238,10 @@ if (process.argv.includes('--selftest')) {
         // value of this closed set that makes the run's own pickups invisible —
         // a player collects a sword and the Armoury does not offer it.
         name: 'the shelf stops counting the run at all (persistence: unlocked)',
-        edits: [{ file: 'src/content/balance.js',
-          find: "    persistence: 'perRun',",
-          replace: "    persistence: 'unlocked'," }],
+        edits: [{ file: 'content/source/balanceEquipment.json',
+          find: '  "persistence": "perRun",',
+          replace: '  "persistence": "unlocked",' }],
+        prep: [['node', 'tools/content-build.mjs']],
         // BOUND TO ITS OWN DIRECTION, and this is a correction to my first
         // draft rather than caution. `expectRed: /FAIL A1/` passed here — but
         // it passed on the OTHER sub-check's line, the same "offers too much"

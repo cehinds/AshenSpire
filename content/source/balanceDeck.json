@@ -1,0 +1,10 @@
+{
+  "minimum": 8,
+  "minimumStepLevels": 2,
+  "minimumPerStep": 1,
+  "$note": {
+    "minimum": "The fewest cards a run may leave the Armoury holding, at character level 0.",
+    "minimumStepLevels": "How many character levels apart each rise in that deck floor sits.",
+    "minimumPerStep": "How far the deck floor rises at each of those steps."
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "hpPerLoop": 0.35,
+  "strPerLoop": 1,
+  "actsPerCycle": 3,
+  "$note": {
+    "hpPerLoop": "Endless Spire: the fraction of extra enemy HP each completed cycle adds.",
+    "strPerLoop": "Endless Spire: Strength enemies gain per completed cycle.",
+    "actsPerCycle": "Endless Spire: acts before the spire loops. It is also the act count of an ordinary climb."
+  }
+}

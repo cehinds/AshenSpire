@@ -1,0 +1,9 @@
+{
+  "1": { "hp": 0.8, "damage": 0.8 },
+  "2": { "hp": 2.2, "damage": 1.5 },
+  "3": { "hp": 2.2, "damage": 1.5 },
+  "$note": {
+    "{tier}.hp": "Boss HP multiplier when a boss is met at tier {tier} (whichever seat holds it), on top of the seat-tier ratio.",
+    "{tier}.damage": "Boss move-damage multiplier when a boss is met at tier {tier} (whichever seat holds it)."
+  }
+}

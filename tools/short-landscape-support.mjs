@@ -46,7 +46,10 @@ const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 if (args.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
   const cssAnchor = ":root[data-composition='short-wide'] .hand-area { height: 10rem; }";
-  const minAnchor = '      shortWideMinH: 340,';
+  // Authored in content/source/balanceUi.json (the build recompiles it); in the
+  // shipped bundle the same number is compact JSON inside the generated module.
+  const minAnchor = '    "shortWideMinH": 340,';
+  const distMinAnchor = '"shortWideMinH":340,';
   const sourcePlants = [
     {
       name: 'the layout answer stops publishing the compact composition',
@@ -71,9 +74,12 @@ if (args.includes('--selftest')) {
     },
     {
       name: 'the refusal is lowered below the derived compact floor',
-      file: 'src/content/balance.js',
+      file: 'content/source/balanceUi.json',
       find: minAnchor,
-      replace: '      shortWideMinH: 0, // plant: boundary no longer follows rendered premise',
+      replace: '    "shortWideMinH": 0,',
+      prep: [['node', 'tools/content-build.mjs']],
+      distFind: distMinAnchor,
+      distReplace: '"shortWideMinH":0,',
       expectRed: /FAIL (?:derived lower boundary|below lower edge 844x339 keeps the refusal)/,
     },
   ];
@@ -82,7 +88,7 @@ if (args.includes('--selftest')) {
   // player opens instead of rebuilding inside doorplant's deliberately non-Git
   // scratch tree (buildversion correctly refuses to invent a commit there).
   const plants = useDist
-    ? sourcePlants.map((plant) => ({ ...plant, file: 'dist/AshenSpire.html' }))
+    ? sourcePlants.map(({ prep, distFind, distReplace, ...plant }) => ({ ...plant, file: 'dist/AshenSpire.html', ...(distFind ? { find: distFind, replace: distReplace } : {}) }))
     : sourcePlants;
   const code = await doorSelftest({
     tool: 'short-landscape-support.mjs',
