@@ -1,8 +1,11 @@
 // Forty class families. Rank is a recipe selection, never an imperative card hook.
+// Stays JS: the rider functions and familyGrade are logic. The grade budget and the
+// area-family list it reads are data, authored in content/source/progressionGradeRules.json.
 import { cardFamilies } from './cardFamilies.js';
 import { recipeText } from './cardRecipeText.js';
 import { progressionCardLore } from './cardLore.js';
 import { abilityCardUpdates as lessonUpdates } from './lessons.js';
+import { progressionGradeRules } from '../generated/progressionGradeRules.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 export const abilityCardUpdates = lessonUpdates;
 
@@ -63,8 +66,8 @@ const riders = {
   'dawn-after-ash': () => [{ op: 'removeStatus', target: 'self', status: 'weak', amount: 1 }],
 };
 
-const budget = [6, 9, 13, 18, 24, 30];
-const areaFamilies = new Set(['ashen-cleaver', 'falling-constellation']);
+const budget = progressionGradeRules.gradeBudget;
+const areaFamilies = new Set(progressionGradeRules.areaFamilies);
 
 export function familyGrade(family, rank) {
   if (family.grades) {
