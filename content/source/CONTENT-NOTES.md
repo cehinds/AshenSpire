@@ -534,3 +534,81 @@ _No comments were written beside these numbers in the old balance.js._
   hit; one XP per impactPerXp impact absorbed (heavy), evadeXp per hit
   evaded (light; medium reads half of each), one XP per buildupPerXp arcane
   buildup dealt (focus). model/skills.js is the one reader of the curve.
+
+### balanceSkill.json — skill
+
+- **`skill.class`** — The class track (plan phase 5b): paid by the run's
+  owner for a won fight, more for a boss (the owner knows the door's
+  pool; the combat does not), and per quest once phase 10a's event
+  exists. `tierAt` is the class level each tree tier opens at.
+- **`skill.rarityUnlock`** — The drafts a level buys (plan phase 4b, proposal §6.1): pick 1 of
+  `draftSize` cards of the track's schools; at most `draftsPerCombat`
+  drafts per track per reward door, the rest queue; a rarity is drafted
+  from the level its row names (the game has no legendary relic or card, so the
+  proposal's fourth row has no seat). A level no longer upgrades the
+  deck: card ranks replaced that threshold (SPEC §13.4o).
+- **`skill.rankMax`** — A card's highest rank (SPEC §13.4o). A draft offers ranks 1 to the
+  track's level, never past this, the higher ones likelier.
+- **`skill.flatEvery`** — Every this-many levels of a card-school track adds 1 to the primary
+  number of every card of its schools (SPEC §13.4o): +1 at 5, +2 at 10.
+- **`skill.attributeEvery`** — Every this-many levels a track with a linked attribute set offers +1 to
+  one attribute of that set (SPEC §13.4o): Blade STR/DEX, Shield
+  STR/DEX/CON/WIS, Magic DEX/CON/WIS/INT; other tracks are authored with
+  the content (phase C).
+- **`skill.featEvery`** — Every this-many levels a track that authors skill feats offers one
+  (SPEC §13.4o, content/skillFeats.js).
+- **`skill.favoredXpMult`** — The class card's leaning (plan phase 5a, proposal §4): skill XP in the
+  weapon groups the card names (its item-type tags) is multiplied by
+  this, through the `favored` property the card carries.
+
+### balanceTagMechanics.json — tagMechanics
+
+- **`tagMechanics`** — Technique tag mechanics (owner decision 11, 2026-10-12). Oath is a class
+  property rule (oathKept, nodeEffects.json) bound to this number.
+
+### balanceRewards.json — rewards
+
+- **`rewards`** — ---- M2 run economy (SPEC §6) ---------------------------------------------
+- **`rewards.bossRelicChoices`** — A solo boss victory offers this many boss relics to pick ONE from (1 or 0
+  is a single relic, as before). Elite drops are unaffected.
+- **`rewards.cinders`** — ×3 the first ladder (Constantine, 2026-09-04: "3x the amount for the
+  base") — cinders are granted on arrival at the reward door now, so the
+  faucet is the whole economy lever. The ladder and the shop were left
+  reading against the OLD faucet for a week; both are re-tuned against
+  this one now (2026-09-11) — the shop by this same ×3, the level ladder
+  by measurement, each explained where it lives.
+- **`rewards.rarityWeightsByClass`** — Caster rewards favor uncommon/rare cards when the skill gate allows them.
+- **`rewards.elementAffinity`** — Owner decision #13: Psychic and Earth cards belong to no class, but the
+  Herald and Starseer meet them more naturally. Within a rarity, a card
+  tagged damage:<element> for one of the class's elements weighs
+  offerWeightMult times a plain card in that class's card rewards.
+  startingChoice: the affinity classes may pick up to maxPicks of these
+  element spells as one of their selectable starting spells at character
+  creation (owner decision 13, 2026-10-12). Only classless attack cards whose
+  attack.source is `source` and rarity is listed qualify; the picker is
+  src/model/startingAbilities.js. Skills (Stoneskin, Dissonance) are not spells.
+- **`rewards.flaskDropBasePct`** — Decaying flask drop (StS potion rule): −step on drop, +step on miss.
+- **`rewards.cardRewards`** — THE CARD REWARD SCHEDULE (SPEC §15.1): when a won fight offers a card
+  row, and whether a level the fight bought adds one. Combat cards ship
+  at 10% in every pool (owner, 2026-10-03).
+  Read by engine/encounters.js `rollCombatCardOffer`.
+
+### balanceShop.json — shop
+
+- **`shop.armamentCost`** — ×3 WITH THE FAUCET (2026-09-11). Every price here was tuned against the
+  pre-2026-09-04 faucet and was left reading against it when `rewards.
+  cinders` tripled, so the merchant quietly became a third of his price:
+  a common card cost two-and-a-half normal fights before, and one fight
+  after. These are linear in cinders — you pay the number or you do not —
+  so the factor that restores a price is the faucet's own, and ×3 here
+  puts every shelf back at the fights-per-purchase it was tuned to. (The
+  level ladder is quadratic and takes a different, measured factor; see
+  levelUp below.) `sellFraction` is a fraction OF this table and needs no
+  scaling — it moved with these numbers by construction.
+- **`shop.sellFraction`** — E2 (#247): the merchant's buy-back, as a FRACTION of the low end of the
+  same cost table his own stock rolls from (relicCost[rarity][0] /
+  flaskCost[0]) — so a possession is always worth less than the cheapest
+  he would sell one for, and the same item fetches the same cinders every
+  visit, no rng. OUR number, labelled as ours: half, rounded down at the
+  price, one word flips it. 0 turns the buy-back off at the table without
+  touching the Settings toggle that owns the feature's visibility.

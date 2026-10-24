@@ -1,0 +1,90 @@
+{
+  "sourceBonuses": {
+    "combatFeatChancePct": 5,
+    "classFeatChancePct": 100,
+    "classCardChancePct": 25,
+    "$note": {
+      "combatFeatChancePct": "Percent chance a won fight offers a feat, independently of its combat card.",
+      "classFeatChancePct": "Percent chance each class-track level offers a feat in addition to its class-tree upgrade.",
+      "classCardChancePct": "Percent chance each class-track level offers a combat card from the class pool, independently of its feat."
+    }
+  },
+  "cardChoices": 3,
+  "bossRelicChoices": 3,
+  "cinders": {
+    "normal": [45, 75],
+    "elite": [105, 150],
+    "boss": [225, 270],
+    "$note": { "{kind}.{end}": "The {band} of the cinders that {pool} pays." }
+  },
+  "rarityWeights": {
+    "normal": { "common": 60, "uncommon": 35, "rare": 5 },
+    "elite": { "common": 45, "uncommon": 40, "rare": 15 },
+    "boss": { "common": 45, "uncommon": 40, "rare": 15 },
+    "$note": {
+      "{kind}.{rarity}": "How often {pool} offers {a rarity} card, weighed against the other rarities in its row. Classes with a table of their own use that instead."
+    }
+  },
+  "rarityWeightsByClass": {
+    "starseer": {
+      "normal": { "common": 35, "uncommon": 50, "rare": 15 },
+      "elite": { "common": 25, "uncommon": 50, "rare": 25 },
+      "boss": { "common": 20, "uncommon": 45, "rare": 35 }
+    },
+    "herald": {
+      "normal": { "common": 35, "uncommon": 50, "rare": 15 },
+      "elite": { "common": 25, "uncommon": 50, "rare": 25 },
+      "boss": { "common": 20, "uncommon": 45, "rare": 35 }
+    },
+    "$note": {
+      "{classId}.{kind}.{rarity}": "The {className}'s own reward odds: how often {pool} offers {a rarity} card, weighed against the other rarities in its row."
+    }
+  },
+  "elementAffinity": {
+    "classes": { "herald": ["psychic", "earth"], "starseer": ["psychic", "earth"] },
+    "offerWeightMult": 2,
+    "startingChoice": {
+      "maxPicks": 1,
+      "source": "spell",
+      "rarities": ["common", "uncommon"],
+      "$note": {
+        "maxPicks": "How many element spells (classless spell attacks of the listed rarities) an affinity class may take among its starting spells at character creation."
+      }
+    },
+    "$note": {
+      "offerWeightMult": "How many times likelier an affinity-element card is to be picked, within its rarity, in this class's card rewards."
+    }
+  },
+  "flaskDropBasePct": 35,
+  "flaskDropStepPct": 10,
+  "cardRewards": {
+    "afterCombat": {
+      "normal": true,
+      "elite": true,
+      "boss": true,
+      "$note": {
+        "{kind}": "Whether winning {pool} offers a card to choose. Off, that fight lays out no card row."
+      }
+    },
+    "chancePct": {
+      "normal": 10,
+      "elite": 10,
+      "boss": 10,
+      "$note": {
+        "{kind}": "The percent chance that winning {pool} offers its card row. At 100 nothing is rolled; a miss says \"No card this time.\""
+      }
+    },
+    "onLevelUp": true,
+    "onLevelUpMaxPerFight": 1,
+    "$note": {
+      "onLevelUp": "When a fight raises the character level, show a Level Up! button beside the XP bar to choose a bonus card at that fight's rarity odds.",
+      "onLevelUpMaxPerFight": "How many level card rows one fight can add, however many levels it gained."
+    }
+  },
+  "$note": {
+    "cardChoices": "How many cards a reward door lays out to choose from.",
+    "bossRelicChoices": "How many boss relics a boss victory lays out to pick one from (1 or 0: a single relic).",
+    "flaskDropBasePct": "The chance a fight drops a flask charge, before the run's running adjustment.",
+    "flaskDropStepPct": "How far that chance falls after a drop, and rises after a miss."
+  }
+}
