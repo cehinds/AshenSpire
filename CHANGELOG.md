@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-24
 
-- **Attributes, derived stats and action costs are now editable data files** ([#2293](https://github.com/cehinds/AshenSpire/pull/2293), `0.7.1.1823`). Character attributes, creation modes, derived-stat rules and action-cost tunables live in `content/source/`. Nothing in play changes.
+- **Attributes, derived stats and action costs are now editable data files** ([#2293](https://github.com/cehinds/AshenSpire/pull/2293), `0.7.1.1825`). Character attributes, creation modes, derived-stat rules and action-cost tunables live in `content/source/`. Nothing in play changes.
 - **Console output inside the combat log** ([#2284](https://github.com/cehinds/AshenSpire/pull/2284), `0.7.1.1823`). In Settings → General → Combat → Combat log, enable Console button in combat log (off by default). Open Combat log → Console to read, copy or export recent session output. Uncaught errors retain available file, line and trace details. Exports include build and device details; no saved game or profile is attached, and nothing is shared automatically.
 - **Combat expansion tables are now editable data files** ([#2292](https://github.com/cehinds/AshenSpire/pull/2292), `0.7.1.1821`). The expansion's lore, equipment, martial and card tables, and its new cards, live in `content/source/`. Only the rules that apply them stay in code. Nothing in play changes.
 - **Consumables, companions and keywords are now editable data files** ([#2290](https://github.com/cehinds/AshenSpire/pull/2290), `0.7.1.1819`). Skill books, revive tokens, companions and keyword definitions live in `content/source/`. Class skill books are still built automatically, one per class. Nothing in play changes.
