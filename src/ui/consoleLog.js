@@ -24,12 +24,10 @@ export function consoleValueText(value) {
         }
         return fallback;
       };
-      // Browser stacks are usually own data. Lazy/accessor stacks are omitted:
-      // even a native lazy stack getter may evaluate custom name/message hooks.
-      const stack = Object.getOwnPropertyDescriptor(item, 'stack');
-      return stack && 'value' in stack && typeof stack.value === 'string'
-        ? stack.value.slice(0, CONSOLE_MAX_TEXT)
-        : `${dataText('name', 'Error')}: ${dataText('message', '')}`.slice(0, CONSOLE_MAX_TEXT);
+      // Even requesting the stack descriptor can materialize V8's lazy stack
+      // and invoke custom name/message hooks. Summarize data fields only;
+      // the existing uncaught-error handler supplies its already-read trace.
+      return `${dataText('name', 'Error')}: ${dataText('message', '')}`.slice(0, CONSOLE_MAX_TEXT);
     }
     if (depth >= 4) return '[Object]';
     const values = [];

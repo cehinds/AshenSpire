@@ -28,7 +28,7 @@ test('capture snapshots circular values, errors, bigint and getters without exec
   const ordinary = new Error('stack marker');
   assert.match(consoleValueText(ordinary), /Error: stack marker/);
   Object.defineProperty(ordinary, 'stack', { value: 'Error: stack marker\n    at console-test.js:1', configurable: true });
-  assert.match(consoleValueText(ordinary), /at console-test.js:1/);
+  assert.equal(consoleValueText(ordinary), 'Error: stack marker', 'explicit stack values are omitted by the summary-only policy');
   assert.equal(consoleValueText(new Proxy({}, { ownKeys() { throw new Error('hostile'); } })), '[Uninspectable value]');
   const recorder = createConsoleRecorder(), value = { before: 1 };
   recorder.append('log', value); value.before = 2;
@@ -102,4 +102,39 @@ test('error and function hooks never run while diagnostic text is captured', () 
   const recorder = createConsoleRecorder(); recorder.append('log', error, fn, obj);
   assert.equal(reads, 0);
   assert.match(recorder.getEntries()[0].text, /\[Getter\].*\[Function\]/);
+});
+
+test('fresh native Error summaries do not materialize lazy stacks or custom name/message getters', () => {
+  let reads = 0;
+  const error = new Error('fresh native error');
+  Object.defineProperty(error, 'name', { configurable: true, get() { reads++; return 'custom name'; } });
+  Object.defineProperty(error, 'message', { configurable: true, get() { reads++; return 'custom message'; } });
+  const summary = consoleValueText(error);
+  assert.equal(reads, 0, 'capturing a fresh native Error must not format its lazy stack');
+  assert.equal(summary, '[Getter]: [Getter]');
+});
+
+test('capturing native Errors never calls a custom prepareStackTrace hook', () => {
+  const original = Object.getOwnPropertyDescriptor(Error, 'prepareStackTrace');
+  let calls = 0;
+  Object.defineProperty(Error, 'prepareStackTrace', { configurable: true, writable: true, value: () => { calls++; return 'prepared stack'; } });
+  try {
+    assert.equal(consoleValueText(new Error('fresh lazy stack')), 'Error: fresh lazy stack');
+    assert.equal(calls, 0);
+  } finally {
+    if (original) Object.defineProperty(Error, 'prepareStackTrace', original);
+    else delete Error.prepareStackTrace;
+  }
+});
+
+test('Error summaries never even request the native stack descriptor', () => {
+  let stackProbes = 0;
+  const error = new Proxy(new Error('summary only'), {
+    getOwnPropertyDescriptor(target, key) {
+      if (key === 'stack') stackProbes++;
+      return Reflect.getOwnPropertyDescriptor(target, key);
+    },
+  });
+  assert.equal(consoleValueText(error), 'Error: summary only');
+  assert.equal(stackProbes, 0, 'stack descriptor inspection can materialize native V8 stacks');
 });
