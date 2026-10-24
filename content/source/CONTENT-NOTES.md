@@ -331,3 +331,7 @@ The class-progression content under `src/content/progression/`. Flat top-level f
 ### Card lore (progressionCardLore.json)
 
 `src/content/progression/cardLore.js` re-exports `progressionCardLore`. Header comment: "Three-part card lore: identity, remembered history, and a closing line." Keys are the family id without its `progression-` prefix; `cards.js` joins the three strings with blank lines into the card's `flavor`.
+
+### Gear requirements (progressionGearRequirements.json)
+
+`src/content/progression/gear.js` re-exports `progressionGearRequirements`. Header comment: "All 63 gear requirements, including the level-zero public baseline." Level 0 rows are the baseline every class starts with. `unlocks.js` turns each row above level 0 into a `weapon` or `armament` unlock row.
