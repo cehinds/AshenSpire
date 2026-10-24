@@ -7,6 +7,11 @@ import { tooltipHelp } from './tooltipHelp.js';
 import { progressionGearRequirements } from './progression/gear.js';
 import { combatMatchups, combatIntent } from './combatMatchups.js';
 import { enemyKnowledgeTuning } from './enemyKnowledge.js';
+import { balanceCosts } from './generated/balanceCosts.js';
+import { balanceCustomMods } from './generated/balanceCustomMods.js';
+import { balanceBossTiers } from './generated/balanceBossTiers.js';
+import { balanceSeatTiers } from './generated/balanceSeatTiers.js';
+import { balanceEndless } from './generated/balanceEndless.js';
 import { balanceCoop } from './generated/balanceCoop.js';
 import { balanceGauntlet } from './generated/balanceGauntlet.js';
 import { balanceLevelUp } from './generated/balanceLevelUp.js';
@@ -310,70 +315,10 @@ export const balance = {
 
   coop: balanceCoop,
 
-  // ---- Endless Spire + Custom Climb rule magnitudes ------------------------
-  endless: {
-    hpPerLoop: 0.35, // +% enemy HP per completed cycle
-    strPerLoop: 1, // +Strength per completed cycle
-    actsPerCycle: 3, // acts before the spire loops (also the act count)
-    [NOTE]: {
-      hpPerLoop: 'Endless Spire: the fraction of extra enemy HP each completed cycle adds.',
-      strPerLoop: 'Endless Spire: Strength enemies gain per completed cycle.',
-      actsPerCycle: 'Endless Spire: acts before the spire loops. It is also the act count of an ordinary climb.',
-    },
-  },
-  // ---- Seats (SPEC §13.3) ------------------------------------------------------
-  // One multiplier per TIER. A seat's rosters were authored at its baseTier
-  // (content/seats.js), so a fight in seat S at tier T scales enemy HP by
-  // seatTiers[T] / seatTiers[S.baseTier] — exactly 1 at the baseline, which is
-  // what keeps every existing seed's fights byte-identical (§13.6). The values
-  // are the measured HP ratio of the shipped rosters (docs/BALANCE.md §2):
-  // act-2 rows average ≈1.5× act-1, act-3 rows ≈1.9× (normals, elites and
-  // bosses weighted together, as authored). Tier 1 is 1 by definition and the
-  // validator holds it there. A BOSS fight reads bossTiers below instead: the
-  // same ratio on HP and move damage, × the tier's boss row.
-  seatTiers: {
-    1: 1, 2: 1.5, 3: 1.9,
-    [NOTE]: {
-      '{tier}': 'Enemy HP multiplier for a tier-{tier} seat. A fight scales by this over the tier its roster was authored at, so a seat at its own tier is exactly 1.',
-    },
-  },
-  // BOSSES BY THE TIER THEY ARE MET AT (SPEC §13.3). Seats are drawn in a
-  // random order per run (§13.4), so a boss's difficulty cannot be authored
-  // into its roster row: the Marches boss is a run's first boss in a third of
-  // climbs and its second in another third. A boss fight at tier T takes the
-  // seatTiers ratio against ITS OWN seat's baseline on HP AND on every move's
-  // damage (engine: enemyDamageMult), then × bossTiers[T].hp / .damage — an
-  // absolute row per tier, not a ratio (model/seats.js bossTierScale). Only
-  // 'boss'-pool fights read it; World Journey has no seat and is untouched.
-  // TUNED (#1284) with `node tools/runsim.mjs <n> --seeded-seats`, the order a
-  // real run draws; 240 runs a class: Reaver 105, Starseer 103, Rogue 135,
-  // Herald 135 wins (44/43/56/56%). The tool's fixed weald → marches → reach
-  // order (no flag, one climb in six) reads lower: 120 runs, 42/38/56/56.
-  bossTiers: {
-    1: { hp: 0.8, damage: 0.8 },
-    2: { hp: 2.2, damage: 1.5 },
-    3: { hp: 2.2, damage: 1.5 },
-    [NOTE]: {
-      '{tier}.hp': 'Boss HP multiplier when a boss is met at tier {tier} (whichever seat holds it), on top of the seat-tier ratio.',
-      '{tier}.damage': 'Boss move-damage multiplier when a boss is met at tier {tier} (whichever seat holds it).',
-    },
-  },
-  customMods: {
-    toughElitesHpMult: 1.3, // Tough Elites: elites & bosses ×HP
-    bigBossesHpMult: 1.5, // Dread Bosses: act bosses ×HP
-    hoarderCinders: 250, // Hoarder: bonus starting cinders
-    expensiveShopsMult: 1.5, // Greedy Merchants: ×shop price
-    hoarderShopMult: 2, // Hoarder: ×shop price
-    lessHealingMult: 0.5, // Scarce Embers: ×healing (shrine rest + between-act)
-    [NOTE]: {
-      toughElitesHpMult: 'Custom Climb, Tough Elites: multiplies elite and boss HP.',
-      bigBossesHpMult: 'Custom Climb, Dread Bosses: multiplies act boss HP.',
-      hoarderCinders: 'Custom Climb, Hoarder: bonus cinders the run starts with.',
-      expensiveShopsMult: 'Custom Climb, Greedy Merchants: multiplies every shop price.',
-      hoarderShopMult: 'Custom Climb, Hoarder: multiplies every shop price, the other half of its bargain.',
-      lessHealingMult: 'Custom Climb, Scarce Embers: multiplies all healing — shrine rests and the between-act refill alike.',
-    },
-  },
+  endless: balanceEndless,
+  seatTiers: balanceSeatTiers,
+  bossTiers: balanceBossTiers,
+  customMods: balanceCustomMods,
 
   // ---- presentation config (read by the UI layer, never by the engine) ----
   // Same rule as the tuning above: code never embeds these numbers. Keeping the
@@ -1064,28 +1009,7 @@ export const balance = {
     audio: { musicEnabled: true, musicVolume: 50, sfxVolume: 75 },
   },
 
-  // ---- Armaments & armour (equipment) ---------------------------------------
-  // What you carry rewrites the cards you start with, rather than adding new
-  // ones: a dagger turns Strike into 3×2, a greatsword into one heavy swing.
-  // The pieces themselves live in content/source/weapons.csv and outfits.csv;
-  // what a mod is ALLOWED to say lives in equipMods.csv. Everything here is
-  // the rules of the system, kept in one place so it can be tuned or switched
-  // off without touching the model.
-  // What the relic-carried powers are tuned to. Every number a power used to
-  // carry as a literal in its own rule lives here now, one row per variable,
-  // and the rule names the variable (content/source/nodeEffects.json) while
-  // content/source/variableBindings.csv says which row the variable reads.
-  // Retuning a relic is editing this block; the rule never changes.
-  // The framework's default cost amounts: what a card pays when it carries a
-  // cost node (content/source/nodes.csv cost.action/stamina/mana) with no
-  // amount of its own. Bound in variableBindings.csv; read into the generated
-  // framework data at build.
-  costs: {
-    action: 1, stamina: 1, mana: 1,
-    [NOTE]: {
-      '{resource}': 'The {resource} a card pays when it carries {a resource} cost with no amount of its own.',
-    },
-  },
+  costs: balanceCosts,
   // The class tree's numbers (plan phase 5b): one row per node, read by its
   // variable bindings; the tree itself is content/source/classTree.csv.
   classTree: {

@@ -717,3 +717,66 @@ _No comments were written beside these numbers in the old balance.js._
 - **`coop.headcountHpFactor`** — enemy HP ×(1 + factor×(headcount−1)): 2p ×1.6, 3p ×2.2, 4p ×2.8
 - **`coop.mendHealPct`** — Mend at a shrine heals an ally this % of their max HP
 - **`coop.reviveHp`** — downed-but-not-dead members revive next floor at this HP (StS2)
+
+### balanceEndless.json — endless
+
+- **`endless`** — ---- Endless Spire + Custom Climb rule magnitudes ------------------------
+- **`endless.hpPerLoop`** — +% enemy HP per completed cycle
+- **`endless.strPerLoop`** — +Strength per completed cycle
+- **`endless.actsPerCycle`** — acts before the spire loops (also the act count)
+
+### balanceSeatTiers.json — seatTiers
+
+- **`seatTiers`** — ---- Seats (SPEC §13.3) ------------------------------------------------------
+  One multiplier per TIER. A seat's rosters were authored at its baseTier
+  (content/seats.js), so a fight in seat S at tier T scales enemy HP by
+  seatTiers[T] / seatTiers[S.baseTier] — exactly 1 at the baseline, which is
+  what keeps every existing seed's fights byte-identical (§13.6). The values
+  are the measured HP ratio of the shipped rosters (docs/BALANCE.md §2):
+  act-2 rows average ≈1.5× act-1, act-3 rows ≈1.9× (normals, elites and
+  bosses weighted together, as authored). Tier 1 is 1 by definition and the
+  validator holds it there. A BOSS fight reads bossTiers below instead: the
+  same ratio on HP and move damage, × the tier's boss row.
+
+### balanceBossTiers.json — bossTiers
+
+- **`bossTiers`** — BOSSES BY THE TIER THEY ARE MET AT (SPEC §13.3). Seats are drawn in a
+  random order per run (§13.4), so a boss's difficulty cannot be authored
+  into its roster row: the Marches boss is a run's first boss in a third of
+  climbs and its second in another third. A boss fight at tier T takes the
+  seatTiers ratio against ITS OWN seat's baseline on HP AND on every move's
+  damage (engine: enemyDamageMult), then × bossTiers[T].hp / .damage — an
+  absolute row per tier, not a ratio (model/seats.js bossTierScale). Only
+  'boss'-pool fights read it; World Journey has no seat and is untouched.
+  TUNED (#1284) with `node tools/runsim.mjs <n> --seeded-seats`, the order a
+  real run draws; 240 runs a class: Reaver 105, Starseer 103, Rogue 135,
+  Herald 135 wins (44/43/56/56%). The tool's fixed weald → marches → reach
+  order (no flag, one climb in six) reads lower: 120 runs, 42/38/56/56.
+
+### balanceCustomMods.json — customMods
+
+- **`customMods.toughElitesHpMult`** — Tough Elites: elites & bosses ×HP
+- **`customMods.bigBossesHpMult`** — Dread Bosses: act bosses ×HP
+- **`customMods.hoarderCinders`** — Hoarder: bonus starting cinders
+- **`customMods.expensiveShopsMult`** — Greedy Merchants: ×shop price
+- **`customMods.hoarderShopMult`** — Hoarder: ×shop price
+- **`customMods.lessHealingMult`** — Scarce Embers: ×healing (shrine rest + between-act)
+
+### balanceCosts.json — costs
+
+- **`costs`** — ---- Armaments & armour (equipment) ---------------------------------------
+  What you carry rewrites the cards you start with, rather than adding new
+  ones: a dagger turns Strike into 3×2, a greatsword into one heavy swing.
+  The pieces themselves live in content/source/weapons.csv and outfits.csv;
+  what a mod is ALLOWED to say lives in equipMods.csv. Everything here is
+  the rules of the system, kept in one place so it can be tuned or switched
+  off without touching the model.
+  What the relic-carried powers are tuned to. Every number a power used to
+  carry as a literal in its own rule lives here now, one row per variable,
+  and the rule names the variable (content/source/nodeEffects.json) while
+  content/source/variableBindings.csv says which row the variable reads.
+  Retuning a relic is editing this block; the rule never changes.
+  The framework's default cost amounts: what a card pays when it carries a
+  cost node (content/source/nodes.csv cost.action/stamina/mana) with no
+  amount of its own. Bound in variableBindings.csv; read into the generated
+  framework data at build.
