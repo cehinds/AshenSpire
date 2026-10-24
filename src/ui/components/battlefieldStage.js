@@ -555,7 +555,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   // Pose animations (attacks, hurt, stance) settle well inside this window.
   const TRACK_WINDOW_MS = 900;
   let trackUntil = 0;
-  const extendTracking = () => { trackUntil = performance.now() + TRACK_WINDOW_MS; trackFresh = true; trackStable = 0; };
+  const extendTracking = () => { trackUntil = performance.now() + TRACK_WINDOW_MS; trackFresh = true; if (!trackingRequest) trackStable = 0; };
   // Tracking only has work while a body actually moves. Each frame compares every figure's painted body with the
   // previous frame's (kept across windows, so a selection that moves nothing settles at once): the first frame of a
   // window always places, a frame whose bodies did not move (within half a pixel) skips the placement, and two such
