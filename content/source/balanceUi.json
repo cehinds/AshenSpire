@@ -1,0 +1,145 @@
+{
+  "imageHints": { "decoding": "async", "lazy": true },
+  "touchFlick": {
+    "enabled": true,
+    "distance": { "min": 32, "max": 160, "def": 64 },
+    "minVelocity": 300,
+    "velocityWindowMs": 120
+  },
+  "hudBars": {
+    "main": { "scaleByMax": true, "maxViewportPct": 40, "availableWidthPct": 82 },
+    "model": { "scaleByMax": false }
+  },
+  "hudPresentation": {
+    "componentBackgroundOpacityPct": 0,
+    "metadataFontPx": 11,
+    "beltItemGapPx": 2,
+    "portraitScale": 0.58,
+    "primaryRowGapPx": 4,
+    "controlGapPx": 0,
+    "resourceRowGapPx": 3,
+    "panelPadPx": 0,
+    "mobilePanelPadPx": 0,
+    "mobileControlGapPx": 1,
+    "mobileOuterPadPx": 4,
+    "mobileRowGapPx": 3,
+    "cindersMaxWidthPct": 30,
+    "metadataMaxWidthPct": 30,
+    "metadataShowTotals": false
+  },
+  "hudQuickSettings": {
+    "places": ["title", "map", "combat"],
+    "edgeGapPx": 4,
+    "stackGapPx": 0,
+    "cardSizePx": 40,
+    "glyphSizePx": 28,
+    "stateDotPx": 6,
+    "activeTintPct": 14,
+    "showCardBackground": true,
+    "showLabels": false
+  },
+  "combatantStage": {
+    "hudClearanceViewportPct": 3,
+    "actionClearanceViewportPct": 3,
+    "intentGapPx": 6,
+    "centerPct": 50
+  },
+  "equipmentCard": {
+    "frameWidthPx": 350,
+    "frameHeightPx": 490,
+    "paddingPx": 19,
+    "gapPx": 3,
+    "regions": {
+      "art": { "minPx": 270, "priority": 7, "grow": 0 },
+      "type": { "minPx": 22, "priority": 5, "grow": 0 },
+      "facts": { "minPx": 40, "priority": 6, "grow": 0 },
+      "tags": { "minPx": 18, "priority": 4, "grow": 0 },
+      "effects": { "minPx": 54, "priority": 7, "grow": 2 },
+      "flavor": { "minPx": 18, "priority": 1, "grow": 0 },
+      "footer": { "minPx": 16, "priority": 2, "grow": 0 }
+    },
+    "text": {
+      "name": { "minPx": 13, "idealCh": 5.2, "maxPx": 20, "floorPx": 15 },
+      "type": { "minPx": 9, "idealCh": 2.9, "maxPx": 11, "floorPx": 10 },
+      "fact": { "minPx": 9, "idealCh": 2.7, "maxPx": 10, "floorPx": 10 },
+      "factValue": { "minPx": 13, "idealCh": 4.2, "maxPx": 16, "floorPx": 15 },
+      "tag": { "minPx": 9, "idealCh": 2.6, "maxPx": 10, "floorPx": 10 },
+      "heading": { "minPx": 9, "idealCh": 2.6, "maxPx": 10, "floorPx": 10 },
+      "bonus": { "minPx": 11, "idealCh": 3.4, "maxPx": 13, "floorPx": 13 },
+      "flavor": { "minPx": 10, "idealCh": 3.1, "maxPx": 12, "floorPx": 11 },
+      "footer": { "minPx": 9, "idealCh": 2.6, "maxPx": 10, "floorPx": 10 }
+    },
+    "bonusMaxLines": 2,
+    "info": { "fadeMs": 120, "insetPx": 6 }
+  },
+  "tooltipPlacement": { "autoFadeMs": 5000, "topBandViewportPct": 25, "sideBandViewportPct": 30 },
+  "combatantInspector": { "widthRem": 20, "mobileWidthViewportPct": 62 },
+  "shrinePresentation": {
+    "optionLayout": "list",
+    "foldedCardWidthViewportPct": 88,
+    "foldedCardMaxWidthRem": 44,
+    "foldedCardHeightViewportPct": 10,
+    "foldedCardMaxHeightRem": 6.5
+  },
+  "accents": {
+    "gold": { "hex": "#c9a227", "rgb": "201, 162, 39" },
+    "crimson": { "hex": "#c1453a", "rgb": "193, 69, 58" },
+    "frost": { "hex": "#7fa8c9", "rgb": "127, 168, 201" },
+    "verdant": { "hex": "#8bae54", "rgb": "139, 174, 84" },
+    "violet": { "hex": "#a06cc8", "rgb": "160, 108, 200" }
+  },
+  "uiScale": {
+    "named": { "s": 0.85, "m": 1, "l": 1.2, "xl": 1.45 },
+    "designW": 1200,
+    "designH": 730,
+    "min": 0.62,
+    "max": 1.7,
+    "narrowW": 430,
+    "narrowH": 780,
+    "narrowMax": 520,
+    "shortWideMinH": 340,
+    "gateBelowH": 465,
+    "formFactor": {
+      "widescreenMinAspect": 2,
+      "widescreenAspectMinWidth": 1600,
+      "widescreenMinWidth": 2400,
+      "mobileMaxWidth": 600,
+      "tabletMaxWidth": 1100
+    }
+  },
+  "textSize": { "S": "56.25%", "M": "62.5%", "L": "68.75%", "XL": "75%" },
+  "tapSize": { "def": 44, "sizes": [44, 36, 30, 24], "missRate": { "24": "1 tap in 7", "44": "1 in 30" } },
+  "victoryBeat": { "ms": 600 },
+  "holdConfirm": {
+    "def": "normal",
+    "steps": { "off": 0, "short": 350, "normal": 600, "long": 1000 },
+    "dragSettleMs": 1000,
+    "settleSlopPx": 8
+  },
+  "titleLoadHold": { "ms": 600 },
+  "holdBeat": { "at": [0, 0.42, 0.78] },
+  "inspectHold": { "ms": 400 },
+  "rewardCollect": { "def": "manual", "modes": ["auto", "manual"] },
+  "handLayout": "paging",
+  "handLayoutModes": ["paging", "overlap"],
+  "spriteTiers": {
+    "small": { "w": 92, "h": 128, "font": 44 },
+    "medium": { "w": 132, "h": 168, "font": 58 },
+    "large": { "w": 194, "h": 206, "font": 78 }
+  },
+  "backdropActs": 3,
+  "parchmentActs": 3,
+  "cardTypes": {
+    "stance": { "label": "STANCE", "color": "#c9502e", "radius": 3, "art": 0 },
+    "consumable": { "label": "CONSUMABLE", "color": "#7fa8c9", "radius": 10, "art": 6 },
+    "attack": { "label": "ATTACK", "color": "#c9502e", "radius": 3, "art": 0 },
+    "skill": { "label": "SKILL", "color": "#7fa8c9", "radius": 10, "art": 6 },
+    "power": { "label": "POWER", "color": "#c9a227", "radius": 20, "art": 16 },
+    "curse": { "label": "CURSE", "color": "#6a3a7a", "radius": 10, "art": 6 },
+    "status": { "label": "STATUS", "color": "#7a6f5a", "radius": 10, "art": 6 }
+  },
+  "cardMotif": "wash",
+  "cardMotifModes": ["off", "wash", "accent", "band"],
+  "cardMotifStrength": { "subtle": 0.06, "normal": 0.1, "strong": 0.17 },
+  "audio": { "musicEnabled": true, "musicVolume": 50, "sfxVolume": 75 }
+}
