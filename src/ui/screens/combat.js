@@ -2266,8 +2266,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const stateKey = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
       combat.turn, combat.phase, combat.result, combat.rangeState, [...rangeRoutesByCard], [...upcastRanksByCard], [...stackedIds], readSettings()]);
     const key = stateKey + '|' + JSON.stringify([selected, selfArm, lastTargetId]);
-    if (handRenderKey === key) { syncHandPager(handList); return; }
-    const previewCache = handPreviewCache.stateKey === stateKey && handRenderKey !== null && !upcastPreviewRefresh ? handPreviewCache.cards : new Map();
+    if (handRenderKey === key || (combat.pendingReaction && handRenderKey === key + '|paused')) { syncHandPager(handList); return; }
+    // While a reaction offer is pending the hand is inert and its fight state is mid-turn, so a
+    // quote taken now is replaced the moment the offer resolves. Reuse the last quotes for the
+    // same cards instead of re-quoting the whole hand for every offer; the cache keeps its old
+    // key, so the first render after the offer re-quotes.
+    const reusePaused = !!combat.pendingReaction && handRenderKey !== null && !upcastPreviewRefresh && !disp && handPreviewCache.cards.size > 0
+      && handList.every(inst => handPreviewCache.cards.get(inst.instanceId)?.plain && inst.instanceId !== selected && inst.instanceId !== selfArm);
+    const previewCache = reusePaused || (handPreviewCache.stateKey === stateKey && handRenderKey !== null && !upcastPreviewRefresh) ? handPreviewCache.cards : new Map();
     const nextPreviews = new Map();
     handStrip.render({
       cards: handList.map((inst) => {
@@ -2307,8 +2313,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }),
     });
     syncHandPager(handList);
-    handRenderKey = key;
-    handPreviewCache = { stateKey, cards: nextPreviews };
+    handRenderKey = reusePaused ? key + '|paused' : key; // never equal to a live key: the first render after the offer repaints
+    handPreviewCache = { stateKey: reusePaused ? null : stateKey, cards: nextPreviews };
     if (refreshHitChances) syncHitChances();
   }
 
