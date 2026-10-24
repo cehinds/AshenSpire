@@ -156,12 +156,12 @@ orchestrator after resultText is shown. SPEC §9 M3 target: 10 events.
 
 ## Cards (content/source/cards/*.json)
 
-Six plain-data card pools are JSON files under `content/source/cards/`, one array each, named for the
-export they compile to: `heraldCards.json`, `reaverCards.json`, `starseerCards.json`,
+Seven plain-data card pools are JSON files under `content/source/cards/`, one array each, named for the
+export they compile to: `heraldCards.json`, `reaverCards.json`, `rogueCards.json`, `starseerCards.json`,
 `armamentCards.json`, `colorlessCards.json`, `corruptedCards.json`. `tools/content-build.mjs` compiles each
 to `src/content/generated/cards/<name>.js`, and the old `src/content/cards/{herald,reaver,starseer,armaments,
 colorless,corrupted}.js` are shims that re-export it (the pools were unfrozen before and still are).
-`rogue.js` and `coop.js` stay JS: they hold builder functions, which JSON cannot carry. These are the design
+`coop.js` stays JS: it holds builder functions, which JSON cannot carry. `rogue.js` is now a shim too; its shared helpers (`one`, `PREPARED`, `TARGET_*`, `prepare()`, `spendPrepared()`) are written out inline in every row that used them. These are the design
 notes that lived as comments in the old JS files (JSON has no comments); keep a note under the card id when
 you change one. The shared constants the old files declared (`one = { f: 'add', args: [1] }`, and in the
 Starseer file `CHARGED` and `GAIN_CHARGE`) are written out inline in every row that used them; the values are
@@ -226,6 +226,16 @@ round 2, round 4, the class ability card, skill-draft depth.
 - **brace** — the class ability card (plan phase 5a, proposal §4). Brace: the Reaver's loop is stance switching as tempo. Enter Brace, a stance that holds the line; leaving it hits harder (stances.js `brace`).
 - **hewingArc**, **sunderingChop**, **setTheShield**, **aegisOfEmbers**, **shieldCrash** — Skill-draft depth (blade and shield tracks). A levelled sword or shield drafts from its own school at every rarity it has opened; these join the retagged pool so each has at least four.
 - **hewingArc** — Keep its pre-fix resolved price; area targeting must not add a tax (the upgrade carries `cost: 3`).
+
+### rogueCards
+
+File header: the Rogue parity slice. Prepared is a content-owned one-hit opening: Rogue attacks read it before removing it. Venom is a normal status hook. No Rogue behavior needs a new opcode, predicate, formula, or script.
+Section order in the file: Non-reward cards (signature + two generated tools), Commons (13), Uncommons (13), Rares (10), the class ability card, skill-draft depth.
+- **helpers** — The old file declared `one = { f: 'add', args: [1] }`, `PREPARED` (hasStatus self prepared), `TARGET_WEAK`, `TARGET_VULNERABLE`, `TARGET_BLEED`, `TARGET_VENOM`, `TARGET_VENOM_3` (venom atLeast 3), `prepare()` (applyStatus self prepared, stacks `one`) and `spendPrepared()` (removeStatus self prepared). They are inlined in the JSON rows; values unchanged.
+- **ambush** and the two generated tools (**rogueShiv**, **smokePellet**) — Non-reward cards: the signature card and the generated tools.
+- **deathblow** — 60% Blunt, 40% Necrotic (owner, 2026-10-13).
+- **prepare** — the class ability card (plan phase 5a, proposal §4). Prepare: the Rogue's loop is setup then payoff; the cheapest way in.
+- Skill-draft depth (bow and parrying-hand tracks) — A levelled shortbow drafts pierce/ranged/precision cards, a buckler or parrying dagger guard/flourish ones; the closing rows give each at least four per rarity it has opened.
 
 ### starseerCards
 
@@ -319,3 +329,45 @@ File header: class definitions (SPEC section 5.1). Only the Reaver registered in
 classes are UI display data, exported separately and NOT part of the bundle).
 
 - **cardPool** — each class's list was grouped by rarity with comments. In order: Commons, Uncommons, Rares. Reaver: Commons start at `crimsonCleave`, Uncommons at `stomp`, Rares at `executioner`. Starseer: Commons start at `cometFragment`, Uncommons at `starstoneArc`, Rares at `supernova` (the group runs to `riteOfCinders`, the end of its list). Rogue's list carried no rarity comments. Herald: Commons start at `bloodPact`, Uncommons at `martyrBlood`, Rares at `secondBloom`. A card's rarity is authoritative in its card row (content/source/cards/*.json), not by position in this list.
+
+## Encounters (content/source/wealdEncounters.json, marchesEncounters.json, reachEncounters.json)
+
+The encounter pools are one JSON file per seat, compiled by `tools/content-build.mjs` to
+`src/content/generated/<seat>Encounters.js` and re-exported by `src/content/encounters/<seat>.js`. These are
+the header and inline comments that lived in those three modules (JSON has no comments). Row order is
+meaningful: pools are read in bundle order, so do not reorder rows.
+
+### wealdEncounters.json (The Hollow Weald)
+
+File header: src/content/encounters/weald.js — The Hollow Weald encounter pool (SPEC §13.2). The seat's numbers are authored at baseTier 1 (content/seats.js); a climb at another tier scales them by balance.seatTiers (§13.3). Rows are the act-1 rows they always were, re-homed: `act: 1` became `seat: 'weald'`.
+
+Trailing note: `M1_GAUNTLET = ['patrol','packHunt','eliteWyrm','bossOmen']` — the M1 acceptance walk, SPEC §9 M1 — stood here and in the content barrel with no reader anywhere in the tree, found by tools/closedsets.mjs. Deleted: the map flow has been the real thing since M2, the headless bot test runs off `balance.gauntlet`, and four ids nothing resolves are four ids that rot when an encounter is renamed. SPEC §9 M1's prose is the record of that acceptance.
+
+### marchesEncounters.json (The Pale Marches)
+
+File header: src/content/encounters/marches.js — The Pale Marches encounter pool (SPEC §13.2). The seat's numbers are authored at baseTier 2 (content/seats.js); a climb at another tier scales them by balance.seatTiers (§13.3). Rows are the act-2 rows they always were, re-homed: `act: 2` became `seat: 'marches'`.
+
+### reachEncounters.json (The Cinder Reach)
+
+File header: src/content/encounters/reach.js — The Cinder Reach encounter pool (SPEC §13.2). The seat's numbers are authored at baseTier 3 (content/seats.js); a climb at another tier scales them by balance.seatTiers (§13.3). Rows are the act-3 rows they always were, re-homed: `act: 3` became `seat: 'reach'`.
+
+- **a3_bossRotValkyrie** — THE ONE NULL SEAT (SPEC §13.5): the Blighted Valkyrie is the tier-3 act's extra terminal whatever seat holds it, so she is in no seat's pool (`seat` is `null`). She stays in this file, in this position (after `a3_eliteWyrmLord`, before `a3_cinderNest`), because the boss pool is read in bundle order and moving her would move which column each destination lands in.
+
+## Shops (content/source/shops.json)
+
+File header (was the comment block at the top of src/content/shops.js): the three shop kinds and what each one offers (SPEC §14.2). `shops.json` is the single export `shops`; `kindWeights`, `market`, `blacksmith`, `master` and `masters` keep their old shape.
+
+- **`$note`** — every `[NOTE]` block of the old module is the string key `"$note"` in the JSON, same value shape; content-build wraps the export in `withNotes(...)` (src/content/noteKeys.js), which turns each back into the `Symbol.for('ashenspire.balance.note')` key. The notes are the sentences Settings → Advanced → Shops shows. validateContent refuses a numeric leaf without one, by name. Generic offering notes (`enabled`, `chance`, `weight`) and the shared conditional/stockKey sentences were copied into each offering's `$note` in full when the `offering()` helper was inlined.
+- **Kinds and offerings** — a shop has a KIND (`market`, `blacksmith` or `master`) and each kind is a list of OFFERINGS. A visit rolls every enabled offering's `chance` once, in the order written, on the `shopOffers` stream; a chance of 100 always comes up and draws nothing, and 0 never comes up by the roll. When fewer than `guaranteedMinimum` came up, the missing enabled offerings with the highest `weight` are added (ties in written order) until the minimum is met, with no further roll. A disabled offering never appears, not even through the guarantee.
+- **Every number is a default.** Settings → Advanced → Shops generates one row per number (model/shopKinds.js `shopConfigRows`), keyed `gameConfig.shops.<kind>.<offering>.<key>`, and a run freezes the values it began with in `run.advancedConfigSnapshot`.
+- **The market's shelves are today's.** Their stock counts and prices stay in `balance.shop`, their one home, where Advanced → Rewards already lists them; an offering here says only whether that shelf is out on a visit. Every shelf ships at chance 100, so a seed's shelves roll exactly what they rolled before shop kinds existed, and the `shop` stream is drawn exactly as before.
+- **The blacksmith's screen** shipped at §14.6 step 6 (model/shopKinds.js SHOP_KIND_SCREENS), so the non-conditional minimum binds it and its weight has a Settings row; it still ships at weight 0, and the owner raises it to let a classic merchant be a blacksmith. The atlas smith is always one. **The master's screen** shipped at §14.6 step 7 (SPEC §14.5): it also ships at weight 0, and the owner raises it to let a classic merchant be a master. An atlas `master` point is always one, though no shipped point carries it yet.
+- **Conditional or not (SPEC §14.2).** An offering is `conditional` when its pool can be empty on a visit (every relic already held, every armament carried, every sigil owned), so the visit does not lay it out and the guarantee fills from the others. A conditional offering never counts toward the enablement minimum: validateContent and Settings keep at least `guaranteedMinimum` enabled offerings that are NOT conditional, so the guarantee can always be met. Authored per offering, never a Settings row. When in doubt, an offering is conditional.
+- **A non-conditional shelf still needs a stock (SPEC §14.2).** Its per-visit count lives elsewhere (`balance.shop`, where Advanced → Rewards lists it) and can be set to 0; `stockKey` names it, so validation and Settings count the offering toward the minimum only while that count is at least 1. An offering that names none always counts (a service with nothing to run out).
+- **A blacksmith service stays once rolled (SPEC §14.4, coordinator ruling on #1378):** whether it can act is judged when it is shown and quoted, so it is shown unavailable until the run holds something for it.
+- **kindWeights** — which kind a classic merchant node turns out to be, rolled on `shopOffers` only when more than one kind has a weight above 0.
+- **The market additions (SPEC §14.3, §14.6 step 5)** — `armour`, `smithStones`, `sigils`, `innRest`: each ships at a chance below 100 and a weight below the shelves above, so the shelves stay the visit's certainties and the guarantee still fills from them first. Their stock rolls on `shopOffers` after the offering roll, never on `shop`.
+- **Step 5b (SPEC §14.3)** — `skillBooks`, `reviveTokens`, `questEvent`, `companions`: consumables, the quest event and companions. Each item's price and numbers are its own rows (content/consumables.js, content/companions.js); the offering adds only how many it lays out.
+- **master.respecRefundPct** — a respec pays back this whole percentage of the XP spent above level 1 into the training pool (SPEC §14.5). Every reader clamps it to 50–75.
+- **master shelves and services (SPEC §14.5)** — the stocked shelves (`skillBooks`, `weaponArts`, `armaments`) are each filtered to the visiting master's tracks and rolled on `shopOffers` after the offering roll. The services (`training`, `respec`, `lesson`, `appraisal`, `redistribute`) each stay laid out once rolled and are judged live. Training and appraisal can always act: every master teaches three or four tracks.
+- **masters (SPEC §14.5)** — not a kind and no Settings row: who a master visit can be. A visit picks one on the `shop` stream, in written order. Each teaches 3 or 4 distinct weapon, focus or dual-wield tracks (never an armour track, which has no item type, nor a `class:` track, whose respec would strand the class tree's picks), and speaks as a speakers.csv row.
