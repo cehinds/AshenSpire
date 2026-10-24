@@ -11,6 +11,7 @@ import { formationTileGeometry, perspectiveCellOutlinePath } from '../models/For
 import { FORMATION_ROWS, formationDimensions, playerFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
+import { stageFor } from '../services/PoseAnimator.js';
 import { combatSpriteGeometry, currentSpriteArtBounds, currentSpriteBodyBounds, invalidateSpriteRects } from './combatSpriteGeometry.js';
 import { classicAppearance, displayAppearance } from '../displayAppearance.js';
 import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
@@ -582,7 +583,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const same = sameBodies(bodies, trackBodies), place = trackFresh || !same;
     trackFresh = false;
     trackBodies = bodies;
-    trackStable = same ? trackStable + 1 : 0;
+    // A pose sequence, reaction or hit-stop hold can pause the body and then move it again with no attribute change,
+    // so an unmoved frame only counts toward the early stop while every figure is at rest.
+    trackStable = same && ![...field.querySelectorAll('.combatant .sprite')].some(sprite => stageFor(sprite)?.busy) ? trackStable + 1 : 0;
     if (place) {
       // Keep the settled target cores reserved, or the HUD can snap back over the player target.
       placePlayerHud(false, settledTargetCores, true);
