@@ -487,7 +487,7 @@ for (const target of ['src/content/generated/statuses.js', 'src/content/balance.
 // It is invisible without help because src/ is ESM and therefore already
 // strict; the transform strips the import/export that made it so.
 const STRICT_ONLY = [
-  ['octal literal', /^  energy: 3,$/m, '  energy: 010,', /[Oo]ctal/],
+  ['octal literal', /^  energy: balanceCore\.energy,$/m, '  energy: 010,', /[Oo]ctal/],
   ['duplicate parameter names', /^export const balance = \{$/m,
     'export function __dup(a, a) { return a; }\nexport const balance = {', /[Dd]uplicate parameter/],
   ['with statement', /^export const balance = \{$/m,
