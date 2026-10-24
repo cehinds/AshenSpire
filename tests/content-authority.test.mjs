@@ -27,6 +27,8 @@ import { classes, LOCKED_CLASSES } from '../src/content/classes.js';
 import { contentBundle } from '../src/content/index.js';
 import { combatExpansionLore } from '../src/content/combatExpansionLore.js';
 import { combatExpansionEquipment } from '../src/content/combatExpansionEquipment.js';
+import { combatExpansionMartialOverlay } from '../src/content/combatExpansionMartial.js';
+import { combatExpansionMartialTables } from '../src/content/generated/combatExpansionMartialTables.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const KINDS = { relics, stances, flasks };
@@ -206,6 +208,8 @@ test('classes: src/content/classes.js is a shim; LOCKED_CLASSES stays an empty J
 const EXPANSION_TABLES = {
   combatExpansionLore: [combatExpansionLore, 'combatExpansionLore'],
   combatExpansionEquipment: [combatExpansionEquipment, 'combatExpansionEquipment'],
+  combatExpansionMartialOverlay: [combatExpansionMartialOverlay, 'combatExpansionMartial'],
+  combatExpansionMartialTables: [combatExpansionMartialTables, 'combatExpansionMartial'],
 };
 
 for (const [name, [exported, moduleName]] of Object.entries(EXPANSION_TABLES)) {
