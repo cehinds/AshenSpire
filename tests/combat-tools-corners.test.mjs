@@ -17,5 +17,5 @@ test('combat tools use screen-edge corners and independently measured footer geo
 
 test('the fan does not reserve a second tools band above its cards', () => {
   assert.match(hand, /const toolsHeight = 0;/);
-  assert.match(hand, /height: handEl.clientHeight - toolsHeight/);
+  assert.match(hand, /height: clientHeight - toolsHeight/);
 });
