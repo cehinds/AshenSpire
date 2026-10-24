@@ -32,6 +32,9 @@ import { combatExpansionCardOverlay, combatExpansionSpellProfiles, combatExpansi
 import { combatExpansionCardTables } from '../src/content/generated/combatExpansionCardTables.js';
 import { combatExpansionMartialOverlay } from '../src/content/combatExpansionMartial.js';
 import { combatExpansionMartialTables } from '../src/content/generated/combatExpansionMartialTables.js';
+import { attributes, creationModes, attributeRules } from '../src/content/attributes.js';
+import { derivedStatRules } from '../src/content/derivedStats.js';
+import * as actionCostsModule from '../src/content/actionCosts.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const KINDS = { relics, stances, flasks };
@@ -249,4 +252,43 @@ test('expansion cards: combatExpansionNewCards deep-equals content/source/cards/
 test('the generated modules are current (content-build --check exits 0)', () => {
   const r = spawnSync(process.execPath, ['tools/content-build.mjs', '--check'], { cwd: ROOT, encoding: 'utf8' });
   assert.equal(r.status, 0, `content-build --check:\n${r.stdout}\n${r.stderr}`);
+});
+
+// Stats tables (cleanup plan step 5): attributes, creation modes, attribute presets, derived-stat rules and the
+// action-cost tunables are JSON under content/source; the old modules are shims. equipment.js is the exception: it holds
+// normalisers and lookups over generated CSV tables (no data of its own), so it stays JS.
+const STATS_TABLES = { attributes, creationModes, attributeRules, derivedStatRules };
+for (const [name, exported] of Object.entries(STATS_TABLES)) {
+  test(`stats tables: ${name} deep-equals content/source/${name}.json`, () => {
+    assert.deepStrictEqual(exported, readJson(name));
+  });
+}
+
+test('stats tables: actionCosts.json holds one key per data export, and each export deep-equals it', () => {
+  const authored = readJson('actionCosts');
+  for (const [key, value] of Object.entries(authored)) assert.deepStrictEqual(actionCostsModule[key], value, key);
+  const derived = new Set(['TWO_COST_EFFECT_MULTIPLIER']);
+  assert.deepStrictEqual(Object.keys(actionCostsModule).filter((key) => !derived.has(key)).sort(), Object.keys(authored).sort());
+  assert.equal(actionCostsModule.TWO_COST_EFFECT_MULTIPLIER, authored.COST_BUDGET.twoCostMultiplier);
+});
+
+test('stats tables: the shims import the generated modules and author no data', () => {
+  for (const [file, generated] of [['attributes', ['attributes', 'creationModes', 'attributeRules']], ['derivedStats', ['derivedStatRules']], ['actionCosts', ['actionCosts']]]) {
+    const text = readFileSync(resolve(ROOT, `src/content/${file}.js`), 'utf8');
+    for (const name of generated) assert.match(text, new RegExp(`from './generated/${name}\\.js'`), `${file}.js imports generated/${name}.js`);
+    assert.ok(!/^\s*(id|label|base|weight)\s*:/m.test(text), `${file}.js authors a data row — edit content/source instead`);
+  }
+});
+
+test('stats tables: equipment.js still stays JS (normalisers over generated tables, no rows of its own)', () => {
+  const text = readFileSync(resolve(ROOT, 'src/content/equipment.js'), 'utf8');
+  assert.match(text, /from '\.\/generated\/weapons\.js'/);
+  assert.ok(!/^\s*\{\s*id\s*:/m.test(text), 'equipment.js authors a row — edit the CSV under content/source instead');
+});
+
+test('stats tables: the action-cost constants keep the freeze depth they had', () => {
+  const isDeep = (v) => !v || typeof v !== 'object' || (Object.isFrozen(v) && Object.values(v).every(isDeep));
+  for (const key of ['COST_BUDGET', 'KEYWORD_TAGS', 'RANGE_TAGS', 'ENEMY_SP_BANDS', 'ACTION_COST_TABLE']) assert.ok(isDeep(actionCostsModule[key]), `${key} is deeply frozen`);
+  assert.ok(Object.isFrozen(actionCostsModule.COST_TAGS), 'COST_TAGS is frozen');
+  assert.equal(Object.isFrozen(actionCostsModule.COST_TAGS['camp:spell']), false, 'COST_TAGS rows were never frozen');
 });
