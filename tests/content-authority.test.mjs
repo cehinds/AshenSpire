@@ -25,6 +25,7 @@ import { act2Enemies } from '../src/content/enemies/act2.js';
 import { act3Enemies } from '../src/content/enemies/act3.js';
 import { classes, LOCKED_CLASSES } from '../src/content/classes.js';
 import { contentBundle } from '../src/content/index.js';
+import { combatExpansionLore } from '../src/content/combatExpansionLore.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const KINDS = { relics, stances, flasks };
@@ -198,6 +199,25 @@ test('classes: src/content/classes.js is a shim; LOCKED_CLASSES stays an empty J
   assert.match(text, /from '\.\/generated\/classes\.js'/);
   assert.deepStrictEqual(LOCKED_CLASSES, []);
 });
+
+// Combat expansion tables: top-level tables whose file name is the export name.
+// The combatExpansion*.js module re-exports each one; any logic in the module stays JS.
+const EXPANSION_TABLES = {
+  combatExpansionLore: [combatExpansionLore, 'combatExpansionLore'],
+};
+
+for (const [name, [exported, moduleName]] of Object.entries(EXPANSION_TABLES)) {
+  test(`expansion tables: ${name} deep-equals content/source/${name}.json`, () => {
+    const authored = JSON.parse(readFileSync(resolve(ROOT, `content/source/${name}.json`), 'utf8'));
+    assert.ok(authored && typeof authored === 'object' && Object.keys(authored).length > 0, `${name}.json is non-empty`);
+    assert.deepStrictEqual(exported, authored);
+  });
+
+  test(`expansion tables: ${moduleName}.js imports ${name} from generated/ and authors no row`, () => {
+    const text = readFileSync(resolve(ROOT, `src/content/${moduleName}.js`), 'utf8');
+    assert.match(text, new RegExp(`from '\\./generated/${name}\\.js'`));
+  });
+}
 
 test('the generated modules are current (content-build --check exits 0)', () => {
   const r = spawnSync(process.execPath, ['tools/content-build.mjs', '--check'], { cwd: ROOT, encoding: 'utf8' });
