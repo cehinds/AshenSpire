@@ -801,3 +801,275 @@ _No comments were written beside these numbers in the old balance.js._
 - **`sigils.attuneMax`** — How many legendary sigils a run may hold attuned at once (0: none).
 - **`sigils.dropChancePct`** — The chance, 0-100, that a won fight or a treasure room drops one
   legendary sigil the run does not own. Shipped off: 0 draws nothing.
+
+### balanceEquipment.json — equipment
+
+- **`equipment.startingKitDiscovery.undiscoveredPresentation`** — Undiscovered alternates render no row at all: no name, numbers, cards,
+  or item silhouette leaks through character creation.
+- **`equipment.startingDeck`** — ---- Composed starting deck (togglable) ---------------------------------
+  `roleCopies` above is a FIXED distribution that must sum to
+  startingDeckSize by hand: grant a class one more card and the sum breaks.
+  This block derives the same deck instead. Named cards ("grants") are
+  dealt first — the weapon's technique, the class signature, anything
+  global — and whatever budget remains is FILLER, split between the attack
+  and guard roles. Filler still resolves through equipped profiles, so a
+  sword-wielder's filler attacks are Slashing Strikes, not generic ones.
+  
+  With the defaults below the composed path reproduces 4/4/1/1 exactly
+  (grants = technique 1 + signature 1; filler 8 at bias 0.5 → 4/4), which
+  is what makes it safe to ship enabled. Set `enabled: false` to fall back
+  to roleCopies verbatim.
+- **`equipment.startingDeck.global`** — `growToFit` and `minFiller` lived here. Both decided who yields when
+  grants got greedy — the deck size, or the content author. Under the cap
+  rule (SPEC, "The starting deck") nobody yields: the cap governs how many
+  BASE strikes and defends are minted, bound cards are never capped or
+  dropped, and a floor of basic cards is simply what the cap leaves over.
+  Card ids every class starts with, whatever it wears. Cards named here
+  must exist in the card registry; each is granted exactly one copy.
+- **`equipment.startingDeck.sourceOrder`** — The order bound cards are DEALT in at creation. Was `dropOrder`, which
+  named a behaviour that no longer exists — nothing is ever dropped. Each
+  entry is a tag id in the `grantSource` domain, so adding a source is a
+  node in nodes.csv rather than an edit to loadout.js.
+- **`equipment.startingDeck.sources`** — WHICH TAG EACH MINTING SEAM STAMPS. `sourceOrder` is the vocabulary's
+  order; this is the binding between that vocabulary and the four places
+  in loadout.js that actually mint a bound card. It exists because the
+  ids used to be typed at those seams: renaming `from:weapon` here and in
+  `sourceOrder` validated clean and then silently dealt the weapon's
+  cards last, because the minting site still stamped the old id. Now the
+  seam READS its id from this map, so a rename is a data edit and an
+  unbound or misspelt role is refused by name.
+  
+  The KEYS are the engine's seams, not content vocabulary — there is a
+  weapon seam whatever an author calls its source. `from:relic` has no
+  key because nothing mints it yet; it is declared vocabulary waiting for
+  a minter, and ranking it early costs nothing until one exists.
+- **`equipment.startingDeck.oddFillerGoesTo`** — Which role wins the remainder when the cap leaves an odd number of base
+  cards. Authored rather than assumed — it used to be a rounding rule
+  buried in the arithmetic.
+- **`equipment.startingDeck.defaultStrikeBias`** — Per-class filler split. `strikeBias` is the share of base cards that go
+  to attacks; the rest are guards. Classes absent here use
+  `defaultStrikeBias`.
+- **`equipment.cardMounts`** — CARD MOUNTS (owner ruling, 2026-09-03). Every card an item lends sits in
+  a MOUNT on that item; a smith can extract it (it becomes the run's own,
+  the mount empties) or refill the mount with another card. What is
+  extractable is a TAG on the card — strikes and defends do not carry it
+  today, and the day the game changes its mind that is a spreadsheet
+  edit. What an emptied mount shows is a FALLBACK per mount kind: a
+  weapon-art mount falls back to the unarmed technique (the Dodge Roll),
+  read from `unarmedProfiles` above rather than typed here, and any item
+  may override that under `fallbackByItem`. `extraMounts` is the seam a
+  later rune feature opens: mounts beyond the authored ones, per item,
+  behind a flag that is off.
+- **`equipment.persistence`** — WHAT THE SHELF IS SCOPED TO, and it is this word — there is no second one.
+  'perRun'   what you find is yours for this run only
+  'unlocked' pieces are permanent once unlocked, chosen before a run
+  'both'     unlocked pieces are choosable AND drops apply for the run
+  
+  Constantine, 2026-08-08: *"maybe the armament menu on the main menu might
+  update, but everything else is profile specific but maybe a few basic
+  weapons become available for all. so all together for armory shelf with
+  settings to configure this."* The DEFAULT half of that is decided —
+  profile-wide, which is `both` and is what already shipped (directions.md
+  D15). The SETTING half is this line, and it did not need inventing: a
+  `shelfScope` word beside `persistence` would be two settings answering one
+  question, which is the defect this house is named for (Law 1 clause 2).
+  What `persistence` genuinely cannot say is the other half of his sentence
+  — the few pieces that are nobody's to FIND because they are everybody's —
+  and that is `basicTag` below.
+  HIS WORD, 2026-08-21: *"it should only show armory you actually picked
+  up mid run"*. That is this line and nothing else — the three values were
+  already the closed set and 'perRun' is already documented above as "what
+  you find is yours for this run only". Law 0's falsifier, answered by the
+  machinery that was already here: an entry describes, the machinery
+  derives, and the whole of item 1 is one word in a content table.
+  
+  WHAT THIS DOES NOT TOUCH, said out loud because it is the half of his
+  sentence this word cannot reach: `basicTag` below still exempts the few
+  pieces that are everybody's from the found gate, so three `basic`
+  armaments remain on the shelf in a run that has picked up nothing. That
+  is HIS OWN earlier ask (A7, 2026-08-08) and the two instructions meet
+  here. It is flagged on the PR rather than averaged: if he wants a truly
+  empty shelf, `basicTag: ''` is the second word and it is his to say.
+- **`equipment.basicTag`** — ---- A FEW BASIC WEAPONS, AVAILABLE FOR ALL --------------------------
+  The tag that means "this is everybody's". It answers the FOUND gate only
+  (drops.requireFound): a basic piece never has to turn up in treasure. It
+  has no opinion about the EARNED gate, so the two compose instead of
+  racing, and a row that carries both is refused by name at validation
+  rather than quietly preferring one.
+  
+  NOTHING NEW IS AUTHORED (Law 0 clause 1). `tags` is a column weapons.csv
+  has always had; three plain rows now carry `basic` and the shelf follows.
+  Moving the line between "for all" and "profile specific" is editing that
+  column — no code, which is the whole promise. Set it to '' to switch the
+  universal shelf off entirely; a value naming a tag no armament carries is
+  a hard validation failure, because a setting that silently does nothing
+  is the one failure mode worse than a missing one.
+  
+  KILLED BY HIM, 2026-08-21: *"kill 3 basic weapons on self unless it's a
+  starting kit armory weapon shown on character creation. the armory should
+  not show weapons not collected in run. it should not show items not
+  available at character creation."*
+  
+  THE UNLESS-CLAUSE NEEDED NO CODE, AND THAT IS A MEASUREMENT, NOT A HOPE.
+  The worry was that clearing this tag would also hide the pieces the player
+  STARTED with — his exemption is the starting kit, not a category. It does
+  not, because the kit is WORN: `carriedIds(loadout)` is storage plus every
+  set, and `createRunState` puts the kit in the sets. Measured across all
+  three shipped classes at this ref:
+  
+    reaver    carries straightSword, roundShield, default
+    starseer  carries ashStaff, default
+    herald    carries boneSceptre, default
+  
+  So with `persistence: 'perRun'` the shelf is already exactly KIT ∪ WHAT
+  THIS RUN PICKED UP, per class, following the player rather than a tag —
+  which is his sentence. What the tag was adding on top is the part he
+  killed: it handed the starseer a straightSword and a roundShield it was
+  never shown, and the herald all three.
+  
+  '' is the documented off value, not an invention (see the paragraph
+  above); a value naming a tag no armament carries is still a hard
+  validation failure, so this cannot rot into a silent no-op.
+- **`equipment.swapCostKind`** — Swapping a hand mid-fight. 'energy' spends from the turn's pool;
+  'allowance' gives a separate per-turn budget that energy never touches.
+- **`equipment.swapAllowancePerTurn`** — only consulted when swapCostKind === 'allowance'
+- **`equipment.allowChangesInCombat`** — The Armoury remains actionable during the player's combat turn. Replacing,
+  moving, or unequipping a carried item uses the same priced combat action
+  as switching a prepared weapon set; the engine, never the panel, commits it.
+- **`equipment.swapCostRule`** — ---- WHAT A SWAP COSTS: three prices he can try, one chain ------------
+  Constantine, 2026-08-08: *"switching sets should cost actions. perhaps
+  this action costs more or less depending on Talisman or starting relic,
+  or some other reason. let's default to costing 2 actions. alternatively,
+  or by a setting, different weapon categories have weapon swap costs.
+  THAT WAY I CAN TRY EACH."*
+  
+  He named three prices and asked to FEEL them, so the three are ROWS and
+  the live one is a WORD — never three branches in the engine. One chain,
+  always the same, and the row says which of its rungs are live:
+  
+    base 'category' → the drawn piece's category cost, falling through to
+                      `swapCost` when its tags match no row below
+    base 'default'  → `swapCost` for everything
+    gear true       → talisman and relic deltas adjust that base
+  
+  THE PRODUCT IS TOTAL, AND THAT IS THE PART I GOT WRONG LAST TIME (#78).
+  Two closed fields make FOUR cells; I once shipped three ids for a product
+  whose fourth cell nobody had built, and one row of legal data drew an
+  empty screen. Here every one of the four computes a real price. The
+  fourth — category AND gear — is deliberately not shipped, because he named
+  three; it is one row away and needs no code, which is what test 28q
+  measures (Law 0's falsifier, applied to a rule instead of a card).
+  
+  WHY 28q, AND NOT 28p OR 28r — re-derivable in one read, because this line
+  cited `28c` from b5c81d0 through 284997a and NO TEST OF THAT NAME HAS EVER
+  EXISTED IN THIS REPO (`git log --all -S '28c.' -- tests/` returns nothing).
+  A wrong citation that four hands corrected in copies while the original
+  stood is not fixed by a better name alone; it is fixed by a name a reader
+  can check without trusting me:
+    · 28q is the ONLY test in tests/engine.test.js that DECLARES the fourth
+      cell — `{ id: 'both', base: 'category', gear: true }` — and then prices
+      all four cells of the base × gear product, asserting '2,3,3,4'.
+    · 28p asserts the shipped rows are exactly `flat,gear,category`. It
+      measures the three and never builds a fourth.
+    · 28r holds the two fields APART: its one gear clause refuses a
+      non-boolean `gear` by name, and its base sweep runs `gear: false`
+      throughout, so the fourth cell never occurs in it either.
+  Scored over all 66 tests in that file at 284997a, on the four claims this
+  sentence makes, 28q is the only one that carries all four.
+  
+  The default is 'flat', which is the game exactly as it shipped: nobody who
+  does not opt in pays a different price. Settings → Advanced switches it.
+- **`equipment.swapCostByCategory`** — A WEAPON'S CATEGORY IS ITS TAGS. `heavy` and `flourish` are already on the
+  rows because a greatsword IS heavy — a `swapCost` column on weapons.csv
+  would compel an author to restate what the tags already imply, which is a
+  breach of Law 0 clause 1 even though every value would sit in a table.
+  
+  ORDERED, FIRST MATCH WINS. A twinblade is `blade|flourish` and a halberd
+  is `blade|heavy`; which tag rules is the order of these rows, not a max()
+  nobody can see. A tag no armament carries fails validation by name.
+- **`equipment.restampHand`** — true  → swapping rewrites the Strikes/Defends already in your hand
+  false → only cards drawn after the swap carry the new numbers
+- **`equipment.storageSlots`** — pieces carried but not slotted; hand slots lock in combat
+- **`equipment.defaultView`** — 'grid' | 'rack' | 'hybrid'
+- **`equipment.narrowDefaultView`** — What a NARROW layout opens on. Data, not a branch in the screen: the view
+  list is content, and picking one in JS would put a second copy of the
+  closed set below the content layer (Law 1 clause 3). EldenSpire#38 —
+  'hybrid' asks for a figure and three cells side by side and a phone has
+  room for one of those, which is how two of six weapon slots went missing.
+  A player's own saved equipView still wins over this; it is what a phone
+  OPENS on, never what it is allowed to show.
+- **`equipment.views`** — A VIEW DESCRIBES ITSELF; the screen derives the layout (#78, Law 0 cl.1).
+  These were three bare ids and `equipment.js` was `if (view === 'grid') …
+  else …`, so a fourth id rendered AS HYBRID and said nothing — the author
+  did the data-driven thing correctly and got a silently wrong screen.
+  
+  Two characteristics are the whole difference, and every rule in ui.css
+  that used to key off `.view-<id>` keys off one of them now:
+    figure — is the dressed class figure on screen at all
+    slots  — 'flank': slot blocks split either side of the figure
+             'list':  slot blocks in one column beside it
+  
+  WHAT IS CLOSED IS THE COMBINATION, NOT EACH FIELD. Read that before
+  inventing a row. The first pass said "both are closed sets", which is two
+  closed sets and a product of FOUR cells — and only three are drawn. A row
+  saying `figure: false, slots: 'flank'` used every legal word and rendered
+  an EMPTY armoury in silence (Vira, #78). The three combinations below are
+  the whole vocabulary; each one is a layout in LAYOUTS in equipment.js and
+  that table is the only place the list lives. Anything else fails loud and
+  names this row (Law 1 clause 5) — including a combination of two words
+  that are each fine on their own.
+- **`equipment.subject`** — WHICH PANE IS THE SUBJECT. One field, and it is the whole of "collapsible"
+  (#90). Constantine: *"I still want the armoury card list to be collapsable
+  SO THAT I CAN SEE THE ARMORY SLOTS BETTER."* The clause after "so that" is
+  the datum — on this screen the slots are what you came for and everything
+  else is what helps you decide. `collapsible: true` written on a pane is
+  that fact spelled as a mechanism, and it is a special case in a
+  characteristic's clothes.
+  
+  NOT A FLAG PER PANE, and this is the #78 lesson one screen over. A
+  two-valued `role` on each pane is a closed set per pane whose PRODUCT has
+  cells nobody built: NO subject (every pane collapsible — you can fold the
+  whole screen away) and TWO subjects (nothing to order by, nothing that
+  must stay open). A POINTER has no product. One field, one value, and
+  context is the COMPLEMENT — derived, never authored.
+  
+  The regions themselves are the vocabulary and live where they are drawn
+  (REGIONS in src/ui/screens/equipment.js), exactly as LAYOUTS holds the
+  view cells. A name here that is not a region fails BY NAME at boot with
+  the list printed; naming none fails the same way.
+- **`equipment.spriteReacts`** — 'none' | 'hands' | 'full'
+- **`equipment.limits`** — Floors of the mod system, so a piece can't be authored past the point
+  where the card stops making sense.
+- **`equipment.drops`** — ---- Where armaments come from ------------------------------------------
+  You start bare-handed and the run arms you. A found piece is yours for
+  the run immediately AND remembered forever, so a climb that ends badly
+  still widens the wardrobe — the roguelike bargain: this run's loss is
+  next run's option.
+- **`equipment.drops.requireFound`** — false makes every authored armament available from the start (a sandbox
+  for testing the mod system without playing for it).
+- **`equipment.drops.reveal`** — HOW MUCH OF THE UNKNOWN THE PLAYER SEES — the Compendium's whole dial,
+  and one word. Constantine: *"the potential weapons to unlock should be
+  in its own menu on the main menu that keeps most things hidden."* The
+  vocabulary is not new: it is `REVEAL_MODES` from unlocks.csv, applied to
+  the OTHER gate. An armament is withheld by not being found rather than
+  by an unearned condition, so it has no unlock row to read a reveal from,
+  and this is where that answer lives — one home, tunable, no code.
+    'teased'  silhouette, rarity, hand. No name, no tags, no numbers.
+    'listed'  the above plus its name and why it is not yours.
+    'hidden'  the Compendium is empty until you find something.
+  'teased' is the shipped line: shape is a promise, a name is the item
+  delivered without the climb. A piece that wants a different answer names
+  an unlock row, whose own `reveal` wins (Law 0 clause 3 — the override is
+  data). The Armoury picker is unaffected by this word: an offer you
+  cannot take shows its reason either way.
+- **`equipment.drops.chance`** — Chance a node of each kind yields an armament, and the rarity odds when
+  it does. Bosses always drop; their table is weighted to the good stuff.
+  `normal` (SPEC §15.3) ships at 0, which returns before any draw, so an
+  ordinary fight drops nothing until the owner raises it. The roll draws
+  from the authored weapons only; armour has no run inventory to drop into.
+- **`equipment.drops.preferUnfound`** — A duplicate is a non-event, so drops prefer something you have never
+  held. With nothing new left the node gives cinders instead.
+
+### balanceProgressionFeats.json — progressionFeats
+
+- **`progressionFeats`** — Class feat magnitudes and thresholds (SPEC §13.4r). Nodes name these bindings.
