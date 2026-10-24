@@ -19,6 +19,7 @@
 // strings.js is itself a leaf (it imports only generated data), so this
 // module stays one.
 import { t } from './strings.js';
+import { consoleRecorder } from './consoleLog.js';
 
 export const MAX_ENTRIES = 300;
 const entries = [];
@@ -199,14 +200,30 @@ if (typeof window !== 'undefined') {
   const where = (ev) => (ev.filename ? ` at ${String(ev.filename).split('/').pop()}:${ev.lineno}` : '');
   window.addEventListener('error', (ev) => {
     if (!ev.message) return;
-    if (isBenignPageNotice(ev.message)) { dlog('NOTICE', String(ev.message)); return; }
-    dlog('ERROR', String(ev.message), ev.error && ev.error.stack ? String(ev.error.stack).split('\n').slice(0, 4).join(' | ') : '');
-    failureBanner(`uncaught:${ev.message}`, 'SOMETHING JUST STOPPED WORKING',
-      `${ev.message}${where(ev)}\nThe game is still running. What you last pressed did not.`);
+    const message = String(ev.message);
+    if (isBenignPageNotice(message)) {
+      dlog('NOTICE', message);
+      consoleRecorder.append('notice', message);
+      return;
+    }
+    // The legacy error handler already reads the browser's (sometimes lazy)
+    // stack. Read it once, then share the same bounded trace with both logs;
+    // the general console formatter still never invokes arbitrary getters.
+    const stack = ev.error && ev.error.stack;
+    const trace = stack ? String(stack).split('\n').slice(0, 4).join(' | ') : '';
+    const location = where(ev);
+    dlog('ERROR', message, trace);
+    consoleRecorder.append('error', message + location, trace);
+    failureBanner(`uncaught:${message}`, 'SOMETHING JUST STOPPED WORKING',
+      `${message}${location}\nThe game is still running. What you last pressed did not.`);
   });
   window.addEventListener('unhandledrejection', (ev) => {
-    const msg = String((ev.reason && ev.reason.message) || ev.reason || 'unhandled promise rejection');
-    dlog('ERROR', 'unhandled promise rejection', String((ev.reason && ev.reason.stack) || ev.reason).slice(0, 300));
+    const reason = ev.reason;
+    const msg = String((reason && reason.message) || reason || 'unhandled promise rejection');
+    const stack = reason && reason.stack;
+    const trace = String(stack || reason).slice(0, 300);
+    dlog('ERROR', 'unhandled promise rejection', trace);
+    consoleRecorder.append('error', 'Unhandled promise rejection:', msg, trace);
     failureBanner(`rejection:${msg}`, 'SOMETHING JUST STOPPED WORKING',
       `${msg}\nThe game is still running. What you last asked for did not finish.`);
   });
@@ -238,3 +255,6 @@ export function openDebugLog() {
   document.body.appendChild(pre);
   return null;
 }
+
+/** The console door shares the registered chrome without closing the leaf import graph. */
+export function openConsoleLog(options = {}) { return chrome?.consoleDoor?.(options) || null; }

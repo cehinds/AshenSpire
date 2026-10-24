@@ -491,3 +491,25 @@ test('hidden legacy log stays empty while current receipts and palette reach bot
     tools.release();
   });
 });
+
+test('the reachable Combat log shortcut follows the setting live and across remounts', () => {
+  withToolsDom(dom => {
+    resetModalState();
+    const combatEl = dom.document.createElement('section'); dom.document.body.appendChild(combatEl);
+    const state = { open: false, size: 'Medium', followLatest: true };
+    let settings = {}, tools;
+    const paint = () => tools.update(combatToolsModel({ supported: true, enabled: true, entries: logRows, ...state }));
+    const mount = () => mountCombatTools(combatEl, { state, readSettings: () => settings, onViewChange: paint, onToggle() {} });
+    tools = mount(); paint();
+    combatEl.querySelector('[data-combat-tool="log"]').click();
+    const door = state.drawerLog, shortcut = door.panel.querySelector('[data-console-shortcut]');
+    assert.equal(shortcut.hidden, true);
+    settings = { combatLogConsole: true }; paint(); assert.equal(shortcut.hidden, false);
+    tools.release(); tools = mount(); paint();
+    assert.equal(state.drawerLog, door); assert.equal(shortcut.hidden, false);
+    settings = { combatLogConsole: false }; paint(); assert.equal(shortcut.hidden, true);
+    closeDoor(door);
+    assert.equal(dom.document.activeElement, combatEl.querySelector('[data-combat-tool="log"]'));
+    closeCombatFullLog(state); tools.release();
+  });
+});
