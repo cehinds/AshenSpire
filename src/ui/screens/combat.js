@@ -3496,7 +3496,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const finalPreview = previewCard(combat, instanceId, targetId, rank);
     const needEnergy = finalPreview.costIsX ? 0 : finalPreview.cost;
     const needStamina = finalPreview.staminaCost || 0;
-    if (combat.player.energy < needEnergy) { refusePlay(instanceId, `cost ${needEnergy} > energy ${combat.player.energy}`, `Not enough stamina (needs ${needEnergy}, have ${combat.player.energy}).`); return; }
+    if (combat.player.energy < needEnergy) { refusePlay(instanceId, `cost ${needEnergy} > energy ${combat.player.energy}`, `Not enough ${t('combat.actions')} (needs ${needEnergy}, have ${combat.player.energy}).`); return; }
     if (combat.player.mana < finalPreview.manaCost) { refusePlay(instanceId, `cost ${finalPreview.manaCost} > mana ${combat.player.mana}`, `Not enough mana (needs ${finalPreview.manaCost}, have ${combat.player.mana}).`); return; }
     if (combat.player.stamina < needStamina) { refusePlay(instanceId, `cost ${needStamina} > stamina ${combat.player.stamina}`, `Not enough stamina (needs ${needStamina}, have ${combat.player.stamina}).`); return; }
     if (targetId) lastTargetId = targetId;
