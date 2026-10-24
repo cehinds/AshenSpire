@@ -325,3 +325,4 @@ classes are UI display data, exported separately and NOT part of the bundle).
 Each compiles to `src/content/generated/` (the card pool to `generated/cards/`); the matching `src/content/combatExpansion*.js` module re-exports it.
 
 - **combatExpansionLore** — three-part lore for the expanded techniques and borrowed Blight cards.
+- **combatExpansionEquipment** — scoped ids are deliberate in `armour`: two classes can wear different sets named `default`, so a key is `<class>:<set>`.

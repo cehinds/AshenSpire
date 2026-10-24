@@ -26,6 +26,7 @@ import { act3Enemies } from '../src/content/enemies/act3.js';
 import { classes, LOCKED_CLASSES } from '../src/content/classes.js';
 import { contentBundle } from '../src/content/index.js';
 import { combatExpansionLore } from '../src/content/combatExpansionLore.js';
+import { combatExpansionEquipment } from '../src/content/combatExpansionEquipment.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const KINDS = { relics, stances, flasks };
@@ -204,6 +205,7 @@ test('classes: src/content/classes.js is a shim; LOCKED_CLASSES stays an empty J
 // The combatExpansion*.js module re-exports each one; any logic in the module stays JS.
 const EXPANSION_TABLES = {
   combatExpansionLore: [combatExpansionLore, 'combatExpansionLore'],
+  combatExpansionEquipment: [combatExpansionEquipment, 'combatExpansionEquipment'],
 };
 
 for (const [name, [exported, moduleName]] of Object.entries(EXPANSION_TABLES)) {
