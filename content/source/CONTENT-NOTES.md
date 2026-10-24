@@ -674,3 +674,46 @@ _No comments were written beside these numbers in the old balance.js._
   only when a later activation story supplies a resolved enemy level.
   Every row states its rounding and hard result caps; hits, statuses,
   delays, phases, and move order are deliberately absent.
+
+### balanceXp.json — xp
+
+_No comments were written beside these numbers in the old balance.js._
+
+
+### balanceLevelUp.json — levelUp
+
+- **`levelUp.pointsPerLevel`** — What a level GRANTS: attribute points, waiting on the ledger until the
+  player assigns them at a shrine. `maxLevels` is the character's ceiling
+  (SPEC §13.4o: 20, about 100,000 XP); null is no ceiling.
+- **`levelUp.pointsPerLevelMin`** — What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
+  ladder in his own words: "i don't want a dial for hte level up, I want to
+  be able to enter the value myself and maybe a slider with it that is
+  synced with the value." Four chips let him test four things; he said he
+  wants to test.
+  
+  ONE DOMAIN, TWO CONTROLS. The typed field and the slider read these two
+  numbers, so they cannot disagree about what is enterable — a field that
+  accepted 50 while the slider stopped at 20 would be the second copy of a
+  domain, and the player would find it by dragging.
+  
+  THE CEILING IS ONE NUMBER HERE AND NOTHING ELSE. 20 is an experimental
+  bound, not a design claim: at 20 a single level is four tiers of a stat.
+  If he wants 50, this line is the whole change — no code, no UI, and the
+  field will say it clamped rather than swallowing the value (Law 0 clause
+  5: the silent plausible answer is the dangerous one).
+
+### balanceGauntlet.json — gauntlet
+
+- **`gauntlet`** — Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
+  `unknownNode` MOVED to mapConfigs[act].unknownWeights (EldenSpire#43-adjacent,
+  Freja's finding, Marina binding): what a `?` node resolves to is map geometry
+  and belongs beside `typeWeights`, per act. A flat global here could not vary
+  per act while the map it describes does, and nothing said so.
+  M1 gauntlet glue (kept for the headless bot test; the map flow is M2+).
+
+### balanceCoop.json — coop
+
+- **`coop`** — ---- Forsaken Together (co-op) ------------------------------------------
+- **`coop.headcountHpFactor`** — enemy HP ×(1 + factor×(headcount−1)): 2p ×1.6, 3p ×2.2, 4p ×2.8
+- **`coop.mendHealPct`** — Mend at a shrine heals an ally this % of their max HP
+- **`coop.reviveHp`** — downed-but-not-dead members revive next floor at this HP (StS2)

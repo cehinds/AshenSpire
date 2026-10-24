@@ -7,6 +7,10 @@ import { tooltipHelp } from './tooltipHelp.js';
 import { progressionGearRequirements } from './progression/gear.js';
 import { combatMatchups, combatIntent } from './combatMatchups.js';
 import { enemyKnowledgeTuning } from './enemyKnowledge.js';
+import { balanceCoop } from './generated/balanceCoop.js';
+import { balanceGauntlet } from './generated/balanceGauntlet.js';
+import { balanceLevelUp } from './generated/balanceLevelUp.js';
+import { balanceXp } from './generated/balanceXp.js';
 import { balanceLevels } from './generated/balanceLevels.js';
 import { balanceSmithing } from './generated/balanceSmithing.js';
 import { balanceAtlas } from './generated/balanceAtlas.js';
@@ -296,91 +300,15 @@ export const balance = {
   levels: balanceLevels,
 
   level: balanceCore.level,
-  xp: {
-    combatWin: 25,
-    kill: {
-      normal: 10, elite: 10, boss: 10,
-      [NOTE]: {
-        '{kind}': 'Base character XP for killing an enemy out of the roster {pool} draws from. Multiply by the enemy-level factor and that enemy\'s level.',
-      },
-    },
-    killLevelMultiplier: 0.2,
-    combatPowerMultiplier: 0.2,
-    quest: 125,
-    [NOTE]: {
-      combatWin: 'Base XP multiplied by the total combat power of defeated enemies and the combat-power multiplier after a win.',
-      combatPowerMultiplier: 'Multiplier on defeated-enemy combat power for a win. Combat power adds level, health, poise, attack, and a small equipment bonus.',
-      killLevelMultiplier: 'Multiply each kill\'s base XP and enemy level by this factor. At 0.2, two level-5 kills give 20 XP before combat-power XP.',
-      quest: 'Character XP for a completed quest.',
-    },
-  },
-  levelUp: {
-    // What a level GRANTS: attribute points, waiting on the ledger until the
-    // player assigns them at a shrine. `maxLevels` is the character's ceiling
-    // (SPEC §13.4o: 20, about 100,000 XP); null is no ceiling.
-    pointsPerLevel: 1,
-    maxLevels: 20,
-    // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
-    // ladder in his own words: "i don't want a dial for hte level up, I want to
-    // be able to enter the value myself and maybe a slider with it that is
-    // synced with the value." Four chips let him test four things; he said he
-    // wants to test.
-    //
-    // ONE DOMAIN, TWO CONTROLS. The typed field and the slider read these two
-    // numbers, so they cannot disagree about what is enterable — a field that
-    // accepted 50 while the slider stopped at 20 would be the second copy of a
-    // domain, and the player would find it by dragging.
-    //
-    // THE CEILING IS ONE NUMBER HERE AND NOTHING ELSE. 20 is an experimental
-    // bound, not a design claim: at 20 a single level is four tiers of a stat.
-    // If he wants 50, this line is the whole change — no code, no UI, and the
-    // field will say it clamped rather than swallowing the value (Law 0 clause
-    // 5: the silent plausible answer is the dangerous one).
-    pointsPerLevelMin: 1,
-    pointsPerLevelMax: 20,
-    [NOTE]: {
-      maxLevels: 'The highest character level (SPEC §13.4o: 20, about 100,000 XP); XP past it stays banked.',
-      pointsPerLevelMin: { text: 'The lowest value Level-up value accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
-      pointsPerLevelMax: { text: 'The highest value Level-up value accepts, and nothing reads it from here: that row takes its bounds from the authored table, so an override changes no control.', inert: true },
-    },
-  },
+  xp: balanceXp,
+  levelUp: balanceLevelUp,
 
   graceRefill: balanceCore.graceRefill,
   graceRefillAtRunStart: balanceCore.graceRefillAtRunStart,
 
-  // Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
-  // `unknownNode` MOVED to mapConfigs[act].unknownWeights (EldenSpire#43-adjacent,
-  // Freja's finding, Marina binding): what a `?` node resolves to is map geometry
-  // and belongs beside `typeWeights`, per act. A flat global here could not vary
-  // per act while the map it describes does, and nothing said so.
+  gauntlet: balanceGauntlet,
 
-  // M1 gauntlet glue (kept for the headless bot test; the map flow is M2+).
-  gauntlet: {
-    healPct: 15,
-    rewardChoices: 3,
-    rarityWeights: {
-      common: 60, uncommon: 35, rare: 5,
-      [NOTE]: {
-        '{rarity}': 'Headless gauntlet only: how often its reward is {a rarity} card, weighed against the other rarities.',
-      },
-    },
-    [NOTE]: {
-      healPct: 'Headless gauntlet only: percent of max HP healed between its fights.',
-      rewardChoices: 'Headless gauntlet only: how many cards its reward lays out.',
-    },
-  },
-
-  // ---- Forsaken Together (co-op) ------------------------------------------
-  coop: {
-    headcountHpFactor: 0.6, // enemy HP ×(1 + factor×(headcount−1)): 2p ×1.6, 3p ×2.2, 4p ×2.8
-    mendHealPct: 30, // Mend at a shrine heals an ally this % of their max HP
-    reviveHp: 1, // downed-but-not-dead members revive next floor at this HP (StS2)
-    [NOTE]: {
-      headcountHpFactor: 'Co-op: enemy HP is multiplied by 1 + this × (party size − 1), so each extra body at the table adds one more share of the same fight. 0 leaves a four-hander reading exactly like a solo climb.',
-      mendHealPct: 'Co-op: percent of an ally\'s max HP that Mend at a shrine restores.',
-      reviveHp: 'Co-op: the HP a downed-but-not-dead member comes back at on the next floor.',
-    },
-  },
+  coop: balanceCoop,
 
   // ---- Endless Spire + Custom Climb rule magnitudes ------------------------
   endless: {

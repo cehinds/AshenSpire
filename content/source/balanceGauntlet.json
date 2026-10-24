@@ -1,0 +1,16 @@
+{
+  "healPct": 15,
+  "rewardChoices": 3,
+  "rarityWeights": {
+    "common": 60,
+    "uncommon": 35,
+    "rare": 5,
+    "$note": {
+      "{rarity}": "Headless gauntlet only: how often its reward is {a rarity} card, weighed against the other rarities."
+    }
+  },
+  "$note": {
+    "healPct": "Headless gauntlet only: percent of max HP healed between its fights.",
+    "rewardChoices": "Headless gauntlet only: how many cards its reward lays out."
+  }
+}
