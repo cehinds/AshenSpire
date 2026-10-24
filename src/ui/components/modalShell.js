@@ -510,6 +510,11 @@ export function openModal({
   host = document.body,
   role = 'dialog',
   titleId: givenTitleId = '',
+  // Focus waits for the next frame, so opening does not force a layout in the
+  // frame that builds the door. `initialFocus()` may name the element to land
+  // on; the default is still the forward button (or the way out).
+  deferFocus = false,
+  initialFocus = null,
 } = {}) {
   // A caller may name the heading (an instrument reads `aria-labelledby` by
   // that name); otherwise the id is minted here so the label always resolves.
@@ -595,11 +600,19 @@ export function openModal({
 
   // Focus the way FORWARD when there is one, else the way out. Never the veil.
   // A footer exit (the wide Close) outranks the head's small close.
-  const first = panel.querySelector('.modal-foot-actions .primary')
-    || panel.querySelector('.modal-foot-actions [data-control-role="exit"]')
-    || panel.querySelector('[data-focusable="true"]')
-    || panel.querySelector('.modal-close');
-  first?.focus?.({ preventScroll: true });
+  const focusFirst = () => {
+    const first = (typeof initialFocus === 'function' ? initialFocus() : null)
+      || panel.querySelector('.modal-foot-actions .primary')
+      || panel.querySelector('.modal-foot-actions [data-control-role="exit"]')
+      || panel.querySelector('[data-focusable="true"]')
+      || panel.querySelector('.modal-close');
+    first?.focus?.({ preventScroll: true });
+  };
+  if (deferFocus && typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(() => { if (veil.isConnected) focusFirst(); });
+  } else {
+    focusFirst();
+  }
 
   return Object.freeze({ veil, panel, head, body: bodyEl, foot, close });
 }
