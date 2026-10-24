@@ -2424,7 +2424,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // No outer Energy gate: a Light dodge costs 0 Actions and 1 Stamina, so a
     // player at 0 Energy with Stamina left still holds a playable card, and
     // the per-card check below already prices every pool.
-    return combat.piles.hand.some((inst) => {
+    // End Turn is disabled while a reaction offer is pending, so the answer keeps the value it had
+    // before the offer rather than quoting the whole hand again for each beat.
+    if (combat.pendingReaction && lastEndTurnPlayable !== null) return lastEndTurnPlayable;
+    return lastEndTurnPlayable = combat.piles.hand.some((inst) => {
       if (isUnplayable(inst)) return false;
       // The live preview — class-priced dodge costs, Power reductions — the
       // same numbers the badge shows and the engine charges, in all three
@@ -2478,9 +2481,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
     paintEndTurnKey($('.end-turn'), etKey);
-    // End Turn is disabled while a reaction offer is pending, so its pulse keeps the value it had
-    // before the offer rather than quoting the whole hand again for each beat.
-    const hasPlayable = combat.pendingReaction && lastEndTurnPlayable !== null ? lastEndTurnPlayable : (lastEndTurnPlayable = endTurnHasPlayable());
+    const hasPlayable = endTurnHasPlayable();
     $('.end-turn').classList.toggle('pulse', hasPlayable);
     $('.end-turn').dataset.confirmReady = String(combat.phase === 'player' && !hasPlayable);
 
