@@ -1577,7 +1577,7 @@ function maxEdgeSelftestPlants() {
     'const textSizeArrived = xl.rootFontPx > ',
     'm.rootFontPx;',
   ].join('');
-  const textSizeTable = "textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' },";
+  const textSizeTable = '"textSize": { "S": "56.25%", "M": "62.5%", "L": "68.75%", "XL": "75%" },';
   return [
     {
       name: 'fixed-height rows do not make a correctly enlarged XL font look absent',
@@ -1596,9 +1596,10 @@ function maxEdgeSelftestPlants() {
     },
     {
       name: 'Text XL is authored with the same computed root font size as Text M',
-      file: 'src/content/balance.js',
+      file: 'content/source/balanceUi.json',
       find: textSizeTable,
-      replace: "textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '62.5%' },",
+      replace: '"textSize": { "S": "56.25%", "M": "62.5%", "L": "68.75%", "XL": "62.5%" },',
+      prep: [['node', 'tools/content-build.mjs']],
       expectRed: /FINDING D5\/maxedge .*root-font-m=10 root-font-xl=10/,
     },
   ];
