@@ -85,8 +85,11 @@ test('quotes are reused while a reaction offer is pending, and re-taken after it
   f.combat.pendingReaction = { id: 'g:p', groupKey: 'g', ownerId: f.combat.player.id, options: [] };
   f.context.renderHand();
   assert.equal(quotes(), first, 'the paused hand is not re-quoted');
-  assert.equal(f.rendered.at(-1).length, 1, 'the hand still paints');
-  assert.ok(f.rendered.at(-1)[0].preview, 'with its last quote');
+  assert.equal(f.rendered.length, 1, 'the unchanged, inert hand is not repainted');
+  f.combat.piles.hand.pop(); // a reaction card leaves the hand: that does repaint
+  f.context.renderHand();
+  assert.equal(f.rendered.length, 2, 'a changed hand repaints even while paused');
+  f.combat.piles.hand.push({ instanceId: 'spark-1', cardId: 'starSpark' });
   delete f.combat.pendingReaction;
   f.context.renderHand();
   assert.ok(quotes() > first, 'the first render after the offer quotes against the new state');

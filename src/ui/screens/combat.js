@@ -2012,6 +2012,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let topbarRenderKey = null;
   let handRenderKey = null;
   let handPreviewCache = { stateKey: null, cards: new Map() };
+  let handPaintedIds = null;
+  let lastEndTurnPlayable = null;
   const enemyFrames = new Map();
 
   function renderPlayer() {
@@ -2266,14 +2268,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const stateKey = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
       combat.turn, combat.phase, combat.result, combat.rangeState, [...rangeRoutesByCard], [...upcastRanksByCard], [...stackedIds], readSettings()]);
     const key = stateKey + '|' + JSON.stringify([selected, selfArm, lastTargetId]);
-    if (handRenderKey === key || (combat.pendingReaction && handRenderKey === key + '|paused')) { syncHandPager(handList); return; }
-    // While a reaction offer is pending the hand is inert and its fight state is mid-turn, so a
-    // quote taken now is replaced the moment the offer resolves. Reuse the last quotes for the
-    // same cards instead of re-quoting the whole hand for every offer; the cache keeps its old
-    // key, so the first render after the offer re-quotes.
-    const reusePaused = !!combat.pendingReaction && handRenderKey !== null && !upcastPreviewRefresh && !disp && handPreviewCache.cards.size > 0
-      && handList.every(inst => handPreviewCache.cards.get(inst.instanceId)?.plain && inst.instanceId !== selected && inst.instanceId !== selfArm);
-    const previewCache = reusePaused || (handPreviewCache.stateKey === stateKey && handRenderKey !== null && !upcastPreviewRefresh) ? handPreviewCache.cards : new Map();
+    if (handRenderKey === key || (combat.pendingReaction && handRenderKey === stateKey + '|paused')) { syncHandPager(handList); return; }
+    // While a reaction offer is pending the hand is inert and the fight is mid-turn, so a repaint
+    // of the same cards would only re-quote them against state that changes again when the offer
+    // resolves. Keep the faces as painted; the key below is never a live key, so the first render
+    // after the offer repaints and re-quotes.
+    const handIds = handList.map(inst => inst.instanceId).join('|');
+    if (combat.pendingReaction && handRenderKey !== null && !upcastPreviewRefresh && handPaintedIds === handIds && selected == null && selfArm == null) {
+      handRenderKey = stateKey + '|paused'; syncHandPager(handList); return;
+    }
+    const previewCache = handPreviewCache.stateKey === stateKey && handRenderKey !== null && !upcastPreviewRefresh ? handPreviewCache.cards : new Map();
     const nextPreviews = new Map();
     handStrip.render({
       cards: handList.map((inst) => {
@@ -2313,8 +2317,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }),
     });
     syncHandPager(handList);
-    handRenderKey = reusePaused ? key + '|paused' : key; // never equal to a live key: the first render after the offer repaints
-    handPreviewCache = { stateKey: reusePaused ? null : stateKey, cards: nextPreviews };
+    handRenderKey = key;
+    handPaintedIds = handIds;
+    handPreviewCache = { stateKey, cards: nextPreviews };
     if (refreshHitChances) syncHitChances();
   }
 
@@ -2473,7 +2478,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // shortcut is discoverable without reading the hint bar. Tracks rebinds.
     const etKey = hasGamepad() ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
     paintEndTurnKey($('.end-turn'), etKey);
-    const hasPlayable = endTurnHasPlayable();
+    // End Turn is disabled while a reaction offer is pending, so its pulse keeps the value it had
+    // before the offer rather than quoting the whole hand again for each beat.
+    const hasPlayable = combat.pendingReaction && lastEndTurnPlayable !== null ? lastEndTurnPlayable : (lastEndTurnPlayable = endTurnHasPlayable());
     $('.end-turn').classList.toggle('pulse', hasPlayable);
     $('.end-turn').dataset.confirmReady = String(combat.phase === 'player' && !hasPlayable);
 
