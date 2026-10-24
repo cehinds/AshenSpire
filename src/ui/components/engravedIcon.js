@@ -1,6 +1,6 @@
 // Original icon geometry from the reviewed player-polish kit. Masks inherit
 // the caller's semantic colour; canonical item/character paintings stay intact.
-import { uiIconId } from '../../content/uiIcons.js';
+import { uiIconId, uiIconGlyph } from '../../content/uiIcons.js';
 import { assetUrl } from '../assetmap.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 
@@ -11,20 +11,42 @@ export function engravedIconId(id) {
 export function engravedGlyphId(char) { return uiIconId(char); }
 export function engravedIconUrl(id) {
   const resolved = engravedIconId(id);
+  const glyph = uiIconGlyph(resolved);
+  if (glyph) return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(glyphSvgHtml(glyph, '#d8b976'));
   return resolved ? assetUrl(`assets/player-polish/ui/icons/${resolved}.svg`) : null;
 }
 // Both tiers carry identical vectors. Keep the exporter-inlined CSS mask so
 // file play and external builds share a CORS-safe source. A verified picked
 // folder may override it with its already-loaded blob or data URL.
 export function engravedMaskUrl(id) {
+  if (uiIconGlyph(engravedIconId(id))) return null;
   const url = engravedIconUrl(id);
   return url && /^(data:|blob:)/i.test(url) ? url : null;
 }
 const maskValue = (url) => `url("${String(url).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/[\r\n\f]/g, '')}")`;
 const htmlAttribute = (value) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// Only fixed registered glyphs enter SVG markup; arbitrary overrides remain
+// on the existing named-vector/fallback path. URL consumers need an explicit
+// fill because currentColor cannot inherit through an SVG <image> or <img>.
+const GLYPH_SVG_ATTRS = Object.freeze({ viewBox: '0 0 64 64', width: '100%', height: '100%', 'aria-hidden': 'true' });
+const GLYPH_TEXT_ATTRS = Object.freeze({ x: '32', y: '34', 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': '46', 'font-family': 'Georgia, Segoe UI Symbol, Noto Sans Symbols 2, serif' });
+const svgAttrs = (attrs) => Object.entries(attrs).map(([key, value]) => `${key}="${htmlAttribute(value)}"`).join(' ');
+function glyphSvgHtml(glyph, fill) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" ${svgAttrs(GLYPH_SVG_ATTRS)}><text ${svgAttrs({ ...GLYPH_TEXT_ATTRS, fill })}>${htmlAttribute(glyph)}</text></svg>`;
+}
+function appendGlyphSvg(node, glyph) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  for (const [key, value] of Object.entries(GLYPH_SVG_ATTRS)) svg.setAttribute(key, value);
+  const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  for (const [key, value] of Object.entries({ ...GLYPH_TEXT_ATTRS, fill: 'currentColor' })) text.setAttribute(key, value);
+  text.textContent = glyph;
+  svg.appendChild(text); node.appendChild(svg);
+}
 export function engravedIconHtml(id) {
   const resolved = engravedIconId(id);
   if (!resolved) return '';
+  const glyph = uiIconGlyph(resolved);
+  if (glyph) return `<span class="engraved-icon engraved-glyph" data-component="${UI.playerEngravedIcon}" data-engraved-icon="${resolved}" aria-hidden="true">${glyphSvgHtml(glyph, 'currentColor')}</span>`;
   const url = engravedMaskUrl(resolved);
   return `<span class="engraved-icon" data-component="${UI.playerEngravedIcon}" data-engraved-icon="${resolved}" aria-hidden="true"${url ? ` style="${htmlAttribute('--engraving:' + maskValue(url))}"` : ''}></span>`;
 }
@@ -36,6 +58,8 @@ export function engravedIcon(id) {
   node.dataset.engravedIcon = resolved;
   node.dataset.component = UI.playerEngravedIcon;
   node.setAttribute('aria-hidden', 'true');
+  const glyph = uiIconGlyph(resolved);
+  if (glyph) { node.className += ' engraved-glyph'; appendGlyphSvg(node, glyph); return node; }
   const url = engravedMaskUrl(resolved);
   if (url) node.style.setProperty('--engraving', maskValue(url));
   return node;

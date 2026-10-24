@@ -14,6 +14,9 @@
   -webkit-mask:var(--engraving, var(--engraving-fallback)) center / contain no-repeat;
   pointer-events:none;
 }
+/* Preserve original identity glyphs inside the same caller-owned icon box. */
+.engraved-icon.engraved-glyph { background:none; mask:none; -webkit-mask:none; }
+.engraved-glyph > svg { display:block; width:100%; height:100%; overflow:hidden; }
 .as-glyph .engraved-icon { width:100%; height:100%; }
 .as-iconbtn .engraved-icon { width:24px; height:24px; }
 /* modalShell owns the single close glyph. A second masked icon here both
