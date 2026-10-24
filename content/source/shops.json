@@ -1,0 +1,580 @@
+{
+  "kindWeights": {
+    "market": 100,
+    "blacksmith": 0,
+    "master": 0,
+    "$note": {
+      "market": "How likely a merchant on the map is to be the usual market. While the other kinds are at 0, any weight above 0 makes every merchant a market.",
+      "blacksmith": "How likely a merchant on the map is to be a blacksmith, which offers the blacksmith's services instead of market shelves. At 0 no merchant is one; an atlas smith always is.",
+      "master": "How likely a merchant on the map is to be a wise master, who trains, respecs and teaches the skills he knows instead of selling market shelves. At 0 no merchant is one."
+    }
+  },
+  "market": {
+    "guaranteedMinimum": 2,
+    "offerings": [
+      {
+        "id": "cards",
+        "enabled": true,
+        "chance": 100,
+        "weight": 60,
+        "conditional": false,
+        "stockKey": "balance.shop.cardStock",
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It always has something to lay out when it comes up, so it counts toward the guaranteed minimum. Its pool is the class's cards and the colourless ones, whatever the run owns.",
+          "stockKey": "Where this shelf's per-visit stock lives. While that stock is 0 the shelf lays out nothing, so it does not count toward the guaranteed minimum."
+        }
+      },
+      {
+        "id": "relics",
+        "enabled": true,
+        "chance": 100,
+        "weight": 30,
+        "conditional": true,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (it never offers a relic you already hold); then it is not laid out, and it never counts toward the guaranteed minimum."
+        }
+      },
+      {
+        "id": "flasks",
+        "enabled": true,
+        "chance": 100,
+        "weight": 40,
+        "conditional": false,
+        "stockKey": "balance.shop.flaskStock",
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It always has something to lay out when it comes up, so it counts toward the guaranteed minimum. Its pool is every utility flask, whatever the run carries.",
+          "stockKey": "Where this shelf's per-visit stock lives. While that stock is 0 the shelf lays out nothing, so it does not count toward the guaranteed minimum."
+        }
+      },
+      {
+        "id": "armaments",
+        "enabled": true,
+        "chance": 100,
+        "weight": 30,
+        "conditional": true,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (it never offers an armament you already carry); then it is not laid out, and it never counts toward the guaranteed minimum."
+        }
+      },
+      {
+        "id": "weaponArts",
+        "enabled": true,
+        "chance": 100,
+        "weight": 20,
+        "conditional": true,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (its pool is only the mountable weapon arts the armaments carry); then it is not laid out, and it never counts toward the guaranteed minimum."
+        }
+      },
+      {
+        "id": "remove",
+        "enabled": true,
+        "chance": 100,
+        "weight": 50,
+        "conditional": true,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (it needs a card in your deck that can be removed, and a deck of one card, or of granted cards only, has none); then it is not laid out, and it never counts toward the guaranteed minimum."
+        }
+      },
+      {
+        "id": "armour",
+        "enabled": true,
+        "chance": 35,
+        "weight": 20,
+        "conditional": true,
+        "stock": 2,
+        "includeLocked": true,
+        "cost": {
+          "min": 300,
+          "max": 390,
+          "$note": {
+            "min": "The least one armour set on the market's shelf costs, in cinders.",
+            "max": "The most one armour set on the market's shelf costs, in cinders. Each set's price is rolled between the two."
+          }
+        },
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "stock": "How many armour sets the market's armour shelf holds each visit. Only sets of your class that you do not already own are offered.",
+          "conditional": "It can have nothing to sell on a visit (only locked sets of your class that the run does not own are sold, and with Include locked off there are none); then it is not laid out, and it never counts toward the guaranteed minimum.",
+          "includeLocked": "Whether the market sells armour sets of your class that your profile has not unlocked yet. A set bought this way is yours for this run only and does not unlock it. Off, the armour shelf has nothing to sell and is not laid out."
+        }
+      },
+      {
+        "id": "smithStones",
+        "enabled": true,
+        "chance": 50,
+        "weight": 25,
+        "conditional": true,
+        "price": 110,
+        "perVisit": 2,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (its per-visit stock can be set to 0); then it is not laid out, and it never counts toward the guaranteed minimum.",
+          "price": "What one Smithing Stone costs at the market, in cinders.",
+          "perVisit": "How many Smithing Stones the market sells each visit."
+        }
+      },
+      {
+        "id": "sigils",
+        "enabled": true,
+        "chance": 25,
+        "weight": 10,
+        "conditional": true,
+        "stock": 2,
+        "pricePct": 100,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (it never offers a sigil you already own); then it is not laid out, and it never counts toward the guaranteed minimum.",
+          "stock": "How many sigils the market's sigil shelf holds each visit. It never offers one you already own.",
+          "pricePct": "The percent of each sigil's authored cost the market charges for it. At 100 it sells at the sigil's own price."
+        }
+      },
+      {
+        "id": "innRest",
+        "enabled": true,
+        "chance": 30,
+        "weight": 15,
+        "conditional": true,
+        "price": 150,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance a market away from any inn offers a full rest. A market in a town with an inn always offers it while it is enabled.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (it is certain only in a town with an inn); then it is not laid out, and it never counts toward the guaranteed minimum.",
+          "price": "What a full rest bought at the market costs, in cinders. It rests you exactly as the inn's bed does, once per visit."
+        }
+      },
+      {
+        "id": "skillBooks",
+        "enabled": true,
+        "chance": 30,
+        "weight": 12,
+        "conditional": true,
+        "stock": 2,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (its per-visit stock can be set to 0); then it is not laid out, and it never counts toward the guaranteed minimum.",
+          "stock": "How many different skill books the market's book shelf holds each visit."
+        }
+      },
+      {
+        "id": "reviveTokens",
+        "enabled": true,
+        "chance": 10,
+        "weight": 5,
+        "conditional": true,
+        "stock": 1,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (its per-visit stock can be set to 0); then it is not laid out, and it never counts toward the guaranteed minimum.",
+          "stock": "How many different revive tokens the market lays out each visit."
+        }
+      },
+      {
+        "id": "questEvent",
+        "enabled": true,
+        "chance": 15,
+        "weight": 8,
+        "conditional": true,
+        "price": 60,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (it never offers an event you have already seen, and you may have seen them all); then it is not laid out, and it never counts toward the guaranteed minimum.",
+          "price": "What following the market's quest event costs, in cinders. Taking it closes the market behind you."
+        }
+      },
+      {
+        "id": "companions",
+        "enabled": true,
+        "chance": 20,
+        "weight": 10,
+        "conditional": true,
+        "stock": 1,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (it never offers a companion already travelling with you); then it is not laid out, and it never counts toward the guaranteed minimum.",
+          "stock": "How many different companions the market offers each visit. One of each travels with you at a time."
+        }
+      }
+    ],
+    "$note": {
+      "guaranteedMinimum": "The fewest offerings a market visit lays out. When fewer came up by their chances, the heaviest missing ones are added. At least 2."
+    }
+  },
+  "blacksmith": {
+    "guaranteedMinimum": 2,
+    "offerings": [
+      {
+        "id": "armaments",
+        "enabled": true,
+        "chance": 100,
+        "weight": 40,
+        "conditional": true,
+        "stock": 5,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (it never offers an armament you already carry); then it is not laid out, and it never counts toward the guaranteed minimum.",
+          "stock": "How many armaments the blacksmith's shelf holds each visit."
+        }
+      },
+      {
+        "id": "upgrade",
+        "enabled": true,
+        "chance": 100,
+        "weight": 100,
+        "conditional": true,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to act on (every item you own may already be at its top tier); then it is shown unavailable until you do, and it never counts toward the guaranteed minimum."
+        }
+      },
+      {
+        "id": "smithStones",
+        "enabled": true,
+        "chance": 100,
+        "weight": 60,
+        "conditional": false,
+        "stockKey": "shops.blacksmith.smithStones.perVisit",
+        "price": 90,
+        "perVisit": 3,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It always has something to lay out when it comes up, so it counts toward the guaranteed minimum. It sells stones, whatever the run owns, while its per-visit stock is at least 1.",
+          "stockKey": "Where this shelf's per-visit stock lives. While that stock is 0 the shelf lays out nothing, so it does not count toward the guaranteed minimum.",
+          "price": "What one Smithing Stone costs at the blacksmith, in cinders.",
+          "perVisit": "How many Smithing Stones the blacksmith sells each visit."
+        }
+      },
+      {
+        "id": "refineStones",
+        "enabled": true,
+        "chance": 100,
+        "weight": 30,
+        "conditional": false,
+        "refine": {
+          "from": 3,
+          "value": 4,
+          "cinders": 100,
+          "$note": {
+            "from": "How many ordinary Smithing Stones one refined stone is made from.",
+            "value": "How many ordinary stones a refined stone pays toward an upgrade.",
+            "cinders": "The cinders refining one stone costs, on top of the stones."
+          }
+        },
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It always has something to lay out when it comes up, so it counts toward the guaranteed minimum. It is a service with a price, not a shelf of goods."
+        }
+      },
+      {
+        "id": "sigilSlots",
+        "enabled": true,
+        "chance": 100,
+        "weight": 20,
+        "conditional": true,
+        "sigilSlots": {
+          "base": 0,
+          "max": 3,
+          "cinders": 300,
+          "$note": {
+            "base": "How many empty sigil slots every armament has before the blacksmith cuts any. The slots he cuts are added to these.",
+            "max": "The most sigil slots one armament can have, its base slots included. The blacksmith cuts none past it.",
+            "cinders": "What cutting one sigil slot costs, in cinders."
+          }
+        },
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to act on (you may carry no armament, or every one may already have its most slots); then it is shown unavailable until you do, and it never counts toward the guaranteed minimum."
+        }
+      },
+      {
+        "id": "sigils",
+        "enabled": true,
+        "chance": 100,
+        "weight": 20,
+        "conditional": true,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to act on (it sets only the sigils you carry into empty slots, and takes out only those set, and you may have neither); then it is shown unavailable until you do, and it never counts toward the guaranteed minimum."
+        }
+      },
+      {
+        "id": "extractArt",
+        "enabled": true,
+        "chance": 100,
+        "weight": 50,
+        "conditional": true,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to act on (it needs an armament with a weapon art to take out); then it is shown unavailable until you do, and it never counts toward the guaranteed minimum."
+        }
+      },
+      {
+        "id": "installArt",
+        "enabled": true,
+        "chance": 100,
+        "weight": 50,
+        "conditional": true,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to act on (it needs a loose weapon-art card and an open mount to put it in); then it is shown unavailable until you do, and it never counts toward the guaranteed minimum."
+        }
+      },
+      {
+        "id": "upgradeArt",
+        "enabled": true,
+        "chance": 100,
+        "weight": 30,
+        "conditional": true,
+        "stones": 2,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to act on (it needs a loose weapon-art card that is not upgraded yet); then it is shown unavailable until you do, and it never counts toward the guaranteed minimum.",
+          "stones": "How many Smithing Stones upgrading one loose weapon-art card costs."
+        }
+      },
+      {
+        "id": "stackCopy",
+        "enabled": true,
+        "chance": 100,
+        "weight": 20,
+        "conditional": true,
+        "stack": {
+          "stones": 2,
+          "cinders": 150,
+          "stepPerOwned": 1,
+          "$note": {
+            "stones": "The Smithing Stones stacking the first extra copy of a card costs.",
+            "cinders": "The cinders stacking the first extra copy of a card costs.",
+            "stepPerOwned": "How much each of those two prices rises for every copy of the card you own beyond the first."
+          }
+        },
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to act on (it needs a loose weapon art or technique you own); then it is shown unavailable until you do, and it never counts toward the guaranteed minimum."
+        }
+      }
+    ],
+    "$note": {
+      "guaranteedMinimum": "The fewest offerings a blacksmith visit lays out. At least 2."
+    }
+  },
+  "master": {
+    "guaranteedMinimum": 2,
+    "respecRefundPct": 60,
+    "offerings": [
+      {
+        "id": "skillBooks",
+        "enabled": true,
+        "chance": 100,
+        "weight": 40,
+        "conditional": true,
+        "stock": 2,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (no skill book may teach the master's skills, or its stock may be 0); then it is not laid out, and it never counts toward the guaranteed minimum.",
+          "stock": "How many different skill books for the master's skills his shelf holds each visit."
+        }
+      },
+      {
+        "id": "weaponArts",
+        "enabled": true,
+        "chance": 100,
+        "weight": 40,
+        "conditional": true,
+        "stock": 3,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (its pool is only the mountable weapon arts of the pieces the master teaches, and its stock may be 0); then it is not laid out, and it never counts toward the guaranteed minimum.",
+          "stock": "How many weapon arts of the master's pieces his shelf holds each visit."
+        }
+      },
+      {
+        "id": "armaments",
+        "enabled": true,
+        "chance": 100,
+        "weight": 30,
+        "conditional": true,
+        "stock": 3,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to sell on a visit (it never offers an armament you already carry, and its stock may be 0); then it is not laid out, and it never counts toward the guaranteed minimum.",
+          "stock": "How many armaments of the master's item types his rack holds each visit."
+        }
+      },
+      {
+        "id": "training",
+        "enabled": true,
+        "chance": 100,
+        "weight": 100,
+        "conditional": false,
+        "stockKey": "shops.master.training.training.perVisit",
+        "training": {
+          "cinders": 150,
+          "xp": 20,
+          "perVisit": 3,
+          "$note": {
+            "cinders": "What one training session costs, in cinders.",
+            "xp": "The skill XP one training session pays.",
+            "perVisit": "How many training sessions one master visit sells, whichever skills they train."
+          }
+        },
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It always has something to lay out when it comes up, so it counts toward the guaranteed minimum. Every master teaches three or four skills, so there is always one to train while its sessions per visit are at least 1.",
+          "stockKey": "Where this shelf's per-visit stock lives. While that stock is 0 the shelf lays out nothing, so it does not count toward the guaranteed minimum."
+        }
+      },
+      {
+        "id": "respec",
+        "enabled": true,
+        "chance": 100,
+        "weight": 60,
+        "conditional": true,
+        "respec": {
+          "cost": {
+            "base": 200,
+            "perLevel": 50,
+            "$note": {
+              "base": "The cinders every respec costs before its level surcharge.",
+              "perLevel": "The cinders a respec adds for each level the skill had."
+            }
+          }
+        },
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to act on (none of the master's skills may be at level 2 or higher); then it is shown unavailable until you do, and it never counts toward the guaranteed minimum."
+        }
+      },
+      {
+        "id": "lesson",
+        "enabled": true,
+        "chance": 100,
+        "weight": 50,
+        "conditional": true,
+        "cinders": 250,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to act on (every one of the master's skills may have taken its lesson this visit, or have nothing to draw); then it is shown unavailable until you do, and it never counts toward the guaranteed minimum.",
+          "cinders": "What one lesson (a skill draft for one of the master's skills) costs, in cinders."
+        }
+      },
+      {
+        "id": "appraisal",
+        "enabled": true,
+        "chance": 100,
+        "weight": 30,
+        "conditional": false,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It always has something to lay out when it comes up, so it counts toward the guaranteed minimum. It is free and shows the master's skills, and every master teaches three or four."
+        }
+      },
+      {
+        "id": "redistribute",
+        "enabled": true,
+        "chance": 100,
+        "weight": 30,
+        "conditional": true,
+        "$note": {
+          "enabled": "Whether this offering can appear at all. Off, it is never rolled and never added by the guarantee.",
+          "chance": "The percent chance this offering comes up when a visit rolls. At 100 it always does and nothing is rolled; at 0 it appears only when the guarantee needs it.",
+          "weight": "When too few offerings came up, the guarantee adds the missing ones with the highest weight first.",
+          "conditional": "It can have nothing to act on (your training pool may be empty until a respec fills it); then it is shown unavailable until you do, and it never counts toward the guaranteed minimum."
+        }
+      }
+    ],
+    "$note": {
+      "guaranteedMinimum": "The fewest offerings a master visit lays out. At least 2.",
+      "respecRefundPct": "The whole percentage of the XP spent above level 1 that a respec pays into the training pool. It is read between 50 and 75."
+    }
+  },
+  "masters": [
+    {
+      "id": "swordSaint",
+      "name": "The Sword Saint",
+      "speakerId": "swordSaint",
+      "skills": [
+        "item:blade",
+        "item:shield",
+        "dualWield"
+      ]
+    },
+    {
+      "id": "starReader",
+      "name": "The Star Reader",
+      "speakerId": "starReader",
+      "skills": [
+        "item:magic-focus",
+        "item:shield",
+        "item:blade"
+      ]
+    }
+  ]
+}
