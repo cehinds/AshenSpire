@@ -124,6 +124,7 @@ import { armPress } from '../gesture.js';
 import { setActionControl, releaseActionControl } from '../input.js';
 import { beatFor } from '../../model/secondbeat.js';
 import { sfx } from '../sfx.js';
+import { dlog } from '../debuglog.js';
 import { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { openConfirmationModal } from './confirmationModal.js';
 import { reviewEyebrow, reviewTone } from '../models/ConfirmationReviewModel.js';
@@ -541,6 +542,7 @@ export function armHold(btn, {
     // guessed: tools/holdconfirm.mjs case 4b. So the moved flag is consumed
     // before the detail check, and the click is swallowed whole.
     if (movedThisPress) {
+      if (btn.classList.contains('card')) dlog('ignored', `card click ${btn.dataset.instanceId}`, 'moved');
       movedThisPress = false;
       heldThisPress = false;
       committedThisPress = false;
@@ -557,6 +559,7 @@ export function armHold(btn, {
       // Composite cards finish pointer taps on release. A rebuilt binding can
       // receive the old press's trailing click without owning that press.
       if (tapOnPointerRelease && ev.detail > 0) {
+        if (btn.classList.contains('card')) dlog('ignored', `card click ${btn.dataset.instanceId}`, 'click without its press');
         ev.preventDefault(); ev.stopPropagation(); return;
       }
       if (pointerOnly && onTap) onTap(ev);

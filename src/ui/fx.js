@@ -864,6 +864,7 @@ export function animateEvents(events, ctx, done) {
     // A read-only control (the combat log, the Reaction switch) is not a skip, as in playTimeline.
     // It stays registered until the walk ends (removed below), so a read-only click leaves it armed.
     if (event?.target?.closest?.('[data-combat-read-only]')) return;
+    dlog('input', 'tap skipped animation');
     flushRequested = true;
     if (ctx.reactionForReceipt) for (const sprite of globalThis.document?.querySelectorAll?.('.combatant .sprite') || []) {
       const stage = stageFor(sprite);
@@ -1057,6 +1058,7 @@ export function playTimeline(events, ctx, done) {
   let handle, skippedPointer = false;
   const skip = event => {
     if (event?.target?.closest?.('[data-combat-read-only], dialog, [role="dialog"]')) return;
+    dlog('input', 'tap skipped animation');
     skippedPointer = true;
     handle?.pauseForSkip();
     // Keep the screen busy through pointer release, so the same click cannot
@@ -1250,6 +1252,7 @@ function playLegacyTimeline(events, ctx, done) {
   const skip = event => {
     if (event?.target?.closest?.('[data-combat-read-only]')) return;
     if (finished) return;
+    dlog('input', 'tap skipped animation');
     removeEventListener('pointerdown', skip, { capture: true });
     flushed = true;
     clearHeldFigures();
