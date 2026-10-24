@@ -1,6 +1,16 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — Combat Console review snapshot
 
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/fix/CombatLogConsoleReview/latest/)
+
+Enable **Settings → General → Combat → Combat log → Console button in combat log**, then open **Combat log → Console** to read, copy or export session output. These captures show reviewed commit `fe7c6988e`: build **0.7.1.1814**, source digest **ddf4bd050f**. The canonical branch may contain later upstream data updates. [Capture record](docs/preview/features/combat-console/CAPTURE-RECORD.md) · [Component catalog](docs/component-catalog.html).
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile: Console output with Copy, Export and Close](docs/preview/features/combat-console/phone.png) | ![Desktop: full combat log with Console shortcut](docs/preview/features/combat-console/desktop.png) | ![Wide: Console viewer with session output](docs/preview/features/combat-console/wide.png) | ![Tablet: Combat settings with Console preference enabled](docs/preview/features/combat-console/tablet.png) |
+<!-- feature-preview:end -->
 
 
 
