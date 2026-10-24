@@ -156,12 +156,12 @@ orchestrator after resultText is shown. SPEC §9 M3 target: 10 events.
 
 ## Cards (content/source/cards/*.json)
 
-Six plain-data card pools are JSON files under `content/source/cards/`, one array each, named for the
-export they compile to: `heraldCards.json`, `reaverCards.json`, `starseerCards.json`,
+Seven plain-data card pools are JSON files under `content/source/cards/`, one array each, named for the
+export they compile to: `heraldCards.json`, `reaverCards.json`, `rogueCards.json`, `starseerCards.json`,
 `armamentCards.json`, `colorlessCards.json`, `corruptedCards.json`. `tools/content-build.mjs` compiles each
 to `src/content/generated/cards/<name>.js`, and the old `src/content/cards/{herald,reaver,starseer,armaments,
 colorless,corrupted}.js` are shims that re-export it (the pools were unfrozen before and still are).
-`rogue.js` and `coop.js` stay JS: they hold builder functions, which JSON cannot carry. These are the design
+`coop.js` stays JS: it holds builder functions, which JSON cannot carry. `rogue.js` is now a shim too; its shared helpers (`one`, `PREPARED`, `TARGET_*`, `prepare()`, `spendPrepared()`) are written out inline in every row that used them. These are the design
 notes that lived as comments in the old JS files (JSON has no comments); keep a note under the card id when
 you change one. The shared constants the old files declared (`one = { f: 'add', args: [1] }`, and in the
 Starseer file `CHARGED` and `GAIN_CHARGE`) are written out inline in every row that used them; the values are
@@ -226,6 +226,16 @@ round 2, round 4, the class ability card, skill-draft depth.
 - **brace** — the class ability card (plan phase 5a, proposal §4). Brace: the Reaver's loop is stance switching as tempo. Enter Brace, a stance that holds the line; leaving it hits harder (stances.js `brace`).
 - **hewingArc**, **sunderingChop**, **setTheShield**, **aegisOfEmbers**, **shieldCrash** — Skill-draft depth (blade and shield tracks). A levelled sword or shield drafts from its own school at every rarity it has opened; these join the retagged pool so each has at least four.
 - **hewingArc** — Keep its pre-fix resolved price; area targeting must not add a tax (the upgrade carries `cost: 3`).
+
+### rogueCards
+
+File header: the Rogue parity slice. Prepared is a content-owned one-hit opening: Rogue attacks read it before removing it. Venom is a normal status hook. No Rogue behavior needs a new opcode, predicate, formula, or script.
+Section order in the file: Non-reward cards (signature + two generated tools), Commons (13), Uncommons (13), Rares (10), the class ability card, skill-draft depth.
+- **helpers** — The old file declared `one = { f: 'add', args: [1] }`, `PREPARED` (hasStatus self prepared), `TARGET_WEAK`, `TARGET_VULNERABLE`, `TARGET_BLEED`, `TARGET_VENOM`, `TARGET_VENOM_3` (venom atLeast 3), `prepare()` (applyStatus self prepared, stacks `one`) and `spendPrepared()` (removeStatus self prepared). They are inlined in the JSON rows; values unchanged.
+- **ambush** and the two generated tools (**rogueShiv**, **smokePellet**) — Non-reward cards: the signature card and the generated tools.
+- **deathblow** — 60% Blunt, 40% Necrotic (owner, 2026-10-13).
+- **prepare** — the class ability card (plan phase 5a, proposal §4). Prepare: the Rogue's loop is setup then payoff; the cheapest way in.
+- Skill-draft depth (bow and parrying-hand tracks) — A levelled shortbow drafts pierce/ranged/precision cards, a buckler or parrying dagger guard/flourish ones; the closing rows give each at least four per rarity it has opened.
 
 ### starseerCards
 
