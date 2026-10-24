@@ -825,3 +825,53 @@ Compiled to `src/content/generated/derivedStatRules.js`; `src/content/derivedSta
     shift by these amounts (floored at 0) wherever its stats are read.
 
     SP per stance for an enemy move that does not name its own `sp`.
+
+## Progression (content/source/progression*.json)
+
+The class-progression content under `src/content/progression/`. Flat top-level file names (the compiler reads only `cards/` as a subfolder). Each module imports its generated rows from `src/content/generated/` and keeps its real logic in JS; each module's header says which part is which.
+
+### Card families (progressionCardFamilies.json)
+
+`src/content/progression/cardFamilies.js` re-exports it as `cardFamilies`. Header comment: "Approved progression catalogue; exact family identities, unlocks and rank costs. Recipes live in cards.js; tags live only in content/source/tagging.csv." The recipes that turn a row into a card (riders, grade budget) are code in `cards.js`.
+
+### Card lore (progressionCardLore.json)
+
+`src/content/progression/cardLore.js` re-exports `progressionCardLore`. Header comment: "Three-part card lore: identity, remembered history, and a closing line." Keys are the family id without its `progression-` prefix; `cards.js` joins the three strings with blank lines into the card's `flavor`.
+
+### Gear requirements (progressionGearRequirements.json)
+
+`src/content/progression/gear.js` re-exports `progressionGearRequirements`. Header comment: "All 63 gear requirements, including the level-zero public baseline." Level 0 rows are the baseline every class starts with. `unlocks.js` turns each row above level 0 into a `weapon` or `armament` unlock row.
+
+### Relics (progressionRelics.json, progressionRelicUnlocks.json)
+
+`src/content/progression/relics.js` re-exports `progressionRelics` and `progressionRelicUnlocks`. Header comment: "Relic definitions and gates are one independently installable module." The relic rows are the definitions; the unlock rows (`kind: "relic"`) are the class-level gates for them.
+
+### Feats (progressionFeatRows.json, progressionFeatUnlocks.json)
+
+`src/content/progression/feats.js` keeps `progressionFeats` and `progressionFeatUnlocks` (both frozen) and builds them from the generated rows. Header comment: "Fifty class feats. Their descriptions and effects share normalized balance bindings." The rows hold id, skill, minimum level and name only; each feat's `description` is derived in JS by `getFeatDescription` from balance, property rules, tagging and the variable bindings, so it stays code. The unlock rows (`kind: "feat"`) are the class-level gates.
+
+### Unlocks (progressionUnlockRows.json)
+
+`src/content/progression/unlocks.js` exports `progressionUnlocks`: the JSON rows (existing families rescheduled by the approved expansion catalog) followed by the item gates, which are derived in JS from the single gear requirements table (`progressionGearRequirements`, level above 0) and the ARMAMENTS table (`kind: "weapon"` for a weapon, `"armament"` otherwise). Edit a gear gate in progressionGearRequirements.json, not here.
+
+### Lessons (progressionLessonRecipes.json)
+
+`src/content/progression/lessons.js` exports `abilityCardUpdates`: one update per recipe row, derived in JS from the class card pools (`reaver`, `starseer`, `rogue`, `herald`), `cardExposure` and the grade maths (`lessonGrade`). Header comment: "Explicit shared lesson and cost-retune recipes. Existing school/status identity is preserved from the authored family; no class pool is broadened."
+
+Each row was a positional tuple `[id, source, default rank, exact Actions at rank 2, primary index, six authored primary values (or explicit grades)]` plus an options object; the comment on the table said "Conditional/secondary effects activate at 2." The tuple is now named fields:
+
+- **id** — the card id in a class pool. **abilityKind** — `spell` or `maneuver` (the old "source"). **abilityRank** — the default rank. **actionCost** — the exact Actions at rank 2. **primaryIndex** — which of the original card's effects is the primary one. **values** — the six authored per-rank primary values.
+- **grades** (optional) — six explicit grade profiles, used instead of `values`. They preserve the previous resolved resource prices and riders, and author the payoff of the paid entry spells and arts directly instead of letting a stronger effect buy another resource tax.
+- **alwaysRiders** (optional) — keep the non-primary effects at every rank (otherwise they start at rank 2).
+- **fixedGradeCosts** (optional) — `{ "<rank>": { actionCost, manaCost } }`. The `crimsonCleave` entry preserves the existing resolved grade-4 price after correcting Sweep area targeting.
+
+### Cards and grade rules (progressionGradeRules.json)
+
+`src/content/progression/cards.js` ("Forty class families. Rank is a recipe selection, never an imperative card hook.") stays JS: it holds `riders`, one function per family that builds that family's rank-2-and-up effects, plus `familyGrade` and the card assembly, all logic over the card families and lore rows. Its comment "Only the family rider is specialized. Shared grade milestones and budgets are composed below, with no engine branch naming one of these families." still applies.
+
+The two constants it shares with `lessons.js` are data:
+
+- **gradeBudget** — the approved total direct damage and Block ceiling at each of the six ranks. Catalogue values are per hit; the explicit immediate rider budget and the milestone Block are reserved before a primary is clamped to this ceiling.
+- **areaFamilies** — families whose primary hits every living enemy from rank 3.
+
+`cardRecipeText.js` (the display text builder; "Display is derived from the same numeric recipe rather than copying numbers into prose. Condition descriptions carry no hidden combat implementation.") and `rules.js` (re-exports `balance.progression`; numeric defaults and their Advanced help live in the one balance source) are wholly logic or derived from another module, and stay JS.
