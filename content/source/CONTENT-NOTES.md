@@ -327,3 +327,7 @@ The class-progression content under `src/content/progression/`. Flat top-level f
 ### Card families (progressionCardFamilies.json)
 
 `src/content/progression/cardFamilies.js` re-exports it as `cardFamilies`. Header comment: "Approved progression catalogue; exact family identities, unlocks and rank costs. Recipes live in cards.js; tags live only in content/source/tagging.csv." The recipes that turn a row into a card (riders, grade budget) are code in `cards.js`.
+
+### Card lore (progressionCardLore.json)
+
+`src/content/progression/cardLore.js` re-exports `progressionCardLore`. Header comment: "Three-part card lore: identity, remembered history, and a closing line." Keys are the family id without its `progression-` prefix; `cards.js` joins the three strings with blank lines into the card's `flavor`.
