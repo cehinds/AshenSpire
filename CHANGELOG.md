@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-24
 
+- **Balance numbers are now editable data files** ([#2296](https://github.com/cehinds/AshenSpire/pull/2296), `0.7.1.1827`). The tuning numbers that used to fill one 2,700-line code file are split by topic into `content/source/balance*.json`, with each Settings explanation beside its number. Nothing in play changes.
 - **Progression tables are now editable data files** ([#2295](https://github.com/cehinds/AshenSpire/pull/2295), `0.7.1.1827`). Card families, card lore, gear requirements, relics, feats, unlocks, lesson recipes and grade rules live in `content/source/`. The rules that build cards and feats from them stay in code. Nothing in play changes.
 - **Attributes, derived stats and action costs are now editable data files** ([#2293](https://github.com/cehinds/AshenSpire/pull/2293), `0.7.1.1825`). Character attributes, creation modes, derived-stat rules and action-cost tunables live in `content/source/`. Nothing in play changes.
 - **Console output inside the combat log** ([#2284](https://github.com/cehinds/AshenSpire/pull/2284), `0.7.1.1823`). In Settings → General → Combat → Combat log, enable Console button in combat log (off by default). Open Combat log → Console to read, copy or export recent session output. Uncaught errors retain available file, line and trace details. Exports include build and device details; no saved game or profile is attached, and nothing is shared automatically.
