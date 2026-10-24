@@ -7,6 +7,10 @@ import { tooltipHelp } from './tooltipHelp.js';
 import { progressionGearRequirements } from './progression/gear.js';
 import { combatMatchups, combatIntent } from './combatMatchups.js';
 import { enemyKnowledgeTuning } from './enemyKnowledge.js';
+import { balanceLevels } from './generated/balanceLevels.js';
+import { balanceSmithing } from './generated/balanceSmithing.js';
+import { balanceAtlas } from './generated/balanceAtlas.js';
+import { balanceRest } from './generated/balanceRest.js';
 import { balanceShop } from './generated/balanceShop.js';
 import { balanceRewards } from './generated/balanceRewards.js';
 import { balanceTagMechanics } from './generated/balanceTagMechanics.js';
@@ -283,133 +287,13 @@ export const balance = {
 
   shop: balanceShop,
 
-  // WHAT A REST RESTORES is the location's tag set (plan phase 7): a place
-  // carries restHpSmall / restHpPartial / restHpFull and restMana, and each
-  // tag's rule reads its number here (variableBindings.csv). `mana.mode` is
-  // the default `restMana` behaviour, resolved at the door (engine/locations.js)
-  // to the fixed-mode tag it names:
-  //   flat         restore `flat` points
-  //   floorOrFull  restore TO `floorPct` of max, or to full when already there
-  //   full         restore to max
-  // A location that wants another amount carries restManaFlat / restManaFloor
-  // / restManaFull itself instead of restMana.
-  rest: {
-    hpSmallPct: 25,
-    hpPartialPct: 35,
-    mana: {
-      mode: 'floorOrFull', flat: 3, floorPct: 50,
-      [NOTE]: {
-        flat: 'Mana a flat-mode rest restores, as a fixed number of points.',
-        floorPct: 'The percent of max Mana a floor-mode rest tops you up TO. Already at or above it, you go to full instead.',
-      },
-    },
-    [NOTE]: {
-      hpSmallPct: 'Percent of max HP a rough camp\'s small rest hands back.',
-      hpPartialPct: 'Percent of max HP a shrine\'s rest hands back.',
-    },
-  },
+  rest: balanceRest,
 
-  // The seeded route's town budget (plan phase 7): at most this many towns —
-  // the atlas's start and city nodes — per difficulty act, so attrition
-  // between towns is the run's tension. generateJourney rejects a route over
-  // it and rolls again.
-  atlas: {
-    townsPerActMax: 1,
-    [NOTE]: {
-      townsPerActMax: 'The most towns — start and city nodes — a generated act may hold. A route over it is rejected and rolled again, so attrition between towns is the run\'s tension.',
-    },
-  },
+  atlas: balanceAtlas,
 
-  // Smithing promotes the owned armament, not one card copy. The model owns
-  // the transaction; balance owns the tier ceiling, price, and reward faucet.
-  smithing: {
-    // Item/tier costs, card changes, and requirement changes are authored in
-    // itemUpgradeChanges.csv. Balance owns only the reward faucet.
-    rewardByPool: {
-      normal: 0, elite: 1, boss: 1, treasure: 0,
-      [NOTE]: {
-        '{kind}': 'How many Smithing Stones {pool} pays out.',
-      },
-    },
-    // THE STONE DOOR'S CHANCE (SPEC §15.3). A stone reward is paid when the
-    // pool pays anything and this percent passes, rolled once per door on the
-    // `smith` stream. 100 is always and rolls nothing, so the shipped table
-    // pays exactly what it always did; 0 is never, and rolls nothing either.
-    rewardChancePct: {
-      normal: 100, elite: 100, boss: 100, treasure: 100,
-      [NOTE]: {
-        '{kind}': 'Percent chance {pool} pays its Smithing Stone reward, ordinary and refined alike. 100 is always and rolls nothing; 0 is never.',
-      },
-    },
-    // Refined stones as a drop — the crafting-material reward. Paid through
-    // the same door and the same chance as the ordinary stones above, into
-    // `run.smithingStonesRefined`. Shipped off everywhere. They are paid and
-    // shown only: spending them is §14.4's blacksmith (`refine.value`).
-    refinedRewardByPool: {
-      normal: 0, elite: 0, boss: 0, treasure: 0,
-      [NOTE]: {
-        '{kind}': 'How many Refined Smithing Stones {pool} pays out, through the same chance as its ordinary stones.',
-      },
-    },
+  smithing: balanceSmithing,
 
-    // THE SMITH'S SERVICES, AND WHO OFFERS THEM (owner ruling, 2026-09-03).
-    // A smith does three things: upgrade an item (the tier promotion above),
-    // EXTRACT a card from one of an item's mounts so it becomes the run's own,
-    // and INSTALL a run-owned card into an emptied or open mount. Which node
-    // kinds offer which services is this table — a merchant rolls `chance`
-    // once per visit on its own RNG stream, so adding the roll cannot shift
-    // what any later reward draws in an existing seed. 100 means always, no
-    // roll consumed; 0 means never.
-    services: {
-      offeredAt: {
-        shrine: { chance: 100, services: ['upgrade', 'extract', 'install'] },
-        merchant: { chance: 25, services: ['upgrade', 'extract', 'install'] },
-        [NOTE]: {
-          '{kind}.chance': 'Percent chance {pool} offers the smith\'s services on a visit. 100 is always and rolls nothing; 0 is never.',
-        },
-      },
-      // Priced in Smithing Stones, the same purse as an upgrade. Free by the
-      // owner's word, configurable because he said so in the same breath.
-      extract: { cost: 0 },
-      install: { cost: 0 },
-      [NOTE]: {
-        'extract.cost': 'Smithing Stones to pull a card out of an item\'s mount so it becomes the run\'s own.',
-        'install.cost': 'Smithing Stones to fit a run-owned card into an open or emptied mount.',
-      },
-    },
-  },
-
-  // ---- canonical hidden level semantics (#237) ---------------------------
-  //
-  // Player level begins at one authored value and advances once per shrine
-  // purchase (`run.levelUps`). `run.levelPoints` is deliberately absent from
-  // this rule: it records how many attribute points those purchases granted,
-  // and the configurable points-per-level dial means it is not a level count.
-  //
-  // Enemy bounds and act/floor target bands are authored by #238. The pure
-  // resolver in model/levels.js accepts those rows without activating them in
-  // encounter creation, saves, co-op, or the UI.
-  levels: {
-    playerStartingLevel: 1,
-    // Inert #238 content. The pure level planner consumes these coefficients
-    // only when a later activation story supplies a resolved enemy level.
-    // Every row states its rounding and hard result caps; hits, statuses,
-    // delays, phases, and move order are deliberately absent.
-    enemyScaling: {
-      hp: { perLevel: 2, rounding: 'round', min: 1, max: 9999 },
-      damage: { perLevel: 0.5, rounding: 'round', min: 0, max: 999 },
-      block: { perLevel: 0.5, rounding: 'round', min: 0, max: 999 },
-      poise: { perLevel: 1, rounding: 'round', min: 0, max: 999 },
-      [NOTE]: {
-        '{statId}.perLevel': { text: 'How much {stat} an enemy would gain per level of enemy level. Authored and not yet read: nothing resolves an enemy level, so moving this changes no fight today.', inert: true },
-        '{statId}.min': { text: 'The lowest {stat} that scaling may produce, whatever the level. Authored and not yet read: nothing resolves an enemy level, so moving this changes no fight today.', inert: true },
-        '{statId}.max': { text: 'The highest {stat} that scaling may produce, whatever the level. Authored and not yet read: nothing resolves an enemy level, so moving this changes no fight today.', inert: true },
-      },
-    },
-    [NOTE]: {
-      playerStartingLevel: { text: 'The character level a run would begin at. Authored and not yet read: the level planner that would consult it is called from nowhere, and a climb takes its level from the levels it has earned instead.', inert: true },
-    },
-  },
+  levels: balanceLevels,
 
   level: balanceCore.level,
   xp: {
