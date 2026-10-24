@@ -32,6 +32,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-24
+
+- **Unaffordable cards dim with their costs** ([#2276](https://github.com/cehinds/AshenSpire/pull/2276), `0.7.1.1806`). Lite mode shades the illustrated card body and dims its cost symbols and numbers, including the Stamina and Mana badges above the frame. The card face stays opaque so neighboring cards cannot show through, without blur or color filters.
+- **Published build verification** ([#2277](https://github.com/cehinds/AshenSpire/pull/2277), `0.7.1.1804`). Publication checks compare each primary channel's source, build version and page hash with the exact assembled site, including Test, before reporting success.
+
 ## 2026-10-23
 
 - **Adept copies and affordable enemy actions** ([#2265](https://github.com/cehinds/AshenSpire/pull/2265), `0.7.1.1802`). Collected Basics and Cantrips can be copied under the equipped Martial or Magic Adept class. Matching stances reduce the class's correct SP or MP cost. Enemy plans respect available Stamina, multi-hit minimums and range charges, and price follow-ups after their queued movement; preparations and reactions pay once. Active saved fights keep their previous action prices. Selected hand cards retain their Information control after a repaint.
