@@ -1014,8 +1014,6 @@ export const balance = {
 
   costs: balanceCosts,
   classTree: balanceClassTree,
-},
-
   powers: balancePowers,
   sigils: balanceSigils,
   equipment: {
