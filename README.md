@@ -58,20 +58,28 @@ for a red `deploy` job. Publication can lag source changes. For ZIPs, open a suc
 
 ## Screenshots
 
-Latest published Release candidate **0.7.1.1517**, captured 2026-10-15 UTC.
-[Play this exact build](https://cehinds.github.io/AshenSpire/release/1517/) · [Capture details](docs/preview/releases/0.7.1.1517/README.md).
+Latest published Release candidate **0.7.1.1784**, captured 2026-10-24 UTC.
+[Play this exact build](https://cehinds.github.io/AshenSpire/release/1784/) · [Capture details](docs/preview/releases/0.7.1.1784/README.md).
+Captures use the byte-identical local Release and its native showcase states.
 Dev/Test can contain newer features. Select an image to view its full size.
 
 | Create a character | Explore a route |
 | --- | --- |
-| ![Release 0.7.1.1517 character creation with four classes](docs/preview/releases/0.7.1.1517/creation.png) | ![Release 0.7.1.1517 map with a posed five-step route and encounter nodes](docs/preview/releases/0.7.1.1517/map.png) |
+| ![Release 0.7.1.1784 creation with two class choices, one locked](docs/preview/releases/0.7.1.1784/creation.png) | ![Release 0.7.1.1784 map with a posed five-step route and encounter nodes](docs/preview/releases/0.7.1.1784/map.png) |
 | **Fight with cards** | **Visit shops and improve equipment** |
-| ![Release 0.7.1.1517 combat with enemy intentions and cards in hand](docs/preview/releases/0.7.1.1517/combat.png) | ![Release 0.7.1.1517 merchant relics, equipment categories and services](docs/preview/releases/0.7.1.1517/shop.png) |
+| ![Release 0.7.1.1784 combat with enemy intentions and cards in hand](docs/preview/releases/0.7.1.1784/combat.png) | ![Release 0.7.1.1784 configured shop offers, costs and services](docs/preview/releases/0.7.1.1784/shop.png) |
+
+<details>
+<summary>Title screen</summary>
+
+![Release 0.7.1.1784 title after native Enter](docs/preview/releases/0.7.1.1784/title.png)
+
+</details>
 
 <details>
 <summary>Phone combat — 390 × 844</summary>
 
-![Release 0.7.1.1517 phone combat with enemy intentions, cards and turn controls](docs/preview/releases/0.7.1.1517/combat-phone.png)
+![Release 0.7.1.1784 phone combat with enemy intentions, cards and turn controls](docs/preview/releases/0.7.1.1784/combat-phone.png)
 
 </details>
 
