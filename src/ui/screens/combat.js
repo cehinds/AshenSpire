@@ -1208,7 +1208,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (plan) followPlans[e.id] = plan;
     }
     const handPreviews = new Map();
+    // Answering a reaction offer snapshots a hand that is inert until the turn resumes: its faces
+    // keep the quotes already painted instead of quoting every card again for each answer.
+    const paintedQuotes = combat.pendingReaction ? handPreviewCache.cards : null;
     for (const inst of combat.piles.hand) {
+      const painted = paintedQuotes?.get(inst.instanceId)?.plain?.pv;
+      if (painted) { handPreviews.set(inst.instanceId, painted); continue; }
       try { handPreviews.set(inst.instanceId, previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId))); } catch {}
     }
     return { ents, followPlans, hand: [...combat.piles.hand], handPreviews,
