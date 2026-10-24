@@ -347,3 +347,14 @@ The class-progression content under `src/content/progression/`. Flat top-level f
 ### Unlocks (progressionUnlockRows.json)
 
 `src/content/progression/unlocks.js` exports `progressionUnlocks`: the JSON rows (existing families rescheduled by the approved expansion catalog) followed by the item gates, which are derived in JS from the single gear requirements table (`progressionGearRequirements`, level above 0) and the ARMAMENTS table (`kind: "weapon"` for a weapon, `"armament"` otherwise). Edit a gear gate in progressionGearRequirements.json, not here.
+
+### Lessons (progressionLessonRecipes.json)
+
+`src/content/progression/lessons.js` exports `abilityCardUpdates`: one update per recipe row, derived in JS from the class card pools (`reaver`, `starseer`, `rogue`, `herald`), `cardExposure` and the grade maths (`lessonGrade`). Header comment: "Explicit shared lesson and cost-retune recipes. Existing school/status identity is preserved from the authored family; no class pool is broadened."
+
+Each row was a positional tuple `[id, source, default rank, exact Actions at rank 2, primary index, six authored primary values (or explicit grades)]` plus an options object; the comment on the table said "Conditional/secondary effects activate at 2." The tuple is now named fields:
+
+- **id** — the card id in a class pool. **abilityKind** — `spell` or `maneuver` (the old "source"). **abilityRank** — the default rank. **actionCost** — the exact Actions at rank 2. **primaryIndex** — which of the original card's effects is the primary one. **values** — the six authored per-rank primary values.
+- **grades** (optional) — six explicit grade profiles, used instead of `values`. They preserve the previous resolved resource prices and riders, and author the payoff of the paid entry spells and arts directly instead of letting a stronger effect buy another resource tax.
+- **alwaysRiders** (optional) — keep the non-primary effects at every rank (otherwise they start at rank 2).
+- **fixedGradeCosts** (optional) — `{ "<rank>": { actionCost, manaCost } }`. The `crimsonCleave` entry preserves the existing resolved grade-4 price after correcting Sweep area targeting.
