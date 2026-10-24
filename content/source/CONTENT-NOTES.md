@@ -343,3 +343,7 @@ The class-progression content under `src/content/progression/`. Flat top-level f
 ### Feats (progressionFeatRows.json, progressionFeatUnlocks.json)
 
 `src/content/progression/feats.js` keeps `progressionFeats` and `progressionFeatUnlocks` (both frozen) and builds them from the generated rows. Header comment: "Fifty class feats. Their descriptions and effects share normalized balance bindings." The rows hold id, skill, minimum level and name only; each feat's `description` is derived in JS by `getFeatDescription` from balance, property rules, tagging and the variable bindings, so it stays code. The unlock rows (`kind: "feat"`) are the class-level gates.
+
+### Unlocks (progressionUnlockRows.json)
+
+`src/content/progression/unlocks.js` exports `progressionUnlocks`: the JSON rows (existing families rescheduled by the approved expansion catalog) followed by the item gates, which are derived in JS from the single gear requirements table (`progressionGearRequirements`, level above 0) and the ARMAMENTS table (`kind: "weapon"` for a weapon, `"armament"` otherwise). Edit a gear gate in progressionGearRequirements.json, not here.
