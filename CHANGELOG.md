@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-24
 
-- **Published build verification** ([#2277](https://github.com/cehinds/AshenSpire/pull/2277), `0.7.1.1802`). Publication checks compare each primary channel's source, build version and page hash with the exact assembled site, including Test, before reporting success.
+- **Published build verification** ([#2277](https://github.com/cehinds/AshenSpire/pull/2277), `0.7.1.1804`). Publication checks compare each primary channel's source, build version and page hash with the exact assembled site, including Test, before reporting success.
 
 ## 2026-10-23
 
