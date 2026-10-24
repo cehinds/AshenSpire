@@ -325,3 +325,21 @@ classes are UI display data, exported separately and NOT part of the bundle).
 Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for
 these ids are engine primitives (card-zone/turn rules that cannot be data); this
 registry supplies only what tooltips show.
+
+## Companions
+
+Temporary companions (SPEC §14.3). A companion travels with the run for `combats` fights, held in
+`run.companions` as { id, combatsLeft }; `combatsLeft` drops by one at each combat end
+(engine/runCombat.js runCombatEnd) and it leaves at 0. One of each at a time: the market never offers
+one already travelling.
+
+WHAT IT DOES IS NOT WRITTEN HERE (Codex on #1376; coordinator ruling). A companion's effect is a
+property rule, as a relic's and a location's are: its `family = companion` rows in
+content/source/tagging.csv name leaves under the `companion` branch of `property` in nodes.csv, whose
+rules live in nodeEffects.json with their numbers bound to balance.powers.*. stampTags derives
+`propertyTags`, and the fight mounts it as a `companion` carrier (engine/properties.js
+syncCompanionProperties). validateContent refuses a row that writes `triggers` or `modifiers`, and one
+with no property tag.
+
+`cost` and `combats` are defaults, each with a note (`$note`): Settings > Advanced > Shops generates
+`gameConfig.companions.<id>.<key>` for them.

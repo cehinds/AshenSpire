@@ -1,0 +1,24 @@
+[
+  {
+    "id": "hollowSquire",
+    "name": "Hollow Squire",
+    "blurb": "A squire without a knight. It raises a shield before you at the start of each fight.",
+    "cost": 220,
+    "combats": 3,
+    "$note": {
+      "cost": "What this companion costs at the market, in cinders.",
+      "combats": "How many fights this companion travels with you before it leaves."
+    }
+  },
+  {
+    "id": "emberHound",
+    "name": "Ember Hound",
+    "blurb": "A hound of banked coals. It bites at your foes as each of your turns begins.",
+    "cost": 260,
+    "combats": 3,
+    "$note": {
+      "cost": "What this companion costs at the market, in cinders.",
+      "combats": "How many fights this companion travels with you before it leaves."
+    }
+  }
+]
