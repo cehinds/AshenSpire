@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-24
 
-- **Original class and map symbols** ([#2279](https://github.com/cehinds/AshenSpire/pull/2279), `0.7.1.1806`). Class choices again show crossed swords, a comet, a dagger and the sun. Map locations recover their original symbols and their type, reachable and current-location colors. Readable icon names remain in the content files; custom icons and saved sigil aliases keep their existing behavior.
+- **Original class and map symbols** ([#2279](https://github.com/cehinds/AshenSpire/pull/2279), `0.7.1.1808`). Class choices again show crossed swords, a comet, a dagger and the sun. Map locations recover their original symbols and their type, reachable and current-location colors. Readable icon names remain in the content files; custom icons and saved sigil aliases keep their existing behavior.
+- **Faster hand and reaction prompts on phones** ([#2280](https://github.com/cehinds/AshenSpire/pull/2280), `0.7.1.1808`). Selecting and playing cards does less layout work, the health and intent markers stop redrawing when nothing moves, and ending your turn with reactions on opens each reaction prompt faster and redraws the hand less while it waits for your choice.
 - **Unaffordable cards dim with their costs** ([#2276](https://github.com/cehinds/AshenSpire/pull/2276), `0.7.1.1806`). Lite mode shades the illustrated card body and dims its cost symbols and numbers, including the Stamina and Mana badges above the frame. The card face stays opaque so neighboring cards cannot show through, without blur or color filters.
 - **Published build verification** ([#2277](https://github.com/cehinds/AshenSpire/pull/2277), `0.7.1.1804`). Publication checks compare each primary channel's source, build version and page hash with the exact assembled site, including Test, before reporting success.
 

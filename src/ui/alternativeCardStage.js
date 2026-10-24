@@ -215,6 +215,8 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   const ready=preload();
   return Object.freeze({ el, ready, ownsMotion:true, animationSetId:'class-cards-'+classId,
     poses:[...Object.keys(family.frames),...Object.keys(family.sequences),'idle','guard','hit','defeated','cast','power'],
+    // True while an action, reaction or hit-stop hold is running: the body may be paused yet about to move again.
+    get busy(){return !!playing||flashAt!==null||!!bodyReaction||holdUntil>performance.now();},
     get pose(){return pose;},
     get currentArt(){return currentArt;},
     get rest(){return rest;},
