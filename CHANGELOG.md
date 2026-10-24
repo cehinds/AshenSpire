@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-24
 
-- **Unaffordable cards dim with their costs** ([#2276](https://github.com/cehinds/AshenSpire/pull/2276), `0.7.1.1804`). Lite mode dims the whole illustrated card together with its Stamina and Mana badges, including the parts above the frame. The dim cue preserves the artwork and symbols without blur or color filters.
+- **Unaffordable cards dim with their costs** ([#2276](https://github.com/cehinds/AshenSpire/pull/2276), `0.7.1.1804`). Lite mode shades the illustrated card body and dims its cost symbols and numbers, including the Stamina and Mana badges above the frame. The card face stays opaque so neighboring cards cannot show through, without blur or color filters.
 - **Published build verification** ([#2277](https://github.com/cehinds/AshenSpire/pull/2277), `0.7.1.1804`). Publication checks compare each primary channel's source, build version and page hash with the exact assembled site, including Test, before reporting success.
 
 ## 2026-10-23
