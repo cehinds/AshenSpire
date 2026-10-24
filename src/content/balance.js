@@ -7,6 +7,7 @@ import { tooltipHelp } from './tooltipHelp.js';
 import { progressionGearRequirements } from './progression/gear.js';
 import { combatMatchups, combatIntent } from './combatMatchups.js';
 import { enemyKnowledgeTuning } from './enemyKnowledge.js';
+import { balanceCore } from './generated/balanceCore.js';
 
 // ---- WHAT EACH NUMBER DOES, WRITTEN BESIDE IT (owner, 2026-09-23) ----------
 //
@@ -321,39 +322,14 @@ export const balance = {
       buildupPerManaSpell: 'The least Arcane Exposure a card that costs Mana must build per hit, so a Mana spell always works toward a break faster than an action-only one.',
     },
   },
-  energy: 3,
-  draw: 5,
-  // (`handMax` retired in ruleset 7: every fight's hand size is the
-  // derivedStatRules `handSize` row; validate.js refuses it by name.)
-  // Crimson/Azure are charge pools sharing this fixed capacity. Utility
-  // consumables remain inventory items and use flaskSlots independently.
-  flaskCapacity: 3,
-  // The approved base is three (owner, 2026-09-24; four before); future unlocks may still grow the total. The
-  // first live growth rung is data: Golden Sprout
-  // is the Golden Seed homage, and carrying it grows the pool by one Crimson
-  // charge. One row, amount 1, deliberately modest — the M3 balance pass owns
-  // the number, and a retune is this row, nothing else: the tooltip clause
-  // derives (flaskGrowthClause), the capacity derives (syncFlaskGrowth), the
-  // corpus derives its expectations (tools/flaskgrowth.mjs). Schema and
-  // refusals: model/flaskgrowth.js.
-  flaskGrowth: [
-    { source: 'relic', id: 'goldenSprout', kind: 'hp', amount: 1 },
-  ],
-  flaskSlots: 3,
-  startingCinders: 20,
-  // 11 since plan phase 5a: the class ability card joins the kit beside the
-  // signature (roleCopies.ability below; the composed plan grants it first).
-  startingDeckSize: 11,
-  [NOTE]: {
-    energy: { text: 'The authored actions a turn starts with, and nothing reads it: a run derives Actions from Dexterity, and Stats → Actions is where they are set. It survives because the engine still spells actions "energy" — that rename is its own piece of work.', inert: true },
-    draw: { text: 'The authored cards drawn each turn, and nothing reads it: a run derives Draw from its Draw / turn stat row, and Stats → Draw & hand is where it is set.', inert: true },
-    flaskCapacity: 'Crimson and Azure charges a run carries between them, before any growth row adds to it. They share this one pool, and each class\'s HP and Mana flasks (Progression › the class) must add up to it; if they do not, the whole Advanced configuration is set aside and authored defaults are used.',
-    flaskSlots: 'Inventory slots for utility consumables. Separate from flask charges, which have their own capacity above.',
-    startingCinders: 'Cinders a new run opens with.',
-    startingDeckSize: 'How many cards a new character\'s deck holds, the class ability and signature included.',
-    graceRefillAtRunStart: { text: 'A retired flag: it once refilled flask charges the moment a run started, as though a grace had already been touched. Nothing reads it now.', inert: true },
-    'flaskGrowth.{i}.amount': 'How many extra {flaskKind} flask charges carrying {carrier} adds to the run\'s capacity.',
-  },
+  energy: balanceCore.energy,
+  draw: balanceCore.draw,
+  flaskCapacity: balanceCore.flaskCapacity,
+  flaskGrowth: balanceCore.flaskGrowth,
+  flaskSlots: balanceCore.flaskSlots,
+  startingCinders: balanceCore.startingCinders,
+  startingDeckSize: balanceCore.startingDeckSize,
+  [NOTE]: balanceCore[NOTE],
 
   // Engine-consulted poise config (see ENGINE-API §1). onFill is where content
   // defines what "Staggered" means — the engine never names the status.
@@ -812,60 +788,7 @@ export const balance = {
     },
   },
 
-  // ---- levelling at a shrine (Constantine, D10 wave 1 + E13) ----------------
-  //
-  // His words, and the whole feature is in them:
-  //
-  //   "also at graces, players should have the option to level up their
-  //    character (per run) by trading cinders to level up. at level up they may
-  //    increase a stat by 1 point."
-  //   "rest sites become where you level, cinders spent past a threshold — 1
-  //    stat point per level, 10–20 level-ups a run, scalable."   (E13)
-  //
-  // FOUR NUMBERS AND NOTHING ELSE, because the rest is derived (Law 0 clause 1):
-  // which attributes may be raised is `content/attributes.js` — adding a sixth
-  // attribute puts a sixth button on the shrine with no UI edit, and that is
-  // this feature's Law 0 falsifier. What a point is WORTH is
-  // `content/derivedStats.js`, already: a CON point is +1 HP per five, a WIS
-  // point is Mana. Nothing about the value of a level is authored here.
-  //
-  //   pointsPerLevel  "they may increase a stat by 1 point". His number —
-  //               what a level GRANTS to the ledger (balance.levelUp below).
-  //   maxLevels   null = no ceiling. His range is an ECONOMY, not a cap.
-  //
-  // The cinder ladder that sat here (firstCost / costStep, "cinders spent
-  // past a threshold, scalable", measured at 20+4 and again at 50+10 against
-  // the tripled faucet) is GONE with plan phase 6: a level is earned, below.
-  //
-  // THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): a win pays
-  // defeated-enemy combat power × 25 × 0.2, kills pay 10 × 0.2 × enemy level,
-  // and the first step costs 100 XP, each later one ×1.75 (owner, 2026-10-02).
-  // Settings → Progression → Experience previews the same configured curve
-  // and awards the run uses. The existing per-award level cap remains separate.
-  // Cinders buy no level any more: the ladder that sat here (firstCost /
-  // costStep, measured twice) is gone with the purse.
-  level: {
-    xp: {
-      base: 200, linear: false, multScaler: 1.3, growth: 1.303, roundTo: 10,
-      [NOTE]: {
-        base: 'Character XP for the first step and the base used for later increases.',
-        linear: 'Use base + (level − 1) × base × scaler. Off: use base × exponential growth^(level − 1).',
-        multScaler: 'Linear increase per character level as a multiple of the base, used only when the linear curve is on. At base 100 and scaler 1.3: 100, 230, 360 XP.',
-        growth: 'Exponential character-step growth, used only when the linear curve is off.',
-        roundTo: 'The character level curve: every step cost is rounded to a multiple of this.',
-      },
-    },
-    // THE LEVELLING CAP (SPEC §15.2). 0 is no cap, as shipped. Above 0, one
-    // award (a fight's XP, or a quest's) never raises the level by more than
-    // this, and the XP past the cap is DISCARDED: the ledger keeps at most one
-    // XP short of the next step, so the progress bar never reads past full.
-    maxLevelsPerFight: 0,
-    [NOTE]: {
-      maxLevelsPerFight: 'The most character levels one fight or quest can raise you; 0 is no cap. XP past the cap is lost, leaving you just short of the next level.',
-    },
-    // The maxima bump cadence is authored on the derived-stat rows that carry
-    // it (content/derivedStats.js `perLevel`), where the snapshot keeps it.
-  },
+  level: balanceCore.level,
   xp: {
     combatWin: 25,
     kill: {
@@ -915,12 +838,8 @@ export const balance = {
     },
   },
 
-  // ---- what a grace hands back ----------------------------------------------
-  // Grace refills the current Crimson/Azure counts to the allocation stored on
-  // the run. The allocation may be redistributed but always sums to capacity.
-  // This legacy table remains empty so old debug readers fail harmlessly.
-  graceRefill: [],
-  graceRefillAtRunStart: true,
+  graceRefill: balanceCore.graceRefill,
+  graceRefillAtRunStart: balanceCore.graceRefillAtRunStart,
 
   // Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
   // `unknownNode` MOVED to mapConfigs[act].unknownWeights (EldenSpire#43-adjacent,

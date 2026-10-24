@@ -319,3 +319,139 @@ File header: class definitions (SPEC section 5.1). Only the Reaver registered in
 classes are UI display data, exported separately and NOT part of the bundle).
 
 - **cardPool** — each class's list was grouped by rarity with comments. In order: Commons, Uncommons, Rares. Reaver: Commons start at `crimsonCleave`, Uncommons at `stomp`, Rares at `executioner`. Starseer: Commons start at `cometFragment`, Uncommons at `starstoneArc`, Rares at `supernova` (the group runs to `riteOfCinders`, the end of its list). Rogue's list carried no rarity comments. Herald: Commons start at `bloodPact`, Uncommons at `martyrBlood`, Rares at `secondBloom`. A card's rarity is authoritative in its card row (content/source/cards/*.json), not by position in this list.
+
+## Balance (content/source/balance*.json)
+
+The global tuning numbers (SPEC §3.1(4)) are JSON, one file per top-level key of
+`balance`, named `content/source/balance<Key>.json` (`balanceShop.json`,
+`balanceSmithing.json`, ...). `tools/content-build.mjs` compiles each to
+`src/content/generated/balance<Key>.js`, and `src/content/balance.js` imports
+those parts and reassembles `balance` in the original key order. The module
+everyone imports is still `src/content/balance.js` (exports `NOTE`, `balance`,
+`balanceWords`). Edit the number in its JSON file, run `node tools/content-build.mjs`,
+and commit the regenerated module beside it.
+
+`balanceCore.json` holds the small scalar keys that would otherwise be one-line
+files (`energy`, `draw`, `flaskCapacity`, `flaskGrowth`, `flaskSlots`,
+`startingCinders`, `startingDeckSize`, `level`, `graceRefill`,
+`graceRefillAtRunStart`) and the `$note` for those scalars.
+
+What stays in `balance.js`, and why (code, not data):
+
+- `combatMatchups`, `combatIntent` and `enemyKnowledge` come from their own modules.
+- `balanceWords` is the frozen vocabulary the note blanks are filled from.
+- `damage`: the card-value rule is one template used for five card kinds, and its
+  `statusMultipliers` roster is derived from `expansionStatuses` (no second
+  hand-maintained roster). Its comments stay beside the code.
+- `progression`: the numbers are JSON, but `gearRequirements` is the shared
+  `progression/gear.js` table and the `[NOTE]` sentences for its rows are computed
+  from it, so `balance.js` stitches those two pieces in.
+- `ui.tooltipPlacement.hoverDelayMs` is derived from the tooltip settings table; the
+  rest of `ui` is JSON.
+
+JSON has no comments, so the comments that sat beside the numbers in the old
+`balance.js` are kept below, one subsection per file, under the key they
+described. Paths are relative to the file's object. Keep a note under its key
+when you change one.
+
+### How a `[NOTE]` is written (old balance.js header, owner, 2026-09-23)
+
+What each number does, written beside it.
+
+Every object below carries a `[NOTE]` block beside its own numbers: the
+sentence Settings → Advanced shows under each row. They lived in
+model/balanceNotes.js until the owner asked for them here, and the reason
+is the one this file's header gives for the numbers — a description kept in
+a second file drifts from the number it describes, because nobody editing
+the number sees it. Two of the sentences reviewed in #1243 had been copied
+from a comment in this file that the code had since outgrown.
+
+THE KEY IS A SYMBOL, and that is what lets a sentence sit inside an object
+the engine reads as numbers. `Object.keys`, `Object.entries`, JSON and
+structuredClone all skip it, so `validate.js`'s unknown-field checks,
+model/advancedConfig.js's `leafRows` and every engine reader walk past it:
+`balance.shop.sellFraction` is still 0.5 and `balance.shop` still has the
+keys it had. `Symbol.for`, so a second copy of this module shares the key.
+
+HOW TO WRITE ONE. A key names a number by its path under the object that
+holds the block:
+
+  sellFraction: 'What the merchant pays …'           this one number
+  '{kind}Cost.{rarity}.{end}': 'The {band} of …'     every number of a family
+  '{statId}.perLevel': { text: '…', inert: true }    a number nothing reads
+
+`{name}` in a key captures a path segment. In a sentence, `{name}` is a
+blank model/balanceNotes.js fills with a NAME — a relic's from the relic, a
+class's from the class — and `{a name}` fills it with its article too.
+Nothing there writes prose; the phrases it picks between are `balanceWords`
+below. Every note but an inert one ends with `balanceWords.newRun`; an
+inert one says nothing reads it, and does not then promise to apply.
+
+A number with no note falls back to "Authored balance value: <path>", and
+tests/advanced-config.test.mjs fails on it. So does a note naming a number
+that is not here, which is what keeps a sentence and its number together:
+rename the number without moving its sentence and the test says so.
+
+In JSON the symbol key is the string key `"$note"`, written last in its object
+with the same value shape the symbol holds. `src/content/noteKeys.js`
+(`withNotes`) turns every `"$note"` back into the `NOTE` symbol when the
+generated module loads; `balance.js` still exports `NOTE` for the readers.
+
+### balanceCore.json — energy, draw, flaskCapacity, flaskGrowth, flaskSlots, startingCinders, startingDeckSize, level, graceRefill, graceRefillAtRunStart
+
+- **`flaskCapacity`** — (`handMax` retired in ruleset 7: every fight's hand size is the
+  derivedStatRules `handSize` row; validate.js refuses it by name.)
+  Crimson/Azure are charge pools sharing this fixed capacity. Utility
+  consumables remain inventory items and use flaskSlots independently.
+- **`flaskGrowth`** — The approved base is three (owner, 2026-09-24; four before); future unlocks may still grow the total. The
+  first live growth rung is data: Golden Sprout
+  is the Golden Seed homage, and carrying it grows the pool by one Crimson
+  charge. One row, amount 1, deliberately modest — the M3 balance pass owns
+  the number, and a retune is this row, nothing else: the tooltip clause
+  derives (flaskGrowthClause), the capacity derives (syncFlaskGrowth), the
+  corpus derives its expectations (tools/flaskgrowth.mjs). Schema and
+  refusals: model/flaskgrowth.js.
+- **`startingDeckSize`** — 11 since plan phase 5a: the class ability card joins the kit beside the
+  signature (roleCopies.ability below; the composed plan grants it first).
+- **`level`** — ---- levelling at a shrine (Constantine, D10 wave 1 + E13) ----------------
+  
+  His words, and the whole feature is in them:
+  
+    "also at graces, players should have the option to level up their
+     character (per run) by trading cinders to level up. at level up they may
+     increase a stat by 1 point."
+    "rest sites become where you level, cinders spent past a threshold — 1
+     stat point per level, 10–20 level-ups a run, scalable."   (E13)
+  
+  FOUR NUMBERS AND NOTHING ELSE, because the rest is derived (Law 0 clause 1):
+  which attributes may be raised is `content/attributes.js` — adding a sixth
+  attribute puts a sixth button on the shrine with no UI edit, and that is
+  this feature's Law 0 falsifier. What a point is WORTH is
+  `content/derivedStats.js`, already: a CON point is +1 HP per five, a WIS
+  point is Mana. Nothing about the value of a level is authored here.
+  
+    pointsPerLevel  "they may increase a stat by 1 point". His number —
+                what a level GRANTS to the ledger (balance.levelUp below).
+    maxLevels   null = no ceiling. His range is an ECONOMY, not a cap.
+  
+  The cinder ladder that sat here (firstCost / costStep, "cinders spent
+  past a threshold, scalable", measured at 20+4 and again at 50+10 against
+  the tripled faucet) is GONE with plan phase 6: a level is earned, below.
+  
+  THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): a win pays
+  defeated-enemy combat power × 25 × 0.2, kills pay 10 × 0.2 × enemy level,
+  and the first step costs 100 XP, each later one ×1.75 (owner, 2026-10-02).
+  Settings → Progression → Experience previews the same configured curve
+  and awards the run uses. The existing per-award level cap remains separate.
+  Cinders buy no level any more: the ladder that sat here (firstCost /
+  costStep, measured twice) is gone with the purse.
+- **`level.maxLevelsPerFight`** — THE LEVELLING CAP (SPEC §15.2). 0 is no cap, as shipped. Above 0, one
+  award (a fight's XP, or a quest's) never raises the level by more than
+  this, and the XP past the cap is DISCARDED: the ledger keeps at most one
+  XP short of the next step, so the progress bar never reads past full.
+- **` (end of block)`** — The maxima bump cadence is authored on the derived-stat rows that carry
+  it (content/derivedStats.js `perLevel`), where the snapshot keeps it.
+- **`graceRefill`** — ---- what a grace hands back ----------------------------------------------
+  Grace refills the current Crimson/Azure counts to the allocation stored on
+  the run. The allocation may be redistributed but always sums to capacity.
+  This legacy table remains empty so old debug readers fail harmlessly.
