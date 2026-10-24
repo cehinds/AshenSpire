@@ -3,5 +3,6 @@
 // src/content/generated/progressionRelics.js and progressionRelicUnlocks.js. Edit the JSON, not this file.
 // Relic definitions and gates are one independently installable module.
 // The whole module is data, so it only re-exports the generated rows.
-export { progressionRelics } from '../generated/progressionRelics.js';
-export { progressionRelicUnlocks } from '../generated/progressionRelicUnlocks.js';
+import { progressionRelics } from '../generated/progressionRelics.js';
+import { progressionRelicUnlocks } from '../generated/progressionRelicUnlocks.js';
+export { progressionRelics, progressionRelicUnlocks };
