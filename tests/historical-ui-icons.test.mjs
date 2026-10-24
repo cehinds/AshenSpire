@@ -26,9 +26,13 @@ test('DOM, HTML and kit slots display actual glyphs inside the existing icon box
     assert.equal(text.textContent,char);
     assert.equal(text.namespaceURI,'http://www.w3.org/2000/svg');
     assert.equal(text.getAttribute('fill'),'currentColor');
+    assert.equal(text.getAttribute('font-family'),null,'DOM keeps the original inherited UI font');
+    assert.equal(text.getAttribute('x'),'32');assert.equal(text.getAttribute('y'),'32');
+    assert.equal(node.querySelector('svg').getAttribute('viewBox'),'-2 -2 68 68');
     assert.equal(node.querySelector('svg').getAttribute('width'),'100%');
     assert.equal(node.querySelector('svg').getAttribute('height'),'100%');
     assert.ok(engravedIconHtml(id).includes(`>${char}</text>`));
+    assert.doesNotMatch(engravedIconHtml(id),/font-family=/,'HTML keeps the original inherited UI font');
     const slot = glyph(id);
     assert.equal(slot.querySelector('text').textContent,char);
     // The lightweight DOM fixture serializes an SVG text element as its text.
@@ -41,8 +45,11 @@ test('URL-only class consumers receive fixed-whitelist escaped SVGs with explici
   for (const [id,char] of Object.entries(original)) {
     const url=engravedIconUrl(id);assert.ok(url.startsWith('data:image/svg+xml;charset=utf-8,'));
     const svg=decodeURIComponent(url.slice(url.indexOf(',')+1));
-    assert.ok(svg.includes(`>${char}</text>`));assert.match(svg,/viewBox="0 0 64 64"/);
-    assert.match(svg,/fill="#d8b976"/);assert.match(svg,/font-size="46"/);assert.doesNotMatch(svg,/currentColor|<script|href=/);
+    assert.ok(svg.includes(`>${char}</text>`));assert.match(svg,/viewBox="-2 -2 68 68"/);
+    assert.match(svg,/fill="#d8b976"/);
+    assert.match(svg,/font-family="&quot;Inter&quot;, &quot;Segoe UI&quot;/);
+    assert.ok(svg.includes('&quot;Noto Color Emoji&quot;'));
+    assert.match(svg,/x="32" y="32"/);assert.match(svg,/font-size="46"/);assert.doesNotMatch(svg,/currentColor|<script|href=/);
   }
   assert.ok(engravedIconUrl('progression').endsWith('/progression.svg'));
 });
@@ -86,4 +93,14 @@ test('map faces and legend/atlas icon slots share original glyphs while keeping 
     NODE_TYPES.monster.icon='\u2600';assert.match(mapNodeInk({type:'monster',radius:21}),/<image[^>]+madness\.svg/);
     NODE_TYPES.monster.icon='historic-sun<script>';assert.match(mapNodeInk({type:'monster',radius:21}),/>\?<\/text>/);assert.doesNotMatch(mapNodeInk({type:'monster',radius:21}),/<script/);
   }finally{NODE_TYPES.monster.icon=saved;}
+});
+
+// Bounds captured by the failed source445 phone QA, not a geometry mock.
+test('centered padded SVG fits the observed original UI-font metric boxes without relaxing the gate', () => {
+  const observed=[{x:3.2941176891326904,y:2,width:60.235294342041016,height:64},{x:3.2941176891326904,y:2.20915,width:60.235294342041016,height:63.5817}];
+  for(const box of observed){
+    const y=box.y-2; // source text anchor moves34 ->32; font and outer slots stay unchanged
+    assert.ok(box.y+box.height>64,'the original64px source failed its strict gate');
+    assert.ok(box.x>=-2&&y>=-2&&box.x+box.width<=66&&y+box.height<=66,'new68px frame contains actual failed-font metrics');
+  }
 });

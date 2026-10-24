@@ -12,7 +12,7 @@ export function engravedGlyphId(char) { return uiIconId(char); }
 export function engravedIconUrl(id) {
   const resolved = engravedIconId(id);
   const glyph = uiIconGlyph(resolved);
-  if (glyph) return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(glyphSvgHtml(glyph, '#d8b976'));
+  if (glyph) return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(glyphSvgHtml(glyph, '#d8b976', URL_GLYPH_FONT_FAMILY));
   return resolved ? assetUrl(`assets/player-polish/ui/icons/${resolved}.svg`) : null;
 }
 // Both tiers carry identical vectors. Keep the exporter-inlined CSS mask so
@@ -28,11 +28,15 @@ const htmlAttribute = (value) => value.replace(/&/g, '&amp;').replace(/"/g, '&qu
 // Only fixed registered glyphs enter SVG markup; arbitrary overrides remain
 // on the existing named-vector/fallback path. URL consumers need an explicit
 // fill because currentColor cannot inherit through an SVG <image> or <img>.
-const GLYPH_SVG_ATTRS = Object.freeze({ viewBox: '0 0 64 64', width: '100%', height: '100%', 'aria-hidden': 'true' });
-const GLYPH_TEXT_ATTRS = Object.freeze({ x: '32', y: '34', 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': '46', 'font-family': 'Georgia, Segoe UI Symbol, Noto Sans Symbols 2, serif' });
+const GLYPH_SVG_ATTRS = Object.freeze({ viewBox: '-2 -2 68 68', width: '100%', height: '100%', 'aria-hidden': 'true' });
+const GLYPH_TEXT_ATTRS = Object.freeze({ x: '32', y: '32', 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': '46' });
+// In-document glyphs inherit the existing UI font and its original symbol
+// fallback. Standalone SVG images cannot inherit that stack from their caller.
+const URL_GLYPH_FONT_FAMILY = '"Inter", "Segoe UI", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", sans-serif';
 const svgAttrs = (attrs) => Object.entries(attrs).map(([key, value]) => `${key}="${htmlAttribute(value)}"`).join(' ');
-function glyphSvgHtml(glyph, fill) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" ${svgAttrs(GLYPH_SVG_ATTRS)}><text ${svgAttrs({ ...GLYPH_TEXT_ATTRS, fill })}>${htmlAttribute(glyph)}</text></svg>`;
+function glyphSvgHtml(glyph, fill, family = null) {
+  const attrs = { ...GLYPH_TEXT_ATTRS, fill, ...(family ? { 'font-family': family } : {}) };
+  return `<svg xmlns="http://www.w3.org/2000/svg" ${svgAttrs(GLYPH_SVG_ATTRS)}><text ${svgAttrs(attrs)}>${htmlAttribute(glyph)}</text></svg>`;
 }
 function appendGlyphSvg(node, glyph) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
