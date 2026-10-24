@@ -829,7 +829,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }),
       disabled: busy || enemyPlayback || combat.phase !== 'player' || !!combat.result,
       onActivate: id => {
-        if (busy || combat.phase !== 'player' || combat.result || !pendingTargetPlan().legalIds.includes(id)) return;
+        if (busy || combat.phase !== 'player' || combat.result || !pendingTargetPlan().legalIds.includes(id)) {
+          if (selected || selectedFlask != null) dlog('ignored', `target picker ${id}`, busy ? 'busy' : combat.result ? 'combat over' : combat.phase !== 'player' ? `phase ${combat.phase}` : 'not a legal target');
+          return;
+        }
         if (selected) playCard(selected, id);
         else if (selectedFlask != null) useFlask(selectedFlask, id);
       },
@@ -1463,7 +1466,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (busy || enemyPlayback || combat.result || combat.phase !== 'player'
         || combat.pendingReaction || hasCardChoice(combat) || veilIsOpen()
         || !(selected || selfArm || selectedFlask != null)
-        || !pendingTargetPlan().legalIds.includes(id)) return;
+        || !pendingTargetPlan().legalIds.includes(id)) {
+      if (selected || selfArm || selectedFlask != null) {
+        const why = busy ? 'busy' : enemyPlayback ? 'enemy playback' : combat.result ? 'combat over' : combat.phase !== 'player' ? `phase ${combat.phase}`
+          : combat.pendingReaction ? 'pending reaction' : hasCardChoice(combat) ? 'pending card choice' : veilIsOpen() ? 'veil open' : 'not a legal target';
+        dlog('ignored', `target hud ${id}`, why);
+      }
+      return;
+    }
     if (selected) playCard(selected, id);
     else if (selfArm) playCard(selfArm, null);
     else if (selectedFlask != null) useFlask(selectedFlask, id);
@@ -2134,7 +2144,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         unknownDetail: t('combat.targetHud.unknown') });
       return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
     }, registries, { onTarget: () => {
-      if (busy || !getEntity(combat, enemy.id)?.alive || selfArm) return false;
+      if (busy || !getEntity(combat, enemy.id)?.alive || selfArm) {
+        if (selected || selectedFlask != null) dlog('ignored', `intent tap ${enemy.id}`, busy ? 'busy' : selfArm ? 'self-armed card' : 'dead target');
+        return false;
+      }
       if (selected) { playCard(selected, enemy.id); return true; }
       if (selectedFlask != null) { useFlask(selectedFlask, enemy.id); return true; }
       selectCombatant(enemy.id);
@@ -2186,7 +2199,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }
       const openThisRead = (event) => {
         event.stopPropagation();
-        if (!getEntity(combat, enemy.id)?.alive) return;
+        if (!getEntity(combat, enemy.id)?.alive) {
+          if (selected || selectedFlask != null) dlog('ignored', `enemy name tap ${enemy.id}`, 'dead target');
+          return;
+        }
         if (selected) playCard(selected, enemy.id);
         else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
         else openCombatantDoor(combatantSubject('enemy', enemy), nm);
@@ -2214,12 +2230,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         wireCombatantContext(box, def.name);
         box.addEventListener('click', (event) => {
           event.stopPropagation();
-          if (!getEntity(combat, enemy.id)?.alive) return;
+          if (!getEntity(combat, enemy.id)?.alive) {
+            if (selected || selectedFlask != null) dlog('ignored', `enemy tap ${enemy.id}`, 'dead target');
+            return;
+          }
           if (selected) playCard(selected, enemy.id);
           else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
           else if (!selfArm) {
             selectCombatant(enemy.id);
-          }
+          } else dlog('ignored', `enemy tap ${enemy.id}`, 'self-armed card');
         });
         box.addEventListener('pointerenter', () => getEntity(combat, enemy.id)?.alive && (selected || selectedFlask != null)
           && pendingTargetPlan().legalIds.includes(enemy.id) && box.classList.add('hover-target'));
@@ -2824,7 +2843,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
     const confirm = () => {
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-      if (busy || dragging) return;
+      if (busy || dragging) { dlog('ignored', 'card tap', busy ? 'busy' : 'dragging'); return; }
       if (!affordable) { if (rangeSelectable) select(); return; }
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
       play();
@@ -2832,7 +2851,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const tap = () => {
       // A queued card is taken back before the affordable check: `affordable` reads the energy left after queueing.
       if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
-      if (busy || dragging) return;
+      if (busy || dragging) { dlog('ignored', 'card tap', busy ? 'busy' : 'dragging'); return; }
       if (!affordable) {
         if (rangeSelectable) { select(); return; }
         const reasons = [];
@@ -2890,6 +2909,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // Pointer capture can retarget a card's trailing touch click to its hand
     // after pointerup lifts the selected card. That is still a card gesture.
     if (event.target.closest('.combatant, button, .hand, .card, .as-tip, .modal, input, [data-combat-read-only]')) return;
+    if (selected || selfArm || selectedFlask != null) {
+      const tgt = event.target;
+      dlog('input', 'selection cleared', `${tgt.tagName ? tgt.tagName.toLowerCase() : '?'}${typeof tgt.className === 'string' && tgt.className ? '.' + tgt.className.trim().split(/\s+/)[0] : ''}`);
+    }
     selected = null; selfArm = null; selectedFlask = null;
     syncCardSelection();
   });
@@ -3409,11 +3432,23 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     render();
   }
 
+  // One line in the Command log for a tap that reached playCard and went no further;
+  // `tip` (plain player words) also shows on the card when it is given.
+  function refusePlay(instanceId, line, tip) {
+    dlog('ignored', `playCard ${instanceId}`, line);
+    if (!tip) return;
+    const cardEl = combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(instanceId)}"]`);
+    if (cardEl) showTooltipFor(cardEl, '<p>' + esc(tip) + '</p>');
+  }
+
   function playCard(instanceId, targetId, choice, chosenUpcastRanks = null) {
-    if (hasCardChoice(combat)) { showPendingDiscard(); return; }
-    if (combat.combatRounds?.playerQueue?.some(record => record.instanceId === instanceId)) { unqueueCard(instanceId); return; }
-    if (targetId && !getEntity(combat, targetId)?.alive) return;
-    if (targetId && !cardTargets(instanceId).legalIds.includes(targetId)) return;
+    if (hasCardChoice(combat)) { refusePlay(instanceId, 'pending card choice'); showPendingDiscard(); return; }
+    if (combat.combatRounds?.playerQueue?.some(record => record.instanceId === instanceId)) { refusePlay(instanceId, 'queued in rounds, taken back'); unqueueCard(instanceId); return; }
+    if (targetId && !getEntity(combat, targetId)?.alive) { refusePlay(instanceId, `dead target ${targetId}`); return; }
+    if (targetId) {
+      const legalIds = cardTargets(instanceId).legalIds;
+      if (!legalIds.includes(targetId)) { refusePlay(instanceId, `illegal target ${targetId}, legal [${legalIds.join(',')}]`, "That target can't be reached by this card."); return; }
+    }
     if (busy || combat.result) {
       const why = lockReport();
       console.debug('[combat] playCard ignored:', JSON.stringify(why));
@@ -3421,11 +3456,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       return;
     }
     const inst = combat.piles.hand.find(card => card.instanceId === instanceId);
-    if (!inst || unplayableReason(inst)) return;
+    if (!inst) { refusePlay(instanceId, 'card not in hand'); return; }
+    const blocked = unplayableReason(inst);
+    if (blocked) { refusePlay(instanceId, `unplayable: ${blocked}`, blocked); return; }
     const definition = resolveCombatCard(combat, inst);
     const rank = chosenUpcastRanks ?? upcastRanksByCard.get(instanceId) ?? definition.upcast?.baseTier ?? 0;
     if (chosenUpcastRanks === null && readSettings().askToUpcastAfterTarget && upcastOptions(definition).length) {
-      if (expansionChoiceShell) return;
+      if (expansionChoiceShell) { refusePlay(instanceId, 'upcast choice already open'); return; }
       if (targetId) lastTargetId = targetId;
       expansionChoiceShell = openUpcastChoice({ definition, opener: combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(instanceId)}"]`),
         onClosed: () => { expansionChoiceShell = null; },
@@ -3457,7 +3494,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }
     }
     const finalPreview = previewCard(combat, instanceId, targetId, rank);
-    if (combat.player.energy < (finalPreview.costIsX ? 0 : finalPreview.cost) || combat.player.mana < finalPreview.manaCost || combat.player.stamina < (finalPreview.staminaCost || 0)) return;
+    const needEnergy = finalPreview.costIsX ? 0 : finalPreview.cost;
+    const needStamina = finalPreview.staminaCost || 0;
+    if (combat.player.energy < needEnergy) { refusePlay(instanceId, `cost ${needEnergy} > energy ${combat.player.energy}`, `Not enough stamina (needs ${needEnergy}, have ${combat.player.energy}).`); return; }
+    if (combat.player.mana < finalPreview.manaCost) { refusePlay(instanceId, `cost ${finalPreview.manaCost} > mana ${combat.player.mana}`, `Not enough mana (needs ${finalPreview.manaCost}, have ${combat.player.mana}).`); return; }
+    if (combat.player.stamina < needStamina) { refusePlay(instanceId, `cost ${needStamina} > stamina ${combat.player.stamina}`, `Not enough stamina (needs ${needStamina}, have ${combat.player.stamina}).`); return; }
     if (targetId) lastTargetId = targetId;
     hideTooltip();
     disp = takeSnapshot();
