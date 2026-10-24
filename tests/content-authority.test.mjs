@@ -26,6 +26,12 @@ import { act2Enemies } from '../src/content/enemies/act2.js';
 import { act3Enemies } from '../src/content/enemies/act3.js';
 import { classes, LOCKED_CLASSES } from '../src/content/classes.js';
 import { contentBundle } from '../src/content/index.js';
+import { combatExpansionLore } from '../src/content/combatExpansionLore.js';
+import { combatExpansionEquipment } from '../src/content/combatExpansionEquipment.js';
+import { combatExpansionCardOverlay, combatExpansionSpellProfiles, combatExpansionNewCards } from '../src/content/combatExpansionCards.js';
+import { combatExpansionCardTables } from '../src/content/generated/combatExpansionCardTables.js';
+import { combatExpansionMartialOverlay } from '../src/content/combatExpansionMartial.js';
+import { combatExpansionMartialTables } from '../src/content/generated/combatExpansionMartialTables.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const KINDS = { relics, stances, flasks };
@@ -199,6 +205,45 @@ test('classes: src/content/classes.js is a shim; LOCKED_CLASSES stays an empty J
   assert.ok(!/^\s*name\s*:/m.test(text), 'classes.js authors a `name:` line — edit content/source/classes.json instead');
   assert.match(text, /from '\.\/generated\/classes\.js'/);
   assert.deepStrictEqual(LOCKED_CLASSES, []);
+});
+
+// Combat expansion tables: top-level tables whose file name is the export name.
+// The combatExpansion*.js module re-exports each one; any logic in the module stays JS.
+const EXPANSION_TABLES = {
+  combatExpansionLore: [combatExpansionLore, 'combatExpansionLore'],
+  combatExpansionEquipment: [combatExpansionEquipment, 'combatExpansionEquipment'],
+  combatExpansionMartialOverlay: [combatExpansionMartialOverlay, 'combatExpansionMartial'],
+  combatExpansionMartialTables: [combatExpansionMartialTables, 'combatExpansionMartial'],
+  combatExpansionCardOverlay: [combatExpansionCardOverlay, 'combatExpansionCards'],
+  combatExpansionSpellProfiles: [combatExpansionSpellProfiles, 'combatExpansionCards'],
+  combatExpansionCardTables: [combatExpansionCardTables, 'combatExpansionCards'],
+};
+
+for (const [name, [exported, moduleName]] of Object.entries(EXPANSION_TABLES)) {
+  test(`expansion tables: ${name} deep-equals content/source/${name}.json`, () => {
+    const authored = JSON.parse(readFileSync(resolve(ROOT, `content/source/${name}.json`), 'utf8'));
+    assert.ok(authored && typeof authored === 'object' && Object.keys(authored).length > 0, `${name}.json is non-empty`);
+    assert.deepStrictEqual(exported, authored);
+  });
+
+  test(`expansion tables: ${moduleName}.js imports ${name} from generated/ and authors no row`, () => {
+    const text = readFileSync(resolve(ROOT, `src/content/${moduleName}.js`), 'utf8');
+    assert.match(text, new RegExp(`from '\\./generated/${name}\\.js'`));
+  });
+}
+
+// The expansion's colorless counters and cantrips are a card pool: JSON under
+// content/source/cards, re-exported by combatExpansionCards.js (which keeps the projection).
+test('expansion cards: combatExpansionNewCards deep-equals content/source/cards/combatExpansionNewCards.json', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/cards/combatExpansionNewCards.json'), 'utf8'));
+  assert.ok(Array.isArray(authored) && authored.length > 0, 'combatExpansionNewCards.json is a non-empty array');
+  assert.deepStrictEqual(combatExpansionNewCards, authored);
+  assert.equal(new Set(authored.map((card) => card.id)).size, authored.length, 'card ids are unique');
+  assert.ok(authored.every((card) => card.minCombatExpansionVersion === 2), 'every row is a version 2 card');
+  assert.equal(Object.isFrozen(combatExpansionNewCards), false);
+  const text = readFileSync(resolve(ROOT, 'src/content/combatExpansionCards.js'), 'utf8');
+  assert.match(text, /from '\.\/generated\/cards\/combatExpansionNewCards\.js'/);
+  assert.ok(!/^const (counter|cantrip) = \(/m.test(text), 'the counter and cantrip row builders are gone: edit the JSON rows');
 });
 
 test('the generated modules are current (content-build --check exits 0)', () => {
