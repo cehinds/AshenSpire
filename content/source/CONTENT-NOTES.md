@@ -1602,3 +1602,9 @@ _No comments were written beside these numbers in the old balance.js._
   gains 0.34–0.6), so 50 is clearly audible from first boot without
   crowding the feedback layer.
 - **`tooltipPlacement.hoverDelayMs`** — not in the JSON: `balance.js` derives it from the default of the `tooltipDelay` row of `tooltipHelp.settings`, so the setting and this number cannot disagree.
+
+### balanceProgression.json — progression
+
+_No comments were written beside these numbers in the old balance.js._
+
+- **`gearRequirements`** — not in the JSON: `balance.js` puts the shared `progression/gear.js` table second, after `version`, and writes the `gearRequirements.<i>.level` sentences (computed from each row) right after the `version` note.

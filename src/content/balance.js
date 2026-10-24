@@ -7,6 +7,7 @@ import { tooltipHelp } from './tooltipHelp.js';
 import { progressionGearRequirements } from './progression/gear.js';
 import { combatMatchups, combatIntent } from './combatMatchups.js';
 import { enemyKnowledgeTuning } from './enemyKnowledge.js';
+import { balanceProgression } from './generated/balanceProgression.js';
 import { balanceUi } from './generated/balanceUi.js';
 import { balanceProgressionFeats } from './generated/balanceProgressionFeats.js';
 import { balanceEquipment } from './generated/balanceEquipment.js';
@@ -215,42 +216,27 @@ const cardValueRule = () => ({
   statusMultipliers: { ...cardValueStatusMultipliers },
 });
 
-const PROGRESSION_CONTRACT_DESCRIPTION = 'The progression contract version saved for new characters, preserving the rules chosen at creation.';
-
 export const balance = {
   combatMatchups,
   combatIntent,
   enemyKnowledge: enemyKnowledgeTuning,
-  progression: {
-    version: 1,
-    gearRequirements: progressionGearRequirements,
-    cadence: { cards: [2,4,6,8,10,12,14,16,18,20], feat: [1,4,8,12,16,20], armory: [3,6,9,12,15,18], relic: [5,8,11,14,17,20], attribute: [5,10,15,20] },
-    skillBonusXp: 25,
-    ability: { base: 100, growthPerLevel: 50, maxLevel: 10, ranksAt: [1,2,4,6,8,10], xp: { magical: 2, spell: 3, manaSpell: 1, technique: 2, maneuver: 5 }, draftSize: 3, intelligenceChance: 0.05, bonusRankDepth: 3 },
-    classSkills: { reaver: ['combatManeuvers','item:blade','item:shield','armour:heavy'], starseer: ['item:magic-focus','item:blade','armour:light','armour:medium'], rogue: ['combatManeuvers','item:blade','dualWield','armour:light'], herald: ['item:magic-focus','item:blade','item:shield','armour:medium'] },
-    classAttributes: { reaver: ['strength','constitution','dexterity'], starseer: ['intelligence','wisdom','dexterity'], rogue: ['dexterity','strength','wisdom'], herald: ['wisdom','constitution','intelligence'] },
-    lessons: { 'item:magic-focus': ['cometFragment','crystalBarrier','scholarsInsight','ashenMote','emberVigil','readTheAsh','cinderSigil','starstoneArc','blightTouch','penance'], combatManeuvers: ['crimsonCleave','shieldBash','quickstep','guardCounter','riposte','rend','quickCut','backstep','stomp','lowBlow'] },
-    respec: { enabled: true, cost: null },
-    [NOTE]: {
-      version: PROGRESSION_CONTRACT_DESCRIPTION,
-      ...Object.fromEntries(progressionGearRequirements.map((row,index)=>[`gearRequirements.${index}.level`, `${row.ref} — the minimum ${row.classId} class level for this gear option; existing discovery and attribute requirements also apply.`])),
-      ...Object.fromEntries(Object.entries({cards:10,feat:6,armory:6,relic:6,attribute:4}).flatMap(([kind,count])=>Array.from({length:count},(_,index)=>[`cadence.${kind}.${index}`, `The class level for ${kind} reward number ${index+1}; every earned milestone keeps its own saved grant.`]))),
-      skillBonusXp: 'XP banked in each of the four class-related skills when a new class level is claimed; respec cannot replay this award.',
-      'ability.base': 'XP required to advance an ability skill from its first activated level.',
-      'ability.growthPerLevel': 'Additional XP required for each successive Spellcraft or Combat Maneuvers skill level.',
-      'ability.maxLevel': 'The highest available Spellcraft or Combat Maneuvers skill level.',
-      ...Object.fromEntries(Array.from({length:6},(_,rank)=>[`ability.ranksAt.${rank}`, `The ability skill level that makes rank ${rank} card profiles available in normal offers.`])),
-      'ability.xp.magical': 'Spellcraft XP awarded once when a card resolves a magical effect.',
-      'ability.xp.spell': 'Additional Spellcraft XP awarded once for playing a Spell, including a Cantrip.',
-      'ability.xp.manaSpell': 'Additional Spellcraft XP per printed Mana point on a Spell; discounts do not reduce this award.',
-      'ability.xp.technique': 'Combat Maneuvers XP awarded once for a physical Technique with no printed Mana cost.',
-      'ability.xp.maneuver': 'Combat Maneuvers XP awarded once for a physical maneuver with a printed Mana cost.',
-      'ability.draftSize': 'Distinct card families shown at the normal available rank in each saved ability offer.',
-      'ability.intelligenceChance': 'Chance per Intelligence point for a fourth, higher-rank card option, capped at certainty.',
-      'ability.bonusRankDepth': 'Maximum number of ranks above the normal offer for the Intelligence bonus option, capped at rank five.',
-      'respec.enabled': 'Allows a class respec preview and atomic exchange of eligible choices through the current class level.',
-    },
-  },
+  // progression is JSON except the shared gear table and the sentences computed
+  // from its rows: `version` first, the gear table second, then the rest, and the
+  // `version` note first with the per-row gear sentences straight after it.
+  progression: (() => {
+    const { version, [NOTE]: note, ...rest } = balanceProgression;
+    const { version: versionNote, ...restNotes } = note;
+    return {
+      version,
+      gearRequirements: progressionGearRequirements,
+      ...rest,
+      [NOTE]: {
+        version: versionNote,
+        ...Object.fromEntries(progressionGearRequirements.map((row, index) => [`gearRequirements.${index}.level`, `${row.ref} — the minimum ${row.classId} class level for this gear option; existing discovery and attribute requirements also apply.`])),
+        ...restNotes,
+      },
+    };
+  })(),
   progressionRelics: balanceProgressionRelics,
   // Primary card values and physical/magical impact are derived from costs:
   // floor(global × (AP×action + MP×mana + SP×stamina)
