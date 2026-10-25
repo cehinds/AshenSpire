@@ -80,7 +80,7 @@ try {
   await capture('git', ['-c', 'core.fscache=false', '-c', 'core.preloadIndex=false', '-c', 'index.threads=1', 'checkout', '--detach', head], report.snapshot);
   if (suite !== 'combat') {
     const pin = JSON.parse(await readFile(path.join(report.snapshot, 'art-release.json'), 'utf8'));
-    if (!/^hd-assets-v\d+$/.test(pin.tag)) throw new Error('Unsupported art cache tag');
+    if (!/^(?:ashenspire-)?hd-assets-v[1-9]\d*$/.test(pin.tag)) throw new Error('Unsupported art cache tag');
     const originalPin = JSON.parse(await readFile(path.join(root, 'art-release.json'), 'utf8'));
     if (JSON.stringify(pin) === JSON.stringify(originalPin)) {
       const sourceCache = path.join(root, '.art-cache', pin.tag);
