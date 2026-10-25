@@ -576,6 +576,14 @@ File header (was the comment block at the top of src/content/customMods.js): a t
 - The orchestrator (main.js) reads `run.custom.mods[id]` at the relevant hook; nothing here is engine-specific.
 - **Deleted union.** `ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS]` stood in the module with no reader in src/, tools/ or tests/ — a union kept in case somebody wanted one. Deleted rather than documented: nothing re-typed it, so there is nothing to collapse into, and the day a screen needs both groups it can spell the spread itself.
 
+## Seats (content/source/seats.json)
+
+File header (was the comment block at the top of src/content/seats.js): THE SEATS (SPEC §13.1). A seat is a region with its content: enemies, encounters, boss pool and combat scenery. An act is a seat at a tier: `run.actNumber` is the tier, `run.seatOrder[tier - 1]` the seat. `seats.json` has two keys: `seats` (src/content/seats.js freezes the array as `SEATS`, rows stay unfrozen) and `causewayRegionId` (`CAUSEWAY_REGION_ID`).
+
+- **`seats[].baseTier`** — the tier the seat's numbers were authored at (the act it used to be), so climbing it at another tier scales by a RATIO against this baseline (`balanceSeatTiers.json`, SPEC §13.3), and a seat at its own baseline scales by exactly 1. That ratio is the whole of the byte-identity claim in §13.6: an existing seed climbing the default order fights the fights it always did.
+- **`seats[].regionId`** — a foreign key into content/environments.js. The check stays in src/content/seats.js, at module load, so a mistyped region fails the boot rather than painting the wrong sky (Law 1 clause 5).
+- **`causewayRegionId`** — the scenery of the final tier's boss node, the causeway to the Ashen Spire (SPEC §13.2, LORE §1): a region that is no seat's, painted where the last climb ends whichever seat holds it. Data, so the model never spells it. Checked against the environment regions the same way.
+
 ## Keywords
 
 Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for

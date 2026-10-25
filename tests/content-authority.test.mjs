@@ -395,3 +395,11 @@ test('customMods: the four tables deep-equal their authored JSON; MAX_ASCENSION 
   assert.equal(MAX_ASCENSION, authored.ascensionOrder.length);
   assert.ok([DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER].every((t) => !Object.isFrozen(t)), 'these tables were never frozen');
 });
+
+import { SEATS, CAUSEWAY_REGION_ID } from '../src/content/seats.js';
+test('seats: SEATS and CAUSEWAY_REGION_ID deep-equal the authored JSON; the array is frozen, its rows are not', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/seats.json'), 'utf8'));
+  assert.deepStrictEqual(SEATS, authored.seats);
+  assert.equal(CAUSEWAY_REGION_ID, authored.causewayRegionId);
+  assert.ok(Object.isFrozen(SEATS) && SEATS.every((row) => !Object.isFrozen(row)));
+});
