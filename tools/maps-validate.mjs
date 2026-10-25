@@ -61,7 +61,7 @@ export function resolveAtlasPath(doc, path) {
 
 // A cited "file:line" must still contain the token the rule is named after.
 const TOKENS = {
-  columns: 'columns', entries: 'entries', fixedFloor: 'at:', noShrineBefore: 'noShrineBefore', noEliteBefore: 'noEliteBefore',
+  columns: 'columns', entries: 'entries', fixedFloor: '"at":', noShrineBefore: 'noShrineBefore', noEliteBefore: 'noEliteBefore',
   noShrineOn: 'noShrineOn', restBeforeElite: 'restBeforeElite', minElites: 'minElites', minMerchants: 'minMerchants',
   topFloorShrine: 'addNode(floors', noSameTypeAdjacent: 'banned', unknownWeights: 'unknownWeights', typingRetries: 'TYPING_RETRIES',
 };
