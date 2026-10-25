@@ -48,7 +48,10 @@ test('nodeComfortablyVisible checks all four sides against the margin', () => {
   assert.match(body, /nodeBox\.right <= portBox\.right - margin/);
   assert.match(body, /nodeBox\.top >= portBox\.top \+ margin/);
   assert.match(body, /nodeBox\.bottom <= visibleBottom - margin/);
-  assert.match(body, /Math\.min\(portBox\.bottom, coveredTop\)/, 'the visible bottom is clipped to the tray');
+  assert.match(body, /const \{ portBox, visibleBottom \} = trayViewport\(revealHeight\)/, 'visibility uses the shared physical viewport band');
+  const viewport = fnBody('trayViewport');
+  assert.match(viewport, /portBox\.height \/ port\.offsetHeight/, 'local reveal height is converted using the actual port scale');
+  assert.match(viewport, /Math\.max\(portBox\.top, Math\.min\(portBox\.top \+ port\.clientHeight \* scaleY, trayTop - height \* scaleY\)\)/, 'the visible bottom is clipped to both the content viewport and the reveal in physical coordinates');
 });
 
 test('the board passes the activating pointer type into map selection', () => {
@@ -67,7 +70,8 @@ test('closeTray resets the framing only when the tray moved the camera', () => {
 test('a pick that is not centred still leaves its look for a re-fit (#1142)', () => {
   const map = readFileSync(new URL('../src/ui/screens/map.js', import.meta.url), 'utf8');
   const board = readFileSync(new URL('../src/ui/components/mapboard.js', import.meta.url), 'utf8');
-  assert.match(board, /function holdLook\(id, \{ inset = 0 \} = \{\}\) \{[\s\S]*?look = \{ id, inset: insetBottom \};/);
+  assert.match(board, /function holdLook\(id, \{ inset = 0 \} = \{\}\) \{[\s\S]*?insetBottom = Math\.max\(0, typeof inset === 'function' \? inset\(\) : inset\);[\s\S]*?look = \{ id, inset \};/, 'the current value is resolved while the original provider is retained for a later re-fit');
+  assert.equal((map.match(/else board\.holdLook\(selection\.selectedId, \{ inset: trayInset \}\)/g) || []).length, 2, 'both held looks retain the live tray inset provider');
   assert.match(board, /function releaseLook\(\) \{[\s\S]*?look = null;/);
   assert.equal((map.match(/else board\.holdLook\(selection\.selectedId/g) || []).length, 2, 'both open paths hold the look when they skip the move');
   assert.match(map, /else board\.releaseLook\(\);/, 'closing a tray that never moved the camera forgets the look without re-framing');
