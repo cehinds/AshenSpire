@@ -23,6 +23,9 @@
   "ownedCopyWeight": 0.35,
   "tagWeights": {
     "maneuver:casting": 1,
-    "default": 2
+    "maneuver:smash": 5,
+    "maneuver:counter": 5,
+    "maneuver:sweep": 5,
+    "default": 3
   }
 }

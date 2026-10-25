@@ -59,6 +59,24 @@ function cardRank(card,rules) {
   const rule=rules?.eligibility?.combatCards;
   return Number.isSafeInteger(card.rank) ? card.rank : rule?.rankOfRarity?.[card.rarity] ?? 1;
 }
+// Owner 2026-10-24: fewer copies of cards already owned, and non-casting maneuvers favoured. Weight = tag weight x
+// ownedCopyWeight^copies (deck + sideboard); one float roll on the offer's stream keeps replays deterministic.
+// When every candidate weighs the same (no settings, or Core 1's neutral ones) the draw is the old uniform pick.
+export function cardPickWeight(rule,card,owned) {
+  const tagWeights=rule?.tagWeights||{},matched=(card?.tags||[]).filter(tag=>tag!=='default'&&Number.isFinite(tagWeights[tag]));
+  const tag=matched.length?matched.reduce((product,key)=>product*tagWeights[key],1):(Number.isFinite(tagWeights.default)?tagWeights.default:1);
+  return tag*Math.pow(Number.isFinite(rule?.ownedCopyWeight)?rule.ownedCopyWeight:1,owned);
+}
+function weightedCardPick(run,rule,rng,stream,ids) {
+  if(ids.length<2)return rng.pick(stream,ids);
+  const defs=new Map((gameContent(run,'cards')||[]).map(card=>[card.id,card])),owned=new Map();
+  for(const card of [...(run.deck||[]),...(run.sideboard||[])]){const id=card?.cardId??card?.id??card;owned.set(id,(owned.get(id)||0)+1);}
+  const weights=ids.map(id=>cardPickWeight(rule,defs.get(id),owned.get(id)||0)),total=weights.reduce((sum,weight)=>sum+weight,0);
+  if(!(total>0)||weights.every(weight=>weight===weights[0]))return rng.pick(stream,ids);
+  let roll=rng.float(stream)*total;
+  for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
+  return ids.at(-1);
+}
 function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
   if(run.gameProfileRewardOffers?.[offerId])return run.gameProfileRewardOffers[offerId];
@@ -89,7 +107,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
       if(!allowLow&&!high.length){available[kind]=[];continue;}
       ids=allowLow?lowIds:high;
     }
-    const id=rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
+    const id=kind==='combatCards'?weightedCardPick(run,rule,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
     options.push({kind,id});
     shelfCounts.set(kind,(shelfCounts.get(kind)||0)+1);
   }
