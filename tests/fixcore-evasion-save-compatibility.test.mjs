@@ -62,6 +62,25 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   assert.equal(roundtrip.gameProfile.hash,originalHash);assert.equal(roundtrip.fixCoreRules.accuracy.evadeStackDex,0);
 });
 
+test('a run saved on dev before the 2026-10-25 combat retune (runtime 73ef24...) still loads and fights', () => {
+  const devRuntime = 'sha256:73ef240835ff52f3dec38ad7b0a972d6f4886adf88fbbf1e3bf12a42d53161f2';
+  const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} }));
+  profile.lock.runtimeHash = devRuntime;
+  digest(profile);
+  const originalHash = profile.hash;
+  const validated = validateGameProfileSnapshot(profile);
+  assert.equal(validated.hash, originalHash);
+  assert.equal(validated.lock.runtimeHash, devRuntime);
+  const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
+  const run = deserializeRun(serializeRun(createRunState({ registries, classId: 'rogue', seed: 513, profileMeta: { gameProfileUnlocks: { core: { completedRunIds: ['a','b','c'] } } } })));
+  assert.equal(run.gameProfile.hash, originalHash);
+  const combat = createRunCombat({ registries, run, rng: createRng(513), enemyIds: ['wanderingSoldier'] });
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(513), snapshot: serializeCombatSnapshot(combat), expectedGameProfile: run.gameProfile });
+  assert.equal(restored.gameProfile.hash, originalHash);
+  const other = structuredClone(profile); other.lock.core = 'ashen.core@1.0.0'; digest(other);
+  assert.throws(() => validateGameProfileSnapshot(other), /unsupported runtime artifact/);
+});
+
 test('compatibility rejects digest damage, unknown runtimes, other cores and future target runtimes', () => {
   const tampered=priorRuntimeEnvelope();tampered.modules.cards.handBase++;
   assert.throws(()=>validateGameProfileSnapshot(tampered),/digest mismatch/);
@@ -75,7 +94,7 @@ test('compatibility rejects digest damage, unknown runtimes, other cores and fut
 
 test('current shipped Core runtime and combat saves survive presentation-only changes', () => {
   const profile = structuredClone(resolveGameProfile({ formatVersion: 1, core: 'ashen.core@2.0.0', modules: {} }));
-  assert.equal(profile.lock.runtimeHash, 'sha256:28eee6726d3faf89bd10234adcfb0029d7dacb3ed424f91aef1493070819daf0');
+  assert.equal(profile.lock.runtimeHash, 'sha256:df30b7dac0b52f363d4875c083955c3efeaf9cebe235ef3e523a2e8d58c0f2e5');
   const originalHash = profile.hash;
   const validated = validateGameProfileSnapshot(profile);
   const registries = bindGameProfileRegistries(createRegistries(applyGameProfileToContent(contentBundle, validated)), validated);
