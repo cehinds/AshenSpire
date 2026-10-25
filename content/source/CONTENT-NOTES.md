@@ -1073,6 +1073,19 @@ Compiled to `src/content/generated/derivedStatRules.js`; `src/content/derivedSta
 
 - **twoCostMultiplier:** — a card whose derived SP is 2 or more multiplies its effect amounts by this
 
+    MULTI_HIT_SP_FLOOR (owner, 2026-10-25; Core 2 only). A move that hits one target more than once costs at least
+    max(hits − offset, minimum) SP. The offset is manaOffset for a move that costs Mana, finesseOffset for a `finesse`
+    move, else baseOffset (the largest that applies). Guarded (`if`) damage effects are separate branches; the largest
+    branch is the hit count. The floor raises the paid price only; it never scales damage.
+
+- **baseOffset:** — hits not charged on an ordinary multi-hit move (0: 1 SP per hit)
+
+- **finesseOffset:** — hits not charged on a finesse move (1)
+
+- **manaOffset:** — hits not charged on a move that costs Mana (2)
+
+- **minimum:** — the least a multi-hit move's floor can be (1)
+
     Combat tag weights (-3..3) and the side each counts on. A tag counts once per card at its weight. A tag the card
     does not carry, or that this table does not list, adds nothing. Range tags are priced by RANGE_WEIGHTS instead.
 

@@ -21,7 +21,7 @@ const registries = bindGameProfileRegistries(createRegistries(applyGameProfileTo
 function fight(id) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: `bundled-policy1-${id}` });
   const combat = createRunCombat({ registries, run, rng: createRng(511), enemyIds: [id] });
-  assert.equal(combat.core2ActionRulesVersion, 1, 'exercise the new policy, not Current or an old active fight');
+  assert.equal(combat.core2ActionRulesVersion, 2, 'exercise the new policy, not Current or an old active fight');
   return combat;
 }
 function settle(combat) {
@@ -31,7 +31,7 @@ function settle(combat) {
   }
 }
 
-test('bundled policy1 enemy reaction pays base plus positive Advance at commit and survives restore without double payment', () => {
+test('bundled policy1 enemy reaction pays base at commit (after the player Advance persisted) and survives restore without double payment', () => {
   const combat = fight('gildedKnight'), enemy = combat.enemies[0];
   combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 1;
   const quote = enemyMoveQuote(registries.enemies.get(enemy.enemyId).moves.gildedGuard, { enemy, moveId: 'gildedGuard', combat });
@@ -47,12 +47,13 @@ test('bundled policy1 enemy reaction pays base plus positive Advance at commit a
   const strike = combat.piles.hand.find(row => row.cardId === 'core.strike');
   dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: enemy.id });
   assert.ok(observed.length, 'the actual bundled reaction was committed');
-  for (const state of observed) assert.deepEqual(state, { stamina: 0, payment: { sp: 1, advanceSp: 1, totalSp: 2 } });
+  // The player's own Strike paid its Advance first and committed distance 0, so the reaction owes none.
+  for (const state of observed) assert.deepEqual(state, { stamina: 1, payment: { sp: 1, advanceSp: 0, totalSp: 1 } });
   assert.ok(combat.pendingReaction);
   const restored = restoreCombatSnapshot({ registries, rng: createRng(511, combat.rng.getCounters()), snapshot: plain(serializeCombatSnapshot(combat)) });
   settle(combat); settle(restored);
-  assert.equal(enemy.stamina, 0);
-  assert.equal(restored.enemies[0].stamina, 0);
+  assert.equal(enemy.stamina, 1);
+  assert.equal(restored.enemies[0].stamina, 1);
   assert.ok(enemy.performedMoves.includes('gildedGuard'), 'the paid reaction actually resolves');
   assert.deepEqual(plain(restored.enemies[0].performedMoves), plain(enemy.performedMoves));
   assert.deepEqual(plain(restored.rng.getCounters()), plain(combat.rng.getCounters()));

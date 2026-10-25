@@ -933,7 +933,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 4,
+      "size": 5,
       "cards": [
         {
           "id": "graveWisp.curse",
@@ -948,6 +948,11 @@
         {
           "id": "graveWisp.advance",
           "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "graveWisp.retreat",
+          "name": "Retreat",
           "copies": 1
         }
       ]
@@ -1283,7 +1288,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 4,
+      "size": 5,
       "cards": [
         {
           "id": "lanternMoth.lanternDust",
@@ -1298,6 +1303,11 @@
         {
           "id": "lanternMoth.advance",
           "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "lanternMoth.retreat",
+          "name": "Retreat",
           "copies": 1
         }
       ]
@@ -1493,7 +1503,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 4,
+      "size": 5,
       "cards": [
         {
           "id": "chainScavenger.hookCast",
@@ -1513,6 +1523,11 @@
         {
           "id": "chainScavenger.advance",
           "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "chainScavenger.retreat",
+          "name": "Retreat",
           "copies": 1
         }
       ]
@@ -1993,7 +2008,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 4,
+      "size": 5,
       "cards": [
         {
           "id": "courtSurgeon.scalpel",
@@ -2013,6 +2028,11 @@
         {
           "id": "courtSurgeon.advance",
           "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "courtSurgeon.retreat",
+          "name": "Retreat",
           "copies": 1
         }
       ]
@@ -2730,7 +2750,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 4,
+      "size": 5,
       "cards": [
         {
           "id": "mirrorScribe.silverScript",
@@ -2750,6 +2770,11 @@
         {
           "id": "mirrorScribe.advance",
           "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "mirrorScribe.retreat",
+          "name": "Retreat",
           "copies": 1
         }
       ]
@@ -3930,7 +3955,7 @@
       }
     ],
     "deck": {
-      "size": 8,
+      "size": 9,
       "cards": [
         {
           "id": "blightedValkyrie.spiralThrust",
@@ -3950,6 +3975,11 @@
         {
           "id": "blightedValkyrie.advance",
           "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "blightedValkyrie.retreat",
+          "name": "Retreat",
           "copies": 1
         }
       ]
@@ -4125,7 +4155,7 @@
     ],
     "relics": [],
     "deck": {
-      "size": 4,
+      "size": 5,
       "cards": [
         {
           "id": "eclipseCantor.darkHymn",
@@ -4145,6 +4175,11 @@
         {
           "id": "eclipseCantor.advance",
           "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "eclipseCantor.retreat",
+          "name": "Retreat",
           "copies": 1
         }
       ]
@@ -4596,7 +4631,7 @@
       }
     ],
     "deck": {
-      "size": 8,
+      "size": 9,
       "cards": [
         {
           "id": "ashheartDragon.obsidianClaws",
@@ -4616,6 +4651,11 @@
         {
           "id": "ashheartDragon.advance",
           "name": "Advance",
+          "copies": 1
+        },
+        {
+          "id": "ashheartDragon.retreat",
+          "name": "Retreat",
           "copies": 1
         }
       ]

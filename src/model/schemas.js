@@ -656,6 +656,8 @@ const enemyMoveSchema = obj({
   // Required on a rolled move; absent on a reaction move, which is never rolled
   // (validate.js enforces both). docs/combat-card-traits-contract.md, "Enemy reactions".
   weight: opt(num),
+  // A retreat move's weight, applied only while the fight is closer than the enemy's starting range (combat.js weightedMovePick).
+  retreatWeight: opt(num),
   reaction: opt(obj({
     on: arr(en('playerAction', 'playerReaction')),
     minIncoming: opt(int),
@@ -1065,6 +1067,7 @@ export const SCHEMAS = Object.freeze({
     firstMove: opt(str), // checked against own moves in validate.js
     startingRange: opt(en('melee', 'reach', 'ranged')),
     rangeClosingMove: opt(str),
+    rangeRetreatMove: opt(str),
     rangeRoutePolicy: opt(en('advance')),
     moveSources: opt(mapOf(obj({ cardId: str }))),
     phases: opt(arr(enemyPhaseSchema)),
