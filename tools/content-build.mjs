@@ -1154,11 +1154,11 @@ async function mutate() {
     // M1 — the dropped comma (Marina's parse edge): dies UPSTREAM of every
     // validator, and must still name the file.
     try {
-      await import(copyContent('m1', [['generated/mapActShape.js', '"floors":12,', '"floors":12']]));
-      report(false, 'M1', 'dropped comma in generated/mapActShape.js', 'import succeeded — a syntax error loaded clean');
+      await import(copyContent('m1', [['mapconfig.js', '// src/content/mapconfig.js — per-act map-generation knobs (SPEC §6)', 'const planted = { floors: 12\n  columns: 7 };\n// src/content/mapconfig.js — per-act map-generation knobs (SPEC §6)']]));
+      report(false, 'M1', 'dropped comma in mapconfig.js', 'import succeeded — a syntax error loaded clean');
     } catch (e) {
       const where = `${e.message}\n${e.stack || ''}`;
-      report(where.includes('mapActShape.js'), 'M1', 'dropped comma in generated/mapActShape.js — SyntaxError must name the file', (e.message || '').split('\n')[0] + (where.includes('mapActShape.js') ? ' (file named)' : ' (FILE NOT NAMED)'));
+      report(where.includes('mapconfig.js'), 'M1', 'dropped comma in mapconfig.js — SyntaxError must name the file', (e.message || '').split('\n')[0] + (where.includes('mapconfig.js') ? ' (file named)' : ' (FILE NOT NAMED)'));
     }
     // M2 — the original #43 defect, reinstated in today's vocabulary:
     // floors moved down while a fixed anchor stays absolute.
