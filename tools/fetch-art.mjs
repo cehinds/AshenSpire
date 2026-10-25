@@ -16,8 +16,9 @@
 //   node tools/fetch-art.mjs --print-dir [--pack <p>]   print the cache directory and exit
 //
 // WHY (docs/ART-REPO-PLAN.md step 4; docs/EXTERNAL-ASSETS-PLAN.md §2, step 11).
-// The art, fonts, music and map tiles are released from cehinds/AshenSpire-art
-// as three zips under one tag, hd-assets-v<N>:
+// Current releases live on cehinds/AI-Art, branch ashenspire, under
+// ashenspire-hd-assets-v<N>. Legacy cehinds/AshenSpire-art pins remain readable;
+// their original bytes and provenance are not renamed. Both tag forms use:
 //
 //   high    hd-assets-v<N>.zip       assets/…          each art id's `high` record
 //   light   light-assets-v<N>.zip    assets-mobile/…   each art id's `light` record
@@ -61,7 +62,7 @@
 // A new pin's manifest is written from the release itself:
 // node tools/art-manifest.mjs --write.
 //
-// THE TOKEN. None is needed: cehinds/AshenSpire-art is public (owner answer 1,
+// THE TOKEN. None is needed for the public art host (owner answer 1,
 // step 10a), so the zip is downloaded from the release's public URL. When
 // ART_REPO_TOKEN (CI passes the secret of that name on protected branches only)
 // or else GITHUB_TOKEN is set, it is sent (to the API only: fetch drops
@@ -105,10 +106,17 @@ function agreesCommon(theirs, rec) {
   return false;
 }
 
-/** The zip a pack is released as under `tag` (hd-assets-v<N> → <stem>-assets-v<N>.zip). */
+/** Release identity is project-scoped; archive names retain their original bytes. */
+export function artVersionForTag(tag) {
+  const match = /^(?:ashenspire-)?hd-assets-v([1-9]\d*)$/.exec(String(tag));
+  if (!match) throw new Error(`${PIN_PATH}: tag must be hd-assets-v<N> or ashenspire-hd-assets-v<N>`);
+  return match[1];
+}
+
+/** Both tag families use the unprefixed <stem>-assets-v<N>.zip basename. */
 export function zipNameFor(pack, tag) {
   if (!PACKS.includes(pack)) throw new Error(`unknown pack ${JSON.stringify(pack)} (one of ${PACKS.join(', ')})`);
-  return `${STEM[pack]}-assets-v${String(tag).replace(/^hd-assets-v/, '')}.zip`;
+  return `${STEM[pack]}-assets-v${artVersionForTag(tag)}.zip`;
 }
 
 /**
@@ -119,13 +127,13 @@ export function readPin(root = ROOT) {
   const pin = JSON.parse(readFileSync(join(root, PIN_PATH), 'utf8'));
   const missing = ['repo', 'tag', 'zip', 'sha256'].filter((k) => !pin[k]);
   if (missing.length) {
-    throw new Error(`${PIN_PATH} pins no release yet (${missing.join(', ')} unset). The owner publishes hd-assets-v<N> from cehinds/AshenSpire-art first; a PR then pins its tag, zip names and sha256s here.`);
+    throw new Error(`${PIN_PATH} pins no release yet (${missing.join(', ')} unset). Publish ashenspire-hd-assets-v<N> from cehinds/AI-Art first; a PR then pins its tag, zip names and sha256s here.`);
   }
   // Strict shapes: the tag names a directory this tool deletes and recreates,
   // so it can never be `..` or a path, and each zip is that tag's own asset.
   if (!/^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(pin.repo)) throw new Error(`${PIN_PATH}: repo must be owner/name`);
-  if (!/^hd-assets-v[1-9]\d*$/.test(pin.tag)) throw new Error(`${PIN_PATH}: tag must be hd-assets-v<N>`);
-  if (pin.zip !== `${pin.tag}.zip`) throw new Error(`${PIN_PATH}: zip must be ${pin.tag}.zip`);
+  artVersionForTag(pin.tag);
+  if (pin.zip !== zipNameFor('high', pin.tag)) throw new Error(`${PIN_PATH}: zip must be ${zipNameFor('high', pin.tag)}`);
   if (!/^[0-9a-f]{64}$/.test(pin.sha256)) throw new Error(`${PIN_PATH}: sha256 must be 64 lowercase hex characters`);
   const schema = pin.schema === undefined ? 1 : pin.schema;
   if (schema === 1) {
