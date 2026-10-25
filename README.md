@@ -1,5 +1,15 @@
 # AshenSpire
+<!-- feature-preview:start -->
+## Feature preview — Art cache relocation
 
+[Play this verified Art build](https://cehinds.github.io/AshenSpire/branches/fix/ArtCacheRelocation/latest/) · [Capture and source record](docs/preview/features/art-cache-relocation/README.md)
+
+The public route was HTTP-verified at source `9469093` on 2026-10-25. These four exact original captures show settled v24 art availability/readability from the official local source `7770f5d` light build **0.7.1.1842 / 48703465be**, whose build inputs match post-removal `3536765`. They are retained captures, not new screenshots of the later public head; no gameplay or performance claim is made.
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile: v24 actors, cards and controls](docs/preview/features/art-cache-relocation/mobile.png) | ![Desktop: v24 combat art and card costs](docs/preview/features/art-cache-relocation/desktop.png) | ![Wide: v24 combat art and controls](docs/preview/features/art-cache-relocation/wide.png) | ![Tablet: v24 combat art and readable controls](docs/preview/features/art-cache-relocation/tablet.png) |
+<!-- feature-preview:end -->
 
 
 
