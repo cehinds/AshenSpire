@@ -190,20 +190,22 @@ export function mapTravelEdgesHtml({ nodes, path = [], isDrawn = () => true, aut
  * observation. So only a later CHANGE re-fits. Within 1 px is not a change —
  * the restore door's own tolerance.
  *
+ * An optional initial baseline precedes a mount's layout-changing report.
+ * Other callers keep the current-box baseline by default.
  * Debounced (a settling layout fires several times in a row; the camera moves
  * once, on the last). The re-fit is a jump, never a glide, so reduced motion
  * needs no branch here. Returns `stop()`; no ResizeObserver means no watch,
  * and says so by returning a no-op rather than throwing.
  */
 export function watchViewport(el, {
-  read, onChange, delayMs = 100,
+  read, onChange, initial = null, delayMs = 100,
   RO = typeof ResizeObserver !== 'undefined' ? ResizeObserver : null,
   setTimer = setTimeout, clearTimer = clearTimeout,
 } = {}) {
   if (!RO || !el) return () => {};
   const usable = (v) => !!v && v.width > 0 && v.height > 0;
   const same = (a, b) => Math.abs(a.width - b.width) <= 1 && Math.abs(a.height - b.height) <= 1;
-  let last = read();
+  let last = initial || read();
   let timer = null;
   let stopped = false;
   const fire = () => {
@@ -657,6 +659,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // `restored` is then the right answer. `data-camera-viewport` says the one
   // thing the door cannot: the shape the camera in force was measured against.
   let solvedViewport = null;
+  let viewportBeforeReport = null;
   function solveViewport(width, height) {
     if (!(Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0)) return;
     solvedViewport = { width, height };
@@ -1107,6 +1110,9 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // tools/mapfit.mjs all read one fact instead of three re-derivations.
   let warnedClipped = false;
   function report(box, count) {
+    // The current mount may restore a manual camera solved on another screen.
+    // Observe only layout changes OUR report makes, not that persisted shape.
+    viewportBeforeReport = { width: scroll.clientWidth, height: scroll.clientHeight };
     const d = scroll.dataset;
     if (!box) {
       d.framing = 'none'; d.framingMiss = '0';
@@ -1273,11 +1279,13 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // The tray's look, remembered so a re-fit can take it again (refitCamera).
   let look = null;
   const refit = () => refitCamera({ look, centerOnCurrent, centerOnNode });
+  // A host may provide a live inset when flow below the scrollport changes.
+  // Retain that provider for re-fits; never retain a stale footer measurement.
   function centerOnNode(id, { inset = 0, glideMs = 0 } = {}) {
     const n = byId[id];
     if (!n) return;
-    insetBottom = Math.max(0, inset);
-    look = { id, inset: insetBottom };
+    insetBottom = Math.max(0, typeof inset === 'function' ? inset() : inset);
+    look = { id, inset };
     sizeSvg();
     // WHAT THE TRAY COVERS OF THE MAP, not of the frame. The reveal panel is
     // absolutely positioned against the foot of the map frame (styles/map.css:
@@ -1311,8 +1319,8 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // recorded exactly as centerOnNode records it, and the camera stays put.
   function holdLook(id, { inset = 0 } = {}) {
     if (!byId[id]) return;
-    insetBottom = Math.max(0, inset);
-    look = { id, inset: insetBottom };
+    insetBottom = Math.max(0, typeof inset === 'function' ? inset() : inset);
+    look = { id, inset };
   }
   // Closing a tray that never moved the camera forgets its look without
   // re-framing, so the view the player is looking at does not jump.
@@ -1452,6 +1460,9 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   function startRefitWatch() {
     if (stopRefitWatch) return;
     stopRefitWatch = watchViewport(scroll, {
+      // report() can change flow notes after the current mount was measured.
+      // A restored camera's persisted viewport is deliberately not the baseline.
+      initial: viewportBeforeReport,
       read: () => ({ width: scroll.clientWidth, height: scroll.clientHeight }),
       onChange: () => {
         if (!scroll.isConnected) return;
