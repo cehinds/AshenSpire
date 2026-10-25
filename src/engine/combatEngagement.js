@@ -3,7 +3,7 @@ import { createRng } from './rng.js';
 // Runtime adapter around the pure engagement planner. No pricing or distance is
 // inferred from a stance, screen coordinates, or another held weapon.
 import { pureEngagementMovement } from '../model/rangeCardAvailability.js';
-import { actorRangeKey, createRangeState, snapshotRangePolicy, rangeActionPlan, rangeBand, movedEngagementState } from '../model/combatEngagement.js';
+import { actorRangeKey, createRangeState, snapshotRangePolicy, rangeActionPlan, rangeBand, movedEngagementState, advancedEngagementState } from '../model/combatEngagement.js';
 import { fixCoreEnabled, fixCoreRules } from '../model/fixCoreMechanics.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { attackDescriptor } from '../model/attackTags.js';
@@ -153,6 +153,7 @@ export function acceptRangeActions(ctx, source, actions, carrier, rootId) {
       ctx.emit?.('energySpent', { amount: extra }); ctx.emit?.('staminaSpent', { amount: extra });
     }
   }
+  if (!carrier.rangePlan && !prepaidReturn && extra > 0 && !ctx._rangeContext) ctx.rangeState = advancedEngagementState(ctx.rangeState, plan);
   const accepted = { ...plan, rootId, paid: carrier.rangePlan?.paid || authorization?.paid || addRangeCosts(carrier.rangeBaseCosts || { energy: 0, stamina: 0, mana: 0 }, plan) };
   carrier.rangePlan = accepted;
   if (lineage) carrier.rangeLineagePlan={...lineage,rootId};

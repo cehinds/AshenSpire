@@ -61,7 +61,7 @@ test('real imported sword, halberd and bow coverage sets initial distance and li
     assert.equal(events.find(row => row.type === 'cardPlayed').staminaSpent, route.costs.stamina);
     assert.ok(events.some(row => row.type === 'attackHit' || row.type === 'attackMissed'), `${id}: a real hit roll resolved`);
     assert.equal(events.some(row => row.missReason === 'range'), false);
-    assert.equal(combat.rangeState.engagements[pair(enemy)], 2, 'temporary approach cannot persistently move the pair');
+    assert.equal(combat.rangeState.engagements[pair(enemy)], expected, 'a paid approach persists as the new distance');
   }
 });
 

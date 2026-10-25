@@ -118,6 +118,7 @@ test('a paused reaction preserves a paid mixed-source quote after persistent mov
   const group = combat.queue.find(action => action.meta?.expansionGroup)?.meta.expansionGroup;
   clearRangeContactIds(group);
   const sourceKey = combat.enemies[0].rangeActorKey, targetKey = combat.player.rangeActorKey;
+  combat.rangeState.engagements[rangePairKey(sourceKey, targetKey)] = 2;
   const plan = rangeActionPlan(combat.rangeState, sourceKey, [
     { contactId: 'bow', targetKey, coverage: 'ranged', weapon: true, sourceWeaponId: 'fixture-bow' },
     { contactId: 'dagger', targetKey, coverage: 'melee', weapon: true, sourceWeaponId: 'fixture-dagger' },
@@ -253,7 +254,7 @@ test('a real paid three-hit approach resumes through SaveManager without repeat 
   assert.equal(restored.pauses, 3);
   assert.equal(restored.hits.length, 3);
   assert.equal(restored.enemySp, 0, 'resuming later hits cannot charge another approach');
-  assert.equal(restored.pair, 2, 'temporary Advance never moves the persistent pair');
+  assert.equal(restored.pair, 0, 'a paid Advance persists in the committed pair');
 });
 
 test('a real co-op fan-out pays the greatest approach once and restores both seat contacts', { skip: !COOP_TESTS_ENABLED && COOP_TEST_SKIP_REASON }, () => {

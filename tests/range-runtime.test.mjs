@@ -24,9 +24,24 @@ test('real sourced Strike quotes and pays the approach surcharge once, retaining
   const start = ctx.eventLog.length;
   dispatch(ctx, { type:'playCard', cardInstanceId:card.instanceId, targetId:'e1' });
   assert.equal(ctx.player.stamina, 0);
-  assert.equal(ctx.rangeState.engagements[rangePairKey('player:player','enemy:e1')], 2);
+  assert.equal(ctx.rangeState.engagements[rangePairKey('player:player','enemy:e1')], 0, 'a paid Advance persists as the new distance');
   const played = ctx.eventLog.slice(start).find(row => row.type === 'cardPlayed');
   assert.equal(played.staminaSpent, read.staminaCost);
+});
+test('Advance once, attack twice, pay once; growing the distance re-charges', () => {
+  const ctx = live(), card = strike(ctx); far(ctx);
+  const key = rangePairKey('player:player','enemy:e1');
+  const first = previewCard(ctx, card.instanceId, 'e1');
+  assert.equal(first.range.routes[0].advanceSp, 2);
+  ctx.player.stamina = first.staminaCost;
+  dispatch(ctx, { type:'playCard', cardInstanceId:card.instanceId, targetId:'e1' });
+  assert.equal(ctx.rangeState.engagements[key], 0);
+  const again = ctx.piles.hand.find(row => row.instanceId !== card.instanceId && previewCard(ctx, row.instanceId, 'e1')?.range) || ctx.piles.hand[0];
+  const second = previewCard(ctx, again.instanceId, 'e1');
+  assert.equal(second.range.routes[0].advanceSp, 0, 'second attack has no Advance cost');
+  assert.equal(second.staminaCost, first.staminaCost - 2);
+  ctx.rangeState = { ...ctx.rangeState, engagements: { ...ctx.rangeState.engagements, [key]: 2 } };
+  assert.equal(previewCard(ctx, again.instanceId, 'e1').range.routes[0].advanceSp, 2, 'distance grown again is paid again');
 });
 test('unaffordable sampled root refuses atomically without card, pool, charge, or RNG changes', () => {
   const ctx = live(), card = strike(ctx); far(ctx); ctx.player.stamina = 1;
