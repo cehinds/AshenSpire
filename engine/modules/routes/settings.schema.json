@@ -72,6 +72,12 @@
       "maximum": 1,
       "description": "Share of randomly typed nodes (not rest, elite, boss or the forced first floor) that are shops; the rest keep the even event/fight/treasure split. Absent keeps the even draw over every alternative."
     },
+    "maxBranches": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Present: after a shared opening depth the act splits into 1..min(maxBranches, distinct bosses) branches, each with its own lanes, rests, elites and boss. Absent keeps a single trunk with one boss."
+    },
     "requirePrebossRest": {
       "type": "boolean",
       "description": "Require the last preboss depth to be a mandatory rest on every route."

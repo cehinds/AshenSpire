@@ -8,7 +8,7 @@ import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { refreshBossDestinationLabels } from '../src/model/bossDestinationLabels.js';
 import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
 import { createRng } from '../src/engine/rng.js';
-import { mapKnowledge, resolveMapMode, HIDDEN, KNOWN } from '../src/model/map/mapknowledge.js';
+import { mapKnowledge, resolveMapMode, nearestShrine, litNodes, HIDDEN, KNOWN } from '../src/model/map/mapknowledge.js';
 import { compileGameProfiles } from '../tools/game-config.mjs';
 import { resolveGameAuthor } from '../engine/kernel/gameConfig.js';
 
@@ -20,11 +20,16 @@ function setup(routes = {}) {
   const run = createRunState({ seed: 73, classId: 'reaver', registries: reg });
   return { reg, run };
 }
+// Branched Core maps (owner, 2026-10-25): depth 1 is shared, then every branch has its own lanes, rests, elites and boss.
 function verifyPaths(map, rests) {
   const reached = new Set();
-  function walk(id, length = 0, visitedRests = []) {
+  function walk(id, length = 0, visitedRests = [], branch = null) {
     const node = map.nodes[id];
     reached.add(id);
+    if (node.branch != null) {
+      assert.ok(branch == null || branch === node.branch, `${id} leaves branch ${branch}`);
+      branch = node.branch;
+    }
     const nextRests = node.type === 'shrine' ? [...visitedRests, node.floor] : visitedRests;
     if (node.type === 'boss') {
       assert.equal(length + 1, map.floors);
@@ -35,45 +40,73 @@ function verifyPaths(map, rests) {
     assert.ok(node.next.length, `dead end ${id}`);
     for (const next of node.next) {
       assert.equal(map.nodes[next].floor, node.floor + 1);
-      walk(next, length + 1, nextRests);
+      walk(next, length + 1, nextRests, branch);
     }
   }
   for (const start of map.startIds) { assert.equal(map.nodes[start].floor, 1); walk(start); }
   assert.equal(reached.size, Object.keys(map.nodes).length);
 }
-test('every seeded core branch visits eight levels and all three rests across all three acts', () => {
+function verifyBranches(map, { rests, count, minimumThreatFloor = 3 }) {
+  const b = map.bossIds.length;
+  assert.ok(b >= 1 && b <= 5);
+  assert.equal(map.bossId, map.bossIds[0]);
+  assert.equal(new Set(map.bossIds.map(id => map.nodes[id].encounterId)).size, b, 'bosses are distinct');
+  assert.equal(map.shrineIds.length, b);
+  assert.equal(map.shrineId, map.shrineIds[0]);
+  const lanes = map.columns / b;
+  assert.ok(Number.isInteger(lanes) && lanes >= 1);
+  const width = map.startIds.length;
+  assert.equal(width, map.columns, 'depth 1 is one shared node per column');
+  assert.equal(Object.keys(map.nodes).length, width + (count - 1 - rests.filter(f => f > 1).length) * map.columns + rests.filter(f => f > 1).length * b + b);
+  for (let k = 0; k < b; k++) {
+    const own = Object.values(map.nodes).filter(node => node.branch === k);
+    assert.equal(own.filter(node => node.type === 'shrine').map(node => node.floor).sort((x, y) => x - y).join(), rests.join(), `branch ${k} has its own rest at every rest floor`);
+    assert.ok(own.some(node => node.actualType === 'elite' && node.floor >= minimumThreatFloor), `branch ${k} has an elite`);
+    assert.equal(own.filter(node => node.type === 'boss').length, 1);
+    const preboss = own.filter(node => node.next.includes(map.bossIds[k]));
+    assert.ok(preboss.length && preboss.every(node => node.type === 'shrine' && node.floor === count));
+    assert.ok(map.shrineIds.includes(preboss[0].id));
+  }
+  for (const node of Object.values(map.nodes)) if (node.branch != null) for (const next of node.next) assert.equal(map.nodes[next].branch, node.branch, `${node.id} -> ${next} crosses branches`);
+}
+test('every seeded core map splits into distinct-boss branches, each with its own rests, elite and boss, across all three acts', () => {
   const { reg, run } = setup();
-  for (let seed = 1; seed <= 20; seed++) {
-    const bosses = new Set();
+  const seen = new Set();
+  for (let seed = 1; seed <= 40; seed++) {
     for (let tier = 1; tier <= 3; tier++) {
       const seat = run.seatOrder[tier - 1];
       const map = buildActMap(reg, createRng(seed), seat, tier);
-      verifyPaths(map, [3, 5, 7]);
-      assert.equal(map.floors, 8);
-      // Floor 1 is a fight (routes.firstFloor, owner 2026-10-18): three fight lanes to choose from, drawn as fights.
-      assert.deepEqual(map.startIds, ['n1_0', 'n1_1', 'n1_2']);
-      for (const id of map.startIds) { assert.equal(map.nodes[id].actualType, 'fight'); assert.equal(map.nodes[id].type, 'monster'); assert.ok(map.nodes[id].next.length >= 2); }
-      assert.equal(Object.values(map.nodes).filter(node => node.floor === 1).length, 3);
-      assert.equal(map.shrineId, 'n7_0');
+      verifyPaths(map, [3, 6, 9]);
+      verifyBranches(map, { rests: [3, 6, 9], count: 9 });
+      assert.equal(map.floors, 10);
+      seen.add(map.bossIds.length);
+      // Floor 1 is a fight (routes.firstFloor, owner 2026-10-18): one fight node per column, drawn as fights.
+      for (const id of map.startIds) { assert.equal(map.nodes[id].actualType, 'fight'); assert.equal(map.nodes[id].type, 'monster'); assert.ok(map.nodes[id].next.length >= 1); }
       for (const node of Object.values(map.nodes)) if (['elite', 'boss'].includes(node.actualType)) assert.ok(node.floor >= 3);
-      assert.equal(Object.keys(map.nodes).length, 16);
-      assert.ok(Object.values(map.nodes).some(node => node.next.length > 1));
-      assert.equal(Object.values(map.nodes).filter(node => node.type === 'shrine').length, 3);
-      assert.equal(Object.values(map.nodes).filter(node => node.type === 'boss').length, 1);
-      for (const node of Object.values(map.nodes).filter(node => node.next.includes(map.bossId))) assert.equal(node.type, 'shrine', 'every boss predecessor is a rest');
-      assert.equal(bossEncounterForNode(reg, map, map.bossId, { seat, tier }), map.nodes.boss.encounterId);
-      bosses.add(map.nodes.boss.encounterId);
-      assert.deepEqual(map, buildActMap(reg, createRng(seed), seat, tier));
+      for (const id of map.bossIds) assert.equal(bossEncounterForNode(reg, map, id, { seat, tier }), map.nodes[id].encounterId);
+      assert.deepEqual(map, buildActMap(reg, createRng(seed), seat, tier), 'replays identically');
       for (const node of Object.values(map.nodes)) {
         if (['rest', 'elite', 'boss'].includes(node.actualType) || node.floor === 1) assert.notEqual(node.type, 'event');
         else { assert.equal(node.type, 'event'); assert.ok(node.resolved); }
       }
     }
-    assert.equal(bosses.size, 3);
   }
+  assert.deepEqual([...seen].sort(), [1, 2, 3, 4], 'branch count varies from 1 up to the bosses available (4 at act 3)');
+});
+test('branch count never exceeds the distinct bosses of the act or maxBranches', () => {
+  const capped = setup({ maxBranches: 2 });
+  for (let seed = 1; seed <= 30; seed++) assert.ok(buildActMap(capped.reg, createRng(seed), capped.run.seatOrder[0], 1).bossIds.length <= 2);
+  const single = setup({ maxBranches: 1 });
+  const map = buildActMap(single.reg, createRng(3), single.run.seatOrder[0], 1);
+  assert.deepEqual(map.bossIds, ['boss_0']);
+  assert.equal(map.columns, 3);
+  const act3 = setup();
+  let widest = 0;
+  for (let seed = 1; seed <= 60; seed++) widest = Math.max(widest, buildActMap(act3.reg, createRng(seed), act3.run.seatOrder[2], 3).bossIds.length);
+  assert.equal(widest, 4, 'the final act offers four distinct bosses');
 });
 test('branch width, length, rest placement and exposed node types follow JSON settings', () => {
-  const { reg, run } = setup({ branchColumns: 4, prebossNodes: 5, restFloors: [2, 5], hideUnknownNodes: false });
+  const { reg, run } = setup({ branchColumns: 4, prebossNodes: 5, restFloors: [2, 5], hideUnknownNodes: false, maxBranches: 1 });
   const map = buildActMap(reg, createRng(7), run.seatOrder[0], 1);
   assert.equal(map.columns, 4);
   assert.equal(map.floors, 6);
@@ -84,6 +117,18 @@ test('branch width, length, rest placement and exposed node types follow JSON se
   const noRestMap = buildActMap(noRests.reg, createRng(7), noRests.run.seatOrder[0], 1);
   verifyPaths(noRestMap, []);
   assert.equal(noRestMap.shrineId, null);
+});
+test('a one-depth branched route links every entrance to its branch boss', () => {
+  const named = setup();
+  const fresh = buildActMap(named.reg, createRng(4), named.run.seatOrder[0], 1);
+  assert.ok(fresh.bossIds.every(id => fresh.nodes[id].destinationLabel), 'branch bosses are named on a fresh map');
+  for (const maxBranches of [1, 2]) {
+    const { reg, run } = setup({ prebossNodes: 1, restsPerAct: 0, restFloors: [], requirePrebossRest: false, minimumThreatFloor: 2, branchColumns: 5, maxBranches });
+    for (let seed = 1; seed <= 20; seed++) {
+      const map = buildActMap(reg, createRng(seed), run.seatOrder[0], 1);
+      for (const id of map.startIds) assert.ok(map.nodes[id].next.length && map.nodes[id].next.every(next => map.bossIds.includes(next)), `${id} reaches a boss (seed ${seed})`);
+    }
+  }
 });
 test('branched map choices survive a run round trip without regeneration', () => {
   const { reg, run } = setup();
@@ -141,7 +186,7 @@ test('a configured fog route reveals only landmarks, then the split and next res
   assert.equal(mode, 'fog', 'configured policy must not inherit a stale whole-map viewer setting');
   const knowledge = (subject = run, reveal = false) => mapKnowledge({ graph: subject.mapGraph, run: subject, mode, reveal });
   const birth = knowledge();
-  assert.deepEqual([...birth.drawn].sort(), ['boss', 'n1_0']);
+  assert.deepEqual([...birth.drawn].sort(), ['n1_0', ...run.mapGraph.bossIds].sort(), 'every branch boss is a landmark from birth');
   assert.equal(birth.rung.get('n1_0'), KNOWN);
   assert.equal(birth.rung.get('n6_0'), HIDDEN);
   run.path = ['n1_0']; run.mapNodeId = 'n1_0';
@@ -175,4 +220,21 @@ test('authored threat threshold controls generation, validates boss depth, and c
   assert.equal(resolveMapMode({ settings: { mapMode: 'path' } }, { gameProfile: resolveGameProfile('current') }), 'path');
   const authored = setup({ mapMode: 'path' });
   assert.equal(resolveMapMode({}, authored.run), 'path');
+});
+
+test('a rest lights only its own branch\'s next rest, never a sibling branch\'s', () => {
+  const { reg, run } = setup();
+  let checked = 0;
+  for (let seed = 1; seed <= 30; seed++) {
+    const map = buildActMap(reg, createRng(seed), run.seatOrder[0], 1);
+    if (map.bossIds.length < 2) continue;
+    for (const rest of Object.values(map.nodes).filter(node => node.type === 'shrine' && node.floor === 3)) {
+      const found = nearestShrine({ graph: map, from: rest.id });
+      assert.equal(map.nodes[found.id].branch, rest.branch);
+      const lit = litNodes({ graph: map, run: { path: [rest.id], mapNodeId: rest.id } });
+      for (const id of lit) if (map.nodes[id].type === 'shrine' && id !== rest.id) assert.equal(map.nodes[id].branch, rest.branch, `${id} lit from ${rest.id}`);
+      checked++;
+    }
+  }
+  assert.ok(checked > 10);
 });
