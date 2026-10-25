@@ -73,6 +73,7 @@ jobs:
         with:
           # The range walk needs every commit between the push's before and after.
           fetch-depth: 0
+          filter: blob:none
           lfs: false
 
       - name: Set up Node

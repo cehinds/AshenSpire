@@ -8,6 +8,42 @@ import path from 'node:path';
 
 const exec = promisify(execFile);
 
+for (const variant of ['committed shared host', 'legacy', 'unsafe tag']) {
+  test(`actual core runner accepts safe art pins before fetch: ${variant}`, async () => {
+    const storage = process.platform === 'win32' ? 'D:/repos/.codex/tmp' : tmpdir();
+    await mkdir(storage, { recursive: true });
+    const fixture = await mkdtemp(path.join(storage, 'local-checks-art-pin-'));
+    const author = path.join(fixture, 'author'), output = path.join(fixture, 'result');
+    for (const folder of ['tools', 'tests']) await mkdir(path.join(author, folder), { recursive: true });
+    const git = async (...argv) => (await exec('git', argv, { cwd: author, windowsHide: true })).stdout.trim();
+    await git('init'); await git('config', 'user.name', 'Art pin regression'); await git('config', 'user.email', 'art-pin@example.invalid');
+    await copyFile(new URL('../tools/local-checks.mjs', import.meta.url), path.join(author, 'tools/local-checks.mjs'));
+    const pin = JSON.parse(await readFile(new URL('../art-release.json', import.meta.url), 'utf8'));
+    if (variant === 'legacy') { pin.repo = 'cehinds/AshenSpire-art'; pin.tag = 'hd-assets-v23'; }
+    if (variant === 'unsafe tag') pin.tag = '../escape';
+    await writeFile(path.join(author, 'art-release.json'), JSON.stringify(pin));
+    // Only the consumer is real; downstream workloads are tiny local recorders.
+    // The fixture contains no art cache, real art, dependency tree or network.
+    for (const [file, marker] of [['tools/fetch-art.mjs', 'fetch-ran.json'], ['tests/run-node.mjs', 'core-ran.json']]) {
+      await writeFile(path.join(author, file), `import {writeFileSync} from 'node:fs'; writeFileSync('${marker}',JSON.stringify(process.argv.slice(2)));\n`);
+    }
+    await git('add', '.'); await git('commit', '-m', 'Tiny art pin consumer fixture');
+    const result = await exec(process.execPath, ['tools/local-checks.mjs', '--suite', 'core', '--output', output], { cwd: author, windowsHide: true })
+      .then(value => ({ ...value, code: 0 }), error => ({ code: error.code, stdout: error.stdout, stderr: error.stderr }));
+    const report = JSON.parse(await readFile(path.join(output, 'result.json'), 'utf8'));
+    if (variant === 'unsafe tag') {
+      assert.notEqual(result.code, 0); assert.match(report.error, /Unsupported art cache tag/);
+      assert.equal(report.checks.length, 0, 'unsafe cache paths stop before any workload');
+    } else {
+      assert.equal(result.code, 0, `Retained fixture ${fixture}: ${report.error || result.stderr}`);
+      assert.equal(report.status, 'passed');
+      assert.deepEqual(JSON.parse(await readFile(path.join(report.snapshot, 'fetch-ran.json'), 'utf8')), ['--pack', 'all']);
+      assert.deepEqual(JSON.parse(await readFile(path.join(report.snapshot, 'core-ran.json'), 'utf8')), ['--no-selftests']);
+      assert.equal(JSON.parse(await readFile(path.join(report.snapshot, 'art-release.json'), 'utf8')).tag, pin.tag);
+    }
+  });
+}
+
 test('shared local QA freezes committed LF source despite global Windows CRLF conversion', async () => {
   const storage = process.platform === 'win32' ? 'D:/repos/.codex/tmp' : tmpdir();
   await mkdir(storage, { recursive: true });
