@@ -41,7 +41,7 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   const combat = createRunCombat({ registries, run: restoredRun, rng: createRng(511), enemyIds: ['wanderingSoldier'] });
   const snapshot = serializeCombatSnapshot(combat);
   snapshot.fixCoreRules.smashVsDefensive.damageMultiplier = 2;
-  delete snapshot.fixCoreRules.accuracy.evasionVersion;snapshot.fixCoreRules.accuracy.evadeStackDex = 1;
+  delete snapshot.fixCoreRules.accuracy.evasionVersion;snapshot.fixCoreRules.accuracy.evadeStackBase = 1;snapshot.fixCoreRules.accuracy.evadeStackDex = 1;
   const restored = restoreCombatSnapshot({ registries, rng: createRng(511), snapshot, expectedGameProfile: restoredRun.gameProfile });
   assert.equal(restored.gameProfile.hash, originalHash);
   assert.equal(fixCoreSmashVsDefensiveRules(restored.fixCoreRules).damageMultiplier, 2);
@@ -53,8 +53,8 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   assert.equal(restored.fixCoreRules.accuracy.evasionVersion, 2);assert.equal(restored.fixCoreRules.accuracy.evadeStackDex, 0);
   restored.piles.hand.push({cardId:'core.evade',instanceId:'resumed-evade',upgraded:false});
   const def = registries.cards.get('core.evade');
-  assert.equal(cardFaceLines(def, null, registries).map(row=>row.html).join('').replace(/<[^>]*>/g,''), 'Gain 1 Evade.');
-  assert.equal(cardPlainText(registries, {cardId:'core.evade'}), 'Gain 1 Evade.');
+  assert.equal(cardFaceLines(def, null, registries).map(row=>row.html).join('').replace(/<[^>]*>/g,''), 'Gain 3 Evade.');
+  assert.equal(cardPlainText(registries, {cardId:'core.evade'}), 'Gain 3 Evade.');
   const start=restored.player.statuses.evade?.stacks || 0;
   dispatch(restored,{type:'playCard',cardInstanceId:'resumed-evade'});
   assert.equal(restored.player.statuses.evade.stacks,start+1);
