@@ -246,6 +246,10 @@
       "weight": 0,
       "side": "sp"
     },
+    "finesse": {
+      "weight": 0,
+      "side": "sp"
+    },
     "guile": {
       "weight": 0,
       "side": "sp"
@@ -478,6 +482,12 @@
   "MANEUVER_SP_FLOORS": {
     "maneuver:smash": 2,
     "maneuver:sweep": 2
+  },
+  "MULTI_HIT_SP_FLOOR": {
+    "baseOffset": 0,
+    "finesseOffset": 1,
+    "manaOffset": 2,
+    "minimum": 1
   },
   "RANGE_TAGS": {
     "delivery:melee": "melee",

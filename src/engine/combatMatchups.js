@@ -536,6 +536,7 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const pierce = profiles.some((p, i) => p.camp === 'physical' && amounts[i] > 0
     && (cfg.damageAliases[p.damageType] === 'piercing' || p.damageType === 'piercing'));
   // Technique riders (Precision) join Piercing's bypass: the larger, never the sum.
+  // The bypass lets that much of the hit past Block, magic part included (Block soaks the whole hit; owner, 2026-10-25).
   const physicalHit = profiles.some((p, i) => p.camp === 'physical' && amounts[i] > 0);
   const bypass = riderGuardBypass([...(pierce && cfg.damageRiders.piercing ? [cfg.damageRiders.piercing] : []),
     ...(physicalHit ? tagRidersFor(cfg, carrier, ctx) : [])]);

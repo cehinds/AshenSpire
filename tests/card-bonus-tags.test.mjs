@@ -43,9 +43,9 @@ test('Core Evade retains its short body and one unquantified keyword tag', () =>
   const def = definition('core.evade');
   const [tag] = cardBonusTags(def, null, core);
   assert.equal(tag.count, undefined);assert.equal(tag.countFormula, undefined);
-  assert.match(tag.blurb, /Gain 1 Evade/);assert.match(tag.blurb, /to Evasion\. Only attacks roll\./);assert.doesNotMatch(tag.blurb, /fixed Evasion/);assert.doesNotMatch(tag.blurb, /On changing stance/);
+  assert.match(tag.blurb, /Gain 3 Evade/);assert.match(tag.blurb, /to Evasion\. Only attacks roll\./);assert.doesNotMatch(tag.blurb, /fixed Evasion/);assert.doesNotMatch(tag.blurb, /On changing stance/);
   assert.deepEqual(tag.representedEffects, []);
-  assert.equal(text(faceWith(def, [tag])), 'Gain 1 Evade.', 'the shared face supplies the whole compact body');
+  assert.equal(text(faceWith(def, [tag])), 'Gain 3 Evade.', 'the shared face supplies the whole compact body');
   const preview = { values: [{ op: 'applyStatus', status: 'evade', value: 7 }] };
   assert.match(cardBonusTags(def, preview, core)[0].blurb, /Gain 7 Evade/);
 });
@@ -127,7 +127,7 @@ test('hand, reward and complete printed faces show the short Evade grant with a 
         const body = html.replace(/(?:aria-label|aria-description|data-tip)="[^"]*"/g, '');
         assert.doesNotMatch(body, /Entry:|stat mix|Gain Evade/);
         assert.match(html, id === 'core.strike' ? /aria-label="Precision 1 \+ stat mix"/ : /aria-label="Evade"/);
-        if (id === 'core.evade') assert.match(body.replace(/<[^>]*>/g, ''), /Gain 1 Evade\./);
+        if (id === 'core.evade') assert.match(body.replace(/<[^>]*>/g, ''), /Gain 3 Evade\./);
       }
     }
   });

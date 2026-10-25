@@ -160,15 +160,16 @@ test('a native ranged enemy reaction pays base and Advance before its stacked ev
   dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
   assert.ok(observed.length > 0);
   for (const state of observed) {
-    assert.equal(state.stamina, before - quote.totalSp, 'the full quote is paid before the stacked event');
+    // The player's Strike already paid and committed its Advance, so the reaction owes base SP only.
+    assert.equal(state.stamina, before - quote.sp, 'the base quote is paid before the stacked event');
     assert.equal(state.remaining, state.stamina);
-    assert.deepEqual(state.payment, { sp: quote.sp, advanceSp: quote.advanceSp, totalSp: quote.totalSp });
+    assert.deepEqual(state.payment, { sp: quote.sp, advanceSp: 0, totalSp: quote.sp });
   }
   assert.ok(combat.pendingReaction);
   const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
   const restored = restoreCombatSnapshot({ registries, rng: createRng(511, combat.rng.getCounters()), snapshot });
   settle(combat); settle(restored);
-  assert.equal(combat.enemies[0].stamina, before - quote.totalSp);
+  assert.equal(combat.enemies[0].stamina, before - quote.sp);
   assert.equal(restored.enemies[0].stamina, combat.enemies[0].stamina);
   assert.deepEqual(restored.enemies[0].performedMoves, combat.enemies[0].performedMoves);
   assert.deepEqual(restored.rng.getCounters(), combat.rng.getCounters());
@@ -227,14 +228,14 @@ for (const replay of [false, true]) test(`native Core planning projects persiste
   assert.deepEqual(restored.rng.getCounters(), combat.rng.getCounters());
 });
 
-test('an attack approach remains temporary and is paid again by the next planned attack', () => {
+test('an attack approach persists: the next planned attack is not charged an Advance', () => {
   const combat = fight(), enemy = combat.enemies[0], def = registries.enemies.get(enemy.enemyId);
   combat.rangeState.engagements[Object.keys(combat.rangeState.engagements)[0]] = 1;
   enemy.maxStamina = 4;
   enemy.movesHistory = [];
   delete enemy.combatStance;
   const queue = buildEnemyQueue(enemy, def, { combat, pick: () => 'caneStrike' });
-  assert.deepEqual(queue, [{ moveId: 'caneStrike', sp: 2 }, { moveId: 'caneStrike', sp: 2 }]);
+  assert.deepEqual(queue, [{ moveId: 'caneStrike', sp: 2 }, { moveId: 'caneStrike', sp: 1 }, { moveId: 'caneStrike', sp: 1 }]);
 });
 
 
@@ -268,4 +269,79 @@ test('movement projection resolves authored repeat formulas without granting oth
   const queue = buildEnemyQueue(enemy, def, { combat, pick: () => ['advance', 'caneStrike', 'caneStrike'][index++] });
   assert.deepEqual(queue, [{ moveId: 'advance', sp: 1 }, { moveId: 'caneStrike', sp: 1 }, { moveId: 'caneStrike', sp: 1 }]);
   assert.deepEqual({ range: combat.rangeState, block: enemy.block, counters: combat.rng.getCounters() }, before);
+});
+
+test('a multi-hit move costs 1 SP per hit; finesse and Mana moves floor at max(hits - 1, 1) and max(hits - 2, 1) (owner, 2026-10-25)', () => {
+  const combat = fight(), enemy = combat.enemies[0], def = registries.enemies.get(enemy.enemyId);
+  const options = { enemy, moveId: 'hammerToss', combat };
+  const hits = n => ({ ...def.moves.caneStrike, damage: undefined, sp: 1, effects: [{ op: 'damage', target: 'player', amount: 1, hits: n }] });
+  assert.equal(enemyMoveSp(hits(1), options), 1);
+  assert.equal(enemyMoveSp(hits(2), options), 2);
+  assert.equal(enemyMoveSp(hits(3), options), 3, '3 hits cost 3 SP');
+  assert.equal(enemyMoveSp(hits(5), options), 5, 'no cap');
+  assert.equal(enemyMoveSp({ ...hits(3), mp: 1 }, options), 1, 'a Mana move: max(3 - 2, 1)');
+  assert.equal(enemyMoveSp({ ...hits(5), mp: 1 }, options), 3, 'a Mana move: max(5 - 2, 1)');
+  assert.equal(enemyMoveSp({ ...hits(3), tags: [...(hits(3).tags || []), 'finesse'] }, options), 2, 'a finesse move: max(3 - 1, 1)');
+  assert.equal(enemyMoveSp({ ...hits(3), sp: 6 }, options), enemyMoveSp({ ...hits(1), sp: 6 }, options), 'an authored price above the hit count is never lowered');
+  const staggered = { p: 'hasStatus', of: 'target', status: 'staggered' };
+  const branches = effects => ({ ...hits(1), effects });
+  assert.equal(enemyMoveSp(branches([{ op: 'damage', target: 'player', amount: 10, if: { p: 'not', pred: staggered } }, { op: 'damage', target: 'player', amount: 25, if: staggered }]), options), 1, 'an either/or pair is one hit');
+  assert.equal(enemyMoveSp(branches([{ op: 'damage', target: 'player', amount: 1, hits: 3 }, { op: 'damage', target: 'player', amount: 1, hits: 3, if: staggered }]), options), 3, 'a guarded bonus volley is its own branch, not added');
+});
+
+test('an enemy that cannot afford a multi-hit move never picks it', () => {
+  const combat = fight(), enemy = combat.enemies[0], def = registries.enemies.get(enemy.enemyId);
+  const three = { ...def.moves.caneStrike, damage: undefined, sp: 1, weight: 1000, effects: [{ op: 'damage', target: 'player', amount: 1, hits: 3 }] };
+  const crowded = { ...def, moves: { ...def.moves, tripleCut: three } };
+  enemy.maxStamina = 2; enemy.movesHistory = [];
+  const picked = new Set();
+  for (let i = 0; i < 20; i++) for (const row of buildEnemyQueue(enemy, crowded, { combat, pick: (e, d, maxSp, pricing) => Object.keys(d.moves).find(id => id === 'tripleCut' && enemyMoveQuote(d.moves[id], { enemy: e, moveId: id, combat: pricing }).totalSp <= maxSp) ?? 'caneStrike' })) picked.add(row.moveId);
+  assert.ok(!picked.has('tripleCut'), 'a 3 SP move is not queued from a 2 SP pool');
+});
+
+// Boss tier from the encounter pools, as tools/enemy-decks-convert.mjs reads it.
+const BOSSES = new Set(Object.values(await import('../src/content/encounters/weald.js')).concat(Object.values(await import('../src/content/encounters/marches.js')), Object.values(await import('../src/content/encounters/reach.js')))
+  .filter(Array.isArray).flat().filter(row => row?.pool === 'boss').flatMap(row => row.enemies || []));
+// Boss pools count at most 3 SP (the combat-damage branch caps bosses at 3).
+const spCap = (id, pool) => BOSSES.has(id) ? Math.min(pool, 3) : pool;
+function damageMovePrices(id) {
+  const combat = fight(id), enemy = combat.enemies[0], def = registries.enemies.get(id);
+  const cap = spCap(id, enemy.maxStamina);
+  const moves = Object.entries(def.moves).filter(([, move]) => move.damage != null || (move.effects || []).some(effect => effect.op === 'damage'))
+    .map(([moveId, move]) => ({ moveId, sp: enemyMoveSp(move, { enemy, moveId, combat }) }));
+  return { cap, moves };
+}
+test('every Core enemy has at least one damage move it can afford (boss pools taken as min(pool, 3))', () => {
+  assert.ok(BOSSES.has('ashheartDragon') && BOSSES.has('fellWarden'), 'the boss tier is read from the encounter pools');
+  const without = [];
+  for (const id of registries.enemies.ids()) {
+    const { cap, moves } = damageMovePrices(id);
+    if (moves.length && !moves.some(move => move.sp <= cap)) without.push(id);
+  }
+  assert.deepEqual(without, [], 'every Core enemy has an affordable damage move');
+});
+
+test('the trimmed multi-hit moves fit their enemy\'s pool (owner, 2026-10-25)', () => {
+  const trimmed = { lanternMoth: ['wingSparks'], mirrorScribe: ['shardVolley'], blightedValkyrie: ['whirlwind', 'scarletDance'], fellWarden: ['twinDaggers'],
+    hollowAstronomer: ['orbitalShards'], stitchedKing: ['thousandHands'], glassRegent: ['shatteredCourt'], ashheartDragon: ['ashBreath'] };
+  for (const [id, moveIds] of Object.entries(trimmed)) {
+    const { cap, moves } = damageMovePrices(id);
+    for (const moveId of moveIds) assert.ok(moves.find(move => move.moveId === moveId).sp <= cap, `${id}.${moveId} fits ${cap} SP`);
+  }
+  // The trim is Core content only: the shared (legacy) move keeps its hits.
+  const legacy = createRegistries(contentBundle);
+  assert.equal(legacy.enemies.get('stitchedKing').moves.thousandHands.hits, 6);
+  assert.equal(registries.enemies.get('stitchedKing').moves.thousandHands.hits, 3);
+});
+
+test('the single-hit attacks of the four 1 SP enemies cost the Core card\'s 1 SP (owner, 2026-10-25); legacy keeps its price', () => {
+  const moves = { charredColossus: ['smash'], huskBrute: ['club'], livingArmor: ['slam', 'crush', 'rimeCrush'], stitchCrab: ['scuttleRush'] };
+  const legacy = createRegistries(contentBundle);
+  for (const [id, ids] of Object.entries(moves)) {
+    const combat = fight(id), enemy = combat.enemies[0];
+    for (const moveId of ids) {
+      assert.equal(enemyMoveSp(registries.enemies.get(id).moves[moveId], { enemy, moveId, combat }), 1, `${id}.${moveId}`);
+      assert.equal(legacy.enemies.get(id).moves[moveId].sp, undefined, `${id}.${moveId} legacy keeps the stance price`);
+    }
+  }
 });

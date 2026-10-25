@@ -102,10 +102,10 @@ test('fixed Evasion retains DEX at zero stacks and applies gear once',()=>{
  ctx.fixCoreRules.accuracy.baseAC=2;ctx.fixCoreRules.accuracy.evasionBase=4;
  assert.equal(evasion(2),16,'configured base and per-stack base stay data driven');
 });
-test('shipped Evade grants exactly one stack for every DEX value',()=>{
+test('shipped Evade grants exactly three stacks for every DEX value (owner, 2026-10-25)',()=>{
  const {ctx}=setup();
  for(const dexterity of [0,2,17,100]) {
-  ctx.player.attributes={dexterity};assert.equal(evadeStackGain(ctx,ctx.player),1);
+  ctx.player.attributes={dexterity};assert.equal(evadeStackGain(ctx,ctx.player),3);
  }
 });
 test('Precision entry remains 1 + stat mix; DEX 2, level 1 gives 3 stacks and Precision 9 (owner, 2026-10-19)',()=>{

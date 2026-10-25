@@ -2202,6 +2202,7 @@
       "min": 18,
       "max": 19
     },
+    "spFloor": 3,
     "defaultDeck": [
       "wyrmLord.consecration",
       "wyrmLord.halberdReign",

@@ -7,6 +7,12 @@ import { rangeSourceContact } from '../src/engine/combatEngagement.js';
 import * as Foundation from '../src/engine/combatRules.js';
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { tacticalCarrier } from '../src/engine/combatCardTactics.js';
+import { registries } from './helpers/fixcore-combat-rules.mjs';
+import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
+import { createRng } from '../src/engine/rng.js';
+import { core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../src/model/core2ActionPolicy.js';
+import { enemyMoveSp } from '../src/engine/combatRoundsAdapter.js';
 function strike(ctx) {
   const card = ctx.piles.hand.find(row => row.cardId === 'core.strike');
   assert.ok(card, 'real Core Reaver starting Strike');
@@ -24,9 +30,24 @@ test('real sourced Strike quotes and pays the approach surcharge once, retaining
   const start = ctx.eventLog.length;
   dispatch(ctx, { type:'playCard', cardInstanceId:card.instanceId, targetId:'e1' });
   assert.equal(ctx.player.stamina, 0);
-  assert.equal(ctx.rangeState.engagements[rangePairKey('player:player','enemy:e1')], 2);
+  assert.equal(ctx.rangeState.engagements[rangePairKey('player:player','enemy:e1')], 0, 'a paid Advance persists as the new distance');
   const played = ctx.eventLog.slice(start).find(row => row.type === 'cardPlayed');
   assert.equal(played.staminaSpent, read.staminaCost);
+});
+test('Advance once, attack twice, pay once; growing the distance re-charges', () => {
+  const ctx = live(), card = strike(ctx); far(ctx);
+  const key = rangePairKey('player:player','enemy:e1');
+  const first = previewCard(ctx, card.instanceId, 'e1');
+  assert.equal(first.range.routes[0].advanceSp, 2);
+  ctx.player.stamina = first.staminaCost;
+  dispatch(ctx, { type:'playCard', cardInstanceId:card.instanceId, targetId:'e1' });
+  assert.equal(ctx.rangeState.engagements[key], 0);
+  const again = ctx.piles.hand.find(row => row.instanceId !== card.instanceId && previewCard(ctx, row.instanceId, 'e1')?.range) || ctx.piles.hand[0];
+  const second = previewCard(ctx, again.instanceId, 'e1');
+  assert.equal(second.range.routes[0].advanceSp, 0, 'second attack has no Advance cost');
+  assert.equal(second.staminaCost, first.staminaCost - 2);
+  ctx.rangeState = { ...ctx.rangeState, engagements: { ...ctx.rangeState.engagements, [key]: 2 } };
+  assert.equal(previewCard(ctx, again.instanceId, 'e1').range.routes[0].advanceSp, 2, 'distance grown again is paid again');
 });
 test('unaffordable sampled root refuses atomically without card, pool, charge, or RNG changes', () => {
   const ctx = live(), card = strike(ctx); far(ctx); ctx.player.stamina = 1;
@@ -160,4 +181,24 @@ test('a missed incoming contact neither refunds nor preserves its paid Counter r
   assert.equal(events.filter(row=>row.type==='staminaSpent').reduce((sum,row)=>sum+row.amount,0),2);
   assert.equal(events.some(row=>row.type==='combatCounterTriggered'),false);
   assert.equal(ctx.player.combatCounter?.carrier?.rangeCounterReservation,undefined);
+});
+test('a fight saved under Core 2 rules version 1 keeps v1 pricing and a temporary Advance after restore', () => {
+  const ctx = live(), card = strike(ctx); far(ctx);
+  ctx.core2ActionRulesVersion = 1;
+  const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(ctx)));
+  assert.equal(saved.core2ActionRulesVersion, 1);
+  assert.deepEqual(combatSnapshotProblems(saved), []);
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(511), snapshot: saved });
+  assert.equal(restored.core2ActionRulesVersion, 1, 'the saved version is kept, not upgraded');
+  assert.equal(core2ActionPolicyEnabled(restored), true, 'v1 keeps the v1 Core 2 policy');
+  assert.equal(core2MultiHitRulesEnabled(restored), false);
+  // v1 pricing: the fixture's three-hit slash keeps its v1 price (no 1 SP per hit).
+  const enemy = restored.enemies[0], move = registries.enemies.get(enemy.enemyId).moves.slash;
+  assert.equal(enemyMoveSp(move, { enemy, moveId: 'slash', combat: restored }), enemyMoveSp(move, { enemy, moveId: 'slash', combat: { ...restored, core2ActionRulesVersion: undefined } }));
+  assert.ok(enemyMoveSp(move, { enemy, moveId: 'slash', combat: { ...restored, core2ActionRulesVersion: 2 } }) >= 3, 'v2 prices the same move per hit');
+  // v1 Advance: paid, but temporary to the action.
+  const key = rangePairKey('player:player','enemy:e1');
+  restored.player.stamina = previewCard(restored, card.instanceId, 'e1').staminaCost;
+  dispatch(restored, { type:'playCard', cardInstanceId:card.instanceId, targetId:'e1' });
+  assert.equal(restored.rangeState.engagements[key], 2, 'a v1 fight keeps the Advance temporary');
 });

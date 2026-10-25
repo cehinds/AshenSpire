@@ -22,7 +22,7 @@ const base = bindGameProfileRegistries(createRegistries(applyGameProfileToConten
 const registries = { ...base, enemies: { ...base.enemies, get(id) {
   const def = base.enemies.get(id);
   return id !== 'wanderingSoldier' ? def : { ...def, firstMove: 'slash', moves: { ...def.moves,
-    slash: { ...def.moves.slash, damage: 20, hits: 3 } } };
+    slash: { ...def.moves.slash, damage: 20, hits: 3, tags: [...(def.moves.slash.tags || []), 'finesse'] } } };
 } } };
 function fixture({ spent = false } = {}) {
   const run = createRunState({ registries, classId: 'reaver', seed: 511, runId: 'automatic-counter-forecast' });

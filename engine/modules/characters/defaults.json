@@ -54,6 +54,11 @@
       "constitution": 1
     }
   },
+  "attributeOffset": {
+    "strength": -2,
+    "constitution": -2,
+    "dexterity": -2
+  },
   "penaltyFloor": {
     "sp": 1,
     "mp": 0,

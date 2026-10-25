@@ -1,6 +1,7 @@
 import { previewEnemyAction } from './enemyActionPreview.js';
-import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled } from '../model/core2ActionPolicy.js';
+import { CORE2_ACTION_RULES_VERSION, core2ActionPolicyEnabled, core2MultiHitRulesEnabled } from '../model/core2ActionPolicy.js';
 import { initializeCombatRange, assertRangeCardEnabled, quoteRangeActions, addRangeCosts, previewRangeRoutes, paidCounterRange, rangeCardSourceSnapshots } from './combatEngagement.js';
+import { actorRangeKey, engagementBand, rangeBand } from '../model/combatEngagement.js';
 import { ownGameProfile } from '../model/ownedGameProfile.js';
 import { gameProfileEnemyRatings } from '../model/gameProfileEnemy.js';
 import { snapshotEnemyKnowledgeRules } from '../model/enemyKnowledgeRules.js';
@@ -69,9 +70,10 @@ import { clearEnemyReactionRolls } from './enemyReactions.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
 import { configuredSkillProgression } from '../model/gameProfileProgression.js';
+import { gameModule } from '../model/gameProfile.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
-import { ownRestoreFunds } from '../model/actionCosts.js';
+import { ownRestoreFunds, multiHitSpFloor } from '../model/actionCosts.js';
 import { cardKind } from '../model/tree.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
@@ -334,7 +336,8 @@ export function createCombat({
   };
   if (fixCoreEnabled(combat)) {
     combat.fixCoreRules = snapshotFixCoreRules(combat);
-    combat.core2ActionRulesVersion = CORE2_ACTION_RULES_VERSION;
+    // Stamp v2 only when the run's own profile carries the current rules; a run started on an older profile keeps v1.
+    combat.core2ActionRulesVersion = Math.min(CORE2_ACTION_RULES_VERSION, gameModule(combat, 'effects')?.core2ActionRulesVersion ?? 1);
     if (combat.reactionRulesVersion === 2) combat.reactionRules.contactPolicy = 'perHit';
   }
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
@@ -1085,8 +1088,13 @@ function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
     && closing?.effects?.some(effect => effect.op === 'moveEngagement')
     && Rounds.enemyMoveQuote(closing, { enemy, moveId: closingId, combat }).totalSp <= maxSp;
   const replacements = new Map();
+  // A retreat (a move with its own retreatWeight) is offered only while the fight is closer than the enemy
+  // prefers; maxConsecutive keeps it from repeating back to back, so the player is not chased out of reach forever.
+  const wantsDistance = policy && combat.rangeState?.policy.enabled && def.startingRange !== undefined
+    && engagementBand(combat.rangeState, actorRangeKey(combat, enemy), actorRangeKey(combat, combat.player)) < rangeBand(def.startingRange);
   const entries = Object.entries(def.moves).filter(
     ([id, mv]) => {
+      if (mv.retreatWeight != null && !wantsDistance) return false;
       if (mv.reaction || (mv.locked && !enemy.unlockedMoves.includes(id))) return false;
       if (!policy) return Rounds.enemyMoveSp(mv, { enemy, moveId: id, combat }) <= maxSp;
       const quote = Rounds.enemyMoveQuote(mv, { enemy, moveId: id, combat });
@@ -1115,11 +1123,12 @@ function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
   });
   const pool = eligible.length > 0 ? eligible : entries;
 
-  const total = pool.reduce((acc, [, mv]) => acc + mv.weight, 0);
+  const weightOf = mv => mv.retreatWeight ?? mv.weight;
+  const total = pool.reduce((acc, [, mv]) => acc + weightOf(mv), 0);
   if (total <= 0) return replacements.get(pool[0][0]) ?? pool[0][0];
   let r = combat.rng.float('enemyAI') * total;
   for (const [id, mv] of pool) {
-    r -= mv.weight;
+    r -= weightOf(mv);
     if (r < 0) return replacements.get(id) ?? id;
   }
   const last = pool[pool.length - 1][0];
@@ -1576,6 +1585,9 @@ function resolvedCardPriceReceipt(combat,def,claimed=null) {
 function baseCardPriceReceipt(combat, def, claimed = null) {
   if (configuredCombat(combat)) {
     const paid = profileCardCosts(combat, def);
+    // Multi-hit floor (owner, 2026-10-25): a fixed Core cost is read here, so the floor applies here too.
+    const hitFloor = core2MultiHitRulesEnabled(combat) ? multiHitSpFloor(def, { mana: paid.mana }) : 0;
+    if (hitFloor > paid.stamina) { paid.energy = hitFloor; paid.stamina = hitFloor; }
     return { paid, display: { action: paid.energy, stamina: paid.stamina, mana: paid.mana }, selfFunded: false };
   }
   const weightClass = playerWeightClass(combat).weightClass;

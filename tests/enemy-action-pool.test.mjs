@@ -32,7 +32,7 @@ function registriesWith({ pool, extraMoves } = {}) {
       const def = orig.get(id);
       if (id !== ENEMY) return def;
       const moves = { ...def.moves, ...(extraMoves || {}) };
-      return { ...def, attributes: FIXTURE_STATS, moves, ...(pool === undefined ? {} : { spPool: pool }) };
+      return { ...def, attributes: FIXTURE_STATS, equipmentSp: 0, moves, ...(pool === undefined ? {} : { spPool: pool }) };
     },
   };
   return { ...base, enemies };

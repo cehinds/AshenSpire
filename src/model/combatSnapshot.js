@@ -1,3 +1,4 @@
+import { CORE2_ACTION_RULES_VERSIONS } from './core2ActionPolicy.js';
 import { validateFixCoreRules, normalizeFixCoreRules } from './fixCoreMechanics.js';
 import { enemySpPaymentValid } from './core2ActionPolicy.js';
 import { enemyBurdenProblems } from '../engine/enemyBurdens.js';
@@ -125,7 +126,7 @@ function cardProblems(card, path) {
 export function combatSnapshotProblems(snapshot) {
   if (!record(snapshot)) return ['snapshot must be an object'];
   const problems = [];
-  if (snapshot.core2ActionRulesVersion !== undefined && snapshot.core2ActionRulesVersion !== 1) problems.push('snapshot.core2ActionRulesVersion must be 1 when present');
+  if (snapshot.core2ActionRulesVersion !== undefined && !CORE2_ACTION_RULES_VERSIONS.includes(snapshot.core2ActionRulesVersion)) problems.push(`snapshot.core2ActionRulesVersion must be one of ${CORE2_ACTION_RULES_VERSIONS.join(', ')} when present`);
   if (snapshot.gameProfile !== undefined) {
     try { validateGameProfileSnapshot(snapshot.gameProfile); } catch (error) { problems.push(`gameProfile: ${error.message}`); }
     if (!Number.isInteger(snapshot.gameProfileCommands) || snapshot.gameProfileCommands < 0) problems.push('gameProfileCommands must be a nonnegative integer');
