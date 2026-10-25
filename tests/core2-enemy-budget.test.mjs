@@ -270,3 +270,26 @@ test('movement projection resolves authored repeat formulas without granting oth
   assert.deepEqual(queue, [{ moveId: 'advance', sp: 1 }, { moveId: 'caneStrike', sp: 1 }, { moveId: 'caneStrike', sp: 1 }]);
   assert.deepEqual({ range: combat.rangeState, block: enemy.block, counters: combat.rng.getCounters() }, before);
 });
+
+test('a multi-hit move costs 1 SP per hit; mana and finesse moves keep their ordinary price (owner, 2026-10-25)', () => {
+  const combat = fight(), enemy = combat.enemies[0], def = registries.enemies.get(enemy.enemyId);
+  const options = { enemy, moveId: 'hammerToss', combat };
+  const hits = n => ({ ...def.moves.caneStrike, damage: undefined, sp: 1, effects: [{ op: 'damage', target: 'player', amount: 1, hits: n }] });
+  assert.equal(enemyMoveSp(hits(1), options), 1);
+  assert.equal(enemyMoveSp(hits(2), options), 2);
+  assert.equal(enemyMoveSp(hits(3), options), 3, '3 hits cost 3 SP');
+  assert.equal(enemyMoveSp(hits(5), options), 5, 'no cap');
+  assert.equal(enemyMoveSp({ ...hits(3), mp: 1 }, options), 1, 'a mana move keeps its price');
+  assert.equal(enemyMoveSp({ ...hits(3), tags: [...(hits(3).tags || []), 'finesse'] }, options), 1, 'a finesse move keeps its price');
+  assert.equal(enemyMoveSp({ ...hits(3), sp: 6 }, options), enemyMoveSp({ ...hits(1), sp: 6 }, options), 'an authored price above the hit count is never lowered');
+});
+
+test('an enemy that cannot afford a multi-hit move never picks it', () => {
+  const combat = fight(), enemy = combat.enemies[0], def = registries.enemies.get(enemy.enemyId);
+  const three = { ...def.moves.caneStrike, damage: undefined, sp: 1, weight: 1000, effects: [{ op: 'damage', target: 'player', amount: 1, hits: 3 }] };
+  const crowded = { ...def, moves: { ...def.moves, tripleCut: three } };
+  enemy.maxStamina = 2; enemy.movesHistory = [];
+  const picked = new Set();
+  for (let i = 0; i < 20; i++) for (const row of buildEnemyQueue(enemy, crowded, { combat, pick: (e, d, maxSp, pricing) => Object.keys(d.moves).find(id => id === 'tripleCut' && enemyMoveQuote(d.moves[id], { enemy: e, moveId: id, combat: pricing }).totalSp <= maxSp) ?? 'caneStrike' })) picked.add(row.moveId);
+  assert.ok(!picked.has('tripleCut'), 'a 3 SP move is not queued from a 2 SP pool');
+});

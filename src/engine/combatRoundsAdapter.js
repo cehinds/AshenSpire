@@ -48,16 +48,25 @@ export function roundState(combat) {
 export function moveSp(move, { enemy = null, moveId, combat = null } = {}) {
   const entity = enemy && combat?.combatExpansionVersion === 2 ? enemy : null;
   const price = enemyMoveSpOf(move, moveKind(move), MOVE_SP, { entity, enemyId: enemy?.enemyId, moveId, ctx: combat });
-  return core2ActionPolicyEnabled(combat) && enemyMoveHasMultipleHits(move, { enemy, moveId, combat }) ? Math.max(2, price) : price;
+  if (!core2ActionPolicyEnabled(combat)) return price;
+  // Owner rule (2026-10-25): a multi-hit move costs 1 SP per hit, unless it costs mana or is a finesse move. The
+  // authored price is never lowered, and there is no cap; an enemy short of SP simply cannot use the move.
+  const hits = enemyMoveHitCount(move, { enemy, moveId, combat });
+  return hits > 1 ? Math.max(price, hits) : price;
 }
 export const enemyMoveSp = moveSp;
 
 // Count HP-damage contacts per target, before damage components split into
 // physical/magical lanes. An area attack hitting each defender once is one hit.
-export function enemyMoveHasMultipleHits(move, { enemy, moveId, combat }) {
+export const enemyMoveHasMultipleHits = (move, options) => enemyMoveHitCount(move, options) > 1;
+// The most HP-damage contacts any one defender takes from the move, or 0 for a mana or finesse move, which keeps its
+// ordinary price (a counter is never multi-hit).
+export function enemyMoveHitCount(move, { enemy, moveId, combat }) {
   const expanded = expandedEnemyMove(enemy, move, moveId, combat);
   const carrier = enemyMoveCarrier(enemy, expanded, moveId, combat);
-  if (carrier.combatProfile.maneuver === 'counter') return false;
+  if (carrier.combatProfile.maneuver === 'counter') return 0;
+  if (Number(expanded.mp) > 0 || Number(expanded.manaCost) > 0) return 0;
+  if ([...(carrier.tags || []), ...(expanded.tags || [])].includes('finesse')) return 0;
   const effects = [...(expanded.damage != null ? [{ op: 'damage', target: 'player', amount: expanded.damage, hits: expanded.hits ?? 1 }] : []), ...(expanded.effects || [])];
   const counts = new Map();
   const detached = { ...combat, rng: createRng(combat.rng.seed, combat.rng.getCounters()) };
@@ -69,10 +78,9 @@ export function enemyMoveHasMultipleHits(move, { enemy, moveId, combat }) {
     for (let i = 0; i < hits; i++) for (const target of Actions.resolveTargets(detached, action, effect.target)) {
       const key = target.id;
       counts.set(key, (counts.get(key) || 0) + 1);
-      if (counts.get(key) > 1) return true;
     }
   }
-  return false;
+  return Math.max(0, ...counts.values());
 }
 
 // A forecast only: range quotes use detached streams and do not move or charge
