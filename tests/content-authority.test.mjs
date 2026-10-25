@@ -438,3 +438,26 @@ test('music: the tables deep-equal their authored JSON; quiet leads BEDS and the
     assert.equal(m.MUSIC_TRACK_FALLBACK[`map-${id}`], 'map');
   }
 });
+
+import * as sfxModule from '../src/content/sfx.js';
+test('sfx: the recipe, family and tier tables deep-equal their authored JSON; aliases share one frozen row', () => {
+  const read = (name) => JSON.parse(readFileSync(resolve(ROOT, `content/source/${name}.json`), 'utf8'));
+  const rows = read('sfxRecipes');
+  const m = sfxModule;
+  assert.deepStrictEqual(Object.keys(m.SFX_RECIPES), Object.keys(rows), 'recipe ids keep their written order');
+  for (const [id, row] of Object.entries(rows)) {
+    if (typeof row === 'string') assert.equal(m.SFX_RECIPES[id], m.SFX_RECIPES[row], `${id} aliases ${row}`);
+    else assert.deepStrictEqual(m.SFX_RECIPES[id], row, id);
+  }
+  const aliased = new Set(Object.values(rows).filter((row) => typeof row === 'string'));
+  assert.deepStrictEqual([...aliased].sort(), ['hit_medium', 'holdCommit']);
+  for (const [id, recipe] of Object.entries(m.SFX_RECIPES)) {
+    const shared = aliased.has(id) || typeof rows[id] === 'string';
+    assert.equal(Object.isFrozen(recipe), shared, `${id}: only a row that is shared through an alias is frozen`);
+    assert.ok(recipe.every((layer) => !Object.isFrozen(layer)), `${id}: layers were never frozen`);
+  }
+  assert.ok(!Object.isFrozen(m.SFX_RECIPES));
+  assert.deepStrictEqual(m.SFX_FAMILY_IDS, read('sfxFamilyIds'));
+  assert.deepStrictEqual(m.SFX_HIT_TIERS, read('sfxHitTiers'));
+  assert.ok(Object.isFrozen(m.SFX_FAMILY_IDS) && Object.isFrozen(m.SFX_HIT_TIERS) && m.SFX_HIT_TIERS.every(Object.isFrozen));
+});

@@ -607,6 +607,95 @@ File header (was the comment block at the top of src/content/music.js): the proc
 - **`beds`** — music beds per context. Each context has a `gain`, a `drone` flag, and a set of procedural VARIANTS (root frequency, scale, note cadence in ms); one is picked at random each time the context starts, so the score varies between a handful of "tracks" even with zero audio files. Shop and Rest have their own calmer sets; Boss/Elite their own darker ones. Each variant may also set `wave` (oscillator timbre) and `lift` (melodic stride through the scale) so variants differ in colour and contour, not just key/tempo — more perceived variety from the same synth.
 - **`mapRegions`** — the map sounds like where you are. Each region the map can stand in has its own context, `map-<region id>` (ids from content/config/ui/presentation/environments.json). They share the map's procedural bed (src/content/music.js sets `BEDS['map-<id>'] = BEDS.map`, the same object), so a region with no recorded track sounds exactly as the map always has; the music folder can name tracks per region, and a region it leaves empty falls back to the folder's plain `map` list (`MUSIC_TRACK_FALLBACK`) before the synth.
 
+## Sound effects (content/source/sfxRecipes.json, sfxFamilyIds.json, sfxHitTiers.json)
+
+File header (was the comment block at the top of src/content/sfx.js): the SFX recipes, as data (#46; design law §3.1, Law 1). The synth engine (src/ui/audio.js) knows how to say exactly two words, `tone` and `noise`, and each recipe is a list of layers spoken in that closed vocabulary. Tuning a sound (hit too loud, click too shrill) is a table edit, never an engine edit: the same rule the music beds in music.js and the cards follow. Schema: `SFX_LAYER_SCHEMAS` in model/schemas.js; validated at boot and in tests via the content bundle (model/validate.js), so a malformed layer fails naming its recipe id.
+
+The three source files: `sfxRecipes.json` → `SFX_RECIPES` (an object of id → layer list, in written order), `sfxFamilyIds.json` → `SFX_FAMILY_IDS`, `sfxHitTiers.json` → `SFX_HIT_TIERS`. src/content/sfx.js freezes the two lists, keeps `SFX_MANIFEST` (empty), `hitTierFor` and `resolveRecipe`, and builds `SFX_RECIPES` from the JSON.
+
+- **Alias rows.** A recipe row whose value is a string, not a layer list, is an alias: `"hit": "hit_medium"` and `"beat": "holdCommit"` answer with the very same layer list as the row they name (it was one shared constant each in the old module, `HIT_MEDIUM_RECIPE` and `CONFIRM_ARRIVAL_RECIPE`), so retuning one moves both. src/content/sfx.js freezes a row that another row aliases (its layers stay unfrozen, as before).
+- **Layer fields** (all times in seconds, frequencies in Hz, peaks are gain 0-1): `tone` — `type` (sine|square|sawtooth|triangle), `freq`, `to`? (glide target), `dur`, `peak`?, `t0`? (delay before onset); `noise` — `dur`, `peak`?, `t0`?, `hp`? (highpass Hz), `lp`? (lowpass Hz).
+- **`default`** is required: it is what an id with no entry plays — a quiet, audible beep, so a missing recipe is heard, never silent (Law 1 clause 5). The fallback for any id with no entry; audible on purpose.
+- **The id scheme.** Composed ids, and why this table has a family row (#66/D16). A call site may compose an id from data: `procBurst_${status}` (ui/fx.js). Resolution is generic-then-specific, in resolveRecipe() below: procBurst_frost  →  the exact row if authored →  else `procBurst`, the FAMILY row (before the '_') →  else `default` So a per-status row is an OPTIONAL flourish, never a requirement: the day content authors a fourth proc status, its burst already sounds like a burst instead of degrading to the 440 Hz blip. That is Law 1 clause 3 — new combinations of existing vocabulary must just work, with no engine edit. Authoring a new family = one row named for the id before the underscore. Found by Sunna at #66: #65 started composing `procBurst_<status>` and no row answered, so bleed, frost AND insanity all played the fallback while the settings screen named sounds the build did not make.
+- **`SFX_MANIFEST` (stays in JS).** A recipe id automatically tries assets/sfx/<encoded-id>.ogg before using its synth recipe. Add a row here only to override that path or format; both the convention and overrides pass through assetUrl() so standalone builds can inline them. A cue synths immediately while an unknown file warms; only a cached known-good file replaces later cues. Missing/undecodable files remain unavailable in that cache, so every cue keeps the immediate recipe below. (Moved here from music.js so all SFX content has one home.)
+- **`sfxFamilyIds`.** Family rows are an explicit content characteristic. Runtime resolution and the content-build reachability check both consume this list; neither guesses that every row before an underscore is intended as a composed-id family.
+- **`sfxHitTiers`.** HIT TIERS (FINISH §5, D48). An attack that takes HP plays `hit_<tier>`, and the tier is the highest row whose `min` the HP damage reaches (guard consumed does not count — the guard half already plays `block`). The thresholds are data (owner ruling D1) and match the damage-number sizes in ui/fx.js dmgClass: under 6 is a chip, 15 and over is heavy (the hit that also shakes the screen, SPEC §7.4). Retuning is an edit to this table; a fourth tier is one more row here plus its `hit_<tier>` recipe below.
+- **`hit`, `hit_medium`.** The medium hit is also the `hit` family row: a tier some future table names before its recipe is authored still sounds like a hit, not the blip. (Same gesture — a noise smack over a falling square — scaled in weight: the light hit is shorter, brighter and quieter; the heavy one drops lower, lasts longer and adds a sub thump. `hit_medium` is the old single `hit`.)
+- **`beat`, `holdCommit`.** Confirm arrivals share one generic fallback gesture. `beat_<phase>` and `holdCommit_<action>` may add exact flourishes later without copying this tuning or falling through to the missing-id beep today.
+- **`hit_heavy`.** The thump: a short flat 60 Hz sine under the smack, so a heavy hit lands in the chest.
+- **`playerHurt`.** The player taking HP: a dull, low, wet thud with a sawtooth groan under it, so being hurt never sounds like landing a hit.
+- **`turnStinger`.** Your turn: a short two-note rising stinger (D4 -> A4), quieter than `victory` and played once per turn.
+- **`cardDraw`, `deckShuffle`, `cardDiscard`.** Pile sounds play once per beat, however many cards moved, so they are kept quiet and short: a paper flick, a riffle, a soft drop.
+- **`procBurst`, the proc-burst family (#66/D16).** `procBurst` is the FAMILY row: any status that procs and has no row of its own sounds like a burst, not like a missing sound. The three per-status rows below are the flourish — same gesture, different material, so a player learns which threshold blew without reading the banner. (This row was promoted from the old `bleedBurst`, which lost its caller at #65. RETUNED at Sunna's gate: promoting it verbatim made the family row and `procBurst_bleed` the same sound — 0.5 dB apart A-weighted, measured — so the FOURTH proc status would have been heard as bleed. A false identity costs a tired player more than a generic one, so the family is now the GESTURE WITHOUT THE MATERIAL: mid-register triangle, mid-band noise, no wet low-mid. It should read "a threshold blew" and claim no element. Each sibling owns a different timbre AND a different register — bleed sawtooth/low, insanity squares beating, frost triangle/high.)
+- **`procBurst_bleed`.** Bleed — wet and low: the family gesture with the noise band dropped and widened, so it reads as fluid rather than brittle.
+- **`procBurst_frost`.** Frost — brittle and high: a short glassy crack over a thin high-passed hiss. Same shape, opposite end of the spectrum from bleed. RETUNED at Sunna's gate — DISTRIBUTION ONLY, and the level half is deliberately NOT closed. Her render measured frost 10 dB under its siblings; my analytic meter (tools/sfx-loudness.mjs) measures it 9 dB OVER them. Two instruments, opposite signs, so I changed nothing whose justification depends on which is right — a level edit I cannot defend in either direction is a guess wearing a decimal. What BOTH instruments agree on is where the energy sits, and that is what moved: the sub-bass body halves (peak .28 -> .14, shorter), because it is the part a laptop or phone cannot reproduce and A-weighting says the ear barely counts; the hiss reaches DOWN to 1.8 kHz (from 2600) so it lands in the band that survives a bed instead of above it; and the glassy tone glides to 700 rather than 520 so it stays bright instead of falling into the mids. Peaks are untouched. Centroid 925 -> 1216 Hz on my meter; identity-band SNR over the bed +11.8 dB at 1.8-4 kHz on hers.
+- **`procBurst_insanity`.** Insanity — unstable: two detuned squares beating against each other, so the burst sounds wrong on purpose rather than merely loud.
+- **`holdTick`, `holdCommit`, the hold family.** The comment block that stood above `holdTick`, verbatim:
+
+```text
+
+
+THE SCORE, written out because this house has no ears and a sound nobody
+can check is decoration. Four sounds make ONE PHRASE, and the phrase is
+"approach, approach, approach, arrive":
+
+  tick   tick  tick      COMMIT
+  A3     A3    A3        A3 -> E4, with A4 over it
+  |------|-----|---|
+  0.00   0.42  0.78  1.0        (fractions of the fill; balance.ui.holdBeat)
+
+Every tick is the SAME NOTE. Nothing rises in pitch — the gaps shorten, and
+that is the whole progress signal (the reason is in balance.ui.holdBeat, one
+home). The commit is that same A arriving UP: 220 glides to 330 (a fifth)
+with a quiet 440 (the octave) laid over it 25 ms later. So the landing is
+heard as the ticks resolving rather than as a fifth unrelated event, and a
+player learns the phrase in one run without being told anything.
+
+WHY A3 = 220 Hz. It is an octave under `cardPlay` (520->380) and two under
+`relic`, so a confirmation never competes with the sound of the thing being
+confirmed. A phone speaker rolls off hard below ~500 Hz, so on the shape
+that matters the fundamental is barely there and the TRIANGLE'S ODD
+HARMONICS (660, 1100, 1540...) are what actually arrives — which is why the
+tick is a triangle and not a sine. A 35 ms sine has no transient to hear.
+
+WHY NOT THE OTHER TIMBRES: square reads as an error tone (it is `stagger`
+and half of `procBurst_insanity`); sawtooth is the bleed/death material;
+noise is impact, and a confirmation is not an impact. The tick is the only
+dry, unfiltered, single-layer row in this table on purpose.
+
+THE LEVELS, AND THE TRADE I TOOK. `holdTick` peak 0.10 is the QUIETEST row
+here — under `default`'s 0.15 — and 35 ms is the shortest. It fires three
+times per confirmation and hundreds of times a run, so it is the one sound
+in the game whose cost is paid at hold #200 rather than hold #1. It is
+audible because it is dry and transient against a sustained bed, NOT
+because it is loud; buying audibility with gain would be the wrong fix and
+the mix would be the thing at fault.
+
+`holdCommit` peak 0.30 sits UNDER `cardPlay`'s 0.35, deliberately and at a
+cost: the more satisfying sound is louder. But a confirmation is not a
+bigger event than the card it confirms, and a mix where the guard
+out-shouts the action is lying about what mattered.
+
+THERE IS NO `holdAbort`, AND THE ABSENCE IS THE DECISION. Letting go is
+nothing happening, and the honest sound for nothing happening is nothing.
+It is also the COMMON case — releasing early IS the feature — so a cue
+there would become the most-fired sound in the game while reporting a
+non-event. The train stopping already says it.
+
+COMPOSED PER ACTION, exactly like `procBurst_<status>` above:
+  holdCommit_endTurn -> the exact row if some future author writes one
+                     -> else `holdCommit`, this family row
+So the day an action becomes one that "takes a second beat", it already
+sounds right with no engine edit and no content edit. A per-action row is
+an OPTIONAL flourish. None is authored here on purpose: this table deleted
+`uiClick` for being a shipped sound with no caller, and a `holdCommit_x`
+for an x that does not hold yet would be the same lie in a new coat.
+```
+- **`rewardTake`.** REWARD COLLECTION (E11). A FAMILY row — the reward menu composes `rewardTake_<kind>` per collected row (rewardTake_cinders, rewardTake_card, rewardTake_flask, rewardTake_armament, rewardTake_relic) and resolution falls through exact → this family → default, the procBurst shape (#71). Authoring a per-kind flourish later is ONE exact row here, zero code. The gesture: a short upward settle — receipt, not fanfare; `victory` already owns the fanfare and fires once at the screen, not per row.
+- **`uiClick` (deleted).** `uiClick` WAS HERE and is gone — no call site in the tree ever fired it (D10: tuned, validated, shipped, played by nothing). A shipped sound with no caller makes the settings screen promise a sound the build never makes, which is the same lie as a caller with no recipe. Restoring it is one line, the day a caller exists — the row was, verbatim: `"uiClick": [{ "kind": "tone", "type": "square", "freq": 420, "to": 420, "dur": 0.04, "peak": 0.18 }]`. Wiring buttons to it is a UI-domain call, not mine, and rides the D10/D16
+- **`victory`.** A rising G–B–D–G arpeggio, one layer per note (was a forEach in engine code).
+
+
 ## Keywords
 
 Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for
