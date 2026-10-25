@@ -36,6 +36,9 @@ export function dlog(kind, msg, data) {
   }
   entries.push({ time: new Date(), kind, msg, detail });
   if (entries.length > MAX_ENTRIES) entries.splice(0, entries.length - MAX_ENTRIES);
+  // Mirror into the session console so ignored taps sit beside the errors.
+  // append, not console.debug: nothing extra prints to the devtools console.
+  try { consoleRecorder.append('debug', `[${kind}] ${msg}${detail ? ' ' + detail : ''}`); } catch (e) { /* never break a trace */ }
 }
 
 export function getEntries() {
