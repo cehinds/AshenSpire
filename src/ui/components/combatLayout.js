@@ -124,14 +124,15 @@ export function wireCombatLayout(combatEl) {
     const split = desktopFooterEnabled({ formFactor, appearance: document.documentElement.dataset.displayAppearance, layout: combatEl.dataset.layout });
     const alternative = document.documentElement.dataset.displayAppearance === 'alternative';
     const headerSizing = uiConfig.scenes.w4a.sizing.desktopHeader;
-    // The co-op board has its own header markup: it keeps the measured band.
+    // The co-op board has its own header markup: it keeps the measured band, with a
+    // floor for its resource bars and fight label (a short host folds them inline).
     const sharedHeader = !!combatEl.querySelector(':scope > .combat-hud.shared-hud');
     const headerRow = !alternative || !sharedHeader ? '' : (split || width * zoom >= headerSizing.singleRowMinWidthPx ? 'single' : 'stacked');
     if (combatEl.dataset.headerRow !== headerRow) combatEl.dataset.headerRow = headerRow;
     const hudBand = headerRow
       ? Math.max(bands.hud, (headerRow === 'single' ? headerSizing.heightPx : headerSizing.stackedHeightPx) / zoom)
       : Math.max(combatHudBandHeight(combatEl.querySelector(':scope > .topbar'), bands.hud, zoom, bandMemo),
-        alternative ? headerSizing.coopHeightPx / zoom : 0);
+        alternative ? (clientHeight * zoom <= headerSizing.coopShortHostMaxPx ? headerSizing.coopHeightPx : headerSizing.coopTallHeightPx) / zoom : 0);
     combatEl.dataset.compactCombat = String(compact);
     combatEl.dataset.formFactor = formFactor || '';
     combatEl.dataset.desktopFooter = String(split);
