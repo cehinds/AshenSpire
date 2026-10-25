@@ -102,3 +102,10 @@ test('an open tray: a re-fit solves the frame, then keeps the selected node fram
   refitCamera({ look: { id: 'f3c2', inset: 188 }, ...c });
   assert.deepEqual(c.calls, ['current', 'node:f3c2:188']);
 });
+
+test('a tray inset never re-frames the map painting', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const src = await readFile(new URL('../src/ui/components/mapboard.js', import.meta.url), 'utf8');
+  const call = src.match(/const frameBox = paintingGround\(\{[^\n]*\}\);/)?.[0] || '';
+  assert.match(call, /h: h - insetBottom \/ zoom/, 'the painting is framed against the ground without the tray padding');
+});

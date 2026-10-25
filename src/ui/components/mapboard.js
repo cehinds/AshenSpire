@@ -742,8 +742,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // the viewport centred on it; otherwise every aimX +- w/2 from the ink's
     // columns, so an end-column node never shows bare paper), not this frame's viewBox: a pan moves
     // x0 and must only translate the painting. Re-solved when the act, board
-    // size or zoom changes (the key), never per glide frame.
-    const frameBox = paintingGround({ ink: inkBox, w, y0, h, aim: freePan ? null : { min: inkBox.x0, max: inkBox.x1 } });
+    // size or zoom changes (the key), never per glide frame. A tray's inset is
+    // temporary camera padding under the tray, not ground: framing against it
+    // would rescale the painting (and move terrain zones) on every open/close.
+    const frameBox = paintingGround({ ink: inkBox, w, y0, h: h - insetBottom / zoom, aim: freePan ? null : { min: inkBox.x0, max: inkBox.x1 } });
     const frameKey = paintingFrameKey(frameBox);
     if (!paintingAnchor || !paintingArt || !paintingStart) frameCache = { key: '', frame: null };
     else if (frameCache.key !== frameKey) {
