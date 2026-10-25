@@ -356,3 +356,11 @@ test('skillFeats: the export deep-equals the authored JSON array', () => {
   assert.ok(Array.isArray(authored) && authored.length > 0);
   assert.deepStrictEqual(skillFeats, authored);
 });
+
+import { surveyQuestLore } from '../src/content/surveyQuestLore.js';
+test('surveyQuestLore: the export deep-equals the authored JSON and stays frozen at both depths', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/surveyQuestLore.json'), 'utf8'));
+  assert.deepStrictEqual(surveyQuestLore, authored);
+  assert.ok(Object.isFrozen(surveyQuestLore));
+  for (const entry of Object.values(surveyQuestLore)) assert.ok(Object.isFrozen(entry));
+});

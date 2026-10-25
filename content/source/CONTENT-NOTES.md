@@ -396,6 +396,10 @@ File header (was the comment block above src/content/skillFeats.js): the feats a
 - **`crit`** — Blade-tagged attacks may crit (owner, 2026-10-04): chance base + Σ weight·attribute / divisor, capped; a crit multiplies the hit. Chances from several sources add before the cap.
 - **`passive`** — a tag on the character that changes every card meeting its tags (SPEC §13.4o "Passive tag effects"): `block` adds to the card's first unconditional Block, shown on the card's face.
 
+## Survey quest lore (content/source/surveyQuestLore.json)
+
+File header (was the comment above src/content/surveyQuestLore.js): player-facing survey writing. Keep prose outside the atlas topology tables: their historical revision includes text, and changing it would reroute seeds and refuse existing journeys. IDs, objectives and rewards stay in the atlas. `surveyQuestLore.json` is the object export `surveyQuestLore`, keyed by survey id, each entry `{ title, description, report }`; src/content/surveyQuestLore.js freezes the table and each entry, as before.
+
 ## Keywords
 
 Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for
