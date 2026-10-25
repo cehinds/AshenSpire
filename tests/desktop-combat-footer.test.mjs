@@ -17,7 +17,7 @@ for (const [width,height,zoom] of [[1440,900,1.2],[1920,1080,1.48]]) test(`deskt
   assert.ok(Math.abs((end.y+end.h)*zoom-(height-6*footer.unit*zoom))<.001);
   for(const count of [1,3,5,7,10]){
     const hand=desktopHandLayout({width:width/zoom,height:footer.handHeight,count,zoom});
-    assert.ok(hand.cardWidth*zoom>=184 && hand.cardWidth*zoom<204, 'desktop cards stay readable and below the previous reference size');
+    assert.ok(hand.cardWidth*zoom>=150 && hand.cardWidth*zoom<=181, "desktop cards sit in the SPEC 150-180px band, below the previous 184px reference size");
     assert.ok(Math.abs(hand.cardWidth/hand.cardHeight-2/3)<1e-9);
     assert.ok(hand.cards[0].x>=0);
     assert.ok(hand.cards.at(-1).x+hand.cardWidth<=width/zoom);
@@ -40,9 +40,8 @@ test('approved B fade changes only the desktop backing, preserving all layout ge
     assert.deepEqual(newGeometry,oldGeometry,'only the backing position changes');
     assert.equal(after.backgroundFadeHeight*zoom,90*after.unit*zoom);
     assert.ok(newTop>oldTop);
-    if(width===1440) {
-      assert.ok(Math.abs(newTop*zoom-700)<.001);
-      assert.ok(Math.abs((newTop+after.backgroundFadeHeight)*zoom-790)<.001);
-    }
+    // The backing is placed on the 900px design canvas, then scaled with the footer.
+    assert.ok(Math.abs(newTop*zoom-(height-200*after.unit*zoom))<.001);
+    assert.ok(Math.abs((newTop+after.backgroundFadeHeight)*zoom-(height-110*after.unit*zoom))<.001);
   }
 });

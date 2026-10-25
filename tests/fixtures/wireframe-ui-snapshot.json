@@ -36,7 +36,7 @@
     }
   },
   "hand": {
-    "minimumHeightPx": 208,
+    "minimumHeightPx": 184,
     "minWidthRem": 5,
     "maxWidthRem": 11.5,
     "minCapacity": 5,
@@ -53,10 +53,10 @@
   },
   "combat": {
     "bands": [
-      10,
-      49,
-      27,
-      14
+      6,
+      61,
+      20,
+      13
     ],
     "footerMinimumPx": 56,
     "shortHostRails": true
