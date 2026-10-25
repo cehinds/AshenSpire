@@ -1,18 +1,6 @@
 # AshenSpire
 
-<!-- feature-preview:start -->
-## Feature preview — startup registry initialization
 
-Captured from PR #2322 source `86a1417b30726de1b59b2f3704f1d20728c26410`, official local LIGHT WEB build **0.7.1.1857 / 04fdb60963** on 2026-10-25. Ordinary boot reaches the title and native New Game class selection with the class glyphs, profile values, and lock state intact. These four original PNGs show the class-selection outcome.
-
-**Playable preview:** hosted Play is pending publisher repair. These captures are from an official local reproduction of the exact captured source, not downloaded CI artifact bytes or a verified public deployment. [Feature PR and CI](https://github.com/cehinds/AshenSpire/pull/2322).
-
-| Mobile 375×667, DPR3 | Desktop 1280×720 | Wide 1920×1080 | Tablet 1024×768 |
-| --- | --- | --- | --- |
-| ![Mobile class selection](docs/preview/features/startup-registry-once/mobile.png) | ![Desktop class selection](docs/preview/features/startup-registry-once/desktop.png) | ![Wide class selection](docs/preview/features/startup-registry-once/wide.png) | ![Tablet class selection](docs/preview/features/startup-registry-once/tablet.png) |
-
-[Capture identity and native qualification](docs/preview/features/startup-registry-once/capture.json). PNGs use CSS pixel dimensions without stretching; the mobile renderer remains DPR3. This responsive proof makes no hardware or speed claim.
-<!-- feature-preview:end -->
 
 
 
