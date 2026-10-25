@@ -193,6 +193,33 @@
                 "frozen": false,
                 "values": {
                   "act": {
+                    "__string": "console"
+                  },
+                  "icon": {
+                    "__string": "historic-eye"
+                  },
+                  "label": {
+                    "__string": "Console"
+                  },
+                  "band": {
+                    "__string": "comfort"
+                  },
+                  "tip": {
+                    "__string": "Read the session's errors and tap traces, with Copy and Export."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
                     "__string": "inventory"
                   },
                   "icon": {
@@ -454,6 +481,33 @@
                   },
                   "tip": {
                     "__string": "Turn music on or off without changing its volume, sound effects, or global mute."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "console"
+                  },
+                  "icon": {
+                    "__string": "historic-eye"
+                  },
+                  "label": {
+                    "__string": "Console"
+                  },
+                  "band": {
+                    "__string": "comfort"
+                  },
+                  "tip": {
+                    "__string": "Read the session's errors and tap traces, with Copy and Export."
                   }
                 }
               },
@@ -743,6 +797,33 @@
                 "frozen": false,
                 "values": {
                   "act": {
+                    "__string": "console"
+                  },
+                  "icon": {
+                    "__string": "historic-eye"
+                  },
+                  "label": {
+                    "__string": "Console"
+                  },
+                  "band": {
+                    "__string": "comfort"
+                  },
+                  "tip": {
+                    "__string": "Read the session's errors and tap traces, with Copy and Export."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
                     "__string": "inventory"
                   },
                   "icon": {
@@ -917,6 +998,9 @@
           },
           {
             "__string": "music"
+          },
+          {
+            "__string": "console"
           },
           {
             "__string": "inventory"
@@ -2087,6 +2171,51 @@
             "frozen": false,
             "values": {
               "act": {
+                "__string": "console"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "historic-eye"
+              },
+              "label": {
+                "__string": "Console"
+              },
+              "tip": {
+                "__string": "Read the session's errors and tap traces, with Copy and Export."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
                 "__string": "inventory"
               },
               "tab": null,
@@ -2546,6 +2675,51 @@
             "frozen": false,
             "values": {
               "act": {
+                "__string": "console"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "historic-eye"
+              },
+              "label": {
+                "__string": "Console"
+              },
+              "tip": {
+                "__string": "Read the session's errors and tap traces, with Copy and Export."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
                 "__string": "inventory"
               },
               "tab": null,
@@ -2983,6 +3157,51 @@
               },
               "control": {
                 "__string": "switch"
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "console"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "historic-eye"
+              },
+              "label": {
+                "__string": "Console"
+              },
+              "tip": {
+                "__string": "Read the session's errors and tap traces, with Copy and Export."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
               },
               "sep": {
                 "__boolean": false
