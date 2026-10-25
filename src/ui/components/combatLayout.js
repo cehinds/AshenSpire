@@ -114,10 +114,17 @@ export function wireCombatLayout(combatEl) {
     // custom-property write (it was the 273 ms forced recalc in End Turn); the
     // result is cached on the size key while those inputs hold.
     bandMemo.width = clientWidth; bandMemo.height = clientHeight; bandMemo.fontSize = fontSize;
-    const hudBand = combatHudBandHeight(combatEl.querySelector(':scope > .topbar'), bands.hud, zoom, bandMemo);
+    // Desktop and widescreen draw the header as one short row (styles/
+    // responsive-combat-chrome.css): its band is the authored row height, so the
+    // header is not measured. Measuring it here would catch the first pass in the
+    // old stacked layout (the data-desktop-header gate is written below) and the
+    // memo would keep that tall band for the life of the fight.
+    const split = desktopFooterEnabled({ formFactor, appearance: document.documentElement.dataset.displayAppearance, layout: combatEl.dataset.layout });
+    const hudBand = split
+      ? Math.max(bands.hud, uiConfig.scenes.w4a.sizing.desktopHeader.heightPx / zoom)
+      : combatHudBandHeight(combatEl.querySelector(':scope > .topbar'), bands.hud, zoom, bandMemo);
     combatEl.dataset.compactCombat = String(compact);
     combatEl.dataset.formFactor = formFactor || '';
-    const split = desktopFooterEnabled({ formFactor, appearance: document.documentElement.dataset.displayAppearance, layout: combatEl.dataset.layout });
     combatEl.dataset.desktopFooter = String(split);
     desktopHeader.apply(document.documentElement.dataset.displayAppearance === 'alternative');
     if (combatEl.dataset.desktopHeader === 'true') {

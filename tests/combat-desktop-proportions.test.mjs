@@ -1,4 +1,4 @@
-// Responsive combat keeps shared 10/49/27/14 bands. The formation camera
+// Responsive combat keeps shared 6/53/27/14 bands. The formation camera
 // receives the live form factor so each native cell profile fits its artwork.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -30,9 +30,9 @@ test('combatLayout.js does not pass formFactor to allocateCombatBands', () => {
 });
 
 // Exercise the real caller so a separate desktop band table cannot return.
-test('the desktop battlefield keeps the approved 49% share and the common hand bands', () => {
+test('the desktop battlefield keeps the approved 53% share and the common hand bands', () => {
   const desktop = planCombatLayout({ formFactor: 'desktop', width: 1920, height: 1080 });
-  assert.ok(Math.abs(desktop.battlefield / 1080 - .49) < 1e-9, `battlefield share ${desktop.battlefield / 1080}`);
+  assert.ok(Math.abs(desktop.battlefield / 1080 - .53) < 1e-9, `battlefield share ${desktop.battlefield / 1080}`);
   const phone = planCombatLayout({ formFactor: 'mobile', width: 1920, height: 1080 });
   assert.deepEqual([desktop.hud, desktop.hand], [phone.hud, phone.hand], 'the hud and hand are the phone\'s');
 });
@@ -48,6 +48,6 @@ test('desktop sprite height tracks available scene space without inflating the a
   const scene = planCombatLayout({ formFactor: 'desktop', width: 1920, height: 1080 }).battlefield;
   const retiredHalf = 1080 * .5;
   const ratio = spriteHeight(scene) / spriteHeight(retiredHalf);
-  assert.ok(Math.abs(scene - 1080 * .49) < 1e-9, 'approved scene share is independent of the retired layout');
+  assert.ok(Math.abs(scene - 1080 * .53) < 1e-9, 'approved scene share is independent of the retired layout');
   assert.ok(Math.abs(ratio - scene / retiredHalf) < .02, `sprite ratio ${ratio} for scene ratio ${scene / retiredHalf}`);
 });

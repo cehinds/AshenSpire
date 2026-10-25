@@ -3,8 +3,9 @@
     "meterRowRem": 0.85
   },
   "sizing": {
-    "bands": { "hud": 10, "scene": 49, "context": 27, "footer": 14 },
+    "bands": { "hud": 6, "scene": 53, "context": 27, "footer": 14 },
     "floorPercent": 80,
+    "desktopHeader": { "heightPx": 56 },
     "desktopFooter": {
       "referenceHeightPx": 900,
       "maximumScale": 1.08,

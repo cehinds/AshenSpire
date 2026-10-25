@@ -63,3 +63,34 @@
 :root[data-display-appearance='alternative'] .combat[data-layout='formation'] > .alternative-card-fade {
   background-image: linear-gradient(to bottom, transparent, #211d16 calc(60px / var(--ui-zoom,1)), #211d16) !important;
 }
+
+/* Desktop and widescreen combat header: ONE short row instead of a 100px stack
+   (owner, 2026-10-25: the top and bottom chrome squeeze the battlefield).
+   HP bar and relics share the left half, the turn ribbon sits in the middle
+   (combatLayout.js publishes --desktop-header-left-width so the bar stops short
+   of it), and Cinders plus the quick controls sit at the right on the same
+   line. Phone and tablet keep the shared stacked header. Specificity matches
+   shared-run-hud.css, which loads after this file, plus the form-factor gate. */
+:root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat[data-layout='formation'][data-desktop-header='true'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] {
+  padding-block: calc(4px / var(--ui-zoom,1));
+}
+:root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat[data-layout='formation'][data-desktop-header='true'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] > .hud-top {
+  padding-top: 0; row-gap: 0; align-items: center;
+  grid-template-columns: minmax(0,1fr) auto auto;
+  grid-template-areas: 'meters purse actions';
+}
+:root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat[data-layout='formation'][data-desktop-header='true'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] :is(.hud-vitals-panel,.hud-bottom) {
+  max-width: var(--desktop-header-left-width, 100%);
+}
+:root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat[data-layout='formation'][data-desktop-header='true'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-bottom {
+  margin-top: calc(22px / var(--ui-zoom,1));
+}
+:root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat[data-layout='formation'][data-desktop-header='true'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-info-row.hud-cinders-strip {
+  grid-area: purse; align-self: center; margin: 0; translate: none;
+}
+:root:is([data-form-factor='desktop'],[data-form-factor='widescreen']) .combat[data-layout='formation'][data-desktop-header='true'] > header.topbar.combat-hud.shared-hud[data-shared-chrome='true'] .hud-control-grid {
+  align-self: center; translate: none;
+}
+:root:is([data-form-factor='desktop'],[data-form-factor='widescreen'])[data-display-appearance='alternative'] .combat[data-desktop-header='true'] > .combat-hud.shared-hud > .turn-ribbon {
+  top: 50%; transform: translate(-50%, -50%);
+}

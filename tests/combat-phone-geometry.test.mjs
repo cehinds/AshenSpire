@@ -32,7 +32,7 @@ test('compact band, footer and low-level hand arithmetic retain the captured bas
   const { bandsTablet: retiredTablet, ...expected } = fixture;
   assert.deepEqual(actual, expected);
   const height = 844 / .91;
-  assert.ok(Math.abs(bandsTablet.battlefield / height - .49) < 1e-9);
+  assert.ok(Math.abs(bandsTablet.battlefield / height - .53) < 1e-9);
   assert.ok(Math.abs(bandsTablet.hand / height - .27) < 1e-9);
   assert.ok(Math.abs(bandsTablet.footer / height - .14) < 1e-9);
 });

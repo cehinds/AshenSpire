@@ -22,9 +22,9 @@ test('compact phones reserve a tool row and distinct smaller resting card slots'
   }
 });
 
-test('tall hosts receive the approved 10/49/27/14 bands', () => {
+test('tall hosts receive the approved 6/53/27/14 bands', () => {
   const bands = allocateCombatBands({ height: 2000 });
-  assert.ok(near(bands.hud, 200) && near(bands.battlefield, 980) && near(bands.hand, 540) && near(bands.footer, 280));
+  assert.ok(near(bands.hud, 120) && near(bands.battlefield, 1060) && near(bands.hand, 540) && near(bands.footer, 280));
   assert.equal(bands.supported, true);
 });
 

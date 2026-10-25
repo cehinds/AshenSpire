@@ -55,7 +55,7 @@ test('the shared W4 plan is a pure refactor: combat\'s stacked bands are identic
   // Short landscape still folds into rails with the band heights in px.
   const rails = allocateCombatBands({ width: 844, height: 390 });
   assert.equal(rails.arrangement, 'rails');
-  assert.ok(near(rails.hud, 39) && near(rails.hud + rails.battlefield + rails.hand, 390), 'rails keep the HUD band in px');
+  assert.ok(near(rails.hud, 23.4) && near(rails.hud + rails.battlefield + rails.hand, 390), 'rails keep the HUD band in px');
 });
 
 test('allocateSceneBands reads a scene config and its parent; the scene absorbs the shortfall', () => {

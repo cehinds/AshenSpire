@@ -9146,10 +9146,10 @@
         "frozen": true,
         "values": {
           "hud": {
-            "__number": "60"
+            "__number": "36"
           },
           "battlefield": {
-            "__number": "248"
+            "__number": "272"
           },
           "hand": {
             "__number": "208"
@@ -9183,10 +9183,10 @@
         "frozen": true,
         "values": {
           "hud": {
-            "__number": "81.2"
+            "__number": "48.72"
           },
           "battlefield": {
-            "__number": "397.87999999999994"
+            "__number": "430.35999999999996"
           },
           "hand": {
             "__number": "219.24"
