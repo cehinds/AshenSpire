@@ -184,10 +184,10 @@ try {
     mkdirSync(dirname(file(path)), { recursive: true });
     writeFileSync(file(path), fullBytes);
     writeFileSync(file(lite), mobileBytes);
-    const file = filename, mobileFile = `${manifest.id}-${choice.role}-mobile.webp`;
-    catalog.hashes[file] = fullHash;
+    const outputFile = filename, mobileFile = `${manifest.id}-${choice.role}-mobile.webp`;
+    catalog.hashes[outputFile] = fullHash;
     catalog.hashes[mobileFile] = mobileHash;
-    catalog.filePaths[file] = path;
+    catalog.filePaths[outputFile] = path;
     catalog.filePaths[mobileFile] = lite;
     frames[choice.role] = {
       path, lite, size: [512, 512], rasterSize: [512, 512], mobileRasterSize: [256, 256],

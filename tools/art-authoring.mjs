@@ -49,6 +49,7 @@ export function authoringPath(value, options = {}) {
 // engine/, tests and display catalogs keep their game checkout ownership.
 export function isAuthoringFile(rel) {
   safeArtRelative(rel);
+  if (rel === 'tools/hud-component-studio/reference.png') return true;
   if (/^music\/score\/.*\.m?js$/i.test(rel)) return false;
   if (/^assets-display\//.test(rel)) return !/\.(?:json|md)$/i.test(rel);
   if (/^(assets|assets-mobile|art|music|map-detail)\//.test(rel)) return true;
