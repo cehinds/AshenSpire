@@ -20,6 +20,7 @@ export function gameProfileRestModel(registries, run, visit) {
     const def = registries.attributes.get(id);
     return { id, label: def.label || def.name || id, shortLabel: def.shortLabel || id, value: run.attributes[id], ...attempt('levelUp', { attributeId: id }) };
   });
+  const rank = service => (service.available ? 0 : 2) + (service.id === 'levelUp' ? 0 : 1);
   const services = rules.services.filter(id => id !== 'levelUp' || configuredCharacterLevels(run) || run.level?.unspentPoints > 0).map(id => {
     const result = id === 'smith' ? [...smithPreviews.values()].find(row => row.available) || [...smithPreviews.values()][0] || { available: false, reason: t('gameProfile.rest.noSmith') }
       : id === 'levelUp' ? attributes.find(row => row.available) || attributes[0] || { available: false, reason: t('gameProfile.rest.noLevel') }
@@ -27,6 +28,8 @@ export function gameProfileRestModel(registries, run, visit) {
     if (id === 'levelUp' && !restServiceSpent(run, visit, id) && !result.available && !(run.level?.unspentPoints > 0)) result.reason = t('gameProfile.rest.noLevel');
     return { ...result, id, title: t(`gameProfile.rest.service.${id}`), description: t(restServicesAll(run) ? `gameProfile.rest.description.${id === 'smith' && !restSmithFree(run) ? 'smithAllPaid' : `${id}All`}` : `gameProfile.rest.description.${id}`) };
   });
+  // Available choices first, Level Up leading; spent or unavailable ones sink to the bottom. Array#sort is stable.
+  services.sort((a, b) => rank(a) - rank(b));
   return { services, smith, smithPreviews, attributes, smithFree: restSmithFree(run) };
 }
 

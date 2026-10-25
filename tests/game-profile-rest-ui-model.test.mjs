@@ -174,3 +174,14 @@ test('free-Smith copy is gated on rests.smith.free, the flag the commit reads', 
   const noLevel = gameProfileSmithModel(registries, paidModel.smith, paidModel.smithPreviews, null, () => '', { all: true, levelUpOffered: false });
   assert.doesNotMatch(noLevel.properties.consequence, /Level Up/);
 });
+
+test('rest options list available choices first with Level Up leading, and unavailable ones last', () => {
+  const none = fixture();
+  assert.deepEqual(gameProfileRestModel(registries, none.run, none.visit).services.map(row => [row.id, row.available]),
+    [['smith', true], ['levelUp', false]], 'unavailable Level Up sorts after an available Smith');
+  const points = fixture(); points.run.level.unspentPoints = 1;
+  assert.deepEqual(gameProfileRestModel(registries, points.run, points.visit).services.map(row => row.id), ['levelUp', 'smith'], 'an available Level Up comes first');
+  commitGameProfileRest(registries, points.run, 'levelUp', { attributeId: 'constitution' });
+  assert.deepEqual(gameProfileRestModel(registries, points.run, points.run.gameProfileRestVisits[points.visit.id]).services.map(row => [row.id, row.available]),
+    [['smith', true], ['levelUp', false]], 'a spent Level Up drops below the open Smith');
+});
