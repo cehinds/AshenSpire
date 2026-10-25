@@ -38,7 +38,8 @@ export function dlog(kind, msg, data) {
   if (entries.length > MAX_ENTRIES) entries.splice(0, entries.length - MAX_ENTRIES);
   // Mirror into the session console so ignored taps sit beside the errors.
   // append, not console.debug: nothing extra prints to the devtools console.
-  try { consoleRecorder.append('debug', `[${kind}] ${msg}${detail ? ' ' + detail : ''}`); } catch (e) { /* never break a trace */ }
+  // ERROR lines are skipped: the window handlers append them to the console themselves.
+  if (kind !== 'ERROR') try { consoleRecorder.append('debug', `[${kind}] ${msg}${detail ? ' ' + detail : ''}`); } catch (e) { /* never break a trace */ }
 }
 
 export function getEntries() {
@@ -265,7 +266,13 @@ export function openDebugLog() {
 // reader returns a string (or null once its screen is gone). A snapshot error
 // can never block opening the console.
 let consoleSnapshot = null;
-export function registerConsoleSnapshot(fn) { consoleSnapshot = typeof fn === 'function' ? fn : null; }
+export function registerConsoleSnapshot(fn) {
+  const own = typeof fn === 'function' ? fn : null;
+  consoleSnapshot = own;
+  // Clears only this reader, so a combat torn down after the next one mounted
+  // cannot unregister its successor.
+  return () => { if (consoleSnapshot === own) consoleSnapshot = null; };
+}
 
 export function openConsoleLog(options = {}) {
   try {

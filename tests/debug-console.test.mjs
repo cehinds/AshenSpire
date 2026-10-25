@@ -78,3 +78,21 @@ test('the in-combat Console button renders only while debugMode is on', () => {
     assert.equal(combatEl.querySelector('[data-combat-debug]'), null);
   });
 });
+
+test('ERROR dlog lines are not mirrored, since the window handlers append errors themselves', () => {
+  const before = consoleRecorder.getEntries().length;
+  dlog('ERROR', 'boom-unique-7f', 'trace');
+  assert.ok(!consoleRecorder.getEntries().slice(before).some(e => JSON.stringify(e).includes('boom-unique-7f')));
+});
+
+test('a stale combat releasing its snapshot reader does not clear its successor', () => {
+  const releaseOld = registerConsoleSnapshot(() => 'old-combat');
+  const releaseNew = registerConsoleSnapshot(() => 'new-combat-9c');
+  releaseOld();
+  openConsoleLog();
+  assert.ok(consoleRecorder.getEntries().some(e => JSON.stringify(e).includes('[snapshot] new-combat-9c')));
+  releaseNew();
+  const before = consoleRecorder.getEntries().length;
+  openConsoleLog();
+  assert.ok(!consoleRecorder.getEntries().slice(before).some(e => JSON.stringify(e).includes('[snapshot]')));
+});

@@ -582,7 +582,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   };
   // One line of combat input state, recorded when the console is opened from
   // combat. Reads existing state only; a failure is swallowed by openConsoleLog.
-  registerConsoleSnapshot(() => {
+  const releaseConsoleSnapshot = registerConsoleSnapshot(() => {
     if (!combatEl.isConnected) return null;
     const p = combat.player || {};
     let card = 'none';
@@ -3835,6 +3835,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         combatLayout.release();
         closeCombatFullLog(combatToolsState);
         combatTools.release();
+        debugButton.release();
+        releaseConsoleSnapshot();
         reactionNote.clear();
         aimObserver?.disconnect();
         releaseSelectionWatch();
