@@ -24,7 +24,7 @@ import { startRound, stepRound, answerReaction, finishRound } from './combatRoun
 import { makeFight, makeCombatant, plannedQueueSpeeds } from './combatRounds/timeline.js';
 import { decayMomentum } from './combatRounds/resolver.js';
 import { stanceFor, playerKind, moveKind } from './combatRounds/stance.js';
-import { branchHitCount, enemyAttributesOf, enemyMoveSpOf, enemyPoolOf } from '../model/actionCosts.js';
+import { branchHitCount, multiHitFloorFor, enemyAttributesOf, enemyMoveSpOf, enemyPoolOf } from '../model/actionCosts.js';
 import { SPEED_MODS_CSV } from '../content/combatRounds.js';
 // A move with no stance costs 1 SP unless the move defines its own `sp` (SPEC §4.11).
 export const MOVE_SP = 1;
@@ -49,24 +49,30 @@ export function moveSp(move, { enemy = null, moveId, combat = null } = {}) {
   const entity = enemy && combat?.combatExpansionVersion === 2 ? enemy : null;
   const price = enemyMoveSpOf(move, moveKind(move), MOVE_SP, { entity, enemyId: enemy?.enemyId, moveId, ctx: combat });
   if (!core2ActionPolicyEnabled(combat)) return price;
-  // Owner rule (2026-10-25): a multi-hit move costs 1 SP per hit, unless it costs mana or is a finesse move. The
-  // authored price is never lowered, and there is no cap; an enemy short of SP simply cannot use the move.
-  const hits = enemyMoveHitCount(move, { enemy, moveId, combat });
-  return hits > 1 ? Math.max(price, hits) : price;
+  // Owner rule (2026-10-25): a multi-hit move costs at least its multi-hit floor (model/actionCosts.js
+  // multiHitFloorFor: 1 SP per hit, less an offset for a finesse or Mana move). The authored price is never lowered
+  // and there is no cap; an enemy short of SP simply cannot use the move.
+  return Math.max(price, enemyMoveHitFloor(move, { enemy, moveId, combat }));
 }
 export const enemyMoveSp = moveSp;
 
 // Count HP-damage contacts per target, before damage components split into
 // physical/magical lanes. An area attack hitting each defender once is one hit.
 export const enemyMoveHasMultipleHits = (move, options) => enemyMoveHitCount(move, options) > 1;
-// The most HP-damage contacts any one defender takes from the move, or 0 for a mana or finesse move, which keeps its
-// ordinary price (a counter is never multi-hit).
+// A move's multi-hit SP floor: multiHitFloorFor over its hit count, with the Mana and finesse offsets.
+export function enemyMoveHitFloor(move, { enemy, moveId, combat }) {
+  const expanded = expandedEnemyMove(enemy, move, moveId, combat);
+  const carrier = enemyMoveCarrier(enemy, expanded, moveId, combat);
+  return multiHitFloorFor(enemyMoveHitCount(move, { enemy, moveId, combat }), {
+    mana: Number(expanded.mp) > 0 || Number(expanded.manaCost) > 0,
+    finesse: [...(carrier.tags || []), ...(expanded.tags || [])].includes('finesse'),
+  });
+}
+// The most HP-damage contacts any one defender takes from the move, per guarded branch (a counter is never multi-hit).
 export function enemyMoveHitCount(move, { enemy, moveId, combat }) {
   const expanded = expandedEnemyMove(enemy, move, moveId, combat);
   const carrier = enemyMoveCarrier(enemy, expanded, moveId, combat);
   if (carrier.combatProfile.maneuver === 'counter') return 0;
-  if (Number(expanded.mp) > 0 || Number(expanded.manaCost) > 0) return 0;
-  if ([...(carrier.tags || []), ...(expanded.tags || [])].includes('finesse')) return 0;
   const effects = [...(expanded.damage != null ? [{ op: 'damage', target: 'player', amount: expanded.damage, hits: expanded.hits ?? 1 }] : []), ...(expanded.effects || [])];
   const detached = { ...combat, rng: createRng(combat.rng.seed, combat.rng.getCounters()) };
   const actionOf = effect => ({ source: enemy, owner: enemy, target: combat.player, card: carrier, effect });

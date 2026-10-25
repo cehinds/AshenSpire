@@ -271,7 +271,7 @@ test('movement projection resolves authored repeat formulas without granting oth
   assert.deepEqual({ range: combat.rangeState, block: enemy.block, counters: combat.rng.getCounters() }, before);
 });
 
-test('a multi-hit move costs 1 SP per hit; mana and finesse moves keep their ordinary price (owner, 2026-10-25)', () => {
+test('a multi-hit move costs 1 SP per hit; finesse and Mana moves floor at max(hits - 1, 1) and max(hits - 2, 1) (owner, 2026-10-25)', () => {
   const combat = fight(), enemy = combat.enemies[0], def = registries.enemies.get(enemy.enemyId);
   const options = { enemy, moveId: 'hammerToss', combat };
   const hits = n => ({ ...def.moves.caneStrike, damage: undefined, sp: 1, effects: [{ op: 'damage', target: 'player', amount: 1, hits: n }] });
@@ -279,8 +279,9 @@ test('a multi-hit move costs 1 SP per hit; mana and finesse moves keep their ord
   assert.equal(enemyMoveSp(hits(2), options), 2);
   assert.equal(enemyMoveSp(hits(3), options), 3, '3 hits cost 3 SP');
   assert.equal(enemyMoveSp(hits(5), options), 5, 'no cap');
-  assert.equal(enemyMoveSp({ ...hits(3), mp: 1 }, options), 1, 'a mana move keeps its price');
-  assert.equal(enemyMoveSp({ ...hits(3), tags: [...(hits(3).tags || []), 'finesse'] }, options), 1, 'a finesse move keeps its price');
+  assert.equal(enemyMoveSp({ ...hits(3), mp: 1 }, options), 1, 'a Mana move: max(3 - 2, 1)');
+  assert.equal(enemyMoveSp({ ...hits(5), mp: 1 }, options), 3, 'a Mana move: max(5 - 2, 1)');
+  assert.equal(enemyMoveSp({ ...hits(3), tags: [...(hits(3).tags || []), 'finesse'] }, options), 2, 'a finesse move: max(3 - 1, 1)');
   assert.equal(enemyMoveSp({ ...hits(3), sp: 6 }, options), enemyMoveSp({ ...hits(1), sp: 6 }, options), 'an authored price above the hit count is never lowered');
   const staggered = { p: 'hasStatus', of: 'target', status: 'staggered' };
   const branches = effects => ({ ...hits(1), effects });

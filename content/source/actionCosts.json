@@ -483,6 +483,12 @@
     "maneuver:smash": 2,
     "maneuver:sweep": 2
   },
+  "MULTI_HIT_SP_FLOOR": {
+    "baseOffset": 0,
+    "finesseOffset": 1,
+    "manaOffset": 2,
+    "minimum": 1
+  },
   "RANGE_TAGS": {
     "delivery:melee": "melee",
     "range:melee": "melee",
