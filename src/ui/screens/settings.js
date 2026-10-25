@@ -718,6 +718,8 @@ const ROWS = [
     note: tFull('settings.row.reduceFlashes') },
   { cat: 'Accessibility', key: 'readableHeadings', def: false, label: t('settings.row.readableHeadings'),
     note: tFull('settings.row.readableHeadings') },
+  { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'debugMode', def: false, label: t('settings.row.debugMode'),
+    note: tFull('settings.row.debugMode') },
   { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'commandLog', type: 'button', btn: 'Open', label: t('settings.row.commandLog'),
     note: tFull('settings.row.commandLog') },
   // E2 (#247): the recorded answer on the row — Sell is its own bar at the

@@ -18,12 +18,12 @@
       {
         "rule": "columns",
         "value": 7,
-        "source": "src/content/mapconfig.js:53"
+        "source": "content/source/mapActShape.json:3"
       },
       {
         "rule": "entries",
         "value": 1,
-        "source": "src/content/mapconfig.js:74"
+        "source": "content/source/mapActShape.json:5"
       },
       {
         "rule": "fixedFloor",
@@ -31,7 +31,7 @@
         "anchor": {
           "at": "first"
         },
-        "source": "src/content/mapconfig.js:82"
+        "source": "content/source/mapActShape.json:10"
       },
       {
         "rule": "fixedFloor",
@@ -40,7 +40,7 @@
           "at": "fraction",
           "of": 0.64
         },
-        "source": "src/content/mapconfig.js:83"
+        "source": "content/source/mapActShape.json:11"
       },
       {
         "rule": "noShrineBefore",
@@ -48,7 +48,7 @@
           "at": "fraction",
           "of": 0.27
         },
-        "source": "src/content/mapconfig.js:99"
+        "source": "content/source/mapActShape.json:13"
       },
       {
         "rule": "noEliteBefore",
@@ -56,29 +56,29 @@
           "at": "fraction",
           "of": 0.43
         },
-        "source": "src/content/mapconfig.js:100"
+        "source": "content/source/mapActShape.json:14"
       },
       {
         "rule": "noShrineOn",
         "anchor": {
           "at": "last"
         },
-        "source": "src/content/mapconfig.js:101"
+        "source": "content/source/mapActShape.json:15"
       },
       {
         "rule": "restBeforeElite",
         "value": true,
-        "source": "src/content/mapconfig.js:120"
+        "source": "content/source/mapActShape.json:16"
       },
       {
         "rule": "minElites",
         "value": 2,
-        "source": "src/content/mapconfig.js:121"
+        "source": "content/source/mapActShape.json:17"
       },
       {
         "rule": "minMerchants",
         "value": 1,
-        "source": "src/content/mapconfig.js:122"
+        "source": "content/source/mapActShape.json:18"
       },
       {
         "rule": "topFloorShrine",
@@ -100,7 +100,7 @@
           "shrine": 12,
           "treasure": 8
         },
-        "source": "src/content/mapconfig.js:79"
+        "source": "content/source/mapActShape.json:7"
       },
       {
         "rule": "typingRetries",

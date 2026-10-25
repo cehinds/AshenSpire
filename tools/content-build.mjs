@@ -1154,7 +1154,7 @@ async function mutate() {
     // M1 — the dropped comma (Marina's parse edge): dies UPSTREAM of every
     // validator, and must still name the file.
     try {
-      await import(copyContent('m1', [['mapconfig.js', 'floors: 12,', 'floors: 12']]));
+      await import(copyContent('m1', [['mapconfig.js', '// src/content/mapconfig.js — per-act map-generation knobs (SPEC §6)', 'const planted = { floors: 12\n  columns: 7 };\n// src/content/mapconfig.js — per-act map-generation knobs (SPEC §6)']]));
       report(false, 'M1', 'dropped comma in mapconfig.js', 'import succeeded — a syntax error loaded clean');
     } catch (e) {
       const where = `${e.message}\n${e.stack || ''}`;
@@ -1164,8 +1164,8 @@ async function mutate() {
     // floors moved down while a fixed anchor stays absolute.
     {
       const { contentBundle: mb } = await import(copyContent('m2', [
-        ['mapconfig.js', 'floors: 12,', 'floors: 8,'],
-        ['mapconfig.js', "{ at: 'fraction', of: 0.64, type: 'treasure' }", "{ at: 'floor', index: 9, type: 'treasure' }"],
+        ['generated/mapActShape.js', '"floors":12,', '"floors":8,'],
+        ['generated/mapActShape.js', '{"at":"fraction","of":0.64,"type":"treasure"}', '{"at":"floor","index":9,"type":"treasure"}'],
       ]));
       const r = G.validateContent(mb);
       const hit = (r.errors || []).map((e) => `${e.path}: ${e.msg}`).find((m) => m.includes('floorRules.fixed') && m.includes('outside'));
@@ -1173,7 +1173,7 @@ async function mutate() {
     }
     // M3 — the sfx audible-fallback contract: 'default' typo'd away.
     {
-      const { contentBundle: mb } = await import(copyContent('m3', [['sfx.js', 'default:', 'defualt:']]));
+      const { contentBundle: mb } = await import(copyContent('m3', [['generated/sfxRecipes.js', '"default":', '"defualt":']]));
       const r = G.validateContent(mb);
       const hit = (r.errors || []).map((e) => `${e.path}: ${e.msg}`).find((m) => m.includes("Missing 'default' recipe"));
       report(!r.ok && !!hit, 'M3', "sfx 'default' recipe typo'd to 'defualt'", hit || 'validated clean');

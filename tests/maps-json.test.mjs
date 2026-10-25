@@ -15,7 +15,7 @@ const files = loadMapFiles();
 
 function sandbox() {
   const dir = mkdtempSync(join(tmpdir(), 'maps-json-'));
-  for (const rel of ['engine/contracts', 'engine/maps', 'games/ashenspire/maps', 'src/content/mapconfig.js', 'src/engine/mapgen.js', 'content/source/worldAtlas.json']) {
+  for (const rel of ['engine/contracts', 'engine/maps', 'games/ashenspire/maps', 'src/content/mapconfig.js', 'src/content/generated/mapActShape.js', 'src/content/generated/mapShapeLimits.js', 'src/content/generated/legacyActBosses.js', 'src/engine/mapgen.js', 'content/source/worldAtlas.json', 'content/source/mapActShape.json']) {
     mkdirSync(dirname(join(dir, rel)), { recursive: true });
     cpSync(join(ROOT, rel), join(dir, rel), { recursive: true });
   }
@@ -57,11 +57,11 @@ test('no glyphs: every string is ASCII', () => {
   for (const set of Object.values(files)) for (const v of Object.values(set)) assert.deepEqual(strings(v).filter(s => /[^\x00-\x7f]/.test(s)), []);
 });
 
-test('drift in mapconfig.js fails the check', async () => {
+test('drift in the map shape (generated/mapActShape.js) fails the check', async () => {
   const dir = sandbox();
   try {
-    const cfg = join(dir, 'src/content/mapconfig.js');
-    writeFileSync(cfg, readFileSync(cfg, 'utf8').replace('minElites: 2', 'minElites: 3'));
+    const cfg = join(dir, 'src/content/generated/mapActShape.js');
+    writeFileSync(cfg, readFileSync(cfg, 'utf8').replace('"minElites":2', '"minElites":3'));
     const { problems } = await validateMaps({ root: dir });
     assert.ok(problems.some(p => /minElites/.test(p)), problems.join('\n'));
   } finally { rmSync(dir, { recursive: true, force: true }); }

@@ -372,6 +372,330 @@ File header (was the comment block at the top of src/content/shops.js): the thre
 - **master shelves and services (SPEC §14.5)** — the stocked shelves (`skillBooks`, `weaponArts`, `armaments`) are each filtered to the visiting master's tracks and rolled on `shopOffers` after the offering roll. The services (`training`, `respec`, `lesson`, `appraisal`, `redistribute`) each stay laid out once rolled and are judged live. Training and appraisal can always act: every master teaches three or four tracks.
 - **masters (SPEC §14.5)** — not a kind and no Settings row: who a master visit can be. A visit picks one on the `shop` stream, in written order. Each teaches 3 or 4 distinct weapon, focus or dual-wield tracks (never an armour track, which has no item type, nor a `class:` track, whose respec would strand the class tree's picks), and speaks as a speakers.csv row.
 
+## Sigils (content/source/sigils.json)
+
+File header (was the comment block at the top of src/content/sigils.js): sigils, the brief's "runes" (SPEC §14.3). `sigils.json` is the single array export `sigils`; each row is `{ id, name, rarity, cost, blurb }`.
+
+- **Why "sigil".** Renamed from "rune" because that word is this spec's pre-scrub name for the currency (cinders).
+- **What it does is not written here** (Codex on #1376; coordinator ruling). A sigil's effect is a property rule, as a relic's and a companion's are: its `family = sigil` row in content/source/tagging.csv names a leaf under the `sigil` branch of `property` in nodes.csv, whose rule lives in nodeEffects.json with its numbers bound to balance.sigils.*. stampTags derives `propertyTags`. Its numbers are Settings rows, so a blurb names none (the rule's own words are nodeTerms.csv's). A sigil set into a slot of an EQUIPPED armament mounts as a `sigil` carrier (engine/properties.js, SPEC §14.4). One carried in `run.sigils`, or slotted in a piece that is not worn, mounts nowhere. validateContent refuses a row that writes `triggers` or `modifiers`, and one with no property tag.
+- **Prices.** `cost` is the sigil's own price; the market charges `gameConfig.shops.market.sigils.pricePct` percent of it (content/source/shops.json), so the owner tunes what the shelf asks in Settings without editing a row. The blacksmith sells no sigils; it cuts slots and sets them (§14.4).
+- **Legendary sigils** are SPEC §15.4's: `{ id, name, rarity: 'legendary', blurb }`, with no cost, never shop stock, and never slotted. One works while it is ATTUNED in the Armoury's Sigils panel (model/sigils.js attuneSigil), up to `balance.sigils.attuneMax` at a time, and a fight or a treasure room can drop one (balance.sigils.dropChancePct, shipped off). Each derives exactly one property tag, and each rule is an on/if combination no relic uses.
+
+## Feats (content/source/feats.json)
+
+File header (was the comment above src/content/feats.js): permanent, repeatable character-level choices. Values are intentionally small because a long run may select the same feat more than once. `feats.json` is the array export `feats`; src/content/feats.js freezes the array (the rows stay unfrozen, as before).
+
+## Class skill feats (content/source/classSkillFeats.json)
+
+File header (was the comment above src/content/classSkillFeats.js): SPEC §13.4q class feats. The profile/run integration selects these only for mastery-scoped runs; older runs retain the existing skill-feat catalogue. `classSkillFeats.json` is the array export `classSkillFeats`; src/content/classSkillFeats.js freezes the array (the rows stay unfrozen). The `crit` and `passive` shapes are the ones described under "Skill feats".
+
+## Skill feats (content/source/skillFeats.json)
+
+File header (was the comment block above src/content/skillFeats.js): the feats a skill track's every-2nd level offers (SPEC §13.4o, "every 2nd level: a feat tied to the skill"). Each is taken once. Only the owner's own examples are authored here; the rest of the table is content phase C. `skillFeats.json` is the array export `skillFeats`; src/content/skillFeats.js freezes the array (the rows stay unfrozen).
+
+- **`crit`** — Blade-tagged attacks may crit (owner, 2026-10-04): chance base + Σ weight·attribute / divisor, capped; a crit multiplies the hit. Chances from several sources add before the cap.
+- **`passive`** — a tag on the character that changes every card meeting its tags (SPEC §13.4o "Passive tag effects"): `block` adds to the card's first unconditional Block, shown on the card's face.
+
+## Survey quest lore (content/source/surveyQuestLore.json)
+
+File header (was the comment above src/content/surveyQuestLore.js): player-facing survey writing. Keep prose outside the atlas topology tables: their historical revision includes text, and changing it would reroute seeds and refuse existing journeys. IDs, objectives and rewards stay in the atlas. `surveyQuestLore.json` is the object export `surveyQuestLore`, keyed by survey id, each entry `{ title, description, report }`; src/content/surveyQuestLore.js freezes the table and each entry, as before.
+
+## Combat matchups (combatIntent.json, combatMatchups.json, combatExpansionMatchups.json)
+
+File header (was the comment above src/content/combatMatchups.js): shared tactical numbers and tag riders; balance exposes these same objects. The three JSON files are the three exports of src/content/combatMatchups.js, unchanged in shape; every `[NOTE]` block is the string key `"$note"` in the JSON (see the Shops notes).
+
+- **combatMatchups.json (version 1)** — the table the original tagged-card contract priced. Immutable history: saves priced under it keep it.
+- **combatExpansionMatchups.json** — new runs carry this table separately; the version-1 table is the immutable history for saves which were priced under the original tagged-card contract. It carries no `$note` blocks.
+- **`tagRiders`** (both tables) — technique riders (owner decision 11, 2026-10-12): keyed by a carrier's authored card tag, resolved with the damage rider once per action and target. A guard bypass takes the larger of this and the damage type's. In the expansion table they are the version-1 rows with status pressure for gauges.
+
+## Map config (mapActShape.json, mapShapeLimits.json, legacyActBosses.json)
+
+The map-generation knobs of src/content/mapconfig.js (SPEC §6). `mapActShape.json` is the shared act shape (it was the module-private `ACT_SHAPE`); src/content/mapconfig.js spreads it into `mapConfigs` for acts 1 to 3 (distinct objects, so acts can diverge later). `mapShapeLimits.json` is `MAP_SHAPE_LIMITS` (frozen in the module) and `legacyActBosses.json` is `LEGACY_ACT_BOSSES` (frozen in the module). The comments below were the module's; they are quoted as they were, so a few lines say "above" for what is now `mapActShape.json`.
+
+### File header
+
+    src/content/mapconfig.js — per-act map-generation knobs (SPEC §6)
+    Consumed by engine/mapgen.js through model/floorplan.js; authored as data
+    (SPEC §3.8, Law 1).
+
+    EVERY FLOOR IS AN ANCHOR, NOT AN INDEX. Constantine: "make this configurable
+    by data driven tooling." An absolute floor number is not configurable — it is
+    a constant whose MEANING moves when `floors` changes while the constant does
+    not, which is SOP 2's drift clause applied to data. The four anchor kinds are
+    a closed set and live in `model/floorplan.js`:
+
+        { at: 'first' }                 floor 1
+        { at: 'last' }                  the last ROLLABLE floor (floors - 1)
+        { at: 'floor',    index: 9 }    absolute; an error if outside 1..floors-1
+        { at: 'fraction', of: 0.64 }    64% of the way up the rollable band
+
+    `node tools/mapplan.mjs` prints what each one resolves to at any act length.
+    Turn a knob, read the number: that is the whole feature.
+
+    WHAT CHANGED AND WHY, so the next reader does not restore the old numbers:
+
+      `9: 'treasure'`  ->  { at: 'fraction', of: 0.64 }
+          Absolute 9 is a cliff. Below 10 floors the rank simply does not exist
+          and the act ships with NO treasure — 4.0 nodes per act to 0.0, 24 of 24
+          seeds, in silence. 0.64 x 14 rounds to 9, so the 15-floor act is
+          unchanged, and a 10-floor act gets its treasure at floor 6.
+
+      `15: 'shrine'`   ->  DELETED, because it never fired.
+          The generator types the top floor as the lone Shrine and puts the Boss
+          above it BEFORE any rule runs, so floor 15 was never rollable. Deleting
+          it changes 0 of 24 seeds at 10, 12 and 15 floors (Freja, measured). It
+          is not a rule we are dropping; it is a rule that was never a rule, and
+          the schema now rejects it — an anchor outside 1..floors-1 is an error,
+          which is exactly the check that would have caught it.
+
+      `noEliteOrShrineBefore: 6`  ->  { at: 'fraction', of: 0.43 }
+          6 gates 36% of a 15-floor act and 56% of a 10-floor one. Same number,
+          different game. The fraction keeps the SHAPE: 36% at 15 floors, 36% at
+          12, 33% at 10.
+
+      `noShrineOn: 14`  ->  { at: 'last' }
+          14 always meant "the last floor a rule can reach". Now it says so.
+
+      `minReachableElites` -> `minElites` (and the same for merchants).
+          The old name promised reachability; mapgen counts the whole graph. It
+          never measured what it claimed. The count is unchanged and honestly
+          named; the reachability number is MEASURED AND PRINTED by
+          tools/mapplan.mjs on every run — deliberately not restated here,
+          because a sample restated in prose drifts (Bjorn caught three homes
+          carrying three different samples within a day).
+
+### mapActShape.json: entries
+
+    ONE MAP ENTRANCE — Constantine, 2026-08-08, verbatim and unqualified.
+
+    `entries` and `pathCount` are two knobs and this line is why they had to be.
+    The act is entered from ONE column; six walkers still climb it, so the
+    routes behind that door are unchanged in number. Measured literally, "one
+    path" would have been a corridor — 13 nodes and zero choices in a whole act
+    (Viki, 300 seeds) — which is not what he described.
+
+    WHAT IT COSTS AND WHAT IT BUYS, both measured at 300 seeds before it shipped:
+      entrance row      5.92 columns wide  ->  1
+      nodes per act     46.26              ->  35.88   (22% smaller)
+      next step hidden  9 of 12 seeds      ->  0 of 12 at 390x844 (tools/mapfit.mjs)
+    The act is smaller. That is the trade he chose and it is the whole reason
+    the shrinkage is stated here rather than discovered later.
+
+    EVERY SEED IN THE GAME IS A DIFFERENT MAP NOW. That is not a side effect of
+    this line, it IS this line: the walkers' first roll moved, so every graph
+    downstream of it moved. No save is invalidated (graphs are stored per run),
+    but a seed screenshotted before today no longer reproduces.
+
+### mapActShape.json: unknownWeights
+
+    What a `?` node resolves to. HERE, beside the geometry it belongs to, and
+    no longer in `balance.unknownNode` — a flat global could not differ per act
+    while the map it describes is per act, and nothing said so (Freja).
+
+### mapActShape.json: floorRules
+
+    TWO GATES WHERE THERE WAS ONE, and the split is what E13 needed. The old
+    `noEliteOrShrineBefore` opened rests and Elites on the SAME floor, so the
+    earliest rest could never be below the earliest Elite. Constantine asked
+    for a rest "so eletes, maybe shop, and definitely before a boss".
+
+    THE ELITE GATE DOES NOT MOVE. 0.43 is the number that shipped, so Elites
+    land exactly where they landed before this change; only the rest opens
+    earlier. That is the smaller of the two edits available and it is
+    deliberate — retuning where Elites appear is a separate decision from
+    promising a rest below them.
+
+      0.27 x 11 -> floor 3      rests open here
+      0.43 x 11 -> floor 5      Elites open here, unchanged
+      => floors 3 and 4 are where the promised rest can land
+
+    E13's other half, and the generator keeps it the way it keeps `minElites`
+    — by barring the roll and then force-placing, never by hoping. Measured
+    on the canonical seed stream before it shipped: 124 of 180 maps carried
+    an Elite with no Shrine on any earlier floor. `node tools/mapplan.mjs`
+    prints the number now, including the per-path reachability this rule
+    does NOT promise.
+
+    WHAT IT COSTS, and it is not free: the shortest act these rules can
+    describe moved from 4 floors to 7 (`minViableFloors`, and the run-shape
+    test pins the number). A 6-floor act resolves `noShrineBefore` onto floor
+    1, which the fixed Monster already claims, so no floor is left to hold
+    the promised rest and the resolver refuses rather than force-placing over
+    another rule. That narrows Constantine's short-run slider, which is a
+    real trade against "I only have the patience for 30 min runs".
+    The other end of it, if he wants the range back: `noEliteBefore` at
+    { fraction: 0.5 } takes the shortest act to 6 and moves Elites one floor
+    later on the shipped act (5 -> 6). 0.43 is kept here because it is the
+    number that shipped, so Elites land exactly where they always did.
+
+### mapShapeLimits.json
+
+    THE DEBUG RUN SHAPE — Constantine, 2026-08-08, verbatim:
+
+      "need to do a full run, but I only have the patience for 30 min runs.
+       perhaps add an advanced debug feature to limit the amount of max columns,
+       rows, and or columns with percent chance of certain nodes being more
+       likely"
+
+    Three knobs, and the entry below is the ONLY thing this feature adds to
+    content. Everything else about it is DERIVED (Law 0 clause 1):
+
+      floors cap    max = whatever THIS act authors above; min = the shortest act
+                    this act's own floorRules can describe, found by ASKING
+                    resolveFloorPlan (model/floorplan.js `minViableFloors`). Edit
+                    the anchors above and the slider's low end moves on its own.
+      columns cap   max = authored; min = the one number below, because "a
+                    corridor is not a map" is a design call and not arithmetic.
+      type weights  ONE SLIDER PER KEY OF `typeWeights` ABOVE. The Custom Climb
+                    screen reads that object and builds its controls from it, so
+                    adding a node type to the act adds a knob with zero UI edits.
+                    That is this feature's Law 0 falsifier and it is testable.
+
+    A CAP, not a setting: the effective value is min(authored, cap), so a cap
+    above the authored number does nothing — and the readout SAYS SO rather than
+    letting it look like it did something (Law 0 clause 5).
+
+- **minColumns**:
+    Two columns is the floor because ONE column is a corridor: every walker
+    lands on the same node, the act has zero choices, and the shape is
+    identical every seed (Viki measured exactly this at pathCount 1 — 13 nodes,
+    no decisions, 300 seeds). A short run is the ask; a run with no map is not.
+- **maxWeight**:
+    The largest weight a knob may set. Weights are RELATIVE — the odds a type
+    is rolled are its weight over the total — so this number is a slider end,
+    not a percentage. The screen prints the derived share beside each one.
+
+## Custom Climb modifiers (content/source/customMods.json)
+
+File header (was the comment block at the top of src/content/customMods.js): a tailored take on Slay the Spire 2's custom mode. `customMods.json` holds four keys, which src/content/customMods.js re-exports as `DIFFICULTY_MODS`, `CHAOS_MODS`, `DECK_MODES` and `ASCENSION_ORDER`; each mod row is `{ id, label, desc }`. Tuning magnitudes live in `balanceCustomMods.json` and `balanceEndless.json`, not here.
+
+- **`difficultyMods`** — harder rules. The Ascension ladder just enables the first N of `ascensionOrder`, so "Ascension 4" is the four hardest-first rules, and every rule is also individually toggleable.
+- **`chaosMods`** — flavourful run-warping toggles, independent of difficulty.
+- **`deckModes`** — how your starting deck is built.
+- **`ascensionOrder`** — Ascension enables the first N difficulty rules (hardest impact first). `MAX_ASCENSION` is its length, computed in JS.
+- The orchestrator (main.js) reads `run.custom.mods[id]` at the relevant hook; nothing here is engine-specific.
+- **Deleted union.** `ALL_MODS = [...DIFFICULTY_MODS, ...CHAOS_MODS]` stood in the module with no reader in src/, tools/ or tests/ — a union kept in case somebody wanted one. Deleted rather than documented: nothing re-typed it, so there is nothing to collapse into, and the day a screen needs both groups it can spell the spread itself.
+
+## Seats (content/source/seats.json)
+
+File header (was the comment block at the top of src/content/seats.js): THE SEATS (SPEC §13.1). A seat is a region with its content: enemies, encounters, boss pool and combat scenery. An act is a seat at a tier: `run.actNumber` is the tier, `run.seatOrder[tier - 1]` the seat. `seats.json` has two keys: `seats` (src/content/seats.js freezes the array as `SEATS`, rows stay unfrozen) and `causewayRegionId` (`CAUSEWAY_REGION_ID`).
+
+- **`seats[].baseTier`** — the tier the seat's numbers were authored at (the act it used to be), so climbing it at another tier scales by a RATIO against this baseline (`balanceSeatTiers.json`, SPEC §13.3), and a seat at its own baseline scales by exactly 1. That ratio is the whole of the byte-identity claim in §13.6: an existing seed climbing the default order fights the fights it always did.
+- **`seats[].regionId`** — a foreign key into content/environments.js. The check stays in src/content/seats.js, at module load, so a mistyped region fails the boot rather than painting the wrong sky (Law 1 clause 5).
+- **`causewayRegionId`** — the scenery of the final tier's boss node, the causeway to the Ashen Spire (SPEC §13.2, LORE §1): a region that is no seat's, painted where the last climb ends whichever seat holds it. Data, so the model never spells it. Checked against the environment regions the same way.
+
+## Combat feel (content/source/combatFeel.json)
+
+File header (was the comment block at the top of src/content/combatFeel.js): how hard a hit feels, as data (SPEC §7.4, D51). The key-to-export map: `bigHitShare` → `BIG_HIT_SHARE`, `hugeHitShare` → `HUGE_HIT_SHARE`, `shakeMaxPx` → `SHAKE_MAX_PX`, `shakeFloorPx` → `SHAKE_FLOOR_PX`, `shakeSteps` → `SHAKE_STEPS`, `shakeStepsHp` → `SHAKE_STEPS_HP`, `hitStop` → `HIT_STOP`. src/content/combatFeel.js freezes the three tables (arrays and rows) and keeps `shakePxFor`, `hitStopMsFor` and `combatFeelIssues`.
+
+- **`shakeSteps`** — every hit that costs its target HP shakes the screen, scaled by the SHARE of the target's max HP it cost after Block (owner, 2026-10-18, Fix A). A hit takes the largest step whose `minShare` it reaches; a hit under the first step shakes `shakeFloorPx`, so every hit that costs HP still shakes. Never over `shakeMaxPx` (10 px, from 35% of max HP).
+- **`shakeStepsHp`** — the 2026-10-05 rule (1-4 px by absolute HP, 1/6/10/15); a hit whose target's max HP is unknown falls back to it.
+- **`hitStop`** — a hit that costs `hugeShare` of the target's max HP or more holds the attacker's impact frame and the target's recoil for `hugeMs`, with no HP floor; a hit that costs at least `minHp` holds them for `ms` before the swing recovers. The huge share is judged first. The damage number, sound and haptic fire at impact; only the two figures pause. `ms` 0 turns it off. Instant speed and Reduced motion never reach it: they play the fast path, which has no swing to hold (ui/fx.js animateEvents).
+- **`bigHitShare`, `hugeHitShare`** — also size the damage number (ui/fx.js dmgClass: pct20, pct35) and fire the bigHit haptic. A hit this share of the target's max HP is a big hit (pct20, and the bigHit haptic); this share is a huge hit (pct35, and the long hit-stop).
+- **Numbers that must agree.** The third `shakeSteps` row's `minShare` was written as `BIG_HIT_SHARE`, the fourth's and `hitStop.hugeShare` as `HUGE_HIT_SHARE`. JSON cannot reference a value, so each is now written out twice; tests/content-authority.test.mjs fails if they drift apart.
+- The Screen shake setting and Reduced motion drop the shake (ui/fx.js shake).
+
+## Music (content/source/music.json)
+
+File header (was the comment block at the top of src/content/music.js): the procedural score, as data (SPEC §3.1(4), §7.4). The synth engine (src/ui/audio.js) knows how to PLAY a bed; what the beds are is content, so a new mood or a new screen's music is a data edit here with no change to the engine. `music.json` has four keys: `shippedMusicFolder` → `SHIPPED_MUSIC_FOLDER`, `scales` → `SCALES`, `beds` → the authored part of `BEDS`, `mapRegions` → `MAP_REGIONS`. src/content/music.js keeps `MUSIC_MANIFEST`, builds `BEDS` and `MUSIC_TRACK_FALLBACK`, and keeps `mapMusicContext`.
+
+- **The silence word.** A context that should be deliberately quiet is spelled with the exact word `'silence'` as its whole value, never null, never a missing key, never `[]` or a zero gain. Those are mistakes and the validator rejects each by name (model/validate.js; the word's one home is `MUSIC_SILENCE_WORD` in model/schemas.js). A quiet screen must be a decision someone typed, because untyped quiet is how a broken audio path hides. A user music folder naming tracks for a silence context still plays them — the more specific typed intent wins. Because the word has one home in code, `beds` has no `quiet` row: src/content/music.js adds `quiet: MUSIC_SILENCE_WORD` first.
+- **`quiet`, why it is a context.** A scene of the opening may ask for silence (Advanced → Opening → Music); it switches to this context rather than calling stopMusic(), because the engine remembers the context it is in — stopping the sound without changing the context left `music('map')` returning 'unchanged' when the opening ended, and the map stayed silent until some other screen changed the bed.
+- **`shippedMusicFolder`** — the repo's music/ folder (music/manifest.json, filled from music/PROMPTS.md). With the Custom music folder setting blank, a page served over http(s) reads it; a context it leaves empty, a missing file or a file:// page (browsers block the fetch) keeps the procedural beds. This folder is also the ID PREFIX of the score's assets (step 3c, docs/EXTERNAL-ASSETS-PLAN.md §3.9): `music/manifest.json` and `music/<context>/<track>.mp3` resolve through assetUrl(), so the web edition reads them from the common pack's objects, while a single file served over http(s) and the source tree read the music/ folder beside the page.
+- **`MUSIC_MANIFEST`** (stays in JS, empty) — naming a file for a context makes the engine play that sample instead of synthesizing, and a missing/failed load falls back to the synth, so this stays safe to point at art that doesn't exist yet. The SFX manifest and recipes live in content/sfx.js — one home per medium.
+- **`scales`** — minor / phrygian-ish scales (semitone offsets from the root) per mood. `hymn` is a warmer major-pentatonic-ish scale (shop/rest/victory); `veiled` is dorian-flavoured, wistful; `wrath` is jagged and aggressive (elite/boss).
+- **`beds`** — music beds per context. Each context has a `gain`, a `drone` flag, and a set of procedural VARIANTS (root frequency, scale, note cadence in ms); one is picked at random each time the context starts, so the score varies between a handful of "tracks" even with zero audio files. Shop and Rest have their own calmer sets; Boss/Elite their own darker ones. Each variant may also set `wave` (oscillator timbre) and `lift` (melodic stride through the scale) so variants differ in colour and contour, not just key/tempo — more perceived variety from the same synth.
+- **`mapRegions`** — the map sounds like where you are. Each region the map can stand in has its own context, `map-<region id>` (ids from content/config/ui/presentation/environments.json). They share the map's procedural bed (src/content/music.js sets `BEDS['map-<id>'] = BEDS.map`, the same object), so a region with no recorded track sounds exactly as the map always has; the music folder can name tracks per region, and a region it leaves empty falls back to the folder's plain `map` list (`MUSIC_TRACK_FALLBACK`) before the synth.
+
+## Sound effects (content/source/sfxRecipes.json, sfxFamilyIds.json, sfxHitTiers.json)
+
+File header (was the comment block at the top of src/content/sfx.js): the SFX recipes, as data (#46; design law §3.1, Law 1). The synth engine (src/ui/audio.js) knows how to say exactly two words, `tone` and `noise`, and each recipe is a list of layers spoken in that closed vocabulary. Tuning a sound (hit too loud, click too shrill) is a table edit, never an engine edit: the same rule the music beds in music.js and the cards follow. Schema: `SFX_LAYER_SCHEMAS` in model/schemas.js; validated at boot and in tests via the content bundle (model/validate.js), so a malformed layer fails naming its recipe id.
+
+The three source files: `sfxRecipes.json` → `SFX_RECIPES` (an object of id → layer list, in written order), `sfxFamilyIds.json` → `SFX_FAMILY_IDS`, `sfxHitTiers.json` → `SFX_HIT_TIERS`. src/content/sfx.js freezes the two lists, keeps `SFX_MANIFEST` (empty), `hitTierFor` and `resolveRecipe`, and builds `SFX_RECIPES` from the JSON.
+
+- **Alias rows.** A recipe row whose value is a string, not a layer list, is an alias: `"hit": "hit_medium"` and `"beat": "holdCommit"` answer with the very same layer list as the row they name (it was one shared constant each in the old module, `HIT_MEDIUM_RECIPE` and `CONFIRM_ARRIVAL_RECIPE`), so retuning one moves both. src/content/sfx.js freezes a row that another row aliases (its layers stay unfrozen, as before).
+- **Layer fields** (all times in seconds, frequencies in Hz, peaks are gain 0-1): `tone` — `type` (sine|square|sawtooth|triangle), `freq`, `to`? (glide target), `dur`, `peak`?, `t0`? (delay before onset); `noise` — `dur`, `peak`?, `t0`?, `hp`? (highpass Hz), `lp`? (lowpass Hz).
+- **`default`** is required: it is what an id with no entry plays — a quiet, audible beep, so a missing recipe is heard, never silent (Law 1 clause 5). The fallback for any id with no entry; audible on purpose.
+- **The id scheme.** Composed ids, and why this table has a family row (#66/D16). A call site may compose an id from data: `procBurst_${status}` (ui/fx.js). Resolution is generic-then-specific, in resolveRecipe() below: procBurst_frost  →  the exact row if authored →  else `procBurst`, the FAMILY row (before the '_') →  else `default` So a per-status row is an OPTIONAL flourish, never a requirement: the day content authors a fourth proc status, its burst already sounds like a burst instead of degrading to the 440 Hz blip. That is Law 1 clause 3 — new combinations of existing vocabulary must just work, with no engine edit. Authoring a new family = one row named for the id before the underscore. Found by Sunna at #66: #65 started composing `procBurst_<status>` and no row answered, so bleed, frost AND insanity all played the fallback while the settings screen named sounds the build did not make.
+- **`SFX_MANIFEST` (stays in JS).** A recipe id automatically tries assets/sfx/<encoded-id>.ogg before using its synth recipe. Add a row here only to override that path or format; both the convention and overrides pass through assetUrl() so standalone builds can inline them. A cue synths immediately while an unknown file warms; only a cached known-good file replaces later cues. Missing/undecodable files remain unavailable in that cache, so every cue keeps the immediate recipe below. (Moved here from music.js so all SFX content has one home.)
+- **`sfxFamilyIds`.** Family rows are an explicit content characteristic. Runtime resolution and the content-build reachability check both consume this list; neither guesses that every row before an underscore is intended as a composed-id family.
+- **`sfxHitTiers`.** HIT TIERS (FINISH §5, D48). An attack that takes HP plays `hit_<tier>`, and the tier is the highest row whose `min` the HP damage reaches (guard consumed does not count — the guard half already plays `block`). The thresholds are data (owner ruling D1) and match the damage-number sizes in ui/fx.js dmgClass: under 6 is a chip, 15 and over is heavy (the hit that also shakes the screen, SPEC §7.4). Retuning is an edit to this table; a fourth tier is one more row here plus its `hit_<tier>` recipe below.
+- **`hit`, `hit_medium`.** The medium hit is also the `hit` family row: a tier some future table names before its recipe is authored still sounds like a hit, not the blip. (Same gesture — a noise smack over a falling square — scaled in weight: the light hit is shorter, brighter and quieter; the heavy one drops lower, lasts longer and adds a sub thump. `hit_medium` is the old single `hit`.)
+- **`beat`, `holdCommit`.** Confirm arrivals share one generic fallback gesture. `beat_<phase>` and `holdCommit_<action>` may add exact flourishes later without copying this tuning or falling through to the missing-id beep today.
+- **`hit_heavy`.** The thump: a short flat 60 Hz sine under the smack, so a heavy hit lands in the chest.
+- **`playerHurt`.** The player taking HP: a dull, low, wet thud with a sawtooth groan under it, so being hurt never sounds like landing a hit.
+- **`turnStinger`.** Your turn: a short two-note rising stinger (D4 -> A4), quieter than `victory` and played once per turn.
+- **`cardDraw`, `deckShuffle`, `cardDiscard`.** Pile sounds play once per beat, however many cards moved, so they are kept quiet and short: a paper flick, a riffle, a soft drop.
+- **`procBurst`, the proc-burst family (#66/D16).** `procBurst` is the FAMILY row: any status that procs and has no row of its own sounds like a burst, not like a missing sound. The three per-status rows below are the flourish — same gesture, different material, so a player learns which threshold blew without reading the banner. (This row was promoted from the old `bleedBurst`, which lost its caller at #65. RETUNED at Sunna's gate: promoting it verbatim made the family row and `procBurst_bleed` the same sound — 0.5 dB apart A-weighted, measured — so the FOURTH proc status would have been heard as bleed. A false identity costs a tired player more than a generic one, so the family is now the GESTURE WITHOUT THE MATERIAL: mid-register triangle, mid-band noise, no wet low-mid. It should read "a threshold blew" and claim no element. Each sibling owns a different timbre AND a different register — bleed sawtooth/low, insanity squares beating, frost triangle/high.)
+- **`procBurst_bleed`.** Bleed — wet and low: the family gesture with the noise band dropped and widened, so it reads as fluid rather than brittle.
+- **`procBurst_frost`.** Frost — brittle and high: a short glassy crack over a thin high-passed hiss. Same shape, opposite end of the spectrum from bleed. RETUNED at Sunna's gate — DISTRIBUTION ONLY, and the level half is deliberately NOT closed. Her render measured frost 10 dB under its siblings; my analytic meter (tools/sfx-loudness.mjs) measures it 9 dB OVER them. Two instruments, opposite signs, so I changed nothing whose justification depends on which is right — a level edit I cannot defend in either direction is a guess wearing a decimal. What BOTH instruments agree on is where the energy sits, and that is what moved: the sub-bass body halves (peak .28 -> .14, shorter), because it is the part a laptop or phone cannot reproduce and A-weighting says the ear barely counts; the hiss reaches DOWN to 1.8 kHz (from 2600) so it lands in the band that survives a bed instead of above it; and the glassy tone glides to 700 rather than 520 so it stays bright instead of falling into the mids. Peaks are untouched. Centroid 925 -> 1216 Hz on my meter; identity-band SNR over the bed +11.8 dB at 1.8-4 kHz on hers.
+- **`procBurst_insanity`.** Insanity — unstable: two detuned squares beating against each other, so the burst sounds wrong on purpose rather than merely loud.
+- **`holdTick`, `holdCommit`, the hold family.** The comment block that stood above `holdTick`, verbatim:
+
+```text
+
+
+THE SCORE, written out because this house has no ears and a sound nobody
+can check is decoration. Four sounds make ONE PHRASE, and the phrase is
+"approach, approach, approach, arrive":
+
+  tick   tick  tick      COMMIT
+  A3     A3    A3        A3 -> E4, with A4 over it
+  |------|-----|---|
+  0.00   0.42  0.78  1.0        (fractions of the fill; balance.ui.holdBeat)
+
+Every tick is the SAME NOTE. Nothing rises in pitch — the gaps shorten, and
+that is the whole progress signal (the reason is in balance.ui.holdBeat, one
+home). The commit is that same A arriving UP: 220 glides to 330 (a fifth)
+with a quiet 440 (the octave) laid over it 25 ms later. So the landing is
+heard as the ticks resolving rather than as a fifth unrelated event, and a
+player learns the phrase in one run without being told anything.
+
+WHY A3 = 220 Hz. It is an octave under `cardPlay` (520->380) and two under
+`relic`, so a confirmation never competes with the sound of the thing being
+confirmed. A phone speaker rolls off hard below ~500 Hz, so on the shape
+that matters the fundamental is barely there and the TRIANGLE'S ODD
+HARMONICS (660, 1100, 1540...) are what actually arrives — which is why the
+tick is a triangle and not a sine. A 35 ms sine has no transient to hear.
+
+WHY NOT THE OTHER TIMBRES: square reads as an error tone (it is `stagger`
+and half of `procBurst_insanity`); sawtooth is the bleed/death material;
+noise is impact, and a confirmation is not an impact. The tick is the only
+dry, unfiltered, single-layer row in this table on purpose.
+
+THE LEVELS, AND THE TRADE I TOOK. `holdTick` peak 0.10 is the QUIETEST row
+here — under `default`'s 0.15 — and 35 ms is the shortest. It fires three
+times per confirmation and hundreds of times a run, so it is the one sound
+in the game whose cost is paid at hold #200 rather than hold #1. It is
+audible because it is dry and transient against a sustained bed, NOT
+because it is loud; buying audibility with gain would be the wrong fix and
+the mix would be the thing at fault.
+
+`holdCommit` peak 0.30 sits UNDER `cardPlay`'s 0.35, deliberately and at a
+cost: the more satisfying sound is louder. But a confirmation is not a
+bigger event than the card it confirms, and a mix where the guard
+out-shouts the action is lying about what mattered.
+
+THERE IS NO `holdAbort`, AND THE ABSENCE IS THE DECISION. Letting go is
+nothing happening, and the honest sound for nothing happening is nothing.
+It is also the COMMON case — releasing early IS the feature — so a cue
+there would become the most-fired sound in the game while reporting a
+non-event. The train stopping already says it.
+
+COMPOSED PER ACTION, exactly like `procBurst_<status>` above:
+  holdCommit_endTurn -> the exact row if some future author writes one
+                     -> else `holdCommit`, this family row
+So the day an action becomes one that "takes a second beat", it already
+sounds right with no engine edit and no content edit. A per-action row is
+an OPTIONAL flourish. None is authored here on purpose: this table deleted
+`uiClick` for being a shipped sound with no caller, and a `holdCommit_x`
+for an x that does not hold yet would be the same lie in a new coat.
+```
+- **`rewardTake`.** REWARD COLLECTION (E11). A FAMILY row — the reward menu composes `rewardTake_<kind>` per collected row (rewardTake_cinders, rewardTake_card, rewardTake_flask, rewardTake_armament, rewardTake_relic) and resolution falls through exact → this family → default, the procBurst shape (#71). Authoring a per-kind flourish later is ONE exact row here, zero code. The gesture: a short upward settle — receipt, not fanfare; `victory` already owns the fanfare and fires once at the screen, not per row.
+- **`uiClick` (deleted).** `uiClick` WAS HERE and is gone — no call site in the tree ever fired it (D10: tuned, validated, shipped, played by nothing). A shipped sound with no caller makes the settings screen promise a sound the build never makes, which is the same lie as a caller with no recipe. Restoring it is one line, the day a caller exists — the row was, verbatim: `"uiClick": [{ "kind": "tone", "type": "square", "freq": 420, "to": 420, "dur": 0.04, "peak": 0.18 }]`. Wiring buttons to it is a UI-domain call, not mine, and rides the D10/D16
+- **`victory`.** A rising G–B–D–G arpeggio, one layer per note (was a forEach in engine code).
+
+
 ## Keywords
 
 Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for

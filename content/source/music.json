@@ -1,0 +1,97 @@
+{
+  "shippedMusicFolder": "music",
+  "scales": {
+    "calm": [0, 3, 5, 7, 10, 12, 15],
+    "tense": [0, 1, 5, 6, 7, 10, 12],
+    "dread": [0, 2, 3, 7, 8, 10, 12],
+    "hymn": [0, 2, 4, 7, 9, 12, 16],
+    "veiled": [0, 3, 5, 6, 10, 12, 15],
+    "wrath": [0, 1, 4, 5, 8, 11, 12]
+  },
+  "beds": {
+    "title": {
+      "drone": true,
+      "gain": 0.5,
+      "variants": [
+        { "root": 146.83, "scale": "calm", "cadence": 2600, "wave": "triangle", "lift": 3 },
+        { "root": 130.81, "scale": "dread", "cadence": 3000, "wave": "sine", "lift": 2 },
+        { "root": 164.81, "scale": "calm", "cadence": 2400, "wave": "triangle", "lift": 4 },
+        { "root": 155.56, "scale": "veiled", "cadence": 2800, "wave": "sine", "lift": 3 }
+      ]
+    },
+    "map": {
+      "drone": true,
+      "gain": 0.42,
+      "variants": [
+        { "root": 164.81, "scale": "calm", "cadence": 2200, "wave": "triangle", "lift": 3 },
+        { "root": 155.56, "scale": "calm", "cadence": 2500, "wave": "sine", "lift": 4 },
+        { "root": 174.61, "scale": "dread", "cadence": 2000, "wave": "triangle", "lift": 2 },
+        { "root": 146.83, "scale": "veiled", "cadence": 2350, "wave": "sine", "lift": 3 }
+      ]
+    },
+    "combat": {
+      "drone": true,
+      "gain": 0.5,
+      "pulse": true,
+      "variants": [
+        { "root": 130.81, "scale": "tense", "cadence": 1500, "wave": "triangle", "lift": 3 },
+        { "root": 123.47, "scale": "dread", "cadence": 1300, "wave": "square", "lift": 2 },
+        { "root": 146.83, "scale": "tense", "cadence": 1400, "wave": "triangle", "lift": 4 },
+        { "root": 138.59, "scale": "tense", "cadence": 1250, "wave": "sawtooth", "lift": 3 },
+        { "root": 130.81, "scale": "veiled", "cadence": 1350, "wave": "triangle", "lift": 5 },
+        { "root": 155.56, "scale": "dread", "cadence": 1200, "wave": "square", "lift": 2 }
+      ]
+    },
+    "elite": {
+      "drone": true,
+      "gain": 0.55,
+      "pulse": true,
+      "variants": [
+        { "root": 110, "scale": "tense", "cadence": 1150, "wave": "sawtooth", "lift": 3 },
+        { "root": 103.83, "scale": "dread", "cadence": 1050, "wave": "square", "lift": 2 },
+        { "root": 116.54, "scale": "wrath", "cadence": 1100, "wave": "sawtooth", "lift": 4 },
+        { "root": 98, "scale": "wrath", "cadence": 1000, "wave": "square", "lift": 3 }
+      ]
+    },
+    "boss": {
+      "drone": true,
+      "gain": 0.6,
+      "pulse": true,
+      "variants": [
+        { "root": 98, "scale": "dread", "cadence": 1000, "wave": "sawtooth", "lift": 2 },
+        { "root": 92.5, "scale": "wrath", "cadence": 900, "wave": "square", "lift": 3 },
+        { "root": 87.31, "scale": "wrath", "cadence": 950, "wave": "sawtooth", "lift": 4 },
+        { "root": 82.41, "scale": "dread", "cadence": 860, "wave": "square", "lift": 2 },
+        { "root": 103.83, "scale": "wrath", "cadence": 920, "wave": "sawtooth", "lift": 3 }
+      ]
+    },
+    "shop": {
+      "drone": true,
+      "gain": 0.4,
+      "variants": [
+        { "root": 196, "scale": "hymn", "cadence": 2200, "wave": "triangle", "lift": 3 },
+        { "root": 174.61, "scale": "calm", "cadence": 2000, "wave": "sine", "lift": 4 },
+        { "root": 220, "scale": "hymn", "cadence": 2400, "wave": "triangle", "lift": 2 }
+      ]
+    },
+    "rest": {
+      "drone": true,
+      "gain": 0.34,
+      "variants": [
+        { "root": 130.81, "scale": "calm", "cadence": 3200, "wave": "sine", "lift": 3 },
+        { "root": 146.83, "scale": "hymn", "cadence": 3000, "wave": "sine", "lift": 2 },
+        { "root": 123.47, "scale": "veiled", "cadence": 3400, "wave": "triangle", "lift": 3 }
+      ]
+    },
+    "victory": {
+      "drone": false,
+      "gain": 0.5,
+      "variants": [
+        { "root": 196, "scale": "hymn", "cadence": 1400, "wave": "triangle", "lift": 3 },
+        { "root": 220, "scale": "hymn", "cadence": 1200, "wave": "triangle", "lift": 4 },
+        { "root": 246.94, "scale": "calm", "cadence": 1300, "wave": "sine", "lift": 2 }
+      ]
+    }
+  },
+  "mapRegions": ["hollow-weald", "pale-marches", "cinder-reach", "drowned-coast", "ashen-crown"]
+}

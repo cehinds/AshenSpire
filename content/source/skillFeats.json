@@ -1,0 +1,4 @@
+[
+  {"id":"bladeCritical","skillId":"item:blade","minLevel":2,"name":"Critical Edge","description":"Blade attacks can deal a critical hit for 1.5× damage: 5% + (0.1 × Dexterity + 0.2 × Wisdom + 0.1 × Intelligence)%, up to 50%.","crit":{"tags":["blade"],"base":0.05,"weights":{"dexterity":0.1,"wisdom":0.2,"intelligence":0.1},"divisor":100,"cap":0.5,"multiplier":1.5}},
+  {"id":"shieldBraced","skillId":"item:shield","minLevel":2,"name":"Braced Shield","description":"Every Shield card gains +3 Block, shown on the card.","passive":{"tags":["guard"],"block":3}}
+]

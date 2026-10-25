@@ -11,7 +11,7 @@
       "of": 0.64
     },
     "noSameTypeAdjacent": true,
-    "source": "src/content/mapconfig.js:83"
+    "source": "content/source/mapActShape.json:11"
   },
   "rewards": {
     "relic": true
