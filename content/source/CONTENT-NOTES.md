@@ -400,6 +400,14 @@ File header (was the comment block above src/content/skillFeats.js): the feats a
 
 File header (was the comment above src/content/surveyQuestLore.js): player-facing survey writing. Keep prose outside the atlas topology tables: their historical revision includes text, and changing it would reroute seeds and refuse existing journeys. IDs, objectives and rewards stay in the atlas. `surveyQuestLore.json` is the object export `surveyQuestLore`, keyed by survey id, each entry `{ title, description, report }`; src/content/surveyQuestLore.js freezes the table and each entry, as before.
 
+## Combat matchups (combatIntent.json, combatMatchups.json, combatExpansionMatchups.json)
+
+File header (was the comment above src/content/combatMatchups.js): shared tactical numbers and tag riders; balance exposes these same objects. The three JSON files are the three exports of src/content/combatMatchups.js, unchanged in shape; every `[NOTE]` block is the string key `"$note"` in the JSON (see the Shops notes).
+
+- **combatMatchups.json (version 1)** — the table the original tagged-card contract priced. Immutable history: saves priced under it keep it.
+- **combatExpansionMatchups.json** — new runs carry this table separately; the version-1 table is the immutable history for saves which were priced under the original tagged-card contract. It carries no `$note` blocks.
+- **`tagRiders`** (both tables) — technique riders (owner decision 11, 2026-10-12): keyed by a carrier's authored card tag, resolved with the damage rider once per action and target. A guard bypass takes the larger of this and the damage type's. In the expansion table they are the version-1 rows with status pressure for gauges.
+
 ## Keywords
 
 Header comment of the old `src/content/keywords.js` (SPEC §3.7 note): semantics for

@@ -364,3 +364,12 @@ test('surveyQuestLore: the export deep-equals the authored JSON and stays frozen
   assert.ok(Object.isFrozen(surveyQuestLore));
   for (const entry of Object.values(surveyQuestLore)) assert.ok(Object.isFrozen(entry));
 });
+
+import { withNotes } from '../src/content/noteKeys.js';
+import { combatIntent, combatMatchups, combatExpansionMatchups } from '../src/content/combatMatchups.js';
+for (const [name, exported] of Object.entries({ combatIntent, combatMatchups, combatExpansionMatchups })) {
+  test(`${name}: the export deep-equals the authored JSON (with its NOTE blocks)`, () => {
+    const authored = JSON.parse(readFileSync(resolve(ROOT, `content/source/${name}.json`), 'utf8'));
+    assert.deepStrictEqual(exported, withNotes(authored));
+  });
+}
