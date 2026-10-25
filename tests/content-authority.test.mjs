@@ -383,3 +383,81 @@ test('mapconfig: the three tables deep-equal their authored JSON and keep their 
   assert.ok(Object.isFrozen(MAP_SHAPE_LIMITS) && Object.isFrozen(LEGACY_ACT_BOSSES));
   assert.ok(!Object.isFrozen(mapConfigs) && mapConfigs[1] !== mapConfigs[2]);
 });
+
+// Plan row 9b, batch B: the next five modules.
+import { DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER, MAX_ASCENSION } from '../src/content/customMods.js';
+test('customMods: the four tables deep-equal their authored JSON; MAX_ASCENSION stays computed', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/customMods.json'), 'utf8'));
+  assert.deepStrictEqual(DIFFICULTY_MODS, authored.difficultyMods);
+  assert.deepStrictEqual(CHAOS_MODS, authored.chaosMods);
+  assert.deepStrictEqual(DECK_MODES, authored.deckModes);
+  assert.deepStrictEqual(ASCENSION_ORDER, authored.ascensionOrder);
+  assert.equal(MAX_ASCENSION, authored.ascensionOrder.length);
+  assert.ok([DIFFICULTY_MODS, CHAOS_MODS, DECK_MODES, ASCENSION_ORDER].every((t) => !Object.isFrozen(t)), 'these tables were never frozen');
+});
+
+import { SEATS, CAUSEWAY_REGION_ID } from '../src/content/seats.js';
+test('seats: SEATS and CAUSEWAY_REGION_ID deep-equal the authored JSON; the array is frozen, its rows are not', () => {
+  const authored = JSON.parse(readFileSync(resolve(ROOT, 'content/source/seats.json'), 'utf8'));
+  assert.deepStrictEqual(SEATS, authored.seats);
+  assert.equal(CAUSEWAY_REGION_ID, authored.causewayRegionId);
+  assert.ok(Object.isFrozen(SEATS) && SEATS.every((row) => !Object.isFrozen(row)));
+});
+
+import * as combatFeelModule from '../src/content/combatFeel.js';
+test('combatFeel: the tables deep-equal their authored JSON, stay frozen to the row, and keep the numbers that must agree', () => {
+  const a = JSON.parse(readFileSync(resolve(ROOT, 'content/source/combatFeel.json'), 'utf8'));
+  const m = combatFeelModule;
+  assert.deepStrictEqual(m.SHAKE_STEPS, a.shakeSteps);
+  assert.deepStrictEqual(m.SHAKE_STEPS_HP, a.shakeStepsHp);
+  assert.deepStrictEqual(m.HIT_STOP, a.hitStop);
+  assert.deepStrictEqual([m.BIG_HIT_SHARE, m.HUGE_HIT_SHARE, m.SHAKE_MAX_PX, m.SHAKE_FLOOR_PX], [a.bigHitShare, a.hugeHitShare, a.shakeMaxPx, a.shakeFloorPx]);
+  for (const table of [m.SHAKE_STEPS, m.SHAKE_STEPS_HP]) assert.ok(Object.isFrozen(table) && table.every(Object.isFrozen));
+  assert.ok(Object.isFrozen(m.HIT_STOP));
+  // These were one constant each in the old module, so they cannot be allowed to drift.
+  assert.equal(m.SHAKE_STEPS.find((step) => step.px === 7).minShare, m.BIG_HIT_SHARE);
+  assert.equal(m.SHAKE_STEPS.find((step) => step.px === 10).minShare, m.HUGE_HIT_SHARE);
+  assert.equal(m.HIT_STOP.hugeShare, m.HUGE_HIT_SHARE);
+});
+
+import * as musicModule from '../src/content/music.js';
+import { MUSIC_SILENCE_WORD } from '../src/model/schemas.js';
+test('music: the tables deep-equal their authored JSON; quiet leads BEDS and the region beds share the map bed', () => {
+  const a = JSON.parse(readFileSync(resolve(ROOT, 'content/source/music.json'), 'utf8'));
+  const m = musicModule;
+  assert.equal(m.SHIPPED_MUSIC_FOLDER, a.shippedMusicFolder);
+  assert.deepStrictEqual(m.SCALES, a.scales);
+  assert.deepStrictEqual(m.MAP_REGIONS, a.mapRegions);
+  assert.equal(Object.keys(m.BEDS)[0], 'quiet');
+  assert.equal(m.BEDS.quiet, MUSIC_SILENCE_WORD);
+  assert.ok(!('quiet' in a.beds), 'the silence word has one home (MUSIC_SILENCE_WORD), not the JSON');
+  for (const [name, bed] of Object.entries(a.beds)) assert.deepStrictEqual(m.BEDS[name], bed);
+  assert.deepStrictEqual(Object.keys(m.BEDS), ['quiet', ...Object.keys(a.beds), ...a.mapRegions.map((id) => `map-${id}`)]);
+  for (const id of a.mapRegions) {
+    assert.equal(m.BEDS[`map-${id}`], m.BEDS.map);
+    assert.equal(m.MUSIC_TRACK_FALLBACK[`map-${id}`], 'map');
+  }
+});
+
+import * as sfxModule from '../src/content/sfx.js';
+test('sfx: the recipe, family and tier tables deep-equal their authored JSON; aliases share one frozen row', () => {
+  const read = (name) => JSON.parse(readFileSync(resolve(ROOT, `content/source/${name}.json`), 'utf8'));
+  const rows = read('sfxRecipes');
+  const m = sfxModule;
+  assert.deepStrictEqual(Object.keys(m.SFX_RECIPES), Object.keys(rows), 'recipe ids keep their written order');
+  for (const [id, row] of Object.entries(rows)) {
+    if (typeof row === 'string') assert.equal(m.SFX_RECIPES[id], m.SFX_RECIPES[row], `${id} aliases ${row}`);
+    else assert.deepStrictEqual(m.SFX_RECIPES[id], row, id);
+  }
+  const aliased = new Set(Object.values(rows).filter((row) => typeof row === 'string'));
+  assert.deepStrictEqual([...aliased].sort(), ['hit_medium', 'holdCommit']);
+  for (const [id, recipe] of Object.entries(m.SFX_RECIPES)) {
+    const shared = aliased.has(id) || typeof rows[id] === 'string';
+    assert.equal(Object.isFrozen(recipe), shared, `${id}: only a row that is shared through an alias is frozen`);
+    assert.ok(recipe.every((layer) => !Object.isFrozen(layer)), `${id}: layers were never frozen`);
+  }
+  assert.ok(!Object.isFrozen(m.SFX_RECIPES));
+  assert.deepStrictEqual(m.SFX_FAMILY_IDS, read('sfxFamilyIds'));
+  assert.deepStrictEqual(m.SFX_HIT_TIERS, read('sfxHitTiers'));
+  assert.ok(Object.isFrozen(m.SFX_FAMILY_IDS) && Object.isFrozen(m.SFX_HIT_TIERS) && m.SFX_HIT_TIERS.every(Object.isFrozen));
+});
