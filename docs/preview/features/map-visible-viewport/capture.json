@@ -1,0 +1,313 @@
+{
+  "PR": 2324,
+  "capturedSource": "95ce3f3885563806b7d39d21b5d118c00cc989e3",
+  "CImerge": "3d3d67fc8e61774e70ccedc7202e00021775fc2e",
+  "capturedAtUTC": "2026-10-25T20:33:51.969Z",
+  "build": {
+    "_": "DERIVED \u2014 written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
+    "release": "0.7.1",
+    "ordinal": 1857,
+    "digest": "a9dfccb269",
+    "built": "2026-10-25"
+  },
+  "HTML": {
+    "path": "AshenSpire.html",
+    "bytes": 14776154,
+    "sha256": "75ecc4d49d06a88d79616bee8038f85447a41a6c18468aa56a9a98d636dd3ca8"
+  },
+  "localOfficialReproduction": true,
+  "downloadedCIArtifactBytes": false,
+  "matchingCIProducer": {
+    "run": 40230248650,
+    "job": 121280227037,
+    "standaloneArtifact": 12612871173,
+    "URL": "https://github.com/cehinds/AshenSpire/actions/runs/40230248650/artifacts/12612871173"
+  },
+  "sharedAssets": "all8334 original nonHTML hashes byte-identical to canonicalM pack; supported asset-base sidecar",
+  "sourceFiles": 1104,
+  "compiledModules": 982,
+  "viewports": [
+    {
+      "name": "mobile",
+      "width": 375,
+      "height": 667,
+      "DPR": 3,
+      "touch": true
+    },
+    {
+      "name": "desktop",
+      "width": 1280,
+      "height": 720,
+      "DPR": 1,
+      "touch": false
+    },
+    {
+      "name": "wide",
+      "width": 1920,
+      "height": 1080,
+      "DPR": 1,
+      "touch": false
+    },
+    {
+      "name": "tablet",
+      "width": 1024,
+      "height": 768,
+      "DPR": 1,
+      "touch": true
+    }
+  ],
+  "nativeFlow": "SHOWCASE native map fixture \u2192 hit-tested native reachable-node selection \u2192 open destination tray",
+  "sourceSupportedCameraPolicy": "touch holds comfortably visible node with24px margins, preserving pre-tap position; mouse or noncomfortable touch centers within2px",
+  "nativeCameraGates": {
+    "map-two-axis-pan": 3,
+    "map-camera-persistence-check": 1,
+    "receiptSHA256": "5d2a93bb3871f300219ce729427dca0b611d89c52e98b87a2a11f998ae20b417",
+    "localReceipt": "/tmp/map-final95ce-native-prep-1792959859050240785/output/CLOSURE.json"
+  },
+  "fonts": 15,
+  "visibleImagesDecoded": true,
+  "SVGFragments": "same-document mask/clip/filter references resolve to correct SVG element and child raster sources are decoded",
+  "geometry": [
+    {
+      "viewport": "mobile",
+      "node": "n1_0",
+      "policy": "touch holdLook,24px comfort margin",
+      "dx": -0.546875,
+      "dy": 60.15338134765625,
+      "preTap": {
+        "left": 140.54351806640625,
+        "top": 362.267333984375,
+        "right": 233.36273193359375,
+        "bottom": 455.0865478515625,
+        "cx": 186.953125,
+        "cy": 408.67694091796875
+      },
+      "final": {
+        "nodeRect": {
+          "left": 145.18447875976562,
+          "top": 366.908203125,
+          "right": 228.72177124023438,
+          "bottom": 450.4454345703125,
+          "cx": 186.953125,
+          "cy": 408.67681884765625
+        },
+        "visibleBounds": {
+          "left": 0,
+          "top": 150.734375,
+          "right": 375,
+          "floor": 546.3125
+        },
+        "node": "n1_0",
+        "trayOpen": true,
+        "dx": -0.546875,
+        "dy": 60.15338134765625,
+        "viewport": "441x607",
+        "panAxis": "both",
+        "port": {
+          "left": 0,
+          "top": 150.734375,
+          "width": 375,
+          "height": 516.265625,
+          "clientWidth": 441,
+          "clientHeight": 607
+        },
+        "reveal": {
+          "top": 546.3125,
+          "bottom": 667,
+          "height": 120.6875
+        }
+      }
+    },
+    {
+      "viewport": "desktop",
+      "node": "n1_0",
+      "policy": "centerOnNode",
+      "dx": 0.012198794100186205,
+      "dy": 0.5545654296875,
+      "preTap": {
+        "left": 584.67333984375,
+        "top": 348.7684326171875,
+        "right": 685.45166015625,
+        "bottom": 449.546875,
+        "cx": 635.0625,
+        "cy": 399.15765380859375
+      },
+      "final": {
+        "nodeRect": {
+          "left": 586.4141235351562,
+          "top": 289.5078125,
+          "right": 683.7108154296875,
+          "bottom": 386.804443359375,
+          "cx": 635.0624694824219,
+          "cy": 338.1561279296875
+        },
+        "visibleBounds": {
+          "left": 0,
+          "top": 141.75,
+          "right": 1280,
+          "floor": 533.453125
+        },
+        "node": "n1_0",
+        "trayOpen": true,
+        "dx": 0.012198794100186205,
+        "dy": 0.5545654296875,
+        "viewport": "1283x520",
+        "panAxis": "both",
+        "port": {
+          "left": 0,
+          "top": 141.75,
+          "width": 1280,
+          "height": 524.359375,
+          "clientWidth": 1283,
+          "clientHeight": 520
+        },
+        "reveal": {
+          "top": 533.453125,
+          "bottom": 666.109375,
+          "height": 132.65625
+        }
+      }
+    },
+    {
+      "viewport": "wide",
+      "node": "n1_0",
+      "policy": "centerOnNode",
+      "dx": -0.16054476676947615,
+      "dy": 0.491943359375,
+      "preTap": {
+        "left": 881.890869140625,
+        "top": 504.143310546875,
+        "right": 1028.906005859375,
+        "bottom": 651.158447265625,
+        "cx": 955.3984375,
+        "cy": 577.65087890625
+      },
+      "final": {
+        "nodeRect": {
+          "left": 882.6715087890625,
+          "top": 421.92138671875,
+          "right": 1028.1253662109375,
+          "bottom": 567.375,
+          "cx": 955.3984375,
+          "cy": 494.648193359375
+        },
+        "visibleBounds": {
+          "left": 0,
+          "top": 152.53125,
+          "right": 1920,
+          "floor": 835.78125
+        },
+        "node": "n1_0",
+        "trayOpen": true,
+        "dx": -0.16054476676947615,
+        "dy": 0.491943359375,
+        "viewport": "1291x575",
+        "panAxis": "both",
+        "port": {
+          "left": 0,
+          "top": 152.53125,
+          "width": 1920,
+          "height": 860.84375,
+          "clientWidth": 1291,
+          "clientHeight": 575
+        },
+        "reveal": {
+          "top": 835.78125,
+          "bottom": 1013.375,
+          "height": 177.59375
+        }
+      }
+    },
+    {
+      "viewport": "tablet",
+      "node": "n1_0",
+      "policy": "touch holdLook,24px comfort margin",
+      "dx": -0.35162353515625,
+      "dy": 60.48126220703125,
+      "preTap": {
+        "left": 465.23883056640625,
+        "top": 380.8216552734375,
+        "right": 558.0579833984375,
+        "bottom": 473.640869140625,
+        "cx": 511.6484069824219,
+        "cy": 427.23126220703125
+      },
+      "final": {
+        "nodeRect": {
+          "left": 469.8797607421875,
+          "top": 385.462646484375,
+          "right": 553.4169921875,
+          "bottom": 468.9998779296875,
+          "cx": 511.64837646484375,
+          "cy": 427.23126220703125
+        },
+        "visibleBounds": {
+          "left": 0,
+          "top": 138.6875,
+          "right": 1024,
+          "floor": 594.8125
+        },
+        "node": "n1_0",
+        "trayOpen": true,
+        "dx": -0.35162353515625,
+        "dy": 60.48126220703125,
+        "viewport": "1205x679",
+        "panAxis": "both",
+        "port": {
+          "left": 0,
+          "top": 138.6875,
+          "width": 1024,
+          "height": 576.8125,
+          "clientWidth": 1205,
+          "clientHeight": 679
+        },
+        "reveal": {
+          "top": 594.8125,
+          "bottom": 715.5,
+          "height": 120.6875
+        }
+      }
+    }
+  ],
+  "screenshotEncoding": "original lossless CSS pixel PNG; mobile375x667 rendererDPR3, othersDPR1; no stretch",
+  "rawReportSHA256": "204d2d6b12ce195d0df63443e6e69fe2fa6801c8821e11a8296abff7d73f046f",
+  "rawReportLocal": "/tmp/pr2322-2324-delivery-qbhct4dz/responsive-current/Map-output-rev4/REPORT.json",
+  "cleanup": {
+    "browserPIDAbsent": true,
+    "profileAbsent": true,
+    "serverClosed": true,
+    "integrityClosed": true
+  },
+  "retainedFailures": {
+    "producer": "resource floor crossed by3596288B after completed output; retained failed report; separate full314/8334/source verification accepted complete artifact after duplicate compaction",
+    "captureAttempts": "attempt1/2 image decoder assumed SVG mask fragments were raster images; attempt3 incorrectly required centering for intentional comfortable-touch hold; all raw failures unchanged"
+  },
+  "publicPlay": "Not verified, publisher repair pending. Linked private CI artifact is a download, not a hosted public Play page.",
+  "performanceClaim": false,
+  "files": [
+    {
+      "path": "docs/preview/features/map-visible-viewport/mobile.png",
+      "rawOriginal": "/tmp/pr2322-2324-delivery-qbhct4dz/responsive-current/Map-output-rev4/mobile-map.png",
+      "bytes": 143797,
+      "sha256": "081c2b01c037976046003cb3f40c31a7edb77e9a398796f7be4c9a5c5d41e3bb"
+    },
+    {
+      "path": "docs/preview/features/map-visible-viewport/desktop.png",
+      "rawOriginal": "/tmp/pr2322-2324-delivery-qbhct4dz/responsive-current/Map-output-rev4/desktop-map.png",
+      "bytes": 265224,
+      "sha256": "61fb4610dddb03b114516f0a6bd30ef760163906983a71770c6d9a77a3e9aadc"
+    },
+    {
+      "path": "docs/preview/features/map-visible-viewport/wide.png",
+      "rawOriginal": "/tmp/pr2322-2324-delivery-qbhct4dz/responsive-current/Map-output-rev4/wide-map.png",
+      "bytes": 521817,
+      "sha256": "625b0353eaa42854e451eab4ab58ccdb4db858f104a84207d8401c138dee5b6d"
+    },
+    {
+      "path": "docs/preview/features/map-visible-viewport/tablet.png",
+      "rawOriginal": "/tmp/pr2322-2324-delivery-qbhct4dz/responsive-current/Map-output-rev4/tablet-map.png",
+      "bytes": 232094,
+      "sha256": "4c25cf5a9babf344c8593ea9fb2cd394d6865d75418613c1723148a64ab614f7"
+    }
+  ]
+}
