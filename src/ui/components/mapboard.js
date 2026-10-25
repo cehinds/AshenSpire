@@ -1,7 +1,7 @@
 import { authoredMapTerrainHtml } from './authoredMapArt.js';
 import { mapPoint } from '../../model/map/mapview.js';
 import { actRegionId } from '../../model/environmentArt.js';
-import { paintingFrame, paintingGround, paintingFrameKey } from '../../model/mapPaintingFrame.js';
+import { paintingFrame, paintingGround, paintingFrameKey, terrainSettingAt } from '../../model/mapPaintingFrame.js';
 import { MAP_ART } from '../../content/mapArt.generated.js';
 import { MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
 import { mountMapDetail } from './mapDetail.js';
@@ -370,6 +370,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // The painting is framed so the act's start sits on its region's biome (mapPaintingFrame.js).
   const paintingAnchor = act.authoredMap ? null : world.biomes?.[actRegionId(act)] || null;
   const paintingArt = MAP_ART[world.map]?.levels.at(-1);
+  let paintingFrameNow = null; // the frame last applied; terrainAt reads the painting under a node through it
   const startNodes = (act.startIds || []).map(id => byId[id]).filter(Boolean);
   const paintingStart = startNodes.length
     ? { x: startNodes.reduce((t, n) => t + px(n), 0) / startNodes.length, y: startNodes.reduce((t, n) => t + py(n), 0) / startNodes.length }
@@ -749,6 +750,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       frameCache = { key: frameKey, frame: paintingFrame({ anchor: paintingAnchor, aspect: paintingArt.width / paintingArt.height, box: frameBox, start: paintingStart }) };
     }
     const frame = frameCache.frame;
+    paintingFrameNow = frame;
     const painting = svgEl.querySelector('.map-painting');
     if (painting) {
       if (frame) painting.setAttribute('transform', frame.transform); else painting.removeAttribute('transform');
@@ -1497,6 +1499,12 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     scroll, svg: svgEl, counts: know.counts, know, columns, width, height,
     recenter, resetFraming, centerOnNode, holdLook, releaseLook, stepZoom, teardown,
     readingOf: (id) => drawnReadings.get(id) || null,
+    // The setting (city, bridge, forest...) of the painting under a node, or null
+    // when the board has no framed painting or no zone there.
+    terrainAt: (id) => {
+      const n = byId[id];
+      return n && paintingFrameNow && !act.authoredMap ? terrainSettingAt(world, paintingFrameNow, { x: px(n), y: py(n) }) : null;
+    },
     get zoom() { return zoom; },
   };
 }
