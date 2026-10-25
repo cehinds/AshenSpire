@@ -36,6 +36,10 @@ export function dlog(kind, msg, data) {
   }
   entries.push({ time: new Date(), kind, msg, detail });
   if (entries.length > MAX_ENTRIES) entries.splice(0, entries.length - MAX_ENTRIES);
+  // Mirror into the session console so ignored taps sit beside the errors.
+  // append, not console.debug: nothing extra prints to the devtools console.
+  // ERROR lines are skipped: the window handlers append them to the console themselves.
+  if (kind !== 'ERROR') try { consoleRecorder.append('debug', `[${kind}] ${msg}${detail ? ' ' + detail : ''}`); } catch (e) { /* never break a trace */ }
 }
 
 export function getEntries() {
@@ -257,4 +261,23 @@ export function openDebugLog() {
 }
 
 /** The console door shares the registered chrome without closing the leaf import graph. */
-export function openConsoleLog(options = {}) { return chrome?.consoleDoor?.(options) || null; }
+// A screen may register one snapshot reader; opening the console first records
+// its line, so a stuck turn comes with the input state at that moment. The
+// reader returns a string (or null once its screen is gone). A snapshot error
+// can never block opening the console.
+let consoleSnapshot = null;
+export function registerConsoleSnapshot(fn) {
+  const own = typeof fn === 'function' ? fn : null;
+  consoleSnapshot = own;
+  // Clears only this reader, so a combat torn down after the next one mounted
+  // cannot unregister its successor.
+  return () => { if (consoleSnapshot === own) consoleSnapshot = null; };
+}
+
+export function openConsoleLog(options = {}) {
+  try {
+    const line = consoleSnapshot && consoleSnapshot();
+    if (line) dlog('snapshot', line);
+  } catch (e) { /* diagnostics only */ }
+  return chrome?.consoleDoor?.(options) || null;
+}
