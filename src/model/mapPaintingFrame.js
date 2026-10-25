@@ -47,3 +47,36 @@ export function paintingFrame({ anchor, aspect, box, start }) {
   }
   return null;
 }
+
+/**
+ * paintingPointAt(frame, point) -> {u, v} | null
+ * Inverts the frame (placement, zoom and mirror) to the normalised coordinates
+ * of the UNMIRRORED painting that sit under a board point (SVG units).
+ */
+export function paintingPointAt(frame, point) {
+  if (!frame || !point || !(frame.cw > 0) || !(frame.ch > 0)) return null;
+  const lx = frame.flipX ? frame.ox + frame.cw - point.x : point.x - frame.ox;
+  const ly = frame.flipY ? frame.oy + frame.ch - point.y : point.y - frame.oy;
+  return { u: lx / frame.cw, v: ly / frame.ch };
+}
+
+/**
+ * terrainSettingAt(painting, frame, point) -> settingId | null
+ *  painting  a megaMaps entry; `terrain: [{ rect:[x,y,w,h], settingId }]` in
+ *            normalised unmirrored-painting coordinates, first match wins
+ *  frame     the current paintingFrame (null when the painting is not framed)
+ *  point     the node's board position (SVG units)
+ * Null when there is no frame, no zone list or no zone under the point; the
+ * caller then keeps the node-type rule.
+ */
+export function terrainSettingAt(painting, frame, point) {
+  const zones = painting?.terrain;
+  if (!Array.isArray(zones) || !zones.length) return null;
+  const at = paintingPointAt(frame, point);
+  if (!at) return null;
+  for (const zone of zones) {
+    const [x, y, w, h] = zone.rect || [];
+    if (at.u >= x && at.u <= x + w && at.v >= y && at.v <= y + h) return zone.settingId;
+  }
+  return null;
+}
