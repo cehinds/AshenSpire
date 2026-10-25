@@ -1,0 +1,10 @@
+{
+  "label": "Arcane Exposure",
+  "schoolBuildupMultipliers": {
+    "magic": 1,
+    "arcane": 1,
+    "$note": {
+      "{school}": "Multiplies the Arcane Exposure {a school} card builds on its target. 0 means {school} damage never builds Exposure at all."
+    }
+  }
+}

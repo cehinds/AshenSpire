@@ -140,8 +140,15 @@ const TEXT = QUICK ? ['M'] : ['M', 'XL'];
 // of the source rather than imported, so the tool measures the tree it was
 // pointed at instead of the one it lives in.
 function tapSizesFromTree() {
-  const src = readFileSync(resolve(TREE, 'src/content/balance.js'), 'utf8');
-  const m = /tapSize:\s*\{[^}]*?sizes:\s*\[([^\]]+)\]/s.exec(src);
+  // The setting is authored in content/source/balanceUi.json; an older tree
+  // (--tree) still has it in src/content/balance.js, so that file is read too.
+  let m = null;
+  for (const rel of ['content/source/balanceUi.json', 'src/content/balance.js']) {
+    let src = '';
+    try { src = readFileSync(resolve(TREE, rel), 'utf8'); } catch { continue; }
+    m = /"?tapSize"?:\s*\{[^}]*?"?sizes"?:\s*\[([^\]]+)\]/s.exec(src);
+    if (m) break;
+  }
   // A tree without the setting is measurable exactly once, at the constant the
   // stylesheet still carries — that is what --legacy is FOR, so it is not an
   // error there. Anywhere else, a missing set is nothing to measure.

@@ -825,3 +825,1342 @@ Compiled to `src/content/generated/derivedStatRules.js`; `src/content/derivedSta
     shift by these amounts (floored at 0) wherever its stats are read.
 
     SP per stance for an enemy move that does not name its own `sp`.
+
+## Progression (content/source/progression*.json)
+
+The class-progression content under `src/content/progression/`. Flat top-level file names (the compiler reads only `cards/` as a subfolder). Each module imports its generated rows from `src/content/generated/` and keeps its real logic in JS; each module's header says which part is which.
+
+### Card families (progressionCardFamilies.json)
+
+`src/content/progression/cardFamilies.js` re-exports it as `cardFamilies`. Header comment: "Approved progression catalogue; exact family identities, unlocks and rank costs. Recipes live in cards.js; tags live only in content/source/tagging.csv." The recipes that turn a row into a card (riders, grade budget) are code in `cards.js`.
+
+### Card lore (progressionCardLore.json)
+
+`src/content/progression/cardLore.js` re-exports `progressionCardLore`. Header comment: "Three-part card lore: identity, remembered history, and a closing line." Keys are the family id without its `progression-` prefix; `cards.js` joins the three strings with blank lines into the card's `flavor`.
+
+### Gear requirements (progressionGearRequirements.json)
+
+`src/content/progression/gear.js` re-exports `progressionGearRequirements`. Header comment: "All 63 gear requirements, including the level-zero public baseline." Level 0 rows are the baseline every class starts with. `unlocks.js` turns each row above level 0 into a `weapon` or `armament` unlock row.
+
+### Relics (progressionRelics.json, progressionRelicUnlocks.json)
+
+`src/content/progression/relics.js` re-exports `progressionRelics` and `progressionRelicUnlocks`. Header comment: "Relic definitions and gates are one independently installable module." The relic rows are the definitions; the unlock rows (`kind: "relic"`) are the class-level gates for them.
+
+### Feats (progressionFeatRows.json, progressionFeatUnlocks.json)
+
+`src/content/progression/feats.js` keeps `progressionFeats` and `progressionFeatUnlocks` (both frozen) and builds them from the generated rows. Header comment: "Fifty class feats. Their descriptions and effects share normalized balance bindings." The rows hold id, skill, minimum level and name only; each feat's `description` is derived in JS by `getFeatDescription` from balance, property rules, tagging and the variable bindings, so it stays code. The unlock rows (`kind: "feat"`) are the class-level gates.
+
+### Unlocks (progressionUnlockRows.json)
+
+`src/content/progression/unlocks.js` exports `progressionUnlocks`: the JSON rows (existing families rescheduled by the approved expansion catalog) followed by the item gates, which are derived in JS from the single gear requirements table (`progressionGearRequirements`, level above 0) and the ARMAMENTS table (`kind: "weapon"` for a weapon, `"armament"` otherwise). Edit a gear gate in progressionGearRequirements.json, not here.
+
+### Lessons (progressionLessonRecipes.json)
+
+`src/content/progression/lessons.js` exports `abilityCardUpdates`: one update per recipe row, derived in JS from the class card pools (`reaver`, `starseer`, `rogue`, `herald`), `cardExposure` and the grade maths (`lessonGrade`). Header comment: "Explicit shared lesson and cost-retune recipes. Existing school/status identity is preserved from the authored family; no class pool is broadened."
+
+Each row was a positional tuple `[id, source, default rank, exact Actions at rank 2, primary index, six authored primary values (or explicit grades)]` plus an options object; the comment on the table said "Conditional/secondary effects activate at 2." The tuple is now named fields:
+
+- **id** — the card id in a class pool. **abilityKind** — `spell` or `maneuver` (the old "source"). **abilityRank** — the default rank. **actionCost** — the exact Actions at rank 2. **primaryIndex** — which of the original card's effects is the primary one. **values** — the six authored per-rank primary values.
+- **grades** (optional) — six explicit grade profiles, used instead of `values`. They preserve the previous resolved resource prices and riders, and author the payoff of the paid entry spells and arts directly instead of letting a stronger effect buy another resource tax.
+- **alwaysRiders** (optional) — keep the non-primary effects at every rank (otherwise they start at rank 2).
+- **fixedGradeCosts** (optional) — `{ "<rank>": { actionCost, manaCost } }`. The `crimsonCleave` entry preserves the existing resolved grade-4 price after correcting Sweep area targeting.
+
+### Cards and grade rules (progressionGradeRules.json)
+
+`src/content/progression/cards.js` ("Forty class families. Rank is a recipe selection, never an imperative card hook.") stays JS: it holds `riders`, one function per family that builds that family's rank-2-and-up effects, plus `familyGrade` and the card assembly, all logic over the card families and lore rows. Its comment "Only the family rider is specialized. Shared grade milestones and budgets are composed below, with no engine branch naming one of these families." still applies.
+
+The two constants it shares with `lessons.js` are data:
+
+- **gradeBudget** — the approved total direct damage and Block ceiling at each of the six ranks. Catalogue values are per hit; the explicit immediate rider budget and the milestone Block are reserved before a primary is clamped to this ceiling.
+- **areaFamilies** — families whose primary hits every living enemy from rank 3.
+
+`cardRecipeText.js` (the display text builder; "Display is derived from the same numeric recipe rather than copying numbers into prose. Condition descriptions carry no hidden combat implementation.") and `rules.js` (re-exports `balance.progression`; numeric defaults and their Advanced help live in the one balance source) are wholly logic or derived from another module, and stay JS.
+
+## Balance (content/source/balance*.json)
+
+The global tuning numbers (SPEC §3.1(4)) are JSON, one file per top-level key of
+`balance`, named `content/source/balance<Key>.json` (`balanceShop.json`,
+`balanceSmithing.json`, ...). `tools/content-build.mjs` compiles each to
+`src/content/generated/balance<Key>.js`, and `src/content/balance.js` imports
+those parts and reassembles `balance` in the original key order. The module
+everyone imports is still `src/content/balance.js` (exports `NOTE`, `balance`,
+`balanceWords`). Edit the number in its JSON file, run `node tools/content-build.mjs`,
+and commit the regenerated module beside it.
+
+`balanceCore.json` holds the small scalar keys that would otherwise be one-line
+files (`energy`, `draw`, `flaskCapacity`, `flaskGrowth`, `flaskSlots`,
+`startingCinders`, `startingDeckSize`, `level`, `graceRefill`,
+`graceRefillAtRunStart`) and the `$note` for those scalars.
+
+What stays in `balance.js`, and why (code, not data):
+
+- `combatMatchups`, `combatIntent` and `enemyKnowledge` come from their own modules.
+- `balanceWords` is the frozen vocabulary the note blanks are filled from.
+- `damage`: the card-value rule is one template used for five card kinds, and its
+  `statusMultipliers` roster is derived from `expansionStatuses` (no second
+  hand-maintained roster). Its comments stay beside the code.
+- `progression`: the numbers are JSON, but `gearRequirements` is the shared
+  `progression/gear.js` table and the `[NOTE]` sentences for its rows are computed
+  from it, so `balance.js` stitches those two pieces in.
+- `ui.tooltipPlacement.hoverDelayMs` is derived from the tooltip settings table; the
+  rest of `ui` is JSON.
+
+JSON has no comments, so the comments that sat beside the numbers in the old
+`balance.js` are kept below, one subsection per file, under the key they
+described. Paths are relative to the file's object. Keep a note under its key
+when you change one.
+
+### How a `[NOTE]` is written (old balance.js header, owner, 2026-09-23)
+
+What each number does, written beside it.
+
+Every object below carries a `[NOTE]` block beside its own numbers: the
+sentence Settings → Advanced shows under each row. They lived in
+model/balanceNotes.js until the owner asked for them here, and the reason
+is the one this file's header gives for the numbers — a description kept in
+a second file drifts from the number it describes, because nobody editing
+the number sees it. Two of the sentences reviewed in #1243 had been copied
+from a comment in this file that the code had since outgrown.
+
+THE KEY IS A SYMBOL, and that is what lets a sentence sit inside an object
+the engine reads as numbers. `Object.keys`, `Object.entries`, JSON and
+structuredClone all skip it, so `validate.js`'s unknown-field checks,
+model/advancedConfig.js's `leafRows` and every engine reader walk past it:
+`balance.shop.sellFraction` is still 0.5 and `balance.shop` still has the
+keys it had. `Symbol.for`, so a second copy of this module shares the key.
+
+HOW TO WRITE ONE. A key names a number by its path under the object that
+holds the block:
+
+  sellFraction: 'What the merchant pays …'           this one number
+  '{kind}Cost.{rarity}.{end}': 'The {band} of …'     every number of a family
+  '{statId}.perLevel': { text: '…', inert: true }    a number nothing reads
+
+`{name}` in a key captures a path segment. In a sentence, `{name}` is a
+blank model/balanceNotes.js fills with a NAME — a relic's from the relic, a
+class's from the class — and `{a name}` fills it with its article too.
+Nothing there writes prose; the phrases it picks between are `balanceWords`
+below. Every note but an inert one ends with `balanceWords.newRun`; an
+inert one says nothing reads it, and does not then promise to apply.
+
+A number with no note falls back to "Authored balance value: <path>", and
+tests/advanced-config.test.mjs fails on it. So does a note naming a number
+that is not here, which is what keeps a sentence and its number together:
+rename the number without moving its sentence and the test says so.
+
+In JSON the symbol key is the string key `"$note"`, written last in its object
+with the same value shape the symbol holds. `src/content/noteKeys.js`
+(`withNotes`) turns every `"$note"` back into the `NOTE` symbol when the
+generated module loads; `balance.js` still exports `NOTE` for the readers.
+
+### balanceCore.json — energy, draw, flaskCapacity, flaskGrowth, flaskSlots, startingCinders, startingDeckSize, level, graceRefill, graceRefillAtRunStart
+
+- **`flaskCapacity`** — (`handMax` retired in ruleset 7: every fight's hand size is the
+  derivedStatRules `handSize` row; validate.js refuses it by name.)
+  Crimson/Azure are charge pools sharing this fixed capacity. Utility
+  consumables remain inventory items and use flaskSlots independently.
+- **`flaskGrowth`** — The approved base is three (owner, 2026-09-24; four before); future unlocks may still grow the total. The
+  first live growth rung is data: Golden Sprout
+  is the Golden Seed homage, and carrying it grows the pool by one Crimson
+  charge. One row, amount 1, deliberately modest — the M3 balance pass owns
+  the number, and a retune is this row, nothing else: the tooltip clause
+  derives (flaskGrowthClause), the capacity derives (syncFlaskGrowth), the
+  corpus derives its expectations (tools/flaskgrowth.mjs). Schema and
+  refusals: model/flaskgrowth.js.
+- **`startingDeckSize`** — 11 since plan phase 5a: the class ability card joins the kit beside the
+  signature (roleCopies.ability below; the composed plan grants it first).
+- **`level`** — ---- levelling at a shrine (Constantine, D10 wave 1 + E13) ----------------
+  
+  His words, and the whole feature is in them:
+  
+    "also at graces, players should have the option to level up their
+     character (per run) by trading cinders to level up. at level up they may
+     increase a stat by 1 point."
+    "rest sites become where you level, cinders spent past a threshold — 1
+     stat point per level, 10–20 level-ups a run, scalable."   (E13)
+  
+  FOUR NUMBERS AND NOTHING ELSE, because the rest is derived (Law 0 clause 1):
+  which attributes may be raised is `content/attributes.js` — adding a sixth
+  attribute puts a sixth button on the shrine with no UI edit, and that is
+  this feature's Law 0 falsifier. What a point is WORTH is
+  `content/derivedStats.js`, already: a CON point is +1 HP per five, a WIS
+  point is Mana. Nothing about the value of a level is authored here.
+  
+    pointsPerLevel  "they may increase a stat by 1 point". His number —
+                what a level GRANTS to the ledger (balance.levelUp below).
+    maxLevels   null = no ceiling. His range is an ECONOMY, not a cap.
+  
+  The cinder ladder that sat here (firstCost / costStep, "cinders spent
+  past a threshold, scalable", measured at 20+4 and again at 50+10 against
+  the tripled faucet) is GONE with plan phase 6: a level is earned, below.
+  
+  THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): a win pays
+  defeated-enemy combat power × 25 × 0.2, kills pay 10 × 0.2 × enemy level,
+  and the first step costs 100 XP, each later one ×1.75 (owner, 2026-10-02).
+  Settings → Progression → Experience previews the same configured curve
+  and awards the run uses. The existing per-award level cap remains separate.
+  Cinders buy no level any more: the ladder that sat here (firstCost /
+  costStep, measured twice) is gone with the purse.
+- **`level.maxLevelsPerFight`** — THE LEVELLING CAP (SPEC §15.2). 0 is no cap, as shipped. Above 0, one
+  award (a fight's XP, or a quest's) never raises the level by more than
+  this, and the XP past the cap is DISCARDED: the ledger keeps at most one
+  XP short of the next step, so the progress bar never reads past full.
+- **` (end of block)`** — The maxima bump cadence is authored on the derived-stat rows that carry
+  it (content/derivedStats.js `perLevel`), where the snapshot keeps it.
+- **`graceRefill`** — ---- what a grace hands back ----------------------------------------------
+  Grace refills the current Crimson/Azure counts to the allocation stored on
+  the run. The allocation may be redistributed but always sums to capacity.
+  This legacy table remains empty so old debug readers fail harmlessly.
+
+### balanceProgressionRelics.json — progressionRelics
+
+_No comments were written beside these numbers in the old balance.js._
+
+
+### balanceArcaneExposure.json — arcaneExposure
+
+- **`arcaneExposure`** — Arcane Exposure host resolution: visible name plus the explicit school
+  mapping actions.js consumes. No buildup is inferred from card tags.
+- **`arcaneExposure.schoolBuildupMultipliers`** — Explicit carrier schools. Physical/holy/fire are currently unmapped and
+  therefore add zero even if a malformed card tries to author buildup.
+- **`arcaneExposure.schoolBuildupMultipliers`** — PROVISIONAL
+
+### balanceExposure.json — exposure
+
+- **`exposure`** — Focus properties (docs/proposal-progression-and-property-system.md §7.2,
+  §10): what an Arcane Break, or a hit, is worth to the caster whose focus
+  holds the property. content/source/nodeEffects.json reads these, through variableBindings.csv,
+  through `{ "balance": "exposure.…" }`; no number is typed in that file.
+- **`exposure.siphonRefund`** — PROVISIONAL — Mana back on YOUR arcane break (scepter `siphon`)
+- **`exposure.siphonRefundMastered`** — PROVISIONAL — the same, once the focus skill reaches siphonMasteryLevel
+- **`exposure.siphonMasteryLevel`** — PROVISIONAL — focus skill level; the ledger arrives in plan phase 4
+- **`exposure.overchargeBuildupMult`** — PROVISIONAL — buildup per hit × (wand `overcharge`)
+- **`exposure.staggerBreakPoise`** — Plan phase 8 (proposal §7.2): what the other two foci make of YOUR break.
+- **`exposure.staggerBreakPoise`** — PROVISIONAL — Poise damage to the broken foe (staff `staggerBreak`)
+- **`exposure.resonanceSpreadPct`** — PROVISIONAL — % of the broken foe's threshold poured into every OTHER foe (orb `resonance`)
+- **`exposure.buildupPerManaSpell`** — A Mana spell's buildup per hit (content/source/cardExposure.csv must carry at
+  least this on a card that costs Mana): an empty caster still works toward
+  a break with action-only spells, a Mana spell works faster.
+- **`exposure.buildupPerManaSpell`** — PROVISIONAL
+
+### balancePoise.json — poise
+
+- **`poise`** — Engine-consulted poise config (see ENGINE-API §1). onFill is where content
+  defines what "Staggered" means — the engine never names the status.
+- **`poise.playerImpactPerHit`** — THE PLAYER'S VESSEL (plan phase 8, proposal §7.3): its max is Constitution ×
+  this, plus the worn body armour's poiseThreshold, plus relic
+  poiseThresholdAdd (model/statProjection.js playerPoiseThresholdReceipt).
+  THE CONSTITUTION TERM LEFT THIS BLOCK IN PHASE 9. It is a derived-stat
+  row now (derivedStats.js `poise`, ruleset 5) and the receipt reads it
+  there; a copy here would be a second home for one number.
+  OUTSIDE the foundation ruleset (the shipped fight has none), an enemy
+  blow that draws blood rocks the player by this much; the ruleset's
+  weapon impact replaces it wherever a ruleset is handed in.
+- **`poise.playerImpactPerHit`** — PROVISIONAL
+
+### balanceStagger.json — stagger
+
+- **`stagger`** — WHAT A PLAYER STAGGER COSTS (plan phase 8, proposal §7.3): the poise meter
+  filling takes this many actions off the NEXT turn and applies these
+  statuses (ordinary decay). The engine reads the map; it names no status.
+
+### balanceMana.json — mana
+
+- **`mana`** — Mana is an additional cost beside the single turn-Stamina cost.
+  minActionCost retains its serialized name; the old additive floor is zero.
+
+### balanceDeck.json — deck
+
+- **`deck`** — ---- The deck's floor (plan phase 3b, proposal §5) -----------------------
+  A run may not LEAVE the Armoury holding fewer cards than this. `minimum`
+  is the floor at character level 0; it rises by `minimumPerStep` every
+  `minimumStepLevels` levels (the proposal's "+1 every 2 levels"). Character
+  level lands in phase 6; until then every run reads as level 0 and the
+  floor is `minimum`. model/loadout.js deckMinimum is the one reader.
+
+### balanceClassMastery.json — classMastery
+
+- **`classMastery`** — ---- Skill tracks (plan phase 4a, proposal §6.1 and §10) ----------------
+  One curve shape for every track: the step from level n costs
+  round(base × growth^n, roundTo). `xp` is the weapon, armour, focus and
+  dual-wield curve; `class.xp` the class curve. The award rows are
+  what the engine's hooks pay (engine/skillXp.js): perHit for a hit or a
+  block a group's card resolves on a live target; perWinEquipped per
+  equipped group on a win, × killMult when that group landed the killing
+  hit; one XP per impactPerXp impact absorbed (heavy), evadeXp per hit
+  evaded (light; medium reads half of each), one XP per buildupPerXp arcane
+  buildup dealt (focus). model/skills.js is the one reader of the curve.
+
+### balanceSkill.json — skill
+
+- **`skill.class`** — The class track (plan phase 5b): paid by the run's
+  owner for a won fight, more for a boss (the owner knows the door's
+  pool; the combat does not), and per quest once phase 10a's event
+  exists. `tierAt` is the class level each tree tier opens at.
+- **`skill.rarityUnlock`** — The drafts a level buys (plan phase 4b, proposal §6.1): pick 1 of
+  `draftSize` cards of the track's schools; at most `draftsPerCombat`
+  drafts per track per reward door, the rest queue; a rarity is drafted
+  from the level its row names (the game has no legendary relic or card, so the
+  proposal's fourth row has no seat). A level no longer upgrades the
+  deck: card ranks replaced that threshold (SPEC §13.4o).
+- **`skill.rankMax`** — A card's highest rank (SPEC §13.4o). A draft offers ranks 1 to the
+  track's level, never past this, the higher ones likelier.
+- **`skill.flatEvery`** — Every this-many levels of a card-school track adds 1 to the primary
+  number of every card of its schools (SPEC §13.4o): +1 at 5, +2 at 10.
+- **`skill.attributeEvery`** — Every this-many levels a track with a linked attribute set offers +1 to
+  one attribute of that set (SPEC §13.4o): Blade STR/DEX, Shield
+  STR/DEX/CON/WIS, Magic DEX/CON/WIS/INT; other tracks are authored with
+  the content (phase C).
+- **`skill.featEvery`** — Every this-many levels a track that authors skill feats offers one
+  (SPEC §13.4o, content/skillFeats.js).
+- **`skill.favoredXpMult`** — The class card's leaning (plan phase 5a, proposal §4): skill XP in the
+  weapon groups the card names (its item-type tags) is multiplied by
+  this, through the `favored` property the card carries.
+
+### balanceTagMechanics.json — tagMechanics
+
+- **`tagMechanics`** — Technique tag mechanics (owner decision 11, 2026-10-12). Oath is a class
+  property rule (oathKept, nodeEffects.json) bound to this number.
+
+### balanceRewards.json — rewards
+
+- **`rewards`** — ---- M2 run economy (SPEC §6) ---------------------------------------------
+- **`rewards.bossRelicChoices`** — A solo boss victory offers this many boss relics to pick ONE from (1 or 0
+  is a single relic, as before). Elite drops are unaffected.
+- **`rewards.cinders`** — ×3 the first ladder (Constantine, 2026-09-04: "3x the amount for the
+  base") — cinders are granted on arrival at the reward door now, so the
+  faucet is the whole economy lever. The ladder and the shop were left
+  reading against the OLD faucet for a week; both are re-tuned against
+  this one now (2026-09-11) — the shop by this same ×3, the level ladder
+  by measurement, each explained where it lives.
+- **`rewards.rarityWeightsByClass`** — Caster rewards favor uncommon/rare cards when the skill gate allows them.
+- **`rewards.elementAffinity`** — Owner decision #13: Psychic and Earth cards belong to no class, but the
+  Herald and Starseer meet them more naturally. Within a rarity, a card
+  tagged damage:<element> for one of the class's elements weighs
+  offerWeightMult times a plain card in that class's card rewards.
+  startingChoice: the affinity classes may pick up to maxPicks of these
+  element spells as one of their selectable starting spells at character
+  creation (owner decision 13, 2026-10-12). Only classless attack cards whose
+  attack.source is `source` and rarity is listed qualify; the picker is
+  src/model/startingAbilities.js. Skills (Stoneskin, Dissonance) are not spells.
+- **`rewards.flaskDropBasePct`** — Decaying flask drop (StS potion rule): −step on drop, +step on miss.
+- **`rewards.cardRewards`** — THE CARD REWARD SCHEDULE (SPEC §15.1): when a won fight offers a card
+  row, and whether a level the fight bought adds one. Combat cards ship
+  at 10% in every pool (owner, 2026-10-03).
+  Read by engine/encounters.js `rollCombatCardOffer`.
+
+### balanceShop.json — shop
+
+- **`shop.armamentCost`** — ×3 WITH THE FAUCET (2026-09-11). Every price here was tuned against the
+  pre-2026-09-04 faucet and was left reading against it when `rewards.
+  cinders` tripled, so the merchant quietly became a third of his price:
+  a common card cost two-and-a-half normal fights before, and one fight
+  after. These are linear in cinders — you pay the number or you do not —
+  so the factor that restores a price is the faucet's own, and ×3 here
+  puts every shelf back at the fights-per-purchase it was tuned to. (The
+  level ladder is quadratic and takes a different, measured factor; see
+  levelUp below.) `sellFraction` is a fraction OF this table and needs no
+  scaling — it moved with these numbers by construction.
+- **`shop.sellFraction`** — E2 (#247): the merchant's buy-back, as a FRACTION of the low end of the
+  same cost table his own stock rolls from (relicCost[rarity][0] /
+  flaskCost[0]) — so a possession is always worth less than the cheapest
+  he would sell one for, and the same item fetches the same cinders every
+  visit, no rng. OUR number, labelled as ours: half, rounded down at the
+  price, one word flips it. 0 turns the buy-back off at the table without
+  touching the Settings toggle that owns the feature's visibility.
+
+### balanceRest.json — rest
+
+- **`rest`** — WHAT A REST RESTORES is the location's tag set (plan phase 7): a place
+  carries restHpSmall / restHpPartial / restHpFull and restMana, and each
+  tag's rule reads its number here (variableBindings.csv). `mana.mode` is
+  the default `restMana` behaviour, resolved at the door (engine/locations.js)
+  to the fixed-mode tag it names:
+    flat         restore `flat` points
+    floorOrFull  restore TO `floorPct` of max, or to full when already there
+    full         restore to max
+  A location that wants another amount carries restManaFlat / restManaFloor
+  / restManaFull itself instead of restMana.
+
+### balanceAtlas.json — atlas
+
+- **`atlas`** — The seeded route's town budget (plan phase 7): at most this many towns —
+  the atlas's start and city nodes — per difficulty act, so attrition
+  between towns is the run's tension. generateJourney rejects a route over
+  it and rolls again.
+
+### balanceSmithing.json — smithing
+
+- **`smithing`** — Smithing promotes the owned armament, not one card copy. The model owns
+  the transaction; balance owns the tier ceiling, price, and reward faucet.
+- **`smithing.rewardByPool`** — Item/tier costs, card changes, and requirement changes are authored in
+  itemUpgradeChanges.csv. Balance owns only the reward faucet.
+- **`smithing.rewardChancePct`** — THE STONE DOOR'S CHANCE (SPEC §15.3). A stone reward is paid when the
+  pool pays anything and this percent passes, rolled once per door on the
+  `smith` stream. 100 is always and rolls nothing, so the shipped table
+  pays exactly what it always did; 0 is never, and rolls nothing either.
+- **`smithing.refinedRewardByPool`** — Refined stones as a drop — the crafting-material reward. Paid through
+  the same door and the same chance as the ordinary stones above, into
+  `run.smithingStonesRefined`. Shipped off everywhere. They are paid and
+  shown only: spending them is §14.4's blacksmith (`refine.value`).
+- **`smithing.services`** — THE SMITH'S SERVICES, AND WHO OFFERS THEM (owner ruling, 2026-09-03).
+  A smith does three things: upgrade an item (the tier promotion above),
+  EXTRACT a card from one of an item's mounts so it becomes the run's own,
+  and INSTALL a run-owned card into an emptied or open mount. Which node
+  kinds offer which services is this table — a merchant rolls `chance`
+  once per visit on its own RNG stream, so adding the roll cannot shift
+  what any later reward draws in an existing seed. 100 means always, no
+  roll consumed; 0 means never.
+- **`smithing.services.extract`** — Priced in Smithing Stones, the same purse as an upgrade. Free by the
+  owner's word, configurable because he said so in the same breath.
+
+### balanceLevels.json — levels
+
+- **`levels`** — ---- canonical hidden level semantics (#237) ---------------------------
+  
+  Player level begins at one authored value and advances once per shrine
+  purchase (`run.levelUps`). `run.levelPoints` is deliberately absent from
+  this rule: it records how many attribute points those purchases granted,
+  and the configurable points-per-level dial means it is not a level count.
+  
+  Enemy bounds and act/floor target bands are authored by #238. The pure
+  resolver in model/levels.js accepts those rows without activating them in
+  encounter creation, saves, co-op, or the UI.
+- **`levels.enemyScaling`** — Inert #238 content. The pure level planner consumes these coefficients
+  only when a later activation story supplies a resolved enemy level.
+  Every row states its rounding and hard result caps; hits, statuses,
+  delays, phases, and move order are deliberately absent.
+
+### balanceXp.json — xp
+
+_No comments were written beside these numbers in the old balance.js._
+
+
+### balanceLevelUp.json — levelUp
+
+- **`levelUp.pointsPerLevel`** — What a level GRANTS: attribute points, waiting on the ledger until the
+  player assigns them at a shrine. `maxLevels` is the character's ceiling
+  (SPEC §13.4o: 20, about 100,000 XP); null is no ceiling.
+- **`levelUp.pointsPerLevelMin`** — What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
+  ladder in his own words: "i don't want a dial for hte level up, I want to
+  be able to enter the value myself and maybe a slider with it that is
+  synced with the value." Four chips let him test four things; he said he
+  wants to test.
+  
+  ONE DOMAIN, TWO CONTROLS. The typed field and the slider read these two
+  numbers, so they cannot disagree about what is enterable — a field that
+  accepted 50 while the slider stopped at 20 would be the second copy of a
+  domain, and the player would find it by dragging.
+  
+  THE CEILING IS ONE NUMBER HERE AND NOTHING ELSE. 20 is an experimental
+  bound, not a design claim: at 20 a single level is four tiers of a stat.
+  If he wants 50, this line is the whole change — no code, no UI, and the
+  field will say it clamped rather than swallowing the value (Law 0 clause
+  5: the silent plausible answer is the dangerous one).
+
+### balanceGauntlet.json — gauntlet
+
+- **`gauntlet`** — Unknown (?) node resolution odds (SPEC §5.6 M2 tuning).
+  `unknownNode` MOVED to mapConfigs[act].unknownWeights (EldenSpire#43-adjacent,
+  Freja's finding, Marina binding): what a `?` node resolves to is map geometry
+  and belongs beside `typeWeights`, per act. A flat global here could not vary
+  per act while the map it describes does, and nothing said so.
+  M1 gauntlet glue (kept for the headless bot test; the map flow is M2+).
+
+### balanceCoop.json — coop
+
+- **`coop`** — ---- Forsaken Together (co-op) ------------------------------------------
+- **`coop.headcountHpFactor`** — enemy HP ×(1 + factor×(headcount−1)): 2p ×1.6, 3p ×2.2, 4p ×2.8
+- **`coop.mendHealPct`** — Mend at a shrine heals an ally this % of their max HP
+- **`coop.reviveHp`** — downed-but-not-dead members revive next floor at this HP (StS2)
+
+### balanceEndless.json — endless
+
+- **`endless`** — ---- Endless Spire + Custom Climb rule magnitudes ------------------------
+- **`endless.hpPerLoop`** — +% enemy HP per completed cycle
+- **`endless.strPerLoop`** — +Strength per completed cycle
+- **`endless.actsPerCycle`** — acts before the spire loops (also the act count)
+
+### balanceSeatTiers.json — seatTiers
+
+- **`seatTiers`** — ---- Seats (SPEC §13.3) ------------------------------------------------------
+  One multiplier per TIER. A seat's rosters were authored at its baseTier
+  (content/seats.js), so a fight in seat S at tier T scales enemy HP by
+  seatTiers[T] / seatTiers[S.baseTier] — exactly 1 at the baseline, which is
+  what keeps every existing seed's fights byte-identical (§13.6). The values
+  are the measured HP ratio of the shipped rosters (docs/BALANCE.md §2):
+  act-2 rows average ≈1.5× act-1, act-3 rows ≈1.9× (normals, elites and
+  bosses weighted together, as authored). Tier 1 is 1 by definition and the
+  validator holds it there. A BOSS fight reads bossTiers below instead: the
+  same ratio on HP and move damage, × the tier's boss row.
+
+### balanceBossTiers.json — bossTiers
+
+- **`bossTiers`** — BOSSES BY THE TIER THEY ARE MET AT (SPEC §13.3). Seats are drawn in a
+  random order per run (§13.4), so a boss's difficulty cannot be authored
+  into its roster row: the Marches boss is a run's first boss in a third of
+  climbs and its second in another third. A boss fight at tier T takes the
+  seatTiers ratio against ITS OWN seat's baseline on HP AND on every move's
+  damage (engine: enemyDamageMult), then × bossTiers[T].hp / .damage — an
+  absolute row per tier, not a ratio (model/seats.js bossTierScale). Only
+  'boss'-pool fights read it; World Journey has no seat and is untouched.
+  TUNED (#1284) with `node tools/runsim.mjs <n> --seeded-seats`, the order a
+  real run draws; 240 runs a class: Reaver 105, Starseer 103, Rogue 135,
+  Herald 135 wins (44/43/56/56%). The tool's fixed weald → marches → reach
+  order (no flag, one climb in six) reads lower: 120 runs, 42/38/56/56.
+
+### balanceCustomMods.json — customMods
+
+- **`customMods.toughElitesHpMult`** — Tough Elites: elites & bosses ×HP
+- **`customMods.bigBossesHpMult`** — Dread Bosses: act bosses ×HP
+- **`customMods.hoarderCinders`** — Hoarder: bonus starting cinders
+- **`customMods.expensiveShopsMult`** — Greedy Merchants: ×shop price
+- **`customMods.hoarderShopMult`** — Hoarder: ×shop price
+- **`customMods.lessHealingMult`** — Scarce Embers: ×healing (shrine rest + between-act)
+
+### balanceCosts.json — costs
+
+- **`costs`** — ---- Armaments & armour (equipment) ---------------------------------------
+  What you carry rewrites the cards you start with, rather than adding new
+  ones: a dagger turns Strike into 3×2, a greatsword into one heavy swing.
+  The pieces themselves live in content/source/weapons.csv and outfits.csv;
+  what a mod is ALLOWED to say lives in equipMods.csv. Everything here is
+  the rules of the system, kept in one place so it can be tuned or switched
+  off without touching the model.
+  What the relic-carried powers are tuned to. Every number a power used to
+  carry as a literal in its own rule lives here now, one row per variable,
+  and the rule names the variable (content/source/nodeEffects.json) while
+  content/source/variableBindings.csv says which row the variable reads.
+  Retuning a relic is editing this block; the rule never changes.
+  The framework's default cost amounts: what a card pays when it carries a
+  cost node (content/source/nodes.csv cost.action/stamina/mana) with no
+  amount of its own. Bound in variableBindings.csv; read into the generated
+  framework data at build.
+
+### balanceClassTree.json — classTree
+
+- **`classTree`** — The class tree's numbers (plan phase 5b): one row per node, read by its
+  variable bindings; the tree itself is content/source/classTree.csv.
+
+### balancePowers.json — powers
+
+- **`powers.ashenGrip`** — The four class kit relics (plan phase 5a, proposal §4).
+- **`powers.hollowSquire`** — The two companions (SPEC §14.3): their property rules read these, so a
+  companion's numbers are tuned beside every relic's.
+
+### balanceSigils.json — sigils
+
+- **`sigils`** — THE SIGILS' NUMBERS (SPEC §14.3, §15.4). A sigil's property rule lives in
+  nodeEffects.json and reads its numbers here, through variableBindings.csv,
+  so each gets its generated Settings row like every balance number.
+- **`sigils.vigilSigil`** — The legendary sigils (SPEC §15.4): attuned, never slotted.
+- **`sigils.attuneMax`** — How many legendary sigils a run may hold attuned at once (0: none).
+- **`sigils.dropChancePct`** — The chance, 0-100, that a won fight or a treasure room drops one
+  legendary sigil the run does not own. Shipped off: 0 draws nothing.
+
+### balanceEquipment.json — equipment
+
+- **`equipment.startingKitDiscovery.undiscoveredPresentation`** — Undiscovered alternates render no row at all: no name, numbers, cards,
+  or item silhouette leaks through character creation.
+- **`equipment.startingDeck`** — ---- Composed starting deck (togglable) ---------------------------------
+  `roleCopies` above is a FIXED distribution that must sum to
+  startingDeckSize by hand: grant a class one more card and the sum breaks.
+  This block derives the same deck instead. Named cards ("grants") are
+  dealt first — the weapon's technique, the class signature, anything
+  global — and whatever budget remains is FILLER, split between the attack
+  and guard roles. Filler still resolves through equipped profiles, so a
+  sword-wielder's filler attacks are Slashing Strikes, not generic ones.
+  
+  With the defaults below the composed path reproduces 4/4/1/1 exactly
+  (grants = technique 1 + signature 1; filler 8 at bias 0.5 → 4/4), which
+  is what makes it safe to ship enabled. Set `enabled: false` to fall back
+  to roleCopies verbatim.
+- **`equipment.startingDeck.global`** — `growToFit` and `minFiller` lived here. Both decided who yields when
+  grants got greedy — the deck size, or the content author. Under the cap
+  rule (SPEC, "The starting deck") nobody yields: the cap governs how many
+  BASE strikes and defends are minted, bound cards are never capped or
+  dropped, and a floor of basic cards is simply what the cap leaves over.
+  Card ids every class starts with, whatever it wears. Cards named here
+  must exist in the card registry; each is granted exactly one copy.
+- **`equipment.startingDeck.sourceOrder`** — The order bound cards are DEALT in at creation. Was `dropOrder`, which
+  named a behaviour that no longer exists — nothing is ever dropped. Each
+  entry is a tag id in the `grantSource` domain, so adding a source is a
+  node in nodes.csv rather than an edit to loadout.js.
+- **`equipment.startingDeck.sources`** — WHICH TAG EACH MINTING SEAM STAMPS. `sourceOrder` is the vocabulary's
+  order; this is the binding between that vocabulary and the four places
+  in loadout.js that actually mint a bound card. It exists because the
+  ids used to be typed at those seams: renaming `from:weapon` here and in
+  `sourceOrder` validated clean and then silently dealt the weapon's
+  cards last, because the minting site still stamped the old id. Now the
+  seam READS its id from this map, so a rename is a data edit and an
+  unbound or misspelt role is refused by name.
+  
+  The KEYS are the engine's seams, not content vocabulary — there is a
+  weapon seam whatever an author calls its source. `from:relic` has no
+  key because nothing mints it yet; it is declared vocabulary waiting for
+  a minter, and ranking it early costs nothing until one exists.
+- **`equipment.startingDeck.oddFillerGoesTo`** — Which role wins the remainder when the cap leaves an odd number of base
+  cards. Authored rather than assumed — it used to be a rounding rule
+  buried in the arithmetic.
+- **`equipment.startingDeck.defaultStrikeBias`** — Per-class filler split. `strikeBias` is the share of base cards that go
+  to attacks; the rest are guards. Classes absent here use
+  `defaultStrikeBias`.
+- **`equipment.cardMounts`** — CARD MOUNTS (owner ruling, 2026-09-03). Every card an item lends sits in
+  a MOUNT on that item; a smith can extract it (it becomes the run's own,
+  the mount empties) or refill the mount with another card. What is
+  extractable is a TAG on the card — strikes and defends do not carry it
+  today, and the day the game changes its mind that is a spreadsheet
+  edit. What an emptied mount shows is a FALLBACK per mount kind: a
+  weapon-art mount falls back to the unarmed technique (the Dodge Roll),
+  read from `unarmedProfiles` above rather than typed here, and any item
+  may override that under `fallbackByItem`. `extraMounts` is the seam a
+  later rune feature opens: mounts beyond the authored ones, per item,
+  behind a flag that is off.
+- **`equipment.persistence`** — WHAT THE SHELF IS SCOPED TO, and it is this word — there is no second one.
+  'perRun'   what you find is yours for this run only
+  'unlocked' pieces are permanent once unlocked, chosen before a run
+  'both'     unlocked pieces are choosable AND drops apply for the run
+  
+  Constantine, 2026-08-08: *"maybe the armament menu on the main menu might
+  update, but everything else is profile specific but maybe a few basic
+  weapons become available for all. so all together for armory shelf with
+  settings to configure this."* The DEFAULT half of that is decided —
+  profile-wide, which is `both` and is what already shipped (directions.md
+  D15). The SETTING half is this line, and it did not need inventing: a
+  `shelfScope` word beside `persistence` would be two settings answering one
+  question, which is the defect this house is named for (Law 1 clause 2).
+  What `persistence` genuinely cannot say is the other half of his sentence
+  — the few pieces that are nobody's to FIND because they are everybody's —
+  and that is `basicTag` below.
+  HIS WORD, 2026-08-21: *"it should only show armory you actually picked
+  up mid run"*. That is this line and nothing else — the three values were
+  already the closed set and 'perRun' is already documented above as "what
+  you find is yours for this run only". Law 0's falsifier, answered by the
+  machinery that was already here: an entry describes, the machinery
+  derives, and the whole of item 1 is one word in a content table.
+  
+  WHAT THIS DOES NOT TOUCH, said out loud because it is the half of his
+  sentence this word cannot reach: `basicTag` below still exempts the few
+  pieces that are everybody's from the found gate, so three `basic`
+  armaments remain on the shelf in a run that has picked up nothing. That
+  is HIS OWN earlier ask (A7, 2026-08-08) and the two instructions meet
+  here. It is flagged on the PR rather than averaged: if he wants a truly
+  empty shelf, `basicTag: ''` is the second word and it is his to say.
+- **`equipment.basicTag`** — ---- A FEW BASIC WEAPONS, AVAILABLE FOR ALL --------------------------
+  The tag that means "this is everybody's". It answers the FOUND gate only
+  (drops.requireFound): a basic piece never has to turn up in treasure. It
+  has no opinion about the EARNED gate, so the two compose instead of
+  racing, and a row that carries both is refused by name at validation
+  rather than quietly preferring one.
+  
+  NOTHING NEW IS AUTHORED (Law 0 clause 1). `tags` is a column weapons.csv
+  has always had; three plain rows now carry `basic` and the shelf follows.
+  Moving the line between "for all" and "profile specific" is editing that
+  column — no code, which is the whole promise. Set it to '' to switch the
+  universal shelf off entirely; a value naming a tag no armament carries is
+  a hard validation failure, because a setting that silently does nothing
+  is the one failure mode worse than a missing one.
+  
+  KILLED BY HIM, 2026-08-21: *"kill 3 basic weapons on self unless it's a
+  starting kit armory weapon shown on character creation. the armory should
+  not show weapons not collected in run. it should not show items not
+  available at character creation."*
+  
+  THE UNLESS-CLAUSE NEEDED NO CODE, AND THAT IS A MEASUREMENT, NOT A HOPE.
+  The worry was that clearing this tag would also hide the pieces the player
+  STARTED with — his exemption is the starting kit, not a category. It does
+  not, because the kit is WORN: `carriedIds(loadout)` is storage plus every
+  set, and `createRunState` puts the kit in the sets. Measured across all
+  three shipped classes at this ref:
+  
+    reaver    carries straightSword, roundShield, default
+    starseer  carries ashStaff, default
+    herald    carries boneSceptre, default
+  
+  So with `persistence: 'perRun'` the shelf is already exactly KIT ∪ WHAT
+  THIS RUN PICKED UP, per class, following the player rather than a tag —
+  which is his sentence. What the tag was adding on top is the part he
+  killed: it handed the starseer a straightSword and a roundShield it was
+  never shown, and the herald all three.
+  
+  '' is the documented off value, not an invention (see the paragraph
+  above); a value naming a tag no armament carries is still a hard
+  validation failure, so this cannot rot into a silent no-op.
+- **`equipment.swapCostKind`** — Swapping a hand mid-fight. 'energy' spends from the turn's pool;
+  'allowance' gives a separate per-turn budget that energy never touches.
+- **`equipment.swapAllowancePerTurn`** — only consulted when swapCostKind === 'allowance'
+- **`equipment.allowChangesInCombat`** — The Armoury remains actionable during the player's combat turn. Replacing,
+  moving, or unequipping a carried item uses the same priced combat action
+  as switching a prepared weapon set; the engine, never the panel, commits it.
+- **`equipment.swapCostRule`** — ---- WHAT A SWAP COSTS: three prices he can try, one chain ------------
+  Constantine, 2026-08-08: *"switching sets should cost actions. perhaps
+  this action costs more or less depending on Talisman or starting relic,
+  or some other reason. let's default to costing 2 actions. alternatively,
+  or by a setting, different weapon categories have weapon swap costs.
+  THAT WAY I CAN TRY EACH."*
+  
+  He named three prices and asked to FEEL them, so the three are ROWS and
+  the live one is a WORD — never three branches in the engine. One chain,
+  always the same, and the row says which of its rungs are live:
+  
+    base 'category' → the drawn piece's category cost, falling through to
+                      `swapCost` when its tags match no row below
+    base 'default'  → `swapCost` for everything
+    gear true       → talisman and relic deltas adjust that base
+  
+  THE PRODUCT IS TOTAL, AND THAT IS THE PART I GOT WRONG LAST TIME (#78).
+  Two closed fields make FOUR cells; I once shipped three ids for a product
+  whose fourth cell nobody had built, and one row of legal data drew an
+  empty screen. Here every one of the four computes a real price. The
+  fourth — category AND gear — is deliberately not shipped, because he named
+  three; it is one row away and needs no code, which is what test 28q
+  measures (Law 0's falsifier, applied to a rule instead of a card).
+  
+  WHY 28q, AND NOT 28p OR 28r — re-derivable in one read, because this line
+  cited `28c` from b5c81d0 through 284997a and NO TEST OF THAT NAME HAS EVER
+  EXISTED IN THIS REPO (`git log --all -S '28c.' -- tests/` returns nothing).
+  A wrong citation that four hands corrected in copies while the original
+  stood is not fixed by a better name alone; it is fixed by a name a reader
+  can check without trusting me:
+    · 28q is the ONLY test in tests/engine.test.js that DECLARES the fourth
+      cell — `{ id: 'both', base: 'category', gear: true }` — and then prices
+      all four cells of the base × gear product, asserting '2,3,3,4'.
+    · 28p asserts the shipped rows are exactly `flat,gear,category`. It
+      measures the three and never builds a fourth.
+    · 28r holds the two fields APART: its one gear clause refuses a
+      non-boolean `gear` by name, and its base sweep runs `gear: false`
+      throughout, so the fourth cell never occurs in it either.
+  Scored over all 66 tests in that file at 284997a, on the four claims this
+  sentence makes, 28q is the only one that carries all four.
+  
+  The default is 'flat', which is the game exactly as it shipped: nobody who
+  does not opt in pays a different price. Settings → Advanced switches it.
+- **`equipment.swapCostByCategory`** — A WEAPON'S CATEGORY IS ITS TAGS. `heavy` and `flourish` are already on the
+  rows because a greatsword IS heavy — a `swapCost` column on weapons.csv
+  would compel an author to restate what the tags already imply, which is a
+  breach of Law 0 clause 1 even though every value would sit in a table.
+  
+  ORDERED, FIRST MATCH WINS. A twinblade is `blade|flourish` and a halberd
+  is `blade|heavy`; which tag rules is the order of these rows, not a max()
+  nobody can see. A tag no armament carries fails validation by name.
+- **`equipment.restampHand`** — true  → swapping rewrites the Strikes/Defends already in your hand
+  false → only cards drawn after the swap carry the new numbers
+- **`equipment.storageSlots`** — pieces carried but not slotted; hand slots lock in combat
+- **`equipment.defaultView`** — 'grid' | 'rack' | 'hybrid'
+- **`equipment.narrowDefaultView`** — What a NARROW layout opens on. Data, not a branch in the screen: the view
+  list is content, and picking one in JS would put a second copy of the
+  closed set below the content layer (Law 1 clause 3). EldenSpire#38 —
+  'hybrid' asks for a figure and three cells side by side and a phone has
+  room for one of those, which is how two of six weapon slots went missing.
+  A player's own saved equipView still wins over this; it is what a phone
+  OPENS on, never what it is allowed to show.
+- **`equipment.views`** — A VIEW DESCRIBES ITSELF; the screen derives the layout (#78, Law 0 cl.1).
+  These were three bare ids and `equipment.js` was `if (view === 'grid') …
+  else …`, so a fourth id rendered AS HYBRID and said nothing — the author
+  did the data-driven thing correctly and got a silently wrong screen.
+  
+  Two characteristics are the whole difference, and every rule in ui.css
+  that used to key off `.view-<id>` keys off one of them now:
+    figure — is the dressed class figure on screen at all
+    slots  — 'flank': slot blocks split either side of the figure
+             'list':  slot blocks in one column beside it
+  
+  WHAT IS CLOSED IS THE COMBINATION, NOT EACH FIELD. Read that before
+  inventing a row. The first pass said "both are closed sets", which is two
+  closed sets and a product of FOUR cells — and only three are drawn. A row
+  saying `figure: false, slots: 'flank'` used every legal word and rendered
+  an EMPTY armoury in silence (Vira, #78). The three combinations below are
+  the whole vocabulary; each one is a layout in LAYOUTS in equipment.js and
+  that table is the only place the list lives. Anything else fails loud and
+  names this row (Law 1 clause 5) — including a combination of two words
+  that are each fine on their own.
+- **`equipment.subject`** — WHICH PANE IS THE SUBJECT. One field, and it is the whole of "collapsible"
+  (#90). Constantine: *"I still want the armoury card list to be collapsable
+  SO THAT I CAN SEE THE ARMORY SLOTS BETTER."* The clause after "so that" is
+  the datum — on this screen the slots are what you came for and everything
+  else is what helps you decide. `collapsible: true` written on a pane is
+  that fact spelled as a mechanism, and it is a special case in a
+  characteristic's clothes.
+  
+  NOT A FLAG PER PANE, and this is the #78 lesson one screen over. A
+  two-valued `role` on each pane is a closed set per pane whose PRODUCT has
+  cells nobody built: NO subject (every pane collapsible — you can fold the
+  whole screen away) and TWO subjects (nothing to order by, nothing that
+  must stay open). A POINTER has no product. One field, one value, and
+  context is the COMPLEMENT — derived, never authored.
+  
+  The regions themselves are the vocabulary and live where they are drawn
+  (REGIONS in src/ui/screens/equipment.js), exactly as LAYOUTS holds the
+  view cells. A name here that is not a region fails BY NAME at boot with
+  the list printed; naming none fails the same way.
+- **`equipment.spriteReacts`** — 'none' | 'hands' | 'full'
+- **`equipment.limits`** — Floors of the mod system, so a piece can't be authored past the point
+  where the card stops making sense.
+- **`equipment.drops`** — ---- Where armaments come from ------------------------------------------
+  You start bare-handed and the run arms you. A found piece is yours for
+  the run immediately AND remembered forever, so a climb that ends badly
+  still widens the wardrobe — the roguelike bargain: this run's loss is
+  next run's option.
+- **`equipment.drops.requireFound`** — false makes every authored armament available from the start (a sandbox
+  for testing the mod system without playing for it).
+- **`equipment.drops.reveal`** — HOW MUCH OF THE UNKNOWN THE PLAYER SEES — the Compendium's whole dial,
+  and one word. Constantine: *"the potential weapons to unlock should be
+  in its own menu on the main menu that keeps most things hidden."* The
+  vocabulary is not new: it is `REVEAL_MODES` from unlocks.csv, applied to
+  the OTHER gate. An armament is withheld by not being found rather than
+  by an unearned condition, so it has no unlock row to read a reveal from,
+  and this is where that answer lives — one home, tunable, no code.
+    'teased'  silhouette, rarity, hand. No name, no tags, no numbers.
+    'listed'  the above plus its name and why it is not yours.
+    'hidden'  the Compendium is empty until you find something.
+  'teased' is the shipped line: shape is a promise, a name is the item
+  delivered without the climb. A piece that wants a different answer names
+  an unlock row, whose own `reveal` wins (Law 0 clause 3 — the override is
+  data). The Armoury picker is unaffected by this word: an offer you
+  cannot take shows its reason either way.
+- **`equipment.drops.chance`** — Chance a node of each kind yields an armament, and the rarity odds when
+  it does. Bosses always drop; their table is weighted to the good stuff.
+  `normal` (SPEC §15.3) ships at 0, which returns before any draw, so an
+  ordinary fight drops nothing until the owner raises it. The roll draws
+  from the authored weapons only; armour has no run inventory to drop into.
+- **`equipment.drops.preferUnfound`** — A duplicate is a non-event, so drops prefer something you have never
+  held. With nothing new left the node gives cinders instead.
+
+### balanceProgressionFeats.json — progressionFeats
+
+- **`progressionFeats`** — Class feat magnitudes and thresholds (SPEC §13.4r). Nodes name these bindings.
+
+### balanceUi.json — ui
+
+- **`ui`** — ---- presentation config (read by the UI layer, never by the engine) ----
+  Same rule as the tuning above: code never embeds these numbers. Keeping the
+  audio defaults here in particular means the engine fallback and the settings
+  slider can't drift apart — they previously lived in two files and silently
+  disagreed.
+- **`ui.imageHints`** — How every rendered <img> is handed to the browser. Both of these are
+  decode-path settings, not network settings, and that distinction is the
+  whole reason this block exists rather than sixteen literal attributes
+  scattered through the render sites.
+  
+  The shipped build inlines its art as data: URIs (see ui/assetmap.js), so
+  there is no request to defer — the cost that remains is DECODE, and on a
+  phone decoding a 350x490 WebP synchronously on the main thread is a
+  dropped frame every time a card mounts. `decoding: 'async'` is the fix
+  and it is safe everywhere, because the only thing it gives up is the
+  guarantee that the image is painted in the same frame as its parent.
+  
+  `lazy` is NOT safe everywhere, and it is off by default for that reason.
+  A `loading="lazy"` image inside a container that is display:none, or
+  translated off-screen, or opacity:0 may never load at all — which is
+  exactly the shape of every combat effect overlay in this codebase. It is
+  opted into per call site, and only for images that sit in a scrollable
+  list where being below the fold is the normal case.
+- **`ui.hudBars`** — HUD resource bars, per surface (content/resources.js holds the rows).
+  
+  `scaleByMax` is HIS RULE — "the size of that bar should scale depending on
+  the max total ... with the max size filling up the full top row". It is on
+  for the main HUD, which is the surface he said it about.
+  
+  It is OFF under the character models, and that is a call worth stating
+  rather than burying: he assigned that surface its CONTENTS ("really just
+  health and poise"), not a scaling rule. Turning it on there is defensible
+  and informative — the act-3 boss is authored at 250 HP (550 met at tier 3,
+  balance.bossTiers) against a 12 HP wisp —
+  but the under-model track is 84.6 px at 390x844, so most of the roster
+  lands on the 16 px floor and stops encoding anything.
+  
+  MEASURED, all 19 enemies, `node tools/hudbars.mjs --model-scale`:
+  15 of 38 bars (39 %) sit ON the floor, and 13 of the 19 HP bars (68 %) do
+  — every enemy at or under 60 HP renders the same length as every other.
+  A scale two thirds of whose values are pinned to its minimum is not a
+  scale. That is the reason for the false, and it is a number rather than
+  a preference.
+  
+  Flipping either boolean is a one-number data edit and needs no code.
+- **`ui.hudBars.main`** — The shared map/combat resource reference track may occupy at most this
+  share of the visual viewport. main.js projects it to one CSS variable;
+  the stylesheet carries no second numeric copy.
+  The shared solo HUD uses this share of the room left after its action
+  cells. The old 40vw cap typed a viewport answer before those controls
+  had taken their space; 82% keeps a deliberate gutter without making a
+  second breakpoint. Co-op still consumes maxViewportPct below.
+- **`ui.hudPresentation`** — Shared HUD presentation tokens. These are screen-pixel intentions;
+  main.js projects them through --ui-zoom so Map and Combat consume the
+  same answer. Component backgrounds are transparent by current design,
+  while borders and the contents inside each panel remain visible.
+- **`ui.hudPresentation.portraitScale`** — Shared HUD spacing/scale tokens. Portraits shrink to 70% of the
+  legacy badge; the primary row, control grid, and vital rows each own
+  their own gap so responsive layouts do not hide a second copy.
+- **`ui.hudPresentation.cindersMaxWidthPct`** — Header columns negotiate inside one grid: the center Cinders track and
+  right metadata trail each cap at 30% of the viewport. Act/Floor show
+  their current values by default; totals remain an opt-in.
+- **`ui.hudQuickSettings`** — The two always-nearby comfort controls are one shared component on the
+  title, map, and combat surfaces. Places and spacing are authored here so
+  a future surface or denser theme does not require another renderer.
+- **`ui.hudQuickSettings.cardSizePx`** — One visual card on every device. The 40px face sits inside the shared
+  tap floor, while its 28px icon occupies 70% of the authored face.
+- **`ui.combatantStage`** — BattlefieldStageModel owns the protected vertical corridor between the
+  shared run HUD and the hand. Percentages are viewport-height shares on
+  the glass; intentGapPx is the visible device-pixel attachment distance.
+- **`ui.equipmentCard`** — Contextual explanations point back toward the readable centre instead of
+  blindly choosing the first side with room. Combatants add a persistent,
+  foldable edge inspector while the shared floating tooltip remains the
+  short-lived hover/tap explanation.
+  THE EQUIPMENT CARD FACE, SIZED BY WHAT THE INFORMATION IS WORTH.
+  
+  The face used to be seven hard-coded pixel rows. Whatever did not fit was
+  cut wherever the row happened to end, and because flavour and the footer
+  sat in rows of their own, the thing that got cut was the MECHANICS: a
+  player could read "Grey wood, warm at the grip." in full while
+  "Class power: +1 Potency" was sliced through the middle.
+  
+  Rows are now declared with a PRIORITY and a floor. Every region states
+  what it must never shrink below and how willingly it gives space up:
+  higher `priority` keeps its room longer, and `grow` says who absorbs the
+  slack when there is any. Nothing here is a magic constant in a
+  stylesheet — the numbers are data, and the face is composed from them.
+  
+  The ordering is the claim, and it is deliberate: what the item DOES
+  (bonuses) outranks what it IS (type, tags), which outranks what it is
+  LIKE (flavour). Flavour is lore and says so in its own tooltip; it is the
+  first thing to give up room and the first thing to ellipsis.
+- **`ui.equipmentCard.frameWidthPx`** — Face geometry. The frame lays out at this size and is then scaled to
+  whatever box it is dropped into, so these are design pixels, not
+  device pixels.
+- **`ui.equipmentCard.regions`** — Regions, in visual order. `minPx` is the floor; `priority` breaks ties
+  when there is not enough room; `grow` shares out anything left over.
+- **`ui.equipmentCard.text`** — Text sizing. Every face value is a clamp: it may shrink to `minPx` so a
+  long line stays on the card, and never grows past `maxPx` so a short
+  one does not shout. `idealCh` is the width the size is derived from, so
+  the type scales with the card rather than with the viewport.
+  `floorPx` is a PHYSICAL floor, and it is the one that matters on a
+  phone. The frame lays out at frameWidthPx and is then transform-scaled
+  into whatever box holds it, so a 13px line inside a face scaled to 0.6
+  reaches the glass at 7.8px. The floor is divided by that scale — the
+  same compensation the rest of the kit applies against `--ui-zoom` — so
+  authored type shrinks with the card only until it would stop being
+  readable, and then stops shrinking. The priority solver above is what
+  affords this: the regions that hold text now have room to take it.
+- **`ui.equipmentCard.bonusMaxLines`** — How many lines a single bonus may wrap to before it ellipsises. One
+  line was the old behaviour and it truncated real numbers mid-word.
+- **`ui.equipmentCard.info`** — The information button. It appears on the FIRST press of a card, not
+  the second: a control nobody can find is a control nobody uses. The
+  fade keeps it from snapping into place under the thumb. Its reveal
+  delay (wireframeUi.selection) and size (wireframeUi.inspect) are the
+  shared WCF3/WCB1 ones every card and combatant uses.
+- **`ui.shrinePresentation`** — Shrine options default to one vertical list. `grid` preserves the
+  horizontal wide-screen composition as an authored alternative; narrow
+  screens still collapse it to a list for touch and readable labels.
+- **`ui.shrinePresentation.optionLayout`** — list | grid
+- **`ui.shrinePresentation.foldedCardWidthViewportPct`** — The six option faces share one folded footprint. Percentages own the
+  responsive size; the bounds preserve the interaction floor, keep a
+  wide monitor from turning a choice into a banner, and let the complete
+  collapsed menu fit before its body becomes a scrollport.
+- **`ui.accents`** — Accent themes → --gold plus its rgb form (focus glow / halos).
+- **`ui.uiScale`** — UI size → whole-app zoom (--ui-zoom). 'Auto' flexes against the design
+  baseline below and is clamped so it never gets unusably tiny/huge.
+- **`ui.uiScale.narrowW`** — PROTOTYPE (EldenSpire#23, track B). A SECOND design baseline, for the
+  narrow layout in styles/combat.css. #23 reads as a clamp bug — the
+  floor of 0.62 winning on every phone — and it is not: lowering the
+  floor to 0.325 fits a 1200px layout onto a 390px screen and gives you
+  glyphs you can read on a board you still cannot use. The wrong number
+  is the BASELINE, which says every screen is 1200x730. Auto picks
+  whichever of the two baselines wants the LARGER zoom, so nothing here
+  decides "is this a phone" — the fit does, and the floor stops binding
+  on its own without being touched.
+  
+  430x780 is a portrait-phone board: at 390x844 it wants 0.907 (local
+  430x930), at 412x915 0.958, at 360x640 0.821 (local 438x780).
+  
+  narrowMax is the viewport width, in visual px, at or below which the
+  narrow layout is used. Height may change the zoom, never this mode.
+  
+  It used to live in styles/combat.css as a container query. main.js now
+  owns the width decision and writes `data-layout` on <html>; the
+  stylesheets follow it and measure nothing. Height can change the zoom,
+  but cannot make a browser-chrome or keyboard resize flip the mode.
+- **`ui.uiScale.shortWideMinH`** — The compact wide composition's rendered lower edge. Text XL is the
+  tallest cell: at 844x340 its complete HUD, combatants, cards, hint row
+  and action controls are on glass; at 844x339 at least one required
+  region crosses its owning row. Derived at one-pixel resolution by
+  tools/short-landscape-support.mjs before this value is consulted, so
+  moving the number without moving the rendered premise goes red.
+- **`ui.uiScale.gateBelowH`** — THE SHORT-WIDE BAND'S UPPER EDGE (src/main.js, #27). At or above this
+  viewport height, the established wide composition remains. Below it,
+  main.js selects the compact composition down through shortWideMinH;
+  only heights below that rendered floor are refused. Thus the complete
+  current answer is:
+  
+    h >= 465                 standard wide composition
+    340 <= h < 465           compact wide composition (when width fits)
+    h < 340                  truthful upright/resize refusal
+  
+  IT IS A MEASUREMENT, NOT A TASTE, and it is in data because it is a
+  layout fact that will move when the board does.
+  
+  HISTORICAL PRE-#27 RECORD BELOW. It explains why 465 was originally
+  derived as the refusal threshold. #27 keeps that exact measured upper
+  edge but inserts a supported composition below it; statements below
+  about 368..464 being refused describe the former runtime, not today.
+  
+  THE MEASUREMENT IS A DERIVATION OVER AN ENUMERATED SET, AND SAYING THAT
+  OUT LOUD IS WHY THIS NUMBER SURVIVED HAVING ITS QUESTION CHANGED. It was
+  432 on 2026-08-15 under a different predicate; the predicate was ruled
+  wrong on 2026-08-16 and the number was RE-RUN rather than re-investigated
+  — a threshold with a domain can be re-derived when the question changes,
+  a remembered one cannot.
+  
+  ===================================================================
+  WHAT IT ANSWERS TO: THE WALL (Marina, MR-142, 2026-08-16)
+  ===================================================================
+  
+  Two predicates were on the table and they name different sets of screens:
+    `whole`   — all five required controls whole. A QUALITY question:
+                is this screen good?
+    the WALL  — `.end-turn` UNREACHABLE: not one pixel on glass and no
+                gesture to it. A SAFETY question: can this player continue?
+  They part by 64-109 px at every text size (Vira, 2026-08-15). MARINA
+  RULED THE WALL, for three reasons and the third decides it alone:
+    1. the gate's cost is TOTAL — it removes the shape and says rotate —
+       and a total hammer should fire on a total condition;
+    2. a refusal removes the player's choice, a degraded screen leaves it.
+       At 67.3% of the hand a player can rotate, page or accept. Behind the
+       gate they cannot opt out;
+    3. `whole` CAN BE SATISFIED BY THE VERY INTERACTION THAT STRANDS THE
+       PLAYER — one flask gesture at 844x390 scrolls `.combat` 162.9 px and
+       takes the screen from 2/5 + UNREACHABLE to 5/5 + onscreen, carrying
+       the topbar off the top with no gesture back. A refusal predicate the
+       trap itself satisfies is the wrong question.
+  
+  ===================================================================
+  THE DERIVATION: max(wall h) + 1, NEVER min(good h) (MR-143)
+  ===================================================================
+  
+  Sunna, 2026-08-16, `?shot=combat`, wide layout, auto UI size, headless
+  Chromium at width 800, EXHAUSTIVE 1 px sweep of h 360..600 per text size
+  (964 cells), tree at HEAD `sunna/the-ladder-and-the-number`:
+    `CHROME=/usr/bin/chromium node tools/uprightgate.mjs --ladder --ladder-from 360`
+  
+    text size                 S     M     L     XL
+    last WALLED h           367   394   423   464      <- the derivation
+    max(wall)+1             368   395   424   465
+    all five whole from     432   495   533   571      <- the COST column
+  
+    THE XL WALL IS NOT AN INTERVAL: h 360..450 AND 464 (92 cells), with
+    451..463 not walled at all. The auto-zoom steps 0.63 -> 0.64 at 464 and
+    the board grows faster than the window, so END TURN goes 13.37% on
+    screen at 460, 0% AT 464, 19.76% at 470. Found by Vira, 2026-08-15;
+    re-derived here.
+  
+    THE LOWER BOUND READ `390` UNTIL 2026-08-16 AND 390 WAS NEVER MEASURED
+    — it is `--ladder-from`'s DEFAULT (uprightgate.mjs, `argOf(...) ?? 390`).
+    A run that takes the default cannot see below its own floor, so the
+    floor comes back in the output looking exactly like an edge. It printed
+    as one, was copied here as one, and understated this wall by 30 cells.
+    Re-measured from 360 (Bjorn, 2026-08-16): XL is walled at every swept
+    cell from the floor to 450.
+  
+    AND 360 IS THE NEW FLOOR, NOT A NEW EDGE. The wall's LOWER edge is
+    still unestablished — at 360 all four text sizes are walled, so each
+    run's bottom is the sweep's, not the board's. Writing `360` as though
+    it were measured is the same mistake one floor down. IT DOES NOT
+    MATTER TO THE NUMBER: the derivation is max(wall)+1 and needs only the
+    wall's TOP edge, which is inside the sweep at every text size. That is
+    why a wrong lower bound sat here harmlessly and why it still had to go
+    — a bound that costs nothing today is read as measured tomorrow.
+  
+  465 IS ONE PAST THE LAST WALL — max(368, 395, 424, 465). NOT the first
+  height that stops being a wall, WHICH WOULD BE 451 AND WOULD BE WRONG BY
+  FOURTEEN. `min(good)` is a monotonic idea and this ground is not
+  monotonic; I measured the non-monotonicity myself (97.13% at h 485, 94.4%
+  at 486), used it to justify sweeping exhaustively, and still derived with
+  `min(good)`. One past the last bad cell is the only form that survives a
+  hole, and the hole is real.
+  
+  AND I CHECKED THE SAME QUESTION AGAINST THE COST COLUMN, because a
+  corrected derivation that leaves its neighbour uncorrected is the same
+  defect at a new address: at all four text sizes `min(whole)` and
+  `max(not-whole)+1` COINCIDE (432/495/533/571 either way). The whole set
+  is contiguous above its first cell; the wall set is not. That is a
+  measurement, not an assumption, and it is why only one column moved.
+  
+  ===================================================================
+  THE COST OF ONE NUMBER, AND IT IS MINE (MR-142's division)
+  ===================================================================
+  
+  MAXIMUM, NOT MINIMUM, AND THE DIRECTION FLIPPED WITH THE PREDICATE.
+  Under `whole` the binding constraint was "refuse no working screen", so
+  the constant was the SMALLEST of the four. Under the wall it is COVERAGE
+  — a wall the gate does not stand on is a player who cannot end their turn
+  and is not told why — so it is the LARGEST. One number cannot serve both
+  ends of the dial, and it now serves the one where the player has no way
+  out.
+  
+  WHAT 465 BUYS: every wall at every text size is covered, including the
+  Text XL band 432..450 and the one-pixel wall at 464 that no shipped
+  instrument could see. THE XL CARD DOES NOT GET RE-CARDED, IT CLOSES.
+  
+  WHAT 465 COSTS, COUNTED — `--ladder` prints this table on every run:
+    Text S : h 368..464 refused, NOT ONE OF THEM A WALL, and h 432..464
+             (33 heights) are FULLY WHOLE — a perfect screen, refused.
+             (This read `390..464` and carried THE SAME sweep-floor default
+             as the XL wall above — one defect, two addresses, one comment
+             block. 368 is max(wall)+1 at Text S and is floor-independent,
+             which is why the M and L rows below were right all along.)
+    Text M : h 395..464 refused and not walled.
+    Text L : h 424..464 refused and not walled.
+    h 451..463 refuses NOBODY at any text size — the gap the Text XL wall
+    jumps, which a downward-closed threshold cannot jump with it.
+  A Text S player on a 800x440 window is refused a board that works. That
+  is the price of one number and it is stated here rather than discovered.
+  
+  THE OPTION I MEASURED AND DID NOT INSTALL, because the shape of the
+  threshold is a design ruling and not mine: a per-text-size TABLE on the
+  premise — {S 368, M 395, L 424, XL 465} — is better on BOTH edges at
+  once. It covers every wall AND refuses no reachable screen at any text
+  size except the 451..463 gap at XL. My Law 4 objection to a table
+  ("an accessibility setting that takes screens away as you turn it up")
+  was true of a table on `whole` and is FALSE of a table on the premise:
+  it refuses a large-text player only the heights where that player is
+  actually walled. Vira found the step I generalised over; the objection
+  was a property of the predicate, not of the shape. What it costs is the
+  thing the single number hides: at Text S a landscape phone is handed a
+  board with 67.3% of the hand and 86.4% of the orb, both CLIPPED WITH NO
+  SCROLL PATH, and nothing refuses it. Whether that board is playable is a
+  player-experience finding and it is filed with this act.
+  
+  Re-derive with `node tools/uprightgate.mjs --ladder --ladder-from 360` —
+  it sweeps every cell at 1 px and goes red BOTH ways: a constant at or
+  below the last wall (LEAVES A WALL UNGATED — what 432 was) and one above
+  it (REFUSES ABOVE ITS OWN PREMISE). `node tools/uprightgate.mjs
+  --predicates` is the standing check that every wall has a gate on it, and
+  `--text S` is the standing check on what this number costs.
+- **`ui.uiScale.formFactor`** — THE HUD FORM FACTOR (docs/hud-layout-tokens.md). applyUiScale writes
+  <html data-form-factor> from these, in the window's CSS px, so the
+  combat HUD picks content/hud-layout/<form-factor>.json. First match
+  wins: widescreen (w / h >= widescreenMinAspect, or w >=
+  widescreenMinWidth), mobile (w <= mobileMaxWidth), tablet (w <=
+  tabletMaxWidth), else desktop. It chooses styling only — never the
+  layout mode, the zoom or the gate above.
+- **`ui.textSize`** — Text size → root font-size %. Auto owns the browser stylesheet baseline;
+  M remains a legacy data alias for old saves and geometry tools. It scales
+  readable type and line metrics; component and sprite geometry is separate.
+- **`ui.tapSize`** — MINIMUM TAP SIZE (Settings → Accessibility). THE ONE HOME OF THE 44.
+  
+  It used to be the literal `44px` inside `--tap-floor` in styles/base.css.
+  Constantine: "just make the tabs about 20% smaller or the size
+  configurable or scalable with UI or both" — and then, on the 44 floor,
+  "actually, I think it should be able to go smaller than 44px." Sunna
+  measured why the second half of the first sentence could never answer
+  him: `calc(44px / var(--ui-zoom))` under `body { zoom }` renders
+  44 x zoom / zoom, so the floored controls are the one part of the
+  interface UI size cannot reach — 44.00 device px in all 20 UI-size x
+  shape cells, zero variance. So it is configurable, and this is the data.
+  
+  `sizes` IS THE CLOSED SET, largest first — that order is the order the
+  chips draw in and the order the row reads. The settings row derives its
+  `choices` and its `def` from here; nothing restates them.
+  
+  `missRate` is what the RESEARCH says, and ONLY where it says anything.
+  Two points exist: WCAG 2.1 AAA (SC 2.5.5) is 44x44 CSS px, WCAG 2.2 AA
+  (SC 2.5.8) is 24x24. 36 and 30 sit between them and carry no entry ON
+  PURPOSE — an interpolated statistic is a fabricated one, and the cost
+  line below 44 says less about them rather than inventing a number
+  (Sunna's ruling; Law 0 clause 5 is the same sentence about derivation).
+  
+  ADDING A FIFTH SIZE IS A ROW HERE AND NOTHING ELSE: it appears as a chip,
+  it applies, and it gets a cost line with no percentage unless someone
+  adds one. Removing `missRate` for a size removes the percentage and keeps
+  the sentence. That is the falsifier for Law 0 on this control.
+- **`ui.victoryBeat`** — HOLD TO CONFIRM (Settings → Advanced). THE ONE HOME OF THE DURATIONS.
+  
+  WHAT IT IS FOR, and the number that made it necessary. The event screen's
+  three choice bars are 44/44/44 across sixteen cells — the size is fixed
+  and it did not help, because THE GAPS ARE 9-9.7 px at every dial setting
+  and nothing in this game reads a gap. Targets grow, the space between
+  them does not, so a thumb that lands 9 px low lands on the NEIGHBOUR —
+  and on this screen the neighbour is "permanent curse", with no confirm
+  and no undo. Constantine, asked: "yes press and hold".
+  
+  WHY BOTH FORMS SHIP. A short activation opens the shared review modal so
+  the player sees the exact result and optional cost. A deliberate hold
+  fills on the original control and commits without the modal for players
+  who already know the result. Releasing the hold early remains an abort.
+  
+  `steps` IS THE CLOSED SET, in dial order, and `off` is first because it
+  is the A/B — the same "let me try each and decide" he asked for on the
+  map. The Advanced row derives its `choices` and its `def` from these keys
+  and nothing restates them; ADDING A FIFTH SPEED IS A ROW HERE AND NOTHING
+  ELSE. That is the falsifier for Law 0 on this control, and it is the same
+  sentence tapSize above already ships.
+  
+  `normal` is the default: state-changing option controls now use a short
+  press to review and a deliberate hold to approve without the modal.
+  600 ms sits just past the familiar ~400-500 ms long-press threshold
+  ms (Android's own threshold) and a CONFIRM wants to sit just past reflex
+  without becoming a chore. `short` is for players who find the wait
+  irritating, `long` for hands that need the room. `off` is 0 and disables
+  only the shortcut; the short activation still opens the review modal.
+  THE VICTORY BEAT (Constantine's review, 2026-09-11): when the last enemy
+  falls, the fight's title stands over the battlefield for this long
+  before the spoils door opens — a breath between the blow and the loot.
+  Reduced motion skips it entirely (ui/components/victoryBeat.js).
+- **`ui.holdConfirm.dragSettleMs`** — THE SETTLE WINDOW — A PRESS IS NOT A HOLD UNTIL IT HAS STAYED PUT.
+  
+  The fill used to arm on `pointerdown` and only cancel once the finger
+  passed the slop. On any surface that also drags — the map camera, the
+  Armoury tray, an inventory card you can drag — that meant every drag
+  began with a hold animation flashing and dying under the thumb. The
+  gesture was correct and the feedback was a lie.
+  
+  Nothing is dressed, painted or announced until the pointer has held
+  still inside the slop for `settleMs`. Move first and this press is a
+  drag: the hold never existed, so it has nothing to take back.
+  
+  `settleMs` is time BEFORE the hold, and the hold's own duration starts
+  when the settle ends — a `long` hold on a dragging surface is
+  1000 + 1000. That ordering is deliberate: the fill should represent the
+  whole of the commitment, not resume a bar that already crept while the
+  player was deciding whether to scroll. Setting `settleMs: 0` restores
+  the old immediate arm exactly, and a surface may override it per call.
+  
+  WHY IT IS NOT ON EVERY CONTROL. A control with no drag beneath it has
+  nothing to disambiguate, and a safety beat that waits a second before
+  it even begins to look like it is working reads as a broken button.
+  `settleMs` is opt-in per call site; `dragSettleMs` is the value those
+  sites use so the delay is authored once rather than eleven times.
+- **`ui.holdConfirm.settleSlopPx`** — How far the finger may drift during the settle and still be judged
+  still. Kept apart from the hold's own slop so "did they mean to drag"
+  and "did they wander off mid-hold" can be tuned independently.
+- **`ui.titleLoadHold`** — TITLE SAVE SLOT QUICK LOAD. This is a pointer/touch convenience gesture,
+  not the irreversible-action safety dial above: a short activation still
+  selects/reviews the save, while a stationary hold loads it directly.
+  Keeping the duration here lets the interaction be tuned without changing
+  the title screen's event wiring.
+- **`ui.holdBeat`** — THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
+  fractions; the sounds themselves are recipes in content/sfx.js and the
+  durations are holdConfirm above. Three facts, three homes, none restated.
+  
+  WHY THE HOLD NEEDS ONE AT ALL, and it is a measurement rather than a
+  taste. The fill is the only feedback the hold has, and on the event
+  screen it works: the bar is 378x44 at 390x844 and a thumb covers a
+  fraction of it. END TURN IS 190.2x50.4 AT y=784.6 OF AN 844 px VIEWPORT
+  — a control roughly the size of the contact patch, in the bottom 60 px,
+  approached from below. The hand that presses it is on top of the only
+  thing telling the player the press was received. A hold with no beat is
+  then indistinguishable from a tap that did not register, and the player
+  presses again — so the guard fires the thing twice.
+  
+  `at` IS THE CLOSED SET, as fractions of the fill, ascending, and 1.0 is
+  NOT in it: the arrival is `holdCommit`, a different sound with a
+  different job, and putting it here would give the landing two homes.
+  
+  THE SPACING IS THE MESSAGE, not decoration. The gaps shorten (0.42,
+  0.36, 0.22) so the train ACCELERATES toward the commit: a player hears
+  "approaching" without counting anything, and an abort at 0.5 has heard a
+  train that was speeding up and then stopped, which is the true sentence
+  about what happened. An evenly spaced train is a metronome, and a
+  metronome says only "time is passing".
+  
+  ACCELERATION AND NOT PITCH, which is a composition decision with a
+  maintenance reason. A rising train would need one recipe per tick
+  (`holdTick_1..3`), and the day someone adds a fourth fraction here the
+  fourth tick has no row and the rise breaks — the row edit this comment
+  promises would stop being enough. Identical ticks getting closer
+  together is the same signal, and a fourth fraction just works.
+  
+  WHY THREE. One tick cannot rise. Two can, barely. Four plus a commit is
+  five sounds on every confirmation and this fires many times a run — the
+  cost of a charming sound is paid at hold #200, not hold #1. Three is the
+  fewest that reads as a gesture. TUNING IS THIS ROW: an empty array is
+  legal and means the ticks are off with the commit intact.
+  
+  The first tick is at 0.00 on purpose — it is the "pressed" report, and a
+  report that arrives at 180 ms has already let the player wonder.
+- **`ui.inspectHold`** — HOLD TO INSPECT (the hand). THE ONE HOME OF THE DURATION.
+  
+  Constantine, 2026-08-08: press-and-hold a card and it "expands" and comes
+  "in front". This is the gesture half of that ask; the layout half (how
+  the hand itself is arranged) is HELD on C2 and no number for it lives
+  here or anywhere.
+  
+  WHY THIS IS NOT holdConfirm's DIAL, though both are a stationary press
+  with a timer. Two different jobs (Law 4's shape, applied to time): the
+  confirm hold is a SHORTCUT around the review modal — its length is a
+  protection preference, and `off` means "review only". The inspect
+  hold is how a player READS a card — turning the safety dial off must not
+  take reading away, and a hand that needs a longer confirm does not
+  thereby need slower reading. One dial answering both would break the
+  weaker job the day anyone tunes the stronger one.
+  
+  400 ms: the bottom of the long-press convention players already know
+  (Android's own threshold is ~400-500), BELOW the confirm's 600 default
+  because reading is cheaper than committing and fires far more often —
+  and above any tap: the slow edge of a deliberate tap is ~250 ms, and a
+  stationary press that outlives 400 was not going to become one. The
+  known cost, stated rather than hidden: a tap slower than this becomes an
+  inspect, whose release then does nothing — the card visibly expanding IS
+  the feedback that says why. `ms: 0` is the off position: no inspect,
+  pre-gesture behaviour byte for byte.
+- **`ui.rewardCollect`** — REWARD COLLECTION (E11, #256). THE ONE HOME OF THE WORD.
+  
+  Constantine, 2026-08-15 (the E11 card): Continue on the reward menu is
+  ALWAYS pressable and a setting decides what it means — "auto-collect ON
+  takes everything, picking at random where there is a choice; OFF gives
+  only what was chosen, no nagging".
+  
+  Manual collection is the default; stored preferences can still select auto.
+- **`ui.handLayout`** — HAND LAYOUT (C2). THE ONE HOME OF THE WORD.
+  
+  Constantine, 2026-08-13: "overlap and paging (maybe a toggleable
+  feature)" — BOTH modes, one knob. His "maybe" hedges the TOGGLE, not the
+  modes (directions.md D19), so both modes exist now behind this word and
+  the player-facing control waits for his eye on a picture. No Settings row
+  derives from this yet, on purpose — adding one later is a data edit in
+  settings.js, not a redesign.
+  
+  'paging' names the SHIPPED narrow hand: the horizontal card strip
+  (styles/combat.css, the narrow reflow) — F1 of the approved hybrid.
+  Selecting it changes nothing, byte for byte; it is the default because
+  the shipped behaviour keeps its seat until his picture says otherwise.
+  
+  'overlap' lays the whole hand inside the strip's width: each card
+  overlapped by the next, the overlap DERIVED per render from hand size
+  and measured width (renderHand, combat.js) — no number for it lives
+  here or anywhere, which is why this row is a word and not a px value.
+  
+  The renderer derives from this word alone (via data-hand-layout on
+  <html>, written by applyDisplaySettings beside cardMotif's attribute).
+  A stored settings.handLayout outside `handLayoutModes` lands on this
+  default and says so in the debug log; a garbage value HERE fails loud
+  in model/validate.js — the two halves of "validated loud, garbage lands
+  on default".
+- **`ui.spriteTiers`** — Sprite display tiers an enemy def's `size` selects. px-magnitude; the
+  renderer emits them as rem (÷10).
+- **`ui.backdropActs`** — How many act backdrop plates exist (assets/bg/bg_act*.webp). Endless acts
+  past this cycle back through them.
+- **`ui.parchmentActs`** — How many map-parchment plates exist (assets/map/parchment_act*.webp) — the
+  undiscovered ground the fog map draws on. Same rule as backdropActs, its
+  own row because the two sets are authored separately and one may grow
+  first. A row, so a fourth plate is a file plus this number and no code.
+- **`ui.cardTypes`** — Card colour motif (Settings → Display). Cards carry two independent
+  colour axes: the owning class (each class def's cardTint) and the
+  player's accent. `cardMotif` picks how the class one is expressed;
+  `cardMotifStrength` is the wash depth for each choice.
+  Card TYPE presentation. Geometry carries the type (attack squarest,
+  power roundest, skill between) and each type owns its banner colour.
+  label is display-only — the engine keys on the id (CARD_TYPES is frozen
+  and the Bulwark stance matches 'skill'), so renaming here is safe.
+- **`ui.audio`** — Default audio levels for a profile that has never touched the sliders.
+  Music ships at 50, deliberately under SFX's 75: the score is ambience,
+  the SFX are information, and the hit-confirm must read over any swell.
+  The beds carry their own gain staging on top of this bus (music.js,
+  gains 0.34–0.6), so 50 is clearly audible from first boot without
+  crowding the feedback layer.
+- **`tooltipPlacement.hoverDelayMs`** — not in the JSON: `balance.js` derives it from the default of the `tooltipDelay` row of `tooltipHelp.settings`, so the setting and this number cannot disagree.
+
+### balanceProgression.json — progression
+
+_No comments were written beside these numbers in the old balance.js._
+
+- **`gearRequirements`** — not in the JSON: `balance.js` puts the shared `progression/gear.js` table second, after `version`, and writes the `gearRequirements.<i>.level` sentences (computed from each row) right after the `version` note.
