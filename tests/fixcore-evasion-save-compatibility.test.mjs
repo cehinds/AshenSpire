@@ -8,7 +8,7 @@ import { coreEvasionCompatibleRuntime } from '../src/model/coreEvasionCompatibil
 import { createRunState, serializeRun, deserializeRun } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { dispatch } from '../src/engine/combat.js';
+import { dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { cardPlainText } from '../src/ui/components/card.js';
 import { fixCoreSmashVsDefensiveRules } from '../src/model/fixCoreMechanics.js';
@@ -53,11 +53,17 @@ test('a compatible prior-runtime Core profile resumes without changing its integ
   assert.equal(restored.fixCoreRules.accuracy.evasionVersion, 2);assert.equal(restored.fixCoreRules.accuracy.evadeStackDex, 0);
   restored.piles.hand.push({cardId:'core.evade',instanceId:'resumed-evade',upgraded:false});
   const def = registries.cards.get('core.evade');
-  assert.equal(cardFaceLines(def, null, registries).map(row=>row.html).join('').replace(/<[^>]*>/g,''), 'Gain 3 Evade.');
+  // The resumed fight keeps its snapshotted evadeStackBase of 1: its card face reads that, not the shipped 3, and the
+  // grant matches the face. Off-combat faces (no combat rules) still read the shipped rule.
   assert.equal(cardPlainText(registries, {cardId:'core.evade'}), 'Gain 3 Evade.');
+  const face = cardFaceLines(def, null, registries, restored).map(row=>row.html).join('').replace(/<[^>]*>/g,'');
+  const plain = cardPlainText(registries, {cardId:'core.evade'}, { rules: restored });
+  const live = cardPlainText(registries, {cardId:'core.evade'}, { rules: restored, preview: previewCard(restored, 'resumed-evade', null) });
   const start=restored.player.statuses.evade?.stacks || 0;
   dispatch(restored,{type:'playCard',cardInstanceId:'resumed-evade'});
-  assert.equal(restored.player.statuses.evade.stacks,start+1);
+  const granted = restored.player.statuses.evade.stacks - start;
+  assert.equal(granted, 1);
+  for (const text of [face, plain, live]) assert.equal(text, `Gain ${granted} Evade.`, 'the resumed card face matches its grant');
   const roundtrip=restoreCombatSnapshot({registries,rng:createRng(511),snapshot:serializeCombatSnapshot(restored),expectedGameProfile:restoredRun.gameProfile});
   assert.equal(roundtrip.gameProfile.hash,originalHash);assert.equal(roundtrip.fixCoreRules.accuracy.evadeStackDex,0);
 });
