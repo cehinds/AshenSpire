@@ -2918,7 +2918,8 @@ function enterNode(nodeId) {
   const firstVisit = !run.path.includes(nodeId);
   if (firstVisit) run.path.push(nodeId);
   run.floor = node.floor;
-  if (firstVisit && applyNodeRefill(run, node)) persist(); // the branched map's start node refills HP and flasks
+  const refillHealMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
+  if (firstVisit && applyNodeRefill(run, node, { healMult: refillHealMult })) persist(); // the branched map's start node refills HP and flasks
 
   let kind = node.type;
   if (kind === 'event') {

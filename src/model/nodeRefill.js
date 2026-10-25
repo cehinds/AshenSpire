@@ -3,9 +3,13 @@
 // Graphs saved before the flag existed carry no `refill`, so they do nothing new.
 import { refillFlaskCharges } from './gracerefill.js';
 
-export function applyNodeRefill(run, node) {
+// healMult scales the HP restored, matching the between-acts heal: Scarce Embers (lessHealing) passes its
+// balance multiplier so the start node does not undo the halved heal. Flasks always refill.
+export function applyNodeRefill(run, node, { healMult = 1 } = {}) {
   if (!run || !node || node.refill !== true) return false;
-  if (Number.isFinite(run.maxHp)) run.hp = run.maxHp;
+  if (Number.isFinite(run.maxHp) && Number.isFinite(run.hp)) {
+    run.hp = Math.min(run.maxHp, run.hp + Math.floor((run.maxHp - run.hp) * healMult));
+  }
   refillFlaskCharges(run.flaskCharges);
   return true;
 }

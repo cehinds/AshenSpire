@@ -258,6 +258,10 @@ test('the start node refills HP and both flasks on entry unless startNodeRefills
   const run = hurt();
   assert.equal(applyNodeRefill(run, on.map.nodes.n1_0), true);
   assert.deepEqual([run.hp, run.flaskCharges.hpCurrent, run.flaskCharges.manaCurrent], [80, 2, 1]);
+  const scarce = hurt();
+  assert.equal(applyNodeRefill(scarce, on.map.nodes.n1_0, { healMult: 0.5 }), true);
+  assert.deepEqual([scarce.hp, scarce.flaskCharges.hpCurrent, scarce.flaskCharges.manaCurrent], [46, 2, 1],
+    'Scarce Embers halves the HP restored (12 + floor(68 * 0.5)) but flasks still refill');
   const other = hurt();
   assert.equal(applyNodeRefill(other, on.map.nodes[on.map.nodes.n1_0.next[0]]), false);
   assert.equal(other.hp, 12);
