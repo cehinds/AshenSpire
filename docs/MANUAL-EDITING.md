@@ -1,4 +1,231 @@
-# Editing AshenSpire without an agent
+# Editing AshenSpire
+
+Two parts, one page:
+
+1. [Changing game content (`content/source/`)](#changing-game-content-contentsource): the shared content every game reads, as a "to change X, edit Y" table, with the five-step workflow, JSON basics, what stays code and the common mistakes.
+2. [Visual Studio, game packs and recipes](#part-2--editing-ashenspire-without-an-agent): the Core game pack, interface layout and timing, named icons.
+
+**Read this first: which file wins.** The default player game is **Core**. Core
+installs its own pack, `games/ashenspire/packs/core/`, on top of the shared
+content, and for the things below the pack's file wins. Edit those in the pack
+([Core: edit the active game pack first](#core-edit-the-active-game-pack-first)),
+then run `node tools/game-config.mjs build` and `node tools/game-config.mjs check`.
+
+| In Core, this comes from the pack | Pack file |
+| --- | --- |
+| The cards in a Core deck (ids starting `core.`, such as `core.strike` and the class specials) | `cards.json`, costs in `resourceVariants.json`, pools in `cardPools.json` |
+| A class's starting attributes, deck, equipment, special card and description | `characters.json` (and `starterDeck.json`) |
+| How attributes turn into HP, draw and the rest in Core | `stats.json` |
+| Enemy attributes, decks, behavior, boss phases and starting Poise | `characters.json` |
+| Enemy attacks and per-hit damage | `enemyCards.json` |
+| Base reward cards and their statuses | `games/ashenspire/packs/base-cards/cards.json`, `statuses.json` |
+| Map routes, rest services, shop offers, victory reward offers, class unlocks | `routes.json`, `rests.json`, `shops.json`, `rewards.json`, `classUnlocks.json` |
+| Minimum stats to equip gear | none: Core switches equipment requirements off |
+
+The rest (encounters, events, relics, items and equipment, progression,
+balance numbers, interface text and the other tables in Part 1) comes from the
+shared content in Part 1, in Core too. If an edit in Part 1 does not show up in
+Core, check the table above and Part 2 for a pack file that owns it.
+
+## Changing game content (`content/source/`)
+
+Game content is JSON and CSV files in `content/source/`. You edit those, never the
+JavaScript under `src/content/`. `node tools/content-build.mjs` compiles them into
+`src/content/generated/`, which you never touch by hand. Design notes for each file
+are in `content/source/CONTENT-NOTES.md`.
+
+### To change... edit this file
+
+Paths are inside `content/source/` unless they start with `src/`.
+
+#### Cards and classes
+
+| To change... | Edit this file | Notes |
+| --- | --- | --- |
+| Reaver, Starseer, Herald or Rogue cards | `cards/reaverCards.json`, `cards/starseerCards.json`, `cards/heraldCards.json`, `cards/rogueCards.json` | One row per card: cost, type, rarity, effects, text, upgrade. Copy a nearby row for a new card. |
+| Cards any class can find; corrupted cards; weapon cards | `cards/colorlessCards.json`, `cards/corruptedCards.json`, `cards/armamentCards.json` | Weapon cards are mounted on a weapon by `weaponCardPackages.json`. |
+| Extra spells and counters added for combat expansion | `cards/combatExpansionNewCards.json` | Same card shape as above. |
+| Which cards a weapon gives | `weaponCardPackages.json`, `basicCardProfiles.csv`, `cardEquipmentExceptions.csv` | Basic strike/guard cards follow the weapon's profile. |
+| Whether a card deals fire, frost and so on | `cardExposure.csv` | One row per card that carries a damage school. |
+| Mana rules for spell cards | `cardManaPolicy.json` | Which cards must cost Mana. |
+| A class's HP, starting relic, flasks, card pool | `classes.json` | Four classes: reaver, starseer, rogue, herald. In Core the pack sets HP, deck and special card. |
+| A class's starting weapon and shield | `startingKits.csv` | One free baseline kit per class. Core uses the pack's `starterDeck.json` and `characters.json`. |
+| Keyword tooltips (Exhaust, Retain...) | `keywords.json` | Five rows. Names and tooltip text only. |
+| What a status does (Bleed, Burn...) | `statuses.json` | 56 rows. Stack mode, decay, tooltip. Expansion statuses are code; base-card statuses in Core are in the base-cards pack. |
+| Stances | `stances.json` | Three rows. |
+
+#### Enemies, encounters, events
+
+| To change... | Edit this file | Notes |
+| --- | --- | --- |
+| An enemy's HP, attributes, moves | `act1Enemies.json`, `act2Enemies.json`, `act3Enemies.json` | One file per act, eleven enemies each. Core's enemy decks, attacks and Poise are in the pack. |
+| Which enemies appear together, per region | `wealdEncounters.json`, `marchesEncounters.json`, `reachEncounters.json` | One row per fight: enemies, weight, pool, floor band. |
+| Boss tougher or easier by tier | `balanceBossTiers.json`, `balanceSeatTiers.json` | See the balance table below. |
+| Event text and choices | `events.json` | Choice ids go in `eventChoiceIds.json`, same length as the choices. |
+| Who speaks an event line | `eventSpeakers.json`, `speakers.csv` | |
+| Event gates and quest chains | `eventHistoryRequirements.json`, `eventChoiceHistoryRequirements.json`, `questChains.json` | |
+| Map, towns, regions | `worldAtlas.json`, `locationPresentation.json` | Weather, music and scenes per place. |
+| Old-style dungeons | `legacyDungeons.json` | |
+
+#### Shops, items, companions
+
+| To change... | Edit this file | Notes |
+| --- | --- | --- |
+| What shops sell and how often | `shops.json` | Prices and stock sizes are in `balanceShop.json`. Core's shop offers are the pack's `shops.json`. |
+| Consumable books and tokens | `consumableBooks.json`, `consumableTokens.json` | Class skill books are also made from `classes.json`. |
+| Flasks (potions) | `flasks.json` | Seven rows. |
+| Relics | `relics.json` | The relic's combat effect is a separate rule: a row in `nodes.csv`, `nodeEffects.json` and `tagging.csv` that shares the relic's id. |
+| Companions | `companions.json` | Two rows. |
+| Weapons, shields, staves | `weapons.csv` | One row each. |
+| Armour sets | `outfits.csv` | |
+| Slots, modifiers, what a card modifier rewrites | `equipSlots.csv`, `equipMods.csv`, `equipTargets.csv` | The words a modifier may use. |
+| Cards a piece carries | `equipmentGrants.csv` | |
+| Minimum stats to equip | `equipmentRequirements.csv` | Core switches these off. |
+| Smithing upgrades per tier | `itemUpgradeChanges.csv` | One row is one number change. |
+| The Armoury screen layout | `armouryUi.json` | |
+
+#### Characters and stats
+
+| To change... | Edit this file | Notes |
+| --- | --- | --- |
+| The five attributes | `attributes.json` | Names and short names. |
+| Point-buy presets | `attributeRules.json` | |
+| Character creation screen, keepsakes | `characterCreation.json`, `creationModes.json` | Modes: starting points, minimum, maximum. |
+| What each stat turns into (HP, Actions, Draw...) | `derivedStatRules.json` | |
+| Action costs of cards and drawbacks | `actionCosts.json` | The cost table and its budget. |
+| Core combat rules: Poise, ward, counters, accuracy, perception, range, stances, statuses | `fixCoreMechanics.json` | |
+
+#### Progression
+
+| To change... | Edit this file | Notes |
+| --- | --- | --- |
+| Card families (the ability ladder) | `progressionCardFamilies.json` | 40 rows. Lore text is in `progressionCardLore.json`. |
+| Lessons (how abilities are learned) | `progressionLessonRecipes.json` | |
+| Feats and what unlocks them | `progressionFeatRows.json`, `progressionFeatUnlocks.json` | Feat descriptions are computed. See "What is still code". |
+| Progression relics | `progressionRelics.json`, `progressionRelicUnlocks.json` | |
+| What a class unlocks at each level | `progressionUnlockRows.json`, `classMastery.csv` | |
+| Outfits, characters and slots earned across runs | `unlocks.csv` | Gated by wins, bosses beaten and runs. |
+| Gear needed at each level | `progressionGearRequirements.json` | |
+| Grade budget for abilities | `progressionGradeRules.json` | The maths using it is code. |
+| Class mastery levels and rewards | `classMastery.csv`, `balanceClassMastery.json` | |
+| The class talent tree | `classTree.csv`, `familyNodes.csv`, `balanceClassTree.json` | |
+
+#### Balance numbers (one file per topic)
+
+| To change... | Edit this file | Notes |
+| --- | --- | --- |
+| Start of a run: draw, flasks, starting Cinders, deck size | `balanceCore.json` | Some rows say they are unused; the `$note` says so. |
+| Costs a card pays when it names a resource | `balanceCosts.json`, `balanceMana.json` | Stamina, Mana and Actions floors. |
+| Minimum deck size | `balanceDeck.json` | Rises with character level. |
+| Rewards after fights: card choices, Cinders, rarity odds, flask drops | `balanceRewards.json` | Core's reward offers are the pack's `rewards.json`. |
+| Shop stock sizes, prices, selling | `balanceShop.json` | |
+| Rest sites: how much HP a camp or shrine heals | `balanceRest.json` | Core's rest services are the pack's `rests.json`. |
+| XP from wins and kills | `balanceXp.json` | |
+| Character XP needed per level | `balanceCore.json` (`level.xp`) | |
+| Level-up points and level cap | `balanceLevelUp.json` (`maxLevels`) | `balanceLevels.json` holds the starting level and enemy scaling. |
+| Skills: drafts, ranks, feat rhythm | `balanceSkill.json`, `balanceProgression.json` | |
+| Feat and progression-relic numbers | `balanceProgressionFeats.json`, `balanceProgressionRelics.json` | |
+| Relic powers (Forsaken Medallion and the rest) | `balancePowers.json` | |
+| Sigils: strength, drop chance | `balanceSigils.json` | Sigil names, rarity, cost and text are still code: `src/content/sigils.js`. |
+| Equipment: swapping, mounts, rarity bonuses | `balanceEquipment.json`, `balanceCustomMods.json` | Custom Climb options are in the second. |
+| Smithing stones and services | `balanceSmithing.json` | |
+| Poise and stagger | `balancePoise.json`, `balanceStagger.json` | |
+| Spell exposure and breaks | `balanceExposure.json`, `balanceArcaneExposure.json` | |
+| Oath and other tag effects | `balanceTagMechanics.json` | |
+| Boss and seat strength by tier | `balanceBossTiers.json`, `balanceSeatTiers.json` | |
+| Endless Spire scaling | `balanceEndless.json` | HP and Strength added each loop. |
+| Co-op, gauntlet test | `balanceCoop.json`, `balanceGauntlet.json` | Co-op is off in the current player flow. |
+| Towns per act | `balanceAtlas.json` | The act map's shape (floors, columns, paths, room-type odds) is still code: `src/content/mapconfig.js`. |
+| Interface sizes, HUD, tooltips, accents, audio, card motifs, hand layout, hold timings | `balanceUi.json` | |
+
+#### Combat expansion tables
+
+| To change... | Edit this file | Notes |
+| --- | --- | --- |
+| A spell's school and damage type | `combatExpansionCardOverlay.json`, `combatExpansionSpellProfiles.json`, `combatExpansionCardTables.json` | The projection reading them is code. |
+| Martial card roles | `combatExpansionMartialOverlay.json`, `combatExpansionMartialTables.json` | |
+| Armour and enemy expansion values | `combatExpansionEquipment.json` | |
+| Counter text | `combatExpansionLore.json` | |
+
+#### Words, tags and everything else
+
+| To change... | Edit this file | Notes |
+| --- | --- | --- |
+| Any sentence the interface says | `uiStrings.csv` | Three lengths per id: `short`, `full`, `tip`. |
+| Rules attached to tags (the tag tree) | `nodes.csv`, `nodeEffects.json`, `nodeRelations.csv`, `nodeTerms.csv`, `nodeVariables.csv`, `variableBindings.csv`, `tagFamilies.csv`, `tagging.csv` | Advanced. `tagging.csv` is 4,000 lines: who carries which tag. |
+| Interface layout, sizes, timings | `content/config/ui/` | Different build: `node tools/config-build.mjs`. See Part 2. |
+
+### Workflow
+
+1. Edit the JSON or CSV file. Change one thing first.
+2. Run `node tools/content-build.mjs`. One run is enough. It rewrites `src/content/generated/`.
+3. Run `node tools/content-build.mjs --check`. It must finish with no error message.
+4. Preview: `node tools/serve.mjs`, then open http://localhost:8080. `node tools/launch.mjs` also works and builds first (`npm start` does the same).
+5. Commit (see CONTRIBUTING.md, "Commits & PRs"):
+   - small commits, imperative subject of at most 72 characters;
+   - commit the source file and the regenerated files that go with it;
+   - never commit built HTML, and do not edit `CHANGELOG.md` or `buildordinal.json` by hand;
+   - work on a branch and open a pull request into `dev`.
+
+### JSON basics
+
+- Text goes in double quotes: `"name": "Ember Hew"`. Single quotes are an error.
+- Numbers have no quotes: `"cost": 2`. `"2"` is text, not a number.
+- Every entry except the last in a list or object ends with a comma. The last one has no comma (a trailing comma is an error).
+- Lists use `[ ... ]`, objects use `{ ... }`. Each must close.
+- CSV files: keep the header row. Quote any cell containing a comma. Lines starting with `#` are comments.
+- `"$note"` holds an explanation for the value beside it. It becomes the sentence shown for that number in Settings → Advanced (see `src/model/balanceNotes.js`). Keep a note accurate when you change its number.
+- Keep ids unique and do not rename ids. Saves store them (a saved combat holds each card as a `cardId`, in `src/engine/combat.js`), and the game refuses two entries with the same id (`Duplicate id` in `src/model/validate.js`). To retire something, change what it does rather than its id.
+
+### What is still code, and why
+
+A few things are computed, so they cannot be a plain table. Ask a developer to change them.
+
+| Still code | Why | Ask about |
+| --- | --- | --- |
+| The damage rule template (one template for five card kinds) | Its status list is derived from the other status rows. | `src/content/balance.js` |
+| Gear sentences in the progression notes | Written from the gear requirement rows. | `src/content/balance.js` |
+| Delays derived from tooltip settings (`hoverDelayMs`) | Computed from other settings. | `src/content/balance.js` |
+| Ability grade maths | A formula, not a list. | `src/model/abilityGrades.js` |
+| Feat descriptions | Built from balance numbers, tags and variable bindings. | `src/content/progression/feats.js` |
+| Spell and martial "apply" functions | Real logic reading the expansion tables. | `src/content/combatExpansionCards.js`, `src/content/combatExpansionMartial.js` |
+| Expansion statuses | Derived from rules. | `src/content/combatStatusRules.js` |
+| Equipment lookups | Normalises the CSV tables into lookups. | `src/content/equipment.js` |
+| Co-op-only cards | Still written in a code file (co-op is off in the current player flow). | `src/content/cards/coop.js` |
+| Art, pose and landmark tables | Generated by the art tools. | `src/content/poseSprites.js`, `src/content/mapArt.generated.js` |
+| Sigils (names, rarity, cost, text) | Not moved yet. | `src/content/sigils.js` |
+| Act map shape (floors, columns, paths, room odds) | Not moved yet. | `src/content/mapconfig.js` |
+| Custom Climb modifier labels and text | Not moved yet. | `src/content/customMods.js` |
+| Character-level and skill feats | Not moved yet. | `src/content/feats.js`, `src/content/classSkillFeats.js`, `src/content/skillFeats.js` |
+| Intent hiding, seats, survey lore, combat feel, music, sound effects | Not moved yet. | `src/content/combatMatchups.js`, `seats.js`, `surveyQuestLore.js`, `combatFeel.js`, `music.js`, `sfx.js` |
+
+### Common mistakes and what you will see
+
+Every message starts with `content-build: `.
+
+| Mistake | Message |
+| --- | --- |
+| Broken JSON (comma, quote, bracket) | `<file>: <JSON error text>` |
+| A card file that is not a list | `cards/<file>: a card pool is a JSON array of card rows` |
+| CSV row with the wrong number of cells | `<file>: row N has X cells, header has Y` |
+| Repeated CSV column name | `<file>: duplicate column '<name>'` |
+| CSV with no rows | `<file>: no data rows` |
+| Weapon with a bad range | `weapons.csv: row N ('<id>') has range '...' — every armament names one of ...` |
+| Node with an unknown parent | `nodes.csv: '<id>' names parent '<x>', which is not a node` |
+| A rule for a node that does not exist | `nodeEffects.json: '<id>' is not a node` |
+| Variable with no binding | `nodeEffects.json: '<id>' reads variable '<v>', which has no default binding in variableBindings.csv` |
+| Binding pointing at a missing balance number | `variableBindings.csv: '<node>.<variable>' names balance row '<path>', which is not a number in src/content/balance.js` |
+| A new file the compiler does not know | `stray source file(s) the compile will never read:` |
+| You forgot step 2 | `N generated file(s) are out of date — run: node tools/content-build.mjs` |
+| You deleted a source file | `orphaned generated file(s) with no source: ... — delete them or restore their source` |
+
+Other checks (unknown fields, duplicate ids, bad references) run in the game's tests
+rather than the compiler. After any edit, run `node tools/content-build.mjs --check`
+and `npm test`, or the test command in DEVELOPER.md.
+
+---
+
+## Part 2 — Editing AshenSpire without an agent
 
 Open the repository folder in Visual Studio (**File → Open → Folder**).
 No solution conversion is needed. Install Node 22.14 or newer. Right-click
@@ -74,7 +301,7 @@ JSON: review its diff before compiling if you run one deliberately.
 
 | Change | Edit here | Verify |
 | --- | --- | --- |
-| A base card's costs, effects, text or icon | `content/source/cards/*.json`; Rogue and co-op additions currently remain in `src/content/cards/rogue.js` / `coop.js` | Compile authored content; Fast core tests |
+| A base card's costs, effects, text or icon | `content/source/cards/*.json`; co-op additions currently remain in `src/content/cards/coop.js` | Compile authored content; Fast core tests |
 | Shared progression ability grades and riders | `src/content/progression/cardFamilies.js`, `cards.js`, `lessons.js`, `cardRecipeText.js` | `node --test tests/progression-card-content.test.mjs` |
 | Enemy definitions | `content/source/act1Enemies.json`, `act2Enemies.json`, `act3Enemies.json`; shared expansion owners in `src/content/enemyExpansion.js` | Compile authored content; Fast core tests |
 | Weapons, starting kits, mounted cards | `content/source/weapons.csv`, `startingKits.csv`, `weaponCardPackages.json`; shared progression gear in `src/content/progression/gear.js` | Compile authored content; Fast core tests |
