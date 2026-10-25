@@ -2070,3 +2070,12 @@ body.reduce-motion .target-hud-detail { transition: none; }
 .card-option .co-part[data-dir='up'] .co-arrow { color: var(--green); }
 .card-option .co-part[data-dir='down'] .co-arrow { color: var(--ember); }
 .card-option .co-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Debug mode's Console button (combatDebugButton.js): fixed, above every combat layer, tiny. */
+.combat-debug-console {
+  position: fixed; top: calc(env(safe-area-inset-top, 0px) + 99px); right: 8px; z-index: 950;
+  min-height: 28px; padding: 3px 9px; font: inherit; font-size: 12px; line-height: 1;
+  border: 1px solid var(--line, rgba(255, 255, 255, .35)); border-radius: 6px;
+  background: rgba(20, 16, 14, .85); color: var(--text, #f0e8dc);
+  touch-action: manipulation; pointer-events: auto;
+}
