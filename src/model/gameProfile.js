@@ -79,13 +79,27 @@ function projectEnemyRangeContent(bundle, profile, baseBundle) {
     moves[row.rangeClosingMove] = { intent: 'buff', sp: card.staminaCost, weight: hint.aiWeight ?? 0, effects: dataClone(card.effects) };
     closingKeys.add(JSON.stringify([def.id, row.rangeClosingMove]));
     additions.push(...[...(card.tags || []).filter(tagId => !tagId.startsWith('classification.')), 'classification.enemyMove'].map(tagId => ({ family: 'enemyMove', scope: def.id, objectId: row.rangeClosingMove, tagId })));
+    // A retreat is the opposite one-band move: authored price (the closing price plus one), and a
+    // dynamic weight the engine applies only while the fight is closer than the enemy prefers.
+    if (row.rangeRetreatMove !== undefined) {
+      const rEntry = Object.entries(row.cardHints || {}).find(([id, h]) => owned.has(id) && h.legacyMove === row.rangeRetreatMove);
+      const rCard = rEntry && cards.get(rEntry[0]), rHint = rEntry?.[1];
+      if (!rCard || !Number.isSafeInteger(rCard.staminaCost) || rCard.staminaCost < 0 || rCard.manaCost !== 0
+        || rCard.effects?.length !== 1 || rCard.effects[0].op !== 'moveEngagement' || rCard.effects[0].target !== 'enemy' || rCard.effects[0].bands !== 1) {
+        throw new GameConfigError(`$/content/enemies/${def.id}/rangeRetreatMove`, 'requires an owned, explicitly priced one-band retreat card');
+      }
+      moves[row.rangeRetreatMove] = { intent: 'buff', sp: rCard.staminaCost, weight: 0, retreatWeight: rHint.aiWeight ?? 0,
+        ...(rHint.maxConsecutive ? { maxConsecutive: rHint.maxConsecutive } : {}), effects: dataClone(rCard.effects) };
+      closingKeys.add(JSON.stringify([def.id, row.rangeRetreatMove]));
+      additions.push(...[...(rCard.tags || []).filter(tagId => !tagId.startsWith('classification.')), 'classification.enemyMove'].map(tagId => ({ family: 'enemyMove', scope: def.id, objectId: row.rangeRetreatMove, tagId })));
+    }
     for (const [id, metadata] of Object.entries(row.cardHints || {})) {
       const source = cards.get(id);
       if ((owned.has(id) || (row.unlockCards || []).includes(id)) && moves[metadata.legacyMove] && source?.range !== undefined) {
         rangeOverrides.set(JSON.stringify([def.id, metadata.legacyMove]), source.range);
       }
     }
-    return { ...def, moves, startingRange: row.startingRange, rangeClosingMove: row.rangeClosingMove, rangeRoutePolicy: row.rangeRoutePolicy };
+    return { ...def, moves, startingRange: row.startingRange, rangeClosingMove: row.rangeClosingMove, ...(row.rangeRetreatMove === undefined ? {} : { rangeRetreatMove: row.rangeRetreatMove }), rangeRoutePolicy: row.rangeRoutePolicy };
   });
   bundle.enemyMoves = deriveEnemyMoves(bundle.enemies);
   bundle.tagging = [...(bundle.tagging || []).filter(row => !(row.family === 'enemyMove' && (closingKeys.has(JSON.stringify([row.scope, row.objectId])) || rangeOverrides.has(JSON.stringify([row.scope, row.objectId])) && /^(range|reach):/.test(row.tagId)))),

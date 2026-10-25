@@ -11,7 +11,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { enemyPools, enemyItemBonuses, resolveGearItem, mergeGameSettings, resolveEnemyAttributes, enemyAttributeOutcomes, characterRule, characterSettings } from '../engine/kernel/gameConfig.js';
-import { authorEnemyRange, enemyAdvanceCard } from './lib/core-range-content.mjs';
+import { authorEnemyRange, enemyAdvanceCard, enemyRetreatCard } from './lib/core-range-content.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PACK = 'games/ashenspire/packs/core';
@@ -230,6 +230,7 @@ for (const enemy of roster) {
   const startingRange = authoredEnemies.get(row.id)?.startingRange;
   Object.assign(row, authorEnemyRange({ ...row, ...(startingRange ? { startingRange } : {}) }, gear));
   enemyCards.push(enemyAdvanceCard(enemy.id));
+  if (row.rangeRetreatMove) enemyCards.push(enemyRetreatCard(enemy.id));
   for (const card of enemyCards) if (authoredCards.get(card.id)?.range) card.range = authoredCards.get(card.id).range;
   enemies.push(row);
   {
