@@ -963,8 +963,10 @@ function onKeydown(ev) {
   if (!enabled) return;
   // Inspection and route controls own native Enter/Space activation. The
   // game cursor may still point at their card, whose action must stay inert.
-  // A focused target HUD panel opens its own inspection on Enter the same way.
-  if (ev.target?.closest?.('.card-info-button, .target-hud-panel, .combat-range-action, [data-damage-receipt], .tooltip-keyword[data-tip]')) return;
+  if (ev.target?.closest?.('.card-info-button, .combat-range-action, [data-damage-receipt], .tooltip-keyword[data-tip]')) return;
+  // A focused target HUD panel opens its own inspection on Enter/Space the
+  // same way; every other key (arrows) still drives the game cursor.
+  if (ev.target?.closest?.('.target-hud-panel') && (ev.key === 'Enter' || ev.key === ' ')) return;
   // The focused log handle uses these keys for its three drawer heights.
   // Let the component resize without also moving the game cursor away.
   if (ev.target?.closest?.('[data-combat-tool="log"]')

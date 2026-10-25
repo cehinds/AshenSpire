@@ -197,6 +197,9 @@ test('Enter on a focused target HUD panel is left to the panel; the cursor card 
       }
       for (const handler of listeners.get('keyup') || []) handler(new Event('keyup', { key: 'Enter', target: panel, bubbles: true }));
       assert.equal(cardClicks, 0, 'the cursor card is never pressed by Enter on the panel');
+      const arrow = new Event('keydown', { key: 'ArrowRight', target: panel, bubbles: true, cancelable: true });
+      for (const handler of listeners.get('keydown').slice(0, 2)) handler(arrow);
+      assert.equal(arrow.defaultPrevented, true, 'arrows on the focused panel still drive the game cursor');
       clearFocus();
     } finally {
       if (descriptor) Object.defineProperty(globalThis, 'navigator', descriptor); else delete globalThis.navigator;
