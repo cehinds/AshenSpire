@@ -308,6 +308,17 @@ function newerRunSchemaVersion(json) {
 }
 
 /**
+ * isStorageFullError(error) → true when a storage write failed because the
+ * browser's quota is used up: the standard DOMException QuotaExceededError (also
+ * code 22 / 1014), and Firefox's NS_ERROR_DOM_QUOTA_REACHED.
+ */
+export function isStorageFullError(error) {
+  if (!error) return false;
+  return error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED'
+    || error.code === 22 || error.code === 1014;
+}
+
+/**
  * createSaveManager(storage) → { saveRun, loadRun, clearRun, hasRun, slotSummary,
  *                                listSlots, loadMeta, saveMeta, recordResult }
  */

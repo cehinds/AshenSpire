@@ -107,7 +107,7 @@ if (process.argv.includes('--selftest')) {
         // checkpoint. Omit BOTH saves to plant the same missing-entry defect;
         // the old deletion alone no longer produces an observed regression.
         edits: [
-          { file: 'src/main.js', find: '  if (!resuming) persist();',
+          { file: 'src/main.js', find: '  if (!resuming) persistOrWarn();',
             replace: '  // slot-load-door selftest plant' },
           { file: 'src/main.js', find: '      durable(combat);',
             replace: '      // slot-load-door selftest plant: omit the v2 entry checkpoint too' },
