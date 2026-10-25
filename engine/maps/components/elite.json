@@ -16,7 +16,7 @@
     "restBeforeElite": true,
     "minPerAct": 2,
     "noSameTypeAdjacent": true,
-    "source": "content/source/mapActShape.json:14,120,121; src/engine/mapgen.js:218,224"
+    "source": "content/source/mapActShape.json:14,16,17; src/engine/mapgen.js:218,224"
   },
   "rewards": {
     "cinders": "elite",

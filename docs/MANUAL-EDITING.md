@@ -136,9 +136,10 @@ Paths are inside `content/source/` unless they start with `src/`.
 | Endless Spire scaling | `balanceEndless.json` | HP and Strength added each loop. |
 | Co-op, gauntlet test | `balanceCoop.json`, `balanceGauntlet.json` | Co-op is off in the current player flow. |
 | Towns per act | `balanceAtlas.json` | |
-| The act map's shape: floors, columns, paths, room-type odds, act bosses | `mapActShape.json`, `mapShapeLimits.json`, `legacyActBosses.json` | |
+| The act map's shape: floors, columns, paths, room-type odds | `mapActShape.json`, `mapShapeLimits.json` | `legacyActBosses.json` only migrates old saves; don't edit it. |
 | Character-level and skill feats | `feats.json`, `classSkillFeats.json`, `skillFeats.json` | |
-| How much enemy intent you see (matchups) | `combatIntent.json`, `combatMatchups.json`, `combatExpansionMatchups.json` | |
+| How much enemy intent you see | `combatIntent.json` | |
+| Counter and smash multipliers, damage and tag riders | `combatMatchups.json`, `combatExpansionMatchups.json` | |
 | Survey quest lore | `surveyQuestLore.json` | |
 | Interface sizes, HUD, tooltips, accents, audio, card motifs, hand layout, hold timings | `balanceUi.json` | |
 
