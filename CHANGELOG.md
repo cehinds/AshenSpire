@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-25
 
-- **Maps start at one node, framed on your biome, and fights show the ground you walked onto** ([#2323](https://github.com/cehinds/AshenSpire/pull/2323), `0.7.1.1854`). Each act opens on a single start node that leads to every path and restores your health and flasks; the world painting is framed so the act begins on its own biome; a fight on a bridge, city, forest, shore or lava field shows that scenery; tapping a target's info panel opens its inspection, with slimmer health bars; and picking a map node on a phone now centres it properly.
+- **Maps start at one node, framed on your biome, and fights show the ground you walked onto** ([#2323](https://github.com/cehinds/AshenSpire/pull/2323), `0.7.1.1856`). Each act opens on a single start node that leads to every path and restores your health and flasks; the world painting is framed so the act begins on its own biome; a fight on a bridge, city, forest, shore or lava field shows that scenery; tapping a target's info panel opens its inspection, with slimmer health bars; and picking a map node on a phone now centres it properly.
 
 - **Shorter rest screen** ([#2321](https://github.com/cehinds/AshenSpire/pull/2321), `0.7.1.1854`). Level Up comes first, options you can't use sink to one line at the bottom, and the extra text is gone, so nothing scrolls on a phone.
 
