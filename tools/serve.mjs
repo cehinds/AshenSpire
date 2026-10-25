@@ -347,6 +347,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
     try {
       if (lanLayer && (await lanLayer.handleHttp(req, res))) return;
       const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
+      if (urlPath.includes('\\')) { res.writeHead(403); res.end('Forbidden'); return; }
       // --watch only: the live-reload stream (events are sent by startWatch below).
       if (watch && urlPath === DEV_EVENTS_PATH) {
         res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Content-Type-Options': 'nosniff' });
@@ -405,7 +406,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
         } catch (error) { reply(400, { ok: false, error: error.message }); }
         return;
       }
-      const rel = normalize(urlPath).replace(/^([/\\]|\.\.([/\\]|$))+/, '');
+      const rel = normalize(urlPath).replace(/^([/\\]|\.\.([/\\]|$))+/, '').split(sep).join('/');
       let filePath = rel ? join(rootResolved, rel) : rootResolved;
       if (!resolve(filePath).startsWith(rootResolved)) {
         res.writeHead(403);
