@@ -2,10 +2,12 @@
 import { gameModule, gameContent } from './gameProfile.js';
 import { syncZones } from './state.js';
 import { pickRewardCategory, rewardGroupProblems } from '../../engine/kernel/rewardPolicy.js';
-import { acquireFlask } from './gracerefill.js';
+import { acquireFlask, refillFlaskCharges, flaskKindOf } from './gracerefill.js';
+import { syncFlaskGrowth, flaskGrowthTable } from './flaskgrowth.js';
 import { reserveStanceCards } from './stanceCoverage.js';
 import { deckEditBounds, moveFromSideboard } from './deckRules.js';
 import { rangeCardAvailable } from './rangeCardAvailability.js';
+import { shopOfferPrice } from './shopOfferPrice.js';
 
 // Group members are authored references because the legacy catalog's item tags
 // are broader than the core's weapon/armor families. Never infer type from art.
@@ -46,7 +48,7 @@ function pools(registries, run) {
   const carried = new Set([...run.loadout.storage,...Object.values(run.loadout.sets).flat()]);
   return {
     weapons: equipment ? (registries.equipment.armaments||[]).filter(row=>weapons.has(row.id)&&!carried.has(row.id)).map(row=>row.id) : [],
-    relics: registries.relics.all().filter(row=>!run.relics.includes(row.id)).map(row=>row.id),
+    relics: registries.relics.all().filter(row=>!run.relics.includes(row.id)&&(row.pool!=='core2'||(rules.eligibility?.relics?.pools||[]).includes(row.pool))).map(row=>row.id),
     combatCards: hasCards ? cards.map(row=>row.id) : [],
     // Rank split for combat-card offers (rewards.json eligibility.combatCards): a card's own rank, else its rarity's.
     combatCardsLow: hasCards ? cards.filter(row=>cardRank(row,rules)<(rules.eligibility?.combatCards?.minRank??0)).map(row=>row.id) : [],
@@ -59,10 +61,40 @@ function cardRank(card,rules) {
   const rule=rules?.eligibility?.combatCards;
   return Number.isSafeInteger(card.rank) ? card.rank : rule?.rankOfRarity?.[card.rarity] ?? 1;
 }
+// Owner 2026-10-24: fewer copies of cards already owned, and non-casting maneuvers favoured. Weight = tag weight x
+// ownedCopyWeight^copies (deck + sideboard); one float roll on the offer's stream keeps replays deterministic.
+// When every candidate weighs the same (no settings, or Core 1's neutral ones) the draw is the old uniform pick.
+export function cardPickWeight(rule,card,owned) {
+  const tagWeights=rule?.tagWeights||{},matched=(card?.tags||[]).filter(tag=>tag!=='default'&&Number.isFinite(tagWeights[tag]));
+  const tag=matched.length?matched.reduce((product,key)=>product*tagWeights[key],1):(Number.isFinite(tagWeights.default)?tagWeights.default:1);
+  return tag*Math.pow(Number.isFinite(rule?.ownedCopyWeight)?rule.ownedCopyWeight:1,owned);
+}
+function weightedCardPick(run,rule,rng,stream,ids) {
+  if(ids.length<2)return rng.pick(stream,ids);
+  const defs=new Map((gameContent(run,'cards')||[]).map(card=>[card.id,card])),owned=new Map();
+  for(const card of [...(run.deck||[]),...(run.sideboard||[])]){const id=card?.cardId??card?.id??card;owned.set(id,(owned.get(id)||0)+1);}
+  const weights=ids.map(id=>cardPickWeight(rule,defs.get(id),owned.get(id)||0)),total=weights.reduce((sum,weight)=>sum+weight,0);
+  if(!(total>0)||weights.every(weight=>weight===weights[0]))return rng.pick(stream,ids);
+  let roll=rng.float(stream)*total;
+  for(const [index,id] of ids.entries()){roll-=weights[index];if(roll<0)return id;}
+  return ids.at(-1);
+}
+// Authored relic weights (rewards.json eligibility.relics.weights, default 1) make a chosen relic a likely pick.
+function weightedRelicPick(weights,rng,stream,ids) {
+  const list=ids.map(id=>Number.isFinite(weights?.[id])&&weights[id]>=0?weights[id]:1),total=list.reduce((sum,weight)=>sum+weight,0);
+  if(!weights||ids.length<2||!(total>0)||list.every(weight=>weight===list[0]))return rng.pick(stream,ids);
+  let roll=rng.float(stream)*total;
+  for(const [index,id] of ids.entries()){roll-=list[index];if(roll<0)return id;}
+  return ids.at(-1);
+}
 function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories,groups=[],itemsPerCategory=null}) {
   if (!offerId || typeof offerId!=='string') throw new Error('A stable reward offerId is required');
   if(run.gameProfileRewardOffers?.[offerId])return run.gameProfileRewardOffers[offerId];
   const available=pools(registries,run), options=[];
+  // Owner 2026-10-24: eligibility.potions.excludeKinds keeps the charge flasks (hp, mana) out of NEW Core offers; a relic grows
+  // them instead. Claiming still accepts them, so an offer saved before this change stays claimable.
+  const excludedFlasks=gameContent(run,'rewards')?.eligibility?.potions?.excludeKinds||[];
+  if(excludedFlasks.length)available.potions=available.potions.filter(id=>!excludedFlasks.includes(flaskKindOf(registries.flasks.get(id))));
   const stream=source==='shop'&&itemsPerCategory!==null?'shop':'cardRewards';
   if(groups.length) {
     const problems=rewardGroupProblems(groups,categories);
@@ -89,7 +121,7 @@ function makeOffer(registries,run,rng,{offerId,source,count,takeCount,categories
       if(!allowLow&&!high.length){available[kind]=[];continue;}
       ids=allowLow?lowIds:high;
     }
-    const id=rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
+    const id=kind==='combatCards'?weightedCardPick(run,rule,rng,stream,ids):kind==='relics'?weightedRelicPick(gameContent(run,'rewards')?.eligibility?.relics?.weights,rng,stream,ids):rng.pick(stream,ids);available[kind]=available[kind].filter(value=>value!==id);
     options.push({kind,id});
     shelfCounts.set(kind,(shelfCounts.get(kind)||0)+1);
   }
@@ -123,6 +155,9 @@ export function claimGameProfileReward(registries,run,offerId,index) {
     registries.relics.get(option.id);
     if(draft.relics.includes(option.id))throw new Error('Reward relic already owned');
     draft.relics.push(option.id);
+    // Bind flask growth now (a Core pickup used to wait for a reload); a relic that grows a flask also refills them.
+    syncFlaskGrowth(registries,draft);
+    if(flaskGrowthTable(registries.balance).some(row=>row?.source==='relic'&&row.id===option.id))refillFlaskCharges(draft.flaskCharges);
   } else if(option.kind==='potions') {
     const acquisition=acquireFlask(registries,draft,option.id);
     if(!acquisition.ok)throw new Error(acquisition.reason);
@@ -170,16 +205,35 @@ export function gameProfileShopStock(registries,run,rng,{shopId}={}) {
   const categories=gameContent(run,'rewards').categories;
   const itemsPerCategory=module.itemsPerCategory??rules.itemsPerCategory??null;
   const count=itemsPerCategory===null?(module.options??rules.offerCount):itemsPerCategory*categories.length;
+  const fresh=!run.gameProfileRewardOffers?.[`shop:${shopId}`];
   const stock=makeOffer(registries,run,rng,{offerId:`shop:${shopId}`,source:'shop',count,takeCount:count,categories,itemsPerCategory});
   if(stock.price===undefined)stock.price=module.price??rules.price;
+  // Owner 2026-10-24: each new offer rolls its own price from the authored table; saved stock keeps its single price.
+  const table=module.priceTable??rules.priceTable;
+  if(fresh&&table)for(const option of stock.options)if(option.price===undefined)option.price=rollOfferPrice(registries,run,rng,table,option);
   return stock;
 }
+const PRICE_KIND={combatCards:'card',weaponArts:'weaponArt',relics:'relic',weapons:'armament',armor:'armour',potions:'flask'};
+function rollOfferPrice(registries,run,rng,table,option) {
+  const kind=PRICE_KIND[option.kind],row=table[kind];
+  if(!row)throw new Error(`No shop price for ${option.kind}`);
+  const def=option.kind==='combatCards'||option.kind==='weaponArts'?registries.cards.get(option.id)
+    :option.kind==='relics'?registries.relics.get(option.id)
+    :option.kind==='potions'?registries.flasks.get(option.id)
+    :option.kind==='weapons'?(registries.equipment.armaments||[]).find(item=>item.id===option.id)
+    :(registries.equipment.armour||[]).find(item=>item.id===option.id&&item.classId===run.class);
+  const range=Array.isArray(row)?row:row[def?.rarity]??row.common;
+  if(!Array.isArray(range)||range.length!==2||!range.every(Number.isSafeInteger)||range[0]<0||range[1]<range[0])throw new Error(`Invalid shop price range for ${option.kind}`);
+  return rng.int('shop',range[0],range[1]);
+}
+export { shopOfferPrice };
 export function purchaseGameProfileShopOffer(registries,run,shopId,index) {
   const offerId=`shop:${shopId}`,stock=run.gameProfileRewardOffers?.[offerId];
   if(!stock||stock.source!=='shop')throw new Error('Missing configured shop');
-  if(!Number.isSafeInteger(stock.price)||stock.price<0)throw new Error('Invalid configured shop price');
-  if(run.cinders<stock.price)throw new Error('Insufficient cinders');
-  const draft=structuredClone(run);draft.cinders-=stock.price;
+  const price=shopOfferPrice(stock,index);
+  if(!Number.isSafeInteger(price)||price<0)throw new Error('Invalid configured shop price');
+  if(run.cinders<price)throw new Error('Insufficient cinders');
+  const draft=structuredClone(run);draft.cinders-=price;
   const receipt=claimGameProfileReward(registries,draft,offerId,index);
-  Object.assign(run,draft);return {...receipt,price:stock.price};
+  Object.assign(run,draft);return {...receipt,price};
 }

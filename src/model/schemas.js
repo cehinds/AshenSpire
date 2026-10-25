@@ -459,7 +459,9 @@ export const SIGIL_RARITIES = Object.freeze(['common', 'uncommon', 'rare', 'lege
 // and then silently kept by `addRelic`'s duplicate-ignore. validate.js refuses
 // a quest-pool relic that no event choice grants, because it would then be
 // unreachable content.
-export const RELIC_POOLS = Object.freeze(['reward', 'quest']);
+// `core2` (owner 2026-10-25) is a relic only the Core 2 reward policy draws: rewards.json eligibility.relics.pools
+// names it, so legacy and Core 1 never see it.
+export const RELIC_POOLS = Object.freeze(['reward', 'quest', 'core2']);
 export function relicInRewardPool(relic) {
   return (relic.pool || 'reward') === 'reward';
 }

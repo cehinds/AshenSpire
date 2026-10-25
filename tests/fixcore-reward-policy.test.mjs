@@ -54,6 +54,7 @@ test('older shop snapshots retain their total count and cardRewards stream', () 
   const run=createRunState({seed:1,classId:'reaver',registries:reg});
   delete run.gameProfile.modules.shops.itemsPerCategory;
   delete run.gameProfile.content.shops.itemsPerCategory;
+  delete run.gameProfile.content.shops.priceTable;   // an older snapshot also predates per-offer prices (no shop-stream draws)
   const rng=createRng(71), before=rng.getCounters();
   const stock=gameProfileShopStock(reg,run,rng,{shopId:'legacy-snapshot'});
   assert.equal(stock.options.length,3);
