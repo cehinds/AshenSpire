@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-24
 
+- **Custom Climb modifiers, seats, combat feel, music and sound recipes are now editable data files** ([#2300](https://github.com/cehinds/AshenSpire/pull/2300), `0.7.1.1833`). Their tables live in `content/source/`; only the rules that read them stay in code. Nothing in play changes.
 - **Sigils, feats, matchups, survey lore and the act map shape are now editable data files** ([#2299](https://github.com/cehinds/AshenSpire/pull/2299), `0.7.1.1833`). They live in `content/source/` like the rest of the game content. Nothing in play changes.
 - **One guide for editing the game by hand** ([#2298](https://github.com/cehinds/AshenSpire/pull/2298), `0.7.1.1831`). `docs/MANUAL-EDITING.md` now opens with a "to change X, edit Y" table for every content file, the edit-build-check steps, JSON basics, what still lives in code, and the messages common mistakes produce. Nothing in play changes.
 - **Balance numbers are now editable data files** ([#2296](https://github.com/cehinds/AshenSpire/pull/2296), `0.7.1.1829`). The tuning numbers that used to fill one 2,700-line code file are split by topic into `content/source/balance*.json`, with each Settings explanation beside its number. Nothing in play changes.

@@ -1,0 +1,24 @@
+{
+  "bigHitShare": 0.2,
+  "hugeHitShare": 0.35,
+  "shakeMaxPx": 10,
+  "shakeFloorPx": 1,
+  "shakeSteps": [
+    { "minShare": 0.02, "px": 2 },
+    { "minShare": 0.08, "px": 4 },
+    { "minShare": 0.2, "px": 7 },
+    { "minShare": 0.35, "px": 10 }
+  ],
+  "shakeStepsHp": [
+    { "minHp": 1, "px": 1 },
+    { "minHp": 6, "px": 2 },
+    { "minHp": 10, "px": 3 },
+    { "minHp": 15, "px": 4 }
+  ],
+  "hitStop": {
+    "minHp": 6,
+    "ms": 60,
+    "hugeShare": 0.35,
+    "hugeMs": 120
+  }
+}

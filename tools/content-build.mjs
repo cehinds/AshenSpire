@@ -1173,7 +1173,7 @@ async function mutate() {
     }
     // M3 — the sfx audible-fallback contract: 'default' typo'd away.
     {
-      const { contentBundle: mb } = await import(copyContent('m3', [['sfx.js', 'default:', 'defualt:']]));
+      const { contentBundle: mb } = await import(copyContent('m3', [['generated/sfxRecipes.js', '"default":', '"defualt":']]));
       const r = G.validateContent(mb);
       const hit = (r.errors || []).map((e) => `${e.path}: ${e.msg}`).find((m) => m.includes("Missing 'default' recipe"));
       report(!r.ok && !!hit, 'M3', "sfx 'default' recipe typo'd to 'defualt'", hit || 'validated clean');

@@ -30,6 +30,9 @@ const argOf = (flag) => { const at = args.indexOf(flag); return at >= 0 ? args[a
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 const SOURCE_BASIS_PATHS = [
   'src/content/sfx.js',
+  'content/source/sfxRecipes.json',
+  'content/source/sfxFamilyIds.json',
+  'content/source/sfxHitTiers.json',
   'src/ui/assetmap.js',
   'src/ui/audio.js',
   'tools/bundle.mjs',

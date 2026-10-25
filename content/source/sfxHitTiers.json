@@ -1,0 +1,5 @@
+[
+  { "tier": "light", "min": 1 },
+  { "tier": "medium", "min": 6 },
+  { "tier": "heavy", "min": 15 }
+]
